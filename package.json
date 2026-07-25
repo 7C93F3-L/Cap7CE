@@ -49,7 +49,8 @@
       "LICENSE",
       "THIRD_PARTY_NOTICES.md",
       "BRAND.md",
-      "package.json"
+      "package.json",
+      "!node_modules/ag-psd/.v8-cache/**/*"
     ],
     "asarUnpack": [
       "node_modules/sql.js/dist/*.wasm",
