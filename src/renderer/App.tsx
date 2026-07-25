@@ -6,6 +6,7 @@ import iconSortDescSvg from "./assets/icons/icon-sort-desc.svg?raw";
 import thumbnailPlaceholderSvg from "./assets/icons/thumbnail-placeholder.svg?raw";
 import warningGradientSvg from "./assets/icons/warning-gradient.svg?raw";
 import WaitingIndicator from "./WaitingIndicator";
+import ColorPickerPopover from "./ColorPickerPopover";
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
@@ -1431,6 +1432,10 @@ const App = () => {
     const normalizedColors = normalizeAppearanceColors(nextAppearanceColors);
     setAppearanceColors(normalizedColors);
     void window.imageEverything?.preferences.updateAppearanceColors(normalizedColors);
+  };
+
+  const previewAppearanceColors = (nextAppearanceColors: AppearanceColors) => {
+    setAppearanceColors(normalizeAppearanceColors(nextAppearanceColors));
   };
 
   const updateEdgeSnapEnabled = (nextEdgeSnapEnabled: boolean) => {
@@ -3353,6 +3358,7 @@ const App = () => {
                 onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch, true)}
                 onThemeChange={updateTheme}
                 onLanguageChange={updateLanguage}
+                onAppearanceColorsPreview={previewAppearanceColors}
                 onAppearanceColorsChange={updateAppearanceColors}
                 onEdgeSnapChange={updateEdgeSnapEnabled}
                 onStandbyLineVisibleChange={updateStandbyLineVisible}
@@ -5599,6 +5605,7 @@ interface SettingsViewProps {
   onSearchOptionsChange: (search: SearchState) => void;
   onThemeChange: (theme: ThemeMode) => void;
   onLanguageChange: (language: LanguagePreference) => void;
+  onAppearanceColorsPreview: (appearanceColors: AppearanceColors) => void;
   onAppearanceColorsChange: (appearanceColors: AppearanceColors) => void;
   onEdgeSnapChange: (edgeSnapEnabled: boolean) => void;
   onStandbyLineVisibleChange: (standbyLineVisible: boolean) => void;
@@ -5632,14 +5639,15 @@ interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
   const [originImageUrl, setOriginImageUrl] = useState<string | null>(null);
   const [originVisible, setOriginVisible] = useState(false);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
-  const themeColorInputRef = useRef<HTMLInputElement | null>(null);
-  const accentColorInputRef = useRef<HTMLInputElement | null>(null);
+  const themeColorButtonRef = useRef<HTMLButtonElement | null>(null);
+  const accentColorButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [activeColorPicker, setActiveColorPicker] = useState<keyof AppearanceColors | null>(null);
   const quickActionsCollapseTimerRef = useRef<number | null>(null);
   const quickCommandsCollapseTimerRef = useRef<number | null>(null);
   const runtimeDetailsCollapseTimerRef = useRef<number | null>(null);
@@ -5810,6 +5818,14 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const updateAppearanceColor = (key: keyof AppearanceColors, value: string) => {
     if (!isHexColor(value)) return;
     onAppearanceColorsChange({
+      ...appearanceColors,
+      [key]: value.toUpperCase()
+    });
+  };
+
+  const previewAppearanceColor = (key: keyof AppearanceColors, value: string) => {
+    if (!isHexColor(value)) return;
+    onAppearanceColorsPreview({
       ...appearanceColors,
       [key]: value.toUpperCase()
     });
@@ -6148,18 +6164,17 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           </div>
           <div className="cap-settings-row cap-settings-wide">
             <span className="cap-settings-label">{t("appearance.configureLabel")}</span>
-            <button className="cap-settings-pill" type="button" title={t("settings.editColorHint")} onClick={() => themeColorInputRef.current?.click()}>
+            <button
+              ref={themeColorButtonRef}
+              className="cap-settings-pill"
+              type="button"
+              title={t("settings.editColorHint")}
+              onClick={() => setActiveColorPicker("themeColor")}
+            >
               {t("appearance.themeColor")} {currentAppearanceColors.themeColor}
             </button>
-            <input
-              ref={themeColorInputRef}
-              className="cap-settings-color-input"
-              type="color"
-              value={currentAppearanceColors.themeColor}
-              onChange={(event) => updateAppearanceColor("themeColor", event.target.value)}
-              aria-label={t("appearance.themeColor")}
-            />
             <button
+              ref={accentColorButtonRef}
               className="cap-settings-pill"
               type="button"
               style={{
@@ -6168,18 +6183,10 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 "--theme-on-color": getTextColorForBackground(currentAppearanceColors.accentColor)
               } as CSSProperties}
               title={t("settings.editColorHint")}
-              onClick={() => accentColorInputRef.current?.click()}
+              onClick={() => setActiveColorPicker("accentColor")}
             >
               {t("appearance.accentColor")} {currentAppearanceColors.accentColor}
             </button>
-            <input
-              ref={accentColorInputRef}
-              className="cap-settings-color-input"
-              type="color"
-              value={currentAppearanceColors.accentColor}
-              onChange={(event) => updateAppearanceColor("accentColor", event.target.value)}
-              aria-label={t("appearance.accentColor")}
-            />
             <button className="cap-settings-pill" type="button" onClick={resetAppearanceColors}>{t("common.restoreDefault")}</button>
           </div>
         </section>
@@ -6475,6 +6482,18 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         <CustomScrollbar scrollContainerRef={settingsScrollRef} orientation="vertical" />
       </div>
     </main>
+    {activeColorPicker && (
+      <ColorPickerPopover
+        key={activeColorPicker}
+        anchorRef={activeColorPicker === "themeColor" ? themeColorButtonRef : accentColorButtonRef}
+        value={currentAppearanceColors[activeColorPicker]}
+        ariaLabel={activeColorPicker === "themeColor" ? t("appearance.themeColor") : t("appearance.accentColor")}
+        menuStyle={menuStyle}
+        onPreview={(value) => previewAppearanceColor(activeColorPicker, value)}
+        onCommit={(value) => updateAppearanceColor(activeColorPicker, value)}
+        onClose={() => setActiveColorPicker(null)}
+      />
+    )}
     {originVisible && originImageUrl && createPortal(
       <div
         className="cap7ce-origin-overlay"
