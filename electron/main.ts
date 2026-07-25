@@ -1,0 +1,2767 @@
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
+import { randomUUID } from "node:crypto";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { addDirectory, applyDirectoryScanSummaries, deleteDirectory, listDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
+import { moveIndexedImagesToTrash } from "./fileOperationService";
+import { startNativeFileDrag } from "./fileDragService";
+import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
+import { searchImagesWithAddedDirectories } from "./imageSearchService";
+import { isSupportedImageFilePath, scanImageDirectories, type ScannedImageFile } from "./imageScanner";
+import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime } from "./llamaRuntimeManager";
+import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
+import { runContinuousAiIndex } from "./llamaVisionIndexer";
+import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
+import { getUserPreferences, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateThemePreference } from "./preferenceStore";
+import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
+import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
+import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
+import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
+import { readVisualCacheImage } from "./visualCacheService";
+import { ensurePreviewImagePath, shouldUseSourceFileForPreview } from "./visualRenderService";
+import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
+import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
+import type { KeywordBatchUpdateRequest, KeywordBatchUpdateResult } from "./keywordTypes";
+import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
+
+const applicationName = "Cap7CE";
+const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
+app.setName(applicationName);
+app.setPath("userData", path.join(app.getPath("appData"), applicationName));
+
+const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
+  if (process.platform !== "win32" || !app.isPackaged) {
+    return;
+  }
+  app.setLoginItemSettings({
+    openAtLogin: launchAtLogin,
+    path: process.execPath
+  });
+};
+
+let mainWindow: BrowserWindow | null = null;
+let startupHintWindow: BrowserWindow | null = null;
+let previewWindow: BrowserWindow | null = null;
+let appTray: Tray | null = null;
+let isQuitting = false;
+let cancelAiIndexRequested = false;
+let resizeRepaintTimer: NodeJS.Timeout | null = null;
+let resizeSettledTimer: NodeJS.Timeout | null = null;
+let shellMousePassthroughTimer: NodeJS.Timeout | null = null;
+let shellIgnoreMouseEvents = false;
+let programmaticResizeGuardUntil = 0;
+let moveSnapTimer: NodeJS.Timeout | null = null;
+let programmaticMoveGuardUntil = 0;
+let previewMoveSnapTimer: NodeJS.Timeout | null = null;
+let previewProgrammaticMoveGuardUntil = 0;
+let cacheClearAuthorization: { token: string; expiresAt: number } | null = null;
+let startupHintCloseTimer: NodeJS.Timeout | null = null;
+let shellAlwaysOnTop = false;
+let shellMaximized = false;
+let lastNormalBounds: Electron.Rectangle | null = null;
+let activeShellState: Cap7CEShellState = "standby";
+let mainWindowSkipTaskbar: boolean | null = null;
+let microBottomCenterAnchored = false;
+let edgeSnapEnabled = true;
+let standbyLineVisible = true;
+let quickActionGlobalEnabled = true;
+let shortcutCaptureActive = false;
+let registeredActivateCapsuleShortcut: string | null = null;
+const registeredShellModeShortcuts = new Map<string, string>();
+type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "openSettings";
+type GlobalShortcutActionId = ShortcutActionId;
+type ShortcutActionPreferences = Record<ShortcutActionId, string>;
+let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
+let thumbnailOptimizationScanPromise: Promise<void> | null = null;
+let modelInputCacheCleanupPromise: Promise<void> | null = null;
+let previewWindowLoaded = false;
+let previewSessionActive = false;
+let activePreviewData: PreviewWindowData | null = null;
+let latestPreviewContentSize: PreviewContentSize | null = null;
+const userMovedShellBounds = new Map<Cap7CEShellState, Electron.Rectangle>();
+const previewSourceFallbackExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp"]);
+type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
+const shellWindowStates = new Set<Cap7CEShellState>(["standby", "capsule", "micro", "mini", "normal", "settings"]);
+const standbyVisualWidthPx = 180;
+const standbyVisualHeightPx = 4;
+
+const toThumbnailOptimizationCandidates = (images: ScannedImageFile[]): ThumbnailOptimizationCandidate[] => (
+  images.map((image) => ({
+    filePath: image.file_path,
+    fileName: image.file_name,
+    fileSize: image.file_size,
+    modifiedAt: image.modified_at,
+    modifiedMs: image.modified_ms
+  }))
+);
+
+const enqueueScannedThumbnails = (images: ScannedImageFile[]) => {
+  void enqueueThumbnailOptimizationCandidates(toThumbnailOptimizationCandidates(images)).catch((error) => {
+    console.warn("[thumbnail-optimization] candidate filtering failed", error);
+  });
+};
+
+const scheduleAllDirectoryThumbnailOptimization = () => {
+  if (!getThumbnailOptimizationStatus().enabled || thumbnailOptimizationScanPromise) {
+    return thumbnailOptimizationScanPromise ?? Promise.resolve();
+  }
+
+  thumbnailOptimizationScanPromise = (async () => {
+    const directories = await listDirectories();
+    if (directories.length === 0 || !getThumbnailOptimizationStatus().enabled) {
+      return;
+    }
+    const scanResult = await scanImageDirectories(directories);
+    enqueueScannedThumbnails(scanResult.images);
+  })().catch((error) => {
+    console.warn("[thumbnail-optimization] directory scan failed", error);
+  }).finally(() => {
+    thumbnailOptimizationScanPromise = null;
+  });
+
+  return thumbnailOptimizationScanPromise;
+};
+
+const scheduleRecognizedModelInputCacheCleanup = () => {
+  if (!getThumbnailOptimizationStatus().enabled || modelInputCacheCleanupPromise) {
+    return modelInputCacheCleanupPromise ?? Promise.resolve();
+  }
+
+  modelInputCacheCleanupPromise = cleanupRecognizedModelInputCaches()
+    .then((result) => {
+      if (result.deletedCount > 0) {
+        console.info("[model-input-cache] cleaned recognized cache entries", result);
+      }
+    })
+    .catch((error) => {
+      console.warn("[model-input-cache] historical cleanup failed", error);
+    })
+    .finally(() => {
+      modelInputCacheCleanupPromise = null;
+    });
+
+  return modelInputCacheCleanupPromise;
+};
+const capsuleWidthPx = 300;
+const capsuleVisualHeightPx = 30;
+const capsuleWindowVerticalPaddingPx = 2;
+const capsuleWindowHeightPx = capsuleVisualHeightPx + capsuleWindowVerticalPaddingPx * 2;
+const microDefaultHeightPx = 156;
+const miniDefaultHeightPx = 500;
+const resizableShellMinimumWidthPx = 300;
+const resizableShellMinimumHeightPx = microDefaultHeightPx;
+const edgeGapPx = 5;
+const microLayoutMaxHeight = 300;
+const normalLayoutMinWidth = 1280;
+const normalLayoutMinHeight = 760;
+const resizeSettleDelayMs = 260;
+const programmaticResizeGuardMs = 420;
+const moveSnapSettleDelayMs = 180;
+const edgeSnapThresholdPx = 40;
+const edgeAnchorThresholdPx = 12;
+const programmaticMoveGuardMs = 420;
+const shellMousePassthroughPollMs = 50;
+const previewWindowMinimumWidth = 360;
+const previewWindowMinimumHeight = 280;
+const previewWindowHorizontalPadding = 50;
+const previewWindowVerticalChrome = 24;
+const previewWindowWorkAreaRatio = 0.85;
+const DEBUG_WINDOW_BOUNDS = true;
+
+const isShellWindowState = (state: string): state is Cap7CEShellState => shellWindowStates.has(state as Cap7CEShellState);
+
+const syncTaskbarVisibility = (state: Cap7CEShellState) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+
+  const shouldSkipTaskbar = state !== "normal" && state !== "settings";
+  if (mainWindowSkipTaskbar === shouldSkipTaskbar) return true;
+
+  mainWindow.setSkipTaskbar(shouldSkipTaskbar);
+  mainWindowSkipTaskbar = shouldSkipTaskbar;
+  return true;
+};
+
+const closeStartupHintWindow = () => {
+  if (startupHintCloseTimer !== null) {
+    clearTimeout(startupHintCloseTimer);
+    startupHintCloseTimer = null;
+  }
+  if (startupHintWindow && !startupHintWindow.isDestroyed()) {
+    startupHintWindow.close();
+  }
+  startupHintWindow = null;
+};
+
+const sendActivePreviewData = () => {
+  if (!previewWindowLoaded || !activePreviewData || !previewWindow || previewWindow.isDestroyed()) {
+    return;
+  }
+  previewWindow.webContents.send("preview:data", activePreviewData);
+};
+
+const applyLanguagePreference = async (languagePreference: LanguagePreference) => {
+  const preferences = await updateLanguagePreference(languagePreference);
+  const resolvedLanguage = resolveLanguagePreference(preferences.languagePreference, app.getLocale());
+  setActiveLanguage(resolvedLanguage);
+  updateTrayMenu();
+  mainWindow?.webContents.send("preferences:languageChanged", preferences.languagePreference, resolvedLanguage);
+  if (activePreviewData) {
+    activePreviewData = { ...activePreviewData, language: resolvedLanguage };
+    sendActivePreviewData();
+  }
+  return preferences;
+};
+
+const revealPreviewWindow = () => {
+  if (!previewSessionActive || !previewWindow || previewWindow.isDestroyed()) {
+    return false;
+  }
+  if (!previewWindow.isVisible()) {
+    previewWindow.showInactive();
+  }
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+    mainWindow.hide();
+  }
+  applyAlwaysOnTopState();
+  previewWindow.focus();
+  previewWindow.moveTop();
+  return true;
+};
+
+const getPreviewWindowControlState = (): PreviewWindowControlState => ({
+  isMaximized: Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isMaximized()),
+  isAlwaysOnTop: shellAlwaysOnTop,
+  miniStandardHeight: miniDefaultHeightPx
+});
+
+const closePreviewSession = () => {
+  clearPreviewMoveSnapCheck();
+  if (previewWindow && !previewWindow.isDestroyed()) {
+    previewWindow.hide();
+    if (previewWindow.isMaximized()) {
+      previewWindow.unmaximize();
+    }
+    previewWindow.setAlwaysOnTop(false);
+  }
+
+  const wasActive = previewSessionActive;
+  previewSessionActive = false;
+  activePreviewData = null;
+  latestPreviewContentSize = null;
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("preview:closed");
+    if (wasActive) {
+      mainWindow.show();
+      applyAlwaysOnTopState();
+      mainWindow.focus();
+    }
+  }
+
+  return wasActive;
+};
+
+const centerPreviewWindowForNewSession = () => {
+  if (!previewWindow || previewWindow.isDestroyed()) {
+    return false;
+  }
+
+  const display = mainWindow && !mainWindow.isDestroyed()
+    ? screen.getDisplayMatching(mainWindow.getBounds())
+    : screen.getPrimaryDisplay();
+  const { workArea } = display;
+  const { width, height } = previewWindow.getBounds();
+  markPreviewProgrammaticMove();
+  previewWindow.setPosition(
+    workArea.x + Math.round((workArea.width - width) / 2),
+    workArea.y + Math.round((workArea.height - height) / 2),
+    false
+  );
+  return true;
+};
+
+const getPreviewWindowBounds = (contentWidth: number, contentHeight: number): Electron.Rectangle => {
+  const currentPreviewBounds = previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible()
+    ? previewWindow.getBounds()
+    : null;
+  const display = previewSessionActive && currentPreviewBounds
+    ? screen.getDisplayMatching(currentPreviewBounds)
+    : mainWindow
+      ? screen.getDisplayMatching(mainWindow.getBounds())
+      : screen.getPrimaryDisplay();
+  const { workArea } = display;
+  const maximumWidth = Math.max(1, Math.floor(workArea.width * previewWindowWorkAreaRatio));
+  const maximumHeight = Math.max(1, Math.floor(workArea.height * previewWindowWorkAreaRatio));
+  const minimumWidth = Math.min(previewWindowMinimumWidth, maximumWidth);
+  const minimumHeight = Math.min(previewWindowMinimumHeight, maximumHeight);
+  const availableContentWidth = Math.max(1, maximumWidth - previewWindowHorizontalPadding);
+  const availableContentHeight = Math.max(1, maximumHeight - previewWindowVerticalChrome);
+  const safeContentWidth = Math.max(1, Math.round(contentWidth));
+  const safeContentHeight = Math.max(1, Math.round(contentHeight));
+  const scale = Math.min(
+    1,
+    availableContentWidth / safeContentWidth,
+    availableContentHeight / safeContentHeight
+  );
+  const width = clamp(
+    Math.round(safeContentWidth * scale) + previewWindowHorizontalPadding,
+    minimumWidth,
+    maximumWidth
+  );
+  const height = clamp(
+    Math.round(safeContentHeight * scale) + previewWindowVerticalChrome,
+    minimumHeight,
+    maximumHeight
+  );
+  const anchorX = currentPreviewBounds
+    ? currentPreviewBounds.x + Math.round(currentPreviewBounds.width / 2)
+    : workArea.x + Math.round(workArea.width / 2);
+  const anchorY = currentPreviewBounds
+    ? currentPreviewBounds.y + Math.round(currentPreviewBounds.height / 2)
+    : workArea.y + Math.round(workArea.height / 2);
+  const maximumX = workArea.x + workArea.width - width;
+  const maximumY = workArea.y + workArea.height - height;
+
+  return {
+    x: clamp(anchorX - Math.round(width / 2), workArea.x, maximumX),
+    y: clamp(anchorY - Math.round(height / 2), workArea.y, maximumY),
+    width,
+    height
+  };
+};
+
+const applyLatestPreviewContentSize = () => {
+  if (
+    !previewSessionActive
+    || !activePreviewData
+    || !latestPreviewContentSize
+    || !previewWindow
+    || previewWindow.isDestroyed()
+    || previewWindow.isMaximized()
+    || latestPreviewContentSize.sessionId !== activePreviewData.sessionId
+    || latestPreviewContentSize.filePath !== activePreviewData.filePath
+  ) {
+    return false;
+  }
+
+  const nextBounds = getPreviewWindowBounds(
+    latestPreviewContentSize.width,
+    latestPreviewContentSize.height
+  );
+  const currentBounds = previewWindow.getBounds();
+  if (
+    currentBounds.x !== nextBounds.x
+    || currentBounds.y !== nextBounds.y
+    || currentBounds.width !== nextBounds.width
+    || currentBounds.height !== nextBounds.height
+  ) {
+    markPreviewProgrammaticMove();
+    previewWindow.setBounds(nextBounds, false);
+  }
+  return true;
+};
+
+const createPreviewWindow = () => {
+  if (previewWindow && !previewWindow.isDestroyed()) {
+    return;
+  }
+
+  previewWindowLoaded = false;
+  previewWindow = new BrowserWindow({
+    width: previewWindowMinimumWidth,
+    height: previewWindowMinimumHeight,
+    minWidth: previewWindowMinimumWidth,
+    minHeight: previewWindowMinimumHeight,
+    title: "Cap7CE",
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    show: false,
+    skipTaskbar: true,
+    resizable: true,
+    minimizable: false,
+    maximizable: true,
+    fullscreenable: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  previewWindow.setSkipTaskbar(true);
+  previewWindow.setMenuBarVisibility(false);
+  applyAlwaysOnTopState();
+  previewWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  previewWindow.webContents.on("did-finish-load", () => {
+    previewWindowLoaded = true;
+    sendActivePreviewData();
+    revealPreviewWindow();
+  });
+  previewWindow.on("move", () => {
+    if (
+      !previewSessionActive
+      || !previewWindow
+      || previewWindow.isDestroyed()
+      || !previewWindow.isVisible()
+      || previewWindow.isMaximized()
+      || isPreviewProgrammaticMoveGuardActive()
+    ) {
+      return;
+    }
+    schedulePreviewMoveSnapCheck();
+  });
+  previewWindow.on("close", (event) => {
+    if (isQuitting) {
+      return;
+    }
+    event.preventDefault();
+    closePreviewSession();
+  });
+  previewWindow.on("closed", () => {
+    clearPreviewMoveSnapCheck();
+    previewWindow = null;
+    previewWindowLoaded = false;
+    previewSessionActive = false;
+    activePreviewData = null;
+    latestPreviewContentSize = null;
+  });
+
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL;
+  if (devServerUrl) {
+    const previewUrl = new URL(devServerUrl);
+    previewUrl.searchParams.set("window", "preview");
+    void previewWindow.loadURL(previewUrl.toString());
+  } else {
+    void previewWindow.loadFile(path.join(__dirname, "../dist/index.html"), {
+      query: { window: "preview" }
+    });
+  }
+};
+
+const createStartupHintWindow = async () => {
+  if (startupHintWindow) return;
+
+  const logoPathCandidates = [
+    path.join(process.resourcesPath, "renderer-assets/startup/startup-logo-cap7ce.svg"),
+    path.join(app.getAppPath(), "src/renderer/assets/startup/startup-logo-cap7ce.svg"),
+    path.join(process.resourcesPath, "app", "src/renderer/assets/startup/startup-logo-cap7ce.svg"),
+    path.join(process.resourcesPath, "app.asar", "src/renderer/assets/startup/startup-logo-cap7ce.svg")
+  ];
+  let logoPath: string | undefined;
+  for (const candidatePath of logoPathCandidates) {
+    try {
+      await fs.access(candidatePath);
+      logoPath = candidatePath;
+      break;
+    } catch {
+    }
+  }
+  let logoSvg = "";
+  if (!logoPath) {
+    console.warn("[startup-hint] missing startup logo", { logoPathCandidates });
+    return;
+  }
+  try {
+    logoSvg = await fs.readFile(logoPath, "utf8");
+  } catch (error) {
+    console.warn("[startup-hint] missing startup logo", { logoPath, error });
+    return;
+  }
+
+  const { workArea } = screen.getPrimaryDisplay();
+  startupHintWindow = new BrowserWindow({
+    ...workArea,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: true,
+    skipTaskbar: true,
+    show: false,
+    focusable: false,
+    alwaysOnTop: true,
+    backgroundColor: "#00000000",
+    hasShadow: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  });
+  startupHintWindow.setSkipTaskbar(true);
+  startupHintWindow.setAlwaysOnTop(true, "screen-saver");
+  startupHintWindow.setIgnoreMouseEvents(true, { forward: true });
+  startupHintWindow.on("closed", () => {
+    if (startupHintCloseTimer !== null) {
+      clearTimeout(startupHintCloseTimer);
+      startupHintCloseTimer = null;
+    }
+    startupHintWindow = null;
+  });
+
+  const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .startup-hint-logo {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 110px;
+      height: 30px;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.98);
+      transform-origin: center center;
+      animation:
+        startup-hint-fade-in 200ms ease-out forwards,
+        startup-hint-contract 650ms 760ms cubic-bezier(0.22, 0.85, 0.18, 1) forwards;
+      pointer-events: none;
+    }
+
+    .startup-hint-logo svg {
+      width: 110px;
+      height: 30px;
+      display: block;
+    }
+
+    @keyframes startup-hint-fade-in {
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes startup-hint-contract {
+      0% {
+        left: 50%;
+        top: 50%;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        left: 50%;
+        top: calc(100% - 7px);
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.36, 0.14);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="startup-hint-logo">${logoSvg.replace(/<\?xml[^>]*>\s*/u, "")}</div>
+</body>
+</html>`;
+
+  await startupHintWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  if (!startupHintWindow || startupHintWindow.isDestroyed()) return;
+  startupHintWindow.showInactive();
+  startupHintCloseTimer = setTimeout(closeStartupHintWindow, 1600);
+};
+
+const getShellDisplay = () => (
+  mainWindow
+    ? screen.getDisplayMatching(mainWindow.getBounds())
+    : screen.getPrimaryDisplay()
+);
+
+const getNormalWorkAreaBounds = (): Electron.Rectangle => {
+  const { x, y, width, height } = getShellDisplay().workArea;
+  return { x, y, width, height };
+};
+
+const getShellWindowBounds = (state: Cap7CEShellState): Electron.Rectangle => {
+  const display = mainWindow
+    ? screen.getDisplayMatching(mainWindow.getBounds())
+    : screen.getPrimaryDisplay();
+  const { x, y, width, height } = display.workArea;
+  const bottom = y + height;
+  const centerX = x + Math.round(width / 2);
+
+  if (state === "standby") {
+    return {
+      width: standbyVisualWidthPx,
+      height: standbyVisualHeightPx,
+      x: centerX - Math.round(standbyVisualWidthPx / 2),
+      y: bottom - edgeGapPx - standbyVisualHeightPx
+    };
+  }
+
+  if (state === "capsule") {
+    return {
+      width: capsuleWidthPx,
+      height: capsuleWindowHeightPx,
+      x: centerX - Math.round(capsuleWidthPx / 2),
+      y: bottom - edgeGapPx - capsuleWindowHeightPx
+    };
+  }
+
+  if (state === "micro") {
+    return {
+      width: 540,
+      height: microDefaultHeightPx,
+      x: centerX - 270,
+      y: bottom - microDefaultHeightPx - edgeGapPx
+    };
+  }
+
+  if (state === "mini") {
+    return {
+      width: 300,
+      height: miniDefaultHeightPx,
+      x: centerX - 150,
+      y: bottom - miniDefaultHeightPx - edgeGapPx
+    };
+  }
+
+  return {
+    width: Math.min(1280, width),
+    height: Math.min(760, height),
+    x: x + Math.round((width - Math.min(1280, width)) / 2),
+    y: y + Math.round((height - Math.min(760, height)) / 2)
+  };
+};
+
+const getMicroResizeBoundsForCurrentPosition = (currentBounds: Electron.Rectangle): Electron.Rectangle => {
+  const { workArea } = screen.getDisplayMatching(currentBounds);
+  const workRight = workArea.x + workArea.width;
+  const workBottom = workArea.y + workArea.height;
+  const nextWidth = Math.min(workArea.width, Math.max(300, Math.round(currentBounds.width)));
+  const nextHeight = microDefaultHeightPx;
+  const minX = workArea.x + edgeGapPx;
+  const minY = workArea.y + edgeGapPx;
+  const maxX = Math.max(minX, workRight - nextWidth - edgeGapPx);
+  const maxY = Math.max(minY, workBottom - nextHeight - edgeGapPx);
+  const currentRightGap = Math.abs(workRight - (currentBounds.x + currentBounds.width) - edgeGapPx);
+  const currentBottomGap = Math.abs(workBottom - (currentBounds.y + currentBounds.height) - edgeGapPx);
+  const isLeftAnchored = Math.abs(currentBounds.x - minX) <= edgeAnchorThresholdPx;
+  const isRightAnchored = currentRightGap <= edgeAnchorThresholdPx;
+  const isTopAnchored = Math.abs(currentBounds.y - minY) <= edgeAnchorThresholdPx;
+  const isBottomAnchored = currentBottomGap <= edgeAnchorThresholdPx;
+  const centerX = currentBounds.x + Math.round(currentBounds.width / 2);
+  const centerY = currentBounds.y + Math.round(currentBounds.height / 2);
+
+  return {
+    width: nextWidth,
+    height: nextHeight,
+    x: isLeftAnchored
+      ? minX
+      : isRightAnchored
+        ? maxX
+        : clamp(centerX - Math.round(nextWidth / 2), minX, maxX),
+    y: isTopAnchored
+      ? minY
+      : isBottomAnchored
+        ? maxY
+        : clamp(centerY - Math.round(nextHeight / 2), minY, maxY)
+  };
+};
+
+const isBottomCenterMicroBounds = (bounds: Electron.Rectangle) => {
+  const { workArea } = screen.getDisplayMatching(bounds);
+  const workBottom = workArea.y + workArea.height;
+  const workCenterX = workArea.x + Math.round(workArea.width / 2);
+  const boundsCenterX = bounds.x + Math.round(bounds.width / 2);
+
+  return (
+    Math.abs(boundsCenterX - workCenterX) <= edgeAnchorThresholdPx &&
+    Math.abs(bounds.y + bounds.height - (workBottom - edgeGapPx)) <= edgeAnchorThresholdPx
+  );
+};
+
+const getBottomCenterMicroResizeBounds = (newBounds: Electron.Rectangle): Electron.Rectangle => {
+  const { workArea } = screen.getDisplayMatching(newBounds);
+  const microMinimumSize = getShellMinimumSize("micro");
+  const minWidth = microMinimumSize?.width ?? 540;
+  const maxWidth = Math.max(minWidth, workArea.width - edgeGapPx * 2);
+  const nextWidth = clamp(Math.round(newBounds.width), minWidth, maxWidth);
+  const nextHeight = newBounds.height < microLayoutMaxHeight
+    ? Math.max(microMinimumSize?.height ?? microDefaultHeightPx, Math.round(newBounds.height))
+    : microDefaultHeightPx;
+  const centerX = workArea.x + Math.round(workArea.width / 2);
+  const bottom = workArea.y + workArea.height;
+
+  return {
+    width: nextWidth,
+    height: nextHeight,
+    x: centerX - Math.round(nextWidth / 2),
+    y: bottom - nextHeight - edgeGapPx
+  };
+};
+
+const getShellMinimumSize = (state: Cap7CEShellState) => {
+  if (state === "micro" || state === "mini" || state === "normal" || state === "settings") {
+    return { width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx };
+  }
+
+  return null;
+};
+
+const markProgrammaticResize = () => {
+  programmaticResizeGuardUntil = Date.now() + programmaticResizeGuardMs;
+};
+
+const isProgrammaticResizeGuardActive = () => Date.now() < programmaticResizeGuardUntil;
+
+const markProgrammaticMove = () => {
+  programmaticMoveGuardUntil = Date.now() + programmaticMoveGuardMs;
+  if (moveSnapTimer !== null) {
+    clearTimeout(moveSnapTimer);
+    moveSnapTimer = null;
+  }
+};
+
+const isProgrammaticMoveGuardActive = () => Date.now() < programmaticMoveGuardUntil;
+
+const getResizeTargetState = (
+  currentState: Cap7CEShellState,
+  bounds: Electron.Rectangle
+): Extract<Cap7CEShellState, "micro" | "mini" | "normal"> => {
+  if (currentState === "micro") {
+    return bounds.height >= microLayoutMaxHeight ? "mini" : "micro";
+  }
+
+  if (currentState === "mini") {
+    if (bounds.width >= normalLayoutMinWidth && bounds.height >= normalLayoutMinHeight) {
+      return "normal";
+    }
+
+    return bounds.height < microLayoutMaxHeight ? "micro" : "mini";
+  }
+
+  if (bounds.width >= normalLayoutMinWidth && bounds.height >= normalLayoutMinHeight) {
+    return "normal";
+  }
+
+  if (bounds.height < microLayoutMaxHeight) {
+    return "micro";
+  }
+
+  return "mini";
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const canSnapShellWindow = () => (
+  activeShellState === "micro" ||
+  activeShellState === "mini" ||
+  activeShellState === "normal" ||
+  activeShellState === "settings"
+);
+
+const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
+  if (!canSnapShellWindow() || shellMaximized || mainWindow?.isMaximized()) {
+    return;
+  }
+
+  userMovedShellBounds.set(activeShellState, { ...bounds });
+};
+
+const getEdgeSnappedBounds = (bounds: Electron.Rectangle): Electron.Rectangle => {
+  const { workArea } = screen.getDisplayMatching(bounds);
+  const workRight = workArea.x + workArea.width;
+  const workBottom = workArea.y + workArea.height;
+  const boundsRight = bounds.x + bounds.width;
+  const boundsBottom = bounds.y + bounds.height;
+  const minX = workArea.x + edgeGapPx;
+  const minY = workArea.y + edgeGapPx;
+  const maxX = Math.max(minX, workRight - bounds.width - edgeGapPx);
+  const maxY = Math.max(minY, workBottom - bounds.height - edgeGapPx);
+  let nextX = clamp(bounds.x, minX, maxX);
+  let nextY = clamp(bounds.y, minY, maxY);
+
+  if (
+    Math.abs(bounds.x - workArea.x) <= edgeSnapThresholdPx ||
+    Math.abs(bounds.x - minX) <= edgeSnapThresholdPx
+  ) {
+    nextX = minX;
+  } else if (
+    Math.abs(workRight - boundsRight) <= edgeSnapThresholdPx ||
+    Math.abs(maxX - bounds.x) <= edgeSnapThresholdPx
+  ) {
+    nextX = maxX;
+  }
+
+  if (
+    Math.abs(bounds.y - workArea.y) <= edgeSnapThresholdPx ||
+    Math.abs(bounds.y - minY) <= edgeSnapThresholdPx
+  ) {
+    nextY = minY;
+  } else if (
+    Math.abs(workBottom - boundsBottom) <= edgeSnapThresholdPx ||
+    Math.abs(maxY - bounds.y) <= edgeSnapThresholdPx
+  ) {
+    nextY = maxY;
+  }
+
+  return { ...bounds, x: nextX, y: nextY };
+};
+
+const clearPreviewMoveSnapCheck = () => {
+  if (previewMoveSnapTimer === null) {
+    return false;
+  }
+
+  clearTimeout(previewMoveSnapTimer);
+  previewMoveSnapTimer = null;
+  return true;
+};
+
+const markPreviewProgrammaticMove = () => {
+  previewProgrammaticMoveGuardUntil = Date.now() + programmaticMoveGuardMs;
+  clearPreviewMoveSnapCheck();
+};
+
+const isPreviewProgrammaticMoveGuardActive = () => Date.now() < previewProgrammaticMoveGuardUntil;
+
+const applyPreviewEdgeSnapAfterMove = () => {
+  if (
+    !previewWindow
+    || previewWindow.isDestroyed()
+    || !previewSessionActive
+    || !previewWindow.isVisible()
+    || previewWindow.isMaximized()
+    || !edgeSnapEnabled
+  ) {
+    return;
+  }
+
+  const currentBounds = previewWindow.getBounds();
+  const nextBounds = getEdgeSnappedBounds(currentBounds);
+  if (nextBounds.x === currentBounds.x && nextBounds.y === currentBounds.y) {
+    return;
+  }
+
+  markPreviewProgrammaticMove();
+  previewWindow.setBounds(nextBounds, true);
+};
+
+const schedulePreviewMoveSnapCheck = () => {
+  if (
+    !previewWindow
+    || previewWindow.isDestroyed()
+    || !previewSessionActive
+    || !previewWindow.isVisible()
+    || previewWindow.isMaximized()
+    || !edgeSnapEnabled
+  ) {
+    return;
+  }
+
+  clearPreviewMoveSnapCheck();
+  previewMoveSnapTimer = setTimeout(() => {
+    previewMoveSnapTimer = null;
+    applyPreviewEdgeSnapAfterMove();
+  }, moveSnapSettleDelayMs);
+};
+
+const isDefaultBottomAnchoredBounds = (bounds: Electron.Rectangle) => {
+  const { workArea } = screen.getDisplayMatching(bounds);
+  const workBottom = workArea.y + workArea.height;
+  const workCenterX = workArea.x + Math.round(workArea.width / 2);
+  const boundsCenterX = bounds.x + Math.round(bounds.width / 2);
+  const boundsBottom = bounds.y + bounds.height;
+
+  return (
+    Math.abs(boundsCenterX - workCenterX) <= edgeAnchorThresholdPx &&
+    (
+      Math.abs(boundsBottom - (workBottom - edgeGapPx)) <= edgeAnchorThresholdPx ||
+      Math.abs(boundsBottom - workBottom) <= edgeAnchorThresholdPx
+    )
+  );
+};
+
+const shouldKeepDefaultBottomGapOnResize = (
+  currentState: Cap7CEShellState,
+  targetState: Extract<Cap7CEShellState, "micro" | "mini" | "normal">,
+  currentBounds: Electron.Rectangle
+) => (
+  (
+    (currentState === "micro" && targetState === "mini") ||
+    (currentState === "mini" && targetState === "micro")
+  ) &&
+  isDefaultBottomAnchoredBounds(currentBounds)
+);
+
+const getResizeTransitionBounds = (
+  targetState: Extract<Cap7CEShellState, "micro" | "mini" | "normal">,
+  currentBounds: Electron.Rectangle,
+  currentState: Cap7CEShellState
+): Electron.Rectangle => {
+  const { workArea } = screen.getDisplayMatching(currentBounds);
+
+  if (shouldKeepDefaultBottomGapOnResize(currentState, targetState, currentBounds)) {
+    return getShellWindowBounds(targetState);
+  }
+
+  const targetBounds = getShellWindowBounds(targetState);
+  const centerX = currentBounds.x + Math.round(currentBounds.width / 2);
+  const centerY = currentBounds.y + Math.round(currentBounds.height / 2);
+  const maxX = Math.max(workArea.x, workArea.x + workArea.width - targetBounds.width);
+  const maxY = Math.max(workArea.y, workArea.y + workArea.height - targetBounds.height);
+
+  return {
+    ...targetBounds,
+    x: clamp(centerX - Math.round(targetBounds.width / 2), workArea.x, maxX),
+    y: clamp(centerY - Math.round(targetBounds.height / 2), workArea.y, maxY)
+  };
+};
+
+const sendShellStateToRenderer = (state: string) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:shellStateChanged", state);
+  }
+};
+
+const sendOpenSettingsToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:openSettingsRequested");
+  }
+};
+
+const sendShowAllFilesToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:showAllFilesRequested");
+  }
+};
+
+const sendActivateCapsuleShortcutToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:activateCapsuleShortcut");
+  }
+};
+
+const sendActivateShellModeShortcutToRenderer = (mode: "micro" | "mini" | "normal" | "standby") => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:activateShellModeShortcut", mode);
+  }
+};
+
+const sendStandbyLineVisibleToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("preferences:standbyLineVisibleChanged", standbyLineVisible);
+  }
+};
+
+const sendEdgeSnapEnabledToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("preferences:edgeSnapEnabledChanged", edgeSnapEnabled);
+  }
+};
+
+const showAndFocusMainWindow = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return false;
+  }
+
+  setShellIgnoreMouseEvents(false);
+  if (!mainWindow.isVisible()) {
+    mainWindow.show();
+  }
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  applyAlwaysOnTopState();
+  mainWindow.focus();
+  mainWindow.moveTop();
+  return true;
+};
+
+const activateCapsuleShortcut = () => {
+  if (!showAndFocusMainWindow()) {
+    return;
+  }
+
+  if (activeShellState === "standby") {
+    applyCapsuleWindowMode();
+    sendShellStateToRenderer("capsule");
+  }
+
+  sendActivateCapsuleShortcutToRenderer();
+};
+
+const unregisterActivateCapsuleShortcut = () => {
+  if (!registeredActivateCapsuleShortcut) {
+    return;
+  }
+
+  globalShortcut.unregister(registeredActivateCapsuleShortcut);
+  registeredActivateCapsuleShortcut = null;
+};
+
+const registerActivateCapsuleShortcut = (shortcut: string) => {
+  unregisterActivateCapsuleShortcut();
+  if (!shortcut) {
+    return false;
+  }
+
+  let registered = false;
+  try {
+    registered = globalShortcut.register(shortcut, activateCapsuleShortcut);
+  } catch (error) {
+    console.warn("[shortcut] failed to register activate capsule shortcut", { shortcut, error });
+    return false;
+  }
+
+  if (!registered) {
+    console.warn("[shortcut] failed to register activate capsule shortcut", { shortcut });
+    return false;
+  }
+
+  registeredActivateCapsuleShortcut = shortcut;
+  return true;
+};
+
+const unregisterShellModeShortcuts = () => {
+  for (const shortcut of registeredShellModeShortcuts.values()) {
+    globalShortcut.unregister(shortcut);
+  }
+  registeredShellModeShortcuts.clear();
+};
+
+const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "settings") => {
+  if (mode === "settings") {
+    openSettingsFromTray();
+    return;
+  }
+
+  if (mode !== "standby" && !showAndFocusMainWindow()) {
+    return;
+  }
+
+  sendActivateShellModeShortcutToRenderer(mode);
+};
+
+const registerShellModeShortcuts = (shortcutActions: {
+  activateMicro: string;
+  activateMini: string;
+  activateNormal: string;
+  activateStandby: string;
+  openSettings: string;
+}) => {
+  unregisterShellModeShortcuts();
+  const unavailableActionIds = new Set<GlobalShortcutActionId>();
+  const shortcutModes = [
+    { id: "activateMicro", shortcut: shortcutActions.activateMicro, mode: "micro" },
+    { id: "activateMini", shortcut: shortcutActions.activateMini, mode: "mini" },
+    { id: "activateNormal", shortcut: shortcutActions.activateNormal, mode: "normal" },
+    { id: "activateStandby", shortcut: shortcutActions.activateStandby, mode: "standby" },
+    { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" }
+  ] as const;
+
+  for (const { id, shortcut, mode } of shortcutModes) {
+    if (!shortcut) continue;
+    try {
+      const registered = globalShortcut.register(shortcut, () => {
+        void activateShellModeShortcut(mode);
+      });
+      if (registered) {
+        registeredShellModeShortcuts.set(id, shortcut);
+      } else {
+        unavailableActionIds.add(id);
+        console.warn("[shortcut] failed to register shell mode shortcut", { id, shortcut, mode });
+      }
+    } catch (error) {
+      unavailableActionIds.add(id);
+      console.warn("[shortcut] failed to register shell mode shortcut", { id, shortcut, mode, error });
+    }
+  }
+  return unavailableActionIds;
+};
+
+const unregisterConfiguredGlobalShortcuts = () => {
+  unregisterActivateCapsuleShortcut();
+  unregisterShellModeShortcuts();
+};
+
+const registerConfiguredGlobalShortcuts = (shortcutActions: ShortcutActionPreferences) => {
+  unregisterConfiguredGlobalShortcuts();
+  const unavailableActionIds = registerShellModeShortcuts(shortcutActions);
+  if (!registerActivateCapsuleShortcut(shortcutActions.activateCapsule)) {
+    unavailableActionIds.add("activateCapsule");
+  }
+  unavailableGlobalShortcutActionIds = unavailableActionIds;
+  return unavailableActionIds;
+};
+
+const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) => {
+  const shortcutEntries: Array<[GlobalShortcutActionId, string]> = [
+    ["activateCapsule", shortcutActions.activateCapsule],
+    ["activateMicro", shortcutActions.activateMicro],
+    ["activateMini", shortcutActions.activateMini],
+    ["activateNormal", shortcutActions.activateNormal],
+    ["activateStandby", shortcutActions.activateStandby],
+    ["openSettings", shortcutActions.openSettings]
+  ];
+  const unavailableActionIds = new Set<GlobalShortcutActionId>();
+  const registeredShortcuts: string[] = [];
+
+  for (const [id, shortcut] of shortcutEntries) {
+    if (!shortcut) {
+      unavailableActionIds.add(id);
+      continue;
+    }
+    try {
+      if (globalShortcut.register(shortcut, () => undefined)) {
+        registeredShortcuts.push(shortcut);
+      } else {
+        unavailableActionIds.add(id);
+      }
+    } catch (error) {
+      unavailableActionIds.add(id);
+      console.warn("[shortcut] failed to probe shortcut", { id, shortcut, error });
+    }
+  }
+
+  for (const shortcut of registeredShortcuts) {
+    globalShortcut.unregister(shortcut);
+  }
+  unavailableGlobalShortcutActionIds = unavailableActionIds;
+  return unavailableActionIds;
+};
+
+const shortcutAvailabilityResponse = () => ({
+  unavailableActionIds: Array.from(unavailableGlobalShortcutActionIds)
+});
+
+const updateTrayMenu = () => {
+  if (!appTray) return;
+
+  appTray.setContextMenu(Menu.buildFromTemplate([
+    {
+      label: standbyLineVisible ? t("tray.hideLine") : t("tray.showLine"),
+      click: () => {
+        void setStandbyLineVisible(!standbyLineVisible);
+      }
+    },
+    {
+      label: edgeSnapEnabled ? t("tray.disableEdgeSnap") : t("tray.enableEdgeSnap"),
+      click: () => {
+        void setEdgeSnapEnabled(!edgeSnapEnabled);
+      }
+    },
+    {
+      label: t("tray.openSettings"),
+      click: openSettingsFromTray
+    },
+    {
+      label: t("tray.quit"),
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      }
+    }
+  ]));
+};
+
+const createAppTray = () => {
+  if (appTray) return;
+
+  appTray = new Tray(path.join(app.getAppPath(), "build", "icon.ico"));
+  appTray.setToolTip("Cap7CE");
+  appTray.on("double-click", () => openNormalFromTray());
+  updateTrayMenu();
+};
+
+const setStandbyLineVisible = async (nextStandbyLineVisible: boolean) => {
+  standbyLineVisible = nextStandbyLineVisible;
+  const preferences = await updateStandbyLineVisiblePreference(nextStandbyLineVisible);
+  standbyLineVisible = preferences.standbyLineVisible;
+  updateTrayMenu();
+  sendStandbyLineVisibleToRenderer();
+
+  if (activeShellState === "standby") {
+    applyStandbyWindowMode();
+  }
+
+  return preferences;
+};
+
+const setEdgeSnapEnabled = async (nextEdgeSnapEnabled: boolean) => {
+  const preferences = await updateEdgeSnapPreference(nextEdgeSnapEnabled);
+  edgeSnapEnabled = preferences.edgeSnapEnabled;
+  updateTrayMenu();
+  sendEdgeSnapEnabledToRenderer();
+  return preferences;
+};
+
+const openSettingsFromTray = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  if (!showAndFocusMainWindow()) {
+    return;
+  }
+  const preserveBounds = activeShellState === "normal" || activeShellState === "settings";
+  if (activeShellState !== "settings") {
+    applyShellWindowState("settings", { preserveBounds });
+  }
+  showAndFocusMainWindow();
+  sendShellStateToRenderer("settings");
+  sendOpenSettingsToRenderer();
+};
+
+const openNormalFromTray = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  if (!showAndFocusMainWindow()) {
+    return;
+  }
+  const preserveBounds = activeShellState === "normal" || activeShellState === "settings";
+  if (activeShellState !== "normal") {
+    applyShellWindowState("normal", { preserveBounds });
+  }
+  if (!showAndFocusMainWindow()) {
+    return;
+  }
+  sendShellStateToRenderer("normal");
+  sendShowAllFilesToRenderer();
+};
+
+const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "standby" | "capsule">) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return null;
+  }
+
+  const bounds = mainWindow.getBounds();
+  const contentBounds = mainWindow.getContentBounds();
+  const { workArea } = screen.getDisplayMatching(bounds);
+  const boundsBottom = bounds.y + bounds.height;
+  const workAreaBottom = workArea.y + workArea.height;
+
+  return {
+    shellState,
+    bounds,
+    contentBounds,
+    workArea,
+    boundsBottom,
+    workAreaBottom,
+    exceedsWorkAreaBottom: boundsBottom > workAreaBottom,
+    isFocused: mainWindow.isFocused(),
+    isAlwaysOnTop: mainWindow.isAlwaysOnTop(),
+    isResizable: mainWindow.isResizable(),
+    isMovable: mainWindow.isMovable(),
+    isVisible: mainWindow.isVisible(),
+    ignoreMouseEventsDebug: {
+      currentIgnoreMouseEvents: shellIgnoreMouseEvents,
+      currentEntryPath: shellState === "standby"
+        ? "applyStandbyWindowMode"
+        : "applyCapsuleWindowMode",
+      expectedRules: shellState === "standby"
+        ? "false only when cursor is inside standby bounds; true with forward elsewhere"
+        : "false only when cursor is inside the current capsule window bounds; true with forward elsewhere",
+      switchPoints: [
+        "setShellIgnoreMouseEvents",
+        "syncShellMousePassthrough",
+        "startShellMousePassthrough",
+        "stopShellMousePassthrough"
+      ]
+    }
+  };
+};
+
+const logWindowBoundsDebug = (
+  label: string,
+  shellState: Extract<Cap7CEShellState, "standby" | "capsule">
+) => {
+  if (!DEBUG_WINDOW_BOUNDS || !mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  console.log(`[window] ${label}`, getBoundsDebugPayload(shellState));
+};
+
+const isPointInsideBounds = (point: Electron.Point, bounds: Electron.Rectangle) => (
+  point.x >= bounds.x &&
+  point.x < bounds.x + bounds.width &&
+  point.y >= bounds.y &&
+  point.y < bounds.y + bounds.height
+);
+
+const setShellIgnoreMouseEvents = (ignore: boolean) => {
+  if (!mainWindow || mainWindow.isDestroyed() || shellIgnoreMouseEvents === ignore) {
+    return;
+  }
+
+  shellIgnoreMouseEvents = ignore;
+  if (ignore) {
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  } else {
+    mainWindow.setIgnoreMouseEvents(false);
+  }
+
+  if (DEBUG_WINDOW_BOUNDS) {
+    console.log("[window] setIgnoreMouseEvents", {
+      shellState: activeShellState,
+      ignore,
+      forward: ignore,
+      path: activeShellState === "standby" || activeShellState === "capsule"
+        ? "global cursor polling"
+        : "normal window mode"
+    });
+  }
+};
+
+const syncShellMousePassthrough = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  if (activeShellState !== "standby" && activeShellState !== "capsule") {
+    setShellIgnoreMouseEvents(false);
+    return;
+  }
+
+  const cursorPoint = screen.getCursorScreenPoint();
+  const interactiveBounds = mainWindow.getBounds();
+  setShellIgnoreMouseEvents(!isPointInsideBounds(cursorPoint, interactiveBounds));
+};
+
+const startShellMousePassthrough = () => {
+  syncShellMousePassthrough();
+  if (shellMousePassthroughTimer !== null) {
+    return;
+  }
+
+  shellMousePassthroughTimer = setInterval(syncShellMousePassthrough, shellMousePassthroughPollMs);
+};
+
+const stopShellMousePassthrough = () => {
+  if (shellMousePassthroughTimer !== null) {
+    clearInterval(shellMousePassthroughTimer);
+    shellMousePassthroughTimer = null;
+  }
+  setShellIgnoreMouseEvents(false);
+};
+
+const applyAlwaysOnTopState = () => {
+  const previewIsActive = Boolean(
+    previewSessionActive
+    && previewWindow
+    && !previewWindow.isDestroyed()
+    && previewWindow.isVisible()
+  );
+
+  if (mainWindow && !mainWindow.isDestroyed() && !previewIsActive) {
+    if (shellAlwaysOnTop) {
+      mainWindow.setAlwaysOnTop(true, "screen-saver");
+      if (mainWindow.isVisible() && !mainWindow.isMinimized()) {
+        mainWindow.moveTop();
+        mainWindow.focus();
+      }
+    } else {
+      mainWindow.setAlwaysOnTop(false);
+    }
+  }
+
+  if (previewIsActive && previewWindow && !previewWindow.isDestroyed()) {
+    if (shellAlwaysOnTop) {
+      previewWindow.setAlwaysOnTop(true, "screen-saver");
+      previewWindow.moveTop();
+    } else {
+      previewWindow.setAlwaysOnTop(false);
+    }
+  }
+
+  return Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isAlwaysOnTop());
+};
+
+const sendAlwaysOnTopStateToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:alwaysOnTopChanged", shellAlwaysOnTop);
+  }
+  if (previewWindow && !previewWindow.isDestroyed()) {
+    previewWindow.webContents.send("window:alwaysOnTopChanged", shellAlwaysOnTop);
+  }
+};
+
+const getAlwaysOnTopState = (enabled = shellAlwaysOnTop) => ({
+  enabled,
+  actual: mainWindow && !mainWindow.isDestroyed() ? mainWindow.isAlwaysOnTop() : false,
+  windowId: mainWindow && !mainWindow.isDestroyed() ? mainWindow.id : null
+});
+
+const resetShellBehavior = () => {
+  shellMaximized = false;
+  lastNormalBounds = null;
+  microBottomCenterAnchored = false;
+  if (moveSnapTimer !== null) {
+    clearTimeout(moveSnapTimer);
+    moveSnapTimer = null;
+  }
+  if (resizeSettledTimer !== null) {
+    clearTimeout(resizeSettledTimer);
+    resizeSettledTimer = null;
+  }
+};
+
+const applyStandbyWindowMode = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+
+  resetShellBehavior();
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  }
+
+  const standbyBounds = getShellWindowBounds("standby");
+  markProgrammaticResize();
+  markProgrammaticMove();
+  mainWindow.setMinimumSize(1, 1);
+  mainWindow.setHasShadow(false);
+  mainWindow.setResizable(false);
+  setShellIgnoreMouseEvents(false);
+  mainWindow.setBounds(standbyBounds, true);
+  applyAlwaysOnTopState();
+  activeShellState = "standby";
+  syncTaskbarVisibility(activeShellState);
+  updateTrayMenu();
+
+  if (!standbyLineVisible) {
+    stopShellMousePassthrough();
+    mainWindow.hide();
+    return true;
+  }
+
+  if (!mainWindow.isVisible()) {
+    mainWindow.showInactive();
+    applyAlwaysOnTopState();
+  }
+  mainWindow.blur();
+  startShellMousePassthrough();
+
+  logWindowBoundsDebug("[standby after setBounds]", "standby");
+
+  return true;
+};
+
+const applyCapsuleWindowMode = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+
+  resetShellBehavior();
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  }
+
+  logWindowBoundsDebug("[capsule before]", "capsule");
+  const capsuleBounds = getShellWindowBounds("capsule");
+  markProgrammaticResize();
+  markProgrammaticMove();
+  mainWindow.setMinimumSize(1, 1);
+  mainWindow.setHasShadow(false);
+  mainWindow.setResizable(false);
+  setShellIgnoreMouseEvents(false);
+  mainWindow.setBounds(capsuleBounds, false);
+  mainWindow.setContentSize(capsuleBounds.width, capsuleBounds.height, false);
+  applyAlwaysOnTopState();
+  mainWindow.moveTop();
+  activeShellState = "capsule";
+  syncTaskbarVisibility(activeShellState);
+  startShellMousePassthrough();
+
+  logWindowBoundsDebug("[capsule after setBounds]", "capsule");
+  setTimeout(() => {
+    logWindowBoundsDebug("[capsule after 100ms]", "capsule");
+  }, 100);
+
+  return true;
+};
+
+const applyShellWindowState = (state: string, options: { preserveBounds?: boolean } = {}) => {
+  if (!mainWindow || !isShellWindowState(state)) return false;
+  if (state === "standby") {
+    return applyStandbyWindowMode();
+  }
+  if (state === "capsule") {
+    return applyCapsuleWindowMode();
+  }
+  microBottomCenterAnchored = false;
+
+  const isLargeWindow = state === "normal" || state === "settings";
+  const isResizableWindow = state === "micro" || state === "mini" || isLargeWindow;
+  const minimumSize = getShellMinimumSize(state);
+  const preserveBounds = Boolean(options.preserveBounds);
+  if (preserveBounds && canSnapShellWindow()) {
+    rememberUserMovedShellBounds(mainWindow.getBounds());
+  }
+  if (!isLargeWindow) {
+    shellMaximized = false;
+  }
+  if (mainWindow.isMaximized() && !preserveBounds) {
+    mainWindow.unmaximize();
+  }
+  mainWindow.setResizable(isResizableWindow);
+  if (minimumSize) {
+    mainWindow.setMinimumSize(minimumSize.width, minimumSize.height);
+  } else {
+    mainWindow.setMinimumSize(1, 1);
+  }
+  mainWindow.setHasShadow(!(isLargeWindow && (shellMaximized || mainWindow.isMaximized())));
+  if (!preserveBounds) {
+    markProgrammaticResize();
+    markProgrammaticMove();
+    mainWindow.setBounds(shellMaximized && isLargeWindow ? getNormalWorkAreaBounds() : getShellWindowBounds(state), true);
+  }
+  stopShellMousePassthrough();
+  applyAlwaysOnTopState();
+  if (!preserveBounds) {
+    mainWindow.moveTop();
+  }
+  activeShellState = state;
+  microBottomCenterAnchored = (
+    state === "micro" &&
+    !preserveBounds &&
+    isBottomCenterMicroBounds(mainWindow.getBounds())
+  );
+  syncTaskbarVisibility(activeShellState);
+  if (preserveBounds && canSnapShellWindow()) {
+    rememberUserMovedShellBounds(mainWindow.getBounds());
+  }
+  return true;
+};
+
+const setShellWindowStateFromResize = (state: Cap7CEShellState) => {
+  if (state === activeShellState) return false;
+  if (!mainWindow || !isShellWindowState(state)) return false;
+
+  const targetState = state as Extract<Cap7CEShellState, "micro" | "mini" | "normal">;
+  const minimumSize = getShellMinimumSize(targetState);
+  const currentBounds = mainWindow.getBounds();
+  const keepDefaultBottomGap = shouldKeepDefaultBottomGapOnResize(activeShellState, targetState, currentBounds);
+  const transitionBounds = getResizeTransitionBounds(targetState, currentBounds, activeShellState);
+  const nextBounds = keepDefaultBottomGap || !edgeSnapEnabled ? transitionBounds : getEdgeSnappedBounds(transitionBounds);
+  const isResizableWindow = targetState === "micro" || targetState === "mini" || targetState === "normal";
+
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  }
+  if (minimumSize) {
+    mainWindow.setMinimumSize(minimumSize.width, minimumSize.height);
+  }
+  mainWindow.setHasShadow(true);
+  mainWindow.setResizable(isResizableWindow);
+  stopShellMousePassthrough();
+  shellMaximized = false;
+  microBottomCenterAnchored = false;
+  markProgrammaticResize();
+  markProgrammaticMove();
+  mainWindow.setBounds(nextBounds, true);
+  mainWindow.moveTop();
+  activeShellState = targetState;
+  microBottomCenterAnchored = (
+    targetState === "micro" &&
+    isBottomCenterMicroBounds(nextBounds)
+  );
+  syncTaskbarVisibility(activeShellState);
+  rememberUserMovedShellBounds(nextBounds);
+  applyAlwaysOnTopState();
+  sendShellStateToRenderer(state);
+  return true;
+};
+
+registerLlamaRuntimeShutdownHandler();
+
+onLlamaRuntimeProcessStateChanged((state) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("llamaRuntime:statusChanged", state);
+  }
+});
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "cap7ce",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true
+    }
+  }
+]);
+
+const registerLocalImageProtocol = () => {
+  const toResponseBody = (buffer: Buffer) => (
+    buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
+  );
+
+  protocol.handle("cap7ce", async (request) => {
+    const url = new URL(request.url);
+    if (url.hostname !== "thumbnail" && url.hostname !== "image") {
+      return new Response("Not found", { status: 404 });
+    }
+
+    const filePath = url.searchParams.get("path");
+    if (!filePath) {
+      return new Response("Missing path", { status: 400 });
+    }
+
+    try {
+      if (url.hostname === "image") {
+        if (await shouldUseSourceFileForPreview(filePath)) {
+          return net.fetch(pathToFileURL(filePath).toString());
+        }
+
+        try {
+          const previewPath = await ensurePreviewImagePath(filePath);
+          const preview = await readVisualCacheImage(previewPath);
+          return new Response(toResponseBody(preview.buffer), {
+            headers: {
+              "Content-Type": preview.mimeType,
+              "Cache-Control": "no-store"
+            }
+          });
+        } catch (error) {
+          if (previewSourceFallbackExtensions.has(path.extname(filePath).toLowerCase())) {
+            return net.fetch(pathToFileURL(filePath).toString());
+          }
+          throw error;
+        }
+      }
+
+      const thumbnailPath = await ensureThumbnailPath(filePath);
+      const thumbnail = await readVisualCacheImage(thumbnailPath);
+      return new Response(toResponseBody(thumbnail.buffer), {
+        headers: {
+          "Content-Type": thumbnail.mimeType,
+          "Cache-Control": "no-store"
+        }
+      });
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      const status = code === "ENOENT" ? 404 : 500;
+      const message = error instanceof Error ? error.message : "Thumbnail unavailable";
+      console.warn("[thumbnail] failed", { filePath, status, message });
+      return new Response(message, { status });
+    }
+  });
+};
+
+const evaluateShellResizeThresholds = () => {
+  if (!mainWindow || mainWindow.isDestroyed() || isProgrammaticResizeGuardActive()) {
+    return;
+  }
+
+  if (activeShellState !== "micro" && activeShellState !== "mini" && activeShellState !== "normal" && activeShellState !== "settings") {
+    return;
+  }
+
+  const currentBounds = mainWindow.getBounds();
+  const nextState = getResizeTargetState(activeShellState, currentBounds);
+  if (activeShellState === "settings") {
+    if (nextState !== "normal") {
+      shellMaximized = false;
+      setShellWindowStateFromResize(nextState);
+    }
+    return;
+  }
+
+  if (activeShellState === "normal" && nextState !== "normal") {
+    shellMaximized = false;
+  }
+  if (nextState === activeShellState && activeShellState === "micro") {
+    const nextBounds = getMicroResizeBoundsForCurrentPosition(currentBounds);
+    if (
+      nextBounds.x !== currentBounds.x ||
+      nextBounds.y !== currentBounds.y ||
+      nextBounds.width !== currentBounds.width ||
+      nextBounds.height !== currentBounds.height
+    ) {
+      markProgrammaticResize();
+      markProgrammaticMove();
+      mainWindow.setBounds(nextBounds, true);
+      mainWindow.webContents.invalidate();
+    }
+    return;
+  }
+  setShellWindowStateFromResize(nextState);
+};
+
+const scheduleResizeSettledCheck = () => {
+  if (resizeSettledTimer !== null) {
+    clearTimeout(resizeSettledTimer);
+  }
+
+  resizeSettledTimer = setTimeout(() => {
+    resizeSettledTimer = null;
+    evaluateShellResizeThresholds();
+  }, resizeSettleDelayMs);
+};
+
+const applyEdgeSnapAfterMove = () => {
+  if (!mainWindow || mainWindow.isDestroyed() || !edgeSnapEnabled || shellMaximized || mainWindow.isMaximized() || !canSnapShellWindow()) {
+    return;
+  }
+
+  const currentBounds = mainWindow.getBounds();
+  const nextBounds = getEdgeSnappedBounds(currentBounds);
+  if (nextBounds.x === currentBounds.x && nextBounds.y === currentBounds.y) {
+    rememberUserMovedShellBounds(currentBounds);
+    return;
+  }
+
+  markProgrammaticMove();
+  mainWindow.setBounds(nextBounds, true);
+  rememberUserMovedShellBounds(nextBounds);
+};
+
+const scheduleMoveSnapCheck = () => {
+  if (
+    !mainWindow ||
+    mainWindow.isDestroyed() ||
+    shellMaximized ||
+    mainWindow.isMaximized() ||
+    !edgeSnapEnabled ||
+    resizeSettledTimer !== null ||
+    !canSnapShellWindow()
+  ) {
+    return;
+  }
+
+  if (moveSnapTimer !== null) {
+    clearTimeout(moveSnapTimer);
+  }
+
+  moveSnapTimer = setTimeout(() => {
+    moveSnapTimer = null;
+    applyEdgeSnapAfterMove();
+  }, moveSnapSettleDelayMs);
+};
+
+const clearResizeSettledCheck = () => {
+  if (resizeSettledTimer === null) {
+    return false;
+  }
+
+  clearTimeout(resizeSettledTimer);
+  resizeSettledTimer = null;
+  return true;
+};
+
+const applyBottomCenterMicroWillResize = (
+  event: Electron.Event,
+  newBounds: Electron.Rectangle
+) => {
+  if (!mainWindow || mainWindow.isDestroyed() || activeShellState !== "micro" || !microBottomCenterAnchored) {
+    return;
+  }
+
+  const currentBounds = mainWindow.getBounds();
+  if (!isBottomCenterMicroBounds(currentBounds)) {
+    microBottomCenterAnchored = false;
+    return;
+  }
+
+  const widthDelta = Math.abs(newBounds.width - currentBounds.width);
+  const heightDelta = Math.abs(newBounds.height - currentBounds.height);
+  const isHorizontalResize = widthDelta > 0 && heightDelta <= Math.max(2, Math.round(widthDelta * 0.2));
+  if (!isHorizontalResize || newBounds.height >= microLayoutMaxHeight) {
+    return;
+  }
+
+  event.preventDefault();
+  const nextBounds = getBottomCenterMicroResizeBounds(newBounds);
+  markProgrammaticResize();
+  markProgrammaticMove();
+  mainWindow.setBounds(nextBounds, true);
+  mainWindow.webContents.invalidate();
+};
+
+const forceApplyDefaultMicroBounds = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+
+  const defaultMicroBounds = getShellWindowBounds("micro");
+  clearResizeSettledCheck();
+  const minimumSize = getShellMinimumSize("micro");
+
+  shellMaximized = false;
+  lastNormalBounds = null;
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  }
+  mainWindow.setResizable(true);
+  if (minimumSize) {
+    mainWindow.setMinimumSize(minimumSize.width, minimumSize.height);
+  }
+  mainWindow.setHasShadow(true);
+  stopShellMousePassthrough();
+  markProgrammaticResize();
+  markProgrammaticMove();
+  mainWindow.setBounds(defaultMicroBounds, true);
+  mainWindow.moveTop();
+  activeShellState = "micro";
+  syncTaskbarVisibility(activeShellState);
+  microBottomCenterAnchored = true;
+  applyAlwaysOnTopState();
+
+  return true;
+};
+
+const createWindow = () => {
+  mainWindow = new BrowserWindow({
+    width: standbyVisualWidthPx,
+    height: standbyVisualHeightPx,
+    minWidth: 1,
+    minHeight: 1,
+    title: "Cap7CE",
+    skipTaskbar: true,
+    frame: false,
+    transparent: true,
+    hasShadow: false,
+    show: false,
+    backgroundColor: "#00000000",
+    paintWhenInitiallyHidden: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  mainWindowSkipTaskbar = true;
+
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL;
+  if (devServerUrl) {
+    mainWindow.loadURL(devServerUrl);
+  } else {
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+  }
+
+  mainWindow.once("ready-to-show", () => {
+    applyStandbyWindowMode();
+    if (standbyLineVisible) {
+      mainWindow?.show();
+      applyAlwaysOnTopState();
+    }
+  });
+
+  mainWindow.on("will-resize", applyBottomCenterMicroWillResize);
+
+  mainWindow.on("close", (event) => {
+    if (isQuitting) {
+      return;
+    }
+
+    event.preventDefault();
+    mainWindow?.hide();
+  });
+
+  mainWindow.on("resize", () => {
+    if (resizeRepaintTimer !== null) {
+      if (!isProgrammaticResizeGuardActive()) {
+        scheduleResizeSettledCheck();
+      }
+      return;
+    }
+
+    resizeRepaintTimer = setTimeout(() => {
+      mainWindow?.webContents.invalidate();
+      resizeRepaintTimer = null;
+    }, 16);
+
+    if (!isProgrammaticResizeGuardActive()) {
+      if (shellMaximized && (activeShellState === "normal" || activeShellState === "settings")) {
+        shellMaximized = false;
+      }
+      scheduleResizeSettledCheck();
+    }
+  });
+
+  mainWindow.on("move", () => {
+    if (isProgrammaticMoveGuardActive()) {
+      return;
+    }
+
+    if (activeShellState === "micro") {
+      microBottomCenterAnchored = false;
+    }
+    if (!edgeSnapEnabled) {
+      const movedBounds = mainWindow?.getBounds();
+      if (movedBounds) {
+        rememberUserMovedShellBounds(movedBounds);
+      }
+      return;
+    }
+    scheduleMoveSnapCheck();
+  });
+};
+
+app.whenReady().then(async () => {
+  registerLocalImageProtocol();
+  await ensureImageDatabase();
+  await initializeThumbnailCache();
+  const preferences = await getUserPreferences();
+  setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
+  edgeSnapEnabled = preferences.edgeSnapEnabled;
+  shellAlwaysOnTop = preferences.alwaysOnTop;
+  standbyLineVisible = preferences.standbyLineVisible;
+  quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
+  applyLaunchAtLoginPreference(preferences.launchAtLogin);
+  setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
+  await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
+  void scheduleRecognizedModelInputCacheCleanup();
+  createWindow();
+  setThumbnailOptimizationStatusListener((status) => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+      mainWindow.webContents.send("cache:optimizationStatusChanged", status);
+    }
+  });
+  createPreviewWindow();
+  void createStartupHintWindow();
+  createAppTray();
+  if (quickActionGlobalEnabled) {
+    registerConfiguredGlobalShortcuts(preferences.shortcutActions);
+  } else {
+    probeGlobalShortcutActions(preferences.shortcutActions);
+  }
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on("window-all-closed", () => {
+  if (isQuitting && process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+app.on("before-quit", () => {
+  isQuitting = true;
+  closeStartupHintWindow();
+  if (previewWindow && !previewWindow.isDestroyed()) {
+    previewWindow.destroy();
+  }
+  previewWindow = null;
+  unregisterActivateCapsuleShortcut();
+  unregisterShellModeShortcuts();
+  appTray?.destroy();
+  appTray = null;
+});
+
+ipcMain.handle("window:getShellLayoutMetrics", () => ({
+  miniStandardHeight: miniDefaultHeightPx
+}));
+
+ipcMain.handle("window:setShellState", (_event, state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => {
+  const forceBounds = Boolean(options?.forceBounds);
+  if (state === "micro" && forceBounds) {
+    return forceApplyDefaultMicroBounds();
+  }
+
+  if (state === "standby") {
+    return applyStandbyWindowMode();
+  }
+  if (state === "capsule") {
+    return applyCapsuleWindowMode();
+  }
+
+  if (isShellWindowState(state) && state === activeShellState && !forceBounds) {
+    return true;
+  }
+
+  return applyShellWindowState(state, { preserveBounds: Boolean(options?.preserveBounds) });
+});
+
+ipcMain.handle("window:setAlwaysOnTop", async (_event, enabled: boolean) => {
+  if (!mainWindow) return { enabled: Boolean(enabled), actual: false, windowId: null };
+  const requestedEnabled = Boolean(enabled);
+  const before = mainWindow.isAlwaysOnTop();
+  const preferences = await updateAlwaysOnTopPreference(requestedEnabled);
+  shellAlwaysOnTop = preferences.alwaysOnTop;
+  const after = applyAlwaysOnTopState();
+  sendAlwaysOnTopStateToRenderer();
+  console.log("[alwaysOnTop]", {
+    enabled: requestedEnabled,
+    before,
+    after,
+    windowId: mainWindow.id,
+    visible: mainWindow.isVisible(),
+    focused: mainWindow.isFocused(),
+    minimized: mainWindow.isMinimized(),
+    destroyed: mainWindow.isDestroyed()
+  });
+  return getAlwaysOnTopState(requestedEnabled);
+});
+
+ipcMain.handle("window:getAlwaysOnTop", () => {
+  applyAlwaysOnTopState();
+  return getAlwaysOnTopState();
+});
+
+ipcMain.handle("window:toggleNormalMaximized", () => {
+  if (!mainWindow || (activeShellState !== "normal" && activeShellState !== "settings")) {
+    return { isMaximized: shellMaximized, lastNormalBounds };
+  }
+
+  if (shellMaximized) {
+    const restoreBounds = lastNormalBounds ?? getShellWindowBounds(activeShellState);
+    markProgrammaticResize();
+    markProgrammaticMove();
+    mainWindow.setBounds(restoreBounds, true);
+    shellMaximized = false;
+    mainWindow.setHasShadow(true);
+    return { isMaximized: shellMaximized, lastNormalBounds };
+  }
+
+  lastNormalBounds = mainWindow.getBounds();
+  markProgrammaticResize();
+  markProgrammaticMove();
+  mainWindow.setHasShadow(false);
+  mainWindow.setBounds(getNormalWorkAreaBounds(), true);
+  shellMaximized = true;
+  return { isMaximized: shellMaximized, lastNormalBounds };
+});
+
+ipcMain.handle("app:quit", () => {
+  isQuitting = true;
+  app.quit();
+  return true;
+});
+
+ipcMain.handle("app:openReleasePage", async () => {
+  await shell.openExternal(releasePageUrl);
+  return true;
+});
+
+ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    return false;
+  }
+  if (
+    !data
+    || typeof data.sessionId !== "string"
+    || typeof data.filePath !== "string"
+    || typeof data.previewUrl !== "string"
+    || (data.theme !== "light" && data.theme !== "dark")
+  ) {
+    return false;
+  }
+
+  createPreviewWindow();
+  const isOpeningSession = !previewSessionActive;
+  if (isOpeningSession) {
+    centerPreviewWindowForNewSession();
+  }
+  previewSessionActive = true;
+  activePreviewData = data;
+  latestPreviewContentSize = null;
+  sendActivePreviewData();
+  if (isOpeningSession && previewWindowLoaded) {
+    revealPreviewWindow();
+  }
+  return true;
+});
+
+ipcMain.handle("preview:close", (event) => {
+  const isMainRenderer = Boolean(mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents);
+  const isPreviewRenderer = Boolean(previewWindow && !previewWindow.isDestroyed() && event.sender === previewWindow.webContents);
+  if (!isMainRenderer && !isPreviewRenderer) {
+    return false;
+  }
+  return closePreviewSession();
+});
+
+ipcMain.handle("preview:getWindowControlState", (event) => {
+  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
+    return getPreviewWindowControlState();
+  }
+  return getPreviewWindowControlState();
+});
+
+ipcMain.handle("preview:toggleMaximized", (event) => {
+  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
+    return getPreviewWindowControlState();
+  }
+  if (previewWindow.isMaximized()) {
+    previewWindow.once("unmaximize", applyLatestPreviewContentSize);
+    previewWindow.unmaximize();
+  } else {
+    previewWindow.maximize();
+  }
+  return getPreviewWindowControlState();
+});
+
+ipcMain.handle("preview:toggleAlwaysOnTop", async (event) => {
+  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
+    return getPreviewWindowControlState();
+  }
+  const preferences = await updateAlwaysOnTopPreference(!shellAlwaysOnTop);
+  shellAlwaysOnTop = preferences.alwaysOnTop;
+  applyAlwaysOnTopState();
+  sendAlwaysOnTopStateToRenderer();
+  return getPreviewWindowControlState();
+});
+
+ipcMain.handle("preview:openSettings", (event) => {
+  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
+    return false;
+  }
+  closePreviewSession();
+  openSettingsFromTray();
+  return true;
+});
+
+ipcMain.handle("preview:itemAction", (event, request: PreviewItemActionRequest) => {
+  if (
+    !previewSessionActive
+    || !activePreviewData
+    || !previewWindow
+    || previewWindow.isDestroyed()
+    || event.sender !== previewWindow.webContents
+    || !request
+    || (request.action !== "editKeywords" && request.action !== "deleteFile")
+    || request.itemId !== activePreviewData.itemId
+    || request.filePath !== activePreviewData.filePath
+  ) {
+    return false;
+  }
+
+  const validatedRequest: PreviewItemActionRequest = {
+    action: request.action,
+    itemId: activePreviewData.itemId,
+    filePath: activePreviewData.filePath
+  };
+  closePreviewSession();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("preview:itemAction", validatedRequest);
+    return true;
+  }
+  return false;
+});
+
+ipcMain.on("preview:navigate", (event, direction: PreviewNavigateDirection) => {
+  if (
+    !previewSessionActive
+    || !previewWindow
+    || previewWindow.isDestroyed()
+    || event.sender !== previewWindow.webContents
+    || (direction !== -1 && direction !== 1)
+  ) {
+    return;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("preview:navigate", direction);
+  }
+});
+
+ipcMain.on("preview:data", (event) => {
+  if (
+    previewWindow
+    && !previewWindow.isDestroyed()
+    && event.sender === previewWindow.webContents
+  ) {
+    sendActivePreviewData();
+  }
+});
+
+ipcMain.on("preview:contentSize", (event, size: PreviewContentSize) => {
+  if (
+    !previewSessionActive
+    || !activePreviewData
+    || !previewWindow
+    || previewWindow.isDestroyed()
+    || event.sender !== previewWindow.webContents
+    || size?.sessionId !== activePreviewData.sessionId
+    || size?.filePath !== activePreviewData.filePath
+    || !Number.isFinite(size?.width)
+    || !Number.isFinite(size?.height)
+  ) {
+    return;
+  }
+
+  latestPreviewContentSize = { ...size };
+  applyLatestPreviewContentSize();
+  if (!previewWindow.isVisible()) {
+    revealPreviewWindow();
+  }
+  applyAlwaysOnTopState();
+  previewWindow.focus();
+});
+
+ipcMain.handle("file:open", async (_event, filePath: string) => {
+  return shell.openPath(filePath);
+});
+
+ipcMain.handle("file:showInFolder", (_event, filePath: string) => {
+  shell.showItemInFolder(filePath);
+});
+
+ipcMain.handle("file:moveToTrash", async (_event, filePaths: unknown) => {
+  const requestedPaths = Array.isArray(filePaths)
+    ? filePaths.filter((filePath): filePath is string => typeof filePath === "string" && filePath.trim().length > 0)
+    : [];
+  if (!app.isPackaged) {
+    console.debug("[file-delete:ipc] request", { requestedPaths });
+  }
+  try {
+    const result = await moveIndexedImagesToTrash(requestedPaths);
+    if (!app.isPackaged) {
+      console.debug("[file-delete:ipc] result", result);
+    }
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : t("error.fileDeleteServiceFailed");
+    console.warn("[file-delete:ipc] failed before a result was produced", error);
+    return {
+      success: false,
+      totalCount: requestedPaths.length,
+      deletedPaths: [],
+      failedItems: requestedPaths.map((filePath) => ({ path: filePath, error: message }))
+    };
+  }
+});
+
+ipcMain.on("file:startDrag", (event, filePaths: string[]) => {
+  try {
+    startNativeFileDrag(event.sender, filePaths);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : t("error.fileDragStartFailed");
+    console.warn("[file-drag] failed", { message });
+  }
+});
+
+const withSqliteImageCounts = async (directories: PersistedDirectory[]) => {
+  const counts = await getExistingImageCountsByDirectory(directories.map((directory) => directory.id));
+  const directoriesWithoutCounts = directories.filter(
+    (directory) => (
+      (counts[directory.id] ?? 0) === 0
+      && (directory.lastScannedAt === undefined || directory.indexedCount > 0)
+    )
+  );
+  let currentDirectories = directories;
+
+  if (directoriesWithoutCounts.length > 0) {
+    const scanResult = await scanImageDirectories(directoriesWithoutCounts);
+    const scannedCounts = await writeScannedImagesToIndex(
+      directoriesWithoutCounts.map((directory) => directory.id),
+      scanResult.images,
+      scanResult.scannedAt
+    );
+    Object.assign(counts, scannedCounts);
+    enqueueScannedThumbnails(scanResult.images);
+    currentDirectories = await applyDirectoryScanSummaries(scanResult.summaries.map((summary) => ({
+      ...summary,
+      indexedCount: scannedCounts[summary.id] ?? 0
+    })));
+  }
+
+  return currentDirectories.map((directory) => ({
+    ...directory,
+    indexedCount: (counts[directory.id] ?? 0) > 0 ? counts[directory.id] : directory.indexedCount
+  }));
+};
+
+const runAiIndexBatch = async (directoryId?: string) => {
+  await pauseThumbnailOptimization("ai-recognition");
+  try {
+    const ai = await runContinuousAiIndex({
+      directoryId,
+      limit: 5,
+      language: getActiveLanguage(),
+      shouldCancel: () => cancelAiIndexRequested,
+      onProgress: (progress) => {
+        mainWindow?.webContents.send("ai:indexProgress", progress);
+      }
+    }).catch((error) => {
+      const message = error instanceof Error ? error.message : t("error.recognitionFailed");
+      mainWindow?.webContents.send("ai:indexProgress", {
+        phase: "failed",
+        total: 0,
+        current: 0,
+        completed: 0,
+        failed: 0,
+        cancellable: false,
+        message
+      });
+      return {
+        total: 0,
+        completed: 0,
+        failed: 0,
+        errors: [
+          {
+            filePath: "",
+            fileName: "",
+            message
+          }
+        ]
+      };
+    });
+
+    return {
+      ai,
+      stats: await getImageIndexQualityStats()
+    };
+  } finally {
+    resumeThumbnailOptimization("ai-recognition");
+  }
+};
+
+ipcMain.handle("directories:list", async () => {
+  return withSqliteImageCounts(await listDirectories());
+});
+
+ipcMain.handle("directories:selectAndAdd", async () => {
+  const options: OpenDialogOptions = {
+    title: t("dialog.selectIndexDirectory"),
+    properties: ["openDirectory"]
+  };
+  const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return withSqliteImageCounts(await listDirectories());
+  }
+
+  return withSqliteImageCounts(await addDirectory(result.filePaths[0]));
+});
+
+ipcMain.handle("directories:updateName", async (_event, id: string, name: string) => {
+  return withSqliteImageCounts(await updateDirectoryName(id, name));
+});
+
+ipcMain.handle("directories:delete", async (_event, id: string) => {
+  const directory = (await listDirectories()).find((item) => item.id === id);
+  const deletedFilePaths = await deleteDirectoryImages(id);
+  if (directory) {
+    await deleteThumbnailsForDirectory(directory.path, deletedFilePaths);
+  } else {
+    await deleteThumbnailsForImages(deletedFilePaths);
+  }
+  const directories = await deleteDirectory(id);
+  return withSqliteImageCounts(directories);
+});
+
+ipcMain.handle("scan:allDirectories", async () => {
+  cancelAiIndexRequested = false;
+  const cleanupResult = await cleanupMissingIndexedImages();
+  cleanupResult.errors.forEach((message) => console.warn(`[stale-image-cleanup] ${message}`));
+  const directories = await listDirectories();
+  const scanResult = await scanImageDirectories(directories);
+  const counts = await writeScannedImagesToIndex(
+    directories.map((directory) => directory.id),
+    scanResult.images,
+    scanResult.scannedAt
+  );
+  const summaries = scanResult.summaries.map((summary) => ({
+    ...summary,
+    indexedCount: counts[summary.id] ?? 0
+  }));
+  const updatedDirectories = await withSqliteImageCounts(await applyDirectoryScanSummaries(summaries));
+  const aiResult = await runAiIndexBatch();
+  enqueueScannedThumbnails(scanResult.images);
+
+  return {
+    directories: updatedDirectories,
+    imageCount: Object.values(counts).reduce((sum, count) => sum + count, 0),
+    scanResultPath: getImageDatabasePath(),
+    results: scanResult.directories,
+    ai: aiResult.ai,
+    removedFilePaths: cleanupResult.removedFilePaths
+  };
+});
+
+ipcMain.handle("scan:directory", async (_event, directoryId: string) => {
+  cancelAiIndexRequested = false;
+  const directories = await listDirectories();
+  const directory = directories.find((item) => item.id === directoryId);
+  if (!directory) {
+    throw new Error(t("error.directoryDoesNotExist"));
+  }
+
+  const cleanupResult = await cleanupMissingIndexedImages(directory.id);
+  cleanupResult.errors.forEach((message) => console.warn(`[stale-image-cleanup] ${message}`));
+  const scanResult = await scanImageDirectories([directory]);
+  const counts = await writeScannedImagesToIndex(
+    [directory.id],
+    scanResult.images,
+    scanResult.scannedAt
+  );
+  const summaries = scanResult.summaries.map((summary) => ({
+    ...summary,
+    indexedCount: counts[summary.id] ?? 0
+  }));
+  const updatedDirectories = await withSqliteImageCounts(await applyDirectoryScanSummaries(summaries));
+  const aiResult = await runAiIndexBatch(directory.id);
+  enqueueScannedThumbnails(scanResult.images);
+
+  return {
+    directories: updatedDirectories,
+    imageCount: counts[directory.id] ?? 0,
+    scanResultPath: getImageDatabasePath(),
+    results: scanResult.directories,
+    ai: aiResult.ai,
+    removedFilePaths: cleanupResult.removedFilePaths
+  };
+});
+
+ipcMain.handle("search:images", async (_event, search) => {
+  return searchImagesWithAddedDirectories(search, await listDirectories(), enqueueScannedThumbnails);
+});
+
+const getManualMetadataImage = async (
+  filePath: string,
+  directories: PersistedDirectory[]
+): Promise<ScannedImageFile> => {
+  const resolvedFilePath = path.resolve(filePath);
+  const ownerDirectory = directories
+    .filter((directory) => {
+      const relativePath = path.relative(path.resolve(directory.path), resolvedFilePath);
+      return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
+    })
+    .sort((left, right) => right.path.length - left.path.length)[0];
+  if (!ownerDirectory) {
+    throw new Error(t("error.fileOutsideAddedDirectories"));
+  }
+
+  const sourceStat = await fs.stat(resolvedFilePath);
+  if (!sourceStat.isFile()) {
+    throw new Error(t("error.fileMissingOrStale"));
+  }
+
+  return {
+    directory_id: ownerDirectory.id,
+    directory_path: ownerDirectory.path,
+    file_path: resolvedFilePath,
+    file_name: path.basename(resolvedFilePath),
+    file_size: sourceStat.size,
+    created_at: sourceStat.birthtime.toISOString(),
+    modified_at: sourceStat.mtime.toISOString(),
+    modified_ms: sourceStat.mtimeMs
+  };
+};
+
+ipcMain.handle("index:updateManualMetadata", async (_event, filePath: string, caption: string, keywordText: string) => {
+  if (typeof filePath !== "string" || !filePath.trim() || !isSupportedImageFilePath(filePath)) {
+    throw new Error(t("error.invalidFile"));
+  }
+  if (typeof caption !== "string" || typeof keywordText !== "string") {
+    throw new Error(t("error.invalidMetadata"));
+  }
+
+  const directories = await listDirectories();
+  const image = await getManualMetadataImage(filePath, directories);
+  const normalizedKeywords = parseKeywordText(keywordText);
+  await upsertImageManualMetadata(
+    image,
+    caption.trim(),
+    normalizedKeywords,
+    new Date().toISOString()
+  );
+  return true;
+});
+
+ipcMain.handle("index:updateKeywordsBatch", async (event, request: KeywordBatchUpdateRequest): Promise<KeywordBatchUpdateResult> => {
+  const totalCount = Array.isArray(request?.targets) ? request.targets.length : 0;
+  const normalizedKeywordText = typeof request?.targetKeywordText === "string"
+    ? formatKeywordText(parseKeywordText(request.targetKeywordText))
+    : "";
+  const failureResult = (error: unknown): KeywordBatchUpdateResult => ({
+    success: false,
+    totalCount,
+    failedCount: totalCount,
+    errorMessage: error instanceof Error ? error.message : t("error.batchKeywordFailed"),
+    normalizedKeywordText
+  });
+
+  try {
+    if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+      throw new Error(t("error.invalidBatchKeywordSource"));
+    }
+    if (!Array.isArray(request.targets) || request.targets.length === 0) {
+      throw new Error(t("error.noBatchKeywordSelection"));
+    }
+    if (!Array.isArray(request.initialCommonKeywords) || typeof request.targetKeywordText !== "string") {
+      throw new Error(t("error.invalidBatchKeywordParameters"));
+    }
+
+    const seenTargets = new Set<string>();
+    const directories = await listDirectories();
+    const targets = await Promise.all(request.targets.map(async (target) => {
+      if (typeof target?.filePath !== "string" || !target.filePath.trim()) {
+        throw new Error(t("error.invalidBatchKeywordTarget"));
+      }
+      const filePath = path.resolve(target.filePath);
+      if (!isSupportedImageFilePath(filePath)) {
+        throw new Error(t("error.unsupportedFile", { path: target.filePath }));
+      }
+      const targetKey = filePath.toLowerCase();
+      if (seenTargets.has(targetKey)) {
+        throw new Error(t("error.duplicateBatchKeywordTarget"));
+      }
+      seenTargets.add(targetKey);
+      return { image: await getManualMetadataImage(filePath, directories) };
+    }));
+
+    const normalizedTargetKeywords = await updateImageKeywordsBatch(
+      targets,
+      normalizeKeywordList(request.initialCommonKeywords),
+      request.targetKeywordText
+    );
+    return {
+      success: true,
+      totalCount,
+      failedCount: 0,
+      errorMessage: "",
+      normalizedKeywordText: formatKeywordText(normalizedTargetKeywords)
+    };
+  } catch (error) {
+    return failureResult(error);
+  }
+});
+
+ipcMain.handle("index:qualityStats", async () => {
+  return getImageIndexQualityStats();
+});
+
+ipcMain.handle("index:continueRecognition", async () => {
+  cancelAiIndexRequested = false;
+  const cleanupResult = await cleanupMissingIndexedImages();
+  cleanupResult.errors.forEach((message) => console.warn(`[stale-image-cleanup] ${message}`));
+  return {
+    ...await runAiIndexBatch(),
+    removedFilePaths: cleanupResult.removedFilePaths
+  };
+});
+
+ipcMain.handle("index:cancelRecognition", () => {
+  cancelAiIndexRequested = true;
+  return true;
+});
+
+ipcMain.handle("llamaRuntime:settings", () => {
+  return getLlamaRuntimeSettings();
+});
+
+ipcMain.handle("llamaRuntime:updateSelected", (_event, selectedVersion: string) => {
+  const processState = getLlamaRuntimeProcessState();
+  if (processState.status === "starting" || processState.status === "running") {
+    throw new Error(t("error.stopServerBeforeRuntimeSwitch"));
+  }
+  return updateSelectedLlamaRuntime(selectedVersion);
+});
+
+ipcMain.handle("llamaRuntime:processState", () => {
+  return getLlamaRuntimeProcessState();
+});
+
+ipcMain.handle("llamaRuntime:start", () => {
+  return startLlamaRuntime();
+});
+
+ipcMain.handle("llamaRuntime:stop", () => {
+  return stopLlamaRuntime();
+});
+
+ipcMain.handle("ggufModels:settings", () => {
+  return getGgufModelSettings();
+});
+
+ipcMain.handle("ggufModels:updateSelected", (_event, selectedModelId: string) => {
+  const processState = getLlamaRuntimeProcessState();
+  if (processState.status === "starting" || processState.status === "running") {
+    throw new Error(t("error.stopServerBeforeModelSwitch"));
+  }
+  return updateSelectedGgufModel(selectedModelId);
+});
+
+ipcMain.handle("preferences:get", () => {
+  return getUserPreferences();
+});
+
+ipcMain.handle("preferences:updateTheme", async (_event, themePreference: "system" | "light" | "dark") => {
+  return updateThemePreference(themePreference);
+});
+
+ipcMain.handle("preferences:updateLanguage", async (_event, languagePreference: LanguagePreference) => {
+  const nextLanguagePreference = languagePreference === "zh-CN" || languagePreference === "en-US"
+    ? languagePreference
+    : "system";
+  return applyLanguagePreference(nextLanguagePreference);
+});
+
+ipcMain.handle("preferences:updateSort", async (_event, sortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => {
+  const preferences = await updateSortPreference(sortPreference);
+  setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
+  return preferences;
+});
+
+ipcMain.handle("preferences:updateAppearanceColors", async (_event, appearanceColors: { themeColor: string; accentColor: string }) => {
+  return updateAppearanceColorsPreference(appearanceColors);
+});
+
+ipcMain.handle("preferences:updateEdgeSnap", async (_event, nextEdgeSnapEnabled: boolean) => {
+  return setEdgeSnapEnabled(Boolean(nextEdgeSnapEnabled));
+});
+
+ipcMain.handle("preferences:updateStandbyLineVisible", async (_event, nextStandbyLineVisible: boolean) => {
+  return setStandbyLineVisible(Boolean(nextStandbyLineVisible));
+});
+
+ipcMain.handle("preferences:updateLaunchAtLogin", async (_event, nextLaunchAtLogin: boolean) => {
+  const preferences = await updateLaunchAtLoginPreference(Boolean(nextLaunchAtLogin));
+  applyLaunchAtLoginPreference(preferences.launchAtLogin);
+  return preferences;
+});
+
+ipcMain.handle("preferences:updateOperationHints", async (_event, nextEnabled: boolean) => {
+  return updateOperationHintsPreference(Boolean(nextEnabled));
+});
+
+ipcMain.handle("preferences:updateAutoCacheOptimization", async (_event, nextEnabled: boolean) => {
+  const preferences = await updateAutoCacheOptimizationPreference(Boolean(nextEnabled));
+  await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
+  if (preferences.autoCacheOptimizationEnabled) {
+    void scheduleRecognizedModelInputCacheCleanup();
+    void scheduleAllDirectoryThumbnailOptimization();
+  }
+  return preferences;
+});
+
+ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, nextQuickActionGlobalEnabled: boolean) => {
+  const shouldEnable = Boolean(nextQuickActionGlobalEnabled);
+
+  if (!shouldEnable) {
+    quickActionGlobalEnabled = false;
+    unregisterConfiguredGlobalShortcuts();
+    const currentPreferences = await getUserPreferences();
+    probeGlobalShortcutActions(currentPreferences.shortcutActions);
+    return updateQuickActionGlobalEnabledPreference(false);
+  }
+
+  const currentPreferences = await getUserPreferences();
+  registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
+  const preferences = await updateQuickActionGlobalEnabledPreference(true);
+  quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
+  return preferences;
+});
+
+ipcMain.handle("preferences:updateCommandEnabled", async (_event, nextCommandEnabled: boolean) => {
+  return updateCommandEnabledPreference(Boolean(nextCommandEnabled));
+});
+
+ipcMain.handle("preferences:updateSearchLabelVisibility", async (_event, nextVisibility: {
+  directory: boolean;
+  recognition: boolean;
+  sort: boolean;
+  format: boolean;
+}) => {
+  return updateSearchLabelVisibilityPreference({
+    directory: Boolean(nextVisibility?.directory),
+    recognition: Boolean(nextVisibility?.recognition),
+    sort: Boolean(nextVisibility?.sort),
+    format: Boolean(nextVisibility?.format)
+  });
+});
+
+ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {
+  activateCapsule: string;
+  activateMicro: string;
+  activateMini: string;
+  activateNormal: string;
+  activateStandby: string;
+  openSettings: string;
+}) => {
+  const currentPreferences = await getUserPreferences();
+  const candidateShortcutActions = shortcutActions as ShortcutActionPreferences;
+  quickActionGlobalEnabled = currentPreferences.quickActionGlobalEnabled;
+  const unavailableActionIds = quickActionGlobalEnabled && !shortcutCaptureActive
+    ? registerConfiguredGlobalShortcuts(candidateShortcutActions)
+    : probeGlobalShortcutActions(candidateShortcutActions);
+
+  if (unavailableActionIds.size > 0) {
+    if (quickActionGlobalEnabled && !shortcutCaptureActive) {
+      registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
+    }
+    return {
+      applied: false,
+      preferences: currentPreferences,
+      unavailableActionIds: Array.from(unavailableActionIds)
+    };
+  }
+
+  let preferences;
+  try {
+    preferences = await updateShortcutActionsPreference(candidateShortcutActions);
+  } catch (error) {
+    if (quickActionGlobalEnabled) {
+      registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
+    }
+    throw error;
+  }
+  quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
+  if (quickActionGlobalEnabled && !shortcutCaptureActive) {
+    unavailableGlobalShortcutActionIds = new Set();
+  } else {
+    unregisterConfiguredGlobalShortcuts();
+    unavailableGlobalShortcutActionIds = new Set();
+  }
+  return {
+    applied: true,
+    preferences,
+    unavailableActionIds: []
+  };
+});
+
+ipcMain.handle("preferences:shortcutAvailability", () => shortcutAvailabilityResponse());
+
+ipcMain.handle("preferences:beginShortcutCapture", () => {
+  if (!shortcutCaptureActive) {
+    shortcutCaptureActive = true;
+    unregisterConfiguredGlobalShortcuts();
+  }
+  return true;
+});
+
+ipcMain.handle("preferences:endShortcutCapture", async () => {
+  if (!shortcutCaptureActive) {
+    return shortcutAvailabilityResponse();
+  }
+
+  shortcutCaptureActive = false;
+  const preferences = await getUserPreferences();
+  quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
+  if (!quickActionGlobalEnabled) {
+    probeGlobalShortcutActions(preferences.shortcutActions);
+    return shortcutAvailabilityResponse();
+  }
+
+  registerConfiguredGlobalShortcuts(preferences.shortcutActions);
+  return shortcutAvailabilityResponse();
+});
+
+ipcMain.handle("cache:stats", () => {
+  return getAllVisualCacheStats();
+});
+
+ipcMain.handle("cache:optimizationStatus", () => {
+  return getThumbnailOptimizationStatus();
+});
+
+ipcMain.handle("cache:authorizeClear", () => {
+  const authorization = {
+    token: randomUUID(),
+    expiresAt: Date.now() + 30_000
+  };
+  cacheClearAuthorization = authorization;
+  return authorization.token;
+});
+
+ipcMain.handle("cache:clearAll", async (_event, token?: string) => {
+  const authorization = cacheClearAuthorization;
+  cacheClearAuthorization = null;
+  if (!authorization || token !== authorization.token || Date.now() > authorization.expiresAt) {
+    throw new Error(t("error.cacheConfirmationRequired"));
+  }
+  await setThumbnailOptimizationEnabled(false);
+  await updateAutoCacheOptimizationPreference(false);
+  return clearAllVisualCaches();
+});

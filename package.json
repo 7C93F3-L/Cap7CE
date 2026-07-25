@@ -1,0 +1,115 @@
+{
+  "name": "cap7ce",
+  "version": "0.7.7",
+  "productName": "Cap7CE",
+  "description": "Windows local image search tool built with Electron, React, TypeScript and SQLite.",
+  "author": "7C93F3-L",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/7C93F3-L/Cap7CE#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7C93F3-L/Cap7CE.git"
+  },
+  "bugs": {
+    "url": "https://github.com/7C93F3-L/Cap7CE/issues"
+  },
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "vite --host 127.0.0.1",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "tsc -b && vite build && npm run build:electron",
+    "test": "npm run build:electron && npm run test:integration",
+    "test:integration": "npm run test:file-drag && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
+    "test:file-drag": "electron tests/file-drag.integration.cjs",
+    "test:manual-index": "electron tests/manual-index.integration.cjs",
+    "test:stale-cleanup": "electron tests/stale-image-cleanup.integration.cjs",
+    "test:model-input-cleanup": "electron tests/model-input-cache-cleanup.integration.cjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.cap7ce.app",
+    "productName": "Cap7CE",
+    "copyright": "Copyright © 2026 7C93F3-L",
+    "icon": "build/icon.ico",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "src/renderer/assets/icons/**/*",
+      "src/renderer/assets/startup/**/*",
+      "build/icon.ico",
+      "LICENSE",
+      "THIRD_PARTY_NOTICES.md",
+      "BRAND.md",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/sql.js/dist/*.wasm",
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/@napi-rs/canvas/**/*",
+      "node_modules/@napi-rs/canvas-win32-x64-msvc/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "src/renderer/assets/icons",
+        "to": "renderer-assets/icons",
+        "filter": [
+          "*.svg"
+        ]
+      },
+      {
+        "from": "src/renderer/assets/startup",
+        "to": "renderer-assets/startup",
+        "filter": [
+          "*.svg"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signtoolOptions": {
+        "publisherName": "7C"
+      },
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.88",
+    "@types/sql.js": "^1.4.11",
+    "ag-psd": "^30.1.1",
+    "pdfjs-dist": "^5.4.624",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.35.1",
+    "sql.js": "^1.14.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^31.7.7",
+    "electron-builder": "^26.8.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "wait-on": "^8.0.1"
+  }
+}

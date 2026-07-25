@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
+  <defs>
+    <style>
+      .cls-1 {
+        fill-rule: evenodd;
+      }
+    </style>
+  </defs>
+  <path class="cls-1" d="M11.55,10.01c0-.41-.34-.75-.75-.75s-.75.34-.75.75v8.19l-2.32-2.32c-.29-.29-.77-.29-1.06,0h0c-.29.29-.29.77,0,1.06l3.6,3.6c.19.19.57.27.82.16.38-.16.46-.51.46-.69v-10Z"/>
+  <g>
+    <rect x="14.55" y="10.25" width="9" height="1.5" rx=".75" ry=".75"/>
+    <rect x="14.55" y="14.25" width="9" height="1.5" rx=".75" ry=".75"/>
+    <rect x="14.55" y="18.25" width="9" height="1.5" rx=".75" ry=".75"/>
+  </g>
+</svg>

@@ -1,0 +1,212 @@
+import path from "node:path";
+import { createVisualCacheEntryFromSourceMetadata } from "./visualCacheService";
+import { ensureThumbnailPath, getThumbnailCacheFileInventory } from "./thumbnailService";
+
+export type ThumbnailOptimizationSortField = "file_name" | "modified_at";
+export type ThumbnailOptimizationSortDirection = "asc" | "desc";
+
+export interface ThumbnailOptimizationCandidate {
+  filePath: string;
+  fileName: string;
+  fileSize: number;
+  modifiedAt: string;
+  modifiedMs: number;
+}
+
+export interface ThumbnailOptimizationStatus {
+  enabled: boolean;
+  phase: "disabled" | "ready" | "running" | "completed";
+  queuedCount: number;
+  processedCount: number;
+  failedCount: number;
+}
+
+type StatusListener = (status: ThumbnailOptimizationStatus) => void;
+
+const queueByPath = new Map<string, ThumbnailOptimizationCandidate>();
+const pauseReasons = new Set<string>();
+let queue: ThumbnailOptimizationCandidate[] = [];
+let activePathKey: string | null = null;
+let enabled = false;
+let completed = false;
+let processedCount = 0;
+let failedCount = 0;
+let sortField: ThumbnailOptimizationSortField = "file_name";
+let sortDirection: ThumbnailOptimizationSortDirection = "desc";
+let workerPromise: Promise<void> | null = null;
+let statusListener: StatusListener | null = null;
+
+const normalizePathKey = (filePath: string) => path.resolve(filePath).toLowerCase();
+const yieldToForegroundWork = () => new Promise<void>((resolve) => setTimeout(resolve, 120));
+
+const compareCandidates = (left: ThumbnailOptimizationCandidate, right: ThumbnailOptimizationCandidate) => {
+  const direction = sortDirection === "desc" ? -1 : 1;
+  const comparison = sortField === "modified_at"
+    ? new Date(left.modifiedAt).getTime() - new Date(right.modifiedAt).getTime()
+    : left.fileName.localeCompare(right.fileName, undefined, { numeric: true, sensitivity: "base" });
+  if (comparison !== 0) {
+    return comparison * direction;
+  }
+  return left.filePath.localeCompare(right.filePath, undefined, { numeric: true, sensitivity: "base" }) * direction;
+};
+
+const sortQueue = () => {
+  queue.sort(compareCandidates);
+};
+
+export const getThumbnailOptimizationStatus = (): ThumbnailOptimizationStatus => ({
+  enabled,
+  phase: !enabled
+    ? "disabled"
+    : activePathKey !== null || queue.length > 0
+      ? "running"
+      : completed
+        ? "completed"
+        : "ready",
+  queuedCount: queue.length + (activePathKey === null ? 0 : 1),
+  processedCount,
+  failedCount
+});
+
+const emitStatus = () => {
+  statusListener?.(getThumbnailOptimizationStatus());
+};
+
+const runWorker = async () => {
+  while (enabled && pauseReasons.size === 0) {
+    const candidate = queue.shift();
+    if (!candidate) {
+      completed = processedCount > 0;
+      break;
+    }
+
+    const candidateKey = normalizePathKey(candidate.filePath);
+    queueByPath.delete(candidateKey);
+    activePathKey = candidateKey;
+    emitStatus();
+
+    try {
+      await ensureThumbnailPath(candidate.filePath);
+    } catch (error) {
+      failedCount += 1;
+      console.warn("[thumbnail-optimization] failed", {
+        filePath: candidate.filePath,
+        message: error instanceof Error ? error.message : String(error)
+      });
+    } finally {
+      processedCount += 1;
+      activePathKey = null;
+      emitStatus();
+    }
+
+    await yieldToForegroundWork();
+  }
+};
+
+const startWorker = () => {
+  if (!enabled || pauseReasons.size > 0 || queue.length === 0 || workerPromise) {
+    emitStatus();
+    return;
+  }
+
+  workerPromise = runWorker().finally(() => {
+    workerPromise = null;
+    emitStatus();
+    if (enabled && pauseReasons.size === 0 && queue.length > 0) {
+      startWorker();
+    }
+  });
+};
+
+export const setThumbnailOptimizationStatusListener = (listener: StatusListener | null) => {
+  statusListener = listener;
+  emitStatus();
+};
+
+export const setThumbnailOptimizationSort = (
+  nextSortField: ThumbnailOptimizationSortField,
+  nextSortDirection: ThumbnailOptimizationSortDirection
+) => {
+  sortField = nextSortField;
+  sortDirection = nextSortDirection;
+  sortQueue();
+  emitStatus();
+};
+
+export const enqueueThumbnailOptimizationCandidates = async (candidates: ThumbnailOptimizationCandidate[]) => {
+  if (!enabled || candidates.length === 0) {
+    return;
+  }
+
+  const cacheFileInventory = await getThumbnailCacheFileInventory();
+  if (!enabled) {
+    return;
+  }
+
+  let addedCandidate = false;
+  for (const candidate of candidates) {
+    const candidateKey = normalizePathKey(candidate.filePath);
+    if (candidateKey === activePathKey || queueByPath.has(candidateKey)) {
+      continue;
+    }
+
+    const cacheEntry = createVisualCacheEntryFromSourceMetadata(candidate.filePath, "search-thumbnail", {
+      fileSize: candidate.fileSize,
+      modifiedMs: candidate.modifiedMs
+    });
+    if (
+      cacheFileInventory.has(path.basename(cacheEntry.imagePath))
+      && cacheFileInventory.has(path.basename(cacheEntry.metadataPath))
+    ) {
+      continue;
+    }
+
+    queueByPath.set(candidateKey, candidate);
+    queue.push(candidate);
+    addedCandidate = true;
+  }
+
+  if (addedCandidate) {
+    completed = false;
+    sortQueue();
+    emitStatus();
+    startWorker();
+  } else if (activePathKey === null && queue.length === 0 && !completed) {
+    completed = true;
+    emitStatus();
+  }
+};
+
+export const setThumbnailOptimizationEnabled = async (nextEnabled: boolean) => {
+  enabled = nextEnabled;
+  completed = false;
+  processedCount = 0;
+  failedCount = 0;
+
+  if (!enabled) {
+    queue = [];
+    queueByPath.clear();
+  }
+
+  emitStatus();
+  if (workerPromise) {
+    await workerPromise;
+  }
+  if (enabled) {
+    startWorker();
+  }
+};
+
+export const pauseThumbnailOptimization = async (reason: string) => {
+  pauseReasons.add(reason);
+  emitStatus();
+  if (workerPromise) {
+    await workerPromise;
+  }
+};
+
+export const resumeThumbnailOptimization = (reason: string) => {
+  pauseReasons.delete(reason);
+  emitStatus();
+  startWorker();
+};
