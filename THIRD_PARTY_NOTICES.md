@@ -2,7 +2,7 @@
 
 Cap7CE source code is licensed under GPL-3.0-only. Third-party software included in the source tree, dependency graph, or packaged runtime remains subject to its own license.
 
-This file is a human-readable inventory for Cap7CE 0.7.7. `package-lock.json` is the authoritative locked npm dependency inventory. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
+This file is a human-readable inventory for Cap7CE 0.7.8. `package-lock.json` is the authoritative locked npm dependency inventory. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
 
 ## Primary runtime components
 
