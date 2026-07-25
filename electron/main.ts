@@ -1422,6 +1422,16 @@ const applyStandbyWindowMode = () => {
   mainWindow.setResizable(false);
   setShellIgnoreMouseEvents(false);
   mainWindow.setBounds(standbyBounds, true);
+  const actualStandbyBounds = mainWindow.getBounds();
+  if (actualStandbyBounds.height !== standbyBounds.height) {
+    const { workArea } = screen.getDisplayMatching(actualStandbyBounds);
+    markProgrammaticMove();
+    mainWindow.setBounds({
+      ...actualStandbyBounds,
+      x: standbyBounds.x,
+      y: workArea.y + workArea.height - edgeGapPx - actualStandbyBounds.height
+    }, false);
+  }
   applyAlwaysOnTopState();
   activeShellState = "standby";
   syncTaskbarVisibility(activeShellState);

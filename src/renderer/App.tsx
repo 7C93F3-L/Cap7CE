@@ -3869,6 +3869,13 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       if (event.code === "Space") {
         event.preventDefault();
         if (selectedImageIndex >= 0) {
+          const focusedElement = document.activeElement;
+          if (
+            focusedElement instanceof HTMLElement &&
+            focusedElement.closest(".thumb, .unrecognized-item")
+          ) {
+            focusedElement.blur();
+          }
           openPreviewAtIndex(selectedImageIndex);
         }
         return;
