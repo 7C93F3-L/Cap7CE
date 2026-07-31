@@ -764,18 +764,6 @@ textarea,
   white-space: nowrap;
 }
 
-.cap-skim-breadcrumb-segment {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.cap-skim-breadcrumb-separator {
-  flex: 0 0 auto;
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
 .cap-skim-breadcrumb {
   flex: 0 1 auto;
   min-width: 0;
@@ -786,13 +774,6 @@ textarea,
 
 .cap-skim-breadcrumb[data-selected="true"] {
   background: var(--chip-bg-hover);
-}
-
-.cap-skim-feedback-input {
-  flex: 0 1 132px;
-  min-width: 64px;
-  pointer-events: none;
-  text-align: right;
 }
 
 .cap-skim-grid-frame {
@@ -2362,12 +2343,66 @@ textarea,
   transition: transform 160ms ease-out;
 }
 
+.result-file-card {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px 8px;
+  color: var(--text-main);
+  pointer-events: none;
+}
+
+.result-file-card-icon {
+  width: clamp(32px, 38%, 58px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  color: currentColor;
+  transition: transform 160ms ease-out;
+}
+
+.result-file-card-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.result-file-card-name {
+  width: 100%;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-file-card-format {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
 .thumb:not(.selected):hover .thumbnail-image-frame > img,
 .thumb:not(.selected):focus-visible .thumbnail-image-frame > img,
 .thumb.selected .thumbnail-image-frame > img,
 .unrecognized-item:not(.selected):hover .thumbnail-image-frame > img,
 .unrecognized-item:not(.selected):focus-visible .thumbnail-image-frame > img,
 .unrecognized-item.selected .thumbnail-image-frame > img {
+  transform: scale(1.035);
+}
+
+.thumb:not(.selected):hover .result-file-card-icon,
+.thumb:not(.selected):focus-visible .result-file-card-icon,
+.thumb.selected .result-file-card-icon {
   transform: scale(1.035);
 }
 

@@ -52,7 +52,7 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
     iconName: `format-${extension}`,
     canBrowse: true,
     canIndex: true,
-    canSearch: false,
+    canSearch: true,
     canThumbnail: false,
     previewKind: "fileInfo",
     canDirectPreview: false,

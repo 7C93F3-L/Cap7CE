@@ -1,7 +1,8 @@
 import path from "node:path";
-import { scanImageDirectories, type ScannedImageFile } from "./imageScanner";
+import { getFileFormatCapability } from "./formatCapabilities";
+import { scanImageDirectories, type ScannedFile, type ScannedImageFile } from "./imageScanner";
 import type { PersistedDirectory } from "./directoryStore";
-import { listExistingImageFilePaths, searchIndexedImages, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
+import { listExistingImageFilePaths, searchIndexedFiles, searchIndexedImages, type FileCatalogSearchResult, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
 
 const toSearchTerms = (query: string) => query.trim().split(/\s+/).filter(Boolean);
 
@@ -48,8 +49,12 @@ const targetDirectories = (directories: PersistedDirectory[], directoryId: strin
 
 const scannedImageToResult = (image: ScannedImageFile): ImageSearchResult => ({
   id: `file:${image.file_path}`,
+  resultKind: "visual",
   filePath: image.file_path,
   fileName: image.file_name,
+  extension: path.extname(image.file_name).toLowerCase(),
+  iconName: "skim-file",
+  previewKind: "image",
   fileSize: image.file_size,
   createdAt: image.created_at,
   modifiedAt: image.modified_at,
@@ -65,14 +70,43 @@ const scannedImageToResult = (image: ScannedImageFile): ImageSearchResult => ({
   thumbnailUrl: toThumbnailUrl(image.file_path)
 });
 
-const scanAddedDirectoryImages = async (directories: PersistedDirectory[], search: ImageSearchState) => {
+const toNonVisualResult = (file: ScannedFile | FileCatalogSearchResult): ImageSearchResult | null => {
+  const extension = file.extension;
+  const capability = getFileFormatCapability(extension);
+  if (!capability?.canSearch || capability.canAIIndex) return null;
+  const filePath = "file_path" in file ? file.file_path : file.filePath;
+  const fileName = "file_name" in file ? file.file_name : file.fileName;
+  return {
+    id: `file:${filePath}`,
+    resultKind: "file",
+    filePath,
+    fileName,
+    extension,
+    iconName: capability.iconName,
+    previewKind: capability.previewKind,
+    fileSize: "file_size" in file ? file.file_size : file.fileSize,
+    createdAt: "created_at" in file ? file.created_at : file.createdAt,
+    modifiedAt: "modified_at" in file ? file.modified_at : file.modifiedAt,
+    imageWidth: 0,
+    imageHeight: 0,
+    caption: "",
+    keywords: [],
+    aiError: "",
+    manualIndex: false,
+    failureType: "pending",
+    failureLabel: "",
+    indexedAt: "indexedAt" in file ? file.indexedAt : "",
+    thumbnailUrl: ""
+  };
+};
+
+const scanAddedDirectories = async (directories: PersistedDirectory[], search: ImageSearchState) => {
   const directoriesToScan = targetDirectories(directories, search.directoryId);
   if (directoriesToScan.length === 0) {
-    return [];
+    return { images: [], files: [] };
   }
 
-  const scanResult = await scanImageDirectories(directoriesToScan);
-  return scanResult.images;
+  return scanImageDirectories(directoriesToScan);
 };
 
 type ImageSearchWithFormatsResponse = ImageSearchResponse & { availableFormats: string[] };
@@ -82,11 +116,17 @@ export const searchImagesWithAddedDirectories = async (
   directories: PersistedDirectory[],
   onScannedImages?: (images: ScannedImageFile[]) => void
 ): Promise<ImageSearchWithFormatsResponse> => {
-  const indexed = await searchIndexedImages(search);
+  const [indexed, indexedFiles, scanResult] = await Promise.all([
+    searchIndexedImages(search),
+    searchIndexedFiles(search),
+    scanAddedDirectories(directories, search)
+  ]);
   const terms = toSearchTerms(search.query);
-  const scannedImages = await scanAddedDirectoryImages(directories, search);
+  const scannedImages = scanResult.images;
+  const scannedFiles = scanResult.files;
   onScannedImages?.(scannedImages);
-  const availableFormats = Array.from(new Set(scannedImages.map((image) => getFileFormat(image.file_name)).filter(Boolean)))
+  const availableFormatFiles = search.recognitionStatus === "all" ? scannedFiles : scannedImages;
+  const availableFormats = Array.from(new Set(availableFormatFiles.map((file) => getFileFormat(file.file_name)).filter(Boolean)))
     .sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
   const formatFilteredImages = selectedFileFormat === "all"
@@ -95,6 +135,23 @@ export const searchImagesWithAddedDirectories = async (
   const existingPaths = await listExistingImageFilePaths(search.directoryId);
   const indexedResultPaths = new Set(indexed.images.map((image) => image.filePath));
   const unindexedImages = formatFilteredImages.filter((image) => !existingPaths.has(image.file_path));
+  const normalizedTerms = terms.map((term) => term.toLocaleLowerCase());
+  const scannedNonVisualFiles = search.recognitionStatus === "all"
+    ? scannedFiles
+      .filter((file) => !getFileFormatCapability(file.extension)?.canAIIndex)
+      .filter((file) => selectedFileFormat === "all" || getFileFormat(file.file_name) === selectedFileFormat)
+      .filter((file) => normalizedTerms.every((term) => file.file_name.toLocaleLowerCase().includes(term)))
+    : [];
+  const nonVisualResultByPath = new Map<string, ImageSearchResult>();
+  for (const file of indexedFiles) {
+    const result = toNonVisualResult(file);
+    if (result) nonVisualResultByPath.set(result.filePath.toLocaleLowerCase(), result);
+  }
+  for (const file of scannedNonVisualFiles) {
+    const result = toNonVisualResult(file);
+    if (result) nonVisualResultByPath.set(result.filePath.toLocaleLowerCase(), result);
+  }
+  const nonVisualResults = [...nonVisualResultByPath.values()];
 
   if (search.recognitionStatus === "recognized") {
     return {
@@ -107,7 +164,6 @@ export const searchImagesWithAddedDirectories = async (
   }
 
   if (search.recognitionStatus === "unrecognized") {
-    const normalizedTerms = terms.map((term) => term.toLocaleLowerCase());
     const pendingImages = unindexedImages
       .filter((image) => normalizedTerms.every((term) => image.file_name.toLocaleLowerCase().includes(term)))
       .filter((image) => !indexedResultPaths.has(image.file_path))
@@ -124,14 +180,13 @@ export const searchImagesWithAddedDirectories = async (
 
   if (terms.length > 0) {
     const unrecognizedCount = indexed.unrecognizedCount + unindexedImages.length;
-    const normalizedTerms = terms.map((term) => term.toLocaleLowerCase());
     const pendingImages = unindexedImages
       .filter((image) => normalizedTerms.every((term) => image.file_name.toLocaleLowerCase().includes(term)))
       .filter((image) => !indexedResultPaths.has(image.file_path))
       .map(scannedImageToResult);
 
     return {
-      images: [...indexed.images, ...pendingImages].sort(compareImages(search)),
+      images: [...indexed.images, ...pendingImages, ...nonVisualResults].sort(compareImages(search)),
       availableFormats,
       unrecognizedCount,
       skippedUnrecognizedCount: unrecognizedCount,
@@ -143,7 +198,8 @@ export const searchImagesWithAddedDirectories = async (
     ...indexed.images,
     ...unindexedImages
       .filter((image) => !indexedResultPaths.has(image.file_path))
-      .map(scannedImageToResult)
+      .map(scannedImageToResult),
+    ...nonVisualResults
   ].sort(compareImages(search));
 
   return {

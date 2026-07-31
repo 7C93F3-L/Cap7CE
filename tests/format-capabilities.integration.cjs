@@ -30,7 +30,7 @@ const { app } = require("electron");
   )), true);
   assert.equal(visualCapabilities.filter((capability) => capability.canDirectPreview).length, 7);
   assert.equal(nonVisualCapabilities.every((capability) => (
-    !capability.canSearch
+    capability.canSearch
     && !capability.canThumbnail
     && capability.previewKind === "fileInfo"
     && !capability.canDirectPreview
@@ -55,7 +55,7 @@ const { app } = require("electron");
     centralCapabilitiesUnique: true,
     allWhitelistedFormatsIndexable: true,
     visualSearchBoundaryPreserved: true,
-    nonVisualSearchBoundaryPreserved: true,
+    nonVisualSearchEnabled: true,
     formalVisualScannerBoundaryPreserved: true,
     skimWhitelistCount: skimBrowsableFileExtensionSet.size,
     formatIconsVerified: nonVisualCapabilities.length

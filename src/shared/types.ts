@@ -221,8 +221,12 @@ export interface SkimFolderStatsUpdate extends SkimFolderStats {
 
 export interface ImageIndexItem {
   id: string;
+  resultKind: "visual" | "file";
   filePath: string;
   fileName: string;
+  extension: string;
+  iconName: string;
+  previewKind: FilePreviewKind;
   fileSize: number;
   createdAt: string;
   modifiedAt: string;

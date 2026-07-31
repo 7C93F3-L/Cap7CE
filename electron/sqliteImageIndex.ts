@@ -31,8 +31,12 @@ export type RecognitionFailureType = "parse" | "file" | "pending";
 
 export interface ImageSearchResult {
   id: string;
+  resultKind: "visual" | "file";
   filePath: string;
   fileName: string;
+  extension: string;
+  iconName: string;
+  previewKind: "image" | "fileInfo";
   fileSize: number;
   createdAt: string;
   modifiedAt: string;
@@ -1210,6 +1214,101 @@ export const deleteFilesByFilePaths = async (filePaths: string[]): Promise<void>
   }
 };
 
+export interface FileCatalogSearchResult {
+  id: string;
+  filePath: string;
+  fileName: string;
+  extension: string;
+  fileSize: number;
+  createdAt: string;
+  modifiedAt: string;
+  indexedAt: string;
+}
+
+export const searchIndexedFiles = async (search: ImageSearchState): Promise<FileCatalogSearchResult[]> => {
+  if (search.recognitionStatus !== "all") return [];
+  const database = await loadDatabase();
+  const terms = toSearchTerms(search.query);
+  const params: Record<string, SqlValue> = {};
+  const where = ['"exists" = 1'];
+
+  if (search.directoryId !== "all") {
+    where.push("directory_id = :directory_id");
+    params[":directory_id"] = search.directoryId;
+  }
+
+  const fileFormat = normalizeFileFormat(search.fileFormat);
+  if (fileFormat === "jpg") {
+    where.push("extension IN ('.jpg', '.jpeg')");
+  } else if (fileFormat === "tif") {
+    where.push("extension IN ('.tif', '.tiff')");
+  } else if (fileFormat !== "all") {
+    where.push("extension = :extension");
+    params[":extension"] = `.${fileFormat}`;
+  }
+
+  terms.forEach((term, index) => {
+    const key = `:file_term_${index}`;
+    where.push(`LOWER(file_name) LIKE ${key}`);
+    params[key] = `%${term}%`;
+  });
+
+  const sortColumn = sortFieldColumns[search.sortField] ?? sortFieldColumns.file_name;
+  const sortDirection = sortDirections[search.sortDirection] ?? sortDirections.asc;
+
+  try {
+    const rows = database.exec(
+      `
+        SELECT id, file_path, file_name, extension, file_size, created_at, modified_at, indexed_at
+        FROM files
+        WHERE ${where.join(" AND ")}
+        ORDER BY ${sortColumn} ${sortDirection}, id ASC
+      `,
+      params
+    )[0]?.values ?? [];
+    const files: FileCatalogSearchResult[] = [];
+    const missingIds: number[] = [];
+
+    for (const row of rows) {
+      const id = Number(row[0]);
+      const filePath = String(row[1]);
+      try {
+        await fs.access(filePath);
+      } catch {
+        missingIds.push(id);
+        continue;
+      }
+      files.push({
+        id: `catalog:${id}`,
+        filePath,
+        fileName: String(row[2]),
+        extension: String(row[3]).toLowerCase(),
+        fileSize: Number(row[4] ?? 0),
+        createdAt: String(row[5] ?? ""),
+        modifiedAt: String(row[6] ?? ""),
+        indexedAt: String(row[7] ?? "")
+      });
+    }
+
+    if (missingIds.length > 0) {
+      const statement = database.prepare('UPDATE files SET "exists" = 0, indexed_at = :indexed_at WHERE id = :id');
+      try {
+        const indexedAt = new Date().toISOString();
+        for (const id of missingIds) {
+          statement.run({ ":id": id, ":indexed_at": indexedAt });
+        }
+      } finally {
+        statement.free();
+      }
+      await saveDatabase(database);
+    }
+
+    return files;
+  } finally {
+    database.close();
+  }
+};
+
 export const searchIndexedImages = async (search: ImageSearchState): Promise<ImageSearchResponse> => {
   const database = await loadDatabase();
   const terms = toSearchTerms(search.query);
@@ -1295,8 +1394,12 @@ export const searchIndexedImages = async (search: ImageSearchState): Promise<Ima
 
       images.push({
         id: String(id),
+        resultKind: "visual",
         filePath,
         fileName: String(row[2]),
+        extension: path.extname(String(row[2])).toLowerCase(),
+        iconName: "skim-file",
+        previewKind: "image",
         fileSize: Number(row[3] ?? 0),
         createdAt: String(row[4] ?? ""),
         modifiedAt: String(row[5] ?? ""),

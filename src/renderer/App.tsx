@@ -2689,6 +2689,7 @@ const App = () => {
 
   const requestDeleteFiles = (items: ImageIndexItem[]) => {
     setContextMenu(null);
+    if (items.length === 0 || items.some((item) => item.resultKind !== "visual")) return;
     setFilesPendingDelete(items.map((item) => ({ ...item, keywords: [...item.keywords] })));
     setDeleteFilesFeedback(null);
     setDialog("deleteFiles");
@@ -2728,7 +2729,7 @@ const App = () => {
   };
 
   const requestEditKeywords = (items: ImageIndexItem[]) => {
-    if (items.length === 0) {
+    if (items.length === 0 || items.some((item) => item.resultKind !== "visual")) {
       return;
     }
     captureKeywordEditScrollSnapshot();
@@ -3570,6 +3571,7 @@ const App = () => {
             )}
             {activeView === "skim" && (
               <SkimView
+                search={search}
                 entries={skimEntries}
                 currentPath={skimCurrentPath}
                 breadcrumbs={skimBreadcrumbs}
@@ -3579,6 +3581,11 @@ const App = () => {
                 appearanceColors={appearanceColors}
                 shellState={shellState}
                 isAddingDirectory={isAddingDirectory}
+                inputFeedback={searchInputFeedback}
+                inputFeedbackIsGuide={operationHintVisible}
+                searchInputRef={searchInputRef}
+                onSearchChange={setSearch}
+                onSearch={() => submitSearch(search)}
                 onOpenRoot={() => void loadSkimLocation(null)}
                 onOpenBreadcrumb={(breadcrumbPath) => void loadSkimLocation(breadcrumbPath)}
                 onOpenEntry={(entry) => {
@@ -3742,7 +3749,8 @@ const App = () => {
           compact={contextMenu.shellState === "micro" || contextMenu.shellState === "mini"}
           primaryActionLabel={t("preview.action")}
           deleteActionLabel={contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile")}
-          showEditKeywords={contextMenu.items.length > 0}
+          showEditKeywords={contextMenu.items.length > 0 && contextMenu.items.every((item) => item.resultKind === "visual")}
+          showDelete={contextMenu.items.length > 0 && contextMenu.items.every((item) => item.resultKind === "visual")}
           onPrimaryAction={contextMenu.preview}
           onOpen={() => invokeFileAction("open", contextMenu.item)}
           onShowInFolder={() => invokeFileAction("showInFolder", contextMenu.item)}
@@ -3891,7 +3899,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     }
   }, []);
 
-  const openPreviewAtIndex = useCallback((index: number) => {
+  const openPreviewAtIndex = useCallback(async (index: number) => {
     const image = images[index];
     const previewApi = window.imageEverything?.preview;
     if (!image || !previewApi) {
@@ -3904,19 +3912,42 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       selectionAnchorIdRef.current = image.id;
     }
     onSelectedImageChange(image.id);
+    let previewData: PreviewWindowData;
+    if (image.resultKind === "file") {
+      try {
+        const info = await window.imageEverything?.skim.inspect({ path: image.filePath, kind: "file" });
+        if (!info) return;
+        previewData = {
+          sessionId: `${image.id}:${Date.now()}:${++previewSessionCounterRef.current}`,
+          itemId: image.id,
+          filePath: image.filePath,
+          fileName: image.fileName,
+          previewUrl: "",
+          thumbnailUrl: "",
+          provider: "fileInfo",
+          info,
+          theme: contextMenuTheme,
+          language: getActiveLanguage(),
+          appearanceColors
+        };
+      } catch {
+        return;
+      }
+    } else {
+      previewData = {
+        sessionId: `${image.id}:${Date.now()}:${++previewSessionCounterRef.current}`,
+        itemId: image.id,
+        filePath: image.filePath,
+        fileName: image.fileName,
+        previewUrl: toFullImageUrl(image.filePath),
+        thumbnailUrl: image.thumbnailUrl,
+        theme: contextMenuTheme,
+        language: getActiveLanguage(),
+        appearanceColors
+      };
+    }
     previewIndexRef.current = index;
     setPreviewIndex(index);
-    const previewData: PreviewWindowData = {
-      sessionId: `${image.id}:${Date.now()}:${++previewSessionCounterRef.current}`,
-      itemId: image.id,
-      filePath: image.filePath,
-      fileName: image.fileName,
-      previewUrl: toFullImageUrl(image.filePath),
-      thumbnailUrl: image.thumbnailUrl,
-      theme: contextMenuTheme,
-      language: getActiveLanguage(),
-      appearanceColors
-    };
     void previewApi.open(previewData).then((opened) => {
       if (!opened) {
         if (previewIndexRef.current === index) {
@@ -4314,7 +4345,21 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   );
 };
 
+const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => (
+  item.resultKind === "file" ? (
+    <span className="result-file-card">
+      <SvgIcon
+        svg={skimFormatIconSvgByName[item.iconName] ?? skimFileSvg}
+        className="cap-svg-icon result-file-card-icon"
+      />
+      <span className="result-file-card-name" title={item.fileName}>{item.fileName}</span>
+      <span className="result-file-card-format">{item.extension.slice(1).toUpperCase()}</span>
+    </span>
+  ) : <ThumbnailContent thumbnailUrl={item.thumbnailUrl} />
+);
+
 interface SkimViewProps {
+  search: SearchState;
   entries: SkimBrowseEntry[];
   currentPath: string | null;
   breadcrumbs: SkimBreadcrumb[];
@@ -4324,6 +4369,11 @@ interface SkimViewProps {
   appearanceColors: AppearanceColors;
   shellState: ShellState;
   isAddingDirectory: boolean;
+  inputFeedback: string;
+  inputFeedbackIsGuide: boolean;
+  searchInputRef: Ref<HTMLInputElement>;
+  onSearchChange: (search: SearchState) => void;
+  onSearch: () => void;
   onOpenRoot: () => void;
   onOpenBreadcrumb: (path: string) => void;
   onOpenEntry: (entry: SkimBrowseEntry) => void;
@@ -4333,7 +4383,7 @@ interface SkimViewProps {
 
 type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] };
 
-const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
+const SkimView = ({ search, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
@@ -4517,8 +4567,18 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, them
       setActivePath(null);
       selectionAnchorPathRef.current = null;
     }}>
-      <div className="cap7ce-top-capsule cap7ce-search-capsule cap7ce-search-capsule-unified cap-skim-breadcrumbs">
-        <div className="cap-skim-breadcrumb-list" aria-label={t("skim.name")}>
+      <Cap7CESearchCapsule
+        search={search}
+        directoryName=""
+        labelVisibility={{ directory: false, recognition: false, sort: false, format: false }}
+        status={statusText}
+        inputFeedback={inputFeedback}
+        inputFeedbackIsGuide={inputFeedbackIsGuide}
+        unified
+        inputRef={searchInputRef}
+        labelMenuEnabled={false}
+        leadingContent={(
+          <div className="cap-skim-breadcrumb-list" aria-label={t("skim.name")}>
           <button
             className="cap7ce-pill cap-skim-breadcrumb"
             type="button"
@@ -4529,31 +4589,24 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, them
             {t("skim.computer")}
           </button>
           {breadcrumbs.map((breadcrumb, index) => (
-            <span className="cap-skim-breadcrumb-segment" key={breadcrumb.path}>
-              <span className="cap-skim-breadcrumb-separator" aria-hidden="true">›</span>
-              <button
-                className="cap7ce-pill cap-skim-breadcrumb"
-                type="button"
-                data-selected={index === breadcrumbs.length - 1}
-                aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}
-                title={breadcrumb.path}
-                onClick={() => onOpenBreadcrumb(breadcrumb.path)}
-              >
-                {breadcrumb.name}
-              </button>
-            </span>
+            <button
+              className="cap7ce-pill cap-skim-breadcrumb"
+              type="button"
+              key={breadcrumb.path}
+              data-selected={index === breadcrumbs.length - 1}
+              aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}
+              title={breadcrumb.path}
+              onClick={() => onOpenBreadcrumb(breadcrumb.path)}
+            >
+              {breadcrumb.name}
+            </button>
           ))}
-        </div>
-        <input
-          className="cap7ce-capsule-input cap-skim-feedback-input"
-          value=""
-          readOnly
-          tabIndex={-1}
-          aria-label={t("skim.feedbackLabel")}
-          placeholder={statusText}
-          title={statusText}
-        />
-      </div>
+          </div>
+        )}
+        onSearchChange={onSearchChange}
+        onLabelVisibilityChange={() => undefined}
+        onSearch={onSearch}
+      />
       <div className="cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical">
         <section className="cap-skim-grid cap-main-scroll-viewport" ref={scrollContainerRef} aria-label={t("skim.name")}>
           {isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.loading")}</div>}
@@ -4647,6 +4700,8 @@ interface Cap7CESearchCapsuleProps {
   inputFeedback?: string;
   inputFeedbackIsGuide?: boolean;
   unified?: boolean;
+  leadingContent?: React.ReactNode;
+  labelMenuEnabled?: boolean;
   imageContextMenuOpen?: boolean;
   inputRef?: Ref<HTMLInputElement>;
   onSearchChange: (search: SearchState) => void;
@@ -4663,7 +4718,7 @@ const filterChipExitDurationMs = 350;
 const filterChipExitStaggerMs = 35;
 const filterChipMotionMaxStaggerSteps = 6;
 
-const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, leadingContent, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
   const [directoryChipsOpen, setDirectoryChipsOpen] = useState(false);
   const [recognitionChipsOpen, setRecognitionChipsOpen] = useState(false);
   const [sortChipsOpen, setSortChipsOpen] = useState(false);
@@ -4913,6 +4968,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
   };
 
   const openLabelMenu = (event: React.MouseEvent<HTMLFormElement>) => {
+    if (!labelMenuEnabled) return;
     event.preventDefault();
     event.stopPropagation();
     const target = event.target as HTMLElement;
@@ -4968,6 +5024,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       onSearch();
     }}
   >
+    {leadingContent}
     {labelVisibility.directory && (
     <button
       className="cap7ce-pill cap7ce-pill-wide cap7ce-directory-tag"
@@ -5120,7 +5177,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       autoComplete="off"
     />
     <div className="cap7ce-capsule-status">{status}</div>
-    {labelMenuPointer && createPortal(
+    {labelMenuEnabled && labelMenuPointer && createPortal(
       <div
         ref={labelMenuRef}
         className="cap7ce-label-menu"
@@ -5687,7 +5744,7 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIn
               onPointerEnter={() => onHoverImageChange(item.id)}
               onPointerLeave={() => onHoverImageChange(null)}
             >
-              <ThumbnailContent thumbnailUrl={item.thumbnailUrl} />
+              <ResultThumbnailContent item={item} />
             </button>
           ))}
         </div>
