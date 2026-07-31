@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 
@@ -77,6 +77,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     }
   },
   files: {
+    getPathForFile: (file: File) => webUtils.getPathForFile(file),
     open: (filePath: string) => ipcRenderer.invoke("file:open", filePath),
     showInFolder: (filePath: string) => ipcRenderer.invoke("file:showInFolder", filePath),
     moveToTrash: (filePaths: string[]) => ipcRenderer.invoke("file:moveToTrash", filePaths),

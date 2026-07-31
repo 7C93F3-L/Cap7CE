@@ -43,6 +43,7 @@ declare global {
         onItemAction: (callback: (request: PreviewItemActionRequest) => void) => () => void;
       };
       files: {
+        getPathForFile: (file: File) => string;
         open: (filePath: string) => Promise<string>;
         showInFolder: (filePath: string) => Promise<void>;
         moveToTrash: (filePaths: string[]) => Promise<DeleteFilesResult>;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref, type RefObject } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type Ref, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import iconSignatureCap7CESvg from "./assets/icons/icon-signature-cap7ce.svg?raw";
 import iconSortAscSvg from "./assets/icons/icon-sort-asc.svg?raw";
@@ -92,7 +92,27 @@ type ShellTransition = {
 };
 type SearchCapsuleLabelVisibility = SearchLabelVisibilityPreferences;
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
-type DialogName = "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
+type DialogName = "addDroppedDirectories" | "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
+type DroppedDirectory = {
+  name: string;
+  path: string;
+};
+
+const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] => {
+  const directories: DroppedDirectory[] = [];
+  const seenPaths = new Set<string>();
+  for (const item of Array.from(dataTransfer.items)) {
+    if (item.kind !== "file" || !item.webkitGetAsEntry()?.isDirectory) continue;
+    const file = item.getAsFile();
+    if (!file) continue;
+    const filePath = window.imageEverything?.files.getPathForFile(file)?.trim() ?? "";
+    const pathKey = filePath.toLocaleLowerCase();
+    if (!filePath || seenPaths.has(pathKey)) continue;
+    seenPaths.add(pathKey);
+    directories.push({ name: file.name, path: filePath });
+  }
+  return directories;
+};
 type ImageContextMenuState = {
   x: number;
   y: number;
@@ -910,6 +930,7 @@ const App = () => {
   const [skimFeedback, setSkimFeedback] = useState("");
   const [dialog, setDialog] = useState<DialogName>(null);
   const [directoryToDelete, setDirectoryToDelete] = useState<string | null>(null);
+  const [droppedDirectories, setDroppedDirectories] = useState<DroppedDirectory[]>([]);
   const [pendingDirectoryAddResult, setPendingDirectoryAddResult] = useState<DirectoryAddResult | null>(null);
   const directoryAddFeedbackTargetRef = useRef<"search" | "skim">("search");
   const [editingDirectoryId, setEditingDirectoryId] = useState<string | null>(null);
@@ -2458,6 +2479,54 @@ const App = () => {
     }
   };
 
+  const cancelDroppedDirectoryAdd = () => {
+    if (isAddingDirectory) return;
+    setDroppedDirectories([]);
+    setDialog(null);
+    directoryAddFeedbackTargetRef.current = "search";
+  };
+
+  const confirmDroppedDirectoryAdd = async () => {
+    if (isAddingDirectory || droppedDirectories.length === 0) return;
+    setIsAddingDirectory(true);
+    try {
+      const result = await window.imageEverything?.directories.addCandidates({
+        candidates: droppedDirectories.map((directory) => directory.path)
+      });
+      if (!result) {
+        setDirectoryServiceUnavailable(true);
+        setDroppedDirectories([]);
+        setDialog(null);
+        directoryAddFeedbackTargetRef.current = "search";
+        return;
+      }
+      await applyDirectoryAddResult(result, false);
+      const message = formatDirectoryAddFeedback(result);
+      if (message) {
+        if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(message);
+        else showQuickCommandNotice(message);
+      }
+      setDroppedDirectories([]);
+      if (result.conflicts.length > 0) {
+        setPendingDirectoryAddResult(result);
+        setDialog("replaceDirectories");
+      } else {
+        setDialog(null);
+        directoryAddFeedbackTargetRef.current = "search";
+      }
+    } catch (error) {
+      const message = formatDisplayMessage(error instanceof Error ? error.message : t("directoryAdd.noChanges"));
+      if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(message);
+      else showQuickCommandNotice(message);
+      setDirectoryServiceUnavailable(true);
+      setDroppedDirectories([]);
+      setDialog(null);
+      directoryAddFeedbackTargetRef.current = "search";
+    } finally {
+      setIsAddingDirectory(false);
+    }
+  };
+
   const confirmDirectoryReplacement = async () => {
     if (!pendingDirectoryAddResult || isAddingDirectory) {
       return;
@@ -3235,6 +3304,14 @@ const App = () => {
           return;
         }
 
+        if (dialog === "addDroppedDirectories") {
+          if (isAddingDirectory) return;
+          setDroppedDirectories([]);
+          setDialog(null);
+          directoryAddFeedbackTargetRef.current = "search";
+          return;
+        }
+
         if (dialog === "replaceDirectories") {
           if (isAddingDirectory) return;
           setPendingDirectoryAddResult(null);
@@ -3499,11 +3576,31 @@ const App = () => {
     ? ` cap-shell-transition cap-transition-${shellTransition.from}-to-${shellTransition.to}`
     : "";
   const hasLastNormalBounds = lastNormalBounds !== null;
+  const acceptsDirectoryDrop = (
+    shellState === "micro"
+    || shellState === "mini"
+    || shellState === "normal"
+    || shellState === "settings"
+  ) && dialog === null && !isAddingDirectory;
 
   return (
     <div
       className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}`}
       style={appThemeStyle}
+      onDragOverCapture={(event: ReactDragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = acceptsDirectoryDrop ? "copy" : "none";
+      }}
+      onDropCapture={(event: ReactDragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        if (!acceptsDirectoryDrop) return;
+        const nextDroppedDirectories = readDroppedDirectories(event.dataTransfer);
+        if (nextDroppedDirectories.length === 0) return;
+        setContextMenu(null);
+        setDroppedDirectories(nextDroppedDirectories);
+        directoryAddFeedbackTargetRef.current = view === "skim" ? "skim" : "search";
+        setDialog("addDroppedDirectories");
+      }}
       onClick={() => {
         if (shellState === "standby") {
           activateStandbyCapsule();
@@ -3581,6 +3678,14 @@ const App = () => {
       {isExpandedShell && (
         <>
           <div className="cap-shell-content">
+            {dialog === "addDroppedDirectories" && droppedDirectories.length > 0 && (
+              <AddDroppedDirectoriesPanel
+                directories={droppedDirectories}
+                isAdding={isAddingDirectory}
+                onConfirm={() => void confirmDroppedDirectoryAdd()}
+                onCancel={cancelDroppedDirectoryAdd}
+              />
+            )}
             {activeView === "home" && (
               <HomeView
                 search={search}
@@ -3723,7 +3828,7 @@ const App = () => {
                 onCancel={() => setDialog(null)}
               />
             )}
-            {(activeView === "settings" || activeView === "skim") && dialog === "replaceDirectories" && pendingDirectoryAddResult && (
+            {dialog === "replaceDirectories" && pendingDirectoryAddResult && (
               <ReplaceDirectoriesPanel
                 conflictCount={pendingDirectoryAddResult.conflicts.length}
                 replacedCount={pendingDirectoryAddResult.conflicts.reduce(
@@ -7619,6 +7724,35 @@ const DeleteDirectoryPanel = ({
         <div className="modal-actions">
           <button type="button" onClick={onCancel}>{t("common.confirmNo")}</button>
           <button type="button" onClick={onConfirm}>{t("common.confirmYes")}</button>
+        </div>
+      </div>
+    </section>
+  </main>
+);
+
+const AddDroppedDirectoriesPanel = ({
+  directories,
+  isAdding,
+  onConfirm,
+  onCancel
+}: {
+  directories: DroppedDirectory[];
+  isAdding: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) => (
+  <main className="keyword-editor-view delete-files-view">
+    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("directoryAdd.dropDialogTitle")}>
+      <div className="delete-files-content">
+        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
+        <div className="delete-files-message">
+          {directories.length === 1
+            ? t("directoryAdd.dropSingleQuestion", { name: directories[0].name })
+            : t("directoryAdd.dropMultipleQuestion", { count: directories.length })}
+        </div>
+        <div className="modal-actions">
+          <button type="button" onClick={onCancel} disabled={isAdding}>{t("common.cancel")}</button>
+          <button type="button" onClick={onConfirm} disabled={isAdding}>{t("common.confirm")}</button>
         </div>
       </div>
     </section>
