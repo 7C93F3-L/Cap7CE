@@ -49,6 +49,18 @@ import type {
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 
+const skimFormatIconModules = import.meta.glob<string>("./assets/icons/format-*.svg", {
+  eager: true,
+  query: "?raw",
+  import: "default"
+});
+const skimFormatIconSvgByName = Object.fromEntries(
+  Object.entries(skimFormatIconModules).map(([assetPath, svg]) => [
+    assetPath.slice(assetPath.lastIndexOf("/") + 1, -4),
+    svg
+  ])
+) as Record<string, string>;
+
 type ShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type ShellTransition = {
   from: ShellState;
@@ -4331,10 +4343,10 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, them
   const previewSessionCounterRef = useRef(0);
   const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
   const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
-  const entryIcons: Record<SkimBrowseEntry["kind"], string> = {
-    drive: skimDiskSvg,
-    folder: skimFolderSvg,
-    file: skimFileSvg
+  const getEntryIcon = (entry: SkimBrowseEntry) => {
+    if (entry.kind === "drive") return skimDiskSvg;
+    if (entry.kind === "folder") return skimFolderSvg;
+    return skimFormatIconSvgByName[entry.formatCapability?.iconName ?? ""] ?? skimFileSvg;
   };
 
   useEffect(() => {
@@ -4424,14 +4436,18 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, them
       });
       if (!info) return;
       const sessionId = `skim:${Date.now()}:${++previewSessionCounterRef.current}`;
-      const provider = entry.kind === "folder" ? "folderInfo" : "image";
+      const provider = entry.kind === "folder"
+        ? "folderInfo"
+        : entry.formatCapability?.previewKind === "image" && entry.formatCapability.canDirectPreview
+          ? "image"
+          : "fileInfo";
       const previewData: PreviewWindowData = {
         sessionId,
         itemId: entry.path,
         filePath: entry.path,
         fileName: entry.name,
-        previewUrl: provider === "image" ? toFullImageUrl(entry.path) : "",
-        thumbnailUrl: provider === "image" ? `cap7ce://thumbnail/?path=${encodeURIComponent(entry.path)}` : "",
+        previewUrl: provider === "image" ? `cap7ce://skim-image/?path=${encodeURIComponent(entry.path)}` : "",
+        thumbnailUrl: provider === "image" ? `cap7ce://skim-image/?path=${encodeURIComponent(entry.path)}` : "",
         provider,
         info,
         theme,
@@ -4582,9 +4598,10 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, them
                   }
                 }}
               >
-                <SvgIcon svg={entryIcons[entry.kind]} className="cap-svg-icon cap-skim-entry-icon" />
+                <SvgIcon svg={getEntryIcon(entry)} className="cap-svg-icon cap-skim-entry-icon" />
                 <span className="cap-skim-entry-name">{entry.label || entry.name}</span>
                 {entry.label && <span className="cap-skim-entry-path">{entry.name}</span>}
+                {entry.kind === "file" && <span className="cap-skim-entry-format">{entry.extension.slice(1).toUpperCase()}</span>}
               </button>
             );
           })}

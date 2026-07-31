@@ -19,17 +19,33 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const nestedFolderPath = path.join(folderPath, "nested");
     await fs.mkdir(nestedFolderPath, { recursive: true });
     await fs.writeFile(path.join(folderPath, "visible.png"), "png");
-    await fs.writeFile(path.join(folderPath, "ignored.txt"), "txt");
+    await fs.writeFile(path.join(folderPath, "notes.txt"), "txt");
+    await fs.writeFile(path.join(folderPath, "document.docx"), "docx");
+    await fs.writeFile(path.join(folderPath, "sound.mp3"), "mp3");
+    await fs.writeFile(path.join(folderPath, "model.obj"), "obj");
+    await fs.writeFile(path.join(folderPath, "ignored.exe"), "exe");
     await fs.writeFile(path.join(nestedFolderPath, "not-recursive.jpg"), "jpg");
 
-    const result = await readSkimLocation(folderPath);
+    const result = await readSkimLocation(folderPath, () => false, [testRoot]);
     assert.equal(result.cancelled, false);
     assert.deepEqual(result.entries.map((entry) => [entry.kind, entry.name]), [
       ["folder", "nested"],
+      ["file", "document.docx"],
+      ["file", "model.obj"],
+      ["file", "notes.txt"],
+      ["file", "sound.mp3"],
       ["file", "visible.png"]
     ]);
     assert.equal(result.entries.some((entry) => entry.name === "not-recursive.jpg"), false);
     assert.equal(result.breadcrumbs.at(-1).path, path.resolve(folderPath));
+    assert.equal(result.entries.every((entry) => entry.withinAddedDirectory), true);
+    assert.equal(result.entries.every((entry) => entry.status === "ready"), true);
+    assert.equal(result.entries.find((entry) => entry.name === "nested").size, null);
+    assert.equal(typeof result.entries.find((entry) => entry.name === "notes.txt").size, "number");
+    assert.equal(typeof result.entries.find((entry) => entry.name === "notes.txt").modifiedAt, "string");
+    assert.equal(result.entries.find((entry) => entry.name === "notes.txt").formatCapability.previewKind, "fileInfo");
+    assert.equal(result.entries.find((entry) => entry.name === "visible.png").formatCapability.previewKind, "image");
+    assert.equal(result.entries.some((entry) => entry.name === "ignored.exe"), false);
 
     const breadcrumbs = buildSkimBreadcrumbs(folderPath);
     assert.equal(breadcrumbs[0].path, path.parse(folderPath).root);
@@ -59,7 +75,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 
     console.log(JSON.stringify({
       directChildrenOnly: true,
-      visualWhitelistApplied: true,
+      mixedFormatWhitelistApplied: true,
       breadcrumbsBuilt: true,
       cancellationHonored: true,
       driveOutputNormalized: true

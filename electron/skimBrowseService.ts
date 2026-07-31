@@ -3,7 +3,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { supportedVisualFileExtensionSet } from "./supportedVisualFormats";
+import { getFileFormatCapability, type FileFormatCapability } from "./formatCapabilities";
+import { isPathWithinDirectory } from "./skimPreviewService";
 
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
@@ -13,6 +14,12 @@ export interface SkimBrowseEntry {
   path: string;
   extension: string;
   label?: string;
+  size: number | null;
+  modifiedAt: string | null;
+  withinAddedDirectory: boolean;
+  formatCapability?: FileFormatCapability;
+  status: "ready" | "loading" | "error";
+  error?: string;
 }
 
 export interface SkimBreadcrumb {
@@ -43,7 +50,11 @@ const toDriveEntry = (root: string, label = ""): SkimBrowseEntry => {
     name: normalizedRoot,
     path: normalizedRoot,
     extension: "",
-    label: label.trim() || undefined
+    label: label.trim() || undefined,
+    size: null,
+    modifiedAt: null,
+    withinAddedDirectory: false,
+    status: "ready"
   };
 };
 
@@ -121,7 +132,8 @@ const cancelledResult = (currentPath: string | null): SkimReadResult => ({
 
 export const readSkimLocation = async (
   requestedPath: string | null,
-  shouldCancel: () => boolean = () => false
+  shouldCancel: () => boolean = () => false,
+  addedDirectoryPaths: string[] = []
 ): Promise<SkimReadResult> => {
   if (shouldCancel()) {
     return cancelledResult(requestedPath);
@@ -155,21 +167,48 @@ export const readSkimLocation = async (
   }
 
   const entries: SkimBrowseEntry[] = [];
-  for (const entry of directoryEntries) {
-    if (shouldCancel()) {
-      return cancelledResult(directoryPath);
-    }
-    if (entry.isSymbolicLink()) {
-      continue;
-    }
-    const entryPath = path.join(directoryPath, entry.name);
-    if (entry.isDirectory()) {
-      entries.push({ kind: "folder", name: entry.name, path: entryPath, extension: "" });
-      continue;
-    }
-    const extension = path.extname(entry.name).toLocaleLowerCase();
-    if (entry.isFile() && supportedVisualFileExtensionSet.has(extension)) {
-      entries.push({ kind: "file", name: entry.name, path: entryPath, extension });
+  for (let index = 0; index < directoryEntries.length; index += 48) {
+    if (shouldCancel()) return cancelledResult(directoryPath);
+    const batchEntries = await Promise.all(directoryEntries.slice(index, index + 48).map(async (entry) => {
+      if (entry.isSymbolicLink()) return null;
+      const entryPath = path.join(directoryPath, entry.name);
+      try {
+        const stats = await fs.lstat(entryPath);
+        if (stats.isSymbolicLink()) return null;
+        const withinAddedDirectory = addedDirectoryPaths.some((addedPath) => isPathWithinDirectory(entryPath, addedPath));
+        if (stats.isDirectory()) {
+          return {
+            kind: "folder",
+            name: entry.name,
+            path: entryPath,
+            extension: "",
+            size: null,
+            modifiedAt: stats.mtime.toISOString(),
+            withinAddedDirectory,
+            status: "ready"
+          } satisfies SkimBrowseEntry;
+        }
+        if (!stats.isFile()) return null;
+        const extension = path.extname(entry.name).toLocaleLowerCase();
+        const formatCapability = getFileFormatCapability(extension);
+        if (!formatCapability?.canBrowse) return null;
+        return {
+          kind: "file",
+          name: entry.name,
+          path: entryPath,
+          extension,
+          size: stats.size,
+          modifiedAt: stats.mtime.toISOString(),
+          withinAddedDirectory,
+          formatCapability,
+          status: "ready"
+        } satisfies SkimBrowseEntry;
+      } catch {
+        return null;
+      }
+    }));
+    for (const entry of batchEntries) {
+      if (entry) entries.push(entry);
     }
   }
 

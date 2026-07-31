@@ -24,7 +24,7 @@ const normalizePathKey = (value: string) => {
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 };
 
-const isWithinDirectory = (candidatePath: string, directoryPath: string) => {
+export const isPathWithinDirectory = (candidatePath: string, directoryPath: string) => {
   const candidateKey = normalizePathKey(candidatePath);
   const directoryKey = normalizePathKey(directoryPath);
   const relativePath = path.relative(directoryKey, candidateKey);
@@ -56,7 +56,7 @@ export const inspectSkimEntry = async (
     extension: actualKind === "file" ? path.extname(normalizedPath).toLowerCase() : "",
     size: actualKind === "file" ? stats.size : 0,
     modifiedAt: stats.mtime.toISOString(),
-    withinAddedDirectory: addedDirectoryPaths.some((directoryPath) => isWithinDirectory(normalizedPath, directoryPath))
+    withinAddedDirectory: addedDirectoryPaths.some((directoryPath) => isPathWithinDirectory(normalizedPath, directoryPath))
   };
 };
 

@@ -1,0 +1,62 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { app } = require("electron");
+
+(async () => {
+  const {
+    fileFormatCapabilities,
+    fileFormatCapabilityByExtension,
+    skimBrowsableFileExtensionSet
+  } = require("../dist-electron/formatCapabilities.js");
+  const { supportedVisualFileExtensionSet } = require("../dist-electron/supportedVisualFormats.js");
+  const { isSupportedImageFilePath } = require("../dist-electron/imageScanner.js");
+
+  assert.equal(fileFormatCapabilities.length, fileFormatCapabilityByExtension.size);
+  assert.equal(fileFormatCapabilities.every((capability) => capability.extension.startsWith(".")), true);
+  assert.equal(fileFormatCapabilities.every((capability) => capability.canBrowse), true);
+
+  const visualCapabilities = fileFormatCapabilities.filter((capability) => capability.category === "visual");
+  const nonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual");
+  assert.equal(visualCapabilities.length, 14);
+  assert.equal(nonVisualCapabilities.length, 59);
+  assert.equal(visualCapabilities.every((capability) => (
+    capability.canSearch
+    && capability.canThumbnail
+    && capability.previewKind === "image"
+    && capability.canAIIndex
+  )), true);
+  assert.equal(visualCapabilities.filter((capability) => capability.canDirectPreview).length, 7);
+  assert.equal(nonVisualCapabilities.every((capability) => (
+    !capability.canSearch
+    && !capability.canThumbnail
+    && capability.previewKind === "fileInfo"
+    && !capability.canDirectPreview
+    && !capability.canAIIndex
+  )), true);
+  assert.deepEqual(
+    [...supportedVisualFileExtensionSet].sort(),
+    visualCapabilities.map((capability) => capability.extension).sort()
+  );
+  assert.equal(skimBrowsableFileExtensionSet.size, 73);
+  assert.equal(isSupportedImageFilePath("C:\\asset.png"), true);
+  assert.equal(isSupportedImageFilePath("C:\\notes.txt"), false);
+  assert.equal(isSupportedImageFilePath("C:\\document.docx"), false);
+
+  const iconDirectory = path.join(__dirname, "..", "src", "renderer", "assets", "icons");
+  for (const capability of nonVisualCapabilities) {
+    assert.equal(fs.existsSync(path.join(iconDirectory, `${capability.iconName}.svg`)), true, capability.iconName);
+  }
+
+  console.log(JSON.stringify({
+    centralCapabilitiesUnique: true,
+    visualSearchBoundaryPreserved: true,
+    nonVisualBrowseOnlyBoundaryPreserved: true,
+    formalVisualScannerBoundaryPreserved: true,
+    skimWhitelistCount: skimBrowsableFileExtensionSet.size,
+    formatIconsVerified: nonVisualCapabilities.length
+  }));
+})().then(() => app.exit(0)).catch((error) => {
+  console.error(error);
+  app.exit(1);
+});

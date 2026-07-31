@@ -277,10 +277,6 @@ const PreviewWindowApp = () => {
             }
             setShowPreviewLoadingIndicator(false);
             setIsPreviewLoading(false);
-            if (previewData.provider === "image" && previewData.info) {
-              setShowInfoFallback(true);
-              return;
-            }
             window.imageEverything?.preview.contentSize({
               sessionId: previewData.sessionId,
               filePath: previewData.filePath,
@@ -300,6 +296,10 @@ const PreviewWindowApp = () => {
             }
             setShowPreviewLoadingIndicator(false);
             setIsPreviewLoading(false);
+            if (previewData.provider === "image" && previewData.info) {
+              setShowInfoFallback(true);
+              return;
+            }
             window.imageEverything?.preview.contentSize({
               sessionId: previewData.sessionId,
               filePath: previewData.filePath,

@@ -151,7 +151,7 @@ export const enUS = defineLocale({
   "skim.exit": "Exit Skim",
   "skim.computer": "This PC",
   "skim.loading": "Reading this location…",
-  "skim.empty": "No folders or visual files are available here",
+  "skim.empty": "No folders or supported files are available here",
   "skim.entryCount": "{count} items",
   "skim.searchElsewhere": "Find with Skim",
   "skim.feedbackLabel": "Skim status",

@@ -7,6 +7,7 @@ import { addDirectoryCandidates, createCancelledDirectoryAddResult, type Directo
 import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { startNativeFileDrag } from "./fileDragService";
+import { getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
 import { isSupportedImageFilePath, scanImageDirectories, type ScannedImageFile } from "./imageScanner";
@@ -1621,7 +1622,7 @@ const registerLocalImageProtocol = () => {
 
   protocol.handle("cap7ce", async (request) => {
     const url = new URL(request.url);
-    if (url.hostname !== "thumbnail" && url.hostname !== "image") {
+    if (url.hostname !== "thumbnail" && url.hostname !== "image" && url.hostname !== "skim-image") {
       return new Response("Not found", { status: 404 });
     }
 
@@ -1631,6 +1632,12 @@ const registerLocalImageProtocol = () => {
     }
 
     try {
+      if (url.hostname === "skim-image") {
+        if (!getFileFormatCapability(path.extname(filePath).toLowerCase())?.canDirectPreview) {
+          return new Response("Skim source preview is unavailable", { status: 415 });
+        }
+        return net.fetch(pathToFileURL(filePath).toString());
+      }
       if (url.hostname === "image") {
         if (await shouldUseSourceFileForPreview(filePath)) {
           return net.fetch(pathToFileURL(filePath).toString());
@@ -2432,7 +2439,10 @@ ipcMain.handle("skim:read", async (_event, request: unknown) => {
   const task = skimReadTasks.get(taskId) ?? { cancelled: false };
   skimReadTasks.set(taskId, task);
   try {
-    const result = await readSkimLocation(requestedPath, () => task.cancelled);
+    const addedDirectoryPaths = requestedPath === null
+      ? []
+      : (await listDirectories()).map((directory) => directory.path);
+    const result = await readSkimLocation(requestedPath, () => task.cancelled, addedDirectoryPaths);
     return { taskId, ...result };
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;

@@ -1,19 +1,8 @@
-export const supportedVisualFileExtensions = [
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".webp",
-  ".bmp",
-  ".tif",
-  ".tiff",
-  ".gif",
-  ".svg",
-  ".pdf",
-  ".psd",
-  ".ai",
-  ".eps",
-  ".cdr"
-] as const;
+import { fileFormatCapabilities } from "./formatCapabilities";
+
+export const supportedVisualFileExtensions = fileFormatCapabilities
+  .filter((capability) => capability.category === "visual" && capability.canSearch)
+  .map((capability) => capability.extension);
 
 export const supportedVisualFileExtensionSet: ReadonlySet<string> = new Set(
   supportedVisualFileExtensions

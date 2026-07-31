@@ -151,7 +151,7 @@ export const zhCN = {
   "skim.exit": "退出轻阅",
   "skim.computer": "此电脑",
   "skim.loading": "正在读取当前位置…",
-  "skim.empty": "当前位置没有可显示的文件夹或视觉文件",
+  "skim.empty": "当前位置没有可显示的文件夹或支持文件",
   "skim.entryCount": "{count} 个项目",
   "skim.searchElsewhere": "在轻阅中查找",
   "skim.feedbackLabel": "轻阅状态",

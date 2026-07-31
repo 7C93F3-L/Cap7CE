@@ -140,12 +140,33 @@ export interface DirectoryAddResult {
 
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
+export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
+export type FilePreviewKind = "image" | "fileInfo";
+
+export interface FileFormatCapability {
+  extension: string;
+  category: FileFormatCategory;
+  iconName: string;
+  canBrowse: boolean;
+  canSearch: boolean;
+  canThumbnail: boolean;
+  previewKind: FilePreviewKind;
+  canDirectPreview: boolean;
+  canAIIndex: boolean;
+}
+
 export interface SkimBrowseEntry {
   kind: SkimBrowseEntryKind;
   name: string;
   path: string;
   extension: string;
   label?: string;
+  size: number | null;
+  modifiedAt: string | null;
+  withinAddedDirectory: boolean;
+  formatCapability?: FileFormatCapability;
+  status: "ready" | "loading" | "error";
+  error?: string;
 }
 
 export interface SkimBreadcrumb {
