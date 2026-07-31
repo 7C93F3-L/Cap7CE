@@ -15,6 +15,16 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
+  provider?: "image" | "fileInfo" | "folderInfo";
+  info?: {
+    kind: "file" | "folder";
+    name: string;
+    path: string;
+    extension: string;
+    size: number;
+    modifiedAt: string;
+    withinAddedDirectory: boolean;
+  };
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";
   appearanceColors: {

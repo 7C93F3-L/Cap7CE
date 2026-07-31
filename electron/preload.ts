@@ -91,7 +91,15 @@ contextBridge.exposeInMainWorld("imageEverything", {
   },
   skim: {
     read: (request: unknown) => ipcRenderer.invoke("skim:read", request),
-    cancel: (taskId: string) => ipcRenderer.invoke("skim:cancel", taskId)
+    cancel: (taskId: string) => ipcRenderer.invoke("skim:cancel", taskId),
+    inspect: (request: unknown) => ipcRenderer.invoke("skim:inspect", request),
+    startFolderStats: (request: unknown) => ipcRenderer.invoke("skim:startFolderStats", request),
+    cancelFolderStats: (sessionId: string) => ipcRenderer.invoke("skim:cancelFolderStats", sessionId),
+    onFolderStats: (callback: (update: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, update: unknown) => callback(update);
+      ipcRenderer.on("skim:folderStats", listener);
+      return () => ipcRenderer.removeListener("skim:folderStats", listener);
+    }
   },
   scan: {
     allDirectories: () => ipcRenderer.invoke("scan:allDirectories"),

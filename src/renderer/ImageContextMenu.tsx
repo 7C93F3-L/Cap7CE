@@ -34,8 +34,11 @@ interface ImageContextMenuProps {
   menuStyle?: CSSProperties;
   compact?: boolean;
   primaryActionLabel: string;
+  openActionLabel?: string;
+  showInFolderActionLabel?: string;
   deleteActionLabel?: string;
   showEditKeywords?: boolean;
+  showDelete?: boolean;
   onPrimaryAction: () => void;
   onOpen: () => void;
   onShowInFolder: () => void;
@@ -60,8 +63,11 @@ const ImageContextMenu = ({
   menuStyle,
   compact = false,
   primaryActionLabel,
+  openActionLabel = t("context.open"),
+  showInFolderActionLabel = t("context.showInFolder"),
   deleteActionLabel = t("context.deleteFile"),
   showEditKeywords = true,
+  showDelete = true,
   onPrimaryAction,
   onOpen,
   onShowInFolder,
@@ -104,10 +110,10 @@ const ImageContextMenu = ({
     >
       <div className="cap7ce-menu-motion-surface">
         <button type="button" onClick={onPrimaryAction}>{primaryActionLabel}</button>
-        <button type="button" onClick={onOpen}>{t("context.open")}</button>
-        <button type="button" onClick={onShowInFolder}>{t("context.showInFolder")}</button>
+        <button type="button" onClick={onOpen}>{openActionLabel}</button>
+        <button type="button" onClick={onShowInFolder}>{showInFolderActionLabel}</button>
         {showEditKeywords && <button type="button" onClick={onEditKeywords}>{t("context.editKeywords")}</button>}
-        <button type="button" onClick={onDeleteFile}>{deleteActionLabel}</button>
+        {showDelete && <button type="button" onClick={onDeleteFile}>{deleteActionLabel}</button>}
       </div>
     </div>,
     document.body

@@ -18,6 +18,7 @@ import { getUserPreferences, updateAlwaysOnTopPreference, updateAppearanceColors
 import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
+import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
@@ -81,6 +82,8 @@ let previewWindowLoaded = false;
 let previewSessionActive = false;
 let activePreviewData: PreviewWindowData | null = null;
 let latestPreviewContentSize: PreviewContentSize | null = null;
+let activeSkimFolderStatsTask: { sessionId: string; path: string; cancelled: boolean } | null = null;
+let latestSkimFolderStatsUpdate: ({ sessionId: string; path: string } & Awaited<ReturnType<typeof collectSkimFolderStats>>) | null = null;
 const userMovedShellBounds = new Map<Cap7CEShellState, Electron.Rectangle>();
 const previewSourceFallbackExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp"]);
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
@@ -200,6 +203,12 @@ const sendActivePreviewData = () => {
     return;
   }
   previewWindow.webContents.send("preview:data", activePreviewData);
+  if (
+    latestSkimFolderStatsUpdate
+    && latestSkimFolderStatsUpdate.sessionId === activePreviewData.sessionId
+  ) {
+    previewWindow.webContents.send("skim:folderStats", latestSkimFolderStatsUpdate);
+  }
 };
 
 const applyLanguagePreference = async (languagePreference: LanguagePreference) => {
@@ -238,6 +247,11 @@ const getPreviewWindowControlState = (): PreviewWindowControlState => ({
 });
 
 const closePreviewSession = () => {
+  if (activeSkimFolderStatsTask) {
+    activeSkimFolderStatsTask.cancelled = true;
+    activeSkimFolderStatsTask = null;
+  }
+  latestSkimFolderStatsUpdate = null;
   clearPreviewMoveSnapCheck();
   if (previewWindow && !previewWindow.isDestroyed()) {
     previewWindow.hide();
@@ -2054,9 +2068,19 @@ ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
     || typeof data.sessionId !== "string"
     || typeof data.filePath !== "string"
     || typeof data.previewUrl !== "string"
+    || (data.provider !== undefined && data.provider !== "image" && data.provider !== "fileInfo" && data.provider !== "folderInfo")
+    || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
     return false;
+  }
+
+  if (activeSkimFolderStatsTask && activeSkimFolderStatsTask.sessionId !== data.sessionId) {
+    activeSkimFolderStatsTask.cancelled = true;
+    activeSkimFolderStatsTask = null;
+  }
+  if (latestSkimFolderStatsUpdate?.sessionId !== data.sessionId) {
+    latestSkimFolderStatsUpdate = null;
   }
 
   createPreviewWindow();
@@ -2436,6 +2460,81 @@ ipcMain.handle("skim:cancel", (_event, taskId: unknown) => {
     return false;
   }
   task.cancelled = true;
+  return true;
+});
+
+ipcMain.handle("skim:inspect", async (_event, request: unknown) => {
+  const candidate = request && typeof request === "object"
+    ? request as { path?: unknown; kind?: unknown }
+    : {};
+  if (
+    typeof candidate.path !== "string"
+    || (candidate.kind !== "file" && candidate.kind !== "folder")
+  ) {
+    throw new Error(t("skim.invalidRequest"));
+  }
+  try {
+    const directories = await listDirectories();
+    return await inspectSkimEntry(candidate.path, candidate.kind, directories.map((directory) => directory.path));
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "EACCES" || code === "EPERM") throw new Error(t("skim.accessDenied"));
+    if (code === "ENOENT" || code === "ENOTDIR" || code === "EINVAL") throw new Error(t("skim.directoryUnavailable"));
+    throw new Error(t("skim.readFailed"));
+  }
+});
+
+ipcMain.handle("skim:startFolderStats", (event, request: unknown) => {
+  const candidate = request && typeof request === "object"
+    ? request as { sessionId?: unknown; path?: unknown }
+    : {};
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof candidate.sessionId !== "string"
+    || typeof candidate.path !== "string"
+    || !activePreviewData
+    || activePreviewData.sessionId !== candidate.sessionId
+    || activePreviewData.filePath !== candidate.path
+    || activePreviewData.provider !== "folderInfo"
+  ) {
+    return false;
+  }
+
+  if (activeSkimFolderStatsTask) activeSkimFolderStatsTask.cancelled = true;
+  const task = { sessionId: candidate.sessionId, path: candidate.path, cancelled: false };
+  activeSkimFolderStatsTask = task;
+  void collectSkimFolderStats(
+    task.path,
+    () => task.cancelled || activeSkimFolderStatsTask !== task,
+    (stats) => {
+      latestSkimFolderStatsUpdate = {
+        sessionId: task.sessionId,
+        path: task.path,
+        ...stats
+      };
+      if (
+        !task.cancelled
+        && activeSkimFolderStatsTask === task
+        && previewWindow
+        && !previewWindow.isDestroyed()
+      ) {
+        previewWindow.webContents.send("skim:folderStats", latestSkimFolderStatsUpdate);
+      }
+    }
+  ).finally(() => {
+    if (activeSkimFolderStatsTask === task) activeSkimFolderStatsTask = null;
+  });
+  return true;
+});
+
+ipcMain.handle("skim:cancelFolderStats", (_event, sessionId: unknown) => {
+  if (typeof sessionId !== "string" || activeSkimFolderStatsTask?.sessionId !== sessionId) {
+    return false;
+  }
+  activeSkimFolderStatsTask.cancelled = true;
+  activeSkimFolderStatsTask = null;
   return true;
 });
 

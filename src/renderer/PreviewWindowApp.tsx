@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { PreviewWindowControlState, PreviewWindowData } from "../shared/types";
+import type { PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
@@ -13,27 +13,51 @@ const defaultPreviewWindowControlState: PreviewWindowControlState = {
 
 const previewLoadingIndicatorDelayMs = 180;
 
+const formatPreviewBytes = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
+};
+
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
   const [displaySrc, setDisplaySrc] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [showInfoFallback, setShowInfoFallback] = useState(false);
   const [showPreviewLoadingIndicator, setShowPreviewLoadingIndicator] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
   const [windowControlState, setWindowControlState] = useState(defaultPreviewWindowControlState);
+  const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const targetSessionIdRef = useRef("");
+  const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.preview.onData((data) => {
       setActiveLanguage(data.language);
       setPreviewData(data);
+      targetFilePathRef.current = data.filePath;
       if (targetSessionIdRef.current === data.sessionId) {
         return;
       }
+      setFolderStats(data.provider === "folderInfo" ? {
+        fileCount: 0,
+        folderCount: 0,
+        totalSize: 0,
+        skippedCount: 0,
+        status: "scanning"
+      } : null);
+      setShowInfoFallback(false);
       targetSessionIdRef.current = data.sessionId;
       if (previewLoadingIndicatorTimerRef.current !== null) {
         window.clearTimeout(previewLoadingIndicatorTimerRef.current);
@@ -41,7 +65,13 @@ const PreviewWindowApp = () => {
       setShowPreviewLoadingIndicator(false);
       setDisplaySrc(data.previewUrl);
       setUsingFallback(false);
-      setIsPreviewLoading(true);
+      const isImageProvider = !data.provider || data.provider === "image";
+      setIsPreviewLoading(isImageProvider);
+      if (!isImageProvider) {
+        setContextMenu(null);
+        void window.imageEverything?.preview.getWindowControlState().then(setWindowControlState);
+        return;
+      }
       previewLoadingIndicatorTimerRef.current = window.setTimeout(() => {
         if (targetSessionIdRef.current === data.sessionId) {
           setShowPreviewLoadingIndicator(true);
@@ -55,6 +85,22 @@ const PreviewWindowApp = () => {
     return () => unsubscribe?.();
   }, []);
 
+  useEffect(() => window.imageEverything?.skim.onFolderStats((update) => {
+    if (targetSessionIdRef.current === update.sessionId && targetFilePathRef.current === update.path) {
+      setFolderStats(update);
+    }
+  }), []);
+
+  useEffect(() => {
+    if (!previewData || ((!previewData.provider || previewData.provider === "image") && !showInfoFallback)) return;
+    window.imageEverything?.preview.contentSize({
+      sessionId: previewData.sessionId,
+      filePath: previewData.filePath,
+      width: 640,
+      height: 440
+    });
+  }, [previewData, showInfoFallback]);
+
   useEffect(() => {
     const resetPreviewSession = () => {
       if (document.visibilityState !== "hidden") {
@@ -65,6 +111,7 @@ const PreviewWindowApp = () => {
         previewLoadingIndicatorTimerRef.current = null;
       }
       targetSessionIdRef.current = "";
+      targetFilePathRef.current = "";
       setShowPreviewLoadingIndicator(false);
     };
     document.addEventListener("visibilitychange", resetPreviewSession);
@@ -148,6 +195,9 @@ const PreviewWindowApp = () => {
   }, [previewData]);
 
   const closePreview = () => {
+    if (previewData?.provider === "folderInfo") {
+      void window.imageEverything?.skim.cancelFolderStats(previewData.sessionId);
+    }
     void window.imageEverything?.preview.close();
   };
 
@@ -177,6 +227,12 @@ const PreviewWindowApp = () => {
   if (!previewData) {
     return <main className="preview-window-root" />;
   }
+  const isImageProvider = (!previewData.provider || previewData.provider === "image") && !showInfoFallback;
+  const folderStatsStatus = folderStats?.status === "completed"
+    ? t("skim.previewStats.completed")
+    : folderStats?.status === "cancelled"
+      ? t("skim.previewStats.cancelled")
+      : t("skim.previewStats.scanning");
 
   return (
     <main
@@ -207,7 +263,7 @@ const PreviewWindowApp = () => {
             <span>{t("preview.loading")}</span>
           </div>
         )}
-        <img
+        {isImageProvider ? <img
           key={`${previewData.sessionId}:${displaySrc}`}
           ref={imageRef}
           className={`preview-window-image${isPreviewLoading ? " is-loading" : ""}`}
@@ -221,6 +277,10 @@ const PreviewWindowApp = () => {
             }
             setShowPreviewLoadingIndicator(false);
             setIsPreviewLoading(false);
+            if (previewData.provider === "image" && previewData.info) {
+              setShowInfoFallback(true);
+              return;
+            }
             window.imageEverything?.preview.contentSize({
               sessionId: previewData.sessionId,
               filePath: previewData.filePath,
@@ -251,7 +311,25 @@ const PreviewWindowApp = () => {
             event.stopPropagation();
             setContextMenu(null);
           }}
-        />
+        /> : previewData.info && (
+          <section className="preview-info-panel">
+            <h1>{previewData.info.name}</h1>
+            <dl>
+              <dt>{t("skim.previewPath")}</dt><dd>{previewData.info.path}</dd>
+              <dt>{t("skim.previewType")}</dt><dd>{previewData.info.kind === "folder" ? t("skim.folder") : (previewData.info.extension || t("skim.file"))}</dd>
+              <dt>{t("skim.previewModified")}</dt><dd>{new Date(previewData.info.modifiedAt).toLocaleString()}</dd>
+              {previewData.info.kind === "file" && <><dt>{t("skim.previewSize")}</dt><dd>{formatPreviewBytes(previewData.info.size)}</dd></>}
+              <dt>{t("skim.previewIndexedScope")}</dt><dd>{previewData.info.withinAddedDirectory ? t("common.yes") : t("common.no")}</dd>
+              {previewData.info.kind === "folder" && folderStats && <>
+                <dt>{t("skim.previewStatsStatus")}</dt><dd>{folderStatsStatus}</dd>
+                <dt>{t("skim.previewFileCount")}</dt><dd>{folderStats.fileCount}</dd>
+                <dt>{t("skim.previewFolderCount")}</dt><dd>{folderStats.folderCount}</dd>
+                <dt>{t("skim.previewTotalSize")}</dt><dd>{formatPreviewBytes(folderStats.totalSize)}</dd>
+                <dt>{t("skim.previewSkippedCount")}</dt><dd>{folderStats.skippedCount}</dd>
+              </>}
+            </dl>
+          </section>
+        )}
       </div>
       <WindowControlRail
         actions={previewControlActions}
@@ -297,6 +375,8 @@ const PreviewWindowApp = () => {
               filePath: previewData.filePath
             });
           }}
+          showEditKeywords={!previewData.provider}
+          showDelete={!previewData.provider}
         />
       )}
     </main>

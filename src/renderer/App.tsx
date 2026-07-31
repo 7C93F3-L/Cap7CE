@@ -40,6 +40,7 @@ import type {
   SkimBreadcrumb,
   SkimBrowseEntry,
   SkimBrowseOptions,
+  SkimPreviewInfo,
   SortDirection,
   SortField,
   ThumbnailOptimizationStatus,
@@ -874,6 +875,7 @@ const App = () => {
   const [dialog, setDialog] = useState<DialogName>(null);
   const [directoryToDelete, setDirectoryToDelete] = useState<string | null>(null);
   const [pendingDirectoryAddResult, setPendingDirectoryAddResult] = useState<DirectoryAddResult | null>(null);
+  const directoryAddFeedbackTargetRef = useRef<"search" | "skim">("search");
   const [editingDirectoryId, setEditingDirectoryId] = useState<string | null>(null);
   const [llamaRuntimeSettings, setLlamaRuntimeSettings] = useState<LlamaRuntimeSettings>(emptyLlamaRuntimeSettings);
   const [llamaRuntimeProcessState, setLlamaRuntimeProcessState] = useState<LlamaRuntimeProcessState>(emptyLlamaRuntimeProcessState);
@@ -2339,6 +2341,7 @@ const App = () => {
       return;
     }
     setIsAddingDirectory(true);
+    directoryAddFeedbackTargetRef.current = "search";
     try {
       const result = await window.imageEverything?.directories.selectAndAdd();
       if (!result) {
@@ -2352,6 +2355,32 @@ const App = () => {
       }
     } catch {
       setDirectoryServiceUnavailable(true);
+    } finally {
+      setIsAddingDirectory(false);
+    }
+  };
+
+  const addSkimEntries = async (entries: SkimBrowseEntry[]) => {
+    if (isAddingDirectory || entries.length === 0) return;
+    setIsAddingDirectory(true);
+    directoryAddFeedbackTargetRef.current = "skim";
+    try {
+      const result = await window.imageEverything?.directories.addCandidates({
+        candidates: entries.map((entry) => entry.path)
+      });
+      if (!result) {
+        showSkimFeedback(t("directoryAdd.noChanges"));
+        return;
+      }
+      await applyDirectoryAddResult(result, false);
+      const message = formatDirectoryAddFeedback(result);
+      if (message) showSkimFeedback(message);
+      if (result.conflicts.length > 0) {
+        setPendingDirectoryAddResult(result);
+        setDialog("replaceDirectories");
+      }
+    } catch (error) {
+      showSkimFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("directoryAdd.noChanges")));
     } finally {
       setIsAddingDirectory(false);
     }
@@ -2371,9 +2400,15 @@ const App = () => {
         setDirectoryServiceUnavailable(true);
         return;
       }
-      await applyDirectoryAddResult(result);
+      await applyDirectoryAddResult(result, false);
+      const message = formatDirectoryAddFeedback(result);
+      if (message) {
+        if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(message);
+        else showQuickCommandNotice(message);
+      }
       setPendingDirectoryAddResult(null);
       setDialog(null);
+      directoryAddFeedbackTargetRef.current = "search";
     } catch {
       setDirectoryServiceUnavailable(true);
     } finally {
@@ -2957,6 +2992,7 @@ const App = () => {
 
   const closeSkim = useCallback(() => {
     cancelSkimRead();
+    void window.imageEverything?.preview.close();
     clearSkimFeedback();
     setSkimEntries([]);
     setSkimCurrentPath(null);
@@ -3130,7 +3166,9 @@ const App = () => {
           if (isAddingDirectory) return;
           setPendingDirectoryAddResult(null);
           setDialog(null);
-          showQuickCommandNotice(t("command.cancelled"));
+          if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
+          else showQuickCommandNotice(t("command.cancelled"));
+          directoryAddFeedbackTargetRef.current = "search";
           return;
         }
 
@@ -3525,6 +3563,10 @@ const App = () => {
                 breadcrumbs={skimBreadcrumbs}
                 isLoading={isSkimLoading}
                 feedback={skimFeedback}
+                theme={effectiveTheme}
+                appearanceColors={appearanceColors}
+                shellState={shellState}
+                isAddingDirectory={isAddingDirectory}
                 onOpenRoot={() => void loadSkimLocation(null)}
                 onOpenBreadcrumb={(breadcrumbPath) => void loadSkimLocation(breadcrumbPath)}
                 onOpenEntry={(entry) => {
@@ -3532,6 +3574,8 @@ const App = () => {
                     void loadSkimLocation(entry.path);
                   }
                 }}
+                onAddEntries={(entries) => void addSkimEntries(entries)}
+                onFeedback={showSkimFeedback}
               />
             )}
             {activeView === "settings" && dialog === "deleteDirectory" && (
@@ -3540,7 +3584,7 @@ const App = () => {
                 onCancel={() => setDialog(null)}
               />
             )}
-            {activeView === "settings" && dialog === "replaceDirectories" && pendingDirectoryAddResult && (
+            {(activeView === "settings" || activeView === "skim") && dialog === "replaceDirectories" && pendingDirectoryAddResult && (
               <ReplaceDirectoriesPanel
                 conflictCount={pendingDirectoryAddResult.conflicts.length}
                 replacedCount={pendingDirectoryAddResult.conflicts.reduce(
@@ -3553,7 +3597,9 @@ const App = () => {
                   if (isAddingDirectory) return;
                   setPendingDirectoryAddResult(null);
                   setDialog(null);
-                  showQuickCommandNotice(t("command.cancelled"));
+                  if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
+                  else showQuickCommandNotice(t("command.cancelled"));
+                  directoryAddFeedbackTargetRef.current = "search";
                 }}
               />
             )}
@@ -4262,22 +4308,199 @@ interface SkimViewProps {
   breadcrumbs: SkimBreadcrumb[];
   isLoading: boolean;
   feedback: string;
+  theme: ResolvedThemeMode;
+  appearanceColors: AppearanceColors;
+  shellState: ShellState;
+  isAddingDirectory: boolean;
   onOpenRoot: () => void;
   onOpenBreadcrumb: (path: string) => void;
   onOpenEntry: (entry: SkimBrowseEntry) => void;
+  onAddEntries: (entries: SkimBrowseEntry[]) => void;
+  onFeedback: (message: string) => void;
 }
 
-const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, onOpenRoot, onOpenBreadcrumb, onOpenEntry }: SkimViewProps) => {
+type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] };
+
+const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+  const [activePath, setActivePath] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
+  const selectionAnchorPathRef = useRef<string | null>(null);
+  const previewEntryPathRef = useRef<string | null>(null);
+  const previewSessionCounterRef = useRef(0);
   const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
+  const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
   const entryIcons: Record<SkimBrowseEntry["kind"], string> = {
     drive: skimDiskSvg,
     folder: skimFolderSvg,
     file: skimFileSvg
   };
 
+  useEffect(() => {
+    setSelectedPaths(new Set());
+    setActivePath(null);
+    setContextMenu(null);
+    selectionAnchorPathRef.current = null;
+  }, [currentPath]);
+
+  const selectedEntries = useMemo(
+    () => entries.filter((entry) => selectedPaths.has(entry.path)),
+    [entries, selectedPaths]
+  );
+
+  useEffect(() => {
+    const clearSelectionOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (contextMenu) {
+        setContextMenu(null);
+        return;
+      }
+      if (selectedPaths.size > 0) {
+        setSelectedPaths(new Set());
+        setActivePath(null);
+        selectionAnchorPathRef.current = null;
+      }
+    };
+    window.addEventListener("keydown", clearSelectionOnEscape);
+    return () => window.removeEventListener("keydown", clearSelectionOnEscape);
+  }, [contextMenu, selectedPaths]);
+
+  const selectEntry = useCallback((entry: SkimBrowseEntry, ctrlKey: boolean, shiftKey: boolean) => {
+    if (entry.kind === "drive") {
+      setSelectedPaths(new Set([entry.path]));
+      setActivePath(entry.path);
+      selectionAnchorPathRef.current = entry.path;
+      return;
+    }
+    if (shiftKey && selectionAnchorPathRef.current) {
+      const anchorIndex = entries.findIndex((candidate) => candidate.path === selectionAnchorPathRef.current);
+      const targetIndex = entries.findIndex((candidate) => candidate.path === entry.path);
+      if (anchorIndex >= 0 && targetIndex >= 0) {
+        const rangePaths = entries
+          .slice(Math.min(anchorIndex, targetIndex), Math.max(anchorIndex, targetIndex) + 1)
+          .filter((candidate) => candidate.kind !== "drive")
+          .map((candidate) => candidate.path);
+        setSelectedPaths((current) => new Set(ctrlKey ? [...current, ...rangePaths] : rangePaths));
+        setActivePath(entry.path);
+        return;
+      }
+    }
+    if (ctrlKey) {
+      setSelectedPaths((current) => {
+        const next = new Set(current);
+        if (next.has(entry.path)) next.delete(entry.path);
+        else next.add(entry.path);
+        return next;
+      });
+    } else {
+      setSelectedPaths(new Set([entry.path]));
+    }
+    setActivePath(entry.path);
+    selectionAnchorPathRef.current = entry.path;
+  }, [entries]);
+
+  const openSystemPath = useCallback(async (targetPath: string) => {
+    const result = await window.imageEverything?.files.open(targetPath);
+    if (result) onFeedback(formatDisplayMessage(result));
+  }, [onFeedback]);
+
+  const openEntry = useCallback((entry: SkimBrowseEntry) => {
+    setContextMenu(null);
+    if (entry.kind === "drive" || entry.kind === "folder") {
+      onOpenEntry(entry);
+    } else {
+      void openSystemPath(entry.path);
+    }
+  }, [onOpenEntry, openSystemPath]);
+
+  const openPreview = useCallback(async (entry: SkimBrowseEntry) => {
+    if (entry.kind === "drive") return;
+    setContextMenu(null);
+    try {
+      const info: SkimPreviewInfo | undefined = await window.imageEverything?.skim.inspect({
+        path: entry.path,
+        kind: entry.kind
+      });
+      if (!info) return;
+      const sessionId = `skim:${Date.now()}:${++previewSessionCounterRef.current}`;
+      const provider = entry.kind === "folder" ? "folderInfo" : "image";
+      const previewData: PreviewWindowData = {
+        sessionId,
+        itemId: entry.path,
+        filePath: entry.path,
+        fileName: entry.name,
+        previewUrl: provider === "image" ? toFullImageUrl(entry.path) : "",
+        thumbnailUrl: provider === "image" ? `cap7ce://thumbnail/?path=${encodeURIComponent(entry.path)}` : "",
+        provider,
+        info,
+        theme,
+        language: getActiveLanguage(),
+        appearanceColors
+      };
+      previewEntryPathRef.current = entry.path;
+      const opened = await window.imageEverything?.preview.open(previewData);
+      if (opened && provider === "folderInfo") {
+        void window.imageEverything?.skim.startFolderStats({ sessionId, path: entry.path });
+      }
+    } catch (error) {
+      onFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
+    }
+  }, [appearanceColors, onFeedback, theme]);
+
+  useEffect(() => {
+    const movePreview = (direction: -1 | 1) => {
+      const currentIndex = entries.findIndex((entry) => entry.path === previewEntryPathRef.current);
+      if (currentIndex < 0) return;
+      const nextIndex = Math.min(entries.length - 1, Math.max(0, currentIndex + direction));
+      const nextEntry = entries[nextIndex];
+      if (!nextEntry || nextEntry.kind === "drive" || nextIndex === currentIndex) return;
+      setSelectedPaths(new Set([nextEntry.path]));
+      setActivePath(nextEntry.path);
+      selectionAnchorPathRef.current = nextEntry.path;
+      void openPreview(nextEntry);
+    };
+    const unsubscribeNavigate = window.imageEverything?.preview.onNavigate(movePreview);
+    const unsubscribeClosed = window.imageEverything?.preview.onClosed(() => {
+      previewEntryPathRef.current = null;
+    });
+    return () => {
+      unsubscribeNavigate?.();
+      unsubscribeClosed?.();
+    };
+  }, [entries, openPreview]);
+
+  const openContextMenu = useCallback((event: React.MouseEvent, item: SkimBrowseEntry) => {
+    if (item.kind === "drive") return;
+    event.preventDefault();
+    const contextPaths = selectedPaths.has(item.path) ? selectedPaths : new Set([item.path]);
+    if (!selectedPaths.has(item.path)) setSelectedPaths(contextPaths);
+    setActivePath(item.path);
+    selectionAnchorPathRef.current = item.path;
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      item,
+      items: entries.filter((entry) => contextPaths.has(entry.path))
+    });
+  }, [entries, selectedPaths]);
+
+  const showEntryInFolder = useCallback((item: SkimBrowseEntry, itemCount: number) => {
+    setContextMenu(null);
+    if (itemCount > 1 && currentPath) {
+      void openSystemPath(currentPath);
+    } else {
+      void window.imageEverything?.files.showInFolder(item.path);
+    }
+  }, [currentPath, openSystemPath]);
+
   return (
-    <main className="skim-view cap-skim-view" data-skim-view="true">
+    <main className="skim-view cap-skim-view" data-skim-view="true" onClick={() => {
+      setContextMenu(null);
+      setSelectedPaths(new Set());
+      setActivePath(null);
+      selectionAnchorPathRef.current = null;
+    }}>
       <div className="cap7ce-top-capsule cap7ce-search-capsule cap7ce-search-capsule-unified cap-skim-breadcrumbs">
         <div className="cap-skim-breadcrumb-list" aria-label={t("skim.name")}>
           <button
@@ -4320,21 +4543,42 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, onOp
           {isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.loading")}</div>}
           {!isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.empty")}</div>}
           {entries.map((entry) => {
-            const canEnter = entry.kind === "drive" || entry.kind === "folder";
+            const isSelected = selectedPaths.has(entry.path);
+            const isActive = activePath === entry.path;
             return (
               <button
-                className={`cap-skim-entry cap-skim-entry-${entry.kind}`}
+                className={`cap-skim-entry cap-skim-entry-${entry.kind}${isSelected ? " selected" : ""}${isActive ? " active" : ""}`}
                 type="button"
                 key={`${entry.kind}:${entry.path}`}
                 title={entry.path}
                 aria-label={entry.label ? `${entry.label} ${entry.name}` : entry.name}
+                aria-pressed={isSelected}
+                draggable={entry.kind === "file"}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  selectEntry(entry, event.ctrlKey || event.metaKey, event.shiftKey);
+                  setContextMenu(null);
+                }}
                 onDoubleClick={() => {
-                  if (canEnter && !isLoading) onOpenEntry(entry);
+                  if (!isLoading) openEntry(entry);
+                }}
+                onContextMenu={(event) => openContextMenu(event, entry)}
+                onDragStart={(event) => {
+                  if (entry.kind !== "file") return;
+                  event.preventDefault();
+                  const dragEntries = selectedPaths.has(entry.path)
+                    ? selectedEntries.filter((candidate) => candidate.kind === "file")
+                    : [entry];
+                  window.imageEverything?.files.startDrag(dragEntries.map((candidate) => candidate.path));
                 }}
                 onKeyDown={(event) => {
-                  if (canEnter && !isLoading && event.key === "Enter") {
+                  if (!isLoading && event.key === "Enter") {
                     event.preventDefault();
-                    onOpenEntry(entry);
+                    openEntry(entry);
+                  } else if (!isLoading && entry.kind !== "drive" && event.code === "Space") {
+                    event.preventDefault();
+                    if (!selectedPaths.has(entry.path)) selectEntry(entry, false, false);
+                    void openPreview(entry);
                   }
                 }}
               >
@@ -4347,6 +4591,29 @@ const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, onOp
         </section>
         <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation="vertical" />
       </div>
+      {contextMenu && (
+        <ImageContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          theme={theme}
+          menuStyle={menuStyle}
+          compact={shellState === "micro" || shellState === "mini"}
+          primaryActionLabel={t("skim.addDirectory")}
+          openActionLabel={t("skim.preview")}
+          showInFolderActionLabel={t("skim.openItem")}
+          deleteActionLabel={t("skim.openPath")}
+          showEditKeywords={false}
+          showDelete
+          onPrimaryAction={() => {
+            setContextMenu(null);
+            if (!isAddingDirectory) onAddEntries(contextMenu.items);
+          }}
+          onOpen={() => void openPreview(contextMenu.item)}
+          onShowInFolder={() => openEntry(contextMenu.item)}
+          onEditKeywords={() => undefined}
+          onDeleteFile={() => showEntryInFolder(contextMenu.item, contextMenu.items.length)}
+        />
+      )}
     </main>
   );
 };

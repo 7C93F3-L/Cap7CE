@@ -28,6 +28,8 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
+  provider?: "image" | "fileInfo" | "folderInfo";
+  info?: SkimPreviewInfo;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
   appearanceColors: AppearanceColors;
@@ -170,6 +172,29 @@ export interface SkimReadResponse {
   breadcrumbs: SkimBreadcrumb[];
   entries: SkimBrowseEntry[];
   cancelled: boolean;
+}
+
+export interface SkimPreviewInfo {
+  kind: "file" | "folder";
+  name: string;
+  path: string;
+  extension: string;
+  size: number;
+  modifiedAt: string;
+  withinAddedDirectory: boolean;
+}
+
+export interface SkimFolderStats {
+  fileCount: number;
+  folderCount: number;
+  totalSize: number;
+  skippedCount: number;
+  status: "scanning" | "completed" | "cancelled";
+}
+
+export interface SkimFolderStatsUpdate extends SkimFolderStats {
+  sessionId: string;
+  path: string;
 }
 
 export interface ImageIndexItem {

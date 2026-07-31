@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiIndexProgress, AiIndexRunResponse, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageScanResponse, ImageSearchResponse, IndexQualityStats, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimReadRequest, SkimReadResponse, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { AiIndexProgress, AiIndexRunResponse, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageScanResponse, ImageSearchResponse, IndexQualityStats, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -58,6 +58,10 @@ declare global {
       skim: {
         read: (request: SkimReadRequest) => Promise<SkimReadResponse>;
         cancel: (taskId: string) => Promise<boolean>;
+        inspect: (request: { path: string; kind: "file" | "folder" }) => Promise<SkimPreviewInfo>;
+        startFolderStats: (request: { sessionId: string; path: string }) => Promise<boolean>;
+        cancelFolderStats: (sessionId: string) => Promise<boolean>;
+        onFolderStats: (callback: (update: SkimFolderStatsUpdate) => void) => () => void;
       };
       scan: {
         allDirectories: () => Promise<ImageScanResponse>;
