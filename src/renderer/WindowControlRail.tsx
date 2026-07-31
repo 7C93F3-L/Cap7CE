@@ -1,6 +1,7 @@
 import iconPinOffSvg from "./assets/icons/icon-pin-off.svg?raw";
 import iconPinOnSvg from "./assets/icons/icon-pin-on.svg?raw";
 import iconSettingsSvg from "./assets/icons/icon-settings.svg?raw";
+import iconSkimSvg from "./assets/icons/icon-skim.svg?raw";
 import iconWindowExpandSvg from "./assets/icons/icon-window-expand.svg?raw";
 import iconWindowLineSvg from "./assets/icons/icon-window-line.svg?raw";
 import { t } from "../../electron/localization";
@@ -17,6 +18,10 @@ export interface WindowControlAction {
 
 interface WindowControlRailProps {
   actions: WindowControlAction[];
+  showSkim?: boolean;
+  skimActive?: boolean;
+  skimLabel?: string;
+  onSkim?: () => void;
   showSettings: boolean;
   settingsActive?: boolean;
   settingsLabel?: string;
@@ -38,8 +43,9 @@ const RailSvgIcon = ({ svg, className }: { svg: string; className: string }) => 
   />
 );
 
-const WindowControlRail = ({ actions, showSettings, settingsActive = false, settingsLabel, onSettings }: WindowControlRailProps) => {
+const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skimLabel, onSkim, showSettings, settingsActive = false, settingsLabel, onSettings }: WindowControlRailProps) => {
   const resolvedSettingsLabel = settingsLabel ?? (settingsActive ? t("window.returnSearch") : t("window.openSettings"));
+  const resolvedSkimLabel = skimLabel ?? (skimActive ? t("skim.exit") : t("skim.open"));
 
   return (
     <div className="cap-window-control-rail" data-window-controls="true">
@@ -59,6 +65,18 @@ const WindowControlRail = ({ actions, showSettings, settingsActive = false, sett
         ))}
       </div>
       <div className="cap-window-drag-spacer" aria-hidden="true" />
+      {showSkim && onSkim && (
+        <button
+          className="cap-skim-toggle"
+          type="button"
+          onClick={onSkim}
+          aria-label={resolvedSkimLabel}
+          title={resolvedSkimLabel}
+          aria-pressed={skimActive}
+        >
+          <RailSvgIcon svg={iconSkimSvg} className="cap-svg-icon cap-skim-svg-icon" />
+        </button>
+      )}
       {showSettings && (
         <button
           className="cap-settings-toggle"

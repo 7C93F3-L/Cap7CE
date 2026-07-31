@@ -17,6 +17,7 @@ import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupServi
 import { getUserPreferences, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateThemePreference } from "./preferenceStore";
 import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
+import { readSkimLocation } from "./skimBrowseService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
@@ -2386,6 +2387,56 @@ ipcMain.handle("directories:selectAndAdd", async () => {
 
 ipcMain.handle("directories:addCandidates", async (_event, request: unknown) => {
   return withDirectoryAddSqliteCounts(await addDirectoryCandidatesWithIndexMigration(normalizeDirectoryAddRequest(request)));
+});
+
+interface SkimReadTaskState {
+  cancelled: boolean;
+}
+
+const skimReadTasks = new Map<string, SkimReadTaskState>();
+
+ipcMain.handle("skim:read", async (_event, request: unknown) => {
+  const candidate = request && typeof request === "object"
+    ? request as { taskId?: unknown; path?: unknown }
+    : {};
+  const taskId = typeof candidate.taskId === "string" ? candidate.taskId.trim() : "";
+  const requestedPath = candidate.path === null || typeof candidate.path === "string" ? candidate.path : undefined;
+  if (!taskId || taskId.length > 128 || requestedPath === undefined) {
+    throw new Error(t("skim.invalidRequest"));
+  }
+
+  const task = skimReadTasks.get(taskId) ?? { cancelled: false };
+  skimReadTasks.set(taskId, task);
+  try {
+    const result = await readSkimLocation(requestedPath, () => task.cancelled);
+    return { taskId, ...result };
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "EACCES" || code === "EPERM") {
+      throw new Error(t("skim.accessDenied"));
+    }
+    if (code === "ENOENT" || code === "ENOTDIR" || code === "EINVAL") {
+      throw new Error(t("skim.directoryUnavailable"));
+    }
+    throw new Error(t("skim.readFailed"));
+  } finally {
+    if (skimReadTasks.get(taskId) === task) {
+      skimReadTasks.delete(taskId);
+    }
+  }
+});
+
+ipcMain.handle("skim:cancel", (_event, taskId: unknown) => {
+  if (typeof taskId !== "string" || !taskId.trim() || taskId.length > 128) {
+    return false;
+  }
+  const normalizedTaskId = taskId.trim();
+  const task = skimReadTasks.get(normalizedTaskId);
+  if (!task) {
+    return false;
+  }
+  task.cancelled = true;
+  return true;
 });
 
 ipcMain.handle("directories:updateName", async (_event, id: string, name: string) => {

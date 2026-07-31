@@ -1,4 +1,4 @@
-export type AppView = "home" | "results" | "settings";
+export type AppView = "home" | "results" | "skim" | "settings";
 
 export type ThemeMode = "system" | "light" | "dark";
 
@@ -133,6 +133,42 @@ export interface DirectoryAddResult {
   conflicts: DirectoryAddConflict[];
   replacements: DirectoryAddReplacement[];
   failures: DirectoryAddFailure[];
+  cancelled: boolean;
+}
+
+export type SkimBrowseEntryKind = "drive" | "folder" | "file";
+
+export interface SkimBrowseEntry {
+  kind: SkimBrowseEntryKind;
+  name: string;
+  path: string;
+  extension: string;
+  label?: string;
+}
+
+export interface SkimBreadcrumb {
+  name: string;
+  path: string;
+}
+
+export interface SkimBrowseOptions {
+  query: string;
+  fileFormat: string;
+  sortField: "name" | "modifiedAt";
+  sortDirection: "asc" | "desc";
+}
+
+export interface SkimReadRequest {
+  taskId: string;
+  path: string | null;
+  options: SkimBrowseOptions;
+}
+
+export interface SkimReadResponse {
+  taskId: string;
+  currentPath: string | null;
+  breadcrumbs: SkimBreadcrumb[];
+  entries: SkimBrowseEntry[];
   cancelled: boolean;
 }
 

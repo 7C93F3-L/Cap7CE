@@ -3,6 +3,9 @@ import { createPortal } from "react-dom";
 import iconSignatureCap7CESvg from "./assets/icons/icon-signature-cap7ce.svg?raw";
 import iconSortAscSvg from "./assets/icons/icon-sort-asc.svg?raw";
 import iconSortDescSvg from "./assets/icons/icon-sort-desc.svg?raw";
+import skimDiskSvg from "./assets/icons/skim-disk.svg?raw";
+import skimFileSvg from "./assets/icons/skim-file.svg?raw";
+import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
 import thumbnailPlaceholderSvg from "./assets/icons/thumbnail-placeholder.svg?raw";
 import warningGradientSvg from "./assets/icons/warning-gradient.svg?raw";
 import WaitingIndicator from "./WaitingIndicator";
@@ -34,6 +37,9 @@ import type {
   ShortcutActionPreferences,
   ShortcutActionsUpdateResult,
   ShortcutAvailabilityResult,
+  SkimBreadcrumb,
+  SkimBrowseEntry,
+  SkimBrowseOptions,
   SortDirection,
   SortField,
   ThumbnailOptimizationStatus,
@@ -96,6 +102,10 @@ type KeywordEditScrollSnapshot = {
   search: SearchState;
 };
 type ResultLayoutMode = "micro" | "mini" | "normal";
+type SkimReturnContext = {
+  view: Exclude<AppView, "skim">;
+  shellState: ShellState;
+};
 
 const imageGridGap = 5;
 const imageGridOverscanRows = 2;
@@ -103,6 +113,12 @@ const imageGridOverscanItems = 10;
 const microVisibleThumbCount = 5;
 const miniDefaultColumnCount = 2;
 const imageGridTargetThumbSize = 150;
+const defaultSkimBrowseOptions: SkimBrowseOptions = {
+  query: "",
+  fileFormat: "all",
+  sortField: "name",
+  sortDirection: "asc"
+};
 const shellTransitionDurationMs = 560;
 const viewportMenuGap = 5;
 const DEBUG_WINDOW_BOUNDS = false;
@@ -849,6 +865,12 @@ const App = () => {
   const [isLoadingDirectories, setIsLoadingDirectories] = useState(true);
   const [isAddingDirectory, setIsAddingDirectory] = useState(false);
   const [directoryServiceUnavailable, setDirectoryServiceUnavailable] = useState(false);
+  const [skimEntries, setSkimEntries] = useState<SkimBrowseEntry[]>([]);
+  const [skimCurrentPath, setSkimCurrentPath] = useState<string | null>(null);
+  const [skimBreadcrumbs, setSkimBreadcrumbs] = useState<SkimBreadcrumb[]>([]);
+  const [skimBrowseOptions] = useState<SkimBrowseOptions>(defaultSkimBrowseOptions);
+  const [isSkimLoading, setIsSkimLoading] = useState(false);
+  const [skimFeedback, setSkimFeedback] = useState("");
   const [dialog, setDialog] = useState<DialogName>(null);
   const [directoryToDelete, setDirectoryToDelete] = useState<string | null>(null);
   const [pendingDirectoryAddResult, setPendingDirectoryAddResult] = useState<DirectoryAddResult | null>(null);
@@ -908,6 +930,9 @@ const App = () => {
   const [isContinuingRecognition, setIsContinuingRecognition] = useState(false);
   const [isCancellingRecognition, setIsCancellingRecognition] = useState(false);
   const quickCommandNoticeTimerRef = useRef<number | null>(null);
+  const skimFeedbackTimerRef = useRef<number | null>(null);
+  const skimTaskIdRef = useRef<string | null>(null);
+  const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
   const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
   const scanResultsRefreshedDuringTaskRef = useRef(false);
@@ -999,6 +1024,61 @@ const App = () => {
       quickCommandNoticeTimerRef.current = null;
     }, 3600);
   }, [clearQuickCommandNotice]);
+  const clearSkimFeedback = useCallback(() => {
+    if (skimFeedbackTimerRef.current !== null) {
+      window.clearTimeout(skimFeedbackTimerRef.current);
+      skimFeedbackTimerRef.current = null;
+    }
+    setSkimFeedback("");
+  }, []);
+  const showSkimFeedback = useCallback((message: string) => {
+    clearSkimFeedback();
+    setSkimFeedback(message);
+    skimFeedbackTimerRef.current = window.setTimeout(() => {
+      setSkimFeedback("");
+      skimFeedbackTimerRef.current = null;
+    }, 3600);
+  }, [clearSkimFeedback]);
+  const cancelSkimRead = useCallback(() => {
+    const taskId = skimTaskIdRef.current;
+    skimTaskIdRef.current = null;
+    if (taskId) {
+      void window.imageEverything?.skim.cancel(taskId);
+    }
+    setIsSkimLoading(false);
+  }, []);
+  const loadSkimLocation = useCallback(async (nextPath: string | null) => {
+    const previousTaskId = skimTaskIdRef.current;
+    if (previousTaskId) {
+      void window.imageEverything?.skim.cancel(previousTaskId);
+    }
+    const taskId = window.crypto?.randomUUID?.() ?? `skim-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    skimTaskIdRef.current = taskId;
+    setIsSkimLoading(true);
+    clearSkimFeedback();
+    try {
+      const response = await window.imageEverything?.skim.read({
+        taskId,
+        path: nextPath,
+        options: skimBrowseOptions
+      });
+      if (!response || skimTaskIdRef.current !== taskId || response.taskId !== taskId || response.cancelled) {
+        return;
+      }
+      setSkimEntries(response.entries);
+      setSkimCurrentPath(response.currentPath);
+      setSkimBreadcrumbs(response.breadcrumbs);
+    } catch (error) {
+      if (skimTaskIdRef.current === taskId) {
+        showSkimFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
+      }
+    } finally {
+      if (skimTaskIdRef.current === taskId) {
+        skimTaskIdRef.current = null;
+        setIsSkimLoading(false);
+      }
+    }
+  }, [clearSkimFeedback, showSkimFeedback, skimBrowseOptions]);
   const showCacheInlineFeedback = useCallback((message: string) => {
     if (cacheInlineFeedbackTimerRef.current !== null) {
       window.clearTimeout(cacheInlineFeedbackTimerRef.current);
@@ -1107,6 +1187,12 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onShellStateChanged?.((nextShellState) => {
       if (nextShellState === "standby") {
+        cancelSkimRead();
+        clearSkimFeedback();
+        skimReturnContextRef.current = null;
+        setSkimEntries([]);
+        setSkimCurrentPath(null);
+        setSkimBreadcrumbs([]);
         resetShellBehaviorState();
         resetSettingsViewState(true);
       }
@@ -1130,7 +1216,7 @@ const App = () => {
       void syncAlwaysOnTop();
     });
     return () => unsubscribe?.();
-  }, [resetSettingsViewState, resetShellBehaviorState, syncAlwaysOnTop]);
+  }, [cancelSkimRead, clearSkimFeedback, resetSettingsViewState, resetShellBehaviorState, syncAlwaysOnTop]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onAlwaysOnTopChanged?.((enabled) => {
@@ -1401,6 +1487,14 @@ const App = () => {
     if (cacheInlineFeedbackTimerRef.current !== null) {
       window.clearTimeout(cacheInlineFeedbackTimerRef.current);
       cacheInlineFeedbackTimerRef.current = null;
+    }
+    if (skimFeedbackTimerRef.current !== null) {
+      window.clearTimeout(skimFeedbackTimerRef.current);
+      skimFeedbackTimerRef.current = null;
+    }
+    if (skimTaskIdRef.current) {
+      void window.imageEverything?.skim.cancel(skimTaskIdRef.current);
+      skimTaskIdRef.current = null;
     }
   }, []);
 
@@ -2861,7 +2955,59 @@ const App = () => {
     }
   };
 
+  const closeSkim = useCallback(() => {
+    cancelSkimRead();
+    clearSkimFeedback();
+    setSkimEntries([]);
+    setSkimCurrentPath(null);
+    setSkimBreadcrumbs([]);
+    const returnContext = skimReturnContextRef.current;
+    skimReturnContextRef.current = null;
+    if (returnContext) {
+      setView(returnContext.view);
+      setShellState(returnContext.shellState);
+      return;
+    }
+    setView("results");
+    setShellState("normal");
+  }, [cancelSkimRead, clearSkimFeedback]);
+
+  const openSkim = useCallback(() => {
+    if (view === "skim") {
+      return;
+    }
+    const returnView: Exclude<AppView, "skim"> = view === "home" ? "results" : view;
+    skimReturnContextRef.current = { view: returnView, shellState };
+    setSkimEntries([]);
+    setSkimCurrentPath(null);
+    setSkimBreadcrumbs([]);
+    if (shellState === "settings") {
+      setShellState("normal");
+    }
+    setView("skim");
+    void loadSkimLocation(null);
+  }, [loadSkimLocation, shellState, view]);
+
+  const navigateSkimBack = useCallback(() => {
+    if (skimCurrentPath === null) {
+      closeSkim();
+      return;
+    }
+    const parentBreadcrumb = skimBreadcrumbs.length > 1
+      ? skimBreadcrumbs[skimBreadcrumbs.length - 2]
+      : null;
+    void loadSkimLocation(parentBreadcrumb?.path ?? null);
+  }, [closeSkim, loadSkimLocation, skimBreadcrumbs, skimCurrentPath]);
+
   function openSettings(section?: "quick" | "cmd") {
+    if (view === "skim") {
+      cancelSkimRead();
+      clearSkimFeedback();
+      skimReturnContextRef.current = null;
+      setSkimEntries([]);
+      setSkimCurrentPath(null);
+      setSkimBreadcrumbs([]);
+    }
     if (section === "quick") {
       setQuickActionsExpanded(true);
     }
@@ -2908,12 +3054,16 @@ const App = () => {
 
       event.preventDefault();
       if (event.button === 3) {
+        if (view === "skim") {
+          navigateSkimBack();
+          return;
+        }
         if (shellState === "settings" || view === "settings") {
           closeSettings();
           return;
         }
         navigateBack();
-      } else {
+      } else if (view !== "skim") {
         navigateForward();
       }
     };
@@ -2926,7 +3076,7 @@ const App = () => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [closeSettings, navigateBack, navigateForward, shellState, view]);
+  }, [closeSettings, navigateBack, navigateForward, navigateSkimBack, shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateCapsuleShortcut?.(() => {
@@ -3250,6 +3400,9 @@ const App = () => {
       {shellState !== "standby" && (
         <WindowControlRail
           actions={shellControlActions}
+          showSkim={showShellSettingsToggle}
+          skimActive={view === "skim"}
+          onSkim={view === "skim" ? closeSkim : openSkim}
           settingsActive={shellState === "settings"}
           showSettings={showShellSettingsToggle}
           onSettings={shellState === "settings" ? closeSettings : openSettings}
@@ -3362,6 +3515,23 @@ const App = () => {
                 }}
                 onContextMenuClose={closeContextMenu}
                 onOpenImage={(item) => invokeFileAction("open", item)}
+                onOpenSkim={openSkim}
+              />
+            )}
+            {activeView === "skim" && (
+              <SkimView
+                entries={skimEntries}
+                currentPath={skimCurrentPath}
+                breadcrumbs={skimBreadcrumbs}
+                isLoading={isSkimLoading}
+                feedback={skimFeedback}
+                onOpenRoot={() => void loadSkimLocation(null)}
+                onOpenBreadcrumb={(breadcrumbPath) => void loadSkimLocation(breadcrumbPath)}
+                onOpenEntry={(entry) => {
+                  if (entry.kind === "drive" || entry.kind === "folder") {
+                    void loadSkimLocation(entry.path);
+                  }
+                }}
               />
             )}
             {activeView === "settings" && dialog === "deleteDirectory" && (
@@ -3589,9 +3759,10 @@ interface ResultsViewProps {
   onContextMenu: (event: React.MouseEvent, item: ImageIndexItem, selectedItems: ImageIndexItem[], preview: () => void) => void;
   onContextMenuClose: () => void;
   onOpenImage: (item: ImageIndexItem) => void;
+  onOpenSkim: () => void;
 }
 
-const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onContextMenu, onContextMenuClose, onOpenImage }: ResultsViewProps) => {
+const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -4078,8 +4249,104 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           onStartDrag={startFileDrag}
           onHoverImageChange={updateHoveredImageIntent}
           onLayoutChange={updateGridMetrics}
+          onOpenSkim={onOpenSkim}
         />
       )}
+    </main>
+  );
+};
+
+interface SkimViewProps {
+  entries: SkimBrowseEntry[];
+  currentPath: string | null;
+  breadcrumbs: SkimBreadcrumb[];
+  isLoading: boolean;
+  feedback: string;
+  onOpenRoot: () => void;
+  onOpenBreadcrumb: (path: string) => void;
+  onOpenEntry: (entry: SkimBrowseEntry) => void;
+}
+
+const SkimView = ({ entries, currentPath, breadcrumbs, isLoading, feedback, onOpenRoot, onOpenBreadcrumb, onOpenEntry }: SkimViewProps) => {
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
+  const entryIcons: Record<SkimBrowseEntry["kind"], string> = {
+    drive: skimDiskSvg,
+    folder: skimFolderSvg,
+    file: skimFileSvg
+  };
+
+  return (
+    <main className="skim-view cap-skim-view" data-skim-view="true">
+      <div className="cap7ce-top-capsule cap7ce-search-capsule cap7ce-search-capsule-unified cap-skim-breadcrumbs">
+        <div className="cap-skim-breadcrumb-list" aria-label={t("skim.name")}>
+          <button
+            className="cap7ce-pill cap-skim-breadcrumb"
+            type="button"
+            data-selected={currentPath === null}
+            aria-current={currentPath === null ? "page" : undefined}
+            onClick={onOpenRoot}
+          >
+            {t("skim.computer")}
+          </button>
+          {breadcrumbs.map((breadcrumb, index) => (
+            <span className="cap-skim-breadcrumb-segment" key={breadcrumb.path}>
+              <span className="cap-skim-breadcrumb-separator" aria-hidden="true">›</span>
+              <button
+                className="cap7ce-pill cap-skim-breadcrumb"
+                type="button"
+                data-selected={index === breadcrumbs.length - 1}
+                aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}
+                title={breadcrumb.path}
+                onClick={() => onOpenBreadcrumb(breadcrumb.path)}
+              >
+                {breadcrumb.name}
+              </button>
+            </span>
+          ))}
+        </div>
+        <input
+          className="cap7ce-capsule-input cap-skim-feedback-input"
+          value=""
+          readOnly
+          tabIndex={-1}
+          aria-label={t("skim.feedbackLabel")}
+          placeholder={statusText}
+          title={statusText}
+        />
+      </div>
+      <div className="cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical">
+        <section className="cap-skim-grid cap-main-scroll-viewport" ref={scrollContainerRef} aria-label={t("skim.name")}>
+          {isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.loading")}</div>}
+          {!isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.empty")}</div>}
+          {entries.map((entry) => {
+            const canEnter = entry.kind === "drive" || entry.kind === "folder";
+            return (
+              <button
+                className={`cap-skim-entry cap-skim-entry-${entry.kind}`}
+                type="button"
+                key={`${entry.kind}:${entry.path}`}
+                title={entry.path}
+                aria-label={entry.label ? `${entry.label} ${entry.name}` : entry.name}
+                onDoubleClick={() => {
+                  if (canEnter && !isLoading) onOpenEntry(entry);
+                }}
+                onKeyDown={(event) => {
+                  if (canEnter && !isLoading && event.key === "Enter") {
+                    event.preventDefault();
+                    onOpenEntry(entry);
+                  }
+                }}
+              >
+                <SvgIcon svg={entryIcons[entry.kind]} className="cap-svg-icon cap-skim-entry-icon" />
+                <span className="cap-skim-entry-name">{entry.label || entry.name}</span>
+                {entry.label && <span className="cap-skim-entry-path">{entry.name}</span>}
+              </button>
+            );
+          })}
+        </section>
+        <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation="vertical" />
+      </div>
     </main>
   );
 };
@@ -4605,6 +4872,7 @@ interface VirtualImageGridProps {
   onStartDrag: (event: React.DragEvent, item: ImageIndexItem) => void;
   onHoverImageChange: (imageId: string | null) => void;
   onLayoutChange: (metrics: { left: number; right: number; columnCount: number }) => void;
+  onOpenSkim?: () => void;
 }
 
 type CustomScrollbarMetrics = {
@@ -4893,7 +5161,7 @@ const CustomScrollbar = ({ scrollContainerRef, orientation }: {
   );
 };
 
-const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange }: VirtualImageGridProps) => {
+const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const resizeFrameRef = useRef<number | null>(null);
@@ -5107,7 +5375,12 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIn
     <div className={`image-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
       <section className="image-grid cap-main-scroll-viewport" aria-label={t("search.resultGridLabel")} ref={containerRef} onScroll={handleScroll} onWheel={handleWheel}>
       {searchError && <div className="empty-result-row">{searchError}</div>}
-      {!isSearching && !searchError && images.length === 0 && <div className="empty-result-row">{t("search.emptyResult")}</div>}
+      {!isSearching && !searchError && images.length === 0 && (
+        <button className="empty-result-row cap-skim-empty-entry" type="button" onClick={onOpenSkim}>
+          <span>{t("search.emptyResult")}</span>
+          <span className="cap-skim-empty-action">{t("skim.searchElsewhere")}</span>
+        </button>
+      )}
       {!searchError && images.length > 0 && (
         <div className="virtual-grid-spacer" style={{ height: virtualGrid.totalHeight, width: isHorizontalGrid ? virtualGrid.totalWidth : "100%" }} data-rendered-count={virtualGrid.visibleItems.length} data-column-count={virtualGrid.columnCount}>
           {virtualGrid.visibleItems.map(({ item, top, left }) => (

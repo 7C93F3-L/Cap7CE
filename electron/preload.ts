@@ -89,6 +89,10 @@ contextBridge.exposeInMainWorld("imageEverything", {
     updateName: (id: string, name: string) => ipcRenderer.invoke("directories:updateName", id, name),
     delete: (id: string) => ipcRenderer.invoke("directories:delete", id)
   },
+  skim: {
+    read: (request: unknown) => ipcRenderer.invoke("skim:read", request),
+    cancel: (taskId: string) => ipcRenderer.invoke("skim:cancel", taskId)
+  },
   scan: {
     allDirectories: () => ipcRenderer.invoke("scan:allDirectories"),
     directory: (directoryId: string) => ipcRenderer.invoke("scan:directory", directoryId),
