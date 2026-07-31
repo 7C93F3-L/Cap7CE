@@ -125,6 +125,7 @@ export const zhCN = {
   "preview.pin": "置顶",
   "preview.unpin": "取消置顶",
   "preview.loading": "正在加载预览…",
+  "preview.textTruncated": "仅显示前 1 MB",
   "preview.action": "预览",
   "context.open": "打开",
   "context.showInFolder": "打开路径",

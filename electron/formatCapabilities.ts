@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video";
 
 export interface FileFormatCapability {
   extension: string;
@@ -32,6 +32,12 @@ const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonl
   ["project", ["aep", "bip", "bld", "drp", "ksp", "pr", "veg"]]
 ];
 
+const contentPreviewKinds = new Map<string, FilePreviewKind>([
+  ["txt", "text"], ["md", "text"],
+  ["mp3", "audio"], ["wav", "audio"],
+  ["mp4", "video"], ["mov", "video"]
+]);
+
 const visualCapabilities = visualExtensions.map((extension): FileFormatCapability => ({
   extension,
   category: "visual",
@@ -54,7 +60,7 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
     canIndex: true,
     canSearch: true,
     canThumbnail: false,
-    previewKind: "fileInfo",
+    previewKind: contentPreviewKinds.get(extension) ?? "fileInfo",
     canDirectPreview: false,
     canAIIndex: false
   }))

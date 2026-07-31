@@ -1,7 +1,9 @@
 import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
+import { createReadStream } from "node:fs";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
 import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
@@ -21,6 +23,7 @@ import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
+import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
@@ -1631,6 +1634,7 @@ const registerLocalImageProtocol = () => {
       && url.hostname !== "skim-image"
       && url.hostname !== "skim-thumbnail"
       && url.hostname !== "skim-preview"
+      && url.hostname !== "skim-media"
     ) {
       return new Response("Not found", { status: 404 });
     }
@@ -1641,6 +1645,44 @@ const registerLocalImageProtocol = () => {
     }
 
     try {
+      if (url.hostname === "skim-media") {
+        const extension = path.extname(filePath).toLowerCase();
+        const expectedProvider = skimAudioPreviewExtensions.has(extension)
+          ? "audio"
+          : skimVideoPreviewExtensions.has(extension)
+            ? "video"
+            : null;
+        const normalizedRequestedPath = path.normalize(path.resolve(filePath));
+        const normalizedActivePath = activePreviewData
+          ? path.normalize(path.resolve(activePreviewData.filePath))
+          : "";
+        const samePath = process.platform === "win32"
+          ? normalizedRequestedPath.toLowerCase() === normalizedActivePath.toLowerCase()
+          : normalizedRequestedPath === normalizedActivePath;
+        if (!expectedProvider || !samePath || activePreviewData?.provider !== expectedProvider) {
+          return new Response("Media preview is unavailable", { status: 403 });
+        }
+
+        const stat = await fs.stat(normalizedRequestedPath);
+        if (!stat.isFile()) return new Response("Media preview is unavailable", { status: 404 });
+        const mimeType = getSkimMediaMimeType(extension);
+        if (!mimeType) return new Response("Media preview is unavailable", { status: 415 });
+        const rangeHeader = request.headers.get("range");
+        const byteRange = parseSkimMediaByteRange(stat.size, rangeHeader);
+        if (!byteRange) return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${stat.size}` } });
+        const { start, end, status } = byteRange;
+        const headers: Record<string, string> = {
+          "Accept-Ranges": "bytes",
+          "Content-Length": String(stat.size === 0 ? 0 : end - start + 1),
+          "Content-Type": mimeType,
+          "Cache-Control": "no-store"
+        };
+        if (status === 206) headers["Content-Range"] = `bytes ${start}-${end}/${stat.size}`;
+        const body = request.method === "HEAD" || stat.size === 0
+          ? null
+          : Readable.toWeb(createReadStream(normalizedRequestedPath, { start, end })) as ReadableStream<Uint8Array>;
+        return new Response(body, { status, headers });
+      }
       if (url.hostname === "skim-thumbnail" || url.hostname === "skim-preview") {
         const sessionId = url.searchParams.get("session");
         const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
@@ -2103,8 +2145,15 @@ ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
     || typeof data.sessionId !== "string"
     || typeof data.filePath !== "string"
     || typeof data.previewUrl !== "string"
-    || (data.provider !== undefined && data.provider !== "image" && data.provider !== "fileInfo" && data.provider !== "folderInfo")
+    || (data.provider !== undefined
+      && data.provider !== "image"
+      && data.provider !== "fileInfo"
+      && data.provider !== "folderInfo"
+      && data.provider !== "text"
+      && data.provider !== "audio"
+      && data.provider !== "video")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
+    || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
     return false;
@@ -2539,6 +2588,18 @@ ipcMain.handle("skim:inspect", async (_event, request: unknown) => {
     if (code === "ENOENT" || code === "ENOTDIR" || code === "EINVAL") throw new Error(t("skim.directoryUnavailable"));
     throw new Error(t("skim.readFailed"));
   }
+});
+
+ipcMain.handle("skim:readTextPreview", async (event, filePath: unknown) => {
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof filePath !== "string"
+  ) {
+    throw new Error(t("skim.invalidRequest"));
+  }
+  return readSkimTextPreview(filePath);
 });
 
 ipcMain.handle("skim:startFolderStats", (event, request: unknown) => {

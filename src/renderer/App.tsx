@@ -21,6 +21,7 @@ import type {
   AppearanceColors,
   DirectoryAddResult,
   DirectoryItem,
+  FilePreviewKind,
   GgufModelSettings,
   ImageIndexItem,
   ImageSearchResponse,
@@ -41,6 +42,7 @@ import type {
   SkimBrowseEntry,
   SkimBrowseOptions,
   SkimPreviewInfo,
+  SkimTextPreview,
   SortDirection,
   SortField,
   ThumbnailOptimizationStatus,
@@ -60,6 +62,28 @@ const skimFormatIconSvgByName = Object.fromEntries(
     svg
   ])
 ) as Record<string, string>;
+
+const resolveFileContentPreview = async (filePath: string, previewKind: FilePreviewKind): Promise<{
+  provider: "fileInfo" | "text" | "audio" | "video";
+  previewUrl: string;
+  textPreview?: SkimTextPreview;
+}> => {
+  if (previewKind === "text") {
+    try {
+      const textPreview = await window.imageEverything?.skim.readTextPreview(filePath);
+      if (textPreview) return { provider: "text", previewUrl: "", textPreview };
+    } catch {
+      return { provider: "fileInfo", previewUrl: "" };
+    }
+  }
+  if (previewKind === "audio" || previewKind === "video") {
+    return {
+      provider: previewKind,
+      previewUrl: `cap7ce://skim-media/?path=${encodeURIComponent(filePath)}`
+    };
+  }
+  return { provider: "fileInfo", previewUrl: "" };
+};
 
 type ShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type ShellTransition = {
@@ -3959,6 +3983,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   const selectionAnchorIdRef = useRef<string | null>(selectedImageId);
   const handledClearSelectionRequestIdRef = useRef(clearSelectionRequestId);
   const previewSessionCounterRef = useRef(0);
+  const previewOpenRequestRef = useRef(0);
   const previewIndexRef = useRef<number | null>(null);
   const updateGridMetrics = useCallback((nextMetrics: { left: number; right: number; columnCount: number }) => {
     setGridMetrics((currentMetrics) => {
@@ -4018,6 +4043,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   }, []);
 
   const openPreviewAtIndex = useCallback(async (index: number) => {
+    const openRequestId = ++previewOpenRequestRef.current;
     const image = images[index];
     const previewApi = window.imageEverything?.preview;
     if (!image || !previewApi) {
@@ -4034,16 +4060,19 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     if (image.resultKind === "file") {
       try {
         const info = await window.imageEverything?.skim.inspect({ path: image.filePath, kind: "file" });
-        if (!info) return;
+        if (!info || previewOpenRequestRef.current !== openRequestId) return;
+        const contentPreview = await resolveFileContentPreview(image.filePath, image.previewKind);
+        if (previewOpenRequestRef.current !== openRequestId) return;
         previewData = {
           sessionId: `${image.id}:${Date.now()}:${++previewSessionCounterRef.current}`,
           itemId: image.id,
           filePath: image.filePath,
           fileName: image.fileName,
-          previewUrl: "",
+          previewUrl: contentPreview.previewUrl,
           thumbnailUrl: "",
-          provider: "fileInfo",
+          provider: contentPreview.provider,
           info,
+          textPreview: contentPreview.textPreview,
           theme: contextMenuTheme,
           language: getActiveLanguage(),
           appearanceColors
@@ -4099,6 +4128,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   useEffect(() => {
     const unsubscribeNavigate = window.imageEverything?.preview.onNavigate(movePreview);
     const unsubscribeClosed = window.imageEverything?.preview.onClosed(() => {
+      previewOpenRequestRef.current += 1;
       const lastPreviewIndex = previewIndexRef.current;
       previewIndexRef.current = null;
       setPreviewIndex(null);
@@ -4556,6 +4586,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   const selectionAnchorPathRef = useRef<string | null>(null);
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
+  const previewOpenRequestRef = useRef(0);
   const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
   const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
   const getEntryIcon = (entry: SkimBrowseEntry) => {
@@ -4643,22 +4674,31 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
 
   const openPreview = useCallback(async (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return;
+    const openRequestId = ++previewOpenRequestRef.current;
     setContextMenu(null);
     try {
       const info: SkimPreviewInfo | undefined = await window.imageEverything?.skim.inspect({
         path: entry.path,
         kind: entry.kind
       });
-      if (!info) return;
+      if (!info || previewOpenRequestRef.current !== openRequestId) return;
       const sessionId = `skim:${Date.now()}:${++previewSessionCounterRef.current}`;
+      const imageProviderAvailable = entry.kind === "file"
+        && entry.formatCapability?.previewKind === "image"
+        && entry.formatCapability.canThumbnail
+        && visualSessionId;
+      const contentPreview = entry.kind === "file" && !imageProviderAvailable
+        ? await resolveFileContentPreview(entry.path, entry.formatCapability?.previewKind ?? "fileInfo")
+        : null;
+      if (previewOpenRequestRef.current !== openRequestId) return;
       const provider = entry.kind === "folder"
         ? "folderInfo"
-        : entry.formatCapability?.previewKind === "image" && entry.formatCapability.canThumbnail && visualSessionId
+        : imageProviderAvailable
           ? "image"
-          : "fileInfo";
+          : contentPreview?.provider ?? "fileInfo";
       const skimPreviewUrl = provider === "image"
         ? `cap7ce://skim-preview/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(visualSessionId)}`
-        : "";
+        : contentPreview?.previewUrl ?? "";
       const previewData: PreviewWindowData = {
         sessionId,
         itemId: entry.path,
@@ -4670,6 +4710,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
           : "",
         provider,
         info,
+        textPreview: contentPreview?.textPreview,
         theme,
         language: getActiveLanguage(),
         appearanceColors
@@ -4698,6 +4739,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     };
     const unsubscribeNavigate = window.imageEverything?.preview.onNavigate(movePreview);
     const unsubscribeClosed = window.imageEverything?.preview.onClosed(() => {
+      previewOpenRequestRef.current += 1;
       previewEntryPathRef.current = null;
     });
     return () => {

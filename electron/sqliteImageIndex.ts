@@ -36,7 +36,7 @@ export interface ImageSearchResult {
   fileName: string;
   extension: string;
   iconName: string;
-  previewKind: "image" | "fileInfo";
+  previewKind: "image" | "fileInfo" | "text" | "audio" | "video";
   fileSize: number;
   createdAt: string;
   modifiedAt: string;

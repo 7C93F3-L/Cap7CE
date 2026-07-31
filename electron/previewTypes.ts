@@ -15,7 +15,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video";
   info?: {
     kind: "file" | "folder";
     name: string;
@@ -24,6 +24,11 @@ export interface PreviewWindowData {
     size: number;
     modifiedAt: string;
     withinAddedDirectory: boolean;
+  };
+  textPreview?: {
+    content: string;
+    encoding: "utf-8" | "utf-16le" | "utf-16be";
+    truncated: boolean;
   };
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";

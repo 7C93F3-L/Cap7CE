@@ -38,12 +38,14 @@ const PreviewWindowApp = () => {
   const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const mediaRef = useRef<HTMLMediaElement | null>(null);
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.preview.onData((data) => {
+      mediaRef.current?.pause();
       setActiveLanguage(data.language);
       setPreviewData(data);
       targetFilePathRef.current = data.filePath;
@@ -93,11 +95,32 @@ const PreviewWindowApp = () => {
 
   useEffect(() => {
     if (!previewData || ((!previewData.provider || previewData.provider === "image") && !showInfoFallback)) return;
+    const dimensions = showInfoFallback
+      ? { width: 640, height: 440 }
+      : previewData.provider === "video"
+      ? { width: 960, height: 600 }
+      : previewData.provider === "audio"
+        ? { width: 640, height: 260 }
+        : previewData.provider === "text"
+          ? { width: 760, height: 600 }
+          : { width: 640, height: 440 };
     window.imageEverything?.preview.contentSize({
       sessionId: previewData.sessionId,
       filePath: previewData.filePath,
-      width: 640,
-      height: 440
+      ...dimensions
+    });
+  }, [previewData, showInfoFallback]);
+
+  useEffect(() => {
+    if (
+      showInfoFallback
+      || (previewData?.provider !== "audio" && previewData?.provider !== "video")
+      || !mediaRef.current
+    ) {
+      return;
+    }
+    void mediaRef.current.play().catch(() => {
+      // Keep native controls available when the runtime or codec blocks autoplay.
     });
   }, [previewData, showInfoFallback]);
 
@@ -112,6 +135,8 @@ const PreviewWindowApp = () => {
       }
       targetSessionIdRef.current = "";
       targetFilePathRef.current = "";
+      mediaRef.current?.pause();
+      if (mediaRef.current) mediaRef.current.removeAttribute("src");
       setShowPreviewLoadingIndicator(false);
     };
     document.addEventListener("visibilitychange", resetPreviewSession);
@@ -160,9 +185,11 @@ const PreviewWindowApp = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code === "Space" || event.key === "Escape") {
         event.preventDefault();
+        mediaRef.current?.pause();
         void window.imageEverything?.preview.close();
         return;
       }
+      if (mediaRef.current && document.activeElement === mediaRef.current) return;
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         window.imageEverything?.preview.navigate(-1);
@@ -195,6 +222,7 @@ const PreviewWindowApp = () => {
   }, [previewData]);
 
   const closePreview = () => {
+    mediaRef.current?.pause();
     if (previewData?.provider === "folderInfo") {
       void window.imageEverything?.skim.cancelFolderStats(previewData.sessionId);
     }
@@ -245,7 +273,8 @@ const PreviewWindowApp = () => {
         event.preventDefault();
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
-      onWheel={(event) => {
+      onWheelCapture={(event) => {
+        if (event.target instanceof HTMLElement && event.target.closest(".preview-text-panel")) return;
         event.preventDefault();
         setContextMenu(null);
         const now = window.performance.now();
@@ -311,7 +340,43 @@ const PreviewWindowApp = () => {
             event.stopPropagation();
             setContextMenu(null);
           }}
-        /> : previewData.info && (
+        /> : previewData.provider === "text" && previewData.textPreview && !showInfoFallback ? (
+          <section className="preview-text-panel">
+            <header>
+              <strong>{previewData.fileName}</strong>
+              <span>{previewData.textPreview.encoding}{previewData.textPreview.truncated ? ` · ${t("preview.textTruncated")}` : ""}</span>
+            </header>
+            <pre>{previewData.textPreview.content}</pre>
+          </section>
+        ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
+          previewData.provider === "audio" ? (
+            <section className="preview-media-panel preview-audio-panel">
+              <strong>{previewData.fileName}</strong>
+              <audio
+                key={previewData.sessionId}
+                ref={(element) => { mediaRef.current = element; }}
+                src={previewData.previewUrl}
+                controls
+                autoPlay
+                loop
+                preload="metadata"
+                onError={() => setShowInfoFallback(true)}
+              />
+            </section>
+          ) : (
+            <video
+              key={previewData.sessionId}
+              ref={(element) => { mediaRef.current = element; }}
+              className="preview-video"
+              src={previewData.previewUrl}
+              controls
+              autoPlay
+              loop
+              preload="metadata"
+              onError={() => setShowInfoFallback(true)}
+            />
+          )
+        ) : previewData.info && (
           <section className="preview-info-panel">
             <h1>{previewData.info.name}</h1>
             <dl>

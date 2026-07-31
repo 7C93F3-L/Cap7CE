@@ -43,7 +43,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(result.entries.find((entry) => entry.name === "nested").size, null);
     assert.equal(typeof result.entries.find((entry) => entry.name === "notes.txt").size, "number");
     assert.equal(typeof result.entries.find((entry) => entry.name === "notes.txt").modifiedAt, "string");
-    assert.equal(result.entries.find((entry) => entry.name === "notes.txt").formatCapability.previewKind, "fileInfo");
+    assert.equal(result.entries.find((entry) => entry.name === "notes.txt").formatCapability.previewKind, "text");
     assert.equal(result.entries.find((entry) => entry.name === "visible.png").formatCapability.previewKind, "image");
     assert.equal(result.entries.some((entry) => entry.name === "ignored.exe"), false);
 

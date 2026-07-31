@@ -121,7 +121,7 @@ app.whenReady().then(async () => {
     assert.deepEqual(notesResult.images.map((item) => item.fileName), ["notes.txt"]);
     assert.equal(notesResult.images[0].resultKind, "file");
     assert.equal(notesResult.images[0].iconName, "format-txt");
-    assert.equal(notesResult.images[0].previewKind, "fileInfo");
+    assert.equal(notesResult.images[0].previewKind, "text");
     assert.equal(notesResult.images[0].thumbnailUrl, "");
 
     const pathOnlyQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "path-only-token" }, directories);

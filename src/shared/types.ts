@@ -28,8 +28,9 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video";
   info?: SkimPreviewInfo;
+  textPreview?: SkimTextPreview;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
   appearanceColors: AppearanceColors;
@@ -141,7 +142,7 @@ export interface DirectoryAddResult {
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video";
 
 export interface FileFormatCapability {
   extension: string;
@@ -204,6 +205,12 @@ export interface SkimPreviewInfo {
   size: number;
   modifiedAt: string;
   withinAddedDirectory: boolean;
+}
+
+export interface SkimTextPreview {
+  content: string;
+  encoding: "utf-8" | "utf-16le" | "utf-16be";
+  truncated: boolean;
 }
 
 export interface SkimFolderStats {

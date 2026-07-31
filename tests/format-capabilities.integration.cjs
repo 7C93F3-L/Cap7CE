@@ -32,10 +32,17 @@ const { app } = require("electron");
   assert.equal(nonVisualCapabilities.every((capability) => (
     capability.canSearch
     && !capability.canThumbnail
-    && capability.previewKind === "fileInfo"
     && !capability.canDirectPreview
     && !capability.canAIIndex
   )), true);
+  assert.deepEqual(
+    Object.fromEntries([".txt", ".md", ".mp3", ".wav", ".mp4", ".mov"].map((extension) => [
+      extension,
+      fileFormatCapabilityByExtension.get(extension).previewKind
+    ])),
+    { ".txt": "text", ".md": "text", ".mp3": "audio", ".wav": "audio", ".mp4": "video", ".mov": "video" }
+  );
+  assert.equal(nonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 53);
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
     visualCapabilities.map((capability) => capability.extension).sort()

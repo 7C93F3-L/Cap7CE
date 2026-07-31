@@ -125,6 +125,7 @@ export const enUS = defineLocale({
   "preview.pin": "Pin",
   "preview.unpin": "Unpin",
   "preview.loading": "Loading Preview…",
+  "preview.textTruncated": "Showing first 1 MB",
   "preview.action": "Preview",
   "context.open": "Open",
   "context.showInFolder": "Show in Folder",
