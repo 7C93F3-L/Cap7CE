@@ -6,6 +6,7 @@ export interface FileFormatCapability {
   category: FileFormatCategory;
   iconName: string;
   canBrowse: boolean;
+  canIndex: boolean;
   canSearch: boolean;
   canThumbnail: boolean;
   previewKind: FilePreviewKind;
@@ -36,6 +37,7 @@ const visualCapabilities = visualExtensions.map((extension): FileFormatCapabilit
   category: "visual",
   iconName: "skim-file",
   canBrowse: true,
+  canIndex: true,
   canSearch: true,
   canThumbnail: true,
   previewKind: "image",
@@ -49,6 +51,7 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
     category,
     iconName: `format-${extension}`,
     canBrowse: true,
+    canIndex: true,
     canSearch: false,
     canThumbnail: false,
     previewKind: "fileInfo",
@@ -68,6 +71,10 @@ export const fileFormatCapabilityByExtension: ReadonlyMap<string, FileFormatCapa
 
 export const skimBrowsableFileExtensionSet: ReadonlySet<string> = new Set(
   fileFormatCapabilities.filter((capability) => capability.canBrowse).map((capability) => capability.extension)
+);
+
+export const indexableFileExtensionSet: ReadonlySet<string> = new Set(
+  fileFormatCapabilities.filter((capability) => capability.canIndex).map((capability) => capability.extension)
 );
 
 export const getFileFormatCapability = (extension: string) => (

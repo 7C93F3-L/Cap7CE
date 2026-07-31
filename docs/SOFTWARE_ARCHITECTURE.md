@@ -61,11 +61,11 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | --- | --- |
 | `directoryStore.ts` | 已添加目录配置、目录显示名与持久化 |
 | `directoryAddService.ts` | Settings、skim、拖入与未来入口共用的目录候选转换、规范化、去重、父子包含检测和结构化添加结果 |
-| `formatCapabilities.ts` | 文件扩展名中央能力表，分别声明浏览、正式搜索、缩略图、预览 Provider 和 AI 能力，并作为 skim 白名单及现有视觉格式集合的来源 |
+| `formatCapabilities.ts` | 文件扩展名中央能力表，分别声明浏览、通用索引、正式搜索、缩略图、预览 Provider 和 AI 能力，并作为 skim 白名单、通用文件扫描白名单及现有视觉格式集合的来源 |
 | `skimBrowseService.ts` | skim 的磁盘枚举、当前一级目录元数据读取、skim 白名单过滤、面包屑构建与协作式取消 |
 | `skimPreviewService.ts` | skim 文件/文件夹元数据读取、已添加目录范围判断，以及不跟随链接的受控并发后代统计 |
-| `imageScanner.ts` | 支持格式递归扫描，排除应用缓存目录 |
-| `sqliteImageIndex.ts` | SQLite 初始化、读写、统计、搜索和手动关键词更新 |
+| `imageScanner.ts` | 对已添加目录执行一次受支持格式递归扫描，排除应用缓存目录，同时产出通用文件记录和视觉文件子集 |
+| `sqliteImageIndex.ts` | SQLite 初始化、`files` 通用目录层、`images` 视觉识别层、迁移、读写、统计、搜索和手动关键词更新 |
 | `imageSearchService.ts` | 合并 SQLite 索引结果与已扫描未索引文件，执行文件名、目录、识别状态和排序筛选，并生成缩略图 URL |
 | `visualCacheService.ts` | 模型输入图、预览图、缩略图缓存路径、原子写入，以及三类视觉缓存的统一统计与清理 |
 | `visualRenderService.ts` | 统一调度各格式代表图、模型图和预览图渲染 |
@@ -82,6 +82,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `fileOperationService.ts` | 路径复制与回收站删除 |
 | `fileDragService.ts` | Windows 原生单文件 / 多文件拖拽 |
 | `staleImageCleanupService.ts` | 源文件缺失后的索引与缓存清理 |
+| `staleFileCleanupService.ts` | 通用文件目录层中缺失源文件的记录清理，不触碰视觉缓存 |
 | `preferenceStore.ts` | 主题、颜色、快捷键、标签显隐、待机线、边缘吸附等偏好 |
 | `localization.ts` | 主进程与 Renderer 共用的界面文案 ID、中文语言表和参数插值入口 |
 
@@ -135,7 +136,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 `src/renderer/styles.css` 是 0.7.8 UI 的主要样式入口，包含搜索胶囊、统一窗口壳层、Settings、右键菜单、自绘拾色器、独立预览、关键词编辑、自绘滚动条、等待状态、交互动效、待机线和主题变量。Settings 底部版本号以文字按钮形式打开固定 GitHub Releases 页面，不承担自动版本检查或更新下载。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
 
-格式能力必须保持分层：当前 14 种视觉格式继续允许正式搜索、正式缩略图和 AI 索引；59 种项目关联非视觉格式首期只允许在 skim 浏览、定位、系统打开和拖出，使用文件信息预览，不写正式索引、不生成正式或 skim 缩略图，也不进入 AI。`supportedVisualFormats.ts` 从中央能力表派生视觉集合，避免 skim 白名单扩展意外扩大扫描与识别范围。skim 视觉预览当前只通过 `cap7ce://skim-image` 直接读取 Chromium 可显示的安全源格式，其他视觉格式回退文件信息；该协议不调用正式预览或缩略图渲染服务，独立 skim 缓存留待后续轮次实现。
+格式能力必须保持分层：当前 14 种视觉格式继续允许通用索引、正式搜索、正式缩略图和 AI 索引；59 种项目关联非视觉格式允许 skim 浏览及写入已添加目录的 `files` 通用目录层，但在多格式搜索接入前仍不返回正式搜索结果，不生成正式或 skim 缩略图，也不进入 AI。`supportedVisualFormats.ts` 从中央能力表派生视觉集合，避免通用扫描白名单扩展意外扩大识别范围。skim 视觉预览当前只通过 `cap7ce://skim-image` 直接读取 Chromium 可显示的安全源格式，其他视觉格式回退文件信息；该协议不调用正式预览或缩略图渲染服务，独立 skim 缓存留待后续轮次实现。
 
 当前界面文案通过纯 TypeScript 模块 `electron/localization.ts` 的稳定文案 ID 和 `t()` 入口读取。该模块不依赖 Electron、Node 或 React，因此主进程与 Renderer 可以共用。中文与 `electron/locales/en-US.ts` 英文语言表保持相同键及占位符，语言偏好支持跟随系统、中文和 English，并由主进程持久化后同步到主窗口、独立预览窗口和托盘菜单。切换语言时运行期生成界面标签，避免模块初始化阶段缓存旧语言。AI 提示词不属于界面语言表，但识别任务启动时会固定当前已解析语言并选择独立的中文或英文提示词模板，避免运行期间切换语言造成同一批结果中英混杂；错误分类正则、开发日志、用户文件名与第三方原始错误同样不属于界面语言表，不能为消除硬编码扫描结果而修改其语义。
 
@@ -215,7 +216,7 @@ standby 之外的主窗口形态共用统一壳层与 `WindowControlRail`。控�
 
 Electron 在任何数据路径读取前将 `userData` 固定为 `%APPDATA%\Cap7CE`。当前开发阶段不读取、不兼容、也不迁移旧 `%APPDATA%\Image Everything`；数据库、配置、预览缓存和缩略图缓存均写入 Cap7CE 目录。
 
-SQLite 保存文件路径、文件名、文件大小、目录 ID、识别状态、caption、keywords、AI 错误、手动索引标记等信息。未经过模型识别的文件也可通过 path UPSERT 最小手动索引记录；手动关键词无需伪造 caption，并可立即参与搜索。
+SQLite 在同一个数据库中保持职责分离的双层结构：`files` 保存全部白名单文件的路径、名称、扩展名、大小、时间、目录 ID 与存在状态；`images` 继续只保存视觉文件及识别状态、caption、keywords、AI 错误和手动索引标记。旧数据库迁移时将既有 `images` 记录回填到 `files`，但按目录的通用扫描完成标记不会被伪造，后续目录加载会补一次真实多格式扫描。扫描一次目录即可同时更新两层；目录替换、删除和缺失源文件清理同步维护两层。Settings 的 `indexedCount`、识别统计、待识别任务与现有搜索仍只读取 `images`，因此非视觉文件不会被误算为未识别图片，也不会进入 AI。未经过模型识别的视觉文件仍可通过 path UPSERT 最小手动索引记录；手动关键词无需伪造 caption，并可立即参与搜索。
 
 ## 9. 文件格式支持
 

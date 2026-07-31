@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import initSqlJs from "sql.js";
 import type { Database, SqlJsStatic, SqlValue } from "sql.js";
-import type { ScannedImageFile } from "./imageScanner";
+import type { ScannedFile, ScannedImageFile } from "./imageScanner";
 import { applyKeywordBatchDelta, formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
 
 const requireFromHere = createRequire(__filename);
@@ -196,6 +196,77 @@ const ensureColumn = (database: Database, tableName: string, columnName: string,
   }
 };
 
+const backfillFileCatalogFromImages = (database: Database) => {
+  const migrationKey = "file_catalog_backfill_v1";
+  const migrationCompleted = database.exec(
+    "SELECT value FROM index_metadata WHERE key = :key",
+    { ":key": migrationKey }
+  )[0]?.values[0]?.[0] === "completed";
+  if (migrationCompleted) return;
+
+  database.run("BEGIN TRANSACTION");
+  try {
+    const rows = database.exec(`
+      SELECT file_path, file_name, file_size, created_at, modified_at, indexed_at, directory_id, "exists"
+      FROM images
+    `)[0]?.values ?? [];
+    const statement = database.prepare(`
+      INSERT OR IGNORE INTO files (
+        file_path,
+        file_name,
+        extension,
+        file_size,
+        created_at,
+        modified_at,
+        indexed_at,
+        directory_id,
+        "exists"
+      ) VALUES (
+        :file_path,
+        :file_name,
+        :extension,
+        :file_size,
+        :created_at,
+        :modified_at,
+        :indexed_at,
+        :directory_id,
+        :exists
+      )
+    `);
+    try {
+      for (const row of rows) {
+        const fileName = String(row[1]);
+        statement.run({
+          ":file_path": String(row[0]),
+          ":file_name": fileName,
+          ":extension": path.extname(fileName).toLowerCase(),
+          ":file_size": Number(row[2]),
+          ":created_at": String(row[3]),
+          ":modified_at": String(row[4]),
+          ":indexed_at": String(row[5]),
+          ":directory_id": String(row[6]),
+          ":exists": Number(row[7] ?? 1)
+        });
+        statement.reset();
+      }
+    } finally {
+      statement.free();
+    }
+    database.run(
+      "INSERT OR REPLACE INTO index_metadata (key, value) VALUES (:key, 'completed')",
+      { ":key": migrationKey }
+    );
+    database.run("COMMIT");
+  } catch (error) {
+    try {
+      database.run("ROLLBACK");
+    } catch {
+      // Preserve the original migration error.
+    }
+    throw error;
+  }
+};
+
 const migrate = (database: Database) => {
   database.exec(`
     CREATE TABLE IF NOT EXISTS images (
@@ -222,11 +293,44 @@ const migrate = (database: Database) => {
 
     CREATE INDEX IF NOT EXISTS idx_images_file_name
       ON images (file_name);
+
+    CREATE TABLE IF NOT EXISTS files (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      file_path TEXT NOT NULL UNIQUE,
+      file_name TEXT NOT NULL,
+      extension TEXT NOT NULL,
+      file_size INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      modified_at TEXT NOT NULL,
+      indexed_at TEXT NOT NULL,
+      directory_id TEXT NOT NULL,
+      "exists" INTEGER NOT NULL DEFAULT 1 CHECK ("exists" IN (0, 1))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_files_directory_exists
+      ON files (directory_id, "exists");
+
+    CREATE INDEX IF NOT EXISTS idx_files_file_name
+      ON files (file_name);
+
+    CREATE INDEX IF NOT EXISTS idx_files_extension
+      ON files (extension);
+
+    CREATE TABLE IF NOT EXISTS directory_file_scans (
+      directory_id TEXT PRIMARY KEY,
+      scanned_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS index_metadata (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
 
   ensureColumn(database, "images", "ai_error", "TEXT NOT NULL DEFAULT ''");
   ensureColumn(database, "images", "ai_failed_at", "TEXT");
   ensureColumn(database, "images", "manual_index", "INTEGER NOT NULL DEFAULT 0 CHECK (manual_index IN (0, 1))");
+  backfillFileCatalogFromImages(database);
 };
 
 const firstResultValue = (database: Database, sql: string, params?: Record<string, SqlValue>) => {
@@ -262,7 +366,47 @@ export const getExistingImageCountsByDirectory = async (directoryIds: string[]):
   return counts;
 };
 
-export const writeScannedImagesToIndex = async (directoryIds: string[], images: ScannedImageFile[], indexedAt: string): Promise<Record<string, number>> => {
+export const getCompletedFileScanDirectoryIds = async (directoryIds: string[]): Promise<Set<string>> => {
+  if (directoryIds.length === 0) return new Set();
+  const requestedDirectoryIds = new Set(directoryIds);
+  const database = await loadDatabase();
+  try {
+    const rows = database.exec("SELECT directory_id FROM directory_file_scans")[0]?.values ?? [];
+    return new Set(
+      rows.map((row) => String(row[0])).filter((directoryId) => requestedDirectoryIds.has(directoryId))
+    );
+  } finally {
+    database.close();
+  }
+};
+
+export const getExistingFileCountsByDirectory = async (directoryIds: string[]): Promise<Record<string, number>> => {
+  const counts: Record<string, number> = Object.fromEntries(directoryIds.map((id) => [id, 0]));
+  if (directoryIds.length === 0) return counts;
+  const database = await loadDatabase();
+  try {
+    const statement = database.prepare('SELECT COUNT(*) FROM files WHERE directory_id = :directory_id AND "exists" = 1');
+    try {
+      for (const directoryId of directoryIds) {
+        const value = statement.get({ ":directory_id": directoryId })[0];
+        counts[directoryId] = typeof value === "number" ? value : 0;
+        statement.reset();
+      }
+    } finally {
+      statement.free();
+    }
+    return counts;
+  } finally {
+    database.close();
+  }
+};
+
+export const writeScannedImagesToIndex = async (
+  directoryIds: string[],
+  images: ScannedImageFile[],
+  indexedAt: string,
+  files?: ScannedFile[]
+): Promise<Record<string, number>> => {
   const database = await loadDatabase();
 
   try {
@@ -315,11 +459,63 @@ export const writeScannedImagesToIndex = async (directoryIds: string[], images: 
         "exists" = 1
     `);
 
+    const markMissingFileStatement = files === undefined ? null : database.prepare(`
+      UPDATE files
+      SET "exists" = 0,
+          indexed_at = :indexed_at
+      WHERE directory_id = :directory_id
+    `);
+    const upsertFileStatement = database.prepare(`
+      INSERT INTO files (
+        file_path,
+        file_name,
+        extension,
+        file_size,
+        created_at,
+        modified_at,
+        indexed_at,
+        directory_id,
+        "exists"
+      ) VALUES (
+        :file_path,
+        :file_name,
+        :extension,
+        :file_size,
+        :created_at,
+        :modified_at,
+        :indexed_at,
+        :directory_id,
+        1
+      )
+      ON CONFLICT(file_path) DO UPDATE SET
+        file_name = excluded.file_name,
+        extension = excluded.extension,
+        file_size = excluded.file_size,
+        created_at = excluded.created_at,
+        modified_at = excluded.modified_at,
+        indexed_at = excluded.indexed_at,
+        directory_id = excluded.directory_id,
+        "exists" = 1
+    `);
+    const markFileScanStatement = files === undefined ? null : database.prepare(`
+      INSERT INTO directory_file_scans (directory_id, scanned_at)
+      VALUES (:directory_id, :scanned_at)
+      ON CONFLICT(directory_id) DO UPDATE SET scanned_at = excluded.scanned_at
+    `);
+
     try {
       for (const directoryId of directoryIds) {
         markMissingStatement.run({
           ":directory_id": directoryId,
           ":indexed_at": indexedAt
+        });
+        markMissingFileStatement?.run({
+          ":directory_id": directoryId,
+          ":indexed_at": indexedAt
+        });
+        markFileScanStatement?.run({
+          ":directory_id": directoryId,
+          ":scanned_at": indexedAt
         });
       }
 
@@ -336,9 +532,28 @@ export const writeScannedImagesToIndex = async (directoryIds: string[], images: 
           ":directory_id": image.directory_id
         });
       }
+      const catalogFiles: Array<ScannedFile | (ScannedImageFile & { extension: string })> = files ?? images.map((image) => ({
+        ...image,
+        extension: path.extname(image.file_name).toLowerCase()
+      }));
+      for (const file of catalogFiles) {
+        upsertFileStatement.run({
+          ":file_path": file.file_path,
+          ":file_name": file.file_name,
+          ":extension": file.extension,
+          ":file_size": file.file_size,
+          ":created_at": file.created_at,
+          ":modified_at": file.modified_at,
+          ":indexed_at": indexedAt,
+          ":directory_id": file.directory_id
+        });
+      }
     } finally {
       markMissingStatement.free();
       upsertStatement.free();
+      markMissingFileStatement?.free();
+      upsertFileStatement.free();
+      markFileScanStatement?.free();
     }
 
     database.run("COMMIT");
@@ -448,6 +663,7 @@ export const deleteDirectoryImages = async (directoryId: string): Promise<string
       }
     )[0]?.values ?? []).map((row) => String(row[0]));
 
+    database.run("BEGIN TRANSACTION");
     database.run(
       `
         DELETE FROM images
@@ -457,8 +673,18 @@ export const deleteDirectoryImages = async (directoryId: string): Promise<string
         ":directory_id": directoryId
       }
     );
+    database.run("DELETE FROM files WHERE directory_id = :directory_id", { ":directory_id": directoryId });
+    database.run("DELETE FROM directory_file_scans WHERE directory_id = :directory_id", { ":directory_id": directoryId });
+    database.run("COMMIT");
     await saveDatabase(database);
     return filePaths;
+  } catch (error) {
+    try {
+      database.run("ROLLBACK");
+    } catch {
+      // Preserve the original database error.
+    }
+    throw error;
   } finally {
     database.close();
   }
@@ -480,18 +706,38 @@ export const reassignDirectoryImages = async (
       SET directory_id = :to_directory_id
       WHERE directory_id = :from_directory_id
     `);
+    const fileStatement = database.prepare(`
+      UPDATE files
+      SET directory_id = :to_directory_id
+      WHERE directory_id = :from_directory_id
+    `);
+    const clearScanStatement = database.prepare(`
+      DELETE FROM directory_file_scans
+      WHERE directory_id = :directory_id
+    `);
     try {
       for (const replacement of effectiveReplacements) {
+        clearScanStatement.run({ ":directory_id": replacement.toDirectoryId });
+        clearScanStatement.reset();
         for (const fromDirectoryId of replacement.fromDirectoryIds) {
           statement.run({
             ":to_directory_id": replacement.toDirectoryId,
             ":from_directory_id": fromDirectoryId
           });
           statement.reset();
+          fileStatement.run({
+            ":to_directory_id": replacement.toDirectoryId,
+            ":from_directory_id": fromDirectoryId
+          });
+          fileStatement.reset();
+          clearScanStatement.run({ ":directory_id": fromDirectoryId });
+          clearScanStatement.reset();
         }
       }
     } finally {
       statement.free();
+      fileStatement.free();
+      clearScanStatement.free();
     }
     database.run("COMMIT");
     await saveDatabase(database);
@@ -534,23 +780,34 @@ export const deleteImagesByFilePaths = async (filePaths: string[]): Promise<void
 
   try {
     const targetPathKeys = new Set(filePaths.map(normalizeImageFilePathKey));
-    const storedFilePaths = (database.exec("SELECT file_path FROM images")[0]?.values ?? [])
+    const storedImageFilePaths = (database.exec("SELECT file_path FROM images")[0]?.values ?? [])
       .map((row) => String(row[0]))
       .filter((filePath) => targetPathKeys.has(normalizeImageFilePathKey(filePath)));
-    if (storedFilePaths.length === 0) {
+    const storedCatalogFilePaths = (database.exec("SELECT file_path FROM files")[0]?.values ?? [])
+      .map((row) => String(row[0]))
+      .filter((filePath) => targetPathKeys.has(normalizeImageFilePathKey(filePath)));
+    if (storedImageFilePaths.length === 0 && storedCatalogFilePaths.length === 0) {
       return;
     }
     database.run("BEGIN TRANSACTION");
-    const statement = database.prepare(`
+    const imageStatement = database.prepare(`
       DELETE FROM images
       WHERE file_path = :file_path
     `);
+    const fileStatement = database.prepare(`
+      DELETE FROM files
+      WHERE file_path = :file_path
+    `);
     try {
-      for (const filePath of storedFilePaths) {
-        statement.run({ ":file_path": filePath });
+      for (const filePath of storedImageFilePaths) {
+        imageStatement.run({ ":file_path": filePath });
+      }
+      for (const filePath of storedCatalogFilePaths) {
+        fileStatement.run({ ":file_path": filePath });
       }
     } finally {
-      statement.free();
+      imageStatement.free();
+      fileStatement.free();
     }
     database.run("COMMIT");
     await saveDatabase(database);
@@ -697,6 +954,40 @@ const upsertImageManualMetadataRecord = (
   );
 };
 
+const upsertFileCatalogFromImageRecord = (
+  database: Database,
+  image: ScannedImageFile,
+  indexedAt: string
+) => {
+  database.run(`
+    INSERT INTO files (
+      file_path, file_name, extension, file_size, created_at, modified_at,
+      indexed_at, directory_id, "exists"
+    ) VALUES (
+      :file_path, :file_name, :extension, :file_size, :created_at, :modified_at,
+      :indexed_at, :directory_id, 1
+    )
+    ON CONFLICT(file_path) DO UPDATE SET
+      file_name = excluded.file_name,
+      extension = excluded.extension,
+      file_size = excluded.file_size,
+      created_at = excluded.created_at,
+      modified_at = excluded.modified_at,
+      indexed_at = excluded.indexed_at,
+      directory_id = excluded.directory_id,
+      "exists" = 1
+  `, {
+    ":file_path": image.file_path,
+    ":file_name": image.file_name,
+    ":extension": path.extname(image.file_name).toLowerCase(),
+    ":file_size": image.file_size,
+    ":created_at": image.created_at,
+    ":modified_at": image.modified_at,
+    ":indexed_at": indexedAt,
+    ":directory_id": image.directory_id
+  });
+};
+
 export const upsertImageManualMetadata = async (
   image: ScannedImageFile,
   caption: string,
@@ -707,6 +998,7 @@ export const upsertImageManualMetadata = async (
 
   try {
     upsertImageManualMetadataRecord(database, image, caption, keywords, indexedAt, false);
+    upsertFileCatalogFromImageRecord(database, image, indexedAt);
     await saveDatabase(database);
   } finally {
     database.close();
@@ -753,14 +1045,16 @@ export const updateImageKeywordsBatch = async (
         normalizedTargetKeywords
       );
 
+      const normalizedImage = { ...target.image, file_path: existingFilePath };
       upsertImageManualMetadataRecord(
         database,
-        { ...target.image, file_path: existingFilePath },
+        normalizedImage,
         "",
         nextKeywords,
         indexedAt,
         true
       );
+      upsertFileCatalogFromImageRecord(database, normalizedImage, indexedAt);
     }
 
     database.run("COMMIT");
@@ -862,6 +1156,55 @@ export const listIndexedImageFilePaths = async (directoryId?: string): Promise<s
     )[0]?.values ?? [];
 
     return rows.map((row) => String(row[0]));
+  } finally {
+    database.close();
+  }
+};
+
+export const listIndexedFilePaths = async (directoryId?: string): Promise<string[]> => {
+  const database = await loadDatabase();
+  try {
+    const rows = database.exec(
+      `
+        SELECT file_path
+        FROM files
+        ${directoryId ? "WHERE directory_id = :directory_id" : ""}
+      `,
+      directoryId ? { ":directory_id": directoryId } : undefined
+    )[0]?.values ?? [];
+    return rows.map((row) => String(row[0]));
+  } finally {
+    database.close();
+  }
+};
+
+export const deleteFilesByFilePaths = async (filePaths: string[]): Promise<void> => {
+  if (filePaths.length === 0) return;
+  const database = await loadDatabase();
+  try {
+    const targetPathKeys = new Set(filePaths.map(normalizeImageFilePathKey));
+    const storedFilePaths = (database.exec("SELECT file_path FROM files")[0]?.values ?? [])
+      .map((row) => String(row[0]))
+      .filter((filePath) => targetPathKeys.has(normalizeImageFilePathKey(filePath)));
+    if (storedFilePaths.length === 0) return;
+    database.run("BEGIN TRANSACTION");
+    const statement = database.prepare("DELETE FROM files WHERE file_path = :file_path");
+    try {
+      for (const filePath of storedFilePaths) {
+        statement.run({ ":file_path": filePath });
+      }
+    } finally {
+      statement.free();
+    }
+    database.run("COMMIT");
+    await saveDatabase(database);
+  } catch (error) {
+    try {
+      database.run("ROLLBACK");
+    } catch {
+      // Preserve the original database error.
+    }
+    throw error;
   } finally {
     database.close();
   }

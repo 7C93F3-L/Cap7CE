@@ -16,8 +16,9 @@ import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRunt
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateThemePreference } from "./preferenceStore";
-import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
+import { deleteDirectoryImages, ensureImageDatabase, getCompletedFileScanDirectoryIds, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
+import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
@@ -2274,21 +2275,28 @@ ipcMain.on("file:startDrag", (event, filePaths: string[]) => {
 });
 
 const withSqliteImageCounts = async (directories: PersistedDirectory[]) => {
-  const counts = await getExistingImageCountsByDirectory(directories.map((directory) => directory.id));
-  const directoriesWithoutCounts = directories.filter(
+  const directoryIds = directories.map((directory) => directory.id);
+  const counts = await getExistingImageCountsByDirectory(directoryIds);
+  const completedFileScanDirectoryIds = await getCompletedFileScanDirectoryIds(directoryIds);
+  const directoryIdsNeedingScan = new Set(directories.filter(
     (directory) => (
-      (counts[directory.id] ?? 0) === 0
-      && (directory.lastScannedAt === undefined || directory.indexedCount > 0)
+      !completedFileScanDirectoryIds.has(directory.id)
+      || (
+        (counts[directory.id] ?? 0) === 0
+        && (directory.lastScannedAt === undefined || directory.indexedCount > 0)
+      )
     )
-  );
+  ).map((directory) => directory.id));
+  const directoriesNeedingScan = directories.filter((directory) => directoryIdsNeedingScan.has(directory.id));
   let currentDirectories = directories;
 
-  if (directoriesWithoutCounts.length > 0) {
-    const scanResult = await scanImageDirectories(directoriesWithoutCounts);
+  if (directoriesNeedingScan.length > 0) {
+    const scanResult = await scanImageDirectories(directoriesNeedingScan);
     const scannedCounts = await writeScannedImagesToIndex(
-      directoriesWithoutCounts.map((directory) => directory.id),
+      directoriesNeedingScan.map((directory) => directory.id),
       scanResult.images,
-      scanResult.scannedAt
+      scanResult.scannedAt,
+      scanResult.files
     );
     Object.assign(counts, scannedCounts);
     enqueueScannedThumbnails(scanResult.images);
@@ -2568,12 +2576,15 @@ ipcMain.handle("scan:allDirectories", async () => {
   cancelAiIndexRequested = false;
   const cleanupResult = await cleanupMissingIndexedImages();
   cleanupResult.errors.forEach((message) => console.warn(`[stale-image-cleanup] ${message}`));
+  const fileCleanupResult = await cleanupMissingIndexedFiles();
+  fileCleanupResult.errors.forEach((message) => console.warn(`[stale-file-cleanup] ${message}`));
   const directories = await listDirectories();
   const scanResult = await scanImageDirectories(directories);
   const counts = await writeScannedImagesToIndex(
     directories.map((directory) => directory.id),
     scanResult.images,
-    scanResult.scannedAt
+    scanResult.scannedAt,
+    scanResult.files
   );
   const summaries = scanResult.summaries.map((summary) => ({
     ...summary,
@@ -2603,11 +2614,14 @@ ipcMain.handle("scan:directory", async (_event, directoryId: string) => {
 
   const cleanupResult = await cleanupMissingIndexedImages(directory.id);
   cleanupResult.errors.forEach((message) => console.warn(`[stale-image-cleanup] ${message}`));
+  const fileCleanupResult = await cleanupMissingIndexedFiles(directory.id);
+  fileCleanupResult.errors.forEach((message) => console.warn(`[stale-file-cleanup] ${message}`));
   const scanResult = await scanImageDirectories([directory]);
   const counts = await writeScannedImagesToIndex(
     [directory.id],
     scanResult.images,
-    scanResult.scannedAt
+    scanResult.scannedAt,
+    scanResult.files
   );
   const summaries = scanResult.summaries.map((summary) => ({
     ...summary,

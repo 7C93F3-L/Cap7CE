@@ -148,6 +148,7 @@ export interface FileFormatCapability {
   category: FileFormatCategory;
   iconName: string;
   canBrowse: boolean;
+  canIndex: boolean;
   canSearch: boolean;
   canThumbnail: boolean;
   previewKind: FilePreviewKind;
@@ -321,6 +322,7 @@ export interface ImageScanDirectoryResult {
   directory_id: string;
   directory_path: string;
   status: "ready" | "missing" | "error";
+  file_count: number;
   image_count: number;
   skipped_files: number;
   skipped_directories: number;

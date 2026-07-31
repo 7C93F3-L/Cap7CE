@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { DirectoryScanSummary, PersistedDirectory } from "./directoryStore";
+import { getFileFormatCapability } from "./formatCapabilities";
 import { supportedVisualFileExtensionSet } from "./supportedVisualFormats";
 import { isCap7CECachePath } from "./visualCacheService";
 
@@ -15,10 +16,23 @@ export interface ScannedImageFile {
   modified_ms: number;
 }
 
+export interface ScannedFile {
+  directory_id: string;
+  directory_path: string;
+  file_path: string;
+  file_name: string;
+  extension: string;
+  file_size: number;
+  created_at: string;
+  modified_at: string;
+  modified_ms: number;
+}
+
 export interface DirectoryImageScanResult {
   directory_id: string;
   directory_path: string;
   status: "ready" | "missing" | "error";
+  file_count: number;
   image_count: number;
   skipped_files: number;
   skipped_directories: number;
@@ -28,6 +42,7 @@ export interface DirectoryImageScanResult {
 export interface ImageScanResult {
   scannedAt: string;
   directories: DirectoryImageScanResult[];
+  files: ScannedFile[];
   images: ScannedImageFile[];
   summaries: DirectoryScanSummary[];
 }
@@ -38,7 +53,8 @@ export const isSupportedImageFilePath = (filePath: string) => (
   supportedVisualFileExtensionSet.has(path.extname(filePath).toLowerCase())
 );
 
-const scanDirectoryRecursive = async (rootDirectory: PersistedDirectory, currentPath: string): Promise<{ images: ScannedImageFile[]; skippedFiles: number; skippedDirectories: number }> => {
+const scanDirectoryRecursive = async (rootDirectory: PersistedDirectory, currentPath: string): Promise<{ files: ScannedFile[]; images: ScannedImageFile[]; skippedFiles: number; skippedDirectories: number }> => {
+  const files: ScannedFile[] = [];
   const images: ScannedImageFile[] = [];
   let skippedFiles = 0;
   let skippedDirectories = 0;
@@ -47,7 +63,7 @@ const scanDirectoryRecursive = async (rootDirectory: PersistedDirectory, current
   try {
     entries = await fs.opendir(currentPath);
   } catch {
-    return { images, skippedFiles, skippedDirectories: skippedDirectories + 1 };
+    return { files, images, skippedFiles, skippedDirectories: skippedDirectories + 1 };
   }
 
   for await (const entry of entries) {
@@ -62,37 +78,47 @@ const scanDirectoryRecursive = async (rootDirectory: PersistedDirectory, current
         continue;
       }
       const nested = await scanDirectoryRecursive(rootDirectory, entryPath);
+      files.push(...nested.files);
       images.push(...nested.images);
       skippedFiles += nested.skippedFiles;
       skippedDirectories += nested.skippedDirectories;
       continue;
     }
 
-    if (!entry.isFile() || !isSupportedImageFilePath(entry.name)) {
+    if (!entry.isFile()) {
       continue;
     }
 
+    const extension = path.extname(entry.name).toLowerCase();
+    const capability = getFileFormatCapability(extension);
+    if (!capability?.canIndex) continue;
+
     try {
       const stat = await fs.stat(entryPath);
-      images.push({
+      const scannedFile: ScannedFile = {
         directory_id: rootDirectory.id,
         directory_path: rootDirectory.path,
         file_path: entryPath,
         file_name: entry.name,
+        extension,
         file_size: stat.size,
         created_at: toIso(stat.birthtime),
         modified_at: toIso(stat.mtime),
         modified_ms: stat.mtimeMs
-      });
+      };
+      files.push(scannedFile);
+      if (capability.canAIIndex) {
+        images.push(scannedFile);
+      }
     } catch {
       skippedFiles += 1;
     }
   }
 
-  return { images, skippedFiles, skippedDirectories };
+  return { files, images, skippedFiles, skippedDirectories };
 };
 
-const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: string): Promise<{ directoryResult: DirectoryImageScanResult; images: ScannedImageFile[]; summary: DirectoryScanSummary }> => {
+const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: string): Promise<{ directoryResult: DirectoryImageScanResult; files: ScannedFile[]; images: ScannedImageFile[]; summary: DirectoryScanSummary }> => {
   try {
     const stat = await fs.stat(directory.path);
     if (!stat.isDirectory()) {
@@ -102,11 +128,13 @@ const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: str
           directory_id: directory.id,
           directory_path: directory.path,
           status: "missing",
+          file_count: 0,
           image_count: 0,
           skipped_files: 0,
           skipped_directories: 0,
           error
         },
+        files: [],
         images: [],
         summary: {
           id: directory.id,
@@ -124,11 +152,13 @@ const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: str
         directory_id: directory.id,
         directory_path: directory.path,
         status: "missing",
+        file_count: 0,
         image_count: 0,
         skipped_files: 0,
         skipped_directories: 0,
         error
       },
+      files: [],
       images: [],
       summary: {
         id: directory.id,
@@ -146,10 +176,12 @@ const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: str
         directory_id: directory.id,
         directory_path: directory.path,
         status: "ready",
+        file_count: 0,
         image_count: 0,
         skipped_files: 0,
         skipped_directories: 0
       },
+      files: [],
       images: [],
       summary: {
         id: directory.id,
@@ -169,11 +201,13 @@ const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: str
       directory_id: directory.id,
       directory_path: directory.path,
       status,
+      file_count: scan.files.length,
       image_count: scan.images.length,
       skipped_files: scan.skippedFiles,
       skipped_directories: scan.skippedDirectories,
       error
     },
+    files: scan.files,
     images: scan.images,
     summary: {
       id: directory.id,
@@ -188,12 +222,14 @@ const scanSingleDirectory = async (directory: PersistedDirectory, scannedAt: str
 export const scanImageDirectories = async (directories: PersistedDirectory[]): Promise<ImageScanResult> => {
   const scannedAt = new Date().toISOString();
   const directoryResults: DirectoryImageScanResult[] = [];
+  const allFiles: ScannedFile[] = [];
   const allImages: ScannedImageFile[] = [];
   const summaries: DirectoryScanSummary[] = [];
 
   for (const directory of directories) {
     const result = await scanSingleDirectory(directory, scannedAt);
     directoryResults.push(result.directoryResult);
+    allFiles.push(...result.files);
     allImages.push(...result.images);
     summaries.push(result.summary);
   }
@@ -201,6 +237,7 @@ export const scanImageDirectories = async (directories: PersistedDirectory[]): P
   return {
     scannedAt,
     directories: directoryResults,
+    files: allFiles,
     images: allImages,
     summaries
   };

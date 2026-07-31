@@ -7,6 +7,7 @@ const { app } = require("electron");
   const {
     fileFormatCapabilities,
     fileFormatCapabilityByExtension,
+    indexableFileExtensionSet,
     skimBrowsableFileExtensionSet
   } = require("../dist-electron/formatCapabilities.js");
   const { supportedVisualFileExtensionSet } = require("../dist-electron/supportedVisualFormats.js");
@@ -15,6 +16,7 @@ const { app } = require("electron");
   assert.equal(fileFormatCapabilities.length, fileFormatCapabilityByExtension.size);
   assert.equal(fileFormatCapabilities.every((capability) => capability.extension.startsWith(".")), true);
   assert.equal(fileFormatCapabilities.every((capability) => capability.canBrowse), true);
+  assert.equal(fileFormatCapabilities.every((capability) => capability.canIndex), true);
 
   const visualCapabilities = fileFormatCapabilities.filter((capability) => capability.category === "visual");
   const nonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual");
@@ -39,6 +41,7 @@ const { app } = require("electron");
     visualCapabilities.map((capability) => capability.extension).sort()
   );
   assert.equal(skimBrowsableFileExtensionSet.size, 73);
+  assert.deepEqual([...indexableFileExtensionSet].sort(), [...skimBrowsableFileExtensionSet].sort());
   assert.equal(isSupportedImageFilePath("C:\\asset.png"), true);
   assert.equal(isSupportedImageFilePath("C:\\notes.txt"), false);
   assert.equal(isSupportedImageFilePath("C:\\document.docx"), false);
@@ -50,8 +53,9 @@ const { app } = require("electron");
 
   console.log(JSON.stringify({
     centralCapabilitiesUnique: true,
+    allWhitelistedFormatsIndexable: true,
     visualSearchBoundaryPreserved: true,
-    nonVisualBrowseOnlyBoundaryPreserved: true,
+    nonVisualSearchBoundaryPreserved: true,
     formalVisualScannerBoundaryPreserved: true,
     skimWhitelistCount: skimBrowsableFileExtensionSet.size,
     formatIconsVerified: nonVisualCapabilities.length
