@@ -95,30 +95,21 @@ export const listDirectories = async (): Promise<PersistedDirectory[]> => {
   return config.directories;
 };
 
-export const addDirectory = async (directoryPath: string): Promise<PersistedDirectory[]> => {
-  const config = await readConfig();
-  const existing = config.directories.find((directory) => directory.path.toLocaleLowerCase() === directoryPath.toLocaleLowerCase());
-  if (existing) {
-    return config.directories;
-  }
-
+export const createPersistedDirectory = (directoryPath: string): PersistedDirectory => {
   const timestamp = now();
-  const directoryName = path.basename(directoryPath) || directoryPath;
-  const directory: PersistedDirectory = {
+  return {
     id: randomUUID(),
-    name: directoryName,
+    name: path.basename(directoryPath) || directoryPath,
     path: directoryPath,
     indexedCount: 0,
     createdAt: timestamp,
     updatedAt: timestamp
   };
+};
 
-  const nextConfig: DirectoryConfig = {
-    version: 1,
-    directories: [...config.directories, directory]
-  };
-  await writeConfig(nextConfig);
-  return nextConfig.directories;
+export const replaceDirectories = async (directories: PersistedDirectory[]): Promise<PersistedDirectory[]> => {
+  await writeConfig({ version: 1, directories });
+  return directories;
 };
 
 export const updateDirectoryName = async (id: string, name: string): Promise<PersistedDirectory[]> => {

@@ -85,6 +85,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
   directories: {
     list: () => ipcRenderer.invoke("directories:list"),
     selectAndAdd: () => ipcRenderer.invoke("directories:selectAndAdd"),
+    addCandidates: (request: unknown) => ipcRenderer.invoke("directories:addCandidates", request),
     updateName: (id: string, name: string) => ipcRenderer.invoke("directories:updateName", id, name),
     delete: (id: string) => ipcRenderer.invoke("directories:delete", id)
   },

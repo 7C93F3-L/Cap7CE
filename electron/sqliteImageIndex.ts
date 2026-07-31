@@ -464,6 +464,49 @@ export const deleteDirectoryImages = async (directoryId: string): Promise<string
   }
 };
 
+export const reassignDirectoryImages = async (
+  replacements: Array<{ fromDirectoryIds: string[]; toDirectoryId: string }>
+): Promise<void> => {
+  const effectiveReplacements = replacements.filter((replacement) => replacement.fromDirectoryIds.length > 0);
+  if (effectiveReplacements.length === 0) {
+    return;
+  }
+
+  const database = await loadDatabase();
+  try {
+    database.run("BEGIN TRANSACTION");
+    const statement = database.prepare(`
+      UPDATE images
+      SET directory_id = :to_directory_id
+      WHERE directory_id = :from_directory_id
+    `);
+    try {
+      for (const replacement of effectiveReplacements) {
+        for (const fromDirectoryId of replacement.fromDirectoryIds) {
+          statement.run({
+            ":to_directory_id": replacement.toDirectoryId,
+            ":from_directory_id": fromDirectoryId
+          });
+          statement.reset();
+        }
+      }
+    } finally {
+      statement.free();
+    }
+    database.run("COMMIT");
+    await saveDatabase(database);
+  } catch (error) {
+    try {
+      database.run("ROLLBACK");
+    } catch {
+      // Preserve the original migration error.
+    }
+    throw error;
+  } finally {
+    database.close();
+  }
+};
+
 export const findImageRecordFilePaths = async (filePaths: string[]): Promise<string[]> => {
   if (filePaths.length === 0) {
     return [];

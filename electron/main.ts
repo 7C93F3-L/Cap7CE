@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { addDirectory, applyDirectoryScanSummaries, deleteDirectory, listDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
+import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
+import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { startNativeFileDrag } from "./fileDragService";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
@@ -14,7 +15,7 @@ import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRunt
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateThemePreference } from "./preferenceStore";
-import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
+import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
@@ -2320,18 +2321,71 @@ ipcMain.handle("directories:list", async () => {
   return withSqliteImageCounts(await listDirectories());
 });
 
+const withDirectoryAddSqliteCounts = async (result: DirectoryAddResult): Promise<DirectoryAddResult> => ({
+  ...result,
+  directories: await withSqliteImageCounts(result.directories)
+});
+
+const addDirectoryCandidatesWithIndexMigrationInternal = async (request: DirectoryAddRequest) => {
+  const result = await addDirectoryCandidates(request);
+  try {
+    await reassignDirectoryImages(result.replacements.map((replacement) => ({
+      fromDirectoryIds: replacement.replacedDirectories.map((directory) => directory.id),
+      toDirectoryId: replacement.directory.id
+    })));
+  } catch (error) {
+    const replacementIds = new Set(result.replacements.map((replacement) => replacement.directory.id));
+    const restoredDirectories = [
+      ...result.directories.filter((directory) => !replacementIds.has(directory.id)),
+      ...result.replacements.flatMap((replacement) => replacement.replacedDirectories)
+    ];
+    try {
+      await replaceDirectories(restoredDirectories);
+    } catch (rollbackError) {
+      console.warn("[directory-add] failed to restore directory configuration after index migration failure", rollbackError);
+    }
+    throw error;
+  }
+  return result;
+};
+
+let directoryAddQueue: Promise<void> = Promise.resolve();
+
+const addDirectoryCandidatesWithIndexMigration = (request: DirectoryAddRequest) => {
+  const task = directoryAddQueue.then(() => addDirectoryCandidatesWithIndexMigrationInternal(request));
+  directoryAddQueue = task.then(() => undefined, () => undefined);
+  return task;
+};
+
+const normalizeDirectoryAddRequest = (value: unknown): DirectoryAddRequest => {
+  if (!value || typeof value !== "object") {
+    return { candidates: [] };
+  }
+  const candidate = value as { candidates?: unknown; conflictResolution?: unknown };
+  return {
+    candidates: Array.isArray(candidate.candidates)
+      ? candidate.candidates as string[]
+      : [],
+    conflictResolution: candidate.conflictResolution === "replace-existing" ? "replace-existing" : "prompt"
+  };
+};
+
 ipcMain.handle("directories:selectAndAdd", async () => {
   const options: OpenDialogOptions = {
     title: t("dialog.selectIndexDirectory"),
-    properties: ["openDirectory"]
+    properties: ["openDirectory", "multiSelections"]
   };
   const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
 
   if (result.canceled || result.filePaths.length === 0) {
-    return withSqliteImageCounts(await listDirectories());
+    return withDirectoryAddSqliteCounts(await createCancelledDirectoryAddResult());
   }
 
-  return withSqliteImageCounts(await addDirectory(result.filePaths[0]));
+  return withDirectoryAddSqliteCounts(await addDirectoryCandidatesWithIndexMigration({ candidates: result.filePaths }));
+});
+
+ipcMain.handle("directories:addCandidates", async (_event, request: unknown) => {
+  return withDirectoryAddSqliteCounts(await addDirectoryCandidatesWithIndexMigration(normalizeDirectoryAddRequest(request)));
 });
 
 ipcMain.handle("directories:updateName", async (_event, id: string, name: string) => {

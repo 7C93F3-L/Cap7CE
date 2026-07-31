@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiIndexProgress, AiIndexRunResponse, DeleteFilesResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageScanResponse, ImageSearchResponse, IndexQualityStats, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { AiIndexProgress, AiIndexRunResponse, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageScanResponse, ImageSearchResponse, IndexQualityStats, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -50,7 +50,8 @@ declare global {
       };
       directories: {
         list: () => Promise<DirectoryItem[]>;
-        selectAndAdd: () => Promise<DirectoryItem[]>;
+        selectAndAdd: () => Promise<DirectoryAddResult>;
+        addCandidates: (request: DirectoryAddRequest) => Promise<DirectoryAddResult>;
         updateName: (id: string, name: string) => Promise<DirectoryItem[]>;
         delete: (id: string) => Promise<DirectoryItem[]>;
       };

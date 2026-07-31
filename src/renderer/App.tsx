@@ -16,6 +16,7 @@ import type {
   AiIndexProgress,
   AppView,
   AppearanceColors,
+  DirectoryAddResult,
   DirectoryItem,
   GgufModelSettings,
   ImageIndexItem,
@@ -48,7 +49,7 @@ type ShellTransition = {
 };
 type SearchCapsuleLabelVisibility = SearchLabelVisibilityPreferences;
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
-type DialogName = "deleteDirectory" | "deleteFiles" | "editKeywords" | "clearCache" | null;
+type DialogName = "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | null;
 type ImageContextMenuState = {
   x: number;
   y: number;
@@ -781,6 +782,40 @@ const formatCacheSize = (bytes: number) => {
   return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 };
 
+const formatDirectoryAddFeedback = (result: DirectoryAddResult) => {
+  if (result.cancelled) {
+    return "";
+  }
+  if (result.added.length > 0 && result.ignored.length === 0 && result.failures.length === 0) {
+    return t("directoryAdd.added", { count: result.added.length });
+  }
+  if (result.added.length > 0 || result.ignored.length + result.failures.length > 1) {
+    return t("directoryAdd.summary", {
+      added: result.added.length,
+      ignored: result.ignored.length,
+      failed: result.failures.length
+    });
+  }
+  const ignored = result.ignored[0];
+  if (ignored?.reason === "drive-root") {
+    return t("directoryAdd.driveRootIgnored");
+  }
+  if (ignored?.reason === "already-added") {
+    return t("directoryAdd.alreadyAdded");
+  }
+  if (ignored?.reason === "covered-by-existing") {
+    return t("directoryAdd.coveredByExisting", { name: ignored.existingDirectory?.name ?? "" });
+  }
+  if (ignored) {
+    return t("directoryAdd.noChanges");
+  }
+  const failure = result.failures[0];
+  if (failure) {
+    return t("directoryAdd.failed", { path: failure.inputPath });
+  }
+  return t("directoryAdd.noChanges");
+};
+
 const App = () => {
   const [view, setView] = useState<AppView>("home");
   const navigationEntriesRef = useRef<AppView[]>(["home"]);
@@ -816,6 +851,7 @@ const App = () => {
   const [directoryServiceUnavailable, setDirectoryServiceUnavailable] = useState(false);
   const [dialog, setDialog] = useState<DialogName>(null);
   const [directoryToDelete, setDirectoryToDelete] = useState<string | null>(null);
+  const [pendingDirectoryAddResult, setPendingDirectoryAddResult] = useState<DirectoryAddResult | null>(null);
   const [editingDirectoryId, setEditingDirectoryId] = useState<string | null>(null);
   const [llamaRuntimeSettings, setLlamaRuntimeSettings] = useState<LlamaRuntimeSettings>(emptyLlamaRuntimeSettings);
   const [llamaRuntimeProcessState, setLlamaRuntimeProcessState] = useState<LlamaRuntimeProcessState>(emptyLlamaRuntimeProcessState);
@@ -2189,22 +2225,61 @@ const App = () => {
     void refreshDefaultDirectoryResults();
   }, [aiProgress?.phase, isIndexing]);
 
+  const applyDirectoryAddResult = async (result: DirectoryAddResult, showFeedback = true) => {
+    refreshDirectories(result.directories);
+    setDirectoryServiceUnavailable(false);
+    if (result.added.length > 0) {
+      await refreshIndexStats();
+      await refreshDefaultDirectoryResults();
+    }
+    if (showFeedback) {
+      const message = formatDirectoryAddFeedback(result);
+      if (message) {
+        showQuickCommandNotice(message);
+      }
+    }
+  };
+
   const addDirectory = async () => {
     if (isAddingDirectory) {
       return;
     }
     setIsAddingDirectory(true);
     try {
-      const nextDirectories = await window.imageEverything?.directories.selectAndAdd();
-      if (!nextDirectories) {
+      const result = await window.imageEverything?.directories.selectAndAdd();
+      if (!result) {
         setDirectoryServiceUnavailable(true);
         return;
       }
-      refreshDirectories(nextDirectories);
-      if (nextDirectories.length > 0) {
-        await refreshIndexStats();
-        await refreshDefaultDirectoryResults();
+      await applyDirectoryAddResult(result, result.conflicts.length === 0);
+      if (result.conflicts.length > 0) {
+        setPendingDirectoryAddResult(result);
+        setDialog("replaceDirectories");
       }
+    } catch {
+      setDirectoryServiceUnavailable(true);
+    } finally {
+      setIsAddingDirectory(false);
+    }
+  };
+
+  const confirmDirectoryReplacement = async () => {
+    if (!pendingDirectoryAddResult || isAddingDirectory) {
+      return;
+    }
+    setIsAddingDirectory(true);
+    try {
+      const result = await window.imageEverything?.directories.addCandidates({
+        candidates: pendingDirectoryAddResult.conflicts.map((conflict) => conflict.candidatePath),
+        conflictResolution: "replace-existing"
+      });
+      if (!result) {
+        setDirectoryServiceUnavailable(true);
+        return;
+      }
+      await applyDirectoryAddResult(result);
+      setPendingDirectoryAddResult(null);
+      setDialog(null);
     } catch {
       setDirectoryServiceUnavailable(true);
     } finally {
@@ -2901,6 +2976,14 @@ const App = () => {
           return;
         }
 
+        if (dialog === "replaceDirectories") {
+          if (isAddingDirectory) return;
+          setPendingDirectoryAddResult(null);
+          setDialog(null);
+          showQuickCommandNotice(t("command.cancelled"));
+          return;
+        }
+
         if (dialog === "clearCache") {
           if (isClearingCache || cacheClearFeedback?.status === "succeeded") return;
           setCacheClearToken(null);
@@ -2955,6 +3038,7 @@ const App = () => {
     deleteFilesFeedback,
     dialog,
     editingDirectoryId,
+    isAddingDirectory,
     isClearingCache,
     isDeletingFiles,
     isSavingMetadata,
@@ -3286,6 +3370,23 @@ const App = () => {
                 onCancel={() => setDialog(null)}
               />
             )}
+            {activeView === "settings" && dialog === "replaceDirectories" && pendingDirectoryAddResult && (
+              <ReplaceDirectoriesPanel
+                conflictCount={pendingDirectoryAddResult.conflicts.length}
+                replacedCount={pendingDirectoryAddResult.conflicts.reduce(
+                  (count, conflict) => count + conflict.existingDirectories.length,
+                  0
+                )}
+                isAdding={isAddingDirectory}
+                onConfirm={confirmDirectoryReplacement}
+                onCancel={() => {
+                  if (isAddingDirectory) return;
+                  setPendingDirectoryAddResult(null);
+                  setDialog(null);
+                  showQuickCommandNotice(t("command.cancelled"));
+                }}
+              />
+            )}
             {activeView === "settings" && dialog === "clearCache" && (
               <ClearCachePanel
                 isClearing={isClearingCache}
@@ -3304,7 +3405,7 @@ const App = () => {
                 }}
               />
             )}
-            {activeView === "settings" && dialog !== "deleteDirectory" && dialog !== "clearCache" && (
+            {activeView === "settings" && dialog !== "deleteDirectory" && dialog !== "replaceDirectories" && dialog !== "clearCache" && (
               <SettingsView
                 search={search}
                 quickCommandNotice={searchInputFeedback}
@@ -6669,6 +6770,35 @@ const DeleteDirectoryPanel = ({
         <div className="modal-actions">
           <button type="button" onClick={onCancel}>{t("common.confirmNo")}</button>
           <button type="button" onClick={onConfirm}>{t("common.confirmYes")}</button>
+        </div>
+      </div>
+    </section>
+  </main>
+);
+
+const ReplaceDirectoriesPanel = ({
+  conflictCount,
+  replacedCount,
+  isAdding,
+  onConfirm,
+  onCancel
+}: {
+  conflictCount: number;
+  replacedCount: number;
+  isAdding: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) => (
+  <main className="keyword-editor-view delete-files-view">
+    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("directoryAdd.replaceDialogTitle")}>
+      <div className="delete-files-content">
+        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
+        <div className="delete-files-message">
+          {t("directoryAdd.replaceQuestion", { candidates: conflictCount, count: replacedCount })}
+        </div>
+        <div className="modal-actions">
+          <button type="button" onClick={onCancel} disabled={isAdding}>{t("common.confirmNo")}</button>
+          <button type="button" onClick={onConfirm} disabled={isAdding}>{t("common.confirmYes")}</button>
         </div>
       </div>
     </section>

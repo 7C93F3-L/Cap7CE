@@ -87,6 +87,55 @@ export interface DirectoryItem {
   scanError?: string;
 }
 
+export type DirectoryAddConflictResolution = "prompt" | "replace-existing";
+
+export interface DirectoryAddRequest {
+  candidates: string[];
+  conflictResolution?: DirectoryAddConflictResolution;
+}
+
+export type DirectoryAddIgnoreReason =
+  | "drive-root"
+  | "duplicate-candidate"
+  | "covered-by-candidate"
+  | "already-added"
+  | "covered-by-existing";
+
+export interface DirectoryAddIgnoredItem {
+  inputPath: string;
+  directoryPath?: string;
+  reason: DirectoryAddIgnoreReason;
+  existingDirectory?: DirectoryItem;
+}
+
+export type DirectoryAddFailureReason = "invalid-candidate" | "not-found" | "unavailable";
+
+export interface DirectoryAddFailure {
+  inputPath: string;
+  reason: DirectoryAddFailureReason;
+  message: string;
+}
+
+export interface DirectoryAddConflict {
+  candidatePath: string;
+  existingDirectories: DirectoryItem[];
+}
+
+export interface DirectoryAddReplacement {
+  directory: DirectoryItem;
+  replacedDirectories: DirectoryItem[];
+}
+
+export interface DirectoryAddResult {
+  directories: DirectoryItem[];
+  added: DirectoryItem[];
+  ignored: DirectoryAddIgnoredItem[];
+  conflicts: DirectoryAddConflict[];
+  replacements: DirectoryAddReplacement[];
+  failures: DirectoryAddFailure[];
+  cancelled: boolean;
+}
+
 export interface ImageIndexItem {
   id: string;
   filePath: string;
