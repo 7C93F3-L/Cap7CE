@@ -21,6 +21,7 @@ import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
+import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
@@ -61,6 +62,7 @@ let programmaticMoveGuardUntil = 0;
 let previewMoveSnapTimer: NodeJS.Timeout | null = null;
 let previewProgrammaticMoveGuardUntil = 0;
 let cacheClearAuthorization: { token: string; expiresAt: number } | null = null;
+let skimCacheClearAuthorization: { token: string; expiresAt: number } | null = null;
 let startupHintCloseTimer: NodeJS.Timeout | null = null;
 let shellAlwaysOnTop = false;
 let shellMaximized = false;
@@ -1623,7 +1625,13 @@ const registerLocalImageProtocol = () => {
 
   protocol.handle("cap7ce", async (request) => {
     const url = new URL(request.url);
-    if (url.hostname !== "thumbnail" && url.hostname !== "image" && url.hostname !== "skim-image") {
+    if (
+      url.hostname !== "thumbnail"
+      && url.hostname !== "image"
+      && url.hostname !== "skim-image"
+      && url.hostname !== "skim-thumbnail"
+      && url.hostname !== "skim-preview"
+    ) {
       return new Response("Not found", { status: 404 });
     }
 
@@ -1633,6 +1641,25 @@ const registerLocalImageProtocol = () => {
     }
 
     try {
+      if (url.hostname === "skim-thumbnail" || url.hostname === "skim-preview") {
+        const sessionId = url.searchParams.get("session");
+        const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
+        if (!sessionId || !capability?.canThumbnail) {
+          return new Response("Skim visual request is unavailable", { status: 415 });
+        }
+        const cachePath = await requestSkimVisualCache(
+          sessionId,
+          filePath,
+          url.hostname === "skim-preview" ? "preview" : "thumbnail"
+        );
+        const image = await readVisualCacheImage(cachePath);
+        return new Response(toResponseBody(image.buffer), {
+          headers: {
+            "Content-Type": image.mimeType,
+            "Cache-Control": "no-store"
+          }
+        });
+      }
       if (url.hostname === "skim-image") {
         if (!getFileFormatCapability(path.extname(filePath).toLowerCase())?.canDirectPreview) {
           return new Response("Skim source preview is unavailable", { status: 415 });
@@ -1671,7 +1698,7 @@ const registerLocalImageProtocol = () => {
       });
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
-      const status = code === "ENOENT" ? 404 : 500;
+      const status = code === "ENOENT" ? 404 : code === "ECANCELED" ? 499 : 500;
       const message = error instanceof Error ? error.message : "Thumbnail unavailable";
       console.warn("[thumbnail] failed", { filePath, status, message });
       return new Response(message, { status });
@@ -2481,6 +2508,18 @@ ipcMain.handle("skim:cancel", (_event, taskId: unknown) => {
   return true;
 });
 
+ipcMain.handle("skim:beginVisualSession", (_event, sessionId: unknown) => (
+  typeof sessionId === "string" && sessionId.trim().length > 0 && sessionId.length <= 128
+    ? beginSkimVisualSession(sessionId.trim())
+    : false
+));
+
+ipcMain.handle("skim:cancelVisualSession", (_event, sessionId: unknown) => (
+  typeof sessionId === "string" && sessionId.trim().length > 0 && sessionId.length <= 128
+    ? cancelSkimVisualSession(sessionId.trim())
+    : false
+));
+
 ipcMain.handle("skim:inspect", async (_event, request: unknown) => {
   const candidate = request && typeof request === "object"
     ? request as { path?: unknown; kind?: unknown }
@@ -3002,4 +3041,24 @@ ipcMain.handle("cache:clearAll", async (_event, token?: string) => {
   await setThumbnailOptimizationEnabled(false);
   await updateAutoCacheOptimizationPreference(false);
   return clearAllVisualCaches();
+});
+
+ipcMain.handle("skimCache:stats", () => getSkimCacheStats());
+
+ipcMain.handle("skimCache:authorizeClear", () => {
+  const authorization = {
+    token: randomUUID(),
+    expiresAt: Date.now() + 30_000
+  };
+  skimCacheClearAuthorization = authorization;
+  return authorization.token;
+});
+
+ipcMain.handle("skimCache:clear", async (_event, token?: string) => {
+  const authorization = skimCacheClearAuthorization;
+  skimCacheClearAuthorization = null;
+  if (!authorization || token !== authorization.token || Date.now() > authorization.expiresAt) {
+    throw new Error(t("error.cacheConfirmationRequired"));
+  }
+  return clearSkimCacheSafely();
 });

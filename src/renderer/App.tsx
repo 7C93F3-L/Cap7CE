@@ -68,7 +68,7 @@ type ShellTransition = {
 };
 type SearchCapsuleLabelVisibility = SearchLabelVisibilityPreferences;
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
-type DialogName = "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | null;
+type DialogName = "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
 type ImageContextMenuState = {
   x: number;
   y: number;
@@ -896,6 +896,7 @@ const App = () => {
   const [isLoadingGgufModels, setIsLoadingGgufModels] = useState(false);
   const [isChangingLlamaRuntimeState, setIsChangingLlamaRuntimeState] = useState(false);
   const [visualCacheStats, setVisualCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
+  const [skimCacheStats, setSkimCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
   const [thumbnailOptimizationStatus, setThumbnailOptimizationStatus] = useState<ThumbnailOptimizationStatus>(emptyThumbnailOptimizationStatus);
   const thumbnailOptimizationPhaseRef = useRef<ThumbnailOptimizationStatus["phase"]>(emptyThumbnailOptimizationStatus.phase);
   const thumbnailOptimizationStatsTimerRef = useRef<number | null>(null);
@@ -903,6 +904,9 @@ const App = () => {
   const [isClearingCache, setIsClearingCache] = useState(false);
   const [cacheClearToken, setCacheClearToken] = useState<string | null>(null);
   const [cacheClearFeedback, setCacheClearFeedback] = useState<CacheClearFeedback | null>(null);
+  const [skimCacheClearToken, setSkimCacheClearToken] = useState<string | null>(null);
+  const [skimCacheClearFeedback, setSkimCacheClearFeedback] = useState<CacheClearFeedback | null>(null);
+  const [isClearingSkimCache, setIsClearingSkimCache] = useState(false);
   const [cacheInlineFeedback, setCacheInlineFeedback] = useState("");
   const [contextMenu, setContextMenu] = useState<ImageContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
@@ -946,6 +950,8 @@ const App = () => {
   const quickCommandNoticeTimerRef = useRef<number | null>(null);
   const skimFeedbackTimerRef = useRef<number | null>(null);
   const skimTaskIdRef = useRef<string | null>(null);
+  const skimVisualSessionIdRef = useRef<string | null>(null);
+  const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
   const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
   const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
@@ -1059,6 +1065,12 @@ const App = () => {
     if (taskId) {
       void window.imageEverything?.skim.cancel(taskId);
     }
+    const visualSessionId = skimVisualSessionIdRef.current;
+    skimVisualSessionIdRef.current = null;
+    setSkimVisualSessionId("");
+    if (visualSessionId) {
+      void window.imageEverything?.skim.cancelVisualSession(visualSessionId);
+    }
     setIsSkimLoading(false);
   }, []);
   const loadSkimLocation = useCallback(async (nextPath: string | null) => {
@@ -1066,8 +1078,15 @@ const App = () => {
     if (previousTaskId) {
       void window.imageEverything?.skim.cancel(previousTaskId);
     }
+    const previousVisualSessionId = skimVisualSessionIdRef.current;
+    if (previousVisualSessionId) {
+      void window.imageEverything?.skim.cancelVisualSession(previousVisualSessionId);
+    }
+    skimVisualSessionIdRef.current = null;
+    setSkimVisualSessionId("");
     const taskId = window.crypto?.randomUUID?.() ?? `skim-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     skimTaskIdRef.current = taskId;
+    await window.imageEverything?.skim.beginVisualSession(taskId);
     setIsSkimLoading(true);
     clearSkimFeedback();
     try {
@@ -1082,8 +1101,11 @@ const App = () => {
       setSkimEntries(response.entries);
       setSkimCurrentPath(response.currentPath);
       setSkimBreadcrumbs(response.breadcrumbs);
+      skimVisualSessionIdRef.current = taskId;
+      setSkimVisualSessionId(taskId);
     } catch (error) {
       if (skimTaskIdRef.current === taskId) {
+        void window.imageEverything?.skim.cancelVisualSession(taskId);
         showSkimFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
       }
     } finally {
@@ -1349,9 +1371,15 @@ const App = () => {
   const refreshVisualCacheStats = async () => {
     setIsLoadingCacheStats(true);
     try {
-      const stats = await window.imageEverything?.cache.stats();
+      const [stats, currentSkimCacheStats] = await Promise.all([
+        window.imageEverything?.cache.stats(),
+        window.imageEverything?.skimCache.stats()
+      ]);
       if (stats) {
         setVisualCacheStats(stats);
+      }
+      if (currentSkimCacheStats) {
+        setSkimCacheStats(currentSkimCacheStats);
       }
     } finally {
       setIsLoadingCacheStats(false);
@@ -1371,6 +1399,7 @@ const App = () => {
         const llamaRuntimeProcessState = await window.imageEverything?.llamaRuntime.processState();
         const ggufModelSettings = await window.imageEverything?.ggufModels.settings();
         const cacheStats = await window.imageEverything?.cache.stats();
+        const loadedSkimCacheStats = await window.imageEverything?.skimCache.stats();
         const cacheOptimizationStatus = await window.imageEverything?.cache.optimizationStatus();
         const preferences = await window.imageEverything?.preferences.get();
         const shortcutAvailability = await window.imageEverything?.preferences.shortcutAvailability();
@@ -1421,6 +1450,9 @@ const App = () => {
           }
           if (cacheStats) {
             setVisualCacheStats(cacheStats);
+          }
+          if (loadedSkimCacheStats) {
+            setSkimCacheStats(loadedSkimCacheStats);
           }
           if (cacheOptimizationStatus) {
             thumbnailOptimizationPhaseRef.current = cacheOptimizationStatus.phase;
@@ -1509,6 +1541,10 @@ const App = () => {
     if (skimTaskIdRef.current) {
       void window.imageEverything?.skim.cancel(skimTaskIdRef.current);
       skimTaskIdRef.current = null;
+    }
+    if (skimVisualSessionIdRef.current) {
+      void window.imageEverything?.skim.cancelVisualSession(skimVisualSessionIdRef.current);
+      skimVisualSessionIdRef.current = null;
     }
   }, []);
 
@@ -3193,6 +3229,14 @@ const App = () => {
           return;
         }
 
+        if (dialog === "clearSkimCache") {
+          if (isClearingSkimCache || skimCacheClearFeedback?.status === "succeeded") return;
+          setSkimCacheClearToken(null);
+          setSkimCacheClearFeedback(null);
+          setDialog(null);
+          return;
+        }
+
         if (contextMenu) {
           closeNavigationOverlays();
           return;
@@ -3241,6 +3285,7 @@ const App = () => {
     editingDirectoryId,
     isAddingDirectory,
     isClearingCache,
+    isClearingSkimCache,
     isDeletingFiles,
     isSavingMetadata,
     keywordBatchFeedback,
@@ -3250,6 +3295,7 @@ const App = () => {
     selectedResultImageId,
     showQuickCommandNotice,
     shellState,
+    skimCacheClearFeedback,
     shortcutActions,
     view
   ]);
@@ -3361,6 +3407,55 @@ const App = () => {
         message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheUnavailable"))
       });
       setDialog("clearCache");
+    }
+  };
+
+  const clearSkimCaches = async () => {
+    if (isClearingSkimCache) return null;
+    const isRetry = skimCacheClearFeedback?.status === "failed";
+    let token = skimCacheClearToken;
+    try {
+      if (!token || isRetry) token = await window.imageEverything?.skimCache.authorizeClear() ?? null;
+      if (!token) throw new Error(t("error.cacheUnavailable"));
+      setIsClearingSkimCache(true);
+      const stats = await window.imageEverything?.skimCache.clear(token);
+      if (!stats) throw new Error(t("error.cacheUnavailable"));
+      setSkimCacheStats(stats);
+      setSkimCacheClearToken(null);
+      if (isRetry) {
+        setSkimCacheClearFeedback({ status: "succeeded", message: "" });
+      } else {
+        setSkimCacheClearFeedback(null);
+        setDialog(null);
+        showCacheInlineFeedback(t("settings.skimCacheCleared"));
+      }
+      return stats;
+    } catch (error) {
+      setSkimCacheClearToken(null);
+      setSkimCacheClearFeedback({
+        status: "failed",
+        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheFailed"))
+      });
+      return null;
+    } finally {
+      setIsClearingSkimCache(false);
+    }
+  };
+
+  const requestClearSkimCache = async () => {
+    try {
+      const token = await window.imageEverything?.skimCache.authorizeClear();
+      if (!token) throw new Error(t("error.cacheUnavailable"));
+      setSkimCacheClearToken(token);
+      setSkimCacheClearFeedback(null);
+      setDialog("clearSkimCache");
+    } catch (error) {
+      setSkimCacheClearToken(null);
+      setSkimCacheClearFeedback({
+        status: "failed",
+        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheUnavailable"))
+      });
+      setDialog("clearSkimCache");
     }
   };
 
@@ -3572,6 +3667,7 @@ const App = () => {
             {activeView === "skim" && (
               <SkimView
                 search={search}
+                visualSessionId={skimVisualSessionId}
                 entries={skimEntries}
                 currentPath={skimCurrentPath}
                 breadcrumbs={skimBreadcrumbs}
@@ -3640,7 +3736,26 @@ const App = () => {
                 }}
               />
             )}
-            {activeView === "settings" && dialog !== "deleteDirectory" && dialog !== "replaceDirectories" && dialog !== "clearCache" && (
+            {activeView === "settings" && dialog === "clearSkimCache" && (
+              <ClearCachePanel
+                isClearing={isClearingSkimCache}
+                feedback={skimCacheClearFeedback}
+                skim
+                onConfirm={clearSkimCaches}
+                onCancel={() => {
+                  if (skimCacheClearFeedback?.status === "succeeded") return;
+                  setSkimCacheClearToken(null);
+                  setSkimCacheClearFeedback(null);
+                  setDialog(null);
+                }}
+                onComplete={() => {
+                  setSkimCacheClearToken(null);
+                  setSkimCacheClearFeedback(null);
+                  setDialog(null);
+                }}
+              />
+            )}
+            {activeView === "settings" && dialog !== "deleteDirectory" && dialog !== "replaceDirectories" && dialog !== "clearCache" && dialog !== "clearSkimCache" && (
               <SettingsView
                 search={search}
                 quickCommandNotice={searchInputFeedback}
@@ -3681,9 +3796,11 @@ const App = () => {
                 isLoadingGgufModels={isLoadingGgufModels}
                 isChangingLlamaRuntimeState={isChangingLlamaRuntimeState}
                 visualCacheStats={visualCacheStats}
+                skimCacheStats={skimCacheStats}
                 thumbnailOptimizationStatus={thumbnailOptimizationStatus}
                 isLoadingCacheStats={isLoadingCacheStats}
                 isClearingCache={isClearingCache}
+                isClearingSkimCache={isClearingSkimCache}
                 cacheInlineFeedback={cacheInlineFeedback}
                 editingDirectoryId={editingDirectoryId}
                 onSearchChange={(nextSearch) => {
@@ -3727,6 +3844,7 @@ const App = () => {
                 onStartLlamaRuntime={startLlamaRuntimeServer}
                 onStopLlamaRuntime={stopLlamaRuntimeServer}
                 onClearCache={requestClearThumbnailCache}
+                onClearSkimCache={requestClearSkimCache}
                 onOpenIndexView={openIndexView}
                 onEditDirectory={setEditingDirectoryId}
                 onCancelDirectoryEdit={() => setEditingDirectoryId(null)}
@@ -4360,6 +4478,7 @@ const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => (
 
 interface SkimViewProps {
   search: SearchState;
+  visualSessionId: string;
   entries: SkimBrowseEntry[];
   currentPath: string | null;
   breadcrumbs: SkimBreadcrumb[];
@@ -4383,7 +4502,53 @@ interface SkimViewProps {
 
 type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] };
 
-const SkimView = ({ search, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
+const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: {
+  entry: SkimBrowseEntry;
+  sessionId: string;
+  scrollContainerRef: RefObject<HTMLElement | null>;
+  fallbackSvg: string;
+}) => {
+  const visualRef = useRef<HTMLSpanElement | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const canLoadThumbnail = entry.kind === "file" && Boolean(entry.formatCapability?.canThumbnail) && Boolean(sessionId);
+
+  useEffect(() => {
+    setVisible(false);
+    setFailed(false);
+    if (!canLoadThumbnail) return undefined;
+    const target = visualRef.current;
+    if (!target || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver((records) => {
+      if (records.some((record) => record.isIntersecting)) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    }, { root: scrollContainerRef.current, rootMargin: "120px" });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [canLoadThumbnail, entry.path, scrollContainerRef, sessionId]);
+
+  return (
+    <span className="cap-skim-entry-visual" ref={visualRef}>
+      <SvgIcon svg={fallbackSvg} className="cap-svg-icon cap-skim-entry-icon" />
+      {visible && !failed && (
+        <img
+          className="cap-skim-entry-thumbnail"
+          src={`cap7ce://skim-thumbnail/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(sessionId)}`}
+          alt=""
+          draggable={false}
+          onError={() => setFailed(true)}
+        />
+      )}
+    </span>
+  );
+};
+
+const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
@@ -4488,16 +4653,21 @@ const SkimView = ({ search, entries, currentPath, breadcrumbs, isLoading, feedba
       const sessionId = `skim:${Date.now()}:${++previewSessionCounterRef.current}`;
       const provider = entry.kind === "folder"
         ? "folderInfo"
-        : entry.formatCapability?.previewKind === "image" && entry.formatCapability.canDirectPreview
+        : entry.formatCapability?.previewKind === "image" && entry.formatCapability.canThumbnail && visualSessionId
           ? "image"
           : "fileInfo";
+      const skimPreviewUrl = provider === "image"
+        ? `cap7ce://skim-preview/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(visualSessionId)}`
+        : "";
       const previewData: PreviewWindowData = {
         sessionId,
         itemId: entry.path,
         filePath: entry.path,
         fileName: entry.name,
-        previewUrl: provider === "image" ? `cap7ce://skim-image/?path=${encodeURIComponent(entry.path)}` : "",
-        thumbnailUrl: provider === "image" ? `cap7ce://skim-image/?path=${encodeURIComponent(entry.path)}` : "",
+        previewUrl: skimPreviewUrl,
+        thumbnailUrl: provider === "image"
+          ? `cap7ce://skim-thumbnail/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(visualSessionId)}`
+          : "",
         provider,
         info,
         theme,
@@ -4512,7 +4682,7 @@ const SkimView = ({ search, entries, currentPath, breadcrumbs, isLoading, feedba
     } catch (error) {
       onFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
     }
-  }, [appearanceColors, onFeedback, theme]);
+  }, [appearanceColors, onFeedback, theme, visualSessionId]);
 
   useEffect(() => {
     const movePreview = (direction: -1 | 1) => {
@@ -4651,7 +4821,12 @@ const SkimView = ({ search, entries, currentPath, breadcrumbs, isLoading, feedba
                   }
                 }}
               >
-                <SvgIcon svg={getEntryIcon(entry)} className="cap-svg-icon cap-skim-entry-icon" />
+                <SkimEntryVisual
+                  entry={entry}
+                  sessionId={visualSessionId}
+                  scrollContainerRef={scrollContainerRef}
+                  fallbackSvg={getEntryIcon(entry)}
+                />
                 <span className="cap-skim-entry-name">{entry.label || entry.name}</span>
                 {entry.label && <span className="cap-skim-entry-path">{entry.name}</span>}
                 {entry.kind === "file" && <span className="cap-skim-entry-format">{entry.extension.slice(1).toUpperCase()}</span>}
@@ -6310,9 +6485,11 @@ interface SettingsViewProps {
   isLoadingGgufModels: boolean;
   isChangingLlamaRuntimeState: boolean;
   visualCacheStats: VisualCacheStats;
+  skimCacheStats: VisualCacheStats;
   thumbnailOptimizationStatus: ThumbnailOptimizationStatus;
   isLoadingCacheStats: boolean;
   isClearingCache: boolean;
+  isClearingSkimCache: boolean;
   cacheInlineFeedback: string;
   editingDirectoryId: string | null;
   onSearchChange: (search: SearchState) => void;
@@ -6347,6 +6524,7 @@ interface SettingsViewProps {
   onStartLlamaRuntime: () => void;
   onStopLlamaRuntime: () => void;
   onClearCache: () => void;
+  onClearSkimCache: () => void;
   onOpenIndexView: (recognitionStatus: RecognitionStatusFilter) => void;
   onEditDirectory: (id: string) => void;
   onCancelDirectoryEdit: () => void;
@@ -6354,7 +6532,7 @@ interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
   const [originImageUrl, setOriginImageUrl] = useState<string | null>(null);
@@ -6860,6 +7038,21 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             </button>
             <button className="cap-settings-pill" type="button" onClick={onClearCache} title={t("settings.clearCache")} disabled={isLoadingCacheStats || isClearingCache || (visualCacheStats.totalBytes === 0 && thumbnailOptimizationStatus.phase !== "running")}>
               {isClearingCache ? t("settings.clearingCache") : t("settings.clearAllCache")}
+            </button>
+          </div>
+          <div className="cap-settings-row cap-settings-row-cache">
+            <span className="cap-settings-label">{t("settings.skimCache")}</span>
+            <span className="cap-settings-value">
+              {t("settings.cacheStats", { count: skimCacheStats.cacheCount, size: formatCacheSize(skimCacheStats.totalBytes) })}
+            </span>
+            <button
+              className="cap-settings-pill"
+              type="button"
+              onClick={onClearSkimCache}
+              title={t("settings.clearSkimCache")}
+              disabled={isLoadingCacheStats || isClearingSkimCache || skimCacheStats.totalBytes === 0}
+            >
+              {isClearingSkimCache ? t("settings.clearingCache") : t("settings.clearSkimCache")}
             </button>
           </div>
         </section>
@@ -7422,24 +7615,26 @@ const ReplaceDirectoriesPanel = ({
 const ClearCachePanel = ({
   isClearing,
   feedback,
+  skim = false,
   onConfirm,
   onCancel,
   onComplete
 }: {
   isClearing: boolean;
   feedback: CacheClearFeedback | null;
+  skim?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   onComplete: () => void;
 }) => (
   <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("cache.dialogTitle")}>
+    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={skim ? t("cache.skimDialogTitle") : t("cache.dialogTitle")}>
       <div className="delete-files-content">
         <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
         <div className="delete-files-message">
           {feedback?.status === "failed" ? feedback.message : feedback?.status === "succeeded" ? t("cache.completed") : (
             <>
-              {t("cache.regenerationHint")}<br />
+              {skim ? t("cache.skimRegenerationHint") : t("cache.regenerationHint")}<br />
               {t("cache.clearQuestion")}
             </>
           )}

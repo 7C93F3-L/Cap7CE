@@ -4,13 +4,16 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { CACHE_VERSION, RENDER_STRATEGY_VERSION } from "./versioning";
 
-export type VisualCacheType = "search-thumbnail" | "model-input-image" | "preview-image";
+export type FormalVisualCacheType = "search-thumbnail" | "model-input-image" | "preview-image";
+export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview";
+export type VisualCacheType = FormalVisualCacheType | SkimVisualCacheType;
 export type VisualImageMimeType = "image/jpeg" | "image/png";
 
 export interface VisualCacheDescriptor {
   type: VisualCacheType;
-  directoryName: "thumbnails" | "model-inputs" | "previews";
-  extension: ".capth" | ".capmo" | ".cappr";
+  directoryName: string;
+  metadataDirectoryName?: string;
+  extension: ".capth" | ".capmo" | ".cappr" | ".capskth" | ".capskpr";
 }
 
 export interface VisualCacheEntry {
@@ -70,8 +73,25 @@ const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
     type: "preview-image",
     directoryName: "previews",
     extension: ".cappr"
+  },
+  "skim-thumbnail": {
+    type: "skim-thumbnail",
+    directoryName: path.join("skim-cache", "thumbnails"),
+    metadataDirectoryName: path.join("skim-cache", "metadata"),
+    extension: ".capskth"
+  },
+  "skim-preview": {
+    type: "skim-preview",
+    directoryName: path.join("skim-cache", "previews"),
+    metadataDirectoryName: path.join("skim-cache", "metadata"),
+    extension: ".capskpr"
   }
 };
+
+const formalVisualCacheTypes: readonly FormalVisualCacheType[] = [
+  "search-thumbnail", "model-input-image", "preview-image"
+];
+const skimVisualCacheTypes: readonly SkimVisualCacheType[] = ["skim-thumbnail", "skim-preview"];
 
 let cachedVisualCacheDirectories: string[] | null = null;
 let visualCacheInitializationPromise: Promise<void> | null = null;
@@ -89,9 +109,16 @@ export const getVisualCacheDirectory = (type: VisualCacheType) => (
   path.join(app.getPath("userData"), getVisualCacheDescriptor(type).directoryName)
 );
 
+export const getVisualCacheMetadataDirectory = (type: VisualCacheType) => {
+  const descriptor = getVisualCacheDescriptor(type);
+  return path.join(app.getPath("userData"), descriptor.metadataDirectoryName ?? descriptor.directoryName);
+};
+
 export const getVisualCacheDirectories = () => (
-  cachedVisualCacheDirectories ??= Object.keys(cacheDescriptors)
-    .map((type) => getVisualCacheDirectory(type as VisualCacheType))
+  cachedVisualCacheDirectories ??= [...new Set(
+    (Object.keys(cacheDescriptors) as VisualCacheType[])
+      .flatMap((type) => [getVisualCacheDirectory(type), getVisualCacheMetadataDirectory(type)])
+  )]
 );
 
 export const getLegacyVisualCacheDirectory = () => path.join(app.getPath("userData"), "cache");
@@ -115,54 +142,74 @@ export const initializeVisualCacheDirectories = async () => {
   await visualCacheInitializationPromise;
 };
 
-const isVisualCacheFile = (fileName: string, type: VisualCacheType) => {
-  const extension = getVisualCacheDescriptor(type).extension;
-  return fileName.endsWith(extension) || fileName.endsWith(`${extension}.json`);
-};
-
 const getVisualCacheTypeStats = async (type: VisualCacheType) => {
   const cachePath = getVisualCacheDirectory(type);
+  const metadataPath = getVisualCacheMetadataDirectory(type);
   const extension = getVisualCacheDescriptor(type).extension;
   const entries = await fs.readdir(cachePath, { withFileTypes: true });
-  const cacheFiles = entries.filter((entry) => entry.isFile() && isVisualCacheFile(entry.name, type));
+  const imageFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith(extension));
+  const metadataEntries = metadataPath === cachePath
+    ? entries.filter((entry) => entry.isFile() && entry.name.endsWith(`${extension}.json`))
+    : (await fs.readdir(metadataPath, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(`${extension}.json`));
+  const filePaths = [
+    ...imageFiles.map((entry) => path.join(cachePath, entry.name)),
+    ...metadataEntries.map((entry) => path.join(metadataPath, entry.name))
+  ];
   const fileSizes = await Promise.all(
-    cacheFiles.map(async (entry) => (await fs.stat(path.join(cachePath, entry.name))).size)
+    filePaths.map(async (filePath) => (await fs.stat(filePath)).size)
   );
 
   return {
-    cacheCount: cacheFiles.filter((entry) => entry.name.endsWith(extension)).length,
+    cacheCount: imageFiles.length,
     totalBytes: fileSizes.reduce((sum, fileSize) => sum + fileSize, 0),
-    cachePath
+    cachePaths: [...new Set([cachePath, metadataPath])]
   };
 };
 
-export const getVisualCacheStats = async (): Promise<VisualCacheStats> => {
+const getCacheStats = async (types: readonly VisualCacheType[]): Promise<VisualCacheStats> => {
   await initializeVisualCacheDirectories();
-  const statsByType = await Promise.all(
-    (Object.keys(cacheDescriptors) as VisualCacheType[]).map(getVisualCacheTypeStats)
-  );
+  const statsByType = await Promise.all(types.map(getVisualCacheTypeStats));
 
   return {
     cacheCount: statsByType.reduce((sum, stats) => sum + stats.cacheCount, 0),
     totalBytes: statsByType.reduce((sum, stats) => sum + stats.totalBytes, 0),
-    cachePaths: statsByType.map((stats) => stats.cachePath)
+    cachePaths: [...new Set(statsByType.flatMap((stats) => stats.cachePaths))]
   };
 };
 
-export const clearVisualCaches = async (): Promise<VisualCacheStats> => {
+export const getVisualCacheStats = () => getCacheStats(formalVisualCacheTypes);
+export const getSkimVisualCacheStats = () => getCacheStats(skimVisualCacheTypes);
+
+const clearCacheTypes = async (types: readonly VisualCacheType[]) => {
   await initializeVisualCacheDirectories();
   await Promise.all(
-    (Object.keys(cacheDescriptors) as VisualCacheType[]).map(async (type) => {
-      const cachePath = getVisualCacheDirectory(type);
-      const entries = await fs.readdir(cachePath, { withFileTypes: true });
-      await Promise.all(entries.map(async (entry) => {
-        if (entry.isFile() && isVisualCacheFile(entry.name, type)) {
-          await fs.rm(path.join(cachePath, entry.name), { force: true });
-        }
+    types.map(async (type) => {
+      const descriptor = getVisualCacheDescriptor(type);
+      const directories = [...new Set([getVisualCacheDirectory(type), getVisualCacheMetadataDirectory(type)])];
+      await Promise.all(directories.map(async (cachePath) => {
+        const entries = await fs.readdir(cachePath, { withFileTypes: true });
+        await Promise.all(entries.map(async (entry) => {
+          if (entry.isFile() && (
+            entry.name.endsWith(descriptor.extension)
+            || entry.name.endsWith(`${descriptor.extension}.json`)
+          )) {
+            await fs.rm(path.join(cachePath, entry.name), { force: true });
+          }
+        }));
       }));
     })
   );
+};
+
+export const clearVisualCaches = async (): Promise<VisualCacheStats> => {
+  await clearCacheTypes(formalVisualCacheTypes);
   return getVisualCacheStats();
+};
+
+export const clearSkimVisualCaches = async (): Promise<VisualCacheStats> => {
+  await clearCacheTypes(skimVisualCacheTypes);
+  return getSkimVisualCacheStats();
 };
 
 export const createVisualCacheEntryFromSourceMetadata = (
@@ -193,7 +240,7 @@ export const createVisualCacheEntryFromSourceMetadata = (
     cacheVersion: CACHE_VERSION,
     renderStrategyVersion: RENDER_STRATEGY_VERSION,
     imagePath: path.join(cacheDirectory, `${key}${descriptor.extension}`),
-    metadataPath: path.join(cacheDirectory, `${key}${descriptor.extension}.json`)
+    metadataPath: path.join(getVisualCacheMetadataDirectory(type), `${key}${descriptor.extension}.json`)
   };
 };
 
@@ -311,7 +358,7 @@ export const readVisualCacheImage = async (imagePath: string): Promise<VisualCac
 };
 
 const listMetadataPaths = async (type: VisualCacheType) => {
-  const cacheDirectory = getVisualCacheDirectory(type);
+  const cacheDirectory = getVisualCacheMetadataDirectory(type);
   try {
     const entries = await fs.readdir(cacheDirectory, { withFileTypes: true });
     return entries
@@ -325,8 +372,11 @@ const listMetadataPaths = async (type: VisualCacheType) => {
   }
 };
 
-const deleteEntryFiles = async (metadataPath: string) => {
-  const imagePath = metadataPath.slice(0, -".json".length);
+const deleteEntryFiles = async (metadataPath: string, type: VisualCacheType) => {
+  const imagePath = path.join(
+    getVisualCacheDirectory(type),
+    path.basename(metadataPath).slice(0, -".json".length)
+  );
   await Promise.all([
     fs.rm(imagePath, { force: true }).catch(() => undefined),
     fs.rm(metadataPath, { force: true }).catch(() => undefined)
@@ -339,6 +389,7 @@ export const deleteVisualCacheImage = async (
 ) => {
   const descriptor = getVisualCacheDescriptor(type);
   const cacheDirectory = getVisualCacheDirectory(type);
+  const metadataDirectory = getVisualCacheMetadataDirectory(type);
   const normalizedImagePath = path.resolve(imagePath);
   if (
     !isPathInsideDirectory(normalizedImagePath, cacheDirectory)
@@ -349,7 +400,7 @@ export const deleteVisualCacheImage = async (
 
   await Promise.all([
     fs.rm(normalizedImagePath, { force: true }),
-    fs.rm(`${normalizedImagePath}.json`, { force: true })
+    fs.rm(path.join(metadataDirectory, `${path.basename(normalizedImagePath)}.json`), { force: true })
   ]);
 };
 
@@ -367,7 +418,7 @@ export const deleteVisualCachesForImagesByType = async (
   await Promise.all(metadataPaths.map(async (metadataPath) => {
     const metadata = await readVisualCacheMetadata(metadataPath);
     if (metadata && normalizedSourcePaths.has(normalizedPathForKey(metadata.sourcePath))) {
-      await deleteEntryFiles(metadataPath);
+      await deleteEntryFiles(metadataPath, type);
       deletedCount += 1;
     }
   }));
@@ -392,7 +443,7 @@ export const deleteVisualCachesForDirectory = async (directoryPath: string) => {
       await Promise.all(metadataPaths.map(async (metadataPath) => {
         const metadata = await readVisualCacheMetadata(metadataPath);
         if (metadata && isPathInsideDirectory(metadata.sourcePath, directoryPath)) {
-          await deleteEntryFiles(metadataPath);
+          await deleteEntryFiles(metadataPath, type);
         }
       }));
     })

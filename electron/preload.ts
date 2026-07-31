@@ -92,6 +92,8 @@ contextBridge.exposeInMainWorld("imageEverything", {
   skim: {
     read: (request: unknown) => ipcRenderer.invoke("skim:read", request),
     cancel: (taskId: string) => ipcRenderer.invoke("skim:cancel", taskId),
+    beginVisualSession: (sessionId: string) => ipcRenderer.invoke("skim:beginVisualSession", sessionId),
+    cancelVisualSession: (sessionId: string) => ipcRenderer.invoke("skim:cancelVisualSession", sessionId),
     inspect: (request: unknown) => ipcRenderer.invoke("skim:inspect", request),
     startFolderStats: (request: unknown) => ipcRenderer.invoke("skim:startFolderStats", request),
     cancelFolderStats: (sessionId: string) => ipcRenderer.invoke("skim:cancelFolderStats", sessionId),
@@ -189,5 +191,10 @@ contextBridge.exposeInMainWorld("imageEverything", {
     },
     authorizeClear: () => ipcRenderer.invoke("cache:authorizeClear"),
     clearAll: (token: string) => ipcRenderer.invoke("cache:clearAll", token)
+  },
+  skimCache: {
+    stats: () => ipcRenderer.invoke("skimCache:stats"),
+    authorizeClear: () => ipcRenderer.invoke("skimCache:authorizeClear"),
+    clear: (token: string) => ipcRenderer.invoke("skimCache:clear", token)
   }
 });

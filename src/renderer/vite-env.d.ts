@@ -58,6 +58,8 @@ declare global {
       skim: {
         read: (request: SkimReadRequest) => Promise<SkimReadResponse>;
         cancel: (taskId: string) => Promise<boolean>;
+        beginVisualSession: (sessionId: string) => Promise<boolean>;
+        cancelVisualSession: (sessionId: string) => Promise<boolean>;
         inspect: (request: { path: string; kind: "file" | "folder" }) => Promise<SkimPreviewInfo>;
         startFolderStats: (request: { sessionId: string; path: string }) => Promise<boolean>;
         cancelFolderStats: (sessionId: string) => Promise<boolean>;
@@ -118,6 +120,11 @@ declare global {
         onOptimizationStatusChanged: (callback: (status: ThumbnailOptimizationStatus) => void) => () => void;
         authorizeClear: () => Promise<string>;
         clearAll: (token: string) => Promise<VisualCacheStats>;
+      };
+      skimCache: {
+        stats: () => Promise<VisualCacheStats>;
+        authorizeClear: () => Promise<string>;
+        clear: (token: string) => Promise<VisualCacheStats>;
       };
     };
   }

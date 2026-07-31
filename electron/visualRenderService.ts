@@ -61,6 +61,16 @@ const renderStrategies: Record<VisualCacheType, VisualRenderStrategy> = {
     maxWidth: 2560,
     maxHeight: 2560,
     mimeType: "image/png"
+  },
+  "skim-thumbnail": {
+    maxWidth: 300,
+    maxHeight: 300,
+    mimeType: "image/png"
+  },
+  "skim-preview": {
+    maxWidth: 2560,
+    maxHeight: 2560,
+    mimeType: "image/png"
   }
 };
 
@@ -387,6 +397,14 @@ export const ensureModelInputImagePath = (sourcePath: string) => (
 
 export const ensurePreviewImagePath = (sourcePath: string) => (
   ensureVisualCachePath(sourcePath, "preview-image")
+);
+
+export const ensureSkimThumbnailPath = (sourcePath: string) => (
+  ensureVisualCachePath(sourcePath, "skim-thumbnail")
+);
+
+export const ensureSkimPreviewPath = (sourcePath: string) => (
+  ensureVisualCachePath(sourcePath, "skim-preview")
 );
 
 export const loadModelInputImage = async (sourcePath: string) => {

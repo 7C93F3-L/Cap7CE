@@ -834,6 +834,26 @@ textarea,
   flex: 0 0 auto;
 }
 
+.cap-skim-entry-visual {
+  position: relative;
+  width: 56px;
+  height: 48px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.cap-skim-entry-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--panel-bg);
+}
+
 .cap-skim-entry-name,
 .cap-skim-entry-path {
   max-width: 100%;
@@ -877,6 +897,11 @@ textarea,
 .cap-shell-micro .cap-skim-entry-icon {
   width: 30px;
   height: 30px;
+}
+
+.cap-shell-micro .cap-skim-entry-visual {
+  width: 42px;
+  height: 34px;
 }
 
 .cap-shell-micro .cap-skim-entry-path,
