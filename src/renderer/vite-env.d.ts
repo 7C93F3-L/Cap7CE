@@ -19,6 +19,7 @@ declare global {
         onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => () => void;
         onOpenSettingsRequested: (callback: () => void) => () => void;
         onToggleSkimRequested: (callback: () => void) => () => void;
+        onActivateSkimRequested: (callback: () => void) => () => void;
         onShowAllFilesRequested: (callback: () => void) => () => void;
         onActivateCapsuleShortcut: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "micro" | "mini" | "normal" | "standby") => void) => () => void;

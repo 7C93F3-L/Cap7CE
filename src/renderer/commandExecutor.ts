@@ -25,6 +25,8 @@ export interface QuickCommandExecutorContext {
   defaultShortcutActions: ShortcutActionPreferences;
   currentAppearanceColors: AppearanceColors;
   openSettings: (section?: "quick" | "cmd") => void;
+  openSkim: () => void;
+  openSkimRoot: () => void;
   updateTheme: (theme: ThemeMode) => void;
   updateLanguage: (language: LanguagePreference) => Promise<void>;
   updateAppearanceColors: (appearanceColors: AppearanceColors) => void;
@@ -65,6 +67,7 @@ export interface QuickCommandExecutorContext {
   getLlamaStopBlocker: () => string | null;
   stopLlamaRuntime: () => Promise<CommandOperationResult>;
   clearCache: () => Promise<CommandOperationResult>;
+  clearSkimCache: () => Promise<CommandOperationResult>;
   quitApp: () => Promise<CommandOperationResult>;
 }
 
@@ -245,6 +248,17 @@ export const executeQuickCommand = async (
     }
   }
 
+  if (command.domain === "skim") {
+    if (command.action === "") {
+      context.openSkim();
+      return { status: "handled", message: t("command.skimOpened"), clearInput: true };
+    }
+    if (command.action === "root") {
+      context.openSkimRoot();
+      return { status: "handled", message: t("command.skimRootOpened"), clearInput: true };
+    }
+  }
+
   if (command.domain === "ui") {
     if (command.action === "light" || command.action === "dark" || command.action === "auto") {
       context.updateTheme(command.action === "auto" ? "system" : command.action);
@@ -396,6 +410,22 @@ export const executeQuickCommand = async (
         successMessage: t("command.cacheCleared"),
         failureMessage: t("command.cacheClearFailed"),
         execute: context.clearCache
+      }
+    };
+  }
+
+  if (command.domain === "cache" && command.action === "skim") {
+    const message = t("command.confirmClearSkimCache");
+    return {
+      status: "confirmation",
+      message,
+      clearInput: true,
+      confirmation: {
+        raw: command.raw,
+        message,
+        successMessage: t("command.skimCacheCleared"),
+        failureMessage: t("command.skimCacheClearFailed"),
+        execute: context.clearSkimCache
       }
     };
   }

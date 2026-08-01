@@ -79,7 +79,7 @@ let quickActionGlobalEnabled = true;
 let shortcutCaptureActive = false;
 let registeredActivateCapsuleShortcut: string | null = null;
 const registeredShellModeShortcuts = new Map<string, string>();
-type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "openSettings";
+type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "openSettings";
 type GlobalShortcutActionId = ShortcutActionId;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
@@ -960,6 +960,12 @@ const sendToggleSkimToRenderer = () => {
   }
 };
 
+const sendActivateSkimToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:activateSkimRequested");
+  }
+};
+
 const sendShowAllFilesToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:showAllFilesRequested");
@@ -1060,13 +1066,18 @@ const unregisterShellModeShortcuts = () => {
   registeredShellModeShortcuts.clear();
 };
 
-const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "settings") => {
+const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings") => {
   if (mode === "settings") {
     openSettingsFromTray();
     return;
   }
 
   if (mode !== "standby" && !showAndFocusMainWindow()) {
+    return;
+  }
+
+  if (mode === "skim") {
+    sendActivateSkimToRenderer();
     return;
   }
 
@@ -1078,6 +1089,7 @@ const registerShellModeShortcuts = (shortcutActions: {
   activateMini: string;
   activateNormal: string;
   activateStandby: string;
+  activateSkim: string;
   openSettings: string;
 }) => {
   unregisterShellModeShortcuts();
@@ -1087,6 +1099,7 @@ const registerShellModeShortcuts = (shortcutActions: {
     { id: "activateMini", shortcut: shortcutActions.activateMini, mode: "mini" },
     { id: "activateNormal", shortcut: shortcutActions.activateNormal, mode: "normal" },
     { id: "activateStandby", shortcut: shortcutActions.activateStandby, mode: "standby" },
+    { id: "activateSkim", shortcut: shortcutActions.activateSkim, mode: "skim" },
     { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" }
   ] as const;
 
@@ -1132,6 +1145,7 @@ const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) 
     ["activateMini", shortcutActions.activateMini],
     ["activateNormal", shortcutActions.activateNormal],
     ["activateStandby", shortcutActions.activateStandby],
+    ["activateSkim", shortcutActions.activateSkim],
     ["openSettings", shortcutActions.openSettings]
   ];
   const unavailableActionIds = new Set<GlobalShortcutActionId>();
@@ -3022,6 +3036,7 @@ ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActio
   activateMini: string;
   activateNormal: string;
   activateStandby: string;
+  activateSkim: string;
   openSettings: string;
 }) => {
   const currentPreferences = await getUserPreferences();

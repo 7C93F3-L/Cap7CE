@@ -49,6 +49,7 @@ tag:
 idx:
 dir:
 cache:
+skim:
 set:
 ui:
 line:
@@ -335,6 +336,7 @@ dir:refresh
 | `cache:thumb`   | 仅清理缩略图缓存，后续评估       | 中   |
 | `cache:preview` | 仅清理预览缓存，后续评估        | 中   |
 | `cache:model`   | 仅清理模型输入图缓存，后续评估     | 中   |
+| `cache:skim`    | 清理 skim 缩略图、预览图及元数据缓存 | 中，必须确认 |
 
 建议第一版只保留：
 
@@ -366,7 +368,27 @@ set:cmd
 
 ---
 
-## 2.8 外观类：`ui:`
+## 2.8 skim：`skim:`
+
+用于进入 skim 及返回 skim 根目录。
+
+| 指令 | 含义 | 风险 |
+| --- | --- | --- |
+| `skim:` | 进入 skim；已经位于 skim 时保持当前目录 | 低 |
+| `skim:root` | 进入 skim 根目录 | 低 |
+
+示例：
+
+```text
+skim:
+skim:root
+```
+
+`skim:` 与 `skim:root` 都是确定性操作，不作为退出 skim 的开关。skim 的独立缓存归入缓存领域，通过 `cache:skim` 清理并复用快捷指令确认态；清理后缓存会在浏览时按需重新生成。
+
+---
+
+## 2.9 外观类：`ui:`
 
 用于主题、颜色1、颜色2等界面外观设置。
 
@@ -392,7 +414,7 @@ ui:reset
 
 ---
 
-## 2.9 line：`line:`
+## 2.10 line：`line:`
 
 用于控制 line 显示。
 
@@ -410,7 +432,7 @@ line:off
 
 ---
 
-## 2.10 边缘吸附类：`edge:`
+## 2.11 边缘吸附类：`edge:`
 
 用于控制边缘吸附。
 
@@ -436,7 +458,7 @@ dock:auto off
 
 ---
 
-## 2.11 快捷键类：`key:`
+## 2.12 快捷键类：`key:`
 
 用于控制快捷动作中的全局快捷键。
 
@@ -461,7 +483,7 @@ key:reset
 
 ---
 
-## 2.12 快捷指令类：`cmd:`
+## 2.13 快捷指令类：`cmd:`
 
 用于控制快捷指令系统自身。
 
@@ -484,7 +506,7 @@ cmd:off
 
 ---
 
-## 2.13 语言类：`lang:`
+## 2.14 语言类：`lang:`
 
 用于语言切换。该功能可以最后实现。
 
@@ -508,7 +530,7 @@ lang:en
 
 ---
 
-## 2.14 llama.cpp 运行时类：`llama:`
+## 2.15 llama.cpp 运行时类：`llama:`
 
 用于 llama.cpp 版本与运行状态管理。
 
@@ -530,7 +552,7 @@ llama:refresh
 
 ---
 
-## 2.15 视觉模型类：`model:`
+## 2.16 视觉模型类：`model:`
 
 用于选择或刷新视觉模型。
 
@@ -552,7 +574,7 @@ model:use "Qwen3-VL-4B-Instruct-Q4_K_M.gguf"
 
 ---
 
-## 2.16 软件行为与操作类：`app:`
+## 2.17 软件行为与操作类：`app:`
 
 用于控制软件级运行行为，以及执行退出等全局操作。
 
@@ -683,6 +705,9 @@ set:
 set:quick
 set:cmd
 
+skim:
+skim:root
+
 ui:light
 ui:dark
 ui:auto
@@ -720,6 +745,7 @@ model:refresh
 idx:all
 idx:dir "目录名称"
 cache:clear
+cache:skim
 llama:start
 llama:stop
 llama:use "版本名称"
@@ -772,6 +798,7 @@ tag
 idx
 dir
 cache
+skim
 set
 ui
 line

@@ -10,7 +10,7 @@ type AppearanceColors = {
   themeColor: string;
   accentColor: string;
 };
-type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "openSettings";
+type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "openSettings";
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type SearchLabelVisibilityPreferences = {
   directory: boolean;
@@ -73,7 +73,8 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     activateMini: "Alt+2",
     activateNormal: "Alt+3",
     activateStandby: "Alt+4",
-    openSettings: "Alt+5"
+    activateSkim: "Alt+5",
+    openSettings: "Alt+6"
   },
   updatedAt: new Date().toISOString()
 });
@@ -95,6 +96,7 @@ const isShortcutActionId = (value: string): value is ShortcutActionId => (
   || value === "activateMini"
   || value === "activateNormal"
   || value === "activateStandby"
+  || value === "activateSkim"
   || value === "openSettings"
 );
 const isShortcutValue = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
@@ -125,6 +127,9 @@ const normalizeShortcutActions = (
   defaults = defaultPreferences().shortcutActions
 ): ShortcutActionPreferences => {
   const parsedShortcuts = shortcutActions as Partial<Record<string, unknown>> | undefined;
+  if (!parsedShortcuts || !isShortcutValue(parsedShortcuts.activateSkim)) {
+    return { ...defaults };
+  }
   return (Object.keys(defaults) as ShortcutActionId[]).reduce<ShortcutActionPreferences>((currentShortcuts, shortcutId) => {
     const shortcutValue = parsedShortcuts && isShortcutActionId(shortcutId) ? parsedShortcuts[shortcutId] : undefined;
     return {

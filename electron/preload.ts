@@ -29,6 +29,11 @@ contextBridge.exposeInMainWorld("imageEverything", {
       ipcRenderer.on("window:toggleSkimRequested", listener);
       return () => ipcRenderer.removeListener("window:toggleSkimRequested", listener);
     },
+    onActivateSkimRequested: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("window:activateSkimRequested", listener);
+      return () => ipcRenderer.removeListener("window:activateSkimRequested", listener);
+    },
     onShowAllFilesRequested: (callback: () => void) => {
       const listener = () => callback();
       ipcRenderer.on("window:showAllFilesRequested", listener);
@@ -168,6 +173,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
       activateMini: string;
       activateNormal: string;
       activateStandby: string;
+      activateSkim: string;
       openSettings: string;
     }) => ipcRenderer.invoke("preferences:updateShortcutActions", shortcutActions),
     shortcutAvailability: () => ipcRenderer.invoke("preferences:shortcutAvailability"),

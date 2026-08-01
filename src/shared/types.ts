@@ -56,6 +56,7 @@ export type ShortcutActionId =
   | "activateMini"
   | "activateNormal"
   | "activateStandby"
+  | "activateSkim"
   | "openSettings";
 
 export type ShortcutActionPreferences = Record<ShortcutActionId, string>;

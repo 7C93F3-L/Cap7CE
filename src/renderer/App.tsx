@@ -561,7 +561,8 @@ const defaultShortcutActions: ShortcutActionPreferences = {
   activateMini: "Alt+2",
   activateNormal: "Alt+3",
   activateStandby: "Alt+4",
-  openSettings: "Alt+5"
+  activateSkim: "Alt+5",
+  openSettings: "Alt+6"
 };
 
 interface OperationHintDefinition {
@@ -579,6 +580,7 @@ const operationHintDefinitions: OperationHintDefinition[] = [
   { key: "search.guide.activateMini", shortcutActionId: "activateMini" },
   { key: "search.guide.activateNormal", shortcutActionId: "activateNormal" },
   { key: "search.guide.activateLine", shortcutActionId: "activateStandby" },
+  { key: "search.guide.activateSkim", shortcutActionId: "activateSkim" },
   { key: "search.guide.openSettings", shortcutActionId: "openSettings" },
   { key: "search.guide.preview" },
   { key: "search.guide.previewNavigate" },
@@ -603,6 +605,7 @@ const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }>
   { id: "activateMini", name: t("shortcut.activateMini") },
   { id: "activateNormal", name: t("shortcut.activateNormal") },
   { id: "activateStandby", name: t("shortcut.activateLine") },
+  { id: "activateSkim", name: t("shortcut.activateSkim") },
   { id: "openSettings", name: t("shortcut.openSettings") }
 ];
 
@@ -610,6 +613,13 @@ const getQuickCommandGroups = (): Array<{
   title: string;
   items: Array<{ command: string; description: string }>;
 }> => [
+  {
+    title: t("commands.group.skim"),
+    items: [
+      { command: "skim:", description: t("commands.skim.open") },
+      { command: "skim:root", description: t("commands.skim.root") }
+    ]
+  },
   {
     title: t("commands.group.settings"),
     items: [
@@ -748,7 +758,8 @@ const getQuickCommandGroups = (): Array<{
     items: [
       { command: "cache:thumb", description: t("commands.cache.thumbnail") },
       { command: "cache:preview", description: t("commands.cache.preview") },
-      { command: "cache:model", description: t("commands.cache.model") }
+      { command: "cache:model", description: t("commands.cache.model") },
+      { command: "cache:skim", description: t("commands.cache.skim") }
     ]
   }
 ];
@@ -758,7 +769,8 @@ const getDangerousQuickCommandItems = () => [
   { command: "idx:clear all", description: t("commands.confirm.clearIndex") },
   { command: "app:quit", description: t("commands.confirm.quit") },
   { command: "llama:stop", description: t("commands.confirm.stopRuntime") },
-  { command: "cache:clear", description: t("commands.confirm.clearCache") }
+  { command: "cache:clear", description: t("commands.confirm.clearCache") },
+  { command: "cache:skim", description: t("commands.confirm.clearSkimCache") }
 ];
 
 const normalizeShortcutActions = (shortcutActions?: Partial<ShortcutActionPreferences>): ShortcutActionPreferences => ({
@@ -767,6 +779,7 @@ const normalizeShortcutActions = (shortcutActions?: Partial<ShortcutActionPrefer
   activateMini: shortcutActions?.activateMini || defaultShortcutActions.activateMini,
   activateNormal: shortcutActions?.activateNormal || defaultShortcutActions.activateNormal,
   activateStandby: shortcutActions?.activateStandby || defaultShortcutActions.activateStandby,
+  activateSkim: shortcutActions?.activateSkim || defaultShortcutActions.activateSkim,
   openSettings: shortcutActions?.openSettings || defaultShortcutActions.openSettings
 });
 
@@ -2143,6 +2156,27 @@ const App = () => {
     }
   };
 
+  const clearCommandSkimCache = async () => {
+    try {
+      const token = await window.imageEverything?.skimCache.authorizeClear();
+      if (!token) {
+        return commandOperationFailed(t("error.cacheFailed"));
+      }
+      const stats = await window.imageEverything?.skimCache.clear(token);
+      if (stats) {
+        setSkimCacheStats(stats);
+      } else {
+        await refreshVisualCacheStats();
+      }
+      if (view === "skim") {
+        void loadSkimLocation(skimCurrentPath);
+      }
+      return { ok: true as const };
+    } catch (error) {
+      return commandOperationFailed(error instanceof Error ? error.message : t("error.cacheFailed"));
+    }
+  };
+
   const quitCommandApp = async () => {
     try {
       await window.imageEverything?.app.quit();
@@ -2207,6 +2241,14 @@ const App = () => {
       defaultShortcutActions,
       currentAppearanceColors: appearanceColors,
       openSettings,
+      openSkim,
+      openSkimRoot: () => {
+        if (view === "skim") {
+          void loadSkimLocation(null);
+        } else {
+          openSkim();
+        }
+      },
       updateTheme,
       updateLanguage,
       updateAppearanceColors,
@@ -2284,6 +2326,7 @@ const App = () => {
       getLlamaStopBlocker: getCommandLlamaStopBlocker,
       stopLlamaRuntime: stopCommandLlamaRuntime,
       clearCache: clearCommandCache,
+      clearSkimCache: clearCommandSkimCache,
       quitApp: quitCommandApp
     }).then((result) => {
       showQuickCommandNotice(result.message, result.status === "confirmation");
@@ -3191,12 +3234,15 @@ const App = () => {
       return;
     }
     const returnView: Exclude<AppView, "skim"> = view === "home" ? "results" : view;
-    skimReturnContextRef.current = { view: returnView, shellState };
+    const returnShellState = shellState === "standby" || shellState === "capsule"
+      ? "normal"
+      : shellState;
+    skimReturnContextRef.current = { view: returnView, shellState: returnShellState };
     setSkimEntries([]);
     setSkimCurrentPath(null);
     setSkimBreadcrumbs([]);
     skimForwardPathsRef.current = [];
-    if (shellState === "settings") {
+    if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
     setView("skim");
@@ -3264,6 +3310,11 @@ const App = () => {
     });
     return () => unsubscribe?.();
   }, [closeSkim, openSkim, view]);
+
+  useEffect(() => {
+    const unsubscribe = window.imageEverything?.window.onActivateSkimRequested?.(openSkim);
+    return () => unsubscribe?.();
+  }, [openSkim]);
 
   const closeSettings = () => {
     setShellState("normal");
@@ -3436,6 +3487,14 @@ const App = () => {
         return;
       }
 
+      if (matchesShortcutEvent(event, shortcutActions.activateSkim)) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeNavigationOverlays();
+        openSkim();
+        return;
+      }
+
       if (matchesShortcutEvent(event, shortcutActions.openSettings)) {
         event.preventDefault();
         event.stopPropagation();
@@ -3462,6 +3521,7 @@ const App = () => {
     isDeletingFiles,
     isSavingMetadata,
     keywordBatchFeedback,
+    openSkim,
     openSettings,
     pendingQuickCommandConfirmation,
     search,
