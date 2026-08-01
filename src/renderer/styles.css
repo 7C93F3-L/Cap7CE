@@ -768,10 +768,6 @@ textarea,
   white-space: nowrap;
 }
 
-.cap-skim-breadcrumb[data-selected="true"] {
-  background: var(--chip-bg-hover);
-}
-
 .cap-skim-grid-frame {
   flex: 1 1 auto;
   width: 100%;

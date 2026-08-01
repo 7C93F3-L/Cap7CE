@@ -5058,9 +5058,10 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         leadingContent={(
           <div className="cap-skim-breadcrumb-list" aria-label={t("skim.name")}>
           <button
-            className="cap7ce-pill cap-skim-breadcrumb"
+            className="cap7ce-pill cap7ce-directory-tag cap-skim-breadcrumb"
             type="button"
             data-selected={currentPath === null}
+            aria-expanded={breadcrumbs.length > 0}
             aria-current={currentPath === null ? "page" : undefined}
             onClick={onOpenRoot}
           >
@@ -5068,7 +5069,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
           </button>
           {breadcrumbs.map((breadcrumb, index) => (
             <button
-              className="cap7ce-pill cap-skim-breadcrumb"
+              className="cap7ce-pill cap7ce-directory-chip cap-skim-breadcrumb"
               type="button"
               key={breadcrumb.path}
               data-selected={index === breadcrumbs.length - 1}
