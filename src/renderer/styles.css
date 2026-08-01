@@ -752,8 +752,9 @@ textarea,
 
 .cap-skim-breadcrumb-list {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   align-items: center;
+  gap: var(--cap-grid-gap, var(--cap-thumb-gap));
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -780,10 +781,11 @@ textarea,
 
 .cap-skim-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  grid-auto-rows: minmax(98px, auto);
+  grid-template-columns: repeat(auto-fill, minmax(var(--cap-grid-target-size, 150px), 1fr));
+  grid-auto-rows: max-content;
   align-content: start;
-  gap: 10px;
+  align-items: start;
+  gap: var(--cap-grid-gap, var(--cap-thumb-gap));
   overflow-x: hidden;
   overflow-y: auto;
   padding: 0;
@@ -796,12 +798,14 @@ textarea,
 
 .cap-skim-entry {
   min-width: 0;
-  min-height: 98px;
+  min-height: 0;
+  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
+  overflow: hidden;
   padding: 10px 8px;
   border: 0;
   border-radius: var(--radius-thumb);
@@ -813,6 +817,12 @@ textarea,
 .cap-skim-entry:focus-visible {
   background: color-mix(in srgb, var(--text-main) 8%, var(--panel-bg));
   outline: none;
+  outline-offset: 0;
+}
+
+.app .cap-skim-entry:focus-visible {
+  outline: none;
+  outline-offset: 0;
 }
 
 .cap-skim-entry.selected {
@@ -824,15 +834,16 @@ textarea,
 }
 
 .cap-skim-entry-icon {
-  width: 40px;
-  height: 40px;
+  width: 80%;
+  height: 80%;
   flex: 0 0 auto;
 }
 
 .cap-skim-entry-visual {
   position: relative;
-  width: 56px;
-  height: 48px;
+  width: clamp(48px, 42%, 72px);
+  height: auto;
+  aspect-ratio: 1;
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -846,7 +857,11 @@ textarea,
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: var(--panel-bg);
+  background: transparent;
+}
+
+.cap-skim-entry-visual:has(.cap-skim-entry-thumbnail) > .cap-skim-entry-icon {
+  visibility: hidden;
 }
 
 .cap-skim-entry-name,
@@ -854,16 +869,22 @@ textarea,
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .cap-skim-entry-name {
+  display: -webkit-box;
+  overflow-wrap: anywhere;
   font-size: 12px;
+  line-height: 15px;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .cap-skim-entry-path {
   color: var(--text-muted);
   font-size: 10px;
+  white-space: nowrap;
 }
 
 .cap-skim-entry-format {
@@ -877,15 +898,18 @@ textarea,
 }
 
 .cap-shell-micro .cap-skim-grid {
-  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-  grid-auto-rows: minmax(74px, 1fr);
-  grid-auto-flow: column;
+  display: flex;
+  align-items: stretch;
+  gap: var(--cap-grid-gap, var(--cap-thumb-gap));
   overflow-x: auto;
   overflow-y: hidden;
 }
 
 .cap-shell-micro .cap-skim-entry {
-  min-height: 74px;
+  width: auto;
+  height: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
   padding: 6px;
 }
 
@@ -897,6 +921,15 @@ textarea,
 .cap-shell-micro .cap-skim-entry-visual {
   width: 42px;
   height: 34px;
+  aspect-ratio: auto;
+}
+
+.cap-shell-micro .cap-skim-grid > .empty-result-row {
+  flex: 1 0 100%;
+}
+
+.cap-shell-mini .cap-skim-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .cap-shell-micro .cap-skim-entry-path,

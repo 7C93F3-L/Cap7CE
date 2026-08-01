@@ -4722,6 +4722,9 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
 
 const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const gridResizeFrameRef = useRef<number | null>(null);
+  const gridViewportRef = useRef({ width: 0, height: 0 });
+  const [gridViewport, setGridViewport] = useState({ width: 0, height: 0 });
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
@@ -4730,6 +4733,8 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   const previewSessionCounterRef = useRef(0);
   const previewOpenRequestRef = useRef(0);
   const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
+  const isHorizontalGrid = shellState === "micro";
+  const gridLayout = getImageGridLayout(getResultLayoutMode(shellState), gridViewport.width, gridViewport.height);
   const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
   const getEntryIcon = (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return skimDiskSvg;
@@ -4743,6 +4748,42 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     setContextMenu(null);
     selectionAnchorPathRef.current = null;
   }, [currentPath]);
+
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const measureViewport = () => {
+      const nextViewport = {
+        width: container.clientWidth,
+        height: container.clientHeight
+      };
+      if (nextViewport.width !== gridViewportRef.current.width || nextViewport.height !== gridViewportRef.current.height) {
+        gridViewportRef.current = nextViewport;
+        setGridViewport(nextViewport);
+      }
+    };
+    const scheduleViewportUpdate = () => {
+      if (gridResizeFrameRef.current !== null) return;
+      gridResizeFrameRef.current = window.requestAnimationFrame(() => {
+        measureViewport();
+        gridResizeFrameRef.current = null;
+      });
+    };
+
+    measureViewport();
+    const resizeObserver = new ResizeObserver(scheduleViewportUpdate);
+    resizeObserver.observe(container);
+    window.addEventListener("resize", scheduleViewportUpdate);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleViewportUpdate);
+      if (gridResizeFrameRef.current !== null) {
+        window.cancelAnimationFrame(gridResizeFrameRef.current);
+        gridResizeFrameRef.current = null;
+      }
+    };
+  }, []);
 
   const selectedEntries = useMemo(
     () => entries.filter((entry) => selectedPaths.has(entry.path)),
@@ -4916,12 +4957,20 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   }, [currentPath, openSystemPath]);
 
   return (
-    <main className="skim-view cap-skim-view" data-skim-view="true" onClick={() => {
+    <main
+      className="skim-view cap-skim-view"
+      data-skim-view="true"
+      style={{
+        "--cap-grid-target-size": `${imageGridTargetThumbSize}px`,
+        "--cap-grid-gap": `${imageGridGap}px`
+      } as CSSProperties}
+      onClick={() => {
       setContextMenu(null);
       setSelectedPaths(new Set());
       setActivePath(null);
       selectionAnchorPathRef.current = null;
-    }}>
+      }}
+    >
       <Cap7CESearchCapsule
         search={search}
         directoryName=""
@@ -4962,8 +5011,24 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         onLabelVisibilityChange={() => undefined}
         onSearch={onSearch}
       />
-      <div className="cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical">
-        <section className="cap-skim-grid cap-main-scroll-viewport" ref={scrollContainerRef} aria-label={t("skim.name")}>
+      <div className={`cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
+        <section
+          className="cap-skim-grid cap-main-scroll-viewport"
+          ref={scrollContainerRef}
+          aria-label={t("skim.name")}
+          style={!isHorizontalGrid && gridViewport.width > 0 ? {
+            gridTemplateColumns: `repeat(${gridLayout.columnCount}, minmax(0, ${gridLayout.cellSize}px))`,
+            gridAutoRows: `${gridLayout.cellSize}px`
+          } : undefined}
+          onWheel={(event) => {
+            if (!isHorizontalGrid || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+            event.preventDefault();
+            event.currentTarget.scrollTo({
+              left: event.currentTarget.scrollLeft + event.deltaY,
+              behavior: "auto"
+            });
+          }}
+        >
           {isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.loading")}</div>}
           {!isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.empty")}</div>}
           {entries.map((entry) => {
@@ -5019,7 +5084,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
             );
           })}
         </section>
-        <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation="vertical" />
+        <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation={isHorizontalGrid ? "horizontal" : "vertical"} />
       </div>
       {contextMenu && (
         <ImageContextMenu
