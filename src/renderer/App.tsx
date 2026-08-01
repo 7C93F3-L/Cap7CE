@@ -4939,8 +4939,13 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         : imageProviderAvailable
           ? "image"
           : contentPreview?.provider ?? "fileInfo";
+      const useAnimatedSourcePreview = provider === "image"
+        && entry.formatCapability?.canDirectPreview
+        && (entry.extension.toLowerCase() === ".gif" || entry.extension.toLowerCase() === ".webp");
       const skimPreviewUrl = provider === "image"
-        ? `cap7ce://skim-preview/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(visualSessionId)}`
+        ? useAnimatedSourcePreview
+          ? `cap7ce://skim-image/?path=${encodeURIComponent(entry.path)}`
+          : `cap7ce://skim-preview/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(visualSessionId)}`
         : contentPreview?.previewUrl ?? "";
       const previewData: PreviewWindowData = {
         sessionId,

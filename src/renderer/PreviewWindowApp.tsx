@@ -96,7 +96,10 @@ const PreviewWindowApp = () => {
   }), []);
 
   useEffect(() => {
-    if (!previewData || ((!previewData.provider || previewData.provider === "image") && !showInfoFallback)) return;
+    if (
+      !previewData
+      || ((!previewData.provider || previewData.provider === "image" || previewData.provider === "video") && !showInfoFallback)
+    ) return;
     const infoDimensions = previewData.info?.kind === "folder"
       ? { width: 480, height: 360 }
       : { width: 480, height: 250 };
@@ -392,6 +395,15 @@ const PreviewWindowApp = () => {
               autoPlay
               loop
               preload="metadata"
+              onLoadedMetadata={(event) => {
+                if (event.currentTarget.videoWidth <= 0 || event.currentTarget.videoHeight <= 0) return;
+                window.imageEverything?.preview.contentSize({
+                  sessionId: previewData.sessionId,
+                  filePath: previewData.filePath,
+                  width: event.currentTarget.videoWidth,
+                  height: event.currentTarget.videoHeight
+                });
+              }}
               onError={() => setShowInfoFallback(true)}
             />
           )
