@@ -95,15 +95,18 @@ const PreviewWindowApp = () => {
 
   useEffect(() => {
     if (!previewData || ((!previewData.provider || previewData.provider === "image") && !showInfoFallback)) return;
+    const infoDimensions = previewData.info?.kind === "folder"
+      ? { width: 480, height: 360 }
+      : { width: 480, height: 250 };
     const dimensions = showInfoFallback
-      ? { width: 640, height: 440 }
+      ? infoDimensions
       : previewData.provider === "video"
       ? { width: 960, height: 600 }
       : previewData.provider === "audio"
         ? { width: 640, height: 260 }
         : previewData.provider === "text"
           ? { width: 760, height: 600 }
-          : { width: 640, height: 440 };
+          : infoDimensions;
     window.imageEverything?.preview.contentSize({
       sessionId: previewData.sessionId,
       filePath: previewData.filePath,
@@ -398,6 +401,9 @@ const PreviewWindowApp = () => {
       </div>
       <WindowControlRail
         actions={previewControlActions}
+        showSkim={showSettings}
+        skimActive={previewData.skimActive}
+        onSkim={() => { void window.imageEverything?.preview.toggleSkim(); }}
         showSettings={showSettings}
         settingsLabel={t("window.openSettings")}
         onSettings={() => { void window.imageEverything?.preview.openSettings(); }}

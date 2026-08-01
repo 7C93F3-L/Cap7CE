@@ -998,6 +998,7 @@ const App = () => {
   const skimVisualSessionIdRef = useRef<string | null>(null);
   const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
   const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
+  const skimForwardPathsRef = useRef<string[]>([]);
   const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
   const scanResultsRefreshedDuringTaskRef = useRef(false);
@@ -1141,18 +1142,20 @@ const App = () => {
         options: skimBrowseOptions
       });
       if (!response || skimTaskIdRef.current !== taskId || response.taskId !== taskId || response.cancelled) {
-        return;
+        return false;
       }
       setSkimEntries(response.entries);
       setSkimCurrentPath(response.currentPath);
       setSkimBreadcrumbs(response.breadcrumbs);
       skimVisualSessionIdRef.current = taskId;
       setSkimVisualSessionId(taskId);
+      return true;
     } catch (error) {
       if (skimTaskIdRef.current === taskId) {
         void window.imageEverything?.skim.cancelVisualSession(taskId);
         showSkimFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
       }
+      return false;
     } finally {
       if (skimTaskIdRef.current === taskId) {
         skimTaskIdRef.current = null;
@@ -3139,6 +3142,7 @@ const App = () => {
     setSkimEntries([]);
     setSkimCurrentPath(null);
     setSkimBreadcrumbs([]);
+    skimForwardPathsRef.current = [];
     const returnContext = skimReturnContextRef.current;
     skimReturnContextRef.current = null;
     if (returnContext) {
@@ -3159,12 +3163,19 @@ const App = () => {
     setSkimEntries([]);
     setSkimCurrentPath(null);
     setSkimBreadcrumbs([]);
+    skimForwardPathsRef.current = [];
     if (shellState === "settings") {
       setShellState("normal");
     }
     setView("skim");
     void loadSkimLocation(null);
   }, [loadSkimLocation, shellState, view]);
+
+  const openSkimLocation = useCallback((nextPath: string | null) => {
+    void loadSkimLocation(nextPath).then((loaded) => {
+      if (loaded) skimForwardPathsRef.current = [];
+    });
+  }, [loadSkimLocation]);
 
   const navigateSkimBack = useCallback(() => {
     if (skimCurrentPath === null) {
@@ -3174,8 +3185,21 @@ const App = () => {
     const parentBreadcrumb = skimBreadcrumbs.length > 1
       ? skimBreadcrumbs[skimBreadcrumbs.length - 2]
       : null;
-    void loadSkimLocation(parentBreadcrumb?.path ?? null);
+    const currentPath = skimCurrentPath;
+    void loadSkimLocation(parentBreadcrumb?.path ?? null).then((loaded) => {
+      if (loaded) skimForwardPathsRef.current.push(currentPath);
+    });
   }, [closeSkim, loadSkimLocation, skimBreadcrumbs, skimCurrentPath]);
+
+  const navigateSkimForward = useCallback(() => {
+    const nextPath = skimForwardPathsRef.current[skimForwardPathsRef.current.length - 1];
+    if (!nextPath) return;
+    void loadSkimLocation(nextPath).then((loaded) => {
+      if (loaded && skimForwardPathsRef.current[skimForwardPathsRef.current.length - 1] === nextPath) {
+        skimForwardPathsRef.current.pop();
+      }
+    });
+  }, [loadSkimLocation]);
 
   function openSettings(section?: "quick" | "cmd") {
     if (view === "skim") {
@@ -3185,6 +3209,7 @@ const App = () => {
       setSkimEntries([]);
       setSkimCurrentPath(null);
       setSkimBreadcrumbs([]);
+      skimForwardPathsRef.current = [];
     }
     if (section === "quick") {
       setQuickActionsExpanded(true);
@@ -3203,6 +3228,14 @@ const App = () => {
     const unsubscribe = window.imageEverything?.window.onOpenSettingsRequested?.(openSettings);
     return () => unsubscribe?.();
   }, [openSettings]);
+
+  useEffect(() => {
+    const unsubscribe = window.imageEverything?.window.onToggleSkimRequested?.(() => {
+      if (view === "skim") closeSkim();
+      else openSkim();
+    });
+    return () => unsubscribe?.();
+  }, [closeSkim, openSkim, view]);
 
   const closeSettings = () => {
     setShellState("normal");
@@ -3241,7 +3274,9 @@ const App = () => {
           return;
         }
         navigateBack();
-      } else if (view !== "skim") {
+      } else if (view === "skim") {
+        navigateSkimForward();
+      } else {
         navigateForward();
       }
     };
@@ -3254,7 +3289,7 @@ const App = () => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [closeSettings, navigateBack, navigateForward, navigateSkimBack, shellState, view]);
+  }, [closeSettings, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateCapsuleShortcut?.(() => {
@@ -3811,11 +3846,11 @@ const App = () => {
                 searchInputRef={searchInputRef}
                 onSearchChange={setSearch}
                 onSearch={() => submitSearch(search)}
-                onOpenRoot={() => void loadSkimLocation(null)}
-                onOpenBreadcrumb={(breadcrumbPath) => void loadSkimLocation(breadcrumbPath)}
+                onOpenRoot={() => openSkimLocation(null)}
+                onOpenBreadcrumb={openSkimLocation}
                 onOpenEntry={(entry) => {
                   if (entry.kind === "drive" || entry.kind === "folder") {
-                    void loadSkimLocation(entry.path);
+                    openSkimLocation(entry.path);
                   }
                 }}
                 onAddEntries={(entries) => void addSkimEntries(entries)}
@@ -4178,6 +4213,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           provider: contentPreview.provider,
           info,
           textPreview: contentPreview.textPreview,
+          skimActive: false,
           theme: contextMenuTheme,
           language: getActiveLanguage(),
           appearanceColors
@@ -4193,6 +4229,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         fileName: image.fileName,
         previewUrl: toFullImageUrl(image.filePath),
         thumbnailUrl: image.thumbnailUrl,
+        skimActive: false,
         theme: contextMenuTheme,
         language: getActiveLanguage(),
         appearanceColors
@@ -4816,6 +4853,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         provider,
         info,
         textPreview: contentPreview?.textPreview,
+        skimActive: true,
         theme,
         language: getActiveLanguage(),
         appearanceColors

@@ -24,6 +24,11 @@ contextBridge.exposeInMainWorld("imageEverything", {
       ipcRenderer.on("window:openSettingsRequested", listener);
       return () => ipcRenderer.removeListener("window:openSettingsRequested", listener);
     },
+    onToggleSkimRequested: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("window:toggleSkimRequested", listener);
+      return () => ipcRenderer.removeListener("window:toggleSkimRequested", listener);
+    },
     onShowAllFilesRequested: (callback: () => void) => {
       const listener = () => callback();
       ipcRenderer.on("window:showAllFilesRequested", listener);
@@ -53,6 +58,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     getWindowControlState: (): Promise<PreviewWindowControlState> => ipcRenderer.invoke("preview:getWindowControlState"),
     toggleMaximized: (): Promise<PreviewWindowControlState> => ipcRenderer.invoke("preview:toggleMaximized"),
     toggleAlwaysOnTop: (): Promise<PreviewWindowControlState> => ipcRenderer.invoke("preview:toggleAlwaysOnTop"),
+    toggleSkim: () => ipcRenderer.invoke("preview:toggleSkim"),
     openSettings: () => ipcRenderer.invoke("preview:openSettings"),
     requestData: () => ipcRenderer.send("preview:data"),
     onData: (callback: (data: PreviewWindowData) => void) => {

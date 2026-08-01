@@ -30,6 +30,7 @@ export interface PreviewWindowData {
     encoding: "utf-8" | "utf-16le" | "utf-16be";
     truncated: boolean;
   };
+  skimActive: boolean;
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";
   appearanceColors: {

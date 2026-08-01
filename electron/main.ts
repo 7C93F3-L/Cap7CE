@@ -954,6 +954,12 @@ const sendOpenSettingsToRenderer = () => {
   }
 };
 
+const sendToggleSkimToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("window:toggleSkimRequested");
+  }
+};
+
 const sendShowAllFilesToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:showAllFilesRequested");
@@ -2154,6 +2160,7 @@ ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
       && data.provider !== "video")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
+    || typeof data.skimActive !== "boolean"
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
     return false;
@@ -2228,6 +2235,15 @@ ipcMain.handle("preview:openSettings", (event) => {
   }
   closePreviewSession();
   openSettingsFromTray();
+  return true;
+});
+
+ipcMain.handle("preview:toggleSkim", (event) => {
+  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
+    return false;
+  }
+  closePreviewSession();
+  sendToggleSkimToRenderer();
   return true;
 });
 

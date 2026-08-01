@@ -18,6 +18,7 @@ declare global {
         onShellStateChanged: (callback: (state: Cap7CEShellState) => void) => () => void;
         onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => () => void;
         onOpenSettingsRequested: (callback: () => void) => () => void;
+        onToggleSkimRequested: (callback: () => void) => () => void;
         onShowAllFilesRequested: (callback: () => void) => () => void;
         onActivateCapsuleShortcut: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "micro" | "mini" | "normal" | "standby") => void) => () => void;
@@ -35,6 +36,7 @@ declare global {
         getWindowControlState: () => Promise<PreviewWindowControlState>;
         toggleMaximized: () => Promise<PreviewWindowControlState>;
         toggleAlwaysOnTop: () => Promise<PreviewWindowControlState>;
+        toggleSkim: () => Promise<boolean>;
         openSettings: () => Promise<boolean>;
         requestData: () => void;
         onData: (callback: (data: PreviewWindowData) => void) => () => void;

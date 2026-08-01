@@ -31,6 +31,7 @@ export interface PreviewWindowData {
   provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video";
   info?: SkimPreviewInfo;
   textPreview?: SkimTextPreview;
+  skimActive: boolean;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
   appearanceColors: AppearanceColors;
