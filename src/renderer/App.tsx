@@ -177,6 +177,19 @@ const defaultSkimBrowseOptions: SkimBrowseOptions = {
   sortField: "name",
   sortDirection: "asc"
 };
+const sortSkimBrowseEntries = (entries: SkimBrowseEntry[], options: SkimBrowseOptions) => {
+  const direction = options.sortDirection === "asc" ? 1 : -1;
+  return [...entries].sort((left, right) => {
+    const leftKind = left.kind === "drive" ? 0 : left.kind === "folder" ? 1 : 2;
+    const rightKind = right.kind === "drive" ? 0 : right.kind === "folder" ? 1 : 2;
+    if (leftKind !== rightKind) return leftKind - rightKind;
+    const fieldOrder = options.sortField === "modifiedAt"
+      ? (Date.parse(left.modifiedAt ?? "") || 0) - (Date.parse(right.modifiedAt ?? "") || 0)
+      : left.name.localeCompare(right.name, "zh-Hans-CN", { numeric: true, sensitivity: "base" });
+    const nameOrder = left.name.localeCompare(right.name, "zh-Hans-CN", { numeric: true, sensitivity: "base" });
+    return direction * (fieldOrder || nameOrder);
+  });
+};
 const shellTransitionDurationMs = 560;
 const viewportMenuGap = 5;
 const DEBUG_WINDOW_BOUNDS = false;
@@ -926,7 +939,15 @@ const App = () => {
   const [skimEntries, setSkimEntries] = useState<SkimBrowseEntry[]>([]);
   const [skimCurrentPath, setSkimCurrentPath] = useState<string | null>(null);
   const [skimBreadcrumbs, setSkimBreadcrumbs] = useState<SkimBreadcrumb[]>([]);
-  const [skimBrowseOptions] = useState<SkimBrowseOptions>(defaultSkimBrowseOptions);
+  const skimBrowseOptions = useMemo<SkimBrowseOptions>(() => ({
+    ...defaultSkimBrowseOptions,
+    sortField: search.sortField === "modified_at" ? "modifiedAt" : "name",
+    sortDirection: search.sortDirection
+  }), [search.sortDirection, search.sortField]);
+  const sortedSkimEntries = useMemo(
+    () => sortSkimBrowseEntries(skimEntries, skimBrowseOptions),
+    [skimBrowseOptions, skimEntries]
+  );
   const [isSkimLoading, setIsSkimLoading] = useState(false);
   const [skimFeedback, setSkimFeedback] = useState("");
   const [dialog, setDialog] = useState<DialogName>(null);
@@ -1001,6 +1022,7 @@ const App = () => {
   const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
   const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
   const skimForwardPathsRef = useRef<string[]>([]);
+  const settingsOpenedFromSkimRef = useRef(false);
   const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
   const scanResultsRefreshedDuringTaskRef = useRef(false);
@@ -3204,14 +3226,10 @@ const App = () => {
   }, [loadSkimLocation]);
 
   function openSettings(section?: "quick" | "cmd") {
+    settingsOpenedFromSkimRef.current = view === "skim";
     if (view === "skim") {
       cancelSkimRead();
       clearSkimFeedback();
-      skimReturnContextRef.current = null;
-      setSkimEntries([]);
-      setSkimCurrentPath(null);
-      setSkimBreadcrumbs([]);
-      skimForwardPathsRef.current = [];
     }
     if (section === "quick") {
       setQuickActionsExpanded(true);
@@ -3241,6 +3259,15 @@ const App = () => {
 
   const closeSettings = () => {
     setShellState("normal");
+    if (settingsOpenedFromSkimRef.current) {
+      settingsOpenedFromSkimRef.current = false;
+      const previousIndex = navigationIndexRef.current - 1;
+      if (previousIndex >= 0) navigationIndexRef.current = previousIndex;
+      closeNavigationOverlays();
+      setView("skim");
+      void loadSkimLocation(skimCurrentPath);
+      return;
+    }
     const previousIndex = navigationIndexRef.current - 1;
     const previousView = previousIndex >= 0 ? navigationEntriesRef.current[previousIndex] : null;
     if (previousView === "results" && resultsInitializedRef.current) {
@@ -3838,7 +3865,7 @@ const App = () => {
               <SkimView
                 search={search}
                 visualSessionId={skimVisualSessionId}
-                entries={skimEntries}
+                entries={sortedSkimEntries}
                 currentPath={skimCurrentPath}
                 breadcrumbs={skimBreadcrumbs}
                 isLoading={isSkimLoading}
@@ -3849,8 +3876,11 @@ const App = () => {
                 isAddingDirectory={isAddingDirectory}
                 inputFeedback={searchInputFeedback}
                 inputFeedbackIsGuide={operationHintVisible}
+                labelVisibility={searchCapsuleLabelVisibility}
                 searchInputRef={searchInputRef}
                 onSearchChange={setSearch}
+                onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch)}
+                onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
                 onSearch={() => submitSearch(search)}
                 onOpenRoot={() => openSkimLocation(null)}
                 onOpenBreadcrumb={openSkimLocation}
@@ -4671,8 +4701,11 @@ interface SkimViewProps {
   isAddingDirectory: boolean;
   inputFeedback: string;
   inputFeedbackIsGuide: boolean;
+  labelVisibility: SearchCapsuleLabelVisibility;
   searchInputRef: Ref<HTMLInputElement>;
   onSearchChange: (search: SearchState) => void;
+  onSearchOptionsChange: (search: SearchState) => void;
+  onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
   onSearch: () => void;
   onOpenRoot: () => void;
   onOpenBreadcrumb: (path: string) => void;
@@ -4730,7 +4763,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
+const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -5048,42 +5081,28 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
       <Cap7CESearchCapsule
         search={search}
         directoryName=""
-        labelVisibility={{ directory: false, recognition: false, sort: false, format: false }}
+        labelVisibility={labelVisibility}
         status={statusText}
         inputFeedback={inputFeedback}
         inputFeedbackIsGuide={inputFeedbackIsGuide}
         unified
         inputRef={searchInputRef}
-        labelMenuEnabled={false}
-        leadingContent={(
-          <div className="cap-skim-breadcrumb-list" aria-label={t("skim.name")}>
-          <button
-            className="cap7ce-pill cap7ce-directory-tag cap-skim-breadcrumb"
-            type="button"
-            data-selected={currentPath === null}
-            aria-expanded={breadcrumbs.length > 0}
-            aria-current={currentPath === null ? "page" : undefined}
-            onClick={onOpenRoot}
-          >
-            {t("skim.computer")}
-          </button>
-          {breadcrumbs.map((breadcrumb, index) => (
-            <button
-              className="cap7ce-pill cap7ce-directory-chip cap-skim-breadcrumb"
-              type="button"
-              key={breadcrumb.path}
-              data-selected={index === breadcrumbs.length - 1}
-              aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}
-              title={breadcrumb.path}
-              onClick={() => onOpenBreadcrumb(breadcrumb.path)}
-            >
-              {breadcrumb.name}
-            </button>
-          ))}
-          </div>
-        )}
+        directoryGroup={{
+          parentLabel: t("skim.computer"),
+          collapsedLabel: t("skim.computer"),
+          selectedId: currentPath,
+          options: breadcrumbs.map((breadcrumb) => ({
+            id: breadcrumb.path,
+            label: breadcrumb.name,
+            title: breadcrumb.path
+          })),
+          onSelect: onOpenBreadcrumb,
+          onReturnToParent: onOpenRoot
+        }}
+        enabledLabelGroups={["directory", "sort"]}
         onSearchChange={onSearchChange}
-        onLabelVisibilityChange={() => undefined}
+        onSearchOptionsChange={onSearchOptionsChange}
+        onLabelVisibilityChange={onLabelVisibilityChange}
         onSearch={onSearch}
       />
       <div className={`cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
@@ -5202,6 +5221,21 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   );
 };
 
+type SearchCapsuleDirectoryOption = {
+  id: string;
+  label: string;
+  title?: string;
+};
+
+type SearchCapsuleDirectoryGroup = {
+  parentLabel: string;
+  collapsedLabel?: string;
+  selectedId: string | null;
+  options: SearchCapsuleDirectoryOption[];
+  onSelect: (id: string) => void;
+  onReturnToParent: () => void;
+};
+
 interface Cap7CESearchCapsuleProps {
   search: SearchState;
   availableFormats?: string[];
@@ -5215,6 +5249,8 @@ interface Cap7CESearchCapsuleProps {
   inputFeedbackIsGuide?: boolean;
   unified?: boolean;
   leadingContent?: React.ReactNode;
+  directoryGroup?: SearchCapsuleDirectoryGroup;
+  enabledLabelGroups?: FilterChipGroup[];
   labelMenuEnabled?: boolean;
   imageContextMenuOpen?: boolean;
   inputRef?: Ref<HTMLInputElement>;
@@ -5232,7 +5268,7 @@ const filterChipExitDurationMs = 350;
 const filterChipExitStaggerMs = 35;
 const filterChipMotionMaxStaggerSteps = 6;
 
-const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, leadingContent, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, leadingContent, directoryGroup, enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
   const [directoryChipsOpen, setDirectoryChipsOpen] = useState(false);
   const [recognitionChipsOpen, setRecognitionChipsOpen] = useState(false);
   const [sortChipsOpen, setSortChipsOpen] = useState(false);
@@ -5306,9 +5342,16 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     return () => window.removeEventListener("keydown", handleEscape, true);
   }, [directoryChipsOpen, formatChipsOpen, labelMenuPointer, recognitionChipsOpen, sortChipsOpen]);
   const measuredLabelMenuPosition = useMeasuredViewportMenuPosition(labelMenuPointer, labelMenuRef, labelMenuMeasurementKey);
-  const selectedDirectoryLabel = search.directoryId === "all" ? t("filter.addedDirectories") : directoryName;
+  const enabledGroups = new Set<FilterChipGroup>(enabledLabelGroups ?? ["directory", "recognition", "sort", "format"]);
+  const selectedDirectoryLabel = directoryGroup?.collapsedLabel
+    ?? (search.directoryId === "all" ? t("filter.addedDirectories") : directoryName);
+  const selectedDirectoryId = directoryGroup?.selectedId ?? (search.directoryId === "all" ? null : search.directoryId);
+  const directoryOptions: SearchCapsuleDirectoryOption[] = directoryGroup?.options
+    ?? directories
+      .filter((directory) => directory.id !== "all")
+      .map((directory) => ({ id: directory.id, label: directory.name, title: directory.path }));
   const expandedDirectories = unified && labelVisibility.directory && directoryChipsOpen
-    ? directories.filter((directory) => directory.id !== "all")
+    ? directoryOptions
     : [];
   const expandedRecognitionStatuses = unified && recognitionChipsOpen
     ? (["recognized", "unrecognized"] as RecognitionStatusFilter[])
@@ -5318,6 +5361,13 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     : [];
 
   const selectDirectory = (directoryId: string) => {
+    if (directoryGroup) {
+      closeChipGroup("directory", expandedDirectories.length, () => setDirectoryChipsOpen(false));
+      setFormatChipsOpen(false);
+      if (directoryId === directoryGroup.selectedId) directoryGroup.onReturnToParent();
+      else directoryGroup.onSelect(directoryId);
+      return;
+    }
     const nextSearch = {
       ...search,
       directoryId: search.directoryId === directoryId ? "all" : directoryId
@@ -5361,7 +5411,9 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       return;
     }
     closeChipGroup("directory", expandedDirectories.length, () => setDirectoryChipsOpen(false));
-    if (search.directoryId !== "all") {
+    if (directoryGroup) {
+      directoryGroup.onReturnToParent();
+    } else if (search.directoryId !== "all") {
       const nextSearch = { ...search, directoryId: "all" };
       onSearchChange(nextSearch);
       onSearchOptionsChange?.(nextSearch);
@@ -5449,6 +5501,12 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setClosingChipGroup(null);
     setLabelMenuPointer(null);
     onLabelVisibilityChange(nextVisibility);
+  };
+
+  const setEnabledLabelVisibility = (visible: boolean) => {
+    const nextVisibility = { ...labelVisibility };
+    for (const group of enabledGroups) nextVisibility[group] = visible;
+    updateLabelVisibility(nextVisibility);
   };
 
   useLayoutEffect(() => {
@@ -5539,13 +5597,13 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     }}
   >
     {leadingContent}
-    {labelVisibility.directory && (
+    {enabledGroups.has("directory") && labelVisibility.directory && (
     <button
       className="cap7ce-pill cap7ce-pill-wide cap7ce-directory-tag"
       type="button"
       title={t("search.hideLabelHint")}
       aria-expanded={unified ? directoryChipsOpen : undefined}
-      data-selected={search.directoryId !== "all"}
+      data-selected={selectedDirectoryId !== null}
       onContextMenu={hideDirectoryLabel}
       onClick={() => {
         if (unified) {
@@ -5555,7 +5613,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     >
       {unified
         ? directoryChipsOpen
-          ? t("filter.addedDirectories")
+          ? directoryGroup?.parentLabel ?? t("filter.addedDirectories")
           : selectedDirectoryLabel
         : directoryName || t("filter.allDirectories")}
     </button>
@@ -5565,15 +5623,15 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         key={directory.id}
         className={`cap7ce-pill cap7ce-pill-wide cap7ce-directory-chip cap7ce-filter-chip-motion${closingChipGroup === "directory" ? " cap7ce-filter-chip-closing" : ""}`}
         type="button"
-        title={directory.path}
-        data-selected={search.directoryId === directory.id}
+        title={directory.title}
+        data-selected={selectedDirectoryId === directory.id}
         style={getChipMotionStyle(index, expandedDirectories.length)}
         onClick={() => selectDirectory(directory.id)}
       >
-        {directory.name}
+        {directory.label}
       </button>
     ))}
-    {unified && labelVisibility.recognition && (
+    {unified && enabledGroups.has("recognition") && labelVisibility.recognition && (
     <button
       className="cap7ce-pill cap7ce-pill-wide cap7ce-recognition-tag"
       type="button"
@@ -5601,7 +5659,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         {getRecognitionStatusLabels()[recognitionStatus]}
       </button>
     ))}
-    {labelVisibility.sort && (
+    {enabledGroups.has("sort") && labelVisibility.sort && (
     <button
       className={`cap7ce-pill cap7ce-sort-tag${sortChipsOpen ? " cap7ce-pill-wide" : " cap7ce-pill-icon"}`}
       type="button"
@@ -5650,7 +5708,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         {getSortLabels()[sortField]}
       </button>
     ))}
-    {unified && showFormatLabel && labelVisibility.format && (
+    {unified && enabledGroups.has("format") && showFormatLabel && labelVisibility.format && (
     <button
       className="cap7ce-pill cap7ce-pill-wide cap7ce-file-format-tag"
       type="button"
@@ -5702,8 +5760,8 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         onContextMenu={(event) => event.preventDefault()}
       >
         <div className="cap7ce-menu-motion-surface">
-          <button type="button" role="menuitem" onClick={() => updateLabelVisibility({ directory: true, recognition: true, sort: true, format: true })}>{t("search.showAllLabels")}</button>
-          <button type="button" role="menuitem" onClick={() => updateLabelVisibility({ directory: false, recognition: false, sort: false, format: false })}>{t("search.hideAllLabels")}</button>
+          <button type="button" role="menuitem" onClick={() => setEnabledLabelVisibility(true)}>{t("search.showAllLabels")}</button>
+          <button type="button" role="menuitem" onClick={() => setEnabledLabelVisibility(false)}>{t("search.hideAllLabels")}</button>
         </div>
       </div>
     , document.body)}
