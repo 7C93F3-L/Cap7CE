@@ -5089,7 +5089,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         inputRef={searchInputRef}
         directoryGroup={{
           parentLabel: t("skim.computer"),
-          collapsedLabel: t("skim.computer"),
+          collapsedLabel: breadcrumbs[breadcrumbs.length - 1]?.name ?? t("skim.computer"),
           selectedId: currentPath,
           options: breadcrumbs.map((breadcrumb) => ({
             id: breadcrumb.path,
