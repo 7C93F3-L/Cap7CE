@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
+import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
@@ -39,6 +40,7 @@ const PreviewWindowApp = () => {
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const textScrollRef = useRef<HTMLPreElement | null>(null);
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
@@ -349,7 +351,7 @@ const PreviewWindowApp = () => {
               <strong>{previewData.fileName}</strong>
               <span>{previewData.textPreview.encoding}{previewData.textPreview.truncated ? ` · ${t("preview.textTruncated")}` : ""}</span>
             </header>
-            <pre>{previewData.textPreview.content}</pre>
+            <pre ref={textScrollRef} className="cap-main-scroll-viewport">{previewData.textPreview.content}</pre>
           </section>
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
@@ -399,6 +401,11 @@ const PreviewWindowApp = () => {
           </section>
         )}
       </div>
+      {previewData.provider === "text" && previewData.textPreview && !showInfoFallback && (
+        <div className="preview-window-scrollbar-slot">
+          <CustomScrollbar scrollContainerRef={textScrollRef} orientation="vertical" />
+        </div>
+      )}
       <WindowControlRail
         actions={previewControlActions}
         showSkim={showSettings}

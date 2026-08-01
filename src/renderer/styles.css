@@ -58,6 +58,7 @@ button {
   --window-control-rail-width: 30px;
   --window-control-rail-top: 38px;
   --custom-scrollbar-hit-size: 8px;
+  --custom-scrollbar-thumb-size: 3px;
   --app-bg: #ffffff;
   --capsule-bg: var(--app-bg);
   --capsule-bg-focus: var(--app-bg);
@@ -171,7 +172,6 @@ textarea,
     var(--accent-color) 100%
   );
   --cap-ease: cubic-bezier(0.22, 0.85, 0.18, 1);
-  --custom-scrollbar-thumb-size: 3px;
   --window-resize-safe-gap: 4px;
   --cap-edge-inset: var(--content-edge-gap);
   --cap-thumb-gap: 5px;
@@ -2691,6 +2691,31 @@ textarea,
   tab-size: 2;
   white-space: pre-wrap;
   user-select: text;
+}
+
+.preview-text-panel pre.cap-main-scroll-viewport {
+  scrollbar-width: none;
+}
+
+.preview-text-panel pre.cap-main-scroll-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.preview-window-scrollbar-slot {
+  position: absolute;
+  top: var(--content-edge-gap);
+  right: var(--window-control-rail-width);
+  bottom: var(--content-edge-gap);
+  width: var(--custom-scrollbar-hit-size);
+  display: grid;
+  grid-template-columns: var(--custom-scrollbar-hit-size);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.preview-window-scrollbar-slot > .cap-custom-scrollbar-vertical {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .preview-media-panel {
