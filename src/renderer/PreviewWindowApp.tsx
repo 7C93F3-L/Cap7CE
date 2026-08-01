@@ -279,7 +279,21 @@ const PreviewWindowApp = () => {
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
       onWheelCapture={(event) => {
-        if (event.target instanceof HTMLElement && event.target.closest(".preview-text-panel")) return;
+        if (previewData.provider === "text" && previewData.textPreview && !showInfoFallback) {
+          event.preventDefault();
+          setContextMenu(null);
+          const deltaMultiplier = event.deltaMode === 1
+            ? 16
+            : event.deltaMode === 2
+              ? textScrollRef.current?.clientHeight ?? 1
+              : 1;
+          textScrollRef.current?.scrollBy({
+            top: event.deltaY * deltaMultiplier,
+            left: event.deltaX * deltaMultiplier,
+            behavior: "auto"
+          });
+          return;
+        }
         event.preventDefault();
         setContextMenu(null);
         const now = window.performance.now();
