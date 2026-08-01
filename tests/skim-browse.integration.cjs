@@ -11,6 +11,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
   try {
     const {
       buildSkimBreadcrumbs,
+      listSkimDrives,
       parseWindowsDriveOutput,
       readSkimLocation
     } = require("../dist-electron/skimBrowseService.js");
@@ -73,12 +74,16 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual(drives.map((drive) => drive.path.toUpperCase()), ["C:\\", "D:\\"]);
     assert.equal(drives[0].label, "System");
 
+    const systemDrives = await listSkimDrives();
+    assert.equal(systemDrives.some((drive) => drive.label?.includes("�")), false);
+
     console.log(JSON.stringify({
       directChildrenOnly: true,
       mixedFormatWhitelistApplied: true,
       breadcrumbsBuilt: true,
       cancellationHonored: true,
-      driveOutputNormalized: true
+      driveOutputNormalized: true,
+      unicodeDriveLabelsPreserved: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

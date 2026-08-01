@@ -3171,12 +3171,20 @@ const App = () => {
     skimReturnContextRef.current = null;
     if (returnContext) {
       setView(returnContext.view);
-      setShellState(returnContext.shellState);
+      if (
+        returnContext.shellState !== "micro"
+        && returnContext.shellState !== "mini"
+        && returnContext.shellState !== "normal"
+      ) {
+        setShellState(returnContext.shellState);
+      }
       return;
     }
     setView("results");
-    setShellState("normal");
-  }, [cancelSkimRead, clearSkimFeedback]);
+    if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
+      setShellState("normal");
+    }
+  }, [cancelSkimRead, clearSkimFeedback, shellState]);
 
   const openSkim = useCallback(() => {
     if (view === "skim") {
@@ -4649,6 +4657,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           onStartDrag={startFileDrag}
           onHoverImageChange={updateHoveredImageIntent}
           onLayoutChange={updateGridMetrics}
+          onOpenSkim={onOpenSkim}
         />
       ) : (
         <VirtualImageGrid
@@ -5785,9 +5794,17 @@ interface VirtualImageGridProps {
   onStartDrag: (event: React.DragEvent, item: ImageIndexItem) => void;
   onHoverImageChange: (imageId: string | null) => void;
   onLayoutChange: (metrics: { left: number; right: number; columnCount: number }) => void;
-  onOpenSkim?: () => void;
+  onOpenSkim: () => void;
 }
 
+const EmptySearchResult = ({ message, onOpenSkim }: { message: string; onOpenSkim: () => void }) => (
+  <button className="empty-result-row cap-skim-empty-entry" type="button" onClick={onOpenSkim}>
+    <span className="cap-empty-result-content">
+      <span>{message}</span>
+      <span>{t("skim.searchElsewhere")}</span>
+    </span>
+  </button>
+);
 
 const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
@@ -6004,10 +6021,7 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIn
       <section className="image-grid cap-main-scroll-viewport" aria-label={t("search.resultGridLabel")} ref={containerRef} onScroll={handleScroll} onWheel={handleWheel}>
       {searchError && <div className="empty-result-row">{searchError}</div>}
       {!isSearching && !searchError && images.length === 0 && (
-        <button className="empty-result-row cap-skim-empty-entry" type="button" onClick={onOpenSkim}>
-          <span>{t("search.emptyResult")}</span>
-          <span className="cap-skim-empty-action">{t("skim.searchElsewhere")}</span>
-        </button>
+        <EmptySearchResult message={t("search.emptyResult")} onOpenSkim={onOpenSkim} />
       )}
       {!searchError && images.length > 0 && (
         <div className="virtual-grid-spacer" style={{ height: virtualGrid.totalHeight, width: isHorizontalGrid ? virtualGrid.totalWidth : "100%" }} data-rendered-count={virtualGrid.visibleItems.length} data-column-count={virtualGrid.columnCount}>
@@ -6060,7 +6074,7 @@ const measureUnrecognizedViewport = (container: HTMLElement) => {
   };
 };
 
-const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange }: VirtualImageGridProps) => {
+const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef({ width: 0, height: 0 });
   const scrollFrameRef = useRef<number | null>(null);
@@ -6279,7 +6293,9 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollT
     <div className={`image-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalList ? "horizontal" : "vertical"}`}>
       <section className="image-grid unrecognized-list cap-main-scroll-viewport" aria-label={t("search.unrecognizedGridLabel")} ref={containerRef} onScroll={handleScroll} onWheel={handleWheel}>
       {searchError && <div className="empty-result-row">{searchError}</div>}
-      {!isSearching && !searchError && images.length === 0 && <div className="empty-result-row">{t("search.emptyUnrecognized")}</div>}
+      {!isSearching && !searchError && images.length === 0 && (
+        <EmptySearchResult message={t("search.emptyUnrecognized")} onOpenSkim={onOpenSkim} />
+      )}
       {!searchError && images.length > 0 && (
         <div
           className="virtual-unrecognized-spacer"

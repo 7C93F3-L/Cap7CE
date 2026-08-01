@@ -158,7 +158,7 @@ export const zhCN = {
   "skim.loading": "正在读取当前位置…",
   "skim.empty": "当前位置没有可显示的文件夹或支持文件",
   "skim.entryCount": "{count} 个项目",
-  "skim.searchElsewhere": "在 skim 中查找",
+  "skim.searchElsewhere": "点击在 skim 中查找",
   "skim.feedbackLabel": "skim 状态",
   "skim.invalidRequest": "skim 读取请求无效。",
   "skim.accessDenied": "没有权限读取该目录。",

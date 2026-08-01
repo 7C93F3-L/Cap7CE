@@ -938,10 +938,13 @@ textarea,
   cursor: pointer;
 }
 
-.cap-skim-empty-action {
-  display: block;
-  margin-top: 6px;
-  color: var(--text-main);
+.cap-empty-result-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: inherit;
 }
 
 .cap-shell-normal .cap7ce-top-capsule,

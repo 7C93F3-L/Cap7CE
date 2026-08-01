@@ -158,7 +158,7 @@ export const enUS = defineLocale({
   "skim.loading": "Reading this location…",
   "skim.empty": "No folders or supported files are available here",
   "skim.entryCount": "{count} items",
-  "skim.searchElsewhere": "Find with skim",
+  "skim.searchElsewhere": "Click to find with skim",
   "skim.feedbackLabel": "skim status",
   "skim.invalidRequest": "The skim read request is invalid.",
   "skim.accessDenied": "You do not have permission to read this folder.",

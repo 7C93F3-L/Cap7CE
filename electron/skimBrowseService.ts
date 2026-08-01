@@ -93,6 +93,8 @@ export const listSkimDrives = async (): Promise<SkimBrowseEntry[]> => {
   }
   const command = [
     "$ErrorActionPreference = 'Stop'",
+    "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)",
+    "$OutputEncoding = [Console]::OutputEncoding",
     "$drives = @(Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -match '^[A-Za-z]:\\\\$' } | ForEach-Object { [PSCustomObject]@{ root = $_.Root; label = $_.Description } })",
     "ConvertTo-Json -Compress -InputObject $drives"
   ].join("; ");
