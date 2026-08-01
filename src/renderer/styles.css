@@ -584,6 +584,10 @@ textarea,
   margin-top: auto;
 }
 
+.cap-settings-toggle {
+  margin-top: 4px;
+}
+
 .cap-icon-nut {
   width: 16px;
   height: 16px;

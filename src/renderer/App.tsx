@@ -3213,7 +3213,6 @@ const App = () => {
     const returnContext = skimReturnContextRef.current;
     skimReturnContextRef.current = null;
     if (returnContext) {
-      setView(returnContext.view);
       if (
         returnContext.shellState !== "micro"
         && returnContext.shellState !== "mini"
@@ -3221,13 +3220,22 @@ const App = () => {
       ) {
         setShellState(returnContext.shellState);
       }
+      if (returnContext.view === "results" && !resultsInitializedRef.current) {
+        openResults();
+        return;
+      }
+      setView(returnContext.view);
+      return;
+    }
+    if (!resultsInitializedRef.current) {
+      openResults();
       return;
     }
     setView("results");
     if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
-  }, [cancelSkimRead, clearSkimFeedback, shellState]);
+  }, [cancelSkimRead, clearSkimFeedback, openResults, shellState]);
 
   const openSkim = useCallback(() => {
     if (view === "skim") {
