@@ -33,7 +33,7 @@ Cap7CE 是一款面向 Windows 的本地视觉文件搜索工具。它扫描用�
 
 ### 当前状态
 
-- 当前版本：`0.7.8`
+- 当前版本：`0.8.0`
 - 发布阶段：Preview
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
@@ -47,6 +47,7 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 - 通过本地视觉模型生成描述与关键词。
 - 新执行的 AI 识别会跟随当前软件语言生成中文或英文描述与关键词。
 - 按关键词、文件名、目录、识别状态、格式和排序方式筛选。
+- 使用 skim 浏览磁盘和目录中的多种项目文件，并快速预览视觉、文本、音频和视频内容。
 - 提供 capsule、micro、mini、normal 和 Settings 窗口形态。
 - 支持缩略图、独立预览窗口、多选和关键词编辑。
 - 支持打开文件、定位路径、拖拽导出和移入回收站。
@@ -201,7 +202,7 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current version: `0.7.8`
+- Current version: `0.8.0`
 - Release stage: Preview
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
@@ -215,6 +216,7 @@ Preview releases may still contain compatibility, performance, and UI issues. Ea
 - Generate descriptions and keywords with a local vision model.
 - New AI recognition runs generate Chinese or English descriptions and keywords according to the current app language.
 - Filter by keywords, file name, directory, recognition status, format, and sort order.
+- Use skim to browse project files across disks and folders, with quick previews for visual, text, audio, and video content.
 - Use capsule, micro, mini, normal, and Settings window forms.
 - Browse thumbnails, open an independent preview window, select multiple files, and edit keywords.
 - Open files, reveal paths, drag files to other applications, and move files to the Recycle Bin.
