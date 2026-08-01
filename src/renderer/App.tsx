@@ -4722,9 +4722,12 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
 
 const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
+  const pendingGridScrollOffsetRef = useRef(0);
   const gridViewportRef = useRef({ width: 0, height: 0 });
   const [gridViewport, setGridViewport] = useState({ width: 0, height: 0 });
+  const [gridScrollOffset, setGridScrollOffset] = useState(0);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
@@ -4735,6 +4738,41 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
   const isHorizontalGrid = shellState === "micro";
   const gridLayout = getImageGridLayout(getResultLayoutMode(shellState), gridViewport.width, gridViewport.height);
+  const virtualGrid = useMemo(() => {
+    const { cellSize, columnCount, contentWidth, isHorizontal } = gridLayout;
+    const rowStride = cellSize + imageGridGap;
+    const effectiveColumnCount = isHorizontal ? Math.max(1, columnCount) : columnCount;
+    const totalRows = isHorizontal ? (entries.length > 0 ? 1 : 0) : Math.ceil(entries.length / effectiveColumnCount);
+    const totalHeight = isHorizontal ? gridViewport.height : totalRows > 0 ? totalRows * rowStride - imageGridGap : 0;
+    const totalWidth = isHorizontal && entries.length > 0
+      ? entries.length * rowStride - imageGridGap
+      : contentWidth;
+    const visibleEntries: Array<{ entry: SkimBrowseEntry; top: number; left: number }> = [];
+
+    if (entries.length === 0 || gridViewport.width === 0 || gridViewport.height === 0 || cellSize <= 0) {
+      return { cellSize, totalHeight, totalWidth, visibleEntries };
+    }
+
+    if (isHorizontal) {
+      const firstVisibleIndex = Math.max(0, Math.floor(gridScrollOffset / rowStride) - imageGridOverscanItems);
+      const lastVisibleIndex = Math.min(entries.length - 1, Math.ceil((gridScrollOffset + gridViewport.width) / rowStride) + imageGridOverscanItems);
+      for (let index = firstVisibleIndex; index <= lastVisibleIndex; index += 1) {
+        const entry = entries[index];
+        if (entry) visibleEntries.push({ entry, top: 0, left: index * rowStride });
+      }
+    } else {
+      const firstVisibleRow = Math.max(0, Math.floor(gridScrollOffset / rowStride) - imageGridOverscanRows);
+      const lastVisibleRow = Math.min(totalRows - 1, Math.ceil((gridScrollOffset + gridViewport.height) / rowStride) + imageGridOverscanRows);
+      for (let row = firstVisibleRow; row <= lastVisibleRow; row += 1) {
+        for (let column = 0; column < effectiveColumnCount; column += 1) {
+          const entry = entries[row * effectiveColumnCount + column];
+          if (entry) visibleEntries.push({ entry, top: row * rowStride, left: column * rowStride });
+        }
+      }
+    }
+
+    return { cellSize, totalHeight, totalWidth, visibleEntries };
+  }, [entries, gridLayout.cellSize, gridLayout.columnCount, gridLayout.contentWidth, gridLayout.isHorizontal, gridScrollOffset, gridViewport.height, gridViewport.width]);
   const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
   const getEntryIcon = (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return skimDiskSvg;
@@ -4782,8 +4820,29 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         window.cancelAnimationFrame(gridResizeFrameRef.current);
         gridResizeFrameRef.current = null;
       }
+      if (gridScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(gridScrollFrameRef.current);
+        gridScrollFrameRef.current = null;
+      }
     };
   }, []);
+
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const nextOffset = isHorizontalGrid ? container.scrollLeft : container.scrollTop;
+    pendingGridScrollOffsetRef.current = nextOffset;
+    setGridScrollOffset(nextOffset);
+  }, [isHorizontalGrid]);
+
+  const handleGridScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
+    pendingGridScrollOffsetRef.current = isHorizontalGrid ? event.currentTarget.scrollLeft : event.currentTarget.scrollTop;
+    if (gridScrollFrameRef.current !== null) return;
+    gridScrollFrameRef.current = window.requestAnimationFrame(() => {
+      setGridScrollOffset(pendingGridScrollOffsetRef.current);
+      gridScrollFrameRef.current = null;
+    });
+  }, [isHorizontalGrid]);
 
   const selectedEntries = useMemo(
     () => entries.filter((entry) => selectedPaths.has(entry.path)),
@@ -5013,13 +5072,10 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
       />
       <div className={`cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
         <section
-          className="cap-skim-grid cap-main-scroll-viewport"
+          className="cap-skim-grid cap-skim-grid-virtualized cap-main-scroll-viewport"
           ref={scrollContainerRef}
           aria-label={t("skim.name")}
-          style={!isHorizontalGrid && gridViewport.width > 0 ? {
-            gridTemplateColumns: `repeat(${gridLayout.columnCount}, minmax(0, ${gridLayout.cellSize}px))`,
-            gridAutoRows: `${gridLayout.cellSize}px`
-          } : undefined}
+          onScroll={handleGridScroll}
           onWheel={(event) => {
             if (!isHorizontalGrid || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
             event.preventDefault();
@@ -5031,58 +5087,73 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         >
           {isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.loading")}</div>}
           {!isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.empty")}</div>}
-          {entries.map((entry) => {
-            const isSelected = selectedPaths.has(entry.path);
-            const isActive = activePath === entry.path;
-            return (
-              <button
-                className={`cap-skim-entry cap-skim-entry-${entry.kind}${isSelected ? " selected" : ""}${isActive ? " active" : ""}`}
-                type="button"
-                key={`${entry.kind}:${entry.path}`}
-                title={entry.path}
-                aria-label={entry.label ? `${entry.label} ${entry.name}` : entry.name}
-                aria-pressed={isSelected}
-                draggable={entry.kind === "file"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  selectEntry(entry, event.ctrlKey || event.metaKey, event.shiftKey);
-                  setContextMenu(null);
-                }}
-                onDoubleClick={() => {
-                  if (!isLoading) openEntry(entry);
-                }}
-                onContextMenu={(event) => openContextMenu(event, entry)}
-                onDragStart={(event) => {
-                  if (entry.kind !== "file") return;
-                  event.preventDefault();
-                  const dragEntries = selectedPaths.has(entry.path)
-                    ? selectedEntries.filter((candidate) => candidate.kind === "file")
-                    : [entry];
-                  window.imageEverything?.files.startDrag(dragEntries.map((candidate) => candidate.path));
-                }}
-                onKeyDown={(event) => {
-                  if (!isLoading && event.key === "Enter") {
-                    event.preventDefault();
-                    openEntry(entry);
-                  } else if (!isLoading && entry.kind !== "drive" && event.code === "Space") {
-                    event.preventDefault();
-                    if (!selectedPaths.has(entry.path)) selectEntry(entry, false, false);
-                    void openPreview(entry);
-                  }
-                }}
-              >
-                <SkimEntryVisual
-                  entry={entry}
-                  sessionId={visualSessionId}
-                  scrollContainerRef={scrollContainerRef}
-                  fallbackSvg={getEntryIcon(entry)}
-                />
-                <span className="cap-skim-entry-name">{entry.label || entry.name}</span>
-                {entry.label && <span className="cap-skim-entry-path">{entry.name}</span>}
-                {entry.kind === "file" && <span className="cap-skim-entry-format">{entry.extension.slice(1).toUpperCase()}</span>}
-              </button>
-            );
-          })}
+          {entries.length > 0 && (
+            <div
+              className="cap-skim-virtual-spacer"
+              style={{
+                width: isHorizontalGrid ? virtualGrid.totalWidth : "100%",
+                height: virtualGrid.totalHeight
+              }}
+            >
+              {virtualGrid.visibleEntries.map(({ entry, top, left }) => {
+                const isSelected = selectedPaths.has(entry.path);
+                const isActive = activePath === entry.path;
+                return (
+                  <button
+                    className={`cap-skim-entry cap-skim-entry-${entry.kind}${isSelected ? " selected" : ""}${isActive ? " active" : ""}`}
+                    type="button"
+                    key={`${entry.kind}:${entry.path}`}
+                    style={{
+                      width: virtualGrid.cellSize,
+                      height: virtualGrid.cellSize,
+                      transform: `translate(${left}px, ${top}px)`
+                    }}
+                    title={entry.path}
+                    aria-label={entry.label ? `${entry.label} ${entry.name}` : entry.name}
+                    aria-pressed={isSelected}
+                    draggable={entry.kind === "file"}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      selectEntry(entry, event.ctrlKey || event.metaKey, event.shiftKey);
+                      setContextMenu(null);
+                    }}
+                    onDoubleClick={() => {
+                      if (!isLoading) openEntry(entry);
+                    }}
+                    onContextMenu={(event) => openContextMenu(event, entry)}
+                    onDragStart={(event) => {
+                      if (entry.kind !== "file") return;
+                      event.preventDefault();
+                      const dragEntries = selectedPaths.has(entry.path)
+                        ? selectedEntries.filter((candidate) => candidate.kind === "file")
+                        : [entry];
+                      window.imageEverything?.files.startDrag(dragEntries.map((candidate) => candidate.path));
+                    }}
+                    onKeyDown={(event) => {
+                      if (!isLoading && event.key === "Enter") {
+                        event.preventDefault();
+                        openEntry(entry);
+                      } else if (!isLoading && entry.kind !== "drive" && event.code === "Space") {
+                        event.preventDefault();
+                        if (!selectedPaths.has(entry.path)) selectEntry(entry, false, false);
+                        void openPreview(entry);
+                      }
+                    }}
+                  >
+                    <SkimEntryVisual
+                      entry={entry}
+                      sessionId={visualSessionId}
+                      scrollContainerRef={scrollContainerRef}
+                      fallbackSvg={getEntryIcon(entry)}
+                    />
+                    <span className="cap-skim-entry-name">{entry.label || entry.name}</span>
+                    {entry.label && <span className="cap-skim-entry-path">{entry.name}</span>}
+                    {entry.kind === "file" && <span className="cap-skim-entry-format">{entry.extension.slice(1).toUpperCase()}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </section>
         <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation={isHorizontalGrid ? "horizontal" : "vertical"} />
       </div>

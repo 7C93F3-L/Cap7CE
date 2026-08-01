@@ -932,6 +932,20 @@ textarea,
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.cap-shell .cap-skim-grid-virtualized {
+  display: block;
+}
+
+.cap-skim-virtual-spacer {
+  position: relative;
+  min-width: 100%;
+}
+
+.cap-skim-grid-virtualized .cap-skim-entry {
+  position: absolute;
+  margin: 0;
+}
+
 .cap-shell-micro .cap-skim-entry-path,
 .cap-shell-micro .cap-skim-entry-format,
 .cap-shell-micro .cap-skim-feedback-input {
