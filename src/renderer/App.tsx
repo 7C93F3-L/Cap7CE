@@ -6663,6 +6663,9 @@ interface SettingsViewProps {
 const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
+  const [indexDetailsClosing, setIndexDetailsClosing] = useState(false);
+  const [directoriesExpanded, setDirectoriesExpanded] = useState(false);
+  const [directoriesClosing, setDirectoriesClosing] = useState(false);
   const [originImageUrl, setOriginImageUrl] = useState<string | null>(null);
   const [originVisible, setOriginVisible] = useState(false);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -6672,6 +6675,8 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const quickActionsCollapseTimerRef = useRef<number | null>(null);
   const quickCommandsCollapseTimerRef = useRef<number | null>(null);
   const runtimeDetailsCollapseTimerRef = useRef<number | null>(null);
+  const indexDetailsCollapseTimerRef = useRef<number | null>(null);
+  const directoriesCollapseTimerRef = useRef<number | null>(null);
   const originSequenceRef = useRef({ count: 0, lastClickAt: 0 });
   const originLoadingRef = useRef(false);
   const [quickActionsClosing, setQuickActionsClosing] = useState(false);
@@ -6760,9 +6765,24 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
 
   useEffect(() => {
     if (isScanning) {
+      if (indexDetailsCollapseTimerRef.current !== null) {
+        window.clearTimeout(indexDetailsCollapseTimerRef.current);
+        indexDetailsCollapseTimerRef.current = null;
+      }
+      setIndexDetailsClosing(false);
       setIndexDetailsExpanded(true);
     }
   }, [isScanning]);
+
+  useEffect(() => {
+    if (directories.length > 0) return;
+    if (directoriesCollapseTimerRef.current !== null) {
+      window.clearTimeout(directoriesCollapseTimerRef.current);
+      directoriesCollapseTimerRef.current = null;
+    }
+    setDirectoriesExpanded(false);
+    setDirectoriesClosing(false);
+  }, [directories.length]);
 
   useEffect(() => {
     if (!originVisible) return undefined;
@@ -6964,6 +6984,33 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     }, collapseDuration);
   };
 
+  const closeIndexDetails = () => {
+    if (isScanning || indexDetailsClosing) return;
+    setIndexDetailsClosing(true);
+    const collapseDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    indexDetailsCollapseTimerRef.current = window.setTimeout(() => {
+      setIndexDetailsExpanded(false);
+      setIndexDetailsClosing(false);
+      indexDetailsCollapseTimerRef.current = null;
+    }, collapseDuration);
+  };
+
+  const toggleDirectories = () => {
+    if (directoriesClosing) return;
+    if (!directoriesExpanded) {
+      setDirectoriesExpanded(true);
+      return;
+    }
+    onCancelDirectoryEdit();
+    setDirectoriesClosing(true);
+    const collapseDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    directoriesCollapseTimerRef.current = window.setTimeout(() => {
+      setDirectoriesExpanded(false);
+      setDirectoriesClosing(false);
+      directoriesCollapseTimerRef.current = null;
+    }, collapseDuration);
+  };
+
   useEffect(() => () => {
     if (quickActionsCollapseTimerRef.current !== null) {
       window.clearTimeout(quickActionsCollapseTimerRef.current);
@@ -6973,6 +7020,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     }
     if (runtimeDetailsCollapseTimerRef.current !== null) {
       window.clearTimeout(runtimeDetailsCollapseTimerRef.current);
+    }
+    if (indexDetailsCollapseTimerRef.current !== null) {
+      window.clearTimeout(indexDetailsCollapseTimerRef.current);
+    }
+    if (directoriesCollapseTimerRef.current !== null) {
+      window.clearTimeout(directoriesCollapseTimerRef.current);
     }
   }, []);
 
@@ -7055,6 +7108,14 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             <span className="cap-settings-label">{t("settings.directoryConfig")}</span>
             <span className="cap-settings-value">{directoryServiceUnavailable ? t("common.unavailable") : isLoadingDirectories ? t("settings.directoryLoading") : directories.length === 0 ? t("settings.directoryEmpty") : t("settings.directoryCount", { count: directories.length })}</span>
             <button className="cap-settings-pill" type="button" onClick={onStartAdd} title={t("settings.addDirectory")} disabled={isAddingDirectory}>{t("common.add")}</button>
+            <button
+              className="cap-settings-pill"
+              type="button"
+              onClick={toggleDirectories}
+              disabled={isLoadingDirectories || directoryServiceUnavailable || directories.length === 0}
+            >
+              {directoriesExpanded ? t("common.collapse") : t("common.manage")}
+            </button>
           </div>
 
           <div className="cap-settings-row cap-settings-row-directory-actions">
@@ -7074,12 +7135,14 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           </div>
 
           {indexDetailsExpanded && hasIndexDetails && (
-            <div className="cap-settings-quick-actions-panel cap-settings-index-panel">
+            <div className={`cap-settings-expandable-shell${indexDetailsClosing ? " is-closing" : ""}`}>
+              <div className="cap-settings-expandable-inner">
+                <div className="cap-settings-quick-actions-panel cap-settings-index-panel">
               <div className="cap-settings-quick-actions-header">
                 <span className="cap-settings-label">{t("settings.indexStatus")}</span>
                 {!isScanning && (
                   <div className="cap-settings-quick-actions-controls">
-                    <button className="cap-settings-pill" type="button" onClick={() => setIndexDetailsExpanded(false)}>{t("common.collapse")}</button>
+                    <button className="cap-settings-pill" type="button" onClick={closeIndexDetails}>{t("common.collapse")}</button>
                   </div>
                 )}
               </div>
@@ -7105,11 +7168,15 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                   </>
                 )}
               </div>
+                </div>
+              </div>
             </div>
           )}
 
-          {!isLoadingDirectories && directories.length > 0 && (
-            <div className="cap-settings-directory-list">
+          {directoriesExpanded && !isLoadingDirectories && directories.length > 0 && (
+            <div className={`cap-settings-expandable-shell${directoriesClosing ? " is-closing" : ""}`}>
+              <div className="cap-settings-expandable-inner">
+                <div className="cap-settings-directory-list">
               {directories.map((directory) => (
               <div className="cap-settings-row cap-settings-directory-row" key={directory.id}>
                 {editingDirectoryId === directory.id ? (
@@ -7147,6 +7214,8 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 </button>
               </div>
               ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -7168,7 +7237,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               {isClearingCache ? t("settings.clearingCache") : t("settings.clearAllCache")}
             </button>
           </div>
-          <div className="cap-settings-row cap-settings-row-cache">
+          <div className="cap-settings-row">
             <span className="cap-settings-label">{t("settings.skimCache")}</span>
             <span className="cap-settings-value">
               {t("settings.cacheStats", { count: skimCacheStats.cacheCount, size: formatCacheSize(skimCacheStats.totalBytes) })}

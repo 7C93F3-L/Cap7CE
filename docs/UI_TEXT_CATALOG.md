@@ -46,6 +46,7 @@
 | `common.refreshing`     | 刷新中       |      |     | 模型          |
 | `common.restoreDefault` | 恢复默认      |      |     | 外观、快捷动作     |
 | `common.view`           | 查看        |      |     | 搜索标签、快捷指令   |
+| `common.manage`         | 管理        |      |     | Settings、目录 |
 | `common.collapse`       | 收起        |      |     | Settings 详情 |
 | `common.start`          | 启动        |      |     | llama.cpp   |
 | `common.starting`       | 启动中       |      |     | llama.cpp   |
