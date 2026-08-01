@@ -31,8 +31,11 @@ export const validateNativeDragFilePaths = (filePaths: unknown): string[] => {
     } catch {
       throw new Error(`源文件不存在或无法访问：${resolvedPath}`);
     }
-    if (!stat.isFile()) {
-      throw new Error(`拖拽路径不是文件：${resolvedPath}`);
+    if (!stat.isFile() && !stat.isDirectory()) {
+      throw new Error(`拖拽路径不是文件或文件夹：${resolvedPath}`);
+    }
+    if (stat.isDirectory() && path.parse(resolvedPath).root === resolvedPath) {
+      throw new Error(`拒绝拖拽磁盘根目录：${resolvedPath}`);
     }
 
     uniqueFilePaths.set(normalizePathKey(resolvedPath), resolvedPath);

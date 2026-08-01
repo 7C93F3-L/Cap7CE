@@ -934,6 +934,7 @@ const App = () => {
   const [droppedDirectories, setDroppedDirectories] = useState<DroppedDirectory[]>([]);
   const [pendingDirectoryAddResult, setPendingDirectoryAddResult] = useState<DirectoryAddResult | null>(null);
   const directoryAddFeedbackTargetRef = useRef<"search" | "skim">("search");
+  const internalNativeDragRef = useRef(false);
   const [editingDirectoryId, setEditingDirectoryId] = useState<string | null>(null);
   const [llamaRuntimeSettings, setLlamaRuntimeSettings] = useState<LlamaRuntimeSettings>(emptyLlamaRuntimeSettings);
   const [llamaRuntimeProcessState, setLlamaRuntimeProcessState] = useState<LlamaRuntimeProcessState>(emptyLlamaRuntimeProcessState);
@@ -3625,10 +3626,14 @@ const App = () => {
       style={appThemeStyle}
       onDragOverCapture={(event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
-        event.dataTransfer.dropEffect = acceptsDirectoryDrop ? "copy" : "none";
+        event.dataTransfer.dropEffect = acceptsDirectoryDrop && !internalNativeDragRef.current ? "copy" : "none";
       }}
       onDropCapture={(event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
+        if (internalNativeDragRef.current) {
+          internalNativeDragRef.current = false;
+          return;
+        }
         if (!acceptsDirectoryDrop) return;
         const nextDroppedDirectories = readDroppedDirectories(event.dataTransfer);
         if (nextDroppedDirectories.length === 0) return;
@@ -3856,6 +3861,9 @@ const App = () => {
                 }}
                 onAddEntries={(entries) => void addSkimEntries(entries)}
                 onFeedback={showSkimFeedback}
+                onNativeDragStateChange={(active) => {
+                  internalNativeDragRef.current = active;
+                }}
               />
             )}
             {activeView === "settings" && dialog === "deleteDirectory" && (
@@ -4671,6 +4679,7 @@ interface SkimViewProps {
   onOpenEntry: (entry: SkimBrowseEntry) => void;
   onAddEntries: (entries: SkimBrowseEntry[]) => void;
   onFeedback: (message: string) => void;
+  onNativeDragStateChange: (active: boolean) => void;
 }
 
 type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] };
@@ -4721,7 +4730,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback }: SkimViewProps) => {
+const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, searchInputRef, onSearchChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -5117,7 +5126,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                     title={entry.path}
                     aria-label={entry.label ? `${entry.label} ${entry.name}` : entry.name}
                     aria-pressed={isSelected}
-                    draggable={entry.kind === "file"}
+                    draggable={entry.kind !== "drive"}
                     onClick={(event) => {
                       event.stopPropagation();
                       selectEntry(entry, event.ctrlKey || event.metaKey, event.shiftKey);
@@ -5128,13 +5137,15 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                     }}
                     onContextMenu={(event) => openContextMenu(event, entry)}
                     onDragStart={(event) => {
-                      if (entry.kind !== "file") return;
+                      if (entry.kind === "drive") return;
                       event.preventDefault();
+                      onNativeDragStateChange(true);
                       const dragEntries = selectedPaths.has(entry.path)
-                        ? selectedEntries.filter((candidate) => candidate.kind === "file")
+                        ? selectedEntries.filter((candidate) => candidate.kind !== "drive")
                         : [entry];
                       window.imageEverything?.files.startDrag(dragEntries.map((candidate) => candidate.path));
                     }}
+                    onDragEnd={() => onNativeDragStateChange(false)}
                     onKeyDown={(event) => {
                       if (!isLoading && event.key === "Enter") {
                         event.preventDefault();

@@ -10,6 +10,7 @@ const testRoot = path.join(
 );
 const userDataPath = path.join(testRoot, "user-data");
 const sourceDirectory = path.join(testRoot, "sources");
+const draggedDirectory = path.join(sourceDirectory, "folder");
 const firstSourcePath = path.join(sourceDirectory, "first.png");
 const secondSourcePath = path.join(sourceDirectory, "second.psd");
 const cachePath = path.join(userDataPath, "thumbnails", "blocked.capth");
@@ -19,6 +20,7 @@ app.setPath("userData", userDataPath);
 (async () => {
   try {
     await fs.mkdir(sourceDirectory, { recursive: true });
+    await fs.mkdir(draggedDirectory, { recursive: true });
     await fs.mkdir(path.dirname(cachePath), { recursive: true });
     await fs.writeFile(firstSourcePath, "first");
     await fs.writeFile(secondSourcePath, "second");
@@ -32,11 +34,13 @@ app.setPath("userData", userDataPath);
     const validatedPaths = validateNativeDragFilePaths([
       firstSourcePath,
       secondSourcePath,
+      draggedDirectory,
       firstSourcePath
     ]);
     assert.deepEqual(validatedPaths, [
       path.resolve(firstSourcePath),
-      path.resolve(secondSourcePath)
+      path.resolve(secondSourcePath),
+      path.resolve(draggedDirectory)
     ]);
     assert.throws(
       () => validateNativeDragFilePaths([cachePath]),
@@ -46,27 +50,34 @@ app.setPath("userData", userDataPath);
       () => validateNativeDragFilePaths([path.join(sourceDirectory, "missing.png")]),
       /不存在或无法访问/
     );
+    assert.throws(
+      () => validateNativeDragFilePaths([path.parse(sourceDirectory).root]),
+      /磁盘根目录/
+    );
 
     let dragItem = null;
     startNativeFileDrag({
       startDrag: (item) => {
         dragItem = item;
       }
-    }, [firstSourcePath, secondSourcePath]);
+    }, [draggedDirectory, firstSourcePath]);
     assert.ok(dragItem);
-    assert.equal(dragItem.file, path.resolve(firstSourcePath));
+    assert.equal(dragItem.file, path.resolve(draggedDirectory));
     assert.deepEqual(dragItem.files, [
-      path.resolve(firstSourcePath),
-      path.resolve(secondSourcePath)
+      path.resolve(draggedDirectory),
+      path.resolve(firstSourcePath)
     ]);
     assert.equal(dragItem.icon.isEmpty(), false);
 
     console.log(JSON.stringify({
-      validatedSourceFiles: validatedPaths.length,
+      validatedSourceItems: validatedPaths.length,
+      folderPathsAccepted: true,
+      mixedPathPayload: true,
       duplicatePathsRemoved: true,
       cachePathRejected: true,
       missingPathRejected: true,
-      nativeMultiFilePayload: dragItem.files.length
+      driveRootRejected: true,
+      nativeMultiItemPayload: dragItem.files.length
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });
