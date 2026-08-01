@@ -42,6 +42,7 @@
   "build": {
     "appId": "com.cap7ce.app",
     "productName": "Cap7CE",
+    "afterPack": "scripts/afterPack.cjs",
     "copyright": "Copyright © 2026 7C93F3-L",
     "icon": "build/icon.ico",
     "electronDist": "node_modules/electron/dist",

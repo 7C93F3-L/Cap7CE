@@ -88,6 +88,8 @@ Cap7CE/
 
 每个 `llama.cpp` 版本使用独立子目录。`models` 可以包含子目录；Cap7CE 会递归扫描 `.gguf` 文件，并尝试将主模型与 `mmproj` 配对。
 
+官方多文件压缩包已预先创建空的 `llama.cpp` 与 `models` 目录；软件仍不内置运行时或模型文件。
+
 运行时和模型必须由用户从其官方或可信来源单独获取，并遵守各自的许可证与使用条款。Cap7CE 项目不为第三方运行时或模型提供再分发授权。
 
 当前 Qwen3-VL 4B Q4 开发配置建议使用具备至少 8 GB 显存的 NVIDIA GPU；16 GB 显存可为模型和上下文提供更多余量。CPU-only、其他 GPU 后端和更大模型的速度及显存需求取决于所选 `llama.cpp` 构建，尚未完成全面验证。
@@ -256,6 +258,8 @@ Cap7CE/
 ```
 
 Keep each `llama.cpp` version in a separate subdirectory. The `models` directory may contain nested directories; Cap7CE scans `.gguf` files recursively and attempts to pair each main model with its `mmproj`.
+
+The official multi-file archive includes empty `llama.cpp` and `models` directories. Runtime and model files are still not bundled.
 
 Users must obtain runtimes and models separately from official or otherwise trusted sources and comply with their respective licenses and terms. The Cap7CE project does not grant redistribution rights for third-party runtimes or models.
 
