@@ -14,7 +14,7 @@ import { getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
 import { isSupportedImageFilePath, scanImageDirectories, type ScannedImageFile } from "./imageScanner";
-import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime } from "./llamaRuntimeManager";
+import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
@@ -3219,12 +3219,14 @@ ipcMain.handle("llamaRuntime:settings", () => {
   return getLlamaRuntimeSettings();
 });
 
-ipcMain.handle("llamaRuntime:updateSelected", (_event, selectedVersion: string) => {
+ipcMain.handle("llamaRuntime:updateSelected", async (_event, selectedVersion: string) => {
   const processState = getLlamaRuntimeProcessState();
   if (processState.status === "starting" || processState.status === "running") {
     throw new Error(t("error.stopServerBeforeRuntimeSwitch"));
   }
-  return updateSelectedLlamaRuntime(selectedVersion);
+  const settings = await updateSelectedLlamaRuntime(selectedVersion);
+  await syncIdleLlamaRuntimeSelectionState();
+  return settings;
 });
 
 ipcMain.handle("llamaRuntime:processState", () => {
@@ -3243,12 +3245,14 @@ ipcMain.handle("ggufModels:settings", () => {
   return getGgufModelSettings();
 });
 
-ipcMain.handle("ggufModels:updateSelected", (_event, selectedModelId: string) => {
+ipcMain.handle("ggufModels:updateSelected", async (_event, selectedModelId: string) => {
   const processState = getLlamaRuntimeProcessState();
   if (processState.status === "starting" || processState.status === "running") {
     throw new Error(t("error.stopServerBeforeModelSwitch"));
   }
-  return updateSelectedGgufModel(selectedModelId);
+  const settings = await updateSelectedGgufModel(selectedModelId);
+  await syncIdleLlamaRuntimeSelectionState();
+  return settings;
 });
 
 ipcMain.handle("preferences:get", () => {

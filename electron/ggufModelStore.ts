@@ -251,6 +251,13 @@ export const getGgufModelSettings = async () => buildSettings();
 
 export const updateSelectedGgufModel = async (selectedModelId: string) => {
   const normalizedModelId = selectedModelId.trim().toLowerCase();
+  if (!normalizedModelId) {
+    await saveConfig({
+      selectedModelId: "",
+      updatedAt: new Date().toISOString()
+    });
+    return buildSettings();
+  }
   const settings = await buildSettings();
   if (!settings.models.some((model) => model.id === normalizedModelId)) {
     throw new Error(t("model.notExists", { name: selectedModelId || t("common.unselected") }));

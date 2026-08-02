@@ -556,6 +556,31 @@ const performStart = async (): Promise<LlamaRuntimeProcessState> => {
 
 export const getLlamaRuntimeProcessState = () => snapshotState();
 
+export const syncIdleLlamaRuntimeSelectionState = async () => {
+  if (managedProcess || startPromise || currentState.status === "starting" || currentState.status === "running") {
+    return snapshotState();
+  }
+
+  const [runtimeSettings, modelSettings] = await Promise.all([
+    getLlamaRuntimeSettings(),
+    getGgufModelSettings()
+  ]);
+  return setState({
+    status: "stopped",
+    host: runtimeHost,
+    port: null,
+    selectedVersion: runtimeSettings.selectedVersion,
+    modelStatus: modelLoadStatusFromSettings(modelSettings.status),
+    selectedModelId: modelSettings.selectedModelId,
+    modelMessage: modelSettings.selectedModelId
+      ? modelSettings.message || t("runtime.modelSelectedNotLoaded")
+      : t("runtime.modelUnselected"),
+    message: t("runtime.serverStopped"),
+    healthUrl: "",
+    logPath: getLogPath()
+  });
+};
+
 export const getReadyLlamaRuntimeConnection = async (): Promise<LlamaRuntimeConnection | null> => {
   const state = snapshotState();
   if (

@@ -197,6 +197,13 @@ export const getLlamaRuntimeSettings = async () => buildSettings();
 
 export const updateSelectedLlamaRuntime = async (selectedVersion: string) => {
   const normalizedVersion = selectedVersion.trim();
+  if (!normalizedVersion) {
+    await saveConfig({
+      selectedVersion: "",
+      updatedAt: new Date().toISOString()
+    });
+    return buildSettings();
+  }
   const currentSettings = await buildSettings();
   if (!currentSettings.versions.some((version) => version.version === normalizedVersion)) {
     throw new Error(t("runtime.versionUnavailable", { name: normalizedVersion || t("common.unselected") }));
