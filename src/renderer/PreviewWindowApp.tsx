@@ -145,7 +145,14 @@ const PreviewWindowApp = () => {
       targetFilePathRef.current = "";
       mediaRef.current?.pause();
       if (mediaRef.current) mediaRef.current.removeAttribute("src");
+      setPreviewData(null);
+      setDisplaySrc("");
+      setUsingFallback(false);
+      setIsPreviewLoading(false);
+      setShowInfoFallback(false);
       setShowPreviewLoadingIndicator(false);
+      setContextMenu(null);
+      setFolderStats(null);
     };
     document.addEventListener("visibilitychange", resetPreviewSession);
     return () => {
