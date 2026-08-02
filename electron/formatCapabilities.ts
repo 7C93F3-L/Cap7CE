@@ -75,7 +75,7 @@ export const fileFormatCapabilityByExtension: ReadonlyMap<string, FileFormatCapa
   fileFormatCapabilities.map((capability) => [capability.extension, capability])
 );
 
-export const skimBrowsableFileExtensionSet: ReadonlySet<string> = new Set(
+export const skimCuratedFileExtensionSet: ReadonlySet<string> = new Set(
   fileFormatCapabilities.filter((capability) => capability.canBrowse).map((capability) => capability.extension)
 );
 

@@ -100,6 +100,11 @@ const searchTasks = new Map<string, SearchTaskState>();
 let previewWindowLoaded = false;
 let previewSessionActive = false;
 let activePreviewData: PreviewWindowData | null = null;
+
+const logPreviewLifecycle = (event: string, details: Record<string, unknown>) => {
+  if (app.isPackaged) return;
+  console.info(`[preview-lifecycle] ${new Date().toISOString()} ${event}`, details);
+};
 let latestPreviewContentSize: PreviewContentSize | null = null;
 let activeSkimFolderStatsTask: { sessionId: string; path: string; cancelled: boolean } | null = null;
 let latestSkimFolderStatsUpdate: ({ sessionId: string; path: string } & Awaited<ReturnType<typeof collectSkimFolderStats>>) | null = null;
@@ -253,7 +258,9 @@ const revealPreviewWindow = () => {
   if (!previewSessionActive || !previewWindow || previewWindow.isDestroyed()) {
     return false;
   }
-  if (!previewWindow.isVisible()) {
+  const mainWasVisible = Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible());
+  const previewWasVisible = previewWindow.isVisible();
+  if (!previewWasVisible) {
     previewWindow.showInactive();
   }
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
@@ -262,6 +269,14 @@ const revealPreviewWindow = () => {
   applyAlwaysOnTopState();
   previewWindow.focus();
   previewWindow.moveTop();
+  logPreviewLifecycle("reveal", {
+    sessionId: activePreviewData?.sessionId ?? null,
+    source: activePreviewData?.skimActive ? "skim" : "results",
+    mainWasVisible,
+    mainVisible: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()),
+    previewWasVisible,
+    previewVisible: previewWindow.isVisible()
+  });
   return true;
 };
 
@@ -2456,6 +2471,15 @@ ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
     return false;
   }
 
+  logPreviewLifecycle("open-request", {
+    sessionId: data.sessionId,
+    source: data.skimActive ? "skim" : "results",
+    provider: data.provider ?? "image",
+    previousSessionId: activePreviewData?.sessionId ?? null,
+    mainVisible: mainWindow.isVisible(),
+    previewVisible: Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible())
+  });
+
   if (activeSkimFolderStatsTask && activeSkimFolderStatsTask.sessionId !== data.sessionId) {
     activeSkimFolderStatsTask.cancelled = true;
     activeSkimFolderStatsTask = null;
@@ -2485,7 +2509,18 @@ ipcMain.handle("preview:close", (event) => {
   if (!isMainRenderer && !isPreviewRenderer) {
     return false;
   }
-  return closePreviewSession();
+  const sessionId = activePreviewData?.sessionId ?? null;
+  const source = activePreviewData ? (activePreviewData.skimActive ? "skim" : "results") : null;
+  const closed = closePreviewSession();
+  logPreviewLifecycle("close", {
+    requestedBy: isMainRenderer ? "main-renderer" : "preview-renderer",
+    sessionId,
+    source,
+    closed,
+    mainVisible: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()),
+    previewVisible: Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible())
+  });
+  return closed;
 });
 
 ipcMain.handle("preview:getWindowControlState", (event) => {

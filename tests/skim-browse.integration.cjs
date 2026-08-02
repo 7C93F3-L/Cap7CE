@@ -25,6 +25,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await fs.writeFile(path.join(folderPath, "sound.mp3"), "mp3");
     await fs.writeFile(path.join(folderPath, "model.obj"), "obj");
     await fs.writeFile(path.join(folderPath, "ignored.exe"), "exe");
+    await fs.writeFile(path.join(folderPath, "extensionless"), "no-extension");
+    await fs.writeFile(path.join(folderPath, "unknown.customext"), "unknown");
     await fs.writeFile(path.join(nestedFolderPath, "not-recursive.jpg"), "jpg");
 
     const result = await readSkimLocation(folderPath, () => false, [testRoot]);
@@ -32,9 +34,12 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual(result.entries.map((entry) => [entry.kind, entry.name]), [
       ["folder", "nested"],
       ["file", "document.docx"],
+      ["file", "extensionless"],
+      ["file", "ignored.exe"],
       ["file", "model.obj"],
       ["file", "notes.txt"],
       ["file", "sound.mp3"],
+      ["file", "unknown.customext"],
       ["file", "visible.png"]
     ]);
     assert.equal(result.entries.some((entry) => entry.name === "not-recursive.jpg"), false);
@@ -46,7 +51,10 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(typeof result.entries.find((entry) => entry.name === "notes.txt").modifiedAt, "string");
     assert.equal(result.entries.find((entry) => entry.name === "notes.txt").formatCapability.previewKind, "text");
     assert.equal(result.entries.find((entry) => entry.name === "visible.png").formatCapability.previewKind, "image");
-    assert.equal(result.entries.some((entry) => entry.name === "ignored.exe"), false);
+    assert.equal(result.entries.find((entry) => entry.name === "ignored.exe").formatCapability, undefined);
+    assert.equal(result.entries.find((entry) => entry.name === "unknown.customext").formatCapability, undefined);
+    assert.equal(result.entries.find((entry) => entry.name === "extensionless").extension, "");
+    assert.equal(result.entries.find((entry) => entry.name === "extensionless").formatCapability, undefined);
 
     const breadcrumbs = buildSkimBreadcrumbs(folderPath);
     assert.equal(breadcrumbs[0].path, path.parse(folderPath).root);
@@ -79,7 +87,9 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 
     console.log(JSON.stringify({
       directChildrenOnly: true,
-      mixedFormatWhitelistApplied: true,
+      allRegularFilesVisible: true,
+      knownCapabilitiesPreserved: true,
+      unknownFormatsUseGenericFallback: true,
       breadcrumbsBuilt: true,
       cancellationHonored: true,
       driveOutputNormalized: true,

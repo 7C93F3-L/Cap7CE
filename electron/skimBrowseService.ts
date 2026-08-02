@@ -193,7 +193,6 @@ export const readSkimLocation = async (
         if (!stats.isFile()) return null;
         const extension = path.extname(entry.name).toLocaleLowerCase();
         const formatCapability = getFileFormatCapability(extension);
-        if (!formatCapability?.canBrowse) return null;
         return {
           kind: "file",
           name: entry.name,
@@ -202,7 +201,7 @@ export const readSkimLocation = async (
           size: stats.size,
           modifiedAt: stats.mtime.toISOString(),
           withinAddedDirectory,
-          formatCapability,
+          ...(formatCapability?.canBrowse ? { formatCapability } : {}),
           status: "ready"
         } satisfies SkimBrowseEntry;
       } catch {

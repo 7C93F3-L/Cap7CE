@@ -15,6 +15,7 @@ import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
+import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
   AiIndexProgress,
@@ -4890,7 +4891,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   const selectionAnchorPathRef = useRef<string | null>(null);
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
-  const previewOpenRequestRef = useRef(0);
+  const previewRequestGuard = useMemo(() => createPreviewRequestGuard(), []);
   const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
   const isHorizontalGrid = shellState === "micro";
   const gridLayout = getImageGridLayout(getResultLayoutMode(shellState), gridViewport.width, gridViewport.height);
@@ -4942,6 +4943,11 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     setContextMenu(null);
     selectionAnchorPathRef.current = null;
   }, [currentPath]);
+
+  useEffect(() => () => {
+    previewRequestGuard.invalidate();
+    previewEntryPathRef.current = null;
+  }, [previewRequestGuard]);
 
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
@@ -5072,14 +5078,14 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
 
   const openPreview = useCallback(async (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return;
-    const openRequestId = ++previewOpenRequestRef.current;
+    const openRequestId = previewRequestGuard.begin();
     setContextMenu(null);
     try {
       const info: SkimPreviewInfo | undefined = await window.imageEverything?.skim.inspect({
         path: entry.path,
         kind: entry.kind
       });
-      if (!info || previewOpenRequestRef.current !== openRequestId) return;
+      if (!info || !previewRequestGuard.isCurrent(openRequestId)) return;
       const sessionId = `skim:${Date.now()}:${++previewSessionCounterRef.current}`;
       const imageProviderAvailable = entry.kind === "file"
         && entry.formatCapability?.previewKind === "image"
@@ -5088,7 +5094,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
       const contentPreview = entry.kind === "file" && !imageProviderAvailable
         ? await resolveFileContentPreview(entry.path, entry.formatCapability?.previewKind ?? "fileInfo")
         : null;
-      if (previewOpenRequestRef.current !== openRequestId) return;
+      if (!previewRequestGuard.isCurrent(openRequestId)) return;
       const provider = entry.kind === "folder"
         ? "folderInfo"
         : imageProviderAvailable
@@ -5127,7 +5133,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     } catch (error) {
       onFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
     }
-  }, [appearanceColors, onFeedback, theme, visualSessionId]);
+  }, [appearanceColors, onFeedback, previewRequestGuard, theme, visualSessionId]);
 
   useEffect(() => {
     const movePreview = (direction: -1 | 1) => {
@@ -5143,14 +5149,14 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     };
     const unsubscribeNavigate = window.imageEverything?.preview.onNavigate(movePreview);
     const unsubscribeClosed = window.imageEverything?.preview.onClosed(() => {
-      previewOpenRequestRef.current += 1;
+      previewRequestGuard.invalidate();
       previewEntryPathRef.current = null;
     });
     return () => {
       unsubscribeNavigate?.();
       unsubscribeClosed?.();
     };
-  }, [entries, openPreview]);
+  }, [entries, openPreview, previewRequestGuard]);
 
   const openContextMenu = useCallback((event: React.MouseEvent, item: SkimBrowseEntry) => {
     if (item.kind === "drive") return;
