@@ -31,6 +31,8 @@ export interface UserPreferencesResponse {
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
+  systemNotificationsEnabled: boolean;
+  backgroundRunNotificationShown: boolean;
   operationHintsEnabled: boolean;
   autoCacheOptimizationEnabled: boolean;
   quickActionGlobalEnabled: boolean;
@@ -57,6 +59,8 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   alwaysOnTop: false,
   standbyLineVisible: true,
   launchAtLogin: false,
+  systemNotificationsEnabled: true,
+  backgroundRunNotificationShown: false,
   operationHintsEnabled: true,
   autoCacheOptimizationEnabled: true,
   quickActionGlobalEnabled: true,
@@ -160,6 +164,12 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       alwaysOnTop: typeof parsed.alwaysOnTop === "boolean" ? parsed.alwaysOnTop : defaults.alwaysOnTop,
       standbyLineVisible: typeof parsed.standbyLineVisible === "boolean" ? parsed.standbyLineVisible : defaults.standbyLineVisible,
       launchAtLogin: typeof parsed.launchAtLogin === "boolean" ? parsed.launchAtLogin : defaults.launchAtLogin,
+      systemNotificationsEnabled: typeof parsed.systemNotificationsEnabled === "boolean"
+        ? parsed.systemNotificationsEnabled
+        : defaults.systemNotificationsEnabled,
+      backgroundRunNotificationShown: typeof parsed.backgroundRunNotificationShown === "boolean"
+        ? parsed.backgroundRunNotificationShown
+        : defaults.backgroundRunNotificationShown,
       operationHintsEnabled: typeof parsed.operationHintsEnabled === "boolean"
         ? parsed.operationHintsEnabled
         : defaults.operationHintsEnabled,
@@ -281,6 +291,29 @@ export const updateLaunchAtLoginPreference = async (launchAtLogin: boolean) => {
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     launchAtLogin,
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateSystemNotificationsPreference = async (systemNotificationsEnabled: boolean) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    systemNotificationsEnabled,
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const markBackgroundRunNotificationShown = async () => {
+  const preferences = await readPreferences();
+  if (preferences.backgroundRunNotificationShown) return preferences;
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    backgroundRunNotificationShown: true,
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

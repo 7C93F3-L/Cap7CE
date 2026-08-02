@@ -1473,7 +1473,12 @@ textarea,
 }
 
 .cap-settings-group-display {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 60px;
+}
+
+.cap-settings-group-display > .cap-settings-row-half {
+  grid-column: span 2;
 }
 
 .cap-settings-wide {

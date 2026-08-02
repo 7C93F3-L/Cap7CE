@@ -322,6 +322,8 @@ export interface UserPreferences {
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
+  systemNotificationsEnabled: boolean;
+  backgroundRunNotificationShown: boolean;
   operationHintsEnabled: boolean;
   autoCacheOptimizationEnabled: boolean;
   quickActionGlobalEnabled: boolean;
@@ -369,6 +371,7 @@ export interface ThumbnailOptimizationStatus {
   queuedCount: number;
   processedCount: number;
   failedCount: number;
+  activeDurationMs: number;
 }
 
 export type AiIndexPhase = "idle" | "checking" | "processing" | "completed" | "failed" | "cancelled";

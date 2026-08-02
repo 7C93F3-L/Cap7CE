@@ -18,7 +18,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateThemePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { deleteDirectoryImages, ensureImageDatabase, getCompletedFileScanDirectoryIds, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -27,7 +27,7 @@ import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
-import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate } from "./thumbnailOptimizationService";
+import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { ensurePreviewImagePath, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
@@ -77,6 +77,7 @@ let mainWindowSkipTaskbar: boolean | null = null;
 let microBottomCenterAnchored = false;
 let edgeSnapEnabled = true;
 let standbyLineVisible = true;
+let systemNotificationsEnabled = true;
 let quickActionGlobalEnabled = true;
 let shortcutCaptureActive = false;
 let registeredActivateCapsuleShortcut: string | null = null;
@@ -93,12 +94,16 @@ let activePreviewData: PreviewWindowData | null = null;
 let latestPreviewContentSize: PreviewContentSize | null = null;
 let activeSkimFolderStatsTask: { sessionId: string; path: string; cancelled: boolean } | null = null;
 let latestSkimFolderStatsUpdate: ({ sessionId: string; path: string } & Awaited<ReturnType<typeof collectSkimFolderStats>>) | null = null;
+let cacheNotificationBatchBaseline: Pick<ThumbnailOptimizationStatus, "processedCount" | "failedCount" | "activeDurationMs"> | null = null;
+let lastCacheCompletionNotificationAt = 0;
 const userMovedShellBounds = new Map<Cap7CEShellState, Electron.Rectangle>();
 const previewSourceFallbackExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp"]);
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 const shellWindowStates = new Set<Cap7CEShellState>(["standby", "capsule", "micro", "mini", "normal", "settings"]);
 const standbyVisualWidthPx = 180;
 const standbyVisualHeightPx = 4;
+const backgroundTaskNotificationMinimumMs = 60_000;
+const cacheCompletionNotificationCooldownMs = 30 * 60_000;
 
 const toThumbnailOptimizationCandidates = (images: ScannedImageFile[]): ThumbnailOptimizationCandidate[] => (
   images.map((image) => ({
@@ -1211,12 +1216,90 @@ const updateTrayMenu = () => {
   ]));
 };
 
+const isMainWindowInBackground = () => (
+  Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isFocused())
+);
+
+const showSystemNotification = (title: string, content: string) => {
+  if (!systemNotificationsEnabled || process.platform !== "win32" || !appTray) {
+    return false;
+  }
+  try {
+    appTray.displayBalloon({
+      iconType: "custom",
+      icon: path.join(app.getAppPath(), "build", "icon.ico"),
+      title,
+      content,
+      noSound: true,
+      respectQuietTime: true
+    });
+    return true;
+  } catch (error) {
+    console.warn("[system-notification] failed", error);
+    return false;
+  }
+};
+
+const showBackgroundRunNotificationOnce = async (
+  preferences: Awaited<ReturnType<typeof getUserPreferences>>
+) => {
+  if (!preferences.systemNotificationsEnabled || preferences.backgroundRunNotificationShown) return;
+  const configuredShortcut = preferences.shortcutActions.activateCapsule;
+  const shortcutAvailable = preferences.quickActionGlobalEnabled
+    && !unavailableGlobalShortcutActionIds.has("activateCapsule");
+  const content = shortcutAvailable
+    ? t("notification.backgroundRunContent", { shortcut: configuredShortcut })
+    : t("notification.backgroundRunContentWithoutShortcut");
+  if (showSystemNotification(t("notification.backgroundRunTitle"), content)) {
+    await markBackgroundRunNotificationShown();
+  }
+};
+
+const handleThumbnailOptimizationStatusForNotification = (status: ThumbnailOptimizationStatus) => {
+  if (status.phase === "running" && cacheNotificationBatchBaseline === null) {
+    cacheNotificationBatchBaseline = {
+      processedCount: status.processedCount,
+      failedCount: status.failedCount,
+      activeDurationMs: status.activeDurationMs
+    };
+    return;
+  }
+  if (status.phase === "disabled") {
+    cacheNotificationBatchBaseline = null;
+    return;
+  }
+  if (status.phase !== "completed" || cacheNotificationBatchBaseline === null) return;
+
+  const baseline = cacheNotificationBatchBaseline;
+  cacheNotificationBatchBaseline = null;
+  const processedCount = status.processedCount - baseline.processedCount;
+  const failedCount = status.failedCount - baseline.failedCount;
+  const activeDurationMs = status.activeDurationMs - baseline.activeDurationMs;
+  const now = Date.now();
+  if (
+    processedCount <= 0
+    || activeDurationMs < backgroundTaskNotificationMinimumMs
+    || !isMainWindowInBackground()
+    || now - lastCacheCompletionNotificationAt < cacheCompletionNotificationCooldownMs
+  ) {
+    return;
+  }
+
+  const content = failedCount > 0
+    ? t("notification.cacheCompletedWithFailures", { count: processedCount, failed: failedCount })
+    : t("notification.cacheCompleted", { count: processedCount });
+  if (showSystemNotification(t("notification.cacheCompletedTitle"), content)) {
+    lastCacheCompletionNotificationAt = now;
+  }
+};
+
 const createAppTray = () => {
   if (appTray) return;
 
   appTray = new Tray(path.join(app.getAppPath(), "build", "icon.ico"));
   appTray.setToolTip("Cap7CE");
   appTray.on("double-click", () => openNormalFromTray());
+  appTray.on("balloon-click", () => openSettingsFromTray());
   updateTrayMenu();
 };
 
@@ -2027,6 +2110,7 @@ app.whenReady().then(async () => {
   edgeSnapEnabled = preferences.edgeSnapEnabled;
   shellAlwaysOnTop = preferences.alwaysOnTop;
   standbyLineVisible = preferences.standbyLineVisible;
+  systemNotificationsEnabled = preferences.systemNotificationsEnabled;
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
@@ -2037,6 +2121,7 @@ app.whenReady().then(async () => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
       mainWindow.webContents.send("cache:optimizationStatusChanged", status);
     }
+    handleThumbnailOptimizationStatusForNotification(status);
   });
   createPreviewWindow();
   void createStartupHintWindow();
@@ -2046,6 +2131,9 @@ app.whenReady().then(async () => {
   } else {
     probeGlobalShortcutActions(preferences.shortcutActions);
   }
+  void showBackgroundRunNotificationOnce(preferences).catch((error) => {
+    console.warn("[system-notification] failed to persist first-run state", error);
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -2454,6 +2542,7 @@ const withSqliteImageCounts = async (directories: PersistedDirectory[]) => {
 };
 
 const runAiIndexBatch = async (directoryId?: string) => {
+  const startedAt = Date.now();
   await pauseThumbnailOptimization("ai-recognition");
   try {
     const ai = await runContinuousAiIndex({
@@ -2479,6 +2568,7 @@ const runAiIndexBatch = async (directoryId?: string) => {
         total: 0,
         completed: 0,
         failed: 0,
+        cancelled: false,
         errors: [
           {
             filePath: "",
@@ -2489,10 +2579,30 @@ const runAiIndexBatch = async (directoryId?: string) => {
       };
     });
 
-    return {
+    const result = {
       ai,
       stats: await getImageIndexQualityStats()
     };
+    if (
+      !cancelAiIndexRequested
+      && ai.cancelled !== true
+      && Date.now() - startedAt >= backgroundTaskNotificationMinimumMs
+      && isMainWindowInBackground()
+    ) {
+      const fatalFailure = ai.total === 0 && ai.errors.length > 0;
+      if (fatalFailure) {
+        showSystemNotification(
+          t("notification.aiFailedTitle"),
+          t("notification.aiFailedContent")
+        );
+      } else if (ai.total > 0) {
+        showSystemNotification(
+          t("notification.aiCompletedTitle"),
+          t("notification.aiCompletedContent", { completed: ai.completed, failed: ai.failed })
+        );
+      }
+    }
+    return result;
   } finally {
     resumeThumbnailOptimization("ai-recognition");
   }
@@ -3012,6 +3122,12 @@ ipcMain.handle("preferences:updateStandbyLineVisible", async (_event, nextStandb
 ipcMain.handle("preferences:updateLaunchAtLogin", async (_event, nextLaunchAtLogin: boolean) => {
   const preferences = await updateLaunchAtLoginPreference(Boolean(nextLaunchAtLogin));
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
+  return preferences;
+});
+
+ipcMain.handle("preferences:updateSystemNotifications", async (_event, nextEnabled: boolean) => {
+  const preferences = await updateSystemNotificationsPreference(Boolean(nextEnabled));
+  systemNotificationsEnabled = preferences.systemNotificationsEnabled;
   return preferences;
 });
 

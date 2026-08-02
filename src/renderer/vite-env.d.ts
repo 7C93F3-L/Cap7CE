@@ -115,6 +115,7 @@ declare global {
         updateEdgeSnap: (edgeSnapEnabled: UserPreferences["edgeSnapEnabled"]) => Promise<UserPreferences>;
         updateStandbyLineVisible: (standbyLineVisible: UserPreferences["standbyLineVisible"]) => Promise<UserPreferences>;
         updateLaunchAtLogin: (launchAtLogin: UserPreferences["launchAtLogin"]) => Promise<UserPreferences>;
+        updateSystemNotifications: (enabled: UserPreferences["systemNotificationsEnabled"]) => Promise<UserPreferences>;
         updateOperationHints: (enabled: UserPreferences["operationHintsEnabled"]) => Promise<UserPreferences>;
         updateAutoCacheOptimization: (enabled: UserPreferences["autoCacheOptimizationEnabled"]) => Promise<UserPreferences>;
         updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: UserPreferences["quickActionGlobalEnabled"]) => Promise<UserPreferences>;

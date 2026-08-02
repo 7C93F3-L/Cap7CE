@@ -422,7 +422,8 @@ const emptyThumbnailOptimizationStatus: ThumbnailOptimizationStatus = {
   phase: "ready",
   queuedCount: 0,
   processedCount: 0,
-  failedCount: 0
+  failedCount: 0,
+  activeDurationMs: 0
 };
 
 const emptySearchResponse: ImageSearchResponse = {
@@ -930,6 +931,7 @@ const App = () => {
   const [edgeSnapEnabled, setEdgeSnapEnabled] = useState(true);
   const [standbyLineVisible, setStandbyLineVisible] = useState(true);
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
+  const [systemNotificationsEnabled, setSystemNotificationsEnabled] = useState(true);
   const [operationHintsEnabled, setOperationHintsEnabled] = useState(true);
   const [quickActionGlobalEnabled, setQuickActionGlobalEnabled] = useState(true);
   const [commandEnabled, setCommandEnabled] = useState(true);
@@ -1502,6 +1504,7 @@ const App = () => {
             setIsAlwaysOnTop(preferences.alwaysOnTop);
             setStandbyLineVisible(preferences.standbyLineVisible);
             setLaunchAtLogin(preferences.launchAtLogin);
+            setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);
             setOperationHintsEnabled(preferences.operationHintsEnabled);
             setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
             setCommandEnabled(preferences.commandEnabled);
@@ -2153,6 +2156,13 @@ const App = () => {
       return { ok: true as const };
     } catch (error) {
       return commandOperationFailed(error instanceof Error ? error.message : t("error.cacheFailed"));
+    }
+  };
+
+  const updateSystemNotifications = async (enabled: boolean) => {
+    const preferences = await window.imageEverything?.preferences.updateSystemNotifications(enabled);
+    if (preferences) {
+      setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);
     }
   };
 
@@ -4052,6 +4062,7 @@ const App = () => {
                 edgeSnapEnabled={edgeSnapEnabled}
                 standbyLineVisible={standbyLineVisible}
                 launchAtLogin={launchAtLogin}
+                systemNotificationsEnabled={systemNotificationsEnabled}
                 operationHintsEnabled={operationHintsEnabled}
                 quickActionGlobalEnabled={quickActionGlobalEnabled}
                 shortcutActions={shortcutActions}
@@ -4095,6 +4106,7 @@ const App = () => {
                 onEdgeSnapChange={updateEdgeSnapEnabled}
                 onStandbyLineVisibleChange={updateStandbyLineVisible}
                 onLaunchAtLoginChange={updateLaunchAtLogin}
+                onSystemNotificationsChange={updateSystemNotifications}
                 onOperationHintsChange={updateOperationHints}
                 onAutoCacheOptimizationChange={updateAutoCacheOptimization}
                 onQuickActionGlobalEnabledChange={updateQuickActionGlobalEnabled}
@@ -6658,6 +6670,7 @@ interface SettingsViewProps {
   edgeSnapEnabled: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
+  systemNotificationsEnabled: boolean;
   operationHintsEnabled: boolean;
   quickActionGlobalEnabled: boolean;
   shortcutActions: ShortcutActionPreferences;
@@ -6698,6 +6711,7 @@ interface SettingsViewProps {
   onEdgeSnapChange: (edgeSnapEnabled: boolean) => void;
   onStandbyLineVisibleChange: (standbyLineVisible: boolean) => void;
   onLaunchAtLoginChange: (launchAtLogin: boolean) => void;
+  onSystemNotificationsChange: (enabled: boolean) => void;
   onOperationHintsChange: (enabled: boolean) => void;
   onAutoCacheOptimizationChange: (enabled: boolean) => void;
   onQuickActionGlobalEnabledChange: (quickActionGlobalEnabled: boolean) => void;
@@ -6728,7 +6742,7 @@ interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
   const [indexDetailsClosing, setIndexDetailsClosing] = useState(false);
@@ -7428,16 +7442,22 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               {edgeSnapEnabled ? t("settings.enabled") : t("settings.disabled")}
             </button>
           </div>
-          <div className="cap-settings-row">
+          <div className="cap-settings-row cap-settings-row-half">
             <span className="cap-settings-label">{t("settings.launchAtLogin")}</span>
             <button className="cap-settings-pill" type="button" onClick={() => onLaunchAtLoginChange(!launchAtLogin)}>
               {launchAtLogin ? t("settings.launchAtLoginOn") : t("settings.launchAtLoginOff")}
             </button>
           </div>
-          <div className="cap-settings-row">
+          <div className="cap-settings-row cap-settings-row-half">
             <span className="cap-settings-label">{t("settings.operationHints")}</span>
             <button className="cap-settings-pill" type="button" onClick={() => onOperationHintsChange(!operationHintsEnabled)}>
               {operationHintsEnabled ? t("settings.operationHintsOn") : t("settings.operationHintsOff")}
+            </button>
+          </div>
+          <div className="cap-settings-row cap-settings-row-half">
+            <span className="cap-settings-label">{t("settings.systemNotifications")}</span>
+            <button className="cap-settings-pill" type="button" onClick={() => onSystemNotificationsChange(!systemNotificationsEnabled)}>
+              {systemNotificationsEnabled ? t("settings.systemNotificationsOn") : t("settings.systemNotificationsOff")}
             </button>
           </div>
         </section>

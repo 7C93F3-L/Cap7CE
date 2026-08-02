@@ -19,6 +19,7 @@ export interface ThumbnailOptimizationStatus {
   queuedCount: number;
   processedCount: number;
   failedCount: number;
+  activeDurationMs: number;
 }
 
 type StatusListener = (status: ThumbnailOptimizationStatus) => void;
@@ -31,6 +32,7 @@ let enabled = false;
 let completed = false;
 let processedCount = 0;
 let failedCount = 0;
+let activeDurationMs = 0;
 let sortField: ThumbnailOptimizationSortField = "file_name";
 let sortDirection: ThumbnailOptimizationSortDirection = "desc";
 let workerPromise: Promise<void> | null = null;
@@ -65,7 +67,8 @@ export const getThumbnailOptimizationStatus = (): ThumbnailOptimizationStatus =>
         : "ready",
   queuedCount: queue.length + (activePathKey === null ? 0 : 1),
   processedCount,
-  failedCount
+  failedCount,
+  activeDurationMs
 });
 
 const emitStatus = () => {
@@ -73,33 +76,38 @@ const emitStatus = () => {
 };
 
 const runWorker = async () => {
-  while (enabled && pauseReasons.size === 0) {
-    const candidate = queue.shift();
-    if (!candidate) {
-      completed = processedCount > 0;
-      break;
-    }
+  const activeRunStartedAt = Date.now();
+  try {
+    while (enabled && pauseReasons.size === 0) {
+      const candidate = queue.shift();
+      if (!candidate) {
+        completed = processedCount > 0;
+        break;
+      }
 
-    const candidateKey = normalizePathKey(candidate.filePath);
-    queueByPath.delete(candidateKey);
-    activePathKey = candidateKey;
-    emitStatus();
-
-    try {
-      await ensureThumbnailPath(candidate.filePath);
-    } catch (error) {
-      failedCount += 1;
-      console.warn("[thumbnail-optimization] failed", {
-        filePath: candidate.filePath,
-        message: error instanceof Error ? error.message : String(error)
-      });
-    } finally {
-      processedCount += 1;
-      activePathKey = null;
+      const candidateKey = normalizePathKey(candidate.filePath);
+      queueByPath.delete(candidateKey);
+      activePathKey = candidateKey;
       emitStatus();
-    }
 
-    await yieldToForegroundWork();
+      try {
+        await ensureThumbnailPath(candidate.filePath);
+      } catch (error) {
+        failedCount += 1;
+        console.warn("[thumbnail-optimization] failed", {
+          filePath: candidate.filePath,
+          message: error instanceof Error ? error.message : String(error)
+        });
+      } finally {
+        processedCount += 1;
+        activePathKey = null;
+        emitStatus();
+      }
+
+      await yieldToForegroundWork();
+    }
+  } finally {
+    activeDurationMs += Date.now() - activeRunStartedAt;
   }
 };
 
@@ -182,6 +190,7 @@ export const setThumbnailOptimizationEnabled = async (nextEnabled: boolean) => {
   completed = false;
   processedCount = 0;
   failedCount = 0;
+  activeDurationMs = 0;
 
   if (!enabled) {
     queue = [];

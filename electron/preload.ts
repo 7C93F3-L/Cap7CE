@@ -164,6 +164,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     updateEdgeSnap: (edgeSnapEnabled: boolean) => ipcRenderer.invoke("preferences:updateEdgeSnap", edgeSnapEnabled),
     updateStandbyLineVisible: (standbyLineVisible: boolean) => ipcRenderer.invoke("preferences:updateStandbyLineVisible", standbyLineVisible),
     updateLaunchAtLogin: (launchAtLogin: boolean) => ipcRenderer.invoke("preferences:updateLaunchAtLogin", launchAtLogin),
+    updateSystemNotifications: (enabled: boolean) => ipcRenderer.invoke("preferences:updateSystemNotifications", enabled),
     updateOperationHints: (enabled: boolean) => ipcRenderer.invoke("preferences:updateOperationHints", enabled),
     updateAutoCacheOptimization: (enabled: boolean) => ipcRenderer.invoke("preferences:updateAutoCacheOptimization", enabled),
     updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: boolean) => ipcRenderer.invoke("preferences:updateQuickActionGlobalEnabled", quickActionGlobalEnabled),
@@ -200,8 +201,8 @@ contextBridge.exposeInMainWorld("imageEverything", {
   cache: {
     stats: () => ipcRenderer.invoke("cache:stats"),
     optimizationStatus: () => ipcRenderer.invoke("cache:optimizationStatus"),
-    onOptimizationStatusChanged: (callback: (status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number }) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number }) => callback(status);
+    onOptimizationStatusChanged: (callback: (status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => callback(status);
       ipcRenderer.on("cache:optimizationStatusChanged", listener);
       return () => ipcRenderer.removeListener("cache:optimizationStatusChanged", listener);
     },
