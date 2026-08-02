@@ -27,6 +27,15 @@ declare global {
       app: {
         quit: () => Promise<boolean>;
         openReleasePage: () => Promise<boolean>;
+        checkForUpdates: () => Promise<{
+          status: "up_to_date" | "update_available" | "failed";
+          currentVersion: string;
+          latestVersion?: string;
+        }>;
+        downloadUpdate: () => Promise<{
+          status: "download_started" | "failed";
+          version?: string;
+        }>;
       };
       preview: {
         open: (data: PreviewWindowData) => Promise<boolean>;

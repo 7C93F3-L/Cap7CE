@@ -6754,6 +6754,8 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [capturingShortcutActionId, setCapturingShortcutActionId] = useState<ShortcutActionId | null>(null);
   const [shortcutActionDrafts, setShortcutActionDrafts] = useState<ShortcutActionPreferences>(shortcutActions);
   const [draftUnavailableActionIds, setDraftUnavailableActionIds] = useState<ShortcutActionId[]>([]);
+  const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "opening_download" | "download_started" | "failed" | "download_failed">("idle");
+  const [appUpdateVersion, setAppUpdateVersion] = useState("");
   const selectedGgufModel = ggufModelSettings.models.find((model) => model.id === ggufModelSettings.selectedModelId);
   const selectedLlamaRuntime = llamaRuntimeSettings.versions.find((runtime) => runtime.version === llamaRuntimeSettings.selectedVersion);
   const isLlamaRuntimeRunning = llamaRuntimeProcessState.status === "running";
@@ -6830,6 +6832,28 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const indexFailedCount = aiProgress?.failed ?? scanSummary?.aiFailed ?? 0;
   const indexErrorSummary = indexFailed ? formatDisplayMessage(scanError || aiProgress?.message) : "";
   const hasIndexDetails = isScanning || aiProgress !== null || scanSummary !== null || Boolean(scanError);
+  const appUpdateStatusLabel = appUpdateStatus === "checking"
+    ? t("settings.updateChecking")
+    : appUpdateStatus === "up_to_date"
+      ? t("settings.updateUpToDate", { version: appUpdateVersion })
+      : appUpdateStatus === "update_available" || appUpdateStatus === "opening_download"
+        ? t("settings.updateAvailable", { version: appUpdateVersion })
+        : appUpdateStatus === "download_started"
+          ? t("settings.updateDownloadStarted", { version: appUpdateVersion })
+          : appUpdateStatus === "download_failed"
+            ? t("settings.updateDownloadFailed")
+            : appUpdateStatus === "failed"
+              ? t("settings.updateCheckFailed")
+              : t("settings.updateNotChecked");
+  const appUpdateButtonLabel = appUpdateStatus === "checking"
+    ? t("settings.updateCheckingButton")
+    : appUpdateStatus === "opening_download"
+      ? t("settings.updateOpeningDownload")
+      : appUpdateStatus === "update_available" || appUpdateStatus === "download_failed"
+        ? t("settings.downloadUpdateNow")
+        : appUpdateStatus === "download_started"
+          ? t("settings.downloadUpdateAgain")
+          : t("settings.checkForUpdates");
 
   useEffect(() => {
     if (isScanning) {
@@ -6871,6 +6895,33 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
       URL.revokeObjectURL(originImageUrl);
     }
   }, [originImageUrl]);
+
+  const handleAppUpdateAction = async () => {
+    if (appUpdateStatus === "checking" || appUpdateStatus === "opening_download") return;
+    if (appUpdateStatus === "update_available" || appUpdateStatus === "download_started" || appUpdateStatus === "download_failed") {
+      setAppUpdateStatus("opening_download");
+      try {
+        const result = await window.imageEverything?.app.downloadUpdate();
+        setAppUpdateStatus(result?.status === "download_started" ? "download_started" : "download_failed");
+      } catch {
+        setAppUpdateStatus("download_failed");
+      }
+      return;
+    }
+
+    setAppUpdateStatus("checking");
+    try {
+      const result = await window.imageEverything?.app.checkForUpdates();
+      if (!result) {
+        setAppUpdateStatus("failed");
+        return;
+      }
+      setAppUpdateVersion(result.latestVersion || result.currentVersion);
+      setAppUpdateStatus(result.status);
+    } catch {
+      setAppUpdateStatus("failed");
+    }
+  };
 
   const revealOrigin = async () => {
     if (originImageUrl) {
@@ -7499,8 +7550,8 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           )}
         </section>
 
-        <section className="cap-settings-group cap-settings-group-runtime">
-          <div className="cap-settings-row">
+        <section className="cap-settings-group cap-settings-split cap-settings-group-runtime">
+          <div className="cap-settings-row cap-settings-wide">
             <span className="cap-settings-label">llama.cpp</span>
             <span className="cap-settings-value">
               {runtimeStatusLabel}
@@ -7527,9 +7578,9 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               {isLlamaRuntimeStarting ? t("common.starting") : isLlamaRuntimeRunning ? t("common.stop") : t("common.start")}
             </button>
           </div>
-          {runtimeErrorMessage && !runtimeHasMissingPrompt && <div className={`cap-settings-message${runtimeMessageIsFailure ? " is-error" : ""}`}>{runtimeErrorMessage}</div>}
+          {runtimeErrorMessage && !runtimeHasMissingPrompt && <div className={`cap-settings-message cap-settings-wide${runtimeMessageIsFailure ? " is-error" : ""}`}>{runtimeErrorMessage}</div>}
 
-          <div className="cap-settings-row">
+          <div className="cap-settings-row cap-settings-wide">
             <span className="cap-settings-label">{t("settings.visionModel")}</span>
             <span className="cap-settings-value">
               {modelStatusLabel}
@@ -7553,9 +7604,25 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               {isLoadingGgufModels ? t("common.refreshing") : t("common.refresh")}
             </button>
           </div>
-          {modelErrorMessage && !modelHasMissingPrompt && <div className={`cap-settings-message${modelMessageIsFailure ? " is-error" : ""}`}>{modelErrorMessage}</div>}
+          {modelErrorMessage && !modelHasMissingPrompt && <div className={`cap-settings-message cap-settings-wide${modelMessageIsFailure ? " is-error" : ""}`}>{modelErrorMessage}</div>}
 
-          <details className="cap-settings-details cap-settings-row" open={runtimeDetailsExpanded}>
+          <div className="cap-settings-row">
+            <span className="cap-settings-label">{t("settings.versionUpdate")}</span>
+            <span className="cap-settings-value">
+              {appUpdateStatusLabel}
+            </span>
+            <button
+              className="cap-settings-pill"
+              type="button"
+              onClick={() => void handleAppUpdateAction()}
+              title={appUpdateButtonLabel}
+              disabled={appUpdateStatus === "checking" || appUpdateStatus === "opening_download"}
+            >
+              {appUpdateButtonLabel}
+            </button>
+          </div>
+
+          <details className="cap-settings-details cap-settings-row cap-settings-wide" open={runtimeDetailsExpanded}>
             <summary
               aria-expanded={runtimeDetailsExpanded}
               onClick={(event) => {

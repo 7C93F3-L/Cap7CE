@@ -52,7 +52,9 @@ contextBridge.exposeInMainWorld("imageEverything", {
   },
   app: {
     quit: () => ipcRenderer.invoke("app:quit"),
-    openReleasePage: () => ipcRenderer.invoke("app:openReleasePage")
+    openReleasePage: () => ipcRenderer.invoke("app:openReleasePage"),
+    checkForUpdates: () => ipcRenderer.invoke("app:checkForUpdates"),
+    downloadUpdate: () => ipcRenderer.invoke("app:downloadUpdate")
   },
   preview: {
     open: (data: PreviewWindowData) => ipcRenderer.invoke("preview:open", data),

@@ -6,6 +6,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
+import { checkForAppUpdate, type AppUpdateDownload } from "./appUpdateService";
 import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { startNativeFileDrag } from "./fileDragService";
@@ -53,6 +54,7 @@ let mainWindow: BrowserWindow | null = null;
 let startupHintWindow: BrowserWindow | null = null;
 let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
+let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let isQuitting = false;
 let cancelAiIndexRequested = false;
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
@@ -2154,6 +2156,39 @@ ipcMain.handle("app:quit", () => {
 ipcMain.handle("app:openReleasePage", async () => {
   await shell.openExternal(releasePageUrl);
   return true;
+});
+
+ipcMain.handle("app:checkForUpdates", async (event) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    return {
+      status: "failed",
+      currentVersion: app.getVersion()
+    };
+  }
+  const result = await checkForAppUpdate(app.getVersion());
+  pendingAppUpdateDownload = result.status === "update_available"
+    && result.latestVersion
+    && result.downloadUrl
+    ? { version: result.latestVersion, downloadUrl: result.downloadUrl }
+    : null;
+  return {
+    status: result.status,
+    currentVersion: result.currentVersion,
+    ...(result.latestVersion ? { latestVersion: result.latestVersion } : {})
+  };
+});
+
+ipcMain.handle("app:downloadUpdate", async (event) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || !pendingAppUpdateDownload) {
+    return { status: "failed" };
+  }
+  const update = pendingAppUpdateDownload;
+  try {
+    await shell.openExternal(update.downloadUrl);
+    return { status: "download_started", version: update.version };
+  } catch {
+    return { status: "failed", version: update.version };
+  }
 });
 
 ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
