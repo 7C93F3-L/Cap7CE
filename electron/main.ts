@@ -26,6 +26,7 @@ import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
+import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
@@ -60,6 +61,8 @@ let cancelAiIndexRequested = false;
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let resizeSettledTimer: NodeJS.Timeout | null = null;
 let shellMousePassthroughTimer: NodeJS.Timeout | null = null;
+let lastShellMousePoint: Electron.Point | null = null;
+let stationaryShellMousePollCount = 0;
 let shellIgnoreMouseEvents = false;
 let programmaticResizeGuardUntil = 0;
 let moveSnapTimer: NodeJS.Timeout | null = null;
@@ -185,7 +188,6 @@ const moveSnapSettleDelayMs = 180;
 const edgeSnapThresholdPx = 40;
 const edgeAnchorThresholdPx = 12;
 const programmaticMoveGuardMs = 420;
-const shellMousePassthroughPollMs = 50;
 const previewWindowMinimumWidth = 360;
 const previewWindowMinimumHeight = 280;
 const previewWindowHorizontalPadding = 50;
@@ -1440,7 +1442,7 @@ const setShellIgnoreMouseEvents = (ignore: boolean) => {
       ignore,
       forward: ignore,
       path: activeShellState === "standby" || activeShellState === "capsule"
-        ? "global cursor polling"
+        ? "adaptive global cursor polling"
         : "normal window mode"
     });
   }
@@ -1448,33 +1450,55 @@ const setShellIgnoreMouseEvents = (ignore: boolean) => {
 
 const syncShellMousePassthrough = () => {
   if (!mainWindow || mainWindow.isDestroyed()) {
-    return;
+    return null;
   }
 
   if (activeShellState !== "standby" && activeShellState !== "capsule") {
     setShellIgnoreMouseEvents(false);
-    return;
+    return null;
   }
 
   const cursorPoint = screen.getCursorScreenPoint();
   const interactiveBounds = mainWindow.getBounds();
+  stationaryShellMousePollCount = lastShellMousePoint
+    && lastShellMousePoint.x === cursorPoint.x
+    && lastShellMousePoint.y === cursorPoint.y
+    ? stationaryShellMousePollCount + 1
+    : 0;
+  lastShellMousePoint = cursorPoint;
   setShellIgnoreMouseEvents(!isPointInsideBounds(cursorPoint, interactiveBounds));
+  return getShellMousePollDelay(cursorPoint, interactiveBounds, stationaryShellMousePollCount);
+};
+
+const scheduleShellMousePassthrough = (delayMs: number) => {
+  shellMousePassthroughTimer = setTimeout(() => {
+    shellMousePassthroughTimer = null;
+    const nextDelayMs = syncShellMousePassthrough();
+    if (nextDelayMs !== null) {
+      scheduleShellMousePassthrough(nextDelayMs);
+    }
+  }, delayMs);
 };
 
 const startShellMousePassthrough = () => {
-  syncShellMousePassthrough();
   if (shellMousePassthroughTimer !== null) {
     return;
   }
-
-  shellMousePassthroughTimer = setInterval(syncShellMousePassthrough, shellMousePassthroughPollMs);
+  lastShellMousePoint = null;
+  stationaryShellMousePollCount = 0;
+  const nextDelayMs = syncShellMousePassthrough();
+  if (nextDelayMs !== null) {
+    scheduleShellMousePassthrough(nextDelayMs);
+  }
 };
 
 const stopShellMousePassthrough = () => {
   if (shellMousePassthroughTimer !== null) {
-    clearInterval(shellMousePassthroughTimer);
+    clearTimeout(shellMousePassthroughTimer);
     shellMousePassthroughTimer = null;
   }
+  lastShellMousePoint = null;
+  stationaryShellMousePollCount = 0;
   setShellIgnoreMouseEvents(false);
 };
 
