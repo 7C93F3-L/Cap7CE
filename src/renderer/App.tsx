@@ -5825,6 +5825,55 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         {t(`skim.display.${mode}` as TranslationKey)}
       </button>
     ))}
+    {enabledGroups.has("sort") && labelVisibility.sort && (
+    <button
+      className={`cap7ce-pill cap7ce-sort-tag${sortChipsOpen ? " cap7ce-pill-wide" : " cap7ce-pill-icon"}`}
+      type="button"
+      title={t("search.hideLabelHint")}
+      aria-label={sortChipsOpen ? t("sort.parent") : getSortDirectionLabels()[search.sortDirection]}
+      aria-expanded={sortChipsOpen}
+      onContextMenu={hideSortLabel}
+      onClick={toggleSortChips}
+    >
+      {sortChipsOpen
+        ? t("sort.parent")
+        : (
+          <SvgIcon
+            svg={search.sortDirection === "asc" ? iconSortAscSvg : iconSortDescSvg}
+            className="cap-svg-icon cap-sort-svg-icon"
+          />
+        )}
+    </button>
+    )}
+    {sortChipsOpen && (["desc", "asc"] as SortDirection[]).map((sortDirection, index) => (
+      <button
+        key={sortDirection}
+        className={`cap7ce-pill cap7ce-pill-icon cap7ce-sort-chip cap7ce-sort-direction-chip cap7ce-filter-chip-motion${closingChipGroup === "sort" ? " cap7ce-filter-chip-closing" : ""}`}
+        type="button"
+        title={getSortDirectionLabels()[sortDirection]}
+        aria-label={getSortDirectionLabels()[sortDirection]}
+        data-selected={search.sortDirection === sortDirection}
+        style={getChipMotionStyle(index, 4)}
+        onClick={() => selectSortDirection(sortDirection)}
+      >
+        <SvgIcon
+          svg={sortDirection === "asc" ? iconSortAscSvg : iconSortDescSvg}
+          className="cap-svg-icon cap-sort-svg-icon"
+        />
+      </button>
+    ))}
+    {sortChipsOpen && (["file_name", "modified_at"] as SortField[]).map((sortField, index) => (
+      <button
+        key={sortField}
+        className={`cap7ce-pill cap7ce-pill-wide cap7ce-sort-chip cap7ce-filter-chip-motion${closingChipGroup === "sort" ? " cap7ce-filter-chip-closing" : ""}`}
+        type="button"
+        data-selected={search.sortField === sortField}
+        style={getChipMotionStyle(index + 2, 4)}
+        onClick={() => selectSortField(sortField)}
+      >
+        {getSortLabels()[sortField]}
+      </button>
+    ))}
     {enabledGroups.has("directory") && labelVisibility.directory && (
     <button
       className="cap7ce-pill cap7ce-pill-wide cap7ce-directory-tag"
@@ -5885,55 +5934,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         onClick={() => selectRecognitionStatus(recognitionStatus)}
       >
         {getRecognitionStatusLabels()[recognitionStatus]}
-      </button>
-    ))}
-    {enabledGroups.has("sort") && labelVisibility.sort && (
-    <button
-      className={`cap7ce-pill cap7ce-sort-tag${sortChipsOpen ? " cap7ce-pill-wide" : " cap7ce-pill-icon"}`}
-      type="button"
-      title={t("search.hideLabelHint")}
-      aria-label={sortChipsOpen ? t("sort.parent") : getSortDirectionLabels()[search.sortDirection]}
-      aria-expanded={sortChipsOpen}
-      onContextMenu={hideSortLabel}
-      onClick={toggleSortChips}
-    >
-      {sortChipsOpen
-        ? t("sort.parent")
-        : (
-          <SvgIcon
-            svg={search.sortDirection === "asc" ? iconSortAscSvg : iconSortDescSvg}
-            className="cap-svg-icon cap-sort-svg-icon"
-          />
-        )}
-    </button>
-    )}
-    {sortChipsOpen && (["desc", "asc"] as SortDirection[]).map((sortDirection, index) => (
-      <button
-        key={sortDirection}
-        className={`cap7ce-pill cap7ce-pill-icon cap7ce-sort-chip cap7ce-sort-direction-chip cap7ce-filter-chip-motion${closingChipGroup === "sort" ? " cap7ce-filter-chip-closing" : ""}`}
-        type="button"
-        title={getSortDirectionLabels()[sortDirection]}
-        aria-label={getSortDirectionLabels()[sortDirection]}
-        data-selected={search.sortDirection === sortDirection}
-        style={getChipMotionStyle(index, 4)}
-        onClick={() => selectSortDirection(sortDirection)}
-      >
-        <SvgIcon
-          svg={sortDirection === "asc" ? iconSortAscSvg : iconSortDescSvg}
-          className="cap-svg-icon cap-sort-svg-icon"
-        />
-      </button>
-    ))}
-    {sortChipsOpen && (["file_name", "modified_at"] as SortField[]).map((sortField, index) => (
-      <button
-        key={sortField}
-        className={`cap7ce-pill cap7ce-pill-wide cap7ce-sort-chip cap7ce-filter-chip-motion${closingChipGroup === "sort" ? " cap7ce-filter-chip-closing" : ""}`}
-        type="button"
-        data-selected={search.sortField === sortField}
-        style={getChipMotionStyle(index + 2, 4)}
-        onClick={() => selectSortField(sortField)}
-      >
-        {getSortLabels()[sortField]}
       </button>
     ))}
     {unified && enabledGroups.has("format") && showFormatLabel && labelVisibility.format && (
