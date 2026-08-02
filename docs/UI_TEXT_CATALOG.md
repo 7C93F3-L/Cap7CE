@@ -226,8 +226,8 @@
 
 | 文案 ID                              | 当前中文                          | 确认中文                      | 英文  | 使用位置 / 备注       |
 | ---------------------------------- | ----------------------------- | ------------------------- | --- | --------------- |
-| `settings.language`                | 语言                            |                           |     | 当前仅静态展示         |
-| `settings.languageSystem`          | 跟随系统                          |                           |     | 当前仅静态展示         |
+| `settings.language`                | 语言 / Language                 |                           | Language / 语言 | Settings 双语语言入口 |
+| `settings.languageSystem`          | 跟随系统 / System                 |                           | 跟随系统 / System | Settings 系统语言值 |
 | `settings.themeMode`               | 模式切换                          | 外观切换                      |     | 建议核对名称          |
 | `settings.appearance`              | 配置外观                          |                           |     | 外观区             |
 | `settings.editColorHint`           | 单击修改                          |                           |     | 颜色按钮 title      |
