@@ -6454,6 +6454,7 @@ interface SettingsSelectProps {
   options: SettingsSelectOption[];
   disabled?: boolean;
   ariaLabel: string;
+  title: string;
   className: string;
   menuStyle: CSSProperties;
   onChange: (value: string) => void;
@@ -6464,6 +6465,7 @@ const SettingsSelect = ({
   options,
   disabled = false,
   ariaLabel,
+  title,
   className,
   menuStyle,
   onChange
@@ -6629,7 +6631,7 @@ const SettingsSelect = ({
         aria-expanded={isOpen}
         aria-controls={isOpen ? listboxId : undefined}
         aria-activedescendant={isOpen && activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined}
-        title={ariaLabel}
+        title={title}
         onClick={() => isOpen ? closeMenu() : openMenu(-1)}
         onKeyDown={handleKeyDown}
       >
@@ -6892,6 +6894,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         : appUpdateStatus === "download_started"
           ? t("settings.downloadUpdateAgain")
           : t("settings.checkForUpdates");
+  const appUpdateButtonHint = appUpdateStatus === "update_available"
+    || appUpdateStatus === "opening_download"
+    || appUpdateStatus === "download_started"
+    || appUpdateStatus === "download_failed"
+    ? t("settings.downloadUpdateActionHint")
+    : t("settings.checkForUpdatesActionHint");
 
   useEffect(() => {
     if (isScanning) {
@@ -7264,11 +7272,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           <div className="cap-settings-row cap-settings-row-directory-config">
             <span className="cap-settings-label">{t("settings.directoryConfig")}</span>
             <span className="cap-settings-value">{directoryServiceUnavailable ? t("common.unavailable") : isLoadingDirectories ? t("settings.directoryLoading") : directories.length === 0 ? t("settings.directoryEmpty") : t("settings.directoryCount", { count: directories.length })}</span>
-            <button className="cap-settings-pill" type="button" onClick={onStartAdd} title={t("settings.addDirectory")} disabled={isAddingDirectory}>{t("common.add")}</button>
+            <button className="cap-settings-pill" type="button" onClick={onStartAdd} title={t("settings.addDirectoryActionHint")} disabled={isAddingDirectory}>{t("common.add")}</button>
             <button
               className="cap-settings-pill"
               type="button"
               onClick={toggleDirectories}
+              title={directoriesExpanded ? t("settings.collapseDirectoriesHint") : t("settings.expandDirectoriesHint")}
               disabled={isLoadingDirectories || directoryServiceUnavailable || directories.length === 0}
             >
               {directoriesExpanded ? t("common.collapse") : t("common.manage")}
@@ -7281,12 +7290,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               className="cap-settings-pill"
               type="button"
               onClick={isScanning && aiProgress?.cancellable === true ? onCancelRecognition : indexFailed ? onRetryIndex : onContinueRecognition}
-              title={isScanning && aiProgress?.cancellable === true ? t("common.cancel") : indexFailed ? t("common.retry") : t("settings.continueRecognition")}
+              title={isScanning && aiProgress?.cancellable === true ? t("settings.cancelRecognitionActionHint") : indexFailed ? t("settings.retryIndexActionHint") : t("settings.continueRecognitionActionHint")}
               disabled={isScanning ? aiProgress?.cancellable !== true || isCancellingRecognition : !indexFailed && indexStats.unrecognizedImages === 0}
             >
               {isScanning && aiProgress?.cancellable === true ? isCancellingRecognition ? t("settings.cancellingRecognition") : t("common.cancel") : indexFailed ? t("common.retry") : t("settings.continueRecognition")}
             </button>
-            <button className="cap-settings-pill" type="button" onClick={onUpdateAll} title={isScanning ? indexStatusLabel : t("settings.updateAll")} disabled={isScanning}>
+            <button className="cap-settings-pill" type="button" onClick={onUpdateAll} title={isScanning ? indexStatusLabel : t("settings.updateAllActionHint")} disabled={isScanning}>
               {isScanning ? indexIsRecognizing ? t("settings.recognizing") : t("settings.scanning") : t("settings.updateAll")}
             </button>
           </div>
@@ -7299,7 +7308,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 <span className="cap-settings-label">{t("settings.indexStatus")}</span>
                 {!isScanning && (
                   <div className="cap-settings-quick-actions-controls">
-                    <button className="cap-settings-pill" type="button" onClick={closeIndexDetails}>{t("common.collapse")}</button>
+                    <button className="cap-settings-pill" type="button" onClick={closeIndexDetails} title={t("settings.collapseIndexDetailsHint")}>{t("common.collapse")}</button>
                   </div>
                 )}
               </div>
@@ -7363,10 +7372,10 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 )}
                 <span className="cap-settings-value cap-settings-path" title={directory.path}>{directory.path}</span>
                 <span className="cap-settings-pill">{directory.indexedCount}{directory.scanStatus === "missing" || directory.scanStatus === "error" ? ` ${t("common.abnormal")}` : ""}</span>
-                <button className="cap-settings-pill" type="button" onClick={() => onRecognizeDirectory(directory.id)} title={t("settings.recognizeDirectoryHint")} disabled={isScanning}>
+                <button className="cap-settings-pill" type="button" onClick={() => onRecognizeDirectory(directory.id)} title={t("settings.recognizeDirectoryActionHint")} disabled={isScanning}>
                   {t("settings.recognizeDirectory")}
                 </button>
-                <button className="cap-settings-pill" type="button" onClick={() => onDeleteDirectory(directory.id)} title={t("settings.deleteDirectoryHint")} disabled={isScanning}>
+                <button className="cap-settings-pill" type="button" onClick={() => onDeleteDirectory(directory.id)} title={t("settings.deleteDirectoryActionHint")} disabled={isScanning}>
                   {t("common.delete")}
                 </button>
               </div>
@@ -7384,13 +7393,13 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             <button
               className="cap-settings-pill"
               type="button"
-              title={thumbnailOptimizationStatus.enabled ? t("settings.cacheOptimizationOnHint") : t("settings.cacheOptimizationOffHint")}
+              title={thumbnailOptimizationStatus.enabled ? t("settings.disableCacheOptimizationHint") : t("settings.enableCacheOptimizationHint")}
               disabled={isClearingCache}
               onClick={() => onAutoCacheOptimizationChange(!thumbnailOptimizationStatus.enabled)}
             >
               {thumbnailOptimizationStatus.enabled ? t("settings.cacheOptimizationOn") : t("settings.cacheOptimizationOff")}
             </button>
-            <button className="cap-settings-pill" type="button" onClick={onClearCache} title={t("settings.clearCache")} disabled={isLoadingCacheStats || isClearingCache || (visualCacheStats.totalBytes === 0 && thumbnailOptimizationStatus.phase !== "running")}>
+            <button className="cap-settings-pill" type="button" onClick={onClearCache} title={t("settings.clearAllCacheActionHint")} disabled={isLoadingCacheStats || isClearingCache || (visualCacheStats.totalBytes === 0 && thumbnailOptimizationStatus.phase !== "running")}>
               {isClearingCache ? t("settings.clearingCache") : t("settings.clearAllCache")}
             </button>
           </div>
@@ -7403,7 +7412,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               className="cap-settings-pill"
               type="button"
               onClick={onClearSkimCache}
-              title={t("settings.clearSkimCache")}
+              title={t("settings.clearSkimCacheActionHint")}
               disabled={isLoadingCacheStats || isClearingSkimCache || skimCacheStats.totalBytes === 0}
             >
               {isClearingSkimCache ? t("settings.clearingCache") : t("settings.clearSkimCache")}
@@ -7414,13 +7423,13 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         <section className="cap-settings-group cap-settings-split cap-settings-group-preferences">
           <div className="cap-settings-row">
             <span className="cap-settings-label">{t("settings.language")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onLanguageChange(getNextLanguagePreference(languagePreference))}>
+            <button className="cap-settings-pill" type="button" onClick={() => onLanguageChange(getNextLanguagePreference(languagePreference))} title={t("settings.changeLanguageHint")}>
               {getLanguagePreferenceLabel(languagePreference)}
             </button>
           </div>
           <div className="cap-settings-row">
             <span className="cap-settings-label">{t("appearance.themeModeLabel")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onThemeChange(getNextThemeMode(theme))}>
+            <button className="cap-settings-pill" type="button" onClick={() => onThemeChange(getNextThemeMode(theme))} title={t("settings.changeThemeHint")}>
               {getSettingsThemeLabels()[theme]}
             </button>
           </div>
@@ -7430,7 +7439,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               ref={themeColorButtonRef}
               className="cap-settings-pill"
               type="button"
-              title={t("settings.editColorHint")}
+              title={t("settings.editThemeColorHint")}
               onClick={() => setActiveColorPicker("themeColor")}
             >
               {t("appearance.themeColor")} {currentAppearanceColors.themeColor}
@@ -7444,43 +7453,43 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 "--focus-border": "var(--accent-color)",
                 "--theme-on-color": getTextColorForBackground(currentAppearanceColors.accentColor)
               } as CSSProperties}
-              title={t("settings.editColorHint")}
+              title={t("settings.editAccentColorHint")}
               onClick={() => setActiveColorPicker("accentColor")}
             >
               {t("appearance.accentColor")} {currentAppearanceColors.accentColor}
             </button>
-            <button className="cap-settings-pill" type="button" onClick={resetAppearanceColors}>{t("common.restoreDefault")}</button>
+            <button className="cap-settings-pill" type="button" onClick={resetAppearanceColors} title={t("settings.resetAppearanceHint")}>{t("common.restoreDefault")}</button>
           </div>
         </section>
 
         <section className="cap-settings-group cap-settings-split cap-settings-group-display">
           <div className="cap-settings-row">
             <span className="cap-settings-label">{t("settings.standbyLine")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onStandbyLineVisibleChange(!standbyLineVisible)}>
+            <button className="cap-settings-pill" type="button" onClick={() => onStandbyLineVisibleChange(!standbyLineVisible)} title={standbyLineVisible ? t("settings.hideStandbyLineHint") : t("settings.showStandbyLineHint")}>
               {standbyLineVisible ? t("settings.visible") : t("settings.hidden")}
             </button>
           </div>
           <div className="cap-settings-row">
             <span className="cap-settings-label">{t("settings.edgeSnap")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onEdgeSnapChange(!edgeSnapEnabled)}>
+            <button className="cap-settings-pill" type="button" onClick={() => onEdgeSnapChange(!edgeSnapEnabled)} title={edgeSnapEnabled ? t("settings.disableEdgeSnapHint") : t("settings.enableEdgeSnapHint")}>
               {edgeSnapEnabled ? t("settings.enabled") : t("settings.disabled")}
             </button>
           </div>
           <div className="cap-settings-row cap-settings-row-half">
             <span className="cap-settings-label">{t("settings.launchAtLogin")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onLaunchAtLoginChange(!launchAtLogin)}>
+            <button className="cap-settings-pill" type="button" onClick={() => onLaunchAtLoginChange(!launchAtLogin)} title={launchAtLogin ? t("settings.disableLaunchAtLoginHint") : t("settings.enableLaunchAtLoginHint")}>
               {launchAtLogin ? t("settings.launchAtLoginOn") : t("settings.launchAtLoginOff")}
             </button>
           </div>
           <div className="cap-settings-row cap-settings-row-half">
             <span className="cap-settings-label">{t("settings.operationHints")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onOperationHintsChange(!operationHintsEnabled)}>
+            <button className="cap-settings-pill" type="button" onClick={() => onOperationHintsChange(!operationHintsEnabled)} title={operationHintsEnabled ? t("settings.disableOperationHintsHint") : t("settings.enableOperationHintsHint")}>
               {operationHintsEnabled ? t("settings.operationHintsOn") : t("settings.operationHintsOff")}
             </button>
           </div>
           <div className="cap-settings-row cap-settings-row-half">
             <span className="cap-settings-label">{t("settings.systemNotifications")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onSystemNotificationsChange(!systemNotificationsEnabled)}>
+            <button className="cap-settings-pill" type="button" onClick={() => onSystemNotificationsChange(!systemNotificationsEnabled)} title={systemNotificationsEnabled ? t("settings.disableSystemNotificationsHint") : t("settings.enableSystemNotificationsHint")}>
               {systemNotificationsEnabled ? t("settings.systemNotificationsOn") : t("settings.systemNotificationsOff")}
             </button>
           </div>
@@ -7494,11 +7503,11 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                   <div className="cap-settings-quick-actions-header">
                     <span className="cap-settings-label">{t("settings.quickActions")}</span>
                     <div className="cap-settings-quick-actions-controls">
-                      <button className="cap-settings-pill" type="button" disabled={capturingShortcutActionId !== null} onClick={() => onQuickActionGlobalEnabledChange(!quickActionGlobalEnabled)}>
+                      <button className="cap-settings-pill" type="button" disabled={capturingShortcutActionId !== null} onClick={() => onQuickActionGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
                         {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
                       </button>
-                      <button className="cap-settings-pill" type="button" onClick={resetShortcutActions}>{t("common.restoreDefault")}</button>
-                      <button className="cap-settings-pill" type="button" onClick={() => void closeShortcutConfiguration()}>{t("settings.finishConfiguration")}</button>
+                      <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
+                      <button className="cap-settings-pill" type="button" onClick={() => void closeShortcutConfiguration()} title={t("settings.finishQuickActionsHint")}>{t("settings.finishConfiguration")}</button>
                     </div>
                   </div>
                   <div className="cap-settings-quick-actions-list">
@@ -7518,7 +7527,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                             <button
                               className="cap-settings-pill cap-settings-shortcut-pill"
                               type="button"
-                              title={t("settings.editShortcutHint")}
+                              title={t("settings.editShortcutActionHint")}
                               onClick={() => {
                                 if (!isCapturing) {
                                   void startShortcutCapture(item.id);
@@ -7528,7 +7537,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                               {isCapturing ? t("settings.captureShortcut") : formatShortcutLabel(shortcutActionDrafts[item.id])}
                             </button>
                             {isCapturing && (
-                              <button className="cap-settings-pill" type="button" onClick={() => void finishShortcutCapture()}>{t("common.cancel")}</button>
+                              <button className="cap-settings-pill" type="button" onClick={() => void finishShortcutCapture()} title={t("settings.cancelShortcutCaptureHint")}>{t("common.cancel")}</button>
                             )}
                           </div>
                         </div>
@@ -7540,12 +7549,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             </div>
           ) : (
             <div className="cap-settings-row">
-              <button className="cap-settings-pill" type="button" onClick={() => onQuickActionGlobalEnabledChange(!quickActionGlobalEnabled)}>
+              <button className="cap-settings-pill" type="button" onClick={() => onQuickActionGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
                 {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
               </button>
               <span className="cap-settings-label">{t("settings.quickActions")}</span>
-              <button className="cap-settings-pill" type="button" onClick={resetShortcutActions}>{t("common.restoreDefault")}</button>
-              <button className="cap-settings-pill" type="button" onClick={() => onQuickActionsExpandedChange(true)}>{t("settings.configure")}</button>
+              <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
+              <button className="cap-settings-pill" type="button" onClick={() => onQuickActionsExpandedChange(true)} title={t("settings.configureQuickActionsHint")}>{t("settings.configure")}</button>
             </div>
           )}
           {quickCommandsExpanded ? (
@@ -7554,7 +7563,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 <div className="cap-settings-quick-commands-panel">
                   <div className="cap-settings-quick-commands-header">
                     <span className="cap-settings-label">{t("settings.quickCommands")}</span>
-                    <button className="cap-settings-pill" type="button" onClick={closeQuickCommands}>{t("settings.closeQuickCommands")}</button>
+                    <button className="cap-settings-pill" type="button" onClick={closeQuickCommands} title={t("settings.closeQuickCommandsHint")}>{t("settings.closeQuickCommands")}</button>
                   </div>
                   <div className="cap-settings-quick-command-groups">
                     {getQuickCommandGroups().map((group) => (
@@ -7589,7 +7598,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           ) : (
             <div className="cap-settings-row">
               <span className="cap-settings-label">{t("settings.quickCommands")}</span>
-              <button className="cap-settings-pill" type="button" onClick={() => onQuickCommandsExpandedChange(true)}>{t("common.view")}</button>
+              <button className="cap-settings-pill" type="button" onClick={() => onQuickCommandsExpandedChange(true)} title={t("settings.openQuickCommandsHint")}>{t("common.view")}</button>
             </div>
           )}
         </section>
@@ -7605,6 +7614,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               value={llamaRuntimeSettings.selectedVersion}
               disabled={isLoadingLlamaRuntime || isChangingLlamaRuntimeState || llamaRuntimeSettings.versions.length === 0 || llamaRuntimeProcessState.status === "starting" || llamaRuntimeProcessState.status === "running"}
               ariaLabel={t("settings.selectRuntime")}
+              title={t("settings.selectRuntimeActionHint")}
               menuStyle={menuStyle}
               options={[
                 { value: "", label: t("settings.selectVersion") },
@@ -7615,10 +7625,10 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               ]}
               onChange={onLlamaRuntimeChange}
             />
-            <button className="cap-settings-pill" type="button" onClick={onRefreshLlamaRuntime} title={t("settings.refreshRuntime")} disabled={isLoadingLlamaRuntime}>
+            <button className="cap-settings-pill" type="button" onClick={onRefreshLlamaRuntime} title={t("settings.refreshRuntimeActionHint")} disabled={isLoadingLlamaRuntime}>
               {t("common.refresh")}
             </button>
-            <button className="cap-settings-pill" type="button" onClick={isLlamaRuntimeRunning ? onStopLlamaRuntime : onStartLlamaRuntime} title={isLlamaRuntimeRunning ? t("settings.stopServer") : t("settings.startServer")} disabled={llamaRuntimeActionDisabled}>
+            <button className="cap-settings-pill" type="button" onClick={isLlamaRuntimeRunning ? onStopLlamaRuntime : onStartLlamaRuntime} title={isLlamaRuntimeRunning ? t("settings.stopServerActionHint") : t("settings.startServerActionHint")} disabled={llamaRuntimeActionDisabled}>
               {isLlamaRuntimeStarting ? t("common.starting") : isLlamaRuntimeRunning ? t("common.stop") : t("common.start")}
             </button>
           </div>
@@ -7634,6 +7644,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               value={ggufModelSettings.selectedModelId}
               disabled={isLoadingGgufModels || isChangingLlamaRuntimeState || ggufModelSettings.models.length === 0 || llamaRuntimeProcessState.status === "starting" || llamaRuntimeProcessState.status === "running"}
               ariaLabel={t("settings.selectVisionModel")}
+              title={t("settings.selectVisionModelActionHint")}
               menuStyle={menuStyle}
               options={[
                 { value: "", label: t("settings.selectVisionModel") },
@@ -7644,7 +7655,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               ]}
               onChange={onGgufModelChange}
             />
-            <button className="cap-settings-pill" type="button" onClick={onRefreshGgufModels} title={t("settings.refreshGguf")} disabled={isLoadingGgufModels || llamaRuntimeProcessState.status === "starting"}>
+            <button className="cap-settings-pill" type="button" onClick={onRefreshGgufModels} title={t("settings.refreshGgufActionHint")} disabled={isLoadingGgufModels || llamaRuntimeProcessState.status === "starting"}>
               {isLoadingGgufModels ? t("common.refreshing") : t("common.refresh")}
             </button>
           </div>
@@ -7659,7 +7670,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               className="cap-settings-pill"
               type="button"
               onClick={() => void handleAppUpdateAction()}
-              title={appUpdateButtonLabel}
+              title={appUpdateButtonHint}
               disabled={appUpdateStatus === "checking" || appUpdateStatus === "opening_download"}
             >
               {appUpdateButtonLabel}
@@ -7669,6 +7680,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           <details className="cap-settings-details cap-settings-row cap-settings-wide" open={runtimeDetailsExpanded}>
             <summary
               aria-expanded={runtimeDetailsExpanded}
+              title={runtimeDetailsExpanded ? t("settings.collapseDetailsHint") : t("settings.expandDetailsHint")}
               onClick={(event) => {
                 event.preventDefault();
                 toggleRuntimeDetails();
@@ -7741,8 +7753,8 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             <button
               className="cap7ce-release-link"
               type="button"
-              title={t("settings.viewReleases")}
-              aria-label={t("settings.viewReleases")}
+              title={t("settings.openReleasesHint")}
+              aria-label={t("settings.openReleasesHint")}
               onClick={() => void window.imageEverything?.app.openReleasePage()}
             >
               0.8.0
