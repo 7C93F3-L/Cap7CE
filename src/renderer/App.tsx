@@ -3923,7 +3923,7 @@ const App = () => {
                 }}
               />
             )}
-            {activeView === "results" && dialog !== "editKeywords" && dialog !== "deleteFiles" && (
+            {isExpandedShell && activeView === "results" && dialog !== "editKeywords" && dialog !== "deleteFiles" && (
               <ResultsView
                 shellState={shellState}
                 search={search}

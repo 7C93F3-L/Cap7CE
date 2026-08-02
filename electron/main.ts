@@ -72,6 +72,7 @@ let previewProgrammaticMoveGuardUntil = 0;
 let cacheClearAuthorization: { token: string; expiresAt: number } | null = null;
 let skimCacheClearAuthorization: { token: string; expiresAt: number } | null = null;
 let startupHintCloseTimer: NodeJS.Timeout | null = null;
+let previewIdleDestroyTimer: NodeJS.Timeout | null = null;
 let shellAlwaysOnTop = false;
 let shellMaximized = false;
 let lastNormalBounds: Electron.Rectangle | null = null;
@@ -193,6 +194,7 @@ const previewWindowMinimumHeight = 280;
 const previewWindowHorizontalPadding = 50;
 const previewWindowVerticalChrome = 24;
 const previewWindowWorkAreaRatio = 0.85;
+const previewWindowIdleDestroyDelayMs = 2 * 60_000;
 const DEBUG_WINDOW_BOUNDS = true;
 
 const isShellWindowState = (state: string): state is Cap7CEShellState => shellWindowStates.has(state as Cap7CEShellState);
@@ -267,6 +269,26 @@ const getPreviewWindowControlState = (): PreviewWindowControlState => ({
   miniStandardHeight: miniDefaultHeightPx
 });
 
+const clearPreviewIdleDestroyTimer = () => {
+  if (previewIdleDestroyTimer !== null) {
+    clearTimeout(previewIdleDestroyTimer);
+    previewIdleDestroyTimer = null;
+  }
+};
+
+const schedulePreviewIdleDestroy = () => {
+  clearPreviewIdleDestroyTimer();
+  if (!previewWindow || previewWindow.isDestroyed() || previewSessionActive) {
+    return;
+  }
+  previewIdleDestroyTimer = setTimeout(() => {
+    previewIdleDestroyTimer = null;
+    if (!previewSessionActive && previewWindow && !previewWindow.isDestroyed()) {
+      previewWindow.destroy();
+    }
+  }, previewWindowIdleDestroyDelayMs);
+};
+
 const closePreviewSession = () => {
   if (activeSkimFolderStatsTask) {
     activeSkimFolderStatsTask.cancelled = true;
@@ -295,6 +317,8 @@ const closePreviewSession = () => {
       mainWindow.focus();
     }
   }
+
+  schedulePreviewIdleDestroy();
 
   return wasActive;
 };
@@ -400,6 +424,7 @@ const applyLatestPreviewContentSize = () => {
 };
 
 const createPreviewWindow = () => {
+  clearPreviewIdleDestroyTimer();
   if (previewWindow && !previewWindow.isDestroyed()) {
     return;
   }
@@ -456,6 +481,7 @@ const createPreviewWindow = () => {
     closePreviewSession();
   });
   previewWindow.on("closed", () => {
+    clearPreviewIdleDestroyTimer();
     clearPreviewMoveSnapCheck();
     previewWindow = null;
     previewWindowLoaded = false;
@@ -2190,6 +2216,7 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   isQuitting = true;
   closeStartupHintWindow();
+  clearPreviewIdleDestroyTimer();
   if (previewWindow && !previewWindow.isDestroyed()) {
     previewWindow.destroy();
   }
