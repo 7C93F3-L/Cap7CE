@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import iconSignatureCap7CESvg from "./assets/icons/icon-signature-cap7ce.svg?raw";
 import iconSortAscSvg from "./assets/icons/icon-sort-asc.svg?raw";
 import iconSortDescSvg from "./assets/icons/icon-sort-desc.svg?raw";
+import iconSkimSvg from "./assets/icons/icon-skim.svg?raw";
 import skimDiskSvg from "./assets/icons/skim-disk.svg?raw";
 import skimFileSvg from "./assets/icons/skim-file.svg?raw";
 import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
@@ -43,6 +44,8 @@ import type {
   SkimBreadcrumb,
   SkimBrowseEntry,
   SkimBrowseOptions,
+  SkimDisplayMode,
+  SkimDisplayPreferences,
   SkimPreviewInfo,
   SkimTextPreview,
   SortDirection,
@@ -52,6 +55,7 @@ import type {
   ThemeMode
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
+import { fileFormatCapabilities, skimDefaultFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
 
 const skimFormatIconModules = import.meta.glob<string>("./assets/icons/format-*.svg", {
   eager: true,
@@ -177,6 +181,11 @@ const defaultSkimBrowseOptions: SkimBrowseOptions = {
   fileFormat: "all",
   sortField: "name",
   sortDirection: "asc"
+};
+const defaultSkimDisplayPreferences: SkimDisplayPreferences = {
+  mode: "skim",
+  customExtensions: [...skimDefaultFileExtensionSet],
+  showHiddenFiles: false
 };
 const sortSkimBrowseEntries = (entries: SkimBrowseEntry[], options: SkimBrowseOptions) => {
   const direction = options.sortDirection === "asc" ? 1 : -1;
@@ -480,7 +489,7 @@ const getNextLanguagePreference = (currentLanguage: LanguagePreference): Languag
 const getLanguagePreferenceLabel = (language: LanguagePreference) => {
   if (language === "zh-CN") return t("language.zhCN");
   if (language === "en-US") return t("language.enUS");
-  return t("language.system");
+  return getActiveLanguage() === "zh-CN" ? t("language.zhCN") : t("language.enUS");
 };
 
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
@@ -940,13 +949,15 @@ const App = () => {
   const [unavailableShortcutActionIds, setUnavailableShortcutActionIds] = useState<ShortcutActionId[]>([]);
   const [quickActionsExpanded, setQuickActionsExpanded] = useState(false);
   const [quickCommandsExpanded, setQuickCommandsExpanded] = useState(false);
+  const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
   const [searchCapsuleLabelVisibility, setSearchCapsuleLabelVisibility] = useState<SearchCapsuleLabelVisibility>({
     directory: true,
     recognition: true,
     sort: true,
-    format: true
+    format: true,
+    skimDisplay: true
   });
   const [directories, setDirectories] = useState<DirectoryItem[]>([]);
   const [isLoadingDirectories, setIsLoadingDirectories] = useState(true);
@@ -960,9 +971,21 @@ const App = () => {
     sortField: search.sortField === "modified_at" ? "modifiedAt" : "name",
     sortDirection: search.sortDirection
   }), [search.sortDirection, search.sortField]);
+  const visibleSkimEntries = useMemo(() => {
+    if (skimDisplay.mode === "all") return skimEntries;
+    const customExtensions = new Set(skimDisplay.customExtensions);
+    return skimEntries.filter((entry) => {
+      const showHidden = skimDisplay.mode === "custom" && skimDisplay.showHiddenFiles;
+      if (!showHidden && entry.hidden) return false;
+      if (entry.kind !== "file") return true;
+      return skimDisplay.mode === "skim"
+        ? Boolean(entry.formatCapability?.defaultInSkim)
+        : customExtensions.has(entry.extension);
+    });
+  }, [skimDisplay, skimEntries]);
   const sortedSkimEntries = useMemo(
-    () => sortSkimBrowseEntries(skimEntries, skimBrowseOptions),
-    [skimBrowseOptions, skimEntries]
+    () => sortSkimBrowseEntries(visibleSkimEntries, skimBrowseOptions),
+    [skimBrowseOptions, visibleSkimEntries]
   );
   const [isSkimLoading, setIsSkimLoading] = useState(false);
   const [skimFeedback, setSkimFeedback] = useState("");
@@ -1537,6 +1560,7 @@ const App = () => {
             setCommandEnabled(preferences.commandEnabled);
             setShortcutActions(normalizeShortcutActions(preferences.shortcutActions));
             setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
+            setSkimDisplay(preferences.skimDisplay);
             if (!resultsInitializedRef.current) {
               lastResultSearchRef.current = {
                 ...lastResultSearchRef.current,
@@ -2184,6 +2208,13 @@ const App = () => {
     }
   };
 
+  const updateSkimDisplay = (nextSkimDisplay: SkimDisplayPreferences) => {
+    setSkimDisplay(nextSkimDisplay);
+    void window.imageEverything?.preferences.updateSkimDisplay(nextSkimDisplay).then((preferences) => {
+      if (preferences) setSkimDisplay(preferences.skimDisplay);
+    });
+  };
+
   const updateSystemNotifications = async (enabled: boolean) => {
     const preferences = await window.imageEverything?.preferences.updateSystemNotifications(enabled);
     if (preferences) {
@@ -2329,7 +2360,7 @@ const App = () => {
         updateResultsSearch(nextSearch, true);
       },
       setAllLabelsVisible: (visible) => {
-        updateSearchCapsuleLabelVisibility({ directory: visible, recognition: visible, sort: visible, format: visible });
+        updateSearchCapsuleLabelVisibility({ directory: visible, recognition: visible, sort: visible, format: visible, skimDisplay: visible });
       },
       setDirectoryLabelVisible: (visible) => {
         setSearchCapsuleLabelVisibility((currentVisibility) => {
@@ -3988,10 +4019,12 @@ const App = () => {
                 inputFeedback={searchInputFeedback}
                 inputFeedbackIsGuide={operationHintVisible}
                 labelVisibility={searchCapsuleLabelVisibility}
+                skimDisplayMode={skimDisplay.mode}
                 searchInputRef={searchInputRef}
                 onSearchChange={setSearch}
                 onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch)}
                 onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
+                onSkimDisplayModeChange={(mode) => updateSkimDisplay({ ...skimDisplay, mode })}
                 onSearch={() => submitSearch(search)}
                 onOpenRoot={() => openSkimLocation(null)}
                 onOpenBreadcrumb={openSkimLocation}
@@ -4094,6 +4127,7 @@ const App = () => {
                 unavailableShortcutActionIds={unavailableShortcutActionIds}
                 quickActionsExpanded={quickActionsExpanded}
                 quickCommandsExpanded={quickCommandsExpanded}
+                skimDisplay={skimDisplay}
                 directories={directories}
                 isLoadingDirectories={isLoadingDirectories}
                 isAddingDirectory={isAddingDirectory}
@@ -4140,6 +4174,7 @@ const App = () => {
                 onShortcutCaptureEnd={endShortcutCapture}
                 onQuickActionsExpandedChange={setQuickActionsExpanded}
                 onQuickCommandsExpandedChange={setQuickCommandsExpanded}
+                onSkimDisplayChange={updateSkimDisplay}
                 onSearch={() => {
                   if (submitQuickCommandIfNeeded(search)) {
                     return;
@@ -4816,10 +4851,12 @@ interface SkimViewProps {
   inputFeedback: string;
   inputFeedbackIsGuide: boolean;
   labelVisibility: SearchCapsuleLabelVisibility;
+  skimDisplayMode: SkimDisplayMode;
   searchInputRef: Ref<HTMLInputElement>;
   onSearchChange: (search: SearchState) => void;
   onSearchOptionsChange: (search: SearchState) => void;
   onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
+  onSkimDisplayModeChange: (mode: SkimDisplayMode) => void;
   onSearch: () => void;
   onOpenRoot: () => void;
   onOpenBreadcrumb: (path: string) => void;
@@ -4877,7 +4914,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
+const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -5218,7 +5255,9 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
           onSelect: onOpenBreadcrumb,
           onReturnToParent: onOpenRoot
         }}
-        enabledLabelGroups={["directory", "sort"]}
+        skimDisplayMode={skimDisplayMode}
+        onSkimDisplayModeChange={onSkimDisplayModeChange}
+        enabledLabelGroups={["skimDisplay", "directory", "sort"]}
         onSearchChange={onSearchChange}
         onSearchOptionsChange={onSearchOptionsChange}
         onLabelVisibilityChange={onLabelVisibilityChange}
@@ -5369,6 +5408,7 @@ interface Cap7CESearchCapsuleProps {
   unified?: boolean;
   leadingContent?: React.ReactNode;
   directoryGroup?: SearchCapsuleDirectoryGroup;
+  skimDisplayMode?: SkimDisplayMode;
   enabledLabelGroups?: FilterChipGroup[];
   labelMenuEnabled?: boolean;
   imageContextMenuOpen?: boolean;
@@ -5376,18 +5416,20 @@ interface Cap7CESearchCapsuleProps {
   onSearchChange: (search: SearchState) => void;
   onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
   onSearchOptionsChange?: (search: SearchState) => void;
+  onSkimDisplayModeChange?: (mode: SkimDisplayMode) => void;
   onSearch: () => void;
   onImageContextMenuClose?: () => void;
 }
 
-type FilterChipGroup = "directory" | "recognition" | "sort" | "format";
+type FilterChipGroup = "skimDisplay" | "directory" | "recognition" | "sort" | "format";
 
 const filterChipEnterStaggerMs = 120;
 const filterChipExitDurationMs = 350;
 const filterChipExitStaggerMs = 35;
 const filterChipMotionMaxStaggerSteps = 6;
 
-const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, leadingContent, directoryGroup, enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+  const [skimDisplayChipsOpen, setSkimDisplayChipsOpen] = useState(false);
   const [directoryChipsOpen, setDirectoryChipsOpen] = useState(false);
   const [recognitionChipsOpen, setRecognitionChipsOpen] = useState(false);
   const [sortChipsOpen, setSortChipsOpen] = useState(false);
@@ -5440,7 +5482,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
   useEffect(() => () => clearChipGroupCloseTimer(), []);
 
   useEffect(() => {
-    if (!directoryChipsOpen && !recognitionChipsOpen && !sortChipsOpen && !formatChipsOpen && !labelMenuPointer) {
+    if (!skimDisplayChipsOpen && !directoryChipsOpen && !recognitionChipsOpen && !sortChipsOpen && !formatChipsOpen && !labelMenuPointer) {
       return undefined;
     }
 
@@ -5459,7 +5501,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
 
     window.addEventListener("keydown", handleEscape, true);
     return () => window.removeEventListener("keydown", handleEscape, true);
-  }, [directoryChipsOpen, formatChipsOpen, labelMenuPointer, recognitionChipsOpen, sortChipsOpen]);
+  }, [directoryChipsOpen, formatChipsOpen, labelMenuPointer, recognitionChipsOpen, skimDisplayChipsOpen, sortChipsOpen]);
   const measuredLabelMenuPosition = useMeasuredViewportMenuPosition(labelMenuPointer, labelMenuRef, labelMenuMeasurementKey);
   const enabledGroups = new Set<FilterChipGroup>(enabledLabelGroups ?? ["directory", "recognition", "sort", "format"]);
   const selectedDirectoryLabel = directoryGroup?.collapsedLabel
@@ -5478,11 +5520,36 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
   const expandedFileFormats = unified && labelVisibility.format && formatChipsOpen
     ? [...availableFormats].sort((left, right) => left.localeCompare(right))
     : [];
+  const expandedSkimDisplayModes = unified && labelVisibility.skimDisplay && skimDisplayChipsOpen
+    ? (["all", "custom"] as SkimDisplayMode[])
+    : [];
+
+  const selectSkimDisplayMode = (mode: SkimDisplayMode) => {
+    closeChipGroup("skimDisplay", expandedSkimDisplayModes.length, () => setSkimDisplayChipsOpen(false));
+    onSkimDisplayModeChange?.(skimDisplayMode === mode ? "skim" : mode);
+  };
+
+  const toggleSkimDisplayChips = () => {
+    clearChipGroupCloseTimer();
+    setClosingChipGroup(null);
+    setDirectoryChipsOpen(false);
+    setRecognitionChipsOpen(false);
+    setSortChipsOpen(false);
+    setFormatChipsOpen(false);
+    if (!skimDisplayChipsOpen) {
+      prepareChipGroupOpen();
+      setSkimDisplayChipsOpen(true);
+      return;
+    }
+    closeChipGroup("skimDisplay", expandedSkimDisplayModes.length, () => setSkimDisplayChipsOpen(false));
+    if (skimDisplayMode !== "skim") onSkimDisplayModeChange?.("skim");
+  };
 
   const selectDirectory = (directoryId: string) => {
     if (directoryGroup) {
       closeChipGroup("directory", expandedDirectories.length, () => setDirectoryChipsOpen(false));
       setFormatChipsOpen(false);
+      setSkimDisplayChipsOpen(false);
       if (directoryId === directoryGroup.selectedId) directoryGroup.onReturnToParent();
       else directoryGroup.onSelect(directoryId);
       return;
@@ -5524,6 +5591,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setRecognitionChipsOpen(false);
     setSortChipsOpen(false);
     setFormatChipsOpen(false);
+    setSkimDisplayChipsOpen(false);
     if (!directoryChipsOpen) {
       prepareChipGroupOpen();
       setDirectoryChipsOpen(true);
@@ -5545,6 +5613,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setDirectoryChipsOpen(false);
     setSortChipsOpen(false);
     setFormatChipsOpen(false);
+    setSkimDisplayChipsOpen(false);
     if (!recognitionChipsOpen) {
       prepareChipGroupOpen();
       setRecognitionChipsOpen(true);
@@ -5564,6 +5633,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setDirectoryChipsOpen(false);
     setRecognitionChipsOpen(false);
     setSortChipsOpen(false);
+    setSkimDisplayChipsOpen(false);
     if (!formatChipsOpen) {
       prepareChipGroupOpen();
       setFormatChipsOpen(true);
@@ -5583,6 +5653,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setDirectoryChipsOpen(false);
     setRecognitionChipsOpen(false);
     setFormatChipsOpen(false);
+    setSkimDisplayChipsOpen(false);
     if (!sortChipsOpen) {
       prepareChipGroupOpen();
       setSortChipsOpen(true);
@@ -5615,6 +5686,9 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     }
     if (!nextVisibility.format) {
       setFormatChipsOpen(false);
+    }
+    if (!nextVisibility.skimDisplay) {
+      setSkimDisplayChipsOpen(false);
     }
     clearChipGroupCloseTimer();
     setClosingChipGroup(null);
@@ -5656,6 +5730,12 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     event.preventDefault();
     event.stopPropagation();
     updateLabelVisibility({ ...labelVisibility, format: false });
+  };
+
+  const hideSkimDisplayLabel = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    updateLabelVisibility({ ...labelVisibility, skimDisplay: false });
   };
 
   const openLabelMenu = (event: React.MouseEvent<HTMLFormElement>) => {
@@ -5707,6 +5787,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         setRecognitionChipsOpen(false);
         setSortChipsOpen(false);
         setFormatChipsOpen(false);
+        setSkimDisplayChipsOpen(false);
         setLabelMenuPointer(null);
       }
     }}
@@ -5716,6 +5797,34 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     }}
   >
     {leadingContent}
+    {enabledGroups.has("skimDisplay") && labelVisibility.skimDisplay && (
+      <button
+        className={`cap7ce-pill cap7ce-skim-display-tag${skimDisplayChipsOpen || skimDisplayMode !== "skim" ? " cap7ce-pill-wide" : " cap7ce-pill-icon"}`}
+        type="button"
+        title={t("search.hideLabelHint")}
+        aria-label={skimDisplayChipsOpen ? t("skim.display.parent") : t(`skim.display.${skimDisplayMode}` as TranslationKey)}
+        aria-expanded={skimDisplayChipsOpen}
+        data-selected={skimDisplayMode !== "skim"}
+        onContextMenu={hideSkimDisplayLabel}
+        onClick={toggleSkimDisplayChips}
+      >
+        {skimDisplayChipsOpen || skimDisplayMode === "skim"
+          ? <SvgIcon svg={iconSkimSvg} className="cap-svg-icon cap-skim-display-svg-icon" />
+          : t(`skim.display.${skimDisplayMode}` as TranslationKey)}
+      </button>
+    )}
+    {expandedSkimDisplayModes.map((mode, index) => (
+      <button
+        key={mode}
+        className={`cap7ce-pill cap7ce-pill-wide cap7ce-skim-display-chip cap7ce-filter-chip-motion${closingChipGroup === "skimDisplay" ? " cap7ce-filter-chip-closing" : ""}`}
+        type="button"
+        data-selected={skimDisplayMode === mode}
+        style={getChipMotionStyle(index, expandedSkimDisplayModes.length)}
+        onClick={() => selectSkimDisplayMode(mode)}
+      >
+        {t(`skim.display.${mode}` as TranslationKey)}
+      </button>
+    ))}
     {enabledGroups.has("directory") && labelVisibility.directory && (
     <button
       className="cap7ce-pill cap7ce-pill-wide cap7ce-directory-tag"
@@ -6709,6 +6818,7 @@ interface SettingsViewProps {
   unavailableShortcutActionIds: ShortcutActionId[];
   quickActionsExpanded: boolean;
   quickCommandsExpanded: boolean;
+  skimDisplay: SkimDisplayPreferences;
   directories: DirectoryItem[];
   isLoadingDirectories: boolean;
   isAddingDirectory: boolean;
@@ -6752,6 +6862,7 @@ interface SettingsViewProps {
   onShortcutCaptureEnd: () => Promise<ShortcutAvailabilityResult>;
   onQuickActionsExpandedChange: (expanded: boolean) => void;
   onQuickCommandsExpandedChange: (expanded: boolean) => void;
+  onSkimDisplayChange: (skimDisplay: SkimDisplayPreferences) => void;
   onSearch: () => void;
   onStartAdd: () => void;
   onUpdateAll: () => void;
@@ -6774,7 +6885,7 @@ interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
   const [indexDetailsClosing, setIndexDetailsClosing] = useState(false);
@@ -6788,6 +6899,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [activeColorPicker, setActiveColorPicker] = useState<keyof AppearanceColors | null>(null);
   const quickActionsCollapseTimerRef = useRef<number | null>(null);
   const quickCommandsCollapseTimerRef = useRef<number | null>(null);
+  const skimDisplayCollapseTimerRef = useRef<number | null>(null);
   const runtimeDetailsCollapseTimerRef = useRef<number | null>(null);
   const indexDetailsCollapseTimerRef = useRef<number | null>(null);
   const directoriesCollapseTimerRef = useRef<number | null>(null);
@@ -6795,6 +6907,8 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const originLoadingRef = useRef(false);
   const [quickActionsClosing, setQuickActionsClosing] = useState(false);
   const [quickCommandsClosing, setQuickCommandsClosing] = useState(false);
+  const [skimDisplayExpanded, setSkimDisplayExpanded] = useState(false);
+  const [skimDisplayClosing, setSkimDisplayClosing] = useState(false);
   const [runtimeDetailsExpanded, setRuntimeDetailsExpanded] = useState(false);
   const [runtimeDetailsClosing, setRuntimeDetailsClosing] = useState(false);
   const [capturingShortcutActionId, setCapturingShortcutActionId] = useState<ShortcutActionId | null>(null);
@@ -6853,6 +6967,36 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const modelStatusLabel = modelHasMissingPrompt ? t("model.notFound") : getGgufModelStatusLabel(ggufModelSettings, llamaRuntimeProcessState);
   const currentAppearanceColors = appearanceColors;
   const recognitionStatusLabels = getRecognitionStatusLabels();
+  const skimFormatGroups = useMemo(() => {
+    const groups = new Map<FileFormatCategory, string[]>();
+    for (const capability of fileFormatCapabilities) {
+      if (!capability.canBrowse) continue;
+      const extensions = groups.get(capability.category) ?? [];
+      extensions.push(capability.extension);
+      groups.set(capability.category, extensions);
+    }
+    return [...groups.entries()].map(([category, extensions]) => ({ category, extensions }));
+  }, []);
+  const selectedSkimExtensions = new Set(skimDisplay.customExtensions);
+  const updateCustomSkimExtensions = (customExtensions: string[]) => onSkimDisplayChange({
+    ...skimDisplay,
+    customExtensions: [...new Set(customExtensions)].sort()
+  });
+  const toggleSkimCategory = (extensions: string[]) => {
+    const allSelected = extensions.every((extension) => selectedSkimExtensions.has(extension));
+    const nextExtensions = new Set(selectedSkimExtensions);
+    for (const extension of extensions) {
+      if (allSelected) nextExtensions.delete(extension);
+      else nextExtensions.add(extension);
+    }
+    updateCustomSkimExtensions([...nextExtensions]);
+  };
+  const toggleSkimExtension = (extension: string) => {
+    const nextExtensions = new Set(selectedSkimExtensions);
+    if (nextExtensions.has(extension)) nextExtensions.delete(extension);
+    else nextExtensions.add(extension);
+    updateCustomSkimExtensions([...nextExtensions]);
+  };
   const indexStatItems: Array<{ status: RecognitionStatusFilter; label: string; value: number; title: string }> = [
     { status: "all", label: recognitionStatusLabels.all, value: indexStats.totalImages, title: t("settings.viewAllSupportedHint") },
     { status: "recognized", label: recognitionStatusLabels.recognized, value: indexStats.recognizedImages, title: t("settings.viewRecognizedHint") },
@@ -7155,6 +7299,21 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     }, collapseDuration);
   };
 
+  const toggleSkimDisplayConfiguration = () => {
+    if (skimDisplayClosing) return;
+    if (!skimDisplayExpanded) {
+      setSkimDisplayExpanded(true);
+      return;
+    }
+    setSkimDisplayClosing(true);
+    const collapseDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    skimDisplayCollapseTimerRef.current = window.setTimeout(() => {
+      setSkimDisplayExpanded(false);
+      setSkimDisplayClosing(false);
+      skimDisplayCollapseTimerRef.current = null;
+    }, collapseDuration);
+  };
+
   const closeIndexDetails = () => {
     if (isScanning || indexDetailsClosing) return;
     setIndexDetailsClosing(true);
@@ -7191,6 +7350,9 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     }
     if (runtimeDetailsCollapseTimerRef.current !== null) {
       window.clearTimeout(runtimeDetailsCollapseTimerRef.current);
+    }
+    if (skimDisplayCollapseTimerRef.current !== null) {
+      window.clearTimeout(skimDisplayCollapseTimerRef.current);
     }
     if (indexDetailsCollapseTimerRef.current !== null) {
       window.clearTimeout(indexDetailsCollapseTimerRef.current);
@@ -7502,6 +7664,100 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         </section>
 
         <section className="cap-settings-group cap-settings-split cap-settings-group-actions">
+          {skimDisplayExpanded ? (
+            <div className={`cap-settings-expandable-shell${skimDisplayClosing ? " is-closing" : ""}`}>
+              <div className="cap-settings-expandable-inner">
+                <div className="cap-settings-skim-display-panel">
+                  <div className="cap-settings-quick-actions-header cap-settings-skim-display-header">
+                    <span className="cap-settings-label">{t("settings.skimDisplay")}</span>
+                    <span className="cap-settings-value">
+                      {t("settings.skimDisplaySummary", { selected: skimDisplay.customExtensions.length, total: fileFormatCapabilities.length })}
+                    </span>
+                    <div className="cap-settings-quick-actions-controls">
+                      <button
+                        className="cap-settings-pill"
+                        type="button"
+                        onClick={() => onSkimDisplayChange({ ...skimDisplay, showHiddenFiles: !skimDisplay.showHiddenFiles })}
+                        title={skimDisplay.showHiddenFiles ? t("settings.hideHiddenFilesHint") : t("settings.showHiddenFilesHint")}
+                      >
+                        {skimDisplay.showHiddenFiles ? t("settings.hiddenFilesOn") : t("settings.hiddenFilesOff")}
+                      </button>
+                      <button
+                        className="cap-settings-pill"
+                        type="button"
+                        onClick={() => updateCustomSkimExtensions([...skimDefaultFileExtensionSet])}
+                        title={t("settings.resetSkimDisplayHint")}
+                      >
+                        {t("common.restoreDefault")}
+                      </button>
+                      <button className="cap-settings-pill" type="button" onClick={toggleSkimDisplayConfiguration} title={t("settings.finishSkimDisplayHint")}>
+                        {t("settings.finishConfiguration")}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="cap-settings-skim-format-groups">
+                    {skimFormatGroups.map(({ category, extensions }) => {
+                      const selectedCount = extensions.filter((extension) => selectedSkimExtensions.has(extension)).length;
+                      return (
+                        <section className="cap-settings-skim-format-group" key={category}>
+                          <div className="cap-settings-skim-category-heading">
+                            <button
+                              className="cap-settings-skim-category-toggle"
+                              type="button"
+                              data-selected={selectedCount === extensions.length}
+                              data-partial={selectedCount > 0 && selectedCount < extensions.length}
+                              onClick={() => toggleSkimCategory(extensions)}
+                              title={t("settings.toggleSkimCategoryHint")}
+                              aria-label={t("settings.toggleSkimCategoryHint")}
+                            />
+                            <span>{t(`format.category.${category}` as TranslationKey)}</span>
+                          </div>
+                          <div className="cap-settings-skim-extensions">
+                            {extensions.map((extension) => (
+                              <button
+                                className="cap-settings-pill cap-settings-skim-extension"
+                                type="button"
+                                key={extension}
+                                data-selected={selectedSkimExtensions.has(extension)}
+                                onClick={() => toggleSkimExtension(extension)}
+                                title={t("settings.toggleSkimExtensionHint", { extension })}
+                              >
+                                {extension.slice(1).toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="cap-settings-row cap-settings-wide">
+              <span className="cap-settings-label">{t("settings.skimDisplay")}</span>
+              <span className="cap-settings-value">
+                {t("settings.skimDisplaySummary", { selected: skimDisplay.customExtensions.length, total: fileFormatCapabilities.length })}
+              </span>
+              <button
+                className="cap-settings-pill"
+                type="button"
+                onClick={() => onSkimDisplayChange({ ...skimDisplay, showHiddenFiles: !skimDisplay.showHiddenFiles })}
+                title={skimDisplay.showHiddenFiles ? t("settings.hideHiddenFilesHint") : t("settings.showHiddenFilesHint")}
+              >
+                {skimDisplay.showHiddenFiles ? t("settings.hiddenFilesOn") : t("settings.hiddenFilesOff")}
+              </button>
+              <button
+                className="cap-settings-pill"
+                type="button"
+                onClick={() => updateCustomSkimExtensions([...skimDefaultFileExtensionSet])}
+                title={t("settings.resetSkimDisplayHint")}
+              >
+                {t("common.restoreDefault")}
+              </button>
+              <button className="cap-settings-pill" type="button" onClick={toggleSkimDisplayConfiguration} title={t("settings.configureSkimDisplayHint")}>{t("settings.configure")}</button>
+            </div>
+          )}
           {quickActionsExpanded ? (
             <div className={`cap-settings-expandable-shell${quickActionsClosing ? " is-closing" : ""}`}>
               <div className="cap-settings-expandable-inner">

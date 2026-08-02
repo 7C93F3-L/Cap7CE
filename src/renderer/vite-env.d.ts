@@ -50,6 +50,7 @@ declare global {
         openSettings: () => Promise<boolean>;
         requestData: () => void;
         onData: (callback: (data: PreviewWindowData) => void) => () => void;
+        onReset: (callback: () => void) => () => void;
         onNavigate: (callback: (direction: PreviewNavigateDirection) => void) => () => void;
         onClosed: (callback: () => void) => () => void;
         onItemAction: (callback: (request: PreviewItemActionRequest) => void) => () => void;
@@ -122,6 +123,7 @@ declare global {
         updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: UserPreferences["quickActionGlobalEnabled"]) => Promise<UserPreferences>;
         updateCommandEnabled: (commandEnabled: UserPreferences["commandEnabled"]) => Promise<UserPreferences>;
         updateSearchLabelVisibility: (searchLabelVisibility: UserPreferences["searchLabelVisibility"]) => Promise<UserPreferences>;
+        updateSkimDisplay: (skimDisplay: UserPreferences["skimDisplay"]) => Promise<UserPreferences>;
         updateShortcutActions: (shortcutActions: UserPreferences["shortcutActions"]) => Promise<ShortcutActionsUpdateResult>;
         shortcutAvailability: () => Promise<ShortcutAvailabilityResult>;
         beginShortcutCapture: () => Promise<boolean>;

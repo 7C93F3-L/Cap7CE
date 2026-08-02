@@ -17,6 +17,7 @@ export interface SkimBrowseEntry {
   size: number | null;
   modifiedAt: string | null;
   withinAddedDirectory: boolean;
+  hidden: boolean;
   formatCapability?: FileFormatCapability;
   status: "ready" | "loading" | "error";
   error?: string;
@@ -54,6 +55,7 @@ const toDriveEntry = (root: string, label = ""): SkimBrowseEntry => {
     size: null,
     modifiedAt: null,
     withinAddedDirectory: false,
+    hidden: false,
     status: "ready"
   };
 };
@@ -85,6 +87,36 @@ export const parseWindowsDriveOutput = (output: string): SkimBrowseEntry[] => {
 const fallbackDriveEntries = () => {
   const roots = [path.parse(os.homedir()).root, path.parse(process.cwd()).root].filter(Boolean);
   return parseWindowsDriveOutput(JSON.stringify(roots.map((root) => ({ root }))));
+};
+
+export const parseWindowsHiddenAttributeOutput = (output: string): Set<string> => {
+  const trimmed = output.replace(/^\uFEFF/, "").trim();
+  if (!trimmed) return new Set<string>();
+  const parsed = JSON.parse(trimmed) as string | string[];
+  return new Set((Array.isArray(parsed) ? parsed : [parsed]).filter((value) => typeof value === "string").map(pathKey));
+};
+
+const listHiddenEntryPaths = async (directoryPath: string) => {
+  if (process.platform !== "win32") return new Set<string>();
+  const escapedDirectoryPath = directoryPath.replace(/'/g, "''");
+  const command = [
+    "$ErrorActionPreference = 'Stop'",
+    "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)",
+    "$OutputEncoding = [Console]::OutputEncoding",
+    `$paths = @(Get-ChildItem -LiteralPath '${escapedDirectoryPath}' -Force | Where-Object { ($_.Attributes -band [IO.FileAttributes]::Hidden) -ne 0 } | ForEach-Object { $_.FullName })`,
+    "ConvertTo-Json -Compress -InputObject $paths"
+  ].join("; ");
+  try {
+    const { stdout } = await execFileAsync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command], {
+      encoding: "utf8",
+      windowsHide: true,
+      timeout: 10_000,
+      maxBuffer: 4 * 1024 * 1024
+    });
+    return parseWindowsHiddenAttributeOutput(stdout);
+  } catch {
+    return new Set<string>();
+  }
 };
 
 export const listSkimDrives = async (): Promise<SkimBrowseEntry[]> => {
@@ -164,6 +196,7 @@ export const readSkimLocation = async (
   }
 
   const directoryEntries = await fs.readdir(directoryPath, { withFileTypes: true });
+  const hiddenEntryPaths = await listHiddenEntryPaths(directoryPath);
   if (shouldCancel()) {
     return cancelledResult(directoryPath);
   }
@@ -187,6 +220,7 @@ export const readSkimLocation = async (
             size: null,
             modifiedAt: stats.mtime.toISOString(),
             withinAddedDirectory,
+            hidden: hiddenEntryPaths.has(pathKey(entryPath)) || (process.platform !== "win32" && entry.name.startsWith(".")),
             status: "ready"
           } satisfies SkimBrowseEntry;
         }
@@ -201,6 +235,7 @@ export const readSkimLocation = async (
           size: stats.size,
           modifiedAt: stats.mtime.toISOString(),
           withinAddedDirectory,
+          hidden: hiddenEntryPaths.has(pathKey(entryPath)) || (process.platform !== "win32" && entry.name.startsWith(".")),
           ...(formatCapability?.canBrowse ? { formatCapability } : {}),
           status: "ready"
         } satisfies SkimBrowseEntry;

@@ -73,6 +73,11 @@ contextBridge.exposeInMainWorld("imageEverything", {
       ipcRenderer.on("preview:data", listener);
       return () => ipcRenderer.removeListener("preview:data", listener);
     },
+    onReset: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("preview:reset", listener);
+      return () => ipcRenderer.removeListener("preview:reset", listener);
+    },
     onNavigate: (callback: (direction: PreviewNavigateDirection) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, direction: PreviewNavigateDirection) => callback(direction);
       ipcRenderer.on("preview:navigate", listener);
@@ -170,7 +175,8 @@ contextBridge.exposeInMainWorld("imageEverything", {
     updateAutoCacheOptimization: (enabled: boolean) => ipcRenderer.invoke("preferences:updateAutoCacheOptimization", enabled),
     updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: boolean) => ipcRenderer.invoke("preferences:updateQuickActionGlobalEnabled", quickActionGlobalEnabled),
     updateCommandEnabled: (commandEnabled: boolean) => ipcRenderer.invoke("preferences:updateCommandEnabled", commandEnabled),
-    updateSearchLabelVisibility: (searchLabelVisibility: { directory: boolean; recognition: boolean; sort: boolean; format: boolean }) => ipcRenderer.invoke("preferences:updateSearchLabelVisibility", searchLabelVisibility),
+    updateSearchLabelVisibility: (searchLabelVisibility: { directory: boolean; recognition: boolean; sort: boolean; format: boolean; skimDisplay: boolean }) => ipcRenderer.invoke("preferences:updateSearchLabelVisibility", searchLabelVisibility),
+    updateSkimDisplay: (skimDisplay: { mode: "skim" | "all" | "custom"; customExtensions: string[]; showHiddenFiles: boolean }) => ipcRenderer.invoke("preferences:updateSkimDisplay", skimDisplay),
     updateShortcutActions: (shortcutActions: {
       activateCapsule: string;
       activateMicro: string;

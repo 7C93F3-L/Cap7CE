@@ -151,6 +151,7 @@ export interface FileFormatCapability {
   category: FileFormatCategory;
   iconName: string;
   canBrowse: boolean;
+  defaultInSkim: boolean;
   canIndex: boolean;
   canSearch: boolean;
   canThumbnail: boolean;
@@ -168,6 +169,7 @@ export interface SkimBrowseEntry {
   size: number | null;
   modifiedAt: string | null;
   withinAddedDirectory: boolean;
+  hidden: boolean;
   formatCapability?: FileFormatCapability;
   status: "ready" | "loading" | "error";
   error?: string;
@@ -308,6 +310,15 @@ export interface SearchLabelVisibilityPreferences {
   recognition: boolean;
   sort: boolean;
   format: boolean;
+  skimDisplay: boolean;
+}
+
+export type SkimDisplayMode = "skim" | "all" | "custom";
+
+export interface SkimDisplayPreferences {
+  mode: SkimDisplayMode;
+  customExtensions: string[];
+  showHiddenFiles: boolean;
 }
 
 export interface UserPreferences {
@@ -329,6 +340,7 @@ export interface UserPreferences {
   quickActionGlobalEnabled: boolean;
   commandEnabled: boolean;
   searchLabelVisibility: SearchLabelVisibilityPreferences;
+  skimDisplay: SkimDisplayPreferences;
   shortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }

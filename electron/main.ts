@@ -18,7 +18,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -314,6 +314,7 @@ const closePreviewSession = () => {
   latestSkimFolderStatsUpdate = null;
   clearPreviewMoveSnapCheck();
   if (previewWindow && !previewWindow.isDestroyed()) {
+    previewWindow.webContents.send("preview:reset");
     previewWindow.hide();
     if (previewWindow.isMaximized()) {
       previewWindow.unmaximize();
@@ -3375,14 +3376,22 @@ ipcMain.handle("preferences:updateSearchLabelVisibility", async (_event, nextVis
   recognition: boolean;
   sort: boolean;
   format: boolean;
+  skimDisplay: boolean;
 }) => {
   return updateSearchLabelVisibilityPreference({
     directory: Boolean(nextVisibility?.directory),
     recognition: Boolean(nextVisibility?.recognition),
     sort: Boolean(nextVisibility?.sort),
-    format: Boolean(nextVisibility?.format)
+    format: Boolean(nextVisibility?.format),
+    skimDisplay: Boolean(nextVisibility?.skimDisplay)
   });
 });
+
+ipcMain.handle("preferences:updateSkimDisplay", async (_event, nextSkimDisplay: {
+  mode: "skim" | "all" | "custom";
+  customExtensions: string[];
+  showHiddenFiles: boolean;
+}) => updateSkimDisplayPreference(nextSkimDisplay));
 
 ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {
   activateCapsule: string;

@@ -1,6 +1,7 @@
 import { app } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { skimDefaultFileExtensionSet } from "./formatCapabilities";
 
 type ThemeMode = "system" | "light" | "dark";
 type LanguagePreference = "system" | "zh-CN" | "en-US";
@@ -17,6 +18,13 @@ type SearchLabelVisibilityPreferences = {
   recognition: boolean;
   sort: boolean;
   format: boolean;
+  skimDisplay: boolean;
+};
+type SkimDisplayMode = "skim" | "all" | "custom";
+type SkimDisplayPreferences = {
+  mode: SkimDisplayMode;
+  customExtensions: string[];
+  showHiddenFiles: boolean;
 };
 
 export interface UserPreferencesResponse {
@@ -38,6 +46,7 @@ export interface UserPreferencesResponse {
   quickActionGlobalEnabled: boolean;
   commandEnabled: boolean;
   searchLabelVisibility: SearchLabelVisibilityPreferences;
+  skimDisplay: SkimDisplayPreferences;
   shortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }
@@ -69,7 +78,13 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     directory: true,
     recognition: true,
     sort: true,
-    format: true
+    format: true,
+    skimDisplay: true
+  },
+  skimDisplay: {
+    mode: "skim",
+    customExtensions: [...skimDefaultFileExtensionSet],
+    showHiddenFiles: false
   },
   shortcutActions: {
     activateCapsule: "Alt+`",
@@ -93,6 +108,10 @@ const normalizeSortField = (value: unknown, fallback: SortField): SortField => (
       : fallback
 );
 const isSortDirection = (value: unknown): value is SortDirection => value === "asc" || value === "desc";
+const isSkimDisplayMode = (value: unknown): value is SkimDisplayMode => value === "skim" || value === "all" || value === "custom";
+const normalizeSkimExtensions = (value: unknown) => Array.isArray(value)
+  ? [...new Set(value.filter((extension): extension is string => typeof extension === "string" && /^\.[a-z0-9]+$/i.test(extension)).map((extension) => extension.toLowerCase()))]
+  : [];
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
 const isShortcutActionId = (value: string): value is ShortcutActionId => (
   value === "activateCapsule"
@@ -186,7 +205,19 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
           ? parsedLabelVisibility.format
           : typeof parsed.formatLabelVisible === "boolean"
             ? parsed.formatLabelVisible
-            : defaults.searchLabelVisibility.format
+            : defaults.searchLabelVisibility.format,
+        skimDisplay: typeof parsedLabelVisibility?.skimDisplay === "boolean"
+          ? parsedLabelVisibility.skimDisplay
+          : defaults.searchLabelVisibility.skimDisplay
+      },
+      skimDisplay: {
+        mode: isSkimDisplayMode(parsed.skimDisplay?.mode) ? parsed.skimDisplay.mode : defaults.skimDisplay.mode,
+        customExtensions: Array.isArray(parsed.skimDisplay?.customExtensions)
+          ? normalizeSkimExtensions(parsed.skimDisplay.customExtensions)
+          : defaults.skimDisplay.customExtensions,
+        showHiddenFiles: typeof parsed.skimDisplay?.showHiddenFiles === "boolean"
+          ? parsed.skimDisplay.showHiddenFiles
+          : defaults.skimDisplay.showHiddenFiles
       },
       shortcutActions: normalizeShortcutActions(parsed.shortcutActions, defaults.shortcutActions),
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : defaults.updatedAt
@@ -369,6 +400,21 @@ export const updateSearchLabelVisibilityPreference = async (searchLabelVisibilit
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     searchLabelVisibility,
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateSkimDisplayPreference = async (skimDisplay: SkimDisplayPreferences) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    skimDisplay: {
+      mode: isSkimDisplayMode(skimDisplay?.mode) ? skimDisplay.mode : preferences.skimDisplay.mode,
+      customExtensions: normalizeSkimExtensions(skimDisplay?.customExtensions),
+      showHiddenFiles: Boolean(skimDisplay?.showHiddenFiles)
+    },
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

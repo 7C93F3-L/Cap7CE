@@ -8,7 +8,8 @@ const { app } = require("electron");
     fileFormatCapabilities,
     fileFormatCapabilityByExtension,
     indexableFileExtensionSet,
-    skimCuratedFileExtensionSet
+    skimCuratedFileExtensionSet,
+    skimDefaultFileExtensionSet
   } = require("../dist-electron/formatCapabilities.js");
   const { supportedVisualFileExtensionSet } = require("../dist-electron/supportedVisualFormats.js");
   const { isSupportedImageFilePath } = require("../dist-electron/imageScanner.js");
@@ -16,22 +17,31 @@ const { app } = require("electron");
   assert.equal(fileFormatCapabilities.length, fileFormatCapabilityByExtension.size);
   assert.equal(fileFormatCapabilities.every((capability) => capability.extension.startsWith(".")), true);
   assert.equal(fileFormatCapabilities.every((capability) => capability.canBrowse), true);
-  assert.equal(fileFormatCapabilities.every((capability) => capability.canIndex), true);
 
-  const visualCapabilities = fileFormatCapabilities.filter((capability) => capability.category === "visual");
-  const nonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual");
-  assert.equal(visualCapabilities.length, 14);
-  assert.equal(nonVisualCapabilities.length, 59);
-  assert.equal(visualCapabilities.every((capability) => (
+  const formalVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category === "visual" && capability.canSearch);
+  const formalNonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual" && capability.canIndex);
+  const browseOnlyCapabilities = fileFormatCapabilities.filter((capability) => !capability.canIndex);
+  assert.equal(formalVisualCapabilities.length, 14);
+  assert.equal(formalNonVisualCapabilities.length, 60);
+  assert.equal(browseOnlyCapabilities.length, 40);
+  assert.equal(formalVisualCapabilities.every((capability) => (
     capability.canSearch
     && capability.canThumbnail
     && capability.previewKind === "image"
     && capability.canAIIndex
   )), true);
-  assert.equal(visualCapabilities.filter((capability) => capability.canDirectPreview).length, 7);
-  assert.equal(nonVisualCapabilities.every((capability) => (
+  assert.equal(formalVisualCapabilities.filter((capability) => capability.canDirectPreview).length, 7);
+  assert.equal(formalNonVisualCapabilities.every((capability) => (
     capability.canSearch
     && !capability.canThumbnail
+    && !capability.canDirectPreview
+    && !capability.canAIIndex
+  )), true);
+  assert.equal(browseOnlyCapabilities.every((capability) => (
+    capability.canBrowse
+    && !capability.canSearch
+    && !capability.canThumbnail
+    && capability.previewKind === "fileInfo"
     && !capability.canDirectPreview
     && !capability.canAIIndex
   )), true);
@@ -42,30 +52,42 @@ const { app } = require("electron");
     ])),
     { ".txt": "text", ".md": "text", ".mp3": "audio", ".wav": "audio", ".mp4": "video", ".mov": "video" }
   );
-  assert.equal(nonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 53);
+  assert.equal(formalNonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 54);
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
-    visualCapabilities.map((capability) => capability.extension).sort()
+    formalVisualCapabilities.map((capability) => capability.extension).sort()
   );
-  assert.equal(skimCuratedFileExtensionSet.size, 73);
-  assert.deepEqual([...indexableFileExtensionSet].sort(), [...skimCuratedFileExtensionSet].sort());
+  assert.equal(skimCuratedFileExtensionSet.size, 114);
+  assert.equal(skimDefaultFileExtensionSet.size, 102);
+  assert.equal(indexableFileExtensionSet.size, 74);
+  assert.equal(fileFormatCapabilityByExtension.has(".bld"), false);
+  assert.equal(fileFormatCapabilityByExtension.has(".pr"), false);
+  assert.equal(fileFormatCapabilityByExtension.get(".blend").iconName, "format-blend");
+  assert.equal(fileFormatCapabilityByExtension.get(".prproj").iconName, "format-prproj");
+  assert.equal(fileFormatCapabilityByExtension.get(".pproj").iconName, "format-prproj");
+  assert.equal(skimDefaultFileExtensionSet.has(".ini"), false);
+  assert.equal(skimDefaultFileExtensionSet.has(".dll"), false);
+  assert.equal(skimDefaultFileExtensionSet.has(".mp4"), true);
+  assert.equal(indexableFileExtensionSet.has(".avif"), false);
+  assert.equal(indexableFileExtensionSet.has(".blend"), true);
   assert.equal(isSupportedImageFilePath("C:\\asset.png"), true);
   assert.equal(isSupportedImageFilePath("C:\\notes.txt"), false);
   assert.equal(isSupportedImageFilePath("C:\\document.docx"), false);
 
   const iconDirectory = path.join(__dirname, "..", "src", "renderer", "assets", "icons");
-  for (const capability of nonVisualCapabilities) {
+  for (const capability of fileFormatCapabilities.filter((capability) => capability.iconName !== "skim-file")) {
     assert.equal(fs.existsSync(path.join(iconDirectory, `${capability.iconName}.svg`)), true, capability.iconName);
   }
 
   console.log(JSON.stringify({
     centralCapabilitiesUnique: true,
-    allWhitelistedFormatsIndexable: true,
+    browseOnlyFormatsExcludedFromFormalIndex: true,
     visualSearchBoundaryPreserved: true,
     nonVisualSearchEnabled: true,
     formalVisualScannerBoundaryPreserved: true,
     skimCuratedFormatCount: skimCuratedFileExtensionSet.size,
-    formatIconsVerified: nonVisualCapabilities.length
+    skimDefaultFormatCount: skimDefaultFileExtensionSet.size,
+    formatIconsVerified: fileFormatCapabilities.filter((capability) => capability.iconName !== "skim-file").length
   }));
 })().then(() => app.exit(0)).catch((error) => {
   console.error(error);

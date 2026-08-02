@@ -6,6 +6,7 @@ export interface FileFormatCapability {
   category: FileFormatCategory;
   iconName: string;
   canBrowse: boolean;
+  defaultInSkim: boolean;
   canIndex: boolean;
   canSearch: boolean;
   canThumbnail: boolean;
@@ -29,8 +30,25 @@ const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonl
   ["video", ["avi", "m4v", "mkv", "mov", "mp4", "webm"]],
   ["font", ["otf", "ttf", "woff", "woff2"]],
   ["threeD", ["3ds", "c4d", "dwg", "dxf", "fbx", "glb", "gltf", "iges", "igs", "max", "obj", "skp", "step", "stl", "stp"]],
-  ["project", ["aep", "bip", "bld", "drp", "ksp", "pr", "veg"]]
+  ["project", ["aep", "bip", "blend", "drp", "ksp", "prproj", "pproj", "veg"]]
 ];
+
+const browseOnlyFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
+  ["visual", ["avif", "heic", "heif", "jfif", "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
+  ["video", ["wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp"]],
+  ["audio", ["wma", "opus", "aif", "aiff", "ape"]],
+  ["document", ["odt", "ods", "odp", "epub", "wps", "et", "dps", "one", "xps", "oxps"]]
+];
+
+const skimDefaultHiddenExtensions = new Set([
+  "rtf", "html", "ini", "csv", "json", "xml", "yaml", "yml", "gz", "tar", "woff", "woff2"
+]);
+
+const iconNameByExtension = new Map<string, string>([
+  ["blend", "format-blend"],
+  ["prproj", "format-prproj"],
+  ["pproj", "format-prproj"]
+]);
 
 const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["txt", "text"], ["md", "text"],
@@ -43,6 +61,7 @@ const visualCapabilities = visualExtensions.map((extension): FileFormatCapabilit
   category: "visual",
   iconName: "skim-file",
   canBrowse: true,
+  defaultInSkim: true,
   canIndex: true,
   canSearch: true,
   canThumbnail: true,
@@ -55,8 +74,9 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
   extensions.map((extension): FileFormatCapability => ({
     extension: `.${extension}`,
     category,
-    iconName: `format-${extension}`,
+    iconName: iconNameByExtension.get(extension) ?? `format-${extension}`,
     canBrowse: true,
+    defaultInSkim: !skimDefaultHiddenExtensions.has(extension),
     canIndex: true,
     canSearch: true,
     canThumbnail: false,
@@ -66,9 +86,26 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
   }))
 ));
 
+const browseOnlyCapabilities = browseOnlyFormatGroups.flatMap(([category, extensions]) => (
+  extensions.map((extension): FileFormatCapability => ({
+    extension: `.${extension}`,
+    category,
+    iconName: "skim-file",
+    canBrowse: true,
+    defaultInSkim: true,
+    canIndex: false,
+    canSearch: false,
+    canThumbnail: false,
+    previewKind: "fileInfo",
+    canDirectPreview: false,
+    canAIIndex: false
+  }))
+));
+
 export const fileFormatCapabilities: readonly FileFormatCapability[] = [
   ...visualCapabilities,
-  ...nonVisualCapabilities
+  ...nonVisualCapabilities,
+  ...browseOnlyCapabilities
 ];
 
 export const fileFormatCapabilityByExtension: ReadonlyMap<string, FileFormatCapability> = new Map(
@@ -77,6 +114,10 @@ export const fileFormatCapabilityByExtension: ReadonlyMap<string, FileFormatCapa
 
 export const skimCuratedFileExtensionSet: ReadonlySet<string> = new Set(
   fileFormatCapabilities.filter((capability) => capability.canBrowse).map((capability) => capability.extension)
+);
+
+export const skimDefaultFileExtensionSet: ReadonlySet<string> = new Set(
+  fileFormatCapabilities.filter((capability) => capability.canBrowse && capability.defaultInSkim).map((capability) => capability.extension)
 );
 
 export const indexableFileExtensionSet: ReadonlySet<string> = new Set(

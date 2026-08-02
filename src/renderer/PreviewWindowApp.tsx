@@ -134,9 +134,6 @@ const PreviewWindowApp = () => {
 
   useEffect(() => {
     const resetPreviewSession = () => {
-      if (document.visibilityState !== "hidden") {
-        return;
-      }
       if (previewLoadingIndicatorTimerRef.current !== null) {
         window.clearTimeout(previewLoadingIndicatorTimerRef.current);
         previewLoadingIndicatorTimerRef.current = null;
@@ -154,9 +151,9 @@ const PreviewWindowApp = () => {
       setContextMenu(null);
       setFolderStats(null);
     };
-    document.addEventListener("visibilitychange", resetPreviewSession);
+    const unsubscribe = window.imageEverything?.preview.onReset(resetPreviewSession);
     return () => {
-      document.removeEventListener("visibilitychange", resetPreviewSession);
+      unsubscribe?.();
       if (previewLoadingIndicatorTimerRef.current !== null) {
         window.clearTimeout(previewLoadingIndicatorTimerRef.current);
       }
