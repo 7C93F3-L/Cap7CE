@@ -26,7 +26,7 @@ import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
-import { getShellMousePollDelay } from "./shellMousePollingPolicy";
+import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
@@ -61,6 +61,7 @@ let cancelAiIndexRequested = false;
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let resizeSettledTimer: NodeJS.Timeout | null = null;
 let shellMousePassthroughTimer: NodeJS.Timeout | null = null;
+let shellWorkAreaRefreshTimer: NodeJS.Timeout | null = null;
 let lastShellMousePoint: Electron.Point | null = null;
 let stationaryShellMousePollCount = 0;
 let shellIgnoreMouseEvents = false;
@@ -110,6 +111,7 @@ type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "s
 const shellWindowStates = new Set<Cap7CEShellState>(["standby", "capsule", "micro", "mini", "normal", "settings"]);
 const standbyVisualWidthPx = 180;
 const standbyVisualHeightPx = 4;
+const standbyInteractionHeightPx = 15;
 const backgroundTaskNotificationMinimumMs = 60_000;
 const cacheCompletionNotificationCooldownMs = 30 * 60_000;
 
@@ -695,6 +697,64 @@ const getShellWindowBounds = (state: Cap7CEShellState): Electron.Rectangle => {
     x: x + Math.round((width - Math.min(1280, width)) / 2),
     y: y + Math.round((height - Math.min(760, height)) / 2)
   };
+};
+
+const scheduleBottomAnchoredShellWorkAreaRefresh = (changedDisplayId: number) => {
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || (activeShellState !== "standby" && activeShellState !== "capsule")
+    || screen.getDisplayMatching(mainWindow.getBounds()).id !== changedDisplayId
+  ) {
+    return;
+  }
+
+  if (shellWorkAreaRefreshTimer !== null) {
+    clearTimeout(shellWorkAreaRefreshTimer);
+  }
+  shellWorkAreaRefreshTimer = setTimeout(() => {
+    shellWorkAreaRefreshTimer = null;
+    if (
+      !mainWindow
+      || mainWindow.isDestroyed()
+      || (activeShellState !== "standby" && activeShellState !== "capsule")
+    ) {
+      return;
+    }
+
+    const currentBounds = mainWindow.getBounds();
+    const currentDisplay = screen.getDisplayMatching(currentBounds);
+    if (currentDisplay.id !== changedDisplayId) {
+      return;
+    }
+
+    const targetBounds = getShellWindowBounds(activeShellState);
+    const nextBounds = activeShellState === "standby"
+      ? {
+          ...currentBounds,
+          x: targetBounds.x,
+          y: currentDisplay.workArea.y
+            + currentDisplay.workArea.height
+            - edgeGapPx
+            - currentBounds.height
+        }
+      : targetBounds;
+    if (
+      currentBounds.x === nextBounds.x
+      && currentBounds.y === nextBounds.y
+      && currentBounds.width === nextBounds.width
+      && currentBounds.height === nextBounds.height
+    ) {
+      return;
+    }
+
+    markProgrammaticMove();
+    if (currentBounds.width !== nextBounds.width || currentBounds.height !== nextBounds.height) {
+      markProgrammaticResize();
+    }
+    mainWindow.setBounds(nextBounds, false);
+    logWindowBoundsDebug("[shell after workArea change]", activeShellState);
+  }, 120);
 };
 
 const getMicroResizeBoundsForCurrentPosition = (currentBounds: Electron.Rectangle): Electron.Rectangle => {
@@ -1485,7 +1545,10 @@ const syncShellMousePassthrough = () => {
   }
 
   const cursorPoint = screen.getCursorScreenPoint();
-  const interactiveBounds = mainWindow.getBounds();
+  const windowBounds = mainWindow.getBounds();
+  const interactiveBounds = activeShellState === "standby"
+    ? getBottomAnchoredInteractiveBounds(windowBounds, standbyInteractionHeightPx)
+    : windowBounds;
   stationaryShellMousePollCount = lastShellMousePoint
     && lastShellMousePoint.x === cursorPoint.x
     && lastShellMousePoint.y === cursorPoint.y
@@ -1603,6 +1666,7 @@ const applyStandbyWindowMode = () => {
   mainWindow.setMinimumSize(1, 1);
   mainWindow.setHasShadow(false);
   mainWindow.setResizable(false);
+  mainWindow.setShape([]);
   setShellIgnoreMouseEvents(false);
   mainWindow.setBounds(standbyBounds, true);
   const actualStandbyBounds = mainWindow.getBounds();
@@ -1615,6 +1679,14 @@ const applyStandbyWindowMode = () => {
       y: workArea.y + workArea.height - edgeGapPx - actualStandbyBounds.height
     }, false);
   }
+  const shapedStandbyBounds = mainWindow.getBounds();
+  const standbyShapeHeight = Math.min(standbyInteractionHeightPx, shapedStandbyBounds.height);
+  mainWindow.setShape([{
+    x: 0,
+    y: shapedStandbyBounds.height - standbyShapeHeight,
+    width: shapedStandbyBounds.width,
+    height: standbyShapeHeight
+  }]);
   applyAlwaysOnTopState();
   activeShellState = "standby";
   syncTaskbarVisibility(activeShellState);
@@ -1653,6 +1725,7 @@ const applyCapsuleWindowMode = () => {
   mainWindow.setMinimumSize(1, 1);
   mainWindow.setHasShadow(false);
   mainWindow.setResizable(false);
+  mainWindow.setShape([]);
   setShellIgnoreMouseEvents(false);
   mainWindow.setBounds(capsuleBounds, false);
   mainWindow.setContentSize(capsuleBounds.width, capsuleBounds.height, false);
@@ -1679,6 +1752,7 @@ const applyShellWindowState = (state: string, options: { preserveBounds?: boolea
     return applyCapsuleWindowMode();
   }
   microBottomCenterAnchored = false;
+  mainWindow.setShape([]);
 
   const isLargeWindow = state === "normal" || state === "settings";
   const isResizableWindow = state === "micro" || state === "mini" || isLargeWindow;
@@ -1734,6 +1808,8 @@ const setShellWindowStateFromResize = (state: Cap7CEShellState) => {
   const transitionBounds = getResizeTransitionBounds(targetState, currentBounds, activeShellState);
   const nextBounds = keepDefaultBottomGap || !edgeSnapEnabled ? transitionBounds : getEdgeSnappedBounds(transitionBounds);
   const isResizableWindow = targetState === "micro" || targetState === "mini" || targetState === "normal";
+
+  mainWindow.setShape([]);
 
   if (mainWindow.isMaximized()) {
     mainWindow.unmaximize();
@@ -2047,6 +2123,7 @@ const forceApplyDefaultMicroBounds = () => {
 
   shellMaximized = false;
   lastNormalBounds = null;
+  mainWindow.setShape([]);
   if (mainWindow.isMaximized()) {
     mainWindow.unmaximize();
   }
@@ -2183,6 +2260,12 @@ app.whenReady().then(async () => {
   await pauseThumbnailOptimization("inactive-content");
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   createWindow();
+  screen.on("display-metrics-changed", (_event, display, changedMetrics) => {
+    if (!changedMetrics.includes("workArea") && !changedMetrics.includes("bounds")) {
+      return;
+    }
+    scheduleBottomAnchoredShellWorkAreaRefresh(display.id);
+  });
   setThumbnailOptimizationStatusListener((status) => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
       mainWindow.webContents.send("cache:optimizationStatusChanged", status);
@@ -2215,6 +2298,10 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  if (shellWorkAreaRefreshTimer !== null) {
+    clearTimeout(shellWorkAreaRefreshTimer);
+    shellWorkAreaRefreshTimer = null;
+  }
   closeStartupHintWindow();
   clearPreviewIdleDestroyTimer();
   if (previewWindow && !previewWindow.isDestroyed()) {

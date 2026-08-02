@@ -12,6 +12,18 @@ export const shellMouseActivePollMs = 50;
 export const shellMouseMediumPollMs = 100;
 export const shellMouseIdlePollMs = 200;
 
+export const getBottomAnchoredInteractiveBounds = (
+  bounds: ShellMouseBounds,
+  maximumHeight: number
+): ShellMouseBounds => {
+  const height = Math.max(1, Math.min(Math.floor(maximumHeight), bounds.height));
+  return {
+    ...bounds,
+    y: bounds.y + bounds.height - height,
+    height
+  };
+};
+
 const nearDistancePx = 120;
 const mediumDistancePx = 480;
 const stationaryPollsBeforeBackoff = 4;
