@@ -1032,6 +1032,7 @@ const App = () => {
   const [isCancellingRecognition, setIsCancellingRecognition] = useState(false);
   const quickCommandNoticeTimerRef = useRef<number | null>(null);
   const skimFeedbackTimerRef = useRef<number | null>(null);
+  const searchTaskIdRef = useRef<string | null>(null);
   const skimTaskIdRef = useRef<string | null>(null);
   const skimVisualSessionIdRef = useRef<string | null>(null);
   const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
@@ -1144,6 +1145,14 @@ const App = () => {
       skimFeedbackTimerRef.current = null;
     }, 3600);
   }, [clearSkimFeedback]);
+  const cancelSearch = useCallback(() => {
+    const taskId = searchTaskIdRef.current;
+    searchTaskIdRef.current = null;
+    if (taskId) {
+      void window.imageEverything?.search.cancel(taskId);
+    }
+    setIsSearching(false);
+  }, []);
   const cancelSkimRead = useCallback(() => {
     const taskId = skimTaskIdRef.current;
     skimTaskIdRef.current = null;
@@ -1306,6 +1315,28 @@ const App = () => {
       setIsMaximized(false);
     }
   }, [shellState]);
+
+  useEffect(() => {
+    const contentViewActive = (
+      (view === "results" || view === "skim")
+      && (shellState === "micro" || shellState === "mini" || shellState === "normal")
+    );
+    const syncContentActivity = () => {
+      const active = contentViewActive && document.visibilityState === "visible" && document.hasFocus();
+      void window.imageEverything?.cache.setContentViewActive(active);
+      if (!active) cancelSearch();
+    };
+
+    syncContentActivity();
+    window.addEventListener("focus", syncContentActivity);
+    window.addEventListener("blur", syncContentActivity);
+    document.addEventListener("visibilitychange", syncContentActivity);
+    return () => {
+      window.removeEventListener("focus", syncContentActivity);
+      window.removeEventListener("blur", syncContentActivity);
+      document.removeEventListener("visibilitychange", syncContentActivity);
+    };
+  }, [cancelSearch, shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onShellStateChanged?.((nextShellState) => {
@@ -1482,11 +1513,6 @@ const App = () => {
       try {
         const loadedDirectories = (await window.imageEverything?.directories.list()) ?? [];
         const stats = await window.imageEverything?.index.qualityStats();
-        const llamaRuntimeSettings = await window.imageEverything?.llamaRuntime.settings();
-        const llamaRuntimeProcessState = await window.imageEverything?.llamaRuntime.processState();
-        const ggufModelSettings = await window.imageEverything?.ggufModels.settings();
-        const cacheStats = await window.imageEverything?.cache.stats();
-        const loadedSkimCacheStats = await window.imageEverything?.skimCache.stats();
         const cacheOptimizationStatus = await window.imageEverything?.cache.optimizationStatus();
         const preferences = await window.imageEverything?.preferences.get();
         const shortcutAvailability = await window.imageEverything?.preferences.shortcutAvailability();
@@ -1526,21 +1552,6 @@ const App = () => {
           setUnavailableShortcutActionIds(shortcutAvailability?.unavailableActionIds ?? []);
           if (stats) {
             setIndexStats(stats);
-          }
-          if (llamaRuntimeSettings) {
-            setLlamaRuntimeSettings(llamaRuntimeSettings);
-          }
-          if (llamaRuntimeProcessState) {
-            setLlamaRuntimeProcessState(llamaRuntimeProcessState);
-          }
-          if (ggufModelSettings) {
-            setGgufModelSettings(ggufModelSettings);
-          }
-          if (cacheStats) {
-            setVisualCacheStats(cacheStats);
-          }
-          if (loadedSkimCacheStats) {
-            setSkimCacheStats(loadedSkimCacheStats);
           }
           if (cacheOptimizationStatus) {
             thumbnailOptimizationPhaseRef.current = cacheOptimizationStatus.phase;
@@ -1626,6 +1637,10 @@ const App = () => {
       window.clearTimeout(skimFeedbackTimerRef.current);
       skimFeedbackTimerRef.current = null;
     }
+    if (searchTaskIdRef.current) {
+      void window.imageEverything?.search.cancel(searchTaskIdRef.current);
+      searchTaskIdRef.current = null;
+    }
     if (skimTaskIdRef.current) {
       void window.imageEverything?.skim.cancel(skimTaskIdRef.current);
       skimTaskIdRef.current = null;
@@ -1637,6 +1652,9 @@ const App = () => {
   }, []);
 
   const runSearch = async (nextSearch = search, options?: { navigate?: boolean }) => {
+    cancelSearch();
+    const taskId = window.crypto?.randomUUID?.() ?? `search-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    searchTaskIdRef.current = taskId;
     setContextMenu(null);
     setQuickCommandNotice("");
     setIsSearching(true);
@@ -1647,7 +1665,8 @@ const App = () => {
       navigateTo("results");
     }
     try {
-      let response = (await window.imageEverything?.search.images(nextSearch)) ?? emptySearchResponse;
+      let response = (await window.imageEverything?.search.images(nextSearch, taskId)) ?? emptySearchResponse;
+      if (searchTaskIdRef.current !== taskId) return;
       if (
         !Array.isArray(response)
         && nextSearch.fileFormat !== "all"
@@ -1656,16 +1675,21 @@ const App = () => {
         const fallbackSearch = { ...nextSearch, fileFormat: "all" };
         setSearch(fallbackSearch);
         lastResultSearchRef.current = fallbackSearch;
-        response = (await window.imageEverything?.search.images(fallbackSearch)) ?? emptySearchResponse;
+        response = (await window.imageEverything?.search.images(fallbackSearch, taskId)) ?? emptySearchResponse;
+        if (searchTaskIdRef.current !== taskId) return;
       }
       setSearchResults(Array.isArray(response) ? response : response.images);
       setSearchStatus(Array.isArray(response) ? emptySearchResponse : response);
     } catch (error) {
+      if (searchTaskIdRef.current !== taskId) return;
       setSearchResults([]);
       setSearchStatus(emptySearchResponse);
       setSearchError(error instanceof Error ? error.message : t("search.failed"));
     } finally {
-      setIsSearching(false);
+      if (searchTaskIdRef.current === taskId) {
+        searchTaskIdRef.current = null;
+        setIsSearching(false);
+      }
     }
   };
 

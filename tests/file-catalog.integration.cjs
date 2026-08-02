@@ -98,6 +98,10 @@ app.whenReady().then(async () => {
       createdAt: timestamp,
       updatedAt: timestamp
     };
+    await assert.rejects(
+      () => scanImageDirectories([directory], { isCancelled: () => true }),
+      (error) => error?.code === "ECANCELED"
+    );
     const scan = await scanImageDirectories([directory]);
     assert.deepEqual(scan.files.map((file) => file.file_name).sort(), ["brief.docx", "notes.txt", "visual.png"]);
     assert.deepEqual(scan.images.map((file) => file.file_name), ["visual.png"]);
@@ -165,7 +169,8 @@ app.whenReady().then(async () => {
       missingFilesCleaned: 1,
       directoryReassignmentSynchronized: true,
       directoryDeletionSynchronized: true,
-      emptyDirectoryScanRecorded: true
+      emptyDirectoryScanRecorded: true,
+      cooperativeScanCancellation: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

@@ -128,7 +128,8 @@ contextBridge.exposeInMainWorld("imageEverything", {
     }
   },
   search: {
-    images: (search: unknown) => ipcRenderer.invoke("search:images", search)
+    images: (search: unknown, taskId: string) => ipcRenderer.invoke("search:images", search, taskId),
+    cancel: (taskId: string) => ipcRenderer.invoke("search:cancel", taskId)
   },
   index: {
     qualityStats: () => ipcRenderer.invoke("index:qualityStats"),
@@ -201,6 +202,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
   cache: {
     stats: () => ipcRenderer.invoke("cache:stats"),
     optimizationStatus: () => ipcRenderer.invoke("cache:optimizationStatus"),
+    setContentViewActive: (active: boolean) => ipcRenderer.invoke("cache:setContentViewActive", active),
     onOptimizationStatusChanged: (callback: (status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => callback(status);
       ipcRenderer.on("cache:optimizationStatusChanged", listener);

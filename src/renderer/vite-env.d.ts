@@ -85,7 +85,8 @@ declare global {
         onAiProgress: (callback: (progress: AiIndexProgress) => void) => () => void;
       };
       search: {
-        images: (search: SearchState) => Promise<ImageSearchResponse>;
+        images: (search: SearchState, taskId: string) => Promise<ImageSearchResponse>;
+        cancel: (taskId: string) => Promise<boolean>;
       };
       index: {
         qualityStats: () => Promise<IndexQualityStats>;
@@ -132,6 +133,7 @@ declare global {
       cache: {
         stats: () => Promise<VisualCacheStats>;
         optimizationStatus: () => Promise<ThumbnailOptimizationStatus>;
+        setContentViewActive: (active: boolean) => Promise<boolean>;
         onOptimizationStatusChanged: (callback: (status: ThumbnailOptimizationStatus) => void) => () => void;
         authorizeClear: () => Promise<string>;
         clearAll: (token: string) => Promise<VisualCacheStats>;

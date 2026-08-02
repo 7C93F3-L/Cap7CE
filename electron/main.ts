@@ -19,14 +19,14 @@ import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRunt
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
-import { deleteDirectoryImages, ensureImageDatabase, getCompletedFileScanDirectoryIds, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
+import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
-import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats, initializeThumbnailCache } from "./thumbnailService";
+import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { ensurePreviewImagePath, shouldUseSourceFileForPreview } from "./visualRenderService";
@@ -86,8 +86,12 @@ type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "
 type GlobalShortcutActionId = ShortcutActionId;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
-let thumbnailOptimizationScanPromise: Promise<void> | null = null;
 let modelInputCacheCleanupPromise: Promise<void> | null = null;
+let rendererContentViewActive = false;
+interface SearchTaskState {
+  cancelled: boolean;
+}
+const searchTasks = new Map<string, SearchTaskState>();
 let previewWindowLoaded = false;
 let previewSessionActive = false;
 let activePreviewData: PreviewWindowData | null = null;
@@ -121,25 +125,26 @@ const enqueueScannedThumbnails = (images: ScannedImageFile[]) => {
   });
 };
 
-const scheduleAllDirectoryThumbnailOptimization = () => {
-  if (!getThumbnailOptimizationStatus().enabled || thumbnailOptimizationScanPromise) {
-    return thumbnailOptimizationScanPromise ?? Promise.resolve();
+const syncThumbnailOptimizationActivity = () => {
+  const shouldRun = Boolean(
+    rendererContentViewActive
+    && mainWindow
+    && !mainWindow.isDestroyed()
+    && mainWindow.isVisible()
+    && mainWindow.isFocused()
+    && (activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal")
+  );
+  if (shouldRun) {
+    resumeThumbnailOptimization("inactive-content");
+    return;
   }
+  void pauseThumbnailOptimization("inactive-content");
+};
 
-  thumbnailOptimizationScanPromise = (async () => {
-    const directories = await listDirectories();
-    if (directories.length === 0 || !getThumbnailOptimizationStatus().enabled) {
-      return;
-    }
-    const scanResult = await scanImageDirectories(directories);
-    enqueueScannedThumbnails(scanResult.images);
-  })().catch((error) => {
-    console.warn("[thumbnail-optimization] directory scan failed", error);
-  }).finally(() => {
-    thumbnailOptimizationScanPromise = null;
-  });
-
-  return thumbnailOptimizationScanPromise;
+const cancelActiveSearchTasks = () => {
+  for (const task of searchTasks.values()) {
+    task.cancelled = true;
+  }
 };
 
 const scheduleRecognizedModelInputCacheCleanup = () => {
@@ -2048,6 +2053,18 @@ const createWindow = () => {
       mainWindow?.show();
       applyAlwaysOnTopState();
     }
+    syncThumbnailOptimizationActivity();
+  });
+
+  mainWindow.on("focus", syncThumbnailOptimizationActivity);
+  mainWindow.on("blur", () => {
+    syncThumbnailOptimizationActivity();
+    cancelActiveSearchTasks();
+  });
+  mainWindow.on("show", syncThumbnailOptimizationActivity);
+  mainWindow.on("hide", () => {
+    syncThumbnailOptimizationActivity();
+    cancelActiveSearchTasks();
   });
 
   mainWindow.on("will-resize", applyBottomCenterMicroWillResize);
@@ -2104,7 +2121,6 @@ const createWindow = () => {
 app.whenReady().then(async () => {
   registerLocalImageProtocol();
   await ensureImageDatabase();
-  await initializeThumbnailCache();
   const preferences = await getUserPreferences();
   setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
   edgeSnapEnabled = preferences.edgeSnapEnabled;
@@ -2114,8 +2130,8 @@ app.whenReady().then(async () => {
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
+  await pauseThumbnailOptimization("inactive-content");
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
-  void scheduleRecognizedModelInputCacheCleanup();
   createWindow();
   setThumbnailOptimizationStatusListener((status) => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
@@ -2123,7 +2139,6 @@ app.whenReady().then(async () => {
     }
     handleThumbnailOptimizationStatusForNotification(status);
   });
-  createPreviewWindow();
   void createStartupHintWindow();
   createAppTray();
   if (quickActionGlobalEnabled) {
@@ -2506,36 +2521,7 @@ ipcMain.on("file:startDrag", (event, filePaths: string[]) => {
 const withSqliteImageCounts = async (directories: PersistedDirectory[]) => {
   const directoryIds = directories.map((directory) => directory.id);
   const counts = await getExistingImageCountsByDirectory(directoryIds);
-  const completedFileScanDirectoryIds = await getCompletedFileScanDirectoryIds(directoryIds);
-  const directoryIdsNeedingScan = new Set(directories.filter(
-    (directory) => (
-      !completedFileScanDirectoryIds.has(directory.id)
-      || (
-        (counts[directory.id] ?? 0) === 0
-        && (directory.lastScannedAt === undefined || directory.indexedCount > 0)
-      )
-    )
-  ).map((directory) => directory.id));
-  const directoriesNeedingScan = directories.filter((directory) => directoryIdsNeedingScan.has(directory.id));
-  let currentDirectories = directories;
-
-  if (directoriesNeedingScan.length > 0) {
-    const scanResult = await scanImageDirectories(directoriesNeedingScan);
-    const scannedCounts = await writeScannedImagesToIndex(
-      directoriesNeedingScan.map((directory) => directory.id),
-      scanResult.images,
-      scanResult.scannedAt,
-      scanResult.files
-    );
-    Object.assign(counts, scannedCounts);
-    enqueueScannedThumbnails(scanResult.images);
-    currentDirectories = await applyDirectoryScanSummaries(scanResult.summaries.map((summary) => ({
-      ...summary,
-      indexedCount: scannedCounts[summary.id] ?? 0
-    })));
-  }
-
-  return currentDirectories.map((directory) => ({
+  return directories.map((directory) => ({
     ...directory,
     indexedCount: (counts[directory.id] ?? 0) > 0 ? counts[directory.id] : directory.indexedCount
   }));
@@ -2916,8 +2902,49 @@ ipcMain.handle("scan:directory", async (_event, directoryId: string) => {
   };
 });
 
-ipcMain.handle("search:images", async (_event, search) => {
-  return searchImagesWithAddedDirectories(search, await listDirectories(), enqueueScannedThumbnails);
+ipcMain.handle("search:images", async (event, search, taskId: unknown) => {
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof taskId !== "string"
+    || !taskId.trim()
+    || taskId.length > 128
+  ) {
+    throw new Error(t("search.failed"));
+  }
+  const normalizedTaskId = taskId.trim();
+  const task = { cancelled: false };
+  searchTasks.set(normalizedTaskId, task);
+  try {
+    return await searchImagesWithAddedDirectories(
+      search,
+      await listDirectories(),
+      enqueueScannedThumbnails,
+      { isCancelled: () => task.cancelled }
+    );
+  } finally {
+    if (searchTasks.get(normalizedTaskId) === task) {
+      searchTasks.delete(normalizedTaskId);
+    }
+  }
+});
+
+ipcMain.handle("search:cancel", (event, taskId: unknown) => {
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof taskId !== "string"
+    || !taskId.trim()
+    || taskId.length > 128
+  ) {
+    return false;
+  }
+  const task = searchTasks.get(taskId.trim());
+  if (!task) return false;
+  task.cancelled = true;
+  return true;
 });
 
 const getManualMetadataImage = async (
@@ -3140,7 +3167,6 @@ ipcMain.handle("preferences:updateAutoCacheOptimization", async (_event, nextEna
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   if (preferences.autoCacheOptimizationEnabled) {
     void scheduleRecognizedModelInputCacheCleanup();
-    void scheduleAllDirectoryThumbnailOptimization();
   }
   return preferences;
 });
@@ -3264,6 +3290,15 @@ ipcMain.handle("cache:stats", () => {
 
 ipcMain.handle("cache:optimizationStatus", () => {
   return getThumbnailOptimizationStatus();
+});
+
+ipcMain.handle("cache:setContentViewActive", (event, active: unknown) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    return false;
+  }
+  rendererContentViewActive = active === true;
+  syncThumbnailOptimizationActivity();
+  return true;
 });
 
 ipcMain.handle("cache:authorizeClear", () => {

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { getFileFormatCapability } from "./formatCapabilities";
-import { scanImageDirectories, type ScannedFile, type ScannedImageFile } from "./imageScanner";
+import { scanImageDirectories, type ImageScanControl, type ScannedFile, type ScannedImageFile } from "./imageScanner";
 import type { PersistedDirectory } from "./directoryStore";
 import { listExistingImageFilePaths, searchIndexedFiles, searchIndexedImages, type FileCatalogSearchResult, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
 
@@ -100,13 +100,17 @@ const toNonVisualResult = (file: ScannedFile | FileCatalogSearchResult): ImageSe
   };
 };
 
-const scanAddedDirectories = async (directories: PersistedDirectory[], search: ImageSearchState) => {
+const scanAddedDirectories = async (
+  directories: PersistedDirectory[],
+  search: ImageSearchState,
+  control?: ImageScanControl
+) => {
   const directoriesToScan = targetDirectories(directories, search.directoryId);
   if (directoriesToScan.length === 0) {
     return { images: [], files: [] };
   }
 
-  return scanImageDirectories(directoriesToScan);
+  return scanImageDirectories(directoriesToScan, control);
 };
 
 type ImageSearchWithFormatsResponse = ImageSearchResponse & { availableFormats: string[] };
@@ -114,13 +118,17 @@ type ImageSearchWithFormatsResponse = ImageSearchResponse & { availableFormats: 
 export const searchImagesWithAddedDirectories = async (
   search: ImageSearchState,
   directories: PersistedDirectory[],
-  onScannedImages?: (images: ScannedImageFile[]) => void
+  onScannedImages?: (images: ScannedImageFile[]) => void,
+  control?: ImageScanControl
 ): Promise<ImageSearchWithFormatsResponse> => {
   const [indexed, indexedFiles, scanResult] = await Promise.all([
     searchIndexedImages(search),
     searchIndexedFiles(search),
-    scanAddedDirectories(directories, search)
+    scanAddedDirectories(directories, search, control)
   ]);
+  if (control?.isCancelled()) {
+    throw Object.assign(new Error("Image search cancelled."), { code: "ECANCELED" });
+  }
   const terms = toSearchTerms(search.query);
   const scannedImages = scanResult.images;
   const scannedFiles = scanResult.files;
