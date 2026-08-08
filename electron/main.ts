@@ -42,6 +42,7 @@ import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePrevi
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
 import { closeFontPreviewSession, FontPreviewError, inspectFontPreviewSource, isFontPreviewRequestAuthorized, openFontPreviewSession } from "./fontPreviewService";
 import { closeEpubPreviewSession, EpubPreviewError, openEpubPreviewSession } from "./epubPreviewService";
+import { closeMobiPreviewSession, MobiPreviewError, openMobiPreviewSession } from "./mobiPreviewService";
 
 const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -320,6 +321,7 @@ const closePreviewSession = () => {
   previewOpenRequestId += 1;
   closeFontPreviewSession();
   closeEpubPreviewSession();
+  closeMobiPreviewSession();
   closeArchivePreviewSession();
   closeOfficePreviewSession();
   closePdfPreviewSession();
@@ -2565,7 +2567,8 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       && data.provider !== "office"
       && data.provider !== "archive"
       && data.provider !== "font"
-      && data.provider !== "epub")
+      && data.provider !== "epub"
+      && data.provider !== "mobi")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
     || data.archivePreview !== undefined
@@ -2574,6 +2577,8 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
     || data.fontFallbackReason !== undefined
     || data.epubPreview !== undefined
     || data.epubFallbackReason !== undefined
+    || data.mobiPreview !== undefined
+    || data.mobiFallbackReason !== undefined
     || typeof data.skimActive !== "boolean"
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
@@ -2589,10 +2594,36 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
     fontPreview: undefined,
     fontFallbackReason: undefined,
     epubPreview: undefined,
-    epubFallbackReason: undefined
+    epubFallbackReason: undefined,
+    mobiPreview: undefined,
+    mobiFallbackReason: undefined
   };
+  if (data.provider !== "mobi") closeMobiPreviewSession();
   if (data.provider !== "epub") closeEpubPreviewSession();
-  if (data.provider === "epub") {
+  if (data.provider === "mobi") {
+    closeEpubPreviewSession();
+    closeFontPreviewSession();
+    closeArchivePreviewSession();
+    closeOfficePreviewSession();
+    closePdfPreviewSession();
+    try {
+      const mobiPreview = await openMobiPreviewSession(data.sessionId, data.filePath);
+      if (requestId !== previewOpenRequestId) {
+        closeMobiPreviewSession(data.sessionId);
+        return false;
+      }
+      preparedData = { ...preparedData, mobiPreview };
+    } catch (error) {
+      if (requestId !== previewOpenRequestId) return false;
+      preparedData = {
+        ...preparedData,
+        provider: "fileInfo",
+        previewUrl: "",
+        mobiFallbackReason: error instanceof MobiPreviewError ? error.reason : "failed"
+      };
+    }
+  } else if (data.provider === "epub") {
+    closeMobiPreviewSession();
     closeFontPreviewSession();
     closeArchivePreviewSession();
     closeOfficePreviewSession();
@@ -2689,6 +2720,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       };
     }
   } else {
+    closeMobiPreviewSession();
     closeEpubPreviewSession();
     closeFontPreviewSession();
     closeArchivePreviewSession();

@@ -14,6 +14,9 @@ This file is a human-readable inventory for Cap7CE 0.8.1. `package-lock.json` is
 | `ag-psd` | MIT |
 | `7z-wasm` / 7-Zip WebAssembly | LGPL-2.1-or-later with the UnRAR restriction; bundled license texts are in `third_party/7z-wasm` |
 | `fflate` | MIT |
+| `@lingo-reader/mobi-parser` / `@lingo-reader/shared` | MIT |
+| `events` / `path-browserify` | MIT |
+| `sax` | BlueOak-1.0.0 |
 | `@xmldom/xmldom` | MIT |
 | `parse5` | MIT |
 | `entities` | BSD-2-Clause |
@@ -31,6 +34,8 @@ Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entrie
 Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active preview session. Binary packaging copies its MIT license to `resources/licenses/opentype.js`.
 
 Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
+
+Cap7CE uses `@lingo-reader/mobi-parser` and its runtime dependencies only inside the bounded MOBI preview worker, after Cap7CE validates the PalmDB/MOBI6 structure and supported format boundary. It extracts inert text and a bounded cover image; it does not execute book scripts or network resources.
 
 ## Electron and Chromium notices
 

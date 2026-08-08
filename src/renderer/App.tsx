@@ -70,7 +70,7 @@ const skimFormatIconSvgByName = Object.fromEntries(
 ) as Record<string, string>;
 
 const resolveFileContentPreview = async (filePath: string, previewKind: FilePreviewKind): Promise<{
-  provider: "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub";
+  provider: "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";
   previewUrl: string;
   textPreview?: SkimTextPreview;
 }> => {
@@ -101,6 +101,7 @@ const resolveFileContentPreview = async (filePath: string, previewKind: FilePrev
     return { provider: "font", previewUrl: "" };
   }
   if (previewKind === "epub") return { provider: "epub", previewUrl: "" };
+  if (previewKind === "mobi") return { provider: "mobi", previewUrl: "" };
   return { provider: "fileInfo", previewUrl: "" };
 };
 

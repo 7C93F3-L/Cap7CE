@@ -22,7 +22,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "tsc -b && vite build && npm run build:electron",
     "test": "npm run build:electron && npm run test:integration",
-    "test:integration": "npm run test:app-update && npm run test:epub-preview && npm run test:web-contents-zoom && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:file-catalog && npm run test:multi-format-search && npm run test:search-scan-snapshot && npm run test:file-drag && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
+    "test:integration": "npm run test:app-update && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:file-catalog && npm run test:multi-format-search && npm run test:search-scan-snapshot && npm run test:file-drag && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
     "test:app-update": "node tests/app-update.integration.cjs",
     "test:web-contents-zoom": "electron tests/web-contents-zoom.integration.cjs",
     "test:shell-mouse-polling": "node tests/shell-mouse-polling.integration.cjs",
@@ -53,7 +53,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win portable",
-    "test:epub-preview": "node tests/epub-preview.integration.cjs"
+    "test:epub-preview": "node tests/epub-preview.integration.cjs",
+    "test:mobi-preview": "node tests/mobi-preview.integration.cjs"
   },
   "build": {
     "appId": "com.cap7ce.app",
@@ -82,6 +83,11 @@
       "node_modules/7z-wasm/**/*",
       "dist-electron/fontMetadataWorker.js",
       "dist-electron/epubPreviewWorker.js",
+      "dist-electron/mobiPreviewWorker.js",
+      "node_modules/@lingo-reader/**/*",
+      "node_modules/events/**/*",
+      "node_modules/path-browserify/**/*",
+      "node_modules/sax/**/*",
       "node_modules/fflate/**/*",
       "node_modules/@xmldom/**/*",
       "node_modules/parse5/**/*",
@@ -89,6 +95,8 @@
       "node_modules/opentype.js/**/*",
       "node_modules/sql.js/dist/*.wasm",
       "node_modules/sharp/**/*",
+      "node_modules/detect-libc/**/*",
+      "node_modules/semver/**/*",
       "node_modules/@img/**/*",
       "node_modules/@napi-rs/canvas/**/*",
       "node_modules/@napi-rs/canvas-win32-x64-msvc/**/*"
@@ -139,6 +147,7 @@
     }
   },
   "dependencies": {
+    "@lingo-reader/mobi-parser": "0.4.6",
     "@napi-rs/canvas": "^0.1.88",
     "@types/sql.js": "^1.4.11",
     "@xmldom/xmldom": "^0.9.10",
