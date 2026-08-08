@@ -74,8 +74,10 @@ app.whenReady().then(async () => {
     assert.equal(parseSkimMediaByteRange(1000, "bytes=0-1,4-5"), null);
     assert.equal(getSkimMediaMimeType(".mp3"), "audio/mpeg");
     assert.equal(getSkimMediaMimeType(".wav"), "audio/wav");
+    assert.equal(getSkimMediaMimeType(".m4a"), "audio/mp4");
     assert.equal(getSkimMediaMimeType(".mp4"), "video/mp4");
     assert.equal(getSkimMediaMimeType(".mov"), "video/quicktime");
+    assert.equal(getSkimMediaMimeType(".webm"), "video/webm");
 
     console.log(JSON.stringify({
       utf8AndUtf16TextSupported: true,
@@ -85,7 +87,8 @@ app.whenReady().then(async () => {
       binaryEncodingRejected: true,
       textSizeBoundaryApplied: true,
       mediaRangeRequestsValidated: true,
-      mediaMimeTypesMapped: true
+      mediaMimeTypesMapped: true,
+      probedM4aAndWebmMapped: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

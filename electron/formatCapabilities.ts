@@ -53,8 +53,8 @@ const iconNameByExtension = new Map<string, string>([
 const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["txt", "text"], ["md", "text"], ["ini", "text"], ["html", "text"],
   ["csv", "text"], ["json", "text"], ["xml", "text"], ["yaml", "text"], ["yml", "text"],
-  ["mp3", "audio"], ["wav", "audio"],
-  ["mp4", "video"], ["mov", "video"]
+  ["m4a", "audio"], ["mp3", "audio"], ["wav", "audio"],
+  ["mp4", "video"], ["mov", "video"], ["webm", "video"]
 ]);
 
 const visualCapabilities = visualExtensions.map((extension): FileFormatCapability => ({

@@ -4,8 +4,8 @@ import path from "node:path";
 export const skimTextPreviewExtensions = new Set([
   ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml"
 ]);
-export const skimAudioPreviewExtensions = new Set([".mp3", ".wav"]);
-export const skimVideoPreviewExtensions = new Set([".mp4", ".mov"]);
+export const skimAudioPreviewExtensions = new Set([".m4a", ".mp3", ".wav"]);
+export const skimVideoPreviewExtensions = new Set([".mp4", ".mov", ".webm"]);
 export const maximumSkimTextPreviewBytes = 1024 * 1024;
 
 export interface SkimMediaByteRange {
@@ -15,10 +15,12 @@ export interface SkimMediaByteRange {
 }
 
 export const getSkimMediaMimeType = (extension: string) => ({
+  ".m4a": "audio/mp4",
   ".mp3": "audio/mpeg",
   ".wav": "audio/wav",
   ".mp4": "video/mp4",
-  ".mov": "video/quicktime"
+  ".mov": "video/quicktime",
+  ".webm": "video/webm"
 } as Record<string, string>)[extension.toLowerCase()] ?? null;
 
 export const parseSkimMediaByteRange = (fileSize: number, rangeHeader: string | null): SkimMediaByteRange | null => {

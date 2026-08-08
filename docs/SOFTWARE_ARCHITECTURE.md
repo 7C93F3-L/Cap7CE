@@ -65,7 +65,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `formatCapabilities.ts` | 文件扩展名中央能力表，分别声明增强浏览、通用索引、正式搜索、缩略图、预览 Provider 和 AI 能力，并作为未来 skim 精简范围、通用文件扫描白名单及现有视觉格式集合的来源；未登记格式仍可在 skim 使用通用能力显示 |
 | `skimBrowseService.ts` | skim 的磁盘枚举、当前一级全部普通文件元数据读取、可选格式能力附加、面包屑构建与协作式取消 |
 | `skimPreviewService.ts` | skim 文件/文件夹元数据读取、已添加目录范围判断，以及不跟随链接的受控并发后代统计 |
-| `skimContentPreviewService.ts` | TXT/MD/INI/HTML 与 CSV/JSON/XML/YAML/YML 限量源码文本读取、UTF-8/UTF-16 编码边界，以及 MP3/WAV/MP4/MOV 媒体 MIME 与单段 Range 校验 |
+| `skimContentPreviewService.ts` | TXT/MD/INI/HTML 与 CSV/JSON/XML/YAML/YML 限量源码文本读取、UTF-8/UTF-16 编码边界，以及 M4A/MP3/WAV 与 MP4/MOV/WEBM 媒体 MIME 和单段 Range 校验 |
 | `imageScanner.ts` | 对已添加目录执行一次支持协作取消的受支持格式递归扫描，排除应用缓存目录，同时产出通用文件记录和视觉文件子集 |
 | `searchPathEvidence.ts` | 统一查询拆词、路径规范化、SQL LIKE 转义、相对目录证据和根目录真实名称 / 用户显示名称匹配语义 |
 | `searchScanSnapshotService.ts` | 按已添加目录维护 15 秒内存扫描快照，合并并发扫描请求，并处理显式扫描注入、目录变更失效和离开内容视图 / 失焦取消 |
@@ -145,7 +145,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 `src/renderer/styles.css` 是 0.8.1 UI 的主要样式入口，包含搜索胶囊、统一窗口壳层、Settings、右键菜单、自绘拾色器、独立预览、关键词编辑、自绘滚动条、等待状态、交互动效、待机线和主题变量。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。Settings 底部版本号仍以文字按钮形式打开固定 GitHub Releases 页面；视觉模型下方的“版本更新”行仅在用户点击时检查更新，发现新版后先显示版本号并将按钮切换为“立即下载”，再次点击才由系统浏览器打开受限命名的 ZIP。Cap7CE 本身不后台检查、不写入下载文件或自动覆盖安装。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
 
-格式能力必须保持分层：skim 可以显示当前一级全部普通文件，但这不等于全部格式进入正式能力。当前 14 种视觉格式继续允许通用索引、正式搜索、正式缩略图和 AI 索引；60 种已登记的项目关联非视觉格式允许写入已添加目录的 `files` 通用目录层，并以文件名和扩展名进入正式搜索，但不生成正式视觉缩略图，也不进入 AI；其他未知格式仍只存在于 skim。非原生视觉格式在 skim 当前可见范围内可以尝试 Windows Shell 内容缩略图，但失败只回退格式或通用图标，不改变格式能力归属。识别状态为“已识别”或“未识别”时只返回视觉结果，非视觉文件不会被归入任一识别状态。`supportedVisualFormats.ts` 从中央能力表派生视觉集合，避免通用扫描白名单扩展意外扩大识别范围。skim 视觉文件通过独立 `cap7ce://skim-thumbnail` 和 `cap7ce://skim-preview` 协议按需进入专属缓存，支持正式视觉渲染器覆盖的全部视觉格式。TXT/MD/INI/HTML 与 CSV/JSON/XML/YAML/YML 以最多 1 MB 的源码文本进入正式搜索和 skim 共用的 `text` Provider；HTML 始终作为纯文本放入 `<pre>`，不解析或执行。RTF 保持文件信息预览，等待文档 Provider。MP3/WAV 与 MP4/MOV 通过只允许当前预览项目访问、支持 Range 的 `cap7ce://skim-media` 进入 `audio`/`video` Provider。编码、文件内容或浏览器媒体解码不支持时回退文件信息。
+格式能力必须保持分层：skim 可以显示当前一级全部普通文件，但这不等于全部格式进入正式能力。当前 14 种视觉格式继续允许通用索引、正式搜索、正式缩略图和 AI 索引；60 种已登记的项目关联非视觉格式允许写入已添加目录的 `files` 通用目录层，并以文件名和扩展名进入正式搜索，但不生成正式视觉缩略图，也不进入 AI；其他未知格式仍只存在于 skim。非原生视觉格式在 skim 当前可见范围内可以尝试 Windows Shell 内容缩略图，但失败只回退格式或通用图标，不改变格式能力归属。识别状态为“已识别”或“未识别”时只返回视觉结果，非视觉文件不会被归入任一识别状态。`supportedVisualFormats.ts` 从中央能力表派生视觉集合，避免通用扫描白名单扩展意外扩大识别范围。skim 视觉文件通过独立 `cap7ce://skim-thumbnail` 和 `cap7ce://skim-preview` 协议按需进入专属缓存，支持正式视觉渲染器覆盖的全部视觉格式。TXT/MD/INI/HTML 与 CSV/JSON/XML/YAML/YML 以最多 1 MB 的源码文本进入正式搜索和 skim 共用的 `text` Provider；HTML 始终作为纯文本放入 `<pre>`，不解析或执行。RTF 保持文件信息预览，等待文档 Provider。M4A/MP3/WAV 与 MP4/MOV/WEBM 通过只允许当前预览项目访问、支持 Range 的 `cap7ce://skim-media` 进入 `audio`/`video` Provider；M4A 与 WEBM 仅在 Electron 43 / Chromium 150 的用户真实样本完成元数据、首段解码、播放状态及时间轴推进验证后接入，其他登记容器不据扩展名推定可播放。编码、文件内容或浏览器媒体解码不支持时回退文件信息。
 
 当前界面文案通过纯 TypeScript 模块 `electron/localization.ts` 的稳定文案 ID 和 `t()` 入口读取。该模块不依赖 Electron、Node 或 React，因此主进程与 Renderer 可以共用。中文与 `electron/locales/en-US.ts` 英文语言表保持相同键及占位符，语言偏好支持跟随系统、中文和 English，并由主进程持久化后同步到主窗口、独立预览窗口和托盘菜单。Settings 的语言入口在中文界面显示“语言 / Language”，在英文界面显示“Language / 语言”；明确选择语言时显示“中文”或“English”，跟随系统时显示当前实际解析语言，同时保留系统跟随偏好，确保用户不熟悉当前界面语言时仍能定位并操作。切换语言时运行期生成界面标签，避免模块初始化阶段缓存旧语言。AI 提示词不属于界面语言表，但识别任务启动时会固定当前已解析语言并选择独立的中文或英文提示词模板，避免运行期间切换语言造成同一批结果中英混杂；错误分类正则、开发日志、用户文件名与第三方原始错误同样不属于界面语言表，不能为消除硬编码扫描结果而修改其语义。
 
