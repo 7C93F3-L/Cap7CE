@@ -52,7 +52,7 @@ const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
     fileName: file.file_name,
     extension: file.extension,
     iconName: isVisual ? "skim-file" : capability.iconName,
-    previewKind: isVisual ? "image" : capability.previewKind,
+    previewKind: capability.previewKind,
     fileSize: file.file_size,
     createdAt: file.created_at,
     modifiedAt: file.modified_at,

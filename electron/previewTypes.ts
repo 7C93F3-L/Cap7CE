@@ -15,7 +15,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf";
   info?: {
     kind: "file" | "folder";
     name: string;
@@ -29,6 +29,11 @@ export interface PreviewWindowData {
     content: string;
     encoding: "utf-8" | "utf-16le" | "utf-16be";
     truncated: boolean;
+  };
+  pdfPreview?: {
+    pageCount: number;
+    defaultPageWidth: number;
+    defaultPageHeight: number;
   };
   skimActive: boolean;
   theme: "light" | "dark";

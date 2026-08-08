@@ -70,7 +70,7 @@ const skimFormatIconSvgByName = Object.fromEntries(
 ) as Record<string, string>;
 
 const resolveFileContentPreview = async (filePath: string, previewKind: FilePreviewKind): Promise<{
-  provider: "fileInfo" | "text" | "audio" | "video";
+  provider: "fileInfo" | "text" | "audio" | "video" | "pdf";
   previewUrl: string;
   textPreview?: SkimTextPreview;
 }> => {
@@ -87,6 +87,9 @@ const resolveFileContentPreview = async (filePath: string, previewKind: FilePrev
       provider: previewKind,
       previewUrl: `cap7ce://skim-media/?path=${encodeURIComponent(filePath)}`
     };
+  }
+  if (previewKind === "pdf") {
+    return { provider: "pdf", previewUrl: "" };
   }
   return { provider: "fileInfo", previewUrl: "" };
 };
@@ -4384,7 +4387,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     }
     onSelectedImageChange(image.id);
     let previewData: PreviewWindowData;
-    if (image.resultKind === "file") {
+    if (image.resultKind === "file" || image.previewKind !== "image") {
       try {
         const info = await window.imageEverything?.skim.inspect({ path: image.filePath, kind: "file" });
         if (!info || previewOpenRequestRef.current !== openRequestId) return;

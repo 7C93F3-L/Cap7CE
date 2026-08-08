@@ -37,6 +37,7 @@ import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "./key
 import type { KeywordBatchUpdateRequest, KeywordBatchUpdateResult } from "./keywordTypes";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
+import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 
 const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -76,6 +77,7 @@ let cacheClearAuthorization: { token: string; expiresAt: number } | null = null;
 let skimCacheClearAuthorization: { token: string; expiresAt: number } | null = null;
 let startupHintCloseTimer: NodeJS.Timeout | null = null;
 let previewIdleDestroyTimer: NodeJS.Timeout | null = null;
+let previewOpenRequestId = 0;
 let shellAlwaysOnTop = false;
 let shellMaximized = false;
 let lastNormalBounds: Electron.Rectangle | null = null;
@@ -311,6 +313,8 @@ const schedulePreviewIdleDestroy = () => {
 };
 
 const closePreviewSession = () => {
+  previewOpenRequestId += 1;
+  closePdfPreviewSession();
   if (activeSkimFolderStatsTask) {
     activeSkimFolderStatsTask.cancelled = true;
     activeSkimFolderStatsTask = null;
@@ -1893,6 +1897,7 @@ const registerLocalImageProtocol = () => {
       && url.hostname !== "skim-thumbnail"
       && url.hostname !== "skim-preview"
       && url.hostname !== "skim-media"
+      && url.hostname !== "pdf-page"
     ) {
       return new Response("Not found", { status: 404 });
     }
@@ -1903,6 +1908,33 @@ const registerLocalImageProtocol = () => {
     }
 
     try {
+      if (url.hostname === "pdf-page") {
+        const sessionId = url.searchParams.get("session");
+        const pageNumber = Number(url.searchParams.get("page"));
+        const normalizedRequestedPath = path.normalize(path.resolve(filePath));
+        const normalizedActivePath = activePreviewData
+          ? path.normalize(path.resolve(activePreviewData.filePath))
+          : "";
+        const samePath = process.platform === "win32"
+          ? normalizedRequestedPath.toLowerCase() === normalizedActivePath.toLowerCase()
+          : normalizedRequestedPath === normalizedActivePath;
+        if (
+          !sessionId
+          || activePreviewData?.provider !== "pdf"
+          || activePreviewData.sessionId !== sessionId
+          || !samePath
+          || !Number.isInteger(pageNumber)
+        ) {
+          return new Response("PDF preview page is unavailable", { status: 403 });
+        }
+        const page = await renderPdfPreviewPage(sessionId, normalizedRequestedPath, pageNumber);
+        return new Response(toResponseBody(page), {
+          headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": "no-store"
+          }
+        });
+      }
       if (url.hostname === "skim-media") {
         const extension = path.extname(filePath).toLowerCase();
         const expectedProvider = skimAudioPreviewExtensions.has(extension)
@@ -2462,7 +2494,7 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
   }
 });
 
-ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
+ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
   if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
     return false;
   }
@@ -2477,13 +2509,38 @@ ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
       && data.provider !== "folderInfo"
       && data.provider !== "text"
       && data.provider !== "audio"
-      && data.provider !== "video")
+      && data.provider !== "video"
+      && data.provider !== "pdf")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
     || typeof data.skimActive !== "boolean"
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
     return false;
+  }
+
+  const requestId = ++previewOpenRequestId;
+  let preparedData: PreviewWindowData = { ...data, pdfPreview: undefined };
+  if (data.provider === "pdf") {
+    try {
+      const pdfPreview = await openPdfPreviewSession(data.sessionId, data.filePath);
+      if (requestId !== previewOpenRequestId) {
+        closePdfPreviewSession(data.sessionId);
+        return false;
+      }
+      preparedData = { ...preparedData, pdfPreview };
+    } catch {
+      if (requestId !== previewOpenRequestId) return false;
+      closePdfPreviewSession(data.sessionId);
+      preparedData = {
+        ...preparedData,
+        provider: "fileInfo",
+        previewUrl: "",
+        pdfPreview: undefined
+      };
+    }
+  } else {
+    closePdfPreviewSession();
   }
 
   logPreviewLifecycle("open-request", {
@@ -2509,7 +2566,7 @@ ipcMain.handle("preview:open", (event, data: PreviewWindowData) => {
     centerPreviewWindowForNewSession();
   }
   previewSessionActive = true;
-  activePreviewData = data;
+  activePreviewData = preparedData;
   latestPreviewContentSize = null;
   sendActivePreviewData();
   if (isOpeningSession && previewWindowLoaded) {

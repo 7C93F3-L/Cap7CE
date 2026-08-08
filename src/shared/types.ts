@@ -28,13 +28,20 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf";
   info?: SkimPreviewInfo;
   textPreview?: SkimTextPreview;
+  pdfPreview?: PdfPreviewMetadata;
   skimActive: boolean;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
   appearanceColors: AppearanceColors;
+}
+
+export interface PdfPreviewMetadata {
+  pageCount: number;
+  defaultPageWidth: number;
+  defaultPageHeight: number;
 }
 
 export interface PreviewWindowControlState {
@@ -144,7 +151,7 @@ export interface DirectoryAddResult {
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf";
 
 export interface FileFormatCapability {
   extension: string;

@@ -27,7 +27,7 @@ const { app } = require("electron");
   assert.equal(formalVisualCapabilities.every((capability) => (
     capability.canSearch
     && capability.canThumbnail
-    && capability.previewKind === "image"
+    && capability.previewKind === (capability.extension === ".pdf" ? "pdf" : "image")
     && capability.canAIIndex
   )), true);
   assert.equal(formalVisualCapabilities.filter((capability) => capability.canDirectPreview).length, 7);
@@ -48,7 +48,7 @@ const { app } = require("electron");
   assert.deepEqual(
     Object.fromEntries([
       ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml",
-      ".m4a", ".mp3", ".wav", ".mp4", ".mov", ".webm"
+      ".pdf", ".m4a", ".mp3", ".wav", ".mp4", ".mov", ".webm"
     ].map((extension) => [
       extension,
       fileFormatCapabilityByExtension.get(extension).previewKind
@@ -56,6 +56,7 @@ const { app } = require("electron");
     {
       ".txt": "text", ".md": "text", ".ini": "text", ".html": "text",
       ".csv": "text", ".json": "text", ".xml": "text", ".yaml": "text", ".yml": "text",
+      ".pdf": "pdf",
       ".m4a": "audio", ".mp3": "audio", ".wav": "audio",
       ".mp4": "video", ".mov": "video", ".webm": "video"
     }

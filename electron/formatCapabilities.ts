@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf";
 
 export interface FileFormatCapability {
   extension: string;
@@ -66,7 +66,7 @@ const visualCapabilities = visualExtensions.map((extension): FileFormatCapabilit
   canIndex: true,
   canSearch: true,
   canThumbnail: true,
-  previewKind: "image",
+  previewKind: extension === ".pdf" ? "pdf" : "image",
   canDirectPreview: directPreviewExtensions.has(extension),
   canAIIndex: true
 }));

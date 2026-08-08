@@ -41,7 +41,7 @@ export interface ImageSearchResult {
   fileName: string;
   extension: string;
   iconName: string;
-  previewKind: "image" | "fileInfo" | "text" | "audio" | "video";
+  previewKind: "image" | "fileInfo" | "text" | "audio" | "video" | "pdf";
   fileSize: number;
   createdAt: string;
   modifiedAt: string;
@@ -1475,7 +1475,7 @@ export const searchIndexedCatalog = async (
         fileName,
         extension,
         iconName: isVisual ? "skim-file" : capability.iconName,
-        previewKind: isVisual ? "image" : capability.previewKind,
+        previewKind: capability.previewKind,
         fileSize: Number(row[4] ?? 0),
         createdAt: String(row[5] ?? ""),
         modifiedAt: String(row[6] ?? ""),
@@ -1720,7 +1720,7 @@ export const searchIndexedImages = async (search: ImageSearchState): Promise<Ima
         fileName: String(row[2]),
         extension: path.extname(String(row[2])).toLowerCase(),
         iconName: "skim-file",
-        previewKind: "image",
+        previewKind: getFileFormatCapability(path.extname(String(row[2])).toLowerCase())?.previewKind ?? "image",
         fileSize: Number(row[3] ?? 0),
         createdAt: String(row[4] ?? ""),
         modifiedAt: String(row[5] ?? ""),

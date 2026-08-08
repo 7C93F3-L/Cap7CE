@@ -4,6 +4,7 @@ import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
+import PdfPreviewPanel from "./PdfPreviewPanel";
 import { setActiveLanguage, t } from "../../electron/localization";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
@@ -41,6 +42,7 @@ const PreviewWindowApp = () => {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const textScrollRef = useRef<HTMLPreElement | null>(null);
+  const pdfScrollRef = useRef<HTMLDivElement>(null);
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
@@ -111,6 +113,8 @@ const PreviewWindowApp = () => {
         ? { width: 640, height: 260 }
         : previewData.provider === "text"
           ? { width: 760, height: 600 }
+          : previewData.provider === "pdf"
+            ? { width: 920, height: 700 }
           : infoDimensions;
     window.imageEverything?.preview.contentSize({
       sessionId: previewData.sessionId,
@@ -202,6 +206,14 @@ const PreviewWindowApp = () => {
         return;
       }
       if (mediaRef.current && document.activeElement === mediaRef.current) return;
+      if (previewData?.provider === "pdf" && (event.key === "PageUp" || event.key === "PageDown")) {
+        event.preventDefault();
+        pdfScrollRef.current?.scrollBy({
+          top: (event.key === "PageDown" ? 1 : -1) * (pdfScrollRef.current.clientHeight * 0.9),
+          behavior: "auto"
+        });
+        return;
+      }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         window.imageEverything?.preview.navigate(-1);
@@ -215,7 +227,7 @@ const PreviewWindowApp = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [previewData?.provider]);
 
   const themeStyle = useMemo(() => {
     if (!previewData) {
@@ -286,15 +298,20 @@ const PreviewWindowApp = () => {
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
       onWheelCapture={(event) => {
-        if (previewData.provider === "text" && previewData.textPreview && !showInfoFallback) {
+        const contentScroll = previewData.provider === "text"
+          ? textScrollRef.current
+          : previewData.provider === "pdf"
+            ? pdfScrollRef.current
+            : null;
+        if (contentScroll && !showInfoFallback) {
           event.preventDefault();
           setContextMenu(null);
           const deltaMultiplier = event.deltaMode === 1
             ? 16
             : event.deltaMode === 2
-              ? textScrollRef.current?.clientHeight ?? 1
+              ? contentScroll.clientHeight
               : 1;
-          textScrollRef.current?.scrollBy({
+          contentScroll.scrollBy({
             top: event.deltaY * deltaMultiplier,
             left: event.deltaX * deltaMultiplier,
             behavior: "auto"
@@ -374,6 +391,12 @@ const PreviewWindowApp = () => {
             </header>
             <pre ref={textScrollRef} className="cap-main-scroll-viewport">{previewData.textPreview.content}</pre>
           </section>
+        ) : previewData.provider === "pdf" && previewData.pdfPreview && !showInfoFallback ? (
+          <PdfPreviewPanel
+            data={{ ...previewData, pdfPreview: previewData.pdfPreview }}
+            scrollRef={pdfScrollRef}
+            onError={() => setShowInfoFallback(true)}
+          />
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
             <section className="preview-media-panel preview-audio-panel">
@@ -431,9 +454,15 @@ const PreviewWindowApp = () => {
           </section>
         )}
       </div>
-      {previewData.provider === "text" && previewData.textPreview && !showInfoFallback && (
+      {(
+        (previewData.provider === "text" && previewData.textPreview)
+        || (previewData.provider === "pdf" && previewData.pdfPreview)
+      ) && !showInfoFallback && (
         <div className="preview-window-scrollbar-slot">
-          <CustomScrollbar scrollContainerRef={textScrollRef} orientation="vertical" />
+          <CustomScrollbar
+            scrollContainerRef={previewData.provider === "pdf" ? pdfScrollRef : textScrollRef}
+            orientation="vertical"
+          />
         </div>
       )}
       <WindowControlRail
