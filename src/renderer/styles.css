@@ -2723,13 +2723,92 @@ textarea,
 .preview-text-panel,
 .preview-media-panel,
 .preview-pdf-panel,
-.preview-archive-panel {
+.preview-archive-panel,
+.preview-font-panel {
   width: min(100%, 860px);
   max-height: 100%;
   overflow: hidden;
   border-radius: var(--radius-thumb);
   background: var(--panel-bg);
   color: var(--text-main);
+}
+
+.preview-font-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px 30px;
+  overflow: hidden;
+}
+
+.preview-font-panel > header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.preview-font-panel > header > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-font-panel > header strong {
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-font-axes {
+  flex: 0 0 auto;
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.preview-font-samples {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+}
+
+.preview-font-sample > span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.preview-font-sample > p {
+  margin: 8px 0 0;
+  color: var(--text-main);
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.preview-font-latin-sample > span {
+  display: block;
+}
+
+.preview-font-sample > .preview-font-chinese-sample {
+  font-size: clamp(22px, 3.4vw, 32px);
+}
+
+.preview-font-sample > .preview-font-unsupported,
+.preview-font-loading {
+  color: var(--text-muted);
+  font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
+  font-size: 13px;
 }
 
 .preview-text-panel {
@@ -3030,7 +3109,7 @@ textarea,
 .preview-info-panel {
   width: min(100%, 680px);
   max-height: 100%;
-  overflow: auto;
+  overflow: hidden;
   padding: 28px;
   border-radius: var(--radius-thumb);
   background: var(--panel-bg);

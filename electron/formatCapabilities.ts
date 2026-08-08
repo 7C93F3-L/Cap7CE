@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font";
 
 export interface FileFormatCapability {
   extension: string;
@@ -56,6 +56,7 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["doc", "text"], ["docx", "text"],
   ["xls", "office"], ["xlsx", "office"], ["ppt", "office"], ["pptx", "office"],
   ["7z", "archive"], ["rar", "archive"], ["zip", "archive"],
+  ["otf", "font"], ["ttf", "font"],
   ["flac", "audio"], ["m4a", "audio"], ["mp3", "audio"], ["ogg", "audio"], ["wav", "audio"],
   ["mkv", "video"], ["mp4", "video"], ["mov", "video"], ["webm", "video"]
 ]);

@@ -40,6 +40,7 @@ import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
+import { closeFontPreviewSession, FontPreviewError, inspectFontPreviewSource, isFontPreviewRequestAuthorized, openFontPreviewSession } from "./fontPreviewService";
 
 const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -316,6 +317,7 @@ const schedulePreviewIdleDestroy = () => {
 
 const closePreviewSession = () => {
   previewOpenRequestId += 1;
+  closeFontPreviewSession();
   closeArchivePreviewSession();
   closeOfficePreviewSession();
   closePdfPreviewSession();
@@ -1884,6 +1886,15 @@ protocol.registerSchemesAsPrivileged([
       secure: true,
       supportFetchAPI: true
     }
+  },
+  {
+    scheme: "cap7cefont",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true
+    }
   }
 ]);
 
@@ -1891,6 +1902,34 @@ const registerLocalImageProtocol = () => {
   const toResponseBody = (buffer: Buffer) => (
     buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
   );
+
+  protocol.handle("cap7cefont", async (request) => {
+    const url = new URL(request.url);
+    if (url.hostname !== "preview") return new Response("Not found", { status: 404 });
+    const filePath = url.searchParams.get("path");
+    const sessionId = url.searchParams.get("session");
+    if (!filePath) return new Response("Missing path", { status: 400 });
+    try {
+      const normalizedRequestedPath = path.normalize(path.resolve(filePath));
+      if (!isFontPreviewRequestAuthorized(activePreviewData, sessionId, normalizedRequestedPath)) {
+        return new Response("Font preview is unavailable", { status: 403 });
+      }
+      const { normalizedPath, size } = await inspectFontPreviewSource(normalizedRequestedPath);
+      const extension = path.extname(normalizedPath).toLowerCase();
+      const body = request.method === "HEAD"
+        ? null
+        : Readable.toWeb(createReadStream(normalizedPath)) as ReadableStream<Uint8Array>;
+      return new Response(body, {
+        headers: {
+          "Content-Length": String(size),
+          "Content-Type": extension === ".otf" ? "font/otf" : "font/ttf",
+          "Cache-Control": "no-store"
+        }
+      });
+    } catch {
+      return new Response("Font preview is unavailable", { status: 404 });
+    }
+  });
 
   protocol.handle("cap7ce", async (request) => {
     const url = new URL(request.url);
@@ -2522,11 +2561,14 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       && data.provider !== "video"
       && data.provider !== "pdf"
       && data.provider !== "office"
-      && data.provider !== "archive")
+      && data.provider !== "archive"
+      && data.provider !== "font")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
     || data.archivePreview !== undefined
     || data.archiveFallbackReason !== undefined
+    || data.fontPreview !== undefined
+    || data.fontFallbackReason !== undefined
     || typeof data.skimActive !== "boolean"
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
@@ -2538,9 +2580,33 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
     ...data,
     pdfPreview: undefined,
     archivePreview: undefined,
-    archiveFallbackReason: undefined
+    archiveFallbackReason: undefined,
+    fontPreview: undefined,
+    fontFallbackReason: undefined
   };
-  if (data.provider === "archive") {
+  if (data.provider === "font") {
+    closeArchivePreviewSession();
+    closeOfficePreviewSession();
+    closePdfPreviewSession();
+    try {
+      const fontPreview = await openFontPreviewSession(data.sessionId, data.filePath, data.language);
+      if (requestId !== previewOpenRequestId) {
+        closeFontPreviewSession(data.sessionId);
+        return false;
+      }
+      preparedData = { ...preparedData, fontPreview };
+    } catch (error) {
+      if (requestId !== previewOpenRequestId) return false;
+      closeFontPreviewSession(data.sessionId);
+      preparedData = {
+        ...preparedData,
+        provider: "fileInfo",
+        previewUrl: "",
+        fontFallbackReason: error instanceof FontPreviewError ? error.reason : "failed"
+      };
+    }
+  } else if (data.provider === "archive") {
+    closeFontPreviewSession();
     closeOfficePreviewSession();
     closePdfPreviewSession();
     try {
@@ -2561,6 +2627,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       };
     }
   } else if (data.provider === "pdf" || data.provider === "office") {
+    closeFontPreviewSession();
     closeArchivePreviewSession();
     try {
       let pdfSourcePath = data.filePath;
@@ -2593,6 +2660,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       };
     }
   } else {
+    closeFontPreviewSession();
     closeArchivePreviewSession();
     closeOfficePreviewSession();
     closePdfPreviewSession();

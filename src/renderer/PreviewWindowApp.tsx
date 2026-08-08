@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { ArchivePreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
+import type { ArchivePreviewFallbackReason, FontPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import PdfPreviewPanel from "./PdfPreviewPanel";
+import FontPreviewPanel from "./FontPreviewPanel";
 import { setActiveLanguage, t } from "../../electron/localization";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
@@ -38,12 +39,22 @@ const getArchiveFallbackMessage = (reason: ArchivePreviewFallbackReason) => {
   }
 };
 
+const getFontFallbackMessage = (reason: FontPreviewFallbackReason) => {
+  switch (reason) {
+    case "invalidFont": return t("preview.fontFallback.invalidFont");
+    case "tooLarge": return t("preview.fontFallback.tooLarge");
+    case "timedOut": return t("preview.fontFallback.timedOut");
+    default: return t("preview.fontFallback.failed");
+  }
+};
+
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
   const [displaySrc, setDisplaySrc] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showInfoFallback, setShowInfoFallback] = useState(false);
+  const [fontRuntimeFailed, setFontRuntimeFailed] = useState(false);
   const [showPreviewLoadingIndicator, setShowPreviewLoadingIndicator] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
@@ -76,6 +87,7 @@ const PreviewWindowApp = () => {
         status: "scanning"
       } : null);
       setShowInfoFallback(false);
+      setFontRuntimeFailed(false);
       targetSessionIdRef.current = data.sessionId;
       if (previewLoadingIndicatorTimerRef.current !== null) {
         window.clearTimeout(previewLoadingIndicatorTimerRef.current);
@@ -115,8 +127,8 @@ const PreviewWindowApp = () => {
       || ((!previewData.provider || previewData.provider === "image" || previewData.provider === "video") && !showInfoFallback)
     ) return;
     const infoDimensions = previewData.info?.kind === "folder"
-      ? { width: 480, height: 360 }
-      : { width: 480, height: 250 };
+      ? { width: 600, height: 460 }
+      : { width: 600, height: 360 };
     const dimensions = showInfoFallback
       ? infoDimensions
       : previewData.provider === "video"
@@ -129,6 +141,8 @@ const PreviewWindowApp = () => {
             ? { width: 920, height: 700 }
           : previewData.provider === "archive"
             ? { width: 800, height: 620 }
+          : previewData.provider === "font"
+            ? { width: 780, height: 520 }
           : infoDimensions;
     window.imageEverything?.preview.contentSize({
       sessionId: previewData.sessionId,
@@ -165,6 +179,7 @@ const PreviewWindowApp = () => {
       setUsingFallback(false);
       setIsPreviewLoading(false);
       setShowInfoFallback(false);
+      setFontRuntimeFailed(false);
       setShowPreviewLoadingIndicator(false);
       setContextMenu(null);
       setFolderStats(null);
@@ -438,6 +453,14 @@ const PreviewWindowApp = () => {
               ))}
             </div>
           </section>
+        ) : previewData.provider === "font" && previewData.fontPreview && !showInfoFallback ? (
+          <FontPreviewPanel
+            data={{ ...previewData, fontPreview: previewData.fontPreview }}
+            onError={() => {
+              setFontRuntimeFailed(true);
+              setShowInfoFallback(true);
+            }}
+          />
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
             <section className="preview-media-panel preview-audio-panel">
@@ -480,6 +503,12 @@ const PreviewWindowApp = () => {
             <h1>{previewData.info.name}</h1>
             {previewData.archiveFallbackReason && (
               <p className="preview-info-notice">{getArchiveFallbackMessage(previewData.archiveFallbackReason)}</p>
+            )}
+            {previewData.fontFallbackReason && (
+              <p className="preview-info-notice">{getFontFallbackMessage(previewData.fontFallbackReason)}</p>
+            )}
+            {fontRuntimeFailed && !previewData.fontFallbackReason && (
+              <p className="preview-info-notice">{getFontFallbackMessage("failed")}</p>
             )}
             <dl>
               <dt>{t("skim.previewPath")}</dt><dd>{previewData.info.path}</dd>

@@ -1,4 +1,5 @@
 import type { ArchivePreviewData, ArchivePreviewFallbackReason } from "./archivePreviewTypes";
+import type { FontPreviewData, FontPreviewFallbackReason } from "./fontPreviewTypes";
 
 export type PreviewNavigateDirection = -1 | 1;
 
@@ -17,7 +18,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font";
   info?: {
     kind: "file" | "folder";
     name: string;
@@ -39,6 +40,8 @@ export interface PreviewWindowData {
   };
   archivePreview?: ArchivePreviewData;
   archiveFallbackReason?: ArchivePreviewFallbackReason;
+  fontPreview?: FontPreviewData;
+  fontFallbackReason?: FontPreviewFallbackReason;
   skimActive: boolean;
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";
