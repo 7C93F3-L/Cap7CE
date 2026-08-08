@@ -48,7 +48,7 @@ const { app } = require("electron");
   assert.deepEqual(
     Object.fromEntries([
       ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml",
-      ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+      ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".7z", ".rar", ".zip",
       ".pdf", ".flac", ".m4a", ".mp3", ".ogg", ".wav", ".mkv", ".mp4", ".mov", ".webm"
     ].map((extension) => [
       extension,
@@ -59,12 +59,13 @@ const { app } = require("electron");
       ".csv": "text", ".json": "text", ".xml": "text", ".yaml": "text", ".yml": "text",
       ".doc": "text", ".docx": "text",
       ".xls": "office", ".xlsx": "office", ".ppt": "office", ".pptx": "office",
+      ".7z": "archive", ".rar": "archive", ".zip": "archive",
       ".pdf": "pdf",
       ".flac": "audio", ".m4a": "audio", ".mp3": "audio", ".ogg": "audio", ".wav": "audio",
       ".mkv": "video", ".mp4": "video", ".mov": "video", ".webm": "video"
     }
   );
-  assert.equal(formalNonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 36);
+  assert.equal(formalNonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 33);
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()

@@ -2,7 +2,7 @@
 
 Cap7CE source code is licensed under GPL-3.0-only. Third-party software included in the source tree, dependency graph, or packaged runtime remains subject to its own license.
 
-This file is a human-readable inventory for Cap7CE 0.8.0. `package-lock.json` is the authoritative locked npm dependency inventory. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
+This file is a human-readable inventory for Cap7CE 0.8.1. `package-lock.json` is the authoritative locked npm dependency inventory. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
 
 ## Primary runtime components
 
@@ -12,6 +12,7 @@ This file is a human-readable inventory for Cap7CE 0.8.0. `package-lock.json` is
 | React / React DOM | MIT |
 | `@napi-rs/canvas` and Windows runtime package | MIT |
 | `ag-psd` | MIT |
+| `7z-wasm` / 7-Zip WebAssembly | LGPL-2.1-or-later with the UnRAR restriction; bundled license texts are in `third_party/7z-wasm` |
 | `pdfjs-dist` | Apache-2.0 |
 | `sharp` | Apache-2.0 |
 | `@img/sharp-win32-x64` / bundled libvips components | Apache-2.0 AND LGPL-3.0-or-later |
@@ -19,6 +20,8 @@ This file is a human-readable inventory for Cap7CE 0.8.0. `package-lock.json` is
 | `pako` | MIT AND Zlib |
 
 The installed production dependency graph also contains components under MIT, Apache-2.0, ISC, 0BSD, Zlib, and LGPL-3.0-or-later compatible terms. Their exact versions are locked in `package-lock.json`.
+
+Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entries. It does not implement or expose RAR archive creation. Binary packaging copies `License.txt` and `unRarLicense.txt` to `resources/licenses/7z-wasm`.
 
 ## Electron and Chromium notices
 

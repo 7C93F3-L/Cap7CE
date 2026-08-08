@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
+import type { ArchivePreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
@@ -27,6 +27,17 @@ const formatPreviewBytes = (bytes: number) => {
   return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 };
 
+const getArchiveFallbackMessage = (reason: ArchivePreviewFallbackReason) => {
+  switch (reason) {
+    case "passwordRequired": return t("preview.archiveFallback.passwordRequired");
+    case "invalidArchive": return t("preview.archiveFallback.invalidArchive");
+    case "unsupportedArchive": return t("preview.archiveFallback.unsupportedArchive");
+    case "tooLarge": return t("preview.archiveFallback.tooLarge");
+    case "timedOut": return t("preview.archiveFallback.timedOut");
+    default: return t("preview.archiveFallback.failed");
+  }
+};
+
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
   const [displaySrc, setDisplaySrc] = useState("");
@@ -43,6 +54,7 @@ const PreviewWindowApp = () => {
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const textScrollRef = useRef<HTMLPreElement | null>(null);
   const pdfScrollRef = useRef<HTMLDivElement>(null);
+  const archiveScrollRef = useRef<HTMLDivElement>(null);
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
@@ -115,6 +127,8 @@ const PreviewWindowApp = () => {
           ? { width: 760, height: 600 }
           : previewData.provider === "pdf"
             ? { width: 920, height: 700 }
+          : previewData.provider === "archive"
+            ? { width: 800, height: 620 }
           : infoDimensions;
     window.imageEverything?.preview.contentSize({
       sessionId: previewData.sessionId,
@@ -302,6 +316,8 @@ const PreviewWindowApp = () => {
           ? textScrollRef.current
           : previewData.provider === "pdf"
             ? pdfScrollRef.current
+            : previewData.provider === "archive"
+              ? archiveScrollRef.current
             : null;
         if (contentScroll && !showInfoFallback) {
           event.preventDefault();
@@ -397,6 +413,31 @@ const PreviewWindowApp = () => {
             scrollRef={pdfScrollRef}
             onError={() => setShowInfoFallback(true)}
           />
+        ) : previewData.provider === "archive" && previewData.archivePreview && !showInfoFallback ? (
+          <section className="preview-archive-panel">
+            <header>
+              <strong>{previewData.fileName}</strong>
+              <span>{t("preview.archiveSummary", {
+                count: previewData.archivePreview.entryCount,
+                size: formatPreviewBytes(previewData.archivePreview.totalUncompressedSize)
+              })}</span>
+            </header>
+            {previewData.archivePreview.truncated && (
+              <p className="preview-archive-truncated">
+                {t("preview.archiveTruncated", { count: previewData.archivePreview.entries.length })}
+              </p>
+            )}
+            <div ref={archiveScrollRef} className="preview-archive-list cap-main-scroll-viewport" role="list">
+              {previewData.archivePreview.entries.map((entry, index) => (
+                <div className="preview-archive-entry" role="listitem" key={`${entry.path}:${index}`}>
+                  <span className="preview-archive-entry-path" title={entry.path}>{entry.path}</span>
+                  <span className="preview-archive-entry-size">
+                    {entry.directory ? t("preview.archiveFolder") : formatPreviewBytes(entry.size ?? 0)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
             <section className="preview-media-panel preview-audio-panel">
@@ -437,6 +478,9 @@ const PreviewWindowApp = () => {
         ) : previewData.info && (
           <section className="preview-info-panel">
             <h1>{previewData.info.name}</h1>
+            {previewData.archiveFallbackReason && (
+              <p className="preview-info-notice">{getArchiveFallbackMessage(previewData.archiveFallbackReason)}</p>
+            )}
             <dl>
               <dt>{t("skim.previewPath")}</dt><dd>{previewData.info.path}</dd>
               <dt>{t("skim.previewType")}</dt><dd>{previewData.info.kind === "folder" ? t("skim.folder") : (previewData.info.extension || t("skim.file"))}</dd>
@@ -457,10 +501,15 @@ const PreviewWindowApp = () => {
       {(
         (previewData.provider === "text" && previewData.textPreview)
         || (previewData.provider === "pdf" && previewData.pdfPreview)
+        || (previewData.provider === "archive" && previewData.archivePreview)
       ) && !showInfoFallback && (
         <div className="preview-window-scrollbar-slot">
           <CustomScrollbar
-            scrollContainerRef={previewData.provider === "pdf" ? pdfScrollRef : textScrollRef}
+            scrollContainerRef={previewData.provider === "pdf"
+              ? pdfScrollRef
+              : previewData.provider === "archive"
+                ? archiveScrollRef
+                : textScrollRef}
             orientation="vertical"
           />
         </div>

@@ -39,6 +39,7 @@ import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, typ
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
+import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
 
 const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -315,6 +316,7 @@ const schedulePreviewIdleDestroy = () => {
 
 const closePreviewSession = () => {
   previewOpenRequestId += 1;
+  closeArchivePreviewSession();
   closeOfficePreviewSession();
   closePdfPreviewSession();
   if (activeSkimFolderStatsTask) {
@@ -2519,9 +2521,12 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       && data.provider !== "audio"
       && data.provider !== "video"
       && data.provider !== "pdf"
-      && data.provider !== "office")
+      && data.provider !== "office"
+      && data.provider !== "archive")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
+    || data.archivePreview !== undefined
+    || data.archiveFallbackReason !== undefined
     || typeof data.skimActive !== "boolean"
     || (data.theme !== "light" && data.theme !== "dark")
   ) {
@@ -2529,8 +2534,34 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
   }
 
   const requestId = ++previewOpenRequestId;
-  let preparedData: PreviewWindowData = { ...data, pdfPreview: undefined };
-  if (data.provider === "pdf" || data.provider === "office") {
+  let preparedData: PreviewWindowData = {
+    ...data,
+    pdfPreview: undefined,
+    archivePreview: undefined,
+    archiveFallbackReason: undefined
+  };
+  if (data.provider === "archive") {
+    closeOfficePreviewSession();
+    closePdfPreviewSession();
+    try {
+      const archivePreview = await openArchivePreviewSession(data.sessionId, data.filePath);
+      if (requestId !== previewOpenRequestId) {
+        closeArchivePreviewSession(data.sessionId);
+        return false;
+      }
+      preparedData = { ...preparedData, archivePreview };
+    } catch (error) {
+      if (requestId !== previewOpenRequestId) return false;
+      closeArchivePreviewSession(data.sessionId);
+      preparedData = {
+        ...preparedData,
+        provider: "fileInfo",
+        previewUrl: "",
+        archiveFallbackReason: error instanceof ArchivePreviewError ? error.reason : "failed"
+      };
+    }
+  } else if (data.provider === "pdf" || data.provider === "office") {
+    closeArchivePreviewSession();
     try {
       let pdfSourcePath = data.filePath;
       if (data.provider === "office") {
@@ -2562,6 +2593,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       };
     }
   } else {
+    closeArchivePreviewSession();
     closeOfficePreviewSession();
     closePdfPreviewSession();
   }

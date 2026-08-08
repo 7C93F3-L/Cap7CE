@@ -81,6 +81,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `pdfRenderService.ts` | PDF 首页渲染 |
 | `pdfPreviewService.ts` | PDF 独立预览会话、页面串行渲染、可取消切换、最多 5 页 LRU 内存缓存和渲染安全上限；不写入正式或 skim 缓存 |
 | `officePreviewService.ts` | XLS/XLSX 与 PPT/PPTX 通过本机 Microsoft Excel/PowerPoint 只读转换为会话临时 PDF；负责大小上限、30 秒超时、精确终止本轮拥有的转换进程、切换取消和临时目录清理 |
+| `archivePreviewService.ts` / `archivePreviewWorker.ts` | ZIP、7Z、RAR 只读条目列表；通过可终止辅助进程中的 7-Zip WebAssembly 执行结构化列表命令，限制源文件大小、输出量、条目数、路径长度和时间，切换或关闭预览即终止进程 |
 | `psdRenderService.ts` | PSD 合成图和多画板代表图处理 |
 | `vectorDocumentRenderService.ts` | AI / EPS 兼容预览数据处理 |
 | `cdrRenderService.ts` | 现代 CDR 内置预览图读取 |
@@ -150,6 +151,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 格式能力必须保持分层：skim 可以显示当前一级全部普通文件，但这不等于全部格式进入正式能力。当前 15 种视觉格式继续允许通用索引、正式搜索、正式缩略图和 AI 索引；60 种已登记的项目关联非视觉格式允许写入已添加目录的 `files` 通用目录层，并以文件名和扩展名进入正式搜索，但不生成正式视觉缩略图，也不进入 AI；其他未知格式仍只存在于 skim。AVIF 已从 browse-only 提升为正式视觉格式，并经 sharp/libvips 统一生成搜索缩略图、预览缓存和 JPEG 模型输入；HEIC、HEIF 与 RAW 仍保持 browse-only。非原生视觉格式在 skim 当前可见范围内可以尝试 Windows Shell 内容缩略图，但失败只回退格式或通用图标，不改变格式能力归属。识别状态为“已识别”或“未识别”时只返回视觉结果，非视觉文件不会被归入任一识别状态。`supportedVisualFormats.ts` 从中央能力表派生视觉集合，避免通用扫描白名单扩展意外扩大识别范围。skim 视觉文件通过独立 `cap7ce://skim-thumbnail` 和 `cap7ce://skim-preview` 协议按需进入专属缓存，支持正式视觉渲染器覆盖的全部视觉格式；GIF、动态 WEBP 及包含多帧 `acTL` 块的 APNG 在独立预览中直接读取当前授权源文件以保留动画，普通 PNG 继续使用受限尺寸的静态缓存。PDF 保留现有视觉索引、首页缩略图和 AI 边界，但独立预览改由 `pdf` Provider 按页渲染，不复用首页代表图。TXT/MD/INI/HTML 与 CSV/JSON/XML/YAML/YML 以最多 1 MB 的源码文本进入正式搜索和 skim 共用的 `text` Provider；HTML 始终作为纯文本放入 `<pre>`，不解析或执行。DOC/DOCX 复用 `text` Provider，仅提取正文并限制源文件大小，不承诺原版式、图片或复杂对象还原。XLS/XLSX 与 PPT/PPTX 依赖本机已安装的 Microsoft Excel/PowerPoint，在只读、禁用宏及外部链接更新的条件下转换为会话临时 PDF；源文件上限 256 MB、单次转换上限 30 秒，切换或关闭即取消并清理临时输出，不写入正式或 skim 缓存。缺少对应组件、转换失败或超时均回退文件信息；当前不提供 WPS 兼容、Office 编辑、内容搜索或版式优化。RTF 保持文件信息预览，等待文档 Provider。FLAC/M4A/MP3/OGG/WAV 与 MKV/MP4/MOV/WEBM 通过只允许当前预览项目访问、支持 Range 的 `cap7ce://skim-media` 进入 `audio`/`video` Provider；M4A、WEBM、FLAC、OGG 与 MKV 仅在 Electron 43 / Chromium 150 的用户真实样本完成元数据、首段解码、播放状态及时间轴推进验证后接入，AVI 实测解码失败并继续回退文件信息，其他登记容器不据扩展名推定可播放。编码、文件内容、Office 转换或浏览器媒体解码不支持时回退文件信息。
 
 当前界面文案通过纯 TypeScript 模块 `electron/localization.ts` 的稳定文案 ID 和 `t()` 入口读取。该模块不依赖 Electron、Node 或 React，因此主进程与 Renderer 可以共用。中文与 `electron/locales/en-US.ts` 英文语言表保持相同键及占位符，语言偏好支持跟随系统、中文和 English，并由主进程持久化后同步到主窗口、独立预览窗口和托盘菜单。Settings 的语言入口在中文界面显示“语言 / Language”，在英文界面显示“Language / 语言”；明确选择语言时显示“中文”或“English”，跟随系统时显示当前实际解析语言，同时保留系统跟随偏好，确保用户不熟悉当前界面语言时仍能定位并操作。切换语言时运行期生成界面标签，避免模块初始化阶段缓存旧语言。AI 提示词不属于界面语言表，但识别任务启动时会固定当前已解析语言并选择独立的中文或英文提示词模板，避免运行期间切换语言造成同一批结果中英混杂；错误分类正则、开发日志、用户文件名与第三方原始错误同样不属于界面语言表，不能为消除硬编码扫描结果而修改其语义。
+
+ZIP、7Z 与 RAR 继续属于正式非视觉文件名搜索范围，但其预览 Provider 只在用户打开预览时启动独立 `7z-wasm` 辅助进程，固定执行 `l -slt` 条目列表并显示路径、目录标记和大小；不解压、不打开内部条目、不输入或保存密码、不建立归档内容索引，也不写入源目录或预览缓存。单次列表最多向界面返回 2,000 项，输出、路径、源文件体积和执行时间均有硬上限；加密、损坏、算法不支持、超时或进程异常使用本地化原因回退文件信息。7-Zip 与 UnRAR 许可文本随打包资源分发。
 
 ## 6. UI 状态系统
 

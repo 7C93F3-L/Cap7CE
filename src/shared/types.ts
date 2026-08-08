@@ -21,6 +21,28 @@ export interface PreviewItemActionRequest {
   filePath: string;
 }
 
+export interface ArchivePreviewEntry {
+  path: string;
+  size: number | null;
+  compressedSize: number | null;
+  directory: boolean;
+}
+
+export interface ArchivePreviewData {
+  entries: ArchivePreviewEntry[];
+  entryCount: number;
+  totalUncompressedSize: number;
+  truncated: boolean;
+}
+
+export type ArchivePreviewFallbackReason =
+  | "passwordRequired"
+  | "invalidArchive"
+  | "unsupportedArchive"
+  | "tooLarge"
+  | "timedOut"
+  | "failed";
+
 export interface PreviewWindowData {
   sessionId: string;
   itemId: string;
@@ -28,10 +50,12 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive";
   info?: SkimPreviewInfo;
   textPreview?: SkimTextPreview;
   pdfPreview?: PdfPreviewMetadata;
+  archivePreview?: ArchivePreviewData;
+  archiveFallbackReason?: ArchivePreviewFallbackReason;
   skimActive: boolean;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
@@ -151,7 +175,7 @@ export interface DirectoryAddResult {
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive";
 
 export interface FileFormatCapability {
   extension: string;

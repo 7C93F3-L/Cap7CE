@@ -1,3 +1,5 @@
+import type { ArchivePreviewData, ArchivePreviewFallbackReason } from "./archivePreviewTypes";
+
 export type PreviewNavigateDirection = -1 | 1;
 
 export type PreviewItemAction = "editKeywords" | "deleteFile";
@@ -15,7 +17,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive";
   info?: {
     kind: "file" | "folder";
     name: string;
@@ -35,6 +37,8 @@ export interface PreviewWindowData {
     defaultPageWidth: number;
     defaultPageHeight: number;
   };
+  archivePreview?: ArchivePreviewData;
+  archiveFallbackReason?: ArchivePreviewFallbackReason;
   skimActive: boolean;
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";
