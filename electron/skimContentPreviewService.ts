@@ -5,8 +5,8 @@ import WordExtractor from "word-extractor";
 export const skimTextPreviewExtensions = new Set([
   ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml", ".doc", ".docx"
 ]);
-export const skimAudioPreviewExtensions = new Set([".m4a", ".mp3", ".wav"]);
-export const skimVideoPreviewExtensions = new Set([".mp4", ".mov", ".webm"]);
+export const skimAudioPreviewExtensions = new Set([".flac", ".m4a", ".mp3", ".ogg", ".wav"]);
+export const skimVideoPreviewExtensions = new Set([".mkv", ".mp4", ".mov", ".webm"]);
 export const maximumSkimTextPreviewBytes = 1024 * 1024;
 const maximumWordPreviewBytes = 64 * 1024 * 1024;
 const wordPreviewExtensions = new Set([".doc", ".docx"]);
@@ -19,9 +19,12 @@ export interface SkimMediaByteRange {
 }
 
 export const getSkimMediaMimeType = (extension: string) => ({
+  ".flac": "audio/flac",
   ".m4a": "audio/mp4",
   ".mp3": "audio/mpeg",
+  ".ogg": "audio/ogg",
   ".wav": "audio/wav",
+  ".mkv": "video/x-matroska",
   ".mp4": "video/mp4",
   ".mov": "video/quicktime",
   ".webm": "video/webm"

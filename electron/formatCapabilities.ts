@@ -55,8 +55,8 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["csv", "text"], ["json", "text"], ["xml", "text"], ["yaml", "text"], ["yml", "text"],
   ["doc", "text"], ["docx", "text"],
   ["xls", "office"], ["xlsx", "office"], ["ppt", "office"], ["pptx", "office"],
-  ["m4a", "audio"], ["mp3", "audio"], ["wav", "audio"],
-  ["mp4", "video"], ["mov", "video"], ["webm", "video"]
+  ["flac", "audio"], ["m4a", "audio"], ["mp3", "audio"], ["ogg", "audio"], ["wav", "audio"],
+  ["mkv", "video"], ["mp4", "video"], ["mov", "video"], ["webm", "video"]
 ]);
 
 const visualCapabilities = visualExtensions.map((extension): FileFormatCapability => ({

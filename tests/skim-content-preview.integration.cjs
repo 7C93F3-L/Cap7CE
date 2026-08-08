@@ -145,9 +145,12 @@ app.whenReady().then(async () => {
     assert.deepEqual(parseSkimMediaByteRange(1000, "bytes=-100"), { start: 900, end: 999, status: 206 });
     assert.equal(parseSkimMediaByteRange(1000, "bytes=1000-"), null);
     assert.equal(parseSkimMediaByteRange(1000, "bytes=0-1,4-5"), null);
+    assert.equal(getSkimMediaMimeType(".flac"), "audio/flac");
     assert.equal(getSkimMediaMimeType(".mp3"), "audio/mpeg");
+    assert.equal(getSkimMediaMimeType(".ogg"), "audio/ogg");
     assert.equal(getSkimMediaMimeType(".wav"), "audio/wav");
     assert.equal(getSkimMediaMimeType(".m4a"), "audio/mp4");
+    assert.equal(getSkimMediaMimeType(".mkv"), "video/x-matroska");
     assert.equal(getSkimMediaMimeType(".mp4"), "video/mp4");
     assert.equal(getSkimMediaMimeType(".mov"), "video/quicktime");
     assert.equal(getSkimMediaMimeType(".webm"), "video/webm");
@@ -163,7 +166,7 @@ app.whenReady().then(async () => {
       textSizeBoundaryApplied: true,
       mediaRangeRequestsValidated: true,
       mediaMimeTypesMapped: true,
-      probedM4aAndWebmMapped: true
+      probedMediaFormatsMapped: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });
