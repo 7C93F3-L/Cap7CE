@@ -89,6 +89,9 @@ app.whenReady().then(async () => {
     const safeSourcePreviews = new Map([
       ["settings.ini", "[app]\nname=Cap7CE"],
       ["page.html", "<script>not executed</script>"],
+      ["main.css", "body { color: #333; }"],
+      ["app.js", "console.log('not executed');"],
+      ["tool.py", "print('not executed')"],
       ["table.csv", "name,value\nCap7CE,1"],
       ["data.json", '{"name":"Cap7CE"}'],
       ["data.xml", "<app>Cap7CE</app>"],

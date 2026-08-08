@@ -22,7 +22,7 @@ const visualExtensions = [
 const directPreviewExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
 
 const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
-  ["text", ["txt", "md", "rtf", "html", "ini"]],
+  ["text", ["txt", "md", "rtf", "html", "ini", "css", "js", "py"]],
   ["data", ["csv", "json", "xml", "yaml", "yml"]],
   ["document", ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "epub", "mobi"]],
   ["archive", ["7z", "gz", "rar", "tar", "zip"]],
@@ -47,13 +47,17 @@ const skimDefaultHiddenExtensions = new Set([
 const iconNameByExtension = new Map<string, string>([
   ["blend", "format-blend"],
   ["epub", "skim-file"],
+  ["css", "skim-file"],
+  ["js", "skim-file"],
   ["mobi", "skim-file"],
+  ["py", "skim-file"],
   ["prproj", "format-prproj"],
   ["pproj", "format-prproj"]
 ]);
 
 const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["txt", "text"], ["md", "text"], ["ini", "text"], ["html", "text"],
+  ["css", "text"], ["js", "text"], ["py", "text"],
   ["csv", "text"], ["json", "text"], ["xml", "text"], ["yaml", "text"], ["yml", "text"],
   ["doc", "text"], ["docx", "text"],
   ["xls", "office"], ["xlsx", "office"], ["ppt", "office"], ["pptx", "office"],

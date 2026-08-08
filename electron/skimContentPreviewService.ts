@@ -3,7 +3,8 @@ import path from "node:path";
 import WordExtractor from "word-extractor";
 
 export const skimTextPreviewExtensions = new Set([
-  ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml", ".doc", ".docx"
+  ".txt", ".md", ".ini", ".html", ".css", ".js", ".py",
+  ".csv", ".json", ".xml", ".yaml", ".yml", ".doc", ".docx"
 ]);
 export const skimAudioPreviewExtensions = new Set([".flac", ".m4a", ".mp3", ".ogg", ".wav"]);
 export const skimVideoPreviewExtensions = new Set([".mkv", ".mp4", ".mov", ".webm"]);

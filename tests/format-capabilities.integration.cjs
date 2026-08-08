@@ -22,7 +22,7 @@ const { app } = require("electron");
   const formalNonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual" && capability.canIndex);
   const browseOnlyCapabilities = fileFormatCapabilities.filter((capability) => !capability.canIndex);
   assert.equal(formalVisualCapabilities.length, 15);
-  assert.equal(formalNonVisualCapabilities.length, 62);
+  assert.equal(formalNonVisualCapabilities.length, 65);
   assert.equal(browseOnlyCapabilities.length, 38);
   assert.equal(formalVisualCapabilities.every((capability) => (
     capability.canSearch
@@ -47,7 +47,7 @@ const { app } = require("electron");
   )), true);
   assert.deepEqual(
     Object.fromEntries([
-      ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml",
+      ".txt", ".md", ".ini", ".html", ".css", ".js", ".py", ".csv", ".json", ".xml", ".yaml", ".yml",
       ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".epub", ".mobi", ".7z", ".rar", ".zip", ".otf", ".ttf",
       ".pdf", ".flac", ".m4a", ".mp3", ".ogg", ".wav", ".mkv", ".mp4", ".mov", ".webm"
     ].map((extension) => [
@@ -56,6 +56,7 @@ const { app } = require("electron");
     ])),
     {
       ".txt": "text", ".md": "text", ".ini": "text", ".html": "text",
+      ".css": "text", ".js": "text", ".py": "text",
       ".csv": "text", ".json": "text", ".xml": "text", ".yaml": "text", ".yml": "text",
       ".doc": "text", ".docx": "text",
       ".xls": "office", ".xlsx": "office", ".ppt": "office", ".pptx": "office", ".epub": "epub", ".mobi": "mobi",
@@ -71,11 +72,14 @@ const { app } = require("electron");
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()
   );
-  assert.equal(skimCuratedFileExtensionSet.size, 115);
-  assert.equal(skimDefaultFileExtensionSet.size, 103);
-  assert.equal(indexableFileExtensionSet.size, 77);
+  assert.equal(skimCuratedFileExtensionSet.size, 118);
+  assert.equal(skimDefaultFileExtensionSet.size, 106);
+  assert.equal(indexableFileExtensionSet.size, 80);
   assert.equal(indexableFileExtensionSet.has(".epub"), true);
   assert.equal(indexableFileExtensionSet.has(".mobi"), true);
+  assert.equal(indexableFileExtensionSet.has(".css"), true);
+  assert.equal(indexableFileExtensionSet.has(".js"), true);
+  assert.equal(indexableFileExtensionSet.has(".py"), true);
   assert.equal(fileFormatCapabilityByExtension.has(".bld"), false);
   assert.equal(fileFormatCapabilityByExtension.has(".pr"), false);
   assert.equal(fileFormatCapabilityByExtension.get(".blend").iconName, "format-blend");
