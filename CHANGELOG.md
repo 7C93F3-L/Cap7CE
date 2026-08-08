@@ -10,6 +10,7 @@
 - 经 Electron 43 / Chromium 150 真实样本验证后，正式搜索与 skim 的共用预览窗口新增 FLAC、OGG 音频和 MKV 视频播放；AVI 样本无法取得元数据或解码，继续回退文件信息。
 - 正式搜索与 skim 的共用预览窗口新增 PDF 多页连续纵向预览；仅加载视口及邻近页面，远离页面释放图片，支持页码跳转、文档滚动和原有左右方向键切换文件，损坏或无法解析的 PDF 静默回退文件信息。
 - 正式搜索与 skim 新增 Office 文件基础预览：DOC/DOCX 安全提取正文文本，XLS/XLSX 与 PPT/PPTX 在已安装 Microsoft Excel/PowerPoint 时只读转换为会话临时 PDF 并复用连续页面预览；转换失败、超时或缺少对应 Office 组件时静默回退文件信息，不提供版式优化、编辑或内容搜索。
+- AVIF 从 skim browse-only 格式提升为正式视觉格式，进入目录扫描、正式搜索、缩略图与预览缓存及 AI 模型输入；继续通过 sharp/libvips 转换为受限尺寸代表图，不扩大 HEIC 或 RAW 能力。
 
 ### 优化
 

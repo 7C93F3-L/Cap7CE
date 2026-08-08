@@ -16,7 +16,7 @@ export interface FileFormatCapability {
 }
 
 const visualExtensions = [
-  ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif",
+  ".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".tif", ".tiff", ".gif",
   ".svg", ".pdf", ".psd", ".ai", ".eps", ".cdr"
 ] as const;
 const directPreviewExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
@@ -34,7 +34,7 @@ const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonl
 ];
 
 const browseOnlyFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
-  ["visual", ["avif", "heic", "heif", "jfif", "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
+  ["visual", ["heic", "heif", "jfif", "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
   ["video", ["wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp"]],
   ["audio", ["wma", "opus", "aif", "aiff", "ape"]],
   ["document", ["odt", "ods", "odp", "epub", "wps", "et", "dps", "one", "xps", "oxps"]]

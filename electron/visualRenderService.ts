@@ -41,6 +41,7 @@ const sharpSourceExtensions = new Set([
   ".jpeg",
   ".png",
   ".webp",
+  ".avif",
   ".tif",
   ".tiff",
   ".gif",

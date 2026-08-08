@@ -21,9 +21,9 @@ const { app } = require("electron");
   const formalVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category === "visual" && capability.canSearch);
   const formalNonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual" && capability.canIndex);
   const browseOnlyCapabilities = fileFormatCapabilities.filter((capability) => !capability.canIndex);
-  assert.equal(formalVisualCapabilities.length, 14);
+  assert.equal(formalVisualCapabilities.length, 15);
   assert.equal(formalNonVisualCapabilities.length, 60);
-  assert.equal(browseOnlyCapabilities.length, 40);
+  assert.equal(browseOnlyCapabilities.length, 39);
   assert.equal(formalVisualCapabilities.every((capability) => (
     capability.canSearch
     && capability.canThumbnail
@@ -71,7 +71,7 @@ const { app } = require("electron");
   );
   assert.equal(skimCuratedFileExtensionSet.size, 114);
   assert.equal(skimDefaultFileExtensionSet.size, 102);
-  assert.equal(indexableFileExtensionSet.size, 74);
+  assert.equal(indexableFileExtensionSet.size, 75);
   assert.equal(fileFormatCapabilityByExtension.has(".bld"), false);
   assert.equal(fileFormatCapabilityByExtension.has(".pr"), false);
   assert.equal(fileFormatCapabilityByExtension.get(".blend").iconName, "format-blend");
@@ -80,9 +80,10 @@ const { app } = require("electron");
   assert.equal(skimDefaultFileExtensionSet.has(".ini"), false);
   assert.equal(skimDefaultFileExtensionSet.has(".dll"), false);
   assert.equal(skimDefaultFileExtensionSet.has(".mp4"), true);
-  assert.equal(indexableFileExtensionSet.has(".avif"), false);
+  assert.equal(indexableFileExtensionSet.has(".avif"), true);
   assert.equal(indexableFileExtensionSet.has(".blend"), true);
   assert.equal(isSupportedImageFilePath("C:\\asset.png"), true);
+  assert.equal(isSupportedImageFilePath("C:\\asset.avif"), true);
   assert.equal(isSupportedImageFilePath("C:\\notes.txt"), false);
   assert.equal(isSupportedImageFilePath("C:\\document.docx"), false);
 
