@@ -1,11 +1,16 @@
 import { app } from "electron";
 import { createRequire } from "node:module";
+import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import initSqlJs from "sql.js";
 import type { Database, SqlJsStatic, SqlValue } from "sql.js";
 import type { ScannedFile, ScannedImageFile } from "./imageScanner";
+import type { PersistedDirectory } from "./directoryStore";
+import { getFileFormatCapability } from "./formatCapabilities";
 import { applyKeywordBatchDelta, formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
+import { escapeSqlLikeTerm, getDirectoryTermMatches, getRelativeDirectoryEvidence, SEARCH_PATH_EVIDENCE_VERSION, toSearchTerms } from "./searchPathEvidence";
+import { supportedVisualFileExtensionSet } from "./supportedVisualFormats";
 
 const requireFromHere = createRequire(__filename);
 
@@ -80,8 +85,6 @@ const sortDirections: Record<ImageSearchState["sortDirection"], "ASC" | "DESC"> 
 
 const recognizedImageClause = "TRIM(keywords) <> '' AND (TRIM(caption) <> '' OR manual_index = 1)";
 const unrecognizedImageClause = `NOT (${recognizedImageClause})`;
-
-const toSearchTerms = (query: string) => query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 
 const normalizeFileFormat = (value: unknown) => {
   const normalized = typeof value === "string" ? value.trim().replace(/^\./, "").toLowerCase() : "";
@@ -303,6 +306,8 @@ const migrate = (database: Database) => {
       file_path TEXT NOT NULL UNIQUE,
       file_name TEXT NOT NULL,
       extension TEXT NOT NULL,
+      relative_directory TEXT NOT NULL DEFAULT '',
+      path_evidence_version INTEGER NOT NULL DEFAULT 0,
       file_size INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       modified_at TEXT NOT NULL,
@@ -334,6 +339,8 @@ const migrate = (database: Database) => {
   ensureColumn(database, "images", "ai_error", "TEXT NOT NULL DEFAULT ''");
   ensureColumn(database, "images", "ai_failed_at", "TEXT");
   ensureColumn(database, "images", "manual_index", "INTEGER NOT NULL DEFAULT 0 CHECK (manual_index IN (0, 1))");
+  ensureColumn(database, "files", "relative_directory", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, "files", "path_evidence_version", "INTEGER NOT NULL DEFAULT 0");
   backfillFileCatalogFromImages(database);
 };
 
@@ -342,10 +349,72 @@ const firstResultValue = (database: Database, sql: string, params?: Record<strin
   return result[0]?.values[0]?.[0];
 };
 
+const ensurePathEvidenceMigrationBackup = async () => {
+  const databasePath = getImageDatabasePath();
+  const backupPath = `${databasePath}.pre-path-v1.bak`;
+  try {
+    await fs.copyFile(databasePath, backupPath, fsConstants.COPYFILE_EXCL);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT" && code !== "EEXIST") throw error;
+  }
+};
+
 export const ensureImageDatabase = async () => {
+  await ensurePathEvidenceMigrationBackup();
   const database = await loadDatabase();
   await saveDatabase(database);
   database.close();
+};
+
+export const backfillFilePathEvidence = async (directories: PersistedDirectory[]) => {
+  const directoryById = new Map(directories.map((directory) => [directory.id, directory]));
+  const database = await loadDatabase();
+  let updatedCount = 0;
+  try {
+    const rows = database.exec(
+      "SELECT id, file_path, directory_id FROM files WHERE path_evidence_version < :version",
+      { ":version": SEARCH_PATH_EVIDENCE_VERSION }
+    )[0]?.values ?? [];
+    if (rows.length === 0) return 0;
+
+    database.run("BEGIN TRANSACTION");
+    const statement = database.prepare(`
+      UPDATE files
+      SET relative_directory = :relative_directory,
+          path_evidence_version = :path_evidence_version
+      WHERE id = :id
+    `);
+    try {
+      for (const row of rows) {
+        const directory = directoryById.get(String(row[2]));
+        if (!directory) continue;
+        const relativeDirectory = getRelativeDirectoryEvidence(directory.path, String(row[1]));
+        if (relativeDirectory === null) continue;
+        statement.run({
+          ":id": Number(row[0]),
+          ":relative_directory": relativeDirectory,
+          ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION
+        });
+        statement.reset();
+        updatedCount += 1;
+      }
+    } finally {
+      statement.free();
+    }
+    database.run("COMMIT");
+    if (updatedCount > 0) await saveDatabase(database);
+    return updatedCount;
+  } catch (error) {
+    try {
+      database.run("ROLLBACK");
+    } catch {
+      // Preserve the original migration error.
+    }
+    throw error;
+  } finally {
+    database.close();
+  }
 };
 
 export const getExistingImageCountsByDirectory = async (directoryIds: string[]): Promise<Record<string, number>> => {
@@ -474,6 +543,8 @@ export const writeScannedImagesToIndex = async (
         file_path,
         file_name,
         extension,
+        relative_directory,
+        path_evidence_version,
         file_size,
         created_at,
         modified_at,
@@ -484,6 +555,8 @@ export const writeScannedImagesToIndex = async (
         :file_path,
         :file_name,
         :extension,
+        :relative_directory,
+        :path_evidence_version,
         :file_size,
         :created_at,
         :modified_at,
@@ -494,6 +567,8 @@ export const writeScannedImagesToIndex = async (
       ON CONFLICT(file_path) DO UPDATE SET
         file_name = excluded.file_name,
         extension = excluded.extension,
+        relative_directory = excluded.relative_directory,
+        path_evidence_version = excluded.path_evidence_version,
         file_size = excluded.file_size,
         created_at = excluded.created_at,
         modified_at = excluded.modified_at,
@@ -541,10 +616,13 @@ export const writeScannedImagesToIndex = async (
         extension: path.extname(image.file_name).toLowerCase()
       }));
       for (const file of catalogFiles) {
+        const relativeDirectory = getRelativeDirectoryEvidence(file.directory_path, file.file_path) ?? "";
         upsertFileStatement.run({
           ":file_path": file.file_path,
           ":file_name": file.file_name,
           ":extension": file.extension,
+          ":relative_directory": relativeDirectory,
+          ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION,
           ":file_size": file.file_size,
           ":created_at": file.created_at,
           ":modified_at": file.modified_at,
@@ -695,7 +773,7 @@ export const deleteDirectoryImages = async (directoryId: string): Promise<string
 };
 
 export const reassignDirectoryImages = async (
-  replacements: Array<{ fromDirectoryIds: string[]; toDirectoryId: string }>
+  replacements: Array<{ fromDirectoryIds: string[]; toDirectoryId: string; toDirectoryPath?: string }>
 ): Promise<void> => {
   const effectiveReplacements = replacements.filter((replacement) => replacement.fromDirectoryIds.length > 0);
   if (effectiveReplacements.length === 0) {
@@ -714,6 +792,17 @@ export const reassignDirectoryImages = async (
       UPDATE files
       SET directory_id = :to_directory_id
       WHERE directory_id = :from_directory_id
+    `);
+    const selectFilesStatement = database.prepare(`
+      SELECT id, file_path
+      FROM files
+      WHERE directory_id = :directory_id
+    `);
+    const updatePathEvidenceStatement = database.prepare(`
+      UPDATE files
+      SET relative_directory = :relative_directory,
+          path_evidence_version = :path_evidence_version
+      WHERE id = :id
     `);
     const clearScanStatement = database.prepare(`
       DELETE FROM directory_file_scans
@@ -737,10 +826,27 @@ export const reassignDirectoryImages = async (
           clearScanStatement.run({ ":directory_id": fromDirectoryId });
           clearScanStatement.reset();
         }
+        if (replacement.toDirectoryPath) {
+          selectFilesStatement.bind({ ":directory_id": replacement.toDirectoryId });
+          while (selectFilesStatement.step()) {
+            const row = selectFilesStatement.get();
+            const relativeDirectory = getRelativeDirectoryEvidence(replacement.toDirectoryPath, String(row[1]));
+            if (relativeDirectory === null) continue;
+            updatePathEvidenceStatement.run({
+              ":id": Number(row[0]),
+              ":relative_directory": relativeDirectory,
+              ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION
+            });
+            updatePathEvidenceStatement.reset();
+          }
+          selectFilesStatement.reset();
+        }
       }
     } finally {
       statement.free();
       fileStatement.free();
+      selectFilesStatement.free();
+      updatePathEvidenceStatement.free();
       clearScanStatement.free();
     }
     database.run("COMMIT");
@@ -966,10 +1072,10 @@ const upsertFileCatalogFromImageRecord = (
   database.run(`
     INSERT INTO files (
       file_path, file_name, extension, file_size, created_at, modified_at,
-      indexed_at, directory_id, "exists"
+      relative_directory, path_evidence_version, indexed_at, directory_id, "exists"
     ) VALUES (
       :file_path, :file_name, :extension, :file_size, :created_at, :modified_at,
-      :indexed_at, :directory_id, 1
+      :relative_directory, :path_evidence_version, :indexed_at, :directory_id, 1
     )
     ON CONFLICT(file_path) DO UPDATE SET
       file_name = excluded.file_name,
@@ -977,6 +1083,8 @@ const upsertFileCatalogFromImageRecord = (
       file_size = excluded.file_size,
       created_at = excluded.created_at,
       modified_at = excluded.modified_at,
+      relative_directory = excluded.relative_directory,
+      path_evidence_version = excluded.path_evidence_version,
       indexed_at = excluded.indexed_at,
       directory_id = excluded.directory_id,
       "exists" = 1
@@ -987,6 +1095,8 @@ const upsertFileCatalogFromImageRecord = (
     ":file_size": image.file_size,
     ":created_at": image.created_at,
     ":modified_at": image.modified_at,
+    ":relative_directory": getRelativeDirectoryEvidence(image.directory_path, image.file_path) ?? "",
+    ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION,
     ":indexed_at": indexedAt,
     ":directory_id": image.directory_id
   });
@@ -1224,6 +1334,217 @@ export interface FileCatalogSearchResult {
   modifiedAt: string;
   indexedAt: string;
 }
+
+export type IndexedCatalogSearchResponse = ImageSearchResponse & {
+  availableFormats: string[];
+  directoryIdByFilePath: Record<string, string>;
+  knownCatalogVisualFilePaths: string[];
+  knownVisualFilePaths: string[];
+};
+
+const catalogRecognizedClause = "TRIM(COALESCE(i.keywords, '')) <> '' AND (TRIM(COALESCE(i.caption, '')) <> '' OR i.manual_index = 1)";
+const catalogUnrecognizedClause = `NOT (${catalogRecognizedClause})`;
+
+const appendCatalogFileFormatFilter = (
+  where: string[],
+  params: Record<string, SqlValue>,
+  fileFormat: string
+) => {
+  if (fileFormat === "all") return;
+  if (fileFormat === "jpg") {
+    where.push("f.extension IN ('.jpg', '.jpeg')");
+    return;
+  }
+  if (fileFormat === "tif") {
+    where.push("f.extension IN ('.tif', '.tiff')");
+    return;
+  }
+  where.push("f.extension = :catalog_extension");
+  params[":catalog_extension"] = `.${fileFormat}`;
+};
+
+const appendVisualExtensionParams = (params: Record<string, SqlValue>, prefix: string) => {
+  const keys: string[] = [];
+  [...supportedVisualFileExtensionSet].forEach((extension, index) => {
+    const key = `:${prefix}_${index}`;
+    keys.push(key);
+    params[key] = extension;
+  });
+  return keys;
+};
+
+export const searchIndexedCatalog = async (
+  search: ImageSearchState,
+  directories: PersistedDirectory[]
+): Promise<IndexedCatalogSearchResponse> => {
+  const database = await loadDatabase();
+  const terms = toSearchTerms(search.query);
+  const selectedDirectories = search.directoryId === "all"
+    ? directories
+    : directories.filter((directory) => directory.id === search.directoryId);
+  const directoryTermMatches = getDirectoryTermMatches(selectedDirectories, terms);
+  const params: Record<string, SqlValue> = {};
+  const where = ['f."exists" = 1'];
+
+  if (search.directoryId !== "all") {
+    where.push("f.directory_id = :catalog_directory_id");
+    params[":catalog_directory_id"] = search.directoryId;
+  }
+
+  appendCatalogFileFormatFilter(where, params, normalizeFileFormat(search.fileFormat));
+  if (search.recognitionStatus === "recognized") {
+    where.push(`i.id IS NOT NULL AND (${catalogRecognizedClause})`);
+  } else if (search.recognitionStatus === "unrecognized") {
+    const visualExtensionKeys = appendVisualExtensionParams(params, "catalog_visual_extension");
+    where.push(`f.extension IN (${visualExtensionKeys.join(", ")}) AND (i.id IS NULL OR (${catalogUnrecognizedClause}))`);
+  }
+
+  terms.forEach((term, termIndex) => {
+    const fuzzyKey = `:catalog_term_${termIndex}`;
+    const keywordKey = `:catalog_keyword_${termIndex}`;
+    params[fuzzyKey] = escapeSqlLikeTerm(term);
+    params[keywordKey] = term;
+    const directoryKeys = [...(directoryTermMatches[termIndex] ?? [])].map((directoryId, directoryIndex) => {
+      const key = `:catalog_term_${termIndex}_directory_${directoryIndex}`;
+      params[key] = directoryId;
+      return key;
+    });
+    where.push(`(
+      LOWER(f.file_name) LIKE ${fuzzyKey} ESCAPE '\\'
+      OR LOWER(f.extension) LIKE ${fuzzyKey} ESCAPE '\\'
+      OR LOWER(f.relative_directory) LIKE ${fuzzyKey} ESCAPE '\\'
+      ${directoryKeys.length > 0 ? `OR f.directory_id IN (${directoryKeys.join(", ")})` : ""}
+      OR LOWER(COALESCE(i.caption, '')) LIKE ${fuzzyKey} ESCAPE '\\'
+      OR INSTR(
+        ',' || LOWER(REPLACE(COALESCE(i.keywords, ''), '，', ',')) || ',',
+        ',' || ${keywordKey} || ','
+      ) > 0
+    )`);
+  });
+
+  const sortColumn = search.sortField === "modified_at" ? "f.modified_at" : "f.file_name";
+  const sortDirection = sortDirections[search.sortDirection] ?? sortDirections.asc;
+
+  try {
+    const rows = database.exec(`
+      SELECT
+        f.id,
+        f.file_path,
+        f.file_name,
+        f.extension,
+        f.file_size,
+        f.created_at,
+        f.modified_at,
+        f.indexed_at,
+        f.relative_directory,
+        f.directory_id,
+        i.id,
+        i.image_width,
+        i.image_height,
+        i.caption,
+        i.keywords,
+        i.ai_error,
+        i.manual_index,
+        i.indexed_at
+      FROM files AS f
+      LEFT JOIN images AS i
+        ON i.file_path = f.file_path
+       AND i."exists" = 1
+      WHERE ${where.join(" AND ")}
+      ORDER BY ${sortColumn} ${sortDirection}, f.id ASC
+    `, params)[0]?.values ?? [];
+
+    const images: ImageSearchResult[] = [];
+    const directoryIdByFilePath: Record<string, string> = {};
+    for (const row of rows) {
+      const filePath = String(row[1]);
+      const fileName = String(row[2]);
+      const extension = String(row[3]).toLowerCase();
+      const capability = getFileFormatCapability(extension);
+      if (!capability?.canSearch) continue;
+      const isVisual = capability.canAIIndex;
+      const imageId = row[10] === null ? null : Number(row[10]);
+      const aiError = imageId === null ? "" : String(row[15] ?? "");
+      const failure = imageId === null
+        ? { type: "pending" as const, label: t("recognition.pending") }
+        : classifyRecognitionFailure(aiError);
+      images.push({
+        id: imageId === null ? `file:${filePath}` : String(imageId),
+        resultKind: isVisual ? "visual" : "file",
+        filePath,
+        fileName,
+        extension,
+        iconName: isVisual ? "skim-file" : capability.iconName,
+        previewKind: isVisual ? "image" : capability.previewKind,
+        fileSize: Number(row[4] ?? 0),
+        createdAt: String(row[5] ?? ""),
+        modifiedAt: String(row[6] ?? ""),
+        imageWidth: imageId === null ? 0 : Number(row[11] ?? 0),
+        imageHeight: imageId === null ? 0 : Number(row[12] ?? 0),
+        caption: imageId === null ? "" : String(row[13] ?? ""),
+        keywords: imageId === null ? [] : parseKeywordText(String(row[14] ?? "")),
+        aiError,
+        manualIndex: imageId !== null && Number(row[16] ?? 0) === 1,
+        failureType: failure.type,
+        failureLabel: isVisual ? failure.label : "",
+        indexedAt: imageId === null ? String(row[7] ?? "") : String(row[17] ?? ""),
+        thumbnailUrl: isVisual ? toThumbnailUrl(filePath) : ""
+      });
+      directoryIdByFilePath[filePath] = String(row[9]);
+    }
+
+    const visualStateParams: Record<string, SqlValue> = {};
+    const visualStateWhere = ['f."exists" = 1'];
+    if (search.directoryId !== "all") {
+      visualStateWhere.push("f.directory_id = :visual_state_directory_id");
+      visualStateParams[":visual_state_directory_id"] = search.directoryId;
+    }
+    const visualStateExtensionKeys = appendVisualExtensionParams(visualStateParams, "visual_state_extension");
+    visualStateWhere.push(`f.extension IN (${visualStateExtensionKeys.join(", ")})`);
+    const visualStateRows = database.exec(`
+      SELECT f.file_path, f.extension, i.id, i.caption, i.keywords, i.manual_index
+      FROM files AS f
+      LEFT JOIN images AS i
+        ON i.file_path = f.file_path
+       AND i."exists" = 1
+      WHERE ${visualStateWhere.join(" AND ")}
+    `, visualStateParams)[0]?.values ?? [];
+    const knownCatalogVisualFilePaths: string[] = [];
+    const knownVisualFilePaths: string[] = [];
+    const selectedFileFormat = normalizeFileFormat(search.fileFormat);
+    let unrecognizedCount = 0;
+    for (const row of visualStateRows) {
+      const filePath = String(row[0]);
+      const extension = normalizeFileFormat(String(row[1]).replace(/^\./, ""));
+      const imageId = row[2] === null ? null : Number(row[2]);
+      knownCatalogVisualFilePaths.push(filePath);
+      if (imageId !== null) knownVisualFilePaths.push(filePath);
+      const matchesSelectedFormat = selectedFileFormat === "all" || selectedFileFormat === extension;
+      const recognized = imageId !== null
+        && String(row[4] ?? "").trim() !== ""
+        && (String(row[3] ?? "").trim() !== "" || Number(row[5] ?? 0) === 1);
+      if (matchesSelectedFormat && !recognized) unrecognizedCount += 1;
+    }
+    const failureStats = images.reduce((stats, image) => {
+      if (image.failureType === "file") stats.fileFailures += 1;
+      else if (image.failureType === "parse") stats.parseFailures += 1;
+      return stats;
+    }, { parseFailures: 0, fileFailures: 0 });
+
+    return {
+      images,
+      availableFormats: [],
+      directoryIdByFilePath,
+      knownCatalogVisualFilePaths,
+      knownVisualFilePaths,
+      unrecognizedCount,
+      skippedUnrecognizedCount: terms.length > 0 && search.recognitionStatus !== "unrecognized" ? unrecognizedCount : 0,
+      failureStats
+    };
+  } finally {
+    database.close();
+  }
+};
 
 export const searchIndexedFiles = async (search: ImageSearchState): Promise<FileCatalogSearchResult[]> => {
   if (search.recognitionStatus !== "all") return [];

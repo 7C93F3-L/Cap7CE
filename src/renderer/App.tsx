@@ -1705,11 +1705,11 @@ const App = () => {
       }
       setSearchResults(Array.isArray(response) ? response : response.images);
       setSearchStatus(Array.isArray(response) ? emptySearchResponse : response);
-    } catch (error) {
+    } catch {
       if (searchTaskIdRef.current !== taskId) return;
       setSearchResults([]);
       setSearchStatus(emptySearchResponse);
-      setSearchError(error instanceof Error ? error.message : t("search.failed"));
+      setSearchError(t("search.failed"));
     } finally {
       if (searchTaskIdRef.current === taskId) {
         searchTaskIdRef.current = null;

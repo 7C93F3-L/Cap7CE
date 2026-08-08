@@ -1,10 +1,11 @@
 import path from "node:path";
-import { getFileFormatCapability } from "./formatCapabilities";
-import { scanImageDirectories, type ImageScanControl, type ScannedFile, type ScannedImageFile } from "./imageScanner";
 import type { PersistedDirectory } from "./directoryStore";
-import { listExistingImageFilePaths, searchIndexedFiles, searchIndexedImages, type FileCatalogSearchResult, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
-
-const toSearchTerms = (query: string) => query.trim().split(/\s+/).filter(Boolean);
+import { getFileFormatCapability } from "./formatCapabilities";
+import type { ImageScanControl, ImageScanResult, ScannedFile, ScannedImageFile } from "./imageScanner";
+import { t } from "./localization";
+import { fileMatchesDeterministicSearchTerms, getDirectoryTermMatches, toSearchTerms } from "./searchPathEvidence";
+import { searchScanSnapshotService } from "./searchScanSnapshotService";
+import { searchIndexedCatalog, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
 
 const canonicalizeFileFormat = (fileFormat: string) => {
   if (fileFormat === "jpeg") return "jpg";
@@ -20,6 +21,7 @@ const normalizeFileFormat = (value: unknown) => {
 };
 
 const toThumbnailUrl = (filePath: string) => `cap7ce://thumbnail/?path=${encodeURIComponent(filePath)}`;
+const filePathKey = (filePath: string) => path.normalize(path.resolve(filePath)).toLocaleLowerCase();
 
 const compareText = (left: string, right: string) => left.localeCompare(right, "zh-Hans-CN", {
   numeric: true,
@@ -28,18 +30,10 @@ const compareText = (left: string, right: string) => left.localeCompare(right, "
 
 const compareImages = (search: ImageSearchState) => (left: ImageSearchResult, right: ImageSearchResult) => {
   const direction = search.sortDirection === "desc" ? -1 : 1;
-  let result = 0;
-
-  if (search.sortField === "modified_at") {
-    result = new Date(left.modifiedAt).getTime() - new Date(right.modifiedAt).getTime();
-  } else {
-    result = compareText(left.fileName, right.fileName);
-  }
-
-  if (result === 0) {
-    result = compareText(left.filePath, right.filePath);
-  }
-
+  let result = search.sortField === "modified_at"
+    ? new Date(left.modifiedAt).getTime() - new Date(right.modifiedAt).getTime()
+    : compareText(left.fileName, right.fileName);
+  if (result === 0) result = compareText(left.filePath, right.filePath);
   return result * direction;
 };
 
@@ -47,46 +41,21 @@ const targetDirectories = (directories: PersistedDirectory[], directoryId: strin
   directoryId === "all" ? directories : directories.filter((directory) => directory.id === directoryId)
 );
 
-const scannedImageToResult = (image: ScannedImageFile): ImageSearchResult => ({
-  id: `file:${image.file_path}`,
-  resultKind: "visual",
-  filePath: image.file_path,
-  fileName: image.file_name,
-  extension: path.extname(image.file_name).toLowerCase(),
-  iconName: "skim-file",
-  previewKind: "image",
-  fileSize: image.file_size,
-  createdAt: image.created_at,
-  modifiedAt: image.modified_at,
-  imageWidth: 0,
-  imageHeight: 0,
-  caption: "",
-  keywords: [],
-  aiError: "",
-  manualIndex: false,
-  failureType: "pending",
-  failureLabel: t("recognition.pending"),
-  indexedAt: "",
-  thumbnailUrl: toThumbnailUrl(image.file_path)
-});
-
-const toNonVisualResult = (file: ScannedFile | FileCatalogSearchResult): ImageSearchResult | null => {
-  const extension = file.extension;
-  const capability = getFileFormatCapability(extension);
-  if (!capability?.canSearch || capability.canAIIndex) return null;
-  const filePath = "file_path" in file ? file.file_path : file.filePath;
-  const fileName = "file_name" in file ? file.file_name : file.fileName;
+const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
+  const capability = getFileFormatCapability(file.extension);
+  if (!capability?.canSearch) return null;
+  const isVisual = capability.canAIIndex;
   return {
-    id: `file:${filePath}`,
-    resultKind: "file",
-    filePath,
-    fileName,
-    extension,
-    iconName: capability.iconName,
-    previewKind: capability.previewKind,
-    fileSize: "file_size" in file ? file.file_size : file.fileSize,
-    createdAt: "created_at" in file ? file.created_at : file.createdAt,
-    modifiedAt: "modified_at" in file ? file.modified_at : file.modifiedAt,
+    id: `file:${file.file_path}`,
+    resultKind: isVisual ? "visual" : "file",
+    filePath: file.file_path,
+    fileName: file.file_name,
+    extension: file.extension,
+    iconName: isVisual ? "skim-file" : capability.iconName,
+    previewKind: isVisual ? "image" : capability.previewKind,
+    fileSize: file.file_size,
+    createdAt: file.created_at,
+    modifiedAt: file.modified_at,
     imageWidth: 0,
     imageHeight: 0,
     caption: "",
@@ -94,26 +63,44 @@ const toNonVisualResult = (file: ScannedFile | FileCatalogSearchResult): ImageSe
     aiError: "",
     manualIndex: false,
     failureType: "pending",
-    failureLabel: "",
-    indexedAt: "indexedAt" in file ? file.indexedAt : "",
-    thumbnailUrl: ""
+    failureLabel: isVisual ? t("recognition.pending") : "",
+    indexedAt: "",
+    thumbnailUrl: isVisual ? toThumbnailUrl(file.file_path) : ""
   };
 };
 
-const scanAddedDirectories = async (
-  directories: PersistedDirectory[],
-  search: ImageSearchState,
-  control?: ImageScanControl
-) => {
-  const directoriesToScan = targetDirectories(directories, search.directoryId);
-  if (directoriesToScan.length === 0) {
-    return { images: [], files: [] };
-  }
-
-  return scanImageDirectories(directoriesToScan, control);
-};
+const mergeScannedMetadata = (existing: ImageSearchResult, file: ScannedFile): ImageSearchResult => ({
+  ...existing,
+  filePath: file.file_path,
+  fileName: file.file_name,
+  extension: file.extension,
+  fileSize: file.file_size,
+  createdAt: file.created_at,
+  modifiedAt: file.modified_at
+});
 
 type ImageSearchWithFormatsResponse = ImageSearchResponse & { availableFormats: string[] };
+
+const emptyScanResult = (): ImageScanResult => ({
+  scannedAt: new Date().toISOString(),
+  directories: [],
+  files: [],
+  images: [],
+  summaries: []
+});
+
+const getSearchScanResult = async (
+  directories: PersistedDirectory[],
+  control?: ImageScanControl
+) => {
+  try {
+    return await searchScanSnapshotService.get(directories, () => control?.isCancelled() === true);
+  } catch (error) {
+    if (control?.isCancelled()) throw error;
+    if ((error as NodeJS.ErrnoException)?.code === "ECANCELED") return emptyScanResult();
+    throw error;
+  }
+};
 
 export const searchImagesWithAddedDirectories = async (
   search: ImageSearchState,
@@ -121,101 +108,81 @@ export const searchImagesWithAddedDirectories = async (
   onScannedImages?: (images: ScannedImageFile[]) => void,
   control?: ImageScanControl
 ): Promise<ImageSearchWithFormatsResponse> => {
-  const [indexed, indexedFiles, scanResult] = await Promise.all([
-    searchIndexedImages(search),
-    searchIndexedFiles(search),
-    scanAddedDirectories(directories, search, control)
+  const directoriesToScan = targetDirectories(directories, search.directoryId);
+  const [indexed, scanResult] = await Promise.all([
+    searchIndexedCatalog(search, directories),
+    getSearchScanResult(directoriesToScan, control)
   ]);
   if (control?.isCancelled()) {
     throw Object.assign(new Error("Image search cancelled."), { code: "ECANCELED" });
   }
+
+  onScannedImages?.(scanResult.images);
   const terms = toSearchTerms(search.query);
-  const scannedImages = scanResult.images;
-  const scannedFiles = scanResult.files;
-  onScannedImages?.(scannedImages);
-  const availableFormatFiles = search.recognitionStatus === "all" ? scannedFiles : scannedImages;
-  const availableFormats = Array.from(new Set(availableFormatFiles.map((file) => getFileFormat(file.file_name)).filter(Boolean)))
-    .sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
+  const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
-  const formatFilteredImages = selectedFileFormat === "all"
-    ? scannedImages
-    : scannedImages.filter((image) => getFileFormat(image.file_name) === selectedFileFormat);
-  const existingPaths = await listExistingImageFilePaths(search.directoryId);
-  const indexedResultPaths = new Set(indexed.images.map((image) => image.filePath));
-  const unindexedImages = formatFilteredImages.filter((image) => !existingPaths.has(image.file_path));
-  const normalizedTerms = terms.map((term) => term.toLocaleLowerCase());
-  const scannedNonVisualFiles = search.recognitionStatus === "all"
-    ? scannedFiles
-      .filter((file) => !getFileFormatCapability(file.extension)?.canAIIndex)
-      .filter((file) => selectedFileFormat === "all" || getFileFormat(file.file_name) === selectedFileFormat)
-      .filter((file) => normalizedTerms.every((term) => file.file_name.toLocaleLowerCase().includes(term)))
-    : [];
-  const nonVisualResultByPath = new Map<string, ImageSearchResult>();
-  for (const file of indexedFiles) {
-    const result = toNonVisualResult(file);
-    if (result) nonVisualResultByPath.set(result.filePath.toLocaleLowerCase(), result);
+  const knownCatalogVisualPaths = new Set(indexed.knownCatalogVisualFilePaths.map(filePathKey));
+  const knownVisualPaths = new Set(indexed.knownVisualFilePaths.map(filePathKey));
+  const scannedPathKeysByDirectory = new Map<string, Set<string>>();
+  for (const file of scanResult.files) {
+    const paths = scannedPathKeysByDirectory.get(file.directory_id) ?? new Set<string>();
+    paths.add(filePathKey(file.file_path));
+    scannedPathKeysByDirectory.set(file.directory_id, paths);
   }
-  for (const file of scannedNonVisualFiles) {
-    const result = toNonVisualResult(file);
-    if (result) nonVisualResultByPath.set(result.filePath.toLocaleLowerCase(), result);
-  }
-  const nonVisualResults = [...nonVisualResultByPath.values()];
+  const scanStatusByDirectory = new Map(
+    scanResult.directories.map((directory) => [directory.directory_id, directory.status])
+  );
 
-  if (search.recognitionStatus === "recognized") {
-    return {
-      images: indexed.images,
-      availableFormats,
-      unrecognizedCount: indexed.unrecognizedCount + unindexedImages.length,
-      skippedUnrecognizedCount: 0,
-      failureStats: indexed.failureStats
-    };
+  const resultByPath = new Map<string, ImageSearchResult>();
+  for (const result of indexed.images) {
+    const directoryId = indexed.directoryIdByFilePath[result.filePath];
+    const scanStatus = directoryId ? scanStatusByDirectory.get(directoryId) : undefined;
+    if (
+      (scanStatus === "ready" || scanStatus === "missing")
+      && !scannedPathKeysByDirectory.get(directoryId)?.has(filePathKey(result.filePath))
+    ) {
+      continue;
+    }
+    resultByPath.set(filePathKey(result.filePath), result);
   }
 
-  if (search.recognitionStatus === "unrecognized") {
-    const pendingImages = unindexedImages
-      .filter((image) => normalizedTerms.every((term) => image.file_name.toLocaleLowerCase().includes(term)))
-      .filter((image) => !indexedResultPaths.has(image.file_path))
-      .map(scannedImageToResult);
+  const availableFormatFiles = search.recognitionStatus === "all" ? scanResult.files : scanResult.images;
+  const availableFormats = Array.from(new Set(
+    availableFormatFiles.map((file) => getFileFormat(file.file_name)).filter(Boolean)
+  )).sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
 
-    return {
-      images: [...indexed.images, ...pendingImages].sort(compareImages(search)),
-      availableFormats,
-      unrecognizedCount: indexed.unrecognizedCount + unindexedImages.length,
-      skippedUnrecognizedCount: 0,
-      failureStats: indexed.failureStats
-    };
+  const newUnrecognizedVisualPaths = new Set<string>();
+  for (const file of scanResult.files) {
+    const capability = getFileFormatCapability(file.extension);
+    if (!capability?.canSearch) continue;
+    const fileFormat = getFileFormat(file.file_name);
+    if (selectedFileFormat !== "all" && fileFormat !== selectedFileFormat) continue;
+    if (!fileMatchesDeterministicSearchTerms(file, terms, directoryTermMatches)) continue;
+
+    const key = filePathKey(file.file_path);
+    const existing = resultByPath.get(key);
+    if (existing) {
+      resultByPath.set(key, mergeScannedMetadata(existing, file));
+      continue;
+    }
+
+    if (capability.canAIIndex) {
+      if (!knownCatalogVisualPaths.has(key)) newUnrecognizedVisualPaths.add(key);
+      if (search.recognitionStatus === "recognized" || knownVisualPaths.has(key)) continue;
+    } else if (search.recognitionStatus !== "all") {
+      continue;
+    }
+
+    const result = scannedFileToResult(file);
+    if (result) resultByPath.set(key, result);
   }
 
-  if (terms.length > 0) {
-    const unrecognizedCount = indexed.unrecognizedCount + unindexedImages.length;
-    const pendingImages = unindexedImages
-      .filter((image) => normalizedTerms.every((term) => image.file_name.toLocaleLowerCase().includes(term)))
-      .filter((image) => !indexedResultPaths.has(image.file_path))
-      .map(scannedImageToResult);
-
-    return {
-      images: [...indexed.images, ...pendingImages, ...nonVisualResults].sort(compareImages(search)),
-      availableFormats,
-      unrecognizedCount,
-      skippedUnrecognizedCount: unrecognizedCount,
-      failureStats: indexed.failureStats
-    };
-  }
-
-  const images = [
-    ...indexed.images,
-    ...unindexedImages
-      .filter((image) => !indexedResultPaths.has(image.file_path))
-      .map(scannedImageToResult),
-    ...nonVisualResults
-  ].sort(compareImages(search));
-
+  const unrecognizedCount = indexed.unrecognizedCount + newUnrecognizedVisualPaths.size;
   return {
-    images,
-    availableFormats,
-    unrecognizedCount: indexed.unrecognizedCount + unindexedImages.length,
-    skippedUnrecognizedCount: 0,
+    images: [...resultByPath.values()].sort(compareImages(search)),
+    availableFormats: availableFormats.length > 0 ? availableFormats : indexed.availableFormats,
+    unrecognizedCount,
+    skippedUnrecognizedCount: terms.length > 0 && search.recognitionStatus !== "unrecognized" ? unrecognizedCount : 0,
     failureStats: indexed.failureStats
   };
 };
-import { t } from "./localization";

@@ -26,7 +26,8 @@ app.whenReady().then(async () => {
     await fs.mkdir(sourceDirectory, { recursive: true });
     const imagePath = path.join(sourceDirectory, "visual.png");
     const textPath = path.join(sourceDirectory, "notes.txt");
-    const documentPath = path.join(sourceDirectory, "brief.docx");
+    const documentPath = path.join(sourceDirectory, "nested", "brief.docx");
+    await fs.mkdir(path.dirname(documentPath), { recursive: true });
     await fs.writeFile(imagePath, "png");
     await fs.writeFile(textPath, "txt");
     await fs.writeFile(documentPath, "docx");
@@ -75,6 +76,7 @@ app.whenReady().then(async () => {
     const { scanImageDirectories } = require("../dist-electron/imageScanner.js");
     const {
       deleteDirectoryImages,
+      backfillFilePathEvidence,
       ensureImageDatabase,
       getCompletedFileScanDirectoryIds,
       getExistingFileCountsByDirectory,
@@ -86,10 +88,6 @@ app.whenReady().then(async () => {
     } = require("../dist-electron/sqliteImageIndex.js");
     const { cleanupMissingIndexedFiles } = require("../dist-electron/staleFileCleanupService.js");
 
-    await ensureImageDatabase();
-    assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 1);
-    assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), false);
-
     const directory = {
       id: directoryId,
       name: "sources",
@@ -98,6 +96,11 @@ app.whenReady().then(async () => {
       createdAt: timestamp,
       updatedAt: timestamp
     };
+    await ensureImageDatabase();
+    await fs.access(`${databasePath}.pre-path-v1.bak`);
+    assert.equal(await backfillFilePathEvidence([directory]), 1);
+    assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 1);
+    assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), false);
     await assert.rejects(
       () => scanImageDirectories([directory], { isCancelled: () => true }),
       (error) => error?.code === "ECANCELED"
@@ -109,6 +112,13 @@ app.whenReady().then(async () => {
     assert.equal(scan.directories[0].image_count, 1);
 
     await writeScannedImagesToIndex([directoryId], scan.images, scan.scannedAt, scan.files);
+    const pathEvidenceDatabase = new SQL.Database(await fs.readFile(databasePath));
+    const pathEvidenceRow = pathEvidenceDatabase.exec(
+      "SELECT relative_directory, path_evidence_version FROM files WHERE file_path = :file_path",
+      { ":file_path": documentPath }
+    )[0]?.values[0];
+    pathEvidenceDatabase.close();
+    assert.deepEqual(pathEvidenceRow, ["nested", 1]);
     assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 3);
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), true);
     assert.deepEqual(await getImageIndexQualityStats(directoryId), {
@@ -145,8 +155,16 @@ app.whenReady().then(async () => {
 
     await reassignDirectoryImages([{
       fromDirectoryIds: [directoryId],
-      toDirectoryId: replacementDirectoryId
+      toDirectoryId: replacementDirectoryId,
+      toDirectoryPath: testRoot
     }]);
+    const reassignedDatabase = new SQL.Database(await fs.readFile(databasePath));
+    const reassignedPathRow = reassignedDatabase.exec(
+      "SELECT relative_directory, path_evidence_version FROM files WHERE file_path = :file_path",
+      { ":file_path": documentPath }
+    )[0]?.values[0];
+    reassignedDatabase.close();
+    assert.deepEqual(reassignedPathRow, ["sources/nested", 1]);
     assert.equal((await getExistingFileCountsByDirectory([directoryId, replacementDirectoryId]))[replacementDirectoryId], 2);
     assert.equal((await getImageIndexQualityStats(replacementDirectoryId)).totalImages, 1);
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId, replacementDirectoryId])).size, 0);
@@ -162,6 +180,9 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       legacyImagesBackfilled: true,
+      legacyPathEvidenceBackfilledWithoutSourceScan: true,
+      migrationBackupCreated: true,
+      relativeDirectoryStoredAndReassigned: true,
       mixedFormatsCataloged: 3,
       missingFilesMarkedBeforeCleanup: true,
       nonVisualAiBoundaryPreserved: true,

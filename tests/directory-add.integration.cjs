@@ -131,7 +131,8 @@ const hasOverlappingDirectories = (directories) => directories.some((left, index
 
     await reassignDirectoryImages(replacement.replacements.map((item) => ({
       fromDirectoryIds: item.replacedDirectories.map((directory) => directory.id),
-      toDirectoryId: item.directory.id
+      toDirectoryId: item.directory.id,
+      toDirectoryPath: item.directory.path
     })));
     const replacementCounts = await getExistingImageCountsByDirectory([replacement.added[0].id]);
     assert.equal(replacementCounts[replacement.added[0].id], 2);

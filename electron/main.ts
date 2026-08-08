@@ -14,12 +14,13 @@ import { getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
 import { isSupportedImageFilePath, scanImageDirectories, type ScannedImageFile } from "./imageScanner";
+import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
-import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
+import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
@@ -146,6 +147,7 @@ const syncThumbnailOptimizationActivity = () => {
     && (activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal")
   );
   setSkimShellThumbnailActivity(shouldRun);
+  searchScanSnapshotService.setActive(shouldRun);
   if (shouldRun) {
     resumeThumbnailOptimization("inactive-content");
     return;
@@ -2267,6 +2269,11 @@ const createWindow = () => {
 app.whenReady().then(async () => {
   registerLocalImageProtocol();
   await ensureImageDatabase();
+  try {
+    await backfillFilePathEvidence(await listDirectories());
+  } catch (error) {
+    console.warn("[search-path-evidence] failed to backfill existing catalog paths", error);
+  }
   const preferences = await getUserPreferences();
   setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
   edgeSnapEnabled = preferences.edgeSnapEnabled;
@@ -2785,8 +2792,13 @@ const addDirectoryCandidatesWithIndexMigrationInternal = async (request: Directo
   try {
     await reassignDirectoryImages(result.replacements.map((replacement) => ({
       fromDirectoryIds: replacement.replacedDirectories.map((directory) => directory.id),
-      toDirectoryId: replacement.directory.id
+      toDirectoryId: replacement.directory.id,
+      toDirectoryPath: replacement.directory.path
     })));
+    searchScanSnapshotService.invalidate([
+      ...result.added.map((directory) => directory.id),
+      ...result.replacements.flatMap((replacement) => replacement.replacedDirectories.map((directory) => directory.id))
+    ]);
   } catch (error) {
     const replacementIds = new Set(result.replacements.map((replacement) => replacement.directory.id));
     const restoredDirectories = [
@@ -2999,6 +3011,7 @@ ipcMain.handle("directories:updateName", async (_event, id: string, name: string
 });
 
 ipcMain.handle("directories:delete", async (_event, id: string) => {
+  searchScanSnapshotService.invalidate([id]);
   const directory = (await listDirectories()).find((item) => item.id === id);
   const deletedFilePaths = await deleteDirectoryImages(id);
   if (directory) {
@@ -3018,6 +3031,7 @@ ipcMain.handle("scan:allDirectories", async () => {
   fileCleanupResult.errors.forEach((message) => console.warn(`[stale-file-cleanup] ${message}`));
   const directories = await listDirectories();
   const scanResult = await scanImageDirectories(directories);
+  searchScanSnapshotService.seed(directories, scanResult);
   const counts = await writeScannedImagesToIndex(
     directories.map((directory) => directory.id),
     scanResult.images,
@@ -3055,6 +3069,7 @@ ipcMain.handle("scan:directory", async (_event, directoryId: string) => {
   const fileCleanupResult = await cleanupMissingIndexedFiles(directory.id);
   fileCleanupResult.errors.forEach((message) => console.warn(`[stale-file-cleanup] ${message}`));
   const scanResult = await scanImageDirectories([directory]);
+  searchScanSnapshotService.seed([directory], scanResult);
   const counts = await writeScannedImagesToIndex(
     [directory.id],
     scanResult.images,

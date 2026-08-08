@@ -55,7 +55,7 @@ app.whenReady().then(async () => {
       await fs.utimes(orderedFiles[index], modifiedAt, modifiedAt);
     }
 
-    const firstDirectory = createDirectory("first-directory", "first", firstDirectoryPath);
+    const firstDirectory = createDirectory("first-directory", "用户项目-Alpha", firstDirectoryPath);
     const secondDirectory = createDirectory("second-directory", "second", secondDirectoryPath);
     const directories = [firstDirectory, secondDirectory];
     const { scanImageDirectories } = require("../dist-electron/imageScanner.js");
@@ -66,6 +66,7 @@ app.whenReady().then(async () => {
       writeScannedImagesToIndex
     } = require("../dist-electron/sqliteImageIndex.js");
     const { searchImagesWithAddedDirectories } = require("../dist-electron/imageSearchService.js");
+    const { searchScanSnapshotService } = require("../dist-electron/searchScanSnapshotService.js");
 
     await ensureImageDatabase();
     const initialScan = await scanImageDirectories(directories);
@@ -125,7 +126,22 @@ app.whenReady().then(async () => {
     assert.equal(notesResult.images[0].thumbnailUrl, "");
 
     const pathOnlyQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "path-only-token" }, directories);
-    assert.equal(pathOnlyQuery.images.length, 0);
+    assert.deepEqual(pathOnlyQuery.images.map((item) => item.fileName), ["plain.txt"]);
+
+    const rootNameQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "first" }, directories);
+    assert.deepEqual(rootNameQuery.images.map((item) => item.fileName), [
+      "brief.docx",
+      "notes.txt",
+      "plain.txt",
+      "sound.mp3",
+      "visual.png"
+    ]);
+    const displayNameQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "用户项目" }, directories);
+    assert.deepEqual(displayNameQuery.images.map((item) => item.fileName), rootNameQuery.images.map((item) => item.fileName));
+    const crossSourceQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "first plain" }, directories);
+    assert.deepEqual(crossSourceQuery.images.map((item) => item.fileName), ["plain.txt"]);
+    assert.equal((await searchImagesWithAddedDirectories({ ...baseSearch, query: "%" }, directories)).images.length, 0);
+    assert.equal((await searchImagesWithAddedDirectories({ ...baseSearch, query: "_" }, directories)).images.length, 0);
 
     const keywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "landscape" }, directories);
     assert.deepEqual(keywordQuery.images.map((item) => item.fileName), ["visual.png"]);
@@ -155,6 +171,7 @@ app.whenReady().then(async () => {
     assert.equal(unrecognizedResults.unrecognizedCount, 0);
 
     await fs.writeFile(path.join(firstDirectoryPath, "new-archive.zip"), "zip");
+    searchScanSnapshotService.invalidate([firstDirectory.id]);
     const liveOverlayResults = await searchImagesWithAddedDirectories({
       ...baseSearch,
       query: "new-archive"
@@ -162,15 +179,30 @@ app.whenReady().then(async () => {
     assert.deepEqual(liveOverlayResults.images.map((item) => item.fileName), ["new-archive.zip"]);
     assert.equal(liveOverlayResults.images[0].iconName, "format-zip");
 
+    searchScanSnapshotService.setActive(false);
+    const inactiveSnapshotResults = await searchImagesWithAddedDirectories(baseSearch, directories);
+    assert.deepEqual(inactiveSnapshotResults.images.map((item) => item.fileName), [
+      "brief.docx",
+      "notes.txt",
+      "other.md",
+      "plain.txt",
+      "sound.mp3",
+      "visual.png"
+    ]);
+    searchScanSnapshotService.setActive(true);
+
     console.log(JSON.stringify({
       visualAndNonVisualMerged: true,
       pathDeduplicationPreserved: true,
       filenameAndExtensionSearchEnabled: true,
-      pathSemanticsExcluded: true,
+      deterministicPathSemanticsEnabled: true,
+      crossSourceAndPreserved: true,
+      likeWildcardsEscaped: true,
       visualKeywordSearchPreserved: true,
       directoryFormatAndSortFiltersPreserved: true,
       recognitionFiltersRemainVisualOnly: true,
-      liveScanOverlayIncludesNewFiles: true
+      liveScanOverlayIncludesNewFiles: true,
+      inactiveSnapshotFallsBackToIndex: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });
