@@ -1988,6 +1988,9 @@ const registerLocalImageProtocol = () => {
             filePath,
             url.hostname === "skim-preview" ? "preview" : "thumbnail"
           );
+        if (url.hostname === "skim-preview" && await shouldUseSourceFileForPreview(filePath)) {
+          return net.fetch(pathToFileURL(filePath).toString());
+        }
         const image = await readVisualCacheImage(cachePath);
         return new Response(toResponseBody(image.buffer), {
           headers: {
