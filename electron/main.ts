@@ -36,6 +36,7 @@ import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirec
 import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
 import type { KeywordBatchUpdateRequest, KeywordBatchUpdateResult } from "./keywordTypes";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
+import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 
 const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -472,6 +473,7 @@ const createPreviewWindow = () => {
       nodeIntegration: false
     }
   });
+  lockWebContentsZoom(previewWindow.webContents);
   previewWindow.setSkipTaskbar(true);
   previewWindow.setMenuBarVisibility(false);
   applyAlwaysOnTopState();
@@ -575,6 +577,7 @@ const createStartupHintWindow = async () => {
       sandbox: true
     }
   });
+  lockWebContentsZoom(startupHintWindow.webContents);
   startupHintWindow.setSkipTaskbar(true);
   startupHintWindow.setAlwaysOnTop(true, "screen-saver");
   startupHintWindow.setIgnoreMouseEvents(true, { forward: true });
@@ -2186,6 +2189,7 @@ const createWindow = () => {
       nodeIntegration: false
     }
   });
+  lockWebContentsZoom(mainWindow.webContents);
   mainWindowSkipTaskbar = true;
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
