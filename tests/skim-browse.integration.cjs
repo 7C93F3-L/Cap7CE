@@ -13,7 +13,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       buildSkimBreadcrumbs,
       listSkimDrives,
       parseWindowsDriveOutput,
-      parseWindowsHiddenAttributeOutput,
+      parseWindowsHiddenNameOutput,
+      parseWindowsVolumeLabelOutput,
       readSkimLocation
     } = require("../dist-electron/skimBrowseService.js");
 
@@ -74,21 +75,25 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 
     await assert.rejects(() => readSkimLocation("relative-path"), /Invalid skim directory path/);
 
-    const drives = parseWindowsDriveOutput(JSON.stringify([
-      { root: "C:\\", label: "System" },
-      { root: "c:\\", label: "Duplicate" },
-      { root: "D:\\", label: "Data" },
-      { root: "not-a-drive" }
-    ]));
+    const drives = parseWindowsDriveOutput("Drives: C:\\ c:\\ D:\\ not-a-drive");
     assert.deepEqual(drives.map((drive) => drive.path.toUpperCase()), ["C:\\", "D:\\"]);
-    assert.equal(drives[0].label, "System");
 
-    const hiddenPaths = parseWindowsHiddenAttributeOutput(JSON.stringify([
-      "C:\\Users\\Example\\hidden.ini",
-      "C:\\Users\\Example\\隐藏.txt"
-    ]));
+    const hiddenDirectory = "C:\\Users\\Example";
+    const hiddenPaths = parseWindowsHiddenNameOutput(hiddenDirectory, "hidden.ini\r\n隐藏.txt\r\n");
     assert.equal(hiddenPaths.has(path.normalize("C:\\Users\\Example\\hidden.ini").toLocaleLowerCase()), true);
     assert.equal(hiddenPaths.has(path.normalize("C:\\Users\\Example\\隐藏.txt").toLocaleLowerCase()), true);
+
+    const volumeLabels = parseWindowsVolumeLabelOutput([
+      " Volume in drive C is Windows ",
+      "驱动器 D 中的卷是 工作资料",
+      "磁碟機 E 中的磁碟區是 素材",
+      "Volume in drive F has no label."
+    ].join("\r\n"));
+    assert.deepEqual([...volumeLabels.entries()], [
+      ["C", "Windows"],
+      ["D", "工作资料"],
+      ["E", "素材"]
+    ]);
 
     const systemDrives = await listSkimDrives();
     assert.equal(systemDrives.some((drive) => drive.label?.includes("�")), false);
@@ -101,7 +106,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       breadcrumbsBuilt: true,
       cancellationHonored: true,
       driveOutputNormalized: true,
-      unicodeDriveLabelsPreserved: true,
+      volumeLabelsNormalized: true,
       hiddenAttributeOutputNormalized: true
     }));
   } finally {

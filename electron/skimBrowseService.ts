@@ -35,11 +35,6 @@ export interface SkimReadResult {
   cancelled: boolean;
 }
 
-interface WindowsDriveRecord {
-  root?: unknown;
-  label?: unknown;
-}
-
 const execFileAsync = promisify(execFile);
 
 const pathKey = (value: string) => path.normalize(value).toLocaleLowerCase();
@@ -61,19 +56,10 @@ const toDriveEntry = (root: string, label = ""): SkimBrowseEntry => {
 };
 
 export const parseWindowsDriveOutput = (output: string): SkimBrowseEntry[] => {
-  const trimmed = output.replace(/^\uFEFF/, "").trim();
-  if (!trimmed) {
-    return [];
-  }
-  const parsed = JSON.parse(trimmed) as WindowsDriveRecord | WindowsDriveRecord[] | null;
-  const records = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
   const seenRoots = new Set<string>();
   const drives: SkimBrowseEntry[] = [];
-  for (const record of records) {
-    if (typeof record.root !== "string" || !/^[A-Za-z]:\\$/.test(record.root)) {
-      continue;
-    }
-    const drive = toDriveEntry(record.root, typeof record.label === "string" ? record.label : "");
+  for (const [root] of output.matchAll(/[A-Za-z]:\\/g)) {
+    const drive = toDriveEntry(root);
     const key = pathKey(drive.path);
     if (seenRoots.has(key)) {
       continue;
@@ -84,38 +70,70 @@ export const parseWindowsDriveOutput = (output: string): SkimBrowseEntry[] => {
   return drives.sort((left, right) => left.path.localeCompare(right.path, "en", { sensitivity: "base" }));
 };
 
-const fallbackDriveEntries = () => {
-  const roots = [path.parse(os.homedir()).root, path.parse(process.cwd()).root].filter(Boolean);
-  return parseWindowsDriveOutput(JSON.stringify(roots.map((root) => ({ root }))));
+export const parseWindowsVolumeLabelOutput = (output: string): Map<string, string> => {
+  const labels = new Map<string, string>();
+  const patterns = [
+    /^Volume in drive ([A-Z]) is (.+)$/i,
+    /^驱动器\s+([A-Z])\s+中的卷是\s+(.+)$/i,
+    /^磁碟機\s+([A-Z])\s+中的磁碟區是\s+(.+)$/i
+  ];
+  for (const line of output.replace(/^\uFEFF/, "").split(/\r?\n/).map((value) => value.trim()).filter(Boolean)) {
+    for (const pattern of patterns) {
+      const match = line.match(pattern);
+      if (!match) continue;
+      labels.set(match[1].toLocaleUpperCase(), match[2].trim());
+      break;
+    }
+  }
+  return labels;
 };
 
-export const parseWindowsHiddenAttributeOutput = (output: string): Set<string> => {
-  const trimmed = output.replace(/^\uFEFF/, "").trim();
-  if (!trimmed) return new Set<string>();
-  const parsed = JSON.parse(trimmed) as string | string[];
-  return new Set((Array.isArray(parsed) ? parsed : [parsed]).filter((value) => typeof value === "string").map(pathKey));
+const fallbackDriveEntries = () => {
+  const roots = [path.parse(os.homedir()).root, path.parse(process.cwd()).root].filter(Boolean);
+  return parseWindowsDriveOutput(roots.join(" "));
+};
+
+export const parseWindowsHiddenNameOutput = (directoryPath: string, output: string): Set<string> => {
+  return new Set(output
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .map((name) => pathKey(path.join(directoryPath, name))));
 };
 
 const listHiddenEntryPaths = async (directoryPath: string) => {
   if (process.platform !== "win32") return new Set<string>();
-  const escapedDirectoryPath = directoryPath.replace(/'/g, "''");
-  const command = [
-    "$ErrorActionPreference = 'Stop'",
-    "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)",
-    "$OutputEncoding = [Console]::OutputEncoding",
-    `$paths = @(Get-ChildItem -LiteralPath '${escapedDirectoryPath}' -Force | Where-Object { ($_.Attributes -band [IO.FileAttributes]::Hidden) -ne 0 } | ForEach-Object { $_.FullName })`,
-    "ConvertTo-Json -Compress -InputObject $paths"
-  ].join("; ");
   try {
-    const { stdout } = await execFileAsync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command], {
-      encoding: "utf8",
+    const { stdout } = await execFileAsync(process.env.ComSpec || "cmd.exe", ["/d", "/u", "/c", "dir /a:h /b"], {
+      cwd: directoryPath,
+      encoding: "utf16le",
       windowsHide: true,
       timeout: 10_000,
       maxBuffer: 4 * 1024 * 1024
     });
-    return parseWindowsHiddenAttributeOutput(stdout);
+    return parseWindowsHiddenNameOutput(directoryPath, stdout);
   } catch {
     return new Set<string>();
+  }
+};
+
+const readWindowsVolumeLabels = async (drives: SkimBrowseEntry[]) => {
+  const driveLetters = drives
+    .map((drive) => drive.path.match(/^([A-Za-z]):\\$/)?.[1]?.toLocaleUpperCase())
+    .filter((letter): letter is string => Boolean(letter));
+  if (driveLetters.length === 0) return new Map<string, string>();
+  const command = `${driveLetters.map((letter) => `vol ${letter}:`).join(" & ")} & exit /b 0`;
+  try {
+    const { stdout } = await execFileAsync(process.env.ComSpec || "cmd.exe", ["/d", "/u", "/c", command], {
+      encoding: "utf16le",
+      windowsHide: true,
+      timeout: 5_000,
+      maxBuffer: 1024 * 1024
+    });
+    return parseWindowsVolumeLabelOutput(stdout);
+  } catch {
+    return new Map<string, string>();
   }
 };
 
@@ -123,22 +141,21 @@ export const listSkimDrives = async (): Promise<SkimBrowseEntry[]> => {
   if (process.platform !== "win32") {
     return fallbackDriveEntries();
   }
-  const command = [
-    "$ErrorActionPreference = 'Stop'",
-    "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)",
-    "$OutputEncoding = [Console]::OutputEncoding",
-    "$drives = @(Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -match '^[A-Za-z]:\\\\$' } | ForEach-Object { [PSCustomObject]@{ root = $_.Root; label = $_.Description } })",
-    "ConvertTo-Json -Compress -InputObject $drives"
-  ].join("; ");
   try {
-    const { stdout } = await execFileAsync("powershell.exe", ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command], {
+    const fsutilPath = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "fsutil.exe");
+    const { stdout } = await execFileAsync(fsutilPath, ["fsinfo", "drives"], {
       encoding: "utf8",
       windowsHide: true,
       timeout: 10_000,
       maxBuffer: 1024 * 1024
     });
     const drives = parseWindowsDriveOutput(stdout);
-    return drives.length > 0 ? drives : fallbackDriveEntries();
+    if (drives.length === 0) return fallbackDriveEntries();
+    const labels = await readWindowsVolumeLabels(drives);
+    return drives.map((drive) => ({
+      ...drive,
+      label: labels.get(drive.path[0].toLocaleUpperCase()) || undefined
+    }));
   } catch {
     return fallbackDriveEntries();
   }
