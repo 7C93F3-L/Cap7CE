@@ -13,6 +13,10 @@ This file is a human-readable inventory for Cap7CE 0.8.1. `package-lock.json` is
 | `@napi-rs/canvas` and Windows runtime package | MIT |
 | `ag-psd` | MIT |
 | `7z-wasm` / 7-Zip WebAssembly | LGPL-2.1-or-later with the UnRAR restriction; bundled license texts are in `third_party/7z-wasm` |
+| `fflate` | MIT |
+| `@xmldom/xmldom` | MIT |
+| `parse5` | MIT |
+| `entities` | BSD-2-Clause |
 | `pdfjs-dist` | Apache-2.0 |
 | `opentype.js` | MIT; bundled license text is in `third_party/opentype.js` |
 | `sharp` | Apache-2.0 |
@@ -25,6 +29,8 @@ The installed production dependency graph also contains components under MIT, Ap
 Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entries. It does not implement or expose RAR archive creation. Binary packaging copies `License.txt` and `unRarLicense.txt` to `resources/licenses/7z-wasm`.
 
 Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active preview session. Binary packaging copies its MIT license to `resources/licenses/opentype.js`.
+
+Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
 
 ## Electron and Chromium notices
 

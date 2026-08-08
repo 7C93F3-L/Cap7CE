@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { ArchivePreviewFallbackReason, FontPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
+import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
@@ -47,6 +47,15 @@ const getFontFallbackMessage = (reason: FontPreviewFallbackReason) => {
     default: return t("preview.fontFallback.failed");
   }
 };
+const getEpubFallbackMessage = (reason: EpubPreviewFallbackReason) => {
+  switch (reason) {
+    case "invalidEpub": return t("preview.epubFallback.invalidEpub");
+    case "encrypted": return t("preview.epubFallback.encrypted");
+    case "tooLarge": return t("preview.epubFallback.tooLarge");
+    case "timedOut": return t("preview.epubFallback.timedOut");
+    default: return t("preview.epubFallback.failed");
+  }
+};
 
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
@@ -66,6 +75,7 @@ const PreviewWindowApp = () => {
   const textScrollRef = useRef<HTMLPreElement | null>(null);
   const pdfScrollRef = useRef<HTMLDivElement>(null);
   const archiveScrollRef = useRef<HTMLDivElement>(null);
+  const epubScrollRef = useRef<HTMLDivElement>(null);
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
@@ -143,6 +153,8 @@ const PreviewWindowApp = () => {
             ? { width: 800, height: 620 }
           : previewData.provider === "font"
             ? { width: 780, height: 520 }
+          : previewData.provider === "epub"
+            ? { width: 820, height: 680 }
           : infoDimensions;
     window.imageEverything?.preview.contentSize({
       sessionId: previewData.sessionId,
@@ -333,6 +345,8 @@ const PreviewWindowApp = () => {
             ? pdfScrollRef.current
             : previewData.provider === "archive"
               ? archiveScrollRef.current
+            : previewData.provider === "epub"
+              ? epubScrollRef.current
             : null;
         if (contentScroll && !showInfoFallback) {
           event.preventDefault();
@@ -461,6 +475,24 @@ const PreviewWindowApp = () => {
               setShowInfoFallback(true);
             }}
           />
+        ) : previewData.provider === "epub" && previewData.epubPreview && !showInfoFallback ? (
+          <section className="preview-epub-panel">
+            <div ref={epubScrollRef} className="preview-epub-scroll cap-main-scroll-viewport">
+              <header>
+                {previewData.epubPreview.coverDataUrl && <img src={previewData.epubPreview.coverDataUrl} alt="" />}
+                <div>
+                  <h1>{previewData.epubPreview.title}</h1>
+                  {previewData.epubPreview.creator && <p>{previewData.epubPreview.creator}</p>}
+                </div>
+              </header>
+              {previewData.epubPreview.chapters.map((chapter, index) => (
+                <article key={index}>
+                  <h2>{chapter.title}</h2>
+                  <pre>{chapter.text}</pre>
+                </article>
+              ))}
+            </div>
+          </section>
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
             <section className="preview-media-panel preview-audio-panel">
@@ -510,6 +542,7 @@ const PreviewWindowApp = () => {
             {fontRuntimeFailed && !previewData.fontFallbackReason && (
               <p className="preview-info-notice">{getFontFallbackMessage("failed")}</p>
             )}
+            {previewData.epubFallbackReason && <p className="preview-info-notice">{getEpubFallbackMessage(previewData.epubFallbackReason)}</p>}
             <dl>
               <dt>{t("skim.previewPath")}</dt><dd>{previewData.info.path}</dd>
               <dt>{t("skim.previewType")}</dt><dd>{previewData.info.kind === "folder" ? t("skim.folder") : (previewData.info.extension || t("skim.file"))}</dd>
@@ -531,6 +564,7 @@ const PreviewWindowApp = () => {
         (previewData.provider === "text" && previewData.textPreview)
         || (previewData.provider === "pdf" && previewData.pdfPreview)
         || (previewData.provider === "archive" && previewData.archivePreview)
+        || (previewData.provider === "epub" && previewData.epubPreview)
       ) && !showInfoFallback && (
         <div className="preview-window-scrollbar-slot">
           <CustomScrollbar
@@ -538,6 +572,8 @@ const PreviewWindowApp = () => {
               ? pdfScrollRef
               : previewData.provider === "archive"
                 ? archiveScrollRef
+              : previewData.provider === "epub"
+                ? epubScrollRef
                 : textScrollRef}
             orientation="vertical"
           />

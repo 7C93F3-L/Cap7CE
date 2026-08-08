@@ -83,6 +83,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `officePreviewService.ts` | XLS/XLSX 与 PPT/PPTX 通过本机 Microsoft Excel/PowerPoint 只读转换为会话临时 PDF；负责大小上限、30 秒超时、精确终止本轮拥有的转换进程、切换取消和临时目录清理 |
 | `archivePreviewService.ts` / `archivePreviewWorker.ts` | ZIP、7Z、RAR 只读条目列表；通过可终止辅助进程中的 7-Zip WebAssembly 执行结构化列表命令，限制源文件大小、输出量、条目数、路径长度和时间，切换或关闭预览即终止进程 |
 | `fontPreviewService.ts` / `fontMetadataWorker.ts` | TTF、OTF 会话字体预览；在可终止 Worker 中使用 OpenType.js 读取本地化名称、样式、字重、字符覆盖和可变轴摘要，限制文件大小与时间，不在主进程同步解析字体 |
+| `epubPreviewService.ts` / `epubPreviewWorker.ts` | EPUB 会话内容预览；在可终止 Worker 中限制压缩条目数、单条目与展开总量，严格读取容器和 OPF 结构，再以容错 HTML 解析提取书名、作者、封面及连续纯文本章节，不执行书内脚本、CSS 或网络资源 |
 | `psdRenderService.ts` | PSD 合成图和多画板代表图处理 |
 | `vectorDocumentRenderService.ts` | AI / EPS 兼容预览数据处理 |
 | `cdrRenderService.ts` | 现代 CDR 内置预览图读取 |
@@ -156,6 +157,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ZIP、7Z 与 RAR 继续属于正式非视觉文件名搜索范围，但其预览 Provider 只在用户打开预览时启动独立 `7z-wasm` 辅助进程，固定执行 `l -slt` 条目列表并显示路径、目录标记和大小；不解压、不打开内部条目、不输入或保存密码、不建立归档内容索引，也不写入源目录或预览缓存。单次列表最多向界面返回 2,000 项，输出、路径、源文件体积和执行时间均有硬上限；加密、损坏、算法不支持、超时或进程异常使用本地化原因回退文件信息。7-Zip 与 UnRAR 许可文本随打包资源分发。
 
 TTF 与 OTF 继续属于正式非视觉文件名搜索范围，只有内容预览改用独立 `font` Provider。主进程先在可终止 Worker 中以 OpenType.js 的低内存模式读取受限元数据；预览 Renderer 再通过只授权当前会话和当前路径、并与其他本地资源隔离的 `cap7cefont://preview` 协议取得最多 64 MiB 字体字节，以随机会话别名创建临时 FontFace。界面只显示本地化家族名、样式、字形数量、可变轴摘要及固定中英文示例；不安装字体、不使用字体内部名称注册系统或进程级字体、不提供编辑或轴控制、不建立缓存。切换或关闭时中止读取并从 `document.fonts` 删除临时字体；损坏、超限、超时或加载失败使用本地化原因回退文件信息。OpenType.js 的 MIT 许可文本随打包资源分发。
+
+EPUB 属于正式非视觉文件名搜索范围，内容预览使用独立 `epub` Provider。主进程只在用户打开预览时启动可终止 Worker，并限制源文件大小、压缩条目数、单条目大小、展开总量、正文字数和执行时间；容器与 OPF 使用 XML 结构读取，章节 XHTML 使用容错 HTML 解析后仅提取纯文本，封面转换为受限尺寸 PNG。预览不执行书内脚本、CSS 或网络请求，不读取加密内容，不建立正文索引或持久缓存；切换或关闭立即终止旧任务。无正文、损坏、加密、超限或超时均以本地化原因回退文件信息。
 
 ## 6. UI 状态系统
 

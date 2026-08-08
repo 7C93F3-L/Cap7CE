@@ -2733,6 +2733,17 @@ textarea,
   color: var(--text-main);
 }
 
+.preview-epub-panel { width:100%; height:100%; overflow:hidden; background:var(--panel-bg); border-radius:var(--radius-thumb); }
+.preview-epub-scroll { height:100%; overflow-y:auto; padding:28px 44px 48px; scrollbar-width:none; }
+.preview-epub-scroll::-webkit-scrollbar { width:0; }
+.preview-epub-scroll > header { display:flex; align-items:center; gap:26px; margin:0 auto 36px; max-width:680px; }
+.preview-epub-scroll > header img { width:120px; max-height:170px; object-fit:contain; border-radius:4px; box-shadow:0 4px 18px rgb(0 0 0 / 18%); }
+.preview-epub-scroll h1 { margin:0 0 8px; font-size:24px; }
+.preview-epub-scroll header p { margin:0; color:var(--text-muted); }
+.preview-epub-scroll article { max-width:680px; margin:0 auto 38px; }
+.preview-epub-scroll article h2 { margin:0 0 14px; font-size:18px; }
+.preview-epub-scroll article pre { margin:0; color:var(--text-main); font:14px/1.9 "Microsoft YaHei UI",sans-serif; white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; }
+
 .preview-font-panel {
   width: 100%;
   height: 100%;

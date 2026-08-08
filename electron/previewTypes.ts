@@ -1,5 +1,6 @@
 import type { ArchivePreviewData, ArchivePreviewFallbackReason } from "./archivePreviewTypes";
 import type { FontPreviewData, FontPreviewFallbackReason } from "./fontPreviewTypes";
+import type { EpubPreviewData, EpubPreviewFallbackReason } from "./epubPreviewTypes";
 
 export type PreviewNavigateDirection = -1 | 1;
 
@@ -18,7 +19,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub";
   info?: {
     kind: "file" | "folder";
     name: string;
@@ -42,6 +43,8 @@ export interface PreviewWindowData {
   archiveFallbackReason?: ArchivePreviewFallbackReason;
   fontPreview?: FontPreviewData;
   fontFallbackReason?: FontPreviewFallbackReason;
+  epubPreview?: EpubPreviewData;
+  epubFallbackReason?: EpubPreviewFallbackReason;
   skimActive: boolean;
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";

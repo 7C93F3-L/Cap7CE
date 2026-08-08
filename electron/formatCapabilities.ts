@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub";
 
 export interface FileFormatCapability {
   extension: string;
@@ -24,7 +24,7 @@ const directPreviewExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp
 const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
   ["text", ["txt", "md", "rtf", "html", "ini"]],
   ["data", ["csv", "json", "xml", "yaml", "yml"]],
-  ["document", ["doc", "docx", "xls", "xlsx", "ppt", "pptx"]],
+  ["document", ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "epub"]],
   ["archive", ["7z", "gz", "rar", "tar", "zip"]],
   ["audio", ["aac", "flac", "m4a", "mp3", "ogg", "wav"]],
   ["video", ["avi", "m4v", "mkv", "mov", "mp4", "webm"]],
@@ -37,7 +37,7 @@ const browseOnlyFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readon
   ["visual", ["heic", "heif", "jfif", "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
   ["video", ["wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp"]],
   ["audio", ["wma", "opus", "aif", "aiff", "ape"]],
-  ["document", ["odt", "ods", "odp", "epub", "wps", "et", "dps", "one", "xps", "oxps"]]
+  ["document", ["odt", "ods", "odp", "wps", "et", "dps", "one", "xps", "oxps"]]
 ];
 
 const skimDefaultHiddenExtensions = new Set([
@@ -46,6 +46,7 @@ const skimDefaultHiddenExtensions = new Set([
 
 const iconNameByExtension = new Map<string, string>([
   ["blend", "format-blend"],
+  ["epub", "skim-file"],
   ["prproj", "format-prproj"],
   ["pproj", "format-prproj"]
 ]);
@@ -57,6 +58,7 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["xls", "office"], ["xlsx", "office"], ["ppt", "office"], ["pptx", "office"],
   ["7z", "archive"], ["rar", "archive"], ["zip", "archive"],
   ["otf", "font"], ["ttf", "font"],
+  ["epub", "epub"],
   ["flac", "audio"], ["m4a", "audio"], ["mp3", "audio"], ["ogg", "audio"], ["wav", "audio"],
   ["mkv", "video"], ["mp4", "video"], ["mov", "video"], ["webm", "video"]
 ]);

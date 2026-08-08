@@ -61,6 +61,9 @@ export interface FontPreviewData {
 }
 
 export type FontPreviewFallbackReason = "invalidFont" | "tooLarge" | "timedOut" | "failed";
+export interface EpubPreviewChapter { title: string; text: string }
+export interface EpubPreviewData { title: string; creator: string; chapters: EpubPreviewChapter[]; navigationCount: number; skippedChapterCount: number; truncated: boolean; coverDataUrl: string | null }
+export type EpubPreviewFallbackReason = "invalidEpub" | "encrypted" | "tooLarge" | "timedOut" | "failed";
 
 export interface PreviewWindowData {
   sessionId: string;
@@ -69,7 +72,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub";
   info?: SkimPreviewInfo;
   textPreview?: SkimTextPreview;
   pdfPreview?: PdfPreviewMetadata;
@@ -77,6 +80,8 @@ export interface PreviewWindowData {
   archiveFallbackReason?: ArchivePreviewFallbackReason;
   fontPreview?: FontPreviewData;
   fontFallbackReason?: FontPreviewFallbackReason;
+  epubPreview?: EpubPreviewData;
+  epubFallbackReason?: EpubPreviewFallbackReason;
   skimActive: boolean;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
@@ -196,7 +201,7 @@ export interface DirectoryAddResult {
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub";
 
 export interface FileFormatCapability {
   extension: string;
