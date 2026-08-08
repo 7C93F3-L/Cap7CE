@@ -15,7 +15,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office";
   info?: {
     kind: "file" | "folder";
     name: string;

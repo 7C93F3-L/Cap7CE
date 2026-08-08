@@ -1,12 +1,16 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import WordExtractor from "word-extractor";
 
 export const skimTextPreviewExtensions = new Set([
-  ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml"
+  ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml", ".doc", ".docx"
 ]);
 export const skimAudioPreviewExtensions = new Set([".m4a", ".mp3", ".wav"]);
 export const skimVideoPreviewExtensions = new Set([".mp4", ".mov", ".webm"]);
 export const maximumSkimTextPreviewBytes = 1024 * 1024;
+const maximumWordPreviewBytes = 64 * 1024 * 1024;
+const wordPreviewExtensions = new Set([".doc", ".docx"]);
+const wordExtractor = new WordExtractor();
 
 export interface SkimMediaByteRange {
   start: number;
@@ -77,6 +81,20 @@ const decodeUtf16Be = (buffer: Buffer) => {
   return new TextDecoder("utf-16le", { fatal: true }).decode(swapped);
 };
 
+const readWordTextPreview = async (filePath: string, fileSize: number): Promise<SkimTextPreviewResult> => {
+  if (fileSize > maximumWordPreviewBytes) {
+    throw unsupportedTextError();
+  }
+  const document = await wordExtractor.extract(filePath);
+  const encoded = Buffer.from(document.getBody(), "utf8");
+  const truncated = encoded.length > maximumSkimTextPreviewBytes;
+  return {
+    content: decodeUtf8(encoded.subarray(0, maximumSkimTextPreviewBytes), truncated),
+    encoding: "utf-8",
+    truncated
+  };
+};
+
 export const readSkimTextPreview = async (filePath: string): Promise<SkimTextPreviewResult> => {
   if (!path.isAbsolute(filePath) || !skimTextPreviewExtensions.has(path.extname(filePath).toLowerCase())) {
     throw unsupportedTextError();
@@ -84,6 +102,9 @@ export const readSkimTextPreview = async (filePath: string): Promise<SkimTextPre
   const normalizedPath = path.normalize(path.resolve(filePath));
   const stat = await fs.stat(normalizedPath);
   if (!stat.isFile()) throw unsupportedTextError();
+  if (wordPreviewExtensions.has(path.extname(normalizedPath).toLowerCase())) {
+    return readWordTextPreview(normalizedPath, stat.size);
+  }
 
   const truncated = stat.size > maximumSkimTextPreviewBytes;
   const readLength = Math.min(stat.size, maximumSkimTextPreviewBytes);

@@ -6,6 +6,70 @@ const { app } = require("electron");
 
 const testRoot = path.join(os.tmpdir(), `cap7ce-skim-content-${process.pid}-${Date.now()}`);
 
+const crcTable = Array.from({ length: 256 }, (_, value) => {
+  let current = value;
+  for (let bit = 0; bit < 8; bit += 1) {
+    current = (current & 1) ? (0xedb88320 ^ (current >>> 1)) : (current >>> 1);
+  }
+  return current >>> 0;
+});
+
+const crc32 = (buffer) => {
+  let crc = 0xffffffff;
+  for (const byte of buffer) crc = crcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+const createStoredZip = (entries) => {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  for (const [name, content] of entries) {
+    const nameBuffer = Buffer.from(name);
+    const contentBuffer = Buffer.from(content);
+    const checksum = crc32(contentBuffer);
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt32LE(checksum, 14);
+    localHeader.writeUInt32LE(contentBuffer.length, 18);
+    localHeader.writeUInt32LE(contentBuffer.length, 22);
+    localHeader.writeUInt16LE(nameBuffer.length, 26);
+    localParts.push(localHeader, nameBuffer, contentBuffer);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt32LE(checksum, 16);
+    centralHeader.writeUInt32LE(contentBuffer.length, 20);
+    centralHeader.writeUInt32LE(contentBuffer.length, 24);
+    centralHeader.writeUInt16LE(nameBuffer.length, 28);
+    centralHeader.writeUInt32LE(offset, 42);
+    centralParts.push(centralHeader, nameBuffer);
+    offset += localHeader.length + nameBuffer.length + contentBuffer.length;
+  }
+  const centralDirectory = Buffer.concat(centralParts);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(entries.length, 8);
+  end.writeUInt16LE(entries.length, 10);
+  end.writeUInt32LE(centralDirectory.length, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...localParts, centralDirectory, end]);
+};
+
+const createDocx = (bodyText) => createStoredZip([
+  ["[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8"?>
+    <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+      <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+    </Types>`],
+  ["word/document.xml", `<?xml version="1.0" encoding="UTF-8"?>
+    <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+      <w:body><w:p><w:r><w:t>${bodyText}</w:t></w:r></w:p></w:body>
+    </w:document>`]
+]);
+
 app.whenReady().then(async () => {
   const {
     getSkimMediaMimeType,
@@ -20,6 +84,8 @@ app.whenReady().then(async () => {
     const utf16Path = path.join(testRoot, "readme.md");
     const binaryPath = path.join(testRoot, "binary.txt");
     const largePath = path.join(testRoot, "large.txt");
+    const docxPath = path.join(testRoot, "document.docx");
+    const corruptDocPath = path.join(testRoot, "corrupt.doc");
     const safeSourcePreviews = new Map([
       ["settings.ini", "[app]\nname=Cap7CE"],
       ["page.html", "<script>not executed</script>"],
@@ -36,6 +102,8 @@ app.whenReady().then(async () => {
     ]));
     await fs.writeFile(binaryPath, Buffer.from([0x41, 0x00, 0x42, 0xff]));
     await fs.writeFile(largePath, "x".repeat(maximumSkimTextPreviewBytes + 128));
+    await fs.writeFile(docxPath, createDocx("Office 文档正文预览"));
+    await fs.writeFile(corruptDocPath, "not a Word document");
     for (const [fileName, content] of safeSourcePreviews) {
       await fs.writeFile(path.join(testRoot, fileName), content);
     }
@@ -66,6 +134,11 @@ app.whenReady().then(async () => {
       () => readSkimTextPreview(path.join(testRoot, "document.rtf")),
       (error) => error?.code === "EUNSUPPORTED_ENCODING"
     );
+    const docx = await readSkimTextPreview(docxPath);
+    assert.equal(docx.content.trim(), "Office 文档正文预览");
+    assert.equal(docx.encoding, "utf-8");
+    assert.equal(docx.truncated, false);
+    await assert.rejects(() => readSkimTextPreview(corruptDocPath));
 
     assert.deepEqual(parseSkimMediaByteRange(1000, null), { start: 0, end: 999, status: 200 });
     assert.deepEqual(parseSkimMediaByteRange(1000, "bytes=100-199"), { start: 100, end: 199, status: 206 });
@@ -84,6 +157,8 @@ app.whenReady().then(async () => {
       safeTextAndStructuredFormatsSupported: true,
       htmlReturnedAsLiteralSource: true,
       rtfRemainsOutsideRawTextPreview: true,
+      wordDocumentTextExtracted: true,
+      corruptWordDocumentRejected: true,
       binaryEncodingRejected: true,
       textSizeBoundaryApplied: true,
       mediaRangeRequestsValidated: true,

@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office";
 
 export interface FileFormatCapability {
   extension: string;
@@ -53,6 +53,8 @@ const iconNameByExtension = new Map<string, string>([
 const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["txt", "text"], ["md", "text"], ["ini", "text"], ["html", "text"],
   ["csv", "text"], ["json", "text"], ["xml", "text"], ["yaml", "text"], ["yml", "text"],
+  ["doc", "text"], ["docx", "text"],
+  ["xls", "office"], ["xlsx", "office"], ["ppt", "office"], ["pptx", "office"],
   ["m4a", "audio"], ["mp3", "audio"], ["wav", "audio"],
   ["mp4", "video"], ["mov", "video"], ["webm", "video"]
 ]);

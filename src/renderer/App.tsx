@@ -70,7 +70,7 @@ const skimFormatIconSvgByName = Object.fromEntries(
 ) as Record<string, string>;
 
 const resolveFileContentPreview = async (filePath: string, previewKind: FilePreviewKind): Promise<{
-  provider: "fileInfo" | "text" | "audio" | "video" | "pdf";
+  provider: "fileInfo" | "text" | "audio" | "video" | "pdf" | "office";
   previewUrl: string;
   textPreview?: SkimTextPreview;
 }> => {
@@ -90,6 +90,9 @@ const resolveFileContentPreview = async (filePath: string, previewKind: FilePrev
   }
   if (previewKind === "pdf") {
     return { provider: "pdf", previewUrl: "" };
+  }
+  if (previewKind === "office") {
+    return { provider: "office", previewUrl: "" };
   }
   return { provider: "fileInfo", previewUrl: "" };
 };

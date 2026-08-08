@@ -41,7 +41,7 @@ export interface ImageSearchResult {
   fileName: string;
   extension: string;
   iconName: string;
-  previewKind: "image" | "fileInfo" | "text" | "audio" | "video" | "pdf";
+  previewKind: "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office";
   fileSize: number;
   createdAt: string;
   modifiedAt: string;

@@ -31,6 +31,7 @@ export interface PdfPreviewMetadata {
 interface PdfPreviewSession {
   sessionId: string;
   filePath: string;
+  authorizedFilePath: string;
   loadingTask: PDFDocumentLoadingTask;
   document: PDFDocumentProxy | null;
   disposed: boolean;
@@ -90,7 +91,8 @@ export const closePdfPreviewSession = (sessionId?: string) => {
 
 export const openPdfPreviewSession = async (
   sessionId: string,
-  filePath: string
+  filePath: string,
+  authorizedFilePath = filePath
 ): Promise<PdfPreviewMetadata> => {
   const requestId = ++sessionRequestId;
   pendingSessionId = sessionId;
@@ -137,6 +139,7 @@ export const openPdfPreviewSession = async (
   const session: PdfPreviewSession = {
     sessionId,
     filePath: normalizedPath,
+    authorizedFilePath: normalizeFilePath(authorizedFilePath),
     loadingTask,
     document: null,
     disposed: false,
@@ -236,7 +239,7 @@ export const renderPdfPreviewPage = async (
     !session
     || session.disposed
     || session.sessionId !== sessionId
-    || !filePathsEqual(session.filePath, filePath)
+    || !filePathsEqual(session.authorizedFilePath, filePath)
     || !Number.isInteger(pageNumber)
     || !session.document
     || pageNumber < 1

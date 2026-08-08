@@ -38,6 +38,7 @@ import type { KeywordBatchUpdateRequest, KeywordBatchUpdateResult } from "./keyw
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
+import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 
 const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -314,6 +315,7 @@ const schedulePreviewIdleDestroy = () => {
 
 const closePreviewSession = () => {
   previewOpenRequestId += 1;
+  closeOfficePreviewSession();
   closePdfPreviewSession();
   if (activeSkimFolderStatsTask) {
     activeSkimFolderStatsTask.cancelled = true;
@@ -2304,6 +2306,9 @@ const createWindow = () => {
 
 app.whenReady().then(async () => {
   registerLocalImageProtocol();
+  await prepareOfficePreviewTemporaryRoot().catch((error) => {
+    console.warn("[office-preview] failed to reset temporary root", error);
+  });
   await ensureImageDatabase();
   try {
     await backfillFilePathEvidence(await listDirectories());
@@ -2510,7 +2515,8 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       && data.provider !== "text"
       && data.provider !== "audio"
       && data.provider !== "video"
-      && data.provider !== "pdf")
+      && data.provider !== "pdf"
+      && data.provider !== "office")
     || (data.provider !== undefined && (!data.info || data.info.path !== data.filePath))
     || (data.provider === "text" && (!data.textPreview || typeof data.textPreview.content !== "string"))
     || typeof data.skimActive !== "boolean"
@@ -2521,16 +2527,29 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
 
   const requestId = ++previewOpenRequestId;
   let preparedData: PreviewWindowData = { ...data, pdfPreview: undefined };
-  if (data.provider === "pdf") {
+  if (data.provider === "pdf" || data.provider === "office") {
     try {
-      const pdfPreview = await openPdfPreviewSession(data.sessionId, data.filePath);
+      let pdfSourcePath = data.filePath;
+      if (data.provider === "office") {
+        const officePreview = await openOfficePreviewSession(data.sessionId, data.filePath);
+        if (requestId !== previewOpenRequestId) {
+          closeOfficePreviewSession(data.sessionId);
+          return false;
+        }
+        pdfSourcePath = officePreview.pdfPath;
+      } else {
+        closeOfficePreviewSession();
+      }
+      const pdfPreview = await openPdfPreviewSession(data.sessionId, pdfSourcePath, data.filePath);
       if (requestId !== previewOpenRequestId) {
+        closeOfficePreviewSession(data.sessionId);
         closePdfPreviewSession(data.sessionId);
         return false;
       }
-      preparedData = { ...preparedData, pdfPreview };
+      preparedData = { ...preparedData, provider: "pdf", pdfPreview };
     } catch {
       if (requestId !== previewOpenRequestId) return false;
+      closeOfficePreviewSession(data.sessionId);
       closePdfPreviewSession(data.sessionId);
       preparedData = {
         ...preparedData,
@@ -2540,6 +2559,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
       };
     }
   } else {
+    closeOfficePreviewSession();
     closePdfPreviewSession();
   }
 

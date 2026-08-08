@@ -28,7 +28,7 @@ export interface PreviewWindowData {
   fileName: string;
   previewUrl: string;
   thumbnailUrl: string;
-  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf";
+  provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office";
   info?: SkimPreviewInfo;
   textPreview?: SkimTextPreview;
   pdfPreview?: PdfPreviewMetadata;
@@ -151,7 +151,7 @@ export interface DirectoryAddResult {
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office";
 
 export interface FileFormatCapability {
   extension: string;

@@ -8,6 +8,7 @@
 - 正式搜索与 skim 的共用预览窗口新增 INI、HTML、CSV、JSON、XML、YAML 和 YML 源码式只读预览；保留 1 MB 上限与 UTF-8/UTF-16 编码边界，HTML 不执行，读取失败静默回退文件信息。
 - 经 Electron/Chromium 真实样本解码验证后，正式搜索与 skim 的共用预览窗口新增 M4A 音频和 WEBM 视频播放，继续复用当前文件授权、Range 串流、媒体释放与文件信息回退边界。
 - 正式搜索与 skim 的共用预览窗口新增 PDF 多页连续纵向预览；仅加载视口及邻近页面，远离页面释放图片，支持页码跳转、文档滚动和原有左右方向键切换文件，损坏或无法解析的 PDF 静默回退文件信息。
+- 正式搜索与 skim 新增 Office 文件基础预览：DOC/DOCX 安全提取正文文本，XLS/XLSX 与 PPT/PPTX 在已安装 Microsoft Excel/PowerPoint 时只读转换为会话临时 PDF 并复用连续页面预览；转换失败、超时或缺少对应 Office 组件时静默回退文件信息，不提供版式优化、编辑或内容搜索。
 
 ### 优化
 
