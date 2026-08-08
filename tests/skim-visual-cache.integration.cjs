@@ -81,9 +81,17 @@ app.whenReady().then(async () => {
     ]);
     assert.equal(shellCachePath, duplicateShellCachePath);
     assert.equal(providerCalls, 1);
+    assert.equal(await shellProvider.ensureThumbnailPath(shellSourcePath), shellCachePath);
+    assert.equal(providerCalls, 1);
     const shellMetadata = JSON.parse(await fs.readFile(shellEntry.metadataPath, "utf8"));
     assert.equal(shellMetadata.renderSource, "shell");
     assert.equal(shellMetadata.shellThumbnailPolicyVersion, SHELL_THUMBNAIL_POLICY_VERSION);
+
+    const shellFuture = new Date(Date.now() + 3000);
+    await fs.utimes(shellSourcePath, shellFuture, shellFuture);
+    const changedShellCachePath = await shellProvider.ensureThumbnailPath(shellSourcePath);
+    assert.notEqual(changedShellCachePath, shellCachePath);
+    assert.equal(providerCalls, 2);
 
     let schedulerCalls = 0;
     let schedulerActive = 0;
@@ -144,17 +152,38 @@ app.whenReady().then(async () => {
     );
     assert.equal(timeoutSchedulerCalls, 1);
 
+    let releaseLateTask;
+    let lateTaskStarted;
+    const lateTaskStartedPromise = new Promise((resolve) => {
+      lateTaskStarted = resolve;
+    });
+    const lateScheduler = new ShellThumbnailScheduler(async (filePath) => {
+      lateTaskStarted();
+      await new Promise((resolve) => {
+        releaseLateTask = resolve;
+      });
+      return `${filePath}.cache`;
+    });
+    lateScheduler.beginSession("late-session");
+    lateScheduler.setActive(true);
+    const lateRequest = lateScheduler.request("late-session", `${testRoot}\\late`);
+    const lateRejection = assert.rejects(() => lateRequest, (error) => error?.code === "ECANCELED");
+    await lateTaskStartedPromise;
+    assert.equal(lateScheduler.cancelSession("late-session"), true);
+    releaseLateTask();
+    await lateRejection;
+
     const shellPathThroughSession = await requestSkimShellThumbnailCache("session-one", sourcePath);
     assert.equal(path.dirname(shellPathThroughSession), getVisualCacheDirectory("skim-shell-thumbnail"));
 
     const initialStats = await getSkimCacheStats();
-    assert.equal(initialStats.cacheCount, 4);
+    assert.equal(initialStats.cacheCount, 5);
     assert.ok(initialStats.totalBytes > 0);
     assert.ok(initialStats.cachePaths.every((cachePath) => cachePath.includes("skim-cache")));
 
     await clearVisualCaches();
     await assert.rejects(() => fs.access(formalEntry.imagePath));
-    assert.equal((await getSkimCacheStats()).cacheCount, 4);
+    assert.equal((await getSkimCacheStats()).cacheCount, 5);
     await writeVisualCacheEntry(formalEntry, png, "image/png");
 
     const future = new Date(Date.now() + 2000);
@@ -174,6 +203,9 @@ app.whenReady().then(async () => {
       totalBytes: 0,
       cachePaths: initialStats.cachePaths
     });
+    await assert.rejects(() => fs.access(shellCachePath));
+    await assert.rejects(() => fs.access(changedShellCachePath));
+    await assert.rejects(() => fs.access(shellPathThroughSession));
     await fs.access(formalEntry.imagePath);
 
     console.log(JSON.stringify({
@@ -184,6 +216,10 @@ app.whenReady().then(async () => {
       shellFailuresDeduplicatedPerSession: true,
       shellQueuePausedAndCancelledWithSession: true,
       shellTimeoutCircuitBreakerVerified: true,
+      shellSequentialCacheHitVerified: true,
+      shellSourceChangeInvalidatedKey: true,
+      cancelledShellSessionRejectedLateWork: true,
+      shellClearRemovedAllShellEntries: true,
       metadataSeparated: true,
       sourceChangeInvalidatedKey: true,
       cancelledSessionRejectedLateWork: true,
