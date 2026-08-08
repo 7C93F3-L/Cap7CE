@@ -26,7 +26,7 @@ const opentype = require("opentype.js") as {
 const maximumMetadataTextLength = 256;
 const maximumVariationAxes = 16;
 const latinSample = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-const chineseSample = "物无非彼物无非是自彼则不见自之则知之";
+const chineseSample = "物无非彼物无非是自彼则不见自知则知之";
 
 const selectName = (record: LocalizedNameRecord | undefined, language: FontMetadataWorkerRequest["language"]) => {
   if (!record) return null;

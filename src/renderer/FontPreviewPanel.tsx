@@ -99,7 +99,7 @@ const FontPreviewPanel = ({ data, onError }: FontPreviewPanelProps) => {
           <div className="preview-font-sample">
             <span>{t("preview.fontChineseSample")}</span>
             {data.fontPreview.supportsChineseSample
-              ? <p className="preview-font-chinese-sample" style={sampleStyle}>物无非彼物无非是自彼则不见自之则知之</p>
+              ? <p className="preview-font-chinese-sample" style={sampleStyle}>物无非彼物无非是自彼则不见自知则知之</p>
               : <p className="preview-font-unsupported">{t("preview.fontNoChinese")}</p>}
           </div>
         </>}
