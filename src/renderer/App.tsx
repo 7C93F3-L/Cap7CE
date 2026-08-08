@@ -4877,7 +4877,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   const visualRef = useRef<HTMLSpanElement | null>(null);
   const [visible, setVisible] = useState(false);
   const [failed, setFailed] = useState(false);
-  const canLoadThumbnail = entry.kind === "file" && Boolean(entry.formatCapability?.canThumbnail) && Boolean(sessionId);
+  const canLoadThumbnail = entry.kind === "file" && Boolean(sessionId);
 
   useEffect(() => {
     setVisible(false);

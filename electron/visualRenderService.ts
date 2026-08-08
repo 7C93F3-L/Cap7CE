@@ -34,6 +34,8 @@ interface ImageSize {
   height: number;
 }
 
+type NativeVisualCacheType = Exclude<VisualCacheType, "skim-shell-thumbnail">;
+
 const sharpSourceExtensions = new Set([
   ".jpg",
   ".jpeg",
@@ -45,7 +47,7 @@ const sharpSourceExtensions = new Set([
   ".svg"
 ]);
 
-const renderStrategies: Record<VisualCacheType, VisualRenderStrategy> = {
+const renderStrategies: Record<NativeVisualCacheType, VisualRenderStrategy> = {
   "search-thumbnail": {
     maxWidth: 300,
     maxHeight: 300,
@@ -352,6 +354,9 @@ const renderSourceImage = async (
 };
 
 const renderVisualCache = async (entry: VisualCacheEntry) => {
+  if (entry.type === "skim-shell-thumbnail") {
+    throw new Error("Shell 缩略图必须使用独立 Provider。");
+  }
   if (await isVisualCacheEntryValid(entry)) {
     return entry.imagePath;
   }

@@ -25,7 +25,7 @@ import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
-import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimVisualCache } from "./skimVisualCacheService";
+import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
@@ -145,6 +145,7 @@ const syncThumbnailOptimizationActivity = () => {
     && mainWindow.isFocused()
     && (activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal")
   );
+  setSkimShellThumbnailActivity(shouldRun);
   if (shouldRun) {
     resumeThumbnailOptimization("inactive-content");
     return;
@@ -1938,14 +1939,16 @@ const registerLocalImageProtocol = () => {
       if (url.hostname === "skim-thumbnail" || url.hostname === "skim-preview") {
         const sessionId = url.searchParams.get("session");
         const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
-        if (!sessionId || !capability?.canThumbnail) {
+        if (!sessionId || (url.hostname === "skim-preview" && !capability?.canThumbnail)) {
           return new Response("Skim visual request is unavailable", { status: 415 });
         }
-        const cachePath = await requestSkimVisualCache(
-          sessionId,
-          filePath,
-          url.hostname === "skim-preview" ? "preview" : "thumbnail"
-        );
+        const cachePath = url.hostname === "skim-thumbnail" && !capability?.canThumbnail
+          ? await requestSkimShellThumbnailCache(sessionId, filePath)
+          : await requestSkimVisualCache(
+            sessionId,
+            filePath,
+            url.hostname === "skim-preview" ? "preview" : "thumbnail"
+          );
         const image = await readVisualCacheImage(cachePath);
         return new Response(toResponseBody(image.buffer), {
           headers: {

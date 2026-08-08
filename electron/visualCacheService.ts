@@ -2,18 +2,19 @@ import { app } from "electron";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { CACHE_VERSION, RENDER_STRATEGY_VERSION } from "./versioning";
+import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "./versioning";
 
 export type FormalVisualCacheType = "search-thumbnail" | "model-input-image" | "preview-image";
-export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview";
+export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview" | "skim-shell-thumbnail";
 export type VisualCacheType = FormalVisualCacheType | SkimVisualCacheType;
 export type VisualImageMimeType = "image/jpeg" | "image/png";
+export type VisualCacheRenderSource = "native" | "shell";
 
 export interface VisualCacheDescriptor {
   type: VisualCacheType;
   directoryName: string;
   metadataDirectoryName?: string;
-  extension: ".capth" | ".capmo" | ".cappr" | ".capskth" | ".capskpr";
+  extension: ".capth" | ".capmo" | ".cappr" | ".capskth" | ".capskpr" | ".capsksh";
 }
 
 export interface VisualCacheEntry {
@@ -25,6 +26,8 @@ export interface VisualCacheEntry {
   modifiedMs: number;
   cacheVersion: number;
   renderStrategyVersion: number;
+  renderSource: VisualCacheRenderSource;
+  shellThumbnailPolicyVersion: number | null;
   imagePath: string;
   metadataPath: string;
 }
@@ -38,6 +41,8 @@ export interface VisualCacheMetadata {
   modifiedMs: number;
   cacheVersion: number;
   renderStrategyVersion: number;
+  renderSource?: VisualCacheRenderSource;
+  shellThumbnailPolicyVersion?: number;
   mimeType: VisualImageMimeType;
   generatedAt: string;
 }
@@ -85,13 +90,21 @@ const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
     directoryName: path.join("skim-cache", "previews"),
     metadataDirectoryName: path.join("skim-cache", "metadata"),
     extension: ".capskpr"
+  },
+  "skim-shell-thumbnail": {
+    type: "skim-shell-thumbnail",
+    directoryName: path.join("skim-cache", "thumbnails"),
+    metadataDirectoryName: path.join("skim-cache", "metadata"),
+    extension: ".capsksh"
   }
 };
 
 const formalVisualCacheTypes: readonly FormalVisualCacheType[] = [
   "search-thumbnail", "model-input-image", "preview-image"
 ];
-const skimVisualCacheTypes: readonly SkimVisualCacheType[] = ["skim-thumbnail", "skim-preview"];
+const skimVisualCacheTypes: readonly SkimVisualCacheType[] = [
+  "skim-thumbnail", "skim-preview", "skim-shell-thumbnail"
+];
 
 let cachedVisualCacheDirectories: string[] | null = null;
 let visualCacheInitializationPromise: Promise<void> | null = null;
@@ -219,14 +232,20 @@ export const createVisualCacheEntryFromSourceMetadata = (
 ): VisualCacheEntry => {
   const normalizedSourcePath = path.resolve(sourcePath);
   const sourcePathHash = hash(normalizedPathForKey(normalizedSourcePath));
-  const key = hash([
+  const renderSource: VisualCacheRenderSource = type === "skim-shell-thumbnail" ? "shell" : "native";
+  const shellThumbnailPolicyVersion = renderSource === "shell" ? SHELL_THUMBNAIL_POLICY_VERSION : null;
+  const keyParts: Array<string | number> = [
     sourcePathHash,
     sourceMetadata.fileSize,
     sourceMetadata.modifiedMs,
     CACHE_VERSION,
     RENDER_STRATEGY_VERSION,
     type
-  ].join(":"));
+  ];
+  if (shellThumbnailPolicyVersion !== null) {
+    keyParts.push(renderSource, shellThumbnailPolicyVersion);
+  }
+  const key = hash(keyParts.join(":"));
   const descriptor = getVisualCacheDescriptor(type);
   const cacheDirectory = getVisualCacheDirectory(type);
 
@@ -239,6 +258,8 @@ export const createVisualCacheEntryFromSourceMetadata = (
     modifiedMs: sourceMetadata.modifiedMs,
     cacheVersion: CACHE_VERSION,
     renderStrategyVersion: RENDER_STRATEGY_VERSION,
+    renderSource,
+    shellThumbnailPolicyVersion,
     imagePath: path.join(cacheDirectory, `${key}${descriptor.extension}`),
     metadataPath: path.join(getVisualCacheMetadataDirectory(type), `${key}${descriptor.extension}.json`)
   };
@@ -280,6 +301,11 @@ export const isVisualCacheEntryValid = async (entry: VisualCacheEntry) => {
     || metadata.modifiedMs !== entry.modifiedMs
     || metadata.cacheVersion !== entry.cacheVersion
     || metadata.renderStrategyVersion !== entry.renderStrategyVersion
+    || (metadata.renderSource ?? "native") !== entry.renderSource
+    || (
+      entry.shellThumbnailPolicyVersion !== null
+      && metadata.shellThumbnailPolicyVersion !== entry.shellThumbnailPolicyVersion
+    )
   ) {
     return false;
   }
@@ -326,6 +352,10 @@ export const writeVisualCacheEntry = async (
     modifiedMs: entry.modifiedMs,
     cacheVersion: entry.cacheVersion,
     renderStrategyVersion: entry.renderStrategyVersion,
+    renderSource: entry.renderSource,
+    ...(entry.shellThumbnailPolicyVersion === null
+      ? {}
+      : { shellThumbnailPolicyVersion: entry.shellThumbnailPolicyVersion }),
     mimeType,
     generatedAt: new Date().toISOString()
   };

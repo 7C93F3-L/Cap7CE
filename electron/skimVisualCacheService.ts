@@ -4,6 +4,8 @@ import {
   type VisualCacheStats
 } from "./visualCacheService";
 import { ensureSkimPreviewPath, ensureSkimThumbnailPath } from "./visualRenderService";
+import { ensureSkimShellThumbnailPath } from "./shellThumbnailProvider";
+import { ShellThumbnailScheduler } from "./shellThumbnailScheduler";
 
 export type SkimVisualRequestKind = "thumbnail" | "preview";
 
@@ -23,6 +25,7 @@ const sessions = new Map<string, SkimVisualSession>();
 const queuedTasks: SkimVisualTask[] = [];
 const activeTasks = new Set<Promise<void>>();
 const maximumConcurrentTasks = 2;
+const shellThumbnailScheduler = new ShellThumbnailScheduler(ensureSkimShellThumbnailPath);
 let clearing = false;
 
 const cancelledError = () => Object.assign(new Error("Skim visual task cancelled."), { code: "ECANCELED" });
@@ -60,6 +63,7 @@ const pumpQueue = () => {
 export const beginSkimVisualSession = (sessionId: string) => {
   if (!sessionId) return false;
   sessions.set(sessionId, { cancelled: false });
+  shellThumbnailScheduler.beginSession(sessionId);
   return true;
 };
 
@@ -68,6 +72,7 @@ export const cancelSkimVisualSession = (sessionId: string) => {
   if (!session) return false;
   session.cancelled = true;
   sessions.delete(sessionId);
+  shellThumbnailScheduler.cancelSession(sessionId);
   for (let index = queuedTasks.length - 1; index >= 0; index -= 1) {
     const task = queuedTasks[index];
     if (task.sessionId === sessionId) {
@@ -93,12 +98,24 @@ export const requestSkimVisualCache = (
   pumpQueue();
 });
 
+export const requestSkimShellThumbnailCache = (
+  sessionId: string,
+  sourcePath: string
+) => shellThumbnailScheduler.request(sessionId, sourcePath);
+
+export const setSkimShellThumbnailActivity = (active: boolean) => {
+  shellThumbnailScheduler.setActive(active);
+};
+
 export const getSkimCacheStats = (): Promise<VisualCacheStats> => getSkimVisualCacheStats();
 
 export const clearSkimCacheSafely = async (): Promise<VisualCacheStats> => {
   clearing = true;
   for (const sessionId of [...sessions.keys()]) cancelSkimVisualSession(sessionId);
-  await Promise.allSettled([...activeTasks]);
+  await Promise.all([
+    Promise.allSettled([...activeTasks]),
+    shellThumbnailScheduler.clear()
+  ]);
   try {
     return await clearSkimVisualCaches();
   } finally {
