@@ -1,7 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-export const skimTextPreviewExtensions = new Set([".txt", ".md"]);
+export const skimTextPreviewExtensions = new Set([
+  ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml"
+]);
 export const skimAudioPreviewExtensions = new Set([".mp3", ".wav"]);
 export const skimVideoPreviewExtensions = new Set([".mp4", ".mov"]);
 export const maximumSkimTextPreviewBytes = 1024 * 1024;

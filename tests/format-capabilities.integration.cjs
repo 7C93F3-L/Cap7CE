@@ -46,13 +46,20 @@ const { app } = require("electron");
     && !capability.canAIIndex
   )), true);
   assert.deepEqual(
-    Object.fromEntries([".txt", ".md", ".mp3", ".wav", ".mp4", ".mov"].map((extension) => [
+    Object.fromEntries([
+      ".txt", ".md", ".ini", ".html", ".csv", ".json", ".xml", ".yaml", ".yml",
+      ".mp3", ".wav", ".mp4", ".mov"
+    ].map((extension) => [
       extension,
       fileFormatCapabilityByExtension.get(extension).previewKind
     ])),
-    { ".txt": "text", ".md": "text", ".mp3": "audio", ".wav": "audio", ".mp4": "video", ".mov": "video" }
+    {
+      ".txt": "text", ".md": "text", ".ini": "text", ".html": "text",
+      ".csv": "text", ".json": "text", ".xml": "text", ".yaml": "text", ".yml": "text",
+      ".mp3": "audio", ".wav": "audio", ".mp4": "video", ".mov": "video"
+    }
   );
-  assert.equal(formalNonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 54);
+  assert.equal(formalNonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 47);
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()

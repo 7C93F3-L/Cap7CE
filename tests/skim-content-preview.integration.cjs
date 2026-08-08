@@ -20,6 +20,15 @@ app.whenReady().then(async () => {
     const utf16Path = path.join(testRoot, "readme.md");
     const binaryPath = path.join(testRoot, "binary.txt");
     const largePath = path.join(testRoot, "large.txt");
+    const safeSourcePreviews = new Map([
+      ["settings.ini", "[app]\nname=Cap7CE"],
+      ["page.html", "<script>not executed</script>"],
+      ["table.csv", "name,value\nCap7CE,1"],
+      ["data.json", '{"name":"Cap7CE"}'],
+      ["data.xml", "<app>Cap7CE</app>"],
+      ["data.yaml", "name: Cap7CE"],
+      ["data.yml", "name: Cap7CE"]
+    ]);
     await fs.writeFile(utf8Path, "Hello 世界\nplain text");
     await fs.writeFile(utf16Path, Buffer.concat([
       Buffer.from([0xff, 0xfe]),
@@ -27,6 +36,9 @@ app.whenReady().then(async () => {
     ]));
     await fs.writeFile(binaryPath, Buffer.from([0x41, 0x00, 0x42, 0xff]));
     await fs.writeFile(largePath, "x".repeat(maximumSkimTextPreviewBytes + 128));
+    for (const [fileName, content] of safeSourcePreviews) {
+      await fs.writeFile(path.join(testRoot, fileName), content);
+    }
 
     const utf8 = await readSkimTextPreview(utf8Path);
     assert.equal(utf8.encoding, "utf-8");
@@ -44,6 +56,16 @@ app.whenReady().then(async () => {
     const large = await readSkimTextPreview(largePath);
     assert.equal(large.truncated, true);
     assert.equal(Buffer.byteLength(large.content, "utf8"), maximumSkimTextPreviewBytes);
+    for (const [fileName, content] of safeSourcePreviews) {
+      const preview = await readSkimTextPreview(path.join(testRoot, fileName));
+      assert.equal(preview.content, content);
+      assert.equal(preview.encoding, "utf-8");
+      assert.equal(preview.truncated, false);
+    }
+    await assert.rejects(
+      () => readSkimTextPreview(path.join(testRoot, "document.rtf")),
+      (error) => error?.code === "EUNSUPPORTED_ENCODING"
+    );
 
     assert.deepEqual(parseSkimMediaByteRange(1000, null), { start: 0, end: 999, status: 200 });
     assert.deepEqual(parseSkimMediaByteRange(1000, "bytes=100-199"), { start: 100, end: 199, status: 206 });
@@ -57,6 +79,9 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       utf8AndUtf16TextSupported: true,
+      safeTextAndStructuredFormatsSupported: true,
+      htmlReturnedAsLiteralSource: true,
+      rtfRemainsOutsideRawTextPreview: true,
       binaryEncodingRejected: true,
       textSizeBoundaryApplied: true,
       mediaRangeRequestsValidated: true,
