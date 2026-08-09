@@ -627,44 +627,84 @@ const PreviewWindowApp = () => {
       />
       {contextMenu && (
         <ImageContextMenu
+          key={`preview:${previewData.filePath}:${contextMenu.x}:${contextMenu.y}`}
           x={contextMenu.x}
           y={contextMenu.y}
           theme={previewData.theme}
           menuStyle={getImageContextMenuStyle(previewData.theme, previewData.appearanceColors)}
-          primaryActionLabel={t("preview.close")}
-          onPrimaryAction={() => {
-            setContextMenu(null);
-            closePreview();
-          }}
-          onOpen={async () => {
-            setContextMenu(null);
-            const result = await window.imageEverything?.files.open(previewData.filePath);
-            if (result === "") {
-              closePreview();
+          groups={[
+            {
+              id: "view",
+              label: t("context.view"),
+              actions: [
+                {
+                  id: "close",
+                  label: t("preview.close"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    closePreview();
+                  }
+                },
+                {
+                  id: "open",
+                  label: t("context.open"),
+                  onSelect: async () => {
+                    setContextMenu(null);
+                    const result = await window.imageEverything?.files.open(previewData.filePath);
+                    if (result === "") closePreview();
+                  }
+                },
+                {
+                  id: "showInFolder",
+                  label: t("context.showInFolder"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    void window.imageEverything?.files.showInFolder(previewData.filePath);
+                  }
+                }
+              ]
+            },
+            {
+              id: "actions",
+              label: t("context.actions"),
+              actions: [
+                {
+                  id: "copyPath",
+                  label: t("context.copyPath"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    void window.imageEverything?.files.copyPaths([previewData.filePath]);
+                  }
+                },
+                ...(!previewData.provider ? [
+                  {
+                    id: "editKeywords",
+                    label: t("context.editKeywords"),
+                    onSelect: () => {
+                      setContextMenu(null);
+                      void window.imageEverything?.preview.requestItemAction({
+                        action: "editKeywords",
+                        itemId: previewData.itemId,
+                        filePath: previewData.filePath
+                      });
+                    }
+                  },
+                  {
+                    id: "delete",
+                    label: t("context.deleteFile"),
+                    onSelect: () => {
+                      setContextMenu(null);
+                      void window.imageEverything?.preview.requestItemAction({
+                        action: "deleteFile",
+                        itemId: previewData.itemId,
+                        filePath: previewData.filePath
+                      });
+                    }
+                  }
+                ] : [])
+              ]
             }
-          }}
-          onShowInFolder={() => {
-            setContextMenu(null);
-            void window.imageEverything?.files.showInFolder(previewData.filePath);
-          }}
-          onEditKeywords={() => {
-            setContextMenu(null);
-            void window.imageEverything?.preview.requestItemAction({
-              action: "editKeywords",
-              itemId: previewData.itemId,
-              filePath: previewData.filePath
-            });
-          }}
-          onDeleteFile={() => {
-            setContextMenu(null);
-            void window.imageEverything?.preview.requestItemAction({
-              action: "deleteFile",
-              itemId: previewData.itemId,
-              filePath: previewData.filePath
-            });
-          }}
-          showEditKeywords={!previewData.provider}
-          showDelete={!previewData.provider}
+          ]}
         />
       )}
     </main>

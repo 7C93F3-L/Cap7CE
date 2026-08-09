@@ -3251,6 +3251,40 @@ textarea,
   color: var(--theme-on-color);
 }
 
+.context-menu.context-menu-grouped {
+  min-width: 128px;
+}
+
+.context-menu .context-menu-parent-action {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.context-menu .context-menu-parent-action.is-active {
+  background: var(--theme-color);
+  color: var(--theme-on-color);
+}
+
+.context-menu.context-submenu {
+  z-index: 1001;
+  min-width: 128px;
+  max-width: min(200px, calc(100vw - 10px));
+}
+
+.context-submenu-left .cap7ce-menu-motion-surface {
+  animation-name: cap7ce-context-submenu-enter-left;
+}
+
+@keyframes cap7ce-context-submenu-enter-left {
+  from {
+    transform: translate3d(20px, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .context-menu.cap-settings-select-menu {
   min-width: 0;
   max-width: calc(100vw - 10px);

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -9,6 +9,7 @@ import { addDirectoryCandidates, createCancelledDirectoryAddResult, type Directo
 import { checkForAppUpdate, type AppUpdateDownload } from "./appUpdateService";
 import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
+import { normalizeFilePathsForClipboard } from "./fileClipboardService";
 import { startNativeFileDrag } from "./fileDragService";
 import { getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
@@ -2913,6 +2914,22 @@ ipcMain.handle("file:open", async (_event, filePath: string) => {
 
 ipcMain.handle("file:showInFolder", (_event, filePath: string) => {
   shell.showItemInFolder(filePath);
+});
+
+ipcMain.handle("file:copyPaths", (event, filePaths: unknown) => {
+  const trustedSender = (
+    mainWindow
+    && !mainWindow.isDestroyed()
+    && event.sender === mainWindow.webContents
+  ) || (
+    previewWindow
+    && !previewWindow.isDestroyed()
+    && event.sender === previewWindow.webContents
+  );
+  if (!trustedSender) return 0;
+  const paths = normalizeFilePathsForClipboard(filePaths);
+  if (paths.length > 0) clipboard.writeText(paths.join("\r\n"));
+  return paths.length;
 });
 
 ipcMain.handle("file:moveToTrash", async (_event, filePaths: unknown) => {

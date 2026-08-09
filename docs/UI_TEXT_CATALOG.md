@@ -172,6 +172,10 @@
 | `preview.action`              | 预览                |         |     | 图片右键菜单          |
 | `context.open`                | 打开                |         |     | 图片右键菜单          |
 | `context.showInFolder`        | 打开路径              |         |     | 图片右键菜单          |
+| `context.view`                | 查看                  |         |     | 右键菜单父级          |
+| `context.actions`             | 操作                  |         |     | 右键菜单父级          |
+| `context.copyPath`            | 复制路径              |         |     | 单选右键菜单          |
+| `context.copySelectedPaths`   | 复制选中的 {count} 条路径 |      |     | 多选右键菜单          |
 | `context.editKeywords`        | 编辑关键词             |         |     | 图片右键菜单          |
 | `context.deleteFile`          | 删除文件              |         |     | 图片右键菜单          |
 | `context.deleteSelectedFiles` | 删除选中的 {count} 个文件 |         |     | 多选右键菜单          |

@@ -15,7 +15,7 @@ import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
-import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
+import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import FileInfoCard, { truncateFileInfoName, useTransientFileInfoCard } from "./FileInfoCard";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
@@ -4227,20 +4227,49 @@ const App = () => {
       )}
       {contextMenu && (
         <ImageContextMenu
+          key={`results:${contextMenu.item.id}:${contextMenu.x}:${contextMenu.y}`}
           x={contextMenu.x}
           y={contextMenu.y}
           theme={effectiveTheme}
           menuStyle={contextMenuStyle}
           compact={contextMenu.shellState === "micro" || contextMenu.shellState === "mini"}
-          primaryActionLabel={t("preview.action")}
-          deleteActionLabel={contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile")}
-          showEditKeywords={contextMenu.items.length > 0 && contextMenu.items.every((item) => item.resultKind === "visual")}
-          showDelete={contextMenu.items.length > 0 && contextMenu.items.every((item) => item.resultKind === "visual")}
-          onPrimaryAction={contextMenu.preview}
-          onOpen={() => invokeFileAction("open", contextMenu.item)}
-          onShowInFolder={() => invokeFileAction("showInFolder", contextMenu.item)}
-          onEditKeywords={() => requestEditKeywords(contextMenu.items)}
-          onDeleteFile={() => requestDeleteFiles(contextMenu.items)}
+          groups={[
+            {
+              id: "view",
+              label: t("context.view"),
+              actions: [
+                { id: "preview", label: t("preview.action"), onSelect: contextMenu.preview },
+                { id: "open", label: t("context.open"), onSelect: () => void invokeFileAction("open", contextMenu.item) },
+                { id: "showInFolder", label: t("context.showInFolder"), onSelect: () => void invokeFileAction("showInFolder", contextMenu.item) }
+              ]
+            },
+            {
+              id: "actions",
+              label: t("context.actions"),
+              actions: [
+                {
+                  id: "copyPaths",
+                  label: contextMenu.items.length > 1
+                    ? t("context.copySelectedPaths", { count: contextMenu.items.length })
+                    : t("context.copyPath"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    void window.imageEverything?.files.copyPaths(contextMenu.items.map((item) => item.filePath));
+                  }
+                },
+                ...(contextMenu.items.length > 0 && contextMenu.items.every((item) => item.resultKind === "visual")
+                  ? [
+                    { id: "editKeywords", label: t("context.editKeywords"), onSelect: () => requestEditKeywords(contextMenu.items) },
+                    {
+                      id: "delete",
+                      label: contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile"),
+                      onSelect: () => requestDeleteFiles(contextMenu.items)
+                    }
+                  ] satisfies ImageContextMenuGroup["actions"]
+                  : [])
+              ]
+            }
+          ]}
         />
       )}
     </div>
@@ -5447,25 +5476,48 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
       </div>
       {contextMenu && (
         <ImageContextMenu
+          key={`skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
           x={contextMenu.x}
           y={contextMenu.y}
           theme={theme}
           menuStyle={menuStyle}
           compact={shellState === "micro" || shellState === "mini"}
-          primaryActionLabel={t("skim.addDirectory")}
-          openActionLabel={t("skim.preview")}
-          showInFolderActionLabel={t("skim.openItem")}
-          deleteActionLabel={t("skim.openPath")}
-          showEditKeywords={false}
-          showDelete
-          onPrimaryAction={() => {
-            setContextMenu(null);
-            if (!isAddingDirectory) onAddEntries(contextMenu.items);
-          }}
-          onOpen={() => void openPreview(contextMenu.item)}
-          onShowInFolder={() => openEntry(contextMenu.item)}
-          onEditKeywords={() => undefined}
-          onDeleteFile={() => showEntryInFolder(contextMenu.item, contextMenu.items.length)}
+          groups={[
+            {
+              id: "view",
+              label: t("context.view"),
+              actions: [
+                { id: "preview", label: t("skim.preview"), onSelect: () => void openPreview(contextMenu.item) },
+                { id: "open", label: t("skim.openItem"), onSelect: () => openEntry(contextMenu.item) },
+                { id: "showInFolder", label: t("skim.openPath"), onSelect: () => showEntryInFolder(contextMenu.item, contextMenu.items.length) }
+              ]
+            },
+            {
+              id: "actions",
+              label: t("context.actions"),
+              actions: [
+                {
+                  id: "copyPaths",
+                  label: contextMenu.items.length > 1
+                    ? t("context.copySelectedPaths", { count: contextMenu.items.length })
+                    : t("context.copyPath"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    void window.imageEverything?.files.copyPaths(contextMenu.items.map((entry) => entry.path));
+                  }
+                },
+                {
+                  id: "addDirectory",
+                  label: t("skim.addDirectory"),
+                  disabled: isAddingDirectory,
+                  onSelect: () => {
+                    setContextMenu(null);
+                    if (!isAddingDirectory) onAddEntries(contextMenu.items);
+                  }
+                }
+              ]
+            }
+          ]}
         />
       )}
       {fileInfoCard.card && (() => {
