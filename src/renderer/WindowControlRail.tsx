@@ -73,6 +73,7 @@ const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skim
           aria-label={resolvedSkimLabel}
           title={resolvedSkimLabel}
           aria-pressed={skimActive}
+          aria-current={skimActive ? "page" : undefined}
         >
           <RailSvgIcon svg={iconSkimSvg} className="cap-svg-icon cap-window-svg-icon" />
         </button>
@@ -85,6 +86,7 @@ const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skim
           aria-label={resolvedSettingsLabel}
           title={resolvedSettingsLabel}
           aria-pressed={settingsActive}
+          aria-current={settingsActive ? "page" : undefined}
         >
           <RailSvgIcon svg={iconSettingsSvg} className="cap-svg-icon cap-settings-svg-icon" />
         </button>

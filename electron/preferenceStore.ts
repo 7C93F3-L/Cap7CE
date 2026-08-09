@@ -34,6 +34,10 @@ export interface UserPreferencesResponse {
     sortField: SortField;
     sortDirection: SortDirection;
   };
+  skimSortPreference: {
+    sortField: SortField;
+    sortDirection: SortDirection;
+  };
   appearanceColors: AppearanceColors;
   edgeSnapEnabled: boolean;
   alwaysOnTop: boolean;
@@ -59,6 +63,10 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   sortPreference: {
     sortField: "file_name",
     sortDirection: "desc"
+  },
+  skimSortPreference: {
+    sortField: "file_name",
+    sortDirection: "asc"
   },
   appearanceColors: {
     themeColor: "#7C93F3",
@@ -178,6 +186,12 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
         sortField: normalizeSortField(parsed.sortPreference?.sortField, defaults.sortPreference.sortField),
         sortDirection: isSortDirection(parsed.sortPreference?.sortDirection) ? parsed.sortPreference.sortDirection : defaults.sortPreference.sortDirection
       },
+      skimSortPreference: {
+        sortField: normalizeSortField(parsed.skimSortPreference?.sortField, defaults.skimSortPreference.sortField),
+        sortDirection: isSortDirection(parsed.skimSortPreference?.sortDirection)
+          ? parsed.skimSortPreference.sortDirection
+          : defaults.skimSortPreference.sortDirection
+      },
       appearanceColors: normalizeAppearanceColors(parsed.appearanceColors, defaults.appearanceColors),
       edgeSnapEnabled: typeof parsed.edgeSnapEnabled === "boolean" ? parsed.edgeSnapEnabled : defaults.edgeSnapEnabled,
       alwaysOnTop: typeof parsed.alwaysOnTop === "boolean" ? parsed.alwaysOnTop : defaults.alwaysOnTop,
@@ -267,6 +281,22 @@ export const updateSortPreference = async (sortPreference: UserPreferencesRespon
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     sortPreference,
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateSkimSortPreference = async (skimSortPreference: UserPreferencesResponse["skimSortPreference"]) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    skimSortPreference: {
+      sortField: normalizeSortField(skimSortPreference?.sortField, preferences.skimSortPreference.sortField),
+      sortDirection: isSortDirection(skimSortPreference?.sortDirection)
+        ? skimSortPreference.sortDirection
+        : preferences.skimSortPreference.sortDirection
+    },
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

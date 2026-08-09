@@ -117,6 +117,7 @@ declare global {
         updateTheme: (themePreference: UserPreferences["themePreference"]) => Promise<UserPreferences>;
         updateLanguage: (languagePreference: UserPreferences["languagePreference"]) => Promise<UserPreferences>;
         updateSort: (sortPreference: UserPreferences["sortPreference"]) => Promise<UserPreferences>;
+        updateSkimSort: (skimSortPreference: UserPreferences["skimSortPreference"]) => Promise<UserPreferences>;
         updateAppearanceColors: (appearanceColors: UserPreferences["appearanceColors"]) => Promise<UserPreferences>;
         updateEdgeSnap: (edgeSnapEnabled: UserPreferences["edgeSnapEnabled"]) => Promise<UserPreferences>;
         updateStandbyLineVisible: (standbyLineVisible: UserPreferences["standbyLineVisible"]) => Promise<UserPreferences>;

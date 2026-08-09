@@ -122,6 +122,7 @@ export const zhCN = {
   "window.pinToggle": "置顶/取消置顶",
   "window.openSettings": "打开设置",
   "window.returnSearch": "返回搜索页",
+  "window.returnSkim": "返回 skim",
   "preview.close": "关闭预览",
   "preview.restore": "还原预览窗口",
   "preview.maximize": "最大化预览窗口",

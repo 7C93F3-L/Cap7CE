@@ -197,6 +197,10 @@ const defaultSkimBrowseOptions: SkimBrowseOptions = {
   sortField: "name",
   sortDirection: "asc"
 };
+const defaultSkimSortPreference: Pick<SearchState, "sortField" | "sortDirection"> = {
+  sortField: "file_name",
+  sortDirection: "asc"
+};
 const defaultSkimDisplayPreferences: SkimDisplayPreferences = {
   mode: "skim",
   customExtensions: [...skimDefaultFileExtensionSet],
@@ -965,6 +969,7 @@ const App = () => {
   const [quickActionsExpanded, setQuickActionsExpanded] = useState(false);
   const [quickCommandsExpanded, setQuickCommandsExpanded] = useState(false);
   const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
+  const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
   const [searchCapsuleLabelVisibility, setSearchCapsuleLabelVisibility] = useState<SearchCapsuleLabelVisibility>({
@@ -983,9 +988,9 @@ const App = () => {
   const [skimBreadcrumbs, setSkimBreadcrumbs] = useState<SkimBreadcrumb[]>([]);
   const skimBrowseOptions = useMemo<SkimBrowseOptions>(() => ({
     ...defaultSkimBrowseOptions,
-    sortField: search.sortField === "modified_at" ? "modifiedAt" : "name",
-    sortDirection: search.sortDirection
-  }), [search.sortDirection, search.sortField]);
+    sortField: skimSortPreference.sortField === "modified_at" ? "modifiedAt" : "name",
+    sortDirection: skimSortPreference.sortDirection
+  }), [skimSortPreference]);
   const visibleSkimEntries = useMemo(() => {
     if (skimDisplay.mode === "all") return skimEntries;
     const customExtensions = new Set(skimDisplay.customExtensions);
@@ -1576,6 +1581,7 @@ const App = () => {
             setShortcutActions(normalizeShortcutActions(preferences.shortcutActions));
             setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
             setSkimDisplay(preferences.skimDisplay);
+            setSkimSortPreference(preferences.skimSortPreference);
             if (!resultsInitializedRef.current) {
               lastResultSearchRef.current = {
                 ...lastResultSearchRef.current,
@@ -1764,6 +1770,15 @@ const App = () => {
     const normalizedColors = normalizeAppearanceColors(nextAppearanceColors);
     setAppearanceColors(normalizedColors);
     void window.imageEverything?.preferences.updateAppearanceColors(normalizedColors);
+  };
+
+  const updateSkimSort = (nextSearch: SearchState) => {
+    const nextSkimSortPreference = {
+      sortField: nextSearch.sortField,
+      sortDirection: nextSearch.sortDirection
+    };
+    setSkimSortPreference(nextSkimSortPreference);
+    void window.imageEverything?.preferences.updateSkimSort(nextSkimSortPreference);
   };
 
   const previewAppearanceColors = (nextAppearanceColors: AppearanceColors) => {
@@ -3895,9 +3910,15 @@ const App = () => {
           actions={shellControlActions}
           showSkim={showShellSettingsToggle}
           skimActive={view === "skim"}
-          onSkim={view === "skim" ? closeSkim : openSkim}
+          skimLabel={shellState === "settings" && settingsOpenedFromSkimRef.current ? t("window.returnSkim") : undefined}
+          onSkim={shellState === "settings" && settingsOpenedFromSkimRef.current
+            ? closeSettings
+            : view === "skim"
+              ? closeSkim
+              : openSkim}
           settingsActive={shellState === "settings"}
           showSettings={showShellSettingsToggle}
+          settingsLabel={shellState === "settings" && settingsOpenedFromSkimRef.current ? t("window.returnSkim") : undefined}
           onSettings={shellState === "settings" ? closeSettings : openSettings}
         />
       )}
@@ -4021,7 +4042,7 @@ const App = () => {
             )}
             {activeView === "skim" && (
               <SkimView
-                search={search}
+                search={{ ...search, ...skimSortPreference }}
                 visualSessionId={skimVisualSessionId}
                 entries={sortedSkimEntries}
                 currentPath={skimCurrentPath}
@@ -4037,8 +4058,12 @@ const App = () => {
                 labelVisibility={searchCapsuleLabelVisibility}
                 skimDisplayMode={skimDisplay.mode}
                 searchInputRef={searchInputRef}
-                onSearchChange={setSearch}
-                onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch)}
+                onSearchChange={(nextSearch) => setSearch({
+                  ...nextSearch,
+                  sortField: search.sortField,
+                  sortDirection: search.sortDirection
+                })}
+                onSearchOptionsChange={updateSkimSort}
                 onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
                 onSkimDisplayModeChange={(mode) => updateSkimDisplay({ ...skimDisplay, mode })}
                 onSearch={() => submitSearch(search)}
@@ -5903,7 +5928,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
 
   return (
   <form
-    className={`cap7ce-top-capsule cap7ce-search-capsule${unified ? " cap7ce-search-capsule-unified" : ""}${directoryChipsOpen ? " cap7ce-search-capsule-directory-open" : ""}`}
+    className={`cap7ce-top-capsule cap7ce-search-capsule${unified ? " cap7ce-search-capsule-unified" : ""}${directoryChipsOpen ? " cap7ce-search-capsule-directory-open" : ""}${!enabledGroups.has("skimDisplay") ? " cap7ce-search-capsule-directory-first" : ""}`}
     data-search-capsule="true"
     onPointerDown={(event) => event.stopPropagation()}
     onContextMenu={openLabelMenu}

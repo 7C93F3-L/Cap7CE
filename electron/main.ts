@@ -20,7 +20,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSortPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -3674,6 +3674,10 @@ ipcMain.handle("preferences:updateSort", async (_event, sortPreference: { sortFi
   const preferences = await updateSortPreference(sortPreference);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   return preferences;
+});
+
+ipcMain.handle("preferences:updateSkimSort", (_event, skimSortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => {
+  return updateSkimSortPreference(skimSortPreference);
 });
 
 ipcMain.handle("preferences:updateAppearanceColors", async (_event, appearanceColors: { themeColor: string; accentColor: string }) => {

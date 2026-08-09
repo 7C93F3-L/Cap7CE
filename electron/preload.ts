@@ -170,6 +170,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     updateTheme: (themePreference: "system" | "light" | "dark") => ipcRenderer.invoke("preferences:updateTheme", themePreference),
     updateLanguage: (languagePreference: "system" | "zh-CN" | "en-US") => ipcRenderer.invoke("preferences:updateLanguage", languagePreference),
     updateSort: (sortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => ipcRenderer.invoke("preferences:updateSort", sortPreference),
+    updateSkimSort: (skimSortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => ipcRenderer.invoke("preferences:updateSkimSort", skimSortPreference),
     updateAppearanceColors: (appearanceColors: { themeColor: string; accentColor: string }) => ipcRenderer.invoke("preferences:updateAppearanceColors", appearanceColors),
     updateEdgeSnap: (edgeSnapEnabled: boolean) => ipcRenderer.invoke("preferences:updateEdgeSnap", edgeSnapEnabled),
     updateStandbyLineVisible: (standbyLineVisible: boolean) => ipcRenderer.invoke("preferences:updateStandbyLineVisible", standbyLineVisible),

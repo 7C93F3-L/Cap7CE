@@ -575,7 +575,9 @@ textarea,
 }
 
 .cap-skim-toggle:hover,
-.cap-settings-toggle:hover {
+.cap-settings-toggle:hover,
+.cap-skim-toggle[aria-pressed="true"],
+.cap-settings-toggle[aria-pressed="true"] {
   color: var(--window-control-hover);
   background: transparent;
 }
@@ -1020,6 +1022,16 @@ textarea,
 
 .cap7ce-search-capsule-unified > .cap7ce-pill-icon:last-of-type {
   display: none;
+}
+
+.cap7ce-search-capsule-directory-first > .cap7ce-directory-tag,
+.cap7ce-search-capsule-directory-first > .cap7ce-directory-chip {
+  order: -2;
+}
+
+.cap7ce-search-capsule-directory-first > .cap7ce-sort-tag,
+.cap7ce-search-capsule-directory-first > .cap7ce-sort-chip {
+  order: -1;
 }
 
 .cap7ce-pill,

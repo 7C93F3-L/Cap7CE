@@ -390,6 +390,10 @@ export interface UserPreferences {
     sortField: SortField;
     sortDirection: SortDirection;
   };
+  skimSortPreference: {
+    sortField: SortField;
+    sortDirection: SortDirection;
+  };
   appearanceColors: AppearanceColors;
   edgeSnapEnabled: boolean;
   alwaysOnTop: boolean;

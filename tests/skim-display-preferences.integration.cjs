@@ -12,7 +12,9 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const {
       getUserPreferences,
       updateSearchLabelVisibilityPreference,
-      updateSkimDisplayPreference
+      updateSkimDisplayPreference,
+      updateSkimSortPreference,
+      updateSortPreference
     } = require("../dist-electron/preferenceStore.js");
 
     const defaults = await getUserPreferences();
@@ -20,6 +22,10 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.skimDisplay.showHiddenFiles, false);
     assert.equal(defaults.skimDisplay.customExtensions.includes(".png"), true);
     assert.equal(defaults.searchLabelVisibility.skimDisplay, true);
+    assert.deepEqual(defaults.skimSortPreference, {
+      sortField: "file_name",
+      sortDirection: "asc"
+    });
 
     const updated = await updateSkimDisplayPreference({
       mode: "custom",
@@ -36,15 +42,20 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       ...updated.searchLabelVisibility,
       skimDisplay: false
     });
+    await updateSortPreference({ sortField: "modified_at", sortDirection: "desc" });
+    await updateSkimSortPreference({ sortField: "file_name", sortDirection: "desc" });
     const reloaded = await getUserPreferences();
     assert.equal(reloaded.skimDisplay.mode, "custom");
     assert.equal(reloaded.searchLabelVisibility.skimDisplay, false);
+    assert.deepEqual(reloaded.sortPreference, { sortField: "modified_at", sortDirection: "desc" });
+    assert.deepEqual(reloaded.skimSortPreference, { sortField: "file_name", sortDirection: "desc" });
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
       customExtensionsNormalized: true,
       skimModePersisted: true,
-      skimLabelVisibilityPersisted: true
+      skimLabelVisibilityPersisted: true,
+      independentSkimSortPersisted: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

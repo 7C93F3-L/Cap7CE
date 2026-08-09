@@ -122,6 +122,7 @@ export const enUS = defineLocale({
   "window.pinToggle": "Pin/Unpin",
   "window.openSettings": "Open Settings",
   "window.returnSearch": "Return to Search",
+  "window.returnSkim": "Return to skim",
   "preview.close": "Close Preview",
   "preview.restore": "Restore Preview Window",
   "preview.maximize": "Maximize Preview Window",
