@@ -508,7 +508,7 @@ const getNextLanguagePreference = (currentLanguage: LanguagePreference): Languag
 const getLanguagePreferenceLabel = (language: LanguagePreference) => {
   if (language === "zh-CN") return t("language.zhCN");
   if (language === "en-US") return t("language.enUS");
-  return getActiveLanguage() === "zh-CN" ? t("language.zhCN") : t("language.enUS");
+  return t("language.system");
 };
 
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
@@ -1103,7 +1103,8 @@ const App = () => {
   const appThemeStyle = {
     "--theme-color": appearanceColors.themeColor,
     "--accent-color": appearanceColors.accentColor,
-    "--theme-on-color": getTextColorForBackground(appearanceColors.themeColor)
+    "--theme-on-color": getTextColorForBackground(appearanceColors.themeColor),
+    "--accent-on-color": getTextColorForBackground(appearanceColors.accentColor)
   } as CSSProperties;
   const contextMenuStyle = getImageContextMenuStyle(effectiveTheme, appearanceColors);
   const selectRandomOperationHint = useCallback(() => {
@@ -5485,7 +5486,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
               : t("fileInfo.size", { size: formatCacheSize(contextMenu.item.size ?? 0) }),
             details: contextMenu.item.kind === "folder"
               ? fileInfoFolderStats
-                ? [t("fileInfo.contents", { files: fileInfoFolderStats.fileCount, folders: fileInfoFolderStats.folderCount })]
+                ? [t("fileInfo.compactContents", { files: fileInfoFolderStats.fileCount, folders: fileInfoFolderStats.folderCount })]
                 : [t("fileInfo.calculating")]
               : fileInfoDimensions
                 ? [t("fileInfo.resolution", { width: fileInfoDimensions.width, height: fileInfoDimensions.height })]
@@ -7854,18 +7855,19 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                       const selectedCount = extensions.filter((extension) => selectedSkimExtensions.has(extension)).length;
                       return (
                         <section className="cap-settings-skim-format-group" key={category}>
-                          <div className="cap-settings-skim-category-heading">
-                            <button
-                              className="cap-settings-skim-category-toggle"
-                              type="button"
-                              data-selected={selectedCount === extensions.length}
-                              data-partial={selectedCount > 0 && selectedCount < extensions.length}
-                              onClick={() => toggleSkimCategory(extensions)}
-                              title={t("settings.toggleSkimCategoryHint")}
-                              aria-label={t("settings.toggleSkimCategoryHint")}
-                            />
+                          <button
+                            className="cap-settings-skim-category-heading"
+                            type="button"
+                            data-selected={selectedCount === extensions.length}
+                            data-partial={selectedCount > 0 && selectedCount < extensions.length}
+                            onClick={() => toggleSkimCategory(extensions)}
+                            title={t("settings.toggleSkimCategoryHint")}
+                            aria-label={t("settings.toggleSkimCategoryHint")}
+                            aria-pressed={selectedCount === extensions.length ? true : selectedCount > 0 ? "mixed" : false}
+                          >
+                            <span className="cap-settings-skim-category-toggle" aria-hidden="true" />
                             <span>{t(`format.category.${category}` as TranslationKey)}</span>
-                          </div>
+                          </button>
                           <div className="cap-settings-skim-extensions">
                             {extensions.map((extension) => (
                               <button

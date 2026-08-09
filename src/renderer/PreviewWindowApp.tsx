@@ -649,7 +649,7 @@ const PreviewWindowApp = () => {
                 : undefined,
             details: previewData.info?.kind === "folder"
               ? folderStats
-                ? [t("fileInfo.contents", { files: folderStats.fileCount, folders: folderStats.folderCount })]
+                ? [t("fileInfo.compactContents", { files: folderStats.fileCount, folders: folderStats.folderCount })]
                 : [t("fileInfo.calculating")]
               : []
           }}

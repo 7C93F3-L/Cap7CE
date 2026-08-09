@@ -73,6 +73,7 @@ button {
   --theme-color: #7C93F3;
   --accent-color: #68C3C0;
   --theme-on-color: #ffffff;
+  --accent-on-color: #191919;
   --chip-bg: #d8d8d8;
   --chip-bg-hover: var(--theme-color);
   --window-control-color: var(--text-muted);
@@ -772,6 +773,8 @@ textarea,
   gap: var(--cap-grid-gap, var(--cap-thumb-gap));
   overflow-x: hidden;
   overflow-y: auto;
+  border-radius: inherit;
+  contain: layout paint;
   padding: 0;
 }
 
@@ -1709,11 +1712,18 @@ textarea,
 }
 
 .cap-settings-skim-category-heading {
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
-  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: var(--text-main);
+  background: transparent;
   white-space: nowrap;
+  transition: color 160ms ease;
 }
 
 .cap-settings-skim-category-toggle {
@@ -1730,20 +1740,27 @@ textarea,
     transform 500ms ease;
 }
 
-.cap-settings-skim-category-toggle:hover {
+.cap-settings-skim-category-heading:hover {
+  color: var(--theme-color);
+}
+
+.cap-settings-skim-category-heading:hover .cap-settings-skim-category-toggle {
   background: var(--theme-color);
   transform: translateY(-1px);
 }
 
-.cap-settings-skim-category-toggle[data-selected="true"],
-.cap-settings-skim-category-toggle[data-partial="true"],
+.cap-settings-skim-category-heading[data-selected="true"] .cap-settings-skim-category-toggle,
+.cap-settings-skim-category-heading[data-partial="true"] .cap-settings-skim-category-toggle,
 .cap-settings-skim-extension[data-selected="true"] {
-  color: var(--theme-on-color);
   background: var(--accent-color);
 }
 
+.cap-settings-skim-extension[data-selected="true"] {
+  color: var(--accent-on-color);
+}
+
 .cap-settings-skim-extension[data-selected="true"]:hover:not(:disabled) {
-  color: var(--theme-on-color);
+  color: var(--accent-on-color);
   background: var(--accent-color);
   transform: translateY(-1px);
 }
@@ -4410,6 +4427,11 @@ textarea.keyword-editor-textarea::-webkit-scrollbar-corner {
   grid-template-rows: 1fr;
   background: var(--app-bg);
   animation: none;
+}
+
+.cap-shell-normal .keyword-editor-panel.delete-files-panel {
+  width: 100%;
+  max-width: none;
 }
 
 .delete-files-content {
