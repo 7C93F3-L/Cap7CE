@@ -39,12 +39,32 @@ export interface ImageContextMenuGroup {
   actions: ImageContextMenuAction[];
 }
 
+export interface ImageContextMenuHeader {
+  format: string;
+  fileName: string;
+  details: string[];
+}
+
+export const truncateContextMenuFileName = (fileName: string, maximumLength = 28) => {
+  if (fileName.length <= maximumLength) return fileName;
+  const extensionIndex = fileName.lastIndexOf(".");
+  const suffix = extensionIndex > 0 && fileName.length - extensionIndex <= 10
+    ? fileName.slice(extensionIndex)
+    : "";
+  const stem = suffix ? fileName.slice(0, extensionIndex) : fileName;
+  const remaining = Math.max(8, maximumLength - suffix.length - 1);
+  const leadingLength = Math.ceil(remaining * 0.55);
+  const trailingLength = Math.max(3, remaining - leadingLength);
+  return `${stem.slice(0, leadingLength)}…${stem.slice(-trailingLength)}${suffix}`;
+};
+
 interface ImageContextMenuProps {
   x: number;
   y: number;
   theme: "light" | "dark";
   menuStyle?: CSSProperties;
   compact?: boolean;
+  header: ImageContextMenuHeader;
   groups: ImageContextMenuGroup[];
 }
 
@@ -64,6 +84,7 @@ const ImageContextMenu = ({
   theme,
   menuStyle,
   compact = false,
+  header,
   groups
 }: ImageContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -72,7 +93,7 @@ const ImageContextMenu = ({
   const [position, setPosition] = useState<(MenuPosition & { key: string }) | null>(null);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [submenuPosition, setSubmenuPosition] = useState<(MenuPosition & { direction: "left" | "right"; key: string }) | null>(null);
-  const measurementKey = `${x}:${y}:${compact}:${groups.map((group) => `${group.id}:${group.label}:${group.actions.map((action) => `${action.id}:${action.label}`).join(",")}`).join("|")}`;
+  const measurementKey = `${x}:${y}:${compact}:${header.format}:${header.fileName}:${header.details.join(",")}:${groups.map((group) => `${group.id}:${group.label}:${group.actions.map((action) => `${action.id}:${action.label}`).join(",")}`).join("|")}`;
   const activeGroup = useMemo(
     () => groups.find((group) => group.id === activeGroupId) ?? null,
     [activeGroupId, groups]
@@ -84,11 +105,35 @@ const ImageContextMenu = ({
       return;
     }
     const bounds = menuRef.current.getBoundingClientRect();
+    const nextPosition = clampMenuPositionToViewport(x, y, bounds.width, bounds.height);
+    if (compact) {
+      const submenuGap = 4;
+      const pairWidth = bounds.width * 2 + submenuGap;
+      const availableWidth = window.innerWidth - viewportMenuGap * 2;
+      if (pairWidth <= availableWidth) {
+        const rightOpeningMaximumLeft = window.innerWidth - viewportMenuGap - pairWidth;
+        const leftOpeningMinimumLeft = viewportMenuGap + bounds.width + submenuGap;
+        const maximumRootLeft = window.innerWidth - viewportMenuGap - bounds.width;
+        const rightOpeningLeft = Math.min(Math.max(nextPosition.left, viewportMenuGap), rightOpeningMaximumLeft);
+        const leftOpeningLeft = Math.min(Math.max(nextPosition.left, leftOpeningMinimumLeft), maximumRootLeft);
+        const distanceToMenu = (left: number) => x < left
+          ? left - x
+          : x > left + bounds.width
+            ? x - left - bounds.width
+            : 0;
+        const rightDistance = distanceToMenu(rightOpeningLeft);
+        const leftDistance = distanceToMenu(leftOpeningLeft);
+        nextPosition.left = rightDistance < leftDistance
+          || (rightDistance === leftDistance && Math.abs(rightOpeningLeft - x) <= Math.abs(leftOpeningLeft - x))
+          ? rightOpeningLeft
+          : leftOpeningLeft;
+      }
+    }
     setPosition({
-      ...clampMenuPositionToViewport(x, y, bounds.width, bounds.height),
+      ...nextPosition,
       key: measurementKey
     });
-  }, [measurementKey, x, y]);
+  }, [compact, measurementKey, x, y]);
 
   useEffect(() => {
     if (activeGroupId && !groups.some((group) => group.id === activeGroupId)) {
@@ -108,9 +153,11 @@ const ImageContextMenu = ({
     const submenuGap = 4;
     const rightLeft = parentBounds.right + submenuGap;
     const leftLeft = parentBounds.left - submenuBounds.width - submenuGap;
-    const openRight = rightLeft + submenuBounds.width <= window.innerWidth - viewportMenuGap;
-    const direction: "left" | "right" = openRight || leftLeft < viewportMenuGap ? "right" : "left";
-    const preferredLeft = direction === "right" ? rightLeft : leftLeft;
+    const canOpenRight = rightLeft + submenuBounds.width <= window.innerWidth - viewportMenuGap;
+    const canOpenLeft = leftLeft >= viewportMenuGap;
+    let direction: "left" | "right" = canOpenRight || !canOpenLeft ? "right" : "left";
+    let preferredLeft = direction === "right" ? rightLeft : leftLeft;
+
     setSubmenuPosition({
       left: Math.min(Math.max(preferredLeft, viewportMenuGap), Math.max(viewportMenuGap, window.innerWidth - submenuBounds.width - viewportMenuGap)),
       top: Math.min(Math.max(parentBounds.top, viewportMenuGap), Math.max(viewportMenuGap, window.innerHeight - submenuBounds.height - viewportMenuGap)),
@@ -147,6 +194,13 @@ const ImageContextMenu = ({
       }}
     >
       <div className="cap7ce-menu-motion-surface">
+        <div className="context-menu-file-header" aria-label={`${header.format} ${header.fileName}`}>
+          <span className="context-menu-file-format">{header.format}</span>
+          <span className="context-menu-file-name" title={header.fileName}>{header.fileName}</span>
+          <div className="context-menu-file-details">
+            {header.details.map((detail) => <span key={detail}>{detail}</span>)}
+          </div>
+        </div>
         {groups.map((group) => (
           <button
             ref={(element) => {

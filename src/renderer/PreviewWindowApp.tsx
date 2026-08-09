@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
-import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
+import ImageContextMenu, { getImageContextMenuStyle, truncateContextMenuFileName } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import PdfPreviewPanel from "./PdfPreviewPanel";
@@ -632,6 +632,25 @@ const PreviewWindowApp = () => {
           y={contextMenu.y}
           theme={previewData.theme}
           menuStyle={getImageContextMenuStyle(previewData.theme, previewData.appearanceColors)}
+          header={{
+            format: previewData.info?.kind === "folder"
+              ? t("fileInfo.folder")
+              : (() => {
+                const extension = previewData.fileName.slice(previewData.fileName.lastIndexOf(".") + 1);
+                return extension && extension !== previewData.fileName ? extension.toUpperCase() : t("fileInfo.file");
+              })(),
+            fileName: truncateContextMenuFileName(previewData.fileName),
+            details: previewData.info?.kind === "folder"
+              ? folderStats
+                ? [
+                  t("fileInfo.size", { size: formatPreviewBytes(folderStats.totalSize) }),
+                  t("fileInfo.contents", { files: folderStats.fileCount, folders: folderStats.folderCount })
+                ]
+                : [t("fileInfo.calculating")]
+              : previewData.info?.kind === "file"
+                ? [t("fileInfo.size", { size: formatPreviewBytes(previewData.info.size) })]
+                : []
+          }}
           groups={[
             {
               id: "view",

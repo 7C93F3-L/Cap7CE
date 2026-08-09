@@ -3252,7 +3252,48 @@ textarea,
 }
 
 .context-menu.context-menu-grouped {
-  min-width: 128px;
+  width: 168px;
+  min-width: 168px;
+}
+
+.context-menu .context-menu-file-header,
+.context-menu .context-menu-file-header * {
+  min-width: 0;
+  pointer-events: none;
+}
+
+.context-menu-file-header {
+  display: grid;
+  gap: 1px;
+  padding: 2px 10px 5px;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.context-menu-file-format,
+.context-menu-file-name,
+.context-menu-file-details span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.context-menu-file-format {
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 17px;
+}
+
+.context-menu-file-name {
+  color: var(--text-main);
+}
+
+.context-menu-file-details {
+  display: grid;
+  gap: 0;
+  color: var(--accent-color);
 }
 
 .context-menu .context-menu-parent-action {
@@ -3267,8 +3308,21 @@ textarea,
 
 .context-menu.context-submenu {
   z-index: 1001;
-  min-width: 128px;
+  min-width: 168px;
   max-width: min(200px, calc(100vw - 10px));
+}
+
+.context-menu.context-menu-grouped.context-menu-mini,
+.context-menu.context-submenu.context-menu-mini {
+  width: 142px;
+  min-width: 142px;
+}
+
+.context-menu.context-submenu.context-menu-mini button {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .context-submenu-left .cap7ce-menu-motion-surface {
@@ -3305,64 +3359,6 @@ textarea,
 .context-menu.cap-settings-select-menu button.is-active {
   background: var(--theme-color);
   color: var(--theme-on-color);
-}
-
-.context-menu.file-info-card {
-  width: 180px;
-  min-width: 0;
-  max-width: calc(100vw - 10px);
-  padding: 8px 10px;
-  pointer-events: none;
-}
-
-.context-menu.file-info-card *,
-.context-menu.file-info-card .cap7ce-menu-motion-surface {
-  min-width: 0;
-  pointer-events: none;
-}
-
-.file-info-card-compact.context-menu {
-  width: 168px;
-  padding: 7px 9px;
-}
-
-.file-info-card .cap7ce-menu-motion-surface {
-  gap: 3px;
-}
-
-.file-info-card-heading,
-.file-info-card-name,
-.file-info-card-details span {
-  display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.file-info-card-heading {
-  color: var(--text-main);
-  font-size: 13px;
-  line-height: 17px;
-}
-
-.file-info-card-name {
-  color: var(--text-main);
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.file-info-card-details {
-  display: grid;
-  gap: 1px;
-  margin-top: 3px;
-  color: var(--accent-color);
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.file-info-card-compact .file-info-card-heading {
-  font-size: 13px;
-  line-height: 17px;
 }
 
 .context-menu.cap-color-picker {
