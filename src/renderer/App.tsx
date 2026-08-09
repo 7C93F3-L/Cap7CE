@@ -2969,7 +2969,7 @@ const App = () => {
 
   const requestDeleteFiles = (items: ImageIndexItem[]) => {
     setContextMenu(null);
-    if (items.length === 0 || items.some((item) => item.resultKind !== "visual")) return;
+    if (items.length === 0) return;
     setFilesPendingDelete(items.map((item) => ({ ...item, keywords: [...item.keywords] })));
     setDeleteFilesFeedback(null);
     setDialog("deleteFiles");
@@ -3009,7 +3009,7 @@ const App = () => {
   };
 
   const requestEditKeywords = (items: ImageIndexItem[]) => {
-    if (items.length === 0 || items.some((item) => item.resultKind !== "visual")) {
+    if (items.length === 0) {
       return;
     }
     captureKeywordEditScrollSnapshot();
@@ -3213,7 +3213,8 @@ const App = () => {
       const deletedItems = pendingItems.filter((item) => deletedPathKeys.has(item.filePath.toLowerCase()));
       const deletedImageIds = new Set(deletedItems.map((item) => item.id));
       const deletedUnrecognizedCount = deletedItems.filter(
-        (item) => item.caption.trim().length === 0 || item.keywords.length === 0
+        (item) => item.resultKind === "visual"
+          && (item.caption.trim().length === 0 || item.keywords.length === 0)
       ).length;
       const deletedParseFailures = deletedItems.filter((item) => item.failureType === "parse").length;
       const deletedFileFailures = deletedItems.filter((item) => item.failureType === "file").length;
@@ -4266,7 +4267,7 @@ const App = () => {
                     void window.imageEverything?.files.copyPaths(contextMenu.items.map((item) => item.filePath));
                   }
                 },
-                ...(contextMenu.items.length > 0 && contextMenu.items.every((item) => item.resultKind === "visual")
+                ...(contextMenu.items.length > 0
                   ? [
                     { id: "editKeywords", label: t("context.editKeywords"), onSelect: () => requestEditKeywords(contextMenu.items) },
                     {

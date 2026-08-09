@@ -311,6 +311,8 @@ const migrate = (database: Database) => {
       file_size INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       modified_at TEXT NOT NULL,
+      user_keywords TEXT NOT NULL DEFAULT '',
+      user_keywords_at TEXT,
       indexed_at TEXT NOT NULL,
       directory_id TEXT NOT NULL,
       "exists" INTEGER NOT NULL DEFAULT 1 CHECK ("exists" IN (0, 1))
@@ -341,6 +343,8 @@ const migrate = (database: Database) => {
   ensureColumn(database, "images", "manual_index", "INTEGER NOT NULL DEFAULT 0 CHECK (manual_index IN (0, 1))");
   ensureColumn(database, "files", "relative_directory", "TEXT NOT NULL DEFAULT ''");
   ensureColumn(database, "files", "path_evidence_version", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(database, "files", "user_keywords", "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database, "files", "user_keywords_at", "TEXT");
   backfillFileCatalogFromImages(database);
 };
 
@@ -881,6 +885,20 @@ export const findImageRecordFilePaths = async (filePaths: string[]): Promise<str
   }
 };
 
+export const findCatalogRecordFilePaths = async (filePaths: string[]): Promise<string[]> => {
+  if (filePaths.length === 0) return [];
+  const database = await loadDatabase();
+  try {
+    const storedFilePathKeys = new Set(
+      (database.exec("SELECT file_path FROM files")[0]?.values ?? [])
+        .map((row) => normalizeImageFilePathKey(String(row[0])))
+    );
+    return filePaths.filter((filePath) => storedFilePathKeys.has(normalizeImageFilePathKey(filePath)));
+  } finally {
+    database.close();
+  }
+};
+
 export const deleteImagesByFilePaths = async (filePaths: string[]): Promise<void> => {
   if (filePaths.length === 0) {
     return;
@@ -1119,12 +1137,47 @@ export const upsertImageManualMetadata = async (
   }
 };
 
-export interface ImageKeywordBatchTarget {
-  image: ScannedImageFile;
+export const upsertFileManualKeywords = async (
+  file: ScannedImageFile,
+  keywords: string[],
+  updatedAt: string
+): Promise<void> => {
+  const database = await loadDatabase();
+
+  try {
+    database.run("BEGIN TRANSACTION");
+    upsertFileCatalogFromImageRecord(database, file, updatedAt);
+    database.run(`
+      UPDATE files
+      SET user_keywords = :user_keywords,
+          user_keywords_at = :user_keywords_at
+      WHERE file_path = :file_path COLLATE NOCASE
+    `, {
+      ":file_path": file.file_path,
+      ":user_keywords": formatKeywordText(keywords),
+      ":user_keywords_at": updatedAt
+    });
+    database.run("COMMIT");
+    await saveDatabase(database);
+  } catch (error) {
+    try {
+      database.run("ROLLBACK");
+    } catch {
+      // Preserve the original database error.
+    }
+    throw error;
+  } finally {
+    database.close();
+  }
+};
+
+export interface ManualKeywordBatchTarget {
+  file: ScannedImageFile;
+  resultKind: "visual" | "file";
 }
 
-export const updateImageKeywordsBatch = async (
-  targets: ImageKeywordBatchTarget[],
+export const updateManualKeywordsBatch = async (
+  targets: ManualKeywordBatchTarget[],
   initialCommonKeywords: string[],
   targetKeywordText: string
 ): Promise<string[]> => {
@@ -1137,19 +1190,21 @@ export const updateImageKeywordsBatch = async (
     database.run("BEGIN TRANSACTION");
 
     for (const target of targets) {
-      const rows = database.exec(
-        `
+      const rows = target.resultKind === "visual"
+        ? database.exec(`
           SELECT file_path, keywords
           FROM images
           WHERE file_path = :file_path COLLATE NOCASE
           LIMIT 1
-        `,
-        {
-          ":file_path": target.image.file_path
-        }
-      )[0]?.values ?? [];
+        `, { ":file_path": target.file.file_path })[0]?.values ?? []
+        : database.exec(`
+          SELECT file_path, user_keywords
+          FROM files
+          WHERE file_path = :file_path COLLATE NOCASE
+          LIMIT 1
+        `, { ":file_path": target.file.file_path })[0]?.values ?? [];
 
-      const existingFilePath = rows.length > 0 ? String(rows[0][0]) : target.image.file_path;
+      const existingFilePath = rows.length > 0 ? String(rows[0][0]) : target.file.file_path;
       const existingKeywords = rows.length > 0
         ? parseKeywordText(String(rows[0][1] ?? ""))
         : [];
@@ -1159,16 +1214,30 @@ export const updateImageKeywordsBatch = async (
         normalizedTargetKeywords
       );
 
-      const normalizedImage = { ...target.image, file_path: existingFilePath };
-      upsertImageManualMetadataRecord(
-        database,
-        normalizedImage,
-        "",
-        nextKeywords,
-        indexedAt,
-        true
-      );
-      upsertFileCatalogFromImageRecord(database, normalizedImage, indexedAt);
+      const normalizedFile = { ...target.file, file_path: existingFilePath };
+      if (target.resultKind === "visual") {
+        upsertImageManualMetadataRecord(
+          database,
+          normalizedFile,
+          "",
+          nextKeywords,
+          indexedAt,
+          true
+        );
+      }
+      upsertFileCatalogFromImageRecord(database, normalizedFile, indexedAt);
+      if (target.resultKind === "file") {
+        database.run(`
+          UPDATE files
+          SET user_keywords = :user_keywords,
+              user_keywords_at = :user_keywords_at
+          WHERE file_path = :file_path COLLATE NOCASE
+        `, {
+          ":file_path": normalizedFile.file_path,
+          ":user_keywords": formatKeywordText(nextKeywords),
+          ":user_keywords_at": indexedAt
+        });
+      }
     }
 
     database.run("COMMIT");
@@ -1419,6 +1488,10 @@ export const searchIndexedCatalog = async (
         ',' || LOWER(REPLACE(COALESCE(i.keywords, ''), '，', ',')) || ',',
         ',' || ${keywordKey} || ','
       ) > 0
+      OR INSTR(
+        ',' || LOWER(REPLACE(COALESCE(f.user_keywords, ''), '，', ',')) || ',',
+        ',' || ${keywordKey} || ','
+      ) > 0
     )`);
   });
 
@@ -1445,7 +1518,8 @@ export const searchIndexedCatalog = async (
         i.keywords,
         i.ai_error,
         i.manual_index,
-        i.indexed_at
+        i.indexed_at,
+        f.user_keywords
       FROM files AS f
       LEFT JOIN images AS i
         ON i.file_path = f.file_path
@@ -1482,7 +1556,9 @@ export const searchIndexedCatalog = async (
         imageWidth: imageId === null ? 0 : Number(row[11] ?? 0),
         imageHeight: imageId === null ? 0 : Number(row[12] ?? 0),
         caption: imageId === null ? "" : String(row[13] ?? ""),
-        keywords: imageId === null ? [] : parseKeywordText(String(row[14] ?? "")),
+        keywords: isVisual
+          ? imageId === null ? [] : parseKeywordText(String(row[14] ?? ""))
+          : parseKeywordText(String(row[18] ?? "")),
         aiError,
         manualIndex: imageId !== null && Number(row[16] ?? 0) === 1,
         failureType: failure.type,

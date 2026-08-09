@@ -61,8 +61,11 @@ app.whenReady().then(async () => {
     const { scanImageDirectories } = require("../dist-electron/imageScanner.js");
     const {
       ensureImageDatabase,
+      getImageIndexQualityStats,
       listPendingImageRecognitions,
       updateImageRecognition,
+      updateManualKeywordsBatch,
+      upsertFileManualKeywords,
       writeScannedImagesToIndex
     } = require("../dist-electron/sqliteImageIndex.js");
     const { searchImagesWithAddedDirectories } = require("../dist-electron/imageSearchService.js");
@@ -78,6 +81,11 @@ app.whenReady().then(async () => {
     );
     const pendingVisual = (await listPendingImageRecognitions(10))[0];
     await updateImageRecognition(pendingVisual.id, "mountain reference", ["landscape"], timestamp);
+    const notesFile = initialScan.files.find((file) => file.file_name === "notes.txt");
+    const visualFile = initialScan.images.find((file) => file.file_name === "visual.png");
+    assert.ok(notesFile);
+    assert.ok(visualFile);
+    await upsertFileManualKeywords(notesFile, ["meeting", "reference"], timestamp);
 
     const allResults = await searchImagesWithAddedDirectories(baseSearch, directories);
     assert.deepEqual(allResults.images.map((item) => item.fileName), [
@@ -147,6 +155,35 @@ app.whenReady().then(async () => {
     assert.deepEqual(keywordQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(keywordQuery.images[0].resultKind, "visual");
 
+    const nonVisualKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "meeting" }, directories);
+    assert.deepEqual(nonVisualKeywordQuery.images.map((item) => item.fileName), ["notes.txt"]);
+    assert.deepEqual(nonVisualKeywordQuery.images[0].keywords, ["meeting", "reference"]);
+    assert.equal(nonVisualKeywordQuery.images[0].resultKind, "file");
+    assert.deepEqual(await getImageIndexQualityStats(), {
+      totalImages: 1,
+      recognizedImages: 1,
+      unrecognizedImages: 0
+    });
+
+    await updateManualKeywordsBatch([
+      { file: notesFile, resultKind: "file" },
+      { file: visualFile, resultKind: "visual" }
+    ], [], "shared-project");
+    const mixedKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "shared-project" }, directories);
+    assert.deepEqual(mixedKeywordQuery.images.map((item) => item.fileName), ["notes.txt", "visual.png"]);
+    const rescan = await scanImageDirectories(directories);
+    await writeScannedImagesToIndex(
+      directories.map((directory) => directory.id),
+      rescan.images,
+      rescan.scannedAt,
+      rescan.files
+    );
+    const rescannedKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "shared-project" }, directories);
+    assert.deepEqual(rescannedKeywordQuery.images.map((item) => item.fileName), ["notes.txt", "visual.png"]);
+    await upsertFileManualKeywords(notesFile, [], timestamp);
+    const clearedKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "shared-project" }, directories);
+    assert.deepEqual(clearedKeywordQuery.images.map((item) => item.fileName), ["visual.png"]);
+
     const documentFilter = await searchImagesWithAddedDirectories({ ...baseSearch, fileFormat: "docx" }, directories);
     assert.deepEqual(documentFilter.images.map((item) => item.fileName), ["brief.docx"]);
 
@@ -199,6 +236,11 @@ app.whenReady().then(async () => {
       crossSourceAndPreserved: true,
       likeWildcardsEscaped: true,
       visualKeywordSearchPreserved: true,
+      nonVisualKeywordSearchEnabled: true,
+      mixedKeywordBatchPreserved: true,
+      nonVisualKeywordsPreservedAcrossRescan: true,
+      nonVisualKeywordsCanBeCleared: true,
+      nonVisualKeywordsExcludedFromImageStats: true,
       directoryFormatAndSortFiltersPreserved: true,
       recognitionFiltersRemainVisualOnly: true,
       liveScanOverlayIncludesNewFiles: true,

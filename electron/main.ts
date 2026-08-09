@@ -14,14 +14,14 @@ import { startNativeFileDrag } from "./fileDragService";
 import { getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
-import { isSupportedImageFilePath, scanImageDirectories, type ScannedImageFile } from "./imageScanner";
+import { scanImageDirectories, type ScannedImageFile } from "./imageScanner";
 import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
-import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateImageKeywordsBatch, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
+import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation } from "./skimBrowseService";
@@ -3510,22 +3510,26 @@ const getManualMetadataImage = async (
 };
 
 ipcMain.handle("index:updateManualMetadata", async (_event, filePath: string, caption: string, keywordText: string) => {
-  if (typeof filePath !== "string" || !filePath.trim() || !isSupportedImageFilePath(filePath)) {
+  if (typeof filePath !== "string" || !filePath.trim()) {
     throw new Error(t("error.invalidFile"));
   }
   if (typeof caption !== "string" || typeof keywordText !== "string") {
     throw new Error(t("error.invalidMetadata"));
   }
 
+  const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
+  if (!capability?.canSearch) {
+    throw new Error(t("error.invalidFile"));
+  }
   const directories = await listDirectories();
-  const image = await getManualMetadataImage(filePath, directories);
+  const file = await getManualMetadataImage(filePath, directories);
   const normalizedKeywords = parseKeywordText(keywordText);
-  await upsertImageManualMetadata(
-    image,
-    caption.trim(),
-    normalizedKeywords,
-    new Date().toISOString()
-  );
+  const updatedAt = new Date().toISOString();
+  if (capability.canAIIndex) {
+    await upsertImageManualMetadata(file, caption.trim(), normalizedKeywords, updatedAt);
+  } else {
+    await upsertFileManualKeywords(file, normalizedKeywords, updatedAt);
+  }
   return true;
 });
 
@@ -3560,7 +3564,8 @@ ipcMain.handle("index:updateKeywordsBatch", async (event, request: KeywordBatchU
         throw new Error(t("error.invalidBatchKeywordTarget"));
       }
       const filePath = path.resolve(target.filePath);
-      if (!isSupportedImageFilePath(filePath)) {
+      const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
+      if (!capability?.canSearch) {
         throw new Error(t("error.unsupportedFile", { path: target.filePath }));
       }
       const targetKey = filePath.toLowerCase();
@@ -3568,10 +3573,13 @@ ipcMain.handle("index:updateKeywordsBatch", async (event, request: KeywordBatchU
         throw new Error(t("error.duplicateBatchKeywordTarget"));
       }
       seenTargets.add(targetKey);
-      return { image: await getManualMetadataImage(filePath, directories) };
+      return {
+        file: await getManualMetadataImage(filePath, directories),
+        resultKind: capability.canAIIndex ? "visual" as const : "file" as const
+      };
     }));
 
-    const normalizedTargetKeywords = await updateImageKeywordsBatch(
+    const normalizedTargetKeywords = await updateManualKeywordsBatch(
       targets,
       normalizeKeywordList(request.initialCommonKeywords),
       request.targetKeywordText

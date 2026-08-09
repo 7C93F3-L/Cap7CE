@@ -695,7 +695,7 @@ const PreviewWindowApp = () => {
                     void window.imageEverything?.files.copyPaths([previewData.filePath]);
                   }
                 },
-                ...(!previewData.provider ? [
+                ...(!previewData.skimActive ? [
                   {
                     id: "editKeywords",
                     label: t("context.editKeywords"),

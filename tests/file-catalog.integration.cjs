@@ -98,6 +98,11 @@ app.whenReady().then(async () => {
     };
     await ensureImageDatabase();
     await fs.access(`${databasePath}.pre-path-v1.bak`);
+    const migratedFileDatabase = new SQL.Database(await fs.readFile(databasePath));
+    const migratedFileColumns = migratedFileDatabase.exec("PRAGMA table_info(files)")[0]?.values ?? [];
+    migratedFileDatabase.close();
+    assert.ok(migratedFileColumns.some((column) => String(column[1]) === "user_keywords"));
+    assert.ok(migratedFileColumns.some((column) => String(column[1]) === "user_keywords_at"));
     assert.equal(await backfillFilePathEvidence([directory]), 1);
     assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 1);
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), false);
@@ -180,6 +185,7 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       legacyImagesBackfilled: true,
+      userKeywordColumnsMigrated: true,
       legacyPathEvidenceBackfilledWithoutSourceScan: true,
       migrationBackupCreated: true,
       relativeDirectoryStoredAndReassigned: true,

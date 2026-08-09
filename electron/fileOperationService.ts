@@ -3,11 +3,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import {
   deleteImagesByFilePaths,
+  findCatalogRecordFilePaths,
   findImageRecordFilePaths,
   normalizeImageFilePathKey
 } from "./sqliteImageIndex";
 import { listDirectories } from "./directoryStore";
-import { isSupportedImageFilePath } from "./imageScanner";
+import { getFileFormatCapability } from "./formatCapabilities";
 import {
   deleteVisualCachesForImages,
   isCap7CECachePath
@@ -126,18 +127,21 @@ export const moveIndexedImagesToTrash = async (
     }
     return true;
   });
-  const [recordFilePaths, directories] = await Promise.all([
+  const [imageRecordFilePaths, catalogRecordFilePaths, directories] = await Promise.all([
     findImageRecordFilePaths(allowedFilePaths),
+    findCatalogRecordFilePaths(allowedFilePaths),
     listDirectories()
   ]);
-  const recordPathKeys = new Set(recordFilePaths.map(normalizeImageFilePathKey));
+  const recordPathKeys = new Set(
+    [...imageRecordFilePaths, ...catalogRecordFilePaths].map(normalizeImageFilePathKey)
+  );
   const deletableFilePaths: string[] = [];
 
   for (const filePath of allowedFilePaths) {
-    const hasImageRecord = recordPathKeys.has(normalizeImageFilePathKey(filePath));
-    const isSupportedFileInAddedDirectory = isSupportedImageFilePath(filePath)
+    const hasIndexedRecord = recordPathKeys.has(normalizeImageFilePathKey(filePath));
+    const isSupportedFileInAddedDirectory = Boolean(getFileFormatCapability(path.extname(filePath).toLowerCase())?.canSearch)
       && directories.some((directory) => isPathInsideDirectory(filePath, directory.path));
-    if (!hasImageRecord && !isSupportedFileInAddedDirectory) {
+    if (!hasIndexedRecord && !isSupportedFileInAddedDirectory) {
       failedItems.push({
         path: filePath,
         error: t("file.outsideAddedDirectories")
