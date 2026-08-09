@@ -3252,8 +3252,47 @@ textarea,
 }
 
 .context-menu.context-menu-grouped {
+  --context-menu-group-width: 168px;
   width: 168px;
   min-width: 168px;
+  max-width: calc(100vw - 10px);
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+.context-menu.context-menu-grouped.is-expanded {
+  animation: cap7ce-context-menu-shell-expand-right 180ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+.context-menu-unified-layout {
+  display: grid;
+  grid-template-columns: calc(var(--context-menu-group-width) - 14px);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.context-menu-grouped.is-expanded .context-menu-unified-layout {
+  grid-template-columns: repeat(2, calc(var(--context-menu-group-width) - 14px));
+}
+
+.context-menu-root-column,
+.context-menu-inline-submenu {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.context-menu-grouped.is-expanded .context-menu-root-column {
+  grid-column: 1;
+}
+
+.context-menu-grouped.is-expanded .context-menu-inline-submenu {
+  grid-column: 2;
+}
+
+.context-menu-inline-submenu {
+  animation: cap7ce-context-inline-submenu-enter-right 180ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
 }
 
 .context-menu .context-menu-file-header,
@@ -3270,8 +3309,26 @@ textarea,
   line-height: 15px;
 }
 
+.context-menu-file-heading {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.context-menu-file-primary-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent-color);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .context-menu-file-format,
-.context-menu-file-name,
 .context-menu-file-details span {
   display: block;
   overflow: hidden;
@@ -3280,6 +3337,7 @@ textarea,
 }
 
 .context-menu-file-format {
+  flex: 0 0 auto;
   color: var(--text-main);
   font-size: 13px;
   font-weight: 700;
@@ -3287,7 +3345,22 @@ textarea,
 }
 
 .context-menu-file-name {
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
   color: var(--text-main);
+  white-space: nowrap;
+}
+
+.context-menu-file-name-leading {
+  min-width: 0;
+  overflow: hidden;
+  flex: 0 1 auto;
+  text-overflow: ellipsis;
+}
+
+.context-menu-file-name-trailing {
+  flex: 0 0 auto;
 }
 
 .context-menu-file-details {
@@ -3306,36 +3379,42 @@ textarea,
   color: var(--theme-on-color);
 }
 
-.context-menu.context-submenu {
-  z-index: 1001;
-  min-width: 168px;
-  max-width: min(200px, calc(100vw - 10px));
-}
-
-.context-menu.context-menu-grouped.context-menu-mini,
-.context-menu.context-submenu.context-menu-mini {
+.context-menu.context-menu-grouped.context-menu-mini {
+  --context-menu-group-width: 142px;
   width: 142px;
   min-width: 142px;
 }
 
-.context-menu.context-submenu.context-menu-mini button {
+.context-menu-inline-submenu button {
   width: 100%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.context-submenu-left .cap7ce-menu-motion-surface {
-  animation-name: cap7ce-context-submenu-enter-left;
-}
-
-@keyframes cap7ce-context-submenu-enter-left {
+@keyframes cap7ce-context-inline-submenu-enter-right {
   from {
-    transform: translate3d(20px, 0, 0);
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
   }
 
   to {
+    opacity: 1;
     transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes cap7ce-context-menu-shell-expand-right {
+  from {
+    clip-path: inset(0 calc(100% - var(--context-menu-group-width)) 0 0 round var(--radius-menu));
+  }
+
+  99% {
+    clip-path: inset(0 0 0 0 round var(--radius-menu));
+  }
+
+  100% {
+    clip-path: none;
   }
 }
 
@@ -3453,6 +3532,8 @@ textarea,
   .cap7ce-filter-chip-motion.cap7ce-filter-chip-closing,
   .cap7ce-file-format-label,
   .cap7ce-menu-motion-surface,
+  .context-menu.context-menu-grouped.is-expanded,
+  .context-menu-inline-submenu,
   .cap-settings-expandable-shell,
   .keyword-editor-view,
   .keyword-editor-panel,

@@ -15,7 +15,7 @@ import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
-import ImageContextMenu, { getImageContextMenuStyle, truncateContextMenuFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
+import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
@@ -4235,12 +4235,12 @@ const App = () => {
           compact={contextMenu.shellState === "micro" || contextMenu.shellState === "mini"}
           header={{
             format: contextMenu.item.extension.slice(1).toUpperCase() || t("fileInfo.file"),
-            fileName: truncateContextMenuFileName(contextMenu.item.fileName),
+            fileName: contextMenu.item.fileName,
+            primaryDetail: t("fileInfo.size", { size: formatCacheSize(contextMenu.item.fileSize) }),
             details: [
               ...(contextMenu.item.imageWidth > 0 && contextMenu.item.imageHeight > 0
                 ? [t("fileInfo.resolution", { width: contextMenu.item.imageWidth, height: contextMenu.item.imageHeight })]
-                : []),
-              t("fileInfo.size", { size: formatCacheSize(contextMenu.item.fileSize) })
+                : [])
             ]
           }}
           groups={[
@@ -5452,20 +5452,19 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
             format: contextMenu.item.kind === "folder"
               ? t("fileInfo.folder")
               : contextMenu.item.extension.slice(1).toUpperCase() || t("fileInfo.file"),
-            fileName: truncateContextMenuFileName(contextMenu.item.label || contextMenu.item.name),
+            fileName: contextMenu.item.label || contextMenu.item.name,
+            primaryDetail: contextMenu.item.kind === "folder"
+              ? fileInfoFolderStats
+                ? t("fileInfo.size", { size: formatCacheSize(fileInfoFolderStats.totalSize) })
+                : undefined
+              : t("fileInfo.size", { size: formatCacheSize(contextMenu.item.size ?? 0) }),
             details: contextMenu.item.kind === "folder"
               ? fileInfoFolderStats
-                ? [
-                  t("fileInfo.size", { size: formatCacheSize(fileInfoFolderStats.totalSize) }),
-                  t("fileInfo.contents", { files: fileInfoFolderStats.fileCount, folders: fileInfoFolderStats.folderCount })
-                ]
+                ? [t("fileInfo.contents", { files: fileInfoFolderStats.fileCount, folders: fileInfoFolderStats.folderCount })]
                 : [t("fileInfo.calculating")]
-              : [
-                ...(fileInfoDimensions
-                  ? [t("fileInfo.resolution", { width: fileInfoDimensions.width, height: fileInfoDimensions.height })]
-                  : []),
-                t("fileInfo.size", { size: formatCacheSize(contextMenu.item.size ?? 0) })
-              ]
+              : fileInfoDimensions
+                ? [t("fileInfo.resolution", { width: fileInfoDimensions.width, height: fileInfoDimensions.height })]
+                : []
           }}
           groups={[
             {
