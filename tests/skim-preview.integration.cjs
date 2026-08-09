@@ -3,6 +3,7 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const { app } = require("electron");
+const sharp = require("sharp");
 
 const testRoot = path.join(os.tmpdir(), `cap7ce-skim-preview-${process.pid}-${Date.now()}`);
 app.setPath("userData", path.join(testRoot, "user-data"));
@@ -10,6 +11,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 (async () => {
   try {
     const { collectSkimFolderStats, inspectSkimEntry } = require("../dist-electron/skimPreviewService.js");
+    const { readVisualSourceDimensions } = require("../dist-electron/visualRenderService.js");
     const rootPath = path.join(testRoot, "root");
     const nestedPath = path.join(rootPath, "nested");
     const deeperPath = path.join(nestedPath, "deeper");
@@ -50,12 +52,20 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(cancelled.status, "cancelled");
 
     await assert.rejects(() => inspectSkimEntry(filePath, "folder", []), /type changed/);
+    const imagePath = path.join(rootPath, "dimensions.png");
+    await sharp({
+      create: { width: 37, height: 23, channels: 4, background: "#336699" }
+    }).png().toFile(imagePath);
+    assert.deepEqual(await readVisualSourceDimensions(imagePath), { width: 37, height: 23 });
+    assert.equal(await readVisualSourceDimensions(filePath), null);
     console.log(JSON.stringify({
       metadataInspected: true,
       addedScopeDetected: true,
       descendantStatsComplete: true,
       progressReported: true,
-      cancellationHonored: true
+      cancellationHonored: true,
+      safeImageDimensionsRead: true,
+      unsupportedDimensionsSkipped: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

@@ -117,6 +117,9 @@ contextBridge.exposeInMainWorld("imageEverything", {
     readTextPreview: (filePath: string) => ipcRenderer.invoke("skim:readTextPreview", filePath),
     startFolderStats: (request: unknown) => ipcRenderer.invoke("skim:startFolderStats", request),
     cancelFolderStats: (sessionId: string) => ipcRenderer.invoke("skim:cancelFolderStats", sessionId),
+    readFileInfoDimensions: (filePath: string) => ipcRenderer.invoke("skim:readFileInfoDimensions", filePath),
+    readFileInfoFolderStats: (request: unknown) => ipcRenderer.invoke("skim:readFileInfoFolderStats", request),
+    cancelFileInfoFolderStats: (taskId: string) => ipcRenderer.invoke("skim:cancelFileInfoFolderStats", taskId),
     onFolderStats: (callback: (update: unknown) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, update: unknown) => callback(update);
       ipcRenderer.on("skim:folderStats", listener);

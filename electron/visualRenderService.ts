@@ -29,7 +29,7 @@ interface VisualRenderStrategy {
   jpegQuality?: number;
 }
 
-interface ImageSize {
+export interface ImageSize {
   width: number;
   height: number;
 }
@@ -271,6 +271,25 @@ const readSafeSvg = async (filePath: string) => {
   }
 
   return Buffer.from(stripSvgDoctype(original), "utf8");
+};
+
+export const readVisualSourceDimensions = async (sourcePath: string): Promise<ImageSize | null> => {
+  const extension = path.extname(sourcePath).toLowerCase();
+  if (extension === ".bmp") return readBmpSize(sourcePath);
+  if (!sharpSourceExtensions.has(extension)) return null;
+
+  const input = extension === ".svg" ? await readSafeSvg(sourcePath) : sourcePath;
+  const metadata = await sharp(input, {
+    animated: false,
+    limitInputPixels: maximumInputPixels
+  }).metadata();
+  const rawWidth = metadata.width ?? 0;
+  const rawHeight = metadata.pageHeight ?? metadata.height ?? 0;
+  if (rawWidth <= 0 || rawHeight <= 0) return null;
+  const rotated = metadata.orientation !== undefined && metadata.orientation >= 5 && metadata.orientation <= 8;
+  return rotated
+    ? { width: rawHeight, height: rawWidth }
+    : { width: rawWidth, height: rawHeight };
 };
 
 const createSharpPipeline = async (entry: VisualCacheEntry): Promise<sharp.Sharp> => {

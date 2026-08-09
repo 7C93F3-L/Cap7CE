@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiIndexProgress, AiIndexRunResponse, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageScanResponse, ImageSearchResponse, IndexQualityStats, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { AiIndexProgress, AiIndexRunResponse, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageScanResponse, ImageSearchResponse, IndexQualityStats, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -78,6 +78,9 @@ declare global {
         readTextPreview: (filePath: string) => Promise<SkimTextPreview>;
         startFolderStats: (request: { sessionId: string; path: string }) => Promise<boolean>;
         cancelFolderStats: (sessionId: string) => Promise<boolean>;
+        readFileInfoDimensions: (filePath: string) => Promise<{ width: number; height: number } | null>;
+        readFileInfoFolderStats: (request: { taskId: string; path: string }) => Promise<SkimFolderStats | null>;
+        cancelFileInfoFolderStats: (taskId: string) => Promise<boolean>;
         onFolderStats: (callback: (update: SkimFolderStatsUpdate) => void) => () => void;
       };
       scan: {

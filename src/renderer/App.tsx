@@ -16,6 +16,7 @@ import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
+import FileInfoCard, { truncateFileInfoName, useTransientFileInfoCard } from "./FileInfoCard";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
@@ -46,6 +47,7 @@ import type {
   SkimBrowseOptions,
   SkimDisplayMode,
   SkimDisplayPreferences,
+  SkimFolderStats,
   SkimPreviewInfo,
   SkimTextPreview,
   SortDirection,
@@ -4326,6 +4328,8 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   const previewSessionCounterRef = useRef(0);
   const previewOpenRequestRef = useRef(0);
   const previewIndexRef = useRef<number | null>(null);
+  const fileInfoCard = useTransientFileInfoCard<ImageIndexItem>();
+  const fileInfoMenuStyle = getImageContextMenuStyle(contextMenuTheme, appearanceColors);
   const updateGridMetrics = useCallback((nextMetrics: { left: number; right: number; columnCount: number }) => {
     setGridMetrics((currentMetrics) => {
       if (currentMetrics.left === nextMetrics.left && currentMetrics.right === nextMetrics.right && currentMetrics.columnCount === nextMetrics.columnCount) {
@@ -4538,6 +4542,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     }
 
     if (event.shiftKey) {
+      fileInfoCard.dismiss();
       const anchorIndex = selectionAnchorIdRef.current
         ? images.findIndex((image) => image.id === selectionAnchorIdRef.current)
         : -1;
@@ -4558,6 +4563,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     }
 
     if (event.ctrlKey || event.metaKey) {
+      fileInfoCard.dismiss();
       const nextSelectedImageIds = new Set(selectedImageIds);
       if (nextSelectedImageIds.has(item.id)) {
         nextSelectedImageIds.delete(item.id);
@@ -4581,9 +4587,11 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     selectionAnchorIdRef.current = item.id;
     onSelectedImageChange(item.id);
     onContextMenuClose();
-  }, [images, onContextMenuClose, onSelectedImageChange, selectedImageId, selectedImageIds]);
+    fileInfoCard.schedule(event, item);
+  }, [fileInfoCard, images, onContextMenuClose, onSelectedImageChange, selectedImageId, selectedImageIds]);
 
   const startFileDrag = useCallback((event: React.DragEvent, item: ImageIndexItem) => {
+    fileInfoCard.dismiss();
     event.preventDefault();
     const draggedItems = selectedImageIds.has(item.id)
       ? images.filter((image) => selectedImageIds.has(image.id))
@@ -4591,13 +4599,14 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     window.imageEverything?.files.startDrag(
       draggedItems.map((draggedItem) => draggedItem.filePath)
     );
-  }, [images, selectedImageIds]);
+  }, [fileInfoCard, images, selectedImageIds]);
 
   const openContextMenuForItem = useCallback((
     event: React.MouseEvent,
     item: ImageIndexItem,
     preview: () => void
   ) => {
+    fileInfoCard.dismiss();
     const contextSelectionIds = selectedImageIds.has(item.id)
       ? selectedImageIds
       : new Set([item.id]);
@@ -4608,9 +4617,10 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     selectionAnchorIdRef.current = item.id;
     onSelectedImageChange(item.id);
     onContextMenu(event, item, contextItems, preview);
-  }, [images, onContextMenu, onSelectedImageChange, selectedImageIds]);
+  }, [fileInfoCard, images, onContextMenu, onSelectedImageChange, selectedImageIds]);
 
   const clearResultSelection = useCallback(() => {
+    fileInfoCard.dismiss();
     const focusedElement = document.activeElement;
     if (
       focusedElement instanceof HTMLElement &&
@@ -4625,7 +4635,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     selectionAnchorIdRef.current = null;
     onSelectedImageChange(null);
     setScrollTargetIndex(null);
-  }, [onSelectedImageChange]);
+  }, [fileInfoCard, onSelectedImageChange]);
 
   useEffect(() => {
     if (handledClearSelectionRequestIdRef.current === clearSelectionRequestId) {
@@ -4807,7 +4817,10 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           onScrollTopChange={onScrollTopChange}
           onScrollTargetHandled={() => setScrollTargetIndex(null)}
           onContextMenu={(event, item) => openContextMenuForItem(event, item, () => openPreviewForItem(item))}
-          onOpenImage={onOpenImage}
+          onOpenImage={(item) => {
+            fileInfoCard.dismiss();
+            onOpenImage(item);
+          }}
           onStartDrag={startFileDrag}
           onHoverImageChange={updateHoveredImageIntent}
           onLayoutChange={updateGridMetrics}
@@ -4826,11 +4839,31 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           onScrollTopChange={onScrollTopChange}
           onScrollTargetHandled={() => setScrollTargetIndex(null)}
           onContextMenu={(event, item) => openContextMenuForItem(event, item, () => openPreviewForItem(item))}
-          onOpenImage={onOpenImage}
+          onOpenImage={(item) => {
+            fileInfoCard.dismiss();
+            onOpenImage(item);
+          }}
           onStartDrag={startFileDrag}
           onHoverImageChange={updateHoveredImageIntent}
           onLayoutChange={updateGridMetrics}
           onOpenSkim={onOpenSkim}
+        />
+      )}
+      {fileInfoCard.card && (
+        <FileInfoCard
+          x={fileInfoCard.card.x}
+          y={fileInfoCard.card.y}
+          theme={contextMenuTheme}
+          menuStyle={fileInfoMenuStyle}
+          compact={shellState === "micro" || shellState === "mini"}
+          heading={fileInfoCard.card.item.extension.slice(1).toUpperCase() || t("fileInfo.file")}
+          fileName={truncateFileInfoName(fileInfoCard.card.item.fileName, shellState === "micro" || shellState === "mini" ? 22 : 27)}
+          details={[
+            ...(fileInfoCard.card.item.imageWidth > 0 && fileInfoCard.card.item.imageHeight > 0
+              ? [t("fileInfo.resolution", { width: fileInfoCard.card.item.imageWidth, height: fileInfoCard.card.item.imageHeight })]
+              : []),
+            t("fileInfo.size", { size: formatCacheSize(fileInfoCard.card.item.fileSize) })
+          ]}
         />
       )}
     </main>
@@ -4939,6 +4972,9 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
+  const [fileInfoDimensions, setFileInfoDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [fileInfoFolderStats, setFileInfoFolderStats] = useState<SkimFolderStats | null>(null);
+  const fileInfoCard = useTransientFileInfoCard<SkimBrowseEntry>();
   const selectionAnchorPathRef = useRef<string | null>(null);
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
@@ -4989,11 +5025,43 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   };
 
   useEffect(() => {
+    fileInfoCard.dismiss();
     setSelectedPaths(new Set());
     setActivePath(null);
     setContextMenu(null);
     selectionAnchorPathRef.current = null;
-  }, [currentPath]);
+  }, [currentPath, fileInfoCard.dismiss]);
+
+  useEffect(() => {
+    const entry = fileInfoCard.card?.item;
+    setFileInfoDimensions(null);
+    setFileInfoFolderStats(null);
+    if (!entry) return;
+
+    let active = true;
+    let folderTimer: number | null = null;
+    let folderTaskId: string | null = null;
+    if (entry.kind === "folder") {
+      folderTimer = window.setTimeout(() => {
+        folderTimer = null;
+        folderTaskId = `file-info:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+        void window.imageEverything?.skim.readFileInfoFolderStats({ taskId: folderTaskId, path: entry.path })
+          .then((stats) => {
+            if (active && stats?.status === "completed") setFileInfoFolderStats(stats);
+          });
+      }, 300);
+    } else if (entry.kind === "file" && entry.formatCapability?.previewKind === "image") {
+      void window.imageEverything?.skim.readFileInfoDimensions(entry.path).then((dimensions) => {
+        if (active) setFileInfoDimensions(dimensions ?? null);
+      });
+    }
+
+    return () => {
+      active = false;
+      if (folderTimer !== null) window.clearTimeout(folderTimer);
+      if (folderTaskId) void window.imageEverything?.skim.cancelFileInfoFolderStats(folderTaskId);
+    };
+  }, [fileInfoCard.card]);
 
   useEffect(() => () => {
     previewRequestGuard.invalidate();
@@ -5119,16 +5187,18 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   }, [onFeedback]);
 
   const openEntry = useCallback((entry: SkimBrowseEntry) => {
+    fileInfoCard.dismiss();
     setContextMenu(null);
     if (entry.kind === "drive" || entry.kind === "folder") {
       onOpenEntry(entry);
     } else {
       void openSystemPath(entry.path);
     }
-  }, [onOpenEntry, openSystemPath]);
+  }, [fileInfoCard, onOpenEntry, openSystemPath]);
 
   const openPreview = useCallback(async (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return;
+    fileInfoCard.dismiss();
     const openRequestId = previewRequestGuard.begin();
     setContextMenu(null);
     try {
@@ -5184,7 +5254,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     } catch (error) {
       onFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
     }
-  }, [appearanceColors, onFeedback, previewRequestGuard, theme, visualSessionId]);
+  }, [appearanceColors, fileInfoCard, onFeedback, previewRequestGuard, theme, visualSessionId]);
 
   useEffect(() => {
     const movePreview = (direction: -1 | 1) => {
@@ -5211,6 +5281,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
 
   const openContextMenu = useCallback((event: React.MouseEvent, item: SkimBrowseEntry) => {
     if (item.kind === "drive") return;
+    fileInfoCard.dismiss();
     event.preventDefault();
     const contextPaths = selectedPaths.has(item.path) ? selectedPaths : new Set([item.path]);
     if (!selectedPaths.has(item.path)) setSelectedPaths(contextPaths);
@@ -5222,7 +5293,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
       item,
       items: entries.filter((entry) => contextPaths.has(entry.path))
     });
-  }, [entries, selectedPaths]);
+  }, [entries, fileInfoCard, selectedPaths]);
 
   const showEntryInFolder = useCallback((item: SkimBrowseEntry, itemCount: number) => {
     setContextMenu(null);
@@ -5242,6 +5313,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         "--cap-grid-gap": `${imageGridGap}px`
       } as CSSProperties}
       onClick={() => {
+      fileInfoCard.dismiss();
       setContextMenu(null);
       setSelectedPaths(new Set());
       setActivePath(null);
@@ -5323,13 +5395,20 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                       event.stopPropagation();
                       selectEntry(entry, event.ctrlKey || event.metaKey, event.shiftKey);
                       setContextMenu(null);
+                      if (entry.kind !== "drive" && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                        fileInfoCard.schedule(event, entry);
+                      } else {
+                        fileInfoCard.dismiss();
+                      }
                     }}
                     onDoubleClick={() => {
+                      fileInfoCard.dismiss();
                       if (!isLoading) openEntry(entry);
                     }}
                     onContextMenu={(event) => openContextMenu(event, entry)}
                     onDragStart={(event) => {
                       if (entry.kind === "drive") return;
+                      fileInfoCard.dismiss();
                       event.preventDefault();
                       onNativeDragStateChange(true);
                       const dragEntries = selectedPaths.has(entry.path)
@@ -5389,6 +5468,45 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
           onDeleteFile={() => showEntryInFolder(contextMenu.item, contextMenu.items.length)}
         />
       )}
+      {fileInfoCard.card && (() => {
+        const entry = fileInfoCard.card.item;
+        const isCompact = shellState === "micro" || shellState === "mini";
+        const details = entry.kind === "folder"
+          ? fileInfoFolderStats
+            ? [
+              t("fileInfo.size", { size: formatCacheSize(fileInfoFolderStats.totalSize) }),
+              ...(isCompact
+                ? [
+                  t("fileInfo.files", { count: fileInfoFolderStats.fileCount }),
+                  t("fileInfo.folders", { count: fileInfoFolderStats.folderCount })
+                ]
+                : [t("fileInfo.contents", { files: fileInfoFolderStats.fileCount, folders: fileInfoFolderStats.folderCount })])
+            ]
+            : [t("fileInfo.calculating")]
+          : [
+            ...(fileInfoDimensions
+              ? [t("fileInfo.resolution", { width: fileInfoDimensions.width, height: fileInfoDimensions.height })]
+              : []),
+            t("fileInfo.size", { size: formatCacheSize(entry.size ?? 0) }),
+            ...(entry.modifiedAt ? [t("fileInfo.modified", {
+              time: isCompact
+                ? new Date(entry.modifiedAt).toLocaleDateString()
+                : new Date(entry.modifiedAt).toLocaleString()
+            })] : [])
+          ];
+        return (
+          <FileInfoCard
+            x={fileInfoCard.card.x}
+            y={fileInfoCard.card.y}
+            theme={theme}
+            menuStyle={menuStyle}
+            compact={isCompact}
+            heading={entry.kind === "folder" ? t("fileInfo.folder") : entry.extension.slice(1).toUpperCase() || t("fileInfo.file")}
+            fileName={truncateFileInfoName(entry.label || entry.name, isCompact ? 22 : 27)}
+            details={details}
+          />
+        );
+      })()}
     </main>
   );
 };

@@ -31,7 +31,7 @@ import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./sh
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
 import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
-import { ensurePreviewImagePath, shouldUseSourceFileForPreview } from "./visualRenderService";
+import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
 import type { KeywordBatchUpdateRequest, KeywordBatchUpdateResult } from "./keywordTypes";
@@ -116,6 +116,7 @@ const logPreviewLifecycle = (event: string, details: Record<string, unknown>) =>
 };
 let latestPreviewContentSize: PreviewContentSize | null = null;
 let activeSkimFolderStatsTask: { sessionId: string; path: string; cancelled: boolean } | null = null;
+let activeFileInfoFolderStatsTask: { taskId: string; path: string; cancelled: boolean } | null = null;
 let latestSkimFolderStatsUpdate: ({ sessionId: string; path: string } & Awaited<ReturnType<typeof collectSkimFolderStats>>) | null = null;
 let cacheNotificationBatchBaseline: Pick<ThumbnailOptimizationStatus, "processedCount" | "failedCount" | "activeDurationMs"> | null = null;
 let lastCacheCompletionNotificationAt = 0;
@@ -3249,6 +3250,80 @@ ipcMain.handle("skim:cancelFolderStats", (_event, sessionId: unknown) => {
   }
   activeSkimFolderStatsTask.cancelled = true;
   activeSkimFolderStatsTask = null;
+  return true;
+});
+
+ipcMain.handle("skim:readFileInfoDimensions", async (event, filePath: unknown) => {
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof filePath !== "string"
+    || !path.isAbsolute(filePath)
+  ) {
+    return null;
+  }
+  try {
+    const normalizedPath = path.normalize(path.resolve(filePath));
+    const stats = await fs.lstat(normalizedPath);
+    if (stats.isSymbolicLink() || !stats.isFile()) return null;
+    return await readVisualSourceDimensions(normalizedPath);
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle("skim:readFileInfoFolderStats", async (event, request: unknown) => {
+  const candidate = request && typeof request === "object"
+    ? request as { taskId?: unknown; path?: unknown }
+    : {};
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof candidate.taskId !== "string"
+    || candidate.taskId.length === 0
+    || candidate.taskId.length > 128
+    || typeof candidate.path !== "string"
+    || !path.isAbsolute(candidate.path)
+  ) {
+    return null;
+  }
+
+  if (activeFileInfoFolderStatsTask) activeFileInfoFolderStatsTask.cancelled = true;
+  const task = {
+    taskId: candidate.taskId,
+    path: path.normalize(path.resolve(candidate.path)),
+    cancelled: false
+  };
+  activeFileInfoFolderStatsTask = task;
+  try {
+    const stats = await fs.lstat(task.path);
+    if (stats.isSymbolicLink() || !stats.isDirectory()) return null;
+    return await collectSkimFolderStats(
+      task.path,
+      () => task.cancelled || activeFileInfoFolderStatsTask !== task,
+      () => undefined
+    );
+  } catch {
+    return null;
+  } finally {
+    if (activeFileInfoFolderStatsTask === task) activeFileInfoFolderStatsTask = null;
+  }
+});
+
+ipcMain.handle("skim:cancelFileInfoFolderStats", (event, taskId: unknown) => {
+  if (
+    !mainWindow
+    || mainWindow.isDestroyed()
+    || event.sender !== mainWindow.webContents
+    || typeof taskId !== "string"
+    || activeFileInfoFolderStatsTask?.taskId !== taskId
+  ) {
+    return false;
+  }
+  activeFileInfoFolderStatsTask.cancelled = true;
+  activeFileInfoFolderStatsTask = null;
   return true;
 });
 
