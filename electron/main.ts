@@ -2557,6 +2557,9 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
     !data
     || typeof data.sessionId !== "string"
     || typeof data.filePath !== "string"
+    || typeof data.fileSize !== "number"
+    || !Number.isFinite(data.fileSize)
+    || data.fileSize < 0
     || typeof data.previewUrl !== "string"
     || (data.provider !== undefined
       && data.provider !== "image"

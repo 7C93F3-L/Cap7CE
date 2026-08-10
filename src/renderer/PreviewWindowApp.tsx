@@ -644,9 +644,7 @@ const PreviewWindowApp = () => {
               ? folderStats
                 ? t("fileInfo.size", { size: formatPreviewBytes(folderStats.totalSize) })
                 : undefined
-              : previewData.info?.kind === "file"
-                ? t("fileInfo.size", { size: formatPreviewBytes(previewData.info.size) })
-                : undefined,
+              : t("fileInfo.size", { size: formatPreviewBytes(previewData.fileSize) }),
             details: previewData.info?.kind === "folder"
               ? folderStats
                 ? [t("fileInfo.compactContents", { files: folderStats.fileCount, folders: folderStats.folderCount })]

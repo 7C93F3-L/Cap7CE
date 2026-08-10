@@ -258,6 +258,14 @@ const knownFileFormatLabels: Record<string, string> = {
   tiff: "TIF"
 };
 
+const formatCompactExtensionLabel = (extension: string, maximumLength = 7) => {
+  const label = extension.slice(1).toUpperCase();
+  if (label.length <= maximumLength) return label;
+  const visibleLength = maximumLength - 1;
+  const leadingLength = Math.ceil(visibleLength / 2);
+  return `${label.slice(0, leadingLength)}…${label.slice(-Math.floor(visibleLength / 2))}`;
+};
+
 const getFileFormatLabel = (fileName: string) => {
   const extensionIndex = fileName.lastIndexOf(".");
   const extension = extensionIndex >= 0 ? fileName.slice(extensionIndex + 1).toLowerCase() : "";
@@ -4476,6 +4484,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           itemId: image.id,
           filePath: image.filePath,
           fileName: image.fileName,
+          fileSize: image.fileSize,
           previewUrl: contentPreview.previewUrl,
           thumbnailUrl: "",
           provider: contentPreview.provider,
@@ -4495,6 +4504,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         itemId: image.id,
         filePath: image.filePath,
         fileName: image.fileName,
+        fileSize: image.fileSize,
         previewUrl: toFullImageUrl(image.filePath),
         thumbnailUrl: image.thumbnailUrl,
         skimActive: false,
@@ -5264,6 +5274,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         itemId: entry.path,
         filePath: entry.path,
         fileName: entry.name,
+        fileSize: info.size,
         previewUrl: skimPreviewUrl,
         thumbnailUrl: provider === "image"
           ? `cap7ce://skim-thumbnail/?path=${encodeURIComponent(entry.path)}&session=${encodeURIComponent(visualSessionId)}`
@@ -7878,7 +7889,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                                 onClick={() => toggleSkimExtension(extension)}
                                 title={t("settings.toggleSkimExtensionHint", { extension })}
                               >
-                                {extension.slice(1).toUpperCase()}
+                                {formatCompactExtensionLabel(extension)}
                               </button>
                             ))}
                           </div>

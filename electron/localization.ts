@@ -215,7 +215,7 @@ export const zhCN = {
   "fileInfo.compactContents": "{files} 文件 / {folders} 文件夹",
   "fileInfo.files": "文件：{count} 个",
   "fileInfo.folders": "文件夹：{count} 个",
-  "skim.searchElsewhere": "点击在 skim 中查找",
+  "skim.searchElsewhere": "点击进入 skim，或拖入文件夹添加目录",
   "skim.feedbackLabel": "skim 状态",
   "skim.invalidRequest": "skim 读取请求无效。",
   "skim.accessDenied": "没有权限读取该目录。",

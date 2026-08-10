@@ -18,6 +18,7 @@ export interface PreviewWindowData {
   itemId: string;
   filePath: string;
   fileName: string;
+  fileSize: number;
   previewUrl: string;
   thumbnailUrl: string;
   provider?: "image" | "fileInfo" | "folderInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";

@@ -215,7 +215,7 @@ export const enUS = defineLocale({
   "fileInfo.compactContents": "{files} files / {folders} folders",
   "fileInfo.files": "Files: {count}",
   "fileInfo.folders": "Folders: {count}",
-  "skim.searchElsewhere": "Click to find with skim",
+  "skim.searchElsewhere": "Open skim, or drag in a folder",
   "skim.feedbackLabel": "skim status",
   "skim.invalidRequest": "The skim read request is invalid.",
   "skim.accessDenied": "You do not have permission to read this folder.",
