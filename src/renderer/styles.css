@@ -2631,17 +2631,22 @@ textarea,
 }
 
 .thumbnail-placeholder-icon {
-  width: 30px;
-  height: 30px;
+  width: clamp(38px, calc(33.6% - 5.4px), 58px);
+  height: clamp(38px, calc(33.6% - 5.4px), 58px);
   display: grid;
   place-items: center;
 }
 
 .thumbnail-placeholder-icon svg {
-  width: 30px;
-  height: 30px;
+  width: 100%;
+  height: 100%;
   display: block;
   fill: currentColor;
+}
+
+.unrecognized-thumbnail .thumbnail-placeholder-icon {
+  width: 30px;
+  height: 30px;
 }
 
 .unrecognized-details {

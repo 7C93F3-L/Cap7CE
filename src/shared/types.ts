@@ -205,7 +205,7 @@ export interface DirectoryAddResult {
 
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";
 
-export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
+export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project" | "model";
 export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";
 
 export interface FileFormatCapability {

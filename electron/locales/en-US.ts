@@ -315,6 +315,7 @@ export const enUS = defineLocale({
   "format.category.font": "Fonts",
   "format.category.threeD": "3D",
   "format.category.project": "Project Files",
+  "format.category.model": "Models",
   "settings.finishConfiguration": "Finish",
   "settings.configure": "Configure",
   "settings.shortcutUnavailable": "This shortcut is unavailable. Choose another.",

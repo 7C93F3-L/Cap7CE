@@ -1,4 +1,4 @@
-export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project";
+export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project" | "model";
 export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";
 
 export interface FileFormatCapability {
@@ -35,9 +35,12 @@ const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonl
 
 const browseOnlyFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
   ["visual", ["heic", "heif", "jfif", "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
-  ["video", ["wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp"]],
+  ["video", ["wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp", "swf"]],
   ["audio", ["wma", "opus", "aif", "aiff", "ape"]],
-  ["document", ["odt", "ods", "odp", "wps", "et", "dps", "one", "xps", "oxps"]]
+  ["document", ["odt", "ods", "odp", "wps", "et", "dps", "one", "xps", "oxps"]],
+  ["archive", ["iso"]],
+  ["threeD", ["3dm"]],
+  ["model", ["gguf", "safetensors"]]
 ];
 
 const skimDefaultHiddenExtensions = new Set([
@@ -45,15 +48,24 @@ const skimDefaultHiddenExtensions = new Set([
 ]);
 
 const iconNameByExtension = new Map<string, string>([
-  ["blend", "format-blend"],
-  ["epub", "skim-file"],
-  ["css", "skim-file"],
-  ["js", "skim-file"],
-  ["mobi", "skim-file"],
-  ["py", "skim-file"],
-  ["prproj", "format-prproj"],
-  ["pproj", "format-prproj"]
+  ["jpeg", "format-jpg"],
+  ["tiff", "format-tif"],
+  ["yml", "format-yaml"],
+  ["igs", "format-iges"],
+  ["stp", "format-step"],
+  ["pproj", "format-prproj"],
+  ["heif", "format-heic"],
+  ["mpeg", "format-mpg"],
+  ["m2ts", "format-mts"],
+  ["aiff", "format-aif"],
+  ["oxps", "format-xps"],
+  ["gguf", "format-model"],
+  ["safetensors", "format-model"]
 ]);
+
+const getFormatIconName = (extension: string) => (
+  iconNameByExtension.get(extension) ?? `format-${extension}`
+);
 
 const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["txt", "text"], ["md", "text"], ["ini", "text"], ["html", "text"],
@@ -72,7 +84,7 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
 const visualCapabilities = visualExtensions.map((extension): FileFormatCapability => ({
   extension,
   category: "visual",
-  iconName: "skim-file",
+  iconName: getFormatIconName(extension.slice(1)),
   canBrowse: true,
   defaultInSkim: true,
   canIndex: true,
@@ -87,7 +99,7 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
   extensions.map((extension): FileFormatCapability => ({
     extension: `.${extension}`,
     category,
-    iconName: iconNameByExtension.get(extension) ?? `format-${extension}`,
+    iconName: getFormatIconName(extension),
     canBrowse: true,
     defaultInSkim: !skimDefaultHiddenExtensions.has(extension),
     canIndex: true,
@@ -103,7 +115,7 @@ const browseOnlyCapabilities = browseOnlyFormatGroups.flatMap(([category, extens
   extensions.map((extension): FileFormatCapability => ({
     extension: `.${extension}`,
     category,
-    iconName: "skim-file",
+    iconName: getFormatIconName(extension),
     canBrowse: true,
     defaultInSkim: true,
     canIndex: false,

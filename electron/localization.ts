@@ -315,6 +315,7 @@ export const zhCN = {
   "format.category.font": "字体",
   "format.category.threeD": "三维",
   "format.category.project": "项目文件",
+  "format.category.model": "模型",
   "settings.finishConfiguration": "完成配置",
   "settings.configure": "配置",
   "settings.shortcutUnavailable": "当前设置不可用，需重新设置",

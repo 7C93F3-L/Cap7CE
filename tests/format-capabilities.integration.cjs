@@ -23,7 +23,7 @@ const { app } = require("electron");
   const browseOnlyCapabilities = fileFormatCapabilities.filter((capability) => !capability.canIndex);
   assert.equal(formalVisualCapabilities.length, 15);
   assert.equal(formalNonVisualCapabilities.length, 65);
-  assert.equal(browseOnlyCapabilities.length, 38);
+  assert.equal(browseOnlyCapabilities.length, 43);
   assert.equal(formalVisualCapabilities.every((capability) => (
     capability.canSearch
     && capability.canThumbnail
@@ -72,8 +72,8 @@ const { app } = require("electron");
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()
   );
-  assert.equal(skimCuratedFileExtensionSet.size, 118);
-  assert.equal(skimDefaultFileExtensionSet.size, 106);
+  assert.equal(skimCuratedFileExtensionSet.size, 123);
+  assert.equal(skimDefaultFileExtensionSet.size, 111);
   assert.equal(indexableFileExtensionSet.size, 80);
   assert.equal(indexableFileExtensionSet.has(".epub"), true);
   assert.equal(indexableFileExtensionSet.has(".mobi"), true);
@@ -83,8 +83,20 @@ const { app } = require("electron");
   assert.equal(fileFormatCapabilityByExtension.has(".bld"), false);
   assert.equal(fileFormatCapabilityByExtension.has(".pr"), false);
   assert.equal(fileFormatCapabilityByExtension.get(".blend").iconName, "format-blend");
+  assert.equal(fileFormatCapabilityByExtension.get(".jpeg").iconName, "format-jpg");
+  assert.equal(fileFormatCapabilityByExtension.get(".tiff").iconName, "format-tif");
+  assert.equal(fileFormatCapabilityByExtension.get(".yml").iconName, "format-yaml");
   assert.equal(fileFormatCapabilityByExtension.get(".prproj").iconName, "format-prproj");
   assert.equal(fileFormatCapabilityByExtension.get(".pproj").iconName, "format-prproj");
+  assert.equal(fileFormatCapabilityByExtension.get(".gguf").iconName, "format-model");
+  assert.equal(fileFormatCapabilityByExtension.get(".safetensors").iconName, "format-model");
+  for (const extension of [".3dm", ".iso", ".swf", ".gguf", ".safetensors"]) {
+    const capability = fileFormatCapabilityByExtension.get(extension);
+    assert.equal(capability.canBrowse, true, extension);
+    assert.equal(capability.canIndex, false, extension);
+    assert.equal(capability.canSearch, false, extension);
+    assert.equal(capability.previewKind, "fileInfo", extension);
+  }
   assert.equal(skimDefaultFileExtensionSet.has(".ini"), false);
   assert.equal(skimDefaultFileExtensionSet.has(".dll"), false);
   assert.equal(skimDefaultFileExtensionSet.has(".mp4"), true);
@@ -96,7 +108,7 @@ const { app } = require("electron");
   assert.equal(isSupportedImageFilePath("C:\\document.docx"), false);
 
   const iconDirectory = path.join(__dirname, "..", "src", "renderer", "assets", "icons");
-  for (const capability of fileFormatCapabilities.filter((capability) => capability.iconName !== "skim-file")) {
+  for (const capability of fileFormatCapabilities) {
     assert.equal(fs.existsSync(path.join(iconDirectory, `${capability.iconName}.svg`)), true, capability.iconName);
   }
 
@@ -108,7 +120,7 @@ const { app } = require("electron");
     formalVisualScannerBoundaryPreserved: true,
     skimCuratedFormatCount: skimCuratedFileExtensionSet.size,
     skimDefaultFormatCount: skimDefaultFileExtensionSet.size,
-    formatIconsVerified: fileFormatCapabilities.filter((capability) => capability.iconName !== "skim-file").length
+    formatIconsVerified: fileFormatCapabilities.length
   }));
 })().then(() => app.exit(0)).catch((error) => {
   console.error(error);
