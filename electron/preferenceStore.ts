@@ -23,6 +23,7 @@ type SearchLabelVisibilityPreferences = {
 type SkimDisplayMode = "skim" | "all" | "custom";
 type SkimDisplayPreferences = {
   mode: SkimDisplayMode;
+  searchMode: SkimDisplayMode;
   customExtensions: string[];
   showHiddenFiles: boolean;
 };
@@ -91,6 +92,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   },
   skimDisplay: {
     mode: "skim",
+    searchMode: "skim",
     customExtensions: [...skimDefaultFileExtensionSet],
     showHiddenFiles: false
   },
@@ -226,6 +228,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       },
       skimDisplay: {
         mode: isSkimDisplayMode(parsed.skimDisplay?.mode) ? parsed.skimDisplay.mode : defaults.skimDisplay.mode,
+        searchMode: isSkimDisplayMode(parsed.skimDisplay?.searchMode) ? parsed.skimDisplay.searchMode : defaults.skimDisplay.searchMode,
         customExtensions: Array.isArray(parsed.skimDisplay?.customExtensions)
           ? normalizeSkimExtensions(parsed.skimDisplay.customExtensions)
           : defaults.skimDisplay.customExtensions,
@@ -442,6 +445,7 @@ export const updateSkimDisplayPreference = async (skimDisplay: SkimDisplayPrefer
     ...preferences,
     skimDisplay: {
       mode: isSkimDisplayMode(skimDisplay?.mode) ? skimDisplay.mode : preferences.skimDisplay.mode,
+      searchMode: isSkimDisplayMode(skimDisplay?.searchMode) ? skimDisplay.searchMode : preferences.skimDisplay.searchMode,
       customExtensions: normalizeSkimExtensions(skimDisplay?.customExtensions),
       showHiddenFiles: Boolean(skimDisplay?.showHiddenFiles)
     },

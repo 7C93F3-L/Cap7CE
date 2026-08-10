@@ -366,6 +366,7 @@ export interface SearchState {
   sortField: SortField;
   sortDirection: SortDirection;
   recognitionStatus: RecognitionStatusFilter;
+  includedExtensions?: string[];
 }
 
 export interface SearchLabelVisibilityPreferences {
@@ -380,6 +381,7 @@ export type SkimDisplayMode = "skim" | "all" | "custom";
 
 export interface SkimDisplayPreferences {
   mode: SkimDisplayMode;
+  searchMode: SkimDisplayMode;
   customExtensions: string[];
   showHiddenFiles: boolean;
 }

@@ -56,7 +56,7 @@ import type {
   ThemeMode
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
-import { fileFormatCapabilities, skimDefaultFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
+import { fileFormatCapabilities, skimDefaultFileExtensionSet, skimCuratedFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
 
 const skimFormatIconModules = import.meta.glob<string>("./assets/icons/format-*.svg", {
   eager: true,
@@ -203,9 +203,17 @@ const defaultSkimSortPreference: Pick<SearchState, "sortField" | "sortDirection"
 };
 const defaultSkimDisplayPreferences: SkimDisplayPreferences = {
   mode: "skim",
+  searchMode: "skim",
   customExtensions: [...skimDefaultFileExtensionSet],
   showHiddenFiles: false
 };
+const getSearchDisplayExtensions = (display: SkimDisplayPreferences) => (
+  display.searchMode === "all"
+    ? [...skimCuratedFileExtensionSet]
+    : display.searchMode === "custom"
+      ? display.customExtensions
+      : [...skimDefaultFileExtensionSet]
+).filter((extension) => fileFormatCapabilities.some((capability) => capability.extension === extension && capability.canSearch));
 const sortSkimBrowseEntries = (entries: SkimBrowseEntry[], options: SkimBrowseOptions) => {
   const direction = options.sortDirection === "asc" ? 1 : -1;
   return [...entries].sort((left, right) => {
@@ -1085,6 +1093,7 @@ const App = () => {
   const quickCommandNoticeTimerRef = useRef<number | null>(null);
   const skimFeedbackTimerRef = useRef<number | null>(null);
   const searchTaskIdRef = useRef<string | null>(null);
+  const viewDisplaySearchTimerRef = useRef<number | null>(null);
   const skimTaskIdRef = useRef<string | null>(null);
   const skimVisualSessionIdRef = useRef<string | null>(null);
   const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
@@ -1696,6 +1705,10 @@ const App = () => {
       void window.imageEverything?.search.cancel(searchTaskIdRef.current);
       searchTaskIdRef.current = null;
     }
+    if (viewDisplaySearchTimerRef.current !== null) {
+      window.clearTimeout(viewDisplaySearchTimerRef.current);
+      viewDisplaySearchTimerRef.current = null;
+    }
     if (skimTaskIdRef.current) {
       void window.imageEverything?.skim.cancel(skimTaskIdRef.current);
       skimTaskIdRef.current = null;
@@ -1706,7 +1719,14 @@ const App = () => {
     }
   }, []);
 
-  const runSearch = async (nextSearch = search, options?: { navigate?: boolean }) => {
+  const runSearch = async (
+    nextSearch = search,
+    options?: { navigate?: boolean; display?: SkimDisplayPreferences }
+  ) => {
+    if (viewDisplaySearchTimerRef.current !== null) {
+      window.clearTimeout(viewDisplaySearchTimerRef.current);
+      viewDisplaySearchTimerRef.current = null;
+    }
     cancelSearch();
     const taskId = window.crypto?.randomUUID?.() ?? `search-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     searchTaskIdRef.current = taskId;
@@ -1720,7 +1740,11 @@ const App = () => {
       navigateTo("results");
     }
     try {
-      let response = (await window.imageEverything?.search.images(nextSearch, taskId)) ?? emptySearchResponse;
+      const searchRequest = {
+        ...nextSearch,
+        includedExtensions: getSearchDisplayExtensions(options?.display ?? skimDisplay)
+      };
+      let response = (await window.imageEverything?.search.images(searchRequest, taskId)) ?? emptySearchResponse;
       if (searchTaskIdRef.current !== taskId) return;
       if (
         !Array.isArray(response)
@@ -1730,7 +1754,10 @@ const App = () => {
         const fallbackSearch = { ...nextSearch, fileFormat: "all" };
         setSearch(fallbackSearch);
         lastResultSearchRef.current = fallbackSearch;
-        response = (await window.imageEverything?.search.images(fallbackSearch, taskId)) ?? emptySearchResponse;
+        response = (await window.imageEverything?.search.images({
+          ...fallbackSearch,
+          includedExtensions: searchRequest.includedExtensions
+        }, taskId)) ?? emptySearchResponse;
         if (searchTaskIdRef.current !== taskId) return;
       }
       setSearchResults(Array.isArray(response) ? response : response.images);
@@ -2249,6 +2276,23 @@ const App = () => {
 
   const updateSkimDisplay = (nextSkimDisplay: SkimDisplayPreferences) => {
     setSkimDisplay(nextSkimDisplay);
+    if (viewDisplaySearchTimerRef.current !== null) {
+      window.clearTimeout(viewDisplaySearchTimerRef.current);
+      viewDisplaySearchTimerRef.current = null;
+    }
+    if (resultsInitializedRef.current) {
+      const searchModeChanged = nextSkimDisplay.searchMode !== skimDisplay.searchMode;
+      const customRangeChanged = nextSkimDisplay.searchMode === "custom"
+        && nextSkimDisplay.customExtensions.join("|") !== skimDisplay.customExtensions.join("|");
+      if (searchModeChanged) {
+        void runSearch(lastResultSearchRef.current, { navigate: false, display: nextSkimDisplay });
+      } else if (customRangeChanged) {
+        viewDisplaySearchTimerRef.current = window.setTimeout(() => {
+          viewDisplaySearchTimerRef.current = null;
+          void runSearch(lastResultSearchRef.current, { navigate: false, display: nextSkimDisplay });
+        }, 300);
+      }
+    }
     void window.imageEverything?.preferences.updateSkimDisplay(nextSkimDisplay).then((preferences) => {
       if (preferences) setSkimDisplay(preferences.skimDisplay);
     });
@@ -4014,6 +4058,7 @@ const App = () => {
                 directories={directoryOptions}
                 directoryName={selectedDirectory.name}
                 labelVisibility={searchCapsuleLabelVisibility}
+                searchDisplayMode={skimDisplay.searchMode}
                 contextMenuTheme={effectiveTheme}
                 appearanceColors={appearanceColors}
                 imageContextMenuOpen={contextMenu !== null}
@@ -4030,6 +4075,7 @@ const App = () => {
                   updateResultsSearch(nextSearch);
                 }}
                 onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
+                onSearchDisplayModeChange={(searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })}
                 onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch, true)}
                 onSearch={() => submitSearch(search)}
                 onContextMenu={(event, item, selectedItems, preview) => {
@@ -4367,6 +4413,7 @@ interface ResultsViewProps {
   directories: DirectoryItem[];
   directoryName: string;
   labelVisibility: SearchCapsuleLabelVisibility;
+  searchDisplayMode: SkimDisplayMode;
   contextMenuTheme: "light" | "dark";
   appearanceColors: AppearanceColors;
   imageContextMenuOpen: boolean;
@@ -4378,6 +4425,7 @@ interface ResultsViewProps {
   onScrollTopChange: (scrollTop: number) => void;
   onSearchChange: (search: SearchState) => void;
   onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
+  onSearchDisplayModeChange: (mode: SkimDisplayMode) => void;
   onSearchOptionsChange: (search: SearchState) => void;
   onSearch: () => void;
   onContextMenu: (event: React.MouseEvent, item: ImageIndexItem, selectedItems: ImageIndexItem[], preview: () => void) => void;
@@ -4386,7 +4434,7 @@ interface ResultsViewProps {
   onOpenSkim: () => void;
 }
 
-const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSearch, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
+const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, searchDisplayMode, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchDisplayModeChange, onSearchOptionsChange, onSearch, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -4864,10 +4912,13 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         inputFeedbackIsGuide={inputFeedbackIsGuide}
         unified
         autoSearchOnQueryClear
+        skimDisplayMode={searchDisplayMode}
+        enabledLabelGroups={["skimDisplay", "directory", "recognition", "sort", "format"]}
         imageContextMenuOpen={imageContextMenuOpen}
         inputRef={searchInputRef}
         onSearchChange={onSearchChange}
         onLabelVisibilityChange={onLabelVisibilityChange}
+        onSkimDisplayModeChange={onSearchDisplayModeChange}
         onSearchOptionsChange={onSearchOptionsChange}
         onSearch={onSearch}
         onImageContextMenuClose={onContextMenuClose}

@@ -3760,6 +3760,7 @@ ipcMain.handle("preferences:updateSearchLabelVisibility", async (_event, nextVis
 
 ipcMain.handle("preferences:updateSkimDisplay", async (_event, nextSkimDisplay: {
   mode: "skim" | "all" | "custom";
+  searchMode: "skim" | "all" | "custom";
   customExtensions: string[];
   showHiddenFiles: boolean;
 }) => updateSkimDisplayPreference(nextSkimDisplay));

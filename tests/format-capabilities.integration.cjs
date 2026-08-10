@@ -18,12 +18,11 @@ const { app } = require("electron");
   assert.equal(fileFormatCapabilities.every((capability) => capability.extension.startsWith(".")), true);
   assert.equal(fileFormatCapabilities.every((capability) => capability.canBrowse), true);
 
-  const formalVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category === "visual" && capability.canSearch);
-  const formalNonVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.category !== "visual" && capability.canIndex);
-  const browseOnlyCapabilities = fileFormatCapabilities.filter((capability) => !capability.canIndex);
+  const formalVisualCapabilities = fileFormatCapabilities.filter((capability) => capability.canAIIndex);
+  const searchableFileCapabilities = fileFormatCapabilities.filter((capability) => !capability.canAIIndex);
   assert.equal(formalVisualCapabilities.length, 15);
-  assert.equal(formalNonVisualCapabilities.length, 65);
-  assert.equal(browseOnlyCapabilities.length, 43);
+  assert.equal(searchableFileCapabilities.length, 108);
+  assert.equal(fileFormatCapabilities.every((capability) => capability.canIndex && capability.canSearch), true);
   assert.equal(formalVisualCapabilities.every((capability) => (
     capability.canSearch
     && capability.canThumbnail
@@ -31,17 +30,9 @@ const { app } = require("electron");
     && capability.canAIIndex
   )), true);
   assert.equal(formalVisualCapabilities.filter((capability) => capability.canDirectPreview).length, 7);
-  assert.equal(formalNonVisualCapabilities.every((capability) => (
+  assert.equal(searchableFileCapabilities.every((capability) => (
     capability.canSearch
     && !capability.canThumbnail
-    && !capability.canDirectPreview
-    && !capability.canAIIndex
-  )), true);
-  assert.equal(browseOnlyCapabilities.every((capability) => (
-    capability.canBrowse
-    && !capability.canSearch
-    && !capability.canThumbnail
-    && capability.previewKind === "fileInfo"
     && !capability.canDirectPreview
     && !capability.canAIIndex
   )), true);
@@ -67,14 +58,14 @@ const { app } = require("electron");
       ".mkv": "video", ".mp4": "video", ".mov": "video", ".webm": "video"
     }
   );
-  assert.equal(formalNonVisualCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 31);
+  assert.equal(searchableFileCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 74);
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()
   );
   assert.equal(skimCuratedFileExtensionSet.size, 123);
-  assert.equal(skimDefaultFileExtensionSet.size, 111);
-  assert.equal(indexableFileExtensionSet.size, 80);
+  assert.equal(skimDefaultFileExtensionSet.size, 55);
+  assert.equal(indexableFileExtensionSet.size, 123);
   assert.equal(indexableFileExtensionSet.has(".epub"), true);
   assert.equal(indexableFileExtensionSet.has(".mobi"), true);
   assert.equal(indexableFileExtensionSet.has(".css"), true);
@@ -93,11 +84,13 @@ const { app } = require("electron");
   for (const extension of [".3dm", ".iso", ".swf", ".gguf", ".safetensors"]) {
     const capability = fileFormatCapabilityByExtension.get(extension);
     assert.equal(capability.canBrowse, true, extension);
-    assert.equal(capability.canIndex, false, extension);
-    assert.equal(capability.canSearch, false, extension);
+    assert.equal(capability.canIndex, true, extension);
+    assert.equal(capability.canSearch, true, extension);
     assert.equal(capability.previewKind, "fileInfo", extension);
   }
   assert.equal(skimDefaultFileExtensionSet.has(".ini"), false);
+  assert.equal(skimDefaultFileExtensionSet.has(".iso"), false);
+  assert.equal(skimDefaultFileExtensionSet.has(".gguf"), false);
   assert.equal(skimDefaultFileExtensionSet.has(".dll"), false);
   assert.equal(skimDefaultFileExtensionSet.has(".mp4"), true);
   assert.equal(indexableFileExtensionSet.has(".avif"), true);
@@ -114,7 +107,7 @@ const { app } = require("electron");
 
   console.log(JSON.stringify({
     centralCapabilitiesUnique: true,
-    browseOnlyFormatsExcludedFromFormalIndex: true,
+    allRegisteredFormatsSearchable: true,
     visualSearchBoundaryPreserved: true,
     nonVisualSearchEnabled: true,
     formalVisualScannerBoundaryPreserved: true,

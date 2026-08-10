@@ -22,6 +22,9 @@ const normalizeFileFormat = (value: unknown) => {
 
 const toThumbnailUrl = (filePath: string) => `cap7ce://thumbnail/?path=${encodeURIComponent(filePath)}`;
 const filePathKey = (filePath: string) => path.normalize(path.resolve(filePath)).toLocaleLowerCase();
+const getIncludedExtensionSet = (includedExtensions: string[] | undefined) => includedExtensions
+  ? new Set(includedExtensions.map((extension) => extension.toLowerCase()))
+  : null;
 
 const compareText = (left: string, right: string) => left.localeCompare(right, "zh-Hans-CN", {
   numeric: true,
@@ -119,6 +122,7 @@ export const searchImagesWithAddedDirectories = async (
 
   onScannedImages?.(scanResult.images);
   const terms = toSearchTerms(search.query);
+  const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
   const knownCatalogVisualPaths = new Set(indexed.knownCatalogVisualFilePaths.map(filePathKey));
@@ -146,7 +150,8 @@ export const searchImagesWithAddedDirectories = async (
     resultByPath.set(filePathKey(result.filePath), result);
   }
 
-  const availableFormatFiles = search.recognitionStatus === "all" ? scanResult.files : scanResult.images;
+  const availableFormatFiles = (search.recognitionStatus === "all" ? scanResult.files : scanResult.images)
+    .filter((file) => !includedExtensions || includedExtensions.has(path.extname(file.file_name).toLowerCase()));
   const availableFormats = Array.from(new Set(
     availableFormatFiles.map((file) => getFileFormat(file.file_name)).filter(Boolean)
   )).sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
@@ -155,6 +160,7 @@ export const searchImagesWithAddedDirectories = async (
   for (const file of scanResult.files) {
     const capability = getFileFormatCapability(file.extension);
     if (!capability?.canSearch) continue;
+    if (includedExtensions && !includedExtensions.has(file.extension)) continue;
     const fileFormat = getFileFormat(file.file_name);
     if (selectedFileFormat !== "all" && fileFormat !== selectedFileFormat) continue;
     if (!fileMatchesDeterministicSearchTerms(file, terms, directoryTermMatches)) continue;

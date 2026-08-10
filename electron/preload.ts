@@ -181,7 +181,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: boolean) => ipcRenderer.invoke("preferences:updateQuickActionGlobalEnabled", quickActionGlobalEnabled),
     updateCommandEnabled: (commandEnabled: boolean) => ipcRenderer.invoke("preferences:updateCommandEnabled", commandEnabled),
     updateSearchLabelVisibility: (searchLabelVisibility: { directory: boolean; recognition: boolean; sort: boolean; format: boolean; skimDisplay: boolean }) => ipcRenderer.invoke("preferences:updateSearchLabelVisibility", searchLabelVisibility),
-    updateSkimDisplay: (skimDisplay: { mode: "skim" | "all" | "custom"; customExtensions: string[]; showHiddenFiles: boolean }) => ipcRenderer.invoke("preferences:updateSkimDisplay", skimDisplay),
+    updateSkimDisplay: (skimDisplay: { mode: "skim" | "all" | "custom"; searchMode: "skim" | "all" | "custom"; customExtensions: string[]; showHiddenFiles: boolean }) => ipcRenderer.invoke("preferences:updateSkimDisplay", skimDisplay),
     updateShortcutActions: (shortcutActions: {
       activateCapsule: string;
       activateMicro: string;

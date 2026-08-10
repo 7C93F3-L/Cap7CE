@@ -39,6 +39,7 @@ app.whenReady().then(async () => {
     await fs.writeFile(path.join(firstDirectoryPath, "notes.txt"), "txt");
     await fs.writeFile(path.join(firstDirectoryPath, "brief.docx"), "docx");
     await fs.writeFile(path.join(firstDirectoryPath, "sound.mp3"), "mp3");
+    await fs.writeFile(path.join(firstDirectoryPath, "weights.gguf"), "gguf");
     await fs.writeFile(path.join(firstDirectoryPath, "ignored.exe"), "exe");
     await fs.writeFile(path.join(nestedPathOnlyDirectory, "plain.txt"), "plain");
     await fs.writeFile(path.join(secondDirectoryPath, "other.md"), "md");
@@ -48,7 +49,8 @@ app.whenReady().then(async () => {
       path.join(nestedPathOnlyDirectory, "plain.txt"),
       path.join(firstDirectoryPath, "notes.txt"),
       path.join(secondDirectoryPath, "other.md"),
-      path.join(firstDirectoryPath, "visual.png")
+      path.join(firstDirectoryPath, "visual.png"),
+      path.join(firstDirectoryPath, "weights.gguf")
     ];
     for (let index = 0; index < orderedFiles.length; index += 1) {
       const modifiedAt = new Date(`2026-07-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`);
@@ -83,8 +85,10 @@ app.whenReady().then(async () => {
     await updateImageRecognition(pendingVisual.id, "mountain reference", ["landscape"], timestamp);
     const notesFile = initialScan.files.find((file) => file.file_name === "notes.txt");
     const visualFile = initialScan.images.find((file) => file.file_name === "visual.png");
+    const modelFile = initialScan.files.find((file) => file.file_name === "weights.gguf");
     assert.ok(notesFile);
     assert.ok(visualFile);
+    assert.ok(modelFile);
     await upsertFileManualKeywords(notesFile, ["meeting", "reference"], timestamp);
 
     const allResults = await searchImagesWithAddedDirectories(baseSearch, directories);
@@ -94,10 +98,11 @@ app.whenReady().then(async () => {
       "other.md",
       "plain.txt",
       "sound.mp3",
-      "visual.png"
+      "visual.png",
+      "weights.gguf"
     ]);
     assert.equal(new Set(allResults.images.map((item) => item.filePath.toLowerCase())).size, allResults.images.length);
-    assert.deepEqual(allResults.availableFormats, ["docx", "md", "mp3", "png", "txt"]);
+    assert.deepEqual(allResults.availableFormats, ["docx", "gguf", "md", "mp3", "png", "txt"]);
     assert.equal(allResults.unrecognizedCount, 0);
 
     const nameDescending = await searchImagesWithAddedDirectories({
@@ -105,6 +110,7 @@ app.whenReady().then(async () => {
       sortDirection: "desc"
     }, directories);
     assert.deepEqual(nameDescending.images.map((item) => item.fileName), [
+      "weights.gguf",
       "visual.png",
       "sound.mp3",
       "plain.txt",
@@ -118,6 +124,7 @@ app.whenReady().then(async () => {
       sortDirection: "desc"
     }, directories);
     assert.deepEqual(modifiedDescending.images.map((item) => item.fileName), [
+      "weights.gguf",
       "visual.png",
       "other.md",
       "notes.txt",
@@ -142,7 +149,8 @@ app.whenReady().then(async () => {
       "notes.txt",
       "plain.txt",
       "sound.mp3",
-      "visual.png"
+      "visual.png",
+      "weights.gguf"
     ]);
     const displayNameQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "用户项目" }, directories);
     assert.deepEqual(displayNameQuery.images.map((item) => item.fileName), rootNameQuery.images.map((item) => item.fileName));
@@ -159,6 +167,11 @@ app.whenReady().then(async () => {
     assert.deepEqual(nonVisualKeywordQuery.images.map((item) => item.fileName), ["notes.txt"]);
     assert.deepEqual(nonVisualKeywordQuery.images[0].keywords, ["meeting", "reference"]);
     assert.equal(nonVisualKeywordQuery.images[0].resultKind, "file");
+    await upsertFileManualKeywords(modelFile, ["local-model"], timestamp);
+    const modelKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "local-model" }, directories);
+    assert.deepEqual(modelKeywordQuery.images.map((item) => item.fileName), ["weights.gguf"]);
+    assert.equal(modelKeywordQuery.images[0].iconName, "format-model");
+    assert.equal(modelKeywordQuery.images[0].previewKind, "fileInfo");
     assert.deepEqual(await getImageIndexQualityStats(), {
       totalImages: 1,
       recognizedImages: 1,
@@ -180,12 +193,21 @@ app.whenReady().then(async () => {
     );
     const rescannedKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "shared-project" }, directories);
     assert.deepEqual(rescannedKeywordQuery.images.map((item) => item.fileName), ["notes.txt", "visual.png"]);
+    const rescannedModelKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "local-model" }, directories);
+    assert.deepEqual(rescannedModelKeywordQuery.images.map((item) => item.fileName), ["weights.gguf"]);
     await upsertFileManualKeywords(notesFile, [], timestamp);
     const clearedKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "shared-project" }, directories);
     assert.deepEqual(clearedKeywordQuery.images.map((item) => item.fileName), ["visual.png"]);
 
     const documentFilter = await searchImagesWithAddedDirectories({ ...baseSearch, fileFormat: "docx" }, directories);
     assert.deepEqual(documentFilter.images.map((item) => item.fileName), ["brief.docx"]);
+
+    const compactRange = await searchImagesWithAddedDirectories({
+      ...baseSearch,
+      includedExtensions: [".png", ".txt"]
+    }, directories);
+    assert.deepEqual(compactRange.images.map((item) => item.fileName), ["notes.txt", "plain.txt", "visual.png"]);
+    assert.deepEqual(compactRange.availableFormats, ["png", "txt"]);
 
     const directoryFilter = await searchImagesWithAddedDirectories({
       ...baseSearch,
@@ -224,7 +246,8 @@ app.whenReady().then(async () => {
       "other.md",
       "plain.txt",
       "sound.mp3",
-      "visual.png"
+      "visual.png",
+      "weights.gguf"
     ]);
     searchScanSnapshotService.setActive(true);
 
@@ -237,6 +260,8 @@ app.whenReady().then(async () => {
       likeWildcardsEscaped: true,
       visualKeywordSearchPreserved: true,
       nonVisualKeywordSearchEnabled: true,
+      promotedFormatKeywordSearchEnabled: true,
+      sharedViewRangeFilteringEnabled: true,
       mixedKeywordBatchPreserved: true,
       nonVisualKeywordsPreservedAcrossRescan: true,
       nonVisualKeywordsCanBeCleared: true,

@@ -30,6 +30,7 @@ export interface ImageSearchState {
   sortField: "file_name" | "modified_at";
   sortDirection: "asc" | "desc";
   recognitionStatus: "all" | "recognized" | "unrecognized";
+  includedExtensions?: string[];
 }
 
 export type RecognitionFailureType = "parse" | "file" | "pending";
@@ -1432,6 +1433,29 @@ const appendCatalogFileFormatFilter = (
   params[":catalog_extension"] = `.${fileFormat}`;
 };
 
+const appendIncludedExtensionsFilter = (
+  where: string[],
+  params: Record<string, SqlValue>,
+  includedExtensions: string[] | undefined,
+  prefix: string,
+  column = "f.extension"
+) => {
+  if (!includedExtensions) return;
+  const normalizedExtensions = [...new Set(includedExtensions
+    .filter((extension) => /^\.[a-z0-9]+$/i.test(extension))
+    .map((extension) => extension.toLowerCase()))];
+  if (normalizedExtensions.length === 0) {
+    where.push("1 = 0");
+    return;
+  }
+  const keys = normalizedExtensions.map((extension, index) => {
+    const key = `:${prefix}_${index}`;
+    params[key] = extension;
+    return key;
+  });
+  where.push(`${column} IN (${keys.join(", ")})`);
+};
+
 const appendVisualExtensionParams = (params: Record<string, SqlValue>, prefix: string) => {
   const keys: string[] = [];
   [...supportedVisualFileExtensionSet].forEach((extension, index) => {
@@ -1461,6 +1485,7 @@ export const searchIndexedCatalog = async (
   }
 
   appendCatalogFileFormatFilter(where, params, normalizeFileFormat(search.fileFormat));
+  appendIncludedExtensionsFilter(where, params, search.includedExtensions, "catalog_included_extension");
   if (search.recognitionStatus === "recognized") {
     where.push(`i.id IS NOT NULL AND (${catalogRecognizedClause})`);
   } else if (search.recognitionStatus === "unrecognized") {
@@ -1577,6 +1602,12 @@ export const searchIndexedCatalog = async (
     }
     const visualStateExtensionKeys = appendVisualExtensionParams(visualStateParams, "visual_state_extension");
     visualStateWhere.push(`f.extension IN (${visualStateExtensionKeys.join(", ")})`);
+    appendIncludedExtensionsFilter(
+      visualStateWhere,
+      visualStateParams,
+      search.includedExtensions,
+      "visual_state_included_extension"
+    );
     const visualStateRows = database.exec(`
       SELECT f.file_path, f.extension, i.id, i.caption, i.keywords, i.manual_index
       FROM files AS f

@@ -43,8 +43,15 @@ const browseOnlyFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readon
   ["model", ["gguf", "safetensors"]]
 ];
 
-const skimDefaultHiddenExtensions = new Set([
-  "rtf", "html", "ini", "csv", "json", "xml", "yaml", "yml", "gz", "tar", "woff", "woff2"
+const compactViewHiddenExtensions = new Set([
+  "html", "ini", "css", "js", "py", "json", "xml", "yaml", "yml",
+  "gz", "tar", "iso", "woff", "woff2",
+  "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2",
+  "wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp", "swf",
+  "wma", "opus", "aif", "aiff", "ape",
+  "odt", "ods", "odp", "wps", "et", "dps", "one", "xps", "oxps",
+  "3ds", "c4d", "dwg", "dxf", "fbx", "glb", "gltf", "iges", "igs", "max", "obj", "skp", "step", "stl", "stp", "3dm",
+  "gguf", "safetensors"
 ]);
 
 const iconNameByExtension = new Map<string, string>([
@@ -101,7 +108,7 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
     category,
     iconName: getFormatIconName(extension),
     canBrowse: true,
-    defaultInSkim: !skimDefaultHiddenExtensions.has(extension),
+    defaultInSkim: !compactViewHiddenExtensions.has(extension),
     canIndex: true,
     canSearch: true,
     canThumbnail: false,
@@ -117,9 +124,9 @@ const browseOnlyCapabilities = browseOnlyFormatGroups.flatMap(([category, extens
     category,
     iconName: getFormatIconName(extension),
     canBrowse: true,
-    defaultInSkim: true,
-    canIndex: false,
-    canSearch: false,
+    defaultInSkim: !compactViewHiddenExtensions.has(extension),
+    canIndex: true,
+    canSearch: true,
     canThumbnail: false,
     previewKind: "fileInfo",
     canDirectPreview: false,

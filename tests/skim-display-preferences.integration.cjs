@@ -19,6 +19,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 
     const defaults = await getUserPreferences();
     assert.equal(defaults.skimDisplay.mode, "skim");
+    assert.equal(defaults.skimDisplay.searchMode, "skim");
     assert.equal(defaults.skimDisplay.showHiddenFiles, false);
     assert.equal(defaults.skimDisplay.customExtensions.includes(".png"), true);
     assert.equal(defaults.searchLabelVisibility.skimDisplay, true);
@@ -27,13 +28,28 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       sortDirection: "asc"
     });
 
+    const legacyPreferencesPath = path.join(app.getPath("userData"), "config", "preferences.json");
+    await fs.mkdir(path.dirname(legacyPreferencesPath), { recursive: true });
+    await fs.writeFile(legacyPreferencesPath, JSON.stringify({
+      skimDisplay: {
+        mode: "all",
+        customExtensions: [".png"],
+        showHiddenFiles: false
+      }
+    }));
+    const migrated = await getUserPreferences();
+    assert.equal(migrated.skimDisplay.mode, "all");
+    assert.equal(migrated.skimDisplay.searchMode, "skim");
+
     const updated = await updateSkimDisplayPreference({
       mode: "custom",
+      searchMode: "all",
       customExtensions: [".PNG", ".txt", ".txt", "invalid"],
       showHiddenFiles: true
     });
     assert.deepEqual(updated.skimDisplay, {
       mode: "custom",
+      searchMode: "all",
       customExtensions: [".png", ".txt"],
       showHiddenFiles: true
     });
@@ -46,14 +62,17 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateSkimSortPreference({ sortField: "file_name", sortDirection: "desc" });
     const reloaded = await getUserPreferences();
     assert.equal(reloaded.skimDisplay.mode, "custom");
+    assert.equal(reloaded.skimDisplay.searchMode, "all");
     assert.equal(reloaded.searchLabelVisibility.skimDisplay, false);
     assert.deepEqual(reloaded.sortPreference, { sortField: "modified_at", sortDirection: "desc" });
     assert.deepEqual(reloaded.skimSortPreference, { sortField: "file_name", sortDirection: "desc" });
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
+      legacySkimPreferencesMigrated: true,
       customExtensionsNormalized: true,
       skimModePersisted: true,
+      independentSearchModePersisted: true,
       skimLabelVisibilityPersisted: true,
       independentSkimSortPersisted: true
     }));
