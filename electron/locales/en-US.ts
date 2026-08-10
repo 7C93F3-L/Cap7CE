@@ -104,7 +104,7 @@ export const enUS = defineLocale({
   "search.guide.multiSelect": "Hold Ctrl or Shift while clicking thumbnails to select multiple files.",
   "search.guide.batchActions": "Select multiple files to edit keywords or delete them in a batch.",
   "search.guide.dragResult": "Drag search results directly into another app.",
-  "search.guide.labels": "Use the top labels to change folders, status, sorting, or file format.",
+  "search.guide.labels": "Use the top labels to change view range, folders, status, or sorting.",
   "search.guide.hideLabel": "Right-click a top label to hide it.",
   "search.guide.labelMenu": "Right-click the search area to hide or show labels together.",
   "search.guide.commandDark": "Type ui:dark and press Enter to switch to Dark mode.",

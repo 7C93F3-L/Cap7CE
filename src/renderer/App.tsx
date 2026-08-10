@@ -261,11 +261,6 @@ const getImageGridLayout = (layoutMode: ResultLayoutMode, viewportWidth: number,
   return { cellSize, columnCount, contentWidth, isHorizontal };
 };
 
-const knownFileFormatLabels: Record<string, string> = {
-  jpeg: "JPG",
-  tiff: "TIF"
-};
-
 const formatCompactExtensionLabel = (extension: string, maximumLength = 7) => {
   const label = extension.slice(1).toUpperCase();
   if (label.length <= maximumLength) return label;
@@ -273,16 +268,6 @@ const formatCompactExtensionLabel = (extension: string, maximumLength = 7) => {
   const leadingLength = Math.ceil(visibleLength / 2);
   return `${label.slice(0, leadingLength)}…${label.slice(-Math.floor(visibleLength / 2))}`;
 };
-
-const getFileFormatLabel = (fileName: string) => {
-  const extensionIndex = fileName.lastIndexOf(".");
-  const extension = extensionIndex >= 0 ? fileName.slice(extensionIndex + 1).toLowerCase() : "";
-  return knownFileFormatLabels[extension] ?? (extension.toUpperCase() || "FILE");
-};
-
-const getSearchCapsuleFormatLabel = (item: ImageIndexItem | null) => (
-  item ? getFileFormatLabel(item.fileName) : t("filter.fileFormat")
-);
 
 const SvgIcon = ({ svg, className = "cap-svg-icon" }: { svg: string; className?: string }) => (
   <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />
@@ -3989,7 +3974,6 @@ const App = () => {
             {activeView === "home" && (
               <HomeView
                 search={search}
-                availableFormats={searchStatus.availableFormats}
                 directoryName={selectedDirectory.name}
                 directories={directoryOptions}
                 labelVisibility={searchCapsuleLabelVisibility}
@@ -4204,7 +4188,6 @@ const App = () => {
                 quickCommandNotice={searchInputFeedback}
                 inputFeedbackIsGuide={operationHintVisible}
                 searchInputRef={searchInputRef}
-                availableFormats={searchStatus.availableFormats}
                 directoryName={selectedDirectory.name}
                 status="ready"
                 searchDirectories={directoryOptions}
@@ -4368,7 +4351,6 @@ const App = () => {
 
 interface HomeViewProps {
   search: SearchState;
-  availableFormats: string[];
   directoryName: string;
   directories: DirectoryItem[];
   labelVisibility: SearchCapsuleLabelVisibility;
@@ -4382,13 +4364,11 @@ const HomeView = (props: HomeViewProps) => (
   <main className="home-view cap-home-view">
     <Cap7CESearchCapsule
       search={props.search}
-      availableFormats={props.availableFormats}
       directoryName={props.directoryName}
       directories={props.directories}
       labelVisibility={props.labelVisibility}
       status="ready"
       unified
-      showFormatLabel
       onSearchChange={props.onSearchChange}
       onLabelVisibilityChange={props.onLabelVisibilityChange}
       onSearchOptionsChange={props.onSearchOptionsChange}
@@ -4441,9 +4421,6 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
     () => new Set(selectedImageId ? [selectedImageId] : [])
   );
-  const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
-  const hoveredImageIntentRef = useRef<string | null>(null);
-  const hoveredImageTimerRef = useRef<number | null>(null);
   const selectionAnchorIdRef = useRef<string | null>(selectedImageId);
   const handledClearSelectionRequestIdRef = useRef(clearSelectionRequestId);
   const previewSessionCounterRef = useRef(0);
@@ -4460,9 +4437,6 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   const hasSearchTerms = search.query.trim().length > 0;
   const isUnrecognizedView = search.recognitionStatus === "unrecognized";
   const selectedImageIndex = selectedImageId ? images.findIndex((image) => image.id === selectedImageId) : -1;
-  const hoveredImage = hoveredImageId ? images.find((image) => image.id === hoveredImageId) ?? null : null;
-  const selectedImage = selectedImageId ? images.find((image) => image.id === selectedImageId) ?? null : null;
-  const formatDisplayLabel = getSearchCapsuleFormatLabel(hoveredImage ?? selectedImage);
   const activePreviewIndex = previewIndex !== null && images[previewIndex] ? previewIndex : null;
   const resultStatusContent = isSearching
     ? t("search.searching")
@@ -4486,25 +4460,6 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           </span>
         )
         : t("search.resultCount", { count: images.length });
-
-  const updateHoveredImageIntent = useCallback((imageId: string | null) => {
-    hoveredImageIntentRef.current = imageId;
-    if (hoveredImageTimerRef.current !== null) {
-      window.clearTimeout(hoveredImageTimerRef.current);
-    }
-    hoveredImageTimerRef.current = window.setTimeout(() => {
-      if (hoveredImageIntentRef.current === imageId) {
-        setHoveredImageId(imageId);
-      }
-      hoveredImageTimerRef.current = null;
-    }, imageId === null ? 120 : 350);
-  }, []);
-
-  useEffect(() => () => {
-    if (hoveredImageTimerRef.current !== null) {
-      window.clearTimeout(hoveredImageTimerRef.current);
-    }
-  }, []);
 
   const openPreviewAtIndex = useCallback(async (index: number) => {
     const openRequestId = ++previewOpenRequestRef.current;
@@ -4901,19 +4856,16 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     <main className={`results-view cap-results-view${isUnrecognizedView ? " cap-results-view-unrecognized" : ""}`} data-results-view="true">
       <Cap7CESearchCapsule
         search={search}
-        availableFormats={searchStatus.availableFormats}
         directoryName={directoryName}
         directories={directories}
         labelVisibility={labelVisibility}
-        formatDisplayLabel={formatDisplayLabel}
-        showFormatLabel
         status={resultStatusContent}
         inputFeedback={quickCommandNotice}
         inputFeedbackIsGuide={inputFeedbackIsGuide}
         unified
         autoSearchOnQueryClear
         skimDisplayMode={searchDisplayMode}
-        enabledLabelGroups={["skimDisplay", "directory", "recognition", "sort", "format"]}
+        enabledLabelGroups={["skimDisplay", "directory", "recognition", "sort"]}
         imageContextMenuOpen={imageContextMenuOpen}
         inputRef={searchInputRef}
         onSearchChange={onSearchChange}
@@ -4938,7 +4890,6 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           onContextMenu={(event, item) => openContextMenuForItem(event, item, () => openPreviewForItem(item))}
           onOpenImage={onOpenImage}
           onStartDrag={startFileDrag}
-          onHoverImageChange={updateHoveredImageIntent}
           onLayoutChange={updateGridMetrics}
           onOpenSkim={onOpenSkim}
         />
@@ -4957,7 +4908,6 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           onContextMenu={(event, item) => openContextMenuForItem(event, item, () => openPreviewForItem(item))}
           onOpenImage={onOpenImage}
           onStartDrag={startFileDrag}
-          onHoverImageChange={updateHoveredImageIntent}
           onLayoutChange={updateGridMetrics}
           onOpenSkim={onOpenSkim}
         />
@@ -5614,12 +5564,9 @@ type SearchCapsuleDirectoryGroup = {
 
 interface Cap7CESearchCapsuleProps {
   search: SearchState;
-  availableFormats?: string[];
   directoryName: string;
   directories?: DirectoryItem[];
   labelVisibility: SearchCapsuleLabelVisibility;
-  formatDisplayLabel?: string;
-  showFormatLabel?: boolean;
   status: React.ReactNode;
   inputFeedback?: string;
   inputFeedbackIsGuide?: boolean;
@@ -5640,19 +5587,18 @@ interface Cap7CESearchCapsuleProps {
   onImageContextMenuClose?: () => void;
 }
 
-type FilterChipGroup = "skimDisplay" | "directory" | "recognition" | "sort" | "format";
+type FilterChipGroup = "skimDisplay" | "directory" | "recognition" | "sort";
 
 const filterChipEnterStaggerMs = 120;
 const filterChipExitDurationMs = 350;
 const filterChipExitStaggerMs = 35;
 const filterChipMotionMaxStaggerSteps = 6;
 
-const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, autoSearchOnQueryClear = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVisibility, status, inputFeedback = "", inputFeedbackIsGuide = false, autoSearchOnQueryClear = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
   const [skimDisplayChipsOpen, setSkimDisplayChipsOpen] = useState(false);
   const [directoryChipsOpen, setDirectoryChipsOpen] = useState(false);
   const [recognitionChipsOpen, setRecognitionChipsOpen] = useState(false);
   const [sortChipsOpen, setSortChipsOpen] = useState(false);
-  const [formatChipsOpen, setFormatChipsOpen] = useState(false);
   const [closingChipGroup, setClosingChipGroup] = useState<FilterChipGroup | null>(null);
   const [labelMenuPointer, setLabelMenuPointer] = useState<MenuPointerPosition | null>(null);
   const [labelMenuThemeStyle, setLabelMenuThemeStyle] = useState<CSSProperties>({});
@@ -5716,7 +5662,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
   }, [search.directoryId, search.fileFormat, search.recognitionStatus, search.sortDirection, search.sortField]);
 
   useEffect(() => {
-    if (!skimDisplayChipsOpen && !directoryChipsOpen && !recognitionChipsOpen && !sortChipsOpen && !formatChipsOpen && !labelMenuPointer) {
+    if (!skimDisplayChipsOpen && !directoryChipsOpen && !recognitionChipsOpen && !sortChipsOpen && !labelMenuPointer) {
       return undefined;
     }
 
@@ -5729,15 +5675,14 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       setDirectoryChipsOpen(false);
       setRecognitionChipsOpen(false);
       setSortChipsOpen(false);
-      setFormatChipsOpen(false);
       setLabelMenuPointer(null);
     };
 
     window.addEventListener("keydown", handleEscape, true);
     return () => window.removeEventListener("keydown", handleEscape, true);
-  }, [directoryChipsOpen, formatChipsOpen, labelMenuPointer, recognitionChipsOpen, skimDisplayChipsOpen, sortChipsOpen]);
+  }, [directoryChipsOpen, labelMenuPointer, recognitionChipsOpen, skimDisplayChipsOpen, sortChipsOpen]);
   const measuredLabelMenuPosition = useMeasuredViewportMenuPosition(labelMenuPointer, labelMenuRef, labelMenuMeasurementKey);
-  const enabledGroups = new Set<FilterChipGroup>(enabledLabelGroups ?? ["directory", "recognition", "sort", "format"]);
+  const enabledGroups = new Set<FilterChipGroup>(enabledLabelGroups ?? ["directory", "recognition", "sort"]);
   const selectedDirectoryLabel = directoryGroup?.collapsedLabel
     ?? (search.directoryId === "all" ? t("filter.addedDirectories") : directoryName);
   const selectedDirectoryId = directoryGroup?.selectedId ?? (search.directoryId === "all" ? null : search.directoryId);
@@ -5750,9 +5695,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     : [];
   const expandedRecognitionStatuses = unified && recognitionChipsOpen
     ? (["recognized", "unrecognized"] as RecognitionStatusFilter[])
-    : [];
-  const expandedFileFormats = unified && labelVisibility.format && formatChipsOpen
-    ? [...availableFormats].sort((left, right) => left.localeCompare(right))
     : [];
   const expandedSkimDisplayModes = unified && labelVisibility.skimDisplay && skimDisplayChipsOpen
     ? (["all", "custom"] as SkimDisplayMode[])
@@ -5769,7 +5711,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setDirectoryChipsOpen(false);
     setRecognitionChipsOpen(false);
     setSortChipsOpen(false);
-    setFormatChipsOpen(false);
     if (!skimDisplayChipsOpen) {
       prepareChipGroupOpen();
       setSkimDisplayChipsOpen(true);
@@ -5782,7 +5723,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
   const selectDirectory = (directoryId: string) => {
     if (directoryGroup) {
       closeChipGroup("directory", expandedDirectories.length, () => setDirectoryChipsOpen(false));
-      setFormatChipsOpen(false);
       setSkimDisplayChipsOpen(false);
       if (directoryId === directoryGroup.selectedId) directoryGroup.onReturnToParent();
       else directoryGroup.onSelect(directoryId);
@@ -5793,7 +5733,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       directoryId: search.directoryId === directoryId ? "all" : directoryId
     };
     closeChipGroup("directory", expandedDirectories.length, () => setDirectoryChipsOpen(false));
-    setFormatChipsOpen(false);
     onSearchChange(nextSearch);
     onSearchOptionsChange?.(nextSearch);
   };
@@ -5804,17 +5743,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       recognitionStatus: search.recognitionStatus === recognitionStatus ? "all" : recognitionStatus
     };
     closeChipGroup("recognition", expandedRecognitionStatuses.length, () => setRecognitionChipsOpen(false));
-    setFormatChipsOpen(false);
-    onSearchChange(nextSearch);
-    onSearchOptionsChange?.(nextSearch);
-  };
-
-  const selectFileFormat = (fileFormat: string) => {
-    const nextSearch = {
-      ...search,
-      fileFormat: search.fileFormat === fileFormat ? "all" : fileFormat
-    };
-    closeChipGroup("format", expandedFileFormats.length, () => setFormatChipsOpen(false));
     onSearchChange(nextSearch);
     onSearchOptionsChange?.(nextSearch);
   };
@@ -5824,7 +5752,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setClosingChipGroup(null);
     setRecognitionChipsOpen(false);
     setSortChipsOpen(false);
-    setFormatChipsOpen(false);
     setSkimDisplayChipsOpen(false);
     if (!directoryChipsOpen) {
       prepareChipGroupOpen();
@@ -5846,7 +5773,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     setClosingChipGroup(null);
     setDirectoryChipsOpen(false);
     setSortChipsOpen(false);
-    setFormatChipsOpen(false);
     setSkimDisplayChipsOpen(false);
     if (!recognitionChipsOpen) {
       prepareChipGroupOpen();
@@ -5861,32 +5787,11 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     }
   };
 
-  const toggleFormatChips = () => {
-    clearChipGroupCloseTimer();
-    setClosingChipGroup(null);
-    setDirectoryChipsOpen(false);
-    setRecognitionChipsOpen(false);
-    setSortChipsOpen(false);
-    setSkimDisplayChipsOpen(false);
-    if (!formatChipsOpen) {
-      prepareChipGroupOpen();
-      setFormatChipsOpen(true);
-      return;
-    }
-    closeChipGroup("format", expandedFileFormats.length, () => setFormatChipsOpen(false));
-    if (search.fileFormat !== "all") {
-      const nextSearch = { ...search, fileFormat: "all" };
-      onSearchChange(nextSearch);
-      onSearchOptionsChange?.(nextSearch);
-    }
-  };
-
   const toggleSortChips = () => {
     clearChipGroupCloseTimer();
     setClosingChipGroup(null);
     setDirectoryChipsOpen(false);
     setRecognitionChipsOpen(false);
-    setFormatChipsOpen(false);
     setSkimDisplayChipsOpen(false);
     if (!sortChipsOpen) {
       prepareChipGroupOpen();
@@ -5917,9 +5822,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     }
     if (!nextVisibility.sort) {
       setSortChipsOpen(false);
-    }
-    if (!nextVisibility.format) {
-      setFormatChipsOpen(false);
     }
     if (!nextVisibility.skimDisplay) {
       setSkimDisplayChipsOpen(false);
@@ -5960,12 +5862,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     updateLabelVisibility({ ...labelVisibility, recognition: false });
   };
 
-  const hideFormatLabel = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    updateLabelVisibility({ ...labelVisibility, format: false });
-  };
-
   const hideSkimDisplayLabel = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -6000,12 +5896,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       visibility: "visible"
     }
     : { ...labelMenuThemeStyle, left: 0, top: 0, visibility: "hidden" };
-  const fileFormatTagLabel = formatChipsOpen
-    ? t("filter.fileFormat")
-    : search.fileFormat === "all"
-      ? formatDisplayLabel ?? t("filter.fileFormat")
-      : search.fileFormat.toUpperCase();
-
   return (
   <form
     className={`cap7ce-top-capsule cap7ce-search-capsule${unified ? " cap7ce-search-capsule-unified" : ""}${directoryChipsOpen ? " cap7ce-search-capsule-directory-open" : ""}${!enabledGroups.has("skimDisplay") ? " cap7ce-search-capsule-directory-first" : ""}`}
@@ -6020,7 +5910,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         setDirectoryChipsOpen(false);
         setRecognitionChipsOpen(false);
         setSortChipsOpen(false);
-        setFormatChipsOpen(false);
         setSkimDisplayChipsOpen(false);
         setLabelMenuPointer(null);
       }
@@ -6171,33 +6060,6 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
         {getRecognitionStatusLabels()[recognitionStatus]}
       </button>
     ))}
-    {unified && enabledGroups.has("format") && showFormatLabel && labelVisibility.format && (
-    <button
-      className="cap7ce-pill cap7ce-pill-wide cap7ce-file-format-tag"
-      type="button"
-      title={t("search.hideLabelHint")}
-      aria-expanded={formatChipsOpen}
-      data-selected={search.fileFormat !== "all"}
-      onContextMenu={hideFormatLabel}
-      onClick={toggleFormatChips}
-    >
-      <span key={fileFormatTagLabel} className="cap7ce-file-format-label">
-        {fileFormatTagLabel}
-      </span>
-    </button>
-    )}
-    {expandedFileFormats.map((fileFormat, index) => (
-      <button
-        key={fileFormat}
-        className={`cap7ce-pill cap7ce-pill-wide cap7ce-file-format-chip cap7ce-filter-chip-motion${closingChipGroup === "format" ? " cap7ce-filter-chip-closing" : ""}`}
-        type="button"
-        data-selected={search.fileFormat === fileFormat}
-        style={getChipMotionStyle(index, expandedFileFormats.length)}
-        onClick={() => selectFileFormat(fileFormat)}
-      >
-        {fileFormat}
-      </button>
-    ))}
     <button className="cap7ce-pill cap7ce-pill-icon" type="button" title={t("common.view")}>
       □
     </button>
@@ -6259,7 +6121,6 @@ interface VirtualImageGridProps {
   onContextMenu: (event: React.MouseEvent, item: ImageIndexItem) => void;
   onOpenImage: (item: ImageIndexItem) => void;
   onStartDrag: (event: React.DragEvent, item: ImageIndexItem) => void;
-  onHoverImageChange: (imageId: string | null) => void;
   onLayoutChange: (metrics: { left: number; right: number; columnCount: number }) => void;
   onOpenSkim: () => void;
 }
@@ -6273,7 +6134,7 @@ const EmptySearchResult = ({ message, onOpenSkim }: { message: string; onOpenSki
   </button>
 );
 
-const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
+const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const resizeFrameRef = useRef<number | null>(null);
@@ -6509,8 +6370,6 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIn
               onContextMenu={(event) => onContextMenu(event, item)}
               draggable
               onDragStart={(event) => onStartDrag(event, item)}
-              onPointerEnter={() => onHoverImageChange(item.id)}
-              onPointerLeave={() => onHoverImageChange(null)}
             >
               <ResultThumbnailContent item={item} />
             </button>
@@ -6541,7 +6400,7 @@ const measureUnrecognizedViewport = (container: HTMLElement) => {
   };
 };
 
-const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onHoverImageChange, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
+const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef({ width: 0, height: 0 });
   const scrollFrameRef = useRef<number | null>(null);
@@ -6786,8 +6645,6 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollT
                 onContextMenu={(event) => onContextMenu(event, item)}
                 draggable
                 onDragStart={(event) => onStartDrag(event, item)}
-                onPointerEnter={() => onHoverImageChange(item.id)}
-                onPointerLeave={() => onHoverImageChange(null)}
               >
                 <UnrecognizedThumbnail thumbnailUrl={item.thumbnailUrl} />
                 <span className="unrecognized-details">
@@ -7047,7 +6904,6 @@ interface SettingsViewProps {
   quickCommandNotice: string;
   inputFeedbackIsGuide: boolean;
   searchInputRef: Ref<HTMLInputElement>;
-  availableFormats: string[];
   directoryName: string;
   status: React.ReactNode;
   searchDirectories: DirectoryItem[];
@@ -7133,7 +6989,7 @@ interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, availableFormats, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
   const [indexDetailsClosing, setIndexDetailsClosing] = useState(false);
@@ -7641,7 +7497,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     <main className="settings-view cap-settings-view" data-settings-view="true" onClick={() => setSelectedIndexStat(null)}>
       <Cap7CESearchCapsule
         search={search}
-        availableFormats={availableFormats}
         directoryName={directoryName}
         directories={searchDirectories}
         labelVisibility={labelVisibility}
@@ -7650,7 +7505,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         inputFeedbackIsGuide={inputFeedbackIsGuide}
         inputRef={searchInputRef}
         unified
-        showFormatLabel
         onSearchChange={onSearchChange}
         onLabelVisibilityChange={onLabelVisibilityChange}
         onSearchOptionsChange={onSearchOptionsChange}

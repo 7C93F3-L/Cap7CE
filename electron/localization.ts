@@ -104,7 +104,7 @@ export const zhCN = {
   "search.guide.multiSelect": "按住 Ctrl 或 Shift 点击缩略图，可以选择多个文件。",
   "search.guide.batchActions": "选择多个文件后，可以批量修改关键词或删除文件。",
   "search.guide.dragResult": "搜索结果可以直接拖至其他应用。",
-  "search.guide.labels": "点击顶部标签，可以切换目录、状态、排序或文件格式。",
+  "search.guide.labels": "点击顶部标签，可以切换查看范围、目录、状态或排序。",
   "search.guide.hideLabel": "右键单击顶部标签，可以隐藏对应标签。",
   "search.guide.labelMenu": "右键单击搜索区域，可以统一隐藏或显示标签。",
   "search.guide.commandDark": "键入 ui:dark 并按下回车键，可切换至黑暗模式。",
