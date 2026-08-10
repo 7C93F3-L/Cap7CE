@@ -51,7 +51,7 @@ export interface ImageContextMenuHeader {
   details: string[];
 }
 
-const splitContextMenuFileName = (fileName: string) => {
+export const splitMiddleEllipsisFileName = (fileName: string) => {
   const extensionIndex = fileName.lastIndexOf(".");
   const suffix = extensionIndex > 0 && fileName.length - extensionIndex <= 10
     ? fileName.slice(extensionIndex)
@@ -107,7 +107,7 @@ const ImageContextMenu = ({
     () => groups.find((group) => group.id === activeGroupId) ?? null,
     [activeGroupId, groups]
   );
-  const splitFileName = useMemo(() => splitContextMenuFileName(header.fileName), [header.fileName]);
+  const splitFileName = useMemo(() => splitMiddleEllipsisFileName(header.fileName), [header.fileName]);
 
   useLayoutEffect(() => {
     if (!menuRef.current || !rootColumnRef.current) {

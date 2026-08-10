@@ -854,19 +854,17 @@ textarea,
 .cap-skim-entry-name,
 .cap-skim-entry-path {
   max-width: 100%;
+  display: flex;
+  justify-content: center;
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cap-skim-entry-name {
-  display: -webkit-box;
   min-height: 30px;
-  overflow-wrap: anywhere;
+  align-items: center;
   font-size: 12px;
   line-height: 15px;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .cap-skim-entry-path {
@@ -2548,12 +2546,23 @@ textarea,
 .result-file-card-name {
   width: 100%;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
   color: var(--text-main);
   font-size: 11px;
   line-height: 1.25;
   text-align: center;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cap-middle-ellipsis-leading {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cap-middle-ellipsis-trailing {
+  flex: 0 0 auto;
 }
 
 .result-file-card-format {

@@ -15,7 +15,7 @@ import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
-import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
+import ImageContextMenu, { getImageContextMenuStyle, splitMiddleEllipsisFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
@@ -4865,7 +4865,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         unified
         autoSearchOnQueryClear
         skimDisplayMode={searchDisplayMode}
-        enabledLabelGroups={["skimDisplay", "directory", "recognition", "sort"]}
+        enabledLabelGroups={standardSearchLabelGroups}
         imageContextMenuOpen={imageContextMenuOpen}
         inputRef={searchInputRef}
         onSearchChange={onSearchChange}
@@ -4916,18 +4916,28 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   );
 };
 
-const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => (
-  item.resultKind === "file" ? (
+const MiddleEllipsisFileName = ({ fileName, className }: { fileName: string; className: string }) => {
+  const splitFileName = splitMiddleEllipsisFileName(fileName);
+  return (
+    <span className={className} title={fileName}>
+      <span className="cap-middle-ellipsis-leading">{splitFileName.leading}</span>
+      {splitFileName.trailing && <span className="cap-middle-ellipsis-trailing">{splitFileName.trailing}</span>}
+    </span>
+  );
+};
+
+const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => {
+  return item.resultKind === "file" ? (
     <span className="result-file-card">
       <SvgIcon
         svg={skimFormatIconSvgByName[item.iconName] ?? skimFileSvg}
         className="cap-svg-icon result-file-card-icon"
       />
-      <span className="result-file-card-name" title={item.fileName}>{item.fileName}</span>
+      <MiddleEllipsisFileName fileName={item.fileName} className="result-file-card-name" />
       <span className="result-file-card-format">{item.extension.slice(1).toUpperCase()}</span>
     </span>
   ) : <ThumbnailContent thumbnailUrl={item.thumbnailUrl} />
-);
+};
 
 interface SkimViewProps {
   search: SearchState;
@@ -5468,8 +5478,8 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                       scrollContainerRef={scrollContainerRef}
                       fallbackSvg={getEntryIcon(entry)}
                     />
-                    <span className="cap-skim-entry-name">{entry.label || entry.name}</span>
-                    {entry.label && <span className="cap-skim-entry-path">{entry.name}</span>}
+                    <MiddleEllipsisFileName fileName={entry.label || entry.name} className="cap-skim-entry-name" />
+                    {entry.label && <MiddleEllipsisFileName fileName={entry.name} className="cap-skim-entry-path" />}
                     {entry.kind === "file" && <span className="cap-skim-entry-format">{entry.extension.slice(1).toUpperCase()}</span>}
                   </button>
                 );
@@ -5588,6 +5598,7 @@ interface Cap7CESearchCapsuleProps {
 }
 
 type FilterChipGroup = "skimDisplay" | "directory" | "recognition" | "sort";
+const standardSearchLabelGroups: FilterChipGroup[] = ["skimDisplay", "sort", "directory", "recognition"];
 
 const filterChipEnterStaggerMs = 120;
 const filterChipExitDurationMs = 350;
@@ -7505,8 +7516,11 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         inputFeedbackIsGuide={inputFeedbackIsGuide}
         inputRef={searchInputRef}
         unified
+        skimDisplayMode={skimDisplay.searchMode}
+        enabledLabelGroups={standardSearchLabelGroups}
         onSearchChange={onSearchChange}
         onLabelVisibilityChange={onLabelVisibilityChange}
+        onSkimDisplayModeChange={(searchMode) => onSkimDisplayChange({ ...skimDisplay, searchMode })}
         onSearchOptionsChange={onSearchOptionsChange}
         onSearch={onSearch}
       />
