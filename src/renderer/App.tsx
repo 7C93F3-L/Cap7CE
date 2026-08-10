@@ -5936,10 +5936,10 @@ const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVis
       <button
         className={`cap7ce-pill cap7ce-skim-display-tag${skimDisplayChipsOpen || skimDisplayMode !== "skim" ? " cap7ce-pill-wide" : " cap7ce-pill-icon"}`}
         type="button"
-        title={t("search.hideLabelHint")}
+        title={skimDisplayChipsOpen ? t("skim.display.skimHint") : t("search.hideLabelHint")}
         aria-label={skimDisplayChipsOpen ? t("skim.display.parent") : t(`skim.display.${skimDisplayMode}` as TranslationKey)}
         aria-expanded={skimDisplayChipsOpen}
-        data-selected={skimDisplayMode !== "skim"}
+        data-selected="true"
         onContextMenu={hideSkimDisplayLabel}
         onClick={toggleSkimDisplayChips}
       >
@@ -5954,6 +5954,7 @@ const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVis
         className={`cap7ce-pill cap7ce-pill-wide cap7ce-skim-display-chip cap7ce-filter-chip-motion${closingChipGroup === "skimDisplay" ? " cap7ce-filter-chip-closing" : ""}`}
         type="button"
         data-selected={skimDisplayMode === mode}
+        title={t(`skim.display.${mode}Hint` as TranslationKey)}
         style={getChipMotionStyle(index, expandedSkimDisplayModes.length)}
         onClick={() => selectSkimDisplayMode(mode)}
       >

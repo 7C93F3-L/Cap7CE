@@ -1104,6 +1104,8 @@ textarea,
 .cap7ce-recognition-tag[data-selected="true"],
 .cap7ce-recognition-tag[aria-expanded="true"],
 .cap7ce-sort-tag[aria-expanded="true"],
+.cap7ce-skim-display-tag[data-selected="true"],
+.cap7ce-skim-display-tag[aria-expanded="true"],
 .cap7ce-file-format-tag[data-selected="true"],
 .cap7ce-file-format-tag[aria-expanded="true"] {
   background: var(--theme-color);
@@ -1113,6 +1115,7 @@ textarea,
 .cap7ce-directory-chip,
 .cap7ce-recognition-chip,
 .cap7ce-sort-chip,
+.cap7ce-skim-display-chip,
 .cap7ce-file-format-chip {
   background: color-mix(in srgb, var(--theme-color) 50%, transparent);
   color: var(--text-main);
@@ -1125,7 +1128,8 @@ textarea,
 
 .cap7ce-directory-chip[data-selected="true"],
 .cap7ce-recognition-chip[data-selected="true"],
-.cap7ce-sort-chip[data-selected="true"] {
+.cap7ce-sort-chip[data-selected="true"],
+.cap7ce-skim-display-chip[data-selected="true"] {
   background: var(--theme-color);
   color: var(--theme-on-color);
 }
