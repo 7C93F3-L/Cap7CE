@@ -4863,6 +4863,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         inputFeedback={quickCommandNotice}
         inputFeedbackIsGuide={inputFeedbackIsGuide}
         unified
+        autoSearchOnQueryClear
         imageContextMenuOpen={imageContextMenuOpen}
         inputRef={searchInputRef}
         onSearchChange={onSearchChange}
@@ -5571,6 +5572,7 @@ interface Cap7CESearchCapsuleProps {
   status: React.ReactNode;
   inputFeedback?: string;
   inputFeedbackIsGuide?: boolean;
+  autoSearchOnQueryClear?: boolean;
   unified?: boolean;
   leadingContent?: React.ReactNode;
   directoryGroup?: SearchCapsuleDirectoryGroup;
@@ -5594,7 +5596,7 @@ const filterChipExitDurationMs = 350;
 const filterChipExitStaggerMs = 35;
 const filterChipMotionMaxStaggerSteps = 6;
 
-const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, directories = [], labelVisibility, formatDisplayLabel, showFormatLabel = false, status, inputFeedback = "", inputFeedbackIsGuide = false, autoSearchOnQueryClear = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
   const [skimDisplayChipsOpen, setSkimDisplayChipsOpen] = useState(false);
   const [directoryChipsOpen, setDirectoryChipsOpen] = useState(false);
   const [recognitionChipsOpen, setRecognitionChipsOpen] = useState(false);
@@ -5605,7 +5607,15 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
   const [labelMenuThemeStyle, setLabelMenuThemeStyle] = useState<CSSProperties>({});
   const labelMenuRef = useRef<HTMLDivElement | null>(null);
   const chipGroupCloseTimerRef = useRef<number | null>(null);
+  const queryClearSearchTimerRef = useRef<number | null>(null);
   const labelMenuMeasurementKey = labelMenuPointer ? `${labelMenuPointer.x}:${labelMenuPointer.y}` : "closed";
+
+  const clearQueryClearSearchTimer = () => {
+    if (queryClearSearchTimerRef.current !== null) {
+      window.clearTimeout(queryClearSearchTimerRef.current);
+      queryClearSearchTimerRef.current = null;
+    }
+  };
 
   const clearChipGroupCloseTimer = () => {
     if (chipGroupCloseTimerRef.current !== null) {
@@ -5645,7 +5655,14 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     ) * filterChipExitStaggerMs}ms`
   } as CSSProperties);
 
-  useEffect(() => () => clearChipGroupCloseTimer(), []);
+  useEffect(() => () => {
+    clearChipGroupCloseTimer();
+    clearQueryClearSearchTimer();
+  }, []);
+
+  useEffect(() => {
+    clearQueryClearSearchTimer();
+  }, [search.directoryId, search.fileFormat, search.recognitionStatus, search.sortDirection, search.sortField]);
 
   useEffect(() => {
     if (!skimDisplayChipsOpen && !directoryChipsOpen && !recognitionChipsOpen && !sortChipsOpen && !formatChipsOpen && !labelMenuPointer) {
@@ -5959,6 +5976,7 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
     }}
     onSubmit={(event) => {
       event.preventDefault();
+      clearQueryClearSearchTimer();
       onSearch();
     }}
   >
@@ -6138,7 +6156,20 @@ const Cap7CESearchCapsule = ({ search, availableFormats = [], directoryName, dir
       value={search.query}
       placeholder={inputFeedback}
       title={inputFeedback || undefined}
-      onChange={(event) => onSearchChange({ ...search, query: event.target.value })}
+      onChange={(event) => {
+        clearQueryClearSearchTimer();
+        const nextSearch = { ...search, query: event.target.value };
+        const userClearedQuery = autoSearchOnQueryClear
+          && search.query.trim().length > 0
+          && nextSearch.query.trim().length === 0;
+        onSearchChange(nextSearch);
+        if (userClearedQuery && onSearchOptionsChange) {
+          queryClearSearchTimerRef.current = window.setTimeout(() => {
+            queryClearSearchTimerRef.current = null;
+            onSearchOptionsChange({ ...nextSearch, query: "" });
+          }, 500);
+        }
+      }}
       aria-label={t("search.inputLabel")}
       autoComplete="off"
     />
