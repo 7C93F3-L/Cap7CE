@@ -182,6 +182,8 @@ export const enUS = defineLocale({
   "context.actions": "Actions",
   "context.copyPath": "Copy Path",
   "context.copySelectedPaths": "Copy {count} Selected Paths",
+  "clipboard.itemsCopied": "Copied {count} item(s)",
+  "clipboard.copyFailed": "Failed to copy file items",
   "context.editKeywords": "Edit Keywords",
   "context.deleteFile": "Delete File",
   "context.deleteSelectedFiles": "Delete {count} Selected Files",

@@ -65,6 +65,7 @@ declare global {
         open: (filePath: string) => Promise<string>;
         showInFolder: (filePath: string) => Promise<void>;
         copyPaths: (filePaths: string[]) => Promise<number>;
+        copyItems: (filePaths: string[]) => Promise<number>;
         moveToTrash: (filePaths: string[]) => Promise<DeleteFilesResult>;
         startDrag: (filePaths: string[]) => void;
       };

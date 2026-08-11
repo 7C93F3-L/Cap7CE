@@ -4180,6 +4180,7 @@ const App = () => {
                 onSearchDisplayModeChange={(searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })}
                 onSearchOptionsChange={updateResultsSearchOptions}
                 onSearch={() => submitSearch(search)}
+                onFeedback={showQuickCommandNotice}
                 onContextMenu={(event, item, selectedItems, preview) => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -4527,13 +4528,14 @@ interface ResultsViewProps {
   onSearchDisplayModeChange: (mode: SkimDisplayMode) => void;
   onSearchOptionsChange: (search: SearchState) => void;
   onSearch: () => void;
+  onFeedback: (message: string) => void;
   onContextMenu: (event: React.MouseEvent, item: ImageIndexItem, selectedItems: ImageIndexItem[], preview: () => void) => void;
   onContextMenuClose: () => void;
   onOpenImage: (item: ImageIndexItem) => void;
   onOpenSkim: () => void;
 }
 
-const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, searchDisplayMode, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchDisplayModeChange, onSearchOptionsChange, onSearch, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
+const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, searchDisplayMode, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchDisplayModeChange, onSearchOptionsChange, onSearch, onFeedback, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -4923,6 +4925,20 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         return;
       }
 
+      if (event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyC" && selectedImageIds.size > 0) {
+        event.preventDefault();
+        if (event.repeat) return;
+        const selectedPaths = images
+          .filter((image) => selectedImageIds.has(image.id))
+          .map((image) => image.filePath);
+        void window.imageEverything?.files.copyItems(selectedPaths).then((copiedCount) => {
+          onFeedback(copiedCount > 0
+            ? t("clipboard.itemsCopied", { count: copiedCount })
+            : t("clipboard.copyFailed"));
+        }).catch(() => onFeedback(t("clipboard.copyFailed")));
+        return;
+      }
+
       if (event.code === "Space") {
         event.preventDefault();
         if (selectedImageIndex >= 0) {
@@ -4970,7 +4986,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [images, moveSelection, onOpenImage, openPreviewAtIndex, selectedImageIndex]);
+  }, [images, moveSelection, onFeedback, onOpenImage, openPreviewAtIndex, selectedImageIds, selectedImageIndex]);
   return (
     <main className={`results-view cap-results-view${isUnrecognizedView ? " cap-results-view-unrecognized" : ""}`} data-results-view="true">
       <Cap7CESearchCapsule
@@ -5331,7 +5347,22 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   );
 
   useEffect(() => {
-    const clearSelectionOnEscape = (event: KeyboardEvent) => {
+    const handleSelectionKeyDown = (event: KeyboardEvent) => {
+      if (isEditableKeyboardTarget(event.target)) return;
+      if (event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyC") {
+        const copyPaths = selectedEntries
+          .filter((entry) => entry.kind !== "drive")
+          .map((entry) => entry.path);
+        if (copyPaths.length === 0) return;
+        event.preventDefault();
+        if (event.repeat) return;
+        void window.imageEverything?.files.copyItems(copyPaths).then((copiedCount) => {
+          onFeedback(copiedCount > 0
+            ? t("clipboard.itemsCopied", { count: copiedCount })
+            : t("clipboard.copyFailed"));
+        }).catch(() => onFeedback(t("clipboard.copyFailed")));
+        return;
+      }
       if (event.key !== "Escape") return;
       if (contextMenu) {
         setContextMenu(null);
@@ -5343,9 +5374,9 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         selectionAnchorPathRef.current = null;
       }
     };
-    window.addEventListener("keydown", clearSelectionOnEscape);
-    return () => window.removeEventListener("keydown", clearSelectionOnEscape);
-  }, [contextMenu, selectedPaths]);
+    window.addEventListener("keydown", handleSelectionKeyDown);
+    return () => window.removeEventListener("keydown", handleSelectionKeyDown);
+  }, [contextMenu, onFeedback, selectedEntries, selectedPaths]);
 
   const selectEntry = useCallback((entry: SkimBrowseEntry, ctrlKey: boolean, shiftKey: boolean) => {
     if (entry.kind === "drive") {

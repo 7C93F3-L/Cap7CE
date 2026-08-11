@@ -104,6 +104,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     open: (filePath: string) => ipcRenderer.invoke("file:open", filePath),
     showInFolder: (filePath: string) => ipcRenderer.invoke("file:showInFolder", filePath),
     copyPaths: (filePaths: string[]) => ipcRenderer.invoke("file:copyPaths", filePaths),
+    copyItems: (filePaths: string[]) => ipcRenderer.invoke("file:copyItems", filePaths),
     moveToTrash: (filePaths: string[]) => ipcRenderer.invoke("file:moveToTrash", filePaths),
     startDrag: (filePaths: string[]) => ipcRenderer.send("file:startDrag", filePaths)
   },

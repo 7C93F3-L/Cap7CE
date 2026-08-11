@@ -182,6 +182,8 @@ export const zhCN = {
   "context.actions": "操作",
   "context.copyPath": "复制路径",
   "context.copySelectedPaths": "复制选中的 {count} 条路径",
+  "clipboard.itemsCopied": "已复制 {count} 个项目",
+  "clipboard.copyFailed": "复制文件失败",
   "context.editKeywords": "编辑关键词",
   "context.deleteFile": "删除文件",
   "context.deleteSelectedFiles": "删除选中的 {count} 个文件",

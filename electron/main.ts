@@ -10,7 +10,7 @@ import { addDirectoryCandidates, createCancelledDirectoryAddResult, type Directo
 import { checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadProgress } from "./appUpdateService";
 import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
-import { normalizeFilePathsForClipboard } from "./fileClipboardService";
+import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
 import { startNativeFileDrag } from "./fileDragService";
 import { getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
@@ -3024,6 +3024,27 @@ ipcMain.handle("file:copyPaths", (event, filePaths: unknown) => {
   const paths = normalizeFilePathsForClipboard(filePaths);
   if (paths.length > 0) clipboard.writeText(paths.join("\r\n"));
   return paths.length;
+});
+
+ipcMain.handle("file:copyItems", async (event, filePaths: unknown) => {
+  const trustedSender = (
+    mainWindow
+    && !mainWindow.isDestroyed()
+    && event.sender === mainWindow.webContents
+  ) || (
+    previewWindow
+    && !previewWindow.isDestroyed()
+    && event.sender === previewWindow.webContents
+  );
+  if (!trustedSender) return 0;
+  try {
+    return await copyFileItemsToClipboard(filePaths);
+  } catch (error) {
+    console.warn("[file-clipboard] failed to copy file items", {
+      message: error instanceof Error ? error.message : String(error)
+    });
+    return 0;
+  }
 });
 
 ipcMain.handle("file:moveToTrash", async (_event, filePaths: unknown) => {
