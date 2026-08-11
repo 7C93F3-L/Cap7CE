@@ -1,6 +1,6 @@
 {
   "name": "cap7ce",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "productName": "Cap7CE",
   "description": "Windows local image search tool built with Electron, React, TypeScript and SQLite.",
   "author": "7C93F3-L",

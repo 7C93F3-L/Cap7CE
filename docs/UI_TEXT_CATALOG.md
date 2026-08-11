@@ -1,6 +1,6 @@
 # Cap7CE 界面文案核对表
 
-> 来源：Cap7CE 0.8.2 当前代码（2026-08-10）
+> 来源：Cap7CE 0.8.3 当前代码（2026-08-12）
 > 用途：核对中文术语，并作为运行时语言表的人工审校来源。本文档不是运行时语言文件。
 > 当前运行时中文表：`electron/localization.ts`；英文表：`electron/locales/en-US.ts`。界面通过稳定文案 ID 和 `t()` 读取。
 
@@ -105,6 +105,15 @@
 | `search.inputLabel`            | 搜索关键词                                          |                                        |     | 输入框 aria-label     |
 | `search.action`                | 搜索                                             |                                        |     | 旧搜索按钮 / aria-label |
 | `search.directorySelect`       | 目录选择                                           |                                        |     | 图标提示               |
+| `search.directorySwitched`     | 已切换到目录 {name}                                  |                                        |     | 目录标签反馈            |
+| `search.allDirectoriesSwitched` | 已切换为所有已添加目录                               |                                        |     | 目录标签反馈            |
+| `search.displaySwitched.skim`  | 已查看默认格式                                       |                                        |     | 查看范围反馈            |
+| `search.displaySwitched.all`   | 已查看全部格式                                       |                                        |     | 查看范围反馈            |
+| `search.displaySwitched.custom` | 已查看自定义格式                                    |                                        |     | 查看范围反馈            |
+| `search.sortSwitched.modifiedAtDesc` | 已按时间降序排序                              |                                        |     | 排序反馈               |
+| `search.sortSwitched.modifiedAtAsc` | 已按时间升序排序                               |                                        |     | 排序反馈               |
+| `search.sortSwitched.fileNameAsc` | 已按名称升序排序                                  |                                        |     | 排序反馈               |
+| `search.sortSwitched.fileNameDesc` | 已按名称降序排序                                 |                                        |     | 排序反馈               |
 | `search.settings`              | 设置                                             |                                        |     | 图标提示               |
 | `search.colorScheme`           | 配色方案                                           |                                        |     | 图标提示               |
 | `search.hideLabelHint`         | 右键单击隐藏标签                                       |                                        |     | 标签 title           |
@@ -176,6 +185,8 @@
 | `context.actions`             | 操作                  |         |     | 右键菜单父级          |
 | `context.copyPath`            | 复制路径              |         |     | 单选右键菜单          |
 | `context.copySelectedPaths`   | 复制选中的 {count} 条路径 |      |     | 多选右键菜单          |
+| `clipboard.itemsCopied`       | 已复制 {count} 个项目    |      |     | 文件剪贴板反馈        |
+| `clipboard.copyFailed`        | 复制文件失败              |      |     | 文件剪贴板反馈        |
 | `context.editKeywords`        | 编辑关键词             |         |     | 图片右键菜单          |
 | `context.deleteFile`          | 删除文件              |         |     | 图片右键菜单          |
 | `context.deleteSelectedFiles` | 删除选中的 {count} 个文件 |         |     | 多选右键菜单          |
@@ -249,6 +260,18 @@
 | `settings.operationHints`          | 操作提示                          |                           |     | 搜索框操作提示设置       |
 | `settings.operationHintsOn`        | 显示                            |                           |     | 操作提示开启状态        |
 | `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |
+| `settings.skimDisplay`             | 自定义查看                        |                           |     | 格式范围配置          |
+| `format.category.visual`           | 图像                            |                           |     | 自定义查看分类        |
+| `format.category.video`            | 视频                            |                           |     | 自定义查看分类        |
+| `format.category.audio`            | 音频                            |                           |     | 自定义查看分类        |
+| `format.category.text`             | 文本                            |                           |     | 自定义查看分类        |
+| `format.category.document`         | 文档                            |                           |     | 自定义查看分类        |
+| `format.category.project`          | 项目                            |                           |     | 自定义查看分类        |
+| `format.category.threeD`           | 三维                            |                           |     | 自定义查看分类        |
+| `format.category.archive`          | 压缩包                           |                           |     | 自定义查看分类        |
+| `format.category.data`             | 数据                            |                           |     | 自定义查看分类        |
+| `format.category.font`             | 字体                            |                           |     | 自定义查看分类        |
+| `format.category.model`            | 模型                            |                           |     | 自定义查看分类        |
 | `settings.quickActions`            | 快捷动作                          |                           |     | 配置区             |
 | `settings.finishConfiguration`     | 完成配置                          |                           |     | 快捷动作            |
 | `settings.configure`               | 配置                            |                           |     | 快捷动作            |
@@ -265,6 +288,7 @@
 | `shortcut.activateMini`            | 激活mini                        |                           |     | 快捷动作名称；中英文空格需核对 |
 | `shortcut.activateNormal`          | 激活normal                      |                           |     | 快捷动作名称；中英文空格需核对 |
 | `shortcut.activateStandby`         | 激活standby                     | 激活line                    |     | 快捷动作名称；中英文空格需核对 |
+| `shortcut.cycleDirectory`          | 目录切换                          |                           |     | 窗口内快捷动作          |
 | `shortcut.openSettings`            | 打开设置                          |                           |     | 快捷动作名称          |
 
 ## 7. Settings：llama.cpp、视觉模型与详情
@@ -305,6 +329,20 @@
 | `settings.mainModelInfo`          | 主模型大小 / 修改时间     |      |     | 详情字段                      |
 | `settings.mmprojInfo`             | mmproj 大小 / 修改时间 |      |     | 详情字段                      |
 | `settings.modelInventory`         | 可用模型 / GGUF 文件   |      | Available Models / GGUF Files | 显示可加载模型组合数 / GGUF 文件数 |
+| `settings.versionUpdate`          | 版本更新             |      | Version Update | 用户主动更新入口 |
+| `settings.updateNotChecked`       | 尚未检查             |      | Not checked | 更新状态 |
+| `settings.checkForUpdates`        | 检查更新             |      | Check for Updates | 更新按钮 |
+| `settings.updateChecking`         | 正在检查最新版本        |      | Checking for the latest version | 更新状态 |
+| `settings.updateUpToDate`         | 已是最新版本 {version} |      | Latest: {version} | 更新状态 |
+| `settings.updateAvailable`        | 发现新版本 {version}   |      | New: {version} | 更新状态 |
+| `settings.downloadUpdateNow`      | 立即下载             |      | Download Now | 更新按钮 |
+| `settings.updateDownloading`      | 正在下载 {percent}% · {received} / {total} |      | Downloading {percent}% · {received} / {total} | 下载进度 |
+| `settings.updateDownloadingButton` | 下载中              |      | Downloading | 下载按钮状态 |
+| `settings.updateInstalling`       | 下载完成，正在启动更新程序 |      | Download complete. Starting the updater | 更新状态 |
+| `settings.updateInstallingButton` | 更新中               |      | Updating | 更新按钮状态 |
+| `settings.updateUnsupported`      | 开发模式不支持自动替换，请使用打包版测试 |      | Automatic replacement is unavailable in development mode. Test with a packaged build. | 开发版边界 |
+| `settings.downloadUpdateAgain`    | 再次下载             |      | Download Again | 重试按钮 |
+| `settings.updateCheckFailed`      | 检查失败，请重试       |      | Check failed. Try again. | 更新失败 |
 
 ## 8. 编辑、删除与缓存弹层
 
@@ -562,7 +600,7 @@
 | `settings.indexScanning`        | 正在扫描        |           |     | 索引阶段         |
 | `settings.indexRecognizing`     | 正在识别        |           |     | 索引阶段         |
 
-## 13. 系统托盘
+## 13. 系统托盘与系统通知
 
 | 文案 ID                  | 当前中文      | 确认中文    | 英文  | 使用位置 / 备注 |
 | ---------------------- | --------- | ------- | --- | --------- |
@@ -570,6 +608,8 @@
 | `tray.showStandbyLine` | 显示待机线     | 显示 line |     | 托盘菜单      |
 | `tray.openSettings`    | 打开设置页     | 打开设置    |     | 托盘菜单      |
 | `tray.quit`            | 退出 Cap7CE |         |     | 托盘菜单      |
+| `notification.backgroundRunTitle` | Cap7CE 已在后台运行 | | Cap7CE is running in the background | 首次后台提示 |
+| `notification.duplicateLaunchContent` | 无需重复启动，可使用快捷键唤醒或从系统托盘打开。 | | No need to start it again. Use a shortcut to activate Cap7CE, or open it from the system tray. | 重复启动提示 |
 
 ---
 

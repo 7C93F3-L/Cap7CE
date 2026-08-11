@@ -203,7 +203,7 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current version: `0.8.0`
+- Current version: `0.8.3`
 - Release stage: Preview
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
