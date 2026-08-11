@@ -1411,15 +1411,6 @@ textarea,
   padding: 5px var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
 }
 
-.cap-shell-normal .cap-results-view {
-  padding-top: 8px;
-}
-
-.cap-shell-normal .cap-results-view > .image-grid-frame,
-.cap-shell-normal .cap-skim-grid-frame {
-  margin-top: 2px;
-}
-
 .cap-shell-micro .cap7ce-top-capsule,
 .cap-shell-mini .cap7ce-top-capsule {
   left: 15px;
