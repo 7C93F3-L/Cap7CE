@@ -75,6 +75,7 @@
       "src/renderer/assets/icons/**/*",
       "src/renderer/assets/startup/**/*",
       "build/icon.ico",
+      "build/notification-icon.png",
       "LICENSE",
       "THIRD_PARTY_NOTICES.md",
       "BRAND.md",

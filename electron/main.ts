@@ -1372,7 +1372,7 @@ const showSystemNotification = (title: string, content: string) => {
   try {
     appTray.displayBalloon({
       iconType: "custom",
-      icon: path.join(app.getAppPath(), "build", "icon.ico"),
+      icon: path.join(app.getAppPath(), "build", "notification-icon.png"),
       title,
       content,
       noSound: true,
