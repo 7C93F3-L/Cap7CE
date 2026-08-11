@@ -1093,6 +1093,16 @@ textarea,
   transform: translateY(-1px);
 }
 
+.cap-settings-expand-toggle[aria-expanded="true"],
+.cap-settings-expand-toggle[aria-expanded="true"]:hover:not(:disabled) {
+  background: var(--theme-color);
+  color: var(--theme-on-color);
+}
+
+.cap-settings-expand-toggle[aria-expanded="true"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
 .cap7ce-pill:disabled,
 .cap-settings-pill:disabled {
   opacity: 0.52;
@@ -2161,12 +2171,17 @@ textarea,
   place-items: center;
   padding: 28px;
   overflow: hidden;
+  border-radius: var(--radius-window-settings);
   background: rgba(5, 5, 10, 0.9);
   backdrop-filter: blur(14px) saturate(0.72);
   -webkit-backdrop-filter: blur(14px) saturate(0.72);
   app-region: no-drag;
   -webkit-app-region: no-drag;
   animation: cap7ce-origin-backdrop-enter 320ms ease-out both;
+}
+
+body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
+  border-radius: 0;
 }
 
 .cap7ce-origin-card {

@@ -7655,11 +7655,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             <span className="cap-settings-value">{directoryServiceUnavailable ? t("common.unavailable") : isLoadingDirectories ? t("settings.directoryLoading") : directories.length === 0 ? t("settings.directoryEmpty") : t("settings.directoryCount", { count: directories.length })}</span>
             <button className="cap-settings-pill" type="button" onClick={onStartAdd} title={t("settings.addDirectoryActionHint")} disabled={isAddingDirectory}>{t("common.add")}</button>
             <button
-              className="cap-settings-pill"
+              className="cap-settings-pill cap-settings-expand-toggle"
               type="button"
               onClick={toggleDirectories}
               title={directoriesExpanded ? t("settings.collapseDirectoriesHint") : t("settings.expandDirectoriesHint")}
               disabled={isLoadingDirectories || directoryServiceUnavailable || directories.length === 0}
+              aria-expanded={directoriesExpanded}
             >
               {directoriesExpanded ? t("common.collapse") : t("common.manage")}
             </button>
@@ -7689,7 +7690,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 <span className="cap-settings-label">{t("settings.indexStatus")}</span>
                 {!isScanning && (
                   <div className="cap-settings-quick-actions-controls">
-                    <button className="cap-settings-pill" type="button" onClick={closeIndexDetails} title={t("settings.collapseIndexDetailsHint")}>{t("common.collapse")}</button>
+                    <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={closeIndexDetails} title={t("settings.collapseIndexDetailsHint")} aria-expanded="true">{t("common.collapse")}</button>
                   </div>
                 )}
               </div>
@@ -7903,7 +7904,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                       >
                         {t("common.restoreDefault")}
                       </button>
-                      <button className="cap-settings-pill" type="button" onClick={toggleSkimDisplayConfiguration} title={t("settings.finishSkimDisplayHint")}>
+                      <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={toggleSkimDisplayConfiguration} title={t("settings.finishSkimDisplayHint")} aria-expanded="true">
                         {t("settings.finishConfiguration")}
                       </button>
                     </div>
@@ -7969,7 +7970,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               >
                 {t("common.restoreDefault")}
               </button>
-              <button className="cap-settings-pill" type="button" onClick={toggleSkimDisplayConfiguration} title={t("settings.configureSkimDisplayHint")}>{t("settings.configure")}</button>
+              <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={toggleSkimDisplayConfiguration} title={t("settings.configureSkimDisplayHint")} aria-expanded="false">{t("settings.configure")}</button>
             </div>
           )}
           {quickActionsExpanded ? (
@@ -7983,7 +7984,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                         {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
                       </button>
                       <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
-                      <button className="cap-settings-pill" type="button" onClick={() => void closeShortcutConfiguration()} title={t("settings.finishQuickActionsHint")}>{t("settings.finishConfiguration")}</button>
+                      <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => void closeShortcutConfiguration()} title={t("settings.finishQuickActionsHint")} aria-expanded="true">{t("settings.finishConfiguration")}</button>
                     </div>
                   </div>
                   <div className="cap-settings-quick-actions-list">
@@ -8030,7 +8031,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               </button>
               <span className="cap-settings-label">{t("settings.quickActions")}</span>
               <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
-              <button className="cap-settings-pill" type="button" onClick={() => onQuickActionsExpandedChange(true)} title={t("settings.configureQuickActionsHint")}>{t("settings.configure")}</button>
+              <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => onQuickActionsExpandedChange(true)} title={t("settings.configureQuickActionsHint")} aria-expanded="false">{t("settings.configure")}</button>
             </div>
           )}
           {quickCommandsExpanded ? (
@@ -8039,7 +8040,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                 <div className="cap-settings-quick-commands-panel">
                   <div className="cap-settings-quick-commands-header">
                     <span className="cap-settings-label">{t("settings.quickCommands")}</span>
-                    <button className="cap-settings-pill" type="button" onClick={closeQuickCommands} title={t("settings.closeQuickCommandsHint")}>{t("settings.closeQuickCommands")}</button>
+                    <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={closeQuickCommands} title={t("settings.closeQuickCommandsHint")} aria-expanded="true">{t("settings.closeQuickCommands")}</button>
                   </div>
                   <div className="cap-settings-quick-command-groups">
                     {getQuickCommandGroups().map((group) => (
@@ -8074,7 +8075,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           ) : (
             <div className="cap-settings-row">
               <span className="cap-settings-label">{t("settings.quickCommands")}</span>
-              <button className="cap-settings-pill" type="button" onClick={() => onQuickCommandsExpandedChange(true)} title={t("settings.openQuickCommandsHint")}>{t("common.view")}</button>
+              <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => onQuickCommandsExpandedChange(true)} title={t("settings.openQuickCommandsHint")} aria-expanded="false">{t("common.view")}</button>
             </div>
           )}
         </section>
