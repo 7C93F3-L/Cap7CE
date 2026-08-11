@@ -1841,6 +1841,13 @@ const App = () => {
     void window.imageEverything?.preferences.updateAppearanceColors(normalizedColors);
   };
 
+  const showSortNotice = (sortField: SortField, sortDirection: SortDirection) => {
+    const noticeKey: TranslationKey = sortField === "modified_at"
+      ? (sortDirection === "desc" ? "search.sortSwitched.modifiedAtDesc" : "search.sortSwitched.modifiedAtAsc")
+      : (sortDirection === "asc" ? "search.sortSwitched.fileNameAsc" : "search.sortSwitched.fileNameDesc");
+    showQuickCommandNotice(t(noticeKey));
+  };
+
   const updateSkimSort = (nextSearch: SearchState) => {
     const nextSkimSortPreference = {
       sortField: nextSearch.sortField,
@@ -1848,6 +1855,12 @@ const App = () => {
     };
     setSkimSortPreference(nextSkimSortPreference);
     void window.imageEverything?.preferences.updateSkimSort(nextSkimSortPreference);
+    if (
+      nextSkimSortPreference.sortField !== skimSortPreference.sortField
+      || nextSkimSortPreference.sortDirection !== skimSortPreference.sortDirection
+    ) {
+      showSortNotice(nextSkimSortPreference.sortField, nextSkimSortPreference.sortDirection);
+    }
   };
 
   const previewAppearanceColors = (nextAppearanceColors: AppearanceColors) => {
@@ -2311,11 +2324,15 @@ const App = () => {
     const nextDirectory = nextSearch.directoryId !== search.directoryId
       ? directoryOptions.find((directory) => directory.id === nextSearch.directoryId)
       : undefined;
+    const sortChanged = nextSearch.sortField !== search.sortField
+      || nextSearch.sortDirection !== search.sortDirection;
     updateResultsSearch(nextSearch, true);
     if (nextDirectory) {
       showQuickCommandNotice(nextDirectory.id === "all"
         ? t("search.allDirectoriesSwitched")
         : t("search.directorySwitched", { name: nextDirectory.name }));
+    } else if (sortChanged) {
+      showSortNotice(nextSearch.sortField, nextSearch.sortDirection);
     }
   };
 
@@ -2327,6 +2344,9 @@ const App = () => {
   };
 
   const updateSkimDisplay = (nextSkimDisplay: SkimDisplayPreferences) => {
+    const changedDisplayMode = nextSkimDisplay.searchMode !== skimDisplay.searchMode
+      ? nextSkimDisplay.searchMode
+      : (nextSkimDisplay.mode !== skimDisplay.mode ? nextSkimDisplay.mode : null);
     setSkimDisplay(nextSkimDisplay);
     if (viewDisplaySearchTimerRef.current !== null) {
       window.clearTimeout(viewDisplaySearchTimerRef.current);
@@ -2348,6 +2368,9 @@ const App = () => {
     void window.imageEverything?.preferences.updateSkimDisplay(nextSkimDisplay).then((preferences) => {
       if (preferences) setSkimDisplay(preferences.skimDisplay);
     });
+    if (changedDisplayMode) {
+      showQuickCommandNotice(t(`search.displaySwitched.${changedDisplayMode}` as TranslationKey));
+    }
   };
 
   const updateSystemNotifications = async (enabled: boolean) => {
