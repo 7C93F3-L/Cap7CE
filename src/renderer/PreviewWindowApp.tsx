@@ -147,9 +147,14 @@ const PreviewWindowApp = () => {
       !previewData
       || ((!previewData.provider || previewData.provider === "image" || previewData.provider === "video") && !showInfoFallback)
     ) return;
+    const hasExtendedInfoFallback = showInfoFallback
+      || Boolean(previewData.archiveFallbackReason)
+      || Boolean(previewData.fontFallbackReason)
+      || Boolean(previewData.epubFallbackReason)
+      || Boolean(previewData.mobiFallbackReason);
     const infoDimensions = previewData.info?.kind === "folder"
       ? { width: 600, height: 460 }
-      : { width: 600, height: 360 };
+      : { width: 600, height: hasExtendedInfoFallback ? 360 : 240 };
     const dimensions = showInfoFallback
       ? infoDimensions
       : previewData.provider === "video"

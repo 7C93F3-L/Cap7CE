@@ -3163,6 +3163,12 @@ textarea,
   width: 100%;
 }
 
+.preview-audio-panel {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+
 .preview-video {
   min-width: 0;
   min-height: 0;
@@ -3174,6 +3180,7 @@ textarea,
 
 .preview-info-panel {
   width: min(100%, 680px);
+  height: 100%;
   max-height: 100%;
   overflow: hidden;
   padding: 28px;
@@ -3209,7 +3216,7 @@ textarea,
 }
 
 .preview-info-panel dt {
-  color: var(--text-muted);
+  color: var(--accent-color);
 }
 
 .preview-info-panel dd {
