@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type Ref, type RefObject } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type ReactNode, type Ref, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import iconSignatureCap7CESvg from "./assets/icons/icon-signature-cap7ce.svg?raw";
 import iconSortAscSvg from "./assets/icons/icon-sort-asc.svg?raw";
@@ -7,7 +7,6 @@ import iconSkimSvg from "./assets/icons/icon-skim.svg?raw";
 import skimDiskSvg from "./assets/icons/skim-disk.svg?raw";
 import skimFileSvg from "./assets/icons/skim-file.svg?raw";
 import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
-import thumbnailPlaceholderSvg from "./assets/icons/thumbnail-placeholder.svg?raw";
 import warningGradientSvg from "./assets/icons/warning-gradient.svg?raw";
 import WaitingIndicator from "./WaitingIndicator";
 import ColorPickerPopover from "./ColorPickerPopover";
@@ -56,7 +55,7 @@ import type {
   ThemeMode
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
-import { fileFormatCapabilities, skimDefaultFileExtensionSet, skimCuratedFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
+import { fileFormatCapabilities, fileFormatCapabilityByExtension, skimDefaultFileExtensionSet, skimCuratedFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
 
 const skimFormatIconModules = import.meta.glob<string>("./assets/icons/format-*.svg", {
   eager: true,
@@ -69,6 +68,12 @@ const skimFormatIconSvgByName = Object.fromEntries(
     svg
   ])
 ) as Record<string, string>;
+
+const getFormatIconSvg = (extension: string, iconName = "") => {
+  const normalizedExtension = extension.startsWith(".") ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
+  const resolvedIconName = fileFormatCapabilityByExtension.get(normalizedExtension)?.iconName ?? iconName;
+  return skimFormatIconSvgByName[resolvedIconName] ?? skimFileSvg;
+};
 
 const resolveFileContentPreview = async (filePath: string, previewKind: FilePreviewKind): Promise<{
   provider: "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";
@@ -273,16 +278,14 @@ const SvgIcon = ({ svg, className = "cap-svg-icon" }: { svg: string; className?:
   <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />
 );
 
-const ThumbnailContent = ({ thumbnailUrl }: { thumbnailUrl: string }) => {
+const ThumbnailContent = ({ thumbnailUrl, fallback }: { thumbnailUrl: string; fallback: ReactNode }) => {
   const [showPlaceholder, setShowPlaceholder] = useState(!thumbnailUrl);
 
   useEffect(() => {
     setShowPlaceholder(!thumbnailUrl);
   }, [thumbnailUrl]);
 
-  return showPlaceholder ? (
-    <SvgIcon svg={thumbnailPlaceholderSvg} className="thumbnail-placeholder-icon" />
-  ) : (
+  return showPlaceholder ? fallback : (
     <span className="thumbnail-image-frame">
       <img
         src={thumbnailUrl}
@@ -299,9 +302,12 @@ const ThumbnailContent = ({ thumbnailUrl }: { thumbnailUrl: string }) => {
   );
 };
 
-const UnrecognizedThumbnail = ({ thumbnailUrl }: { thumbnailUrl: string }) => (
+const UnrecognizedThumbnail = ({ item }: { item: ImageIndexItem }) => (
   <span className="unrecognized-thumbnail">
-    <ThumbnailContent thumbnailUrl={thumbnailUrl} />
+    <ThumbnailContent
+      thumbnailUrl={item.thumbnailUrl}
+      fallback={<SvgIcon svg={getFormatIconSvg(item.extension, item.iconName)} className="cap-svg-icon unrecognized-format-icon" />}
+    />
   </span>
 );
 
@@ -4948,17 +4954,31 @@ const MiddleEllipsisFileName = ({ fileName, className }: { fileName: string; cla
   );
 };
 
-const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => {
-  return item.resultKind === "file" ? (
-    <span className="result-file-card">
-      <SvgIcon
-        svg={skimFormatIconSvgByName[item.iconName] ?? skimFileSvg}
-        className="cap-svg-icon result-file-card-icon"
-      />
-      <MiddleEllipsisFileName fileName={item.fileName} className="result-file-card-name" />
-      <span className="result-file-card-format">{item.extension.slice(1).toUpperCase()}</span>
+const TwoLineMiddleEllipsisFileName = ({ fileName, className }: { fileName: string; className: string }) => {
+  const splitFileName = splitMiddleEllipsisFileName(fileName);
+  return (
+    <span className={`${className} cap-two-line-middle-name${splitFileName.trailing ? " is-split" : ""}`} title={fileName}>
+      <span className="cap-two-line-middle-leading">{splitFileName.leading}</span>
+      {splitFileName.trailing && <span className="cap-two-line-middle-trailing">{`\u2026${splitFileName.trailing}`}</span>}
     </span>
-  ) : <ThumbnailContent thumbnailUrl={item.thumbnailUrl} />
+  );
+};
+
+const ResultFormatCard = ({ item }: { item: ImageIndexItem }) => (
+  <span className="result-file-card">
+    <SvgIcon
+      svg={getFormatIconSvg(item.extension, item.iconName)}
+      className="cap-svg-icon result-file-card-icon"
+    />
+    <TwoLineMiddleEllipsisFileName fileName={item.fileName} className="result-file-card-name" />
+  </span>
+);
+
+const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => {
+  const fallback = <ResultFormatCard item={item} />;
+  return item.resultKind === "file"
+    ? fallback
+    : <ThumbnailContent thumbnailUrl={item.thumbnailUrl} fallback={fallback} />;
 };
 
 interface SkimViewProps {
@@ -5500,9 +5520,8 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                       scrollContainerRef={scrollContainerRef}
                       fallbackSvg={getEntryIcon(entry)}
                     />
-                    <MiddleEllipsisFileName fileName={entry.label || entry.name} className="cap-skim-entry-name" />
+                    <TwoLineMiddleEllipsisFileName fileName={entry.label || entry.name} className="cap-skim-entry-name" />
                     {entry.label && <MiddleEllipsisFileName fileName={entry.name} className="cap-skim-entry-path" />}
-                    {entry.kind === "file" && <span className="cap-skim-entry-format">{entry.extension.slice(1).toUpperCase()}</span>}
                   </button>
                 );
               })}
@@ -6680,7 +6699,7 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollT
                 draggable
                 onDragStart={(event) => onStartDrag(event, item)}
               >
-                <UnrecognizedThumbnail thumbnailUrl={item.thumbnailUrl} />
+                <UnrecognizedThumbnail item={item} />
                 <span className="unrecognized-details">
                   <strong title={item.fileName}>{item.fileName}</strong>
                   <span className="unrecognized-path" title={directoryPath}>{directoryPath}</span>
