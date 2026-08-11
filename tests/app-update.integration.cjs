@@ -1,4 +1,7 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs/promises");
+const os = require("node:os");
+const path = require("node:path");
 
 const release = (version, overrides = {}) => ({
   tag_name: `v${version}`,
@@ -12,7 +15,7 @@ const release = (version, overrides = {}) => ({
 });
 
 (async () => {
-  const { checkForAppUpdate, selectLatestAppUpdate } = require("../dist-electron/appUpdateService.js");
+  const { checkForAppUpdate, downloadAppUpdate, selectLatestAppUpdate } = require("../dist-electron/appUpdateService.js");
 
   const latest = selectLatestAppUpdate([
     release("0.8.1"),
@@ -57,6 +60,27 @@ const release = (version, overrides = {}) => ({
     async () => ({ ok: false })
   );
   assert.equal(unavailable.status, "failed");
+
+  const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "cap7ce-update-test-"));
+  try {
+    const destinationPath = path.join(temporaryRoot, "Cap7CE-0.8.3-win-x64.zip");
+    const payload = Buffer.from("test-update-package");
+    const progress = [];
+    const downloaded = await downloadAppUpdate(
+      {
+        version: "0.8.3",
+        downloadUrl: release("0.8.3").assets[0].browser_download_url
+      },
+      destinationPath,
+      (entry) => progress.push(entry),
+      async () => new Response(payload, { headers: { "content-length": String(payload.length) } })
+    );
+    assert.equal(downloaded.receivedBytes, payload.length);
+    assert.deepEqual(await fs.readFile(destinationPath), payload);
+    assert.equal(progress.at(-1).percent, 100);
+  } finally {
+    await fs.rm(temporaryRoot, { recursive: true, force: true });
+  }
 
   console.log("App update integration checks passed.");
 })().catch((error) => {

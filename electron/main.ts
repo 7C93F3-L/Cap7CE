@@ -1,12 +1,13 @@
 import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
+import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
-import { checkForAppUpdate, type AppUpdateDownload } from "./appUpdateService";
+import { checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadProgress } from "./appUpdateService";
 import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { normalizeFilePathsForClipboard } from "./fileClipboardService";
@@ -70,6 +71,7 @@ let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
 let duplicateLaunchNotificationPending = false;
 let pendingAppUpdateDownload: AppUpdateDownload | null = null;
+let appUpdateDownloadActive = false;
 let isQuitting = false;
 let cancelAiIndexRequested = false;
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
@@ -2580,12 +2582,61 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
   if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || !pendingAppUpdateDownload) {
     return { status: "failed" };
   }
+  if (!app.isPackaged) {
+    return { status: "unsupported", version: pendingAppUpdateDownload.version };
+  }
+  if (appUpdateDownloadActive) {
+    return { status: "busy", version: pendingAppUpdateDownload.version };
+  }
   const update = pendingAppUpdateDownload;
+  const updateRoot = path.join(app.getPath("temp"), `Cap7CE-update-${update.version}-${randomUUID()}`);
+  const packagePath = path.join(updateRoot, `Cap7CE-${update.version}-win-x64.zip`);
+  const helperPath = path.join(updateRoot, "update-helper.ps1");
+  const sendDownloadProgress = (progress: AppUpdateDownloadProgress) => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+      mainWindow.webContents.send("app:updateDownloadProgress", progress);
+    }
+  };
+  appUpdateDownloadActive = true;
   try {
-    await shell.openExternal(update.downloadUrl);
-    return { status: "download_started", version: update.version };
-  } catch {
+    await downloadAppUpdate(update, packagePath, sendDownloadProgress);
+    await fs.copyFile(path.join(app.getAppPath(), "build", "update-helper.ps1"), helperPath);
+    const updaterProcess = spawn("powershell.exe", [
+      "-NoLogo",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      helperPath,
+      "-PackagePath",
+      packagePath,
+      "-InstallDirectory",
+      path.dirname(process.execPath),
+      "-ExpectedVersion",
+      update.version,
+      "-CurrentProcessId",
+      String(process.pid),
+      "-ExecutableName",
+      path.basename(process.execPath)
+    ], {
+      cwd: updateRoot,
+      detached: true,
+      stdio: "ignore",
+      windowsHide: false
+    });
+    updaterProcess.unref();
+    pendingAppUpdateDownload = null;
+    setTimeout(() => {
+      isQuitting = true;
+      app.quit();
+    }, 500);
+    return { status: "installing", version: update.version };
+  } catch (error) {
+    console.warn("[app-update] automatic update failed", error);
+    await fs.rm(updateRoot, { recursive: true, force: true }).catch(() => undefined);
     return { status: "failed", version: update.version };
+  } finally {
+    appUpdateDownloadActive = false;
   }
 });
 

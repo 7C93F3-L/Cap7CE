@@ -7096,8 +7096,9 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [capturingShortcutActionId, setCapturingShortcutActionId] = useState<ShortcutActionId | null>(null);
   const [shortcutActionDrafts, setShortcutActionDrafts] = useState<ShortcutActionPreferences>(shortcutActions);
   const [draftUnavailableActionIds, setDraftUnavailableActionIds] = useState<ShortcutActionId[]>([]);
-  const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "opening_download" | "download_started" | "failed" | "download_failed">("idle");
+  const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "downloading" | "installing" | "unsupported" | "failed" | "download_failed">("idle");
   const [appUpdateVersion, setAppUpdateVersion] = useState("");
+  const [appUpdateProgress, setAppUpdateProgress] = useState<{ receivedBytes: number; totalBytes: number | null; percent: number | null } | null>(null);
   const selectedGgufModel = ggufModelSettings.models.find((model) => model.id === ggufModelSettings.selectedModelId);
   const selectedLlamaRuntime = llamaRuntimeSettings.versions.find((runtime) => runtime.version === llamaRuntimeSettings.selectedVersion);
   const isLlamaRuntimeRunning = llamaRuntimeProcessState.status === "running";
@@ -7216,10 +7217,18 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     ? t("settings.updateChecking")
     : appUpdateStatus === "up_to_date"
       ? t("settings.updateUpToDate", { version: appUpdateVersion })
-      : appUpdateStatus === "update_available" || appUpdateStatus === "opening_download"
+      : appUpdateStatus === "update_available"
         ? t("settings.updateAvailable", { version: appUpdateVersion })
-        : appUpdateStatus === "download_started"
-          ? t("settings.updateDownloadStarted", { version: appUpdateVersion })
+        : appUpdateStatus === "downloading"
+          ? t("settings.updateDownloading", {
+            percent: appUpdateProgress?.percent === null || appUpdateProgress?.percent === undefined ? "--" : String(appUpdateProgress.percent),
+            received: formatCacheSize(appUpdateProgress?.receivedBytes ?? 0),
+            total: appUpdateProgress?.totalBytes ? formatCacheSize(appUpdateProgress.totalBytes) : "--"
+          })
+          : appUpdateStatus === "installing"
+            ? t("settings.updateInstalling")
+            : appUpdateStatus === "unsupported"
+              ? t("settings.updateUnsupported")
           : appUpdateStatus === "download_failed"
             ? t("settings.updateDownloadFailed")
             : appUpdateStatus === "failed"
@@ -7227,17 +7236,18 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               : t("settings.updateNotChecked");
   const appUpdateButtonLabel = appUpdateStatus === "checking"
     ? t("settings.updateCheckingButton")
-    : appUpdateStatus === "opening_download"
-      ? t("settings.updateOpeningDownload")
-      : appUpdateStatus === "update_available" || appUpdateStatus === "download_failed"
+    : appUpdateStatus === "downloading"
+      ? t("settings.updateDownloadingButton")
+      : appUpdateStatus === "installing"
+        ? t("settings.updateInstallingButton")
+      : appUpdateStatus === "update_available" || appUpdateStatus === "download_failed" || appUpdateStatus === "unsupported"
         ? t("settings.downloadUpdateNow")
-        : appUpdateStatus === "download_started"
-          ? t("settings.downloadUpdateAgain")
-          : t("settings.checkForUpdates");
+        : t("settings.checkForUpdates");
   const appUpdateButtonHint = appUpdateStatus === "update_available"
-    || appUpdateStatus === "opening_download"
-    || appUpdateStatus === "download_started"
+    || appUpdateStatus === "downloading"
+    || appUpdateStatus === "installing"
     || appUpdateStatus === "download_failed"
+    || appUpdateStatus === "unsupported"
     ? t("settings.downloadUpdateActionHint")
     : t("settings.checkForUpdatesActionHint");
 
@@ -7282,13 +7292,25 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     }
   }, [originImageUrl]);
 
+  useEffect(() => window.imageEverything?.app.onUpdateDownloadProgress((progress) => {
+    setAppUpdateProgress(progress);
+    setAppUpdateStatus("downloading");
+  }), []);
+
   const handleAppUpdateAction = async () => {
-    if (appUpdateStatus === "checking" || appUpdateStatus === "opening_download") return;
-    if (appUpdateStatus === "update_available" || appUpdateStatus === "download_started" || appUpdateStatus === "download_failed") {
-      setAppUpdateStatus("opening_download");
+    if (appUpdateStatus === "checking" || appUpdateStatus === "downloading" || appUpdateStatus === "installing") return;
+    if (appUpdateStatus === "update_available" || appUpdateStatus === "download_failed" || appUpdateStatus === "unsupported") {
+      setAppUpdateProgress(null);
+      setAppUpdateStatus("downloading");
       try {
         const result = await window.imageEverything?.app.downloadUpdate();
-        setAppUpdateStatus(result?.status === "download_started" ? "download_started" : "download_failed");
+        setAppUpdateStatus(result?.status === "installing"
+          ? "installing"
+          : result?.status === "unsupported"
+            ? "unsupported"
+            : result?.status === "busy"
+              ? "downloading"
+              : "download_failed");
       } catch {
         setAppUpdateStatus("download_failed");
       }
@@ -8125,7 +8147,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               type="button"
               onClick={() => void handleAppUpdateAction()}
               title={appUpdateButtonHint}
-              disabled={appUpdateStatus === "checking" || appUpdateStatus === "opening_download"}
+              disabled={appUpdateStatus === "checking" || appUpdateStatus === "downloading" || appUpdateStatus === "installing"}
             >
               {appUpdateButtonLabel}
             </button>
