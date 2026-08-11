@@ -69,6 +69,29 @@ const skimFormatIconSvgByName = Object.fromEntries(
   ])
 ) as Record<string, string>;
 
+const settingsFormatCategoryOrder: readonly FileFormatCategory[] = [
+  "visual",
+  "video",
+  "audio",
+  "text",
+  "document",
+  "project",
+  "threeD",
+  "archive",
+  "data",
+  "font",
+  "model"
+];
+
+const settingsFormatCategoryOverrides: ReadonlyMap<string, FileFormatCategory> = new Map([
+  [".pdf", "document"],
+  [".rtf", "document"],
+  [".psd", "project"],
+  [".psb", "project"],
+  [".ai", "project"],
+  [".cdr", "project"]
+]);
+
 const getFormatIconSvg = (extension: string, iconName = "") => {
   const normalizedExtension = extension.startsWith(".") ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
   const resolvedIconName = fileFormatCapabilityByExtension.get(normalizedExtension)?.iconName ?? iconName;
@@ -7126,14 +7149,22 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const currentAppearanceColors = appearanceColors;
   const recognitionStatusLabels = getRecognitionStatusLabels();
   const skimFormatGroups = useMemo(() => {
-    const groups = new Map<FileFormatCategory, string[]>();
+    const groups = new Map<FileFormatCategory, string[]>(
+      settingsFormatCategoryOrder.map((category) => [category, []])
+    );
     for (const capability of fileFormatCapabilities) {
       if (!capability.canBrowse) continue;
-      const extensions = groups.get(capability.category) ?? [];
+      const displayCategory = settingsFormatCategoryOverrides.get(capability.extension) ?? capability.category;
+      const extensions = groups.get(displayCategory) ?? [];
       extensions.push(capability.extension);
-      groups.set(capability.category, extensions);
+      groups.set(displayCategory, extensions);
     }
-    return [...groups.entries()].map(([category, extensions]) => ({ category, extensions }));
+    return settingsFormatCategoryOrder.map((category) => ({
+      category,
+      extensions: (groups.get(category) ?? []).sort((left, right) => (
+        left.slice(1).localeCompare(right.slice(1), "en-US", { numeric: true, sensitivity: "base" })
+      ))
+    }));
   }, []);
   const selectedSkimExtensions = new Set(skimDisplay.customExtensions);
   const updateCustomSkimExtensions = (customExtensions: string[]) => onSkimDisplayChange({

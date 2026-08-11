@@ -317,7 +317,7 @@ export const enUS = defineLocale({
   "format.category.video": "Video",
   "format.category.font": "Fonts",
   "format.category.threeD": "3D",
-  "format.category.project": "Project Files",
+  "format.category.project": "Projects",
   "format.category.model": "Models",
   "settings.finishConfiguration": "Finish",
   "settings.configure": "Configure",
