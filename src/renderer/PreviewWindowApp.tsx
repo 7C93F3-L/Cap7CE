@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
@@ -15,6 +17,17 @@ const defaultPreviewWindowControlState: PreviewWindowControlState = {
 };
 
 const previewLoadingIndicatorDelayMs = 180;
+
+const markdownComponents: Components = {
+  a: ({ children, href }) => (
+    <span className="preview-markdown-link" title={href}>{children}</span>
+  ),
+  img: ({ alt, src }) => (
+    <span className="preview-markdown-image-reference" title={src}>
+      {alt || src || "image"}
+    </span>
+  )
+};
 
 const formatPreviewBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -82,7 +95,7 @@ const PreviewWindowApp = () => {
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
-  const textScrollRef = useRef<HTMLPreElement | null>(null);
+  const textScrollRef = useRef<HTMLElement | null>(null);
   const pdfScrollRef = useRef<HTMLDivElement>(null);
   const archiveScrollRef = useRef<HTMLDivElement>(null);
   const epubScrollRef = useRef<HTMLDivElement>(null);
@@ -344,6 +357,8 @@ const PreviewWindowApp = () => {
     : folderStats?.status === "cancelled"
       ? t("skim.previewStats.cancelled")
       : t("skim.previewStats.scanning");
+  const isMarkdownPreview = previewData.provider === "text"
+    && previewData.fileName.toLocaleLowerCase().endsWith(".md");
 
   return (
     <main
@@ -454,7 +469,27 @@ const PreviewWindowApp = () => {
               <strong>{previewData.fileName}</strong>
               <span>{previewData.textPreview.encoding}{previewData.textPreview.truncated ? ` · ${t("preview.textTruncated")}` : ""}</span>
             </header>
-            <pre ref={textScrollRef} className="cap-main-scroll-viewport">{previewData.textPreview.content}</pre>
+            {isMarkdownPreview ? (
+              <div
+                ref={(node) => { textScrollRef.current = node; }}
+                className="preview-markdown-content cap-main-scroll-viewport"
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  skipHtml
+                  components={markdownComponents}
+                >
+                  {previewData.textPreview.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <pre
+                ref={(node) => { textScrollRef.current = node; }}
+                className="cap-main-scroll-viewport"
+              >
+                {previewData.textPreview.content}
+              </pre>
+            )}
           </section>
         ) : previewData.provider === "pdf" && previewData.pdfPreview && !showInfoFallback ? (
           <PdfPreviewPanel

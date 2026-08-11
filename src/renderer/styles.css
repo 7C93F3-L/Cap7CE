@@ -3198,26 +3198,157 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   white-space: nowrap;
 }
 
-.preview-text-panel pre {
+.preview-text-panel pre,
+.preview-markdown-content {
   flex: 1 1 auto;
   min-height: 0;
   margin: 0;
   overflow: auto;
   padding: 4px 18px 18px;
+  user-select: text;
+}
+
+.preview-text-panel pre {
   font: 12px/1.65 Consolas, "Cascadia Mono", monospace;
   overflow-wrap: anywhere;
   tab-size: 2;
   white-space: pre-wrap;
-  user-select: text;
 }
 
-.preview-text-panel pre.cap-main-scroll-viewport {
+.preview-text-panel pre.cap-main-scroll-viewport,
+.preview-markdown-content.cap-main-scroll-viewport {
   scrollbar-width: none;
 }
 
-.preview-text-panel pre.cap-main-scroll-viewport::-webkit-scrollbar {
+.preview-text-panel pre.cap-main-scroll-viewport::-webkit-scrollbar,
+.preview-markdown-content.cap-main-scroll-viewport::-webkit-scrollbar {
   width: 0;
   height: 0;
+}
+
+.preview-markdown-content {
+  color: var(--text-main);
+  font: 13px/1.75 "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.preview-markdown-content > :first-child {
+  margin-top: 0;
+}
+
+.preview-markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.preview-markdown-content h1,
+.preview-markdown-content h2,
+.preview-markdown-content h3,
+.preview-markdown-content h4,
+.preview-markdown-content h5,
+.preview-markdown-content h6 {
+  margin: 1.35em 0 0.55em;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.preview-markdown-content h1 { font-size: 1.8em; }
+.preview-markdown-content h2 { font-size: 1.5em; }
+.preview-markdown-content h3 { font-size: 1.25em; }
+.preview-markdown-content h4,
+.preview-markdown-content h5,
+.preview-markdown-content h6 { font-size: 1em; }
+
+.preview-markdown-content p,
+.preview-markdown-content ul,
+.preview-markdown-content ol,
+.preview-markdown-content blockquote,
+.preview-markdown-content pre,
+.preview-markdown-content table {
+  margin: 0 0 1em;
+}
+
+.preview-markdown-content ul,
+.preview-markdown-content ol {
+  padding-left: 1.8em;
+}
+
+.preview-markdown-content li + li {
+  margin-top: 0.25em;
+}
+
+.preview-markdown-content blockquote {
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 3px solid var(--accent-color);
+  color: var(--text-muted);
+}
+
+.preview-markdown-content blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.preview-markdown-content code {
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  background: rgb(127 127 127 / 14%);
+  font: 0.92em/1.55 Consolas, "Cascadia Mono", monospace;
+}
+
+.preview-markdown-content pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgb(127 127 127 / 12%);
+  white-space: pre;
+}
+
+.preview-markdown-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.preview-markdown-content hr {
+  height: 1px;
+  margin: 1.4em 0;
+  border: 0;
+  background: rgb(127 127 127 / 24%);
+}
+
+.preview-markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.preview-markdown-content th,
+.preview-markdown-content td {
+  padding: 7px 9px;
+  border: 1px solid rgb(127 127 127 / 24%);
+  text-align: left;
+}
+
+.preview-markdown-content th {
+  background: rgb(127 127 127 / 10%);
+}
+
+.preview-markdown-content input[type="checkbox"] {
+  margin: 0 0.4em 0 0;
+  accent-color: var(--theme-color);
+}
+
+.preview-markdown-link {
+  color: var(--accent-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.preview-markdown-image-reference {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.15em 0.45em;
+  border-radius: 5px;
+  background: rgb(127 127 127 / 12%);
+  color: var(--text-muted);
+  font-size: 0.9em;
 }
 
 .preview-window-scrollbar-slot {

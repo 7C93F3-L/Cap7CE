@@ -2,7 +2,7 @@
 
 Cap7CE source code is licensed under GPL-3.0-only. Third-party software included in the source tree, dependency graph, or packaged runtime remains subject to its own license.
 
-This file is a human-readable inventory for Cap7CE 0.8.1. `package-lock.json` is the authoritative locked npm dependency inventory. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
+This file is a human-readable inventory for Cap7CE 0.8.2. `package-lock.json` is the authoritative locked npm dependency inventory. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
 
 ## Primary runtime components
 
@@ -10,6 +10,7 @@ This file is a human-readable inventory for Cap7CE 0.8.1. `package-lock.json` is
 | --- | --- |
 | Electron | MIT; the Electron distribution also includes Chromium and other third-party notices |
 | React / React DOM | MIT |
+| `react-markdown` / `remark-gfm` and unified ecosystem dependencies | MIT; selected supporting packages also use ISC |
 | `@napi-rs/canvas` and Windows runtime package | MIT |
 | `ag-psd` | MIT |
 | `7z-wasm` / 7-Zip WebAssembly | LGPL-2.1-or-later with the UnRAR restriction; bundled license texts are in `third_party/7z-wasm` |
@@ -36,6 +37,8 @@ Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active
 Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
 
 Cap7CE uses `@lingo-reader/mobi-parser` and its runtime dependencies only inside the bounded MOBI preview worker, after Cap7CE validates the PalmDB/MOBI6 structure and supported format boundary. It extracts inert text and a bounded cover image; it does not execute book scripts or network resources.
+
+Cap7CE uses `react-markdown`, `remark-gfm`, and their unified ecosystem dependencies only to render bounded Markdown text in the preview renderer. Raw HTML, image resource loading, and link navigation remain disabled.
 
 ## Electron and Chromium notices
 
