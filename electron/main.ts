@@ -30,7 +30,7 @@ import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, ski
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
-import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
+import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
@@ -147,6 +147,24 @@ const enqueueScannedThumbnails = (images: ScannedImageFile[]) => {
   });
 };
 
+let thumbnailOptimizationDiscoveryQueue: Promise<void> = Promise.resolve();
+
+const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[]) => {
+  if (directories.length === 0 || !getThumbnailOptimizationStatus().enabled) return;
+  const task = thumbnailOptimizationDiscoveryQueue.then(async () => {
+    if (!getThumbnailOptimizationStatus().enabled) return;
+    const scanResult = await scanImageDirectories(directories, {
+      isCancelled: () => !getThumbnailOptimizationStatus().enabled
+    });
+    enqueueScannedThumbnails(scanResult.images);
+  });
+  thumbnailOptimizationDiscoveryQueue = task.catch((error) => {
+    if ((error as NodeJS.ErrnoException)?.code !== "ECANCELED") {
+      console.warn("[thumbnail-optimization] added directory scan failed", error);
+    }
+  });
+};
+
 const syncThumbnailOptimizationActivity = () => {
   const shouldRun = Boolean(
     rendererContentViewActive
@@ -158,11 +176,7 @@ const syncThumbnailOptimizationActivity = () => {
   );
   setSkimShellThumbnailActivity(shouldRun);
   searchScanSnapshotService.setActive(shouldRun);
-  if (shouldRun) {
-    resumeThumbnailOptimization("inactive-content");
-    return;
-  }
-  void pauseThumbnailOptimization("inactive-content");
+  setThumbnailOptimizationForegroundActive(shouldRun);
 };
 
 const cancelActiveSearchTasks = () => {
@@ -2374,7 +2388,6 @@ app.whenReady().then(async () => {
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
-  await pauseThumbnailOptimization("inactive-content");
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   createWindow();
   screen.on("display-metrics-changed", (_event, display, changedMetrics) => {
@@ -3066,6 +3079,7 @@ const addDirectoryCandidatesWithIndexMigrationInternal = async (request: Directo
       ...result.added.map((directory) => directory.id),
       ...result.replacements.flatMap((replacement) => replacement.replacedDirectories.map((directory) => directory.id))
     ]);
+    scheduleDirectoryThumbnailOptimization(result.added);
   } catch (error) {
     const replacementIds = new Set(result.replacements.map((replacement) => replacement.directory.id));
     const restoredDirectories = [

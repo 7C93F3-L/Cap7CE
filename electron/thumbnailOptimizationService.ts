@@ -37,9 +37,15 @@ let sortField: ThumbnailOptimizationSortField = "file_name";
 let sortDirection: ThumbnailOptimizationSortDirection = "desc";
 let workerPromise: Promise<void> | null = null;
 let statusListener: StatusListener | null = null;
+let foregroundActive = false;
+
+const foregroundYieldMs = 120;
+const backgroundYieldMs = 750;
 
 const normalizePathKey = (filePath: string) => path.resolve(filePath).toLowerCase();
-const yieldToForegroundWork = () => new Promise<void>((resolve) => setTimeout(resolve, 120));
+const yieldToForegroundWork = () => new Promise<void>((resolve) => (
+  setTimeout(resolve, foregroundActive ? foregroundYieldMs : backgroundYieldMs)
+));
 
 const compareCandidates = (left: ThumbnailOptimizationCandidate, right: ThumbnailOptimizationCandidate) => {
   const direction = sortDirection === "desc" ? -1 : 1;
@@ -139,6 +145,10 @@ export const setThumbnailOptimizationSort = (
   sortDirection = nextSortDirection;
   sortQueue();
   emitStatus();
+};
+
+export const setThumbnailOptimizationForegroundActive = (active: boolean) => {
+  foregroundActive = active;
 };
 
 export const enqueueThumbnailOptimizationCandidates = async (candidates: ThumbnailOptimizationCandidate[]) => {
