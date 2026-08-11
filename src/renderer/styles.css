@@ -3302,6 +3302,7 @@ textarea,
 
 .context-menu.context-menu-grouped {
   --context-menu-group-width: 168px;
+  --context-menu-submenu-width: 114px;
   width: 168px;
   min-width: 168px;
   max-width: calc(100vw - 10px);
@@ -3321,7 +3322,7 @@ textarea,
 }
 
 .context-menu-grouped.is-expanded .context-menu-unified-layout {
-  grid-template-columns: repeat(2, calc(var(--context-menu-group-width) - 14px));
+  grid-template-columns: calc(var(--context-menu-group-width) - 14px) var(--context-menu-submenu-width);
 }
 
 .context-menu-root-column,
@@ -3347,6 +3348,13 @@ textarea,
 .context-menu .context-menu-file-header,
 .context-menu .context-menu-file-header * {
   min-width: 0;
+}
+
+.context-menu .context-menu-file-header {
+  pointer-events: auto;
+}
+
+.context-menu .context-menu-file-header * {
   pointer-events: none;
 }
 
@@ -3426,12 +3434,6 @@ textarea,
 .context-menu .context-menu-parent-action.is-active {
   background: var(--theme-color);
   color: var(--theme-on-color);
-}
-
-.context-menu.context-menu-grouped.context-menu-mini {
-  --context-menu-group-width: 142px;
-  width: 142px;
-  min-width: 142px;
 }
 
 .context-menu-inline-submenu button {

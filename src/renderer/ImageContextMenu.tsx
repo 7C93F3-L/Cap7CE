@@ -108,6 +108,11 @@ const ImageContextMenu = ({
     [activeGroupId, groups]
   );
   const splitFileName = useMemo(() => splitMiddleEllipsisFileName(header.fileName), [header.fileName]);
+  const headerTooltip = useMemo(() => [
+    header.fileName,
+    ...(header.primaryDetail ? [getContextMenuDetailValue(header.primaryDetail)] : []),
+    ...header.details.map(getContextMenuDetailValue)
+  ].join("\n"), [header.details, header.fileName, header.primaryDetail]);
 
   useLayoutEffect(() => {
     if (!menuRef.current || !rootColumnRef.current) {
@@ -116,8 +121,11 @@ const ImageContextMenu = ({
     }
     const bounds = menuRef.current.getBoundingClientRect();
     const rootColumnBounds = rootColumnRef.current.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(menuRef.current);
+    const submenuWidth = Number.parseFloat(computedStyle.getPropertyValue("--context-menu-submenu-width"))
+      || rootColumnBounds.width;
     const nextPosition = clampMenuPositionToViewport(x, y, bounds.width, bounds.height);
-    const expansionSpan = rootColumnBounds.width + inlineSubmenuGap;
+    const expansionSpan = submenuWidth + inlineSubmenuGap;
     const expandedWidth = bounds.width + expansionSpan;
     const maximumRootLeft = Math.max(viewportMenuGap, window.innerWidth - viewportMenuGap - expandedWidth);
     nextPosition.left = Math.min(Math.max(nextPosition.left, viewportMenuGap), maximumRootLeft);
@@ -171,7 +179,7 @@ const ImageContextMenu = ({
       <div className="cap7ce-menu-motion-surface">
         <div className="context-menu-unified-layout">
           <div ref={rootColumnRef} className="context-menu-root-column">
-            <div className="context-menu-file-header" aria-label={`${header.format} ${header.fileName}`}>
+            <div className="context-menu-file-header" aria-label={`${header.format} ${header.fileName}`} title={headerTooltip}>
               <div className="context-menu-file-heading">
                 <span className="context-menu-file-format">{header.format}</span>
                 {header.primaryDetail && (
