@@ -194,6 +194,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
       activateNormal: string;
       activateStandby: string;
       activateSkim: string;
+      cycleDirectory: string;
       openSettings: string;
     }) => ipcRenderer.invoke("preferences:updateShortcutActions", shortcutActions),
     shortcutAvailability: () => ipcRenderer.invoke("preferences:shortcutAvailability"),

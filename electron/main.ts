@@ -104,8 +104,8 @@ let quickActionGlobalEnabled = true;
 let shortcutCaptureActive = false;
 let registeredActivateCapsuleShortcut: string | null = null;
 const registeredShellModeShortcuts = new Map<string, string>();
-type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "openSettings";
-type GlobalShortcutActionId = ShortcutActionId;
+type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "cycleDirectory" | "openSettings";
+type GlobalShortcutActionId = Exclude<ShortcutActionId, "cycleDirectory">;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
 let modelInputCacheCleanupPromise: Promise<void> | null = null;
@@ -3864,6 +3864,7 @@ ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActio
   activateNormal: string;
   activateStandby: string;
   activateSkim: string;
+  cycleDirectory: string;
   openSettings: string;
 }) => {
   const currentPreferences = await getUserPreferences();

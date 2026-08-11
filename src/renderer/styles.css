@@ -1244,9 +1244,16 @@ textarea,
   }
 }
 
-.cap7ce-capsule-input {
+.cap7ce-capsule-input-shell {
   flex: 1 1 auto;
   min-width: 90px;
+  height: 20px;
+  position: relative;
+}
+
+.cap7ce-capsule-input {
+  width: 100%;
+  min-width: 0;
   height: 20px;
   border: 0;
   border-radius: var(--radius-pill);
@@ -1276,11 +1283,14 @@ textarea,
   box-shadow: none;
 }
 
+.cap7ce-search-capsule-unified .cap7ce-capsule-input-shell {
+  flex: 1 1 60px;
+  min-width: 40px;
+}
+
 .cap7ce-search-capsule-unified .cap7ce-capsule-input,
 .cap7ce-search-capsule-unified .cap7ce-capsule-input:focus,
 .cap7ce-search-capsule-unified .cap7ce-capsule-input:focus-visible {
-  flex: 1 1 60px;
-  min-width: 40px;
   overflow: hidden;
   border: 0;
   outline: 0;
@@ -1733,6 +1743,24 @@ textarea,
   padding: 20px 25px 22px;
   color: var(--text-main);
   font-size: 12px;
+}
+
+.cap7ce-capsule-input.cap-temporary-feedback-active {
+  color: transparent;
+  caret-color: var(--input-text);
+}
+
+.cap7ce-capsule-input-feedback {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: 0 8px;
+  color: var(--accent-color);
+  font-size: 12px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .cap-settings-skim-display-header > .cap-settings-label {

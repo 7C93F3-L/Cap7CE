@@ -11,7 +11,7 @@ type AppearanceColors = {
   themeColor: string;
   accentColor: string;
 };
-type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "openSettings";
+type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "cycleDirectory" | "openSettings";
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type SearchLabelVisibilityPreferences = {
   directory: boolean;
@@ -103,6 +103,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     activateNormal: "Alt+3",
     activateStandby: "Alt+4",
     activateSkim: "Alt+5",
+    cycleDirectory: "Alt+Q",
     openSettings: "Alt+6"
   },
   updatedAt: new Date().toISOString()
@@ -130,6 +131,7 @@ const isShortcutActionId = (value: string): value is ShortcutActionId => (
   || value === "activateNormal"
   || value === "activateStandby"
   || value === "activateSkim"
+  || value === "cycleDirectory"
   || value === "openSettings"
 );
 const isShortcutValue = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;

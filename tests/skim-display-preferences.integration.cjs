@@ -12,6 +12,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const {
       getUserPreferences,
       updateSearchLabelVisibilityPreference,
+      updateShortcutActionsPreference,
       updateSkimDisplayPreference,
       updateSkimSortPreference,
       updateSortPreference
@@ -23,6 +24,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.skimDisplay.showHiddenFiles, false);
     assert.equal(defaults.skimDisplay.customExtensions.includes(".png"), true);
     assert.equal(defaults.searchLabelVisibility.skimDisplay, true);
+    assert.equal(defaults.shortcutActions.cycleDirectory, "Alt+Q");
     assert.deepEqual(defaults.skimSortPreference, {
       sortField: "file_name",
       sortDirection: "asc"
@@ -35,11 +37,27 @@ app.setPath("userData", path.join(testRoot, "user-data"));
         mode: "all",
         customExtensions: [".png"],
         showHiddenFiles: false
+      },
+      shortcutActions: {
+        activateCapsule: "Alt+`",
+        activateMicro: "Alt+1",
+        activateMini: "Alt+2",
+        activateNormal: "Alt+3",
+        activateStandby: "Alt+4",
+        activateSkim: "Alt+5",
+        openSettings: "Alt+6"
       }
     }));
     const migrated = await getUserPreferences();
     assert.equal(migrated.skimDisplay.mode, "all");
     assert.equal(migrated.skimDisplay.searchMode, "skim");
+    assert.equal(migrated.shortcutActions.cycleDirectory, "Alt+Q");
+
+    const updatedShortcuts = await updateShortcutActionsPreference({
+      ...migrated.shortcutActions,
+      cycleDirectory: "Alt+W"
+    });
+    assert.equal(updatedShortcuts.shortcutActions.cycleDirectory, "Alt+W");
 
     const updated = await updateSkimDisplayPreference({
       mode: "custom",
@@ -70,6 +88,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
       legacySkimPreferencesMigrated: true,
+      legacyDirectoryCycleShortcutMigrated: true,
+      directoryCycleShortcutPersisted: true,
       customExtensionsNormalized: true,
       skimModePersisted: true,
       independentSearchModePersisted: true,

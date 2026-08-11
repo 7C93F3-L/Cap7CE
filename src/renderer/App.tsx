@@ -622,6 +622,7 @@ const defaultShortcutActions: ShortcutActionPreferences = {
   activateNormal: "Alt+3",
   activateStandby: "Alt+4",
   activateSkim: "Alt+5",
+  cycleDirectory: "Alt+Q",
   openSettings: "Alt+6"
 };
 
@@ -666,7 +667,8 @@ const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }>
   { id: "activateNormal", name: t("shortcut.activateNormal") },
   { id: "activateStandby", name: t("shortcut.activateLine") },
   { id: "activateSkim", name: t("shortcut.activateSkim") },
-  { id: "openSettings", name: t("shortcut.openSettings") }
+  { id: "openSettings", name: t("shortcut.openSettings") },
+  { id: "cycleDirectory", name: t("shortcut.cycleDirectory") }
 ];
 
 const getQuickCommandGroups = (): Array<{
@@ -840,6 +842,7 @@ const normalizeShortcutActions = (shortcutActions?: Partial<ShortcutActionPrefer
   activateNormal: shortcutActions?.activateNormal || defaultShortcutActions.activateNormal,
   activateStandby: shortcutActions?.activateStandby || defaultShortcutActions.activateStandby,
   activateSkim: shortcutActions?.activateSkim || defaultShortcutActions.activateSkim,
+  cycleDirectory: shortcutActions?.cycleDirectory || defaultShortcutActions.cycleDirectory,
   openSettings: shortcutActions?.openSettings || defaultShortcutActions.openSettings
 });
 
@@ -2304,6 +2307,25 @@ const App = () => {
     }
   };
 
+  const updateResultsSearchOptions = (nextSearch: SearchState) => {
+    const nextDirectory = nextSearch.directoryId !== search.directoryId
+      ? directoryOptions.find((directory) => directory.id === nextSearch.directoryId)
+      : undefined;
+    updateResultsSearch(nextSearch, true);
+    if (nextDirectory) {
+      showQuickCommandNotice(nextDirectory.id === "all"
+        ? t("search.allDirectoriesSwitched")
+        : t("search.directorySwitched", { name: nextDirectory.name }));
+    }
+  };
+
+  const cycleSearchDirectory = () => {
+    if (directoryOptions.length <= 1) return;
+    const currentIndex = directoryOptions.findIndex((directory) => directory.id === search.directoryId);
+    const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % directoryOptions.length;
+    updateResultsSearchOptions({ ...search, directoryId: directoryOptions[nextIndex].id });
+  };
+
   const updateSkimDisplay = (nextSkimDisplay: SkimDisplayPreferences) => {
     setSkimDisplay(nextSkimDisplay);
     if (viewDisplaySearchTimerRef.current !== null) {
@@ -3680,6 +3702,27 @@ const App = () => {
         return;
       }
 
+      const searchResultsVisible = (
+        shellState === "micro"
+        || shellState === "mini"
+        || shellState === "normal"
+      ) && (view === "home" || view === "results");
+      if (
+        quickActionGlobalEnabled
+        && searchResultsVisible
+        && !dialog
+        && !contextMenu
+        && !editingDirectoryId
+        && matchesShortcutEvent(event, shortcutActions.cycleDirectory)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) {
+          cycleSearchDirectory();
+        }
+        return;
+      }
+
       if (matchesShortcutEvent(event, shortcutActions.activateSkim)) {
         event.preventDefault();
         event.stopPropagation();
@@ -3705,6 +3748,7 @@ const App = () => {
     closeNavigationOverlays,
     cacheClearFeedback,
     contextMenu,
+    cycleSearchDirectory,
     deleteFilesFeedback,
     dialog,
     editingDirectoryId,
@@ -3717,6 +3761,7 @@ const App = () => {
     openSkim,
     openSettings,
     pendingQuickCommandConfirmation,
+    quickActionGlobalEnabled,
     search,
     selectedResultImageId,
     showQuickCommandNotice,
@@ -4030,7 +4075,7 @@ const App = () => {
                 onSearchChange={setSearch}
                 onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
                 onSearch={openResults}
-                onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch, true)}
+                onSearchOptionsChange={updateResultsSearchOptions}
               />
             )}
             {activeView === "results" && dialog === "editKeywords" && keywordEditSession && (
@@ -4110,7 +4155,7 @@ const App = () => {
                 }}
                 onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
                 onSearchDisplayModeChange={(searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })}
-                onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch, true)}
+                onSearchOptionsChange={updateResultsSearchOptions}
                 onSearch={() => submitSearch(search)}
                 onContextMenu={(event, item, selectedItems, preview) => {
                   event.preventDefault();
@@ -4287,7 +4332,7 @@ const App = () => {
                   setSearch(nextSearch);
                 }}
                 onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
-                onSearchOptionsChange={(nextSearch) => updateResultsSearch(nextSearch, true)}
+                onSearchOptionsChange={updateResultsSearchOptions}
                 onThemeChange={updateTheme}
                 onLanguageChange={updateLanguage}
                 onAppearanceColorsPreview={previewAppearanceColors}
@@ -5972,6 +6017,7 @@ const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVis
       visibility: "visible"
     }
     : { ...labelMenuThemeStyle, left: 0, top: 0, visibility: "hidden" };
+  const temporaryInputFeedback = inputFeedbackIsGuide ? "" : inputFeedback;
   return (
   <form
     className={`cap7ce-top-capsule cap7ce-search-capsule${unified ? " cap7ce-search-capsule-unified" : ""}${directoryChipsOpen ? " cap7ce-search-capsule-directory-open" : ""}${!enabledGroups.has("skimDisplay") ? " cap7ce-search-capsule-directory-first" : ""}`}
@@ -6140,29 +6186,36 @@ const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVis
     <button className="cap7ce-pill cap7ce-pill-icon" type="button" title={t("common.view")}>
       □
     </button>
-    <input
-      className={`cap7ce-capsule-input${inputFeedbackIsGuide ? " cap-operation-hint" : ""}`}
-      ref={inputRef}
-      value={search.query}
-      placeholder={inputFeedback}
-      title={inputFeedback || undefined}
-      onChange={(event) => {
-        clearQueryClearSearchTimer();
-        const nextSearch = { ...search, query: event.target.value };
-        const userClearedQuery = autoSearchOnQueryClear
-          && search.query.trim().length > 0
-          && nextSearch.query.trim().length === 0;
-        onSearchChange(nextSearch);
-        if (userClearedQuery && onSearchOptionsChange) {
-          queryClearSearchTimerRef.current = window.setTimeout(() => {
-            queryClearSearchTimerRef.current = null;
-            onSearchOptionsChange({ ...nextSearch, query: "" });
-          }, 500);
-        }
-      }}
-      aria-label={t("search.inputLabel")}
-      autoComplete="off"
-    />
+    <div className="cap7ce-capsule-input-shell">
+      <input
+        className={`cap7ce-capsule-input${inputFeedbackIsGuide ? " cap-operation-hint" : ""}${temporaryInputFeedback ? " cap-temporary-feedback-active" : ""}`}
+        ref={inputRef}
+        value={search.query}
+        placeholder={inputFeedbackIsGuide ? inputFeedback : ""}
+        title={inputFeedback || undefined}
+        onChange={(event) => {
+          clearQueryClearSearchTimer();
+          const nextSearch = { ...search, query: event.target.value };
+          const userClearedQuery = autoSearchOnQueryClear
+            && search.query.trim().length > 0
+            && nextSearch.query.trim().length === 0;
+          onSearchChange(nextSearch);
+          if (userClearedQuery && onSearchOptionsChange) {
+            queryClearSearchTimerRef.current = window.setTimeout(() => {
+              queryClearSearchTimerRef.current = null;
+              onSearchOptionsChange({ ...nextSearch, query: "" });
+            }, 500);
+          }
+        }}
+        aria-label={t("search.inputLabel")}
+        autoComplete="off"
+      />
+      {temporaryInputFeedback && (
+        <span className="cap7ce-capsule-input-feedback" title={temporaryInputFeedback}>
+          {temporaryInputFeedback}
+        </span>
+      )}
+    </div>
     <div className="cap7ce-capsule-status">{status}</div>
     {labelMenuEnabled && labelMenuPointer && createPortal(
       <div

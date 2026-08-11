@@ -120,6 +120,7 @@ export type ShortcutActionId =
   | "activateNormal"
   | "activateStandby"
   | "activateSkim"
+  | "cycleDirectory"
   | "openSettings";
 
 export type ShortcutActionPreferences = Record<ShortcutActionId, string>;
