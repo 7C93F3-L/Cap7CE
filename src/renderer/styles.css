@@ -1916,16 +1916,18 @@ textarea,
 }
 
 .cap-settings-quick-command-groups {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 34px;
+  column-count: 2;
+  column-gap: 34px;
 }
 
 .cap-settings-quick-command-group {
   min-width: 0;
-  display: grid;
+  width: 100%;
+  display: inline-grid;
   align-content: start;
   gap: 8px;
+  margin: 0 0 18px;
+  break-inside: avoid;
 }
 
 .cap-settings-quick-command-group h3 {
@@ -1942,7 +1944,7 @@ textarea,
 }
 
 .cap-settings-quick-command-danger {
-  grid-column: 1 / -1;
+  column-span: all;
   margin-top: 4px;
 }
 
