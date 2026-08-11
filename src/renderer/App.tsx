@@ -3524,6 +3524,11 @@ const App = () => {
       } else if (view === "skim") {
         navigateSkimForward();
       } else {
+        const nextIndex = navigationIndexRef.current + 1;
+        if (navigationEntriesRef.current[nextIndex] === "settings") {
+          openSettings();
+          return;
+        }
         navigateForward();
       }
     };
@@ -3536,7 +3541,7 @@ const App = () => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [closeSettings, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, shellState, view]);
+  }, [closeSettings, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettings, shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateCapsuleShortcut?.(() => {
