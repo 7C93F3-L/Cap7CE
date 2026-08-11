@@ -381,6 +381,16 @@ textarea,
   transform-origin: center center;
 }
 
+.cap-transition-normal-to-mini.cap-shell-mini {
+  animation: cap-normal-to-mini 460ms var(--cap-ease) both;
+  transform-origin: center center;
+}
+
+.cap-transition-mini-to-micro.cap-shell-micro {
+  animation: cap-mini-to-micro 420ms var(--cap-ease) both;
+  transform-origin: bottom center;
+}
+
 .cap-transition-normal-to-settings.cap-shell-settings,
 .cap-transition-settings-to-normal.cap-shell-normal {
   animation: cap-content-settle 320ms var(--cap-ease) both;
@@ -398,6 +408,8 @@ textarea,
 
 .cap-transition-micro-to-mini .cap-shell-content,
 .cap-transition-mini-to-normal .cap-shell-content,
+.cap-transition-normal-to-mini .cap-shell-content,
+.cap-transition-mini-to-micro .cap-shell-content,
 .cap-transition-normal-to-micro .cap-shell-content,
 .cap-transition-normal-to-settings .cap-shell-content,
 .cap-transition-settings-to-normal .cap-shell-content {
@@ -470,6 +482,32 @@ textarea,
   100% {
     transform: scaleX(1) scaleY(1);
     border-radius: var(--radius-window-normal);
+    opacity: 1;
+  }
+}
+
+@keyframes cap-normal-to-mini {
+  0% {
+    transform: scaleX(1.06) scaleY(1.08);
+    border-radius: var(--radius-window-normal);
+    opacity: 0.96;
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    border-radius: var(--radius-window-mini);
+    opacity: 1;
+  }
+}
+
+@keyframes cap-mini-to-micro {
+  0% {
+    transform: scaleX(0.98) scaleY(1.1);
+    border-radius: var(--radius-window-mini);
+    opacity: 0.96;
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+    border-radius: var(--radius-window-micro);
     opacity: 1;
   }
 }
