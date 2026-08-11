@@ -5099,7 +5099,8 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
   const previewRequestGuard = useMemo(() => createPreviewRequestGuard(), []);
-  const statusText = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length }));
+  const statusText = isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length });
+  const resolvedInputFeedback = feedback || inputFeedback;
   const isHorizontalGrid = shellState === "micro";
   const gridLayout = getImageGridLayout(getResultLayoutMode(shellState), gridViewport.width, gridViewport.height);
   const virtualGrid = useMemo(() => {
@@ -5441,8 +5442,8 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
         directoryName=""
         labelVisibility={labelVisibility}
         status={statusText}
-        inputFeedback={inputFeedback}
-        inputFeedbackIsGuide={inputFeedbackIsGuide}
+        inputFeedback={resolvedInputFeedback}
+        inputFeedbackIsGuide={!feedback && inputFeedbackIsGuide}
         unified
         inputRef={searchInputRef}
         directoryGroup={{

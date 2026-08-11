@@ -1211,7 +1211,7 @@ textarea,
 
 .cap7ce-capsule-input::placeholder,
 .cap-capsule input::placeholder {
-  color: var(--text-muted);
+  color: var(--accent-color);
   opacity: 1;
 }
 
