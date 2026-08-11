@@ -1036,6 +1036,7 @@ const App = () => {
   const [skimCacheClearFeedback, setSkimCacheClearFeedback] = useState<CacheClearFeedback | null>(null);
   const [isClearingSkimCache, setIsClearingSkimCache] = useState(false);
   const [cacheInlineFeedback, setCacheInlineFeedback] = useState("");
+  const [skimCacheInlineFeedback, setSkimCacheInlineFeedback] = useState("");
   const [contextMenu, setContextMenu] = useState<ImageContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
   const [shellTransition, setShellTransition] = useState<ShellTransition | null>(null);
@@ -1086,6 +1087,7 @@ const App = () => {
   const skimForwardPathsRef = useRef<string[]>([]);
   const settingsOpenedFromSkimRef = useRef(false);
   const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
+  const skimCacheInlineFeedbackTimerRef = useRef<number | null>(null);
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
   const scanResultsRefreshedDuringTaskRef = useRef(false);
   const keywordEditScrollSnapshotRef = useRef<KeywordEditScrollSnapshot | null>(null);
@@ -1266,6 +1268,16 @@ const App = () => {
     cacheInlineFeedbackTimerRef.current = window.setTimeout(() => {
       setCacheInlineFeedback("");
       cacheInlineFeedbackTimerRef.current = null;
+    }, 3600);
+  }, []);
+  const showSkimCacheInlineFeedback = useCallback((message: string) => {
+    if (skimCacheInlineFeedbackTimerRef.current !== null) {
+      window.clearTimeout(skimCacheInlineFeedbackTimerRef.current);
+    }
+    setSkimCacheInlineFeedback(message);
+    skimCacheInlineFeedbackTimerRef.current = window.setTimeout(() => {
+      setSkimCacheInlineFeedback("");
+      skimCacheInlineFeedbackTimerRef.current = null;
     }, 3600);
   }, []);
   const resetShellBehaviorState = useCallback(() => {
@@ -1681,6 +1693,10 @@ const App = () => {
     if (cacheInlineFeedbackTimerRef.current !== null) {
       window.clearTimeout(cacheInlineFeedbackTimerRef.current);
       cacheInlineFeedbackTimerRef.current = null;
+    }
+    if (skimCacheInlineFeedbackTimerRef.current !== null) {
+      window.clearTimeout(skimCacheInlineFeedbackTimerRef.current);
+      skimCacheInlineFeedbackTimerRef.current = null;
     }
     if (skimFeedbackTimerRef.current !== null) {
       window.clearTimeout(skimFeedbackTimerRef.current);
@@ -3803,7 +3819,7 @@ const App = () => {
       } else {
         setSkimCacheClearFeedback(null);
         setDialog(null);
-        showCacheInlineFeedback(t("settings.skimCacheCleared"));
+        showSkimCacheInlineFeedback(t("settings.skimCacheCleared"));
       }
       return stats;
     } catch (error) {
@@ -4230,6 +4246,7 @@ const App = () => {
                 isClearingCache={isClearingCache}
                 isClearingSkimCache={isClearingSkimCache}
                 cacheInlineFeedback={cacheInlineFeedback}
+                skimCacheInlineFeedback={skimCacheInlineFeedback}
                 editingDirectoryId={editingDirectoryId}
                 onSearchChange={(nextSearch) => {
                   clearQuickCommandNotice();
@@ -6958,6 +6975,7 @@ interface SettingsViewProps {
   isClearingCache: boolean;
   isClearingSkimCache: boolean;
   cacheInlineFeedback: string;
+  skimCacheInlineFeedback: string;
   editingDirectoryId: string | null;
   onSearchChange: (search: SearchState) => void;
   onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
@@ -7001,7 +7019,7 @@ interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, edgeSnapEnabled, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, isScanning, isCancellingRecognition, aiProgress, scanSummary, scanError, indexStats, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, skimCacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onEdgeSnapChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onUpdateAll, onRecognizeDirectory, onContinueRecognition, onCancelRecognition, onRetryIndex, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onOpenIndexView, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const [selectedIndexStat, setSelectedIndexStat] = useState<RecognitionStatusFilter | null>(null);
   const [indexDetailsExpanded, setIndexDetailsExpanded] = useState(isScanning);
   const [indexDetailsClosing, setIndexDetailsClosing] = useState(false);
@@ -7691,7 +7709,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           <div className="cap-settings-row">
             <span className="cap-settings-label">{t("settings.skimCache")}</span>
             <span className="cap-settings-value">
-              {t("settings.cacheStats", { count: skimCacheStats.cacheCount, size: formatCacheSize(skimCacheStats.totalBytes) })}
+              {skimCacheInlineFeedback || t("settings.cacheStats", { count: skimCacheStats.cacheCount, size: formatCacheSize(skimCacheStats.totalBytes) })}
             </span>
             <button
               className="cap-settings-pill"
