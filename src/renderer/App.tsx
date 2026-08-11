@@ -5299,6 +5299,18 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
+    if (gridScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(gridScrollFrameRef.current);
+      gridScrollFrameRef.current = null;
+    }
+    container.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    pendingGridScrollOffsetRef.current = 0;
+    setGridScrollOffset(0);
+  }, [currentPath]);
+
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
     const nextOffset = isHorizontalGrid ? container.scrollLeft : container.scrollTop;
     pendingGridScrollOffsetRef.current = nextOffset;
     setGridScrollOffset(nextOffset);
