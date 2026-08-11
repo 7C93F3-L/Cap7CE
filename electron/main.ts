@@ -49,6 +49,10 @@ const applicationName = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
 app.setName(applicationName);
 app.setPath("userData", path.join(app.getPath("appData"), applicationName));
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
 
 const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
   if (process.platform !== "win32" || !app.isPackaged) {
@@ -64,6 +68,7 @@ let mainWindow: BrowserWindow | null = null;
 let startupHintWindow: BrowserWindow | null = null;
 let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
+let duplicateLaunchNotificationPending = false;
 let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let isQuitting = false;
 let cancelAiIndexRequested = false;
@@ -1365,8 +1370,8 @@ const isMainWindowInBackground = () => (
   Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isFocused())
 );
 
-const showSystemNotification = (title: string, content: string) => {
-  if (!systemNotificationsEnabled || process.platform !== "win32" || !appTray) {
+const showSystemNotification = (title: string, content: string, options: { force?: boolean } = {}) => {
+  if ((!systemNotificationsEnabled && !options.force) || process.platform !== "win32" || !appTray) {
     return false;
   }
   try {
@@ -1383,6 +1388,19 @@ const showSystemNotification = (title: string, content: string) => {
     console.warn("[system-notification] failed", error);
     return false;
   }
+};
+
+const showDuplicateLaunchNotification = () => {
+  if (!appTray) {
+    duplicateLaunchNotificationPending = true;
+    return false;
+  }
+  duplicateLaunchNotificationPending = false;
+  return showSystemNotification(
+    t("notification.backgroundRunTitle"),
+    t("notification.duplicateLaunchContent"),
+    { force: true }
+  );
 };
 
 const showBackgroundRunNotificationOnce = async (
@@ -2368,7 +2386,13 @@ const createWindow = () => {
   });
 };
 
-app.whenReady().then(async () => {
+if (hasSingleInstanceLock) {
+  app.on("second-instance", () => {
+    showDuplicateLaunchNotification();
+  });
+}
+
+if (hasSingleInstanceLock) app.whenReady().then(async () => {
   registerLocalImageProtocol();
   await prepareOfficePreviewTemporaryRoot().catch((error) => {
     console.warn("[office-preview] failed to reset temporary root", error);
@@ -2404,6 +2428,9 @@ app.whenReady().then(async () => {
   });
   void createStartupHintWindow();
   createAppTray();
+  if (duplicateLaunchNotificationPending) {
+    showDuplicateLaunchNotification();
+  }
   if (quickActionGlobalEnabled) {
     registerConfiguredGlobalShortcuts(preferences.shortcutActions);
   } else {

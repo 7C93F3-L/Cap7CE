@@ -741,6 +741,7 @@ export const zhCN = {
   "notification.backgroundRunTitle": "Cap7CE 已在后台运行",
   "notification.backgroundRunContent": "按 {shortcut} 随时开始搜索，或从系统托盘打开设置。",
   "notification.backgroundRunContentWithoutShortcut": "可从系统托盘打开设置。",
+  "notification.duplicateLaunchContent": "无需重复启动，可使用快捷键唤醒或从系统托盘打开。",
   "notification.aiCompletedTitle": "AI 识别完成",
   "notification.aiCompletedContent": "成功 {completed} 项，失败 {failed} 项。",
   "notification.aiFailedTitle": "AI 识别失败",

@@ -741,6 +741,7 @@ export const enUS = defineLocale({
   "notification.backgroundRunTitle": "Cap7CE is running in the background",
   "notification.backgroundRunContent": "Press {shortcut} to search anytime, or open Settings from the system tray.",
   "notification.backgroundRunContentWithoutShortcut": "Open Settings from the system tray.",
+  "notification.duplicateLaunchContent": "No need to start it again. Use a shortcut to activate Cap7CE, or open it from the system tray.",
   "notification.aiCompletedTitle": "AI Recognition Complete",
   "notification.aiCompletedContent": "{completed} succeeded, {failed} failed.",
   "notification.aiFailedTitle": "AI Recognition Failed",
