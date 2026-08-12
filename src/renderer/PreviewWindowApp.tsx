@@ -271,7 +271,14 @@ const PreviewWindowApp = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space" || event.key === "Escape") {
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (event.repeat) return;
+        mediaRef.current?.pause();
+        void window.imageEverything?.preview.close();
+        return;
+      }
+      if (event.key === "Escape") {
         event.preventDefault();
         mediaRef.current?.pause();
         void window.imageEverything?.preview.close();

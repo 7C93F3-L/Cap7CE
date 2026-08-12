@@ -5696,6 +5696,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                         openEntry(entry);
                       } else if (!isLoading && entry.kind !== "drive" && event.code === "Space") {
                         event.preventDefault();
+                        if (event.repeat) return;
                         if (!selectedPaths.has(entry.path)) selectEntry(entry, false, false);
                         void openPreview(entry);
                       }
