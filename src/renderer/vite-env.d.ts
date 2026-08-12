@@ -11,6 +11,7 @@ declare global {
     imageEverything?: {
       window: {
         setShellState: (state: Cap7CEShellState, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => Promise<boolean>;
+        revealAfterShellStateReady: () => Promise<boolean>;
         setAlwaysOnTop: (enabled: boolean) => Promise<Cap7CEAlwaysOnTopState>;
         getAlwaysOnTop: () => Promise<Cap7CEAlwaysOnTopState>;
         toggleNormalMaximized: () => Promise<{ isMaximized: boolean; lastNormalBounds: Cap7CEWindowBounds | null }>;
@@ -22,7 +23,10 @@ declare global {
         onActivateSkimRequested: (callback: () => void) => () => void;
         onShowAllFilesRequested: (callback: () => void) => () => void;
         onActivateCapsuleShortcut: (callback: () => void) => () => void;
-        onActivateShellModeShortcut: (callback: (mode: "micro" | "mini" | "normal" | "standby") => void) => () => void;
+        onActivateShellModeShortcut: (callback: (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => void) => () => void;
+      };
+      line: {
+        onRefreshAppearance: (callback: () => void) => () => void;
       };
       app: {
         quit: () => Promise<boolean>;

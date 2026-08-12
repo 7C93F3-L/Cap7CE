@@ -3,9 +3,15 @@ import ReactDOM from "react-dom/client";
 import "./styles.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
-const isPreviewWindow = new URLSearchParams(window.location.search).get("window") === "preview";
+const windowKind = new URLSearchParams(window.location.search).get("window");
+const isPreviewWindow = windowKind === "preview";
+const isLineWindow = windowKind === "line";
 
-if (isPreviewWindow) {
+if (isLineWindow) {
+  void import("./LineWindowApp").then(({ default: LineWindowApp }) => {
+    root.render(<LineWindowApp />);
+  });
+} else if (isPreviewWindow) {
   void import("./PreviewWindowApp").then(({ default: PreviewWindowApp }) => {
     root.render(
       <React.StrictMode>

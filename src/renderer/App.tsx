@@ -1411,7 +1411,14 @@ const App = () => {
     void window.imageEverything?.window.setShellState(
       shellState,
       preserveBounds ? { preserveBounds: true } : undefined
-    ).then(() => syncAlwaysOnTop());
+    ).then(() => {
+      syncAlwaysOnTop();
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          void window.imageEverything?.window.revealAfterShellStateReady();
+        });
+      });
+    });
   }, [shellState, syncAlwaysOnTop]);
 
   useEffect(() => {
@@ -2107,7 +2114,7 @@ const App = () => {
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateShellModeShortcut?.((mode) => {
-      setCommandShellMode(mode === "standby" ? "line" : mode);
+      setCommandShellMode(mode === "standby" ? "line" : mode === "capsule" ? "cap" : mode);
       if (mode === "standby" || dialog) return;
       window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
     });
@@ -2625,10 +2632,6 @@ const App = () => {
     setSearch(nextSearch);
     submitSearch(nextSearch);
   };
-
-  const activateStandbyCapsule = useCallback(() => {
-    setShellState((currentShellState) => currentShellState === "standby" ? "capsule" : currentShellState);
-  }, []);
 
   const collapseShellToStandby = useCallback(() => {
     resetShellBehaviorState();
@@ -4072,24 +4075,9 @@ const App = () => {
         setDialog("addDroppedDirectories");
       }}
       onClick={() => {
-        if (shellState === "standby") {
-          activateStandbyCapsule();
-          return;
-        }
         setContextMenu(null);
       }}
     >
-      {shellState === "standby" && (
-        <button
-          className="cap-standby-line"
-          type="button"
-          aria-label={t("search.expandCapsule")}
-          onClick={(event) => {
-            event.stopPropagation();
-            activateStandbyCapsule();
-          }}
-        />
-      )}
       {DEBUG_WINDOW_BOUNDS && (shellState === "standby" || shellState === "capsule") && (
         <div className="cap-debug-window-viewport" aria-hidden="true" />
       )}

@@ -29,7 +29,7 @@ import { readSkimLocation } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
-import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
+import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
@@ -70,6 +70,7 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
 };
 
 let mainWindow: BrowserWindow | null = null;
+let lineWindow: BrowserWindow | null = null;
 let startupHintWindow: BrowserWindow | null = null;
 let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
@@ -82,6 +83,8 @@ let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let resizeSettledTimer: NodeJS.Timeout | null = null;
 let shellMousePassthroughTimer: NodeJS.Timeout | null = null;
 let shellWorkAreaRefreshTimer: NodeJS.Timeout | null = null;
+let hiddenActivationRevealTimer: NodeJS.Timeout | null = null;
+let hiddenActivationRevealPending = false;
 let lastShellMousePoint: Electron.Point | null = null;
 let stationaryShellMousePollCount = 0;
 let shellIgnoreMouseEvents = false;
@@ -98,7 +101,7 @@ let previewOpenRequestId = 0;
 let shellAlwaysOnTop = false;
 let shellMaximized = false;
 let lastNormalBounds: Electron.Rectangle | null = null;
-let activeShellState: Cap7CEShellState = "standby";
+let activeShellState: Cap7CEShellState = "normal";
 let mainWindowSkipTaskbar: boolean | null = null;
 let microBottomCenterAnchored = false;
 let edgeSnapEnabled = true;
@@ -137,7 +140,6 @@ const previewSourceFallbackExtensions = new Set([".jpg", ".jpeg", ".png", ".gif"
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 const shellWindowStates = new Set<Cap7CEShellState>(["standby", "capsule", "micro", "mini", "normal", "settings"]);
 const standbyVisualWidthPx = 180;
-const standbyVisualHeightPx = 4;
 const standbyInteractionHeightPx = 15;
 const backgroundTaskNotificationMinimumMs = 60_000;
 const cacheCompletionNotificationCooldownMs = 30 * 60_000;
@@ -705,6 +707,64 @@ const getShellDisplay = () => (
     : screen.getPrimaryDisplay()
 );
 
+const getLineWindowBounds = (windowHeight = standbyInteractionHeightPx): Electron.Rectangle => {
+  const display = mainWindow && !mainWindow.isDestroyed()
+    ? screen.getDisplayMatching(mainWindow.getBounds())
+    : screen.getPrimaryDisplay();
+  const { x, y, width, height } = display.workArea;
+  return {
+    width: standbyVisualWidthPx,
+    height: windowHeight,
+    x: x + Math.round((width - standbyVisualWidthPx) / 2),
+    y: y + height - edgeGapPx - windowHeight
+  };
+};
+
+const syncLineWindowShape = () => {
+  if (!lineWindow || lineWindow.isDestroyed()) return;
+  const bounds = lineWindow.getBounds();
+  const interactionHeight = Math.min(standbyInteractionHeightPx, bounds.height);
+  lineWindow.setShape([{
+    x: 0,
+    y: bounds.height - interactionHeight,
+    width: bounds.width,
+    height: interactionHeight
+  }]);
+};
+
+const positionLineWindow = () => {
+  if (!lineWindow || lineWindow.isDestroyed()) return;
+  const actualHeight = lineWindow.getBounds().height;
+  lineWindow.setBounds(getLineWindowBounds(actualHeight), false);
+  syncLineWindowShape();
+};
+
+const hideLineWindow = () => {
+  if (lineWindow && !lineWindow.isDestroyed() && lineWindow.isVisible()) {
+    lineWindow.hide();
+  }
+};
+
+const refreshLineAppearance = () => {
+  if (lineWindow && !lineWindow.isDestroyed() && !lineWindow.webContents.isLoadingMainFrame()) {
+    lineWindow.webContents.send("line:refreshAppearance");
+  }
+};
+
+const showLineWindow = () => {
+  if (!standbyLineVisible || !lineWindow || lineWindow.isDestroyed()) return false;
+  positionLineWindow();
+  if (shellAlwaysOnTop) {
+    lineWindow.setAlwaysOnTop(true, "screen-saver");
+  } else {
+    lineWindow.setAlwaysOnTop(false);
+  }
+  refreshLineAppearance();
+  if (lineWindow.webContents.isLoadingMainFrame()) return false;
+  lineWindow.showInactive();
+  return true;
+};
+
 const getNormalWorkAreaBounds = (): Electron.Rectangle => {
   const { x, y, width, height } = getShellDisplay().workArea;
   return { x, y, width, height };
@@ -717,15 +777,6 @@ const getShellWindowBounds = (state: Cap7CEShellState): Electron.Rectangle => {
   const { x, y, width, height } = display.workArea;
   const bottom = y + height;
   const centerX = x + Math.round(width / 2);
-
-  if (state === "standby") {
-    return {
-      width: standbyVisualWidthPx,
-      height: standbyVisualHeightPx,
-      x: centerX - Math.round(standbyVisualWidthPx / 2),
-      y: bottom - edgeGapPx - standbyVisualHeightPx
-    };
-  }
 
   if (state === "capsule") {
     return {
@@ -764,9 +815,17 @@ const getShellWindowBounds = (state: Cap7CEShellState): Electron.Rectangle => {
 
 const scheduleBottomAnchoredShellWorkAreaRefresh = (changedDisplayId: number) => {
   if (
+    lineWindow
+    && !lineWindow.isDestroyed()
+    && lineWindow.isVisible()
+    && screen.getDisplayMatching(lineWindow.getBounds()).id === changedDisplayId
+  ) {
+    positionLineWindow();
+  }
+  if (
     !mainWindow
     || mainWindow.isDestroyed()
-    || (activeShellState !== "standby" && activeShellState !== "capsule")
+    || activeShellState !== "capsule"
     || screen.getDisplayMatching(mainWindow.getBounds()).id !== changedDisplayId
   ) {
     return;
@@ -780,7 +839,7 @@ const scheduleBottomAnchoredShellWorkAreaRefresh = (changedDisplayId: number) =>
     if (
       !mainWindow
       || mainWindow.isDestroyed()
-      || (activeShellState !== "standby" && activeShellState !== "capsule")
+      || activeShellState !== "capsule"
     ) {
       return;
     }
@@ -791,17 +850,7 @@ const scheduleBottomAnchoredShellWorkAreaRefresh = (changedDisplayId: number) =>
       return;
     }
 
-    const targetBounds = getShellWindowBounds(activeShellState);
-    const nextBounds = activeShellState === "standby"
-      ? {
-          ...currentBounds,
-          x: targetBounds.x,
-          y: currentDisplay.workArea.y
-            + currentDisplay.workArea.height
-            - edgeGapPx
-            - currentBounds.height
-        }
-      : targetBounds;
+    const nextBounds = getShellWindowBounds(activeShellState);
     if (
       currentBounds.x === nextBounds.x
       && currentBounds.y === nextBounds.y
@@ -1141,15 +1190,9 @@ const sendActivateCapsuleShortcutToRenderer = () => {
   }
 };
 
-const sendActivateShellModeShortcutToRenderer = (mode: "micro" | "mini" | "normal" | "standby") => {
+const sendActivateShellModeShortcutToRenderer = (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:activateShellModeShortcut", mode);
-  }
-};
-
-const sendStandbyLineVisibleToRenderer = () => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("preferences:standbyLineVisibleChanged", standbyLineVisible);
   }
 };
 
@@ -1164,7 +1207,12 @@ const showAndFocusMainWindow = () => {
     return false;
   }
 
+  const shouldWaitForTargetLayout = activeShellState === "standby" && !mainWindow.isVisible();
+  hideLineWindow();
   setShellIgnoreMouseEvents(false);
+  if (shouldWaitForTargetLayout) {
+    prepareHiddenActivationReveal();
+  }
   if (!mainWindow.isVisible()) {
     mainWindow.show();
   }
@@ -1178,16 +1226,15 @@ const showAndFocusMainWindow = () => {
 };
 
 const activateCapsuleShortcut = () => {
-  if (!showAndFocusMainWindow()) {
-    return;
-  }
-
-  if (activeShellState === "standby") {
-    applyCapsuleWindowMode();
-    sendShellStateToRenderer("capsule");
-  }
-
+  if (!showAndFocusMainWindow()) return;
+  sendActivateShellModeShortcutToRenderer("capsule");
   sendActivateCapsuleShortcutToRenderer();
+};
+
+const sendStandbyLineVisibleToRenderer = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("preferences:standbyLineVisibleChanged", standbyLineVisible);
+  }
 };
 
 const unregisterActivateCapsuleShortcut = () => {
@@ -1235,15 +1282,17 @@ const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "st
     return;
   }
 
-  if (mode !== "standby" && !showAndFocusMainWindow()) {
-    return;
-  }
-
   if (mode === "skim") {
+    if (!showAndFocusMainWindow()) return;
     sendActivateSkimToRenderer();
     return;
   }
-
+  if (mode === "standby") {
+    applyStandaloneLineMode();
+    sendActivateShellModeShortcutToRenderer(mode);
+    return;
+  }
+  if (!showAndFocusMainWindow()) return;
   sendActivateShellModeShortcutToRenderer(mode);
 };
 
@@ -1480,7 +1529,11 @@ const setStandbyLineVisible = async (nextStandbyLineVisible: boolean) => {
   sendStandbyLineVisibleToRenderer();
 
   if (activeShellState === "standby") {
-    applyStandbyWindowMode();
+    if (standbyLineVisible) {
+      showLineWindow();
+    } else {
+      hideLineWindow();
+    }
   }
 
   return preferences;
@@ -1526,7 +1579,7 @@ const openNormalFromTray = () => {
   sendShowAllFilesToRenderer();
 };
 
-const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "standby" | "capsule">) => {
+const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "capsule">) => {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return null;
   }
@@ -1552,12 +1605,8 @@ const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "standby" |
     isVisible: mainWindow.isVisible(),
     ignoreMouseEventsDebug: {
       currentIgnoreMouseEvents: shellIgnoreMouseEvents,
-      currentEntryPath: shellState === "standby"
-        ? "applyStandbyWindowMode"
-        : "applyCapsuleWindowMode",
-      expectedRules: shellState === "standby"
-        ? "false only when cursor is inside standby bounds; true with forward elsewhere"
-        : "false only when cursor is inside the current capsule window bounds; true with forward elsewhere",
+      currentEntryPath: "applyCapsuleWindowMode",
+      expectedRules: "false only when cursor is inside the current capsule window bounds; true with forward elsewhere",
       switchPoints: [
         "setShellIgnoreMouseEvents",
         "syncShellMousePassthrough",
@@ -1570,7 +1619,7 @@ const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "standby" |
 
 const logWindowBoundsDebug = (
   label: string,
-  shellState: Extract<Cap7CEShellState, "standby" | "capsule">
+  shellState: Extract<Cap7CEShellState, "capsule">
 ) => {
   if (!DEBUG_WINDOW_BOUNDS || !mainWindow || mainWindow.isDestroyed()) {
     return;
@@ -1603,7 +1652,7 @@ const setShellIgnoreMouseEvents = (ignore: boolean) => {
       shellState: activeShellState,
       ignore,
       forward: ignore,
-      path: activeShellState === "standby" || activeShellState === "capsule"
+      path: activeShellState === "capsule"
         ? "adaptive global cursor polling"
         : "normal window mode"
     });
@@ -1615,16 +1664,14 @@ const syncShellMousePassthrough = () => {
     return null;
   }
 
-  if (activeShellState !== "standby" && activeShellState !== "capsule") {
+  if (activeShellState !== "capsule") {
     setShellIgnoreMouseEvents(false);
     return null;
   }
 
   const cursorPoint = screen.getCursorScreenPoint();
   const windowBounds = mainWindow.getBounds();
-  const interactiveBounds = activeShellState === "standby"
-    ? getBottomAnchoredInteractiveBounds(windowBounds, standbyInteractionHeightPx)
-    : windowBounds;
+  const interactiveBounds = windowBounds;
   stationaryShellMousePollCount = lastShellMousePoint
     && lastShellMousePoint.x === cursorPoint.x
     && lastShellMousePoint.y === cursorPoint.y
@@ -1696,7 +1743,51 @@ const applyAlwaysOnTopState = () => {
     }
   }
 
+  if (lineWindow && !lineWindow.isDestroyed()) {
+    if (shellAlwaysOnTop) {
+      lineWindow.setAlwaysOnTop(true, "screen-saver");
+    } else {
+      lineWindow.setAlwaysOnTop(false);
+    }
+  }
+
   return Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isAlwaysOnTop());
+};
+
+const clearHiddenActivationReveal = () => {
+  hiddenActivationRevealPending = false;
+  if (hiddenActivationRevealTimer !== null) {
+    clearTimeout(hiddenActivationRevealTimer);
+    hiddenActivationRevealTimer = null;
+  }
+};
+
+const revealMainWindowAfterHiddenActivation = () => {
+  if (!hiddenActivationRevealPending || !mainWindow || mainWindow.isDestroyed()) {
+    return false;
+  }
+  if (!mainWindow.isVisible()) {
+    return false;
+  }
+
+  clearHiddenActivationReveal();
+  mainWindow.setOpacity(1);
+  applyAlwaysOnTopState();
+  mainWindow.focus();
+  mainWindow.moveTop();
+  return true;
+};
+
+const prepareHiddenActivationReveal = () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  clearHiddenActivationReveal();
+  hiddenActivationRevealPending = true;
+  mainWindow.setOpacity(0);
+  hiddenActivationRevealTimer = setTimeout(() => {
+    hiddenActivationRevealTimer = null;
+    revealMainWindowAfterHiddenActivation();
+  }, 800);
 };
 
 const sendAlwaysOnTopStateToRenderer = () => {
@@ -1728,67 +1819,29 @@ const resetShellBehavior = () => {
   }
 };
 
-const applyStandbyWindowMode = () => {
+const applyStandaloneLineMode = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
-  resetShellBehavior();
-  if (mainWindow.isMaximized()) {
-    mainWindow.unmaximize();
-  }
-
-  const standbyBounds = getShellWindowBounds("standby");
-  markProgrammaticResize();
-  markProgrammaticMove();
-  mainWindow.setMinimumSize(1, 1);
-  mainWindow.setHasShadow(false);
-  mainWindow.setResizable(false);
-  mainWindow.setShape([]);
+  clearHiddenActivationReveal();
+  mainWindow.setOpacity(1);
+  stopShellMousePassthrough();
   setShellIgnoreMouseEvents(false);
-  mainWindow.setBounds(standbyBounds, true);
-  const actualStandbyBounds = mainWindow.getBounds();
-  if (actualStandbyBounds.height !== standbyBounds.height) {
-    const { workArea } = screen.getDisplayMatching(actualStandbyBounds);
-    markProgrammaticMove();
-    mainWindow.setBounds({
-      ...actualStandbyBounds,
-      x: standbyBounds.x,
-      y: workArea.y + workArea.height - edgeGapPx - actualStandbyBounds.height
-    }, false);
-  }
-  const shapedStandbyBounds = mainWindow.getBounds();
-  const standbyShapeHeight = Math.min(standbyInteractionHeightPx, shapedStandbyBounds.height);
-  mainWindow.setShape([{
-    x: 0,
-    y: shapedStandbyBounds.height - standbyShapeHeight,
-    width: shapedStandbyBounds.width,
-    height: standbyShapeHeight
-  }]);
-  applyAlwaysOnTopState();
   activeShellState = "standby";
   syncTaskbarVisibility(activeShellState);
+  mainWindow.hide();
+  if (standbyLineVisible) {
+    showLineWindow();
+  } else {
+    hideLineWindow();
+  }
   updateTrayMenu();
-
-  if (!standbyLineVisible) {
-    stopShellMousePassthrough();
-    mainWindow.hide();
-    return true;
-  }
-
-  if (!mainWindow.isVisible()) {
-    mainWindow.showInactive();
-    applyAlwaysOnTopState();
-  }
-  mainWindow.blur();
-  startShellMousePassthrough();
-
-  logWindowBoundsDebug("[standby after setBounds]", "standby");
-
   return true;
 };
 
 const applyCapsuleWindowMode = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
+  hideLineWindow();
   resetShellBehavior();
   if (mainWindow.isMaximized()) {
     mainWindow.unmaximize();
@@ -1805,6 +1858,16 @@ const applyCapsuleWindowMode = () => {
   setShellIgnoreMouseEvents(false);
   mainWindow.setBounds(capsuleBounds, false);
   mainWindow.setContentSize(capsuleBounds.width, capsuleBounds.height, false);
+  const actualCapsuleBounds = mainWindow.getBounds();
+  if (actualCapsuleBounds.height !== capsuleBounds.height) {
+    const { workArea } = screen.getDisplayMatching(actualCapsuleBounds);
+    markProgrammaticMove();
+    mainWindow.setBounds({
+      ...actualCapsuleBounds,
+      x: capsuleBounds.x,
+      y: workArea.y + workArea.height - edgeGapPx - actualCapsuleBounds.height
+    }, false);
+  }
   applyAlwaysOnTopState();
   mainWindow.moveTop();
   activeShellState = "capsule";
@@ -1822,11 +1885,12 @@ const applyCapsuleWindowMode = () => {
 const applyShellWindowState = (state: string, options: { preserveBounds?: boolean } = {}) => {
   if (!mainWindow || !isShellWindowState(state)) return false;
   if (state === "standby") {
-    return applyStandbyWindowMode();
+    return applyStandaloneLineMode();
   }
   if (state === "capsule") {
     return applyCapsuleWindowMode();
   }
+  hideLineWindow();
   microBottomCenterAnchored = false;
   mainWindow.setShape([]);
 
@@ -2263,6 +2327,7 @@ const applyBottomCenterMicroWillResize = (
 const forceApplyDefaultMicroBounds = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
+  hideLineWindow();
   const defaultMicroBounds = getShellWindowBounds("micro");
   clearResizeSettledCheck();
   const minimumSize = getShellMinimumSize("micro");
@@ -2291,17 +2356,70 @@ const forceApplyDefaultMicroBounds = () => {
   return true;
 };
 
-const createWindow = () => {
-  mainWindow = new BrowserWindow({
-    width: standbyVisualWidthPx,
-    height: standbyVisualHeightPx,
-    minWidth: 1,
-    minHeight: 1,
-    title: "Cap7CE",
+const createLineWindow = () => {
+  if (lineWindow && !lineWindow.isDestroyed()) return;
+  const bounds = getLineWindowBounds();
+  lineWindow = new BrowserWindow({
+    ...bounds,
+    minWidth: standbyVisualWidthPx,
+    maxWidth: standbyVisualWidthPx,
+    title: "Cap7CE Line",
     skipTaskbar: true,
     frame: false,
     transparent: true,
     hasShadow: false,
+    show: false,
+    resizable: false,
+    movable: false,
+    focusable: false,
+    backgroundColor: "#00000000",
+    paintWhenInitiallyHidden: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  lockWebContentsZoom(lineWindow.webContents);
+  lineWindow.setIgnoreMouseEvents(true);
+  positionLineWindow();
+
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL;
+  if (devServerUrl) {
+    const lineUrl = new URL(devServerUrl);
+    lineUrl.searchParams.set("window", "line");
+    void lineWindow.loadURL(lineUrl.toString());
+  } else {
+    void lineWindow.loadFile(path.join(__dirname, "../dist/index.html"), { query: { window: "line" } });
+  }
+
+  lineWindow.once("ready-to-show", () => {
+    positionLineWindow();
+    if (activeShellState === "standby" && standbyLineVisible) {
+      showLineWindow();
+    }
+  });
+  lineWindow.on("close", (event) => {
+    if (isQuitting) return;
+    event.preventDefault();
+    lineWindow?.hide();
+  });
+  lineWindow.on("closed", () => {
+    lineWindow = null;
+  });
+};
+
+const createWindow = () => {
+  const initialBounds = getShellWindowBounds("normal");
+  mainWindow = new BrowserWindow({
+    ...initialBounds,
+    minWidth: resizableShellMinimumWidthPx,
+    minHeight: resizableShellMinimumHeightPx,
+    title: "Cap7CE",
+    skipTaskbar: false,
+    frame: false,
+    transparent: true,
+    hasShadow: true,
     show: false,
     backgroundColor: "#00000000",
     paintWhenInitiallyHidden: true,
@@ -2312,7 +2430,7 @@ const createWindow = () => {
     }
   });
   lockWebContentsZoom(mainWindow.webContents);
-  mainWindowSkipTaskbar = true;
+  mainWindowSkipTaskbar = false;
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
@@ -2322,10 +2440,8 @@ const createWindow = () => {
   }
 
   mainWindow.once("ready-to-show", () => {
-    applyStandbyWindowMode();
-    if (standbyLineVisible) {
-      mainWindow?.show();
-      applyAlwaysOnTopState();
+    if (activeShellState !== "standby") {
+      applyShellWindowState("normal");
     }
     syncThumbnailOptimizationActivity();
   });
@@ -2420,6 +2536,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   createWindow();
+  createLineWindow();
   screen.on("display-metrics-changed", (_event, display, changedMetrics) => {
     if (!changedMetrics.includes("workArea") && !changedMetrics.includes("bounds")) {
       return;
@@ -2461,6 +2578,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  clearHiddenActivationReveal();
   if (shellWorkAreaRefreshTimer !== null) {
     clearTimeout(shellWorkAreaRefreshTimer);
     shellWorkAreaRefreshTimer = null;
@@ -2488,7 +2606,7 @@ ipcMain.handle("window:setShellState", (_event, state: string, options?: { force
   }
 
   if (state === "standby") {
-    return applyStandbyWindowMode();
+    return applyStandaloneLineMode();
   }
   if (state === "capsule") {
     return applyCapsuleWindowMode();
@@ -2499,6 +2617,13 @@ ipcMain.handle("window:setShellState", (_event, state: string, options?: { force
   }
 
   return applyShellWindowState(state, { preserveBounds: Boolean(options?.preserveBounds) });
+});
+
+ipcMain.handle("window:revealAfterShellStateReady", (event) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender.id !== mainWindow.webContents.id) {
+    return false;
+  }
+  return revealMainWindowAfterHiddenActivation();
 });
 
 ipcMain.handle("window:setAlwaysOnTop", async (_event, enabled: boolean) => {
@@ -3813,7 +3938,9 @@ ipcMain.handle("preferences:get", () => {
 });
 
 ipcMain.handle("preferences:updateTheme", async (_event, themePreference: "system" | "light" | "dark") => {
-  return updateThemePreference(themePreference);
+  const preferences = await updateThemePreference(themePreference);
+  refreshLineAppearance();
+  return preferences;
 });
 
 ipcMain.handle("preferences:updateLanguage", async (_event, languagePreference: LanguagePreference) => {
@@ -3834,7 +3961,9 @@ ipcMain.handle("preferences:updateSkimSort", (_event, skimSortPreference: { sort
 });
 
 ipcMain.handle("preferences:updateAppearanceColors", async (_event, appearanceColors: { themeColor: string; accentColor: string }) => {
-  return updateAppearanceColorsPreference(appearanceColors);
+  const preferences = await updateAppearanceColorsPreference(appearanceColors);
+  refreshLineAppearance();
+  return preferences;
 });
 
 ipcMain.handle("preferences:updateEdgeSnap", async (_event, nextEdgeSnapEnabled: boolean) => {

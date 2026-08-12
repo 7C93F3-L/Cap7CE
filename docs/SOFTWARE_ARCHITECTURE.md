@@ -40,12 +40,12 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 创建主 `BrowserWindow`。
-- 管理 standby / capsule / micro / mini / normal / Settings 窗口状态。
+- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，以及只负责待机线展示的不可聚焦、鼠标穿透独立 `lineWindow`。
+- 管理 capsule / micro / mini / normal / Settings 主窗口状态，以及 standby 对主窗口隐藏和独立 line 显示的协调语义；从 standby 唤起时先保持主窗口透明，待目标形态完成主进程布局与 Renderer 绘制后再显现，并保留超时恢复以避免透明窗口滞留。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
 - 创建托盘图标和右键菜单；托盘图标双击进入 normal 并显示全部已添加文件。
 - 通过托盘气泡发送可关闭的 Windows 系统通知，显式使用 Cap7CE 图标并尊重系统安静时间；通知点击统一复用托盘打开 Settings 的窗口恢复链路。
-- 控制主窗口与预览窗口共享的 `alwaysOnTop` 置顶状态并持久化。
+- 控制主窗口、line 与预览窗口共享的 `alwaysOnTop` 置顶状态并持久化。
 - 创建独立的冷启动提示窗口；启动提示窗口必须只关闭自己，不能控制主窗口生命周期。
 - 首次实际预览时按需创建并复用独立、可缩放的 `previewWindow`；预览窗口不进入主窗口状态机和任务栏，复用窗口控制栏、主题描边视觉、边缘吸附偏好与 bounds 吸附计算，关闭后恢复打开预览前的主窗口状态与焦点。关闭后的窗口立即卸载旧预览数据、图片或媒体源及临时 UI 状态，但保留空 Renderer 2 分钟供连续预览快速复用；持续无预览会话后销毁完整 Renderer，下次预览再按需创建。
 - 预览内容切换后根据最新图片尺寸重新计算窗口大小；最大化期间只记录最新目标尺寸，恢复时再应用。
@@ -169,22 +169,22 @@ MOBI 属于正式非视觉文件名搜索范围，内容预览使用独立 `mobi
 
 Cap7CE 0.8.3 的窗口状态是同一搜索胶囊系统的不同展开程度：
 
-- `standby`：待机线。只显示线状胶囊提示，是否显示由待机线偏好控制；偏好关闭时进入隐藏 standby，`Alt+4` 不会主动重新开启待机线。
+- `standby`：主窗口隐藏状态；独立 `lineWindow` 按待机线偏好决定是否显示，`Alt+4` 不会主动改变该偏好。
 - `capsule`：输入胶囊。轻量输入入口。
 - `micro`：横向缩略图搜索结果形态。
 - `mini`：较小窗口内的纵向搜索结果形态。
 - `normal`：完整搜索结果窗口。
 - `settings`：同一窗口体系内的配置状态。
 
-micro / mini / normal 不是完全独立页面，而是搜索胶囊的不同尺寸状态。Settings 也属于同一主窗口状态机，不应另起并行窗口状态。窗口状态切换、bounds、minSize、resize 阈值和 show / hide 生命周期集中在主进程，不要随意新增旁路逻辑。
+micro / mini / normal 不是完全独立页面，而是搜索胶囊的不同尺寸状态。Settings 也属于同一主窗口状态机，不应另起并行窗口状态。主窗口冷启动时按 normal bounds 完成初始化但保持隐藏；standby 不再修改主窗口 bounds、shape 或鼠标穿透，只负责隐藏主窗口并按偏好显示独立 line。窗口状态切换、bounds、minSize、resize 阈值和 show / hide 生命周期集中在主进程，不要随意新增旁路逻辑。
 
 收起到 standby 或 capsule 时，Renderer 保留搜索结果元数据、筛选条件和滚动位置记录，但卸载 `ResultsView` 网格及其图片 DOM；重新展开后使用内存中的结果直接重建视图，不主动重新扫描磁盘。该边界用于释放解码图片和网格组件占用，同时避免通过清空结果换取内存后又产生新的磁盘扫描。
 
-standby 与 capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标。Electron 43 在 Windows 上会把请求为 4 px 的透明无边框 standby 窗口抬高到原生最小高度，因此 standby 通过原生窗口 shape 将实际绘制和交互限制在底部 15 px，并让其余透明区域穿透；离开 standby 后立即恢复完整矩形，4 px 待机线仍保持连续渐变动画。鼠标轮询同样以底部 15 px 为 standby 命中边界。调度由固定 50 ms 改为自适应单次计时：光标刚移动、位于交互边界内或距离边界不超过 120 px 时使用 50 ms；静止且位于中距离时使用 100 ms；静止且远离时使用 200 ms。每次检测到位置变化都会立即恢复快速档，离开 standby / capsule 时停止计时并恢复普通鼠标事件。主进程监听显示器 `workArea` / `bounds` 变化，并将当前显示器上的 standby 或 capsule 延迟合并后重新贴合工作区底部，供任务栏自动隐藏设置切换使用；micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。该策略不恢复 edge hidden，也不改变点击控制的 Standby 语义。
+capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标，并按光标距离以 50 / 100 / 200 ms 自适应调度；离开 capsule 时停止计时并恢复普通鼠标事件。独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复。主进程监听显示器 `workArea` / `bounds` 变化，并分别将可见 line 与 capsule 重新贴合当前工作区底部；micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。该策略不恢复 edge hidden。
 
 可拉伸主窗口的最小边界为 micro 基准尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他模式不额外引入并行缩放规则。
 
-standby 之外的主窗口形态共用统一壳层与 `WindowControlRail`。控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。capsule 使用右侧专用原生拖动空白区，不使用 Renderer 模拟窗口移动。
+主窗口的 capsule、micro、mini、normal 与 Settings 形态共用统一壳层与 `WindowControlRail`。控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。capsule 使用右侧专用原生拖动空白区，不使用 Renderer 模拟窗口移动；line 由独立 Renderer 只绘制待机线，不提供点击交互。
 
 ## 7. 0.8.3 UI 结构
 

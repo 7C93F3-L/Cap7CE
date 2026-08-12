@@ -5,6 +5,7 @@ import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 contextBridge.exposeInMainWorld("imageEverything", {
   window: {
     setShellState: (state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => ipcRenderer.invoke("window:setShellState", state, options),
+    revealAfterShellStateReady: () => ipcRenderer.invoke("window:revealAfterShellStateReady"),
     setAlwaysOnTop: (enabled: boolean) => ipcRenderer.invoke("window:setAlwaysOnTop", enabled),
     getAlwaysOnTop: () => ipcRenderer.invoke("window:getAlwaysOnTop"),
     toggleNormalMaximized: () => ipcRenderer.invoke("window:toggleNormalMaximized"),
@@ -44,10 +45,17 @@ contextBridge.exposeInMainWorld("imageEverything", {
       ipcRenderer.on("window:activateCapsuleShortcut", listener);
       return () => ipcRenderer.removeListener("window:activateCapsuleShortcut", listener);
     },
-    onActivateShellModeShortcut: (callback: (mode: "micro" | "mini" | "normal" | "standby") => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, mode: "micro" | "mini" | "normal" | "standby") => callback(mode);
+    onActivateShellModeShortcut: (callback: (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, mode: "capsule" | "micro" | "mini" | "normal" | "standby") => callback(mode);
       ipcRenderer.on("window:activateShellModeShortcut", listener);
       return () => ipcRenderer.removeListener("window:activateShellModeShortcut", listener);
+    }
+  },
+  line: {
+    onRefreshAppearance: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("line:refreshAppearance", listener);
+      return () => ipcRenderer.removeListener("line:refreshAppearance", listener);
     }
   },
   app: {
