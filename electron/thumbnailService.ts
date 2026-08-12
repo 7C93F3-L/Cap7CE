@@ -24,6 +24,8 @@ interface ThumbnailRenderTask {
 }
 const thumbnailRenderQueue: ThumbnailRenderTask[] = [];
 const pendingThumbnailRenders = new Map<string, { task: ThumbnailRenderTask; promise: Promise<string> }>();
+const activeThumbnailRenders = new Set<Promise<void>>();
+const thumbnailRenderPauseReasons = new Set<string>();
 let activeThumbnailRenderCount = 0;
 let interactiveTasksSinceBackground = 0;
 const maximumConcurrentThumbnailRenders = 2;
@@ -41,6 +43,7 @@ const enqueueInteractiveThumbnailTask = (task: ThumbnailRenderTask) => {
 };
 
 const pumpThumbnailRenderQueue = () => {
+  if (thumbnailRenderPauseReasons.size > 0) return;
   while (activeThumbnailRenderCount < maximumConcurrentThumbnailRenders && thumbnailRenderQueue.length > 0) {
     const backgroundIndex = thumbnailRenderQueue.findIndex((candidate) => candidate.priority === "background");
     const taskIndex = backgroundIndex >= 0 && interactiveTasksSinceBackground >= maximumInteractiveTasksBeforeBackground
@@ -51,16 +54,18 @@ const pumpThumbnailRenderQueue = () => {
     if (task.priority === "background") interactiveTasksSinceBackground = 0;
     else interactiveTasksSinceBackground += 1;
     activeThumbnailRenderCount += 1;
-    void ensureSearchThumbnailPath(task.filePath)
+    const render = ensureSearchThumbnailPath(task.filePath)
       .then((thumbnailPath) => {
         addThumbnailPathToInventory(thumbnailPath);
         task.resolve(thumbnailPath);
       }, (error) => task.reject(error instanceof Error ? error : new Error(String(error))))
       .finally(() => {
         activeThumbnailRenderCount -= 1;
+        activeThumbnailRenders.delete(render);
         pendingThumbnailRenders.delete(task.pathKey);
         pumpThumbnailRenderQueue();
       });
+    activeThumbnailRenders.add(render);
   }
 };
 
@@ -164,6 +169,40 @@ export const discardQueuedInteractiveThumbnailRenders = () => {
   }
   pumpThumbnailRenderQueue();
   return discardedCount;
+};
+
+const discardQueuedThumbnailRenders = (matches: (task: ThumbnailRenderTask) => boolean) => {
+  let discardedCount = 0;
+  for (let index = thumbnailRenderQueue.length - 1; index >= 0; index -= 1) {
+    const task = thumbnailRenderQueue[index];
+    if (!matches(task)) continue;
+    thumbnailRenderQueue.splice(index, 1);
+    pendingThumbnailRenders.delete(task.pathKey);
+    task.reject(Object.assign(new Error("Thumbnail request was cancelled."), { code: "ECANCELED" }));
+    discardedCount += 1;
+  }
+  return discardedCount;
+};
+
+export const pauseThumbnailRendering = async (reason: string) => {
+  thumbnailRenderPauseReasons.add(reason);
+  if (activeThumbnailRenders.size > 0) {
+    await Promise.allSettled([...activeThumbnailRenders]);
+  }
+};
+
+export const resumeThumbnailRendering = (reason: string) => {
+  thumbnailRenderPauseReasons.delete(reason);
+  pumpThumbnailRenderQueue();
+};
+
+export const discardAllQueuedThumbnailRenders = () => discardQueuedThumbnailRenders(() => true);
+
+export const discardQueuedThumbnailRendersForDirectory = (directoryPath: string) => {
+  const directoryPathKey = normalizeThumbnailPathKey(directoryPath);
+  return discardQueuedThumbnailRenders((task) => (
+    task.pathKey === directoryPathKey || task.pathKey.startsWith(`${directoryPathKey}${path.sep}`)
+  ));
 };
 
 export const deleteThumbnailsForImages = async (filePaths: string[]) => {

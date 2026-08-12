@@ -30,7 +30,7 @@ import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
-import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardQueuedInteractiveThumbnailRenders, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
+import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
@@ -3470,14 +3470,17 @@ ipcMain.handle("directories:updateName", async (_event, id: string, name: string
 
 ipcMain.handle("directories:delete", async (_event, id: string) => {
   const optimizationPauseReason = `directory-delete:${id}`;
+  const renderingPauseReason = `directory-delete:${id}`;
+  const directory = (await listDirectories()).find((item) => item.id === id);
   await pauseThumbnailOptimization(optimizationPauseReason);
+  await pauseThumbnailRendering(renderingPauseReason);
   try {
     await thumbnailOptimizationDiscoveryQueue;
     searchScanSnapshotService.invalidate([id]);
-    const directory = (await listDirectories()).find((item) => item.id === id);
     const deletedFilePaths = await deleteDirectoryImages(id);
     if (directory) {
       discardThumbnailOptimizationCandidatesForDirectory(directory.path);
+      discardQueuedThumbnailRendersForDirectory(directory.path);
       await deleteThumbnailsForDirectory(directory.path, deletedFilePaths);
     } else {
       await deleteThumbnailsForImages(deletedFilePaths);
@@ -3485,6 +3488,7 @@ ipcMain.handle("directories:delete", async (_event, id: string) => {
     const directories = await deleteDirectory(id);
     return withSqliteImageCounts(directories);
   } finally {
+    resumeThumbnailRendering(renderingPauseReason);
     resumeThumbnailOptimization(optimizationPauseReason);
   }
 });
@@ -4024,9 +4028,16 @@ ipcMain.handle("cache:clearAll", async (_event, token?: string) => {
   if (!authorization || token !== authorization.token || Date.now() > authorization.expiresAt) {
     throw new Error(t("error.cacheConfirmationRequired"));
   }
-  await setThumbnailOptimizationEnabled(false);
-  await updateAutoCacheOptimizationPreference(false);
-  return clearAllVisualCaches();
+  const renderingPauseReason = "cache-clear";
+  await pauseThumbnailRendering(renderingPauseReason);
+  try {
+    discardAllQueuedThumbnailRenders();
+    await setThumbnailOptimizationEnabled(false);
+    await updateAutoCacheOptimizationPreference(false);
+    return await clearAllVisualCaches();
+  } finally {
+    resumeThumbnailRendering(renderingPauseReason);
+  }
 });
 
 ipcMain.handle("skimCache:stats", () => getSkimCacheStats());

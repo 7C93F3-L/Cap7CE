@@ -29,18 +29,23 @@ const candidateFor = async (filePath) => {
 
 app.whenReady().then(async () => {
   const service = require("../dist-electron/thumbnailOptimizationService.js");
+  const thumbnailService = require("../dist-electron/thumbnailService.js");
   await fs.mkdir(testRoot, { recursive: true });
   const backgroundFile = path.join(testRoot, "background.png");
   const pausedFile = path.join(testRoot, "paused.png");
   const deletedDirectory = path.join(testRoot, "deleted-directory");
   const deletedDirectoryFile = path.join(deletedDirectory, "deleted.png");
   const retainedFile = path.join(testRoot, "retained.png");
+  const cancelledRenderFile = path.join(deletedDirectory, "cancelled-render.png");
+  const activeRenderFile = path.join(testRoot, "active-render.png");
   await fs.mkdir(deletedDirectory, { recursive: true });
   await Promise.all([
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#336699" } }).png().toFile(backgroundFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#996633" } }).png().toFile(pausedFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#663399" } }).png().toFile(deletedDirectoryFile),
-    sharp({ create: { width: 8, height: 8, channels: 4, background: "#339966" } }).png().toFile(retainedFile)
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#339966" } }).png().toFile(retainedFile),
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#993366" } }).png().toFile(cancelledRenderFile),
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#669933" } }).png().toFile(activeRenderFile)
   ]);
 
   try {
@@ -75,12 +80,30 @@ app.whenReady().then(async () => {
     await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
     assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
 
+    await service.setThumbnailOptimizationEnabled(false);
+    await thumbnailService.pauseThumbnailRendering("test-directory-delete");
+    const cancelledRender = thumbnailService.ensureThumbnailPath(cancelledRenderFile);
+    thumbnailService.discardQueuedThumbnailRendersForDirectory(deletedDirectory);
+    await assert.rejects(cancelledRender, (error) => error?.code === "ECANCELED");
+    thumbnailService.resumeThumbnailRendering("test-directory-delete");
+
+    const activeRender = thumbnailService.ensureThumbnailPath(activeRenderFile);
+    await thumbnailService.pauseThumbnailRendering("test-cache-clear");
+    await activeRender;
+    thumbnailService.discardAllQueuedThumbnailRenders();
+    await thumbnailService.clearAllVisualCaches();
+    thumbnailService.resumeThumbnailRendering("test-cache-clear");
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal((await thumbnailService.getAllVisualCacheStats()).cacheCount, 0);
+
     console.log(JSON.stringify({
       backgroundQueueContinues: true,
       explicitPauseStillBlocks: true,
       resumeCompletesQueue: true,
       deletedDirectoryCandidatesDiscarded: true,
-      unrelatedDirectoryCandidatesPreserved: true
+      unrelatedDirectoryCandidatesPreserved: true,
+      queuedDirectoryRendersCancelled: true,
+      cacheClearWaitedForActiveRenders: true
     }));
   } finally {
     await service.setThumbnailOptimizationEnabled(false);
