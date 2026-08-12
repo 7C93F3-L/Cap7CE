@@ -614,6 +614,7 @@ textarea,
   border-radius: var(--radius-control);
   color: var(--window-control-color);
   background: transparent;
+  transition: color 210ms ease-out;
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }
@@ -624,6 +625,11 @@ textarea,
 .cap-settings-toggle[aria-pressed="true"] {
   color: var(--window-control-hover);
   background: transparent;
+}
+
+.cap-skim-toggle:hover,
+.cap-settings-toggle:hover {
+  transition-duration: 210ms;
 }
 
 .cap-skim-toggle {
@@ -685,6 +691,7 @@ textarea,
   border-radius: var(--radius-control);
   color: var(--window-control-color);
   background: transparent;
+  transition: color 210ms ease-out;
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }
@@ -724,6 +731,7 @@ textarea,
 
 .cap-window-button:hover {
   color: var(--window-control-hover);
+  transition-duration: 210ms;
 }
 
 .cap-window-button[aria-pressed="true"] {
@@ -841,6 +849,7 @@ textarea,
   border-radius: var(--radius-thumb);
   color: var(--text-main);
   background: var(--panel-bg);
+  transition: background-color 180ms ease-out;
 }
 
 .cap-skim-entry:hover,
