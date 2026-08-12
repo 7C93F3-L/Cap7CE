@@ -39,8 +39,8 @@ let workerPromise: Promise<void> | null = null;
 let statusListener: StatusListener | null = null;
 let foregroundActive = false;
 
-const foregroundYieldMs = 120;
-const backgroundYieldMs = 750;
+const foregroundYieldMs = 750;
+const backgroundYieldMs = 120;
 
 const normalizePathKey = (filePath: string) => path.resolve(filePath).toLowerCase();
 const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
@@ -102,7 +102,7 @@ const runWorker = async () => {
       emitStatus();
 
       try {
-        await ensureThumbnailPath(candidate.filePath);
+        await ensureThumbnailPath(candidate.filePath, "background");
       } catch (error) {
         failedCount += 1;
         console.warn("[thumbnail-optimization] failed", {

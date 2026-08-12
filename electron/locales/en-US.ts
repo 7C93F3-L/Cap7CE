@@ -276,7 +276,7 @@ export const enUS = defineLocale({
   "settings.readingCache": "Reading",
   "settings.cacheStats": "{count} items / {size}",
   "settings.cacheOptimizationReady": "{count} items / {size}  Automatic optimization is on.",
-  "settings.cacheOptimizationRunning": "{count} items / {size}  Auto-optimizing. Turn off if performance drops.",
+  "settings.cacheOptimizationRunning": "{count} items / {size}  Optimizing: {processed} processed, {remaining} remaining.",
   "settings.cacheOptimizationCompleted": "{count} items / {size}  Automatic optimization is complete.",
   "settings.cacheOptimizationDisabled": "{count} items / {size}  Automatic optimization is off. Turn it on for smoother browsing.",
   "settings.cacheOptimizationOn": "Auto Optimize",

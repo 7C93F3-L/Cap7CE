@@ -221,6 +221,8 @@ contextBridge.exposeInMainWorld("imageEverything", {
     stats: () => ipcRenderer.invoke("cache:stats"),
     optimizationStatus: () => ipcRenderer.invoke("cache:optimizationStatus"),
     setContentViewActive: (active: boolean) => ipcRenderer.invoke("cache:setContentViewActive", active),
+    setGridInteractionActive: (active: boolean) => ipcRenderer.invoke("cache:setGridInteractionActive", active),
+    discardQueuedInteractiveThumbnails: () => ipcRenderer.invoke("cache:discardQueuedInteractiveThumbnails"),
     onOptimizationStatusChanged: (callback: (status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => callback(status);
       ipcRenderer.on("cache:optimizationStatusChanged", listener);

@@ -276,7 +276,7 @@ export const zhCN = {
   "settings.readingCache": "读取中",
   "settings.cacheStats": "{count} 个 / {size}",
   "settings.cacheOptimizationReady": "{count}个 / {size}　自动优化已开启。",
-  "settings.cacheOptimizationRunning": "{count}个 / {size}　正在自动优化缓存，如遇电脑卡顿可手动关闭。",
+  "settings.cacheOptimizationRunning": "{count}个 / {size}　正在自动优化：已处理 {processed}，剩余 {remaining}。",
   "settings.cacheOptimizationCompleted": "{count}个 / {size}　自动优化已完成。",
   "settings.cacheOptimizationDisabled": "{count}个 / {size}　自动优化已关闭，开启可提升浏览体验。",
   "settings.cacheOptimizationOn": "自动优化",

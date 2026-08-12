@@ -224,6 +224,19 @@ type SkimReturnContext = {
 const imageGridGap = 5;
 const imageGridOverscanRows = 2;
 const imageGridOverscanItems = 10;
+const gridInteractionResumeDelayMs = 240;
+let gridInteractionResumeTimer: number | null = null;
+
+const notifyGridInteraction = () => {
+  void window.imageEverything?.cache.setGridInteractionActive(true);
+  if (gridInteractionResumeTimer !== null) {
+    window.clearTimeout(gridInteractionResumeTimer);
+  }
+  gridInteractionResumeTimer = window.setTimeout(() => {
+    gridInteractionResumeTimer = null;
+    void window.imageEverything?.cache.setGridInteractionActive(false);
+  }, gridInteractionResumeDelayMs);
+};
 const microVisibleThumbCount = 5;
 const miniDefaultColumnCount = 2;
 const imageGridTargetThumbSize = 150;
@@ -1365,7 +1378,7 @@ const App = () => {
           thumbnailOptimizationStatsTimerRef.current = window.setTimeout(() => {
             thumbnailOptimizationStatsTimerRef.current = null;
             refreshOptimizationCacheStats();
-          }, 1000);
+          }, 5000);
         }
       } else {
         if (thumbnailOptimizationStatsTimerRef.current !== null) {
@@ -1444,6 +1457,14 @@ const App = () => {
       document.removeEventListener("visibilitychange", syncContentActivity);
     };
   }, [cancelSearch, shellState, view]);
+
+  useEffect(() => {
+    const resultGridMounted = view === "results"
+      && (shellState === "micro" || shellState === "mini" || shellState === "normal");
+    if (!resultGridMounted) {
+      void window.imageEverything?.cache.discardQueuedInteractiveThumbnails();
+    }
+  }, [shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onShellStateChanged?.((nextShellState) => {
@@ -6457,6 +6478,7 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, isSpaceHolding
   }, []);
 
   const handleScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
+    notifyGridInteraction();
     pendingScrollTopRef.current = isHorizontalGrid ? event.currentTarget.scrollLeft : event.currentTarget.scrollTop;
     if (scrollFrameRef.current !== null) {
       return;
@@ -6714,6 +6736,7 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, isSpace
   }, []);
 
   const handleScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
+    notifyGridInteraction();
     const nextViewport = measureUnrecognizedViewport(event.currentTarget);
     if (nextViewport.width !== viewportRef.current.width || nextViewport.height !== viewportRef.current.height) {
       viewportRef.current = nextViewport;
@@ -7298,7 +7321,9 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const runtimeStatusLabel = runtimeHasMissingPrompt ? t("runtime.notFound") : getLlamaRuntimeProcessStatusLabel(llamaRuntimeProcessState);
   const cacheStatusValues = {
     count: visualCacheStats.cacheCount,
-    size: formatCacheSize(visualCacheStats.totalBytes)
+    size: formatCacheSize(visualCacheStats.totalBytes),
+    processed: thumbnailOptimizationStatus.processedCount,
+    remaining: thumbnailOptimizationStatus.queuedCount
   };
   const cacheOptimizationStatusLabel = cacheInlineFeedback
     || (isLoadingCacheStats

@@ -147,6 +147,8 @@ declare global {
         stats: () => Promise<VisualCacheStats>;
         optimizationStatus: () => Promise<ThumbnailOptimizationStatus>;
         setContentViewActive: (active: boolean) => Promise<boolean>;
+        setGridInteractionActive: (active: boolean) => Promise<boolean>;
+        discardQueuedInteractiveThumbnails: () => Promise<number>;
         onOptimizationStatusChanged: (callback: (status: ThumbnailOptimizationStatus) => void) => () => void;
         authorizeClear: () => Promise<string>;
         clearAll: (token: string) => Promise<VisualCacheStats>;

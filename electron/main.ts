@@ -30,7 +30,7 @@ import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
-import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
+import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardQueuedInteractiveThumbnailRenders, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
@@ -3840,6 +3840,7 @@ ipcMain.handle("preferences:updateAutoCacheOptimization", async (_event, nextEna
   const preferences = await updateAutoCacheOptimizationPreference(Boolean(nextEnabled));
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   if (preferences.autoCacheOptimizationEnabled) {
+    scheduleDirectoryThumbnailOptimization(await listDirectories());
     void scheduleRecognizedModelInputCacheCleanup();
   }
   return preferences;
@@ -3981,7 +3982,30 @@ ipcMain.handle("cache:setContentViewActive", (event, active: unknown) => {
     return false;
   }
   rendererContentViewActive = active === true;
+  if (!rendererContentViewActive) {
+    resumeThumbnailOptimization("grid-interaction");
+  }
   syncThumbnailOptimizationActivity();
+  return true;
+});
+
+ipcMain.handle("cache:discardQueuedInteractiveThumbnails", (event) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    return 0;
+  }
+  return discardQueuedInteractiveThumbnailRenders();
+});
+
+ipcMain.handle("cache:setGridInteractionActive", (event, active: unknown) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    return false;
+  }
+  const pauseReason = "grid-interaction";
+  if (active === true) {
+    void pauseThumbnailOptimization(pauseReason);
+  } else {
+    resumeThumbnailOptimization(pauseReason);
+  }
   return true;
 });
 
