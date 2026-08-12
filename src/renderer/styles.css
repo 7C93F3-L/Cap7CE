@@ -3824,7 +3824,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .context-menu-light.keyword-editor-card textarea.keyword-editor-textarea {
-  background: #ffffff;
+  background: #f2f2f2;
 }
 
 .context-menu-light.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
@@ -3832,7 +3832,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea {
-  background: #191919;
+  background: #282828;
 }
 
 .context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
