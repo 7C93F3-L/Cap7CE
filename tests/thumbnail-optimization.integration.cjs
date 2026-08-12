@@ -32,9 +32,15 @@ app.whenReady().then(async () => {
   await fs.mkdir(testRoot, { recursive: true });
   const backgroundFile = path.join(testRoot, "background.png");
   const pausedFile = path.join(testRoot, "paused.png");
+  const deletedDirectory = path.join(testRoot, "deleted-directory");
+  const deletedDirectoryFile = path.join(deletedDirectory, "deleted.png");
+  const retainedFile = path.join(testRoot, "retained.png");
+  await fs.mkdir(deletedDirectory, { recursive: true });
   await Promise.all([
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#336699" } }).png().toFile(backgroundFile),
-    sharp({ create: { width: 8, height: 8, channels: 4, background: "#996633" } }).png().toFile(pausedFile)
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#996633" } }).png().toFile(pausedFile),
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#663399" } }).png().toFile(deletedDirectoryFile),
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#339966" } }).png().toFile(retainedFile)
   ]);
 
   try {
@@ -55,10 +61,26 @@ app.whenReady().then(async () => {
     await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
     assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
 
+    await service.setThumbnailOptimizationEnabled(false);
+    await service.setThumbnailOptimizationEnabled(true);
+    await service.pauseThumbnailOptimization("test-directory-delete");
+    await service.enqueueThumbnailOptimizationCandidates([
+      await candidateFor(deletedDirectoryFile),
+      await candidateFor(retainedFile)
+    ]);
+    assert.equal(service.getThumbnailOptimizationStatus().queuedCount, 2);
+    service.discardThumbnailOptimizationCandidatesForDirectory(deletedDirectory);
+    assert.equal(service.getThumbnailOptimizationStatus().queuedCount, 1);
+    service.resumeThumbnailOptimization("test-directory-delete");
+    await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
+    assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
+
     console.log(JSON.stringify({
       backgroundQueueContinues: true,
       explicitPauseStillBlocks: true,
-      resumeCompletesQueue: true
+      resumeCompletesQueue: true,
+      deletedDirectoryCandidatesDiscarded: true,
+      unrelatedDirectoryCandidatesPreserved: true
     }));
   } finally {
     await service.setThumbnailOptimizationEnabled(false);

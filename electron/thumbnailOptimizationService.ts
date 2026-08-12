@@ -43,6 +43,11 @@ const foregroundYieldMs = 120;
 const backgroundYieldMs = 750;
 
 const normalizePathKey = (filePath: string) => path.resolve(filePath).toLowerCase();
+const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
+  const filePathKey = normalizePathKey(filePath);
+  const directoryPathKey = normalizePathKey(directoryPath);
+  return filePathKey === directoryPathKey || filePathKey.startsWith(`${directoryPathKey}${path.sep}`);
+};
 const yieldToForegroundWork = () => new Promise<void>((resolve) => (
   setTimeout(resolve, foregroundActive ? foregroundYieldMs : backgroundYieldMs)
 ));
@@ -228,4 +233,16 @@ export const resumeThumbnailOptimization = (reason: string) => {
   pauseReasons.delete(reason);
   emitStatus();
   startWorker();
+};
+
+export const discardThumbnailOptimizationCandidatesForDirectory = (directoryPath: string) => {
+  const retainedQueue = queue.filter((candidate) => !isPathInsideDirectory(candidate.filePath, directoryPath));
+  if (retainedQueue.length === queue.length) {
+    return;
+  }
+
+  queue = retainedQueue;
+  queueByPath.clear();
+  queue.forEach((candidate) => queueByPath.set(normalizePathKey(candidate.filePath), candidate));
+  emitStatus();
 };

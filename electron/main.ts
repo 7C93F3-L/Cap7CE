@@ -31,7 +31,7 @@ import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, ski
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { getBottomAnchoredInteractiveBounds, getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, ensureThumbnailPath, getAllVisualCacheStats } from "./thumbnailService";
-import { enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
+import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
@@ -167,7 +167,7 @@ const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[
     const scanResult = await scanImageDirectories(directories, {
       isCancelled: () => !getThumbnailOptimizationStatus().enabled
     });
-    enqueueScannedThumbnails(scanResult.images);
+    await enqueueThumbnailOptimizationCandidates(toThumbnailOptimizationCandidates(scanResult.images));
   });
   thumbnailOptimizationDiscoveryQueue = task.catch((error) => {
     if ((error as NodeJS.ErrnoException)?.code !== "ECANCELED") {
@@ -3469,16 +3469,24 @@ ipcMain.handle("directories:updateName", async (_event, id: string, name: string
 });
 
 ipcMain.handle("directories:delete", async (_event, id: string) => {
-  searchScanSnapshotService.invalidate([id]);
-  const directory = (await listDirectories()).find((item) => item.id === id);
-  const deletedFilePaths = await deleteDirectoryImages(id);
-  if (directory) {
-    await deleteThumbnailsForDirectory(directory.path, deletedFilePaths);
-  } else {
-    await deleteThumbnailsForImages(deletedFilePaths);
+  const optimizationPauseReason = `directory-delete:${id}`;
+  await pauseThumbnailOptimization(optimizationPauseReason);
+  try {
+    await thumbnailOptimizationDiscoveryQueue;
+    searchScanSnapshotService.invalidate([id]);
+    const directory = (await listDirectories()).find((item) => item.id === id);
+    const deletedFilePaths = await deleteDirectoryImages(id);
+    if (directory) {
+      discardThumbnailOptimizationCandidatesForDirectory(directory.path);
+      await deleteThumbnailsForDirectory(directory.path, deletedFilePaths);
+    } else {
+      await deleteThumbnailsForImages(deletedFilePaths);
+    }
+    const directories = await deleteDirectory(id);
+    return withSqliteImageCounts(directories);
+  } finally {
+    resumeThumbnailOptimization(optimizationPauseReason);
   }
-  const directories = await deleteDirectory(id);
-  return withSqliteImageCounts(directories);
 });
 
 ipcMain.handle("scan:allDirectories", async () => {
