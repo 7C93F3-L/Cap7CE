@@ -47,8 +47,12 @@ import { closeEpubPreviewSession, EpubPreviewError, openEpubPreviewSession } fro
 import { closeMobiPreviewSession, MobiPreviewError, openMobiPreviewSession } from "./mobiPreviewService";
 
 const applicationName = "Cap7CE";
+const windowsAppUserModelId = "com.cap7ce.app";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
 app.setName(applicationName);
+if (process.platform === "win32" && app.isPackaged) {
+  app.setAppUserModelId(windowsAppUserModelId);
+}
 app.setPath("userData", path.join(app.getPath("appData"), applicationName));
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) {
