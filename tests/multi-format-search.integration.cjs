@@ -9,6 +9,8 @@ const userDataPath = path.join(testRoot, "user-data");
 const firstDirectoryPath = path.join(testRoot, "first");
 const secondDirectoryPath = path.join(testRoot, "second");
 const nestedPathOnlyDirectory = path.join(firstDirectoryPath, "path-only-token");
+const k2DirectoryPath = path.join(testRoot, "K2真实根目录");
+const k2NestedDirectoryPath = path.join(k2DirectoryPath, "海报", "活动素材");
 const timestamp = new Date("2026-07-31T00:00:00.000Z").toISOString();
 
 app.setPath("userData", userDataPath);
@@ -251,6 +253,56 @@ app.whenReady().then(async () => {
     ]);
     searchScanSnapshotService.setActive(true);
 
+    await fs.mkdir(k2NestedDirectoryPath, { recursive: true });
+    await fs.writeFile(path.join(k2NestedDirectoryPath, "春季主视觉.png"), "png");
+    await fs.writeFile(path.join(k2NestedDirectoryPath, "说明.txt"), "txt");
+    await fs.writeFile(path.join(k2NestedDirectoryPath, "无关项目.txt"), "txt");
+    const k2Directory = createDirectory("k2-directory", "客户展示名", k2DirectoryPath);
+    directories.push(k2Directory);
+    const k2Scan = await scanImageDirectories([k2Directory]);
+    await writeScannedImagesToIndex(
+      [k2Directory.id],
+      k2Scan.images,
+      k2Scan.scannedAt,
+      k2Scan.files
+    );
+    const k2NotesFile = k2Scan.files.find((file) => file.file_name === "说明.txt");
+    assert.ok(k2NotesFile);
+    await upsertFileManualKeywords(k2NotesFile, ["现场确认"], timestamp);
+
+    const k2Cases = [
+      { id: "file-name", query: "春季主视觉", expected: ["春季主视觉.png"] },
+      { id: "root-real-name", query: "K2真实根目录", expected: ["春季主视觉.png", "说明.txt", "无关项目.txt"] },
+      { id: "display-name", query: "客户展示名", expected: ["春季主视觉.png", "说明.txt", "无关项目.txt"] },
+      { id: "relative-parent", query: "海报 活动素材", expected: ["春季主视觉.png", "说明.txt", "无关项目.txt"] },
+      { id: "cross-field-and", query: "海报 说明 txt 现场确认", expected: ["说明.txt"] },
+      { id: "no-sibling-propagation", query: "无关项目", expected: ["无关项目.txt"] },
+      { id: "outside-path-miss", query: "路径外词", expected: [] }
+    ];
+    const runK2Cases = async () => {
+      const output = {};
+      for (const testCase of k2Cases) {
+        const result = await searchImagesWithAddedDirectories({
+          ...baseSearch,
+          query: testCase.query,
+          directoryId: k2Directory.id
+        }, directories);
+        const fileNames = result.images.map((item) => item.fileName);
+        assert.deepEqual(fileNames, testCase.expected, testCase.id);
+        output[testCase.id] = fileNames;
+      }
+      return output;
+    };
+
+    searchScanSnapshotService.setActive(false);
+    const k2PersistedResults = await runK2Cases();
+    searchScanSnapshotService.setActive(true);
+    searchScanSnapshotService.invalidate([k2Directory.id]);
+    const k2FreshScanResults = await runK2Cases();
+    const k2ReusedSnapshotResults = await runK2Cases();
+    assert.deepEqual(k2FreshScanResults, k2PersistedResults);
+    assert.deepEqual(k2ReusedSnapshotResults, k2PersistedResults);
+
     console.log(JSON.stringify({
       visualAndNonVisualMerged: true,
       pathDeduplicationPreserved: true,
@@ -269,7 +321,10 @@ app.whenReady().then(async () => {
       directoryFormatAndSortFiltersPreserved: true,
       recognitionFiltersRemainVisualOnly: true,
       liveScanOverlayIncludesNewFiles: true,
-      inactiveSnapshotFallsBackToIndex: true
+      inactiveSnapshotFallsBackToIndex: true,
+      k2DeterministicSampleCases: k2Cases.length,
+      k2PersistedFreshAndReusedResultsMatch: true,
+      k2SiblingNamesDoNotPropagate: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });
