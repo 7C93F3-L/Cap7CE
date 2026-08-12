@@ -73,6 +73,7 @@ declare global {
         list: () => Promise<DirectoryItem[]>;
         selectAndAdd: () => Promise<DirectoryAddResult>;
         addCandidates: (request: DirectoryAddRequest) => Promise<DirectoryAddResult>;
+        refreshFileCounts: (directoryIds: string[]) => Promise<DirectoryItem[]>;
         updateName: (id: string, name: string) => Promise<DirectoryItem[]>;
         delete: (id: string) => Promise<DirectoryItem[]>;
       };

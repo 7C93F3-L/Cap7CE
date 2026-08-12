@@ -8,6 +8,7 @@ export interface PersistedDirectory {
   name: string;
   path: string;
   indexedCount: number;
+  fileCount: number | null;
   createdAt: string;
   updatedAt: string;
   lastScannedAt?: string;
@@ -18,6 +19,7 @@ export interface PersistedDirectory {
 export interface DirectoryScanSummary {
   id: string;
   indexedCount: number;
+  fileCount: number;
   lastScannedAt: string;
   scanStatus: "ready" | "missing" | "error";
   scanError?: string;
@@ -35,12 +37,13 @@ const now = () => new Date().toISOString();
 
 const isPersistedDirectory = (value: unknown): value is PersistedDirectory => {
   if (!value || typeof value !== "object") return false;
-  const candidate = value as PersistedDirectory;
+  const candidate = value as Partial<PersistedDirectory>;
   return (
     typeof candidate.id === "string" &&
     typeof candidate.name === "string" &&
     typeof candidate.path === "string" &&
     typeof candidate.indexedCount === "number" &&
+    (candidate.fileCount === undefined || candidate.fileCount === null || typeof candidate.fileCount === "number") &&
     typeof candidate.createdAt === "string" &&
     typeof candidate.updatedAt === "string" &&
     (candidate.lastScannedAt === undefined || typeof candidate.lastScannedAt === "string") &&
@@ -55,7 +58,12 @@ const normalizeConfig = (value: unknown): DirectoryConfig => {
   }
 
   const candidate = value as Partial<DirectoryConfig>;
-  const directories = Array.isArray(candidate.directories) ? candidate.directories.filter(isPersistedDirectory) : [];
+  const directories = Array.isArray(candidate.directories)
+    ? candidate.directories.filter(isPersistedDirectory).map((directory) => ({
+        ...directory,
+        fileCount: directory.fileCount ?? null
+      }))
+    : [];
   return { version: 1, directories };
 };
 
@@ -102,6 +110,7 @@ export const createPersistedDirectory = (directoryPath: string): PersistedDirect
     name: path.basename(directoryPath) || directoryPath,
     path: directoryPath,
     indexedCount: 0,
+    fileCount: null,
     createdAt: timestamp,
     updatedAt: timestamp
   };
@@ -160,6 +169,7 @@ export const applyDirectoryScanSummaries = async (summaries: DirectoryScanSummar
       return {
         ...directory,
         indexedCount: summary.indexedCount,
+        fileCount: summary.fileCount,
         lastScannedAt: summary.lastScannedAt,
         scanStatus: summary.scanStatus,
         scanError: summary.scanError,
@@ -168,6 +178,21 @@ export const applyDirectoryScanSummaries = async (summaries: DirectoryScanSummar
     })
   };
 
+  await writeConfig(nextConfig);
+  return nextConfig.directories;
+};
+
+export const applyDirectoryFileCounts = async (counts: Record<string, number>): Promise<PersistedDirectory[]> => {
+  const config = await readConfig();
+  const timestamp = now();
+  const nextConfig: DirectoryConfig = {
+    version: 1,
+    directories: config.directories.map((directory) => (
+      Object.prototype.hasOwnProperty.call(counts, directory.id)
+        ? { ...directory, fileCount: counts[directory.id], updatedAt: timestamp }
+        : directory
+    ))
+  };
   await writeConfig(nextConfig);
   return nextConfig.directories;
 };

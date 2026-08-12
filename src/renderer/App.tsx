@@ -925,6 +925,9 @@ const createAllDirectoriesOption = (directories: DirectoryItem[]): DirectoryItem
     name: t("filter.allAddedDirectories"),
     path: "",
     indexedCount: directories.reduce((sum, directory) => sum + directory.indexedCount, 0),
+    fileCount: directories.some((directory) => directory.fileCount === null)
+      ? null
+      : directories.reduce((sum, directory) => sum + (directory.fileCount ?? 0), 0),
     createdAt: timestamp,
     updatedAt: timestamp
   };
@@ -1640,12 +1643,20 @@ const App = () => {
       setIsLoadingCacheStats(true);
       try {
         const loadedDirectories = (await window.imageEverything?.directories.list()) ?? [];
+        const missingFileCountIds = loadedDirectories
+          .filter((directory) => directory.fileCount === null)
+          .map((directory) => directory.id);
         const stats = await window.imageEverything?.index.qualityStats();
         const cacheOptimizationStatus = await window.imageEverything?.cache.optimizationStatus();
         const preferences = await window.imageEverything?.preferences.get();
         const shortcutAvailability = await window.imageEverything?.preferences.shortcutAvailability();
         if (isMounted) {
           setDirectories(loadedDirectories);
+          if (missingFileCountIds.length > 0) {
+            void window.imageEverything?.directories.refreshFileCounts(missingFileCountIds).then((countedDirectories) => {
+              if (isMounted && countedDirectories) setDirectories(countedDirectories);
+            }).catch(() => undefined);
+          }
           setDirectoryServiceUnavailable(false);
           if (preferences) {
             const resolvedLanguage = resolveLanguagePreference(preferences.languagePreference, navigator.language);
@@ -2751,6 +2762,8 @@ const App = () => {
     refreshDirectories(result.directories);
     setDirectoryServiceUnavailable(false);
     if (result.added.length > 0) {
+      const countedDirectories = await window.imageEverything?.directories.refreshFileCounts(result.added.map((directory) => directory.id));
+      if (countedDirectories) refreshDirectories(countedDirectories);
       await refreshIndexStats();
       await refreshDefaultDirectoryResults();
     }
@@ -7955,7 +7968,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
                   </button>
                 )}
                 <span className="cap-settings-value cap-settings-path" title={directory.path}>{directory.path}</span>
-                <span className="cap-settings-pill">{directory.indexedCount}{directory.scanStatus === "missing" || directory.scanStatus === "error" ? ` ${t("common.abnormal")}` : ""}</span>
+                <span className="cap-settings-pill" title={t("settings.directoryFileCountHint")}>{directory.fileCount ?? "…"}{directory.scanStatus === "missing" || directory.scanStatus === "error" ? ` ${t("common.abnormal")}` : ""}</span>
                 <button className="cap-settings-pill" type="button" onClick={() => onRecognizeDirectory(directory.id)} title={t("settings.recognizeDirectoryActionHint")} disabled={isScanning}>
                   {t("settings.recognizeDirectory")}
                 </button>

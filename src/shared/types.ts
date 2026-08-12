@@ -149,6 +149,7 @@ export interface DirectoryItem {
   name: string;
   path: string;
   indexedCount: number;
+  fileCount: number | null;
   createdAt: string;
   updatedAt: string;
   lastScannedAt?: string;

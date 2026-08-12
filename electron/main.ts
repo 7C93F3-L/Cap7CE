@@ -8,7 +8,7 @@ import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
 import { checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadProgress } from "./appUpdateService";
-import { applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
+import { applyDirectoryFileCounts, applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
 import { startNativeFileDrag } from "./fileDragService";
@@ -3236,6 +3236,16 @@ ipcMain.handle("directories:selectAndAdd", async () => {
 
 ipcMain.handle("directories:addCandidates", async (_event, request: unknown) => {
   return withDirectoryAddSqliteCounts(await addDirectoryCandidatesWithIndexMigration(normalizeDirectoryAddRequest(request)));
+});
+
+ipcMain.handle("directories:refreshFileCounts", async (_event, directoryIds: unknown) => {
+  const requestedIds = new Set(Array.isArray(directoryIds) ? directoryIds.filter((id): id is string => typeof id === "string") : []);
+  const directories = (await listDirectories()).filter((directory) => requestedIds.has(directory.id));
+  if (directories.length === 0) return withSqliteImageCounts(await listDirectories());
+  const scanResult = await scanImageDirectories(directories);
+  searchScanSnapshotService.seed(directories, scanResult);
+  const counts = Object.fromEntries(scanResult.summaries.map((summary) => [summary.id, summary.fileCount]));
+  return withSqliteImageCounts(await applyDirectoryFileCounts(counts));
 });
 
 interface SkimReadTaskState {

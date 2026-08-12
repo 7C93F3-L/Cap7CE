@@ -386,6 +386,7 @@ export const enUS = defineLocale({
   "settings.recognitionFailed": "Recognition Failed",
   "settings.scanFailed": "Scan Failed",
   "settings.addDirectoryActionHint": "Click to add a folder",
+  "settings.directoryFileCountHint": "File count",
   "settings.expandDirectoriesHint": "Manage added folders",
   "settings.collapseDirectoriesHint": "Click to collapse the list",
   "settings.continueRecognitionActionHint": "Continue the current task",

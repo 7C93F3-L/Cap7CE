@@ -118,6 +118,7 @@ app.whenReady().then(async () => {
     assert.deepEqual(scan.images.map((file) => file.file_name), ["visual.png"]);
     assert.equal(scan.directories[0].file_count, 3);
     assert.equal(scan.directories[0].image_count, 1);
+    assert.equal(scan.summaries[0].fileCount, 3);
 
     await writeScannedImagesToIndex([directoryId], scan.images, scan.scannedAt, scan.files);
     const pathEvidenceDatabase = new SQL.Database(await fs.readFile(databasePath));
@@ -171,6 +172,7 @@ app.whenReady().then(async () => {
 
     await fs.rm(textPath);
     const rescan = await scanImageDirectories([directory]);
+    assert.equal(rescan.summaries[0].fileCount, 2);
     await writeScannedImagesToIndex([directoryId], rescan.images, rescan.scannedAt, rescan.files);
     const markedDatabase = new SQL.Database(await fs.readFile(databasePath));
     const missingRow = markedDatabase.exec(

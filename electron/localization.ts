@@ -386,6 +386,7 @@ export const zhCN = {
   "settings.recognitionFailed": "识别失败",
   "settings.scanFailed": "扫描失败",
   "settings.addDirectoryActionHint": "点击添加目录",
+  "settings.directoryFileCountHint": "文件数量",
   "settings.expandDirectoriesHint": "管理已添加目录",
   "settings.collapseDirectoriesHint": "点击收起列表",
   "settings.continueRecognitionActionHint": "继续当前任务",

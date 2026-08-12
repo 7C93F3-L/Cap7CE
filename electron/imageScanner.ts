@@ -161,6 +161,7 @@ const scanSingleDirectory = async (
         summary: {
           id: directory.id,
           indexedCount: 0,
+          fileCount: 0,
           lastScannedAt: scannedAt,
           scanStatus: "missing",
           scanError: error
@@ -185,6 +186,7 @@ const scanSingleDirectory = async (
       summary: {
         id: directory.id,
         indexedCount: 0,
+        fileCount: 0,
         lastScannedAt: scannedAt,
         scanStatus: "missing",
         scanError: error
@@ -208,6 +210,7 @@ const scanSingleDirectory = async (
       summary: {
         id: directory.id,
         indexedCount: 0,
+        fileCount: 0,
         lastScannedAt: scannedAt,
         scanStatus: "ready"
       }
@@ -234,6 +237,7 @@ const scanSingleDirectory = async (
     summary: {
       id: directory.id,
       indexedCount: scan.images.length,
+      fileCount: scan.files.length,
       lastScannedAt: scannedAt,
       scanStatus: status,
       scanError: error
