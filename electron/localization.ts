@@ -455,6 +455,8 @@ export const zhCN = {
   "keywords.selectedCount": "已选择 {count} 个文件",
   "keywords.directoryCount": "位于 {count} 个目录中",
   "keywords.formatCount": "{count} 种格式",
+  "keywords.saved": "已保存",
+  "keywords.cancelled": "已取消",
   "keywords.label": "关键词",
   "keywords.placeholder": "为所选项添加关键词，用逗号分隔。\n按下回车键完成添加，按 ESC 键取消。",
   "keywords.resultTitle": "关键词更新结果",

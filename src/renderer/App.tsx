@@ -20,6 +20,7 @@ import {
   createSpaceReleaseGuard,
   createSpaceHoldController,
   getKeywordEditorTextareaMaximumHeight,
+  getKeywordEditorExitDelay,
   isKeywordEditorCancelKey,
   isPlainSpaceShortcut,
   shouldSubmitKeywordEditor,
@@ -1088,11 +1089,14 @@ const App = () => {
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [deleteFilesFeedback, setDeleteFilesFeedback] = useState<DeleteFilesFeedback | null>(null);
   const [keywordEditSession, setKeywordEditSession] = useState<KeywordEditSession | null>(null);
+  const [isKeywordEditorClosing, setIsKeywordEditorClosing] = useState(false);
   const [editCaption, setEditCaption] = useState("");
   const [editKeywords, setEditKeywords] = useState("");
   const [editMetadataError, setEditMetadataError] = useState("");
   const [isSavingMetadata, setIsSavingMetadata] = useState(false);
   const keywordSaveInFlightRef = useRef(false);
+  const keywordEditorClosingRef = useRef(false);
+  const keywordEditorExitTimerRef = useRef<number | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
   const [scanError, setScanError] = useState("");
@@ -1137,6 +1141,12 @@ const App = () => {
   const capsuleComposingRef = useRef(false);
   const capsuleCompositionGuardUntilRef = useRef(0);
   const resultsInitializedRef = useRef(false);
+
+  useEffect(() => () => {
+    if (keywordEditorExitTimerRef.current !== null) {
+      window.clearTimeout(keywordEditorExitTimerRef.current);
+    }
+  }, []);
 
   const directoryOptions = useMemo(() => [createAllDirectoriesOption(directories), ...directories], [directories]);
   const selectedDirectory = directoryOptions.find((directory) => directory.id === search.directoryId) ?? directoryOptions[0];
@@ -3162,6 +3172,12 @@ const App = () => {
       return;
     }
     captureKeywordEditScrollSnapshot();
+    if (keywordEditorExitTimerRef.current !== null) {
+      window.clearTimeout(keywordEditorExitTimerRef.current);
+      keywordEditorExitTimerRef.current = null;
+    }
+    keywordEditorClosingRef.current = false;
+    setIsKeywordEditorClosing(false);
     setContextMenu(null);
     const frozenItems = items.map((item) => ({ ...item, keywords: [...item.keywords] }));
     const mode = frozenItems.length === 1 ? "single" : "multi";
@@ -3198,14 +3214,34 @@ const App = () => {
     return () => unsubscribe?.();
   }, [searchResults, showQuickCommandNotice]);
 
-  const cancelEditKeywords = () => {
-    if (keywordSaveInFlightRef.current) {
-      return;
+  const finishKeywordEditorClose = () => {
+    if (!keywordEditorClosingRef.current) return;
+    if (keywordEditorExitTimerRef.current !== null) {
+      window.clearTimeout(keywordEditorExitTimerRef.current);
+      keywordEditorExitTimerRef.current = null;
     }
+    keywordEditorClosingRef.current = false;
     restoreKeywordEditScrollSnapshot();
     setDialog(null);
     setKeywordEditSession(null);
     setEditMetadataError("");
+    setIsKeywordEditorClosing(false);
+  };
+
+  const beginKeywordEditorClose = () => {
+    if (keywordEditorClosingRef.current) return;
+    keywordEditorClosingRef.current = true;
+    setIsKeywordEditorClosing(true);
+    const exitDelay = getKeywordEditorExitDelay(
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    );
+    keywordEditorExitTimerRef.current = window.setTimeout(finishKeywordEditorClose, exitDelay);
+  };
+
+  const cancelEditKeywords = () => {
+    if (keywordSaveInFlightRef.current || keywordEditorClosingRef.current) return;
+    showQuickCommandNotice(t("keywords.cancelled"));
+    beginKeywordEditorClose();
   };
 
   const saveEditedKeywords = async () => {
@@ -3216,6 +3252,7 @@ const App = () => {
     keywordSaveInFlightRef.current = true;
     setIsSavingMetadata(true);
     setEditMetadataError("");
+    showQuickCommandNotice(t("common.saving"), true);
     try {
       if (keywordEditSession.mode === "single") {
         const updated = await window.imageEverything?.index.updateManualMetadata(
@@ -3236,6 +3273,7 @@ const App = () => {
           throw new Error(t("error.indexUnavailable"));
         }
         if (!result.success) {
+          clearQuickCommandNotice();
           setEditMetadataError(result.errorMessage || t("keywords.updateFailedCount", { count: result.failedCount }));
           return;
         }
@@ -3244,10 +3282,10 @@ const App = () => {
         runSearch(search, { navigate: false }),
         refreshIndexStats()
       ]);
-      restoreKeywordEditScrollSnapshot();
-      setDialog(null);
-      setKeywordEditSession(null);
+      showQuickCommandNotice(t("keywords.saved"));
+      beginKeywordEditorClose();
     } catch (error) {
+      clearQuickCommandNotice();
       setEditMetadataError(error instanceof Error
         ? error.message
         : keywordEditSession.mode === "multi"
@@ -3462,22 +3500,27 @@ const App = () => {
   }
 
   useEffect(() => {
-    const unsubscribe = window.imageEverything?.window.onOpenSettingsRequested?.(openSettings);
+    const unsubscribe = window.imageEverything?.window.onOpenSettingsRequested?.(() => {
+      if (dialog !== "editKeywords") openSettings();
+    });
     return () => unsubscribe?.();
-  }, [openSettings]);
+  }, [dialog, openSettings]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onToggleSkimRequested?.(() => {
+      if (dialog === "editKeywords") return;
       if (view === "skim") closeSkim();
       else openSkim();
     });
     return () => unsubscribe?.();
-  }, [closeSkim, openSkim, view]);
+  }, [closeSkim, dialog, openSkim, view]);
 
   useEffect(() => {
-    const unsubscribe = window.imageEverything?.window.onActivateSkimRequested?.(openSkim);
+    const unsubscribe = window.imageEverything?.window.onActivateSkimRequested?.(() => {
+      if (dialog !== "editKeywords") openSkim();
+    });
     return () => unsubscribe?.();
-  }, [openSkim]);
+  }, [dialog, openSkim]);
 
   const closeSettings = () => {
     setShellState("normal");
@@ -3515,6 +3558,7 @@ const App = () => {
       }
 
       event.preventDefault();
+      if (dialog === "editKeywords") return;
       if (event.button === 3) {
         if (view === "skim") {
           navigateSkimBack();
@@ -3545,7 +3589,7 @@ const App = () => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [closeSettings, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettings, shellState, view]);
+  }, [closeSettings, dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettings, shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateCapsuleShortcut?.(() => {
@@ -3652,6 +3696,10 @@ const App = () => {
       }
 
       if (pendingQuickCommandConfirmation) {
+        return;
+      }
+
+      if (dialog === "editKeywords") {
         return;
       }
 
@@ -3907,7 +3955,7 @@ const App = () => {
 
   return (
     <div
-      className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}`}
+      className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}${dialog === "editKeywords" ? " cap-shell-keyword-editor-open" : ""}`}
       style={appThemeStyle}
       onDragOverCapture={(event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -4379,11 +4427,13 @@ const App = () => {
           keywords={editKeywords}
           error={editMetadataError}
           isSaving={isSavingMetadata}
+          isClosing={isKeywordEditorClosing}
           menuStyle={contextMenuStyle}
           theme={effectiveTheme}
           onKeywordsChange={setEditKeywords}
           onSave={saveEditedKeywords}
           onCancel={cancelEditKeywords}
+          onExitComplete={finishKeywordEditorClose}
         />
       )}
     </div>
@@ -4581,10 +4631,18 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     }
   }, [images, openPreviewAtIndex]);
 
-  const spaceHoldController = useMemo(() => createSpaceHoldController<SpacePressSnapshot>({
-    delayMs: 350,
-    schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
-    cancelScheduled: (handle) => window.clearTimeout(handle as number),
+  const spaceHoldControllerRef = useRef<ReturnType<typeof createSpaceHoldController<SpacePressSnapshot>> | null>(null);
+  if (!spaceHoldControllerRef.current) {
+    spaceHoldControllerRef.current = createSpaceHoldController<SpacePressSnapshot>({
+      delayMs: 350,
+      schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
+      cancelScheduled: (handle) => window.clearTimeout(handle as number),
+      onShortPress: () => undefined,
+      onLongPress: () => undefined
+    });
+  }
+  const spaceHoldController = spaceHoldControllerRef.current;
+  spaceHoldController.updateHandlers({
     onShortPress: (snapshot) => {
       setIsSpaceHolding(false);
       openPreviewAtIndex(snapshot.index);
@@ -4594,15 +4652,30 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       spaceReleaseGuardRef.current.activate();
       onEditKeywords(snapshot.items);
     }
-  }), [onEditKeywords, openPreviewAtIndex]);
+  });
+
+  const cancelPendingSpaceHold = useCallback(() => {
+    spaceHoldController.cancel();
+    setIsSpaceHolding(false);
+  }, [spaceHoldController]);
+
+  const cancelSpaceHold = useCallback(() => {
+    spaceReleaseGuardRef.current.cancel();
+    cancelPendingSpaceHold();
+  }, [cancelPendingSpaceHold]);
 
   useEffect(() => () => {
+    spaceReleaseGuardRef.current.cancel();
     spaceHoldController.cancel();
   }, [spaceHoldController]);
 
   useEffect(() => {
-    if (spaceHoldController.cancel()) setIsSpaceHolding(false);
-  }, [imageContextMenuOpen, keywordEditorOpen, selectedImageId, shellState, spaceHoldController]);
+    if (keywordEditorOpen) {
+      cancelPendingSpaceHold();
+      return;
+    }
+    cancelSpaceHold();
+  }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, keywordEditorOpen, selectedImageId, shellState]);
 
   const movePreview = useCallback((direction: -1 | 1) => {
     onContextMenuClose();
@@ -4946,16 +5019,12 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       if (spaceReleaseGuardRef.current.consumeKeyUp(event.code)) {
         event.preventDefault();
         event.stopPropagation();
+        cancelPendingSpaceHold();
         return;
       }
       if (event.code !== "Space" || !spaceHoldController.isActive()) return;
       event.preventDefault();
       spaceHoldController.release();
-    };
-
-    const cancelSpaceHold = () => {
-      spaceReleaseGuardRef.current.cancel();
-      if (spaceHoldController.cancel()) setIsSpaceHolding(false);
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
@@ -4967,7 +5036,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       window.removeEventListener("blur", cancelSpaceHold);
       spaceHoldController.cancel();
     };
-  }, [imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onFeedback, onOpenImage, selectedImageIds, selectedImageIndex, spaceHoldController]);
+  }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onFeedback, onOpenImage, selectedImageIds, selectedImageIndex, spaceHoldController]);
   return (
     <main className={`results-view cap-results-view${isUnrecognizedView ? " cap-results-view-unrecognized" : ""}`} data-results-view="true">
       <Cap7CESearchCapsule
@@ -8399,11 +8468,13 @@ interface KeywordEditorCardProps {
   keywords: string;
   error: string;
   isSaving: boolean;
+  isClosing: boolean;
   menuStyle: CSSProperties;
   theme: ResolvedThemeMode;
   onKeywordsChange: (keywords: string) => void;
   onSave: () => void;
   onCancel: () => void;
+  onExitComplete: () => void;
 }
 
 const getDirectParentPath = (filePath: string) => {
@@ -8417,11 +8488,13 @@ const KeywordEditorCard = ({
   keywords,
   error,
   isSaving,
+  isClosing,
   menuStyle,
   theme,
   onKeywordsChange,
   onSave,
-  onCancel
+  onCancel,
+  onExitComplete
 }: KeywordEditorCardProps) => {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -8509,7 +8582,7 @@ const KeywordEditorCard = ({
   return createPortal(
     <div
       ref={cardRef}
-      className={`context-menu context-menu-${theme} keyword-editor-card`}
+      className={`context-menu context-menu-${theme} keyword-editor-card${isClosing ? " is-closing" : ""}`}
       data-context-menu="true"
       data-keyword-editor="true"
       style={{
@@ -8528,7 +8601,12 @@ const KeywordEditorCard = ({
         event.stopPropagation();
       }}
     >
-      <div className="cap7ce-menu-motion-surface keyword-editor-card-surface">
+      <div
+        className="cap7ce-menu-motion-surface keyword-editor-card-surface"
+        onAnimationEnd={(event) => {
+          if (isClosing && event.animationName === "cap7ce-keyword-card-exit") onExitComplete();
+        }}
+      >
         <div className="context-menu-file-header keyword-editor-card-header" title={headerTooltip}>
           {isSingle ? (
             <>
@@ -8585,12 +8663,11 @@ const KeywordEditorCard = ({
               onSave();
             }
           }}
-          disabled={isSaving}
+          disabled={isSaving || isClosing}
           placeholder={t("keywords.placeholder")}
           aria-label={t("keywords.label")}
         />
         {error && <div className="keyword-editor-error" role="alert">{error}</div>}
-        {isSaving && <div className="keyword-editor-saving">{t("common.saving")}</div>}
       </div>
     </div>,
     document.body

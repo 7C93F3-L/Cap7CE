@@ -381,6 +381,11 @@ textarea,
   transform-origin: center center;
 }
 
+.cap-shell-keyword-editor-open .cap-shell-content,
+.cap-shell-keyword-editor-open .cap-window-control-rail {
+  pointer-events: none;
+}
+
 .cap-transition-normal-to-mini.cap-shell-mini {
   animation: cap-normal-to-mini 460ms var(--cap-ease) both;
   transform-origin: center center;
@@ -3753,6 +3758,26 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   gap: 7px;
 }
 
+.keyword-editor-card.is-closing {
+  pointer-events: none;
+}
+
+.keyword-editor-card.is-closing .keyword-editor-card-surface {
+  animation: cap7ce-keyword-card-exit 180ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+@keyframes cap7ce-keyword-card-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+}
+
 .keyword-editor-card-header {
   padding-bottom: 4px;
 }
@@ -3820,15 +3845,10 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   }
 }
 
-.keyword-editor-card .keyword-editor-error,
-.keyword-editor-saving {
+.keyword-editor-card .keyword-editor-error {
   padding: 0 4px 1px;
   font-size: 11px;
   line-height: 15px;
-}
-
-.keyword-editor-saving {
-  color: var(--accent-color);
 }
 
 .context-menu.cap-color-picker {

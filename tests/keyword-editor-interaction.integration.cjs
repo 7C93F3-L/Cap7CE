@@ -6,6 +6,7 @@ const {
   createSpaceReleaseGuard,
   getKeywordEditorTextareaMaximumHeight,
   getKeywordEditorTextareaMinimumHeight,
+  getKeywordEditorExitDelay,
   isKeywordEditorCancelKey,
   isPlainSpaceShortcut,
   shouldSubmitKeywordEditor
@@ -57,6 +58,8 @@ assert.equal(getKeywordEditorTextareaMinimumHeight(156), 60);
 assert.equal(getKeywordEditorTextareaMaximumHeight(156), 60);
 assert.equal(getKeywordEditorTextareaMinimumHeight(420), 76);
 assert.equal(getKeywordEditorTextareaMaximumHeight(420), 160);
+assert.equal(getKeywordEditorExitDelay(false), 180);
+assert.equal(getKeywordEditorExitDelay(true), 0);
 
 assert.deepEqual(
   normalizeKeywordList(parseKeywordText(" 海报，产品A,海报, , 产品A ")),
@@ -108,5 +111,24 @@ assert.equal(controller.start("cancelled"), true);
 assert.equal(controller.cancel(), true);
 scheduled[2].callback();
 assert.deepEqual(longPresses, ["long"]);
+
+const updatedLongPresses = [];
+assert.equal(controller.start("rerendered"), true);
+controller.updateHandlers({
+  onShortPress: (value) => shortPresses.push(`updated:${value}`),
+  onLongPress: (value) => updatedLongPresses.push(value)
+});
+scheduled[3].callback();
+assert.deepEqual(longPresses, ["long"]);
+assert.deepEqual(updatedLongPresses, ["rerendered"]);
+controller.release();
+
+const guardedReleaseAfterPendingCancel = createSpaceReleaseGuard();
+guardedReleaseAfterPendingCancel.activate();
+assert.equal(controller.start("opened-editor"), true);
+assert.equal(controller.cancel(), true);
+assert.equal(guardedReleaseAfterPendingCancel.shouldSuppressKeyDown("Space"), true);
+assert.equal(guardedReleaseAfterPendingCancel.consumeKeyUp("Space"), true);
+assert.equal(guardedReleaseAfterPendingCancel.shouldSuppressKeyDown("Space"), false);
 
 console.log("keyword editor interaction integration passed");

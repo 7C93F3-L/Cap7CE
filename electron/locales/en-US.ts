@@ -455,6 +455,8 @@ export const enUS = defineLocale({
   "keywords.selectedCount": "{count} files selected",
   "keywords.directoryCount": "In {count} folders",
   "keywords.formatCount": "{count} formats",
+  "keywords.saved": "Saved",
+  "keywords.cancelled": "Cancelled",
   "keywords.label": "Keywords",
   "keywords.placeholder": "Add keywords to the selected items, separated by commas.\nPress Enter to finish, or ESC to cancel.",
   "keywords.resultTitle": "Keyword Update Result",

@@ -81,6 +81,10 @@ export const createSpaceReleaseGuard = () => {
   };
 };
 
+export const getKeywordEditorExitDelay = (prefersReducedMotion: boolean) => (
+  prefersReducedMotion ? 0 : 180
+);
+
 type SpaceHoldOptions<T> = {
   delayMs: number;
   schedule: (callback: () => void, delayMs: number) => unknown;
@@ -93,6 +97,8 @@ export const createSpaceHoldController = <T>(options: SpaceHoldOptions<T>) => {
   let pendingValue: T | null = null;
   let timer: unknown = null;
   let longPressTriggered = false;
+  let onShortPress = options.onShortPress;
+  let onLongPress = options.onLongPress;
 
   const clearTimer = () => {
     if (timer !== null) {
@@ -110,7 +116,7 @@ export const createSpaceHoldController = <T>(options: SpaceHoldOptions<T>) => {
         const activeValue = pendingValue;
         if (activeValue === null) return;
         longPressTriggered = true;
-        options.onLongPress(activeValue);
+        onLongPress(activeValue);
       }, options.delayMs);
       return true;
     },
@@ -119,7 +125,7 @@ export const createSpaceHoldController = <T>(options: SpaceHoldOptions<T>) => {
       if (activeValue === null) return false;
       clearTimer();
       if (!longPressTriggered) {
-        options.onShortPress(activeValue);
+        onShortPress(activeValue);
       }
       pendingValue = null;
       longPressTriggered = false;
@@ -134,6 +140,10 @@ export const createSpaceHoldController = <T>(options: SpaceHoldOptions<T>) => {
     },
     isActive() {
       return pendingValue !== null;
+    },
+    updateHandlers(handlers: Pick<SpaceHoldOptions<T>, "onShortPress" | "onLongPress">) {
+      onShortPress = handlers.onShortPress;
+      onLongPress = handlers.onLongPress;
     }
   };
 };
