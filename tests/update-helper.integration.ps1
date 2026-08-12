@@ -2,6 +2,7 @@ $ErrorActionPreference = "Stop"
 $probeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("cap7ce-updater-probe-" + [guid]::NewGuid().ToString("N"))
 $resolvedTemp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $resolvedProbe = [System.IO.Path]::GetFullPath($probeRoot)
+$blockingProcess = $null
 if (-not $resolvedProbe.StartsWith($resolvedTemp, [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "Unsafe updater probe path."
 }
@@ -61,17 +62,36 @@ public static class Cap7CEUpdateProbeApplication {
   Compress-Archive -LiteralPath $payloadDirectory -DestinationPath $packagePath
   $copiedHelperPath = Join-Path $updateRoot "update-helper.ps1"
   Copy-Item -LiteralPath $helperPath -Destination $copiedHelperPath
+  $blockingProcess = Start-Process -FilePath "powershell.exe" -ArgumentList @(
+    "-NoLogo", "-NoProfile", "-Command", "Start-Sleep -Seconds 30"
+  ) -PassThru
   $successfulUpdater = Start-Process -FilePath "powershell.exe" -ArgumentList @(
     "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
     "-File", $copiedHelperPath,
     "-PackagePath", $packagePath,
     "-InstallDirectory", $installDirectory,
     "-ExpectedVersion", "9.9.9",
-    "-CurrentProcessId", "999999",
+    "-CurrentProcessId", $blockingProcess.Id,
     "-ExecutableName", "Cap7CE.exe",
     "-StartupValidationSeconds", "1",
     "-FailureCloseDelaySeconds", "0"
-  ) -PassThru -Wait
+  ) -PassThru
+  $readyPath = Join-Path $updateRoot "helper-ready"
+  $readyDeadline = (Get-Date).AddSeconds(30)
+  while (-not (Test-Path -LiteralPath $readyPath -PathType Leaf) -and (Get-Date) -lt $readyDeadline) {
+    if ($successfulUpdater.HasExited) {
+      throw "Updater exited before publishing its ready signal."
+    }
+    Start-Sleep -Milliseconds 100
+  }
+  if (-not (Test-Path -LiteralPath $readyPath -PathType Leaf)) {
+    throw "Updater did not publish its ready signal."
+  }
+  if (-not (Test-Path -LiteralPath (Join-Path $installDirectory "current-marker.txt") -PathType Leaf)) {
+    throw "The application directory was replaced before the current process exited."
+  }
+  Stop-Process -Id $blockingProcess.Id -Force
+  $successfulUpdater.WaitForExit()
   if ($successfulUpdater.ExitCode -ne 0) {
     throw "Expected successful update exit code 0, got $($successfulUpdater.ExitCode)."
   }
@@ -84,6 +104,9 @@ public static class Cap7CEUpdateProbeApplication {
   Start-Sleep -Seconds 4
   Write-Host '{"failedReplacementRolledBack":true,"successfulReplacementCompleted":true,"preservedDirectoriesRestored":true}'
 } finally {
+  if ($blockingProcess -and -not $blockingProcess.HasExited) {
+    Stop-Process -Id $blockingProcess.Id -Force -ErrorAction SilentlyContinue
+  }
   if (Test-Path -LiteralPath $probeRoot) {
     Remove-Item -LiteralPath $probeRoot -Recurse -Force
   }

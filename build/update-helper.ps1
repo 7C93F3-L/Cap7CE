@@ -13,14 +13,22 @@ $ProgressPreference = "Continue"
 $updateRoot = Split-Path -Parent $PackagePath
 $extractDirectory = Join-Path $updateRoot "extracted"
 $sourceDirectory = Join-Path $extractDirectory "Cap7CE"
+$readyPath = Join-Path $updateRoot "helper-ready"
+$logPath = Join-Path $updateRoot "update-helper.log"
 $installDirectoryPath = [System.IO.Path]::GetFullPath($InstallDirectory).TrimEnd("\")
 $installParent = Split-Path -Parent $installDirectoryPath
 $backupDirectory = Join-Path $installParent (".Cap7CE-backup-" + [guid]::NewGuid().ToString("N"))
 $replacementStarted = $false
+$currentProcessExited = $false
+
+function Write-UpdateLog([string]$Message) {
+  Add-Content -LiteralPath $logPath -Value ((Get-Date -Format "yyyy-MM-dd HH:mm:ss") + " " + $Message) -Encoding UTF8
+}
 
 function Write-UpdateStatus([string]$Message) {
   Write-Host ""
   Write-Host ("[Cap7CE Update] " + $Message) -ForegroundColor Cyan
+  Write-UpdateLog $Message
 }
 
 function Start-Cap7CE([string]$RootDirectory) {
@@ -32,6 +40,10 @@ function Start-Cap7CE([string]$RootDirectory) {
 }
 
 try {
+  if (Test-Path -LiteralPath $readyPath) {
+    Remove-Item -LiteralPath $readyPath -Force
+  }
+  Write-UpdateLog ("Updater started for Cap7CE " + $ExpectedVersion + ".")
   $installRoot = [System.IO.Path]::GetPathRoot($installDirectoryPath).TrimEnd("\")
   if (-not $installParent -or $installRoot -eq $installDirectoryPath) {
     throw "The application directory is not safe to replace."
@@ -53,8 +65,10 @@ try {
     throw "The update package does not contain the expected Cap7CE layout."
   }
 
+  Set-Content -LiteralPath $readyPath -Value $ExpectedVersion -Encoding ASCII
   Write-UpdateStatus "Waiting for Cap7CE to exit..."
   Wait-Process -Id $CurrentProcessId -ErrorAction SilentlyContinue
+  $currentProcessExited = $true
 
   Write-UpdateStatus "Backing up the current version..."
   Move-Item -LiteralPath $installDirectoryPath -Destination $backupDirectory
@@ -97,6 +111,7 @@ try {
   }
   exit 0
 } catch {
+  Write-UpdateLog ("Update failed: " + $_.Exception.Message)
   Write-Host ""
   Write-Host ("[Cap7CE Update] Update failed: " + $_.Exception.Message) -ForegroundColor Red
   if ($replacementStarted -and (Test-Path -LiteralPath $backupDirectory -PathType Container)) {
@@ -106,7 +121,7 @@ try {
     }
     Move-Item -LiteralPath $backupDirectory -Destination $installDirectoryPath
   }
-  if (Test-Path -LiteralPath (Join-Path $installDirectoryPath $ExecutableName) -PathType Leaf) {
+  if ($currentProcessExited -and (Test-Path -LiteralPath (Join-Path $installDirectoryPath $ExecutableName) -PathType Leaf)) {
     Start-Cap7CE $installDirectoryPath | Out-Null
   }
   Write-Host ("[Cap7CE Update] The previous version has been restored. This window will close in " + $FailureCloseDelaySeconds + " seconds.") -ForegroundColor Yellow

@@ -2730,6 +2730,7 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
   try {
     await downloadAppUpdate(update, packagePath, sendDownloadProgress);
     await fs.copyFile(path.join(app.getAppPath(), "build", "update-helper.ps1"), helperPath);
+    const helperReadyPath = path.join(updateRoot, "helper-ready");
     const updaterProcess = spawn("powershell.exe", [
       "-NoLogo",
       "-NoProfile",
@@ -2752,6 +2753,32 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
       detached: true,
       stdio: "ignore",
       windowsHide: false
+    });
+    await new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const finish = (error?: Error) => {
+        if (settled) return;
+        settled = true;
+        clearInterval(readyPoll);
+        clearTimeout(readyTimeout);
+        updaterProcess.off("error", handleError);
+        updaterProcess.off("exit", handleExit);
+        if (error) reject(error);
+        else resolve();
+      };
+      const handleError = (error: Error) => finish(error);
+      const handleExit = (code: number | null) => finish(new Error(`Update helper exited before it was ready (code ${code ?? "unknown"}).`));
+      const checkReady = () => {
+        void fs.access(helperReadyPath).then(() => finish()).catch(() => undefined);
+      };
+      const readyPoll = setInterval(checkReady, 100);
+      const readyTimeout = setTimeout(() => {
+        updaterProcess.kill();
+        finish(new Error("Update helper did not become ready in time."));
+      }, 300_000);
+      updaterProcess.once("error", handleError);
+      updaterProcess.once("exit", handleExit);
+      checkReady();
     });
     updaterProcess.unref();
     pendingAppUpdateDownload = null;
