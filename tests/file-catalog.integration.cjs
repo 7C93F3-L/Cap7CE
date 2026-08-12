@@ -84,6 +84,9 @@ app.whenReady().then(async () => {
       getPendingImageRecognitionCount,
       reassignDirectoryImages,
       searchIndexedImages,
+      updateImageRecognition,
+      updateManualKeywordsBatch,
+      upsertFileManualKeywords,
       writeScannedImagesToIndex
     } = require("../dist-electron/sqliteImageIndex.js");
     const { cleanupMissingIndexedFiles } = require("../dist-electron/staleFileCleanupService.js");
@@ -142,6 +145,30 @@ app.whenReady().then(async () => {
     });
     assert.deepEqual(existingSearch.images.map((image) => image.fileName), ["visual.png"]);
 
+    const visualFile = scan.images[0];
+    const nonVisualFile = scan.files.find((file) => file.file_path === textPath);
+    assert.ok(nonVisualFile);
+    await updateImageRecognition(1, "保留的 AI 描述", ["共同词", "视觉私有词"], timestamp);
+    await upsertFileManualKeywords(nonVisualFile, ["共同词", "文本私有词"], timestamp);
+    const normalizedBatchKeywords = await updateManualKeywordsBatch([
+      { file: visualFile, resultKind: "visual" },
+      { file: nonVisualFile, resultKind: "file" }
+    ], ["共同词"], " 新词， 新词, ");
+    assert.deepEqual(normalizedBatchKeywords, ["新词"]);
+
+    const keywordDatabase = new SQL.Database(await fs.readFile(databasePath));
+    const visualKeywordRow = keywordDatabase.exec(
+      "SELECT caption, keywords FROM images WHERE file_path = :file_path",
+      { ":file_path": imagePath }
+    )[0]?.values[0];
+    const nonVisualKeywordRow = keywordDatabase.exec(
+      "SELECT user_keywords FROM files WHERE file_path = :file_path",
+      { ":file_path": textPath }
+    )[0]?.values[0];
+    keywordDatabase.close();
+    assert.deepEqual(visualKeywordRow, ["保留的 AI 描述", "视觉私有词,新词"]);
+    assert.deepEqual(nonVisualKeywordRow, ["文本私有词,新词"]);
+
     await fs.rm(textPath);
     const rescan = await scanImageDirectories([directory]);
     await writeScannedImagesToIndex([directoryId], rescan.images, rescan.scannedAt, rescan.files);
@@ -190,6 +217,7 @@ app.whenReady().then(async () => {
       migrationBackupCreated: true,
       relativeDirectoryStoredAndReassigned: true,
       mixedFormatsCataloged: 3,
+      mixedKeywordBatchPreservedCaptionAndPrivateKeywords: true,
       missingFilesMarkedBeforeCleanup: true,
       nonVisualAiBoundaryPreserved: true,
       visualSearchBoundaryPreserved: true,

@@ -15,6 +15,15 @@ import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle, splitMiddleEllipsisFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
+import {
+  clampFloatingCardPosition,
+  createSpaceHoldController,
+  getKeywordEditorTextareaMaximumHeight,
+  isKeywordEditorCancelKey,
+  isPlainSpaceShortcut,
+  shouldSubmitKeywordEditor,
+  type FloatingAnchor
+} from "./keywordEditorInteraction";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
@@ -174,12 +183,7 @@ type KeywordEditSession = {
   mode: "single" | "multi";
   items: ImageIndexItem[];
   initialCommonKeywords: string[];
-};
-type KeywordBatchFeedback = {
-  status: "failed" | "succeeded";
-  failedCount: number;
-  errorMessage: string;
-  normalizedKeywordText: string;
+  anchor: FloatingAnchor;
 };
 type DeleteFilesFeedback = {
   status: "failed" | "succeeded";
@@ -208,6 +212,11 @@ type KeywordEditScrollSnapshot = {
   search: SearchState;
 };
 type ResultLayoutMode = "micro" | "mini" | "normal";
+type SpacePressSnapshot = {
+  index: number;
+  items: ImageIndexItem[];
+  anchor: FloatingAnchor;
+};
 type SkimReturnContext = {
   view: Exclude<AppView, "skim">;
   shellState: ShellState;
@@ -1081,7 +1090,6 @@ const App = () => {
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [deleteFilesFeedback, setDeleteFilesFeedback] = useState<DeleteFilesFeedback | null>(null);
   const [keywordEditSession, setKeywordEditSession] = useState<KeywordEditSession | null>(null);
-  const [keywordBatchFeedback, setKeywordBatchFeedback] = useState<KeywordBatchFeedback | null>(null);
   const [editCaption, setEditCaption] = useState("");
   const [editKeywords, setEditKeywords] = useState("");
   const [editMetadataError, setEditMetadataError] = useState("");
@@ -3151,7 +3159,7 @@ const App = () => {
     }
   };
 
-  const requestEditKeywords = (items: ImageIndexItem[]) => {
+  const requestEditKeywords = (items: ImageIndexItem[], anchor?: FloatingAnchor) => {
     if (items.length === 0) {
       return;
     }
@@ -3162,11 +3170,15 @@ const App = () => {
     const initialCommonKeywords = mode === "single"
       ? [...frozenItems[0].keywords]
       : getCommonKeywords(frozenItems);
-    setKeywordEditSession({ mode, items: frozenItems, initialCommonKeywords });
+    setKeywordEditSession({
+      mode,
+      items: frozenItems,
+      initialCommonKeywords,
+      anchor: anchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+    });
     setEditCaption(frozenItems[0].caption);
     setEditKeywords(initialCommonKeywords.join(","));
     setEditMetadataError("");
-    setKeywordBatchFeedback(null);
     setDialog("editKeywords");
   };
 
@@ -3196,7 +3208,6 @@ const App = () => {
     restoreKeywordEditScrollSnapshot();
     setDialog(null);
     setKeywordEditSession(null);
-    setKeywordBatchFeedback(null);
     setEditMetadataError("");
   };
 
@@ -3228,12 +3239,7 @@ const App = () => {
           throw new Error(t("error.indexUnavailable"));
         }
         if (!result.success) {
-          setKeywordBatchFeedback({
-            status: "failed",
-            failedCount: result.failedCount,
-            errorMessage: result.errorMessage,
-            normalizedKeywordText: result.normalizedKeywordText
-          });
+          setEditMetadataError(result.errorMessage || t("keywords.updateFailedCount", { count: result.failedCount }));
           return;
         }
       }
@@ -3244,89 +3250,16 @@ const App = () => {
       restoreKeywordEditScrollSnapshot();
       setDialog(null);
       setKeywordEditSession(null);
-      setKeywordBatchFeedback(null);
     } catch (error) {
-      if (keywordEditSession.mode === "multi") {
-        setKeywordBatchFeedback({
-          status: "failed",
-          failedCount: keywordEditSession.items.length,
-          errorMessage: error instanceof Error ? error.message : t("error.batchKeywordFailed"),
-          normalizedKeywordText: editKeywords
-        });
-      } else {
-        setEditMetadataError(error instanceof Error ? error.message : t("error.metadataSaveFailed"));
-      }
+      setEditMetadataError(error instanceof Error
+        ? error.message
+        : keywordEditSession.mode === "multi"
+          ? t("error.batchKeywordFailed")
+          : t("error.metadataSaveFailed"));
     } finally {
       keywordSaveInFlightRef.current = false;
       setIsSavingMetadata(false);
     }
-  };
-
-  const retryKeywordBatchUpdate = async () => {
-    if (
-      !keywordEditSession
-      || keywordEditSession.mode !== "multi"
-      || keywordBatchFeedback?.status !== "failed"
-      || keywordSaveInFlightRef.current
-    ) {
-      return;
-    }
-
-    keywordSaveInFlightRef.current = true;
-    setIsSavingMetadata(true);
-    try {
-      const result = await window.imageEverything?.index.updateKeywordsBatch({
-        targets: keywordEditSession.items.map((item) => ({ filePath: item.filePath })),
-        initialCommonKeywords: keywordEditSession.initialCommonKeywords,
-        targetKeywordText: keywordBatchFeedback.normalizedKeywordText
-      });
-      if (!result) {
-        throw new Error(t("error.indexUnavailable"));
-      }
-      if (result.success) {
-        setKeywordBatchFeedback({
-          status: "succeeded",
-          failedCount: 0,
-          errorMessage: "",
-          normalizedKeywordText: result.normalizedKeywordText
-        });
-        await Promise.allSettled([
-          runSearch(search, { navigate: false }),
-          refreshIndexStats()
-        ]);
-        return;
-      }
-      setKeywordBatchFeedback({
-        status: "failed",
-        failedCount: result.failedCount,
-        errorMessage: result.errorMessage,
-        normalizedKeywordText: result.normalizedKeywordText
-      });
-    } catch (error) {
-      setKeywordBatchFeedback((current) => current ? {
-        ...current,
-        status: "failed",
-        failedCount: keywordEditSession.items.length,
-        errorMessage: error instanceof Error ? error.message : t("error.batchKeywordFailed")
-      } : current);
-    } finally {
-      keywordSaveInFlightRef.current = false;
-      setIsSavingMetadata(false);
-    }
-  };
-
-  const completeKeywordBatchUpdate = async () => {
-    if (keywordBatchFeedback?.status !== "succeeded" || keywordSaveInFlightRef.current) {
-      return;
-    }
-    keywordSaveInFlightRef.current = true;
-    setIsSavingMetadata(true);
-    restoreKeywordEditScrollSnapshot();
-    setDialog(null);
-    setKeywordEditSession(null);
-    setKeywordBatchFeedback(null);
-    keywordSaveInFlightRef.current = false;
-    setIsSavingMetadata(false);
   };
 
   const confirmDeleteFiles = async () => {
@@ -3646,7 +3579,7 @@ const App = () => {
         }
 
         if (dialog === "editKeywords") {
-          if (isSavingMetadata || keywordBatchFeedback?.status === "succeeded") return;
+          if (isSavingMetadata) return;
           cancelEditKeywords();
           return;
         }
@@ -3780,7 +3713,6 @@ const App = () => {
     isClearingSkimCache,
     isDeletingFiles,
     isSavingMetadata,
-    keywordBatchFeedback,
     openSkim,
     openSettings,
     pendingQuickCommandConfirmation,
@@ -4101,33 +4033,6 @@ const App = () => {
                 onSearchOptionsChange={updateResultsSearchOptions}
               />
             )}
-            {activeView === "results" && dialog === "editKeywords" && keywordEditSession && (
-              keywordBatchFeedback ? (
-                <KeywordBatchResultPanel
-                  status={keywordBatchFeedback.status}
-                  failedCount={keywordBatchFeedback.failedCount}
-                  onCancel={() => {
-                    if (keywordBatchFeedback.status === "succeeded") return;
-                    cancelEditKeywords();
-                  }}
-                  onPrimaryAction={keywordBatchFeedback.status === "failed"
-                    ? retryKeywordBatchUpdate
-                    : completeKeywordBatchUpdate}
-                />
-              ) : (
-                <KeywordEditorModal
-                  fileName={keywordEditSession.mode === "single"
-                    ? keywordEditSession.items[0].fileName
-                    : t("keywords.selectedCount", { count: keywordEditSession.items.length })}
-                  keywords={editKeywords}
-                  error={editMetadataError}
-                  isSaving={isSavingMetadata}
-                  onKeywordsChange={setEditKeywords}
-                  onSave={saveEditedKeywords}
-                  onCancel={cancelEditKeywords}
-                />
-              )
-            )}
             {activeView === "results" && dialog === "deleteFiles" && (
               <DeleteFilesPanel
                 isDeleting={isDeletingFiles}
@@ -4147,7 +4052,7 @@ const App = () => {
                 }}
               />
             )}
-            {isExpandedShell && activeView === "results" && dialog !== "editKeywords" && dialog !== "deleteFiles" && (
+            {isExpandedShell && activeView === "results" && dialog !== "deleteFiles" && (
               <ResultsView
                 shellState={shellState}
                 search={search}
@@ -4164,6 +4069,7 @@ const App = () => {
                 contextMenuTheme={effectiveTheme}
                 appearanceColors={appearanceColors}
                 imageContextMenuOpen={contextMenu !== null}
+                keywordEditorOpen={dialog === "editKeywords"}
                 selectedImageId={selectedResultImageId}
                 clearSelectionRequestId={clearSelectionRequestId}
                 scrollTop={resultScrollPositionsRef.current[search.recognitionStatus]}
@@ -4181,6 +4087,7 @@ const App = () => {
                 onSearchOptionsChange={updateResultsSearchOptions}
                 onSearch={() => submitSearch(search)}
                 onFeedback={showQuickCommandNotice}
+                onEditKeywords={requestEditKeywords}
                 onContextMenu={(event, item, selectedItems, preview) => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -4452,7 +4359,11 @@ const App = () => {
                 },
                 ...(contextMenu.items.length > 0
                   ? [
-                    { id: "editKeywords", label: t("context.editKeywords"), onSelect: () => requestEditKeywords(contextMenu.items) },
+                    {
+                      id: "editKeywords",
+                      label: t("context.editKeywords"),
+                      onSelect: () => requestEditKeywords(contextMenu.items, { x: contextMenu.x, y: contextMenu.y })
+                    },
                     {
                       id: "delete",
                       label: contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile"),
@@ -4463,6 +4374,19 @@ const App = () => {
               ]
             }
           ]}
+        />
+      )}
+      {dialog === "editKeywords" && keywordEditSession && (
+        <KeywordEditorCard
+          session={keywordEditSession}
+          keywords={editKeywords}
+          error={editMetadataError}
+          isSaving={isSavingMetadata}
+          menuStyle={contextMenuStyle}
+          theme={effectiveTheme}
+          onKeywordsChange={setEditKeywords}
+          onSave={saveEditedKeywords}
+          onCancel={cancelEditKeywords}
         />
       )}
     </div>
@@ -4517,6 +4441,7 @@ interface ResultsViewProps {
   contextMenuTheme: "light" | "dark";
   appearanceColors: AppearanceColors;
   imageContextMenuOpen: boolean;
+  keywordEditorOpen: boolean;
   selectedImageId: string | null;
   clearSelectionRequestId: number;
   scrollTop: number;
@@ -4529,13 +4454,14 @@ interface ResultsViewProps {
   onSearchOptionsChange: (search: SearchState) => void;
   onSearch: () => void;
   onFeedback: (message: string) => void;
+  onEditKeywords: (items: ImageIndexItem[], anchor: FloatingAnchor) => void;
   onContextMenu: (event: React.MouseEvent, item: ImageIndexItem, selectedItems: ImageIndexItem[], preview: () => void) => void;
   onContextMenuClose: () => void;
   onOpenImage: (item: ImageIndexItem) => void;
   onOpenSkim: () => void;
 }
 
-const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, searchDisplayMode, contextMenuTheme, appearanceColors, imageContextMenuOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchDisplayModeChange, onSearchOptionsChange, onSearch, onFeedback, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
+const ResultsView = ({ shellState, search, images, searchStatus, isSearching, searchError, quickCommandNotice, inputFeedbackIsGuide, directories, directoryName, labelVisibility, searchDisplayMode, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollTop, searchInputRef, onSelectedImageChange, onScrollTopChange, onSearchChange, onLabelVisibilityChange, onSearchDisplayModeChange, onSearchOptionsChange, onSearch, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onOpenSkim }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -4655,6 +4581,22 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       openPreviewAtIndex(index);
     }
   }, [images, openPreviewAtIndex]);
+
+  const spaceHoldController = useMemo(() => createSpaceHoldController<SpacePressSnapshot>({
+    delayMs: 350,
+    schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
+    cancelScheduled: (handle) => window.clearTimeout(handle as number),
+    onShortPress: (snapshot) => openPreviewAtIndex(snapshot.index),
+    onLongPress: (snapshot) => onEditKeywords(snapshot.items, snapshot.anchor)
+  }), [onEditKeywords, openPreviewAtIndex]);
+
+  useEffect(() => () => {
+    spaceHoldController.cancel();
+  }, [spaceHoldController]);
+
+  useEffect(() => {
+    spaceHoldController.cancel();
+  }, [imageContextMenuOpen, keywordEditorOpen, selectedImageId, shellState, spaceHoldController]);
 
   const movePreview = useCallback((direction: -1 | 1) => {
     onContextMenuClose();
@@ -4939,18 +4881,28 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         return;
       }
 
-      if (event.code === "Space") {
+      if (isPlainSpaceShortcut(event)) {
         event.preventDefault();
-        if (selectedImageIndex >= 0) {
-          const focusedElement = document.activeElement;
-          if (
-            focusedElement instanceof HTMLElement &&
-            focusedElement.closest(".thumb, .unrecognized-item")
-          ) {
-            focusedElement.blur();
-          }
-          openPreviewAtIndex(selectedImageIndex);
+        if (event.repeat || selectedImageIndex < 0 || imageContextMenuOpen || keywordEditorOpen) return;
+        const focusedElement = document.activeElement;
+        if (
+          focusedElement instanceof HTMLElement &&
+          focusedElement.closest(".thumb, .unrecognized-item")
+        ) {
+          focusedElement.blur();
         }
+        const activeItem = images[selectedImageIndex];
+        const activeTile = Array.from(document.querySelectorAll<HTMLElement>("[data-result-item-id]"))
+          .find((element) => element.dataset.resultItemId === activeItem.id);
+        const activeBounds = activeTile?.getBoundingClientRect();
+        const selectedItems = images.filter((image) => selectedImageIds.has(image.id));
+        spaceHoldController.start({
+          index: selectedImageIndex,
+          items: selectedItems.length > 0 ? selectedItems : [activeItem],
+          anchor: activeBounds
+            ? { x: activeBounds.right, y: activeBounds.top }
+            : { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+        });
         return;
       }
 
@@ -4984,9 +4936,24 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [images, moveSelection, onFeedback, onOpenImage, openPreviewAtIndex, selectedImageIds, selectedImageIndex]);
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || !spaceHoldController.isActive()) return;
+      event.preventDefault();
+      spaceHoldController.release();
+    };
+
+    const cancelSpaceHold = () => spaceHoldController.cancel();
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyUp, true);
+    window.addEventListener("blur", cancelSpaceHold);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyUp, true);
+      window.removeEventListener("blur", cancelSpaceHold);
+      spaceHoldController.cancel();
+    };
+  }, [imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onFeedback, onOpenImage, selectedImageIds, selectedImageIndex, spaceHoldController]);
   return (
     <main className={`results-view cap-results-view${isUnrecognizedView ? " cap-results-view-unrecognized" : ""}`} data-results-view="true">
       <Cap7CESearchCapsule
@@ -6553,6 +6520,7 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIn
             <button
               className={`thumb${selectedImageIds.has(item.id) ? " selected" : ""}`}
               data-result-tile="true"
+              data-result-item-id={item.id}
               key={item.id}
               style={{
                 width: virtualGrid.cellSize,
@@ -6830,6 +6798,7 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollT
               <button
                 className={`unrecognized-item${selectedImageIds.has(item.id) ? " selected" : ""}`}
                 data-result-tile="true"
+                data-result-item-id={item.id}
                 key={item.id}
                 style={{
                   width: virtualList.itemWidth,
@@ -8408,28 +8377,41 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   );
 };
 
-interface KeywordEditorModalProps {
-  fileName: string;
+interface KeywordEditorCardProps {
+  session: KeywordEditSession;
   keywords: string;
   error: string;
   isSaving: boolean;
+  menuStyle: CSSProperties;
+  theme: ResolvedThemeMode;
   onKeywordsChange: (keywords: string) => void;
   onSave: () => void;
   onCancel: () => void;
 }
 
-const KeywordEditorModal = ({
-  fileName,
+const getDirectParentPath = (filePath: string) => {
+  const normalizedPath = filePath.replace(/\//g, "\\");
+  const separatorIndex = normalizedPath.lastIndexOf("\\");
+  return separatorIndex >= 0 ? normalizedPath.slice(0, separatorIndex).toLocaleLowerCase() : "";
+};
+
+const KeywordEditorCard = ({
+  session,
   keywords,
   error,
   isSaving,
+  menuStyle,
+  theme,
   onKeywordsChange,
   onSave,
   onCancel
-}: KeywordEditorModalProps) => {
+}: KeywordEditorCardProps) => {
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const composingRef = useRef(false);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   const resizeTextarea = useCallback((textarea: HTMLTextAreaElement) => {
-    const maxHeight = 160;
+    const maxHeight = getKeywordEditorTextareaMaximumHeight(window.innerHeight);
     textarea.style.height = "auto";
     const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${nextHeight}px`;
@@ -8437,73 +8419,159 @@ const KeywordEditorModal = ({
   }, []);
 
   useLayoutEffect(() => {
-    if (textareaRef.current) {
-      resizeTextarea(textareaRef.current);
-    }
+    const textarea = textareaRef.current;
+    const card = cardRef.current;
+    if (!textarea || !card) return;
+    resizeTextarea(textarea);
+    const bounds = card.getBoundingClientRect();
+    setPosition(clampFloatingCardPosition(
+      session.anchor,
+      { width: bounds.width, height: bounds.height },
+      { width: window.innerWidth, height: window.innerHeight }
+    ));
   }, [keywords, resizeTextarea]);
 
-  return (
-  <main className="keyword-editor-view">
-    <form
-      className="keyword-editor-panel"
-      onSubmit={(event) => {
+  useEffect(() => {
+    const handleResize = () => {
+      const card = cardRef.current;
+      if (!card) return;
+      const bounds = card.getBoundingClientRect();
+      setPosition(clampFloatingCardPosition(
+        session.anchor,
+        { width: bounds.width, height: bounds.height },
+        { width: window.innerWidth, height: window.innerHeight }
+      ));
+    };
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(handleResize);
+    if (cardRef.current) resizeObserver?.observe(cardRef.current);
+    window.addEventListener("resize", handleResize);
+    textareaRef.current?.focus();
+    textareaRef.current?.select();
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [session.anchor]);
+
+  const firstItem = session.items[0];
+  const isSingle = session.mode === "single";
+  const formatCounts = new Map<string, number>();
+  for (const item of session.items) {
+    const format = item.extension.slice(1).toUpperCase() || t("fileInfo.file");
+    formatCounts.set(format, (formatCounts.get(format) ?? 0) + 1);
+  }
+  const formatComposition = [...formatCounts.entries()]
+    .map(([format, count]) => `${count} ${format}`)
+    .join(" / ");
+  const directoryCount = new Set(session.items.map((item) => getDirectParentPath(item.filePath))).size;
+  const compactFormatComposition = formatCounts.size <= 3
+    ? formatComposition
+    : t("keywords.formatCount", { count: formatCounts.size });
+  const headerTooltip = isSingle
+    ? [
+      firstItem.fileName,
+      formatCacheSize(firstItem.fileSize),
+      ...(firstItem.imageWidth > 0 && firstItem.imageHeight > 0
+        ? [t("fileInfo.resolution", { width: firstItem.imageWidth, height: firstItem.imageHeight })]
+        : [])
+    ].join("\n")
+    : [
+      t("keywords.selectedCount", { count: session.items.length }),
+      t("keywords.directoryCount", { count: directoryCount }),
+      formatComposition
+    ].join("\n");
+  const splitFileName = splitMiddleEllipsisFileName(firstItem.fileName);
+
+  return createPortal(
+    <div
+      ref={cardRef}
+      className={`context-menu context-menu-${theme} keyword-editor-card`}
+      data-context-menu="true"
+      data-keyword-editor="true"
+      style={{
+        ...menuStyle,
+        left: position?.left ?? session.anchor.x,
+        top: position?.top ?? session.anchor.y,
+        visibility: position ? "visible" : "hidden"
+      }}
+      role="dialog"
+      aria-modal="false"
+      aria-label={t("context.editKeywords")}
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onContextMenu={(event) => {
         event.preventDefault();
-        onSave();
+        event.stopPropagation();
       }}
     >
-      <div className="keyword-editor-main">
-        <div className="keyword-editor-field keyword-editor-readonly-field keyword-editor-file-name">
-          <strong title={fileName}>{fileName}</strong>
+      <div className="cap7ce-menu-motion-surface keyword-editor-card-surface">
+        <div className="context-menu-file-header keyword-editor-card-header" title={headerTooltip}>
+          {isSingle ? (
+            <>
+              <div className="context-menu-file-heading">
+                <span className="context-menu-file-format">{firstItem.extension.slice(1).toUpperCase() || t("fileInfo.file")}</span>
+                <span className="context-menu-file-primary-detail">{formatCacheSize(firstItem.fileSize)}</span>
+              </div>
+              <span className="context-menu-file-name">
+                <span className="context-menu-file-name-leading">{splitFileName.leading}</span>
+                {splitFileName.trailing && <span className="context-menu-file-name-trailing">{splitFileName.trailing}</span>}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="context-menu-file-heading">
+                <span className="context-menu-file-format keyword-editor-multi-heading">
+                  {t("keywords.selectedCount", { count: session.items.length })}
+                </span>
+                <span className="context-menu-file-primary-detail">
+                  {t("keywords.directoryCount", { count: directoryCount })}
+                </span>
+              </div>
+              <span className="context-menu-file-name keyword-editor-format-composition">{compactFormatComposition}</span>
+            </>
+          )}
         </div>
-        <label className="keyword-editor-field keyword-editor-keywords-field keyword-editor-input">
-          <span>{t("keywords.label")}</span>
-          <textarea
-            ref={textareaRef}
-            className="keyword-editor-textarea"
-            value={keywords}
-            onChange={(event) => onKeywordsChange(event.target.value)}
-            onInput={(event) => resizeTextarea(event.currentTarget)}
-            disabled={isSaving}
-            placeholder={t("keywords.placeholder")}
-          />
-        </label>
-        {error && <div className="keyword-editor-error">{error}</div>}
-        <div className="modal-actions keyword-editor-actions">
-          <button type="button" disabled={isSaving} onClick={onCancel}>{t("common.cancel")}</button>
-          <button type="submit" disabled={isSaving}>{isSaving ? t("common.saving") : t("common.save")}</button>
-        </div>
+        <textarea
+          ref={textareaRef}
+          className="keyword-editor-textarea"
+          value={keywords}
+          onChange={(event) => onKeywordsChange(event.target.value)}
+          onInput={(event) => resizeTextarea(event.currentTarget)}
+          onCompositionStart={() => {
+            composingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false;
+          }}
+          onKeyDown={(event) => {
+            if (isKeywordEditorCancelKey(event.key)) {
+              event.preventDefault();
+              event.stopPropagation();
+              onCancel();
+              return;
+            }
+            const nativeEvent = event.nativeEvent as KeyboardEvent;
+            if (shouldSubmitKeywordEditor({
+              key: event.key,
+              isComposing: nativeEvent.isComposing || composingRef.current,
+              repeat: nativeEvent.repeat
+            })) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSave();
+            }
+          }}
+          disabled={isSaving}
+          placeholder={t("keywords.placeholder")}
+          aria-label={t("keywords.label")}
+        />
+        {error && <div className="keyword-editor-error" role="alert">{error}</div>}
+        {isSaving && <div className="keyword-editor-saving">{t("common.saving")}</div>}
       </div>
-    </form>
-  </main>
+    </div>,
+    document.body
   );
 };
-
-const KeywordBatchResultPanel = ({
-  status,
-  failedCount,
-  onCancel,
-  onPrimaryAction
-}: {
-  status: "failed" | "succeeded";
-  failedCount: number;
-  onCancel: () => void;
-  onPrimaryAction: () => void;
-}) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("keywords.resultTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
-          {status === "failed" ? t("keywords.updateFailedCount", { count: failedCount }) : t("keywords.updateCompleted")}
-        </div>
-        <div className="modal-actions">
-          <button type="button" onClick={onCancel}>{t("common.cancel")}</button>
-          <button type="button" onClick={onPrimaryAction}>{status === "failed" ? t("common.retry") : t("common.done")}</button>
-        </div>
-      </div>
-    </section>
-  </main>
-);
 
 const DeleteFilesPanel = ({
   isDeleting,

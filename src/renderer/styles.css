@@ -3718,6 +3718,99 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   color: var(--theme-on-color);
 }
 
+.context-menu.keyword-editor-card {
+  z-index: 1001;
+  width: min(286px, calc(100vw - 10px));
+  min-width: min(220px, calc(100vw - 10px));
+  max-width: calc(100vw - 10px);
+  max-height: calc(100vh - 10px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.keyword-editor-card-surface {
+  min-width: 0;
+  gap: 7px;
+}
+
+.keyword-editor-card-header {
+  padding-bottom: 4px;
+}
+
+.keyword-editor-multi-heading {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyword-editor-format-composition {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyword-editor-card textarea.keyword-editor-textarea {
+  width: 100%;
+  min-height: 60px;
+  max-height: min(160px, calc(100vh - 96px));
+  box-sizing: border-box;
+  overflow-y: hidden;
+  border: 0;
+  border-radius: var(--radius-control);
+  outline: 0;
+  color: var(--text-main);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  resize: none;
+}
+
+.keyword-editor-card textarea.keyword-editor-textarea:focus {
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+
+.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
+  opacity: 1;
+}
+
+.context-menu-light.keyword-editor-card textarea.keyword-editor-textarea {
+  background: #ffffff;
+}
+
+.context-menu-light.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
+  color: #9b9b9b;
+}
+
+.context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea {
+  background: #191919;
+}
+
+.context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
+  color: #777777;
+}
+
+@media (min-height: 200px) {
+  .keyword-editor-card textarea.keyword-editor-textarea {
+    min-height: 76px;
+  }
+}
+
+.keyword-editor-card .keyword-editor-error,
+.keyword-editor-saving {
+  padding: 0 4px 1px;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.keyword-editor-saving {
+  color: var(--accent-color);
+}
+
 .context-menu.cap-color-picker {
   width: 236px;
   min-width: 236px;
