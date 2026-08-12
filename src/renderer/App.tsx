@@ -2076,9 +2076,11 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateShellModeShortcut?.((mode) => {
       setCommandShellMode(mode === "standby" ? "line" : mode);
+      if (mode === "standby" || dialog) return;
+      window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
     });
     return () => unsubscribe?.();
-  }, [setCommandShellMode]);
+  }, [dialog, setCommandShellMode]);
 
   const isRecognitionTaskRunning = () => (
     isScanning
