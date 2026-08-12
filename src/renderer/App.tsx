@@ -16,13 +16,13 @@ import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle, splitMiddleEllipsisFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
 import {
-  clampFloatingCardPosition,
+  centerFloatingCardPosition,
+  createSpaceReleaseGuard,
   createSpaceHoldController,
   getKeywordEditorTextareaMaximumHeight,
   isKeywordEditorCancelKey,
   isPlainSpaceShortcut,
   shouldSubmitKeywordEditor,
-  type FloatingAnchor
 } from "./keywordEditorInteraction";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
@@ -183,7 +183,6 @@ type KeywordEditSession = {
   mode: "single" | "multi";
   items: ImageIndexItem[];
   initialCommonKeywords: string[];
-  anchor: FloatingAnchor;
 };
 type DeleteFilesFeedback = {
   status: "failed" | "succeeded";
@@ -215,7 +214,6 @@ type ResultLayoutMode = "micro" | "mini" | "normal";
 type SpacePressSnapshot = {
   index: number;
   items: ImageIndexItem[];
-  anchor: FloatingAnchor;
 };
 type SkimReturnContext = {
   view: Exclude<AppView, "skim">;
@@ -3159,7 +3157,7 @@ const App = () => {
     }
   };
 
-  const requestEditKeywords = (items: ImageIndexItem[], anchor?: FloatingAnchor) => {
+  const requestEditKeywords = (items: ImageIndexItem[]) => {
     if (items.length === 0) {
       return;
     }
@@ -3173,8 +3171,7 @@ const App = () => {
     setKeywordEditSession({
       mode,
       items: frozenItems,
-      initialCommonKeywords,
-      anchor: anchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+      initialCommonKeywords
     });
     setEditCaption(frozenItems[0].caption);
     setEditKeywords(initialCommonKeywords.join(","));
@@ -4362,7 +4359,7 @@ const App = () => {
                     {
                       id: "editKeywords",
                       label: t("context.editKeywords"),
-                      onSelect: () => requestEditKeywords(contextMenu.items, { x: contextMenu.x, y: contextMenu.y })
+                      onSelect: () => requestEditKeywords(contextMenu.items)
                     },
                     {
                       id: "delete",
@@ -4454,7 +4451,7 @@ interface ResultsViewProps {
   onSearchOptionsChange: (search: SearchState) => void;
   onSearch: () => void;
   onFeedback: (message: string) => void;
-  onEditKeywords: (items: ImageIndexItem[], anchor: FloatingAnchor) => void;
+  onEditKeywords: (items: ImageIndexItem[]) => void;
   onContextMenu: (event: React.MouseEvent, item: ImageIndexItem, selectedItems: ImageIndexItem[], preview: () => void) => void;
   onContextMenuClose: () => void;
   onOpenImage: (item: ImageIndexItem) => void;
@@ -4473,6 +4470,8 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   const previewSessionCounterRef = useRef(0);
   const previewOpenRequestRef = useRef(0);
   const previewIndexRef = useRef<number | null>(null);
+  const [isSpaceHolding, setIsSpaceHolding] = useState(false);
+  const spaceReleaseGuardRef = useRef(createSpaceReleaseGuard());
   const updateGridMetrics = useCallback((nextMetrics: { left: number; right: number; columnCount: number }) => {
     setGridMetrics((currentMetrics) => {
       if (currentMetrics.left === nextMetrics.left && currentMetrics.right === nextMetrics.right && currentMetrics.columnCount === nextMetrics.columnCount) {
@@ -4586,8 +4585,15 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     delayMs: 350,
     schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
     cancelScheduled: (handle) => window.clearTimeout(handle as number),
-    onShortPress: (snapshot) => openPreviewAtIndex(snapshot.index),
-    onLongPress: (snapshot) => onEditKeywords(snapshot.items, snapshot.anchor)
+    onShortPress: (snapshot) => {
+      setIsSpaceHolding(false);
+      openPreviewAtIndex(snapshot.index);
+    },
+    onLongPress: (snapshot) => {
+      setIsSpaceHolding(false);
+      spaceReleaseGuardRef.current.activate();
+      onEditKeywords(snapshot.items);
+    }
   }), [onEditKeywords, openPreviewAtIndex]);
 
   useEffect(() => () => {
@@ -4595,7 +4601,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   }, [spaceHoldController]);
 
   useEffect(() => {
-    spaceHoldController.cancel();
+    if (spaceHoldController.cancel()) setIsSpaceHolding(false);
   }, [imageContextMenuOpen, keywordEditorOpen, selectedImageId, shellState, spaceHoldController]);
 
   const movePreview = useCallback((direction: -1 | 1) => {
@@ -4863,6 +4869,12 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (spaceReleaseGuardRef.current.shouldSuppressKeyDown(event.code)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
       if (isEditableKeyboardTarget(event.target)) {
         return;
       }
@@ -4892,17 +4904,11 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           focusedElement.blur();
         }
         const activeItem = images[selectedImageIndex];
-        const activeTile = Array.from(document.querySelectorAll<HTMLElement>("[data-result-item-id]"))
-          .find((element) => element.dataset.resultItemId === activeItem.id);
-        const activeBounds = activeTile?.getBoundingClientRect();
         const selectedItems = images.filter((image) => selectedImageIds.has(image.id));
-        spaceHoldController.start({
+        if (spaceHoldController.start({
           index: selectedImageIndex,
-          items: selectedItems.length > 0 ? selectedItems : [activeItem],
-          anchor: activeBounds
-            ? { x: activeBounds.right, y: activeBounds.top }
-            : { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-        });
+          items: selectedItems.length > 0 ? selectedItems : [activeItem]
+        })) setIsSpaceHolding(true);
         return;
       }
 
@@ -4937,12 +4943,20 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      if (spaceReleaseGuardRef.current.consumeKeyUp(event.code)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (event.code !== "Space" || !spaceHoldController.isActive()) return;
       event.preventDefault();
       spaceHoldController.release();
     };
 
-    const cancelSpaceHold = () => spaceHoldController.cancel();
+    const cancelSpaceHold = () => {
+      spaceReleaseGuardRef.current.cancel();
+      if (spaceHoldController.cancel()) setIsSpaceHolding(false);
+    };
 
     window.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("keyup", handleKeyUp, true);
@@ -4982,6 +4996,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           shellState={shellState}
           images={images}
           selectedImageIds={selectedImageIds}
+          isSpaceHolding={isSpaceHolding}
           scrollTargetIndex={scrollTargetIndex}
           initialScrollTop={scrollTop}
           isSearching={isSearching}
@@ -5000,6 +5015,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
           shellState={shellState}
           images={images}
           selectedImageIds={selectedImageIds}
+          isSpaceHolding={isSpaceHolding}
           scrollTargetIndex={scrollTargetIndex}
           initialScrollTop={scrollTop}
           isSearching={isSearching}
@@ -6274,6 +6290,7 @@ interface VirtualImageGridProps {
   shellState: ShellState;
   images: ImageIndexItem[];
   selectedImageIds: ReadonlySet<string>;
+  isSpaceHolding: boolean;
   scrollTargetIndex: number | null;
   initialScrollTop: number;
   isSearching: boolean;
@@ -6297,7 +6314,7 @@ const EmptySearchResult = ({ message, onOpenSkim }: { message: string; onOpenSki
   </button>
 );
 
-const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
+const VirtualImageGrid = ({ shellState, images, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const resizeFrameRef = useRef<number | null>(null);
@@ -6518,7 +6535,7 @@ const VirtualImageGrid = ({ shellState, images, selectedImageIds, scrollTargetIn
         <div className="virtual-grid-spacer" style={{ height: virtualGrid.totalHeight, width: isHorizontalGrid ? virtualGrid.totalWidth : "100%" }} data-rendered-count={virtualGrid.visibleItems.length} data-column-count={virtualGrid.columnCount}>
           {virtualGrid.visibleItems.map(({ item, top, left }) => (
             <button
-              className={`thumb${selectedImageIds.has(item.id) ? " selected" : ""}`}
+              className={`thumb${selectedImageIds.has(item.id) ? " selected" : ""}${isSpaceHolding && selectedImageIds.has(item.id) ? " is-space-holding" : ""}`}
               data-result-tile="true"
               data-result-item-id={item.id}
               key={item.id}
@@ -6564,7 +6581,7 @@ const measureUnrecognizedViewport = (container: HTMLElement) => {
   };
 };
 
-const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
+const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollTop, isSearching, searchError, onSelectImage, onScrollTopChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef({ width: 0, height: 0 });
   const scrollFrameRef = useRef<number | null>(null);
@@ -6796,7 +6813,7 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, scrollT
             const directoryPath = getDirectoryPath(item.filePath);
             return (
               <button
-                className={`unrecognized-item${selectedImageIds.has(item.id) ? " selected" : ""}`}
+                className={`unrecognized-item${selectedImageIds.has(item.id) ? " selected" : ""}${isSpaceHolding && selectedImageIds.has(item.id) ? " is-space-holding" : ""}`}
                 data-result-tile="true"
                 data-result-item-id={item.id}
                 key={item.id}
@@ -8424,8 +8441,7 @@ const KeywordEditorCard = ({
     if (!textarea || !card) return;
     resizeTextarea(textarea);
     const bounds = card.getBoundingClientRect();
-    setPosition(clampFloatingCardPosition(
-      session.anchor,
+    setPosition(centerFloatingCardPosition(
       { width: bounds.width, height: bounds.height },
       { width: window.innerWidth, height: window.innerHeight }
     ));
@@ -8436,8 +8452,7 @@ const KeywordEditorCard = ({
       const card = cardRef.current;
       if (!card) return;
       const bounds = card.getBoundingClientRect();
-      setPosition(clampFloatingCardPosition(
-        session.anchor,
+      setPosition(centerFloatingCardPosition(
         { width: bounds.width, height: bounds.height },
         { width: window.innerWidth, height: window.innerHeight }
       ));
@@ -8445,13 +8460,22 @@ const KeywordEditorCard = ({
     const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(handleResize);
     if (cardRef.current) resizeObserver?.observe(cardRef.current);
     window.addEventListener("resize", handleResize);
-    textareaRef.current?.focus();
-    textareaRef.current?.select();
     return () => {
       resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
     };
-  }, [session.anchor]);
+  }, []);
+
+  useEffect(() => {
+    if (!position || !textareaRef.current) return undefined;
+    const focusFrame = window.requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus({ preventScroll: true });
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [position]);
 
   const firstItem = session.items[0];
   const isSingle = session.mode === "single";
@@ -8490,8 +8514,8 @@ const KeywordEditorCard = ({
       data-keyword-editor="true"
       style={{
         ...menuStyle,
-        left: position?.left ?? session.anchor.x,
-        top: position?.top ?? session.anchor.y,
+        left: position?.left ?? window.innerWidth / 2,
+        top: position?.top ?? window.innerHeight / 2,
         visibility: position ? "visible" : "hidden"
       }}
       role="dialog"

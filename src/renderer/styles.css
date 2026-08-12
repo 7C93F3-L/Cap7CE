@@ -2570,6 +2570,26 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   opacity: 0.6;
 }
 
+.thumb.selected.is-space-holding::after,
+.thumb.selected.is-space-holding:hover::after,
+.thumb.selected.is-space-holding:focus-visible::after,
+.unrecognized-item.selected.is-space-holding .unrecognized-thumbnail::after,
+.unrecognized-item.selected.is-space-holding:hover .unrecognized-thumbnail::after,
+.unrecognized-item.selected.is-space-holding:focus-visible .unrecognized-thumbnail::after {
+  opacity: 0.4;
+  animation: cap7ce-space-hold-progress 350ms linear both;
+}
+
+@keyframes cap7ce-space-hold-progress {
+  from {
+    background: rgb(0 0 0);
+  }
+
+  to {
+    background: var(--theme-color);
+  }
+}
+
 .thumbnail-image-frame {
   position: absolute;
   inset: -2px;

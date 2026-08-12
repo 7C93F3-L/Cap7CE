@@ -17,6 +17,21 @@ export const clampFloatingCardPosition = (
   )
 });
 
+export const centerFloatingCardPosition = (
+  card: FloatingSize,
+  viewport: FloatingSize,
+  gap = 5
+) => ({
+  left: Math.min(
+    Math.max((viewport.width - card.width) / 2, gap),
+    Math.max(gap, viewport.width - card.width - gap)
+  ),
+  top: Math.min(
+    Math.max((viewport.height - card.height) / 2, gap),
+    Math.max(gap, viewport.height - card.height - gap)
+  )
+});
+
 export const isPlainSpaceShortcut = (event: {
   code: string;
   ctrlKey: boolean;
@@ -45,6 +60,26 @@ export const getKeywordEditorTextareaMaximumHeight = (viewportHeight: number) =>
   160,
   Math.max(getKeywordEditorTextareaMinimumHeight(viewportHeight), viewportHeight - 96)
 );
+
+export const createSpaceReleaseGuard = () => {
+  let active = false;
+  return {
+    activate() {
+      active = true;
+    },
+    shouldSuppressKeyDown(code: string) {
+      return active && code === "Space";
+    },
+    consumeKeyUp(code: string) {
+      if (!active || code !== "Space") return false;
+      active = false;
+      return true;
+    },
+    cancel() {
+      active = false;
+    }
+  };
+};
 
 type SpaceHoldOptions<T> = {
   delayMs: number;

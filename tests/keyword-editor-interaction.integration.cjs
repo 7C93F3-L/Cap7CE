@@ -1,7 +1,9 @@
 const assert = require("node:assert/strict");
 const {
   clampFloatingCardPosition,
+  centerFloatingCardPosition,
   createSpaceHoldController,
+  createSpaceReleaseGuard,
   getKeywordEditorTextareaMaximumHeight,
   getKeywordEditorTextareaMinimumHeight,
   isKeywordEditorCancelKey,
@@ -16,6 +18,20 @@ const position = clampFloatingCardPosition(
   { width: 800, height: 600 }
 );
 assert.deepEqual(position, { left: 515, top: 435 });
+assert.deepEqual(
+  centerFloatingCardPosition(
+    { width: 280, height: 140 },
+    { width: 540, height: 156 }
+  ),
+  { left: 130, top: 8 }
+);
+assert.deepEqual(
+  centerFloatingCardPosition(
+    { width: 280, height: 160 },
+    { width: 200, height: 120 }
+  ),
+  { left: 5, top: 5 }
+);
 
 assert.equal(isPlainSpaceShortcut({
   code: "Space",
@@ -47,6 +63,16 @@ assert.deepEqual(
   ["海报", "产品A"]
 );
 assert.deepEqual(normalizeKeywordList(parseKeywordText("， ,  ")), []);
+
+const spaceReleaseGuard = createSpaceReleaseGuard();
+assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), false);
+spaceReleaseGuard.activate();
+assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), true);
+assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("KeyA"), false);
+assert.equal(spaceReleaseGuard.consumeKeyUp("KeyA"), false);
+assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), true);
+assert.equal(spaceReleaseGuard.consumeKeyUp("Space"), true);
+assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), false);
 
 const scheduled = [];
 const shortPresses = [];
