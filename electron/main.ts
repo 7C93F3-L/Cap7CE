@@ -3619,6 +3619,17 @@ ipcMain.handle("search:cancel", (event, taskId: unknown) => {
   return true;
 });
 
+ipcMain.handle("search:refresh", (event, directoryIds: unknown) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    return false;
+  }
+  const normalizedIds = Array.isArray(directoryIds)
+    ? directoryIds.filter((id): id is string => typeof id === "string" && id.length > 0)
+    : undefined;
+  searchScanSnapshotService.invalidate(normalizedIds);
+  return true;
+});
+
 const getManualMetadataImage = async (
   filePath: string,
   directories: PersistedDirectory[]

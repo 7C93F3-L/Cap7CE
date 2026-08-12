@@ -674,6 +674,7 @@ export const zhCN = {
   "error.cacheUnavailable": "缓存清理服务暂时不可用。",
   "error.cacheFailed": "缓存清理失败。",
   "error.directoryStatusRefreshFailed": "刷新目录状态失败",
+  "error.refreshFailed": "刷新失败",
   "error.runtimeRefreshFailed": "刷新 llama.cpp 版本列表失败",
   "error.runtimeAlreadyRunning": "llama.cpp 已在运行",
   "error.runtimeStartFailed": "llama.cpp 启动失败",

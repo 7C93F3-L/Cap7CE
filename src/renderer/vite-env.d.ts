@@ -99,6 +99,7 @@ declare global {
       search: {
         images: (search: SearchState, taskId: string) => Promise<ImageSearchResponse>;
         cancel: (taskId: string) => Promise<boolean>;
+        refresh: (directoryIds?: string[]) => Promise<boolean>;
       };
       index: {
         qualityStats: () => Promise<IndexQualityStats>;

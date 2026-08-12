@@ -674,6 +674,7 @@ export const enUS = defineLocale({
   "error.cacheUnavailable": "Cache service is unavailable.",
   "error.cacheFailed": "Failed to clear cache.",
   "error.directoryStatusRefreshFailed": "Failed to refresh folder status",
+  "error.refreshFailed": "Refresh failed",
   "error.runtimeRefreshFailed": "Failed to refresh llama.cpp versions",
   "error.runtimeAlreadyRunning": "llama.cpp is already running",
   "error.runtimeStartFailed": "Failed to start llama.cpp",

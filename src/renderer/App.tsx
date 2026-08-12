@@ -3582,6 +3582,50 @@ const App = () => {
     void runSearch(nextSearch);
   };
 
+  const refreshCurrentPage = async () => {
+    if (
+      shellState === "standby"
+      || shellState === "capsule"
+      || dialog
+      || contextMenu
+      || editingDirectoryId
+      || pendingQuickCommandConfirmation
+      || isAddingDirectory
+      || isClearingCache
+      || isClearingSkimCache
+      || isDeletingFiles
+      || isSavingMetadata
+      || isIndexing
+    ) {
+      return;
+    }
+
+    if (view === "skim") {
+      await loadSkimLocation(skimCurrentPath);
+      return;
+    }
+
+    if (shellState === "settings" || view === "settings") {
+      const directoryIds = directories.map((directory) => directory.id);
+      const [countedDirectories] = await Promise.all([
+        directoryIds.length > 0
+          ? window.imageEverything?.directories.refreshFileCounts(directoryIds)
+          : Promise.resolve(undefined),
+        refreshIndexStats(),
+        refreshVisualCacheStats(),
+        refreshLlamaRuntimeSettings(),
+        refreshGgufModelSettings()
+      ]);
+      if (countedDirectories) refreshDirectories(countedDirectories);
+      return;
+    }
+
+    if (view === "home" || view === "results") {
+      await window.imageEverything?.search.refresh(search.directoryId === "all" ? undefined : [search.directoryId]);
+      await runSearch(search, { navigate: false });
+    }
+  };
+
   useEffect(() => {
     const preventSideButtonDefault = (event: MouseEvent) => {
       if (event.button === 3 || event.button === 4) {
@@ -3641,6 +3685,18 @@ const App = () => {
   useEffect(() => {
     const handleWindowShortcutKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) {
+        return;
+      }
+
+      if (event.key === "F5") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) {
+          void refreshCurrentPage().catch(() => {
+            if (view === "skim") showSkimFeedback(t("error.refreshFailed"));
+            else showQuickCommandNotice(t("error.refreshFailed"));
+          });
+        }
         return;
       }
 
@@ -3788,12 +3844,14 @@ const App = () => {
     cycleSearchDirectory,
     deleteFilesFeedback,
     dialog,
+    directories,
     editingDirectoryId,
     isAddingDirectory,
     isClearingCache,
     isClearingSkimCache,
     isDeletingFiles,
     isSavingMetadata,
+    isIndexing,
     openSkim,
     openSettings,
     pendingQuickCommandConfirmation,
@@ -3801,8 +3859,10 @@ const App = () => {
     search,
     selectedResultImageId,
     showQuickCommandNotice,
+    showSkimFeedback,
     shellState,
     skimCacheClearFeedback,
+    skimCurrentPath,
     shortcutActions,
     view
   ]);

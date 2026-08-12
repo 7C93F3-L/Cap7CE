@@ -145,7 +145,8 @@ contextBridge.exposeInMainWorld("imageEverything", {
   },
   search: {
     images: (search: unknown, taskId: string) => ipcRenderer.invoke("search:images", search, taskId),
-    cancel: (taskId: string) => ipcRenderer.invoke("search:cancel", taskId)
+    cancel: (taskId: string) => ipcRenderer.invoke("search:cancel", taskId),
+    refresh: (directoryIds?: string[]) => ipcRenderer.invoke("search:refresh", directoryIds)
   },
   index: {
     qualityStats: () => ipcRenderer.invoke("index:qualityStats"),
