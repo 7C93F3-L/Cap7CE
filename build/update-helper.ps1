@@ -14,6 +14,7 @@ $updateRoot = Split-Path -Parent $PackagePath
 $extractDirectory = Join-Path $updateRoot "extracted"
 $sourceDirectory = Join-Path $extractDirectory "Cap7CE"
 $readyPath = Join-Path $updateRoot "helper-ready"
+$failedPath = Join-Path $updateRoot "helper-failed"
 $logPath = Join-Path $updateRoot "update-helper.log"
 $installDirectoryPath = [System.IO.Path]::GetFullPath($InstallDirectory).TrimEnd("\")
 $installParent = Split-Path -Parent $installDirectoryPath
@@ -42,6 +43,9 @@ function Start-Cap7CE([string]$RootDirectory) {
 try {
   if (Test-Path -LiteralPath $readyPath) {
     Remove-Item -LiteralPath $readyPath -Force
+  }
+  if (Test-Path -LiteralPath $failedPath) {
+    Remove-Item -LiteralPath $failedPath -Force
   }
   Write-UpdateLog ("Updater started for Cap7CE " + $ExpectedVersion + ".")
   $installRoot = [System.IO.Path]::GetPathRoot($installDirectoryPath).TrimEnd("\")
@@ -112,6 +116,7 @@ try {
   exit 0
 } catch {
   Write-UpdateLog ("Update failed: " + $_.Exception.Message)
+  Set-Content -LiteralPath $failedPath -Value $_.Exception.Message -Encoding UTF8
   Write-Host ""
   Write-Host ("[Cap7CE Update] Update failed: " + $_.Exception.Message) -ForegroundColor Red
   if ($replacementStarted -and (Test-Path -LiteralPath $backupDirectory -PathType Container)) {

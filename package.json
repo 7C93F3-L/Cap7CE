@@ -22,7 +22,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "tsc -b && vite build && npm run build:electron",
     "test": "npm run build:electron && npm run test:integration",
-    "test:integration": "npm run test:app-update && npm run test:update-helper && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:keyword-editor-interaction && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:file-catalog && npm run test:multi-format-search && npm run test:search-scan-snapshot && npm run test:thumbnail-optimization && npm run test:file-drag && npm run test:file-clipboard && npm run test:file-operation && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
+    "test:integration": "npm run test:app-update && npm run test:update-launcher && npm run test:update-helper && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:keyword-editor-interaction && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:file-catalog && npm run test:multi-format-search && npm run test:search-scan-snapshot && npm run test:thumbnail-optimization && npm run test:file-drag && npm run test:file-clipboard && npm run test:file-operation && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
     "test:app-update": "node tests/app-update.integration.cjs",
     "test:update-helper": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/update-helper.integration.ps1",
     "test:web-contents-zoom": "electron tests/web-contents-zoom.integration.cjs",
@@ -59,7 +59,8 @@
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win portable",
     "test:epub-preview": "node tests/epub-preview.integration.cjs",
-    "test:mobi-preview": "node tests/mobi-preview.integration.cjs"
+    "test:mobi-preview": "node tests/mobi-preview.integration.cjs",
+    "test:update-launcher": "electron tests/app-update-launcher.integration.cjs"
   },
   "build": {
     "appId": "com.cap7ce.app",

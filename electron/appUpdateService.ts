@@ -40,6 +40,7 @@ const releasesApiUrl = "https://api.github.com/repos/7C93F3-L/Cap7CE/releases?pe
 const releaseDownloadPathPrefix = "/7C93F3-L/Cap7CE/releases/download/";
 const versionPattern = /^v?(\d+)\.(\d+)\.(\d+)$/;
 const maximumUpdatePackageBytes = 1024 * 1024 * 1024;
+const defaultDownloadInactivityTimeoutMs = 60_000;
 
 const parseVersion = (version: string) => {
   const match = version.trim().match(versionPattern);
@@ -157,7 +158,8 @@ export const downloadAppUpdate = async (
   update: AppUpdateDownload,
   destinationPath: string,
   onProgress: (progress: AppUpdateDownloadProgress) => void,
-  fetchDownload: typeof fetch = fetch
+  fetchDownload: typeof fetch = fetch,
+  inactivityTimeoutMs = defaultDownloadInactivityTimeoutMs
 ) => {
   await fs.mkdir(path.dirname(destinationPath), { recursive: true });
   const response = await fetchDownload(update.downloadUrl, {
@@ -180,6 +182,21 @@ export const downloadAppUpdate = async (
   let receivedBytes = 0;
   let lastProgressAt = 0;
   let completed = false;
+  const readNextChunk = async () => {
+    let inactivityTimer: NodeJS.Timeout | null = null;
+    try {
+      return await Promise.race([
+        reader.read(),
+        new Promise<never>((_resolve, reject) => {
+          inactivityTimer = setTimeout(() => {
+            reject(new Error("Update download stopped receiving data"));
+          }, inactivityTimeoutMs);
+        })
+      ]);
+    } finally {
+      if (inactivityTimer !== null) clearTimeout(inactivityTimer);
+    }
+  };
   const emitProgress = (force = false) => {
     const now = Date.now();
     if (!force && now - lastProgressAt < 200) return;
@@ -194,7 +211,7 @@ export const downloadAppUpdate = async (
   try {
     emitProgress(true);
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await readNextChunk();
       if (done) break;
       if (!value) continue;
       receivedBytes += value.byteLength;

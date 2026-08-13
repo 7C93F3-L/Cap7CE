@@ -362,7 +362,7 @@ export const zhCN = {
   "settings.updateOpeningDownload": "正在打开",
   "settings.downloadUpdateAgain": "再次下载",
   "settings.updateDownloadStarted": "已打开 {version} 下载",
-  "settings.updateDownloadFailed": "打开下载失败，请重试",
+  "settings.updateDownloadFailed": "更新准备失败，请重试",
   "settings.updateCheckFailed": "检查失败，请重试",
   "settings.details": "详细信息 >",
   "settings.viewReleases": "查看版本发布",

@@ -8,7 +8,7 @@ if (-not $resolvedProbe.StartsWith($resolvedTemp, [System.StringComparison]::Ord
 }
 
 try {
-  $installDirectory = Join-Path $probeRoot "installed\Cap7CE"
+  $installDirectory = Join-Path $probeRoot "installed\更新测试路径\Cap7CE"
   $payloadDirectory = Join-Path $probeRoot "payload\Cap7CE"
   $updateRoot = Join-Path $probeRoot "update"
   New-Item -ItemType Directory -Force -Path @(
@@ -103,6 +103,11 @@ public static class Cap7CEUpdateProbeApplication {
   }
   Start-Sleep -Seconds 4
   Write-Host '{"failedReplacementRolledBack":true,"successfulReplacementCompleted":true,"preservedDirectoriesRestored":true}'
+} catch {
+  Get-ChildItem -LiteralPath $probeRoot -Filter "update-helper.log" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+    Write-Host (Get-Content -LiteralPath $_.FullName -Raw)
+  }
+  throw
 } finally {
   if ($blockingProcess -and -not $blockingProcess.HasExited) {
     Stop-Process -Id $blockingProcess.Id -Force -ErrorAction SilentlyContinue

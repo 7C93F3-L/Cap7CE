@@ -1,6 +1,5 @@
 import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
-import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
 import path from "node:path";
@@ -8,6 +7,7 @@ import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
 import { checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadProgress } from "./appUpdateService";
+import { createAppUpdateLauncherScript, resolveWindowsPowerShellPath } from "./appUpdateLauncher";
 import { applyDirectoryFileCounts, applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
@@ -78,6 +78,23 @@ let duplicateLaunchNotificationPending = false;
 let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let appUpdateDownloadActive = false;
 let isQuitting = false;
+
+const cleanupStaleAppUpdateLaunchers = async (): Promise<void> => {
+  const tempDirectory = app.getPath("temp");
+  const entries = await fs.readdir(tempDirectory, { withFileTypes: true });
+  const staleBefore = Date.now() - 20_000;
+  await Promise.all(entries
+    .filter((entry) => entry.isFile()
+      && entry.name.startsWith("Cap7CE-update-launcher-")
+      && (entry.name.endsWith(".vbs") || entry.name.endsWith(".cmd")))
+    .map(async (entry) => {
+      const launcherPath = path.join(tempDirectory, entry.name);
+      const launcherStats = await fs.stat(launcherPath).catch(() => null);
+      if (launcherStats && launcherStats.mtimeMs <= staleBefore) {
+        await fs.rm(launcherPath, { force: true }).catch(() => undefined);
+      }
+    }));
+};
 let cancelAiIndexRequested = false;
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let resizeSettledTimer: NodeJS.Timeout | null = null;
@@ -2562,6 +2579,11 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   void showBackgroundRunNotificationOnce(preferences).catch((error) => {
     console.warn("[system-notification] failed to persist first-run state", error);
   });
+  setTimeout(() => {
+    void cleanupStaleAppUpdateLaunchers().catch((error) => {
+      console.warn("[app-update] failed to clean stale launchers", error);
+    });
+  }, 30_000);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -2718,9 +2740,13 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
     return { status: "busy", version: pendingAppUpdateDownload.version };
   }
   const update = pendingAppUpdateDownload;
-  const updateRoot = path.join(app.getPath("temp"), `Cap7CE-update-${update.version}-${randomUUID()}`);
+  const updateSessionId = randomUUID();
+  const updateRoot = path.join(app.getPath("temp"), `Cap7CE-update-${update.version}-${updateSessionId}`);
   const packagePath = path.join(updateRoot, `Cap7CE-${update.version}-win-x64.zip`);
   const helperPath = path.join(updateRoot, "update-helper.ps1");
+  // Keep the executing launcher outside updateRoot so the helper can remove the download directory safely.
+  const launcherPath = path.join(app.getPath("temp"), `Cap7CE-update-launcher-${updateSessionId}.vbs`);
+  const failureLogPath = path.join(app.getPath("temp"), "Cap7CE-update-last-failure.log");
   const sendDownloadProgress = (progress: AppUpdateDownloadProgress) => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
       mainWindow.webContents.send("app:updateDownloadProgress", progress);
@@ -2731,29 +2757,21 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
     await downloadAppUpdate(update, packagePath, sendDownloadProgress);
     await fs.copyFile(path.join(app.getAppPath(), "build", "update-helper.ps1"), helperPath);
     const helperReadyPath = path.join(updateRoot, "helper-ready");
-    const updaterProcess = spawn("powershell.exe", [
-      "-NoLogo",
-      "-NoProfile",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-File",
+    const helperFailedPath = path.join(updateRoot, "helper-failed");
+    await fs.rm(failureLogPath, { force: true }).catch(() => undefined);
+    await fs.access(resolveWindowsPowerShellPath());
+    await fs.writeFile(launcherPath, createAppUpdateLauncherScript({
       helperPath,
-      "-PackagePath",
       packagePath,
-      "-InstallDirectory",
-      path.dirname(process.execPath),
-      "-ExpectedVersion",
-      update.version,
-      "-CurrentProcessId",
-      String(process.pid),
-      "-ExecutableName",
-      path.basename(process.execPath)
-    ], {
-      cwd: updateRoot,
-      detached: true,
-      stdio: "ignore",
-      windowsHide: false
-    });
+      installDirectory: path.dirname(process.execPath),
+      expectedVersion: update.version,
+      currentProcessId: process.pid,
+      executableName: path.basename(process.execPath)
+    }), "utf8");
+    const launchError = await shell.openPath(launcherPath);
+    if (launchError) {
+      throw new Error(`Update launcher could not be opened: ${launchError}`);
+    }
     await new Promise<void>((resolve, reject) => {
       let settled = false;
       const finish = (error?: Error) => {
@@ -2761,26 +2779,24 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
         settled = true;
         clearInterval(readyPoll);
         clearTimeout(readyTimeout);
-        updaterProcess.off("error", handleError);
-        updaterProcess.off("exit", handleExit);
         if (error) reject(error);
         else resolve();
       };
-      const handleError = (error: Error) => finish(error);
-      const handleExit = (code: number | null) => finish(new Error(`Update helper exited before it was ready (code ${code ?? "unknown"}).`));
       const checkReady = () => {
-        void fs.access(helperReadyPath).then(() => finish()).catch(() => undefined);
+        void Promise.all([
+          fs.access(helperReadyPath).then(() => true).catch(() => false),
+          fs.readFile(helperFailedPath, "utf8").catch(() => "")
+        ]).then(([ready, failure]) => {
+          if (ready) finish();
+          else if (failure) finish(new Error(`Update helper failed before it was ready: ${failure.trim()}`));
+        });
       };
       const readyPoll = setInterval(checkReady, 100);
       const readyTimeout = setTimeout(() => {
-        updaterProcess.kill();
         finish(new Error("Update helper did not become ready in time."));
       }, 300_000);
-      updaterProcess.once("error", handleError);
-      updaterProcess.once("exit", handleExit);
       checkReady();
     });
-    updaterProcess.unref();
     pendingAppUpdateDownload = null;
     setTimeout(() => {
       isQuitting = true;
@@ -2789,7 +2805,16 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
     return { status: "installing", version: update.version };
   } catch (error) {
     console.warn("[app-update] automatic update failed", error);
+    const helperLogPath = path.join(updateRoot, "update-helper.log");
+    const helperLog = await fs.readFile(helperLogPath, "utf8").catch(() => "");
+    const failureDetails = [
+      `${new Date().toISOString()} Cap7CE ${app.getVersion()} update preparation failed.`,
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      helperLog.trim()
+    ].filter(Boolean).join("\n");
+    await fs.writeFile(failureLogPath, `${failureDetails}\n`, "utf8").catch(() => undefined);
     await fs.rm(updateRoot, { recursive: true, force: true }).catch(() => undefined);
+    await fs.rm(launcherPath, { force: true }).catch(() => undefined);
     return { status: "failed", version: update.version };
   } finally {
     appUpdateDownloadActive = false;

@@ -362,7 +362,7 @@ export const enUS = defineLocale({
   "settings.updateOpeningDownload": "Opening",
   "settings.downloadUpdateAgain": "Download Again",
   "settings.updateDownloadStarted": "Opened: {version}",
-  "settings.updateDownloadFailed": "Open Failed, Try Again",
+  "settings.updateDownloadFailed": "Update Preparation Failed, Try Again",
   "settings.updateCheckFailed": "Check Failed, Try Again",
   "settings.details": "Details >",
   "settings.viewReleases": "View releases",

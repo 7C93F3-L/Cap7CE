@@ -78,6 +78,25 @@ const release = (version, overrides = {}) => ({
     assert.equal(downloaded.receivedBytes, payload.length);
     assert.deepEqual(await fs.readFile(destinationPath), payload);
     assert.equal(progress.at(-1).percent, 100);
+
+    const stalledDestinationPath = path.join(temporaryRoot, "stalled.zip");
+    const stalledBody = new ReadableStream({
+      cancel() {}
+    });
+    await assert.rejects(
+      downloadAppUpdate(
+        {
+          version: "0.8.3",
+          downloadUrl: release("0.8.3").assets[0].browser_download_url
+        },
+        stalledDestinationPath,
+        () => undefined,
+        async () => new Response(stalledBody, { headers: { "content-length": "100" } }),
+        50
+      ),
+      /stopped receiving data/
+    );
+    await assert.rejects(fs.access(stalledDestinationPath));
   } finally {
     await fs.rm(temporaryRoot, { recursive: true, force: true });
   }
