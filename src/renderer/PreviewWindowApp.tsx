@@ -666,8 +666,11 @@ const PreviewWindowApp = () => {
       <WindowControlRail
         actions={previewControlActions}
         showSkim={showSettings}
-        skimActive={previewData.skimActive}
-        onSkim={() => { void window.imageEverything?.preview.toggleSkim(); }}
+        skimActive={false}
+        skimCurrent={previewData.skimActive}
+        skimExpanded={false}
+        skimLabel={t("skim.locationPicker.open")}
+        onSkim={() => { void window.imageEverything?.preview.toggleSkimLocationPicker(); }}
         showSettings={showSettings}
         settingsLabel={t("window.openSettings")}
         onSettings={() => { void window.imageEverything?.preview.openSettings(); }}

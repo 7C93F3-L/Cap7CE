@@ -3691,13 +3691,11 @@ const App = () => {
   }, [dialog, openSettings]);
 
   useEffect(() => {
-    const unsubscribe = window.imageEverything?.window.onToggleSkimRequested?.(() => {
-      if (dialog === "editKeywords") return;
-      if (view === "skim") closeSkim();
-      else openSkim();
+    const unsubscribe = window.imageEverything?.window.onToggleSkimLocationPickerRequested?.(() => {
+      toggleSkimLocationPicker();
     });
     return () => unsubscribe?.();
-  }, [closeSkim, dialog, openSkim, view]);
+  }, [toggleSkimLocationPicker]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateSkimRequested?.(() => {

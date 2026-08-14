@@ -1209,9 +1209,9 @@ const sendOpenSettingsToRenderer = () => {
   }
 };
 
-const sendToggleSkimToRenderer = () => {
+const sendToggleSkimLocationPickerToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("window:toggleSkimRequested");
+    mainWindow.webContents.send("window:toggleSkimLocationPickerRequested");
   }
 };
 
@@ -3158,12 +3158,12 @@ ipcMain.handle("preview:openSettings", (event) => {
   return true;
 });
 
-ipcMain.handle("preview:toggleSkim", (event) => {
+ipcMain.handle("preview:toggleSkimLocationPicker", (event) => {
   if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
     return false;
   }
   closePreviewSession();
-  sendToggleSkimToRenderer();
+  sendToggleSkimLocationPickerToRenderer();
   return true;
 });
 
