@@ -10,7 +10,6 @@ import type { PersistedDirectory } from "./directoryStore";
 import { getFileFormatCapability } from "./formatCapabilities";
 import { applyKeywordBatchDelta, formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
 import { escapeSqlLikeTerm, getDirectoryTermMatches, getRelativeDirectoryEvidence, SEARCH_PATH_EVIDENCE_VERSION, toSearchTerms } from "./searchPathEvidence";
-import { supportedVisualFileExtensionSet } from "./supportedVisualFormats";
 
 const requireFromHere = createRequire(__filename);
 
@@ -69,9 +68,11 @@ export interface ImageSearchResponse {
 }
 
 export interface IndexQualityStats {
-  totalImages: number;
-  recognizedImages: number;
-  unrecognizedImages: number;
+  totalFiles: number;
+  recognizedFiles: number;
+  unrecognizedFiles: number;
+  totalVisualImages: number;
+  pendingVisualImages: number;
 }
 
 const sortFieldColumns: Record<ImageSearchState["sortField"], string> = {
@@ -1258,26 +1259,40 @@ export const updateManualKeywordsBatch = async (
 
 export const getImageIndexQualityStats = async (directoryId?: string): Promise<IndexQualityStats> => {
   const database = await loadDatabase();
-  const directoryClause = directoryId ? "AND directory_id = :directory_id" : "";
+  const directoryClause = directoryId ? "AND f.directory_id = :directory_id" : "";
 
   try {
     const row = database.exec(
       `
         SELECT
           COUNT(*),
-          SUM(CASE WHEN ${recognizedImageClause} THEN 1 ELSE 0 END),
-          SUM(CASE WHEN ${unrecognizedImageClause} THEN 1 ELSE 0 END)
-        FROM images
-        WHERE "exists" = 1
+          SUM(CASE WHEN ${catalogRecognizedClause} THEN 1 ELSE 0 END),
+          SUM(CASE WHEN ${catalogUnrecognizedClause} THEN 1 ELSE 0 END)
+        FROM files AS f
+        LEFT JOIN images AS i
+          ON i.file_path = f.file_path
+         AND i."exists" = 1
+        WHERE f."exists" = 1
           ${directoryClause}
       `,
       directoryId ? { ":directory_id": directoryId } : undefined
     )[0]?.values[0] ?? [0, 0, 0];
 
+    const visualRow = database.exec(`
+      SELECT
+        COUNT(*),
+        SUM(CASE WHEN ${unrecognizedImageClause} THEN 1 ELSE 0 END)
+      FROM images
+      WHERE "exists" = 1
+        ${directoryId ? "AND directory_id = :directory_id" : ""}
+    `, directoryId ? { ":directory_id": directoryId } : undefined)[0]?.values[0] ?? [0, 0];
+
     return {
-      totalImages: Number(row[0] ?? 0),
-      recognizedImages: Number(row[1] ?? 0),
-      unrecognizedImages: Number(row[2] ?? 0)
+      totalFiles: Number(row[0] ?? 0),
+      recognizedFiles: Number(row[1] ?? 0),
+      unrecognizedFiles: Number(row[2] ?? 0),
+      totalVisualImages: Number(visualRow[0] ?? 0),
+      pendingVisualImages: Number(visualRow[1] ?? 0)
     };
   } finally {
     database.close();
@@ -1408,11 +1423,14 @@ export interface FileCatalogSearchResult {
 export type IndexedCatalogSearchResponse = ImageSearchResponse & {
   availableFormats: string[];
   directoryIdByFilePath: Record<string, string>;
-  knownCatalogVisualFilePaths: string[];
+  knownCatalogFilePaths: string[];
   knownVisualFilePaths: string[];
 };
 
-const catalogRecognizedClause = "TRIM(COALESCE(i.keywords, '')) <> ''";
+const catalogRecognizedClause = `(
+  TRIM(COALESCE(i.keywords, '')) <> ''
+  OR TRIM(COALESCE(f.user_keywords, '')) <> ''
+)`;
 const catalogUnrecognizedClause = `NOT (${catalogRecognizedClause})`;
 
 const appendCatalogFileFormatFilter = (
@@ -1456,16 +1474,6 @@ const appendIncludedExtensionsFilter = (
   where.push(`${column} IN (${keys.join(", ")})`);
 };
 
-const appendVisualExtensionParams = (params: Record<string, SqlValue>, prefix: string) => {
-  const keys: string[] = [];
-  [...supportedVisualFileExtensionSet].forEach((extension, index) => {
-    const key = `:${prefix}_${index}`;
-    keys.push(key);
-    params[key] = extension;
-  });
-  return keys;
-};
-
 export const searchIndexedCatalog = async (
   search: ImageSearchState,
   directories: PersistedDirectory[]
@@ -1487,10 +1495,9 @@ export const searchIndexedCatalog = async (
   appendCatalogFileFormatFilter(where, params, normalizeFileFormat(search.fileFormat));
   appendIncludedExtensionsFilter(where, params, search.includedExtensions, "catalog_included_extension");
   if (search.recognitionStatus === "recognized") {
-    where.push(`i.id IS NOT NULL AND (${catalogRecognizedClause})`);
+    where.push(catalogRecognizedClause);
   } else if (search.recognitionStatus === "unrecognized") {
-    const visualExtensionKeys = appendVisualExtensionParams(params, "catalog_visual_extension");
-    where.push(`f.extension IN (${visualExtensionKeys.join(", ")}) AND (i.id IS NULL OR (${catalogUnrecognizedClause}))`);
+    where.push(catalogUnrecognizedClause);
   }
 
   terms.forEach((term, termIndex) => {
@@ -1594,41 +1601,48 @@ export const searchIndexedCatalog = async (
       directoryIdByFilePath[filePath] = String(row[9]);
     }
 
-    const visualStateParams: Record<string, SqlValue> = {};
-    const visualStateWhere = ['f."exists" = 1'];
+    const catalogStateParams: Record<string, SqlValue> = {};
+    const catalogStateWhere = ['f."exists" = 1'];
     if (search.directoryId !== "all") {
-      visualStateWhere.push("f.directory_id = :visual_state_directory_id");
-      visualStateParams[":visual_state_directory_id"] = search.directoryId;
+      catalogStateWhere.push("f.directory_id = :catalog_state_directory_id");
+      catalogStateParams[":catalog_state_directory_id"] = search.directoryId;
     }
-    const visualStateExtensionKeys = appendVisualExtensionParams(visualStateParams, "visual_state_extension");
-    visualStateWhere.push(`f.extension IN (${visualStateExtensionKeys.join(", ")})`);
     appendIncludedExtensionsFilter(
-      visualStateWhere,
-      visualStateParams,
+      catalogStateWhere,
+      catalogStateParams,
       search.includedExtensions,
-      "visual_state_included_extension"
+      "catalog_state_included_extension"
     );
-    const visualStateRows = database.exec(`
-      SELECT f.file_path, f.extension, i.id, i.caption, i.keywords, i.manual_index
+    const catalogStateRows = database.exec(`
+      SELECT f.file_path, f.extension, i.id, i.keywords, f.user_keywords
       FROM files AS f
       LEFT JOIN images AS i
         ON i.file_path = f.file_path
        AND i."exists" = 1
-      WHERE ${visualStateWhere.join(" AND ")}
-    `, visualStateParams)[0]?.values ?? [];
-    const knownCatalogVisualFilePaths: string[] = [];
+      WHERE ${catalogStateWhere.join(" AND ")}
+    `, catalogStateParams)[0]?.values ?? [];
+    const knownCatalogFilePaths: string[] = [];
     const knownVisualFilePaths: string[] = [];
+    const availableFormats = new Set<string>();
     const selectedFileFormat = normalizeFileFormat(search.fileFormat);
     let unrecognizedCount = 0;
-    for (const row of visualStateRows) {
+    for (const row of catalogStateRows) {
       const filePath = String(row[0]);
-      const extension = normalizeFileFormat(String(row[1]).replace(/^\./, ""));
+      const extension = String(row[1]).toLowerCase();
+      const capability = getFileFormatCapability(extension);
+      if (!capability?.canSearch) continue;
       const imageId = row[2] === null ? null : Number(row[2]);
-      knownCatalogVisualFilePaths.push(filePath);
-      if (imageId !== null) knownVisualFilePaths.push(filePath);
-      const matchesSelectedFormat = selectedFileFormat === "all" || selectedFileFormat === extension;
-      const recognized = imageId !== null
-        && String(row[4] ?? "").trim() !== "";
+      knownCatalogFilePaths.push(filePath);
+      if (capability.canAIIndex) {
+        if (imageId !== null) knownVisualFilePaths.push(filePath);
+      }
+      const recognized = String(row[3] ?? "").trim() !== ""
+        || String(row[4] ?? "").trim() !== "";
+      const normalizedFormat = normalizeFileFormat(extension);
+      const matchesRecognitionStatus = search.recognitionStatus === "all"
+        || (search.recognitionStatus === "recognized" ? recognized : !recognized);
+      if (matchesRecognitionStatus) availableFormats.add(normalizedFormat);
+      const matchesSelectedFormat = selectedFileFormat === "all" || selectedFileFormat === normalizedFormat;
       if (matchesSelectedFormat && !recognized) unrecognizedCount += 1;
     }
     const failureStats = images.reduce((stats, image) => {
@@ -1639,9 +1653,9 @@ export const searchIndexedCatalog = async (
 
     return {
       images,
-      availableFormats: [],
+      availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),
       directoryIdByFilePath,
-      knownCatalogVisualFilePaths,
+      knownCatalogFilePaths,
       knownVisualFilePaths,
       unrecognizedCount,
       skippedUnrecognizedCount: terms.length > 0 && search.recognitionStatus !== "unrecognized" ? unrecognizedCount : 0,

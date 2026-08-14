@@ -125,7 +125,7 @@ export const searchImagesWithAddedDirectories = async (
   const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
-  const knownCatalogVisualPaths = new Set(indexed.knownCatalogVisualFilePaths.map(filePathKey));
+  const knownCatalogPaths = new Set(indexed.knownCatalogFilePaths.map(filePathKey));
   const knownVisualPaths = new Set(indexed.knownVisualFilePaths.map(filePathKey));
   const scannedPathKeysByDirectory = new Map<string, Set<string>>();
   for (const file of scanResult.files) {
@@ -150,32 +150,27 @@ export const searchImagesWithAddedDirectories = async (
     resultByPath.set(filePathKey(result.filePath), result);
   }
 
-  const availableFormatFiles = (search.recognitionStatus === "all" ? scanResult.files : scanResult.images)
-    .filter((file) => !includedExtensions || includedExtensions.has(path.extname(file.file_name).toLowerCase()));
-  const availableFormats = Array.from(new Set(
-    availableFormatFiles.map((file) => getFileFormat(file.file_name)).filter(Boolean)
-  )).sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
-
-  const newUnrecognizedVisualPaths = new Set<string>();
+  const newUnrecognizedPaths = new Set<string>();
   for (const file of scanResult.files) {
     const capability = getFileFormatCapability(file.extension);
     if (!capability?.canSearch) continue;
     if (includedExtensions && !includedExtensions.has(file.extension)) continue;
     const fileFormat = getFileFormat(file.file_name);
     if (selectedFileFormat !== "all" && fileFormat !== selectedFileFormat) continue;
-    if (!fileMatchesDeterministicSearchTerms(file, terms, directoryTermMatches)) continue;
 
     const key = filePathKey(file.file_path);
+    if (!knownCatalogPaths.has(key)) newUnrecognizedPaths.add(key);
+    if (!fileMatchesDeterministicSearchTerms(file, terms, directoryTermMatches)) continue;
     const existing = resultByPath.get(key);
     if (existing) {
       resultByPath.set(key, mergeScannedMetadata(existing, file));
       continue;
     }
 
+    if (search.recognitionStatus === "unrecognized" && knownCatalogPaths.has(key)) continue;
     if (capability.canAIIndex) {
-      if (!knownCatalogVisualPaths.has(key)) newUnrecognizedVisualPaths.add(key);
       if (search.recognitionStatus === "recognized" || knownVisualPaths.has(key)) continue;
-    } else if (search.recognitionStatus !== "all") {
+    } else if (search.recognitionStatus === "recognized") {
       continue;
     }
 
@@ -183,10 +178,24 @@ export const searchImagesWithAddedDirectories = async (
     if (result) resultByPath.set(key, result);
   }
 
-  const unrecognizedCount = indexed.unrecognizedCount + newUnrecognizedVisualPaths.size;
+  const sortedImages = [...resultByPath.values()].sort(compareImages(search));
+  const unrecognizedCount = terms.length === 0
+    ? sortedImages.filter((image) => image.keywords.length === 0).length
+    : indexed.unrecognizedCount + newUnrecognizedPaths.size;
+  const scannedAvailableFormats = search.recognitionStatus === "recognized"
+    ? []
+    : scanResult.files
+      .filter((file) => !includedExtensions || includedExtensions.has(path.extname(file.file_name).toLowerCase()))
+      .filter((file) => search.recognitionStatus === "all" || newUnrecognizedPaths.has(filePathKey(file.file_path)))
+      .map((file) => getFileFormat(file.file_name))
+      .filter(Boolean);
+  const availableFormats = Array.from(new Set([
+    ...indexed.availableFormats,
+    ...scannedAvailableFormats
+  ])).sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" }));
   return {
-    images: [...resultByPath.values()].sort(compareImages(search)),
-    availableFormats: availableFormats.length > 0 ? availableFormats : indexed.availableFormats,
+    images: sortedImages,
+    availableFormats,
     unrecognizedCount,
     skippedUnrecognizedCount: terms.length > 0 && search.recognitionStatus !== "unrecognized" ? unrecognizedCount : 0,
     failureStats: indexed.failureStats

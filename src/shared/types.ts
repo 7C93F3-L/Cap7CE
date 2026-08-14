@@ -456,9 +456,11 @@ export interface ImageScanResponse {
 }
 
 export interface IndexQualityStats {
-  totalImages: number;
-  recognizedImages: number;
-  unrecognizedImages: number;
+  totalFiles: number;
+  recognizedFiles: number;
+  unrecognizedFiles: number;
+  totalVisualImages: number;
+  pendingVisualImages: number;
 }
 
 export interface VisualCacheStats {

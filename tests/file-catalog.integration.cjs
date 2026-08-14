@@ -131,9 +131,11 @@ app.whenReady().then(async () => {
     assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 3);
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), true);
     assert.deepEqual(await getImageIndexQualityStats(directoryId), {
-      totalImages: 1,
-      recognizedImages: 0,
-      unrecognizedImages: 1
+      totalFiles: 3,
+      recognizedFiles: 0,
+      unrecognizedFiles: 3,
+      totalVisualImages: 1,
+      pendingVisualImages: 1
     });
     assert.equal(await getPendingImageRecognitionCount(directoryId), 1);
     const existingSearch = await searchIndexedImages({
@@ -169,6 +171,13 @@ app.whenReady().then(async () => {
     keywordDatabase.close();
     assert.deepEqual(visualKeywordRow, ["保留的 AI 描述", "视觉私有词,新词"]);
     assert.deepEqual(nonVisualKeywordRow, ["文本私有词,新词"]);
+    assert.deepEqual(await getImageIndexQualityStats(directoryId), {
+      totalFiles: 3,
+      recognizedFiles: 2,
+      unrecognizedFiles: 1,
+      totalVisualImages: 1,
+      pendingVisualImages: 0
+    });
 
     await fs.rm(textPath);
     const rescan = await scanImageDirectories([directory]);
@@ -185,7 +194,13 @@ app.whenReady().then(async () => {
     const cleanup = await cleanupMissingIndexedFiles(directoryId);
     assert.deepEqual(cleanup.removedFilePaths, [textPath]);
     assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 2);
-    assert.equal((await getImageIndexQualityStats(directoryId)).totalImages, 1);
+    assert.deepEqual(await getImageIndexQualityStats(directoryId), {
+      totalFiles: 2,
+      recognizedFiles: 1,
+      unrecognizedFiles: 1,
+      totalVisualImages: 1,
+      pendingVisualImages: 0
+    });
 
     await reassignDirectoryImages([{
       fromDirectoryIds: [directoryId],
@@ -200,13 +215,25 @@ app.whenReady().then(async () => {
     reassignedDatabase.close();
     assert.deepEqual(reassignedPathRow, ["sources/nested", 1]);
     assert.equal((await getExistingFileCountsByDirectory([directoryId, replacementDirectoryId]))[replacementDirectoryId], 2);
-    assert.equal((await getImageIndexQualityStats(replacementDirectoryId)).totalImages, 1);
+    assert.deepEqual(await getImageIndexQualityStats(replacementDirectoryId), {
+      totalFiles: 2,
+      recognizedFiles: 1,
+      unrecognizedFiles: 1,
+      totalVisualImages: 1,
+      pendingVisualImages: 0
+    });
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId, replacementDirectoryId])).size, 0);
 
     const deletedImagePaths = await deleteDirectoryImages(replacementDirectoryId);
     assert.deepEqual(deletedImagePaths, [imagePath]);
     assert.equal((await getExistingFileCountsByDirectory([replacementDirectoryId]))[replacementDirectoryId], 0);
-    assert.equal((await getImageIndexQualityStats(replacementDirectoryId)).totalImages, 0);
+    assert.deepEqual(await getImageIndexQualityStats(replacementDirectoryId), {
+      totalFiles: 0,
+      recognizedFiles: 0,
+      unrecognizedFiles: 0,
+      totalVisualImages: 0,
+      pendingVisualImages: 0
+    });
 
     await writeScannedImagesToIndex([emptyDirectoryId], [], timestamp, []);
     assert.equal((await getExistingFileCountsByDirectory([emptyDirectoryId]))[emptyDirectoryId], 0);
@@ -219,6 +246,8 @@ app.whenReady().then(async () => {
       migrationBackupCreated: true,
       relativeDirectoryStoredAndReassigned: true,
       mixedFormatsCataloged: 3,
+      allSupportedFileStatsUnified: true,
+      recognizedAndUnrecognizedSumToTotal: true,
       mixedKeywordBatchPreservedCaptionAndPrivateKeywords: true,
       missingFilesMarkedBeforeCleanup: true,
       nonVisualAiBoundaryPreserved: true,

@@ -105,7 +105,7 @@ app.whenReady().then(async () => {
     ]);
     assert.equal(new Set(allResults.images.map((item) => item.filePath.toLowerCase())).size, allResults.images.length);
     assert.deepEqual(allResults.availableFormats, ["docx", "gguf", "md", "mp3", "png", "txt"]);
-    assert.equal(allResults.unrecognizedCount, 0);
+    assert.equal(allResults.unrecognizedCount, 5);
 
     const nameDescending = await searchImagesWithAddedDirectories({
       ...baseSearch,
@@ -175,9 +175,11 @@ app.whenReady().then(async () => {
     assert.equal(modelKeywordQuery.images[0].iconName, "format-model");
     assert.equal(modelKeywordQuery.images[0].previewKind, "fileInfo");
     assert.deepEqual(await getImageIndexQualityStats(), {
-      totalImages: 1,
-      recognizedImages: 1,
-      unrecognizedImages: 0
+      totalFiles: 7,
+      recognizedFiles: 3,
+      unrecognizedFiles: 4,
+      totalVisualImages: 1,
+      pendingVisualImages: 0
     });
 
     await updateManualKeywordsBatch([
@@ -221,15 +223,22 @@ app.whenReady().then(async () => {
       ...baseSearch,
       recognitionStatus: "recognized"
     }, directories);
-    assert.deepEqual(recognizedResults.images.map((item) => item.fileName), ["visual.png"]);
-    assert.deepEqual(recognizedResults.availableFormats, ["png"]);
+    assert.deepEqual(recognizedResults.images.map((item) => item.fileName), ["visual.png", "weights.gguf"]);
+    assert.deepEqual(recognizedResults.availableFormats, ["gguf", "png"]);
 
     const unrecognizedResults = await searchImagesWithAddedDirectories({
       ...baseSearch,
       recognitionStatus: "unrecognized"
     }, directories);
-    assert.equal(unrecognizedResults.images.length, 0);
-    assert.equal(unrecognizedResults.unrecognizedCount, 0);
+    assert.deepEqual(unrecognizedResults.images.map((item) => item.fileName), [
+      "brief.docx",
+      "notes.txt",
+      "other.md",
+      "plain.txt",
+      "sound.mp3"
+    ]);
+    assert.equal(unrecognizedResults.unrecognizedCount, 5);
+    assert.deepEqual(unrecognizedResults.availableFormats, ["docx", "md", "mp3", "txt"]);
 
     await fs.writeFile(path.join(firstDirectoryPath, "new-archive.zip"), "zip");
     searchScanSnapshotService.invalidate([firstDirectory.id]);
@@ -239,6 +248,7 @@ app.whenReady().then(async () => {
     }, directories);
     assert.deepEqual(liveOverlayResults.images.map((item) => item.fileName), ["new-archive.zip"]);
     assert.equal(liveOverlayResults.images[0].iconName, "format-zip");
+    assert.equal(liveOverlayResults.unrecognizedCount, 6);
 
     searchScanSnapshotService.setActive(false);
     const inactiveSnapshotResults = await searchImagesWithAddedDirectories(baseSearch, directories);
@@ -317,9 +327,9 @@ app.whenReady().then(async () => {
       mixedKeywordBatchPreserved: true,
       nonVisualKeywordsPreservedAcrossRescan: true,
       nonVisualKeywordsCanBeCleared: true,
-      nonVisualKeywordsExcludedFromImageStats: true,
+      allSupportedFilesIncludedInRecognitionStats: true,
       directoryFormatAndSortFiltersPreserved: true,
-      recognitionFiltersRemainVisualOnly: true,
+      recognitionFiltersUseKeywordsAcrossSupportedFormats: true,
       liveScanOverlayIncludesNewFiles: true,
       inactiveSnapshotFallsBackToIndex: true,
       k2DeterministicSampleCases: k2Cases.length,

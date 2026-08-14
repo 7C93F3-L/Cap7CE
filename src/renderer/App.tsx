@@ -483,9 +483,11 @@ const deriveSkimSidebarFolderPaths = (entries: SkimBrowseEntry[]) => {
 };
 
 const emptyIndexQualityStats: IndexQualityStats = {
-  totalImages: 0,
-  recognizedImages: 0,
-  unrecognizedImages: 0
+  totalFiles: 0,
+  recognizedFiles: 0,
+  unrecognizedFiles: 0,
+  totalVisualImages: 0,
+  pendingVisualImages: 0
 };
 
 const emptyLlamaRuntimeSettings: LlamaRuntimeSettings = {
@@ -3190,7 +3192,7 @@ const App = () => {
       setIndexStats(result.stats);
       await refreshResultsAfterIndexChange();
       setScanSummary({
-        imageCount: result.stats.totalImages,
+        imageCount: result.stats.totalVisualImages,
         scanResultPath: "",
         aiCompleted: result.ai.completed,
         aiFailed: result.ai.failed,
@@ -7664,10 +7666,15 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     else nextExtensions.add(extension);
     updateCustomSkimExtensions([...nextExtensions]);
   };
+  const directoryFileTotal = directories.some((directory) => directory.fileCount === null)
+    ? indexStats.totalFiles
+    : directories.reduce((sum, directory) => sum + (directory.fileCount ?? 0), 0);
+  const recognizedFileTotal = Math.min(indexStats.recognizedFiles, directoryFileTotal);
+  const unrecognizedFileTotal = Math.max(0, directoryFileTotal - recognizedFileTotal);
   const indexStatItems: Array<{ status: RecognitionStatusFilter; label: string; value: number; title: string }> = [
-    { status: "all", label: recognitionStatusLabels.all, value: indexStats.totalImages, title: t("settings.viewAllSupportedHint") },
-    { status: "recognized", label: recognitionStatusLabels.recognized, value: indexStats.recognizedImages, title: t("settings.viewRecognizedHint") },
-    { status: "unrecognized", label: recognitionStatusLabels.unrecognized, value: indexStats.unrecognizedImages, title: t("settings.viewUnrecognizedHint") }
+    { status: "all", label: recognitionStatusLabels.all, value: directoryFileTotal, title: t("settings.viewAllSupportedHint") },
+    { status: "recognized", label: recognitionStatusLabels.recognized, value: recognizedFileTotal, title: t("settings.viewRecognizedHint") },
+    { status: "unrecognized", label: recognitionStatusLabels.unrecognized, value: unrecognizedFileTotal, title: t("settings.viewUnrecognizedHint") }
   ];
   const indexFailed = aiProgress?.phase === "failed" || Boolean(scanError);
   const indexCancelled = aiProgress?.phase === "cancelled";
@@ -8186,7 +8193,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               type="button"
               onClick={isScanning && aiProgress?.cancellable === true ? onCancelRecognition : indexFailed ? onRetryIndex : onContinueRecognition}
               title={isScanning && aiProgress?.cancellable === true ? t("settings.cancelRecognitionActionHint") : indexFailed ? t("settings.retryIndexActionHint") : t("settings.continueRecognitionActionHint")}
-              disabled={isScanning ? aiProgress?.cancellable !== true || isCancellingRecognition : !indexFailed && indexStats.unrecognizedImages === 0}
+              disabled={isScanning ? aiProgress?.cancellable !== true || isCancellingRecognition : !indexFailed && indexStats.pendingVisualImages === 0}
             >
               {isScanning && aiProgress?.cancellable === true ? isCancellingRecognition ? t("settings.cancellingRecognition") : t("common.cancel") : indexFailed ? t("common.retry") : t("settings.continueRecognition")}
             </button>
