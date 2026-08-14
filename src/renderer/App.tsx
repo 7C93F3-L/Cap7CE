@@ -1515,14 +1515,7 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onShellStateChanged?.((nextShellState) => {
       if (nextShellState === "standby") {
-        cancelSkimRead();
-        clearSkimFeedback();
-        skimReturnContextRef.current = null;
-        setSkimEntries([]);
-        setSkimCurrentPath(null);
-        setSkimBreadcrumbs([]);
         resetShellBehaviorState();
-        resetSettingsViewState(true);
       }
       if (nextShellState === "micro" || nextShellState === "mini" || nextShellState === "normal") {
         setView((currentView) => {
@@ -1544,7 +1537,7 @@ const App = () => {
       void syncAlwaysOnTop();
     });
     return () => unsubscribe?.();
-  }, [cancelSkimRead, clearSkimFeedback, resetSettingsViewState, resetShellBehaviorState, syncAlwaysOnTop]);
+  }, [resetShellBehaviorState, syncAlwaysOnTop]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onAlwaysOnTopChanged?.((enabled) => {
@@ -2133,7 +2126,6 @@ const App = () => {
   const setCommandShellMode = (mode: "line" | "cap" | "micro" | "mini" | "normal") => {
     if (mode === "line") {
       resetShellBehaviorState();
-      resetSettingsViewState(true);
       setShellState("standby");
       closeNavigationOverlays();
       return;
@@ -2145,13 +2137,16 @@ const App = () => {
       return;
     }
 
-    resetSettingsViewState(true);
+    const preserveSkimView = view === "skim";
+    if (!preserveSkimView) {
+      resetSettingsViewState(true);
+    }
     const nextShellState = mode;
     if (nextShellState === "micro") {
       void window.imageEverything?.window.setShellState("micro", { forceBounds: true });
     }
     setShellState(nextShellState);
-    if (!resultsInitializedRef.current) {
+    if (!preserveSkimView && !resultsInitializedRef.current) {
       const nextSearch = { ...getCommandBaseSearch(), query: "", recognitionStatus: "all" as const };
       setSearch(nextSearch);
       void runSearch(nextSearch);
@@ -2681,10 +2676,9 @@ const App = () => {
 
   const collapseShellToStandby = useCallback(() => {
     resetShellBehaviorState();
-    resetSettingsViewState(true);
     setShellState("standby");
     closeNavigationOverlays();
-  }, [closeNavigationOverlays, resetSettingsViewState, resetShellBehaviorState]);
+  }, [closeNavigationOverlays, resetShellBehaviorState]);
 
   const expandCapsuleToMicro = useCallback(() => {
     resetShellBehaviorState();
