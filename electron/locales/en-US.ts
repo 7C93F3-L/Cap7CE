@@ -797,6 +797,8 @@ export const enUS = defineLocale({
   "notification.cacheCompletedTitle": "Cache Optimization Complete",
   "notification.cacheCompleted": "Optimized {count} items in this run.",
   "notification.cacheCompletedWithFailures": "Processed {count} items in this run; {failed} failed.",
+  "notification.updateCompletedTitle": "Update successful",
+  "notification.updateCompletedContent": "Cap7CE has been updated to {version}",
   "dialog.selectIndexDirectory": "Select Index Folder",
   "tray.hideLine": "Hide line",
   "tray.showLine": "Show line",

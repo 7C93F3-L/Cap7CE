@@ -79,6 +79,9 @@ let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let appUpdateDownloadActive = false;
 let appUpdateDownloadAbortController: AbortController | null = null;
 let isQuitting = false;
+const completedUpdateVersion = process.argv
+  .map((argument) => argument.match(/^--cap7ce-updated=(\d+\.\d+\.\d+)$/)?.[1] ?? null)
+  .find((version): version is string => version !== null) ?? null;
 
 const cleanupStaleAppUpdateLaunchers = async (): Promise<void> => {
   const tempDirectory = app.getPath("temp");
@@ -2595,6 +2598,15 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   });
   void createStartupHintWindow();
   createAppTray();
+  if (completedUpdateVersion) {
+    setTimeout(() => {
+      showSystemNotification(
+        t("notification.updateCompletedTitle"),
+        t("notification.updateCompletedContent", { version: completedUpdateVersion }),
+        { force: true }
+      );
+    }, 7_000);
+  }
   if (duplicateLaunchNotificationPending) {
     showDuplicateLaunchNotification();
   }

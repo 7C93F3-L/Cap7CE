@@ -797,6 +797,8 @@ export const zhCN = {
   "notification.cacheCompletedTitle": "缓存优化完成",
   "notification.cacheCompleted": "本次已优化 {count} 项。",
   "notification.cacheCompletedWithFailures": "本次已处理 {count} 项，其中 {failed} 项失败。",
+  "notification.updateCompletedTitle": "更新成功",
+  "notification.updateCompletedContent": "Cap7CE 已更新至{version}",
   "dialog.selectIndexDirectory": "选择索引目录",
   "tray.hideLine": "隐藏 line",
   "tray.showLine": "显示 line",

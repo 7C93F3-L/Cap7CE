@@ -32,12 +32,12 @@ function Write-UpdateStatus([string]$Message) {
   Write-UpdateLog $Message
 }
 
-function Start-Cap7CE([string]$RootDirectory) {
+function Start-Cap7CE([string]$RootDirectory, [string]$UpdatedVersion) {
   $executablePath = Join-Path $RootDirectory $ExecutableName
   if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
     throw "Cap7CE executable is missing after update."
   }
-  return Start-Process -FilePath $executablePath -WorkingDirectory $RootDirectory -PassThru
+  return Start-Process -FilePath $executablePath -WorkingDirectory $RootDirectory -ArgumentList @("--cap7ce-updated=$UpdatedVersion") -PassThru
 }
 
 try {
@@ -94,7 +94,7 @@ try {
   }
 
   Write-UpdateStatus "Starting the updated application..."
-  $newProcess = Start-Cap7CE $installDirectoryPath
+  $newProcess = Start-Cap7CE $installDirectoryPath $ExpectedVersion
   Start-Sleep -Seconds $StartupValidationSeconds
   if ($newProcess.HasExited) {
     throw "The updated application exited before startup completed."
