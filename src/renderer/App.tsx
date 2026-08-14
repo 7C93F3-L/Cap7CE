@@ -3520,6 +3520,24 @@ const App = () => {
     }
   };
 
+  const restoreViewAfterSkim = useCallback((nextView: Exclude<AppView, "skim">) => {
+    const entries = navigationEntriesRef.current;
+    const currentIndex = navigationIndexRef.current;
+    const previousIndex = currentIndex - 1;
+    if (
+      entries[currentIndex] === "skim"
+      && previousIndex >= 0
+      && entries[previousIndex] === nextView
+    ) {
+      navigationIndexRef.current = previousIndex;
+    } else {
+      navigationEntriesRef.current = [nextView];
+      navigationIndexRef.current = 0;
+    }
+    closeNavigationOverlays();
+    setView(nextView);
+  }, [closeNavigationOverlays]);
+
   const closeSkim = useCallback(() => {
     cancelSkimRead();
     void window.imageEverything?.preview.close();
@@ -3542,18 +3560,18 @@ const App = () => {
         openResults();
         return;
       }
-      setView(returnContext.view);
+      restoreViewAfterSkim(returnContext.view);
       return;
     }
     if (!resultsInitializedRef.current) {
       openResults();
       return;
     }
-    setView("results");
+    restoreViewAfterSkim("results");
     if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
-  }, [cancelSkimRead, clearSkimFeedback, openResults, shellState]);
+  }, [cancelSkimRead, clearSkimFeedback, openResults, restoreViewAfterSkim, shellState]);
 
   const openSkimAtLocation = useCallback((nextPath: string | null) => {
     if (skimLocationPickerCloseTimerRef.current !== null) {
@@ -3602,12 +3620,13 @@ const App = () => {
   }, [loadSkimLocation]);
 
   const closeSkimLocationPicker = useCallback((afterClose?: () => void) => {
-    if (!skimLocationPickerOpen || skimLocationPickerClosing) return;
+    if (
+      !skimLocationPickerOpen
+      || skimLocationPickerClosing
+      || skimLocationPickerCloseTimerRef.current !== null
+    ) return;
     skimLocationPickerCloseActionRef.current = afterClose ?? null;
     setSkimLocationPickerClosing(true);
-    if (skimLocationPickerCloseTimerRef.current !== null) {
-      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
-    }
     skimLocationPickerCloseTimerRef.current = window.setTimeout(() => {
       skimLocationPickerCloseTimerRef.current = null;
       setSkimLocationPickerOpen(false);
