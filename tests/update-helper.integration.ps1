@@ -101,6 +101,9 @@ public static class Cap7CEUpdateProbeApplication {
   if (-not (Test-Path -LiteralPath (Join-Path $installDirectory "models\user-model.bin") -PathType Leaf)) {
     throw "The model directory was not preserved after a successful update."
   }
+  if ((Get-Content -LiteralPath (Join-Path $installDirectory ".cap7ce-update-completed") -Raw).Trim() -ne "9.9.9") {
+    throw "The successful update marker did not contain the expected version."
+  }
   Start-Sleep -Seconds 4
   Write-Host '{"failedReplacementRolledBack":true,"successfulReplacementCompleted":true,"preservedDirectoriesRestored":true}'
 } catch {

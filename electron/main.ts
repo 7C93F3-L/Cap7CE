@@ -7,6 +7,7 @@ import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
 import { AppUpdateDownloadError, checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadErrorCode, type AppUpdateDownloadProgress } from "./appUpdateService";
+import { consumeAppUpdateCompletion } from "./appUpdateCompletion";
 import { createAppUpdateLauncherScript, resolveWindowsPowerShellPath } from "./appUpdateLauncher";
 import { applyDirectoryFileCounts, applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
@@ -81,7 +82,7 @@ let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let appUpdateDownloadActive = false;
 let appUpdateDownloadAbortController: AbortController | null = null;
 let isQuitting = false;
-const completedUpdateVersion = process.argv
+const completedUpdateVersionArgument = process.argv
   .map((argument) => argument.match(/^--cap7ce-updated=(\d+\.\d+\.\d+)$/)?.[1] ?? null)
   .find((version): version is string => version !== null) ?? null;
 
@@ -2578,6 +2579,21 @@ if (hasSingleInstanceLock) {
 }
 
 if (hasSingleInstanceLock) app.whenReady().then(async () => {
+  const completedUpdateVersion = app.isPackaged
+    ? await consumeAppUpdateCompletion({
+      currentVersion: app.getVersion(),
+      argumentVersion: completedUpdateVersionArgument,
+      installMarkerPath: path.join(path.dirname(process.execPath), ".cap7ce-update-completed"),
+      versionStatePath: path.join(app.getPath("userData"), "config", "app-version.json"),
+      legacyUserDataPaths: [
+        path.join(app.getPath("userData"), "config", "preferences.json"),
+        path.join(app.getPath("userData"), "index", "image-everything.db")
+      ]
+    }).catch((error) => {
+      console.warn("[app-update] failed to resolve completed update", error);
+      return completedUpdateVersionArgument;
+    })
+    : completedUpdateVersionArgument;
   registerLocalImageProtocol();
   await prepareOfficePreviewTemporaryRoot().catch((error) => {
     console.warn("[office-preview] failed to reset temporary root", error);

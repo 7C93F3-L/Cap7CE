@@ -93,6 +93,8 @@ try {
     Copy-Item -LiteralPath $preservedDirectory -Destination $newDirectory -Recurse
   }
 
+  Set-Content -LiteralPath (Join-Path $installDirectoryPath ".cap7ce-update-completed") -Value $ExpectedVersion -Encoding ASCII
+
   Write-UpdateStatus "Starting the updated application..."
   $newProcess = Start-Cap7CE $installDirectoryPath $ExpectedVersion
   Start-Sleep -Seconds $StartupValidationSeconds
