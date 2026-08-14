@@ -2468,6 +2468,10 @@ const createWindow = () => {
   mainWindow.on("blur", () => {
     syncThumbnailOptimizationActivity();
     cancelActiveSearchTasks();
+    if (activeShellState === "capsule") {
+      applyStandaloneLineMode();
+      sendShellStateToRenderer("standby");
+    }
   });
   mainWindow.on("show", syncThumbnailOptimizationActivity);
   mainWindow.on("hide", () => {
