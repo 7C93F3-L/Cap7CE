@@ -1,8 +1,8 @@
 {
   "name": "cap7ce",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "productName": "Cap7CE",
-  "description": "Windows local image search tool built with Electron, React, TypeScript and SQLite.",
+  "description": "Windows local file search, browsing and preview tool built with Electron, React, TypeScript and SQLite.",
   "author": "7C93F3-L",
   "license": "GPL-3.0-only",
   "homepage": "https://github.com/7C93F3-L/Cap7CE#readme",

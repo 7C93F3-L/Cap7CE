@@ -27,13 +27,13 @@ See [Screenshot asset sources](docs/assets/screenshots/ASSET_SOURCES.md) for the
 
 ## 中文
 
-Cap7CE 是一款面向 Windows 的本地视觉文件搜索工具。它扫描用户主动添加的目录，使用本地 `llama.cpp` 视觉模型生成描述与关键词索引，并提供缩略图搜索、筛选、预览和基础文件管理能力。
+Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。它扫描用户主动添加的目录，可按文件名、目录路径和手工关键词搜索多种文件，并可选使用本地 `llama.cpp` 视觉模型为受支持图像生成描述与关键词。
 
 源文件、索引、缓存、模型和运行时配置均保留在本机。Cap7CE 不提供模型或 `llama.cpp`，也不会将素材上传到远程识别服务。
 
 ### 当前状态
 
-- 当前版本：`0.8.0`
+- 当前版本：`0.9.2`
 - 发布阶段：Preview
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
@@ -47,7 +47,7 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 - 通过本地视觉模型生成描述与关键词。
 - 新执行的 AI 识别会跟随当前软件语言生成中文或英文描述与关键词。
 - 按关键词、文件名、目录、识别状态、格式和排序方式筛选。
-- 使用 skim 浏览磁盘和目录中的多种项目文件，并快速预览视觉、文本、音频和视频内容。
+- 使用 skim 浏览磁盘和目录中的多种项目文件，通过快速访问边栏直达常用位置，并预览视觉、文本、文档、归档、字体、音频和视频内容。
 - 提供 capsule、micro、mini、normal 和 Settings 窗口形态。
 - 支持缩略图、独立预览窗口、多选和关键词编辑。
 - 支持打开文件、定位路径、拖拽导出和移入回收站。
@@ -57,7 +57,11 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 
 ### 支持的文件格式
 
-`JPG`、`JPEG`、`PNG`、`WEBP`、`BMP`、`TIF`、`TIFF`、`GIF`、`SVG`、`PDF`、`PSD`、`AI`、`EPS`、`CDR`
+正式视觉缩略图与 AI 识别支持：`JPG`、`JPEG`、`PNG`、`WEBP`、`AVIF`、`BMP`、`TIF`、`TIFF`、`GIF`、`SVG`、`PDF`、`PSD`、`AI`、`EPS`、`CDR`。
+
+文件名、目录路径和手工关键词搜索还覆盖办公文档、文本与源码、归档、字体、音视频、电子书、设计工程文件等已登记格式；这些格式不因此进入 AI 识别。
+
+部分预览依赖本机已有的系统组件：`HEIC`、`HEIF` 及 `DNG`、`CR2`、`CR3`、`NEF`、`ARW`、`RAF`、`ORF`、`RW2` 等相机格式需要兼容的 Windows 图像扩展或解码器；`XLS`、`XLSX`、`PPT`、`PPTX` 需要本机安装 Microsoft Excel 或 PowerPoint。系统组件缺失、文件编码不兼容或解码失败时，Cap7CE 会安全回退为格式图标和文件信息，不影响搜索，也不会把这些格式自动送入 AI 识别。
 
 多页或复杂文档当前通常使用第一页、合成图或内置预览图作为代表图。部分旧格式、特殊编码或缺少内置预览的文件可能无法渲染。
 
@@ -92,26 +96,24 @@ Cap7CE/
 
 运行时和模型必须由用户从其官方或可信来源单独获取，并遵守各自的许可证与使用条款。Cap7CE 项目不为第三方运行时或模型提供再分发授权。
 
-当前 Qwen3-VL 4B Q4 开发配置建议使用具备至少 8 GB 显存的 NVIDIA GPU；16 GB 显存可为模型和上下文提供更多余量。CPU-only、其他 GPU 后端和更大模型的速度及显存需求取决于所选 `llama.cpp` 构建，尚未完成全面验证。
+模型速度、内存与显存需求取决于参数规模、量化版本、上下文长度、硬件和所选 `llama.cpp` 构建。请根据本机资源选择合适的模型规格。
 
 #### 已验证的推荐模型
 
-在当前完成测试的视觉模型中，`Qwen3-VL-4B-Instruct` 是与 Cap7CE 适配效果最好的推荐模型。Qwen 团队提供[上游原始模型](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct)；Cap7CE 当前实际验证的是 Unsloth 发布的第三方 GGUF 量化版本：
+当前推荐使用 [Qwen3-VL](https://huggingface.co/collections/Qwen/qwen3-vl) 系列视觉模型。Cap7CE 已完成 Qwen3-VL 2B 与 4B 的实际使用测试；其他参数规模也可以使用，用户可根据本机硬件、速度和效果需求自行选择。
 
-- 主模型：[Qwen3-VL-4B-Instruct-Q4_K_M.gguf](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-GGUF/blob/main/Qwen3-VL-4B-Instruct-Q4_K_M.gguf)
-- 视觉投影文件：[mmproj-F16.gguf](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-GGUF/blob/main/mmproj-F16.gguf)
-- 完整仓库：[unsloth/Qwen3-VL-4B-Instruct-GGUF](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-GGUF)
+Qwen 团队提供上游模型；用于 `llama.cpp` 的第三方 GGUF 量化版本可从 [Unsloth Qwen3-VL 模型集合](https://huggingface.co/collections/unsloth/qwen3-vl) 等可信来源获取。
 
-必须同时下载主模型和 `mmproj-F16.gguf`。只有主模型时，Cap7CE 会将该视觉模型标记为未配对，无法执行图像识别。建议把两个文件放在 `models` 下的同一个目录中，例如：
+必须同时下载相互匹配的 GGUF 主模型和视觉投影 `mmproj` 文件。只有主模型时，Cap7CE 会将该视觉模型标记为未配对，无法执行图像识别。建议把两个文件放在 `models` 下的同一个目录中，例如：
 
 ```text
 models/
-└─ Qwen3-VL-4B-Instruct/
-   ├─ Qwen3-VL-4B-Instruct-Q4_K_M.gguf
-   └─ mmproj-F16.gguf
+└─ Qwen3-VL/
+   ├─ Qwen3-VL-Instruct.gguf
+   └─ mmproj-Qwen3-VL.gguf
 ```
 
-该 GGUF 仓库由 Unsloth 而非 Qwen 团队发布，并标记为 Apache-2.0。下载和使用前仍应阅读模型仓库及上游模型卡；Cap7CE 不镜像、不修改也不随安装包分发这些文件。
+第三方 GGUF 量化文件并非由 Cap7CE 或 Qwen 团队发布。下载和使用前应阅读所选量化仓库及上游模型卡，确认主模型与 `mmproj` 彼此匹配，并遵守对应许可证；Cap7CE 不镜像、不修改也不随安装包分发这些文件。
 
 ### 从源码运行
 
@@ -162,6 +164,7 @@ npm run dist
 - 不内置、不自动下载 `llama.cpp` 或视觉模型。
 - AI 识别结果取决于模型、量化版本、硬件和提示词，不保证准确。
 - 复杂文档格式主要提供代表图预览，不是完整文档编辑器或解析器。
+- 部分相机、Office 和媒体格式的预览能力取决于本机已安装的系统扩展、应用组件或解码器。
 - 当前未对所有 GPU、CPU-only 运行时和 Windows 版本完成兼容性验证。
 - Preview 版本的数据结构和行为仍可能变化。
 
@@ -197,13 +200,13 @@ Designed and developed by 7C93F3-L with assistance from Echo using OpenAI Codex.
 
 ## English
 
-Cap7CE is a local visual-file search tool for Windows. It scans directories explicitly added by the user, generates descriptions and keyword indexes with a local `llama.cpp` vision model, and provides thumbnail search, filtering, preview, and lightweight file-management features.
+Cap7CE is a local file search, browsing, and preview tool for Windows. It scans directories explicitly added by the user, searches many file types by file name, directory path, and manual keywords, and can optionally use a local `llama.cpp` vision model to generate descriptions and keywords for supported images.
 
 Source files, indexes, caches, models, and runtime settings remain on the local machine. Cap7CE does not bundle models or `llama.cpp`, and it does not upload media to a remote recognition service.
 
 ### Project status
 
-- Current version: `0.8.3`
+- Current version: `0.9.2`
 - Release stage: Preview
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
@@ -217,7 +220,7 @@ Preview releases may still contain compatibility, performance, and UI issues. Ea
 - Generate descriptions and keywords with a local vision model.
 - New AI recognition runs generate Chinese or English descriptions and keywords according to the current app language.
 - Filter by keywords, file name, directory, recognition status, format, and sort order.
-- Use skim to browse project files across disks and folders, with quick previews for visual, text, audio, and video content.
+- Use skim to browse project files across disks and folders, jump to common locations from the Quick Access sidebar, and preview visual, text, document, archive, font, audio, and video content.
 - Use capsule, micro, mini, normal, and Settings window forms.
 - Browse thumbnails, open an independent preview window, select multiple files, and edit keywords.
 - Open files, reveal paths, drag files to other applications, and move files to the Recycle Bin.
@@ -227,7 +230,11 @@ Preview releases may still contain compatibility, performance, and UI issues. Ea
 
 ### Supported formats
 
-`JPG`, `JPEG`, `PNG`, `WEBP`, `BMP`, `TIF`, `TIFF`, `GIF`, `SVG`, `PDF`, `PSD`, `AI`, `EPS`, `CDR`
+Formal visual thumbnails and AI recognition support: `JPG`, `JPEG`, `PNG`, `WEBP`, `AVIF`, `BMP`, `TIF`, `TIFF`, `GIF`, `SVG`, `PDF`, `PSD`, `AI`, `EPS`, `CDR`.
+
+File-name, directory-path, and manual-keyword search additionally covers registered office, text and source-code, archive, font, media, ebook, design, and project formats. These formats do not become AI-recognition inputs.
+
+Some previews depend on components already available on the computer. `HEIC`, `HEIF`, and camera formats such as `DNG`, `CR2`, `CR3`, `NEF`, `ARW`, `RAF`, `ORF`, and `RW2` require a compatible Windows imaging extension or codec. `XLS`, `XLSX`, `PPT`, and `PPTX` require Microsoft Excel or PowerPoint to be installed. If a component is missing or decoding fails, Cap7CE safely falls back to the format icon and file information; search continues to work, and these files are not automatically sent to AI recognition.
 
 For multi-page or complex documents, Cap7CE generally uses the first page, a composite image, or an embedded preview as the representative image. Some legacy files, unusual encodings, or files without embedded previews may not render.
 
@@ -262,26 +269,24 @@ The official multi-file archive includes empty `llama.cpp` and `models` director
 
 Users must obtain runtimes and models separately from official or otherwise trusted sources and comply with their respective licenses and terms. The Cap7CE project does not grant redistribution rights for third-party runtimes or models.
 
-For the current Qwen3-VL 4B Q4 development configuration, an NVIDIA GPU with at least 8 GB of VRAM is recommended; 16 GB provides additional headroom for the model and context. Performance and memory requirements for CPU-only use, other GPU backends, and larger models depend on the selected `llama.cpp` build and have not been comprehensively validated.
+Model speed, memory, and VRAM requirements depend on parameter count, quantization, context length, hardware, and the selected `llama.cpp` build. Choose a model size appropriate for the local system.
 
 #### Verified recommended model
 
-Among the vision models tested so far, `Qwen3-VL-4B-Instruct` currently provides the best fit for Cap7CE. The Qwen team publishes the [upstream model](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct); the configuration actually verified with Cap7CE uses third-party GGUF quantization files published by Unsloth:
+The recommended vision-model family is [Qwen3-VL](https://huggingface.co/collections/Qwen/qwen3-vl). Qwen3-VL 2B and 4B have been tested with Cap7CE. Other parameter sizes may also be used according to the available hardware and the preferred speed-quality balance.
 
-- Main model: [Qwen3-VL-4B-Instruct-Q4_K_M.gguf](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-GGUF/blob/main/Qwen3-VL-4B-Instruct-Q4_K_M.gguf)
-- Vision projector: [mmproj-F16.gguf](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-GGUF/blob/main/mmproj-F16.gguf)
-- Full repository: [unsloth/Qwen3-VL-4B-Instruct-GGUF](https://huggingface.co/unsloth/Qwen3-VL-4B-Instruct-GGUF)
+The Qwen team publishes the upstream models. Third-party GGUF quantizations for `llama.cpp` can be obtained from trusted sources such as the [Unsloth Qwen3-VL collection](https://huggingface.co/collections/unsloth/qwen3-vl).
 
-Both the main model and `mmproj-F16.gguf` are required. With only the main model present, Cap7CE marks the vision model as unpaired and cannot perform image recognition. Place both files in the same directory under `models`, for example:
+A matching GGUF main model and vision-projector `mmproj` file are both required. With only the main model present, Cap7CE marks the vision model as unpaired and cannot perform image recognition. Place both files in the same directory under `models`, for example:
 
 ```text
 models/
-└─ Qwen3-VL-4B-Instruct/
-   ├─ Qwen3-VL-4B-Instruct-Q4_K_M.gguf
-   └─ mmproj-F16.gguf
+└─ Qwen3-VL/
+   ├─ Qwen3-VL-Instruct.gguf
+   └─ mmproj-Qwen3-VL.gguf
 ```
 
-This GGUF repository is published by Unsloth, not by the Qwen team, and is marked Apache-2.0. Review the quantization repository and upstream model card before downloading or using the files. Cap7CE does not mirror, modify, or distribute them with the application.
+Third-party GGUF quantizations are not published by Cap7CE or the Qwen team. Review the selected quantization repository and upstream model card, verify that the main model and `mmproj` match, and follow their respective licenses before use. Cap7CE does not mirror, modify, or distribute these files with the application.
 
 ### Run from source
 
@@ -332,6 +337,7 @@ A successful `npm run build` does not validate the packaged application. Packagi
 - `llama.cpp` and vision models are neither bundled nor downloaded automatically.
 - Recognition quality depends on the model, quantization, hardware, and prompt and is not guaranteed.
 - Complex document formats are represented by preview images; Cap7CE is not a full document editor or parser.
+- Preview support for some camera, Office, and media formats depends on installed Windows extensions, application components, or codecs.
 - Not every GPU, CPU-only runtime, or Windows version has been tested.
 - Preview data structures and behavior may still change.
 
