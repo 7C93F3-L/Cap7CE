@@ -5,7 +5,7 @@ import {
   isVisualCacheEntryValid,
   writeVisualCacheEntry
 } from "./visualCacheService";
-import type { SkimVisualCacheType } from "./visualCacheService";
+import type { VisualCacheType } from "./visualCacheService";
 
 interface ShellThumbnailImage {
   isEmpty: () => boolean;
@@ -16,7 +16,10 @@ export interface ShellThumbnailProviderOptions {
   createThumbnail?: (sourcePath: string, size: { width: number; height: number }) => Promise<ShellThumbnailImage>;
   timeoutMs?: number;
   edge?: number;
-  cacheType?: Extract<SkimVisualCacheType, "skim-shell-thumbnail" | "skim-shell-preview">;
+  cacheType?: Extract<
+    VisualCacheType,
+    "skim-shell-thumbnail" | "skim-shell-preview" | "search-shell-thumbnail" | "search-shell-preview"
+  >;
 }
 
 export interface ShellThumbnailProvider {
@@ -113,4 +116,22 @@ const defaultShellPreviewProvider = createShellThumbnailProvider({
 
 export const ensureSkimShellPreviewPath = (sourcePath: string) => (
   defaultShellPreviewProvider.ensureThumbnailPath(sourcePath)
+);
+
+const defaultSearchShellThumbnailProvider = createShellThumbnailProvider({
+  edge: shellThumbnailEdge,
+  cacheType: "search-shell-thumbnail"
+});
+
+const defaultSearchShellPreviewProvider = createShellThumbnailProvider({
+  edge: shellPreviewEdge,
+  cacheType: "search-shell-preview"
+});
+
+export const ensureSearchShellThumbnailPath = (sourcePath: string) => (
+  defaultSearchShellThumbnailProvider.ensureThumbnailPath(sourcePath)
+);
+
+export const ensureSearchShellPreviewPath = (sourcePath: string) => (
+  defaultSearchShellPreviewProvider.ensureThumbnailPath(sourcePath)
 );

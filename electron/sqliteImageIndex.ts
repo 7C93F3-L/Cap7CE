@@ -42,6 +42,7 @@ export interface ImageSearchResult {
   extension: string;
   iconName: string;
   previewKind: "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";
+  canShellPreview: boolean;
   fileSize: number;
   createdAt: string;
   modifiedAt: string;
@@ -115,6 +116,7 @@ const appendFileFormatFilter = (where: string[], params: Record<string, SqlValue
 };
 
 const toThumbnailUrl = (filePath: string) => `cap7ce://thumbnail/?path=${encodeURIComponent(filePath)}`;
+const toSearchShellThumbnailUrl = (filePath: string) => `cap7ce://search-shell-thumbnail/?path=${encodeURIComponent(filePath)}`;
 
 export const normalizeImageFilePathKey = (filePath: string) => {
   const resolvedPath = path.normalize(path.resolve(filePath));
@@ -1582,6 +1584,7 @@ export const searchIndexedCatalog = async (
         extension,
         iconName: isVisual ? "skim-file" : capability.iconName,
         previewKind: capability.previewKind,
+        canShellPreview: capability.canShellPreview,
         fileSize: Number(row[4] ?? 0),
         createdAt: String(row[5] ?? ""),
         modifiedAt: String(row[6] ?? ""),
@@ -1596,7 +1599,11 @@ export const searchIndexedCatalog = async (
         failureType: failure.type,
         failureLabel: isVisual ? failure.label : "",
         indexedAt: imageId === null ? String(row[7] ?? "") : String(row[17] ?? ""),
-        thumbnailUrl: isVisual ? toThumbnailUrl(filePath) : ""
+        thumbnailUrl: isVisual
+          ? toThumbnailUrl(filePath)
+          : capability.canShellPreview
+            ? toSearchShellThumbnailUrl(filePath)
+            : ""
       });
       directoryIdByFilePath[filePath] = String(row[9]);
     }
@@ -1841,6 +1848,7 @@ export const searchIndexedImages = async (search: ImageSearchState): Promise<Ima
         extension: path.extname(String(row[2])).toLowerCase(),
         iconName: "skim-file",
         previewKind: getFileFormatCapability(path.extname(String(row[2])).toLowerCase())?.previewKind ?? "image",
+        canShellPreview: false,
         fileSize: Number(row[3] ?? 0),
         createdAt: String(row[4] ?? ""),
         modifiedAt: String(row[5] ?? ""),

@@ -8,6 +8,10 @@ import {
   getVisualCacheStats,
   initializeVisualCacheDirectories
 } from "./visualCacheService";
+import {
+  pauseSearchShellVisualCacheForClear,
+  resumeSearchShellVisualCacheAfterClear
+} from "./searchShellVisualCacheService";
 import { ensureSearchThumbnailPath } from "./visualRenderService";
 
 let thumbnailCacheFileInventory: Set<string> | null = null;
@@ -217,9 +221,14 @@ export const deleteThumbnailsForDirectory = async (directoryPath: string, knownF
 };
 
 export const clearAllVisualCaches = async () => {
-  const stats = await clearVisualCaches();
-  invalidateThumbnailCacheFileInventory();
-  return stats;
+  await pauseSearchShellVisualCacheForClear();
+  try {
+    const stats = await clearVisualCaches();
+    invalidateThumbnailCacheFileInventory();
+    return stats;
+  } finally {
+    resumeSearchShellVisualCacheAfterClear();
+  }
 };
 
 export const getAllVisualCacheStats = () => getVisualCacheStats();

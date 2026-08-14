@@ -29,6 +29,7 @@ import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowse
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellPreviewCache, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
+import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSearchShellVisualActivity } from "./searchShellVisualCacheService";
 import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
@@ -231,6 +232,7 @@ const syncThumbnailOptimizationActivity = () => {
     && (activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal")
   );
   setSkimShellThumbnailActivity(shouldRun);
+  setSearchShellVisualActivity(shouldRun);
   searchScanSnapshotService.setActive(shouldRun);
   setThumbnailOptimizationForegroundActive(shouldRun);
 };
@@ -2081,6 +2083,8 @@ const registerLocalImageProtocol = () => {
     if (
       url.hostname !== "thumbnail"
       && url.hostname !== "image"
+      && url.hostname !== "search-shell-thumbnail"
+      && url.hostname !== "search-shell-preview"
       && url.hostname !== "skim-image"
       && url.hostname !== "skim-thumbnail"
       && url.hostname !== "skim-preview"
@@ -2179,6 +2183,22 @@ const registerLocalImageProtocol = () => {
         if (url.hostname === "skim-preview" && await shouldUseSourceFileForPreview(filePath)) {
           return net.fetch(pathToFileURL(filePath).toString());
         }
+        const image = await readVisualCacheImage(cachePath);
+        return new Response(toResponseBody(image.buffer), {
+          headers: {
+            "Content-Type": image.mimeType,
+            "Cache-Control": "no-store"
+          }
+        });
+      }
+      if (url.hostname === "search-shell-thumbnail" || url.hostname === "search-shell-preview") {
+        const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
+        if (!capability?.canShellPreview) {
+          return new Response("Search system image is unavailable", { status: 415 });
+        }
+        const cachePath = url.hostname === "search-shell-preview"
+          ? await requestSearchShellPreviewCache(filePath)
+          : await requestSearchShellThumbnailCache(filePath);
         const image = await readVisualCacheImage(cachePath);
         return new Response(toResponseBody(image.buffer), {
           headers: {

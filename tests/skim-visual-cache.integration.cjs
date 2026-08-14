@@ -17,6 +17,7 @@ app.whenReady().then(async () => {
     clearVisualCaches,
     getVisualCacheDirectory,
     getVisualCacheMetadataDirectory,
+    getVisualCacheStats,
     initializeVisualCacheDirectories,
     isCap7CECachePath,
     writeVisualCacheEntry
@@ -31,6 +32,11 @@ app.whenReady().then(async () => {
     requestSkimVisualCache,
     setSkimShellThumbnailActivity
   } = require("../dist-electron/skimVisualCacheService.js");
+  const {
+    requestSearchShellPreviewCache,
+    requestSearchShellThumbnailCache,
+    setSearchShellVisualActivity
+  } = require("../dist-electron/searchShellVisualCacheService.js");
   const { createShellThumbnailProvider } = require("../dist-electron/shellThumbnailProvider.js");
   const { ShellThumbnailScheduler } = require("../dist-electron/shellThumbnailScheduler.js");
   const { SHELL_THUMBNAIL_POLICY_VERSION } = require("../dist-electron/versioning.js");
@@ -48,6 +54,14 @@ app.whenReady().then(async () => {
 
     const formalEntry = await createVisualCacheEntry(sourcePath, "search-thumbnail");
     await writeVisualCacheEntry(formalEntry, png, "image/png");
+    setSearchShellVisualActivity(true);
+    const [searchShellThumbnailPath, searchShellPreviewPath] = await Promise.all([
+      requestSearchShellThumbnailCache(sourcePath),
+      requestSearchShellPreviewCache(sourcePath)
+    ]);
+    assert.equal(path.dirname(searchShellThumbnailPath), getVisualCacheDirectory("search-shell-thumbnail"));
+    assert.equal(path.dirname(searchShellPreviewPath), getVisualCacheDirectory("search-shell-preview"));
+    assert.equal((await getVisualCacheStats()).cacheCount, 3);
 
     assert.equal(beginSkimVisualSession("session-one"), true);
     setSkimShellThumbnailActivity(true);
@@ -208,6 +222,8 @@ app.whenReady().then(async () => {
 
     await clearVisualCaches();
     await assert.rejects(() => fs.access(formalEntry.imagePath));
+    await assert.rejects(() => fs.access(searchShellThumbnailPath));
+    await assert.rejects(() => fs.access(searchShellPreviewPath));
     assert.equal((await getSkimCacheStats()).cacheCount, 7);
     await writeVisualCacheEntry(formalEntry, png, "image/png");
 
@@ -237,6 +253,7 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       independentDirectories: true,
+      searchAndSkimShellCachesSeparated: true,
       thumbnailAndPreviewGenerated: true,
       shellThumbnailCachedWithSourceAndPolicy: true,
       shellPreviewCachedAtPreviewResolution: true,

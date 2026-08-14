@@ -972,6 +972,7 @@ const createAllDirectoriesOption = (directories: DirectoryItem[]): DirectoryItem
 };
 
 const toFullImageUrl = (filePath: string) => `cap7ce://image/?path=${encodeURIComponent(filePath)}`;
+const toSearchShellPreviewUrl = (filePath: string) => `cap7ce://search-shell-preview/?path=${encodeURIComponent(filePath)}`;
 
 const isEditableKeyboardTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) {
@@ -4894,7 +4895,7 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
     }
     onSelectedImageChange(image.id);
     let previewData: PreviewWindowData;
-    if (image.resultKind === "file" || image.previewKind !== "image") {
+    if ((image.resultKind === "file" && !image.canShellPreview) || image.previewKind !== "image") {
       try {
         const info = await window.imageEverything?.skim.inspect({ path: image.filePath, kind: "file" });
         if (!info || previewOpenRequestRef.current !== openRequestId) return;
@@ -4926,7 +4927,9 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
         filePath: image.filePath,
         fileName: image.fileName,
         fileSize: image.fileSize,
-        previewUrl: toFullImageUrl(image.filePath),
+        previewUrl: image.canShellPreview
+          ? toSearchShellPreviewUrl(image.filePath)
+          : toFullImageUrl(image.filePath),
         thumbnailUrl: image.thumbnailUrl,
         skimActive: false,
         theme: contextMenuTheme,
@@ -5457,7 +5460,7 @@ const ResultFormatCard = ({ item }: { item: ImageIndexItem }) => (
 
 const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => {
   const fallback = <ResultFormatCard item={item} />;
-  return item.resultKind === "file"
+  return item.resultKind === "file" && !item.canShellPreview
     ? fallback
     : <ThumbnailContent thumbnailUrl={item.thumbnailUrl} fallback={fallback} />;
 };

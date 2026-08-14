@@ -21,6 +21,7 @@ const normalizeFileFormat = (value: unknown) => {
 };
 
 const toThumbnailUrl = (filePath: string) => `cap7ce://thumbnail/?path=${encodeURIComponent(filePath)}`;
+const toSearchShellThumbnailUrl = (filePath: string) => `cap7ce://search-shell-thumbnail/?path=${encodeURIComponent(filePath)}`;
 const filePathKey = (filePath: string) => path.normalize(path.resolve(filePath)).toLocaleLowerCase();
 const getIncludedExtensionSet = (includedExtensions: string[] | undefined) => includedExtensions
   ? new Set(includedExtensions.map((extension) => extension.toLowerCase()))
@@ -56,6 +57,7 @@ const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
     extension: file.extension,
     iconName: isVisual ? "skim-file" : capability.iconName,
     previewKind: capability.previewKind,
+    canShellPreview: capability.canShellPreview,
     fileSize: file.file_size,
     createdAt: file.created_at,
     modifiedAt: file.modified_at,
@@ -68,7 +70,11 @@ const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
     failureType: "pending",
     failureLabel: isVisual ? t("recognition.pending") : "",
     indexedAt: "",
-    thumbnailUrl: isVisual ? toThumbnailUrl(file.file_path) : ""
+    thumbnailUrl: isVisual
+      ? toThumbnailUrl(file.file_path)
+      : capability.canShellPreview
+        ? toSearchShellThumbnailUrl(file.file_path)
+        : ""
   };
 };
 

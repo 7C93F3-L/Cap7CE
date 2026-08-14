@@ -321,6 +321,7 @@ export interface ImageIndexItem {
   extension: string;
   iconName: string;
   previewKind: FilePreviewKind;
+  canShellPreview: boolean;
   fileSize: number;
   createdAt: string;
   modifiedAt: string;

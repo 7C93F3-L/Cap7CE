@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "./versioning";
 
-export type FormalVisualCacheType = "search-thumbnail" | "model-input-image" | "preview-image";
+export type FormalVisualCacheType = "search-thumbnail" | "search-shell-thumbnail" | "search-shell-preview" | "model-input-image" | "preview-image";
 export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview" | "skim-shell-thumbnail" | "skim-shell-preview";
 export type VisualCacheType = FormalVisualCacheType | SkimVisualCacheType;
 export type VisualImageMimeType = "image/jpeg" | "image/png";
@@ -14,7 +14,7 @@ export interface VisualCacheDescriptor {
   type: VisualCacheType;
   directoryName: string;
   metadataDirectoryName?: string;
-  extension: ".capth" | ".capmo" | ".cappr" | ".capskth" | ".capskpr" | ".capsksh" | ".capsksp";
+  extension: ".capth" | ".capshth" | ".capshpr" | ".capmo" | ".cappr" | ".capskth" | ".capskpr" | ".capsksh" | ".capsksp";
 }
 
 export interface VisualCacheEntry {
@@ -69,6 +69,18 @@ const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
     directoryName: "thumbnails",
     extension: ".capth"
   },
+  "search-shell-thumbnail": {
+    type: "search-shell-thumbnail",
+    directoryName: path.join("search-shell-cache", "thumbnails"),
+    metadataDirectoryName: path.join("search-shell-cache", "metadata"),
+    extension: ".capshth"
+  },
+  "search-shell-preview": {
+    type: "search-shell-preview",
+    directoryName: path.join("search-shell-cache", "previews"),
+    metadataDirectoryName: path.join("search-shell-cache", "metadata"),
+    extension: ".capshpr"
+  },
   "model-input-image": {
     type: "model-input-image",
     directoryName: "model-inputs",
@@ -106,7 +118,7 @@ const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
 };
 
 const formalVisualCacheTypes: readonly FormalVisualCacheType[] = [
-  "search-thumbnail", "model-input-image", "preview-image"
+  "search-thumbnail", "search-shell-thumbnail", "search-shell-preview", "model-input-image", "preview-image"
 ];
 const skimVisualCacheTypes: readonly SkimVisualCacheType[] = [
   "skim-thumbnail", "skim-preview", "skim-shell-thumbnail", "skim-shell-preview"
@@ -238,7 +250,10 @@ export const createVisualCacheEntryFromSourceMetadata = (
 ): VisualCacheEntry => {
   const normalizedSourcePath = path.resolve(sourcePath);
   const sourcePathHash = hash(normalizedPathForKey(normalizedSourcePath));
-  const renderSource: VisualCacheRenderSource = type === "skim-shell-thumbnail" || type === "skim-shell-preview"
+  const renderSource: VisualCacheRenderSource = type === "skim-shell-thumbnail"
+    || type === "skim-shell-preview"
+    || type === "search-shell-thumbnail"
+    || type === "search-shell-preview"
     ? "shell"
     : "native";
   const shellThumbnailPolicyVersion = renderSource === "shell" ? SHELL_THUMBNAIL_POLICY_VERSION : null;
