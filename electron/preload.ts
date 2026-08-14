@@ -125,6 +125,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     delete: (id: string) => ipcRenderer.invoke("directories:delete", id)
   },
   skim: {
+    listLocations: () => ipcRenderer.invoke("skim:listLocations"),
     read: (request: unknown) => ipcRenderer.invoke("skim:read", request),
     cancel: (taskId: string) => ipcRenderer.invoke("skim:cancel", taskId),
     beginVisualSession: (sessionId: string) => ipcRenderer.invoke("skim:beginVisualSession", sessionId),

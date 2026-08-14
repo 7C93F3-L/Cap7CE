@@ -20,6 +20,8 @@ interface WindowControlRailProps {
   actions: WindowControlAction[];
   showSkim?: boolean;
   skimActive?: boolean;
+  skimCurrent?: boolean;
+  skimExpanded?: boolean;
   skimLabel?: string;
   onSkim?: () => void;
   showSettings: boolean;
@@ -43,7 +45,7 @@ const RailSvgIcon = ({ svg, className }: { svg: string; className: string }) => 
   />
 );
 
-const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skimLabel, onSkim, showSettings, settingsActive = false, settingsLabel, onSettings }: WindowControlRailProps) => {
+const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skimCurrent = skimActive, skimExpanded, skimLabel, onSkim, showSettings, settingsActive = false, settingsLabel, onSettings }: WindowControlRailProps) => {
   const resolvedSettingsLabel = settingsLabel ?? (settingsActive ? t("window.returnSearch") : t("window.openSettings"));
   const resolvedSkimLabel = skimLabel ?? (skimActive ? t("skim.exit") : t("skim.open"));
 
@@ -68,12 +70,14 @@ const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skim
       {showSkim && onSkim && (
         <button
           className="cap-skim-toggle"
+          data-skim-location-toggle="true"
           type="button"
           onClick={onSkim}
           aria-label={resolvedSkimLabel}
           title={resolvedSkimLabel}
           aria-pressed={skimActive}
-          aria-current={skimActive ? "page" : undefined}
+          aria-current={skimCurrent ? "page" : undefined}
+          aria-expanded={skimExpanded}
         >
           <RailSvgIcon svg={iconSkimSvg} className="cap-svg-icon cap-window-svg-icon" />
         </button>

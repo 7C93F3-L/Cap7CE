@@ -266,6 +266,22 @@ export interface SkimReadResponse {
   cancelled: boolean;
 }
 
+export type SkimLocationShortcutKind =
+  | "computer"
+  | "downloads"
+  | "documents"
+  | "pictures"
+  | "music"
+  | "videos"
+  | "starred";
+
+export interface SkimLocationShortcut {
+  id: string;
+  kind: SkimLocationShortcutKind;
+  path: string | null;
+  name?: string;
+}
+
 export interface SkimPreviewInfo {
   kind: "file" | "folder";
   name: string;

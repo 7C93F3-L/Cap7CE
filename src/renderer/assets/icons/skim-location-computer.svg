@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" style="fill:url(#cap-skim-location-computer-gradient)">
+  <defs>
+    <linearGradient id="cap-skim-location-computer-gradient" x1="0" y1="30" x2="30" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--theme-color)"/>
+      <stop offset="100%" stop-color="var(--accent-color)"/>
+    </linearGradient>
+  </defs>
+  <path d="M27.75,1.8H2.25C1.01,1.8,0,2.81,0,4.05v16.92c0,1.24,1.01,2.25,2.25,2.25h7.92v3.31h-5.6c-.46,0-.83.37-.83.83s.37.83.83.83h20.85c.46,0,.83-.37.83-.83s-.37-.83-.83-.83h-5.6v-3.31h7.92c1.24,0,2.25-1.01,2.25-2.25V4.05c0-1.24-1.01-2.25-2.25-2.25ZM29,20.52c0,.94-.76,1.7-1.7,1.7H2.7c-.94,0-1.7-.76-1.7-1.7V4.5c0-.94.76-1.7,1.7-1.7h24.6c.94,0,1.7.76,1.7,1.7v16.02ZM2,20.15V4.88c0-.59.48-1.08,1.08-1.08h23.85c.59,0,1.08.48,1.08,1.08v15.27c0,.59-.48,1.08-1.08,1.08H3.08c-.59,0-1.08-.48-1.08-1.08Z"/>
+</svg>

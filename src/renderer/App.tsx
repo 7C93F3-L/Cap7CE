@@ -15,6 +15,7 @@ import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle, splitMiddleEllipsisFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
+import SkimLocationPicker from "./SkimLocationPicker";
 import {
   centerFloatingCardPosition,
   createSpaceReleaseGuard,
@@ -56,6 +57,7 @@ import type {
   SkimDisplayMode,
   SkimDisplayPreferences,
   SkimFolderStats,
+  SkimLocationShortcut,
   SkimPreviewInfo,
   SkimTextPreview,
   SortDirection,
@@ -1066,6 +1068,11 @@ const App = () => {
   );
   const [isSkimLoading, setIsSkimLoading] = useState(false);
   const [skimFeedback, setSkimFeedback] = useState("");
+  const [skimLocationPickerOpen, setSkimLocationPickerOpen] = useState(false);
+  const [skimLocationPickerClosing, setSkimLocationPickerClosing] = useState(false);
+  const [skimLocations, setSkimLocations] = useState<SkimLocationShortcut[]>([
+    { id: "computer", kind: "computer", path: null }
+  ]);
   const [dialog, setDialog] = useState<DialogName>(null);
   const [directoryToDelete, setDirectoryToDelete] = useState<string | null>(null);
   const [droppedDirectories, setDroppedDirectories] = useState<DroppedDirectory[]>([]);
@@ -1136,6 +1143,8 @@ const App = () => {
   const [isCancellingRecognition, setIsCancellingRecognition] = useState(false);
   const quickCommandNoticeTimerRef = useRef<number | null>(null);
   const skimFeedbackTimerRef = useRef<number | null>(null);
+  const skimLocationPickerCloseTimerRef = useRef<number | null>(null);
+  const skimLocationPickerCloseActionRef = useRef<(() => void) | null>(null);
   const searchTaskIdRef = useRef<string | null>(null);
   const viewDisplaySearchTimerRef = useRef<number | null>(null);
   const skimTaskIdRef = useRef<string | null>(null);
@@ -1161,6 +1170,9 @@ const App = () => {
   useEffect(() => () => {
     if (keywordEditorExitTimerRef.current !== null) {
       window.clearTimeout(keywordEditorExitTimerRef.current);
+    }
+    if (skimLocationPickerCloseTimerRef.current !== null) {
+      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
     }
   }, []);
 
@@ -1547,6 +1559,13 @@ const App = () => {
 
   const closeNavigationOverlays = useCallback(() => {
     setContextMenu(null);
+    if (skimLocationPickerCloseTimerRef.current !== null) {
+      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
+      skimLocationPickerCloseTimerRef.current = null;
+    }
+    skimLocationPickerCloseActionRef.current = null;
+    setSkimLocationPickerOpen(false);
+    setSkimLocationPickerClosing(false);
   }, []);
 
   const navigateTo = useCallback((nextView: AppView) => {
@@ -3469,8 +3488,18 @@ const App = () => {
     }
   }, [cancelSkimRead, clearSkimFeedback, openResults, shellState]);
 
-  const openSkim = useCallback(() => {
+  const openSkimAtLocation = useCallback((nextPath: string | null) => {
+    if (skimLocationPickerCloseTimerRef.current !== null) {
+      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
+      skimLocationPickerCloseTimerRef.current = null;
+    }
+    skimLocationPickerCloseActionRef.current = null;
+    setSkimLocationPickerOpen(false);
+    setSkimLocationPickerClosing(false);
     if (view === "skim") {
+      void loadSkimLocation(nextPath).then((loaded) => {
+        if (loaded) skimForwardPathsRef.current = [];
+      });
       return;
     }
     const returnView: Exclude<AppView, "skim"> = view === "home" ? "results" : view;
@@ -3486,14 +3515,58 @@ const App = () => {
       setShellState("normal");
     }
     setView("skim");
-    void loadSkimLocation(null);
+    void loadSkimLocation(nextPath);
   }, [loadSkimLocation, shellState, view]);
+
+  const openSkim = useCallback(() => {
+    if (view === "skim") return;
+    openSkimAtLocation(null);
+  }, [openSkimAtLocation, view]);
 
   const openSkimLocation = useCallback((nextPath: string | null) => {
     void loadSkimLocation(nextPath).then((loaded) => {
       if (loaded) skimForwardPathsRef.current = [];
     });
   }, [loadSkimLocation]);
+
+  const closeSkimLocationPicker = useCallback((afterClose?: () => void) => {
+    if (!skimLocationPickerOpen || skimLocationPickerClosing) return;
+    skimLocationPickerCloseActionRef.current = afterClose ?? null;
+    setSkimLocationPickerClosing(true);
+    if (skimLocationPickerCloseTimerRef.current !== null) {
+      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
+    }
+    skimLocationPickerCloseTimerRef.current = window.setTimeout(() => {
+      skimLocationPickerCloseTimerRef.current = null;
+      setSkimLocationPickerOpen(false);
+      setSkimLocationPickerClosing(false);
+      const closeAction = skimLocationPickerCloseActionRef.current;
+      skimLocationPickerCloseActionRef.current = null;
+      closeAction?.();
+    }, 280);
+  }, [skimLocationPickerClosing, skimLocationPickerOpen]);
+
+  const toggleSkimLocationPicker = useCallback(() => {
+    if (dialog === "editKeywords" || isAddingDirectory) return;
+    if (skimLocationPickerOpen) {
+      closeSkimLocationPicker();
+      return;
+    }
+    setContextMenu(null);
+    setSkimLocationPickerClosing(false);
+    setSkimLocationPickerOpen(true);
+    void window.imageEverything?.skim.listLocations().then((nextLocations) => {
+      if (nextLocations?.length) setSkimLocations(nextLocations);
+    });
+  }, [closeSkimLocationPicker, dialog, isAddingDirectory, skimLocationPickerOpen]);
+
+  const handleSkimLocationPickerExit = useCallback(() => {
+    if (view === "skim") {
+      closeSkimLocationPicker(closeSkim);
+      return;
+    }
+    closeSkimLocationPicker();
+  }, [closeSkim, closeSkimLocationPicker, view]);
 
   const navigateSkimBack = useCallback(() => {
     if (skimCurrentPath === null) {
@@ -3591,6 +3664,7 @@ const App = () => {
       || shellState === "capsule"
       || dialog
       || contextMenu
+      || skimLocationPickerOpen
       || editingDirectoryId
       || pendingQuickCommandConfirmation
       || isAddingDirectory
@@ -4041,6 +4115,15 @@ const App = () => {
       { id: "pin", label: t("window.pinToggle"), icon: isAlwaysOnTop ? "pinOn" : "pinOff", pressed: isAlwaysOnTop, onClick: toggleAlwaysOnTop }
     ];
   const activeView = isExpandedShell && view === "home" ? "results" : view;
+  useEffect(() => {
+    if (skimLocationPickerCloseTimerRef.current !== null) {
+      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
+      skimLocationPickerCloseTimerRef.current = null;
+    }
+    skimLocationPickerCloseActionRef.current = null;
+    setSkimLocationPickerOpen(false);
+    setSkimLocationPickerClosing(false);
+  }, [dialog, shellState, view]);
   const shellTransitionClass = shellTransition
     ? ` cap-shell-transition cap-transition-${shellTransition.from}-to-${shellTransition.to}`
     : "";
@@ -4126,13 +4209,11 @@ const App = () => {
         <WindowControlRail
           actions={shellControlActions}
           showSkim={showShellSettingsToggle}
-          skimActive={view === "skim"}
-          skimLabel={shellState === "settings" && settingsOpenedFromSkimRef.current ? t("window.returnSkim") : undefined}
-          onSkim={shellState === "settings" && settingsOpenedFromSkimRef.current
-            ? closeSettings
-            : view === "skim"
-              ? closeSkim
-              : openSkim}
+          skimActive={skimLocationPickerOpen}
+          skimCurrent={false}
+          skimExpanded={skimLocationPickerOpen}
+          skimLabel={skimLocationPickerOpen ? t("skim.locationPicker.close") : t("skim.locationPicker.open")}
+          onSkim={toggleSkimLocationPicker}
           settingsActive={shellState === "settings"}
           showSettings={showShellSettingsToggle}
           settingsLabel={shellState === "settings" && settingsOpenedFromSkimRef.current ? t("window.returnSkim") : undefined}
@@ -4439,6 +4520,17 @@ const App = () => {
                   setDirectoryToDelete(id);
                   setDialog("deleteDirectory");
                 }}
+              />
+            )}
+            {skimLocationPickerOpen && showShellSettingsToggle && dialog === null && (
+              <SkimLocationPicker
+                activeView={activeView}
+                locations={skimLocations}
+                inSkim={view === "skim"}
+                closing={skimLocationPickerClosing}
+                onSelect={(path) => closeSkimLocationPicker(() => openSkimAtLocation(path))}
+                onDismiss={closeSkimLocationPicker}
+                onExit={handleSkimLocationPickerExit}
               />
             )}
           </div>

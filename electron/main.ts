@@ -3431,6 +3431,15 @@ interface SkimReadTaskState {
 
 const skimReadTasks = new Map<string, SkimReadTaskState>();
 
+ipcMain.handle("skim:listLocations", () => [
+  { id: "computer", kind: "computer", path: null },
+  { id: "downloads", kind: "downloads", path: app.getPath("downloads") },
+  { id: "documents", kind: "documents", path: app.getPath("documents") },
+  { id: "pictures", kind: "pictures", path: app.getPath("pictures") },
+  { id: "music", kind: "music", path: app.getPath("music") },
+  { id: "videos", kind: "videos", path: app.getPath("videos") }
+]);
+
 ipcMain.handle("skim:read", async (_event, request: unknown) => {
   const candidate = request && typeof request === "object"
     ? request as { taskId?: unknown; path?: unknown }

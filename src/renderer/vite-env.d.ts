@@ -82,6 +82,7 @@ declare global {
         delete: (id: string) => Promise<DirectoryItem[]>;
       };
       skim: {
+        listLocations: () => Promise<SkimLocationShortcut[]>;
         read: (request: SkimReadRequest) => Promise<SkimReadResponse>;
         cancel: (taskId: string) => Promise<boolean>;
         beginVisualSession: (sessionId: string) => Promise<boolean>;
