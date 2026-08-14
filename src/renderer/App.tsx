@@ -1052,6 +1052,7 @@ const App = () => {
   const [quickCommandsExpanded, setQuickCommandsExpanded] = useState(false);
   const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
   const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
+  const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
   const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
@@ -1724,6 +1725,7 @@ const App = () => {
             setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
             setSkimDisplay(preferences.skimDisplay);
             setSkimSidebarFolders(preferences.skimSidebarFolders);
+            setSkimSystemLocationsCollapsed(preferences.skimSystemLocationsCollapsed);
             setSkimSortPreference(preferences.skimSortPreference);
             if (!resultsInitializedRef.current) {
               lastResultSearchRef.current = {
@@ -2888,6 +2890,17 @@ const App = () => {
       showSkimFeedback(t("skim.sidebar.addedFeedback"));
     }
   }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders]);
+
+  const toggleSkimSystemLocations = useCallback(async () => {
+    const nextCollapsed = !skimSystemLocationsCollapsed;
+    setSkimSystemLocationsCollapsed(nextCollapsed);
+    try {
+      const preferences = await window.imageEverything?.preferences.updateSkimSystemLocationsCollapsed(nextCollapsed);
+      if (preferences) setSkimSystemLocationsCollapsed(preferences.skimSystemLocationsCollapsed);
+    } catch {
+      setSkimSystemLocationsCollapsed(!nextCollapsed);
+    }
+  }, [skimSystemLocationsCollapsed]);
 
   const removeSkimSidebarFolder = useCallback(async (folderPath: string) => {
     const removedKey = normalizeWindowsPathKey(folderPath);
@@ -4592,12 +4605,16 @@ const App = () => {
             {skimLocationPickerOpen && showShellSettingsToggle && dialog === null && (
               <SkimLocationPicker
                 activeView={activeView}
-                locations={skimLocations}
+                locations={skimSystemLocationsCollapsed
+                  ? skimLocations.filter((location) => location.kind === "computer" || location.kind === "desktop" || location.kind === "starred")
+                  : skimLocations}
                 inSkim={view === "skim"}
                 closing={skimLocationPickerClosing}
+                systemLocationsCollapsed={skimSystemLocationsCollapsed}
                 onSelect={(path) => closeSkimLocationPicker(() => openSkimAtLocation(path))}
                 onDismiss={closeSkimLocationPicker}
                 onExit={handleSkimLocationPickerExit}
+                onToggleSystemLocations={() => void toggleSkimSystemLocations()}
                 menuStyle={contextMenuStyle}
                 onRemoveSidebarFolder={(path) => void removeSkimSidebarFolder(path)}
               />

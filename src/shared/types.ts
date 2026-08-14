@@ -268,6 +268,7 @@ export interface SkimReadResponse {
 
 export type SkimLocationShortcutKind =
   | "computer"
+  | "desktop"
   | "downloads"
   | "documents"
   | "pictures"
@@ -429,6 +430,7 @@ export interface UserPreferences {
   searchLabelVisibility: SearchLabelVisibilityPreferences;
   skimDisplay: SkimDisplayPreferences;
   skimSidebarFolders: string[];
+  skimSystemLocationsCollapsed: boolean;
   shortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }

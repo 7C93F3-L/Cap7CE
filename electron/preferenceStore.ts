@@ -53,6 +53,7 @@ export interface UserPreferencesResponse {
   searchLabelVisibility: SearchLabelVisibilityPreferences;
   skimDisplay: SkimDisplayPreferences;
   skimSidebarFolders: string[];
+  skimSystemLocationsCollapsed: boolean;
   shortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }
@@ -98,6 +99,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     showHiddenFiles: false
   },
   skimSidebarFolders: [],
+  skimSystemLocationsCollapsed: false,
   shortcutActions: {
     activateCapsule: "Alt+`",
     activateMicro: "Alt+1",
@@ -127,6 +129,7 @@ const normalizeSkimExtensions = (value: unknown) => Array.isArray(value)
   : [];
 const normalizePathKey = (value: string) => path.resolve(value).replace(/[\\/]+$/, "").toLowerCase();
 const getStandardSkimLocationPathKeys = () => new Set([
+  app.getPath("desktop"),
   app.getPath("downloads"),
   app.getPath("documents"),
   app.getPath("pictures"),
@@ -267,6 +270,9 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
           : defaults.skimDisplay.showHiddenFiles
       },
       skimSidebarFolders: normalizeSkimSidebarFolders(parsed.skimSidebarFolders),
+      skimSystemLocationsCollapsed: typeof parsed.skimSystemLocationsCollapsed === "boolean"
+        ? parsed.skimSystemLocationsCollapsed
+        : defaults.skimSystemLocationsCollapsed,
       shortcutActions: normalizeShortcutActions(parsed.shortcutActions, defaults.shortcutActions),
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : defaults.updatedAt
     };
@@ -491,6 +497,17 @@ export const updateSkimSidebarFoldersPreference = async (skimSidebarFolders: str
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     skimSidebarFolders: normalizeSkimSidebarFolders(skimSidebarFolders),
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateSkimSystemLocationsCollapsedPreference = async (skimSystemLocationsCollapsed: boolean) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    skimSystemLocationsCollapsed: Boolean(skimSystemLocationsCollapsed),
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

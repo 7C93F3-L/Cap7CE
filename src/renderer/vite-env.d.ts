@@ -146,6 +146,7 @@ declare global {
         updateSearchLabelVisibility: (searchLabelVisibility: UserPreferences["searchLabelVisibility"]) => Promise<UserPreferences>;
         updateSkimDisplay: (skimDisplay: UserPreferences["skimDisplay"]) => Promise<UserPreferences>;
         updateSkimSidebarFolders: (skimSidebarFolders: UserPreferences["skimSidebarFolders"]) => Promise<UserPreferences>;
+        updateSkimSystemLocationsCollapsed: (collapsed: boolean) => Promise<UserPreferences>;
         updateShortcutActions: (shortcutActions: UserPreferences["shortcutActions"]) => Promise<ShortcutActionsUpdateResult>;
         shortcutAvailability: () => Promise<ShortcutAvailabilityResult>;
         beginShortcutCapture: () => Promise<boolean>;

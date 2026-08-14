@@ -4,16 +4,19 @@ import type { AppView, SkimLocationShortcut, SkimLocationShortcutKind } from "..
 import { t } from "../../electron/localization";
 import CustomScrollbar from "./CustomScrollbar";
 import computerSvg from "./assets/icons/skim-location-computer.svg?raw";
+import desktopSvg from "./assets/icons/skim-location-desktop.svg?raw";
 import documentsSvg from "./assets/icons/skim-location-documents.svg?raw";
 import downloadsSvg from "./assets/icons/skim-location-downloads.svg?raw";
 import exitSvg from "./assets/icons/skim-location-exit.svg?raw";
 import musicSvg from "./assets/icons/skim-location-music.svg?raw";
 import picturesSvg from "./assets/icons/skim-location-pictures.svg?raw";
 import starredFolderSvg from "./assets/icons/skim-location-starred-folder.svg?raw";
+import systemFoldersSvg from "./assets/icons/skim-location-system-folders.svg?raw";
 import videosSvg from "./assets/icons/skim-location-videos.svg?raw";
 
 const locationIcons: Record<SkimLocationShortcutKind, string> = {
   computer: computerSvg,
+  desktop: desktopSvg,
   downloads: downloadsSvg,
   documents: documentsSvg,
   pictures: picturesSvg,
@@ -24,6 +27,7 @@ const locationIcons: Record<SkimLocationShortcutKind, string> = {
 
 const locationLabels: Partial<Record<SkimLocationShortcutKind, Parameters<typeof t>[0]>> = {
   computer: "skim.computer",
+  desktop: "skim.locationPicker.desktop",
   downloads: "skim.locationPicker.downloads",
   documents: "skim.locationPicker.documents",
   pictures: "skim.locationPicker.pictures",
@@ -49,16 +53,18 @@ interface SkimLocationPickerProps {
   locations: SkimLocationShortcut[];
   inSkim: boolean;
   closing: boolean;
+  systemLocationsCollapsed: boolean;
   onSelect: (path: string | null) => void;
   onDismiss: () => void;
   onExit: () => void;
+  onToggleSystemLocations: () => void;
   menuStyle?: CSSProperties;
   onRemoveSidebarFolder: (path: string) => void;
 }
 
 type LocationContextMenu = { x: number; y: number; path: string };
 
-const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, onDismiss, onExit, menuStyle, onRemoveSidebarFolder }: SkimLocationPickerProps) => {
+const SkimLocationPicker = ({ activeView, locations, inSkim, closing, systemLocationsCollapsed, onSelect, onDismiss, onExit, onToggleSystemLocations, menuStyle, onRemoveSidebarFolder }: SkimLocationPickerProps) => {
   const pickerRef = useRef<HTMLElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
@@ -141,15 +147,27 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, 
         </div>
         <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
       </div>
-      <button
-        className="cap-skim-location-exit"
-        type="button"
-        title={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
-        aria-label={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
-        onClick={onExit}
-      >
-        <PickerSvgIcon svg={exitSvg} className="cap-svg-icon cap-skim-location-exit-icon" />
-      </button>
+      <div className="cap-skim-location-footer">
+        <button
+          className="cap-window-button cap-skim-location-footer-button"
+          type="button"
+          title={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
+          aria-label={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
+          onClick={onExit}
+        >
+          <PickerSvgIcon svg={exitSvg} className="cap-svg-icon cap-window-svg-icon" />
+        </button>
+        <button
+          className="cap-window-button cap-skim-location-footer-button"
+          type="button"
+          title={systemLocationsCollapsed ? t("skim.locationPicker.showSystemFolders") : t("skim.locationPicker.hideSystemFolders")}
+          aria-label={systemLocationsCollapsed ? t("skim.locationPicker.showSystemFolders") : t("skim.locationPicker.hideSystemFolders")}
+          aria-pressed={systemLocationsCollapsed}
+          onClick={onToggleSystemLocations}
+        >
+          <PickerSvgIcon svg={systemFoldersSvg} className="cap-svg-icon cap-window-svg-icon" />
+        </button>
+      </div>
       {contextMenu && createPortal(
         <div
           ref={contextMenuRef}

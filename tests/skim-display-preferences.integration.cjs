@@ -15,6 +15,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       updateShortcutActionsPreference,
       updateSkimDisplayPreference,
       updateSkimSidebarFoldersPreference,
+      updateSkimSystemLocationsCollapsedPreference,
       updateSkimSortPreference,
       updateSortPreference
     } = require("../dist-electron/preferenceStore.js");
@@ -26,6 +27,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.skimDisplay.customExtensions.includes(".png"), true);
     assert.equal(defaults.searchLabelVisibility.skimDisplay, true);
     assert.deepEqual(defaults.skimSidebarFolders, []);
+    assert.equal(defaults.skimSystemLocationsCollapsed, false);
     assert.equal(defaults.shortcutActions.cycleDirectory, "Alt+Q");
     assert.deepEqual(defaults.skimSortPreference, {
       sortField: "file_name",
@@ -41,7 +43,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
         customExtensions: [".png"],
         showHiddenFiles: false
       },
-      skimSidebarFolders: [sidebarFolder, sidebarFolder.toUpperCase(), app.getPath("downloads"), path.parse(sidebarFolder).root, "", 42],
+      skimSidebarFolders: [sidebarFolder, sidebarFolder.toUpperCase(), app.getPath("desktop"), app.getPath("downloads"), path.parse(sidebarFolder).root, "", 42],
       shortcutActions: {
         activateCapsule: "Alt+`",
         activateMicro: "Alt+1",
@@ -57,6 +59,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(migrated.skimDisplay.searchMode, "skim");
     assert.equal(migrated.shortcutActions.cycleDirectory, "Alt+Q");
     assert.deepEqual(migrated.skimSidebarFolders, [sidebarFolder]);
+    assert.equal(migrated.skimSystemLocationsCollapsed, false);
 
     const updatedShortcuts = await updateShortcutActionsPreference({
       ...migrated.shortcutActions,
@@ -85,6 +88,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateSkimSortPreference({ sortField: "file_name", sortDirection: "desc" });
     const secondSidebarFolder = path.join(testRoot, "Second Sidebar Folder");
     await updateSkimSidebarFoldersPreference([sidebarFolder, secondSidebarFolder, sidebarFolder]);
+    await updateSkimSystemLocationsCollapsedPreference(true);
     const reloaded = await getUserPreferences();
     assert.equal(reloaded.skimDisplay.mode, "custom");
     assert.equal(reloaded.skimDisplay.searchMode, "all");
@@ -92,6 +96,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual(reloaded.sortPreference, { sortField: "modified_at", sortDirection: "desc" });
     assert.deepEqual(reloaded.skimSortPreference, { sortField: "file_name", sortDirection: "desc" });
     assert.deepEqual(reloaded.skimSidebarFolders, [sidebarFolder, secondSidebarFolder]);
+    assert.equal(reloaded.skimSystemLocationsCollapsed, true);
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
@@ -103,7 +108,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       independentSearchModePersisted: true,
       skimLabelVisibilityPersisted: true,
       independentSkimSortPersisted: true,
-      skimSidebarFoldersNormalizedAndPersisted: true
+      skimSidebarFoldersNormalizedAndPersisted: true,
+      skimSystemLocationsCollapsedPersisted: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

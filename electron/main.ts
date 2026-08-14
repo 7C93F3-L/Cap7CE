@@ -21,7 +21,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -33,6 +33,7 @@ import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
+import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNameService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
@@ -3499,13 +3500,23 @@ const skimReadTasks = new Map<string, SkimReadTaskState>();
 
 ipcMain.handle("skim:listLocations", async () => {
   const preferences = await getUserPreferences();
+  const systemLocations = [
+    { id: "computer", kind: "computer", path: null, classId: "{20D04FE0-3AEA-1069-A2D8-08002B30309D}", fallbackName: t("skim.computer") },
+    { id: "desktop", kind: "desktop", path: app.getPath("desktop"), knownFolderId: "{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}", fallbackName: t("skim.locationPicker.desktop") },
+    { id: "downloads", kind: "downloads", path: app.getPath("downloads"), knownFolderId: "{374DE290-123F-4565-9164-39C4925E467B}", fallbackName: t("skim.locationPicker.downloads") },
+    { id: "documents", kind: "documents", path: app.getPath("documents"), knownFolderId: "{FDD39AD0-238F-46AF-ADB4-6C85480369C7}", fallbackName: t("skim.locationPicker.documents") },
+    { id: "pictures", kind: "pictures", path: app.getPath("pictures"), knownFolderId: "{33E28130-4E1E-4676-835A-98395C3BC3BB}", fallbackName: t("skim.locationPicker.pictures") },
+    { id: "music", kind: "music", path: app.getPath("music"), knownFolderId: "{4BD8D571-6D19-48D3-BE97-422220080E43}", fallbackName: t("skim.locationPicker.music") },
+    { id: "videos", kind: "videos", path: app.getPath("videos"), knownFolderId: "{18989B1D-99B5-455B-841C-AB7C74E4DDFC}", fallbackName: t("skim.locationPicker.videos") }
+  ] as const;
+  const displayNames = await getWindowsKnownFolderDisplayNames(systemLocations);
   return [
-    { id: "computer", kind: "computer", path: null },
-    { id: "downloads", kind: "downloads", path: app.getPath("downloads") },
-    { id: "documents", kind: "documents", path: app.getPath("documents") },
-    { id: "pictures", kind: "pictures", path: app.getPath("pictures") },
-    { id: "music", kind: "music", path: app.getPath("music") },
-    { id: "videos", kind: "videos", path: app.getPath("videos") },
+    ...systemLocations.map(({ id, kind, path: locationPath, fallbackName }) => ({
+      id,
+      kind,
+      path: locationPath,
+      name: displayNames.get(id) ?? fallbackName
+    })),
     ...preferences.skimSidebarFolders.map((folderPath, index) => ({
       id: `starred-${index}-${folderPath.toLowerCase()}`,
       kind: "starred",
@@ -4183,6 +4194,10 @@ ipcMain.handle("preferences:updateSkimDisplay", async (_event, nextSkimDisplay: 
 
 ipcMain.handle("preferences:updateSkimSidebarFolders", (_event, skimSidebarFolders: string[]) => (
   updateSkimSidebarFoldersPreference(skimSidebarFolders)
+));
+
+ipcMain.handle("preferences:updateSkimSystemLocationsCollapsed", (_event, collapsed: boolean) => (
+  updateSkimSystemLocationsCollapsedPreference(collapsed)
 ));
 
 ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {

@@ -977,28 +977,22 @@ textarea,
   text-overflow: ellipsis;
 }
 
-.cap-skim-location-exit {
-  width: calc(100% - var(--cap-thumb-gap));
+.cap-skim-location-footer {
+  width: 100%;
   height: 30px;
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border-radius: var(--radius-control);
-  color: var(--window-control-color);
-  background: transparent;
-  transition: color 210ms ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
-.cap-skim-location-exit:hover,
-.cap-skim-location-exit:focus-visible {
+.cap-skim-location-footer-button {
+  flex: 0 0 var(--window-control-rail-width);
+}
+
+.cap-skim-location-footer-button:focus-visible {
   outline: none;
-  color: var(--window-control-hover);
-}
-
-.cap-skim-location-exit-icon {
-  width: 30px;
-  height: 30px;
 }
 
 .context-menu.cap-skim-location-context-menu {
