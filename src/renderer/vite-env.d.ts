@@ -21,7 +21,6 @@ declare global {
         onOpenSettingsRequested: (callback: () => void) => () => void;
         onToggleSkimRequested: (callback: () => void) => () => void;
         onActivateSkimRequested: (callback: () => void) => () => void;
-        onShowAllFilesRequested: (callback: () => void) => () => void;
         onActivateCapsuleShortcut: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => void) => () => void;
       };

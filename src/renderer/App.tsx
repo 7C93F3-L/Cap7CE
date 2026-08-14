@@ -2087,13 +2087,6 @@ const App = () => {
     void runSearch(nextSearch);
   };
 
-  useEffect(() => {
-    const unsubscribe = window.imageEverything?.window.onShowAllFilesRequested?.(() => {
-      showCommandResults({ ...getCommandBaseSearch(), query: "", directoryId: "all", fileFormat: "all", recognitionStatus: "all" });
-    });
-    return () => unsubscribe?.();
-  }, [showCommandResults]);
-
   const showCommandDirectory = (directoryName: string) => {
     const directory = findDirectoryByCommandName(directoryName);
     if (!directory) {
@@ -3573,14 +3566,19 @@ const App = () => {
     if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
-    setView("skim");
+    navigateTo("skim");
     void loadSkimLocation(nextPath);
-  }, [loadSkimLocation, shellState, view]);
+  }, [loadSkimLocation, navigateTo, shellState, view]);
 
   const openSkim = useCallback(() => {
-    if (view === "skim") return;
+    if (view === "skim") {
+      if (shellState === "standby" || shellState === "capsule") {
+        setShellState("normal");
+      }
+      return;
+    }
     openSkimAtLocation(null);
-  }, [openSkimAtLocation, view]);
+  }, [openSkimAtLocation, shellState, view]);
 
   const openSkimLocation = useCallback((nextPath: string | null) => {
     void loadSkimLocation(nextPath).then((loaded) => {

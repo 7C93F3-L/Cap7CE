@@ -35,11 +35,6 @@ contextBridge.exposeInMainWorld("imageEverything", {
       ipcRenderer.on("window:activateSkimRequested", listener);
       return () => ipcRenderer.removeListener("window:activateSkimRequested", listener);
     },
-    onShowAllFilesRequested: (callback: () => void) => {
-      const listener = () => callback();
-      ipcRenderer.on("window:showAllFilesRequested", listener);
-      return () => ipcRenderer.removeListener("window:showAllFilesRequested", listener);
-    },
     onActivateCapsuleShortcut: (callback: () => void) => {
       const listener = () => callback();
       ipcRenderer.on("window:activateCapsuleShortcut", listener);

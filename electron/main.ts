@@ -1220,12 +1220,6 @@ const sendActivateSkimToRenderer = () => {
   }
 };
 
-const sendShowAllFilesToRenderer = () => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("window:showAllFilesRequested");
-  }
-};
-
 const sendActivateCapsuleShortcutToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:activateCapsuleShortcut");
@@ -1619,7 +1613,6 @@ const openNormalFromTray = () => {
     return;
   }
   sendShellStateToRenderer("normal");
-  sendShowAllFilesToRenderer();
 };
 
 const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "capsule">) => {
