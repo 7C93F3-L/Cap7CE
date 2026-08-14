@@ -84,7 +84,7 @@ app.whenReady().then(async () => {
       initialScan.files
     );
     const pendingVisual = (await listPendingImageRecognitions(10))[0];
-    await updateImageRecognition(pendingVisual.id, "mountain reference", ["landscape"], timestamp);
+    await updateImageRecognition(pendingVisual.id, "", ["landscape"], timestamp);
     const notesFile = initialScan.files.find((file) => file.file_name === "notes.txt");
     const visualFile = initialScan.images.find((file) => file.file_name === "visual.png");
     const modelFile = initialScan.files.find((file) => file.file_name === "weights.gguf");

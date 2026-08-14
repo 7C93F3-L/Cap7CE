@@ -84,7 +84,7 @@ const sortDirections: Record<ImageSearchState["sortDirection"], "ASC" | "DESC"> 
   desc: "DESC"
 };
 
-const recognizedImageClause = "TRIM(keywords) <> '' AND (TRIM(caption) <> '' OR manual_index = 1)";
+const recognizedImageClause = "TRIM(keywords) <> ''";
 const unrecognizedImageClause = `NOT (${recognizedImageClause})`;
 
 const normalizeFileFormat = (value: unknown) => {
@@ -1412,7 +1412,7 @@ export type IndexedCatalogSearchResponse = ImageSearchResponse & {
   knownVisualFilePaths: string[];
 };
 
-const catalogRecognizedClause = "TRIM(COALESCE(i.keywords, '')) <> '' AND (TRIM(COALESCE(i.caption, '')) <> '' OR i.manual_index = 1)";
+const catalogRecognizedClause = "TRIM(COALESCE(i.keywords, '')) <> ''";
 const catalogUnrecognizedClause = `NOT (${catalogRecognizedClause})`;
 
 const appendCatalogFileFormatFilter = (
@@ -1628,8 +1628,7 @@ export const searchIndexedCatalog = async (
       if (imageId !== null) knownVisualFilePaths.push(filePath);
       const matchesSelectedFormat = selectedFileFormat === "all" || selectedFileFormat === extension;
       const recognized = imageId !== null
-        && String(row[4] ?? "").trim() !== ""
-        && (String(row[3] ?? "").trim() !== "" || Number(row[5] ?? 0) === 1);
+        && String(row[4] ?? "").trim() !== "";
       if (matchesSelectedFormat && !recognized) unrecognizedCount += 1;
     }
     const failureStats = images.reduce((stats, image) => {

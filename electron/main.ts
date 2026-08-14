@@ -3433,6 +3433,12 @@ ipcMain.handle("directories:refreshFileCounts", async (_event, directoryIds: unk
   if (directories.length === 0) return withSqliteImageCounts(await listDirectories());
   const scanResult = await scanImageDirectories(directories);
   searchScanSnapshotService.seed(directories, scanResult);
+  await writeScannedImagesToIndex(
+    directories.map((directory) => directory.id),
+    scanResult.images,
+    scanResult.scannedAt,
+    scanResult.files
+  );
   const counts = Object.fromEntries(scanResult.summaries.map((summary) => [summary.id, summary.fileCount]));
   return withSqliteImageCounts(await applyDirectoryFileCounts(counts));
 });

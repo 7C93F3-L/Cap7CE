@@ -1698,7 +1698,10 @@ const App = () => {
           setDirectories(loadedDirectories);
           if (missingFileCountIds.length > 0) {
             void window.imageEverything?.directories.refreshFileCounts(missingFileCountIds).then((countedDirectories) => {
-              if (isMounted && countedDirectories) setDirectories(countedDirectories);
+              if (isMounted && countedDirectories) {
+                setDirectories(countedDirectories);
+                void refreshIndexStats();
+              }
             }).catch(() => undefined);
           }
           setDirectoryServiceUnavailable(false);
@@ -3740,16 +3743,16 @@ const App = () => {
 
     if (shellState === "settings" || view === "settings") {
       const directoryIds = directories.map((directory) => directory.id);
-      const [countedDirectories] = await Promise.all([
-        directoryIds.length > 0
-          ? window.imageEverything?.directories.refreshFileCounts(directoryIds)
-          : Promise.resolve(undefined),
+      const countedDirectories = directoryIds.length > 0
+        ? await window.imageEverything?.directories.refreshFileCounts(directoryIds)
+        : undefined;
+      if (countedDirectories) refreshDirectories(countedDirectories);
+      await Promise.all([
         refreshIndexStats(),
         refreshVisualCacheStats(),
         refreshLlamaRuntimeSettings(),
         refreshGgufModelSettings()
       ]);
-      if (countedDirectories) refreshDirectories(countedDirectories);
       return;
     }
 
