@@ -290,7 +290,8 @@ textarea,
 
 .cap-line-window {
   position: relative;
-  pointer-events: none;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .cap-shell-transition .cap-shell-content {

@@ -51,7 +51,11 @@ const LineWindowApp = () => {
   } as CSSProperties;
 
   return (
-    <div className={`app theme-${effectiveTheme} cap-shell cap-line-window`} style={style}>
+    <div
+      className={`app theme-${effectiveTheme} cap-shell cap-line-window`}
+      style={style}
+      onClick={() => void window.imageEverything?.line.activateCapsule()}
+    >
       <div className="cap-standby-line" aria-hidden="true" />
     </div>
   );

@@ -1243,9 +1243,10 @@ const showAndFocusMainWindow = () => {
 };
 
 const activateCapsuleShortcut = () => {
-  if (!showAndFocusMainWindow()) return;
+  if (!showAndFocusMainWindow()) return false;
   sendActivateShellModeShortcutToRenderer("capsule");
   sendActivateCapsuleShortcutToRenderer();
+  return true;
 };
 
 const sendStandbyLineVisibleToRenderer = () => {
@@ -2398,7 +2399,7 @@ const createLineWindow = () => {
     }
   });
   lockWebContentsZoom(lineWindow.webContents);
-  lineWindow.setIgnoreMouseEvents(true);
+  lineWindow.setIgnoreMouseEvents(false);
   positionLineWindow();
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
@@ -2620,6 +2621,13 @@ app.on("before-quit", () => {
 ipcMain.handle("window:getShellLayoutMetrics", () => ({
   miniStandardHeight: miniDefaultHeightPx
 }));
+
+ipcMain.handle("line:activateCapsule", (event) => {
+  if (!lineWindow || lineWindow.isDestroyed() || event.sender.id !== lineWindow.webContents.id) {
+    return false;
+  }
+  return activateCapsuleShortcut();
+});
 
 ipcMain.handle("window:setShellState", (_event, state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => {
   const forceBounds = Boolean(options?.forceBounds);

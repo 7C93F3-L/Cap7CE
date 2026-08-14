@@ -26,6 +26,7 @@ declare global {
         onActivateShellModeShortcut: (callback: (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => void) => () => void;
       };
       line: {
+        activateCapsule: () => Promise<boolean>;
         onRefreshAppearance: (callback: () => void) => () => void;
       };
       app: {

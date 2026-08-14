@@ -40,7 +40,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，以及只负责待机线展示的不可聚焦、鼠标穿透独立 `lineWindow`。
+- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，以及只负责待机线展示的不可聚焦独立 `lineWindow`；line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
 - 管理 capsule / micro / mini / normal / Settings 主窗口状态，以及 standby 对主窗口隐藏和独立 line 显示的协调语义；从 standby 唤起时先保持主窗口透明，待目标形态完成主进程布局与 Renderer 绘制后再显现，并保留超时恢复以避免透明窗口滞留。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
 - 创建托盘图标和右键菜单；托盘图标双击进入 normal 并显示全部已添加文件。

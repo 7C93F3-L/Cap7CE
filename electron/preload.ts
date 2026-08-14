@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
     }
   },
   line: {
+    activateCapsule: () => ipcRenderer.invoke("line:activateCapsule"),
     onRefreshAppearance: (callback: () => void) => {
       const listener = () => callback();
       ipcRenderer.on("line:refreshAppearance", listener);
