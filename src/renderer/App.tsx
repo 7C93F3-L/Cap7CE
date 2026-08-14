@@ -8694,7 +8694,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               aria-label={t("settings.openReleasesHint")}
               onClick={() => void window.imageEverything?.app.openReleasePage()}
             >
-              0.9.0
+              0.9.1
             </button>
             {" · 7C93F3-L & "}
             <button
