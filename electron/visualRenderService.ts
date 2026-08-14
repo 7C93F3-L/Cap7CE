@@ -34,7 +34,7 @@ export interface ImageSize {
   height: number;
 }
 
-type NativeVisualCacheType = Exclude<VisualCacheType, "skim-shell-thumbnail">;
+type NativeVisualCacheType = Exclude<VisualCacheType, "skim-shell-thumbnail" | "skim-shell-preview">;
 
 const sharpSourceExtensions = new Set([
   ".jpg",
@@ -419,8 +419,8 @@ const renderSourceImage = async (
 };
 
 const renderVisualCache = async (entry: VisualCacheEntry) => {
-  if (entry.type === "skim-shell-thumbnail") {
-    throw new Error("Shell 缩略图必须使用独立 Provider。");
+  if (entry.type === "skim-shell-thumbnail" || entry.type === "skim-shell-preview") {
+    throw new Error("Shell 图像必须使用独立 Provider。");
   }
   if (await isVisualCacheEntryValid(entry)) {
     return entry.imagePath;

@@ -220,6 +220,7 @@ export interface FileFormatCapability {
   canIndex: boolean;
   canSearch: boolean;
   canThumbnail: boolean;
+  canShellPreview: boolean;
   previewKind: FilePreviewKind;
   canDirectPreview: boolean;
   canAIIndex: boolean;

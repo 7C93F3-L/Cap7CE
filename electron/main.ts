@@ -28,7 +28,7 @@ import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
 import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
-import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
+import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellPreviewCache, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
@@ -2164,16 +2164,18 @@ const registerLocalImageProtocol = () => {
       if (url.hostname === "skim-thumbnail" || url.hostname === "skim-preview") {
         const sessionId = url.searchParams.get("session");
         const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
-        if (!sessionId || (url.hostname === "skim-preview" && !capability?.canThumbnail)) {
+        if (!sessionId || (url.hostname === "skim-preview" && !capability?.canThumbnail && !capability?.canShellPreview)) {
           return new Response("Skim visual request is unavailable", { status: 415 });
         }
-        const cachePath = url.hostname === "skim-thumbnail" && !capability?.canThumbnail
-          ? await requestSkimShellThumbnailCache(sessionId, filePath)
-          : await requestSkimVisualCache(
+        const cachePath = url.hostname === "skim-preview" && capability?.canShellPreview
+          ? await requestSkimShellPreviewCache(sessionId, filePath)
+          : url.hostname === "skim-thumbnail" && !capability?.canThumbnail
+            ? await requestSkimShellThumbnailCache(sessionId, filePath)
+            : await requestSkimVisualCache(
             sessionId,
             filePath,
             url.hostname === "skim-preview" ? "preview" : "thumbnail"
-          );
+            );
         if (url.hostname === "skim-preview" && await shouldUseSourceFileForPreview(filePath)) {
           return net.fetch(pathToFileURL(filePath).toString());
         }

@@ -26,6 +26,7 @@ app.whenReady().then(async () => {
     cancelSkimVisualSession,
     clearSkimCacheSafely,
     getSkimCacheStats,
+    requestSkimShellPreviewCache,
     requestSkimShellThumbnailCache,
     requestSkimVisualCache,
     setSkimShellThumbnailActivity
@@ -61,11 +62,14 @@ app.whenReady().then(async () => {
     const thumbnailEntry = await createVisualCacheEntry(sourcePath, "skim-thumbnail");
     const previewEntry = await createVisualCacheEntry(sourcePath, "skim-preview");
     const shellEntry = await createVisualCacheEntry(shellSourcePath, "skim-shell-thumbnail");
+    const shellPreviewEntry = await createVisualCacheEntry(shellSourcePath, "skim-shell-preview");
     assert.equal(path.dirname(thumbnailEntry.metadataPath), getVisualCacheMetadataDirectory("skim-thumbnail"));
     assert.equal(path.dirname(previewEntry.metadataPath), getVisualCacheMetadataDirectory("skim-preview"));
     assert.equal(path.dirname(shellEntry.imagePath), getVisualCacheDirectory("skim-shell-thumbnail"));
     assert.equal(shellEntry.renderSource, "shell");
     assert.equal(shellEntry.shellThumbnailPolicyVersion, SHELL_THUMBNAIL_POLICY_VERSION);
+    assert.equal(path.dirname(shellPreviewEntry.imagePath), getVisualCacheDirectory("skim-shell-preview"));
+    assert.equal(shellPreviewEntry.renderSource, "shell");
 
     let providerCalls = 0;
     const shellProvider = createShellThumbnailProvider({
@@ -92,6 +96,20 @@ app.whenReady().then(async () => {
     const changedShellCachePath = await shellProvider.ensureThumbnailPath(shellSourcePath);
     assert.notEqual(changedShellCachePath, shellCachePath);
     assert.equal(providerCalls, 2);
+
+    let requestedPreviewSize = null;
+    const shellPreviewProvider = createShellThumbnailProvider({
+      createThumbnail: async (_filePath, size) => {
+        requestedPreviewSize = size;
+        return require("electron").nativeImage.createFromBuffer(png);
+      },
+      timeoutMs: 1000,
+      edge: 1200,
+      cacheType: "skim-shell-preview"
+    });
+    const shellPreviewCachePath = await shellPreviewProvider.ensureThumbnailPath(shellSourcePath);
+    assert.deepEqual(requestedPreviewSize, { width: 1200, height: 1200 });
+    assert.equal(path.dirname(shellPreviewCachePath), getVisualCacheDirectory("skim-shell-preview"));
 
     let schedulerCalls = 0;
     let schedulerActive = 0;
@@ -131,6 +149,11 @@ app.whenReady().then(async () => {
     );
     assert.equal(schedulerCalls, callsAfterFailure);
     scheduler.setActive(false);
+    const inactivePreviewPath = `${testRoot}\\inactive-preview`;
+    assert.equal(
+      await scheduler.request("scheduler-session", inactivePreviewPath, "preview"),
+      `${inactivePreviewPath}.cache`
+    );
     const cancelledQueuedRequest = scheduler.request("scheduler-session", `${testRoot}\\cancelled`);
     assert.equal(scheduler.cancelSession("scheduler-session"), true);
     await assert.rejects(() => cancelledQueuedRequest, (error) => error?.code === "ECANCELED");
@@ -175,15 +198,17 @@ app.whenReady().then(async () => {
 
     const shellPathThroughSession = await requestSkimShellThumbnailCache("session-one", sourcePath);
     assert.equal(path.dirname(shellPathThroughSession), getVisualCacheDirectory("skim-shell-thumbnail"));
+    const shellPreviewPathThroughSession = await requestSkimShellPreviewCache("session-one", sourcePath);
+    assert.equal(path.dirname(shellPreviewPathThroughSession), getVisualCacheDirectory("skim-shell-preview"));
 
     const initialStats = await getSkimCacheStats();
-    assert.equal(initialStats.cacheCount, 5);
+    assert.equal(initialStats.cacheCount, 7);
     assert.ok(initialStats.totalBytes > 0);
     assert.ok(initialStats.cachePaths.every((cachePath) => cachePath.includes("skim-cache")));
 
     await clearVisualCaches();
     await assert.rejects(() => fs.access(formalEntry.imagePath));
-    assert.equal((await getSkimCacheStats()).cacheCount, 5);
+    assert.equal((await getSkimCacheStats()).cacheCount, 7);
     await writeVisualCacheEntry(formalEntry, png, "image/png");
 
     const future = new Date(Date.now() + 2000);
@@ -206,15 +231,19 @@ app.whenReady().then(async () => {
     await assert.rejects(() => fs.access(shellCachePath));
     await assert.rejects(() => fs.access(changedShellCachePath));
     await assert.rejects(() => fs.access(shellPathThroughSession));
+    await assert.rejects(() => fs.access(shellPreviewCachePath));
+    await assert.rejects(() => fs.access(shellPreviewPathThroughSession));
     await fs.access(formalEntry.imagePath);
 
     console.log(JSON.stringify({
       independentDirectories: true,
       thumbnailAndPreviewGenerated: true,
       shellThumbnailCachedWithSourceAndPolicy: true,
+      shellPreviewCachedAtPreviewResolution: true,
       shellRequestsSerializedAndDeduplicated: true,
       shellFailuresDeduplicatedPerSession: true,
       shellQueuePausedAndCancelledWithSession: true,
+      shellUserPreviewContinuesWhileGridQueuePaused: true,
       shellTimeoutCircuitBreakerVerified: true,
       shellSequentialCacheHitVerified: true,
       shellSourceChangeInvalidatedKey: true,

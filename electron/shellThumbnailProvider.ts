@@ -5,6 +5,7 @@ import {
   isVisualCacheEntryValid,
   writeVisualCacheEntry
 } from "./visualCacheService";
+import type { SkimVisualCacheType } from "./visualCacheService";
 
 interface ShellThumbnailImage {
   isEmpty: () => boolean;
@@ -14,6 +15,8 @@ interface ShellThumbnailImage {
 export interface ShellThumbnailProviderOptions {
   createThumbnail?: (sourcePath: string, size: { width: number; height: number }) => Promise<ShellThumbnailImage>;
   timeoutMs?: number;
+  edge?: number;
+  cacheType?: Extract<SkimVisualCacheType, "skim-shell-thumbnail" | "skim-shell-preview">;
 }
 
 export interface ShellThumbnailProvider {
@@ -21,6 +24,7 @@ export interface ShellThumbnailProvider {
 }
 
 const shellThumbnailEdge = 300;
+const shellPreviewEdge = 1200;
 const defaultTimeoutMs = 15_000;
 
 const timeoutError = (timeoutMs: number) => Object.assign(
@@ -31,12 +35,13 @@ const timeoutError = (timeoutMs: number) => Object.assign(
 const loadWithTimeout = async (
   createThumbnail: NonNullable<ShellThumbnailProviderOptions["createThumbnail"]>,
   sourcePath: string,
+  edge: number,
   timeoutMs: number
 ) => {
   let timer: NodeJS.Timeout | null = null;
   const thumbnailPromise = Promise.resolve().then(() => createThumbnail(sourcePath, {
-    width: shellThumbnailEdge,
-    height: shellThumbnailEdge
+    width: edge,
+    height: edge
   }));
   thumbnailPromise.catch(() => undefined);
   try {
@@ -60,11 +65,13 @@ export const createShellThumbnailProvider = (
 ): ShellThumbnailProvider => {
   const createThumbnail = options.createThumbnail ?? defaultCreateThumbnail;
   const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
+  const edge = options.edge ?? shellThumbnailEdge;
+  const cacheType = options.cacheType ?? "skim-shell-thumbnail";
   const pendingRequests = new Map<string, Promise<string>>();
 
   const ensureThumbnailPath = async (sourcePath: string) => {
     await initializeVisualCacheDirectories();
-    const entry = await createVisualCacheEntry(sourcePath, "skim-shell-thumbnail");
+    const entry = await createVisualCacheEntry(sourcePath, cacheType);
     if (await isVisualCacheEntryValid(entry)) {
       return entry.imagePath;
     }
@@ -73,7 +80,7 @@ export const createShellThumbnailProvider = (
     if (pending) return pending;
 
     const request = (async () => {
-      const image = await loadWithTimeout(createThumbnail, entry.sourcePath, timeoutMs);
+      const image = await loadWithTimeout(createThumbnail, entry.sourcePath, edge, timeoutMs);
       if (image.isEmpty()) {
         throw new Error("Windows Shell 未返回内容缩略图。");
       }
@@ -97,4 +104,13 @@ const defaultShellThumbnailProvider = createShellThumbnailProvider();
 
 export const ensureSkimShellThumbnailPath = (sourcePath: string) => (
   defaultShellThumbnailProvider.ensureThumbnailPath(sourcePath)
+);
+
+const defaultShellPreviewProvider = createShellThumbnailProvider({
+  edge: shellPreviewEdge,
+  cacheType: "skim-shell-preview"
+});
+
+export const ensureSkimShellPreviewPath = (sourcePath: string) => (
+  defaultShellPreviewProvider.ensureThumbnailPath(sourcePath)
 );

@@ -9,9 +9,12 @@ interface ShellThumbnailTask {
   sessionId: string;
   sourcePath: string;
   pathKey: string;
+  kind: ShellThumbnailRequestKind;
   resolve: (cachePath: string) => void;
   reject: (error: Error) => void;
 }
+
+export type ShellThumbnailRequestKind = "thumbnail" | "preview";
 
 const normalizePathKey = (sourcePath: string) => {
   const resolvedPath = path.resolve(sourcePath);
@@ -30,7 +33,10 @@ export class ShellThumbnailScheduler {
   private active = false;
   private clearing = false;
 
-  constructor(private readonly ensureThumbnailPath: (sourcePath: string) => Promise<string>) {}
+  constructor(private readonly ensureThumbnailPath: (
+    sourcePath: string,
+    kind: ShellThumbnailRequestKind
+  ) => Promise<string>) {}
 
   beginSession(sessionId: string) {
     if (!sessionId) return false;
@@ -56,9 +62,9 @@ export class ShellThumbnailScheduler {
     if (active) this.pumpQueue();
   }
 
-  request(sessionId: string, sourcePath: string) {
+  request(sessionId: string, sourcePath: string, kind: ShellThumbnailRequestKind = "thumbnail") {
     const session = this.sessions.get(sessionId);
-    const pathKey = normalizePathKey(sourcePath);
+    const pathKey = `${kind}:${normalizePathKey(sourcePath)}`;
     if (this.clearing || !session) return Promise.reject(cancelledError());
     if (session.circuitOpen || session.failedPaths.has(pathKey)) {
       return Promise.reject(unavailableError());
@@ -69,7 +75,9 @@ export class ShellThumbnailScheduler {
     if (pending) return pending;
 
     const request = new Promise<string>((resolve, reject) => {
-      this.queuedTasks.push({ sessionId, sourcePath, pathKey, resolve, reject });
+      const task = { sessionId, sourcePath, pathKey, kind, resolve, reject };
+      if (kind === "preview") this.queuedTasks.unshift(task);
+      else this.queuedTasks.push(task);
       this.pumpQueue();
     });
     this.pendingRequests.set(requestKey, request);
@@ -92,19 +100,27 @@ export class ShellThumbnailScheduler {
   }
 
   private pumpQueue() {
-    if (!this.active || this.clearing || this.activeTask) return;
+    if (this.clearing || this.activeTask) return;
 
-    let task = this.queuedTasks.shift();
-    while (task && !this.isSessionActive(task.sessionId)) {
-      task.reject(cancelledError());
-      task = this.queuedTasks.shift();
+    let task: ShellThumbnailTask | undefined;
+    while (!task) {
+      const taskIndex = this.active
+        ? 0
+        : this.queuedTasks.findIndex((candidate) => candidate.kind === "preview");
+      if (taskIndex < 0 || taskIndex >= this.queuedTasks.length) return;
+      const candidate = this.queuedTasks.splice(taskIndex, 1)[0];
+      if (!candidate) return;
+      if (!this.isSessionActive(candidate.sessionId)) {
+        candidate.reject(cancelledError());
+        continue;
+      }
+      task = candidate;
     }
-    if (!task) return;
 
     const currentTask = task;
     this.activeTask = (async () => {
       try {
-        const cachePath = await this.ensureThumbnailPath(currentTask.sourcePath);
+        const cachePath = await this.ensureThumbnailPath(currentTask.sourcePath, currentTask.kind);
         if (!this.isSessionActive(currentTask.sessionId)) throw cancelledError();
         currentTask.resolve(cachePath);
       } catch (error) {

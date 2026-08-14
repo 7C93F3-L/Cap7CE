@@ -5,7 +5,7 @@ import path from "node:path";
 import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "./versioning";
 
 export type FormalVisualCacheType = "search-thumbnail" | "model-input-image" | "preview-image";
-export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview" | "skim-shell-thumbnail";
+export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview" | "skim-shell-thumbnail" | "skim-shell-preview";
 export type VisualCacheType = FormalVisualCacheType | SkimVisualCacheType;
 export type VisualImageMimeType = "image/jpeg" | "image/png";
 export type VisualCacheRenderSource = "native" | "shell";
@@ -14,7 +14,7 @@ export interface VisualCacheDescriptor {
   type: VisualCacheType;
   directoryName: string;
   metadataDirectoryName?: string;
-  extension: ".capth" | ".capmo" | ".cappr" | ".capskth" | ".capskpr" | ".capsksh";
+  extension: ".capth" | ".capmo" | ".cappr" | ".capskth" | ".capskpr" | ".capsksh" | ".capsksp";
 }
 
 export interface VisualCacheEntry {
@@ -96,6 +96,12 @@ const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
     directoryName: path.join("skim-cache", "thumbnails"),
     metadataDirectoryName: path.join("skim-cache", "metadata"),
     extension: ".capsksh"
+  },
+  "skim-shell-preview": {
+    type: "skim-shell-preview",
+    directoryName: path.join("skim-cache", "previews"),
+    metadataDirectoryName: path.join("skim-cache", "metadata"),
+    extension: ".capsksp"
   }
 };
 
@@ -103,7 +109,7 @@ const formalVisualCacheTypes: readonly FormalVisualCacheType[] = [
   "search-thumbnail", "model-input-image", "preview-image"
 ];
 const skimVisualCacheTypes: readonly SkimVisualCacheType[] = [
-  "skim-thumbnail", "skim-preview", "skim-shell-thumbnail"
+  "skim-thumbnail", "skim-preview", "skim-shell-thumbnail", "skim-shell-preview"
 ];
 
 let cachedVisualCacheDirectories: string[] | null = null;
@@ -232,7 +238,9 @@ export const createVisualCacheEntryFromSourceMetadata = (
 ): VisualCacheEntry => {
   const normalizedSourcePath = path.resolve(sourcePath);
   const sourcePathHash = hash(normalizedPathForKey(normalizedSourcePath));
-  const renderSource: VisualCacheRenderSource = type === "skim-shell-thumbnail" ? "shell" : "native";
+  const renderSource: VisualCacheRenderSource = type === "skim-shell-thumbnail" || type === "skim-shell-preview"
+    ? "shell"
+    : "native";
   const shellThumbnailPolicyVersion = renderSource === "shell" ? SHELL_THUMBNAIL_POLICY_VERSION : null;
   const keyParts: Array<string | number> = [
     sourcePathHash,

@@ -5834,7 +5834,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
       const sessionId = `skim:${Date.now()}:${++previewSessionCounterRef.current}`;
       const imageProviderAvailable = entry.kind === "file"
         && entry.formatCapability?.previewKind === "image"
-        && entry.formatCapability.canThumbnail
+        && (entry.formatCapability.canThumbnail || entry.formatCapability.canShellPreview)
         && visualSessionId;
       const contentPreview = entry.kind === "file" && !imageProviderAvailable
         ? await resolveFileContentPreview(entry.path, entry.formatCapability?.previewKind ?? "fileInfo")

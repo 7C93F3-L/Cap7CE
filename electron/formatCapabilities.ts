@@ -10,6 +10,7 @@ export interface FileFormatCapability {
   canIndex: boolean;
   canSearch: boolean;
   canThumbnail: boolean;
+  canShellPreview: boolean;
   previewKind: FilePreviewKind;
   canDirectPreview: boolean;
   canAIIndex: boolean;
@@ -20,6 +21,9 @@ const visualExtensions = [
   ".svg", ".pdf", ".psd", ".ai", ".eps", ".cdr"
 ] as const;
 const directPreviewExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"]);
+const shellPreviewExtensions = new Set([
+  ".heic", ".heif", ".dng", ".cr2", ".cr3", ".nef", ".arw", ".raf", ".orf", ".rw2"
+]);
 
 const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
   ["text", ["txt", "md", "rtf", "html", "ini", "css", "js", "py"]],
@@ -97,6 +101,7 @@ const visualCapabilities = visualExtensions.map((extension): FileFormatCapabilit
   canIndex: true,
   canSearch: true,
   canThumbnail: true,
+  canShellPreview: false,
   previewKind: extension === ".pdf" ? "pdf" : "image",
   canDirectPreview: directPreviewExtensions.has(extension),
   canAIIndex: true
@@ -112,6 +117,7 @@ const nonVisualCapabilities = nonVisualFormatGroups.flatMap(([category, extensio
     canIndex: true,
     canSearch: true,
     canThumbnail: false,
+    canShellPreview: false,
     previewKind: contentPreviewKinds.get(extension) ?? "fileInfo",
     canDirectPreview: false,
     canAIIndex: false
@@ -128,7 +134,8 @@ const browseOnlyCapabilities = browseOnlyFormatGroups.flatMap(([category, extens
     canIndex: true,
     canSearch: true,
     canThumbnail: false,
-    previewKind: "fileInfo",
+    canShellPreview: shellPreviewExtensions.has(`.${extension}`),
+    previewKind: shellPreviewExtensions.has(`.${extension}`) ? "image" : "fileInfo",
     canDirectPreview: false,
     canAIIndex: false
   }))

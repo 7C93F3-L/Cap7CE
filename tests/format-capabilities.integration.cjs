@@ -58,7 +58,21 @@ const { app } = require("electron");
       ".mkv": "video", ".mp4": "video", ".mov": "video", ".webm": "video"
     }
   );
-  assert.equal(searchableFileCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 74);
+  const shellPreviewExtensions = [
+    ".heic", ".heif", ".dng", ".cr2", ".cr3", ".nef", ".arw", ".raf", ".orf", ".rw2"
+  ];
+  assert.equal(searchableFileCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 64);
+  for (const extension of shellPreviewExtensions) {
+    const capability = fileFormatCapabilityByExtension.get(extension);
+    assert.equal(capability.previewKind, "image", extension);
+    assert.equal(capability.canShellPreview, true, extension);
+    assert.equal(capability.canThumbnail, false, extension);
+    assert.equal(capability.canAIIndex, false, extension);
+  }
+  assert.equal(
+    fileFormatCapabilities.filter((capability) => capability.canShellPreview).length,
+    shellPreviewExtensions.length
+  );
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()
