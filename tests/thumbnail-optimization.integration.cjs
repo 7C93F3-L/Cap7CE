@@ -38,6 +38,7 @@ app.whenReady().then(async () => {
   const retainedFile = path.join(testRoot, "retained.png");
   const cancelledRenderFile = path.join(deletedDirectory, "cancelled-render.png");
   const activeRenderFile = path.join(testRoot, "active-render.png");
+  const failedFile = path.join(testRoot, "failed.png");
   await fs.mkdir(deletedDirectory, { recursive: true });
   await Promise.all([
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#336699" } }).png().toFile(backgroundFile),
@@ -47,6 +48,7 @@ app.whenReady().then(async () => {
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#993366" } }).png().toFile(cancelledRenderFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#669933" } }).png().toFile(activeRenderFile)
   ]);
+  await fs.writeFile(failedFile, "not-a-png");
 
   try {
     await service.setThumbnailOptimizationEnabled(true);
@@ -54,6 +56,32 @@ app.whenReady().then(async () => {
     await service.enqueueThumbnailOptimizationCandidates([await candidateFor(backgroundFile)]);
     await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
     assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
+
+    await service.setThumbnailOptimizationEnabled(false);
+    await service.setThumbnailOptimizationEnabled(true);
+    const firstFailedCandidate = await candidateFor(failedFile);
+    await service.enqueueThumbnailOptimizationCandidates([firstFailedCandidate]);
+    await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
+    assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
+    assert.equal(service.getThumbnailOptimizationStatus().failedCount, 1);
+
+    await service.enqueueThumbnailOptimizationCandidates([firstFailedCandidate]);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    assert.equal(service.getThumbnailOptimizationStatus().phase, "completed");
+    assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
+    assert.equal(service.getThumbnailOptimizationStatus().failedCount, 1);
+
+    await fs.writeFile(failedFile, "still-not-a-valid-png");
+    await service.enqueueThumbnailOptimizationCandidates([await candidateFor(failedFile)]);
+    await waitFor(() => service.getThumbnailOptimizationStatus().processedCount === 2);
+    assert.equal(service.getThumbnailOptimizationStatus().failedCount, 2);
+
+    await service.setThumbnailOptimizationEnabled(false);
+    await service.setThumbnailOptimizationEnabled(true);
+    await service.enqueueThumbnailOptimizationCandidates([await candidateFor(failedFile)]);
+    await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
+    assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
+    assert.equal(service.getThumbnailOptimizationStatus().failedCount, 1);
 
     await service.setThumbnailOptimizationEnabled(false);
     await service.setThumbnailOptimizationEnabled(true);
@@ -98,6 +126,9 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       backgroundQueueContinues: true,
+      unchangedFailuresSuppressedPerSession: true,
+      changedFailuresRetried: true,
+      manualReenableRetriesFailures: true,
       explicitPauseStillBlocks: true,
       resumeCompletesQueue: true,
       deletedDirectoryCandidatesDiscarded: true,

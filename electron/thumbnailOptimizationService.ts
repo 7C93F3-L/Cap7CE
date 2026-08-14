@@ -13,6 +13,10 @@ export interface ThumbnailOptimizationCandidate {
   modifiedMs: number;
 }
 
+type QueuedThumbnailOptimizationCandidate = ThumbnailOptimizationCandidate & {
+  cacheKey: string;
+};
+
 export interface ThumbnailOptimizationStatus {
   enabled: boolean;
   phase: "disabled" | "ready" | "running" | "completed";
@@ -24,9 +28,10 @@ export interface ThumbnailOptimizationStatus {
 
 type StatusListener = (status: ThumbnailOptimizationStatus) => void;
 
-const queueByPath = new Map<string, ThumbnailOptimizationCandidate>();
+const queueByPath = new Map<string, QueuedThumbnailOptimizationCandidate>();
+const failedCacheKeys = new Set<string>();
 const pauseReasons = new Set<string>();
-let queue: ThumbnailOptimizationCandidate[] = [];
+let queue: QueuedThumbnailOptimizationCandidate[] = [];
 let activePathKey: string | null = null;
 let enabled = false;
 let completed = false;
@@ -103,7 +108,9 @@ const runWorker = async () => {
 
       try {
         await ensureThumbnailPath(candidate.filePath, "background");
+        failedCacheKeys.delete(candidate.cacheKey);
       } catch (error) {
+        failedCacheKeys.add(candidate.cacheKey);
         failedCount += 1;
         console.warn("[thumbnail-optimization] failed", {
           filePath: candidate.filePath,
@@ -177,6 +184,9 @@ export const enqueueThumbnailOptimizationCandidates = async (candidates: Thumbna
       fileSize: candidate.fileSize,
       modifiedMs: candidate.modifiedMs
     });
+    if (failedCacheKeys.has(cacheEntry.key)) {
+      continue;
+    }
     if (
       cacheFileInventory.has(path.basename(cacheEntry.imagePath))
       && cacheFileInventory.has(path.basename(cacheEntry.metadataPath))
@@ -184,8 +194,9 @@ export const enqueueThumbnailOptimizationCandidates = async (candidates: Thumbna
       continue;
     }
 
-    queueByPath.set(candidateKey, candidate);
-    queue.push(candidate);
+    const queuedCandidate = { ...candidate, cacheKey: cacheEntry.key };
+    queueByPath.set(candidateKey, queuedCandidate);
+    queue.push(queuedCandidate);
     addedCandidate = true;
   }
 
@@ -206,6 +217,7 @@ export const setThumbnailOptimizationEnabled = async (nextEnabled: boolean) => {
   processedCount = 0;
   failedCount = 0;
   activeDurationMs = 0;
+  failedCacheKeys.clear();
 
   if (!enabled) {
     queue = [];
