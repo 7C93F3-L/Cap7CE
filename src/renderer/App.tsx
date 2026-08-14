@@ -3840,6 +3840,9 @@ const App = () => {
       }
 
       if (event.key === "Escape") {
+        if (shellState === "capsule" && (event.isComposing || isCapsuleCompositionActive())) {
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
 
@@ -3914,15 +3917,17 @@ const App = () => {
           return;
         }
 
+        if (shellState === "capsule") {
+          setSearch((currentSearch) => ({ ...currentSearch, query: "" }));
+          collapseShellToStandby();
+          return;
+        }
+
         if (view === "results" && selectedResultImageId) {
           setClearSelectionRequestId((requestId) => requestId + 1);
           return;
         }
 
-        if (shellState === "capsule" && search.query.trim().length > 0) {
-          setSearch((currentSearch) => ({ ...currentSearch, query: "" }));
-          window.setTimeout(() => capsuleInputRef.current?.focus(), 0);
-        }
         return;
       }
 
@@ -3978,6 +3983,7 @@ const App = () => {
     return () => window.removeEventListener("keydown", handleWindowShortcutKeyDown);
   }, [
     closeNavigationOverlays,
+    collapseShellToStandby,
     cacheClearFeedback,
     contextMenu,
     cycleSearchDirectory,
@@ -3991,6 +3997,7 @@ const App = () => {
     isDeletingFiles,
     isSavingMetadata,
     isIndexing,
+    isCapsuleCompositionActive,
     openSkim,
     openSettings,
     pendingQuickCommandConfirmation,
@@ -4267,7 +4274,7 @@ const App = () => {
           </form>
         </div>
       )}
-      {shellState !== "standby" && (
+      {isExpandedShell && (
         <WindowControlRail
           actions={shellControlActions}
           showSkim={showShellSettingsToggle}

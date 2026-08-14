@@ -323,7 +323,7 @@ textarea,
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -341,8 +341,6 @@ textarea,
   overflow: hidden;
   border-radius: var(--radius-pill);
   background: var(--capsule-bg);
-  app-region: drag;
-  -webkit-app-region: drag;
   transform-origin: bottom center;
 }
 
