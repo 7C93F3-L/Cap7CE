@@ -1178,6 +1178,7 @@ const App = () => {
   const skimVisualSessionIdRef = useRef<string | null>(null);
   const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
   const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
+  const lastClosedSkimPathRef = useRef<string | null>(null);
   const skimForwardPathsRef = useRef<string[]>([]);
   const settingsOpenedFromSkimRef = useRef(false);
   const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
@@ -3542,6 +3543,7 @@ const App = () => {
     cancelSkimRead();
     void window.imageEverything?.preview.close();
     clearSkimFeedback();
+    lastClosedSkimPathRef.current = skimCurrentPath;
     setSkimEntries([]);
     setSkimCurrentPath(null);
     setSkimBreadcrumbs([]);
@@ -3571,7 +3573,7 @@ const App = () => {
     if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
-  }, [cancelSkimRead, clearSkimFeedback, openResults, restoreViewAfterSkim, shellState]);
+  }, [cancelSkimRead, clearSkimFeedback, openResults, restoreViewAfterSkim, shellState, skimCurrentPath]);
 
   const openSkimAtLocation = useCallback((nextPath: string | null) => {
     if (skimLocationPickerCloseTimerRef.current !== null) {
@@ -3823,6 +3825,10 @@ const App = () => {
           openSettings();
           return;
         }
+        if (navigationEntriesRef.current[nextIndex] === "skim") {
+          openSkimAtLocation(lastClosedSkimPathRef.current);
+          return;
+        }
         navigateForward();
       }
     };
@@ -3835,7 +3841,7 @@ const App = () => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [closeSettings, dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettings, shellState, view]);
+  }, [closeSettings, dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettings, openSkimAtLocation, shellState, view]);
 
   useEffect(() => {
     const unsubscribe = window.imageEverything?.window.onActivateCapsuleShortcut?.(() => {
