@@ -428,6 +428,7 @@ export interface UserPreferences {
   commandEnabled: boolean;
   searchLabelVisibility: SearchLabelVisibilityPreferences;
   skimDisplay: SkimDisplayPreferences;
+  skimSidebarFolders: string[];
   shortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }

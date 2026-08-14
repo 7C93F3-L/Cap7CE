@@ -21,7 +21,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSortPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -3431,14 +3431,23 @@ interface SkimReadTaskState {
 
 const skimReadTasks = new Map<string, SkimReadTaskState>();
 
-ipcMain.handle("skim:listLocations", () => [
-  { id: "computer", kind: "computer", path: null },
-  { id: "downloads", kind: "downloads", path: app.getPath("downloads") },
-  { id: "documents", kind: "documents", path: app.getPath("documents") },
-  { id: "pictures", kind: "pictures", path: app.getPath("pictures") },
-  { id: "music", kind: "music", path: app.getPath("music") },
-  { id: "videos", kind: "videos", path: app.getPath("videos") }
-]);
+ipcMain.handle("skim:listLocations", async () => {
+  const preferences = await getUserPreferences();
+  return [
+    { id: "computer", kind: "computer", path: null },
+    { id: "downloads", kind: "downloads", path: app.getPath("downloads") },
+    { id: "documents", kind: "documents", path: app.getPath("documents") },
+    { id: "pictures", kind: "pictures", path: app.getPath("pictures") },
+    { id: "music", kind: "music", path: app.getPath("music") },
+    { id: "videos", kind: "videos", path: app.getPath("videos") },
+    ...preferences.skimSidebarFolders.map((folderPath, index) => ({
+      id: `starred-${index}-${folderPath.toLowerCase()}`,
+      kind: "starred",
+      path: folderPath,
+      name: path.basename(folderPath) || folderPath
+    }))
+  ];
+});
 
 ipcMain.handle("skim:read", async (_event, request: unknown) => {
   const candidate = request && typeof request === "object"
@@ -4105,6 +4114,10 @@ ipcMain.handle("preferences:updateSkimDisplay", async (_event, nextSkimDisplay: 
   customExtensions: string[];
   showHiddenFiles: boolean;
 }) => updateSkimDisplayPreference(nextSkimDisplay));
+
+ipcMain.handle("preferences:updateSkimSidebarFolders", (_event, skimSidebarFolders: string[]) => (
+  updateSkimSidebarFoldersPreference(skimSidebarFolders)
+));
 
 ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {
   activateCapsule: string;

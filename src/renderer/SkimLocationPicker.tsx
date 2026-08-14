@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import type { AppView, SkimLocationShortcut, SkimLocationShortcutKind } from "../shared/types";
 import { t } from "../../electron/localization";
 import CustomScrollbar from "./CustomScrollbar";
@@ -51,23 +52,47 @@ interface SkimLocationPickerProps {
   onSelect: (path: string | null) => void;
   onDismiss: () => void;
   onExit: () => void;
+  menuStyle?: CSSProperties;
+  onRemoveSidebarFolder: (path: string) => void;
 }
 
-const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, onDismiss, onExit }: SkimLocationPickerProps) => {
+type LocationContextMenu = { x: number; y: number; path: string };
+
+const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, onDismiss, onExit, menuStyle, onRemoveSidebarFolder }: SkimLocationPickerProps) => {
   const pickerRef = useRef<HTMLElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement | null>(null);
+  const [contextMenu, setContextMenu] = useState<LocationContextMenu | null>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!contextMenu || !contextMenuRef.current) {
+      setContextMenuPosition(null);
+      return;
+    }
+    const bounds = contextMenuRef.current.getBoundingClientRect();
+    setContextMenuPosition({
+      left: Math.max(5, Math.min(contextMenu.x, window.innerWidth - bounds.width - 5)),
+      top: Math.max(5, Math.min(contextMenu.y, window.innerHeight - bounds.height - 5))
+    });
+  }, [contextMenu]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node) || pickerRef.current?.contains(target)) return;
       if (target instanceof Element && target.closest("[data-skim-location-toggle='true']")) return;
+      if (target instanceof Element && target.closest("[data-skim-location-context-menu='true']")) return;
       onDismiss();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      if (contextMenu) {
+        setContextMenu(null);
+        return;
+      }
       onDismiss();
     };
     const handleViewportChange = () => onDismiss();
@@ -82,7 +107,7 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, 
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("blur", handleViewportChange);
     };
-  }, [onDismiss]);
+  }, [contextMenu, onDismiss]);
 
   return (
     <aside
@@ -102,6 +127,11 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, 
                 title={location.path ?? label}
                 aria-label={label}
                 onClick={() => onSelect(location.path)}
+                onContextMenu={location.kind === "starred" && location.path ? (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setContextMenu({ x: event.clientX, y: event.clientY, path: location.path! });
+                } : undefined}
               >
                 <PickerSvgIcon svg={locationIcons[location.kind]} className="cap-svg-icon cap-skim-location-entry-icon" />
                 <span className="cap-skim-location-entry-name">{label}</span>
@@ -120,6 +150,33 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, onSelect, 
       >
         <PickerSvgIcon svg={exitSvg} className="cap-svg-icon cap-skim-location-exit-icon" />
       </button>
+      {contextMenu && createPortal(
+        <div
+          ref={contextMenuRef}
+          className="context-menu cap7ce-menu-motion-surface cap-skim-location-context-menu"
+          data-skim-location-context-menu="true"
+          style={{
+            ...menuStyle,
+            left: contextMenuPosition?.left ?? contextMenu.x,
+            top: contextMenuPosition?.top ?? contextMenu.y,
+            visibility: contextMenuPosition ? "visible" : "hidden"
+          }}
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              const targetPath = contextMenu.path;
+              setContextMenu(null);
+              onRemoveSidebarFolder(targetPath);
+            }}
+          >
+            {t("skim.sidebar.remove")}
+          </button>
+        </div>,
+        document.body
+      )}
     </aside>
   );
 };

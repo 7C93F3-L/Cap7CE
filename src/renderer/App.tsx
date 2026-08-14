@@ -7,6 +7,7 @@ import iconSkimSvg from "./assets/icons/icon-skim.svg?raw";
 import skimDiskSvg from "./assets/icons/skim-disk.svg?raw";
 import skimFileSvg from "./assets/icons/skim-file.svg?raw";
 import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
+import skimStarredFolderSvg from "./assets/icons/skim-location-starred-folder.svg?raw";
 import warningGradientSvg from "./assets/icons/warning-gradient.svg?raw";
 import WaitingIndicator from "./WaitingIndicator";
 import ColorPickerPopover from "./ColorPickerPopover";
@@ -457,6 +458,28 @@ const getDirectoryPath = (filePath: string) => {
     return normalizedPath.slice(0, 3);
   }
   return normalizedPath.slice(0, Math.max(1, separatorIndex));
+};
+
+const normalizeWindowsPathKey = (value: string) => value
+  .trim()
+  .replace(/\//g, "\\")
+  .replace(/\\+$/, "")
+  .toLowerCase();
+
+const isWindowsRootPath = (value: string) => /^[a-z]:[\\/]?$/i.test(value.trim())
+  || /^\\\\[^\\]+[\\][^\\]+[\\]?$/i.test(value.trim());
+
+const deriveSkimSidebarFolderPaths = (entries: SkimBrowseEntry[]) => {
+  const seen = new Set<string>();
+  const paths: string[] = [];
+  for (const entry of entries) {
+    const folderPath = entry.kind === "folder" ? entry.path : getDirectoryPath(entry.path);
+    const key = normalizeWindowsPathKey(folderPath);
+    if (!key || isWindowsRootPath(folderPath) || seen.has(key)) continue;
+    seen.add(key);
+    paths.push(folderPath);
+  }
+  return paths;
 };
 
 const emptyIndexQualityStats: IndexQualityStats = {
@@ -1028,6 +1051,7 @@ const App = () => {
   const [quickActionsExpanded, setQuickActionsExpanded] = useState(false);
   const [quickCommandsExpanded, setQuickCommandsExpanded] = useState(false);
   const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
+  const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
   const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
@@ -1675,6 +1699,7 @@ const App = () => {
         const stats = await window.imageEverything?.index.qualityStats();
         const cacheOptimizationStatus = await window.imageEverything?.cache.optimizationStatus();
         const preferences = await window.imageEverything?.preferences.get();
+        const loadedSkimLocations = await window.imageEverything?.skim.listLocations();
         const shortcutAvailability = await window.imageEverything?.preferences.shortcutAvailability();
         if (isMounted) {
           setDirectories(loadedDirectories);
@@ -1702,6 +1727,7 @@ const App = () => {
             setShortcutActions(normalizeShortcutActions(preferences.shortcutActions));
             setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
             setSkimDisplay(preferences.skimDisplay);
+            setSkimSidebarFolders(preferences.skimSidebarFolders);
             setSkimSortPreference(preferences.skimSortPreference);
             if (!resultsInitializedRef.current) {
               lastResultSearchRef.current = {
@@ -1716,6 +1742,7 @@ const App = () => {
               sortDirection: preferences.sortPreference.sortDirection
             }));
           }
+          if (loadedSkimLocations?.length) setSkimLocations(loadedSkimLocations);
           setUnavailableShortcutActionIds(shortcutAvailability?.unavailableActionIds ?? []);
           if (stats) {
             setIndexStats(stats);
@@ -2846,6 +2873,41 @@ const App = () => {
       setIsAddingDirectory(false);
     }
   };
+
+  const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
+    try {
+      const preferences = await window.imageEverything?.preferences.updateSkimSidebarFolders(nextFolders);
+      if (!preferences) return false;
+      setSkimSidebarFolders(preferences.skimSidebarFolders);
+      const nextLocations = await window.imageEverything?.skim.listLocations();
+      if (nextLocations?.length) setSkimLocations(nextLocations);
+      return true;
+    } catch (error) {
+      const message = formatDisplayMessage(error instanceof Error ? error.message : t("skim.sidebar.updateFailed"));
+      if (view === "skim") showSkimFeedback(message);
+      else showQuickCommandNotice(message);
+      return false;
+    }
+  }, [showQuickCommandNotice, showSkimFeedback, view]);
+
+  const addSkimSidebarFolders = useCallback(async (folderPaths: string[]) => {
+    const existingKeys = new Set(skimSidebarFolders.map(normalizeWindowsPathKey));
+    const missingFolders = folderPaths.filter((folderPath) => !existingKeys.has(normalizeWindowsPathKey(folderPath)));
+    if (missingFolders.length === 0) return;
+    if (await saveSkimSidebarFolders([...skimSidebarFolders, ...missingFolders])) {
+      showSkimFeedback(t("skim.sidebar.addedFeedback"));
+    }
+  }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders]);
+
+  const removeSkimSidebarFolder = useCallback(async (folderPath: string) => {
+    const removedKey = normalizeWindowsPathKey(folderPath);
+    const nextFolders = skimSidebarFolders.filter((candidate) => normalizeWindowsPathKey(candidate) !== removedKey);
+    if (nextFolders.length === skimSidebarFolders.length) return;
+    if (await saveSkimSidebarFolders(nextFolders)) {
+      if (view === "skim") showSkimFeedback(t("skim.sidebar.removedFeedback"));
+      else showQuickCommandNotice(t("skim.sidebar.removedFeedback"));
+    }
+  }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, view]);
 
   const cancelDroppedDirectoryAdd = () => {
     if (isAddingDirectory) return;
@@ -4350,6 +4412,9 @@ const App = () => {
                   }
                 }}
                 onAddEntries={(entries) => void addSkimEntries(entries)}
+                sidebarFolderPaths={skimSidebarFolders}
+                sidebarKnownPaths={skimLocations.flatMap((location) => location.path ? [location.path] : [])}
+                onAddSidebarFolders={(folderPaths) => void addSkimSidebarFolders(folderPaths)}
                 onFeedback={showSkimFeedback}
                 onNativeDragStateChange={(active) => {
                   internalNativeDragRef.current = active;
@@ -4531,6 +4596,8 @@ const App = () => {
                 onSelect={(path) => closeSkimLocationPicker(() => openSkimAtLocation(path))}
                 onDismiss={closeSkimLocationPicker}
                 onExit={handleSkimLocationPickerExit}
+                menuStyle={contextMenuStyle}
+                onRemoveSidebarFolder={(path) => void removeSkimSidebarFolder(path)}
               />
             )}
           </div>
@@ -5342,6 +5409,9 @@ interface SkimViewProps {
   onOpenBreadcrumb: (path: string) => void;
   onOpenEntry: (entry: SkimBrowseEntry) => void;
   onAddEntries: (entries: SkimBrowseEntry[]) => void;
+  sidebarFolderPaths: string[];
+  sidebarKnownPaths: string[];
+  onAddSidebarFolders: (folderPaths: string[]) => void;
   onFeedback: (message: string) => void;
   onNativeDragStateChange: (active: boolean) => void;
 }
@@ -5394,7 +5464,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
+const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -5451,9 +5521,27 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     return { cellSize, totalHeight, totalWidth, visibleEntries };
   }, [entries, gridLayout.cellSize, gridLayout.columnCount, gridLayout.contentWidth, gridLayout.isHorizontal, gridScrollOffset, gridViewport.height, gridViewport.width]);
   const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
+  const sidebarFolderPathKeys = useMemo(
+    () => new Set(sidebarFolderPaths.map(normalizeWindowsPathKey)),
+    [sidebarFolderPaths]
+  );
+  const sidebarKnownPathKeys = useMemo(
+    () => new Set(sidebarKnownPaths.map(normalizeWindowsPathKey)),
+    [sidebarKnownPaths]
+  );
+  const contextMenuSidebarFolderPaths = useMemo(
+    () => deriveSkimSidebarFolderPaths(contextMenu?.items ?? []),
+    [contextMenu?.items]
+  );
+  const contextMenuMissingSidebarFolderPaths = useMemo(
+    () => contextMenuSidebarFolderPaths.filter((folderPath) => !sidebarKnownPathKeys.has(normalizeWindowsPathKey(folderPath))),
+    [contextMenuSidebarFolderPaths, sidebarKnownPathKeys]
+  );
   const getEntryIcon = (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return skimDiskSvg;
-    if (entry.kind === "folder") return skimFolderSvg;
+    if (entry.kind === "folder") {
+      return sidebarFolderPathKeys.has(normalizeWindowsPathKey(entry.path)) ? skimStarredFolderSvg : skimFolderSvg;
+    }
     return skimFormatIconSvgByName[entry.formatCapability?.iconName ?? ""] ?? skimFileSvg;
   };
 
@@ -5951,6 +6039,19 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
                   onSelect: () => {
                     setContextMenu(null);
                     if (!isAddingDirectory) onAddEntries(contextMenu.items);
+                  }
+                },
+                {
+                  id: "addToSidebar",
+                  label: contextMenuSidebarFolderPaths.length > 0 && contextMenuMissingSidebarFolderPaths.length === 0
+                    ? t("skim.sidebar.alreadyAdded")
+                    : t("skim.sidebar.add"),
+                  disabled: contextMenuSidebarFolderPaths.length === 0 || contextMenuMissingSidebarFolderPaths.length === 0,
+                  onSelect: () => {
+                    setContextMenu(null);
+                    if (contextMenuMissingSidebarFolderPaths.length > 0) {
+                      onAddSidebarFolders(contextMenuMissingSidebarFolderPaths);
+                    }
                   }
                 }
               ]

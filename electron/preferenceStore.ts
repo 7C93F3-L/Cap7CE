@@ -52,6 +52,7 @@ export interface UserPreferencesResponse {
   commandEnabled: boolean;
   searchLabelVisibility: SearchLabelVisibilityPreferences;
   skimDisplay: SkimDisplayPreferences;
+  skimSidebarFolders: string[];
   shortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }
@@ -96,6 +97,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     customExtensions: [...skimDefaultFileExtensionSet],
     showHiddenFiles: false
   },
+  skimSidebarFolders: [],
   shortcutActions: {
     activateCapsule: "Alt+`",
     activateMicro: "Alt+1",
@@ -123,6 +125,32 @@ const isSkimDisplayMode = (value: unknown): value is SkimDisplayMode => value ==
 const normalizeSkimExtensions = (value: unknown) => Array.isArray(value)
   ? [...new Set(value.filter((extension): extension is string => typeof extension === "string" && /^\.[a-z0-9]+$/i.test(extension)).map((extension) => extension.toLowerCase()))]
   : [];
+const normalizePathKey = (value: string) => path.resolve(value).replace(/[\\/]+$/, "").toLowerCase();
+const getStandardSkimLocationPathKeys = () => new Set([
+  app.getPath("downloads"),
+  app.getPath("documents"),
+  app.getPath("pictures"),
+  app.getPath("music"),
+  app.getPath("videos")
+].map(normalizePathKey));
+export const normalizeSkimSidebarFolders = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const standardPaths = getStandardSkimLocationPathKeys();
+  const seen = new Set<string>();
+  const folders: string[] = [];
+  for (const candidate of value) {
+    if (typeof candidate !== "string" || candidate.includes("\0")) continue;
+    const trimmed = candidate.trim();
+    if (!trimmed || !path.isAbsolute(trimmed)) continue;
+    const resolved = path.resolve(trimmed);
+    const key = normalizePathKey(resolved);
+    if (!key || key === normalizePathKey(path.parse(resolved).root) || standardPaths.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    folders.push(resolved);
+    if (folders.length >= 50) break;
+  }
+  return folders;
+};
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
 const isShortcutActionId = (value: string): value is ShortcutActionId => (
   value === "activateCapsule"
@@ -238,6 +266,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
           ? parsed.skimDisplay.showHiddenFiles
           : defaults.skimDisplay.showHiddenFiles
       },
+      skimSidebarFolders: normalizeSkimSidebarFolders(parsed.skimSidebarFolders),
       shortcutActions: normalizeShortcutActions(parsed.shortcutActions, defaults.shortcutActions),
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : defaults.updatedAt
     };
@@ -451,6 +480,17 @@ export const updateSkimDisplayPreference = async (skimDisplay: SkimDisplayPrefer
       customExtensions: normalizeSkimExtensions(skimDisplay?.customExtensions),
       showHiddenFiles: Boolean(skimDisplay?.showHiddenFiles)
     },
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateSkimSidebarFoldersPreference = async (skimSidebarFolders: string[]) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    skimSidebarFolders: normalizeSkimSidebarFolders(skimSidebarFolders),
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

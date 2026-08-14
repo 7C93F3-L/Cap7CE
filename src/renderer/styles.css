@@ -1002,6 +1002,11 @@ textarea,
   height: 30px;
 }
 
+.context-menu.cap-skim-location-context-menu {
+  min-width: 110px;
+  max-width: 180px;
+}
+
 @keyframes cap7ce-skim-location-picker-enter {
   from {
     transform: translate3d(20px, 0, 0);
