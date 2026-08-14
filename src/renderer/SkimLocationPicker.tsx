@@ -121,52 +121,54 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, systemLoca
       className={`cap-skim-location-picker cap-skim-location-picker-${activeView}${closing ? " cap-skim-location-picker-closing" : ""}`}
       aria-label={t("skim.locationPicker.open")}
     >
-      <div className="cap-skim-location-scroll-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical">
-        <div className="cap-skim-location-list cap-main-scroll-viewport" ref={scrollRef}>
-          {locations.map((location) => {
-            const label = resolveLocationLabel(location);
-            return (
-              <button
-                className="cap-skim-location-entry"
-                type="button"
-                key={location.id}
-                title={location.path ?? label}
-                aria-label={label}
-                onClick={() => onSelect(location.path)}
-                onContextMenu={location.kind === "starred" && location.path ? (event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setContextMenu({ x: event.clientX, y: event.clientY, path: location.path! });
-                } : undefined}
-              >
-                <PickerSvgIcon svg={locationIcons[location.kind]} className="cap-svg-icon cap-skim-location-entry-icon" />
-                <span className="cap-skim-location-entry-name">{label}</span>
-              </button>
-            );
-          })}
+      <div className="cap-skim-location-picker-surface">
+        <div className="cap-skim-location-scroll-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical">
+          <div className="cap-skim-location-list cap-main-scroll-viewport" ref={scrollRef}>
+            {locations.map((location) => {
+              const label = resolveLocationLabel(location);
+              return (
+                <button
+                  className="cap-skim-location-entry"
+                  type="button"
+                  key={location.id}
+                  title={location.path ?? label}
+                  aria-label={label}
+                  onClick={() => onSelect(location.path)}
+                  onContextMenu={location.kind === "starred" && location.path ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setContextMenu({ x: event.clientX, y: event.clientY, path: location.path! });
+                  } : undefined}
+                >
+                  <PickerSvgIcon svg={locationIcons[location.kind]} className="cap-svg-icon cap-skim-location-entry-icon" />
+                  <span className="cap-skim-location-entry-name">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
         </div>
-        <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
-      </div>
-      <div className="cap-skim-location-footer">
-        <button
-          className="cap-window-button cap-skim-location-footer-button"
-          type="button"
-          title={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
-          aria-label={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
-          onClick={onExit}
-        >
-          <PickerSvgIcon svg={exitSvg} className="cap-svg-icon cap-window-svg-icon" />
-        </button>
-        <button
-          className="cap-window-button cap-skim-location-footer-button"
-          type="button"
-          title={systemLocationsCollapsed ? t("skim.locationPicker.showSystemFolders") : t("skim.locationPicker.hideSystemFolders")}
-          aria-label={systemLocationsCollapsed ? t("skim.locationPicker.showSystemFolders") : t("skim.locationPicker.hideSystemFolders")}
-          aria-pressed={systemLocationsCollapsed}
-          onClick={onToggleSystemLocations}
-        >
-          <PickerSvgIcon svg={systemFoldersSvg} className="cap-svg-icon cap-window-svg-icon" />
-        </button>
+        <div className="cap-skim-location-footer">
+          <button
+            className="cap-window-button cap-skim-location-footer-button"
+            type="button"
+            title={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
+            aria-label={inSkim ? t("skim.exit") : t("skim.locationPicker.close")}
+            onClick={onExit}
+          >
+            <PickerSvgIcon svg={exitSvg} className="cap-svg-icon cap-window-svg-icon" />
+          </button>
+          <button
+            className="cap-window-button cap-skim-location-footer-button"
+            type="button"
+            title={systemLocationsCollapsed ? t("skim.locationPicker.showSystemFolders") : t("skim.locationPicker.hideSystemFolders")}
+            aria-label={systemLocationsCollapsed ? t("skim.locationPicker.showSystemFolders") : t("skim.locationPicker.hideSystemFolders")}
+            aria-pressed={systemLocationsCollapsed}
+            onClick={onToggleSystemLocations}
+          >
+            <PickerSvgIcon svg={systemFoldersSvg} className="cap-svg-icon cap-window-svg-icon" />
+          </button>
+        </div>
       </div>
       {contextMenu && createPortal(
         <div
