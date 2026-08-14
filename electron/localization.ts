@@ -271,7 +271,7 @@ export const zhCN = {
   "skim.previewStats.scanning": "正在统计",
   "skim.previewStats.completed": "统计完成",
   "skim.previewStats.cancelled": "已取消",
-  "settings.index": "索引",
+  "settings.index": "AI 识别",
   "settings.cancellingRecognition": "正在取消",
   "settings.continueRecognition": "继续识别",
   "settings.updateAll": "全部更新",

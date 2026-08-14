@@ -3001,6 +3001,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .preview-window-root {
+  --preview-secondary-text: var(--accent-color);
   position: relative;
   width: 100vw;
   height: 100vh;
@@ -3077,7 +3078,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 .preview-epub-scroll > header, .preview-mobi-scroll > header { display:flex; align-items:center; gap:26px; margin:0 auto 36px; max-width:680px; }
 .preview-epub-scroll > header img, .preview-mobi-scroll > header img { width:120px; max-height:170px; object-fit:contain; border-radius:4px; box-shadow:0 4px 18px rgb(0 0 0 / 18%); }
 .preview-epub-scroll h1, .preview-mobi-scroll h1 { margin:0 0 8px; font-size:24px; }
-.preview-epub-scroll header p, .preview-mobi-scroll header p { margin:0; color:var(--text-muted); }
+.preview-epub-scroll header p, .preview-mobi-scroll header p { margin:0; color:var(--preview-secondary-text); }
 .preview-epub-scroll article, .preview-mobi-scroll article { max-width:680px; margin:0 auto 38px; }
 .preview-epub-scroll article h2, .preview-mobi-scroll article h2 { margin:0 0 14px; font-size:18px; }
 .preview-epub-scroll article pre, .preview-mobi-scroll article pre { margin:0; color:var(--text-main); font:14px/1.9 "Microsoft YaHei UI",sans-serif; white-space:pre-wrap; overflow-wrap:anywhere; user-select:text; }
@@ -3097,7 +3098,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3119,7 +3120,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 .preview-font-axes {
   flex: 0 0 auto;
   margin: 12px 0 0;
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3133,7 +3134,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .preview-font-sample > span {
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3155,7 +3156,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 
 .preview-font-sample > .preview-font-unsupported,
 .preview-font-loading {
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
   font-size: 13px;
 }
@@ -3181,7 +3182,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   gap: 16px;
   min-height: 48px;
   padding: 8px 18px;
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3196,7 +3197,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 .preview-archive-truncated {
   flex: 0 0 auto;
   margin: 0 18px 8px;
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3238,7 +3239,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .preview-archive-entry-size {
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   white-space: nowrap;
 }
 
@@ -3257,7 +3258,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   gap: 16px;
   min-height: 48px;
   padding: 8px 14px 8px 18px;
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3377,7 +3378,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   justify-content: space-between;
   gap: 16px;
   padding: 14px 18px;
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 11px;
 }
 
@@ -3470,7 +3471,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 .preview-markdown-content blockquote {
   padding: 0.1em 0 0.1em 1em;
   border-left: 3px solid var(--accent-color);
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
 }
 
 .preview-markdown-content blockquote > :last-child {
@@ -3538,7 +3539,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   padding: 0.15em 0.45em;
   border-radius: 5px;
   background: rgb(127 127 127 / 12%);
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 0.9em;
 }
 
@@ -3615,7 +3616,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   padding: 10px 12px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--theme-color) 10%, transparent);
-  color: var(--text-muted);
+  color: var(--preview-secondary-text);
   font-size: 12px;
   line-height: 18px;
 }

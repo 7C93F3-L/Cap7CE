@@ -271,7 +271,7 @@ export const enUS = defineLocale({
   "skim.previewStats.scanning": "Scanning",
   "skim.previewStats.completed": "Complete",
   "skim.previewStats.cancelled": "Cancelled",
-  "settings.index": "Index",
+  "settings.index": "AI Recognition",
   "settings.cancellingRecognition": "Cancelling",
   "settings.continueRecognition": "Continue Recognition",
   "settings.updateAll": "Update All",
