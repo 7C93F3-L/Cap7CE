@@ -15,7 +15,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       parseWindowsDriveOutput,
       parseWindowsHiddenNameOutput,
       parseWindowsVolumeLabelOutput,
-      readSkimLocation
+      readSkimLocation,
+      resolveReadableSkimDirectoryPath
     } = require("../dist-electron/skimBrowseService.js");
 
     const folderPath = path.join(testRoot, "folder");
@@ -74,6 +75,9 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(cancelledDuringProcessing.cancelled, true);
 
     await assert.rejects(() => readSkimLocation("relative-path"), /Invalid skim directory path/);
+    assert.equal(await resolveReadableSkimDirectoryPath(folderPath), path.resolve(folderPath));
+    await assert.rejects(() => resolveReadableSkimDirectoryPath(path.join(folderPath, "notes.txt")), /not a readable directory/);
+    await assert.rejects(() => resolveReadableSkimDirectoryPath("relative-path"), /Invalid skim directory path/);
 
     const drives = parseWindowsDriveOutput("Drives: C:\\ c:\\ D:\\ not-a-drive");
     assert.deepEqual(drives.map((drive) => drive.path.toUpperCase()), ["C:\\", "D:\\"]);
@@ -105,6 +109,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       unknownFormatsUseGenericFallback: true,
       breadcrumbsBuilt: true,
       cancellationHonored: true,
+      directDirectoryPathValidated: true,
       driveOutputNormalized: true,
       volumeLabelsNormalized: true,
       hiddenAttributeOutputNormalized: true

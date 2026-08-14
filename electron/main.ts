@@ -25,7 +25,7 @@ import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnT
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
-import { readSkimLocation } from "./skimBrowseService";
+import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
@@ -3524,6 +3524,17 @@ ipcMain.handle("skim:listLocations", async () => {
       name: path.basename(folderPath) || folderPath
     }))
   ];
+});
+
+ipcMain.handle("skim:resolveDirectoryPath", async (_event, input: unknown) => {
+  if (typeof input !== "string" || input.length === 0 || input.length > 32_768) {
+    return null;
+  }
+  try {
+    return await resolveReadableSkimDirectoryPath(input);
+  } catch {
+    return null;
+  }
 });
 
 ipcMain.handle("skim:read", async (_event, request: unknown) => {

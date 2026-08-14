@@ -105,6 +105,17 @@ const settingsFormatCategoryOverrides: ReadonlyMap<string, FileFormatCategory> =
   [".cdr", "project"]
 ]);
 
+const getAbsoluteWindowsDirectoryInput = (input: string): string | null => {
+  let candidate = input.trim();
+  if (candidate.length >= 2 && candidate.startsWith('"') && candidate.endsWith('"')) {
+    candidate = candidate.slice(1, -1).trim();
+  }
+  if (/^[\\/]{2}[?.][\\/]/.test(candidate)) return null;
+  if (/^[a-z]:[\\/]/i.test(candidate)) return candidate;
+  if (/^(?:\\\\|\/\/)[^\\/]+[\\/][^\\/]+/.test(candidate)) return candidate;
+  return null;
+};
+
 const getFormatIconSvg = (extension: string, iconName = "") => {
   const normalizedExtension = extension.startsWith(".") ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
   const resolvedIconName = fileFormatCapabilityByExtension.get(normalizedExtension)?.iconName ?? iconName;
@@ -1172,6 +1183,7 @@ const App = () => {
   const skimFeedbackTimerRef = useRef<number | null>(null);
   const skimLocationPickerCloseTimerRef = useRef<number | null>(null);
   const skimLocationPickerCloseActionRef = useRef<(() => void) | null>(null);
+  const directoryPathResolutionRequestRef = useRef(0);
   const searchTaskIdRef = useRef<string | null>(null);
   const viewDisplaySearchTimerRef = useRef<number | null>(null);
   const skimTaskIdRef = useRef<string | null>(null);
@@ -1260,6 +1272,9 @@ const App = () => {
     if (previousQuery.length > 0 && search.query.length === 0) {
       selectRandomOperationHint();
     }
+  }, [search.query]);
+  useEffect(() => {
+    directoryPathResolutionRequestRef.current += 1;
   }, [search.query]);
   const clearQuickCommandNotice = useCallback(() => {
     if (quickCommandNoticeTimerRef.current !== null) {
@@ -2662,7 +2677,27 @@ const App = () => {
   };
 
   const submitSearch = (nextSearch = search) => {
+    const directoryPathResolutionRequest = ++directoryPathResolutionRequestRef.current;
     if (submitQuickCommandIfNeeded(nextSearch)) {
+      return;
+    }
+
+    const directoryInput = getAbsoluteWindowsDirectoryInput(nextSearch.query);
+    if (directoryInput) {
+      void window.imageEverything?.skim.resolveDirectoryPath(directoryInput).then((resolvedPath) => {
+        if (directoryPathResolutionRequestRef.current !== directoryPathResolutionRequest) return;
+        if (!resolvedPath) {
+          showQuickCommandNotice(t("skim.directoryUnavailable"));
+          return;
+        }
+        clearQuickCommandNotice();
+        setSearch({ ...nextSearch, query: "" });
+        openSkimAtLocation(resolvedPath);
+      }).catch(() => {
+        if (directoryPathResolutionRequestRef.current === directoryPathResolutionRequest) {
+          showQuickCommandNotice(t("skim.directoryUnavailable"));
+        }
+      });
       return;
     }
 

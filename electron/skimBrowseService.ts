@@ -181,6 +181,30 @@ const cancelledResult = (currentPath: string | null): SkimReadResult => ({
   cancelled: true
 });
 
+const resolveSkimDirectoryPath = async (requestedPath: string): Promise<string> => {
+  if (typeof requestedPath !== "string" || requestedPath.trim().length === 0 || !path.isAbsolute(requestedPath)) {
+    const error = new Error("Invalid skim directory path.") as NodeJS.ErrnoException;
+    error.code = "EINVAL";
+    throw error;
+  }
+
+  const directoryPath = path.normalize(path.resolve(requestedPath));
+  const targetStats = await fs.lstat(directoryPath);
+  if (targetStats.isSymbolicLink() || !targetStats.isDirectory()) {
+    const error = new Error("Skim target is not a readable directory.") as NodeJS.ErrnoException;
+    error.code = "ENOTDIR";
+    throw error;
+  }
+  return directoryPath;
+};
+
+export const resolveReadableSkimDirectoryPath = async (requestedPath: string): Promise<string> => {
+  const directoryPath = await resolveSkimDirectoryPath(requestedPath);
+  const directory = await fs.opendir(directoryPath);
+  await directory.close();
+  return directoryPath;
+};
+
 export const readSkimLocation = async (
   requestedPath: string | null,
   shouldCancel: () => boolean = () => false,
@@ -195,19 +219,7 @@ export const readSkimLocation = async (
       ? cancelledResult(null)
       : { currentPath: null, breadcrumbs: [], entries, cancelled: false };
   }
-  if (typeof requestedPath !== "string" || requestedPath.trim().length === 0 || !path.isAbsolute(requestedPath)) {
-    const error = new Error("Invalid skim directory path.") as NodeJS.ErrnoException;
-    error.code = "EINVAL";
-    throw error;
-  }
-
-  const directoryPath = path.normalize(path.resolve(requestedPath));
-  const targetStats = await fs.lstat(directoryPath);
-  if (targetStats.isSymbolicLink() || !targetStats.isDirectory()) {
-    const error = new Error("Skim target is not a readable directory.") as NodeJS.ErrnoException;
-    error.code = "ENOTDIR";
-    throw error;
-  }
+  const directoryPath = await resolveSkimDirectoryPath(requestedPath);
   if (shouldCancel()) {
     return cancelledResult(directoryPath);
   }

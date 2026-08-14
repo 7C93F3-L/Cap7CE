@@ -123,6 +123,7 @@ contextBridge.exposeInMainWorld("imageEverything", {
   },
   skim: {
     listLocations: () => ipcRenderer.invoke("skim:listLocations"),
+    resolveDirectoryPath: (input: string) => ipcRenderer.invoke("skim:resolveDirectoryPath", input),
     read: (request: unknown) => ipcRenderer.invoke("skim:read", request),
     cancel: (taskId: string) => ipcRenderer.invoke("skim:cancel", taskId),
     beginVisualSession: (sessionId: string) => ipcRenderer.invoke("skim:beginVisualSession", sessionId),

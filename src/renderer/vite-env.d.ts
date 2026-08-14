@@ -86,6 +86,7 @@ declare global {
       };
       skim: {
         listLocations: () => Promise<SkimLocationShortcut[]>;
+        resolveDirectoryPath: (input: string) => Promise<string | null>;
         read: (request: SkimReadRequest) => Promise<SkimReadResponse>;
         cancel: (taskId: string) => Promise<boolean>;
         beginVisualSession: (sessionId: string) => Promise<boolean>;
