@@ -64,8 +64,9 @@ contextBridge.exposeInMainWorld("imageEverything", {
     openReleasePage: () => ipcRenderer.invoke("app:openReleasePage"),
     checkForUpdates: () => ipcRenderer.invoke("app:checkForUpdates"),
     downloadUpdate: () => ipcRenderer.invoke("app:downloadUpdate"),
-    onUpdateDownloadProgress: (callback: (progress: { receivedBytes: number; totalBytes: number | null; percent: number | null }) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, progress: { receivedBytes: number; totalBytes: number | null; percent: number | null }) => callback(progress);
+    cancelUpdateDownload: () => ipcRenderer.invoke("app:cancelUpdateDownload"),
+    onUpdateDownloadProgress: (callback: (progress: { receivedBytes: number; totalBytes: number | null; percent: number | null; completed?: boolean }) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, progress: { receivedBytes: number; totalBytes: number | null; percent: number | null; completed?: boolean }) => callback(progress);
       ipcRenderer.on("app:updateDownloadProgress", listener);
       return () => ipcRenderer.removeListener("app:updateDownloadProgress", listener);
     }

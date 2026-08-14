@@ -6,7 +6,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
-import { checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadProgress } from "./appUpdateService";
+import { AppUpdateDownloadError, checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadErrorCode, type AppUpdateDownloadProgress } from "./appUpdateService";
 import { createAppUpdateLauncherScript, resolveWindowsPowerShellPath } from "./appUpdateLauncher";
 import { applyDirectoryFileCounts, applyDirectoryScanSummaries, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
@@ -77,6 +77,7 @@ let appTray: Tray | null = null;
 let duplicateLaunchNotificationPending = false;
 let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let appUpdateDownloadActive = false;
+let appUpdateDownloadAbortController: AbortController | null = null;
 let isQuitting = false;
 
 const cleanupStaleAppUpdateLaunchers = async (): Promise<void> => {
@@ -94,6 +95,27 @@ const cleanupStaleAppUpdateLaunchers = async (): Promise<void> => {
         await fs.rm(launcherPath, { force: true }).catch(() => undefined);
       }
     }));
+};
+
+const cleanupStaleAppUpdateDownloads = async (): Promise<void> => {
+  const tempDirectory = app.getPath("temp");
+  const entries = await fs.readdir(tempDirectory, { withFileTypes: true });
+  const staleBefore = Date.now() - 24 * 60 * 60 * 1000;
+  await Promise.all(entries
+    .filter((entry) => entry.isDirectory() && /^Cap7CE-update-\d+\.\d+\.\d+-[0-9a-f-]{36}$/i.test(entry.name))
+    .map(async (entry) => {
+      const candidatePath = path.join(tempDirectory, entry.name);
+      const stat = await fs.stat(candidatePath).catch(() => null);
+      if (stat && stat.mtimeMs < staleBefore) {
+        await fs.rm(candidatePath, { recursive: true, force: true }).catch(() => undefined);
+      }
+    }));
+};
+
+const writeAppUpdateDiagnostic = async (details: string): Promise<void> => {
+  const logDirectory = path.join(app.getPath("userData"), "logs");
+  await fs.mkdir(logDirectory, { recursive: true });
+  await fs.appendFile(path.join(logDirectory, "app-update.log"), `${details}\n`, "utf8");
 };
 let cancelAiIndexRequested = false;
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
@@ -2588,6 +2610,9 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     void cleanupStaleAppUpdateLaunchers().catch((error) => {
       console.warn("[app-update] failed to clean stale launchers", error);
     });
+    void cleanupStaleAppUpdateDownloads().catch((error) => {
+      console.warn("[app-update] failed to clean stale downloads", error);
+    });
   }, 30_000);
 
   app.on("activate", () => {
@@ -2765,8 +2790,11 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
     }
   };
   appUpdateDownloadActive = true;
+  appUpdateDownloadAbortController = new AbortController();
   try {
-    await downloadAppUpdate(update, packagePath, sendDownloadProgress);
+    void cleanupStaleAppUpdateDownloads().catch(() => undefined);
+    await downloadAppUpdate(update, packagePath, sendDownloadProgress, fetch, undefined, appUpdateDownloadAbortController.signal);
+    appUpdateDownloadAbortController = null;
     await fs.copyFile(path.join(app.getAppPath(), "build", "update-helper.ps1"), helperPath);
     const helperReadyPath = path.join(updateRoot, "helper-ready");
     const helperFailedPath = path.join(updateRoot, "helper-failed");
@@ -2817,6 +2845,11 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
     return { status: "installing", version: update.version };
   } catch (error) {
     console.warn("[app-update] automatic update failed", error);
+    const failureReason: AppUpdateDownloadErrorCode = error instanceof AppUpdateDownloadError
+      ? error.code
+      : error instanceof Error && /downloaded update package|expected Cap7CE layout|expand-archive|archive/i.test(error.message)
+        ? "invalid"
+        : ((error as NodeJS.ErrnoException)?.code === "ENOSPC" ? "disk_space" : "unknown");
     const helperLogPath = path.join(updateRoot, "update-helper.log");
     const helperLog = await fs.readFile(helperLogPath, "utf8").catch(() => "");
     const failureDetails = [
@@ -2825,12 +2858,22 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
       helperLog.trim()
     ].filter(Boolean).join("\n");
     await fs.writeFile(failureLogPath, `${failureDetails}\n`, "utf8").catch(() => undefined);
+    await writeAppUpdateDiagnostic(failureDetails).catch(() => undefined);
     await fs.rm(updateRoot, { recursive: true, force: true }).catch(() => undefined);
     await fs.rm(launcherPath, { force: true }).catch(() => undefined);
-    return { status: "failed", version: update.version };
+    return { status: failureReason === "cancelled" ? "cancelled" : "failed", version: update.version, reason: failureReason };
   } finally {
+    appUpdateDownloadAbortController = null;
     appUpdateDownloadActive = false;
   }
+});
+
+ipcMain.handle("app:cancelUpdateDownload", (event) => {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || !appUpdateDownloadAbortController) {
+    return false;
+  }
+  appUpdateDownloadAbortController?.abort();
+  return true;
 });
 
 ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {

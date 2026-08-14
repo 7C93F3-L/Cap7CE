@@ -38,13 +38,16 @@ declare global {
           latestVersion?: string;
         }>;
         downloadUpdate: () => Promise<{
-          status: "installing" | "unsupported" | "busy" | "failed";
+          status: "installing" | "unsupported" | "busy" | "cancelled" | "failed";
           version?: string;
+          reason?: "cancelled" | "rate_limited" | "network" | "disk_space" | "security" | "incomplete" | "invalid" | "unknown";
         }>;
+        cancelUpdateDownload: () => Promise<boolean>;
         onUpdateDownloadProgress: (callback: (progress: {
           receivedBytes: number;
           totalBytes: number | null;
           percent: number | null;
+          completed?: boolean;
         }) => void) => () => void;
       };
       preview: {

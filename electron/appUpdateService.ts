@@ -34,6 +34,16 @@ export interface AppUpdateDownloadProgress {
   receivedBytes: number;
   totalBytes: number | null;
   percent: number | null;
+  completed?: boolean;
+}
+
+export type AppUpdateDownloadErrorCode = "cancelled" | "rate_limited" | "network" | "disk_space" | "security" | "incomplete" | "invalid" | "unknown";
+
+export class AppUpdateDownloadError extends Error {
+  constructor(public readonly code: AppUpdateDownloadErrorCode, message: string) {
+    super(message);
+    this.name = "AppUpdateDownloadError";
+  }
 }
 
 const releasesApiUrl = "https://api.github.com/repos/7C93F3-L/Cap7CE/releases?per_page=20";
@@ -159,17 +169,28 @@ export const downloadAppUpdate = async (
   destinationPath: string,
   onProgress: (progress: AppUpdateDownloadProgress) => void,
   fetchDownload: typeof fetch = fetch,
-  inactivityTimeoutMs = defaultDownloadInactivityTimeoutMs
+  inactivityTimeoutMs = defaultDownloadInactivityTimeoutMs,
+  signal?: AbortSignal
 ) => {
   await fs.mkdir(path.dirname(destinationPath), { recursive: true });
-  const response = await fetchDownload(update.downloadUrl, {
-    method: "GET",
-    headers: { "User-Agent": `Cap7CE/${update.version}` },
-    redirect: "follow"
-  });
-  if (!response.ok || !response.body) {
-    throw new Error(`Update download failed with status ${response.status}`);
+  const partialPath = `${destinationPath}.part`;
+  let response: Response;
+  try {
+    response = await fetchDownload(update.downloadUrl, {
+      method: "GET",
+      headers: { "User-Agent": `Cap7CE/${update.version}` },
+      redirect: "follow",
+      signal
+    });
+  } catch (error) {
+    if (signal?.aborted) throw new AppUpdateDownloadError("cancelled", "Update download was cancelled");
+    throw new AppUpdateDownloadError("network", error instanceof Error ? error.message : "Update download connection failed");
   }
+  if (!response.ok || !response.body) {
+    const code = response.status === 403 || response.status === 429 ? "rate_limited" : "network";
+    throw new AppUpdateDownloadError(code, `Update download failed with status ${response.status}`);
+  }
+  if (signal?.aborted) throw new AppUpdateDownloadError("cancelled", "Update download was cancelled");
 
   const declaredLength = Number.parseInt(response.headers.get("content-length") || "", 10);
   const totalBytes = Number.isFinite(declaredLength) && declaredLength > 0 ? declaredLength : null;
@@ -177,8 +198,17 @@ export const downloadAppUpdate = async (
     throw new Error("Update package exceeds the maximum allowed size");
   }
 
-  const fileHandle = await fs.open(destinationPath, "wx");
+  let fileHandle: Awaited<ReturnType<typeof fs.open>>;
+  try {
+    fileHandle = await fs.open(partialPath, "wx");
+  } catch (error) {
+    const fileErrorCode = (error as NodeJS.ErrnoException)?.code;
+    throw new AppUpdateDownloadError(fileErrorCode === "ENOSPC" ? "disk_space" : "security", error instanceof Error ? error.message : "Update download file could not be opened");
+  }
   const reader = response.body.getReader();
+  const cancelReader = () => { void reader.cancel().catch(() => undefined); };
+  signal?.addEventListener("abort", cancelReader, { once: true });
+  if (signal?.aborted) cancelReader();
   let receivedBytes = 0;
   let lastProgressAt = 0;
   let completed = false;
@@ -189,7 +219,7 @@ export const downloadAppUpdate = async (
         reader.read(),
         new Promise<never>((_resolve, reject) => {
           inactivityTimer = setTimeout(() => {
-            reject(new Error("Update download stopped receiving data"));
+            reject(new AppUpdateDownloadError("network", "Update download stopped receiving data"));
           }, inactivityTimeoutMs);
         })
       ]);
@@ -197,14 +227,15 @@ export const downloadAppUpdate = async (
       if (inactivityTimer !== null) clearTimeout(inactivityTimer);
     }
   };
-  const emitProgress = (force = false) => {
+  const emitProgress = (force = false, completed = false) => {
     const now = Date.now();
     if (!force && now - lastProgressAt < 200) return;
     lastProgressAt = now;
     onProgress({
       receivedBytes,
       totalBytes,
-      percent: totalBytes === null ? null : Math.min(100, Math.round((receivedBytes / totalBytes) * 100))
+      percent: totalBytes === null ? null : Math.min(100, Math.round((receivedBytes / totalBytes) * 100)),
+      completed
     });
   };
 
@@ -212,6 +243,7 @@ export const downloadAppUpdate = async (
     emitProgress(true);
     while (true) {
       const { done, value } = await readNextChunk();
+      if (signal?.aborted) throw new AppUpdateDownloadError("cancelled", "Update download was cancelled");
       if (done) break;
       if (!value) continue;
       receivedBytes += value.byteLength;
@@ -222,17 +254,35 @@ export const downloadAppUpdate = async (
       emitProgress();
     }
     if (receivedBytes === 0 || (totalBytes !== null && receivedBytes !== totalBytes)) {
-      throw new Error("Update package download is incomplete");
+      throw new AppUpdateDownloadError("incomplete", "Update package download is incomplete");
     }
-    emitProgress(true);
+    await fileHandle.sync();
+    await fileHandle.close();
+    await fs.rename(partialPath, destinationPath);
+    emitProgress(true, true);
     completed = true;
     return { packagePath: destinationPath, receivedBytes, totalBytes };
   } catch (error) {
     await reader.cancel().catch(() => undefined);
+    if (signal?.aborted && !(error instanceof AppUpdateDownloadError)) {
+      throw new AppUpdateDownloadError("cancelled", "Update download was cancelled");
+    }
+    if (!(error instanceof AppUpdateDownloadError)) {
+      const fileErrorCode = (error as NodeJS.ErrnoException)?.code;
+      if (fileErrorCode === "ENOSPC") {
+        throw new AppUpdateDownloadError("disk_space", error instanceof Error ? error.message : "Update download ran out of disk space");
+      }
+      if (fileErrorCode === "EACCES" || fileErrorCode === "EPERM" || fileErrorCode === "EBUSY" || fileErrorCode === "EIO") {
+        throw new AppUpdateDownloadError("security", error instanceof Error ? error.message : "Update download file could not be written");
+      }
+      throw new AppUpdateDownloadError("network", error instanceof Error ? error.message : "Update download connection failed");
+    }
     throw error;
   } finally {
-    await fileHandle.close();
+    signal?.removeEventListener("abort", cancelReader);
+    await fileHandle.close().catch(() => undefined);
     if (!completed) {
+      await fs.rm(partialPath, { force: true }).catch(() => undefined);
       await fs.rm(destinationPath, { force: true }).catch(() => undefined);
     }
   }

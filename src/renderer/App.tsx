@@ -7554,9 +7554,10 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [capturingShortcutActionId, setCapturingShortcutActionId] = useState<ShortcutActionId | null>(null);
   const [shortcutActionDrafts, setShortcutActionDrafts] = useState<ShortcutActionPreferences>(shortcutActions);
   const [draftUnavailableActionIds, setDraftUnavailableActionIds] = useState<ShortcutActionId[]>([]);
-  const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "downloading" | "installing" | "unsupported" | "failed" | "download_failed">("idle");
+  const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "downloading" | "cancelling" | "cancelled" | "installing" | "unsupported" | "failed" | "download_failed">("idle");
+  const [appUpdateFailureReason, setAppUpdateFailureReason] = useState<"rate_limited" | "network" | "disk_space" | "security" | "incomplete" | "invalid" | "unknown" | null>(null);
   const [appUpdateVersion, setAppUpdateVersion] = useState("");
-  const [appUpdateProgress, setAppUpdateProgress] = useState<{ receivedBytes: number; totalBytes: number | null; percent: number | null } | null>(null);
+  const [appUpdateProgress, setAppUpdateProgress] = useState<{ receivedBytes: number; totalBytes: number | null; percent: number | null; completed?: boolean } | null>(null);
   const selectedGgufModel = ggufModelSettings.models.find((model) => model.id === ggufModelSettings.selectedModelId);
   const selectedLlamaRuntime = llamaRuntimeSettings.versions.find((runtime) => runtime.version === llamaRuntimeSettings.selectedVersion);
   const isLlamaRuntimeRunning = llamaRuntimeProcessState.status === "running";
@@ -7680,33 +7681,56 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
       : appUpdateStatus === "update_available"
         ? t("settings.updateAvailable", { version: appUpdateVersion })
         : appUpdateStatus === "downloading"
-          ? t("settings.updateDownloading", {
-            percent: appUpdateProgress?.percent === null || appUpdateProgress?.percent === undefined ? "--" : String(appUpdateProgress.percent),
-            received: formatCacheSize(appUpdateProgress?.receivedBytes ?? 0),
-            total: appUpdateProgress?.totalBytes ? formatCacheSize(appUpdateProgress.totalBytes) : "--"
-          })
+          ? appUpdateProgress?.totalBytes
+            ? t("settings.updateDownloading", {
+              percent: appUpdateProgress?.percent === null || appUpdateProgress?.percent === undefined ? "--" : String(appUpdateProgress.percent),
+              received: formatCacheSize(appUpdateProgress?.receivedBytes ?? 0),
+              total: formatCacheSize(appUpdateProgress.totalBytes)
+            })
+            : t("settings.updateDownloadingUnknownTotal", { received: formatCacheSize(appUpdateProgress?.receivedBytes ?? 0) })
+          : appUpdateStatus === "cancelling"
+            ? t("settings.updateCancelling")
+          : appUpdateStatus === "cancelled"
+            ? t("settings.updateCancelled")
           : appUpdateStatus === "installing"
             ? t("settings.updateInstalling")
             : appUpdateStatus === "unsupported"
               ? t("settings.updateUnsupported")
           : appUpdateStatus === "download_failed"
-            ? t("settings.updateDownloadFailed")
+            ? t(appUpdateFailureReason === "rate_limited"
+              ? "settings.updateRateLimited"
+              : appUpdateFailureReason === "network"
+                ? "settings.updateNetworkFailed"
+                : appUpdateFailureReason === "disk_space"
+                  ? "settings.updateDiskSpaceFailed"
+                : appUpdateFailureReason === "security"
+                  ? "settings.updateSecurityFailed"
+                  : appUpdateFailureReason === "incomplete"
+                    ? "settings.updateIncomplete"
+                    : appUpdateFailureReason === "invalid"
+                      ? "settings.updateInvalid"
+                      : "settings.updateDownloadFailed")
             : appUpdateStatus === "failed"
               ? t("settings.updateCheckFailed")
               : t("settings.updateNotChecked");
   const appUpdateButtonLabel = appUpdateStatus === "checking"
     ? t("settings.updateCheckingButton")
     : appUpdateStatus === "downloading"
-      ? t("settings.updateDownloadingButton")
+      ? t("common.cancel")
+      : appUpdateStatus === "cancelling"
+        ? t("settings.updateCancellingButton")
       : appUpdateStatus === "installing"
         ? t("settings.updateInstallingButton")
-      : appUpdateStatus === "update_available" || appUpdateStatus === "download_failed" || appUpdateStatus === "unsupported"
+      : appUpdateStatus === "update_available" || appUpdateStatus === "download_failed" || appUpdateStatus === "cancelled" || appUpdateStatus === "unsupported"
         ? t("settings.downloadUpdateNow")
         : t("settings.checkForUpdates");
-  const appUpdateButtonHint = appUpdateStatus === "update_available"
-    || appUpdateStatus === "downloading"
+  const appUpdateButtonHint = appUpdateStatus === "downloading"
+    ? t("settings.cancelUpdateDownloadHint")
+    : appUpdateStatus === "update_available"
+    || appUpdateStatus === "cancelling"
     || appUpdateStatus === "installing"
     || appUpdateStatus === "download_failed"
+    || appUpdateStatus === "cancelled"
     || appUpdateStatus === "unsupported"
     ? t("settings.downloadUpdateActionHint")
     : t("settings.checkForUpdatesActionHint");
@@ -7754,30 +7778,44 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
 
   useEffect(() => window.imageEverything?.app.onUpdateDownloadProgress((progress) => {
     setAppUpdateProgress(progress);
-    setAppUpdateStatus("downloading");
+    setAppUpdateStatus(progress.completed ? "installing" : "downloading");
   }), []);
 
   const handleAppUpdateAction = async () => {
-    if (appUpdateStatus === "checking" || appUpdateStatus === "downloading" || appUpdateStatus === "installing") return;
-    if (appUpdateStatus === "update_available" || appUpdateStatus === "download_failed" || appUpdateStatus === "unsupported") {
+    if (appUpdateStatus === "downloading") {
+      setAppUpdateStatus("cancelling");
+      const cancelled = await window.imageEverything?.app.cancelUpdateDownload();
+      if (!cancelled) setAppUpdateStatus("downloading");
+      return;
+    }
+    if (appUpdateStatus === "checking" || appUpdateStatus === "cancelling" || appUpdateStatus === "installing") return;
+    if (appUpdateStatus === "update_available" || appUpdateStatus === "download_failed" || appUpdateStatus === "cancelled" || appUpdateStatus === "unsupported") {
       setAppUpdateProgress(null);
+      setAppUpdateFailureReason(null);
       setAppUpdateStatus("downloading");
       try {
         const result = await window.imageEverything?.app.downloadUpdate();
+        if (result?.status === "failed") {
+          setAppUpdateFailureReason(result.reason === "cancelled" ? null : result.reason ?? "unknown");
+        }
         setAppUpdateStatus(result?.status === "installing"
           ? "installing"
+          : result?.status === "cancelled"
+            ? "cancelled"
           : result?.status === "unsupported"
             ? "unsupported"
             : result?.status === "busy"
               ? "downloading"
               : "download_failed");
       } catch {
+        setAppUpdateFailureReason("unknown");
         setAppUpdateStatus("download_failed");
       }
       return;
     }
 
     setAppUpdateStatus("checking");
+    setAppUpdateFailureReason(null);
     try {
       const result = await window.imageEverything?.app.checkForUpdates();
       if (!result) {
@@ -8608,7 +8646,7 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
               type="button"
               onClick={() => void handleAppUpdateAction()}
               title={appUpdateButtonHint}
-              disabled={appUpdateStatus === "checking" || appUpdateStatus === "downloading" || appUpdateStatus === "installing"}
+              disabled={appUpdateStatus === "checking" || appUpdateStatus === "cancelling" || appUpdateStatus === "installing"}
             >
               {appUpdateButtonLabel}
             </button>
