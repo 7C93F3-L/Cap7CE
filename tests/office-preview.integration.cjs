@@ -86,6 +86,12 @@ const run = async () => {
     assert.equal(closeOfficePreviewSession("excel-session"), true);
     assert.equal(await waitForMissing(excelPreview.pdfPath), true);
 
+    const cachedExcelPreview = await openOfficePreviewSession("cached-excel-session", excelPath);
+    assert.equal(cachedExcelPreview.kind, "excel");
+    assert.deepEqual(observedKinds, ["excel"]);
+    assert.equal(closeOfficePreviewSession("cached-excel-session"), true);
+    assert.equal(await waitForMissing(cachedExcelPreview.pdfPath), false);
+
     const presentationPreview = await openOfficePreviewSession("presentation-session", presentationPath);
     assert.equal(presentationPreview.kind, "powerpoint");
     assert.deepEqual(observedKinds, ["excel", "powerpoint"]);
@@ -118,6 +124,7 @@ const run = async () => {
     console.log(JSON.stringify({
       excelAndPowerPointKindsMapped: true,
       convertedPdfValidated: true,
+      repeatedConversionCacheReused: true,
       originalPathAuthorizationPreserved: true,
       temporaryOutputRemovedOnClose: true,
       supersededConversionCancelled: true,
