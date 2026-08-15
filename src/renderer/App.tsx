@@ -4687,7 +4687,9 @@ const App = () => {
             {skimLocationPickerOpen && showShellSettingsToggle && dialog === null && (
               <SkimLocationPicker
                 activeView={activeView}
-                locations={skimLocations}
+                locations={skimSystemLocationsCollapsed
+                  ? skimLocations.filter((location) => location.kind === "computer" || location.kind === "desktop" || location.kind === "starred")
+                  : skimLocations}
                 inSkim={view === "skim"}
                 closing={skimLocationPickerClosing}
                 systemLocationsCollapsed={skimSystemLocationsCollapsed}

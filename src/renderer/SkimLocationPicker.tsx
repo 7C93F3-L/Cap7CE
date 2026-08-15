@@ -48,10 +48,6 @@ const resolveLocationLabel = (location: SkimLocationShortcut) => (
   location.name?.trim() || t(locationLabels[location.kind] ?? "skim.locationPicker.starred")
 );
 
-const isCollapsibleSystemLocation = (location: SkimLocationShortcut) => (
-  location.kind !== "computer" && location.kind !== "desktop" && location.kind !== "starred"
-);
-
 interface SkimLocationPickerProps {
   activeView: AppView;
   locations: SkimLocationShortcut[];
@@ -74,27 +70,6 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, systemLoca
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const [contextMenu, setContextMenu] = useState<LocationContextMenu | null>(null);
   const [contextMenuPosition, setContextMenuPosition] = useState<{ left: number; top: number } | null>(null);
-  const [systemLocationsVisible, setSystemLocationsVisible] = useState(!systemLocationsCollapsed);
-  const [systemLocationsMotion, setSystemLocationsMotion] = useState<"entering" | "exiting" | null>(null);
-
-  useEffect(() => {
-    let motionTimer: ReturnType<typeof setTimeout> | null = null;
-    if (systemLocationsCollapsed) {
-      if (!systemLocationsVisible) return undefined;
-      setSystemLocationsMotion("exiting");
-      motionTimer = setTimeout(() => {
-        setSystemLocationsVisible(false);
-        setSystemLocationsMotion(null);
-      }, 160);
-    } else {
-      setSystemLocationsVisible(true);
-      setSystemLocationsMotion("entering");
-      motionTimer = setTimeout(() => setSystemLocationsMotion(null), 160);
-    }
-    return () => {
-      if (motionTimer) clearTimeout(motionTimer);
-    };
-  }, [systemLocationsCollapsed, systemLocationsVisible]);
 
   useLayoutEffect(() => {
     if (!contextMenu || !contextMenuRef.current) {
@@ -150,12 +125,10 @@ const SkimLocationPicker = ({ activeView, locations, inSkim, closing, systemLoca
         <div className="cap-skim-location-scroll-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical">
           <div className="cap-skim-location-list cap-main-scroll-viewport" ref={scrollRef}>
             {locations.map((location) => {
-              const collapsibleSystemLocation = isCollapsibleSystemLocation(location);
-              if (collapsibleSystemLocation && !systemLocationsVisible) return null;
               const label = resolveLocationLabel(location);
               return (
                 <button
-                  className={`cap-skim-location-entry${collapsibleSystemLocation && systemLocationsMotion ? ` cap-skim-location-entry-${systemLocationsMotion}` : ""}`}
+                  className="cap-skim-location-entry"
                   type="button"
                   key={location.id}
                   title={location.path ?? label}
