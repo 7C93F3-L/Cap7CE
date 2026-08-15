@@ -7,7 +7,7 @@ import initSqlJs from "sql.js";
 import type { Database, SqlJsStatic, SqlValue } from "sql.js";
 import type { ScannedFile, ScannedImageFile } from "./imageScanner";
 import type { PersistedDirectory } from "./directoryStore";
-import { getFileFormatCapability } from "./formatCapabilities";
+import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import { applyKeywordBatchDelta, formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
 import { escapeSqlLikeTerm, getDirectoryTermMatches, getRelativeDirectoryEvidence, SEARCH_PATH_EVIDENCE_VERSION, toSearchTerms } from "./searchPathEvidence";
 
@@ -1571,6 +1571,7 @@ export const searchIndexedCatalog = async (
       const capability = getFileFormatCapability(extension);
       if (!capability?.canSearch) continue;
       const isVisual = capability.canAIIndex;
+      const canUseShellThumbnail = canUseSearchShellThumbnail(extension);
       const imageId = row[10] === null ? null : Number(row[10]);
       const aiError = imageId === null ? "" : String(row[15] ?? "");
       const failure = imageId === null
@@ -1584,7 +1585,7 @@ export const searchIndexedCatalog = async (
         extension,
         iconName: isVisual ? "skim-file" : capability.iconName,
         previewKind: capability.previewKind,
-        canShellPreview: capability.canShellPreview,
+        canShellPreview: canUseShellThumbnail,
         fileSize: Number(row[4] ?? 0),
         createdAt: String(row[5] ?? ""),
         modifiedAt: String(row[6] ?? ""),
@@ -1601,7 +1602,7 @@ export const searchIndexedCatalog = async (
         indexedAt: imageId === null ? String(row[7] ?? "") : String(row[17] ?? ""),
         thumbnailUrl: isVisual
           ? toThumbnailUrl(filePath)
-          : capability.canShellPreview
+          : canUseShellThumbnail
             ? toSearchShellThumbnailUrl(filePath)
             : ""
       });

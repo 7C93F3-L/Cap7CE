@@ -7,6 +7,7 @@ const { app } = require("electron");
   const {
     fileFormatCapabilities,
     fileFormatCapabilityByExtension,
+    canUseSearchShellThumbnail,
     indexableFileExtensionSet,
     skimCuratedFileExtensionSet,
     skimDefaultFileExtensionSet
@@ -73,6 +74,11 @@ const { app } = require("electron");
     fileFormatCapabilities.filter((capability) => capability.canShellPreview).length,
     shellPreviewExtensions.length
   );
+  for (const extension of [".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm", ".wmv", ".mpg", ".mpeg", ".mts", ".m2ts", ".mxf", ".flv", ".rmvb", ".3gp"]) {
+    assert.equal(canUseSearchShellThumbnail(extension), true, extension);
+  }
+  assert.equal(canUseSearchShellThumbnail(".swf"), false);
+  assert.equal(canUseSearchShellThumbnail(".txt"), false);
   assert.deepEqual(
     [...supportedVisualFileExtensionSet].sort(),
     formalVisualCapabilities.map((capability) => capability.extension).sort()

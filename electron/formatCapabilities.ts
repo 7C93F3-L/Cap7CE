@@ -151,6 +151,16 @@ export const fileFormatCapabilityByExtension: ReadonlyMap<string, FileFormatCapa
   fileFormatCapabilities.map((capability) => [capability.extension, capability])
 );
 
+export const searchShellThumbnailExtensionSet: ReadonlySet<string> = new Set(
+  fileFormatCapabilities
+    .filter((capability) => capability.canShellPreview || (capability.category === "video" && capability.extension !== ".swf"))
+    .map((capability) => capability.extension)
+);
+
+export const canUseSearchShellThumbnail = (extension: string) => (
+  searchShellThumbnailExtensionSet.has(extension.toLowerCase())
+);
+
 export const skimCuratedFileExtensionSet: ReadonlySet<string> = new Set(
   fileFormatCapabilities.filter((capability) => capability.canBrowse).map((capability) => capability.extension)
 );

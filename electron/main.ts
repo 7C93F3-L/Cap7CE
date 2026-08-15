@@ -13,7 +13,7 @@ import { applyDirectoryFileCounts, applyDirectoryScanSummaries, deleteDirectory,
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
 import { startNativeFileDrag } from "./fileDragService";
-import { getFileFormatCapability } from "./formatCapabilities";
+import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
 import { scanImageDirectories, type ScannedImageFile } from "./imageScanner";
@@ -2194,7 +2194,10 @@ const registerLocalImageProtocol = () => {
       }
       if (url.hostname === "search-shell-thumbnail" || url.hostname === "search-shell-preview") {
         const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
-        if (!capability?.canShellPreview) {
+        const available = url.hostname === "search-shell-preview"
+          ? capability?.canShellPreview
+          : capability && canUseSearchShellThumbnail(capability.extension);
+        if (!available) {
           return new Response("Search system image is unavailable", { status: 415 });
         }
         const cachePath = url.hostname === "search-shell-preview"

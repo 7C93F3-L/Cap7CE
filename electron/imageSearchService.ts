@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { PersistedDirectory } from "./directoryStore";
-import { getFileFormatCapability } from "./formatCapabilities";
+import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import type { ImageScanControl, ImageScanResult, ScannedFile, ScannedImageFile } from "./imageScanner";
 import { t } from "./localization";
 import { fileMatchesDeterministicSearchTerms, getDirectoryTermMatches, toSearchTerms } from "./searchPathEvidence";
@@ -49,6 +49,7 @@ const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
   const capability = getFileFormatCapability(file.extension);
   if (!capability?.canSearch) return null;
   const isVisual = capability.canAIIndex;
+  const canUseShellThumbnail = canUseSearchShellThumbnail(file.extension);
   return {
     id: `file:${file.file_path}`,
     resultKind: isVisual ? "visual" : "file",
@@ -57,7 +58,7 @@ const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
     extension: file.extension,
     iconName: isVisual ? "skim-file" : capability.iconName,
     previewKind: capability.previewKind,
-    canShellPreview: capability.canShellPreview,
+    canShellPreview: canUseShellThumbnail,
     fileSize: file.file_size,
     createdAt: file.created_at,
     modifiedAt: file.modified_at,
@@ -72,7 +73,7 @@ const scannedFileToResult = (file: ScannedFile): ImageSearchResult | null => {
     indexedAt: "",
     thumbnailUrl: isVisual
       ? toThumbnailUrl(file.file_path)
-      : capability.canShellPreview
+      : canUseShellThumbnail
         ? toSearchShellThumbnailUrl(file.file_path)
         : ""
   };
