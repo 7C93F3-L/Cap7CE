@@ -976,6 +976,15 @@ textarea,
   background: color-mix(in srgb, var(--text-main) 8%, var(--panel-bg));
 }
 
+.cap-skim-location-entry-entering {
+  animation: cap7ce-skim-location-entry-enter 160ms ease-out both;
+}
+
+.cap-skim-location-entry-exiting {
+  pointer-events: none;
+  animation: cap7ce-skim-location-entry-exit 160ms ease-in both;
+}
+
 .cap-skim-location-entry-icon {
   width: clamp(48px, 52%, 72px);
   height: clamp(48px, 52%, 72px);
@@ -1035,6 +1044,30 @@ textarea,
 
   to {
     transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes cap7ce-skim-location-entry-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes cap7ce-skim-location-entry-exit {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
   }
 }
 
@@ -4126,7 +4159,9 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   .keyword-editor-panel,
   .delete-files-content,
   .cap7ce-origin-overlay,
-  .cap7ce-origin-card {
+  .cap7ce-origin-card,
+  .cap-skim-location-entry-entering,
+  .cap-skim-location-entry-exiting {
     animation: none;
   }
 
