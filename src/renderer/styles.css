@@ -4004,7 +4004,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .context-menu-light.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
-  color: #9b9b9b;
+  color: #d8d8d8;
 }
 
 .context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea {
@@ -4012,7 +4012,7 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
 }
 
 .context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
-  color: #777777;
+  color: #4f4f4f;
 }
 
 @media (min-height: 200px) {

@@ -7265,7 +7265,7 @@ const VirtualUnrecognizedList = ({ shellState, images, selectedImageIds, isSpace
                   <span className="unrecognized-path" title={directoryPath}>{directoryPath}</span>
                   <span className="unrecognized-file-size">{formatCacheSize(item.fileSize)}</span>
                 </span>
-                <span className={`failure-type failure-type-${item.failureType}`}>{item.failureLabel}</span>
+                <span className={`failure-type failure-type-${item.failureType}`}>{item.failureLabel || t("filter.unrecognized")}</span>
               </button>
             );
           })}

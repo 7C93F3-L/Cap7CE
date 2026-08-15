@@ -188,14 +188,14 @@ const resolveSkimDirectoryPath = async (requestedPath: string): Promise<string> 
     throw error;
   }
 
-  const directoryPath = path.normalize(path.resolve(requestedPath));
-  const targetStats = await fs.lstat(directoryPath);
-  if (targetStats.isSymbolicLink() || !targetStats.isDirectory()) {
+  const targetPath = path.normalize(path.resolve(requestedPath));
+  const targetStats = await fs.lstat(targetPath);
+  if (targetStats.isSymbolicLink() || (!targetStats.isDirectory() && !targetStats.isFile())) {
     const error = new Error("Skim target is not a readable directory.") as NodeJS.ErrnoException;
     error.code = "ENOTDIR";
     throw error;
   }
-  return directoryPath;
+  return targetStats.isFile() ? path.dirname(targetPath) : targetPath;
 };
 
 export const resolveReadableSkimDirectoryPath = async (requestedPath: string): Promise<string> => {

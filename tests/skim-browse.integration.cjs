@@ -76,7 +76,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 
     await assert.rejects(() => readSkimLocation("relative-path"), /Invalid skim directory path/);
     assert.equal(await resolveReadableSkimDirectoryPath(folderPath), path.resolve(folderPath));
-    await assert.rejects(() => resolveReadableSkimDirectoryPath(path.join(folderPath, "notes.txt")), /not a readable directory/);
+    assert.equal(await resolveReadableSkimDirectoryPath(path.join(folderPath, "notes.txt")), path.resolve(folderPath));
     await assert.rejects(() => resolveReadableSkimDirectoryPath("relative-path"), /Invalid skim directory path/);
 
     const drives = parseWindowsDriveOutput("Drives: C:\\ c:\\ D:\\ not-a-drive");
