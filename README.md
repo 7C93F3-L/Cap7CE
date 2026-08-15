@@ -33,7 +33,7 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 当前状态
 
-- 当前版本：`0.9.2`
+- 当前版本：`0.9.3`
 - 发布阶段：Preview
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
@@ -47,7 +47,7 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 - 通过本地视觉模型生成描述与关键词。
 - 新执行的 AI 识别会跟随当前软件语言生成中文或英文描述与关键词。
 - 按关键词、文件名、目录、识别状态、格式和排序方式筛选。
-- 使用 skim 浏览磁盘和目录中的多种项目文件，通过快速访问边栏直达常用位置，并预览视觉、文本、文档、归档、字体、音频和视频内容。
+- 使用 skim 浏览磁盘和目录中的多种项目文件，通过快速访问边栏或在搜索框粘贴本机文件、目录的完整路径直达对应位置，并预览视觉、文本、文档、归档、字体、音频和视频内容。
 - 提供 capsule、micro、mini、normal 和 Settings 窗口形态。
 - 支持缩略图、独立预览窗口、多选和关键词编辑。
 - 支持打开文件、定位路径、拖拽导出和移入回收站。
@@ -61,7 +61,7 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 
 文件名、目录路径和手工关键词搜索还覆盖办公文档、文本与源码、归档、字体、音视频、电子书、设计工程文件等已登记格式；这些格式不因此进入 AI 识别。
 
-部分预览依赖本机已有的系统组件：`HEIC`、`HEIF` 及 `DNG`、`CR2`、`CR3`、`NEF`、`ARW`、`RAF`、`ORF`、`RW2` 等相机格式需要兼容的 Windows 图像扩展或解码器；`XLS`、`XLSX`、`PPT`、`PPTX` 需要本机安装 Microsoft Excel 或 PowerPoint。系统组件缺失、文件编码不兼容或解码失败时，Cap7CE 会安全回退为格式图标和文件信息，不影响搜索，也不会把这些格式自动送入 AI 识别。
+部分预览依赖本机已有的系统组件：`HEIC`、`HEIF` 及 `DNG`、`CR2`、`CR3`、`NEF`、`ARW`、`RAF`、`ORF`、`RW2` 等相机格式需要兼容的 Windows 图像扩展或解码器；部分视频缩略图依赖 Windows Shell 中可用的媒体解码能力；`XLS`、`XLSX`、`PPT`、`PPTX` 需要本机安装 Microsoft Excel 或 PowerPoint。系统组件缺失、文件编码不兼容或解码失败时，Cap7CE 会安全回退为格式图标和文件信息，不影响搜索，也不会把这些格式自动送入 AI 识别。
 
 多页或复杂文档当前通常使用第一页、合成图或内置预览图作为代表图。部分旧格式、特殊编码或缺少内置预览的文件可能无法渲染。
 
@@ -206,7 +206,7 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current version: `0.9.2`
+- Current version: `0.9.3`
 - Release stage: Preview
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
@@ -220,7 +220,7 @@ Preview releases may still contain compatibility, performance, and UI issues. Ea
 - Generate descriptions and keywords with a local vision model.
 - New AI recognition runs generate Chinese or English descriptions and keywords according to the current app language.
 - Filter by keywords, file name, directory, recognition status, format, and sort order.
-- Use skim to browse project files across disks and folders, jump to common locations from the Quick Access sidebar, and preview visual, text, document, archive, font, audio, and video content.
+- Use skim to browse project files across disks and folders, jump to common locations from the Quick Access sidebar or by pasting a full local file or folder path into search, and preview visual, text, document, archive, font, audio, and video content.
 - Use capsule, micro, mini, normal, and Settings window forms.
 - Browse thumbnails, open an independent preview window, select multiple files, and edit keywords.
 - Open files, reveal paths, drag files to other applications, and move files to the Recycle Bin.
@@ -234,7 +234,7 @@ Formal visual thumbnails and AI recognition support: `JPG`, `JPEG`, `PNG`, `WEBP
 
 File-name, directory-path, and manual-keyword search additionally covers registered office, text and source-code, archive, font, media, ebook, design, and project formats. These formats do not become AI-recognition inputs.
 
-Some previews depend on components already available on the computer. `HEIC`, `HEIF`, and camera formats such as `DNG`, `CR2`, `CR3`, `NEF`, `ARW`, `RAF`, `ORF`, and `RW2` require a compatible Windows imaging extension or codec. `XLS`, `XLSX`, `PPT`, and `PPTX` require Microsoft Excel or PowerPoint to be installed. If a component is missing or decoding fails, Cap7CE safely falls back to the format icon and file information; search continues to work, and these files are not automatically sent to AI recognition.
+Some previews depend on components already available on the computer. `HEIC`, `HEIF`, and camera formats such as `DNG`, `CR2`, `CR3`, `NEF`, `ARW`, `RAF`, `ORF`, and `RW2` require a compatible Windows imaging extension or codec; some video thumbnails depend on media decoding available through Windows Shell. `XLS`, `XLSX`, `PPT`, and `PPTX` require Microsoft Excel or PowerPoint to be installed. If a component is missing or decoding fails, Cap7CE safely falls back to the format icon and file information; search continues to work, and these files are not automatically sent to AI recognition.
 
 For multi-page or complex documents, Cap7CE generally uses the first page, a composite image, or an embedded preview as the representative image. Some legacy files, unusual encodings, or files without embedded previews may not render.
 

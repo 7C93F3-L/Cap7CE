@@ -1,6 +1,6 @@
 # Cap7CE 界面文案核对表
 
-> 来源：Cap7CE 0.9.2 当前代码（2026-08-15）
+> 来源：Cap7CE 0.9.3 当前代码（2026-08-16）
 > 用途：核对中文术语，并作为运行时语言表的人工审校来源。本文档不是运行时语言文件。
 > 当前运行时中文表：`electron/localization.ts`；英文表：`electron/locales/en-US.ts`。界面通过稳定文案 ID 和 `t()` 读取。
 
@@ -105,6 +105,8 @@
 | `search.inputLabel`            | 搜索关键词                                          |                                        |     | 输入框 aria-label     |
 | `search.action`                | 搜索                                             |                                        |     | 旧搜索按钮 / aria-label |
 | `search.directorySelect`       | 目录选择                                           |                                        |     | 图标提示               |
+| `skim.locationPicker.open`     | skim 边栏                                        |                                        | skim sidebar | 主窗口与预览窗口入口 title / aria-label |
+| `skim.locationPicker.close`    | 收起 skim 边栏                                     |                                        | Close skim sidebar | 主窗口与预览窗口入口 title / aria-label |
 | `search.directorySwitched`     | 已切换到目录 {name}                                  |                                        |     | 目录标签反馈            |
 | `search.allDirectoriesSwitched` | 已切换为所有已添加目录                               |                                        |     | 目录标签反馈            |
 | `search.displaySwitched.skim`  | 已查看默认格式                                       |                                        |     | 查看范围反馈            |
@@ -202,7 +204,7 @@
 | `settings.directoryEmpty`         | 尚未添加目录             |      |     | 目录服务状态        |
 | `settings.directoryCount`         | {count} 个目录        |      |     | 目录统计          |
 | `settings.addDirectory`           | 添加目录               |      |     | 按钮 title      |
-| `settings.index`                  | 索引                 |      |     | 索引操作区         |
+| `settings.index`                  | AI 识别              |      | AI Recognition | AI 操作区         |
 | `settings.cancelRecognition`      | 取消                 |      |     | 索引操作          |
 | `settings.cancellingRecognition`  | 正在取消               |      |     | 索引操作          |
 | `settings.retryRecognition`       | 重试                 |      |     | 索引操作          |
@@ -261,6 +263,7 @@
 | `settings.operationHintsOn`        | 显示                            |                           |     | 操作提示开启状态        |
 | `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |
 | `settings.skimDisplay`             | 自定义查看                        |                           |     | 格式范围配置          |
+| `settings.skimDisplaySummary`      | 已选择 {selected} / {total} 种格式　　在标签中选中“自定义”以应用。 | | Selected {selected} / {total} formats. Choose “Custom” in the label to apply. | 自定义查看摘要 |
 | `format.category.visual`           | 图像                            |                           |     | 自定义查看分类        |
 | `format.category.video`            | 视频                            |                           |     | 自定义查看分类        |
 | `format.category.audio`            | 音频                            |                           |     | 自定义查看分类        |
