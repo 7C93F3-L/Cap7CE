@@ -15,7 +15,7 @@
 ### 紧凑模式 / Compact modes
 
 <p align="center">
-  <img src="docs/assets/screenshots/compact-modes-light.png" width="442" alt="Cap7CE micro and mini modes in light theme">
+  <img src="docs/assets/screenshots/compact-modes-light.png" width="442" alt="Cap7CE micro and mini modes in dark theme">
 </p>
 
 ### 设置界面 / Settings
@@ -140,13 +140,13 @@ npm run pack
 npm run dist
 ```
 
-| 命令 | 用途 |
-| --- | --- |
-| `npm run dev` | 启动 Vite 与 Electron 开发环境 |
+| 命令              | 用途                         |
+| --------------- | -------------------------- |
+| `npm run dev`   | 启动 Vite 与 Electron 开发环境    |
 | `npm run build` | 构建 Renderer 和 Electron 主进程 |
-| `npm test` | 运行仓库内可独立完成的集成测试 |
-| `npm run pack` | 生成未安装的应用目录，用于打包检查 |
-| `npm run dist` | 生成 Windows x64 portable 构建 |
+| `npm test`      | 运行仓库内可独立完成的集成测试            |
+| `npm run pack`  | 生成未安装的应用目录，用于打包检查          |
+| `npm run dist`  | 生成 Windows x64 portable 构建 |
 
 `npm run build` 通过不代表安装包已经验证。发布前仍需执行打包并进行人工交互测试。
 
@@ -313,13 +313,13 @@ npm run pack
 npm run dist
 ```
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the Vite and Electron development environment |
-| `npm run build` | Build the Renderer and Electron main process |
-| `npm test` | Run the self-contained integration tests included in the repository |
-| `npm run pack` | Generate an unpacked application directory for packaging checks |
-| `npm run dist` | Generate a Windows x64 portable build |
+| Command         | Purpose                                                             |
+| --------------- | ------------------------------------------------------------------- |
+| `npm run dev`   | Start the Vite and Electron development environment                 |
+| `npm run build` | Build the Renderer and Electron main process                        |
+| `npm test`      | Run the self-contained integration tests included in the repository |
+| `npm run pack`  | Generate an unpacked application directory for packaging checks     |
+| `npm run dist`  | Generate a Windows x64 portable build                               |
 
 A successful `npm run build` does not validate the packaged application. Packaging and manual interaction tests are still required before release.
 
