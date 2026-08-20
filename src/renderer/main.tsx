@@ -4,6 +4,7 @@ import "./styles.css";
 import "./skim/SkimView.css";
 import "./preview/PreviewWindow.css";
 import "./dialogs/KeywordEditorCard.css";
+import "./ColorPickerPopover.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const windowKind = new URLSearchParams(window.location.search).get("window");
