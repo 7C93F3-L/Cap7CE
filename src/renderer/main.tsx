@@ -11,6 +11,7 @@ import "./results/ResultsView.css";
 import "./settings/SettingsSelect.css";
 import "./settings/ShortcutSettingsPanels.css";
 import "./settings/SkimDisplaySettingsRows.css";
+import "./settings/SettingsFooter.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const windowKind = new URLSearchParams(window.location.search).get("window");

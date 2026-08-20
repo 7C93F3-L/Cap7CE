@@ -1588,149 +1588,6 @@ textarea,
   -webkit-user-select: text;
 }
 
-.cap-settings-view .cap7ce-signature {
-  position: static;
-  width: max-content;
-  margin: 74px auto 0;
-  transform: none;
-  pointer-events: none;
-}
-
-.cap7ce-signature {
-  position: absolute;
-  left: 50%;
-  bottom: 30px;
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  transform: translateX(-50%);
-  color: var(--text-main);
-  font-size: 12px;
-  pointer-events: none;
-}
-
-.cap7ce-signature .cap-signature-svg-icon {
-  width: 74px;
-  height: 24px;
-}
-
-.cap7ce-signature small {
-  color: var(--text-main);
-  font-size: 11px;
-}
-
-.cap7ce-release-link {
-  appearance: none;
-  margin: 0;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: color 160ms ease;
-}
-
-.cap7ce-release-link:hover,
-.cap7ce-release-link:focus-visible {
-  color: var(--theme-color);
-}
-
-.cap7ce-echo-trigger {
-  appearance: none;
-  margin: 0;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-  cursor: default;
-  pointer-events: auto;
-}
-
-.cap7ce-origin-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: grid;
-  place-items: center;
-  padding: 28px;
-  overflow: hidden;
-  border-radius: var(--radius-window-settings);
-  background: rgba(5, 5, 10, 0.9);
-  backdrop-filter: blur(14px) saturate(0.72);
-  -webkit-backdrop-filter: blur(14px) saturate(0.72);
-  app-region: no-drag;
-  -webkit-app-region: no-drag;
-  animation: cap7ce-origin-backdrop-enter 320ms ease-out both;
-}
-
-body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
-  border-radius: 0;
-}
-
-.cap7ce-origin-card {
-  display: grid;
-  justify-items: center;
-  gap: 14px;
-  max-width: min(78vw, 720px);
-  margin: 0;
-  pointer-events: none;
-  animation: cap7ce-origin-card-enter 560ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
-}
-
-.cap7ce-origin-card img {
-  display: block;
-  max-width: 100%;
-  max-height: calc(100vh - 118px);
-  border-radius: 18px;
-  object-fit: contain;
-  box-shadow:
-    0 22px 70px rgba(0, 0, 0, 0.58),
-    0 0 42px rgba(124, 147, 243, 0.22);
-}
-
-.cap7ce-origin-card figcaption {
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  text-align: center;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.8);
-}
-
-.cap7ce-origin-card figcaption small {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
-}
-
-@keyframes cap7ce-origin-backdrop-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes cap7ce-origin-card-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.94) translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
 .app button:focus,
 .app input:focus,
 .app select:focus,
@@ -2226,14 +2083,11 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   .cap7ce-menu-motion-surface,
   .context-menu.context-menu-grouped.is-expanded,
   .context-menu-inline-submenu,
-  .cap-settings-expandable-shell,
-  .cap7ce-origin-overlay,
-  .cap7ce-origin-card {
+  .cap-settings-expandable-shell {
     animation: none;
   }
 
-  .cap-custom-scrollbar-thumb,
-  .cap7ce-release-link {
+  .cap-custom-scrollbar-thumb {
     transition-duration: 0ms;
     transition-delay: 0ms;
   }
