@@ -3,6 +3,7 @@ import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
+import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
 import {
@@ -48,13 +49,10 @@ import type {
   AppearanceColors,
   DirectoryAddResult,
   DirectoryItem,
-  GgufModelSettings,
   ImageIndexItem,
   ImageSearchResponse,
   IndexQualityStats,
   LanguagePreference,
-  LlamaRuntimeProcessState,
-  LlamaRuntimeSettings,
   RecognitionStatusFilter,
   ResolvedThemeMode,
   SearchState,
@@ -177,34 +175,6 @@ const emptyIndexQualityStats: IndexQualityStats = {
   unrecognizedFiles: 0,
   totalVisualImages: 0,
   pendingVisualImages: 0
-};
-
-const emptyLlamaRuntimeSettings: LlamaRuntimeSettings = {
-  versions: [],
-  selectedVersion: "",
-  status: "missing_root",
-  runtimeRoot: "",
-  configPath: ""
-};
-
-const emptyLlamaRuntimeProcessState: LlamaRuntimeProcessState = {
-  status: "stopped",
-  host: "127.0.0.1",
-  port: null,
-  selectedVersion: "",
-  modelStatus: "unselected",
-  selectedModelId: "",
-  healthUrl: "",
-  logPath: ""
-};
-
-const emptyGgufModelSettings: GgufModelSettings = {
-  files: [],
-  models: [],
-  selectedModelId: "",
-  status: "unselected",
-  modelsRoot: "",
-  configPath: ""
 };
 
 const emptyVisualCacheStats: VisualCacheStats = {
@@ -444,12 +414,20 @@ const App = () => {
   const directoryAddFeedbackTargetRef = useRef<"search" | "skim">("search");
   const internalNativeDragRef = useRef(false);
   const [editingDirectoryId, setEditingDirectoryId] = useState<string | null>(null);
-  const [llamaRuntimeSettings, setLlamaRuntimeSettings] = useState<LlamaRuntimeSettings>(emptyLlamaRuntimeSettings);
-  const [llamaRuntimeProcessState, setLlamaRuntimeProcessState] = useState<LlamaRuntimeProcessState>(emptyLlamaRuntimeProcessState);
-  const [ggufModelSettings, setGgufModelSettings] = useState<GgufModelSettings>(emptyGgufModelSettings);
-  const [isLoadingLlamaRuntime, setIsLoadingLlamaRuntime] = useState(false);
-  const [isLoadingGgufModels, setIsLoadingGgufModels] = useState(false);
-  const [isChangingLlamaRuntimeState, setIsChangingLlamaRuntimeState] = useState(false);
+  const {
+    llamaRuntimeSettings,
+    llamaRuntimeProcessState,
+    ggufModelSettings,
+    isLoadingLlamaRuntime,
+    isLoadingGgufModels,
+    isChangingLlamaRuntimeState,
+    refreshLlamaRuntimeSettings,
+    refreshGgufModelSettings,
+    updateSelectedLlamaRuntime,
+    updateSelectedGgufModel,
+    startLlamaRuntimeServer,
+    stopLlamaRuntimeServer
+  } = useRuntimeModelController();
   const [visualCacheStats, setVisualCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
   const [skimCacheStats, setSkimCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
   const [thumbnailOptimizationStatus, setThumbnailOptimizationStatus] = useState<ThumbnailOptimizationStatus>(emptyThumbnailOptimizationStatus);
@@ -973,38 +951,6 @@ const App = () => {
     }
   };
 
-  const refreshLlamaRuntimeSettings = async () => {
-    setIsLoadingLlamaRuntime(true);
-    try {
-      const [settings, processState] = await Promise.all([
-        window.imageEverything?.llamaRuntime.settings(),
-        window.imageEverything?.llamaRuntime.processState()
-      ]);
-      if (settings) {
-        setLlamaRuntimeSettings(settings);
-      }
-      if (processState) {
-        setLlamaRuntimeProcessState(processState);
-      }
-      return { settings: settings ?? null, processState: processState ?? null };
-    } finally {
-      setIsLoadingLlamaRuntime(false);
-    }
-  };
-
-  const refreshGgufModelSettings = async () => {
-    setIsLoadingGgufModels(true);
-    try {
-      const settings = await window.imageEverything?.ggufModels.settings();
-      if (settings) {
-        setGgufModelSettings(settings);
-      }
-      return settings ?? null;
-    } finally {
-      setIsLoadingGgufModels(false);
-    }
-  };
-
   const refreshVisualCacheStats = async () => {
     setIsLoadingCacheStats(true);
     try {
@@ -1107,12 +1053,6 @@ const App = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    return window.imageEverything?.llamaRuntime.onStatusChanged((state) => {
-      setLlamaRuntimeProcessState(state);
-    });
   }, []);
 
   useEffect(() => {
@@ -3406,48 +3346,6 @@ const App = () => {
     shortcutActions,
     view
   ]);
-
-  const updateSelectedLlamaRuntime = async (version: string) => {
-    const settings = await window.imageEverything?.llamaRuntime.updateSelected(version);
-    if (settings) {
-      setLlamaRuntimeSettings(settings);
-    }
-    return settings ?? null;
-  };
-
-  const updateSelectedGgufModel = async (modelId: string) => {
-    const settings = await window.imageEverything?.ggufModels.updateSelected(modelId);
-    if (settings) {
-      setGgufModelSettings(settings);
-    }
-    return settings ?? null;
-  };
-
-  const startLlamaRuntimeServer = async () => {
-    setIsChangingLlamaRuntimeState(true);
-    try {
-      const state = await window.imageEverything?.llamaRuntime.start();
-      if (state) {
-        setLlamaRuntimeProcessState(state);
-      }
-      return state ?? null;
-    } finally {
-      setIsChangingLlamaRuntimeState(false);
-    }
-  };
-
-  const stopLlamaRuntimeServer = async () => {
-    setIsChangingLlamaRuntimeState(true);
-    try {
-      const state = await window.imageEverything?.llamaRuntime.stop();
-      if (state) {
-        setLlamaRuntimeProcessState(state);
-      }
-      return state ?? null;
-    } finally {
-      setIsChangingLlamaRuntimeState(false);
-    }
-  };
 
   const clearVisualCaches = async () => {
     if (isClearingCache) return null;
