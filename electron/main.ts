@@ -4074,27 +4074,15 @@ registerPreferenceIpc({
   applyThumbnailSort: (sortPreference) => {
     setThumbnailOptimizationSort(sortPreference.sortField, sortPreference.sortDirection);
   },
-  updateAppearanceColors: updateAppearanceColorsPreference
-});
-
-ipcMain.handle("preferences:updateEdgeSnap", async (_event, nextEdgeSnapEnabled: boolean) => {
-  return setEdgeSnapEnabled(Boolean(nextEdgeSnapEnabled));
-});
-
-ipcMain.handle("preferences:updateStandbyLineVisible", async (_event, nextStandbyLineVisible: boolean) => {
-  return setStandbyLineVisible(Boolean(nextStandbyLineVisible));
-});
-
-ipcMain.handle("preferences:updateLaunchAtLogin", async (_event, nextLaunchAtLogin: boolean) => {
-  const preferences = await updateLaunchAtLoginPreference(Boolean(nextLaunchAtLogin));
-  applyLaunchAtLoginPreference(preferences.launchAtLogin);
-  return preferences;
-});
-
-ipcMain.handle("preferences:updateSystemNotifications", async (_event, nextEnabled: boolean) => {
-  const preferences = await updateSystemNotificationsPreference(Boolean(nextEnabled));
-  systemNotificationsEnabled = preferences.systemNotificationsEnabled;
-  return preferences;
+  updateAppearanceColors: updateAppearanceColorsPreference,
+  setEdgeSnapEnabled,
+  setStandbyLineVisible,
+  updateLaunchAtLogin: updateLaunchAtLoginPreference,
+  applyLaunchAtLogin: applyLaunchAtLoginPreference,
+  updateSystemNotifications: updateSystemNotificationsPreference,
+  applySystemNotifications: (enabled) => {
+    systemNotificationsEnabled = enabled;
+  }
 });
 
 ipcMain.handle("preferences:updateAutoCacheOptimization", async (_event, nextEnabled: boolean) => {

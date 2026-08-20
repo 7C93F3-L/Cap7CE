@@ -23,6 +23,12 @@ export interface PreferenceIpcDependencies {
   updateSort: PreferenceUpdater<SortPreference>;
   applyThumbnailSort: (sortPreference: SortPreference) => void;
   updateAppearanceColors: PreferenceUpdater<AppearanceColors>;
+  setEdgeSnapEnabled: PreferenceUpdater<boolean>;
+  setStandbyLineVisible: PreferenceUpdater<boolean>;
+  updateLaunchAtLogin: PreferenceUpdater<boolean>;
+  applyLaunchAtLogin: (enabled: boolean) => void;
+  updateSystemNotifications: PreferenceUpdater<boolean>;
+  applySystemNotifications: (enabled: boolean) => void;
 }
 
 export const registerPreferenceIpc = ({
@@ -40,7 +46,13 @@ export const registerPreferenceIpc = ({
   applyLanguage,
   updateSort,
   applyThumbnailSort,
-  updateAppearanceColors
+  updateAppearanceColors,
+  setEdgeSnapEnabled,
+  setStandbyLineVisible,
+  updateLaunchAtLogin,
+  applyLaunchAtLogin,
+  updateSystemNotifications,
+  applySystemNotifications
 }: PreferenceIpcDependencies): void => {
   registerIpcDomain({
     registrar,
@@ -131,6 +143,34 @@ export const registerPreferenceIpc = ({
         listener: async (_event, appearanceColors: AppearanceColors) => {
           const preferences = await updateAppearanceColors(appearanceColors);
           refreshAppearance();
+          return preferences;
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateEdgeSnap",
+        listener: (_event, nextEnabled: boolean) => setEdgeSnapEnabled(Boolean(nextEnabled))
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateStandbyLineVisible",
+        listener: (_event, nextVisible: boolean) => setStandbyLineVisible(Boolean(nextVisible))
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateLaunchAtLogin",
+        listener: async (_event, nextEnabled: boolean) => {
+          const preferences = await updateLaunchAtLogin(Boolean(nextEnabled));
+          applyLaunchAtLogin(preferences.launchAtLogin);
+          return preferences;
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateSystemNotifications",
+        listener: async (_event, nextEnabled: boolean) => {
+          const preferences = await updateSystemNotifications(Boolean(nextEnabled));
+          applySystemNotifications(preferences.systemNotificationsEnabled);
           return preferences;
         }
       }

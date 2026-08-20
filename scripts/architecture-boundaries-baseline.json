@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4252
+    "electron/main.ts": 4240
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -39,10 +39,6 @@
     "index:qualityStats",
     "index:continueRecognition",
     "index:cancelRecognition",
-    "preferences:updateEdgeSnap",
-    "preferences:updateStandbyLineVisible",
-    "preferences:updateLaunchAtLogin",
-    "preferences:updateSystemNotifications",
     "preferences:updateAutoCacheOptimization",
     "preferences:updateQuickActionGlobalEnabled",
     "preferences:updateShortcutActions",

@@ -6,7 +6,9 @@ const run = async () => {
   const calls = [];
   const response = {
     updatedAt: "test",
-    sortPreference: { sortField: "modified_at", sortDirection: "desc" }
+    sortPreference: { sortField: "modified_at", sortDirection: "desc" },
+    launchAtLogin: true,
+    systemNotificationsEnabled: false
   };
   const capture = (name) => async (value) => {
     calls.push([name, value]);
@@ -31,7 +33,13 @@ const run = async () => {
     applyLanguage: capture("language"),
     updateSort: capture("sort"),
     applyThumbnailSort: (sortPreference) => calls.push(["applyThumbnailSort", sortPreference]),
-    updateAppearanceColors: capture("appearanceColors")
+    updateAppearanceColors: capture("appearanceColors"),
+    setEdgeSnapEnabled: capture("edgeSnap"),
+    setStandbyLineVisible: capture("standbyLineVisible"),
+    updateLaunchAtLogin: capture("launchAtLogin"),
+    applyLaunchAtLogin: (enabled) => calls.push(["applyLaunchAtLogin", enabled]),
+    updateSystemNotifications: capture("systemNotifications"),
+    applySystemNotifications: (enabled) => calls.push(["applySystemNotifications", enabled])
   });
 
   assert.deepEqual([...handles.keys()], [
@@ -46,7 +54,11 @@ const run = async () => {
     "preferences:updateTheme",
     "preferences:updateLanguage",
     "preferences:updateSort",
-    "preferences:updateAppearanceColors"
+    "preferences:updateAppearanceColors",
+    "preferences:updateEdgeSnap",
+    "preferences:updateStandbyLineVisible",
+    "preferences:updateLaunchAtLogin",
+    "preferences:updateSystemNotifications"
   ]);
 
   const event = { sender: { id: 1 } };
@@ -77,6 +89,10 @@ const run = async () => {
   await handles.get("preferences:updateLanguage")(event, "invalid");
   await handles.get("preferences:updateSort")(event, { sortField: "file_name", sortDirection: "asc" });
   await handles.get("preferences:updateAppearanceColors")(event, { themeColor: "#111111", accentColor: "#222222" });
+  await handles.get("preferences:updateEdgeSnap")(event, 0);
+  await handles.get("preferences:updateStandbyLineVisible")(event, 1);
+  await handles.get("preferences:updateLaunchAtLogin")(event, "enabled");
+  await handles.get("preferences:updateSystemNotifications")(event, 0);
 
   assert.deepEqual(calls, [
     ["skimSort", skimSort],
@@ -98,7 +114,13 @@ const run = async () => {
     ["sort", { sortField: "file_name", sortDirection: "asc" }],
     ["applyThumbnailSort", response.sortPreference],
     ["appearanceColors", { themeColor: "#111111", accentColor: "#222222" }],
-    ["refreshAppearance"]
+    ["refreshAppearance"],
+    ["edgeSnap", false],
+    ["standbyLineVisible", true],
+    ["launchAtLogin", true],
+    ["applyLaunchAtLogin", response.launchAtLogin],
+    ["systemNotifications", false],
+    ["applySystemNotifications", response.systemNotificationsEnabled]
   ]);
 
   console.log("Preference IPC integration tests passed.");
