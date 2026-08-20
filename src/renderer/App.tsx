@@ -36,6 +36,7 @@ import {
   type SearchCapsuleLabelVisibility
 } from "./search/Cap7CESearchCapsule";
 import { HomeView } from "./search/HomeView";
+import { CacheSettingsRows } from "./settings/CacheSettingsRows";
 import { SettingsSelect } from "./settings/SettingsSelect";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView } from "./results/ResultsView";
@@ -5280,39 +5281,19 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             </div>
           )}
 
-          <div className="cap-settings-row cap-settings-row-cache">
-            <span className="cap-settings-label">{t("settings.cacheManagement")}</span>
-            <span className="cap-settings-value">
-              {cacheOptimizationStatusLabel}
-            </span>
-            <button
-              className="cap-settings-pill"
-              type="button"
-              title={thumbnailOptimizationStatus.enabled ? t("settings.disableCacheOptimizationHint") : t("settings.enableCacheOptimizationHint")}
-              disabled={isClearingCache}
-              onClick={() => onAutoCacheOptimizationChange(!thumbnailOptimizationStatus.enabled)}
-            >
-              {thumbnailOptimizationStatus.enabled ? t("settings.cacheOptimizationOn") : t("settings.cacheOptimizationOff")}
-            </button>
-            <button className="cap-settings-pill" type="button" onClick={onClearCache} title={t("settings.clearAllCacheActionHint")} disabled={isLoadingCacheStats || isClearingCache || (visualCacheStats.totalBytes === 0 && thumbnailOptimizationStatus.phase !== "running")}>
-              {isClearingCache ? t("settings.clearingCache") : t("settings.clearAllCache")}
-            </button>
-          </div>
-          <div className="cap-settings-row">
-            <span className="cap-settings-label">{t("settings.skimCache")}</span>
-            <span className="cap-settings-value">
-              {skimCacheInlineFeedback || t("settings.cacheStats", { count: skimCacheStats.cacheCount, size: formatCacheSize(skimCacheStats.totalBytes) })}
-            </span>
-            <button
-              className="cap-settings-pill"
-              type="button"
-              onClick={onClearSkimCache}
-              title={t("settings.clearSkimCacheActionHint")}
-              disabled={isLoadingCacheStats || isClearingSkimCache || skimCacheStats.totalBytes === 0}
-            >
-              {isClearingSkimCache ? t("settings.clearingCache") : t("settings.clearSkimCache")}
-            </button>
-          </div>
+          <CacheSettingsRows
+            cacheOptimizationStatusLabel={cacheOptimizationStatusLabel}
+            thumbnailOptimizationStatus={thumbnailOptimizationStatus}
+            visualCacheStats={visualCacheStats}
+            skimCacheStats={skimCacheStats}
+            isLoadingCacheStats={isLoadingCacheStats}
+            isClearingCache={isClearingCache}
+            isClearingSkimCache={isClearingSkimCache}
+            skimCacheInlineFeedback={skimCacheInlineFeedback}
+            onAutoCacheOptimizationChange={onAutoCacheOptimizationChange}
+            onClearCache={onClearCache}
+            onClearSkimCache={onClearSkimCache}
+          />
         </section>
 
         <section className="cap-settings-group cap-settings-split cap-settings-group-preferences">
