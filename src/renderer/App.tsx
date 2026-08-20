@@ -7,6 +7,7 @@ import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
+import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
@@ -64,7 +65,6 @@ import type {
   ShortcutActionId,
   ShortcutActionPreferences,
   ShortcutActionsUpdateResult,
-  SkimBreadcrumb,
   SkimBrowseEntry,
   SkimBrowseOptions,
   SkimDisplayPreferences,
@@ -345,14 +345,30 @@ const App = () => {
   const [isLoadingDirectories, setIsLoadingDirectories] = useState(true);
   const [isAddingDirectory, setIsAddingDirectory] = useState(false);
   const [directoryServiceUnavailable, setDirectoryServiceUnavailable] = useState(false);
-  const [skimEntries, setSkimEntries] = useState<SkimBrowseEntry[]>([]);
-  const [skimCurrentPath, setSkimCurrentPath] = useState<string | null>(null);
-  const [skimBreadcrumbs, setSkimBreadcrumbs] = useState<SkimBreadcrumb[]>([]);
   const skimBrowseOptions = useMemo<SkimBrowseOptions>(() => ({
     ...defaultSkimBrowseOptions,
     sortField: skimSortPreference.sortField === "modified_at" ? "modifiedAt" : "name",
     sortDirection: skimSortPreference.sortDirection
   }), [skimSortPreference]);
+  const {
+    message: skimFeedback,
+    show: showSkimFeedback,
+    clear: clearSkimFeedback
+  } = useTransientFeedback();
+  const {
+    entries: skimEntries,
+    currentPath: skimCurrentPath,
+    breadcrumbs: skimBreadcrumbs,
+    isLoading: isSkimLoading,
+    visualSessionId: skimVisualSessionId,
+    load: loadSkimLocation,
+    cancel: cancelSkimRead,
+    reset: resetSkimLocation
+  } = useSkimReadController({
+    browseOptions: skimBrowseOptions,
+    clearFeedback: clearSkimFeedback,
+    showFeedback: showSkimFeedback
+  });
   const visibleSkimEntries = useMemo(() => {
     if (skimDisplay.mode === "all") return skimEntries;
     const customExtensions = new Set(skimDisplay.customExtensions);
@@ -369,12 +385,6 @@ const App = () => {
     () => sortSkimBrowseEntries(visibleSkimEntries, skimBrowseOptions),
     [skimBrowseOptions, visibleSkimEntries]
   );
-  const [isSkimLoading, setIsSkimLoading] = useState(false);
-  const {
-    message: skimFeedback,
-    show: showSkimFeedback,
-    clear: clearSkimFeedback
-  } = useTransientFeedback();
   const [skimLocationPickerOpen, setSkimLocationPickerOpen] = useState(false);
   const [skimLocationPickerClosing, setSkimLocationPickerClosing] = useState(false);
   const [skimLocations, setSkimLocations] = useState<SkimLocationShortcut[]>([
@@ -475,9 +485,6 @@ const App = () => {
   const directoryPathResolutionRequestRef = useRef(0);
   const searchTaskIdRef = useRef<string | null>(null);
   const viewDisplaySearchTimerRef = useRef<number | null>(null);
-  const skimTaskIdRef = useRef<string | null>(null);
-  const skimVisualSessionIdRef = useRef<string | null>(null);
-  const [skimVisualSessionId, setSkimVisualSessionId] = useState("");
   const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
   const lastClosedSkimPathRef = useRef<string | null>(null);
   const skimForwardPathsRef = useRef<string[]>([]);
@@ -538,64 +545,6 @@ const App = () => {
     }
     setIsSearching(false);
   }, []);
-  const cancelSkimRead = useCallback(() => {
-    const taskId = skimTaskIdRef.current;
-    skimTaskIdRef.current = null;
-    if (taskId) {
-      void window.imageEverything?.skim.cancel(taskId);
-    }
-    const visualSessionId = skimVisualSessionIdRef.current;
-    skimVisualSessionIdRef.current = null;
-    setSkimVisualSessionId("");
-    if (visualSessionId) {
-      void window.imageEverything?.skim.cancelVisualSession(visualSessionId);
-    }
-    setIsSkimLoading(false);
-  }, []);
-  const loadSkimLocation = useCallback(async (nextPath: string | null) => {
-    const previousTaskId = skimTaskIdRef.current;
-    if (previousTaskId) {
-      void window.imageEverything?.skim.cancel(previousTaskId);
-    }
-    const previousVisualSessionId = skimVisualSessionIdRef.current;
-    if (previousVisualSessionId) {
-      void window.imageEverything?.skim.cancelVisualSession(previousVisualSessionId);
-    }
-    skimVisualSessionIdRef.current = null;
-    setSkimVisualSessionId("");
-    const taskId = window.crypto?.randomUUID?.() ?? `skim-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    skimTaskIdRef.current = taskId;
-    await window.imageEverything?.skim.beginVisualSession(taskId);
-    setIsSkimLoading(true);
-    clearSkimFeedback();
-    try {
-      const response = await window.imageEverything?.skim.read({
-        taskId,
-        path: nextPath,
-        options: skimBrowseOptions
-      });
-      if (!response || skimTaskIdRef.current !== taskId || response.taskId !== taskId || response.cancelled) {
-        return false;
-      }
-      setSkimEntries(response.entries);
-      setSkimCurrentPath(response.currentPath);
-      setSkimBreadcrumbs(response.breadcrumbs);
-      skimVisualSessionIdRef.current = taskId;
-      setSkimVisualSessionId(taskId);
-      return true;
-    } catch (error) {
-      if (skimTaskIdRef.current === taskId) {
-        void window.imageEverything?.skim.cancelVisualSession(taskId);
-        showSkimFeedback(formatDisplayMessage(error instanceof Error ? error.message : t("skim.readFailed")));
-      }
-      return false;
-    } finally {
-      if (skimTaskIdRef.current === taskId) {
-        skimTaskIdRef.current = null;
-        setIsSkimLoading(false);
-      }
-    }
-  }, [clearSkimFeedback, showSkimFeedback, skimBrowseOptions]);
   const resetShellBehaviorState = useCallback(() => {
     setIsMaximized(false);
     setLastNormalBounds(null);
@@ -955,14 +904,6 @@ const App = () => {
     if (viewDisplaySearchTimerRef.current !== null) {
       window.clearTimeout(viewDisplaySearchTimerRef.current);
       viewDisplaySearchTimerRef.current = null;
-    }
-    if (skimTaskIdRef.current) {
-      void window.imageEverything?.skim.cancel(skimTaskIdRef.current);
-      skimTaskIdRef.current = null;
-    }
-    if (skimVisualSessionIdRef.current) {
-      void window.imageEverything?.skim.cancelVisualSession(skimVisualSessionIdRef.current);
-      skimVisualSessionIdRef.current = null;
     }
   }, []);
 
@@ -2662,9 +2603,7 @@ const App = () => {
     void window.imageEverything?.preview.close();
     clearSkimFeedback();
     lastClosedSkimPathRef.current = skimCurrentPath;
-    setSkimEntries([]);
-    setSkimCurrentPath(null);
-    setSkimBreadcrumbs([]);
+    resetSkimLocation();
     skimForwardPathsRef.current = [];
     const returnContext = skimReturnContextRef.current;
     skimReturnContextRef.current = null;
@@ -2691,7 +2630,7 @@ const App = () => {
     if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
-  }, [cancelSkimRead, clearSkimFeedback, openResults, restoreViewAfterSkim, shellState, skimCurrentPath]);
+  }, [cancelSkimRead, clearSkimFeedback, openResults, resetSkimLocation, restoreViewAfterSkim, shellState, skimCurrentPath]);
 
   const openSkimAtLocation = useCallback((nextPath: string | null) => {
     if (skimLocationPickerCloseTimerRef.current !== null) {
@@ -2712,16 +2651,14 @@ const App = () => {
       ? "normal"
       : shellState;
     skimReturnContextRef.current = { view: returnView, shellState: returnShellState };
-    setSkimEntries([]);
-    setSkimCurrentPath(null);
-    setSkimBreadcrumbs([]);
+    resetSkimLocation();
     skimForwardPathsRef.current = [];
     if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
       setShellState("normal");
     }
     navigateTo("skim");
     void loadSkimLocation(nextPath);
-  }, [loadSkimLocation, navigateTo, shellState, view]);
+  }, [loadSkimLocation, navigateTo, resetSkimLocation, shellState, view]);
 
   const openSkim = useCallback(() => {
     if (view === "skim") {
