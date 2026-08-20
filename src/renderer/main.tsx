@@ -4,6 +4,7 @@ import "./styles.css";
 import "./skim/SkimView.css";
 import "./preview/PreviewWindow.css";
 import "./dialogs/KeywordEditorCard.css";
+import "./dialogs/ConfirmationPanels.css";
 import "./ColorPickerPopover.css";
 import "./results/ResultGrid.css";
 import "./results/ResultsView.css";
