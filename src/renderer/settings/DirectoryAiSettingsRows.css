@@ -1,0 +1,50 @@
+.cap-settings-stat {
+  min-width: 141px;
+  gap: 12px;
+}
+
+.cap-settings-stat strong {
+  font-weight: 500;
+}
+
+.cap-settings-stat.selected {
+  box-shadow: 0 0 0 1px var(--accent-color) inset;
+}
+
+.app .cap-settings-stat:focus-visible {
+  outline-color: var(--accent-color);
+}
+
+.cap-settings-directory-list {
+  display: grid;
+  gap: 10px;
+  max-height: none;
+  overflow: visible;
+}
+
+.cap-settings-directory-name {
+  min-width: 96px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cap-settings-path {
+  min-width: 130px;
+}
+
+.cap-settings-inline-input {
+  width: 96px;
+  max-width: 150px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.cap-settings-index-panel .ai-details-grid {
+  padding: 0;
+}
+
+.cap-settings-index-panel .ai-details-grid > span,
+.cap-settings-index-panel .ai-details-grid > strong {
+  color: var(--accent-color);
+}
