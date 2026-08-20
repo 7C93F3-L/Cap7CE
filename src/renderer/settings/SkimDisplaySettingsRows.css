@@ -1,0 +1,91 @@
+.cap-settings-skim-display-header > .cap-settings-label {
+  min-width: 88px;
+}
+
+.cap-settings-skim-display-header > .cap-settings-value {
+  color: var(--accent-color);
+}
+
+.cap-settings-skim-format-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.cap-settings-skim-format-group {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 50px;
+  border-radius: var(--radius-pill);
+  background: var(--app-bg);
+  padding: 10px 13px;
+}
+
+.cap-settings-skim-category-heading {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  color: var(--text-main);
+  background: transparent;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.cap-settings-skim-category-toggle {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--chip-bg);
+  padding: 0;
+  transition:
+    background 500ms ease,
+    transform 500ms ease;
+}
+
+.cap-settings-skim-category-heading:hover {
+  color: var(--theme-color);
+}
+
+.cap-settings-skim-category-heading:hover .cap-settings-skim-category-toggle {
+  background: var(--theme-color);
+  transform: translateY(-1px);
+}
+
+.cap-settings-skim-category-heading[data-selected="true"] .cap-settings-skim-category-toggle,
+.cap-settings-skim-category-heading[data-partial="true"] .cap-settings-skim-category-toggle,
+.cap-settings-skim-extension[data-selected="true"] {
+  background: var(--accent-color);
+}
+
+.cap-settings-skim-extension[data-selected="true"] {
+  color: var(--accent-on-color);
+}
+
+.cap-settings-skim-extension[data-selected="true"]:hover:not(:disabled) {
+  color: var(--accent-on-color);
+  background: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.cap-settings-skim-extensions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cap-settings-skim-extension {
+  width: 52px;
+  min-width: 52px;
+  max-width: 52px;
+  overflow: hidden;
+  padding-inline: 5px;
+}
