@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4236
+    "electron/main.ts": 4233
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -36,9 +36,6 @@
     "search:refresh",
     "index:updateManualMetadata",
     "index:updateKeywordsBatch",
-    "index:qualityStats",
-    "index:continueRecognition",
-    "index:cancelRecognition",
     "preferences:updateQuickActionGlobalEnabled",
     "preferences:updateShortcutActions",
     "preferences:shortcutAvailability",

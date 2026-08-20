@@ -26,6 +26,7 @@ import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
+import { registerRecognitionIpc } from "./recognitionIpc";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -4024,23 +4025,18 @@ ipcMain.handle("index:updateKeywordsBatch", async (event, request: KeywordBatchU
   }
 });
 
-ipcMain.handle("index:qualityStats", async () => {
-  return getImageIndexQualityStats();
-});
-
-ipcMain.handle("index:continueRecognition", async () => {
-  cancelAiIndexRequested = false;
-  const cleanupResult = await cleanupMissingIndexedImages();
-  cleanupResult.errors.forEach((message) => console.warn(`[stale-image-cleanup] ${message}`));
-  return {
-    ...await runAiIndexBatch(),
-    removedFilePaths: cleanupResult.removedFilePaths
-  };
-});
-
-ipcMain.handle("index:cancelRecognition", () => {
-  cancelAiIndexRequested = true;
-  return true;
+registerRecognitionIpc({
+  registrar: ipcMain,
+  getQualityStats: getImageIndexQualityStats,
+  beginRecognition: () => {
+    cancelAiIndexRequested = false;
+  },
+  cleanupMissingFiles: cleanupMissingIndexedImages,
+  reportCleanupWarning: (message) => console.warn(`[stale-image-cleanup] ${message}`),
+  runRecognition: runAiIndexBatch,
+  cancelRecognition: () => {
+    cancelAiIndexRequested = true;
+  }
 });
 
 registerRuntimeModelIpc({
