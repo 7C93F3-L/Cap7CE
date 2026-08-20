@@ -6,6 +6,7 @@ import { parseQuickCommand } from "./commandParser";
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
+import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
@@ -313,9 +314,7 @@ const App = () => {
   const [theme, setTheme] = useState<ThemeMode>("system");
   const [languagePreference, setLanguagePreference] = useState<LanguagePreference>("system");
   const [, setResolvedLanguage] = useState(() => getActiveLanguage());
-  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(() => (
-    window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-  ));
+  const systemTheme = useSystemThemeMode();
   const [appearanceColors, setAppearanceColors] = useState<AppearanceColors>(defaultAppearanceColors);
   const [edgeSnapEnabled, setEdgeSnapEnabled] = useState(true);
   const [standbyLineVisible, setStandbyLineVisible] = useState(true);
@@ -953,21 +952,6 @@ const App = () => {
       setResolvedLanguage(nextResolvedLanguage);
     });
     return () => unsubscribe?.();
-  }, []);
-
-  useEffect(() => {
-    const query = window.matchMedia?.("(prefers-color-scheme: dark)");
-    if (!query) {
-      return undefined;
-    }
-
-    const updateSystemTheme = () => {
-      setSystemTheme(query.matches ? "dark" : "light");
-    };
-
-    updateSystemTheme();
-    query.addEventListener("change", updateSystemTheme);
-    return () => query.removeEventListener("change", updateSystemTheme);
   }, []);
 
   useEffect(() => () => {

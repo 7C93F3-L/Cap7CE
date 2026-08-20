@@ -1,6 +1,6 @@
 {
   "maxLines": {
-    "src/renderer/App.tsx": 3856,
+    "src/renderer/App.tsx": 3840,
     "src/renderer/styles.css": 5182,
     "electron/main.ts": 4419
   },
