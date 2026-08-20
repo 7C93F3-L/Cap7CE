@@ -1,7 +1,7 @@
 # Cap7CE 软件架构
 
 > 当前版本：0.9.3
-> 更新日期：2026-08-20
+> 更新日期：2026-08-21
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
 ## 1. 项目定位
@@ -122,6 +122,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 新增 IPC 时必须同步 `electron/preload.ts` 与 `src/renderer/vite-env.d.ts`，避免 renderer 使用未声明 API。
 
+`electron/ipcRegistration.ts` 提供领域 IPC 注册的基础边界：同一领域内 channel 必须非空且唯一，invoke 与 event 参数原样交给领域 listener，并允许装配层注入 sender 授权判断；未授权 invoke 明确拒绝，未授权单向 event 不进入业务 listener。该注册器不依赖 `main.ts`，后续文件、目录、偏好与缓存等外围领域迁移时由主进程显式注入 registrar、sender 边界和业务依赖。窗口、preview 与 line 生命周期 IPC 继续保留在 `main.ts`。
+
 目录添加统一接收候选路径集合。文件候选转换为直接所在目录，目录候选保留自身；主进程按 Windows 大小写不敏感规则规范化、去重和归并，过滤磁盘根目录，并分别返回成功、忽略、父子冲突与失败项。新父目录包含已有子目录时，Renderer 必须先显示确认弹层；确认后用父目录替换子目录配置，并在同一添加协调链中把已有 SQLite 图片记录迁移到新目录 ID，保留识别和手动关键词数据。索引迁移失败时回写原目录配置，使本次操作可以重试；如果回写本身失败，则记录告警并继续抛出原始迁移错误。
 
 新增目录与用户主动刷新目录时，必须由同一次扫描同时更新目录配置中的文件数量、SQLite `files` 通用目录层和 `images` 视觉层，再刷新 Renderer 统计；当前开发阶段不为旧数据库另设迁移或补扫分支。建立文件目录层本身不会自动启动 AI 识别。
@@ -155,7 +157,11 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 `src/renderer/styles.css` 是 0.9.3 UI 的主要样式入口，包含搜索胶囊、统一窗口壳层、Settings、右键菜单、自绘拾色器、独立预览、关键词编辑、自绘滚动条、等待状态、交互动效、待机线和主题变量。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。Settings 底部版本号仍以文字按钮形式打开固定 GitHub Releases 页面；视觉模型下方的“版本更新”行仅在用户点击时检查更新，发现新版后先显示版本号并将按钮切换为“立即下载”，再次点击才在行内显示下载进度。自动替换仅在打包版启用：主进程在本轮下载目录之外生成内容严格为 ASCII 的 VBScript 启动器，将安装目录等可能包含非 ASCII 字符的内部参数放入 UTF-16LE PowerShell 编码命令，再通过 Windows Shell 以隐藏窗口独立运行固定绝对路径的 Windows PowerShell 更新助手，既避免系统代码页破坏中文路径和参数边界，也避开 detached PowerShell 不执行脚本、普通子进程随 Electron 退出终止、助手删除仍在执行的启动器及用户误关命令行四种边界；更新助手先解压并校验 ZIP 内的 `Cap7CE.exe` 与 `resources/app.asar`，写出就绪信号后主进程才退出。助手预检失败会写出 `helper-failed` 信号；启动器无法打开、助手失败或未在时限内就绪时，主进程保持运行、删除本轮临时下载，并将主进程错误及已有助手输出写入系统临时目录中的 `Cap7CE-update-last-failure.log`。助手接管后等待旧进程退出，再备份当前程序目录、复制新版并保留用户自行放置的 `models` 与 `llama.cpp`；新版无法稳定启动时恢复备份并重启旧版，成功后删除备份及临时下载，隐藏启动器由重启后的新版延迟清理。下载流连续 60 秒没有新数据时主动取消本轮下载、删除不完整 ZIP 并在 Settings 行内提示重试，避免网络停滞后无限等待。该流程不后台检查或下载，也不修改 `%APPDATA%\Cap7CE` 用户数据；未来安装包更新策略应继续复用相同的检查、确认与进度状态，只替换主进程执行器。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
 
-0.9.3 建立架构体量与依赖守门，但尚未改变运行时模块所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
+0.9.3 建立架构体量与依赖守门，并按独立切片逐步迁移运行时所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
+
+A5 已把运行时与模型、临时反馈、操作提示、视口只读指标、系统主题、窗口置顶和 skim 目录读取等具有单一所有权的状态簇迁入 `src/renderer/controllers/`。搜索、导航历史、关键词编辑、目录扫描、缓存确认及窗口恢复仍由 App 顶层编排；其中同时跨越多个 Effect、确认或取消语义的状态簇依据停止条件保留原位，不为减少行数强拆。
+
+A6 首先由 `test:ipc-registration` 固定领域注册器的 channel、参数转发和 sender 授权语义；在任何既有外围 IPC 搬迁前先建立可重复验证的注册边界。领域模块不得反向导入 `main.ts`，主进程继续负责依赖注入和生命周期装配。
 
 A1 首轮把关键词编辑卡片、文件/目录删除、拖入目录、目录替换和两类缓存清理确认面板迁入 `src/renderer/dialogs/`，并把通用 SVG 包装与缓存尺寸格式化迁入无状态辅助模块。所有弹层打开条件、异步状态、Effect、保存/取消/重试回调和窗口链路仍由 `App.tsx` 持有，原 CSS 选择器与加载顺序未移动；因此这是组件所有权调整，不是交互或视觉重写。完成该轮后 `App.tsx` 的自动行数上限由 9,268 降至 8,863，防止相同实现重新堆回顶层文件。
 
