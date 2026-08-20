@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4309
+    "electron/main.ts": 4297
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -53,11 +53,6 @@
     "preferences:shortcutAvailability",
     "preferences:beginShortcutCapture",
     "preferences:endShortcutCapture",
-    "cache:stats",
-    "cache:optimizationStatus",
-    "cache:setContentViewActive",
-    "cache:discardQueuedInteractiveThumbnails",
-    "cache:setGridInteractionActive",
     "cache:authorizeClear",
     "cache:clearAll",
     "skimCache:stats",

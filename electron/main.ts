@@ -34,6 +34,7 @@ import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellPreviewCache, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSearchShellVisualActivity } from "./searchShellVisualCacheService";
+import { registerCacheActivityIpc } from "./cacheActivityIpc";
 import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
@@ -4220,44 +4221,31 @@ ipcMain.handle("preferences:endShortcutCapture", async () => {
   return shortcutAvailabilityResponse();
 });
 
-ipcMain.handle("cache:stats", () => {
-  return getAllVisualCacheStats();
-});
-
-ipcMain.handle("cache:optimizationStatus", () => {
-  return getThumbnailOptimizationStatus();
-});
-
-ipcMain.handle("cache:setContentViewActive", (event, active: unknown) => {
-  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
-    return false;
+registerCacheActivityIpc({
+  registrar: ipcMain,
+  isMainSenderAllowed: (event) => Boolean(
+    mainWindow
+    && !mainWindow.isDestroyed()
+    && event.sender === mainWindow.webContents
+  ),
+  getCacheStats: getAllVisualCacheStats,
+  getOptimizationStatus: getThumbnailOptimizationStatus,
+  setContentViewActive: (active) => {
+    rendererContentViewActive = active;
+    if (!rendererContentViewActive) {
+      resumeThumbnailOptimization("grid-interaction");
+    }
+    syncThumbnailOptimizationActivity();
+  },
+  discardQueuedInteractiveThumbnails: discardQueuedInteractiveThumbnailRenders,
+  setGridInteractionActive: (active) => {
+    const pauseReason = "grid-interaction";
+    if (active) {
+      void pauseThumbnailOptimization(pauseReason);
+    } else {
+      resumeThumbnailOptimization(pauseReason);
+    }
   }
-  rendererContentViewActive = active === true;
-  if (!rendererContentViewActive) {
-    resumeThumbnailOptimization("grid-interaction");
-  }
-  syncThumbnailOptimizationActivity();
-  return true;
-});
-
-ipcMain.handle("cache:discardQueuedInteractiveThumbnails", (event) => {
-  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
-    return 0;
-  }
-  return discardQueuedInteractiveThumbnailRenders();
-});
-
-ipcMain.handle("cache:setGridInteractionActive", (event, active: unknown) => {
-  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
-    return false;
-  }
-  const pauseReason = "grid-interaction";
-  if (active === true) {
-    void pauseThumbnailOptimization(pauseReason);
-  } else {
-    resumeThumbnailOptimization(pauseReason);
-  }
-  return true;
 });
 
 ipcMain.handle("cache:authorizeClear", () => {
