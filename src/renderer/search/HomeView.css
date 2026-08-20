@@ -1,0 +1,61 @@
+.cap-shell-micro .home-view,
+.cap-shell-mini .home-view {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 38px 40px 12px 15px;
+}
+
+.cap-home-view {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 5px 18px 0;
+}
+
+.cap-home-signature {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 24px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  transform: translateX(-50%);
+}
+
+.cap-home-signature span {
+  font-size: 12px;
+}
+
+.cap-home-signature small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.theme-dark .cap-home-signature {
+  background: var(--chip-bg);
+  color: var(--text-main);
+}
+
+.home-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 118px;
+}
+
+@media (min-width: 1921px) {
+  .home-view {
+    padding-bottom: 150px;
+  }
+}
+
+@media (min-width: 2561px) {
+  .home-view {
+    padding-bottom: 190px;
+  }
+}

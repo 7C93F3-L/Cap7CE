@@ -9,6 +9,7 @@ import "./ColorPickerPopover.css";
 import "./results/ResultGrid.css";
 import "./results/ResultsView.css";
 import "./search/Cap7CESearchCapsule.css";
+import "./search/HomeView.css";
 import "./settings/SettingsSelect.css";
 import "./settings/ShortcutSettingsPanels.css";
 import "./settings/SkimDisplaySettingsRows.css";
