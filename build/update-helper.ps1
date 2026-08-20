@@ -5,7 +5,8 @@ param(
   [Parameter(Mandatory = $true)][int]$CurrentProcessId,
   [Parameter(Mandatory = $true)][string]$ExecutableName,
   [ValidateRange(1, 30)][int]$StartupValidationSeconds = 6,
-  [ValidateRange(0, 60)][int]$FailureCloseDelaySeconds = 15
+  [ValidateRange(0, 60)][int]$FailureCloseDelaySeconds = 15,
+  [switch]$HideStartedApplicationWindow
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,7 +38,16 @@ function Start-Cap7CE([string]$RootDirectory, [string]$UpdatedVersion) {
   if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
     throw "Cap7CE executable is missing after update."
   }
-  return Start-Process -FilePath $executablePath -WorkingDirectory $RootDirectory -ArgumentList @("--cap7ce-updated=$UpdatedVersion") -PassThru
+  $startProcessParameters = @{
+    FilePath = $executablePath
+    WorkingDirectory = $RootDirectory
+    ArgumentList = @("--cap7ce-updated=$UpdatedVersion")
+    PassThru = $true
+  }
+  if ($HideStartedApplicationWindow) {
+    $startProcessParameters.WindowStyle = "Hidden"
+  }
+  return Start-Process @startProcessParameters
 }
 
 try {

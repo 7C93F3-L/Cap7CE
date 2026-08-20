@@ -3,6 +3,7 @@ $probeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("cap7ce-updater-probe-
 $resolvedTemp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $resolvedProbe = [System.IO.Path]::GetFullPath($probeRoot)
 $blockingProcess = $null
+$startedApplicationProcessId = $null
 if (-not $resolvedProbe.StartsWith($resolvedTemp, [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "Unsafe updater probe path."
 }
@@ -52,23 +53,8 @@ try {
   New-Item -ItemType Directory -Force -Path (Join-Path $payloadDirectory "resources"),$updateRoot | Out-Null
   Set-Content -LiteralPath (Join-Path $payloadDirectory "resources\app.asar") -Value "new"
   Set-Content -LiteralPath (Join-Path $payloadDirectory "updated-marker.txt") -Value "new"
-  $fakeApplicationTypeName = "Cap7CEUpdateProbeApplication" + [guid]::NewGuid().ToString("N")
-  $fakeApplicationSource = @"
-using System.Threading;
-public static class $fakeApplicationTypeName {
-  public static void Main() { Thread.Sleep(4000); }
-}
-"@
   $fakeApplicationPath = Join-Path $payloadDirectory "Cap7CE.exe"
-  if (Test-Path -LiteralPath $fakeApplicationPath) {
-    Remove-Item -LiteralPath $fakeApplicationPath -Force
-  }
-  Add-Type -TypeDefinition $fakeApplicationSource -OutputAssembly $fakeApplicationPath -OutputType WindowsApplication
-  try {
-    [System.Reflection.AssemblyName]::GetAssemblyName($fakeApplicationPath) | Out-Null
-  } catch {
-    throw "The updater success probe executable was not generated correctly."
-  }
+  Copy-Item -LiteralPath (Join-Path $env:WINDIR "System32\Taskmgr.exe") -Destination $fakeApplicationPath
   Compress-Archive -LiteralPath $payloadDirectory -DestinationPath $packagePath
   $copiedHelperPath = Join-Path $updateRoot "update-helper.ps1"
   Copy-Item -LiteralPath $helperPath -Destination $copiedHelperPath
@@ -84,7 +70,8 @@ public static class $fakeApplicationTypeName {
     "-CurrentProcessId", $blockingProcess.Id,
     "-ExecutableName", "Cap7CE.exe",
     "-StartupValidationSeconds", "1",
-    "-FailureCloseDelaySeconds", "0"
+    "-FailureCloseDelaySeconds", "0",
+    "-HideStartedApplicationWindow"
   ) -PassThru
   $readyPath = Join-Path $updateRoot "helper-ready"
   $readyDeadline = (Get-Date).AddSeconds(30)
@@ -114,7 +101,18 @@ public static class $fakeApplicationTypeName {
   if ((Get-Content -LiteralPath (Join-Path $installDirectory ".cap7ce-update-completed") -Raw).Trim() -ne "9.9.9") {
     throw "The successful update marker did not contain the expected version."
   }
-  Start-Sleep -Seconds 4
+  $startedApplication = Get-CimInstance Win32_Process | Where-Object {
+    $_.ExecutablePath -and [System.IO.Path]::GetFullPath($_.ExecutablePath).Equals(
+      (Join-Path $installDirectory "Cap7CE.exe"),
+      [System.StringComparison]::OrdinalIgnoreCase
+    )
+  } | Select-Object -First 1
+  if (-not $startedApplication) {
+    throw "The successful update probe application was not running."
+  }
+  $startedApplicationProcessId = $startedApplication.ProcessId
+  Stop-Process -Id $startedApplicationProcessId -Force
+  $startedApplicationProcessId = $null
   Write-Host '{"failedReplacementRolledBack":true,"successfulReplacementCompleted":true,"preservedDirectoriesRestored":true}'
 } catch {
   Get-ChildItem -LiteralPath $probeRoot -Filter "update-helper.log" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
@@ -124,6 +122,9 @@ public static class $fakeApplicationTypeName {
 } finally {
   if ($blockingProcess -and -not $blockingProcess.HasExited) {
     Stop-Process -Id $blockingProcess.Id -Force -ErrorAction SilentlyContinue
+  }
+  if ($startedApplicationProcessId) {
+    Stop-Process -Id $startedApplicationProcessId -Force -ErrorAction SilentlyContinue
   }
   if (Test-Path -LiteralPath $probeRoot) {
     Remove-Item -LiteralPath $probeRoot -Recurse -Force
