@@ -1,9 +1,10 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 4171,
+    "src/renderer/styles.css": 4063,
     "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,
+    "src/renderer/dialogs/KeywordEditorCard.css": 108,
     "electron/main.ts": 4075
   },
   "legacyMainIpcChannels": [
