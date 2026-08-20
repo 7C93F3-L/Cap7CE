@@ -52,13 +52,23 @@ try {
   New-Item -ItemType Directory -Force -Path (Join-Path $payloadDirectory "resources"),$updateRoot | Out-Null
   Set-Content -LiteralPath (Join-Path $payloadDirectory "resources\app.asar") -Value "new"
   Set-Content -LiteralPath (Join-Path $payloadDirectory "updated-marker.txt") -Value "new"
+  $fakeApplicationTypeName = "Cap7CEUpdateProbeApplication" + [guid]::NewGuid().ToString("N")
   $fakeApplicationSource = @"
 using System.Threading;
-public static class Cap7CEUpdateProbeApplication {
+public static class $fakeApplicationTypeName {
   public static void Main() { Thread.Sleep(4000); }
 }
 "@
-  Add-Type -TypeDefinition $fakeApplicationSource -OutputAssembly (Join-Path $payloadDirectory "Cap7CE.exe") -OutputType WindowsApplication
+  $fakeApplicationPath = Join-Path $payloadDirectory "Cap7CE.exe"
+  if (Test-Path -LiteralPath $fakeApplicationPath) {
+    Remove-Item -LiteralPath $fakeApplicationPath -Force
+  }
+  Add-Type -TypeDefinition $fakeApplicationSource -OutputAssembly $fakeApplicationPath -OutputType WindowsApplication
+  try {
+    [System.Reflection.AssemblyName]::GetAssemblyName($fakeApplicationPath) | Out-Null
+  } catch {
+    throw "The updater success probe executable was not generated correctly."
+  }
   Compress-Archive -LiteralPath $payloadDirectory -DestinationPath $packagePath
   $copiedHelperPath = Join-Path $updateRoot "update-helper.ps1"
   Copy-Item -LiteralPath $helperPath -Destination $copiedHelperPath
