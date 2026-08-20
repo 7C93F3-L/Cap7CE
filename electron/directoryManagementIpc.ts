@@ -1,5 +1,6 @@
 import type { PersistedDirectory } from "./directoryStore";
 import type { DirectoryAddRequest, DirectoryAddResult } from "./directoryAddService";
+import type { ImageScanResult, ScannedFile, ScannedImageFile } from "./imageScanner";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 
 export interface DirectoryManagementIpcDependencies {
@@ -10,6 +11,15 @@ export interface DirectoryManagementIpcDependencies {
   selectDirectoryCandidates: () => Promise<string[] | null>;
   createCancelledDirectoryAddResult: () => Promise<DirectoryAddResult>;
   addDirectoryCandidates: (request: DirectoryAddRequest) => Promise<DirectoryAddResult>;
+  scanDirectories: (directories: PersistedDirectory[]) => Promise<ImageScanResult>;
+  seedScanSnapshot: (directories: PersistedDirectory[], scanResult: ImageScanResult) => void;
+  writeScannedFiles: (
+    directoryIds: string[],
+    images: ScannedImageFile[],
+    scannedAt: string,
+    files: ScannedFile[]
+  ) => Promise<unknown>;
+  applyDirectoryFileCounts: (counts: Record<string, number>) => Promise<PersistedDirectory[]>;
 }
 
 const normalizeDirectoryAddRequest = (value: unknown): DirectoryAddRequest => {
@@ -30,7 +40,11 @@ export const registerDirectoryManagementIpc = ({
   decorateDirectories,
   selectDirectoryCandidates,
   createCancelledDirectoryAddResult,
-  addDirectoryCandidates
+  addDirectoryCandidates,
+  scanDirectories,
+  seedScanSnapshot,
+  writeScannedFiles,
+  applyDirectoryFileCounts
 }: DirectoryManagementIpcDependencies): void => {
   const decorateDirectoryAddResult = async (result: DirectoryAddResult): Promise<DirectoryAddResult> => ({
     ...result,
@@ -69,6 +83,34 @@ export const registerDirectoryManagementIpc = ({
         listener: async (_event, request: unknown) => (
           decorateDirectoryAddResult(await addDirectoryCandidates(normalizeDirectoryAddRequest(request)))
         )
+      },
+      {
+        kind: "handle",
+        channel: "directories:refreshFileCounts",
+        listener: async (_event, directoryIds: unknown) => {
+          const requestedIds = new Set(
+            Array.isArray(directoryIds)
+              ? directoryIds.filter((id): id is string => typeof id === "string")
+              : []
+          );
+          const allDirectories = await listDirectories();
+          const directories = allDirectories.filter((directory) => requestedIds.has(directory.id));
+          if (directories.length === 0) {
+            return decorateDirectories(allDirectories);
+          }
+          const scanResult = await scanDirectories(directories);
+          seedScanSnapshot(directories, scanResult);
+          await writeScannedFiles(
+            directories.map((directory) => directory.id),
+            scanResult.images,
+            scanResult.scannedAt,
+            scanResult.files
+          );
+          const counts = Object.fromEntries(
+            scanResult.summaries.map((summary) => [summary.id, summary.fileCount])
+          );
+          return decorateDirectories(await applyDirectoryFileCounts(counts));
+        }
       }
     ]
   });

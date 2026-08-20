@@ -32,6 +32,21 @@ const run = async () => {
     addDirectoryCandidates: async (request) => {
       calls.push(["addCandidates", request]);
       return { cancelled: false, directories: [addedDirectory] };
+    },
+    scanDirectories: async (directories) => {
+      calls.push(["scan", directories]);
+      return {
+        images: [{ file_path: "C:\\Original\\image.png" }],
+        files: [{ file_path: "C:\\Original\\notes.txt" }],
+        scannedAt: "scan-time",
+        summaries: [{ id: "one", fileCount: 9 }]
+      };
+    },
+    seedScanSnapshot: (directories, scanResult) => calls.push(["seed", directories, scanResult]),
+    writeScannedFiles: async (...args) => calls.push(["write", ...args]),
+    applyDirectoryFileCounts: async (counts) => {
+      calls.push(["applyCounts", counts]);
+      return originalDirectories;
     }
   });
 
@@ -39,7 +54,8 @@ const run = async () => {
     "directories:list",
     "directories:updateName",
     "directories:selectAndAdd",
-    "directories:addCandidates"
+    "directories:addCandidates",
+    "directories:refreshFileCounts"
   ]);
   const event = { sender: { id: 1 } };
   assert.deepEqual(await handles.get("directories:list")(event), [
@@ -59,6 +75,14 @@ const run = async () => {
     cancelled: false,
     directories: [{ ...addedDirectory, indexedCount: 7 }]
   });
+  const refreshResult = await handles.get("directories:refreshFileCounts")(event, ["one", 7]);
+  assert.deepEqual(refreshResult, [{ ...originalDirectories[0], indexedCount: 7 }]);
+  const scanResult = {
+    images: [{ file_path: "C:\\Original\\image.png" }],
+    files: [{ file_path: "C:\\Original\\notes.txt" }],
+    scannedAt: "scan-time",
+    summaries: [{ id: "one", fileCount: 9 }]
+  };
   assert.deepEqual(calls, [
     ["list"],
     ["decorate", originalDirectories],
@@ -68,7 +92,13 @@ const run = async () => {
     ["addCandidates", { candidates: ["C:\\Added"] }],
     ["decorate", [addedDirectory]],
     ["addCandidates", { candidates: ["C:\\External"], conflictResolution: "replace-existing" }],
-    ["decorate", [addedDirectory]]
+    ["decorate", [addedDirectory]],
+    ["list"],
+    ["scan", originalDirectories],
+    ["seed", originalDirectories, scanResult],
+    ["write", ["one"], scanResult.images, "scan-time", scanResult.files],
+    ["applyCounts", { one: 9 }],
+    ["decorate", originalDirectories]
   ]);
 
   const cancelledHandles = new Map();
@@ -92,13 +122,26 @@ const run = async () => {
     addDirectoryCandidates: async () => {
       cancelledCalls.push(["unexpectedAdd"]);
       return { cancelled: false, directories: [] };
-    }
+    },
+    scanDirectories: async () => {
+      cancelledCalls.push(["unexpectedScan"]);
+      return { images: [], files: [], scannedAt: "", summaries: [] };
+    },
+    seedScanSnapshot: () => undefined,
+    writeScannedFiles: async () => undefined,
+    applyDirectoryFileCounts: async () => []
   });
   assert.deepEqual(await cancelledHandles.get("directories:selectAndAdd")(event), {
     cancelled: true,
     directories: []
   });
   assert.deepEqual(cancelledCalls, [["cancelledResult"], ["decorate", []]]);
+  assert.deepEqual(await cancelledHandles.get("directories:refreshFileCounts")(event, ["missing"]), []);
+  assert.deepEqual(cancelledCalls, [
+    ["cancelledResult"],
+    ["decorate", []],
+    ["decorate", []]
+  ]);
 
   console.log("Directory management IPC integration tests passed.");
 };
