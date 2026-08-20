@@ -5,3 +5,12 @@ export const getDirectoryPath = (filePath: string) => {
   if (separatorIndex === 2 && /^[A-Za-z]:[\\/]/.test(normalizedPath)) return normalizedPath.slice(0, 3);
   return normalizedPath.slice(0, Math.max(1, separatorIndex));
 };
+
+export const normalizeWindowsPathKey = (value: string) => value
+  .trim()
+  .replace(/\//g, "\\")
+  .replace(/\\+$/, "")
+  .toLowerCase();
+
+export const isWindowsRootPath = (value: string) => /^[a-z]:[\\/]?$/i.test(value.trim())
+  || /^\\\\[^\\]+[\\][^\\]+[\\]?$/i.test(value.trim());

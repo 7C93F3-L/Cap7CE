@@ -1,3 +1,5 @@
+import { t } from "../../electron/localization";
+
 export const formatCacheSize = (bytes: number) => {
   if (bytes < 1024) {
     return `${bytes} B`;
@@ -13,4 +15,12 @@ export const formatCacheSize = (bytes: number) => {
   }
 
   return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
+};
+
+export const formatDisplayMessage = (message?: string) => {
+  if (!message) {
+    return "";
+  }
+
+  return message.replace(/fetch\s*failed/gi, t("error.connectionFailed"));
 };
