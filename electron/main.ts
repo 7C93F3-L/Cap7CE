@@ -5,7 +5,7 @@ import { createReadStream } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
-import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
+import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest } from "./directoryAddService";
 import { registerDirectoryManagementIpc } from "./directoryManagementIpc";
 import { AppUpdateDownloadError, checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadErrorCode, type AppUpdateDownloadProgress } from "./appUpdateService";
 import { consumeAppUpdateCompletion } from "./appUpdateCompletion";
@@ -3393,13 +3393,6 @@ const runAiIndexBatch = async (directoryId?: string) => {
   }
 };
 
-registerDirectoryManagementIpc({ registrar: ipcMain, listDirectories, updateDirectoryName, decorateDirectories: withSqliteImageCounts });
-
-const withDirectoryAddSqliteCounts = async (result: DirectoryAddResult): Promise<DirectoryAddResult> => ({
-  ...result,
-  directories: await withSqliteImageCounts(result.directories)
-});
-
 const addDirectoryCandidatesWithIndexMigrationInternal = async (request: DirectoryAddRequest) => {
   const result = await addDirectoryCandidates(request);
   try {
@@ -3437,35 +3430,21 @@ const addDirectoryCandidatesWithIndexMigration = (request: DirectoryAddRequest) 
   return task;
 };
 
-const normalizeDirectoryAddRequest = (value: unknown): DirectoryAddRequest => {
-  if (!value || typeof value !== "object") {
-    return { candidates: [] };
-  }
-  const candidate = value as { candidates?: unknown; conflictResolution?: unknown };
-  return {
-    candidates: Array.isArray(candidate.candidates)
-      ? candidate.candidates as string[]
-      : [],
-    conflictResolution: candidate.conflictResolution === "replace-existing" ? "replace-existing" : "prompt"
-  };
-};
-
-ipcMain.handle("directories:selectAndAdd", async () => {
-  const options: OpenDialogOptions = {
-    title: t("dialog.selectIndexDirectory"),
-    properties: ["openDirectory", "multiSelections"]
-  };
-  const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
-
-  if (result.canceled || result.filePaths.length === 0) {
-    return withDirectoryAddSqliteCounts(await createCancelledDirectoryAddResult());
-  }
-
-  return withDirectoryAddSqliteCounts(await addDirectoryCandidatesWithIndexMigration({ candidates: result.filePaths }));
-});
-
-ipcMain.handle("directories:addCandidates", async (_event, request: unknown) => {
-  return withDirectoryAddSqliteCounts(await addDirectoryCandidatesWithIndexMigration(normalizeDirectoryAddRequest(request)));
+registerDirectoryManagementIpc({
+  registrar: ipcMain,
+  listDirectories,
+  updateDirectoryName,
+  decorateDirectories: withSqliteImageCounts,
+  selectDirectoryCandidates: async () => {
+    const options: OpenDialogOptions = {
+      title: t("dialog.selectIndexDirectory"),
+      properties: ["openDirectory", "multiSelections"]
+    };
+    const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
+    return result.canceled ? null : result.filePaths;
+  },
+  createCancelledDirectoryAddResult,
+  addDirectoryCandidates: addDirectoryCandidatesWithIndexMigration
 });
 
 ipcMain.handle("directories:refreshFileCounts", async (_event, directoryIds: unknown) => {
