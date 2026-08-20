@@ -1,0 +1,122 @@
+.cap-shell-micro .results-view,
+.cap-shell-mini .results-view {
+  padding: var(--cap-results-top) var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
+}
+
+.cap-shell-micro .image-grid {
+  padding-right: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.cap-shell-mini .image-grid {
+  padding-right: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.cap-shell-micro .virtual-grid-spacer {
+  min-width: 100%;
+  height: 100%;
+}
+
+.cap-shell-normal .results-view,
+.cap-shell-settings .results-view {
+  padding-top: 50px;
+}
+
+.cap-results-view-unrecognized .cap7ce-capsule-status {
+  flex: 0 1 auto;
+  max-width: none;
+  margin-left: auto;
+  color: var(--muted-strong);
+  opacity: 0.72;
+}
+
+.cap-results-view-unrecognized .cap7ce-capsule-status .unrecognized-status {
+  justify-content: flex-end;
+  gap: 4px 12px;
+}
+
+.cap-shell .cap-results-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 5px var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
+}
+
+.cap-shell .cap-results-view > .cap7ce-search-capsule-unified {
+  flex: 0 0 auto;
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  margin: 0 0 var(--cap-capsule-content-gap);
+  transform: none;
+}
+
+.cap-shell .cap-results-view > .image-grid-frame,
+.cap-shell .cap-results-view > .image-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.cap-shell .cap-results-view .image-grid {
+  padding-right: 0;
+}
+
+.cap-shell .cap-results-view .empty-result-row {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  text-align: center;
+}
+
+.cap-shell-micro .cap-results-view,
+.cap-shell-mini .cap-results-view {
+  padding: 5px var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
+}
+
+.cap-shell-normal .cap-results-view,
+.cap-shell-settings .cap-results-view {
+  padding: 5px var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
+}
+
+.results-view {
+  display: flex;
+  flex-direction: column;
+  padding: 44px 76px 62px;
+}
+
+.results-search {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.unrecognized-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+@media (min-width: 1921px) {
+  .results-view {
+    padding: 56px clamp(84px, 4vw, 136px) 72px;
+  }
+}
+
+@media (min-width: 2561px) {
+  .results-view {
+    padding: 64px clamp(96px, 3.5vw, 150px) 82px;
+  }
+}
+

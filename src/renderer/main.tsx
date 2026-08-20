@@ -6,6 +6,7 @@ import "./preview/PreviewWindow.css";
 import "./dialogs/KeywordEditorCard.css";
 import "./ColorPickerPopover.css";
 import "./results/ResultGrid.css";
+import "./results/ResultsView.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const windowKind = new URLSearchParams(window.location.search).get("window");
