@@ -3,6 +3,7 @@ import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
+import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
@@ -232,40 +233,6 @@ const emptySearch: SearchState = {
   recognitionStatus: "all"
 };
 
-interface OperationHintDefinition {
-  key: TranslationKey;
-  shortcutActionId?: ShortcutActionId;
-  requiresCommands?: boolean;
-}
-
-const initialOperationHintKey: TranslationKey = "search.guide.search";
-const operationHintDefinitions: OperationHintDefinition[] = [
-  { key: initialOperationHintKey },
-  { key: "search.guide.showCurrent" },
-  { key: "search.guide.activateCapsule", shortcutActionId: "activateCapsule" },
-  { key: "search.guide.activateMicro", shortcutActionId: "activateMicro" },
-  { key: "search.guide.activateMini", shortcutActionId: "activateMini" },
-  { key: "search.guide.activateNormal", shortcutActionId: "activateNormal" },
-  { key: "search.guide.activateLine", shortcutActionId: "activateStandby" },
-  { key: "search.guide.activateSkim", shortcutActionId: "activateSkim" },
-  { key: "search.guide.openSettings", shortcutActionId: "openSettings" },
-  { key: "search.guide.preview" },
-  { key: "search.guide.previewNavigate" },
-  { key: "search.guide.previewContextMenu" },
-  { key: "search.guide.multiSelect" },
-  { key: "search.guide.batchActions" },
-  { key: "search.guide.dragResult" },
-  { key: "search.guide.labels" },
-  { key: "search.guide.hideLabel" },
-  { key: "search.guide.labelMenu" },
-  { key: "search.guide.commandDark", requiresCommands: true },
-  { key: "search.guide.viewCommands" },
-  { key: "search.guide.editShortcuts" },
-  { key: "search.guide.trayNormal" },
-  { key: "search.guide.focusSearch" },
-  { key: "search.guide.resultContextMenu" }
-];
-
 const normalizeShortcutForMatch = (shortcut: string) => shortcut.replace(/\s+/g, "").toLowerCase();
 
 const hasShortcutModifier = (shortcut: string) => (
@@ -485,7 +452,6 @@ const App = () => {
     show: showQuickCommandNotice,
     clear: clearQuickCommandNotice
   } = useTransientFeedback();
-  const [operationHintKey, setOperationHintKey] = useState<TranslationKey>(initialOperationHintKey);
   const [pendingQuickCommandConfirmation, setPendingQuickCommandConfirmation] = useState<QuickCommandConfirmationRequest | null>(null);
   const resultScrollPositionsRef = useRef<Record<RecognitionStatusFilter, number>>({
     all: 0,
@@ -516,8 +482,6 @@ const App = () => {
   const capsuleInputRef = useRef<HTMLInputElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const previousShellStateRef = useRef<ShellState>("standby");
-  const previousOperationHintQueryRef = useRef("");
-  const initialOperationHintShownRef = useRef(false);
   const capsuleComposingRef = useRef(false);
   const capsuleCompositionGuardUntilRef = useRef(0);
   const resultsInitializedRef = useRef(false);
@@ -542,52 +506,21 @@ const App = () => {
     "--accent-on-color": getTextColorForBackground(appearanceColors.accentColor)
   } as CSSProperties;
   const contextMenuStyle = getImageContextMenuStyle(effectiveTheme, appearanceColors);
-  const selectRandomOperationHint = useCallback(() => {
-    setOperationHintKey((currentKey) => {
-      const availableHints = operationHintDefinitions.filter((hint) => {
-        if (hint.requiresCommands && !commandEnabled) {
-          return false;
-        }
-        if (!hint.shortcutActionId) {
-          return true;
-        }
-        return quickActionGlobalEnabled && !unavailableShortcutActionIds.includes(hint.shortcutActionId);
-      });
-      const candidates = availableHints.filter((hint) => hint.key !== currentKey);
-      const nextHints = candidates.length > 0 ? candidates : availableHints;
-      return nextHints[Math.floor(Math.random() * nextHints.length)]?.key ?? initialOperationHintKey;
-    });
-  }, [commandEnabled, quickActionGlobalEnabled, unavailableShortcutActionIds]);
-  const operationHintDefinition = operationHintDefinitions.find((hint) => hint.key === operationHintKey);
-  const operationHint = operationHintsEnabled && search.query.length === 0
-    ? t(operationHintKey, operationHintDefinition?.shortcutActionId
-      ? { shortcut: shortcutActions[operationHintDefinition.shortcutActionId] }
-      : {})
-    : "";
+  const operationHint = useOperationHintController({
+    shellState,
+    query: search.query,
+    enabled: operationHintsEnabled,
+    commandEnabled,
+    quickActionGlobalEnabled,
+    unavailableShortcutActionIds,
+    shortcutActions
+  });
   const searchInputFeedback = quickCommandNotice || operationHint;
   const operationHintVisible = quickCommandNotice.length === 0 && operationHint.length > 0;
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
   }, []);
 
-  useEffect(() => {
-    if (shellState === "standby") {
-      return;
-    }
-    if (!initialOperationHintShownRef.current) {
-      initialOperationHintShownRef.current = true;
-      return;
-    }
-    selectRandomOperationHint();
-  }, [shellState]);
-
-  useEffect(() => {
-    const previousQuery = previousOperationHintQueryRef.current;
-    previousOperationHintQueryRef.current = search.query;
-    if (previousQuery.length > 0 && search.query.length === 0) {
-      selectRandomOperationHint();
-    }
-  }, [search.query]);
   useEffect(() => {
     directoryPathResolutionRequestRef.current += 1;
   }, [search.query]);
