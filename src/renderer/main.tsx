@@ -8,6 +8,7 @@ import "./dialogs/ConfirmationPanels.css";
 import "./ColorPickerPopover.css";
 import "./results/ResultGrid.css";
 import "./results/ResultsView.css";
+import "./settings/SettingsSelect.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const windowKind = new URLSearchParams(window.location.search).get("window");

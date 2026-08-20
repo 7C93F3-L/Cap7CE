@@ -1397,50 +1397,6 @@ textarea,
   line-height: 20px;
 }
 
-.cap-settings-select {
-  flex: 0 1 230px;
-  width: 230px;
-  max-width: 230px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  appearance: none;
-  outline: none;
-  box-shadow: none;
-  text-align: left;
-}
-
-.cap-settings-select:focus,
-.cap-settings-select:focus-visible,
-.cap-settings-select.is-open {
-  background: var(--chip-bg);
-  color: var(--input-text);
-  box-shadow: none;
-}
-
-.app .cap-settings-select:focus-visible {
-  outline: none;
-}
-
-.cap-settings-select-value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cap-settings-select-runtime {
-  flex-basis: 172px;
-  width: 172px;
-  max-width: 172px;
-}
-
-.cap-settings-select-model {
-  flex-basis: 230px;
-  width: 230px;
-  max-width: 230px;
-}
 
 .cap-settings-status-pill {
   min-width: 64px;
@@ -2495,27 +2451,6 @@ body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
   }
 }
 
-.context-menu.cap-settings-select-menu {
-  min-width: 0;
-  max-width: calc(100vw - 10px);
-  max-height: min(240px, calc(100vh - 10px));
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--chip-bg) transparent;
-}
-
-.context-menu.cap-settings-select-menu button {
-  width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.context-menu.cap-settings-select-menu button.is-active {
-  background: var(--theme-color);
-  color: var(--theme-on-color);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .cap7ce-filter-chip-motion,
