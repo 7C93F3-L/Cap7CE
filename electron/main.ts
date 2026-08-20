@@ -6,6 +6,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest, type DirectoryAddResult } from "./directoryAddService";
+import { registerDirectoryManagementIpc } from "./directoryManagementIpc";
 import { AppUpdateDownloadError, checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadErrorCode, type AppUpdateDownloadProgress } from "./appUpdateService";
 import { consumeAppUpdateCompletion } from "./appUpdateCompletion";
 import { createAppUpdateLauncherScript, resolveWindowsPowerShellPath } from "./appUpdateLauncher";
@@ -3392,9 +3393,7 @@ const runAiIndexBatch = async (directoryId?: string) => {
   }
 };
 
-ipcMain.handle("directories:list", async () => {
-  return withSqliteImageCounts(await listDirectories());
-});
+registerDirectoryManagementIpc({ registrar: ipcMain, listDirectories, updateDirectoryName, decorateDirectories: withSqliteImageCounts });
 
 const withDirectoryAddSqliteCounts = async (result: DirectoryAddResult): Promise<DirectoryAddResult> => ({
   ...result,
@@ -3748,10 +3747,6 @@ ipcMain.handle("skim:cancelFileInfoFolderStats", (event, taskId: unknown) => {
   activeFileInfoFolderStatsTask.cancelled = true;
   activeFileInfoFolderStatsTask = null;
   return true;
-});
-
-ipcMain.handle("directories:updateName", async (_event, id: string, name: string) => {
-  return withSqliteImageCounts(await updateDirectoryName(id, name));
 });
 
 ipcMain.handle("directories:delete", async (_event, id: string) => {
