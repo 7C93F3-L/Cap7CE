@@ -45,12 +45,19 @@ const mainSource = readProjectFile("electron/main.ts");
 const legacyMainIpcChannels = new Set(baseline.legacyMainIpcChannels);
 const lifecyclePrefixes = ["window:", "preview:", "line:"];
 const directMainIpcPattern = /ipcMain\.(?:handle|on)\(\s*["']([^"']+)["']/g;
+const directMainIpcChannels = new Set([...mainSource.matchAll(directMainIpcPattern)].map((match) => match[1]));
 
 for (const match of mainSource.matchAll(directMainIpcPattern)) {
   const channel = match[1];
   const isLifecycleChannel = lifecyclePrefixes.some((prefix) => channel.startsWith(prefix));
   if (!isLifecycleChannel && !legacyMainIpcChannels.has(channel)) {
     failures.push(`electron/main.ts directly registers new non-window IPC channel "${channel}". Register it in a domain IPC module instead.`);
+  }
+}
+
+for (const channel of legacyMainIpcChannels) {
+  if (!directMainIpcChannels.has(channel)) {
+    failures.push(`Legacy main IPC exception "${channel}" no longer exists in electron/main.ts. Remove the stale exception from the architecture baseline.`);
   }
 }
 
@@ -74,6 +81,6 @@ if (failures.length > 0) {
     hotFileLimitsVerified: Object.keys(baseline.maxLines).length,
     rendererFilesChecked: rendererFiles.length,
     legacyMainIpcChannelsGuarded: legacyMainIpcChannels.size,
-    directMainIpcChannelsFound: [...mainSource.matchAll(directMainIpcPattern)].length
+    directMainIpcChannelsFound: directMainIpcChannels.size
   }));
 }
