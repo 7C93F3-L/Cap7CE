@@ -35,6 +35,7 @@ import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, ski
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellPreviewCache, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSearchShellVisualActivity } from "./searchShellVisualCacheService";
 import { registerCacheActivityIpc } from "./cacheActivityIpc";
+import { registerCacheClearIpc } from "./cacheClearIpc";
 import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
@@ -142,8 +143,6 @@ let moveSnapTimer: NodeJS.Timeout | null = null;
 let programmaticMoveGuardUntil = 0;
 let previewMoveSnapTimer: NodeJS.Timeout | null = null;
 let previewProgrammaticMoveGuardUntil = 0;
-let cacheClearAuthorization: { token: string; expiresAt: number } | null = null;
-let skimCacheClearAuthorization: { token: string; expiresAt: number } | null = null;
 let startupHintCloseTimer: NodeJS.Timeout | null = null;
 let previewIdleDestroyTimer: NodeJS.Timeout | null = null;
 let previewOpenRequestId = 0;
@@ -4248,49 +4247,22 @@ registerCacheActivityIpc({
   }
 });
 
-ipcMain.handle("cache:authorizeClear", () => {
-  const authorization = {
-    token: randomUUID(),
-    expiresAt: Date.now() + 30_000
-  };
-  cacheClearAuthorization = authorization;
-  return authorization.token;
-});
-
-ipcMain.handle("cache:clearAll", async (_event, token?: string) => {
-  const authorization = cacheClearAuthorization;
-  cacheClearAuthorization = null;
-  if (!authorization || token !== authorization.token || Date.now() > authorization.expiresAt) {
-    throw new Error(t("error.cacheConfirmationRequired"));
-  }
-  const renderingPauseReason = "cache-clear";
-  await pauseThumbnailRendering(renderingPauseReason);
-  try {
-    discardAllQueuedThumbnailRenders();
-    await setThumbnailOptimizationEnabled(false);
-    await updateAutoCacheOptimizationPreference(false);
-    return await clearAllVisualCaches();
-  } finally {
-    resumeThumbnailRendering(renderingPauseReason);
-  }
-});
-
-ipcMain.handle("skimCache:stats", () => getSkimCacheStats());
-
-ipcMain.handle("skimCache:authorizeClear", () => {
-  const authorization = {
-    token: randomUUID(),
-    expiresAt: Date.now() + 30_000
-  };
-  skimCacheClearAuthorization = authorization;
-  return authorization.token;
-});
-
-ipcMain.handle("skimCache:clear", async (_event, token?: string) => {
-  const authorization = skimCacheClearAuthorization;
-  skimCacheClearAuthorization = null;
-  if (!authorization || token !== authorization.token || Date.now() > authorization.expiresAt) {
-    throw new Error(t("error.cacheConfirmationRequired"));
-  }
-  return clearSkimCacheSafely();
+registerCacheClearIpc({
+  registrar: ipcMain,
+  createToken: randomUUID,
+  translateConfirmationRequired: () => t("error.cacheConfirmationRequired"),
+  clearFormalCache: async () => {
+    const renderingPauseReason = "cache-clear";
+    await pauseThumbnailRendering(renderingPauseReason);
+    try {
+      discardAllQueuedThumbnailRenders();
+      await setThumbnailOptimizationEnabled(false);
+      await updateAutoCacheOptimizationPreference(false);
+      return await clearAllVisualCaches();
+    } finally {
+      resumeThumbnailRendering(renderingPauseReason);
+    }
+  },
+  getSkimCacheStats,
+  clearSkimCache: clearSkimCacheSafely
 });

@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4297
+    "electron/main.ts": 4269
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -52,11 +52,6 @@
     "preferences:updateShortcutActions",
     "preferences:shortcutAvailability",
     "preferences:beginShortcutCapture",
-    "preferences:endShortcutCapture",
-    "cache:authorizeClear",
-    "cache:clearAll",
-    "skimCache:stats",
-    "skimCache:authorizeClear",
-    "skimCache:clear"
+    "preferences:endShortcutCapture"
   ]
 }
