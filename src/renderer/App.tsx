@@ -1,20 +1,20 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type ReactNode, type Ref, type RefObject } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type Ref, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import iconSignatureCap7CESvg from "./assets/icons/icon-signature-cap7ce.svg?raw";
 import iconSortAscSvg from "./assets/icons/icon-sort-asc.svg?raw";
 import iconSortDescSvg from "./assets/icons/icon-sort-desc.svg?raw";
 import iconSkimSvg from "./assets/icons/icon-skim.svg?raw";
 import skimDiskSvg from "./assets/icons/skim-disk.svg?raw";
-import skimFileSvg from "./assets/icons/skim-file.svg?raw";
 import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
 import skimStarredFolderSvg from "./assets/icons/skim-location-starred-folder.svg?raw";
 import ColorPickerPopover from "./ColorPickerPopover";
+import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "./components/MiddleEllipsisFileName";
 import SvgIcon from "./components/SvgIcon";
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import CustomScrollbar from "./CustomScrollbar";
-import ImageContextMenu, { getImageContextMenuStyle, splitMiddleEllipsisFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
+import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
 import {
   createSpaceReleaseGuard,
@@ -38,7 +38,9 @@ import type {
 } from "./dialogs/dialogTypes";
 import { getCommonKeywords } from "./dialogs/keywordEditorModel";
 import { formatCacheSize } from "./formatting";
+import { getFormatIconSvgByName } from "./formatIcons";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
+import { ResultThumbnailContent, UnrecognizedThumbnail } from "./results/ResultThumbnail";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
   AiIndexProgress,
@@ -79,19 +81,7 @@ import type {
   ThemeMode
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
-import { fileFormatCapabilities, fileFormatCapabilityByExtension, skimDefaultFileExtensionSet, skimCuratedFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
-
-const skimFormatIconModules = import.meta.glob<string>("./assets/icons/format-*.svg", {
-  eager: true,
-  query: "?raw",
-  import: "default"
-});
-const skimFormatIconSvgByName = Object.fromEntries(
-  Object.entries(skimFormatIconModules).map(([assetPath, svg]) => [
-    assetPath.slice(assetPath.lastIndexOf("/") + 1, -4),
-    svg
-  ])
-) as Record<string, string>;
+import { fileFormatCapabilities, skimDefaultFileExtensionSet, skimCuratedFileExtensionSet, type FileFormatCategory } from "../../electron/formatCapabilities";
 
 const settingsFormatCategoryOrder: readonly FileFormatCategory[] = [
   "visual",
@@ -125,12 +115,6 @@ const getAbsoluteWindowsDirectoryInput = (input: string): string | null => {
   if (/^[a-z]:[\\/]/i.test(candidate)) return candidate;
   if (/^(?:\\\\|\/\/)[^\\/]+[\\/][^\\/]+/.test(candidate)) return candidate;
   return null;
-};
-
-const getFormatIconSvg = (extension: string, iconName = "") => {
-  const normalizedExtension = extension.startsWith(".") ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
-  const resolvedIconName = fileFormatCapabilityByExtension.get(normalizedExtension)?.iconName ?? iconName;
-  return skimFormatIconSvgByName[resolvedIconName] ?? skimFileSvg;
 };
 
 const resolveFileContentPreview = async (filePath: string, previewKind: FilePreviewKind): Promise<{
@@ -316,60 +300,6 @@ const formatCompactExtensionLabel = (extension: string, maximumLength = 7) => {
   const leadingLength = Math.ceil(visibleLength / 2);
   return `${label.slice(0, leadingLength)}…${label.slice(-Math.floor(visibleLength / 2))}`;
 };
-
-const videoThumbnailExtensions = new Set([
-  ".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm", ".wmv", ".mpg", ".mpeg",
-  ".mts", ".m2ts", ".mxf", ".flv", ".rmvb", ".3gp"
-]);
-
-const VideoThumbnailIndicator = () => (
-  <span className="video-thumbnail-indicator" aria-hidden="true">
-    <svg viewBox="0 0 28 28" focusable="false">
-      <path d="M9.8 4.65C8.3 3.7 6.35 4.78 6.35 6.55v14.9c0 1.77 1.95 2.85 3.45 1.9l11.63-7.45c1.37-.88 1.37-2.92 0-3.8L9.8 4.65Z" />
-    </svg>
-  </span>
-);
-
-const ThumbnailContent = ({ thumbnailUrl, fallback, overlay }: { thumbnailUrl: string; fallback: ReactNode; overlay?: ReactNode }) => {
-  const [showPlaceholder, setShowPlaceholder] = useState(!thumbnailUrl);
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  useEffect(() => {
-    setShowPlaceholder(!thumbnailUrl);
-    setImageLoaded(false);
-  }, [thumbnailUrl]);
-
-  return showPlaceholder ? fallback : (
-    <>
-      <span className="thumbnail-image-frame">
-        <img
-          src={thumbnailUrl}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-          onLoad={() => setImageLoaded(true)}
-          onError={(event) => {
-            event.currentTarget.style.display = "none";
-            setImageLoaded(false);
-            setShowPlaceholder(true);
-          }}
-        />
-      </span>
-      {imageLoaded && overlay}
-    </>
-  );
-};
-
-const UnrecognizedThumbnail = ({ item }: { item: ImageIndexItem }) => (
-  <span className="unrecognized-thumbnail">
-    <ThumbnailContent
-      thumbnailUrl={item.thumbnailUrl}
-      fallback={<SvgIcon svg={getFormatIconSvg(item.extension, item.iconName)} className="cap-svg-icon unrecognized-format-icon" />}
-      overlay={videoThumbnailExtensions.has(item.extension.toLowerCase()) ? <VideoThumbnailIndicator /> : undefined}
-    />
-  </span>
-);
 
 const areImageIdSetsEqual = (
   left: ReadonlySet<string>,
@@ -5413,47 +5343,6 @@ const ResultsView = ({ shellState, search, images, searchStatus, isSearching, se
   );
 };
 
-const MiddleEllipsisFileName = ({ fileName, className }: { fileName: string; className: string }) => {
-  const splitFileName = splitMiddleEllipsisFileName(fileName);
-  return (
-    <span className={className} title={fileName}>
-      <span className="cap-middle-ellipsis-leading">{splitFileName.leading}</span>
-      {splitFileName.trailing && <span className="cap-middle-ellipsis-trailing">{splitFileName.trailing}</span>}
-    </span>
-  );
-};
-
-const TwoLineMiddleEllipsisFileName = ({ fileName, className }: { fileName: string; className: string }) => {
-  const splitFileName = splitMiddleEllipsisFileName(fileName);
-  return (
-    <span className={`${className} cap-two-line-middle-name${splitFileName.trailing ? " is-split" : ""}`} title={fileName}>
-      <span className="cap-two-line-middle-leading">{splitFileName.leading}</span>
-      {splitFileName.trailing && <span className="cap-two-line-middle-trailing">{`\u2026${splitFileName.trailing}`}</span>}
-    </span>
-  );
-};
-
-const ResultFormatCard = ({ item }: { item: ImageIndexItem }) => (
-  <span className="result-file-card">
-    <SvgIcon
-      svg={getFormatIconSvg(item.extension, item.iconName)}
-      className="cap-svg-icon result-file-card-icon"
-    />
-    <TwoLineMiddleEllipsisFileName fileName={item.fileName} className="result-file-card-name" />
-  </span>
-);
-
-const ResultThumbnailContent = ({ item }: { item: ImageIndexItem }) => {
-  const fallback = <ResultFormatCard item={item} />;
-  return item.resultKind === "file" && !item.canShellPreview
-    ? fallback
-    : <ThumbnailContent
-      thumbnailUrl={item.thumbnailUrl}
-      fallback={fallback}
-      overlay={videoThumbnailExtensions.has(item.extension.toLowerCase()) ? <VideoThumbnailIndicator /> : undefined}
-    />;
-};
-
 interface SkimViewProps {
   search: SearchState;
   visualSessionId: string;
@@ -5613,7 +5502,7 @@ const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, 
     if (entry.kind === "folder") {
       return sidebarFolderPathKeys.has(normalizeWindowsPathKey(entry.path)) ? skimStarredFolderSvg : skimFolderSvg;
     }
-    return skimFormatIconSvgByName[entry.formatCapability?.iconName ?? ""] ?? skimFileSvg;
+    return getFormatIconSvgByName(entry.formatCapability?.iconName);
   };
 
   useEffect(() => {
