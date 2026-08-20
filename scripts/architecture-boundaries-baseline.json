@@ -1,7 +1,7 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 3309,
+    "src/renderer/styles.css": 3168,
     "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,
     "src/renderer/dialogs/KeywordEditorCard.css": 108,
@@ -10,6 +10,7 @@
     "src/renderer/results/ResultGrid.css": 333,
     "src/renderer/results/ResultsView.css": 123,
     "src/renderer/settings/SettingsSelect.css": 68,
+    "src/renderer/settings/ShortcutSettingsPanels.css": 141,
     "electron/main.ts": 4075
   },
   "legacyMainIpcChannels": [
