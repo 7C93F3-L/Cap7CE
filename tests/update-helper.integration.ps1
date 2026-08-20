@@ -3,6 +3,7 @@ $probeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("cap7ce-updater-probe-
 $resolvedTemp = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $resolvedProbe = [System.IO.Path]::GetFullPath($probeRoot)
 $blockingProcess = $null
+$successfulUpdater = $null
 $startedApplicationProcessId = $null
 if (-not $resolvedProbe.StartsWith($resolvedTemp, [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "Unsafe updater probe path."
@@ -54,7 +55,7 @@ try {
   Set-Content -LiteralPath (Join-Path $payloadDirectory "resources\app.asar") -Value "new"
   Set-Content -LiteralPath (Join-Path $payloadDirectory "updated-marker.txt") -Value "new"
   $fakeApplicationPath = Join-Path $payloadDirectory "Cap7CE.exe"
-  Copy-Item -LiteralPath (Join-Path $env:WINDIR "System32\Taskmgr.exe") -Destination $fakeApplicationPath
+  Copy-Item -LiteralPath (Join-Path $env:WINDIR "System32\cmd.exe") -Destination $fakeApplicationPath
   Compress-Archive -LiteralPath $payloadDirectory -DestinationPath $packagePath
   $copiedHelperPath = Join-Path $updateRoot "update-helper.ps1"
   Copy-Item -LiteralPath $helperPath -Destination $copiedHelperPath
@@ -88,7 +89,9 @@ try {
     throw "The application directory was replaced before the current process exited."
   }
   Stop-Process -Id $blockingProcess.Id -Force
-  $successfulUpdater.WaitForExit()
+  if (-not $successfulUpdater.WaitForExit(30000)) {
+    throw "Updater did not exit after completing startup validation."
+  }
   if ($successfulUpdater.ExitCode -ne 0) {
     throw "Expected successful update exit code 0, got $($successfulUpdater.ExitCode)."
   }
@@ -122,6 +125,9 @@ try {
 } finally {
   if ($blockingProcess -and -not $blockingProcess.HasExited) {
     Stop-Process -Id $blockingProcess.Id -Force -ErrorAction SilentlyContinue
+  }
+  if ($successfulUpdater -and -not $successfulUpdater.HasExited) {
+    Stop-Process -Id $successfulUpdater.Id -Force -ErrorAction SilentlyContinue
   }
   if ($startedApplicationProcessId) {
     Stop-Process -Id $startedApplicationProcessId -Force -ErrorAction SilentlyContinue
