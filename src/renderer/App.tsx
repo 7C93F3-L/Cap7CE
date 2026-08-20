@@ -35,6 +35,7 @@ import {
   standardSearchLabelGroups,
   type SearchCapsuleLabelVisibility
 } from "./search/Cap7CESearchCapsule";
+import { HomeView } from "./search/HomeView";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView } from "./results/ResultsView";
 import { SkimView } from "./skim/SkimView";
@@ -4441,40 +4442,6 @@ const App = () => {
     </div>
   );
 };
-
-interface HomeViewProps {
-  search: SearchState;
-  directoryName: string;
-  directories: DirectoryItem[];
-  labelVisibility: SearchCapsuleLabelVisibility;
-  onSearchChange: (search: SearchState) => void;
-  onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
-  onSearchOptionsChange: (search: SearchState) => void;
-  onSearch: () => void;
-}
-
-const HomeView = (props: HomeViewProps) => (
-  <main className="home-view cap-home-view">
-    <Cap7CESearchCapsule
-      search={props.search}
-      directoryName={props.directoryName}
-      directories={props.directories}
-      labelVisibility={props.labelVisibility}
-      status="ready"
-      unified
-      onSearchChange={props.onSearchChange}
-      onLabelVisibilityChange={props.onLabelVisibilityChange}
-      onSearchOptionsChange={props.onSearchOptionsChange}
-      onSearch={props.onSearch}
-    />
-    <div className="cap-home-signature">
-      <span>Cap7CE</span>
-      <small>Cap7CE</small>
-    </div>
-  </main>
-);
-
-
 
 type SettingsSelectOption = {
   value: string;
