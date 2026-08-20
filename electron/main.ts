@@ -28,6 +28,7 @@ import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupServi
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerRecognitionIpc } from "./recognitionIpc";
+import { registerManualMetadataIpc } from "./manualMetadataIpc";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -45,8 +46,6 @@ import { readVisualCacheImage } from "./visualCacheService";
 import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNameService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
-import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "./keywordRules";
-import type { KeywordBatchUpdateRequest, KeywordBatchUpdateResult } from "./keywordTypes";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
@@ -3857,123 +3856,16 @@ ipcMain.handle("search:refresh", (event, directoryIds: unknown) => {
   return true;
 });
 
-const getManualMetadataImage = async (
-  filePath: string,
-  directories: PersistedDirectory[]
-): Promise<ScannedImageFile> => {
-  const resolvedFilePath = path.resolve(filePath);
-  const ownerDirectory = directories
-    .filter((directory) => {
-      const relativePath = path.relative(path.resolve(directory.path), resolvedFilePath);
-      return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
-    })
-    .sort((left, right) => right.path.length - left.path.length)[0];
-  if (!ownerDirectory) {
-    throw new Error(t("error.fileOutsideAddedDirectories"));
-  }
-
-  const sourceStat = await fs.stat(resolvedFilePath);
-  if (!sourceStat.isFile()) {
-    throw new Error(t("error.fileMissingOrStale"));
-  }
-
-  return {
-    directory_id: ownerDirectory.id,
-    directory_path: ownerDirectory.path,
-    file_path: resolvedFilePath,
-    file_name: path.basename(resolvedFilePath),
-    file_size: sourceStat.size,
-    created_at: sourceStat.birthtime.toISOString(),
-    modified_at: sourceStat.mtime.toISOString(),
-    modified_ms: sourceStat.mtimeMs
-  };
-};
-
-ipcMain.handle("index:updateManualMetadata", async (_event, filePath: string, caption: string, keywordText: string) => {
-  if (typeof filePath !== "string" || !filePath.trim()) {
-    throw new Error(t("error.invalidFile"));
-  }
-  if (typeof caption !== "string" || typeof keywordText !== "string") {
-    throw new Error(t("error.invalidMetadata"));
-  }
-
-  const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
-  if (!capability?.canSearch) {
-    throw new Error(t("error.invalidFile"));
-  }
-  const directories = await listDirectories();
-  const file = await getManualMetadataImage(filePath, directories);
-  const normalizedKeywords = parseKeywordText(keywordText);
-  const updatedAt = new Date().toISOString();
-  if (capability.canAIIndex) {
-    await upsertImageManualMetadata(file, caption.trim(), normalizedKeywords, updatedAt);
-  } else {
-    await upsertFileManualKeywords(file, normalizedKeywords, updatedAt);
-  }
-  return true;
-});
-
-ipcMain.handle("index:updateKeywordsBatch", async (event, request: KeywordBatchUpdateRequest): Promise<KeywordBatchUpdateResult> => {
-  const totalCount = Array.isArray(request?.targets) ? request.targets.length : 0;
-  const normalizedKeywordText = typeof request?.targetKeywordText === "string"
-    ? formatKeywordText(parseKeywordText(request.targetKeywordText))
-    : "";
-  const failureResult = (error: unknown): KeywordBatchUpdateResult => ({
-    success: false,
-    totalCount,
-    failedCount: totalCount,
-    errorMessage: error instanceof Error ? error.message : t("error.batchKeywordFailed"),
-    normalizedKeywordText
-  });
-
-  try {
-    if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
-      throw new Error(t("error.invalidBatchKeywordSource"));
-    }
-    if (!Array.isArray(request.targets) || request.targets.length === 0) {
-      throw new Error(t("error.noBatchKeywordSelection"));
-    }
-    if (!Array.isArray(request.initialCommonKeywords) || typeof request.targetKeywordText !== "string") {
-      throw new Error(t("error.invalidBatchKeywordParameters"));
-    }
-
-    const seenTargets = new Set<string>();
-    const directories = await listDirectories();
-    const targets = await Promise.all(request.targets.map(async (target) => {
-      if (typeof target?.filePath !== "string" || !target.filePath.trim()) {
-        throw new Error(t("error.invalidBatchKeywordTarget"));
-      }
-      const filePath = path.resolve(target.filePath);
-      const capability = getFileFormatCapability(path.extname(filePath).toLowerCase());
-      if (!capability?.canSearch) {
-        throw new Error(t("error.unsupportedFile", { path: target.filePath }));
-      }
-      const targetKey = filePath.toLowerCase();
-      if (seenTargets.has(targetKey)) {
-        throw new Error(t("error.duplicateBatchKeywordTarget"));
-      }
-      seenTargets.add(targetKey);
-      return {
-        file: await getManualMetadataImage(filePath, directories),
-        resultKind: capability.canAIIndex ? "visual" as const : "file" as const
-      };
-    }));
-
-    const normalizedTargetKeywords = await updateManualKeywordsBatch(
-      targets,
-      normalizeKeywordList(request.initialCommonKeywords),
-      request.targetKeywordText
-    );
-    return {
-      success: true,
-      totalCount,
-      failedCount: 0,
-      errorMessage: "",
-      normalizedKeywordText: formatKeywordText(normalizedTargetKeywords)
-    };
-  } catch (error) {
-    return failureResult(error);
-  }
+registerManualMetadataIpc({
+  registrar: ipcMain,
+  isBatchSenderAllowed: (event) => Boolean(
+    mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents
+  ),
+  listDirectories,
+  upsertVisualMetadata: upsertImageManualMetadata,
+  upsertFileKeywords: upsertFileManualKeywords,
+  updateKeywordsBatch: updateManualKeywordsBatch,
+  translate: t
 });
 
 registerRecognitionIpc({
