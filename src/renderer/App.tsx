@@ -41,8 +41,8 @@ import { DirectoryAiSettingsRows } from "./settings/DirectoryAiSettingsRows";
 import { AppearanceSettingsSections } from "./settings/AppearanceSettingsSections";
 import { QuickActionSettingsRows } from "./settings/QuickActionSettingsRows";
 import { QuickCommandSettingsRows } from "./settings/QuickCommandSettingsRows";
+import { RuntimeModelSettingsSection } from "./settings/RuntimeModelSettingsSection";
 import { SkimDisplaySettingsRows } from "./settings/SkimDisplaySettingsRows";
-import { SettingsSelect } from "./settings/SettingsSelect";
 import {
   defaultShortcutActions,
   getShortcutFromKeyboardEvent,
@@ -269,41 +269,6 @@ const normalizeAppearanceColors = (appearanceColors?: Partial<AppearanceColors> 
         ? migratedColors.accentColor.toUpperCase()
         : defaultAppearanceColors.accentColor
   };
-};
-
-const getLlamaRuntimeStatusLabel = (settings: LlamaRuntimeSettings) => {
-  if (settings.status === "available") return t("common.available");
-  if (settings.status === "unselected") return t("common.unselected");
-  if (settings.status === "missing_root") return t("runtime.rootMissing");
-  if (settings.status === "missing_server") return t("runtime.noneFound");
-  return t("runtime.selectionMissing");
-};
-
-const getLlamaRuntimeProcessStatusLabel = (state: LlamaRuntimeProcessState) => {
-  if (state.status === "starting") return t("common.starting");
-  if (state.status === "running") return t("common.running");
-  if (state.status === "failed") return t("runtime.startFailed");
-  return t("common.stopped");
-};
-
-const getGgufModelStatusLabel = (
-  settings: GgufModelSettings,
-  processState: LlamaRuntimeProcessState
-) => {
-  const processMatchesSelection = processState.selectedModelId === settings.selectedModelId;
-  if (processMatchesSelection && processState.modelStatus === "loading") return t("common.loading");
-  if (processMatchesSelection && processState.modelStatus === "loaded") return t("common.loaded");
-  if (processMatchesSelection && processState.modelStatus === "load_failed") return t("common.loadFailed");
-  if (settings.status === "unpaired") return t("model.unpaired");
-  if (settings.status === "ready") return t("model.paired");
-  if (settings.status === "selection_missing") return t("model.selectionMissing");
-  if (settings.status === "missing_directory") return t("model.directoryMissing");
-  return t("common.unselected");
-};
-
-const joinDisplayPath = (root: string, relativePath?: string) => {
-  if (!root || !relativePath) return t("common.unselected");
-  return `${root.replace(/[\\/]+$/, "")}\\${relativePath.replace(/\//g, "\\")}`;
 };
 
 const emptySearch: SearchState = {
@@ -4249,35 +4214,12 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [originImageUrl, setOriginImageUrl] = useState<string | null>(null);
   const [originVisible, setOriginVisible] = useState(false);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
-  const runtimeDetailsCollapseTimerRef = useRef<number | null>(null);
   const originSequenceRef = useRef({ count: 0, lastClickAt: 0 });
   const originLoadingRef = useRef(false);
-  const [runtimeDetailsExpanded, setRuntimeDetailsExpanded] = useState(false);
-  const [runtimeDetailsClosing, setRuntimeDetailsClosing] = useState(false);
   const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "downloading" | "cancelling" | "cancelled" | "installing" | "unsupported" | "failed" | "download_failed">("idle");
   const [appUpdateFailureReason, setAppUpdateFailureReason] = useState<"rate_limited" | "network" | "disk_space" | "security" | "incomplete" | "invalid" | "unknown" | null>(null);
   const [appUpdateVersion, setAppUpdateVersion] = useState("");
   const [appUpdateProgress, setAppUpdateProgress] = useState<{ receivedBytes: number; totalBytes: number | null; percent: number | null; completed?: boolean } | null>(null);
-  const selectedGgufModel = ggufModelSettings.models.find((model) => model.id === ggufModelSettings.selectedModelId);
-  const selectedLlamaRuntime = llamaRuntimeSettings.versions.find((runtime) => runtime.version === llamaRuntimeSettings.selectedVersion);
-  const isLlamaRuntimeRunning = llamaRuntimeProcessState.status === "running";
-  const isLlamaRuntimeStarting = llamaRuntimeProcessState.status === "starting";
-  const llamaRuntimeActionDisabled = isChangingLlamaRuntimeState
-    || isLlamaRuntimeStarting
-    || (!isLlamaRuntimeRunning && (llamaRuntimeSettings.status !== "available" || ggufModelSettings.status !== "ready"));
-  const runtimeErrorMessage = llamaRuntimeProcessState.status === "failed"
-    ? llamaRuntimeProcessState.message
-    : llamaRuntimeSettings.status === "missing_root"
-      || llamaRuntimeSettings.status === "missing_server"
-      || llamaRuntimeSettings.status === "selection_missing"
-      ? llamaRuntimeSettings.message
-      : "";
-  const runtimeMessageIsFailure = llamaRuntimeProcessState.status === "failed";
-  const runtimeIsMissing = llamaRuntimeSettings.status === "missing_root"
-    || llamaRuntimeSettings.status === "missing_server"
-    || llamaRuntimeSettings.status === "selection_missing";
-  const runtimeHasMissingPrompt = runtimeIsMissing || Boolean(runtimeErrorMessage);
-  const runtimeStatusLabel = runtimeHasMissingPrompt ? t("runtime.notFound") : getLlamaRuntimeProcessStatusLabel(llamaRuntimeProcessState);
   const cacheStatusValues = {
     count: visualCacheStats.cacheCount,
     size: formatCacheSize(visualCacheStats.totalBytes),
@@ -4294,21 +4236,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           : thumbnailOptimizationStatus.enabled
             ? t("settings.cacheOptimizationReady", cacheStatusValues)
             : t("settings.cacheOptimizationDisabled", cacheStatusValues));
-  const modelErrorMessage = llamaRuntimeProcessState.selectedModelId === ggufModelSettings.selectedModelId
-    && llamaRuntimeProcessState.modelStatus === "load_failed"
-    ? llamaRuntimeProcessState.modelMessage
-    : ggufModelSettings.status === "unpaired"
-      || ggufModelSettings.status === "selection_missing"
-      || ggufModelSettings.status === "missing_directory"
-      ? ggufModelSettings.message
-      : "";
-  const modelMessageIsFailure = llamaRuntimeProcessState.selectedModelId === ggufModelSettings.selectedModelId
-    && llamaRuntimeProcessState.modelStatus === "load_failed";
-  const modelIsMissing = ggufModelSettings.status === "unpaired"
-    || ggufModelSettings.status === "selection_missing"
-    || ggufModelSettings.status === "missing_directory";
-  const modelHasMissingPrompt = modelIsMissing || Boolean(modelErrorMessage);
-  const modelStatusLabel = modelHasMissingPrompt ? t("model.notFound") : getGgufModelStatusLabel(ggufModelSettings, llamaRuntimeProcessState);
   const appUpdateStatusLabel = appUpdateStatus === "checking"
     ? t("settings.updateChecking")
     : appUpdateStatus === "up_to_date"
@@ -4495,29 +4422,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     void revealOrigin();
   };
 
-  const toggleRuntimeDetails = () => {
-    if (runtimeDetailsClosing) {
-      return;
-    }
-    if (!runtimeDetailsExpanded) {
-      setRuntimeDetailsExpanded(true);
-      return;
-    }
-    setRuntimeDetailsClosing(true);
-    const collapseDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
-    runtimeDetailsCollapseTimerRef.current = window.setTimeout(() => {
-      setRuntimeDetailsExpanded(false);
-      setRuntimeDetailsClosing(false);
-      runtimeDetailsCollapseTimerRef.current = null;
-    }, collapseDuration);
-  };
-
-  useEffect(() => () => {
-    if (runtimeDetailsCollapseTimerRef.current !== null) {
-      window.clearTimeout(runtimeDetailsCollapseTimerRef.current);
-    }
-  }, []);
-
   return (
     <>
     <main className="settings-view cap-settings-view" data-settings-view="true" onClick={() => setSelectedIndexStat(null)}>
@@ -4631,149 +4535,26 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           />
         </section>
 
-        <section className="cap-settings-group cap-settings-split cap-settings-group-runtime">
-          <div className="cap-settings-row cap-settings-wide">
-            <span className="cap-settings-label">llama.cpp</span>
-            <span className="cap-settings-value">
-              {runtimeStatusLabel}
-            </span>
-            <SettingsSelect
-              className="cap-settings-select-runtime"
-              value={llamaRuntimeSettings.selectedVersion}
-              disabled={isLoadingLlamaRuntime || isChangingLlamaRuntimeState || llamaRuntimeSettings.versions.length === 0 || llamaRuntimeProcessState.status === "starting" || llamaRuntimeProcessState.status === "running"}
-              ariaLabel={t("settings.selectRuntime")}
-              title={t("settings.selectRuntimeActionHint")}
-              menuStyle={menuStyle}
-              options={[
-                { value: "", label: t("settings.selectVersion") },
-                ...llamaRuntimeSettings.versions.map((runtime) => ({
-                  value: runtime.version,
-                  label: runtime.version
-                }))
-              ]}
-              onChange={onLlamaRuntimeChange}
-            />
-            <button className="cap-settings-pill" type="button" onClick={onRefreshLlamaRuntime} title={t("settings.refreshRuntimeActionHint")} disabled={isLoadingLlamaRuntime}>
-              {t("common.refresh")}
-            </button>
-            <button className="cap-settings-pill" type="button" onClick={isLlamaRuntimeRunning ? onStopLlamaRuntime : onStartLlamaRuntime} title={isLlamaRuntimeRunning ? t("settings.stopServerActionHint") : t("settings.startServerActionHint")} disabled={llamaRuntimeActionDisabled}>
-              {isLlamaRuntimeStarting ? t("common.starting") : isLlamaRuntimeRunning ? t("common.stop") : t("common.start")}
-            </button>
-          </div>
-          {runtimeErrorMessage && !runtimeHasMissingPrompt && <div className={`cap-settings-message cap-settings-wide${runtimeMessageIsFailure ? " is-error" : ""}`}>{runtimeErrorMessage}</div>}
-
-          <div className="cap-settings-row cap-settings-wide">
-            <span className="cap-settings-label">{t("settings.visionModel")}</span>
-            <span className="cap-settings-value">
-              {modelStatusLabel}
-            </span>
-            <SettingsSelect
-              className="cap-settings-select-model"
-              value={ggufModelSettings.selectedModelId}
-              disabled={isLoadingGgufModels || isChangingLlamaRuntimeState || ggufModelSettings.models.length === 0 || llamaRuntimeProcessState.status === "starting" || llamaRuntimeProcessState.status === "running"}
-              ariaLabel={t("settings.selectVisionModel")}
-              title={t("settings.selectVisionModelActionHint")}
-              menuStyle={menuStyle}
-              options={[
-                { value: "", label: t("settings.selectVisionModel") },
-                ...ggufModelSettings.models.map((model) => ({
-                  value: model.id,
-                  label: model.name
-                }))
-              ]}
-              onChange={onGgufModelChange}
-            />
-            <button className="cap-settings-pill" type="button" onClick={onRefreshGgufModels} title={t("settings.refreshGgufActionHint")} disabled={isLoadingGgufModels || llamaRuntimeProcessState.status === "starting"}>
-              {isLoadingGgufModels ? t("common.refreshing") : t("common.refresh")}
-            </button>
-          </div>
-          {modelErrorMessage && !modelHasMissingPrompt && <div className={`cap-settings-message cap-settings-wide${modelMessageIsFailure ? " is-error" : ""}`}>{modelErrorMessage}</div>}
-
-          <div className="cap-settings-row">
-            <span className="cap-settings-label">{t("settings.versionUpdate")}</span>
-            <span className="cap-settings-value">
-              {appUpdateStatusLabel}
-            </span>
-            <button
-              className="cap-settings-pill"
-              type="button"
-              onClick={() => void handleAppUpdateAction()}
-              title={appUpdateButtonHint}
-              disabled={appUpdateStatus === "checking" || appUpdateStatus === "cancelling" || appUpdateStatus === "installing"}
-            >
-              {appUpdateButtonLabel}
-            </button>
-          </div>
-
-          <details className="cap-settings-details cap-settings-row cap-settings-wide" open={runtimeDetailsExpanded}>
-            <summary
-              aria-expanded={runtimeDetailsExpanded}
-              title={runtimeDetailsExpanded ? t("settings.collapseDetailsHint") : t("settings.expandDetailsHint")}
-              onClick={(event) => {
-                event.preventDefault();
-                toggleRuntimeDetails();
-              }}
-            >
-              {t("settings.details")}
-            </summary>
-            {runtimeDetailsExpanded && (
-              <div className={`cap-settings-expandable-shell${runtimeDetailsClosing ? " is-closing" : ""}`}>
-                <div className="cap-settings-expandable-inner">
-                  <div className="ai-details-grid">
-              <span>{t("settings.runtimeFileStatus")}</span>
-              <strong>{getLlamaRuntimeStatusLabel(llamaRuntimeSettings)}</strong>
-              <span>{t("settings.runtimeDirectory")}</span>
-              <strong title={llamaRuntimeSettings.runtimeRoot}>{llamaRuntimeSettings.runtimeRoot || t("common.notDetected")}</strong>
-              <span>llama-server</span>
-              <strong title={selectedLlamaRuntime?.serverPath}>{selectedLlamaRuntime?.serverPath || t("common.unselected")}</strong>
-              {isLlamaRuntimeRunning && llamaRuntimeProcessState.port !== null && (
-                <>
-                  <span>{t("settings.serviceAddress")}</span>
-                  <strong>{`http://${llamaRuntimeProcessState.host}:${llamaRuntimeProcessState.port}`}</strong>
-                  <span>{t("settings.processPid")}</span>
-                  <strong>{llamaRuntimeProcessState.pid ?? t("common.unknown")}</strong>
-                  <span>{t("settings.runtimeStartedAt")}</span>
-                  <strong>
-                    {llamaRuntimeProcessState.startedAt
-                      ? new Date(llamaRuntimeProcessState.startedAt).toLocaleString()
-                      : t("common.unknown")}
-                  </strong>
-                </>
-              )}
-              <span>{t("settings.runtimeLog")}</span>
-              <strong title={llamaRuntimeProcessState.logPath}>{llamaRuntimeProcessState.logPath || t("common.notCreated")}</strong>
-              <span>{t("settings.modelDirectory")}</span>
-              <strong title={ggufModelSettings.modelsRoot}>{ggufModelSettings.modelsRoot || t("common.notDetected")}</strong>
-              <span>{t("settings.modelPath")}</span>
-              <strong title={joinDisplayPath(ggufModelSettings.modelsRoot, selectedGgufModel?.modelFile.relativePath)}>
-                {joinDisplayPath(ggufModelSettings.modelsRoot, selectedGgufModel?.modelFile.relativePath)}
-              </strong>
-              <span>{t("settings.mmprojFile")}</span>
-              <strong title={joinDisplayPath(ggufModelSettings.modelsRoot, selectedGgufModel?.mmprojFile?.relativePath)}>
-                {joinDisplayPath(ggufModelSettings.modelsRoot, selectedGgufModel?.mmprojFile?.relativePath)}
-              </strong>
-              <span>{t("settings.mainModelInfo")}</span>
-              <strong>
-                {selectedGgufModel
-                  ? `${formatCacheSize(selectedGgufModel.modelFile.size)} / ${new Date(selectedGgufModel.modelFile.modifiedAt).toLocaleString()}`
-                  : t("common.unselected")}
-              </strong>
-              <span>{t("settings.mmprojInfo")}</span>
-              <strong>
-                {selectedGgufModel?.mmprojFile
-                  ? `${formatCacheSize(selectedGgufModel.mmprojFile.size)} / ${new Date(selectedGgufModel.mmprojFile.modifiedAt).toLocaleString()}`
-                  : t("common.unselected")}
-              </strong>
-              <span>{t("settings.modelInventory")}</span>
-              <strong>
-                {`${ggufModelSettings.models.filter((model) => model.loadable).length} / ${ggufModelSettings.files.length}`}
-              </strong>
-                  </div>
-                </div>
-              </div>
-            )}
-          </details>
-        </section>
+        <RuntimeModelSettingsSection
+          menuStyle={menuStyle}
+          llamaRuntimeSettings={llamaRuntimeSettings}
+          llamaRuntimeProcessState={llamaRuntimeProcessState}
+          ggufModelSettings={ggufModelSettings}
+          isLoadingLlamaRuntime={isLoadingLlamaRuntime}
+          isLoadingGgufModels={isLoadingGgufModels}
+          isChangingLlamaRuntimeState={isChangingLlamaRuntimeState}
+          appUpdateStatusLabel={appUpdateStatusLabel}
+          appUpdateButtonLabel={appUpdateButtonLabel}
+          appUpdateButtonHint={appUpdateButtonHint}
+          appUpdateButtonDisabled={appUpdateStatus === "checking" || appUpdateStatus === "cancelling" || appUpdateStatus === "installing"}
+          onLlamaRuntimeChange={onLlamaRuntimeChange}
+          onRefreshLlamaRuntime={onRefreshLlamaRuntime}
+          onGgufModelChange={onGgufModelChange}
+          onRefreshGgufModels={onRefreshGgufModels}
+          onStartLlamaRuntime={onStartLlamaRuntime}
+          onStopLlamaRuntime={onStopLlamaRuntime}
+          onAppUpdateAction={() => void handleAppUpdateAction()}
+        />
 
         <div className="cap7ce-signature" aria-label="Cap7CE">
           <SvgIcon svg={iconSignatureCap7CESvg} className="cap-svg-icon cap-signature-svg-icon" />
