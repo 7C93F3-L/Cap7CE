@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4201
+    "electron/main.ts": 4188
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -10,7 +10,6 @@
     "app:checkForUpdates",
     "app:downloadUpdate",
     "app:cancelUpdateDownload",
-    "directories:delete",
     "skim:listLocations",
     "skim:resolveDirectoryPath",
     "skim:read",

@@ -4,8 +4,8 @@ const { registerDirectoryManagementIpc } = require("../dist-electron/directoryMa
 const run = async () => {
   const handles = new Map();
   const calls = [];
-  const originalDirectories = [{ id: "one", name: "Original", indexedCount: 1 }];
-  const renamedDirectories = [{ id: "one", name: "Renamed", indexedCount: 1 }];
+  const originalDirectories = [{ id: "one", name: "Original", path: "C:\\Original", indexedCount: 1 }];
+  const renamedDirectories = [{ id: "one", name: "Renamed", path: "C:\\Original", indexedCount: 1 }];
   const addedDirectory = { id: "added", name: "Added", indexedCount: 0 };
   registerDirectoryManagementIpc({
     registrar: {
@@ -47,7 +47,26 @@ const run = async () => {
     applyDirectoryFileCounts: async (counts) => {
       calls.push(["applyCounts", counts]);
       return originalDirectories;
-    }
+    },
+    pauseThumbnailOptimization: async (reason) => calls.push(["pauseOptimization", reason]),
+    pauseThumbnailRendering: async (reason) => calls.push(["pauseRendering", reason]),
+    waitForThumbnailDiscovery: async () => calls.push(["waitDiscovery"]),
+    invalidateSearchSnapshot: (directoryIds) => calls.push(["invalidate", directoryIds]),
+    deleteDirectoryIndex: async (directoryId) => {
+      calls.push(["deleteIndex", directoryId]);
+      if (directoryId === "fail") throw new Error("delete failed");
+      return ["C:\\Original\\image.png"];
+    },
+    discardOptimizationCandidates: (directoryPath) => calls.push(["discardOptimization", directoryPath]),
+    discardQueuedRenders: (directoryPath) => calls.push(["discardRenders", directoryPath]),
+    deleteDirectoryThumbnails: async (directoryPath, filePaths) => calls.push(["deleteDirectoryThumbnails", directoryPath, filePaths]),
+    deleteFileThumbnails: async (filePaths) => calls.push(["deleteFileThumbnails", filePaths]),
+    deleteDirectory: async (directoryId) => {
+      calls.push(["deleteDirectory", directoryId]);
+      return [];
+    },
+    resumeThumbnailRendering: (reason) => calls.push(["resumeRendering", reason]),
+    resumeThumbnailOptimization: (reason) => calls.push(["resumeOptimization", reason])
   });
 
   assert.deepEqual([...handles.keys()], [
@@ -55,14 +74,15 @@ const run = async () => {
     "directories:updateName",
     "directories:selectAndAdd",
     "directories:addCandidates",
-    "directories:refreshFileCounts"
+    "directories:refreshFileCounts",
+    "directories:delete"
   ]);
   const event = { sender: { id: 1 } };
   assert.deepEqual(await handles.get("directories:list")(event), [
-    { id: "one", name: "Original", indexedCount: 7 }
+    { id: "one", name: "Original", path: "C:\\Original", indexedCount: 7 }
   ]);
   assert.deepEqual(await handles.get("directories:updateName")(event, "one", "Renamed"), [
-    { id: "one", name: "Renamed", indexedCount: 7 }
+    { id: "one", name: "Renamed", path: "C:\\Original", indexedCount: 7 }
   ]);
   assert.deepEqual(await handles.get("directories:selectAndAdd")(event), {
     cancelled: false,
@@ -83,6 +103,7 @@ const run = async () => {
     scannedAt: "scan-time",
     summaries: [{ id: "one", fileCount: 9 }]
   };
+  assert.deepEqual(await handles.get("directories:delete")(event, "one"), []);
   assert.deepEqual(calls, [
     ["list"],
     ["decorate", originalDirectories],
@@ -98,7 +119,31 @@ const run = async () => {
     ["seed", originalDirectories, scanResult],
     ["write", ["one"], scanResult.images, "scan-time", scanResult.files],
     ["applyCounts", { one: 9 }],
-    ["decorate", originalDirectories]
+    ["decorate", originalDirectories],
+    ["list"],
+    ["pauseOptimization", "directory-delete:one"],
+    ["pauseRendering", "directory-delete:one"],
+    ["waitDiscovery"],
+    ["invalidate", ["one"]],
+    ["deleteIndex", "one"],
+    ["discardOptimization", "C:\\Original"],
+    ["discardRenders", "C:\\Original"],
+    ["deleteDirectoryThumbnails", "C:\\Original", ["C:\\Original\\image.png"]],
+    ["deleteDirectory", "one"],
+    ["decorate", []],
+    ["resumeRendering", "directory-delete:one"],
+    ["resumeOptimization", "directory-delete:one"]
+  ]);
+  await assert.rejects(handles.get("directories:delete")(event, "fail"), /delete failed/);
+  assert.deepEqual(calls.slice(-8), [
+    ["list"],
+    ["pauseOptimization", "directory-delete:fail"],
+    ["pauseRendering", "directory-delete:fail"],
+    ["waitDiscovery"],
+    ["invalidate", ["fail"]],
+    ["deleteIndex", "fail"],
+    ["resumeRendering", "directory-delete:fail"],
+    ["resumeOptimization", "directory-delete:fail"]
   ]);
 
   const cancelledHandles = new Map();
@@ -129,7 +174,19 @@ const run = async () => {
     },
     seedScanSnapshot: () => undefined,
     writeScannedFiles: async () => undefined,
-    applyDirectoryFileCounts: async () => []
+    applyDirectoryFileCounts: async () => [],
+    pauseThumbnailOptimization: async () => undefined,
+    pauseThumbnailRendering: async () => undefined,
+    waitForThumbnailDiscovery: async () => undefined,
+    invalidateSearchSnapshot: () => undefined,
+    deleteDirectoryIndex: async () => [],
+    discardOptimizationCandidates: () => undefined,
+    discardQueuedRenders: () => undefined,
+    deleteDirectoryThumbnails: async () => undefined,
+    deleteFileThumbnails: async () => undefined,
+    deleteDirectory: async () => [],
+    resumeThumbnailRendering: () => undefined,
+    resumeThumbnailOptimization: () => undefined
   });
   assert.deepEqual(await cancelledHandles.get("directories:selectAndAdd")(event), {
     cancelled: true,

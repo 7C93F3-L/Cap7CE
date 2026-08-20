@@ -3448,7 +3448,21 @@ registerDirectoryManagementIpc({
   scanDirectories: scanImageDirectories,
   seedScanSnapshot: (directories, scanResult) => searchScanSnapshotService.seed(directories, scanResult),
   writeScannedFiles: writeScannedImagesToIndex,
-  applyDirectoryFileCounts
+  applyDirectoryFileCounts,
+  pauseThumbnailOptimization,
+  pauseThumbnailRendering,
+  waitForThumbnailDiscovery: async () => {
+    await thumbnailOptimizationDiscoveryQueue;
+  },
+  invalidateSearchSnapshot: (directoryIds) => searchScanSnapshotService.invalidate(directoryIds),
+  deleteDirectoryIndex: deleteDirectoryImages,
+  discardOptimizationCandidates: discardThumbnailOptimizationCandidatesForDirectory,
+  discardQueuedRenders: discardQueuedThumbnailRendersForDirectory,
+  deleteDirectoryThumbnails: deleteThumbnailsForDirectory,
+  deleteFileThumbnails: deleteThumbnailsForImages,
+  deleteDirectory,
+  resumeThumbnailRendering,
+  resumeThumbnailOptimization
 });
 
 interface SkimReadTaskState {
@@ -3714,31 +3728,6 @@ ipcMain.handle("skim:cancelFileInfoFolderStats", (event, taskId: unknown) => {
   activeFileInfoFolderStatsTask.cancelled = true;
   activeFileInfoFolderStatsTask = null;
   return true;
-});
-
-ipcMain.handle("directories:delete", async (_event, id: string) => {
-  const optimizationPauseReason = `directory-delete:${id}`;
-  const renderingPauseReason = `directory-delete:${id}`;
-  const directory = (await listDirectories()).find((item) => item.id === id);
-  await pauseThumbnailOptimization(optimizationPauseReason);
-  await pauseThumbnailRendering(renderingPauseReason);
-  try {
-    await thumbnailOptimizationDiscoveryQueue;
-    searchScanSnapshotService.invalidate([id]);
-    const deletedFilePaths = await deleteDirectoryImages(id);
-    if (directory) {
-      discardThumbnailOptimizationCandidatesForDirectory(directory.path);
-      discardQueuedThumbnailRendersForDirectory(directory.path);
-      await deleteThumbnailsForDirectory(directory.path, deletedFilePaths);
-    } else {
-      await deleteThumbnailsForImages(deletedFilePaths);
-    }
-    const directories = await deleteDirectory(id);
-    return withSqliteImageCounts(directories);
-  } finally {
-    resumeThumbnailRendering(renderingPauseReason);
-    resumeThumbnailOptimization(optimizationPauseReason);
-  }
 });
 
 ipcMain.handle("scan:allDirectories", async () => {

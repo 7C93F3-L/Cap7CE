@@ -20,6 +20,18 @@ export interface DirectoryManagementIpcDependencies {
     files: ScannedFile[]
   ) => Promise<unknown>;
   applyDirectoryFileCounts: (counts: Record<string, number>) => Promise<PersistedDirectory[]>;
+  pauseThumbnailOptimization: (reason: string) => Promise<void>;
+  pauseThumbnailRendering: (reason: string) => Promise<void>;
+  waitForThumbnailDiscovery: () => Promise<void>;
+  invalidateSearchSnapshot: (directoryIds: string[]) => void;
+  deleteDirectoryIndex: (directoryId: string) => Promise<string[]>;
+  discardOptimizationCandidates: (directoryPath: string) => void;
+  discardQueuedRenders: (directoryPath: string) => void;
+  deleteDirectoryThumbnails: (directoryPath: string, filePaths: string[]) => Promise<void>;
+  deleteFileThumbnails: (filePaths: string[]) => Promise<void>;
+  deleteDirectory: (directoryId: string) => Promise<PersistedDirectory[]>;
+  resumeThumbnailRendering: (reason: string) => void;
+  resumeThumbnailOptimization: (reason: string) => void;
 }
 
 const normalizeDirectoryAddRequest = (value: unknown): DirectoryAddRequest => {
@@ -44,7 +56,19 @@ export const registerDirectoryManagementIpc = ({
   scanDirectories,
   seedScanSnapshot,
   writeScannedFiles,
-  applyDirectoryFileCounts
+  applyDirectoryFileCounts,
+  pauseThumbnailOptimization,
+  pauseThumbnailRendering,
+  waitForThumbnailDiscovery,
+  invalidateSearchSnapshot,
+  deleteDirectoryIndex,
+  discardOptimizationCandidates,
+  discardQueuedRenders,
+  deleteDirectoryThumbnails,
+  deleteFileThumbnails,
+  deleteDirectory,
+  resumeThumbnailRendering,
+  resumeThumbnailOptimization
 }: DirectoryManagementIpcDependencies): void => {
   const decorateDirectoryAddResult = async (result: DirectoryAddResult): Promise<DirectoryAddResult> => ({
     ...result,
@@ -110,6 +134,32 @@ export const registerDirectoryManagementIpc = ({
             scanResult.summaries.map((summary) => [summary.id, summary.fileCount])
           );
           return decorateDirectories(await applyDirectoryFileCounts(counts));
+        }
+      },
+      {
+        kind: "handle",
+        channel: "directories:delete",
+        listener: async (_event, directoryId: string) => {
+          const pauseReason = `directory-delete:${directoryId}`;
+          const directory = (await listDirectories()).find((item) => item.id === directoryId);
+          await pauseThumbnailOptimization(pauseReason);
+          await pauseThumbnailRendering(pauseReason);
+          try {
+            await waitForThumbnailDiscovery();
+            invalidateSearchSnapshot([directoryId]);
+            const deletedFilePaths = await deleteDirectoryIndex(directoryId);
+            if (directory) {
+              discardOptimizationCandidates(directory.path);
+              discardQueuedRenders(directory.path);
+              await deleteDirectoryThumbnails(directory.path, deletedFilePaths);
+            } else {
+              await deleteFileThumbnails(deletedFilePaths);
+            }
+            return decorateDirectories(await deleteDirectory(directoryId));
+          } finally {
+            resumeThumbnailRendering(pauseReason);
+            resumeThumbnailOptimization(pauseReason);
+          }
         }
       }
     ]
