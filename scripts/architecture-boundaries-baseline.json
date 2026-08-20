@@ -1,7 +1,8 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 4521,
+    "src/renderer/styles.css": 4171,
+    "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,
     "electron/main.ts": 4075
   },
