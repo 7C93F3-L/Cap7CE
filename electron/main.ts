@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type OpenDialogOptions } from "electron";
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -13,6 +13,7 @@ import { applyDirectoryFileCounts, applyDirectoryScanSummaries, deleteDirectory,
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
 import { startNativeFileDrag } from "./fileDragService";
+import { registerFileIpc } from "./fileIpc";
 import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
@@ -3285,16 +3286,8 @@ ipcMain.on("preview:contentSize", (event, size: PreviewContentSize) => {
   previewWindow.focus();
 });
 
-ipcMain.handle("file:open", async (_event, filePath: string) => {
-  return shell.openPath(filePath);
-});
-
-ipcMain.handle("file:showInFolder", (_event, filePath: string) => {
-  shell.showItemInFolder(filePath);
-});
-
-ipcMain.handle("file:copyPaths", (event, filePaths: unknown) => {
-  const trustedSender = (
+const isFileClipboardSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
+  (
     mainWindow
     && !mainWindow.isDestroyed()
     && event.sender === mainWindow.webContents
@@ -3302,66 +3295,22 @@ ipcMain.handle("file:copyPaths", (event, filePaths: unknown) => {
     previewWindow
     && !previewWindow.isDestroyed()
     && event.sender === previewWindow.webContents
-  );
-  if (!trustedSender) return 0;
-  const paths = normalizeFilePathsForClipboard(filePaths);
-  if (paths.length > 0) clipboard.writeText(paths.join("\r\n"));
-  return paths.length;
-});
+  )
+);
 
-ipcMain.handle("file:copyItems", async (event, filePaths: unknown) => {
-  const trustedSender = (
-    mainWindow
-    && !mainWindow.isDestroyed()
-    && event.sender === mainWindow.webContents
-  ) || (
-    previewWindow
-    && !previewWindow.isDestroyed()
-    && event.sender === previewWindow.webContents
-  );
-  if (!trustedSender) return 0;
-  try {
-    return await copyFileItemsToClipboard(filePaths);
-  } catch (error) {
-    console.warn("[file-clipboard] failed to copy file items", {
-      message: error instanceof Error ? error.message : String(error)
-    });
-    return 0;
-  }
-});
-
-ipcMain.handle("file:moveToTrash", async (_event, filePaths: unknown) => {
-  const requestedPaths = Array.isArray(filePaths)
-    ? filePaths.filter((filePath): filePath is string => typeof filePath === "string" && filePath.trim().length > 0)
-    : [];
-  if (!app.isPackaged) {
-    console.debug("[file-delete:ipc] request", { requestedPaths });
-  }
-  try {
-    const result = await moveIndexedImagesToTrash(requestedPaths);
-    if (!app.isPackaged) {
-      console.debug("[file-delete:ipc] result", result);
-    }
-    return result;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : t("error.fileDeleteServiceFailed");
-    console.warn("[file-delete:ipc] failed before a result was produced", error);
-    return {
-      success: false,
-      totalCount: requestedPaths.length,
-      deletedPaths: [],
-      failedItems: requestedPaths.map((filePath) => ({ path: filePath, error: message }))
-    };
-  }
-});
-
-ipcMain.on("file:startDrag", (event, filePaths: string[]) => {
-  try {
-    startNativeFileDrag(event.sender, filePaths);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : t("error.fileDragStartFailed");
-    console.warn("[file-drag] failed", { message });
-  }
+registerFileIpc({
+  registrar: ipcMain,
+  isPackaged: app.isPackaged,
+  isClipboardSenderAllowed: isFileClipboardSenderAllowed,
+  openPath: (filePath) => shell.openPath(filePath),
+  showItemInFolder: (filePath) => shell.showItemInFolder(filePath),
+  normalizeClipboardPaths: normalizeFilePathsForClipboard,
+  writeClipboardText: (text) => clipboard.writeText(text),
+  copyFileItems: copyFileItemsToClipboard,
+  moveFilesToTrash: moveIndexedImagesToTrash,
+  startFileDrag: startNativeFileDrag,
+  translateFileDeleteServiceFailure: () => t("error.fileDeleteServiceFailed"),
+  translateFileDragStartFailure: () => t("error.fileDragStartFailed")
 });
 
 const withSqliteImageCounts = async (directories: PersistedDirectory[]) => {

@@ -1,7 +1,7 @@
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 
-type IpcInvokeListener = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown;
-type IpcEventListener = (event: IpcMainEvent, ...args: unknown[]) => void;
+type IpcInvokeListener = (event: IpcMainInvokeEvent, ...args: any[]) => unknown;
+type IpcEventListener = (event: IpcMainEvent, ...args: any[]) => void;
 
 export interface IpcRegistrar {
   handle(channel: string, listener: IpcInvokeListener): void;

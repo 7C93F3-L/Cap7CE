@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4419
+    "electron/main.ts": 4368
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -10,12 +10,6 @@
     "app:checkForUpdates",
     "app:downloadUpdate",
     "app:cancelUpdateDownload",
-    "file:open",
-    "file:showInFolder",
-    "file:copyPaths",
-    "file:copyItems",
-    "file:moveToTrash",
-    "file:startDrag",
     "directories:list",
     "directories:selectAndAdd",
     "directories:addCandidates",
