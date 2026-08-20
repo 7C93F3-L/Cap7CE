@@ -1,0 +1,103 @@
+.cap-window-control-rail {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 50;
+  width: var(--window-control-rail-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--window-control-rail-top) 0 5px;
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+.cap-window-controls {
+  position: static;
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+.cap-window-drag-spacer {
+  width: 100%;
+  min-height: 1px;
+  flex: 1 1 auto;
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+.cap-skim-toggle,
+.cap-settings-toggle {
+  position: static;
+  width: var(--window-control-rail-width);
+  height: 30px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--radius-control);
+  color: var(--window-control-color);
+  background: transparent;
+  transition: color 210ms ease-out;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.cap-skim-toggle:hover,
+.cap-settings-toggle:hover,
+.cap-skim-toggle[aria-pressed="true"],
+.cap-settings-toggle[aria-pressed="true"] {
+  color: var(--window-control-hover);
+  background: transparent;
+}
+
+.cap-skim-toggle:hover,
+.cap-settings-toggle:hover {
+  transition-duration: 210ms;
+}
+
+.cap-skim-toggle {
+  margin-top: auto;
+}
+
+.cap-settings-toggle {
+  margin-top: 4px;
+}
+
+.cap-window-svg-icon,
+.cap-settings-svg-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.cap-window-button {
+  width: var(--window-control-rail-width);
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--radius-control);
+  color: var(--window-control-color);
+  background: transparent;
+  transition: color 210ms ease-out;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.cap-window-button:hover {
+  background: transparent;
+}
+
+.cap-window-button:hover {
+  color: var(--window-control-hover);
+  transition-duration: 210ms;
+}
+
+.cap-window-button[aria-pressed="true"] {
+  background: transparent;
+}

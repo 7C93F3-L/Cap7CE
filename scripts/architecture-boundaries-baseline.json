@@ -1,7 +1,8 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 2193,
+    "src/renderer/styles.css": 2089,
+    "src/renderer/WindowControlRail.css": 104,
     "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,
     "src/renderer/dialogs/KeywordEditorCard.css": 108,
