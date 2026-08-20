@@ -29,6 +29,9 @@ export interface PreferenceIpcDependencies {
   applyLaunchAtLogin: (enabled: boolean) => void;
   updateSystemNotifications: PreferenceUpdater<boolean>;
   applySystemNotifications: (enabled: boolean) => void;
+  updateAutoCacheOptimization: PreferenceUpdater<boolean>;
+  setAutoCacheOptimizationEnabled: (enabled: boolean) => Promise<void>;
+  scheduleAutoCacheOptimization: () => Promise<void>;
 }
 
 export const registerPreferenceIpc = ({
@@ -52,7 +55,10 @@ export const registerPreferenceIpc = ({
   updateLaunchAtLogin,
   applyLaunchAtLogin,
   updateSystemNotifications,
-  applySystemNotifications
+  applySystemNotifications,
+  updateAutoCacheOptimization,
+  setAutoCacheOptimizationEnabled,
+  scheduleAutoCacheOptimization
 }: PreferenceIpcDependencies): void => {
   registerIpcDomain({
     registrar,
@@ -171,6 +177,18 @@ export const registerPreferenceIpc = ({
         listener: async (_event, nextEnabled: boolean) => {
           const preferences = await updateSystemNotifications(Boolean(nextEnabled));
           applySystemNotifications(preferences.systemNotificationsEnabled);
+          return preferences;
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateAutoCacheOptimization",
+        listener: async (_event, nextEnabled: boolean) => {
+          const preferences = await updateAutoCacheOptimization(Boolean(nextEnabled));
+          await setAutoCacheOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
+          if (preferences.autoCacheOptimizationEnabled) {
+            await scheduleAutoCacheOptimization();
+          }
           return preferences;
         }
       }

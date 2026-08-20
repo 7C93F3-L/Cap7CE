@@ -8,7 +8,8 @@ const run = async () => {
     updatedAt: "test",
     sortPreference: { sortField: "modified_at", sortDirection: "desc" },
     launchAtLogin: true,
-    systemNotificationsEnabled: false
+    systemNotificationsEnabled: false,
+    autoCacheOptimizationEnabled: true
   };
   const capture = (name) => async (value) => {
     calls.push([name, value]);
@@ -39,7 +40,10 @@ const run = async () => {
     updateLaunchAtLogin: capture("launchAtLogin"),
     applyLaunchAtLogin: (enabled) => calls.push(["applyLaunchAtLogin", enabled]),
     updateSystemNotifications: capture("systemNotifications"),
-    applySystemNotifications: (enabled) => calls.push(["applySystemNotifications", enabled])
+    applySystemNotifications: (enabled) => calls.push(["applySystemNotifications", enabled]),
+    updateAutoCacheOptimization: capture("autoCacheOptimization"),
+    setAutoCacheOptimizationEnabled: async (enabled) => calls.push(["setAutoCacheOptimizationEnabled", enabled]),
+    scheduleAutoCacheOptimization: async () => calls.push(["scheduleAutoCacheOptimization"])
   });
 
   assert.deepEqual([...handles.keys()], [
@@ -58,7 +62,8 @@ const run = async () => {
     "preferences:updateEdgeSnap",
     "preferences:updateStandbyLineVisible",
     "preferences:updateLaunchAtLogin",
-    "preferences:updateSystemNotifications"
+    "preferences:updateSystemNotifications",
+    "preferences:updateAutoCacheOptimization"
   ]);
 
   const event = { sender: { id: 1 } };
@@ -93,6 +98,7 @@ const run = async () => {
   await handles.get("preferences:updateStandbyLineVisible")(event, 1);
   await handles.get("preferences:updateLaunchAtLogin")(event, "enabled");
   await handles.get("preferences:updateSystemNotifications")(event, 0);
+  await handles.get("preferences:updateAutoCacheOptimization")(event, 0);
 
   assert.deepEqual(calls, [
     ["skimSort", skimSort],
@@ -120,8 +126,46 @@ const run = async () => {
     ["launchAtLogin", true],
     ["applyLaunchAtLogin", response.launchAtLogin],
     ["systemNotifications", false],
-    ["applySystemNotifications", response.systemNotificationsEnabled]
+    ["applySystemNotifications", response.systemNotificationsEnabled],
+    ["autoCacheOptimization", false],
+    ["setAutoCacheOptimizationEnabled", response.autoCacheOptimizationEnabled],
+    ["scheduleAutoCacheOptimization"]
   ]);
+
+  const disabledResponse = { ...response, autoCacheOptimizationEnabled: false };
+  const disabledCalls = [];
+  const disabledHandles = new Map();
+  registerPreferenceIpc({
+    registrar: {
+      handle: (channel, listener) => disabledHandles.set(channel, listener),
+      on: () => undefined
+    },
+    getPreferences: async () => disabledResponse,
+    updateSkimSort: async () => disabledResponse,
+    updateOperationHints: async () => disabledResponse,
+    updateCommandEnabled: async () => disabledResponse,
+    updateSearchLabelVisibility: async () => disabledResponse,
+    updateSkimDisplay: async () => disabledResponse,
+    updateSkimSidebarFolders: async () => disabledResponse,
+    updateSkimSystemLocationsCollapsed: async () => disabledResponse,
+    updateTheme: async () => disabledResponse,
+    refreshAppearance: () => undefined,
+    applyLanguage: async () => disabledResponse,
+    updateSort: async () => disabledResponse,
+    applyThumbnailSort: () => undefined,
+    updateAppearanceColors: async () => disabledResponse,
+    setEdgeSnapEnabled: async () => disabledResponse,
+    setStandbyLineVisible: async () => disabledResponse,
+    updateLaunchAtLogin: async () => disabledResponse,
+    applyLaunchAtLogin: () => undefined,
+    updateSystemNotifications: async () => disabledResponse,
+    applySystemNotifications: () => undefined,
+    updateAutoCacheOptimization: async () => disabledResponse,
+    setAutoCacheOptimizationEnabled: async (enabled) => disabledCalls.push(["set", enabled]),
+    scheduleAutoCacheOptimization: async () => disabledCalls.push(["schedule"])
+  });
+  await disabledHandles.get("preferences:updateAutoCacheOptimization")(event, true);
+  assert.deepEqual(disabledCalls, [["set", false]]);
 
   console.log("Preference IPC integration tests passed.");
 };

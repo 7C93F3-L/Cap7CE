@@ -4082,17 +4082,13 @@ registerPreferenceIpc({
   updateSystemNotifications: updateSystemNotificationsPreference,
   applySystemNotifications: (enabled) => {
     systemNotificationsEnabled = enabled;
-  }
-});
-
-ipcMain.handle("preferences:updateAutoCacheOptimization", async (_event, nextEnabled: boolean) => {
-  const preferences = await updateAutoCacheOptimizationPreference(Boolean(nextEnabled));
-  await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
-  if (preferences.autoCacheOptimizationEnabled) {
+  },
+  updateAutoCacheOptimization: updateAutoCacheOptimizationPreference,
+  setAutoCacheOptimizationEnabled: setThumbnailOptimizationEnabled,
+  scheduleAutoCacheOptimization: async () => {
     scheduleDirectoryThumbnailOptimization(await listDirectories());
     void scheduleRecognizedModelInputCacheCleanup();
   }
-  return preferences;
 });
 
 ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, nextQuickActionGlobalEnabled: boolean) => {
