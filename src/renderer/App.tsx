@@ -5,6 +5,7 @@ import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
+import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
@@ -426,8 +427,7 @@ const App = () => {
   const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [lastNormalBounds, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
-  const [shellViewportHeight, setShellViewportHeight] = useState(() => window.innerHeight);
-  const [miniStandardHeight, setMiniStandardHeight] = useState<number | null>(null);
+  const { shellViewportHeight, miniStandardHeight } = useShellViewportMetrics();
   const [filesPendingDelete, setFilesPendingDelete] = useState<ImageIndexItem[]>([]);
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [deleteFilesFeedback, setDeleteFilesFeedback] = useState<DeleteFilesFeedback | null>(null);
@@ -766,23 +766,6 @@ const App = () => {
     }, 80);
     return () => window.clearTimeout(timer);
   }, [shellState]);
-
-  useEffect(() => {
-    const syncShellViewportHeight = () => setShellViewportHeight(window.innerHeight);
-    syncShellViewportHeight();
-    window.addEventListener("resize", syncShellViewportHeight);
-
-    const getShellLayoutMetrics = window.imageEverything?.window.getShellLayoutMetrics;
-    if (getShellLayoutMetrics) {
-      void getShellLayoutMetrics().then((metrics) => {
-        if (Number.isFinite(metrics.miniStandardHeight)) {
-          setMiniStandardHeight(metrics.miniStandardHeight);
-        }
-      });
-    }
-
-    return () => window.removeEventListener("resize", syncShellViewportHeight);
-  }, []);
 
   const closeNavigationOverlays = useCallback(() => {
     setContextMenu(null);
