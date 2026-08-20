@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4343
+    "electron/main.ts": 4309
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -39,24 +39,16 @@
     "index:qualityStats",
     "index:continueRecognition",
     "index:cancelRecognition",
-    "preferences:get",
     "preferences:updateTheme",
     "preferences:updateLanguage",
     "preferences:updateSort",
-    "preferences:updateSkimSort",
     "preferences:updateAppearanceColors",
     "preferences:updateEdgeSnap",
     "preferences:updateStandbyLineVisible",
     "preferences:updateLaunchAtLogin",
     "preferences:updateSystemNotifications",
-    "preferences:updateOperationHints",
     "preferences:updateAutoCacheOptimization",
     "preferences:updateQuickActionGlobalEnabled",
-    "preferences:updateCommandEnabled",
-    "preferences:updateSearchLabelVisibility",
-    "preferences:updateSkimDisplay",
-    "preferences:updateSkimSidebarFolders",
-    "preferences:updateSkimSystemLocationsCollapsed",
     "preferences:updateShortcutActions",
     "preferences:shortcutAvailability",
     "preferences:beginShortcutCapture",

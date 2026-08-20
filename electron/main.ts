@@ -25,6 +25,7 @@ import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
+import { registerPreferenceIpc } from "./preferenceIpc";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getImageIndexQualityStats, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords, upsertImageManualMetadata, writeScannedImagesToIndex } from "./sqliteImageIndex";
 import { cleanupMissingIndexedImages } from "./staleImageCleanupService";
 import { cleanupMissingIndexedFiles } from "./staleFileCleanupService";
@@ -4056,8 +4057,16 @@ registerRuntimeModelIpc({
   translateModelSwitchBlocked: () => t("error.stopServerBeforeModelSwitch")
 });
 
-ipcMain.handle("preferences:get", () => {
-  return getUserPreferences();
+registerPreferenceIpc({
+  registrar: ipcMain,
+  getPreferences: getUserPreferences,
+  updateSkimSort: updateSkimSortPreference,
+  updateOperationHints: updateOperationHintsPreference,
+  updateCommandEnabled: updateCommandEnabledPreference,
+  updateSearchLabelVisibility: updateSearchLabelVisibilityPreference,
+  updateSkimDisplay: updateSkimDisplayPreference,
+  updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
+  updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference
 });
 
 ipcMain.handle("preferences:updateTheme", async (_event, themePreference: "system" | "light" | "dark") => {
@@ -4077,10 +4086,6 @@ ipcMain.handle("preferences:updateSort", async (_event, sortPreference: { sortFi
   const preferences = await updateSortPreference(sortPreference);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   return preferences;
-});
-
-ipcMain.handle("preferences:updateSkimSort", (_event, skimSortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => {
-  return updateSkimSortPreference(skimSortPreference);
 });
 
 ipcMain.handle("preferences:updateAppearanceColors", async (_event, appearanceColors: { themeColor: string; accentColor: string }) => {
@@ -4107,10 +4112,6 @@ ipcMain.handle("preferences:updateSystemNotifications", async (_event, nextEnabl
   const preferences = await updateSystemNotificationsPreference(Boolean(nextEnabled));
   systemNotificationsEnabled = preferences.systemNotificationsEnabled;
   return preferences;
-});
-
-ipcMain.handle("preferences:updateOperationHints", async (_event, nextEnabled: boolean) => {
-  return updateOperationHintsPreference(Boolean(nextEnabled));
 });
 
 ipcMain.handle("preferences:updateAutoCacheOptimization", async (_event, nextEnabled: boolean) => {
@@ -4140,41 +4141,6 @@ ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, next
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   return preferences;
 });
-
-ipcMain.handle("preferences:updateCommandEnabled", async (_event, nextCommandEnabled: boolean) => {
-  return updateCommandEnabledPreference(Boolean(nextCommandEnabled));
-});
-
-ipcMain.handle("preferences:updateSearchLabelVisibility", async (_event, nextVisibility: {
-  directory: boolean;
-  recognition: boolean;
-  sort: boolean;
-  format: boolean;
-  skimDisplay: boolean;
-}) => {
-  return updateSearchLabelVisibilityPreference({
-    directory: Boolean(nextVisibility?.directory),
-    recognition: Boolean(nextVisibility?.recognition),
-    sort: Boolean(nextVisibility?.sort),
-    format: Boolean(nextVisibility?.format),
-    skimDisplay: Boolean(nextVisibility?.skimDisplay)
-  });
-});
-
-ipcMain.handle("preferences:updateSkimDisplay", async (_event, nextSkimDisplay: {
-  mode: "skim" | "all" | "custom";
-  searchMode: "skim" | "all" | "custom";
-  customExtensions: string[];
-  showHiddenFiles: boolean;
-}) => updateSkimDisplayPreference(nextSkimDisplay));
-
-ipcMain.handle("preferences:updateSkimSidebarFolders", (_event, skimSidebarFolders: string[]) => (
-  updateSkimSidebarFoldersPreference(skimSidebarFolders)
-));
-
-ipcMain.handle("preferences:updateSkimSystemLocationsCollapsed", (_event, collapsed: boolean) => (
-  updateSkimSystemLocationsCollapsedPreference(collapsed)
-));
 
 ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {
   activateCapsule: string;
