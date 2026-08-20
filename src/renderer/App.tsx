@@ -3,6 +3,7 @@ import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
+import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController";
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
@@ -423,7 +424,13 @@ const App = () => {
   const [contextMenu, setContextMenu] = useState<ImageContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
   const [shellTransition, setShellTransition] = useState<ShellTransition | null>(null);
-  const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+  const {
+    isAlwaysOnTop,
+    applyAlwaysOnTop,
+    syncAlwaysOnTop,
+    setAlwaysOnTop,
+    toggleAlwaysOnTop
+  } = useAlwaysOnTopController();
   const [isMaximized, setIsMaximized] = useState(false);
   const [lastNormalBounds, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
   const { shellViewportHeight, miniStandardHeight } = useShellViewportMetrics();
@@ -600,13 +607,6 @@ const App = () => {
       forceResultsView || currentView === "settings" ? "results" : currentView
     ));
   }, []);
-  const syncAlwaysOnTop = useCallback(async () => {
-    const alwaysOnTopState = await window.imageEverything?.window.getAlwaysOnTop();
-    if (alwaysOnTopState) {
-      setIsAlwaysOnTop(alwaysOnTopState.actual);
-    }
-  }, []);
-
   useEffect(() => {
     const refreshOptimizationCacheStats = () => {
       void window.imageEverything?.cache.stats().then((stats) => {
@@ -749,13 +749,6 @@ const App = () => {
   }, [resetShellBehaviorState, syncAlwaysOnTop]);
 
   useEffect(() => {
-    const unsubscribe = window.imageEverything?.window.onAlwaysOnTopChanged?.((enabled) => {
-      setIsAlwaysOnTop(enabled);
-    });
-    return () => unsubscribe?.();
-  }, []);
-
-  useEffect(() => {
     if (shellState !== "capsule") {
       return undefined;
     }
@@ -873,7 +866,7 @@ const App = () => {
             setTheme(preferences.themePreference);
             setAppearanceColors(normalizeAppearanceColors(preferences.appearanceColors));
             setEdgeSnapEnabled(preferences.edgeSnapEnabled);
-            setIsAlwaysOnTop(preferences.alwaysOnTop);
+            applyAlwaysOnTop(preferences.alwaysOnTop);
             setStandbyLineVisible(preferences.standbyLineVisible);
             setLaunchAtLogin(preferences.launchAtLogin);
             setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);
@@ -1487,11 +1480,10 @@ const App = () => {
 
   const setCommandAlwaysOnTop = async (enabled: boolean) => {
     try {
-      const state = await window.imageEverything?.window.setAlwaysOnTop(enabled);
+      const state = await setAlwaysOnTop(enabled);
       if (!state || state.actual !== enabled) {
         return commandOperationFailed(enabled ? t("error.windowPinEnableFailed") : t("error.windowPinDisableFailed"));
       }
-      setIsAlwaysOnTop(state.actual);
       return { ok: true as const };
     } catch (error) {
       return commandOperationFailed(error instanceof Error ? error.message : t("error.windowPinUpdateFailed"));
@@ -1868,19 +1860,6 @@ const App = () => {
 
     setShellState("micro");
   }, [shellState, toggleNormalMaximized]);
-
-  const toggleAlwaysOnTop = useCallback(async () => {
-    const requestedAlwaysOnTop = !isAlwaysOnTop;
-    const alwaysOnTopState = await window.imageEverything?.window.setAlwaysOnTop(requestedAlwaysOnTop);
-    if (alwaysOnTopState) {
-      console.debug("[alwaysOnTop:toggle]", {
-        requested: requestedAlwaysOnTop,
-        actual: alwaysOnTopState.actual,
-        mode: shellState
-      });
-      setIsAlwaysOnTop(alwaysOnTopState.actual);
-    }
-  }, [isAlwaysOnTop, shellState]);
 
   const openIndexView = (recognitionStatus: RecognitionStatusFilter) => {
     const nextSearch: SearchState = {
@@ -3311,7 +3290,7 @@ const App = () => {
     : [
       { id: "standby", label: t("window.collapse"), icon: "line", onClick: collapseShellToStandby },
       { id: "cycle", label: shellCycleLabel, icon: "expand", pressed: isMaximized, onClick: cycleShellWindow },
-      { id: "pin", label: t("window.pinToggle"), icon: isAlwaysOnTop ? "pinOn" : "pinOff", pressed: isAlwaysOnTop, onClick: toggleAlwaysOnTop }
+      { id: "pin", label: t("window.pinToggle"), icon: isAlwaysOnTop ? "pinOn" : "pinOff", pressed: isAlwaysOnTop, onClick: () => void toggleAlwaysOnTop(shellState) }
     ];
   const activeView = isExpandedShell && view === "home" ? "results" : view;
   useEffect(() => {
