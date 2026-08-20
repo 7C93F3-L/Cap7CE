@@ -39,8 +39,14 @@ import { HomeView } from "./search/HomeView";
 import { CacheSettingsRows } from "./settings/CacheSettingsRows";
 import { DirectoryAiSettingsRows } from "./settings/DirectoryAiSettingsRows";
 import { AppearanceSettingsSections } from "./settings/AppearanceSettingsSections";
+import { QuickActionSettingsRows } from "./settings/QuickActionSettingsRows";
 import { SkimDisplaySettingsRows } from "./settings/SkimDisplaySettingsRows";
 import { SettingsSelect } from "./settings/SettingsSelect";
+import {
+  defaultShortcutActions,
+  getShortcutFromKeyboardEvent,
+  normalizeShortcutActions
+} from "./shortcutActions";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView } from "./results/ResultsView";
 import { SkimView } from "./skim/SkimView";
@@ -308,17 +314,6 @@ const emptySearch: SearchState = {
   recognitionStatus: "all"
 };
 
-const defaultShortcutActions: ShortcutActionPreferences = {
-  activateCapsule: "Alt+`",
-  activateMicro: "Alt+1",
-  activateMini: "Alt+2",
-  activateNormal: "Alt+3",
-  activateStandby: "Alt+4",
-  activateSkim: "Alt+5",
-  cycleDirectory: "Alt+Q",
-  openSettings: "Alt+6"
-};
-
 interface OperationHintDefinition {
   key: TranslationKey;
   shortcutActionId?: ShortcutActionId;
@@ -351,17 +346,6 @@ const operationHintDefinitions: OperationHintDefinition[] = [
   { key: "search.guide.trayNormal" },
   { key: "search.guide.focusSearch" },
   { key: "search.guide.resultContextMenu" }
-];
-
-const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }> => [
-  { id: "activateCapsule", name: t("shortcut.activateCapsule") },
-  { id: "activateMicro", name: t("shortcut.activateMicro") },
-  { id: "activateMini", name: t("shortcut.activateMini") },
-  { id: "activateNormal", name: t("shortcut.activateNormal") },
-  { id: "activateStandby", name: t("shortcut.activateLine") },
-  { id: "activateSkim", name: t("shortcut.activateSkim") },
-  { id: "openSettings", name: t("shortcut.openSettings") },
-  { id: "cycleDirectory", name: t("shortcut.cycleDirectory") }
 ];
 
 const getQuickCommandGroups = (): Array<{
@@ -527,45 +511,6 @@ const getDangerousQuickCommandItems = () => [
   { command: "cache:clear", description: t("commands.confirm.clearCache") },
   { command: "cache:skim", description: t("commands.confirm.clearSkimCache") }
 ];
-
-const normalizeShortcutActions = (shortcutActions?: Partial<ShortcutActionPreferences>): ShortcutActionPreferences => ({
-  activateCapsule: shortcutActions?.activateCapsule || defaultShortcutActions.activateCapsule,
-  activateMicro: shortcutActions?.activateMicro || defaultShortcutActions.activateMicro,
-  activateMini: shortcutActions?.activateMini || defaultShortcutActions.activateMini,
-  activateNormal: shortcutActions?.activateNormal || defaultShortcutActions.activateNormal,
-  activateStandby: shortcutActions?.activateStandby || defaultShortcutActions.activateStandby,
-  activateSkim: shortcutActions?.activateSkim || defaultShortcutActions.activateSkim,
-  cycleDirectory: shortcutActions?.cycleDirectory || defaultShortcutActions.cycleDirectory,
-  openSettings: shortcutActions?.openSettings || defaultShortcutActions.openSettings
-});
-
-const formatShortcutLabel = (shortcut: string) => shortcut
-  .split("+")
-  .map((part) => part.trim())
-  .filter(Boolean)
-  .join(" + ");
-
-const getShortcutFromKeyboardEvent = (event: KeyboardEvent) => {
-  const keyMap: Record<string, string> = {
-    Escape: "Esc",
-    " ": "Space",
-    ArrowUp: "Up",
-    ArrowDown: "Down",
-    ArrowLeft: "Left",
-    ArrowRight: "Right"
-  };
-  const ignoredKeys = new Set(["Alt", "Control", "Shift", "Meta"]);
-  if (ignoredKeys.has(event.key)) return null;
-
-  const key = keyMap[event.key] ?? (event.key.length === 1 ? event.key.toUpperCase() : event.key);
-  const parts: string[] = [];
-  if (event.ctrlKey) parts.push("Ctrl");
-  if (event.altKey) parts.push("Alt");
-  if (event.shiftKey) parts.push("Shift");
-  if (event.metaKey) parts.push("Meta");
-  parts.push(key);
-  return parts.join("+");
-};
 
 const normalizeShortcutForMatch = (shortcut: string) => shortcut.replace(/\s+/g, "").toLowerCase();
 
@@ -4467,18 +4412,13 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [originImageUrl, setOriginImageUrl] = useState<string | null>(null);
   const [originVisible, setOriginVisible] = useState(false);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
-  const quickActionsCollapseTimerRef = useRef<number | null>(null);
   const quickCommandsCollapseTimerRef = useRef<number | null>(null);
   const runtimeDetailsCollapseTimerRef = useRef<number | null>(null);
   const originSequenceRef = useRef({ count: 0, lastClickAt: 0 });
   const originLoadingRef = useRef(false);
-  const [quickActionsClosing, setQuickActionsClosing] = useState(false);
   const [quickCommandsClosing, setQuickCommandsClosing] = useState(false);
   const [runtimeDetailsExpanded, setRuntimeDetailsExpanded] = useState(false);
   const [runtimeDetailsClosing, setRuntimeDetailsClosing] = useState(false);
-  const [capturingShortcutActionId, setCapturingShortcutActionId] = useState<ShortcutActionId | null>(null);
-  const [shortcutActionDrafts, setShortcutActionDrafts] = useState<ShortcutActionPreferences>(shortcutActions);
-  const [draftUnavailableActionIds, setDraftUnavailableActionIds] = useState<ShortcutActionId[]>([]);
   const [appUpdateStatus, setAppUpdateStatus] = useState<"idle" | "checking" | "up_to_date" | "update_available" | "downloading" | "cancelling" | "cancelled" | "installing" | "unsupported" | "failed" | "download_failed">("idle");
   const [appUpdateFailureReason, setAppUpdateFailureReason] = useState<"rate_limited" | "network" | "disk_space" | "security" | "incomplete" | "invalid" | "unknown" | null>(null);
   const [appUpdateVersion, setAppUpdateVersion] = useState("");
@@ -4720,84 +4660,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     void revealOrigin();
   };
 
-  useEffect(() => {
-    setShortcutActionDrafts(shortcutActions);
-    setDraftUnavailableActionIds([]);
-  }, [shortcutActions]);
-
-  useEffect(() => () => {
-    void onShortcutCaptureEnd();
-  }, [onShortcutCaptureEnd]);
-
-  const startShortcutCapture = async (shortcutActionId: ShortcutActionId) => {
-    if (await onShortcutCaptureStart()) {
-      setCapturingShortcutActionId(shortcutActionId);
-    }
-  };
-
-  const finishShortcutCapture = async (syncDraftAvailability = true) => {
-    setCapturingShortcutActionId(null);
-    const availability = await onShortcutCaptureEnd();
-    if (syncDraftAvailability) {
-      setDraftUnavailableActionIds(availability.unavailableActionIds);
-    }
-  };
-
-  const updateShortcutAction = async (shortcutActionId: ShortcutActionId, shortcut: string) => {
-    const nextShortcutActions = {
-      ...shortcutActionDrafts,
-      [shortcutActionId]: shortcut
-    };
-    setShortcutActionDrafts(nextShortcutActions);
-
-    const hasInternalConflict = getShortcutActionItems().some((item) => (
-      item.id !== shortcutActionId && nextShortcutActions[item.id] === shortcut
-    ));
-    if (hasInternalConflict) {
-      setDraftUnavailableActionIds([shortcutActionId]);
-      return;
-    }
-
-    const result = await onShortcutActionsChange(nextShortcutActions);
-    if (!result) {
-      setDraftUnavailableActionIds([shortcutActionId]);
-      return;
-    }
-    if (result.applied) {
-      setShortcutActionDrafts(normalizeShortcutActions(result.preferences.shortcutActions));
-      setDraftUnavailableActionIds([]);
-      return;
-    }
-    setDraftUnavailableActionIds(result.unavailableActionIds);
-  };
-
-  const resetShortcutActions = async () => {
-    if (capturingShortcutActionId) {
-      await finishShortcutCapture();
-    }
-    setShortcutActionDrafts(defaultShortcutActions);
-    const result = await onShortcutActionsChange(defaultShortcutActions);
-    setDraftUnavailableActionIds(result?.applied ? [] : result?.unavailableActionIds ?? []);
-  };
-
-  const closeShortcutConfiguration = async () => {
-    if (capturingShortcutActionId) {
-      await finishShortcutCapture();
-    }
-    setShortcutActionDrafts(shortcutActions);
-    setDraftUnavailableActionIds([]);
-    if (quickActionsClosing) {
-      return;
-    }
-    setQuickActionsClosing(true);
-    const collapseDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
-    quickActionsCollapseTimerRef.current = window.setTimeout(() => {
-      onQuickActionsExpandedChange(false);
-      setQuickActionsClosing(false);
-      quickActionsCollapseTimerRef.current = null;
-    }, collapseDuration);
-  };
-
   const closeQuickCommands = () => {
     if (quickCommandsClosing) {
       return;
@@ -4829,9 +4691,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   };
 
   useEffect(() => () => {
-    if (quickActionsCollapseTimerRef.current !== null) {
-      window.clearTimeout(quickActionsCollapseTimerRef.current);
-    }
     if (quickCommandsCollapseTimerRef.current !== null) {
       window.clearTimeout(quickCommandsCollapseTimerRef.current);
     }
@@ -4839,32 +4698,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
       window.clearTimeout(runtimeDetailsCollapseTimerRef.current);
     }
   }, []);
-
-  useEffect(() => {
-    if (!capturingShortcutActionId) return undefined;
-
-    const handleShortcutCapture = (event: KeyboardEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (event.key === "Escape") {
-        void finishShortcutCapture();
-        return;
-      }
-
-      const nextShortcut = getShortcutFromKeyboardEvent(event);
-      if (!nextShortcut) return;
-
-      const shortcutActionId = capturingShortcutActionId;
-      setCapturingShortcutActionId(null);
-      void updateShortcutAction(shortcutActionId, nextShortcut).finally(() => {
-        void finishShortcutCapture(false);
-      });
-    };
-
-    window.addEventListener("keydown", handleShortcutCapture, true);
-    return () => window.removeEventListener("keydown", handleShortcutCapture, true);
-  }, [capturingShortcutActionId, shortcutActionDrafts]);
 
   return (
     <>
@@ -4962,67 +4795,17 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
             skimDisplay={skimDisplay}
             onSkimDisplayChange={onSkimDisplayChange}
           />
-          {quickActionsExpanded ? (
-            <div className={`cap-settings-expandable-shell${quickActionsClosing ? " is-closing" : ""}`}>
-              <div className="cap-settings-expandable-inner">
-                <div className="cap-settings-quick-actions-panel">
-                  <div className="cap-settings-quick-actions-header">
-                    <span className="cap-settings-label">{t("settings.quickActions")}</span>
-                    <div className="cap-settings-quick-actions-controls">
-                      <button className="cap-settings-pill" type="button" disabled={capturingShortcutActionId !== null} onClick={() => onQuickActionGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
-                        {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
-                      </button>
-                      <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
-                      <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => void closeShortcutConfiguration()} title={t("settings.finishQuickActionsHint")} aria-expanded="true">{t("settings.finishConfiguration")}</button>
-                    </div>
-                  </div>
-                  <div className="cap-settings-quick-actions-list">
-                    {getShortcutActionItems().map((item) => {
-                      const isCapturing = capturingShortcutActionId === item.id;
-                      const hasInternalConflict = getShortcutActionItems().some((otherItem) => (
-                        otherItem.id !== item.id && shortcutActionDrafts[otherItem.id] === shortcutActionDrafts[item.id]
-                      ));
-                      const isUnavailable = hasInternalConflict || unavailableShortcutActionIds.includes(item.id) || draftUnavailableActionIds.includes(item.id);
-                      return (
-                        <div className="cap-settings-quick-action-row" key={item.id}>
-                          <span className="cap-settings-quick-action-name">{item.name}</span>
-                          {!isCapturing && isUnavailable && (
-                            <span className="cap-settings-quick-action-hint unavailable">{t("settings.shortcutUnavailable")}</span>
-                          )}
-                          <div className="cap-settings-quick-action-controls">
-                            <button
-                              className="cap-settings-pill cap-settings-shortcut-pill"
-                              type="button"
-                              title={t("settings.editShortcutActionHint")}
-                              onClick={() => {
-                                if (!isCapturing) {
-                                  void startShortcutCapture(item.id);
-                                }
-                              }}
-                            >
-                              {isCapturing ? t("settings.captureShortcut") : formatShortcutLabel(shortcutActionDrafts[item.id])}
-                            </button>
-                            {isCapturing && (
-                              <button className="cap-settings-pill" type="button" onClick={() => void finishShortcutCapture()} title={t("settings.cancelShortcutCaptureHint")}>{t("common.cancel")}</button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="cap-settings-row">
-              <button className="cap-settings-pill" type="button" onClick={() => onQuickActionGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
-                {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
-              </button>
-              <span className="cap-settings-label">{t("settings.quickActions")}</span>
-              <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
-              <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => onQuickActionsExpandedChange(true)} title={t("settings.configureQuickActionsHint")} aria-expanded="false">{t("settings.configure")}</button>
-            </div>
-          )}
+          <QuickActionSettingsRows
+            quickActionGlobalEnabled={quickActionGlobalEnabled}
+            shortcutActions={shortcutActions}
+            unavailableShortcutActionIds={unavailableShortcutActionIds}
+            expanded={quickActionsExpanded}
+            onGlobalEnabledChange={onQuickActionGlobalEnabledChange}
+            onShortcutActionsChange={onShortcutActionsChange}
+            onShortcutCaptureStart={onShortcutCaptureStart}
+            onShortcutCaptureEnd={onShortcutCaptureEnd}
+            onExpandedChange={onQuickActionsExpandedChange}
+          />
           {quickCommandsExpanded ? (
             <div className={`cap-settings-expandable-shell${quickCommandsClosing ? " is-closing" : ""}`}>
               <div className="cap-settings-expandable-inner">
