@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./styles.css";
 import "./WindowControlRail.css";
+import "./CustomScrollbar.css";
 import "./skim/SkimView.css";
 import "./preview/PreviewWindow.css";
 import "./dialogs/KeywordEditorCard.css";
