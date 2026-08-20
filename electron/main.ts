@@ -21,6 +21,7 @@ import { scanImageDirectories, type ScannedImageFile } from "./imageScanner";
 import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
+import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { runContinuousAiIndex } from "./llamaVisionIndexer";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeSnapPreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
@@ -4041,44 +4042,18 @@ ipcMain.handle("index:cancelRecognition", () => {
   return true;
 });
 
-ipcMain.handle("llamaRuntime:settings", () => {
-  return getLlamaRuntimeSettings();
-});
-
-ipcMain.handle("llamaRuntime:updateSelected", async (_event, selectedVersion: string) => {
-  const processState = getLlamaRuntimeProcessState();
-  if (processState.status === "starting" || processState.status === "running") {
-    throw new Error(t("error.stopServerBeforeRuntimeSwitch"));
-  }
-  const settings = await updateSelectedLlamaRuntime(selectedVersion);
-  await syncIdleLlamaRuntimeSelectionState();
-  return settings;
-});
-
-ipcMain.handle("llamaRuntime:processState", () => {
-  return getLlamaRuntimeProcessState();
-});
-
-ipcMain.handle("llamaRuntime:start", () => {
-  return startLlamaRuntime();
-});
-
-ipcMain.handle("llamaRuntime:stop", () => {
-  return stopLlamaRuntime();
-});
-
-ipcMain.handle("ggufModels:settings", () => {
-  return getGgufModelSettings();
-});
-
-ipcMain.handle("ggufModels:updateSelected", async (_event, selectedModelId: string) => {
-  const processState = getLlamaRuntimeProcessState();
-  if (processState.status === "starting" || processState.status === "running") {
-    throw new Error(t("error.stopServerBeforeModelSwitch"));
-  }
-  const settings = await updateSelectedGgufModel(selectedModelId);
-  await syncIdleLlamaRuntimeSelectionState();
-  return settings;
+registerRuntimeModelIpc({
+  registrar: ipcMain,
+  getRuntimeSettings: getLlamaRuntimeSettings,
+  updateSelectedRuntime: updateSelectedLlamaRuntime,
+  getRuntimeProcessState: getLlamaRuntimeProcessState,
+  startRuntime: startLlamaRuntime,
+  stopRuntime: stopLlamaRuntime,
+  getModelSettings: getGgufModelSettings,
+  updateSelectedModel: updateSelectedGgufModel,
+  syncIdleSelectionState: syncIdleLlamaRuntimeSelectionState,
+  translateRuntimeSwitchBlocked: () => t("error.stopServerBeforeRuntimeSwitch"),
+  translateModelSwitchBlocked: () => t("error.stopServerBeforeModelSwitch")
 });
 
 ipcMain.handle("preferences:get", () => {

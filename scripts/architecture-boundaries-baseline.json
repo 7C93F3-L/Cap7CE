@@ -2,7 +2,7 @@
   "maxLines": {
     "src/renderer/App.tsx": 3756,
     "src/renderer/styles.css": 5182,
-    "electron/main.ts": 4368
+    "electron/main.ts": 4343
   },
   "legacyMainIpcChannels": [
     "app:quit",
@@ -39,13 +39,6 @@
     "index:qualityStats",
     "index:continueRecognition",
     "index:cancelRecognition",
-    "llamaRuntime:settings",
-    "llamaRuntime:updateSelected",
-    "llamaRuntime:processState",
-    "llamaRuntime:start",
-    "llamaRuntime:stop",
-    "ggufModels:settings",
-    "ggufModels:updateSelected",
     "preferences:get",
     "preferences:updateTheme",
     "preferences:updateLanguage",
