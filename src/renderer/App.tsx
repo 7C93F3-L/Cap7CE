@@ -4,6 +4,7 @@ import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
+import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
 import {
@@ -401,7 +402,11 @@ const App = () => {
     [skimBrowseOptions, visibleSkimEntries]
   );
   const [isSkimLoading, setIsSkimLoading] = useState(false);
-  const [skimFeedback, setSkimFeedback] = useState("");
+  const {
+    message: skimFeedback,
+    show: showSkimFeedback,
+    clear: clearSkimFeedback
+  } = useTransientFeedback();
   const [skimLocationPickerOpen, setSkimLocationPickerOpen] = useState(false);
   const [skimLocationPickerClosing, setSkimLocationPickerClosing] = useState(false);
   const [skimLocations, setSkimLocations] = useState<SkimLocationShortcut[]>([
@@ -440,8 +445,14 @@ const App = () => {
   const [skimCacheClearToken, setSkimCacheClearToken] = useState<string | null>(null);
   const [skimCacheClearFeedback, setSkimCacheClearFeedback] = useState<CacheClearFeedback | null>(null);
   const [isClearingSkimCache, setIsClearingSkimCache] = useState(false);
-  const [cacheInlineFeedback, setCacheInlineFeedback] = useState("");
-  const [skimCacheInlineFeedback, setSkimCacheInlineFeedback] = useState("");
+  const {
+    message: cacheInlineFeedback,
+    show: showCacheInlineFeedback
+  } = useTransientFeedback();
+  const {
+    message: skimCacheInlineFeedback,
+    show: showSkimCacheInlineFeedback
+  } = useTransientFeedback();
   const [contextMenu, setContextMenu] = useState<ImageContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
   const [shellTransition, setShellTransition] = useState<ShellTransition | null>(null);
@@ -469,7 +480,11 @@ const App = () => {
   const [searchResults, setSearchResults] = useState<ImageIndexItem[]>([]);
   const [selectedResultImageId, setSelectedResultImageId] = useState<string | null>(null);
   const [clearSelectionRequestId, setClearSelectionRequestId] = useState(0);
-  const [quickCommandNotice, setQuickCommandNotice] = useState("");
+  const {
+    message: quickCommandNotice,
+    show: showQuickCommandNotice,
+    clear: clearQuickCommandNotice
+  } = useTransientFeedback();
   const [operationHintKey, setOperationHintKey] = useState<TranslationKey>(initialOperationHintKey);
   const [pendingQuickCommandConfirmation, setPendingQuickCommandConfirmation] = useState<QuickCommandConfirmationRequest | null>(null);
   const resultScrollPositionsRef = useRef<Record<RecognitionStatusFilter, number>>({
@@ -483,8 +498,6 @@ const App = () => {
   const [searchStatus, setSearchStatus] = useState<ImageSearchResponse>(emptySearchResponse);
   const [isContinuingRecognition, setIsContinuingRecognition] = useState(false);
   const [isCancellingRecognition, setIsCancellingRecognition] = useState(false);
-  const quickCommandNoticeTimerRef = useRef<number | null>(null);
-  const skimFeedbackTimerRef = useRef<number | null>(null);
   const skimLocationPickerCloseTimerRef = useRef<number | null>(null);
   const skimLocationPickerCloseActionRef = useRef<(() => void) | null>(null);
   const directoryPathResolutionRequestRef = useRef(0);
@@ -497,8 +510,6 @@ const App = () => {
   const lastClosedSkimPathRef = useRef<string | null>(null);
   const skimForwardPathsRef = useRef<string[]>([]);
   const settingsOpenedFromSkimRef = useRef(false);
-  const cacheInlineFeedbackTimerRef = useRef<number | null>(null);
-  const skimCacheInlineFeedbackTimerRef = useRef<number | null>(null);
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
   const scanResultsRefreshedDuringTaskRef = useRef(false);
   const keywordEditScrollSnapshotRef = useRef<KeywordEditScrollSnapshot | null>(null);
@@ -580,43 +591,6 @@ const App = () => {
   useEffect(() => {
     directoryPathResolutionRequestRef.current += 1;
   }, [search.query]);
-  const clearQuickCommandNotice = useCallback(() => {
-    if (quickCommandNoticeTimerRef.current !== null) {
-      window.clearTimeout(quickCommandNoticeTimerRef.current);
-      quickCommandNoticeTimerRef.current = null;
-    }
-
-    setQuickCommandNotice("");
-  }, []);
-
-  const showQuickCommandNotice = useCallback((message: string, persist = false) => {
-    clearQuickCommandNotice();
-
-    setQuickCommandNotice(message);
-    if (persist) {
-      return;
-    }
-
-    quickCommandNoticeTimerRef.current = window.setTimeout(() => {
-      setQuickCommandNotice("");
-      quickCommandNoticeTimerRef.current = null;
-    }, 3600);
-  }, [clearQuickCommandNotice]);
-  const clearSkimFeedback = useCallback(() => {
-    if (skimFeedbackTimerRef.current !== null) {
-      window.clearTimeout(skimFeedbackTimerRef.current);
-      skimFeedbackTimerRef.current = null;
-    }
-    setSkimFeedback("");
-  }, []);
-  const showSkimFeedback = useCallback((message: string) => {
-    clearSkimFeedback();
-    setSkimFeedback(message);
-    skimFeedbackTimerRef.current = window.setTimeout(() => {
-      setSkimFeedback("");
-      skimFeedbackTimerRef.current = null;
-    }, 3600);
-  }, [clearSkimFeedback]);
   const cancelSearch = useCallback(() => {
     const taskId = searchTaskIdRef.current;
     searchTaskIdRef.current = null;
@@ -683,26 +657,6 @@ const App = () => {
       }
     }
   }, [clearSkimFeedback, showSkimFeedback, skimBrowseOptions]);
-  const showCacheInlineFeedback = useCallback((message: string) => {
-    if (cacheInlineFeedbackTimerRef.current !== null) {
-      window.clearTimeout(cacheInlineFeedbackTimerRef.current);
-    }
-    setCacheInlineFeedback(message);
-    cacheInlineFeedbackTimerRef.current = window.setTimeout(() => {
-      setCacheInlineFeedback("");
-      cacheInlineFeedbackTimerRef.current = null;
-    }, 3600);
-  }, []);
-  const showSkimCacheInlineFeedback = useCallback((message: string) => {
-    if (skimCacheInlineFeedbackTimerRef.current !== null) {
-      window.clearTimeout(skimCacheInlineFeedbackTimerRef.current);
-    }
-    setSkimCacheInlineFeedback(message);
-    skimCacheInlineFeedbackTimerRef.current = window.setTimeout(() => {
-      setSkimCacheInlineFeedback("");
-      skimCacheInlineFeedbackTimerRef.current = null;
-    }, 3600);
-  }, []);
   const resetShellBehaviorState = useCallback(() => {
     setIsMaximized(false);
     setLastNormalBounds(null);
@@ -1101,22 +1055,6 @@ const App = () => {
   }, []);
 
   useEffect(() => () => {
-    if (quickCommandNoticeTimerRef.current !== null) {
-      window.clearTimeout(quickCommandNoticeTimerRef.current);
-      quickCommandNoticeTimerRef.current = null;
-    }
-    if (cacheInlineFeedbackTimerRef.current !== null) {
-      window.clearTimeout(cacheInlineFeedbackTimerRef.current);
-      cacheInlineFeedbackTimerRef.current = null;
-    }
-    if (skimCacheInlineFeedbackTimerRef.current !== null) {
-      window.clearTimeout(skimCacheInlineFeedbackTimerRef.current);
-      skimCacheInlineFeedbackTimerRef.current = null;
-    }
-    if (skimFeedbackTimerRef.current !== null) {
-      window.clearTimeout(skimFeedbackTimerRef.current);
-      skimFeedbackTimerRef.current = null;
-    }
     if (searchTaskIdRef.current) {
       void window.imageEverything?.search.cancel(searchTaskIdRef.current);
       searchTaskIdRef.current = null;
@@ -1147,7 +1085,7 @@ const App = () => {
     const taskId = window.crypto?.randomUUID?.() ?? `search-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     searchTaskIdRef.current = taskId;
     setContextMenu(null);
-    setQuickCommandNotice("");
+    clearQuickCommandNotice();
     setIsSearching(true);
     setSearchError("");
     resultsInitializedRef.current = true;
