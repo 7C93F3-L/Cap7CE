@@ -12,6 +12,7 @@ const {
   shouldSubmitKeywordEditor
 } = require("../src/renderer/keywordEditorInteraction.ts");
 const { normalizeKeywordList, parseKeywordText } = require("../electron/keywordRules.ts");
+const { getCommonKeywords } = require("../src/renderer/dialogs/keywordEditorModel.ts");
 
 const position = clampFloatingCardPosition(
   { x: 790, y: 590 },
@@ -66,6 +67,12 @@ assert.deepEqual(
   ["海报", "产品A"]
 );
 assert.deepEqual(normalizeKeywordList(parseKeywordText("， ,  ")), []);
+assert.deepEqual(getCommonKeywords([]), []);
+assert.deepEqual(getCommonKeywords([
+  { keywords: ["海报", "产品", "海报"] },
+  { keywords: ["产品", "海报", "人物"] },
+  { keywords: ["海报", "产品"] }
+]), ["海报", "产品"]);
 
 const spaceReleaseGuard = createSpaceReleaseGuard();
 assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), false);

@@ -8,9 +8,8 @@ import skimDiskSvg from "./assets/icons/skim-disk.svg?raw";
 import skimFileSvg from "./assets/icons/skim-file.svg?raw";
 import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
 import skimStarredFolderSvg from "./assets/icons/skim-location-starred-folder.svg?raw";
-import warningGradientSvg from "./assets/icons/warning-gradient.svg?raw";
-import WaitingIndicator from "./WaitingIndicator";
 import ColorPickerPopover from "./ColorPickerPopover";
+import SvgIcon from "./components/SvgIcon";
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
@@ -18,15 +17,27 @@ import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle, splitMiddleEllipsisFileName, type ImageContextMenuGroup } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
 import {
-  centerFloatingCardPosition,
   createSpaceReleaseGuard,
   createSpaceHoldController,
-  getKeywordEditorTextareaMaximumHeight,
   getKeywordEditorExitDelay,
-  isKeywordEditorCancelKey,
   isPlainSpaceShortcut,
-  shouldSubmitKeywordEditor,
 } from "./keywordEditorInteraction";
+import {
+  AddDroppedDirectoriesPanel,
+  ClearCachePanel,
+  DeleteDirectoryPanel,
+  DeleteFilesPanel,
+  ReplaceDirectoriesPanel
+} from "./dialogs/ConfirmationPanels";
+import KeywordEditorCard from "./dialogs/KeywordEditorCard";
+import type {
+  CacheClearFeedback,
+  DeleteFilesFeedback,
+  DroppedDirectory,
+  KeywordEditSession
+} from "./dialogs/dialogTypes";
+import { getCommonKeywords } from "./dialogs/keywordEditorModel";
+import { formatCacheSize } from "./formatting";
 import { createPreviewRequestGuard } from "./previewRequestGuard";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import type {
@@ -166,11 +177,6 @@ type ShellTransition = {
 type SearchCapsuleLabelVisibility = SearchLabelVisibilityPreferences;
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
 type DialogName = "addDroppedDirectories" | "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
-type DroppedDirectory = {
-  name: string;
-  path: string;
-};
-
 const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] => {
   const directories: DroppedDirectory[] = [];
   const seenPaths = new Set<string>();
@@ -193,20 +199,6 @@ type ImageContextMenuState = {
   items: ImageIndexItem[];
   preview: () => void;
   shellState: ShellState;
-};
-type KeywordEditSession = {
-  mode: "single" | "multi";
-  items: ImageIndexItem[];
-  initialCommonKeywords: string[];
-};
-type DeleteFilesFeedback = {
-  status: "failed" | "succeeded";
-  failedCount: number;
-  message: string;
-};
-type CacheClearFeedback = {
-  status: "failed" | "succeeded";
-  message: string;
 };
 type IndexTaskRequest =
   | { kind: "all" }
@@ -298,13 +290,6 @@ const getResultLayoutMode = (shellState: ShellState): ResultLayoutMode => (
   shellState === "micro" ? "micro" : shellState === "mini" ? "mini" : "normal"
 );
 
-const getCommonKeywords = (items: ImageIndexItem[]) => {
-  if (items.length === 0) return [];
-  const firstKeywords = items[0].keywords.filter((keyword, index, keywords) => keywords.indexOf(keyword) === index);
-  const remainingKeywordSets = items.slice(1).map((item) => new Set(item.keywords));
-  return firstKeywords.filter((keyword) => remainingKeywordSets.every((keywords) => keywords.has(keyword)));
-};
-
 const getImageGridLayout = (layoutMode: ResultLayoutMode, viewportWidth: number, viewportHeight: number) => {
   const contentWidth = Math.max(0, viewportWidth);
   const isHorizontal = layoutMode === "micro";
@@ -331,10 +316,6 @@ const formatCompactExtensionLabel = (extension: string, maximumLength = 7) => {
   const leadingLength = Math.ceil(visibleLength / 2);
   return `${label.slice(0, leadingLength)}…${label.slice(-Math.floor(visibleLength / 2))}`;
 };
-
-const SvgIcon = ({ svg, className = "cap-svg-icon" }: { svg: string; className?: string }) => (
-  <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />
-);
 
 const videoThumbnailExtensions = new Set([
   ".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm", ".wmv", ".mpg", ".mpeg",
@@ -1010,23 +991,6 @@ const formatDisplayMessage = (message?: string) => {
   }
 
   return message.replace(/fetch\s*failed/gi, t("error.connectionFailed"));
-};
-
-const formatCacheSize = (bytes: number) => {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  const units = ["KB", "MB", "GB"];
-  let value = bytes / 1024;
-  let unitIndex = 0;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 };
 
 const formatDirectoryAddFeedback = (result: DirectoryAddResult) => {
@@ -8894,374 +8858,5 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     </>
   );
 };
-
-interface KeywordEditorCardProps {
-  session: KeywordEditSession;
-  keywords: string;
-  error: string;
-  isSaving: boolean;
-  isClosing: boolean;
-  menuStyle: CSSProperties;
-  theme: ResolvedThemeMode;
-  onKeywordsChange: (keywords: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onExitComplete: () => void;
-}
-
-const getDirectParentPath = (filePath: string) => {
-  const normalizedPath = filePath.replace(/\//g, "\\");
-  const separatorIndex = normalizedPath.lastIndexOf("\\");
-  return separatorIndex >= 0 ? normalizedPath.slice(0, separatorIndex).toLocaleLowerCase() : "";
-};
-
-const KeywordEditorCard = ({
-  session,
-  keywords,
-  error,
-  isSaving,
-  isClosing,
-  menuStyle,
-  theme,
-  onKeywordsChange,
-  onSave,
-  onCancel,
-  onExitComplete
-}: KeywordEditorCardProps) => {
-  const cardRef = useRef<HTMLDivElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const composingRef = useRef(false);
-  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
-  const resizeTextarea = useCallback((textarea: HTMLTextAreaElement) => {
-    const maxHeight = getKeywordEditorTextareaMaximumHeight(window.innerHeight);
-    textarea.style.height = "auto";
-    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
-    textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
-  }, []);
-
-  useLayoutEffect(() => {
-    const textarea = textareaRef.current;
-    const card = cardRef.current;
-    if (!textarea || !card) return;
-    resizeTextarea(textarea);
-    const bounds = card.getBoundingClientRect();
-    setPosition(centerFloatingCardPosition(
-      { width: bounds.width, height: bounds.height },
-      { width: window.innerWidth, height: window.innerHeight }
-    ));
-  }, [keywords, resizeTextarea]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const card = cardRef.current;
-      if (!card) return;
-      const bounds = card.getBoundingClientRect();
-      setPosition(centerFloatingCardPosition(
-        { width: bounds.width, height: bounds.height },
-        { width: window.innerWidth, height: window.innerHeight }
-      ));
-    };
-    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(handleResize);
-    if (cardRef.current) resizeObserver?.observe(cardRef.current);
-    window.addEventListener("resize", handleResize);
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!position || !textareaRef.current) return undefined;
-    const focusFrame = window.requestAnimationFrame(() => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-      textarea.focus({ preventScroll: true });
-      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-    });
-    return () => window.cancelAnimationFrame(focusFrame);
-  }, [position]);
-
-  const firstItem = session.items[0];
-  const isSingle = session.mode === "single";
-  const formatCounts = new Map<string, number>();
-  for (const item of session.items) {
-    const format = item.extension.slice(1).toUpperCase() || t("fileInfo.file");
-    formatCounts.set(format, (formatCounts.get(format) ?? 0) + 1);
-  }
-  const formatComposition = [...formatCounts.entries()]
-    .map(([format, count]) => `${count} ${format}`)
-    .join(" / ");
-  const directoryCount = new Set(session.items.map((item) => getDirectParentPath(item.filePath))).size;
-  const compactFormatComposition = formatCounts.size <= 3
-    ? formatComposition
-    : t("keywords.formatCount", { count: formatCounts.size });
-  const headerTooltip = isSingle
-    ? [
-      firstItem.fileName,
-      formatCacheSize(firstItem.fileSize),
-      ...(firstItem.imageWidth > 0 && firstItem.imageHeight > 0
-        ? [t("fileInfo.resolution", { width: firstItem.imageWidth, height: firstItem.imageHeight })]
-        : [])
-    ].join("\n")
-    : [
-      t("keywords.selectedCount", { count: session.items.length }),
-      t("keywords.directoryCount", { count: directoryCount }),
-      formatComposition
-    ].join("\n");
-  const splitFileName = splitMiddleEllipsisFileName(firstItem.fileName);
-
-  return createPortal(
-    <div
-      ref={cardRef}
-      className={`context-menu context-menu-${theme} keyword-editor-card${isClosing ? " is-closing" : ""}`}
-      data-context-menu="true"
-      data-keyword-editor="true"
-      style={{
-        ...menuStyle,
-        left: position?.left ?? window.innerWidth / 2,
-        top: position?.top ?? window.innerHeight / 2,
-        visibility: position ? "visible" : "hidden"
-      }}
-      role="dialog"
-      aria-modal="false"
-      aria-label={t("context.editKeywords")}
-      onClick={(event) => event.stopPropagation()}
-      onPointerDown={(event) => event.stopPropagation()}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-      }}
-    >
-      <div
-        className="cap7ce-menu-motion-surface keyword-editor-card-surface"
-        onAnimationEnd={(event) => {
-          if (isClosing && event.animationName === "cap7ce-keyword-card-exit") onExitComplete();
-        }}
-      >
-        <div className="context-menu-file-header keyword-editor-card-header" title={headerTooltip}>
-          {isSingle ? (
-            <>
-              <div className="context-menu-file-heading">
-                <span className="context-menu-file-format">{firstItem.extension.slice(1).toUpperCase() || t("fileInfo.file")}</span>
-                <span className="context-menu-file-primary-detail">{formatCacheSize(firstItem.fileSize)}</span>
-              </div>
-              <span className="context-menu-file-name">
-                <span className="context-menu-file-name-leading">{splitFileName.leading}</span>
-                {splitFileName.trailing && <span className="context-menu-file-name-trailing">{splitFileName.trailing}</span>}
-              </span>
-            </>
-          ) : (
-            <>
-              <div className="context-menu-file-heading">
-                <span className="context-menu-file-format keyword-editor-multi-heading">
-                  {t("keywords.selectedCount", { count: session.items.length })}
-                </span>
-                <span className="context-menu-file-primary-detail">
-                  {t("keywords.directoryCount", { count: directoryCount })}
-                </span>
-              </div>
-              <span className="context-menu-file-name keyword-editor-format-composition">{compactFormatComposition}</span>
-            </>
-          )}
-        </div>
-        <textarea
-          ref={textareaRef}
-          className="keyword-editor-textarea"
-          value={keywords}
-          onChange={(event) => onKeywordsChange(event.target.value)}
-          onInput={(event) => resizeTextarea(event.currentTarget)}
-          onCompositionStart={() => {
-            composingRef.current = true;
-          }}
-          onCompositionEnd={() => {
-            composingRef.current = false;
-          }}
-          onKeyDown={(event) => {
-            if (isKeywordEditorCancelKey(event.key)) {
-              event.preventDefault();
-              event.stopPropagation();
-              onCancel();
-              return;
-            }
-            const nativeEvent = event.nativeEvent as KeyboardEvent;
-            if (shouldSubmitKeywordEditor({
-              key: event.key,
-              isComposing: nativeEvent.isComposing || composingRef.current,
-              repeat: nativeEvent.repeat
-            })) {
-              event.preventDefault();
-              event.stopPropagation();
-              onSave();
-            }
-          }}
-          disabled={isSaving || isClosing}
-          placeholder={t("keywords.placeholder")}
-          aria-label={t("keywords.label")}
-        />
-        {error && <div className="keyword-editor-error" role="alert">{error}</div>}
-      </div>
-    </div>,
-    document.body
-  );
-};
-
-const DeleteFilesPanel = ({
-  isDeleting,
-  fileCount,
-  feedback,
-  onConfirm,
-  onCancel,
-  onComplete
-}: {
-  isDeleting: boolean;
-  fileCount: number;
-  feedback: DeleteFilesFeedback | null;
-  onConfirm: () => void;
-  onCancel: () => void;
-  onComplete: () => void;
-}) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("delete.fileDialogTitle")}>
-      <div className="delete-files-content">
-        {isDeleting
-          ? <WaitingIndicator className="delete-files-waiting-icon" />
-          : <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />}
-        <div className="delete-files-message">
-          {isDeleting
-            ? t("delete.movingToTrash", { count: fileCount })
-            : feedback?.status === "failed"
-              ? t("delete.failedCount", { count: feedback.failedCount })
-              : feedback?.status === "succeeded"
-                ? t("delete.completed")
-                : t("delete.fileQuestion")}
-        </div>
-        <div className="modal-actions">
-          <button type="button" disabled={isDeleting} onClick={onCancel}>{t("common.cancel")}</button>
-          <button type="button" disabled={isDeleting} onClick={feedback?.status === "succeeded" ? onComplete : onConfirm}>
-            {feedback?.status === "failed" ? t("common.retry") : feedback?.status === "succeeded" ? t("common.done") : t("common.delete")}
-          </button>
-        </div>
-      </div>
-    </section>
-  </main>
-);
-
-const DeleteDirectoryPanel = ({
-  onConfirm,
-  onCancel
-}: {
-  onConfirm: () => void;
-  onCancel: () => void;
-}) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("delete.directoryDialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">{t("delete.directoryQuestion")}</div>
-        <div className="modal-actions">
-          <button type="button" onClick={onCancel}>{t("common.confirmNo")}</button>
-          <button type="button" onClick={onConfirm}>{t("common.confirmYes")}</button>
-        </div>
-      </div>
-    </section>
-  </main>
-);
-
-const AddDroppedDirectoriesPanel = ({
-  directories,
-  isAdding,
-  onConfirm,
-  onCancel
-}: {
-  directories: DroppedDirectory[];
-  isAdding: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("directoryAdd.dropDialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
-          {directories.length === 1
-            ? t("directoryAdd.dropSingleQuestion", { name: directories[0].name })
-            : t("directoryAdd.dropMultipleQuestion", { count: directories.length })}
-        </div>
-        <div className="modal-actions">
-          <button type="button" onClick={onCancel} disabled={isAdding}>{t("common.cancel")}</button>
-          <button type="button" onClick={onConfirm} disabled={isAdding}>{t("common.confirm")}</button>
-        </div>
-      </div>
-    </section>
-  </main>
-);
-
-const ReplaceDirectoriesPanel = ({
-  conflictCount,
-  replacedCount,
-  isAdding,
-  onConfirm,
-  onCancel
-}: {
-  conflictCount: number;
-  replacedCount: number;
-  isAdding: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("directoryAdd.replaceDialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
-          {t("directoryAdd.replaceQuestion", { candidates: conflictCount, count: replacedCount })}
-        </div>
-        <div className="modal-actions">
-          <button type="button" onClick={onCancel} disabled={isAdding}>{t("common.confirmNo")}</button>
-          <button type="button" onClick={onConfirm} disabled={isAdding}>{t("common.confirmYes")}</button>
-        </div>
-      </div>
-    </section>
-  </main>
-);
-
-const ClearCachePanel = ({
-  isClearing,
-  feedback,
-  skim = false,
-  onConfirm,
-  onCancel,
-  onComplete
-}: {
-  isClearing: boolean;
-  feedback: CacheClearFeedback | null;
-  skim?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-  onComplete: () => void;
-}) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={skim ? t("cache.skimDialogTitle") : t("cache.dialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
-          {feedback?.status === "failed" ? feedback.message : feedback?.status === "succeeded" ? t("cache.completed") : (
-            <>
-              {skim ? t("cache.skimRegenerationHint") : t("cache.regenerationHint")}<br />
-              {t("cache.clearQuestion")}
-            </>
-          )}
-        </div>
-        <div className="modal-actions">
-          <button type="button" disabled={isClearing} onClick={onCancel}>{t("common.cancel")}</button>
-          <button type="button" disabled={isClearing} onClick={feedback?.status === "succeeded" ? onComplete : onConfirm}>
-            {feedback?.status === "failed" ? t("common.retry") : feedback?.status === "succeeded" ? t("common.done") : t("settings.clearCache")}
-          </button>
-        </div>
-      </div>
-    </section>
-  </main>
-);
 
 export default App;

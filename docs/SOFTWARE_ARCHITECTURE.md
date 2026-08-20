@@ -157,6 +157,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 0.9.3 建立架构体量与依赖守门，但尚未改变运行时模块所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
 
+A1 首轮把关键词编辑卡片、文件/目录删除、拖入目录、目录替换和两类缓存清理确认面板迁入 `src/renderer/dialogs/`，并把通用 SVG 包装与缓存尺寸格式化迁入无状态辅助模块。所有弹层打开条件、异步状态、Effect、保存/取消/重试回调和窗口链路仍由 `App.tsx` 持有，原 CSS 选择器与加载顺序未移动；因此这是组件所有权调整，不是交互或视觉重写。完成该轮后 `App.tsx` 的自动行数上限由 9,268 降至 8,863，防止相同实现重新堆回顶层文件。
+
 格式能力必须保持分层：全部 123 种已登记格式都允许写入已添加目录的 `files` 通用目录层，并以文件名、扩展名、目录路径和手工关键词进入正式搜索；其中只有原有 15 种视觉格式生成正式缩略图并进入图片识别与 AI 索引，其余 108 种已登记格式作为通用文件结果显示专用图标并复用对应内容 Provider 或文件信息预览。3DM、ISO、SWF、GGUF、SAFETENSORS、HEIC、HEIF 与 RAW 等原 browse-only 格式现在可以搜索和编辑手工关键词，但不因此获得正式视觉缩略图、OCR 或 AI 能力；其他未登记格式仍只存在于 skim 的全部浏览结果。识别状态属于统一文件属性：全部已登记格式中，只要 `images.keywords` 或 `files.user_keywords` 非空即为“已识别”，没有任何关键词即为“未识别”；这不会扩大 AI 白名单。AVIF 继续经 sharp/libvips 统一生成搜索缩略图、预览缓存和 JPEG 模型输入。非原生视觉格式在 skim 当前可见范围内可以尝试 Windows Shell 内容缩略图，但失败只回退格式或通用图标，不改变正式视觉能力归属。HEIC、HEIF、DNG、CR2、CR3、NEF、ARW、RAF、ORF 与 RW2 可依赖本机 WIC / Windows 相机图像扩展获得可选显示能力：skim 与搜索结果页分别维护独立的 300 px 缩略图、1200 px 预览缓存和串行队列，避免清理、取消、失败及优先级状态跨视图传播；搜索结果还可为受支持视频按需请求 Windows Shell 缩略图并叠加播放标记，以上请求均不进入自动优化。系统扩展缺失、机型不支持或解码失败时，缩略图保留格式图标，空格预览回退文件信息；这些格式仍属于通用文件，不进入正式视觉、AI 或模型输入边界。`supportedVisualFormats.ts` 必须按 `canAIIndex` 派生正式视觉集合，避免扩展通用文件搜索范围时意外扩大识别白名单。所有已登记格式使用专用 `format-*` 图标，扩展名别名按能力表映射复用同一资产；未知格式和加载失败继续回退通用文件图标。skim 视觉文件通过独立 `cap7ce://skim-thumbnail` 和 `cap7ce://skim-preview` 协议按需进入专属缓存，支持正式视觉渲染器覆盖的全部视觉格式；GIF、动态 WEBP 及包含多帧 `acTL` 块的 APNG 在独立预览中直接读取当前授权源文件以保留动画，普通 PNG 继续使用受限尺寸的静态缓存。PDF 保留现有视觉索引、首页缩略图和 AI 边界，但独立预览改由 `pdf` Provider 按页渲染，不复用首页代表图。TXT/MD/INI/HTML/CSS/JS/PY 与 CSV/JSON/XML/YAML/YML 以最多 1 MB 的源码文本进入正式搜索和 skim 共用的 `text` Provider；MD 在 Renderer 内使用 `react-markdown` 与 `remark-gfm` 渲染常用 Markdown 和 GFM 排版，禁用原始 HTML、图片资源加载与链接跳转，其他文本、HTML、CSS、JavaScript 与 Python 始终作为纯文本放入 `<pre>`，不解析或执行。DOC/DOCX 复用 `text` Provider，仅提取正文并限制源文件大小，不承诺原版式、图片或复杂对象还原。XLS/XLSX 与 PPT/PPTX 依赖本机已安装的 Microsoft Excel/PowerPoint，在只读、禁用宏及外部链接更新的条件下转换为会话临时 PDF；源文件上限 256 MB、单次转换上限 30 秒。转换结果按源文件路径、大小与修改时间在当前进程内复用，源文件变化或应用退出后失效；切换或关闭预览会取消尚未完成的转换，但不会删除仍有效的会话结果，缓存不进入正式或 skim 视觉缓存统计。缺少对应组件、转换失败或超时均回退文件信息；当前不提供 WPS 兼容、Office 编辑、内容搜索或版式优化。RTF 保持文件信息预览，等待文档 Provider。FLAC/M4A/MP3/OGG/WAV 与 MKV/MP4/MOV/WEBM 通过只允许当前预览项目访问、支持 Range 的 `cap7ce://skim-media` 进入 `audio`/`video` Provider；M4A、WEBM、FLAC、OGG 与 MKV 仅在 Electron 43 / Chromium 150 的用户真实样本完成元数据、首段解码、播放状态及时间轴推进验证后接入，AVI 实测解码失败并继续回退文件信息，其他登记容器不据扩展名推定可播放。编码、文件内容、Office 转换或浏览器媒体解码不支持时回退文件信息。
 
 添加目录后用于刷新目录文件数量的递归扫描同时把全部已登记格式写入 `files` 通用目录层，并把正式视觉文件写入 `images` 层，但不会自动启动 AI。Settings 顶部“全部文件”取所有目录行文件数量之和，覆盖全部已登记格式；`images.keywords` 或 `files.user_keywords` 非空即为“已识别”，无论关键词来自 AI 还是用户手工录入，其余为“未识别”。因此“已识别 + 未识别 = 全部文件”，并与正式搜索的识别状态筛选和空搜索统计共用相同定义。
@@ -416,6 +418,8 @@ Settings 当前覆盖：
 | `electron/` | 主进程、IPC、窗口、索引、缓存、文件系统、llama.cpp、模型管理 |
 | `electron/preload.ts` | Renderer 安全 API 暴露 |
 | `src/renderer/` | React UI、搜索胶囊、Settings、样式、快捷指令 |
+| `src/renderer/dialogs/` | 关键词编辑与确认面板的纯 UI、局部类型和纯计算模型；业务状态仍由顶层编排持有 |
+| `src/renderer/components/` | 无业务状态的 Renderer 通用展示组件 |
 | `src/renderer/assets/icons/` | 0.7 搜索胶囊窗口控制、排序、设置、签名和警告 SVG 图标 |
 | `src/renderer/assets/startup/` | 冷启动提示动画素材 |
 | `src/shared/` | 共享类型与常量 |
