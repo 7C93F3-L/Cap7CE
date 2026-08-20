@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type Ref } from "react";
 import { createPortal } from "react-dom";
 import iconSignatureCap7CESvg from "./assets/icons/icon-signature-cap7ce.svg?raw";
-import ColorPickerPopover from "./ColorPickerPopover";
+import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "./appearance";
 import SvgIcon from "./components/SvgIcon";
 import { executeQuickCommand } from "./commandExecutor";
 import type { QuickCommandConfirmationRequest } from "./commandExecutor";
@@ -38,6 +38,7 @@ import {
 import { HomeView } from "./search/HomeView";
 import { CacheSettingsRows } from "./settings/CacheSettingsRows";
 import { DirectoryAiSettingsRows } from "./settings/DirectoryAiSettingsRows";
+import { AppearanceSettingsSections } from "./settings/AppearanceSettingsSections";
 import { SettingsSelect } from "./settings/SettingsSelect";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView } from "./results/ResultsView";
@@ -272,46 +273,6 @@ const emptySearchResponse: ImageSearchResponse = {
     parseFailures: 0,
     fileFailures: 0
   }
-};
-
-const getSettingsThemeLabels = (): Record<ThemeMode, string> => ({
-  system: t("theme.system"),
-  light: t("theme.light"),
-  dark: t("theme.dark")
-});
-
-const defaultAppearanceColors: AppearanceColors = {
-  themeColor: "#7C93F3",
-  accentColor: "#68C3C0"
-};
-
-const getNextThemeMode = (currentTheme: ThemeMode): ThemeMode => {
-  if (currentTheme === "system") return "light";
-  if (currentTheme === "light") return "dark";
-  return "system";
-};
-
-const getNextLanguagePreference = (currentLanguage: LanguagePreference): LanguagePreference => {
-  if (currentLanguage === "system") return "zh-CN";
-  if (currentLanguage === "zh-CN") return "en-US";
-  return "system";
-};
-
-const getLanguagePreferenceLabel = (language: LanguagePreference) => {
-  if (language === "zh-CN") return t("language.zhCN");
-  if (language === "en-US") return t("language.enUS");
-  return t("language.system");
-};
-
-const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
-
-const getTextColorForBackground = (color: string) => {
-  if (!isHexColor(color)) return "#191919";
-  const red = Number.parseInt(color.slice(1, 3), 16);
-  const green = Number.parseInt(color.slice(3, 5), 16);
-  const blue = Number.parseInt(color.slice(5, 7), 16);
-  const brightness = red * 0.299 + green * 0.587 + blue * 0.114;
-  return brightness > 160 ? "#191919" : "#ffffff";
 };
 
 const normalizeAppearanceColors = (appearanceColors?: Partial<AppearanceColors> & {
@@ -4536,9 +4497,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
   const [originImageUrl, setOriginImageUrl] = useState<string | null>(null);
   const [originVisible, setOriginVisible] = useState(false);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
-  const themeColorButtonRef = useRef<HTMLButtonElement | null>(null);
-  const accentColorButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [activeColorPicker, setActiveColorPicker] = useState<keyof AppearanceColors | null>(null);
   const quickActionsCollapseTimerRef = useRef<number | null>(null);
   const quickCommandsCollapseTimerRef = useRef<number | null>(null);
   const skimDisplayCollapseTimerRef = useRef<number | null>(null);
@@ -4609,7 +4567,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
     || ggufModelSettings.status === "missing_directory";
   const modelHasMissingPrompt = modelIsMissing || Boolean(modelErrorMessage);
   const modelStatusLabel = modelHasMissingPrompt ? t("model.notFound") : getGgufModelStatusLabel(ggufModelSettings, llamaRuntimeProcessState);
-  const currentAppearanceColors = appearanceColors;
   const skimFormatGroups = useMemo(() => {
     const groups = new Map<FileFormatCategory, string[]>(
       settingsFormatCategoryOrder.map((category) => [category, []])
@@ -4832,26 +4789,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
 
     originSequenceRef.current = { count: 0, lastClickAt: 0 };
     void revealOrigin();
-  };
-
-  const updateAppearanceColor = (key: keyof AppearanceColors, value: string) => {
-    if (!isHexColor(value)) return;
-    onAppearanceColorsChange({
-      ...appearanceColors,
-      [key]: value.toUpperCase()
-    });
-  };
-
-  const previewAppearanceColor = (key: keyof AppearanceColors, value: string) => {
-    if (!isHexColor(value)) return;
-    onAppearanceColorsPreview({
-      ...appearanceColors,
-      [key]: value.toUpperCase()
-    });
-  };
-
-  const resetAppearanceColors = () => {
-    onAppearanceColorsChange(defaultAppearanceColors);
   };
 
   useEffect(() => {
@@ -5087,80 +5024,27 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
           />
         </section>
 
-        <section className="cap-settings-group cap-settings-split cap-settings-group-preferences">
-          <div className="cap-settings-row">
-            <span className="cap-settings-label">{t("settings.language")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onLanguageChange(getNextLanguagePreference(languagePreference))} title={t("settings.changeLanguageHint")}>
-              {getLanguagePreferenceLabel(languagePreference)}
-            </button>
-          </div>
-          <div className="cap-settings-row">
-            <span className="cap-settings-label">{t("appearance.themeModeLabel")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onThemeChange(getNextThemeMode(theme))} title={t("settings.changeThemeHint")}>
-              {getSettingsThemeLabels()[theme]}
-            </button>
-          </div>
-          <div className="cap-settings-row cap-settings-wide">
-            <span className="cap-settings-label">{t("appearance.configureLabel")}</span>
-            <button
-              ref={themeColorButtonRef}
-              className="cap-settings-pill"
-              type="button"
-              title={t("settings.editThemeColorHint")}
-              onClick={() => setActiveColorPicker("themeColor")}
-            >
-              {t("appearance.themeColor")} {currentAppearanceColors.themeColor}
-            </button>
-            <button
-              ref={accentColorButtonRef}
-              className="cap-settings-pill"
-              type="button"
-              style={{
-                "--chip-bg-hover": "var(--accent-color)",
-                "--focus-border": "var(--accent-color)",
-                "--theme-on-color": getTextColorForBackground(currentAppearanceColors.accentColor)
-              } as CSSProperties}
-              title={t("settings.editAccentColorHint")}
-              onClick={() => setActiveColorPicker("accentColor")}
-            >
-              {t("appearance.accentColor")} {currentAppearanceColors.accentColor}
-            </button>
-            <button className="cap-settings-pill" type="button" onClick={resetAppearanceColors} title={t("settings.resetAppearanceHint")}>{t("common.restoreDefault")}</button>
-          </div>
-        </section>
 
-        <section className="cap-settings-group cap-settings-split cap-settings-group-display">
-          <div className="cap-settings-row">
-            <span className="cap-settings-label">{t("settings.standbyLine")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onStandbyLineVisibleChange(!standbyLineVisible)} title={standbyLineVisible ? t("settings.hideStandbyLineHint") : t("settings.showStandbyLineHint")}>
-              {standbyLineVisible ? t("settings.visible") : t("settings.hidden")}
-            </button>
-          </div>
-          <div className="cap-settings-row">
-            <span className="cap-settings-label">{t("settings.edgeSnap")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onEdgeSnapChange(!edgeSnapEnabled)} title={edgeSnapEnabled ? t("settings.disableEdgeSnapHint") : t("settings.enableEdgeSnapHint")}>
-              {edgeSnapEnabled ? t("settings.enabled") : t("settings.disabled")}
-            </button>
-          </div>
-          <div className="cap-settings-row cap-settings-row-half">
-            <span className="cap-settings-label">{t("settings.launchAtLogin")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onLaunchAtLoginChange(!launchAtLogin)} title={launchAtLogin ? t("settings.disableLaunchAtLoginHint") : t("settings.enableLaunchAtLoginHint")}>
-              {launchAtLogin ? t("settings.launchAtLoginOn") : t("settings.launchAtLoginOff")}
-            </button>
-          </div>
-          <div className="cap-settings-row cap-settings-row-half">
-            <span className="cap-settings-label">{t("settings.operationHints")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onOperationHintsChange(!operationHintsEnabled)} title={operationHintsEnabled ? t("settings.disableOperationHintsHint") : t("settings.enableOperationHintsHint")}>
-              {operationHintsEnabled ? t("settings.operationHintsOn") : t("settings.operationHintsOff")}
-            </button>
-          </div>
-          <div className="cap-settings-row cap-settings-row-half">
-            <span className="cap-settings-label">{t("settings.systemNotifications")}</span>
-            <button className="cap-settings-pill" type="button" onClick={() => onSystemNotificationsChange(!systemNotificationsEnabled)} title={systemNotificationsEnabled ? t("settings.disableSystemNotificationsHint") : t("settings.enableSystemNotificationsHint")}>
-              {systemNotificationsEnabled ? t("settings.systemNotificationsOn") : t("settings.systemNotificationsOff")}
-            </button>
-          </div>
-        </section>
+        <AppearanceSettingsSections
+          theme={theme}
+          languagePreference={languagePreference}
+          appearanceColors={appearanceColors}
+          menuStyle={menuStyle}
+          edgeSnapEnabled={edgeSnapEnabled}
+          standbyLineVisible={standbyLineVisible}
+          launchAtLogin={launchAtLogin}
+          systemNotificationsEnabled={systemNotificationsEnabled}
+          operationHintsEnabled={operationHintsEnabled}
+          onThemeChange={onThemeChange}
+          onLanguageChange={onLanguageChange}
+          onAppearanceColorsPreview={onAppearanceColorsPreview}
+          onAppearanceColorsChange={onAppearanceColorsChange}
+          onEdgeSnapChange={onEdgeSnapChange}
+          onStandbyLineVisibleChange={onStandbyLineVisibleChange}
+          onLaunchAtLoginChange={onLaunchAtLoginChange}
+          onSystemNotificationsChange={onSystemNotificationsChange}
+          onOperationHintsChange={onOperationHintsChange}
+        />
 
         <section className="cap-settings-group cap-settings-split cap-settings-group-actions">
           {skimDisplayExpanded ? (
@@ -5540,18 +5424,6 @@ const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, search
         <CustomScrollbar scrollContainerRef={settingsScrollRef} orientation="vertical" />
       </div>
     </main>
-    {activeColorPicker && (
-      <ColorPickerPopover
-        key={activeColorPicker}
-        anchorRef={activeColorPicker === "themeColor" ? themeColorButtonRef : accentColorButtonRef}
-        value={currentAppearanceColors[activeColorPicker]}
-        ariaLabel={activeColorPicker === "themeColor" ? t("appearance.themeColor") : t("appearance.accentColor")}
-        menuStyle={menuStyle}
-        onPreview={(value) => previewAppearanceColor(activeColorPicker, value)}
-        onCommit={(value) => updateAppearanceColor(activeColorPicker, value)}
-        onClose={() => setActiveColorPicker(null)}
-      />
-    )}
     {originVisible && originImageUrl && createPortal(
       <div
         className="cap7ce-origin-overlay"
