@@ -14,6 +14,7 @@ import "./settings/SkimDisplaySettingsRows.css";
 import "./settings/SettingsFooter.css";
 import "./settings/RuntimeModelSettingsSection.css";
 import "./settings/DirectoryAiSettingsRows.css";
+import "./settings/SettingsView.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const windowKind = new URLSearchParams(window.location.search).get("window");

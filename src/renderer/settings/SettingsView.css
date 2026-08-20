@@ -1,0 +1,230 @@
+.cap-settings-view {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0 var(--content-edge-gap);
+  background: var(--app-bg);
+  --cap-results-top: 58px;
+  --cap-results-bottom: var(--content-edge-gap);
+}
+
+.cap-settings-view > .cap7ce-search-capsule-unified {
+  flex: 0 0 auto;
+  position: relative;
+  top: auto;
+  left: auto;
+  width: calc(100% - var(--cap-edge-inset));
+  margin: 0 0 var(--cap-capsule-content-gap) var(--cap-edge-inset);
+  transform: none;
+}
+
+.cap-shell-normal .cap-settings-view,
+.cap-shell-settings .cap-settings-view {
+  padding-top: 5px;
+  padding-bottom: var(--content-edge-gap);
+}
+
+.cap-settings-stage {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.cap-settings-scroll-frame {
+  width: calc(100% - var(--content-edge-gap));
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-left: var(--content-edge-gap);
+}
+
+.cap-settings-stack {
+  width: min(800px, calc(100% - 120px));
+  min-height: 100%;
+  height: auto;
+  max-height: none;
+  margin: 0 auto;
+  padding: 0 2px 42px;
+}
+
+.cap-settings-title {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 25px;
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.cap-settings-group {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cap-settings-split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cap-settings-group-source {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 60px;
+}
+
+.cap-settings-row-source,
+.cap-settings-directory-list {
+  grid-column: 1 / -1;
+}
+
+.cap-settings-row-cache {
+  grid-column: 1 / -1;
+}
+
+.cap-settings-group-display {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 60px;
+}
+
+.cap-settings-group-display > .cap-settings-row-half {
+  grid-column: span 2;
+}
+
+.cap-settings-wide {
+  grid-column: 1 / -1;
+}
+
+.cap-settings-row {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  padding: 10px 13px 10px 25px;
+  font-size: 12px;
+}
+
+.cap-settings-label {
+  min-width: 88px;
+  flex: 0 0 auto;
+  color: currentColor;
+  white-space: nowrap;
+}
+
+.cap-settings-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-settings-row:not(.cap-settings-directory-row) > .cap-settings-label + .cap-settings-pill {
+  margin-left: auto;
+}
+
+.cap-settings-group-actions > .cap-settings-row > .cap-settings-label {
+  order: -1;
+  margin-right: auto;
+}
+
+.cap-settings-group-actions > .cap-settings-row:not(.cap-settings-directory-row) > .cap-settings-label + .cap-settings-pill {
+  margin-left: 0;
+}
+
+.cap-settings-inline-input,
+.cap-settings-select {
+  min-width: 0;
+  height: 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 11px;
+}
+
+.cap-settings-quick-actions-panel,
+.cap-settings-skim-display-panel,
+.cap-settings-index-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 16px;
+  overflow: hidden;
+  border-radius: var(--radius-expanded-panel);
+  background: var(--panel-bg);
+  padding: 20px 25px 22px;
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.cap-settings-expandable-shell {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr;
+  will-change: grid-template-rows;
+  animation: cap-settings-panel-expand 320ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+.cap-settings-expandable-shell.is-closing {
+  pointer-events: none;
+  animation: cap-settings-panel-collapse 240ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+.cap-settings-expandable-inner {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  contain: layout paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+@keyframes cap-settings-panel-expand {
+  from {
+    grid-template-rows: 0fr;
+  }
+
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes cap-settings-panel-collapse {
+  from {
+    grid-template-rows: 1fr;
+  }
+
+  to {
+    grid-template-rows: 0fr;
+  }
+}
+
+.cap-settings-quick-actions-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+}
+
+.cap-settings-quick-actions-header > .cap-settings-label {
+  min-width: 0;
+}
+
+.cap-settings-quick-actions-controls {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.cap-settings-quick-action-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

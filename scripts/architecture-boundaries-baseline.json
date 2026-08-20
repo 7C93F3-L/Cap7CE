@@ -1,7 +1,7 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 2813,
+    "src/renderer/styles.css": 2582,
     "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,
     "src/renderer/dialogs/KeywordEditorCard.css": 108,
@@ -15,6 +15,7 @@
     "src/renderer/settings/SettingsFooter.css": 155,
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
+    "src/renderer/settings/SettingsView.css": 231,
     "electron/main.ts": 4075
   },
   "legacyMainIpcChannels": [
