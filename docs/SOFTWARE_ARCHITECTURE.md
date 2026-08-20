@@ -1,7 +1,7 @@
 # Cap7CE 软件架构
 
 > 当前版本：0.9.3
-> 更新日期：2026-08-16
+> 更新日期：2026-08-20
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
 ## 1. 项目定位
@@ -154,6 +154,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 - 轻提示、菜单、浮层和局部状态管理。
 
 `src/renderer/styles.css` 是 0.9.3 UI 的主要样式入口，包含搜索胶囊、统一窗口壳层、Settings、右键菜单、自绘拾色器、独立预览、关键词编辑、自绘滚动条、等待状态、交互动效、待机线和主题变量。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。Settings 底部版本号仍以文字按钮形式打开固定 GitHub Releases 页面；视觉模型下方的“版本更新”行仅在用户点击时检查更新，发现新版后先显示版本号并将按钮切换为“立即下载”，再次点击才在行内显示下载进度。自动替换仅在打包版启用：主进程在本轮下载目录之外生成内容严格为 ASCII 的 VBScript 启动器，将安装目录等可能包含非 ASCII 字符的内部参数放入 UTF-16LE PowerShell 编码命令，再通过 Windows Shell 以隐藏窗口独立运行固定绝对路径的 Windows PowerShell 更新助手，既避免系统代码页破坏中文路径和参数边界，也避开 detached PowerShell 不执行脚本、普通子进程随 Electron 退出终止、助手删除仍在执行的启动器及用户误关命令行四种边界；更新助手先解压并校验 ZIP 内的 `Cap7CE.exe` 与 `resources/app.asar`，写出就绪信号后主进程才退出。助手预检失败会写出 `helper-failed` 信号；启动器无法打开、助手失败或未在时限内就绪时，主进程保持运行、删除本轮临时下载，并将主进程错误及已有助手输出写入系统临时目录中的 `Cap7CE-update-last-failure.log`。助手接管后等待旧进程退出，再备份当前程序目录、复制新版并保留用户自行放置的 `models` 与 `llama.cpp`；新版无法稳定启动时恢复备份并重启旧版，成功后删除备份及临时下载，隐藏启动器由重启后的新版延迟清理。下载流连续 60 秒没有新数据时主动取消本轮下载、删除不完整 ZIP 并在 Settings 行内提示重试，避免网络停滞后无限等待。该流程不后台检查或下载，也不修改 `%APPDATA%\Cap7CE` 用户数据；未来安装包更新策略应继续复用相同的检查、确认与进度状态，只替换主进程执行器。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
+
+0.9.3 建立架构体量与依赖守门，但尚未改变运行时模块所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
 
 格式能力必须保持分层：全部 123 种已登记格式都允许写入已添加目录的 `files` 通用目录层，并以文件名、扩展名、目录路径和手工关键词进入正式搜索；其中只有原有 15 种视觉格式生成正式缩略图并进入图片识别与 AI 索引，其余 108 种已登记格式作为通用文件结果显示专用图标并复用对应内容 Provider 或文件信息预览。3DM、ISO、SWF、GGUF、SAFETENSORS、HEIC、HEIF 与 RAW 等原 browse-only 格式现在可以搜索和编辑手工关键词，但不因此获得正式视觉缩略图、OCR 或 AI 能力；其他未登记格式仍只存在于 skim 的全部浏览结果。识别状态属于统一文件属性：全部已登记格式中，只要 `images.keywords` 或 `files.user_keywords` 非空即为“已识别”，没有任何关键词即为“未识别”；这不会扩大 AI 白名单。AVIF 继续经 sharp/libvips 统一生成搜索缩略图、预览缓存和 JPEG 模型输入。非原生视觉格式在 skim 当前可见范围内可以尝试 Windows Shell 内容缩略图，但失败只回退格式或通用图标，不改变正式视觉能力归属。HEIC、HEIF、DNG、CR2、CR3、NEF、ARW、RAF、ORF 与 RW2 可依赖本机 WIC / Windows 相机图像扩展获得可选显示能力：skim 与搜索结果页分别维护独立的 300 px 缩略图、1200 px 预览缓存和串行队列，避免清理、取消、失败及优先级状态跨视图传播；搜索结果还可为受支持视频按需请求 Windows Shell 缩略图并叠加播放标记，以上请求均不进入自动优化。系统扩展缺失、机型不支持或解码失败时，缩略图保留格式图标，空格预览回退文件信息；这些格式仍属于通用文件，不进入正式视觉、AI 或模型输入边界。`supportedVisualFormats.ts` 必须按 `canAIIndex` 派生正式视觉集合，避免扩展通用文件搜索范围时意外扩大识别白名单。所有已登记格式使用专用 `format-*` 图标，扩展名别名按能力表映射复用同一资产；未知格式和加载失败继续回退通用文件图标。skim 视觉文件通过独立 `cap7ce://skim-thumbnail` 和 `cap7ce://skim-preview` 协议按需进入专属缓存，支持正式视觉渲染器覆盖的全部视觉格式；GIF、动态 WEBP 及包含多帧 `acTL` 块的 APNG 在独立预览中直接读取当前授权源文件以保留动画，普通 PNG 继续使用受限尺寸的静态缓存。PDF 保留现有视觉索引、首页缩略图和 AI 边界，但独立预览改由 `pdf` Provider 按页渲染，不复用首页代表图。TXT/MD/INI/HTML/CSS/JS/PY 与 CSV/JSON/XML/YAML/YML 以最多 1 MB 的源码文本进入正式搜索和 skim 共用的 `text` Provider；MD 在 Renderer 内使用 `react-markdown` 与 `remark-gfm` 渲染常用 Markdown 和 GFM 排版，禁用原始 HTML、图片资源加载与链接跳转，其他文本、HTML、CSS、JavaScript 与 Python 始终作为纯文本放入 `<pre>`，不解析或执行。DOC/DOCX 复用 `text` Provider，仅提取正文并限制源文件大小，不承诺原版式、图片或复杂对象还原。XLS/XLSX 与 PPT/PPTX 依赖本机已安装的 Microsoft Excel/PowerPoint，在只读、禁用宏及外部链接更新的条件下转换为会话临时 PDF；源文件上限 256 MB、单次转换上限 30 秒。转换结果按源文件路径、大小与修改时间在当前进程内复用，源文件变化或应用退出后失效；切换或关闭预览会取消尚未完成的转换，但不会删除仍有效的会话结果，缓存不进入正式或 skim 视觉缓存统计。缺少对应组件、转换失败或超时均回退文件信息；当前不提供 WPS 兼容、Office 编辑、内容搜索或版式优化。RTF 保持文件信息预览，等待文档 Provider。FLAC/M4A/MP3/OGG/WAV 与 MKV/MP4/MOV/WEBM 通过只允许当前预览项目访问、支持 Range 的 `cap7ce://skim-media` 进入 `audio`/`video` Provider；M4A、WEBM、FLAC、OGG 与 MKV 仅在 Electron 43 / Chromium 150 的用户真实样本完成元数据、首段解码、播放状态及时间轴推进验证后接入，AVI 实测解码失败并继续回退文件信息，其他登记容器不据扩展名推定可播放。编码、文件内容、Office 转换或浏览器媒体解码不支持时回退文件信息。
 
@@ -418,6 +420,7 @@ Settings 当前覆盖：
 | `src/renderer/assets/startup/` | 冷启动提示动画素材 |
 | `src/shared/` | 共享类型与常量 |
 | `docs/` | 当前架构、UI 规划和方案文档 |
+| `scripts/architecture-boundaries-*` | 架构体量、Renderer 权限边界、顶层反向依赖和 main IPC 新增位置的自动守门 |
 | `build/` | 应用图标等构建资源 |
 | `dist/` | Vite 构建输出 |
 | `dist-electron/` | Electron 主进程构建输出 |
