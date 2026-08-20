@@ -4066,32 +4066,15 @@ registerPreferenceIpc({
   updateSearchLabelVisibility: updateSearchLabelVisibilityPreference,
   updateSkimDisplay: updateSkimDisplayPreference,
   updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
-  updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference
-});
-
-ipcMain.handle("preferences:updateTheme", async (_event, themePreference: "system" | "light" | "dark") => {
-  const preferences = await updateThemePreference(themePreference);
-  refreshLineAppearance();
-  return preferences;
-});
-
-ipcMain.handle("preferences:updateLanguage", async (_event, languagePreference: LanguagePreference) => {
-  const nextLanguagePreference = languagePreference === "zh-CN" || languagePreference === "en-US"
-    ? languagePreference
-    : "system";
-  return applyLanguagePreference(nextLanguagePreference);
-});
-
-ipcMain.handle("preferences:updateSort", async (_event, sortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => {
-  const preferences = await updateSortPreference(sortPreference);
-  setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
-  return preferences;
-});
-
-ipcMain.handle("preferences:updateAppearanceColors", async (_event, appearanceColors: { themeColor: string; accentColor: string }) => {
-  const preferences = await updateAppearanceColorsPreference(appearanceColors);
-  refreshLineAppearance();
-  return preferences;
+  updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
+  updateTheme: updateThemePreference,
+  refreshAppearance: refreshLineAppearance,
+  applyLanguage: applyLanguagePreference,
+  updateSort: updateSortPreference,
+  applyThumbnailSort: (sortPreference) => {
+    setThumbnailOptimizationSort(sortPreference.sortField, sortPreference.sortDirection);
+  },
+  updateAppearanceColors: updateAppearanceColorsPreference
 });
 
 ipcMain.handle("preferences:updateEdgeSnap", async (_event, nextEdgeSnapEnabled: boolean) => {

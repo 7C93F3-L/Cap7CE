@@ -2,6 +2,10 @@ import type { UserPreferencesResponse } from "./preferenceStore";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 
 type PreferenceUpdater<T> = (value: T) => Promise<UserPreferencesResponse>;
+type ThemePreference = UserPreferencesResponse["themePreference"];
+type LanguagePreference = UserPreferencesResponse["languagePreference"];
+type SortPreference = UserPreferencesResponse["sortPreference"];
+type AppearanceColors = UserPreferencesResponse["appearanceColors"];
 
 export interface PreferenceIpcDependencies {
   registrar: IpcRegistrar;
@@ -13,6 +17,12 @@ export interface PreferenceIpcDependencies {
   updateSkimDisplay: PreferenceUpdater<UserPreferencesResponse["skimDisplay"]>;
   updateSkimSidebarFolders: PreferenceUpdater<string[]>;
   updateSkimSystemLocationsCollapsed: PreferenceUpdater<boolean>;
+  updateTheme: PreferenceUpdater<ThemePreference>;
+  refreshAppearance: () => void;
+  applyLanguage: PreferenceUpdater<LanguagePreference>;
+  updateSort: PreferenceUpdater<SortPreference>;
+  applyThumbnailSort: (sortPreference: SortPreference) => void;
+  updateAppearanceColors: PreferenceUpdater<AppearanceColors>;
 }
 
 export const registerPreferenceIpc = ({
@@ -24,7 +34,13 @@ export const registerPreferenceIpc = ({
   updateSearchLabelVisibility,
   updateSkimDisplay,
   updateSkimSidebarFolders,
-  updateSkimSystemLocationsCollapsed
+  updateSkimSystemLocationsCollapsed,
+  updateTheme,
+  refreshAppearance,
+  applyLanguage,
+  updateSort,
+  applyThumbnailSort,
+  updateAppearanceColors
 }: PreferenceIpcDependencies): void => {
   registerIpcDomain({
     registrar,
@@ -80,6 +96,43 @@ export const registerPreferenceIpc = ({
         kind: "handle",
         channel: "preferences:updateSkimSystemLocationsCollapsed",
         listener: (_event, collapsed: boolean) => updateSkimSystemLocationsCollapsed(collapsed)
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateTheme",
+        listener: async (_event, themePreference: ThemePreference) => {
+          const preferences = await updateTheme(themePreference);
+          refreshAppearance();
+          return preferences;
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateLanguage",
+        listener: (_event, languagePreference: LanguagePreference) => {
+          const nextLanguagePreference = languagePreference === "zh-CN" || languagePreference === "en-US"
+            ? languagePreference
+            : "system";
+          return applyLanguage(nextLanguagePreference);
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateSort",
+        listener: async (_event, sortPreference: SortPreference) => {
+          const preferences = await updateSort(sortPreference);
+          applyThumbnailSort(preferences.sortPreference);
+          return preferences;
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateAppearanceColors",
+        listener: async (_event, appearanceColors: AppearanceColors) => {
+          const preferences = await updateAppearanceColors(appearanceColors);
+          refreshAppearance();
+          return preferences;
+        }
       }
     ]
   });

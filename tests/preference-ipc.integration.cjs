@@ -4,7 +4,10 @@ const { registerPreferenceIpc } = require("../dist-electron/preferenceIpc.js");
 const run = async () => {
   const handles = new Map();
   const calls = [];
-  const response = { updatedAt: "test" };
+  const response = {
+    updatedAt: "test",
+    sortPreference: { sortField: "modified_at", sortDirection: "desc" }
+  };
   const capture = (name) => async (value) => {
     calls.push([name, value]);
     return response;
@@ -22,7 +25,13 @@ const run = async () => {
     updateSearchLabelVisibility: capture("searchLabelVisibility"),
     updateSkimDisplay: capture("skimDisplay"),
     updateSkimSidebarFolders: capture("skimSidebarFolders"),
-    updateSkimSystemLocationsCollapsed: capture("skimSystemLocationsCollapsed")
+    updateSkimSystemLocationsCollapsed: capture("skimSystemLocationsCollapsed"),
+    updateTheme: capture("theme"),
+    refreshAppearance: () => calls.push(["refreshAppearance"]),
+    applyLanguage: capture("language"),
+    updateSort: capture("sort"),
+    applyThumbnailSort: (sortPreference) => calls.push(["applyThumbnailSort", sortPreference]),
+    updateAppearanceColors: capture("appearanceColors")
   });
 
   assert.deepEqual([...handles.keys()], [
@@ -33,7 +42,11 @@ const run = async () => {
     "preferences:updateSearchLabelVisibility",
     "preferences:updateSkimDisplay",
     "preferences:updateSkimSidebarFolders",
-    "preferences:updateSkimSystemLocationsCollapsed"
+    "preferences:updateSkimSystemLocationsCollapsed",
+    "preferences:updateTheme",
+    "preferences:updateLanguage",
+    "preferences:updateSort",
+    "preferences:updateAppearanceColors"
   ]);
 
   const event = { sender: { id: 1 } };
@@ -60,6 +73,10 @@ const run = async () => {
   await handles.get("preferences:updateSkimDisplay")(event, skimDisplay);
   await handles.get("preferences:updateSkimSidebarFolders")(event, sidebarFolders);
   await handles.get("preferences:updateSkimSystemLocationsCollapsed")(event, "collapsed");
+  await handles.get("preferences:updateTheme")(event, "dark");
+  await handles.get("preferences:updateLanguage")(event, "invalid");
+  await handles.get("preferences:updateSort")(event, { sortField: "file_name", sortDirection: "asc" });
+  await handles.get("preferences:updateAppearanceColors")(event, { themeColor: "#111111", accentColor: "#222222" });
 
   assert.deepEqual(calls, [
     ["skimSort", skimSort],
@@ -74,7 +91,14 @@ const run = async () => {
     }],
     ["skimDisplay", skimDisplay],
     ["skimSidebarFolders", sidebarFolders],
-    ["skimSystemLocationsCollapsed", "collapsed"]
+    ["skimSystemLocationsCollapsed", "collapsed"],
+    ["theme", "dark"],
+    ["refreshAppearance"],
+    ["language", "system"],
+    ["sort", { sortField: "file_name", sortDirection: "asc" }],
+    ["applyThumbnailSort", response.sortPreference],
+    ["appearanceColors", { themeColor: "#111111", accentColor: "#222222" }],
+    ["refreshAppearance"]
   ]);
 
   console.log("Preference IPC integration tests passed.");
