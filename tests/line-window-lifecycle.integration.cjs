@@ -16,6 +16,9 @@ assert.doesNotMatch(mainSource, /if \(mode === "standby"\) \{\s*applyStandaloneL
 assert.match(mainSource, /if \(activeShellState === "capsule"\) \{\s*sendActivateShellModeShortcutToRenderer\("standby"\);\s*\}/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
 assert.doesNotMatch(mainSource, /appTray\.on\("double-click"|openNormalFromTray/u);
+assert.match(mainSource, /const contentViewActive = Boolean\([\s\S]*?rendererContentViewActive[\s\S]*?setSkimShellThumbnailActivity\(contentViewActive\)/u);
+assert.match(mainSource, /const isVisibleAndFocused = \(window: BrowserWindow \| null\)[\s\S]*?window\.isVisible\(\) && window\.isFocused\(\)[\s\S]*?isVisibleAndFocused\(mainWindow\) \|\| isVisibleAndFocused\(previewWindow\)[\s\S]*?setThumbnailOptimizationForegroundActive\(foregroundWindowActive\)/u);
+assert.match(mainSource, /if \(preferences\.autoCacheOptimizationEnabled\) \{\s*scheduleDirectoryThumbnailOptimization\(await listDirectories\(\)\);\s*\}/u);
 
 assert.match(appSource, /const dismissTransientInteractionsForStandby = useCallback/u);
 for (const resetCall of [
@@ -49,5 +52,7 @@ console.log(JSON.stringify({
   standbyCancelsTransientInteractions: true,
   activeModalTasksBlockStandby: true,
   standbyShortcutUsesRendererEntry: true,
-  trayClickUsesNormalShortcutEntry: true
+  trayClickUsesNormalShortcutEntry: true,
+  contentViewAndForegroundCacheActivitySeparated: true,
+  startupCacheOptimizationDiscoveryRestored: true
 }));

@@ -32,6 +32,7 @@ app.whenReady().then(async () => {
   const thumbnailService = require("../dist-electron/thumbnailService.js");
   await fs.mkdir(testRoot, { recursive: true });
   const backgroundFile = path.join(testRoot, "background.png");
+  const foregroundPausedFile = path.join(testRoot, "foreground-paused.png");
   const pausedFile = path.join(testRoot, "paused.png");
   const deletedDirectory = path.join(testRoot, "deleted-directory");
   const deletedDirectoryFile = path.join(deletedDirectory, "deleted.png");
@@ -42,6 +43,7 @@ app.whenReady().then(async () => {
   await fs.mkdir(deletedDirectory, { recursive: true });
   await Promise.all([
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#336699" } }).png().toFile(backgroundFile),
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#335599" } }).png().toFile(foregroundPausedFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#996633" } }).png().toFile(pausedFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#663399" } }).png().toFile(deletedDirectoryFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#339966" } }).png().toFile(retainedFile),
@@ -54,6 +56,17 @@ app.whenReady().then(async () => {
     await service.setThumbnailOptimizationEnabled(true);
     service.setThumbnailOptimizationForegroundActive(false);
     await service.enqueueThumbnailOptimizationCandidates([await candidateFor(backgroundFile)]);
+    await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
+    assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
+
+    await service.setThumbnailOptimizationEnabled(false);
+    await service.setThumbnailOptimizationEnabled(true);
+    service.setThumbnailOptimizationForegroundActive(true);
+    await service.enqueueThumbnailOptimizationCandidates([await candidateFor(foregroundPausedFile)]);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    assert.equal(service.getThumbnailOptimizationStatus().queuedCount, 1);
+    assert.equal(service.getThumbnailOptimizationStatus().processedCount, 0);
+    service.setThumbnailOptimizationForegroundActive(false);
     await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
     assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
 
@@ -126,6 +139,8 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       backgroundQueueContinues: true,
+      foregroundFocusPausesQueue: true,
+      foregroundBlurResumesQueue: true,
       unchangedFailuresSuppressedPerSession: true,
       changedFailuresRetried: true,
       manualReenableRetriesFailures: true,

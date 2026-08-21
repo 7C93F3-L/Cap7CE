@@ -227,8 +227,12 @@ const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[
   });
 };
 
+const isVisibleAndFocused = (window: BrowserWindow | null) => Boolean(
+  window && !window.isDestroyed() && window.isVisible() && window.isFocused()
+);
+
 const syncThumbnailOptimizationActivity = () => {
-  const shouldRun = Boolean(
+  const contentViewActive = Boolean(
     rendererContentViewActive
     && mainWindow
     && !mainWindow.isDestroyed()
@@ -236,10 +240,11 @@ const syncThumbnailOptimizationActivity = () => {
     && mainWindow.isFocused()
     && (activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal")
   );
-  setSkimShellThumbnailActivity(shouldRun);
-  setSearchShellVisualActivity(shouldRun);
-  searchScanSnapshotService.setActive(shouldRun);
-  setThumbnailOptimizationForegroundActive(shouldRun);
+  const foregroundWindowActive = isVisibleAndFocused(mainWindow) || isVisibleAndFocused(previewWindow);
+  setSkimShellThumbnailActivity(contentViewActive);
+  setSearchShellVisualActivity(contentViewActive);
+  searchScanSnapshotService.setActive(contentViewActive);
+  setThumbnailOptimizationForegroundActive(foregroundWindowActive);
 };
 
 const cancelActiveSearchTasks = () => {
@@ -576,6 +581,10 @@ const createPreviewWindow = () => {
     sendActivePreviewData();
     revealPreviewWindow();
   });
+  previewWindow.on("focus", syncThumbnailOptimizationActivity);
+  previewWindow.on("blur", syncThumbnailOptimizationActivity);
+  previewWindow.on("show", syncThumbnailOptimizationActivity);
+  previewWindow.on("hide", syncThumbnailOptimizationActivity);
   previewWindow.on("move", () => {
     if (
       !previewSessionActive
@@ -604,6 +613,7 @@ const createPreviewWindow = () => {
     previewSessionActive = false;
     activePreviewData = null;
     latestPreviewContentSize = null;
+    syncThumbnailOptimizationActivity();
   });
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
@@ -2530,6 +2540,9 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     }
     handleThumbnailOptimizationStatusForNotification(status);
   });
+  if (preferences.autoCacheOptimizationEnabled) {
+    scheduleDirectoryThumbnailOptimization(await listDirectories());
+  }
   void createStartupHintWindow();
   createAppTray();
   if (completedUpdateVersion) {

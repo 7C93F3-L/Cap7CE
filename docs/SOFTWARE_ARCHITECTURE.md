@@ -81,7 +81,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `shellThumbnailScheduler.ts` | Shell 缩略图的独立串行队列、请求去重、前后台暂停、会话取消、失败抑制和超时熔断 |
 | `visualRenderService.ts` | 统一调度各格式代表图、模型图和预览图渲染 |
 | `thumbnailService.ts` | 搜索结果缩略图缓存入口 |
-| `thumbnailOptimizationService.ts` | 最低优先级串行预生成搜索缩略图，支持排序、暂停、取消、进度状态，以及按完整缓存身份进行单次运行失败抑制；文件变化、进程重启或重新开启自动优化后允许重试 |
+| `thumbnailOptimizationService.ts` | 最低优先级串行预生成搜索缩略图；主窗口或预览窗口聚焦时停止领取新任务，与当前页面是否为搜索、skim 或 Settings 无关，窗口失焦、隐藏或进入后台后继续，已开始的单文件自然完成；启动时若开关已启用则复用目录发现链重建内存队列，并按现有缓存身份跳过已完成项；同时支持排序、暂停、取消、进度状态，以及按完整缓存身份进行单次运行失败抑制，文件变化、进程重启或重新开启自动优化后允许重试 |
 | `pdfRenderService.ts` | PDF 首页渲染 |
 | `pdfPreviewService.ts` | PDF 独立预览会话、页面串行渲染、可取消切换、最多 5 页 LRU 内存缓存和渲染安全上限；不写入正式或 skim 缓存 |
 | `officePreviewService.ts` | XLS/XLSX 与 PPT/PPTX 通过本机 Microsoft Excel/PowerPoint 只读转换为会话临时 PDF；负责大小上限、30 秒超时、精确终止本轮拥有的转换进程、切换取消和临时目录清理 |

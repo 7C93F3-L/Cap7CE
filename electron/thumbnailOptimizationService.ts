@@ -46,6 +46,7 @@ let foregroundActive = false;
 
 const foregroundYieldMs = 750;
 const backgroundYieldMs = 120;
+const foregroundPauseReason = "foreground-window";
 
 const normalizePathKey = (filePath: string) => path.resolve(filePath).toLowerCase();
 const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
@@ -160,7 +161,17 @@ export const setThumbnailOptimizationSort = (
 };
 
 export const setThumbnailOptimizationForegroundActive = (active: boolean) => {
+  if (foregroundActive === active) return;
   foregroundActive = active;
+  if (foregroundActive) {
+    pauseReasons.add(foregroundPauseReason);
+    emitStatus();
+    return;
+  }
+
+  pauseReasons.delete(foregroundPauseReason);
+  emitStatus();
+  startWorker();
 };
 
 export const enqueueThumbnailOptimizationCandidates = async (candidates: ThumbnailOptimizationCandidate[]) => {
