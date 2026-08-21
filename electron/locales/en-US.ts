@@ -119,7 +119,7 @@ export const enUS = defineLocale({
   "search.guide.commandDark": "Type ui:dark and press Enter to switch to Dark mode.",
   "search.guide.viewCommands": "View all Quick Commands in Settings.",
   "search.guide.editShortcuts": "Customize Quick Actions in Settings.",
-  "search.guide.trayNormal": "Double-click the system tray icon to open normal mode quickly.",
+  "search.guide.trayNormal": "Click the system tray icon to open normal mode quickly.",
   "search.guide.focusSearch": "Press Ctrl+` to return focus to the search box.",
   "search.guide.resultContextMenu": "Right-click a search result for more file actions.",
   "window.minimize": "Minimize",

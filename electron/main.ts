@@ -1531,7 +1531,7 @@ const createAppTray = () => {
 
   appTray = new Tray(path.join(app.getAppPath(), "build", "icon.ico"));
   appTray.setToolTip("Cap7CE");
-  appTray.on("double-click", () => openNormalFromTray());
+  appTray.on("click", () => void activateShellModeShortcut("normal"));
   appTray.on("balloon-click", () => openSettingsFromTray());
   updateTrayMenu();
 };
@@ -1574,22 +1574,6 @@ const openSettingsFromTray = () => {
   showAndFocusMainWindow();
   sendShellStateToRenderer("settings");
   sendOpenSettingsToRenderer();
-};
-
-const openNormalFromTray = () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-
-  if (!showAndFocusMainWindow()) {
-    return;
-  }
-  const preserveBounds = activeShellState === "normal" || activeShellState === "settings";
-  if (activeShellState !== "normal") {
-    applyShellWindowState("normal", { preserveBounds });
-  }
-  if (!showAndFocusMainWindow()) {
-    return;
-  }
-  sendShellStateToRenderer("normal");
 };
 
 const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "capsule">) => {

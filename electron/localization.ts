@@ -119,7 +119,7 @@ export const zhCN = {
   "search.guide.commandDark": "键入 ui:dark 并按下回车键，可切换至黑暗模式。",
   "search.guide.viewCommands": "在设置页中可以查看所有快捷指令。",
   "search.guide.editShortcuts": "在设置页中可以修改快捷动作。",
-  "search.guide.trayNormal": "双击系统托盘图标，可以快速打开 normal 模式。",
+  "search.guide.trayNormal": "单击系统托盘图标，可以快速打开 normal 模式。",
   "search.guide.focusSearch": "按下 Ctrl+`，可以快速将焦点移回搜索框。",
   "search.guide.resultContextMenu": "右键单击搜索结果，可以查看更多文件操作。",
   "window.minimize": "最小化",

@@ -14,6 +14,8 @@ assert.match(mainSource, /standbyLineVisible[\s\S]*?!mainWindow\.isVisible\(\)[\
 assert.match(mainSource, /if \(mode === "standby"\) \{\s*sendActivateShellModeShortcutToRenderer\(mode\);\s*return;\s*\}/u);
 assert.doesNotMatch(mainSource, /if \(mode === "standby"\) \{\s*applyStandaloneLineMode\(\)/u);
 assert.match(mainSource, /if \(activeShellState === "capsule"\) \{\s*sendActivateShellModeShortcutToRenderer\("standby"\);\s*\}/u);
+assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
+assert.doesNotMatch(mainSource, /appTray\.on\("double-click"|openNormalFromTray/u);
 
 assert.match(appSource, /const dismissTransientInteractionsForStandby = useCallback/u);
 for (const resetCall of [
@@ -46,5 +48,6 @@ console.log(JSON.stringify({
   lineActivationSenderGuardPreserved: true,
   standbyCancelsTransientInteractions: true,
   activeModalTasksBlockStandby: true,
-  standbyShortcutUsesRendererEntry: true
+  standbyShortcutUsesRendererEntry: true,
+  trayClickUsesNormalShortcutEntry: true
 }));
