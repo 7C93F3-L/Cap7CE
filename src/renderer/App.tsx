@@ -492,6 +492,7 @@ const App = () => {
   const lastIndexTaskRequestRef = useRef<IndexTaskRequest | null>(null);
   const scanResultsRefreshedDuringTaskRef = useRef(false);
   const keywordEditScrollSnapshotRef = useRef<KeywordEditScrollSnapshot | null>(null);
+  const directoryDeleteInFlightRef = useRef(false);
   const capsuleInputRef = useRef<HTMLInputElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const previousShellStateRef = useRef<ShellState>("standby");
@@ -718,6 +719,43 @@ const App = () => {
     setSkimLocationPickerOpen(false);
     setSkimLocationPickerClosing(false);
   }, []);
+
+  const dismissCancellableDialog = useCallback((notifyReplacementCancellation = false) => {
+    setDirectoryToDelete(null); setDroppedDirectories([]); setPendingDirectoryAddResult(null);
+    setFilesPendingDelete([]); setDeleteFilesFeedback(null);
+    setCacheClearToken(null); setCacheClearFeedback(null);
+    setSkimCacheClearToken(null); setSkimCacheClearFeedback(null);
+    setDialog(null);
+    if (notifyReplacementCancellation) {
+      if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
+      else showQuickCommandNotice(t("command.cancelled"));
+    }
+    directoryAddFeedbackTargetRef.current = "search";
+  }, [showQuickCommandNotice, showSkimFeedback]);
+
+  const dismissTransientInteractionsForStandby = useCallback(() => {
+    closeNavigationOverlays();
+    if (keywordEditorExitTimerRef.current !== null) {
+      window.clearTimeout(keywordEditorExitTimerRef.current);
+      keywordEditorExitTimerRef.current = null;
+    }
+    keywordEditorClosingRef.current = false; keywordEditScrollSnapshotRef.current = null;
+    setKeywordEditSession(null); setEditCaption(""); setEditKeywords("");
+    setEditMetadataError(""); setIsKeywordEditorClosing(false);
+    dismissCancellableDialog();
+    setEditingDirectoryId(null); setPendingQuickCommandConfirmation(null);
+  }, [closeNavigationOverlays, dismissCancellableDialog]);
+
+  const enterStandby = useCallback(() => {
+    if (
+      isAddingDirectory || isClearingCache || isClearingSkimCache
+      || isDeletingFiles || isSavingMetadata || keywordSaveInFlightRef.current
+      || directoryDeleteInFlightRef.current
+    ) return;
+    dismissTransientInteractionsForStandby();
+    resetShellBehaviorState();
+    setShellState("standby");
+  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isClearingCache, isClearingSkimCache, isDeletingFiles, isSavingMetadata, resetShellBehaviorState]);
 
   const navigateTo = useCallback((nextView: AppView) => {
     const entries = navigationEntriesRef.current;
@@ -1178,12 +1216,7 @@ const App = () => {
   };
 
   const setCommandShellMode = (mode: "line" | "cap" | "micro" | "mini" | "normal") => {
-    if (mode === "line") {
-      resetShellBehaviorState();
-      setShellState("standby");
-      closeNavigationOverlays();
-      return;
-    }
+    if (mode === "line") return void enterStandby();
 
     if (mode === "cap") {
       resetSettingsViewState(true);
@@ -1747,11 +1780,7 @@ const App = () => {
     submitSearch(nextSearch);
   };
 
-  const collapseShellToStandby = useCallback(() => {
-    resetShellBehaviorState();
-    setShellState("standby");
-    closeNavigationOverlays();
-  }, [closeNavigationOverlays, resetShellBehaviorState]);
+  const collapseShellToStandby = enterStandby;
 
   const expandCapsuleToMicro = useCallback(() => {
     resetShellBehaviorState();
@@ -2078,10 +2107,15 @@ const App = () => {
   };
 
   const confirmDeleteDirectory = async () => {
-    if (!directoryToDelete) return;
-    await deleteDirectoryById(directoryToDelete);
-    setDirectoryToDelete(null);
-    setDialog(null);
+    if (!directoryToDelete || directoryDeleteInFlightRef.current) return;
+    directoryDeleteInFlightRef.current = true;
+    try {
+      await deleteDirectoryById(directoryToDelete);
+      setDirectoryToDelete(null);
+      setDialog(null);
+    } finally {
+      directoryDeleteInFlightRef.current = false;
+    }
   };
 
   const removeMissingSearchResults = (filePaths: string[]) => {
@@ -2947,51 +2981,15 @@ const App = () => {
           return;
         }
 
-        if (dialog === "deleteFiles") {
-          if (isDeletingFiles || deleteFilesFeedback?.status === "succeeded") return;
-          setFilesPendingDelete([]);
-          setDeleteFilesFeedback(null);
-          setDialog(null);
-          return;
-        }
-
-        if (dialog === "deleteDirectory") {
-          setDirectoryToDelete(null);
-          setDialog(null);
-          return;
-        }
-
-        if (dialog === "addDroppedDirectories") {
-          if (isAddingDirectory) return;
-          setDroppedDirectories([]);
-          setDialog(null);
-          directoryAddFeedbackTargetRef.current = "search";
-          return;
-        }
-
-        if (dialog === "replaceDirectories") {
-          if (isAddingDirectory) return;
-          setPendingDirectoryAddResult(null);
-          setDialog(null);
-          if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
-          else showQuickCommandNotice(t("command.cancelled"));
-          directoryAddFeedbackTargetRef.current = "search";
-          return;
-        }
-
-        if (dialog === "clearCache") {
-          if (isClearingCache || cacheClearFeedback?.status === "succeeded") return;
-          setCacheClearToken(null);
-          setCacheClearFeedback(null);
-          setDialog(null);
-          return;
-        }
-
-        if (dialog === "clearSkimCache") {
-          if (isClearingSkimCache || skimCacheClearFeedback?.status === "succeeded") return;
-          setSkimCacheClearToken(null);
-          setSkimCacheClearFeedback(null);
-          setDialog(null);
+        if (dialog) {
+          if (
+            isAddingDirectory || isClearingCache || isClearingSkimCache || isDeletingFiles
+            || directoryDeleteInFlightRef.current
+            || deleteFilesFeedback?.status === "succeeded"
+            || cacheClearFeedback?.status === "succeeded"
+            || skimCacheClearFeedback?.status === "succeeded"
+          ) return;
+          dismissCancellableDialog(dialog === "replaceDirectories");
           return;
         }
 

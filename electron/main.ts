@@ -1304,7 +1304,6 @@ const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "st
     return;
   }
   if (mode === "standby") {
-    applyStandaloneLineMode();
     sendActivateShellModeShortcutToRenderer(mode);
     return;
   }
@@ -2429,8 +2428,7 @@ const createWindow = () => {
     syncThumbnailOptimizationActivity();
     cancelActiveSearchTasks();
     if (activeShellState === "capsule") {
-      applyStandaloneLineMode();
-      sendShellStateToRenderer("standby");
+      sendActivateShellModeShortcutToRenderer("standby");
     }
   });
   mainWindow.on("show", syncThumbnailOptimizationActivity);
