@@ -1,7 +1,7 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 1903,
+    "src/renderer/styles.css": 1309,
     "src/renderer/WindowControlRail.css": 104,
     "src/renderer/CustomScrollbar.css": 119,
     "src/renderer/WaitingIndicator.css": 23,
@@ -21,7 +21,7 @@
     "src/renderer/settings/SettingsFooter.css": 155,
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
-    "src/renderer/settings/SettingsView.css": 231,
+    "src/renderer/settings/SettingsView.css": 253,
     "electron/main.ts": 4075
   },
   "legacyMainIpcChannels": [
