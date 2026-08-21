@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { PersistedDirectory } from "./directoryStore";
+import { appendFileSourceRevision } from "./fileSourceRevision";
 import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import type { ImageScanControl, ImageScanResult, ScannedFile, ScannedImageFile } from "./imageScanner";
 import { t } from "./localization";
@@ -89,6 +90,16 @@ const mergeScannedMetadata = (existing: ImageSearchResult, file: ScannedFile): I
   modifiedAt: file.modified_at
 });
 
+const withThumbnailSourceRevision = (result: ImageSearchResult): ImageSearchResult => result.thumbnailUrl
+  ? {
+      ...result,
+      thumbnailUrl: appendFileSourceRevision(result.thumbnailUrl, {
+        fileSize: result.fileSize,
+        modifiedAt: result.modifiedAt
+      })
+    }
+  : result;
+
 type ImageSearchWithFormatsResponse = ImageSearchResponse & { availableFormats: string[] };
 
 const emptyScanResult = (): ImageScanResult => ({
@@ -167,12 +178,12 @@ export const searchImagesWithAddedDirectories = async (
 
     const key = filePathKey(file.file_path);
     if (!knownCatalogPaths.has(key)) newUnrecognizedPaths.add(key);
-    if (!fileMatchesDeterministicSearchTerms(file, terms, directoryTermMatches)) continue;
     const existing = resultByPath.get(key);
     if (existing) {
       resultByPath.set(key, mergeScannedMetadata(existing, file));
       continue;
     }
+    if (!fileMatchesDeterministicSearchTerms(file, terms, directoryTermMatches)) continue;
 
     if (search.recognitionStatus === "unrecognized" && knownCatalogPaths.has(key)) continue;
     if (capability.canAIIndex) {
@@ -185,7 +196,7 @@ export const searchImagesWithAddedDirectories = async (
     if (result) resultByPath.set(key, result);
   }
 
-  const sortedImages = [...resultByPath.values()].sort(compareImages(search));
+  const sortedImages = [...resultByPath.values()].map(withThumbnailSourceRevision).sort(compareImages(search));
   const unrecognizedCount = terms.length === 0
     ? sortedImages.filter((image) => image.keywords.length === 0).length
     : indexed.unrecognizedCount + newUnrecognizedPaths.size;

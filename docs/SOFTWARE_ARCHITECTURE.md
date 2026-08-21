@@ -72,6 +72,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `searchScanSnapshotService.ts` | 按已添加目录维护 15 秒内存扫描快照，合并并发扫描请求，并处理显式扫描注入、目录变更失效和离开内容视图 / 失焦取消 |
 | `sqliteImageIndex.ts` | SQLite 初始化、`files` 通用目录层、`images` 视觉识别层、路径证据迁移与备份、统一关联搜索、读写、统计和手动关键词更新 |
 | `imageSearchService.ts` | 并行读取统一 SQLite 结果与内存扫描快照，补充尚未持久化的新文件、按完整快照核对存在性并按路径去重；只有视觉结果生成缩略图 URL |
+| `fileSourceRevision.ts` | 根据文件大小与修改时间生成轻量源文件版本，并附加到搜索缩略图 URL；主动刷新后只使真实变化文件重新请求派生缩略图，未来元信息提取可复用同一失效依据 |
 | `visualCacheService.ts` | 正式与 skim 视觉缓存的路径、按源文件元数据、渲染来源和内部版本生成的键、有效性检查、原子写入，以及分组统计与清理 |
 | `skimVisualCacheService.ts` | skim 原生视觉队列与 Shell 缩略图队列的会话协调、预览优先级、目录切换取消、迟到结果保护及安全清理 |
 | `searchShellVisualCacheService.ts` | 搜索结果页按当前渲染项请求系统相机格式缩略图与预览，维护独立于 skim 的缓存、串行队列、活动门控和失败抑制 |

@@ -164,6 +164,14 @@ app.whenReady().then(async () => {
     const keywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "landscape" }, directories);
     assert.deepEqual(keywordQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(keywordQuery.images[0].resultKind, "visual");
+    assert.match(keywordQuery.images[0].thumbnailUrl, /&sourceRevision=v1%3A3%3A/u);
+    const initialVisualThumbnailUrl = keywordQuery.images[0].thumbnailUrl;
+    await fs.writeFile(path.join(firstDirectoryPath, "visual.png"), "new");
+    const changedVisualTime = new Date("2026-08-01T00:00:00.000Z");
+    await fs.utimes(path.join(firstDirectoryPath, "visual.png"), changedVisualTime, changedVisualTime);
+    searchScanSnapshotService.invalidate([firstDirectory.id]);
+    const refreshedVisualQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "landscape" }, directories);
+    assert.notEqual(refreshedVisualQuery.images[0].thumbnailUrl, initialVisualThumbnailUrl);
 
     const nonVisualKeywordQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "meeting" }, directories);
     assert.deepEqual(nonVisualKeywordQuery.images.map((item) => item.fileName), ["notes.txt"]);
@@ -331,6 +339,7 @@ app.whenReady().then(async () => {
       directoryFormatAndSortFiltersPreserved: true,
       recognitionFiltersUseKeywordsAcrossSupportedFormats: true,
       liveScanOverlayIncludesNewFiles: true,
+      changedFileThumbnailRevisionUpdated: true,
       inactiveSnapshotFallsBackToIndex: true,
       k2DeterministicSampleCases: k2Cases.length,
       k2PersistedFreshAndReusedResultsMatch: true,
