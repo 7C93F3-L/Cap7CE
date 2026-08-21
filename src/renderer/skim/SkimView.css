@@ -276,10 +276,7 @@
 .cap-skim-entry-name,
 .cap-skim-entry-path {
   max-width: 100%;
-  display: flex;
-  justify-content: center;
   overflow: hidden;
-  white-space: nowrap;
 }
 
 .cap-skim-entry-name {
@@ -287,9 +284,12 @@
   align-items: center;
   font-size: 12px;
   line-height: 15px;
+  text-align: center;
 }
 
 .cap-skim-entry-path {
+  display: flex;
+  justify-content: center;
   color: var(--accent-color);
   font-size: 10px;
   white-space: nowrap;
