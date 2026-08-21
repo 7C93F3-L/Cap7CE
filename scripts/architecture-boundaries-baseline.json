@@ -1,9 +1,10 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3756,
-    "src/renderer/styles.css": 1927,
+    "src/renderer/styles.css": 1903,
     "src/renderer/WindowControlRail.css": 104,
     "src/renderer/CustomScrollbar.css": 119,
+    "src/renderer/WaitingIndicator.css": 23,
     "src/renderer/components/MiddleEllipsisFileName.css": 43,
     "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,

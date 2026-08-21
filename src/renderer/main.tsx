@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./styles.css";
 import "./WindowControlRail.css";
 import "./CustomScrollbar.css";
+import "./WaitingIndicator.css";
 import "./components/MiddleEllipsisFileName.css";
 import "./skim/SkimView.css";
 import "./preview/PreviewWindow.css";
