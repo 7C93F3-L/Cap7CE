@@ -33,7 +33,7 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 当前状态
 
-- 当前版本：`0.9.3`
+- 当前版本：`0.9.4`
 - 发布阶段：Preview
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
@@ -206,7 +206,7 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current version: `0.9.3`
+- Current version: `0.9.4`
 - Release stage: Preview
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
