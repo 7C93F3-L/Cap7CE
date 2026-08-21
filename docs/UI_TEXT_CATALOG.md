@@ -88,7 +88,7 @@
 | `sort.field.modifiedAt`      | 按时间     |      |     | 排序字段（文件修改时间）       |
 | `sort.direction.asc`         | 递增      | 升序   |     | 当前排序标签             |
 | `sort.direction.desc`        | 递减      | 降序   |     | 当前排序标签             |
-| `filter.allFiles`            | 全部文件    |      |     | 识别状态筛选             |
+| `filter.allFiles`            | 支持文件    | Supported Files |     | 识别状态筛选             |
 | `filter.recognized`          | 已识别     |      |     | 识别状态筛选             |
 | `filter.unrecognized`        | 未识别     |      |     | 识别状态筛选             |
 | `filter.allImages`           | 全部图片    | 全部文件 |     | 统计 / Settings      |
