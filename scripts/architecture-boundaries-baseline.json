@@ -22,7 +22,8 @@
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
     "src/renderer/settings/SettingsView.css": 253,
-    "electron/main.ts": 4075
+    "electron/main.ts": 3988,
+    "electron/lineWindowController.ts": 159
   },
   "legacyMainIpcChannels": [
     "app:quit",

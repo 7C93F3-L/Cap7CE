@@ -48,6 +48,7 @@ import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFile
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
+import { LineWindowController } from "./lineWindowController";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -79,7 +80,6 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
 };
 
 let mainWindow: BrowserWindow | null = null;
-let lineWindow: BrowserWindow | null = null;
 let startupHintWindow: BrowserWindow | null = null;
 let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
@@ -770,50 +770,24 @@ const getLineWindowBounds = (windowHeight = standbyInteractionHeightPx): Electro
   };
 };
 
-const syncLineWindowShape = () => {
-  if (!lineWindow || lineWindow.isDestroyed()) return;
-  const bounds = lineWindow.getBounds();
-  const interactionHeight = Math.min(standbyInteractionHeightPx, bounds.height);
-  lineWindow.setShape([{
-    x: 0,
-    y: bounds.height - interactionHeight,
-    width: bounds.width,
-    height: interactionHeight
-  }]);
-};
+const shouldShowLineWindow = () => (
+  standbyLineVisible
+  && Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible())
+  && !Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible())
+);
 
-const positionLineWindow = () => {
-  if (!lineWindow || lineWindow.isDestroyed()) return;
-  const actualHeight = lineWindow.getBounds().height;
-  lineWindow.setBounds(getLineWindowBounds(actualHeight), false);
-  syncLineWindowShape();
-};
-
-const hideLineWindow = () => {
-  if (lineWindow && !lineWindow.isDestroyed() && lineWindow.isVisible()) {
-    lineWindow.hide();
-  }
-};
-
-const refreshLineAppearance = () => {
-  if (lineWindow && !lineWindow.isDestroyed() && !lineWindow.webContents.isLoadingMainFrame()) {
-    lineWindow.webContents.send("line:refreshAppearance");
-  }
-};
-
-const showLineWindow = () => {
-  if (!standbyLineVisible || !lineWindow || lineWindow.isDestroyed()) return false;
-  positionLineWindow();
-  if (shellAlwaysOnTop) {
-    lineWindow.setAlwaysOnTop(true, "screen-saver");
-  } else {
-    lineWindow.setAlwaysOnTop(false);
-  }
-  refreshLineAppearance();
-  if (lineWindow.webContents.isLoadingMainFrame()) return false;
-  lineWindow.showInactive();
-  return true;
-};
+const lineWindowController = new LineWindowController({
+  devServerUrl: process.env.VITE_DEV_SERVER_URL,
+  getAlwaysOnTop: () => shellAlwaysOnTop,
+  getBounds: getLineWindowBounds,
+  interactionHeight: standbyInteractionHeightPx,
+  isQuitting: () => isQuitting,
+  lockWebContentsZoom,
+  preloadPath: path.join(__dirname, "preload.js"),
+  rendererPath: path.join(__dirname, "../dist/index.html"),
+  shouldShow: shouldShowLineWindow,
+  width: standbyVisualWidthPx
+});
 
 const getNormalWorkAreaBounds = (): Electron.Rectangle => {
   const { x, y, width, height } = getShellDisplay().workArea;
@@ -865,12 +839,9 @@ const getShellWindowBounds = (state: Cap7CEShellState): Electron.Rectangle => {
 
 const scheduleBottomAnchoredShellWorkAreaRefresh = (changedDisplayId: number) => {
   if (
-    lineWindow
-    && !lineWindow.isDestroyed()
-    && lineWindow.isVisible()
-    && screen.getDisplayMatching(lineWindow.getBounds()).id === changedDisplayId
+    lineWindowController.isVisibleOnDisplay(changedDisplayId)
   ) {
-    positionLineWindow();
+    lineWindowController.position();
   }
   if (
     !mainWindow
@@ -1252,7 +1223,7 @@ const showAndFocusMainWindow = () => {
   }
 
   const shouldWaitForTargetLayout = activeShellState === "standby" && !mainWindow.isVisible();
-  hideLineWindow();
+  lineWindowController.hide();
   setShellIgnoreMouseEvents(false);
   if (shouldWaitForTargetLayout) {
     prepareHiddenActivationReveal();
@@ -1573,12 +1544,11 @@ const setStandbyLineVisible = async (nextStandbyLineVisible: boolean) => {
   updateTrayMenu();
   sendStandbyLineVisibleToRenderer();
 
-  if (activeShellState === "standby") {
-    if (standbyLineVisible) {
-      showLineWindow();
-    } else {
-      hideLineWindow();
-    }
+  if (standbyLineVisible) {
+    lineWindowController.create();
+    lineWindowController.show();
+  } else {
+    lineWindowController.destroy();
   }
 
   return preferences;
@@ -1787,13 +1757,7 @@ const applyAlwaysOnTopState = () => {
     }
   }
 
-  if (lineWindow && !lineWindow.isDestroyed()) {
-    if (shellAlwaysOnTop) {
-      lineWindow.setAlwaysOnTop(true, "screen-saver");
-    } else {
-      lineWindow.setAlwaysOnTop(false);
-    }
-  }
+  lineWindowController.applyAlwaysOnTop();
 
   return Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isAlwaysOnTop());
 };
@@ -1874,9 +1838,9 @@ const applyStandaloneLineMode = () => {
   syncTaskbarVisibility(activeShellState);
   mainWindow.hide();
   if (standbyLineVisible) {
-    showLineWindow();
+    lineWindowController.show();
   } else {
-    hideLineWindow();
+    lineWindowController.hide();
   }
   updateTrayMenu();
   return true;
@@ -1885,7 +1849,7 @@ const applyStandaloneLineMode = () => {
 const applyCapsuleWindowMode = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
-  hideLineWindow();
+  lineWindowController.hide();
   resetShellBehavior();
   if (mainWindow.isMaximized()) {
     mainWindow.unmaximize();
@@ -1934,7 +1898,7 @@ const applyShellWindowState = (state: string, options: { preserveBounds?: boolea
   if (state === "capsule") {
     return applyCapsuleWindowMode();
   }
-  hideLineWindow();
+  lineWindowController.hide();
   microBottomCenterAnchored = false;
   mainWindow.setShape([]);
 
@@ -2394,7 +2358,7 @@ const applyBottomCenterMicroWillResize = (
 const forceApplyDefaultMicroBounds = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
-  hideLineWindow();
+  lineWindowController.hide();
   const defaultMicroBounds = getShellWindowBounds("micro");
   clearResizeSettledCheck();
   const minimumSize = getShellMinimumSize("micro");
@@ -2421,59 +2385,6 @@ const forceApplyDefaultMicroBounds = () => {
   applyAlwaysOnTopState();
 
   return true;
-};
-
-const createLineWindow = () => {
-  if (lineWindow && !lineWindow.isDestroyed()) return;
-  const bounds = getLineWindowBounds();
-  lineWindow = new BrowserWindow({
-    ...bounds,
-    minWidth: standbyVisualWidthPx,
-    maxWidth: standbyVisualWidthPx,
-    title: "Cap7CE Line",
-    skipTaskbar: true,
-    frame: false,
-    transparent: true,
-    hasShadow: false,
-    show: false,
-    resizable: false,
-    movable: false,
-    focusable: false,
-    backgroundColor: "#00000000",
-    paintWhenInitiallyHidden: true,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  });
-  lockWebContentsZoom(lineWindow.webContents);
-  lineWindow.setIgnoreMouseEvents(false);
-  positionLineWindow();
-
-  const devServerUrl = process.env.VITE_DEV_SERVER_URL;
-  if (devServerUrl) {
-    const lineUrl = new URL(devServerUrl);
-    lineUrl.searchParams.set("window", "line");
-    void lineWindow.loadURL(lineUrl.toString());
-  } else {
-    void lineWindow.loadFile(path.join(__dirname, "../dist/index.html"), { query: { window: "line" } });
-  }
-
-  lineWindow.once("ready-to-show", () => {
-    positionLineWindow();
-    if (activeShellState === "standby" && standbyLineVisible) {
-      showLineWindow();
-    }
-  });
-  lineWindow.on("close", (event) => {
-    if (isQuitting) return;
-    event.preventDefault();
-    lineWindow?.hide();
-  });
-  lineWindow.on("closed", () => {
-    lineWindow = null;
-  });
 };
 
 const createWindow = () => {
@@ -2622,7 +2533,9 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   createWindow();
-  createLineWindow();
+  if (standbyLineVisible) {
+    lineWindowController.create();
+  }
   screen.on("display-metrics-changed", (_event, display, changedMetrics) => {
     if (!changedMetrics.includes("workArea") && !changedMetrics.includes("bounds")) {
       return;
@@ -2703,7 +2616,7 @@ ipcMain.handle("window:getShellLayoutMetrics", () => ({
 }));
 
 ipcMain.handle("line:activateCapsule", (event) => {
-  if (!lineWindow || lineWindow.isDestroyed() || event.sender.id !== lineWindow.webContents.id) {
+  if (!lineWindowController.ownsWebContents(event.sender.id)) {
     return false;
   }
   return activateCapsuleShortcut();
@@ -3907,7 +3820,7 @@ registerPreferenceIpc({
   updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
   updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
   updateTheme: updateThemePreference,
-  refreshAppearance: refreshLineAppearance,
+  refreshAppearance: () => lineWindowController.refreshAppearance(),
   applyLanguage: applyLanguagePreference,
   updateSort: updateSortPreference,
   applyThumbnailSort: (sortPreference) => {

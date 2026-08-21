@@ -40,7 +40,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，以及只负责待机线展示的不可聚焦独立 `lineWindow`；line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
+- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，并装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`。该窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
 - 管理 capsule / micro / mini / normal / Settings 主窗口状态，以及 standby 对主窗口隐藏和独立 line 显示的协调语义；从 standby 唤起时先保持主窗口透明，待目标形态完成主进程布局与 Renderer 绘制后再显现，并保留超时恢复以避免透明窗口滞留。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
 - 创建托盘图标和右键菜单；托盘图标双击进入 normal 并显示全部已添加文件。
@@ -74,6 +74,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `visualCacheService.ts` | 正式与 skim 视觉缓存的路径、按源文件元数据、渲染来源和内部版本生成的键、有效性检查、原子写入，以及分组统计与清理 |
 | `skimVisualCacheService.ts` | skim 原生视觉队列与 Shell 缩略图队列的会话协调、预览优先级、目录切换取消、迟到结果保护及安全清理 |
 | `searchShellVisualCacheService.ts` | 搜索结果页按当前渲染项请求系统相机格式缩略图与预览，维护独立于 skim 的缓存、串行队列、活动门控和失败抑制 |
+| `lineWindowController.ts` | 独立 line 窗口的创建、延迟加载、显示、隐藏、销毁、定位、形状、置顶与发送者归属；主进程只注入当前状态和偏好判断 |
 | `shellThumbnailProvider.ts` | 调用 Windows Shell、WIC 或已安装第三方处理器生成文件内容缩略图，并按调用方写入相互隔离的 skim 或搜索系统图像缓存 |
 | `shellThumbnailScheduler.ts` | Shell 缩略图的独立串行队列、请求去重、前后台暂停、会话取消、失败抑制和超时熔断 |
 | `visualRenderService.ts` | 统一调度各格式代表图、模型图和预览图渲染 |
@@ -122,7 +123,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 新增 IPC 时必须同步 `electron/preload.ts` 与 `src/renderer/vite-env.d.ts`，避免 renderer 使用未声明 API。
 
-`electron/ipcRegistration.ts` 提供领域 IPC 注册的基础边界：同一领域内 channel 必须非空且唯一，invoke 与 event 参数原样交给领域 listener，并允许装配层注入 sender 授权判断；未授权 invoke 明确拒绝，未授权单向 event 不进入业务 listener。该注册器不依赖 `main.ts`，后续文件、目录、偏好与缓存等外围领域迁移时由主进程显式注入 registrar、sender 边界和业务依赖。窗口、preview 与 line 生命周期 IPC 继续保留在 `main.ts`。
+`electron/ipcRegistration.ts` 提供领域 IPC 注册的基础边界：同一领域内 channel 必须非空且唯一，invoke 与 event 参数原样交给领域 listener，并允许装配层注入 sender 授权判断；未授权 invoke 明确拒绝，未授权单向 event 不进入业务 listener。该注册器不依赖 `main.ts`，后续文件、目录、偏好与缓存等外围领域迁移时由主进程显式注入 registrar、sender 边界和业务依赖。窗口与 preview 生命周期 IPC 继续保留在 `main.ts`；line IPC 入口同样留在装配层，但窗口实例只由 `lineWindowController.ts` 持有。
 
 目录添加统一接收候选路径集合。文件候选转换为直接所在目录，目录候选保留自身；主进程按 Windows 大小写不敏感规则规范化、去重和归并，过滤磁盘根目录，并分别返回成功、忽略、父子冲突与失败项。新父目录包含已有子目录时，Renderer 必须先显示确认弹层；确认后用父目录替换子目录配置，并在同一添加协调链中把已有 SQLite 图片记录迁移到新目录 ID，保留识别和手动关键词数据。索引迁移失败时回写原目录配置，使本次操作可以重试；如果回写本身失败，则记录告警并继续抛出原始迁移错误。
 
@@ -169,7 +170,7 @@ AI 识别质量统计、继续识别和取消识别三个入口迁入 `electron/
 
 单文件手动元数据与批量关键词更新两个入口迁入 `electron/manualMetadataIpc.ts`；模块负责参数校验、已添加目录归属、可搜索格式判断、关键词规范化及视觉/非视觉数据库写入分流。批量入口继续只接受主窗口 sender，目录存储、SQLite 写入函数和本地化文案由 `main.ts` 注入；`test:manual-metadata-ipc` 固定嵌套目录取最深归属、两类文件分流、批量去重与 sender 拒绝语义。
 
-A6 收尾保留 28 条 legacy main IPC：应用更新/退出 5 条、skim 读取与取消 13 条、扫描 2 条、搜索任务 3 条、全局快捷键偏好与捕获 5 条。它们分别共享应用退出与下载控制器、skim 任务/视觉会话/统计取消状态、AI 扫描取消与缓存调度、搜索任务表与快照，以及快捷键注册回滚和窗口激活链；继续拆分会跨越既定生命周期所有权或把同一职责分散到装配层两侧。窗口、preview 与 line 生命周期仍按明确边界留在 `main.ts`，不以减少直连 channel 数量为目标迁移。
+A6 收尾保留 28 条 legacy main IPC：应用更新/退出 5 条、skim 读取与取消 13 条、扫描 2 条、搜索任务 3 条、全局快捷键偏好与捕获 5 条。它们分别共享应用退出与下载控制器、skim 任务/视觉会话/统计取消状态、AI 扫描取消与缓存调度、搜索任务表与快照，以及快捷键注册回滚和窗口激活链；继续拆分会跨越既定生命周期所有权或把同一职责分散到装配层两侧。窗口与 preview 生命周期仍按明确边界留在 `main.ts`；line 的状态决策留在装配层，窗口实例生命周期收口到 `lineWindowController.ts`，不以减少直连 channel 数量为目标迁移。
 
 A7 按稳定组件边界迁移 CSS，不重命名选择器或调整视觉参数。窗口控制栏、skim/Settings 切换按钮及边栏底部复用的窗口按钮集中在 `src/renderer/WindowControlRail.css`；共享视口框架、自绘横纵滚动条、滑块交互与减少动效覆盖集中在 `src/renderer/CustomScrollbar.css`；搜索胶囊容器、筛选标签与芯片、输入框、状态文字和各窗口尺寸响应集中在 `src/renderer/search/Cap7CESearchCapsule.css`，Home 页布局、签名和超宽屏留白集中在 `src/renderer/search/HomeView.css`；预览窗口的图片、文本/Markdown、媒体、PDF、Office 转换结果、压缩包、字体、EPUB/MOBI、通用文件信息、加载状态和减少动效规则集中在 `src/renderer/preview/PreviewWindow.css`；skim 主视图、虚拟网格、条目、缩略图与位置边栏集中在 `src/renderer/skim/SkimView.css`；搜索结果的虚拟网格、缩略图、视频标记、格式回退与未识别列表集中在 `src/renderer/results/ResultGrid.css`，结果页外壳、状态统计、尺寸布局和超宽屏边距集中在 `src/renderer/results/ResultsView.css`；轻量关键词编辑卡片的尺寸、输入框、明暗占位色、错误提示与退出动效集中在 `src/renderer/dialogs/KeywordEditorCard.css`，文件/目录删除、拖入、目录替换和缓存清理确认层集中在 `src/renderer/dialogs/ConfirmationPanels.css`；Settings 页面框架、分组/行、共享展开面板与标题控制区集中在 `src/renderer/settings/SettingsView.css`，自绘下拉选择器及其运行时/模型尺寸变体集中在 `src/renderer/settings/SettingsSelect.css`，快捷操作列表与快捷命令面板集中在 `src/renderer/settings/ShortcutSettingsPanels.css`，【自定义查看】的格式分组、类别选择和格式按钮集中在 `src/renderer/settings/SkimDisplaySettingsRows.css`，运行时/模型提示和版本详情折叠卡集中在 `src/renderer/settings/RuntimeModelSettingsSection.css`，目录统计、目录列表和 AI 详情覆盖集中在 `src/renderer/settings/DirectoryAiSettingsRows.css`，页脚签名、发布页链接与来源图层集中在 `src/renderer/settings/SettingsFooter.css`；自绘颜色选择器的色彩面板、色相条、游标与十六进制输入集中在 `src/renderer/ColorPickerPopover.css`。通用 SVG 包装、搜索排序图标、跨搜索与 Settings 共用的胶囊按钮基底、line/capsule 共用占位色、通用详情网格和 Settings/结果项表面规则仍由全局样式提供；原生滚动条基底、通用右键菜单基底与菜单动效也继续由全局样式提供。Renderer 入口在全局基础样式之后按固定顺序加载领域样式；主题变量、跨视图壳层、共享文件名省略组件和搜索结果复用的空状态规则继续留在全局样式。
 
@@ -199,7 +200,7 @@ MOBI 属于正式非视觉文件名搜索范围，内容预览使用独立 `mobi
 
 Cap7CE 0.9.3 的窗口状态是同一搜索胶囊系统的不同展开程度：
 
-- `standby`：主窗口隐藏状态；独立 `lineWindow` 按待机线偏好决定是否显示，`Alt+4` 不会主动改变该偏好。
+- `standby`：主窗口隐藏状态；待机线偏好开启且主窗口与预览窗口均不可见时显示独立 `lineWindow`，偏好关闭时不保留该窗口及 Renderer。托盘在后台开启 line 时不改写保留的窗口形态，但可立即显示 line；Settings 等主窗口可见状态下开启时则等待窗口收起。`Alt+4` 不会主动改变该偏好。
 - `capsule`：输入胶囊。轻量输入入口。
 - `micro`：横向缩略图搜索结果形态。
 - `mini`：较小窗口内的纵向搜索结果形态。
