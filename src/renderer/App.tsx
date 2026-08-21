@@ -3544,7 +3544,7 @@ const App = () => {
                 }}
               />
             )}
-            {activeView === "settings" && dialog !== "deleteDirectory" && dialog !== "replaceDirectories" && dialog !== "clearCache" && dialog !== "clearSkimCache" && (
+            {activeView === "settings" && dialog !== "replaceDirectories" && dialog !== "clearCache" && dialog !== "clearSkimCache" && (
               <SettingsView
                 search={search}
                 quickCommandNotice={searchInputFeedback}
