@@ -459,7 +459,7 @@ Settings 当前覆盖：
 
 Cap7CE 0.9.3 在既有搜索胶囊体系上继续收敛路径导航、系统缩略图和紧凑窗口体验。当前稳定边界包括统一主窗口壳层与右侧控制栏、micro / mini / normal 搜索结果、独立但复用同一壳层的 skim 浏览视图、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、15 秒可取消扫描快照、原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、虚拟化 skim 网格、共享查看范围、自绘滚动条、主题感知图标与拾色器、失败抑制后的后台增量缩略图优化、输入框内快捷指令和标签切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入 AI 识别，系统解码能力不会扩大 AI、自动优化或模型输入边界；正文全文、OCR、AI 深度索引和相关性排序仍未接入。
 
-A7 补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不再属于全局样式入口。Settings 新界面共用的 AI 详情网格基底归入 `src/renderer/settings/SettingsView.css`，旧 Settings、旧 AI 控制区和旧目录表格的零调用样式已移除。
+A7 补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不再属于全局样式入口。Settings 新界面共用的 AI 详情网格基底归入 `src/renderer/settings/SettingsView.css`，旧 Settings、旧 AI 控制区和旧目录表格的零调用样式已移除。最终审计同时移除了已由 SVG、独立关键词编辑卡片和新 Settings 控件替代的零调用图标、胶囊、状态 pill 与旧关键词编辑布局规则；动态窗口过渡、共享菜单、主题、壳层和兼容规则继续保留全局所有权。
 
 后续阶段应进入小修小补和稳定性打磨：
 - 优先修复真实使用中可复现的问题。
