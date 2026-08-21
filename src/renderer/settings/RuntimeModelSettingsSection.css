@@ -12,7 +12,7 @@
   color: #c94b4b;
 }
 
-.cap-settings-details {
+.cap-settings-details.cap-settings-row {
   display: block;
   width: 192px;
   overflow: hidden;
