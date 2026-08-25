@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" style="fill:url(#cap-file-icon-gradient-skim-file)">
+  <defs>
+    <linearGradient id="cap-file-icon-gradient-skim-file" x1="0" y1="30" x2="30" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--theme-color)"/>
+      <stop offset="100%" stop-color="var(--accent-color)"/>
+    </linearGradient>
+  </defs>
+  <path d="M25,1c2.21,0,4,1.79,4,4v20c0,2.21-1.79,4-4,4H5c-2.21,0-4-1.79-4-4V5C1,2.79,2.79,1,5,1h20M25,0H5C2.24,0,0,2.24,0,5v20c0,2.76,2.24,5,5,5h20c2.76,0,5-2.24,5-5V5c0-2.76-2.24-5-5-5h0ZM24.25,12.15H5.75c-.41,0-.75-.34-.75-.75h0c0-.41.34-.75.75-.75h18.5c.41,0,.75.34.75.75h0c0,.41-.34.75-.75.75ZM24.25,8.18H5.75c-.41,0-.75-.34-.75-.75h0c0-.41.34-.75.75-.75h18.5c.41,0,.75.34.75.75h0c0,.41-.34.75-.75.75ZM24.25,16.12H5.75c-.41,0-.75-.34-.75-.75h0c0-.41.34-.75.75-.75h18.5c.41,0,.75.34.75.75h0c0,.41-.34.75-.75.75Z"/>
+</svg>

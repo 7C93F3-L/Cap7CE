@@ -1,0 +1,44 @@
+.runtime-diagnostics-group {
+  grid-column: 1 / -1;
+  color: var(--text-main) !important;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: default !important;
+  user-select: none !important;
+}
+
+.runtime-diagnostics-group-separated {
+  margin-top: 40px;
+}
+
+.runtime-diagnostics-path {
+  overflow-wrap: anywhere;
+  cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.runtime-diagnostics-action {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.runtime-diagnostics-action > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtime-diagnostics-action > .cap-settings-pill {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1000px) {
+  .runtime-diagnostics-action {
+    margin-bottom: 4px;
+  }
+}

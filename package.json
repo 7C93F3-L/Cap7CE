@@ -1,0 +1,227 @@
+{
+  "name": "cap7ce",
+  "version": "0.9.7",
+  "productName": "Cap7CE",
+  "description": "Windows local file search, browsing and preview tool built with Electron, React, TypeScript and SQLite.",
+  "author": "7C93F3-L",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "homepage": "https://github.com/7C93F3-L/Cap7CE#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7C93F3-L/Cap7CE.git"
+  },
+  "bugs": {
+    "url": "https://github.com/7C93F3-L/Cap7CE/issues"
+  },
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "vite --host 127.0.0.1",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "tsc -b && vite build && npm run build:electron",
+    "test": "npm run build:electron && npm run test:manual-metadata-ipc && npm run test:line-window-lifecycle && npm run test:window-layout-baseline && npm run test:window-layout-memory && npm run test:docked-shell-automation && npm run test:window-resize-state && npm run test:integration",
+    "test:integration": "npm run test:architecture-boundaries && npm run test:window-layout-foundation && npm run test:ipc-registration && npm run test:file-ipc && npm run test:runtime-model-ipc && npm run test:search-ipc && npm run test:diagnostics-ipc && npm run test:runtime-diagnostics && npm run test:preference-ipc && npm run test:cache-activity-ipc && npm run test:cache-clear-ipc && npm run test:ai-search-ipc && npm run test:ai-search && npm run test:ai-query-evidence && npm run test:directory-management-ipc && npm run test:embedded-metadata-ipc && npm run test:embedded-metadata-service && npm run test:visual-property-service && npm run test:image-dimension-service && npm run test:virtual-grid-layout && npm run test:result-section-layout && npm run test:app-update && npm run test:update-completion && npm run test:update-launcher && npm run test:update-helper && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:embedded-metadata && npm run test:visual-property && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:keyword-editor-interaction && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:search-evidence && npm run test:search-query-planner && npm run test:file-catalog && npm run test:multi-format-search && npm run test:search-scan-snapshot && npm run test:thumbnail-optimization && npm run test:file-drag && npm run test:file-clipboard && npm run test:file-operation && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
+    "test:architecture-boundaries": "node scripts/architecture-boundaries-check.cjs",
+    "test:line-window-lifecycle": "node tests/line-window-lifecycle.integration.cjs",
+    "test:window-layout-baseline": "node tests/window-layout-baseline.integration.cjs",
+    "test:window-layout-foundation": "node tests/window-layout-foundation.integration.cjs",
+    "test:window-layout-memory": "node tests/window-layout-memory.integration.cjs",
+    "test:docked-shell-automation": "node tests/docked-shell-automation.integration.cjs",
+    "test:window-resize-state": "node tests/window-resize-state.integration.cjs",
+    "test:ipc-registration": "node tests/ipc-registration.integration.cjs",
+    "test:file-ipc": "node tests/file-ipc.integration.cjs",
+    "test:runtime-model-ipc": "node tests/runtime-model-ipc.integration.cjs",
+    "test:search-ipc": "node tests/search-ipc.integration.cjs",
+    "test:diagnostics-ipc": "node tests/diagnostics-ipc.integration.cjs",
+    "test:runtime-diagnostics": "node tests/runtime-diagnostics.integration.cjs",
+    "test:preference-ipc": "node tests/preference-ipc.integration.cjs",
+    "test:cache-activity-ipc": "node tests/cache-activity-ipc.integration.cjs",
+    "test:cache-clear-ipc": "node tests/cache-clear-ipc.integration.cjs",
+    "test:ai-search-ipc": "node tests/ai-search-ipc.integration.cjs",
+    "test:ai-search": "node tests/ai-search.integration.cjs",
+    "test:ai-query-evidence": "node tests/ai-query-evidence-store.integration.cjs",
+    "test:manual-metadata-ipc": "node tests/manual-metadata-ipc.integration.cjs",
+    "test:directory-management-ipc": "node tests/directory-management-ipc.integration.cjs",
+    "test:virtual-grid-layout": "node tests/virtual-grid-layout.integration.cjs",
+    "test:result-section-layout": "node tests/result-section-layout.integration.cjs",
+    "test:app-update": "node tests/app-update.integration.cjs",
+    "test:update-completion": "node tests/app-update-completion.integration.cjs",
+    "test:update-helper": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/update-helper.integration.ps1",
+    "test:web-contents-zoom": "electron tests/web-contents-zoom.integration.cjs",
+    "test:shell-mouse-polling": "node tests/shell-mouse-polling.integration.cjs",
+    "test:shell-thumbnail-probe": "electron tests/shell-thumbnail-probe.integration.cjs",
+    "test:runtime-model-selection": "node tests/runtime-model-selection.integration.cjs",
+    "test:directory-add": "electron tests/directory-add.integration.cjs",
+    "test:format-capabilities": "electron tests/format-capabilities.integration.cjs",
+    "test:skim-browse": "electron tests/skim-browse.integration.cjs",
+    "test:skim-display-preferences": "electron tests/skim-display-preferences.integration.cjs",
+    "test:skim-preview": "electron tests/skim-preview.integration.cjs",
+    "test:pdf-preview": "electron tests/pdf-preview.integration.cjs",
+    "test:office-preview": "electron tests/office-preview.integration.cjs",
+    "test:archive-preview": "node tests/archive-preview.integration.cjs",
+    "test:font-preview": "electron tests/font-preview.integration.cjs",
+    "test:embedded-metadata": "node tests/embedded-metadata.integration.cjs",
+    "test:visual-property": "node tests/visual-property.integration.cjs",
+    "test:embedded-metadata-ipc": "node tests/embedded-metadata-ipc.integration.cjs",
+    "test:embedded-metadata-service": "node tests/embedded-metadata-service.integration.cjs",
+    "test:visual-property-service": "node tests/visual-property-service.integration.cjs && npm run test:visual-property-semantics",
+    "test:image-dimension-service": "node tests/image-dimension-service.integration.cjs",
+    "test:visual-property-semantics": "node tests/visual-property-semantics.integration.cjs",
+    "test:animated-image-preview": "electron tests/animated-image-preview.integration.cjs && npm run build:electron && node tests/animation-fact.integration.cjs",
+    "test:avif-visual-format": "electron tests/avif-visual-format.integration.cjs",
+    "test:preview-request-guard": "node tests/preview-request-guard.integration.cjs",
+    "test:keyword-editor-interaction": "node tests/keyword-editor-interaction.integration.cjs",
+    "test:search-evidence": "node tests/search-evidence.integration.cjs",
+    "test:search-query-planner": "node tests/search-query-planner.integration.cjs",
+    "test:skim-visual-cache": "electron tests/skim-visual-cache.integration.cjs",
+    "test:skim-content-preview": "electron tests/skim-content-preview.integration.cjs",
+    "test:file-catalog": "electron tests/file-catalog.integration.cjs",
+    "test:multi-format-search": "electron tests/multi-format-search.integration.cjs",
+    "test:search-scan-snapshot": "electron tests/search-scan-snapshot.integration.cjs",
+    "test:thumbnail-optimization": "electron tests/thumbnail-optimization.integration.cjs",
+    "test:file-drag": "electron tests/file-drag.integration.cjs",
+    "test:file-clipboard": "node tests/file-clipboard.integration.cjs",
+    "test:file-operation": "electron tests/file-operation.integration.cjs",
+    "test:manual-index": "electron tests/manual-index.integration.cjs",
+    "test:stale-cleanup": "electron tests/stale-image-cleanup.integration.cjs",
+    "test:model-input-cleanup": "electron tests/model-input-cache-cleanup.integration.cjs",
+    "probe:shell-thumbnail": "electron scripts/shell-thumbnail-probe.cjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win portable",
+    "test:epub-preview": "node tests/epub-preview.integration.cjs",
+    "test:mobi-preview": "node tests/mobi-preview.integration.cjs",
+    "test:update-launcher": "electron tests/app-update-launcher.integration.cjs"
+  },
+  "build": {
+    "appId": "com.cap7ce.app",
+    "productName": "Cap7CE",
+    "afterPack": "scripts/afterPack.cjs",
+    "copyright": "Copyright © 2026 7C93F3-L",
+    "icon": "build/icon.ico",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "src/renderer/assets/icons/**/*",
+      "src/renderer/assets/startup/**/*",
+      "build/icon.ico",
+      "build/notification-icon.png",
+      "build/update-helper.ps1",
+      "LICENSE",
+      "NOTICE",
+      "THIRD_PARTY_NOTICES.md",
+      "BRAND.md",
+      "package.json",
+      "!node_modules/ag-psd/.v8-cache/**/*"
+    ],
+    "asarUnpack": [
+      "dist-electron/archivePreviewWorker.js",
+      "node_modules/7z-wasm/**/*",
+      "dist-electron/fontMetadataWorker.js",
+      "dist-electron/embeddedMetadataWorker.js",
+      "dist-electron/visualPropertyWorker.js",
+      "dist-electron/epubPreviewWorker.js",
+      "dist-electron/mobiPreviewWorker.js",
+      "node_modules/@lingo-reader/**/*",
+      "node_modules/events/**/*",
+      "node_modules/path-browserify/**/*",
+      "node_modules/sax/**/*",
+      "node_modules/fflate/**/*",
+      "node_modules/@xmldom/**/*",
+      "node_modules/parse5/**/*",
+      "node_modules/entities/**/*",
+      "node_modules/opentype.js/**/*",
+      "node_modules/sql.js/dist/*.wasm",
+      "node_modules/sharp/**/*",
+      "node_modules/detect-libc/**/*",
+      "node_modules/semver/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/@napi-rs/canvas/**/*",
+      "node_modules/@napi-rs/canvas-win32-x64-msvc/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "src/renderer/assets/icons",
+        "to": "renderer-assets/icons",
+        "filter": [
+          "*.svg"
+        ]
+      },
+      {
+        "from": "src/renderer/assets/startup",
+        "to": "renderer-assets/startup",
+        "filter": [
+          "*.svg"
+        ]
+      },
+      {
+        "from": "third_party/7z-wasm",
+        "to": "licenses/7z-wasm",
+        "filter": [
+          "*.txt"
+        ]
+      },
+      {
+        "from": "third_party/opentype.js",
+        "to": "licenses/opentype.js",
+        "filter": [
+          "LICENSE"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signtoolOptions": {
+        "publisherName": "7C"
+      },
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@lingo-reader/mobi-parser": "0.4.6",
+    "@napi-rs/canvas": "^0.1.88",
+    "@types/sql.js": "^1.4.11",
+    "@xmldom/xmldom": "^0.9.10",
+    "7z-wasm": "^1.2.0",
+    "ag-psd": "^30.1.1",
+    "exifr": "7.1.3",
+    "fflate": "^0.8.3",
+    "opentype.js": "^2.0.0",
+    "parse5": "^8.0.1",
+    "pdfjs-dist": "^5.4.624",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "sharp": "^0.35.1",
+    "sql.js": "^1.14.1",
+    "word-extractor": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/word-extractor": "^1.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.4",
+    "cross-env": "^7.0.3",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.7.2",
+    "vite": "^7.3.6",
+    "wait-on": "^8.0.1"
+  }
+}

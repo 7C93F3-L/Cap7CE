@@ -1,0 +1,122 @@
+.result-section-layout-cell {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.result-section-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(5px, 5%, 10px);
+  overflow: hidden;
+  padding: clamp(10px, 9%, 20px);
+  border-radius: var(--radius-thumb);
+  background: var(--panel-bg);
+  color: var(--text-main);
+  pointer-events: none;
+  user-select: none;
+  transition: background-color 180ms ease-out;
+}
+
+.result-section-card[data-interactive="true"] {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.result-section-card[data-interactive="true"]:hover,
+.result-section-card[data-interactive="true"]:focus-visible {
+  background: color-mix(in srgb, var(--theme-color) 18%, var(--panel-bg));
+  outline: none;
+}
+
+.result-section-card-aiDeepMatch[data-ai-phase="starting"] h2,
+.result-section-card-aiDeepMatch[data-ai-phase="starting"] p,
+.result-section-card-aiDeepMatch[data-ai-phase="running"] h2,
+.result-section-card-aiDeepMatch[data-ai-phase="running"] p {
+  animation: cap7ce-ai-section-text-breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes cap7ce-ai-section-text-breathe {
+  0%,
+  100% {
+    color: var(--window-control-color);
+  }
+
+  50% {
+    color: var(--theme-color);
+  }
+}
+
+.result-section-card h2,
+.result-section-card p {
+  margin: 0;
+}
+
+.result-section-card h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.12em;
+  font-size: 20px;
+  font-weight: 450;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--theme-color);
+}
+
+.result-section-card h2 span {
+  color: var(--muted-strong);
+  font-weight: 350;
+}
+
+.result-section-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--window-control-color);
+  font-size: 11px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.cap-shell-normal .result-section-card {
+  gap: clamp(7px, 6%, 12px);
+  padding: clamp(14px, 10%, 24px);
+}
+
+.cap-shell-normal .result-section-card h2 {
+  font-size: 24px;
+}
+
+.cap-shell-normal .result-section-card p {
+  font-size: 12px;
+}
+
+.cap-shell-micro .result-section-card {
+  gap: 4px;
+  padding: 8px;
+}
+
+.cap-shell-micro .result-section-card h2 {
+  overflow: hidden;
+  font-size: 16px;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.cap-shell-micro .result-section-card p {
+  font-size: 10px;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-section-card-aiDeepMatch[data-ai-phase="starting"] h2,
+  .result-section-card-aiDeepMatch[data-ai-phase="starting"] p,
+  .result-section-card-aiDeepMatch[data-ai-phase="running"] h2,
+  .result-section-card-aiDeepMatch[data-ai-phase="running"] p {
+    animation: none;
+  }
+}

@@ -1,0 +1,31 @@
+.cap7ce-ai-search-tag {
+  flex: 0 0 auto;
+}
+
+.cap7ce-ai-search-tag[data-selected="true"] {
+  background: var(--theme-color);
+  color: var(--theme-on-color);
+}
+
+.cap7ce-ai-search-tag[data-busy="true"] {
+  animation: cap7ce-ai-search-breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes cap7ce-ai-search-breathe {
+  0%,
+  100% {
+    background: var(--chip-bg);
+    color: var(--text-main);
+  }
+
+  50% {
+    background: var(--theme-color);
+    color: var(--theme-on-color);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cap7ce-ai-search-tag[data-busy="true"] {
+    animation: none;
+  }
+}

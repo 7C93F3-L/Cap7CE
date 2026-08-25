@@ -1,0 +1,64 @@
+.cap-settings-message {
+  margin: -4px 25px 4px 113px;
+  overflow: hidden;
+  color: var(--accent-color);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-settings-message.is-error {
+  color: #c94b4b;
+}
+
+.cap-settings-details.cap-settings-row {
+  display: block;
+  width: 192px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--panel-bg);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.cap-settings-details[open] {
+  width: 100%;
+  grid-column: 1 / -1;
+  border-radius: var(--radius-expanded-panel);
+}
+
+.cap-settings-details summary {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border-radius: inherit;
+  color: var(--text-main);
+  cursor: pointer;
+  list-style: none;
+}
+
+.app .cap-settings-details summary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--focus-border) inset;
+}
+
+.cap-settings-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.cap-settings-details .ai-details-grid {
+  padding: 12px 0 6px;
+}
+
+.cap-settings-details .ai-details-grid > span,
+.cap-settings-details .ai-details-grid > strong {
+  color: var(--accent-color);
+}
+
+.cap-settings-details .ai-details-grid > strong {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}

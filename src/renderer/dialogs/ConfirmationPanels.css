@@ -1,0 +1,177 @@
+.keyword-editor-view {
+  position: absolute;
+  inset: 0 calc(-1 * var(--cap-control-rail)) 0 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  background: var(--app-bg);
+  padding: 0;
+  -webkit-app-region: no-drag;
+  animation: cap7ce-dialog-backdrop-enter 300ms ease-out both;
+}
+
+.keyword-editor-panel {
+  width: min(270px, calc(100vw - 30px));
+  max-width: calc(100vw - 30px);
+  min-height: 0;
+  max-height: calc(100vh - 30px);
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-panel);
+  background: var(--app-bg);
+  color: var(--text-main);
+  box-shadow: none;
+  padding: 15px;
+  transform-origin: center;
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+  animation: cap7ce-dialog-content-enter 400ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+.keyword-editor-panel .modal-actions {
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.keyword-editor-panel .modal-actions button {
+  min-width: 34px;
+  height: 20px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  color: var(--text-main);
+  font-size: 11px;
+  line-height: 20px;
+  transition:
+    background 500ms ease,
+    color 500ms ease,
+    transform 500ms ease,
+    box-shadow 500ms ease;
+}
+
+.delete-files-view {
+  overflow: hidden;
+}
+
+.delete-files-panel {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  display: grid;
+  grid-template-rows: 1fr;
+  background: var(--app-bg);
+  animation: none;
+}
+
+.cap-shell-normal .keyword-editor-panel.delete-files-panel {
+  width: 100%;
+  max-width: none;
+}
+
+.delete-files-content {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+  animation: cap7ce-dialog-content-enter 400ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+@keyframes cap7ce-dialog-backdrop-enter {
+  from {
+    background-color: transparent;
+  }
+
+  to {
+    background-color: var(--app-bg);
+  }
+}
+
+@keyframes cap7ce-dialog-content-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.delete-files-warning-icon {
+  width: 58px;
+  height: 51px;
+}
+
+.delete-files-warning-icon svg {
+  fill: initial;
+}
+
+.delete-files-waiting-icon {
+  width: 54px;
+  height: 54px;
+}
+
+.delete-files-message {
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.delete-files-panel .modal-actions {
+  justify-content: center;
+  gap: 22px;
+  margin-top: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 30px;
+}
+
+.modal-actions button {
+  width: 88px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  transition:
+    background 500ms ease,
+    border-color 500ms ease,
+    color 500ms ease,
+    transform 500ms ease,
+    box-shadow 500ms ease;
+}
+
+.modal-actions button:hover:not(:disabled) {
+  background: var(--chip-bg-hover);
+  color: var(--theme-on-color);
+  transform: translateY(-1px);
+}
+
+.modal-actions button:disabled {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keyword-editor-view,
+  .keyword-editor-panel,
+  .delete-files-content {
+    animation: none;
+  }
+}
+

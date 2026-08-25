@@ -1,0 +1,350 @@
+.cap-shell .cap-skim-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 5px var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
+}
+
+.cap-shell .cap-skim-view > .cap7ce-search-capsule-unified {
+  position: relative;
+  top: auto;
+  left: auto;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 0 var(--cap-capsule-content-gap);
+  transform: none;
+}
+
+.cap-skim-grid-frame {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  border-radius: var(--radius-thumb);
+}
+
+.cap-skim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--cap-grid-target-size, 150px), 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  align-items: start;
+  gap: var(--cap-grid-gap, var(--cap-thumb-gap));
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: inherit;
+  contain: layout paint;
+  padding: 0;
+}
+
+.cap-skim-grid > .empty-result-row {
+  grid-column: 1 / -1;
+  min-height: 100%;
+}
+
+.cap-skim-entry {
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: var(--radius-thumb);
+  color: var(--text-main);
+  background: var(--panel-bg);
+  transition: background-color 180ms ease-out;
+}
+
+.cap-skim-entry:hover,
+.cap-skim-entry:focus-visible {
+  background: color-mix(in srgb, var(--text-main) 8%, var(--panel-bg));
+  outline: none;
+  outline-offset: 0;
+}
+
+.app .cap-skim-entry:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
+.cap-skim-entry.selected {
+  background: color-mix(in srgb, var(--theme-color) 34%, var(--panel-bg));
+}
+
+.cap-skim-entry.active .cap-skim-entry-name {
+  color: var(--input-text);
+}
+
+.cap-skim-location-picker {
+  position: absolute;
+  top: calc(5px + 30px + var(--cap-capsule-content-gap));
+  right: 0;
+  bottom: var(--cap-results-bottom);
+  z-index: 45;
+  width: calc(var(--cap-skim-sidebar-target-size) + 2 * var(--cap-thumb-gap));
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-panel);
+  color: var(--text-main);
+  background: transparent;
+  box-shadow: none;
+  animation: none;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.cap-shell .cap-skim-location-picker * {
+  app-region: initial;
+  -webkit-app-region: initial;
+}
+
+.cap-skim-location-picker-surface {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cap-thumb-gap);
+  overflow: hidden;
+  border-radius: inherit;
+  background: var(--app-bg);
+  padding: var(--cap-thumb-gap) 0 var(--cap-thumb-gap) var(--cap-thumb-gap);
+  animation: cap7ce-skim-location-picker-enter 280ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+.cap-skim-location-picker-skim {
+  top: calc(5px + 30px + var(--cap-capsule-content-gap));
+}
+
+.cap-skim-location-picker-closing {
+  pointer-events: none;
+}
+
+.cap-skim-location-picker-closing .cap-skim-location-picker-surface {
+  animation-name: cap7ce-skim-location-picker-exit;
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: forwards;
+}
+
+.cap-skim-location-picker-settings {
+  top: 58px;
+}
+
+.cap-skim-location-scroll-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: var(--radius-thumb);
+}
+
+.cap-skim-location-list {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cap-thumb-gap);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: inherit;
+}
+
+.cap-skim-location-entry {
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
+  padding: 10px 8px;
+  border-radius: var(--radius-thumb);
+  color: var(--text-main);
+  background: var(--panel-bg);
+  transition: background-color 180ms ease-out;
+}
+
+.cap-skim-location-entry:hover,
+.cap-skim-location-entry:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--text-main) 8%, var(--panel-bg));
+}
+
+.cap-skim-location-entry-icon {
+  width: clamp(48px, 52%, 72px);
+  height: clamp(48px, 52%, 72px);
+}
+
+.cap-skim-location-entry-name {
+  max-width: 100%;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 12px;
+  line-height: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cap-skim-location-footer {
+  width: 100%;
+  height: 30px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.cap-skim-location-footer-button {
+  flex: 0 0 var(--window-control-rail-width);
+}
+
+.cap-skim-location-footer-button:focus-visible {
+  outline: none;
+}
+
+.context-menu.cap-skim-location-context-menu {
+  min-width: 110px;
+  max-width: 180px;
+}
+
+@keyframes cap7ce-skim-location-picker-enter {
+  from {
+    transform: translate3d(20px, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes cap7ce-skim-location-picker-exit {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+.cap-skim-entry-icon {
+  width: 80%;
+  height: 80%;
+  flex: 0 0 auto;
+}
+
+.cap-skim-entry-visual {
+  position: relative;
+  width: clamp(48px, 42%, 72px);
+  height: auto;
+  aspect-ratio: 1;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.cap-skim-entry-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+}
+
+.cap-skim-entry-visual:has(.cap-skim-entry-thumbnail) > .cap-skim-entry-icon {
+  visibility: hidden;
+}
+
+.cap-skim-entry-name,
+.cap-skim-entry-path {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.cap-skim-entry-name {
+  min-height: 30px;
+  align-items: center;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.cap-skim-entry-path {
+  display: flex;
+  justify-content: center;
+  color: var(--accent-color);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.cap-shell-micro .cap-skim-grid {
+  display: flex;
+  align-items: stretch;
+  gap: var(--cap-grid-gap, var(--cap-thumb-gap));
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.cap-shell-micro .cap-skim-entry {
+  width: auto;
+  height: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
+  padding: 6px;
+}
+
+.cap-shell-micro .cap-skim-entry-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.cap-shell-micro .cap-skim-entry-visual {
+  width: 42px;
+  height: 34px;
+  aspect-ratio: auto;
+}
+
+.cap-shell-micro .cap-skim-grid > .empty-result-row {
+  flex: 1 0 100%;
+}
+
+.cap-shell-mini .cap-skim-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cap-shell .cap-skim-grid-virtualized {
+  display: block;
+}
+
+.cap-skim-virtual-spacer {
+  position: relative;
+  min-width: 100%;
+}
+
+.cap-skim-grid-virtualized .cap-skim-entry {
+  position: absolute;
+  margin: 0;
+}
+
+.cap-shell-micro .cap-skim-entry-path,
+.cap-shell-micro .cap-skim-feedback-input {
+  display: none;
+}

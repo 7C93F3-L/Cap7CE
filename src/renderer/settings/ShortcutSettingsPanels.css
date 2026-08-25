@@ -1,0 +1,140 @@
+.cap-settings-quick-actions-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cap-settings-quick-action-row {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  padding: 10px 0 10px 25px;
+}
+
+.cap-settings-quick-action-name,
+.cap-settings-quick-action-hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-settings-quick-action-name {
+  flex: 1 1 auto;
+}
+
+.cap-settings-quick-action-hint {
+  flex: 0 0 auto;
+}
+
+.cap-settings-quick-action-hint.unavailable {
+  color: var(--accent-color);
+}
+
+.cap-settings-shortcut-pill {
+  min-width: 64px;
+  justify-content: center;
+}
+
+.cap-settings-quick-commands-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 16px;
+  overflow: hidden;
+  border-radius: var(--radius-expanded-panel);
+  background: var(--panel-bg);
+  padding: 20px 25px 24px;
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.cap-settings-quick-commands-header {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cap-settings-quick-commands-header > .cap-settings-label {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.cap-settings-quick-command-groups {
+  column-count: 2;
+  column-gap: 34px;
+}
+
+.cap-settings-quick-command-group {
+  min-width: 0;
+  width: 100%;
+  display: inline-grid;
+  align-content: start;
+  gap: 8px;
+  margin: 0 0 18px;
+  break-inside: avoid;
+}
+
+.cap-settings-quick-command-group h3 {
+  margin: 0 0 2px;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.cap-settings-quick-command-group p {
+  margin: 0;
+  color: var(--accent-color);
+  line-height: 18px;
+}
+
+.cap-settings-quick-command-danger {
+  column-span: all;
+  margin-top: 4px;
+}
+
+.cap-settings-quick-command-list {
+  display: grid;
+  gap: 7px;
+}
+
+.cap-settings-quick-command-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 142px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.cap-settings-command-pill {
+  min-width: 0;
+  max-width: 142px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--chip-bg);
+  padding: 0 10px;
+  color: var(--text-main);
+  font-size: 11px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-settings-command-description {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-settings-quick-command-danger .cap-settings-command-description {
+  color: var(--text-main);
+}

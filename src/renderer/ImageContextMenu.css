@@ -1,0 +1,27 @@
+.context-menu.context-menu-grouped {
+  --context-menu-group-width: 132px;
+  --context-menu-submenu-width: 140px;
+  width: 132px;
+  min-width: 132px;
+}
+
+.context-menu-inline-submenu button {
+  gap: 8px;
+}
+
+.context-menu-action-label {
+  min-width: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+  text-overflow: ellipsis;
+}
+
+.context-menu-action-shortcut {
+  flex: 0 0 auto;
+  color: var(--window-control-color);
+  font-size: 10px;
+}
+
+.context-menu-inline-submenu button:hover .context-menu-action-shortcut {
+  color: currentColor;
+}

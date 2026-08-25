@@ -1,0 +1,9 @@
+<svg id="warning-gradient" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
+  <defs>
+    <linearGradient id="warning-gradient-fill" x1="0" y1="30" x2="30" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--theme-color)"/>
+      <stop offset="100%" stop-color="var(--accent-color)"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#warning-gradient-fill)" d="M29.39,23.44L17.61,3.87c-1.44-2.57-3.78-2.57-5.21,0L.61,23.44c-1.44,2.57-.23,4.61,2.64,4.61h23.57c2.79,0,4-2.12,2.57-4.61ZM16.49,24.06c0,.82-.67,1.49-1.49,1.49s-1.49-.67-1.49-1.49v-1.18c0-.82.67-1.49,1.49-1.49s1.49.67,1.49,1.49v1.18ZM16.49,18.01c0,.82-.67,1.49-1.49,1.49s-1.49-.67-1.49-1.49v-8.91c0-.82.67-1.49,1.49-1.49s1.49.67,1.49,1.49v8.91Z"/>
+</svg>

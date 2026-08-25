@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" style="fill:url(#cap-file-icon-gradient-skim-folder)">
+  <defs>
+    <linearGradient id="cap-file-icon-gradient-skim-folder" x1="0" y1="30" x2="30" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--theme-color)"/>
+      <stop offset="100%" stop-color="var(--accent-color)"/>
+    </linearGradient>
+  </defs>
+  <path d="M1.5,11.4h27c.83,0,1.5.67,1.5,1.5v13.6c0,1.1-.9,2-2,2H2c-1.1,0-2-.9-2-2v-13.6c0-.83.67-1.5,1.5-1.5Z"/>
+  <path d="M28.5,5.7h-8.75c-.58,0-1.11-.33-1.35-.86l-1.05-2.2c-.33-.7-1.03-1.14-1.81-1.14H2C.9,1.5,0,2.4,0,3.5v4.9c0,.83.67,1.5,1.5,1.5h27c.83,0,1.5-.67,1.5-1.5v-1.2c0-.83-.68-1.5-1.5-1.5Z"/>
+</svg>

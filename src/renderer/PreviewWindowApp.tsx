@@ -1,0 +1,807 @@
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
+import CustomScrollbar from "./CustomScrollbar";
+import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
+import WaitingIndicator from "./WaitingIndicator";
+import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
+import PdfPreviewPanel from "./PdfPreviewPanel";
+import FontPreviewPanel from "./FontPreviewPanel";
+import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
+import { setActiveLanguage, t } from "../../electron/localization";
+
+const defaultPreviewWindowControlState: PreviewWindowControlState = {
+  isMaximized: false,
+  isAlwaysOnTop: false,
+  miniStandardHeight: 500
+};
+
+const previewLoadingIndicatorDelayMs = 180;
+const videoControlAreaHeight = 56;
+
+const markdownComponents: Components = {
+  a: ({ children, href }) => (
+    <span className="preview-markdown-link" title={href}>{children}</span>
+  ),
+  img: ({ alt, src }) => (
+    <span className="preview-markdown-image-reference" title={src}>
+      {alt || src || "image"}
+    </span>
+  )
+};
+
+const formatPreviewBytes = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
+};
+
+const getArchiveFallbackMessage = (reason: ArchivePreviewFallbackReason) => {
+  switch (reason) {
+    case "passwordRequired": return t("preview.archiveFallback.passwordRequired");
+    case "invalidArchive": return t("preview.archiveFallback.invalidArchive");
+    case "unsupportedArchive": return t("preview.archiveFallback.unsupportedArchive");
+    case "tooLarge": return t("preview.archiveFallback.tooLarge");
+    case "timedOut": return t("preview.archiveFallback.timedOut");
+    default: return t("preview.archiveFallback.failed");
+  }
+};
+
+const getFontFallbackMessage = (reason: FontPreviewFallbackReason) => {
+  switch (reason) {
+    case "invalidFont": return t("preview.fontFallback.invalidFont");
+    case "tooLarge": return t("preview.fontFallback.tooLarge");
+    case "timedOut": return t("preview.fontFallback.timedOut");
+    default: return t("preview.fontFallback.failed");
+  }
+};
+const getEpubFallbackMessage = (reason: EpubPreviewFallbackReason) => {
+  switch (reason) {
+    case "invalidEpub": return t("preview.epubFallback.invalidEpub");
+    case "encrypted": return t("preview.epubFallback.encrypted");
+    case "tooLarge": return t("preview.epubFallback.tooLarge");
+    case "timedOut": return t("preview.epubFallback.timedOut");
+    default: return t("preview.epubFallback.failed");
+  }
+};
+const getMobiFallbackMessage = (reason: MobiPreviewFallbackReason) => {
+  switch (reason) {
+    case "invalidMobi": return t("preview.mobiFallback.invalidMobi");
+    case "encrypted": return t("preview.mobiFallback.encrypted");
+    case "unsupportedMobi": return t("preview.mobiFallback.unsupportedMobi");
+    case "tooLarge": return t("preview.mobiFallback.tooLarge");
+    case "timedOut": return t("preview.mobiFallback.timedOut");
+    default: return t("preview.mobiFallback.failed");
+  }
+};
+
+const PreviewWindowApp = () => {
+  const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
+  const [displaySrc, setDisplaySrc] = useState("");
+  const [usingFallback, setUsingFallback] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [showInfoFallback, setShowInfoFallback] = useState(false);
+  const [fontRuntimeFailed, setFontRuntimeFailed] = useState(false);
+  const [showPreviewLoadingIndicator, setShowPreviewLoadingIndicator] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
+  const [windowControlState, setWindowControlState] = useState(defaultPreviewWindowControlState);
+  const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
+  const [embeddedMetadataExpanded, setEmbeddedMetadataExpanded] = useState(false);
+  const wheelThrottleRef = useRef(0);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const textScrollRef = useRef<HTMLElement | null>(null);
+  const pdfScrollRef = useRef<HTMLDivElement>(null);
+  const archiveScrollRef = useRef<HTMLDivElement>(null);
+  const epubScrollRef = useRef<HTMLDivElement>(null);
+  const mobiScrollRef = useRef<HTMLDivElement>(null);
+  const targetSessionIdRef = useRef("");
+  const targetFilePathRef = useRef("");
+  const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = window.cap7ce?.preview.onData((data) => {
+      mediaRef.current?.pause();
+      setActiveLanguage(data.language);
+      setPreviewData(data);
+      setEmbeddedMetadataExpanded(false);
+      targetFilePathRef.current = data.filePath;
+      if (targetSessionIdRef.current === data.sessionId) {
+        return;
+      }
+      setFolderStats(data.provider === "folderInfo" ? {
+        fileCount: 0,
+        folderCount: 0,
+        totalSize: 0,
+        skippedCount: 0,
+        status: "scanning"
+      } : null);
+      setShowInfoFallback(false);
+      setFontRuntimeFailed(false);
+      targetSessionIdRef.current = data.sessionId;
+      if (previewLoadingIndicatorTimerRef.current !== null) {
+        window.clearTimeout(previewLoadingIndicatorTimerRef.current);
+      }
+      setShowPreviewLoadingIndicator(false);
+      setDisplaySrc(data.previewUrl);
+      setUsingFallback(false);
+      const isImageProvider = !data.provider || data.provider === "image";
+      setIsPreviewLoading(isImageProvider);
+      if (!isImageProvider) {
+        setContextMenu(null);
+        void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
+        return;
+      }
+      previewLoadingIndicatorTimerRef.current = window.setTimeout(() => {
+        if (targetSessionIdRef.current === data.sessionId) {
+          setShowPreviewLoadingIndicator(true);
+        }
+        previewLoadingIndicatorTimerRef.current = null;
+      }, previewLoadingIndicatorDelayMs);
+      setContextMenu(null);
+      void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
+    });
+    window.cap7ce?.preview.requestData();
+    return () => unsubscribe?.();
+  }, []);
+
+  useEffect(() => window.cap7ce?.preview.onEmbeddedMetadata((update) => {
+    setPreviewData((current) => current
+      && current.sessionId === update.sessionId
+      && current.filePath === update.filePath
+      ? { ...current, embeddedMetadata: update.embeddedMetadata }
+      : current);
+  }), []);
+
+  useEffect(() => window.cap7ce?.skim.onFolderStats((update) => {
+    if (targetSessionIdRef.current === update.sessionId && targetFilePathRef.current === update.path) {
+      setFolderStats(update);
+    }
+  }), []);
+
+  useEffect(() => {
+    if (
+      !previewData
+      || ((!previewData.provider || previewData.provider === "image" || previewData.provider === "video") && !showInfoFallback)
+    ) return;
+    const hasExtendedInfoFallback = showInfoFallback
+      || Boolean(previewData.archiveFallbackReason)
+      || Boolean(previewData.fontFallbackReason)
+      || Boolean(previewData.epubFallbackReason)
+      || Boolean(previewData.mobiFallbackReason);
+    const infoDimensions = previewData.info?.kind === "folder"
+      ? { width: 600, height: 460 }
+      : { width: 600, height: hasExtendedInfoFallback ? 360 : 240 };
+    const dimensions = showInfoFallback
+      ? infoDimensions
+      : previewData.provider === "video"
+      ? { width: 960, height: 600 }
+      : previewData.provider === "audio"
+        ? { width: 640, height: 260 }
+        : previewData.provider === "text"
+          ? { width: 760, height: 600 }
+          : previewData.provider === "pdf"
+            ? { width: 920, height: 700 }
+          : previewData.provider === "archive"
+            ? { width: 800, height: 620 }
+          : previewData.provider === "font"
+            ? { width: 780, height: 520 }
+          : previewData.provider === "epub"
+            ? { width: 820, height: 680 }
+          : previewData.provider === "mobi"
+            ? { width: 820, height: 680 }
+          : infoDimensions;
+    window.cap7ce?.preview.contentSize({
+      sessionId: previewData.sessionId,
+      filePath: previewData.filePath,
+      ...dimensions
+    });
+  }, [previewData, showInfoFallback]);
+
+  useEffect(() => {
+    if (
+      showInfoFallback
+      || (previewData?.provider !== "audio" && previewData?.provider !== "video")
+      || !mediaRef.current
+    ) {
+      return;
+    }
+    void mediaRef.current.play().catch(() => {
+      // Keep native controls available when the runtime or codec blocks autoplay.
+    });
+  }, [previewData, showInfoFallback]);
+
+  useEffect(() => {
+    const resetPreviewSession = () => {
+      if (previewLoadingIndicatorTimerRef.current !== null) {
+        window.clearTimeout(previewLoadingIndicatorTimerRef.current);
+        previewLoadingIndicatorTimerRef.current = null;
+      }
+      targetSessionIdRef.current = "";
+      targetFilePathRef.current = "";
+      mediaRef.current?.pause();
+      if (mediaRef.current) mediaRef.current.removeAttribute("src");
+      setPreviewData(null);
+      setDisplaySrc("");
+      setUsingFallback(false);
+      setIsPreviewLoading(false);
+      setShowInfoFallback(false);
+      setFontRuntimeFailed(false);
+      setShowPreviewLoadingIndicator(false);
+      setContextMenu(null);
+      setFolderStats(null);
+      void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
+    };
+    const unsubscribe = window.cap7ce?.preview.onReset(resetPreviewSession);
+    return () => {
+      unsubscribe?.();
+      if (previewLoadingIndicatorTimerRef.current !== null) {
+        window.clearTimeout(previewLoadingIndicatorTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncWindowControlState = () => {
+      setViewportHeight(window.innerHeight);
+      void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
+    };
+    syncWindowControlState();
+    window.addEventListener("resize", syncWindowControlState);
+    return () => window.removeEventListener("resize", syncWindowControlState);
+  }, []);
+
+  useEffect(() => {
+    const image = imageRef.current;
+    if (!previewData || !image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+      return;
+    }
+    window.cap7ce?.preview.contentSize({
+      sessionId: previewData.sessionId,
+      filePath: previewData.filePath,
+      width: image.naturalWidth,
+      height: image.naturalHeight
+    });
+  }, [displaySrc, previewData]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (event.repeat) return;
+        mediaRef.current?.pause();
+        void window.cap7ce?.preview.close();
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        mediaRef.current?.pause();
+        void window.cap7ce?.preview.close();
+        return;
+      }
+      if (mediaRef.current && document.activeElement === mediaRef.current) return;
+      if (previewData?.provider === "pdf" && (event.key === "PageUp" || event.key === "PageDown")) {
+        event.preventDefault();
+        pdfScrollRef.current?.scrollBy({
+          top: (event.key === "PageDown" ? 1 : -1) * (pdfScrollRef.current.clientHeight * 0.9),
+          behavior: "auto"
+        });
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        window.cap7ce?.preview.navigate(-1);
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        window.cap7ce?.preview.navigate(1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewData?.provider]);
+
+  const themeStyle = useMemo(() => {
+    if (!previewData) {
+      return {} as CSSProperties;
+    }
+    const isDark = previewData.theme === "dark";
+    return {
+      "--theme-color": previewData.appearanceColors.themeColor,
+      "--accent-color": previewData.appearanceColors.accentColor,
+      "--app-bg": isDark ? "#191919" : "#ffffff",
+      "--panel-bg": isDark ? "#282828" : "#f2f2f2",
+      "--text-main": isDark ? "#b2b2b2" : "#111111",
+      "--icon-muted": isDark ? "#4f4f4f" : "#777777",
+      "--border-soft": isDark ? "#2a2a2a" : "#ececec"
+    } as CSSProperties;
+  }, [previewData]);
+
+  const closePreview = () => {
+    mediaRef.current?.pause();
+    if (previewData?.provider === "folderInfo") {
+      void window.cap7ce?.skim.cancelFolderStats(previewData.sessionId);
+    }
+    void window.cap7ce?.preview.close();
+  };
+
+  const previewControlActions: WindowControlAction[] = [
+    { id: "close", label: t("preview.close"), icon: "line", onClick: closePreview },
+    {
+      id: "maximize",
+      label: windowControlState.isMaximized ? t("preview.restore") : t("preview.maximize"),
+      icon: "expand",
+      pressed: windowControlState.isMaximized,
+      onClick: () => {
+        void window.cap7ce?.preview.toggleMaximized().then(setWindowControlState);
+      }
+    },
+    {
+      id: "pin",
+      label: windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin"),
+      icon: windowControlState.isAlwaysOnTop ? "pinOn" : "pinOff",
+      pressed: windowControlState.isAlwaysOnTop,
+      onClick: () => {
+        void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);
+      }
+    }
+  ];
+  const showSettings = viewportHeight >= windowControlState.miniStandardHeight;
+
+  if (!previewData) {
+    return <main className="preview-window-root" />;
+  }
+  const isImageProvider = (!previewData.provider || previewData.provider === "image") && !showInfoFallback;
+  const folderStatsStatus = folderStats?.status === "completed"
+    ? t("skim.previewStats.completed")
+    : folderStats?.status === "cancelled"
+      ? t("skim.previewStats.cancelled")
+      : t("skim.previewStats.scanning");
+  const isMarkdownPreview = previewData.provider === "text"
+    && previewData.fileName.toLocaleLowerCase().endsWith(".md");
+
+  return (
+    <main
+      className={`app theme-${previewData.theme} preview-window-root`}
+      style={themeStyle}
+      role="dialog"
+      aria-label={previewData.fileName}
+      onClick={() => setContextMenu(null)}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        setContextMenu({ x: event.clientX, y: event.clientY });
+      }}
+      onWheelCapture={(event) => {
+        const contentScroll = previewData.provider === "text"
+          ? textScrollRef.current
+          : previewData.provider === "pdf"
+            ? pdfScrollRef.current
+            : previewData.provider === "archive"
+              ? archiveScrollRef.current
+            : previewData.provider === "epub"
+              ? epubScrollRef.current
+            : previewData.provider === "mobi"
+              ? mobiScrollRef.current
+            : null;
+        if (contentScroll && !showInfoFallback) {
+          event.preventDefault();
+          setContextMenu(null);
+          const deltaMultiplier = event.deltaMode === 1
+            ? 16
+            : event.deltaMode === 2
+              ? contentScroll.clientHeight
+              : 1;
+          contentScroll.scrollBy({
+            top: event.deltaY * deltaMultiplier,
+            left: event.deltaX * deltaMultiplier,
+            behavior: "auto"
+          });
+          return;
+        }
+        event.preventDefault();
+        setContextMenu(null);
+        const now = window.performance.now();
+        if (now - wheelThrottleRef.current < 200) {
+          return;
+        }
+        wheelThrottleRef.current = now;
+        window.cap7ce?.preview.navigate(event.deltaY > 0 ? 1 : -1);
+      }}
+    >
+      <div className="preview-window-content">
+        {showPreviewLoadingIndicator && (
+          <div className="preview-window-loading" role="status" aria-live="polite">
+            <WaitingIndicator className="preview-window-waiting-icon" />
+            <span>{t("preview.loading")}</span>
+          </div>
+        )}
+        {isImageProvider ? <div className="preview-visual-with-metadata">
+          <img
+          key={`${previewData.sessionId}:${displaySrc}`}
+          ref={imageRef}
+          className={`preview-window-image${isPreviewLoading ? " is-loading" : ""}`}
+          src={displaySrc}
+          alt={previewData.fileName}
+          draggable={false}
+          onLoad={(event) => {
+            if (previewLoadingIndicatorTimerRef.current !== null) {
+              window.clearTimeout(previewLoadingIndicatorTimerRef.current);
+              previewLoadingIndicatorTimerRef.current = null;
+            }
+            setShowPreviewLoadingIndicator(false);
+            setIsPreviewLoading(false);
+            window.cap7ce?.preview.contentSize({
+              sessionId: previewData.sessionId,
+              filePath: previewData.filePath,
+              width: event.currentTarget.naturalWidth,
+              height: event.currentTarget.naturalHeight
+            });
+          }}
+          onError={() => {
+            if (!usingFallback && displaySrc !== previewData.thumbnailUrl) {
+              setUsingFallback(true);
+              setDisplaySrc(previewData.thumbnailUrl);
+              return;
+            }
+            if (previewLoadingIndicatorTimerRef.current !== null) {
+              window.clearTimeout(previewLoadingIndicatorTimerRef.current);
+              previewLoadingIndicatorTimerRef.current = null;
+            }
+            setShowPreviewLoadingIndicator(false);
+            setIsPreviewLoading(false);
+            if (previewData.provider === "image" && previewData.info) {
+              setShowInfoFallback(true);
+              return;
+            }
+            window.cap7ce?.preview.contentSize({
+              sessionId: previewData.sessionId,
+              filePath: previewData.filePath,
+              width: 1,
+              height: 1
+            });
+          }}
+          onClick={(event) => {
+            event.stopPropagation();
+            setContextMenu(null);
+            if (previewData.embeddedMetadata) setEmbeddedMetadataExpanded((current) => !current);
+          }}
+          />
+          {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="sheet" expanded={embeddedMetadataExpanded} />}
+        </div> : previewData.provider === "text" && previewData.textPreview && !showInfoFallback ? (
+          <section className="preview-text-panel">
+            <header>
+              <div className="preview-text-heading">
+                <strong>{previewData.fileName}</strong>
+                {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
+              </div>
+              <span>{previewData.textPreview.encoding}{previewData.textPreview.truncated ? ` · ${t("preview.textTruncated")}` : ""}</span>
+            </header>
+            {isMarkdownPreview ? (
+              <div
+                ref={(node) => { textScrollRef.current = node; }}
+                className="preview-markdown-content cap-main-scroll-viewport"
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  skipHtml
+                  components={markdownComponents}
+                >
+                  {previewData.textPreview.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <pre
+                ref={(node) => { textScrollRef.current = node; }}
+                className="cap-main-scroll-viewport"
+              >
+                {previewData.textPreview.content}
+              </pre>
+            )}
+          </section>
+        ) : previewData.provider === "pdf" && previewData.pdfPreview && !showInfoFallback ? (
+          <PdfPreviewPanel
+            data={{ ...previewData, pdfPreview: previewData.pdfPreview }}
+            scrollRef={pdfScrollRef}
+            onError={() => setShowInfoFallback(true)}
+          />
+        ) : previewData.provider === "archive" && previewData.archivePreview && !showInfoFallback ? (
+          <section className="preview-archive-panel">
+            <header>
+              <strong>{previewData.fileName}</strong>
+              <span>{t("preview.archiveSummary", {
+                count: previewData.archivePreview.entryCount,
+                size: formatPreviewBytes(previewData.archivePreview.totalUncompressedSize)
+              })}</span>
+            </header>
+            {previewData.archivePreview.truncated && (
+              <p className="preview-archive-truncated">
+                {t("preview.archiveTruncated", { count: previewData.archivePreview.entries.length })}
+              </p>
+            )}
+            <div ref={archiveScrollRef} className="preview-archive-list cap-main-scroll-viewport" role="list">
+              {previewData.archivePreview.entries.map((entry, index) => (
+                <div className="preview-archive-entry" role="listitem" key={`${entry.path}:${index}`}>
+                  <span className="preview-archive-entry-path" title={entry.path}>{entry.path}</span>
+                  <span className="preview-archive-entry-size">
+                    {entry.directory ? t("preview.archiveFolder") : formatPreviewBytes(entry.size ?? 0)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : previewData.provider === "font" && previewData.fontPreview && !showInfoFallback ? (
+          <FontPreviewPanel
+            data={{ ...previewData, fontPreview: previewData.fontPreview }}
+            onError={() => {
+              setFontRuntimeFailed(true);
+              setShowInfoFallback(true);
+            }}
+          />
+        ) : previewData.provider === "epub" && previewData.epubPreview && !showInfoFallback ? (
+          <section className="preview-epub-panel">
+            <div ref={epubScrollRef} className="preview-epub-scroll cap-main-scroll-viewport">
+              <header>
+                {previewData.epubPreview.coverDataUrl && <img src={previewData.epubPreview.coverDataUrl} alt="" />}
+                <div>
+                  <h1>{previewData.epubPreview.title}</h1>
+                  {previewData.epubPreview.creator && <p>{previewData.epubPreview.creator}</p>}
+                  {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
+                </div>
+              </header>
+              {previewData.epubPreview.chapters.map((chapter, index) => (
+                <article key={index}>
+                  <h2>{chapter.title}</h2>
+                  <pre>{chapter.text}</pre>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : previewData.provider === "mobi" && previewData.mobiPreview && !showInfoFallback ? (
+          <section className="preview-mobi-panel">
+            <div ref={mobiScrollRef} className="preview-mobi-scroll cap-main-scroll-viewport">
+              <header>
+                {previewData.mobiPreview.coverDataUrl && <img src={previewData.mobiPreview.coverDataUrl} alt="" />}
+                <div>
+                  <h1>{previewData.mobiPreview.title}</h1>
+                  {previewData.mobiPreview.creator && <p>{previewData.mobiPreview.creator}</p>}
+                  {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
+                </div>
+              </header>
+              {previewData.mobiPreview.chapters.map((chapter, index) => (
+                <article key={index}>
+                  <h2>{chapter.title}</h2>
+                  <pre>{chapter.text}</pre>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
+          previewData.provider === "audio" ? (
+            <section className="preview-media-panel preview-audio-panel">
+              <strong>{previewData.fileName}</strong>
+              <audio
+                key={previewData.sessionId}
+                ref={(element) => { mediaRef.current = element; }}
+                src={previewData.previewUrl}
+                controls
+                autoPlay
+                loop
+                preload="metadata"
+                onError={() => setShowInfoFallback(true)}
+              />
+              {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
+            </section>
+          ) : (
+            <div className="preview-visual-with-metadata">
+              <video
+                key={previewData.sessionId}
+                ref={(element) => { mediaRef.current = element; }}
+                className="preview-video"
+                src={previewData.previewUrl}
+                controls
+                autoPlay
+                loop
+                preload="metadata"
+                onLoadedMetadata={(event) => {
+                  if (event.currentTarget.videoWidth <= 0 || event.currentTarget.videoHeight <= 0) return;
+                  window.cap7ce?.preview.contentSize({
+                    sessionId: previewData.sessionId,
+                    filePath: previewData.filePath,
+                    width: event.currentTarget.videoWidth,
+                    height: event.currentTarget.videoHeight
+                  });
+                }}
+                onError={() => setShowInfoFallback(true)}
+                onClick={(event) => {
+                  if (!previewData.embeddedMetadata) return;
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  if (event.clientY >= bounds.bottom - videoControlAreaHeight) return;
+                  setEmbeddedMetadataExpanded((current) => !current);
+                }}
+              />
+              {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="sheet" expanded={embeddedMetadataExpanded} />}
+            </div>
+          )
+        ) : previewData.info && (
+          <section className="preview-info-panel">
+            <h1>{previewData.info.name}</h1>
+            {previewData.archiveFallbackReason && (
+              <p className="preview-info-notice">{getArchiveFallbackMessage(previewData.archiveFallbackReason)}</p>
+            )}
+            {previewData.fontFallbackReason && (
+              <p className="preview-info-notice">{getFontFallbackMessage(previewData.fontFallbackReason)}</p>
+            )}
+            {fontRuntimeFailed && !previewData.fontFallbackReason && (
+              <p className="preview-info-notice">{getFontFallbackMessage("failed")}</p>
+            )}
+            {previewData.epubFallbackReason && <p className="preview-info-notice">{getEpubFallbackMessage(previewData.epubFallbackReason)}</p>}
+            {previewData.mobiFallbackReason && <p className="preview-info-notice">{getMobiFallbackMessage(previewData.mobiFallbackReason)}</p>}
+            <dl>
+              <dt>{t("skim.previewPath")}</dt><dd>{previewData.info.path}</dd>
+              <dt>{t("skim.previewType")}</dt><dd>{previewData.info.kind === "folder" ? t("skim.folder") : (previewData.info.extension || t("skim.file"))}</dd>
+              <dt>{t("skim.previewModified")}</dt><dd>{new Date(previewData.info.modifiedAt).toLocaleString()}</dd>
+              {previewData.info.kind === "file" && <><dt>{t("skim.previewSize")}</dt><dd>{formatPreviewBytes(previewData.info.size)}</dd></>}
+              <dt>{t("skim.previewIndexedScope")}</dt><dd>{previewData.info.withinAddedDirectory ? t("common.yes") : t("common.no")}</dd>
+              {previewData.info.kind === "folder" && folderStats && <>
+                <dt>{t("skim.previewStatsStatus")}</dt><dd>{folderStatsStatus}</dd>
+                <dt>{t("skim.previewFileCount")}</dt><dd>{folderStats.fileCount}</dd>
+                <dt>{t("skim.previewFolderCount")}</dt><dd>{folderStats.folderCount}</dd>
+                <dt>{t("skim.previewTotalSize")}</dt><dd>{formatPreviewBytes(folderStats.totalSize)}</dd>
+                <dt>{t("skim.previewSkippedCount")}</dt><dd>{folderStats.skippedCount}</dd>
+              </>}
+            </dl>
+            {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
+          </section>
+        )}
+      </div>
+      {(
+        (previewData.provider === "text" && previewData.textPreview)
+        || (previewData.provider === "pdf" && previewData.pdfPreview)
+        || (previewData.provider === "archive" && previewData.archivePreview)
+        || (previewData.provider === "epub" && previewData.epubPreview)
+        || (previewData.provider === "mobi" && previewData.mobiPreview)
+      ) && !showInfoFallback && (
+        <div className="preview-window-scrollbar-slot">
+          <CustomScrollbar
+            scrollContainerRef={previewData.provider === "pdf"
+              ? pdfScrollRef
+              : previewData.provider === "archive"
+                ? archiveScrollRef
+              : previewData.provider === "epub"
+                ? epubScrollRef
+              : previewData.provider === "mobi"
+                ? mobiScrollRef
+                : textScrollRef}
+            orientation="vertical"
+          />
+        </div>
+      )}
+      <WindowControlRail
+        actions={previewControlActions}
+        showSkim={showSettings}
+        skimActive={false}
+        skimCurrent={previewData.skimActive}
+        skimExpanded={false}
+        skimLabel={t("skim.locationPicker.open")}
+        onSkim={() => { void window.cap7ce?.preview.toggleSkimLocationPicker(); }}
+        showSettings={showSettings}
+        settingsLabel={t("window.openSettings")}
+        onSettings={() => { void window.cap7ce?.preview.openSettings(); }}
+      />
+      {contextMenu && (
+        <ImageContextMenu
+          key={`preview:${previewData.filePath}:${contextMenu.x}:${contextMenu.y}`}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          theme={previewData.theme}
+          menuStyle={getImageContextMenuStyle(previewData.theme, previewData.appearanceColors)}
+          header={{
+            format: previewData.info?.kind === "folder"
+              ? t("fileInfo.folder")
+              : (() => {
+                const extension = previewData.fileName.slice(previewData.fileName.lastIndexOf(".") + 1);
+                return extension && extension !== previewData.fileName ? extension.toUpperCase() : t("fileInfo.file");
+              })(),
+            fileName: previewData.fileName,
+            filePath: previewData.filePath,
+            primaryDetail: previewData.info?.kind === "folder"
+              ? folderStats
+                ? t("fileInfo.size", { size: formatPreviewBytes(folderStats.totalSize) })
+                : undefined
+              : t("fileInfo.size", { size: formatPreviewBytes(previewData.fileSize) }),
+            details: previewData.info?.kind === "folder"
+              ? folderStats
+                ? [t("fileInfo.compactContents", { files: folderStats.fileCount, folders: folderStats.folderCount })]
+                : [t("fileInfo.calculating")]
+              : []
+          }}
+          groups={[
+            {
+              id: "view",
+              label: t("context.view"),
+              actions: [
+                {
+                  id: "close",
+                  label: t("preview.close"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    closePreview();
+                  }
+                },
+                {
+                  id: "open",
+                  label: t("context.open"),
+                  onSelect: async () => {
+                    setContextMenu(null);
+                    const result = await window.cap7ce?.files.open(previewData.filePath);
+                    if (result === "") closePreview();
+                  }
+                },
+                {
+                  id: "showInFolder",
+                  label: t("context.showInFolder"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    void window.cap7ce?.files.showInFolder(previewData.filePath);
+                  }
+                }
+              ]
+            },
+            {
+              id: "actions",
+              label: t("context.actions"),
+              actions: [
+                {
+                  id: "copyPath",
+                  label: t("context.copyPath"),
+                  onSelect: () => {
+                    setContextMenu(null);
+                    void window.cap7ce?.files.copyPaths([previewData.filePath]);
+                  }
+                },
+                ...(!previewData.skimActive ? [
+                  {
+                    id: "editKeywords",
+                    label: t("context.editKeywords"),
+                    onSelect: () => {
+                      setContextMenu(null);
+                      void window.cap7ce?.preview.requestItemAction({
+                        action: "editKeywords",
+                        itemId: previewData.itemId,
+                        filePath: previewData.filePath
+                      });
+                    }
+                  },
+                  {
+                    id: "delete",
+                    label: t("context.deleteFile"),
+                    onSelect: () => {
+                      setContextMenu(null);
+                      void window.cap7ce?.preview.requestItemAction({
+                        action: "deleteFile",
+                        itemId: previewData.itemId,
+                        filePath: previewData.filePath
+                      });
+                    }
+                  }
+                ] : [])
+              ]
+            }
+          ]}
+        />
+      )}
+    </main>
+  );
+};
+
+export default PreviewWindowApp;
