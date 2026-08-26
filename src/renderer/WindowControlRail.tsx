@@ -58,6 +58,7 @@ const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skim
             type="button"
             key={action.id}
             onClick={action.onClick}
+            onMouseDown={(event) => { event.preventDefault(); event.currentTarget.blur(); }}
             aria-label={action.label}
             title={action.label}
             aria-pressed={action.pressed}
@@ -73,6 +74,7 @@ const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skim
           data-skim-location-toggle="true"
           type="button"
           onClick={onSkim}
+          onMouseDown={(event) => { event.preventDefault(); event.currentTarget.blur(); }}
           aria-label={resolvedSkimLabel}
           title={resolvedSkimLabel}
           aria-pressed={skimActive}
@@ -87,6 +89,7 @@ const WindowControlRail = ({ actions, showSkim = false, skimActive = false, skim
           className="cap-settings-toggle"
           type="button"
           onClick={onSettings}
+          onMouseDown={(event) => { event.preventDefault(); event.currentTarget.blur(); }}
           aria-label={resolvedSettingsLabel}
           title={resolvedSettingsLabel}
           aria-pressed={settingsActive}
