@@ -94,7 +94,7 @@ export const SettingsFooter = () => {
             aria-label={t("settings.openReleasesHint")}
             onClick={() => void window.cap7ce?.app.openReleasePage()}
           >
-            0.9.7
+            0.9.8
           </button>
           {" · 7C93F3-L & "}
           <button
