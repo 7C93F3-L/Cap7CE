@@ -42,7 +42,7 @@
 
 .preview-embedded-metadata-details h2 {
   margin: 0 0 10px;
-  color: var(--theme-color);
+  color: var(--text-main);
   font-size: 12px;
   font-weight: 500;
 }
@@ -103,7 +103,6 @@
 
 .preview-embedded-metadata-layer.is-expanded > .preview-embedded-metadata-sheet {
   background: color-mix(in srgb, var(--app-bg) 94%, transparent);
-  box-shadow: 0 -10px 30px rgb(0 0 0 / 18%);
   transform: translateY(0);
   backdrop-filter: blur(18px);
 }
@@ -117,7 +116,7 @@
 
 .preview-embedded-metadata-sheet-content h2 {
   margin: 0 0 12px;
-  color: var(--theme-color);
+  color: var(--text-main);
   font-size: 12px;
   font-weight: 500;
 }
