@@ -376,7 +376,7 @@ export const zhCN = {
   "settings.operationHintsOff": "关闭",
   "settings.quickActions": "快捷动作",
   "settings.skimDisplay": "自定义查看",
-  "settings.skimDisplaySummary": "已选择 {selected} / {total} 种格式　　在标签中选中“自定义”以应用。",
+  "settings.skimDisplaySummary": "已选 {selected} / {total} 种格式，选择“自定义”后应用。",
   "settings.hiddenFilesOn": "显示隐藏文件",
   "settings.hiddenFilesOff": "不显示隐藏文件",
   "settings.showHiddenFilesHint": "点击在自定义范围中显示隐藏文件",

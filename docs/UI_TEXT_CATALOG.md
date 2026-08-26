@@ -288,7 +288,7 @@
 | `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |
 | `settings.systemNotifications`     | 系统通知                          |                           | Notifications | 系统通知开关       |
 | `settings.skimDisplay`             | 自定义查看                        |                           |     | 格式范围配置          |
-| `settings.skimDisplaySummary`      | 已选择 {selected} / {total} 种格式　　在标签中选中“自定义”以应用。 | | Selected {selected} / {total} formats. Choose “Custom” in the label to apply. | 自定义查看摘要 |
+| `settings.skimDisplaySummary`      | 已选 {selected} / {total} 种格式，选择“自定义”后应用。 | | {selected} / {total} formats selected. Choose “Custom” to apply. | 自定义查看摘要 |
 | `format.category.visual`           | 图像                            |                           |     | 自定义查看分类        |
 | `format.category.video`            | 视频                            |                           |     | 自定义查看分类        |
 | `format.category.audio`            | 音频                            |                           |     | 自定义查看分类        |

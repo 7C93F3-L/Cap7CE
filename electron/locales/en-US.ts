@@ -376,7 +376,7 @@ export const enUS = defineLocale({
   "settings.operationHintsOff": "Off",
   "settings.quickActions": "Quick Actions",
   "settings.skimDisplay": "Custom View",
-  "settings.skimDisplaySummary": "Selected {selected} / {total} formats. Choose “Custom” in the label to apply.",
+  "settings.skimDisplaySummary": "{selected} / {total} formats selected. Choose “Custom” to apply.",
   "settings.hiddenFilesOn": "Show Hidden Files",
   "settings.hiddenFilesOff": "Hide Hidden Files",
   "settings.showHiddenFilesHint": "Click to show hidden files in the Custom range",
