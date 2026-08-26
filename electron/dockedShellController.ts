@@ -208,7 +208,7 @@ export class DockedShellController {
         this.reset(false);
         return;
       }
-      if (this.isPointInside(point, this.getRevealScreenBounds(this.session))) this.expand(false);
+      if (this.isPointInside(point, this.getRevealScreenBounds(this.session))) this.expand(false, true);
       return;
     }
 
@@ -293,11 +293,11 @@ export class DockedShellController {
     this.setCollapsedLayerActive(true);
   }
 
-  private expand(focus: boolean) {
+  private expand(focus: boolean, armForMouseLeave = false) {
     if (!this.collapsed || !this.session) return;
     this.restoreExpandedBounds(focus);
     this.collapsed = false;
-    this.session.armed = false;
+    this.session.armed = armForMouseLeave;
   }
 
   private restoreExpandedBounds(focus: boolean) {

@@ -123,10 +123,11 @@ assert.equal(automatic.activity.focus, 0);
 assert.equal(automatic.activity.moveTop, 1);
 assert.deepEqual(automatic.activity.collapsedLayers, [true, false]);
 
+automatic.context.interactionBlocked = true;
 automatic.sample({ x: 1200, y: 300 }, 3);
 assert.equal(automatic.controller.getState(), null);
-automatic.sample({ x: 200, y: 300 }, 4);
-automatic.sample({ x: 1200, y: 300 }, 5);
+automatic.context.interactionBlocked = false;
+automatic.sample({ x: 1200, y: 300 }, 422);
 assert.deepEqual(automatic.controller.getState(), { edge: "left" });
 
 const rightGapBounds = { x: 1015, y: 180, width: 900, height: 600 };
