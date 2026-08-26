@@ -4,6 +4,7 @@ import type { DirectoryItem } from "../../shared/types";
 
 export interface DirectoryAiSettingsRowsProps {
   directories: DirectoryItem[];
+  totalFileCount: number | null;
   isLoadingDirectories: boolean;
   isAddingDirectory: boolean;
   directoryServiceUnavailable: boolean;
@@ -19,6 +20,7 @@ export interface DirectoryAiSettingsRowsProps {
 
 export const DirectoryAiSettingsRows = ({
   directories,
+  totalFileCount,
   isLoadingDirectories,
   isAddingDirectory,
   directoryServiceUnavailable,
@@ -69,7 +71,7 @@ export const DirectoryAiSettingsRows = ({
     <>
       <div className="cap-settings-row cap-settings-row-directory-config">
         <span className="cap-settings-label">{t("settings.directoryConfig")}</span>
-        <span className="cap-settings-value">{directoryServiceUnavailable ? t("common.unavailable") : isLoadingDirectories ? t("settings.directoryLoading") : directories.length === 0 ? t("settings.directoryEmpty") : t("settings.directoryCount", { count: directories.length })}</span>
+        <span className="cap-settings-value">{directoryServiceUnavailable ? t("common.unavailable") : isLoadingDirectories ? t("settings.directoryLoading") : directories.length === 0 ? t("settings.directoryEmpty") : t("settings.directorySummary", { directoryCount: directories.length, fileCount: totalFileCount ?? "…" })}</span>
         <button className="cap-settings-pill" type="button" onClick={onStartAdd} title={t("settings.addDirectoryActionHint")} disabled={isAddingDirectory}>{t("common.add")}</button>
         <button
           className="cap-settings-pill cap-settings-expand-toggle"

@@ -449,8 +449,8 @@ const App = () => {
       window.clearTimeout(skimLocationPickerCloseTimerRef.current);
     }
   }, []);
-
   const directoryOptions = useMemo(() => [createAllDirectoriesOption(directories), ...directories], [directories]);
+  const totalFileCount = directoryOptions[0]?.fileCount ?? null;
   const selectedDirectory = directoryOptions.find((directory) => directory.id === search.directoryId) ?? directoryOptions[0];
   const effectiveTheme: ResolvedThemeMode = theme === "system" ? systemTheme : theme;
   const appThemeStyle = {
@@ -3018,7 +3018,7 @@ const App = () => {
                     directoryName={selectedDirectory.name}
                     directories={directoryOptions}
                     labelVisibility={searchCapsuleLabelVisibility}
-                    status={<ResultStatus resultCount={searchResults.length} isSearching={isSearching || aiSearchBeta.busy} />}
+                    status={<ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />}
                     inputFeedback={searchInputFeedback}
                     inputFeedbackIsGuide={operationHintVisible}
                     unified
@@ -3214,6 +3214,7 @@ const App = () => {
                 quickCommandsExpanded={quickCommandsExpanded}
                 skimDisplay={skimDisplay}
                 directories={directories}
+                totalFileCount={totalFileCount}
                 isLoadingDirectories={isLoadingDirectories}
                 isAddingDirectory={isAddingDirectory}
                 directoryServiceUnavailable={directoryServiceUnavailable}

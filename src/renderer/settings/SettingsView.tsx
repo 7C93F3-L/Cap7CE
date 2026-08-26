@@ -63,6 +63,7 @@ export interface SettingsViewProps {
   quickCommandsExpanded: boolean;
   skimDisplay: SkimDisplayPreferences;
   directories: DirectoryItem[];
+  totalFileCount: number | null;
   isLoadingDirectories: boolean;
   isAddingDirectory: boolean;
   directoryServiceUnavailable: boolean;
@@ -118,7 +119,7 @@ export interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-export const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, aiRecognitionEnabled, aiSearchEnabled, aiSearchBusy, aiSearchProgress, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, skimCacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onAiRecognitionEnabledChange, onAiSearchToggle, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+export const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, aiRecognitionEnabled, aiSearchEnabled, aiSearchBusy, aiSearchProgress, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, totalFileCount, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, skimCacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onAiRecognitionEnabledChange, onAiSearchToggle, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const windowLayoutPreference = useWindowLayoutPreference();
   useEffect(() => windowLayoutPreference.load(), []);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -290,6 +291,7 @@ export const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide,
 
           <DirectoryAiSettingsRows
             directories={directories}
+            totalFileCount={totalFileCount}
             isLoadingDirectories={isLoadingDirectories}
             isAddingDirectory={isAddingDirectory}
             directoryServiceUnavailable={directoryServiceUnavailable}

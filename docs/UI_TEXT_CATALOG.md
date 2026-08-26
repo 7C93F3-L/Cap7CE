@@ -134,7 +134,8 @@
 | `search.hideAllLabels`         | 隐藏所有标签                                         |                                        |     | 标签菜单               |
 | `search.filterTitle`           | 筛选：{status}                                    |                                        |     | 识别状态 title         |
 | `search.searching`             | 正在搜索...                                        |                                        |     | 搜索状态               |
-| `search.resultCount`           | 搜索结果 {count} 张                                 | 搜索结果：{count}                            |     | 结果统计               |
+| `search.resultCount`           | 搜索结果 {count} 张                                 | 搜索结果：{count}                            | Results: {count} | 有搜索或筛选条件时的结果数 |
+| `search.fileCount`             |                                                  | 文件数量：{count}                            | Files: {count} | 默认全目录无搜索条件时的文件总数 |
 | `search.recognizedCount`       | 已识别图片 {count} 张                                | 已识别文件：{count}                           |     | 结果统计               |
 | `search.allImageCount`         | 全部图片：{count}                                   | 全部文件：{count}                            |     | 结果统计               |
 | `search.unrecognizedCount`     | 未识别：{count}                                    |                                        |     | 结果统计               |
@@ -237,7 +238,7 @@
 | `settings.directoryConfig` | 配置目录 | Configure Folders | 目录区标题 |
 | `settings.directoryLoading` | 正在读取目录… | Loading folders… | 目录服务状态 |
 | `settings.directoryEmpty` | 尚未添加目录 | No folders added | 目录服务状态 |
-| `settings.directoryCount` | {count} 个目录 | {count} folders | 目录数量 |
+| `settings.directorySummary` | {directoryCount} 目录　{fileCount} 文件 | {directoryCount} folders　{fileCount} files | 动态目录数与共用文件总数 |
 | `settings.addDirectoryActionHint` | 点击添加目录 | Click to add a folder | 添加按钮 title |
 | `settings.expandDirectoriesHint` | 管理已添加目录 | Manage added folders | 展开目录列表 |
 | `settings.collapseDirectoriesHint` | 点击收起列表 | Collapse the folder list | 收起目录列表 |
