@@ -575,8 +575,7 @@ const createPreviewWindow = () => {
     fullscreenable: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false
+      contextIsolation: true, devTools: !app.isPackaged, nodeIntegration: false
     }
   });
   lockWebContentsZoom(previewWindow.webContents);
@@ -693,9 +692,8 @@ const createStartupHintWindow = async () => {
     backgroundColor: "#00000000",
     hasShadow: false,
     webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true
+      contextIsolation: true, devTools: !app.isPackaged,
+      nodeIntegration: false, sandbox: true
     }
   });
   lockWebContentsZoom(startupHintWindow.webContents);
@@ -805,7 +803,7 @@ const shouldShowLineWindow = () => (
 );
 
 const lineWindowController = new LineWindowController({
-  devServerUrl: process.env.VITE_DEV_SERVER_URL,
+  devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
   getAlwaysOnTop: () => shellAlwaysOnTop,
   getPlacement: getLineWindowPlacement,
   interactionThickness: standbyInteractionThicknessPx,
@@ -2369,8 +2367,7 @@ const createWindow = () => {
     paintWhenInitiallyHidden: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false
+      contextIsolation: true, devTools: !app.isPackaged, nodeIntegration: false
     }
   });
   lockWebContentsZoom(mainWindow.webContents);

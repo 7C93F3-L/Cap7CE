@@ -5,6 +5,7 @@ import type { WindowDockEdge } from "./windowLayoutTypes";
 interface LineWindowPlacement { bounds: Rectangle; edge: WindowDockEdge }
 interface LineWindowControllerOptions {
   devServerUrl?: string;
+  devToolsEnabled: boolean;
   getAlwaysOnTop: () => boolean;
   getPlacement: (currentBounds?: Rectangle, currentEdge?: WindowDockEdge) => LineWindowPlacement;
   interactionThickness: number;
@@ -38,8 +39,7 @@ export class LineWindowController {
       paintWhenInitiallyHidden: true,
       webPreferences: {
         preload: this.options.preloadPath,
-        contextIsolation: true,
-        nodeIntegration: false
+        contextIsolation: true, devTools: this.options.devToolsEnabled, nodeIntegration: false
       }
     });
     this.lineWindow = createdWindow;

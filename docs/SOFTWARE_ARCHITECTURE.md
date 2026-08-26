@@ -42,7 +42,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，并装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`。该窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
+- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，并装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`。主窗口、预览、line 与启动提示的 DevTools 能力仅在未打包开发环境开启，打包版从 `webPreferences` 层禁用，不依赖快捷键拦截。line 窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
 - `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。窗口停靠吸附是不可关闭的基础行为，边缘收起则由设置页与托盘菜单共用同一偏好控制。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
 - 管理 capsule / micro / mini / normal / Settings 主窗口状态，以及 standby 对主窗口隐藏和独立 line 显示的协调语义；从 standby 唤起时先保持主窗口透明，待目标形态完成主进程布局与 Renderer 绘制后再显现，并保留超时恢复以避免透明窗口滞留。
 - 全局 Alt+4 与 capsule 失焦只向 Renderer 请求进入 standby，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。
