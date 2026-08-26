@@ -55,7 +55,6 @@ export interface SettingsViewProps {
   aiRecognitionEnabled: boolean;
   aiSearchEnabled: boolean;
   aiSearchBusy: boolean;
-  aiSearchProgress?: { processed: number; total: number };
   quickActionGlobalEnabled: boolean;
   shortcutActions: ShortcutActionPreferences;
   unavailableShortcutActionIds: ShortcutActionId[];
@@ -119,7 +118,7 @@ export interface SettingsViewProps {
   onDeleteDirectory: (id: string) => void;
 }
 
-export const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, aiRecognitionEnabled, aiSearchEnabled, aiSearchBusy, aiSearchProgress, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, totalFileCount, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, skimCacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onAiRecognitionEnabledChange, onAiSearchToggle, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
+export const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide, searchInputRef, directoryName, status, searchDirectories, labelVisibility, theme, menuStyle, languagePreference, appearanceColors, standbyLineVisible, launchAtLogin, systemNotificationsEnabled, operationHintsEnabled, aiRecognitionEnabled, aiSearchEnabled, aiSearchBusy, quickActionGlobalEnabled, shortcutActions, unavailableShortcutActionIds, quickActionsExpanded, quickCommandsExpanded, skimDisplay, directories, totalFileCount, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, llamaRuntimeSettings, llamaRuntimeProcessState, ggufModelSettings, isLoadingLlamaRuntime, isLoadingGgufModels, isChangingLlamaRuntimeState, visualCacheStats, skimCacheStats, thumbnailOptimizationStatus, isLoadingCacheStats, isClearingCache, isClearingSkimCache, cacheInlineFeedback, skimCacheInlineFeedback, editingDirectoryId, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onThemeChange, onLanguageChange, onAppearanceColorsPreview, onAppearanceColorsChange, onStandbyLineVisibleChange, onLaunchAtLoginChange, onSystemNotificationsChange, onOperationHintsChange, onAutoCacheOptimizationChange, onAiRecognitionEnabledChange, onAiSearchToggle, onQuickActionGlobalEnabledChange, onShortcutActionsChange, onShortcutCaptureStart, onShortcutCaptureEnd, onQuickActionsExpandedChange, onQuickCommandsExpandedChange, onSkimDisplayChange, onSearch, onStartAdd, onLlamaRuntimeChange, onRefreshLlamaRuntime, onGgufModelChange, onRefreshGgufModels, onStartLlamaRuntime, onStopLlamaRuntime, onClearCache, onClearSkimCache, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory }: SettingsViewProps) => {
   const windowLayoutPreference = useWindowLayoutPreference();
   useEffect(() => windowLayoutPreference.load(), []);
   const settingsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -274,7 +273,6 @@ export const SettingsView = ({ search, quickCommandNotice, inputFeedbackIsGuide,
         enabledLabelGroups={standardSearchLabelGroups}
         aiSearchEnabled={aiSearchEnabled}
         aiSearchBusy={aiSearchBusy}
-        aiSearchProgress={aiSearchProgress}
         onSearchChange={onSearchChange}
         onLabelVisibilityChange={onLabelVisibilityChange}
         onSkimDisplayModeChange={(searchMode) => onSkimDisplayChange({ ...skimDisplay, searchMode })}

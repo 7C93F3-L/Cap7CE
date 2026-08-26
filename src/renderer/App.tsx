@@ -3027,7 +3027,6 @@ const App = () => {
                     enabledLabelGroups={standardSearchLabelGroups}
                     aiSearchEnabled={aiSearchBeta.enabled}
                     aiSearchBusy={aiSearchBeta.busy}
-                    aiSearchProgress={aiSearchBeta.progress}
                     imageContextMenuOpen={contextMenu !== null}
                     inputRef={searchInputRef}
                     onSearchChange={(nextSearch) => {
@@ -3045,6 +3044,7 @@ const App = () => {
                 images={searchResults}
                 isSearching={isSearching || aiSearchBeta.busy}
                 aiSearchPhase={aiSearchBeta.phase}
+                aiSearchProgress={aiSearchBeta.progress}
                 searchError={searchError}
                 contextMenuTheme={effectiveTheme}
                 appearanceColors={appearanceColors}
@@ -3206,7 +3206,6 @@ const App = () => {
                 aiRecognitionEnabled={aiRecognitionEnabled}
                 aiSearchEnabled={aiSearchBeta.enabled}
                 aiSearchBusy={aiSearchBeta.busy}
-                aiSearchProgress={aiSearchBeta.progress}
                 quickActionGlobalEnabled={quickActionGlobalEnabled}
                 shortcutActions={shortcutActions}
                 unavailableShortcutActionIds={unavailableShortcutActionIds}

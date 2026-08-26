@@ -3,6 +3,7 @@ import type { KeyboardEvent } from "react";
 import type { ResultDisplaySection } from "./resultSectionLayout";
 
 export type AiResultSectionPhase = "idle" | "starting" | "running" | "paused_user" | "completed" | "cancelled" | "failed";
+export interface AiResultSectionProgress { processed: number; total: number }
 
 const sectionTextKeys: Record<ResultDisplaySection, { title: Parameters<typeof t>[0]; description: Parameters<typeof t>[0] }> = {
   fastMatch: {
@@ -26,12 +27,20 @@ const aiStatusTextKeys: Partial<Record<AiResultSectionPhase, { title: Parameters
   completed: { title: "search.section.aiDeepMatch.title", description: "search.section.aiDeepMatch.completedDescription" }
 };
 
-export const ResultSectionCard = ({ section, aiPhase = "idle", onAiToggle }: {
+export const ResultSectionCard = ({ section, aiPhase = "idle", aiProgress, onAiToggle }: {
   section: ResultDisplaySection;
   aiPhase?: AiResultSectionPhase;
+  aiProgress?: AiResultSectionProgress;
   onAiToggle?: () => void;
 }) => {
   const text = section === "aiDeepMatch" ? aiStatusTextKeys[aiPhase] ?? sectionTextKeys[section] : sectionTextKeys[section];
+  const progressDescriptionKey = aiProgress?.total && section === "aiDeepMatch"
+    ? aiPhase === "paused_user"
+      ? "search.section.aiPaused.progressDescription"
+      : ["starting", "running"].includes(aiPhase)
+        ? "search.section.aiMatching.progressDescription"
+        : null
+    : null;
   const interactive = section === "aiDeepMatch" && Boolean(onAiToggle) && ["starting", "running", "paused_user"].includes(aiPhase);
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!interactive || (event.key !== "Enter" && event.key !== " ")) return;
@@ -50,7 +59,9 @@ export const ResultSectionCard = ({ section, aiPhase = "idle", onAiToggle }: {
       onKeyDown={handleKeyDown}
     >
       <h2>{t(text.title)}<span aria-hidden="true">›</span></h2>
-      <p>{t(text.description)}</p>
+      <p>{progressDescriptionKey && aiProgress
+        ? t(progressDescriptionKey, { processed: aiProgress.processed, total: aiProgress.total })
+        : t(text.description)}</p>
     </article>
   );
 };

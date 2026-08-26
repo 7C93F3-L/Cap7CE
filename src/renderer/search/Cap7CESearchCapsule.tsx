@@ -107,7 +107,6 @@ export interface Cap7CESearchCapsuleProps {
   labelMenuEnabled?: boolean;
   aiSearchEnabled?: boolean;
   aiSearchBusy?: boolean;
-  aiSearchProgress?: { processed: number; total: number };
   imageContextMenuOpen?: boolean;
   inputRef?: Ref<HTMLInputElement>;
   onSearchChange: (search: SearchState) => void;
@@ -127,7 +126,7 @@ const filterChipExitDurationMs = 350;
 const filterChipExitStaggerMs = 35;
 const filterChipMotionMaxStaggerSteps = 6;
 
-export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVisibility, status, inputFeedback = "", inputFeedbackIsGuide = false, autoSearchOnQueryClear = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, aiSearchEnabled = false, aiSearchBusy = false, aiSearchProgress, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onAiSearchToggle, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
+export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], labelVisibility, status, inputFeedback = "", inputFeedbackIsGuide = false, autoSearchOnQueryClear = false, unified = false, leadingContent, directoryGroup, skimDisplayMode = "skim", enabledLabelGroups, labelMenuEnabled = true, aiSearchEnabled = false, aiSearchBusy = false, imageContextMenuOpen = false, inputRef, onSearchChange, onLabelVisibilityChange, onSearchOptionsChange, onSkimDisplayModeChange, onSearch, onAiSearchToggle, onImageContextMenuClose }: Cap7CESearchCapsuleProps) => {
   const [skimDisplayChipsOpen, setSkimDisplayChipsOpen] = useState(false);
   const [directoryChipsOpen, setDirectoryChipsOpen] = useState(false);
   const [sortChipsOpen, setSortChipsOpen] = useState(false);
@@ -499,9 +498,7 @@ export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], l
         aria-pressed={aiSearchEnabled}
         data-selected={aiSearchEnabled}
         data-busy={aiSearchBusy}
-        title={aiSearchBusy && aiSearchProgress?.total
-          ? t("search.aiEnhanceProgress", aiSearchProgress)
-          : t(aiSearchEnabled ? "search.aiEnhanceStopHint" : "search.aiEnhanceHint")}
+        title={t("search.hideLabelHint")}
         onContextMenu={hideAiSearchLabel}
         onClick={onAiSearchToggle}
       >

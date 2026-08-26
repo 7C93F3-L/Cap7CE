@@ -8,7 +8,7 @@ import { createSpaceHoldController, createSpaceReleaseGuard, isPlainSpaceShortcu
 import { getFileContextShortcutAction } from "../fileContextActions";
 import { VirtualImageGrid, type ResultShellState } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
-import type { AiResultSectionPhase } from "./ResultSectionCard";
+import type { AiResultSectionPhase, AiResultSectionProgress } from "./ResultSectionCard";
 import type { ResultGridScrollMemory } from "../virtualGridLayout";
 
 type SpacePressSnapshot = {
@@ -30,6 +30,7 @@ export interface ResultsViewProps {
   images: ImageIndexItem[];
   isSearching: boolean;
   aiSearchPhase: AiResultSectionPhase;
+  aiSearchProgress: AiResultSectionProgress;
   searchError: string;
   contextMenuTheme: "light" | "dark";
   appearanceColors: AppearanceColors;
@@ -51,7 +52,7 @@ export interface ResultsViewProps {
   onAiSearchSectionToggle: () => void;
 }
 
-export const ResultsView = ({ shellState, searchCapsule, images, isSearching, aiSearchPhase, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onOpenSkim, onAiSearchSectionToggle }: ResultsViewProps) => {
+export const ResultsView = ({ shellState, searchCapsule, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onOpenSkim, onAiSearchSectionToggle }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -587,6 +588,7 @@ export const ResultsView = ({ shellState, searchCapsule, images, isSearching, ai
           initialScrollMemory={scrollMemory}
           isSearching={isSearching}
           aiSearchPhase={aiSearchPhase}
+          aiSearchProgress={aiSearchProgress}
           searchError={searchError}
           onSelectImage={handleImageClick}
           onScrollMemoryChange={onScrollMemoryChange}

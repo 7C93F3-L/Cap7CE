@@ -4,7 +4,7 @@ import { t } from "../../../electron/localization";
 import type { ImageIndexItem } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
 import { ResultThumbnailContent } from "./ResultThumbnail";
-import { ResultSectionCard, type AiResultSectionPhase } from "./ResultSectionCard";
+import { ResultSectionCard, type AiResultSectionPhase, type AiResultSectionProgress } from "./ResultSectionCard";
 import { getResultLayoutIndexForFileIndex, type ResultGridLayoutItem } from "./resultSectionLayout";
 import {
   captureResultGridScrollMemory,
@@ -33,6 +33,7 @@ export interface VirtualImageGridProps {
   initialScrollMemory: ResultGridScrollMemory;
   isSearching: boolean;
   aiSearchPhase: AiResultSectionPhase;
+  aiSearchProgress: AiResultSectionProgress;
   searchError: string;
   onSelectImage: (event: React.MouseEvent, item: ImageIndexItem) => void;
   onScrollMemoryChange: (memory: ResultGridScrollMemory) => void;
@@ -54,7 +55,7 @@ const EmptySearchResult = ({ message, onOpenSkim }: { message: string; onOpenSki
   </button>
 );
 
-export const VirtualImageGrid = ({ shellState, images, layoutItems, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim, onAiSearchSectionToggle }: VirtualImageGridProps) => {
+export const VirtualImageGrid = ({ shellState, images, layoutItems, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim, onAiSearchSectionToggle }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const restoreFrameRef = useRef<number | null>(null);
@@ -363,6 +364,7 @@ export const VirtualImageGrid = ({ shellState, images, layoutItems, selectedImag
               <ResultSectionCard
                 section={layoutItem.section}
                 aiPhase={layoutItem.section === "aiDeepMatch" ? aiSearchPhase : "idle"}
+                aiProgress={layoutItem.section === "aiDeepMatch" ? aiSearchProgress : undefined}
                 onAiToggle={layoutItem.section === "aiDeepMatch" ? onAiSearchSectionToggle : undefined}
               />
             </div>

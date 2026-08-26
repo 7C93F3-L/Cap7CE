@@ -102,9 +102,6 @@
 | `search.inputLabel`            | 搜索关键词                                          |                                        |     | 输入框 aria-label     |
 | `search.action`                | 搜索                                             |                                        |     | 旧搜索按钮 / aria-label |
 | `search.aiEnhance` | AI增强 |  | AI Enhance | 顶部 AI 深度匹配总开关 |
-| `search.aiEnhanceHint` | 开启 AI 增强搜索 |  | Enable AI-enhanced search | 顶部总开关关闭状态 title |
-| `search.aiEnhanceStopHint` | 关闭 AI 增强；结束当前匹配并保留结果 |  | Disable AI enhancement, stop the current match, and keep results | 顶部总开关开启状态 title |
-| `search.aiEnhanceProgress` | AI 增强：已处理 {processed}/{total} |  | AI enhancement: {processed}/{total} processed | 顶部标签运行进度 title |
 | `search.aiEnhanceCompleted` | AI 深度匹配完成 |  | AI deep matching completed | 搜索框临时反馈 |
 | `search.aiRecognitionDisabled` | AI 深度匹配已关闭，请先在设置中开启。 |  | AI deep matching is disabled. Enable it in Settings first. | 设置总许可关闭反馈 |
 | `search.aiStartFailed` / `search.aiFailed` | AI 深度匹配启动失败。/ AI 深度匹配失败。 |  | Failed to start AI deep matching. / AI deep matching failed. | Renderer 启动与主进程兜底反馈 |
@@ -153,8 +150,10 @@
 | `search.section.aiDeepMatch.completedDescription` | 深度匹配已完成 |  | Deep matching completed | 当前范围全部检查完成 |
 | `search.section.aiMatching.title` | AI 匹配中 |  | AI Matching | 当前范围持续匹配状态 |
 | `search.section.aiMatching.description` | 点击暂停本次深度匹配 |  | Click to pause this deep match | 运行中分类卡整卡操作说明 |
+| `search.section.aiMatching.progressDescription` | 已处理 {processed} / {total}，点击暂停 |  | Processed {processed}/{total} · Click to pause | 运行中分类卡进度与操作说明 |
 | `search.section.aiPaused.title` | AI 已暂停 |  | AI Paused | 用户主动暂停状态 |
 | `search.section.aiPaused.description` | 点击继续进行匹配 |  | Click to continue matching | 暂停状态分类卡整卡操作说明 |
+| `search.section.aiPaused.progressDescription` | 已处理 {processed} / {total}，点击继续 |  | Processed {processed}/{total} · Click to continue | 暂停状态分类卡进度与操作说明 |
 | `search.emptyResult`           | 没有匹配的真实图片                                      | 没有匹配的文件                                |     | 空结果                |
 | `search.emptyUnrecognized`     | 没有未识别图片                                        | 没有未识别文件                                |     | 空结果                |
 | `search.failed`                | 搜索失败。                                          |                                        |     | 搜索失败兜底             |
