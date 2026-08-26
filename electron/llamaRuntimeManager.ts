@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
 import { getGgufModelSettings, getSelectedGgufModelRuntime, type GgufModelSettingsStatus } from "./ggufModelStore";
+import { createLlamaRuntimeIdleController, type LlamaRuntimeStartSource } from "./llamaRuntimeIdleController";
 import { getLlamaRuntimeSettings } from "./llamaRuntimeStore";
 
 export type LlamaRuntimeProcessStatus = "stopped" | "starting" | "running" | "failed";
@@ -37,6 +38,7 @@ const startupTimeoutMs = 180_000;
 const healthPollIntervalMs = 250;
 const healthMonitorIntervalMs = 2_000;
 const maximumHealthFailures = 3;
+export const llamaRuntimeAiIdleTimeoutMs = 10 * 60_000;
 
 let managedProcess: ChildProcess | null = null;
 let startPromise: Promise<LlamaRuntimeProcessState> | null = null;
@@ -48,7 +50,22 @@ let consecutiveHealthFailures = 0;
 let logWriteQueue = Promise.resolve();
 let shutdownHandlerRegistered = false;
 let allowAppQuit = false;
+let pendingAiIdleStop: Promise<LlamaRuntimeProcessState> | null = null;
 const stateListeners = new Set<(state: LlamaRuntimeProcessState) => void>();
+
+const runtimeIdleController = createLlamaRuntimeIdleController({
+  idleTimeoutMs: llamaRuntimeAiIdleTimeoutMs,
+  onIdle: () => {
+    const pendingStop = stopLlamaRuntime("AI 搜索空闲 10 分钟");
+    pendingAiIdleStop = pendingStop;
+    void pendingStop.then(() => {
+      if (pendingAiIdleStop === pendingStop) pendingAiIdleStop = null;
+    }, () => {
+      if (pendingAiIdleStop === pendingStop) pendingAiIdleStop = null;
+    });
+    return pendingStop;
+  }
+});
 
 const getLogPath = () => path.join(app.getPath("userData"), "logs", "llama-runtime.log");
 const getBaseUrl = (port = currentPort) => port === null ? "" : `http://${runtimeHost}:${port}`;
@@ -265,6 +282,7 @@ const terminateManagedProcess = async (reason: string) => {
   const child = managedProcess;
   if (!child) {
     currentPort = null;
+    runtimeIdleController.markStopped();
     return;
   }
 
@@ -282,6 +300,7 @@ const terminateManagedProcess = async (reason: string) => {
     managedProcess = null;
   }
   currentPort = null;
+  runtimeIdleController.markStopped();
 };
 
 const failStartup = async (
@@ -460,6 +479,7 @@ const performStart = async (): Promise<LlamaRuntimeProcessState> => {
     }
     managedProcess = null;
     clearHealthMonitor();
+    runtimeIdleController.markStopped();
     void appendRuntimeLog(`进程退出：PID=${child.pid ?? "unknown"}，code=${code ?? "null"}，signal=${signal ?? "null"}`);
     if (!startupCompleted) {
       return;
@@ -602,7 +622,10 @@ export const getReadyLlamaRuntimeConnection = async (): Promise<LlamaRuntimeConn
   };
 };
 
-export const startLlamaRuntime = async () => {
+export const startLlamaRuntime = async (source: LlamaRuntimeStartSource = "manual") => {
+  runtimeIdleController.cancelIdleStop();
+  if (pendingAiIdleStop) await pendingAiIdleStop.catch(() => undefined);
+  runtimeIdleController.markStartRequested(source);
   if (currentState.status === "running" && managedProcess) {
     return snapshotState();
   }
@@ -614,6 +637,16 @@ export const startLlamaRuntime = async () => {
     startPromise = null;
   });
   return startPromise;
+};
+
+export const beginLlamaRuntimeAiUse = async () => {
+  runtimeIdleController.cancelIdleStop();
+  if (pendingAiIdleStop) await pendingAiIdleStop.catch(() => undefined);
+  runtimeIdleController.beginAiUse();
+};
+
+export const endLlamaRuntimeAiUse = () => {
+  runtimeIdleController.endAiUse();
 };
 
 export const stopLlamaRuntime = async (reason = "用户请求") => {

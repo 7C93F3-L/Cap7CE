@@ -120,7 +120,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `vectorDocumentRenderService.ts` | AI / EPS 兼容预览数据处理 |
 | `cdrRenderService.ts` | 现代 CDR 内置预览图读取 |
 | `llamaRuntimeStore.ts` | llama.cpp 版本发现与选择配置 |
-| `llamaRuntimeManager.ts` | llama-server 进程生命周期和健康检查 |
+| `llamaRuntimeManager.ts` / `llamaRuntimeIdleController.ts` | llama-server 进程生命周期、健康检查、手动 / AI 启动所有权与 AI 空闲回收策略 |
 | `ggufModelStore.ts` | GGUF 主模型与 mmproj 扫描、配对和选择 |
 | `llamaVisionRuntime.ts` | 按需 AI 能力共用的视觉运行时连接入口；复用已就绪服务，否则按现有配置启动并验证视觉模型 |
 | `aiSearchCandidateService.ts` / `aiSearchSingleImageModel.ts` / `aiSearchService.ts` | AI 增强搜索 Beta 的候选规划、1024 最低视觉 token、简短单图单条件评分、程序求交集、逐条件短路与用户暂停检查点；确定性条件先缩小范围，基础结果不等待 AI，未暂停的任务持续至完成 |
@@ -375,6 +375,7 @@ SQLite 在同一个数据库中保持相互分离的职责：`files` 保存全�
 模型系统包括：
 - llama.cpp 目录扫描。
 - `llama-server.exe` 选择、启动、停止和状态检查。
+- AI 搜索自动启动的 llama-server 在最后一个任务完成、暂停、取消或失败后保温 10 分钟；期间新任务取消回收并复用已加载模型，超时后停止进程以释放内存与显存。Settings 或快捷指令手动启动的服务不进入该空闲回收，由用户显式停止或随软件退出。
 - llama-server 启动前使用 Node `net.Server` 从 `127.0.0.1:18080` 开始顺序探测最多 100 个端口，自动跳过进程占用、Windows 排除端口和权限禁止端口。
 - 实际端口保存在 `llamaRuntimeManager` 当前运行时状态中；健康检查、模型请求和视觉识别统一读取该端口，不依赖固定 8080，也不提供用户端口配置。
 - GGUF 主模型与 mmproj 模型扫描、配对和选择。

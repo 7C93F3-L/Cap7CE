@@ -90,10 +90,14 @@ const testCascadeAndCache = async () => {
   const scoreCalls = [];
   const cacheWrites = [];
   const updates = [];
+  let runtimeBegins = 0;
+  let runtimeEnds = 0;
   let currentFileName = "";
   const service = new AiSearchService({
     listCandidates: async () => ({ candidates, visualTerms: ["女", "黑色上衣"] }),
     ensureRuntime: async () => ({ baseUrl: "http://test", modelName: "test" }),
+    beginRuntimeUse: () => { runtimeBegins += 1; },
+    endRuntimeUse: () => { runtimeEnds += 1; },
     getModelId: async () => "qwen3.5-0.8b-q8_0.gguf",
     prepareImage: async (filePath) => {
       currentFileName = filePath.split("\\").pop();
@@ -110,6 +114,7 @@ const testCascadeAndCache = async () => {
   assert.equal(scoreCalls.some((call) => call.includes("同时满足全部条件")), false);
   assert.deepEqual(updates.filter((update) => update.type === "batch").flatMap((update) => update.matches).map((item) => item.fileName), ["one.png", "four.png"]);
   assert.deepEqual(cacheWrites.map((entry) => [entry.imageId, entry.keywords]), [[1, ["女", "黑色上衣"]], [7, ["女", "黑色上衣"]]]);
+  assert.deepEqual([runtimeBegins, runtimeEnds], [1, 1]);
 };
 
 assert.match(
@@ -120,10 +125,14 @@ assert.match(
 
 const testUserPauseAtSafeCheckpoint = async () => {
   let scoreCall = 0;
+  let runtimeBegins = 0;
+  let runtimeEnds = 0;
   const updates = [];
   const service = new AiSearchService({
     listCandidates: async () => ({ candidates: [candidate(6, "six.png")], visualTerms: ["做饭"] }),
     ensureRuntime: async () => ({ baseUrl: "http://test", modelName: "test" }),
+    beginRuntimeUse: () => { runtimeBegins += 1; },
+    endRuntimeUse: () => { runtimeEnds += 1; },
     getModelId: async () => "model",
     prepareImage: async () => "data:image/jpeg;base64,AA==",
     scoreImage: async (_connection, _dataUrl, _term, signal) => {
@@ -142,12 +151,42 @@ const testUserPauseAtSafeCheckpoint = async () => {
   await waitForPhase(service, request, "completed", resumedUpdates);
   assert.equal(scoreCall, 2, "the interrupted candidate must restart from its safe checkpoint");
   assert.equal(resumedUpdates.some((update) => update.type === "batch"), true);
+  assert.deepEqual([runtimeBegins, runtimeEnds], [2, 2]);
+};
+
+const testPauseWhileWaitingForRuntimeOwnership = async () => {
+  let releaseRuntimeOwnership;
+  let ensureRuntimeCalls = 0;
+  let runtimeEnds = 0;
+  const updates = [];
+  const service = new AiSearchService({
+    listCandidates: async () => ({ candidates: [candidate(8, "eight.png")], visualTerms: ["跑步"] }),
+    beginRuntimeUse: () => new Promise((resolve) => { releaseRuntimeOwnership = resolve; }),
+    endRuntimeUse: () => { runtimeEnds += 1; },
+    ensureRuntime: async () => {
+      ensureRuntimeCalls += 1;
+      return { baseUrl: "http://test", modelName: "test" };
+    },
+    getModelId: async () => "model",
+    prepareImage: async () => "data:image/jpeg;base64,AA==",
+    scoreImage: async () => 2,
+    saveEvidence: async () => undefined
+  });
+  const request = { sessionId: "runtime-wait-session", search, excludeFilePaths: [] };
+  const paused = waitForPhase(service, request, "paused_user", updates);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(service.cancel(request.sessionId), true);
+  releaseRuntimeOwnership();
+  await paused;
+  assert.equal(ensureRuntimeCalls, 0, "a paused search must not restart llama-server after an idle stop finishes");
+  assert.equal(runtimeEnds, 1);
 };
 
 Promise.all([
   testSingleImageRequest(),
   testCascadeAndCache(),
-  testUserPauseAtSafeCheckpoint()
+  testUserPauseAtSafeCheckpoint(),
+  testPauseWhileWaitingForRuntimeOwnership()
 ]).then(() => {
   console.log("AI search single-image cascade, candidate planning and preserved-result tests passed.");
 }).catch((error) => {

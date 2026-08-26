@@ -49,6 +49,8 @@ export interface AiSearchServiceDependencies {
     excludedFilePaths: readonly string[]
   ) => Promise<AiSearchCandidateSet>;
   ensureRuntime: () => Promise<LlamaRuntimeConnection>;
+  beginRuntimeUse?: () => void | Promise<void>;
+  endRuntimeUse?: () => void;
   getModelId: () => Promise<string>;
   prepareImage: (filePath: string) => Promise<string>;
   scoreImage: (
@@ -183,9 +185,13 @@ export class AiSearchService {
         message
       });
     };
+    let runtimeUseStarted = false;
 
     try {
       emitStatus("starting");
+      await this.dependencies.beginRuntimeUse?.();
+      runtimeUseStarted = true;
+      if (signal.aborted) throw Object.assign(new Error("AI search paused."), { name: "AbortError" });
       const [connection, modelId] = await Promise.all([
         this.dependencies.ensureRuntime(),
         this.dependencies.getModelId()
@@ -256,6 +262,7 @@ export class AiSearchService {
       }
     } finally {
       if (isCurrent()) session.controller = null;
+      if (runtimeUseStarted) this.dependencies.endRuntimeUse?.();
     }
   }
 }

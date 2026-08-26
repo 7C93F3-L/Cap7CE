@@ -5,7 +5,7 @@ export const ensureLlamaVisionRuntimeConnection = async () => {
   const existingConnection = await getReadyLlamaRuntimeConnection();
   if (existingConnection) return existingConnection;
 
-  const state = await startLlamaRuntime();
+  const state = await startLlamaRuntime("ai");
   if (state.status !== "running" || state.modelStatus !== "loaded") {
     throw new Error(state.modelMessage || state.message || t("runtime.visionStartupFailed"));
   }
