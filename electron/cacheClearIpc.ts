@@ -12,6 +12,7 @@ export interface CacheClearIpcDependencies {
   authorizationLifetimeMs?: number;
   translateConfirmationRequired: () => string;
   clearFormalCache: () => Promise<unknown>;
+  clearThumbnailCache: () => Promise<unknown>;
   getSkimCacheStats: () => unknown;
   clearSkimCache: () => Promise<unknown>;
 }
@@ -23,6 +24,7 @@ export const registerCacheClearIpc = ({
   authorizationLifetimeMs = 30_000,
   translateConfirmationRequired,
   clearFormalCache,
+  clearThumbnailCache,
   getSkimCacheStats,
   clearSkimCache
 }: CacheClearIpcDependencies): void => {
@@ -58,6 +60,16 @@ export const registerCacheClearIpc = ({
           formalAuthorization = null;
           assertAuthorized(token, authorization);
           return clearFormalCache();
+        }
+      },
+      {
+        kind: "handle",
+        channel: "cache:clearThumbnails",
+        listener: async (_event, token?: string) => {
+          const authorization = formalAuthorization;
+          formalAuthorization = null;
+          assertAuthorized(token, authorization);
+          return clearThumbnailCache();
         }
       },
       {

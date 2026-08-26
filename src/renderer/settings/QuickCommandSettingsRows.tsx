@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { t } from "../../../electron/localization";
 
-const getQuickCommandGroups = (): Array<{
+export const getQuickCommandGroups = (): Array<{
   title: string;
   items: Array<{ command: string; description: string }>;
 }> => [
@@ -48,10 +48,16 @@ const getQuickCommandGroups = (): Array<{
       { command: "tag:sort", description: t("commands.tags.showSort") },
       { command: "tag:sort asc", description: t("commands.tags.sortAsc") },
       { command: "tag:sort desc", description: t("commands.tags.sortDesc") },
+      { command: "tag:sort name", description: t("commands.tags.sortName") },
+      { command: "tag:sort time", description: t("commands.tags.sortTime") },
       { command: "tag:show all", description: t("commands.tags.showAll") },
       { command: "tag:hide all", description: t("commands.tags.hideAll") },
       { command: "tag:hide dir", description: t("commands.tags.hideDirectory") },
-      { command: "tag:hide sort", description: t("commands.tags.hideSort") }
+      { command: "tag:hide sort", description: t("commands.tags.hideSort") },
+      { command: "tag:show skim", description: t("commands.tags.showSkim") },
+      { command: "tag:hide skim", description: t("commands.tags.hideSkim") },
+      { command: "tag:show ai", description: t("commands.tags.showAi") },
+      { command: "tag:hide ai", description: t("commands.tags.hideAi") }
     ]
   },
   {
@@ -79,7 +85,11 @@ const getQuickCommandGroups = (): Array<{
       { command: "app:startup on", description: t("commands.app.startupEnable") },
       { command: "app:startup off", description: t("commands.app.startupDisable") },
       { command: "app:hints on", description: t("commands.app.hintsEnable") },
-      { command: "app:hints off", description: t("commands.app.hintsDisable") }
+      { command: "app:hints off", description: t("commands.app.hintsDisable") },
+      { command: "app:notify on", description: t("commands.app.notificationsEnable") },
+      { command: "app:notify off", description: t("commands.app.notificationsDisable") },
+      { command: "edge:on", description: t("commands.edge.enable") },
+      { command: "edge:off", description: t("commands.edge.disable") }
     ]
   },
   {
@@ -130,20 +140,25 @@ const getQuickCommandGroups = (): Array<{
   {
     title: t("commands.group.cache"),
     items: [
-      { command: "cache:thumb", description: t("commands.cache.thumbnail") },
-      { command: "cache:preview", description: t("commands.cache.preview") },
-      { command: "cache:model", description: t("commands.cache.model") },
-      { command: "cache:skim", description: t("commands.cache.skim") }
+      { command: "cache:auto on", description: t("commands.cache.autoEnable") },
+      { command: "cache:auto off", description: t("commands.cache.autoDisable") }
+    ]
+  },
+  {
+    title: t("commands.group.ai"),
+    items: [
+      { command: "ai:deep on", description: t("commands.ai.deepEnable") },
+      { command: "ai:deep off", description: t("commands.ai.deepDisable") }
     ]
   }
 ];
 
-const getDangerousQuickCommandItems = () => [
+export const getDangerousQuickCommandItems = () => [
   { command: t("commands.example.deleteDirectory"), description: t("commands.confirm.deleteDirectory") },
-  { command: "idx:clear all", description: t("commands.confirm.clearIndex") },
   { command: "app:quit", description: t("commands.confirm.quit") },
   { command: "llama:stop", description: t("commands.confirm.stopRuntime") },
   { command: "cache:clear", description: t("commands.confirm.clearCache") },
+  { command: "cache:thumb", description: t("commands.confirm.clearThumbnailCache") },
   { command: "cache:skim", description: t("commands.confirm.clearSkimCache") }
 ];
 

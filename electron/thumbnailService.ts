@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
+  clearThumbnailVisualCaches,
   clearVisualCaches,
   deleteVisualCachesForDirectory,
   deleteVisualCachesForImages,
@@ -267,6 +268,17 @@ export const clearAllVisualCaches = async () => {
   await pauseSearchShellVisualCacheForClear();
   try {
     const stats = await clearVisualCaches();
+    invalidateThumbnailCacheFileInventory();
+    return stats;
+  } finally {
+    resumeSearchShellVisualCacheAfterClear();
+  }
+};
+
+export const clearThumbnailCaches = async () => {
+  await pauseSearchShellVisualCacheForClear();
+  try {
+    const stats = await clearThumbnailVisualCaches();
     invalidateThumbnailCacheFileInventory();
     return stats;
   } finally {

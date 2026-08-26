@@ -120,6 +120,9 @@ const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
 const formalVisualCacheTypes: readonly FormalVisualCacheType[] = [
   "search-thumbnail", "search-shell-thumbnail", "search-shell-preview", "model-input-image", "preview-image"
 ];
+const formalThumbnailCacheTypes: readonly FormalVisualCacheType[] = [
+  "search-thumbnail", "search-shell-thumbnail"
+];
 const skimVisualCacheTypes: readonly SkimVisualCacheType[] = [
   "skim-thumbnail", "skim-preview", "skim-shell-thumbnail", "skim-shell-preview"
 ];
@@ -235,6 +238,11 @@ const clearCacheTypes = async (types: readonly VisualCacheType[]) => {
 
 export const clearVisualCaches = async (): Promise<VisualCacheStats> => {
   await clearCacheTypes(formalVisualCacheTypes);
+  return getVisualCacheStats();
+};
+
+export const clearThumbnailVisualCaches = async (): Promise<VisualCacheStats> => {
+  await clearCacheTypes(formalThumbnailCacheTypes);
   return getVisualCacheStats();
 };
 

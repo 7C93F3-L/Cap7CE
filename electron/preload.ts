@@ -281,7 +281,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
       return () => ipcRenderer.removeListener("cache:optimizationStatusChanged", listener);
     },
     authorizeClear: () => ipcRenderer.invoke("cache:authorizeClear"),
-    clearAll: (token: string) => ipcRenderer.invoke("cache:clearAll", token)
+    clearAll: (token: string) => ipcRenderer.invoke("cache:clearAll", token),
+    clearThumbnails: (token: string) => ipcRenderer.invoke("cache:clearThumbnails", token)
   },
   skimCache: {
     stats: () => ipcRenderer.invoke("skimCache:stats"),

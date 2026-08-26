@@ -46,7 +46,7 @@ import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSe
 import { registerCacheActivityIpc } from "./cacheActivityIpc";
 import { registerCacheClearIpc } from "./cacheClearIpc";
 import { getShellMousePollDelay } from "./shellMousePollingPolicy";
-import { clearAllVisualCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
+import { clearAllVisualCaches, clearThumbnailCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNameService";
@@ -3769,22 +3769,25 @@ registerCacheActivityIpc({
   }
 });
 
+const clearFormalVisualCacheSafely = async (clear: typeof clearAllVisualCaches) => {
+  const renderingPauseReason = "cache-clear";
+  await pauseThumbnailRendering(renderingPauseReason);
+  try {
+    discardAllQueuedThumbnailRenders();
+    await setThumbnailOptimizationEnabled(false);
+    await updateAutoCacheOptimizationPreference(false);
+    return await clear();
+  } finally {
+    resumeThumbnailRendering(renderingPauseReason);
+  }
+};
+
 registerCacheClearIpc({
   registrar: ipcMain,
   createToken: randomUUID,
   translateConfirmationRequired: () => t("error.cacheConfirmationRequired"),
-  clearFormalCache: async () => {
-    const renderingPauseReason = "cache-clear";
-    await pauseThumbnailRendering(renderingPauseReason);
-    try {
-      discardAllQueuedThumbnailRenders();
-      await setThumbnailOptimizationEnabled(false);
-      await updateAutoCacheOptimizationPreference(false);
-      return await clearAllVisualCaches();
-    } finally {
-      resumeThumbnailRendering(renderingPauseReason);
-    }
-  },
+  clearFormalCache: () => clearFormalVisualCacheSafely(clearAllVisualCaches),
+  clearThumbnailCache: () => clearFormalVisualCacheSafely(clearThumbnailCaches),
   getSkimCacheStats,
   clearSkimCache: clearSkimCacheSafely
 });

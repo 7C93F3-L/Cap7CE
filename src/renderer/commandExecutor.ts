@@ -4,7 +4,9 @@ import { t } from "../../electron/localization";
 
 type CommandShellMode = "line" | "cap" | "micro" | "mini" | "normal";
 type CommandSortDirection = "asc" | "desc";
-type CommandOperationResult = { ok: true } | { ok: false; message: string };
+type CommandSortField = "file_name" | "modified_at";
+type CommandLabel = "directory" | "sort" | "skimDisplay" | "ai";
+type CommandOperationResult = { ok: true; message?: string } | { ok: false; message: string };
 
 export interface QuickCommandConfirmationRequest {
   raw: string;
@@ -31,8 +33,12 @@ export interface QuickCommandExecutorContext {
   updateLanguage: (language: LanguagePreference) => Promise<void>;
   updateAppearanceColors: (appearanceColors: AppearanceColors) => void;
   updateStandbyLineVisible: (visible: boolean) => void;
+  updateEdgeCollapse: (enabled: boolean) => Promise<void>;
   updateLaunchAtLogin: (enabled: boolean) => Promise<void>;
+  updateSystemNotifications: (enabled: boolean) => Promise<void>;
   updateOperationHints: (enabled: boolean) => Promise<void>;
+  updateAutoCacheOptimization: (enabled: boolean) => Promise<void>;
+  updateAiRecognitionEnabled: (enabled: boolean) => Promise<void>;
   updateQuickActionGlobalEnabled: (enabled: boolean) => Promise<boolean>;
   updateShortcutActions: (shortcutActions: ShortcutActionPreferences) => Promise<boolean>;
   updateCommandEnabled: (enabled: boolean) => Promise<void>;
@@ -45,9 +51,10 @@ export interface QuickCommandExecutorContext {
   selectDirectoryLabel: (directoryName: string) => boolean;
   showSortLabel: () => void;
   setSortDirection: (direction: CommandSortDirection) => void;
+  setSortField: (field: CommandSortField) => void;
   setAllLabelsVisible: (visible: boolean) => void;
-  setDirectoryLabelVisible: (visible: boolean) => void;
-  setSortLabelVisible: (visible: boolean) => void;
+  setLabelVisible: (label: CommandLabel, visible: boolean) => void;
+  addDirectory: (directoryPath: string) => Promise<CommandOperationResult>;
   refreshDirectoryStatus: () => Promise<CommandOperationResult>;
   refreshLlamaRuntimes: () => Promise<CommandOperationResult>;
   startLlamaRuntime: () => Promise<CommandOperationResult>;
@@ -60,6 +67,7 @@ export interface QuickCommandExecutorContext {
   getLlamaStopBlocker: () => string | null;
   stopLlamaRuntime: () => Promise<CommandOperationResult>;
   clearCache: () => Promise<CommandOperationResult>;
+  clearThumbnailCache: () => Promise<CommandOperationResult>;
   clearSkimCache: () => Promise<CommandOperationResult>;
   quitApp: () => Promise<CommandOperationResult>;
 }
@@ -133,6 +141,11 @@ export const executeQuickCommand = async (
         context.setSortDirection(command.args[0]);
         return { status: "handled", message: command.args[0] === "asc" ? t("command.sortAsc") : t("command.sortDesc"), clearInput: true };
       }
+      if (command.args[0] === "name" || command.args[0] === "time") {
+        context.showSortLabel();
+        context.setSortField(command.args[0] === "name" ? "file_name" : "modified_at");
+        return { status: "handled", message: command.args[0] === "name" ? t("command.sortByName") : t("command.sortByTime"), clearInput: true };
+      }
     }
     if (command.action === "show" && command.args[0] === "all") {
       context.setAllLabelsVisible(true);
@@ -144,14 +157,29 @@ export const executeQuickCommand = async (
         return { status: "handled", message: t("command.allLabelsHidden"), clearInput: true };
       }
       if (command.args[0] === "dir") {
-        context.setDirectoryLabelVisible(false);
+        context.setLabelVisible("directory", false);
         return { status: "handled", message: t("command.directoryLabelHidden"), clearInput: true };
       }
       if (command.args[0] === "sort") {
-        context.setSortLabelVisible(false);
+        context.setLabelVisible("sort", false);
         return { status: "handled", message: t("command.sortLabelHidden"), clearInput: true };
       }
+      if (command.args[0] === "skim" || command.args[0] === "ai") {
+        context.setLabelVisible(command.args[0] === "skim" ? "skimDisplay" : "ai", false);
+        return { status: "handled", message: command.args[0] === "skim" ? t("command.skimLabelHidden") : t("command.aiLabelHidden"), clearInput: true };
+      }
     }
+    if (command.action === "show" && (command.args[0] === "skim" || command.args[0] === "ai")) {
+      context.setLabelVisible(command.args[0] === "skim" ? "skimDisplay" : "ai", true);
+      return { status: "handled", message: command.args[0] === "skim" ? t("command.skimLabelShown") : t("command.aiLabelShown"), clearInput: true };
+    }
+  }
+
+  if (command.domain === "dir" && command.action === "add") {
+    const result = await context.addDirectory(command.args[0] ?? "");
+    return result.ok
+      ? { status: "handled", message: result.message ?? t("command.directoryAdded"), clearInput: true }
+      : { status: "failed", message: result.message, clearInput: false };
   }
 
   if (command.domain === "dir" && command.action === "delete") {
@@ -245,6 +273,12 @@ export const executeQuickCommand = async (
       context.updateStandbyLineVisible(command.action === "on");
       return { status: "handled", message: command.action === "on" ? t("command.lineShown") : t("command.lineHidden"), clearInput: true };
     }
+  }
+
+  if (command.domain === "edge" && (command.action === "on" || command.action === "off")) {
+    const enabled = command.action === "on";
+    await context.updateEdgeCollapse(enabled);
+    return { status: "handled", message: enabled ? t("command.edgeCollapseEnabled") : t("command.edgeCollapseDisabled"), clearInput: true };
   }
 
   if (command.domain === "key") {
@@ -364,6 +398,34 @@ export const executeQuickCommand = async (
     };
   }
 
+  if (command.domain === "cache" && command.action === "thumb") {
+    const message = t("command.confirmClearThumbnailCache");
+    return {
+      status: "confirmation",
+      message,
+      clearInput: true,
+      confirmation: {
+        raw: command.raw,
+        message,
+        successMessage: t("command.thumbnailCacheCleared"),
+        failureMessage: t("command.cacheClearFailed"),
+        execute: context.clearThumbnailCache
+      }
+    };
+  }
+
+  if (command.domain === "cache" && command.action === "auto" && (command.args[0] === "on" || command.args[0] === "off")) {
+    const enabled = command.args[0] === "on";
+    await context.updateAutoCacheOptimization(enabled);
+    return { status: "handled", message: enabled ? t("command.autoCacheEnabled") : t("command.autoCacheDisabled"), clearInput: true };
+  }
+
+  if (command.domain === "ai" && command.action === "deep" && (command.args[0] === "on" || command.args[0] === "off")) {
+    const enabled = command.args[0] === "on";
+    await context.updateAiRecognitionEnabled(enabled);
+    return { status: "handled", message: enabled ? t("command.aiDeepEnabled") : t("command.aiDeepDisabled"), clearInput: true };
+  }
+
   if (command.domain === "cache" && command.action === "skim") {
     const message = t("command.confirmClearSkimCache");
     return {
@@ -398,6 +460,11 @@ export const executeQuickCommand = async (
         message: enabled ? t("command.operationHintsEnabled") : t("command.operationHintsDisabled"),
         clearInput: true
       };
+    }
+    if (command.action === "notify" && (command.args[0] === "on" || command.args[0] === "off")) {
+      const enabled = command.args[0] === "on";
+      await context.updateSystemNotifications(enabled);
+      return { status: "handled", message: enabled ? t("command.notificationsEnabled") : t("command.notificationsDisabled"), clearInput: true };
     }
     if (command.action === "quit") {
       const message = t("command.confirmQuit");

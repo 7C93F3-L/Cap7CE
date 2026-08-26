@@ -178,6 +178,7 @@ declare global {
         onOptimizationStatusChanged: (callback: (status: ThumbnailOptimizationStatus) => void) => () => void;
         authorizeClear: () => Promise<string>;
         clearAll: (token: string) => Promise<VisualCacheStats>;
+        clearThumbnails: (token: string) => Promise<VisualCacheStats>;
       };
       skimCache: {
         stats: () => Promise<VisualCacheStats>;

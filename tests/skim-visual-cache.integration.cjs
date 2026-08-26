@@ -14,6 +14,7 @@ app.setPath("userData", userDataPath);
 app.whenReady().then(async () => {
   const {
     createVisualCacheEntry,
+    clearThumbnailVisualCaches,
     clearVisualCaches,
     getVisualCacheDirectory,
     getVisualCacheMetadataDirectory,
@@ -220,6 +221,12 @@ app.whenReady().then(async () => {
     assert.ok(initialStats.totalBytes > 0);
     assert.ok(initialStats.cachePaths.every((cachePath) => cachePath.includes("skim-cache")));
 
+    await clearThumbnailVisualCaches();
+    await assert.rejects(() => fs.access(formalEntry.imagePath));
+    await assert.rejects(() => fs.access(searchShellThumbnailPath));
+    await fs.access(searchShellPreviewPath);
+    assert.equal((await getVisualCacheStats()).cacheCount, 1);
+
     await clearVisualCaches();
     await assert.rejects(() => fs.access(formalEntry.imagePath));
     await assert.rejects(() => fs.access(searchShellThumbnailPath));
@@ -270,7 +277,8 @@ app.whenReady().then(async () => {
       sourceChangeInvalidatedKey: true,
       cancelledSessionRejectedLateWork: true,
       skimClearPreservedFormalCache: true,
-      formalClearPreservedSkimCache: true
+      formalClearPreservedSkimCache: true,
+      thumbnailClearPreservedPreviewCache: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

@@ -19,6 +19,10 @@ const createHarness = () => {
       calls.push(["formal"]);
       return { count: 0 };
     },
+    clearThumbnailCache: async () => {
+      calls.push(["thumbnails"]);
+      return { count: 1 };
+    },
     getSkimCacheStats: () => ({ count: 3 }),
     clearSkimCache: async () => {
       calls.push(["skim"]);
@@ -39,11 +43,20 @@ const run = async () => {
     assert.deepEqual([...handles.keys()], [
       "cache:authorizeClear",
       "cache:clearAll",
+      "cache:clearThumbnails",
       "skimCache:stats",
       "skimCache:authorizeClear",
       "skimCache:clear"
     ]);
     assert.deepEqual(await handles.get("skimCache:stats")(event), { count: 3 });
+  }
+
+  {
+    const { handles, calls } = createHarness();
+    const token = await handles.get("cache:authorizeClear")(event);
+    assert.deepEqual(await handles.get("cache:clearThumbnails")(event, token), { count: 1 });
+    assert.deepEqual(calls, [["thumbnails"]]);
+    await assert.rejects(handles.get("cache:clearAll")(event, token), /confirmation required/);
   }
 
   {

@@ -470,9 +470,9 @@ Settings 当前覆盖：
 - 执行器负责将命令分流到现有 UI / 设置 / 文件能力。
 - 危险命令进入输入框内 `y / n` 确认态。
 
-白名单领域包括 `see:`、`win:`、`tag:`、`idx:`、`dir:`、`cache:`、`skim:`、`set:`、`ui:`、`line:`、`edge:`、`key:`、`cmd:`、`lang:`、`llama:`、`model:`、`app:`。`skim:` 用于确定性进入 skim，`skim:root` 返回其根目录；独立 skim 缓存归入缓存领域，通过 `cache:skim` 确认后清理。
+白名单领域包括 `see:`、`win:`、`tag:`、`dir:`、`cache:`、`ai:`、`skim:`、`set:`、`ui:`、`line:`、`edge:`、`key:`、`cmd:`、`lang:`、`llama:`、`model:`、`app:`。`skim:` 用于确定性进入 skim，`skim:root` 返回其根目录；独立 skim 缓存归入缓存领域，通过 `cache:skim` 确认后清理。
 
-已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 标签类、索引 / 目录状态 / 运行时 / 模型类，以及二次确认类命令。`app:startup on / off` 与 `app:hints on / off` 复用 Settings 现有偏好更新入口，分别控制开机运行和搜索框操作提示；`app:quit` 仍保持独立的危险操作确认。仍需谨慎补齐未实现命令，尤其不要让危险命令绕过确认态。
+已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 标签类、目录 / 运行时 / 模型类，以及二次确认类命令。目录路径添加复用 `directories:addCandidates`，名称 / 修改时间排序与方向排序复用正式搜索偏好入口；贴边收起、系统通知、自动缓存优化和 AI 深度匹配复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
 
 ## 14. 风险和开发约束
 

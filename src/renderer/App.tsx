@@ -149,9 +149,6 @@ const sortSkimBrowseEntries = (entries: SkimBrowseEntry[], options: SkimBrowseOp
 };
 const shellTransitionDurationMs = 560;
 const DEBUG_WINDOW_BOUNDS = false;
-
-
-
 const emptyVisualCacheStats: VisualCacheStats = {
   cacheCount: 0,
   totalBytes: 0,
@@ -1357,13 +1354,13 @@ const App = () => {
     }
   };
 
-  const clearCommandCache = async () => {
+  const clearCommandCache = async (scope: "all" | "thumbnails" = "all") => {
     try {
       const token = await window.cap7ce?.cache.authorizeClear();
       if (!token) {
         return commandOperationFailed(t("error.cacheFailed"));
       }
-      const stats = await window.cap7ce?.cache.clearAll(token);
+      const stats = await (scope === "thumbnails" ? window.cap7ce?.cache.clearThumbnails(token) : window.cap7ce?.cache.clearAll(token));
       if (stats) {
         setVisualCacheStats(stats);
       } else {
@@ -1402,6 +1399,27 @@ const App = () => {
     }
     aiSearchBeta.activate();
     void aiSearchBeta.start(lastResultSearchRef.current, searchResults);
+  };
+
+  const addCommandDirectory = async (directoryPath: string) => {
+    if (isAddingDirectory) return commandOperationFailed(t("command.taskRunning"));
+    setIsAddingDirectory(true);
+    try {
+      const result = await window.cap7ce?.directories.addCandidates({ candidates: [directoryPath] });
+      if (!result) return commandOperationFailed(t("directoryAdd.noChanges"));
+      await applyDirectoryAddResult(result, false);
+      if (result.conflicts.length > 0) {
+        setPendingDirectoryAddResult(result);
+        setDialog("replaceDirectories");
+        return { ok: true as const, message: t("command.directoryAddNeedsConfirmation") };
+      }
+      const message = formatDirectoryAddFeedback(result);
+      return result.failures.length > 0 ? commandOperationFailed(message) : { ok: true as const, message };
+    } catch (error) {
+      return commandOperationFailed(formatDisplayMessage(error instanceof Error ? error.message : t("directoryAdd.noChanges")));
+    } finally {
+      setIsAddingDirectory(false);
+    }
   };
   const cycleSearchDirectory = () => {
     if (directoryOptions.length <= 1) return;
@@ -1546,8 +1564,12 @@ const App = () => {
       updateLanguage,
       updateAppearanceColors,
       updateStandbyLineVisible,
+      updateEdgeCollapse: async (enabled) => { await window.cap7ce?.preferences.updateEdgeCollapse(enabled); },
       updateLaunchAtLogin,
+      updateSystemNotifications,
       updateOperationHints,
+      updateAutoCacheOptimization,
+      updateAiRecognitionEnabled,
       updateQuickActionGlobalEnabled,
       updateShortcutActions: async (nextShortcutActions) => (
         (await updateShortcutActions(nextShortcutActions))?.applied ?? false
@@ -1575,27 +1597,17 @@ const App = () => {
           return nextVisibility;
         });
       },
-      setSortDirection: (sortDirection) => {
-        const nextSearch = { ...getCommandBaseSearch(), sortDirection };
-        updateResultsSearch(nextSearch, true);
-      },
-      setAllLabelsVisible: (visible) => {
-        updateSearchCapsuleLabelVisibility({ directory: visible, sort: visible, format: visible, skimDisplay: visible, ai: visible });
-      },
-      setDirectoryLabelVisible: (visible) => {
+      setSortDirection: (sortDirection) => updateResultsSearch({ ...getCommandBaseSearch(), sortDirection }, true),
+      setSortField: (sortField) => updateResultsSearch({ ...getCommandBaseSearch(), sortField }, true),
+      setAllLabelsVisible: (visible) => updateSearchCapsuleLabelVisibility({ directory: visible, sort: visible, format: visible, skimDisplay: visible, ai: visible }),
+      setLabelVisible: (label, visible) => {
         setSearchCapsuleLabelVisibility((currentVisibility) => {
-          const nextVisibility = { ...currentVisibility, directory: visible };
+          const nextVisibility = { ...currentVisibility, [label]: visible };
           void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
           return nextVisibility;
         });
       },
-      setSortLabelVisible: (visible) => {
-        setSearchCapsuleLabelVisibility((currentVisibility) => {
-          const nextVisibility = { ...currentVisibility, sort: visible };
-          void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
-          return nextVisibility;
-        });
-      },
+      addDirectory: addCommandDirectory,
       refreshDirectoryStatus: refreshCommandDirectoryStatus,
       refreshLlamaRuntimes: refreshCommandLlamaRuntimes,
       startLlamaRuntime: startCommandLlamaRuntime,
@@ -1608,6 +1620,7 @@ const App = () => {
       getLlamaStopBlocker: getCommandLlamaStopBlocker,
       stopLlamaRuntime: stopCommandLlamaRuntime,
       clearCache: clearCommandCache,
+      clearThumbnailCache: () => clearCommandCache("thumbnails"),
       clearSkimCache: clearCommandSkimCache,
       quitApp: quitCommandApp
     }).then((result) => {

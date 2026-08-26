@@ -401,7 +401,6 @@
 | `commands.group.view`              | 查看类                               | 查看                               |      | 分类标题             |
 | `commands.group.window`            | 窗口模式类                             | 窗口模式                             |      | 分类标题             |
 | `commands.group.tags`              | 标签类                               | 标签                               |      | 分类标题             |
-| `commands.group.index`             | 索引类                               | 索引                               |      | 分类标题             |
 | `commands.group.directory`         | 目录类                               | 目录                               |      | 分类标题             |
 | `commands.group.appearance`        | 外观类                               | 外观                               |      | 分类标题             |
 | `commands.group.appBehavior`       | 软件行为                              |                                  |      | 分类标题             |
@@ -413,6 +412,7 @@
 | `commands.group.model`             | 视觉模型类                             | 视觉模型                             |      | 分类标题             |
 | `commands.group.app`               | 软件操作类                             | 软件操作                             |      | 分类标题             |
 | `commands.group.cache`             | 缓存类                               | 缓存                               |      | 分类标题             |
+| `commands.group.ai`                | AI                                |                                  |      | 分类标题             |
 | `commands.set.open`                | 打开设置页                             | 打开设置                             |      | `set:`           |
 | `commands.set.quick`               | 快捷动作配置                            |                                  |      | `set:quick`      |
 | `commands.set.commands`            | 查看快捷指令                            |                                  |      | `set:cmd`        |
@@ -431,14 +431,16 @@
 | `commands.tags.showSort`           | 显示排序标签                            |                                  |      | `tag:sort`       |
 | `commands.tags.sortAsc`            | 切换为递增排序                           | 切换为升序排序                           |      | `tag:sort asc`   |
 | `commands.tags.sortDesc`           | 切换为递减排序                           | 切换为降序排序                           |      | `tag:sort desc`  |
+| `commands.tags.sortName`           | 按名称排序                             |                                  |      | `tag:sort name`  |
+| `commands.tags.sortTime`           | 按修改时间排序                           |                                  |      | `tag:sort time`  |
 | `commands.tags.showAll`            | 显示所有标签                            |                                  |      | `tag:show all`   |
 | `commands.tags.hideAll`            | 隐藏所有标签                            |                                  |      | `tag:hide all`   |
 | `commands.tags.hideDirectory`      | 隐藏目录标签                            |                                  |      | `tag:hide dir`   |
 | `commands.tags.hideSort`           | 隐藏排序标签                            |                                  |      | `tag:hide sort`  |
-| `commands.index.all`               | 更新全部索引                            |                                  |      | `idx:all`        |
-| `commands.index.directory`         | 识别指定目录                            |                                  |      | `idx:dir`        |
-| `commands.index.continue`          | 继续识别未完成文件                         |                                  |      | `idx:continue`   |
-| `commands.index.stop`              | 停止当前识别任务                          |                                  |      | `idx:stop`       |
+| `commands.tags.showSkim`           | 显示查看范围标签                          |                                  |      | `tag:show skim`  |
+| `commands.tags.hideSkim`           | 隐藏查看范围标签                          |                                  |      | `tag:hide skim`  |
+| `commands.tags.showAi`             | 显示 AI 增强标签                         |                                  |      | `tag:show ai`    |
+| `commands.tags.hideAi`             | 隐藏 AI 增强标签                         |                                  |      | `tag:hide ai`    |
 | `commands.directory.add`           | 添加目录                              |                                  |      | `dir:add`        |
 | `commands.directory.rename`        | 重命名目录显示名                          |                                  |      | `dir:rename`     |
 | `commands.directory.refresh`       | 刷新目录统计 / 状态                       |                                  |      | `dir:refresh`    |
@@ -452,6 +454,10 @@
 | `commands.app.startupDisable`      | 关闭开机运行                            |                                  |      | `app:startup off` |
 | `commands.app.hintsEnable`         | 显示操作提示                            |                                  |      | `app:hints on`   |
 | `commands.app.hintsDisable`        | 关闭操作提示                            |                                  |      | `app:hints off`  |
+| `commands.app.notificationsEnable` | 开启系统通知                            |                                  |      | `app:notify on`  |
+| `commands.app.notificationsDisable`| 关闭系统通知                            |                                  |      | `app:notify off` |
+| `commands.edge.enable`             | 开启窗口贴边自动收起                        |                                  |      | `edge:on`        |
+| `commands.edge.disable`            | 关闭窗口贴边自动收起                        |                                  |      | `edge:off`       |
 | `commands.standby.show`            | 显示待机线                             | 显示 line                          |      | `line:on`        |
 | `commands.standby.hide`            | 隐藏待机线                             | 隐藏 line                          |      | `line:off`       |
 | `commands.shortcuts.enable`        | 启用全局快捷键                           |                                  |      | `key:global on`  |
@@ -467,14 +473,16 @@
 | `commands.runtime.refresh`         | 刷新 llama.cpp 版本列表                 |                                  |      | `llama:refresh`  |
 | `commands.model.refresh`           | 刷新视觉模型列表                          |                                  |      | `model:refresh`  |
 | `commands.model.select`            | 切换视觉模型                            |                                  |      | `model:use`      |
-| `commands.cache.thumbnail`         | 仅清理缩略图缓存                          |                                  |      | `cache:thumb`    |
-| `commands.cache.preview`           | 仅清理预览缓存                           |                                  |      | `cache:preview`  |
-| `commands.cache.model`             | 仅清理模型输入图缓存                        |                                  |      | `cache:model`    |
+| `commands.cache.autoEnable`        | 开启自动缓存优化                          |                                  |      | `cache:auto on`  |
+| `commands.cache.autoDisable`       | 关闭自动缓存优化                          |                                  |      | `cache:auto off` |
+| `commands.ai.deepEnable`           | 开启 AI 深度匹配                         |                                  |      | `ai:deep on`     |
+| `commands.ai.deepDisable`          | 关闭 AI 深度匹配                         |                                  |      | `ai:deep off`    |
 | `commands.confirm.deleteDirectory` | 删除目录、索引和相关缓存，需二次确认                | 删除目录、索引和相关缓存                     |      | `dir:delete`     |
-| `commands.confirm.clearIndex`      | 清除全部索引，需二次确认                      | 清除全部索引                           |      | `idx:clear all`  |
 | `commands.confirm.quit`            | 真正退出 Cap7CE，需二次确认                 | 关闭 Cap7CE 运行进程                   |      | `app:quit`       |
 | `commands.confirm.stopRuntime`     | 停止 llama.cpp / llama-server，需二次确认 | 停止 llama.cpp / llama-server      |      | `llama:stop`     |
 | `commands.confirm.clearCache`      | 清理缩略图 / 预览 / 模型输入缓存，需二次确认         | 清理缩略图 / 预览 / 模型输入缓存              |      | `cache:clear`    |
+| `commands.confirm.clearThumbnailCache` | 清理普通搜索与 Shell 缩略图缓存，需二次确认      |                                  |      | `cache:thumb`    |
+| `commands.confirm.clearSkimCache`  | 清理 skim 缩略图 / 预览 / 元数据缓存，需二次确认   |                                  |      | `cache:skim`     |
 
 ## 10. 快捷指令执行反馈
 
@@ -491,7 +499,6 @@
 | `command.enterYesOrNo`                | 请输入 y 或 n               |      |      | 二次确认输入          |
 | `command.cancelled`                   | 已取消操作                   |      |      | 二次确认取消          |
 | `command.taskRunning`                 | 已有任务正在运行                |      |      | 任务冲突            |
-| `command.taskNotRunning`              | 当前没有正在运行的任务             |      |      | 停止识别            |
 | `command.directoryNotFound`           | 未找到目录                   |      |      | 目录操作            |
 | `command.directoryNameEmpty`          | 目录名称不能为空                |      |      | 重命名             |
 | `command.viewedAll`                   | 已查看全部文件                 |      |      | `see:all`       |
@@ -505,15 +512,23 @@
 | `command.sortLabelShown`              | 已显示排序标签                 |      |      | 标签操作            |
 | `command.sortAsc`                     | 已切换递增排序                 | 已切换升序排序 |      | 排序              |
 | `command.sortDesc`                    | 已切换递减排序                 | 已切换降序排序 |      | 排序              |
+| `command.sortByName`                  | 已切换为按名称排序               |      |      | 排序              |
+| `command.sortByTime`                  | 已切换为按修改时间排序             |      |      | 排序              |
 | `command.allLabelsShown`              | 已显示所有标签                 |      |      | 标签操作            |
 | `command.allLabelsHidden`             | 已隐藏所有标签                 |      |      | 标签操作            |
 | `command.directoryLabelHidden`        | 已隐藏目录标签                 |      |      | 标签操作            |
 | `command.sortLabelHidden`             | 已隐藏排序标签                 |      |      | 标签操作            |
+| `command.skimLabelShown`              | 已显示查看范围标签               |      |      | 标签操作            |
+| `command.skimLabelHidden`             | 已隐藏查看范围标签               |      |      | 标签操作            |
+| `command.aiLabelShown`                | 已显示 AI 增强标签              |      |      | 标签操作            |
+| `command.aiLabelHidden`               | 已隐藏 AI 增强标签              |      |      | 标签操作            |
 | `command.confirmDeleteDirectory`      | 确认删除目录“{name}”？输入 y / n |      |      | 二次确认            |
 | `command.directoryDeleted`            | 已删除目录：{name}            |      |      | 目录              |
 | `command.directoryDeleteFailed`       | 删除目录失败                  |      |      | 目录              |
 | `command.directoryRenamed`            | 已重命名目录：{name}           |      |      | 目录              |
 | `command.directoryStatusRefreshed`    | 已刷新目录状态                 |      |      | 目录              |
+| `command.directoryAdded`              | 已添加目录                   |      |      | 目录              |
+| `command.directoryAddNeedsConfirmation` | 请确认是否替换已添加的子目录       |      |      | 目录冲突确认          |
 | `command.settingsOpened`              | 已打开设置页                  | 已打开设置 |      | Settings        |
 | `command.quickActionsOpened`          | 已打开快捷动作配置               |      |      | Settings        |
 | `command.quickCommandsOpened`         | 已打开快捷指令                 |      |      | Settings        |
@@ -535,6 +550,14 @@
 | `command.launchAtLoginDisabled`        | 已关闭开机运行                  |      |      | 软件行为            |
 | `command.operationHintsEnabled`        | 已显示操作提示                  |      |      | 软件行为            |
 | `command.operationHintsDisabled`       | 已关闭操作提示                  |      |      | 软件行为            |
+| `command.notificationsEnabled`         | 已开启系统通知                  |      |      | 软件行为            |
+| `command.notificationsDisabled`        | 已关闭系统通知                  |      |      | 软件行为            |
+| `command.edgeCollapseEnabled`          | 已开启窗口贴边自动收起              |      |      | 窗口行为            |
+| `command.edgeCollapseDisabled`         | 已关闭窗口贴边自动收起              |      |      | 窗口行为            |
+| `command.autoCacheEnabled`             | 已开启自动缓存优化                |      |      | 缓存              |
+| `command.autoCacheDisabled`            | 已关闭自动缓存优化                |      |      | 缓存              |
+| `command.aiDeepEnabled`                | 已开启 AI 深度匹配               |      |      | AI               |
+| `command.aiDeepDisabled`               | 已关闭 AI 深度匹配               |      |      | AI               |
 | `command.runtimeListRefreshed`        | 已刷新 llama.cpp 版本列表      |      |      | llama.cpp       |
 | `command.runtimeStarted`              | 已启动 llama.cpp           |      |      | llama.cpp       |
 | `command.runtimeSelected`             | 已切换 llama.cpp 版本：{name} |      |      | llama.cpp       |
@@ -544,7 +567,9 @@
 | `command.modelListRefreshed`          | 已刷新视觉模型列表               |      |      | 视觉模型            |
 | `command.modelSelected`               | 已切换视觉模型：{name}          |      |      | 视觉模型            |
 | `command.confirmClearCache`           | 确认清理缓存？输入 y / n         |      |      | 二次确认            |
+| `command.confirmClearThumbnailCache`  | 确认清理缩略图缓存？输入 y / n     |      |      | 二次确认            |
 | `command.cacheCleared`                | 已清理缓存                   |      |      | 缓存              |
+| `command.thumbnailCacheCleared`       | 已清理缩略图缓存                |      |      | 缓存              |
 | `command.cacheClearFailed`            | 清理缓存失败                  |      |      | 缓存              |
 | `command.confirmQuit`                 | 确认退出 Cap7CE？输入 y / n    |      |      | 二次确认            |
 | `command.quitting`                    | 正在退出 Cap7CE             |      |      | 软件操作            |
