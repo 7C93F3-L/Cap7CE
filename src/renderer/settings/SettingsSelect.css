@@ -12,6 +12,10 @@
   text-align: left;
 }
 
+.app .cap-settings-select {
+  height: 20px;
+}
+
 .cap-settings-select:focus,
 .cap-settings-select:focus-visible,
 .cap-settings-select.is-open {
@@ -31,12 +35,7 @@
   white-space: nowrap;
 }
 
-.cap-settings-select-runtime {
-  flex-basis: 172px;
-  width: 172px;
-  max-width: 172px;
-}
-
+.cap-settings-select-runtime,
 .cap-settings-select-model {
   flex-basis: 230px;
   width: 230px;
@@ -64,4 +63,3 @@
   background: var(--theme-color);
   color: var(--theme-on-color);
 }
-

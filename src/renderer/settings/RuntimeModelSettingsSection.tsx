@@ -151,6 +151,9 @@ export const RuntimeModelSettingsSection = ({
       <div className="cap-settings-row cap-settings-wide">
         <span className="cap-settings-label">llama.cpp</span>
         <span className="cap-settings-value">{runtimeStatusLabel}</span>
+        <button className="cap-settings-pill" type="button" onClick={isLlamaRuntimeRunning ? onStopLlamaRuntime : onStartLlamaRuntime} title={isLlamaRuntimeRunning ? t("settings.stopServerActionHint") : t("settings.startServerActionHint")} disabled={llamaRuntimeActionDisabled}>
+          {isLlamaRuntimeStarting ? t("common.starting") : isLlamaRuntimeRunning ? t("common.stop") : t("common.start")}
+        </button>
         <SettingsSelect
           className="cap-settings-select-runtime"
           value={llamaRuntimeSettings.selectedVersion}
@@ -169,9 +172,6 @@ export const RuntimeModelSettingsSection = ({
         />
         <button className="cap-settings-pill" type="button" onClick={onRefreshLlamaRuntime} title={t("settings.refreshRuntimeActionHint")} disabled={isLoadingLlamaRuntime}>
           {t("common.refresh")}
-        </button>
-        <button className="cap-settings-pill" type="button" onClick={isLlamaRuntimeRunning ? onStopLlamaRuntime : onStartLlamaRuntime} title={isLlamaRuntimeRunning ? t("settings.stopServerActionHint") : t("settings.startServerActionHint")} disabled={llamaRuntimeActionDisabled}>
-          {isLlamaRuntimeStarting ? t("common.starting") : isLlamaRuntimeRunning ? t("common.stop") : t("common.start")}
         </button>
       </div>
       {runtimeErrorMessage && !runtimeHasMissingPrompt && <div className={`cap-settings-message cap-settings-wide${runtimeMessageIsFailure ? " is-error" : ""}`}>{runtimeErrorMessage}</div>}
