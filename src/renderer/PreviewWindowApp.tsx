@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
@@ -9,6 +9,9 @@ import WindowControlRail, { type WindowControlAction } from "./WindowControlRail
 import PdfPreviewPanel from "./PdfPreviewPanel";
 import FontPreviewPanel from "./FontPreviewPanel";
 import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
+import { buildFileContextMenuGroups, getFileContextShortcutAction } from "./fileContextActions";
+import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
+import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
@@ -106,6 +109,31 @@ const PreviewWindowApp = () => {
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
+  const pendingLongSpaceActionRef = useRef<PreviewWindowData | null>(null);
+  const closePreview = useCallback(() => {
+    mediaRef.current?.pause();
+    if (previewData?.provider === "folderInfo") {
+      void window.cap7ce?.skim.cancelFolderStats(previewData.sessionId);
+    }
+    void window.cap7ce?.preview.close();
+  }, [previewData]);
+  const spaceHoldControllerRef = useRef<ReturnType<typeof createSpaceHoldController<PreviewWindowData>> | null>(null);
+  if (!spaceHoldControllerRef.current) {
+    spaceHoldControllerRef.current = createSpaceHoldController<PreviewWindowData>({
+      delayMs: 350,
+      schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
+      cancelScheduled: (handle) => window.clearTimeout(handle as number),
+      onShortPress: () => undefined,
+      onLongPress: () => undefined
+    });
+  }
+  const spaceHoldController = spaceHoldControllerRef.current;
+  spaceHoldController.updateHandlers({
+    onShortPress: closePreview,
+    onLongPress: (data) => {
+      pendingLongSpaceActionRef.current = data;
+    }
+  });
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.preview.onData((data) => {
@@ -274,19 +302,58 @@ const PreviewWindowApp = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space") {
-        event.preventDefault();
-        if (event.repeat) return;
-        mediaRef.current?.pause();
-        void window.cap7ce?.preview.close();
-        return;
-      }
+      if (isEditableKeyboardTarget(event.target)) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        mediaRef.current?.pause();
-        void window.cap7ce?.preview.close();
+        if (contextMenu) {
+          setContextMenu(null);
+          return;
+        }
+        closePreview();
         return;
       }
+      if (contextMenu) return;
+      if (isPlainSpaceShortcut(event)) {
+        event.preventDefault();
+        if (event.repeat || !previewData) return;
+        if (previewData.skimActive) {
+          closePreview();
+          return;
+        }
+        pendingLongSpaceActionRef.current = null;
+        spaceHoldController.start(previewData);
+        return;
+      }
+
+      const fileShortcutAction = getFileContextShortcutAction(event);
+      if (
+        previewData
+        && fileShortcutAction
+        && fileShortcutAction !== "addDirectory"
+        && fileShortcutAction !== "addToSidebar"
+      ) {
+        if (fileShortcutAction === "delete" && previewData.skimActive) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.repeat) return;
+        if (fileShortcutAction === "open") {
+          void window.cap7ce?.files.open(previewData.filePath).then((result) => {
+            if (result === "") closePreview();
+          });
+        } else if (fileShortcutAction === "showInFolder") {
+          void window.cap7ce?.files.showInFolder(previewData.filePath);
+        } else if (fileShortcutAction === "copyPaths") {
+          void window.cap7ce?.files.copyPaths([previewData.filePath]);
+        } else if (fileShortcutAction === "delete") {
+          void window.cap7ce?.preview.requestItemAction({
+            action: "deleteFile",
+            itemId: previewData.itemId,
+            filePath: previewData.filePath
+          });
+        }
+        return;
+      }
+
       if (mediaRef.current && document.activeElement === mediaRef.current) return;
       if (previewData?.provider === "pdf" && (event.key === "PageUp" || event.key === "PageDown")) {
         event.preventDefault();
@@ -307,9 +374,36 @@ const PreviewWindowApp = () => {
       }
     };
 
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || !spaceHoldController.isActive()) return;
+      event.preventDefault();
+      const pendingLongSpaceAction = pendingLongSpaceActionRef.current;
+      pendingLongSpaceActionRef.current = null;
+      spaceHoldController.release();
+      if (pendingLongSpaceAction) {
+        void window.cap7ce?.preview.requestItemAction({
+          action: "editKeywords",
+          itemId: pendingLongSpaceAction.itemId,
+          filePath: pendingLongSpaceAction.filePath
+        });
+      }
+    };
+
+    const cancelSpaceHold = () => {
+      pendingLongSpaceActionRef.current = null;
+      spaceHoldController.cancel();
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [previewData?.provider]);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", cancelSpaceHold);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", cancelSpaceHold);
+      cancelSpaceHold();
+    };
+  }, [closePreview, contextMenu, previewData, spaceHoldController]);
 
   const themeStyle = useMemo(() => {
     if (!previewData) {
@@ -326,14 +420,6 @@ const PreviewWindowApp = () => {
       "--border-soft": isDark ? "#2a2a2a" : "#ececec"
     } as CSSProperties;
   }, [previewData]);
-
-  const closePreview = () => {
-    mediaRef.current?.pause();
-    if (previewData?.provider === "folderInfo") {
-      void window.cap7ce?.skim.cancelFolderStats(previewData.sessionId);
-    }
-    void window.cap7ce?.preview.close();
-  };
 
   const previewControlActions: WindowControlAction[] = [
     { id: "close", label: t("preview.close"), icon: "line", onClick: closePreview },
@@ -725,79 +811,72 @@ const PreviewWindowApp = () => {
                 : [t("fileInfo.calculating")]
               : []
           }}
-          groups={[
-            {
-              id: "view",
-              label: t("context.view"),
-              actions: [
-                {
-                  id: "close",
-                  label: t("preview.close"),
-                  onSelect: () => {
-                    setContextMenu(null);
-                    closePreview();
-                  }
-                },
-                {
-                  id: "open",
-                  label: t("context.open"),
-                  onSelect: async () => {
-                    setContextMenu(null);
-                    const result = await window.cap7ce?.files.open(previewData.filePath);
-                    if (result === "") closePreview();
-                  }
-                },
-                {
-                  id: "showInFolder",
-                  label: t("context.showInFolder"),
-                  onSelect: () => {
-                    setContextMenu(null);
-                    void window.cap7ce?.files.showInFolder(previewData.filePath);
-                  }
-                }
-              ]
+          groups={buildFileContextMenuGroups({
+            viewLabel: t("context.view"),
+            actionsLabel: t("context.actions"),
+            primaryViewAction: {
+              id: "close",
+              label: t("preview.close"),
+              onSelect: () => {
+                setContextMenu(null);
+                closePreview();
+              }
             },
-            {
-              id: "actions",
-              label: t("context.actions"),
-              actions: [
-                {
-                  id: "copyPath",
-                  label: t("context.copyPath"),
-                  onSelect: () => {
-                    setContextMenu(null);
-                    void window.cap7ce?.files.copyPaths([previewData.filePath]);
-                  }
-                },
-                ...(!previewData.skimActive ? [
-                  {
-                    id: "editKeywords",
-                    label: t("context.editKeywords"),
-                    onSelect: () => {
-                      setContextMenu(null);
-                      void window.cap7ce?.preview.requestItemAction({
-                        action: "editKeywords",
-                        itemId: previewData.itemId,
-                        filePath: previewData.filePath
-                      });
-                    }
-                  },
-                  {
-                    id: "delete",
-                    label: t("context.deleteFile"),
-                    onSelect: () => {
-                      setContextMenu(null);
-                      void window.cap7ce?.preview.requestItemAction({
-                        action: "deleteFile",
-                        itemId: previewData.itemId,
-                        filePath: previewData.filePath
-                      });
-                    }
-                  }
-                ] : [])
-              ]
-            }
-          ]}
+            openAction: {
+              id: "open",
+              label: t("context.open"),
+              onSelect: async () => {
+                setContextMenu(null);
+                const result = await window.cap7ce?.files.open(previewData.filePath);
+                if (result === "") closePreview();
+              }
+            },
+            showInFolderAction: {
+              id: "showInFolder",
+              label: t("context.showInFolder"),
+              onSelect: () => {
+                setContextMenu(null);
+                void window.cap7ce?.files.showInFolder(previewData.filePath);
+              }
+            },
+            copyPathsAction: {
+              id: "copyPath",
+              label: t("context.copyPath"),
+              onSelect: () => {
+                setContextMenu(null);
+                void window.cap7ce?.files.copyPaths([previewData.filePath]);
+              }
+            },
+            editKeywordsAction: !previewData.skimActive
+              ? {
+                id: "editKeywords",
+                label: t("context.editKeywords"),
+                onSelect: () => {
+                  setContextMenu(null);
+                  void window.cap7ce?.preview.requestItemAction({
+                    action: "editKeywords",
+                    itemId: previewData.itemId,
+                    filePath: previewData.filePath
+                  });
+                }
+              }
+              : undefined,
+            editKeywordsShortcut: t("context.holdSpaceShortcut"),
+            deleteAction: !previewData.skimActive
+              ? {
+                id: "delete",
+                label: t("context.deleteFile"),
+                onSelect: () => {
+                  setContextMenu(null);
+                  void window.cap7ce?.preview.requestItemAction({
+                    action: "deleteFile",
+                    itemId: previewData.itemId,
+                    filePath: previewData.filePath
+                  });
+                }
+              }
+              : undefined
+          })}
         />
       )}
     </main>

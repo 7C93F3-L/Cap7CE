@@ -5,6 +5,7 @@ import type { AppearanceColors, ImageIndexItem, PreviewWindowData } from "../../
 import { resolveFileContentPreview } from "../contentPreview";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { createSpaceHoldController, createSpaceReleaseGuard, isPlainSpaceShortcut } from "../keywordEditorInteraction";
+import { getFileContextShortcutAction } from "../fileContextActions";
 import { VirtualImageGrid, type ResultShellState } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
 import type { AiResultSectionPhase } from "./ResultSectionCard";
@@ -465,22 +466,23 @@ export const ResultsView = ({ shellState, searchCapsule, images, isSearching, ai
 
       const selectedItems = images.filter((image) => selectedImageIds.has(image.id));
       const activeItem = selectedImageIndex >= 0 ? images[selectedImageIndex] : null;
+      const fileShortcutAction = getFileContextShortcutAction(event);
 
-      if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === "KeyC" && selectedItems.length > 0) {
+      if (fileShortcutAction === "copyPaths" && selectedItems.length > 0) {
         event.preventDefault();
         event.stopPropagation();
         if (!event.repeat) void window.cap7ce?.files.copyPaths(selectedItems.map((image) => image.filePath));
         return;
       }
 
-      if (event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter" && activeItem) {
+      if (fileShortcutAction === "showInFolder" && activeItem) {
         event.preventDefault();
         event.stopPropagation();
         if (!event.repeat) onShowInFolder(activeItem);
         return;
       }
 
-      if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Delete" && activeItem) {
+      if (fileShortcutAction === "delete" && activeItem) {
         event.preventDefault();
         event.stopPropagation();
         if (!event.repeat) onDeleteItems(selectedItems.length > 0 ? selectedItems : [activeItem]);
@@ -520,7 +522,7 @@ export const ResultsView = ({ shellState, searchCapsule, images, isSearching, ai
         return;
       }
 
-      if (!event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter" && selectedImageIndex >= 0) {
+      if (fileShortcutAction === "open" && selectedImageIndex >= 0) {
         event.preventDefault();
         onOpenImage(images[selectedImageIndex]);
         return;

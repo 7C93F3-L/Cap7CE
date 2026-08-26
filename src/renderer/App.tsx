@@ -11,7 +11,8 @@ import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
 import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
-import ImageContextMenu, { getImageContextMenuStyle, type ImageContextMenuGroup } from "./ImageContextMenu";
+import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
+import { buildFileContextMenuGroups } from "./fileContextActions";
 import SkimLocationPicker from "./SkimLocationPicker";
 import { getKeywordEditorExitDelay } from "./keywordEditorInteraction";
 import {
@@ -1835,6 +1836,16 @@ const App = () => {
     }
   }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders]);
 
+  const removeSkimSidebarFolders = useCallback(async (folderPaths: string[]) => {
+    const removedKeys = new Set(folderPaths.map(normalizeWindowsPathKey));
+    const nextFolders = skimSidebarFolders.filter((candidate) => !removedKeys.has(normalizeWindowsPathKey(candidate)));
+    if (nextFolders.length === skimSidebarFolders.length) return;
+    if (await saveSkimSidebarFolders(nextFolders)) {
+      if (view === "skim") showSkimFeedback(t("skim.sidebar.removedFeedback"));
+      else showQuickCommandNotice(t("skim.sidebar.removedFeedback"));
+    }
+  }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, view]);
+
   const toggleSkimSystemLocations = useCallback(async () => {
     const nextCollapsed = !skimSystemLocationsCollapsed;
     setSkimSystemLocationsCollapsed(nextCollapsed);
@@ -1847,14 +1858,8 @@ const App = () => {
   }, [skimSystemLocationsCollapsed]);
 
   const removeSkimSidebarFolder = useCallback(async (folderPath: string) => {
-    const removedKey = normalizeWindowsPathKey(folderPath);
-    const nextFolders = skimSidebarFolders.filter((candidate) => normalizeWindowsPathKey(candidate) !== removedKey);
-    if (nextFolders.length === skimSidebarFolders.length) return;
-    if (await saveSkimSidebarFolders(nextFolders)) {
-      if (view === "skim") showSkimFeedback(t("skim.sidebar.removedFeedback"));
-      else showQuickCommandNotice(t("skim.sidebar.removedFeedback"));
-    }
-  }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, view]);
+    await removeSkimSidebarFolders([folderPath]);
+  }, [removeSkimSidebarFolders]);
 
   const cancelDroppedDirectoryAdd = () => {
     if (isAddingDirectory) return;
@@ -3098,6 +3103,7 @@ const App = () => {
                 sidebarFolderPaths={skimSidebarFolders}
                 sidebarKnownPaths={skimLocations.flatMap((location) => location.path ? [location.path] : [])}
                 onAddSidebarFolders={(folderPaths) => void addSkimSidebarFolders(folderPaths)}
+                onRemoveSidebarFolders={(folderPaths) => void removeSkimSidebarFolders(folderPaths)}
                 onFeedback={showSkimFeedback}
                 onNativeDragStateChange={(active) => {
                   internalNativeDragRef.current = active;
@@ -3294,49 +3300,34 @@ const App = () => {
                 : [])
             ]
           }}
-          groups={[
-            {
-              id: "view",
-              label: t("context.view"),
-              actions: [
-                { id: "preview", label: t("preview.action"), shortcut: "Space", onSelect: contextMenu.preview },
-                { id: "open", label: t("context.open"), shortcut: "Enter", onSelect: () => void invokeFileAction("open", contextMenu.item) },
-                { id: "showInFolder", label: t("context.showInFolder"), shortcut: "Ctrl+Enter", onSelect: () => void invokeFileAction("showInFolder", contextMenu.item) }
-              ]
+          groups={buildFileContextMenuGroups({
+            viewLabel: t("context.view"),
+            actionsLabel: t("context.actions"),
+            primaryViewAction: { id: "preview", label: t("preview.action"), onSelect: contextMenu.preview },
+            openAction: { id: "open", label: t("context.open"), onSelect: () => void invokeFileAction("open", contextMenu.item) },
+            showInFolderAction: { id: "showInFolder", label: t("context.showInFolder"), onSelect: () => void invokeFileAction("showInFolder", contextMenu.item) },
+            copyPathsAction: {
+              id: "copyPaths",
+              label: contextMenu.items.length > 1
+                ? t("context.copySelectedPaths", { count: contextMenu.items.length })
+                : t("context.copyPath"),
+              onSelect: () => {
+                setContextMenu(null);
+                void window.cap7ce?.files.copyPaths(contextMenu.items.map((item) => item.filePath));
+              }
             },
-            {
-              id: "actions",
-              label: t("context.actions"),
-              actions: [
-                {
-                  id: "copyPaths",
-                  label: contextMenu.items.length > 1
-                    ? t("context.copySelectedPaths", { count: contextMenu.items.length })
-                    : t("context.copyPath"),
-                  shortcut: "Ctrl+Shift+C",
-                  onSelect: () => {
-                    setContextMenu(null);
-                    void window.cap7ce?.files.copyPaths(contextMenu.items.map((item) => item.filePath));
-                  }
-                },
-                ...(contextMenu.items.length > 0
-                  ? [
-                    {
-                      id: "editKeywords", label: t("context.editKeywords"),
-                      shortcut: t("context.holdSpaceShortcut"),
-                      onSelect: () => requestEditKeywords(contextMenu.items)
-                    },
-                    {
-                      id: "delete",
-                      label: contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile"),
-                      shortcut: "Delete",
-                      onSelect: () => requestDeleteFiles(contextMenu.items)
-                    }
-                  ] satisfies ImageContextMenuGroup["actions"]
-                  : [])
-              ]
-            }
-          ]}
+            editKeywordsAction: contextMenu.items.length > 0
+              ? { id: "editKeywords", label: t("context.editKeywords"), onSelect: () => requestEditKeywords(contextMenu.items) }
+              : undefined,
+            editKeywordsShortcut: t("context.holdSpaceShortcut"),
+            deleteAction: contextMenu.items.length > 0
+              ? {
+                id: "delete",
+                label: contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile"),
+                onSelect: () => requestDeleteFiles(contextMenu.items)
+              }
+              : undefined
+          })}
         />
       )}
       {dialog === "editKeywords" && keywordEditSession && (

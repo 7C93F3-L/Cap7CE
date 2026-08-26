@@ -22,6 +22,7 @@ import { resolveFileContentPreview } from "../contentPreview";
 import { getDirectoryPath, isWindowsRootPath, normalizeWindowsPathKey } from "../filePath";
 import { formatCacheSize, formatDisplayMessage } from "../formatting";
 import { getFormatIconSvgByName } from "../formatIcons";
+import { buildFileContextMenuGroups, fileContextShortcutLabels, getFileContextShortcutAction } from "../fileContextActions";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { createPreviewRequestGuard } from "../previewRequestGuard";
 import {
@@ -89,6 +90,7 @@ export interface SkimViewProps {
   sidebarFolderPaths: string[];
   sidebarKnownPaths: string[];
   onAddSidebarFolders: (folderPaths: string[]) => void;
+  onRemoveSidebarFolders: (folderPaths: string[]) => void;
   onFeedback: (message: string) => void;
   onNativeDragStateChange: (active: boolean) => void;
 }
@@ -141,7 +143,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
+export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -214,6 +216,15 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     () => contextMenuSidebarFolderPaths.filter((folderPath) => !sidebarKnownPathKeys.has(normalizeWindowsPathKey(folderPath))),
     [contextMenuSidebarFolderPaths, sidebarKnownPathKeys]
   );
+  const contextMenuRemovableSidebarFolderPaths = useMemo(
+    () => contextMenuSidebarFolderPaths.filter((folderPath) => sidebarFolderPathKeys.has(normalizeWindowsPathKey(folderPath))),
+    [contextMenuSidebarFolderPaths, sidebarFolderPathKeys]
+  );
+  const contextMenuSidebarAction = contextMenuMissingSidebarFolderPaths.length > 0
+    ? "add"
+    : contextMenuRemovableSidebarFolderPaths.length > 0
+      ? "remove"
+      : "unavailable";
   const getEntryIcon = (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return skimDiskSvg;
     if (entry.kind === "folder") {
@@ -505,18 +516,44 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
 
       const actionableEntries = selectedEntries.filter((entry) => entry.kind !== "drive");
       const activeEntry = entries.find((entry) => entry.path === activePath && entry.kind !== "drive");
+      const fileShortcutAction = getFileContextShortcutAction(event);
 
-      if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === "KeyC" && actionableEntries.length > 0) {
+      if (fileShortcutAction === "copyPaths" && actionableEntries.length > 0) {
         event.preventDefault();
         event.stopPropagation();
         if (!event.repeat) void window.cap7ce?.files.copyPaths(actionableEntries.map((entry) => entry.path));
         return;
       }
 
-      if (event.ctrlKey && !event.shiftKey && !event.altKey && event.key === "Enter" && activeEntry) {
+      if (fileShortcutAction === "showInFolder" && activeEntry) {
         event.preventDefault();
         event.stopPropagation();
         if (!event.repeat) showEntryInFolder(activeEntry, 1);
+        return;
+      }
+
+      if (fileShortcutAction === "addDirectory" && actionableEntries.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat && !isAddingDirectory) onAddEntries(actionableEntries);
+        return;
+      }
+
+      if (fileShortcutAction === "addToSidebar" && actionableEntries.length > 0) {
+        const sidebarFolderPaths = deriveSkimSidebarFolderPaths(actionableEntries);
+        const missingSidebarFolderPaths = sidebarFolderPaths.filter(
+          (folderPath) => !sidebarKnownPathKeys.has(normalizeWindowsPathKey(folderPath))
+        );
+        const removableSidebarFolderPaths = sidebarFolderPaths.filter(
+          (folderPath) => sidebarFolderPathKeys.has(normalizeWindowsPathKey(folderPath))
+        );
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat && missingSidebarFolderPaths.length > 0) {
+          onAddSidebarFolders(missingSidebarFolderPaths);
+        } else if (!event.repeat && removableSidebarFolderPaths.length > 0) {
+          onRemoveSidebarFolders(removableSidebarFolderPaths);
+        }
         return;
       }
 
@@ -539,7 +576,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     };
     window.addEventListener("keydown", handleSelectionKeyDown);
     return () => window.removeEventListener("keydown", handleSelectionKeyDown);
-  }, [activePath, contextMenu, entries, onFeedback, selectedEntries, selectedPaths, showEntryInFolder]);
+  }, [activePath, contextMenu, entries, isAddingDirectory, onAddEntries, onAddSidebarFolders, onFeedback, onRemoveSidebarFolders, selectedEntries, selectedPaths, showEntryInFolder, sidebarFolderPathKeys, sidebarKnownPathKeys]);
 
   return (
     <main
@@ -702,56 +739,53 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
                 ? [t("fileInfo.resolution", { width: fileInfoDimensions.width, height: fileInfoDimensions.height })]
                 : []
           }}
-          groups={[
-            {
-              id: "view",
-              label: t("context.view"),
-              actions: [
-                { id: "preview", label: t("skim.preview"), shortcut: "Space", onSelect: () => void openPreview(contextMenu.item) },
-                { id: "open", label: t("skim.openItem"), shortcut: "Enter", onSelect: () => openEntry(contextMenu.item) },
-                { id: "showInFolder", label: t("skim.openPath"), shortcut: "Ctrl+Enter", onSelect: () => showEntryInFolder(contextMenu.item, contextMenu.items.length) }
-              ]
+          groups={buildFileContextMenuGroups({
+            viewLabel: t("context.view"),
+            actionsLabel: t("context.actions"),
+            primaryViewAction: { id: "preview", label: t("skim.preview"), onSelect: () => void openPreview(contextMenu.item) },
+            openAction: { id: "open", label: t("skim.openItem"), onSelect: () => openEntry(contextMenu.item) },
+            showInFolderAction: { id: "showInFolder", label: t("skim.openPath"), onSelect: () => showEntryInFolder(contextMenu.item, contextMenu.items.length) },
+            copyPathsAction: {
+              id: "copyPaths",
+              label: contextMenu.items.length > 1
+                ? t("context.copySelectedPaths", { count: contextMenu.items.length })
+                : t("context.copyPath"),
+              onSelect: () => {
+                setContextMenu(null);
+                void window.cap7ce?.files.copyPaths(contextMenu.items.map((entry) => entry.path));
+              }
             },
-            {
-              id: "actions",
-              label: t("context.actions"),
-              actions: [
-                {
-                  id: "copyPaths",
-                  label: contextMenu.items.length > 1
-                    ? t("context.copySelectedPaths", { count: contextMenu.items.length })
-                    : t("context.copyPath"),
-                  shortcut: "Ctrl+Shift+C",
-                  onSelect: () => {
-                    setContextMenu(null);
-                    void window.cap7ce?.files.copyPaths(contextMenu.items.map((entry) => entry.path));
-                  }
+            additionalActions: [
+              {
+                id: "addDirectory",
+                label: t("skim.addDirectory"),
+                shortcut: fileContextShortcutLabels.addDirectory,
+                disabled: isAddingDirectory,
+                onSelect: () => {
+                  setContextMenu(null);
+                  if (!isAddingDirectory) onAddEntries(contextMenu.items);
                 },
-                {
-                  id: "addDirectory",
-                  label: t("skim.addDirectory"),
-                  disabled: isAddingDirectory,
-                  onSelect: () => {
-                    setContextMenu(null);
-                    if (!isAddingDirectory) onAddEntries(contextMenu.items);
-                  }
-                },
-                {
-                  id: "addToSidebar",
-                  label: contextMenuSidebarFolderPaths.length > 0 && contextMenuMissingSidebarFolderPaths.length === 0
-                    ? t("skim.sidebar.alreadyAdded")
-                    : t("skim.sidebar.add"),
-                  disabled: contextMenuSidebarFolderPaths.length === 0 || contextMenuMissingSidebarFolderPaths.length === 0,
-                  onSelect: () => {
-                    setContextMenu(null);
-                    if (contextMenuMissingSidebarFolderPaths.length > 0) {
-                      onAddSidebarFolders(contextMenuMissingSidebarFolderPaths);
-                    }
+              },
+              {
+                id: "addToSidebar",
+                label: contextMenuSidebarAction === "add"
+                  ? t("skim.sidebar.add")
+                  : contextMenuSidebarAction === "remove"
+                    ? t("skim.sidebar.remove")
+                    : t("skim.sidebar.alreadyAdded"),
+                shortcut: fileContextShortcutLabels.addToSidebar,
+                disabled: contextMenuSidebarAction === "unavailable",
+                onSelect: () => {
+                  setContextMenu(null);
+                  if (contextMenuSidebarAction === "add") {
+                    onAddSidebarFolders(contextMenuMissingSidebarFolderPaths);
+                  } else if (contextMenuSidebarAction === "remove") {
+                    onRemoveSidebarFolders(contextMenuRemovableSidebarFolderPaths);
                   }
                 }
-              ]
-            }
-          ]}
+              }
+            ]
+          })}
         />
       )}
     </main>
