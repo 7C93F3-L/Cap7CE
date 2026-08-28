@@ -572,7 +572,9 @@ export const ResultsView = ({ shellState, searchCapsule, images, isSearching, ai
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("keyup", handleKeyUp, true);
       window.removeEventListener("blur", cancelSpaceHold);
-      spaceHoldController.cancel();
+      // This effect also refreshes when result data or action handlers change.
+      // Preserve an active hold across that listener refresh; the dedicated
+      // unmount effect and explicit interaction changes own cancellation.
     };
   }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
   return (

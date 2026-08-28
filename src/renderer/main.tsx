@@ -9,6 +9,7 @@ import "./components/MiddleEllipsisFileName.css";
 import "./skim/SkimView.css";
 import "./preview/PreviewWindow.css";
 import "./preview/PreviewEmbeddedMetadata.css";
+import "./dialogs/KeywordEditorBackdrop.css";
 import "./dialogs/KeywordEditorCard.css";
 import "./dialogs/ConfirmationPanels.css";
 import "./ColorPickerPopover.css";

@@ -11,6 +11,7 @@ import {
 } from "../keywordEditorInteraction";
 import { formatCacheSize } from "../formatting";
 import type { KeywordEditSession } from "./dialogTypes";
+import KeywordEditorBackdrop from "./KeywordEditorBackdrop";
 
 interface KeywordEditorCardProps {
   session: KeywordEditSession;
@@ -129,27 +130,29 @@ const KeywordEditorCard = ({
   const splitFileName = splitMiddleEllipsisFileName(firstItem.fileName);
 
   return createPortal(
-    <div
-      ref={cardRef}
-      className={`context-menu context-menu-${theme} keyword-editor-card${isClosing ? " is-closing" : ""}`}
-      data-context-menu="true"
-      data-keyword-editor="true"
-      style={{
-        ...menuStyle,
-        left: position?.left ?? window.innerWidth / 2,
-        top: position?.top ?? window.innerHeight / 2,
-        visibility: position ? "visible" : "hidden"
-      }}
-      role="dialog"
-      aria-modal="false"
-      aria-label={t("context.editKeywords")}
-      onClick={(event) => event.stopPropagation()}
-      onPointerDown={(event) => event.stopPropagation()}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-      }}
-    >
+    <>
+      <KeywordEditorBackdrop theme={theme} isClosing={isClosing} />
+      <div
+        ref={cardRef}
+        className={`context-menu context-menu-${theme} keyword-editor-card${isClosing ? " is-closing" : ""}`}
+        data-context-menu="true"
+        data-keyword-editor="true"
+        style={{
+          ...menuStyle,
+          left: position?.left ?? window.innerWidth / 2,
+          top: position?.top ?? window.innerHeight / 2,
+          visibility: position ? "visible" : "hidden"
+        }}
+        role="dialog"
+        aria-modal="false"
+        aria-label={t("context.editKeywords")}
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+      >
       <div
         className="cap7ce-menu-motion-surface keyword-editor-card-surface"
         onAnimationEnd={(event) => {
@@ -217,8 +220,9 @@ const KeywordEditorCard = ({
           aria-label={t("keywords.label")}
         />
         {error && <div className="keyword-editor-error" role="alert">{error}</div>}
+        </div>
       </div>
-    </div>,
+    </>,
     document.body
   );
 };

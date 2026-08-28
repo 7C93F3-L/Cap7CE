@@ -1,4 +1,6 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
   clampFloatingCardPosition,
   centerFloatingCardPosition,
@@ -13,6 +15,30 @@ const {
 } = require("../src/renderer/keywordEditorInteraction.ts");
 const { normalizeKeywordList, parseKeywordText } = require("../electron/keywordRules.ts");
 const { getCommonKeywords } = require("../src/renderer/dialogs/keywordEditorModel.ts");
+
+const resultsViewSource = fs.readFileSync(
+  path.join(__dirname, "../src/renderer/results/ResultsView.tsx"),
+  "utf8"
+);
+const keywordEditorBackdropSource = fs.readFileSync(
+  path.join(__dirname, "../src/renderer/dialogs/KeywordEditorBackdrop.tsx"),
+  "utf8"
+);
+const keywordEditorBackdropCss = fs.readFileSync(
+  path.join(__dirname, "../src/renderer/dialogs/KeywordEditorBackdrop.css"),
+  "utf8"
+);
+
+assert.doesNotMatch(
+  resultsViewSource,
+  /window\.removeEventListener\("blur", cancelSpaceHold\);\s*spaceHoldController\.cancel\(\);/,
+  "refreshing result keyboard listeners must not cancel an in-progress Space hold"
+);
+assert.match(keywordEditorBackdropSource, /data-keyword-editor-backdrop="true"/);
+assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-dark\s*\{[^}]*rgb\(0 0 0 \/ 0\.22\)/s);
+assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-light\s*\{[^}]*rgb\(255 255 255 \/ 0\.28\)/s);
+assert.match(keywordEditorBackdropCss, /border-radius: var\(--radius-window-normal\)/);
+assert.match(keywordEditorBackdropCss, /\.cap-shell-maximized[^}]*border-radius: 0/s);
 
 const position = clampFloatingCardPosition(
   { x: 790, y: 590 },

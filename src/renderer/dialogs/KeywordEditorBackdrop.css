@@ -1,0 +1,55 @@
+.keyword-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  border-radius: var(--radius-window-normal);
+  pointer-events: none;
+  animation: cap7ce-keyword-backdrop-enter 180ms ease-out both;
+}
+
+body:has(.cap-shell-micro, .cap-shell-mini) .keyword-editor-backdrop {
+  border-radius: var(--radius-window-mini);
+}
+
+body:has(.cap-shell-maximized) .keyword-editor-backdrop {
+  border-radius: 0;
+}
+
+.keyword-editor-backdrop-light {
+  background: rgb(255 255 255 / 0.28);
+}
+
+.keyword-editor-backdrop-dark {
+  background: rgb(0 0 0 / 0.22);
+}
+
+.keyword-editor-backdrop.is-closing {
+  animation: cap7ce-keyword-backdrop-exit 180ms ease-out both;
+}
+
+@keyframes cap7ce-keyword-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cap7ce-keyword-backdrop-exit {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keyword-editor-backdrop,
+  .keyword-editor-backdrop.is-closing {
+    animation: none;
+  }
+}
