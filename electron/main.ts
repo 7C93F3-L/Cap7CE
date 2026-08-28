@@ -11,6 +11,7 @@ import { registerAiSearchIpc } from "./aiSearchIpc";
 import { registerDiagnosticsIpc } from "./diagnosticsIpc";
 import { bootstrapRuntimeDiagnostics } from "./runtimeDiagnosticsBootstrap";
 import { RuntimeDiagnostics } from "./runtimeDiagnostics";
+import { createThumbnailFailureResponse } from "./thumbnailFailureResponse";
 import { registerSearchIpc } from "./searchIpc";
 import { writeAppUpdateDiagnostic } from "./appUpdateDiagnostics";
 import { aiSearchService } from "./aiSearchRuntime";
@@ -2163,7 +2164,11 @@ const registerLocalImageProtocol = () => {
         }
       }
 
-      const thumbnailPath = await ensureThumbnailPath(filePath);
+      const thumbnailPath = await ensureThumbnailPath(
+        filePath,
+        "interactive",
+        url.searchParams.get("sourceRevision") ?? ""
+      );
       const thumbnail = await readVisualCacheImage(thumbnailPath);
       return new Response(toResponseBody(thumbnail.buffer), {
         headers: {
@@ -2172,17 +2177,7 @@ const registerLocalImageProtocol = () => {
         }
       });
     } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      const status = code === "ENOENT" ? 404 : code === "ECANCELED" ? 499 : 500;
-      const message = error instanceof Error ? error.message : "Thumbnail unavailable";
-      console.warn("[thumbnail] failed", { filePath, status, message });
-      runtimeDiagnostics.log("warn", "thumbnail.failed", {
-        extension: path.extname(filePath).toLowerCase(),
-        status,
-        code,
-        error
-      });
-      return new Response(message, { status });
+      return createThumbnailFailureResponse(filePath, error, runtimeDiagnostics);
     }
   });
 };
@@ -2406,8 +2401,9 @@ const createWindow = () => {
   mainWindow.on("hide", () => {
     syncThumbnailOptimizationActivity();
     cancelActiveSearchTasks();
+    discardQueuedInteractiveThumbnailRenders();
   });
-
+  mainWindow.on("minimize", () => discardQueuedInteractiveThumbnailRenders());
   mainWindow.on("will-resize", applyBottomCenterMicroWillResize);
 
   mainWindow.on("close", (event) => {

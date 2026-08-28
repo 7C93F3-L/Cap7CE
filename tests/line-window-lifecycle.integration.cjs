@@ -18,6 +18,8 @@ assert.match(mainSource, /if \(mode === "standby"\) \{\s*sendActivateShellModeSh
 assert.doesNotMatch(mainSource, /if \(mode === "standby"\) \{\s*applyStandaloneLineMode\(\)/u);
 assert.match(mainSource, /if \(activeShellState === "capsule"\) \{\s*sendActivateShellModeShortcutToRenderer\("standby"\);\s*\}/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
+assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInteractiveThumbnailRenders\(\)\)/u);
+assert.match(mainSource, /mainWindow\.on\("hide", \(\) => \{[\s\S]*?discardQueuedInteractiveThumbnailRenders\(\);\s*\}\);/u);
 assert.doesNotMatch(mainSource, /appTray\.on\("double-click"|openNormalFromTray/u);
 assert.match(mainSource, /const contentViewActive = Boolean\([\s\S]*?rendererContentViewActive[\s\S]*?setSkimShellThumbnailActivity\(contentViewActive\)/u);
 assert.match(mainSource, /const isVisibleAndFocused = \(window: BrowserWindow \| null\)[\s\S]*?window\.isVisible\(\) && window\.isFocused\(\)[\s\S]*?isVisibleAndFocused\(mainWindow\) \|\| isVisibleAndFocused\(previewWindow\)[\s\S]*?setThumbnailOptimizationForegroundActive\(foregroundWindowActive\)/u);
@@ -60,6 +62,7 @@ console.log(JSON.stringify({
   activeModalTasksBlockStandby: true,
   standbyShortcutUsesRendererEntry: true,
   trayClickUsesNormalShortcutEntry: true,
+  minimizedAndHiddenThumbnailQueuesDiscarded: true,
   contentViewAndForegroundCacheActivitySeparated: true,
   startupCacheOptimizationDiscoveryRestored: true,
   fourDirectionPlacementForwarded: true,

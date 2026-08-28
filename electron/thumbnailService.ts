@@ -14,6 +14,7 @@ import {
   resumeSearchShellVisualCacheAfterClear
 } from "./searchShellVisualCacheService";
 import { createFileSourceRevision } from "./fileSourceRevision";
+import { cachedThumbnailFailureCode } from "./thumbnailFailurePolicy";
 import { ensureSearchThumbnail } from "./visualRenderService";
 
 let thumbnailCacheFileInventory: Set<string> | null = null;
@@ -23,6 +24,7 @@ type ThumbnailRequestPriority = "interactive" | "background";
 interface ThumbnailRenderTask {
   filePath: string;
   pathKey: string;
+  sourceRevision: string;
   priority: ThumbnailRequestPriority;
   backgroundRequested: boolean;
   resolve: (thumbnailPath: string) => void;
@@ -31,11 +33,13 @@ interface ThumbnailRenderTask {
 const thumbnailRenderQueue: ThumbnailRenderTask[] = [];
 const pendingThumbnailRenders = new Map<string, { task: ThumbnailRenderTask; promise: Promise<string> }>();
 const activeThumbnailRenders = new Set<Promise<void>>();
+const failedInteractiveThumbnailRevisions = new Map<string, string>();
 const thumbnailRenderPauseReasons = new Set<string>();
 let activeThumbnailRenderCount = 0;
 let interactiveTasksSinceBackground = 0;
 const maximumConcurrentThumbnailRenders = 2;
 const maximumInteractiveTasksBeforeBackground = 4;
+const maximumFailedInteractiveThumbnailRevisions = 50_000;
 
 export type ThumbnailLifecycleEvent =
   | { kind: "available"; filePath: string; thumbnailPath: string; sourceRevision: string }
@@ -73,6 +77,28 @@ const normalizeThumbnailPathKey = (filePath: string) => {
   return process.platform === "win32" ? resolvedPath.toLowerCase() : resolvedPath;
 };
 
+const rememberInteractiveThumbnailFailure = (pathKey: string, sourceRevision: string) => {
+  if (!sourceRevision) return;
+  failedInteractiveThumbnailRevisions.delete(pathKey);
+  failedInteractiveThumbnailRevisions.set(pathKey, sourceRevision);
+  if (failedInteractiveThumbnailRevisions.size <= maximumFailedInteractiveThumbnailRevisions) return;
+  const oldestPathKey = failedInteractiveThumbnailRevisions.keys().next().value;
+  if (oldestPathKey) failedInteractiveThumbnailRevisions.delete(oldestPathKey);
+};
+
+const clearFailedInteractiveThumbnailForFiles = (filePaths: string[]) => {
+  for (const filePath of filePaths) failedInteractiveThumbnailRevisions.delete(normalizeThumbnailPathKey(filePath));
+};
+
+const clearFailedInteractiveThumbnailsForDirectory = (directoryPath: string) => {
+  const directoryPathKey = normalizeThumbnailPathKey(directoryPath);
+  for (const pathKey of failedInteractiveThumbnailRevisions.keys()) {
+    if (pathKey === directoryPathKey || pathKey.startsWith(`${directoryPathKey}${path.sep}`)) {
+      failedInteractiveThumbnailRevisions.delete(pathKey);
+    }
+  }
+};
+
 const enqueueInteractiveThumbnailTask = (task: ThumbnailRenderTask) => {
   const firstBackgroundIndex = thumbnailRenderQueue.findIndex((candidate) => candidate.priority === "background");
   if (firstBackgroundIndex < 0) thumbnailRenderQueue.push(task);
@@ -93,6 +119,7 @@ const pumpThumbnailRenderQueue = () => {
     activeThumbnailRenderCount += 1;
     const render = ensureSearchThumbnail(task.filePath)
       .then(({ thumbnailPath, fileSize, modifiedMs }) => {
+        failedInteractiveThumbnailRevisions.delete(task.pathKey);
         addThumbnailPathToInventory(thumbnailPath);
         task.resolve(thumbnailPath);
         emitThumbnailLifecycle({
@@ -104,7 +131,13 @@ const pumpThumbnailRenderQueue = () => {
             modifiedAt: new Date(modifiedMs).toISOString()
           })
         });
-      }, (error) => task.reject(error instanceof Error ? error : new Error(String(error))))
+      }, (error) => {
+        const normalizedError = error instanceof Error ? error : new Error(String(error));
+        if ((normalizedError as NodeJS.ErrnoException).code !== "ECANCELED") {
+          rememberInteractiveThumbnailFailure(task.pathKey, task.sourceRevision);
+        }
+        task.reject(normalizedError);
+      })
       .finally(() => {
         activeThumbnailRenderCount -= 1;
         activeThumbnailRenders.delete(render);
@@ -159,10 +192,24 @@ export const getThumbnailCacheFileInventory = async () => {
   });
 };
 
-export const ensureThumbnailPath = (filePath: string, priority: ThumbnailRequestPriority = "interactive") => {
+export const ensureThumbnailPath = (
+  filePath: string,
+  priority: ThumbnailRequestPriority = "interactive",
+  sourceRevision = ""
+) => {
   const pathKey = normalizeThumbnailPathKey(filePath);
+  if (priority === "interactive" && sourceRevision) {
+    const failedRevision = failedInteractiveThumbnailRevisions.get(pathKey);
+    if (failedRevision === sourceRevision) {
+      return Promise.reject(Object.assign(new Error("Thumbnail unavailable for unchanged file."), {
+        code: cachedThumbnailFailureCode
+      }));
+    }
+    if (failedRevision) failedInteractiveThumbnailRevisions.delete(pathKey);
+  }
   const pending = pendingThumbnailRenders.get(pathKey);
   if (pending) {
+    if (sourceRevision && !pending.task.sourceRevision) pending.task.sourceRevision = sourceRevision;
     if (priority === "background") {
       pending.task.backgroundRequested = true;
     }
@@ -186,6 +233,7 @@ export const ensureThumbnailPath = (filePath: string, priority: ThumbnailRequest
   const task: ThumbnailRenderTask = {
     filePath,
     pathKey,
+    sourceRevision,
     priority,
     backgroundRequested: priority === "background",
     resolve: resolveTask,
@@ -253,6 +301,7 @@ export const discardQueuedThumbnailRendersForDirectory = (directoryPath: string)
 
 export const deleteThumbnailsForImages = async (filePaths: string[]) => {
   await deleteVisualCachesForImages(filePaths);
+  clearFailedInteractiveThumbnailForFiles(filePaths);
   invalidateThumbnailCacheFileInventory();
   emitThumbnailLifecycle({ kind: "discard-files", filePaths });
 };
@@ -260,6 +309,8 @@ export const deleteThumbnailsForImages = async (filePaths: string[]) => {
 export const deleteThumbnailsForDirectory = async (directoryPath: string, knownFilePaths: string[] = []) => {
   await deleteVisualCachesForDirectory(directoryPath);
   await deleteVisualCachesForImages(knownFilePaths);
+  clearFailedInteractiveThumbnailsForDirectory(directoryPath);
+  clearFailedInteractiveThumbnailForFiles(knownFilePaths);
   invalidateThumbnailCacheFileInventory();
   emitThumbnailLifecycle({ kind: "discard-directory", directoryPath });
 };
@@ -268,6 +319,7 @@ export const clearAllVisualCaches = async () => {
   await pauseSearchShellVisualCacheForClear();
   try {
     const stats = await clearVisualCaches();
+    failedInteractiveThumbnailRevisions.clear();
     invalidateThumbnailCacheFileInventory();
     return stats;
   } finally {
@@ -279,6 +331,7 @@ export const clearThumbnailCaches = async () => {
   await pauseSearchShellVisualCacheForClear();
   try {
     const stats = await clearThumbnailVisualCaches();
+    failedInteractiveThumbnailRevisions.clear();
     invalidateThumbnailCacheFileInventory();
     return stats;
   } finally {

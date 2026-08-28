@@ -30,6 +30,9 @@ const candidateFor = async (filePath) => {
 app.whenReady().then(async () => {
   const service = require("../dist-electron/thumbnailOptimizationService.js");
   const thumbnailService = require("../dist-electron/thumbnailService.js");
+  const { createFileSourceRevision } = require("../dist-electron/fileSourceRevision.js");
+  const { cachedThumbnailFailureCode, ThumbnailFailureLogPolicy } = require("../dist-electron/thumbnailFailurePolicy.js");
+  const { createThumbnailFailureResponse } = require("../dist-electron/thumbnailFailureResponse.js");
   const lifecycleEvents = [];
   const stopLifecycleListener = thumbnailService.onThumbnailLifecycle((event) => lifecycleEvents.push(event));
   const stopThrowingListener = thumbnailService.onThumbnailLifecycle(() => { throw new Error("observer failure"); });
@@ -44,7 +47,10 @@ app.whenReady().then(async () => {
   const cancelledRenderFile = path.join(deletedDirectory, "cancelled-render.png");
   const activeRenderFile = path.join(testRoot, "active-render.png");
   const failedFile = path.join(testRoot, "failed.png");
+  const minimizedQueueFile = path.join(testRoot, "minimized-queue.png");
+  const interactiveFailureDirectory = path.join(testRoot, "interactive-failures");
   await fs.mkdir(deletedDirectory, { recursive: true });
+  await fs.mkdir(interactiveFailureDirectory, { recursive: true });
   await Promise.all([
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#336699" } }).png().toFile(backgroundFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#4477aa" } }).png().toFile(preexistingFile),
@@ -53,9 +59,15 @@ app.whenReady().then(async () => {
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#663399" } }).png().toFile(deletedDirectoryFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#339966" } }).png().toFile(retainedFile),
     sharp({ create: { width: 8, height: 8, channels: 4, background: "#993366" } }).png().toFile(cancelledRenderFile),
-    sharp({ create: { width: 8, height: 8, channels: 4, background: "#669933" } }).png().toFile(activeRenderFile)
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#669933" } }).png().toFile(activeRenderFile),
+    sharp({ create: { width: 8, height: 8, channels: 4, background: "#996699" } }).png().toFile(minimizedQueueFile)
   ]);
   await fs.writeFile(failedFile, "not-a-png");
+
+  const failureFiles = Array.from({ length: 128 }, (_, index) => (
+    path.join(interactiveFailureDirectory, `encrypted-${String(index).padStart(3, "0")}.png`)
+  ));
+  await Promise.all(failureFiles.map((filePath, index) => fs.writeFile(filePath, `encrypted-content-${index}`)));
 
   try {
     await thumbnailService.ensureThumbnailPath(preexistingFile);
@@ -100,6 +112,73 @@ app.whenReady().then(async () => {
     await waitFor(() => service.getThumbnailOptimizationStatus().phase === "completed");
     assert.equal(service.getThumbnailOptimizationStatus().processedCount, 1);
     assert.equal(service.getThumbnailOptimizationStatus().failedCount, 1);
+
+    const failureCandidates = await Promise.all(failureFiles.map(candidateFor));
+    const failureRevisions = failureCandidates.map((candidate) => createFileSourceRevision({
+      fileSize: candidate.fileSize,
+      modifiedAt: candidate.modifiedAt
+    }));
+    const firstFailurePass = await Promise.allSettled(failureFiles.map((filePath, index) => (
+      thumbnailService.ensureThumbnailPath(filePath, "interactive", failureRevisions[index])
+    )));
+    assert.equal(firstFailurePass.filter((result) => result.status === "rejected").length, failureFiles.length);
+    assert.equal(firstFailurePass.some((result) => result.status === "rejected" && result.reason?.code === cachedThumbnailFailureCode), false);
+
+    const repeatedFailurePassStartedAt = Date.now();
+    const repeatedFailurePass = await Promise.allSettled(failureFiles.map((filePath, index) => (
+      thumbnailService.ensureThumbnailPath(filePath, "interactive", failureRevisions[index])
+    )));
+    assert.equal(repeatedFailurePass.every((result) => (
+      result.status === "rejected" && result.reason?.code === cachedThumbnailFailureCode
+    )), true, "unchanged interactive failures must bypass native decoding");
+    assert.ok(Date.now() - repeatedFailurePassStartedAt < 500, "cached failure fallback must remain immediate");
+
+    await fs.writeFile(failureFiles[0], "changed-encrypted-content");
+    const changedFailureCandidate = await candidateFor(failureFiles[0]);
+    const changedFailureRevision = createFileSourceRevision({
+      fileSize: changedFailureCandidate.fileSize,
+      modifiedAt: changedFailureCandidate.modifiedAt
+    });
+    await assert.rejects(
+      thumbnailService.ensureThumbnailPath(failureFiles[0], "interactive", changedFailureRevision),
+      (error) => error?.code !== cachedThumbnailFailureCode
+    );
+
+    const failureLogPolicy = new ThumbnailFailureLogPolicy(5_000, 2);
+    assert.deepEqual([
+      failureLogPolicy.record(1_000),
+      failureLogPolicy.record(1_001),
+      failureLogPolicy.record(1_002),
+      failureLogPolicy.record(1_003),
+      failureLogPolicy.record(6_000)
+    ], ["detail", "detail", "storm", "suppress", "detail"]);
+
+    const diagnosticEntries = [];
+    const originalConsoleWarn = console.warn;
+    console.warn = () => undefined;
+    try {
+      for (let index = 0; index < 12; index += 1) {
+        createThumbnailFailureResponse(`C:\\encrypted-${index}.png`, new Error("unsupported"), {
+          log: (level, event, data) => diagnosticEntries.push({ level, event, data })
+        });
+      }
+      createThumbnailFailureResponse("C:\\cancelled.png", Object.assign(new Error("cancelled"), { code: "ECANCELED" }), {
+        log: (level, event, data) => diagnosticEntries.push({ level, event, data })
+      });
+      createThumbnailFailureResponse("C:\\cached.png", Object.assign(new Error("cached"), { code: cachedThumbnailFailureCode }), {
+        log: (level, event, data) => diagnosticEntries.push({ level, event, data })
+      });
+    } finally {
+      console.warn = originalConsoleWarn;
+    }
+    assert.equal(diagnosticEntries.filter((entry) => entry.event === "thumbnail.failed").length, 8);
+    assert.equal(diagnosticEntries.filter((entry) => entry.event === "thumbnail.failure_storm").length, 1);
+
+    await thumbnailService.pauseThumbnailRendering("test-window-minimize");
+    const minimizedRender = thumbnailService.ensureThumbnailPath(minimizedQueueFile);
+    assert.equal(thumbnailService.discardQueuedInteractiveThumbnailRenders(), 1);
+    await assert.rejects(minimizedRender, (error) => error?.code === "ECANCELED");
+    thumbnailService.resumeThumbnailRendering("test-window-minimize");
 
     await service.enqueueThumbnailOptimizationCandidates([firstFailedCandidate]);
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -157,6 +236,11 @@ app.whenReady().then(async () => {
     thumbnailService.discardAllQueuedThumbnailRenders();
     await thumbnailService.clearAllVisualCaches();
     thumbnailService.resumeThumbnailRendering("test-cache-clear");
+    await assert.rejects(
+      thumbnailService.ensureThumbnailPath(failureFiles[0], "interactive", changedFailureRevision),
+      (error) => error?.code !== cachedThumbnailFailureCode,
+      "manual cache clearing must allow an unchanged failed source to retry"
+    );
     await new Promise((resolve) => setTimeout(resolve, 100));
     assert.equal((await thumbnailService.getAllVisualCacheStats()).cacheCount, 0);
 
@@ -168,6 +252,12 @@ app.whenReady().then(async () => {
       unchangedFailuresSuppressedPerSession: true,
       changedFailuresRetried: true,
       manualReenableRetriesFailures: true,
+      encryptedFailureStormHandled: failureFiles.length,
+      unchangedInteractiveFailuresSuppressed: true,
+      changedInteractiveFailuresRetried: true,
+      cacheClearRetriesInteractiveFailures: true,
+      thumbnailFailureLoggingRateLimited: true,
+      minimizedInteractiveQueueDiscarded: true,
       explicitPauseStillBlocks: true,
       resumeCompletesQueue: true,
       deletedDirectoryCandidatesDiscarded: true,
