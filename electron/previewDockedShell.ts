@@ -82,8 +82,8 @@ export class PreviewDockedShell {
     return this.fixed;
   }
 
-  isCollapsed() {
-    return Boolean(this.controller?.getState());
+  hasActiveSession() {
+    return Boolean(this.controller?.hasActiveSession());
   }
 
   getExpandedBounds(window: BrowserWindow) {

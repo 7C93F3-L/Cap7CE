@@ -1090,7 +1090,7 @@ const applyPreviewEdgeSnapAfterMove = () => {
     || !previewSessionActive
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
-    || previewDockedShell.isCollapsed()
+    || previewDockedShell.hasActiveSession()
   ) {
     return;
   }
@@ -1112,7 +1112,7 @@ const schedulePreviewMoveSnapCheck = () => {
     || !previewSessionActive
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
-    || previewDockedShell.isCollapsed()
+    || previewDockedShell.hasActiveSession()
   ) {
     return;
   }
@@ -2185,7 +2185,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || isProgrammaticResizeGuardActive() || dockedShellController?.getState()) {
+  if (!mainWindow || mainWindow.isDestroyed() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
     return;
   }
 
@@ -2239,7 +2239,7 @@ const scheduleResizeSettledCheck = () => {
 };
 
 const applyEdgeSnapAfterMove = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || dockedShellController?.getState() || !canSnapShellWindow()) {
+  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || dockedShellController?.hasActiveSession() || !canSnapShellWindow()) {
     return;
   }
 
@@ -2439,7 +2439,7 @@ const createWindow = () => {
   });
 
   mainWindow.on("move", () => {
-    if (isProgrammaticMoveGuardActive() || dockedShellController?.getState()) {
+    if (isProgrammaticMoveGuardActive() || dockedShellController?.hasActiveSession()) {
       return;
     }
 

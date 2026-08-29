@@ -78,6 +78,10 @@ export class DockedShellController {
     return this.collapsed && this.session ? { edge: this.session.edge } : null;
   }
 
+  hasActiveSession() {
+    return this.session !== null;
+  }
+
   start() {
     this.started = true;
     if (this.enabled) this.schedulePoll(0);

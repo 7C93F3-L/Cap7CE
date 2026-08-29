@@ -66,6 +66,7 @@ export const installDockedShell = ({
     setEnabled: (nextEnabled: boolean) => controller.setEnabled(nextEnabled),
     setFixed: (nextFixed: boolean) => controller.setFixed(nextFixed),
     getState: () => controller.getState(),
+    hasActiveSession: () => controller.hasActiveSession(),
     getExpandedBounds: () => controller.getExpandedBounds(),
     reconcileDisplayConfiguration: () => controller.reconcileDisplayConfiguration(),
     updateExpandedBounds: (bounds: WindowLayoutDisplaySnapshot["bounds"]) => controller.updateExpandedBounds(bounds),
