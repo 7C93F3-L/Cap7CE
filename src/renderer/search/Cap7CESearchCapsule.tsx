@@ -135,15 +135,7 @@ export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], l
   const [labelMenuThemeStyle, setLabelMenuThemeStyle] = useState<CSSProperties>({});
   const labelMenuRef = useRef<HTMLDivElement | null>(null);
   const chipGroupCloseTimerRef = useRef<number | null>(null);
-  const queryClearSearchTimerRef = useRef<number | null>(null);
   const labelMenuMeasurementKey = labelMenuPointer ? `${labelMenuPointer.x}:${labelMenuPointer.y}` : "closed";
-
-  const clearQueryClearSearchTimer = () => {
-    if (queryClearSearchTimerRef.current !== null) {
-      window.clearTimeout(queryClearSearchTimerRef.current);
-      queryClearSearchTimerRef.current = null;
-    }
-  };
 
   const clearChipGroupCloseTimer = () => {
     if (chipGroupCloseTimerRef.current !== null) {
@@ -185,12 +177,7 @@ export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], l
 
   useEffect(() => () => {
     clearChipGroupCloseTimer();
-    clearQueryClearSearchTimer();
   }, []);
-
-  useEffect(() => {
-    clearQueryClearSearchTimer();
-  }, [search.directoryId, search.fileFormat, search.sortDirection, search.sortField]);
 
   useEffect(() => {
     if (!skimDisplayChipsOpen && !directoryChipsOpen && !sortChipsOpen && !labelMenuPointer) {
@@ -408,7 +395,6 @@ export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], l
     }}
     onSubmit={(event) => {
       event.preventDefault();
-      clearQueryClearSearchTimer();
       onSearch();
     }}
   >
@@ -550,17 +536,13 @@ export const Cap7CESearchCapsule = ({ search, directoryName, directories = [], l
         placeholder={inputFeedbackIsGuide ? inputFeedback : ""}
         title={inputFeedback || undefined}
         onChange={(event) => {
-          clearQueryClearSearchTimer();
           const nextSearch = { ...search, query: event.target.value };
           const userClearedQuery = autoSearchOnQueryClear
             && search.query.trim().length > 0
             && nextSearch.query.trim().length === 0;
           onSearchChange(nextSearch);
           if (userClearedQuery && onSearchOptionsChange) {
-            queryClearSearchTimerRef.current = window.setTimeout(() => {
-              queryClearSearchTimerRef.current = null;
-              onSearchOptionsChange({ ...nextSearch, query: "" });
-            }, 500);
+            onSearchOptionsChange({ ...nextSearch, query: "" });
           }
         }}
         aria-label={t("search.inputLabel")}
