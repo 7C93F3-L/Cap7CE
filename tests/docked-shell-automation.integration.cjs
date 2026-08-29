@@ -20,7 +20,7 @@ const topTaskbarDisplay = {
   workArea: { x: 0, y: 40, width: 1920, height: 1040 }
 };
 
-const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabled = true, fixed = false, shellState = "normal", collapsibleStates }) => {
+const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabled = true, fixed = false, shellState = "normal", collapsibleStates, isDockEdgeExposed }) => {
   let bounds = { ...initialBounds };
   let activeDisplay = display;
   let clock = 0;
@@ -51,6 +51,7 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
     getDisplay: () => activeDisplay,
     getShellContext: () => ({ ...context }),
     hideLine: () => { activity.hideLine += 1; },
+    isDockEdgeExposed,
     markProgrammaticMove: () => { activity.markProgrammaticMove += 1; },
     markProgrammaticResize: () => { activity.markProgrammaticResize += 1; },
     setCollapsedLayerActive: (active) => { activity.collapsedLayers.push(active); },
@@ -62,7 +63,7 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
     clock = now;
     controller.sampleCursor(point, now);
   };
-  return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; } };
+  return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setBounds: (nextBounds) => { bounds = { ...nextBounds }; }, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; } };
 };
 
 assert.equal(dockedShellDockThresholdPx, 40);
@@ -78,6 +79,8 @@ assert.equal(left.presentation.shadow, false);
 assert.deepEqual(left.controller.getState(), { edge: "left" });
 assert.equal(left.activity.hideLine, 1);
 assert.deepEqual(left.activity.collapsedLayers, [true]);
+left.controller.noteUserWindowInteraction();
+assert.deepEqual(left.controller.getState(), { edge: "left" });
 assert.deepEqual(left.controller.toggle(), { status: "expanded" });
 assert.deepEqual(left.getBounds(), leftBounds);
 assert.equal(left.presentation.shadow, true);
@@ -110,6 +113,13 @@ assert.deepEqual(cornerPrefersAllowedEdge.controller.toggle(), { status: "collap
 
 const nearEdgeWithoutSnap = createController({ initialBounds: { x: 990, y: 200, width: 900, height: 600 } });
 assert.deepEqual(nearEdgeWithoutSnap.controller.toggle(), { status: "collapsed", edge: "right" });
+
+const displaySeam = createController({
+  initialBounds: rightBounds,
+  isDockEdgeExposed: (_display, edge) => edge !== "right"
+});
+assert.deepEqual(displaySeam.controller.toggle(), { status: "blocked", reason: "display-seam" });
+assert.equal(displaySeam.controller.getState(), null);
 
 const automatic = createController({ initialBounds: leftBounds });
 automatic.sample({ x: 200, y: 300 }, 0);
@@ -144,6 +154,16 @@ userMoved.sample({ x: 1200, y: 300 }, 519);
 assert.equal(userMoved.controller.getState(), null);
 userMoved.sample({ x: 1200, y: 300 }, 520);
 assert.deepEqual(userMoved.controller.getState(), { edge: "left" });
+
+const resizedAfterReveal = createController({ initialBounds: leftBounds });
+resizedAfterReveal.sample({ x: 200, y: 300 }, 0);
+resizedAfterReveal.sample({ x: 1200, y: 300 }, 1);
+resizedAfterReveal.sample({ x: 0, y: 300 }, 2);
+resizedAfterReveal.controller.noteUserWindowInteraction(520);
+resizedAfterReveal.setBounds({ ...leftBounds, width: 1100 });
+resizedAfterReveal.sample({ x: 1200, y: 300 }, 522);
+assert.deepEqual(resizedAfterReveal.controller.getState(), { edge: "left" });
+assert.deepEqual(resizedAfterReveal.controller.getExpandedBounds(), { ...leftBounds, width: 1100 });
 
 const suppressed = createController({ initialBounds: leftBounds });
 suppressed.sample({ x: 200, y: 300 }, 0);
@@ -262,11 +282,16 @@ assert.ok(lineLayerApplications >= 5);
 const root = path.resolve(__dirname, "..");
 const controllerSource = fs.readFileSync(path.join(root, "electron", "dockedShellController.ts"), "utf8");
 const automationSource = fs.readFileSync(path.join(root, "electron", "dockedShellAutomation.ts"), "utf8");
+const mainSource = fs.readFileSync(path.join(root, "electron", "main.ts"), "utf8");
 const rendererSource = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 assert.match(automationSource, /enableDebugShortcut && globalShortcut\.register\(debugShortcut/u);
 assert.match(automationSource, /setFixed: \(nextFixed: boolean\) => controller\.setFixed\(nextFixed\)/u);
+assert.match(automationSource, /getState: \(\) => controller\.getState\(\)/u);
 assert.doesNotMatch(automationSource, /ipcMain/u);
 assert.match(controllerSource, /window\.setBounds\(this\.getCollapsedWindowBounds\(session\), false\)/u);
+assert.match(mainSource, /const applyEdgeSnapAfterMove = \(\) => \{[\s\S]*?dockedShellController\?\.getState\(\)[\s\S]*?getEdgeSnappedBounds/u);
+assert.match(mainSource, /mainWindow\.on\("move", \(\) => \{[\s\S]*?isProgrammaticMoveGuardActive\(\) \|\| dockedShellController\?\.getState\(\)/u);
+assert.match(mainSource, /const applyPreviewEdgeSnapAfterMove = \(\) => \{[\s\S]*?previewDockedShell\.isCollapsed\(\)[\s\S]*?getEdgeSnappedBounds/u);
 assert.doesNotMatch(controllerSource, /setShape|setResizable|setMovable/u);
 assert.doesNotMatch(rendererSource, /DockedShellHost|DockedShellProbeHost/u);
 

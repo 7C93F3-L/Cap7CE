@@ -116,6 +116,34 @@ export const inferTaskbarEdge = (
   return maximumInset > 0 ? insets.find(({ inset }) => inset === maximumInset)?.edge ?? null : null;
 };
 
+const rangesOverlap = (firstStart: number, firstLength: number, secondStart: number, secondLength: number) => (
+  Math.min(firstStart + firstLength, secondStart + secondLength) > Math.max(firstStart, secondStart)
+);
+
+export const isWindowDockEdgeExposed = (
+  windowBounds: WindowLayoutBounds,
+  displayBounds: WindowLayoutBounds,
+  otherDisplayBounds: readonly WindowLayoutBounds[],
+  edge: WindowDockEdge
+) => {
+  const displayRight = displayBounds.x + displayBounds.width;
+  const displayBottom = displayBounds.y + displayBounds.height;
+  return !otherDisplayBounds.some((otherBounds) => {
+    const otherRight = otherBounds.x + otherBounds.width;
+    const otherBottom = otherBounds.y + otherBounds.height;
+    if (edge === "left" || edge === "right") {
+      const touchesEdge = edge === "left"
+        ? otherRight === displayBounds.x
+        : otherBounds.x === displayRight;
+      return touchesEdge && rangesOverlap(windowBounds.y, windowBounds.height, otherBounds.y, otherBounds.height);
+    }
+    const touchesEdge = edge === "top"
+      ? otherBottom === displayBounds.y
+      : otherBounds.y === displayBottom;
+    return touchesEdge && rangesOverlap(windowBounds.x, windowBounds.width, otherBounds.x, otherBounds.width);
+  });
+};
+
 export const getEdgeAnchoredCapsuleBounds = (
   workArea: WindowLayoutBounds,
   size: { width: number; height: number },

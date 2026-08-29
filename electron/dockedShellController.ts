@@ -5,7 +5,7 @@ import type { WindowDockEdge, WindowLayoutBounds, WindowLayoutDisplaySnapshot } 
 type DockedShellActionResult =
   | { status: "collapsed"; edge: WindowDockEdge }
   | { status: "expanded" }
-  | { status: "blocked"; reason: "not-docked" | "taskbar-edge" | "shell-state" | "window-unavailable" }
+  | { status: "blocked"; reason: "not-docked" | "taskbar-edge" | "display-seam" | "shell-state" | "window-unavailable" }
   | { status: "unavailable" };
 
 interface DockedShellWindow {
@@ -28,6 +28,11 @@ interface DockedShellControllerOptions {
   getDisplay: (bounds: WindowLayoutBounds) => WindowLayoutDisplaySnapshot;
   getShellContext: () => { state: string; maximized: boolean; interactionBlocked: boolean };
   hideLine: () => void;
+  isDockEdgeExposed?: (
+    display: WindowLayoutDisplaySnapshot,
+    edge: WindowDockEdge,
+    bounds: WindowLayoutBounds
+  ) => boolean;
   markProgrammaticMove: () => void;
   markProgrammaticResize?: () => void;
   now?: () => number;
@@ -172,6 +177,7 @@ export class DockedShellController {
   }
 
   noteUserWindowInteraction(durationMs = 520) {
+    if (!this.collapsed) this.session = null;
     this.armNextSession = true;
     this.suppressFor(durationMs);
   }
@@ -254,6 +260,10 @@ export class DockedShellController {
       this.session = null;
       return { status: "blocked", reason: nearestEdge === taskbarEdge ? "taskbar-edge" : "not-docked" };
     }
+    if (this.options.isDockEdgeExposed && !this.options.isDockEdgeExposed(display, edge, expandedBounds)) {
+      this.session = null;
+      return { status: "blocked", reason: "display-seam" };
+    }
     const session = { edge, display, expandedBounds, armed: false };
     session.armed = this.armNextSession || this.isPointInsideExpandedHoverRegion(point, session);
     this.armNextSession = false;
@@ -287,10 +297,10 @@ export class DockedShellController {
     this.options.hideLine();
     this.restoreShadow = window.hasShadow();
     window.setHasShadow(false);
-    this.options.markProgrammaticMove();
-    window.setBounds(this.getCollapsedWindowBounds(session), false);
     this.collapsed = true;
     this.setCollapsedLayerActive(true);
+    this.options.markProgrammaticMove();
+    window.setBounds(this.getCollapsedWindowBounds(session), false);
   }
 
   private expand(focus: boolean, armForMouseLeave = false) {

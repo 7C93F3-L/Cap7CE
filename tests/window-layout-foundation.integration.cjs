@@ -39,6 +39,33 @@ assert.equal(
   geometry.inferTaskbarEdge({ x: 0, y: 0, width: 1920, height: 1080 }, { x: 48, y: 0, width: 1872, height: 1080 }),
   "left"
 );
+assert.equal(
+  geometry.isWindowDockEdgeExposed(
+    { x: 1380, y: 200, width: 540, height: 156 },
+    { x: 0, y: 0, width: 1920, height: 1080 },
+    [{ x: 1920, y: 0, width: 1920, height: 1080 }],
+    "right"
+  ),
+  false
+);
+assert.equal(
+  geometry.isWindowDockEdgeExposed(
+    { x: 1380, y: 200, width: 540, height: 156 },
+    { x: 0, y: 0, width: 1920, height: 1080 },
+    [{ x: 1920, y: 700, width: 1920, height: 1080 }],
+    "right"
+  ),
+  true
+);
+assert.equal(
+  geometry.isWindowDockEdgeExposed(
+    { x: 500, y: 0, width: 540, height: 156 },
+    { x: 0, y: 0, width: 1920, height: 1080 },
+    [{ x: 1920, y: 0, width: 1920, height: 1080 }],
+    "top"
+  ),
+  true
+);
 
 assert.deepEqual(
   geometry.getEdgeAnchoredCapsuleBounds(workArea, { width: 300, height: 34 }, "bottom", 5),

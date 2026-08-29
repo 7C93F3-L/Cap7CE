@@ -1,4 +1,5 @@
 import { globalShortcut, screen, type BrowserWindow } from "electron";
+import { isWindowDockEdgeExposed } from "./windowLayoutGeometry";
 import type { WindowLayoutDisplaySnapshot } from "./windowLayoutTypes";
 import { DockedShellController } from "./dockedShellController";
 
@@ -41,7 +42,13 @@ export const installDockedShell = ({
     getDisplay: (bounds): WindowLayoutDisplaySnapshot => {
       const display = screen.getDisplayMatching(bounds);
       return { id: display.id, bounds: { ...display.bounds }, workArea: { ...display.workArea }, scaleFactor: display.scaleFactor };
-    }
+    },
+    isDockEdgeExposed: (display, edge, bounds) => isWindowDockEdgeExposed(
+      bounds,
+      display.bounds,
+      screen.getAllDisplays().filter(({ id }) => id !== display.id).map(({ bounds: displayBounds }) => displayBounds),
+      edge
+    )
   });
 
   const shortcutRegistered = enableDebugShortcut && globalShortcut.register(debugShortcut, () => controller.toggle());
@@ -58,6 +65,7 @@ export const installDockedShell = ({
     restore: (focus = false) => controller.restore(focus),
     setEnabled: (nextEnabled: boolean) => controller.setEnabled(nextEnabled),
     setFixed: (nextFixed: boolean) => controller.setFixed(nextFixed),
+    getState: () => controller.getState(),
     getExpandedBounds: () => controller.getExpandedBounds(),
     reconcileDisplayConfiguration: () => controller.reconcileDisplayConfiguration(),
     updateExpandedBounds: (bounds: WindowLayoutDisplaySnapshot["bounds"]) => controller.updateExpandedBounds(bounds),

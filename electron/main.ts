@@ -1090,6 +1090,7 @@ const applyPreviewEdgeSnapAfterMove = () => {
     || !previewSessionActive
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
+    || previewDockedShell.isCollapsed()
   ) {
     return;
   }
@@ -1111,6 +1112,7 @@ const schedulePreviewMoveSnapCheck = () => {
     || !previewSessionActive
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
+    || previewDockedShell.isCollapsed()
   ) {
     return;
   }
@@ -2183,7 +2185,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || isProgrammaticResizeGuardActive()) {
+  if (!mainWindow || mainWindow.isDestroyed() || isProgrammaticResizeGuardActive() || dockedShellController?.getState()) {
     return;
   }
 
@@ -2237,7 +2239,7 @@ const scheduleResizeSettledCheck = () => {
 };
 
 const applyEdgeSnapAfterMove = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || !canSnapShellWindow()) {
+  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || dockedShellController?.getState() || !canSnapShellWindow()) {
     return;
   }
 
@@ -2437,7 +2439,7 @@ const createWindow = () => {
   });
 
   mainWindow.on("move", () => {
-    if (isProgrammaticMoveGuardActive()) {
+    if (isProgrammaticMoveGuardActive() || dockedShellController?.getState()) {
       return;
     }
 
