@@ -33,7 +33,7 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 当前状态
 
-- 当前版本：`0.9.8`
+- 当前版本：`0.9.9`
 - 发布阶段：Preview
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
@@ -46,9 +46,10 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 - 扫描多个本地目录并建立文件索引。
 - 通过本地视觉模型生成描述与关键词。
 - 新执行的 AI 识别会跟随当前软件语言生成中文或英文描述与关键词。
-- 按关键词、文件名、目录、识别状态、格式和排序方式筛选。
+- 按关键词、文件名、目录、查看范围和排序方式筛选。
 - 使用 skim 浏览磁盘和目录中的多种项目文件，通过快速访问边栏或在搜索框粘贴本机文件、目录的完整路径直达对应位置，并预览视觉、文本、文档、归档、字体、音频和视频内容。
 - 提供 capsule、micro、mini、normal 和 Settings 窗口形态。
+- 提供 Cap7CE 透明自绘模式与使用 Windows 原生窗口按钮的兼容模式。
 - 支持缩略图、独立预览窗口、多选和关键词编辑。
 - 支持打开文件、定位路径、拖拽导出和移入回收站。
 - 支持明亮、黑暗、跟随系统主题及中英文界面。
@@ -206,7 +207,7 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current version: `0.9.8`
+- Current version: `0.9.9`
 - Release stage: Preview
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
@@ -219,9 +220,10 @@ Preview releases may still contain compatibility, performance, and UI issues. Ea
 - Scan and index multiple local directories.
 - Generate descriptions and keywords with a local vision model.
 - New AI recognition runs generate Chinese or English descriptions and keywords according to the current app language.
-- Filter by keywords, file name, directory, recognition status, format, and sort order.
+- Filter by keywords, file name, directory, view scope, and sort order.
 - Use skim to browse project files across disks and folders, jump to common locations from the Quick Access sidebar or by pasting a full local file or folder path into search, and preview visual, text, document, archive, font, audio, and video content.
 - Use capsule, micro, mini, normal, and Settings window forms.
+- Choose between the transparent custom Cap7CE mode and a compatibility mode with native Windows controls.
 - Browse thumbnails, open an independent preview window, select multiple files, and edit keywords.
 - Open files, reveal paths, drag files to other applications, and move files to the Recycle Bin.
 - Use light, dark, or system themes with Chinese and English interfaces.
