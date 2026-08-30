@@ -48,7 +48,7 @@ for (const marker of ["aria-pressed={pinned}", "aria-label={label}", "onClick={o
 }
 
 if (!titlebarSource.includes("getWindowPresentationSymbolColor(theme)")
-  || !/color:\s*var\(--compatibility-caption-symbol-color/.test(titlebarStyles)
+  || !/style=\{theme \? \{ color: getWindowPresentationSymbolColor\(theme\) \}/.test(titlebarSource)
   || /cap-compatibility-titlebar-pin:hover\s*\{[^}]*color:/.test(titlebarStyles)
   || /cap-compatibility-titlebar-pin\[aria-pressed="true"\]\s*\{[^}]*color:/.test(titlebarStyles)) {
   throw new Error("Compatibility pin color must remain identical to the native caption symbols in every state.");

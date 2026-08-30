@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { getWindowPresentationSymbolColor } from "../../../electron/windowPresentationPolicy";
 import iconPinOffSvg from "../assets/icons/icon-pin-off.svg?raw";
@@ -10,12 +9,8 @@ interface CompatibilityTitlebarProps {
   onTogglePinned: () => void;
   theme?: "light" | "dark";
 }
-
 const CompatibilityTitlebar = ({ pinned, label, onTogglePinned, theme }: CompatibilityTitlebarProps) => {
-  const titlebarStyle = theme ? {
-    "--compatibility-caption-symbol-color": getWindowPresentationSymbolColor(theme)
-  } as CSSProperties : undefined;
-  return createPortal(<header className={`cap-compatibility-titlebar${theme ? ` app theme-${theme}` : ""}`} style={titlebarStyle} data-window-controls="true">
+  return createPortal(<header className={`cap-compatibility-titlebar${theme ? ` app theme-${theme}` : ""}`} style={theme ? { color: getWindowPresentationSymbolColor(theme) } : undefined} data-window-controls="true">
     <button
       className="cap-compatibility-titlebar-pin"
       type="button"

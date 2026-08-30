@@ -16,7 +16,7 @@
   display: flex;
   align-items: stretch;
   --compatibility-caption-hover: rgb(0 0 0 / 10%);
-  color: var(--compatibility-caption-symbol-color, var(--window-control-hover));
+  color: var(--window-control-hover);
   background: transparent;
   app-region: drag;
   -webkit-app-region: drag;
