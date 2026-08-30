@@ -46,10 +46,11 @@ assert.deepEqual(getWindowPresentationBrowserOptions(cap7cePolicy, "main", "dark
 assert.deepEqual(getWindowPresentationBrowserOptions(compatibilityPolicy, "main", "dark"), {
   frame: false,
   transparent: false,
-  backgroundColor: "#171717",
+  backgroundColor: "#00000000",
+  backgroundMaterial: "mica",
   roundedCorners: true,
   titleBarStyle: "hidden",
-  titleBarOverlay: { color: "#171717", symbolColor: "#D8D8D8", height: 36 }
+  titleBarOverlay: { color: "#00000000", symbolColor: "#D8D8D8", height: 36 }
 });
 assert.equal(resolveWindowPresentationTheme("system", true), "dark");
 assert.equal(resolveWindowPresentationTheme("system", false), "light");

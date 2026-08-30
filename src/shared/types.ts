@@ -14,6 +14,7 @@ export interface AppearanceColors {
 export interface CompatibilityCapsulePresentation {
   query: string;
   placeholder: string;
+  operationHintVisible: boolean;
   ariaLabel: string;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;

@@ -6,7 +6,7 @@ import "./CompatibilityCapsuleWindowApp.css";
 
 const defaultPresentation: CompatibilityCapsulePresentation = {
   query: "",
-  placeholder: "",
+  placeholder: "", operationHintVisible: false,
   ariaLabel: "Search",
   theme: "light",
   appearanceColors: { themeColor: "#7C93F3", accentColor: "#68C3C0" }
@@ -47,7 +47,7 @@ const CompatibilityCapsuleWindowApp = () => {
     <div className={`app theme-${presentation.theme} cap-shell cap-compatibility-capsule-window`} style={style}>
       <QuickSearchCapsule
         ariaLabel={presentation.ariaLabel}
-        inputRef={inputRef}
+        inputRef={inputRef} operationHintVisible={presentation.operationHintVisible}
         placeholder={presentation.placeholder}
         value={draft}
         onCancel={() => void window.cap7ce?.capsule.cancel(true)}

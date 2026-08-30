@@ -1,11 +1,9 @@
-.cap-shell-compatibility {
-  --compatibility-titlebar-height: 36px;
-  background: var(--app-bg);
-}
-
+.cap-shell-compatibility,
 .preview-window-compatibility {
   --compatibility-titlebar-height: 36px;
-  background: var(--app-bg);
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(to bottom, transparent 0 var(--compatibility-titlebar-height), var(--app-bg) var(--compatibility-titlebar-height) 100%);
 }
 
 .cap-compatibility-titlebar {
@@ -17,16 +15,21 @@
   height: env(titlebar-area-height, var(--compatibility-titlebar-height));
   display: flex;
   align-items: stretch;
+  --compatibility-caption-hover: rgb(0 0 0 / 10%);
   color: var(--window-control-color);
   background: transparent;
   app-region: drag;
   -webkit-app-region: drag;
 }
 
+.cap-compatibility-titlebar.theme-dark {
+  --compatibility-caption-hover: rgb(255 255 255 / 10%);
+}
+
 .cap-compatibility-titlebar-pin {
-  width: var(--compatibility-titlebar-height);
+  width: 46px;
   height: 100%;
-  flex: 0 0 var(--compatibility-titlebar-height);
+  flex: 0 0 46px;
   margin-left: auto;
   display: grid;
   place-items: center;
@@ -39,19 +42,17 @@
   -webkit-app-region: no-drag;
 }
 
-.cap-compatibility-titlebar-pin:hover,
-.cap-compatibility-titlebar-pin[aria-pressed="true"] {
-  color: var(--window-control-hover);
-  background: color-mix(in srgb, currentColor 8%, transparent);
-}
+.cap-compatibility-titlebar-pin:hover { color: var(--window-control-hover); background: var(--compatibility-caption-hover); }
+.cap-compatibility-titlebar-pin[aria-pressed="true"] { color: var(--window-control-hover); background: transparent; }
+.cap-compatibility-titlebar-pin[aria-pressed="true"]:hover { background: var(--compatibility-caption-hover); }
 
 .cap-compatibility-titlebar-pin:focus-visible {
   outline-offset: -3px;
 }
 
 .cap-compatibility-titlebar-pin-icon {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 
 .cap-shell-compatibility .cap-shell-content {
@@ -69,8 +70,4 @@
 
 .preview-window-compatibility .cap-window-control-rail {
   top: var(--compatibility-titlebar-height);
-}
-
-.preview-window-compatibility.preview-window-maximized {
-  border-radius: 0;
 }

@@ -18,6 +18,8 @@ assert.match(maximizeControllerSource, /window\.on\("unmaximize", this\.handleRe
 assert.match(mainSource, /miniStandardHeight: miniDefaultHeightPx,[\s\S]*?titlebarHeight: getMainWindowTitlebarHeight\(\)/u);
 assert.match(viewportSource, /window\.innerHeight - currentTitlebarHeight/u);
 assert.match(mainSource, /windowPresentationRuntime\.getBrowserOptions\("preview", nativeTheme\.shouldUseDarkColors\)/u);
+assert.match(mainSource, /const refreshWindowPresentationAppearance = async \(\) => \{[\s\S]*?nativeTheme\.themeSource !== preferences\.themePreference[\s\S]*?nativeTheme\.themeSource = preferences\.themePreference[\s\S]*?applyMainWindowAppearance/u);
+assert.match(mainSource, /const preferences = await getUserPreferences\(\);[\s\S]*?nativeTheme\.themeSource = preferences\.themePreference;[\s\S]*?windowPresentationRuntime\.configure/u);
 
 console.log(JSON.stringify({
   presentationPolicyLoadedBeforeMainWindow: true,
@@ -26,5 +28,6 @@ console.log(JSON.stringify({
   outerBoundsDriveLayoutMemory: true,
   nativeMaximizeRestoreHooked: true,
   rendererViewportExcludesTitlebar: true,
-  previewWindowUsesActivePresentationPolicy: true
+  previewWindowUsesActivePresentationPolicy: true,
+  nativeMicaThemeFollowsPreference: true
 }));

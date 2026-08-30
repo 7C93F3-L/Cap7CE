@@ -1700,11 +1700,11 @@ const App = () => {
 
   const compatibilityCapsulePresentation = useMemo(() => ({
     query: search.query,
-    placeholder: searchInputFeedback,
+    placeholder: searchInputFeedback, operationHintVisible,
     ariaLabel: t("search.action"),
     theme: effectiveTheme,
     appearanceColors
-  }), [appearanceColors, effectiveTheme, languagePreference, search.query, searchInputFeedback]);
+  }), [appearanceColors, effectiveTheme, languagePreference, operationHintVisible, search.query, searchInputFeedback]);
   useCompatibilityCapsuleBridge({
     active: isCompatibilityMode && shellState === "capsule",
     presentation: compatibilityCapsulePresentation,

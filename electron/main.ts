@@ -2306,13 +2306,12 @@ const forceApplyDefaultMicroBounds = () => {
 };
 
 const getMainWindowPresentationOptions = () => windowPresentationRuntime.getBrowserOptions("main", nativeTheme.shouldUseDarkColors);
-
 const refreshWindowPresentationAppearance = async () => {
   const preferences = await getUserPreferences();
+  if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
   const mainUpdated = windowPresentationRuntime.applyMainWindowAppearance(mainWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
   return windowPresentationRuntime.applyPreviewWindowAppearance(previewWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors) || mainUpdated;
 };
-
 const createWindow = () => {
   mainWindowReadyForActivation = false;
   const initialBounds = getShellWindowBounds("normal");
@@ -2460,6 +2459,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     console.warn("[search-path-evidence] failed to backfill existing catalog paths", error);
   }
   const preferences = await getUserPreferences();
+  if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
   const hasDevelopmentWindowModeOverride = !app.isPackaged && Boolean(process.env.CAP7CE_WINDOW_PRESENTATION_MODE);
   const requestedWindowPresentationMode = hasDevelopmentWindowModeOverride ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
   const normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode(requestedWindowPresentationMode);

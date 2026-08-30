@@ -23,6 +23,7 @@ export interface WindowPresentationBrowserOptions {
   frame: false;
   transparent: boolean;
   backgroundColor: string;
+  backgroundMaterial?: "mica";
   roundedCorners?: true;
   titleBarStyle?: "hidden";
   titleBarOverlay?: {
@@ -65,9 +66,9 @@ export const getWindowPresentationPolicy = (
   };
 };
 
-const windowPresentationThemes: Record<WindowPresentationTheme, { backgroundColor: string; symbolColor: string }> = {
-  dark: { backgroundColor: "#171717", symbolColor: "#D8D8D8" },
-  light: { backgroundColor: "#F4F4F4", symbolColor: "#242424" }
+const windowPresentationThemes: Record<WindowPresentationTheme, { symbolColor: string }> = {
+  dark: { symbolColor: "#D8D8D8" },
+  light: { symbolColor: "#242424" }
 };
 
 export const resolveWindowPresentationTheme = (
@@ -94,11 +95,12 @@ export const getWindowPresentationBrowserOptions = (
   return {
     frame: false,
     transparent: false,
-    backgroundColor: colors.backgroundColor,
+    backgroundColor: "#00000000",
+    backgroundMaterial: "mica",
     roundedCorners: true,
     titleBarStyle: "hidden",
     titleBarOverlay: {
-      color: colors.backgroundColor,
+      color: "#00000000",
       symbolColor: colors.symbolColor,
       height: policy.titlebarHeight
     }

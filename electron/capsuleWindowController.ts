@@ -3,7 +3,7 @@ import type { WindowPresentationMode } from "./windowPresentationPolicy";
 import type { WindowDockEdge } from "./windowLayoutTypes";
 export interface CapsulePresentation {
   query: string;
-  placeholder: string;
+  placeholder: string; operationHintVisible: boolean;
   ariaLabel: string;
   theme: "light" | "dark";
   appearanceColors: { themeColor: string; accentColor: string };
@@ -39,7 +39,7 @@ interface CapsuleWindowControllerOptions {
 
 const defaultPresentation: CapsulePresentation = {
   query: "",
-  placeholder: "",
+  placeholder: "", operationHintVisible: false,
   ariaLabel: "Search",
   theme: "light",
   appearanceColors: { themeColor: "#7C93F3", accentColor: "#68C3C0" }
@@ -153,7 +153,7 @@ export class CapsuleWindowController {
     ) return false;
     this.presentation = {
       query: normalizeText(candidate.query, 4096),
-      placeholder: normalizeText(candidate.placeholder, 512),
+      placeholder: normalizeText(candidate.placeholder, 512), operationHintVisible: candidate.operationHintVisible === true,
       ariaLabel: normalizeText(candidate.ariaLabel, 128) || "Search",
       theme: candidate.theme,
       appearanceColors: { ...candidate.appearanceColors }

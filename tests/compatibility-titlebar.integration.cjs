@@ -62,6 +62,21 @@ if (!/\.cap-shell-compatibility \.cap-shell-content[\s\S]*?top:\s*var\(--compati
   throw new Error("Compatibility titlebar must sit outside both the content area and retained right rail.");
 }
 
+if (!/\.cap-shell-compatibility,\s*\.preview-window-compatibility\s*\{[\s\S]*?border-radius:\s*0/.test(titlebarStyles)) {
+  throw new Error("Compatibility windows must leave outer corner rendering to the native frame.");
+}
+
+if (!/\.cap-shell-compatibility,\s*\.preview-window-compatibility\s*\{[\s\S]*?background:\s*linear-gradient\([\s\S]*?transparent 0 var\(--compatibility-titlebar-height\)[\s\S]*?var\(--app-bg\)/.test(titlebarStyles)
+  || !/\.cap-compatibility-titlebar-pin\s*\{[\s\S]*?width:\s*46px[\s\S]*?height:\s*100%/.test(titlebarStyles)
+  || !/\.cap-compatibility-titlebar-pin-icon\s*\{[\s\S]*?width:\s*24px[\s\S]*?height:\s*24px/.test(titlebarStyles)) {
+  throw new Error("Compatibility titlebar must expose Mica only above opaque content and align the pin control with native caption buttons.");
+}
+
+if (!/\.cap-shell-compatibility,\s*\.preview-window-compatibility\s*\{[\s\S]*?border:\s*0/.test(titlebarStyles)
+  || !/\.cap-compatibility-titlebar-pin\[aria-pressed="true"\][^{]*\{[^}]*background:\s*transparent/.test(titlebarStyles)) {
+  throw new Error("Compatibility windows must not retain custom edge lines or a persistent pin background.");
+}
+
 if (!rendererEntry.includes('import "./window-presentation/CompatibilityTitlebar.css";')) {
   throw new Error("Compatibility titlebar domain styles must be loaded by the Renderer entry.");
 }
@@ -71,5 +86,7 @@ console.log(JSON.stringify({
   pinControlAccessibleAndShared: true,
   titlebarIsolatedFromScrollableShell: true,
   existingRightRailEntriesPreserved: true,
-  compatibilityContentOffsetVerified: true
+  compatibilityContentOffsetVerified: true,
+  nativeOuterCornersPreserved: true,
+  micaTitlebarAndCaptionSizingVerified: true
 }));

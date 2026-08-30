@@ -57,7 +57,9 @@ assert.match(bridgeSource, /capsule\.onDraftChanged\(\(query\) => callbacksRef\.
 assert.match(bridgeSource, /capsule\.onSubmitRequested\(\(query\) => callbacksRef\.current\.onSubmit\(query\)\)/u);
 assert.match(bridgeSource, /capsule\.onCancelRequested\(\(clearQuery\) => callbacksRef\.current\.onCancel\(clearQuery\)\)/u);
 assert.match(appSource, /<QuickSearchCapsule/u);
-assert.match(capsuleAppSource, /<QuickSearchCapsule/u);
+assert.match(appSource, /placeholder: searchInputFeedback,[\s\S]*?operationHintVisible,/u);
+assert.match(controllerSource, /operationHintVisible: candidate\.operationHintVisible === true/u);
+assert.match(capsuleAppSource, /<QuickSearchCapsule[\s\S]*?operationHintVisible=\{presentation\.operationHintVisible\}/u);
 assert.match(sharedCapsuleSource, /onCompositionStart[\s\S]*?onComposingChange\?\.\(true\)/u);
 assert.match(sharedCapsuleSource, /onCompositionEnd[\s\S]*?compositionGuardUntilRef\.current = Date\.now\(\) \+ 180/u);
 assert.match(sharedCapsuleSource, /event\.key === "Escape"[\s\S]*?!composing\) onCancel\(\)/u);
@@ -69,6 +71,7 @@ console.log(JSON.stringify({
   sharedImeAndSubmitGuardPreserved: true,
   lineMainPreviewCapsuleMutualExclusionCovered: true,
   cap7ceSameWindowCapsulePreserved: true,
+  operationHintColorStateShared: true,
   displayReconciliationAndExitCleanupCovered: true,
   nativeHeightCorrectionPreservesEdgeGap: true
 }));
