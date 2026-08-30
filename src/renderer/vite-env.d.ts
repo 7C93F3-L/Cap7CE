@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -31,6 +31,7 @@ declare global {
       };
       app: {
         quit: () => Promise<boolean>;
+        switchWindowPresentationMode: (mode: UserPreferences["windowPresentationMode"]) => Promise<WindowPresentationSwitchResult>;
         openReleasePage: () => Promise<boolean>;
         checkForUpdates: () => Promise<{
           status: "up_to_date" | "update_available" | "failed";

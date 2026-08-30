@@ -3199,6 +3199,7 @@ const App = () => {
                 appearanceColors={appearanceColors}
                 standbyLineVisible={standbyLineVisible}
                 launchAtLogin={launchAtLogin}
+                windowPresentationMode={windowPresentationMode}
                 systemNotificationsEnabled={systemNotificationsEnabled}
                 operationHintsEnabled={operationHintsEnabled}
                 aiRecognitionEnabled={aiRecognitionEnabled}

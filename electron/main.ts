@@ -67,6 +67,8 @@ import { DEFAULT_WINDOW_RESIZE_THRESHOLDS, isStableResizeBounds, resolveResizeTa
 import { CompatibilityNativeMaximizeController } from "./compatibilityNativeMaximizeController";
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { WindowPresentationRuntime } from "./windowPresentationRuntime";
+import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
+import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -177,6 +179,12 @@ let mainWindowSkipTaskbar: boolean | null = null;
 let microBottomCenterAnchored = false;
 const windowPresentationRuntime = new WindowPresentationRuntime();
 let windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
+const windowPresentationSwitchRuntime = createWindowPresentationSwitchRuntime({
+  registrar: ipcMain, isSenderAllowed: isMainSenderAllowed, markerPath: path.join(app.getPath("userData"), "config", "window-presentation-switch.json"),
+  getActiveMode: () => windowPresentationRuntime.mode, updatePreference: updateWindowPresentationModePreference,
+  flushBeforeRestart: async () => { await Promise.all([windowLayoutManager.flush(), runtimeDiagnostics.flush()]); }, relaunch: () => { delete process.env.CAP7CE_WINDOW_PRESENTATION_MODE; app.relaunch(); },
+  setQuitting: () => { isQuitting = true; }, quit: () => app.quit()
+});
 let standbyLineVisible = true;
 let systemNotificationsEnabled = true;
 let quickActionGlobalEnabled = true;
@@ -2360,6 +2368,7 @@ const createWindow = () => {
     }
   });
   lockWebContentsZoom(mainWindow.webContents);
+  mainWindow.webContents.once("did-finish-load", () => { void windowPresentationSwitchRuntime.completeStartup(windowPresentationRuntime.mode); });
   dockedShellController = installDockedShell({
     window: mainWindow, enabled: edgeCollapseEnabled, enableDebugShortcut: Boolean(process.env.VITE_DEV_SERVER_URL),
     fixed: shellAlwaysOnTop,
@@ -2478,7 +2487,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   }
   const preferences = await getUserPreferences();
   const requestedWindowPresentationMode = !app.isPackaged && process.env.CAP7CE_WINDOW_PRESENTATION_MODE ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
-  windowPresentationRuntime.configure(requestedWindowPresentationMode, preferences.themePreference);
+  windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizeWindowPresentationMode(requestedWindowPresentationMode)), preferences.themePreference);
   windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences(preferences);
@@ -2667,12 +2676,6 @@ ipcMain.handle("window:toggleNormalMaximized", () => {
   mainWindow.setBounds(getNormalWorkAreaBounds(), true);
   shellMaximized = true;
   return { isMaximized: shellMaximized, lastNormalBounds };
-});
-
-ipcMain.handle("app:quit", () => {
-  isQuitting = true;
-  app.quit();
-  return true;
 });
 
 ipcMain.handle("app:openReleasePage", async () => {

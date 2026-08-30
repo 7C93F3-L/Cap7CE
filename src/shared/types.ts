@@ -490,6 +490,11 @@ export interface SkimDisplayPreferences {
 
 export type WindowPresentationMode = "cap7ce" | "compatibility";
 
+export interface WindowPresentationSwitchResult {
+  status: "restarting" | "unchanged" | "busy" | "failed";
+  targetMode: WindowPresentationMode;
+}
+
 export interface UserPreferences {
   themePreference: ThemeMode;
   languagePreference: LanguagePreference;

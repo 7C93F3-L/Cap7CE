@@ -73,6 +73,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
   },
   app: {
     quit: () => ipcRenderer.invoke("app:quit"),
+    switchWindowPresentationMode: (mode: "cap7ce" | "compatibility") => ipcRenderer.invoke("app:switchWindowPresentationMode", mode),
     openReleasePage: () => ipcRenderer.invoke("app:openReleasePage"),
     checkForUpdates: () => ipcRenderer.invoke("app:checkForUpdates"),
     downloadUpdate: () => ipcRenderer.invoke("app:downloadUpdate"),

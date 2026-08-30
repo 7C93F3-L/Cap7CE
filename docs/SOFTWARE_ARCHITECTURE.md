@@ -69,6 +69,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
 | `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；程序主动取消最大化不会误触发原生还原链路 |
 | `src/renderer/window-presentation/CompatibilityTitlebar.tsx` / `.css` | 仅在兼容主窗口生效的 WCO 标题栏；通过 portal 挂载到 `document.body`，与会动画、裁剪和滚动的网格壳层隔离，避免网格滚动重算后覆盖 Windows 拖动命中区。使用 `titlebar-area-*` 环境变量限定安全拖动区，标题栏右端复用现有置顶图标、状态与统一动作，系统最小化 / 最大化 / 关闭继续由 Windows 绘制。现有右侧栏宽度及 Skim / Settings 入口不变，只清空兼容模式下的旧顶部窗口动作 |
+| `windowPresentationSwitchRuntime.ts` | 窗口模式切换的单次事务、受限 IPC 与启动恢复；先记录旧 / 新模式，再持久化偏好并刷新窗口布局和诊断数据，随后受控 relaunch。新进程须在主 Renderer 完成加载后清除启动标记；重复请求、写入 / 刷新失败、启动超时或上次启动未完成时回退旧模式，避免双实例和半切换状态。原有退出 IPC 同域注册，继续只接受主 Renderer |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 独立 `window-layout.json` 的校验、损坏回退、原子替换和 debounce 写入；Manager 按单一窗口记忆开关捕获与恢复 micro、mini、normal 的完整展开布局，并使 Settings 共用 normal 记录；最后有效停靠方向始终在本次运行内可用，仅在记忆开启时跨重启恢复，供主窗口自身边缘收起使用 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |

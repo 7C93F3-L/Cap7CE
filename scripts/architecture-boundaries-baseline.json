@@ -27,7 +27,6 @@
     "electron/lineWindowController.ts": 159
   },
   "legacyMainIpcChannels": [
-    "app:quit",
     "app:openReleasePage",
     "app:checkForUpdates",
     "app:downloadUpdate",
