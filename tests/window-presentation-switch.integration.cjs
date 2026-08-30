@@ -10,6 +10,7 @@ const createHarness = async (overrides = {}) => {
   const root = overrides.root ?? await fs.mkdtemp(path.join(os.tmpdir(), "cap7ce-window-mode-switch-"));
   const handles = new Map();
   const calls = [];
+  const diagnostics = [];
   let activeMode = overrides.activeMode ?? "cap7ce";
   const runtime = createWindowPresentationSwitchRuntime({
     registrar: {
@@ -27,10 +28,11 @@ const createHarness = async (overrides = {}) => {
     relaunch: overrides.relaunch ?? (() => calls.push(["relaunch"])),
     setQuitting: () => calls.push(["setQuitting"]),
     quit: () => calls.push(["quit"]),
+    onDiagnostic: (level, event, data) => diagnostics.push({ level, event, data }),
     startupTimeoutMs: overrides.startupTimeoutMs ?? 40,
     now: () => new Date("2026-08-30T08:00:00.000Z")
   });
-  return { root, handles, calls, runtime, setActiveMode: (mode) => { activeMode = mode; } };
+  return { root, handles, calls, diagnostics, runtime, setActiveMode: (mode) => { activeMode = mode; } };
 };
 
 const run = async () => {
@@ -48,6 +50,11 @@ const run = async () => {
   });
   await waitForTimers();
   assert.deepEqual(first.calls, [["preference", "compatibility"], ["flush"], ["relaunch"], ["setQuitting"], ["quit"]]);
+  assert.deepEqual(first.diagnostics.map(({ event, data }) => [event, data.status ?? null]), [
+    ["window.presentation.switch.requested", null],
+    ["window.presentation.switch.result", "restarting"],
+    ["window.presentation.switch.result", "busy"]
+  ]);
 
   const successfulProducer = await createHarness();
   await successfulProducer.runtime.requestSwitch("compatibility");
@@ -55,6 +62,7 @@ const run = async () => {
   assert.equal(await launching.runtime.resolveStartupMode("compatibility"), "compatibility");
   await launching.runtime.completeStartup("compatibility");
   assert.deepEqual(launching.calls, []);
+  assert.deepEqual(launching.diagnostics.map(({ event }) => event), ["window.presentation.switch.startup_pending", "window.presentation.switch.completed"]);
 
   const failedFlush = await createHarness({
     flushBeforeRestart: async () => { throw new Error("flush failed"); }
@@ -72,6 +80,7 @@ const run = async () => {
     targetMode: "compatibility"
   });
   assert.deepEqual(failedFlush.calls, [["preference", "compatibility"], ["preference", "cap7ce"]]);
+  assert.equal(failedFlush.diagnostics.at(-1).data.status, "failed");
 
   const timeoutProducer = await createHarness();
   await timeoutProducer.runtime.requestSwitch("compatibility");
@@ -79,6 +88,7 @@ const run = async () => {
   assert.equal(await timeout.runtime.resolveStartupMode("compatibility"), "compatibility");
   await waitForTimers();
   assert.deepEqual(timeout.calls, [["preference", "cap7ce"], ["relaunch"], ["setQuitting"], ["quit"]]);
+  assert.equal(timeout.diagnostics.at(-1).event, "window.presentation.switch.startup_timeout");
 
   const staleLaunch = await createHarness({ activeMode: "cap7ce" });
   await fs.writeFile(path.join(staleLaunch.root, "window-presentation-switch.json"), JSON.stringify({
@@ -101,17 +111,20 @@ const run = async () => {
     relaunch: () => undefined,
     setQuitting: () => undefined,
     quit: () => undefined,
+    onDiagnostic: (level, event, data) => staleLaunch.diagnostics.push({ level, event, data }),
     startupTimeoutMs: 500
   });
   assert.equal(await staleRuntime.resolveStartupMode("cap7ce"), "compatibility");
   assert.deepEqual(staleLaunch.calls.at(-1), ["stalePreference", "compatibility"]);
+  assert.equal(staleLaunch.diagnostics.at(-1).event, "window.presentation.switch.stale_launch_rolled_back");
 
-  const [appearanceSource, rowSource, preloadSource, zhSource, enSource] = await Promise.all([
+  const [appearanceSource, rowSource, preloadSource, zhSource, enSource, packageSource] = await Promise.all([
     fs.readFile(path.join(__dirname, "../src/renderer/settings/AppearanceSettingsSections.tsx"), "utf8"),
     fs.readFile(path.join(__dirname, "../src/renderer/settings/WindowPresentationModeSettingsRow.tsx"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/preload.ts"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/localization.ts"), "utf8"),
-    fs.readFile(path.join(__dirname, "../electron/locales/en-US.ts"), "utf8")
+    fs.readFile(path.join(__dirname, "../electron/locales/en-US.ts"), "utf8"),
+    fs.readFile(path.join(__dirname, "../package.json"), "utf8")
   ]);
   assert.match(appearanceSource, /settings\.launchAtLogin[\s\S]*?<WindowPresentationModeSettingsRow activeMode=\{windowPresentationMode\}/);
   assert.match(rowSource, /activeMode === "cap7ce" \? "compatibility" : "cap7ce"/);
@@ -121,6 +134,9 @@ const run = async () => {
     assert.ok(zhSource.includes(`"${key}"`), `Missing Chinese text: ${key}`);
     assert.ok(enSource.includes(`"${key}"`), `Missing English text: ${key}`);
   }
+  const developmentScript = JSON.parse(packageSource).scripts.dev;
+  assert.match(developmentScript, /--kill-others-on-fail/u);
+  assert.doesNotMatch(developmentScript, /(?:^|\s)-k(?:\s|$)/u);
 
   await Promise.all([first, successfulProducer, failedFlush, timeoutProducer, staleLaunch].map(({ root }) => fs.rm(root, { recursive: true, force: true })));
   console.log(JSON.stringify({
@@ -129,6 +145,8 @@ const run = async () => {
     flushFailureRolledBack: true,
     startupTimeoutRolledBack: true,
     staleLaunchRolledBack: true,
+    controlledRestartDiagnosticsVerified: true,
+    developmentRendererSurvivesControlledRestart: true,
     settingsTargetModeRowVerified: true
   }));
 };

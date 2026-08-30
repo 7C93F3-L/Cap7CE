@@ -1,7 +1,6 @@
-import { BrowserWindow, screen, type Display, type IpcMain, type Rectangle } from "electron";
+import { BrowserWindow, screen, type BrowserWindowConstructorOptions, type Display, type IpcMain, type Rectangle } from "electron";
 import type { WindowPresentationMode } from "./windowPresentationPolicy";
 import type { WindowDockEdge } from "./windowLayoutTypes";
-
 export interface CapsulePresentation {
   query: string;
   placeholder: string;
@@ -16,6 +15,7 @@ export interface CapsuleTarget {
 }
 
 interface CapsuleWindowControllerOptions {
+  createWindow?: (options: BrowserWindowConstructorOptions) => BrowserWindow;
   devServerUrl?: string;
   devToolsEnabled: boolean;
   getAlwaysOnTop: () => boolean;
@@ -189,7 +189,7 @@ export class CapsuleWindowController {
 
   private ensureWindow() {
     if (this.capsuleWindow && !this.capsuleWindow.isDestroyed()) return this.capsuleWindow;
-    const createdWindow = new BrowserWindow({
+    const createdWindow = (this.options.createWindow ?? ((options) => new BrowserWindow(options)))({
       width: 300, height: 34, title: "Cap7CE Capsule", frame: false, transparent: true,
       backgroundColor: "#00000000", hasShadow: false, show: false, skipTaskbar: true,
       resizable: false, movable: false, minimizable: false, maximizable: false, fullscreenable: false,

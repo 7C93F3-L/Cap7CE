@@ -37,7 +37,7 @@ Cap7CE 的核心能力包括：
 
 Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统能力通过 preload 白名单 API 进入主进程。
 
-运行诊断完全保留在本机：`runtimeDiagnostics.ts` 以 2 MB × 5 的 JSONL 轮转上限记录会话、搜索边界、资源快照和异常事件，默认不记录搜索词、文件名、完整路径或嵌入元数据；详细记录仅是本次运行内的临时状态。Electron Crashpad 使用 `uploadToServer: false`，不会自动上传。诊断导出只收集受限数量和体积的日志及最近崩溃报告，文字日志在写入 ZIP 前再次脱敏；应用不提供远程提交入口。
+运行诊断完全保留在本机：`runtimeDiagnostics.ts` 以 2 MB × 5 的 JSONL 轮转上限记录会话、搜索边界、资源快照和异常事件，默认不记录搜索词、文件名、完整路径或嵌入元数据；窗口诊断只记录启动时实际外壳模式、受控切换状态、窗口类别和已脱敏异常。详细记录仅是本次运行内的临时状态。Electron Crashpad 使用 `uploadToServer: false`，不会自动上传。诊断导出只收集受限数量和体积的日志及最近崩溃报告，文字日志在写入 ZIP 前再次脱敏；应用不提供远程提交入口。
 
 ## 3. 主进程架构
 
@@ -69,8 +69,9 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
 | `previewWindowPresentationSizing.ts` | 预览内容尺寸到真实窗口外框的纯几何适配；Cap7CE 模式保持原尺寸，兼容模式额外增加标题栏高度并保持当前外框中心，在狭窄工作区内统一约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原与系统 Snap 适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；左右 / 分区 Snap 通过工作区网格几何识别，在系统管理窗口期间暂停 Cap7CE 的 5 DIP 吸附、布局记忆和边缘收起，普通靠边停放及 Cap7CE 模式不受影响 |
-| `src/renderer/window-presentation/CompatibilityTitlebar.tsx` / `.css` | 仅在兼容主窗口生效的 WCO 标题栏；通过 portal 挂载到 `document.body`，与会动画、裁剪和滚动的网格壳层隔离，避免网格滚动重算后覆盖 Windows 拖动命中区。使用 `titlebar-area-*` 环境变量限定安全拖动区，标题栏右端复用现有置顶图标、状态与统一动作，系统最小化 / 最大化 / 关闭继续由 Windows 绘制。现有右侧栏宽度及 Skim / Settings 入口不变，只清空兼容模式下的旧顶部窗口动作 |
-| `windowPresentationSwitchRuntime.ts` | 窗口模式切换的单次事务、受限 IPC 与启动恢复；先记录旧 / 新模式，再持久化偏好并刷新窗口布局和诊断数据，随后受控 relaunch。新进程须在主 Renderer 完成加载后清除启动标记；重复请求、写入 / 刷新失败、启动超时或上次启动未完成时回退旧模式，避免双实例和半切换状态。原有退出 IPC 同域注册，继续只接受主 Renderer |
+| `src/renderer/window-presentation/CompatibilityTitlebar.tsx` / `.css` | 兼容主窗口与预览窗口共用的 WCO 标题栏；通过 portal 挂载到 `document.body`，与会动画、裁剪和滚动的内容壳层隔离，避免网格滚动重算后覆盖 Windows 拖动命中区。使用 `titlebar-area-*` 环境变量限定安全拖动区，标题栏右端复用现有置顶图标、状态与统一动作，系统最小化 / 最大化 / 关闭继续由 Windows 绘制。现有右侧栏宽度及 Skim / Settings 入口不变，只清空兼容模式下的旧顶部窗口动作 |
+| `windowPresentationSwitchRuntime.ts` | 窗口模式切换的单次事务、受限 IPC 与启动恢复；先记录旧 / 新模式，再持久化偏好并刷新窗口布局和诊断数据，随后受控 relaunch。新进程须在主 Renderer 完成加载后清除启动标记；重复请求、写入 / 刷新失败、启动超时或上次启动未完成时回退旧模式，避免双实例和半切换状态。每次请求、重启、确认、超时和回滚只向本机诊断写稳定模式与状态枚举。开发任务只在子进程异常退出时联动终止，使 Electron 正常 relaunch 后 Vite 页面服务继续存活；打包版不依赖该开发编排。原有退出 IPC 同域注册，继续只接受主 Renderer |
+| `browserWindowDiagnostics.ts` | 主窗口、预览、line、兼容 Capsule 与启动提示共用的原生 BrowserWindow 创建失败边界；记录窗口类别、当前外壳模式和经运行诊断统一脱敏的异常后原样抛出，不吞掉 Electron 创建失败，也不接触用户搜索或路径 |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 独立 `window-layout.json` 的校验、损坏回退、原子替换和 debounce 写入；Manager 按单一窗口记忆开关捕获与恢复 micro、mini、normal 的完整展开布局，并使 Settings 共用 normal 记录；最后有效停靠方向始终在本次运行内可用，仅在记忆开启时跨重启恢复，供主窗口自身边缘收起使用 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
@@ -78,7 +79,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：在 40 DIP 内判断非任务栏停靠边、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
 | `windowResizeState.ts` | micro / mini 的 resize hysteresis、mini / normal 的合法宽度边界、normal / Settings 最小可用尺寸及窄工作区回退；只决定目标形态和记录合法性，不负责 settle、程序 resize 防护或真实窗口变更 |
 | `directoryStore.ts` | 已添加目录配置、目录显示名与持久化 |
-| `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
+| `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听、窗口模式启动 / 切换 / 创建失败事件，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
 | `runtimeDiagnosticBundle.ts` / `diagnosticsIpc.ts` | 对主 Renderer 开放运行信息读取、会话级详细记录和脱敏 ZIP 导出；导出限制单文件、总体积与崩溃报告数量，不接收 Renderer 任意路径 |
 | `searchIpc.ts` | 正式搜索、取消和显式刷新三个 channel 的 sender 校验与任务取消表；调用既有搜索 / 快照服务，并向运行诊断只提交查询长度、范围、排序、结果数及可选的格式聚合，不提交搜索文字或文件路径 |
 | `directoryAddService.ts` | Settings、skim、拖入与未来入口共用的目录候选转换、规范化、去重、父子包含检测和结构化添加结果 |

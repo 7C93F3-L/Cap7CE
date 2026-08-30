@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, protocol, screen, shell, Tray, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, protocol, screen, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -71,6 +71,7 @@ import { WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
+import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -177,12 +178,17 @@ let dockedShellController: ReturnType<typeof installDockedShell> | null = null; 
 let mainWindowSkipTaskbar: boolean | null = null;
 let microBottomCenterAnchored = false;
 const windowPresentationRuntime = new WindowPresentationRuntime();
+const createApplicationWindow = (surface: BrowserWindowSurface, options: BrowserWindowConstructorOptions) => createBrowserWindowWithDiagnostics({
+  create: (windowOptions) => new BrowserWindow(windowOptions), diagnostics: runtimeDiagnostics,
+  options, presentationMode: windowPresentationRuntime.mode, surface
+});
 let windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
 const windowPresentationSwitchRuntime = createWindowPresentationSwitchRuntime({
   registrar: ipcMain, isSenderAllowed: isMainSenderAllowed, markerPath: path.join(app.getPath("userData"), "config", "window-presentation-switch.json"),
   getActiveMode: () => windowPresentationRuntime.mode, updatePreference: updateWindowPresentationModePreference,
   flushBeforeRestart: async () => { await Promise.all([windowLayoutManager.flush(), runtimeDiagnostics.flush()]); }, relaunch: () => { delete process.env.CAP7CE_WINDOW_PRESENTATION_MODE; app.relaunch(); },
-  setQuitting: () => { isQuitting = true; }, quit: () => app.quit()
+  setQuitting: () => { isQuitting = true; }, quit: () => app.quit(),
+  onDiagnostic: (level, event, data) => runtimeDiagnostics.log(level, event, data)
 });
 let standbyLineVisible = true;
 let systemNotificationsEnabled = true;
@@ -557,7 +563,7 @@ const createPreviewWindow = () => {
 
   previewWindowLoaded = false;
   const previewMinimumSize = previewWindowPresentationSizing.getOuterMinimumSize(windowPresentationRuntime.titlebarHeight);
-  previewWindow = new BrowserWindow({
+  previewWindow = createApplicationWindow("preview", {
     width: previewMinimumSize.width,
     height: previewMinimumSize.height,
     minWidth: previewMinimumSize.width,
@@ -676,7 +682,7 @@ const createStartupHintWindow = async () => {
   }
 
   const { workArea } = screen.getPrimaryDisplay();
-  startupHintWindow = new BrowserWindow({
+  startupHintWindow = createApplicationWindow("startup-hint", {
     ...workArea,
     frame: false,
     transparent: true,
@@ -804,7 +810,7 @@ const shouldShowLineWindow = () => (
 );
 
 const lineWindowController = new LineWindowController({
-  devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
+  createWindow: (options) => createApplicationWindow("line", options), devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
   getAlwaysOnTop: () => shellAlwaysOnTop,
   getPlacement: getLineWindowPlacement,
   interactionThickness: standbyInteractionThicknessPx,
@@ -815,7 +821,7 @@ const lineWindowController = new LineWindowController({
   shouldShow: shouldShowLineWindow
 });
 const capsuleWindowController = new CapsuleWindowController({
-  devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
+  createWindow: (options) => createApplicationWindow("capsule", options), devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
   getAlwaysOnTop: () => shellAlwaysOnTop, getMainWindow: () => mainWindow,
   getMode: () => windowPresentationRuntime.mode, isCapsuleActive: () => activeShellState === "capsule",
   isMainSender: (id) => Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents.id === id),
@@ -2311,7 +2317,7 @@ const createWindow = () => {
   mainWindowReadyForActivation = false;
   const initialBounds = getShellWindowBounds("normal");
   const initialMinimumSize = getShellOuterMinimumSize({ width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx });
-  mainWindow = new BrowserWindow({
+  mainWindow = createApplicationWindow("main", {
     ...initialBounds,
     minWidth: initialMinimumSize.width,
     minHeight: initialMinimumSize.height,
@@ -2454,8 +2460,11 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     console.warn("[search-path-evidence] failed to backfill existing catalog paths", error);
   }
   const preferences = await getUserPreferences();
-  const requestedWindowPresentationMode = !app.isPackaged && process.env.CAP7CE_WINDOW_PRESENTATION_MODE ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
-  windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizeWindowPresentationMode(requestedWindowPresentationMode)), preferences.themePreference);
+  const hasDevelopmentWindowModeOverride = !app.isPackaged && Boolean(process.env.CAP7CE_WINDOW_PRESENTATION_MODE);
+  const requestedWindowPresentationMode = hasDevelopmentWindowModeOverride ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
+  const normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode(requestedWindowPresentationMode);
+  windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizedRequestedWindowPresentationMode), preferences.themePreference);
+  runtimeDiagnostics.log("info", "window.presentation.startup", { requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime.mode, source: hasDevelopmentWindowModeOverride ? "development-override" : "preference" });
   windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences(preferences);

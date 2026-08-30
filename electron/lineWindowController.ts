@@ -1,9 +1,9 @@
-import { BrowserWindow, screen, type Rectangle } from "electron";
+import { BrowserWindow, screen, type BrowserWindowConstructorOptions, type Rectangle } from "electron";
 import { getDirectionalLineShape } from "./windowLayoutGeometry";
 import type { WindowDockEdge } from "./windowLayoutTypes";
-
 interface LineWindowPlacement { bounds: Rectangle; edge: WindowDockEdge }
 interface LineWindowControllerOptions {
+  createWindow?: (options: BrowserWindowConstructorOptions) => BrowserWindow;
   devServerUrl?: string;
   devToolsEnabled: boolean;
   getAlwaysOnTop: () => boolean;
@@ -24,7 +24,7 @@ export class LineWindowController {
     if (this.lineWindow && !this.lineWindow.isDestroyed()) return false;
     const placement = this.options.getPlacement();
     this.edge = placement.edge;
-    const createdWindow = new BrowserWindow({
+    const createdWindow = (this.options.createWindow ?? ((options) => new BrowserWindow(options)))({
       ...placement.bounds,
       title: "Cap7CE Line",
       skipTaskbar: true,

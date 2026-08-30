@@ -31,6 +31,7 @@ interface WindowPresentationSwitchRuntimeOptions {
   setQuitting: () => void;
   startupTimeoutMs?: number;
   now?: () => Date;
+  onDiagnostic?: (level: "info" | "warn" | "error", event: string, data: Record<string, unknown>) => void;
 }
 
 const isWindowPresentationMode = (value: unknown): value is WindowPresentationMode => (
@@ -97,6 +98,14 @@ export class WindowPresentationSwitchRuntime {
     return { version: 1, previousMode, targetMode, phase, updatedAt: this.now().toISOString() };
   }
 
+  private report(level: "info" | "warn" | "error", event: string, data: Record<string, unknown>): void {
+    try {
+      this.options.onDiagnostic?.(level, event, data);
+    } catch {
+      // Diagnostics must not change the restart transaction.
+    }
+  }
+
   private clearStartupTimer(): void {
     if (this.startupTimer === null) return;
     clearTimeout(this.startupTimer);
@@ -120,11 +129,13 @@ export class WindowPresentationSwitchRuntime {
     if (!marker) return;
     this.clearStartupTimer();
     this.startupMarker = null;
+    this.report("warn", "window.presentation.switch.startup_timeout", { previousMode: marker.previousMode, targetMode: marker.targetMode });
     try {
       await this.rollback(marker);
       this.options.relaunch();
       this.scheduleQuit();
     } catch (error) {
+      this.report("error", "window.presentation.switch.startup_rollback_failed", { previousMode: marker.previousMode, targetMode: marker.targetMode, error });
       console.warn("[window-presentation-switch] startup rollback failed", error);
     }
   }
@@ -139,10 +150,12 @@ export class WindowPresentationSwitchRuntime {
     }
     if (marker.phase === "launching") {
       await this.rollback(marker);
+      this.report("warn", "window.presentation.switch.stale_launch_rolled_back", { previousMode: marker.previousMode, targetMode: marker.targetMode });
       return marker.previousMode;
     }
     this.startupMarker = this.marker(marker.previousMode, marker.targetMode, "launching");
     await this.store.write(this.startupMarker);
+    this.report("info", "window.presentation.switch.startup_pending", { previousMode: marker.previousMode, targetMode: marker.targetMode });
     this.startupTimer = setTimeout(() => { void this.restartAfterStartupFailure(); }, this.startupTimeoutMs);
     return marker.targetMode;
   }
@@ -155,29 +168,41 @@ export class WindowPresentationSwitchRuntime {
     try {
       await this.store.write(this.marker(marker.previousMode, marker.targetMode, "confirmed"));
     } catch (error) {
+      this.report("error", "window.presentation.switch.confirmation_write_failed", { previousMode: marker.previousMode, targetMode: marker.targetMode, activeMode, error });
       console.warn("[window-presentation-switch] startup confirmation write failed", error);
     }
     await this.store.clear().catch((error) => {
+      this.report("error", "window.presentation.switch.confirmation_cleanup_failed", { previousMode: marker.previousMode, targetMode: marker.targetMode, activeMode, error });
       console.warn("[window-presentation-switch] startup confirmation cleanup failed", error);
     });
+    this.report("info", "window.presentation.switch.completed", { previousMode: marker.previousMode, targetMode: marker.targetMode, activeMode });
   }
 
   async requestSwitch(targetMode: WindowPresentationMode): Promise<WindowPresentationSwitchResult> {
     const normalizedTargetMode = normalizeWindowPresentationMode(targetMode);
     const activeMode = this.options.getActiveMode();
-    if (normalizedTargetMode === activeMode) return { status: "unchanged", targetMode: normalizedTargetMode };
-    if (this.switchInProgress) return { status: "busy", targetMode: normalizedTargetMode };
+    if (normalizedTargetMode === activeMode) {
+      this.report("info", "window.presentation.switch.result", { activeMode, targetMode: normalizedTargetMode, status: "unchanged" });
+      return { status: "unchanged", targetMode: normalizedTargetMode };
+    }
+    if (this.switchInProgress) {
+      this.report("warn", "window.presentation.switch.result", { activeMode, targetMode: normalizedTargetMode, status: "busy" });
+      return { status: "busy", targetMode: normalizedTargetMode };
+    }
     this.switchInProgress = true;
     const marker = this.marker(activeMode, normalizedTargetMode, "pending");
+    this.report("info", "window.presentation.switch.requested", { activeMode, targetMode: normalizedTargetMode });
     try {
       await this.store.write(marker);
       const preferences = await this.options.updatePreference(normalizedTargetMode);
       if (preferences.windowPresentationMode !== normalizedTargetMode) throw new Error("Window presentation preference was not persisted.");
+      this.report("info", "window.presentation.switch.result", { activeMode, targetMode: normalizedTargetMode, status: "restarting" });
       await this.options.flushBeforeRestart();
       this.options.relaunch();
       this.scheduleQuit();
       return { status: "restarting", targetMode: normalizedTargetMode };
     } catch (error) {
+      this.report("error", "window.presentation.switch.result", { activeMode, targetMode: normalizedTargetMode, status: "failed", error });
       console.warn("[window-presentation-switch] controlled restart failed", error);
       await this.rollback(marker).catch((rollbackError) => {
         console.warn("[window-presentation-switch] preference rollback failed", rollbackError);
