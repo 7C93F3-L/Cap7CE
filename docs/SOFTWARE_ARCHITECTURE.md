@@ -67,7 +67,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | --- | --- |
 | `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览窗口外壳模式的稳定类型、能力策略与主进程运行期装配；缺失或非法偏好一律回退 `cap7ce`。透明模式保持既有参数，兼容主窗口使用不透明 WCO、36 DIP 标题栏及主题匹配的背景 / 系统按钮颜色；两种模式分别使用 `window-layout.json` 与 `window-layout-compatibility.json`，避免内容尺寸和外框尺寸互相污染。主进程通过只读壳层指标返回本次实际生效模式，Renderer 不按可能被开发覆盖或安全回退的保存值猜测。预览窗口接入兼容宿主留待独立轮次 |
 | `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
-| `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；程序主动取消最大化不会误触发原生还原链路 |
+| `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原与系统 Snap 适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；左右 / 分区 Snap 通过工作区网格几何识别，在系统管理窗口期间暂停 Cap7CE 的 5 DIP 吸附、布局记忆和边缘收起，普通靠边停放及 Cap7CE 模式不受影响 |
 | `src/renderer/window-presentation/CompatibilityTitlebar.tsx` / `.css` | 仅在兼容主窗口生效的 WCO 标题栏；通过 portal 挂载到 `document.body`，与会动画、裁剪和滚动的网格壳层隔离，避免网格滚动重算后覆盖 Windows 拖动命中区。使用 `titlebar-area-*` 环境变量限定安全拖动区，标题栏右端复用现有置顶图标、状态与统一动作，系统最小化 / 最大化 / 关闭继续由 Windows 绘制。现有右侧栏宽度及 Skim / Settings 入口不变，只清空兼容模式下的旧顶部窗口动作 |
 | `windowPresentationSwitchRuntime.ts` | 窗口模式切换的单次事务、受限 IPC 与启动恢复；先记录旧 / 新模式，再持久化偏好并刷新窗口布局和诊断数据，随后受控 relaunch。新进程须在主 Renderer 完成加载后清除启动标记；重复请求、写入 / 刷新失败、启动超时或上次启动未完成时回退旧模式，避免双实例和半切换状态。原有退出 IPC 同域注册，继续只接受主 Renderer |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |

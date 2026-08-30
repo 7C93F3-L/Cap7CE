@@ -65,7 +65,7 @@ import { getDefaultShellLayoutBounds, toWindowLayoutDisplaySnapshot, WindowLayou
 import { WindowLayoutStore } from "./windowLayoutStore";
 import type { PersistedWindowLayoutState, WindowDockEdge } from "./windowLayoutTypes";
 import { DEFAULT_WINDOW_RESIZE_THRESHOLDS, isStableResizeBounds, resolveResizeTargetState } from "./windowResizeState";
-import { CompatibilityNativeMaximizeController } from "./compatibilityNativeMaximizeController";
+import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "./compatibilityNativeMaximizeController";
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
@@ -967,12 +967,8 @@ const isProgrammaticMoveGuardActive = () => Date.now() < programmaticMoveGuardUn
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-const canSnapShellWindow = () => (
-  activeShellState === "micro" ||
-  activeShellState === "mini" ||
-  activeShellState === "normal" ||
-  activeShellState === "settings"
-);
+const canSnapShellWindow = () => activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal" || activeShellState === "settings";
+const isCompatibilityNativeSnapActive = (bounds = mainWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode === "compatibility" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
 
 const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   const shellState = activeShellState;
@@ -980,6 +976,7 @@ const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
     (shellState !== "micro" && shellState !== "mini" && shellState !== "normal" && shellState !== "settings")
     || shellMaximized
     || mainWindow?.isMaximized()
+    || isCompatibilityNativeSnapActive(bounds)
   ) {
     return;
   }
@@ -2162,7 +2159,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
     return;
   }
 
@@ -2217,7 +2214,7 @@ const scheduleResizeSettledCheck = () => {
 };
 
 const applyEdgeSnapAfterMove = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || dockedShellController?.hasActiveSession() || !canSnapShellWindow()) {
+  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || dockedShellController?.hasActiveSession() || !canSnapShellWindow()) {
     return;
   }
 
@@ -2239,6 +2236,7 @@ const scheduleMoveSnapCheck = () => {
     mainWindow.isDestroyed() ||
     shellMaximized ||
     mainWindow.isMaximized() ||
+    isCompatibilityNativeSnapActive() ||
     resizeSettledTimer !== null ||
     !canSnapShellWindow()
   ) {
@@ -2361,7 +2359,7 @@ const createWindow = () => {
   dockedShellController = installDockedShell({
     window: mainWindow, enabled: edgeCollapseEnabled, enableDebugShortcut: Boolean(process.env.VITE_DEV_SERVER_URL),
     fixed: shellAlwaysOnTop,
-    getShellContext: () => ({ state: activeShellState, maximized: shellMaximized || Boolean(mainWindow?.isMaximized()), interactionBlocked: isQuitting || isProgrammaticMoveGuardActive() || isProgrammaticResizeGuardActive() }),
+    getShellContext: () => ({ state: activeShellState, maximized: shellMaximized || Boolean(mainWindow?.isMaximized()) || isCompatibilityNativeSnapActive(), interactionBlocked: isQuitting || isProgrammaticMoveGuardActive() || isProgrammaticResizeGuardActive() }),
     hideLine: () => lineWindowController.hide(), markProgrammaticMove, markProgrammaticResize,
     setCollapsedLayerActive: (active) => windowLayerController.setMainCollapsedLayerActive(active)
   });
