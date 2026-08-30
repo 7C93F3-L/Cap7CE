@@ -1,0 +1,58 @@
+.cap-shell-compatibility {
+  --compatibility-titlebar-height: 36px;
+  background: var(--app-bg);
+}
+
+.cap-compatibility-titlebar {
+  position: fixed;
+  top: env(titlebar-area-y, 0);
+  left: env(titlebar-area-x, 0);
+  z-index: 60;
+  width: env(titlebar-area-width, 100%);
+  height: env(titlebar-area-height, var(--compatibility-titlebar-height));
+  display: flex;
+  align-items: stretch;
+  color: var(--window-control-color);
+  background: transparent;
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+.cap-compatibility-titlebar-pin {
+  width: var(--compatibility-titlebar-height);
+  height: 100%;
+  flex: 0 0 var(--compatibility-titlebar-height);
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  transition: color 210ms ease-out, background 210ms ease-out;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.cap-compatibility-titlebar-pin:hover,
+.cap-compatibility-titlebar-pin[aria-pressed="true"] {
+  color: var(--window-control-hover);
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.cap-compatibility-titlebar-pin:focus-visible {
+  outline-offset: -3px;
+}
+
+.cap-compatibility-titlebar-pin-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.cap-shell-compatibility .cap-shell-content {
+  top: var(--compatibility-titlebar-height);
+}
+
+.cap-shell-compatibility .cap-window-control-rail {
+  top: var(--compatibility-titlebar-height);
+}

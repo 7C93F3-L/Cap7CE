@@ -31,8 +31,7 @@ for (const [name, source] of [["preview", previewWindowCreation], ["startup", st
 
 assert.match(mainWindowCreation, /\.\.\.getMainWindowPresentationOptions\(\)/u);
 assert.match(presentationPolicySource, /if \(!surfacePolicy\.usesWindowControlsOverlay\) \{[\s\S]*?frame: false,[\s\S]*?transparent: true,[\s\S]*?backgroundColor: "#00000000"/u);
-assert.doesNotMatch(appSource, /cap-compatibility-titlebar|windowPresentationMode/u);
-assert.match(appSource, /const shellControlActions: WindowControlAction\[\] = shellState === "capsule"[\s\S]*?id: "standby"[\s\S]*?id: "cycle"[\s\S]*?id: "pin"/u);
+assert.match(appSource, /const shellControlActions: WindowControlAction\[\] = shellState === "capsule" \|\| isCompatibilityMode[\s\S]*?id: "standby"[\s\S]*?id: "cycle"[\s\S]*?id: "pin"/u);
 assert.match(appSource, /<WindowControlRail[\s\S]*?actions=\{shellControlActions\}[\s\S]*?showSkim=\{showShellSettingsToggle\}[\s\S]*?showSettings=\{showShellSettingsToggle\}/u);
 assert.match(previewSource, /id: "close"[\s\S]*?id: "maximize"[\s\S]*?id: "pin"/u);
 assert.match(previewSource, /<WindowControlRail[\s\S]*?actions=\{previewControlActions\}[\s\S]*?showSkim=\{showSettings\}[\s\S]*?showSettings=\{showSettings\}/u);

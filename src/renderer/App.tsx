@@ -53,6 +53,7 @@ import { ResultsView } from "./results/ResultsView";
 import { SkimView } from "./skim/SkimView";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
+import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import type {
   AppView,
   AppearanceColors,
@@ -77,7 +78,6 @@ import type {
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 import { skimDefaultFileExtensionSet } from "../../electron/formatCapabilities";
-
 type ShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type ShellTransition = {
   from: ShellState;
@@ -389,16 +389,10 @@ const App = () => {
   const [contextMenu, setContextMenu] = useState<ImageContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
   const [shellTransition, setShellTransition] = useState<ShellTransition | null>(null);
-  const {
-    isAlwaysOnTop,
-    applyAlwaysOnTop,
-    syncAlwaysOnTop,
-    setAlwaysOnTop,
-    toggleAlwaysOnTop
-  } = useAlwaysOnTopController();
+  const { isAlwaysOnTop, applyAlwaysOnTop, syncAlwaysOnTop, setAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOnTopController();
   const [isMaximized, setIsMaximized] = useState(false);
   const [lastNormalBounds, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
-  const { shellViewportHeight, miniStandardHeight } = useShellViewportMetrics();
+  const { shellViewportHeight, miniStandardHeight, windowPresentationMode } = useShellViewportMetrics();
   const [filesPendingDelete, setFilesPendingDelete] = useState<ImageIndexItem[]>([]);
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [deleteFilesFeedback, setDeleteFilesFeedback] = useState<DeleteFilesFeedback | null>(null);
@@ -2851,10 +2845,11 @@ const App = () => {
   };
 
   const isExpandedShell = shellState !== "standby" && shellState !== "capsule";
+  const isCompatibilityMode = windowPresentationMode === "compatibility";
   const showShellSettingsToggle = miniStandardHeight !== null && shellViewportHeight >= miniStandardHeight;
   const isLargeShell = shellState === "normal" || shellState === "settings";
   const shellCycleLabel = isLargeShell ? (isMaximized ? t("window.restore") : t("window.maximize")) : t("window.changeMode");
-  const shellControlActions: WindowControlAction[] = shellState === "capsule"
+  const shellControlActions: WindowControlAction[] = shellState === "capsule" || isCompatibilityMode
     ? []
     : [
       { id: "standby", label: t("window.collapse"), icon: "line", onClick: collapseShellToStandby },
@@ -2884,7 +2879,7 @@ const App = () => {
 
   return (
     <div
-      className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}${dialog === "editKeywords" ? " cap-shell-keyword-editor-open" : ""}`}
+      className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${isCompatibilityMode ? " cap-shell-compatibility" : ""}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}${dialog === "editKeywords" ? " cap-shell-keyword-editor-open" : ""}`}
       style={appThemeStyle}
       onDragOverCapture={(event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -2951,6 +2946,9 @@ const App = () => {
             />
           </form>
         </div>
+      )}
+      {isExpandedShell && (
+        isCompatibilityMode && <CompatibilityTitlebar pinned={isAlwaysOnTop} label={isAlwaysOnTop ? t("window.unfix") : t("window.fix")} onTogglePinned={() => void toggleAlwaysOnTop(shellState)} />
       )}
       {isExpandedShell && (
         <WindowControlRail

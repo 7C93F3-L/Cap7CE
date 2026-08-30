@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import type { WindowPresentationMode } from "../../shared/types";
 
 export const useShellViewportMetrics = () => {
   const [shellViewportHeight, setShellViewportHeight] = useState(() => window.innerHeight);
   const [miniStandardHeight, setMiniStandardHeight] = useState<number | null>(null);
   const [titlebarHeight, setTitlebarHeight] = useState(0);
+  const [windowPresentationMode, setWindowPresentationMode] = useState<WindowPresentationMode>("cap7ce");
 
   useEffect(() => {
     let currentTitlebarHeight = 0;
@@ -22,11 +24,12 @@ export const useShellViewportMetrics = () => {
           setTitlebarHeight(currentTitlebarHeight);
           syncShellViewportHeight();
         }
+        setWindowPresentationMode(metrics.windowPresentationMode);
       });
     }
 
     return () => window.removeEventListener("resize", syncShellViewportHeight);
   }, []);
 
-  return { shellViewportHeight, miniStandardHeight, titlebarHeight };
+  return { shellViewportHeight, miniStandardHeight, titlebarHeight, windowPresentationMode };
 };

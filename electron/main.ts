@@ -2430,7 +2430,6 @@ const createWindow = () => {
       scheduleResizeSettledCheck();
     }
   });
-
   mainWindow.on("move", () => {
     if (isProgrammaticMoveGuardActive() || dockedShellController?.hasActiveSession()) {
       return;
@@ -2580,7 +2579,8 @@ app.on("before-quit", () => {
 
 ipcMain.handle("window:getShellLayoutMetrics", () => ({
   miniStandardHeight: miniDefaultHeightPx,
-  titlebarHeight: getMainWindowTitlebarHeight()
+  titlebarHeight: getMainWindowTitlebarHeight(),
+  windowPresentationMode: windowPresentationRuntime.mode
 }));
 
 ipcMain.handle("line:activateCapsule", (event) => {

@@ -27,6 +27,7 @@ import "./settings/RuntimeModelSettingsSection.css";
 import "./settings/RuntimeDiagnosticsRows.css";
 import "./settings/DirectoryAiSettingsRows.css";
 import "./settings/SettingsView.css";
+import "./window-presentation/CompatibilityTitlebar.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const windowKind = new URLSearchParams(window.location.search).get("window");
