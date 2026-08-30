@@ -25,6 +25,7 @@ export interface PreferenceIpcDependencies {
   updateAppearanceColors: PreferenceUpdater<AppearanceColors>;
   setEdgeCollapseEnabled: PreferenceUpdater<boolean>;
   setRememberWindowLayout: PreferenceUpdater<boolean>;
+  updateWindowPresentationMode: PreferenceUpdater<UserPreferencesResponse["windowPresentationMode"]>;
   setStandbyLineVisible: PreferenceUpdater<boolean>;
   updateLaunchAtLogin: PreferenceUpdater<boolean>;
   applyLaunchAtLogin: (enabled: boolean) => void;
@@ -54,6 +55,7 @@ export const registerPreferenceIpc = ({
   updateAppearanceColors,
   setEdgeCollapseEnabled,
   setRememberWindowLayout,
+  updateWindowPresentationMode,
   setStandbyLineVisible,
   updateLaunchAtLogin,
   applyLaunchAtLogin,
@@ -165,6 +167,11 @@ export const registerPreferenceIpc = ({
         kind: "handle",
         channel: "preferences:updateRememberWindowLayout",
         listener: (_event, nextEnabled: boolean) => setRememberWindowLayout(Boolean(nextEnabled))
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateWindowPresentationMode",
+        listener: (_event, mode: UserPreferencesResponse["windowPresentationMode"]) => updateWindowPresentationMode(mode)
       },
       {
         kind: "handle",

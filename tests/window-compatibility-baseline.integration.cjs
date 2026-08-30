@@ -28,7 +28,7 @@ for (const [name, source] of [["main", mainWindowCreation], ["preview", previewW
   assert.match(source, /backgroundColor: "#00000000"/u, `${name} window must keep the transparent background baseline`);
 }
 
-assert.doesNotMatch(mainSource, /titleBarStyle|titleBarOverlay|windowPresentationMode/u);
+assert.doesNotMatch(mainSource, /titleBarStyle|titleBarOverlay/u);
 assert.doesNotMatch(appSource, /cap-compatibility-titlebar|windowPresentationMode/u);
 assert.match(appSource, /const shellControlActions: WindowControlAction\[\] = shellState === "capsule"[\s\S]*?id: "standby"[\s\S]*?id: "cycle"[\s\S]*?id: "pin"/u);
 assert.match(appSource, /<WindowControlRail[\s\S]*?actions=\{shellControlActions\}[\s\S]*?showSkim=\{showShellSettingsToggle\}[\s\S]*?showSettings=\{showShellSettingsToggle\}/u);

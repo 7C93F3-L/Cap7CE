@@ -149,6 +149,7 @@ declare global {
         updateAppearanceColors: (appearanceColors: UserPreferences["appearanceColors"]) => Promise<UserPreferences>;
         updateEdgeCollapse: (enabled: UserPreferences["edgeCollapseEnabled"]) => Promise<UserPreferences>;
         updateRememberWindowLayout: (enabled: UserPreferences["rememberWindowLayout"]) => Promise<UserPreferences>;
+        updateWindowPresentationMode: (mode: UserPreferences["windowPresentationMode"]) => Promise<UserPreferences>;
         updateStandbyLineVisible: (standbyLineVisible: UserPreferences["standbyLineVisible"]) => Promise<UserPreferences>;
         updateLaunchAtLogin: (launchAtLogin: UserPreferences["launchAtLogin"]) => Promise<UserPreferences>;
         updateSystemNotifications: (enabled: UserPreferences["systemNotificationsEnabled"]) => Promise<UserPreferences>;

@@ -488,6 +488,8 @@ export interface SkimDisplayPreferences {
   showHiddenFiles: boolean;
 }
 
+export type WindowPresentationMode = "cap7ce" | "compatibility";
+
 export interface UserPreferences {
   themePreference: ThemeMode;
   languagePreference: LanguagePreference;
@@ -502,6 +504,7 @@ export interface UserPreferences {
   appearanceColors: AppearanceColors;
   edgeCollapseEnabled: boolean;
   rememberWindowLayout: boolean;
+  windowPresentationMode: WindowPresentationMode;
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;

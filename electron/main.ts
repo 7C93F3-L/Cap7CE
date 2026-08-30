@@ -35,7 +35,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateWindowPresentationModePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataIpc } from "./manualMetadataIpc";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords } from "./sqliteImageIndex";
@@ -3633,6 +3633,7 @@ registerPreferenceIpc({
     windowLayoutManager.setPreferences(preferences);
     return preferences;
   },
+  updateWindowPresentationMode: updateWindowPresentationModePreference,
   setStandbyLineVisible,
   updateLaunchAtLogin: updateLaunchAtLoginPreference,
   applyLaunchAtLogin: applyLaunchAtLoginPreference,

@@ -38,6 +38,7 @@ const run = async () => {
     updateAppearanceColors: capture("appearanceColors"),
     setEdgeCollapseEnabled: capture("edgeCollapse"),
     setRememberWindowLayout: capture("rememberWindowLayout"),
+    updateWindowPresentationMode: capture("windowPresentationMode"),
     setStandbyLineVisible: capture("standbyLineVisible"),
     updateLaunchAtLogin: capture("launchAtLogin"),
     applyLaunchAtLogin: (enabled) => calls.push(["applyLaunchAtLogin", enabled]),
@@ -64,6 +65,7 @@ const run = async () => {
     "preferences:updateAppearanceColors",
     "preferences:updateEdgeCollapse",
     "preferences:updateRememberWindowLayout",
+    "preferences:updateWindowPresentationMode",
     "preferences:updateStandbyLineVisible",
     "preferences:updateLaunchAtLogin",
     "preferences:updateSystemNotifications",
@@ -101,6 +103,7 @@ const run = async () => {
   await handles.get("preferences:updateAppearanceColors")(event, { themeColor: "#111111", accentColor: "#222222" });
   await handles.get("preferences:updateEdgeCollapse")(event, 1);
   await handles.get("preferences:updateRememberWindowLayout")(event, 1);
+  await handles.get("preferences:updateWindowPresentationMode")(event, "compatibility");
   await handles.get("preferences:updateStandbyLineVisible")(event, 1);
   await handles.get("preferences:updateLaunchAtLogin")(event, "enabled");
   await handles.get("preferences:updateSystemNotifications")(event, 0);
@@ -130,6 +133,7 @@ const run = async () => {
     ["refreshAppearance"],
     ["edgeCollapse", true],
     ["rememberWindowLayout", true],
+    ["windowPresentationMode", "compatibility"],
     ["standbyLineVisible", true],
     ["launchAtLogin", true],
     ["applyLaunchAtLogin", response.launchAtLogin],
@@ -165,6 +169,7 @@ const run = async () => {
     updateAppearanceColors: async () => disabledResponse,
     setEdgeCollapseEnabled: async () => disabledResponse,
     setRememberWindowLayout: async () => disabledResponse,
+    updateWindowPresentationMode: async () => disabledResponse,
     setStandbyLineVisible: async () => disabledResponse,
     updateLaunchAtLogin: async () => disabledResponse,
     applyLaunchAtLogin: () => undefined,

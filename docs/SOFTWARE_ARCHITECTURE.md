@@ -65,6 +65,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 | 模块 | 职责 |
 | --- | --- |
+| `windowPresentationPolicy.ts` | 主窗口 / 预览窗口外壳模式的稳定类型和只读能力策略；缺失或非法偏好一律回退 `cap7ce`。当前透明模式继续使用既有参数，兼容模式仅声明不透明 WCO、36 DIP 标题栏与独立 Capsule 能力，尚未接入 BrowserWindow 创建；两种模式分别使用 `window-layout.json` 与 `window-layout-compatibility.json`，避免内容尺寸和外框尺寸互相污染 |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 独立 `window-layout.json` 的校验、损坏回退、原子替换和 debounce 写入；Manager 按单一窗口记忆开关捕获与恢复 micro、mini、normal 的完整展开布局，并使 Settings 共用 normal 记录；最后有效停靠方向始终在本次运行内可用，仅在记忆开启时跨重启恢复，供主窗口自身边缘收起使用 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
@@ -131,7 +132,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `fileDragService.ts` | Windows 原生单文件 / 多文件拖拽 |
 | `staleImageCleanupService.ts` | 源文件缺失后的索引与缓存清理 |
 | `staleFileCleanupService.ts` | 通用文件目录层中缺失源文件的记录清理，不触碰视觉缓存 |
-| `preferenceStore.ts` | 主题、颜色、快捷键、标签显隐、待机线、边缘收起、窗口记忆开关等偏好；始终启用的边缘吸附与高频窗口 bounds 不进入该文件 |
+| `preferenceStore.ts` | 主题、颜色、快捷键、标签显隐、待机线、边缘收起、窗口记忆开关与窗口外壳模式等偏好；旧配置缺少模式字段或字段非法时保持 `cap7ce`，始终启用的边缘吸附与高频窗口 bounds 不进入该文件 |
 | `localization.ts` | 主进程与 Renderer 共用的界面文案 ID、中文语言表和参数插值入口 |
 
 ## 4. Preload / IPC 架构
@@ -198,6 +199,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 A5 已把运行时与模型、临时反馈、操作提示、视口只读指标、系统主题、窗口置顶和 skim 目录读取等具有单一所有权的状态簇迁入 `src/renderer/controllers/`。搜索、导航历史、关键词编辑、目录扫描、缓存确认及窗口恢复仍由 App 顶层编排；其中同时跨越多个 Effect、确认或取消语义的状态簇依据停止条件保留原位，不为减少行数强拆。
 
 A6 首先由 `test:ipc-registration` 固定领域注册器的 channel、参数转发和 sender 授权语义；在任何既有外围 IPC 搬迁前先建立可重复验证的注册边界。文件打开、路径定位、文字/系统文件剪贴板、回收站删除和原生拖拽六个 channel 已迁入 `electron/fileIpc.ts`，其服务、平台状态、文案和允许访问剪贴板的主/预览 sender 均由 `main.ts` 显式注入；对应 `test:file-ipc` 固定注册清单、参数过滤、失败结果和 sender 行为。llama.cpp 运行时与 GGUF 模型的读取、选择、启动和停止七个 channel 迁入 `electron/runtimeModelIpc.ts`，继续复用既有 store/manager，并保持运行时处于 starting/running 时禁止切换版本或模型的规则；`test:runtime-model-ipc` 固定注册清单、调用顺序和禁止切换边界。正式搜索、取消与刷新迁入 `electron/searchIpc.ts`，搜索任务表、取消语义和不含私人内容的运行诊断由同一模块持有。运行信息三个 channel 位于 `electron/diagnosticsIpc.ts`，固定主窗口 sender、会话级详细记录和导出边界。偏好读取、skim 排序、操作提示、快捷指令、标签显隐、自定义查看、边栏状态，以及主题、语言、搜索排序、界面颜色、边缘收起、line 显隐、登录启动、系统通知和自动缓存等 channel 迁入 `electron/preferenceIpc.ts`；line 外观刷新、语言应用、缩略图优化排序、窗口/托盘同步、登录项写入、通知运行状态以及自动缓存启停与目录调度等副作用继续由 `main.ts` 显式注入。全局快捷键偏好仍由 `main.ts` 编排。缓存统计、优化状态和主 Renderer 内容/网格活动信号五个 channel 迁入 `electron/cacheActivityIpc.ts`；主窗口 sender 边界、实际活动状态及缩略图优化 pause/resume 动作由 `main.ts` 注入。正式缓存与 skim 缓存的清理授权、30 秒单次令牌和执行入口迁入 `electron/cacheClearIpc.ts`，实际暂停队列、关闭自动优化、写入偏好和安全清理动作继续由既有服务及 `main.ts` 注入；两类令牌保持彼此隔离。领域模块不得反向导入 `main.ts`，主进程继续负责依赖注入和生命周期装配。
+
+C1 在同一偏好领域增加窗口外壳模式的规范化读写 channel；此阶段不触发 BrowserWindow 重建，也不显示设置入口。缺失或非法值始终返回 `cap7ce`，Renderer 只能通过既有偏好白名单读取或写入稳定枚举。
 
 旧全目录 / 单目录视觉识别、完成度统计、继续 / 取消入口和 4×4 网格搜索已退役；`main.ts`、preload 与 Renderer 不再暴露对应扫描或识别 IPC。Settings 只保留持久化的全局 AI 能力开关，搜索页的“AI增强”与 `7ce/` 负责按次激活；关闭时停止领取后续请求并保留当前结果及安全检查点。
 

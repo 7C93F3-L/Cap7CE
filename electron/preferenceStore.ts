@@ -2,6 +2,7 @@ import { app } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { skimDefaultFileExtensionSet } from "./formatCapabilities";
+import { DEFAULT_WINDOW_PRESENTATION_MODE, normalizeWindowPresentationMode, type WindowPresentationMode } from "./windowPresentationPolicy";
 
 type ThemeMode = "system" | "light" | "dark";
 type LanguagePreference = "system" | "zh-CN" | "en-US";
@@ -42,6 +43,7 @@ export interface UserPreferencesResponse {
   appearanceColors: AppearanceColors;
   edgeCollapseEnabled: boolean;
   rememberWindowLayout: boolean;
+  windowPresentationMode: WindowPresentationMode;
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
@@ -79,6 +81,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   },
   edgeCollapseEnabled: false,
   rememberWindowLayout: false,
+  windowPresentationMode: DEFAULT_WINDOW_PRESENTATION_MODE,
   alwaysOnTop: false,
   standbyLineVisible: true,
   launchAtLogin: false,
@@ -234,6 +237,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       appearanceColors: normalizeAppearanceColors(parsed.appearanceColors, defaults.appearanceColors),
       edgeCollapseEnabled: typeof parsed.edgeCollapseEnabled === "boolean" ? parsed.edgeCollapseEnabled : defaults.edgeCollapseEnabled,
       rememberWindowLayout: typeof parsed.rememberWindowLayout === "boolean" ? parsed.rememberWindowLayout : defaults.rememberWindowLayout,
+      windowPresentationMode: normalizeWindowPresentationMode(parsed.windowPresentationMode),
       alwaysOnTop: typeof parsed.alwaysOnTop === "boolean" ? parsed.alwaysOnTop : defaults.alwaysOnTop,
       standbyLineVisible: typeof parsed.standbyLineVisible === "boolean" ? parsed.standbyLineVisible : defaults.standbyLineVisible,
       launchAtLogin: typeof parsed.launchAtLogin === "boolean" ? parsed.launchAtLogin : defaults.launchAtLogin,
@@ -367,6 +371,17 @@ export const updateAppearanceColorsPreference = async (appearanceColors: UserPre
 export const updateRememberWindowLayoutPreference = async (rememberWindowLayout: boolean) => {
   const preferences = await readPreferences();
   const nextPreferences = { ...preferences, rememberWindowLayout, updatedAt: new Date().toISOString() };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateWindowPresentationModePreference = async (windowPresentationMode: WindowPresentationMode) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    windowPresentationMode: normalizeWindowPresentationMode(windowPresentationMode),
+    updatedAt: new Date().toISOString()
+  };
   await savePreferences(nextPreferences);
   return nextPreferences;
 };

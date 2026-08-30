@@ -19,6 +19,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       updateSkimSortPreference,
       updateEdgeCollapsePreference,
       updateRememberWindowLayoutPreference,
+      updateWindowPresentationModePreference,
       updateSortPreference
     } = require("../dist-electron/preferenceStore.js");
 
@@ -34,6 +35,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.shortcutActions.cycleDirectory, "Alt+Q");
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal(defaults.rememberWindowLayout, false);
+    assert.equal(defaults.windowPresentationMode, "cap7ce");
     assert.deepEqual(defaults.sortPreference, {
       sortField: "modified_at",
       sortDirection: "desc"
@@ -73,6 +75,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(migrated.edgeCollapseEnabled, false);
     assert.equal("edgeSnapEnabled" in migrated, false);
     assert.equal(migrated.rememberWindowLayout, false);
+    assert.equal(migrated.windowPresentationMode, "cap7ce");
 
     const updatedShortcuts = await updateShortcutActionsPreference({
       ...migrated.shortcutActions,
@@ -104,6 +107,9 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateSkimSystemLocationsCollapsedPreference(true);
     await updateEdgeCollapsePreference(true);
     await updateRememberWindowLayoutPreference(true);
+    const invalidMode = await updateWindowPresentationModePreference("invalid");
+    assert.equal(invalidMode.windowPresentationMode, "cap7ce");
+    await updateWindowPresentationModePreference("compatibility");
     const reloaded = await getUserPreferences();
     assert.equal(reloaded.skimDisplay.mode, "custom");
     assert.equal(reloaded.skimDisplay.searchMode, "all");
@@ -115,6 +121,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(reloaded.skimSystemLocationsCollapsed, true);
     assert.equal(reloaded.edgeCollapseEnabled, true);
     assert.equal(reloaded.rememberWindowLayout, true);
+    assert.equal(reloaded.windowPresentationMode, "compatibility");
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
@@ -129,7 +136,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       skimSidebarFoldersNormalizedAndPersisted: true,
       skimSystemLocationsCollapsedPersisted: true,
       edgeCollapsePreferencePersisted: true,
-      windowLayoutMemoryPreferencesPersisted: true
+      windowLayoutMemoryPreferencesPersisted: true,
+      windowPresentationModePersisted: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });
