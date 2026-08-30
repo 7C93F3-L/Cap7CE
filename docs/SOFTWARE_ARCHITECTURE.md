@@ -52,7 +52,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 - 控制主窗口、line 与预览窗口共享的 `alwaysOnTop` 置顶状态并持久化。
 - Capsule 激活时按入口选择目标显示器：全局快捷键跟随鼠标、line 单击跟随 line、窗口内切换跟随当前窗口；顶部 line 使用顶部 5 px 镜像落点，底部或左右 line 使用底部 5 px 落点。
 - 创建独立的冷启动提示窗口；启动提示窗口必须只关闭自己，不能控制主窗口生命周期。
-- 首次实际预览时按需创建并复用独立、可缩放的 `previewWindow`；预览窗口不进入主窗口状态机和任务栏，复用窗口控制栏、主题描边视觉、始终启用的 bounds 吸附计算及全局边缘收起开关。预览固定状态仅属于当前会话；关闭时先恢复完整 bounds，再清除固定 / 停靠 / collapsed 状态并恢复主窗口，下次新会话仍在主窗口所在显示器中央打开。关闭后的窗口立即卸载旧预览数据、图片或媒体源及临时 UI 状态，但保留空 Renderer 2 分钟供连续预览快速复用；持续无预览会话后销毁完整 Renderer，下次预览再按需创建。
+- 首次实际预览时按需创建并复用独立、可缩放的 `previewWindow`；Cap7CE 模式保持透明自绘外壳，兼容模式使用与主窗口相同的不透明 WCO 策略和共享标题栏，36 DIP 标题栏添加在既有预览内容高度之外。预览窗口不进入主窗口状态机和任务栏，右侧 Skim / Settings、主题描边视觉、内容自适应、始终启用的 bounds 吸附计算及全局边缘收起开关保持统一。预览固定状态仅属于当前会话；关闭时先恢复完整 bounds，再清除固定 / 停靠 / collapsed 状态并恢复主窗口，下次新会话仍在主窗口所在显示器中央打开。关闭后的窗口立即卸载旧预览数据、图片或媒体源及临时 UI 状态，但保留空 Renderer 2 分钟供连续预览快速复用；持续无预览会话后销毁完整 Renderer，下次预览再按需创建。
 - 预览内容切换后根据最新图片尺寸重新计算窗口大小；最大化期间只记录最新目标尺寸，恢复时再应用。
 - 处理主窗口与预览窗口共用且始终启用的边缘吸附 bounds 计算；两类窗口分别维护拖动结束计时、程序移动保护和独立边缘收起会话。预览收起期间的内容自适应尺寸更新保存的展开 bounds，并重新计算对应屏外位置，避免以 collapsed bounds 错误锚定或产生展开闪动。
 - 注册、暂停、恢复并验证可配置全局快捷动作；快捷键映射候选只有实际注册成功才允许写入偏好，运行期临时冲突不改写用户的总开关偏好。窗口内“目录切换”与全局动作共享配置和内部重复检查，但不调用 `globalShortcut.register`，避免占用其他软件的按键。
@@ -65,8 +65,9 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 | 模块 | 职责 |
 | --- | --- |
-| `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览窗口外壳模式的稳定类型、能力策略与主进程运行期装配；缺失或非法偏好一律回退 `cap7ce`。透明模式保持既有参数，兼容主窗口使用不透明 WCO、36 DIP 标题栏及主题匹配的背景 / 系统按钮颜色；两种模式分别使用 `window-layout.json` 与 `window-layout-compatibility.json`，避免内容尺寸和外框尺寸互相污染。主进程通过只读壳层指标返回本次实际生效模式，Renderer 不按可能被开发覆盖或安全回退的保存值猜测。预览窗口接入兼容宿主留待独立轮次 |
+| `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览窗口外壳模式的稳定类型、能力策略与主进程运行期装配；缺失或非法偏好一律回退 `cap7ce`。透明模式保持既有参数，兼容主窗口和预览窗口使用不透明 WCO、36 DIP 标题栏及主题匹配的背景 / 系统按钮颜色；两种模式分别使用 `window-layout.json` 与 `window-layout-compatibility.json`，避免内容尺寸和外框尺寸互相污染。主进程通过只读壳层指标返回本次实际生效模式，Renderer 不按可能被开发覆盖或安全回退的保存值猜测 |
 | `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
+| `previewWindowPresentationSizing.ts` | 预览内容尺寸到真实窗口外框的纯几何适配；Cap7CE 模式保持原尺寸，兼容模式额外增加标题栏高度并保持当前外框中心，在狭窄工作区内统一约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原与系统 Snap 适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；左右 / 分区 Snap 通过工作区网格几何识别，在系统管理窗口期间暂停 Cap7CE 的 5 DIP 吸附、布局记忆和边缘收起，普通靠边停放及 Cap7CE 模式不受影响 |
 | `src/renderer/window-presentation/CompatibilityTitlebar.tsx` / `.css` | 仅在兼容主窗口生效的 WCO 标题栏；通过 portal 挂载到 `document.body`，与会动画、裁剪和滚动的网格壳层隔离，避免网格滚动重算后覆盖 Windows 拖动命中区。使用 `titlebar-area-*` 环境变量限定安全拖动区，标题栏右端复用现有置顶图标、状态与统一动作，系统最小化 / 最大化 / 关闭继续由 Windows 绘制。现有右侧栏宽度及 Skim / Settings 入口不变，只清空兼容模式下的旧顶部窗口动作 |
 | `windowPresentationSwitchRuntime.ts` | 窗口模式切换的单次事务、受限 IPC 与启动恢复；先记录旧 / 新模式，再持久化偏好并刷新窗口布局和诊断数据，随后受控 relaunch。新进程须在主 Renderer 完成加载后清除启动标记；重复请求、写入 / 刷新失败、启动超时或上次启动未完成时回退旧模式，避免双实例和半切换状态。原有退出 IPC 同域注册，继续只接受主 Renderer |

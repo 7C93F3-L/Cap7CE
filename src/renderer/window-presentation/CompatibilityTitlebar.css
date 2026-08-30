@@ -3,6 +3,11 @@
   background: var(--app-bg);
 }
 
+.preview-window-compatibility {
+  --compatibility-titlebar-height: 36px;
+  background: var(--app-bg);
+}
+
 .cap-compatibility-titlebar {
   position: fixed;
   top: env(titlebar-area-y, 0);
@@ -55,4 +60,17 @@
 
 .cap-shell-compatibility .cap-window-control-rail {
   top: var(--compatibility-titlebar-height);
+}
+
+.preview-window-compatibility .preview-window-content,
+.preview-window-compatibility .preview-window-scrollbar-slot {
+  top: calc(var(--content-edge-gap) + var(--compatibility-titlebar-height));
+}
+
+.preview-window-compatibility .cap-window-control-rail {
+  top: var(--compatibility-titlebar-height);
+}
+
+.preview-window-compatibility.preview-window-maximized {
+  border-radius: 0;
 }

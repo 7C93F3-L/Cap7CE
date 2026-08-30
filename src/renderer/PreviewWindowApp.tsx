@@ -9,10 +9,14 @@ import WindowControlRail, { type WindowControlAction } from "./WindowControlRail
 import PdfPreviewPanel from "./PdfPreviewPanel";
 import FontPreviewPanel from "./FontPreviewPanel";
 import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
+import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import { buildFileContextMenuGroups, getFileContextShortcutAction } from "./fileContextActions";
 import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
+import { COMPATIBILITY_TITLEBAR_HEIGHT } from "../../electron/windowPresentationPolicy";
+
+const isCompatibilityWindow = new URLSearchParams(window.location.search).get("presentation") === "compatibility";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
   isMaximized: false,
@@ -421,7 +425,10 @@ const PreviewWindowApp = () => {
     } as CSSProperties;
   }, [previewData]);
 
-  const previewControlActions: WindowControlAction[] = [
+  const togglePreviewAlwaysOnTop = () => {
+    void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);
+  };
+  const previewControlActions: WindowControlAction[] = isCompatibilityWindow ? [] : [
     { id: "close", label: t("preview.close"), icon: "line", onClick: closePreview },
     {
       id: "maximize",
@@ -437,12 +444,10 @@ const PreviewWindowApp = () => {
       label: windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin"),
       icon: windowControlState.isAlwaysOnTop ? "pinOn" : "pinOff",
       pressed: windowControlState.isAlwaysOnTop,
-      onClick: () => {
-        void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);
-      }
+      onClick: togglePreviewAlwaysOnTop
     }
   ];
-  const showSettings = viewportHeight >= windowControlState.miniStandardHeight;
+  const showSettings = viewportHeight - (isCompatibilityWindow ? COMPATIBILITY_TITLEBAR_HEIGHT : 0) >= windowControlState.miniStandardHeight;
 
   if (!previewData) {
     return <main className="preview-window-root" />;
@@ -458,7 +463,7 @@ const PreviewWindowApp = () => {
 
   return (
     <main
-      className={`app theme-${previewData.theme} preview-window-root`}
+      className={`app theme-${previewData.theme} preview-window-root${isCompatibilityWindow ? " preview-window-compatibility" : ""}${windowControlState.isMaximized ? " preview-window-maximized" : ""}`}
       style={themeStyle}
       role="dialog"
       aria-label={previewData.fileName}
@@ -504,6 +509,7 @@ const PreviewWindowApp = () => {
         window.cap7ce?.preview.navigate(event.deltaY > 0 ? 1 : -1);
       }}
     >
+      {isCompatibilityWindow && <CompatibilityTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
       <div className="preview-window-content">
         {showPreviewLoadingIndicator && (
           <div className="preview-window-loading" role="status" aria-live="polite">

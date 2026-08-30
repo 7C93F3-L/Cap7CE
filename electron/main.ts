@@ -70,6 +70,7 @@ import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
+import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -337,6 +338,7 @@ const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
   edgeGap: edgeGapPx,
   edgeAnchorThreshold: edgeAnchorThresholdPx
 });
+const previewWindowPresentationSizing = new PreviewWindowPresentationSizing({ minimumWidth: previewWindowMinimumWidth, minimumHeight: previewWindowMinimumHeight, horizontalPadding: previewWindowHorizontalPadding, verticalChrome: previewWindowVerticalChrome, workAreaRatio: previewWindowWorkAreaRatio });
 const getShellContentBounds = (bounds: Electron.Rectangle) => shellWindowPresentationSizing.getContentBounds(bounds);
 const getShellContentWorkArea = (workArea: Electron.Rectangle) => shellWindowPresentationSizing.getContentWorkArea(workArea);
 const getShellOuterMinimumSize = (size: { width: number; height: number }) => shellWindowPresentationSizing.getOuterMinimumSize(size);
@@ -458,10 +460,10 @@ const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } =
   previewDockedShell.resetSession();
   if (previewWindow && !previewWindow.isDestroyed()) {
     previewWindow.webContents.send("preview:reset");
-    previewWindow.hide();
     if (previewWindow.isMaximized()) {
       previewWindow.unmaximize();
     }
+    previewWindow.hide();
     previewWindow.setAlwaysOnTop(false);
   }
 
@@ -512,45 +514,7 @@ const getPreviewWindowBounds = (contentWidth: number, contentHeight: number): El
     : mainWindow
       ? screen.getDisplayMatching(mainWindow.getBounds())
       : screen.getPrimaryDisplay();
-  const { workArea } = display;
-  const maximumWidth = Math.max(1, Math.floor(workArea.width * previewWindowWorkAreaRatio));
-  const maximumHeight = Math.max(1, Math.floor(workArea.height * previewWindowWorkAreaRatio));
-  const minimumWidth = Math.min(previewWindowMinimumWidth, maximumWidth);
-  const minimumHeight = Math.min(previewWindowMinimumHeight, maximumHeight);
-  const availableContentWidth = Math.max(1, maximumWidth - previewWindowHorizontalPadding);
-  const availableContentHeight = Math.max(1, maximumHeight - previewWindowVerticalChrome);
-  const safeContentWidth = Math.max(1, Math.round(contentWidth));
-  const safeContentHeight = Math.max(1, Math.round(contentHeight));
-  const scale = Math.min(
-    1,
-    availableContentWidth / safeContentWidth,
-    availableContentHeight / safeContentHeight
-  );
-  const width = clamp(
-    Math.round(safeContentWidth * scale) + previewWindowHorizontalPadding,
-    minimumWidth,
-    maximumWidth
-  );
-  const height = clamp(
-    Math.round(safeContentHeight * scale) + previewWindowVerticalChrome,
-    minimumHeight,
-    maximumHeight
-  );
-  const anchorX = currentPreviewBounds
-    ? currentPreviewBounds.x + Math.round(currentPreviewBounds.width / 2)
-    : workArea.x + Math.round(workArea.width / 2);
-  const anchorY = currentPreviewBounds
-    ? currentPreviewBounds.y + Math.round(currentPreviewBounds.height / 2)
-    : workArea.y + Math.round(workArea.height / 2);
-  const maximumX = workArea.x + workArea.width - width;
-  const maximumY = workArea.y + workArea.height - height;
-
-  return {
-    x: clamp(anchorX - Math.round(width / 2), workArea.x, maximumX),
-    y: clamp(anchorY - Math.round(height / 2), workArea.y, maximumY),
-    width,
-    height
-  };
+  return previewWindowPresentationSizing.resolveBounds({ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display.workArea, titlebarHeight: windowPresentationRuntime.titlebarHeight });
 };
 
 const applyLatestPreviewContentSize = () => {
@@ -560,7 +524,9 @@ const applyLatestPreviewContentSize = () => {
     || !latestPreviewContentSize
     || !previewWindow
     || previewWindow.isDestroyed()
+    || !previewWindow.isVisible()
     || previewWindow.isMaximized()
+    || isCompatibilityPreviewNativeSnapActive()
     || latestPreviewContentSize.sessionId !== activePreviewData.sessionId
     || latestPreviewContentSize.filePath !== activePreviewData.filePath
   ) {
@@ -590,15 +556,14 @@ const createPreviewWindow = () => {
   }
 
   previewWindowLoaded = false;
+  const previewMinimumSize = previewWindowPresentationSizing.getOuterMinimumSize(windowPresentationRuntime.titlebarHeight);
   previewWindow = new BrowserWindow({
-    width: previewWindowMinimumWidth,
-    height: previewWindowMinimumHeight,
-    minWidth: previewWindowMinimumWidth,
-    minHeight: previewWindowMinimumHeight,
+    width: previewMinimumSize.width,
+    height: previewMinimumSize.height,
+    minWidth: previewMinimumSize.width,
+    minHeight: previewMinimumSize.height,
     title: "Cap7CE",
-    frame: false,
-    transparent: true,
-    backgroundColor: "#00000000",
+    ...windowPresentationRuntime.getBrowserOptions("preview", nativeTheme.shouldUseDarkColors),
     show: false,
     skipTaskbar: true,
     resizable: true,
@@ -618,6 +583,7 @@ const createPreviewWindow = () => {
     enabled: edgeCollapseEnabled,
     isSessionActive: () => previewSessionActive,
     isInteractionBlocked: () => isQuitting || isPreviewProgrammaticMoveGuardActive(),
+    isNativeSnapActive: () => isCompatibilityPreviewNativeSnapActive(),
     hideLine: () => lineWindowController.hide(),
     markProgrammaticMove: markPreviewProgrammaticMove,
     setCollapsedLayerActive: (active) => windowLayerController.setPreviewCollapsedLayerActive(active)
@@ -633,6 +599,7 @@ const createPreviewWindow = () => {
   previewWindow.on("blur", syncThumbnailOptimizationActivity);
   previewWindow.on("show", syncThumbnailOptimizationActivity);
   previewWindow.on("hide", syncThumbnailOptimizationActivity);
+  if (windowPresentationRuntime.mode === "compatibility") previewWindow.on("unmaximize", applyLatestPreviewContentSize);
   previewWindow.on("move", () => {
     if (
       !previewSessionActive
@@ -669,10 +636,11 @@ const createPreviewWindow = () => {
   if (devServerUrl) {
     const previewUrl = new URL(devServerUrl);
     previewUrl.searchParams.set("window", "preview");
+    previewUrl.searchParams.set("presentation", windowPresentationRuntime.mode);
     void previewWindow.loadURL(previewUrl.toString());
   } else {
     void previewWindow.loadFile(path.join(__dirname, "../dist/index.html"), {
-      query: { window: "preview" }
+      query: { window: "preview", presentation: windowPresentationRuntime.mode }
     });
   }
 };
@@ -969,6 +937,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 
 const canSnapShellWindow = () => activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal" || activeShellState === "settings";
 const isCompatibilityNativeSnapActive = (bounds = mainWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode === "compatibility" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
+const isCompatibilityPreviewNativeSnapActive = (bounds = previewWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode === "compatibility" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
 
 const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   const shellState = activeShellState;
@@ -1050,6 +1019,7 @@ const applyPreviewEdgeSnapAfterMove = () => {
     || !previewSessionActive
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
+    || isCompatibilityPreviewNativeSnapActive()
     || previewDockedShell.hasActiveSession()
   ) {
     return;
@@ -1072,6 +1042,7 @@ const schedulePreviewMoveSnapCheck = () => {
     || !previewSessionActive
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
+    || isCompatibilityPreviewNativeSnapActive()
     || previewDockedShell.hasActiveSession()
   ) {
     return;
@@ -2330,9 +2301,10 @@ const forceApplyDefaultMicroBounds = () => {
 
 const getMainWindowPresentationOptions = () => windowPresentationRuntime.getBrowserOptions("main", nativeTheme.shouldUseDarkColors);
 
-const refreshMainWindowPresentationAppearance = async () => {
+const refreshWindowPresentationAppearance = async () => {
   const preferences = await getUserPreferences();
-  return windowPresentationRuntime.applyMainWindowAppearance(mainWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
+  const mainUpdated = windowPresentationRuntime.applyMainWindowAppearance(mainWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
+  return windowPresentationRuntime.applyPreviewWindowAppearance(previewWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors) || mainUpdated;
 };
 
 const createWindow = () => {
@@ -2497,7 +2469,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   createWindow();
-  nativeTheme.on("updated", () => { if (windowPresentationRuntime.usesSystemTheme) void refreshMainWindowPresentationAppearance(); });
+  nativeTheme.on("updated", () => { if (windowPresentationRuntime.usesSystemTheme) void refreshWindowPresentationAppearance(); });
   if (standbyLineVisible) {
     lineWindowController.create();
   }
@@ -3611,7 +3583,7 @@ registerPreferenceIpc({
   updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
   updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
   updateTheme: updateThemePreference,
-  refreshAppearance: () => { lineWindowController.refreshAppearance(); void refreshMainWindowPresentationAppearance(); },
+  refreshAppearance: () => { lineWindowController.refreshAppearance(); void refreshWindowPresentationAppearance(); },
   applyLanguage: applyLanguagePreference,
   updateSort: updateSortPreference,
   applyThumbnailSort: (sortPreference) => {

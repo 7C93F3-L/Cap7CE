@@ -23,13 +23,15 @@ const mainWindowCreation = getFunctionBody(mainSource, "const createWindow = () 
 const previewWindowCreation = getFunctionBody(mainSource, "const createPreviewWindow = () => {", "const createStartupHintWindow = async () => {");
 const startupWindowCreation = getFunctionBody(mainSource, "const createStartupHintWindow = async () => {", "const getShellDisplay = () => (");
 
-for (const [name, source] of [["preview", previewWindowCreation], ["startup", startupWindowCreation], ["line", lineControllerSource]]) {
+for (const [name, source] of [["startup", startupWindowCreation], ["line", lineControllerSource]]) {
   assert.match(source, /frame: false/u, `${name} window must remain frameless at the compatibility baseline`);
   assert.match(source, /transparent: true/u, `${name} window must remain transparent at the compatibility baseline`);
   assert.match(source, /backgroundColor: "#00000000"/u, `${name} window must keep the transparent background baseline`);
 }
 
 assert.match(mainWindowCreation, /\.\.\.getMainWindowPresentationOptions\(\)/u);
+assert.match(previewWindowCreation, /\.\.\.windowPresentationRuntime\.getBrowserOptions\("preview", nativeTheme\.shouldUseDarkColors\)/u);
+assert.doesNotMatch(previewWindowCreation, /transparent: false/u);
 assert.match(presentationPolicySource, /if \(!surfacePolicy\.usesWindowControlsOverlay\) \{[\s\S]*?frame: false,[\s\S]*?transparent: true,[\s\S]*?backgroundColor: "#00000000"/u);
 assert.match(appSource, /const shellControlActions: WindowControlAction\[\] = shellState === "capsule" \|\| isCompatibilityMode[\s\S]*?id: "standby"[\s\S]*?id: "cycle"[\s\S]*?id: "pin"/u);
 assert.match(appSource, /<WindowControlRail[\s\S]*?actions=\{shellControlActions\}[\s\S]*?showSkim=\{showShellSettingsToggle\}[\s\S]*?showSettings=\{showShellSettingsToggle\}/u);

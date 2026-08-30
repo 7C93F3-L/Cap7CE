@@ -17,7 +17,7 @@ assert.match(maximizeControllerSource, /window\.on\("maximize", this\.handleMaxi
 assert.match(maximizeControllerSource, /window\.on\("unmaximize", this\.handleRestore\);/u);
 assert.match(mainSource, /miniStandardHeight: miniDefaultHeightPx,[\s\S]*?titlebarHeight: getMainWindowTitlebarHeight\(\)/u);
 assert.match(viewportSource, /window\.innerHeight - currentTitlebarHeight/u);
-assert.doesNotMatch(mainSource, /activeWindowPresentationPolicy\.surfaces\.preview/u);
+assert.match(mainSource, /windowPresentationRuntime\.getBrowserOptions\("preview", nativeTheme\.shouldUseDarkColors\)/u);
 
 console.log(JSON.stringify({
   presentationPolicyLoadedBeforeMainWindow: true,
@@ -26,5 +26,5 @@ console.log(JSON.stringify({
   outerBoundsDriveLayoutMemory: true,
   nativeMaximizeRestoreHooked: true,
   rendererViewportExcludesTitlebar: true,
-  previewWindowDeferredToLaterRound: true
+  previewWindowUsesActivePresentationPolicy: true
 }));

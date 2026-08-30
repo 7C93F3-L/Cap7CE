@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
 const appSource = read("src/renderer/App.tsx");
+const previewSource = read("src/renderer/PreviewWindowApp.tsx");
 const mainSource = read("electron/main.ts");
 const viewportMetricsSource = read("src/renderer/controllers/useShellViewportMetrics.ts");
 const titlebarSource = read("src/renderer/window-presentation/CompatibilityTitlebar.tsx");
@@ -29,6 +30,10 @@ for (const marker of ["showSkim={showShellSettingsToggle}", "showSettings={showS
 
 if (!/isCompatibilityMode\s*&&\s*<CompatibilityTitlebar/.test(appSource)) {
   throw new Error("Compatibility titlebar must render only for the compatibility main shell.");
+}
+
+if (!/isCompatibilityWindow\s*&&\s*<CompatibilityTitlebar/.test(previewSource)) {
+  throw new Error("Compatibility titlebar must be shared with the compatibility preview window.");
 }
 
 if (!titlebarSource.includes('import { createPortal } from "react-dom"')

@@ -16,6 +16,7 @@ export class PreviewDockedShell {
     enabled,
     isSessionActive,
     isInteractionBlocked,
+    isNativeSnapActive = () => false,
     hideLine,
     markProgrammaticMove,
     setCollapsedLayerActive
@@ -24,6 +25,7 @@ export class PreviewDockedShell {
     enabled: boolean;
     isSessionActive: () => boolean;
     isInteractionBlocked: () => boolean;
+    isNativeSnapActive?: () => boolean;
     hideLine: () => void;
     markProgrammaticMove: () => void;
     setCollapsedLayerActive: (active: boolean) => void;
@@ -38,7 +40,7 @@ export class PreviewDockedShell {
       fixed: this.fixed,
       getShellContext: () => ({
         state: isSessionActive() ? "preview" : "inactive",
-        maximized: window.isMaximized(),
+        maximized: window.isMaximized() || isNativeSnapActive(),
         interactionBlocked: isInteractionBlocked()
       }),
       hideLine,

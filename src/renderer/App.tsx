@@ -2939,7 +2939,7 @@ const App = () => {
         />
       )}
       {isExpandedShell && (
-        isCompatibilityMode && <CompatibilityTitlebar pinned={isAlwaysOnTop} label={isAlwaysOnTop ? t("window.unfix") : t("window.fix")} onTogglePinned={() => void toggleAlwaysOnTop(shellState)} />
+        isCompatibilityMode && <CompatibilityTitlebar pinned={isAlwaysOnTop} label={isAlwaysOnTop ? t("window.unfix") : t("window.fix")} onTogglePinned={() => void toggleAlwaysOnTop(shellState)} theme={effectiveTheme} />
       )}
       {isExpandedShell && (
         <WindowControlRail

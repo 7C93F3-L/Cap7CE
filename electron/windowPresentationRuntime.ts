@@ -43,9 +43,17 @@ export class WindowPresentationRuntime {
   }
 
   applyMainWindowAppearance(window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) {
+    return this.applyWindowAppearance("main", window, themePreference, systemUsesDarkColors);
+  }
+
+  applyPreviewWindowAppearance(window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) {
+    return this.applyWindowAppearance("preview", window, themePreference, systemUsesDarkColors);
+  }
+
+  private applyWindowAppearance(surface: WindowPresentationSurface, window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) {
     this.themePreference = themePreference;
     if (!window || window.isDestroyed()) return false;
-    const options = this.getBrowserOptions("main", systemUsesDarkColors);
+    const options = this.getBrowserOptions(surface, systemUsesDarkColors);
     window.setBackgroundColor(options.backgroundColor);
     if (options.titleBarOverlay) window.setTitleBarOverlay(options.titleBarOverlay);
     return true;

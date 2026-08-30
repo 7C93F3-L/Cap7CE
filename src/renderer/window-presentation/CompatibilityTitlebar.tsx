@@ -6,10 +6,11 @@ interface CompatibilityTitlebarProps {
   pinned: boolean;
   label: string;
   onTogglePinned: () => void;
+  theme?: "light" | "dark";
 }
 
-const CompatibilityTitlebar = ({ pinned, label, onTogglePinned }: CompatibilityTitlebarProps) => {
-  return createPortal(<header className="cap-compatibility-titlebar" data-window-controls="true">
+const CompatibilityTitlebar = ({ pinned, label, onTogglePinned, theme }: CompatibilityTitlebarProps) => {
+  return createPortal(<header className={`cap-compatibility-titlebar${theme ? ` app theme-${theme}` : ""}`} data-window-controls="true">
     <button
       className="cap-compatibility-titlebar-pin"
       type="button"
