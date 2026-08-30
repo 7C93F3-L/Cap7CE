@@ -49,8 +49,8 @@ assert.match(mainSource, /screen\.on\("display-removed", \(\) => scheduleShellWo
 assert.match(mainSource, /changedMetrics\.includes\("scaleFactor"\)/u);
 assert.match(appSource, /isAlwaysOnTop \? t\("window\.unfix"\) : t\("window\.fix"\)/u);
 assert.doesNotMatch(previewAppSource, /window\.onAlwaysOnTopChanged/u);
-assert.match(mainSource, /const nextState = resolveResizeTargetState\(activeShellState, currentBounds, screen\.getDisplayMatching\(currentBounds\)\.workArea\);/u);
-assert.match(mainSource, /if \(!isStableResizeBounds\(shellState, bounds, display\.workArea\)\) return;/u);
+assert.match(mainSource, /const nextState = resolveResizeTargetState\(activeShellState, getShellContentBounds\(currentBounds\), getShellContentWorkArea\(currentDisplay\.workArea\)\);/u);
+assert.match(mainSource, /if \(!isStableResizeBounds\(shellState, getShellContentBounds\(bounds\), getShellContentWorkArea\(display\.workArea\)\)\) return;/u);
 assert.match(mainSource, /const isProgrammaticMoveGuardActive = \(\) => Date\.now\(\) < programmaticMoveGuardUntil;/u);
 assert.match(mainSource, /const isProgrammaticResizeGuardActive = \(\) => Date\.now\(\) < programmaticResizeGuardUntil;/u);
 

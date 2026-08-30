@@ -15,7 +15,7 @@ declare global {
         setAlwaysOnTop: (enabled: boolean) => Promise<Cap7CEAlwaysOnTopState>;
         getAlwaysOnTop: () => Promise<Cap7CEAlwaysOnTopState>;
         toggleNormalMaximized: () => Promise<{ isMaximized: boolean; lastNormalBounds: Cap7CEWindowBounds | null }>;
-        getShellLayoutMetrics: () => Promise<{ miniStandardHeight: number }>;
+        getShellLayoutMetrics: () => Promise<{ miniStandardHeight: number; titlebarHeight: number }>;
         onShellStateChanged: (callback: (state: Cap7CEShellState) => void) => () => void;
         onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => () => void;
         onOpenSettingsRequested: (callback: () => void) => () => void;

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, net, protocol, screen, shell, Tray, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, protocol, screen, shell, Tray, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -64,6 +64,9 @@ import { getDefaultShellLayoutBounds, toWindowLayoutDisplaySnapshot, WindowLayou
 import { WindowLayoutStore } from "./windowLayoutStore";
 import type { PersistedWindowLayoutState, WindowDockEdge } from "./windowLayoutTypes";
 import { DEFAULT_WINDOW_RESIZE_THRESHOLDS, isStableResizeBounds, resolveResizeTargetState } from "./windowResizeState";
+import { CompatibilityNativeMaximizeController } from "./compatibilityNativeMaximizeController";
+import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
+import { WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -172,7 +175,8 @@ let activeCapsuleEdge: "top" | "bottom" = "bottom";
 let dockedShellController: ReturnType<typeof installDockedShell> | null = null; let edgeCollapseEnabled = false;
 let mainWindowSkipTaskbar: boolean | null = null;
 let microBottomCenterAnchored = false;
-const windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", "window-layout.json")));
+const windowPresentationRuntime = new WindowPresentationRuntime();
+let windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
 let standbyLineVisible = true;
 let systemNotificationsEnabled = true;
 let quickActionGlobalEnabled = true;
@@ -310,6 +314,26 @@ const previewWindowVerticalChrome = 24;
 const previewWindowWorkAreaRatio = 0.85;
 const previewWindowIdleDestroyDelayMs = 2 * 60_000;
 const DEBUG_WINDOW_BOUNDS = true;
+
+const getMainWindowTitlebarHeight = () => windowPresentationRuntime.titlebarHeight;
+const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
+  getTitlebarHeight: getMainWindowTitlebarHeight,
+  capsuleWidth: capsuleWidthPx,
+  capsuleHeight: capsuleWindowHeightPx,
+  microHeight: microDefaultHeightPx,
+  miniHeight: miniDefaultHeightPx,
+  minimumWidth: resizableShellMinimumWidthPx,
+  minimumHeight: resizableShellMinimumHeightPx,
+  normalMinimumWidth: DEFAULT_WINDOW_RESIZE_THRESHOLDS.normalToMiniWidth,
+  normalMinimumHeight: DEFAULT_WINDOW_RESIZE_THRESHOLDS.normalToMiniHeight,
+  miniMaximumWidth: DEFAULT_WINDOW_RESIZE_THRESHOLDS.miniToNormalWidth,
+  microLayoutMaximumHeight: microLayoutMaxHeight,
+  edgeGap: edgeGapPx,
+  edgeAnchorThreshold: edgeAnchorThresholdPx
+});
+const getShellContentBounds = (bounds: Electron.Rectangle) => shellWindowPresentationSizing.getContentBounds(bounds);
+const getShellContentWorkArea = (workArea: Electron.Rectangle) => shellWindowPresentationSizing.getContentWorkArea(workArea);
+const getShellOuterMinimumSize = (size: { width: number; height: number }) => shellWindowPresentationSizing.getOuterMinimumSize(size);
 
 const isShellWindowState = (state: string): state is Cap7CEShellState => shellWindowStates.has(state as Cap7CEShellState);
 
@@ -823,6 +847,34 @@ const windowLayerController = new WindowLayerController({
   isPreviewActive: () => previewSessionActive
 });
 const applyAlwaysOnTopState = () => windowLayerController.apply();
+const compatibilityNativeMaximizeController = new CompatibilityNativeMaximizeController({
+  isCompatibilityMode: () => windowPresentationRuntime.mode === "compatibility",
+  getShellState: () => activeShellState,
+  enterNormalMaximized: () => {
+    shellMaximized = false;
+    microBottomCenterAnchored = false;
+    activeShellState = "normal";
+    syncTaskbarVisibility(activeShellState);
+    sendShellStateToRenderer(activeShellState);
+  },
+  restoreShellState: (restore) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const minimumSize = getShellMinimumSize(restore.state);
+    resetDockedShellPosition();
+    if (minimumSize) mainWindow.setMinimumSize(minimumSize.width, minimumSize.height);
+    mainWindow.setResizable(true);
+    mainWindow.setHasShadow(true);
+    markProgrammaticResize();
+    markProgrammaticMove();
+    mainWindow.setBounds(restore.bounds, true);
+    activeShellState = restore.state;
+    microBottomCenterAnchored = restore.state === "micro" && isBottomCenterMicroBounds(restore.bounds);
+    syncTaskbarVisibility(activeShellState);
+    rememberUserMovedShellBounds(restore.bounds);
+    applyAlwaysOnTopState();
+    sendShellStateToRenderer(activeShellState);
+  }
+});
 
 const getNormalWorkAreaBounds = (): Electron.Rectangle => {
   const { x, y, width, height } = getShellDisplay().workArea;
@@ -831,21 +883,12 @@ const getNormalWorkAreaBounds = (): Electron.Rectangle => {
 
 const getShellWindowBounds = (state: Cap7CEShellState, targetDisplay?: Electron.Display, capsuleEdge: "top" | "bottom" = "bottom"): Electron.Rectangle => {
   const display = targetDisplay ?? (mainWindow ? screen.getDisplayMatching(mainWindow.getBounds()) : screen.getPrimaryDisplay());
-  const persistedState: PersistedWindowLayoutState | null = state === "settings" ? "normal" : state === "micro" || state === "mini" || state === "normal" ? state : null;
-  const defaultBounds = (workArea: Electron.Rectangle) => getDefaultShellLayoutBounds(state, workArea, { capsuleWidth: capsuleWidthPx, capsuleHeight: capsuleWindowHeightPx, capsuleEdge, microHeight: microDefaultHeightPx, miniHeight: miniDefaultHeightPx, edgeGap: edgeGapPx });
-  if (!persistedState) return defaultBounds(display.workArea);
-  const displays = screen.getAllDisplays();
-  const minimumSize = persistedState === "normal"
-    ? { width: DEFAULT_WINDOW_RESIZE_THRESHOLDS.normalToMiniWidth, height: DEFAULT_WINDOW_RESIZE_THRESHOLDS.normalToMiniHeight }
-    : { width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx };
-  return windowLayoutManager.resolveBounds({
-    state: persistedState,
-    displays: displays.map(toWindowLayoutDisplaySnapshot),
+  return shellWindowPresentationSizing.resolveBounds({
+    state,
+    capsuleEdge,
     currentDisplay: toWindowLayoutDisplaySnapshot(display),
-    defaultBounds: (targetDisplay) => defaultBounds(targetDisplay.workArea),
-    minimumSize,
-    maximumSize: persistedState === "mini" ? { width: DEFAULT_WINDOW_RESIZE_THRESHOLDS.miniToNormalWidth } : undefined,
-    fixedHeight: persistedState === "micro" ? microDefaultHeightPx : undefined
+    displays: screen.getAllDisplays().map(toWindowLayoutDisplaySnapshot),
+    layoutManager: windowLayoutManager
   });
 };
 
@@ -904,86 +947,24 @@ const scheduleShellWorkAreaRefresh = (changedDisplayId: number | null) => {
 
 const getMicroResizeBoundsForCurrentPosition = (currentBounds: Electron.Rectangle): Electron.Rectangle => {
   const { workArea } = screen.getDisplayMatching(currentBounds);
-  const workRight = workArea.x + workArea.width;
-  const workBottom = workArea.y + workArea.height;
-  const nextWidth = Math.min(workArea.width, Math.max(300, Math.round(currentBounds.width)));
-  const nextHeight = microDefaultHeightPx;
-  const minX = workArea.x + edgeGapPx;
-  const minY = workArea.y + edgeGapPx;
-  const maxX = Math.max(minX, workRight - nextWidth - edgeGapPx);
-  const maxY = Math.max(minY, workBottom - nextHeight - edgeGapPx);
-  const currentRightGap = Math.abs(workRight - (currentBounds.x + currentBounds.width) - edgeGapPx);
-  const currentBottomGap = Math.abs(workBottom - (currentBounds.y + currentBounds.height) - edgeGapPx);
-  const isLeftAnchored = Math.abs(currentBounds.x - minX) <= edgeAnchorThresholdPx;
-  const isRightAnchored = currentRightGap <= edgeAnchorThresholdPx;
-  const isTopAnchored = Math.abs(currentBounds.y - minY) <= edgeAnchorThresholdPx;
-  const isBottomAnchored = currentBottomGap <= edgeAnchorThresholdPx;
-  const centerX = currentBounds.x + Math.round(currentBounds.width / 2);
-  const centerY = currentBounds.y + Math.round(currentBounds.height / 2);
-
-  return {
-    width: nextWidth,
-    height: nextHeight,
-    x: isLeftAnchored
-      ? minX
-      : isRightAnchored
-        ? maxX
-        : clamp(centerX - Math.round(nextWidth / 2), minX, maxX),
-    y: isTopAnchored
-      ? minY
-      : isBottomAnchored
-        ? maxY
-        : clamp(centerY - Math.round(nextHeight / 2), minY, maxY)
-  };
+  return shellWindowPresentationSizing.getMicroResizeBounds(currentBounds, workArea);
 };
 
 const isBottomCenterMicroBounds = (bounds: Electron.Rectangle) => {
   const { workArea } = screen.getDisplayMatching(bounds);
-  const workBottom = workArea.y + workArea.height;
-  const workCenterX = workArea.x + Math.round(workArea.width / 2);
-  const boundsCenterX = bounds.x + Math.round(bounds.width / 2);
-
-  return (
-    Math.abs(boundsCenterX - workCenterX) <= edgeAnchorThresholdPx &&
-    Math.abs(bounds.y + bounds.height - (workBottom - edgeGapPx)) <= edgeAnchorThresholdPx
-  );
+  return shellWindowPresentationSizing.isBottomCenterBounds(bounds, workArea);
 };
 
 const getBottomCenterMicroResizeBounds = (newBounds: Electron.Rectangle): Electron.Rectangle => {
   const { workArea } = screen.getDisplayMatching(newBounds);
-  const microMinimumSize = getShellMinimumSize("micro");
-  const minWidth = microMinimumSize?.width ?? 540;
-  const maxWidth = Math.max(minWidth, workArea.width - edgeGapPx * 2);
-  const nextWidth = clamp(Math.round(newBounds.width), minWidth, maxWidth);
-  const nextHeight = newBounds.height < microLayoutMaxHeight
-    ? Math.max(microMinimumSize?.height ?? microDefaultHeightPx, Math.round(newBounds.height))
-    : microDefaultHeightPx;
-  const centerX = workArea.x + Math.round(workArea.width / 2);
-  const bottom = workArea.y + workArea.height;
-
-  return {
-    width: nextWidth,
-    height: nextHeight,
-    x: centerX - Math.round(nextWidth / 2),
-    y: bottom - nextHeight - edgeGapPx
-  };
+  return shellWindowPresentationSizing.getBottomCenterMicroResizeBounds(newBounds, workArea);
 };
 
 const getShellMinimumSize = (state: Cap7CEShellState) => {
-  if (state === "settings") {
-    const workArea = mainWindow
-      ? screen.getDisplayMatching(mainWindow.getBounds()).workArea
-      : screen.getPrimaryDisplay().workArea;
-    return {
-      width: Math.min(DEFAULT_WINDOW_RESIZE_THRESHOLDS.normalToMiniWidth, workArea.width),
-      height: Math.min(DEFAULT_WINDOW_RESIZE_THRESHOLDS.normalToMiniHeight, workArea.height)
-    };
-  }
-  if (state === "micro" || state === "mini" || state === "normal") {
-    return { width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx };
-  }
-
-  return null;
+  const workArea = mainWindow
+    ? screen.getDisplayMatching(mainWindow.getBounds()).workArea
+    : screen.getPrimaryDisplay().workArea;
+  return shellWindowPresentationSizing.getMinimumSize(state, workArea);
 };
 
 const markProgrammaticResize = () => {
@@ -1022,7 +1003,7 @@ const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   }
   const state: PersistedWindowLayoutState = shellState === "settings" ? "normal" : shellState;
   const display = screen.getDisplayMatching(bounds);
-  if (!isStableResizeBounds(shellState, bounds, display.workArea)) return;
+  if (!isStableResizeBounds(shellState, getShellContentBounds(bounds), getShellContentWorkArea(display.workArea))) return;
   windowLayoutManager.captureBounds({ state, bounds, display: toWindowLayoutDisplaySnapshot(display) });
 };
 
@@ -1816,6 +1797,7 @@ const applyCapsuleWindowMode = () => {
   resetShellBehavior();
   resetDockedShellPosition();
   if (mainWindow.isMaximized()) {
+    compatibilityNativeMaximizeController.cancelRestore();
     mainWindow.unmaximize();
   }
 
@@ -1875,6 +1857,7 @@ const applyShellWindowState = (state: string, options: { preserveBounds?: boolea
     shellMaximized = false;
   }
   if (mainWindow.isMaximized() && !preserveBounds) {
+    compatibilityNativeMaximizeController.cancelRestore();
     mainWindow.unmaximize();
   }
   mainWindow.setResizable(isResizableWindow);
@@ -1919,6 +1902,7 @@ const setShellWindowStateFromResize = (state: Cap7CEShellState) => {
   resetDockedShellPosition();
 
   if (mainWindow.isMaximized()) {
+    compatibilityNativeMaximizeController.cancelRestore();
     mainWindow.unmaximize();
   }
   if (minimumSize) {
@@ -2185,7 +2169,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
     return;
   }
 
@@ -2194,7 +2178,8 @@ const evaluateShellResizeThresholds = () => {
   }
 
   const currentBounds = mainWindow.getBounds();
-  const nextState = resolveResizeTargetState(activeShellState, currentBounds, screen.getDisplayMatching(currentBounds).workArea);
+  const currentDisplay = screen.getDisplayMatching(currentBounds);
+  const nextState = resolveResizeTargetState(activeShellState, getShellContentBounds(currentBounds), getShellContentWorkArea(currentDisplay.workArea));
   if (activeShellState === "settings") {
     if (nextState !== "normal") {
       shellMaximized = false;
@@ -2304,7 +2289,7 @@ const applyBottomCenterMicroWillResize = (
   const widthDelta = Math.abs(newBounds.width - currentBounds.width);
   const heightDelta = Math.abs(newBounds.height - currentBounds.height);
   const isHorizontalResize = widthDelta > 0 && heightDelta <= Math.max(2, Math.round(widthDelta * 0.2));
-  if (!isHorizontalResize || newBounds.height >= microLayoutMaxHeight) {
+  if (!isHorizontalResize || getShellContentBounds(newBounds).height >= microLayoutMaxHeight) {
     return;
   }
 
@@ -2328,6 +2313,7 @@ const forceApplyDefaultMicroBounds = () => {
   lastNormalBounds = null;
   resetDockedShellPosition();
   if (mainWindow.isMaximized()) {
+    compatibilityNativeMaximizeController.cancelRestore();
     mainWindow.unmaximize();
   }
   mainWindow.setResizable(true);
@@ -2348,19 +2334,25 @@ const forceApplyDefaultMicroBounds = () => {
   return true;
 };
 
+const getMainWindowPresentationOptions = () => windowPresentationRuntime.getBrowserOptions("main", nativeTheme.shouldUseDarkColors);
+
+const refreshMainWindowPresentationAppearance = async () => {
+  const preferences = await getUserPreferences();
+  return windowPresentationRuntime.applyMainWindowAppearance(mainWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
+};
+
 const createWindow = () => {
   const initialBounds = getShellWindowBounds("normal");
+  const initialMinimumSize = getShellOuterMinimumSize({ width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx });
   mainWindow = new BrowserWindow({
     ...initialBounds,
-    minWidth: resizableShellMinimumWidthPx,
-    minHeight: resizableShellMinimumHeightPx,
+    minWidth: initialMinimumSize.width,
+    minHeight: initialMinimumSize.height,
     title: "Cap7CE",
     skipTaskbar: false,
-    frame: false,
-    transparent: true,
+    ...getMainWindowPresentationOptions(),
     hasShadow: true,
     show: false,
-    backgroundColor: "#00000000",
     paintWhenInitiallyHidden: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -2406,6 +2398,7 @@ const createWindow = () => {
     discardQueuedInteractiveThumbnailRenders();
   });
   mainWindow.on("minimize", () => discardQueuedInteractiveThumbnailRenders());
+  compatibilityNativeMaximizeController.attach(mainWindow);
   mainWindow.on("will-resize", applyBottomCenterMicroWillResize);
 
   mainWindow.on("close", (event) => {
@@ -2485,6 +2478,9 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     console.warn("[search-path-evidence] failed to backfill existing catalog paths", error);
   }
   const preferences = await getUserPreferences();
+  const requestedWindowPresentationMode = !app.isPackaged && process.env.CAP7CE_WINDOW_PRESENTATION_MODE ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
+  windowPresentationRuntime.configure(requestedWindowPresentationMode, preferences.themePreference);
+  windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences(preferences);
   setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
@@ -2497,6 +2493,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
   createWindow();
+  nativeTheme.on("updated", () => { if (windowPresentationRuntime.usesSystemTheme) void refreshMainWindowPresentationAppearance(); });
   if (standbyLineVisible) {
     lineWindowController.create();
   }
@@ -2582,7 +2579,8 @@ app.on("before-quit", () => {
 });
 
 ipcMain.handle("window:getShellLayoutMetrics", () => ({
-  miniStandardHeight: miniDefaultHeightPx
+  miniStandardHeight: miniDefaultHeightPx,
+  titlebarHeight: getMainWindowTitlebarHeight()
 }));
 
 ipcMain.handle("line:activateCapsule", (event) => {
@@ -3620,7 +3618,7 @@ registerPreferenceIpc({
   updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
   updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
   updateTheme: updateThemePreference,
-  refreshAppearance: () => lineWindowController.refreshAppearance(),
+  refreshAppearance: () => { lineWindowController.refreshAppearance(); void refreshMainWindowPresentationAppearance(); },
   applyLanguage: applyLanguagePreference,
   updateSort: updateSortPreference,
   applyThumbnailSort: (sortPreference) => {

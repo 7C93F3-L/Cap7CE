@@ -42,7 +42,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 创建按 normal 尺寸隐藏初始化的主 `BrowserWindow`，并装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`。主窗口、预览、line 与启动提示的 DevTools 能力仅在未打包开发环境开启，打包版从 `webPreferences` 层禁用，不依赖快捷键拦截。line 窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
+- 创建按 normal 内容尺寸隐藏初始化的主 `BrowserWindow`。默认 `cap7ce` 模式继续使用透明自绘窗口；开发期可显式启用的 `compatibility` 宿主使用不透明 Window Controls Overlay，并把 36 DIP 标题栏作为现有内容尺寸之外的外框高度。两种宿主共用同一显示恢复、任务栏、单实例和隐藏链路，但分别读写布局文件。主窗口同时装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`。主窗口、预览、line 与启动提示的 DevTools 能力仅在未打包开发环境开启，打包版从 `webPreferences` 层禁用，不依赖快捷键拦截。line 窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
 - `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。窗口停靠吸附是不可关闭的基础行为，边缘收起则由设置页与托盘菜单共用同一偏好控制。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
 - 管理 capsule / micro / mini / normal / Settings 主窗口状态，以及 standby 对主窗口隐藏和独立 line 显示的协调语义；从 standby 唤起时先保持主窗口透明，待目标形态完成主进程布局与 Renderer 绘制后再显现，并保留超时恢复以避免透明窗口滞留。
 - 全局 Alt+4 与 capsule 失焦只向 Renderer 请求进入 standby，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。
@@ -65,7 +65,9 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 | 模块 | 职责 |
 | --- | --- |
-| `windowPresentationPolicy.ts` | 主窗口 / 预览窗口外壳模式的稳定类型和只读能力策略；缺失或非法偏好一律回退 `cap7ce`。当前透明模式继续使用既有参数，兼容模式仅声明不透明 WCO、36 DIP 标题栏与独立 Capsule 能力，尚未接入 BrowserWindow 创建；两种模式分别使用 `window-layout.json` 与 `window-layout-compatibility.json`，避免内容尺寸和外框尺寸互相污染 |
+| `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览窗口外壳模式的稳定类型、能力策略与主进程运行期装配；缺失或非法偏好一律回退 `cap7ce`。透明模式保持既有参数，兼容主窗口使用不透明 WCO、36 DIP 标题栏及主题匹配的背景 / 系统按钮颜色；两种模式分别使用 `window-layout.json` 与 `window-layout-compatibility.json`，避免内容尺寸和外框尺寸互相污染。预览窗口接入兼容宿主留待独立轮次 |
+| `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
+| `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；程序主动取消最大化不会误触发原生还原链路 |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 独立 `window-layout.json` 的校验、损坏回退、原子替换和 debounce 写入；Manager 按单一窗口记忆开关捕获与恢复 micro、mini、normal 的完整展开布局，并使 Settings 共用 normal 记录；最后有效停靠方向始终在本次运行内可用，仅在记忆开启时跨重启恢复，供主窗口自身边缘收起使用 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |

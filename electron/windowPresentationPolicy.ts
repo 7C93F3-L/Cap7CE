@@ -17,6 +17,21 @@ export interface WindowPresentationPolicy {
   surfaces: Record<WindowPresentationSurface, WindowPresentationSurfacePolicy>;
 }
 
+export type WindowPresentationTheme = "light" | "dark";
+
+export interface WindowPresentationBrowserOptions {
+  frame: false;
+  transparent: boolean;
+  backgroundColor: string;
+  roundedCorners?: true;
+  titleBarStyle?: "hidden";
+  titleBarOverlay?: {
+    color: string;
+    symbolColor: string;
+    height: number;
+  };
+}
+
 export const DEFAULT_WINDOW_PRESENTATION_MODE: WindowPresentationMode = "cap7ce";
 export const COMPATIBILITY_TITLEBAR_HEIGHT = 36;
 
@@ -46,6 +61,46 @@ export const getWindowPresentationPolicy = (
     surfaces: {
       main: { ...surfacePolicy },
       preview: { ...surfacePolicy }
+    }
+  };
+};
+
+const windowPresentationThemes: Record<WindowPresentationTheme, { backgroundColor: string; symbolColor: string }> = {
+  dark: { backgroundColor: "#171717", symbolColor: "#D8D8D8" },
+  light: { backgroundColor: "#F4F4F4", symbolColor: "#242424" }
+};
+
+export const resolveWindowPresentationTheme = (
+  preference: "system" | "light" | "dark",
+  systemUsesDarkColors: boolean
+): WindowPresentationTheme => (
+  preference === "system" ? (systemUsesDarkColors ? "dark" : "light") : preference
+);
+
+export const getWindowPresentationBrowserOptions = (
+  policy: WindowPresentationPolicy,
+  surface: WindowPresentationSurface,
+  theme: WindowPresentationTheme
+): WindowPresentationBrowserOptions => {
+  const surfacePolicy = policy.surfaces[surface];
+  if (!surfacePolicy.usesWindowControlsOverlay) {
+    return {
+      frame: false,
+      transparent: true,
+      backgroundColor: "#00000000"
+    };
+  }
+  const colors = windowPresentationThemes[theme];
+  return {
+    frame: false,
+    transparent: false,
+    backgroundColor: colors.backgroundColor,
+    roundedCorners: true,
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: colors.backgroundColor,
+      symbolColor: colors.symbolColor,
+      height: policy.titlebarHeight
     }
   };
 };
