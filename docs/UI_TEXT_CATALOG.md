@@ -284,11 +284,12 @@
 | `settings.launchAtLoginOff`        | 关闭                            |                           |     | 开机运行状态          |
 | `settings.compatibilityMode`       | 兼容模式                          | Compatibility Mode        |     | 目标窗口模式          |
 | `settings.cap7ceMode`              | Cap7CE 模式                     | Cap7CE Mode               |     | 目标窗口模式          |
+| `settings.windowModeSwitchDescription` | 卡顿等问题时可尝试切换                | Try switching if issues occur. | | 窗口模式切换说明 |
 | `settings.switchWindowMode`        | 切换                            | Switch                    |     | 窗口模式切换按钮       |
 | `settings.switchingWindowMode`     | 切换中                           | Switching                 |     | 窗口模式切换中         |
 | `settings.windowModeSwitchFailed`  | 切换失败，请重试                    | Switch failed. Try again  |     | 窗口模式切换失败       |
-| `settings.switchToCompatibilityHint` | 切换后重启并使用兼容模式               | Restart and use Compatibility Mode | | 兼容模式切换提示 |
-| `settings.switchToCap7CEHint`      | 切换后重启并使用 Cap7CE 模式          | Restart and use Cap7CE Mode |   | Cap7CE 模式切换提示 |
+| `settings.switchToCompatibilityHint` | 点击后切换为兼容模式                  | Click to switch to Compatibility Mode | | 兼容模式切换提示 |
+| `settings.switchToCap7CEHint`      | 点击后切换为 Cap7CE 模式             | Click to switch to Cap7CE Mode | | Cap7CE 模式切换提示 |
 | `settings.operationHints`          | 操作提示                          |                           |     | 搜索框操作提示设置       |
 | `settings.operationHintsOn`        | 显示                            |                           |     | 操作提示开启状态        |
 | `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |

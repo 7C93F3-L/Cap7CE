@@ -38,6 +38,7 @@ export const WindowPresentationModeSettingsRow = ({ activeMode }: WindowPresenta
   return (
     <div className="cap-settings-row cap-settings-row-half">
       <span className="cap-settings-label">{targetLabel}</span>
+      <span className="cap-settings-value">{t("settings.windowModeSwitchDescription")}</span>
       <button
         className="cap-settings-pill"
         type="button"

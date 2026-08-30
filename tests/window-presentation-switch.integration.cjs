@@ -130,7 +130,8 @@ const run = async () => {
   assert.match(rowSource, /activeMode === "cap7ce" \? "compatibility" : "cap7ce"/);
   assert.match(rowSource, /disabled=\{status === "switching"\}/);
   assert.match(preloadSource, /app:switchWindowPresentationMode/);
-  for (const key of ["settings.compatibilityMode", "settings.cap7ceMode", "settings.switchWindowMode", "settings.switchingWindowMode", "settings.switchToCompatibilityHint", "settings.switchToCap7CEHint", "settings.windowModeSwitchFailed"]) {
+  assert.match(rowSource, /settings\.windowModeSwitchDescription/);
+  for (const key of ["settings.compatibilityMode", "settings.cap7ceMode", "settings.windowModeSwitchDescription", "settings.switchWindowMode", "settings.switchingWindowMode", "settings.switchToCompatibilityHint", "settings.switchToCap7CEHint", "settings.windowModeSwitchFailed"]) {
     assert.ok(zhSource.includes(`"${key}"`), `Missing Chinese text: ${key}`);
     assert.ok(enSource.includes(`"${key}"`), `Missing English text: ${key}`);
   }
