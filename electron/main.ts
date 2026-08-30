@@ -57,6 +57,7 @@ import { resolveLanguagePreference, setActiveLanguage, t, type LanguagePreferenc
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 import { LineWindowController } from "./lineWindowController";
 import { CapsuleWindowController } from "./capsuleWindowController";
+import { CapsuleSubmissionHandoff } from "./capsuleSubmissionHandoff";
 import { installDockedShell } from "./dockedShellAutomation";
 import { previewDockedShell } from "./previewDockedShell";
 import { WindowLayerController } from "./windowLayerController";
@@ -820,6 +821,11 @@ const lineWindowController = new LineWindowController({
   rendererPath: path.join(__dirname, "../dist/index.html"),
   shouldShow: shouldShowLineWindow
 });
+const capsuleSubmissionHandoff = new CapsuleSubmissionHandoff({
+  activateNormal: () => activateShellModeShortcut("normal"),
+  canActivate: () => windowPresentationRuntime.mode === "compatibility" && activeShellState === "capsule",
+  dispatchQuery: (query) => mainWindow?.webContents.send("capsule:submitRequested", query)
+});
 const capsuleWindowController = new CapsuleWindowController({
   createWindow: (options) => createApplicationWindow("capsule", options), devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
   getAlwaysOnTop: () => shellAlwaysOnTop, getMainWindow: () => mainWindow,
@@ -827,9 +833,9 @@ const capsuleWindowController = new CapsuleWindowController({
   isMainSender: (id) => Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents.id === id),
   isQuitting: () => isQuitting, lockWebContentsZoom,
   markMainMove: () => markProgrammaticMove(), markMainResize: () => markProgrammaticResize(),
-  onCancel: (clearQuery) => mainWindow?.webContents.send("capsule:cancelRequested", clearQuery),
+  onCancel: (clearQuery) => { capsuleSubmissionHandoff.cancel(); mainWindow?.webContents.send("capsule:cancelRequested", clearQuery); },
   onDraftChange: (query) => mainWindow?.webContents.send("capsule:draftChanged", query),
-  onSubmit: (query) => mainWindow?.webContents.send("capsule:submitRequested", query),
+  onSubmit: (query) => capsuleSubmissionHandoff.submit(query),
   preloadPath: path.join(__dirname, "preload.js"), registrar: ipcMain, rendererPath: path.join(__dirname, "../dist/index.html"),
   resolveCap7CEBounds: (display, edge) => getShellWindowBounds("capsule", display, edge),
   resolveCompatibilityBounds: (display, edge) => getDefaultShellLayoutBounds("capsule", display.workArea, { capsuleWidth: capsuleWidthPx, capsuleHeight: capsuleWindowHeightPx, capsuleEdge: edge, microHeight: microDefaultHeightPx, miniHeight: miniDefaultHeightPx, edgeGap: edgeGapPx })

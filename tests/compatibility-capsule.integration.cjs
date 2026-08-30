@@ -10,6 +10,7 @@ const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"),
 const capsuleAppSource = fs.readFileSync(path.join(root, "src", "renderer", "CompatibilityCapsuleWindowApp.tsx"), "utf8");
 const sharedCapsuleSource = fs.readFileSync(path.join(root, "src", "renderer", "search", "QuickSearchCapsule.tsx"), "utf8");
 const bridgeSource = fs.readFileSync(path.join(root, "src", "renderer", "window-presentation", "useCompatibilityCapsuleBridge.ts"), "utf8");
+const handoffSource = fs.readFileSync(path.join(root, "electron", "capsuleSubmissionHandoff.ts"), "utf8");
 const { getAnchoredCapsuleBounds } = require(path.join(root, "dist-electron", "capsuleWindowController.js"));
 
 assert.deepEqual(
@@ -56,6 +57,7 @@ assert.match(bridgeSource, /capsule\.syncPresentation\(presentation\)/u);
 assert.match(bridgeSource, /capsule\.onDraftChanged\(\(query\) => callbacksRef\.current\.onDraftChange\(query\)\)/u);
 assert.match(bridgeSource, /capsule\.onSubmitRequested\(\(query\) => callbacksRef\.current\.onSubmit\(query\)\)/u);
 assert.match(bridgeSource, /capsule\.onCancelRequested\(\(clearQuery\) => callbacksRef\.current\.onCancel\(clearQuery\)\)/u);
+assert.doesNotMatch(bridgeSource, /if \(!active\) return undefined;[\s\S]*?capsule\.onSubmitRequested/u);
 assert.match(appSource, /<QuickSearchCapsule/u);
 assert.match(appSource, /placeholder: searchInputFeedback,[\s\S]*?operationHintVisible,/u);
 assert.match(controllerSource, /operationHintVisible: candidate\.operationHintVisible === true/u);
@@ -63,6 +65,12 @@ assert.match(capsuleAppSource, /<QuickSearchCapsule[\s\S]*?operationHintVisible=
 assert.match(sharedCapsuleSource, /onCompositionStart[\s\S]*?onComposingChange\?\.\(true\)/u);
 assert.match(sharedCapsuleSource, /onCompositionEnd[\s\S]*?compositionGuardUntilRef\.current = Date\.now\(\) \+ 180/u);
 assert.match(sharedCapsuleSource, /event\.key === "Escape"[\s\S]*?!composing\) onCancel\(\)/u);
+assert.match(mainSource, /const capsuleSubmissionHandoff = new CapsuleSubmissionHandoff\([\s\S]*?activateNormal: \(\) => activateShellModeShortcut\("normal"\)[\s\S]*?dispatchQuery: \(query\) => mainWindow\?\.webContents\.send\("capsule:submitRequested", query\)/u);
+assert.match(mainSource, /onSubmit: \(query\) => capsuleSubmissionHandoff\.submit\(query\)/u);
+assert.match(handoffSource, /setImmediate\(\(\) => void this\.beginHandoff\(requestId, query\)\)/u);
+assert.match(handoffSource, /await this\.options\.activateNormal\(\)[\s\S]*?this\.options\.dispatchQuery\(query\)/u);
+assert.match(mainSource, /const activateShellModeShortcut[\s\S]*?if \(!showAndFocusMainWindow\(\)\) return false;[\s\S]*?sendActivateShellModeShortcutToRenderer\(mode\)/u);
+assert.match(appSource, /const targetShellState = isCompatibilityMode \? "normal" : "micro"[\s\S]*?setShellState\(targetShellState\)[\s\S]*?runSearch\(nextSearch/u);
 
 console.log(JSON.stringify({
   compatibilityCapsuleUsesIndependentHost: true,
@@ -72,6 +80,10 @@ console.log(JSON.stringify({
   lineMainPreviewCapsuleMutualExclusionCovered: true,
   cap7ceSameWindowCapsulePreserved: true,
   operationHintColorStateShared: true,
+  compatibilitySearchUsesNormalWindow: true,
+  compatibilityNormalUsesSharedAlt3Activation: true,
+  capsuleSubmissionReturnsBeforeHostHandoff: true,
+  normalHostActivatedBeforeSearchDispatch: true,
   displayReconciliationAndExitCleanupCovered: true,
   nativeHeightCorrectionPreservesEdgeGap: true
 }));

@@ -112,7 +112,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `skimVisualCacheService.ts` | skim 原生视觉队列与 Shell 缩略图队列的会话协调、预览优先级、目录切换取消、迟到结果保护及安全清理 |
 | `searchShellVisualCacheService.ts` | 搜索结果页按当前渲染项请求系统相机格式缩略图与预览，维护独立于 skim 的缓存、串行队列、活动门控和失败抑制 |
 | `lineWindowController.ts` | 独立 line 窗口的创建、延迟加载、显示、隐藏、销毁、定位、形状、置顶与发送者归属；主进程只注入当前状态和偏好判断 |
-| `capsuleWindowController.ts` | 兼容 Capsule 的创建、延迟加载、焦点、失焦、位置、置顶、显示器恢复与受限 IPC；`CompatibilityCapsuleWindowApp.tsx` 只渲染输入入口，`QuickSearchCapsule.tsx` 为同窗 / 独立两种宿主共享 Enter、Esc 与中文 IME 保护，`useCompatibilityCapsuleBridge.ts` 把草稿和动作交还主 `App.tsx` 的唯一搜索业务链 |
+| `capsuleWindowController.ts` / `capsuleSubmissionHandoff.ts` | 兼容 Capsule 的创建、延迟加载、焦点、失焦、位置、置顶、显示器恢复与受限 IPC；`CompatibilityCapsuleWindowApp.tsx` 只渲染输入入口，`QuickSearchCapsule.tsx` 为同窗 / 独立两种宿主共享 Enter、Esc 与中文 IME 保护，`useCompatibilityCapsuleBridge.ts` 以主页面生命周期订阅草稿和动作，把它们交还主 `App.tsx` 的唯一搜索业务链。Cap7CE 模式提交后继续进入 micro；兼容模式先让 Capsule 提交 IPC 完整返回，再复用 Alt+3、托盘还原共用的 normal 激活入口，并在激活通知之后派发查询；常驻的受限提交监听可跨过 capsule → normal 的 React 状态切换，避免为独立 Capsule 维护第二套主窗口恢复顺序 |
 | `shellThumbnailProvider.ts` | 调用 Windows Shell、WIC 或已安装第三方处理器生成文件内容缩略图，并按调用方写入相互隔离的 skim 或搜索系统图像缓存 |
 | `shellThumbnailScheduler.ts` | Shell 缩略图的独立串行队列、请求去重、前后台暂停、会话取消、失败抑制和超时熔断 |
 | `visualRenderService.ts` | 统一调度各格式代表图、模型图和预览图渲染 |

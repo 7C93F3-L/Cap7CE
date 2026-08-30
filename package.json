@@ -37,7 +37,7 @@
     "test:preview-window-presentation-sizing": "node tests/preview-window-presentation-sizing.integration.cjs",
     "test:compatibility-native-maximize": "node tests/compatibility-native-maximize.integration.cjs",
     "test:window-system-interactions": "node tests/window-system-interactions.integration.cjs",
-    "test:compatibility-capsule": "node tests/compatibility-capsule.integration.cjs",
+    "test:compatibility-capsule": "node tests/compatibility-capsule.integration.cjs && node tests/capsule-submission-handoff.integration.cjs",
     "test:compatibility-titlebar": "node tests/compatibility-titlebar.integration.cjs",
     "test:compatibility-preview": "node tests/compatibility-preview-window.integration.cjs",
     "test:window-compatibility-host": "node tests/window-compatibility-host.integration.cjs",

@@ -24,7 +24,6 @@ export const useCompatibilityCapsuleBridge = ({
   }, [active, presentation]);
 
   useEffect(() => {
-    if (!active) return undefined;
     const unsubscribeDraft = window.cap7ce?.capsule.onDraftChanged((query) => callbacksRef.current.onDraftChange(query));
     const unsubscribeSubmit = window.cap7ce?.capsule.onSubmitRequested((query) => callbacksRef.current.onSubmit(query));
     const unsubscribeCancel = window.cap7ce?.capsule.onCancelRequested((clearQuery) => callbacksRef.current.onCancel(clearQuery));
@@ -33,5 +32,5 @@ export const useCompatibilityCapsuleBridge = ({
       unsubscribeSubmit?.();
       unsubscribeCancel?.();
     };
-  }, [active]);
+  }, []);
 };

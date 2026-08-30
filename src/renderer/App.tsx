@@ -1673,11 +1673,11 @@ const App = () => {
   };
 
   const collapseShellToStandby = enterStandby;
-
-  const expandCapsuleToMicro = useCallback((submittedSearch: SearchState) => {
+  const expandCapsuleToResults = useCallback((submittedSearch: SearchState) => {
     resetShellBehaviorState();
-    void window.cap7ce?.window.setShellState("micro", { forceBounds: true });
-    setShellState("micro");
+    const targetShellState = isCompatibilityMode ? "normal" : "micro";
+    if (targetShellState === "micro") void window.cap7ce?.window.setShellState("micro", { forceBounds: true });
+    setShellState(targetShellState);
     const invocation = parseAssistantInvocation(submittedSearch.query.trim());
     const nextSearch = { ...submittedSearch, query: invocation.query };
     const aiRequested = invocation.requested && aiRecognitionEnabled;
@@ -1686,7 +1686,7 @@ const App = () => {
     setSearch(nextSearch);
     aiSearchBeta.cancelActive();
     void runSearch(nextSearch, { aiEnhanced: aiRequested || (aiRecognitionEnabled && aiSearchBeta.enabled) });
-  }, [aiRecognitionEnabled, aiSearchBeta, resetShellBehaviorState, runSearch, showQuickCommandNotice]);
+  }, [aiRecognitionEnabled, aiSearchBeta, isCompatibilityMode, resetShellBehaviorState, runSearch, showQuickCommandNotice]);
 
   const submitCapsuleInput = (query = search.query) => {
     const nextSearch = { ...search, query: query.trim() };
@@ -1695,7 +1695,7 @@ const App = () => {
       return;
     }
 
-    expandCapsuleToMicro(nextSearch);
+    expandCapsuleToResults(nextSearch);
   };
 
   const compatibilityCapsulePresentation = useMemo(() => ({

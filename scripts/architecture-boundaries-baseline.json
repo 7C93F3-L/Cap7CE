@@ -31,6 +31,7 @@
     "src/renderer/settings/SettingsView.css": 253,
     "electron/main.ts": 3786,
     "electron/capsuleWindowController.ts": 307,
+    "electron/capsuleSubmissionHandoff.ts": 60,
     "electron/previewWindowPresentationSizing.ts": 61,
     "electron/lineWindowController.ts": 159
   },
