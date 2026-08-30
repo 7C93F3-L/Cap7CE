@@ -6,6 +6,7 @@ const { app, BrowserWindow } = require("electron");
 const root = path.resolve(__dirname, "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.ts"), "utf8");
 const lineControllerSource = fs.readFileSync(path.join(root, "electron", "lineWindowController.ts"), "utf8");
+const capsuleControllerSource = fs.readFileSync(path.join(root, "electron", "capsuleWindowController.ts"), "utf8");
 
 assert.equal(
   (mainSource.match(/devTools:\s*!app\.isPackaged/g) ?? []).length,
@@ -15,6 +16,8 @@ assert.equal(
 assert.match(mainSource, /devToolsEnabled:\s*!app\.isPackaged/);
 assert.match(lineControllerSource, /devToolsEnabled:\s*boolean/);
 assert.match(lineControllerSource, /devTools:\s*this\.options\.devToolsEnabled/);
+assert.match(capsuleControllerSource, /devToolsEnabled:\s*boolean/);
+assert.match(capsuleControllerSource, /devTools:\s*this\.options\.devToolsEnabled/);
 assert.doesNotMatch(mainSource, /(?:open|toggle)DevTools\s*\(/);
 
 const run = async () => {
@@ -38,7 +41,7 @@ const run = async () => {
   console.log(JSON.stringify({
     packagedRendererDevToolsDisabled: true,
     developmentRendererDevToolsPreserved: true,
-    mainPreviewLineAndStartupWindowsCovered: true,
+    mainPreviewLineCapsuleAndStartupWindowsCovered: true,
     openDevToolsAndKeyboardProbeBlocked: true
   }));
   app.quit();

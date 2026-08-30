@@ -33,10 +33,15 @@ const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement)
 const windowKind = new URLSearchParams(window.location.search).get("window");
 const isPreviewWindow = windowKind === "preview";
 const isLineWindow = windowKind === "line";
+const isCompatibilityCapsuleWindow = windowKind === "compatibility-capsule";
 
 if (isLineWindow) {
   void import("./LineWindowApp").then(({ default: LineWindowApp }) => {
     root.render(<LineWindowApp />);
+  });
+} else if (isCompatibilityCapsuleWindow) {
+  void import("./CompatibilityCapsuleWindowApp").then(({ default: CompatibilityCapsuleWindowApp }) => {
+    root.render(<CompatibilityCapsuleWindowApp />);
   });
 } else if (isPreviewWindow) {
   void import("./PreviewWindowApp").then(({ default: PreviewWindowApp }) => {

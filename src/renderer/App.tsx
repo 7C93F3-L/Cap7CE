@@ -39,6 +39,7 @@ import {
   type SearchCapsuleLabelVisibility
 } from "./search/Cap7CESearchCapsule";
 import { HomeView } from "./search/HomeView";
+import { QuickSearchCapsule } from "./search/QuickSearchCapsule";
 import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplayExtensions } from "./search/searchViewModel";
 import { parseAssistantInvocation } from "./assistant/assistantInvocation";
 import { hasAiSearchScopeChanged, useAiSearchBeta } from "./ai-search";
@@ -54,6 +55,7 @@ import { SkimView } from "./skim/SkimView";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
+import { useCompatibilityCapsuleBridge } from "./window-presentation/useCompatibilityCapsuleBridge";
 import type {
   AppView,
   AppearanceColors,
@@ -393,6 +395,7 @@ const App = () => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [lastNormalBounds, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
   const { shellViewportHeight, miniStandardHeight, windowPresentationMode } = useShellViewportMetrics();
+  const isCompatibilityMode = windowPresentationMode === "compatibility";
   const [filesPendingDelete, setFilesPendingDelete] = useState<ImageIndexItem[]>([]);
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [deleteFilesFeedback, setDeleteFilesFeedback] = useState<DeleteFilesFeedback | null>(null);
@@ -431,8 +434,6 @@ const App = () => {
   const capsuleInputRef = useRef<HTMLInputElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const previousShellStateRef = useRef<ShellState>("standby");
-  const capsuleComposingRef = useRef(false);
-  const capsuleCompositionGuardUntilRef = useRef(0);
   const resultsInitializedRef = useRef(false);
 
   useEffect(() => () => {
@@ -1673,32 +1674,50 @@ const App = () => {
 
   const collapseShellToStandby = enterStandby;
 
-  const expandCapsuleToMicro = useCallback(() => {
+  const expandCapsuleToMicro = useCallback((submittedSearch: SearchState) => {
     resetShellBehaviorState();
     void window.cap7ce?.window.setShellState("micro", { forceBounds: true });
     setShellState("micro");
-    const invocation = parseAssistantInvocation(search.query.trim());
-    const nextSearch = { ...search, query: invocation.query };
+    const invocation = parseAssistantInvocation(submittedSearch.query.trim());
+    const nextSearch = { ...submittedSearch, query: invocation.query };
     const aiRequested = invocation.requested && aiRecognitionEnabled;
     if (invocation.requested && !aiRecognitionEnabled) showQuickCommandNotice(t("search.aiRecognitionDisabled"));
     if (aiRequested) aiSearchBeta.activate();
     setSearch(nextSearch);
     aiSearchBeta.cancelActive();
     void runSearch(nextSearch, { aiEnhanced: aiRequested || (aiRecognitionEnabled && aiSearchBeta.enabled) });
-  }, [aiRecognitionEnabled, aiSearchBeta, resetShellBehaviorState, runSearch, search, showQuickCommandNotice]);
+  }, [aiRecognitionEnabled, aiSearchBeta, resetShellBehaviorState, runSearch, showQuickCommandNotice]);
 
-  const submitCapsuleInput = () => {
-    const nextSearch = { ...search, query: search.query.trim() };
+  const submitCapsuleInput = (query = search.query) => {
+    const nextSearch = { ...search, query: query.trim() };
+    setSearch(nextSearch);
     if (submitQuickCommandIfNeeded(nextSearch)) {
       return;
     }
 
-    expandCapsuleToMicro();
+    expandCapsuleToMicro(nextSearch);
   };
 
-  const isCapsuleCompositionActive = useCallback(() => (
-    capsuleComposingRef.current || Date.now() < capsuleCompositionGuardUntilRef.current
-  ), []);
+  const compatibilityCapsulePresentation = useMemo(() => ({
+    query: search.query,
+    placeholder: searchInputFeedback,
+    ariaLabel: t("search.action"),
+    theme: effectiveTheme,
+    appearanceColors
+  }), [appearanceColors, effectiveTheme, languagePreference, search.query, searchInputFeedback]);
+  useCompatibilityCapsuleBridge({
+    active: isCompatibilityMode && shellState === "capsule",
+    presentation: compatibilityCapsulePresentation,
+    onDraftChange: (query) => {
+      clearQuickCommandNotice();
+      setSearch((current) => ({ ...current, query }));
+    },
+    onSubmit: submitCapsuleInput,
+    onCancel: (clearQuery) => {
+      if (clearQuery) setSearch((current) => ({ ...current, query: "" }));
+      collapseShellToStandby();
+    }
+  });
 
   const toggleNormalMaximized = useCallback(async () => {
     const nextState = await window.cap7ce?.window.toggleNormalMaximized();
@@ -2591,9 +2610,6 @@ const App = () => {
       }
 
       if (event.key === "Escape") {
-        if (shellState === "capsule" && (event.isComposing || isCapsuleCompositionActive())) {
-          return;
-        }
         event.preventDefault();
         event.stopPropagation();
 
@@ -2711,7 +2727,6 @@ const App = () => {
     isClearingSkimCache,
     isDeletingFiles,
     isSavingMetadata,
-    isCapsuleCompositionActive,
     openSkim,
     openSettings,
     pendingQuickCommandConfirmation,
@@ -2845,7 +2860,6 @@ const App = () => {
   };
 
   const isExpandedShell = shellState !== "standby" && shellState !== "capsule";
-  const isCompatibilityMode = windowPresentationMode === "compatibility";
   const showShellSettingsToggle = miniStandardHeight !== null && shellViewportHeight >= miniStandardHeight;
   const isLargeShell = shellState === "normal" || shellState === "settings";
   const shellCycleLabel = isLargeShell ? (isMaximized ? t("window.restore") : t("window.maximize")) : t("window.changeMode");
@@ -2907,45 +2921,22 @@ const App = () => {
         <div className="cap-debug-window-viewport" aria-hidden="true" />
       )}
       {shellState === "capsule" && (
-        <div className="cap-capsule-stage">
-          <form
-            className="cap-capsule"
-            onClick={(event) => event.stopPropagation()}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!isCapsuleCompositionActive()) {
-                submitCapsuleInput();
-              }
-            }}
-          >
-            <input
-              className={operationHintVisible ? "cap-operation-hint" : undefined}
-              ref={capsuleInputRef}
-              value={search.query}
-              placeholder={searchInputFeedback}
-              title={searchInputFeedback || undefined}
-              onChange={(event) => {
-                clearQuickCommandNotice();
-                setSearch((current) => ({ ...current, query: event.target.value }));
-              }}
-              onCompositionStart={() => {
-                capsuleComposingRef.current = true;
-              }}
-              onCompositionEnd={() => {
-                capsuleComposingRef.current = false;
-                capsuleCompositionGuardUntilRef.current = Date.now() + 180;
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && ((event.nativeEvent as KeyboardEvent).isComposing || isCapsuleCompositionActive())) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }
-              }}
-              aria-label={t("search.action")}
-              autoComplete="off"
-            />
-          </form>
-        </div>
+        <QuickSearchCapsule
+          ariaLabel={t("search.action")}
+          inputRef={capsuleInputRef}
+          operationHintVisible={operationHintVisible}
+          placeholder={searchInputFeedback}
+          value={search.query}
+          onCancel={() => {
+            setSearch((current) => ({ ...current, query: "" }));
+            collapseShellToStandby();
+          }}
+          onChange={(query) => {
+            clearQuickCommandNotice();
+            setSearch((current) => ({ ...current, query }));
+          }}
+          onSubmit={submitCapsuleInput}
+        />
       )}
       {isExpandedShell && (
         isCompatibilityMode && <CompatibilityTitlebar pinned={isAlwaysOnTop} label={isAlwaysOnTop ? t("window.unfix") : t("window.fix")} onTogglePinned={() => void toggleAlwaysOnTop(shellState)} />

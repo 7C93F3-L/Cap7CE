@@ -8,6 +8,7 @@ const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.ts"),
 const previewDockedSource = fs.readFileSync(path.join(root, "electron", "previewDockedShell.ts"), "utf8");
 const windowLayerSource = fs.readFileSync(path.join(root, "electron", "windowLayerController.ts"), "utf8");
 const controllerSource = fs.readFileSync(path.join(root, "electron", "lineWindowController.ts"), "utf8");
+const capsuleControllerSource = fs.readFileSync(path.join(root, "electron", "capsuleWindowController.ts"), "utf8");
 const layoutPreferenceSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "useWindowLayoutPreference.ts"), "utf8");
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
 const previewAppSource = fs.readFileSync(path.join(root, "src", "renderer", "PreviewWindowApp.tsx"), "utf8");
@@ -66,9 +67,9 @@ assert.match(
   mainSource,
   /const applyShellWindowState = \(state: string,[\s\S]*?if \(state === "standby"\) \{[\s\S]*?applyStandaloneLineMode\(\)[\s\S]*?if \(state === "capsule"\) \{[\s\S]*?applyCapsuleWindowMode\(\)/u
 );
-assert.match(mainSource, /const activateCapsuleShortcut = \(source: "cursor" \| "line" = "cursor"\) => \{[\s\S]*?source === "line" \? getLineWindowPlacement\(\) : null[\s\S]*?screen\.getDisplayMatching\(linePlacement\.bounds\)[\s\S]*?screen\.getDisplayNearestPoint\(screen\.getCursorScreenPoint\(\)\)[\s\S]*?pendingCapsuleTargetDisplayId = targetDisplay\.id[\s\S]*?pendingCapsuleEdge = linePlacement\?\.edge === "top" \? "top" : "bottom"/u);
-assert.match(mainSource, /const targetDisplay = screen\.getAllDisplays\(\)\.find\(\(\{ id \}\) => id === pendingCapsuleTargetDisplayId\);[\s\S]*?getShellWindowBounds\("capsule", targetDisplay, capsuleEdge\)/u);
-assert.match(mainSource, /const capsuleEdge = pendingCapsuleEdge \?\? "bottom"/u);
+assert.match(mainSource, /const activateCapsuleShortcut = \(source: "cursor" \| "line" = "cursor"\) => \{[\s\S]*?source === "line" \? getLineWindowPlacement\(\) : null[\s\S]*?capsuleWindowController\.prepareTarget\(linePlacement\)/u);
+assert.match(capsuleControllerSource, /linePlacement[\s\S]*?screen\.getDisplayMatching\(linePlacement\.bounds\)[\s\S]*?screen\.getDisplayNearestPoint\(screen\.getCursorScreenPoint\(\)\)[\s\S]*?linePlacement\?\.edge === "top" \? "top" : "bottom"/u);
+assert.match(mainSource, /const \{ display: targetDisplay, edge: capsuleEdge \} = capsuleWindowController\.takeTarget\(\);[\s\S]*?getShellWindowBounds\("capsule", targetDisplay, capsuleEdge\)/u);
 assert.match(mainSource, /mainWindow\.on\("will-resize", applyBottomCenterMicroWillResize\);/u);
 assert.match(mainSource, /mainWindow\.on\("resize", \(\) => \{[\s\S]*?scheduleResizeSettledCheck\(\);/u);
 assert.match(mainSource, /mainWindow\.on\("move", \(\) => \{[\s\S]*?scheduleMoveSnapCheck\(\);/u);

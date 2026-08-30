@@ -56,6 +56,7 @@ import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirec
 import { resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
 import { lockWebContentsZoom } from "./webContentsZoomPolicy";
 import { LineWindowController } from "./lineWindowController";
+import { CapsuleWindowController } from "./capsuleWindowController";
 import { installDockedShell } from "./dockedShellAutomation";
 import { previewDockedShell } from "./previewDockedShell";
 import { WindowLayerController } from "./windowLayerController";
@@ -154,9 +155,6 @@ const cleanupStaleAppUpdateDownloads = async (): Promise<void> => {
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let resizeSettledTimer: NodeJS.Timeout | null = null;
 let shellMousePassthroughTimer: NodeJS.Timeout | null = null;
-let shellWorkAreaRefreshTimer: NodeJS.Timeout | null = null;
-let pendingCapsuleTargetDisplayId: number | null = null;
-let pendingCapsuleEdge: "top" | "bottom" | null = null;
 let hiddenActivationRevealTimer: NodeJS.Timeout | null = null;
 let hiddenActivationRevealPending = false;
 let lastShellMousePoint: Electron.Point | null = null;
@@ -174,7 +172,6 @@ let shellAlwaysOnTop = false;
 let shellMaximized = false;
 let lastNormalBounds: Electron.Rectangle | null = null;
 let activeShellState: Cap7CEShellState = "normal";
-let activeCapsuleEdge: "top" | "bottom" = "bottom";
 let dockedShellController: ReturnType<typeof installDockedShell> | null = null; let edgeCollapseEnabled = false;
 let mainWindowSkipTaskbar: boolean | null = null;
 let microBottomCenterAnchored = false;
@@ -398,6 +395,7 @@ const revealPreviewWindow = () => {
   if (!previewSessionActive || !previewWindow || previewWindow.isDestroyed()) {
     return false;
   }
+  capsuleWindowController.hide();
   const mainWasVisible = Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible());
   const previewWasVisible = previewWindow.isVisible();
   if (!previewWasVisible) {
@@ -442,7 +440,7 @@ const schedulePreviewIdleDestroy = () => {
     }
   }, previewWindowIdleDestroyDelayMs);
 };
-const closePreviewSession = () => {
+const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } = {}) => {
   previewOpenRequestId += 1;
   embeddedMetadataPreviewCoordinator.cancel();
   closeFontPreviewSession();
@@ -474,7 +472,7 @@ const closePreviewSession = () => {
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("preview:closed");
-    if (wasActive) {
+    if (wasActive && restoreMain) {
       mainWindow.show();
       applyAlwaysOnTopState();
       mainWindow.focus();
@@ -834,6 +832,7 @@ const shouldShowLineWindow = () => (
   standbyLineVisible
   && Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible())
   && !Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible())
+  && !capsuleWindowController.isVisible()
 );
 
 const lineWindowController = new LineWindowController({
@@ -847,6 +846,20 @@ const lineWindowController = new LineWindowController({
   rendererPath: path.join(__dirname, "../dist/index.html"),
   shouldShow: shouldShowLineWindow
 });
+const capsuleWindowController = new CapsuleWindowController({
+  devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
+  getAlwaysOnTop: () => shellAlwaysOnTop, getMainWindow: () => mainWindow,
+  getMode: () => windowPresentationRuntime.mode, isCapsuleActive: () => activeShellState === "capsule",
+  isMainSender: (id) => Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents.id === id),
+  isQuitting: () => isQuitting, lockWebContentsZoom,
+  markMainMove: () => markProgrammaticMove(), markMainResize: () => markProgrammaticResize(),
+  onCancel: (clearQuery) => mainWindow?.webContents.send("capsule:cancelRequested", clearQuery),
+  onDraftChange: (query) => mainWindow?.webContents.send("capsule:draftChanged", query),
+  onSubmit: (query) => mainWindow?.webContents.send("capsule:submitRequested", query),
+  preloadPath: path.join(__dirname, "preload.js"), registrar: ipcMain, rendererPath: path.join(__dirname, "../dist/index.html"),
+  resolveCap7CEBounds: (display, edge) => getShellWindowBounds("capsule", display, edge),
+  resolveCompatibilityBounds: (display, edge) => getDefaultShellLayoutBounds("capsule", display.workArea, { capsuleWidth: capsuleWidthPx, capsuleHeight: capsuleWindowHeightPx, capsuleEdge: edge, microHeight: microDefaultHeightPx, miniHeight: miniDefaultHeightPx, edgeGap: edgeGapPx })
+});
 const windowLayerController = new WindowLayerController({
   applyLineLayer: () => lineWindowController.applyAlwaysOnTop(),
   getMainFixed: () => shellAlwaysOnTop,
@@ -855,7 +868,11 @@ const windowLayerController = new WindowLayerController({
   getPreviewWindow: () => previewWindow,
   isPreviewActive: () => previewSessionActive
 });
-const applyAlwaysOnTopState = () => windowLayerController.apply();
+const applyAlwaysOnTopState = () => {
+  const state = windowLayerController.apply();
+  capsuleWindowController.applyAlwaysOnTop();
+  return state;
+};
 const compatibilityNativeMaximizeController = new CompatibilityNativeMaximizeController({
   isCompatibilityMode: () => windowPresentationRuntime.mode === "compatibility",
   getShellState: () => activeShellState,
@@ -907,51 +924,7 @@ const scheduleShellWorkAreaRefresh = (changedDisplayId: number | null) => {
   if (changedDisplayId === null || lineWindowController.isVisibleOnDisplay(changedDisplayId)) {
     lineWindowController.position();
   }
-  if (
-    !mainWindow
-    || mainWindow.isDestroyed()
-    || activeShellState !== "capsule"
-    || (changedDisplayId !== null && screen.getDisplayMatching(mainWindow.getBounds()).id !== changedDisplayId)
-  ) {
-    return;
-  }
-
-  if (shellWorkAreaRefreshTimer !== null) {
-    clearTimeout(shellWorkAreaRefreshTimer);
-  }
-  shellWorkAreaRefreshTimer = setTimeout(() => {
-    shellWorkAreaRefreshTimer = null;
-    if (
-      !mainWindow
-      || mainWindow.isDestroyed()
-      || activeShellState !== "capsule"
-    ) {
-      return;
-    }
-
-    const currentBounds = mainWindow.getBounds();
-    const currentDisplay = screen.getDisplayMatching(currentBounds);
-    if (changedDisplayId !== null && currentDisplay.id !== changedDisplayId) {
-      return;
-    }
-
-    const nextBounds = getShellWindowBounds(activeShellState, undefined, activeCapsuleEdge);
-    if (
-      currentBounds.x === nextBounds.x
-      && currentBounds.y === nextBounds.y
-      && currentBounds.width === nextBounds.width
-      && currentBounds.height === nextBounds.height
-    ) {
-      return;
-    }
-
-    markProgrammaticMove();
-    if (currentBounds.width !== nextBounds.width || currentBounds.height !== nextBounds.height) {
-      markProgrammaticResize();
-    }
-    mainWindow.setBounds(nextBounds, false);
-    logWindowBoundsDebug("[shell after workArea change]", activeShellState);
-  }, 120);
+  capsuleWindowController.reconcileDisplayConfiguration(changedDisplayId);
 };
 
 const getMicroResizeBoundsForCurrentPosition = (currentBounds: Electron.Rectangle): Electron.Rectangle => {
@@ -1217,8 +1190,12 @@ const showAndFocusMainWindow = () => {
     return false;
   }
 
-  const shouldWaitForTargetLayout = activeShellState === "standby" && !mainWindow.isVisible();
+  const shouldWaitForTargetLayout = !mainWindow.isVisible() && (
+    activeShellState === "standby"
+    || (activeShellState === "capsule" && windowPresentationRuntime.mode === "compatibility")
+  );
   lineWindowController.hide();
+  capsuleWindowController.hide();
   setShellIgnoreMouseEvents(false);
   if (shouldWaitForTargetLayout) {
     prepareHiddenActivationReveal();
@@ -1237,14 +1214,15 @@ const showAndFocusMainWindow = () => {
 
 const activateCapsuleShortcut = (source: "cursor" | "line" = "cursor") => {
   const linePlacement = source === "line" ? getLineWindowPlacement() : null;
-  const targetDisplay = linePlacement
-    ? screen.getDisplayMatching(linePlacement.bounds)
-    : screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
-  pendingCapsuleTargetDisplayId = targetDisplay.id;
-  pendingCapsuleEdge = linePlacement?.edge === "top" ? "top" : "bottom";
+  capsuleWindowController.prepareTarget(linePlacement);
+  if (windowPresentationRuntime.mode === "compatibility" && activeShellState === "capsule") {
+    return applyCapsuleWindowMode();
+  }
+  if (windowPresentationRuntime.mode === "compatibility") {
+    return sendActivateShellModeShortcutToRenderer("capsule");
+  }
   if (!showAndFocusMainWindow()) {
-    pendingCapsuleTargetDisplayId = null;
-    pendingCapsuleEdge = null;
+    capsuleWindowController.clearPendingTarget();
     return false;
   }
   sendActivateShellModeShortcutToRenderer("capsule");
@@ -1772,6 +1750,7 @@ const resetDockedShellPosition = () => { dockedShellController?.reset(false); };
 const applyStandaloneLineMode = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
+  capsuleWindowController.hide();
   clearHiddenActivationReveal();
   resetDockedShellPosition();
   rememberUserMovedShellBounds(mainWindow.getBounds());
@@ -1801,11 +1780,23 @@ const applyCapsuleWindowMode = () => {
     mainWindow.unmaximize();
   }
 
+  const { display: targetDisplay, edge: capsuleEdge } = capsuleWindowController.takeTarget();
+  if (windowPresentationRuntime.mode === "compatibility") {
+    if (previewSessionActive) closePreviewSession({ restoreMain: false });
+    clearHiddenActivationReveal();
+    mainWindow.setOpacity(1);
+    stopShellMousePassthrough();
+    setShellIgnoreMouseEvents(false);
+    activeShellState = "capsule";
+    syncTaskbarVisibility(activeShellState);
+    mainWindow.hide();
+    const bounds = getDefaultShellLayoutBounds("capsule", targetDisplay.workArea, { capsuleWidth: capsuleWidthPx, capsuleHeight: capsuleWindowHeightPx, capsuleEdge, microHeight: microDefaultHeightPx, miniHeight: miniDefaultHeightPx, edgeGap: edgeGapPx });
+    capsuleWindowController.show(bounds);
+    updateTrayMenu();
+    return true;
+  }
+
   logWindowBoundsDebug("[capsule before]", "capsule");
-  const targetDisplay = screen.getAllDisplays().find(({ id }) => id === pendingCapsuleTargetDisplayId);
-  const capsuleEdge = pendingCapsuleEdge ?? "bottom";
-  pendingCapsuleTargetDisplayId = null;
-  pendingCapsuleEdge = null;
   const capsuleBounds = getShellWindowBounds("capsule", targetDisplay, capsuleEdge);
   markProgrammaticResize();
   markProgrammaticMove();
@@ -1824,7 +1815,6 @@ const applyCapsuleWindowMode = () => {
   }
   applyAlwaysOnTopState();
   mainWindow.moveTop();
-  activeCapsuleEdge = capsuleEdge;
   activeShellState = "capsule";
   syncTaskbarVisibility(activeShellState);
   startShellMousePassthrough();
@@ -1845,6 +1835,8 @@ const applyShellWindowState = (state: string, options: { preserveBounds?: boolea
   if (state === "capsule") {
     return applyCapsuleWindowMode();
   }
+  const leavingCompatibilityCapsule = activeShellState === "capsule" && windowPresentationRuntime.mode === "compatibility";
+  capsuleWindowController.hide();
   lineWindowController.hide();
   microBottomCenterAnchored = false;
   resetDockedShellPosition();
@@ -1884,6 +1876,7 @@ const applyShellWindowState = (state: string, options: { preserveBounds?: boolea
     isBottomCenterMicroBounds(mainWindow.getBounds())
   );
   syncTaskbarVisibility(activeShellState);
+  if (leavingCompatibilityCapsule) showAndFocusMainWindow();
   return true;
 };
 
@@ -2304,6 +2297,8 @@ const applyBottomCenterMicroWillResize = (
 const forceApplyDefaultMicroBounds = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
 
+  const leavingCompatibilityCapsule = activeShellState === "capsule" && windowPresentationRuntime.mode === "compatibility";
+  capsuleWindowController.hide();
   lineWindowController.hide();
   const defaultMicroBounds = getShellWindowBounds("micro");
   clearResizeSettledCheck();
@@ -2330,6 +2325,7 @@ const forceApplyDefaultMicroBounds = () => {
   syncTaskbarVisibility(activeShellState);
   microBottomCenterAnchored = isBottomCenterMicroBounds(defaultMicroBounds);
   applyAlwaysOnTopState();
+  if (leavingCompatibilityCapsule) showAndFocusMainWindow();
 
   return true;
 };
@@ -2394,7 +2390,7 @@ const createWindow = () => {
   mainWindow.on("blur", () => {
     syncThumbnailOptimizationActivity();
     cancelActiveSearchTasks();
-    if (activeShellState === "capsule") {
+    if (activeShellState === "capsule" && windowPresentationRuntime.mode === "cap7ce") {
       sendActivateShellModeShortcutToRenderer("standby");
     }
   });
@@ -2568,10 +2564,7 @@ app.on("before-quit", () => {
   isQuitting = true;
   void windowLayoutManager.flush().catch((error) => console.warn("[window-layout] final write failed", error));
   clearHiddenActivationReveal();
-  if (shellWorkAreaRefreshTimer !== null) {
-    clearTimeout(shellWorkAreaRefreshTimer);
-    shellWorkAreaRefreshTimer = null;
-  }
+  capsuleWindowController.destroy();
   closeStartupHintWindow();
   clearPreviewIdleDestroyTimer();
   if (previewWindow && !previewWindow.isDestroyed()) {

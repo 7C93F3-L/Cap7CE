@@ -17,7 +17,7 @@ assert.match(mainSource, /standbyLineVisible[\s\S]*?!mainWindow\.isVisible\(\)[\
 assert.match(mainSource, /const requestSafeMainWindowHide = \(\) => sendActivateShellModeShortcutToRenderer\("standby"\);/u);
 assert.match(mainSource, /if \(mode === "standby"\) \{\s*return requestSafeMainWindowHide\(\);\s*\}/u);
 assert.doesNotMatch(mainSource, /if \(mode === "standby"\) \{\s*applyStandaloneLineMode\(\)/u);
-assert.match(mainSource, /if \(activeShellState === "capsule"\) \{\s*sendActivateShellModeShortcutToRenderer\("standby"\);\s*\}/u);
+assert.match(mainSource, /if \(activeShellState === "capsule" && windowPresentationRuntime\.mode === "cap7ce"\) \{\s*sendActivateShellModeShortcutToRenderer\("standby"\);\s*\}/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
 assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInteractiveThumbnailRenders\(\)\)/u);
 assert.match(mainSource, /mainWindow\.on\("hide", \(\) => \{[\s\S]*?discardQueuedInteractiveThumbnailRenders\(\);\s*\}\);/u);

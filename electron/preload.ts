@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
+import type { CapsulePresentation } from "./capsuleWindowController";
 
 interface RuntimeDiagnosticsInfo {
   logDirectory: string;
@@ -69,6 +70,34 @@ contextBridge.exposeInMainWorld("cap7ce", {
       const listener = () => callback();
       ipcRenderer.on("line:refreshAppearance", listener);
       return () => ipcRenderer.removeListener("line:refreshAppearance", listener);
+    }
+  },
+  capsule: {
+    syncPresentation: (presentation: CapsulePresentation) => ipcRenderer.invoke("capsule:syncPresentation", presentation),
+    getPresentation: (): Promise<CapsulePresentation | null> => ipcRenderer.invoke("capsule:getPresentation"),
+    updateDraft: (query: string) => ipcRenderer.invoke("capsule:updateDraft", query),
+    submit: (query: string) => ipcRenderer.invoke("capsule:submit", query),
+    cancel: (clearQuery: boolean) => ipcRenderer.invoke("capsule:cancel", clearQuery),
+    setComposing: (composing: boolean) => ipcRenderer.invoke("capsule:setComposing", composing),
+    onPresentationChanged: (callback: (presentation: CapsulePresentation) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, presentation: CapsulePresentation) => callback(presentation);
+      ipcRenderer.on("capsule:presentationChanged", listener);
+      return () => ipcRenderer.removeListener("capsule:presentationChanged", listener);
+    },
+    onDraftChanged: (callback: (query: string) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, query: string) => callback(query);
+      ipcRenderer.on("capsule:draftChanged", listener);
+      return () => ipcRenderer.removeListener("capsule:draftChanged", listener);
+    },
+    onSubmitRequested: (callback: (query: string) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, query: string) => callback(query);
+      ipcRenderer.on("capsule:submitRequested", listener);
+      return () => ipcRenderer.removeListener("capsule:submitRequested", listener);
+    },
+    onCancelRequested: (callback: (clearQuery: boolean) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, clearQuery: boolean) => callback(clearQuery);
+      ipcRenderer.on("capsule:cancelRequested", listener);
+      return () => ipcRenderer.removeListener("capsule:cancelRequested", listener);
     }
   },
   app: {

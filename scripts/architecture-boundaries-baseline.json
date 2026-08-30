@@ -1,6 +1,10 @@
 {
   "maxLines": {
-    "src/renderer/App.tsx": 3369,
+    "src/renderer/App.tsx": 3358,
+    "src/renderer/CompatibilityCapsuleWindowApp.tsx": 66,
+    "src/renderer/CompatibilityCapsuleWindowApp.css": 4,
+    "src/renderer/search/QuickSearchCapsule.tsx": 77,
+    "src/renderer/window-presentation/useCompatibilityCapsuleBridge.ts": 38,
     "src/renderer/styles.css": 1090,
     "src/renderer/LineWindowApp.css": 67,
     "src/renderer/WindowControlRail.css": 104,
@@ -23,7 +27,8 @@
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
     "src/renderer/settings/SettingsView.css": 253,
-    "electron/main.ts": 3794,
+    "electron/main.ts": 3786,
+    "electron/capsuleWindowController.ts": 307,
     "electron/lineWindowController.ts": 159
   },
   "legacyMainIpcChannels": [

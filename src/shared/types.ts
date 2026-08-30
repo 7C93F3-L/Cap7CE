@@ -11,6 +11,14 @@ export interface AppearanceColors {
   accentColor: string;
 }
 
+export interface CompatibilityCapsulePresentation {
+  query: string;
+  placeholder: string;
+  ariaLabel: string;
+  theme: ResolvedThemeMode;
+  appearanceColors: AppearanceColors;
+}
+
 export type PreviewNavigateDirection = -1 | 1;
 
 export type PreviewItemAction = "editKeywords" | "deleteFile";

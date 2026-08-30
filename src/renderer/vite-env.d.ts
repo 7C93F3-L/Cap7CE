@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
+import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, CompatibilityCapsulePresentation, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -28,6 +28,18 @@ declare global {
         activateCapsule: () => Promise<boolean>;
         onPlacementChanged: (callback: (edge: "left" | "right" | "top" | "bottom") => void) => () => void;
         onRefreshAppearance: (callback: () => void) => () => void;
+      };
+      capsule: {
+        syncPresentation: (presentation: CompatibilityCapsulePresentation) => Promise<boolean>;
+        getPresentation: () => Promise<CompatibilityCapsulePresentation | null>;
+        updateDraft: (query: string) => Promise<boolean>;
+        submit: (query: string) => Promise<boolean>;
+        cancel: (clearQuery: boolean) => Promise<boolean>;
+        setComposing: (composing: boolean) => Promise<boolean>;
+        onPresentationChanged: (callback: (presentation: CompatibilityCapsulePresentation) => void) => () => void;
+        onDraftChanged: (callback: (query: string) => void) => () => void;
+        onSubmitRequested: (callback: (query: string) => void) => () => void;
+        onCancelRequested: (callback: (clearQuery: boolean) => void) => () => void;
       };
       app: {
         quit: () => Promise<boolean>;

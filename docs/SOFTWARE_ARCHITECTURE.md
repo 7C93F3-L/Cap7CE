@@ -42,7 +42,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 创建按 normal 内容尺寸隐藏初始化的主 `BrowserWindow`。默认 `cap7ce` 模式继续使用透明自绘窗口；开发期可显式启用的 `compatibility` 宿主使用不透明 Window Controls Overlay，并把 36 DIP 标题栏作为现有内容尺寸之外的外框高度。两种宿主共用同一显示恢复、任务栏、单实例和隐藏链路，但分别读写布局文件。主窗口同时装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`。主窗口、预览、line 与启动提示的 DevTools 能力仅在未打包开发环境开启，打包版从 `webPreferences` 层禁用，不依赖快捷键拦截。line 窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用现有 capsule 激活动作，不拥有单独的窗口切换逻辑。
+- 创建按 normal 内容尺寸隐藏初始化的主 `BrowserWindow`。默认 `cap7ce` 模式继续使用透明自绘窗口；开发期可显式启用的 `compatibility` 宿主使用不透明 Window Controls Overlay，并把 36 DIP 标题栏作为现有内容尺寸之外的外框高度。两种宿主共用同一显示恢复、任务栏、单实例和隐藏链路，但分别读写布局文件。主窗口同时装配 `lineWindowController.ts` 管理只负责待机线展示的不可聚焦独立 `lineWindow`，并装配 `capsuleWindowController.ts`：Cap7CE 模式继续缩放同一个主窗口，兼容模式按需创建独立透明 Capsule。主窗口、预览、line、兼容 Capsule 与启动提示的 DevTools 能力仅在未打包开发环境开启，打包版从 `webPreferences` 层禁用，不依赖快捷键拦截。line 窗口仅在偏好开启时创建，运行期关闭 line 会销毁其 Renderer，再次开启时按需重建。line 点击通过受限 IPC 复用同一个 Capsule 激活动作，不拥有单独的窗口切换逻辑。
 - `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。窗口停靠吸附是不可关闭的基础行为，边缘收起则由设置页与托盘菜单共用同一偏好控制。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
 - 管理 capsule / micro / mini / normal / Settings 主窗口状态，以及 standby 对主窗口隐藏和独立 line 显示的协调语义；从 standby 唤起时先保持主窗口透明，待目标形态完成主进程布局与 Renderer 绘制后再显现，并保留超时恢复以避免透明窗口滞留。
 - 全局 Alt+4、兼容主窗口原生关闭与 capsule 失焦只向 Renderer 发出同一个安全 standby 请求，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。真正退出时 `isQuitting` 允许原生 close 继续完成，不反向进入隐藏链路。
@@ -73,6 +73,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 独立 `window-layout.json` 的校验、损坏回退、原子替换和 debounce 写入；Manager 按单一窗口记忆开关捕获与恢复 micro、mini、normal 的完整展开布局，并使 Settings 共用 normal 记录；最后有效停靠方向始终在本次运行内可用，仅在记忆开启时跨重启恢复，供主窗口自身边缘收起使用 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
+| `capsuleWindowController.ts` | 两种窗口模式共用的 Capsule 目标显示器、上下落点和显示器配置恢复；兼容模式额外持有按需创建的透明 Capsule BrowserWindow，限制主 Renderer 只能同步主题、提示与草稿展示，限制 Capsule Renderer 只能回传草稿、提交、取消和 IME 状态。失焦经短时保护返回统一 standby 请求，隐藏、预览打开、line 显示和退出时完成互斥及销毁；搜索、快捷指令和结果跳转仍只由主 Renderer 执行 |
 | `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：在 40 DIP 内判断非任务栏停靠边、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
 | `windowResizeState.ts` | micro / mini 的 resize hysteresis、mini / normal 的合法宽度边界、normal / Settings 最小可用尺寸及窄工作区回退；只决定目标形态和记录合法性，不负责 settle、程序 resize 防护或真实窗口变更 |
 | `directoryStore.ts` | 已添加目录配置、目录显示名与持久化 |
@@ -109,6 +110,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `skimVisualCacheService.ts` | skim 原生视觉队列与 Shell 缩略图队列的会话协调、预览优先级、目录切换取消、迟到结果保护及安全清理 |
 | `searchShellVisualCacheService.ts` | 搜索结果页按当前渲染项请求系统相机格式缩略图与预览，维护独立于 skim 的缓存、串行队列、活动门控和失败抑制 |
 | `lineWindowController.ts` | 独立 line 窗口的创建、延迟加载、显示、隐藏、销毁、定位、形状、置顶与发送者归属；主进程只注入当前状态和偏好判断 |
+| `capsuleWindowController.ts` | 兼容 Capsule 的创建、延迟加载、焦点、失焦、位置、置顶、显示器恢复与受限 IPC；`CompatibilityCapsuleWindowApp.tsx` 只渲染输入入口，`QuickSearchCapsule.tsx` 为同窗 / 独立两种宿主共享 Enter、Esc 与中文 IME 保护，`useCompatibilityCapsuleBridge.ts` 把草稿和动作交还主 `App.tsx` 的唯一搜索业务链 |
 | `shellThumbnailProvider.ts` | 调用 Windows Shell、WIC 或已安装第三方处理器生成文件内容缩略图，并按调用方写入相互隔离的 skim 或搜索系统图像缓存 |
 | `shellThumbnailScheduler.ts` | Shell 缩略图的独立串行队列、请求去重、前后台暂停、会话取消、失败抑制和超时熔断 |
 | `visualRenderService.ts` | 统一调度各格式代表图、模型图和预览图渲染 |
@@ -161,7 +163,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 新增 IPC 时必须同步 `electron/preload.ts` 与 `src/renderer/vite-env.d.ts`，避免 renderer 使用未声明 API。
 
-`electron/ipcRegistration.ts` 提供领域 IPC 注册的基础边界：同一领域内 channel 必须非空且唯一，invoke 与 event 参数原样交给领域 listener，并允许装配层注入 sender 授权判断；未授权 invoke 明确拒绝，未授权单向 event 不进入业务 listener。该注册器不依赖 `main.ts`，后续文件、目录、偏好与缓存等外围领域迁移时由主进程显式注入 registrar、sender 边界和业务依赖。窗口与 preview 生命周期 IPC 继续保留在 `main.ts`；line IPC 入口同样留在装配层，但窗口实例只由 `lineWindowController.ts` 持有。主窗口自身自动收展完全由主进程装配，不新增 Renderer IPC。
+`electron/ipcRegistration.ts` 提供领域 IPC 注册的基础边界：同一领域内 channel 必须非空且唯一，invoke 与 event 参数原样交给领域 listener，并允许装配层注入 sender 授权判断；未授权 invoke 明确拒绝，未授权单向 event 不进入业务 listener。该注册器不依赖 `main.ts`，后续文件、目录、偏好与缓存等外围领域迁移时由主进程显式注入 registrar、sender 边界和业务依赖。窗口与 preview 生命周期 IPC 继续保留在 `main.ts`；line 激活入口同样留在装配层，但窗口实例只由 `lineWindowController.ts` 持有。兼容 Capsule 的六个受限 channel 由 `capsuleWindowController.ts` 自行注册并分别验证主 Renderer 与 Capsule Renderer 归属，不进入通用业务 IPC；主窗口自身自动收展仍完全由主进程装配。
 
 目录添加统一接收候选路径集合。文件候选转换为直接所在目录，目录候选保留自身；主进程按 Windows 大小写不敏感规则规范化、去重和归并，过滤磁盘根目录，并分别返回成功、忽略、父子冲突与失败项。新父目录包含已有子目录时，Renderer 必须先显示确认弹层；确认后用父目录替换子目录配置，并在同一添加协调链中把已有 SQLite 图片记录迁移到新目录 ID，保留识别和手动关键词数据。索引迁移失败时回写原目录配置，使本次操作可以重试；如果回写本身失败，则记录告警并继续抛出原始迁移错误。
 
@@ -249,7 +251,7 @@ MOBI 属于正式非视觉文件名搜索范围，内容预览使用独立 `mobi
 Cap7CE 0.9.8 的窗口状态是同一搜索胶囊系统的不同展开程度：
 
 - `standby`：主窗口隐藏状态；待机线偏好开启且主窗口与预览窗口均不可见时显示独立 `lineWindow`，偏好关闭时不保留该窗口及 Renderer。托盘在后台开启 line 时不改写保留的窗口形态，但可立即显示 line；Settings 等主窗口可见状态下开启时则等待窗口收起。`Alt+4` 不会主动改变该偏好。
-- `capsule`：输入胶囊。轻量输入入口。
+- `capsule`：轻量输入入口。Cap7CE 模式继续使用同一个透明主窗口；兼容模式保持主 Renderer 为状态和搜索权威，但隐藏主窗口并显示独立透明 Capsule，提交后通过统一链路恢复主窗口 micro。
 - `micro`：横向缩略图搜索结果形态。
 - `mini`：较小窗口内的纵向搜索结果形态。
 - `normal`：完整搜索结果窗口。
@@ -259,11 +261,11 @@ micro / mini / normal 不是完全独立页面，而是搜索胶囊的不同尺�
 
 收起到 standby 或 capsule 时，Renderer 保留搜索结果元数据、筛选条件和滚动位置记录，但卸载 `ResultsView` 网格及其图片 DOM；重新展开后使用内存中的结果直接重建视图，不主动重新扫描磁盘。该边界用于释放解码图片和网格组件占用，同时避免通过清空结果换取内存后又产生新的磁盘扫描。
 
-capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标，并按光标距离以 50 / 100 / 200 ms 自适应调度；离开 capsule 时停止计时并恢复普通鼠标事件。独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复。主进程监听显示器 `workArea` / `bounds` 变化，并分别将可见 line 与 capsule 重新贴合当前工作区底部；micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。该策略不恢复 edge hidden。
+Cap7CE 模式的同窗 capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标，并按光标距离以 50 / 100 / 200 ms 自适应调度；离开时停止计时并恢复普通鼠标事件。兼容模式不把不透明 WCO 主窗口压缩成胶囊，而由独立透明 Capsule 接收输入；草稿、提交、Esc、失焦和 IME 状态通过专用白名单同步，搜索与快捷指令仍在隐藏的主 Renderer 执行。独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复。主进程监听显示器 `workArea` / `bounds` 变化，并分别将可见 line 与当前模式的 Capsule 重新贴合工作区；micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。该策略不恢复 edge hidden。
 
 可拉伸主窗口的最小边界为 micro 基准尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他模式不额外引入并行缩放规则。
 
-主窗口的 capsule、micro、mini、normal 与 Settings 形态共用统一壳层；micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 capsule 激活动作。
+主窗口的 capsule、micro、mini、normal 与 Settings 状态仍属于同一业务状态机；Cap7CE 同窗 Capsule 与兼容独立 Capsule 复用同一个 `QuickSearchCapsule` 输入组件。micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。Capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 Capsule 激活动作。
 
 ## 7. 0.9.8 UI 结构
 
