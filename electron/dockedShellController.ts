@@ -46,6 +46,7 @@ interface DockSession {
   armed: boolean;
   display: WindowLayoutDisplaySnapshot;
   edge: WindowDockEdge;
+  edgeInset: number;
   expandedBounds: WindowLayoutBounds;
 }
 
@@ -231,8 +232,7 @@ export class DockedShellController {
 
     const session = this.session;
     if (!session) return;
-    session.expandedBounds = window.getBounds();
-    session.display = this.options.getDisplay(session.expandedBounds);
+    this.captureExpandedBounds(window.getBounds(), session);
     if (this.isPointInsideExpandedHoverRegion(point, session)) {
       session.armed = true;
       return;
@@ -268,7 +268,14 @@ export class DockedShellController {
       this.session = null;
       return { status: "blocked", reason: "display-seam" };
     }
-    const session = { edge, display, expandedBounds, armed: false };
+    const session = {
+      edge,
+      display,
+      edgeInset: this.getEdgeInset(expandedBounds, display.workArea, edge),
+      expandedBounds,
+      armed: false
+    };
+    session.expandedBounds = this.alignBoundsToSessionEdge(expandedBounds, session);
     session.armed = this.armNextSession || this.isPointInsideExpandedHoverRegion(point, session);
     this.armNextSession = false;
     this.session = session;
@@ -296,8 +303,7 @@ export class DockedShellController {
     const session = this.session;
     const { window } = this.options;
     if (!session || this.collapsed || window.isDestroyed()) return;
-    session.expandedBounds = window.getBounds();
-    session.display = this.options.getDisplay(session.expandedBounds);
+    this.captureExpandedBounds(window.getBounds(), session);
     this.options.hideLine();
     this.restoreShadow = window.hasShadow();
     window.setHasShadow(false);
@@ -351,16 +357,32 @@ export class DockedShellController {
     const maximumX = Math.max(workArea.x, workArea.x + workArea.width - bounds.width);
     const maximumY = Math.max(workArea.y, workArea.y + workArea.height - bounds.height);
     const x = session.edge === "left"
-      ? workArea.x
+      ? Math.min(maximumX, workArea.x + session.edgeInset)
       : session.edge === "right"
-        ? maximumX
+        ? Math.max(workArea.x, maximumX - session.edgeInset)
         : Math.min(maximumX, Math.max(workArea.x, bounds.x));
     const y = session.edge === "top"
-      ? workArea.y
+      ? Math.min(maximumY, workArea.y + session.edgeInset)
       : session.edge === "bottom"
-        ? maximumY
+        ? Math.max(workArea.y, maximumY - session.edgeInset)
         : Math.min(maximumY, Math.max(workArea.y, bounds.y));
     return { ...bounds, x, y };
+  }
+
+  private captureExpandedBounds(bounds: WindowLayoutBounds, session: DockSession) {
+    session.display = this.options.getDisplay(bounds);
+    session.expandedBounds = this.alignBoundsToSessionEdge(bounds, session);
+  }
+
+  private getEdgeInset(bounds: WindowLayoutBounds, workArea: WindowLayoutBounds, edge: WindowDockEdge) {
+    const inset = edge === "left"
+      ? bounds.x - workArea.x
+      : edge === "right"
+        ? workArea.x + workArea.width - bounds.x - bounds.width
+        : edge === "top"
+          ? bounds.y - workArea.y
+          : workArea.y + workArea.height - bounds.y - bounds.height;
+    return Math.max(0, Math.round(inset));
   }
 
   private getRevealScreenBounds(session: DockSession): WindowLayoutBounds {

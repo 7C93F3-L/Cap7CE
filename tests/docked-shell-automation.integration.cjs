@@ -20,7 +20,7 @@ const topTaskbarDisplay = {
   workArea: { x: 0, y: 40, width: 1920, height: 1040 }
 };
 
-const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabled = true, fixed = false, shellState = "normal", collapsibleStates, isDockEdgeExposed }) => {
+const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabled = true, fixed = false, shellState = "normal", collapsibleStates, isDockEdgeExposed, applyNativeBounds = (bounds) => bounds }) => {
   let bounds = { ...initialBounds };
   let activeDisplay = display;
   let clock = 0;
@@ -37,7 +37,7 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
     isVisible: () => true,
     moveTop: () => { activity.moveTop += 1; },
     setBounds: (nextBounds, animate) => {
-      bounds = { ...nextBounds };
+      bounds = { ...applyNativeBounds({ ...nextBounds }) };
       appliedBounds.push({ bounds: { ...nextBounds }, animate });
     },
     setHasShadow: (value) => { presentation.shadow = value; }
@@ -149,6 +149,21 @@ edgeGap.sample({ x: 1918, y: 300 }, 1);
 assert.equal(edgeGap.controller.getState(), null);
 edgeGap.sample({ x: 1000, y: 300 }, 2);
 assert.deepEqual(edgeGap.controller.getState(), { edge: "right" });
+
+const highDpiRight = createController({
+  initialBounds: rightGapBounds,
+  display: { ...bottomTaskbarDisplay, scaleFactor: 1.5 },
+  applyNativeBounds: (bounds) => bounds.x < 1900 ? { ...bounds, x: bounds.x + 1 } : bounds
+});
+assert.deepEqual(highDpiRight.controller.toggle(), { status: "collapsed", edge: "right" });
+for (let cycle = 0; cycle < 60; cycle += 1) {
+  highDpiRight.sample({ x: 1919, y: 300 }, cycle * 2 + 1);
+  assert.equal(highDpiRight.controller.hasActiveSession(), true);
+  assert.equal(highDpiRight.getBounds().x, rightGapBounds.x + 1);
+  highDpiRight.sample({ x: 1000, y: 300 }, cycle * 2 + 2);
+  assert.deepEqual(highDpiRight.controller.getState(), { edge: "right" });
+  assert.deepEqual(highDpiRight.controller.getExpandedBounds(), rightGapBounds);
+}
 
 const userMoved = createController({ initialBounds: leftBounds });
 userMoved.controller.noteUserWindowInteraction(520);
@@ -307,6 +322,7 @@ console.log(JSON.stringify({
   immediateCollapseAndRevealVerified: true,
   temporaryCollapsedLayerVerified: true,
   edgeGapIncludedInHoverRegion: true,
+  highDpiRepeatedRevealAnchorStable: true,
   programmaticMoveGuardForwarded: true,
   windowPresentationRestored: true,
   rendererTranslationRemoved: true,
