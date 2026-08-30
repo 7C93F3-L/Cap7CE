@@ -15,6 +15,7 @@ import {
   maximumVisualInputPixels as maximumInputPixels,
   readBmpSize,
   readSafeSvg,
+  readVisualSourceDimensions,
   sharpSourceExtensions,
   type ImageSize
 } from "./visualSourceDimensions";
@@ -97,6 +98,31 @@ const autoCropDocumentExtensions = new Set([
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const maximumPngChunksToInspect = 512;
+const directSourcePreviewExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+const maximumDirectPreviewEdge = 4096;
+const maximumDirectPreviewPixels = 16_000_000;
+const maximumDirectPreviewBytes = 20 * 1024 * 1024;
+
+export interface DirectSourcePreviewFacts {
+  extension: string;
+  fileSize: number;
+  width: number;
+  height: number;
+}
+
+export const shouldUseDirectStaticSourceForPreview = ({
+  extension,
+  fileSize,
+  width,
+  height
+}: DirectSourcePreviewFacts) => (
+  directSourcePreviewExtensions.has(extension.toLowerCase())
+  && width > 0
+  && height > 0
+  && Math.max(width, height) <= maximumDirectPreviewEdge
+  && width * height <= maximumDirectPreviewPixels
+  && fileSize <= maximumDirectPreviewBytes
+);
 
 const isAnimatedPngSource = async (sourcePath: string): Promise<boolean> => {
   let handle: fs.FileHandle | null = null;
@@ -145,19 +171,37 @@ export const shouldUseSourceFileForPreview = async (
     return true;
   }
 
-  if (extension === ".png") {
-    return isAnimatedPngSource(sourcePath);
-  }
-
-  if (extension !== ".webp") {
+  if (!directSourcePreviewExtensions.has(extension)) {
     return false;
   }
 
+  if (extension === ".png" && await isAnimatedPngSource(sourcePath)) {
+    return true;
+  }
+
   try {
-    const metadata = await sharp(sourcePath, {
-      limitInputPixels: maximumInputPixels
-    }).metadata();
-    return (metadata.pages ?? 1) > 1;
+    if (extension === ".webp") {
+      const metadata = await sharp(sourcePath, {
+        limitInputPixels: maximumInputPixels
+      }).metadata();
+      if ((metadata.pages ?? 1) > 1) {
+        return true;
+      }
+    }
+
+    const [sourceStat, sourceSize] = await Promise.all([
+      fs.stat(sourcePath),
+      readVisualSourceDimensions(sourcePath)
+    ]);
+    if (!sourceStat.isFile() || !sourceSize) {
+      return false;
+    }
+    return shouldUseDirectStaticSourceForPreview({
+      extension,
+      fileSize: sourceStat.size,
+      width: sourceSize.width,
+      height: sourceSize.height
+    });
   } catch {
     return false;
   }
@@ -191,7 +235,7 @@ const calculateTargetSize = (sourceSize: ImageSize, strategy: VisualRenderStrate
   };
 };
 
-export { readVisualSourceDimensions } from "./visualSourceDimensions";
+export { readVisualSourceDimensions };
 
 const createSharpPipeline = async (entry: VisualCacheEntry): Promise<sharp.Sharp> => {
   const extension = path.extname(entry.sourcePath).toLowerCase();
