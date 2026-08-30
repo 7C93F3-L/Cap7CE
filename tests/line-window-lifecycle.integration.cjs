@@ -14,7 +14,8 @@ assert.match(mainSource, /if \(standbyLineVisible\) \{\s*lineWindowController\.c
 assert.match(mainSource, /if \(standbyLineVisible\) \{[\s\S]*?lineWindowController\.create\(\);[\s\S]*?\} else \{\s*lineWindowController\.destroy\(\);\s*\}/u);
 assert.match(mainSource, /lineWindowController\.ownsWebContents\(event\.sender\.id\)/u);
 assert.match(mainSource, /standbyLineVisible[\s\S]*?!mainWindow\.isVisible\(\)[\s\S]*?!previewWindow\.isVisible\(\)/u);
-assert.match(mainSource, /if \(mode === "standby"\) \{\s*sendActivateShellModeShortcutToRenderer\(mode\);\s*return;\s*\}/u);
+assert.match(mainSource, /const requestSafeMainWindowHide = \(\) => sendActivateShellModeShortcutToRenderer\("standby"\);/u);
+assert.match(mainSource, /if \(mode === "standby"\) \{\s*return requestSafeMainWindowHide\(\);\s*\}/u);
 assert.doesNotMatch(mainSource, /if \(mode === "standby"\) \{\s*applyStandaloneLineMode\(\)/u);
 assert.match(mainSource, /if \(activeShellState === "capsule"\) \{\s*sendActivateShellModeShortcutToRenderer\("standby"\);\s*\}/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);

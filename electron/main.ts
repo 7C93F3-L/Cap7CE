@@ -109,7 +109,8 @@ const isMainSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
 let startupHintWindow: BrowserWindow | null = null;
 let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
-let duplicateLaunchNotificationPending = false;
+let pendingSecondInstanceActivation = false;
+let mainWindowReadyForActivation = false;
 let pendingAppUpdateDownload: AppUpdateDownload | null = null;
 let appUpdateDownloadActive = false;
 let appUpdateDownloadAbortController: AbortController | null = null;
@@ -1198,8 +1199,12 @@ const sendActivateCapsuleShortcutToRenderer = () => {
 const sendActivateShellModeShortcutToRenderer = (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:activateShellModeShortcut", mode);
+    return true;
   }
+  return false;
 };
+
+const requestSafeMainWindowHide = () => sendActivateShellModeShortcutToRenderer("standby");
 
 const sendEdgeCollapseEnabledToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -1292,23 +1297,22 @@ const unregisterShellModeShortcuts = () => {
   registeredShellModeShortcuts.clear();
 };
 
-const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings") => {
+const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings"): Promise<boolean> => {
   if (mode === "settings") {
-    openSettingsFromTray();
-    return;
+    return openSettingsFromTray();
   }
 
   if (mode === "skim") {
-    if (!showAndFocusMainWindow()) return;
+    if (!showAndFocusMainWindow()) return false;
     sendActivateSkimToRenderer();
-    return;
+    return true;
   }
   if (mode === "standby") {
-    sendActivateShellModeShortcutToRenderer(mode);
-    return;
+    return requestSafeMainWindowHide();
   }
-  if (!showAndFocusMainWindow()) return;
+  if (!showAndFocusMainWindow()) return false;
   sendActivateShellModeShortcutToRenderer(mode);
+  return true;
 };
 
 const registerShellModeShortcuts = (shortcutActions: {
@@ -1460,19 +1464,6 @@ const showSystemNotification = (title: string, content: string, options: { force
   }
 };
 
-const showDuplicateLaunchNotification = () => {
-  if (!appTray) {
-    duplicateLaunchNotificationPending = true;
-    return false;
-  }
-  duplicateLaunchNotificationPending = false;
-  return showSystemNotification(
-    t("notification.backgroundRunTitle"),
-    t("notification.duplicateLaunchContent"),
-    { force: true }
-  );
-};
-
 const showBackgroundRunNotificationOnce = async (
   preferences: Awaited<ReturnType<typeof getUserPreferences>>
 ) => {
@@ -1564,10 +1555,10 @@ const setEdgeCollapseEnabled = async (enabled: boolean) => {
 };
 
 const openSettingsFromTray = () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
 
   if (!showAndFocusMainWindow()) {
-    return;
+    return false;
   }
   const preserveBounds = activeShellState === "normal" || activeShellState === "settings";
   if (activeShellState !== "settings") {
@@ -1576,6 +1567,7 @@ const openSettingsFromTray = () => {
   showAndFocusMainWindow();
   sendShellStateToRenderer("settings");
   sendOpenSettingsToRenderer();
+  return true;
 };
 
 const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "capsule">) => {
@@ -2350,6 +2342,7 @@ const refreshMainWindowPresentationAppearance = async () => {
 };
 
 const createWindow = () => {
+  mainWindowReadyForActivation = false;
   const initialBounds = getShellWindowBounds("normal");
   const initialMinimumSize = getShellOuterMinimumSize({ width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx });
   mainWindow = new BrowserWindow({
@@ -2386,8 +2379,13 @@ const createWindow = () => {
   }
 
   mainWindow.once("ready-to-show", () => {
+    mainWindowReadyForActivation = true;
     if (activeShellState !== "standby") {
       applyShellWindowState("normal");
+    }
+    if (pendingSecondInstanceActivation) {
+      pendingSecondInstanceActivation = false;
+      void activateShellModeShortcut("normal");
     }
     syncThumbnailOptimizationActivity();
   });
@@ -2416,7 +2414,7 @@ const createWindow = () => {
     }
 
     event.preventDefault();
-    mainWindow?.hide();
+    requestSafeMainWindowHide();
   });
 
   mainWindow.on("resize", () => {
@@ -2453,7 +2451,11 @@ const createWindow = () => {
 
 if (hasSingleInstanceLock) {
   app.on("second-instance", () => {
-    showDuplicateLaunchNotification();
+    if (!mainWindowReadyForActivation) {
+      pendingSecondInstanceActivation = true;
+      return;
+    }
+    void activateShellModeShortcut("normal");
   });
 }
 
@@ -2531,9 +2533,6 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
         { force: true }
       );
     }, 7_000);
-  }
-  if (duplicateLaunchNotificationPending) {
-    showDuplicateLaunchNotification();
   }
   if (quickActionGlobalEnabled) {
     registerConfiguredGlobalShortcuts(preferences.shortcutActions);
