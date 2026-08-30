@@ -16,7 +16,7 @@
   display: flex;
   align-items: stretch;
   --compatibility-caption-hover: rgb(0 0 0 / 10%);
-  color: var(--window-control-color);
+  color: var(--compatibility-caption-symbol-color, var(--window-control-hover));
   background: transparent;
   app-region: drag;
   -webkit-app-region: drag;
@@ -37,13 +37,13 @@
   border-radius: 0;
   color: inherit;
   background: transparent;
-  transition: color 210ms ease-out, background 210ms ease-out;
+  transition: background 210ms ease-out;
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }
 
-.cap-compatibility-titlebar-pin:hover { color: var(--window-control-hover); background: var(--compatibility-caption-hover); }
-.cap-compatibility-titlebar-pin[aria-pressed="true"] { color: var(--window-control-hover); background: transparent; }
+.cap-compatibility-titlebar-pin:hover { background: var(--compatibility-caption-hover); }
+.cap-compatibility-titlebar-pin[aria-pressed="true"] { background: transparent; }
 .cap-compatibility-titlebar-pin[aria-pressed="true"]:hover { background: var(--compatibility-caption-hover); }
 
 .cap-compatibility-titlebar-pin:focus-visible {

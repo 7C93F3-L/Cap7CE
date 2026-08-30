@@ -5,6 +5,7 @@ const {
   getWindowPresentationBrowserOptions,
   getWindowLayoutFileName,
   getWindowPresentationPolicy,
+  getWindowPresentationSymbolColor,
   normalizeWindowPresentationMode,
   resolveWindowPresentationTheme
 } = require("../dist-electron/windowPresentationPolicy.js");
@@ -38,6 +39,8 @@ assert.deepEqual(compatibilityPolicy.surfaces.main, {
 });
 assert.deepEqual(compatibilityPolicy.surfaces.preview, compatibilityPolicy.surfaces.main);
 assert.notEqual(getWindowLayoutFileName("cap7ce"), getWindowLayoutFileName("compatibility"));
+assert.equal(getWindowPresentationSymbolColor("dark"), "#D8D8D8");
+assert.equal(getWindowPresentationSymbolColor("light"), "#242424");
 assert.deepEqual(getWindowPresentationBrowserOptions(cap7cePolicy, "main", "dark"), {
   frame: false,
   transparent: true,

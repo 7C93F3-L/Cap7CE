@@ -71,6 +71,10 @@ const windowPresentationThemes: Record<WindowPresentationTheme, { symbolColor: s
   light: { symbolColor: "#242424" }
 };
 
+export const getWindowPresentationSymbolColor = (theme: WindowPresentationTheme) => (
+  windowPresentationThemes[theme].symbolColor
+);
+
 export const resolveWindowPresentationTheme = (
   preference: "system" | "light" | "dark",
   systemUsesDarkColors: boolean
@@ -91,7 +95,6 @@ export const getWindowPresentationBrowserOptions = (
       backgroundColor: "#00000000"
     };
   }
-  const colors = windowPresentationThemes[theme];
   return {
     frame: false,
     transparent: false,
@@ -101,7 +104,7 @@ export const getWindowPresentationBrowserOptions = (
     titleBarStyle: "hidden",
     titleBarOverlay: {
       color: "#00000000",
-      symbolColor: colors.symbolColor,
+      symbolColor: getWindowPresentationSymbolColor(theme),
       height: policy.titlebarHeight
     }
   };
