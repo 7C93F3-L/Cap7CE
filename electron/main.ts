@@ -68,7 +68,7 @@ import type { PersistedWindowLayoutState, WindowDockEdge } from "./windowLayoutT
 import { DEFAULT_WINDOW_RESIZE_THRESHOLDS, isStableResizeBounds, resolveResizeTargetState } from "./windowResizeState";
 import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "./compatibilityNativeMaximizeController";
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
-import { WindowPresentationRuntime } from "./windowPresentationRuntime";
+import { applyCurrentStableUiAlwaysOnTopPreference, applyCurrentStableUiDevelopmentQuery, getStableUiDevelopmentLayoutFileName, isCurrentStableUiDevelopmentEnabled, WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
@@ -329,9 +329,8 @@ const previewWindowWorkAreaRatio = 0.85;
 const previewWindowIdleDestroyDelayMs = 2 * 60_000;
 const DEBUG_WINDOW_BOUNDS = true;
 
-const getMainWindowTitlebarHeight = () => windowPresentationRuntime.titlebarHeight;
 const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
-  getTitlebarHeight: getMainWindowTitlebarHeight,
+  getTitlebarHeight: () => windowPresentationRuntime.titlebarHeight,
   capsuleWidth: capsuleWidthPx,
   capsuleHeight: capsuleWindowHeightPx,
   microHeight: microDefaultHeightPx,
@@ -963,7 +962,7 @@ const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   }
   const state: PersistedWindowLayoutState = shellState === "settings" ? "normal" : shellState;
   const display = screen.getDisplayMatching(bounds);
-  if (!isStableResizeBounds(shellState, getShellContentBounds(bounds), getShellContentWorkArea(display.workArea))) return;
+  if (!isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && !isStableResizeBounds(shellState, getShellContentBounds(bounds), getShellContentWorkArea(display.workArea))) return;
   windowLayoutManager.captureBounds({ state, bounds, display: toWindowLayoutDisplaySnapshot(display) });
 };
 
@@ -2142,7 +2141,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
+  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) || !mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
     return;
   }
 
@@ -2350,14 +2349,15 @@ const createWindow = () => {
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
-    mainWindow.loadURL(devServerUrl);
+    mainWindow.loadURL(applyCurrentStableUiDevelopmentQuery(new URL(devServerUrl), windowPresentationRuntime.mode).toString());
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
   mainWindow.once("ready-to-show", () => {
     mainWindowReadyForActivation = true;
-    if (activeShellState !== "standby") {
+    if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) mainWindow?.show();
+    else if (activeShellState !== "standby") {
       applyShellWindowState("normal");
     }
     if (pendingSecondInstanceActivation) {
@@ -2471,7 +2471,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   const normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode(requestedWindowPresentationMode);
   windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizedRequestedWindowPresentationMode), preferences.themePreference);
   runtimeDiagnostics.log("info", "window.presentation.startup", { requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime.mode, source: hasDevelopmentWindowModeOverride ? "development-override" : "preference" });
-  windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
+  windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", getStableUiDevelopmentLayoutFileName(windowPresentationRuntime.layoutFileName, windowPresentationRuntime.mode))));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences(preferences);
   setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
@@ -2565,7 +2565,7 @@ app.on("before-quit", () => {
 
 ipcMain.handle("window:getShellLayoutMetrics", () => ({
   miniStandardHeight: miniDefaultHeightPx,
-  titlebarHeight: getMainWindowTitlebarHeight(),
+  titlebarHeight: windowPresentationRuntime.titlebarHeight,
   windowPresentationMode: windowPresentationRuntime.mode
 }));
 
@@ -2608,8 +2608,7 @@ ipcMain.handle("window:setAlwaysOnTop", async (_event, enabled: boolean) => {
   if (!mainWindow) return { enabled: Boolean(enabled), actual: false, windowId: null };
   const requestedEnabled = Boolean(enabled);
   const before = mainWindow.isAlwaysOnTop();
-  const preferences = await updateAlwaysOnTopPreference(requestedEnabled);
-  shellAlwaysOnTop = preferences.alwaysOnTop;
+  shellAlwaysOnTop = await applyCurrentStableUiAlwaysOnTopPreference(requestedEnabled, windowPresentationRuntime.mode, updateAlwaysOnTopPreference);
   dockedShellController?.setFixed(shellAlwaysOnTop);
   const after = applyAlwaysOnTopState();
   sendAlwaysOnTopStateToRenderer();

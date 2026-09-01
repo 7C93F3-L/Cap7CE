@@ -30,10 +30,12 @@ import "./settings/SettingsView.css";
 import "./window-presentation/CompatibilityTitlebar.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
-const windowKind = new URLSearchParams(window.location.search).get("window");
+const rendererSearchParams = new URLSearchParams(window.location.search);
+const windowKind = rendererSearchParams.get("window");
 const isPreviewWindow = windowKind === "preview";
 const isLineWindow = windowKind === "line";
 const isCompatibilityCapsuleWindow = windowKind === "compatibility-capsule";
+const isStableUiDevelopmentRoot = import.meta.env.DEV && rendererSearchParams.get("ui") === "stable";
 
 if (isLineWindow) {
   void import("./LineWindowApp").then(({ default: LineWindowApp }) => {
@@ -48,6 +50,14 @@ if (isLineWindow) {
     root.render(
       <React.StrictMode>
         <PreviewWindowApp />
+      </React.StrictMode>
+    );
+  });
+} else if (isStableUiDevelopmentRoot) {
+  void import("./stable-ui/StableUiRoot").then(({ default: StableUiRoot }) => {
+    root.render(
+      <React.StrictMode>
+        <StableUiRoot />
       </React.StrictMode>
     );
   });

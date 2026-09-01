@@ -1,12 +1,18 @@
 {
   "maxLines": {
     "src/renderer/App.tsx": 3358,
+    "src/renderer/main.tsx": 73,
     "src/renderer/CompatibilityCapsuleWindowApp.tsx": 66,
     "src/renderer/CompatibilityCapsuleWindowApp.css": 4,
     "src/renderer/search/QuickSearchCapsule.tsx": 77,
     "src/renderer/window-presentation/useCompatibilityCapsuleBridge.ts": 38,
-    "src/renderer/window-presentation/CompatibilityTitlebar.tsx": 33,
-    "src/renderer/window-presentation/CompatibilityTitlebar.css": 77,
+    "src/renderer/window-presentation/CompatibilityTitlebar.tsx": 24,
+    "src/renderer/window-presentation/CompatibilityTitlebar.css": 74,
+    "src/renderer/window-presentation/WindowPinButton.tsx": 31,
+    "src/renderer/stable-ui/StableTitlebar.tsx": 22,
+    "src/renderer/stable-ui/StableSurface.tsx": 10,
+    "src/renderer/stable-ui/StableUiRoot.tsx": 38,
+    "src/renderer/stable-ui/StableUiFoundation.css": 157,
     "src/renderer/styles.css": 1090,
     "src/renderer/LineWindowApp.css": 67,
     "src/renderer/WindowControlRail.css": 104,
@@ -29,7 +35,9 @@
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
     "src/renderer/settings/SettingsView.css": 253,
-    "electron/main.ts": 3771,
+    "electron/main.ts": 3770,
+    "electron/stableUiDevelopmentContract.ts": 63,
+    "electron/windowPresentationRuntime.ts": 64,
     "electron/capsuleWindowController.ts": 307,
     "electron/capsuleSubmissionHandoff.ts": 60,
     "electron/previewWindowPresentationSizing.ts": 61,
@@ -123,6 +131,7 @@
         "id": "windowPinning",
         "sourceAnchors": [
           { "path": "src/renderer/controllers/useAlwaysOnTopController.ts", "contains": "export const useAlwaysOnTopController" },
+          { "path": "src/renderer/window-presentation/WindowPinButton.tsx", "contains": "const WindowPinButton" },
           { "path": "src/renderer/window-presentation/CompatibilityTitlebar.tsx", "contains": "const CompatibilityTitlebar" },
           { "path": "electron/dockedShellController.ts", "contains": "setFixed" }
         ]

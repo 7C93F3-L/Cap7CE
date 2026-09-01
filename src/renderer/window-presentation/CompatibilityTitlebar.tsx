@@ -1,7 +1,6 @@
 import { createPortal } from "react-dom";
 import { getWindowPresentationSymbolColor } from "../../../electron/windowPresentationPolicy";
-import iconPinOffSvg from "../assets/icons/icon-pin-off.svg?raw";
-import iconPinOnSvg from "../assets/icons/icon-pin-on.svg?raw";
+import WindowPinButton from "./WindowPinButton";
 
 interface CompatibilityTitlebarProps {
   pinned: boolean;
@@ -11,21 +10,13 @@ interface CompatibilityTitlebarProps {
 }
 const CompatibilityTitlebar = ({ pinned, label, onTogglePinned, theme }: CompatibilityTitlebarProps) => {
   return createPortal(<header className={`cap-compatibility-titlebar${theme ? ` app theme-${theme}` : ""}`} style={theme ? { color: getWindowPresentationSymbolColor(theme) } : undefined} data-window-controls="true">
-    <button
+    <WindowPinButton
       className="cap-compatibility-titlebar-pin"
-      type="button"
-      onClick={onTogglePinned}
-      onMouseDown={(event) => { event.preventDefault(); event.currentTarget.blur(); }}
-      aria-label={label}
-      title={label}
-      aria-pressed={pinned}
-    >
-      <span
-        className="cap-svg-icon cap-compatibility-titlebar-pin-icon"
-        aria-hidden="true"
-        dangerouslySetInnerHTML={{ __html: pinned ? iconPinOnSvg : iconPinOffSvg }}
-      />
-    </button>
+      iconClassName="cap-compatibility-titlebar-pin-icon"
+      pinned={pinned}
+      label={label}
+      onToggle={onTogglePinned}
+    />
   </header>, document.body);
 };
 

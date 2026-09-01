@@ -7,6 +7,8 @@ import {
   type WindowPresentationSurface
 } from "./windowPresentationPolicy";
 
+export { applyCurrentStableUiAlwaysOnTopPreference, applyCurrentStableUiDevelopmentQuery, getStableUiDevelopmentLayoutFileName, isCurrentStableUiDevelopmentEnabled } from "./stableUiDevelopmentContract";
+
 type ThemePreference = "system" | "light" | "dark";
 
 export class WindowPresentationRuntime {

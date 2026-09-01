@@ -1,0 +1,156 @@
+.cap-stable-ui {
+  --cap-stable-titlebar-height: env(titlebar-area-height, 36px);
+  --cap-stable-edge-gap: 5px;
+  --cap-stable-space-xs: 4px;
+  --cap-stable-space-sm: 8px;
+  --cap-stable-space-md: 12px;
+  --cap-stable-space-lg: 16px;
+  --cap-stable-radius-sm: 8px;
+  --cap-stable-radius-md: 14px;
+  --cap-stable-radius-pill: 999px;
+  --cap-stable-font-size: 13px;
+  --cap-stable-secondary-font-size: 11px;
+  --cap-stable-section-font-size: 12px;
+  --cap-stable-text: rgb(31 31 31 / 88%);
+  --cap-stable-text-muted: rgb(31 31 31 / 54%);
+  --cap-stable-surface: rgb(255 255 255 / 50%);
+  --cap-stable-surface-soft: rgb(255 255 255 / 30%);
+  --cap-stable-hover: rgb(31 31 31 / 8%);
+  --cap-stable-selected: rgb(31 31 31 / 14%);
+  --cap-stable-caption-hover: rgb(0 0 0 / 10%);
+  --cap-stable-scrollbar: rgb(31 31 31 / 28%);
+  --cap-stable-scrollbar-active: rgb(31 31 31 / 46%);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: var(--cap-stable-text);
+  background: transparent;
+  font: var(--cap-stable-font-size)/20px "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cap-stable-ui {
+    --cap-stable-text: rgb(244 244 244 / 90%);
+    --cap-stable-text-muted: rgb(244 244 244 / 58%);
+    --cap-stable-surface: rgb(26 26 26 / 58%);
+    --cap-stable-surface-soft: rgb(26 26 26 / 36%);
+    --cap-stable-hover: rgb(255 255 255 / 8%);
+    --cap-stable-selected: rgb(255 255 255 / 14%);
+    --cap-stable-caption-hover: rgb(255 255 255 / 10%);
+    --cap-stable-scrollbar: rgb(244 244 244 / 28%);
+    --cap-stable-scrollbar-active: rgb(244 244 244 / 46%);
+  }
+}
+
+.cap-stable-titlebar {
+  position: fixed;
+  top: env(titlebar-area-y, 0);
+  left: env(titlebar-area-x, 0);
+  z-index: 10;
+  width: env(titlebar-area-width, 100%);
+  height: var(--cap-stable-titlebar-height);
+  display: flex;
+  align-items: stretch;
+  color: var(--cap-stable-text);
+  background: transparent;
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+.cap-stable-titlebar-label {
+  align-self: center;
+  margin-left: var(--cap-stable-space-md);
+  color: var(--cap-stable-text-muted);
+  font-size: var(--cap-stable-secondary-font-size);
+  pointer-events: none;
+}
+
+.cap-stable-titlebar-pin {
+  width: 46px;
+  height: 100%;
+  flex: 0 0 46px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.cap-stable-titlebar-pin:hover { background: var(--cap-stable-caption-hover); }
+.cap-stable-titlebar-pin:focus-visible { outline-offset: -3px; }
+.cap-stable-titlebar-pin-icon { width: 17px; height: 17px; }
+
+.cap-stable-workspace {
+  position: absolute;
+  top: var(--cap-stable-titlebar-height);
+  right: var(--cap-stable-edge-gap);
+  bottom: var(--cap-stable-edge-gap);
+  left: var(--cap-stable-edge-gap);
+  min-width: 0;
+  min-height: 0;
+}
+
+.cap-stable-surface {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--cap-stable-space-md);
+  border-radius: var(--cap-stable-radius-md);
+  background: var(--cap-stable-surface);
+  overflow: hidden;
+}
+
+.cap-stable-scroll-surface {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cap-stable-scrollbar) transparent;
+}
+
+.cap-stable-scroll-surface::-webkit-scrollbar { width: 8px; height: 8px; }
+.cap-stable-scroll-surface::-webkit-scrollbar-track,
+.cap-stable-scroll-surface::-webkit-scrollbar-corner,
+.cap-stable-scroll-surface::-webkit-scrollbar-button { background: transparent; }
+.cap-stable-scroll-surface::-webkit-scrollbar-button { width: 0; height: 0; }
+.cap-stable-scroll-surface::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--cap-stable-radius-pill);
+  background: var(--cap-stable-scrollbar);
+  background-clip: content-box;
+}
+.cap-stable-scroll-surface::-webkit-scrollbar-thumb:hover,
+.cap-stable-scroll-surface::-webkit-scrollbar-thumb:active {
+  background: var(--cap-stable-scrollbar-active);
+  background-clip: content-box;
+}
+
+.cap-stable-foundation-card {
+  display: grid;
+  gap: var(--cap-stable-space-xs);
+  min-width: 210px;
+  margin-bottom: var(--cap-stable-space-sm);
+  padding: var(--cap-stable-space-sm) var(--cap-stable-space-md);
+  border-radius: var(--cap-stable-radius-sm);
+  background: var(--cap-stable-surface-soft);
+}
+
+.cap-stable-section-label {
+  color: var(--cap-stable-text-muted);
+  font-size: var(--cap-stable-section-font-size);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cap-stable-ui *,
+  .cap-stable-ui *::before,
+  .cap-stable-ui *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

@@ -9,6 +9,7 @@ const previewSource = read("src/renderer/PreviewWindowApp.tsx");
 const mainSource = read("electron/main.ts");
 const viewportMetricsSource = read("src/renderer/controllers/useShellViewportMetrics.ts");
 const titlebarSource = read("src/renderer/window-presentation/CompatibilityTitlebar.tsx");
+const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.tsx");
 const titlebarStyles = read("src/renderer/window-presentation/CompatibilityTitlebar.css");
 const rendererEntry = read("src/renderer/main.tsx");
 
@@ -41,10 +42,14 @@ if (!titlebarSource.includes('import { createPortal } from "react-dom"')
   throw new Error("Compatibility titlebar must remain outside the animated and scrollable shell DOM.");
 }
 
-for (const marker of ["aria-pressed={pinned}", "aria-label={label}", "onClick={onTogglePinned}", "iconPinOnSvg", "iconPinOffSvg"]) {
-  if (!titlebarSource.includes(marker)) {
+for (const marker of ["aria-pressed={pinned}", "aria-label={label}", "onClick={onToggle}", "iconPinOnSvg", "iconPinOffSvg"]) {
+  if (!pinButtonSource.includes(marker)) {
     throw new Error(`Compatibility pin control is missing ${marker}.`);
   }
+}
+
+if (!titlebarSource.includes("<WindowPinButton") || !titlebarSource.includes('className="cap-compatibility-titlebar-pin"')) {
+  throw new Error("Compatibility titlebar must use the shared window pin button without changing its stable class contract.");
 }
 
 if (!titlebarSource.includes("getWindowPresentationSymbolColor(theme)")
