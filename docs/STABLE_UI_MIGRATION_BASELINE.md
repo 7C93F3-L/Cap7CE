@@ -18,13 +18,13 @@
 
 | 能力 | 当前动作与状态权威 | 当前组件 / 服务 | 新版界面入口与轮次 |
 | --- | --- | --- | --- |
-| 搜索 | `App.tsx` 的 `submitSearch` / `runSearch`；正式查询、IME、路径直达、快捷指令和 AI 按次入口保持同一提交链 | `Cap7CESearchCapsule`、`ResultsView`、`VirtualResultGrids`、`searchIpc.ts` | U4 的新版搜索输入与结果容器只接现有 Props 和动作；不复制查询、排序、证据、虚拟化或缓存逻辑 |
+| 搜索 | `App.tsx` 的 `submitSearch` / `runSearch`；正式查询、IME、路径直达、快捷指令和 AI 按次入口保持同一提交链 | `Cap7CESearchCapsule`、`ResultsView`、`VirtualResultGrids`、`searchIpc.ts` | U3 的新版搜索输入与结果容器只接现有 Props 和动作；不复制查询、排序、证据、虚拟化或缓存逻辑 |
 | 目录 | `App.tsx` 继续编排目录加载、添加、重命名、删除、刷新及冲突确认；主进程以目录管理 IPC 和统一添加服务为权威 | `DirectoryAiSettingsRows`、`directoryManagementIpc.ts`、`directoryAddService.ts` | U5 左栏与 U8 Settings 复用同一目录动作；不修改扫描、SQLite 或目录归属语义 |
 | Skim | `openSkimAtLocation`、`useSkimReadController`、独立 skim 排序 / 范围 / 导航 / 选择 / 滚动状态保持权威 | `SkimView`、`SkimLocationPicker`、skim 服务与缓存链 | U6 将现有 Skim 控制器装入右侧并排插槽；搜索结果的查询、选择和滚动状态不得因视觉隐藏而销毁 |
 | Settings | U0 仍由 `App.tsx` 的 `openSettings` 与同窗 `settings` shell state 打开，设置读写继续走现有偏好和领域 IPC | `SettingsView` 及其分区组件、`preferenceIpc.ts` | U7 只迁移窗口宿主，U8 迁移正式内容；两轮都复用现有读写与任务状态，不建立第二份编辑事务 |
 | Preview | Results / Skim 产生统一预览 DTO；主进程持有单实例窗口、复用、隐藏、两分钟空 Renderer 和主窗协调链 | `PreviewWindowApp`、现有 Provider、`preview:*` 生命周期 | U9 只替换壳层与信息边栏，U10 接快速交互；Provider、会话授权、缓存与复用链保持唯一 |
-| 文件菜单 | 选择范围由 Results / Skim / Preview 所有；动作组与快捷键解析由共享构造器所有；系统能力由文件 IPC 校验 | `fileContextActions.ts`、`ImageContextMenu`、`fileIpc.ts` | U4、U6、U9 的新版表面复用同一动作组；不复制打开、定位、复制、关键词或删除权限判断 |
-| 拖放 | 结果与 Skim 只提交已选路径到 `files.startDrag`；主窗口目录拖入仍由 `App.tsx` 的确认链处理 | `ResultsView`、`SkimView`、`fileDragService.ts`、目录确认面板 | U4 / U6 保留文件拖出，U5 / U8 保留目录拖入；不得绕过原生拖拽抑制或目录冲突确认 |
+| 文件菜单 | 选择范围由 Results / Skim / Preview 所有；动作组与快捷键解析由共享构造器所有；系统能力由文件 IPC 校验 | `fileContextActions.ts`、`ImageContextMenu`、`fileIpc.ts` | U3、U5、U8 的新版表面复用同一动作组；不复制打开、定位、复制、关键词或删除权限判断 |
+| 拖放 | 结果与 Skim 只提交已选路径到 `files.startDrag`；主窗口目录拖入仍由 `App.tsx` 的确认链处理 | `ResultsView`、`SkimView`、`fileDragService.ts`、目录确认面板 | U3 / U5 保留文件拖出，U4 / U7 保留目录拖入；不得绕过原生拖拽抑制或目录冲突确认 |
 | 快捷键 | 主进程负责全局注册、可用性与统一窗口激活；Renderer 负责窗口内取消、目录循环和现有输入命中 | `shortcutActions.ts`、`App.tsx`、`registerConfiguredGlobalShortcuts` | 新版按钮只调用统一动作。U3 单独移除 Capsule 专用动作；U0 不调整键位、文案或注册规则 |
 | 窗口固定 | `useAlwaysOnTopController` 与主进程持久固定状态为权威；固定状态同时抑制自身边缘收起 | `CompatibilityTitlebar`、`WindowControlRail`、`dockedShellController.ts` | U1 抽共享置顶按钮，U9 在 Preview 复用；Settings 不提供置顶入口 |
 | 隐藏恢复 | Renderer 的安全 standby 取消临时交互；主进程的统一激活、显示聚焦、line 互斥和 docked shell 会话保持权威 | `enterStandby`、`activateShellModeShortcut`、`showAndFocusMainWindow`、line / docked shell 控制器 | U2 以后新版 Renderer 只响应现有 shell 通知与动作；不得旁路显示恢复、line、贴边收起或预览协调链 |

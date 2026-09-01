@@ -18,9 +18,9 @@ const sidebarSource = read(shellFiles[2]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell\s*\/>/);
-assert.match(titlebarSource, /role="search"/);
-assert.match(titlebarSource, /U2 · 响应式骨架/);
+assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\}\s*\/>/);
+assert.match(titlebarSource, /\{searchInput\}/);
+assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
 
 for (const marker of [

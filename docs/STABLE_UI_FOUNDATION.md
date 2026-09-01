@@ -12,7 +12,7 @@
 
 该入口要求实际宿主为 `compatibility`，不新增用户偏好或第三种窗口模式。开发窗口只读写独立的 `window-layout-stable-ui-development.json`，置顶点击只影响本次开发会话，不修改正式 compatibility 布局或用户置顶偏好。关闭开发进程后覆盖立即失效；普通 `npm run dev`、`npm run dev:compatibility` 和打包加载路径继续进入旧 Renderer。
 
-新版开发入口不会在启动时套用 micro / mini / normal 预设，也会旁路旧 resize settle 的自动形态转换和 micro 位置修正。用户拖动只改变 BrowserWindow 的实际 bounds；当前 U1 根节点不根据旧 shellState 切换组件或布局。
+新版开发入口不会在启动时套用 micro / mini / normal 预设，也会旁路旧 resize settle 的自动形态转换和 micro 位置修正。用户拖动只改变 BrowserWindow 的实际 bounds；当前 U1 根节点不根据旧 shellState 切换组件或布局。迁移期点击 Windows 原生关闭按钮仍先经过 Renderer 的任务安全检查，空闲时再调用现有 standby / line 隐藏链；该动作不要求新版根节点切换为旧 shell 组件树。
 
 ## 2. 共用基础
 

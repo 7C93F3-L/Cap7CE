@@ -4,7 +4,7 @@
 > 更新日期：2026-08-30
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
-0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
+0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`；U3 正式搜索和结果复用边界记录在 `docs/STABLE_UI_SEARCH_RESULTS.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
 
 ## 1. 项目定位
 
@@ -207,6 +207,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 U1 的新版 Renderer 根节点只在 Vite 开发环境且主进程显式设置开发标记时动态加载，并额外要求本次宿主实际为 `compatibility`；打包加载路径不携带新版查询参数，生产构建会静态移除该动态分支。`stable-ui/StableUiFoundation.css` 独立持有新版间距、圆角、表面透明度、文字层级、标题栏安全区、滚动条和减少动效变量，不修改旧全局样式。`WindowPinButton.tsx` 持有兼容主窗口、兼容 Preview 和新版标题栏共用的图标、可访问状态及鼠标失焦行为；Settings 后续仍不装配该按钮。`stableUiDevelopmentContract.ts` 只解析开发服务标志，不增加窗口模式；开发根节点使用独立 `window-layout-stable-ui-development.json`，置顶动作只更新本次进程状态，不写正式布局或用户置顶偏好。该开发入口启动时保留创建阶段的自由窗口 bounds 与宿主安全最小尺寸，不套用 micro / mini / normal 预设，并在 resize settle 前旁路旧形态推断和 micro 位置修正；旧 Renderer 继续完整使用原状态机。新版后续只按视口连续响应内部布局，预设尺寸与对应快捷动作的去留留到主功能接入完成后的独立窗口收口轮。
 
 U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 单独持有新版响应式网格、可拖动分隔线和断点，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、可在 280–480px 内调整，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
+
+U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过仅开发入口注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；普通入口继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，不扩大旧全局样式。
 
 此前完成的分阶段架构整理继续以体量与依赖守门约束运行时所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。U0 进一步把 `electron/main.ts` 上限收紧到当前 3771 行，并为搜索、目录、Skim、Settings、Preview、文件菜单、拖放、快捷键、窗口固定与隐藏恢复建立正式源码锚点；所有权移动时必须同步迁移映射，不能让旧链悄然消失后在新版组件中复制。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单，守门也会拒绝已经不再对应真实直连 channel 的过期豁免。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
 

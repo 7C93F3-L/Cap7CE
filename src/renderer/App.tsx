@@ -11,8 +11,7 @@ import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
 import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
-import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
-import { buildFileContextMenuGroups } from "./fileContextActions";
+import { getImageContextMenuStyle } from "./ImageContextMenu";
 import SkimLocationPicker from "./SkimLocationPicker";
 import { getKeywordEditorExitDelay } from "./keywordEditorInteraction";
 import {
@@ -31,7 +30,7 @@ import type {
 } from "./dialogs/dialogTypes";
 import { getCommonKeywords } from "./dialogs/keywordEditorModel";
 import { normalizeWindowsPathKey } from "./filePath";
-import { formatCacheSize, formatDisplayMessage } from "./formatting";
+import { formatDisplayMessage } from "./formatting";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import {
   Cap7CESearchCapsule,
@@ -50,12 +49,14 @@ import {
   normalizeShortcutActions
 } from "./shortcutActions";
 import ResultStatus from "./results/ResultStatus";
-import { ResultsView } from "./results/ResultsView";
+import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
+import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results/ResultsContextMenuLayer";
 import { SkimView } from "./skim/SkimView";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import { useCompatibilityCapsuleBridge } from "./window-presentation/useCompatibilityCapsuleBridge";
+import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
 import type {
   AppView,
   AppearanceColors,
@@ -101,14 +102,6 @@ const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] 
     directories.push({ name: file.name, path: filePath });
   }
   return directories;
-};
-type ImageContextMenuState = {
-  x: number;
-  y: number;
-  item: ImageIndexItem;
-  items: ImageIndexItem[];
-  preview: () => void;
-  shellState: ShellState;
 };
 type KeywordEditScrollSnapshot = {
   scrollMemory: ResultGridScrollMemory;
@@ -265,7 +258,12 @@ const formatDirectoryAddFeedback = (result: DirectoryAddResult) => {
   return t("directoryAdd.noChanges");
 };
 
-const App = () => {
+interface AppProps {
+  stableUiRenderer?: StableUiRenderer;
+}
+
+const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
+  const stableUi = Boolean(StableUiRenderer);
   const [view, setView] = useState<AppView>("home");
   const navigationEntriesRef = useRef<AppView[]>(["home"]);
   const navigationIndexRef = useRef(0);
@@ -388,7 +386,7 @@ const App = () => {
     message: skimCacheInlineFeedback,
     show: showSkimCacheInlineFeedback
   } = useTransientFeedback();
-  const [contextMenu, setContextMenu] = useState<ImageContextMenuState | null>(null);
+  const [contextMenu, setContextMenu] = useState<ResultsContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
   const [shellTransition, setShellTransition] = useState<ShellTransition | null>(null);
   const { isAlwaysOnTop, applyAlwaysOnTop, syncAlwaysOnTop, setAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOnTopController();
@@ -456,7 +454,7 @@ const App = () => {
   } as CSSProperties;
   const contextMenuStyle = getImageContextMenuStyle(effectiveTheme, appearanceColors);
   const operationHint = useOperationHintController({
-    shellState,
+    shellState: stableUi ? "normal" : shellState,
     query: search.query,
     enabled: operationHintsEnabled,
     commandEnabled,
@@ -533,6 +531,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    if (stableUi) return;
     const previousShellState = previousShellStateRef.current;
     const preserveBounds = (
       (previousShellState === "normal" || previousShellState === "settings") &&
@@ -549,7 +548,7 @@ const App = () => {
         });
       });
     });
-  }, [shellState, syncAlwaysOnTop]);
+  }, [shellState, stableUi, syncAlwaysOnTop]);
 
   useEffect(() => {
     const previousShellState = previousShellStateRef.current;
@@ -577,7 +576,7 @@ const App = () => {
   }, [shellState]);
 
   useEffect(() => {
-    const contentViewActive = (
+    const contentViewActive = stableUi || (
       (view === "results" || view === "skim")
       && (shellState === "micro" || shellState === "mini" || shellState === "normal")
     );
@@ -596,17 +595,20 @@ const App = () => {
       window.removeEventListener("blur", syncContentActivity);
       document.removeEventListener("visibilitychange", syncContentActivity);
     };
-  }, [cancelSearch, shellState, view]);
+  }, [cancelSearch, shellState, stableUi, view]);
 
   useEffect(() => {
-    const resultGridMounted = view === "results"
-      && (shellState === "micro" || shellState === "mini" || shellState === "normal");
+    const resultGridMounted = stableUi || (
+      view === "results"
+      && (shellState === "micro" || shellState === "mini" || shellState === "normal")
+    );
     if (!resultGridMounted) {
       void window.cap7ce?.cache.discardQueuedInteractiveThumbnails();
     }
-  }, [shellState, view]);
+  }, [shellState, stableUi, view]);
 
   useEffect(() => {
+    if (stableUi) return undefined;
     const unsubscribe = window.cap7ce?.window.onShellStateChanged?.((nextShellState) => {
       if (nextShellState === "standby") {
         resetShellBehaviorState();
@@ -631,7 +633,7 @@ const App = () => {
       void syncAlwaysOnTop();
     });
     return () => unsubscribe?.();
-  }, [resetShellBehaviorState, syncAlwaysOnTop]);
+  }, [resetShellBehaviorState, stableUi, syncAlwaysOnTop]);
 
   useEffect(() => {
     if (shellState !== "capsule") {
@@ -689,8 +691,8 @@ const App = () => {
     ) return;
     dismissTransientInteractionsForStandby();
     resetShellBehaviorState();
-    setShellState("standby");
-  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isClearingCache, isClearingSkimCache, isDeletingFiles, isSavingMetadata, resetShellBehaviorState]);
+    if (stableUi) void window.cap7ce?.window.setShellState("standby"); else setShellState("standby");
+  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isClearingCache, isClearingSkimCache, isDeletingFiles, isSavingMetadata, resetShellBehaviorState, stableUi]);
 
   const navigateTo = useCallback((nextView: AppView) => {
     const entries = navigationEntriesRef.current;
@@ -1154,12 +1156,16 @@ const App = () => {
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateShellModeShortcut?.((mode) => {
+      if (stableUi) {
+        if (mode === "standby") setCommandShellMode("line"); else window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
+        return;
+      }
       setCommandShellMode(mode === "standby" ? "line" : mode === "capsule" ? "cap" : mode);
       if (mode === "standby" || dialog) return;
       window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
     });
     return () => unsubscribe?.();
-  }, [dialog, setCommandShellMode]);
+  }, [dialog, setCommandShellMode, stableUi]);
 
   const commandOperationFailed = (message: string) => ({ ok: false as const, message });
 
@@ -2670,12 +2676,14 @@ const App = () => {
         return;
       }
 
-      const searchResultsVisible = (
+      const searchResultsVisible = stableUi || (
         shellState === "micro"
         || shellState === "mini"
         || shellState === "normal"
       ) && (view === "home" || view === "results");
       if (
+        !stableUi
+        &&
         quickActionGlobalEnabled
         && searchResultsVisible
         && !dialog
@@ -2691,7 +2699,7 @@ const App = () => {
         return;
       }
 
-      if (matchesShortcutEvent(event, shortcutActions.activateSkim)) {
+      if (!stableUi && matchesShortcutEvent(event, shortcutActions.activateSkim)) {
         event.preventDefault();
         event.stopPropagation();
         closeNavigationOverlays();
@@ -2699,7 +2707,7 @@ const App = () => {
         return;
       }
 
-      if (matchesShortcutEvent(event, shortcutActions.openSettings)) {
+      if (!stableUi && matchesShortcutEvent(event, shortcutActions.openSettings)) {
         event.preventDefault();
         event.stopPropagation();
         closeNavigationOverlays();
@@ -2738,6 +2746,7 @@ const App = () => {
     shellState,
     skimCacheClearFeedback,
     skimCurrentPath,
+    stableUi,
     shortcutActions,
     view
   ]);
@@ -2891,6 +2900,120 @@ const App = () => {
     || shellState === "settings"
   ) && dialog === null && !isAddingDirectory;
 
+  const resultStatusNode = <ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />;
+  const searchCapsuleNode = (
+    <Cap7CESearchCapsule
+      search={search}
+      directoryName={selectedDirectory.name}
+      directories={directoryOptions}
+      labelVisibility={searchCapsuleLabelVisibility}
+      status={resultStatusNode}
+      inputFeedback={searchInputFeedback}
+      inputFeedbackIsGuide={operationHintVisible}
+      unified
+      autoSearchOnQueryClear
+      skimDisplayMode={skimDisplay.searchMode}
+      enabledLabelGroups={standardSearchLabelGroups}
+      aiSearchEnabled={aiSearchBeta.enabled}
+      aiSearchBusy={aiSearchBeta.busy}
+      imageContextMenuOpen={contextMenu !== null}
+      inputRef={searchInputRef}
+      onSearchChange={(nextSearch) => {
+        clearQuickCommandNotice();
+        updateResultsSearch(nextSearch);
+      }}
+      onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
+      onSkimDisplayModeChange={(searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })}
+      onSearchOptionsChange={updateResultsSearchOptions}
+      onSearch={() => submitSearch(search)}
+      onAiSearchToggle={toggleAiSearchBeta}
+      onImageContextMenuClose={closeContextMenu}
+    />
+  );
+  const createResultsViewProps = (responsiveLayout: boolean): ResultsViewProps => ({
+    shellState: responsiveLayout ? "normal" : shellState,
+    responsiveLayout,
+    searchCapsule: responsiveLayout ? null : searchCapsuleNode,
+    images: searchResults,
+    isSearching: isSearching || aiSearchBeta.busy,
+    aiSearchPhase: aiSearchBeta.phase,
+    aiSearchProgress: aiSearchBeta.progress,
+    searchError,
+    contextMenuTheme: effectiveTheme,
+    appearanceColors,
+    imageContextMenuOpen: contextMenu !== null,
+    keywordEditorOpen: dialog === "editKeywords",
+    selectedImageId: selectedResultImageId,
+    clearSelectionRequestId,
+    scrollMemory: resultScrollMemoryRef.current,
+    onSelectedImageChange: setSelectedResultImageId,
+    onScrollMemoryChange: (scrollMemory) => { resultScrollMemoryRef.current = scrollMemory; },
+    onFeedback: showQuickCommandNotice,
+    onEditKeywords: requestEditKeywords,
+    onContextMenu: (event, item, selectedItems, preview) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: responsiveLayout ? "normal" : shellState });
+    },
+    onContextMenuClose: closeContextMenu,
+    onOpenImage: (item) => invokeFileAction("open", item),
+    onShowInFolder: (item) => invokeFileAction("showInFolder", item),
+    onDeleteItems: requestDeleteFiles,
+    onOpenSkim: stableUi ? () => undefined : openSkim,
+    onAiSearchSectionToggle: () => aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults)
+  });
+  const deleteFilesPanel = dialog === "deleteFiles" ? (
+    <DeleteFilesPanel
+      isDeleting={isDeletingFiles}
+      fileCount={filesPendingDelete.length}
+      feedback={deleteFilesFeedback}
+      onConfirm={confirmDeleteFiles}
+      onCancel={() => {
+        if (deleteFilesFeedback?.status === "succeeded") return;
+        setFilesPendingDelete([]); setDeleteFilesFeedback(null); setDialog(null);
+      }}
+      onComplete={() => { setFilesPendingDelete([]); setDeleteFilesFeedback(null); setDialog(null); }}
+    />
+  ) : null;
+  const contextMenuLayer = contextMenu ? (
+    <ResultsContextMenuLayer
+      state={contextMenu}
+      theme={effectiveTheme}
+      menuStyle={contextMenuStyle}
+      onOpen={(item) => void invokeFileAction("open", item)}
+      onShowInFolder={(item) => void invokeFileAction("showInFolder", item)}
+      onCopyPaths={(items) => { setContextMenu(null); void window.cap7ce?.files.copyPaths(items.map((item) => item.filePath)); }}
+      onEditKeywords={requestEditKeywords}
+      onDelete={requestDeleteFiles}
+    />
+  ) : null;
+  const keywordEditorLayer = dialog === "editKeywords" && keywordEditSession ? (
+    <KeywordEditorCard session={keywordEditSession} keywords={editKeywords} error={editMetadataError} isSaving={isSavingMetadata} isClosing={isKeywordEditorClosing} menuStyle={contextMenuStyle} theme={effectiveTheme} onKeywordsChange={setEditKeywords} onSave={saveEditedKeywords} onCancel={cancelEditKeywords} onExitComplete={finishKeywordEditorClose} />
+  ) : null;
+
+  if (StableUiRenderer) {
+    return (
+      <StableUiRenderer
+        theme={effectiveTheme}
+        themeStyle={appThemeStyle}
+        pinned={isAlwaysOnTop}
+        pinLabel={isAlwaysOnTop ? t("window.unfix") : t("window.fix")}
+        search={search}
+        searchInputRef={searchInputRef}
+        inputFeedback={searchInputFeedback}
+        inputFeedbackIsGuide={operationHintVisible}
+        resultStatus={resultStatusNode}
+        resultContent={deleteFilesPanel ?? <ResultsView {...createResultsViewProps(true)} />}
+        overlayContent={<>{contextMenuLayer}{keywordEditorLayer}</>}
+        onTogglePinned={() => { void toggleAlwaysOnTop("stable-ui"); }}
+        onSearchChange={(nextSearch) => { clearQuickCommandNotice(); updateResultsSearch(nextSearch); }}
+        onSearchOptionsChange={updateResultsSearchOptions}
+        onSearch={() => submitSearch(search)}
+        onDismissOverlay={closeContextMenu}
+      />
+    );
+  }
+
   return (
     <div
       className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${isCompatibilityMode ? " cap-shell-compatibility" : ""}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}${dialog === "editKeywords" ? " cap-shell-keyword-editor-open" : ""}`}
@@ -2979,94 +3102,8 @@ const App = () => {
                 onSearchOptionsChange={updateResultsSearchOptions}
               />
             )}
-            {activeView === "results" && dialog === "deleteFiles" && (
-              <DeleteFilesPanel
-                isDeleting={isDeletingFiles}
-                fileCount={filesPendingDelete.length}
-                feedback={deleteFilesFeedback}
-                onConfirm={confirmDeleteFiles}
-                onCancel={() => {
-                  if (deleteFilesFeedback?.status === "succeeded") return;
-                  setFilesPendingDelete([]);
-                  setDeleteFilesFeedback(null);
-                  setDialog(null);
-                }}
-                onComplete={() => {
-                  setFilesPendingDelete([]);
-                  setDeleteFilesFeedback(null);
-                  setDialog(null);
-                }}
-              />
-            )}
-            {isExpandedShell && activeView === "results" && dialog !== "deleteFiles" && (
-              <ResultsView
-                shellState={shellState}
-                searchCapsule={(
-                  <Cap7CESearchCapsule
-                    search={search}
-                    directoryName={selectedDirectory.name}
-                    directories={directoryOptions}
-                    labelVisibility={searchCapsuleLabelVisibility}
-                    status={<ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />}
-                    inputFeedback={searchInputFeedback}
-                    inputFeedbackIsGuide={operationHintVisible}
-                    unified
-                    autoSearchOnQueryClear
-                    skimDisplayMode={skimDisplay.searchMode}
-                    enabledLabelGroups={standardSearchLabelGroups}
-                    aiSearchEnabled={aiSearchBeta.enabled}
-                    aiSearchBusy={aiSearchBeta.busy}
-                    imageContextMenuOpen={contextMenu !== null}
-                    inputRef={searchInputRef}
-                    onSearchChange={(nextSearch) => {
-                      clearQuickCommandNotice();
-                      updateResultsSearch(nextSearch);
-                    }}
-                    onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
-                    onSkimDisplayModeChange={(searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })}
-                    onSearchOptionsChange={updateResultsSearchOptions}
-                    onSearch={() => submitSearch(search)}
-                    onAiSearchToggle={toggleAiSearchBeta}
-                    onImageContextMenuClose={closeContextMenu}
-                  />
-                )}
-                images={searchResults}
-                isSearching={isSearching || aiSearchBeta.busy}
-                aiSearchPhase={aiSearchBeta.phase}
-                aiSearchProgress={aiSearchBeta.progress}
-                searchError={searchError}
-                contextMenuTheme={effectiveTheme}
-                appearanceColors={appearanceColors}
-                imageContextMenuOpen={contextMenu !== null}
-                keywordEditorOpen={dialog === "editKeywords"}
-                selectedImageId={selectedResultImageId}
-                clearSelectionRequestId={clearSelectionRequestId}
-                scrollMemory={resultScrollMemoryRef.current}
-                onSelectedImageChange={setSelectedResultImageId}
-                onScrollMemoryChange={(scrollMemory) => {
-                  resultScrollMemoryRef.current = scrollMemory;
-                }}
-                onFeedback={showQuickCommandNotice}
-                onEditKeywords={requestEditKeywords}
-                onContextMenu={(event, item, selectedItems, preview) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setContextMenu({
-                    x: event.clientX,
-                    y: event.clientY,
-                    item,
-                    items: selectedItems,
-                    preview,
-                    shellState
-                  });
-                }}
-                onContextMenuClose={closeContextMenu}
-                onOpenImage={(item) => invokeFileAction("open", item)}
-                onShowInFolder={(item) => invokeFileAction("showInFolder", item)} onDeleteItems={requestDeleteFiles}
-                onOpenSkim={openSkim}
-                onAiSearchSectionToggle={() => aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults)}
-              />
-            )}
+            {activeView === "results" && deleteFilesPanel}
+            {isExpandedShell && activeView === "results" && dialog !== "deleteFiles" && <ResultsView {...createResultsViewProps(false)} />}
             {activeView === "skim" && (
               <SkimView
                 search={{ ...search, ...skimSortPreference }}
@@ -3285,69 +3322,8 @@ const App = () => {
           </div>
         </>
       )}
-      {contextMenu && (
-        <ImageContextMenu
-          key={`results:${contextMenu.item.id}:${contextMenu.x}:${contextMenu.y}`}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          theme={effectiveTheme}
-          menuStyle={contextMenuStyle}
-          compact={contextMenu.shellState === "micro" || contextMenu.shellState === "mini"}
-          header={{
-            format: contextMenu.item.extension.slice(1).toUpperCase() || t("fileInfo.file"),
-            fileName: contextMenu.item.fileName, filePath: contextMenu.item.filePath,
-            primaryDetail: t("fileInfo.size", { size: formatCacheSize(contextMenu.item.fileSize) }),
-            details: [
-              ...(contextMenu.item.imageWidth > 0 && contextMenu.item.imageHeight > 0
-                ? [t("fileInfo.resolution", { width: contextMenu.item.imageWidth, height: contextMenu.item.imageHeight })]
-                : [])
-            ]
-          }}
-          groups={buildFileContextMenuGroups({
-            viewLabel: t("context.view"),
-            actionsLabel: t("context.actions"),
-            primaryViewAction: { id: "preview", label: t("preview.action"), onSelect: contextMenu.preview },
-            openAction: { id: "open", label: t("context.open"), onSelect: () => void invokeFileAction("open", contextMenu.item) },
-            showInFolderAction: { id: "showInFolder", label: t("context.showInFolder"), onSelect: () => void invokeFileAction("showInFolder", contextMenu.item) },
-            copyPathsAction: {
-              id: "copyPaths",
-              label: contextMenu.items.length > 1
-                ? t("context.copySelectedPaths", { count: contextMenu.items.length })
-                : t("context.copyPath"),
-              onSelect: () => {
-                setContextMenu(null);
-                void window.cap7ce?.files.copyPaths(contextMenu.items.map((item) => item.filePath));
-              }
-            },
-            editKeywordsAction: contextMenu.items.length > 0
-              ? { id: "editKeywords", label: t("context.editKeywords"), onSelect: () => requestEditKeywords(contextMenu.items) }
-              : undefined,
-            editKeywordsShortcut: t("context.holdSpaceShortcut"),
-            deleteAction: contextMenu.items.length > 0
-              ? {
-                id: "delete",
-                label: contextMenu.items.length > 1 ? t("context.deleteSelectedFiles", { count: contextMenu.items.length }) : t("context.deleteFile"),
-                onSelect: () => requestDeleteFiles(contextMenu.items)
-              }
-              : undefined
-          })}
-        />
-      )}
-      {dialog === "editKeywords" && keywordEditSession && (
-        <KeywordEditorCard
-          session={keywordEditSession}
-          keywords={editKeywords}
-          error={editMetadataError}
-          isSaving={isSavingMetadata}
-          isClosing={isKeywordEditorClosing}
-          menuStyle={contextMenuStyle}
-          theme={effectiveTheme}
-          onKeywordsChange={setEditKeywords}
-          onSave={saveEditedKeywords}
-          onCancel={cancelEditKeywords}
-          onExitComplete={finishKeywordEditorClose}
-        />
-      )}
+      {contextMenuLayer}
+      {keywordEditorLayer}
     </div>
   );
 };

@@ -140,7 +140,6 @@
   background: var(--cap-stable-surface);
   overflow: hidden;
 }
-
 .cap-stable-placeholder-grid {
   display: grid;
   align-content: start;

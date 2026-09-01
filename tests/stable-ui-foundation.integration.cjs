@@ -57,6 +57,7 @@ void (async () => {
 
   const rendererEntry = read("src/renderer/main.tsx");
   const mainSource = read("electron/main.ts");
+  const appSource = read("src/renderer/App.tsx");
   const contractSource = read("electron/stableUiDevelopmentContract.ts");
   const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
   const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
@@ -84,6 +85,8 @@ void (async () => {
   if (rootSource.includes("setShellState(") || rootSource.includes("size-contract")) {
     throw new Error("Stable UI development root must not select a legacy shell shape or size contract.");
   }
+  assert.match(appSource, /if \(stableUi\) void window\.cap7ce\?\.window\.setShellState\("standby"\); else setShellState\("standby"\);/);
+  assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\("line"\); else window\.setTimeout/);
   if (!titlebarSource.includes("<WindowPinButton") || !pinButtonSource.includes("aria-pressed={pinned}")) {
     throw new Error("Stable main and preview foundations must share the existing accessible pin control.");
   }
@@ -110,6 +113,7 @@ void (async () => {
     sharedPinControlVerified: true,
     developmentPreferencesAndLayoutIsolated: true,
     legacyResizeStateSettlingBypassed: true,
+    nativeCloseUsesSafeStandbyChain: true,
     legacySizePresetNotAppliedAtStartup: true,
     stableTokensAndScrollbarVerified: true
   }));

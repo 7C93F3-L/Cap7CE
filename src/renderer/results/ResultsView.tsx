@@ -26,6 +26,7 @@ const toSearchShellPreviewUrl = (filePath: string) => `cap7ce://search-shell-pre
 
 export interface ResultsViewProps {
   shellState: ResultShellState;
+  responsiveLayout?: boolean;
   searchCapsule: React.ReactNode;
   images: ImageIndexItem[];
   isSearching: boolean;
@@ -52,7 +53,7 @@ export interface ResultsViewProps {
   onAiSearchSectionToggle: () => void;
 }
 
-export const ResultsView = ({ shellState, searchCapsule, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onOpenSkim, onAiSearchSectionToggle }: ResultsViewProps) => {
+export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsule, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onOpenSkim, onAiSearchSectionToggle }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -582,6 +583,7 @@ export const ResultsView = ({ shellState, searchCapsule, images, isSearching, ai
       {searchCapsule}
       <VirtualImageGrid
           shellState={shellState}
+          responsiveLayout={responsiveLayout}
           images={images}
           layoutItems={resultGridLayoutItems}
           selectedImageIds={selectedImageIds}

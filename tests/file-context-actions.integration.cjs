@@ -94,11 +94,13 @@ assert.deepEqual(
 );
 
 const appSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "App.tsx"), "utf8");
+const resultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "ResultsContextMenuLayer.tsx"), "utf8");
 const resultsSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "ResultsView.tsx"), "utf8");
 const previewSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "PreviewWindowApp.tsx"), "utf8");
 const skimSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "skim", "SkimView.tsx"), "utf8");
 
-assert.match(appSource, /buildFileContextMenuGroups\s*\(/);
+assert.match(appSource, /<ResultsContextMenuLayer/);
+assert.match(resultsMenuSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(resultsSource, /getFileContextShortcutAction\s*\(event\)/);
 assert.match(previewSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(previewSource, /getFileContextShortcutAction\s*\(event\)/);

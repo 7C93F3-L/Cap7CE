@@ -54,10 +54,10 @@ if (isLineWindow) {
     );
   });
 } else if (isStableUiDevelopmentRoot) {
-  void import("./stable-ui/StableUiRoot").then(({ default: StableUiRoot }) => {
+  void Promise.all([import("./App"), import("./stable-ui/StableUiRoot")]).then(([{ default: App }, { default: StableUiRoot }]) => {
     root.render(
       <React.StrictMode>
-        <StableUiRoot />
+        <App stableUiRenderer={StableUiRoot} />
       </React.StrictMode>
     );
   });
