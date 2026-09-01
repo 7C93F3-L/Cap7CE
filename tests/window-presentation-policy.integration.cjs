@@ -23,7 +23,8 @@ assert.deepEqual(cap7cePolicy, {
   usesIndependentCapsuleWindow: false,
   surfaces: {
     main: { frame: false, transparent: true, usesWindowControlsOverlay: false },
-    preview: { frame: false, transparent: true, usesWindowControlsOverlay: false }
+    preview: { frame: false, transparent: true, usesWindowControlsOverlay: false },
+    settings: { frame: false, transparent: true, usesWindowControlsOverlay: false }
   }
 });
 
@@ -38,6 +39,7 @@ assert.deepEqual(compatibilityPolicy.surfaces.main, {
   usesWindowControlsOverlay: true
 });
 assert.deepEqual(compatibilityPolicy.surfaces.preview, compatibilityPolicy.surfaces.main);
+assert.deepEqual(compatibilityPolicy.surfaces.settings, compatibilityPolicy.surfaces.main);
 assert.notEqual(getWindowLayoutFileName("cap7ce"), getWindowLayoutFileName("compatibility"));
 assert.equal(getWindowPresentationSymbolColor("dark"), "#D8D8D8");
 assert.equal(getWindowPresentationSymbolColor("light"), "#242424");

@@ -28,16 +28,16 @@ import "./settings/RuntimeDiagnosticsRows.css";
 import "./settings/DirectoryAiSettingsRows.css";
 import "./settings/SettingsView.css";
 import "./window-presentation/CompatibilityTitlebar.css";
-
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const rendererSearchParams = new URLSearchParams(window.location.search);
 const windowKind = rendererSearchParams.get("window");
-const isPreviewWindow = windowKind === "preview";
+const isSettingsWindow = windowKind === "settings", isPreviewWindow = windowKind === "preview";
 const isLineWindow = windowKind === "line";
 const isCompatibilityCapsuleWindow = windowKind === "compatibility-capsule";
 const isStableUiDevelopmentRoot = import.meta.env.DEV && rendererSearchParams.get("ui") === "stable";
-
-if (isLineWindow) {
+if (isSettingsWindow) {
+  void import("./settings-window/SettingsWindowApp").then(({ default: SettingsWindowApp }) => root.render(<React.StrictMode><SettingsWindowApp /></React.StrictMode>));
+} else if (isLineWindow) {
   void import("./LineWindowApp").then(({ default: LineWindowApp }) => {
     root.render(<LineWindowApp />);
   });

@@ -15,7 +15,7 @@ assert.match(mainSource, /const applyStandaloneLineMode = \(\) => \{[\s\S]*?main
 assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInteractiveThumbnailRenders\(\)\)/u);
 assert.match(mainSource, /compatibilityNativeMaximizeController\.attach\(mainWindow\);/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
-assert.match(mainSource, /appTray\.on\("balloon-click", \(\) => openSettingsFromTray\(\)\)/u);
+assert.match(mainSource, /appTray\.on\("balloon-click", \(\) => void openSettings\(\)\)/u);
 assert.match(mainSource, /app\.on\("second-instance", \(\) => \{[\s\S]*?pendingSecondInstanceActivation = true;[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /mainWindow\.once\("ready-to-show", \(\) => \{[\s\S]*?if \(pendingSecondInstanceActivation\) \{[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /\{ id: "activateMicro", shortcut: shortcutActions\.activateMicro, mode: "micro" \}[\s\S]*?\{ id: "activateMini", shortcut: shortcutActions\.activateMini, mode: "mini" \}[\s\S]*?\{ id: "activateNormal", shortcut: shortcutActions\.activateNormal, mode: "normal" \}[\s\S]*?\{ id: "activateStandby", shortcut: shortcutActions\.activateStandby, mode: "standby" \}/u);

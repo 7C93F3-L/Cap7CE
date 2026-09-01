@@ -73,6 +73,7 @@ import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
+import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -106,7 +107,7 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
   });
 };
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null = null, settingsWindowController: SettingsWindowController | null = null;
 const isMainSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
   mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents
 );
@@ -1124,12 +1125,6 @@ const sendShellStateToRenderer = (state: string) => {
   }
 };
 
-const sendOpenSettingsToRenderer = () => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("window:openSettingsRequested");
-  }
-};
-
 const sendToggleSkimLocationPickerToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:toggleSkimLocationPickerRequested");
@@ -1256,7 +1251,7 @@ const unregisterShellModeShortcuts = () => {
 
 const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings"): Promise<boolean> => {
   if (mode === "settings") {
-    return openSettingsFromTray();
+    return openSettings();
   }
 
   if (mode === "skim") {
@@ -1385,7 +1380,7 @@ const updateTrayMenu = () => {
     },
     {
       label: t("tray.openSettings"),
-      click: openSettingsFromTray
+      click: () => void openSettings()
     },
     {
       label: t("tray.quit"),
@@ -1480,7 +1475,7 @@ const createAppTray = () => {
   appTray = new Tray(path.join(app.getAppPath(), "build", "icon.ico"));
   appTray.setToolTip("Cap7CE");
   appTray.on("click", () => void activateShellModeShortcut("normal"));
-  appTray.on("balloon-click", () => openSettingsFromTray());
+  appTray.on("balloon-click", () => void openSettings());
   updateTrayMenu();
 };
 
@@ -1511,22 +1506,20 @@ const setEdgeCollapseEnabled = async (enabled: boolean) => {
   return preferences;
 };
 
-const openSettingsFromTray = () => {
+const openLegacySettings = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
-
-  if (!showAndFocusMainWindow()) {
-    return false;
-  }
+  if (!showAndFocusMainWindow()) return false;
   const preserveBounds = activeShellState === "normal" || activeShellState === "settings";
   if (activeShellState !== "settings") {
     applyShellWindowState("settings", { preserveBounds });
   }
   showAndFocusMainWindow();
   sendShellStateToRenderer("settings");
-  sendOpenSettingsToRenderer();
+  mainWindow.webContents.send("window:openSettingsRequested");
   return true;
 };
-
+const isIndependentSettingsWindowEnabled = () => isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode);
+const openSettings = async () => isIndependentSettingsWindowEnabled() ? Boolean(await settingsWindowController?.open()) : openLegacySettings();
 const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "capsule">) => {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return null;
@@ -2315,7 +2308,9 @@ const refreshWindowPresentationAppearance = async () => {
   const preferences = await getUserPreferences();
   if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
   const mainUpdated = windowPresentationRuntime.applyMainWindowAppearance(mainWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
-  return windowPresentationRuntime.applyPreviewWindowAppearance(previewWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors) || mainUpdated;
+  const previewUpdated = windowPresentationRuntime.applyPreviewWindowAppearance(previewWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
+  const settingsUpdated = settingsWindowController?.refreshAppearance((window) => windowPresentationRuntime.applySettingsWindowAppearance(window, preferences.themePreference, nativeTheme.shouldUseDarkColors));
+  return settingsUpdated || previewUpdated || mainUpdated;
 };
 const createWindow = () => {
   mainWindowReadyForActivation = false;
@@ -2471,6 +2466,13 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   const normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode(requestedWindowPresentationMode);
   windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizedRequestedWindowPresentationMode), preferences.themePreference);
   runtimeDiagnostics.log("info", "window.presentation.startup", { requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime.mode, source: hasDevelopmentWindowModeOverride ? "development-override" : "preference" });
+  settingsWindowController = new SettingsWindowController({
+    browserOptions: () => windowPresentationRuntime.getBrowserOptions("settings", nativeTheme.shouldUseDarkColors), createWindow: (options) => createApplicationWindow("settings", options),
+    devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged, getDisplayMatching: (bounds) => toWindowLayoutDisplaySnapshot(screen.getDisplayMatching(bounds)),
+    getDisplays: () => screen.getAllDisplays().map(toWindowLayoutDisplaySnapshot), getPrimaryDisplay: () => toWindowLayoutDisplaySnapshot(screen.getPrimaryDisplay()), isQuitting: () => isQuitting,
+    layoutStore: new SettingsWindowLayoutStore(path.join(app.getPath("userData"), "config", "settings-window-layout.json")), lockWebContentsZoom,
+    preloadPath: path.join(__dirname, "preload.js"), presentationMode: () => windowPresentationRuntime.mode, rendererPath: path.join(__dirname, "../dist/index.html")
+  });
   windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", getStableUiDevelopmentLayoutFileName(windowPresentationRuntime.layoutFileName, windowPresentationRuntime.mode))));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences(preferences);
@@ -2548,6 +2550,7 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   isQuitting = true;
   void windowLayoutManager.flush().catch((error) => console.warn("[window-layout] final write failed", error));
+  void settingsWindowController?.flush().catch((error) => console.warn("[settings-window] final write failed", error)); settingsWindowController?.destroy();
   clearHiddenActivationReveal();
   capsuleWindowController.destroy();
   closeStartupHintWindow();
@@ -3057,13 +3060,10 @@ ipcMain.handle("preview:toggleAlwaysOnTop", async (event) => {
   return getPreviewWindowControlState();
 });
 
-ipcMain.handle("preview:openSettings", (event) => {
-  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) {
-    return false;
-  }
-  closePreviewSession();
-  openSettingsFromTray();
-  return true;
+ipcMain.handle("preview:openSettings", async (event) => {
+  if (!previewWindow || previewWindow.isDestroyed() || event.sender !== previewWindow.webContents) return false;
+  if (!isIndependentSettingsWindowEnabled()) closePreviewSession();
+  return openSettings();
 });
 
 ipcMain.handle("preview:toggleSkimLocationPicker", (event) => {
@@ -3744,7 +3744,7 @@ registerCacheActivityIpc({
     }
   }
 });
-
+registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, openSettings });
 const clearFormalVisualCacheSafely = async (clear: typeof clearAllVisualCaches) => {
   const renderingPauseReason = "cache-clear";
   await pauseThumbnailRendering(renderingPauseReason);

@@ -2,7 +2,7 @@ import type { BrowserWindow, BrowserWindowConstructorOptions } from "electron";
 import type { RuntimeDiagnostics } from "./runtimeDiagnostics";
 import type { WindowPresentationMode } from "./windowPresentationPolicy";
 
-export type BrowserWindowSurface = "main" | "preview" | "line" | "capsule" | "startup-hint";
+export type BrowserWindowSurface = "main" | "preview" | "settings" | "line" | "capsule" | "startup-hint";
 
 interface DiagnosedBrowserWindowOptions {
   create: (options: BrowserWindowConstructorOptions) => BrowserWindow;

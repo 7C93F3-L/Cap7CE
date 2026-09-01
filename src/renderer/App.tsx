@@ -3058,7 +3058,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),
           onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
-          onOpenSettings: openSettings
+          onOpenSettings: () => void window.cap7ce?.settingsWindow.open()
         }}
         skim={{
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,

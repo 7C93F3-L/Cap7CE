@@ -48,9 +48,9 @@ export class WindowPresentationRuntime {
     return this.applyWindowAppearance("main", window, themePreference, systemUsesDarkColors);
   }
 
-  applyPreviewWindowAppearance(window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) {
-    return this.applyWindowAppearance("preview", window, themePreference, systemUsesDarkColors);
-  }
+  applyPreviewWindowAppearance(window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) { return this.applyWindowAppearance("preview", window, themePreference, systemUsesDarkColors); }
+
+  applySettingsWindowAppearance(window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) { return this.applyWindowAppearance("settings", window, themePreference, systemUsesDarkColors); }
 
   private applyWindowAppearance(surface: WindowPresentationSurface, window: BrowserWindow | null, themePreference: ThemePreference, systemUsesDarkColors: boolean) {
     this.themePreference = themePreference;

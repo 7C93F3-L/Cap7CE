@@ -24,6 +24,9 @@ declare global {
         onActivateCapsuleShortcut: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => void) => () => void;
       };
+      settingsWindow: {
+        open: () => Promise<boolean>;
+      };
       line: {
         activateCapsule: () => Promise<boolean>;
         onPlacementChanged: (callback: (edge: "left" | "right" | "top" | "bottom") => void) => () => void;

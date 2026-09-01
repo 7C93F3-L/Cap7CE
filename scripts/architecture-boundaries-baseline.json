@@ -29,6 +29,8 @@
     "src/renderer/stable-ui/StableSearchInput.tsx": 46,
     "src/renderer/stable-ui/stableUiRendererTypes.ts": 26,
     "src/renderer/stable-ui/StableSearchResults.css": 51,
+    "src/renderer/settings-window/SettingsWindowApp.tsx": 15,
+    "src/renderer/settings-window/SettingsWindowApp.css": 40,
     "src/renderer/results/ResultsContextMenuLayer.tsx": 72,
     "src/renderer/results/ResultsView.tsx": 610,
     "src/renderer/results/VirtualResultGrids.tsx": 411,
@@ -58,6 +60,10 @@
     "electron/main.ts": 3770,
     "electron/stableUiDevelopmentContract.ts": 63,
     "electron/windowPresentationRuntime.ts": 64,
+    "electron/settingsWindowController.ts": 165,
+    "electron/settingsWindowLayout.ts": 127,
+    "electron/settingsWindowIpc.ts": 20,
+    "electron/settingsWindowHost.ts": 4,
     "electron/capsuleWindowController.ts": 307,
     "electron/capsuleSubmissionHandoff.ts": 60,
     "electron/previewWindowPresentationSizing.ts": 61,
@@ -111,7 +117,10 @@
         "id": "settings",
         "sourceAnchors": [
           { "path": "src/renderer/App.tsx", "contains": "function openSettings" },
+          { "path": "src/renderer/settings-window/SettingsWindowApp.tsx", "contains": "const SettingsWindowApp" },
           { "path": "src/renderer/settings/SettingsView.tsx", "contains": "export const SettingsView" },
+          { "path": "electron/settingsWindowController.ts", "contains": "export class SettingsWindowController" },
+          { "path": "electron/settingsWindowLayout.ts", "contains": "export class SettingsWindowLayoutStore" },
           { "path": "electron/preferenceIpc.ts", "contains": "registerPreferenceIpc" }
         ]
       },

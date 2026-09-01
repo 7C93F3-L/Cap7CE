@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld("cap7ce", {
       return () => ipcRenderer.removeListener("window:activateShellModeShortcut", listener);
     }
   },
+  settingsWindow: {
+    open: () => ipcRenderer.invoke("settingsWindow:open")
+  },
   line: {
     activateCapsule: () => ipcRenderer.invoke("line:activateCapsule"),
     onPlacementChanged: (callback: (edge: "left" | "right" | "top" | "bottom") => void) => {

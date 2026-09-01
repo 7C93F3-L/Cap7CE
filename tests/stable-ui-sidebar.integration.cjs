@@ -21,7 +21,8 @@ for (const marker of [
   "onOpenSettings"
 ]) assert.ok(sidebarTypesSource.includes(marker), `Stable sidebar contract is missing ${marker}.`);
 
-assert.match(appSource, /sidebar=\{\{[\s\S]*?directories: directoryOptions[\s\S]*?onAiSearchToggle: toggleAiSearchBeta[\s\S]*?onAddDirectory: \(\) => void addDirectory\(\)[\s\S]*?onOpenSettings: openSettings/);
+assert.match(appSource, /sidebar=\{\{[\s\S]*?directories: directoryOptions[\s\S]*?onAiSearchToggle: toggleAiSearchBeta[\s\S]*?onAddDirectory: \(\) => void addDirectory\(\)[\s\S]*?onOpenSettings: \(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/);
+assert.match(appSource, /function openSettings\(section\?/);
 assert.match(appSource, /const directoryDialogLayer =/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /if \(StableUiRenderer && view !== "settings"\)/);
@@ -51,6 +52,6 @@ for (const marker of [
 console.log(JSON.stringify({
   controlledFilterAndDirectoryActionsBridged: true,
   formalDirectoryTransactionsReused: true,
-  directoryDropAndSettingsFallbackGuarded: true,
+  directoryDropAndIndependentSettingsActionGuarded: true,
   collapsedSidebarAndFooterVerified: true
 }));

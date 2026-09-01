@@ -1,0 +1,39 @@
+.cap-settings-window-foundation {
+  color-scheme: light dark;
+  min-width: 100%;
+  min-height: 100%;
+  color: light-dark(#242424, #f1f1f1);
+}
+
+.cap-settings-window-drag-region {
+  position: fixed;
+  z-index: 2;
+  inset: 0 0 auto;
+  height: 36px;
+  app-region: drag;
+}
+
+.cap-settings-window-placeholder {
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  padding: 72px 32px 32px;
+  border-radius: 14px;
+  background: light-dark(rgb(255 255 255 / 48%), rgb(24 24 24 / 42%));
+}
+
+.cap-settings-window-placeholder span,
+.cap-settings-window-placeholder p {
+  color: light-dark(rgb(36 36 36 / 62%), rgb(241 241 241 / 64%));
+}
+
+.cap-settings-window-placeholder h1 {
+  margin: 10px 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cap-settings-window-placeholder p {
+  margin: 0;
+  font-size: 13px;
+}

@@ -1,7 +1,7 @@
 export const WINDOW_PRESENTATION_MODES = ["cap7ce", "compatibility"] as const;
 
 export type WindowPresentationMode = typeof WINDOW_PRESENTATION_MODES[number];
-export type WindowPresentationSurface = "main" | "preview";
+export type WindowPresentationSurface = "main" | "preview" | "settings";
 
 export interface WindowPresentationSurfacePolicy {
   frame: false;
@@ -61,7 +61,8 @@ export const getWindowPresentationPolicy = (
     usesIndependentCapsuleWindow: compatibility,
     surfaces: {
       main: { ...surfacePolicy },
-      preview: { ...surfacePolicy }
+      preview: { ...surfacePolicy },
+      settings: { ...surfacePolicy }
     }
   };
 };
