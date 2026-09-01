@@ -641,7 +641,7 @@ const createPreviewWindow = () => {
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
-    const previewUrl = new URL(devServerUrl);
+    const previewUrl = applyCurrentStableUiDevelopmentQuery(new URL(devServerUrl), windowPresentationRuntime.mode);
     previewUrl.searchParams.set("window", "preview");
     previewUrl.searchParams.set("presentation", windowPresentationRuntime.mode);
     void previewWindow.loadURL(previewUrl.toString());

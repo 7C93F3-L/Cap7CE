@@ -32,6 +32,11 @@ export interface PreviewEmbeddedMetadata {
   capturedAt: string | null;
 }
 
+export interface PreviewSearchEvidence {
+  terms: Array<{ term: string; bestSource: string }>;
+  classification: string;
+}
+
 export interface PreviewWindowData {
   sessionId: string;
   itemId: string;
@@ -70,6 +75,11 @@ export interface PreviewWindowData {
   mobiPreview?: MobiPreviewData;
   mobiFallbackReason?: MobiPreviewFallbackReason;
   embeddedMetadata?: PreviewEmbeddedMetadata;
+  imageWidth?: number;
+  imageHeight?: number;
+  manualKeywords?: string[];
+  userDescription?: string;
+  searchEvidence?: PreviewSearchEvidence | null;
   skimActive: boolean;
   theme: "light" | "dark";
   language: "zh-CN" | "en-US";

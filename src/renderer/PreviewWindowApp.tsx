@@ -9,6 +9,8 @@ import WindowControlRail, { type WindowControlAction } from "./WindowControlRail
 import PdfPreviewPanel from "./PdfPreviewPanel";
 import FontPreviewPanel from "./FontPreviewPanel";
 import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
+import PreviewInformationSidebar from "./preview/PreviewInformationSidebar";
+import { usePreviewSidebarLayout } from "./preview/usePreviewSidebarLayout";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import { buildFileContextMenuGroups, getFileContextShortcutAction } from "./fileContextActions";
 import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
@@ -17,6 +19,7 @@ import { setActiveLanguage, t } from "../../electron/localization";
 import { COMPATIBILITY_TITLEBAR_HEIGHT } from "../../electron/windowPresentationPolicy";
 
 const isCompatibilityWindow = new URLSearchParams(window.location.search).get("presentation") === "compatibility";
+const isStableUiPreview = import.meta.env.DEV && new URLSearchParams(window.location.search).get("ui") === "stable";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
   isMaximized: false,
@@ -102,6 +105,7 @@ const PreviewWindowApp = () => {
   const [windowControlState, setWindowControlState] = useState(defaultPreviewWindowControlState);
   const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
   const [embeddedMetadataExpanded, setEmbeddedMetadataExpanded] = useState(false);
+  const previewSidebarLayout = usePreviewSidebarLayout();
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
@@ -463,16 +467,21 @@ const PreviewWindowApp = () => {
 
   return (
     <main
-      className={`app theme-${previewData.theme} preview-window-root${isCompatibilityWindow ? " preview-window-compatibility" : ""}${windowControlState.isMaximized ? " preview-window-maximized" : ""}`}
+      className={`app theme-${previewData.theme} preview-window-root${isCompatibilityWindow ? " preview-window-compatibility" : ""}${isStableUiPreview ? " preview-window-stable-ui" : ""}${windowControlState.isMaximized ? " preview-window-maximized" : ""}`}
       style={themeStyle}
       role="dialog"
       aria-label={previewData.fileName}
       onClick={() => setContextMenu(null)}
       onContextMenu={(event) => {
         event.preventDefault();
+        if (isStableUiPreview && (event.target as Element).closest?.("[data-preview-navigation-suppressed='true']")) return;
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
       onWheelCapture={(event) => {
+        if (isStableUiPreview && (event.target as Element).closest?.("[data-preview-navigation-suppressed='true']")) {
+          setContextMenu(null);
+          return;
+        }
         const contentScroll = previewData.provider === "text"
           ? textScrollRef.current
           : previewData.provider === "pdf"
@@ -510,7 +519,33 @@ const PreviewWindowApp = () => {
       }}
     >
       {isCompatibilityWindow && <CompatibilityTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
-      <div className="preview-window-content">
+      <div className={`preview-window-shell${isStableUiPreview ? " preview-stable-shell" : ""}`}>
+        {isStableUiPreview && <PreviewInformationSidebar
+          data={previewData}
+          expanded={previewSidebarLayout.expanded}
+          width={previewSidebarLayout.width}
+          canShowSecondaryActions={showSettings}
+          onToggleExpanded={previewSidebarLayout.toggleExpanded}
+          onBeginResize={previewSidebarLayout.beginResize}
+          onResetWidth={previewSidebarLayout.resetWidth}
+          onOpen={() => {
+            void window.cap7ce?.files.open(previewData.filePath).then((result) => {
+              if (result === "") closePreview();
+            });
+          }}
+          onShowInFolder={() => { void window.cap7ce?.files.showInFolder(previewData.filePath); }}
+          onCopyPath={() => { void window.cap7ce?.files.copyPaths([previewData.filePath]); }}
+          onEditKeywords={() => {
+            void window.cap7ce?.preview.requestItemAction({ action: "editKeywords", itemId: previewData.itemId, filePath: previewData.filePath });
+          }}
+          onDelete={() => {
+            void window.cap7ce?.preview.requestItemAction({ action: "deleteFile", itemId: previewData.itemId, filePath: previewData.filePath });
+          }}
+          onOpenSkim={() => { void window.cap7ce?.preview.toggleSkimLocationPicker(); }}
+          onOpenSettings={() => { void window.cap7ce?.preview.openSettings(); }}
+        />}
+        <div className={`preview-window-stage${isStableUiPreview ? " preview-stable-stage" : ""}`}>
+          <div className="preview-window-content">
         {showPreviewLoadingIndicator && (
           <div className="preview-window-loading" role="status" aria-live="polite">
             <WaitingIndicator className="preview-window-waiting-icon" />
@@ -565,16 +600,16 @@ const PreviewWindowApp = () => {
           onClick={(event) => {
             event.stopPropagation();
             setContextMenu(null);
-            if (previewData.embeddedMetadata) setEmbeddedMetadataExpanded((current) => !current);
+            if (!isStableUiPreview && previewData.embeddedMetadata) setEmbeddedMetadataExpanded((current) => !current);
           }}
           />
-          {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="sheet" expanded={embeddedMetadataExpanded} />}
+          {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="sheet" expanded={embeddedMetadataExpanded} />}
         </div> : previewData.provider === "text" && previewData.textPreview && !showInfoFallback ? (
           <section className="preview-text-panel">
             <header>
               <div className="preview-text-heading">
                 <strong>{previewData.fileName}</strong>
-                {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
+                {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
               </div>
               <span>{previewData.textPreview.encoding}{previewData.textPreview.truncated ? ` · ${t("preview.textTruncated")}` : ""}</span>
             </header>
@@ -647,7 +682,7 @@ const PreviewWindowApp = () => {
                 <div>
                   <h1>{previewData.epubPreview.title}</h1>
                   {previewData.epubPreview.creator && <p>{previewData.epubPreview.creator}</p>}
-                  {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
+                  {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
                 </div>
               </header>
               {previewData.epubPreview.chapters.map((chapter, index) => (
@@ -666,7 +701,7 @@ const PreviewWindowApp = () => {
                 <div>
                   <h1>{previewData.mobiPreview.title}</h1>
                   {previewData.mobiPreview.creator && <p>{previewData.mobiPreview.creator}</p>}
-                  {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
+                  {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="summary" />}
                 </div>
               </header>
               {previewData.mobiPreview.chapters.map((chapter, index) => (
@@ -691,7 +726,7 @@ const PreviewWindowApp = () => {
                 preload="metadata"
                 onError={() => setShowInfoFallback(true)}
               />
-              {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
+              {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
             </section>
           ) : (
             <div className="preview-visual-with-metadata">
@@ -715,13 +750,13 @@ const PreviewWindowApp = () => {
                 }}
                 onError={() => setShowInfoFallback(true)}
                 onClick={(event) => {
-                  if (!previewData.embeddedMetadata) return;
+                  if (isStableUiPreview || !previewData.embeddedMetadata) return;
                   const bounds = event.currentTarget.getBoundingClientRect();
                   if (event.clientY >= bounds.bottom - videoControlAreaHeight) return;
                   setEmbeddedMetadataExpanded((current) => !current);
                 }}
               />
-              {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="sheet" expanded={embeddedMetadataExpanded} />}
+              {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="sheet" expanded={embeddedMetadataExpanded} />}
             </div>
           )
         ) : previewData.info && (
@@ -752,10 +787,10 @@ const PreviewWindowApp = () => {
                 <dt>{t("skim.previewSkippedCount")}</dt><dd>{folderStats.skippedCount}</dd>
               </>}
             </dl>
-            {previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
+            {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
           </section>
         )}
-      </div>
+          </div>
       {(
         (previewData.provider === "text" && previewData.textPreview)
         || (previewData.provider === "pdf" && previewData.pdfPreview)
@@ -777,8 +812,10 @@ const PreviewWindowApp = () => {
             orientation="vertical"
           />
         </div>
-      )}
-      <WindowControlRail
+          )}
+        </div>
+      </div>
+      {!isStableUiPreview && <WindowControlRail
         actions={previewControlActions}
         showSkim={showSettings}
         skimActive={false}
@@ -789,7 +826,7 @@ const PreviewWindowApp = () => {
         showSettings={showSettings}
         settingsLabel={t("window.openSettings")}
         onSettings={() => { void window.cap7ce?.preview.openSettings(); }}
-      />
+      />}
       {contextMenu && (
         <ImageContextMenu
           key={`preview:${previewData.filePath}:${contextMenu.x}:${contextMenu.y}`}

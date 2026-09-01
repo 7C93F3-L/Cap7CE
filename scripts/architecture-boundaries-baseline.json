@@ -46,6 +46,10 @@
     "src/renderer/skim/SkimView.tsx": 809,
     "src/renderer/skim/SkimView.css": 351,
     "src/renderer/preview/PreviewWindow.css": 668,
+    "src/renderer/preview/PreviewInformationSidebar.tsx": 124,
+    "src/renderer/preview/usePreviewSidebarLayout.ts": 76,
+    "src/renderer/preview/previewSidebarData.ts": 12,
+    "src/renderer/preview/StablePreviewShell.css": 252,
     "src/renderer/dialogs/KeywordEditorCard.css": 108,
     "src/renderer/dialogs/ConfirmationPanels.css": 178,
     "src/renderer/ColorPickerPopover.css": 87,
@@ -134,6 +138,9 @@
           { "path": "src/renderer/results/ResultsView.tsx", "contains": "const openPreviewAtIndex" },
           { "path": "src/renderer/skim/SkimView.tsx", "contains": "const openPreview" },
           { "path": "src/renderer/PreviewWindowApp.tsx", "contains": "const PreviewWindowApp" },
+          { "path": "src/renderer/preview/PreviewInformationSidebar.tsx", "contains": "const PreviewInformationSidebar" },
+          { "path": "src/renderer/preview/usePreviewSidebarLayout.ts", "contains": "export const usePreviewSidebarLayout" },
+          { "path": "src/renderer/preview/previewSidebarData.ts", "contains": "export const buildPreviewSidebarData" },
           { "path": "electron/main.ts", "contains": "ipcMain.handle(\"preview:open\"" }
         ]
       },

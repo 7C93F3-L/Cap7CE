@@ -118,6 +118,11 @@ export interface PreviewWindowData {
   mobiPreview?: MobiPreviewData;
   mobiFallbackReason?: MobiPreviewFallbackReason;
   embeddedMetadata?: PreviewEmbeddedMetadata;
+  imageWidth?: number;
+  imageHeight?: number;
+  manualKeywords?: string[];
+  userDescription?: string;
+  searchEvidence?: Pick<SearchResultEvidence, "terms" | "classification"> | null;
   skimActive: boolean;
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;

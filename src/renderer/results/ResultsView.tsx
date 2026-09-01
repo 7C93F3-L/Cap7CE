@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type * as React from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { AppearanceColors, ImageIndexItem, PreviewWindowData } from "../../shared/types";
+import { buildPreviewSidebarData } from "../preview/previewSidebarData";
 import { resolveFileContentPreview } from "../contentPreview";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { createSpaceHoldController, createSpaceReleaseGuard, isPlainSpaceShortcut } from "../keywordEditorInteraction";
@@ -114,7 +114,7 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
           thumbnailUrl: "",
           provider: contentPreview.provider,
           info,
-          textPreview: contentPreview.textPreview,
+          textPreview: contentPreview.textPreview, ...buildPreviewSidebarData(image),
           skimActive: false,
           theme: contextMenuTheme,
           language: getActiveLanguage(),
@@ -134,7 +134,7 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
         previewUrl: image.canShellPreview
           ? toSearchShellPreviewUrl(image.filePath)
           : toFullImageUrl(image.filePath),
-        thumbnailUrl: image.thumbnailUrl,
+        thumbnailUrl: image.thumbnailUrl, ...buildPreviewSidebarData(image),
         skimActive: false,
         theme: contextMenuTheme,
         language: getActiveLanguage(),
