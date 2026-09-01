@@ -1,10 +1,10 @@
 # Cap7CE 软件架构
 
 > 当前版本：0.9.9
-> 更新日期：2026-08-30
+> 更新日期：2026-09-02
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
-0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`；U3 正式搜索和结果复用边界记录在 `docs/STABLE_UI_SEARCH_RESULTS.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
+0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`；U3 正式搜索和结果复用边界记录在 `docs/STABLE_UI_SEARCH_RESULTS.md`；U4 左侧栏与目录动作边界记录在 `docs/STABLE_UI_SIDEBAR.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
 
 ## 1. 项目定位
 
@@ -209,6 +209,8 @@ U1 的新版 Renderer 根节点只在 Vite 开发环境且主进程显式设置�
 U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 单独持有新版响应式网格、可拖动分隔线和断点，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、可在 280–480px 内调整，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
 
 U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过仅开发入口注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；普通入口继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，不扩大旧全局样式。
+
+U4 由 `stableUiRendererTypes.ts` 和 `stableSidebarTypes.ts` 定义显式展示适配契约，`App.tsx` 继续持有搜索、AI、目录状态和正式事务，只向 `StableShellSidebar.tsx` 传递受控值与动作。侧栏的排序、搜索范围、目录筛选、系统选择添加、拖入确认、冲突替换、行内重命名和删除均复用既有搜索与目录链；新版模块不直接读取 preload，也不修改目录服务、SQLite 或 AI 任务逻辑。`StableSidebar.css` 独立持有控制行、目录滚动、选中 / 悬停胶囊、40px 紧凑栏和底部动作布局；宽度仍是 `StableMainShell.tsx` 的会话状态。Skim 底部动作在 U5 前只切换占位插槽，Settings 动作在 U6 独立宿主完成前暂时进入现有设置页。该轮抽取共用目录确认层后把 `App.tsx` 自动上限从 3334 行降到 3330 行，并为四个新增侧栏职责模块建立独立体量守门。
 
 此前完成的分阶段架构整理继续以体量与依赖守门约束运行时所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。U0 进一步把 `electron/main.ts` 上限收紧到当前 3771 行，并为搜索、目录、Skim、Settings、Preview、文件菜单、拖放、快捷键、窗口固定与隐藏恢复建立正式源码锚点；所有权移动时必须同步迁移映射，不能让旧链悄然消失后在新版组件中复制。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单，守门也会拒绝已经不再对应真实直连 channel 的过期豁免。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
 

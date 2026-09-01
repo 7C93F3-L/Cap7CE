@@ -2893,12 +2893,20 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     ? ` cap-shell-transition cap-transition-${shellTransition.from}-to-${shellTransition.to}`
     : "";
   const hasLastNormalBounds = lastNormalBounds !== null;
-  const acceptsDirectoryDrop = (
-    shellState === "micro"
-    || shellState === "mini"
-    || shellState === "normal"
-    || shellState === "settings"
-  ) && dialog === null && !isAddingDirectory;
+  const acceptsDirectoryDrop = (stableUi || shellState === "micro" || shellState === "mini" || shellState === "normal" || shellState === "settings") && dialog === null && !isAddingDirectory;
+  const startDroppedDirectoryAdd = (dataTransfer: DataTransfer) => {
+    if (internalNativeDragRef.current) {
+      internalNativeDragRef.current = false;
+      return;
+    }
+    if (!acceptsDirectoryDrop) return;
+    const nextDroppedDirectories = readDroppedDirectories(dataTransfer);
+    if (nextDroppedDirectories.length === 0) return;
+    setContextMenu(null);
+    setDroppedDirectories(nextDroppedDirectories);
+    directoryAddFeedbackTargetRef.current = stableUi ? "search" : view === "skim" ? "skim" : "search";
+    setDialog("addDroppedDirectories");
+  };
 
   const resultStatusNode = <ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />;
   const searchCapsuleNode = (
@@ -2990,8 +2998,24 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const keywordEditorLayer = dialog === "editKeywords" && keywordEditSession ? (
     <KeywordEditorCard session={keywordEditSession} keywords={editKeywords} error={editMetadataError} isSaving={isSavingMetadata} isClosing={isKeywordEditorClosing} menuStyle={contextMenuStyle} theme={effectiveTheme} onKeywordsChange={setEditKeywords} onSave={saveEditedKeywords} onCancel={cancelEditKeywords} onExitComplete={finishKeywordEditorClose} />
   ) : null;
+  const droppedDirectoryPanel = dialog === "addDroppedDirectories" && droppedDirectories.length > 0 ? (
+    <AddDroppedDirectoriesPanel directories={droppedDirectories} isAdding={isAddingDirectory} onConfirm={() => void confirmDroppedDirectoryAdd()} onCancel={cancelDroppedDirectoryAdd} />
+  ) : null;
+  const directoryDialogLayer = <>
+    {droppedDirectoryPanel}
+    {(stableUi || activeView === "settings") && dialog === "deleteDirectory" && <DeleteDirectoryPanel onConfirm={confirmDeleteDirectory} onCancel={() => { setDirectoryToDelete(null); setDialog(null); }} />}
+    {dialog === "replaceDirectories" && pendingDirectoryAddResult && (
+      <ReplaceDirectoriesPanel conflictCount={pendingDirectoryAddResult.conflicts.length} replacedCount={pendingDirectoryAddResult.conflicts.reduce((count, conflict) => count + conflict.existingDirectories.length, 0)} isAdding={isAddingDirectory} onConfirm={confirmDirectoryReplacement} onCancel={() => {
+        if (isAddingDirectory) return;
+        setPendingDirectoryAddResult(null); setDialog(null);
+        if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
+        else showQuickCommandNotice(t("command.cancelled"));
+        directoryAddFeedbackTargetRef.current = "search";
+      }} />
+    )}
+  </>;
 
-  if (StableUiRenderer) {
+  if (StableUiRenderer && view !== "settings") {
     return (
       <StableUiRenderer
         theme={effectiveTheme}
@@ -3004,11 +3028,25 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         inputFeedbackIsGuide={operationHintVisible}
         resultStatus={resultStatusNode}
         resultContent={deleteFilesPanel ?? <ResultsView {...createResultsViewProps(true)} />}
-        overlayContent={<>{contextMenuLayer}{keywordEditorLayer}</>}
+        overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{directoryDialogLayer}</>}
+        sidebar={{
+          search, directories: directoryOptions,
+          skimDisplayMode: skimDisplay.searchMode, aiSearchEnabled: aiSearchBeta.enabled, aiSearchBusy: aiSearchBeta.busy,
+          isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId,
+          onAiSearchToggle: toggleAiSearchBeta, onSearchOptionsChange: updateResultsSearchOptions,
+          onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode }),
+          onAddDirectory: () => void addDirectory(),
+          onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
+          onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),
+          onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
+          onOpenSettings: openSettings
+        }}
+        directoryDropEnabled={acceptsDirectoryDrop}
         onTogglePinned={() => { void toggleAlwaysOnTop("stable-ui"); }}
         onSearchChange={(nextSearch) => { clearQuickCommandNotice(); updateResultsSearch(nextSearch); }}
         onSearchOptionsChange={updateResultsSearchOptions}
         onSearch={() => submitSearch(search)}
+        onDirectoryDrop={startDroppedDirectoryAdd}
         onDismissOverlay={closeContextMenu}
       />
     );
@@ -3024,17 +3062,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       }}
       onDropCapture={(event: ReactDragEvent<HTMLDivElement>) => {
         event.preventDefault();
-        if (internalNativeDragRef.current) {
-          internalNativeDragRef.current = false;
-          return;
-        }
-        if (!acceptsDirectoryDrop) return;
-        const nextDroppedDirectories = readDroppedDirectories(event.dataTransfer);
-        if (nextDroppedDirectories.length === 0) return;
-        setContextMenu(null);
-        setDroppedDirectories(nextDroppedDirectories);
-        directoryAddFeedbackTargetRef.current = view === "skim" ? "skim" : "search";
-        setDialog("addDroppedDirectories");
+        startDroppedDirectoryAdd(event.dataTransfer);
       }}
       onClick={() => {
         setContextMenu(null);
@@ -3082,14 +3110,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       {isExpandedShell && (
         <>
           <div className="cap-shell-content">
-            {dialog === "addDroppedDirectories" && droppedDirectories.length > 0 && (
-              <AddDroppedDirectoriesPanel
-                directories={droppedDirectories}
-                isAdding={isAddingDirectory}
-                onConfirm={() => void confirmDroppedDirectoryAdd()}
-                onCancel={cancelDroppedDirectoryAdd}
-              />
-            )}
+            {directoryDialogLayer}
             {activeView === "home" && (
               <HomeView
                 search={search}
@@ -3146,31 +3167,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
                 onFeedback={showSkimFeedback}
                 onNativeDragStateChange={(active) => {
                   internalNativeDragRef.current = active;
-                }}
-              />
-            )}
-            {activeView === "settings" && dialog === "deleteDirectory" && (
-              <DeleteDirectoryPanel
-                onConfirm={confirmDeleteDirectory}
-                onCancel={() => setDialog(null)}
-              />
-            )}
-            {dialog === "replaceDirectories" && pendingDirectoryAddResult && (
-              <ReplaceDirectoriesPanel
-                conflictCount={pendingDirectoryAddResult.conflicts.length}
-                replacedCount={pendingDirectoryAddResult.conflicts.reduce(
-                  (count, conflict) => count + conflict.existingDirectories.length,
-                  0
-                )}
-                isAdding={isAddingDirectory}
-                onConfirm={confirmDirectoryReplacement}
-                onCancel={() => {
-                  if (isAddingDirectory) return;
-                  setPendingDirectoryAddResult(null);
-                  setDialog(null);
-                  if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
-                  else showQuickCommandNotice(t("command.cancelled"));
-                  directoryAddFeedbackTargetRef.current = "search";
                 }}
               />
             )}

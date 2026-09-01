@@ -16,9 +16,10 @@ const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
 const mainShellSource = read(shellFiles[0]);
 const sidebarSource = read(shellFiles[2]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
+const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\}\s*\/>/);
+assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\}\s*\/>/);
 assert.match(titlebarSource, /\{searchInput\}/);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
@@ -37,7 +38,6 @@ for (const marker of [
 for (const marker of [
   "--cap-stable-sidebar-width: 160px",
   "--cap-stable-skim-width: 360px",
-  "@container (max-width: 95px)",
   "@media (max-width: 920px) and (min-height: 360px)",
   "@media (max-width: 560px)",
   "@media (max-height: 359.98px)",
@@ -46,6 +46,7 @@ for (const marker of [
 ]) {
   assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);
 }
+assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sidebar is missing its compact container layout.");
 
 assert.doesNotMatch(combinedShellSource, /window\.cap7ce|setShellState|shellState|\bmicro\b|\bmini\b|\bnormal\b/);
 assert.doesNotMatch(combinedShellSource, /stable-ui-canvas|prototypes[\\/]|C:\\Users\\|示例目录|Example/);

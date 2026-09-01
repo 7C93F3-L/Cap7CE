@@ -4,10 +4,11 @@ import StableTitlebar from "./StableTitlebar";
 import type { StableUiRendererProps } from "./stableUiRendererTypes";
 import "./StableUiFoundation.css";
 import "./StableSearchResults.css";
-
-const StableUiRoot = ({ theme, themeStyle, pinned, pinLabel, search, searchInputRef, inputFeedback, inputFeedbackIsGuide, resultStatus, resultContent, overlayContent, onTogglePinned, onSearchChange, onSearchOptionsChange, onSearch, onDismissOverlay }: StableUiRendererProps) => {
+const StableUiRoot = ({ theme, themeStyle, pinned, pinLabel, search, searchInputRef, inputFeedback, inputFeedbackIsGuide, resultStatus, resultContent, overlayContent, sidebar, directoryDropEnabled, onTogglePinned, onSearchChange, onSearchOptionsChange, onSearch, onDirectoryDrop, onDismissOverlay }: StableUiRendererProps) => {
   return (
-    <div className={`app theme-${theme} cap-stable-ui`} style={themeStyle} onClick={onDismissOverlay}>
+    <div className={`app theme-${theme} cap-stable-ui`} style={themeStyle} onClick={onDismissOverlay}
+      onDragOverCapture={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = directoryDropEnabled ? "copy" : "none"; }}
+      onDropCapture={(event) => { event.preventDefault(); if (directoryDropEnabled) onDirectoryDrop(event.dataTransfer); }}>
       <StableTitlebar
         pinned={pinned}
         pinLabel={pinLabel}
@@ -15,10 +16,9 @@ const StableUiRoot = ({ theme, themeStyle, pinned, pinLabel, search, searchInput
         resultStatus={resultStatus}
         onTogglePinned={onTogglePinned}
       />
-      <StableMainShell resultContent={resultContent} />
+      <StableMainShell resultContent={resultContent} sidebar={sidebar} />
       {overlayContent}
     </div>
   );
 };
-
 export default StableUiRoot;

@@ -1,6 +1,6 @@
 {
   "maxLines": {
-    "src/renderer/App.tsx": 3334,
+    "src/renderer/App.tsx": 3330,
     "src/renderer/main.tsx": 73,
     "src/renderer/CompatibilityCapsuleWindowApp.tsx": 66,
     "src/renderer/CompatibilityCapsuleWindowApp.css": 4,
@@ -15,9 +15,13 @@
     "src/renderer/stable-ui/StableUiFoundation.css": 156,
     "src/renderer/stable-ui/StableMainShell.tsx": 42,
     "src/renderer/stable-ui/StablePlaceholderGrid.tsx": 15,
-    "src/renderer/stable-ui/StableShellSidebar.tsx": 41,
+    "src/renderer/stable-ui/StableShellSidebar.tsx": 102,
+    "src/renderer/stable-ui/StableSidebar.css": 76,
+    "src/renderer/stable-ui/StableSidebarFlyout.tsx": 24,
+    "src/renderer/stable-ui/StableSidebarIcons.tsx": 19,
+    "src/renderer/stable-ui/stableSidebarTypes.ts": 23,
     "src/renderer/stable-ui/StableSkimSlot.tsx": 16,
-    "src/renderer/stable-ui/StableMainShell.css": 272,
+    "src/renderer/stable-ui/StableMainShell.css": 146,
     "src/renderer/stable-ui/StableSearchInput.tsx": 46,
     "src/renderer/stable-ui/stableUiRendererTypes.ts": 24,
     "src/renderer/stable-ui/StableSearchResults.css": 51,

@@ -1,11 +1,11 @@
 import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import StableShellSidebar from "./StableShellSidebar";
 import StableSkimSlot from "./StableSkimSlot";
+import type { StableSidebarProps } from "./stableSidebarTypes";
 import "./StableMainShell.css";
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(Math.max(value, minimum), maximum);
-
-const StableMainShell = ({ resultContent }: { resultContent: ReactNode }) => {
+const StableMainShell = ({ resultContent, sidebar }: { resultContent: ReactNode; sidebar: StableSidebarProps }) => {
   const [sidebarWidth, setSidebarWidth] = useState(160);
   const [skimWidth, setSkimWidth] = useState(360);
   const [skimOpen, setSkimOpen] = useState(true);
@@ -25,7 +25,7 @@ const StableMainShell = ({ resultContent }: { resultContent: ReactNode }) => {
 
   return (
     <section className={`cap-stable-main-shell${skimOpen ? " is-skim-open" : ""}`} style={shellStyle}>
-      <StableShellSidebar skimOpen={skimOpen} onToggleSkim={() => setSkimOpen((open) => !open)} />
+      <StableShellSidebar {...sidebar} skimOpen={skimOpen} onToggleSkim={() => setSkimOpen((open) => !open)} />
       <button className="cap-stable-resizer cap-stable-sidebar-resizer" type="button" aria-label="调整侧栏宽度"
         onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={resizeSidebar}
         onDoubleClick={() => setSidebarWidth(160)} />
