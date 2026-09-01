@@ -49,7 +49,9 @@
     "src/renderer/preview/PreviewInformationSidebar.tsx": 124,
     "src/renderer/preview/usePreviewSidebarLayout.ts": 76,
     "src/renderer/preview/previewSidebarData.ts": 12,
-    "src/renderer/preview/StablePreviewShell.css": 252,
+    "src/renderer/preview/previewNavigationTarget.ts": 10,
+    "src/renderer/preview/usePreviewImageTransform.ts": 116,
+    "src/renderer/preview/StablePreviewShell.css": 270,
     "src/renderer/dialogs/KeywordEditorCard.css": 108,
     "src/renderer/dialogs/ConfirmationPanels.css": 178,
     "src/renderer/ColorPickerPopover.css": 87,
@@ -141,6 +143,8 @@
           { "path": "src/renderer/preview/PreviewInformationSidebar.tsx", "contains": "const PreviewInformationSidebar" },
           { "path": "src/renderer/preview/usePreviewSidebarLayout.ts", "contains": "export const usePreviewSidebarLayout" },
           { "path": "src/renderer/preview/previewSidebarData.ts", "contains": "export const buildPreviewSidebarData" },
+          { "path": "src/renderer/preview/previewNavigationTarget.ts", "contains": "export const isPreviewNavigationSuppressedTarget" },
+          { "path": "src/renderer/preview/usePreviewImageTransform.ts", "contains": "export const usePreviewImageTransform" },
           { "path": "electron/main.ts", "contains": "ipcMain.handle(\"preview:open\"" }
         ]
       },

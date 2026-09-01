@@ -11,13 +11,15 @@ const layoutSource = read("src/renderer/preview/usePreviewSidebarLayout.ts");
 const shellStyles = read("src/renderer/preview/StablePreviewShell.css");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const sidebarDataSource = read("src/renderer/preview/previewSidebarData.ts");
+const navigationTargetSource = read("src/renderer/preview/previewNavigationTarget.ts");
 
 assert.match(mainSource, /const previewUrl = applyCurrentStableUiDevelopmentQuery\(new URL\(devServerUrl\), windowPresentationRuntime\.mode\);[\s\S]*?previewUrl\.searchParams\.set\("window", "preview"\)/u);
 assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
 assert.match(previewSource, /const isStableUiPreview = import\.meta\.env\.DEV[\s\S]*?URLSearchParams\(window\.location\.search\)\.get\("ui"\) === "stable"/u);
 assert.match(previewSource, /isStableUiPreview && <PreviewInformationSidebar/u);
 assert.match(previewSource, /!isStableUiPreview && <WindowControlRail/u);
-assert.match(previewSource, /data-preview-navigation-suppressed/u);
+assert.match(previewSource, /isPreviewNavigationSuppressedTarget/u);
+assert.match(navigationTargetSource, /data-preview-navigation-suppressed/u);
 assert.match(previewSource, /!isStableUiPreview && previewData\.embeddedMetadata[\s\S]*?variant="sheet"/u);
 
 assert.match(resultsSource, /buildPreviewSidebarData\(image\)/u);

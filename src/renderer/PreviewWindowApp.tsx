@@ -11,6 +11,8 @@ import FontPreviewPanel from "./FontPreviewPanel";
 import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
 import PreviewInformationSidebar from "./preview/PreviewInformationSidebar";
 import { usePreviewSidebarLayout } from "./preview/usePreviewSidebarLayout";
+import { getPreviewWheelNavigationDirection, isPreviewNavigationSuppressedTarget } from "./preview/previewNavigationTarget";
+import { usePreviewImageTransform } from "./preview/usePreviewImageTransform";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import { buildFileContextMenuGroups, getFileContextShortcutAction } from "./fileContextActions";
 import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
@@ -108,6 +110,7 @@ const PreviewWindowApp = () => {
   const previewSidebarLayout = usePreviewSidebarLayout();
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const imageTransform = usePreviewImageTransform(previewData?.sessionId ?? "", imageRef, isStableUiPreview);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const textScrollRef = useRef<HTMLElement | null>(null);
   const pdfScrollRef = useRef<HTMLDivElement>(null);
@@ -320,6 +323,7 @@ const PreviewWindowApp = () => {
         closePreview();
         return;
       }
+      if (isStableUiPreview && isPreviewNavigationSuppressedTarget(event.target)) return;
       if (contextMenu) return;
       if (isPlainSpaceShortcut(event)) {
         event.preventDefault();
@@ -474,11 +478,15 @@ const PreviewWindowApp = () => {
       onClick={() => setContextMenu(null)}
       onContextMenu={(event) => {
         event.preventDefault();
-        if (isStableUiPreview && (event.target as Element).closest?.("[data-preview-navigation-suppressed='true']")) return;
+        if (isStableUiPreview && isPreviewNavigationSuppressedTarget(event.target)) return;
         setContextMenu({ x: event.clientX, y: event.clientY });
       }}
       onWheelCapture={(event) => {
-        if (isStableUiPreview && (event.target as Element).closest?.("[data-preview-navigation-suppressed='true']")) {
+        if (isStableUiPreview && isImageProvider && (event.target as Element).closest?.("[data-preview-image-canvas='true']") && imageTransform.handleWheel(event)) {
+          setContextMenu(null);
+          return;
+        }
+        if (isStableUiPreview && (isPreviewNavigationSuppressedTarget(event.target) || (event.target as Element).closest?.("[data-preview-provider-interactive='true']"))) {
           setContextMenu(null);
           return;
         }
@@ -515,7 +523,8 @@ const PreviewWindowApp = () => {
           return;
         }
         wheelThrottleRef.current = now;
-        window.cap7ce?.preview.navigate(event.deltaY > 0 ? 1 : -1);
+        const direction = getPreviewWheelNavigationDirection(event.deltaX, event.deltaY);
+        if (direction) window.cap7ce?.preview.navigate(direction);
       }}
     >
       {isCompatibilityWindow && <CompatibilityTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
@@ -552,7 +561,16 @@ const PreviewWindowApp = () => {
             <span>{t("preview.loading")}</span>
           </div>
         )}
-        {isImageProvider ? <div className="preview-visual-with-metadata">
+        {isImageProvider ? <div
+          ref={imageTransform.canvasRef}
+          className={`preview-visual-with-metadata preview-image-transform-canvas${imageTransform.pannable ? " is-pannable" : ""}${imageTransform.dragging ? " is-dragging" : ""}`}
+          data-preview-image-canvas="true"
+          onPointerDown={imageTransform.handlePointerDown}
+          onPointerMove={imageTransform.handlePointerMove}
+          onPointerUp={imageTransform.finishPointer}
+          onPointerCancel={imageTransform.finishPointer}
+          onDoubleClick={isStableUiPreview ? imageTransform.reset : undefined}
+        >
           <img
           key={`${previewData.sessionId}:${displaySrc}`}
           ref={imageRef}
@@ -560,6 +578,7 @@ const PreviewWindowApp = () => {
           src={displaySrc}
           alt={previewData.fileName}
           draggable={false}
+          style={isStableUiPreview ? imageTransform.imageStyle : undefined}
           onLoad={(event) => {
             if (previewLoadingIndicatorTimerRef.current !== null) {
               window.clearTimeout(previewLoadingIndicatorTimerRef.current);
@@ -567,6 +586,7 @@ const PreviewWindowApp = () => {
             }
             setShowPreviewLoadingIndicator(false);
             setIsPreviewLoading(false);
+            imageTransform.reconcile();
             window.cap7ce?.preview.contentSize({
               sessionId: previewData.sessionId,
               filePath: previewData.filePath,
@@ -714,7 +734,7 @@ const PreviewWindowApp = () => {
           </section>
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
-            <section className="preview-media-panel preview-audio-panel">
+            <section className="preview-media-panel preview-audio-panel" data-preview-provider-interactive="true">
               <strong>{previewData.fileName}</strong>
               <audio
                 key={previewData.sessionId}
@@ -729,7 +749,7 @@ const PreviewWindowApp = () => {
               {!isStableUiPreview && previewData.embeddedMetadata && <PreviewEmbeddedMetadata key={previewData.sessionId} data={previewData.embeddedMetadata} variant="details" />}
             </section>
           ) : (
-            <div className="preview-visual-with-metadata">
+            <div className="preview-visual-with-metadata" data-preview-provider-interactive="true">
               <video
                 key={previewData.sessionId}
                 ref={(element) => { mediaRef.current = element; }}

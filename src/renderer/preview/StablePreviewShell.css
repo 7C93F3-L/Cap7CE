@@ -249,3 +249,21 @@
   cursor: ew-resize !important;
   user-select: none !important;
 }
+
+.preview-stable-shell .preview-image-transform-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.preview-stable-shell .preview-image-transform-canvas.is-pannable {
+  cursor: grab;
+}
+
+.preview-stable-shell .preview-image-transform-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.preview-stable-shell .preview-image-transform-canvas.is-dragging > .preview-window-image {
+  transition: none;
+}
