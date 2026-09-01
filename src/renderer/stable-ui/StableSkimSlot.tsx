@@ -1,15 +1,19 @@
-import StablePlaceholderGrid from "./StablePlaceholderGrid";
+import type { ReactNode } from "react";
+import { t } from "../../../electron/localization";
+import StableSkimToolbar from "./StableSkimToolbar";
+import type { StableSkimProps } from "./stableSkimTypes";
+import "./StableSkimPanel.css";
 
-const StableSkimSlot = () => (
-  <aside className="cap-stable-skim-slot" aria-label="Skim 布局占位区">
-    <div className="cap-stable-skim-toolbar" aria-hidden="true">
-      <span className="cap-stable-skim-back">‹</span>
-      <span className="cap-stable-skim-address">Skim</span>
-      <span className="cap-stable-skim-action" />
-      <span className="cap-stable-skim-action" />
-    </div>
-    <StablePlaceholderGrid kind="skim" count={16} />
-  </aside>
-);
+type StableSkimSlotProps = Omit<StableSkimProps, "renderContent" | "onOpen"> & { content: ReactNode };
+
+const StableSkimSlot = ({ content, isLoading, feedback, entryCount, ...toolbarProps }: StableSkimSlotProps) => {
+  const status = feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entryCount }));
+
+  return <aside className="cap-stable-skim-slot" aria-label={t("skim.name")}>
+    <StableSkimToolbar {...toolbarProps} />
+    <div className="cap-stable-skim-status" role="status">{status}</div>
+    <div className="cap-stable-skim-content">{content}</div>
+  </aside>;
+};
 
 export default StableSkimSlot;

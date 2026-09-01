@@ -6,20 +6,22 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const shellFiles = [
   "src/renderer/stable-ui/StableMainShell.tsx",
-  "src/renderer/stable-ui/StablePlaceholderGrid.tsx",
   "src/renderer/stable-ui/StableShellSidebar.tsx",
-  "src/renderer/stable-ui/StableSkimSlot.tsx"
+  "src/renderer/stable-ui/StableSkimSlot.tsx",
+  "src/renderer/stable-ui/StableSkimToolbar.tsx",
+  "src/renderer/stable-ui/useStableShellLayout.ts"
 ];
 
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
 const mainShellSource = read(shellFiles[0]);
-const sidebarSource = read(shellFiles[2]);
+const sidebarSource = read(shellFiles[1]);
+const layoutSource = read(shellFiles[4]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\}\s*\/>/);
+assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\}\s*\/>/);
 assert.match(titlebarSource, /\{searchInput\}/);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
@@ -29,10 +31,10 @@ for (const marker of [
   "useState(360)",
   "clamp(event.clientX, 40, 320)",
   "clamp(window.innerWidth - event.clientX, 280, 480)",
-  "onDoubleClick={() => setSidebarWidth(160)}",
-  "onDoubleClick={() => setSkimWidth(360)}"
+  "resetSidebarWidth: () => setSidebarWidth(160)",
+  "resetSkimWidth: () => setSkimWidth(360)"
 ]) {
-  assert.ok(mainShellSource.includes(marker), `Stable UI shell is missing ${marker}.`);
+  assert.ok(layoutSource.includes(marker), `Stable UI shell layout is missing ${marker}.`);
 }
 
 for (const marker of [

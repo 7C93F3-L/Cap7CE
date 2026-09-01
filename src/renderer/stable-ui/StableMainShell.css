@@ -49,41 +49,6 @@
   background: var(--cap-stable-surface-soft);
 }
 
-.cap-stable-skim-slot {
-  display: none;
-  grid-template-rows: 40px minmax(0, 1fr);
-}
-.cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { display: grid; }
-.cap-stable-skim-toolbar {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 32px 32px;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-}
-.cap-stable-skim-back,
-.cap-stable-skim-action { display: grid; place-items: center; width: 32px; height: 32px; }
-.cap-stable-skim-address {
-  min-width: 0;
-  height: 32px;
-  box-sizing: border-box;
-  padding: 6px 12px;
-  border-radius: var(--cap-stable-radius-pill);
-  color: var(--cap-stable-text-muted);
-  background: var(--cap-stable-surface-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cap-stable-skim-action::before {
-  content: "";
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid currentColor;
-  border-radius: 4px;
-  opacity: 0.42;
-}
-
 .cap-stable-resizer {
   position: fixed;
   z-index: 8;
@@ -140,6 +105,4 @@
     overflow-y: hidden;
   }
   .cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }
-  .cap-stable-skim-slot { grid-template-rows: minmax(0, 1fr); }
-  .cap-stable-skim-toolbar { display: none; }
 }

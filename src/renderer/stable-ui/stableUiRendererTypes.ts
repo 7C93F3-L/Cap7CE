@@ -1,6 +1,7 @@
 import type { ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import type { ResolvedThemeMode, SearchState } from "../../shared/types";
 import type { StableSidebarProps } from "./stableSidebarTypes";
+import type { StableSkimProps } from "./stableSkimTypes";
 
 export interface StableUiRendererProps {
   theme: ResolvedThemeMode; themeStyle: CSSProperties;
@@ -11,6 +12,7 @@ export interface StableUiRendererProps {
   inputFeedbackIsGuide: boolean;
   resultStatus: ReactNode; resultContent: ReactNode; overlayContent: ReactNode;
   sidebar: StableSidebarProps;
+  skim: StableSkimProps;
   directoryDropEnabled: boolean;
   onTogglePinned: () => void;
   onSearchChange: (search: SearchState) => void;

@@ -51,7 +51,7 @@ import {
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
 import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results/ResultsContextMenuLayer";
-import { SkimView } from "./skim/SkimView";
+import { SkimView, type SkimViewProps } from "./skim/SkimView";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
@@ -1853,11 +1853,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return true;
     } catch (error) {
       const message = formatDisplayMessage(error instanceof Error ? error.message : t("skim.sidebar.updateFailed"));
-      if (view === "skim") showSkimFeedback(message);
+      if (view === "skim" || stableUi) showSkimFeedback(message);
       else showQuickCommandNotice(message);
       return false;
     }
-  }, [showQuickCommandNotice, showSkimFeedback, view]);
+  }, [showQuickCommandNotice, showSkimFeedback, stableUi, view]);
 
   const addSkimSidebarFolders = useCallback(async (folderPaths: string[]) => {
     const existingKeys = new Set(skimSidebarFolders.map(normalizeWindowsPathKey));
@@ -1873,10 +1873,10 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     const nextFolders = skimSidebarFolders.filter((candidate) => !removedKeys.has(normalizeWindowsPathKey(candidate)));
     if (nextFolders.length === skimSidebarFolders.length) return;
     if (await saveSkimSidebarFolders(nextFolders)) {
-      if (view === "skim") showSkimFeedback(t("skim.sidebar.removedFeedback"));
+      if (view === "skim" || stableUi) showSkimFeedback(t("skim.sidebar.removedFeedback"));
       else showQuickCommandNotice(t("skim.sidebar.removedFeedback"));
     }
-  }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, view]);
+  }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, stableUi, view]);
 
   const toggleSkimSystemLocations = useCallback(async () => {
     const nextCollapsed = !skimSystemLocationsCollapsed;
@@ -2400,9 +2400,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     closeSkimLocationPicker();
   }, [closeSkim, closeSkimLocationPicker, view]);
 
-  const navigateSkimBack = useCallback(() => {
+  const navigateSkimParent = useCallback((closeAtRoot: boolean) => {
     if (skimCurrentPath === null) {
-      closeSkim();
+      if (closeAtRoot) closeSkim();
       return;
     }
     const parentBreadcrumb = skimBreadcrumbs.length > 1
@@ -2413,6 +2413,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       if (loaded) skimForwardPathsRef.current.push(currentPath);
     });
   }, [closeSkim, loadSkimLocation, skimBreadcrumbs, skimCurrentPath]);
+  const navigateSkimBack = useCallback(() => navigateSkimParent(true), [navigateSkimParent]);
 
   const navigateSkimForward = useCallback(() => {
     const nextPath = skimForwardPathsRef.current[skimForwardPathsRef.current.length - 1];
@@ -2970,6 +2971,24 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onOpenSkim: stableUi ? () => undefined : openSkim,
     onAiSearchSectionToggle: () => aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults)
   });
+  const createSkimViewProps = (responsiveLayout: boolean, active = true): SkimViewProps => ({
+    search: { ...search, ...skimSortPreference }, visualSessionId: skimVisualSessionId,
+    entries: sortedSkimEntries, currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs,
+    isLoading: isSkimLoading, feedback: skimFeedback, theme: effectiveTheme, appearanceColors,
+    shellState: responsiveLayout ? "normal" : shellState, responsiveLayout, embedded: responsiveLayout, active,
+    isAddingDirectory, inputFeedback: searchInputFeedback, inputFeedbackIsGuide: operationHintVisible,
+    labelVisibility: searchCapsuleLabelVisibility, skimDisplayMode: skimDisplay.mode, searchInputRef,
+    onSearchChange: (nextSearch) => setSearch({ ...nextSearch, sortField: search.sortField, sortDirection: search.sortDirection }),
+    onSearchOptionsChange: updateSkimSort, onLabelVisibilityChange: updateSearchCapsuleLabelVisibility,
+    onSkimDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
+    onSearch: () => submitSearch(search), onOpenRoot: () => openSkimLocation(null), onOpenBreadcrumb: openSkimLocation,
+    onOpenEntry: (entry) => { if (entry.kind === "drive" || entry.kind === "folder") openSkimLocation(entry.path); },
+    onAddEntries: (entries) => void addSkimEntries(entries), sidebarFolderPaths: skimSidebarFolders,
+    sidebarKnownPaths: skimLocations.flatMap((location) => location.path ? [location.path] : []),
+    onAddSidebarFolders: (folderPaths) => void addSkimSidebarFolders(folderPaths),
+    onRemoveSidebarFolders: (folderPaths) => void removeSkimSidebarFolders(folderPaths),
+    onFeedback: showSkimFeedback, onNativeDragStateChange: (dragActive) => { internalNativeDragRef.current = dragActive; }
+  });
   const deleteFilesPanel = dialog === "deleteFiles" ? (
     <DeleteFilesPanel
       isDeleting={isDeletingFiles}
@@ -3040,6 +3059,16 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),
           onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
           onOpenSettings: openSettings
+        }}
+        skim={{
+          currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
+          feedback: skimFeedback, entryCount: sortedSkimEntries.length, displayMode: skimDisplay.mode,
+          sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
+          renderContent: (active) => <SkimView {...createSkimViewProps(true, active)} />,
+          onOpen: () => openSkimLocation(skimCurrentPath), onBack: () => navigateSkimParent(false),
+          onOpenRoot: () => openSkimLocation(null), onOpenPath: openSkimLocation,
+          onDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
+          onSortChange: (sortField, sortDirection) => updateSkimSort({ ...search, sortField, sortDirection })
         }}
         directoryDropEnabled={acceptsDirectoryDrop}
         onTogglePinned={() => { void toggleAlwaysOnTop("stable-ui"); }}
@@ -3125,51 +3154,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             )}
             {activeView === "results" && deleteFilesPanel}
             {isExpandedShell && activeView === "results" && dialog !== "deleteFiles" && <ResultsView {...createResultsViewProps(false)} />}
-            {activeView === "skim" && (
-              <SkimView
-                search={{ ...search, ...skimSortPreference }}
-                visualSessionId={skimVisualSessionId}
-                entries={sortedSkimEntries}
-                currentPath={skimCurrentPath}
-                breadcrumbs={skimBreadcrumbs}
-                isLoading={isSkimLoading}
-                feedback={skimFeedback}
-                theme={effectiveTheme}
-                appearanceColors={appearanceColors}
-                shellState={shellState}
-                isAddingDirectory={isAddingDirectory}
-                inputFeedback={searchInputFeedback}
-                inputFeedbackIsGuide={operationHintVisible}
-                labelVisibility={searchCapsuleLabelVisibility}
-                skimDisplayMode={skimDisplay.mode}
-                searchInputRef={searchInputRef}
-                onSearchChange={(nextSearch) => setSearch({
-                  ...nextSearch,
-                  sortField: search.sortField,
-                  sortDirection: search.sortDirection
-                })}
-                onSearchOptionsChange={updateSkimSort}
-                onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
-                onSkimDisplayModeChange={(mode) => updateSkimDisplay({ ...skimDisplay, mode })}
-                onSearch={() => submitSearch(search)}
-                onOpenRoot={() => openSkimLocation(null)}
-                onOpenBreadcrumb={openSkimLocation}
-                onOpenEntry={(entry) => {
-                  if (entry.kind === "drive" || entry.kind === "folder") {
-                    openSkimLocation(entry.path);
-                  }
-                }}
-                onAddEntries={(entries) => void addSkimEntries(entries)}
-                sidebarFolderPaths={skimSidebarFolders}
-                sidebarKnownPaths={skimLocations.flatMap((location) => location.path ? [location.path] : [])}
-                onAddSidebarFolders={(folderPaths) => void addSkimSidebarFolders(folderPaths)}
-                onRemoveSidebarFolders={(folderPaths) => void removeSkimSidebarFolders(folderPaths)}
-                onFeedback={showSkimFeedback}
-                onNativeDragStateChange={(active) => {
-                  internalNativeDragRef.current = active;
-                }}
-              />
-            )}
+            {activeView === "skim" && <SkimView {...createSkimViewProps(false)} />}
             {activeView === "settings" && dialog === "clearCache" && (
               <ClearCachePanel
                 isClearing={isClearingCache}

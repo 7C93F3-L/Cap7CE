@@ -93,6 +93,9 @@ export interface SkimViewProps {
   onRemoveSidebarFolders: (folderPaths: string[]) => void;
   onFeedback: (message: string) => void;
   onNativeDragStateChange: (active: boolean) => void;
+  embedded?: boolean;
+  responsiveLayout?: boolean;
+  active?: boolean;
 }
 
 type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] };
@@ -143,7 +146,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, onFeedback, onNativeDragStateChange }: SkimViewProps) => {
+export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, onFeedback, onNativeDragStateChange, embedded = false, responsiveLayout = false, active = true }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -154,6 +157,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
+  const [lowHeightLayout, setLowHeightLayout] = useState(() => responsiveLayout && window.matchMedia("(max-height: 359.98px)").matches);
   const [fileInfoDimensions, setFileInfoDimensions] = useState<{ width: number; height: number } | null>(null);
   const [fileInfoFolderStats, setFileInfoFolderStats] = useState<SkimFolderStats | null>(null);
   const selectionAnchorPathRef = useRef<string | null>(null);
@@ -162,8 +166,9 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   const previewRequestGuard = useMemo(() => createPreviewRequestGuard(), []);
   const statusText = isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length });
   const resolvedInputFeedback = feedback || inputFeedback;
-  const isHorizontalGrid = shellState === "micro";
-  const gridLayout = getImageGridLayout(getResultLayoutMode(shellState), gridViewport.width, gridViewport.height);
+  const layoutShellState = responsiveLayout ? (lowHeightLayout ? "micro" : "normal") : shellState;
+  const isHorizontalGrid = layoutShellState === "micro";
+  const gridLayout = getImageGridLayout(getResultLayoutMode(layoutShellState), gridViewport.width, gridViewport.height);
   const virtualGrid = useMemo(() => {
     const { cellSize, columnCount, contentWidth, isHorizontal } = gridLayout;
     const rowStride = cellSize + imageGridGap;
@@ -232,6 +237,15 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     }
     return getFormatIconSvgByName(entry.formatCapability?.iconName);
   };
+
+  useEffect(() => {
+    if (!responsiveLayout) return undefined;
+    const mediaQuery = window.matchMedia("(max-height: 359.98px)");
+    const updateLayout = () => setLowHeightLayout(mediaQuery.matches);
+    updateLayout();
+    mediaQuery.addEventListener("change", updateLayout);
+    return () => mediaQuery.removeEventListener("change", updateLayout);
+  }, [responsiveLayout]);
 
   useEffect(() => {
     setSelectedPaths(new Set());
@@ -507,6 +521,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   }, [currentPath, openSystemPath]);
 
   useEffect(() => {
+    if (!active) return undefined;
     const handleSelectionKeyDown = (event: KeyboardEvent) => {
       if (isEditableKeyboardTarget(event.target)) return;
       if (contextMenu) {
@@ -576,11 +591,11 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     };
     window.addEventListener("keydown", handleSelectionKeyDown);
     return () => window.removeEventListener("keydown", handleSelectionKeyDown);
-  }, [activePath, contextMenu, entries, isAddingDirectory, onAddEntries, onAddSidebarFolders, onFeedback, onRemoveSidebarFolders, selectedEntries, selectedPaths, showEntryInFolder, sidebarFolderPathKeys, sidebarKnownPathKeys]);
+  }, [active, activePath, contextMenu, entries, isAddingDirectory, onAddEntries, onAddSidebarFolders, onFeedback, onRemoveSidebarFolders, selectedEntries, selectedPaths, showEntryInFolder, sidebarFolderPathKeys, sidebarKnownPathKeys]);
 
   return (
     <main
-      className="skim-view cap-skim-view"
+      className={`skim-view cap-skim-view${embedded ? " is-embedded" : ""}${isHorizontalGrid ? " is-horizontal" : ""}`}
       data-skim-view="true"
       style={{
         "--cap-grid-target-size": `${imageGridTargetThumbSize}px`,
@@ -593,7 +608,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
       selectionAnchorPathRef.current = null;
       }}
     >
-      <Cap7CESearchCapsule
+      {!embedded && <Cap7CESearchCapsule
         search={search}
         directoryName=""
         labelVisibility={labelVisibility}
@@ -621,7 +636,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
         onSearchOptionsChange={onSearchOptionsChange}
         onLabelVisibilityChange={onLabelVisibilityChange}
         onSearch={onSearch}
-      />
+      />}
       <div className={`cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
         <section
           className="cap-skim-grid cap-skim-grid-virtualized cap-main-scroll-viewport"
@@ -718,7 +733,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
           y={contextMenu.y}
           theme={theme}
           menuStyle={menuStyle}
-          compact={shellState === "micro" || shellState === "mini"}
+          compact={layoutShellState === "micro" || layoutShellState === "mini"}
           header={{
             format: contextMenu.item.kind === "folder"
               ? t("fileInfo.folder")
