@@ -23,6 +23,7 @@ const run = async () => {
       on: () => undefined
     },
     getPreferences: async () => response,
+    broadcastPreferencesChanged: () => undefined,
     updateSkimSort: capture("skimSort"),
     updateOperationHints: capture("operationHints"),
     updateCommandEnabled: capture("commandEnabled"),
@@ -154,6 +155,7 @@ const run = async () => {
       on: () => undefined
     },
     getPreferences: async () => disabledResponse,
+    broadcastPreferencesChanged: () => undefined,
     updateSkimSort: async () => disabledResponse,
     updateOperationHints: async () => disabledResponse,
     updateCommandEnabled: async () => disabledResponse,

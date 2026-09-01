@@ -10,6 +10,7 @@ type AppearanceColors = UserPreferencesResponse["appearanceColors"];
 export interface PreferenceIpcDependencies {
   registrar: IpcRegistrar;
   getPreferences: () => Promise<UserPreferencesResponse>;
+  broadcastPreferencesChanged: (preferences: UserPreferencesResponse) => void;
   updateSkimSort: PreferenceUpdater<UserPreferencesResponse["skimSortPreference"]>;
   updateOperationHints: PreferenceUpdater<boolean>;
   updateCommandEnabled: PreferenceUpdater<boolean>;
@@ -40,6 +41,7 @@ export interface PreferenceIpcDependencies {
 export const registerPreferenceIpc = ({
   registrar,
   getPreferences,
+  broadcastPreferencesChanged,
   updateSkimSort,
   updateOperationHints,
   updateCommandEnabled,
@@ -66,6 +68,11 @@ export const registerPreferenceIpc = ({
   setAutoCacheOptimizationEnabled,
   scheduleAutoCacheOptimization
 }: PreferenceIpcDependencies): void => {
+  const updateAndBroadcast = async (operation: Promise<UserPreferencesResponse>) => {
+    const preferences = await operation;
+    broadcastPreferencesChanged(preferences);
+    return preferences;
+  };
   registerIpcDomain({
     registrar,
     registrations: [
@@ -78,48 +85,48 @@ export const registerPreferenceIpc = ({
         kind: "handle",
         channel: "preferences:updateSkimSort",
         listener: (_event, skimSortPreference: UserPreferencesResponse["skimSortPreference"]) => (
-          updateSkimSort(skimSortPreference)
+          updateAndBroadcast(updateSkimSort(skimSortPreference))
         )
       },
       {
         kind: "handle",
         channel: "preferences:updateOperationHints",
-        listener: (_event, nextEnabled: boolean) => updateOperationHints(Boolean(nextEnabled))
+        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(updateOperationHints(Boolean(nextEnabled)))
       },
       {
         kind: "handle",
         channel: "preferences:updateCommandEnabled",
-        listener: (_event, nextEnabled: boolean) => updateCommandEnabled(Boolean(nextEnabled))
+        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(updateCommandEnabled(Boolean(nextEnabled)))
       },
       {
         kind: "handle",
         channel: "preferences:updateSearchLabelVisibility",
         listener: (_event, nextVisibility: UserPreferencesResponse["searchLabelVisibility"]) => (
-          updateSearchLabelVisibility({
+          updateAndBroadcast(updateSearchLabelVisibility({
             directory: Boolean(nextVisibility?.directory),
             sort: Boolean(nextVisibility?.sort),
             format: Boolean(nextVisibility?.format),
             skimDisplay: Boolean(nextVisibility?.skimDisplay),
             ai: Boolean(nextVisibility?.ai)
-          })
+          }))
         )
       },
       {
         kind: "handle",
         channel: "preferences:updateSkimDisplay",
         listener: (_event, nextSkimDisplay: UserPreferencesResponse["skimDisplay"]) => (
-          updateSkimDisplay(nextSkimDisplay)
+          updateAndBroadcast(updateSkimDisplay(nextSkimDisplay))
         )
       },
       {
         kind: "handle",
         channel: "preferences:updateSkimSidebarFolders",
-        listener: (_event, skimSidebarFolders: string[]) => updateSkimSidebarFolders(skimSidebarFolders)
+        listener: (_event, skimSidebarFolders: string[]) => updateAndBroadcast(updateSkimSidebarFolders(skimSidebarFolders))
       },
       {
         kind: "handle",
         channel: "preferences:updateSkimSystemLocationsCollapsed",
-        listener: (_event, collapsed: boolean) => updateSkimSystemLocationsCollapsed(collapsed)
+        listener: (_event, collapsed: boolean) => updateAndBroadcast(updateSkimSystemLocationsCollapsed(collapsed))
       },
       {
         kind: "handle",
@@ -127,6 +134,7 @@ export const registerPreferenceIpc = ({
         listener: async (_event, themePreference: ThemePreference) => {
           const preferences = await updateTheme(themePreference);
           refreshAppearance();
+          broadcastPreferencesChanged(preferences);
           return preferences;
         }
       },
@@ -137,7 +145,7 @@ export const registerPreferenceIpc = ({
           const nextLanguagePreference = languagePreference === "zh-CN" || languagePreference === "en-US"
             ? languagePreference
             : "system";
-          return applyLanguage(nextLanguagePreference);
+          return updateAndBroadcast(applyLanguage(nextLanguagePreference));
         }
       },
       {
@@ -146,6 +154,7 @@ export const registerPreferenceIpc = ({
         listener: async (_event, sortPreference: SortPreference) => {
           const preferences = await updateSort(sortPreference);
           applyThumbnailSort(preferences.sortPreference);
+          broadcastPreferencesChanged(preferences);
           return preferences;
         }
       },
@@ -155,28 +164,29 @@ export const registerPreferenceIpc = ({
         listener: async (_event, appearanceColors: AppearanceColors) => {
           const preferences = await updateAppearanceColors(appearanceColors);
           refreshAppearance();
+          broadcastPreferencesChanged(preferences);
           return preferences;
         }
       },
       {
         kind: "handle",
         channel: "preferences:updateEdgeCollapse",
-        listener: (_event, nextEnabled: boolean) => setEdgeCollapseEnabled(Boolean(nextEnabled))
+        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(setEdgeCollapseEnabled(Boolean(nextEnabled)))
       },
       {
         kind: "handle",
         channel: "preferences:updateRememberWindowLayout",
-        listener: (_event, nextEnabled: boolean) => setRememberWindowLayout(Boolean(nextEnabled))
+        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(setRememberWindowLayout(Boolean(nextEnabled)))
       },
       {
         kind: "handle",
         channel: "preferences:updateWindowPresentationMode",
-        listener: (_event, mode: UserPreferencesResponse["windowPresentationMode"]) => updateWindowPresentationMode(mode)
+        listener: (_event, mode: UserPreferencesResponse["windowPresentationMode"]) => updateAndBroadcast(updateWindowPresentationMode(mode))
       },
       {
         kind: "handle",
         channel: "preferences:updateStandbyLineVisible",
-        listener: (_event, nextVisible: boolean) => setStandbyLineVisible(Boolean(nextVisible))
+        listener: (_event, nextVisible: boolean) => updateAndBroadcast(setStandbyLineVisible(Boolean(nextVisible)))
       },
       {
         kind: "handle",
@@ -184,6 +194,7 @@ export const registerPreferenceIpc = ({
         listener: async (_event, nextEnabled: boolean) => {
           const preferences = await updateLaunchAtLogin(Boolean(nextEnabled));
           applyLaunchAtLogin(preferences.launchAtLogin);
+          broadcastPreferencesChanged(preferences);
           return preferences;
         }
       },
@@ -193,13 +204,14 @@ export const registerPreferenceIpc = ({
         listener: async (_event, nextEnabled: boolean) => {
           const preferences = await updateSystemNotifications(Boolean(nextEnabled));
           applySystemNotifications(preferences.systemNotificationsEnabled);
+          broadcastPreferencesChanged(preferences);
           return preferences;
         }
       },
       {
         kind: "handle",
         channel: "preferences:updateAiRecognitionEnabled",
-        listener: (_event, nextEnabled: boolean) => updateAiRecognitionEnabled(Boolean(nextEnabled))
+        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(updateAiRecognitionEnabled(Boolean(nextEnabled)))
       },
       {
         kind: "handle",
@@ -210,6 +222,7 @@ export const registerPreferenceIpc = ({
           if (preferences.autoCacheOptimizationEnabled) {
             await scheduleAutoCacheOptimization();
           }
+          broadcastPreferencesChanged(preferences);
           return preferences;
         }
       }

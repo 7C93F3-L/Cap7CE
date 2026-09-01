@@ -4,7 +4,7 @@
 > 更新日期：2026-09-02
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
-0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`；U3 正式搜索和结果复用边界记录在 `docs/STABLE_UI_SEARCH_RESULTS.md`；U4 左侧栏与目录动作边界记录在 `docs/STABLE_UI_SIDEBAR.md`；U5 并排 Skim 及文件动作复用边界记录在 `docs/STABLE_UI_SKIM.md`；U6 独立 Settings 单实例宿主与布局记忆记录在 `docs/STABLE_UI_SETTINGS_WINDOW.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
+0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`；U3 正式搜索和结果复用边界记录在 `docs/STABLE_UI_SEARCH_RESULTS.md`；U4 左侧栏与目录动作边界记录在 `docs/STABLE_UI_SIDEBAR.md`；U5 并排 Skim 及文件动作复用边界记录在 `docs/STABLE_UI_SKIM.md`；U6 独立 Settings 单实例宿主、U7 正式设置内容与共享状态边界记录在 `docs/STABLE_UI_SETTINGS_WINDOW.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
 
 ## 1. 项目定位
 
@@ -76,7 +76,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `browserWindowDiagnostics.ts` | 主窗口、Settings、预览、line、兼容 Capsule 与启动提示共用的原生 BrowserWindow 创建失败边界；记录窗口类别、当前外壳模式和经运行诊断统一脱敏的异常后原样抛出，不吞掉 Electron 创建失败，也不接触用户搜索或路径 |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 独立 `window-layout.json` 的校验、损坏回退、原子替换和 debounce 写入；Manager 按单一窗口记忆开关捕获与恢复 micro、mini、normal 的完整展开布局，并使旧外壳 Settings 共用 normal 记录；最后有效停靠方向始终在本次运行内可用，仅在记忆开启时跨重启恢复，供主窗口自身边缘收起使用 |
-| `settingsWindowController.ts` / `settingsWindowLayout.ts` / `settingsWindowIpc.ts` | 稳定 UI 开发入口的独立 Settings 单实例生命周期、受限主 Renderer 打开入口及版本化专属 bounds；关闭只隐藏自身，重复打开还原并聚焦，显示器缺失或 work area 变化时复用公共布局几何夹回可见区域，不读写 normal 记录。U6 的独立 Renderer 只显示宿主占位内容，正式设置状态和任务仍留在旧 `SettingsView`，等待 U7 建立共享边界后迁移 |
+| `settingsWindowController.ts` / `settingsWindowLayout.ts` / `settingsWindowIpc.ts` / `settingsDataBroadcast.ts` | 稳定 UI 开发入口的独立 Settings 单实例生命周期、受限主 Renderer 打开入口、版本化专属 bounds 及主 / Settings Renderer 状态广播；关闭只隐藏自身，重复打开还原并聚焦，显示器缺失或 work area 变化时复用公共布局几何夹回可见区域，不读写 normal 记录 |
+| `src/renderer/settings-window/SettingsWindowApp.tsx` / `useSettingsWindowController.ts` / `SettingsWindowUpdateControl.tsx` | U7 独立 Settings 的八分类页面组合、本地条目筛选、正式偏好与领域任务控制器，以及应用更新状态；直接复用 preload 白名单，不持有第二份持久化、目录、缓存、快捷键、诊断、运行时或模型服务。`SettingsWindowApp.css` 只服务该独立窗口；窗口材质项在真实能力接入前只显示目标只读状态 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
 | `capsuleWindowController.ts` | 两种窗口模式共用的 Capsule 目标显示器、上下落点和显示器配置恢复；兼容模式额外持有按需创建的透明 Capsule BrowserWindow，限制主 Renderer 只能同步主题、提示与草稿展示，限制 Capsule Renderer 只能回传草稿、提交、取消和 IME 状态。失焦经短时保护返回统一 standby 请求，隐藏、预览打开、line 显示和退出时完成互斥及销毁；搜索、快捷指令和结果跳转仍只由主 Renderer 执行 |
 | `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：在 40 DIP 内判断非任务栏停靠边、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
@@ -280,7 +281,7 @@ Cap7CE 模式的同窗 capsule 继续使用主进程全局光标位置判断窗�
 
 旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。该规则不作为新版 UI 的尺寸契约；仅开发启用的新版入口旁路旧 resize 形态推断，正式预设尺寸留到功能接入完成后的窗口收口轮决定。
 
-旧主窗口的 capsule、micro、mini、normal 与 Settings 状态仍属于同一业务状态机；Cap7CE 同窗 Capsule 与兼容独立 Capsule 复用同一个 `QuickSearchCapsule` 输入组件。旧 micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。稳定 UI 的 Settings 独立 Renderer 由 `src/renderer/main.tsx` 按 `window=settings` 分流，U6 不导入 `SettingsView`。Capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 Capsule 激活动作。
+旧主窗口的 capsule、micro、mini、normal 与 Settings 状态仍属于同一业务状态机；Cap7CE 同窗 Capsule 与兼容独立 Capsule 复用同一个 `QuickSearchCapsule` 输入组件。旧 micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。稳定 UI 的 Settings 独立 Renderer 由 `src/renderer/main.tsx` 按 `window=settings` 分流；U7 的 `SettingsWindowApp` 不导入旧完整 `SettingsView`，而是复用其既有领域组件和同一组 preload 动作。Capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 Capsule 激活动作。
 
 ## 7. 0.9.9 UI 结构
 
@@ -301,7 +302,7 @@ Cap7CE 模式的同窗 capsule 继续使用主进程全局光标位置判断窗�
 - 主窗口、预览窗口、缩略图和搜索结果滚动区域复用统一圆角变量。
 - 主窗口外壳不使用 CSS 阴影，避免透明窗口圆角出现合成残影；Windows 透明无边框窗口的原生阴影可能不可见，当前不额外模拟外部阴影。
 - 关键词编辑窗口使用响应式胶囊面板，micro 为左右布局，mini / normal 为纵向布局。
-- 旧 Settings 页面保留当前内容结构，使用新版胶囊视觉和行内任务状态；稳定 UI 独立 Settings 在 U6 仅提供宿主占位页，正式内容留到 U7。
+- 旧 Settings 页面保留当前内容结构，使用新版胶囊视觉和行内任务状态；稳定 UI 独立 Settings 在 U7 按八个新版分类组合现有偏好、目录和任务能力，两种入口由偏好 / 目录变更广播保持正式状态同步。新版较详细文案优先，尚未一一对应的增删改项允许后续补齐；窗口材质暂时只有 Acrylic 目标只读项，不改变当前宿主。
 - Settings 的 llama.cpp 版本与视觉模型选择使用 Renderer 自绘列表：触发按钮与同排按钮等高，不显示描边或展开箭头，并沿用原有宽度和禁用条件；列表通过 Portal 复用右键菜单视觉并按视口上下定位，鼠标仅对实际 hover 项显示主题色，键盘导航项保留背景反馈。组件支持点击外部、滚动、失焦或 `Esc` 关闭，以及方向键、Home / End、Enter / Space 选择；首项空值会清除并持久化当前选择，非空值继续由 Store 验证实际版本或模型。成功切换或取消后，主进程仅在服务闲置时同步当前配置到进程状态，避免旧启动失败提示残留；服务运行期间仍由 Renderer 和主进程双重禁止切换。
 - 大型文件预览和批量删除复用 `WaitingIndicator`；等待图标使用主题渐变并围绕中心轴旋转。
 - 文件夹拖入、删除及缓存清理等确认层复用全窗口背景与居中内容动效；normal 的通用编辑面板宽度不得覆盖这些全窗口确认层，背景从首帧覆盖完整内容区域，提示内容再独立淡入。

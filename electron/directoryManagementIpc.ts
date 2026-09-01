@@ -1,4 +1,5 @@
 import type { PersistedDirectory } from "./directoryStore";
+import type { IpcMainInvokeEvent } from "electron";
 import type { DirectoryAddRequest, DirectoryAddResult } from "./directoryAddService";
 import type { ImageScanResult, ScannedFile, ScannedImageFile } from "./imageScanner";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
@@ -6,9 +7,10 @@ import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 export interface DirectoryManagementIpcDependencies {
   registrar: IpcRegistrar;
   listDirectories: () => Promise<PersistedDirectory[]>;
+  broadcastDirectoriesChanged: (directories: PersistedDirectory[]) => void;
   updateDirectoryName: (id: string, name: string) => Promise<PersistedDirectory[]>;
   decorateDirectories: (directories: PersistedDirectory[]) => Promise<PersistedDirectory[]>;
-  selectDirectoryCandidates: () => Promise<string[] | null>;
+  selectDirectoryCandidates: (event: IpcMainInvokeEvent) => Promise<string[] | null>;
   createCancelledDirectoryAddResult: () => Promise<DirectoryAddResult>;
   addDirectoryCandidates: (request: DirectoryAddRequest) => Promise<DirectoryAddResult>;
   scanDirectories: (directories: PersistedDirectory[]) => Promise<ImageScanResult>;
@@ -49,6 +51,7 @@ const normalizeDirectoryAddRequest = (value: unknown): DirectoryAddRequest => {
 export const registerDirectoryManagementIpc = ({
   registrar,
   listDirectories,
+  broadcastDirectoriesChanged,
   updateDirectoryName,
   decorateDirectories,
   selectDirectoryCandidates,
@@ -72,9 +75,14 @@ export const registerDirectoryManagementIpc = ({
   resumeThumbnailRendering,
   resumeThumbnailOptimization
 }: DirectoryManagementIpcDependencies): void => {
+  const decorateAndBroadcast = async (directories: PersistedDirectory[]) => {
+    const decoratedDirectories = await decorateDirectories(directories);
+    broadcastDirectoriesChanged(decoratedDirectories);
+    return decoratedDirectories;
+  };
   const decorateDirectoryAddResult = async (result: DirectoryAddResult): Promise<DirectoryAddResult> => ({
     ...result,
-    directories: await decorateDirectories(result.directories)
+    directories: await decorateAndBroadcast(result.directories)
   });
 
   registerIpcDomain({
@@ -89,14 +97,14 @@ export const registerDirectoryManagementIpc = ({
         kind: "handle",
         channel: "directories:updateName",
         listener: async (_event, id: string, name: string) => (
-          decorateDirectories(await updateDirectoryName(id, name))
+          decorateAndBroadcast(await updateDirectoryName(id, name))
         )
       },
       {
         kind: "handle",
         channel: "directories:selectAndAdd",
-        listener: async () => {
-          const candidates = await selectDirectoryCandidates();
+        listener: async (event) => {
+          const candidates = await selectDirectoryCandidates(event);
           if (!candidates || candidates.length === 0) {
             return decorateDirectoryAddResult(await createCancelledDirectoryAddResult());
           }
@@ -135,7 +143,7 @@ export const registerDirectoryManagementIpc = ({
           const counts = Object.fromEntries(
             scanResult.summaries.map((summary) => [summary.id, summary.fileCount])
           );
-          return decorateDirectories(await applyDirectoryFileCounts(counts));
+          return decorateAndBroadcast(await applyDirectoryFileCounts(counts));
         }
       },
       {
@@ -158,7 +166,7 @@ export const registerDirectoryManagementIpc = ({
             } else {
               await deleteFileThumbnails(deletedFilePaths);
             }
-            return decorateDirectories(await deleteDirectory(directoryId));
+            return decorateAndBroadcast(await deleteDirectory(directoryId));
           } finally {
             resumeThumbnailRendering(pauseReason);
             resumeThumbnailOptimization(pauseReason);

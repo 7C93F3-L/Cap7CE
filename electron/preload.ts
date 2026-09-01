@@ -174,7 +174,12 @@ contextBridge.exposeInMainWorld("cap7ce", {
     addCandidates: (request: unknown) => ipcRenderer.invoke("directories:addCandidates", request),
     refreshFileCounts: (directoryIds: string[]) => ipcRenderer.invoke("directories:refreshFileCounts", directoryIds),
     updateName: (id: string, name: string) => ipcRenderer.invoke("directories:updateName", id, name),
-    delete: (id: string) => ipcRenderer.invoke("directories:delete", id)
+    delete: (id: string) => ipcRenderer.invoke("directories:delete", id),
+    onChanged: (callback: (directories: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, directories: unknown) => callback(directories);
+      ipcRenderer.on("directories:changed", listener);
+      return () => ipcRenderer.removeListener("directories:changed", listener);
+    }
   },
   diagnostics: {
     getInfo: (): Promise<RuntimeDiagnosticsInfo> => ipcRenderer.invoke("diagnostics:getInfo"),
@@ -287,6 +292,11 @@ contextBridge.exposeInMainWorld("cap7ce", {
     shortcutAvailability: () => ipcRenderer.invoke("preferences:shortcutAvailability"),
     beginShortcutCapture: () => ipcRenderer.invoke("preferences:beginShortcutCapture"),
     endShortcutCapture: () => ipcRenderer.invoke("preferences:endShortcutCapture"),
+    onChanged: (callback: (preferences: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, preferences: unknown) => callback(preferences);
+      ipcRenderer.on("preferences:changed", listener);
+      return () => ipcRenderer.removeListener("preferences:changed", listener);
+    },
     onStandbyLineVisibleChanged: (callback: (standbyLineVisible: boolean) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, standbyLineVisible: boolean) => callback(standbyLineVisible);
       ipcRenderer.on("preferences:standbyLineVisibleChanged", listener);

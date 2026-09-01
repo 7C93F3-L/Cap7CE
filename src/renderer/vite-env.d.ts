@@ -101,6 +101,7 @@ declare global {
         refreshFileCounts: (directoryIds: string[]) => Promise<DirectoryItem[]>;
         updateName: (id: string, name: string) => Promise<DirectoryItem[]>;
         delete: (id: string) => Promise<DirectoryItem[]>;
+        onChanged: (callback: (directories: DirectoryItem[]) => void) => () => void;
       };
       diagnostics: {
         getInfo: () => Promise<RuntimeDiagnosticsInfo>;
@@ -182,6 +183,7 @@ declare global {
         shortcutAvailability: () => Promise<ShortcutAvailabilityResult>;
         beginShortcutCapture: () => Promise<boolean>;
         endShortcutCapture: () => Promise<ShortcutAvailabilityResult>;
+        onChanged: (callback: (preferences: UserPreferences) => void) => () => void;
         onStandbyLineVisibleChanged: (callback: (standbyLineVisible: UserPreferences["standbyLineVisible"]) => void) => () => void;
         onEdgeCollapseEnabledChanged: (callback: (enabled: UserPreferences["edgeCollapseEnabled"]) => void) => () => void;
         onLanguageChanged: (callback: (languagePreference: UserPreferences["languagePreference"], resolvedLanguage: "zh-CN" | "en-US") => void) => () => void;

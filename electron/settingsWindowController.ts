@@ -53,6 +53,12 @@ export class SettingsWindowController {
     return true;
   }
 
+  send(channel: string, ...args: unknown[]) {
+    if (!this.settingsWindow || this.settingsWindow.isDestroyed()) return false;
+    this.settingsWindow.webContents.send(channel, ...args);
+    return true;
+  }
+
   private async create() {
     if (!this.initialized) {
       await this.options.layoutStore.load();

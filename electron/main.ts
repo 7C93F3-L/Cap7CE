@@ -74,6 +74,7 @@ import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitc
 import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
 import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
+import { createSettingsDataBroadcaster } from "./settingsDataBroadcast";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -96,7 +97,6 @@ const runtimeDiagnostics = hasSingleInstanceLock
 if (!hasSingleInstanceLock) {
   app.quit();
 }
-
 const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
   if (process.platform !== "win32" || !app.isPackaged) {
     return;
@@ -106,8 +106,8 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
     path: process.execPath
   });
 };
-
 let mainWindow: BrowserWindow | null = null, settingsWindowController: SettingsWindowController | null = null;
+const broadcastSettingsData = createSettingsDataBroadcaster({ sendToMain: (channel, value) => mainWindow?.webContents.send(channel, value), sendToSettings: (channel, value) => { settingsWindowController?.send(channel, value); } });
 const isMainSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
   mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents
 );
@@ -3224,18 +3224,18 @@ const addDirectoryCandidatesWithIndexMigration = (request: DirectoryAddRequest) 
   directoryAddQueue = task.then(() => undefined, () => undefined);
   return task;
 };
-
 registerDirectoryManagementIpc({
-  registrar: ipcMain,
+  registrar: ipcMain, broadcastDirectoriesChanged: (directories) => broadcastSettingsData("directories:changed", directories),
   listDirectories,
   updateDirectoryName,
   decorateDirectories: withSqliteImageCounts,
-  selectDirectoryCandidates: async () => {
+  selectDirectoryCandidates: async (event) => {
     const options: OpenDialogOptions = {
       title: t("dialog.selectIndexDirectory"),
       properties: ["openDirectory", "multiSelections"]
     };
-    const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
+    const ownerWindow = BrowserWindow.fromWebContents(event.sender) ?? mainWindow;
+    const result = ownerWindow ? await dialog.showOpenDialog(ownerWindow, options) : await dialog.showOpenDialog(options);
     return result.canceled ? null : result.filePaths;
   },
   createCancelledDirectoryAddResult,
@@ -3585,9 +3585,8 @@ registerDiagnosticsIpc({
     return result.canceled ? null : result.filePath ?? null;
   }
 });
-
 registerPreferenceIpc({
-  registrar: ipcMain,
+  registrar: ipcMain, broadcastPreferencesChanged: (preferences) => broadcastSettingsData("preferences:changed", preferences),
   getPreferences: getUserPreferences,
   updateSkimSort: updateSkimSortPreference,
   updateOperationHints: updateOperationHintsPreference,
@@ -3634,12 +3633,12 @@ ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, next
     unregisterConfiguredGlobalShortcuts();
     const currentPreferences = await getUserPreferences();
     probeGlobalShortcutActions(currentPreferences.shortcutActions);
-    return updateQuickActionGlobalEnabledPreference(false);
+    return broadcastSettingsData("preferences:changed", await updateQuickActionGlobalEnabledPreference(false));
   }
 
   const currentPreferences = await getUserPreferences();
   registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
-  const preferences = await updateQuickActionGlobalEnabledPreference(true);
+  const preferences = broadcastSettingsData("preferences:changed", await updateQuickActionGlobalEnabledPreference(true));
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   return preferences;
 });
@@ -3688,6 +3687,7 @@ ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActio
     unregisterConfiguredGlobalShortcuts();
     unavailableGlobalShortcutActionIds = new Set();
   }
+  broadcastSettingsData("preferences:changed", preferences);
   return {
     applied: true,
     preferences,

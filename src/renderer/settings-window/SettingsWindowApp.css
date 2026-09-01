@@ -1,39 +1,503 @@
 .cap-settings-window-foundation {
-  color-scheme: light dark;
+  --stable-settings-text: #252525;
+  --stable-settings-secondary: rgb(37 37 37 / 62%);
+  --stable-settings-surface: rgb(255 255 255 / 46%);
+  --stable-settings-card: rgb(255 255 255 / 66%);
+  --stable-settings-hover: rgb(255 255 255 / 58%);
+  --stable-settings-border: rgb(50 50 50 / 8%);
   min-width: 100%;
-  min-height: 100%;
-  color: light-dark(#242424, #f1f1f1);
+  min-height: 100vh;
+  color: var(--stable-settings-text);
+  color-scheme: light;
+  background: transparent;
+}
+
+.cap-settings-window-foundation.theme-dark {
+  --stable-settings-text: #f1f1f1;
+  --stable-settings-secondary: rgb(241 241 241 / 62%);
+  --stable-settings-surface: rgb(18 18 18 / 46%);
+  --stable-settings-card: rgb(38 38 38 / 72%);
+  --stable-settings-hover: rgb(255 255 255 / 10%);
+  --stable-settings-border: rgb(255 255 255 / 8%);
+  color-scheme: dark;
 }
 
 .cap-settings-window-drag-region {
   position: fixed;
-  z-index: 2;
-  inset: 0 0 auto;
+  z-index: 20;
+  inset: 0 138px auto 0;
   height: 36px;
   app-region: drag;
+  pointer-events: none;
 }
 
-.cap-settings-window-placeholder {
+.cap-stable-settings-shell {
+  display: grid;
+  grid-template-columns: 184px minmax(0, 1fr);
+  height: 100vh;
+  padding-top: 36px;
   box-sizing: border-box;
-  min-height: 100vh;
-  margin: 0;
-  padding: 72px 32px 32px;
+}
+
+.cap-stable-settings-navigation {
+  min-width: 0;
+  padding: 14px 12px 18px;
+  background: rgb(255 255 255 / 12%);
+  backdrop-filter: blur(24px) saturate(1.16);
+}
+
+.cap-stable-settings-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 15px;
+  background: var(--stable-settings-card);
+  app-region: no-drag;
+}
+
+.cap-stable-settings-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}
+
+.cap-stable-settings-navigation nav {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.cap-stable-settings-navigation nav button {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 16px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  transition: background-color 140ms ease;
+  app-region: no-drag;
+}
+
+.cap-stable-settings-navigation nav button:hover,
+.cap-stable-settings-navigation nav button.is-active {
+  background: var(--stable-settings-hover);
+}
+
+.cap-stable-settings-content-frame {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  margin: 0 5px 5px 0;
+  overflow: hidden;
   border-radius: 14px;
-  background: light-dark(rgb(255 255 255 / 48%), rgb(24 24 24 / 42%));
+  background: var(--stable-settings-surface);
 }
 
-.cap-settings-window-placeholder span,
-.cap-settings-window-placeholder p {
-  color: light-dark(rgb(36 36 36 / 62%), rgb(241 241 241 / 64%));
+.cap-stable-settings-content {
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 22px 24px 34px;
+  scrollbar-width: none;
 }
 
-.cap-settings-window-placeholder h1 {
-  margin: 10px 0 8px;
-  font-size: 18px;
+.cap-stable-settings-content::-webkit-scrollbar {
+  display: none;
+}
+
+.cap-stable-settings-panel + .cap-stable-settings-panel {
+  margin-top: 34px;
+}
+
+.cap-stable-settings-panel > h1 {
+  margin: 0 0 22px 10px;
+  font-size: 20px;
   font-weight: 600;
 }
 
-.cap-settings-window-placeholder p {
+.cap-stable-settings-section + .cap-stable-settings-section {
+  margin-top: 24px;
+}
+
+.cap-stable-settings-section > h2 {
+  margin: 0 0 8px 10px;
+  color: var(--stable-settings-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cap-stable-settings-section-cards {
+  display: grid;
+  gap: 10px;
+}
+
+.cap-stable-settings-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 64px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--stable-settings-border);
+  border-radius: 18px;
+  background: var(--stable-settings-card);
+}
+
+.cap-stable-settings-card-expanded {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.cap-stable-settings-copy {
+  min-width: 0;
+  padding-left: 2px;
+}
+
+.cap-stable-settings-copy h3,
+.cap-stable-settings-copy p {
+  margin: 0;
+}
+
+.cap-stable-settings-copy h3 {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cap-stable-settings-copy p {
+  margin-top: 4px;
+  color: var(--stable-settings-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.cap-stable-settings-control {
+  min-width: 0;
+}
+
+.cap-stable-settings-button,
+.cap-stable-settings-select,
+.cap-stable-settings-readonly,
+.cap-stable-settings-link {
+  min-height: 28px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 14px;
+  color: inherit;
+  background: var(--stable-settings-hover);
+  font: inherit;
+  font-size: 12px;
+}
+
+.cap-stable-settings-button:not(:disabled):hover,
+.cap-stable-settings-link:hover {
+  background: color-mix(in srgb, var(--context-menu-theme-color, #7c93f3) 34%, var(--stable-settings-hover));
+}
+
+.cap-stable-settings-button:disabled {
+  opacity: .48;
+}
+
+.cap-stable-settings-readonly {
+  display: inline-flex;
+  align-items: center;
+  color: var(--stable-settings-secondary);
+}
+
+.cap-stable-settings-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cap-stable-settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 3px 5px 3px 10px;
+  border: 0;
+  border-radius: 14px;
+  color: inherit;
+  background: var(--stable-settings-hover);
+  font: inherit;
+  font-size: 11px;
+}
+
+.cap-stable-settings-toggle i {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgb(127 127 127 / 38%);
+}
+
+.cap-stable-settings-toggle i::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  content: "";
+  transition: transform 140ms ease;
+}
+
+.cap-stable-settings-toggle[data-checked="true"] i {
+  background: var(--context-menu-theme-color, #7c93f3);
+}
+
+.cap-stable-settings-toggle[data-checked="true"] i::after {
+  transform: translateX(12px);
+}
+
+.cap-stable-settings-colors,
+.cap-stable-settings-action-line,
+.cap-stable-settings-directory-summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cap-stable-settings-colors label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.cap-stable-settings-colors input[type="color"] {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.cap-stable-settings-action-line > span:first-child {
+  flex: 1;
+  color: var(--stable-settings-secondary);
+  font-size: 11px;
+}
+
+.cap-stable-settings-directories {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cap-stable-settings-directories > p {
+  margin: 4px 2px;
+  color: var(--stable-settings-secondary);
+  font-size: 11px;
+}
+
+.cap-stable-settings-directory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 8px 4px 12px;
+  border-radius: 17px;
+  background: var(--stable-settings-hover);
+}
+
+.cap-stable-settings-directory span,
+.cap-stable-settings-directory input {
+  min-width: 0;
+}
+
+.cap-stable-settings-directory strong,
+.cap-stable-settings-directory small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-stable-settings-directory strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cap-stable-settings-directory small,
+.cap-stable-settings-directory em {
+  color: var(--stable-settings-secondary);
+  font-size: 10px;
+  font-style: normal;
+}
+
+.cap-stable-settings-directory button {
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 10px;
+}
+
+.cap-stable-settings-command-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.cap-stable-settings-diagnostics,
+.cap-stable-settings-runtime-info {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
+  gap: 8px 14px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.cap-stable-settings-diagnostics .runtime-diagnostics-group {
+  grid-column: 1 / -1;
+  color: var(--stable-settings-secondary);
+}
+
+.cap-stable-settings-diagnostics strong,
+.cap-stable-settings-runtime-info dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+  user-select: text;
+}
+
+.cap-stable-settings-runtime-info dt {
+  color: var(--stable-settings-secondary);
+}
+
+.cap-stable-settings-loading {
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  background: var(--stable-settings-surface);
+}
+
+.cap-stable-settings-loading button,
+.cap-stable-settings-dialog button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 14px;
+  color: inherit;
+  background: var(--stable-settings-hover);
+}
+
+.cap-stable-settings-empty {
+  margin: 42px 10px;
+  color: var(--stable-settings-secondary);
+}
+
+.cap-stable-settings-dialog-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 24%);
+  backdrop-filter: blur(4px);
+}
+
+.cap-stable-settings-dialog {
+  width: min(420px, 100%);
+  padding: 20px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--stable-settings-card) 94%, transparent);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 24%);
+}
+
+.cap-stable-settings-dialog p {
   margin: 0;
   font-size: 13px;
+  line-height: 1.5;
+}
+
+.cap-stable-settings-dialog div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.cap-stable-settings-dialog button {
+  padding: 4px 16px;
+}
+
+.cap-settings-window-foundation .cap-settings-row {
+  min-height: 30px;
+}
+
+.cap-settings-window-foundation .cap-settings-pill {
+  background: var(--stable-settings-hover);
+}
+
+.cap-settings-window-foundation .cap7ce-signature {
+  margin: 18px 10px 0;
+}
+
+@media (max-width: 720px) {
+  .cap-stable-settings-shell {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .cap-stable-settings-navigation {
+    padding-inline: 7px;
+  }
+
+  .cap-stable-settings-search {
+    display: none;
+  }
+
+  .cap-stable-settings-navigation nav {
+    margin-top: 0;
+  }
+
+  .cap-stable-settings-navigation nav button {
+    padding: 0;
+    text-align: center;
+  }
+
+  .cap-stable-settings-navigation nav button span {
+    display: none;
+  }
+
+  .cap-stable-settings-navigation nav button::before {
+    content: attr(data-short);
+    font-size: 11px;
+  }
+
+  .cap-stable-settings-content {
+    padding-inline: 14px;
+  }
+
+  .cap-stable-settings-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .cap-stable-settings-control {
+    justify-self: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cap-stable-settings-navigation nav button,
+  .cap-stable-settings-toggle i::after {
+    transition: none;
+  }
 }

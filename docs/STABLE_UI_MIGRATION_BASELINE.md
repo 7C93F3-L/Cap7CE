@@ -21,7 +21,7 @@
 | 搜索 | `App.tsx` 的 `submitSearch` / `runSearch`；正式查询、IME、路径直达、快捷指令和 AI 按次入口保持同一提交链 | `Cap7CESearchCapsule`、`ResultsView`、`VirtualResultGrids`、`searchIpc.ts` | U3 的新版搜索输入与结果容器只接现有 Props 和动作；不复制查询、排序、证据、虚拟化或缓存逻辑 |
 | 目录 | `App.tsx` 继续编排目录加载、添加、重命名、删除、刷新及冲突确认；主进程以目录管理 IPC 和统一添加服务为权威 | `DirectoryAiSettingsRows`、`directoryManagementIpc.ts`、`directoryAddService.ts` | U4 左栏与 U7 Settings 复用同一目录动作；不修改扫描、SQLite 或目录归属语义 |
 | Skim | `openSkimAtLocation`、`useSkimReadController`、独立 skim 排序 / 范围 / 导航 / 选择 / 滚动状态保持权威 | `SkimView`、`SkimLocationPicker`、skim 服务与缓存链 | U5 将现有 Skim 控制器装入右侧并排插槽；搜索结果的查询、选择和滚动状态不得因视觉隐藏而销毁 |
-| Settings | 旧外壳仍由 `App.tsx` 的 `openSettings` 与同窗 `settings` shell state 打开；稳定 UI 由统一动作恢复独立单实例宿主，设置读写仍留在现有偏好和领域 IPC | `SettingsWindowController`、`SettingsView` 及其分区组件、`preferenceIpc.ts` | U6 只迁移窗口宿主且不装入正式设置；U7 迁移内容时复用现有读写与任务状态，不建立第二份编辑事务 |
+| Settings | 旧外壳仍由 `App.tsx` 的 `openSettings` 与同窗 `settings` shell state 打开；稳定 UI 由统一动作恢复独立单实例宿主，两种 Renderer 共享现有偏好、目录和领域任务 IPC | `SettingsWindowController`、`SettingsWindowApp`、`useSettingsWindowController`、旧 `SettingsView` 及其分区组件、`preferenceIpc.ts` | U6 迁移窗口宿主；U7 按新版分类接入正式内容并同步两窗状态，不复制持久化、目录、缓存、更新、快捷键或模型事务。窗口材质仅保留目标只读项，真实 Acrylic 切换留到后续轮次 |
 | Preview | Results / Skim 产生统一预览 DTO；主进程持有单实例窗口、复用、隐藏、两分钟空 Renderer 和主窗协调链 | `PreviewWindowApp`、现有 Provider、`preview:*` 生命周期 | U8 只替换壳层与信息边栏，U9 接快速交互；Provider、会话授权、缓存与复用链保持唯一 |
 | 文件菜单 | 选择范围由 Results / Skim / Preview 所有；动作组与快捷键解析由共享构造器所有；系统能力由文件 IPC 校验 | `fileContextActions.ts`、`ImageContextMenu`、`fileIpc.ts` | U3、U5、U8 的新版表面复用同一动作组；不复制打开、定位、复制、关键词或删除权限判断 |
 | 拖放 | 结果与 Skim 只提交已选路径到 `files.startDrag`；主窗口目录拖入仍由 `App.tsx` 的确认链处理 | `ResultsView`、`SkimView`、`fileDragService.ts`、目录确认面板 | U3 / U5 保留文件拖出，U4 / U7 保留目录拖入；不得绕过原生拖拽抑制或目录冲突确认 |

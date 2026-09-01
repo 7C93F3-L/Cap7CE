@@ -26,6 +26,7 @@ const run = async () => {
       calls.push(["list"]);
       return originalDirectories;
     },
+    broadcastDirectoriesChanged: () => undefined,
     updateDirectoryName: async (id, name) => {
       calls.push(["updateName", id, name]);
       return renamedDirectories;
@@ -166,6 +167,7 @@ const run = async () => {
       on: () => undefined
     },
     listDirectories: async () => [],
+    broadcastDirectoriesChanged: () => undefined,
     updateDirectoryName: async () => [],
     decorateDirectories: async (directories) => {
       cancelledCalls.push(["decorate", directories]);

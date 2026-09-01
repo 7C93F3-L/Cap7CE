@@ -9,10 +9,14 @@ const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.ts"),
 const rendererEntrySource = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
 const settingsAppSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.tsx"), "utf8");
+const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
+const preferenceIpcSource = fs.readFileSync(path.join(root, "electron", "preferenceIpc.ts"), "utf8");
+const directoryIpcSource = fs.readFileSync(path.join(root, "electron", "directoryManagementIpc.ts"), "utf8");
 const architectureSource = fs.readFileSync(path.join(root, "docs", "SOFTWARE_ARCHITECTURE.md"), "utf8");
 const featureDocSource = fs.readFileSync(path.join(root, "docs", "STABLE_UI_SETTINGS_WINDOW.md"), "utf8");
 const { SettingsWindowController } = require("../dist-electron/settingsWindowController.js");
 const { registerSettingsWindowIpc } = require("../dist-electron/settingsWindowIpc.js");
+const { createSettingsDataBroadcaster } = require("../dist-electron/settingsDataBroadcast.js");
 const {
   SettingsWindowLayoutStore,
   createSettingsWindowLayoutProfile,
@@ -30,8 +34,10 @@ class FakeWindow {
     this.listeners = new Map();
     this.onceListeners = new Map();
     this.calls = [];
+    this.sent = [];
     this.webContents = {
       isDestroyed: () => false,
+      send: (...args) => { this.sent.push(args); },
       setWindowOpenHandler: (handler) => { this.windowOpenHandler = handler; }
     };
   }
@@ -110,6 +116,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.equal(await controller.open(), true);
   assert.equal(created.length, 1);
   assert.deepEqual(created[0].calls.slice(-3), ["restore", "show", "focus"]);
+  assert.equal(controller.send("preferences:changed", { themePreference: "dark" }), true);
+  assert.deepEqual(created[0].sent.at(-1), ["preferences:changed", { themePreference: "dark" }]);
   const closeEvent = { prevented: false, preventDefault() { this.prevented = true; } };
   created[0].emit("close", closeEvent);
   assert.equal(closeEvent.prevented, true);
@@ -117,18 +125,36 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(created[0].loaded, /window=settings/u);
   await controller.flush();
 
+  const broadcasts = [];
+  const broadcastSettingsData = createSettingsDataBroadcaster({
+    sendToMain: (channel, value) => broadcasts.push(["main", channel, value]),
+    sendToSettings: (channel, value) => broadcasts.push(["settings", channel, value])
+  });
+  const canonicalPreferences = { languagePreference: "zh-CN" };
+  assert.equal(broadcastSettingsData("preferences:changed", canonicalPreferences), canonicalPreferences);
+  assert.deepEqual(broadcasts, [["main", "preferences:changed", canonicalPreferences], ["settings", "preferences:changed", canonicalPreferences]]);
+
   assert.match(rendererEntrySource, /windowKind === "settings"[\s\S]*?import\("\.\/settings-window\/SettingsWindowApp"\)/u);
-  assert.match(settingsAppSource, /Settings window foundation/u);
+  assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"search-ai"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
+  assert.match(settingsAppSource, /useSettingsWindowController/u);
+  assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
+  assert.match(settingsAppSource, /stableSettings\.material\.readOnly/u);
+  assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(preloadSource, /settingsWindow:[\s\S]*?settingsWindow:open/u);
+  assert.match(preloadSource, /directories:[\s\S]*?directories:changed[\s\S]*?preferences:[\s\S]*?preferences:changed/u);
   assert.match(appSource, /onOpenSettings:\s*\(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/u);
+  assert.match(appSource, /useSettingsDataSynchronization/u);
   assert.match(mainSource, /const openSettings = async[\s\S]*?settingsWindowController\?\.open\(\)[\s\S]*?openLegacySettings/u);
   assert.match(mainSource, /preview:openSettings[\s\S]*?isIndependentSettingsWindowEnabled[\s\S]*?closePreviewSession/u);
-  assert.doesNotMatch(settingsAppSource, /SettingsView|preferences\.update|downloadUpdate|beginShortcutCapture/u);
+  assert.match(preferenceIpcSource, /updateAndBroadcast[\s\S]*?broadcastPreferencesChanged/u);
+  assert.match(directoryIpcSource, /decorateAndBroadcast[\s\S]*?broadcastDirectoriesChanged/u);
+  assert.doesNotMatch(settingsAppSource, /SettingsView|ipcRenderer|localStorage|stable-ui-canvas|[A-Z]:\\/u);
   assert.match(architectureSource, /settingsWindowController\.ts[\s\S]*?版本化专属 bounds/u);
-  assert.match(featureDocSource, /更新下载、快捷键捕获与全部正式设置内容的交互验收属于 U7/u);
+  assert.match(featureDocSource, /U7 内容与状态边界/u);
+  assert.match(featureDocSource, /Acrylic（目标，只读）/u);
 
   await fs.promises.rm(temporaryRoot, { recursive: true, force: true });
-  console.log(JSON.stringify({ singleInstanceVerified: true, independentBoundsVerified: true, rendererEntryVerified: true, senderGuardVerified: true, legacyFallbackGuarded: true }));
+  console.log(JSON.stringify({ singleInstanceVerified: true, independentBoundsVerified: true, rendererEntryVerified: true, senderGuardVerified: true, sharedStateBroadcastVerified: true, formalSettingsContentVerified: true, legacyFallbackGuarded: true }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

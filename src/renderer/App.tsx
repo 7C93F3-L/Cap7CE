@@ -9,6 +9,7 @@ import { useRuntimeModelController } from "./controllers/useRuntimeModelControll
 import { useSearchIndexRefresh } from "./controllers/useSearchIndexRefresh";
 import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
 import { useSkimReadController } from "./controllers/useSkimReadController";
+import { useSettingsDataSynchronization } from "./controllers/useSettingsDataSynchronization";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import { getImageContextMenuStyle } from "./ImageContextMenu";
@@ -827,22 +828,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = window.cap7ce?.preferences.onStandbyLineVisibleChanged?.((nextStandbyLineVisible) => {
-      setStandbyLineVisible(nextStandbyLineVisible);
-    });
-    return () => unsubscribe?.();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = window.cap7ce?.preferences.onLanguageChanged?.((nextLanguagePreference, nextResolvedLanguage) => {
-      setActiveLanguage(nextResolvedLanguage);
-      setLanguagePreference(nextLanguagePreference);
-      setResolvedLanguage(nextResolvedLanguage);
-    });
-    return () => unsubscribe?.();
   }, []);
 
   useEffect(() => () => {
@@ -1842,6 +1827,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       setIsAddingDirectory(false);
     }
   };
+
+  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchCapsuleLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
 
   const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
     try {
