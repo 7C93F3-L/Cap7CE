@@ -4,7 +4,7 @@
 > 更新日期：2026-08-30
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
-0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
+0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
 
 ## 1. 项目定位
 
@@ -205,6 +205,8 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 `src/renderer/styles.css` 是 0.9.9 UI 的全局样式入口，保留统一窗口壳层、共享菜单、主题变量、动态窗口过渡与兼容规则；独立页面、设置区块、关键词编辑、预览、滚动条和等待状态样式由对应领域文件持有。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。Settings 底部版本号仍以文字按钮形式打开固定 GitHub Releases 页面；视觉模型下方的“版本更新”行仅在用户点击时检查更新，发现新版后先显示版本号并将按钮切换为“立即下载”，再次点击才在行内显示下载进度。自动替换仅在打包版启用：主进程在本轮下载目录之外生成内容严格为 ASCII 的 VBScript 启动器，将安装目录等可能包含非 ASCII 字符的内部参数放入 UTF-16LE PowerShell 编码命令，再通过 Windows Shell 以隐藏窗口独立运行固定绝对路径的 Windows PowerShell 更新助手，既避免系统代码页破坏中文路径和参数边界，也避开 detached PowerShell 不执行脚本、普通子进程随 Electron 退出终止、助手删除仍在执行的启动器及用户误关命令行四种边界；更新助手先解压并校验 ZIP 内的 `Cap7CE.exe` 与 `resources/app.asar`，写出就绪信号后主进程才退出。助手预检失败会写出 `helper-failed` 信号；启动器无法打开、助手失败或未在时限内就绪时，主进程保持运行、删除本轮临时下载，并将主进程错误及已有助手输出写入系统临时目录中的 `Cap7CE-update-last-failure.log`。助手接管后等待旧进程退出，再备份当前程序目录、复制新版并保留用户自行放置的 `models` 与 `llama.cpp`；新版无法稳定启动时恢复备份并重启旧版，成功后删除备份及临时下载，隐藏启动器由重启后的新版延迟清理。下载流连续 60 秒没有新数据时主动取消本轮下载、删除不完整 ZIP 并在 Settings 行内提示重试，避免网络停滞后无限等待。该流程不后台检查或下载，也不修改 `%APPDATA%\Cap7CE` 用户数据；未来安装包更新策略应继续复用相同的检查、确认与进度状态，只替换主进程执行器。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
 
 U1 的新版 Renderer 根节点只在 Vite 开发环境且主进程显式设置开发标记时动态加载，并额外要求本次宿主实际为 `compatibility`；打包加载路径不携带新版查询参数，生产构建会静态移除该动态分支。`stable-ui/StableUiFoundation.css` 独立持有新版间距、圆角、表面透明度、文字层级、标题栏安全区、滚动条和减少动效变量，不修改旧全局样式。`WindowPinButton.tsx` 持有兼容主窗口、兼容 Preview 和新版标题栏共用的图标、可访问状态及鼠标失焦行为；Settings 后续仍不装配该按钮。`stableUiDevelopmentContract.ts` 只解析开发服务标志，不增加窗口模式；开发根节点使用独立 `window-layout-stable-ui-development.json`，置顶动作只更新本次进程状态，不写正式布局或用户置顶偏好。该开发入口启动时保留创建阶段的自由窗口 bounds 与宿主安全最小尺寸，不套用 micro / mini / normal 预设，并在 resize settle 前旁路旧形态推断和 micro 位置修正；旧 Renderer 继续完整使用原状态机。新版后续只按视口连续响应内部布局，预设尺寸与对应快捷动作的去留留到主功能接入完成后的独立窗口收口轮。
+
+U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 单独持有新版响应式网格、可拖动分隔线和断点，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、可在 280–480px 内调整，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
 
 此前完成的分阶段架构整理继续以体量与依赖守门约束运行时所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。U0 进一步把 `electron/main.ts` 上限收紧到当前 3771 行，并为搜索、目录、Skim、Settings、Preview、文件菜单、拖放、快捷键、窗口固定与隐藏恢复建立正式源码锚点；所有权移动时必须同步迁移映射，不能让旧链悄然消失后在新版组件中复制。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单，守门也会拒绝已经不再对应真实直连 channel 的过期豁免。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
 

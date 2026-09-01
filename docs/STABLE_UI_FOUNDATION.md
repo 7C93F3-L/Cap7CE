@@ -17,7 +17,7 @@
 ## 2. 共用基础
 
 - 新版间距、圆角、文字层级、表面、悬停、选中、标题栏、滚动条和减少动效变量只在 `.cap-stable-ui` 下生效。
-- 新版内框表面保留右侧 / 底部 5px 宿主材料间距，使用四角圆角；U1 只显示基础校验卡，不提前建立 U2 主窗口壳层。
+- 新版内框表面保留右侧 / 底部 5px 宿主材料间距，使用四角圆角；U1 人工确认时只显示基础校验卡，当前 U2 空壳见 `docs/STABLE_UI_RESPONSIVE_SHELL.md`。
 - 新版滚动条使用 8px 原生滚动槽与带 2px 透明边界的胶囊滑块，明暗模式分别使用对应文字色透明度；不修改旧 `CustomScrollbar` 的视觉或交互。
 - 主窗口和 Preview 的置顶入口共用 `WindowPinButton`，保留 46px 命中宽度、`aria-pressed`、固定 / 取消固定图标及鼠标点击后不残留焦点框的行为。Settings 不装配置顶按钮。
 - 标题栏使用 `titlebar-area-*` 安全区域和 Windows 原生 drag / no-drag 语义；最小化、最大化、还原、关闭、系统菜单和 Snap 继续由现有 compatibility 宿主管理。

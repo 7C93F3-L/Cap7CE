@@ -57,11 +57,27 @@
   -webkit-app-region: drag;
 }
 
-.cap-stable-titlebar-label {
+.cap-stable-search-slot {
   align-self: center;
-  margin-left: var(--cap-stable-space-md);
+  width: min(clamp(120px, 42vw, 560px), calc(100% - 96px));
+  height: 32px;
+  margin-left: 10px;
+  box-sizing: border-box;
+  padding: 6px 12px;
+  border-radius: var(--cap-stable-radius-pill);
+  color: var(--cap-stable-text-muted);
+  background: var(--cap-stable-surface-soft);
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.cap-stable-result-count {
+  align-self: center;
+  margin-left: auto;
+  padding-inline: var(--cap-stable-space-md);
   color: var(--cap-stable-text-muted);
   font-size: var(--cap-stable-secondary-font-size);
+  white-space: nowrap;
   pointer-events: none;
 }
 
@@ -69,7 +85,7 @@
   width: 46px;
   height: 100%;
   flex: 0 0 46px;
-  margin-left: auto;
+  margin-left: 0;
   display: grid;
   place-items: center;
   padding: 0;
@@ -84,16 +100,6 @@
 .cap-stable-titlebar-pin:hover { background: var(--cap-stable-caption-hover); }
 .cap-stable-titlebar-pin:focus-visible { outline-offset: -3px; }
 .cap-stable-titlebar-pin-icon { width: 17px; height: 17px; }
-
-.cap-stable-workspace {
-  position: absolute;
-  top: var(--cap-stable-titlebar-height);
-  right: var(--cap-stable-edge-gap);
-  bottom: var(--cap-stable-edge-gap);
-  left: var(--cap-stable-edge-gap);
-  min-width: 0;
-  min-height: 0;
-}
 
 .cap-stable-surface {
   box-sizing: border-box;
@@ -130,19 +136,13 @@
   background-clip: content-box;
 }
 
-.cap-stable-foundation-card {
-  display: grid;
-  gap: var(--cap-stable-space-xs);
-  min-width: 210px;
-  margin-bottom: var(--cap-stable-space-sm);
-  padding: var(--cap-stable-space-sm) var(--cap-stable-space-md);
-  border-radius: var(--cap-stable-radius-sm);
-  background: var(--cap-stable-surface-soft);
-}
-
 .cap-stable-section-label {
   color: var(--cap-stable-text-muted);
   font-size: var(--cap-stable-section-font-size);
+}
+
+@media (max-width: 760px) {
+  .cap-stable-result-count { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

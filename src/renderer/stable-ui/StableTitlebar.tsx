@@ -7,7 +7,10 @@ interface StableTitlebarProps {
 
 const StableTitlebar = ({ pinned, onTogglePinned }: StableTitlebarProps) => (
   <header className="cap-stable-titlebar" data-window-controls="true">
-    <span className="cap-stable-titlebar-label">Cap7CE · U1</span>
+    <div className="cap-stable-search-slot" role="search" aria-label="搜索输入布局占位区">
+      <span>搜索</span>
+    </div>
+    <span className="cap-stable-result-count">U2 · 响应式骨架</span>
     <WindowPinButton
       className="cap-stable-titlebar-pin"
       iconClassName="cap-stable-titlebar-pin-icon"
