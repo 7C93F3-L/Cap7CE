@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { builtinModules } = require("node:module");
+const { execFileSync } = require("node:child_process");
 
 const root = path.resolve(__dirname, "..");
 const baseline = JSON.parse(fs.readFileSync(path.join(__dirname, "architecture-boundaries-baseline.json"), "utf8"));
@@ -8,6 +9,51 @@ const failures = [];
 
 const readProjectFile = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const physicalLineCount = (text) => text.split(/\r?\n/).length;
+
+const migrationBaseline = baseline.stableUiMigration;
+const requiredSurfaceIds = new Set(migrationBaseline.requiredSurfaceIds);
+const migrationSurfaceIds = new Set(migrationBaseline.surfaces.map((surface) => surface.id));
+
+if (migrationSurfaceIds.size !== migrationBaseline.surfaces.length) {
+  failures.push("Stable UI migration surface IDs must remain unique.");
+}
+
+for (const requiredSurfaceId of requiredSurfaceIds) {
+  if (!migrationSurfaceIds.has(requiredSurfaceId)) {
+    failures.push(`Stable UI migration surface "${requiredSurfaceId}" is missing from the U0 baseline.`);
+  }
+}
+
+for (const surface of migrationBaseline.surfaces) {
+  if (!requiredSurfaceIds.has(surface.id)) {
+    failures.push(`Stable UI migration surface "${surface.id}" is not part of the frozen U0 scope.`);
+  }
+  for (const anchor of surface.sourceAnchors) {
+    const absolutePath = path.join(root, anchor.path);
+    if (!fs.existsSync(absolutePath)) {
+      failures.push(`Stable UI migration source "${anchor.path}" for "${surface.id}" no longer exists.`);
+      continue;
+    }
+    if (!fs.readFileSync(absolutePath, "utf8").includes(anchor.contains)) {
+      failures.push(`Stable UI migration anchor "${anchor.contains}" for "${surface.id}" is missing from ${anchor.path}. Update the migration map when ownership moves.`);
+    }
+  }
+}
+
+const localPrototypeIgnore = "prototypes/stable-ui-canvas/";
+const gitIgnoreEntries = readProjectFile(".gitignore").split(/\r?\n/).map((entry) => entry.trim());
+if (!gitIgnoreEntries.includes(localPrototypeIgnore)) {
+  failures.push(`Local stable UI prototype must remain ignored by Git via "${localPrototypeIgnore}".`);
+}
+if (fs.existsSync(path.join(root, ".git"))) {
+  const trackedPrototypeFiles = execFileSync("git", ["ls-files", "--", localPrototypeIgnore], {
+    cwd: root,
+    encoding: "utf8"
+  }).trim();
+  if (trackedPrototypeFiles) {
+    failures.push("Local stable UI prototype files must not be tracked by Git.");
+  }
+}
 
 for (const [relativePath, maximum] of Object.entries(baseline.maxLines)) {
   const actual = physicalLineCount(readProjectFile(relativePath));
@@ -79,6 +125,7 @@ if (failures.length > 0) {
 } else {
   console.log(JSON.stringify({
     hotFileLimitsVerified: Object.keys(baseline.maxLines).length,
+    stableUiMigrationSurfacesGuarded: migrationSurfaceIds.size,
     rendererFilesChecked: rendererFiles.length,
     legacyMainIpcChannelsGuarded: legacyMainIpcChannels.size,
     directMainIpcChannelsFound: directMainIpcChannels.size

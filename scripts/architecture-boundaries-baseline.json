@@ -29,11 +29,115 @@
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
     "src/renderer/settings/SettingsView.css": 253,
-    "electron/main.ts": 3786,
+    "electron/main.ts": 3771,
     "electron/capsuleWindowController.ts": 307,
     "electron/capsuleSubmissionHandoff.ts": 60,
     "electron/previewWindowPresentationSizing.ts": 61,
     "electron/lineWindowController.ts": 159
+  },
+  "stableUiMigration": {
+    "requiredSurfaceIds": [
+      "search",
+      "directories",
+      "skim",
+      "settings",
+      "preview",
+      "fileMenus",
+      "dragDrop",
+      "shortcuts",
+      "windowPinning",
+      "hiddenRestore"
+    ],
+    "surfaces": [
+      {
+        "id": "search",
+        "sourceAnchors": [
+          { "path": "src/renderer/App.tsx", "contains": "const runSearch = async" },
+          { "path": "src/renderer/search/Cap7CESearchCapsule.tsx", "contains": "export const Cap7CESearchCapsule" },
+          { "path": "src/renderer/results/ResultsView.tsx", "contains": "export const ResultsView" },
+          { "path": "src/renderer/results/VirtualResultGrids.tsx", "contains": "export const VirtualImageGrid" },
+          { "path": "electron/searchIpc.ts", "contains": "registerSearchIpc" }
+        ]
+      },
+      {
+        "id": "directories",
+        "sourceAnchors": [
+          { "path": "src/renderer/App.tsx", "contains": "const loadDirectories" },
+          { "path": "src/renderer/settings/DirectoryAiSettingsRows.tsx", "contains": "export const DirectoryAiSettingsRows" },
+          { "path": "electron/directoryManagementIpc.ts", "contains": "registerDirectoryManagementIpc" },
+          { "path": "electron/directoryAddService.ts", "contains": "export const addDirectoryCandidates" }
+        ]
+      },
+      {
+        "id": "skim",
+        "sourceAnchors": [
+          { "path": "src/renderer/App.tsx", "contains": "const openSkimAtLocation" },
+          { "path": "src/renderer/controllers/useSkimReadController.ts", "contains": "export const useSkimReadController" },
+          { "path": "src/renderer/skim/SkimView.tsx", "contains": "export const SkimView" },
+          { "path": "src/renderer/SkimLocationPicker.tsx", "contains": "const SkimLocationPicker" }
+        ]
+      },
+      {
+        "id": "settings",
+        "sourceAnchors": [
+          { "path": "src/renderer/App.tsx", "contains": "function openSettings" },
+          { "path": "src/renderer/settings/SettingsView.tsx", "contains": "export const SettingsView" },
+          { "path": "electron/preferenceIpc.ts", "contains": "registerPreferenceIpc" }
+        ]
+      },
+      {
+        "id": "preview",
+        "sourceAnchors": [
+          { "path": "src/renderer/results/ResultsView.tsx", "contains": "const openPreviewAtIndex" },
+          { "path": "src/renderer/skim/SkimView.tsx", "contains": "const openPreview" },
+          { "path": "src/renderer/PreviewWindowApp.tsx", "contains": "const PreviewWindowApp" },
+          { "path": "electron/main.ts", "contains": "ipcMain.handle(\"preview:open\"" }
+        ]
+      },
+      {
+        "id": "fileMenus",
+        "sourceAnchors": [
+          { "path": "src/renderer/fileContextActions.ts", "contains": "buildFileContextMenuGroups" },
+          { "path": "src/renderer/ImageContextMenu.tsx", "contains": "const ImageContextMenu" },
+          { "path": "electron/fileIpc.ts", "contains": "registerFileIpc" }
+        ]
+      },
+      {
+        "id": "dragDrop",
+        "sourceAnchors": [
+          { "path": "src/renderer/results/ResultsView.tsx", "contains": "window.cap7ce?.files.startDrag" },
+          { "path": "src/renderer/skim/SkimView.tsx", "contains": "window.cap7ce?.files.startDrag" },
+          { "path": "src/renderer/App.tsx", "contains": "onDropCapture" },
+          { "path": "electron/fileDragService.ts", "contains": "startNativeFileDrag" }
+        ]
+      },
+      {
+        "id": "shortcuts",
+        "sourceAnchors": [
+          { "path": "src/renderer/shortcutActions.ts", "contains": "defaultShortcutActions" },
+          { "path": "src/renderer/App.tsx", "contains": "handleWindowShortcutKeyDown" },
+          { "path": "electron/main.ts", "contains": "registerConfiguredGlobalShortcuts" }
+        ]
+      },
+      {
+        "id": "windowPinning",
+        "sourceAnchors": [
+          { "path": "src/renderer/controllers/useAlwaysOnTopController.ts", "contains": "export const useAlwaysOnTopController" },
+          { "path": "src/renderer/window-presentation/CompatibilityTitlebar.tsx", "contains": "const CompatibilityTitlebar" },
+          { "path": "electron/dockedShellController.ts", "contains": "setFixed" }
+        ]
+      },
+      {
+        "id": "hiddenRestore",
+        "sourceAnchors": [
+          { "path": "src/renderer/App.tsx", "contains": "const enterStandby" },
+          { "path": "electron/main.ts", "contains": "const activateShellModeShortcut" },
+          { "path": "electron/main.ts", "contains": "const showAndFocusMainWindow" },
+          { "path": "electron/lineWindowController.ts", "contains": "export class LineWindowController" },
+          { "path": "electron/dockedShellAutomation.ts", "contains": "export const installDockedShell" }
+        ]
+      }
+    ]
   },
   "legacyMainIpcChannels": [
     "app:openReleasePage",

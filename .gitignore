@@ -8,6 +8,7 @@ llama.cpp/
 TestFiles/
 .agents/
 .codex/
+prototypes/stable-ui-canvas/
 
 *.local
 *.log

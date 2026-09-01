@@ -4,6 +4,8 @@
 > 更新日期：2026-08-30
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
+0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；后续界面入口必须复用其中列出的正式动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
+
 ## 1. 项目定位
 
 Cap7CE 是 Windows 本地视觉文件搜索工具。中文核心概念是“搜索胶囊”，英文可理解为 Capsule Search Core。
@@ -202,7 +204,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 `src/renderer/styles.css` 是 0.9.9 UI 的全局样式入口，保留统一窗口壳层、共享菜单、主题变量、动态窗口过渡与兼容规则；独立页面、设置区块、关键词编辑、预览、滚动条和等待状态样式由对应领域文件持有。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。Settings 底部版本号仍以文字按钮形式打开固定 GitHub Releases 页面；视觉模型下方的“版本更新”行仅在用户点击时检查更新，发现新版后先显示版本号并将按钮切换为“立即下载”，再次点击才在行内显示下载进度。自动替换仅在打包版启用：主进程在本轮下载目录之外生成内容严格为 ASCII 的 VBScript 启动器，将安装目录等可能包含非 ASCII 字符的内部参数放入 UTF-16LE PowerShell 编码命令，再通过 Windows Shell 以隐藏窗口独立运行固定绝对路径的 Windows PowerShell 更新助手，既避免系统代码页破坏中文路径和参数边界，也避开 detached PowerShell 不执行脚本、普通子进程随 Electron 退出终止、助手删除仍在执行的启动器及用户误关命令行四种边界；更新助手先解压并校验 ZIP 内的 `Cap7CE.exe` 与 `resources/app.asar`，写出就绪信号后主进程才退出。助手预检失败会写出 `helper-failed` 信号；启动器无法打开、助手失败或未在时限内就绪时，主进程保持运行、删除本轮临时下载，并将主进程错误及已有助手输出写入系统临时目录中的 `Cap7CE-update-last-failure.log`。助手接管后等待旧进程退出，再备份当前程序目录、复制新版并保留用户自行放置的 `models` 与 `llama.cpp`；新版无法稳定启动时恢复备份并重启旧版，成功后删除备份及临时下载，隐藏启动器由重启后的新版延迟清理。下载流连续 60 秒没有新数据时主动取消本轮下载、删除不完整 ZIP 并在 Settings 行内提示重试，避免网络停滞后无限等待。该流程不后台检查或下载，也不修改 `%APPDATA%\Cap7CE` 用户数据；未来安装包更新策略应继续复用相同的检查、确认与进度状态，只替换主进程执行器。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
 
-此前完成的分阶段架构整理继续以体量与依赖守门约束运行时所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单，守门也会拒绝已经不再对应真实直连 channel 的过期豁免。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
+此前完成的分阶段架构整理继续以体量与依赖守门约束运行时所有权。`scripts/architecture-boundaries-check.cjs` 固定 `App.tsx`、`styles.css` 与 `electron/main.ts` 的当前物理行数上限，禁止 Renderer 引入 Electron / Node、领域模块反向依赖顶层装配文件，以及在 `main.ts` 继续新增非窗口生命周期 IPC。U0 进一步把 `electron/main.ts` 上限收紧到当前 3771 行，并为搜索、目录、Skim、Settings、Preview、文件菜单、拖放、快捷键、窗口固定与隐藏恢复建立正式源码锚点；所有权移动时必须同步迁移映射，不能让旧链悄然消失后在新版组件中复制。检查通过 `test:architecture-boundaries` 接入完整测试；后续每完成一个领域拆分，应同步降低对应体量上限和收缩 legacy main IPC 白名单，守门也会拒绝已经不再对应真实直连 channel 的过期豁免。该机制用于阻止复杂度重新堆回单体入口，不代替构建、集成测试和窗口人工回归。
 
 A5 已把运行时与模型、临时反馈、操作提示、视口只读指标、系统主题、窗口置顶和 skim 目录读取等具有单一所有权的状态簇迁入 `src/renderer/controllers/`。搜索、导航历史、关键词编辑、目录扫描、缓存确认及窗口恢复仍由 App 顶层编排；其中同时跨越多个 Effect、确认或取消语义的状态簇依据停止条件保留原位，不为减少行数强拆。
 
