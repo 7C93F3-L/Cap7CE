@@ -13,17 +13,16 @@ interface SettingsWindowControllerOptions {
   isQuitting: () => boolean;
   layoutStore: SettingsWindowLayoutStore;
   lockWebContentsZoom: (webContents: Electron.WebContents) => void;
+  prepareWindow?: (window: BrowserWindow) => void;
   preloadPath: string;
   presentationMode: () => WindowPresentationMode;
   rendererPath: string;
 }
-
 export class SettingsWindowController {
   private settingsWindow: BrowserWindow | null = null;
   private initialized = false;
   private opening: Promise<boolean> | null = null;
   private layoutCaptureTimer: NodeJS.Timeout | null = null;
-
   constructor(private readonly options: SettingsWindowControllerOptions) {}
 
   async open(): Promise<boolean> {
@@ -92,6 +91,7 @@ export class SettingsWindowController {
       }
     });
     this.settingsWindow = createdWindow;
+    this.options.prepareWindow?.(createdWindow);
     this.options.lockWebContentsZoom(createdWindow.webContents);
     createdWindow.setMenuBarVisibility(false);
     createdWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));

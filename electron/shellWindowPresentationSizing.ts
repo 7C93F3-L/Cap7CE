@@ -18,6 +18,7 @@ interface ShellWindowPresentationSizingOptions {
   microLayoutMaximumHeight: number;
   edgeGap: number;
   edgeAnchorThreshold: number;
+  getNormalDefaultOuterBounds?: (workArea: WindowLayoutBounds) => WindowLayoutBounds | null;
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -56,7 +57,20 @@ export class ShellWindowPresentationSizing {
         ? state
         : null;
     const verticalAnchor = state === "capsule" || state === "micro" || state === "mini" ? "bottom" : "center";
-    const defaultBounds = (workArea: WindowLayoutBounds) => toWindowOuterBounds(
+    const defaultBounds = (workArea: WindowLayoutBounds) => (state === "normal" || state === "settings")
+      ? this.options.getNormalDefaultOuterBounds?.(workArea) ?? toWindowOuterBounds(
+        getDefaultShellLayoutBounds(state, workArea, {
+          capsuleWidth: this.options.capsuleWidth,
+          capsuleHeight: this.options.capsuleHeight,
+          capsuleEdge,
+          microHeight: this.options.microHeight,
+          miniHeight: this.options.miniHeight,
+          edgeGap: this.options.edgeGap
+        }),
+        this.options.getTitlebarHeight(),
+        "center"
+      )
+      : toWindowOuterBounds(
       getDefaultShellLayoutBounds(state, workArea, {
         capsuleWidth: this.options.capsuleWidth,
         capsuleHeight: this.options.capsuleHeight,

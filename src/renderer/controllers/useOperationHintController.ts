@@ -44,6 +44,7 @@ interface OperationHintControllerOptions {
   quickActionGlobalEnabled: boolean;
   unavailableShortcutActionIds: ShortcutActionId[];
   shortcutActions: ShortcutActionPreferences;
+  stableUi?: boolean;
 }
 
 export const useOperationHintController = ({
@@ -53,7 +54,8 @@ export const useOperationHintController = ({
   commandEnabled,
   quickActionGlobalEnabled,
   unavailableShortcutActionIds,
-  shortcutActions
+  shortcutActions,
+  stableUi = false
 }: OperationHintControllerOptions) => {
   const [operationHintKey, setOperationHintKey] = useState<TranslationKey>(initialOperationHintKey);
   const previousQueryRef = useRef("");
@@ -62,6 +64,7 @@ export const useOperationHintController = ({
   const selectRandomOperationHint = useCallback(() => {
     setOperationHintKey((currentKey) => {
       const availableHints = operationHintDefinitions.filter((hint) => {
+        if (stableUi && (hint.shortcutActionId === "activateMicro" || hint.shortcutActionId === "activateMini")) return false;
         if (hint.requiresCommands && !commandEnabled) {
           return false;
         }
@@ -74,7 +77,7 @@ export const useOperationHintController = ({
       const nextHints = candidates.length > 0 ? candidates : availableHints;
       return nextHints[Math.floor(Math.random() * nextHints.length)]?.key ?? initialOperationHintKey;
     });
-  }, [commandEnabled, quickActionGlobalEnabled, unavailableShortcutActionIds]);
+  }, [commandEnabled, quickActionGlobalEnabled, stableUi, unavailableShortcutActionIds]);
 
   useEffect(() => {
     if (shellState === "standby") {
@@ -97,7 +100,7 @@ export const useOperationHintController = ({
 
   const operationHintDefinition = operationHintDefinitions.find((hint) => hint.key === operationHintKey);
   return enabled && query.length === 0
-    ? t(operationHintKey, operationHintDefinition?.shortcutActionId
+    ? t(stableUi && operationHintKey === "search.guide.activateCapsule" ? "search.guide.focusMainSearch" : stableUi && operationHintKey === "search.guide.activateNormal" ? "search.guide.restoreDefaultWindowSize" : operationHintKey, operationHintDefinition?.shortcutActionId
       ? { shortcut: shortcutActions[operationHintDefinition.shortcutActionId] }
       : {})
     : "";

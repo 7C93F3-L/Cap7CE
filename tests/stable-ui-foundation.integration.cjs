@@ -61,6 +61,7 @@ void (async () => {
   const contractSource = read("electron/stableUiDevelopmentContract.ts");
   const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
   const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
+  const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
   const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.tsx");
   const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
   const packageJson = JSON.parse(read("package.json"));
@@ -90,11 +91,16 @@ void (async () => {
   if (!titlebarSource.includes("<WindowPinButton") || !pinButtonSource.includes("aria-pressed={pinned}")) {
     throw new Error("Stable main and preview foundations must share the existing accessible pin control.");
   }
+  if (!titlebarSource.includes("<WindowTitlebarPortal>")
+    || !/createPortal\(children, document\.body\)/.test(titlebarPortalSource)) {
+    throw new Error("Stable titlebar must remain portaled outside the virtual grid so scrolling cannot invalidate native drag hit testing.");
+  }
   for (const marker of [
     "--cap-stable-edge-gap: 5px",
     "--cap-stable-radius-md: 14px",
     "--cap-stable-font-size: 13px",
     "env(titlebar-area-width",
+    "z-index: 60",
     "width: 46px",
     "::-webkit-scrollbar { width: 8px; height: 8px; }",
     "@media (prefers-reduced-motion: reduce)"
@@ -111,6 +117,7 @@ void (async () => {
     developmentOnlyRendererGateVerified: true,
     compatibilityHostRequired: true,
     sharedPinControlVerified: true,
+    scrollIsolatedTitlebarPortalVerified: true,
     developmentPreferencesAndLayoutIsolated: true,
     legacyResizeStateSettlingBypassed: true,
     nativeCloseUsesSafeStandbyChain: true,

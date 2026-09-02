@@ -455,7 +455,7 @@ const PreviewWindowApp = () => {
       onClick: togglePreviewAlwaysOnTop
     }
   ];
-  const showSettings = viewportHeight - (isCompatibilityWindow ? COMPATIBILITY_TITLEBAR_HEIGHT : 0) >= windowControlState.miniStandardHeight;
+  const showSettings = viewportHeight - (isCompatibilityWindow ? COMPATIBILITY_TITLEBAR_HEIGHT : 0) - (isStableUiPreview ? 4 : 0) >= windowControlState.miniStandardHeight;
 
   if (!previewData) {
     return <main className="preview-window-root" />;

@@ -9,6 +9,8 @@ const previewSource = read("src/renderer/PreviewWindowApp.tsx");
 const mainSource = read("electron/main.ts");
 const viewportMetricsSource = read("src/renderer/controllers/useShellViewportMetrics.ts");
 const titlebarSource = read("src/renderer/window-presentation/CompatibilityTitlebar.tsx");
+const stableTitlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
+const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
 const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.tsx");
 const titlebarStyles = read("src/renderer/window-presentation/CompatibilityTitlebar.css");
 const rendererEntry = read("src/renderer/main.tsx");
@@ -37,9 +39,14 @@ if (!/isCompatibilityWindow\s*&&\s*<CompatibilityTitlebar/.test(previewSource)) 
   throw new Error("Compatibility titlebar must be shared with the compatibility preview window.");
 }
 
-if (!titlebarSource.includes('import { createPortal } from "react-dom"')
-  || !/createPortal\([\s\S]*?document\.body\)/.test(titlebarSource)) {
-  throw new Error("Compatibility titlebar must remain outside the animated and scrollable shell DOM.");
+if (!titlebarPortalSource.includes('import { createPortal } from "react-dom"')
+  || !/createPortal\(children, document\.body\)/.test(titlebarPortalSource)) {
+  throw new Error("The shared titlebar host must portal every native drag region directly to document.body.");
+}
+for (const [label, source] of [["Compatibility", titlebarSource], ["Stable UI", stableTitlebarSource]]) {
+  if (!source.includes('import WindowTitlebarPortal') || !/<WindowTitlebarPortal>[\s\S]*?<header/.test(source)) {
+    throw new Error(`${label} titlebar must remain outside animated, clipped and scrollable application DOM.`);
+  }
 }
 
 for (const marker of ["aria-pressed={pinned}", "aria-label={label}", "onClick={onToggle}", "iconPinOnSvg", "iconPinOffSvg"]) {
@@ -97,6 +104,7 @@ console.log(JSON.stringify({
   nativeOverlaySafeAreaUsed: true,
   pinControlAccessibleAndShared: true,
   titlebarIsolatedFromScrollableShell: true,
+  allWcoTitlebarsSharePortalBoundary: true,
   existingRightRailEntriesPreserved: true,
   compatibilityContentOffsetVerified: true,
   nativeOuterCornersPreserved: true,

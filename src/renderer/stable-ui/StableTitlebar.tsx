@@ -1,26 +1,26 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import type { ResolvedThemeMode } from "../../shared/types";
 import WindowPinButton from "../window-presentation/WindowPinButton";
-
+import WindowTitlebarPortal from "../window-presentation/WindowTitlebarPortal";
 interface StableTitlebarProps {
-  pinned: boolean;
-  pinLabel: string;
-  searchInput: ReactNode;
-  resultStatus: ReactNode;
+  theme: ResolvedThemeMode; themeStyle: CSSProperties;
+  pinned: boolean; pinLabel: string;
+  searchInput: ReactNode; resultStatus: ReactNode;
   onTogglePinned: () => void;
 }
-
-const StableTitlebar = ({ pinned, pinLabel, searchInput, resultStatus, onTogglePinned }: StableTitlebarProps) => (
-  <header className="cap-stable-titlebar" data-window-controls="true">
-    {searchInput}
-    <span className="cap-stable-result-count">{resultStatus}</span>
-    <WindowPinButton
-      className="cap-stable-titlebar-pin"
-      iconClassName="cap-stable-titlebar-pin-icon"
-      pinned={pinned}
-      label={pinLabel}
-      onToggle={onTogglePinned}
-    />
-  </header>
+const StableTitlebar = ({ theme, themeStyle, pinned, pinLabel, searchInput, resultStatus, onTogglePinned }: StableTitlebarProps) => (
+  <WindowTitlebarPortal>
+    <header className={`app theme-${theme} cap-stable-titlebar`} style={themeStyle} data-window-controls="true">
+      {searchInput}
+      <span className="cap-stable-result-count">{resultStatus}</span>
+      <WindowPinButton
+        className="cap-stable-titlebar-pin"
+        iconClassName="cap-stable-titlebar-pin-icon"
+        pinned={pinned}
+        label={pinLabel}
+        onToggle={onTogglePinned}
+      />
+    </header>
+  </WindowTitlebarPortal>
 );
-
 export default StableTitlebar;

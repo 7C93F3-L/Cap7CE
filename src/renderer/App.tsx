@@ -461,7 +461,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     commandEnabled,
     quickActionGlobalEnabled,
     unavailableShortcutActionIds,
-    shortcutActions
+    shortcutActions,
+    stableUi
   });
   const searchInputFeedback = quickCommandNotice || operationHint;
   const operationHintVisible = quickCommandNotice.length === 0 && operationHint.length > 0;

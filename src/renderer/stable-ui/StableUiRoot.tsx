@@ -10,8 +10,8 @@ const StableUiRoot = ({ theme, themeStyle, pinned, pinLabel, search, searchInput
       onDragOverCapture={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = directoryDropEnabled ? "copy" : "none"; }}
       onDropCapture={(event) => { event.preventDefault(); if (directoryDropEnabled) onDirectoryDrop(event.dataTransfer); }}>
       <StableTitlebar
-        pinned={pinned}
-        pinLabel={pinLabel}
+        theme={theme} themeStyle={themeStyle}
+        pinned={pinned} pinLabel={pinLabel}
         searchInput={<StableSearchInput search={search} inputRef={searchInputRef} inputFeedback={inputFeedback} inputFeedbackIsGuide={inputFeedbackIsGuide} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />}
         resultStatus={resultStatus}
         onTogglePinned={onTogglePinned}

@@ -1,5 +1,5 @@
-.cap-stable-ui {
-  --cap-stable-titlebar-height: env(titlebar-area-height, 36px);
+.cap-stable-ui, .cap-stable-titlebar {
+  --cap-stable-titlebar-height: env(titlebar-area-height, 40px);
   --cap-stable-edge-gap: 5px;
   --cap-stable-space-xs: 4px;
   --cap-stable-space-sm: 8px;
@@ -20,16 +20,16 @@
   --cap-stable-caption-hover: rgb(0 0 0 / 10%);
   --cap-stable-scrollbar: rgb(31 31 31 / 28%);
   --cap-stable-scrollbar-active: rgb(31 31 31 / 46%);
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
   color: var(--cap-stable-text);
   background: transparent;
   font: var(--cap-stable-font-size)/20px "Segoe UI Variable", "Segoe UI", sans-serif;
 }
+.cap-stable-ui {
+  position: fixed; inset: 0; overflow: hidden;
+}
 
 @media (prefers-color-scheme: dark) {
-  .cap-stable-ui {
+  .cap-stable-ui, .cap-stable-titlebar {
     --cap-stable-text: rgb(244 244 244 / 90%);
     --cap-stable-text-muted: rgb(244 244 244 / 58%);
     --cap-stable-surface: rgb(26 26 26 / 58%);
@@ -46,7 +46,7 @@
   position: fixed;
   top: env(titlebar-area-y, 0);
   left: env(titlebar-area-x, 0);
-  z-index: 10;
+  z-index: 60;
   width: env(titlebar-area-width, 100%);
   height: var(--cap-stable-titlebar-height);
   display: flex;

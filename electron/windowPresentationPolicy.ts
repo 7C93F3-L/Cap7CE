@@ -4,7 +4,7 @@ export type WindowPresentationMode = typeof WINDOW_PRESENTATION_MODES[number];
 export type WindowPresentationSurface = "main" | "preview" | "settings";
 
 export interface WindowPresentationSurfacePolicy {
-  frame: false;
+  frame: boolean;
   transparent: boolean;
   usesWindowControlsOverlay: boolean;
 }
@@ -20,10 +20,10 @@ export interface WindowPresentationPolicy {
 export type WindowPresentationTheme = "light" | "dark";
 
 export interface WindowPresentationBrowserOptions {
-  frame: false;
+  frame: boolean;
   transparent: boolean;
   backgroundColor: string;
-  backgroundMaterial?: "mica";
+  backgroundMaterial?: "mica" | "acrylic";
   roundedCorners?: true;
   titleBarStyle?: "hidden";
   titleBarOverlay?: {

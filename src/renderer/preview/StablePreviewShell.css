@@ -2,7 +2,7 @@
 .preview-window-stage {
   display: contents;
 }
-
+.preview-window-stable-ui { --compatibility-titlebar-height: 40px; background: transparent; }
 .preview-stable-shell {
   --preview-sidebar-current-width: var(--preview-sidebar-width, 320px);
   position: absolute;

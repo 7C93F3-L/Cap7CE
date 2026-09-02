@@ -70,6 +70,7 @@ import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { applyCurrentStableUiAlwaysOnTopPreference, applyCurrentStableUiDevelopmentQuery, getStableUiDevelopmentLayoutFileName, isCurrentStableUiDevelopmentEnabled, WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
+import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
@@ -343,7 +344,8 @@ const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
   miniMaximumWidth: DEFAULT_WINDOW_RESIZE_THRESHOLDS.miniToNormalWidth,
   microLayoutMaximumHeight: microLayoutMaxHeight,
   edgeGap: edgeGapPx,
-  edgeAnchorThreshold: edgeAnchorThresholdPx
+  edgeAnchorThreshold: edgeAnchorThresholdPx,
+  getNormalDefaultOuterBounds: (workArea) => isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) ? resolveStableUiDefaultWindowBounds(workArea) : null
 });
 const previewWindowPresentationSizing = new PreviewWindowPresentationSizing({ minimumWidth: previewWindowMinimumWidth, minimumHeight: previewWindowMinimumHeight, horizontalPadding: previewWindowHorizontalPadding, verticalChrome: previewWindowVerticalChrome, workAreaRatio: previewWindowWorkAreaRatio });
 const getShellContentBounds = (bounds: Electron.Rectangle) => shellWindowPresentationSizing.getContentBounds(bounds);
@@ -385,9 +387,7 @@ const sendActivePreviewData = () => {
     previewWindow.webContents.send("skim:folderStats", latestSkimFolderStatsUpdate);
   }
 };
-
 const embeddedMetadataPreviewCoordinator = createEmbeddedMetadataPreviewCoordinator({ getActiveData: () => activePreviewData, publish: (update) => { if (activePreviewData) activePreviewData = { ...activePreviewData, embeddedMetadata: update.embeddedMetadata }; previewWindow?.webContents.send("preview:embeddedMetadata", update); } });
-
 const applyLanguagePreference = async (languagePreference: LanguagePreference) => {
   const preferences = await updateLanguagePreference(languagePreference);
   const resolvedLanguage = resolveLanguagePreference(preferences.languagePreference, app.getLocale());
@@ -410,7 +410,7 @@ const revealPreviewWindow = () => {
   if (!previewWasVisible) {
     previewWindow.showInactive();
   }
-  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+  if (!isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
     mainWindow.hide();
   }
   applyAlwaysOnTopState();
@@ -473,31 +473,25 @@ const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } =
     previewWindow.hide();
     previewWindow.setAlwaysOnTop(false);
   }
-
   const wasActive = previewSessionActive;
   previewSessionActive = false;
   activePreviewData = null;
   latestPreviewContentSize = null;
-
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("preview:closed");
-    if (wasActive && restoreMain) {
+    if (wasActive && restoreMain && !isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) {
       mainWindow.show();
       applyAlwaysOnTopState();
       mainWindow.focus();
     }
   }
-
   schedulePreviewIdleDestroy();
-
   return wasActive;
 };
-
 const centerPreviewWindowForNewSession = () => {
   if (!previewWindow || previewWindow.isDestroyed()) {
     return false;
   }
-
   const display = mainWindow && !mainWindow.isDestroyed()
     ? screen.getDisplayMatching(mainWindow.getBounds())
     : screen.getPrimaryDisplay();
@@ -511,7 +505,6 @@ const centerPreviewWindowForNewSession = () => {
   );
   return true;
 };
-
 const getPreviewWindowBounds = (contentWidth: number, contentHeight: number): Electron.Rectangle => {
   const currentPreviewBounds = previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible()
     ? previewDockedShell.getExpandedBounds(previewWindow)
@@ -523,7 +516,6 @@ const getPreviewWindowBounds = (contentWidth: number, contentHeight: number): El
       : screen.getPrimaryDisplay();
   return previewWindowPresentationSizing.resolveBounds({ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display.workArea, titlebarHeight: windowPresentationRuntime.titlebarHeight });
 };
-
 const applyLatestPreviewContentSize = () => {
   if (
     !previewSessionActive
@@ -539,7 +531,6 @@ const applyLatestPreviewContentSize = () => {
   ) {
     return false;
   }
-
   const nextBounds = getPreviewWindowBounds(
     latestPreviewContentSize.width,
     latestPreviewContentSize.height
@@ -555,13 +546,11 @@ const applyLatestPreviewContentSize = () => {
   }
   return true;
 };
-
 const createPreviewWindow = () => {
   clearPreviewIdleDestroyTimer();
   if (previewWindow && !previewWindow.isDestroyed()) {
     return;
   }
-
   previewWindowLoaded = false;
   const previewMinimumSize = previewWindowPresentationSizing.getOuterMinimumSize(windowPresentationRuntime.titlebarHeight);
   previewWindow = createApplicationWindow("preview", {
@@ -595,6 +584,7 @@ const createPreviewWindow = () => {
     markProgrammaticMove: markPreviewProgrammaticMove,
     setCollapsedLayerActive: (active) => windowLayerController.setPreviewCollapsedLayerActive(active)
   });
+  windowPresentationRuntime.applyPreviewWindowAppearance(previewWindow, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors);
   applyAlwaysOnTopState();
   previewWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   previewWindow.webContents.on("did-finish-load", () => {
@@ -651,7 +641,6 @@ const createPreviewWindow = () => {
     });
   }
 };
-
 const createStartupHintWindow = async () => {
   if (startupHintWindow) return;
 
@@ -789,7 +778,6 @@ const getShellDisplay = () => (
     ? screen.getDisplayMatching(mainWindow.getBounds())
     : screen.getPrimaryDisplay()
 );
-
 const getLineWindowPlacement = (currentBounds?: Electron.Rectangle, currentEdge?: WindowDockEdge) => {
   const placement = windowLayoutManager.resolveStandbyLinePlacement(toWindowLayoutDisplaySnapshot(getShellDisplay()));
   const vertical = placement.edge === "left" || placement.edge === "right";
@@ -802,14 +790,12 @@ const getLineWindowPlacement = (currentBounds?: Electron.Rectangle, currentEdge?
     bounds: getDirectionalLineBounds(placement.display.workArea, placement.edge, standbyVisualLengthPx, interactionThickness, edgeGapPx)
   };
 };
-
 const shouldShowLineWindow = () => (
   standbyLineVisible
   && Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible())
-  && !Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible())
+  && (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) || !Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible()))
   && !capsuleWindowController.isVisible()
 );
-
 const lineWindowController = new LineWindowController({
   createWindow: (options) => createApplicationWindow("line", options), devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged,
   getAlwaysOnTop: () => shellAlwaysOnTop,
@@ -881,12 +867,10 @@ const compatibilityNativeMaximizeController = new CompatibilityNativeMaximizeCon
     sendShellStateToRenderer(activeShellState);
   }
 });
-
 const getNormalWorkAreaBounds = (): Electron.Rectangle => {
   const { x, y, width, height } = getShellDisplay().workArea;
   return { x, y, width, height };
 };
-
 const getShellWindowBounds = (state: Cap7CEShellState, targetDisplay?: Electron.Display, capsuleEdge: "top" | "bottom" = "bottom"): Electron.Rectangle => {
   const display = targetDisplay ?? (mainWindow ? screen.getDisplayMatching(mainWindow.getBounds()) : screen.getPrimaryDisplay());
   return shellWindowPresentationSizing.resolveBounds({
@@ -897,7 +881,6 @@ const getShellWindowBounds = (state: Cap7CEShellState, targetDisplay?: Electron.
     layoutManager: windowLayoutManager
   });
 };
-
 const scheduleShellWorkAreaRefresh = (changedDisplayId: number | null) => {
   dockedShellController?.reconcileDisplayConfiguration();
   previewDockedShell.reconcileDisplayConfiguration();
@@ -906,35 +889,29 @@ const scheduleShellWorkAreaRefresh = (changedDisplayId: number | null) => {
   }
   capsuleWindowController.reconcileDisplayConfiguration(changedDisplayId);
 };
-
 const getMicroResizeBoundsForCurrentPosition = (currentBounds: Electron.Rectangle): Electron.Rectangle => {
   const { workArea } = screen.getDisplayMatching(currentBounds);
   return shellWindowPresentationSizing.getMicroResizeBounds(currentBounds, workArea);
 };
-
 const isBottomCenterMicroBounds = (bounds: Electron.Rectangle) => {
   const { workArea } = screen.getDisplayMatching(bounds);
   return shellWindowPresentationSizing.isBottomCenterBounds(bounds, workArea);
 };
-
 const getBottomCenterMicroResizeBounds = (newBounds: Electron.Rectangle): Electron.Rectangle => {
   const { workArea } = screen.getDisplayMatching(newBounds);
   return shellWindowPresentationSizing.getBottomCenterMicroResizeBounds(newBounds, workArea);
 };
-
 const getShellMinimumSize = (state: Cap7CEShellState) => {
   const workArea = mainWindow
     ? screen.getDisplayMatching(mainWindow.getBounds()).workArea
     : screen.getPrimaryDisplay().workArea;
   return shellWindowPresentationSizing.getMinimumSize(state, workArea);
 };
-
 const markProgrammaticResize = () => {
   programmaticResizeGuardUntil = Date.now() + programmaticResizeGuardMs;
 };
 
 const isProgrammaticResizeGuardActive = () => Date.now() < programmaticResizeGuardUntil;
-
 const markProgrammaticMove = () => {
   programmaticMoveGuardUntil = Date.now() + programmaticMoveGuardMs;
   if (moveSnapTimer !== null) {
@@ -942,9 +919,7 @@ const markProgrammaticMove = () => {
     moveSnapTimer = null;
   }
 };
-
 const isProgrammaticMoveGuardActive = () => Date.now() < programmaticMoveGuardUntil;
-
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const canSnapShellWindow = () => activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal" || activeShellState === "settings";
@@ -1164,7 +1139,7 @@ const showAndFocusMainWindow = () => {
     return false;
   }
 
-  const shouldWaitForTargetLayout = !mainWindow.isVisible() && (
+  const shouldWaitForTargetLayout = !isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && !mainWindow.isVisible() && (
     activeShellState === "standby"
     || (activeShellState === "capsule" && windowPresentationRuntime.mode === "compatibility")
   );
@@ -1180,6 +1155,9 @@ const showAndFocusMainWindow = () => {
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }
+  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && activeShellState !== "normal") {
+    activeShellState = "normal"; syncTaskbarVisibility(activeShellState); sendShellStateToRenderer(activeShellState);
+  }
   applyAlwaysOnTopState();
   mainWindow.focus();
   mainWindow.moveTop();
@@ -1187,6 +1165,12 @@ const showAndFocusMainWindow = () => {
 };
 
 const activateCapsuleShortcut = (source: "cursor" | "line" = "cursor") => {
+  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) {
+    capsuleWindowController.clearPendingTarget();
+    if (!showAndFocusMainWindow()) return false;
+    sendActivateCapsuleShortcutToRenderer();
+    return true;
+  }
   const linePlacement = source === "line" ? getLineWindowPlacement() : null;
   capsuleWindowController.prepareTarget(linePlacement);
   if (windowPresentationRuntime.mode === "compatibility" && activeShellState === "capsule") {
@@ -1249,7 +1233,7 @@ const unregisterShellModeShortcuts = () => {
   registeredShellModeShortcuts.clear();
 };
 
-const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings"): Promise<boolean> => {
+const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings", applyDefaultSizePreset = false): Promise<boolean> => {
   if (mode === "settings") {
     return openSettings();
   }
@@ -1263,6 +1247,11 @@ const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "st
     return requestSafeMainWindowHide();
   }
   if (!showAndFocusMainWindow()) return false;
+  if (mode === "normal" && applyDefaultSizePreset && isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && mainWindow) {
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    markProgrammaticResize(); markProgrammaticMove();
+    const presetBounds = resolveStableUiDefaultWindowBounds(screen.getDisplayMatching(mainWindow.getBounds()).workArea); mainWindow.setBounds(presetBounds, true); rememberUserMovedShellBounds(presetBounds);
+  }
   sendActivateShellModeShortcutToRenderer(mode);
   return true;
 };
@@ -1287,10 +1276,11 @@ const registerShellModeShortcuts = (shortcutActions: {
   ] as const;
 
   for (const { id, shortcut, mode } of shortcutModes) {
+    if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
     if (!shortcut) continue;
     try {
       const registered = globalShortcut.register(shortcut, () => {
-        void activateShellModeShortcut(mode);
+        void activateShellModeShortcut(mode, mode === "normal");
       });
       if (registered) {
         registeredShellModeShortcuts.set(id, shortcut);
@@ -1335,6 +1325,7 @@ const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) 
   const registeredShortcuts: string[] = [];
 
   for (const [id, shortcut] of shortcutEntries) {
+    if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
     if (!shortcut) {
       unavailableActionIds.add(id);
       continue;
@@ -1743,6 +1734,7 @@ const applyStandaloneLineMode = () => {
 
 const applyCapsuleWindowMode = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
+  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) return showAndFocusMainWindow() && (sendActivateCapsuleShortcutToRenderer(), true);
 
   lineWindowController.hide();
   resetShellBehavior();
@@ -2331,6 +2323,7 @@ const createWindow = () => {
       contextIsolation: true, devTools: !app.isPackaged, nodeIntegration: false
     }
   });
+  windowPresentationRuntime.applyMainWindowAppearance(mainWindow, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors);
   lockWebContentsZoom(mainWindow.webContents);
   mainWindow.webContents.once("did-finish-load", () => { void windowPresentationSwitchRuntime.completeStartup(windowPresentationRuntime.mode); });
   dockedShellController = installDockedShell({
@@ -2471,7 +2464,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged, getDisplayMatching: (bounds) => toWindowLayoutDisplaySnapshot(screen.getDisplayMatching(bounds)),
     getDisplays: () => screen.getAllDisplays().map(toWindowLayoutDisplaySnapshot), getPrimaryDisplay: () => toWindowLayoutDisplaySnapshot(screen.getPrimaryDisplay()), isQuitting: () => isQuitting,
     layoutStore: new SettingsWindowLayoutStore(path.join(app.getPath("userData"), "config", "settings-window-layout.json")), lockWebContentsZoom,
-    preloadPath: path.join(__dirname, "preload.js"), presentationMode: () => windowPresentationRuntime.mode, rendererPath: path.join(__dirname, "../dist/index.html")
+    preloadPath: path.join(__dirname, "preload.js"), prepareWindow: (window) => windowPresentationRuntime.applySettingsWindowAppearance(window, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors), presentationMode: () => windowPresentationRuntime.mode, rendererPath: path.join(__dirname, "../dist/index.html")
   });
   windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", getStableUiDevelopmentLayoutFileName(windowPresentationRuntime.layoutFileName, windowPresentationRuntime.mode))));
   await windowLayoutManager.load();
@@ -2580,6 +2573,11 @@ ipcMain.handle("line:activateCapsule", (event) => {
 });
 
 ipcMain.handle("window:setShellState", (_event, state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => {
+  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) {
+    if (state === "standby") return applyStandaloneLineMode();
+    if (state === "capsule") return activateCapsuleShortcut();
+    return state === "normal" || state === "settings" ? showAndFocusMainWindow() : false;
+  }
   const forceBounds = Boolean(options?.forceBounds);
   if (state === "micro" && forceBounds) {
     return forceApplyDefaultMicroBounds();
@@ -3071,6 +3069,7 @@ ipcMain.handle("preview:toggleSkimLocationPicker", (event) => {
     return false;
   }
   closePreviewSession();
+  showAndFocusMainWindow();
   sendToggleSkimLocationPickerToRenderer();
   return true;
 });
@@ -3097,6 +3096,7 @@ ipcMain.handle("preview:itemAction", (event, request: PreviewItemActionRequest) 
   };
   closePreviewSession();
   if (mainWindow && !mainWindow.isDestroyed()) {
+    showAndFocusMainWindow();
     mainWindow.webContents.send("preview:itemAction", validatedRequest);
     return true;
   }

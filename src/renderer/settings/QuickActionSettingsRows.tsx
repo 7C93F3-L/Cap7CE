@@ -13,22 +13,23 @@ import {
   normalizeShortcutActions
 } from "../shortcutActions";
 
-const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }> => [
-  { id: "activateCapsule", name: t("shortcut.activateCapsule") },
+const getShortcutActionItems = (stableUi = false): Array<{ id: ShortcutActionId; name: string }> => ([
+  { id: "activateCapsule", name: t(stableUi ? "shortcut.focusMainSearch" : "shortcut.activateCapsule") },
   { id: "activateMicro", name: t("shortcut.activateMicro") },
   { id: "activateMini", name: t("shortcut.activateMini") },
-  { id: "activateNormal", name: t("shortcut.activateNormal") },
+  { id: "activateNormal", name: t(stableUi ? "shortcut.restoreDefaultWindowSize" : "shortcut.activateNormal") },
   { id: "activateStandby", name: t("shortcut.activateLine") },
   { id: "activateSkim", name: t("shortcut.activateSkim") },
   { id: "openSettings", name: t("shortcut.openSettings") },
   { id: "cycleDirectory", name: t("shortcut.cycleDirectory") }
-];
+] as Array<{ id: ShortcutActionId; name: string }>).filter((item) => !stableUi || (item.id !== "activateMicro" && item.id !== "activateMini"));
 
 export interface QuickActionSettingsRowsProps {
   quickActionGlobalEnabled: boolean;
   shortcutActions: ShortcutActionPreferences;
   unavailableShortcutActionIds: ShortcutActionId[];
   expanded: boolean;
+  stableUi?: boolean;
   onGlobalEnabledChange: (enabled: boolean) => void;
   onShortcutActionsChange: (shortcutActions: ShortcutActionPreferences) => Promise<ShortcutActionsUpdateResult | null>;
   onShortcutCaptureStart: () => Promise<boolean>;
@@ -41,6 +42,7 @@ export const QuickActionSettingsRows = ({
   shortcutActions,
   unavailableShortcutActionIds,
   expanded,
+  stableUi = false,
   onGlobalEnabledChange,
   onShortcutActionsChange,
   onShortcutCaptureStart,
@@ -89,7 +91,7 @@ export const QuickActionSettingsRows = ({
     };
     setShortcutActionDrafts(nextShortcutActions);
 
-    const hasInternalConflict = getShortcutActionItems().some((item) => (
+    const hasInternalConflict = getShortcutActionItems(stableUi).some((item) => (
       item.id !== shortcutActionId && nextShortcutActions[item.id] === shortcut
     ));
     if (hasInternalConflict) {
@@ -190,9 +192,9 @@ export const QuickActionSettingsRows = ({
             </div>
           </div>
           <div className="cap-settings-quick-actions-list">
-            {getShortcutActionItems().map((item) => {
+            {getShortcutActionItems(stableUi).map((item) => {
               const isCapturing = capturingShortcutActionId === item.id;
-              const hasInternalConflict = getShortcutActionItems().some((otherItem) => (
+              const hasInternalConflict = getShortcutActionItems(stableUi).some((otherItem) => (
                 otherItem.id !== item.id && shortcutActionDrafts[otherItem.id] === shortcutActionDrafts[item.id]
               ));
               const isUnavailable = hasInternalConflict || unavailableShortcutActionIds.includes(item.id) || draftUnavailableActionIds.includes(item.id);
