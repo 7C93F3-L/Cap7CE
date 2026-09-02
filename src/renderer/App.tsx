@@ -899,6 +899,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
+  useEffect(() => {
+    if (!stableUi || isLoadingDirectories || resultsInitializedRef.current) return;
+    const initialSearch = { ...emptySearch, sortField: search.sortField, sortDirection: search.sortDirection };
+    setSearch(initialSearch);
+    void runSearch(initialSearch, { navigate: false });
+  }, [isLoadingDirectories, stableUi]);
+
   const updateResultsSearch = (nextSearch: SearchState, refresh = false) => {
     setSearch(nextSearch);
     if (nextSearch.sortField !== search.sortField || nextSearch.sortDirection !== search.sortDirection) {

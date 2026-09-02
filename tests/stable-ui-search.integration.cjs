@@ -17,6 +17,7 @@ assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
 assert.match(appSource, /stableUiRenderer\?: StableUiRenderer/);
 assert.match(appSource, /resultContent=\{deleteFilesPanel \?\? <ResultsView \{\.\.\.createResultsViewProps\(true\)\} \/>\}/);
 assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
+assert.match(appSource, /if \(!stableUi \|\| isLoadingDirectories \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)/);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
 assert.match(appSource, /if \(stableUi\) return;/);
@@ -33,6 +34,8 @@ assert.match(resultsSource, /responsiveLayout\?: boolean/);
 assert.match(resultsSource, /responsiveLayout=\{responsiveLayout\}/);
 assert.match(gridSource, /window\.matchMedia\("\(max-height: 359\.98px\)"\)/);
 assert.match(gridSource, /responsiveLayout \? \(lowHeightLayout \? "micro" : "normal"\)/);
+assert.match(gridSource, /interactive=\{!responsiveLayout\}/);
+assert.match(gridSource, /: <div className="empty-result-row">\{message\}<\/div>/);
 
 for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(state.item)", "onCopyPaths(state.items)", "onEditKeywords(state.items)", "onDelete(state.items)"]) {
   assert.ok(menuSource.includes(marker), `Formal results context menu is missing ${marker}.`);
@@ -41,6 +44,8 @@ for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(sta
 console.log(JSON.stringify({
   singleSearchAuthorityBridged: true,
   imeAndClearSubmissionGuarded: true,
+  stableInitialAllDirectorySearchVerified: true,
+  stableEmptyResultIsNotInteractive: true,
   formalVirtualResultsAndFileActionsReused: true,
   responsiveGridDirectionVerified: true
 }));

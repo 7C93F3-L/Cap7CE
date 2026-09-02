@@ -1,16 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useStableShellResize } from "./useStableShellResize";
 
 export const useStableShellLayout = (onSkimOpen: () => void) => {
-  const [skimOpen, setSkimOpen] = useState(true);
-  const openedSkimRef = useRef(false);
+  const [skimOpen, setSkimOpen] = useState(false);
   const resize = useStableShellResize();
-
-  useEffect(() => {
-    if (openedSkimRef.current) return;
-    openedSkimRef.current = true;
-    onSkimOpen();
-  }, [onSkimOpen]);
 
   return {
     ...resize,

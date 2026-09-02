@@ -11,6 +11,7 @@ const toolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const contractSource = read("src/renderer/stable-ui/stableSkimTypes.ts");
 const panelStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
 const skimViewSource = read("src/renderer/skim/SkimView.tsx");
+const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
 assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(true, active\)\} \/>/);
@@ -18,6 +19,9 @@ assert.match(appSource, /onBack: \(\) => navigateSkimParent\(false\)/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
 assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimOpen\)\} \/>/);
+assert.match(layoutSource, /useState\(false\)/);
+assert.doesNotMatch(layoutSource, /useEffect|openedSkimRef/);
+assert.match(layoutSource, /if \(!open\) onSkimOpen\(\)/);
 assert.doesNotMatch(slotSource, /StablePlaceholderGrid|aria-label="Skim 布局占位区"/);
 
 for (const marker of ["currentPath", "breadcrumbs", "onOpenPath", "onSortChange", "onDisplayModeChange", "renderContent: (active: boolean)"]) {
@@ -40,6 +44,7 @@ assert.doesNotMatch(`${shellSource}\n${slotSource}\n${toolbarSource}\n${contract
 console.log(JSON.stringify({
   singleSkimControllerReused: true,
   searchAndSkimRemainOrthogonal: true,
+  skimClosedUntilExplicitToggle: true,
   pathBreadcrumbSortAndScopeControlsVerified: true,
   formalVirtualGridAndFileActionsReused: true,
   hiddenPanelKeyboardIsolationVerified: true,

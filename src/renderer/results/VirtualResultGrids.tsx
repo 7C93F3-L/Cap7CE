@@ -47,14 +47,9 @@ export interface VirtualImageGridProps {
   onAiSearchSectionToggle: () => void;
 }
 
-const EmptySearchResult = ({ message, onOpenSkim }: { message: string; onOpenSkim: () => void }) => (
-  <button className="empty-result-row cap-skim-empty-entry" type="button" onClick={onOpenSkim}>
-    <span className="cap-empty-result-content">
-      <span>{message}</span>
-      <span>{t("skim.searchElsewhere")}</span>
-    </span>
-  </button>
-);
+const EmptySearchResult = ({ message, onOpenSkim, interactive }: { message: string; onOpenSkim: () => void; interactive: boolean }) => interactive ? (
+  <button className="empty-result-row cap-skim-empty-entry" type="button" onClick={onOpenSkim}><span className="cap-empty-result-content"><span>{message}</span><span>{t("skim.searchElsewhere")}</span></span></button>
+) : <div className="empty-result-row">{message}</div>;
 
 export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images, layoutItems, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim, onAiSearchSectionToggle }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
@@ -358,7 +353,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
       <section className="image-grid cap-main-scroll-viewport" aria-label={t("search.resultGridLabel")} ref={containerRef} onScroll={handleScroll} onWheel={handleWheel}>
       {searchError && <div className="empty-result-row">{searchError}</div>}
       {!isSearching && !searchError && !hasGridItems && (
-        <EmptySearchResult message={t("search.emptyResult")} onOpenSkim={onOpenSkim} />
+        <EmptySearchResult message={t("search.emptyResult")} onOpenSkim={onOpenSkim} interactive={!responsiveLayout} />
       )}
       {!searchError && hasGridItems && (
         <div className="virtual-grid-spacer" style={{ height: virtualGrid.totalHeight, width: isHorizontalGrid ? virtualGrid.totalWidth : "100%" }} data-rendered-count={virtualGrid.visibleItems.length} data-column-count={virtualGrid.columnCount}>
