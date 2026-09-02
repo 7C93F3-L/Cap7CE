@@ -1,0 +1,124 @@
+.preview-information-sidebar {
+  --preview-sidebar-muted: color-mix(in srgb, var(--text-main) 58%, transparent);
+  --preview-sidebar-card: color-mix(in srgb, var(--panel-bg) 72%, transparent);
+  --preview-sidebar-control: color-mix(in srgb, var(--app-bg) 76%, transparent);
+  position: relative;
+  z-index: 5;
+  width: var(--preview-sidebar-current-width);
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  color: var(--text-main);
+  background: transparent;
+}
+
+.preview-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 24px);
+  min-height: 32px;
+  box-sizing: border-box;
+  margin: 12px 14px 14px 10px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.preview-information-sidebar.is-collapsed .preview-sidebar-header {
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 6px 4px;
+  padding: 0;
+}
+
+.preview-sidebar-header > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.preview-sidebar-header strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-sidebar-scroll {
+  position: absolute;
+  inset: 58px 0 0;
+  overflow: auto;
+  padding: 0 14px 24px 10px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.preview-sidebar-section {
+  display: grid;
+  gap: 9px;
+  margin: 0 0 10px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--preview-sidebar-card);
+}
+
+.preview-sidebar-file-card { gap: 10px; }
+.preview-sidebar-file-heading strong,
+.preview-sidebar-file-heading span { display: block; }
+.preview-sidebar-file-heading strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-sidebar-file-heading span,
+.preview-sidebar-empty,
+.preview-sidebar-section h2,
+.preview-sidebar-details dt { color: var(--preview-sidebar-muted); }
+.preview-sidebar-file-heading span { margin-top: 5px; font-size: 11px; }
+.preview-sidebar-section h2 { margin: 0; font-size: 12px; font-weight: 600; }
+.preview-sidebar-details { display: grid; gap: 9px; margin: 0; font-size: 12px; }
+.preview-sidebar-details > div { display: grid; gap: 2px; }
+.preview-sidebar-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; user-select: text; }
+.preview-sidebar-path,
+.preview-sidebar-description { margin: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.55; user-select: text; }
+.preview-sidebar-description { margin-top: 10px; }
+.preview-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.preview-sidebar-section-heading button { padding: 2px 6px; color: var(--theme-color); background: transparent; font-size: 11px; }
+.preview-sidebar-keywords,
+.preview-sidebar-evidence { display: flex; flex-wrap: wrap; gap: 6px; }
+.preview-sidebar-keywords span,
+.preview-sidebar-evidence span { max-width: 100%; min-height: 26px; box-sizing: border-box; padding: 5px 10px; overflow: hidden; border-radius: 999px; background: var(--preview-sidebar-control); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-sidebar-empty { margin: 0; font-size: 11px; }
+
+.preview-information-sidebar .preview-embedded-metadata-details {
+  max-height: none;
+  overflow: visible;
+  margin: 0 0 10px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--preview-sidebar-card);
+}
+.preview-information-sidebar .preview-embedded-metadata-details h2,
+.preview-information-sidebar .preview-embedded-metadata-list dt { color: var(--preview-sidebar-muted); font-weight: 600; }
+
+.preview-sidebar-actions,
+.preview-sidebar-secondary-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
+.preview-sidebar-actions button,
+.preview-sidebar-secondary-actions button { min-height: 30px; padding: 5px 12px; border: 0; border-radius: 999px; color: inherit; background: var(--preview-sidebar-control); font-size: 11px; }
+.preview-sidebar-actions button:hover,
+.preview-sidebar-secondary-actions button:hover,
+.preview-sidebar-header:hover { background: color-mix(in srgb, var(--text-main) 10%, transparent); }
+.preview-sidebar-actions button.is-danger { color: #d24b4b; }
+
+.is-resizing-preview-sidebar,
+.is-resizing-preview-sidebar * { cursor: ew-resize !important; user-select: none !important; }

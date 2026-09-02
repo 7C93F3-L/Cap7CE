@@ -12,6 +12,7 @@ const sidebarSource = read("src/renderer/preview/PreviewInformationSidebar.tsx")
 const layoutSource = read("src/renderer/preview/usePreviewSidebarLayout.ts");
 const keyboardSource = read("src/renderer/preview/previewSidebarKeyboard.ts");
 const shellStyles = read("src/renderer/preview/StablePreviewShell.css");
+const sidebarStyles = read("src/renderer/preview/StablePreviewSidebar.css");
 const accessibilityStyles = read("src/renderer/preview/StablePreviewAccessibility.css");
 const responsiveStyles = read("src/renderer/preview/StablePreviewResponsive.css");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
@@ -38,6 +39,7 @@ assert.match(sidebarDataSource, /userDescription: item\.userDescription/u);
 assert.match(sidebarDataSource, /searchEvidence: item\.searchEvidence/u);
 assert.match(sidebarSource, /PreviewEmbeddedMetadata[\s\S]*?variant="details"/u);
 assert.match(sidebarSource, /data-preview-navigation-suppressed="true"/u);
+assert.match(sidebarSource, /preview-sidebar-section preview-sidebar-file-card[\s\S]*?preview-sidebar-file-heading[\s\S]*?preview-sidebar-details/u);
 assert.doesNotMatch(sidebarSource, /window\.cap7ce/u);
 
 assert.match(layoutSource, /cap7ce\.preview\.sidebar-layout\.v1/u);
@@ -48,7 +50,10 @@ assert.match(keyboardSource, /new Set\(\["Home", "End", "ArrowLeft", "ArrowRight
 assert.match(keyboardSource, /event\.key === "ArrowLeft"[\s\S]*?currentWidth - 8[\s\S]*?currentWidth \+ 8/u);
 assert.match(sidebarSource, /aria-label=\{t\(expanded \? "preview\.sidebar\.collapse" : "preview\.sidebar\.expand"\)\}/u);
 assert.match(sidebarSource, /role="separator"[\s\S]*?tabIndex=\{0\}[\s\S]*?aria-valuenow=\{width\}[\s\S]*?onKeyDown=\{onResizeByKeyboard\}/u);
+assert.match(shellStyles, /@import "\.\/StablePreviewSidebar\.css"/u);
 assert.match(shellStyles, /preview-information-sidebar\.is-collapsed[\s\S]*?40px/u);
+assert.match(sidebarStyles, /preview-sidebar-section\s*\{[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--preview-sidebar-card\)/u);
+assert.match(sidebarStyles, /preview-sidebar-actions,[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
 assert.match(titlebarStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]*?inset: 0 5px 5px 0/u);
 assert.match(mainSource, /minimizable: isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
@@ -65,6 +70,7 @@ console.log(JSON.stringify({
   legacyPreviewFallbackPreserved: true,
   singleProviderLifecyclePreserved: true,
   formalInformationSidebarPresent: true,
+  cardBasedInformationLayoutVerified: true,
   embeddedMetadataMovedWithoutStableDuplication: true,
   sidebarLayoutPersistenceBounded: true,
   sidebarScrollNavigationSuppressed: true,

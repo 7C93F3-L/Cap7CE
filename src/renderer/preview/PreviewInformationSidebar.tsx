@@ -61,17 +61,17 @@ const PreviewInformationSidebar = ({
     aria-label={t("preview.sidebar.heading")}
   >
     <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
-      <span aria-hidden="true">{expanded ? "‹" : "›"}</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={expanded ? "m15 5-7 7 7 7" : "m9 5 7 7-7 7"} /></svg>
       {expanded && <strong>{t("preview.sidebar.heading")}</strong>}
     </button>
     {expanded && <>
       <div className="preview-sidebar-scroll cap-main-scroll-viewport">
-        <section className="preview-sidebar-section preview-sidebar-file-heading">
-          <strong title={data.fileName}>{data.fileName}</strong>
-          <span>{getFileFormat(data)}</span>
-        </section>
-        <section className="preview-sidebar-section">
+        <section className="preview-sidebar-section preview-sidebar-file-card">
           <h2>{t("preview.sidebar.fileInfo")}</h2>
+          <div className="preview-sidebar-file-heading">
+            <strong title={data.fileName}>{data.fileName}</strong>
+            <span>{getFileFormat(data)}</span>
+          </div>
           <dl className="preview-sidebar-details">
             {(data.imageWidth ?? 0) > 0 && (data.imageHeight ?? 0) > 0 && <div><dt>{t("preview.sidebar.dimensions")}</dt><dd>{data.imageWidth} × {data.imageHeight}</dd></div>}
             <div><dt>{t("skim.previewSize")}</dt><dd>{formatBytes(data.fileSize)}</dd></div>
