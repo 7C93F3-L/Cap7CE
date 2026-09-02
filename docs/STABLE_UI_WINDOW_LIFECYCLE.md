@@ -4,11 +4,11 @@
 >
 > 状态：U10 自动验证与人工确认通过
 >
-> 正式界面影响：无；仍仅通过 `npm run dev:stable-ui` 进入
+> U8–U10 当时通过开发入口验收；D0 后由正式 `stable` 模式使用同一生命周期
 
-## 1. 新版候选宿主
+## 1. 正式 stable 宿主
 
-稳定 UI 开发入口继续借用现有 `compatibility` 模式作为迁移开关，但主窗口、独立 Settings 和 Preview 在运行期统一覆盖为 `frame: true`、Window Controls Overlay 和 40 DIP 标题栏。Windows 支持时使用 Acrylic；若 Electron 拒绝该背景材料，立即取消材料并按当前明暗主题使用安全纯色。旧 `cap7ce` 透明自绘窗口和正式 compatibility Mica 宿主的构造策略保持不变。
+正式 `stable` 模式的主窗口、独立 Settings 和 Preview 统一使用 `frame: true`、Window Controls Overlay 和 40 DIP 标题栏。Windows 支持时使用 Acrylic；若 Electron 拒绝该背景材料，立即取消材料并按当前明暗主题使用安全纯色。旧 `cap7ce` 透明自绘窗口和 `compatibility` Mica 宿主的构造策略保持不变。
 
 主窗口首次使用当前工作区宽高的 90%，外框最大为 `1280 × 800` 并居中。该几何只作为无有效记录时的起点；稳定 UI 使用自己的布局文件且只读写 normal 槽作为单一自由窗口记录，开启布局记忆后优先恢复最后有效 bounds。拖动或缩放不会触发 micro / mini / normal 自动状态转换。
 
@@ -31,4 +31,4 @@
 
 人工验收应覆盖：自由拖动与缩放不回弹；Alt+3 只执行一次尺寸预设；Capsule 快捷键与 line 点击只聚焦主搜索；standby、原生关闭、托盘和第二实例恢复；主窗口 / Settings / Preview 同时可见及分别关闭；中文 IME、Esc、快速重复唤起、最大化、Snap、双屏和显示器恢复；不得出现 Capsule 残影或重复窗口。
 
-主题、颜色、可访问性、减少动态效果、中英文溢出以及是否正式切换默认宿主的 U11 结论见 `docs/STABLE_UI_FINISHING_AUDIT.md`。
+主题、颜色、可访问性、减少动态效果和中英文溢出的 U11 结论见 `docs/STABLE_UI_FINISHING_AUDIT.md`；D0 默认宿主边界见 `docs/STABLE_UI_DEFAULT_HOST.md`。

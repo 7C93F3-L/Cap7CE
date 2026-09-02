@@ -105,7 +105,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
   },
   app: {
     quit: () => ipcRenderer.invoke("app:quit"),
-    switchWindowPresentationMode: (mode: "cap7ce" | "compatibility") => ipcRenderer.invoke("app:switchWindowPresentationMode", mode),
+    switchWindowPresentationMode: (mode: "stable" | "cap7ce" | "compatibility") => ipcRenderer.invoke("app:switchWindowPresentationMode", mode),
     openReleasePage: () => ipcRenderer.invoke("app:openReleasePage"),
     checkForUpdates: () => ipcRenderer.invoke("app:checkForUpdates"),
     downloadUpdate: () => ipcRenderer.invoke("app:downloadUpdate"),
@@ -266,7 +266,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateAppearanceColors: (appearanceColors: { themeColor: string; accentColor: string }) => ipcRenderer.invoke("preferences:updateAppearanceColors", appearanceColors),
     updateEdgeCollapse: (enabled: boolean) => ipcRenderer.invoke("preferences:updateEdgeCollapse", enabled),
     updateRememberWindowLayout: (enabled: boolean) => ipcRenderer.invoke("preferences:updateRememberWindowLayout", enabled),
-    updateWindowPresentationMode: (mode: "cap7ce" | "compatibility") => ipcRenderer.invoke("preferences:updateWindowPresentationMode", mode),
+    updateWindowPresentationMode: (mode: "stable" | "cap7ce" | "compatibility") => ipcRenderer.invoke("preferences:updateWindowPresentationMode", mode),
     updateStandbyLineVisible: (standbyLineVisible: boolean) => ipcRenderer.invoke("preferences:updateStandbyLineVisible", standbyLineVisible),
     updateLaunchAtLogin: (launchAtLogin: boolean) => ipcRenderer.invoke("preferences:updateLaunchAtLogin", launchAtLogin),
     updateSystemNotifications: (enabled: boolean) => ipcRenderer.invoke("preferences:updateSystemNotifications", enabled),

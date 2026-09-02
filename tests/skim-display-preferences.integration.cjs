@@ -35,7 +35,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.shortcutActions.cycleDirectory, "Alt+Q");
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal(defaults.rememberWindowLayout, false);
-    assert.equal(defaults.windowPresentationMode, "cap7ce");
+    assert.equal(defaults.windowPresentationMode, "stable");
     assert.deepEqual(defaults.sortPreference, {
       sortField: "modified_at",
       sortDirection: "desc"
@@ -75,7 +75,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(migrated.edgeCollapseEnabled, false);
     assert.equal("edgeSnapEnabled" in migrated, false);
     assert.equal(migrated.rememberWindowLayout, false);
-    assert.equal(migrated.windowPresentationMode, "cap7ce");
+    assert.equal(migrated.windowPresentationMode, "stable");
 
     const updatedShortcuts = await updateShortcutActionsPreference({
       ...migrated.shortcutActions,
@@ -108,7 +108,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateEdgeCollapsePreference(true);
     await updateRememberWindowLayoutPreference(true);
     const invalidMode = await updateWindowPresentationModePreference("invalid");
-    assert.equal(invalidMode.windowPresentationMode, "cap7ce");
+    assert.equal(invalidMode.windowPresentationMode, "stable");
     await updateWindowPresentationModePreference("compatibility");
     const reloaded = await getUserPreferences();
     assert.equal(reloaded.skimDisplay.mode, "custom");

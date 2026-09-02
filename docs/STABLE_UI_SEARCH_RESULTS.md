@@ -2,7 +2,7 @@
 
 > 轮次：U3
 > 状态：人工确认通过
-> 正式界面影响：无；仍仅通过 `npm run dev:stable-ui` 进入
+> U3 当时仅通过开发入口验收；D0 后由正式 `stable` 模式复用同一业务链，见 `docs/STABLE_UI_DEFAULT_HOST.md`
 
 ## 1. 单一业务权威
 
@@ -20,7 +20,7 @@
 
 ## 3. 迁移隔离
 
-新版根节点不直接访问 preload API，也不依赖 `App.tsx`。开发入口同时动态加载正式 App 状态权威和新版展示根节点，再通过显式 Props 组合；生产入口与普通开发入口继续只渲染旧界面。
+新版根节点不直接访问 preload API，也不依赖 `App.tsx`。D0 后，正式 `stable` presentation 在开发与打包加载中都动态组合 App 状态权威和新版展示根节点；cap7ce 与 compatibility 继续渲染旧界面。
 
 全局窗口形态快捷入口、左侧目录筛选、Settings 和真实 Skim 不在 U3 接入。开发入口收到旧窗口形态激活通知时只恢复搜索框焦点，不触发尺寸或组件树切换。
 

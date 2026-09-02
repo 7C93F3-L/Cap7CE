@@ -8,11 +8,23 @@ interface WindowPresentationModeSettingsRowProps {
 
 type SwitchStatus = "idle" | "switching" | "failed";
 
+export const getWindowPresentationSwitchTarget = (activeMode: WindowPresentationMode): WindowPresentationMode => (
+  activeMode === "stable" ? "compatibility" : activeMode === "compatibility" ? "cap7ce" : "stable"
+);
+
+export const getWindowPresentationModeLabel = (mode: WindowPresentationMode): string => (
+  mode === "stable" ? t("settings.stableMode") : mode === "compatibility" ? t("settings.compatibilityMode") : t("settings.cap7ceMode")
+);
+
+const getWindowPresentationSwitchHint = (mode: WindowPresentationMode): string => (
+  mode === "stable" ? t("settings.switchToStableHint") : mode === "compatibility" ? t("settings.switchToCompatibilityHint") : t("settings.switchToCap7CEHint")
+);
+
 export const WindowPresentationModeSettingsRow = ({ activeMode }: WindowPresentationModeSettingsRowProps) => {
   const [status, setStatus] = useState<SwitchStatus>("idle");
-  const targetMode: WindowPresentationMode = activeMode === "cap7ce" ? "compatibility" : "cap7ce";
-  const targetLabel = targetMode === "compatibility" ? t("settings.compatibilityMode") : t("settings.cap7ceMode");
-  const switchHint = targetMode === "compatibility" ? t("settings.switchToCompatibilityHint") : t("settings.switchToCap7CEHint");
+  const targetMode = getWindowPresentationSwitchTarget(activeMode);
+  const targetLabel = getWindowPresentationModeLabel(targetMode);
+  const switchHint = getWindowPresentationSwitchHint(targetMode);
 
   const switchMode = async () => {
     if (status === "switching") return;

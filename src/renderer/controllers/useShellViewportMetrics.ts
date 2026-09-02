@@ -5,7 +5,7 @@ export const useShellViewportMetrics = () => {
   const [shellViewportHeight, setShellViewportHeight] = useState(() => window.innerHeight);
   const [miniStandardHeight, setMiniStandardHeight] = useState<number | null>(null);
   const [titlebarHeight, setTitlebarHeight] = useState(0);
-  const [windowPresentationMode, setWindowPresentationMode] = useState<WindowPresentationMode>("cap7ce");
+  const [windowPresentationMode, setWindowPresentationMode] = useState<WindowPresentationMode>("stable");
 
   useEffect(() => {
     let currentTitlebarHeight = 0;

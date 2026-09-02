@@ -2,7 +2,7 @@
 
 > 轮次：U4  
 > 状态：人工确认通过  
-> 正式界面影响：无；仍仅通过 `npm run dev:stable-ui` 进入
+> U4 当时仅通过开发入口验收；D0 后由正式 `stable` 模式复用同一侧栏业务链，见 `docs/STABLE_UI_DEFAULT_HOST.md`
 
 ## 1. 单一状态与事务
 

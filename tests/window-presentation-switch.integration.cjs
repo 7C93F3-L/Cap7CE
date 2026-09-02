@@ -11,7 +11,7 @@ const createHarness = async (overrides = {}) => {
   const handles = new Map();
   const calls = [];
   const diagnostics = [];
-  let activeMode = overrides.activeMode ?? "cap7ce";
+  let activeMode = overrides.activeMode ?? "stable";
   const runtime = createWindowPresentationSwitchRuntime({
     registrar: {
       handle: (channel, listener) => handles.set(channel, listener),
@@ -79,7 +79,7 @@ const run = async () => {
     status: "failed",
     targetMode: "compatibility"
   });
-  assert.deepEqual(failedFlush.calls, [["preference", "compatibility"], ["preference", "cap7ce"]]);
+  assert.deepEqual(failedFlush.calls, [["preference", "compatibility"], ["preference", "stable"]]);
   assert.equal(failedFlush.diagnostics.at(-1).data.status, "failed");
 
   const timeoutProducer = await createHarness();
@@ -87,7 +87,7 @@ const run = async () => {
   const timeout = await createHarness({ root: timeoutProducer.root, activeMode: "compatibility" });
   assert.equal(await timeout.runtime.resolveStartupMode("compatibility"), "compatibility");
   await waitForTimers();
-  assert.deepEqual(timeout.calls, [["preference", "cap7ce"], ["relaunch"], ["setQuitting"], ["quit"]]);
+  assert.deepEqual(timeout.calls, [["preference", "stable"], ["relaunch"], ["setQuitting"], ["quit"]]);
   assert.equal(timeout.diagnostics.at(-1).event, "window.presentation.switch.startup_timeout");
 
   const staleLaunch = await createHarness({ activeMode: "cap7ce" });
@@ -127,11 +127,12 @@ const run = async () => {
     fs.readFile(path.join(__dirname, "../package.json"), "utf8")
   ]);
   assert.match(appearanceSource, /settings\.launchAtLogin[\s\S]*?<WindowPresentationModeSettingsRow activeMode=\{windowPresentationMode\}/);
-  assert.match(rowSource, /activeMode === "cap7ce" \? "compatibility" : "cap7ce"/);
+  assert.match(rowSource, /activeMode === "stable" \? "compatibility" : activeMode === "compatibility" \? "cap7ce" : "stable"/);
+  assert.match(rowSource, /getWindowPresentationModeLabel/);
   assert.match(rowSource, /disabled=\{status === "switching"\}/);
   assert.match(preloadSource, /app:switchWindowPresentationMode/);
   assert.match(rowSource, /settings\.windowModeSwitchDescription/);
-  for (const key of ["settings.compatibilityMode", "settings.cap7ceMode", "settings.windowModeSwitchDescription", "settings.switchWindowMode", "settings.switchingWindowMode", "settings.switchToCompatibilityHint", "settings.switchToCap7CEHint", "settings.windowModeSwitchFailed"]) {
+  for (const key of ["settings.stableMode", "settings.compatibilityMode", "settings.cap7ceMode", "settings.windowModeSwitchDescription", "settings.switchWindowMode", "settings.switchingWindowMode", "settings.switchToStableHint", "settings.switchToCompatibilityHint", "settings.switchToCap7CEHint", "settings.windowModeSwitchFailed"]) {
     assert.ok(zhSource.includes(`"${key}"`), `Missing Chinese text: ${key}`);
     assert.ok(enSource.includes(`"${key}"`), `Missing English text: ${key}`);
   }

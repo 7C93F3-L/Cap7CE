@@ -68,7 +68,7 @@ import type { PersistedWindowLayoutState, WindowDockEdge } from "./windowLayoutT
 import { DEFAULT_WINDOW_RESIZE_THRESHOLDS, isStableResizeBounds, resolveResizeTargetState } from "./windowResizeState";
 import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "./compatibilityNativeMaximizeController";
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
-import { applyCurrentStableUiAlwaysOnTopPreference, applyCurrentStableUiDevelopmentQuery, getStableUiDevelopmentLayoutFileName, isCurrentStableUiDevelopmentEnabled, WindowPresentationRuntime } from "./windowPresentationRuntime";
+import { isStableWindowPresentationMode, WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
 import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
@@ -345,7 +345,7 @@ const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
   microLayoutMaximumHeight: microLayoutMaxHeight,
   edgeGap: edgeGapPx,
   edgeAnchorThreshold: edgeAnchorThresholdPx,
-  getNormalDefaultOuterBounds: (workArea) => isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) ? resolveStableUiDefaultWindowBounds(workArea) : null
+  getNormalDefaultOuterBounds: (workArea) => isStableWindowPresentationMode(windowPresentationRuntime.mode) ? resolveStableUiDefaultWindowBounds(workArea) : null
 });
 const previewWindowPresentationSizing = new PreviewWindowPresentationSizing({ minimumWidth: previewWindowMinimumWidth, minimumHeight: previewWindowMinimumHeight, horizontalPadding: previewWindowHorizontalPadding, verticalChrome: previewWindowVerticalChrome, workAreaRatio: previewWindowWorkAreaRatio });
 const getShellContentBounds = (bounds: Electron.Rectangle) => shellWindowPresentationSizing.getContentBounds(bounds);
@@ -410,7 +410,7 @@ const revealPreviewWindow = () => {
   if (!previewWasVisible) {
     previewWindow.showInactive();
   }
-  if (!isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+  if (!isStableWindowPresentationMode(windowPresentationRuntime.mode) && mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
     mainWindow.hide();
   }
   applyAlwaysOnTopState();
@@ -480,7 +480,7 @@ const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } =
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("preview:closed");
     if (wasActive && restoreMain) {
-      if (!isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) { mainWindow.show(); applyAlwaysOnTopState(); }
+      if (!isStableWindowPresentationMode(windowPresentationRuntime.mode)) { mainWindow.show(); applyAlwaysOnTopState(); }
       mainWindow.focus();
     }
   }
@@ -630,7 +630,7 @@ const createPreviewWindow = () => {
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
-    const previewUrl = applyCurrentStableUiDevelopmentQuery(new URL(devServerUrl), windowPresentationRuntime.mode);
+    const previewUrl = new URL(devServerUrl);
     previewUrl.searchParams.set("window", "preview");
     previewUrl.searchParams.set("presentation", windowPresentationRuntime.mode);
     void previewWindow.loadURL(previewUrl.toString());
@@ -792,7 +792,7 @@ const getLineWindowPlacement = (currentBounds?: Electron.Rectangle, currentEdge?
 const shouldShowLineWindow = () => (
   standbyLineVisible
   && Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible())
-  && (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) || !Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible()))
+  && (isStableWindowPresentationMode(windowPresentationRuntime.mode) || !Boolean(previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible()))
   && !capsuleWindowController.isVisible()
 );
 const lineWindowController = new LineWindowController({
@@ -937,7 +937,7 @@ const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   }
   const state: PersistedWindowLayoutState = shellState === "settings" ? "normal" : shellState;
   const display = screen.getDisplayMatching(bounds);
-  if (!isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && !isStableResizeBounds(shellState, getShellContentBounds(bounds), getShellContentWorkArea(display.workArea))) return;
+  if (!isStableWindowPresentationMode(windowPresentationRuntime.mode) && !isStableResizeBounds(shellState, getShellContentBounds(bounds), getShellContentWorkArea(display.workArea))) return;
   windowLayoutManager.captureBounds({ state, bounds, display: toWindowLayoutDisplaySnapshot(display) });
 };
 
@@ -1138,7 +1138,7 @@ const showAndFocusMainWindow = () => {
     return false;
   }
 
-  const shouldWaitForTargetLayout = !isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && !mainWindow.isVisible() && (
+  const shouldWaitForTargetLayout = !isStableWindowPresentationMode(windowPresentationRuntime.mode) && !mainWindow.isVisible() && (
     activeShellState === "standby"
     || (activeShellState === "capsule" && windowPresentationRuntime.mode === "compatibility")
   );
@@ -1154,7 +1154,7 @@ const showAndFocusMainWindow = () => {
   if (mainWindow.isMinimized()) {
     mainWindow.restore();
   }
-  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && activeShellState !== "normal") {
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode) && activeShellState !== "normal") {
     activeShellState = "normal"; syncTaskbarVisibility(activeShellState); sendShellStateToRenderer(activeShellState);
   }
   applyAlwaysOnTopState();
@@ -1164,7 +1164,7 @@ const showAndFocusMainWindow = () => {
 };
 
 const activateCapsuleShortcut = (source: "cursor" | "line" = "cursor") => {
-  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) {
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) {
     capsuleWindowController.clearPendingTarget();
     if (!showAndFocusMainWindow()) return false;
     sendActivateCapsuleShortcutToRenderer();
@@ -1246,7 +1246,7 @@ const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "st
     return requestSafeMainWindowHide();
   }
   if (!showAndFocusMainWindow()) return false;
-  if (mode === "normal" && applyDefaultSizePreset && isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && mainWindow) {
+  if (mode === "normal" && applyDefaultSizePreset && isStableWindowPresentationMode(windowPresentationRuntime.mode) && mainWindow) {
     if (mainWindow.isMaximized()) mainWindow.unmaximize();
     markProgrammaticResize(); markProgrammaticMove();
     const presetBounds = resolveStableUiDefaultWindowBounds(screen.getDisplayMatching(mainWindow.getBounds()).workArea); mainWindow.setBounds(presetBounds, true); rememberUserMovedShellBounds(presetBounds);
@@ -1275,7 +1275,7 @@ const registerShellModeShortcuts = (shortcutActions: {
   ] as const;
 
   for (const { id, shortcut, mode } of shortcutModes) {
-    if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
+    if (isStableWindowPresentationMode(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
     if (!shortcut) continue;
     try {
       const registered = globalShortcut.register(shortcut, () => {
@@ -1324,7 +1324,7 @@ const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) 
   const registeredShortcuts: string[] = [];
 
   for (const [id, shortcut] of shortcutEntries) {
-    if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
+    if (isStableWindowPresentationMode(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
     if (!shortcut) {
       unavailableActionIds.add(id);
       continue;
@@ -1508,7 +1508,7 @@ const openLegacySettings = () => {
   mainWindow.webContents.send("window:openSettingsRequested");
   return true;
 };
-const isIndependentSettingsWindowEnabled = () => isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode);
+const isIndependentSettingsWindowEnabled = () => isStableWindowPresentationMode(windowPresentationRuntime.mode);
 const openSettings = async () => isIndependentSettingsWindowEnabled() ? Boolean(await settingsWindowController?.open()) : openLegacySettings();
 const getBoundsDebugPayload = (shellState: Extract<Cap7CEShellState, "capsule">) => {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -1733,7 +1733,7 @@ const applyStandaloneLineMode = () => {
 
 const applyCapsuleWindowMode = () => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
-  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) return showAndFocusMainWindow() && (sendActivateCapsuleShortcutToRenderer(), true);
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) return showAndFocusMainWindow() && (sendActivateCapsuleShortcutToRenderer(), true);
 
   lineWindowController.hide();
   resetShellBehavior();
@@ -2125,7 +2125,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) || !mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode) || !mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
     return;
   }
 
@@ -2336,14 +2336,15 @@ const createWindow = () => {
 
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   if (devServerUrl) {
-    mainWindow.loadURL(applyCurrentStableUiDevelopmentQuery(new URL(devServerUrl), windowPresentationRuntime.mode).toString());
+    const mainUrl = new URL(devServerUrl); mainUrl.searchParams.set("presentation", windowPresentationRuntime.mode);
+    mainWindow.loadURL(mainUrl.toString());
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"), { query: { presentation: windowPresentationRuntime.mode } });
   }
 
   mainWindow.once("ready-to-show", () => {
     mainWindowReadyForActivation = true;
-    if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) mainWindow?.show();
+    if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) mainWindow?.show();
     else if (activeShellState !== "standby") {
       applyShellWindowState("normal");
     }
@@ -2465,7 +2466,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     layoutStore: new SettingsWindowLayoutStore(path.join(app.getPath("userData"), "config", "settings-window-layout.json")), lockWebContentsZoom,
     preloadPath: path.join(__dirname, "preload.js"), prepareWindow: (window) => windowPresentationRuntime.applySettingsWindowAppearance(window, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors), presentationMode: () => windowPresentationRuntime.mode, rendererPath: path.join(__dirname, "../dist/index.html")
   });
-  windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", getStableUiDevelopmentLayoutFileName(windowPresentationRuntime.layoutFileName, windowPresentationRuntime.mode))));
+  windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences(preferences);
   setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
@@ -2572,7 +2573,7 @@ ipcMain.handle("line:activateCapsule", (event) => {
 });
 
 ipcMain.handle("window:setShellState", (_event, state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => {
-  if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) {
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) {
     if (state === "standby") return applyStandaloneLineMode();
     if (state === "capsule") return activateCapsuleShortcut();
     return state === "normal" || state === "settings" ? showAndFocusMainWindow() : false;
@@ -2608,7 +2609,7 @@ ipcMain.handle("window:setAlwaysOnTop", async (_event, enabled: boolean) => {
   if (!mainWindow) return { enabled: Boolean(enabled), actual: false, windowId: null };
   const requestedEnabled = Boolean(enabled);
   const before = mainWindow.isAlwaysOnTop();
-  shellAlwaysOnTop = await applyCurrentStableUiAlwaysOnTopPreference(requestedEnabled, windowPresentationRuntime.mode, updateAlwaysOnTopPreference);
+  shellAlwaysOnTop = (await updateAlwaysOnTopPreference(requestedEnabled)).alwaysOnTop;
   dockedShellController?.setFixed(shellAlwaysOnTop);
   const after = applyAlwaysOnTopState();
   sendAlwaysOnTopStateToRenderer();

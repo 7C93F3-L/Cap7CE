@@ -1,4 +1,4 @@
-export const WINDOW_PRESENTATION_MODES = ["cap7ce", "compatibility"] as const;
+export const WINDOW_PRESENTATION_MODES = ["stable", "cap7ce", "compatibility"] as const;
 
 export type WindowPresentationMode = typeof WINDOW_PRESENTATION_MODES[number];
 export type WindowPresentationSurface = "main" | "preview" | "settings";
@@ -33,31 +33,41 @@ export interface WindowPresentationBrowserOptions {
   };
 }
 
-export const DEFAULT_WINDOW_PRESENTATION_MODE: WindowPresentationMode = "cap7ce";
+export const DEFAULT_WINDOW_PRESENTATION_MODE: WindowPresentationMode = "stable";
+export const STABLE_TITLEBAR_HEIGHT = 40;
 export const COMPATIBILITY_TITLEBAR_HEIGHT = 36;
 
 export const normalizeWindowPresentationMode = (value: unknown): WindowPresentationMode => (
-  value === "compatibility" ? "compatibility" : DEFAULT_WINDOW_PRESENTATION_MODE
+  value === "stable" || value === "cap7ce" || value === "compatibility"
+    ? value
+    : DEFAULT_WINDOW_PRESENTATION_MODE
 );
 
 export const getWindowLayoutFileName = (mode: WindowPresentationMode) => (
-  mode === "compatibility" ? "window-layout-compatibility.json" : "window-layout.json"
+  mode === "stable"
+    ? "window-layout-stable-ui.json"
+    : mode === "compatibility"
+      ? "window-layout-compatibility.json"
+      : "window-layout.json"
 );
+
+export const isStableWindowPresentationMode = (mode: WindowPresentationMode) => mode === "stable";
 
 export const getWindowPresentationPolicy = (
   value: unknown = DEFAULT_WINDOW_PRESENTATION_MODE
 ): WindowPresentationPolicy => {
   const mode = normalizeWindowPresentationMode(value);
+  const stable = isStableWindowPresentationMode(mode);
   const compatibility = mode === "compatibility";
   const surfacePolicy: WindowPresentationSurfacePolicy = {
     frame: false,
-    transparent: !compatibility,
-    usesWindowControlsOverlay: compatibility
+    transparent: !stable && !compatibility,
+    usesWindowControlsOverlay: stable || compatibility
   };
   return {
     mode,
     layoutFileName: getWindowLayoutFileName(mode),
-    titlebarHeight: compatibility ? COMPATIBILITY_TITLEBAR_HEIGHT : 0,
+    titlebarHeight: stable ? STABLE_TITLEBAR_HEIGHT : compatibility ? COMPATIBILITY_TITLEBAR_HEIGHT : 0,
     usesIndependentCapsuleWindow: compatibility,
     surfaces: {
       main: { ...surfacePolicy },

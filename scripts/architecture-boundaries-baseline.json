@@ -74,7 +74,6 @@
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
     "src/renderer/settings/SettingsView.css": 253,
     "electron/main.ts": 3770,
-    "electron/stableUiDevelopmentContract.ts": 63,
     "electron/windowPresentationRuntime.ts": 64,
     "electron/settingsWindowController.ts": 171,
     "electron/settingsDataBroadcast.ts": 15,

@@ -5,60 +5,19 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const {
-  applyStableUiAlwaysOnTopPreference,
-  applyStableUiDevelopmentQuery,
-  resolveStableUiDevelopmentOptions,
-  resolveStableUiLayoutFileName
-} = require("../dist-electron/stableUiDevelopmentContract.js");
+  getWindowLayoutFileName,
+  isStableWindowPresentationMode
+} = require("../dist-electron/windowPresentationPolicy.js");
 
 void (async () => {
-  const disabledWithoutDevServer = resolveStableUiDevelopmentOptions({
-    devServerUrl: undefined,
-    rendererFlag: "1",
-    windowPresentationMode: "compatibility"
-  });
-  assert.equal(disabledWithoutDevServer.enabled, false);
-
-  const disabledOutsideCompatibility = resolveStableUiDevelopmentOptions({
-    devServerUrl: "http://127.0.0.1:5173",
-    rendererFlag: "1",
-    windowPresentationMode: "cap7ce"
-  });
-  assert.equal(disabledOutsideCompatibility.enabled, false);
-
-  const stableDevelopment = resolveStableUiDevelopmentOptions({
-    devServerUrl: "http://127.0.0.1:5173",
-    rendererFlag: "1",
-    windowPresentationMode: "compatibility"
-  });
-  assert.equal(stableDevelopment.enabled, true);
-  assert.equal(resolveStableUiLayoutFileName("window-layout-compatibility.json", stableDevelopment), "window-layout-stable-ui-development.json");
-  assert.equal(resolveStableUiLayoutFileName("window-layout.json", disabledWithoutDevServer), "window-layout.json");
-
-  let persistAlwaysOnTopCalls = 0;
-  const developmentAlwaysOnTop = await applyStableUiAlwaysOnTopPreference(true, stableDevelopment, async () => {
-    persistAlwaysOnTopCalls += 1;
-    return { alwaysOnTop: false };
-  });
-  assert.equal(developmentAlwaysOnTop, true);
-  assert.equal(persistAlwaysOnTopCalls, 0);
-  const regularAlwaysOnTop = await applyStableUiAlwaysOnTopPreference(true, disabledWithoutDevServer, async (enabled) => {
-    persistAlwaysOnTopCalls += 1;
-    return { alwaysOnTop: enabled };
-  });
-  assert.equal(regularAlwaysOnTop, true);
-  assert.equal(persistAlwaysOnTopCalls, 1);
-
-  const developmentUrl = applyStableUiDevelopmentQuery(new URL("http://127.0.0.1:5173"), stableDevelopment);
-  assert.equal(developmentUrl.searchParams.get("ui"), "stable");
-  assert.equal(developmentUrl.searchParams.has("size-contract"), false);
-  const disabledUrl = applyStableUiDevelopmentQuery(new URL("http://127.0.0.1:5173"), disabledWithoutDevServer);
-  assert.equal(disabledUrl.searchParams.has("ui"), false);
+  assert.equal(isStableWindowPresentationMode("stable"), true);
+  assert.equal(isStableWindowPresentationMode("cap7ce"), false);
+  assert.equal(isStableWindowPresentationMode("compatibility"), false);
+  assert.equal(getWindowLayoutFileName("stable"), "window-layout-stable-ui.json");
 
   const rendererEntry = read("src/renderer/main.tsx");
   const mainSource = read("electron/main.ts");
   const appSource = read("src/renderer/App.tsx");
-  const contractSource = read("electron/stableUiDevelopmentContract.ts");
   const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
   const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
   const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
@@ -68,22 +27,20 @@ void (async () => {
   const stableUiStyles = `${foundationStyles}\n${accessibilityStyles}`;
   const packageJson = JSON.parse(read("package.json"));
 
-  if (!/import\.meta\.env\.DEV\s*&&\s*rendererSearchParams\.get\("ui"\)\s*===\s*"stable"/.test(rendererEntry)
+  if (!/rendererSearchParams\.get\("presentation"\)\s*===\s*"stable"/.test(rendererEntry)
     || !rendererEntry.includes('import("./stable-ui/StableUiRoot")')) {
-    throw new Error("Stable UI Renderer root must remain behind the Vite development gate.");
+    throw new Error("Stable UI Renderer root must be reachable from the formal stable presentation mode.");
   }
-  if (!mainSource.includes("applyCurrentStableUiDevelopmentQuery(new URL(devServerUrl)")
-    || !mainSource.includes("mainWindow.loadFile(path.join(__dirname, \"../dist/index.html\"))")) {
-    throw new Error("Stable UI selection must remain limited to the development server URL path.");
+  if (!mainSource.includes('mainUrl.searchParams.set("presentation", windowPresentationRuntime.mode)')
+    || !mainSource.includes('query: { presentation: windowPresentationRuntime.mode }')) {
+    throw new Error("Development and packaged main windows must receive the same presentation mode query.");
   }
-  if (!mainSource.includes("getStableUiDevelopmentLayoutFileName(windowPresentationRuntime.layoutFileName")
-    || !mainSource.includes("applyCurrentStableUiAlwaysOnTopPreference(requestedEnabled")) {
-    throw new Error("Stable UI development must isolate layout writes and always-on-top preferences from the formal compatibility host.");
+  if (!mainSource.includes('windowPresentationRuntime.layoutFileName')) {
+    throw new Error("Stable UI must use the formal presentation policy layout namespace.");
   }
-  if (!contractSource.includes("isCurrentStableUiDevelopmentEnabled")
-    || !mainSource.includes("if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode) || !mainWindow")
-    || !mainSource.includes("if (isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) mainWindow?.show();")) {
-    throw new Error("Stable UI development must bypass legacy resize-state settling and open without applying a legacy size preset.");
+  if (!mainSource.includes("if (isStableWindowPresentationMode(windowPresentationRuntime.mode) || !mainWindow")
+    || !mainSource.includes("if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) mainWindow?.show();")) {
+    throw new Error("Stable UI must bypass legacy resize-state settling and open without applying a legacy size preset.");
   }
   if (rootSource.includes("setShellState(") || rootSource.includes("size-contract")) {
     throw new Error("Stable UI development root must not select a legacy shell shape or size contract.");
@@ -116,16 +73,18 @@ void (async () => {
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
   assert.match(foundationStyles, /--cap-stable-focus:\s*var\(--accent-color/u);
   assert.match(accessibilityStyles, /\.cap-stable-titlebar \*[\s\S]*?transition-duration:\s*0ms !important/u);
-  assert.match(packageJson.scripts["dev:stable-ui"], /CAP7CE_STABLE_UI=1/);
+  assert.match(packageJson.scripts["dev:stable-ui"], /CAP7CE_WINDOW_PRESENTATION_MODE=stable/);
+  assert.match(packageJson.scripts["dev:cap7ce"], /CAP7CE_WINDOW_PRESENTATION_MODE=cap7ce/);
+  assert.match(packageJson.scripts["dev:compatibility"], /CAP7CE_WINDOW_PRESENTATION_MODE=compatibility/);
   assert.equal(packageJson.scripts["dev:stable-ui:outer"], undefined);
   assert.doesNotMatch(packageJson.scripts["dev:stable-ui"], /SIZE_CONTRACT/);
 
   console.log(JSON.stringify({
-    developmentOnlyRendererGateVerified: true,
-    compatibilityHostRequired: true,
+    formalStableRendererEntryVerified: true,
+    stableDefaultLayoutIsolated: true,
     sharedPinControlVerified: true,
     scrollIsolatedTitlebarPortalVerified: true,
-    developmentPreferencesAndLayoutIsolated: true,
+    legacyHostDevelopmentCommandsPreserved: true,
     legacyResizeStateSettlingBypassed: true,
     nativeCloseUsesSafeStandbyChain: true,
     legacySizePresetNotAppliedAtStartup: true,

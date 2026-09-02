@@ -21,7 +21,7 @@ import { setActiveLanguage, t } from "../../electron/localization";
 import { COMPATIBILITY_TITLEBAR_HEIGHT } from "../../electron/windowPresentationPolicy";
 
 const isCompatibilityWindow = new URLSearchParams(window.location.search).get("presentation") === "compatibility";
-const isStableUiPreview = import.meta.env.DEV && new URLSearchParams(window.location.search).get("ui") === "stable";
+const isStableUiPreview = new URLSearchParams(window.location.search).get("presentation") === "stable";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
   isMaximized: false,

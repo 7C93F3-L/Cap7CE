@@ -9,10 +9,10 @@ import { QuickCommandSettingsRows } from "../settings/QuickCommandSettingsRows";
 import { RuntimeDiagnosticsRows } from "../settings/RuntimeDiagnosticsRows";
 import { SettingsFooter } from "../settings/SettingsFooter";
 import { SkimDisplaySettingsRows } from "../settings/SkimDisplaySettingsRows";
+import { getWindowPresentationModeLabel, getWindowPresentationSwitchTarget } from "../settings/WindowPresentationModeSettingsRow";
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";
 import { useSettingsWindowController } from "./useSettingsWindowController";
 import "./SettingsWindowApp.css";
-
 type CategoryId = "general" | "appearance" | "browse" | "search-ai" | "cache" | "shortcuts" | "diagnostics" | "about";
 type DialogState = { message: string; confirmLabel?: string; action: () => Promise<unknown> } | null;
 
@@ -134,7 +134,7 @@ const SettingsWindowApp = () => {
         <SettingCard title="settings.rememberWindowLayout" description="stableSettings.desc.rememberWindows" query={normalizedQuery}><SettingsToggle enabled={preferences.rememberWindowLayout} onChange={(enabled) => toggle("rememberWindowLayout", enabled)} /></SettingCard>
         <SettingCard title="settings.edgeCollapse" description="stableSettings.desc.edgeCollapse" query={normalizedQuery}><SettingsToggle enabled={preferences.edgeCollapseEnabled} onChange={(enabled) => toggle("edgeCollapseEnabled", enabled)} /></SettingCard>
         <SettingCard title="stableSettings.material" description="stableSettings.desc.material" query={normalizedQuery}><span className="cap-stable-settings-readonly">{t("stableSettings.material.readOnly")}</span></SettingCard>
-        <SettingCard title="stableSettings.windowMode" description="stableSettings.desc.windowMode" query={normalizedQuery}><button type="button" className="cap-stable-settings-button" onClick={() => void window.cap7ce?.app.switchWindowPresentationMode(preferences.windowPresentationMode === "compatibility" ? "cap7ce" : "compatibility")}>{preferences.windowPresentationMode === "compatibility" ? t("settings.cap7ceMode") : t("settings.compatibilityMode")}</button></SettingCard>
+        <SettingCard title="stableSettings.windowMode" description="stableSettings.desc.windowMode" query={normalizedQuery}><button type="button" className="cap-stable-settings-button" onClick={() => void window.cap7ce?.app.switchWindowPresentationMode(getWindowPresentationSwitchTarget(preferences.windowPresentationMode))}>{getWindowPresentationModeLabel(getWindowPresentationSwitchTarget(preferences.windowPresentationMode))}</button></SettingCard>
       </SettingsSection>
     </>;
     if (category === "appearance") return <>

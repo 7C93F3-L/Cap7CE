@@ -16,9 +16,9 @@ const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const sidebarDataSource = read("src/renderer/preview/previewSidebarData.ts");
 const navigationTargetSource = read("src/renderer/preview/previewNavigationTarget.ts");
 
-assert.match(mainSource, /const previewUrl = applyCurrentStableUiDevelopmentQuery\(new URL\(devServerUrl\), windowPresentationRuntime\.mode\);[\s\S]*?previewUrl\.searchParams\.set\("window", "preview"\)/u);
+assert.match(mainSource, /const previewUrl = new URL\(devServerUrl\);[\s\S]*?previewUrl\.searchParams\.set\("window", "preview"\);[\s\S]*?previewUrl\.searchParams\.set\("presentation", windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
-assert.match(previewSource, /const isStableUiPreview = import\.meta\.env\.DEV[\s\S]*?URLSearchParams\(window\.location\.search\)\.get\("ui"\) === "stable"/u);
+assert.match(previewSource, /const isStableUiPreview = new URLSearchParams\(window\.location\.search\)\.get\("presentation"\) === "stable"/u);
 assert.match(previewSource, /isStableUiPreview && <PreviewInformationSidebar/u);
 assert.match(previewSource, /!isStableUiPreview && <WindowControlRail/u);
 assert.match(previewSource, /isPreviewNavigationSuppressedTarget/u);
@@ -47,8 +47,8 @@ assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw -
 assert.match(accessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.preview-window-stable-ui \*/u);
 
 console.log(JSON.stringify({
-  stablePreviewDevGatePresent: true,
-  legacyAndPackagedPreviewPreserved: true,
+  formalStablePreviewEntryPresent: true,
+  legacyPreviewFallbackPreserved: true,
   singleProviderLifecyclePreserved: true,
   formalInformationSidebarPresent: true,
   embeddedMetadataMovedWithoutStableDuplication: true,

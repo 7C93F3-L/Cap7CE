@@ -2,7 +2,7 @@
 
 > 轮次：U2
 > 状态：人工确认通过
-> 正式界面影响：无；仍仅通过 `npm run dev:stable-ui` 进入
+> U2 当时仅通过开发入口验收；D0 后由正式 `stable` 模式使用同一响应式壳层，见 `docs/STABLE_UI_DEFAULT_HOST.md`
 
 ## 1. 本轮边界
 

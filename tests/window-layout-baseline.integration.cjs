@@ -51,7 +51,7 @@ assert.match(mainSource, /changedMetrics\.includes\("scaleFactor"\)/u);
 assert.match(appSource, /isAlwaysOnTop \? t\("window\.unfix"\) : t\("window\.fix"\)/u);
 assert.doesNotMatch(previewAppSource, /window\.onAlwaysOnTopChanged/u);
 assert.match(mainSource, /const nextState = resolveResizeTargetState\(activeShellState, getShellContentBounds\(currentBounds\), getShellContentWorkArea\(currentDisplay\.workArea\)\);/u);
-assert.match(mainSource, /if \(!isCurrentStableUiDevelopmentEnabled\(windowPresentationRuntime\.mode\) && !isStableResizeBounds\(shellState, getShellContentBounds\(bounds\), getShellContentWorkArea\(display\.workArea\)\)\) return;/u);
+assert.match(mainSource, /if \(!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\) && !isStableResizeBounds\(shellState, getShellContentBounds\(bounds\), getShellContentWorkArea\(display\.workArea\)\)\) return;/u);
 assert.match(mainSource, /const isProgrammaticMoveGuardActive = \(\) => Date\.now\(\) < programmaticMoveGuardUntil;/u);
 assert.match(mainSource, /const isProgrammaticResizeGuardActive = \(\) => Date\.now\(\) < programmaticResizeGuardUntil;/u);
 

@@ -1,8 +1,8 @@
 import type { BrowserWindow } from "electron";
 import type { WindowLayoutBounds } from "./windowLayoutTypes";
-import type { WindowPresentationBrowserOptions, WindowPresentationTheme } from "./windowPresentationPolicy";
+import { STABLE_TITLEBAR_HEIGHT, type WindowPresentationBrowserOptions, type WindowPresentationTheme } from "./windowPresentationPolicy";
 
-export const STABLE_UI_TITLEBAR_HEIGHT = 40;
+export const STABLE_UI_TITLEBAR_HEIGHT = STABLE_TITLEBAR_HEIGHT;
 export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = 0.9;
 export const STABLE_UI_DEFAULT_MAXIMUM_SIZE = { width: 1280, height: 800 } as const;
 

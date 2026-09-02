@@ -502,7 +502,7 @@ export interface SkimDisplayPreferences {
   showHiddenFiles: boolean;
 }
 
-export type WindowPresentationMode = "cap7ce" | "compatibility";
+export type WindowPresentationMode = "stable" | "cap7ce" | "compatibility";
 
 export interface WindowPresentationSwitchResult {
   status: "restarting" | "unchanged" | "busy" | "failed";

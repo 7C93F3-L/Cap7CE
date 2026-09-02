@@ -34,7 +34,7 @@ const windowKind = rendererSearchParams.get("window");
 const isSettingsWindow = windowKind === "settings", isPreviewWindow = windowKind === "preview";
 const isLineWindow = windowKind === "line";
 const isCompatibilityCapsuleWindow = windowKind === "compatibility-capsule";
-const isStableUiDevelopmentRoot = import.meta.env.DEV && rendererSearchParams.get("ui") === "stable";
+const isStableUiRoot = rendererSearchParams.get("presentation") === "stable";
 if (isSettingsWindow) {
   void import("./settings-window/SettingsWindowApp").then(({ default: SettingsWindowApp }) => root.render(<React.StrictMode><SettingsWindowApp /></React.StrictMode>));
 } else if (isLineWindow) {
@@ -53,7 +53,7 @@ if (isSettingsWindow) {
       </React.StrictMode>
     );
   });
-} else if (isStableUiDevelopmentRoot) {
+} else if (isStableUiRoot) {
   void Promise.all([import("./App"), import("./stable-ui/StableUiRoot")]).then(([{ default: App }, { default: StableUiRoot }]) => {
     root.render(
       <React.StrictMode>

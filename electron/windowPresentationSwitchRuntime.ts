@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { IpcMainInvokeEvent } from "electron";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
-import { normalizeWindowPresentationMode, type WindowPresentationMode } from "./windowPresentationPolicy";
+import { normalizeWindowPresentationMode, WINDOW_PRESENTATION_MODES, type WindowPresentationMode } from "./windowPresentationPolicy";
 
 type SwitchPhase = "pending" | "launching" | "confirmed";
 
@@ -35,7 +35,7 @@ interface WindowPresentationSwitchRuntimeOptions {
 }
 
 const isWindowPresentationMode = (value: unknown): value is WindowPresentationMode => (
-  value === "cap7ce" || value === "compatibility"
+  WINDOW_PRESENTATION_MODES.some((mode) => mode === value)
 );
 
 const isSwitchMarker = (value: unknown): value is WindowPresentationSwitchMarker => {

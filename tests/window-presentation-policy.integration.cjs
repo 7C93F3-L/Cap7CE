@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const {
   COMPATIBILITY_TITLEBAR_HEIGHT,
   DEFAULT_WINDOW_PRESENTATION_MODE,
+  STABLE_TITLEBAR_HEIGHT,
   getWindowPresentationBrowserOptions,
   getWindowLayoutFileName,
   getWindowPresentationPolicy,
@@ -10,12 +11,27 @@ const {
   resolveWindowPresentationTheme
 } = require("../dist-electron/windowPresentationPolicy.js");
 
-assert.equal(DEFAULT_WINDOW_PRESENTATION_MODE, "cap7ce");
-assert.equal(normalizeWindowPresentationMode(undefined), "cap7ce");
-assert.equal(normalizeWindowPresentationMode("invalid"), "cap7ce");
+assert.equal(DEFAULT_WINDOW_PRESENTATION_MODE, "stable");
+assert.equal(normalizeWindowPresentationMode(undefined), "stable");
+assert.equal(normalizeWindowPresentationMode("invalid"), "stable");
+assert.equal(normalizeWindowPresentationMode("stable"), "stable");
+assert.equal(normalizeWindowPresentationMode("cap7ce"), "cap7ce");
 assert.equal(normalizeWindowPresentationMode("compatibility"), "compatibility");
 
-const cap7cePolicy = getWindowPresentationPolicy();
+const stablePolicy = getWindowPresentationPolicy();
+assert.equal(stablePolicy.mode, "stable");
+assert.equal(stablePolicy.layoutFileName, "window-layout-stable-ui.json");
+assert.equal(stablePolicy.titlebarHeight, STABLE_TITLEBAR_HEIGHT);
+assert.equal(stablePolicy.usesIndependentCapsuleWindow, false);
+assert.deepEqual(stablePolicy.surfaces.main, {
+  frame: false,
+  transparent: false,
+  usesWindowControlsOverlay: true
+});
+assert.deepEqual(stablePolicy.surfaces.preview, stablePolicy.surfaces.main);
+assert.deepEqual(stablePolicy.surfaces.settings, stablePolicy.surfaces.main);
+
+const cap7cePolicy = getWindowPresentationPolicy("cap7ce");
 assert.deepEqual(cap7cePolicy, {
   mode: "cap7ce",
   layoutFileName: "window-layout.json",
@@ -40,7 +56,7 @@ assert.deepEqual(compatibilityPolicy.surfaces.main, {
 });
 assert.deepEqual(compatibilityPolicy.surfaces.preview, compatibilityPolicy.surfaces.main);
 assert.deepEqual(compatibilityPolicy.surfaces.settings, compatibilityPolicy.surfaces.main);
-assert.notEqual(getWindowLayoutFileName("cap7ce"), getWindowLayoutFileName("compatibility"));
+assert.equal(new Set(["stable", "cap7ce", "compatibility"].map(getWindowLayoutFileName)).size, 3);
 assert.equal(getWindowPresentationSymbolColor("dark"), "#D8D8D8");
 assert.equal(getWindowPresentationSymbolColor("light"), "#242424");
 assert.deepEqual(getWindowPresentationBrowserOptions(cap7cePolicy, "main", "dark"), {
@@ -57,12 +73,22 @@ assert.deepEqual(getWindowPresentationBrowserOptions(compatibilityPolicy, "main"
   titleBarStyle: "hidden",
   titleBarOverlay: { color: "#00000000", symbolColor: "#D8D8D8", height: 36 }
 });
+assert.deepEqual(getWindowPresentationBrowserOptions(stablePolicy, "main", "dark"), {
+  frame: false,
+  transparent: false,
+  backgroundColor: "#00000000",
+  backgroundMaterial: "mica",
+  roundedCorners: true,
+  titleBarStyle: "hidden",
+  titleBarOverlay: { color: "#00000000", symbolColor: "#D8D8D8", height: 40 }
+});
 assert.equal(resolveWindowPresentationTheme("system", true), "dark");
 assert.equal(resolveWindowPresentationTheme("system", false), "light");
 assert.equal(resolveWindowPresentationTheme("light", true), "light");
 
 console.log(JSON.stringify({
-  defaultModePreservesCap7CEWindowPolicy: true,
+  stableUiIsDefaultPresentationMode: true,
+  legacyCap7CEWindowPolicyPreserved: true,
   invalidModesFallbackSafely: true,
   compatibilityCapabilitiesDeclaredReadOnly: true,
   presentationLayoutFilesSeparated: true,
