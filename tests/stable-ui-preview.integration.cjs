@@ -8,7 +8,10 @@ const mainSource = read("electron/main.ts");
 const previewSource = read("src/renderer/PreviewWindowApp.tsx");
 const sidebarSource = read("src/renderer/preview/PreviewInformationSidebar.tsx");
 const layoutSource = read("src/renderer/preview/usePreviewSidebarLayout.ts");
+const keyboardSource = read("src/renderer/preview/previewSidebarKeyboard.ts");
 const shellStyles = read("src/renderer/preview/StablePreviewShell.css");
+const accessibilityStyles = read("src/renderer/preview/StablePreviewAccessibility.css");
+const responsiveStyles = read("src/renderer/preview/StablePreviewResponsive.css");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const sidebarDataSource = read("src/renderer/preview/previewSidebarData.ts");
 const navigationTargetSource = read("src/renderer/preview/previewNavigationTarget.ts");
@@ -31,11 +34,17 @@ assert.match(sidebarSource, /data-preview-navigation-suppressed="true"/u);
 assert.doesNotMatch(sidebarSource, /window\.cap7ce/u);
 
 assert.match(layoutSource, /cap7ce\.preview\.sidebar-layout\.v1/u);
-assert.match(layoutSource, /previewSidebarMinimumWidth = 280/u);
-assert.match(layoutSource, /previewSidebarMaximumWidth = 420/u);
+assert.match(keyboardSource, /previewSidebarMinimumWidth = 280/u);
+assert.match(keyboardSource, /previewSidebarMaximumWidth = 420/u);
 assert.match(layoutSource, /previewSidebarDefaultWidth = 320/u);
+assert.match(keyboardSource, /new Set\(\["Home", "End", "ArrowLeft", "ArrowRight"\]\)\.has\(event\.key\)/u);
+assert.match(keyboardSource, /event\.key === "ArrowLeft"[\s\S]*?currentWidth - 8[\s\S]*?currentWidth \+ 8/u);
+assert.match(sidebarSource, /aria-label=\{t\(expanded \? "preview\.sidebar\.collapse" : "preview\.sidebar\.expand"\)\}/u);
+assert.match(sidebarSource, /role="separator"[\s\S]*?tabIndex=\{0\}[\s\S]*?aria-valuenow=\{width\}[\s\S]*?onKeyDown=\{onResizeByKeyboard\}/u);
 assert.match(shellStyles, /preview-information-sidebar\.is-collapsed[\s\S]*?40px/u);
 assert.match(shellStyles, /\.preview-window-compatibility \.preview-stable-shell \.preview-window-content[\s\S]*?inset: 0 5px 5px 0/u);
+assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw - 220px\)/u);
+assert.match(accessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.preview-window-stable-ui \*/u);
 
 console.log(JSON.stringify({
   stablePreviewDevGatePresent: true,
@@ -45,5 +54,7 @@ console.log(JSON.stringify({
   embeddedMetadataMovedWithoutStableDuplication: true,
   sidebarLayoutPersistenceBounded: true,
   sidebarScrollNavigationSuppressed: true,
-  existingFileActionsReused: true
+  existingFileActionsReused: true,
+  keyboardSidebarResizeVerified: true,
+  narrowPreviewAndReducedMotionVerified: true
 }));

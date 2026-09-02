@@ -123,6 +123,8 @@
 | `search.sortSwitched.modifiedAtDesc` | 已按时间降序排序                              |                                        |     | 排序反馈               |
 | `search.sortSwitched.modifiedAtAsc` | 已按时间升序排序                               |                                        |     | 排序反馈               |
 | `search.sortSwitched.fileNameAsc` | 已按名称升序排序                                  |                                        |     | 排序反馈               |
+| `stableUi.resizeSidebar` / `stableUi.resizeSkim` | 调整侧栏宽度 / 调整 Skim 宽度 | | Resize sidebar / Resize Skim | 新版键盘分隔线 aria-label |
+| `stableUi.resultsRegion` | 搜索结果区 | | Search results | 新版结果区域 aria-label |
 | `search.sortSwitched.fileNameDesc` | 已按名称降序排序                                 |                                        |     | 排序反馈               |
 | `search.settings`              | 设置                                             |                                        |     | 图标提示               |
 | `search.colorScheme`           | 配色方案                                           |                                        |     | 图标提示               |
@@ -203,6 +205,8 @@
 | `preview.pin`                 | 固定窗口              | 固定窗口      | Pin Window | 预览控制栏           |
 | `preview.unpin`               | 取消固定窗口            | 取消固定窗口    | Unpin Window | 预览控制栏           |
 | `preview.loading`             | 正在加载预览…           |         |     | 等待状态            |
+| `preview.sidebar.expand` / `preview.sidebar.collapse` | 展开文件信息 / 收起文件信息 | | Expand / Collapse file information | Preview 边栏按钮 aria-label |
+| `preview.sidebar.resize` | 调整文件信息栏宽度 | | Resize file information sidebar | Preview 键盘分隔线 aria-label |
 | `preview.metadata.heading`    | 嵌入信息                |         | Embedded Information | 预览元数据标题与折叠入口 |
 | `preview.metadata.visualContent` | 画面内容             |         | Visual Content | 图片、视频生成内容 |
 | `preview.metadata.title`      | 标题                    |         | Title | 文档嵌入标题 |

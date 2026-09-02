@@ -1,0 +1,9 @@
+@media (max-width: 640px) {
+  .preview-stable-shell {
+    --preview-sidebar-current-width: min(var(--preview-sidebar-width, 320px), max(180px, calc(100vw - 220px)));
+  }
+
+  .preview-stable-shell:has(.preview-information-sidebar.is-collapsed) {
+    --preview-sidebar-current-width: 40px;
+  }
+}

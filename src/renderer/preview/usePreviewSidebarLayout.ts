@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { handlePreviewSidebarKeyboardResize, previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
 
 const previewSidebarStorageKey = "cap7ce.preview.sidebar-layout.v1";
-export const previewSidebarMinimumWidth = 280;
-export const previewSidebarMaximumWidth = 420;
 export const previewSidebarDefaultWidth = 320;
 
 const clampPreviewSidebarWidth = (width: number) => Math.min(
@@ -70,6 +69,7 @@ export const usePreviewSidebarLayout = () => {
     width,
     toggleExpanded: () => setExpanded((current) => !current),
     beginResize,
+    resizeByKeyboard: (event: ReactKeyboardEvent<HTMLElement>) => handlePreviewSidebarKeyboardResize(event, setWidth),
     resetWidth: () => setWidth(previewSidebarDefaultWidth)
   };
 };

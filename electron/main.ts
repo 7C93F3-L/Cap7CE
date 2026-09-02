@@ -479,9 +479,8 @@ const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } =
   latestPreviewContentSize = null;
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("preview:closed");
-    if (wasActive && restoreMain && !isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) {
-      mainWindow.show();
-      applyAlwaysOnTopState();
+    if (wasActive && restoreMain) {
+      if (!isCurrentStableUiDevelopmentEnabled(windowPresentationRuntime.mode)) { mainWindow.show(); applyAlwaysOnTopState(); }
       mainWindow.focus();
     }
   }

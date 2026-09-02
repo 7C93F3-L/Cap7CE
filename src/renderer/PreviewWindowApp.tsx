@@ -536,6 +536,7 @@ const PreviewWindowApp = () => {
           canShowSecondaryActions={showSettings}
           onToggleExpanded={previewSidebarLayout.toggleExpanded}
           onBeginResize={previewSidebarLayout.beginResize}
+          onResizeByKeyboard={previewSidebarLayout.resizeByKeyboard}
           onResetWidth={previewSidebarLayout.resetWidth}
           onOpen={() => {
             void window.cap7ce?.files.open(previewData.filePath).then((result) => {

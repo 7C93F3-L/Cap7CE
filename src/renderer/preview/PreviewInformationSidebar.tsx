@@ -1,8 +1,8 @@
 import type { PreviewWindowData } from "../../shared/types";
 import { t } from "../../../electron/localization";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
+import { previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
 import "./StablePreviewShell.css";
-
 interface PreviewInformationSidebarProps {
   data: PreviewWindowData;
   expanded: boolean;
@@ -10,6 +10,7 @@ interface PreviewInformationSidebarProps {
   canShowSecondaryActions: boolean;
   onToggleExpanded: () => void;
   onBeginResize: (event: React.PointerEvent) => void;
+  onResizeByKeyboard: (event: React.KeyboardEvent<HTMLElement>) => void;
   onResetWidth: () => void;
   onOpen: () => void;
   onShowInFolder: () => void;
@@ -19,7 +20,6 @@ interface PreviewInformationSidebarProps {
   onOpenSkim: () => void;
   onOpenSettings: () => void;
 }
-
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB", "TB"];
@@ -31,7 +31,6 @@ const formatBytes = (bytes: number) => {
   }
   return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 };
-
 const getFileFormat = (data: PreviewWindowData) => {
   if (data.info?.kind === "folder") return t("fileInfo.folder");
   const extension = data.info?.extension || data.fileName.slice(data.fileName.lastIndexOf(".") + 1);
@@ -45,6 +44,7 @@ const PreviewInformationSidebar = ({
   canShowSecondaryActions,
   onToggleExpanded,
   onBeginResize,
+  onResizeByKeyboard,
   onResetWidth,
   onOpen,
   onShowInFolder,
@@ -60,7 +60,7 @@ const PreviewInformationSidebar = ({
     data-preview-navigation-suppressed="true"
     aria-label={t("preview.sidebar.heading")}
   >
-    <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} aria-expanded={expanded}>
+    <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
       <span aria-hidden="true">{expanded ? "‹" : "›"}</span>
       {expanded && <strong>{t("preview.sidebar.heading")}</strong>}
     </button>
@@ -115,7 +115,7 @@ const PreviewInformationSidebar = ({
           <button type="button" onClick={onOpenSettings}>{t("window.openSettings")}</button>
         </section>}
       </div>
-      <div className="preview-sidebar-resize-handle" role="separator" aria-orientation="vertical" onPointerDown={onBeginResize} onDoubleClick={onResetWidth} />
+      <div className="preview-sidebar-resize-handle" role="separator" tabIndex={0} aria-orientation="vertical" aria-label={t("preview.sidebar.resize")} aria-valuemin={previewSidebarMinimumWidth} aria-valuemax={previewSidebarMaximumWidth} aria-valuenow={width} onPointerDown={onBeginResize} onKeyDown={onResizeByKeyboard} onDoubleClick={onResetWidth} />
     </>}
   </aside>
 );

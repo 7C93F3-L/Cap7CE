@@ -1,0 +1,35 @@
+.cap-stable-settings-search:focus-within {
+  outline: 1px solid var(--stable-settings-focus);
+  outline-offset: 2px;
+}
+
+.cap-stable-settings-navigation nav button span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-stable-settings-copy p { overflow-wrap: anywhere; }
+.cap-stable-settings-control { max-width: 100%; }
+
+.cap-settings-window-foundation button:focus-visible,
+.cap-settings-window-foundation input:focus-visible,
+.cap-settings-window-foundation select:focus-visible,
+.cap-settings-window-foundation summary:focus-visible {
+  outline: 1px solid var(--stable-settings-focus);
+  outline-offset: 2px;
+}
+
+.cap-stable-settings-search input:focus-visible { outline: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cap-settings-window-foundation *,
+  .cap-settings-window-foundation *::before,
+  .cap-settings-window-foundation *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

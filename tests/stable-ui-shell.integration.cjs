@@ -9,7 +9,8 @@ const shellFiles = [
   "src/renderer/stable-ui/StableShellSidebar.tsx",
   "src/renderer/stable-ui/StableSkimSlot.tsx",
   "src/renderer/stable-ui/StableSkimToolbar.tsx",
-  "src/renderer/stable-ui/useStableShellLayout.ts"
+  "src/renderer/stable-ui/useStableShellLayout.ts",
+  "src/renderer/stable-ui/useStableShellResize.ts"
 ];
 
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
@@ -17,6 +18,7 @@ const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
 const mainShellSource = read(shellFiles[0]);
 const sidebarSource = read(shellFiles[1]);
 const layoutSource = read(shellFiles[4]);
+const resizeSource = read(shellFiles[5]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const combinedShellSource = shellFiles.map(read).join("\n");
@@ -25,6 +27,9 @@ assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sideb
 assert.match(titlebarSource, /\{searchInput\}/);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
+assert.match(mainShellSource, /role="separator"[\s\S]*?aria-valuenow=\{sidebarWidth\}[\s\S]*?onKeyDown=\{resizeSidebarByKeyboard\}/u);
+assert.match(mainShellSource, /aria-label=\{t\("stableUi\.resultsRegion"\)\}/u);
+assert.match(resizeSource, /event\.key === "ArrowLeft"[\s\S]*?event\.key === "ArrowRight"/u);
 
 for (const marker of [
   "useState(160)",
@@ -34,7 +39,7 @@ for (const marker of [
   "resetSidebarWidth: () => setSidebarWidth(160)",
   "resetSkimWidth: () => setSkimWidth(360)"
 ]) {
-  assert.ok(layoutSource.includes(marker), `Stable UI shell layout is missing ${marker}.`);
+  assert.ok(`${layoutSource}\n${resizeSource}`.includes(marker), `Stable UI shell layout is missing ${marker}.`);
 }
 
 for (const marker of [
@@ -58,5 +63,6 @@ console.log(JSON.stringify({
   responsiveShellCompositionVerified: true,
   resizeRangesVerified: true,
   narrowAndLowWindowLayoutsVerified: true,
-  noBusinessDataOrLegacyShapeState: true
+  noBusinessDataOrLegacyShapeState: true,
+  keyboardResizeAndLocalizedRegionsVerified: true
 }));

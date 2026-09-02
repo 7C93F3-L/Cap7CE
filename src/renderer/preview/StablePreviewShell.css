@@ -1,3 +1,6 @@
+@import "./StablePreviewAccessibility.css";
+@import "./StablePreviewResponsive.css";
+
 .preview-window-shell,
 .preview-window-stage {
   display: contents;
@@ -232,16 +235,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
-}
-
-.preview-sidebar-resize-handle {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  right: -3px;
-  bottom: 0;
-  width: 7px;
-  cursor: ew-resize;
 }
 
 .is-resizing-preview-sidebar,

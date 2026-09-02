@@ -1,3 +1,5 @@
+@import "./StableShellResize.css";
+
 .cap-stable-main-shell {
   --cap-stable-sidebar-width: 160px;
   --cap-stable-sidebar-rendered-width: min(var(--cap-stable-sidebar-width), max(40px, calc(100vw - 260px)));
@@ -48,29 +50,6 @@
   border-radius: var(--cap-stable-radius-sm);
   background: var(--cap-stable-surface-soft);
 }
-
-.cap-stable-resizer {
-  position: fixed;
-  z-index: 8;
-  width: 9px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: col-resize;
-  touch-action: none;
-}
-.cap-stable-sidebar-resizer {
-  top: var(--cap-stable-titlebar-height);
-  bottom: 0;
-  left: calc(var(--cap-stable-sidebar-rendered-width) - 4px);
-}
-.cap-stable-skim-resizer {
-  top: var(--cap-stable-titlebar-height);
-  right: calc(var(--cap-stable-skim-rendered-width) - 4px);
-  bottom: 0;
-  display: none;
-}
-.cap-stable-main-shell.is-skim-open .cap-stable-skim-resizer { display: block; }
 
 @media (max-width: 920px) and (min-height: 360px) {
   .cap-stable-main-shell.is-skim-open { grid-template-columns: var(--cap-stable-sidebar-rendered-width) minmax(0, 1fr); }

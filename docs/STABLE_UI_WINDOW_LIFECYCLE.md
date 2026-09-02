@@ -2,7 +2,7 @@
 
 > 轮次：U8–U10 Preview 与窗口生命周期收口
 >
-> 状态：U10 自动验证完成后等待人工确认
+> 状态：U10 自动验证与人工确认通过
 >
 > 正式界面影响：无；仍仅通过 `npm run dev:stable-ui` 进入
 
@@ -14,7 +14,7 @@
 
 ## 2. 主窗口、Settings 与 Preview 并存
 
-稳定 UI 打开 Preview 时不隐藏主窗口；打开 Settings 也不关闭 Preview。三者拥有独立原生窗口生命周期，可以同时存在。普通关闭 Preview 只结束预览会话、卸载当前 Provider 数据并隐藏 Preview，不恢复、显示或抢占主窗口焦点。
+稳定 UI 打开 Preview 时不隐藏主窗口；打开 Settings 也不关闭 Preview。三者拥有独立原生窗口生命周期，可以同时存在。普通关闭 Preview 只结束预览会话、卸载当前 Provider 数据并隐藏 Preview，不重复显示或改变主窗口几何，但会把键盘焦点交还主窗口，确保同一缩略图可以立即再次用空格预览。
 
 只有需要回到主界面完成工作的 Preview 动作会显式恢复并聚焦主窗口：编辑关键词、删除文件以及切换 Skim 位置。关闭后的两分钟空 Renderer 复用、Provider 会话授权、最大化 / Snap 保护、边缘收起和内容尺寸计算仍沿用既有链路。
 
@@ -30,3 +30,5 @@
 `tests/stable-ui-window-lifecycle.integration.cjs` 守护 40 DIP WCO、Acrylic / 纯色回退、90% 初始几何、单一自由布局槽、快捷动作收口、Capsule 替代入口和三窗口并存。兼容与稳定 WCO 标题栏必须共同使用 `WindowTitlebarPortal` 脱离虚拟网格和其他可滚动内容树，防止滚动重算再次覆盖 Windows 原生拖动命中区；对应标题栏测试同时守护共享宿主与两个消费者。旧窗口策略、兼容 Capsule、Preview、line、Snap 和布局测试继续参与完整测试，防止新版分支改变迁移回退。
 
 人工验收应覆盖：自由拖动与缩放不回弹；Alt+3 只执行一次尺寸预设；Capsule 快捷键与 line 点击只聚焦主搜索；standby、原生关闭、托盘和第二实例恢复；主窗口 / Settings / Preview 同时可见及分别关闭；中文 IME、Esc、快速重复唤起、最大化、Snap、双屏和显示器恢复；不得出现 Capsule 残影或重复窗口。
+
+主题、颜色、可访问性、减少动态效果、中英文溢出以及是否正式切换默认宿主的 U11 结论见 `docs/STABLE_UI_FINISHING_AUDIT.md`。

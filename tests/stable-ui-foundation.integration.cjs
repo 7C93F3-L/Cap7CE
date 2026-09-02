@@ -64,6 +64,8 @@ void (async () => {
   const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
   const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.tsx");
   const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
+  const accessibilityStyles = read("src/renderer/stable-ui/StableUiAccessibility.css");
+  const stableUiStyles = `${foundationStyles}\n${accessibilityStyles}`;
   const packageJson = JSON.parse(read("package.json"));
 
   if (!/import\.meta\.env\.DEV\s*&&\s*rendererSearchParams\.get\("ui"\)\s*===\s*"stable"/.test(rendererEntry)
@@ -105,10 +107,15 @@ void (async () => {
     "::-webkit-scrollbar { width: 8px; height: 8px; }",
     "@media (prefers-reduced-motion: reduce)"
   ]) {
-    if (!foundationStyles.includes(marker)) {
+    if (!stableUiStyles.includes(marker)) {
       throw new Error(`Stable UI visual foundation is missing ${marker}.`);
     }
   }
+  assert.match(foundationStyles, /\.cap-stable-ui\.theme-dark[\s\S]*?color-scheme:\s*dark/u);
+  assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
+  assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
+  assert.match(foundationStyles, /--cap-stable-focus:\s*var\(--accent-color/u);
+  assert.match(accessibilityStyles, /\.cap-stable-titlebar \*[\s\S]*?transition-duration:\s*0ms !important/u);
   assert.match(packageJson.scripts["dev:stable-ui"], /CAP7CE_STABLE_UI=1/);
   assert.equal(packageJson.scripts["dev:stable-ui:outer"], undefined);
   assert.doesNotMatch(packageJson.scripts["dev:stable-ui"], /SIZE_CONTRACT/);
@@ -122,7 +129,9 @@ void (async () => {
     legacyResizeStateSettlingBypassed: true,
     nativeCloseUsesSafeStandbyChain: true,
     legacySizePresetNotAppliedAtStartup: true,
-    stableTokensAndScrollbarVerified: true
+    stableTokensAndScrollbarVerified: true,
+    resolvedThemeAndCustomColorsVerified: true,
+    portaledTitlebarReducedMotionVerified: true
   }));
 })().catch((error) => {
   console.error(error);

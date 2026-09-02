@@ -1,0 +1,21 @@
+.cap-stable-ui button:focus-visible,
+.cap-stable-ui input:focus-visible,
+.cap-stable-ui select:focus-visible,
+.cap-stable-ui textarea:focus-visible,
+.cap-stable-titlebar button:focus-visible,
+.cap-stable-titlebar input:focus-visible {
+  outline-color: var(--cap-stable-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cap-stable-ui *,
+  .cap-stable-ui *::before,
+  .cap-stable-ui *::after,
+  .cap-stable-titlebar *,
+  .cap-stable-titlebar *::before,
+  .cap-stable-titlebar *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

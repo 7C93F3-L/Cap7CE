@@ -1,3 +1,5 @@
+@import "./StableUiAccessibility.css";
+
 .cap-stable-ui, .cap-stable-titlebar {
   --cap-stable-titlebar-height: env(titlebar-area-height, 40px);
   --cap-stable-edge-gap: 5px;
@@ -16,11 +18,13 @@
   --cap-stable-surface: rgb(255 255 255 / 50%);
   --cap-stable-surface-soft: rgb(255 255 255 / 30%);
   --cap-stable-hover: rgb(31 31 31 / 8%);
-  --cap-stable-selected: rgb(31 31 31 / 14%);
+  --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 22%, transparent);
+  --cap-stable-focus: var(--accent-color, #68c3c0);
   --cap-stable-caption-hover: rgb(0 0 0 / 10%);
   --cap-stable-scrollbar: rgb(31 31 31 / 28%);
   --cap-stable-scrollbar-active: rgb(31 31 31 / 46%);
   color: var(--cap-stable-text);
+  color-scheme: light;
   background: transparent;
   font: var(--cap-stable-font-size)/20px "Segoe UI Variable", "Segoe UI", sans-serif;
 }
@@ -28,18 +32,18 @@
   position: fixed; inset: 0; overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  .cap-stable-ui, .cap-stable-titlebar {
+.cap-stable-ui.theme-dark,
+.cap-stable-titlebar.theme-dark {
     --cap-stable-text: rgb(244 244 244 / 90%);
     --cap-stable-text-muted: rgb(244 244 244 / 58%);
     --cap-stable-surface: rgb(26 26 26 / 58%);
     --cap-stable-surface-soft: rgb(26 26 26 / 36%);
     --cap-stable-hover: rgb(255 255 255 / 8%);
-    --cap-stable-selected: rgb(255 255 255 / 14%);
+    --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 34%, transparent);
     --cap-stable-caption-hover: rgb(255 255 255 / 10%);
     --cap-stable-scrollbar: rgb(244 244 244 / 28%);
     --cap-stable-scrollbar-active: rgb(244 244 244 / 46%);
-  }
+    color-scheme: dark;
 }
 
 .cap-stable-titlebar {
@@ -142,14 +146,4 @@
 
 @media (max-width: 760px) {
   .cap-stable-result-count { display: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cap-stable-ui *,
-  .cap-stable-ui *::before,
-  .cap-stable-ui *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
-  }
 }

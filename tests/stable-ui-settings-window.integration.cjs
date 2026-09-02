@@ -10,6 +10,8 @@ const rendererEntrySource = fs.readFileSync(path.join(root, "src", "renderer", "
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
 const settingsAppSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
+const settingsStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.css"), "utf8");
+const settingsAccessibilityStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowAccessibility.css"), "utf8");
 const preferenceIpcSource = fs.readFileSync(path.join(root, "electron", "preferenceIpc.ts"), "utf8");
 const directoryIpcSource = fs.readFileSync(path.join(root, "electron", "directoryManagementIpc.ts"), "utf8");
 const architectureSource = fs.readFileSync(path.join(root, "docs", "SOFTWARE_ARCHITECTURE.md"), "utf8");
@@ -139,6 +141,13 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /stableSettings\.material\.readOnly/u);
+  assert.match(settingsAppSource, /--stable-settings-theme-color[\s\S]*?appearanceColors\.themeColor/u);
+  assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
+  assert.match(settingsAppSource, /aria-current=\{activeCategory === category\.id \? "page" : undefined\}/u);
+  assert.match(settingsAppSource, /role="alertdialog"[\s\S]*?aria-label=\{dialog\.message\}/u);
+  assert.match(settingsAccessibilityStyles, /cap-settings-window-foundation button:focus-visible[\s\S]*?var\(--stable-settings-focus\)/u);
+  assert.match(settingsAccessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration: 0ms !important/u);
+  assert.match(settingsAccessibilityStyles, /cap-stable-settings-copy p[\s\S]*?overflow-wrap: anywhere/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(preloadSource, /settingsWindow:[\s\S]*?settingsWindow:open/u);
   assert.match(preloadSource, /directories:[\s\S]*?directories:changed[\s\S]*?preferences:[\s\S]*?preferences:changed/u);

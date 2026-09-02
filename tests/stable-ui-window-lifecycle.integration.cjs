@@ -61,7 +61,7 @@ assert.match(runtimeSource, /resolveStableUiBrowserOptions/u);
 assert.match(runtimeSource, /applyStableUiWindowMaterial/u);
 assert.match(mainSource, /getNormalDefaultOuterBounds:[^\n]*resolveStableUiDefaultWindowBounds/u);
 assert.match(mainSource, /const revealPreviewWindow = \(\) => \{[\s\S]*?!isCurrentStableUiDevelopmentEnabled\(windowPresentationRuntime\.mode\)[\s\S]*?mainWindow\.hide\(\)/u);
-assert.match(mainSource, /wasActive && restoreMain && !isCurrentStableUiDevelopmentEnabled/u);
+assert.match(mainSource, /if \(wasActive && restoreMain\) \{[\s\S]*?if \(!isCurrentStableUiDevelopmentEnabled[\s\S]*?mainWindow\.show\(\);[\s\S]*?\}[\s\S]*?mainWindow\.focus\(\);/u);
 assert.match(mainSource, /preview:toggleSkimLocationPicker[\s\S]*?closePreviewSession\(\);[\s\S]*?showAndFocusMainWindow\(\);[\s\S]*?sendToggleSkimLocationPickerToRenderer/u);
 assert.match(mainSource, /preview:itemAction[\s\S]*?closePreviewSession\(\);[\s\S]*?showAndFocusMainWindow\(\);[\s\S]*?mainWindow\.webContents\.send/u);
 assert.match(mainSource, /isStableUiLegacySizeShortcut\(id\)\) continue/u);
@@ -89,5 +89,6 @@ console.log(JSON.stringify({
   defaultSizeShortcutIsOneShot: true,
   capsuleReplacedByMainSearchFocus: true,
   mainSettingsPreviewCoexistenceVerified: true,
+  previewCloseFocusReturnVerified: true,
   legacyWindowPathsPreserved: true
 }));

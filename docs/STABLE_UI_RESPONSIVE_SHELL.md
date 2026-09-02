@@ -23,9 +23,9 @@ U2 只建立顶部标题栏、左侧栏、中央结果占位区和右侧 Skim �
 ## 3. 组件边界
 
 - `StableUiRoot.tsx` 只组合标题栏、置顶控制器与主空壳。
-- `StableMainShell.tsx` 只持有本轮的侧栏宽度、Skim 宽度和 Skim 显隐状态。
+- `StableMainShell.tsx` 只组合布局；`useStableShellLayout.ts` 持有 Skim 显隐状态，`useStableShellResize.ts` 持有两侧宽度及指针 / 键盘调整。
 - `StableShellSidebar.tsx`、`StableSkimSlot.tsx` 与 `StablePlaceholderGrid.tsx` 只展示人工占位内容。
-- `StableMainShell.css` 持有 U2 布局和断点；`StableUiFoundation.css` 继续只持有 U1 共用变量、标题栏和滚动条基础。
+- `StableMainShell.css` 持有 U2 布局和断点，`StableShellResize.css` 持有分隔线；`StableUiFoundation.css` 继续只持有 U1 共用变量、标题栏和滚动条基础。
 
 ## 4. 人工验收清单
 
