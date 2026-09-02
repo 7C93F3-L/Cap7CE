@@ -70,7 +70,7 @@ import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { isStableWindowPresentationMode, WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
-import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds } from "./stableUiWindowLifecycle";
+import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
@@ -350,7 +350,6 @@ const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
 const previewWindowPresentationSizing = new PreviewWindowPresentationSizing({ minimumWidth: previewWindowMinimumWidth, minimumHeight: previewWindowMinimumHeight, horizontalPadding: previewWindowHorizontalPadding, verticalChrome: previewWindowVerticalChrome, workAreaRatio: previewWindowWorkAreaRatio });
 const getShellContentBounds = (bounds: Electron.Rectangle) => shellWindowPresentationSizing.getContentBounds(bounds);
 const getShellContentWorkArea = (workArea: Electron.Rectangle) => shellWindowPresentationSizing.getContentWorkArea(workArea);
-const getShellOuterMinimumSize = (size: { width: number; height: number }) => shellWindowPresentationSizing.getOuterMinimumSize(size);
 
 const isShellWindowState = (state: string): state is Cap7CEShellState => shellWindowStates.has(state as Cap7CEShellState);
 
@@ -901,6 +900,7 @@ const getBottomCenterMicroResizeBounds = (newBounds: Electron.Rectangle): Electr
   return shellWindowPresentationSizing.getBottomCenterMicroResizeBounds(newBounds, workArea);
 };
 const getShellMinimumSize = (state: Cap7CEShellState) => {
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) return { ...STABLE_UI_MINIMUM_OUTER_SIZE };
   const workArea = mainWindow
     ? screen.getDisplayMatching(mainWindow.getBounds()).workArea
     : screen.getPrimaryDisplay().workArea;
@@ -2306,7 +2306,7 @@ const refreshWindowPresentationAppearance = async () => {
 const createWindow = () => {
   mainWindowReadyForActivation = false;
   const initialBounds = getShellWindowBounds("normal");
-  const initialMinimumSize = getShellOuterMinimumSize({ width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx });
+  const initialMinimumSize = getShellMinimumSize("normal") ?? shellWindowPresentationSizing.getOuterMinimumSize({ width: resizableShellMinimumWidthPx, height: resizableShellMinimumHeightPx });
   mainWindow = createApplicationWindow("main", {
     ...initialBounds,
     minWidth: initialMinimumSize.width,

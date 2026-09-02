@@ -56,7 +56,7 @@ void (async () => {
   }
   for (const marker of [
     "--cap-stable-edge-gap: 5px",
-    "--cap-stable-radius-md: 14px",
+    "--cap-stable-radius-md: 12px",
     "--cap-stable-font-size: 13px",
     "env(titlebar-area-width",
     "z-index: 60",

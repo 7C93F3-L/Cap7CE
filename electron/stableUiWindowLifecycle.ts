@@ -5,6 +5,7 @@ import { STABLE_TITLEBAR_HEIGHT, type WindowPresentationBrowserOptions, type Win
 export const STABLE_UI_TITLEBAR_HEIGHT = STABLE_TITLEBAR_HEIGHT;
 export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = 0.9;
 export const STABLE_UI_DEFAULT_MAXIMUM_SIZE = { width: 1280, height: 800 } as const;
+export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 156 } as const;
 
 export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds): WindowLayoutBounds => {
   const width = Math.min(STABLE_UI_DEFAULT_MAXIMUM_SIZE.width, Math.max(1, Math.round(workArea.width * STABLE_UI_DEFAULT_WORK_AREA_RATIO)));

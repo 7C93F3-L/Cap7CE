@@ -78,11 +78,13 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
   const hasGridItems = gridItems.length > 0;
   const layoutMode = responsiveLayout ? (lowHeightLayout ? "micro" : "normal") : getResultLayoutMode(shellState);
   const isHorizontalGrid = layoutMode === "micro";
+  const minimumColumnCount = responsiveLayout ? 2 : 1;
   const captureScrollMemory = useCallback((container: HTMLElement, nextScrollTop: number) => {
     const { cellSize, columnCount, isHorizontal } = getImageGridLayout(
       layoutMode,
       container.clientWidth,
-      container.clientHeight
+      container.clientHeight,
+      { minimumColumnCount }
     );
     return captureResultGridScrollMemory({
       layoutMode,
@@ -95,7 +97,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
       columnCount,
       itemIds: layoutItemIds
     });
-  }, [layoutItemIds, layoutMode]);
+  }, [layoutItemIds, layoutMode, minimumColumnCount]);
   const commitScrollTop = useCallback((container: HTMLElement, nextScrollTop: number) => {
     pendingScrollTopRef.current = nextScrollTop;
     if (scrollFrameRef.current !== null) {
@@ -198,7 +200,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
   }, [isHorizontalGrid]);
 
   const virtualGrid = useMemo(() => {
-    const gridLayout = getImageGridLayout(layoutMode, viewport.width, viewport.height);
+    const gridLayout = getImageGridLayout(layoutMode, viewport.width, viewport.height, { minimumColumnCount });
     const { columnCount, contentWidth, isHorizontal } = gridLayout;
     const cellSize = gridLayout.cellSize;
     const rowStride = cellSize + imageGridGap;
@@ -264,7 +266,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
       gridWidth,
       visibleItems
     };
-  }, [gridItems, layoutMode, scrollTop, viewport.height, viewport.width]);
+  }, [gridItems, layoutMode, minimumColumnCount, scrollTop, viewport.height, viewport.width]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -283,7 +285,8 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
           const { cellSize, columnCount, isHorizontal } = getImageGridLayout(
             layoutMode,
             settledContainer.clientWidth,
-            settledContainer.clientHeight
+            settledContainer.clientHeight,
+            { minimumColumnCount }
           );
           const restoredScrollTop = restoreResultGridScrollOffset({
             memory: restoreSourceMemoryRef.current ?? scrollMemoryRef.current,
@@ -311,7 +314,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
       };
     }
     commitScrollTop(container, isHorizontalGrid ? container.scrollLeft : container.scrollTop);
-  }, [commitScrollTop, images.length, isHorizontalGrid, layoutItemIds, layoutMode, viewport.height, viewport.width, virtualGrid.totalHeight, virtualGrid.totalWidth]);
+  }, [commitScrollTop, images.length, isHorizontalGrid, layoutItemIds, layoutMode, minimumColumnCount, viewport.height, viewport.width, virtualGrid.totalHeight, virtualGrid.totalWidth]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -322,7 +325,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
     const safeIndex = Math.min(images.length - 1, Math.max(0, scrollTargetIndex));
     const targetLayoutIndex = getResultLayoutIndexForFileIndex(gridItems, safeIndex);
     if (targetLayoutIndex < 0) return;
-    const { cellSize, columnCount, isHorizontal } = getImageGridLayout(layoutMode, viewport.width, viewport.height);
+    const { cellSize, columnCount, isHorizontal } = getImageGridLayout(layoutMode, viewport.width, viewport.height, { minimumColumnCount });
     const effectiveCellSize = cellSize;
     const rowStride = effectiveCellSize + imageGridGap;
     const targetOffset = isHorizontal
@@ -338,7 +341,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
     }
     commitScrollTop(container, targetOffset);
     onScrollTargetHandled();
-  }, [commitScrollTop, gridItems, images.length, layoutMode, onScrollTargetHandled, scrollTargetIndex, viewport.height, viewport.width]);
+  }, [commitScrollTop, gridItems, images.length, layoutMode, minimumColumnCount, onScrollTargetHandled, scrollTargetIndex, viewport.height, viewport.width]);
 
   useEffect(() => {
     onLayoutChange({

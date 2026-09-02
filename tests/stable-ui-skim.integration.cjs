@@ -33,6 +33,8 @@ for (const marker of ["onDoubleClick={() => setEditingPath(true)}", "onOpenRoot"
 for (const marker of ["embedded?: boolean", "responsiveLayout?: boolean", "active?: boolean", "if (!active) return undefined", "!embedded && <Cap7CESearchCapsule", "window.matchMedia(\"(max-height: 359.98px)\")"]) {
   assert.ok(skimViewSource.includes(marker), `Formal Skim view bridge is missing ${marker}.`);
 }
+assert.match(skimViewSource, /responsiveSkimGridTargetThumbSize = 120/u);
+assert.match(skimViewSource, /targetThumbSize: gridTargetThumbSize/u);
 for (const marker of ["window.cap7ce?.files.startDrag", "buildFileContextMenuGroups", "resolveFileContentPreview", "CustomScrollbar"]) {
   assert.ok(skimViewSource.includes(marker), `Formal Skim file capability is missing ${marker}.`);
 }
@@ -47,6 +49,7 @@ console.log(JSON.stringify({
   skimClosedUntilExplicitToggle: true,
   pathBreadcrumbSortAndScopeControlsVerified: true,
   formalVirtualGridAndFileActionsReused: true,
+  responsiveSkimGridTargetVerified: true,
   hiddenPanelKeyboardIsolationVerified: true,
   responsiveSkimPanelVerified: true
 }));

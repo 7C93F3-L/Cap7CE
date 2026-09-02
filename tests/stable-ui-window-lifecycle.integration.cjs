@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const {
   STABLE_UI_TITLEBAR_HEIGHT,
+  STABLE_UI_MINIMUM_OUTER_SIZE,
   applyStableUiWindowMaterial,
   isStableUiLegacySizeShortcut,
   resolveStableUiBrowserOptions,
@@ -13,6 +14,7 @@ const {
 } = require("../dist-electron/stableUiWindowLifecycle.js");
 
 assert.equal(STABLE_UI_TITLEBAR_HEIGHT, 40);
+assert.deepEqual(STABLE_UI_MINIMUM_OUTER_SIZE, { width: 300, height: 156 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 320, y: 120, width: 1280, height: 800 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 1920, y: 0, width: 1366, height: 728 }), { x: 1989, y: 37, width: 1229, height: 655 });
 
@@ -61,6 +63,7 @@ const previewTitlebarStyles = read("src/renderer/preview/StablePreviewTitlebar.c
 assert.match(runtimeSource, /resolveStableUiBrowserOptions/u);
 assert.match(runtimeSource, /applyStableUiWindowMaterial/u);
 assert.match(mainSource, /getNormalDefaultOuterBounds:[^\n]*resolveStableUiDefaultWindowBounds/u);
+assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) return \{ \.\.\.STABLE_UI_MINIMUM_OUTER_SIZE \}/u);
 assert.match(mainSource, /const revealPreviewWindow = \(\) => \{[\s\S]*?!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)[\s\S]*?mainWindow\.hide\(\)/u);
 assert.match(mainSource, /if \(wasActive && restoreMain\) \{[\s\S]*?if \(!isStableWindowPresentationMode[\s\S]*?mainWindow\.show\(\);[\s\S]*?\}[\s\S]*?mainWindow\.focus\(\);/u);
 assert.match(mainSource, /preview:toggleSkimLocationPicker[\s\S]*?closePreviewSession\(\);[\s\S]*?showAndFocusMainWindow\(\);[\s\S]*?sendToggleSkimLocationPickerToRenderer/u);
@@ -86,6 +89,7 @@ console.log(JSON.stringify({
   fortyDipWindowControlsOverlayVerified: true,
   scrollingCannotReparentNativeDragRegion: true,
   responsiveInitialBoundsVerified: true,
+  stableMinimumOuterSizeVerified: true,
   freeWindowLayoutProfileVerified: true,
   legacySizeShortcutsSuppressedInStableUi: true,
   defaultSizeShortcutIsOneShot: true,

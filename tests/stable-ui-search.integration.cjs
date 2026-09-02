@@ -10,6 +10,7 @@ const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const inputSource = read("src/renderer/stable-ui/StableSearchInput.tsx");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const gridSource = read("src/renderer/results/VirtualResultGrids.tsx");
+const stableResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css");
 const menuSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
 
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
@@ -34,8 +35,10 @@ assert.match(resultsSource, /responsiveLayout\?: boolean/);
 assert.match(resultsSource, /responsiveLayout=\{responsiveLayout\}/);
 assert.match(gridSource, /window\.matchMedia\("\(max-height: 359\.98px\)"\)/);
 assert.match(gridSource, /responsiveLayout \? \(lowHeightLayout \? "micro" : "normal"\)/);
+assert.match(gridSource, /minimumColumnCount = responsiveLayout \? 2 : 1/u);
 assert.match(gridSource, /interactive=\{!responsiveLayout\}/);
 assert.match(gridSource, /: <div className="empty-result-row">\{message\}<\/div>/);
+assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); \}/u);
 
 for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(state.item)", "onCopyPaths(state.items)", "onEditKeywords(state.items)", "onDelete(state.items)"]) {
   assert.ok(menuSource.includes(marker), `Formal results context menu is missing ${marker}.`);
@@ -47,5 +50,6 @@ console.log(JSON.stringify({
   stableInitialAllDirectorySearchVerified: true,
   stableEmptyResultIsNotInteractive: true,
   formalVirtualResultsAndFileActionsReused: true,
-  responsiveGridDirectionVerified: true
+  responsiveGridDirectionVerified: true,
+  stableTwoColumnMinimumAndEightPixelRadiusVerified: true
 }));

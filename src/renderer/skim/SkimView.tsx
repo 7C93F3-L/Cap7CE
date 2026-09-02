@@ -98,7 +98,7 @@ export interface SkimViewProps {
   active?: boolean;
 }
 
-type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] };
+type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] }; const responsiveSkimGridTargetThumbSize = 120;
 
 const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: {
   entry: SkimBrowseEntry;
@@ -168,7 +168,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   const resolvedInputFeedback = feedback || inputFeedback;
   const layoutShellState = responsiveLayout ? (lowHeightLayout ? "micro" : "normal") : shellState;
   const isHorizontalGrid = layoutShellState === "micro";
-  const gridLayout = getImageGridLayout(getResultLayoutMode(layoutShellState), gridViewport.width, gridViewport.height);
+  const gridTargetThumbSize = responsiveLayout ? responsiveSkimGridTargetThumbSize : imageGridTargetThumbSize; const gridLayout = getImageGridLayout(getResultLayoutMode(layoutShellState), gridViewport.width, gridViewport.height, { targetThumbSize: gridTargetThumbSize });
   const virtualGrid = useMemo(() => {
     const { cellSize, columnCount, contentWidth, isHorizontal } = gridLayout;
     const rowStride = cellSize + imageGridGap;
@@ -598,7 +598,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
       className={`skim-view cap-skim-view${embedded ? " is-embedded" : ""}${isHorizontalGrid ? " is-horizontal" : ""}`}
       data-skim-view="true"
       style={{
-        "--cap-grid-target-size": `${imageGridTargetThumbSize}px`,
+        "--cap-grid-target-size": `${gridTargetThumbSize}px`,
         "--cap-grid-gap": `${imageGridGap}px`
       } as CSSProperties}
       onClick={() => {

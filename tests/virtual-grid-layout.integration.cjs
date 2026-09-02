@@ -30,6 +30,18 @@ assert.deepEqual(getImageGridLayout("normal", 620, 500), {
   contentWidth: 620,
   isHorizontal: false
 });
+assert.deepEqual(getImageGridLayout("normal", 255, 500, { minimumColumnCount: 2 }), {
+  cellSize: 125,
+  columnCount: 2,
+  contentWidth: 255,
+  isHorizontal: false
+});
+assert.deepEqual(getImageGridLayout("normal", 370, 500, { targetThumbSize: 120 }), {
+  cellSize: 120,
+  columnCount: 3,
+  contentWidth: 370,
+  isHorizontal: false
+});
 assert.deepEqual(createInitialResultGridScrollMemory(), {
   layoutMode: "normal",
   offset: 0,
@@ -118,6 +130,7 @@ assert.equal(restoreResultGridScrollOffset({
 console.log(JSON.stringify({
   microHorizontalLayoutVerified: true,
   miniAndNormalColumnLayoutVerified: true,
+  responsiveMainAndSkimSizingVerified: true,
   verticalRevealBoundariesVerified: true,
   horizontalRevealBoundariesVerified: true,
   crossLayoutFileAnchorVerified: true,

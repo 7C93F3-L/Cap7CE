@@ -49,6 +49,8 @@ for (const marker of [
   "@media (max-width: 560px)",
   "@media (max-height: 359.98px)",
   "grid-auto-flow: column",
+  ".cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { grid-template-columns: minmax(0, 1fr); }",
+  ".cap-stable-main-shell .cap-custom-scrollbar-horizontal { right: 0; bottom: 0; }",
   ".cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }"
 ]) {
   assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);

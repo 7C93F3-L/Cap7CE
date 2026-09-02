@@ -21,6 +21,11 @@ export const imageGridOverscanRows = 2;
 export const imageGridOverscanItems = 10;
 export const imageGridTargetThumbSize = 150;
 
+interface ImageGridLayoutOptions {
+  targetThumbSize?: number;
+  minimumColumnCount?: number;
+}
+
 const microVisibleThumbCount = 5;
 const miniDefaultColumnCount = 2;
 const gridInteractionResumeDelayMs = 240;
@@ -39,7 +44,12 @@ export const getResultLayoutMode = (shellState: string): ResultLayoutMode => (
   shellState === "micro" ? "micro" : shellState === "mini" ? "mini" : "normal"
 );
 
-export const getImageGridLayout = (layoutMode: ResultLayoutMode, viewportWidth: number, viewportHeight: number) => {
+export const getImageGridLayout = (
+  layoutMode: ResultLayoutMode,
+  viewportWidth: number,
+  viewportHeight: number,
+  { targetThumbSize = imageGridTargetThumbSize, minimumColumnCount = 1 }: ImageGridLayoutOptions = {}
+) => {
   const contentWidth = Math.max(0, viewportWidth);
   const isHorizontal = layoutMode === "micro";
 
@@ -51,9 +61,9 @@ export const getImageGridLayout = (layoutMode: ResultLayoutMode, viewportWidth: 
 
   const adaptiveColumnCount = Math.max(
     1,
-    Math.floor((contentWidth + imageGridGap) / (imageGridTargetThumbSize + imageGridGap))
+    Math.floor((contentWidth + imageGridGap) / (Math.max(1, targetThumbSize) + imageGridGap))
   );
-  const columnCount = Math.max(layoutMode === "mini" ? miniDefaultColumnCount : 1, adaptiveColumnCount);
+  const columnCount = Math.max(layoutMode === "mini" ? miniDefaultColumnCount : Math.max(1, minimumColumnCount), adaptiveColumnCount);
   const cellSize = Math.max(0, (contentWidth - (columnCount - 1) * imageGridGap) / columnCount);
   return { cellSize, columnCount, contentWidth, isHorizontal };
 };

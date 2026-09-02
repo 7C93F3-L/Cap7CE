@@ -214,6 +214,8 @@ D1 固定 stable 首次内容边界：目录与偏好加载完成后，`App.tsx`
 
 D2 补齐 stable Preview 的原生窗口边界：`StablePreviewTitlebar.tsx` 通过共用 `WindowTitlebarPortal` 将 40 DIP 拖动区与内容、滚动和动画树隔离，并复用 `WindowPinButton` 与现有 Preview 固定动作；固定按钮自身明确为非拖动区。Preview `BrowserWindow` 只在 stable presentation 下启用 Windows 原生最小化并加入任务栏，避免原生最小化因 `skipTaskbar` 退化成无法从任务栏恢复的隐藏状态；旧 cap7ce / compatibility 继续保持既有能力。`StablePreviewTitlebar.css` 清除旧透明 Preview 根节点的边框与窗口圆角，由 Windows 有框窗口独占外缘；`StablePreviewShell.css` 让 stable 内容区使用自身的 5px 内边距，不再为已经移除的旧控制栏预留右侧宽度。Provider、导航、尺寸计算和边栏数据链均未改变。
 
+D3 开始按稳定空壳收口正式视觉参数，但不改变搜索与 Skim 的数据所有权：左侧栏使用主题感知的正式矢量标志并恢复目录节奏；共享虚拟网格计算接受可选目标尺寸与最小列数，stable 搜索保持约 150px 且窄窗至少两列，stable Skim 独立使用约 120px，旧宿主继续沿用原 150px 规则。两种 stable 网格统一使用 5px 间距和 8px 卡片圆角，主内容表面使用 12px 圆角；滚动记忆、选择、文件动作与低高度横向布局保持原链路。
+
 U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 持有新版响应式网格和断点，`StableShellResize.css` 持有分隔线命中与焦点，`useStableShellResize.ts` 持有宽度、指针和键盘调整，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、可在 280–480px 内调整，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
 
 U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过 stable presentation 注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；旧宿主继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，不扩大旧全局样式。
@@ -287,7 +289,7 @@ micro / mini / normal 不是完全独立页面，而是旧搜索胶囊的不同�
 
 Cap7CE 模式的同窗 capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标，并按光标距离以 50 / 100 / 200 ms 自适应调度；离开时停止计时并恢复普通鼠标事件。兼容模式不把不透明 WCO 主窗口压缩成胶囊，而由独立透明 Capsule 接收输入；草稿、提交、Esc、失焦和 IME 状态通过专用白名单同步，搜索与快捷指令仍在隐藏的主 Renderer 执行。独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复。主进程监听显示器 `workArea` / `bounds` 变化，并分别将可见 line 与当前模式的 Capsule 重新贴合工作区；旧外壳 micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。独立 Settings 在隐藏后重开或下次启动时按自己的版本化记录执行显示恢复。该策略不恢复 edge hidden。
 
-旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。该规则不作为新版 UI 的尺寸契约；stable 旁路旧 resize 形态推断，用户可自由缩放，normal 快捷动作只应用一次默认尺寸预设。
+旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。stable 旁路旧 resize 形态推断，按整窗 `300 × 156` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；normal 快捷动作只应用一次默认尺寸预设。
 
 旧主窗口的 capsule、micro、mini、normal 与 Settings 状态仍属于同一业务状态机；Cap7CE 同窗 Capsule 与兼容独立 Capsule 复用同一个 `QuickSearchCapsule` 输入组件。旧 micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。稳定 UI 的 Settings 独立 Renderer 由 `src/renderer/main.tsx` 按 `window=settings` 分流；U7 的 `SettingsWindowApp` 不导入旧完整 `SettingsView`，而是复用其既有领域组件和同一组 preload 动作。Capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 Capsule 激活动作。
 
