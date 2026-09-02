@@ -46,7 +46,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       <span className="cap-stable-directory-label">{all ? t("stableUi.sidebar.allDirectories") : directory.name}</span>
       {!all && <span className="cap-stable-directory-count">{count}</span>}
     </button>;
-    if (all) return <div key={directory.id}>{directoryButton}</div>;
+    if (all) return <div className="cap-stable-all-directories-row" key={directory.id}>{directoryButton}</div>;
     return <div className="cap-stable-directory-row" key={directory.id} onContextMenu={(event) => openDirectoryFlyout(directory, event)}>
       {directoryButton}
       <button className="cap-stable-directory-more" type="button" aria-label={t("common.manage")} onClick={(event) => openDirectoryFlyout(directory, event)}><StableSidebarIcon name="more" /></button>
@@ -54,7 +54,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
   };
 
   return <aside className="cap-stable-sidebar">
-    <div className="cap-stable-brand" aria-label="Cap7CE">Cap7CE</div>
+    <div className="cap-stable-brand" aria-label="Cap7CE"><span className="cap-stable-brand-logo" aria-hidden="true" /></div>
     <div className="cap-stable-sidebar-controls">
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>
         <StableSidebarIcon name="ai" /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span><span className={`cap-stable-switch${aiSearchEnabled ? " is-active" : ""}`} aria-hidden="true" />

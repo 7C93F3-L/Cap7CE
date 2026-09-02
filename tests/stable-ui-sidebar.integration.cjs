@@ -10,6 +10,7 @@ const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
 const sidebarSource = read("src/renderer/stable-ui/StableShellSidebar.tsx");
 const sidebarTypesSource = read("src/renderer/stable-ui/stableSidebarTypes.ts");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
+const brandLogo = read("src/renderer/assets/icons/logo-cap7ce.svg");
 
 for (const marker of [
   "onAiSearchToggle",
@@ -31,6 +32,7 @@ assert.match(shellSource, /<StableShellSidebar \{\.\.\.sidebar\}/);
 assert.doesNotMatch(`${rootSource}\n${shellSource}\n${sidebarSource}`, /window\.cap7ce|from "\.\.\/App"/);
 
 for (const marker of [
+  "cap-stable-brand-logo",
   "search.sortField",
   "search.sortDirection",
   "search.directoryId",
@@ -42,6 +44,8 @@ for (const marker of [
 ]) assert.ok(sidebarSource.includes(marker), `Stable sidebar display is missing ${marker}.`);
 
 for (const marker of [
+  ".cap-stable-brand-logo",
+  ".cap-stable-all-directories-row",
   ".cap-stable-sidebar-control:hover",
   ".cap-stable-directory-item.is-selected",
   ".cap-stable-directory-list",
@@ -49,7 +53,11 @@ for (const marker of [
   "flex-direction: column"
 ]) assert.ok(sidebarStyles.includes(marker), `Stable sidebar styles are missing ${marker}.`);
 
+assert.match(brandLogo, /viewBox="0 0 58\.77 15"/u);
+assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
+
 console.log(JSON.stringify({
+  stableBrandAndDirectoryRhythmPresent: true,
   controlledFilterAndDirectoryActionsBridged: true,
   formalDirectoryTransactionsReused: true,
   directoryDropAndIndependentSettingsActionGuarded: true,
