@@ -560,9 +560,9 @@ const createPreviewWindow = () => {
     title: "Cap7CE",
     ...windowPresentationRuntime.getBrowserOptions("preview", nativeTheme.shouldUseDarkColors),
     show: false,
-    skipTaskbar: true,
+    skipTaskbar: !isStableWindowPresentationMode(windowPresentationRuntime.mode),
     resizable: true,
-    minimizable: false,
+    minimizable: isStableWindowPresentationMode(windowPresentationRuntime.mode),
     maximizable: true,
     fullscreenable: false,
     webPreferences: {
@@ -571,7 +571,7 @@ const createPreviewWindow = () => {
     }
   });
   lockWebContentsZoom(previewWindow.webContents);
-  previewWindow.setSkipTaskbar(true);
+  previewWindow.setSkipTaskbar(!isStableWindowPresentationMode(windowPresentationRuntime.mode));
   previewWindow.setMenuBarVisibility(false);
   previewDockedShell.attach({
     window: previewWindow,

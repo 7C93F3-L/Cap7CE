@@ -10,6 +10,7 @@ import PdfPreviewPanel from "./PdfPreviewPanel";
 import FontPreviewPanel from "./FontPreviewPanel";
 import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
 import PreviewInformationSidebar from "./preview/PreviewInformationSidebar";
+import StablePreviewTitlebar from "./preview/StablePreviewTitlebar";
 import { usePreviewSidebarLayout } from "./preview/usePreviewSidebarLayout";
 import { getPreviewWheelNavigationDirection, isPreviewNavigationSuppressedTarget } from "./preview/previewNavigationTarget";
 import { usePreviewImageTransform } from "./preview/usePreviewImageTransform";
@@ -528,6 +529,7 @@ const PreviewWindowApp = () => {
       }}
     >
       {isCompatibilityWindow && <CompatibilityTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
+      {isStableUiPreview && <StablePreviewTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
       <div className={`preview-window-shell${isStableUiPreview ? " preview-stable-shell" : ""}`}>
         {isStableUiPreview && <PreviewInformationSidebar
           data={previewData}

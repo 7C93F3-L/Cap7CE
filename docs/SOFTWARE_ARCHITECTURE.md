@@ -212,6 +212,8 @@ D0 将 U1 的开发隔离根节点提升为正式第三种 presentation：主进
 
 D1 固定 stable 首次内容边界：目录与偏好加载完成后，`App.tsx` 只触发一次空查询、全部目录、全部格式的正式搜索，并保留用户排序偏好；不再依赖旧 shell 形态激活事件。`useStableShellLayout.ts` 默认关闭 Skim 且不在挂载时读取位置，只有用户点击左下角 Skim 按钮后才调用唯一的 `useSkimReadController`。stable 空结果使用非交互文案容器，不显示进入 Skim 的引导，也不提供主窗口中央点击热区；旧宿主的空状态行为保持不变。
 
+D2 补齐 stable Preview 的原生窗口边界：`StablePreviewTitlebar.tsx` 通过共用 `WindowTitlebarPortal` 将 40 DIP 拖动区与内容、滚动和动画树隔离，并复用 `WindowPinButton` 与现有 Preview 固定动作；固定按钮自身明确为非拖动区。Preview `BrowserWindow` 只在 stable presentation 下启用 Windows 原生最小化并加入任务栏，避免原生最小化因 `skipTaskbar` 退化成无法从任务栏恢复的隐藏状态；旧 cap7ce / compatibility 继续保持既有能力。`StablePreviewTitlebar.css` 清除旧透明 Preview 根节点的边框与窗口圆角，由 Windows 有框窗口独占外缘；`StablePreviewShell.css` 让 stable 内容区使用自身的 5px 内边距，不再为已经移除的旧控制栏预留右侧宽度。Provider、导航、尺寸计算和边栏数据链均未改变。
+
 U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 持有新版响应式网格和断点，`StableShellResize.css` 持有分隔线命中与焦点，`useStableShellResize.ts` 持有宽度、指针和键盘调整，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、可在 280–480px 内调整，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
 
 U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过 stable presentation 注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；旧宿主继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，不扩大旧全局样式。

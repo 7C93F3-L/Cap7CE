@@ -53,9 +53,10 @@ const quickActionsSource = read("src/renderer/settings/QuickActionSettingsRows.t
 const hintSource = read("src/renderer/controllers/useOperationHintController.ts");
 const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
 const stableTitlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
+const stablePreviewTitlebarSource = read("src/renderer/preview/StablePreviewTitlebar.tsx");
 const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
 const settingsStyles = read("src/renderer/settings-window/SettingsWindowApp.css");
-const previewStyles = read("src/renderer/preview/StablePreviewShell.css");
+const previewTitlebarStyles = read("src/renderer/preview/StablePreviewTitlebar.css");
 
 assert.match(runtimeSource, /resolveStableUiBrowserOptions/u);
 assert.match(runtimeSource, /applyStableUiWindowMaterial/u);
@@ -75,9 +76,10 @@ assert.match(hintSource, /stableUi && \(hint\.shortcutActionId === "activateMicr
 assert.match(foundationStyles, /env\(titlebar-area-height, 40px\)/u);
 assert.match(foundationStyles, /\.cap-stable-titlebar\s*\{[\s\S]*?z-index:\s*60/u);
 assert.match(stableTitlebarSource, /<WindowTitlebarPortal>[\s\S]*?<header/u);
+assert.match(stablePreviewTitlebarSource, /<WindowTitlebarPortal>[\s\S]*?<header/u);
 assert.match(titlebarPortalSource, /createPortal\(children, document\.body\)/u);
 assert.match(settingsStyles, /cap-settings-window-drag-region[\s\S]*?height: 40px/u);
-assert.match(previewStyles, /preview-window-stable-ui \{ --compatibility-titlebar-height: 40px; background: transparent; \}/u);
+assert.match(previewTitlebarStyles, /preview-window-stable-ui\s*\{[\s\S]*?--compatibility-titlebar-height: 40px;[\s\S]*?border: 0;[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;/u);
 
 console.log(JSON.stringify({
   acrylicWithSolidFallbackVerified: true,

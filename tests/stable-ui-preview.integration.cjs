@@ -6,6 +6,8 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const mainSource = read("electron/main.ts");
 const previewSource = read("src/renderer/PreviewWindowApp.tsx");
+const titlebarSource = read("src/renderer/preview/StablePreviewTitlebar.tsx");
+const titlebarStyles = read("src/renderer/preview/StablePreviewTitlebar.css");
 const sidebarSource = read("src/renderer/preview/PreviewInformationSidebar.tsx");
 const layoutSource = read("src/renderer/preview/usePreviewSidebarLayout.ts");
 const keyboardSource = read("src/renderer/preview/previewSidebarKeyboard.ts");
@@ -20,7 +22,12 @@ assert.match(mainSource, /const previewUrl = new URL\(devServerUrl\);[\s\S]*?pre
 assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
 assert.match(previewSource, /const isStableUiPreview = new URLSearchParams\(window\.location\.search\)\.get\("presentation"\) === "stable"/u);
 assert.match(previewSource, /isStableUiPreview && <PreviewInformationSidebar/u);
+assert.match(previewSource, /isStableUiPreview && <StablePreviewTitlebar/u);
 assert.match(previewSource, /!isStableUiPreview && <WindowControlRail/u);
+assert.match(titlebarSource, /<WindowTitlebarPortal>[\s\S]*?<header/u);
+assert.match(titlebarSource, /<WindowPinButton/u);
+assert.match(titlebarStyles, /\.preview-stable-titlebar\s*\{[\s\S]*?app-region: drag;/u);
+assert.match(titlebarStyles, /\.preview-stable-titlebar-pin\s*\{[\s\S]*?app-region: no-drag;/u);
 assert.match(previewSource, /isPreviewNavigationSuppressedTarget/u);
 assert.match(navigationTargetSource, /data-preview-navigation-suppressed/u);
 assert.match(previewSource, /!isStableUiPreview && previewData\.embeddedMetadata[\s\S]*?variant="sheet"/u);
@@ -42,12 +49,19 @@ assert.match(keyboardSource, /event\.key === "ArrowLeft"[\s\S]*?currentWidth - 8
 assert.match(sidebarSource, /aria-label=\{t\(expanded \? "preview\.sidebar\.collapse" : "preview\.sidebar\.expand"\)\}/u);
 assert.match(sidebarSource, /role="separator"[\s\S]*?tabIndex=\{0\}[\s\S]*?aria-valuenow=\{width\}[\s\S]*?onKeyDown=\{onResizeByKeyboard\}/u);
 assert.match(shellStyles, /preview-information-sidebar\.is-collapsed[\s\S]*?40px/u);
-assert.match(shellStyles, /\.preview-window-compatibility \.preview-stable-shell \.preview-window-content[\s\S]*?inset: 0 5px 5px 0/u);
+assert.match(titlebarStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;/u);
+assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]*?inset: 0 5px 5px 0/u);
+assert.match(mainSource, /minimizable: isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
+assert.match(mainSource, /skipTaskbar: !isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
+assert.match(mainSource, /previewWindow\.setSkipTaskbar\(!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\)/u);
 assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw - 220px\)/u);
 assert.match(accessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.preview-window-stable-ui \*/u);
 
 console.log(JSON.stringify({
   formalStablePreviewEntryPresent: true,
+  stablePreviewTitlebarAndNativeMinimizePresent: true,
+  stablePreviewNativeTaskbarMinimizePresent: true,
+  stablePreviewSingleWindowSurfacePresent: true,
   legacyPreviewFallbackPreserved: true,
   singleProviderLifecyclePreserved: true,
   formalInformationSidebarPresent: true,

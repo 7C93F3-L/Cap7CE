@@ -5,7 +5,6 @@
 .preview-window-stage {
   display: contents;
 }
-.preview-window-stable-ui { --compatibility-titlebar-height: 40px; background: transparent; }
 .preview-stable-shell {
   --preview-sidebar-current-width: var(--preview-sidebar-width, 320px);
   position: absolute;
@@ -27,7 +26,7 @@
   overflow: hidden;
 }
 
-.preview-window-compatibility .preview-stable-shell .preview-window-content {
+.preview-stable-shell .preview-window-content {
   inset: 0 5px 5px 0;
 }
 
