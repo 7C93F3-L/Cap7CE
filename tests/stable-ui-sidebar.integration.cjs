@@ -8,6 +8,7 @@ const appSource = read("src/renderer/App.tsx");
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
 const sidebarSource = read("src/renderer/stable-ui/StableShellSidebar.tsx");
+const sidebarFlyoutSource = read("src/renderer/stable-ui/StableSidebarFlyout.tsx");
 const stableUiIconSource = read("src/renderer/stable-ui/StableUiIcon.tsx");
 const skimToolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const sidebarTypesSource = read("src/renderer/stable-ui/stableSidebarTypes.ts");
@@ -70,6 +71,10 @@ assert.match(sidebarSource, /cap-stable-settings-button[\s\S]*?<StableUiIcon nam
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-footer-icon \{ width: 20px; height: 20px;[^}]*\} \.cap-stable-skim-icon \{ width: 22px; height: 22px; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout \{[^}]*background: var\(--cap-stable-flyout-surface\);[^}]*font: inherit;/u);
+assert.match(sidebarStyles, /\.cap-stable-flyout-title \{[^}]*color: inherit; font-size: inherit;/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-danger \{ color: inherit; \}/u);
+assert.match(sidebarFlyoutSource, /document\.querySelector<HTMLElement>\("\.cap-stable-ui"\) \?\? document\.body/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-footer-icon\s*\{[^}]*opacity:/u);
 assert.match(stableUiIconSource, /icon-sort-asc\.svg\?raw/u);
 assert.match(stableUiIconSource, /sortDirection === "asc" \? sortAscIcon : sortDescIcon/u);

@@ -17,6 +17,7 @@
   --cap-stable-text-muted: rgb(31 31 31 / 54%);
   --cap-stable-surface: rgb(255 255 255 / 50%);
   --cap-stable-surface-soft: rgb(255 255 255 / 30%);
+  --cap-stable-flyout-surface: rgb(246 246 246 / 80%);
   --cap-stable-hover: rgb(31 31 31 / 8%);
   --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 22%, transparent);
   --cap-stable-focus: var(--accent-color, #68c3c0);
@@ -36,6 +37,7 @@
     --cap-stable-text-muted: rgb(244 244 244 / 58%);
     --cap-stable-surface: rgb(26 26 26 / 58%);
     --cap-stable-surface-soft: rgb(26 26 26 / 36%);
+    --cap-stable-flyout-surface: rgb(32 32 32 / 80%);
     --cap-stable-hover: rgb(255 255 255 / 8%);
     --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 34%, transparent);
     --cap-stable-caption-hover: rgb(255 255 255 / 10%);
