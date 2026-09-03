@@ -7,7 +7,7 @@ import type { StableSkimProps } from "./stableSkimTypes";
 import { useStableShellLayout } from "./useStableShellLayout";
 import "./StableMainShell.css";
 const StableMainShell = ({ resultContent, sidebar, skim }: { resultContent: ReactNode; sidebar: StableSidebarProps; skim: StableSkimProps }) => {
-  const { shellStyle, skimOpen, sidebarWidth, skimWidth, resizeSidebar, resizeSkim, resizeSidebarByKeyboard, resizeSkimByKeyboard, resetSidebarWidth, resetSkimWidth, toggleSkim } = useStableShellLayout(skim.onOpen);
+  const { shellStyle, skimOpen, sidebarWidth, skimWidth, skimMaximumWidth, resizeSidebar, resizeSkim, resizeSidebarByKeyboard, resizeSkimByKeyboard, resetSidebarWidth, resetSkimWidth, toggleSkim } = useStableShellLayout(skim.onOpen);
 
   return (
     <section className={`cap-stable-main-shell${skimOpen ? " is-skim-open" : ""}`} style={shellStyle}>
@@ -16,7 +16,7 @@ const StableMainShell = ({ resultContent, sidebar, skim }: { resultContent: Reac
         onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={resizeSidebar}
         onKeyDown={resizeSidebarByKeyboard} onDoubleClick={resetSidebarWidth} />
       <section className="cap-stable-results-slot" aria-label={t("stableUi.resultsRegion")}>{resultContent}</section>
-      <button className="cap-stable-resizer cap-stable-skim-resizer" type="button" role="separator" aria-orientation="vertical" aria-label={t("stableUi.resizeSkim")} aria-valuemin={280} aria-valuemax={480} aria-valuenow={skimWidth}
+      <button className="cap-stable-resizer cap-stable-skim-resizer" type="button" role="separator" aria-orientation="vertical" aria-label={t("stableUi.resizeSkim")} aria-valuemin={280} aria-valuemax={skimMaximumWidth} aria-valuenow={skimWidth}
         onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={resizeSkim}
         onKeyDown={resizeSkimByKeyboard} onDoubleClick={resetSkimWidth} />
       <StableSkimSlot {...skim} content={skim.renderContent(skimOpen)} />

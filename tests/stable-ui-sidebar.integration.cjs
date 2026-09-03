@@ -58,6 +58,8 @@ for (const marker of [
 assert.match(brandLogo, /viewBox="0 0 58\.77 15"/u);
 assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
 assert.match(sidebarSource, /<StableUiIcon name="ai" active=\{aiSearchEnabled\}/u);
+assert.doesNotMatch(sidebarSource, /cap-stable-switch/u);
+assert.doesNotMatch(sidebarStyles, /\.cap-stable-switch/u);
 assert.match(sidebarSource, /<StableUiIcon name="folder" active=\{selected\}/u);
 assert.match(sidebarSource, /cap-stable-directory-list-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical/u);
 assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScrollRef\} orientation="vertical" \/>/u);

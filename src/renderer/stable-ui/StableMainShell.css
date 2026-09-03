@@ -3,8 +3,8 @@
 .cap-stable-main-shell {
   --cap-stable-sidebar-width: 160px;
   --cap-stable-sidebar-rendered-width: min(var(--cap-stable-sidebar-width), max(40px, calc(100vw - 260px)));
-  --cap-stable-skim-width: 360px;
-  --cap-stable-skim-rendered-width: min(var(--cap-stable-skim-width), 480px, calc(100vw - var(--cap-stable-sidebar-rendered-width) - 480px));
+  --cap-stable-skim-width: 360px; --cap-stable-grid-page-padding: 10px 2px 10px 10px;
+  --cap-stable-skim-rendered-width: min(var(--cap-stable-skim-width), var(--cap-stable-skim-maximum-width));
   position: absolute;
   top: var(--cap-stable-titlebar-height);
   right: 0;
@@ -66,22 +66,22 @@
 }
 
 @media (max-height: 359.98px) {
-  .cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { grid-template-columns: minmax(0, 1fr); }
+  .cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { --cap-stable-grid-page-padding: 10px 2px 2px 10px; grid-template-columns: minmax(0, 1fr); }
   .cap-stable-sidebar,
   .cap-stable-sidebar-resizer,
   .cap-stable-skim-resizer { display: none !important; }
   .cap-stable-results-slot,
-  .cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { grid-column: 1; }
+  .cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { grid-column: 1; margin-left: var(--cap-stable-edge-gap); }
   .cap-stable-results-grid,
   .cap-stable-skim-grid {
     grid-template-columns: none;
     grid-template-rows: minmax(0, 1fr);
     grid-auto-flow: column;
-    grid-auto-columns: min(150px, max(64px, calc(100vh - var(--cap-stable-titlebar-height) - 10px)));
+    grid-auto-columns: min(150px, max(64px, calc(100vh - var(--cap-stable-titlebar-height) - 20px)));
     align-content: stretch;
     overflow-x: auto;
     overflow-y: hidden;
   }
   .cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }
-  .cap-stable-main-shell .cap-custom-scrollbar-horizontal { right: 0; bottom: 0; }
+  .cap-stable-main-shell .cap-scroll-viewport-frame-horizontal { grid-template-rows: minmax(0, 1fr) var(--custom-scrollbar-hit-size); } .cap-stable-main-shell .cap-scroll-viewport-frame-horizontal > .cap-custom-scrollbar-horizontal { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; width: 100%; }
 }

@@ -54,7 +54,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     <div className="cap-stable-brand" aria-label="Cap7CE"><span className="cap-stable-brand-logo" aria-hidden="true" /></div>
     <div className="cap-stable-sidebar-controls">
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>
-        <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span><span className={`cap-stable-switch${aiSearchEnabled ? " is-active" : ""}`} aria-hidden="true" />
+        <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span>
       </button>
       <button className="cap-stable-sidebar-control" type="button" title={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}>
         <StableUiIcon name="sort" sortDirection={search.sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><span className="cap-stable-control-chevron">›</span>

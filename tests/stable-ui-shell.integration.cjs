@@ -40,7 +40,8 @@ for (const marker of [
   "useState(160)",
   "useState(360)",
   "clamp(event.clientX, 40, 320)",
-  "clamp(window.innerWidth - event.clientX, 280, 480)",
+  "Math.floor((viewportWidth - sidebarWidth) / 2)",
+  "clamp(window.innerWidth - event.clientX, 280, skimMaximumWidth)",
   "resetSidebarWidth: () => setSidebarWidth(160)",
   "resetSkimWidth: () => setSkimWidth(360)"
 ]) {
@@ -50,14 +51,18 @@ for (const marker of [
 for (const marker of [
   "--cap-stable-sidebar-width: 160px",
   "--cap-stable-skim-width: 360px",
+  "--cap-stable-skim-rendered-width: min(var(--cap-stable-skim-width), var(--cap-stable-skim-maximum-width))",
   "@media (max-width: 920px) and (min-height: 360px)",
   "@media (max-width: 560px)",
   "@media (max-height: 359.98px)",
   "grid-auto-flow: column",
-  ".cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { grid-template-columns: minmax(0, 1fr); }",
+  ".cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { --cap-stable-grid-page-padding: 10px 2px 2px 10px; grid-template-columns: minmax(0, 1fr); }",
   ".cap-stable-main-shell .cap-stable-directory-list-frame { grid-template-columns: minmax(0, 1fr); }",
   ".cap-stable-main-shell .cap-stable-directory-list-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0;",
-  ".cap-stable-main-shell .cap-custom-scrollbar-horizontal { right: 0; bottom: 0; }",
+  "--cap-stable-grid-page-padding: 10px 2px 2px 10px",
+  ".cap-stable-main-shell .cap-scroll-viewport-frame-horizontal { grid-template-rows: minmax(0, 1fr) var(--custom-scrollbar-hit-size); }",
+  ".cap-stable-main-shell .cap-scroll-viewport-frame-horizontal > .cap-custom-scrollbar-horizontal { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; width: 100%; }",
+  ".cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { grid-column: 1; margin-left: var(--cap-stable-edge-gap); }",
   ".cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }"
 ]) {
   assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);
@@ -66,8 +71,8 @@ assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sid
 assert.match(foundationStyles, /\.cap-stable-titlebar-pin-icon \{ width: 24px; height: 24px; \}/u);
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[\s\S]*?background: var\(--scrollbar-thumb\);/u);
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb:hover\s*\{[\s\S]*?background: var\(--scrollbar-thumb-hover\);/u);
-assert.match(resultStyles, /\.cap-stable-results-slot > \.cap-results-view\s*\{[\s\S]*?padding: 10px 2px 10px 10px;/u);
-assert.match(skimStyles, /\.cap-stable-skim-content > \.cap-skim-view\.is-embedded\s*\{[\s\S]*?padding: 10px 2px 10px 10px;/u);
+assert.match(resultStyles, /\.cap-stable-results-slot > \.cap-results-view\s*\{[\s\S]*?padding: var\(--cap-stable-grid-page-padding\);/u);
+assert.match(skimStyles, /\.cap-stable-skim-content > \.cap-skim-view\.is-embedded\s*\{[\s\S]*?padding: var\(--cap-stable-grid-page-padding\);/u);
 assert.doesNotMatch(shellStyles, /\.cap-stable-main-shell \.cap-scroll-viewport-frame \{ grid-template-columns:/u);
 assert.doesNotMatch(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[^}]*box-shadow:/u);
 assert.equal((globalStyles.match(/--scroll-thumb: color-mix\(in srgb, var\(--text-main\) 42%, transparent\);/gu) || []).length, 2);
