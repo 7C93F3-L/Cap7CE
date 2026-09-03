@@ -59,7 +59,7 @@
 
 .cap-stable-search-slot {
   align-self: center;
-  width: min(clamp(120px, 42vw, 560px), calc(100% - 96px));
+  width: min(clamp(120px, 42vw, 560px), calc(100% - 56px));
   height: 32px;
   margin-left: 10px;
   box-sizing: border-box;
@@ -142,4 +142,5 @@
 
 @media (max-width: 760px) {
   .cap-stable-result-count { display: none; }
+  .cap-stable-titlebar-pin { margin-left: auto; }
 }

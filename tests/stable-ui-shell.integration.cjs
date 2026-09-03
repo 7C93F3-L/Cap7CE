@@ -68,7 +68,11 @@ for (const marker of [
   assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);
 }
 assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sidebar is missing its compact container layout.");
+assert.match(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: drag;[^}]*-webkit-app-region: drag;/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar button,[\s\S]*?\.cap-stable-sidebar \.cap-stable-directory-list-frame \{ app-region: no-drag; -webkit-app-region: no-drag; \}/u);
+assert.match(foundationStyles, /\.cap-stable-search-slot \{[\s\S]*?width: min\(clamp\(120px, 42vw, 560px\), calc\(100% - 56px\)\);/u);
 assert.match(foundationStyles, /\.cap-stable-titlebar-pin-icon \{ width: 24px; height: 24px; \}/u);
+assert.match(foundationStyles, /@media \(max-width: 760px\) \{[\s\S]*?\.cap-stable-result-count \{ display: none; \}[\s\S]*?\.cap-stable-titlebar-pin \{ margin-left: auto; \}[\s\S]*?\}/u);
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[\s\S]*?background: var\(--scrollbar-thumb\);/u);
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb:hover\s*\{[\s\S]*?background: var\(--scrollbar-thumb-hover\);/u);
 assert.match(resultStyles, /\.cap-stable-results-slot > \.cap-results-view\s*\{[\s\S]*?padding: var\(--cap-stable-grid-page-padding\);/u);
