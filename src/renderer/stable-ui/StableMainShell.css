@@ -19,7 +19,7 @@
 .cap-stable-main-shell.is-skim-open {
   grid-template-columns: var(--cap-stable-sidebar-rendered-width) minmax(0, 1fr) var(--cap-stable-skim-rendered-width);
 }
-
+.cap-stable-main-shell .cap-stable-directory-list-frame { grid-template-columns: minmax(0, 1fr); } .cap-stable-main-shell .cap-stable-directory-list-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0; width: var(--custom-scrollbar-hit-size); height: auto; grid-column: auto; grid-row: auto; }
 .cap-stable-results-slot,
 .cap-stable-skim-slot {
   min-width: 0;

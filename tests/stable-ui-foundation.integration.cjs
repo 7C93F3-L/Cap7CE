@@ -72,6 +72,9 @@ void (async () => {
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
   assert.match(foundationStyles, /--cap-stable-focus:\s*var\(--accent-color/u);
+  assert.match(foundationStyles, /scrollbar-color:\s*var\(--scrollbar-thumb\) transparent/u);
+  assert.match(foundationStyles, /::-webkit-scrollbar-thumb:hover,[\s\S]*?background:\s*var\(--scrollbar-thumb-hover\)/u);
+  assert.doesNotMatch(foundationStyles, /--cap-stable-scrollbar/u);
   assert.match(accessibilityStyles, /\.cap-stable-titlebar \*[\s\S]*?transition-duration:\s*0ms !important/u);
   assert.match(packageJson.scripts["dev:stable-ui"], /CAP7CE_WINDOW_PRESENTATION_MODE=stable/);
   assert.match(packageJson.scripts["dev:cap7ce"], /CAP7CE_WINDOW_PRESENTATION_MODE=cap7ce/);

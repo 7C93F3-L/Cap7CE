@@ -58,7 +58,7 @@ button {
   --window-control-rail-width: 30px;
   --window-control-rail-top: 38px;
   --custom-scrollbar-hit-size: 8px;
-  --custom-scrollbar-thumb-size: 3px;
+  --custom-scrollbar-thumb-size: 4px;
   --app-bg: #ffffff;
   --capsule-bg: var(--app-bg);
   --capsule-bg-focus: var(--app-bg);
@@ -69,7 +69,7 @@ button {
   --input-text: #111111;
   --icon-muted: #777777;
   --border-soft: #ececec;
-  --scroll-thumb: color-mix(in srgb, var(--text-main) 22%, transparent);
+  --scroll-thumb: color-mix(in srgb, var(--text-main) 42%, transparent);
   --theme-color: #7C93F3;
   --accent-color: #68C3C0;
   --theme-on-color: #ffffff;
@@ -97,7 +97,7 @@ button {
   --input: var(--app-bg);
   --input-border: #cfcfcf;
   --scrollbar-thumb: var(--scroll-thumb);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-main) 34%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-main) 62%, transparent);
   --option-hover: color-mix(in srgb, var(--text) 8%, var(--surface-strong));
   --option-selected: color-mix(in srgb, var(--text) 12%, var(--surface-strong));
   --focus-border: var(--accent-color);
@@ -129,7 +129,7 @@ textarea,
   --input-text: #ffffff;
   --icon-muted: #3f3f3f;
   --border-soft: #2a2a2a;
-  --scroll-thumb: #3f3f3f;
+  --scroll-thumb: color-mix(in srgb, var(--text-main) 42%, transparent);
   --theme-color: #7C93F3;
   --accent-color: #68C3C0;
   --theme-on-color: #ffffff;
@@ -155,7 +155,7 @@ textarea,
   --input: var(--panel-bg);
   --input-border: #2a2a2a;
   --scrollbar-thumb: var(--scroll-thumb);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--scroll-thumb) 72%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-main) 62%, transparent);
   --option-hover: color-mix(in srgb, var(--text) 9%, var(--surface-strong));
   --option-selected: color-mix(in srgb, var(--text) 14%, var(--surface-strong));
   --focus-border: var(--accent-color);

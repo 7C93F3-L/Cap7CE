@@ -41,6 +41,7 @@ assert.match(sidebarDataSource, /searchEvidence: item\.searchEvidence/u);
 assert.match(sidebarSource, /PreviewEmbeddedMetadata[\s\S]*?variant="details"/u);
 assert.match(sidebarSource, /data-preview-navigation-suppressed="true"/u);
 assert.match(sidebarSource, /preview-sidebar-section preview-sidebar-file-card[\s\S]*?preview-sidebar-file-heading[\s\S]*?preview-sidebar-details/u);
+assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{scrollRef\} orientation="vertical" \/>/u);
 assert.doesNotMatch(sidebarSource, /window\.cap7ce/u);
 
 assert.match(layoutSource, /cap7ce\.preview\.sidebar-layout\.v1/u);
@@ -55,6 +56,8 @@ assert.match(shellStyles, /@import "\.\/StablePreviewSidebar\.css"/u);
 assert.match(shellStyles, /preview-information-sidebar\.is-collapsed[\s\S]*?40px/u);
 assert.match(sidebarStyles, /preview-sidebar-section\s*\{[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--preview-sidebar-card\)/u);
 assert.match(sidebarStyles, /preview-sidebar-actions,[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
+assert.match(sidebarStyles, /\.preview-sidebar-scroll::-webkit-scrollbar \{ width: 0; height: 0; \}/u);
+assert.match(sidebarStyles, /\.preview-information-sidebar > \.cap-custom-scrollbar-vertical \{ position: absolute; top: 58px; right: 4px; bottom: 0;/u);
 assert.match(titlebarStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]*?inset: 0 5px 5px 0/u);
 assert.match(mainSource, /minimizable: isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);

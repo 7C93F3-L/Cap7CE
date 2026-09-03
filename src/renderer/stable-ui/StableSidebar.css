@@ -25,7 +25,7 @@
 .cap-stable-directory-heading button:hover { background: var(--cap-stable-selected); }
 .cap-stable-directory-heading button:disabled { opacity: .4; }
 .cap-stable-directory-heading .cap-stable-sidebar-icon { width: 16px; height: 16px; }
-.cap-stable-all-directories-row { margin-bottom: 4px; } .cap-stable-directory-list { display: grid; align-content: start; gap: 4px; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.cap-stable-all-directories-row { margin-bottom: 4px; } .cap-stable-directory-list-frame { min-width: 0; min-height: 0; } .cap-stable-directory-list { display: grid; align-content: start; gap: 4px; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .cap-stable-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; min-width: 0; }
 .cap-stable-directory-item { grid-template-columns: 28px minmax(0, 1fr) auto; min-height: 34px; padding-block: 3px; }
 .cap-stable-directory-item.is-editing { background: var(--cap-stable-selected); }
@@ -69,7 +69,6 @@
   .cap-stable-directory-section { margin-top: 4px; padding: 4px 0 76px; }
   .cap-stable-directory-heading { justify-content: center; min-height: 32px; margin: 0 0 4px; }
   .cap-stable-directory-heading button { width: 32px; height: 32px; margin: 0; }
-  .cap-stable-directory-list::-webkit-scrollbar { width: 0; height: 0; }
   .cap-stable-sidebar-footer { right: 4px; left: 4px; flex-direction: column; align-items: center; }
   .cap-stable-sidebar-footer button { width: 32px; height: 32px; }
 }

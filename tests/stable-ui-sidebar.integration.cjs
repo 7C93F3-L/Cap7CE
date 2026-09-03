@@ -59,6 +59,8 @@ assert.match(brandLogo, /viewBox="0 0 58\.77 15"/u);
 assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
 assert.match(sidebarSource, /<StableUiIcon name="ai" active=\{aiSearchEnabled\}/u);
 assert.match(sidebarSource, /<StableUiIcon name="folder" active=\{selected\}/u);
+assert.match(sidebarSource, /cap-stable-directory-list-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical/u);
+assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScrollRef\} orientation="vertical" \/>/u);
 assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
 assert.match(sidebarSource, /name="sort" sortDirection=\{search\.sortDirection\} className="cap-stable-sidebar-icon cap-stable-sort-icon"/u);
 assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stable-footer-icon cap-stable-skim-icon"/u);

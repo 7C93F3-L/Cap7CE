@@ -22,6 +22,10 @@ const resizeSource = read(shellFiles[5]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
+const resultStyles = read("src/renderer/stable-ui/StableSearchResults.css");
+const skimStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
+const scrollbarStyles = read("src/renderer/CustomScrollbar.css");
+const globalStyles = read("src/renderer/styles.css");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
 assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\}\s*\/>/);
@@ -51,6 +55,8 @@ for (const marker of [
   "@media (max-height: 359.98px)",
   "grid-auto-flow: column",
   ".cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { grid-template-columns: minmax(0, 1fr); }",
+  ".cap-stable-main-shell .cap-stable-directory-list-frame { grid-template-columns: minmax(0, 1fr); }",
+  ".cap-stable-main-shell .cap-stable-directory-list-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0;",
   ".cap-stable-main-shell .cap-custom-scrollbar-horizontal { right: 0; bottom: 0; }",
   ".cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }"
 ]) {
@@ -58,6 +64,14 @@ for (const marker of [
 }
 assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sidebar is missing its compact container layout.");
 assert.match(foundationStyles, /\.cap-stable-titlebar-pin-icon \{ width: 24px; height: 24px; \}/u);
+assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[\s\S]*?background: var\(--scrollbar-thumb\);/u);
+assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb:hover\s*\{[\s\S]*?background: var\(--scrollbar-thumb-hover\);/u);
+assert.match(resultStyles, /\.cap-stable-results-slot > \.cap-results-view\s*\{[\s\S]*?padding: 10px 2px 10px 10px;/u);
+assert.match(skimStyles, /\.cap-stable-skim-content > \.cap-skim-view\.is-embedded\s*\{[\s\S]*?padding: 10px 2px 10px 10px;/u);
+assert.doesNotMatch(shellStyles, /\.cap-stable-main-shell \.cap-scroll-viewport-frame \{ grid-template-columns:/u);
+assert.doesNotMatch(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[^}]*box-shadow:/u);
+assert.equal((globalStyles.match(/--scroll-thumb: color-mix\(in srgb, var\(--text-main\) 42%, transparent\);/gu) || []).length, 2);
+assert.equal((globalStyles.match(/--scrollbar-thumb-hover: color-mix\(in srgb, var\(--text-main\) 62%, transparent\);/gu) || []).length, 2);
 
 assert.doesNotMatch(combinedShellSource, /window\.cap7ce|setShellState|shellState|\bmicro\b|\bmini\b|\bnormal\b/);
 assert.doesNotMatch(combinedShellSource, /stable-ui-canvas|prototypes[\\/]|C:\\Users\\|示例目录|Example/);

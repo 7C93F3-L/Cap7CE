@@ -21,8 +21,6 @@
   --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 22%, transparent);
   --cap-stable-focus: var(--accent-color, #68c3c0);
   --cap-stable-caption-hover: rgb(0 0 0 / 10%);
-  --cap-stable-scrollbar: rgb(31 31 31 / 28%);
-  --cap-stable-scrollbar-active: rgb(31 31 31 / 46%);
   color: var(--cap-stable-text);
   color-scheme: light;
   background: transparent;
@@ -41,8 +39,6 @@
     --cap-stable-hover: rgb(255 255 255 / 8%);
     --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 34%, transparent);
     --cap-stable-caption-hover: rgb(255 255 255 / 10%);
-    --cap-stable-scrollbar: rgb(244 244 244 / 28%);
-    --cap-stable-scrollbar-active: rgb(244 244 244 / 46%);
     color-scheme: dark;
 }
 
@@ -119,7 +115,7 @@
 .cap-stable-scroll-surface {
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--cap-stable-scrollbar) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .cap-stable-scroll-surface::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -130,12 +126,12 @@
 .cap-stable-scroll-surface::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: var(--cap-stable-radius-pill);
-  background: var(--cap-stable-scrollbar);
+  background: var(--scrollbar-thumb);
   background-clip: content-box;
 }
 .cap-stable-scroll-surface::-webkit-scrollbar-thumb:hover,
 .cap-stable-scroll-surface::-webkit-scrollbar-thumb:active {
-  background: var(--cap-stable-scrollbar-active);
+  background: var(--scrollbar-thumb-hover);
   background-clip: content-box;
 }
 

@@ -1,24 +1,18 @@
+import { useRef } from "react";
 import type { PreviewWindowData } from "../../shared/types";
 import { t } from "../../../electron/localization";
+import CustomScrollbar from "../CustomScrollbar";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
 import { previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
-  data: PreviewWindowData;
-  expanded: boolean;
-  width: number;
-  canShowSecondaryActions: boolean;
-  onToggleExpanded: () => void;
-  onBeginResize: (event: React.PointerEvent) => void;
-  onResizeByKeyboard: (event: React.KeyboardEvent<HTMLElement>) => void;
-  onResetWidth: () => void;
-  onOpen: () => void;
-  onShowInFolder: () => void;
-  onCopyPath: () => void;
-  onEditKeywords: () => void;
-  onDelete: () => void;
-  onOpenSkim: () => void;
-  onOpenSettings: () => void;
+  data: PreviewWindowData; expanded: boolean; width: number;
+  canShowSecondaryActions: boolean; onToggleExpanded: () => void;
+  onBeginResize: (event: React.PointerEvent) => void; onResizeByKeyboard: (event: React.KeyboardEvent<HTMLElement>) => void;
+  onResetWidth: () => void; onOpen: () => void;
+  onShowInFolder: () => void; onCopyPath: () => void;
+  onEditKeywords: () => void; onDelete: () => void;
+  onOpenSkim: () => void; onOpenSettings: () => void;
 }
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -36,7 +30,6 @@ const getFileFormat = (data: PreviewWindowData) => {
   const extension = data.info?.extension || data.fileName.slice(data.fileName.lastIndexOf(".") + 1);
   return extension && extension !== data.fileName ? extension.replace(/^\./u, "").toUpperCase() : t("fileInfo.file");
 };
-
 const PreviewInformationSidebar = ({
   data,
   expanded,
@@ -53,7 +46,9 @@ const PreviewInformationSidebar = ({
   onDelete,
   onOpenSkim,
   onOpenSettings
-}: PreviewInformationSidebarProps) => (
+}: PreviewInformationSidebarProps) => {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  return (
   <aside
     className={`preview-information-sidebar${expanded ? " is-expanded" : " is-collapsed"}`}
     style={{ "--preview-sidebar-width": `${width}px` } as React.CSSProperties}
@@ -65,7 +60,7 @@ const PreviewInformationSidebar = ({
       {expanded && <strong>{t("preview.sidebar.heading")}</strong>}
     </button>
     {expanded && <>
-      <div className="preview-sidebar-scroll cap-main-scroll-viewport">
+      <div ref={scrollRef} className="preview-sidebar-scroll cap-main-scroll-viewport">
         <section className="preview-sidebar-section preview-sidebar-file-card">
           <h2>{t("preview.sidebar.fileInfo")}</h2>
           <div className="preview-sidebar-file-heading">
@@ -115,9 +110,10 @@ const PreviewInformationSidebar = ({
           <button type="button" onClick={onOpenSettings}>{t("window.openSettings")}</button>
         </section>}
       </div>
+      <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
       <div className="preview-sidebar-resize-handle" role="separator" tabIndex={0} aria-orientation="vertical" aria-label={t("preview.sidebar.resize")} aria-valuemin={previewSidebarMinimumWidth} aria-valuemax={previewSidebarMaximumWidth} aria-valuenow={width} onPointerDown={onBeginResize} onKeyDown={onResizeByKeyboard} onDoubleClick={onResetWidth} />
     </>}
   </aside>
-);
-
+  );
+};
 export default PreviewInformationSidebar;
