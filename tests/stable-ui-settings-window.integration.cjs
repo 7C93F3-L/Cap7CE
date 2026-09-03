@@ -150,6 +150,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAccessibilityStyles, /cap-stable-settings-copy p[\s\S]*?overflow-wrap: anywhere/u);
   assert.match(settingsStyles, /cap-stable-settings-shell[\s\S]*?grid-template-columns: 176px minmax\(0, 1fr\)/u);
   assert.match(settingsStyles, /cap-stable-settings-search[\s\S]*?height: 34px/u);
+  assert.match(settingsAppSource, /<StableUiIcon name="search" className="cap-stable-settings-search-icon" \/>/u);
+  assert.match(settingsStyles, /cap-stable-settings-search-icon \{ width: 16px; height: 16px; color: var\(--stable-settings-secondary\); \}/u);
   assert.match(settingsStyles, /cap-stable-settings-card\s*\{[\s\S]*?min-height: 62px;[\s\S]*?border-radius: 999px/u);
   assert.match(settingsStyles, /cap-stable-settings-card-expanded[\s\S]*?border-radius: 22px[\s\S]*?@media \(max-width: 700px\)[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);

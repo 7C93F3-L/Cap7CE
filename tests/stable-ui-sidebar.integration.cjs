@@ -8,6 +8,8 @@ const appSource = read("src/renderer/App.tsx");
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
 const sidebarSource = read("src/renderer/stable-ui/StableShellSidebar.tsx");
+const stableUiIconSource = read("src/renderer/stable-ui/StableUiIcon.tsx");
+const skimToolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const sidebarTypesSource = read("src/renderer/stable-ui/stableSidebarTypes.ts");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const brandLogo = read("src/renderer/assets/icons/logo-cap7ce.svg");
@@ -55,11 +57,27 @@ for (const marker of [
 
 assert.match(brandLogo, /viewBox="0 0 58\.77 15"/u);
 assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
+assert.match(sidebarSource, /<StableUiIcon name="ai" active=\{aiSearchEnabled\}/u);
+assert.match(sidebarSource, /<StableUiIcon name="folder" active=\{selected\}/u);
+assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
+assert.match(sidebarSource, /name="sort" sortDirection=\{search\.sortDirection\} className="cap-stable-sidebar-icon cap-stable-sort-icon"/u);
+assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stable-footer-icon cap-stable-skim-icon"/u);
+assert.match(sidebarSource, /cap-stable-settings-button[\s\S]*?<StableUiIcon name="settings"[\s\S]*?<StableUiIcon name="settings" active/u);
+assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-footer-icon \{ width: 20px; height: 20px;[^}]*\} \.cap-stable-skim-icon \{ width: 22px; height: 22px; \}/u);
+assert.doesNotMatch(sidebarStyles, /\.cap-stable-footer-icon\s*\{[^}]*opacity:/u);
+assert.match(stableUiIconSource, /icon-sort-asc\.svg\?raw/u);
+assert.match(stableUiIconSource, /sortDirection === "asc" \? sortAscIcon : sortDescIcon/u);
+assert.match(skimToolbarSource, /name="sort" sortDirection=\{sortDirection\}/u);
+assert.match(skimToolbarSource, /name="sort" sortDirection=\{sortDirection\} className="cap-stable-sidebar-icon cap-stable-sort-icon"/u);
+assert.match(skimToolbarSource, /name="scope" active=\{flyout\?\.kind === "scope"\}/u);
 
 console.log(JSON.stringify({
   stableBrandAndDirectoryRhythmPresent: true,
   controlledFilterAndDirectoryActionsBridged: true,
   formalDirectoryTransactionsReused: true,
   directoryDropAndIndependentSettingsActionGuarded: true,
-  collapsedSidebarAndFooterVerified: true
+  collapsedSidebarAndFooterVerified: true,
+  stableIconStatesAndLegacySortIconsVerified: true
 }));

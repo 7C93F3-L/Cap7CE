@@ -204,6 +204,13 @@
         "filter": [
           "LICENSE"
         ]
+      },
+      {
+        "from": "third_party/fluentui-system-icons",
+        "to": "licenses/fluentui-system-icons",
+        "filter": [
+          "LICENSE"
+        ]
       }
     ],
     "win": {

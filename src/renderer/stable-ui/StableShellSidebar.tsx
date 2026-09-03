@@ -1,16 +1,13 @@
 import { useState, type MouseEvent } from "react";
 import { t } from "../../../electron/localization";
 import type { DirectoryItem, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
-import settingsIcon from "../assets/icons/icon-settings.svg";
-import skimIcon from "../assets/icons/icon-skim.svg";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableSidebarIcon from "./StableSidebarIcons";
+import StableUiIcon from "./StableUiIcon";
 import type { StableSidebarProps } from "./stableSidebarTypes";
 import "./StableSidebar.css";
-
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
 interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; }
-
 const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onSearchDisplayModeChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
   const [flyout, setFlyout] = useState<FlyoutState>(null);
   const allDirectories = directories[0];
@@ -31,7 +28,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     const title = all ? t("stableUi.sidebar.allDirectories") : `${directory.path}\n${t("settings.directoryFileCountHint")}：${count}`;
     if (!all && editingDirectoryId === directory.id) {
       return <div className="cap-stable-directory-item is-editing" key={directory.id}>
-        <StableSidebarIcon name="folder" />
+        <StableUiIcon name="folder" />
         <input autoFocus defaultValue={directory.name} aria-label={t("settings.renameDirectoryHint")} onBlur={(event) => {
           if (event.currentTarget.dataset.cancelled !== "true") onDirectoryNameChange(directory.id, event.currentTarget.value);
         }} onKeyDown={(event) => {
@@ -42,7 +39,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     }
     const directoryButton = <button className={`cap-stable-directory-item${selected ? " is-selected" : ""}`} type="button" title={title} aria-pressed={selected}
       onClick={() => selectDirectory(directory.id)} onDoubleClick={() => { if (!all) onEditDirectory(directory.id); }}>
-      <StableSidebarIcon name="folder" />
+      <StableUiIcon name="folder" active={selected} />
       <span className="cap-stable-directory-label">{all ? t("stableUi.sidebar.allDirectories") : directory.name}</span>
       {!all && <span className="cap-stable-directory-count">{count}</span>}
     </button>;
@@ -57,13 +54,13 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     <div className="cap-stable-brand" aria-label="Cap7CE"><span className="cap-stable-brand-logo" aria-hidden="true" /></div>
     <div className="cap-stable-sidebar-controls">
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>
-        <StableSidebarIcon name="ai" /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span><span className={`cap-stable-switch${aiSearchEnabled ? " is-active" : ""}`} aria-hidden="true" />
+        <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span><span className={`cap-stable-switch${aiSearchEnabled ? " is-active" : ""}`} aria-hidden="true" />
       </button>
       <button className="cap-stable-sidebar-control" type="button" title={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}>
-        <StableSidebarIcon name="sort" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><span className="cap-stable-control-chevron">›</span>
+        <StableUiIcon name="sort" sortDirection={search.sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><span className="cap-stable-control-chevron">›</span>
       </button>
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.searchScope")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}>
-        <StableSidebarIcon name="scope" /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.searchScope")}</strong><small>{scopeValue}</small></span><span className="cap-stable-control-chevron">›</span>
+        <StableUiIcon name="scope" active={flyout?.kind === "scope"} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.searchScope")}</strong><small>{scopeValue}</small></span><span className="cap-stable-control-chevron">›</span>
       </button>
     </div>
 
@@ -79,8 +76,11 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     </section>
 
     <div className="cap-stable-sidebar-footer">
-      <button className={skimOpen ? "is-active" : ""} type="button" title={skimOpen ? t("skim.exit") : t("skim.open")} aria-label={skimOpen ? t("skim.exit") : t("skim.open")} aria-pressed={skimOpen} onClick={onToggleSkim}><img src={skimIcon} alt="" /></button>
-      <button type="button" title={t("window.openSettings")} aria-label={t("window.openSettings")} onClick={onOpenSettings}><img src={settingsIcon} alt="" /></button>
+      <button className={skimOpen ? "is-active" : ""} type="button" title={skimOpen ? t("skim.exit") : t("skim.open")} aria-label={skimOpen ? t("skim.exit") : t("skim.open")} aria-pressed={skimOpen} onClick={onToggleSkim}><StableUiIcon name="skim" active={skimOpen} className="cap-stable-footer-icon cap-stable-skim-icon" /></button>
+      <button className="cap-stable-settings-button" type="button" title={t("window.openSettings")} aria-label={t("window.openSettings")} onClick={onOpenSettings}>
+        <StableUiIcon name="settings" className="cap-stable-footer-icon cap-stable-settings-icon" />
+        <StableUiIcon name="settings" active className="cap-stable-footer-icon cap-stable-settings-icon-active" />
+      </button>
     </div>
 
     {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} onClose={closeFlyout}>

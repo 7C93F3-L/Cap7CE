@@ -1,7 +1,7 @@
 import { useRef, type FormEvent, type Ref } from "react";
 import type { SearchState } from "../../shared/types";
 import { t } from "../../../electron/localization";
-
+import StableUiIcon from "./StableUiIcon";
 interface StableSearchInputProps {
   search: SearchState;
   inputRef: Ref<HTMLInputElement>;
@@ -11,7 +11,6 @@ interface StableSearchInputProps {
   onSearchOptionsChange: (search: SearchState) => void;
   onSearch: () => void;
 }
-
 const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGuide, onSearchChange, onSearchOptionsChange, onSearch }: StableSearchInputProps) => {
   const composingRef = useRef(false);
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -21,6 +20,7 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGui
 
   return (
     <form className="cap-stable-search-slot" role="search" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
+      <StableUiIcon name="search" className="cap-stable-search-icon" />
       <input
         ref={inputRef}
         value={search.query}
@@ -37,7 +37,7 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGui
           if (clearedQuery) onSearchOptionsChange(nextSearch);
         }}
       />
-      {!inputFeedbackIsGuide && inputFeedback && <span title={inputFeedback}>{inputFeedback}</span>}
+      {!inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback" title={inputFeedback}>{inputFeedback}</span>}
     </form>
   );
 };

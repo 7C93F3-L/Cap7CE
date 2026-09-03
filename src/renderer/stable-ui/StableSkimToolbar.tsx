@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type MouseEvent } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
 import StableSidebarFlyout from "./StableSidebarFlyout";
-import StableSidebarIcon from "./StableSidebarIcons";
+import StableUiIcon from "./StableUiIcon";
 import type { StableSkimProps } from "./stableSkimTypes";
 
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | null;
@@ -37,8 +37,8 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
         <button type="button" onClick={onOpenRoot}>{t("skim.computer")}</button>
         {breadcrumbs.map((breadcrumb) => <span key={breadcrumb.path}><span aria-hidden="true">›</span><button type="button" title={breadcrumb.path} onClick={() => onOpenPath(breadcrumb.path)}>{breadcrumb.name}</button></span>)}
       </div>}
-      <button className="cap-stable-skim-tool" type="button" title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}><StableSidebarIcon name="sort" /></button>
-      <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}><StableSidebarIcon name="scope" /></button>
+      <button className="cap-stable-skim-tool" type="button" title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}><StableUiIcon name="sort" sortDirection={sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /></button>
+      <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>
     </div>
     {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} onClose={() => setFlyout(null)}>
       <span className="cap-stable-flyout-title">{t("sort.parent")}</span>

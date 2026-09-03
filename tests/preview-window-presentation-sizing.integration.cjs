@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { PreviewWindowPresentationSizing } = require("../dist-electron/previewWindowPresentationSizing.js");
+const { getStablePreviewContentChrome, PreviewWindowPresentationSizing } = require("../dist-electron/previewWindowPresentationSizing.js");
 
 const sizing = new PreviewWindowPresentationSizing({
   minimumWidth: 360,
@@ -20,6 +20,12 @@ assert.equal(compatibilityBounds.height, cap7ceBounds.height + 36);
 assert.equal(compatibilityBounds.x + Math.round(compatibilityBounds.width / 2), cap7ceBounds.x + Math.round(cap7ceBounds.width / 2));
 assert.equal(compatibilityBounds.y + Math.round(compatibilityBounds.height / 2), cap7ceBounds.y + Math.round(cap7ceBounds.height / 2));
 
+const stableBounds = sizing.resolveBounds({ contentWidth: 800, contentHeight: 600, currentBounds: null, workArea, titlebarHeight: 40, ...getStablePreviewContentChrome() });
+assert.equal(stableBounds.width, 845);
+assert.equal(stableBounds.height, 645);
+const expandedStableBounds = sizing.resolveBounds({ contentWidth: 800, contentHeight: 600, currentBounds: null, workArea, titlebarHeight: 40, ...getStablePreviewContentChrome(320) });
+assert.equal(expandedStableBounds.width - stableBounds.width, 280);
+
 const anchoredBounds = sizing.resolveBounds({
   contentWidth: 500,
   contentHeight: 400,
@@ -38,6 +44,8 @@ assert.ok(constrainedBounds.x >= 0 && constrainedBounds.y >= 0);
 console.log(JSON.stringify({
   cap7cePreviewSizeUnchanged: true,
   compatibilityTitlebarAddedOutsideContent: true,
+  stablePreviewUsesCollapsedRailAndFivePixelEdge: true,
+  expandedStableSidebarPreservesContentWidth: true,
   currentOuterCenterPreserved: true,
   narrowWorkAreaClamped: true
 }));

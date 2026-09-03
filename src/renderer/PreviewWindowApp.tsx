@@ -109,6 +109,7 @@ const PreviewWindowApp = () => {
   const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
   const [embeddedMetadataExpanded, setEmbeddedMetadataExpanded] = useState(false);
   const previewSidebarLayout = usePreviewSidebarLayout();
+  const previewSidebarWidth = isStableUiPreview ? (previewSidebarLayout.expanded ? previewSidebarLayout.width : 40) : undefined;
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const imageTransform = usePreviewImageTransform(previewData?.sessionId ?? "", imageRef, isStableUiPreview);
@@ -242,9 +243,10 @@ const PreviewWindowApp = () => {
     window.cap7ce?.preview.contentSize({
       sessionId: previewData.sessionId,
       filePath: previewData.filePath,
-      ...dimensions
+      ...dimensions,
+      sidebarWidth: previewSidebarWidth
     });
-  }, [previewData, showInfoFallback]);
+  }, [previewData, previewSidebarWidth, showInfoFallback]);
 
   useEffect(() => {
     if (
@@ -308,9 +310,10 @@ const PreviewWindowApp = () => {
       sessionId: previewData.sessionId,
       filePath: previewData.filePath,
       width: image.naturalWidth,
-      height: image.naturalHeight
+      height: image.naturalHeight,
+      sidebarWidth: previewSidebarWidth
     });
-  }, [displaySrc, previewData]);
+  }, [displaySrc, previewData, previewSidebarWidth]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -594,7 +597,8 @@ const PreviewWindowApp = () => {
               sessionId: previewData.sessionId,
               filePath: previewData.filePath,
               width: event.currentTarget.naturalWidth,
-              height: event.currentTarget.naturalHeight
+              height: event.currentTarget.naturalHeight,
+              sidebarWidth: previewSidebarWidth
             });
           }}
           onError={() => {
@@ -617,7 +621,8 @@ const PreviewWindowApp = () => {
               sessionId: previewData.sessionId,
               filePath: previewData.filePath,
               width: 1,
-              height: 1
+              height: 1,
+              sidebarWidth: previewSidebarWidth
             });
           }}
           onClick={(event) => {
@@ -768,7 +773,8 @@ const PreviewWindowApp = () => {
                     sessionId: previewData.sessionId,
                     filePath: previewData.filePath,
                     width: event.currentTarget.videoWidth,
-                    height: event.currentTarget.videoHeight
+                    height: event.currentTarget.videoHeight,
+                    sidebarWidth: previewSidebarWidth
                   });
                 }}
                 onError={() => setShowInfoFallback(true)}

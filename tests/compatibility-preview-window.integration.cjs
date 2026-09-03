@@ -12,7 +12,7 @@ const titlebarSource = read("src/renderer/window-presentation/CompatibilityTitle
 const titlebarStyles = read("src/renderer/window-presentation/CompatibilityTitlebar.css");
 
 assert.match(mainSource, /const previewMinimumSize = previewWindowPresentationSizing\.getOuterMinimumSize\(windowPresentationRuntime\.titlebarHeight\)[\s\S]*?\.\.\.windowPresentationRuntime\.getBrowserOptions\("preview", nativeTheme\.shouldUseDarkColors\)/u);
-assert.match(mainSource, /previewWindowPresentationSizing\.resolveBounds\(\{ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display\.workArea, titlebarHeight: windowPresentationRuntime\.titlebarHeight \}\)/u);
+assert.match(mainSource, /previewWindowPresentationSizing\.resolveBounds\(\{ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display\.workArea, titlebarHeight: windowPresentationRuntime\.titlebarHeight,[\s\S]*?isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)[\s\S]*?\}\)/u);
 assert.match(mainSource, /previewUrl\.searchParams\.set\("presentation", windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
 assert.match(mainSource, /isCompatibilityPreviewNativeSnapActive\(\)[\s\S]*?previewDockedShell\.hasActiveSession\(\)/u);

@@ -10,6 +10,7 @@ This file is a human-readable inventory for Cap7CE 0.9.7. `package-lock.json` is
 | --- | --- |
 | Electron | MIT; the Electron distribution also includes Chromium and other third-party notices |
 | React / React DOM | MIT |
+| Fluent UI System Icons | MIT; selected SVG geometry is adapted for the stable UI, with the bundled license text in `third_party/fluentui-system-icons` |
 | `react-markdown` / `remark-gfm` and unified ecosystem dependencies | MIT; selected supporting packages also use ISC |
 | `@napi-rs/canvas` and Windows runtime package | MIT |
 | `ag-psd` | MIT |
@@ -33,6 +34,8 @@ The installed production dependency graph also contains components under MIT, Ap
 Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entries. It does not implement or expose RAR archive creation. Binary packaging copies `License.txt` and `unRarLicense.txt` to `resources/licenses/7z-wasm`.
 
 Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active preview session. Binary packaging copies its MIT license to `resources/licenses/opentype.js`.
+
+Cap7CE uses selected Microsoft Fluent UI System Icons as editable SVG geometry in the stable UI. The icons are adapted for Cap7CE state and sizing while remaining subject to the upstream MIT license.
 
 Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
 

@@ -102,7 +102,7 @@
 
 .cap-stable-titlebar-pin:hover { background: var(--cap-stable-caption-hover); }
 .cap-stable-titlebar-pin:focus-visible { outline-offset: -3px; }
-.cap-stable-titlebar-pin-icon { width: 17px; height: 17px; }
+.cap-stable-titlebar-pin-icon { width: 24px; height: 24px; }
 
 .cap-stable-surface {
   box-sizing: border-box;

@@ -21,6 +21,7 @@ const layoutSource = read(shellFiles[4]);
 const resizeSource = read(shellFiles[5]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
+const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
 assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\}\s*\/>/);
@@ -56,6 +57,7 @@ for (const marker of [
   assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);
 }
 assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sidebar is missing its compact container layout.");
+assert.match(foundationStyles, /\.cap-stable-titlebar-pin-icon \{ width: 24px; height: 24px; \}/u);
 
 assert.doesNotMatch(combinedShellSource, /window\.cap7ce|setShellState|shellState|\bmicro\b|\bmini\b|\bnormal\b/);
 assert.doesNotMatch(combinedShellSource, /stable-ui-canvas|prototypes[\\/]|C:\\Users\\|示例目录|Example/);
@@ -66,5 +68,6 @@ console.log(JSON.stringify({
   resizeRangesVerified: true,
   narrowAndLowWindowLayoutsVerified: true,
   noBusinessDataOrLegacyShapeState: true,
-  keyboardResizeAndLocalizedRegionsVerified: true
+  keyboardResizeAndLocalizedRegionsVerified: true,
+  stablePinIconMatchesCaptionScale: true
 }));

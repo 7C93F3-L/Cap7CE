@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { getActiveLanguage, t, type TranslationKey } from "../../../electron/localization";
 import type { UserPreferences } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
+import StableUiIcon from "../stable-ui/StableUiIcon";
 import { formatCacheSize } from "../formatting";
 import { EmbeddedMetadataSettingsRow } from "../settings/EmbeddedMetadataSettingsRow";
 import { QuickActionSettingsRows } from "../settings/QuickActionSettingsRows";
@@ -15,7 +16,6 @@ import { useSettingsWindowController } from "./useSettingsWindowController";
 import "./SettingsWindowApp.css";
 type CategoryId = "general" | "appearance" | "browse" | "search-ai" | "cache" | "shortcuts" | "diagnostics" | "about";
 type DialogState = { message: string; confirmLabel?: string; action: () => Promise<unknown> } | null;
-
 const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; short: string }> = [
   { id: "general", label: "stableSettings.category.general", short: "⚙" },
   { id: "appearance", label: "stableSettings.category.appearance", short: "◐" },
@@ -169,7 +169,7 @@ const SettingsWindowApp = () => {
   return <div className={`cap-settings-window-foundation theme-${effectiveTheme}`} data-language={getActiveLanguage()} style={menuStyle}>
     <div className="cap-settings-window-drag-region" aria-hidden="true" />
     <div className="cap-stable-settings-shell">
-      <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><span aria-hidden="true">⌕</span><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => setQuery(event.target.value)} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} data-short={category.short} onClick={() => { setActiveCategory(category.id); setQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><span>{t(category.label)}</span></button>)}</nav></aside>
+      <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => setQuery(event.target.value)} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} data-short={category.short} onClick={() => { setActiveCategory(category.id); setQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><span>{t(category.label)}</span></button>)}</nav></aside>
       <div className="cap-stable-settings-content-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical"><main className="cap-stable-settings-content cap-main-scroll-viewport" ref={scrollRef}>{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel"><h1>{t(category.label)}</h1>{renderCategory(category.id)}</article>)}</main><CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" /></div>
     </div>
     {dialog && <div className="cap-stable-settings-dialog-backdrop" role="presentation"><section className="cap-stable-settings-dialog" role="alertdialog" aria-modal="true" aria-label={dialog.message}><p>{dialog.message}</p><div><button type="button" autoFocus disabled={dialogBusy} onClick={() => setDialog(null)}>{t("common.cancel")}</button><button type="button" disabled={dialogBusy} onClick={() => void confirmDialog()}>{dialogBusy ? t("common.loading") : dialog.confirmLabel ?? t("common.confirm")}</button></div></section></div>}

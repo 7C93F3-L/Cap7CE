@@ -2,6 +2,9 @@
 @import "./StablePreviewResponsive.css";
 @import "./StablePreviewSidebar.css";
 
+.preview-window-stable-ui { --preview-stable-surface: rgb(255 255 255 / 50%); }
+.preview-window-stable-ui.theme-dark { --preview-stable-surface: rgb(26 26 26 / 58%); }
+
 .preview-window-shell,
 .preview-window-stage {
   display: contents;
@@ -29,6 +32,8 @@
 
 .preview-stable-shell .preview-window-content {
   inset: 0 5px 5px 0;
+  border-radius: 12px;
+  background: var(--preview-stable-surface);
 }
 
 .preview-stable-shell .preview-window-scrollbar-slot,

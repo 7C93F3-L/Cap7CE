@@ -1,6 +1,6 @@
-.cap-stable-search-slot { position: relative; }
+.cap-stable-search-slot { position: relative; display: flex; align-items: center; gap: 8px; }
 .cap-stable-search-slot input {
-  width: 100%;
+  width: 100%; min-width: 0;
   height: 100%;
   padding: 0;
   border: 0;
@@ -10,9 +10,10 @@
   font: inherit;
 }
 .cap-stable-search-slot input::placeholder { color: var(--cap-stable-text-muted); }
-.cap-stable-search-slot span {
+.cap-stable-search-icon { width: 16px; height: 16px; color: var(--cap-stable-text-muted); }
+.cap-stable-search-feedback {
   position: absolute;
-  inset: 0 12px;
+  inset: 0 12px 0 36px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -21,7 +22,6 @@
   white-space: nowrap;
   pointer-events: none;
 }
-
 .cap-stable-results-slot > .cap-results-view {
   display: flex;
   flex-direction: column;

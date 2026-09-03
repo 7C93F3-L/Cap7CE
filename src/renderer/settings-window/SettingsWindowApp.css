@@ -72,6 +72,8 @@
   font-size: 12px;
 }
 
+.cap-stable-settings-search-icon { width: 16px; height: 16px; color: var(--stable-settings-secondary); }
+
 .cap-stable-settings-navigation nav {
   display: grid;
   gap: 4px;

@@ -94,6 +94,7 @@ export interface PreviewContentSize {
   filePath: string;
   width: number;
   height: number;
+  sidebarWidth?: number;
 }
 
 export interface PreviewWindowControlState {

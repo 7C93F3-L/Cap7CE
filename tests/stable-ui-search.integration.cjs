@@ -39,6 +39,7 @@ assert.match(gridSource, /minimumColumnCount = responsiveLayout \? 2 : 1/u);
 assert.match(gridSource, /interactive=\{!responsiveLayout\}/);
 assert.match(gridSource, /: <div className="empty-result-row">\{message\}<\/div>/);
 assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); \}/u);
+assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-search-icon" \/>/u);
 
 for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(state.item)", "onCopyPaths(state.items)", "onEditKeywords(state.items)", "onDelete(state.items)"]) {
   assert.ok(menuSource.includes(marker), `Formal results context menu is missing ${marker}.`);
@@ -51,5 +52,6 @@ console.log(JSON.stringify({
   stableEmptyResultIsNotInteractive: true,
   formalVirtualResultsAndFileActionsReused: true,
   responsiveGridDirectionVerified: true,
-  stableTwoColumnMinimumAndEightPixelRadiusVerified: true
+  stableTwoColumnMinimumAndEightPixelRadiusVerified: true,
+  stableSearchIconEmbedded: true
 }));

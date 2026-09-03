@@ -72,7 +72,7 @@ import { isStableWindowPresentationMode, WindowPresentationRuntime } from "./win
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
 import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
-import { PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
+import { getStablePreviewContentChrome, PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
 import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
 import { createSettingsDataBroadcaster } from "./settingsDataBroadcast";
@@ -503,7 +503,7 @@ const centerPreviewWindowForNewSession = () => {
   );
   return true;
 };
-const getPreviewWindowBounds = (contentWidth: number, contentHeight: number): Electron.Rectangle => {
+const getPreviewWindowBounds = (contentWidth: number, contentHeight: number, sidebarWidth?: number): Electron.Rectangle => {
   const currentPreviewBounds = previewWindow && !previewWindow.isDestroyed() && previewWindow.isVisible()
     ? previewDockedShell.getExpandedBounds(previewWindow)
     : null;
@@ -512,7 +512,7 @@ const getPreviewWindowBounds = (contentWidth: number, contentHeight: number): El
     : mainWindow
       ? screen.getDisplayMatching(mainWindow.getBounds())
       : screen.getPrimaryDisplay();
-  return previewWindowPresentationSizing.resolveBounds({ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display.workArea, titlebarHeight: windowPresentationRuntime.titlebarHeight });
+  return previewWindowPresentationSizing.resolveBounds({ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display.workArea, titlebarHeight: windowPresentationRuntime.titlebarHeight, ...(isStableWindowPresentationMode(windowPresentationRuntime.mode) ? getStablePreviewContentChrome(sidebarWidth) : {}) });
 };
 const applyLatestPreviewContentSize = () => {
   if (
@@ -531,7 +531,7 @@ const applyLatestPreviewContentSize = () => {
   }
   const nextBounds = getPreviewWindowBounds(
     latestPreviewContentSize.width,
-    latestPreviewContentSize.height
+    latestPreviewContentSize.height, latestPreviewContentSize.sidebarWidth
   );
   const currentBounds = previewDockedShell.getExpandedBounds(previewWindow);
   if (
@@ -3138,7 +3138,7 @@ ipcMain.on("preview:contentSize", (event, size: PreviewContentSize) => {
     || size?.sessionId !== activePreviewData.sessionId
     || size?.filePath !== activePreviewData.filePath
     || !Number.isFinite(size?.width)
-    || !Number.isFinite(size?.height)
+    || !Number.isFinite(size?.height) || (size?.sidebarWidth !== undefined && !Number.isFinite(size.sidebarWidth))
   ) {
     return;
   }
