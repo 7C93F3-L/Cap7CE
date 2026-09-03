@@ -158,6 +158,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 - 设置：主题模式、主题色、副色、边缘收起、待机线显示、标签显隐、快捷动作、快捷指令开关。
 - 目录：添加目录、删除目录、更新显示名、列出目录。
 - 文件操作：打开、定位、复制纯文本路径、通过 Windows PowerShell `Set-Clipboard -LiteralPath` 写入系统文件剪贴板、移入回收站和启动原生多文件拖拽；文件剪贴板路径通过 UTF-8 标准输入传递，不拼接到命令行。
+- 文件菜单：`nativeFileContextMenuIpc.ts` 只接收经过长度限制的显示文案并弹出 Windows 原生单层菜单，返回受限动作 ID；它不接收文件路径、不直接执行文件操作，主 Renderer 继续负责把结果分派给既有 Preview、文件、关键词和删除链。
 - skim：枚举本机文件系统盘符、校验统一输入提交的完整绝对目录路径、读取当前位置的直接子项、检查项目元数据、启动/取消文件夹后代统计并向预览窗口推送节流进度。
 - 应用：退出进程、通过固定主进程链接在系统浏览器中打开 GitHub Releases；用户点击检查更新时，由主进程查询固定 Cap7CE GitHub Releases API、筛选受限命名的 Windows x64 ZIP，并在行内提示更高版本。用户再次点击“立即下载”后，主进程才从检查阶段缓存的受限 URL 下载到系统临时目录并向 Renderer 推送进度；下载完成后启动打包资源中的可见 PowerShell 更新助手并正常退出应用。Renderer 不传入任意外部 URL，也不能指定下载或安装路径。
 - 扫描与索引：扫描目录、写入索引、继续识别、全部更新、单目录识别。
@@ -222,7 +223,7 @@ D5 只校准 stable Settings 的正式展示参数：独立窗口继续使用 86
 
 U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 持有新版响应式网格和断点，`StableShellResize.css` 持有分隔线命中与焦点，`useStableShellResize.ts` 持有宽度、视口跟踪、指针和键盘调整，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、最小 280px 且最多占左侧栏之外主内容区的一半，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
 
-U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过 stable presentation 注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；旧宿主继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，不扩大旧全局样式。
+U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过 stable presentation 注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；旧宿主继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。搜索结果与 Skim 生成紧凑文件摘要并通过共享 `NativeFileContextMenuLayer` 请求 `fileContextMenu:open` Windows 原生单层菜单，返回的受限动作 ID 仍交给各自既有 Renderer 动作链执行；旧宿主和 Preview 保留既有 Renderer 菜单。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，不扩大旧全局样式。
 
 U4 由 `stableUiRendererTypes.ts` 和 `stableSidebarTypes.ts` 定义显式展示适配契约，`App.tsx` 继续持有搜索、AI、目录状态和正式事务，只向 `StableShellSidebar.tsx` 传递受控值与动作。侧栏的排序、搜索范围、目录筛选、系统选择添加、拖入确认、冲突替换、行内重命名和删除均复用既有搜索与目录链；新版模块不直接读取 preload，也不修改目录服务、SQLite 或 AI 任务逻辑。AI 增强入口由线框 / 实心图标和副文案表达状态，不保留重复滑动开关。`StableSidebar.css` 独立持有控制行、目录滚动、选中 / 悬停胶囊、40px 紧凑栏和底部动作布局，目录列表复用共享自动隐藏自绘滚动条；宽度仍是 `StableMainShell.tsx` 的会话状态。`StableUiIcon.tsx` 只负责从独立 SVG 资产中选择新版线框 / 实心、目录开合和旧版升降序形态并通过共用 `SvgIcon` 内嵌，不读取业务状态。Skim 底部动作在 U5 前只切换占位插槽，Settings 动作在 U6 独立宿主完成前暂时进入现有设置页。该轮抽取共用目录确认层后把 `App.tsx` 自动上限从 3334 行降到 3330 行，并为四个新增侧栏职责模块建立独立体量守门。
 

@@ -95,12 +95,45 @@ assert.deepEqual(
 
 const appSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "App.tsx"), "utf8");
 const resultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "ResultsContextMenuLayer.tsx"), "utf8");
+const nativeResultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "NativeResultsContextMenuLayer.tsx"), "utf8");
+const legacyResultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "LegacyResultsContextMenuLayer.tsx"), "utf8");
+const nativeMenuLayerSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "components", "NativeFileContextMenuLayer.tsx"), "utf8");
+const nativeResultsMenu = require(path.join(projectRoot, "dist-electron", "nativeFileContextMenuIpc.js"));
 const resultsSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "ResultsView.tsx"), "utf8");
 const previewSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "PreviewWindowApp.tsx"), "utf8");
 const skimSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "skim", "SkimView.tsx"), "utf8");
 
 assert.match(appSource, /<ResultsContextMenuLayer/);
-assert.match(resultsMenuSource, /buildFileContextMenuGroups\s*\(/);
+assert.match(resultsMenuSource, /state\.native[\s\S]*NativeResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
+assert.match(nativeResultsMenuSource, /NativeFileContextMenuLayer/);
+assert.match(legacyResultsMenuSource, /buildFileContextMenuGroups\s*\(/);
+const selectedNativeActions = [];
+const nativeTemplate = nativeResultsMenu.buildNativeFileContextMenuTemplate({
+  fileName: "sample.png",
+  summary: "PNG · 768 × 1024 · 1.17 MB",
+  items: [
+    { id: "preview", label: "Preview" }, { id: "open", label: "Open" }, { id: "showInFolder", label: "Show in folder" },
+    { id: "copyPaths", label: "Copy path", separatorBefore: true }, { id: "editKeywords", label: "Edit keywords" }, { id: "delete", label: "Delete" }
+  ]
+}, (actionId) => selectedNativeActions.push(actionId));
+assert.deepEqual(nativeTemplate.map((item) => item.type ?? item.label), [
+  "sample.png", "PNG · 768 × 1024 · 1.17 MB", "separator",
+  "Preview", "Open", "Show in folder", "separator", "Copy path", "Edit keywords", "Delete"
+]);
+nativeTemplate[3].click();
+nativeTemplate[9].click();
+assert.deepEqual(selectedNativeActions, ["preview", "delete"]);
+const compactNativeTemplate = nativeResultsMenu.buildNativeFileContextMenuTemplate({
+  fileName: "Flux2_Klein_9b_kv_00814_test-upscale-6x.png",
+  summary: "PNG · 6144 × 6048 · 41.4 MB",
+  items: [{ id: "preview", label: "Preview" }]
+}, () => undefined);
+assert.equal(compactNativeTemplate[0].label, "Flux2_Klein_9b_…le-6x.png");
+assert.equal(
+  nativeResultsMenu.ellipsizeNativeMenuLabel("very-long-file-name-that-needs-to-be-shortened-in-the-middle.png", 32),
+  "very-long-file-nam…e-middle.png"
+);
+assert.match(nativeMenuLayerSource, /requestStartedRef\.current/);
 assert.match(resultsSource, /getFileContextShortcutAction\s*\(event\)/);
 assert.match(previewSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(previewSource, /getFileContextShortcutAction\s*\(event\)/);
@@ -109,13 +142,13 @@ assert.match(previewSource, /if \(contextMenu\) \{\s*setContextMenu\(null\);\s*r
 assert.match(previewSource, /if \(previewData\.skimActive\) \{\s*closePreview\(\);/);
 assert.match(previewSource, /if \(pendingLongSpaceAction\) \{\s*void window\.cap7ce\?\.preview\.requestItemAction\(\{\s*action: "editKeywords"/);
 assert.match(previewSource, /deleteAction: !previewData\.skimActive/);
-assert.match(skimSource, /buildFileContextMenuGroups\s*\(/);
+assert.match(skimSource, /NativeFileContextMenuLayer/);
 assert.match(skimSource, /fileShortcutAction === "addDirectory"/);
 assert.match(skimSource, /fileShortcutAction === "addToSidebar"/);
 assert.match(skimSource, /contextMenuSidebarAction === "remove"/);
 assert.match(skimSource, /onRemoveSidebarFolders\(removableSidebarFolderPaths\)/);
 assert.match(skimSource, /onRemoveSidebarFolders\(contextMenuRemovableSidebarFolderPaths\)/);
-assert.match(skimSource, /shortcut: fileContextShortcutLabels\.addDirectory/);
-assert.match(skimSource, /shortcut: fileContextShortcutLabels\.addToSidebar/);
+assert.match(skimSource, /id: "addDirectory"/);
+assert.match(skimSource, /id: "addToSidebar"/);
 
 console.log("file context actions integration passed");

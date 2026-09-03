@@ -2957,7 +2957,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onContextMenu: (event, item, selectedItems, preview) => {
       event.preventDefault();
       event.stopPropagation();
-      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: responsiveLayout ? "normal" : shellState });
+      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: responsiveLayout ? "normal" : shellState, native: responsiveLayout });
     },
     onContextMenuClose: closeContextMenu,
     onOpenImage: (item) => invokeFileAction("open", item),
@@ -2999,7 +2999,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   ) : null;
   const contextMenuLayer = contextMenu ? (
     <ResultsContextMenuLayer
+      key={`${contextMenu.item.id}:${contextMenu.x}:${contextMenu.y}`}
       state={contextMenu}
+      onClose={closeContextMenu}
       theme={effectiveTheme}
       menuStyle={contextMenuStyle}
       onOpen={(item) => void invokeFileAction("open", item)}

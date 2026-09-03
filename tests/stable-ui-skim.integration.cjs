@@ -35,7 +35,7 @@ for (const marker of ["embedded?: boolean", "responsiveLayout?: boolean", "activ
 }
 assert.match(skimViewSource, /responsiveSkimGridTargetThumbSize = 120/u);
 assert.match(skimViewSource, /targetThumbSize: gridTargetThumbSize/u);
-for (const marker of ["window.cap7ce?.files.startDrag", "buildFileContextMenuGroups", "resolveFileContentPreview", "CustomScrollbar"]) {
+for (const marker of ["window.cap7ce?.files.startDrag", "NativeFileContextMenuLayer", "resolveFileContentPreview", "CustomScrollbar"]) {
   assert.ok(skimViewSource.includes(marker), `Formal Skim file capability is missing ${marker}.`);
 }
 for (const marker of ["grid-template-rows: 40px 18px minmax(0, 1fr)", ".cap-stable-skim-content > .cap-skim-view.is-embedded", "@media (max-height: 359.98px)"]) {

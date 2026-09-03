@@ -17,12 +17,13 @@ import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../compon
 import SvgIcon from "../components/SvgIcon";
 import { Cap7CESearchCapsule, type SearchCapsuleLabelVisibility } from "../search/Cap7CESearchCapsule";
 import CustomScrollbar from "../CustomScrollbar";
-import ImageContextMenu, { getImageContextMenuStyle } from "../ImageContextMenu";
+import NativeFileContextMenuLayer from "../components/NativeFileContextMenuLayer";
+import LegacySkimContextMenuLayer from "./LegacySkimContextMenuLayer";
 import { resolveFileContentPreview } from "../contentPreview";
 import { getDirectoryPath, isWindowsRootPath, normalizeWindowsPathKey } from "../filePath";
 import { formatCacheSize, formatDisplayMessage } from "../formatting";
 import { getFormatIconSvgByName } from "../formatIcons";
-import { buildFileContextMenuGroups, fileContextShortcutLabels, getFileContextShortcutAction } from "../fileContextActions";
+import { getFileContextShortcutAction } from "../fileContextActions";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { createPreviewRequestGuard } from "../previewRequestGuard";
 import {
@@ -41,10 +42,10 @@ import type {
   SkimBreadcrumb,
   SkimBrowseEntry,
   SkimDisplayMode,
-  SkimFolderStats,
   SkimPreviewInfo
 } from "../../shared/types";
 import { getActiveLanguage, t } from "../../../electron/localization";
+import type { NativeFileContextMenuAction } from "../../../electron/nativeFileContextMenuTypes";
 
 export type SkimShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 
@@ -98,7 +99,7 @@ export interface SkimViewProps {
   active?: boolean;
 }
 
-type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] }; const responsiveSkimGridTargetThumbSize = 120;
+export type SkimContextMenuState = { x: number; y: number; item: SkimBrowseEntry; items: SkimBrowseEntry[] }; const responsiveSkimGridTargetThumbSize = 120;
 
 const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: {
   entry: SkimBrowseEntry;
@@ -158,8 +159,6 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
   const [lowHeightLayout, setLowHeightLayout] = useState(() => responsiveLayout && window.matchMedia("(max-height: 359.98px)").matches);
-  const [fileInfoDimensions, setFileInfoDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [fileInfoFolderStats, setFileInfoFolderStats] = useState<SkimFolderStats | null>(null);
   const selectionAnchorPathRef = useRef<string | null>(null);
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
@@ -204,7 +203,6 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
 
     return { cellSize, totalHeight, totalWidth, visibleEntries };
   }, [entries, gridLayout.cellSize, gridLayout.columnCount, gridLayout.contentWidth, gridLayout.isHorizontal, gridScrollOffset, gridViewport.height, gridViewport.width]);
-  const menuStyle = getImageContextMenuStyle(theme, appearanceColors);
   const sidebarFolderPathKeys = useMemo(
     () => new Set(sidebarFolderPaths.map(normalizeWindowsPathKey)),
     [sidebarFolderPaths]
@@ -253,37 +251,6 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     setContextMenu(null);
     selectionAnchorPathRef.current = null;
   }, [currentPath]);
-
-  useEffect(() => {
-    const entry = contextMenu?.item;
-    setFileInfoDimensions(null);
-    setFileInfoFolderStats(null);
-    if (!entry) return;
-
-    let active = true;
-    let folderTimer: number | null = null;
-    let folderTaskId: string | null = null;
-    if (entry.kind === "folder") {
-      folderTimer = window.setTimeout(() => {
-        folderTimer = null;
-        folderTaskId = `file-info:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-        void window.cap7ce?.skim.readFileInfoFolderStats({ taskId: folderTaskId, path: entry.path })
-          .then((stats) => {
-            if (active && stats?.status === "completed") setFileInfoFolderStats(stats);
-          });
-      }, 300);
-    } else if (entry.kind === "file" && entry.formatCapability?.previewKind === "image") {
-      void window.cap7ce?.skim.readFileInfoDimensions(entry.path).then((dimensions) => {
-        if (active) setFileInfoDimensions(dimensions ?? null);
-      });
-    }
-
-    return () => {
-      active = false;
-      if (folderTimer !== null) window.clearTimeout(folderTimer);
-      if (folderTaskId) void window.cap7ce?.skim.cancelFileInfoFolderStats(folderTaskId);
-    };
-  }, [contextMenu?.item]);
 
   useEffect(() => () => {
     previewRequestGuard.invalidate();
@@ -520,6 +487,18 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     }
   }, [currentPath, openSystemPath]);
 
+  const handleContextMenuAction = (action: NativeFileContextMenuAction) => {
+    if (!contextMenu) return;
+    setContextMenu(null);
+    if (action === "preview") void openPreview(contextMenu.item);
+    else if (action === "open") openEntry(contextMenu.item);
+    else if (action === "showInFolder") showEntryInFolder(contextMenu.item, contextMenu.items.length);
+    else if (action === "copyPaths") void window.cap7ce?.files.copyPaths(contextMenu.items.map((entry) => entry.path));
+    else if (action === "addDirectory" && !isAddingDirectory) onAddEntries(contextMenu.items);
+    else if (action === "addToSidebar" && contextMenuSidebarAction === "add") onAddSidebarFolders(contextMenuMissingSidebarFolderPaths);
+    else if (action === "addToSidebar" && contextMenuSidebarAction === "remove") onRemoveSidebarFolders(contextMenuRemovableSidebarFolderPaths);
+  };
+
   useEffect(() => {
     if (!active) return undefined;
     const handleSelectionKeyDown = (event: KeyboardEvent) => {
@@ -726,61 +705,24 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
         </section>
         <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation={isHorizontalGrid ? "horizontal" : "vertical"} />
       </div>
-      {contextMenu && (
-        <ImageContextMenu
+      {contextMenu && responsiveLayout && (
+        <NativeFileContextMenuLayer
           key={`skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          theme={theme}
-          menuStyle={menuStyle}
-          compact={layoutShellState === "micro" || layoutShellState === "mini"}
-          header={{
-            format: contextMenu.item.kind === "folder"
-              ? t("fileInfo.folder")
-              : contextMenu.item.extension.slice(1).toUpperCase() || t("fileInfo.file"),
+          request={{
             fileName: contextMenu.item.label || contextMenu.item.name,
-            filePath: contextMenu.item.path,
-            sourceFileName: contextMenu.item.name,
-            primaryDetail: contextMenu.item.kind === "folder"
-              ? fileInfoFolderStats
-                ? t("fileInfo.size", { size: formatCacheSize(fileInfoFolderStats.totalSize) })
-                : undefined
-              : t("fileInfo.size", { size: formatCacheSize(contextMenu.item.size ?? 0) }),
-            details: contextMenu.item.kind === "folder"
-              ? fileInfoFolderStats
-                ? [t("fileInfo.compactContents", { files: fileInfoFolderStats.fileCount, folders: fileInfoFolderStats.folderCount })]
-                : [t("fileInfo.calculating")]
-              : fileInfoDimensions
-                ? [t("fileInfo.resolution", { width: fileInfoDimensions.width, height: fileInfoDimensions.height })]
-                : []
-          }}
-          groups={buildFileContextMenuGroups({
-            viewLabel: t("context.view"),
-            actionsLabel: t("context.actions"),
-            primaryViewAction: { id: "preview", label: t("skim.preview"), onSelect: () => void openPreview(contextMenu.item) },
-            openAction: { id: "open", label: t("skim.openItem"), onSelect: () => openEntry(contextMenu.item) },
-            showInFolderAction: { id: "showInFolder", label: t("skim.openPath"), onSelect: () => showEntryInFolder(contextMenu.item, contextMenu.items.length) },
-            copyPathsAction: {
-              id: "copyPaths",
-              label: contextMenu.items.length > 1
-                ? t("context.copySelectedPaths", { count: contextMenu.items.length })
-                : t("context.copyPath"),
-              onSelect: () => {
-                setContextMenu(null);
-                void window.cap7ce?.files.copyPaths(contextMenu.items.map((entry) => entry.path));
-              }
-            },
-            additionalActions: [
+            summary: contextMenu.item.kind === "folder"
+              ? t("fileInfo.folder")
+              : [contextMenu.item.extension.slice(1).toUpperCase() || t("fileInfo.file"), formatCacheSize(contextMenu.item.size ?? 0)].join(" · "),
+            items: [
+              { id: "preview", label: t("skim.preview") },
+              { id: "open", label: t("skim.openItem") },
+              { id: "showInFolder", label: t("skim.openPath") },
               {
-                id: "addDirectory",
-                label: t("skim.addDirectory"),
-                shortcut: fileContextShortcutLabels.addDirectory,
-                disabled: isAddingDirectory,
-                onSelect: () => {
-                  setContextMenu(null);
-                  if (!isAddingDirectory) onAddEntries(contextMenu.items);
-                },
+                id: "copyPaths",
+                label: contextMenu.items.length > 1 ? t("context.copySelectedPaths", { count: contextMenu.items.length }) : t("context.copyPath"),
+                separatorBefore: true
               },
+              { id: "addDirectory", label: t("skim.addDirectory"), disabled: isAddingDirectory },
               {
                 id: "addToSidebar",
                 label: contextMenuSidebarAction === "add"
@@ -788,19 +730,21 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
                   : contextMenuSidebarAction === "remove"
                     ? t("skim.sidebar.remove")
                     : t("skim.sidebar.alreadyAdded"),
-                shortcut: fileContextShortcutLabels.addToSidebar,
-                disabled: contextMenuSidebarAction === "unavailable",
-                onSelect: () => {
-                  setContextMenu(null);
-                  if (contextMenuSidebarAction === "add") {
-                    onAddSidebarFolders(contextMenuMissingSidebarFolderPaths);
-                  } else if (contextMenuSidebarAction === "remove") {
-                    onRemoveSidebarFolders(contextMenuRemovableSidebarFolderPaths);
-                  }
-                }
+                disabled: contextMenuSidebarAction === "unavailable"
               }
             ]
-          })}
+          }}
+          onClose={() => setContextMenu(null)}
+          onAction={handleContextMenuAction}
+        />
+      )}
+      {contextMenu && !responsiveLayout && (
+        <LegacySkimContextMenuLayer
+          key={`legacy-skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
+          state={contextMenu} theme={theme} appearanceColors={appearanceColors}
+          compact={layoutShellState === "micro" || layoutShellState === "mini"}
+          isAddingDirectory={isAddingDirectory} sidebarAction={contextMenuSidebarAction}
+          onAction={handleContextMenuAction}
         />
       )}
     </main>

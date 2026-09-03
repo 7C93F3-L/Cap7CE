@@ -11,7 +11,8 @@ const inputSource = read("src/renderer/stable-ui/StableSearchInput.tsx");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const gridSource = read("src/renderer/results/VirtualResultGrids.tsx");
 const stableResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css");
-const menuSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
+const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
+const menuSource = read("src/renderer/results/NativeResultsContextMenuLayer.tsx");
 
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
@@ -21,6 +22,8 @@ assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
 assert.match(appSource, /if \(!stableUi \|\| isLoadingDirectories \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)/);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
+assert.match(appSource, /native: responsiveLayout/);
+assert.match(menuAdapterSource, /state\.native[\s\S]*NativeResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
 assert.match(appSource, /if \(stableUi\) return;/);
 assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);
 

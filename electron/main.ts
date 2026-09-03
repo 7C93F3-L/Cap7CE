@@ -76,13 +76,13 @@ import { getStablePreviewContentChrome, PreviewWindowPresentationSizing } from "
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
 import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
 import { createSettingsDataBroadcaster } from "./settingsDataBroadcast";
+import { registerNativeFileContextMenuIpc } from "./nativeFileContextMenuIpc";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
 import { closeFontPreviewSession, FontPreviewError, inspectFontPreviewSource, isFontPreviewRequestAuthorized, openFontPreviewSession } from "./fontPreviewService";
 import { closeEpubPreviewSession, EpubPreviewError, openEpubPreviewSession } from "./epubPreviewService";
 import { closeMobiPreviewSession, MobiPreviewError, openMobiPreviewSession } from "./mobiPreviewService";
-
 const applicationName = "Cap7CE";
 const windowsAppUserModelId = "com.cap7ce.app";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -2413,7 +2413,6 @@ const createWindow = () => {
     scheduleMoveSnapCheck();
   });
 };
-
 if (hasSingleInstanceLock) {
   app.on("second-instance", () => {
     if (!mainWindowReadyForActivation) {
@@ -3745,6 +3744,7 @@ registerCacheActivityIpc({
   }
 });
 registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, openSettings });
+registerNativeFileContextMenuIpc({ registrar: ipcMain, getWindow: () => mainWindow });
 const clearFormalVisualCacheSafely = async (clear: typeof clearAllVisualCaches) => {
   const renderingPauseReason = "cache-clear";
   await pauseThumbnailRendering(renderingPauseReason);
