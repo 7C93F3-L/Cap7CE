@@ -37,7 +37,7 @@
 
 .cap-stable-settings-shell {
   display: grid;
-  grid-template-columns: 184px minmax(0, 1fr);
+  grid-template-columns: 176px minmax(0, 1fr);
   height: 100vh;
   padding-top: 40px;
   box-sizing: border-box;
@@ -45,7 +45,7 @@
 
 .cap-stable-settings-navigation {
   min-width: 0;
-  padding: 14px 12px 18px;
+  padding: 14px 10px 18px;
   background: rgb(255 255 255 / 12%);
   backdrop-filter: blur(24px) saturate(1.16);
 }
@@ -54,7 +54,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: 34px;
   padding: 0 10px;
   border-radius: 15px;
   background: var(--stable-settings-card);
@@ -79,10 +79,10 @@
 }
 
 .cap-stable-settings-navigation nav button {
-  height: 32px;
-  padding: 0 12px;
+  min-height: 36px;
+  padding: 6px 10px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 999px;
   color: inherit;
   text-align: left;
   background: transparent;
@@ -101,7 +101,7 @@
   min-height: 0;
   margin: 0 5px 5px 0;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--stable-settings-surface);
 }
 
@@ -109,7 +109,7 @@
   height: 100%;
   overflow: auto;
   box-sizing: border-box;
-  padding: 22px 24px 34px;
+  padding: 24px 28px 36px;
   scrollbar-width: none;
 }
 
@@ -122,8 +122,8 @@
 }
 
 .cap-stable-settings-panel > h1 {
-  margin: 0 0 22px 10px;
-  font-size: 20px;
+  margin: 0 0 22px;
+  font-size: 22px;
   font-weight: 600;
 }
 
@@ -132,10 +132,10 @@
 }
 
 .cap-stable-settings-section > h2 {
-  margin: 0 0 8px 10px;
+  margin: 0 0 8px 24px;
   color: var(--stable-settings-secondary);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .cap-stable-settings-section-cards {
@@ -148,22 +148,21 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
-  min-height: 64px;
-  padding: 12px 16px;
+  min-height: 62px;
+  padding: 10px 14px 10px 24px;
   box-sizing: border-box;
-  border: 1px solid var(--stable-settings-border);
-  border-radius: 18px;
+  border: 0;
+  border-radius: 999px;
   background: var(--stable-settings-card);
 }
 
 .cap-stable-settings-card-expanded {
   grid-template-columns: minmax(0, 1fr);
-  align-items: stretch;
+  align-items: stretch; border-radius: 22px;
 }
 
 .cap-stable-settings-copy {
   min-width: 0;
-  padding-left: 2px;
 }
 
 .cap-stable-settings-copy h3,
@@ -454,13 +453,13 @@
   margin: 18px 10px 0;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 700px) {
   .cap-stable-settings-shell {
-    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-columns: 52px minmax(0, 1fr);
   }
 
   .cap-stable-settings-navigation {
-    padding-inline: 7px;
+    padding-inline: 8px;
   }
 
   .cap-stable-settings-search {
@@ -472,8 +471,7 @@
   }
 
   .cap-stable-settings-navigation nav button {
-    padding: 0;
-    text-align: center;
+    display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 10px; text-align: center;
   }
 
   .cap-stable-settings-navigation nav button span {
@@ -486,7 +484,7 @@
   }
 
   .cap-stable-settings-content {
-    padding-inline: 14px;
+    padding: 20px 18px 32px;
   }
 
   .cap-stable-settings-card {
