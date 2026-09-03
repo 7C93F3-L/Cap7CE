@@ -14,7 +14,7 @@ const {
 } = require("../dist-electron/stableUiWindowLifecycle.js");
 
 assert.equal(STABLE_UI_TITLEBAR_HEIGHT, 40);
-assert.deepEqual(STABLE_UI_MINIMUM_OUTER_SIZE, { width: 300, height: 156 });
+assert.deepEqual(STABLE_UI_MINIMUM_OUTER_SIZE, { width: 300, height: 170 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 320, y: 120, width: 1280, height: 800 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 1920, y: 0, width: 1366, height: 728 }), { x: 1989, y: 37, width: 1229, height: 655 });
 

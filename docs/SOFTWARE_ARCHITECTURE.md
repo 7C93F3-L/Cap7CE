@@ -294,7 +294,7 @@ micro / mini / normal 不是完全独立页面，而是旧搜索胶囊的不同�
 
 Cap7CE 模式的同窗 capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标，并按光标距离以 50 / 100 / 200 ms 自适应调度；离开时停止计时并恢复普通鼠标事件。兼容模式不把不透明 WCO 主窗口压缩成胶囊，而由独立透明 Capsule 接收输入；草稿、提交、Esc、失焦和 IME 状态通过专用白名单同步，搜索与快捷指令仍在隐藏的主 Renderer 执行。独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复。主进程监听显示器 `workArea` / `bounds` 变化，并分别将可见 line 与当前模式的 Capsule 重新贴合工作区；旧外壳 micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。独立 Settings 在隐藏后重开或下次启动时按自己的版本化记录执行显示恢复。该策略不恢复 edge hidden。
 
-旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。stable 旁路旧 resize 形态推断，按整窗 `300 × 156` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；normal 快捷动作只应用一次默认尺寸预设。
+旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。stable 旁路旧 resize 形态推断，按整窗 `300 × 170` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；normal 快捷动作只应用一次默认尺寸预设。
 
 旧主窗口的 capsule、micro、mini、normal 与 Settings 状态仍属于同一业务状态机；Cap7CE 同窗 Capsule 与兼容独立 Capsule 复用同一个 `QuickSearchCapsule` 输入组件。旧 micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。稳定 UI 的 Settings 独立 Renderer 由 `src/renderer/main.tsx` 按 `window=settings` 分流；U7 的 `SettingsWindowApp` 不导入旧完整 `SettingsView`，而是复用其既有领域组件和同一组 preload 动作。Capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 Capsule 激活动作。
 
