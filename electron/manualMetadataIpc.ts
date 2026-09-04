@@ -12,6 +12,7 @@ import type { ManualKeywordBatchTarget } from "./sqliteImageIndex";
 
 export interface ManualMetadataIpcDependencies {
   registrar: IpcRegistrar;
+  isSingleSenderAllowed: (event: IpcMainInvokeEvent, filePath: string) => boolean;
   isBatchSenderAllowed: (event: IpcMainInvokeEvent) => boolean;
   listDirectories: () => Promise<PersistedDirectory[]>;
   upsertFileKeywords: (file: ScannedImageFile, keywords: string[], updatedAt: string) => Promise<void>;
@@ -21,6 +22,7 @@ export interface ManualMetadataIpcDependencies {
     targetKeywordText: string
   ) => Promise<string[]>;
   translate: (key: TranslationKey, parameters?: TranslationParameters) => string;
+  onSingleKeywordsUpdated?: (event: IpcMainInvokeEvent, filePath: string, keywords: string[]) => void;
   now?: () => Date;
 }
 
@@ -59,11 +61,13 @@ const resolveManualMetadataFile = async (
 
 export const registerManualMetadataIpc = ({
   registrar,
+  isSingleSenderAllowed,
   isBatchSenderAllowed,
   listDirectories,
   upsertFileKeywords,
   updateKeywordsBatch,
   translate,
+  onSingleKeywordsUpdated,
   now = () => new Date()
 }: ManualMetadataIpcDependencies): void => {
   registerIpcDomain({
@@ -72,9 +76,12 @@ export const registerManualMetadataIpc = ({
       {
         kind: "handle",
         channel: "index:updateManualKeywords",
-        listener: async (_event, filePath: string, keywordText: string) => {
+        listener: async (event, filePath: string, keywordText: string) => {
           if (typeof filePath !== "string" || !filePath.trim()) {
             throw new Error(translate("error.invalidFile"));
+          }
+          if (!isSingleSenderAllowed(event, filePath)) {
+            throw new Error(translate("error.invalidMetadata"));
           }
           if (typeof keywordText !== "string") {
             throw new Error(translate("error.invalidMetadata"));
@@ -87,7 +94,8 @@ export const registerManualMetadataIpc = ({
           const normalizedKeywords = parseKeywordText(keywordText);
           const updatedAt = now().toISOString();
           await upsertFileKeywords(file, normalizedKeywords, updatedAt);
-          return true;
+          onSingleKeywordsUpdated?.(event, file.file_path, normalizedKeywords);
+          return normalizedKeywords;
         }
       },
       {

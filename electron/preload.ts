@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
-import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
+import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import type { CapsulePresentation } from "./capsuleWindowController";
@@ -161,6 +161,11 @@ contextBridge.exposeInMainWorld("cap7ce", {
       const listener = (_event: Electron.IpcRendererEvent, request: PreviewItemActionRequest) => callback(request);
       ipcRenderer.on("preview:itemAction", listener);
       return () => ipcRenderer.removeListener("preview:itemAction", listener);
+    },
+    onManualKeywordsUpdated: (callback: (update: PreviewManualKeywordsUpdate) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, update: PreviewManualKeywordsUpdate) => callback(update);
+      ipcRenderer.on("preview:manualKeywordsUpdated", listener);
+      return () => ipcRenderer.removeListener("preview:manualKeywordsUpdated", listener);
     }
   },
   files: {
@@ -240,7 +245,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
     }
   },
   index: {
-    updateManualKeywords: (filePath: string, keywordText: string) => (
+    updateManualKeywords: (filePath: string, keywordText: string): Promise<string[]> => (
       ipcRenderer.invoke("index:updateManualKeywords", filePath, keywordText)
     ),
     updateKeywordsBatch: (request: KeywordBatchUpdateRequest) => ipcRenderer.invoke("index:updateKeywordsBatch", request)

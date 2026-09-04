@@ -3,6 +3,7 @@ import type { PreviewWindowData } from "../../shared/types";
 import { t } from "../../../electron/localization";
 import CustomScrollbar from "../CustomScrollbar";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
+import PreviewManualKeywordsSection from "./PreviewManualKeywordsSection";
 import { previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
@@ -11,7 +12,9 @@ interface PreviewInformationSidebarProps {
   onBeginResize: (event: React.PointerEvent) => void; onResizeByKeyboard: (event: React.KeyboardEvent<HTMLElement>) => void;
   onResetWidth: () => void; onOpen: () => void;
   onShowInFolder: () => void; onCopyPath: () => void;
-  onEditKeywords: () => void; onDelete: () => void;
+  keywordEditorOpen: boolean; keywordSavePending: boolean; keywordSaveError: string;
+  onEditKeywords: () => void; onCancelKeywordEdit: () => void;
+  onSaveKeywords: (keywords: string[]) => void; onDelete: () => void;
 }
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -40,7 +43,12 @@ const PreviewInformationSidebar = ({
   onOpen,
   onShowInFolder,
   onCopyPath,
+  keywordEditorOpen,
+  keywordSavePending,
+  keywordSaveError,
   onEditKeywords,
+  onCancelKeywordEdit,
+  onSaveKeywords,
   onDelete
 }: PreviewInformationSidebarProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -71,18 +79,9 @@ const PreviewInformationSidebar = ({
         </section>
         <section className="preview-sidebar-section">
           <h2>{t("preview.sidebar.location")}</h2>
-          <p className="preview-sidebar-path" title={data.filePath}>{data.filePath}</p>
+          <button className="preview-sidebar-path" type="button" title={data.filePath} onClick={onShowInFolder}>{data.filePath}</button>
         </section>
-        <section className="preview-sidebar-section">
-          <div className="preview-sidebar-section-heading">
-            <h2>{t("preview.sidebar.manualKeywords")}</h2>
-            {!data.skimActive && <button type="button" onClick={onEditKeywords}>{t("context.editKeywords")}</button>}
-          </div>
-          {data.manualKeywords?.length
-            ? <div className="preview-sidebar-keywords">{data.manualKeywords.map((keyword) => <span key={keyword}>{keyword}</span>)}</div>
-            : <p className="preview-sidebar-empty">{data.skimActive ? t("common.unavailable") : t("preview.sidebar.noKeywords")}</p>}
-          {data.userDescription && <p className="preview-sidebar-description">{data.userDescription}</p>}
-        </section>
+        <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
         <section className="preview-sidebar-section">
           <h2>{t("preview.sidebar.currentEvidence")}</h2>
           {data.searchEvidence?.terms.length

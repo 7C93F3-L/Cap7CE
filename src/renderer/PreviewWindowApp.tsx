@@ -109,6 +109,9 @@ const PreviewWindowApp = () => {
   const [windowControlState, setWindowControlState] = useState(defaultPreviewWindowControlState);
   const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
   const [embeddedMetadataExpanded, setEmbeddedMetadataExpanded] = useState(false);
+  const [previewKeywordEditorOpen, setPreviewKeywordEditorOpen] = useState(false);
+  const [previewKeywordSavePending, setPreviewKeywordSavePending] = useState(false);
+  const [previewKeywordSaveError, setPreviewKeywordSaveError] = useState("");
   const previewSidebarLayout = usePreviewSidebarLayout();
   const previewSidebarWidth = isStableUiPreview ? (previewSidebarLayout.expanded ? previewSidebarLayout.width : 40) : undefined;
   const wheelThrottleRef = useRef(0);
@@ -124,6 +127,7 @@ const PreviewWindowApp = () => {
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
   const pendingLongSpaceActionRef = useRef<PreviewWindowData | null>(null);
+  const previewKeywordSavePendingRef = useRef(false);
   const closePreview = useCallback(() => {
     mediaRef.current?.pause();
     if (previewData?.provider === "folderInfo") {
@@ -131,6 +135,20 @@ const PreviewWindowApp = () => {
     }
     void window.cap7ce?.preview.close();
   }, [previewData]);
+  const requestKeywordEdit = useCallback((data: PreviewWindowData) => {
+    if (data.skimActive) return;
+    setContextMenu(null);
+    if (isStableUiPreview) {
+      setPreviewKeywordSaveError("");
+      setPreviewKeywordEditorOpen(true);
+      return;
+    }
+    void window.cap7ce?.preview.requestItemAction({
+      action: "editKeywords",
+      itemId: data.itemId,
+      filePath: data.filePath
+    });
+  }, []);
   const spaceHoldControllerRef = useRef<ReturnType<typeof createSpaceHoldController<PreviewWindowData>> | null>(null);
   if (!spaceHoldControllerRef.current) {
     spaceHoldControllerRef.current = createSpaceHoldController<PreviewWindowData>({
@@ -155,6 +173,12 @@ const PreviewWindowApp = () => {
       setActiveLanguage(data.language);
       setPreviewData(data);
       setEmbeddedMetadataExpanded(false);
+      if (targetSessionIdRef.current !== data.sessionId || targetFilePathRef.current !== data.filePath) {
+        previewKeywordSavePendingRef.current = false;
+        setPreviewKeywordEditorOpen(false);
+        setPreviewKeywordSavePending(false);
+        setPreviewKeywordSaveError("");
+      }
       targetFilePathRef.current = data.filePath;
       if (targetSessionIdRef.current === data.sessionId) {
         return;
@@ -280,6 +304,10 @@ const PreviewWindowApp = () => {
       setFontRuntimeFailed(false);
       setShowPreviewLoadingIndicator(false);
       setContextMenu(null);
+      previewKeywordSavePendingRef.current = false;
+      setPreviewKeywordEditorOpen(false);
+      setPreviewKeywordSavePending(false);
+      setPreviewKeywordSaveError("");
       setFolderStats(null);
       void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
     };
@@ -398,11 +426,7 @@ const PreviewWindowApp = () => {
       pendingLongSpaceActionRef.current = null;
       spaceHoldController.release();
       if (pendingLongSpaceAction) {
-        void window.cap7ce?.preview.requestItemAction({
-          action: "editKeywords",
-          itemId: pendingLongSpaceAction.itemId,
-          filePath: pendingLongSpaceAction.filePath
-        });
+        requestKeywordEdit(pendingLongSpaceAction);
       }
     };
 
@@ -420,7 +444,32 @@ const PreviewWindowApp = () => {
       window.removeEventListener("blur", cancelSpaceHold);
       cancelSpaceHold();
     };
-  }, [closePreview, contextMenu, previewData, spaceHoldController]);
+  }, [closePreview, contextMenu, previewData, requestKeywordEdit, spaceHoldController]);
+
+  const savePreviewKeywords = useCallback(async (keywords: string[]) => {
+    if (!previewData || previewData.skimActive || previewKeywordSavePendingRef.current) return;
+    previewKeywordSavePendingRef.current = true;
+    setPreviewKeywordSavePending(true);
+    setPreviewKeywordSaveError("");
+    try {
+      const normalizedKeywords = await window.cap7ce?.index.updateManualKeywords(
+        previewData.filePath,
+        keywords.join(",")
+      );
+      if (!normalizedKeywords) throw new Error(t("error.indexUnavailable"));
+      setPreviewData((current) => current
+        && current.sessionId === previewData.sessionId
+        && current.filePath === previewData.filePath
+        ? { ...current, manualKeywords: normalizedKeywords }
+        : current);
+      setPreviewKeywordEditorOpen(false);
+    } catch (error) {
+      setPreviewKeywordSaveError(error instanceof Error ? error.message : t("error.metadataSaveFailed"));
+    } finally {
+      previewKeywordSavePendingRef.current = false;
+      setPreviewKeywordSavePending(false);
+    }
+  }, [previewData]);
 
   const themeStyle = useMemo(() => {
     if (!previewData) {
@@ -540,6 +589,9 @@ const PreviewWindowApp = () => {
           data={previewData}
           expanded={previewSidebarLayout.expanded}
           width={previewSidebarLayout.width}
+          keywordEditorOpen={previewKeywordEditorOpen}
+          keywordSavePending={previewKeywordSavePending}
+          keywordSaveError={previewKeywordSaveError}
           onToggleExpanded={previewSidebarLayout.toggleExpanded}
           onBeginResize={previewSidebarLayout.beginResize}
           onResizeByKeyboard={previewSidebarLayout.resizeByKeyboard}
@@ -551,9 +603,13 @@ const PreviewWindowApp = () => {
           }}
           onShowInFolder={() => { void window.cap7ce?.files.showInFolder(previewData.filePath); }}
           onCopyPath={() => { void window.cap7ce?.files.copyPaths([previewData.filePath]); }}
-          onEditKeywords={() => {
-            void window.cap7ce?.preview.requestItemAction({ action: "editKeywords", itemId: previewData.itemId, filePath: previewData.filePath });
+          onEditKeywords={() => requestKeywordEdit(previewData)}
+          onCancelKeywordEdit={() => {
+            if (previewKeywordSavePending) return;
+            setPreviewKeywordEditorOpen(false);
+            setPreviewKeywordSaveError("");
           }}
+          onSaveKeywords={(keywords) => { void savePreviewKeywords(keywords); }}
           onDelete={() => {
             void window.cap7ce?.preview.requestItemAction({ action: "deleteFile", itemId: previewData.itemId, filePath: previewData.filePath });
           }}
@@ -924,11 +980,7 @@ const PreviewWindowApp = () => {
                 label: t("context.editKeywords"),
                 onSelect: () => {
                   setContextMenu(null);
-                  void window.cap7ce?.preview.requestItemAction({
-                    action: "editKeywords",
-                    itemId: previewData.itemId,
-                    filePath: previewData.filePath
-                  });
+                  requestKeywordEdit(previewData);
                 }
               }
               : undefined,

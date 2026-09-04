@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export const useSearchIndexRefresh = (refresh: () => void, delayMs = 200) => {
+export const useSearchIndexRefresh = (refresh: (force?: boolean) => void, delayMs = 200) => {
   const refreshRef = useRef(refresh);
   refreshRef.current = refresh;
 
@@ -10,11 +10,19 @@ export const useSearchIndexRefresh = (refresh: () => void, delayMs = 200) => {
       if (timer !== null) window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         timer = null;
-        refreshRef.current();
+        refreshRef.current(false);
+      }, delayMs);
+    });
+    const unsubscribePreviewKeywords = window.cap7ce?.preview.onManualKeywordsUpdated(() => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        refreshRef.current(true);
       }, delayMs);
     });
     return () => {
       unsubscribe?.();
+      unsubscribePreviewKeywords?.();
       if (timer !== null) window.clearTimeout(timer);
     };
   }, [delayMs]);

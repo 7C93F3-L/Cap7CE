@@ -30,6 +30,13 @@ export interface PreviewItemActionRequest {
   filePath: string;
 }
 
+export interface PreviewManualKeywordsUpdate {
+  sessionId: string;
+  itemId: string;
+  filePath: string;
+  manualKeywords: string[];
+}
+
 export type PreviewEmbeddedMetadataKind =
   | "visual_content"
   | "embedded_title"

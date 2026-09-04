@@ -2,6 +2,8 @@
   --preview-sidebar-muted: color-mix(in srgb, var(--text-main) 58%, transparent);
   --preview-sidebar-card: rgb(255 255 255 / 60%);
   --preview-sidebar-control: color-mix(in srgb, var(--app-bg) 76%, transparent);
+  --keyword-tag-surface: var(--preview-sidebar-control);
+  --keyword-input-surface: var(--preview-sidebar-control);
   position: relative;
   z-index: 5;
   width: var(--preview-sidebar-current-width);
@@ -92,13 +94,18 @@
 .preview-sidebar-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; user-select: text; }
 .preview-sidebar-path,
 .preview-sidebar-description { margin: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.55; user-select: text; }
+.preview-sidebar-path { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.preview-sidebar-path:hover { color: var(--theme-color); }
 .preview-sidebar-description { margin-top: 10px; }
 .preview-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.preview-sidebar-section-heading button { padding: 2px 6px; color: var(--theme-color); background: transparent; font-size: 11px; }
+.preview-sidebar-section-heading button { padding: 2px 6px; color: var(--preview-sidebar-muted); background: transparent; font-size: 11px; }
+.preview-sidebar-section-heading button:not(:disabled):hover { color: var(--theme-color); }
+.preview-sidebar-section-heading button:disabled { opacity: .5; }
 .preview-sidebar-keywords,
 .preview-sidebar-evidence { display: flex; flex-wrap: wrap; gap: 6px; }
 .preview-sidebar-keywords span,
 .preview-sidebar-evidence span { max-width: 100%; min-height: 26px; box-sizing: border-box; padding: 5px 10px; overflow: hidden; border-radius: 999px; background: var(--preview-sidebar-control); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-sidebar-keywords span { min-width: 40px; text-align: center; }
 .preview-sidebar-empty { margin: 0; font-size: 11px; }
 
 .preview-information-sidebar .preview-embedded-metadata-details {

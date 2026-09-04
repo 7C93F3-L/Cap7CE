@@ -1662,8 +1662,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     void runSearch(submittedSearch, { aiEnhanced: aiRequested || (aiRecognitionEnabled && aiSearchBeta.enabled) });
   };
 
-  useSearchIndexRefresh(() => {
-    if (!resultsInitializedRef.current || !lastResultSearchRef.current.query.trim()) return;
+  useSearchIndexRefresh((force) => {
+    if (!resultsInitializedRef.current || (!force && !lastResultSearchRef.current.query.trim())) return;
     void runSearch(lastResultSearchRef.current, { navigate: false, preserveAiResults: true });
   });
 

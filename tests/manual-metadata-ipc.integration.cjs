@@ -17,6 +17,7 @@ const run = async () => {
 
     const handles = new Map();
     const calls = [];
+    const singleUpdates = [];
     const allowedSender = { id: 1 };
     const directories = [
       { id: "parent", path: parentPath },
@@ -27,6 +28,7 @@ const run = async () => {
         handle: (channel, listener) => handles.set(channel, listener),
         on: () => undefined
       },
+      isSingleSenderAllowed: (event) => event.sender === allowedSender,
       isBatchSenderAllowed: (event) => event.sender === allowedSender,
       listDirectories: async () => {
         calls.push(["list"]);
@@ -38,6 +40,7 @@ const run = async () => {
         return ["shared", "new"];
       },
       translate: (key, parameters = {}) => parameters.path ? `${key}:${parameters.path}` : key,
+      onSingleKeywordsUpdated: (...args) => singleUpdates.push(args),
       now: () => new Date("2026-08-21T12:34:56.000Z")
     });
 
@@ -46,16 +49,16 @@ const run = async () => {
       "index:updateKeywordsBatch"
     ]);
     const allowedEvent = { sender: allowedSender };
-    assert.equal(await handles.get("index:updateManualKeywords")(
+    assert.deepEqual(await handles.get("index:updateManualKeywords")(
       allowedEvent,
       visualPath,
       "first, second, first"
-    ), true);
-    assert.equal(await handles.get("index:updateManualKeywords")(
+    ), ["first", "second"]);
+    assert.deepEqual(await handles.get("index:updateManualKeywords")(
       allowedEvent,
       textPath,
       "document"
-    ), true);
+    ), ["document"]);
 
     assert.deepEqual(calls[0], ["list"]);
     assert.equal(calls[1][0], "file");
@@ -68,6 +71,10 @@ const run = async () => {
     assert.equal(calls[3][1].directory_id, "parent");
     assert.deepEqual(calls[3][2], ["document"]);
     assert.equal(calls[3][3], "2026-08-21T12:34:56.000Z");
+    assert.equal(singleUpdates.length, 2);
+    assert.equal(singleUpdates[0][0], allowedEvent);
+    assert.equal(singleUpdates[0][1], path.resolve(visualPath));
+    assert.deepEqual(singleUpdates[0][2], ["first", "second"]);
 
     const batchResult = await handles.get("index:updateKeywordsBatch")(allowedEvent, {
       targets: [{ filePath: visualPath }, { filePath: textPath }],
@@ -113,6 +120,10 @@ const run = async () => {
     assert.equal(duplicateResult.errorMessage, "error.duplicateBatchKeywordTarget");
     assert.equal(duplicateResult.failedCount, 2);
 
+    await assert.rejects(
+      handles.get("index:updateManualKeywords")({ sender: { id: 2 } }, visualPath, "tag"),
+      /error\.invalidMetadata/
+    );
     await assert.rejects(
       handles.get("index:updateManualKeywords")(allowedEvent, path.join(testRoot, "outside.png"), "tag"),
       /error\.fileOutsideAddedDirectories/

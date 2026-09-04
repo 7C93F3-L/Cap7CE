@@ -37,8 +37,8 @@ import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateWindowPresentationModePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
-import { registerManualMetadataIpc } from "./manualMetadataIpc";
-import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages, updateManualKeywordsBatch, upsertFileManualKeywords } from "./sqliteImageIndex";
+import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
+import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
 import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
@@ -3536,12 +3536,12 @@ searchIpcController = registerSearchIpc({
   diagnostics: runtimeDiagnostics
 });
 
-registerManualMetadataIpc({
-  registrar: ipcMain,
-  isBatchSenderAllowed: isMainSenderAllowed,
-  listDirectories,
-  upsertFileKeywords: upsertFileManualKeywords,
-  updateKeywordsBatch: updateManualKeywordsBatch,
+registerManualMetadataRuntime({
+  registrar: ipcMain, isMainSenderAllowed,
+  getMainWindow: () => mainWindow,
+  getPreviewWindow: () => previewWindow,
+  getActivePreviewData: () => activePreviewData,
+  setActivePreviewData: (data) => { activePreviewData = data; },
   translate: t
 });
 

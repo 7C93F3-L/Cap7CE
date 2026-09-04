@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, CompatibilityCapsulePresentation, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
+import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, CompatibilityCapsulePresentation, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
 import type { NativeFileContextMenuAction, NativeFileContextMenuRequest } from "../../electron/nativeFileContextMenuTypes";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
@@ -88,6 +88,7 @@ declare global {
         onNavigate: (callback: (direction: PreviewNavigateDirection) => void) => () => void;
         onClosed: (callback: () => void) => () => void;
         onItemAction: (callback: (request: PreviewItemActionRequest) => void) => () => void;
+        onManualKeywordsUpdated: (callback: (update: PreviewManualKeywordsUpdate) => void) => () => void;
       };
       files: {
         getPathForFile: (file: File) => string;
@@ -146,7 +147,7 @@ declare global {
         onUpdate: (callback: (update: AiSearchUpdate) => void) => () => void;
       };
       index: {
-        updateManualKeywords: (filePath: string, keywordText: string) => Promise<boolean>;
+        updateManualKeywords: (filePath: string, keywordText: string) => Promise<string[]>;
         updateKeywordsBatch: (request: KeywordBatchUpdateRequest) => Promise<KeywordBatchUpdateResult>;
       };
       llamaRuntime: {
