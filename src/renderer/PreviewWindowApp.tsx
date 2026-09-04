@@ -20,6 +20,7 @@ import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditor
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
 import { COMPATIBILITY_TITLEBAR_HEIGHT } from "../../electron/windowPresentationPolicy";
+import { getTextColorForBackground } from "./appearance";
 
 const isCompatibilityWindow = new URLSearchParams(window.location.search).get("presentation") === "compatibility";
 const isStableUiPreview = new URLSearchParams(window.location.search).get("presentation") === "stable";
@@ -429,6 +430,7 @@ const PreviewWindowApp = () => {
     return {
       "--theme-color": previewData.appearanceColors.themeColor,
       "--accent-color": previewData.appearanceColors.accentColor,
+      "--preview-action-hover-text": getTextColorForBackground(previewData.appearanceColors.themeColor, previewData.appearanceColors.accentColor),
       "--app-bg": isDark ? "#191919" : "#ffffff",
       "--panel-bg": isDark ? "#282828" : "#f2f2f2",
       "--text-main": isDark ? "#b2b2b2" : "#111111",
@@ -538,7 +540,6 @@ const PreviewWindowApp = () => {
           data={previewData}
           expanded={previewSidebarLayout.expanded}
           width={previewSidebarLayout.width}
-          canShowSecondaryActions={showSettings}
           onToggleExpanded={previewSidebarLayout.toggleExpanded}
           onBeginResize={previewSidebarLayout.beginResize}
           onResizeByKeyboard={previewSidebarLayout.resizeByKeyboard}
@@ -556,8 +557,6 @@ const PreviewWindowApp = () => {
           onDelete={() => {
             void window.cap7ce?.preview.requestItemAction({ action: "deleteFile", itemId: previewData.itemId, filePath: previewData.filePath });
           }}
-          onOpenSkim={() => { void window.cap7ce?.preview.toggleSkimLocationPicker(); }}
-          onOpenSettings={() => { void window.cap7ce?.preview.openSettings(); }}
         />}
         <div className={`preview-window-stage${isStableUiPreview ? " preview-stable-stage" : ""}`}>
           <div className="preview-window-content">

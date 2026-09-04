@@ -7,12 +7,11 @@ import { previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previe
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
   data: PreviewWindowData; expanded: boolean; width: number;
-  canShowSecondaryActions: boolean; onToggleExpanded: () => void;
+  onToggleExpanded: () => void;
   onBeginResize: (event: React.PointerEvent) => void; onResizeByKeyboard: (event: React.KeyboardEvent<HTMLElement>) => void;
   onResetWidth: () => void; onOpen: () => void;
   onShowInFolder: () => void; onCopyPath: () => void;
   onEditKeywords: () => void; onDelete: () => void;
-  onOpenSkim: () => void; onOpenSettings: () => void;
 }
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -34,7 +33,6 @@ const PreviewInformationSidebar = ({
   data,
   expanded,
   width,
-  canShowSecondaryActions,
   onToggleExpanded,
   onBeginResize,
   onResizeByKeyboard,
@@ -43,9 +41,7 @@ const PreviewInformationSidebar = ({
   onShowInFolder,
   onCopyPath,
   onEditKeywords,
-  onDelete,
-  onOpenSkim,
-  onOpenSettings
+  onDelete
 }: PreviewInformationSidebarProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   return (
@@ -55,7 +51,7 @@ const PreviewInformationSidebar = ({
     data-preview-navigation-suppressed="true"
     aria-label={t("preview.sidebar.heading")}
   >
-    <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
+    <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} onPointerUp={(event) => event.currentTarget.blur()} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={expanded ? "m15 5-7 7 7 7" : "m9 5 7 7-7 7"} /></svg>
       {expanded && <strong>{t("preview.sidebar.heading")}</strong>}
     </button>
@@ -102,13 +98,9 @@ const PreviewInformationSidebar = ({
             <button type="button" onClick={onOpen}>{t("context.open")}</button>
             <button type="button" onClick={onShowInFolder}>{t("context.showInFolder")}</button>
             <button type="button" onClick={onCopyPath}>{t("context.copyPath")}</button>
-            {!data.skimActive && <button type="button" className="is-danger" onClick={onDelete}>{t("context.deleteFile")}</button>}
+            {!data.skimActive && <button type="button" onClick={onDelete}>{t("context.deleteFile")}</button>}
           </div>
         </section>
-        {canShowSecondaryActions && <section className="preview-sidebar-section preview-sidebar-secondary-actions">
-          <button type="button" onClick={onOpenSkim}>{t("skim.locationPicker.open")}</button>
-          <button type="button" onClick={onOpenSettings}>{t("window.openSettings")}</button>
-        </section>}
       </div>
       <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
       <div className="preview-sidebar-resize-handle" role="separator" tabIndex={0} aria-orientation="vertical" aria-label={t("preview.sidebar.resize")} aria-valuemin={previewSidebarMinimumWidth} aria-valuemax={previewSidebarMaximumWidth} aria-valuenow={width} onPointerDown={onBeginResize} onKeyDown={onResizeByKeyboard} onDoubleClick={onResetWidth} />
