@@ -9,18 +9,16 @@
 .cap-stable-skim-address > button,
 .cap-stable-skim-address > span > button { min-width: 0; padding: 3px 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-skim-address > button:hover,
-.cap-stable-skim-address > span > button:hover { color: var(--cap-stable-text); background: var(--cap-stable-hover); }
+.cap-stable-skim-address > span > button:hover { color: var(--cap-stable-text); background: var(--cap-stable-hover); } .cap-stable-skim-address > button:focus-visible, .cap-stable-skim-address > span > button:focus-visible, .cap-stable-skim-address input:focus, .cap-stable-skim-address input:focus-visible { outline: none; outline-offset: 0; box-shadow: none; }
 .cap-stable-skim-address > span { display: flex; min-width: 0; align-items: center; }
-.cap-stable-skim-address > span > span { flex: 0 0 auto; opacity: .55; }
+.cap-stable-skim-address > span > span { flex: 0 0 auto; opacity: .55; } .cap-stable-skim-address > .cap-stable-skim-address-hit-area { min-width: 24px; height: 100%; flex: 0 0 24px; }
 .cap-stable-skim-address input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--cap-stable-text); background: transparent; font: inherit; }
 .cap-stable-skim-status { padding: 0 10px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-skim-content { min-width: 0; min-height: 0; overflow: hidden; }
 .cap-stable-skim-content > .cap-skim-view.is-embedded { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; padding: var(--cap-stable-grid-page-padding); overflow: hidden; }
 .cap-stable-skim-content .cap-skim-grid-frame { border-radius: var(--cap-stable-radius-sm); }
 .cap-stable-skim-content .cap-skim-entry { border-radius: var(--cap-stable-radius-sm); background: var(--cap-stable-surface-soft); }
-.cap-stable-skim-content .cap-skim-entry:hover,
-.cap-stable-skim-content .cap-skim-entry:focus-visible,
-.cap-stable-skim-content .cap-skim-entry.selected { background: var(--panel-bg); }
+.cap-stable-skim-content .cap-skim-entry:hover, .cap-stable-skim-content .cap-skim-entry:focus-visible, .cap-stable-skim-content .cap-skim-entry.selected { background: var(--panel-bg); }
 
 @media (max-height: 359.98px) {
   .cap-stable-skim-slot { grid-template-rows: minmax(0, 1fr); }

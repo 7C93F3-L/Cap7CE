@@ -19,6 +19,7 @@ import { Cap7CESearchCapsule, type SearchCapsuleLabelVisibility } from "../searc
 import CustomScrollbar from "../CustomScrollbar";
 import LegacySkimContextMenuLayer from "./LegacySkimContextMenuLayer";
 import ResponsiveSkimContextMenuLayer from "./ResponsiveSkimContextMenuLayer";
+import SkimRootSections from "./SkimRootSections";
 import { resolveFileContentPreview } from "../contentPreview";
 import { getDirectoryPath, isWindowsRootPath, normalizeWindowsPathKey } from "../filePath";
 import { formatDisplayMessage } from "../formatting";
@@ -42,6 +43,7 @@ import type {
   SkimBreadcrumb,
   SkimBrowseEntry,
   SkimDisplayMode,
+  SkimLocationShortcut,
   SkimPreviewInfo
 } from "../../shared/types";
 import { getActiveLanguage, t } from "../../../electron/localization";
@@ -92,6 +94,9 @@ export interface SkimViewProps {
   sidebarKnownPaths: string[];
   onAddSidebarFolders: (folderPaths: string[]) => void;
   onRemoveSidebarFolders: (folderPaths: string[]) => void;
+  rootLocations: SkimLocationShortcut[];
+  systemLocationsCollapsed: boolean;
+  onToggleSystemLocations: () => void;
   onFeedback: (message: string) => void;
   onNativeDragStateChange: (active: boolean) => void;
   embedded?: boolean;
@@ -147,7 +152,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, onFeedback, onNativeDragStateChange, embedded = false, responsiveLayout = false, active = true }: SkimViewProps) => {
+export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, rootLocations, systemLocationsCollapsed, onToggleSystemLocations, onFeedback, onNativeDragStateChange, embedded = false, responsiveLayout = false, active = true }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -159,6 +164,8 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
   const [lowHeightLayout, setLowHeightLayout] = useState(() => responsiveLayout && window.matchMedia("(max-height: 359.98px)").matches);
+  const [rootStarredCollapsed, setRootStarredCollapsed] = useState(false);
+  const [rootDrivesCollapsed, setRootDrivesCollapsed] = useState(false);
   const selectionAnchorPathRef = useRef<string | null>(null);
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
@@ -364,6 +371,32 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     setActivePath(entry.path);
     selectionAnchorPathRef.current = entry.path;
   }, [entries]);
+
+  const selectRootPath = useCallback((path: string) => {
+    setSelectedPaths(new Set([path]));
+    setActivePath(path);
+    selectionAnchorPathRef.current = path;
+    setContextMenu(null);
+  }, []);
+
+  const openRootLocationContextMenu = useCallback((event: React.MouseEvent<HTMLButtonElement>, location: SkimLocationShortcut) => {
+    if (!location.path) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const entry: SkimBrowseEntry = {
+      kind: "folder",
+      name: location.name?.trim() || t("skim.locationPicker.starred"),
+      path: location.path,
+      extension: "",
+      size: null,
+      modifiedAt: null,
+      withinAddedDirectory: false,
+      hidden: false,
+      status: "ready"
+    };
+    selectRootPath(location.path);
+    setContextMenu({ x: event.clientX, y: event.clientY, item: entry, items: [entry] });
+  }, [selectRootPath]);
 
   const openSystemPath = useCallback(async (targetPath: string) => {
     const result = await window.cap7ce?.files.open(targetPath);
@@ -631,6 +664,20 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
             });
           }}
         >
+          {embedded && currentPath === null ? <SkimRootSections
+            drives={entries.filter((entry) => entry.kind === "drive")}
+            locations={rootLocations}
+            systemLocationsCollapsed={systemLocationsCollapsed}
+            starredLocationsCollapsed={rootStarredCollapsed}
+            drivesCollapsed={rootDrivesCollapsed}
+            selectedPath={activePath}
+            onSelectPath={selectRootPath}
+            onOpenPath={onOpenBreadcrumb}
+            onToggleSystemLocations={onToggleSystemLocations}
+            onToggleStarredLocations={() => setRootStarredCollapsed((current) => !current)}
+            onToggleDrives={() => setRootDrivesCollapsed((current) => !current)}
+            onStarredContextMenu={openRootLocationContextMenu}
+          /> : <>
           {isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.loading")}</div>}
           {!isLoading && entries.length === 0 && <div className="empty-result-row">{t("skim.empty")}</div>}
           {entries.length > 0 && (
@@ -702,6 +749,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
               })}
             </div>
           )}
+          </>}
         </section>
         <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation={isHorizontalGrid ? "horizontal" : "vertical"} />
       </div>

@@ -53,6 +53,7 @@ import ResultStatus from "./results/ResultStatus";
 import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
 import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results/ResultsContextMenuLayer";
 import { SkimView, type SkimViewProps } from "./skim/SkimView";
+import { countSkimRootLocations } from "./skim/SkimRootSections";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
@@ -1860,16 +1861,16 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     const missingFolders = folderPaths.filter((folderPath) => !existingKeys.has(normalizeWindowsPathKey(folderPath)));
     if (missingFolders.length === 0) return;
     if (await saveSkimSidebarFolders([...skimSidebarFolders, ...missingFolders])) {
-      showSkimFeedback(t("skim.sidebar.addedFeedback"));
+      showSkimFeedback(t(stableUi ? "skim.sidebar.starredFeedback" : "skim.sidebar.addedFeedback"));
     }
-  }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders]);
+  }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders, stableUi]);
 
   const removeSkimSidebarFolders = useCallback(async (folderPaths: string[]) => {
     const removedKeys = new Set(folderPaths.map(normalizeWindowsPathKey));
     const nextFolders = skimSidebarFolders.filter((candidate) => !removedKeys.has(normalizeWindowsPathKey(candidate)));
     if (nextFolders.length === skimSidebarFolders.length) return;
     if (await saveSkimSidebarFolders(nextFolders)) {
-      if (view === "skim" || stableUi) showSkimFeedback(t("skim.sidebar.removedFeedback"));
+      if (view === "skim" || stableUi) showSkimFeedback(t(stableUi ? "skim.sidebar.unstarredFeedback" : "skim.sidebar.removedFeedback"));
       else showQuickCommandNotice(t("skim.sidebar.removedFeedback"));
     }
   }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, stableUi, view]);
@@ -2982,7 +2983,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onAddEntries: (entries) => void addSkimEntries(entries), sidebarFolderPaths: skimSidebarFolders,
     sidebarKnownPaths: skimLocations.flatMap((location) => location.path ? [location.path] : []),
     onAddSidebarFolders: (folderPaths) => void addSkimSidebarFolders(folderPaths),
-    onRemoveSidebarFolders: (folderPaths) => void removeSkimSidebarFolders(folderPaths),
+    onRemoveSidebarFolders: (folderPaths) => void removeSkimSidebarFolders(folderPaths), rootLocations: skimLocations, systemLocationsCollapsed: skimSystemLocationsCollapsed, onToggleSystemLocations: () => void toggleSkimSystemLocations(),
     onFeedback: showSkimFeedback, onNativeDragStateChange: (dragActive) => { internalNativeDragRef.current = dragActive; }
   });
   const deleteFilesPanel = dialog === "deleteFiles" ? (
@@ -3060,7 +3061,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         }}
         skim={{
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
-          feedback: skimFeedback, entryCount: sortedSkimEntries.length, displayMode: skimDisplay.mode,
+          feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
           renderContent: (active) => <SkimView {...createSkimViewProps(true, active)} />,
           onOpen: () => openSkimLocation(skimCurrentPath), onBack: () => navigateSkimParent(false),

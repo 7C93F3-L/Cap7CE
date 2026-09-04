@@ -334,6 +334,10 @@
   display: block;
 }
 
+.cap-stable-skim-content .cap-skim-grid-virtualized {
+  display: block;
+}
+
 .cap-skim-virtual-spacer {
   position: relative;
   min-width: 100%;

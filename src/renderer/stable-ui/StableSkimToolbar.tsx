@@ -23,6 +23,10 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
     setEditingPath(false);
     if (path) onOpenPath(path); else onOpenRoot();
   };
+  const startPathEditing = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest("button")) return;
+    setEditingPath(true);
+  };
 
   return <>
     <div className="cap-stable-skim-toolbar">
@@ -33,9 +37,10 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
         <input autoFocus value={pathDraft} aria-label={t("stableUi.skim.path")} onChange={(event) => setPathDraft(event.currentTarget.value)} onBlur={() => setEditingPath(false)} onKeyDown={(event) => {
           if (event.key === "Escape") { event.preventDefault(); setPathDraft(currentPath ?? ""); setEditingPath(false); }
         }} />
-      </form> : <div className="cap-stable-skim-address" title={currentPath ?? t("skim.computer")} onDoubleClick={() => setEditingPath(true)}>
+      </form> : <div className="cap-stable-skim-address" title={currentPath ?? t("skim.computer")} onClick={startPathEditing}>
         <button type="button" onClick={onOpenRoot}>{t("skim.computer")}</button>
         {breadcrumbs.map((breadcrumb) => <span key={breadcrumb.path}><span aria-hidden="true">›</span><button type="button" title={breadcrumb.path} onClick={() => onOpenPath(breadcrumb.path)}>{breadcrumb.name}</button></span>)}
+        <span className="cap-stable-skim-address-hit-area" aria-hidden="true" />
       </div>}
       <button className="cap-stable-skim-tool" type="button" title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}><StableUiIcon name="sort" sortDirection={sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /></button>
       <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>

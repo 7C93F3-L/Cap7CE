@@ -28,6 +28,11 @@ const ResponsiveSkimContextMenuLayer = ({ state, theme, appearanceColors, isAddi
       ? `${t("fileInfo.compactContents", { files: folderStats.fileCount, folders: folderStats.folderCount })} · ${formatCacheSize(folderStats.totalSize)}`
       : t("fileInfo.calculating")
     : [dimensions ? `${dimensions.width} × ${dimensions.height}` : null, formatCacheSize(state.item.size ?? 0)].filter(Boolean).join(" · ");
+  const starLabel = sidebarAction === "add"
+    ? t(state.item.kind === "folder" ? "skim.sidebar.starFolder" : "skim.sidebar.starContainingFolder")
+    : sidebarAction === "remove"
+      ? t("skim.sidebar.unstarFolder")
+      : t("skim.sidebar.alreadyStarred");
 
   return <ResponsiveFileContextMenu
     x={state.x} y={state.y} theme={theme} menuStyle={getImageContextMenuStyle(theme, appearanceColors)}
@@ -43,7 +48,7 @@ const ResponsiveSkimContextMenuLayer = ({ state, theme, appearanceColors, isAddi
       [
         action("copyPaths", state.items.length > 1 ? t("context.copySelectedPaths", { count: state.items.length }) : t("context.copyPath"), fileContextShortcutLabels.copyPaths),
         action("addDirectory", t("skim.addDirectory"), fileContextShortcutLabels.addDirectory, isAddingDirectory),
-        action("addToSidebar", sidebarAction === "add" ? t("skim.sidebar.add") : sidebarAction === "remove" ? t("skim.sidebar.remove") : t("skim.sidebar.alreadyAdded"), fileContextShortcutLabels.addToSidebar, sidebarAction === "unavailable")
+        action("addToSidebar", starLabel, fileContextShortcutLabels.addToSidebar, sidebarAction === "unavailable")
       ]
     ]}
     onClose={onClose}
