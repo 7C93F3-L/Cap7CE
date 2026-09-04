@@ -70,8 +70,13 @@ assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stab
 assert.match(sidebarSource, /cap-stable-settings-button[\s\S]*?<StableUiIcon name="settings"[\s\S]*?<StableUiIcon name="settings" active/u);
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-item:hover,[\s\S]*?\.cap-stable-directory-item\.is-selected \{ background: rgb\(255 255 255 \/ 50%\); \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-control:hover,[\s\S]*?aria-pressed="true"[\s\S]*?aria-expanded="true"[^}]*background: rgb\(255 255 255 \/ 50%\);/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-footer button:hover,[\s\S]*?\.cap-stable-sidebar-footer button\.is-active \{ background: rgb\(255 255 255 \/ 50%\); \}/u);
 assert.match(sidebarStyles, /\.cap-stable-footer-icon \{ width: 20px; height: 20px;[^}]*\} \.cap-stable-skim-icon \{ width: 22px; height: 22px; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout \{[^}]*background: var\(--cap-stable-flyout-surface\);[^}]*font: inherit;/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button \{[^}]*border-radius: 999px;/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button:hover \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
 assert.match(sidebarStyles, /\.cap-stable-flyout-title \{[^}]*color: inherit; font-size: inherit;/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-danger \{ color: inherit; \}/u);
 assert.match(sidebarFlyoutSource, /document\.querySelector<HTMLElement>\("\.cap-stable-ui"\) \?\? document\.body/u);
