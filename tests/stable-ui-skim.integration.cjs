@@ -45,6 +45,11 @@ for (const marker of ["ResponsiveFileContextMenu", "fileInfo.compactContents", "
 for (const marker of ["grid-template-rows: 40px 18px minmax(0, 1fr)", ".cap-stable-skim-content > .cap-skim-view.is-embedded", "@media (max-height: 359.98px)"]) {
   assert.ok(panelStyles.includes(marker), `Stable Skim panel styles are missing ${marker}.`);
 }
+assert.match(
+  panelStyles,
+  /\.cap-stable-skim-content \.cap-skim-entry:hover,\s*\.cap-stable-skim-content \.cap-skim-entry:focus-visible,\s*\.cap-stable-skim-content \.cap-skim-entry\.selected\s*\{\s*background: var\(--panel-bg\);\s*\}/u,
+  "Stable Skim entries should become fully opaque when hovered, keyboard-focused, or selected."
+);
 assert.doesNotMatch(`${shellSource}\n${slotSource}\n${toolbarSource}\n${contractSource}`, /window\.cap7ce|setShellState|navigateTo\("skim"\)/);
 
 console.log(JSON.stringify({
