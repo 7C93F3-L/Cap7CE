@@ -2958,7 +2958,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onContextMenu: (event, item, selectedItems, preview) => {
       event.preventDefault();
       event.stopPropagation();
-      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: responsiveLayout ? "normal" : shellState, native: responsiveLayout });
+      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: responsiveLayout ? "normal" : shellState, responsive: responsiveLayout });
     },
     onContextMenuClose: closeContextMenu,
     onOpenImage: (item) => invokeFileAction("open", item),

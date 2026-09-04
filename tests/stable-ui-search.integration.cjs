@@ -12,18 +12,21 @@ const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const gridSource = read("src/renderer/results/VirtualResultGrids.tsx");
 const stableResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css");
 const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
-const menuSource = read("src/renderer/results/NativeResultsContextMenuLayer.tsx");
+const menuSource = read("src/renderer/results/ResponsiveResultsContextMenuLayer.tsx");
+const sharedMenuSource = read("src/renderer/components/ResponsiveFileContextMenu.tsx");
+const sharedMenuStyles = read("src/renderer/components/ResponsiveFileContextMenu.css");
 
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
 assert.match(appSource, /stableUiRenderer\?: StableUiRenderer/);
-assert.match(appSource, /resultContent=\{deleteFilesPanel \?\? <ResultsView \{\.\.\.createResultsViewProps\(true\)\} \/>\}/);
+assert.match(appSource, /resultContent=\{<ResultsView \{\.\.\.createResultsViewProps\(true\)\} \/>\}/);
+assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
 assert.match(appSource, /if \(!stableUi \|\| isLoadingDirectories \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)/);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
-assert.match(appSource, /native: responsiveLayout/);
-assert.match(menuAdapterSource, /state\.native[\s\S]*NativeResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
+assert.match(appSource, /responsive: responsiveLayout/);
+assert.match(menuAdapterSource, /state\.responsive[\s\S]*ResponsiveResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
 assert.match(appSource, /if \(stableUi\) return;/);
 assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);
 
@@ -47,6 +50,12 @@ assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-sea
 for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(state.item)", "onCopyPaths(state.items)", "onEditKeywords(state.items)", "onDelete(state.items)"]) {
   assert.ok(menuSource.includes(marker), `Formal results context menu is missing ${marker}.`);
 }
+for (const marker of ["compactHeightBreakpoint = 360", "createPortal", "stableTitlebarBottom = 45", "viewportGap = 5", "MiddleEllipsisFileName", "Escape"]) {
+  assert.ok(sharedMenuSource.includes(marker), `Responsive results context menu is missing ${marker}.`);
+}
+assert.match(sharedMenuStyles, /grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
+assert.match(sharedMenuStyles, /width: min\(520px, calc\(100vw - 10px\)\)/);
+assert.match(sharedMenuStyles, /border-radius: 999px[\s\S]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/);
 
 console.log(JSON.stringify({
   singleSearchAuthorityBridged: true,

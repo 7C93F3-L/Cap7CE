@@ -3,7 +3,6 @@ import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequ
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import type { CapsulePresentation } from "./capsuleWindowController";
-import type { NativeFileContextMenuAction, NativeFileContextMenuRequest } from "./nativeFileContextMenuTypes";
 
 interface RuntimeDiagnosticsInfo {
   logDirectory: string;
@@ -17,9 +16,6 @@ type RuntimeDiagnosticsExportResult =
   | { status: "failed"; message: string };
 
 contextBridge.exposeInMainWorld("cap7ce", {
-  fileContextMenu: {
-    open: (request: NativeFileContextMenuRequest): Promise<NativeFileContextMenuAction | null> => ipcRenderer.invoke("fileContextMenu:open", request)
-  },
   window: {
     setShellState: (state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => ipcRenderer.invoke("window:setShellState", state, options),
     revealAfterShellStateReady: () => ipcRenderer.invoke("window:revealAfterShellStateReady"),

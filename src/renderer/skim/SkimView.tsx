@@ -17,11 +17,11 @@ import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../compon
 import SvgIcon from "../components/SvgIcon";
 import { Cap7CESearchCapsule, type SearchCapsuleLabelVisibility } from "../search/Cap7CESearchCapsule";
 import CustomScrollbar from "../CustomScrollbar";
-import NativeFileContextMenuLayer from "../components/NativeFileContextMenuLayer";
 import LegacySkimContextMenuLayer from "./LegacySkimContextMenuLayer";
+import ResponsiveSkimContextMenuLayer from "./ResponsiveSkimContextMenuLayer";
 import { resolveFileContentPreview } from "../contentPreview";
 import { getDirectoryPath, isWindowsRootPath, normalizeWindowsPathKey } from "../filePath";
-import { formatCacheSize, formatDisplayMessage } from "../formatting";
+import { formatDisplayMessage } from "../formatting";
 import { getFormatIconSvgByName } from "../formatIcons";
 import { getFileContextShortcutAction } from "../fileContextActions";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
@@ -45,7 +45,7 @@ import type {
   SkimPreviewInfo
 } from "../../shared/types";
 import { getActiveLanguage, t } from "../../../electron/localization";
-import type { NativeFileContextMenuAction } from "../../../electron/nativeFileContextMenuTypes";
+import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
 
 export type SkimShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 
@@ -487,7 +487,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
     }
   }, [currentPath, openSystemPath]);
 
-  const handleContextMenuAction = (action: NativeFileContextMenuAction) => {
+  const handleContextMenuAction = (action: FileContextMenuAction) => {
     if (!contextMenu) return;
     setContextMenu(null);
     if (action === "preview") void openPreview(contextMenu.item);
@@ -706,34 +706,10 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
         <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation={isHorizontalGrid ? "horizontal" : "vertical"} />
       </div>
       {contextMenu && responsiveLayout && (
-        <NativeFileContextMenuLayer
+        <ResponsiveSkimContextMenuLayer
           key={`skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
-          request={{
-            fileName: contextMenu.item.label || contextMenu.item.name,
-            summary: contextMenu.item.kind === "folder"
-              ? t("fileInfo.folder")
-              : [contextMenu.item.extension.slice(1).toUpperCase() || t("fileInfo.file"), formatCacheSize(contextMenu.item.size ?? 0)].join(" · "),
-            items: [
-              { id: "preview", label: t("skim.preview") },
-              { id: "open", label: t("skim.openItem") },
-              { id: "showInFolder", label: t("skim.openPath") },
-              {
-                id: "copyPaths",
-                label: contextMenu.items.length > 1 ? t("context.copySelectedPaths", { count: contextMenu.items.length }) : t("context.copyPath"),
-                separatorBefore: true
-              },
-              { id: "addDirectory", label: t("skim.addDirectory"), disabled: isAddingDirectory },
-              {
-                id: "addToSidebar",
-                label: contextMenuSidebarAction === "add"
-                  ? t("skim.sidebar.add")
-                  : contextMenuSidebarAction === "remove"
-                    ? t("skim.sidebar.remove")
-                    : t("skim.sidebar.alreadyAdded"),
-                disabled: contextMenuSidebarAction === "unavailable"
-              }
-            ]
-          }}
+          state={contextMenu} theme={theme} appearanceColors={appearanceColors}
+          isAddingDirectory={isAddingDirectory} sidebarAction={contextMenuSidebarAction}
           onClose={() => setContextMenu(null)}
           onAction={handleContextMenuAction}
         />

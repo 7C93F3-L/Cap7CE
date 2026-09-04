@@ -11,6 +11,7 @@ const toolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const contractSource = read("src/renderer/stable-ui/stableSkimTypes.ts");
 const panelStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
 const skimViewSource = read("src/renderer/skim/SkimView.tsx");
+const responsiveMenuSource = read("src/renderer/skim/ResponsiveSkimContextMenuLayer.tsx");
 const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
@@ -35,8 +36,11 @@ for (const marker of ["embedded?: boolean", "responsiveLayout?: boolean", "activ
 }
 assert.match(skimViewSource, /responsiveSkimGridTargetThumbSize = 120/u);
 assert.match(skimViewSource, /targetThumbSize: gridTargetThumbSize/u);
-for (const marker of ["window.cap7ce?.files.startDrag", "NativeFileContextMenuLayer", "resolveFileContentPreview", "CustomScrollbar"]) {
+for (const marker of ["window.cap7ce?.files.startDrag", "ResponsiveSkimContextMenuLayer", "resolveFileContentPreview", "CustomScrollbar"]) {
   assert.ok(skimViewSource.includes(marker), `Formal Skim file capability is missing ${marker}.`);
+}
+for (const marker of ["ResponsiveFileContextMenu", "fileInfo.compactContents", "addDirectory", "addToSidebar"]) {
+  assert.ok(responsiveMenuSource.includes(marker), `Responsive Skim context menu is missing ${marker}.`);
 }
 for (const marker of ["grid-template-rows: 40px 18px minmax(0, 1fr)", ".cap-stable-skim-content > .cap-skim-view.is-embedded", "@media (max-height: 359.98px)"]) {
   assert.ok(panelStyles.includes(marker), `Stable Skim panel styles are missing ${marker}.`);

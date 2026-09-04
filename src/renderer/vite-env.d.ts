@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, CompatibilityCapsulePresentation, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
-import type { NativeFileContextMenuAction, NativeFileContextMenuRequest } from "../../electron/nativeFileContextMenuTypes";
 
 type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -10,9 +9,6 @@ type Cap7CEAlwaysOnTopState = { enabled: boolean; actual: boolean; windowId: num
 declare global {
   interface Window {
     cap7ce?: {
-      fileContextMenu: {
-        open: (request: NativeFileContextMenuRequest) => Promise<NativeFileContextMenuAction | null>;
-      };
       window: {
         setShellState: (state: Cap7CEShellState, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => Promise<boolean>;
         revealAfterShellStateReady: () => Promise<boolean>;

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
 import { t } from "../../../electron/localization";
-import type { NativeFileContextMenuAction } from "../../../electron/nativeFileContextMenuTypes";
-import type { AppearanceColors, SkimFolderStats } from "../../shared/types";
+import type { AppearanceColors } from "../../shared/types";
+import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
 import { buildFileContextMenuGroups, fileContextShortcutLabels } from "../fileContextActions";
 import { formatCacheSize } from "../formatting";
 import ImageContextMenu, { getImageContextMenuStyle } from "../ImageContextMenu";
 import type { SkimContextMenuState } from "./SkimView";
+import useSkimContextMenuMetadata from "./useSkimContextMenuMetadata";
 
 interface LegacySkimContextMenuLayerProps {
   state: SkimContextMenuState;
@@ -14,30 +14,11 @@ interface LegacySkimContextMenuLayerProps {
   compact: boolean;
   isAddingDirectory: boolean;
   sidebarAction: "add" | "remove" | "unavailable";
-  onAction: (action: NativeFileContextMenuAction) => void;
+  onAction: (action: FileContextMenuAction) => void;
 }
 
 const LegacySkimContextMenuLayer = ({ state, theme, appearanceColors, compact, isAddingDirectory, sidebarAction, onAction }: LegacySkimContextMenuLayerProps) => {
-  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
-  useEffect(() => {
-    setDimensions(null); setFolderStats(null);
-    let active = true, folderTimer: number | null = null, folderTaskId: string | null = null;
-    if (state.item.kind === "folder") {
-      folderTimer = window.setTimeout(() => {
-        folderTaskId = `file-info:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-        void window.cap7ce?.skim.readFileInfoFolderStats({ taskId: folderTaskId, path: state.item.path })
-          .then((stats) => { if (active && stats?.status === "completed") setFolderStats(stats); });
-      }, 300);
-    } else if (state.item.formatCapability?.previewKind === "image") {
-      void window.cap7ce?.skim.readFileInfoDimensions(state.item.path).then((value) => { if (active) setDimensions(value ?? null); });
-    }
-    return () => {
-      active = false;
-      if (folderTimer !== null) window.clearTimeout(folderTimer);
-      if (folderTaskId) void window.cap7ce?.skim.cancelFileInfoFolderStats(folderTaskId);
-    };
-  }, [state.item]);
+  const { dimensions, folderStats } = useSkimContextMenuMetadata(state);
   return <ImageContextMenu
     x={state.x} y={state.y} theme={theme} menuStyle={getImageContextMenuStyle(theme, appearanceColors)} compact={compact}
     header={{

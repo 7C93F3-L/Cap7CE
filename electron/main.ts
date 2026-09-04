@@ -76,7 +76,6 @@ import { getStablePreviewContentChrome, PreviewWindowPresentationSizing } from "
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
 import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
 import { createSettingsDataBroadcaster } from "./settingsDataBroadcast";
-import { registerNativeFileContextMenuIpc } from "./nativeFileContextMenuIpc";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
 import { closeOfficePreviewSession, openOfficePreviewSession, prepareOfficePreviewTemporaryRoot } from "./officePreviewService";
 import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSession } from "./archivePreviewService";
@@ -3744,7 +3743,6 @@ registerCacheActivityIpc({
   }
 });
 registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, openSettings });
-registerNativeFileContextMenuIpc({ registrar: ipcMain, getWindow: () => mainWindow });
 const clearFormalVisualCacheSafely = async (clear: typeof clearAllVisualCaches) => {
   const renderingPauseReason = "cache-clear";
   await pauseThumbnailRendering(renderingPauseReason);
