@@ -153,9 +153,6 @@ export const useSettingsWindowController = () => {
     return nextPreferences;
   };
 
-  const updateSearchLabelVisibility = async (searchLabelVisibility: UserPreferences["searchLabelVisibility"]) => (
-    applyPreferences(await window.cap7ce?.preferences.updateSearchLabelVisibility(searchLabelVisibility))
-  );
   const updateSkimDisplay = async (skimDisplay: SkimDisplayPreferences) => (
     applyPreferences(await window.cap7ce?.preferences.updateSkimDisplay(skimDisplay))
   );
@@ -250,7 +247,6 @@ export const useSettingsWindowController = () => {
     updateLanguage,
     updateAppearanceColors,
     updateBooleanPreference,
-    updateSearchLabelVisibility,
     updateSkimDisplay,
     updateShortcutActions,
     beginShortcutCapture,
