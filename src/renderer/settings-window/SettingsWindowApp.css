@@ -7,6 +7,9 @@
   --stable-settings-card: rgb(255 255 255 / 66%);
   --stable-settings-hover: rgb(255 255 255 / 58%);
   --stable-settings-border: rgb(50 50 50 / 8%);
+  --dialog-text: var(--stable-settings-text);
+  --dialog-surface: rgb(246 246 246 / 80%);
+  --dialog-control-surface: rgb(255 255 255 / 58%);
   --stable-settings-theme-color: #7c93f3;
   --stable-settings-focus: #68c3c0;
   min-width: 100%;
@@ -23,6 +26,8 @@
   --stable-settings-card: rgb(38 38 38 / 72%);
   --stable-settings-hover: rgb(255 255 255 / 10%);
   --stable-settings-border: rgb(255 255 255 / 8%);
+  --dialog-surface: rgb(32 32 32 / 80%);
+  --dialog-control-surface: rgb(255 255 255 / 10%);
   color-scheme: dark;
 }
 
@@ -393,8 +398,7 @@
   background: var(--stable-settings-surface);
 }
 
-.cap-stable-settings-loading button,
-.cap-stable-settings-dialog button {
+.cap-stable-settings-loading button {
   min-height: 28px;
   border: 0;
   border-radius: 14px;
@@ -405,42 +409,6 @@
 .cap-stable-settings-empty {
   margin: 42px 10px;
   color: var(--stable-settings-secondary);
-}
-
-.cap-stable-settings-dialog-backdrop {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgb(0 0 0 / 24%);
-  backdrop-filter: blur(4px);
-}
-
-.cap-stable-settings-dialog {
-  width: min(420px, 100%);
-  padding: 20px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--stable-settings-card) 94%, transparent);
-  box-shadow: 0 18px 50px rgb(0 0 0 / 24%);
-}
-
-.cap-stable-settings-dialog p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.cap-stable-settings-dialog div {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.cap-stable-settings-dialog button {
-  padding: 4px 16px;
 }
 
 .cap-settings-window-foundation .cap-settings-row {

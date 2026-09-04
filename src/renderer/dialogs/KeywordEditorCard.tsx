@@ -21,6 +21,7 @@ interface KeywordEditorCardProps {
   isClosing: boolean;
   menuStyle: CSSProperties;
   theme: ResolvedThemeMode;
+  showBackdrop: boolean;
   onKeywordsChange: (keywords: string) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -41,6 +42,7 @@ const KeywordEditorCard = ({
   isClosing,
   menuStyle,
   theme,
+  showBackdrop,
   onKeywordsChange,
   onSave,
   onCancel,
@@ -131,7 +133,7 @@ const KeywordEditorCard = ({
 
   return createPortal(
     <>
-      <KeywordEditorBackdrop theme={theme} isClosing={isClosing} />
+      {showBackdrop && <KeywordEditorBackdrop theme={theme} isClosing={isClosing} />}
       <div
         ref={cardRef}
         className={`context-menu context-menu-${theme} keyword-editor-card${isClosing ? " is-closing" : ""}`}

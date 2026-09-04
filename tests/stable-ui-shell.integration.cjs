@@ -26,6 +26,11 @@ const resultStyles = read("src/renderer/stable-ui/StableSearchResults.css");
 const skimStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
 const scrollbarStyles = read("src/renderer/CustomScrollbar.css");
 const globalStyles = read("src/renderer/styles.css");
+const appSource = read("src/renderer/App.tsx");
+const dialogShellSource = read("src/renderer/dialogs/DialogShell.tsx");
+const dialogShellStyles = read("src/renderer/dialogs/DialogShell.css");
+const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.tsx");
+const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
 assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\}\s*\/>/);
@@ -81,6 +86,14 @@ assert.doesNotMatch(shellStyles, /\.cap-stable-main-shell \.cap-scroll-viewport-
 assert.doesNotMatch(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[^}]*box-shadow:/u);
 assert.equal((globalStyles.match(/--scroll-thumb: color-mix\(in srgb, var\(--text-main\) 42%, transparent\);/gu) || []).length, 2);
 assert.equal((globalStyles.match(/--scrollbar-thumb-hover: color-mix\(in srgb, var\(--text-main\) 62%, transparent\);/gu) || []).length, 2);
+assert.match(dialogShellSource, /cap-dialog-layer[\s\S]*?cap-dialog-surface[\s\S]*?role="alertdialog"/u);
+assert.match(confirmationPanelsSource, /<DialogShell[\s\S]*?warningGradientSvg/u);
+assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-stable-flyout-surface\)\)/u);
+assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
+assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
+assert.match(appSource, /resultContent=\{<ResultsView[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
+assert.match(appSource, /showBackdrop=\{!stableUi\}/u);
+assert.match(keywordEditorSource, /showBackdrop && <KeywordEditorBackdrop/u);
 
 assert.doesNotMatch(combinedShellSource, /window\.cap7ce|setShellState|shellState|\bmicro\b|\bmini\b|\bnormal\b/);
 assert.doesNotMatch(combinedShellSource, /stable-ui-canvas|prototypes[\\/]|C:\\Users\\|示例目录|Example/);

@@ -3,6 +3,7 @@ import { getActiveLanguage, t, type TranslationKey } from "../../../electron/loc
 import type { UserPreferences } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
 import StableUiIcon from "../stable-ui/StableUiIcon";
+import { getTextColorForBackground } from "../appearance";
 import { formatCacheSize } from "../formatting";
 import { EmbeddedMetadataSettingsRow } from "../settings/EmbeddedMetadataSettingsRow";
 import { QuickActionSettingsRows } from "../settings/QuickActionSettingsRows";
@@ -12,6 +13,7 @@ import { SettingsFooter } from "../settings/SettingsFooter";
 import { SkimDisplaySettingsRows } from "../settings/SkimDisplaySettingsRows";
 import { getWindowPresentationModeLabel, getWindowPresentationSwitchTarget } from "../settings/WindowPresentationModeSettingsRow";
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";
+import SettingsConfirmationDialog from "./SettingsConfirmationDialog";
 import { useSettingsWindowController } from "./useSettingsWindowController";
 import "./SettingsWindowApp.css";
 type CategoryId = "general" | "appearance" | "browse" | "search-ai" | "cache" | "shortcuts" | "diagnostics" | "about";
@@ -26,7 +28,6 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; short:
   { id: "diagnostics", label: "stableSettings.category.diagnostics", short: "!" },
   { id: "about", label: "stableSettings.category.about", short: "?" }
 ];
-
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
   general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.rememberWindowLayout", "settings.edgeCollapse", "stableSettings.material", "stableSettings.windowMode", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.rememberWindows", "stableSettings.desc.edgeCollapse", "stableSettings.desc.material", "stableSettings.desc.windowMode"],
   appearance: ["stableSettings.category.appearance", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.hiddenLabels", "stableSettings.desc.theme", "stableSettings.desc.colors", "stableSettings.desc.hiddenLabels"],
@@ -42,7 +43,6 @@ const matchesQuery = (query: string, values: string[]) => {
   const normalized = query.trim().toLocaleLowerCase();
   return !normalized || values.some((value) => value.toLocaleLowerCase().includes(normalized));
 };
-
 const SettingsSection = ({ title, children }: { title: TranslationKey; children: ReactNode }) => (
   <section className="cap-stable-settings-section"><h2>{t(title)}</h2><div className="cap-stable-settings-section-cards">{children}</div></section>
 );
@@ -108,7 +108,7 @@ const SettingsWindowApp = () => {
     ? t("stableSettings.directoryCountUnknown", { directories: controller.directories.length })
     : t("stableSettings.directoryCount", { directories: controller.directories.length, files: controller.totalFileCount });
   const allLabelsVisible = Object.values(preferences.searchLabelVisibility).every(Boolean);
-  const menuStyle = { "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor } as CSSProperties;
+  const menuStyle = { "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--theme-color": preferences.appearanceColors.themeColor, "--accent-color": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
   const toggle = (key: Parameters<typeof controller.updateBooleanPreference>[0], enabled: boolean) => { void controller.updateBooleanPreference(key, enabled); };
   const openConfirmation = (message: string, action: () => Promise<unknown>) => setDialog({ message, action });
   const confirmDialog = async () => {
@@ -172,7 +172,7 @@ const SettingsWindowApp = () => {
       <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => setQuery(event.target.value)} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} data-short={category.short} onClick={() => { setActiveCategory(category.id); setQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><span>{t(category.label)}</span></button>)}</nav></aside>
       <div className="cap-stable-settings-content-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical"><main className="cap-stable-settings-content cap-main-scroll-viewport" ref={scrollRef}>{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel"><h1>{t(category.label)}</h1>{renderCategory(category.id)}</article>)}</main><CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" /></div>
     </div>
-    {dialog && <div className="cap-stable-settings-dialog-backdrop" role="presentation"><section className="cap-stable-settings-dialog" role="alertdialog" aria-modal="true" aria-label={dialog.message}><p>{dialog.message}</p><div><button type="button" autoFocus disabled={dialogBusy} onClick={() => setDialog(null)}>{t("common.cancel")}</button><button type="button" disabled={dialogBusy} onClick={() => void confirmDialog()}>{dialogBusy ? t("common.loading") : dialog.confirmLabel ?? t("common.confirm")}</button></div></section></div>}
+    {dialog && <SettingsConfirmationDialog message={dialog.message} busy={dialogBusy} confirmLabel={dialog.confirmLabel} onCancel={() => setDialog(null)} onConfirm={() => void confirmDialog()} />}
   </div>;
 };
 

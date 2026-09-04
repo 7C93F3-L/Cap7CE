@@ -9,6 +9,8 @@ const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.ts"),
 const rendererEntrySource = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
 const settingsAppSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.tsx"), "utf8");
+const settingsConfirmationSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsConfirmationDialog.tsx"), "utf8");
+const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
 const settingsStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.css"), "utf8");
 const settingsAccessibilityStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowAccessibility.css"), "utf8");
@@ -144,7 +146,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /--stable-settings-theme-color[\s\S]*?appearanceColors\.themeColor/u);
   assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
   assert.match(settingsAppSource, /aria-current=\{activeCategory === category\.id \? "page" : undefined\}/u);
-  assert.match(settingsAppSource, /role="alertdialog"[\s\S]*?aria-label=\{dialog\.message\}/u);
+  assert.match(settingsAppSource, /<SettingsConfirmationDialog[\s\S]*?message=\{dialog\.message\}/u);
+  assert.match(settingsConfirmationSource, /<DialogShell label=\{message\} stable>[\s\S]*?cap-dialog-warning-icon[\s\S]*?cap-dialog-actions/u);
+  assert.match(dialogShellSource, /role="alertdialog"[\s\S]*?aria-label=\{label\}/u);
   assert.match(settingsAccessibilityStyles, /cap-settings-window-foundation button:focus-visible[\s\S]*?var\(--stable-settings-focus\)/u);
   assert.match(settingsAccessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration: 0ms !important/u);
   assert.match(settingsAccessibilityStyles, /cap-stable-settings-copy p[\s\S]*?overflow-wrap: anywhere/u);

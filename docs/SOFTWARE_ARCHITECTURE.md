@@ -78,7 +78,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、上下边缘镜像 Capsule、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 旧宿主按单一记忆开关捕获与恢复 micro、mini、normal 的完整展开布局。stable 使用独立正式布局文件且只把 normal 槽作为最后有效自由 bounds，不迁移或删除旧记录；显示器缺失时仍按工作区夹回可见范围 |
 | `settingsWindowController.ts` / `settingsWindowLayout.ts` / `settingsWindowIpc.ts` / `settingsDataBroadcast.ts` | stable 的独立 Settings 单实例生命周期、受限主 Renderer 打开入口、版本化专属 bounds 及主 / Settings Renderer 状态广播；关闭只隐藏自身，重复打开还原并聚焦，显示器缺失或 work area 变化时复用公共布局几何夹回可见区域，不读写主窗口 normal 记录 |
-| `src/renderer/settings-window/SettingsWindowApp.tsx` / `useSettingsWindowController.ts` / `SettingsWindowUpdateControl.tsx` / `SettingsWindowAccessibility.css` | 独立 Settings 的八分类页面组合、本地条目筛选、正式偏好与领域任务控制器、应用更新状态，以及键盘焦点 / 长文案 / 减少动态效果；直接复用 preload 白名单，不持有第二份持久化、目录、缓存、快捷键、诊断、运行时或模型服务。材质仍为只读状态，但 stable 宿主已真实应用 Acrylic / 安全纯色回退；新版快捷列表隐藏 micro / mini 并使用主搜索与默认尺寸语义 |
+| `src/renderer/settings-window/SettingsWindowApp.tsx` / `useSettingsWindowController.ts` / `SettingsWindowUpdateControl.tsx` / `SettingsConfirmationDialog.tsx` / `SettingsWindowAccessibility.css` | 独立 Settings 的八分类页面组合、本地条目筛选、正式偏好与领域任务控制器、应用更新状态、共享确认弹窗适配，以及键盘焦点 / 长文案 / 减少动态效果；直接复用 preload 白名单，不持有第二份持久化、目录、缓存、快捷键、诊断、运行时或模型服务。材质仍为只读状态，但 stable 宿主已真实应用 Acrylic / 安全纯色回退；新版快捷列表隐藏 micro / mini 并使用主搜索与默认尺寸语义 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
 | `capsuleWindowController.ts` | 两种窗口模式共用的 Capsule 目标显示器、上下落点和显示器配置恢复；兼容模式额外持有按需创建的透明 Capsule BrowserWindow，限制主 Renderer 只能同步主题、提示与草稿展示，限制 Capsule Renderer 只能回传草稿、提交、取消和 IME 状态。失焦经短时保护返回统一 standby 请求，隐藏、预览打开、line 显示和退出时完成互斥及销毁；搜索、快捷指令和结果跳转仍只由主 Renderer 执行 |
 | `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：在 40 DIP 内判断非任务栏停靠边、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
@@ -249,7 +249,7 @@ A6 当前保留 23 条 legacy main IPC：应用更新/退出 5 条、skim 读取
 
 A7 按稳定组件边界迁移 CSS，不重命名选择器或调整视觉参数。窗口控制栏、skim/Settings 切换按钮及边栏底部复用的窗口按钮集中在 `src/renderer/WindowControlRail.css`；独立 line 窗口的四向外观、横竖渐变流动和边缘对齐集中在 `src/renderer/LineWindowApp.css`；共享视口框架、自绘横纵滚动条、滑块交互与减少动效覆盖集中在 `src/renderer/CustomScrollbar.css`；搜索胶囊容器、筛选标签与芯片、输入框、状态文字和各窗口尺寸响应集中在 `src/renderer/search/Cap7CESearchCapsule.css`，Home 页布局、签名和超宽屏留白集中在 `src/renderer/search/HomeView.css`；预览窗口的图片、文本/Markdown、媒体、PDF、Office 转换结果、压缩包、字体、EPUB/MOBI、通用文件信息、加载状态和减少动效规则集中在 `src/renderer/preview/PreviewWindow.css`；skim 主视图、虚拟网格、条目、缩略图与位置边栏集中在 `src/renderer/skim/SkimView.css`；搜索结果的虚拟网格、缩略图、视频标记与格式回退集中在 `src/renderer/results/ResultGrid.css`，可信度分类卡独立集中在 `src/renderer/results/ResultSectionCard.css`，结果页外壳、状态统计、尺寸布局和超宽屏边距集中在 `src/renderer/results/ResultsView.css`；轻量关键词编辑卡片的尺寸、输入框、明暗占位色、错误提示与退出动效集中在 `src/renderer/dialogs/KeywordEditorCard.css`，文件/目录删除、拖入、目录替换和缓存清理确认层集中在 `src/renderer/dialogs/ConfirmationPanels.css`；Settings 页面框架、分组/行、共享展开面板与标题控制区集中在 `src/renderer/settings/SettingsView.css`，自绘下拉选择器及其运行时/模型尺寸变体集中在 `src/renderer/settings/SettingsSelect.css`，快捷操作列表与快捷命令面板集中在 `src/renderer/settings/ShortcutSettingsPanels.css`，【自定义查看】的格式分组、类别选择和格式按钮集中在 `src/renderer/settings/SkimDisplaySettingsRows.css`，运行时/模型提示和版本详情折叠卡集中在 `src/renderer/settings/RuntimeModelSettingsSection.css`，目录管理和 AI 全局开关集中在 `src/renderer/settings/DirectoryAiSettingsRows.css`，页脚签名、发布页链接与来源图层集中在 `src/renderer/settings/SettingsFooter.css`；自绘颜色选择器的色彩面板、色相条、游标与十六进制输入集中在 `src/renderer/ColorPickerPopover.css`。通用 SVG 包装、搜索排序图标、跨搜索与 Settings 共用的胶囊按钮基底、line/capsule 共用占位色、通用详情网格和 Settings/结果项表面规则仍由全局样式提供；原生滚动条基底及其与自绘滚动条共用的明暗主题颜色变量、通用右键菜单基底与菜单动效也继续由全局样式提供。Renderer 入口在全局基础样式之后按固定顺序加载领域样式；主题变量、跨视图壳层、共享文件名省略组件和搜索结果复用的空状态规则继续留在全局样式。
 
-关键词编辑卡片的主题纯色蒙版由 `src/renderer/dialogs/KeywordEditorBackdrop.tsx` 与 `KeywordEditorBackdrop.css` 独立持有；卡片只负责组合，不把蒙版样式重新计入卡片或全局样式边界。
+关键词编辑卡片的主题纯色蒙版由 `src/renderer/dialogs/KeywordEditorBackdrop.tsx` 与 `KeywordEditorBackdrop.css` 独立持有；旧宿主继续组合该蒙版，stable 主窗口只显示浮层卡片、不再叠加白色或黑色蒙版，不把蒙版样式重新计入卡片或全局样式边界。
 
 Settings“运行信息”中新接入的 Cap7CE 诊断行由 `RuntimeDiagnosticsRows.tsx` 独立持有 IPC 状态，样式位于 `RuntimeDiagnosticsRows.css`；`RuntimeModelSettingsSection.tsx` 只组合诊断组与原 llama.cpp 信息，不把诊断状态提升到 `App.tsx`。
 
@@ -544,7 +544,7 @@ Settings 当前覆盖：
 | `electron/` | 主进程、IPC、窗口、索引、缓存、文件系统、llama.cpp、模型管理 |
 | `electron/preload.ts` | Renderer 安全 API 暴露 |
 | `src/renderer/` | React UI、搜索胶囊、Settings、样式、快捷指令 |
-| `src/renderer/dialogs/` | 关键词编辑与确认面板的纯 UI、局部类型和纯计算模型；业务状态仍由顶层编排持有 |
+| `src/renderer/dialogs/` | 关键词编辑与确认面板的纯 UI、局部类型和纯计算模型；stable 的确认类内容共用 `DialogShell` 浮层表面与按钮边界，旧宿主继续由兼容样式保持原布局，业务状态仍由顶层编排持有 |
 | `src/renderer/components/` | 无业务状态的 Renderer 通用展示组件 |
 | `src/renderer/results/` | 搜索结果缩略图、格式回退、证据分类标题卡及文件索引 / 布局索引映射；分类卡不进入业务文件数组，跨视图能力仍通过通用辅助模块复用 |
 | `src/renderer/keywords/` | 可复用的关键词标签编辑控件；单文件或多文件保存编排仍由各宿主持有 |

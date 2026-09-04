@@ -3,6 +3,7 @@ import { t } from "../../../electron/localization";
 import SvgIcon from "../components/SvgIcon";
 import WaitingIndicator from "../WaitingIndicator";
 import type { CacheClearFeedback, DeleteFilesFeedback, DroppedDirectory } from "./dialogTypes";
+import DialogShell from "./DialogShell";
 
 export const DeleteFilesPanel = ({
   isDeleting,
@@ -19,13 +20,11 @@ export const DeleteFilesPanel = ({
   onCancel: () => void;
   onComplete: () => void;
 }) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("delete.fileDialogTitle")}>
-      <div className="delete-files-content">
+  <DialogShell label={t("delete.fileDialogTitle")}>
         {isDeleting
           ? <WaitingIndicator className="delete-files-waiting-icon" />
-          : <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />}
-        <div className="delete-files-message">
+          : <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon cap-dialog-warning-icon" />}
+        <div className="delete-files-message cap-dialog-message">
           {isDeleting
             ? t("delete.movingToTrash", { count: fileCount })
             : feedback?.status === "failed"
@@ -34,15 +33,13 @@ export const DeleteFilesPanel = ({
                 ? t("delete.completed")
                 : t("delete.fileQuestion")}
         </div>
-        <div className="modal-actions">
+        <div className="modal-actions cap-dialog-actions">
           <button type="button" disabled={isDeleting} onClick={onCancel}>{t("common.cancel")}</button>
           <button type="button" disabled={isDeleting} onClick={feedback?.status === "succeeded" ? onComplete : onConfirm}>
             {feedback?.status === "failed" ? t("common.retry") : feedback?.status === "succeeded" ? t("common.done") : t("common.delete")}
           </button>
         </div>
-      </div>
-    </section>
-  </main>
+  </DialogShell>
 );
 
 export const DeleteDirectoryPanel = ({
@@ -52,18 +49,14 @@ export const DeleteDirectoryPanel = ({
   onConfirm: () => void;
   onCancel: () => void;
 }) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("delete.directoryDialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">{t("delete.directoryQuestion")}</div>
-        <div className="modal-actions">
+  <DialogShell label={t("delete.directoryDialogTitle")}>
+        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon cap-dialog-warning-icon" />
+        <div className="delete-files-message cap-dialog-message">{t("delete.directoryQuestion")}</div>
+        <div className="modal-actions cap-dialog-actions">
           <button type="button" onClick={onCancel}>{t("common.confirmNo")}</button>
           <button type="button" onClick={onConfirm}>{t("common.confirmYes")}</button>
         </div>
-      </div>
-    </section>
-  </main>
+  </DialogShell>
 );
 
 export const AddDroppedDirectoriesPanel = ({
@@ -77,22 +70,18 @@ export const AddDroppedDirectoriesPanel = ({
   onConfirm: () => void;
   onCancel: () => void;
 }) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("directoryAdd.dropDialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
+  <DialogShell label={t("directoryAdd.dropDialogTitle")}>
+        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon cap-dialog-warning-icon" />
+        <div className="delete-files-message cap-dialog-message">
           {directories.length === 1
             ? t("directoryAdd.dropSingleQuestion", { name: directories[0].name })
             : t("directoryAdd.dropMultipleQuestion", { count: directories.length })}
         </div>
-        <div className="modal-actions">
+        <div className="modal-actions cap-dialog-actions">
           <button type="button" onClick={onCancel} disabled={isAdding}>{t("common.cancel")}</button>
           <button type="button" onClick={onConfirm} disabled={isAdding}>{t("common.confirm")}</button>
         </div>
-      </div>
-    </section>
-  </main>
+  </DialogShell>
 );
 
 export const ReplaceDirectoriesPanel = ({
@@ -108,20 +97,16 @@ export const ReplaceDirectoriesPanel = ({
   onConfirm: () => void;
   onCancel: () => void;
 }) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={t("directoryAdd.replaceDialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
+  <DialogShell label={t("directoryAdd.replaceDialogTitle")}>
+        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon cap-dialog-warning-icon" />
+        <div className="delete-files-message cap-dialog-message">
           {t("directoryAdd.replaceQuestion", { candidates: conflictCount, count: replacedCount })}
         </div>
-        <div className="modal-actions">
+        <div className="modal-actions cap-dialog-actions">
           <button type="button" onClick={onCancel} disabled={isAdding}>{t("common.confirmNo")}</button>
           <button type="button" onClick={onConfirm} disabled={isAdding}>{t("common.confirmYes")}</button>
         </div>
-      </div>
-    </section>
-  </main>
+  </DialogShell>
 );
 
 export const ClearCachePanel = ({
@@ -139,11 +124,9 @@ export const ClearCachePanel = ({
   onCancel: () => void;
   onComplete: () => void;
 }) => (
-  <main className="keyword-editor-view delete-files-view">
-    <section className="keyword-editor-panel delete-files-panel" role="dialog" aria-modal="true" aria-label={skim ? t("cache.skimDialogTitle") : t("cache.dialogTitle")}>
-      <div className="delete-files-content">
-        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon" />
-        <div className="delete-files-message">
+  <DialogShell label={skim ? t("cache.skimDialogTitle") : t("cache.dialogTitle")}>
+        <SvgIcon svg={warningGradientSvg} className="cap-svg-icon delete-files-warning-icon cap-dialog-warning-icon" />
+        <div className="delete-files-message cap-dialog-message">
           {feedback?.status === "failed" ? feedback.message : feedback?.status === "succeeded" ? t("cache.completed") : (
             <>
               {skim ? t("cache.skimRegenerationHint") : t("cache.regenerationHint")}<br />
@@ -151,13 +134,11 @@ export const ClearCachePanel = ({
             </>
           )}
         </div>
-        <div className="modal-actions">
+        <div className="modal-actions cap-dialog-actions">
           <button type="button" disabled={isClearing} onClick={onCancel}>{t("common.cancel")}</button>
           <button type="button" disabled={isClearing} onClick={feedback?.status === "succeeded" ? onComplete : onConfirm}>
             {feedback?.status === "failed" ? t("common.retry") : feedback?.status === "succeeded" ? t("common.done") : t("settings.clearCache")}
           </button>
         </div>
-      </div>
-    </section>
-  </main>
+  </DialogShell>
 );

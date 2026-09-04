@@ -450,6 +450,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const appThemeStyle = {
     "--theme-color": appearanceColors.themeColor,
     "--accent-color": appearanceColors.accentColor,
+    "--dialog-action-hover-text": getTextColorForBackground(appearanceColors.themeColor, appearanceColors.accentColor),
     "--theme-on-color": getTextColorForBackground(appearanceColors.themeColor),
     "--accent-on-color": getTextColorForBackground(appearanceColors.accentColor)
   } as CSSProperties;
@@ -3012,7 +3013,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     />
   ) : null;
   const keywordEditorLayer = dialog === "editKeywords" && keywordEditSession ? (
-    <KeywordEditorCard session={keywordEditSession} keywords={editKeywords} error={editMetadataError} isSaving={isSavingMetadata} isClosing={isKeywordEditorClosing} menuStyle={contextMenuStyle} theme={effectiveTheme} onKeywordsChange={setEditKeywords} onSave={saveEditedKeywords} onCancel={cancelEditKeywords} onExitComplete={finishKeywordEditorClose} />
+    <KeywordEditorCard session={keywordEditSession} keywords={editKeywords} error={editMetadataError} isSaving={isSavingMetadata} isClosing={isKeywordEditorClosing} menuStyle={contextMenuStyle} theme={effectiveTheme} showBackdrop={!stableUi} onKeywordsChange={setEditKeywords} onSave={saveEditedKeywords} onCancel={cancelEditKeywords} onExitComplete={finishKeywordEditorClose} />
   ) : null;
   const droppedDirectoryPanel = dialog === "addDroppedDirectories" && droppedDirectories.length > 0 ? (
     <AddDroppedDirectoriesPanel directories={droppedDirectories} isAdding={isAddingDirectory} onConfirm={() => void confirmDroppedDirectoryAdd()} onCancel={cancelDroppedDirectoryAdd} />
@@ -3043,8 +3044,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         inputFeedback={searchInputFeedback}
         inputFeedbackIsGuide={operationHintVisible}
         resultStatus={resultStatusNode}
-        resultContent={deleteFilesPanel ?? <ResultsView {...createResultsViewProps(true)} />}
-        overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{directoryDialogLayer}</>}
+        resultContent={<ResultsView {...createResultsViewProps(true)} />}
+        overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
         sidebar={{
           search, directories: directoryOptions,
           skimDisplayMode: skimDisplay.searchMode, aiSearchEnabled: aiSearchBeta.enabled, aiSearchBusy: aiSearchBeta.busy,

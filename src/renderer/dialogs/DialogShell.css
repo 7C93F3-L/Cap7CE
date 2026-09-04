@@ -1,0 +1,72 @@
+.cap-stable-ui .cap-dialog-layer,
+.cap-dialog-layer.is-stable {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 15px;
+  overflow: hidden;
+  background: transparent;
+  animation: none;
+  app-region: no-drag;
+}
+
+.cap-stable-ui .cap-dialog-surface,
+.cap-dialog-layer.is-stable .cap-dialog-surface {
+  width: min(320px, calc(100vw - 30px));
+  max-width: calc(100vw - 30px);
+  height: auto;
+  max-height: calc(100vh - 30px);
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 12px;
+  color: var(--dialog-text, var(--cap-stable-text));
+  background: var(--dialog-surface, var(--cap-stable-flyout-surface));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: cap7ce-dialog-content-enter 280ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+}
+
+.cap-stable-ui .cap-dialog-content,
+.cap-dialog-layer.is-stable .cap-dialog-content {
+  gap: 14px;
+  padding: 17px 13px 13px;
+  animation: none;
+}
+
+.cap-stable-ui .cap-dialog-surface .cap-dialog-actions,
+.cap-dialog-layer.is-stable .cap-dialog-surface .cap-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  gap: 7px;
+}
+
+.cap-stable-ui .cap-dialog-surface .cap-dialog-actions button,
+.cap-dialog-layer.is-stable .cap-dialog-surface .cap-dialog-actions button {
+  width: auto;
+  min-width: 0;
+  min-height: 30px;
+  height: auto;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  color: inherit;
+  background: var(--dialog-control-surface, color-mix(in srgb, var(--app-bg) 76%, transparent));
+  font-size: 11px;
+  line-height: normal;
+  transform: none;
+}
+
+.cap-stable-ui .cap-dialog-surface .cap-dialog-actions button:hover:not(:disabled),
+.cap-dialog-layer.is-stable .cap-dialog-surface .cap-dialog-actions button:hover:not(:disabled) {
+  color: var(--dialog-action-hover-text, var(--theme-on-color));
+  background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
+  transform: none;
+}
+
+.cap-dialog-message { color: inherit; font-size: 14px; line-height: 20px; text-align: center; }
+.cap-dialog-warning-icon { width: 58px; height: 51px; }
+.cap-dialog-warning-icon svg { fill: initial; }
