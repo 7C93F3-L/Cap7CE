@@ -2,7 +2,7 @@
   margin: -4px 25px 4px 113px;
   overflow: hidden;
   color: var(--accent-color);
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -19,7 +19,7 @@
   border-radius: var(--radius-pill);
   background: var(--panel-bg);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
 }
 
 .cap-settings-details[open] {

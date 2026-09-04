@@ -55,7 +55,7 @@
   border-radius: 999px;
   color: inherit;
   background: var(--dialog-control-surface, color-mix(in srgb, var(--app-bg) 76%, transparent));
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
   line-height: normal;
   transform: none;
 }
@@ -67,6 +67,6 @@
   transform: none;
 }
 
-.cap-dialog-message { color: inherit; font-size: 14px; line-height: 20px; text-align: center; }
+.cap-dialog-message { color: inherit; font-size: var(--cap-ui-font-heading); line-height: var(--cap-ui-line-body); text-align: center; }
 .cap-dialog-warning-icon { width: 58px; height: 51px; }
 .cap-dialog-warning-icon svg { fill: initial; }

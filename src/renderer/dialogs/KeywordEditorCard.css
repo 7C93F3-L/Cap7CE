@@ -12,7 +12,7 @@
   color: var(--text-main);
   background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
   box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
-  font: 13px/20px "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-family: var(--cap-ui-font-family); font-size: var(--cap-ui-font-body); line-height: var(--cap-ui-line-body);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
@@ -48,19 +48,19 @@
 }
 
 .keyword-editor-card .context-menu-file-format {
-  font-size: 15px;
+  font-size: var(--cap-ui-font-heading);
   font-weight: 650;
-  line-height: 20px;
+  line-height: var(--cap-ui-line-body);
 }
 
 .keyword-editor-card .context-menu-file-primary-detail {
   color: color-mix(in srgb, currentColor 58%, transparent);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .keyword-editor-card .context-menu-file-name {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
 }
 
 .keyword-editor-multi-heading {
@@ -89,8 +89,8 @@
   color: var(--text-main);
   padding: 9px 11px;
   font: inherit;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
   resize: none;
   scrollbar-width: none;
 }
@@ -141,6 +141,6 @@
 
 .keyword-editor-card .keyword-editor-error {
   padding: 0 4px 1px;
-  font-size: 11px;
-  line-height: 15px;
+  font-size: var(--cap-ui-font-secondary);
+  line-height: var(--cap-ui-line-caption);
 }

@@ -4,14 +4,14 @@
 
 .cap-stable-settings-page-heading h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--cap-ui-font-page-title);
   font-weight: 600;
 }
 
 .cap-stable-settings-page-heading p {
   margin: 6px 0 0;
   color: var(--stable-settings-secondary);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
   line-height: 1.45;
 }
 
@@ -33,7 +33,7 @@
   flex-wrap: wrap;
   gap: 8px;
   color: var(--stable-settings-secondary);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .cap-settings-skim-display-stable-header > div {
@@ -76,7 +76,7 @@
   border-radius: 14px;
   color: var(--stable-settings-text);
   background: transparent;
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
   transition: background 160ms ease, color 160ms ease;
 }
 

@@ -47,7 +47,7 @@
   background: var(--panel-bg);
   padding: 20px 25px 24px;
   color: var(--text-main);
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
 }
 
 .cap-settings-quick-commands-header {
@@ -80,7 +80,7 @@
 .cap-settings-quick-command-group h3 {
   margin: 0 0 2px;
   color: var(--text-main);
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
   font-weight: 400;
 }
 
@@ -120,7 +120,7 @@
   background: var(--chip-bg);
   padding: 0 10px;
   color: var(--text-main);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
   line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;

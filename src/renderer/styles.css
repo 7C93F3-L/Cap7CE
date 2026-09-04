@@ -1,3 +1,4 @@
+@import "./typography.css";
 :root {
   --radius-panel: 16px;
   --radius-menu: 14px;
@@ -15,7 +16,6 @@
   font-synthesis: none;
   text-rendering: geometricPrecision;
 }
-
 * {
   box-sizing: border-box;
 }

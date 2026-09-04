@@ -1,7 +1,7 @@
 .runtime-diagnostics-group {
   grid-column: 1 / -1;
   color: var(--text-main) !important;
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
   font-weight: 400;
   cursor: default !important;
   user-select: none !important;

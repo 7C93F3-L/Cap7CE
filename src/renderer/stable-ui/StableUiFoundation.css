@@ -10,9 +10,9 @@
   --cap-stable-radius-sm: 8px;
   --cap-stable-radius-md: 12px;
   --cap-stable-radius-pill: 999px;
-  --cap-stable-font-size: 13px;
-  --cap-stable-secondary-font-size: 11px;
-  --cap-stable-section-font-size: 12px;
+  --cap-stable-font-size: var(--cap-ui-font-body);
+  --cap-stable-secondary-font-size: var(--cap-ui-font-secondary);
+  --cap-stable-section-font-size: var(--cap-ui-font-control);
   --cap-stable-text: rgb(31 31 31 / 88%);
   --cap-stable-text-muted: rgb(31 31 31 / 54%);
   --cap-stable-surface: rgb(255 255 255 / 50%);
@@ -25,7 +25,7 @@
   color: var(--cap-stable-text);
   color-scheme: light;
   background: transparent;
-  font: var(--cap-stable-font-size)/20px "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-family: var(--cap-ui-font-family); font-size: var(--cap-stable-font-size); line-height: var(--cap-ui-line-body);
 }
 .cap-stable-ui {
   position: fixed; inset: 0; overflow: hidden;

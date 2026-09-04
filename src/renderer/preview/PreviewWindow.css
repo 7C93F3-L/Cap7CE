@@ -97,7 +97,7 @@
   justify-content: space-between;
   gap: 24px;
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-font-panel > header > div {
@@ -119,7 +119,7 @@
   flex: 0 0 auto;
   margin: 12px 0 0;
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-font-samples {
@@ -133,7 +133,7 @@
 
 .preview-font-sample > span {
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-font-sample > p {
@@ -155,8 +155,8 @@
 .preview-font-sample > .preview-font-unsupported,
 .preview-font-loading {
   color: var(--preview-secondary-text);
-  font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
-  font-size: 13px;
+  font-family: var(--cap-ui-font-family);
+  font-size: var(--cap-ui-font-body);
 }
 
 .preview-text-panel {
@@ -181,7 +181,7 @@
   min-height: 48px;
   padding: 8px 18px;
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-archive-panel > header strong {
@@ -196,7 +196,7 @@
   flex: 0 0 auto;
   margin: 0 18px 8px;
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-archive-list {
@@ -222,8 +222,8 @@
   min-height: 34px;
   padding: 5px 8px;
   border-radius: 8px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
 }
 
 .preview-archive-entry:nth-child(odd) {
@@ -257,7 +257,7 @@
   min-height: 48px;
   padding: 8px 14px 8px 18px;
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-pdf-panel > header strong {
@@ -356,7 +356,7 @@
   border-radius: 5px;
   background: rgb(0 0 0 / 42%);
   color: #ffffff;
-  font-size: 9px;
+  font-size: var(--cap-ui-font-caption);
   line-height: 1;
   opacity: 0;
   transition: opacity 140ms ease-out;
@@ -377,7 +377,7 @@
   gap: 16px;
   padding: 14px 18px;
   color: var(--preview-secondary-text);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .preview-text-panel header strong {
@@ -605,7 +605,7 @@
 .preview-info-panel h1 {
   margin: 0 0 22px;
   overflow-wrap: anywhere;
-  font-size: 20px;
+  font-size: calc(var(--cap-ui-font-base) + 7px);
   font-weight: 600;
 }
 
@@ -615,8 +615,8 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--theme-color) 10%, transparent);
   color: var(--preview-secondary-text);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
 }
 
 .preview-info-panel dl {
@@ -624,8 +624,8 @@
   grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
   gap: 10px 20px;
   margin: 0;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
 }
 
 .preview-info-panel dt {
@@ -649,8 +649,8 @@
   justify-content: center;
   gap: 12px;
   color: var(--text-main);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
   pointer-events: none;
 }
 

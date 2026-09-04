@@ -82,31 +82,31 @@
 .preview-sidebar-file-card { gap: 10px; }
 .preview-sidebar-file-heading strong,
 .preview-sidebar-file-heading span { display: block; }
-.preview-sidebar-file-heading strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-sidebar-file-heading strong { overflow: hidden; font-size: var(--cap-ui-font-heading); text-overflow: ellipsis; white-space: nowrap; }
 .preview-sidebar-file-heading span,
 .preview-sidebar-empty,
 .preview-sidebar-section h2,
 .preview-sidebar-details dt { color: var(--preview-sidebar-muted); }
-.preview-sidebar-file-heading span { margin-top: 5px; font-size: 11px; }
-.preview-sidebar-section h2 { margin: 0; font-size: 12px; font-weight: 600; }
-.preview-sidebar-details { display: grid; gap: 9px; margin: 0; font-size: 12px; }
+.preview-sidebar-file-heading span { margin-top: 5px; font-size: var(--cap-ui-font-secondary); }
+.preview-sidebar-section h2 { margin: 0; font-size: var(--cap-ui-font-control); font-weight: 600; }
+.preview-sidebar-details { display: grid; gap: 9px; margin: 0; font-size: var(--cap-ui-font-control); }
 .preview-sidebar-details > div { display: grid; gap: 2px; }
 .preview-sidebar-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; user-select: text; }
 .preview-sidebar-path,
-.preview-sidebar-description { margin: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.55; user-select: text; }
+.preview-sidebar-description { margin: 0; overflow-wrap: anywhere; font-size: var(--cap-ui-font-control); line-height: 1.55; user-select: text; }
 .preview-sidebar-path { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
 .preview-sidebar-path:hover { color: var(--theme-color); }
 .preview-sidebar-description { margin-top: 10px; }
 .preview-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.preview-sidebar-section-heading button { padding: 2px 6px; color: var(--preview-sidebar-muted); background: transparent; font-size: 11px; }
+.preview-sidebar-section-heading button { padding: 2px 6px; color: var(--preview-sidebar-muted); background: transparent; font-size: var(--cap-ui-font-secondary); }
 .preview-sidebar-section-heading button:not(:disabled):hover { color: var(--theme-color); }
 .preview-sidebar-section-heading button:disabled { opacity: .5; }
 .preview-sidebar-keywords,
 .preview-sidebar-evidence { display: flex; flex-wrap: wrap; gap: 6px; }
 .preview-sidebar-keywords span,
-.preview-sidebar-evidence span { max-width: 100%; min-height: 26px; box-sizing: border-box; padding: 5px 10px; overflow: hidden; border-radius: 999px; background: var(--preview-sidebar-control); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-sidebar-evidence span { max-width: 100%; min-height: 26px; box-sizing: border-box; padding: 5px 10px; overflow: hidden; border-radius: 999px; background: var(--preview-sidebar-control); font-size: var(--cap-ui-font-secondary); text-overflow: ellipsis; white-space: nowrap; }
 .preview-sidebar-keywords span { min-width: 40px; text-align: center; }
-.preview-sidebar-empty { margin: 0; font-size: 11px; }
+.preview-sidebar-empty { margin: 0; font-size: var(--cap-ui-font-secondary); }
 
 .preview-information-sidebar .preview-embedded-metadata-details {
   max-height: none;
@@ -121,7 +121,7 @@
 .preview-information-sidebar .preview-embedded-metadata-list dt { color: var(--preview-sidebar-muted); font-weight: 600; }
 
 .preview-sidebar-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
-.preview-sidebar-actions button { min-height: 30px; padding: 5px 12px; border: 0; border-radius: 999px; color: inherit; background: var(--preview-sidebar-control); font-size: 11px; }
+.preview-sidebar-actions button { min-height: 30px; padding: 5px 12px; border: 0; border-radius: 999px; color: inherit; background: var(--preview-sidebar-control); font-size: var(--cap-ui-font-secondary); }
 .preview-sidebar-actions button:hover { color: var(--preview-action-hover-text); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); }
 .preview-sidebar-header:hover { background: color-mix(in srgb, var(--text-main) 10%, transparent); }
 

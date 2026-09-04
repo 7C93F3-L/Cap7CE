@@ -17,6 +17,9 @@
   color: var(--stable-settings-text);
   color-scheme: light;
   background: transparent;
+  font-family: var(--cap-ui-font-family);
+  font-size: var(--cap-ui-font-body);
+  line-height: var(--cap-ui-line-body);
 }
 
 .cap-settings-window-foundation.theme-dark {
@@ -72,7 +75,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
 }
 
 .cap-stable-settings-search-icon { width: 16px; height: 16px; color: var(--stable-settings-secondary); }
@@ -128,7 +131,7 @@
 
 .cap-stable-settings-panel > h1 {
   margin: 0 0 22px;
-  font-size: 22px;
+  font-size: var(--cap-ui-font-page-title);
   font-weight: 600;
 }
 
@@ -139,7 +142,7 @@
 .cap-stable-settings-section > h2 {
   margin: 0 0 8px 24px;
   color: var(--stable-settings-secondary);
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
   font-weight: 600;
 }
 
@@ -176,14 +179,14 @@
 }
 
 .cap-stable-settings-copy h3 {
-  font-size: 13px;
+  font-size: var(--cap-ui-font-body);
   font-weight: 500;
 }
 
 .cap-stable-settings-copy p {
   margin-top: 4px;
   color: var(--stable-settings-secondary);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
   line-height: 1.45;
 }
 
@@ -203,7 +206,7 @@
   color: inherit;
   background: var(--stable-settings-hover);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
 }
 
 .cap-stable-settings-button:not(:disabled):hover,
@@ -237,7 +240,7 @@
   color: inherit;
   background: var(--stable-settings-hover);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .cap-stable-settings-toggle i {
@@ -283,7 +286,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .cap-stable-settings-colors input[type="color"] {
@@ -298,7 +301,7 @@
 .cap-stable-settings-action-line > span:first-child {
   flex: 1;
   color: var(--stable-settings-secondary);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .cap-stable-settings-directories {
@@ -310,7 +313,7 @@
 .cap-stable-settings-directories > p {
   margin: 4px 2px;
   color: var(--stable-settings-secondary);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .cap-stable-settings-directory {
@@ -338,14 +341,14 @@
 }
 
 .cap-stable-settings-directory strong {
-  font-size: 12px;
+  font-size: var(--cap-ui-font-control);
   font-weight: 500;
 }
 
 .cap-stable-settings-directory small,
 .cap-stable-settings-directory em {
   color: var(--stable-settings-secondary);
-  font-size: 10px;
+  font-size: var(--cap-ui-font-caption);
   font-style: normal;
 }
 
@@ -353,7 +356,7 @@
   border: 0;
   color: inherit;
   background: transparent;
-  font-size: 10px;
+  font-size: var(--cap-ui-font-caption);
 }
 
 .cap-stable-settings-command-toggle {
@@ -368,7 +371,7 @@
   grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
   gap: 8px 14px;
   align-items: center;
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
 }
 
 .cap-stable-settings-diagnostics .runtime-diagnostics-group {
@@ -448,7 +451,7 @@
 
   .cap-stable-settings-navigation nav button::before {
     content: attr(data-short);
-    font-size: 11px;
+    font-size: var(--cap-ui-font-secondary);
   }
 
   .cap-stable-settings-content {

@@ -145,6 +145,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?appearance\.themeModeLabel/u);
+  assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
+  assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[\s\S]*?font-size:\s*(?:14|15|16)px/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
   assert.doesNotMatch(settingsAppSource, /settings\.rememberWindowLayout|stableSettings\.desc\.rememberWindows/u);

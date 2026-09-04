@@ -1,0 +1,15 @@
+:root {
+  --cap-ui-font-base: 13px;
+  --cap-ui-font-family: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
+  --cap-ui-font-page-title: calc(var(--cap-ui-font-base) + 9px);
+  --cap-ui-font-heading: calc(var(--cap-ui-font-base) + 1px);
+  --cap-ui-font-body: var(--cap-ui-font-base);
+  --cap-ui-font-control: max(11px, calc(var(--cap-ui-font-base) - 1px));
+  --cap-ui-font-secondary: max(10px, calc(var(--cap-ui-font-base) - 2px));
+  --cap-ui-font-caption: max(9px, calc(var(--cap-ui-font-base) - 3px));
+  --cap-ui-line-body: calc(var(--cap-ui-font-base) + 7px);
+  --cap-ui-line-control: calc(var(--cap-ui-font-base) + 5px);
+  --cap-ui-line-secondary: calc(var(--cap-ui-font-base) + 3px);
+  --cap-ui-line-compact: calc(var(--cap-ui-font-base) + 4px);
+  --cap-ui-line-caption: calc(var(--cap-ui-font-base) + 2px);
+}

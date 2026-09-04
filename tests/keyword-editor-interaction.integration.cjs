@@ -44,7 +44,7 @@ assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-light\s*\{[^}]
 assert.match(keywordEditorBackdropCss, /border-radius: var\(--radius-window-normal\)/);
 assert.match(keywordEditorBackdropCss, /\.cap-shell-maximized[^}]*border-radius: 0/s);
 assert.match(keywordEditorCardCss, /\.context-menu\.keyword-editor-card\s*\{[^}]*background: color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\);[^}]*backdrop-filter: blur\(18px\)/s);
-assert.match(keywordEditorCardCss, /\.keyword-editor-card \.context-menu-file-format\s*\{[^}]*font-size: 15px;/s);
+assert.match(keywordEditorCardCss, /\.keyword-editor-card \.context-menu-file-format\s*\{[^}]*font-size: var\(--cap-ui-font-heading\);/s);
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*border-radius: 12px;/s);
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*scrollbar-width: none;/s);
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea::\-webkit-scrollbar\s*\{[^}]*width: 0;[^}]*height: 0;/s);

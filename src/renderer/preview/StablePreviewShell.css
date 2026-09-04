@@ -2,7 +2,12 @@
 @import "./StablePreviewResponsive.css";
 @import "./StablePreviewSidebar.css";
 
-.preview-window-stable-ui { --preview-stable-surface: rgb(255 255 255 / 50%); }
+.preview-window-stable-ui {
+  --preview-stable-surface: rgb(255 255 255 / 50%);
+  font-family: var(--cap-ui-font-family);
+  font-size: var(--cap-ui-font-body);
+  line-height: var(--cap-ui-line-body);
+}
 .preview-window-stable-ui.theme-dark { --preview-stable-surface: rgb(26 26 26 / 58%); }
 
 .preview-window-shell,

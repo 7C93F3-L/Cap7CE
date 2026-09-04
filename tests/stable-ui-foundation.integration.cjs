@@ -16,6 +16,8 @@ void (async () => {
   assert.equal(getWindowLayoutFileName("stable"), "window-layout-stable-ui.json");
 
   const rendererEntry = read("src/renderer/main.tsx");
+  const globalStyles = read("src/renderer/styles.css");
+  const typographyStyles = read("src/renderer/typography.css");
   const mainSource = read("electron/main.ts");
   const appSource = read("src/renderer/App.tsx");
   const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
@@ -57,7 +59,7 @@ void (async () => {
   for (const marker of [
     "--cap-stable-edge-gap: 5px",
     "--cap-stable-radius-md: 12px",
-    "--cap-stable-font-size: 13px",
+    "--cap-stable-font-size: var(--cap-ui-font-body)",
     "env(titlebar-area-width",
     "z-index: 60",
     "width: 46px",
@@ -69,6 +71,11 @@ void (async () => {
     }
   }
   assert.match(foundationStyles, /\.cap-stable-ui\.theme-dark[\s\S]*?color-scheme:\s*dark/u);
+  assert.match(rendererEntry, /import "\.\/styles\.css";/u);
+  assert.match(globalStyles, /^@import "\.\/typography\.css";/u);
+  assert.match(typographyStyles, /--cap-ui-font-base:\s*13px[\s\S]*?--cap-ui-font-page-title:[\s\S]*?--cap-ui-font-heading:[\s\S]*?--cap-ui-font-caption:/u);
+  assert.doesNotMatch(typographyStyles, /--cap-ui-font-(?:feature-title|display|prominent|micro):/u);
+  assert.match(foundationStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-stable-font-size\)/u);
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
   assert.match(foundationStyles, /--cap-stable-focus:\s*var\(--accent-color/u);

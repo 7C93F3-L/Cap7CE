@@ -95,6 +95,8 @@ assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRunt
 assert.match(previewSource, /previewSidebarWidth = isStableUiPreview \? \(previewSidebarLayout\.expanded \? previewSidebarLayout\.width : 40\) : undefined/u);
 assert.match(previewSource, /preview\.contentSize\(\{[\s\S]*?sidebarWidth: previewSidebarWidth/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content\s*\{[\s\S]*?inset: 0 5px 5px 0;/u);
+assert.match(shellStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
+assert.match(sidebarStyles, /preview-sidebar-file-heading strong[^\n]*font-size:\s*var\(--cap-ui-font-heading\)/u);
 assert.match(shellStyles, /--preview-stable-surface: rgb\(255 255 255 \/ 50%\)[\s\S]*?theme-dark[\s\S]*?rgb\(26 26 26 \/ 58%\)[\s\S]*?background: var\(--preview-stable-surface\)/u);
 assert.match(mainSource, /skipTaskbar: !isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /previewWindow\.setSkipTaskbar\(!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\)/u);

@@ -44,8 +44,8 @@
   border-radius: var(--radius-pill);
   background: var(--chip-bg);
   color: var(--text-main);
-  font-size: 11px;
-  line-height: 20px;
+  font-size: var(--cap-ui-font-secondary);
+  line-height: var(--cap-ui-line-body);
   transition:
     background 500ms ease,
     color 500ms ease,
@@ -124,8 +124,8 @@
 
 .delete-files-message {
   color: var(--text-main);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--cap-ui-font-heading);
+  line-height: var(--cap-ui-line-body);
   text-align: center;
 }
 
@@ -174,4 +174,3 @@
     animation: none;
   }
 }
-

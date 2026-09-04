@@ -168,7 +168,7 @@
   width: 100%;
   overflow: hidden;
   color: var(--text-main);
-  font-size: 11px;
+  font-size: var(--cap-ui-font-secondary);
   line-height: 1.25;
   text-align: center;
 }

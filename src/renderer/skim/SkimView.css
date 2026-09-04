@@ -193,8 +193,8 @@
   justify-content: center;
   overflow: hidden;
   color: var(--text-main);
-  font-size: 12px;
-  line-height: 15px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-caption);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -282,8 +282,8 @@
 .cap-skim-entry-name {
   min-height: 30px;
   align-items: center;
-  font-size: 12px;
-  line-height: 15px;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-caption);
   text-align: center;
 }
 
@@ -291,7 +291,7 @@
   display: flex;
   justify-content: center;
   color: var(--accent-color);
-  font-size: 10px;
+  font-size: var(--cap-ui-font-caption);
   white-space: nowrap;
 }
 

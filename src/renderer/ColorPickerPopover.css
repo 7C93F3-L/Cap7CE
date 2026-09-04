@@ -76,7 +76,7 @@
   outline: none;
   padding: 0 14px;
   text-align: center;
-  font-size: 14px;
+  font-size: var(--cap-ui-font-heading);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
