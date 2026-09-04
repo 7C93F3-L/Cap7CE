@@ -28,6 +28,10 @@ const keywordEditorBackdropCss = fs.readFileSync(
   path.join(__dirname, "../src/renderer/dialogs/KeywordEditorBackdrop.css"),
   "utf8"
 );
+const keywordEditorCardCss = fs.readFileSync(
+  path.join(__dirname, "../src/renderer/dialogs/KeywordEditorCard.css"),
+  "utf8"
+);
 
 assert.doesNotMatch(
   resultsViewSource,
@@ -39,6 +43,11 @@ assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-dark\s*\{[^}]*
 assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-light\s*\{[^}]*rgb\(255 255 255 \/ 0\.28\)/s);
 assert.match(keywordEditorBackdropCss, /border-radius: var\(--radius-window-normal\)/);
 assert.match(keywordEditorBackdropCss, /\.cap-shell-maximized[^}]*border-radius: 0/s);
+assert.match(keywordEditorCardCss, /\.context-menu\.keyword-editor-card\s*\{[^}]*background: color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\);[^}]*backdrop-filter: blur\(18px\)/s);
+assert.match(keywordEditorCardCss, /\.keyword-editor-card \.context-menu-file-format\s*\{[^}]*font-size: 15px;/s);
+assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*border-radius: 12px;/s);
+assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*scrollbar-width: none;/s);
+assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea::\-webkit-scrollbar\s*\{[^}]*width: 0;[^}]*height: 0;/s);
 
 const position = clampFloatingCardPosition(
   { x: 790, y: 590 },

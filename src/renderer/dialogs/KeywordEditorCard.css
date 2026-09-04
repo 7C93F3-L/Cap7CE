@@ -1,16 +1,25 @@
 .context-menu.keyword-editor-card {
   z-index: 1001;
-  width: min(286px, calc(100vw - 10px));
-  min-width: min(220px, calc(100vw - 10px));
+  width: min(300px, calc(100vw - 10px));
+  min-width: min(230px, calc(100vw - 10px));
   max-width: calc(100vw - 10px);
   max-height: calc(100vh - 10px);
   box-sizing: border-box;
+  padding: 6px;
   overflow: hidden;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 12px;
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
+  font: 13px/20px "Segoe UI Variable", "Segoe UI", sans-serif;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .keyword-editor-card-surface {
   min-width: 0;
-  gap: 7px;
+  gap: 6px;
 }
 
 .keyword-editor-card.is-closing {
@@ -34,7 +43,24 @@
 }
 
 .keyword-editor-card-header {
-  padding-bottom: 4px;
+  gap: 2px;
+  padding: 7px 9px 8px;
+}
+
+.keyword-editor-card .context-menu-file-format {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 20px;
+}
+
+.keyword-editor-card .context-menu-file-primary-detail {
+  color: color-mix(in srgb, currentColor 58%, transparent);
+  font-size: 11px;
+}
+
+.keyword-editor-card .context-menu-file-name {
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .keyword-editor-multi-heading {
@@ -58,14 +84,20 @@
   box-sizing: border-box;
   overflow-y: hidden;
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 12px;
   outline: 0;
   color: var(--text-main);
-  padding: 8px 10px;
+  padding: 9px 11px;
   font: inherit;
   font-size: 12px;
   line-height: 18px;
   resize: none;
+  scrollbar-width: none;
+}
+
+.keyword-editor-card textarea.keyword-editor-textarea::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .keyword-editor-card textarea.keyword-editor-textarea:focus {
@@ -74,24 +106,31 @@
   box-shadow: none;
 }
 
+.app .keyword-editor-card textarea.keyword-editor-textarea:focus-visible {
+  border: 0;
+  outline: 0;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
 .keyword-editor-card textarea.keyword-editor-textarea::placeholder {
   opacity: 1;
 }
 
 .context-menu-light.keyword-editor-card textarea.keyword-editor-textarea {
-  background: #f2f2f2;
+  background: rgb(255 255 255 / 62%);
 }
 
 .context-menu-light.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
-  color: #d8d8d8;
+  color: rgb(17 17 17 / 42%);
 }
 
 .context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea {
-  background: #282828;
+  background: rgb(255 255 255 / 10%);
 }
 
 .context-menu-dark.keyword-editor-card textarea.keyword-editor-textarea::placeholder {
-  color: #4f4f4f;
+  color: rgb(255 255 255 / 38%);
 }
 
 @media (min-height: 200px) {
