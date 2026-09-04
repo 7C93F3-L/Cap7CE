@@ -140,7 +140,7 @@
 }
 
 .cap-stable-settings-section > h2 {
-  margin: 0 0 8px 24px;
+  margin: 0 0 8px 8px;
   color: var(--stable-settings-secondary);
   font-size: var(--cap-ui-font-control);
   font-weight: 600;
@@ -148,7 +148,9 @@
 
 .cap-stable-settings-section-cards {
   display: grid;
-  gap: 10px;
+  gap: 0;
+  border-radius: 22px;
+  background: var(--stable-settings-card);
 }
 
 .cap-stable-settings-card {
@@ -160,13 +162,14 @@
   padding: 10px 14px 10px 24px;
   box-sizing: border-box;
   border: 0;
-  border-radius: 999px;
-  background: var(--stable-settings-card);
+  background: transparent;
 }
+
+.cap-stable-settings-card + .cap-stable-settings-card { border-top: 1px solid var(--stable-settings-border); }
 
 .cap-stable-settings-card-expanded {
   grid-template-columns: minmax(0, 1fr);
-  align-items: stretch; border-radius: 22px;
+  align-items: stretch;
 }
 
 .cap-stable-settings-copy {
