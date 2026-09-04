@@ -6,6 +6,7 @@ type ThemePreference = UserPreferencesResponse["themePreference"];
 type LanguagePreference = UserPreferencesResponse["languagePreference"];
 type SortPreference = UserPreferencesResponse["sortPreference"];
 type AppearanceColors = UserPreferencesResponse["appearanceColors"];
+type WindowMaterialPreference = UserPreferencesResponse["windowMaterial"];
 
 export interface PreferenceIpcDependencies {
   registrar: IpcRegistrar;
@@ -19,6 +20,7 @@ export interface PreferenceIpcDependencies {
   updateSkimSidebarFolders: PreferenceUpdater<string[]>;
   updateSkimSystemLocationsCollapsed: PreferenceUpdater<boolean>;
   updateTheme: PreferenceUpdater<ThemePreference>;
+  updateWindowMaterial: PreferenceUpdater<WindowMaterialPreference>;
   refreshAppearance: () => void;
   applyLanguage: PreferenceUpdater<LanguagePreference>;
   updateSort: PreferenceUpdater<SortPreference>;
@@ -50,6 +52,7 @@ export const registerPreferenceIpc = ({
   updateSkimSidebarFolders,
   updateSkimSystemLocationsCollapsed,
   updateTheme,
+  updateWindowMaterial,
   refreshAppearance,
   applyLanguage,
   updateSort,
@@ -133,6 +136,16 @@ export const registerPreferenceIpc = ({
         channel: "preferences:updateTheme",
         listener: async (_event, themePreference: ThemePreference) => {
           const preferences = await updateTheme(themePreference);
+          refreshAppearance();
+          broadcastPreferencesChanged(preferences);
+          return preferences;
+        }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateWindowMaterial",
+        listener: async (_event, material: WindowMaterialPreference) => {
+          const preferences = await updateWindowMaterial(material === "mica" ? "mica" : "acrylic");
           refreshAppearance();
           broadcastPreferencesChanged(preferences);
           return preferences;

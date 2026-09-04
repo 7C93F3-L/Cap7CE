@@ -5,6 +5,7 @@ import {
   getWindowPresentationPolicy,
   isStableWindowPresentationMode,
   resolveWindowPresentationTheme,
+  type WindowMaterial,
   type WindowPresentationMode,
   type WindowPresentationSurface
 } from "./windowPresentationPolicy";
@@ -13,27 +14,25 @@ type ThemePreference = "system" | "light" | "dark";
 export class WindowPresentationRuntime {
   private policy = getWindowPresentationPolicy();
   private themePreference: ThemePreference = "system";
+  private materialPreference: WindowMaterial = "acrylic";
 
-  configure(mode: unknown, themePreference: ThemePreference) {
+  configure(mode: unknown, themePreference: ThemePreference, materialPreference: WindowMaterial = "acrylic") {
     this.policy = getWindowPresentationPolicy(mode);
     this.themePreference = themePreference;
+    this.materialPreference = materialPreference;
   }
 
-  get mode(): WindowPresentationMode {
-    return this.policy.mode;
-  }
+  setMaterialPreference(materialPreference: WindowMaterial) { this.materialPreference = materialPreference; }
 
-  get layoutFileName() {
-    return this.policy.layoutFileName;
-  }
+  get mode(): WindowPresentationMode { return this.policy.mode; }
+
+  get layoutFileName() { return this.policy.layoutFileName; }
 
   get titlebarHeight() {
     return isStableWindowPresentationMode(this.policy.mode) ? STABLE_UI_TITLEBAR_HEIGHT : this.policy.titlebarHeight;
   }
 
-  get usesSystemTheme() {
-    return this.themePreference === "system";
-  }
+  get usesSystemTheme() { return this.themePreference === "system"; }
 
   getBrowserOptions(surface: WindowPresentationSurface, systemUsesDarkColors: boolean) {
     return resolveStableUiBrowserOptions(getWindowPresentationBrowserOptions(
@@ -57,7 +56,7 @@ export class WindowPresentationRuntime {
     const options = this.getBrowserOptions(surface, systemUsesDarkColors);
     window.setBackgroundColor(options.backgroundColor);
     if (options.titleBarOverlay) window.setTitleBarOverlay(options.titleBarOverlay);
-    applyStableUiWindowMaterial(window, isStableWindowPresentationMode(this.policy.mode), resolveWindowPresentationTheme(themePreference, systemUsesDarkColors));
+    applyStableUiWindowMaterial(window, isStableWindowPresentationMode(this.policy.mode), resolveWindowPresentationTheme(themePreference, systemUsesDarkColors), this.materialPreference);
     return true;
   }
 }

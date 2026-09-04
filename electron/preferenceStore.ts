@@ -2,7 +2,7 @@ import { app } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { skimDefaultFileExtensionSet } from "./formatCapabilities";
-import { DEFAULT_WINDOW_PRESENTATION_MODE, normalizeWindowPresentationMode, type WindowPresentationMode } from "./windowPresentationPolicy";
+import { DEFAULT_WINDOW_PRESENTATION_MODE, normalizeWindowPresentationMode, type WindowMaterial, type WindowPresentationMode } from "./windowPresentationPolicy";
 
 type ThemeMode = "system" | "light" | "dark";
 type LanguagePreference = "system" | "zh-CN" | "en-US";
@@ -44,6 +44,7 @@ export interface UserPreferencesResponse {
   edgeCollapseEnabled: boolean;
   rememberWindowLayout: boolean;
   windowPresentationMode: WindowPresentationMode;
+  windowMaterial: WindowMaterial;
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
@@ -82,6 +83,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   edgeCollapseEnabled: false,
   rememberWindowLayout: false,
   windowPresentationMode: DEFAULT_WINDOW_PRESENTATION_MODE,
+  windowMaterial: "acrylic",
   alwaysOnTop: false,
   standbyLineVisible: true,
   launchAtLogin: false,
@@ -238,6 +240,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       edgeCollapseEnabled: typeof parsed.edgeCollapseEnabled === "boolean" ? parsed.edgeCollapseEnabled : defaults.edgeCollapseEnabled,
       rememberWindowLayout: typeof parsed.rememberWindowLayout === "boolean" ? parsed.rememberWindowLayout : defaults.rememberWindowLayout,
       windowPresentationMode: normalizeWindowPresentationMode(parsed.windowPresentationMode),
+      windowMaterial: parsed.windowMaterial === "mica" ? "mica" : "acrylic",
       alwaysOnTop: typeof parsed.alwaysOnTop === "boolean" ? parsed.alwaysOnTop : defaults.alwaysOnTop,
       standbyLineVisible: typeof parsed.standbyLineVisible === "boolean" ? parsed.standbyLineVisible : defaults.standbyLineVisible,
       launchAtLogin: typeof parsed.launchAtLogin === "boolean" ? parsed.launchAtLogin : defaults.launchAtLogin,
@@ -313,6 +316,17 @@ export const updateThemePreference = async (themePreference: ThemeMode) => {
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     themePreference,
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateWindowMaterialPreference = async (windowMaterial: WindowMaterial) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    windowMaterial: windowMaterial === "mica" ? "mica" : "acrylic",
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

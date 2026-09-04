@@ -32,6 +32,7 @@ const run = async () => {
     updateSkimSidebarFolders: capture("skimSidebarFolders"),
     updateSkimSystemLocationsCollapsed: capture("skimSystemLocationsCollapsed"),
     updateTheme: capture("theme"),
+    updateWindowMaterial: capture("windowMaterial"),
     refreshAppearance: () => calls.push(["refreshAppearance"]),
     applyLanguage: capture("language"),
     updateSort: capture("sort"),
@@ -61,6 +62,7 @@ const run = async () => {
     "preferences:updateSkimSidebarFolders",
     "preferences:updateSkimSystemLocationsCollapsed",
     "preferences:updateTheme",
+    "preferences:updateWindowMaterial",
     "preferences:updateLanguage",
     "preferences:updateSort",
     "preferences:updateAppearanceColors",
@@ -99,6 +101,7 @@ const run = async () => {
   await handles.get("preferences:updateSkimSidebarFolders")(event, sidebarFolders);
   await handles.get("preferences:updateSkimSystemLocationsCollapsed")(event, "collapsed");
   await handles.get("preferences:updateTheme")(event, "dark");
+  await handles.get("preferences:updateWindowMaterial")(event, "mica");
   await handles.get("preferences:updateLanguage")(event, "invalid");
   await handles.get("preferences:updateSort")(event, { sortField: "file_name", sortDirection: "asc" });
   await handles.get("preferences:updateAppearanceColors")(event, { themeColor: "#111111", accentColor: "#222222" });
@@ -126,6 +129,8 @@ const run = async () => {
     ["skimSidebarFolders", sidebarFolders],
     ["skimSystemLocationsCollapsed", "collapsed"],
     ["theme", "dark"],
+    ["refreshAppearance"],
+    ["windowMaterial", "mica"],
     ["refreshAppearance"],
     ["language", "system"],
     ["sort", { sortField: "file_name", sortDirection: "asc" }],
@@ -164,6 +169,7 @@ const run = async () => {
     updateSkimSidebarFolders: async () => disabledResponse,
     updateSkimSystemLocationsCollapsed: async () => disabledResponse,
     updateTheme: async () => disabledResponse,
+    updateWindowMaterial: async () => disabledResponse,
     refreshAppearance: () => undefined,
     applyLanguage: async () => disabledResponse,
     updateSort: async () => disabledResponse,

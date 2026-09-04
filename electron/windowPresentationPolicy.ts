@@ -1,6 +1,7 @@
 export const WINDOW_PRESENTATION_MODES = ["stable", "cap7ce", "compatibility"] as const;
 
 export type WindowPresentationMode = typeof WINDOW_PRESENTATION_MODES[number];
+export type WindowMaterial = "acrylic" | "mica";
 export type WindowPresentationSurface = "main" | "preview" | "settings";
 
 export interface WindowPresentationSurfacePolicy {

@@ -119,9 +119,8 @@ export const useSettingsWindowController = () => {
     return () => window.removeEventListener("focus", refreshOnFocus);
   }, [refreshAll]);
 
-  const updateTheme = async (themePreference: UserPreferences["themePreference"]) => (
-    applyPreferences(await window.cap7ce?.preferences.updateTheme(themePreference))
-  );
+  const updateTheme = async (themePreference: UserPreferences["themePreference"]) => applyPreferences(await window.cap7ce?.preferences.updateTheme(themePreference));
+  const updateWindowMaterial = async (material: UserPreferences["windowMaterial"]) => applyPreferences(await window.cap7ce?.preferences.updateWindowMaterial(material));
   const updateLanguage = async (languagePreference: UserPreferences["languagePreference"]) => (
     applyPreferences(await window.cap7ce?.preferences.updateLanguage(languagePreference))
   );
@@ -247,6 +246,7 @@ export const useSettingsWindowController = () => {
     refreshCaches,
     refreshDirectories,
     updateTheme,
+    updateWindowMaterial,
     updateLanguage,
     updateAppearanceColors,
     updateBooleanPreference,

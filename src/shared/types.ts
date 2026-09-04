@@ -511,6 +511,7 @@ export interface SkimDisplayPreferences {
 }
 
 export type WindowPresentationMode = "stable" | "cap7ce" | "compatibility";
+export type WindowMaterial = "acrylic" | "mica";
 
 export interface WindowPresentationSwitchResult {
   status: "restarting" | "unchanged" | "busy" | "failed";
@@ -532,6 +533,7 @@ export interface UserPreferences {
   edgeCollapseEnabled: boolean;
   rememberWindowLayout: boolean;
   windowPresentationMode: WindowPresentationMode;
+  windowMaterial: WindowMaterial;
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;

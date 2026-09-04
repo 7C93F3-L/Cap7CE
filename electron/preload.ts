@@ -265,6 +265,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
   preferences: {
     get: () => ipcRenderer.invoke("preferences:get"),
     updateTheme: (themePreference: "system" | "light" | "dark") => ipcRenderer.invoke("preferences:updateTheme", themePreference),
+    updateWindowMaterial: (material: "acrylic" | "mica") => ipcRenderer.invoke("preferences:updateWindowMaterial", material),
     updateLanguage: (languagePreference: "system" | "zh-CN" | "en-US") => ipcRenderer.invoke("preferences:updateLanguage", languagePreference),
     updateSort: (sortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => ipcRenderer.invoke("preferences:updateSort", sortPreference),
     updateSkimSort: (skimSortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => ipcRenderer.invoke("preferences:updateSkimSort", skimSortPreference),

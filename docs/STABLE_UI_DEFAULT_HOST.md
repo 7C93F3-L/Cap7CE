@@ -10,7 +10,7 @@
 
 | 模式 | Renderer 与原生外壳 | 布局记录 |
 | --- | --- | --- |
-| `stable` | 新版稳定 UI；40 DIP Window Controls Overlay；Acrylic，失败时回退主题安全纯色 | `window-layout-stable-ui.json` |
+| `stable` | 新版稳定 UI；40 DIP Window Controls Overlay；可选 Acrylic / Mica，失败时回退主题安全纯色 | `window-layout-stable-ui.json` |
 | `cap7ce` | 旧透明自绘外壳与旧 Renderer | `window-layout.json` |
 | `compatibility` | 旧不透明 Mica / 36 DIP WCO 外壳与旧 Renderer | `window-layout-compatibility.json` |
 

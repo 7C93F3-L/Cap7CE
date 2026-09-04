@@ -51,8 +51,6 @@
 .cap-stable-settings-navigation {
   min-width: 0;
   padding: 14px 10px 18px;
-  background: rgb(255 255 255 / 12%);
-  backdrop-filter: blur(24px) saturate(1.16);
 }
 
 .cap-stable-settings-search {

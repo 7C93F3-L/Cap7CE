@@ -144,7 +144,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"search-ai"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
-  assert.match(settingsAppSource, /stableSettings\.material\.readOnly/u);
+  assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?appearance\.themeModeLabel/u);
+  assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
   assert.doesNotMatch(settingsAppSource, /settings\.rememberWindowLayout|stableSettings\.desc\.rememberWindows/u);
   assert.match(settingsAppSource, /category === "browse"[\s\S]*?<SkimDisplaySettingsRows stableUi/u);
@@ -160,6 +161,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAccessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration: 0ms !important/u);
   assert.match(settingsAccessibilityStyles, /cap-stable-settings-copy p[\s\S]*?overflow-wrap: anywhere/u);
   assert.match(settingsStyles, /cap-stable-settings-shell[\s\S]*?grid-template-columns: 176px minmax\(0, 1fr\)/u);
+  assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation\s*\{[^}]*?(?:background|backdrop-filter):/u);
   assert.match(settingsStyles, /cap-stable-settings-search[\s\S]*?height: 34px/u);
   assert.match(settingsAppSource, /<StableUiIcon name="search" className="cap-stable-settings-search-icon" \/>/u);
   assert.match(settingsStyles, /cap-stable-settings-search-icon \{ width: 16px; height: 16px; color: var\(--stable-settings-secondary\); \}/u);
@@ -180,7 +182,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(settingsAppSource, /SettingsView|ipcRenderer|localStorage|stable-ui-canvas|[A-Z]:\\/u);
   assert.match(architectureSource, /settingsWindowController\.ts[\s\S]*?版本化专属 bounds/u);
   assert.match(featureDocSource, /U7 内容与状态边界/u);
-  assert.match(featureDocSource, /Acrylic（目标，只读）/u);
+  assert.match(featureDocSource, /亚克力[\s\S]*?云母[\s\S]*?安全纯色/u);
 
   await fs.promises.rm(temporaryRoot, { recursive: true, force: true });
   console.log(JSON.stringify({ singleInstanceVerified: true, independentBoundsVerified: true, rendererEntryVerified: true, senderGuardVerified: true, sharedStateBroadcastVerified: true, formalSettingsContentVerified: true, shellVisualLayoutVerified: true, legacyFallbackGuarded: true }));

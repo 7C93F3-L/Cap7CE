@@ -45,6 +45,13 @@ assert.equal(applyStableUiWindowMaterial({
 }, true, "light"), "acrylic");
 assert.deepEqual(acrylicCalls, [["material", "acrylic"], ["color", "#00000000"]]);
 
+const micaCalls = [];
+assert.equal(applyStableUiWindowMaterial({
+  setBackgroundMaterial: (material) => micaCalls.push(["material", material]),
+  setBackgroundColor: (color) => micaCalls.push(["color", color])
+}, true, "light", "mica"), "mica");
+assert.deepEqual(micaCalls, [["material", "mica"], ["color", "#00000000"]]);
+
 const fallbackCalls = [];
 assert.equal(applyStableUiWindowMaterial({
   setBackgroundMaterial: (material) => { fallbackCalls.push(["material", material]); if (material === "acrylic") throw new Error("unsupported"); },
@@ -66,6 +73,8 @@ const previewTitlebarStyles = read("src/renderer/preview/StablePreviewTitlebar.c
 
 assert.match(runtimeSource, /resolveStableUiBrowserOptions/u);
 assert.match(runtimeSource, /applyStableUiWindowMaterial/u);
+assert.match(runtimeSource, /setMaterialPreference\(materialPreference:[\s\S]*?this\.materialPreference = materialPreference/u);
+assert.match(mainSource, /refreshWindowPresentationAppearance[\s\S]*?setMaterialPreference\(preferences\.windowMaterial\)[\s\S]*?applyMainWindowAppearance[\s\S]*?applyPreviewWindowAppearance[\s\S]*?applySettingsWindowAppearance/u);
 assert.match(mainSource, /getNormalDefaultOuterBounds:[^\n]*resolveStableUiDefaultWindowBounds/u);
 assert.match(mainSource, /windowLayoutManager\.setPreferences\(\{ rememberWindowLayout: resolveWindowLayoutMemoryEnabled\(preferences\.rememberWindowLayout, isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) \}\)/u);
 assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) return \{ \.\.\.STABLE_UI_MINIMUM_OUTER_SIZE \}/u);
@@ -90,7 +99,7 @@ assert.match(settingsStyles, /cap-settings-window-drag-region[\s\S]*?height: 40p
 assert.match(previewTitlebarStyles, /preview-window-stable-ui\s*\{[\s\S]*?--compatibility-titlebar-height: 40px;[\s\S]*?border: 0;[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;/u);
 
 console.log(JSON.stringify({
-  acrylicWithSolidFallbackVerified: true,
+  selectableMaterialWithSolidFallbackVerified: true,
   fortyDipWindowControlsOverlayVerified: true,
   scrollingCannotReparentNativeDragRegion: true,
   responsiveInitialBoundsVerified: true,

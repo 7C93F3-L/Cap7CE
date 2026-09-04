@@ -35,7 +35,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateWindowPresentationModePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateWindowMaterialPreference, updateWindowPresentationModePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
@@ -2168,6 +2168,7 @@ const getMainWindowPresentationOptions = () => windowPresentationRuntime.getBrow
 const refreshWindowPresentationAppearance = async () => {
   const preferences = await getUserPreferences();
   if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
+  windowPresentationRuntime.setMaterialPreference(preferences.windowMaterial);
   const mainUpdated = windowPresentationRuntime.applyMainWindowAppearance(mainWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
   const previewUpdated = windowPresentationRuntime.applyPreviewWindowAppearance(previewWindow, preferences.themePreference, nativeTheme.shouldUseDarkColors);
   const settingsUpdated = settingsWindowController?.refreshAppearance((window) => windowPresentationRuntime.applySettingsWindowAppearance(window, preferences.themePreference, nativeTheme.shouldUseDarkColors));
@@ -2326,7 +2327,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   const hasDevelopmentWindowModeOverride = !app.isPackaged && Boolean(process.env.CAP7CE_WINDOW_PRESENTATION_MODE);
   const requestedWindowPresentationMode = hasDevelopmentWindowModeOverride ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
   const normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode(requestedWindowPresentationMode);
-  windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizedRequestedWindowPresentationMode), preferences.themePreference);
+  windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizedRequestedWindowPresentationMode), preferences.themePreference, preferences.windowMaterial);
   runtimeDiagnostics.log("info", "window.presentation.startup", { requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime.mode, source: hasDevelopmentWindowModeOverride ? "development-override" : "preference" });
   settingsWindowController = new SettingsWindowController({
     browserOptions: () => windowPresentationRuntime.getBrowserOptions("settings", nativeTheme.shouldUseDarkColors), createWindow: (options) => createApplicationWindow("settings", options),
@@ -3465,6 +3466,7 @@ registerPreferenceIpc({
   updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
   updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
   updateTheme: updateThemePreference,
+  updateWindowMaterial: updateWindowMaterialPreference,
   refreshAppearance: () => { lineWindowController.refreshAppearance(); void refreshWindowPresentationAppearance(); },
   applyLanguage: applyLanguagePreference,
   updateSort: updateSortPreference,

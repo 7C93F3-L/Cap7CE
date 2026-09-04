@@ -8,7 +8,7 @@
 
 ## 1. 正式 stable 宿主
 
-正式 `stable` 模式的主窗口、独立 Settings 和 Preview 统一使用 `frame: true`、Window Controls Overlay 和 40 DIP 标题栏。Windows 支持时使用 Acrylic；若 Electron 拒绝该背景材料，立即取消材料并按当前明暗主题使用安全纯色。旧 `cap7ce` 透明自绘窗口和 `compatibility` Mica 宿主的构造策略保持不变。
+正式 `stable` 模式的主窗口、独立 Settings 和 Preview 统一使用 `frame: true`、Window Controls Overlay 和 40 DIP 标题栏。用户可以在 Acrylic 与 Mica 之间持久化选择，运行时切换会同步刷新三个窗口；若 Electron 拒绝所选背景材料，立即取消材料并按当前明暗主题使用安全纯色。旧 `cap7ce` 透明自绘窗口和 `compatibility` Mica 宿主的构造策略保持不变。
 
 主窗口首次使用当前工作区宽高的 90% 并居中，不再设置固定最大尺寸。该几何只作为无有效记录时的起点；稳定 UI 使用自己的布局文件且只读写 normal 槽作为单一自由窗口记录，默认恢复并持续记录最后有效 bounds。显示器变化或记录越界时仍按当前工作区安全修正。拖动或缩放不会触发 micro / mini / normal 自动状态转换。
 
@@ -27,7 +27,7 @@
 
 ## 4. 自动守门与人工验收
 
-`tests/stable-ui-window-lifecycle.integration.cjs` 守护 40 DIP WCO、Acrylic / 纯色回退、90% 初始几何、单一自由布局槽、快捷动作收口、Capsule 替代入口和三窗口并存。兼容与稳定 WCO 标题栏必须共同使用 `WindowTitlebarPortal` 脱离虚拟网格和其他可滚动内容树，防止滚动重算再次覆盖 Windows 原生拖动命中区；对应标题栏测试同时守护共享宿主与两个消费者。旧窗口策略、兼容 Capsule、Preview、line、Snap 和布局测试继续参与完整测试，防止新版分支改变迁移回退。
+`tests/stable-ui-window-lifecycle.integration.cjs` 守护 40 DIP WCO、Acrylic / Mica 选择与纯色回退、90% 初始几何、单一自由布局槽、快捷动作收口、Capsule 替代入口和三窗口并存。兼容与稳定 WCO 标题栏必须共同使用 `WindowTitlebarPortal` 脱离虚拟网格和其他可滚动内容树，防止滚动重算再次覆盖 Windows 原生拖动命中区；对应标题栏测试同时守护共享宿主与两个消费者。旧窗口策略、兼容 Capsule、Preview、line、Snap 和布局测试继续参与完整测试，防止新版分支改变迁移回退。
 
 人工验收应覆盖：自由拖动与缩放不回弹；Alt+3 只执行一次尺寸预设；Capsule 快捷键与 line 点击只聚焦主搜索；standby、原生关闭、托盘和第二实例恢复；主窗口 / Settings / Preview 同时可见及分别关闭；中文 IME、Esc、快速重复唤起、最大化、Snap、双屏和显示器恢复；不得出现 Capsule 残影或重复窗口。
 

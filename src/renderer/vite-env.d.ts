@@ -161,6 +161,7 @@ declare global {
       preferences: {
         get: () => Promise<UserPreferences>;
         updateTheme: (themePreference: UserPreferences["themePreference"]) => Promise<UserPreferences>;
+        updateWindowMaterial: (material: UserPreferences["windowMaterial"]) => Promise<UserPreferences>;
         updateLanguage: (languagePreference: UserPreferences["languagePreference"]) => Promise<UserPreferences>;
         updateSort: (sortPreference: UserPreferences["sortPreference"]) => Promise<UserPreferences>;
         updateSkimSort: (skimSortPreference: UserPreferences["skimSortPreference"]) => Promise<UserPreferences>;

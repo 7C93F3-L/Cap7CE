@@ -1,6 +1,6 @@
 import type { BrowserWindow } from "electron";
 import type { WindowLayoutBounds } from "./windowLayoutTypes";
-import { STABLE_TITLEBAR_HEIGHT, type WindowPresentationBrowserOptions, type WindowPresentationTheme } from "./windowPresentationPolicy";
+import { STABLE_TITLEBAR_HEIGHT, type WindowMaterial, type WindowPresentationBrowserOptions, type WindowPresentationTheme } from "./windowPresentationPolicy";
 
 export const STABLE_UI_TITLEBAR_HEIGHT = STABLE_TITLEBAR_HEIGHT;
 export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = 0.9;
@@ -44,13 +44,14 @@ export const getStableUiSafeBackgroundColor = (theme: WindowPresentationTheme) =
 export const applyStableUiWindowMaterial = (
   window: BrowserWindow,
   enabled: boolean,
-  theme: WindowPresentationTheme
-): "unchanged" | "acrylic" | "solid" => {
+  theme: WindowPresentationTheme,
+  material: WindowMaterial = "acrylic"
+): "unchanged" | WindowMaterial | "solid" => {
   if (!enabled) return "unchanged";
   try {
-    window.setBackgroundMaterial("acrylic");
+    window.setBackgroundMaterial(material);
     window.setBackgroundColor("#00000000");
-    return "acrylic";
+    return material;
   } catch {
     try { window.setBackgroundMaterial("none"); } catch { /* Electron without background material support. */ }
     window.setBackgroundColor(getStableUiSafeBackgroundColor(theme));
