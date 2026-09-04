@@ -1,0 +1,63 @@
+.cap-font-size-setting {
+  width: 240px;
+  max-width: 100%;
+}
+
+.cap-font-size-setting input {
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cap-font-size-setting input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--stable-settings-theme-color) 0%, var(--accent-color) var(--cap-font-size-progress), var(--stable-settings-hover) var(--cap-font-size-progress), var(--stable-settings-hover) 100%);
+}
+
+.cap-font-size-setting input::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 3px solid white;
+  border-radius: 50%;
+  appearance: none;
+  background: var(--stable-settings-theme-color);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 24%);
+}
+
+.cap-font-size-scale {
+  display: flex;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: 0 9px;
+  margin-top: 1px;
+  color: var(--stable-settings-secondary);
+  font-size: var(--cap-ui-font-caption);
+  line-height: var(--cap-ui-line-caption);
+}
+
+.cap-font-size-scale span {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 0;
+  min-height: var(--cap-ui-line-caption);
+  padding-top: 5px;
+  white-space: nowrap;
+}
+
+.cap-font-size-scale span::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  transform: translateX(-50%);
+}

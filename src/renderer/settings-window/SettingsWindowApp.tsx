@@ -5,7 +5,7 @@ import CustomScrollbar from "../CustomScrollbar";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import { getTextColorForBackground } from "../appearance";
 import { formatCacheSize } from "../formatting";
-import { defaultUiFontSize, uiFontSizeOptions, useUiFontSize } from "../typography";
+import { defaultUiFontSize, useUiFontSize } from "../typography";
 import { EmbeddedMetadataSettingsRow } from "../settings/EmbeddedMetadataSettingsRow";
 import { QuickActionSettingsRows } from "../settings/QuickActionSettingsRows";
 import { QuickCommandSettingsRows } from "../settings/QuickCommandSettingsRows";
@@ -15,6 +15,7 @@ import { SkimDisplaySettingsRows } from "../settings/SkimDisplaySettingsRows";
 import { getWindowPresentationModeLabel, getWindowPresentationSwitchTarget } from "../settings/WindowPresentationModeSettingsRow";
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";
 import SettingsConfirmationDialog from "./SettingsConfirmationDialog";
+import FontSizeSetting from "./FontSizeSetting";
 import { useSettingsWindowController } from "./useSettingsWindowController";
 import "./SettingsWindowApp.css";
 import "./StableSkimDisplaySettingsRows.css";
@@ -130,9 +131,9 @@ const SettingsWindowApp = () => {
     if (category === "appearance") return <>
       <SettingsSection title="stableSettings.section.colors">
         <SettingCard title="stableSettings.material" description="stableSettings.desc.material" query={normalizedQuery}><SettingsSelect label={t("stableSettings.material")} value={preferences.windowMaterial} options={[{ value: "acrylic", label: t("stableSettings.material.acrylic") }, { value: "mica", label: t("stableSettings.material.mica") }]} onChange={(value) => void controller.updateWindowMaterial(value as UserPreferences["windowMaterial"])} /></SettingCard>
-        <SettingCard title="stableSettings.uiFontSize" description="stableSettings.desc.uiFontSize" query={normalizedQuery}><SettingsSelect label={t("stableSettings.uiFontSize")} value={String(preferences.uiFontSize)} options={uiFontSizeOptions.map((size) => ({ value: String(size), label: t(`stableSettings.uiFontSize.${size}` as TranslationKey) }))} onChange={(value) => void controller.updateUiFontSize(Number(value) as UserPreferences["uiFontSize"])} /></SettingCard>
         <SettingCard title="appearance.themeModeLabel" description="stableSettings.desc.theme" query={normalizedQuery}><SettingsSelect label={t("appearance.themeModeLabel")} value={preferences.themePreference} options={[{ value: "system", label: t("theme.system") }, { value: "light", label: t("theme.light") }, { value: "dark", label: t("theme.dark") }]} onChange={(value) => void controller.updateTheme(value as UserPreferences["themePreference"])} /></SettingCard>
         <SettingCard title="appearance.configureLabel" description="stableSettings.desc.colors" query={normalizedQuery}><div className="cap-stable-settings-colors"><label>{t("appearance.themeColor")}<input type="color" value={preferences.appearanceColors.themeColor} onChange={(event) => void controller.updateAppearanceColors({ ...preferences.appearanceColors, themeColor: event.target.value.toUpperCase() })} /></label><label>{t("appearance.accentColor")}<input type="color" value={preferences.appearanceColors.accentColor} onChange={(event) => void controller.updateAppearanceColors({ ...preferences.appearanceColors, accentColor: event.target.value.toUpperCase() })} /></label></div></SettingCard>
+        <SettingCard title="stableSettings.uiFontSize" description="stableSettings.desc.uiFontSize" query={normalizedQuery}><FontSizeSetting value={preferences.uiFontSize} onChange={(value) => void controller.updateUiFontSize(value)} /></SettingCard>
       </SettingsSection>
     </>;
     if (category === "browse") return <SkimDisplaySettingsRows stableUi skimDisplay={preferences.skimDisplay} onSkimDisplayChange={(next) => void controller.updateSkimDisplay(next)} />;
