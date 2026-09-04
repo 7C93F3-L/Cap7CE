@@ -10,13 +10,17 @@ const {
   applyStableUiWindowMaterial,
   isStableUiLegacySizeShortcut,
   resolveStableUiBrowserOptions,
-  resolveStableUiDefaultWindowBounds
+  resolveStableUiDefaultWindowBounds,
+  resolveWindowLayoutMemoryEnabled
 } = require("../dist-electron/stableUiWindowLifecycle.js");
 
 assert.equal(STABLE_UI_TITLEBAR_HEIGHT, 40);
 assert.deepEqual(STABLE_UI_MINIMUM_OUTER_SIZE, { width: 300, height: 170 });
-assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 320, y: 120, width: 1280, height: 800 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 96, y: 52, width: 1728, height: 936 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 1920, y: 0, width: 1366, height: 728 }), { x: 1989, y: 37, width: 1229, height: 655 });
+assert.equal(resolveWindowLayoutMemoryEnabled(false, true), true);
+assert.equal(resolveWindowLayoutMemoryEnabled(false, false), false);
+assert.equal(resolveWindowLayoutMemoryEnabled(true, false), true);
 
 const browserOptions = resolveStableUiBrowserOptions({
   frame: false,
@@ -63,6 +67,7 @@ const previewTitlebarStyles = read("src/renderer/preview/StablePreviewTitlebar.c
 assert.match(runtimeSource, /resolveStableUiBrowserOptions/u);
 assert.match(runtimeSource, /applyStableUiWindowMaterial/u);
 assert.match(mainSource, /getNormalDefaultOuterBounds:[^\n]*resolveStableUiDefaultWindowBounds/u);
+assert.match(mainSource, /windowLayoutManager\.setPreferences\(\{ rememberWindowLayout: resolveWindowLayoutMemoryEnabled\(preferences\.rememberWindowLayout, isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) \}\)/u);
 assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) return \{ \.\.\.STABLE_UI_MINIMUM_OUTER_SIZE \}/u);
 assert.match(mainSource, /const revealPreviewWindow = \(\) => \{[\s\S]*?!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)[\s\S]*?mainWindow\.hide\(\)/u);
 assert.match(mainSource, /if \(wasActive && restoreMain\) \{[\s\S]*?if \(!isStableWindowPresentationMode[\s\S]*?mainWindow\.show\(\);[\s\S]*?\}[\s\S]*?mainWindow\.focus\(\);/u);

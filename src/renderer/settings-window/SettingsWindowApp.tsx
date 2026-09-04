@@ -30,7 +30,7 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; short:
   { id: "about", label: "stableSettings.category.about", short: "?" }
 ];
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
-  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.rememberWindowLayout", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.material", "stableSettings.windowMode", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.rememberWindows", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line", "stableSettings.desc.material", "stableSettings.desc.windowMode"],
+  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.material", "stableSettings.windowMode", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line", "stableSettings.desc.material", "stableSettings.desc.windowMode"],
   appearance: ["stableSettings.category.appearance", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.hiddenLabels", "stableSettings.desc.theme", "stableSettings.desc.colors", "stableSettings.desc.hiddenLabels"],
   browse: ["settings.skimDisplay", "stableSettings.desc.skimDisplay"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.idleUnload", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.idleUnload"],
@@ -121,7 +121,6 @@ const SettingsWindowApp = () => {
         <SettingCard title="settings.operationHints" description="stableSettings.desc.hints" query={normalizedQuery}><SettingsToggle enabled={preferences.operationHintsEnabled} onChange={(enabled) => toggle("operationHintsEnabled", enabled)} /></SettingCard>
       </SettingsSection>
       <SettingsSection title="stableSettings.section.windows">
-        <SettingCard title="settings.rememberWindowLayout" description="stableSettings.desc.rememberWindows" query={normalizedQuery}><SettingsToggle enabled={preferences.rememberWindowLayout} onChange={(enabled) => toggle("rememberWindowLayout", enabled)} /></SettingCard>
         <SettingCard title="settings.edgeCollapse" description="stableSettings.desc.edgeCollapse" query={normalizedQuery}><SettingsToggle enabled={preferences.edgeCollapseEnabled} onChange={(enabled) => toggle("edgeCollapseEnabled", enabled)} /></SettingCard>
         <SettingCard title="settings.standbyLine" description="stableSettings.desc.line" query={normalizedQuery}><SettingsToggle enabled={preferences.standbyLineVisible} onChange={(enabled) => toggle("standbyLineVisible", enabled)} /></SettingCard>
         <SettingCard title="stableSettings.material" description="stableSettings.desc.material" query={normalizedQuery}><span className="cap-stable-settings-readonly">{t("stableSettings.material.readOnly")}</span></SettingCard>

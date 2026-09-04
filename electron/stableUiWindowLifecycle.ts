@@ -4,12 +4,11 @@ import { STABLE_TITLEBAR_HEIGHT, type WindowPresentationBrowserOptions, type Win
 
 export const STABLE_UI_TITLEBAR_HEIGHT = STABLE_TITLEBAR_HEIGHT;
 export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = 0.9;
-export const STABLE_UI_DEFAULT_MAXIMUM_SIZE = { width: 1280, height: 800 } as const;
 export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 170 } as const;
 
 export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds): WindowLayoutBounds => {
-  const width = Math.min(STABLE_UI_DEFAULT_MAXIMUM_SIZE.width, Math.max(1, Math.round(workArea.width * STABLE_UI_DEFAULT_WORK_AREA_RATIO)));
-  const height = Math.min(STABLE_UI_DEFAULT_MAXIMUM_SIZE.height, Math.max(1, Math.round(workArea.height * STABLE_UI_DEFAULT_WORK_AREA_RATIO)));
+  const width = Math.max(1, Math.round(workArea.width * STABLE_UI_DEFAULT_WORK_AREA_RATIO));
+  const height = Math.max(1, Math.round(workArea.height * STABLE_UI_DEFAULT_WORK_AREA_RATIO));
   return {
     width,
     height,
@@ -17,6 +16,8 @@ export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds)
     y: workArea.y + Math.round((workArea.height - height) / 2)
   };
 };
+
+export const resolveWindowLayoutMemoryEnabled = (configured: boolean, stableUiEnabled: boolean) => stableUiEnabled || configured;
 
 export const resolveStableUiBrowserOptions = (
   options: WindowPresentationBrowserOptions,

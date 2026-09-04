@@ -70,7 +70,7 @@ import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { isStableWindowPresentationMode, WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
-import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
+import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds, resolveWindowLayoutMemoryEnabled, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { getStablePreviewContentChrome, PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
@@ -2466,7 +2466,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   });
   windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
   await windowLayoutManager.load();
-  windowLayoutManager.setPreferences(preferences);
+  windowLayoutManager.setPreferences({ rememberWindowLayout: resolveWindowLayoutMemoryEnabled(preferences.rememberWindowLayout, isStableWindowPresentationMode(windowPresentationRuntime.mode)) });
   setActiveLanguage(resolveLanguagePreference(preferences.languagePreference, app.getLocale()));
   edgeCollapseEnabled = preferences.edgeCollapseEnabled;
   shellAlwaysOnTop = preferences.alwaysOnTop;
@@ -3604,7 +3604,7 @@ registerPreferenceIpc({
   setEdgeCollapseEnabled,
   setRememberWindowLayout: async (enabled) => {
     const preferences = await updateRememberWindowLayoutPreference(enabled);
-    windowLayoutManager.setPreferences(preferences);
+    windowLayoutManager.setPreferences({ rememberWindowLayout: resolveWindowLayoutMemoryEnabled(preferences.rememberWindowLayout, isStableWindowPresentationMode(windowPresentationRuntime.mode)) });
     return preferences;
   },
   updateWindowPresentationMode: updateWindowPresentationModePreference,

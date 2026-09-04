@@ -44,7 +44,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 按实际 presentation 创建主 `BrowserWindow`。缺失或非法偏好默认使用正式 `stable` 宿主：主窗口、独立 Settings 与 Preview 使用 `frame: true`、40 DIP Window Controls Overlay 和 Acrylic，失败时回退主题安全纯色；首次主窗口按工作区 90% 且不超过 1280×800 居中。明确保存的旧 `cap7ce` 继续使用透明自绘窗口，`compatibility` 继续使用不透明 WCO、36 DIP 标题栏和 Mica，本轮不改写已有偏好。主窗口同时装配只负责待机线展示的不可聚焦 `lineWindow` 和旧宿主 Capsule 控制器；stable 不进入 Capsule 显示链。所有窗口的 DevTools 能力仅在未打包开发环境开启。
+- 按实际 presentation 创建主 `BrowserWindow`。缺失或非法偏好默认使用正式 `stable` 宿主：主窗口、独立 Settings 与 Preview 使用 `frame: true`、40 DIP Window Controls Overlay 和 Acrylic，失败时回退主题安全纯色；首次主窗口按工作区宽高的 90% 居中且不再使用固定最大尺寸。明确保存的旧 `cap7ce` 继续使用透明自绘窗口，`compatibility` 继续使用不透明 WCO、36 DIP 标题栏和 Mica，本轮不改写已有偏好。主窗口同时装配只负责待机线展示的不可聚焦 `lineWindow` 和旧宿主 Capsule 控制器；stable 不进入 Capsule 显示链。所有窗口的 DevTools 能力仅在未打包开发环境开启。
 - `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。窗口停靠吸附是不可关闭的基础行为，边缘收起则由设置页与托盘菜单共用同一偏好控制。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
 - 旧宿主继续管理 capsule / micro / mini / normal / Settings 主窗口状态。stable 的正式窗口表面只有主窗口、独立 Settings、Preview 和原有 line，不迁移或继续扩展 Capsule；它始终使用单一 normal / 自由窗口布局槽，拖动与缩放不触发形态转换。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点。micro / mini 不在新版注册，normal 仅在用户按下对应全局快捷键时执行一次默认尺寸预设。
 - 全局 Alt+4、兼容主窗口原生关闭与 capsule 失焦只向 Renderer 发出同一个安全 standby 请求，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。真正退出时 `isQuitting` 允许原生 close 继续完成，不反向进入隐藏链路。
@@ -68,7 +68,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | 模块 | 职责 |
 | --- | --- |
 | `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览 / Settings 窗口外壳模式的稳定类型、能力策略与主进程运行期装配；缺失或非法偏好一律规范化为 `stable`，已有明确旧偏好保持原值。stable 使用 40 DIP WCO 与 Acrylic / 主题纯色回退，cap7ce 保持透明自绘参数，compatibility 使用不透明 WCO、36 DIP 标题栏和 Mica；三种模式分别使用 `window-layout-stable-ui.json`、`window-layout.json` 与 `window-layout-compatibility.json`。主进程通过只读壳层指标返回本次实际生效模式，Renderer 不按保存值猜测 |
-| `stableUiWindowLifecycle.ts` | 正式 stable 宿主的 40 DIP WCO、Acrylic / 主题纯色回退、90% 且最大 1280×800 的初始自由 bounds，以及新版不再注册的旧尺寸快捷动作判定；不改写或迁移旧宿主布局文件 |
+| `stableUiWindowLifecycle.ts` | 正式 stable 宿主的 40 DIP WCO、Acrylic / 主题纯色回退、工作区 90% 的初始自由 bounds、默认开启的布局记忆策略，以及新版不再注册的旧尺寸快捷动作判定；不改写或迁移旧宿主布局文件 |
 | `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
 | `previewWindowPresentationSizing.ts` | 预览内容尺寸到真实窗口外框的纯几何适配；Cap7CE 模式保持原尺寸，兼容模式额外增加标题栏高度，新版 Preview 使用信息栏当前宽度与右/底 5px 边距计算外框；各模式均保持当前外框中心，并在狭窄工作区内统一约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原与系统 Snap 适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置；左右 / 分区 Snap 通过工作区网格几何识别，在系统管理窗口期间暂停 Cap7CE 的 5 DIP 吸附、布局记忆和边缘收起，普通靠边停放及 Cap7CE 模式不受影响 |

@@ -129,14 +129,13 @@ export const useSettingsWindowController = () => {
     applyPreferences(await window.cap7ce?.preferences.updateAppearanceColors(appearanceColors))
   );
   const updateBooleanPreference = async (
-    key: "edgeCollapseEnabled" | "rememberWindowLayout" | "standbyLineVisible" | "launchAtLogin" | "systemNotificationsEnabled" | "operationHintsEnabled" | "autoCacheOptimizationEnabled" | "aiRecognitionEnabled" | "quickActionGlobalEnabled" | "commandEnabled",
+    key: "edgeCollapseEnabled" | "standbyLineVisible" | "launchAtLogin" | "systemNotificationsEnabled" | "operationHintsEnabled" | "autoCacheOptimizationEnabled" | "aiRecognitionEnabled" | "quickActionGlobalEnabled" | "commandEnabled",
     enabled: boolean
   ) => {
     const api = window.cap7ce?.preferences;
     if (!api) return null;
     const update = {
       edgeCollapseEnabled: api.updateEdgeCollapse,
-      rememberWindowLayout: api.updateRememberWindowLayout,
       standbyLineVisible: api.updateStandbyLineVisible,
       launchAtLogin: api.updateLaunchAtLogin,
       systemNotificationsEnabled: api.updateSystemNotifications,

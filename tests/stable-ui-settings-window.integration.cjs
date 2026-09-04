@@ -146,6 +146,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /stableSettings\.material\.readOnly/u);
   assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
+  assert.doesNotMatch(settingsAppSource, /settings\.rememberWindowLayout|stableSettings\.desc\.rememberWindows/u);
   assert.match(settingsAppSource, /category === "browse"[\s\S]*?<SkimDisplaySettingsRows stableUi/u);
   assert.match(settingsAppSource, /id: "browse", label: "settings\.skimDisplay"/u);
   assert.doesNotMatch(settingsAppSource, /beginAddDirectory|controller\.directories|stableSettings\.section\.folders/u);
