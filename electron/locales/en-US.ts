@@ -507,6 +507,7 @@ export const enUS = defineLocale({
   "settings.skimDisplaySummary": "{selected} / {total} formats selected. Choose “Custom” to apply.",
   "settings.hiddenFilesOn": "Show Hidden Files",
   "settings.hiddenFilesOff": "Hide Hidden Files",
+  "settings.hiddenFiles": "Hidden files",
   "settings.showHiddenFilesHint": "Click to show hidden files in the Custom range",
   "settings.hideHiddenFilesHint": "Click to hide hidden files in the Custom range",
   "settings.resetSkimDisplayHint": "Click to restore the Custom range defaults",

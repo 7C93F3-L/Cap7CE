@@ -12,7 +12,9 @@ const settingsAppSource = fs.readFileSync(path.join(root, "src", "renderer", "se
 const settingsConfirmationSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsConfirmationDialog.tsx"), "utf8");
 const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
+const skimDisplaySource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SkimDisplaySettingsRows.tsx"), "utf8");
 const settingsStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.css"), "utf8");
+const stableSkimStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "StableSkimDisplaySettingsRows.css"), "utf8");
 const settingsAccessibilityStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowAccessibility.css"), "utf8");
 const preferenceIpcSource = fs.readFileSync(path.join(root, "electron", "preferenceIpc.ts"), "utf8");
 const directoryIpcSource = fs.readFileSync(path.join(root, "electron", "directoryManagementIpc.ts"), "utf8");
@@ -143,6 +145,10 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /stableSettings\.material\.readOnly/u);
+  assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
+  assert.match(settingsAppSource, /category === "browse"[\s\S]*?<SkimDisplaySettingsRows stableUi/u);
+  assert.match(settingsAppSource, /id: "browse", label: "settings\.skimDisplay"/u);
+  assert.doesNotMatch(settingsAppSource, /beginAddDirectory|controller\.directories|stableSettings\.section\.folders/u);
   assert.match(settingsAppSource, /--stable-settings-theme-color[\s\S]*?appearanceColors\.themeColor/u);
   assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
   assert.match(settingsAppSource, /aria-current=\{activeCategory === category\.id \? "page" : undefined\}/u);
@@ -158,6 +164,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsStyles, /cap-stable-settings-search-icon \{ width: 16px; height: 16px; color: var\(--stable-settings-secondary\); \}/u);
   assert.match(settingsStyles, /cap-stable-settings-card\s*\{[\s\S]*?min-height: 62px;[\s\S]*?border-radius: 999px/u);
   assert.match(settingsStyles, /cap-stable-settings-card-expanded[\s\S]*?border-radius: 22px[\s\S]*?@media \(max-width: 700px\)[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)/u);
+  assert.match(stableSkimStyles, /cap-settings-skim-display-stable[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?cap-settings-skim-extension\[data-selected="true"\]/u);
+  assert.match(skimDisplaySource, /stableUi[\s\S]*?cap-settings-skim-category-control[\s\S]*?role="switch"[\s\S]*?settings\.hiddenFiles/u);
+  assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(preloadSource, /settingsWindow:[\s\S]*?settingsWindow:open/u);
   assert.match(preloadSource, /directories:[\s\S]*?directories:changed[\s\S]*?preferences:[\s\S]*?preferences:changed/u);

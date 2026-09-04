@@ -39,11 +39,13 @@ const formatCompactExtensionLabel = (extension: string, maximumLength = 7) => {
 };
 
 export interface SkimDisplaySettingsRowsProps {
+  stableUi?: boolean;
   skimDisplay: SkimDisplayPreferences;
   onSkimDisplayChange: (skimDisplay: SkimDisplayPreferences) => void;
 }
 
 export const SkimDisplaySettingsRows = ({
+  stableUi = false,
   skimDisplay,
   onSkimDisplayChange
 }: SkimDisplaySettingsRowsProps) => {
@@ -109,6 +111,79 @@ export const SkimDisplaySettingsRows = ({
     }
   }, []);
 
+  const formatGroups = (
+    <div className="cap-settings-skim-format-groups">
+      {skimFormatGroups.map(({ category, extensions }) => {
+        const selectedCount = extensions.filter((extension) => selectedSkimExtensions.has(extension)).length;
+        return (
+          <section className="cap-settings-skim-format-group" key={category}>
+            {stableUi ? (
+              <button
+                className="cap-stable-settings-toggle cap-settings-skim-category-control"
+                type="button"
+                role="switch"
+                aria-checked={selectedCount === extensions.length}
+                data-checked={selectedCount === extensions.length}
+                onClick={() => toggleSkimCategory(extensions)}
+                title={t("settings.toggleSkimCategoryHint")}
+              >
+                <span>{t(`format.category.${category}` as TranslationKey)}</span>
+                <i aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                className="cap-settings-skim-category-heading"
+                type="button"
+                data-selected={selectedCount === extensions.length}
+                data-partial={selectedCount > 0 && selectedCount < extensions.length}
+                onClick={() => toggleSkimCategory(extensions)}
+                title={t("settings.toggleSkimCategoryHint")}
+                aria-label={t("settings.toggleSkimCategoryHint")}
+                aria-pressed={selectedCount === extensions.length ? true : selectedCount > 0 ? "mixed" : false}
+              >
+                <span className="cap-settings-skim-category-toggle" aria-hidden="true" />
+                <span>{t(`format.category.${category}` as TranslationKey)}</span>
+              </button>
+            )}
+            <div className="cap-settings-skim-extensions">
+              {extensions.map((extension) => (
+                <button
+                  className="cap-settings-pill cap-settings-skim-extension"
+                  type="button"
+                  key={extension}
+                  data-selected={selectedSkimExtensions.has(extension)}
+                  onClick={() => toggleSkimExtension(extension)}
+                  title={t("settings.toggleSkimExtensionHint", { extension })}
+                >
+                  {formatCompactExtensionLabel(extension, stableUi ? 12 : 7)}
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+
+  if (stableUi) {
+    return (
+      <div className="cap-settings-skim-display-panel cap-settings-skim-display-stable">
+        <div className="cap-settings-skim-display-stable-header">
+          <span>{t("settings.skimDisplaySummary", { selected: skimDisplay.customExtensions.length, total: fileFormatCapabilities.length })}</span>
+          <div>
+            <button className="cap-stable-settings-toggle" type="button" role="switch" aria-checked={skimDisplay.showHiddenFiles} data-checked={skimDisplay.showHiddenFiles} onClick={() => onSkimDisplayChange({ ...skimDisplay, showHiddenFiles: !skimDisplay.showHiddenFiles })}>
+              <span>{t("settings.hiddenFiles")}</span><i aria-hidden="true" />
+            </button>
+            <button className="cap-stable-settings-button cap-settings-skim-restore-button" type="button" onClick={() => updateCustomSkimExtensions([...skimDefaultFileExtensionSet])}>
+              {t("common.restoreDefault")}
+            </button>
+          </div>
+        </div>
+        {formatGroups}
+      </div>
+    );
+  }
+
   return (
     <>
 {skimDisplayExpanded ? (
@@ -142,42 +217,7 @@ export const SkimDisplaySettingsRows = ({
                       </button>
                     </div>
                   </div>
-                  <div className="cap-settings-skim-format-groups">
-                    {skimFormatGroups.map(({ category, extensions }) => {
-                      const selectedCount = extensions.filter((extension) => selectedSkimExtensions.has(extension)).length;
-                      return (
-                        <section className="cap-settings-skim-format-group" key={category}>
-                          <button
-                            className="cap-settings-skim-category-heading"
-                            type="button"
-                            data-selected={selectedCount === extensions.length}
-                            data-partial={selectedCount > 0 && selectedCount < extensions.length}
-                            onClick={() => toggleSkimCategory(extensions)}
-                            title={t("settings.toggleSkimCategoryHint")}
-                            aria-label={t("settings.toggleSkimCategoryHint")}
-                            aria-pressed={selectedCount === extensions.length ? true : selectedCount > 0 ? "mixed" : false}
-                          >
-                            <span className="cap-settings-skim-category-toggle" aria-hidden="true" />
-                            <span>{t(`format.category.${category}` as TranslationKey)}</span>
-                          </button>
-                          <div className="cap-settings-skim-extensions">
-                            {extensions.map((extension) => (
-                              <button
-                                className="cap-settings-pill cap-settings-skim-extension"
-                                type="button"
-                                key={extension}
-                                data-selected={selectedSkimExtensions.has(extension)}
-                                onClick={() => toggleSkimExtension(extension)}
-                                title={t("settings.toggleSkimExtensionHint", { extension })}
-                              >
-                                {formatCompactExtensionLabel(extension)}
-                              </button>
-                            ))}
-                          </div>
-                        </section>
-                      );
-                    })}
-                  </div>
+                  {formatGroups}
                 </div>
               </div>
             </div>

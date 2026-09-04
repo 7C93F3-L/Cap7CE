@@ -1,0 +1,105 @@
+.cap-stable-settings-page-heading {
+  margin-bottom: 22px;
+}
+
+.cap-stable-settings-page-heading h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.cap-stable-settings-page-heading p {
+  margin: 6px 0 0;
+  color: var(--stable-settings-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.cap-settings-skim-display-stable {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  overflow: visible;
+  padding: 0;
+  border-radius: 0;
+  color: var(--stable-settings-text);
+  background: transparent;
+}
+
+.cap-settings-skim-display-stable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--stable-settings-secondary);
+  font-size: 11px;
+}
+
+.cap-settings-skim-display-stable-header > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cap-settings-skim-restore-button:hover:not(:disabled) {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
+}
+
+.cap-settings-skim-display-stable .cap-settings-skim-format-groups {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cap-settings-skim-display-stable .cap-settings-skim-format-group {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 8px;
+  min-height: 72px;
+  padding: 10px 12px 12px;
+  border-radius: 18px;
+  background: var(--stable-settings-hover);
+}
+
+.cap-settings-skim-category-control {
+  width: fit-content;
+  justify-self: start;
+}
+
+.cap-settings-skim-display-stable .cap-settings-skim-extension {
+  width: auto;
+  min-width: 52px;
+  max-width: none;
+  height: 28px;
+  padding-inline: 12px;
+  border-radius: 14px;
+  color: var(--stable-settings-text);
+  background: transparent;
+  font-size: 11px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"] {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
+  transform: none;
+}
+
+.cap-settings-skim-display-stable .cap-settings-skim-extension:hover:not(:disabled) {
+  color: var(--stable-settings-text);
+  background: var(--stable-settings-card);
+  transform: none;
+}
+
+.cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"]:hover:not(:disabled) {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
+  transform: none;
+}
+
+@media (max-width: 820px) {
+  .cap-settings-skim-display-stable .cap-settings-skim-format-groups {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

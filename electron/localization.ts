@@ -507,6 +507,7 @@ export const zhCN = {
   "settings.skimDisplaySummary": "已选 {selected} / {total} 种格式，选择“自定义”后应用。",
   "settings.hiddenFilesOn": "显示隐藏文件",
   "settings.hiddenFilesOff": "不显示隐藏文件",
+  "settings.hiddenFiles": "隐藏文件",
   "settings.showHiddenFilesHint": "点击在自定义范围中显示隐藏文件",
   "settings.hideHiddenFilesHint": "点击在自定义范围中不显示隐藏文件",
   "settings.resetSkimDisplayHint": "点击将自定义范围恢复为默认项",
