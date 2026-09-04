@@ -4,6 +4,7 @@ import type { UserPreferences } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import { getTextColorForBackground } from "../appearance";
+import { getImageContextMenuStyle } from "../ImageContextMenu";
 import { formatCacheSize } from "../formatting";
 import { defaultUiFontSize, useUiFontSize } from "../typography";
 import { EmbeddedMetadataSettingsRow } from "../settings/EmbeddedMetadataSettingsRow";
@@ -16,6 +17,8 @@ import { getWindowPresentationModeLabel, getWindowPresentationSwitchTarget } fro
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";
 import SettingsConfirmationDialog from "./SettingsConfirmationDialog";
 import FontSizeSetting from "./FontSizeSetting";
+import AppearanceColorSettingsControl from "./AppearanceColorSettingsControl";
+import StableSettingsSelect from "./StableSettingsSelect";
 import { useSettingsWindowController } from "./useSettingsWindowController";
 import "./SettingsWindowApp.css";
 import "./StableSkimDisplaySettingsRows.css";
@@ -65,14 +68,6 @@ const SettingsToggle = ({ enabled, onChange, disabled = false }: { enabled: bool
   </button>
 );
 
-const SettingsSelect = ({ value, options, onChange, disabled = false, label }: {
-  value: string; options: Array<{ value: string; label: string }>; onChange: (value: string) => void; disabled?: boolean; label: string;
-}) => (
-  <select className="cap-stable-settings-select" value={value} aria-label={label} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
-    {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-  </select>
-);
-
 const SettingsWindowApp = () => {
   const controller = useSettingsWindowController();
   const { preferences, runtime } = controller;
@@ -106,7 +101,7 @@ const SettingsWindowApp = () => {
 
   const effectiveTheme = preferences.themePreference === "system" ? (systemDark ? "dark" : "light") : preferences.themePreference;
   const shownCategories = normalizedQuery ? visibleCategories : categoryDefinitions.filter((category) => category.id === activeCategory);
-  const menuStyle = { ...uiFontStyle, "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--theme-color": preferences.appearanceColors.themeColor, "--accent-color": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
+  const menuStyle = { ...getImageContextMenuStyle(effectiveTheme, preferences.appearanceColors), ...uiFontStyle, "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
   const toggle = (key: Parameters<typeof controller.updateBooleanPreference>[0], enabled: boolean) => { void controller.updateBooleanPreference(key, enabled); };
   const openConfirmation = (message: string, action: () => Promise<unknown>) => setDialog({ message, action });
   const confirmDialog = async () => {
@@ -117,7 +112,7 @@ const SettingsWindowApp = () => {
   const renderCategory = (category: CategoryId) => {
     if (category === "general") return <>
       <SettingsSection title="stableSettings.section.basics">
-        <SettingCard title="settings.language" description="stableSettings.desc.language" query={normalizedQuery}><SettingsSelect label={t("settings.language")} value={preferences.languagePreference} options={[{ value: "system", label: getActiveLanguage() === "zh-CN" ? "跟随系统" : "Use System Setting" }, { value: "zh-CN", label: "中文" }, { value: "en-US", label: "English" }]} onChange={(value) => void controller.updateLanguage(value as UserPreferences["languagePreference"])} /></SettingCard>
+        <SettingCard title="settings.language" description="stableSettings.desc.language" query={normalizedQuery}><StableSettingsSelect menuStyle={menuStyle} label={t("settings.language")} value={preferences.languagePreference} options={[{ value: "system", label: getActiveLanguage() === "zh-CN" ? "跟随系统" : "Use System Setting" }, { value: "zh-CN", label: "中文" }, { value: "en-US", label: "English" }]} onChange={(value) => void controller.updateLanguage(value as UserPreferences["languagePreference"])} /></SettingCard>
         <SettingCard title="settings.launchAtLogin" description="stableSettings.desc.launch" query={normalizedQuery}><SettingsToggle enabled={preferences.launchAtLogin} onChange={(enabled) => toggle("launchAtLogin", enabled)} /></SettingCard>
         <SettingCard title="settings.systemNotifications" description="stableSettings.desc.notifications" query={normalizedQuery}><SettingsToggle enabled={preferences.systemNotificationsEnabled} onChange={(enabled) => toggle("systemNotificationsEnabled", enabled)} /></SettingCard>
         <SettingCard title="settings.operationHints" description="stableSettings.desc.hints" query={normalizedQuery}><SettingsToggle enabled={preferences.operationHintsEnabled} onChange={(enabled) => toggle("operationHintsEnabled", enabled)} /></SettingCard>
@@ -130,17 +125,17 @@ const SettingsWindowApp = () => {
     </>;
     if (category === "appearance") return <>
       <SettingsSection title="stableSettings.section.colors">
-        <SettingCard title="stableSettings.material" description="stableSettings.desc.material" query={normalizedQuery}><SettingsSelect label={t("stableSettings.material")} value={preferences.windowMaterial} options={[{ value: "acrylic", label: t("stableSettings.material.acrylic") }, { value: "mica", label: t("stableSettings.material.mica") }]} onChange={(value) => void controller.updateWindowMaterial(value as UserPreferences["windowMaterial"])} /></SettingCard>
-        <SettingCard title="appearance.themeModeLabel" description="stableSettings.desc.theme" query={normalizedQuery}><SettingsSelect label={t("appearance.themeModeLabel")} value={preferences.themePreference} options={[{ value: "system", label: t("theme.system") }, { value: "light", label: t("theme.light") }, { value: "dark", label: t("theme.dark") }]} onChange={(value) => void controller.updateTheme(value as UserPreferences["themePreference"])} /></SettingCard>
-        <SettingCard title="appearance.configureLabel" description="stableSettings.desc.colors" query={normalizedQuery}><div className="cap-stable-settings-colors"><label>{t("appearance.themeColor")}<input type="color" value={preferences.appearanceColors.themeColor} onChange={(event) => void controller.updateAppearanceColors({ ...preferences.appearanceColors, themeColor: event.target.value.toUpperCase() })} /></label><label>{t("appearance.accentColor")}<input type="color" value={preferences.appearanceColors.accentColor} onChange={(event) => void controller.updateAppearanceColors({ ...preferences.appearanceColors, accentColor: event.target.value.toUpperCase() })} /></label></div></SettingCard>
+        <SettingCard title="stableSettings.material" description="stableSettings.desc.material" query={normalizedQuery}><StableSettingsSelect menuStyle={menuStyle} label={t("stableSettings.material")} value={preferences.windowMaterial} options={[{ value: "acrylic", label: t("stableSettings.material.acrylic") }, { value: "mica", label: t("stableSettings.material.mica") }]} onChange={(value) => void controller.updateWindowMaterial(value as UserPreferences["windowMaterial"])} /></SettingCard>
+        <SettingCard title="appearance.themeModeLabel" description="stableSettings.desc.theme" query={normalizedQuery}><StableSettingsSelect menuStyle={menuStyle} label={t("appearance.themeModeLabel")} value={preferences.themePreference} options={[{ value: "system", label: t("theme.system") }, { value: "light", label: t("theme.light") }, { value: "dark", label: t("theme.dark") }]} onChange={(value) => void controller.updateTheme(value as UserPreferences["themePreference"])} /></SettingCard>
+        <SettingCard title="appearance.configureLabel" description="stableSettings.desc.colors" query={normalizedQuery}><AppearanceColorSettingsControl appearanceColors={preferences.appearanceColors} menuStyle={menuStyle} onPreview={controller.previewAppearanceColors} onChange={(colors) => void controller.updateAppearanceColors(colors)} /></SettingCard>
         <SettingCard title="stableSettings.uiFontSize" description="stableSettings.desc.uiFontSize" query={normalizedQuery}><FontSizeSetting value={preferences.uiFontSize} onChange={(value) => void controller.updateUiFontSize(value)} /></SettingCard>
       </SettingsSection>
     </>;
     if (category === "browse") return <SkimDisplaySettingsRows stableUi skimDisplay={preferences.skimDisplay} onSkimDisplayChange={(next) => void controller.updateSkimDisplay(next)} />;
     if (category === "search-ai") return <SettingsSection title="stableSettings.section.ai">
       <SettingCard title="search.aiEnhance" description="stableSettings.desc.ai" query={normalizedQuery}><SettingsToggle enabled={preferences.aiRecognitionEnabled} onChange={(enabled) => toggle("aiRecognitionEnabled", enabled)} /></SettingCard>
-      <SettingCard title="settings.selectRuntime" description="stableSettings.desc.runtime" query={normalizedQuery}><div className="cap-stable-settings-action-line"><SettingsSelect label={t("settings.selectRuntime")} value={runtime.llamaRuntimeSettings.selectedVersion} disabled={runtime.llamaRuntimeProcessState.status === "running" || runtime.llamaRuntimeProcessState.status === "starting"} options={[{ value: "", label: t("settings.selectVersion") }, ...runtime.llamaRuntimeSettings.versions.map((item) => ({ value: item.version, label: item.version }))]} onChange={(value) => void runtime.updateSelectedLlamaRuntime(value)} /><button type="button" className="cap-stable-settings-button" disabled={runtime.isChangingLlamaRuntimeState || runtime.llamaRuntimeProcessState.status === "starting"} onClick={() => void (runtime.llamaRuntimeProcessState.status === "running" ? runtime.stopLlamaRuntimeServer() : runtime.startLlamaRuntimeServer())}>{runtime.llamaRuntimeProcessState.status === "running" ? t("common.stop") : t("common.start")}</button><button type="button" className="cap-stable-settings-button" disabled={runtime.isLoadingLlamaRuntime} onClick={() => void runtime.refreshLlamaRuntimeSettings()}>{t("common.refresh")}</button></div></SettingCard>
-      <SettingCard title="settings.visionModel" description="stableSettings.desc.model" query={normalizedQuery}><div className="cap-stable-settings-action-line"><SettingsSelect label={t("settings.selectVisionModel")} value={runtime.ggufModelSettings.selectedModelId} disabled={runtime.llamaRuntimeProcessState.status === "running" || runtime.llamaRuntimeProcessState.status === "starting"} options={[{ value: "", label: t("settings.selectVisionModel") }, ...runtime.ggufModelSettings.models.map((model) => ({ value: model.id, label: model.name }))]} onChange={(value) => void runtime.updateSelectedGgufModel(value)} /><button type="button" className="cap-stable-settings-button" disabled={runtime.isLoadingGgufModels} onClick={() => void runtime.refreshGgufModelSettings()}>{t("common.refresh")}</button></div></SettingCard>
+      <SettingCard title="settings.selectRuntime" description="stableSettings.desc.runtime" query={normalizedQuery}><div className="cap-stable-settings-action-line"><StableSettingsSelect menuStyle={menuStyle} label={t("settings.selectRuntime")} value={runtime.llamaRuntimeSettings.selectedVersion} disabled={runtime.llamaRuntimeProcessState.status === "running" || runtime.llamaRuntimeProcessState.status === "starting"} options={[{ value: "", label: t("settings.selectVersion") }, ...runtime.llamaRuntimeSettings.versions.map((item) => ({ value: item.version, label: item.version }))]} onChange={(value) => void runtime.updateSelectedLlamaRuntime(value)} /><button type="button" className="cap-stable-settings-button" disabled={runtime.isChangingLlamaRuntimeState || runtime.llamaRuntimeProcessState.status === "starting"} onClick={() => void (runtime.llamaRuntimeProcessState.status === "running" ? runtime.stopLlamaRuntimeServer() : runtime.startLlamaRuntimeServer())}>{runtime.llamaRuntimeProcessState.status === "running" ? t("common.stop") : t("common.start")}</button><button type="button" className="cap-stable-settings-button" disabled={runtime.isLoadingLlamaRuntime} onClick={() => void runtime.refreshLlamaRuntimeSettings()}>{t("common.refresh")}</button></div></SettingCard>
+      <SettingCard title="settings.visionModel" description="stableSettings.desc.model" query={normalizedQuery}><div className="cap-stable-settings-action-line"><StableSettingsSelect menuStyle={menuStyle} label={t("settings.selectVisionModel")} value={runtime.ggufModelSettings.selectedModelId} disabled={runtime.llamaRuntimeProcessState.status === "running" || runtime.llamaRuntimeProcessState.status === "starting"} options={[{ value: "", label: t("settings.selectVisionModel") }, ...runtime.ggufModelSettings.models.map((model) => ({ value: model.id, label: model.name }))]} onChange={(value) => void runtime.updateSelectedGgufModel(value)} /><button type="button" className="cap-stable-settings-button" disabled={runtime.isLoadingGgufModels} onClick={() => void runtime.refreshGgufModelSettings()}>{t("common.refresh")}</button></div></SettingCard>
       <SettingCard title="stableSettings.idleUnload" description="stableSettings.desc.idleUnload" query={normalizedQuery}><span className="cap-stable-settings-readonly">{t("stableSettings.idleUnload.readOnly")}</span></SettingCard>
     </SettingsSection>;
     if (category === "cache") return <>

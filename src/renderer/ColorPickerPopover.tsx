@@ -19,6 +19,7 @@ interface ColorPickerPopoverProps {
   value: string;
   ariaLabel: string;
   menuStyle?: CSSProperties;
+  className?: string;
   onPreview: (value: string) => void;
   onCommit: (value: string) => void;
   onClose: () => void;
@@ -126,6 +127,7 @@ const ColorPickerPopover = ({
   value,
   ariaLabel,
   menuStyle,
+  className = "",
   onPreview,
   onCommit,
   onClose
@@ -263,7 +265,7 @@ const ColorPickerPopover = ({
   return createPortal(
     <div
       ref={popoverRef}
-      className="context-menu cap-color-picker"
+      className={`context-menu cap-color-picker${className ? ` ${className}` : ""}`}
       data-context-menu="true"
       style={{ ...menuStyle, ...positionedStyle }}
       role="dialog"

@@ -24,6 +24,7 @@ export interface SettingsSelectProps {
   ariaLabel: string;
   title: string;
   className: string;
+  menuClassName?: string;
   menuStyle: CSSProperties;
   onChange: (value: string) => void;
 }
@@ -35,6 +36,7 @@ export const SettingsSelect = ({
   ariaLabel,
   title,
   className,
+  menuClassName = "",
   menuStyle,
   onChange
 }: SettingsSelectProps) => {
@@ -209,7 +211,7 @@ export const SettingsSelect = ({
         <div
           ref={menuRef}
           id={listboxId}
-          className="context-menu cap-settings-select-menu"
+          className={`context-menu cap-settings-select-menu${menuClassName ? ` ${menuClassName}` : ""}`}
           data-context-menu="true"
           role="listbox"
           aria-label={ariaLabel}

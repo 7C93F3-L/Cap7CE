@@ -1,0 +1,61 @@
+.cap-stable-settings-select {
+  position: relative;
+  width: auto;
+  min-width: 124px;
+  max-width: min(230px, 100%);
+  min-height: 28px;
+  flex-basis: auto;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  color: inherit;
+  background: var(--stable-settings-hover);
+  font-size: var(--cap-ui-font-control);
+  cursor: pointer;
+}
+
+.cap-stable-settings-select::after {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: "";
+  opacity: .62;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 140ms ease;
+}
+
+.cap-stable-settings-select.is-open::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.cap-stable-settings-select:hover:not(:disabled),
+.cap-stable-settings-select:focus-visible,
+.cap-stable-settings-select.is-open {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  outline: 0;
+}
+
+.cap-stable-settings-select:disabled {
+  opacity: .48;
+  cursor: default;
+}
+
+.context-menu.cap-stable-settings-select-menu {
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--text-main) 8%, transparent);
+  border-radius: var(--radius-menu);
+  background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  box-shadow: 0 8px 18px rgb(0 0 0 / 12%);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+
+.context-menu.cap-stable-settings-select-menu button:hover,
+.context-menu.cap-stable-settings-select-menu button.is-active {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+}

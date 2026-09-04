@@ -218,7 +218,7 @@ D3 开始按稳定空壳收口正式视觉参数，但不改变搜索与 Skim �
 
 D4 对齐 stable Preview 信息栏的视觉组合，不建立第二套预览数据或动作：`PreviewInformationSidebar.tsx` 仍消费 `previewSidebarData.ts` 的文件概况、手动关键词、搜索依据和嵌入信息，并把文件名与基础属性组合为同一信息卡；独立 `StablePreviewSidebar.css` 持有 40px 折叠轨道、320px 默认且 280–420px 可调的详情栏、22px 信息卡、胶囊标签和单列文件操作，信息栏滚动复用全局自动隐藏自绘滚动条，`StablePreviewShell.css` 只保留窗口网格、半透明图像表面与图像舞台。展开状态和当前宽度随既有内容尺寸消息进入同一窗口几何链，窗口在工作区允许时向外扩展以保持图像区域；宽度记忆、键盘调整、文件动作、Provider、图片变换及旧 Preview 均保持原链路。
 
-D5 只校准 stable Settings 的正式展示参数：独立窗口继续使用 860×680 默认 bounds 和 620×480 最小 bounds，`SettingsWindowApp.css` 将分类栏、搜索框、分类行、内容表面与标题对齐为 176px、34px、36px、12px 和 22px；普通设置按标题分组共用 22px 圆角背景，内部以连续透明设置行和轻分隔线容纳不同控件，复杂展开内容仍留在所属组内，700px 以下切换为 52px 分类轨道。八分类、搜索过滤、偏好与领域任务控制器、跨窗口广播、确认事务及旧 Settings 均不改变。
+D5 只校准 stable Settings 的正式展示参数：独立窗口继续使用 860×680 默认 bounds 和 620×480 最小 bounds，`SettingsWindowApp.css` 将分类栏、搜索框、分类行、内容表面与标题对齐为 176px、34px、36px、12px 和 22px；普通设置按标题分组共用 22px 圆角背景，内部以连续透明设置行和轻分隔线容纳不同控件，复杂展开内容仍留在所属组内，700px 以下切换为 52px 分类轨道。`StableSettingsSelect` 适配共享 Renderer 自绘选择器及主界面浮层视觉，`AppearanceColorSettingsControl` 复用共享 `ColorPickerPopover` 并只在拖动时更新独立 Settings 的本地偏好预览，点击外部才沿正式偏好 IPC 持久化，`Esc` 恢复打开前状态。八分类、搜索过滤、领域任务控制器、跨窗口广播、确认事务及旧 Settings 均不改变。
 
 U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 Skim 占位区，并把各区展示拆分到独立组件；`StableMainShell.css` 持有新版响应式网格和断点，`StableShellResize.css` 持有分隔线命中与焦点，`useStableShellResize.ts` 持有宽度、视口跟踪、指针和键盘调整，不向旧全局样式入口追加规则。侧栏逻辑宽度默认 160px、可在 40–320px 内调整，Skim 默认 360px、最小 280px 且最多占左侧栏之外主内容区的一半，双击相应分隔线恢复默认值。普通高度下，视口不超过 920px 时打开的 Skim 替换中央结果区但保留侧栏，不超过 560px 时 Skim 独占内容宽度；高度低于 360px 时隐藏侧栏并将当前占位网格改为横向滚动。U2 不读取 preload 业务 API，不装配真实搜索、目录或 Skim 数据，也不根据 micro / mini / normal 名称选择布局；这些占位区后续只能通过 U0 映射的正式动作逐轮替换。
 

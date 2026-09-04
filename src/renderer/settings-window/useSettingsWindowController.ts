@@ -128,6 +128,7 @@ export const useSettingsWindowController = () => {
   const updateAppearanceColors = async (appearanceColors: AppearanceColors) => (
     applyPreferences(await window.cap7ce?.preferences.updateAppearanceColors(appearanceColors))
   );
+  const previewAppearanceColors = (appearanceColors: AppearanceColors) => setPreferences((current) => current ? { ...current, appearanceColors } : current);
   const updateBooleanPreference = async (
     key: "edgeCollapseEnabled" | "standbyLineVisible" | "launchAtLogin" | "systemNotificationsEnabled" | "operationHintsEnabled" | "autoCacheOptimizationEnabled" | "aiRecognitionEnabled" | "quickActionGlobalEnabled" | "commandEnabled",
     enabled: boolean
@@ -248,6 +249,7 @@ export const useSettingsWindowController = () => {
     updateUiFontSize,
     updateLanguage,
     updateAppearanceColors,
+    previewAppearanceColors,
     updateBooleanPreference,
     updateSkimDisplay,
     updateShortcutActions,
