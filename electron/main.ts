@@ -165,9 +165,8 @@ let lastShellMousePoint: Electron.Point | null = null;
 let stationaryShellMousePollCount = 0;
 let shellIgnoreMouseEvents = false;
 let programmaticResizeGuardUntil = 0;
-let moveSnapTimer: NodeJS.Timeout | null = null;
+let moveSettledTimer: NodeJS.Timeout | null = null;
 let programmaticMoveGuardUntil = 0;
-let previewMoveSnapTimer: NodeJS.Timeout | null = null;
 let previewProgrammaticMoveGuardUntil = 0;
 let startupHintCloseTimer: NodeJS.Timeout | null = null;
 let previewIdleDestroyTimer: NodeJS.Timeout | null = null;
@@ -318,8 +317,7 @@ const edgeGapPx = 5;
 const microLayoutMaxHeight = DEFAULT_WINDOW_RESIZE_THRESHOLDS.microToMiniHeight;
 const resizeSettleDelayMs = 260;
 const programmaticResizeGuardMs = 420;
-const moveSnapSettleDelayMs = 180;
-const edgeSnapThresholdPx = 40;
+const moveSettleDelayMs = 180;
 const edgeAnchorThresholdPx = 12;
 const programmaticMoveGuardMs = 420;
 const previewWindowMinimumWidth = 360;
@@ -461,7 +459,6 @@ const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } =
     activeSkimFolderStatsTask = null;
   }
   latestSkimFolderStatsUpdate = null;
-  clearPreviewMoveSnapCheck();
   previewDockedShell.resetSession();
   if (previewWindow && !previewWindow.isDestroyed()) {
     previewWindow.webContents.send("preview:reset");
@@ -522,7 +519,7 @@ const applyLatestPreviewContentSize = () => {
     || previewWindow.isDestroyed()
     || !previewWindow.isVisible()
     || previewWindow.isMaximized()
-    || isCompatibilityPreviewNativeSnapActive()
+    || isPreviewNativeSnapActive()
     || latestPreviewContentSize.sessionId !== activePreviewData.sessionId
     || latestPreviewContentSize.filePath !== activePreviewData.filePath
   ) {
@@ -576,7 +573,7 @@ const createPreviewWindow = () => {
     enabled: edgeCollapseEnabled,
     isSessionActive: () => previewSessionActive,
     isInteractionBlocked: () => isQuitting || isPreviewProgrammaticMoveGuardActive(),
-    isNativeSnapActive: () => isCompatibilityPreviewNativeSnapActive(),
+    isNativeSnapActive: () => isPreviewNativeSnapActive(),
     hideLine: () => lineWindowController.hide(),
     markProgrammaticMove: markPreviewProgrammaticMove,
     setCollapsedLayerActive: (active) => windowLayerController.setPreviewCollapsedLayerActive(active)
@@ -594,19 +591,6 @@ const createPreviewWindow = () => {
   previewWindow.on("show", syncThumbnailOptimizationActivity);
   previewWindow.on("hide", syncThumbnailOptimizationActivity);
   if (windowPresentationRuntime.mode === "compatibility") previewWindow.on("unmaximize", applyLatestPreviewContentSize);
-  previewWindow.on("move", () => {
-    if (
-      !previewSessionActive
-      || !previewWindow
-      || previewWindow.isDestroyed()
-      || !previewWindow.isVisible()
-      || previewWindow.isMaximized()
-      || isPreviewProgrammaticMoveGuardActive()
-    ) {
-      return;
-    }
-    schedulePreviewMoveSnapCheck();
-  });
   previewWindow.on("close", (event) => {
     if (isQuitting) {
       return;
@@ -616,7 +600,6 @@ const createPreviewWindow = () => {
   });
   previewWindow.on("closed", () => {
     clearPreviewIdleDestroyTimer();
-    clearPreviewMoveSnapCheck();
     previewDockedShell.detach();
     previewWindow = null;
     previewWindowLoaded = false;
@@ -910,19 +893,24 @@ const markProgrammaticResize = () => {
 };
 
 const isProgrammaticResizeGuardActive = () => Date.now() < programmaticResizeGuardUntil;
+const clearMoveSettledCheck = () => {
+  if (moveSettledTimer === null) {
+    return false;
+  }
+
+  clearTimeout(moveSettledTimer);
+  moveSettledTimer = null;
+  return true;
+};
 const markProgrammaticMove = () => {
   programmaticMoveGuardUntil = Date.now() + programmaticMoveGuardMs;
-  if (moveSnapTimer !== null) {
-    clearTimeout(moveSnapTimer);
-    moveSnapTimer = null;
-  }
+  clearMoveSettledCheck();
 };
 const isProgrammaticMoveGuardActive = () => Date.now() < programmaticMoveGuardUntil;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-const canSnapShellWindow = () => activeShellState === "micro" || activeShellState === "mini" || activeShellState === "normal" || activeShellState === "settings";
-const isCompatibilityNativeSnapActive = (bounds = mainWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode === "compatibility" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
-const isCompatibilityPreviewNativeSnapActive = (bounds = previewWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode === "compatibility" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
+const isNativeSnapActive = (bounds = mainWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode !== "cap7ce" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
+const isPreviewNativeSnapActive = (bounds = previewWindow?.getBounds()) => Boolean(windowPresentationRuntime.mode !== "cap7ce" && bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
 
 const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   const shellState = activeShellState;
@@ -930,7 +918,7 @@ const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
     (shellState !== "micro" && shellState !== "mini" && shellState !== "normal" && shellState !== "settings")
     || shellMaximized
     || mainWindow?.isMaximized()
-    || isCompatibilityNativeSnapActive(bounds)
+    || isNativeSnapActive(bounds)
   ) {
     return;
   }
@@ -940,105 +928,11 @@ const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   windowLayoutManager.captureBounds({ state, bounds, display: toWindowLayoutDisplaySnapshot(display) });
 };
 
-const getEdgeSnappedBounds = (bounds: Electron.Rectangle): Electron.Rectangle => {
-  const { workArea } = screen.getDisplayMatching(bounds);
-  const workRight = workArea.x + workArea.width;
-  const workBottom = workArea.y + workArea.height;
-  const boundsRight = bounds.x + bounds.width;
-  const boundsBottom = bounds.y + bounds.height;
-  const minX = workArea.x + edgeGapPx;
-  const minY = workArea.y + edgeGapPx;
-  const maxX = Math.max(minX, workRight - bounds.width - edgeGapPx);
-  const maxY = Math.max(minY, workBottom - bounds.height - edgeGapPx);
-  let nextX = clamp(bounds.x, minX, maxX);
-  let nextY = clamp(bounds.y, minY, maxY);
-
-  if (
-    Math.abs(bounds.x - workArea.x) <= edgeSnapThresholdPx ||
-    Math.abs(bounds.x - minX) <= edgeSnapThresholdPx
-  ) {
-    nextX = minX;
-  } else if (
-    Math.abs(workRight - boundsRight) <= edgeSnapThresholdPx ||
-    Math.abs(maxX - bounds.x) <= edgeSnapThresholdPx
-  ) {
-    nextX = maxX;
-  }
-
-  if (
-    Math.abs(bounds.y - workArea.y) <= edgeSnapThresholdPx ||
-    Math.abs(bounds.y - minY) <= edgeSnapThresholdPx
-  ) {
-    nextY = minY;
-  } else if (
-    Math.abs(workBottom - boundsBottom) <= edgeSnapThresholdPx ||
-    Math.abs(maxY - bounds.y) <= edgeSnapThresholdPx
-  ) {
-    nextY = maxY;
-  }
-
-  return { ...bounds, x: nextX, y: nextY };
-};
-
-const clearPreviewMoveSnapCheck = () => {
-  if (previewMoveSnapTimer === null) {
-    return false;
-  }
-
-  clearTimeout(previewMoveSnapTimer);
-  previewMoveSnapTimer = null;
-  return true;
-};
-
 const markPreviewProgrammaticMove = () => {
   previewProgrammaticMoveGuardUntil = Date.now() + programmaticMoveGuardMs;
-  clearPreviewMoveSnapCheck();
 };
 
 const isPreviewProgrammaticMoveGuardActive = () => Date.now() < previewProgrammaticMoveGuardUntil;
-
-const applyPreviewEdgeSnapAfterMove = () => {
-  if (
-    !previewWindow
-    || previewWindow.isDestroyed()
-    || !previewSessionActive
-    || !previewWindow.isVisible()
-    || previewWindow.isMaximized()
-    || isCompatibilityPreviewNativeSnapActive()
-    || previewDockedShell.hasActiveSession()
-  ) {
-    return;
-  }
-
-  const currentBounds = previewWindow.getBounds();
-  const nextBounds = getEdgeSnappedBounds(currentBounds);
-  if (nextBounds.x === currentBounds.x && nextBounds.y === currentBounds.y) {
-    return;
-  }
-
-  markPreviewProgrammaticMove();
-  previewWindow.setBounds(nextBounds, true);
-};
-
-const schedulePreviewMoveSnapCheck = () => {
-  if (
-    !previewWindow
-    || previewWindow.isDestroyed()
-    || !previewSessionActive
-    || !previewWindow.isVisible()
-    || previewWindow.isMaximized()
-    || isCompatibilityPreviewNativeSnapActive()
-    || previewDockedShell.hasActiveSession()
-  ) {
-    return;
-  }
-
-  clearPreviewMoveSnapCheck();
-  previewMoveSnapTimer = setTimeout(() => {
-    previewMoveSnapTimer = null;
-    applyPreviewEdgeSnapAfterMove();
-  }, moveSnapSettleDelayMs);
-};
 
 const isDefaultBottomAnchoredBounds = (bounds: Electron.Rectangle) => {
   const { workArea } = screen.getDisplayMatching(bounds);
@@ -1696,10 +1590,7 @@ const resetShellBehavior = () => {
   shellMaximized = false;
   lastNormalBounds = null;
   microBottomCenterAnchored = false;
-  if (moveSnapTimer !== null) {
-    clearTimeout(moveSnapTimer);
-    moveSnapTimer = null;
-  }
+  clearMoveSettledCheck();
   if (resizeSettledTimer !== null) {
     clearTimeout(resizeSettledTimer);
     resizeSettledTimer = null;
@@ -1849,9 +1740,8 @@ const setShellWindowStateFromResize = (state: Cap7CEShellState) => {
   const targetState = state as Extract<Cap7CEShellState, "micro" | "mini" | "normal">;
   const minimumSize = getShellMinimumSize(targetState);
   const currentBounds = mainWindow.getBounds();
-  const keepDefaultBottomGap = shouldKeepDefaultBottomGapOnResize(activeShellState, targetState, currentBounds);
   const transitionBounds = getResizeTransitionBounds(targetState, currentBounds, activeShellState);
-  const nextBounds = keepDefaultBottomGap ? transitionBounds : getEdgeSnappedBounds(transitionBounds);
+  const nextBounds = transitionBounds;
   const isResizableWindow = targetState === "micro" || targetState === "mini" || targetState === "normal";
 
   resetDockedShellPosition();
@@ -2124,7 +2014,7 @@ const registerLocalImageProtocol = () => {
 };
 
 const evaluateShellResizeThresholds = () => {
-  if (isStableWindowPresentationMode(windowPresentationRuntime.mode) || !mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
+  if (isStableWindowPresentationMode(windowPresentationRuntime.mode) || !mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized() || isNativeSnapActive() || isProgrammaticResizeGuardActive() || dockedShellController?.hasActiveSession()) {
     return;
   }
 
@@ -2178,44 +2068,25 @@ const scheduleResizeSettledCheck = () => {
   }, resizeSettleDelayMs);
 };
 
-const applyEdgeSnapAfterMove = () => {
-  if (!mainWindow || mainWindow.isDestroyed() || shellMaximized || mainWindow.isMaximized() || isCompatibilityNativeSnapActive() || dockedShellController?.hasActiveSession() || !canSnapShellWindow()) {
-    return;
-  }
-
-  const currentBounds = mainWindow.getBounds();
-  const nextBounds = getEdgeSnappedBounds(currentBounds);
-  if (nextBounds.x === currentBounds.x && nextBounds.y === currentBounds.y) {
-    rememberUserMovedShellBounds(currentBounds);
-    return;
-  }
-
-  markProgrammaticMove();
-  mainWindow.setBounds(nextBounds, true);
-  rememberUserMovedShellBounds(nextBounds);
-};
-
-const scheduleMoveSnapCheck = () => {
+const scheduleMoveSettledCheck = () => {
   if (
     !mainWindow ||
     mainWindow.isDestroyed() ||
     shellMaximized ||
     mainWindow.isMaximized() ||
-    isCompatibilityNativeSnapActive() ||
-    resizeSettledTimer !== null ||
-    !canSnapShellWindow()
+    isNativeSnapActive() ||
+    resizeSettledTimer !== null
   ) {
     return;
   }
 
-  if (moveSnapTimer !== null) {
-    clearTimeout(moveSnapTimer);
-  }
+  clearMoveSettledCheck();
 
-  moveSnapTimer = setTimeout(() => {
-    moveSnapTimer = null;
-    applyEdgeSnapAfterMove();
-  }, moveSnapSettleDelayMs);
+  moveSettledTimer = setTimeout(() => {
+    moveSettledTimer = null;
+    if (!mainWindow || mainWindow.isDestroyed() || isNativeSnapActive()) return;
+    rememberUserMovedShellBounds(mainWindow.getBounds());
+  }, moveSettleDelayMs);
 };
 
 const clearResizeSettledCheck = () => {
@@ -2327,7 +2198,7 @@ const createWindow = () => {
   dockedShellController = installDockedShell({
     window: mainWindow, enabled: edgeCollapseEnabled, enableDebugShortcut: Boolean(process.env.VITE_DEV_SERVER_URL),
     fixed: shellAlwaysOnTop,
-    getShellContext: () => ({ state: activeShellState, maximized: shellMaximized || Boolean(mainWindow?.isMaximized()) || isCompatibilityNativeSnapActive(), interactionBlocked: isQuitting || isProgrammaticMoveGuardActive() || isProgrammaticResizeGuardActive() }),
+    getShellContext: () => ({ state: activeShellState, maximized: shellMaximized || Boolean(mainWindow?.isMaximized()) || isNativeSnapActive(), interactionBlocked: isQuitting || isProgrammaticMoveGuardActive() || isProgrammaticResizeGuardActive() }),
     hideLine: () => lineWindowController.hide(), markProgrammaticMove, markProgrammaticResize,
     setCollapsedLayerActive: (active) => windowLayerController.setMainCollapsedLayerActive(active)
   });
@@ -2409,7 +2280,7 @@ const createWindow = () => {
     if (activeShellState === "micro") {
       microBottomCenterAnchored = false;
     }
-    scheduleMoveSnapCheck();
+    scheduleMoveSettledCheck();
   });
 };
 if (hasSingleInstanceLock) {

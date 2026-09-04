@@ -19,9 +19,9 @@ assert.match(
 );
 assert.match(mainSource, /windowLayoutManager\.captureBounds\(\{ state, bounds, display:/u);
 assert.match(mainSource, /const getShellWindowBounds = \(state: Cap7CEShellState, targetDisplay\?: Electron\.Display, capsuleEdge: "top" \| "bottom" = "bottom"\): Electron\.Rectangle => \{/u);
-assert.match(mainSource, /const getEdgeSnappedBounds = \(bounds: Electron\.Rectangle\): Electron\.Rectangle => \{/u);
-assert.match(mainSource, /const applyPreviewEdgeSnapAfterMove = \(\) => \{[\s\S]*?const nextBounds = getEdgeSnappedBounds\(currentBounds\);/u);
-assert.match(mainSource, /const applyEdgeSnapAfterMove = \(\) => \{[\s\S]*?const nextBounds = getEdgeSnappedBounds\(currentBounds\);/u);
+assert.doesNotMatch(mainSource, /getEdgeSnappedBounds|applyPreviewEdgeSnapAfterMove|applyEdgeSnapAfterMove|edgeSnapThresholdPx/u);
+assert.match(mainSource, /const isNativeSnapActive = \(bounds = mainWindow\?\.getBounds\(\)\) => Boolean\(windowPresentationRuntime\.mode !== "cap7ce"/u);
+assert.match(mainSource, /const isPreviewNativeSnapActive = \(bounds = previewWindow\?\.getBounds\(\)\) => Boolean\(windowPresentationRuntime\.mode !== "cap7ce"/u);
 assert.doesNotMatch(mainSource, /edgeSnapEnabled|updateEdgeSnapPreference|preferences:updateEdgeSnap/u);
 assert.match(mainSource, /label: edgeCollapseEnabled \? t\("tray\.disableEdgeCollapse"\) : t\("tray\.enableEdgeCollapse"\)/u);
 assert.match(mainSource, /void setEdgeCollapseEnabled\(!edgeCollapseEnabled\);/u);
@@ -72,7 +72,8 @@ assert.match(capsuleControllerSource, /linePlacement[\s\S]*?screen\.getDisplayMa
 assert.match(mainSource, /const \{ display: targetDisplay, edge: capsuleEdge \} = capsuleWindowController\.takeTarget\(\);[\s\S]*?getShellWindowBounds\("capsule", targetDisplay, capsuleEdge\)/u);
 assert.match(mainSource, /mainWindow\.on\("will-resize", applyBottomCenterMicroWillResize\);/u);
 assert.match(mainSource, /mainWindow\.on\("resize", \(\) => \{[\s\S]*?scheduleResizeSettledCheck\(\);/u);
-assert.match(mainSource, /mainWindow\.on\("move", \(\) => \{[\s\S]*?scheduleMoveSnapCheck\(\);/u);
+assert.match(mainSource, /mainWindow\.on\("move", \(\) => \{[\s\S]*?scheduleMoveSettledCheck\(\);/u);
+assert.match(mainSource, /const scheduleMoveSettledCheck = \(\) => \{[\s\S]*?rememberUserMovedShellBounds\(mainWindow\.getBounds\(\)\);/u);
 
 assert.match(controllerSource, /focusable: false/u);
 assert.match(controllerSource, /this\.lineWindow\.showInactive\(\);/u);
@@ -82,8 +83,8 @@ assert.match(controllerSource, /this\.lineWindow\.webContents\.send\("line:place
 console.log(JSON.stringify({
   shellStatesFrozen: true,
   persistentMovedBoundsIntegrationPresent: true,
-  defaultBoundsAndEdgeSnapBaselinePresent: true,
-  edgeSnapAlwaysEnabledAndTrayCollapseSynchronized: true,
+  defaultBoundsAndNativeSnapBaselinePresent: true,
+  customEdgeSnapRemovedAndTrayCollapseSynchronized: true,
   mainAndPreviewFixedStateIndependent: true,
   previewCollapseLifecycleAndSizingProtected: true,
   resizeStateInferenceBaselinePresent: true,

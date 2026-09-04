@@ -15,7 +15,7 @@ assert.match(mainSource, /const previewMinimumSize = previewWindowPresentationSi
 assert.match(mainSource, /previewWindowPresentationSizing\.resolveBounds\(\{ contentWidth, contentHeight, currentBounds: currentPreviewBounds, workArea: display\.workArea, titlebarHeight: windowPresentationRuntime\.titlebarHeight,[\s\S]*?isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)[\s\S]*?\}\)/u);
 assert.match(mainSource, /previewUrl\.searchParams\.set\("presentation", windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
-assert.match(mainSource, /isCompatibilityPreviewNativeSnapActive\(\)[\s\S]*?previewDockedShell\.hasActiveSession\(\)/u);
+assert.match(mainSource, /isNativeSnapActive: \(\) => isPreviewNativeSnapActive\(\)/u);
 assert.match(mainSource, /previewWindow\.on\("unmaximize", applyLatestPreviewContentSize\)/u);
 assert.match(mainSource, /previewWindow\.webContents\.send\("preview:reset"\);[\s\S]*?if \(previewWindow\.isMaximized\(\)\) \{[\s\S]*?previewWindow\.unmaximize\(\);[\s\S]*?\}[\s\S]*?previewWindow\.hide\(\);/u);
 assert.match(runtimeSource, /applyPreviewWindowAppearance\([\s\S]*?this\.applyWindowAppearance\("preview"/u);

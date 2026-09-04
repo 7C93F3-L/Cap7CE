@@ -66,7 +66,7 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
   return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setBounds: (nextBounds) => { bounds = { ...nextBounds }; }, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; } };
 };
 
-assert.equal(dockedShellDockThresholdPx, 40);
+assert.equal(dockedShellDockThresholdPx, 5);
 assert.equal(dockedShellPeekThicknessPx, 5);
 assert.equal(dockedShellRevealThicknessPx, 2);
 
@@ -114,7 +114,8 @@ const cornerPrefersAllowedEdge = createController({ initialBounds: { x: 0, y: 44
 assert.deepEqual(cornerPrefersAllowedEdge.controller.toggle(), { status: "collapsed", edge: "left" });
 
 const nearEdgeWithoutSnap = createController({ initialBounds: { x: 990, y: 200, width: 900, height: 600 } });
-assert.deepEqual(nearEdgeWithoutSnap.controller.toggle(), { status: "collapsed", edge: "right" });
+assert.deepEqual(nearEdgeWithoutSnap.controller.toggle(), { status: "blocked", reason: "not-docked" });
+assert.equal(nearEdgeWithoutSnap.controller.hasActiveSession(), false);
 
 const displaySeam = createController({
   initialBounds: rightBounds,
@@ -309,9 +310,10 @@ assert.match(automationSource, /getState: \(\) => controller\.getState\(\)/u);
 assert.match(automationSource, /hasActiveSession: \(\) => controller\.hasActiveSession\(\)/u);
 assert.doesNotMatch(automationSource, /ipcMain/u);
 assert.match(controllerSource, /window\.setBounds\(this\.getCollapsedWindowBounds\(session\), false\)/u);
-assert.match(mainSource, /const applyEdgeSnapAfterMove = \(\) => \{[\s\S]*?dockedShellController\?\.hasActiveSession\(\)[\s\S]*?getEdgeSnappedBounds/u);
 assert.match(mainSource, /mainWindow\.on\("move", \(\) => \{[\s\S]*?isProgrammaticMoveGuardActive\(\) \|\| dockedShellController\?\.hasActiveSession\(\)/u);
-assert.match(mainSource, /const applyPreviewEdgeSnapAfterMove = \(\) => \{[\s\S]*?previewDockedShell\.hasActiveSession\(\)[\s\S]*?getEdgeSnappedBounds/u);
+assert.match(mainSource, /getShellContext: \(\) => \(\{[^}]*?isNativeSnapActive\(\)/u);
+assert.match(mainSource, /isNativeSnapActive: \(\) => isPreviewNativeSnapActive\(\)/u);
+assert.doesNotMatch(mainSource, /getEdgeSnappedBounds|applyEdgeSnapAfterMove|applyPreviewEdgeSnapAfterMove/u);
 assert.doesNotMatch(controllerSource, /setShape|setResizable|setMovable/u);
 assert.doesNotMatch(rendererSource, /DockedShellHost|DockedShellProbeHost/u);
 
