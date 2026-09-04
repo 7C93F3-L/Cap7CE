@@ -82,6 +82,8 @@ assert.match(sidebarStyles, /preview-sidebar-section-heading button:not\(:disabl
 assert.match(sidebarStyles, /preview-sidebar-keywords span \{ min-width: 40px; text-align: center; \}/u);
 assert.match(sidebarStyles, /preview-sidebar-path:hover \{ color: var\(--theme-color\); \}/u);
 assert.match(previewSource, /--preview-action-hover-text": getTextColorForBackground\(previewData\.appearanceColors\.themeColor, previewData\.appearanceColors\.accentColor\)/u);
+assert.match(previewSource, /useUiFontSize\(isStableUiPreview \? uiFontSize : defaultUiFontSize\)/u);
+assert.match(previewSource, /preferences\.onChanged\(\(preferences\) => setUiFontSize\(preferences\.uiFontSize\)\)/u);
 assert.match(previewSource, /index\.updateManualKeywords\([\s\S]*?previewData\.filePath[\s\S]*?keywords\.join\(","\)[\s\S]*?manualKeywords: normalizedKeywords/u);
 assert.match(manualMetadataRuntimeSource, /isSingleSenderAllowed: \(event, filePath\)[\s\S]*?event\.sender === previewWindow\.webContents[\s\S]*?activePreviewData\.filePath/u);
 assert.match(manualMetadataRuntimeSource, /manualKeywords: keywords[\s\S]*?preview:manualKeywordsUpdated/u);

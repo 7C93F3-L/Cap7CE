@@ -35,7 +35,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateWindowMaterialPreference, updateWindowPresentationModePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference, updateWindowPresentationModePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
@@ -107,7 +107,7 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
   });
 };
 let mainWindow: BrowserWindow | null = null, settingsWindowController: SettingsWindowController | null = null;
-const broadcastSettingsData = createSettingsDataBroadcaster({ sendToMain: (channel, value) => mainWindow?.webContents.send(channel, value), sendToSettings: (channel, value) => { settingsWindowController?.send(channel, value); } });
+const broadcastSettingsData = createSettingsDataBroadcaster({ sendToMain: (channel, value) => mainWindow?.webContents.send(channel, value), sendToSettings: (channel, value) => { settingsWindowController?.send(channel, value); }, sendToPreview: (channel, value) => previewWindow?.webContents.send(channel, value) });
 const isMainSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
   mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents
 );
@@ -3467,6 +3467,7 @@ registerPreferenceIpc({
   updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
   updateTheme: updateThemePreference,
   updateWindowMaterial: updateWindowMaterialPreference,
+  updateUiFontSize: updateUiFontSizePreference,
   refreshAppearance: () => { lineWindowController.refreshAppearance(); void refreshWindowPresentationAppearance(); },
   applyLanguage: applyLanguagePreference,
   updateSort: updateSortPreference,

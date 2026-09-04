@@ -134,20 +134,23 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   const broadcasts = [];
   const broadcastSettingsData = createSettingsDataBroadcaster({
     sendToMain: (channel, value) => broadcasts.push(["main", channel, value]),
-    sendToSettings: (channel, value) => broadcasts.push(["settings", channel, value])
+    sendToSettings: (channel, value) => broadcasts.push(["settings", channel, value]),
+    sendToPreview: (channel, value) => broadcasts.push(["preview", channel, value])
   });
   const canonicalPreferences = { languagePreference: "zh-CN" };
   assert.equal(broadcastSettingsData("preferences:changed", canonicalPreferences), canonicalPreferences);
-  assert.deepEqual(broadcasts, [["main", "preferences:changed", canonicalPreferences], ["settings", "preferences:changed", canonicalPreferences]]);
+  assert.deepEqual(broadcasts, [["main", "preferences:changed", canonicalPreferences], ["settings", "preferences:changed", canonicalPreferences], ["preview", "preferences:changed", canonicalPreferences]]);
 
   assert.match(rendererEntrySource, /windowKind === "settings"[\s\S]*?import\("\.\/settings-window\/SettingsWindowApp"\)/u);
   assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"search-ai"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
-  assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?appearance\.themeModeLabel/u);
+  assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?stableSettings\.uiFontSize[\s\S]*?appearance\.themeModeLabel/u);
   assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[\s\S]*?font-size:\s*(?:14|15|16)px/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
+  assert.match(settingsAppSource, /uiFontSizeOptions\.map[\s\S]*?controller\.updateUiFontSize/u);
+  assert.match(settingsAppSource, /useUiFontSize\(preferences\?\.uiFontSize \?\? defaultUiFontSize\)/u);
   assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
   assert.doesNotMatch(settingsAppSource, /settings\.rememberWindowLayout|stableSettings\.desc\.rememberWindows/u);
   assert.match(settingsAppSource, /category === "browse"[\s\S]*?<SkimDisplaySettingsRows stableUi/u);

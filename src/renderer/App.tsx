@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
 import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "./appearance";
-import { executeQuickCommand } from "./commandExecutor";
-import type { QuickCommandConfirmationRequest } from "./commandExecutor";
+import { executeQuickCommand, type QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController";
 import { useOperationHintController } from "./controllers/useOperationHintController";
@@ -59,6 +58,7 @@ import WindowControlRail, { type WindowControlAction } from "./WindowControlRail
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import { useCompatibilityCapsuleBridge } from "./window-presentation/useCompatibilityCapsuleBridge";
 import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
+import { defaultUiFontSize, useUiFontSize } from "./typography";
 import type {
   AppView,
   AppearanceColors,
@@ -77,9 +77,7 @@ import type {
   SkimLocationShortcut,
   SortDirection,
   SortField,
-  ThumbnailOptimizationStatus,
-  VisualCacheStats,
-  ThemeMode
+  ThumbnailOptimizationStatus, UiFontSize, VisualCacheStats, ThemeMode
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 import { skimDefaultFileExtensionSet } from "../../electron/formatCapabilities";
@@ -263,7 +261,6 @@ const formatDirectoryAddFeedback = (result: DirectoryAddResult) => {
 interface AppProps {
   stableUiRenderer?: StableUiRenderer;
 }
-
 const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const stableUi = Boolean(StableUiRenderer);
   const [view, setView] = useState<AppView>("home");
@@ -274,6 +271,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [, setResolvedLanguage] = useState(() => getActiveLanguage());
   const systemTheme = useSystemThemeMode();
   const [appearanceColors, setAppearanceColors] = useState<AppearanceColors>(defaultAppearanceColors);
+  const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize);
   const [standbyLineVisible, setStandbyLineVisible] = useState(true);
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [systemNotificationsEnabled, setSystemNotificationsEnabled] = useState(true);
@@ -448,7 +446,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const totalFileCount = directoryOptions[0]?.fileCount ?? null;
   const selectedDirectory = directoryOptions.find((directory) => directory.id === search.directoryId) ?? directoryOptions[0];
   const effectiveTheme: ResolvedThemeMode = theme === "system" ? systemTheme : theme;
+  const uiFontStyle = useUiFontSize(stableUi ? uiFontSize : defaultUiFontSize);
   const appThemeStyle = {
+    ...uiFontStyle,
     "--theme-color": appearanceColors.themeColor,
     "--accent-color": appearanceColors.accentColor,
     "--dialog-action-hover-text": getTextColorForBackground(appearanceColors.themeColor, appearanceColors.accentColor),
@@ -784,6 +784,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setResolvedLanguage(resolvedLanguage);
             setTheme(preferences.themePreference);
             setAppearanceColors(normalizeAppearanceColors(preferences.appearanceColors));
+            setUiFontSize(preferences.uiFontSize);
             applyAlwaysOnTop(preferences.alwaysOnTop);
             setStandbyLineVisible(preferences.standbyLineVisible);
             setLaunchAtLogin(preferences.launchAtLogin);
@@ -1838,7 +1839,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchCapsuleLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
+  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchCapsuleLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
 
   const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
     try {

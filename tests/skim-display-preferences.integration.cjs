@@ -19,6 +19,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       updateSkimSortPreference,
       updateEdgeCollapsePreference,
       updateRememberWindowLayoutPreference,
+      updateUiFontSizePreference,
       updateWindowPresentationModePreference,
       updateSortPreference
     } = require("../dist-electron/preferenceStore.js");
@@ -36,6 +37,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal(defaults.rememberWindowLayout, false);
     assert.equal(defaults.windowPresentationMode, "stable");
+    assert.equal(defaults.uiFontSize, 13);
     assert.deepEqual(defaults.sortPreference, {
       sortField: "modified_at",
       sortDirection: "desc"
@@ -50,6 +52,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const sidebarFolder = path.join(testRoot, "Sidebar Folder");
     await fs.writeFile(legacyPreferencesPath, JSON.stringify({
       edgeSnapEnabled: false,
+      uiFontSize: 99,
       skimDisplay: {
         mode: "all",
         customExtensions: [".png"],
@@ -76,6 +79,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal("edgeSnapEnabled" in migrated, false);
     assert.equal(migrated.rememberWindowLayout, false);
     assert.equal(migrated.windowPresentationMode, "stable");
+    assert.equal(migrated.uiFontSize, 13);
 
     const updatedShortcuts = await updateShortcutActionsPreference({
       ...migrated.shortcutActions,
@@ -107,6 +111,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateSkimSystemLocationsCollapsedPreference(true);
     await updateEdgeCollapsePreference(true);
     await updateRememberWindowLayoutPreference(true);
+    await updateUiFontSizePreference(16);
     const invalidMode = await updateWindowPresentationModePreference("invalid");
     assert.equal(invalidMode.windowPresentationMode, "stable");
     await updateWindowPresentationModePreference("compatibility");
@@ -122,6 +127,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(reloaded.edgeCollapseEnabled, true);
     assert.equal(reloaded.rememberWindowLayout, true);
     assert.equal(reloaded.windowPresentationMode, "compatibility");
+    assert.equal(reloaded.uiFontSize, 16);
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
@@ -137,7 +143,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       skimSystemLocationsCollapsedPersisted: true,
       edgeCollapsePreferencePersisted: true,
       windowLayoutMemoryPreferencesPersisted: true,
-      windowPresentationModePersisted: true
+      windowPresentationModePersisted: true,
+      uiFontSizePersisted: true
     }));
   } finally {
     await fs.rm(testRoot, { recursive: true, force: true });

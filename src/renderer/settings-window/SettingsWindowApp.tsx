@@ -5,6 +5,7 @@ import CustomScrollbar from "../CustomScrollbar";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import { getTextColorForBackground } from "../appearance";
 import { formatCacheSize } from "../formatting";
+import { defaultUiFontSize, uiFontSizeOptions, useUiFontSize } from "../typography";
 import { EmbeddedMetadataSettingsRow } from "../settings/EmbeddedMetadataSettingsRow";
 import { QuickActionSettingsRows } from "../settings/QuickActionSettingsRows";
 import { QuickCommandSettingsRows } from "../settings/QuickCommandSettingsRows";
@@ -31,7 +32,7 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; short:
 ];
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
   general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.windowMode", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line", "stableSettings.desc.windowMode"],
-  appearance: ["stableSettings.category.appearance", "stableSettings.material", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.theme", "stableSettings.desc.colors"],
+  appearance: ["stableSettings.category.appearance", "stableSettings.material", "stableSettings.uiFontSize", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.uiFontSize", "stableSettings.desc.theme", "stableSettings.desc.colors"],
   browse: ["settings.skimDisplay", "stableSettings.desc.skimDisplay"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.idleUnload", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.idleUnload"],
   cache: ["stableSettings.category.cache", "stableSettings.cacheOptimization", "stableSettings.formalCache", "settings.skimCache", "settings.embeddedMetadata", "stableSettings.desc.cacheOptimization", "stableSettings.desc.formalCache", "stableSettings.desc.skimCache", "stableSettings.desc.metadata"],
@@ -83,6 +84,7 @@ const SettingsWindowApp = () => {
   const [systemDark, setSystemDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const normalizedQuery = query.trim();
+  const uiFontStyle = useUiFontSize(preferences?.uiFontSize ?? defaultUiFontSize);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -103,7 +105,7 @@ const SettingsWindowApp = () => {
 
   const effectiveTheme = preferences.themePreference === "system" ? (systemDark ? "dark" : "light") : preferences.themePreference;
   const shownCategories = normalizedQuery ? visibleCategories : categoryDefinitions.filter((category) => category.id === activeCategory);
-  const menuStyle = { "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--theme-color": preferences.appearanceColors.themeColor, "--accent-color": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
+  const menuStyle = { ...uiFontStyle, "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--theme-color": preferences.appearanceColors.themeColor, "--accent-color": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
   const toggle = (key: Parameters<typeof controller.updateBooleanPreference>[0], enabled: boolean) => { void controller.updateBooleanPreference(key, enabled); };
   const openConfirmation = (message: string, action: () => Promise<unknown>) => setDialog({ message, action });
   const confirmDialog = async () => {
@@ -128,6 +130,7 @@ const SettingsWindowApp = () => {
     if (category === "appearance") return <>
       <SettingsSection title="stableSettings.section.colors">
         <SettingCard title="stableSettings.material" description="stableSettings.desc.material" query={normalizedQuery}><SettingsSelect label={t("stableSettings.material")} value={preferences.windowMaterial} options={[{ value: "acrylic", label: t("stableSettings.material.acrylic") }, { value: "mica", label: t("stableSettings.material.mica") }]} onChange={(value) => void controller.updateWindowMaterial(value as UserPreferences["windowMaterial"])} /></SettingCard>
+        <SettingCard title="stableSettings.uiFontSize" description="stableSettings.desc.uiFontSize" query={normalizedQuery}><SettingsSelect label={t("stableSettings.uiFontSize")} value={String(preferences.uiFontSize)} options={uiFontSizeOptions.map((size) => ({ value: String(size), label: t(`stableSettings.uiFontSize.${size}` as TranslationKey) }))} onChange={(value) => void controller.updateUiFontSize(Number(value) as UserPreferences["uiFontSize"])} /></SettingCard>
         <SettingCard title="appearance.themeModeLabel" description="stableSettings.desc.theme" query={normalizedQuery}><SettingsSelect label={t("appearance.themeModeLabel")} value={preferences.themePreference} options={[{ value: "system", label: t("theme.system") }, { value: "light", label: t("theme.light") }, { value: "dark", label: t("theme.dark") }]} onChange={(value) => void controller.updateTheme(value as UserPreferences["themePreference"])} /></SettingCard>
         <SettingCard title="appearance.configureLabel" description="stableSettings.desc.colors" query={normalizedQuery}><div className="cap-stable-settings-colors"><label>{t("appearance.themeColor")}<input type="color" value={preferences.appearanceColors.themeColor} onChange={(event) => void controller.updateAppearanceColors({ ...preferences.appearanceColors, themeColor: event.target.value.toUpperCase() })} /></label><label>{t("appearance.accentColor")}<input type="color" value={preferences.appearanceColors.accentColor} onChange={(event) => void controller.updateAppearanceColors({ ...preferences.appearanceColors, accentColor: event.target.value.toUpperCase() })} /></label></div></SettingCard>
       </SettingsSection>

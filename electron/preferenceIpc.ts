@@ -7,6 +7,7 @@ type LanguagePreference = UserPreferencesResponse["languagePreference"];
 type SortPreference = UserPreferencesResponse["sortPreference"];
 type AppearanceColors = UserPreferencesResponse["appearanceColors"];
 type WindowMaterialPreference = UserPreferencesResponse["windowMaterial"];
+type UiFontSizePreference = UserPreferencesResponse["uiFontSize"];
 
 export interface PreferenceIpcDependencies {
   registrar: IpcRegistrar;
@@ -21,6 +22,7 @@ export interface PreferenceIpcDependencies {
   updateSkimSystemLocationsCollapsed: PreferenceUpdater<boolean>;
   updateTheme: PreferenceUpdater<ThemePreference>;
   updateWindowMaterial: PreferenceUpdater<WindowMaterialPreference>;
+  updateUiFontSize: PreferenceUpdater<UiFontSizePreference>;
   refreshAppearance: () => void;
   applyLanguage: PreferenceUpdater<LanguagePreference>;
   updateSort: PreferenceUpdater<SortPreference>;
@@ -53,6 +55,7 @@ export const registerPreferenceIpc = ({
   updateSkimSystemLocationsCollapsed,
   updateTheme,
   updateWindowMaterial,
+  updateUiFontSize,
   refreshAppearance,
   applyLanguage,
   updateSort,
@@ -150,6 +153,11 @@ export const registerPreferenceIpc = ({
           broadcastPreferencesChanged(preferences);
           return preferences;
         }
+      },
+      {
+        kind: "handle",
+        channel: "preferences:updateUiFontSize",
+        listener: (_event, size: UiFontSizePreference) => updateAndBroadcast(updateUiFontSize(size))
       },
       {
         kind: "handle",

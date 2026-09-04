@@ -45,6 +45,7 @@ export interface UserPreferencesResponse {
   rememberWindowLayout: boolean;
   windowPresentationMode: WindowPresentationMode;
   windowMaterial: WindowMaterial;
+  uiFontSize: 12 | 13 | 14 | 15 | 16;
   alwaysOnTop: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
@@ -84,6 +85,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   rememberWindowLayout: false,
   windowPresentationMode: DEFAULT_WINDOW_PRESENTATION_MODE,
   windowMaterial: "acrylic",
+  uiFontSize: 13,
   alwaysOnTop: false,
   standbyLineVisible: true,
   launchAtLogin: false,
@@ -241,6 +243,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       rememberWindowLayout: typeof parsed.rememberWindowLayout === "boolean" ? parsed.rememberWindowLayout : defaults.rememberWindowLayout,
       windowPresentationMode: normalizeWindowPresentationMode(parsed.windowPresentationMode),
       windowMaterial: parsed.windowMaterial === "mica" ? "mica" : "acrylic",
+      uiFontSize: [12, 13, 14, 15, 16].includes(Number(parsed.uiFontSize)) ? Number(parsed.uiFontSize) as UserPreferencesResponse["uiFontSize"] : defaults.uiFontSize,
       alwaysOnTop: typeof parsed.alwaysOnTop === "boolean" ? parsed.alwaysOnTop : defaults.alwaysOnTop,
       standbyLineVisible: typeof parsed.standbyLineVisible === "boolean" ? parsed.standbyLineVisible : defaults.standbyLineVisible,
       launchAtLogin: typeof parsed.launchAtLogin === "boolean" ? parsed.launchAtLogin : defaults.launchAtLogin,
@@ -329,6 +332,14 @@ export const updateWindowMaterialPreference = async (windowMaterial: WindowMater
     windowMaterial: windowMaterial === "mica" ? "mica" : "acrylic",
     updatedAt: new Date().toISOString()
   };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateUiFontSizePreference = async (uiFontSize: UserPreferencesResponse["uiFontSize"]) => {
+  const preferences = await readPreferences();
+  const normalizedSize = [12, 13, 14, 15, 16].includes(Number(uiFontSize)) ? Number(uiFontSize) as UserPreferencesResponse["uiFontSize"] : 13;
+  const nextPreferences = { ...preferences, uiFontSize: normalizedSize, updatedAt: new Date().toISOString() };
   await savePreferences(nextPreferences);
   return nextPreferences;
 };

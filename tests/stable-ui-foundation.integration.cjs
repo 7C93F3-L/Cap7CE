@@ -18,6 +18,7 @@ void (async () => {
   const rendererEntry = read("src/renderer/main.tsx");
   const globalStyles = read("src/renderer/styles.css");
   const typographyStyles = read("src/renderer/typography.css");
+  const typographySource = read("src/renderer/typography.ts");
   const mainSource = read("electron/main.ts");
   const appSource = read("src/renderer/App.tsx");
   const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
@@ -75,6 +76,9 @@ void (async () => {
   assert.match(globalStyles, /^@import "\.\/typography\.css";/u);
   assert.match(typographyStyles, /--cap-ui-font-base:\s*13px[\s\S]*?--cap-ui-font-page-title:[\s\S]*?--cap-ui-font-heading:[\s\S]*?--cap-ui-font-caption:/u);
   assert.doesNotMatch(typographyStyles, /--cap-ui-font-(?:feature-title|display|prominent|micro):/u);
+  assert.match(typographySource, /uiFontSizeOptions: UiFontSize\[\] = \[12, 13, 14, 15, 16\]/u);
+  assert.match(typographySource, /document\.documentElement\.style\.setProperty\("--cap-ui-font-base", `\$\{size\}px`\)/u);
+  assert.match(appSource, /useUiFontSize\(stableUi \? uiFontSize : defaultUiFontSize\)/u);
   assert.match(foundationStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-stable-font-size\)/u);
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);

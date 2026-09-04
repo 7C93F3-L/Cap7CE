@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
+import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats, UiFontSize } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
@@ -21,6 +21,7 @@ import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
 import { COMPATIBILITY_TITLEBAR_HEIGHT } from "../../electron/windowPresentationPolicy";
 import { getTextColorForBackground } from "./appearance";
+import { defaultUiFontSize, useUiFontSize } from "./typography";
 
 const isCompatibilityWindow = new URLSearchParams(window.location.search).get("presentation") === "compatibility";
 const isStableUiPreview = new URLSearchParams(window.location.search).get("presentation") === "stable";
@@ -98,6 +99,7 @@ const getMobiFallbackMessage = (reason: MobiPreviewFallbackReason) => {
 
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
+  const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize);
   const [displaySrc, setDisplaySrc] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -128,6 +130,7 @@ const PreviewWindowApp = () => {
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
   const pendingLongSpaceActionRef = useRef<PreviewWindowData | null>(null);
   const previewKeywordSavePendingRef = useRef(false);
+  const uiFontStyle = useUiFontSize(isStableUiPreview ? uiFontSize : defaultUiFontSize);
   const closePreview = useCallback(() => {
     mediaRef.current?.pause();
     if (previewData?.provider === "folderInfo") {
@@ -217,6 +220,11 @@ const PreviewWindowApp = () => {
     });
     window.cap7ce?.preview.requestData();
     return () => unsubscribe?.();
+  }, []);
+
+  useEffect(() => {
+    void window.cap7ce?.preferences.get().then((preferences) => preferences && setUiFontSize(preferences.uiFontSize));
+    return window.cap7ce?.preferences.onChanged((preferences) => setUiFontSize(preferences.uiFontSize));
   }, []);
 
   useEffect(() => window.cap7ce?.preview.onEmbeddedMetadata((update) => {
@@ -477,6 +485,7 @@ const PreviewWindowApp = () => {
     }
     const isDark = previewData.theme === "dark";
     return {
+      ...uiFontStyle,
       "--theme-color": previewData.appearanceColors.themeColor,
       "--accent-color": previewData.appearanceColors.accentColor,
       "--preview-action-hover-text": getTextColorForBackground(previewData.appearanceColors.themeColor, previewData.appearanceColors.accentColor),
@@ -486,7 +495,7 @@ const PreviewWindowApp = () => {
       "--icon-muted": isDark ? "#4f4f4f" : "#777777",
       "--border-soft": isDark ? "#2a2a2a" : "#ececec"
     } as CSSProperties;
-  }, [previewData]);
+  }, [previewData, uiFontStyle]);
 
   const togglePreviewAlwaysOnTop = () => {
     void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);

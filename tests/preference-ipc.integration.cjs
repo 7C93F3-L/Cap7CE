@@ -33,6 +33,7 @@ const run = async () => {
     updateSkimSystemLocationsCollapsed: capture("skimSystemLocationsCollapsed"),
     updateTheme: capture("theme"),
     updateWindowMaterial: capture("windowMaterial"),
+    updateUiFontSize: capture("uiFontSize"),
     refreshAppearance: () => calls.push(["refreshAppearance"]),
     applyLanguage: capture("language"),
     updateSort: capture("sort"),
@@ -63,6 +64,7 @@ const run = async () => {
     "preferences:updateSkimSystemLocationsCollapsed",
     "preferences:updateTheme",
     "preferences:updateWindowMaterial",
+    "preferences:updateUiFontSize",
     "preferences:updateLanguage",
     "preferences:updateSort",
     "preferences:updateAppearanceColors",
@@ -102,6 +104,7 @@ const run = async () => {
   await handles.get("preferences:updateSkimSystemLocationsCollapsed")(event, "collapsed");
   await handles.get("preferences:updateTheme")(event, "dark");
   await handles.get("preferences:updateWindowMaterial")(event, "mica");
+  await handles.get("preferences:updateUiFontSize")(event, 15);
   await handles.get("preferences:updateLanguage")(event, "invalid");
   await handles.get("preferences:updateSort")(event, { sortField: "file_name", sortDirection: "asc" });
   await handles.get("preferences:updateAppearanceColors")(event, { themeColor: "#111111", accentColor: "#222222" });
@@ -132,6 +135,7 @@ const run = async () => {
     ["refreshAppearance"],
     ["windowMaterial", "mica"],
     ["refreshAppearance"],
+    ["uiFontSize", 15],
     ["language", "system"],
     ["sort", { sortField: "file_name", sortDirection: "asc" }],
     ["applyThumbnailSort", response.sortPreference],
@@ -170,6 +174,7 @@ const run = async () => {
     updateSkimSystemLocationsCollapsed: async () => disabledResponse,
     updateTheme: async () => disabledResponse,
     updateWindowMaterial: async () => disabledResponse,
+    updateUiFontSize: async () => disabledResponse,
     refreshAppearance: () => undefined,
     applyLanguage: async () => disabledResponse,
     updateSort: async () => disabledResponse,
