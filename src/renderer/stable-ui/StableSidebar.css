@@ -29,8 +29,10 @@
 .cap-stable-all-directories-row { margin-bottom: 4px; } .cap-stable-directory-list-frame { min-width: 0; min-height: 0; } .cap-stable-directory-list { display: grid; align-content: start; gap: 4px; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .cap-stable-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; min-width: 0; }
 .cap-stable-directory-item { grid-template-columns: 28px minmax(0, 1fr) auto; min-height: 34px; padding-block: 3px; }
-.cap-stable-directory-item.is-editing { background: var(--cap-stable-selected); }
-.cap-stable-directory-item input { min-width: 0; height: 24px; padding: 0 6px; border: 0; border-radius: 6px; outline: 1px solid color-mix(in srgb, var(--theme-color) 62%, transparent); color: inherit; background: var(--cap-stable-surface-soft); font: inherit; }
+.cap-stable-directory-item.is-editing { background: transparent; }
+.cap-stable-directory-item input { min-width: 0; height: 24px; padding: 0 8px; border: 0; border-radius: 999px; outline: 0; color: inherit; background: rgb(255 255 255 / 50%); font: inherit; }
+.app .cap-stable-directory-item input:focus,
+.app .cap-stable-directory-item input:focus-visible { outline: 0; outline-offset: 0; box-shadow: none; }
 .cap-stable-directory-count { padding-left: 4px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
 .cap-stable-directory-more { display: grid; place-items: center; width: 24px; height: 24px; margin-left: 2px; padding: 0; border: 0; border-radius: 6px; color: inherit; background: transparent; opacity: 0; }
 .cap-stable-directory-row:hover .cap-stable-directory-more,

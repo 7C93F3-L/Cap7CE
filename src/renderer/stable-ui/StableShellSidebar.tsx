@@ -30,7 +30,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     if (!all && editingDirectoryId === directory.id) {
       return <div className="cap-stable-directory-item is-editing" key={directory.id}>
         <StableUiIcon name="folder" />
-        <input autoFocus defaultValue={directory.name} aria-label={t("settings.renameDirectoryHint")} onBlur={(event) => {
+        <input autoFocus defaultValue={directory.name} aria-label={t("stableSettings.rename")} onBlur={(event) => {
           if (event.currentTarget.dataset.cancelled !== "true") onDirectoryNameChange(directory.id, event.currentTarget.value);
         }} onKeyDown={(event) => {
           if (event.key === "Escape") { event.preventDefault(); event.currentTarget.dataset.cancelled = "true"; onCancelDirectoryEdit(); }
@@ -90,7 +90,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={skimDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
     </StableSidebarFlyout>}
     {flyout?.kind === "directory" && <StableSidebarFlyout anchor={flyout.anchor} label={flyout.directory.name} onClose={closeFlyout}>
-      <button type="button" onClick={() => { onEditDirectory(flyout.directory.id); closeFlyout(); }}>{t("settings.renameDirectoryHint")}</button>
+      <button type="button" onClick={() => { onEditDirectory(flyout.directory.id); closeFlyout(); }}>{t("stableSettings.rename")}</button>
       <button type="button" className="is-danger" onClick={() => { onDeleteDirectory(flyout.directory.id); closeFlyout(); }}>{t("common.delete")}</button>
     </StableSidebarFlyout>}
   </aside>;
