@@ -19,6 +19,7 @@ interface ShellWindowPresentationSizingOptions {
   edgeGap: number;
   edgeAnchorThreshold: number;
   getNormalDefaultOuterBounds?: (workArea: WindowLayoutBounds) => WindowLayoutBounds | null;
+  getNormalMinimumOuterSize?: () => Pick<WindowLayoutBounds, "width" | "height"> | null;
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -86,12 +87,15 @@ export class ShellWindowPresentationSizing {
     const contentMinimumSize = persistedState === "normal"
       ? { width: this.options.normalMinimumWidth, height: this.options.normalMinimumHeight }
       : { width: this.options.minimumWidth, height: this.options.minimumHeight };
+    const minimumSize = persistedState === "normal"
+      ? this.options.getNormalMinimumOuterSize?.() ?? this.getOuterMinimumSize(contentMinimumSize)
+      : this.getOuterMinimumSize(contentMinimumSize);
     return layoutManager.resolveBounds({
       state: persistedState,
       displays,
       currentDisplay,
       defaultBounds: (display) => defaultBounds(display.workArea),
-      minimumSize: this.getOuterMinimumSize(contentMinimumSize),
+      minimumSize,
       maximumSize: persistedState === "mini" ? { width: this.options.miniMaximumWidth } : undefined,
       fixedHeight: persistedState === "micro" ? this.options.microHeight + this.options.getTitlebarHeight() : undefined
     });

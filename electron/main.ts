@@ -346,7 +346,8 @@ const shellWindowPresentationSizing = new ShellWindowPresentationSizing({
   microLayoutMaximumHeight: microLayoutMaxHeight,
   edgeGap: edgeGapPx,
   edgeAnchorThreshold: edgeAnchorThresholdPx,
-  getNormalDefaultOuterBounds: (workArea) => isStableWindowPresentationMode(windowPresentationRuntime.mode) ? resolveStableUiDefaultWindowBounds(workArea) : null
+  getNormalDefaultOuterBounds: (workArea) => isStableWindowPresentationMode(windowPresentationRuntime.mode) ? resolveStableUiDefaultWindowBounds(workArea) : null,
+  getNormalMinimumOuterSize: () => isStableWindowPresentationMode(windowPresentationRuntime.mode) ? STABLE_UI_MINIMUM_OUTER_SIZE : null
 });
 const previewWindowPresentationSizing = new PreviewWindowPresentationSizing({ minimumWidth: previewWindowMinimumWidth, minimumHeight: previewWindowMinimumHeight, horizontalPadding: previewWindowHorizontalPadding, verticalChrome: previewWindowVerticalChrome, workAreaRatio: previewWindowWorkAreaRatio });
 const getShellContentBounds = (bounds: Electron.Rectangle) => shellWindowPresentationSizing.getContentBounds(bounds);

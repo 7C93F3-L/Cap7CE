@@ -76,6 +76,7 @@ assert.match(runtimeSource, /applyStableUiWindowMaterial/u);
 assert.match(runtimeSource, /setMaterialPreference\(materialPreference:[\s\S]*?this\.materialPreference = materialPreference/u);
 assert.match(mainSource, /refreshWindowPresentationAppearance[\s\S]*?setMaterialPreference\(preferences\.windowMaterial\)[\s\S]*?applyMainWindowAppearance[\s\S]*?applyPreviewWindowAppearance[\s\S]*?applySettingsWindowAppearance/u);
 assert.match(mainSource, /getNormalDefaultOuterBounds:[^\n]*resolveStableUiDefaultWindowBounds/u);
+assert.match(mainSource, /getNormalMinimumOuterSize:[^\n]*STABLE_UI_MINIMUM_OUTER_SIZE/u);
 assert.match(mainSource, /windowLayoutManager\.setPreferences\(\{ rememberWindowLayout: resolveWindowLayoutMemoryEnabled\(preferences\.rememberWindowLayout, isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) \}\)/u);
 assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\) return \{ \.\.\.STABLE_UI_MINIMUM_OUTER_SIZE \}/u);
 assert.match(mainSource, /const revealPreviewWindow = \(\) => \{[\s\S]*?!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)[\s\S]*?mainWindow\.hide\(\)/u);
