@@ -4,12 +4,12 @@ import type {
   AppearanceColors,
   DirectoryItem,
   LanguagePreference,
+  SearchLabelVisibilityPreferences,
   ShortcutActionPreferences,
   SkimDisplayPreferences,
   ThemeMode,
   UserPreferences
 } from "../../shared/types";
-import type { SearchCapsuleLabelVisibility } from "../search/Cap7CESearchCapsule";
 
 interface SettingsDataSynchronizationOptions {
   setTheme: Dispatch<SetStateAction<ThemeMode>>;
@@ -25,7 +25,7 @@ interface SettingsDataSynchronizationOptions {
   setQuickActionGlobalEnabled: Dispatch<SetStateAction<boolean>>;
   setCommandEnabled: Dispatch<SetStateAction<boolean>>;
   setShortcutActions: Dispatch<SetStateAction<ShortcutActionPreferences>>;
-  setSearchCapsuleLabelVisibility: Dispatch<SetStateAction<SearchCapsuleLabelVisibility>>;
+  setSearchLabelVisibility: Dispatch<SetStateAction<SearchLabelVisibilityPreferences>>;
   setSkimDisplay: Dispatch<SetStateAction<SkimDisplayPreferences>>;
   setSkimSidebarFolders: Dispatch<SetStateAction<string[]>>;
   setSkimSystemLocationsCollapsed: Dispatch<SetStateAction<boolean>>;
@@ -51,7 +51,7 @@ export const useSettingsDataSynchronization = (options: SettingsDataSynchronizat
     current.setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
     current.setCommandEnabled(preferences.commandEnabled);
     current.setShortcutActions(preferences.stableShortcutActions);
-    current.setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
+    current.setSearchLabelVisibility(preferences.searchLabelVisibility);
     current.setSkimDisplay(preferences.skimDisplay);
     current.setSkimSidebarFolders(preferences.skimSidebarFolders);
     current.setSkimSystemLocationsCollapsed(preferences.skimSystemLocationsCollapsed);

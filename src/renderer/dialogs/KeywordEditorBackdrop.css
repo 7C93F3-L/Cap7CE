@@ -7,10 +7,6 @@
   animation: cap7ce-keyword-backdrop-enter 180ms ease-out both;
 }
 
-body:has(.cap-shell-maximized) .keyword-editor-backdrop {
-  border-radius: 0;
-}
-
 .keyword-editor-backdrop-light {
   background: rgb(255 255 255 / 0.28);
 }

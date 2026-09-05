@@ -12,10 +12,10 @@ const initialOperationHintKey: TranslationKey = "search.guide.search";
 const operationHintDefinitions: OperationHintDefinition[] = [
   { key: initialOperationHintKey },
   { key: "search.guide.showCurrent" },
-  { key: "search.guide.activateCapsule", shortcutActionId: "activateCapsule" },
-  { key: "search.guide.activateNormal", shortcutActionId: "activateNormal" },
-  { key: "search.guide.activateLine", shortcutActionId: "activateStandby" },
-  { key: "search.guide.activateSkim", shortcutActionId: "activateSkim" },
+  { key: "search.guide.focusMainSearch", shortcutActionId: "focusMainSearch" },
+  { key: "search.guide.restoreDefaultWindow", shortcutActionId: "restoreDefaultWindow" },
+  { key: "search.guide.hideToLine", shortcutActionId: "hideToLine" },
+  { key: "search.guide.toggleSkim", shortcutActionId: "toggleSkim" },
   { key: "search.guide.openSettings", shortcutActionId: "openSettings" },
   { key: "search.guide.preview" },
   { key: "search.guide.previewNavigate" },
@@ -35,29 +35,24 @@ const operationHintDefinitions: OperationHintDefinition[] = [
 ];
 
 interface OperationHintControllerOptions {
-  shellState: string;
   query: string;
   enabled: boolean;
   commandEnabled: boolean;
   quickActionGlobalEnabled: boolean;
   unavailableShortcutActionIds: ShortcutActionId[];
   shortcutActions: ShortcutActionPreferences;
-  stableUi?: boolean;
 }
 
 export const useOperationHintController = ({
-  shellState,
   query,
   enabled,
   commandEnabled,
   quickActionGlobalEnabled,
   unavailableShortcutActionIds,
-  shortcutActions,
-  stableUi = false
+  shortcutActions
 }: OperationHintControllerOptions) => {
   const [operationHintKey, setOperationHintKey] = useState<TranslationKey>(initialOperationHintKey);
   const previousQueryRef = useRef("");
-  const initialHintShownRef = useRef(false);
 
   const selectRandomOperationHint = useCallback(() => {
     setOperationHintKey((currentKey) => {
@@ -74,18 +69,7 @@ export const useOperationHintController = ({
       const nextHints = candidates.length > 0 ? candidates : availableHints;
       return nextHints[Math.floor(Math.random() * nextHints.length)]?.key ?? initialOperationHintKey;
     });
-  }, [commandEnabled, quickActionGlobalEnabled, stableUi, unavailableShortcutActionIds]);
-
-  useEffect(() => {
-    if (shellState === "standby") {
-      return;
-    }
-    if (!initialHintShownRef.current) {
-      initialHintShownRef.current = true;
-      return;
-    }
-    selectRandomOperationHint();
-  }, [shellState]);
+  }, [commandEnabled, quickActionGlobalEnabled, unavailableShortcutActionIds]);
 
   useEffect(() => {
     const previousQuery = previousQueryRef.current;
@@ -97,7 +81,7 @@ export const useOperationHintController = ({
 
   const operationHintDefinition = operationHintDefinitions.find((hint) => hint.key === operationHintKey);
   return enabled && query.length === 0
-    ? t(stableUi && operationHintKey === "search.guide.activateCapsule" ? "search.guide.focusMainSearch" : stableUi && operationHintKey === "search.guide.activateNormal" ? "search.guide.restoreDefaultWindow" : stableUi && operationHintKey === "search.guide.activateLine" ? "search.guide.hideToLine" : stableUi && operationHintKey === "search.guide.activateSkim" ? "search.guide.toggleSkim" : operationHintKey, operationHintDefinition?.shortcutActionId
+    ? t(operationHintKey, operationHintDefinition?.shortcutActionId
       ? { shortcut: shortcutActions[operationHintDefinition.shortcutActionId] }
       : {})
     : "";

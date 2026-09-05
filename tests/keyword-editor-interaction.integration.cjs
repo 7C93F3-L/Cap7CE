@@ -42,7 +42,7 @@ assert.match(keywordEditorBackdropSource, /data-keyword-editor-backdrop="true"/)
 assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-dark\s*\{[^}]*rgb\(0 0 0 \/ 0\.22\)/s);
 assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-light\s*\{[^}]*rgb\(255 255 255 \/ 0\.28\)/s);
 assert.match(keywordEditorBackdropCss, /border-radius: var\(--radius-window-normal\)/);
-assert.match(keywordEditorBackdropCss, /\.cap-shell-maximized[^}]*border-radius: 0/s);
+assert.doesNotMatch(keywordEditorBackdropCss, /cap-shell-maximized/);
 assert.match(keywordEditorCardCss, /\.context-menu\.keyword-editor-card\s*\{[^}]*background: color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\);[^}]*backdrop-filter: blur\(18px\)/s);
 assert.match(keywordEditorCardCss, /\.keyword-editor-card \.context-menu-file-format\s*\{[^}]*font-size: var\(--cap-ui-font-heading\);/s);
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*border-radius: 12px;/s);

@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import type { ImageIndexItem } from "../../shared/types";
-import LegacyResultsContextMenuLayer from "./LegacyResultsContextMenuLayer";
 import ResponsiveResultsContextMenuLayer from "./ResponsiveResultsContextMenuLayer";
 
 export interface ResultsContextMenuState {
@@ -9,8 +8,6 @@ export interface ResultsContextMenuState {
   item: ImageIndexItem;
   items: ImageIndexItem[];
   preview: () => void;
-  shellState: "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
-  responsive: boolean;
 }
 
 export interface ResultsContextMenuLayerProps {
@@ -28,8 +25,6 @@ interface ResultsContextMenuAdapterProps extends ResultsContextMenuLayerProps {
   menuStyle: CSSProperties;
 }
 
-const ResultsContextMenuLayer = (props: ResultsContextMenuAdapterProps) => props.state.responsive
-  ? <ResponsiveResultsContextMenuLayer {...props} />
-  : <LegacyResultsContextMenuLayer {...props} />;
+const ResultsContextMenuLayer = (props: ResultsContextMenuAdapterProps) => <ResponsiveResultsContextMenuLayer {...props} />;
 
 export default ResultsContextMenuLayer;

@@ -172,7 +172,7 @@ let quickActionGlobalEnabled = true;
 let shortcutCaptureActive = false;
 let registeredMainSearchShortcut: string | null = null;
 const registeredShellModeShortcuts = new Map<string, string>();
-type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "cycleDirectory" | "openSettings";
+type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleSkim" | "cycleDirectory" | "openSettings";
 type GlobalShortcutActionId = Exclude<ShortcutActionId, "cycleDirectory">;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type ShortcutPreferenceProfiles = { stableShortcutActions: ShortcutActionPreferences };
@@ -888,12 +888,12 @@ const registerMainSearchShortcut = (shortcut: string) => {
   try {
     registered = globalShortcut.register(shortcut, activateMainSearchShortcut);
   } catch (error) {
-    console.warn("[shortcut] failed to register activate capsule shortcut", { shortcut, error });
+    console.warn("[shortcut] failed to register main search shortcut", { shortcut, error });
     return false;
   }
 
   if (!registered) {
-    console.warn("[shortcut] failed to register activate capsule shortcut", { shortcut });
+    console.warn("[shortcut] failed to register main search shortcut", { shortcut });
     return false;
   }
 
@@ -938,18 +938,18 @@ const activateShellModeShortcut = async (mode: "normal" | "standby" | "skim" | "
 };
 
 const registerShellModeShortcuts = (shortcutActions: {
-  activateNormal: string;
-  activateStandby: string;
-  activateSkim: string;
+  restoreDefaultWindow: string;
+  hideToLine: string;
+  toggleSkim: string;
   openSettings: string;
 }) => {
   unregisterShellModeShortcuts();
   const unavailableActionIds = new Set<GlobalShortcutActionId>();
   const shortcutModes = [
-    { id: "activateStandby", shortcut: shortcutActions.activateStandby, mode: "standby" },
-    { id: "activateSkim", shortcut: shortcutActions.activateSkim, mode: "skim" },
+    { id: "hideToLine", shortcut: shortcutActions.hideToLine, mode: "standby" },
+    { id: "toggleSkim", shortcut: shortcutActions.toggleSkim, mode: "skim" },
     { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" },
-    { id: "activateNormal", shortcut: shortcutActions.activateNormal, mode: "normal" }
+    { id: "restoreDefaultWindow", shortcut: shortcutActions.restoreDefaultWindow, mode: "normal" }
   ] as const;
 
   for (const { id, shortcut, mode } of shortcutModes) {
@@ -980,8 +980,8 @@ const unregisterConfiguredGlobalShortcuts = () => {
 const registerConfiguredGlobalShortcuts = (shortcutActions: ShortcutActionPreferences) => {
   unregisterConfiguredGlobalShortcuts();
   const unavailableActionIds = registerShellModeShortcuts(shortcutActions);
-  if (!registerMainSearchShortcut(shortcutActions.activateCapsule)) {
-    unavailableActionIds.add("activateCapsule");
+  if (!registerMainSearchShortcut(shortcutActions.focusMainSearch)) {
+    unavailableActionIds.add("focusMainSearch");
   }
   unavailableGlobalShortcutActionIds = unavailableActionIds;
   return unavailableActionIds;
@@ -989,11 +989,11 @@ const registerConfiguredGlobalShortcuts = (shortcutActions: ShortcutActionPrefer
 
 const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) => {
   const shortcutEntries: Array<[GlobalShortcutActionId, string]> = [
-    ["activateCapsule", shortcutActions.activateCapsule],
-    ["activateStandby", shortcutActions.activateStandby],
-    ["activateSkim", shortcutActions.activateSkim],
+    ["focusMainSearch", shortcutActions.focusMainSearch],
+    ["hideToLine", shortcutActions.hideToLine],
+    ["toggleSkim", shortcutActions.toggleSkim],
     ["openSettings", shortcutActions.openSettings],
-    ["activateNormal", shortcutActions.activateNormal]
+    ["restoreDefaultWindow", shortcutActions.restoreDefaultWindow]
   ];
   const unavailableActionIds = new Set<GlobalShortcutActionId>();
   const registeredShortcuts: string[] = [];
@@ -1084,9 +1084,9 @@ const showBackgroundRunNotificationOnce = async (
   preferences: Awaited<ReturnType<typeof getUserPreferences>>
 ) => {
   if (!preferences.systemNotificationsEnabled || preferences.backgroundRunNotificationShown) return;
-  const configuredShortcut = getActiveShortcutActions(preferences).activateCapsule;
+  const configuredShortcut = getActiveShortcutActions(preferences).focusMainSearch;
   const shortcutAvailable = preferences.quickActionGlobalEnabled
-    && !unavailableGlobalShortcutActionIds.has("activateCapsule");
+    && !unavailableGlobalShortcutActionIds.has("focusMainSearch");
   const content = shortcutAvailable
     ? t("notification.backgroundRunContent", { shortcut: configuredShortcut })
     : t("notification.backgroundRunContentWithoutShortcut");
@@ -2774,12 +2774,10 @@ ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, next
 });
 
 ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {
-  activateCapsule: string;
-  activateMicro: string;
-  activateMini: string;
-  activateNormal: string;
-  activateStandby: string;
-  activateSkim: string;
+  focusMainSearch: string;
+  restoreDefaultWindow: string;
+  hideToLine: string;
+  toggleSkim: string;
   cycleDirectory: string;
   openSettings: string;
 }) => {

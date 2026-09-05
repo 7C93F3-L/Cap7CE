@@ -10,7 +10,7 @@ import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSettingsDataSynchronization } from "./controllers/useSettingsDataSynchronization";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
-import { getImageContextMenuStyle } from "./ImageContextMenu";
+import { getFileContextMenuStyle } from "./fileContextMenuShared";
 import { getKeywordEditorExitDelay } from "./keywordEditorInteraction";
 import {
   AddDroppedDirectoriesPanel,
@@ -28,7 +28,6 @@ import { getCommonKeywords } from "./dialogs/keywordEditorModel";
 import { normalizeWindowsPathKey } from "./filePath";
 import { formatDisplayMessage } from "./formatting";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
-import type { SearchCapsuleLabelVisibility } from "./search/Cap7CESearchCapsule";
 import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplayExtensions } from "./search/searchViewModel";
 import { parseAssistantInvocation } from "./assistant/assistantInvocation";
 import { hasAiSearchScopeChanged, useAiSearchBeta } from "./ai-search";
@@ -49,6 +48,7 @@ import type {
   ImageIndexItem,
   LanguagePreference,
   ResolvedThemeMode,
+  SearchLabelVisibilityPreferences,
   SearchState,
   ShortcutActionId,
   ShortcutActionPreferences,
@@ -238,7 +238,6 @@ interface AppProps {
   stableUiRenderer: StableUiRenderer;
 }
 const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
-  const stableUi = true;
   const [view, setView] = useState<AppView>("home");
   const navigationEntriesRef = useRef<AppView[]>(["home"]);
   const navigationIndexRef = useRef(0);
@@ -264,7 +263,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [stableSkimToggleRequestId, setStableSkimToggleRequestId] = useState(0);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
-  const [searchCapsuleLabelVisibility, setSearchCapsuleLabelVisibility] = useState<SearchCapsuleLabelVisibility>({
+  const [, setSearchLabelVisibility] = useState<SearchLabelVisibilityPreferences>({
     directory: true,
     sort: true,
     format: true,
@@ -390,7 +389,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const directoryOptions = useMemo(() => [createAllDirectoriesOption(directories), ...directories], [directories]);
   const totalFileCount = directoryOptions[0]?.fileCount ?? null;
   const effectiveTheme: ResolvedThemeMode = theme === "system" ? systemTheme : theme;
-  const uiFontStyle = useUiFontSize(stableUi ? uiFontSize : defaultUiFontSize);
+  const uiFontStyle = useUiFontSize(uiFontSize);
   const appThemeStyle = {
     ...uiFontStyle,
     "--theme-color": appearanceColors.themeColor,
@@ -399,16 +398,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     "--theme-on-color": getTextColorForBackground(appearanceColors.themeColor),
     "--accent-on-color": getTextColorForBackground(appearanceColors.accentColor)
   } as CSSProperties;
-  const contextMenuStyle = getImageContextMenuStyle(effectiveTheme, appearanceColors);
+  const contextMenuStyle = getFileContextMenuStyle(effectiveTheme, appearanceColors);
   const operationHint = useOperationHintController({
-    shellState: stableUi ? "normal" : shellState,
     query: search.query,
     enabled: operationHintsEnabled,
     commandEnabled,
     quickActionGlobalEnabled,
     unavailableShortcutActionIds,
-    shortcutActions,
-    stableUi
+    shortcutActions
   });
   const searchInputFeedback = quickCommandNotice || operationHint;
   const operationHintVisible = quickCommandNotice.length === 0 && operationHint.length > 0;
@@ -546,8 +543,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     ) return;
     dismissTransientInteractionsForStandby();
     resetShellBehaviorState();
-    if (stableUi) void window.cap7ce?.window.setShellState("standby"); else setShellState("standby");
-  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isDeletingFiles, isSavingMetadata, resetShellBehaviorState, stableUi]);
+    void window.cap7ce?.window.setShellState("standby");
+  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isDeletingFiles, isSavingMetadata, resetShellBehaviorState]);
 
   const navigateTo = useCallback((nextView: AppView) => {
     const entries = navigationEntriesRef.current;
@@ -644,7 +641,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
             setCommandEnabled(preferences.commandEnabled);
             setShortcutActions(normalizeStableShortcutActions(preferences.stableShortcutActions));
-            setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
+            setSearchLabelVisibility(preferences.searchLabelVisibility);
             setSkimDisplay(preferences.skimDisplay);
             setSkimSidebarFolders(preferences.skimSidebarFolders);
             setSkimSystemLocationsCollapsed(preferences.skimSystemLocationsCollapsed);
@@ -753,11 +750,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   useEffect(() => {
-    if (!stableUi || isLoadingDirectories || resultsInitializedRef.current) return;
+    if (isLoadingDirectories || resultsInitializedRef.current) return;
     const initialSearch = { ...emptySearch, sortField: search.sortField, sortDirection: search.sortDirection };
     setSearch(initialSearch);
     void runSearch(initialSearch, { navigate: false });
-  }, [isLoadingDirectories, stableUi]);
+  }, [isLoadingDirectories]);
 
   const updateResultsSearch = (nextSearch: SearchState, refresh = false) => {
     setSearch(nextSearch);
@@ -897,8 +894,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  const updateSearchCapsuleLabelVisibility = (nextVisibility: SearchCapsuleLabelVisibility) => {
-    setSearchCapsuleLabelVisibility(nextVisibility);
+  const updateSearchLabelVisibility = (nextVisibility: SearchLabelVisibilityPreferences) => {
+    setSearchLabelVisibility(nextVisibility);
     void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
   };
 
@@ -943,7 +940,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return false;
     }
 
-    setSearchCapsuleLabelVisibility((currentVisibility) => {
+    setSearchLabelVisibility((currentVisibility) => {
       const nextVisibility = { ...currentVisibility, directory: true };
       void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
       return nextVisibility;
@@ -1395,7 +1392,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       maximizeWindow: maximizeCommandWindow,
       setAlwaysOnTop: setCommandAlwaysOnTop,
       showDirectoryLabel: () => {
-        setSearchCapsuleLabelVisibility((currentVisibility) => {
+        setSearchLabelVisibility((currentVisibility) => {
           const nextVisibility = { ...currentVisibility, directory: true };
           void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
           return nextVisibility;
@@ -1403,7 +1400,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       },
       selectDirectoryLabel: selectCommandDirectoryLabel,
       showSortLabel: () => {
-        setSearchCapsuleLabelVisibility((currentVisibility) => {
+        setSearchLabelVisibility((currentVisibility) => {
           const nextVisibility = { ...currentVisibility, sort: true };
           void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
           return nextVisibility;
@@ -1411,9 +1408,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       },
       setSortDirection: (sortDirection) => updateResultsSearch({ ...getCommandBaseSearch(), sortDirection }, true),
       setSortField: (sortField) => updateResultsSearch({ ...getCommandBaseSearch(), sortField }, true),
-      setAllLabelsVisible: (visible) => updateSearchCapsuleLabelVisibility({ directory: visible, sort: visible, format: visible, skimDisplay: visible, ai: visible }),
+      setAllLabelsVisible: (visible) => updateSearchLabelVisibility({ directory: visible, sort: visible, format: visible, skimDisplay: visible, ai: visible }),
       setLabelVisible: (label, visible) => {
-        setSearchCapsuleLabelVisibility((currentVisibility) => {
+        setSearchLabelVisibility((currentVisibility) => {
           const nextVisibility = { ...currentVisibility, [label]: visible };
           void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
           return nextVisibility;
@@ -1581,7 +1578,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchCapsuleLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
+  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
 
   const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
     try {
@@ -1593,30 +1590,28 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return true;
     } catch (error) {
       const message = formatDisplayMessage(error instanceof Error ? error.message : t("skim.sidebar.updateFailed"));
-      if (view === "skim" || stableUi) showSkimFeedback(message);
-      else showQuickCommandNotice(message);
+      showSkimFeedback(message);
       return false;
     }
-  }, [showQuickCommandNotice, showSkimFeedback, stableUi, view]);
+  }, [showSkimFeedback]);
 
   const addSkimSidebarFolders = useCallback(async (folderPaths: string[]) => {
     const existingKeys = new Set(skimSidebarFolders.map(normalizeWindowsPathKey));
     const missingFolders = folderPaths.filter((folderPath) => !existingKeys.has(normalizeWindowsPathKey(folderPath)));
     if (missingFolders.length === 0) return;
     if (await saveSkimSidebarFolders([...skimSidebarFolders, ...missingFolders])) {
-      showSkimFeedback(t(stableUi ? "skim.sidebar.starredFeedback" : "skim.sidebar.addedFeedback"));
+      showSkimFeedback(t("skim.sidebar.starredFeedback"));
     }
-  }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders, stableUi]);
+  }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders]);
 
   const removeSkimSidebarFolders = useCallback(async (folderPaths: string[]) => {
     const removedKeys = new Set(folderPaths.map(normalizeWindowsPathKey));
     const nextFolders = skimSidebarFolders.filter((candidate) => !removedKeys.has(normalizeWindowsPathKey(candidate)));
     if (nextFolders.length === skimSidebarFolders.length) return;
     if (await saveSkimSidebarFolders(nextFolders)) {
-      if (view === "skim" || stableUi) showSkimFeedback(t(stableUi ? "skim.sidebar.unstarredFeedback" : "skim.sidebar.removedFeedback"));
-      else showQuickCommandNotice(t("skim.sidebar.removedFeedback"));
+      showSkimFeedback(t("skim.sidebar.unstarredFeedback"));
     }
-  }, [saveSkimSidebarFolders, showQuickCommandNotice, showSkimFeedback, skimSidebarFolders, stableUi, view]);
+  }, [saveSkimSidebarFolders, showSkimFeedback, skimSidebarFolders]);
 
   const toggleSkimSystemLocations = useCallback(async () => {
     const nextCollapsed = !skimSystemLocationsCollapsed;
@@ -2125,14 +2120,10 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateSkimRequested?.(() => {
       if (dialog === "editKeywords") return;
-      if (stableUi) {
-        setStableSkimToggleRequestId((requestId) => requestId + 1);
-      } else {
-        openSkim();
-      }
+      setStableSkimToggleRequestId((requestId) => requestId + 1);
     });
     return () => unsubscribe?.();
-  }, [dialog, openSkim, stableUi]);
+  }, [dialog]);
 
   const refreshCurrentPage = async () => {
     if (
@@ -2348,7 +2339,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     showSkimFeedback,
     shellState,
     skimCurrentPath,
-    stableUi,
     shortcutActions,
     view
   ]);
@@ -2370,9 +2360,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const resultStatusNode = <ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />;
   const createResultsViewProps = (): ResultsViewProps => ({
-    shellState: "normal",
-    responsiveLayout: true,
-    searchCapsule: null,
     images: searchResults,
     isSearching: isSearching || aiSearchBeta.busy,
     aiSearchPhase: aiSearchBeta.phase,
@@ -2392,26 +2379,19 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onContextMenu: (event, item, selectedItems, preview) => {
       event.preventDefault();
       event.stopPropagation();
-      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: "normal", responsive: true });
+      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview });
     },
     onContextMenuClose: closeContextMenu,
     onOpenImage: (item) => invokeFileAction("open", item),
     onShowInFolder: (item) => invokeFileAction("showInFolder", item),
     onDeleteItems: requestDeleteFiles,
-    onOpenSkim: () => undefined,
     onAiSearchSectionToggle: () => aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults)
   });
   const createSkimViewProps = (active = true): SkimViewProps => ({
-    search: { ...search, ...skimSortPreference }, visualSessionId: skimVisualSessionId,
-    entries: sortedSkimEntries, currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs,
-    isLoading: isSkimLoading, feedback: skimFeedback, theme: effectiveTheme, appearanceColors,
-    shellState: "normal", responsiveLayout: true, embedded: true, active,
-    isAddingDirectory, inputFeedback: searchInputFeedback, inputFeedbackIsGuide: operationHintVisible,
-    labelVisibility: searchCapsuleLabelVisibility, skimDisplayMode: skimDisplay.mode, searchInputRef,
-    onSearchChange: (nextSearch) => setSearch({ ...nextSearch, sortField: search.sortField, sortDirection: search.sortDirection }),
-    onSearchOptionsChange: updateSkimSort, onLabelVisibilityChange: updateSearchCapsuleLabelVisibility,
-    onSkimDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
-    onSearch: () => submitSearch(search), onOpenRoot: () => openSkimLocation(null), onOpenBreadcrumb: openSkimLocation,
+    visualSessionId: skimVisualSessionId,
+    entries: sortedSkimEntries, currentPath: skimCurrentPath,
+    isLoading: isSkimLoading, theme: effectiveTheme, appearanceColors, active,
+    isAddingDirectory, onOpenBreadcrumb: openSkimLocation,
     onOpenEntry: (entry) => { if (entry.kind === "drive" || entry.kind === "folder") openSkimLocation(entry.path); },
     onAddEntries: (entries) => void addSkimEntries(entries), sidebarFolderPaths: skimSidebarFolders,
     sidebarKnownPaths: skimLocations.flatMap((location) => location.path ? [location.path] : []),

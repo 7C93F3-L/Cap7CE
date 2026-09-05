@@ -248,12 +248,10 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateSkimSidebarFolders: (skimSidebarFolders: string[]) => ipcRenderer.invoke("preferences:updateSkimSidebarFolders", skimSidebarFolders),
     updateSkimSystemLocationsCollapsed: (collapsed: boolean) => ipcRenderer.invoke("preferences:updateSkimSystemLocationsCollapsed", collapsed),
     updateShortcutActions: (shortcutActions: {
-      activateCapsule: string;
-      activateMicro: string;
-      activateMini: string;
-      activateNormal: string;
-      activateStandby: string;
-      activateSkim: string;
+      focusMainSearch: string;
+      restoreDefaultWindow: string;
+      hideToLine: string;
+      toggleSkim: string;
       cycleDirectory: string;
       openSettings: string;
     }) => ipcRenderer.invoke("preferences:updateShortcutActions", shortcutActions),

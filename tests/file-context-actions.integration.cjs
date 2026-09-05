@@ -98,14 +98,14 @@ const resultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "rendere
 const responsiveResultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "ResponsiveResultsContextMenuLayer.tsx"), "utf8");
 const responsiveMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "components", "ResponsiveFileContextMenu.tsx"), "utf8");
 const responsiveMenuStyles = fs.readFileSync(path.join(projectRoot, "src", "renderer", "components", "ResponsiveFileContextMenu.css"), "utf8");
-const legacyResultsMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "LegacyResultsContextMenuLayer.tsx"), "utf8");
 const resultsSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "results", "ResultsView.tsx"), "utf8");
 const previewSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "PreviewWindowApp.tsx"), "utf8");
 const skimSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "skim", "SkimView.tsx"), "utf8");
 const responsiveSkimMenuSource = fs.readFileSync(path.join(projectRoot, "src", "renderer", "skim", "ResponsiveSkimContextMenuLayer.tsx"), "utf8");
 
 assert.match(appSource, /<ResultsContextMenuLayer/);
-assert.match(resultsMenuSource, /state\.responsive[\s\S]*ResponsiveResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
+assert.match(resultsMenuSource, /<ResponsiveResultsContextMenuLayer \{\.\.\.props\} \/>/);
+assert.doesNotMatch(resultsMenuSource, /LegacyResultsContextMenuLayer|state\.responsive/);
 assert.match(responsiveResultsMenuSource, /actionGroups=\{\[[\s\S]*preview[\s\S]*open[\s\S]*showInFolder[\s\S]*copyPaths[\s\S]*editKeywords[\s\S]*delete/);
 for (const marker of ["compactHeightBreakpoint = 360", "stableTitlebarBottom = 45", "viewportGap = 5", "data-layout", "createPortal", "MiddleEllipsisFileName"]) {
   assert.ok(responsiveMenuSource.includes(marker), `Responsive file context menu is missing ${marker}.`);
@@ -113,7 +113,6 @@ for (const marker of ["compactHeightBreakpoint = 360", "stableTitlebarBottom = 4
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu\.is-compact[\s\S]*grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
 assert.match(responsiveMenuSource, /action\.shortcut[\s\S]*<kbd>/);
 assert.match(responsiveResultsMenuSource, /fileContextShortcutLabels\.primaryView[\s\S]*fileContextShortcutLabels\.delete/);
-assert.match(legacyResultsMenuSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(resultsSource, /getFileContextShortcutAction\s*\(event\)/);
 assert.doesNotMatch(previewSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(previewSource, /getFileContextShortcutAction\s*\(event\)/);

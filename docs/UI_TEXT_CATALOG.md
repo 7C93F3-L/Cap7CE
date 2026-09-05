@@ -161,10 +161,11 @@
 | `search.fileMissing`           | 文件已不存在                                         |                                        |     | 预览 / 操作反馈          |
 | `search.guide.search`          | 在此键入关键词进行搜索。                                  |                                        |     | 首次操作提示            |
 | `search.guide.showCurrent`     | 搜索框留空并按下回车键，可浏览当前范围内的内容。                       |                                        |     | 随机操作提示            |
-| `search.guide.activateCapsule` | 按下 {shortcut}，随时唤起快速搜索。                         |                                        |     | 动态快捷键提示           |
-| `search.guide.activateNormal`  | 按下 {shortcut}，使用 normal 模式浏览大量文件。              |                                        |     | 动态快捷键提示           |
-| `search.guide.activateLine`    | 按下 {shortcut}，将窗口收起为 line。                       |                                        |     | 动态快捷键提示           |
-| `search.guide.openSettings`    | 按下 {shortcut}，快速打开设置界面。                         |                                        |     | 动态快捷键提示           |
+| `search.guide.focusMainSearch` | 按下 {shortcut}，显示主窗口并聚焦搜索框。 | | Press {shortcut} to show the main window and focus search. | 动态快捷键提示 |
+| `search.guide.restoreDefaultWindow` | 按下 {shortcut}，以默认大小和位置显示主窗口。 | | Press {shortcut} to show the main window at its default size and position. | 动态快捷键提示 |
+| `search.guide.hideToLine` | 按下 {shortcut}，关闭主窗口并显示 line。 | | Press {shortcut} to close the main window and show line. | 动态快捷键提示 |
+| `search.guide.toggleSkim` | 按下 {shortcut}，展开或收起 skim。 | | Press {shortcut} to expand or collapse skim. | 动态快捷键提示 |
+| `search.guide.openSettings` | 按下 {shortcut}，快速打开设置界面。 | | Press {shortcut} to open Settings quickly. | 动态快捷键提示 |
 | `search.guide.preview`         | 选中一个搜索结果，按下空格键即可快速预览。                         |                                        |     | 随机操作提示            |
 | `search.guide.previewNavigate` | 快速预览时，可使用鼠标滚轮或方向键切换文件。                        |                                        |     | 随机操作提示            |
 | `search.guide.previewContextMenu` | 快速预览窗口也支持右键菜单。                              |                                        |     | 随机操作提示            |
@@ -275,22 +276,11 @@
 | `settings.visible`                 | 显示                            |                           |     | 待机线状态           |
 | `settings.hidden`                  | 不显示                           |                           |     | 待机线状态           |
 | `settings.edgeCollapse`            | 边缘收起                          |                           |     | 窗口边缘收起开关       |
-| `settings.rememberWindowLayout`    | 窗口记忆                          |                           | Window Memory | 窗口位置与尺寸记忆开关 |
 | `settings.enabled`                 | 打开                            |                           |     | 开关状态            |
 | `settings.disabled`                | 关闭                            |                           |     | 开关状态            |
-| `settings.enableRememberWindowLayoutHint` | 点击打开记忆窗口位置 | | Click to remember window positions | 窗口记忆关闭状态 title |
-| `settings.disableRememberWindowLayoutHint` | 点击关闭记忆窗口位置 | | Click to stop remembering window positions | 窗口记忆打开状态 title |
 | `settings.launchAtLogin`           | 开机运行                          |                           |     | Windows 登录启动     |
 | `settings.launchAtLoginOn`         | 启动                            |                           |     | 开机运行状态          |
 | `settings.launchAtLoginOff`        | 关闭                            |                           |     | 开机运行状态          |
-| `settings.compatibilityMode`       | 兼容模式                          | Compatibility Mode        |     | 目标窗口模式          |
-| `settings.cap7ceMode`              | Cap7CE 模式                     | Cap7CE Mode               |     | 目标窗口模式          |
-| `settings.windowModeSwitchDescription` | 卡顿等问题时可尝试切换                | Try switching if issues occur. | | 窗口模式切换说明 |
-| `settings.switchWindowMode`        | 切换                            | Switch                    |     | 窗口模式切换按钮       |
-| `settings.switchingWindowMode`     | 切换中                           | Switching                 |     | 窗口模式切换中         |
-| `settings.windowModeSwitchFailed`  | 切换失败，请重试                    | Switch failed. Try again  |     | 窗口模式切换失败       |
-| `settings.switchToCompatibilityHint` | 点击后切换为兼容模式                  | Click to switch to Compatibility Mode | | 兼容模式切换提示 |
-| `settings.switchToCap7CEHint`      | 点击后切换为 Cap7CE 模式             | Click to switch to Cap7CE Mode | | Cap7CE 模式切换提示 |
 | `settings.operationHints`          | 操作提示                          |                           |     | 搜索框操作提示设置       |
 | `settings.operationHintsOn`        | 显示                            |                           |     | 操作提示开启状态        |
 | `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |
@@ -319,11 +309,12 @@
 | `settings.closeQuickCommands`      | 关闭查看                          |                           |     | 快捷指令            |
 | `settings.confirmationCommands`    | 需二次确认类                        |                           |     | 快捷指令分组          |
 | `settings.confirmationCommandHint` | 危险操作执行前将在输入框内要求输入 y / n 二次确认。 | 执行前将在输入框内要求输入 y / n 二次确认。 |     | 快捷指令说明          |
-| `shortcut.activateCapsule`         | 激活胶囊                          | 激活capsule                 |     | 快捷动作名称          |
-| `shortcut.activateNormal`          | 激活normal                      |                           |     | 快捷动作名称；中英文空格需核对 |
-| `shortcut.activateStandby`         | 激活standby                     | 激活line                    |     | 快捷动作名称；中英文空格需核对 |
-| `shortcut.cycleDirectory`          | 目录切换                          |                           |     | 窗口内快捷动作          |
-| `shortcut.openSettings`            | 打开设置                          |                           |     | 快捷动作名称          |
+| `shortcut.focusMainSearch` | 显示主窗口并聚焦搜索 | | Show main window and focus search | 快捷动作名称 |
+| `shortcut.hideToLine` | 关闭主窗口并显示 line | | Close main window and show line | 快捷动作名称 |
+| `shortcut.toggleSkim` | 展开 / 收起 skim | | Expand / collapse skim | 快捷动作名称 |
+| `shortcut.openSettings` | 打开设置 | | Open Settings | 快捷动作名称 |
+| `shortcut.restoreDefaultWindow` | 默认大小和位置打开主窗口 | | Open main window at default size and position | 快捷动作名称 |
+| `shortcut.cycleDirectory` | 目录切换 | | Cycle folders | 窗口内快捷动作 |
 
 ## 7. Settings：llama.cpp、视觉模型与详情
 
@@ -661,7 +652,7 @@
 以下仅是扫描结果，不代表已决定修改：
 
 1. 主题状态同时存在“浅色 / 深色”“明亮 / 黑暗”“亮色模式 / 暗色模式”。
-2. Settings 使用“模式切换”，但软件同时存在 Capsule / micro / mini / normal 等窗口模式，语义容易混淆。
+2. 旧窗口模式切换与 Capsule / micro / mini 已退役；当前只保留主窗口显示、隐藏至 line、Skim 切换和默认几何恢复。
 3. 同一功能存在“线状胶囊”“待机线”“待机线条”三种名称。
 4. 同一颜色角色存在“副色”，后续可确认是否统一为“强调色”。
 5. Settings 使用“快捷动作”，快捷指令分类使用“快捷键类”，执行反馈又使用“全局快捷键”。三者可能需要明确层级。
@@ -676,7 +667,7 @@
 可在此直接记录全局规则，例如：
 
 - 主题模式统一使用：明亮/黑暗
-- 所有语言模式下，除快捷指令 win:cap 为简写外，窗口形态统一使用：line / capsule / micro / mini / normal ，包括用户可见文字及内部代号，以避免混淆。
+- 窗口相关文字只使用“主窗口”“line”“展开 / 收起 skim”“默认大小和位置”，不再暴露旧 capsule / micro / mini / normal 形态名。
 - 待机线统一使用：line
 - 颜色角色统一使用：颜色1 / 颜色2
 - 排序方向统一使用：升序 / 降序

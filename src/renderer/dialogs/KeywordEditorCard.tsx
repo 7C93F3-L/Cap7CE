@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { createPortal } from "react-dom";
 import { t } from "../../../electron/localization";
 import type { ResolvedThemeMode } from "../../shared/types";
-import { splitMiddleEllipsisFileName } from "../ImageContextMenu";
+import { splitMiddleEllipsisFileName } from "../fileContextMenuShared";
 import {
   centerFloatingCardPosition,
   getKeywordEditorTextareaMaximumHeight,

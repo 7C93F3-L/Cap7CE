@@ -9,7 +9,6 @@ import { getResultLayoutIndexForFileIndex, type ResultGridLayoutItem } from "./r
 import {
   captureResultGridScrollMemory,
   getImageGridLayout,
-  getResultLayoutMode,
   getScrollLeftToRevealItem,
   getScrollTopToRevealItem,
   imageGridGap,
@@ -21,11 +20,7 @@ import {
   type ResultLayoutMode
 } from "../virtualGridLayout";
 
-export type ResultShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
-
 export interface VirtualImageGridProps {
-  shellState: ResultShellState;
-  responsiveLayout?: boolean;
   images: ImageIndexItem[];
   layoutItems?: ResultGridLayoutItem[];
   selectedImageIds: ReadonlySet<string>;
@@ -43,15 +38,12 @@ export interface VirtualImageGridProps {
   onOpenImage: (item: ImageIndexItem) => void;
   onStartDrag: (event: React.DragEvent, item: ImageIndexItem) => void;
   onLayoutChange: (metrics: { left: number; right: number; columnCount: number }) => void;
-  onOpenSkim: () => void;
   onAiSearchSectionToggle: () => void;
 }
 
-const EmptySearchResult = ({ message, onOpenSkim, interactive }: { message: string; onOpenSkim: () => void; interactive: boolean }) => interactive ? (
-  <button className="empty-result-row cap-skim-empty-entry" type="button" onClick={onOpenSkim}><span className="cap-empty-result-content"><span>{message}</span><span>{t("skim.searchElsewhere")}</span></span></button>
-) : <div className="empty-result-row">{message}</div>;
+const EmptySearchResult = ({ message }: { message: string }) => <div className="empty-result-row">{message}</div>;
 
-export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images, layoutItems, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onOpenSkim, onAiSearchSectionToggle }: VirtualImageGridProps) => {
+export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onAiSearchSectionToggle }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const restoreFrameRef = useRef<number | null>(null);
@@ -64,7 +56,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
   const viewportRef = useRef({ width: 0, height: 0 });
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [scrollTop, setScrollTop] = useState(initialScrollMemory.offset);
-  const [lowHeightLayout, setLowHeightLayout] = useState(() => responsiveLayout && window.matchMedia("(max-height: 359.98px)").matches);
+  const [lowHeightLayout, setLowHeightLayout] = useState(() => window.matchMedia("(max-height: 359.98px)").matches);
   const gridItems = useMemo<ResultGridLayoutItem[]>(() => layoutItems ?? images.map((item, fileIndex) => ({
     kind: "file",
     key: `file:${item.id}`,
@@ -76,9 +68,9 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
     [gridItems]
   );
   const hasGridItems = gridItems.length > 0;
-  const layoutMode = responsiveLayout ? (lowHeightLayout ? "micro" : "normal") : getResultLayoutMode(shellState);
+  const layoutMode = lowHeightLayout ? "micro" : "normal";
   const isHorizontalGrid = layoutMode === "micro";
-  const minimumColumnCount = responsiveLayout ? 2 : 1;
+  const minimumColumnCount = 2;
   const captureScrollMemory = useCallback((container: HTMLElement, nextScrollTop: number) => {
     const { cellSize, columnCount, isHorizontal } = getImageGridLayout(
       layoutMode,
@@ -152,13 +144,12 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
   }, []);
 
   useEffect(() => {
-    if (!responsiveLayout) return undefined;
     const mediaQuery = window.matchMedia("(max-height: 359.98px)");
     const updateLayout = () => setLowHeightLayout(mediaQuery.matches);
     updateLayout();
     mediaQuery.addEventListener("change", updateLayout);
     return () => mediaQuery.removeEventListener("change", updateLayout);
-  }, [responsiveLayout]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -356,7 +347,7 @@ export const VirtualImageGrid = ({ shellState, responsiveLayout = false, images,
       <section className="image-grid cap-main-scroll-viewport" aria-label={t("search.resultGridLabel")} ref={containerRef} onScroll={handleScroll} onWheel={handleWheel}>
       {searchError && <div className="empty-result-row">{searchError}</div>}
       {!isSearching && !searchError && !hasGridItems && (
-        <EmptySearchResult message={t("search.emptyResult")} onOpenSkim={onOpenSkim} interactive={!responsiveLayout} />
+        <EmptySearchResult message={t("search.emptyResult")} />
       )}
       {!searchError && hasGridItems && (
         <div className="virtual-grid-spacer" style={{ height: virtualGrid.totalHeight, width: isHorizontalGrid ? virtualGrid.totalWidth : "100%" }} data-rendered-count={virtualGrid.visibleItems.length} data-column-count={virtualGrid.columnCount}>

@@ -6,6 +6,8 @@
 
 0.9.9 兼容窗口专项 C0 至 C9 与新版稳定 UI 的 U0 至 U11 记录均为历史迁移依据。当前产品已完成稳定窗口宿主收口：主窗口、独立 Settings 与 Preview 只装配新版 Renderer、40 DIP Window Controls Overlay 和同一套 Acrylic / Mica 材质运行时，不再保留可执行的 Cap7CE / compatibility 外壳或模式切换。后续界面入口必须复用正式业务动作与状态权威，不能从历史专项恢复平行业务链。
 
+本文中以 C、D、U、A 编号开头的段落记录各阶段当时的边界，不代表当前仍可执行的宿主。当前实现以第 16 节为准：搜索只使用 `StableSearchInput`，搜索结果与 Skim 只使用 `ResponsiveFileContextMenu`，旧搜索胶囊、旧分栏菜单、旧 Results / Skim 适配层及其 CSS、图标和测试均已物理删除。
+
 ## 1. 项目定位
 
 Cap7CE 是 Windows 本地视觉文件搜索工具。中文核心概念是“搜索胶囊”，英文可理解为 Capsule Search Core。
@@ -138,7 +140,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `fileDragService.ts` | Windows 原生单文件 / 多文件拖拽 |
 | `staleImageCleanupService.ts` | 源文件缺失后的索引与缓存清理 |
 | `staleFileCleanupService.ts` | 通用文件目录层中缺失源文件的记录清理，不触碰视觉缓存 |
-| `preferenceStore.ts` | 主题、颜色、快捷键、标签显隐、待机线、边缘收起、窗口记忆开关与窗口外壳模式等偏好；旧配置缺少模式字段或字段非法时保持 `cap7ce`，高频窗口 bounds 不进入该文件；拖动位置不再提供额外自绘吸附偏好 |
+| `preferenceStore.ts` | 主题、颜色、快捷键、标签显隐、待机线与边缘收起等偏好；窗口宿主固定为 stable，旧配置中的窗口模式、窗口记忆和已退役快捷动作字段只被安全忽略或映射，不回写也不删除用户文件；高频窗口 bounds 不进入该文件 |
 | `localization.ts` | 主进程与 Renderer 共用的界面文案 ID、中文语言表和参数插值入口 |
 
 ## 4. Preload / IPC 架构
@@ -146,7 +148,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 `electron/preload.ts` 使用 `contextBridge` 统一在 `window.cap7ce` 暴露安全 API。Renderer 只通过这一命名空间调用主进程，不能直接访问 Node；不保留旧 `window.imageEverything` 别名，避免未来 API 继续扩散历史项目名。
 
 当前 IPC 类型大致包括：
-- 窗口：standby、capsule、micro、mini、normal、Settings 切换，最小化、关闭、置顶、最大化状态同步。
+- 窗口：主窗口显示 / standby 隐藏、默认几何恢复、Skim 展开切换、独立 Settings 打开，以及最小化、关闭、置顶、最大化状态同步。
 - 托盘与后台：显示 / 隐藏待机线、打开设置、真正退出。
 - 设置：主题模式、主题色、副色、边缘收起、待机线显示、标签显隐、快捷动作、快捷指令开关。
 - 目录：添加目录、删除目录、更新显示名、列出目录。
@@ -236,11 +238,11 @@ C1 当时在同一偏好领域增加窗口外壳模式的规范化读写 channel
 
 单文件与批量关键词更新两个入口位于 `electron/manualMetadataIpc.ts`；模块负责参数校验、已添加目录归属、可搜索格式判断和关键词规范化，所有格式统一写入用户元数据，不再按视觉 / 非视觉分流或传递 caption。批量入口继续只接受主窗口 sender，目录存储、SQLite 写入函数和本地化文案由 `main.ts` 注入；`test:manual-metadata-ipc` 固定嵌套目录取最深归属、统一写入、批量去重与 sender 拒绝语义。
 
-A6 当前保留 23 条 legacy main IPC：应用更新/退出 5 条、skim 读取与取消 13 条、全局快捷键偏好与捕获 5 条。它们分别共享应用退出与下载控制器、skim 任务/视觉会话/统计取消状态，以及快捷键注册回滚和窗口激活链；继续拆分会跨越既定生命周期所有权或把同一职责分散到装配层两侧。窗口与 preview 生命周期仍按明确边界留在 `main.ts`；line 的状态决策留在装配层，窗口实例生命周期收口到 `lineWindowController.ts`，不以减少直连 channel 数量为目标迁移。U6 新增的 `settingsWindow:open` 由 `settingsWindowIpc.ts` 注册并限制主 Renderer sender，主进程只注入统一打开动作，不扩大 legacy 例外。
+A6 当前保留 22 条 legacy main IPC：应用更新/退出 4 条、skim 读取与取消 13 条、全局快捷键偏好与捕获 5 条。它们分别共享应用退出与下载控制器、skim 任务/视觉会话/统计取消状态，以及快捷键注册回滚和窗口激活链；继续拆分会跨越既定生命周期所有权或把同一职责分散到装配层两侧。窗口与 preview 生命周期仍按明确边界留在 `main.ts`；line 的状态决策留在装配层，窗口实例生命周期收口到 `lineWindowController.ts`，不以减少直连 channel 数量为目标迁移。U6 新增的 `settingsWindow:open` 由 `settingsWindowIpc.ts` 注册并限制主 Renderer sender，主进程只注入统一打开动作，不扩大 legacy 例外。
 
 A7 按稳定组件边界迁移 CSS，不重命名选择器或调整视觉参数。独立 line 窗口的四向外观、横竖渐变流动和边缘对齐集中在 `src/renderer/LineWindowApp.css`；共享视口框架、自绘横纵滚动条、滑块交互与减少动效覆盖集中在 `src/renderer/CustomScrollbar.css`；搜索胶囊、筛选标签与芯片的兼容组件样式集中在 `src/renderer/search/Cap7CESearchCapsule.css`；预览窗口的图片、文本/Markdown、媒体、PDF、Office 转换结果、压缩包、字体、EPUB/MOBI、通用文件信息、加载状态和减少动效规则集中在 `src/renderer/preview/PreviewWindow.css`；skim 主视图、虚拟网格、条目、缩略图与位置边栏集中在 `src/renderer/skim/SkimView.css`，新版 Skim 根页面的系统位置、星标目录与磁盘分组由 `src/renderer/skim/SkimRootSections.tsx` 和同名 CSS 独立持有；搜索结果的虚拟网格、缩略图、视频标记与格式回退集中在 `src/renderer/results/ResultGrid.css`，可信度分类卡独立集中在 `src/renderer/results/ResultSectionCard.css`，结果页外壳、状态统计、尺寸布局和超宽屏边距集中在 `src/renderer/results/ResultsView.css`；轻量关键词编辑卡片的尺寸、输入框、明暗占位色、错误提示与退出动效集中在 `src/renderer/dialogs/KeywordEditorCard.css`，文件/目录删除、拖入、目录替换和缓存清理确认层集中在 `src/renderer/dialogs/ConfirmationPanels.css`；独立 Settings 的页面框架、分组/行和标题控制区集中在 `src/renderer/settings-window/SettingsWindowApp.css`，自绘下拉选择器及其运行时/模型尺寸变体集中在 `src/renderer/settings/SettingsSelect.css`，快捷操作列表与快捷命令面板集中在 `src/renderer/settings/ShortcutSettingsPanels.css`，【自定义查看】的格式分组、类别选择和格式按钮集中在 `src/renderer/settings/SkimDisplaySettingsRows.css`，稳定 Settings 的常驻展开适配集中在 `src/renderer/settings-window/StableSkimDisplaySettingsRows.css`，页脚签名、发布页链接与来源图层集中在 `src/renderer/settings/SettingsFooter.css`；自绘颜色选择器的色彩面板、色相条、游标与十六进制输入集中在 `src/renderer/ColorPickerPopover.css`。通用 SVG 包装、搜索排序图标、跨搜索与 Settings 共用的胶囊按钮基底、line/capsule 共用占位色、通用详情网格和 Settings/结果项表面规则仍由全局样式提供；原生滚动条基底及其与自绘滚动条共用的明暗主题颜色变量、通用右键菜单基底与菜单动效也继续由全局样式提供。Renderer 入口在全局基础样式之后按固定顺序加载领域样式；主题变量、跨视图壳层、共享文件名省略组件和搜索结果复用的空状态规则继续留在全局样式。
 
-关键词编辑卡片的主题纯色蒙版由 `src/renderer/dialogs/KeywordEditorBackdrop.tsx` 与 `KeywordEditorBackdrop.css` 独立持有；旧宿主继续组合该蒙版，stable 主窗口只显示浮层卡片、不再叠加白色或黑色蒙版。共用卡片在 `KeywordEditorCard.css` 内采用与新版浮层一致的 80% 主题表面、12px 圆角、背景模糊和文件摘要层级，输入与保存语义保持不变，不把这些样式重新计入全局入口。
+关键词编辑卡片的主题纯色蒙版由 `src/renderer/dialogs/KeywordEditorBackdrop.tsx` 与 `KeywordEditorBackdrop.css` 独立持有；主窗口只显示浮层卡片，不再叠加白色或黑色蒙版。共用卡片在 `KeywordEditorCard.css` 内采用 80% 主题表面、12px 圆角、背景模糊和文件摘要层级，输入与保存语义保持不变，不把这些样式重新计入全局入口。
 
 Settings“运行信息”中的 Cap7CE 诊断行由 `RuntimeDiagnosticsRows.tsx` 独立持有 IPC 状态，样式位于 `RuntimeDiagnosticsRows.css`；独立 `SettingsWindowApp` 直接组合诊断行与 llama.cpp 运行信息，不把诊断状态提升到 `App.tsx`。
 
@@ -531,12 +533,12 @@ Settings 当前覆盖：
 | --- | --- |
 | `electron/` | 主进程、IPC、窗口、索引、缓存、文件系统、llama.cpp、模型管理 |
 | `electron/preload.ts` | Renderer 安全 API 暴露 |
-| `src/renderer/` | React UI、搜索胶囊、Settings、样式、快捷指令 |
-| `src/renderer/dialogs/` | 关键词编辑与确认面板的纯 UI、局部类型和纯计算模型；stable 的确认类内容共用 `DialogShell` 浮层表面与按钮边界，旧宿主继续由兼容样式保持原布局，业务状态仍由顶层编排持有 |
+| `src/renderer/` | stable React UI、搜索与 Skim 编排、Settings、Preview、样式和快捷指令 |
+| `src/renderer/dialogs/` | 关键词编辑与确认面板的纯 UI、局部类型和纯计算模型；确认类内容共用 `DialogShell` 浮层表面与按钮边界，业务状态仍由顶层编排持有 |
 | `src/renderer/components/` | 无业务状态的 Renderer 通用展示组件 |
 | `src/renderer/results/` | 搜索结果缩略图、格式回退、证据分类标题卡及文件索引 / 布局索引映射；分类卡不进入业务文件数组，跨视图能力仍通过通用辅助模块复用 |
 | `src/renderer/keywords/` | 可复用的关键词标签编辑控件；单文件或多文件保存编排仍由各宿主持有 |
-| `src/renderer/assets/icons/` | 0.7 搜索胶囊窗口控制、排序、设置、签名和警告 SVG 图标 |
+| `src/renderer/assets/icons/` | 文件格式、stable 导航、排序、设置、签名和警告 SVG 图标 |
 | `src/renderer/assets/startup/` | 冷启动提示动画素材 |
 | `src/shared/` | 共享类型与常量 |
 | `docs/` | 当前架构、UI 规划和方案文档 |
@@ -552,10 +554,10 @@ Settings 当前覆盖：
 
 Cap7CE 0.9.9 的产品 Renderer 与原生窗口宿主均已统一为新版 stable：主窗口、独立 Settings 与 Preview 使用 40 DIP Window Controls Overlay 和可实时切换的 Acrylic / Mica，系统拒绝所选材质时回退安全纯色；采用连续响应式布局并允许三窗口并存。旧主 Renderer、旧 Preview 展示分支、独立与同窗 Capsule、micro/mini 自动形态转换、分形态布局记忆、旧 presentation 策略、兼容最大化控制器、模式切换 IPC 和对应偏好字段均已删除；磁盘上的旧布局和已有用户数据不主动清理，历史偏好 JSON 中多余字段由当前读取器安全忽略。当前稳定边界还包括虚拟化搜索与 skim 网格、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、逐词证据可信度排序、15 秒可取消扫描快照、失败抑制后的原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。普通 JPG / JPEG / PNG / WEBP 仅在尺寸、像素量或文件体积超过受限阈值时生成 2560px 预览缓存，轻量源文件直接读取。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；Preview 的单文件手动关键词在信息边栏内以标签方式编辑，经受限 Preview 保存链复用统一规范化与索引写入，并通知主窗口刷新当前结果；多选编辑继续使用共享浮动编辑卡片。HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、共享查看范围、自绘滚动条、主题感知图标与拾色器、输入框内快捷指令和标签切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入按需 AI 搜索，系统解码能力不会扩大 AI、自动优化或模型输入边界；OCR 与不可见的全目录 AI 深度索引未接入。
 
-A7 补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不再属于全局样式入口。Settings 新界面共用的 AI 详情网格基底归入 `src/renderer/settings-window/SettingsWindowApp.css`；旧 Home、旧 Settings、旧 AI 控制区和旧目录表格的零调用组件及样式已移除。最终审计同时移除了已由 SVG、独立关键词编辑卡片和新 Settings 控件替代的零调用图标、胶囊、状态 pill 与旧关键词编辑布局规则；动态窗口过渡、共享菜单、主题、壳层和预览兼容规则继续保留全局所有权。
+L6 最终审计补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不属于全局样式入口。搜索结果与 Skim 只使用 `ResponsiveFileContextMenu`，菜单主题变量、动作类型与文件名拆分工具位于 `fileContextMenuShared.ts`；旧分栏菜单组件、旧 Results / Skim 适配层、旧搜索胶囊、占位网格、专用 CSS 和零调用图标均已删除。`scripts/architecture-boundaries-baseline.json` 直接守护当前 stable 搜索、菜单、Skim 与窗口入口；`build:electron` 在编译前只清理 `dist-electron` 和对应的 TypeScript 增量缓存，完整 `build` 随后扫描 Renderer 与 Electron 生产输出，不得发现旧宿主、兼容标题栏或 Capsule 入口标识。
 
 后续阶段应进入小修小补和稳定性打磨：
 - 优先修复真实使用中可复现的问题。
-- 新功能谨慎加入，先确认不会破坏窗口状态机、搜索胶囊、托盘后台和索引缓存链路。
+- 新功能谨慎加入，先确认不会破坏 stable 窗口生命周期、搜索入口、托盘后台和索引缓存链路。
 - UI 调整尽量限定在目标组件和相关 CSS，避免牵动主进程窗口生命周期。
 - 搜索、识别、缓存和 SQLite 是业务核心，除明确任务外不要顺手修改。

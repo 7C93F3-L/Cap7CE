@@ -4,7 +4,7 @@
 >
 > 状态：自动验证与人工确认通过
 >
-> 本文记录 U11 当时的候选验收结论；D0 正式切换见 `docs/STABLE_UI_DEFAULT_HOST.md`
+> 本文记录 U11 当时的候选验收结论；当前 stable-only 状态见 `docs/STABLE_UI_DEFAULT_HOST.md` 与 `docs/SOFTWARE_ARCHITECTURE.md` 第 16 节
 
 ## 1. 主题与颜色权威
 
@@ -27,9 +27,9 @@
 
 ## 4. 正式切换评估边界
 
-U11 本轮当时不切换默认宿主、不删除旧 Cap7CE / compatibility 外壳，也不迁移旧布局记录。后续 D0 已把稳定 UI 提升为独立正式 `stable` 模式；旧外壳和旧布局仍保留，旧代码清理继续是默认宿主人工验收之后的独立工作。
+U11 本轮当时不切换默认宿主、不删除旧 Cap7CE / compatibility 外壳，也不迁移旧布局记录。后续 D0 把稳定 UI 提升为正式模式，L1–L6 又完成旧宿主入口、Renderer、状态机与死代码清理；磁盘上的旧布局记录仍不主动删除。
 
-稳定 UI 中原 Capsule 快捷动作与 line 点击只显示主窗口并聚焦搜索，不创建或显示 Capsule。旧 Capsule 的窗口、Renderer、IPC 与测试仅作为旧宿主回退保留，不属于新版可达路径。
+`Alt+反引号` 与 line 点击只显示主窗口并聚焦搜索，不创建或显示 Capsule；旧 Capsule 的窗口、Renderer、IPC 与测试已经删除。
 
 ## 5. 人工验收矩阵
 
@@ -39,4 +39,4 @@ U11 本轮当时不切换默认宿主、不删除旧 Cap7CE / compatibility 外�
 4. 开启 Windows“减少动画”，检查标题栏、网格、Settings、Preview 换图与边栏；功能不变且无非必要过渡。
 5. 回归主窗口 / Settings / Preview 并存、原生关闭、standby、line、托盘、快捷键、贴边收起、最大化、Snap、双屏、显示器移除恢复和受控重启；新版路径不得出现 Capsule 残影或重复窗口。
 
-U11 不制作安装包。D0 只完成默认宿主切换和正式路由，安装包验证、用户偏好迁移以及旧 Renderer / CSS 删除仍需分别授权。
+U11 当时未制作安装包；本次 stable-only 最终审计同样不自动执行 `npm run pack`。历史偏好只做安全读取与忽略，不删除用户数据。

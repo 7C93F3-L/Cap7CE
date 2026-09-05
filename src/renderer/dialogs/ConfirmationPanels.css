@@ -68,11 +68,6 @@
   animation: none;
 }
 
-.cap-shell-normal .keyword-editor-panel.delete-files-panel {
-  width: 100%;
-  max-width: none;
-}
-
 .delete-files-content {
   min-height: 0;
   display: flex;

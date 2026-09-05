@@ -72,7 +72,7 @@ void (async () => {
   assert.doesNotMatch(typographyStyles, /--cap-ui-font-(?:feature-title|display|prominent|micro):/u);
   assert.match(typographySource, /uiFontSizeOptions: UiFontSize\[\] = \[12, 13, 14, 15, 16\]/u);
   assert.match(typographySource, /document\.documentElement\.style\.setProperty\("--cap-ui-font-base", `\$\{size\}px`\)/u);
-  assert.match(appSource, /useUiFontSize\(stableUi \? uiFontSize : defaultUiFontSize\)/u);
+  assert.match(appSource, /useUiFontSize\(uiFontSize\)/u);
   assert.match(appSource, /setWindowMaterial\(preferences\.windowMaterial\)[\s\S]*?windowMaterial=\{windowMaterial\}/u);
   assert.match(rootSource, /data-window-material=\{windowMaterial\}[\s\S]*?<StableTitlebar[\s\S]*?windowMaterial=\{windowMaterial\}/u);
   assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);

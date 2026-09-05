@@ -22,7 +22,8 @@ assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSk
 assert.match(appSource, /onBack: \(\) => navigateSkimParent\(false\)/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
-assert.match(appSource, /onActivateSkimRequested[\s\S]*?if \(stableUi\)[\s\S]*?setStableSkimToggleRequestId[\s\S]*?else \{[\s\S]*?openSkim\(\)/u);
+assert.match(appSource, /onActivateSkimRequested[\s\S]*?setStableSkimToggleRequestId/u);
+assert.doesNotMatch(appSource, /if \(stableUi\)/u);
 assert.match(appSource, /toggleRequestId: stableSkimToggleRequestId/u);
 assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimOpen\)\} \/>/);
 assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.toggleRequestId\)/u);
@@ -37,10 +38,11 @@ for (const marker of ["toggleRequestId", "currentPath", "breadcrumbs", "onOpenPa
 for (const marker of ["onClick={startPathEditing}", "event.target.closest(\"button\")", "onOpenRoot", "breadcrumb.path", "cap-stable-skim-address-hit-area", "sortField", "displayMode"]) {
   assert.ok(toolbarSource.includes(marker), `Stable Skim toolbar is missing ${marker}.`);
 }
-for (const marker of ["embedded?: boolean", "responsiveLayout?: boolean", "active?: boolean", "if (!active) return undefined", "!embedded && <Cap7CESearchCapsule", "window.matchMedia(\"(max-height: 359.98px)\")"]) {
-  assert.ok(skimViewSource.includes(marker), `Formal Skim view bridge is missing ${marker}.`);
+for (const marker of ["active?: boolean", "if (!active) return undefined", "is-embedded", "window.matchMedia(\"(max-height: 359.98px)\")"]) {
+  assert.ok(skimViewSource.includes(marker), `Stable Skim view is missing ${marker}.`);
 }
-for (const marker of ["embedded && currentPath === null", "<SkimRootSections", "rootLocations: SkimLocationShortcut[]", "onToggleSystemLocations"]) {
+assert.doesNotMatch(skimViewSource, /Cap7CESearchCapsule|embedded\?: boolean|responsiveLayout\?: boolean/);
+for (const marker of ["currentPath === null", "<SkimRootSections", "rootLocations: SkimLocationShortcut[]", "onToggleSystemLocations"]) {
   assert.ok(skimViewSource.includes(marker), `Stable Skim root bridge is missing ${marker}.`);
 }
 for (const marker of ["skim.root.systemLocations", "skim.root.starredFolders", "skim.root.thisPc", "starredLocationsCollapsed", "drivesCollapsed", "onStarredContextMenu"]) {

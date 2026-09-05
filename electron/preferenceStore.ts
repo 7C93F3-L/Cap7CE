@@ -12,7 +12,7 @@ type AppearanceColors = {
   themeColor: string;
   accentColor: string;
 };
-type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "cycleDirectory" | "openSettings";
+type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleSkim" | "cycleDirectory" | "openSettings";
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type SearchLabelVisibilityPreferences = {
   directory: boolean;
@@ -108,12 +108,10 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   skimSidebarFolders: [],
   skimSystemLocationsCollapsed: false,
   stableShortcutActions: {
-    activateCapsule: "Alt+`",
-    activateMicro: "Alt+Shift+1",
-    activateMini: "Alt+Shift+2",
-    activateNormal: "Alt+4",
-    activateStandby: "Alt+1",
-    activateSkim: "Alt+2",
+    focusMainSearch: "Alt+`",
+    restoreDefaultWindow: "Alt+4",
+    hideToLine: "Alt+1",
+    toggleSkim: "Alt+2",
     cycleDirectory: "Alt+Q",
     openSettings: "Alt+3"
   },
@@ -163,12 +161,10 @@ export const normalizeSkimSidebarFolders = (value: unknown): string[] => {
 };
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
 const isShortcutActionId = (value: string): value is ShortcutActionId => (
-  value === "activateCapsule"
-  || value === "activateMicro"
-  || value === "activateMini"
-  || value === "activateNormal"
-  || value === "activateStandby"
-  || value === "activateSkim"
+  value === "focusMainSearch"
+  || value === "restoreDefaultWindow"
+  || value === "hideToLine"
+  || value === "toggleSkim"
   || value === "cycleDirectory"
   || value === "openSettings"
 );
@@ -200,11 +196,20 @@ const normalizeShortcutActions = (
   defaults = defaultPreferences().stableShortcutActions
 ): ShortcutActionPreferences => {
   const parsedShortcuts = shortcutActions as Partial<Record<string, unknown>> | undefined;
-  if (!parsedShortcuts || !isShortcutValue(parsedShortcuts.activateSkim)) {
+  if (!parsedShortcuts) {
     return { ...defaults };
   }
+  const legacyAliases: Partial<Record<ShortcutActionId, string>> = {
+    focusMainSearch: "activateCapsule",
+    restoreDefaultWindow: "activateNormal",
+    hideToLine: "activateStandby",
+    toggleSkim: "activateSkim"
+  };
   return (Object.keys(defaults) as ShortcutActionId[]).reduce<ShortcutActionPreferences>((currentShortcuts, shortcutId) => {
-    const shortcutValue = parsedShortcuts && isShortcutActionId(shortcutId) ? parsedShortcuts[shortcutId] : undefined;
+    const legacyShortcutId = legacyAliases[shortcutId];
+    const shortcutValue = isShortcutActionId(shortcutId)
+      ? parsedShortcuts[shortcutId] ?? (legacyShortcutId ? parsedShortcuts[legacyShortcutId] : undefined)
+      : undefined;
     return {
       ...currentShortcuts,
       [shortcutId]: isShortcutValue(shortcutValue) && !isReservedEscapeShortcut(shortcutValue)

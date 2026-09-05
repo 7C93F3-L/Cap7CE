@@ -5,6 +5,8 @@
 > 迁移阶段：U0 基线冻结与迁移映射  
 > 行为状态：无用户可见变化
 
+> 历史快照说明：本页保留 U0 启动时的迁移依据，表中的旧组件名描述当时状态，不是当前可执行入口。当前 stable-only 组件、窗口生命周期与自动守门以 `docs/SOFTWARE_ARCHITECTURE.md`、`docs/STABLE_UI_DEFAULT_HOST.md` 和 `scripts/architecture-boundaries-baseline.json` 为准。
+
 ## 1. 回退边界
 
 - U0 的代码回退点是上面的完整提交；分支与远端默认分支在该提交处一致。

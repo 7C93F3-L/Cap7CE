@@ -1,4 +1,4 @@
-import type { ImageContextMenuAction, ImageContextMenuGroup } from "./ImageContextMenu";
+import type { FileContextMenuAction, FileContextMenuGroup } from "./fileContextMenuShared";
 
 export const fileContextShortcutLabels = {
   primaryView: "Space",
@@ -38,11 +38,11 @@ export const getFileContextShortcutAction = (event: FileContextShortcutEvent): F
   return null;
 };
 
-type FileContextMenuActionInput = Omit<ImageContextMenuAction, "shortcut">;
+type FileContextMenuActionInput = Omit<FileContextMenuAction, "shortcut">;
 
 interface BuildFileContextMenuGroupsOptions {
   actionsLabel: string;
-  additionalActions?: ImageContextMenuAction[];
+  additionalActions?: FileContextMenuAction[];
   copyPathsAction: FileContextMenuActionInput;
   deleteAction?: FileContextMenuActionInput;
   editKeywordsAction?: FileContextMenuActionInput;
@@ -64,7 +64,7 @@ export const buildFileContextMenuGroups = ({
   primaryViewAction,
   showInFolderAction,
   viewLabel
-}: BuildFileContextMenuGroupsOptions): ImageContextMenuGroup[] => [{
+}: BuildFileContextMenuGroupsOptions): FileContextMenuGroup[] => [{
   id: "view",
   label: viewLabel,
   actions: [

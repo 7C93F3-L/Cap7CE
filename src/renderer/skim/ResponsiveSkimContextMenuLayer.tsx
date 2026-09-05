@@ -4,7 +4,7 @@ import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
 import ResponsiveFileContextMenu, { type ResponsiveFileContextMenuItem } from "../components/ResponsiveFileContextMenu";
 import { fileContextShortcutLabels } from "../fileContextActions";
 import { formatCacheSize } from "../formatting";
-import { getImageContextMenuStyle } from "../ImageContextMenu";
+import { getFileContextMenuStyle } from "../fileContextMenuShared";
 import type { SkimContextMenuState } from "./SkimView";
 import useSkimContextMenuMetadata from "./useSkimContextMenuMetadata";
 
@@ -35,7 +35,7 @@ const ResponsiveSkimContextMenuLayer = ({ state, theme, appearanceColors, isAddi
       : t("skim.sidebar.alreadyStarred");
 
   return <ResponsiveFileContextMenu
-    x={state.x} y={state.y} theme={theme} menuStyle={getImageContextMenuStyle(theme, appearanceColors)}
+    x={state.x} y={state.y} theme={theme} menuStyle={getFileContextMenuStyle(theme, appearanceColors)}
     format={state.item.kind === "folder" ? t("fileInfo.folder") : state.item.extension.slice(1).toUpperCase() || t("fileInfo.file")}
     fileName={state.item.label || state.item.name}
     detail={detail}

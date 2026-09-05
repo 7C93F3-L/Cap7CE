@@ -81,19 +81,6 @@
   -webkit-line-clamp: 3;
 }
 
-.cap-shell-normal .result-section-card {
-  gap: clamp(7px, 6%, 12px);
-  padding: clamp(14px, 10%, 24px);
-}
-
-.cap-shell-normal .result-section-card h2 {
-  font-size: calc(var(--cap-ui-font-base) + 11px);
-}
-
-.cap-shell-normal .result-section-card p {
-  font-size: var(--cap-ui-font-control);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .result-section-card-aiDeepMatch[data-ai-phase="starting"] h2,
   .result-section-card-aiDeepMatch[data-ai-phase="starting"] p,

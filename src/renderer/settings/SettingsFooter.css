@@ -78,10 +78,6 @@
   animation: cap7ce-origin-backdrop-enter 320ms ease-out both;
 }
 
-body:has(.cap-shell-settings.cap-shell-maximized) > .cap7ce-origin-overlay {
-  border-radius: 0;
-}
-
 .cap7ce-origin-card {
   display: grid;
   justify-items: center;

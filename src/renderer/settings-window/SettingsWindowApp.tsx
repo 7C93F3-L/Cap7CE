@@ -4,7 +4,7 @@ import type { LlamaRuntimeSettings, UserPreferences } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import { getTextColorForBackground } from "../appearance";
-import { getImageContextMenuStyle } from "../ImageContextMenu";
+import { getFileContextMenuStyle } from "../fileContextMenuShared";
 import { formatCacheSize } from "../formatting";
 import { defaultUiFontSize, useUiFontSize } from "../typography";
 import { EmbeddedMetadataSettingsRow } from "../settings/EmbeddedMetadataSettingsRow";
@@ -113,7 +113,7 @@ const SettingsWindowApp = () => {
 
   const effectiveTheme = preferences.themePreference === "system" ? (systemDark ? "dark" : "light") : preferences.themePreference;
   const shownCategories = normalizedQuery ? visibleCategories : categoryDefinitions.filter((category) => category.id === activeCategory);
-  const menuStyle = { ...getImageContextMenuStyle(effectiveTheme, preferences.appearanceColors), ...uiFontStyle, "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
+  const menuStyle = { ...getFileContextMenuStyle(effectiveTheme, preferences.appearanceColors), ...uiFontStyle, "--context-menu-theme-color": preferences.appearanceColors.themeColor, "--context-menu-accent-color": preferences.appearanceColors.accentColor, "--stable-settings-theme-color": preferences.appearanceColors.themeColor, "--stable-settings-focus": preferences.appearanceColors.accentColor, "--dialog-action-hover-text": getTextColorForBackground(preferences.appearanceColors.themeColor, preferences.appearanceColors.accentColor) } as CSSProperties;
   const toggle = (key: Parameters<typeof controller.updateBooleanPreference>[0], enabled: boolean) => { void controller.updateBooleanPreference(key, enabled); };
   const openConfirmation = (message: string, action: () => Promise<unknown>) => setDialog({ message, action });
   const confirmDialog = async () => {

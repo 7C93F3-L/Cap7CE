@@ -33,11 +33,11 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.skimSystemLocationsCollapsed, false);
     assert.equal("shortcutActions" in defaults, false);
     assert.deepEqual({
-      open: defaults.stableShortcutActions.activateCapsule,
-      hide: defaults.stableShortcutActions.activateStandby,
-      skim: defaults.stableShortcutActions.activateSkim,
+      open: defaults.stableShortcutActions.focusMainSearch,
+      hide: defaults.stableShortcutActions.hideToLine,
+      skim: defaults.stableShortcutActions.toggleSkim,
       settings: defaults.stableShortcutActions.openSettings,
-      reset: defaults.stableShortcutActions.activateNormal,
+      reset: defaults.stableShortcutActions.restoreDefaultWindow,
       directory: defaults.stableShortcutActions.cycleDirectory
     }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+2", settings: "Alt+3", reset: "Alt+4", directory: "Alt+Q" });
     assert.equal(defaults.edgeCollapseEnabled, false);
@@ -67,7 +67,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
         showHiddenFiles: false
       },
       skimSidebarFolders: [sidebarFolder, sidebarFolder.toUpperCase(), app.getPath("desktop"), app.getPath("downloads"), path.parse(sidebarFolder).root, "", 42],
-      shortcutActions: {
+      stableShortcutActions: {
         activateCapsule: "Alt+`",
         activateMicro: "Alt+1",
         activateMini: "Alt+2",
@@ -81,7 +81,16 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(migrated.skimDisplay.mode, "all");
     assert.equal(migrated.skimDisplay.searchMode, "skim");
     assert.equal("shortcutActions" in migrated, false);
-    assert.equal(migrated.stableShortcutActions.activateStandby, "Alt+1");
+    assert.deepEqual(migrated.stableShortcutActions, {
+      focusMainSearch: "Alt+`",
+      restoreDefaultWindow: "Alt+3",
+      hideToLine: "Alt+4",
+      toggleSkim: "Alt+5",
+      cycleDirectory: "Alt+Q",
+      openSettings: "Alt+6"
+    });
+    assert.equal("activateMicro" in migrated.stableShortcutActions, false);
+    assert.equal("activateMini" in migrated.stableShortcutActions, false);
     assert.deepEqual(migrated.skimSidebarFolders, [sidebarFolder]);
     assert.equal(migrated.skimSystemLocationsCollapsed, false);
     assert.equal(migrated.edgeCollapseEnabled, false);

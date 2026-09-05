@@ -147,12 +147,10 @@ export interface PreviewContentSize {
 }
 
 export type ShortcutActionId =
-  | "activateCapsule"
-  | "activateMicro"
-  | "activateMini"
-  | "activateNormal"
-  | "activateStandby"
-  | "activateSkim"
+  | "focusMainSearch"
+  | "restoreDefaultWindow"
+  | "hideToLine"
+  | "toggleSkim"
   | "cycleDirectory"
   | "openSettings";
 

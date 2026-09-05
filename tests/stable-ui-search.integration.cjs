@@ -24,13 +24,13 @@ assert.match(appSource, /stableUiRenderer: StableUiRenderer/);
 assert.match(appSource, /resultContent=\{<ResultsView \{\.\.\.createResultsViewProps\(\)\} \/>\}/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
-assert.match(appSource, /if \(!stableUi \|\| isLoadingDirectories \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)/);
+assert.match(appSource, /if \(isLoadingDirectories \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)/);
 assert.match(appSource, /const cycleSearchDirectory = \(\) => \{[\s\S]*?directoryOptions\.findIndex[\s\S]*?\(currentIndex \+ 1\) % directoryOptions\.length[\s\S]*?updateResultsSearchOptions/u);
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
-assert.match(appSource, /responsive: true/);
-assert.match(menuAdapterSource, /state\.responsive[\s\S]*ResponsiveResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
+assert.match(menuAdapterSource, /<ResponsiveResultsContextMenuLayer \{\.\.\.props\} \/>/);
+assert.doesNotMatch(menuAdapterSource, /LegacyResultsContextMenuLayer|state\.responsive/);
 assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);
 
 for (const marker of [
@@ -42,13 +42,11 @@ for (const marker of [
 assert.match(inputSource, /placeholder=\{inputFeedbackIsGuide \? inputFeedback : inputFeedback \? "" : t\("search\.inputLabel"\)\}/u);
 assert.match(inputSource, /\{!search\.query && !inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback"/u);
 
-assert.match(resultsSource, /responsiveLayout\?: boolean/);
-assert.match(resultsSource, /responsiveLayout=\{responsiveLayout\}/);
+assert.doesNotMatch(resultsSource, /responsiveLayout|shellState/);
 assert.match(gridSource, /window\.matchMedia\("\(max-height: 359\.98px\)"\)/);
-assert.match(gridSource, /responsiveLayout \? \(lowHeightLayout \? "micro" : "normal"\)/);
-assert.match(gridSource, /minimumColumnCount = responsiveLayout \? 2 : 1/u);
-assert.match(gridSource, /interactive=\{!responsiveLayout\}/);
-assert.match(gridSource, /: <div className="empty-result-row">\{message\}<\/div>/);
+assert.match(gridSource, /layoutMode = lowHeightLayout \? "micro" : "normal"/);
+assert.match(gridSource, /minimumColumnCount = 2/u);
+assert.match(gridSource, /const EmptySearchResult = \(\{ message \}: \{ message: string \}\) => <div className="empty-result-row">\{message\}<\/div>/);
 assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); background: var\(--cap-stable-grid-surface\); \}/u);
 assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-search-icon" \/>/u);
 assert.match(foundationStyles, /\.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-search-surface\);/u);

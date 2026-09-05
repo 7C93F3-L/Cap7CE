@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./styles.css";
-import "./ImageContextMenu.css";
 import "./CustomScrollbar.css";
 import "./WaitingIndicator.css";
 import "./components/MiddleEllipsisFileName.css";
@@ -14,8 +13,6 @@ import "./dialogs/ConfirmationPanels.css";
 import "./ColorPickerPopover.css";
 import "./results/ResultGrid.css";
 import "./results/ResultSectionCard.css";
-import "./results/ResultsView.css";
-import "./search/Cap7CESearchCapsule.css";
 import "./ai-search/AiSearchBeta.css";
 import "./settings/SettingsSelect.css";
 import "./settings/ShortcutSettingsPanels.css";

@@ -1,4 +1,4 @@
-import { splitMiddleEllipsisFileName } from "../ImageContextMenu";
+import { splitMiddleEllipsisFileName } from "../fileContextMenuShared";
 
 export const MiddleEllipsisFileName = ({ fileName, className }: { fileName: string; className: string }) => {
   const splitFileName = splitMiddleEllipsisFileName(fileName);

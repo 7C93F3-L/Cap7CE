@@ -6,7 +6,7 @@ import { resolveFileContentPreview } from "../contentPreview";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { createSpaceHoldController, createSpaceReleaseGuard, isPlainSpaceShortcut } from "../keywordEditorInteraction";
 import { getFileContextShortcutAction } from "../fileContextActions";
-import { VirtualImageGrid, type ResultShellState } from "./VirtualResultGrids";
+import { VirtualImageGrid } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
 import type { AiResultSectionPhase, AiResultSectionProgress } from "./ResultSectionCard";
 import type { ResultGridScrollMemory } from "../virtualGridLayout";
@@ -25,9 +25,6 @@ const toFullImageUrl = (filePath: string) => `cap7ce://image/?path=${encodeURICo
 const toSearchShellPreviewUrl = (filePath: string) => `cap7ce://search-shell-preview/?path=${encodeURIComponent(filePath)}`;
 
 export interface ResultsViewProps {
-  shellState: ResultShellState;
-  responsiveLayout?: boolean;
-  searchCapsule: React.ReactNode;
   images: ImageIndexItem[];
   isSearching: boolean;
   aiSearchPhase: AiResultSectionPhase;
@@ -49,11 +46,10 @@ export interface ResultsViewProps {
   onOpenImage: (item: ImageIndexItem) => void;
   onShowInFolder: (item: ImageIndexItem) => void;
   onDeleteItems: (items: ImageIndexItem[]) => void;
-  onOpenSkim: () => void;
   onAiSearchSectionToggle: () => void;
 }
 
-export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsule, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onOpenSkim, onAiSearchSectionToggle }: ResultsViewProps) => {
+export const ResultsView = ({ images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onAiSearchSectionToggle }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -204,7 +200,7 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
       return;
     }
     cancelSpaceHold();
-  }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, keywordEditorOpen, selectedImageId, shellState]);
+  }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, keywordEditorOpen, selectedImageId]);
 
   const movePreview = useCallback((direction: -1 | 1) => {
     onContextMenuClose();
@@ -387,7 +383,7 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
   }, [clearResultSelection, clearSelectionRequestId]);
 
   const clearSelectionFromPointerEvent = useCallback((event: PointerEvent) => {
-    if (event.button !== 0 || !["micro", "mini", "normal"].includes(shellState)) {
+    if (event.button !== 0) {
       return;
     }
 
@@ -403,18 +399,17 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
     }
 
     const inTile = Boolean(targetElement.closest('[data-result-tile="true"]'));
-    const inCapsule = Boolean(targetElement.closest('[data-search-capsule="true"]'));
-    const inControls = Boolean(targetElement.closest('[data-window-controls="true"], .cap-settings-toggle'));
+    const inControls = Boolean(targetElement.closest('[data-window-controls="true"]'));
     const inMenu = Boolean(targetElement.closest('[data-context-menu="true"], .cap7ce-label-menu'));
     const inSettings = Boolean(targetElement.closest('[data-settings-view="true"]'));
-    const willClear = !(inTile || inCapsule || inControls || inMenu || inSettings);
+    const willClear = !(inTile || inControls || inMenu || inSettings);
 
     if (!willClear) {
       return;
     }
 
     clearResultSelection();
-  }, [clearResultSelection, shellState]);
+  }, [clearResultSelection]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -580,10 +575,7 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
   }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
   return (
     <main className="results-view cap-results-view" data-results-view="true">
-      {searchCapsule}
       <VirtualImageGrid
-          shellState={shellState}
-          responsiveLayout={responsiveLayout}
           images={images}
           layoutItems={resultGridLayoutItems}
           selectedImageIds={selectedImageIds}
@@ -601,7 +593,6 @@ export const ResultsView = ({ shellState, responsiveLayout = false, searchCapsul
           onOpenImage={onOpenImage}
           onStartDrag={startFileDrag}
           onLayoutChange={updateGridMetrics}
-          onOpenSkim={onOpenSkim}
           onAiSearchSectionToggle={onAiSearchSectionToggle}
       />
     </main>

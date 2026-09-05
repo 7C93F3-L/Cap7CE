@@ -6,7 +6,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type Ref,
   type RefObject
 } from "react";
 import type React from "react";
@@ -15,9 +14,7 @@ import skimFolderSvg from "../assets/icons/skim-folder.svg?raw";
 import skimStarredFolderSvg from "../assets/icons/skim-location-starred-folder.svg?raw";
 import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
 import SvgIcon from "../components/SvgIcon";
-import { Cap7CESearchCapsule, type SearchCapsuleLabelVisibility } from "../search/Cap7CESearchCapsule";
 import CustomScrollbar from "../CustomScrollbar";
-import LegacySkimContextMenuLayer from "./LegacySkimContextMenuLayer";
 import ResponsiveSkimContextMenuLayer from "./ResponsiveSkimContextMenuLayer";
 import SkimRootSections from "./SkimRootSections";
 import { resolveFileContentPreview } from "../contentPreview";
@@ -32,24 +29,18 @@ import {
   getResultLayoutMode,
   imageGridGap,
   imageGridOverscanItems,
-  imageGridOverscanRows,
-  imageGridTargetThumbSize
+  imageGridOverscanRows
 } from "../virtualGridLayout";
 import type {
   AppearanceColors,
   PreviewWindowData,
   ResolvedThemeMode,
-  SearchState,
-  SkimBreadcrumb,
   SkimBrowseEntry,
-  SkimDisplayMode,
   SkimLocationShortcut,
   SkimPreviewInfo
 } from "../../shared/types";
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
-
-export type SkimShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
 
 const deriveSkimSidebarFolderPaths = (entries: SkimBrowseEntry[]) => {
   const seen = new Set<string>();
@@ -65,28 +56,13 @@ const deriveSkimSidebarFolderPaths = (entries: SkimBrowseEntry[]) => {
 };
 
 export interface SkimViewProps {
-  search: SearchState;
   visualSessionId: string;
   entries: SkimBrowseEntry[];
   currentPath: string | null;
-  breadcrumbs: SkimBreadcrumb[];
   isLoading: boolean;
-  feedback: string;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
-  shellState: SkimShellState;
   isAddingDirectory: boolean;
-  inputFeedback: string;
-  inputFeedbackIsGuide: boolean;
-  labelVisibility: SearchCapsuleLabelVisibility;
-  skimDisplayMode: SkimDisplayMode;
-  searchInputRef: Ref<HTMLInputElement>;
-  onSearchChange: (search: SearchState) => void;
-  onSearchOptionsChange: (search: SearchState) => void;
-  onLabelVisibilityChange: (visibility: SearchCapsuleLabelVisibility) => void;
-  onSkimDisplayModeChange: (mode: SkimDisplayMode) => void;
-  onSearch: () => void;
-  onOpenRoot: () => void;
   onOpenBreadcrumb: (path: string) => void;
   onOpenEntry: (entry: SkimBrowseEntry) => void;
   onAddEntries: (entries: SkimBrowseEntry[]) => void;
@@ -99,8 +75,6 @@ export interface SkimViewProps {
   onToggleSystemLocations: () => void;
   onFeedback: (message: string) => void;
   onNativeDragStateChange: (active: boolean) => void;
-  embedded?: boolean;
-  responsiveLayout?: boolean;
   active?: boolean;
 }
 
@@ -152,7 +126,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-export const SkimView = ({ search, visualSessionId, entries, currentPath, breadcrumbs, isLoading, feedback, theme, appearanceColors, shellState, isAddingDirectory, inputFeedback, inputFeedbackIsGuide, labelVisibility, skimDisplayMode, searchInputRef, onSearchChange, onSearchOptionsChange, onLabelVisibilityChange, onSkimDisplayModeChange, onSearch, onOpenRoot, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, rootLocations, systemLocationsCollapsed, onToggleSystemLocations, onFeedback, onNativeDragStateChange, embedded = false, responsiveLayout = false, active = true }: SkimViewProps) => {
+export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, theme, appearanceColors, isAddingDirectory, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, rootLocations, systemLocationsCollapsed, onToggleSystemLocations, onFeedback, onNativeDragStateChange, active = true }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -163,18 +137,16 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [activePath, setActivePath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<SkimContextMenuState | null>(null);
-  const [lowHeightLayout, setLowHeightLayout] = useState(() => responsiveLayout && window.matchMedia("(max-height: 359.98px)").matches);
+  const [lowHeightLayout, setLowHeightLayout] = useState(() => window.matchMedia("(max-height: 359.98px)").matches);
   const [rootStarredCollapsed, setRootStarredCollapsed] = useState(false);
   const [rootDrivesCollapsed, setRootDrivesCollapsed] = useState(false);
   const selectionAnchorPathRef = useRef<string | null>(null);
   const previewEntryPathRef = useRef<string | null>(null);
   const previewSessionCounterRef = useRef(0);
   const previewRequestGuard = useMemo(() => createPreviewRequestGuard(), []);
-  const statusText = isLoading ? t("skim.loading") : t("skim.entryCount", { count: entries.length });
-  const resolvedInputFeedback = feedback || inputFeedback;
-  const layoutShellState = responsiveLayout ? (lowHeightLayout ? "micro" : "normal") : shellState;
+  const layoutShellState = lowHeightLayout ? "micro" : "normal";
   const isHorizontalGrid = layoutShellState === "micro";
-  const gridTargetThumbSize = responsiveLayout ? responsiveSkimGridTargetThumbSize : imageGridTargetThumbSize; const gridLayout = getImageGridLayout(getResultLayoutMode(layoutShellState), gridViewport.width, gridViewport.height, { targetThumbSize: gridTargetThumbSize });
+  const gridTargetThumbSize = responsiveSkimGridTargetThumbSize; const gridLayout = getImageGridLayout(getResultLayoutMode(layoutShellState), gridViewport.width, gridViewport.height, { targetThumbSize: gridTargetThumbSize });
   const virtualGrid = useMemo(() => {
     const { cellSize, columnCount, contentWidth, isHorizontal } = gridLayout;
     const rowStride = cellSize + imageGridGap;
@@ -244,13 +216,12 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
   };
 
   useEffect(() => {
-    if (!responsiveLayout) return undefined;
     const mediaQuery = window.matchMedia("(max-height: 359.98px)");
     const updateLayout = () => setLowHeightLayout(mediaQuery.matches);
     updateLayout();
     mediaQuery.addEventListener("change", updateLayout);
     return () => mediaQuery.removeEventListener("change", updateLayout);
-  }, [responsiveLayout]);
+  }, []);
 
   useEffect(() => {
     setSelectedPaths(new Set());
@@ -607,7 +578,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
 
   return (
     <main
-      className={`skim-view cap-skim-view${embedded ? " is-embedded" : ""}${isHorizontalGrid ? " is-horizontal" : ""}`}
+      className={`skim-view cap-skim-view is-embedded${isHorizontalGrid ? " is-horizontal" : ""}`}
       data-skim-view="true"
       style={{
         "--cap-grid-target-size": `${gridTargetThumbSize}px`,
@@ -620,35 +591,6 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
       selectionAnchorPathRef.current = null;
       }}
     >
-      {!embedded && <Cap7CESearchCapsule
-        search={search}
-        directoryName=""
-        labelVisibility={labelVisibility}
-        status={statusText}
-        inputFeedback={resolvedInputFeedback}
-        inputFeedbackIsGuide={!feedback && inputFeedbackIsGuide}
-        unified
-        inputRef={searchInputRef}
-        directoryGroup={{
-          parentLabel: t("skim.computer"),
-          collapsedLabel: breadcrumbs[breadcrumbs.length - 1]?.name ?? t("skim.computer"),
-          selectedId: currentPath,
-          options: breadcrumbs.map((breadcrumb) => ({
-            id: breadcrumb.path,
-            label: breadcrumb.name,
-            title: breadcrumb.path
-          })),
-          onSelect: onOpenBreadcrumb,
-          onReturnToParent: onOpenRoot
-        }}
-        skimDisplayMode={skimDisplayMode}
-        onSkimDisplayModeChange={onSkimDisplayModeChange}
-        enabledLabelGroups={["skimDisplay", "directory", "sort"]}
-        onSearchChange={onSearchChange}
-        onSearchOptionsChange={onSearchOptionsChange}
-        onLabelVisibilityChange={onLabelVisibilityChange}
-        onSearch={onSearch}
-      />}
       <div className={`cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
         <section
           className="cap-skim-grid cap-skim-grid-virtualized cap-main-scroll-viewport"
@@ -664,7 +606,7 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
             });
           }}
         >
-          {embedded && currentPath === null ? <SkimRootSections
+          {currentPath === null ? <SkimRootSections
             drives={entries.filter((entry) => entry.kind === "drive")}
             locations={rootLocations}
             systemLocationsCollapsed={systemLocationsCollapsed}
@@ -753,21 +695,12 @@ export const SkimView = ({ search, visualSessionId, entries, currentPath, breadc
         </section>
         <CustomScrollbar scrollContainerRef={scrollContainerRef} orientation={isHorizontalGrid ? "horizontal" : "vertical"} />
       </div>
-      {contextMenu && responsiveLayout && (
+      {contextMenu && (
         <ResponsiveSkimContextMenuLayer
           key={`skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
           state={contextMenu} theme={theme} appearanceColors={appearanceColors}
           isAddingDirectory={isAddingDirectory} sidebarAction={contextMenuSidebarAction}
           onClose={() => setContextMenu(null)}
-          onAction={handleContextMenuAction}
-        />
-      )}
-      {contextMenu && !responsiveLayout && (
-        <LegacySkimContextMenuLayer
-          key={`legacy-skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
-          state={contextMenu} theme={theme} appearanceColors={appearanceColors}
-          compact={layoutShellState === "micro" || layoutShellState === "mini"}
-          isAddingDirectory={isAddingDirectory} sidebarAction={contextMenuSidebarAction}
           onAction={handleContextMenuAction}
         />
       )}

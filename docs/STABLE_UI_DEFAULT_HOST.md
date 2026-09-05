@@ -1,37 +1,24 @@
-# 新版稳定 UI 默认宿主
+# Cap7CE stable 唯一宿主
 
-> 当前轮次：D0
-> 更新日期：2026-09-02
-> 状态：代码与自动守门接入，等待真实 Windows 窗口人工确认
+> 当前状态：0.9.9 stable-only
+>
+> 历史说明：本文最初记录 D0 将 stable 提升为默认宿主；旧 `cap7ce` / `compatibility` 回退链现已退役。
 
-## 1. 正式模式
+## 1. 正式窗口表面
 
-窗口宿主现在使用三个稳定枚举：
+主窗口、独立 Settings 与 Preview 均使用 `frame: true`、40 DIP Window Controls Overlay，以及同一套 Acrylic / Mica 材质运行时；系统不支持所选材质时回退当前主题的安全纯色。line 保持独立、无业务状态的轻量窗口。
 
-| 模式 | Renderer 与原生外壳 | 布局记录 |
-| --- | --- | --- |
-| `stable` | 新版稳定 UI；40 DIP Window Controls Overlay；可选 Acrylic / Mica，失败时回退主题安全纯色 | `window-layout-stable-ui.json` |
-| `cap7ce` | 旧透明自绘外壳与旧 Renderer | `window-layout.json` |
-| `compatibility` | 旧不透明 Mica / 36 DIP WCO 外壳与旧 Renderer | `window-layout-compatibility.json` |
+产品与开发入口不再接受 presentation 模式选择，不再装配旧 Renderer、兼容标题栏、独立或同窗 Capsule，也不再提供 `dev:cap7ce`、`dev:compatibility` 或模式切换事务。历史偏好 JSON 中的模式、窗口记忆和旧快捷动作字段会被安全忽略或映射；磁盘上的旧布局文件与用户数据不会被主动删除。
 
-缺失或非法的窗口模式偏好规范化为 `stable`。已有用户明确保存的 `cap7ce` 或 `compatibility` 继续按原值启动，本轮不改写用户配置，也不把旧布局复制到新版布局。Settings 中的既有受控重启事务按“stable → compatibility → cap7ce → stable”循环，使三个宿主都可实际进入并在启动失败时回滚。
+## 2. 当前入口与布局
 
-## 2. 加载边界
+- 普通启动直接装配 stable 主界面；目录和偏好就绪后执行一次“全部目录”空查询，Skim 默认收起。
+- 主窗口使用 `window-layout-stable-ui.json` 的单一自由 bounds 并默认记忆；无有效记录时按工作区 82%、最大 1600×1000 居中。
+- Settings 使用独立单实例窗口；Preview 使用独立单实例窗口并保留 Provider 会话与内容尺寸链；三者可以同时存在。
+- `Alt+反引号` 显示并聚焦主窗口搜索，`Alt+1` 隐藏主窗口并按偏好显示 line，`Alt+2` 展开 / 收起 Skim，`Alt+3` 打开 Settings，`Alt+4` 恢复默认大小和位置，`Alt+Q` 循环目录。
 
-主进程在开发服务与打包文件加载中都向主窗口和 Preview 传入实际 `presentation`。Renderer 只在 `presentation=stable` 时装配新版主界面与新版 Preview；另两种模式继续装配旧 Renderer。独立 Settings 仍由窗口类别分流，并与本次正式 stable 模式共用真实偏好和领域动作。
+## 3. 守门与验收
 
-`npm run dev:stable-ui` 显式启动 stable，`npm run dev:cap7ce` 与 `npm run dev:compatibility` 分别用于两个旧宿主回归。普通 `npm run dev` 读取已保存偏好；新配置按默认规则进入 stable。
+自动检查必须证明生产 Renderer 与 Electron 输出不含旧主宿主、兼容标题栏或 Capsule 入口；Electron 编译前会清理限定的输出目录和对应增量缓存，避免已删除文件以陈旧产物继续存在。其余检查继续覆盖主窗口 / Settings / Preview 生命周期、搜索、目录、Skim、文件动作、置顶、line、边缘收起、最大化、Snap 与布局记忆。
 
-## 3. 本轮边界
-
-- stable 的正式窗口表面只有主窗口、独立 Settings、Preview 和原有 line；Capsule 不属于新版能力，新版后续不为其增加界面、交互或专项维护。旧 Capsule 只随本轮保留的旧宿主暂存，待旧宿主退役轮次一并处理。
-- 不删除旧 Renderer、旧样式、旧 Capsule、旧窗口状态机或旧布局。
-- 不迁移、覆盖或删除用户偏好、索引、缓存与窗口记录。
-- 不借默认宿主切换调整新版 UI 的尺寸、文案或视觉细节。
-- 不制作安装包，也不把构建成功表述为打包验证。
-
-## 4. 守门与人工确认
-
-自动守门覆盖正式模式规范化、三份布局隔离、受控重启与回滚、开发和生产 Renderer 路由、stable 主窗口 / Settings / Preview 生命周期，以及旧宿主回退链。
-
-人工确认至少检查：首次或无有效偏好时进入新版稳定 UI；目录与偏好就绪后中央自动显示“全部目录”空查询结果，Skim 默认收起且只由明确按钮展开，空结果中央没有进入 Skim 的点击热区；主窗口可自由缩放与拖动；Settings 和 Preview 可与主窗口并存并正常关闭；同一缩略图可重复按空格预览；置顶、line、搜索、目录、Skim 和文件动作无明显回归；三次受控切换可依次进入 compatibility、cap7ce 并回到 stable。人工确认前不提交本轮。
+真实 Windows 验收至少覆盖：冷启动与退出重启、托盘和第二实例恢复、五项窗口快捷动作与 `Alt+Q`、主窗口自由拖动 / 缩放 / 最大化 / Snap、Settings 与 Preview 并存及分别关闭、Preview 固定按钮、Skim 展开收起、中文输入和快速重复操作。未运行 `npm run pack` 时不得声称安装包已经验证。

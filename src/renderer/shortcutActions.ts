@@ -1,12 +1,10 @@
 import type { ShortcutActionPreferences } from "../shared/types";
 
 export const defaultStableShortcutActions: ShortcutActionPreferences = {
-  activateCapsule: "Alt+`",
-  activateMicro: "Alt+Shift+1",
-  activateMini: "Alt+Shift+2",
-  activateNormal: "Alt+4",
-  activateStandby: "Alt+1",
-  activateSkim: "Alt+2",
+  focusMainSearch: "Alt+`",
+  restoreDefaultWindow: "Alt+4",
+  hideToLine: "Alt+1",
+  toggleSkim: "Alt+2",
   cycleDirectory: "Alt+Q",
   openSettings: "Alt+3"
 };
@@ -14,12 +12,10 @@ export const defaultStableShortcutActions: ShortcutActionPreferences = {
 export const normalizeStableShortcutActions = (
   shortcutActions?: Partial<ShortcutActionPreferences>
 ): ShortcutActionPreferences => ({
-  activateCapsule: shortcutActions?.activateCapsule || defaultStableShortcutActions.activateCapsule,
-  activateMicro: shortcutActions?.activateMicro || defaultStableShortcutActions.activateMicro,
-  activateMini: shortcutActions?.activateMini || defaultStableShortcutActions.activateMini,
-  activateNormal: shortcutActions?.activateNormal || defaultStableShortcutActions.activateNormal,
-  activateStandby: shortcutActions?.activateStandby || defaultStableShortcutActions.activateStandby,
-  activateSkim: shortcutActions?.activateSkim || defaultStableShortcutActions.activateSkim,
+  focusMainSearch: shortcutActions?.focusMainSearch || defaultStableShortcutActions.focusMainSearch,
+  restoreDefaultWindow: shortcutActions?.restoreDefaultWindow || defaultStableShortcutActions.restoreDefaultWindow,
+  hideToLine: shortcutActions?.hideToLine || defaultStableShortcutActions.hideToLine,
+  toggleSkim: shortcutActions?.toggleSkim || defaultStableShortcutActions.toggleSkim,
   cycleDirectory: shortcutActions?.cycleDirectory || defaultStableShortcutActions.cycleDirectory,
   openSettings: shortcutActions?.openSettings || defaultStableShortcutActions.openSettings
 });
