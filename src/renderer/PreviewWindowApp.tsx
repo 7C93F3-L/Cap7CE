@@ -121,7 +121,6 @@ const PreviewWindowApp = () => {
   const previewSidebarWidth = isStableUiPreview ? (previewSidebarLayout.expanded ? previewSidebarLayout.width : 40) : undefined;
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const infoPanelRef = useRef<HTMLElement | null>(null);
   const imageTransform = usePreviewImageTransform(previewData?.sessionId ?? "", imageRef, isStableUiPreview);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const textScrollRef = useRef<HTMLElement | null>(null);
@@ -256,8 +255,8 @@ const PreviewWindowApp = () => {
       || Boolean(previewData.epubFallbackReason)
       || Boolean(previewData.mobiFallbackReason);
     const infoDimensions = previewData.info?.kind === "folder"
-      ? { width: 600, height: isStableUiPreview ? 620 : 460 }
-      : { width: 600, height: isStableUiPreview ? (hasExtendedInfoFallback ? 540 : 480) : (hasExtendedInfoFallback ? 360 : 240) };
+      ? { width: 600, height: isStableUiPreview ? 580 : 460 }
+      : { width: 600, height: isStableUiPreview ? (hasExtendedInfoFallback ? 450 : 380) : (hasExtendedInfoFallback ? 360 : 240) };
     const dimensions = showInfoFallback
       ? infoDimensions
       : previewData.provider === "video"
@@ -284,39 +283,6 @@ const PreviewWindowApp = () => {
       sidebarWidth: previewSidebarWidth
     });
   }, [previewData, previewSidebarWidth, showInfoFallback]);
-
-  useEffect(() => {
-    if (!isStableUiPreview || !previewData?.info || !infoPanelRef.current) return;
-    const panel = infoPanelRef.current;
-    let animationFrame: number | null = null;
-    let settleTimer: number | null = null;
-    let lastMeasuredHeight = 0;
-    const observer = new ResizeObserver(() => {
-      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = null;
-        const measuredHeight = Math.ceil(panel.scrollHeight);
-        if (measuredHeight !== lastMeasuredHeight) {
-          lastMeasuredHeight = measuredHeight;
-          window.cap7ce?.preview.contentSize({
-            sessionId: previewData.sessionId,
-            filePath: previewData.filePath,
-            width: 600,
-            height: measuredHeight,
-            sidebarWidth: previewSidebarWidth
-          });
-        }
-        if (settleTimer !== null) window.clearTimeout(settleTimer);
-        settleTimer = window.setTimeout(() => observer.disconnect(), 240);
-      });
-    });
-    observer.observe(panel);
-    return () => {
-      observer.disconnect();
-      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
-      if (settleTimer !== null) window.clearTimeout(settleTimer);
-    };
-  }, [folderStats, fontRuntimeFailed, previewData, previewSidebarWidth, showInfoFallback]);
 
   useEffect(() => {
     if (
@@ -893,7 +859,7 @@ const PreviewWindowApp = () => {
             </div>
           )
         ) : previewData.info && (
-          <section ref={infoPanelRef} className="preview-info-panel" data-preview-navigation-suppressed={isStableUiPreview ? "true" : undefined}>
+          <section className="preview-info-panel" data-preview-navigation-suppressed={isStableUiPreview ? "true" : undefined}>
             {isStableUiPreview
               ? <header className="preview-info-heading">
                 <SvgIcon svg={previewData.info.kind === "folder" ? skimFolderSvg : getFormatIconSvg(previewData.info.extension)} className="cap-svg-icon preview-info-format-icon" />

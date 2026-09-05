@@ -96,9 +96,8 @@ assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]
 assert.match(mainSource, /minimizable: isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\) \? getStablePreviewContentChrome\(sidebarWidth\) : \{\}/u);
 assert.match(previewSource, /previewSidebarWidth = isStableUiPreview \? \(previewSidebarLayout\.expanded \? previewSidebarLayout\.width : 40\) : undefined/u);
-assert.match(previewSource, /infoDimensions = previewData\.info\?\.kind === "folder"[\s\S]*?isStableUiPreview \? 620 : 460[\s\S]*?hasExtendedInfoFallback \? 540 : 480[\s\S]*?hasExtendedInfoFallback \? 360 : 240/u);
-assert.match(previewSource, /new ResizeObserver[\s\S]*?Math\.ceil\(panel\.scrollHeight\)[\s\S]*?width: 600[\s\S]*?height: measuredHeight[\s\S]*?observer\.disconnect\(\), 240/u);
-assert.match(previewSource, /ref=\{infoPanelRef\} className="preview-info-panel"/u);
+assert.match(previewSource, /infoDimensions = previewData\.info\?\.kind === "folder"[\s\S]*?isStableUiPreview \? 580 : 460[\s\S]*?hasExtendedInfoFallback \? 450 : 380[\s\S]*?hasExtendedInfoFallback \? 360 : 240/u);
+assert.doesNotMatch(previewSource, /new ResizeObserver[\s\S]*?panel\.scrollHeight/u);
 assert.match(previewSource, /preview-info-heading[\s\S]*?getFormatIconSvg\(previewData\.info\.extension\)[\s\S]*?previewInfoFormat[\s\S]*?previewData\.info\.name/u);
 assert.match(previewSource, /preview-info-panel" data-preview-navigation-suppressed=\{isStableUiPreview \? "true" : undefined\}/u);
 assert.match(previewSource, /preview\.contentSize\(\{[\s\S]*?sidebarWidth: previewSidebarWidth/u);
