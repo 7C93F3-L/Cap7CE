@@ -42,19 +42,20 @@ assert.match(mainShellSource, /aria-label=\{t\("stableUi\.resultsRegion"\)\}/u);
 assert.match(resizeSource, /event\.key === "ArrowLeft"[\s\S]*?event\.key === "ArrowRight"/u);
 
 for (const marker of [
-  "useState(160)",
+  "stableSidebarDefaultWidth = 176",
+  "useState(stableSidebarDefaultWidth)",
   "useState(360)",
   "clamp(event.clientX, 40, 320)",
   "Math.floor((viewportWidth - sidebarWidth) / 2)",
   "clamp(window.innerWidth - event.clientX, 280, skimMaximumWidth)",
-  "resetSidebarWidth: () => setSidebarWidth(160)",
+  "resetSidebarWidth: () => setSidebarWidth(stableSidebarDefaultWidth)",
   "resetSkimWidth: () => setSkimWidth(360)"
 ]) {
   assert.ok(`${layoutSource}\n${resizeSource}`.includes(marker), `Stable UI shell layout is missing ${marker}.`);
 }
 
 for (const marker of [
-  "--cap-stable-sidebar-width: 160px",
+  "--cap-stable-sidebar-width: 176px",
   "--cap-stable-skim-width: 360px",
   "--cap-stable-skim-rendered-width: min(var(--cap-stable-skim-width), var(--cap-stable-skim-maximum-width))",
   "@media (max-width: 920px) and (min-height: 360px)",

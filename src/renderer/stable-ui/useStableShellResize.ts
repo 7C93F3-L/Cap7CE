@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type Dispatch, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type SetStateAction } from "react";
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(Math.max(value, minimum), maximum); const resizeStep = 8;
+const stableSidebarDefaultWidth = 176;
 const resolveKeyboardWidth = (
   event: ReactKeyboardEvent<HTMLButtonElement>,
   current: number,
@@ -14,7 +15,7 @@ const resolveKeyboardWidth = (
   return null;
 };
 export const useStableShellResize = () => {
-  const [sidebarWidth, setSidebarWidth] = useState(160);
+  const [sidebarWidth, setSidebarWidth] = useState(stableSidebarDefaultWidth);
   const [skimWidth, setSkimWidth] = useState(360);
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
   useEffect(() => { const updateViewportWidth = () => setViewportWidth(window.innerWidth); window.addEventListener("resize", updateViewportWidth); return () => window.removeEventListener("resize", updateViewportWidth); }, []);
@@ -45,7 +46,7 @@ export const useStableShellResize = () => {
     },
     resizeSidebarByKeyboard: (event: ReactKeyboardEvent<HTMLButtonElement>) => resizeByKeyboard(event, 40, 320, -resizeStep, setSidebarWidth),
     resizeSkimByKeyboard: (event: ReactKeyboardEvent<HTMLButtonElement>) => resizeByKeyboard(event, 280, skimMaximumWidth, resizeStep, setSkimWidth),
-    resetSidebarWidth: () => setSidebarWidth(160),
+    resetSidebarWidth: () => setSidebarWidth(stableSidebarDefaultWidth),
     resetSkimWidth: () => setSkimWidth(360)
   };
 };
