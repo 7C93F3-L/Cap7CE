@@ -40,6 +40,8 @@ for (const marker of [
   "if (!composingRef.current) onSearch()",
   "const clearedQuery = search.query.trim().length > 0"
 ]) assert.ok(inputSource.includes(marker), `Stable search input is missing ${marker}.`);
+assert.match(inputSource, /placeholder=\{inputFeedbackIsGuide \? inputFeedback : inputFeedback \? "" : t\("search\.inputLabel"\)\}/u);
+assert.match(inputSource, /\{!search\.query && !inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback"/u);
 
 assert.match(resultsSource, /responsiveLayout\?: boolean/);
 assert.match(resultsSource, /responsiveLayout=\{responsiveLayout\}/);

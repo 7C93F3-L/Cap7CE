@@ -24,7 +24,7 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGui
       <input
         ref={inputRef}
         value={search.query}
-        placeholder={inputFeedbackIsGuide ? inputFeedback : t("search.inputLabel")}
+        placeholder={inputFeedbackIsGuide ? inputFeedback : inputFeedback ? "" : t("search.inputLabel")}
         title={inputFeedback || undefined}
         aria-label={t("search.inputLabel")}
         autoComplete="off"
@@ -37,7 +37,7 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGui
           if (clearedQuery) onSearchOptionsChange(nextSearch);
         }}
       />
-      {!inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback" title={inputFeedback}>{inputFeedback}</span>}
+      {!search.query && !inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback" title={inputFeedback}>{inputFeedback}</span>}
     </form>
   );
 };
