@@ -46,7 +46,7 @@ assert.match(gridSource, /responsiveLayout \? \(lowHeightLayout \? "micro" : "no
 assert.match(gridSource, /minimumColumnCount = responsiveLayout \? 2 : 1/u);
 assert.match(gridSource, /interactive=\{!responsiveLayout\}/);
 assert.match(gridSource, /: <div className="empty-result-row">\{message\}<\/div>/);
-assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); \}/u);
+assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); background: var\(--cap-stable-surface-soft\); \}/u);
 assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-search-icon" \/>/u);
 assert.match(stableResultsStyles, /\.app \.cap-stable-search-slot input:focus,[\s\S]*?input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 

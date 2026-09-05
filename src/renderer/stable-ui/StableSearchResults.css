@@ -40,7 +40,7 @@
   min-width: 0;
   min-height: 0; border-radius: var(--cap-stable-radius-sm);
 }
-.cap-stable-results-slot .image-grid { padding-right: 0; } .cap-stable-results-slot .thumb, .cap-stable-results-slot .result-section-card { border-radius: var(--cap-stable-radius-sm); }
+.cap-stable-results-slot .image-grid { padding-right: 0; } .cap-stable-results-slot .thumb, .cap-stable-results-slot .result-section-card { border-radius: var(--cap-stable-radius-sm); background: var(--cap-stable-surface-soft); }
 .cap-stable-results-slot .empty-result-row {
   width: 100%;
   height: 100%;
