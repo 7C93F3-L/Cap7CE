@@ -7,6 +7,8 @@
   --stable-settings-card: rgb(255 255 255 / 66%);
   --stable-settings-hover: rgb(255 255 255 / 58%);
   --stable-settings-border: rgb(50 50 50 / 8%);
+  --scrollbar-thumb: color-mix(in srgb, var(--stable-settings-text) 42%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--stable-settings-text) 62%, transparent);
   --dialog-text: var(--stable-settings-text);
   --dialog-surface: rgb(246 246 246 / 80%);
   --dialog-control-surface: rgb(255 255 255 / 58%);
@@ -126,6 +128,21 @@
   overflow: hidden;
   border-radius: 12px;
   background: var(--stable-settings-surface);
+}
+
+.cap-stable-settings-content-frame.cap-scroll-viewport-frame-vertical {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cap-stable-settings-content-frame > .cap-custom-scrollbar-vertical {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--custom-scrollbar-hit-size, 8px);
+  height: auto;
+  grid-column: auto;
+  grid-row: auto;
 }
 
 .cap-stable-settings-content {

@@ -233,6 +233,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsCategoryIconSource, /viewBox="0 0 24 24"[\s\S]*?name === "general"[\s\S]*?name === "about"/u);
   assert.match(settingsStyles, /cap-stable-settings-category-icon[\s\S]*?width: 16px[\s\S]*?height: 16px[\s\S]*?@media \(max-width: 700px\)[\s\S]*?width: 17px[\s\S]*?height: 17px/u);
   assert.match(settingsStyles, /cap-stable-settings-content-track\s*\{[\s\S]*?width: min\(100%, 1000px\)[\s\S]*?margin-inline: auto[\s\S]*?cap-stable-settings-panel\s*\{[\s\S]*?width: 100%[\s\S]*?cap-stable-settings-section,[\s\S]*?cap-stable-settings-section-cards[\s\S]*?width: 100%/u);
+  assert.match(settingsStyles, /cap-stable-settings-content-frame\.cap-scroll-viewport-frame-vertical[\s\S]*?grid-template-columns: minmax\(0, 1fr\)[\s\S]*?cap-stable-settings-content-frame > \.cap-custom-scrollbar-vertical[\s\S]*?position: absolute[\s\S]*?right: 0/u);
+  assert.match(settingsStyles, /cap-settings-window-foundation[\s\S]*?--scrollbar-thumb: color-mix\(in srgb, var\(--stable-settings-text\) 42%, transparent\)[\s\S]*?--scrollbar-thumb-hover: color-mix\(in srgb, var\(--stable-settings-text\) 62%, transparent\)/u);
   assert.match(customScrollbarStyles, /grid-template-columns: minmax\(0, 1fr\) var\(--custom-scrollbar-hit-size, 8px\)[\s\S]*?width: var\(--custom-scrollbar-thumb-size, 4px\)/u);
   assert.match(settingsStyles, /cap-stable-settings-card\s*\{[\s\S]*?min-height: 62px;[\s\S]*?background: transparent/u);
   assert.match(settingsStyles, /cap-stable-settings-card \+ \.cap-stable-settings-card \{ border-top: 1px solid var\(--stable-settings-border\); \}/u);
