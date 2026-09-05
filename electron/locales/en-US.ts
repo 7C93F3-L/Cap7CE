@@ -144,6 +144,8 @@ export const enUS = defineLocale({
   "stableSettings.desc.quickActions": "Change global window, Skim, folder-cycle, and Settings shortcuts. Existing shortcuts pause during capture.",
   "stableSettings.desc.quickCommands": "Enable and review deterministic commands available directly from the search box.",
   "stableSettings.desc.diagnostics": "Review local logs and crash-report locations, temporarily enable detailed logging, or export a sanitized bundle.",
+  "stableSettings.diagnostics": "Logs and diagnostics",
+  "stableSettings.runtimeInfo": "llama.cpp runtime information",
   "stableSettings.desc.runtimeInfo": "Review the current llama.cpp service, runtime folder, and model file state.",
   "stableSettings.desc.version": "The currently running Cap7CE version.",
   "stableSettings.desc.update": "Check, download, or cancel updates only when requested. Cap7CE does not update silently in the background.",

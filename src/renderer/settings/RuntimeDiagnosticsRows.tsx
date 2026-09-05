@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { t } from "../../../electron/localization";
 import type { RuntimeDiagnosticsInfo } from "../../shared/types";
 
-export const RuntimeDiagnosticsRows = () => {
+export const RuntimeDiagnosticsRows = ({ stableUi = false }: { stableUi?: boolean }) => {
   const [info, setInfo] = useState<RuntimeDiagnosticsInfo | null>(null);
   const [busyAction, setBusyAction] = useState<"detail" | "export" | null>(null);
   const [status, setStatus] = useState<"idle" | "exported" | "failed">("idle");
@@ -49,6 +49,35 @@ export const RuntimeDiagnosticsRows = () => {
       setBusyAction(null);
     }
   };
+
+  if (stableUi) {
+    return (
+      <div className="cap-stable-runtime-diagnostics-list">
+        <div className="cap-stable-runtime-diagnostics-row">
+          <span>{t("settings.applicationLog")}</span>
+          <strong className="runtime-diagnostics-path">{info?.logDirectory || t("common.notCreated")}</strong>
+        </div>
+        <div className="cap-stable-runtime-diagnostics-row">
+          <span>{t("settings.crashReports")}</span>
+          <strong className="runtime-diagnostics-path">{info?.crashDirectory || t("common.notCreated")}</strong>
+        </div>
+        <div className="cap-stable-runtime-diagnostics-row">
+          <span>{t("settings.detailedLogging")}</span>
+          <strong>{info?.detailedLoggingEnabled ? t("common.enabled") : t("common.disabled")}</strong>
+          <button className="cap-settings-pill" type="button" onClick={toggleDetailedLogging} title={info?.detailedLoggingEnabled ? t("settings.disableDetailedLoggingHint") : t("settings.enableDetailedLoggingHint")} disabled={!info || busyAction !== null}>
+            {info?.detailedLoggingEnabled ? t("common.close") : t("common.enable")}
+          </button>
+        </div>
+        <div className="cap-stable-runtime-diagnostics-row">
+          <span>{t("settings.diagnosticsBundle")}</span>
+          <strong>{status === "exported" ? t("settings.diagnosticsExported") : status === "failed" ? t("settings.diagnosticsActionFailed") : t("settings.diagnosticsBundleDescription")}</strong>
+          <button className="cap-settings-pill" type="button" onClick={exportDiagnostics} title={t("settings.exportDiagnosticsHint")} disabled={busyAction !== null}>
+            {busyAction === "export" ? t("settings.exportingDiagnostics") : t("settings.exportDiagnostics")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -4,13 +4,13 @@
 
 .cap-scroll-viewport-frame-vertical {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--custom-scrollbar-hit-size);
+  grid-template-columns: minmax(0, 1fr) var(--custom-scrollbar-hit-size, 8px);
   grid-template-rows: minmax(0, 1fr);
 }
 
 .cap-scroll-viewport-frame-horizontal {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--custom-scrollbar-hit-size);
+  grid-template-columns: minmax(0, 1fr) var(--custom-scrollbar-hit-size, 8px);
   grid-template-rows: minmax(0, 1fr);
 }
 
@@ -46,15 +46,15 @@
   position: relative;
   grid-column: 2;
   grid-row: 1;
-  width: var(--custom-scrollbar-hit-size);
+  width: var(--custom-scrollbar-hit-size, 8px);
   height: 100%;
 }
 
 .cap-custom-scrollbar-horizontal {
-  right: var(--custom-scrollbar-hit-size);
+  right: var(--custom-scrollbar-hit-size, 8px);
   bottom: calc(var(--window-resize-safe-gap) - var(--content-edge-gap));
   left: 0;
-  height: var(--custom-scrollbar-hit-size);
+  height: var(--custom-scrollbar-hit-size, 8px);
 }
 
 .cap-custom-scrollbar.is-hidden {
@@ -83,7 +83,7 @@
 .cap-custom-scrollbar-vertical .cap-custom-scrollbar-thumb {
   right: 0;
   left: 0;
-  width: var(--custom-scrollbar-thumb-size);
+  width: var(--custom-scrollbar-thumb-size, 4px);
   min-height: 56px;
   margin-right: auto;
   margin-left: auto;
@@ -92,7 +92,7 @@
 .cap-custom-scrollbar-horizontal .cap-custom-scrollbar-thumb {
   top: 0;
   bottom: 0;
-  height: var(--custom-scrollbar-thumb-size);
+  height: var(--custom-scrollbar-thumb-size, 4px);
   min-width: 56px;
   margin-top: auto;
   margin-bottom: auto;

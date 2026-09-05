@@ -87,6 +87,9 @@
 }
 
 .cap-stable-settings-navigation nav button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-height: 36px;
   padding: 6px 10px;
   border: 0;
@@ -96,6 +99,18 @@
   background: transparent;
   transition: background-color 140ms ease;
   app-region: no-drag;
+}
+
+.cap-stable-settings-category-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--stable-settings-secondary);
+}
+
+.cap-stable-settings-navigation nav button:hover .cap-stable-settings-category-icon,
+.cap-stable-settings-navigation nav button.is-active .cap-stable-settings-category-icon {
+  color: inherit;
 }
 
 .cap-stable-settings-navigation nav button:hover,
@@ -125,6 +140,19 @@
   display: none;
 }
 
+.cap-stable-settings-content-track {
+  width: min(100%, 1000px);
+  min-width: 0;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.cap-stable-settings-panel {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .cap-stable-settings-panel + .cap-stable-settings-panel {
   margin-top: 34px;
 }
@@ -137,6 +165,13 @@
 
 .cap-stable-settings-section + .cap-stable-settings-section {
   margin-top: 24px;
+}
+
+.cap-stable-settings-section,
+.cap-stable-settings-section-cards {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .cap-stable-settings-section > h2 {
@@ -335,33 +370,6 @@
   margin-bottom: 8px;
 }
 
-.cap-stable-settings-diagnostics,
-.cap-stable-settings-runtime-info {
-  display: grid;
-  grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
-  gap: 8px 14px;
-  align-items: center;
-  font-size: var(--cap-ui-font-secondary);
-}
-
-.cap-stable-settings-diagnostics .runtime-diagnostics-group {
-  grid-column: 1 / -1;
-  color: var(--stable-settings-secondary);
-}
-
-.cap-stable-settings-diagnostics strong,
-.cap-stable-settings-runtime-info dd {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-weight: 400;
-  user-select: text;
-}
-
-.cap-stable-settings-runtime-info dt {
-  color: var(--stable-settings-secondary);
-}
-
 .cap-stable-settings-loading {
   display: grid;
   place-content: center;
@@ -411,9 +419,10 @@
     display: none;
   }
 
-  .cap-stable-settings-navigation nav button::before {
-    content: attr(data-short);
-    font-size: var(--cap-ui-font-secondary);
+  .cap-stable-settings-category-icon {
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
   }
 
   .cap-stable-settings-content {
