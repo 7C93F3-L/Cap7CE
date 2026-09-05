@@ -437,4 +437,8 @@
   .cap-stable-settings-control {
     justify-self: stretch;
   }
+
+  .cap-stable-settings-colors {
+    justify-content: flex-start;
+  }
 }

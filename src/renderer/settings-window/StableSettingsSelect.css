@@ -85,10 +85,13 @@
 
 @media (max-width: 700px) {
   .cap-stable-settings-model-line {
-    grid-template-columns: minmax(0, 270px) 58px 58px;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
   .cap-stable-settings-model-line .cap-stable-settings-select {
+    width: 100%;
     min-width: 0;
+    max-width: none;
   }
 }

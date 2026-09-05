@@ -237,6 +237,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsStyles, /cap-stable-settings-card\s*\{[\s\S]*?min-height: 62px;[\s\S]*?background: transparent/u);
   assert.match(settingsStyles, /cap-stable-settings-card \+ \.cap-stable-settings-card \{ border-top: 1px solid var\(--stable-settings-border\); \}/u);
   assert.match(settingsStyles, /cap-stable-settings-card-expanded[\s\S]*?align-items: stretch[\s\S]*?@media \(max-width: 700px\)[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)/u);
+  assert.match(settingsStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-settings-card[\s\S]*?grid-template-columns: minmax\(0, 1fr\)[\s\S]*?cap-stable-settings-colors[\s\S]*?justify-content: flex-start/u);
+  assert.match(stableSelectStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-settings-model-line[\s\S]*?width: 100%[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto auto[\s\S]*?cap-stable-settings-select[\s\S]*?max-width: none/u);
+  assert.match(stableRuntimeDiagnosticStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-runtime-diagnostics-row[\s\S]*?grid-template-columns: 116px minmax\(0, 1fr\) auto/u);
   assert.match(stableSkimStyles, /cap-settings-skim-display-stable[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?cap-settings-skim-extension\[data-selected="true"\]/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?min-height: 24px[\s\S]*?height: 24px[\s\S]*?border-radius: var\(--radius-pill\)/u);
   assert.match(skimDisplaySource, /stableUi[\s\S]*?cap-settings-skim-category-control[\s\S]*?role="switch"[\s\S]*?settings\.hiddenFiles/u);

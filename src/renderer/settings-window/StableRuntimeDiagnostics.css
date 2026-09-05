@@ -74,10 +74,6 @@
 
 @media (max-width: 700px) {
   .cap-stable-runtime-diagnostics-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .cap-stable-runtime-diagnostics-row > strong {
-    grid-column: 1 / -1;
+    grid-template-columns: 116px minmax(0, 1fr) auto;
   }
 }
