@@ -98,7 +98,6 @@
 
 | 文案 ID                          | 当前中文                                           | 确认中文                                   | 英文  | 使用位置 / 备注          |
 | ------------------------------ | ---------------------------------------------- | -------------------------------------- | --- | ------------------ |
-| `search.expandCapsule`         | 展开搜索胶囊                                         |                                        |     | aria-label         |
 | `search.inputLabel`            | 搜索关键词                                          |                                        |     | 输入框 aria-label     |
 | `search.action`                | 搜索                                             |                                        |     | 旧搜索按钮 / aria-label |
 | `search.aiEnhance` | AI增强 |  | AI Enhance | 顶部 AI 深度匹配总开关 |
@@ -163,8 +162,6 @@
 | `search.guide.search`          | 在此键入关键词进行搜索。                                  |                                        |     | 首次操作提示            |
 | `search.guide.showCurrent`     | 搜索框留空并按下回车键，可浏览当前范围内的内容。                       |                                        |     | 随机操作提示            |
 | `search.guide.activateCapsule` | 按下 {shortcut}，随时唤起快速搜索。                         |                                        |     | 动态快捷键提示           |
-| `search.guide.activateMicro`   | 按下 {shortcut}，切换至 micro 模式。                      |                                        |     | 动态快捷键提示           |
-| `search.guide.activateMini`    | 按下 {shortcut}，切换至 mini 模式。                       |                                        |     | 动态快捷键提示           |
 | `search.guide.activateNormal`  | 按下 {shortcut}，使用 normal 模式浏览大量文件。              |                                        |     | 动态快捷键提示           |
 | `search.guide.activateLine`    | 按下 {shortcut}，将窗口收起为 line。                       |                                        |     | 动态快捷键提示           |
 | `search.guide.openSettings`    | 按下 {shortcut}，快速打开设置界面。                         |                                        |     | 动态快捷键提示           |
@@ -323,8 +320,6 @@
 | `settings.confirmationCommands`    | 需二次确认类                        |                           |     | 快捷指令分组          |
 | `settings.confirmationCommandHint` | 危险操作执行前将在输入框内要求输入 y / n 二次确认。 | 执行前将在输入框内要求输入 y / n 二次确认。 |     | 快捷指令说明          |
 | `shortcut.activateCapsule`         | 激活胶囊                          | 激活capsule                 |     | 快捷动作名称          |
-| `shortcut.activateMicro`           | 激活micro                       |                           |     | 快捷动作名称；中英文空格需核对 |
-| `shortcut.activateMini`            | 激活mini                        |                           |     | 快捷动作名称；中英文空格需核对 |
 | `shortcut.activateNormal`          | 激活normal                      |                           |     | 快捷动作名称；中英文空格需核对 |
 | `shortcut.activateStandby`         | 激活standby                     | 激活line                    |     | 快捷动作名称；中英文空格需核对 |
 | `shortcut.cycleDirectory`          | 目录切换                          |                           |     | 窗口内快捷动作          |
@@ -431,9 +426,6 @@
 | `commands.view.all`                | 查看全部已添加文件                         |                                  |      | `see:all`        |
 | `commands.view.directory`          | 查看指定目录                            |                                  |      | `see:dir`        |
 | `commands.window.standby`          | 切换到待机线状态                          | 切换为 line 模式                      |      | `win:line`       |
-| `commands.window.capsule`          | 切换到 Capsule 胶囊输入状态                | 切换为 capsule 模式                   |      | `win:cap`        |
-| `commands.window.micro`            | 切换到 micro 状态                      | 切换为 micro 模式                     |      | `win:micro`      |
-| `commands.window.mini`             | 切换到 mini 状态                       | 切换为 mini 模式                      |      | `win:mini`       |
 | `commands.window.normal`           | 切换到 normal 状态                     | 切换为 normal 模式                    |      | `win:normal`     |
 | `commands.window.max`              | 最大化 / 标准大窗口状态                     | 窗口最大化                            |      | `win:max`        |
 | `commands.window.pin`              | 固定窗口                              |                                  | Pin Window | `win:top on`     |

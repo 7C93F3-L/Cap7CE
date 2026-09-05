@@ -40,7 +40,7 @@ assert.throws(() => createBrowserWindowWithDiagnostics({
   presentationMode: "cap7ce",
   surface: "line"
 }), diagnosticFailureCreationError);
-for (const surface of ["main", "preview", "settings", "line", "capsule", "startup-hint"]) {
+for (const surface of ["main", "preview", "settings", "line", "startup-hint"]) {
   assert.ok(mainSource.includes(`createApplicationWindow("${surface}"`), `Missing diagnosed window surface: ${surface}`);
 }
 assert.match(mainSource, /runtimeDiagnostics\.log\("info", "window\.presentation\.startup", \{ requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime\.mode, source:/u);

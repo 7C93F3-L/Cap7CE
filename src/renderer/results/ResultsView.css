@@ -1,25 +1,3 @@
-.cap-shell-micro .results-view,
-.cap-shell-mini .results-view {
-  padding: var(--cap-results-top) var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
-}
-
-.cap-shell-micro .image-grid {
-  padding-right: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.cap-shell-mini .image-grid {
-  padding-right: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.cap-shell-micro .virtual-grid-spacer {
-  min-width: 100%;
-  height: 100%;
-}
-
 .cap-shell-normal .results-view,
 .cap-shell-settings .results-view {
   padding-top: 50px;
@@ -63,11 +41,6 @@
   place-items: center;
   padding: 0 12px;
   text-align: center;
-}
-
-.cap-shell-micro .cap-results-view,
-.cap-shell-mini .cap-results-view {
-  padding: 5px var(--cap-results-right) var(--cap-results-bottom) var(--cap-edge-inset);
 }
 
 .cap-shell-normal .cap-results-view,

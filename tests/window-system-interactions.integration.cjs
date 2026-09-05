@@ -18,7 +18,8 @@ assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeSh
 assert.match(mainSource, /appTray\.on\("balloon-click", \(\) => void openSettings\(\)\)/u);
 assert.match(mainSource, /app\.on\("second-instance", \(\) => \{[\s\S]*?pendingSecondInstanceActivation = true;[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /mainWindow\.once\("ready-to-show", \(\) => \{[\s\S]*?if \(pendingSecondInstanceActivation\) \{[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
-assert.match(mainSource, /\{ id: "activateMicro", shortcut: shortcutActions\.activateMicro, mode: "micro" \}[\s\S]*?\{ id: "activateMini", shortcut: shortcutActions\.activateMini, mode: "mini" \}[\s\S]*?\{ id: "activateNormal", shortcut: shortcutActions\.activateNormal, mode: "normal" \}[\s\S]*?\{ id: "activateStandby", shortcut: shortcutActions\.activateStandby, mode: "standby" \}/u);
+assert.match(mainSource, /\{ id: "activateStandby", shortcut: shortcutActions\.activateStandby, mode: "standby" \}[\s\S]*?\{ id: "activateSkim", shortcut: shortcutActions\.activateSkim, mode: "skim" \}[\s\S]*?\{ id: "openSettings", shortcut: shortcutActions\.openSettings, mode: "settings" \}[\s\S]*?\{ id: "activateNormal", shortcut: shortcutActions\.activateNormal, mode: "normal" \}/u);
+assert.doesNotMatch(mainSource, /mode: "micro"|mode: "mini"/u);
 
 console.log(JSON.stringify({
   nativeCloseUsesSafeRendererRequest: true,

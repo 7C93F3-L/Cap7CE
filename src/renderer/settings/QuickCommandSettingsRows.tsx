@@ -31,9 +31,6 @@ export const getQuickCommandGroups = (): Array<{
     title: t("commands.group.window"),
     items: [
       { command: "win:line", description: t("commands.window.line") },
-      { command: "win:cap", description: t("commands.window.capsule") },
-      { command: "win:micro", description: t("commands.window.micro") },
-      { command: "win:mini", description: t("commands.window.mini") },
       { command: "win:normal", description: t("commands.window.normal") },
       { command: "win:max", description: t("commands.window.max") },
       { command: "win:top on", description: t("commands.window.pin") },

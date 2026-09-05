@@ -10,7 +10,7 @@ import {
   type WindowLayoutProfile
 } from "./windowLayoutTypes";
 
-const layoutStates: PersistedWindowLayoutState[] = ["micro", "mini", "normal"];
+const layoutStates: PersistedWindowLayoutState[] = ["normal"];
 const dockEdges: WindowDockEdge[] = ["left", "right", "top", "bottom"];
 
 const finiteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);

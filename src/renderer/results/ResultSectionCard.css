@@ -94,24 +94,6 @@
   font-size: var(--cap-ui-font-control);
 }
 
-.cap-shell-micro .result-section-card {
-  gap: 4px;
-  padding: 8px;
-}
-
-.cap-shell-micro .result-section-card h2 {
-  overflow: hidden;
-  font-size: calc(var(--cap-ui-font-base) + 3px);
-  letter-spacing: -0.04em;
-  white-space: nowrap;
-}
-
-.cap-shell-micro .result-section-card p {
-  font-size: var(--cap-ui-font-caption);
-  line-height: 1.25;
-  -webkit-line-clamp: 2;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .result-section-card-aiDeepMatch[data-ai-phase="starting"] h2,
   .result-section-card-aiDeepMatch[data-ai-phase="starting"] p,

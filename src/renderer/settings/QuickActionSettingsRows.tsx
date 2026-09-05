@@ -17,10 +17,6 @@ import {
 
 const getShortcutActionItems = (stableUi = false): Array<{ id: ShortcutActionId; name: string }> => ([
   { id: "activateCapsule", name: t(stableUi ? "shortcut.focusMainSearch" : "shortcut.activateCapsule") },
-  ...(!stableUi ? [
-    { id: "activateMicro" as const, name: t("shortcut.activateMicro") },
-    { id: "activateMini" as const, name: t("shortcut.activateMini") }
-  ] : []),
   { id: "activateStandby", name: t(stableUi ? "shortcut.hideToLine" : "shortcut.activateLine") },
   { id: "activateSkim", name: t(stableUi ? "shortcut.toggleSkim" : "shortcut.activateSkim") },
   { id: "openSettings", name: t("shortcut.openSettings") },

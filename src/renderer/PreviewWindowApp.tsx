@@ -24,8 +24,7 @@ import "./stable-ui/StableMaterialContrast.css";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
   isMaximized: false,
-  isAlwaysOnTop: false,
-  miniStandardHeight: 500
+  isAlwaysOnTop: false
 };
 
 const previewLoadingIndicatorDelayMs = 180;

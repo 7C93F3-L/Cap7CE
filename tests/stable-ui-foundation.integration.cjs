@@ -43,15 +43,14 @@ void (async () => {
   if (!mainSource.includes('windowPresentationRuntime.layoutFileName')) {
     throw new Error("Stable UI must use the formal presentation policy layout namespace.");
   }
-  if (!mainSource.includes("if (isStableWindowPresentationMode(windowPresentationRuntime.mode) || !mainWindow")
-    || !mainSource.includes("if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) mainWindow?.show();")) {
-    throw new Error("Stable UI must bypass legacy resize-state settling and open without applying a legacy size preset.");
+  if (/resolveResizeTargetState|scheduleResizeSettledCheck|forceApplyDefaultMicroBounds/.test(mainSource)) {
+    throw new Error("Stable UI must not retain legacy resize-state settling or size presets.");
   }
   if (rootSource.includes("setShellState(") || rootSource.includes("size-contract")) {
     throw new Error("Stable UI development root must not select a legacy shell shape or size contract.");
   }
   assert.match(appSource, /if \(stableUi\) void window\.cap7ce\?\.window\.setShellState\("standby"\); else setShellState\("standby"\);/);
-  assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\("line"\); else window\.setTimeout/);
+  assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\("line"\);[\s\S]*?window\.setTimeout/);
   if (!titlebarSource.includes("<WindowPinButton") || !pinButtonSource.includes("aria-pressed={pinned}")) {
     throw new Error("Stable main and preview foundations must share the existing accessible pin control.");
   }

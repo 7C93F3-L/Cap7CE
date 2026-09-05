@@ -51,7 +51,7 @@ controller.detach();
 assert.equal(window.listenerCount("maximize"), 0);
 assert.equal(window.listenerCount("unmaximize"), 0);
 assert.match(mainSource, /getShellContext: \(\) => \(\{[^}]*?isNativeSnapActive\(\)/u);
-assert.match(mainSource, /const evaluateShellResizeThresholds = \(\) => \{[\s\S]*?isNativeSnapActive\(\)/u);
+assert.doesNotMatch(mainSource, /evaluateShellResizeThresholds|resolveResizeTargetState/u);
 assert.match(mainSource, /const isNativeSnapActive = \(bounds = mainWindow\?\.getBounds\(\)\) => Boolean\(windowPresentationRuntime\.mode !== "cap7ce"/u);
 assert.doesNotMatch(mainSource, /applyEdgeSnapAfterMove|getEdgeSnappedBounds/u);
 

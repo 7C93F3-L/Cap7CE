@@ -7,10 +7,6 @@
   animation: cap7ce-keyword-backdrop-enter 180ms ease-out both;
 }
 
-body:has(.cap-shell-micro, .cap-shell-mini) .keyword-editor-backdrop {
-  border-radius: var(--radius-window-mini);
-}
-
 body:has(.cap-shell-maximized) .keyword-editor-backdrop {
   border-radius: 0;
 }

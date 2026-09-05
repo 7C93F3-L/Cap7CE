@@ -107,5 +107,4 @@ export interface PreviewContentSize {
 export interface PreviewWindowControlState {
   isMaximized: boolean;
   isAlwaysOnTop: boolean;
-  miniStandardHeight: number;
 }

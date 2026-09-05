@@ -144,20 +144,6 @@ export const isWindowDockEdgeExposed = (
   });
 };
 
-export const getEdgeAnchoredCapsuleBounds = (
-  workArea: WindowLayoutBounds,
-  size: { width: number; height: number },
-  edge: "top" | "bottom",
-  gap: number
-): WindowLayoutBounds => clampWindowLayoutBounds({
-  width: size.width,
-  height: size.height,
-  x: workArea.x + Math.round((workArea.width - size.width) / 2),
-  y: edge === "top"
-    ? workArea.y + gap
-    : workArea.y + workArea.height - gap - size.height
-}, workArea, size);
-
 export const getDirectionalLineBounds = (
   workArea: WindowLayoutBounds,
   edge: WindowDockEdge,

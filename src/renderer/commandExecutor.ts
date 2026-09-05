@@ -2,7 +2,7 @@ import type { AppearanceColors, LanguagePreference, ShortcutActionPreferences, T
 import type { ParsedQuickCommand } from "./commandParser";
 import { t } from "../../electron/localization";
 
-type CommandShellMode = "line" | "cap" | "micro" | "mini" | "normal";
+type CommandShellMode = "line" | "normal";
 type CommandSortDirection = "asc" | "desc";
 type CommandSortField = "file_name" | "modified_at";
 type CommandLabel = "directory" | "sort" | "skimDisplay" | "ai";
@@ -99,10 +99,9 @@ export const executeQuickCommand = async (
   }
 
   if (command.domain === "win") {
-    if (command.action === "line" || command.action === "cap" || command.action === "micro" || command.action === "mini" || command.action === "normal") {
+    if (command.action === "line" || command.action === "normal") {
       context.setShellMode(command.action);
-      const modeLabel = command.action === "cap" ? "capsule" : command.action;
-      return { status: "handled", message: t("command.windowChanged", { mode: modeLabel }), clearInput: true };
+      return { status: "handled", message: t("command.windowChanged", { mode: command.action }), clearInput: true };
     }
     if (command.action === "max") {
       const result = await context.maximizeWindow();

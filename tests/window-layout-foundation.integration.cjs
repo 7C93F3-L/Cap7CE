@@ -4,7 +4,6 @@ const os = require("node:os");
 const path = require("node:path");
 
 const geometry = require("../dist-electron/windowLayoutGeometry.js");
-const { getDefaultShellLayoutBounds } = require("../dist-electron/windowLayoutManager.js");
 const {
   WindowLayoutStore,
   normalizeWindowLayoutDocument,
@@ -67,18 +66,6 @@ assert.equal(
   true
 );
 
-assert.deepEqual(
-  geometry.getEdgeAnchoredCapsuleBounds(workArea, { width: 300, height: 34 }, "bottom", 5),
-  { x: 810, y: 1001, width: 300, height: 34 }
-);
-assert.deepEqual(
-  getDefaultShellLayoutBounds("capsule", workArea, { capsuleWidth: 300, capsuleHeight: 34, microHeight: 156, miniHeight: 600, edgeGap: 5 }),
-  { x: 810, y: 1001, width: 300, height: 34 }
-);
-assert.deepEqual(
-  geometry.getEdgeAnchoredCapsuleBounds({ x: -1600, y: 40, width: 1600, height: 860 }, { width: 300, height: 34 }, "top", 5),
-  { x: -950, y: 45, width: 300, height: 34 }
-);
 assert.deepEqual(
   geometry.getDirectionalLineBounds(workArea, "right", 180, 15, 5),
   { x: 1900, y: 430, width: 15, height: 180 }
@@ -174,7 +161,7 @@ const runStoreChecks = async () => {
   console.log(JSON.stringify({
     boundsClampVerified: true,
     edgeAndTaskbarDetectionVerified: true,
-    capsuleAndLineGeometryVerified: true,
+    lineGeometryVerified: true,
     completeLayoutRestoreVerified: true,
     multiDisplayFallbackVerified: true,
     versionedAtomicStoreVerified: true,

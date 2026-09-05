@@ -6,8 +6,6 @@
   --radius-control: 10px;
   --radius-pill: 999px;
   --radius-expanded-panel: 25px;
-  --radius-window-micro: 20px;
-  --radius-window-mini: 20px;
   --radius-window-normal: 18px;
   --radius-window-settings: 18px;
   font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
@@ -207,8 +205,6 @@ textarea,
   contain: paint;
 }
 
-.cap-shell-micro,
-.cap-shell-mini,
 .cap-shell-normal,
 .cap-shell-settings {
   background: var(--app-bg);
@@ -243,20 +239,6 @@ textarea,
 .context-menu * {
   app-region: no-drag;
   -webkit-app-region: no-drag;
-}
-
-.cap-shell-micro {
-  border-radius: var(--radius-window-micro);
-}
-
-.cap-shell-mini {
-  border-radius: var(--radius-window-mini);
-  --cap-skim-sidebar-target-size: 120px;
-}
-
-.cap-shell-micro,
-.cap-shell-mini {
-  --cap-results-top: 35px;
 }
 
 .cap-shell-normal {
@@ -294,225 +276,9 @@ textarea,
   will-change: opacity, transform;
 }
 
-.cap-capsule-stage {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.cap-capsule {
-  position: relative;
-  width: 100%;
-  height: 30px;
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--window-border-color);
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--capsule-bg);
-  transform-origin: bottom center;
-}
-
-.cap-capsule input {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--input-text);
-  padding: 0 26px;
-  font-size: 12px;
-  app-region: no-drag;
-  -webkit-app-region: no-drag;
-}
-
-.cap-transition-standby-to-capsule .cap-capsule {
-  animation: cap-standby-to-capsule 320ms var(--cap-ease) both;
-}
-
-.cap-transition-capsule-to-micro.cap-shell-micro {
-  animation: cap-capsule-to-micro 420ms var(--cap-ease) both;
-  transform-origin: bottom center;
-}
-
-.cap-transition-micro-to-mini.cap-shell-mini {
-  animation: cap-micro-to-mini 460ms var(--cap-ease) both;
-  transform-origin: bottom center;
-}
-
-.cap-transition-mini-to-normal.cap-shell-normal {
-  animation: cap-mini-to-normal 520ms var(--cap-ease) both;
-  transform-origin: center center;
-}
-
 .cap-shell-keyword-editor-open .cap-shell-content,
 .cap-shell-keyword-editor-open .cap-window-control-rail {
   pointer-events: none;
-}
-
-.cap-transition-normal-to-mini.cap-shell-mini {
-  animation: cap-normal-to-mini 460ms var(--cap-ease) both;
-  transform-origin: center center;
-}
-
-.cap-transition-mini-to-micro.cap-shell-micro {
-  animation: cap-mini-to-micro 420ms var(--cap-ease) both;
-  transform-origin: bottom center;
-}
-
-.cap-transition-normal-to-settings.cap-shell-settings,
-.cap-transition-settings-to-normal.cap-shell-normal {
-  animation: cap-content-settle 320ms var(--cap-ease) both;
-  transform-origin: center center;
-}
-
-.cap-transition-normal-to-micro.cap-shell-micro {
-  animation: cap-normal-to-micro 420ms var(--cap-ease) both;
-  transform-origin: center center;
-}
-
-.cap-transition-capsule-to-micro .cap-shell-content {
-  animation: cap-expanded-content-in 360ms var(--cap-ease) both;
-}
-
-.cap-transition-micro-to-mini .cap-shell-content,
-.cap-transition-mini-to-normal .cap-shell-content,
-.cap-transition-normal-to-mini .cap-shell-content,
-.cap-transition-mini-to-micro .cap-shell-content,
-.cap-transition-normal-to-micro .cap-shell-content,
-.cap-transition-normal-to-settings .cap-shell-content,
-.cap-transition-settings-to-normal .cap-shell-content {
-  animation: cap-content-settle 420ms var(--cap-ease) both;
-}
-
-@keyframes cap-standby-to-capsule {
-  0% {
-    transform: translateY(14px) scaleX(0.5) scaleY(0.07);
-    border-radius: 999px;
-  }
-  70% {
-    transform: translateY(0) scaleX(1.01) scaleY(1.04);
-  }
-  100% {
-    transform: translateY(0) scaleX(1) scaleY(1);
-    border-radius: 999px;
-  }
-}
-
-@keyframes cap-capsule-to-micro {
-  0% {
-    transform: translateY(50px) scaleX(0.56) scaleY(0.23);
-    border-radius: 999px;
-  }
-  72% {
-    transform: translateY(0) scaleX(1.01) scaleY(1.02);
-    border-radius: 12px;
-  }
-  100% {
-    transform: translateY(0) scaleX(1) scaleY(1);
-    border-radius: var(--radius-window-micro);
-  }
-}
-
-@keyframes cap-micro-to-mini {
-  0% {
-    transform: scaleX(1.8) scaleY(0.26);
-    border-radius: var(--radius-window-micro);
-  }
-  72% {
-    transform: scaleX(0.98) scaleY(1.02);
-  }
-  100% {
-    transform: scaleX(1) scaleY(1);
-    border-radius: var(--radius-window-mini);
-  }
-}
-
-@keyframes cap-mini-to-normal {
-  0% {
-    transform: scaleX(0.24) scaleY(0.66);
-    border-radius: var(--radius-window-mini);
-    opacity: 0.96;
-  }
-  76% {
-    transform: scaleX(1.01) scaleY(1.01);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleX(1) scaleY(1);
-    border-radius: var(--radius-window-normal);
-    opacity: 1;
-  }
-}
-
-@keyframes cap-normal-to-mini {
-  0% {
-    transform: scaleX(1.06) scaleY(1.08);
-    border-radius: var(--radius-window-normal);
-    opacity: 0.96;
-  }
-  100% {
-    transform: scaleX(1) scaleY(1);
-    border-radius: var(--radius-window-mini);
-    opacity: 1;
-  }
-}
-
-@keyframes cap-mini-to-micro {
-  0% {
-    transform: scaleX(0.98) scaleY(1.1);
-    border-radius: var(--radius-window-mini);
-    opacity: 0.96;
-  }
-  100% {
-    transform: scaleX(1) scaleY(1);
-    border-radius: var(--radius-window-micro);
-    opacity: 1;
-  }
-}
-
-@keyframes cap-normal-to-micro {
-  0% {
-    transform: scaleX(1.1) scaleY(1.12);
-    border-radius: var(--radius-window-normal);
-    opacity: 0.96;
-  }
-  100% {
-    transform: scaleX(1) scaleY(1);
-    border-radius: var(--radius-window-micro);
-    opacity: 1;
-  }
-}
-
-@keyframes cap-expanded-content-in {
-  0%,
-  24% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes cap-content-settle {
-  0% {
-    opacity: 0.72;
-    transform: scale(0.992);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 @keyframes cap-line-resolve {
@@ -561,13 +327,6 @@ textarea,
 .context-menu-mini {
   max-width: min(180px, calc(100vw - 10px));
 }
-
-.cap-shell-micro .empty-result-row,
-.cap-shell-mini .empty-result-row {
-  font-size: 12px;
-}
-
-
 
 .cap-skim-empty-entry {
   border: 0;
@@ -635,14 +394,12 @@ textarea,
   opacity: 0.52;
 }
 
-.cap7ce-capsule-input::placeholder,
-.cap-capsule input::placeholder {
+.cap7ce-capsule-input::placeholder {
   color: var(--accent-color);
   opacity: 1;
 }
 
-.cap7ce-capsule-input.cap-operation-hint::placeholder,
-.cap-capsule input.cap-operation-hint::placeholder {
+.cap7ce-capsule-input.cap-operation-hint::placeholder {
   color: var(--chip-bg);
 }
 
@@ -1032,22 +789,10 @@ textarea.keyword-editor-textarea::-webkit-scrollbar-corner {
   white-space: nowrap;
 }
 
-.cap-shell-micro .keyword-editor-panel {
-  width: min(420px, calc(100vw - 110px));
-  max-width: calc(100vw - 110px);
-  max-height: calc(100vh - 10px);
-}
-
 .cap-shell-normal .keyword-editor-panel {
   width: clamp(340px, 32vw, 380px);
   max-width: calc(100vw - 30px);
 }
-
-.cap-shell-micro .keyword-editor-error {
-  grid-column: 1 / -1;
-}
-
-
 
 textarea.keyword-editor-textarea {
   overflow-y: auto;

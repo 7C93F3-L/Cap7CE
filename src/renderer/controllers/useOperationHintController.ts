@@ -13,8 +13,6 @@ const operationHintDefinitions: OperationHintDefinition[] = [
   { key: initialOperationHintKey },
   { key: "search.guide.showCurrent" },
   { key: "search.guide.activateCapsule", shortcutActionId: "activateCapsule" },
-  { key: "search.guide.activateMicro", shortcutActionId: "activateMicro" },
-  { key: "search.guide.activateMini", shortcutActionId: "activateMini" },
   { key: "search.guide.activateNormal", shortcutActionId: "activateNormal" },
   { key: "search.guide.activateLine", shortcutActionId: "activateStandby" },
   { key: "search.guide.activateSkim", shortcutActionId: "activateSkim" },
@@ -64,9 +62,6 @@ export const useOperationHintController = ({
   const selectRandomOperationHint = useCallback(() => {
     setOperationHintKey((currentKey) => {
       const availableHints = operationHintDefinitions.filter((hint) => {
-        if (stableUi && (hint.shortcutActionId === "activateMicro" || hint.shortcutActionId === "activateMini")) {
-          return false;
-        }
         if (hint.requiresCommands && !commandEnabled) {
           return false;
         }

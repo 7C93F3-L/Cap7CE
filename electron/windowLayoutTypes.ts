@@ -1,4 +1,4 @@
-export type PersistedWindowLayoutState = "micro" | "mini" | "normal";
+export type PersistedWindowLayoutState = "normal";
 export type WindowDockEdge = "left" | "right" | "top" | "bottom";
 
 export interface WindowLayoutBounds {

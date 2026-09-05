@@ -2,7 +2,6 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
-import type { CapsulePresentation } from "./capsuleWindowController";
 
 interface RuntimeDiagnosticsInfo {
   logDirectory: string;
@@ -22,7 +21,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
     setAlwaysOnTop: (enabled: boolean) => ipcRenderer.invoke("window:setAlwaysOnTop", enabled),
     getAlwaysOnTop: () => ipcRenderer.invoke("window:getAlwaysOnTop"),
     toggleNormalMaximized: () => ipcRenderer.invoke("window:toggleNormalMaximized"),
-    getShellLayoutMetrics: () => ipcRenderer.invoke("window:getShellLayoutMetrics"),
     onShellStateChanged: (callback: (state: string) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, state: string) => callback(state);
       ipcRenderer.on("window:shellStateChanged", listener);
@@ -48,13 +46,13 @@ contextBridge.exposeInMainWorld("cap7ce", {
       ipcRenderer.on("window:activateSkimRequested", listener);
       return () => ipcRenderer.removeListener("window:activateSkimRequested", listener);
     },
-    onActivateCapsuleShortcut: (callback: () => void) => {
+    onFocusMainSearch: (callback: () => void) => {
       const listener = () => callback();
-      ipcRenderer.on("window:activateCapsuleShortcut", listener);
-      return () => ipcRenderer.removeListener("window:activateCapsuleShortcut", listener);
+      ipcRenderer.on("window:focusMainSearch", listener);
+      return () => ipcRenderer.removeListener("window:focusMainSearch", listener);
     },
-    onActivateShellModeShortcut: (callback: (mode: "capsule" | "micro" | "mini" | "normal" | "standby") => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, mode: "capsule" | "micro" | "mini" | "normal" | "standby") => callback(mode);
+    onActivateShellModeShortcut: (callback: (mode: "normal" | "standby") => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, mode: "normal" | "standby") => callback(mode);
       ipcRenderer.on("window:activateShellModeShortcut", listener);
       return () => ipcRenderer.removeListener("window:activateShellModeShortcut", listener);
     }
@@ -63,7 +61,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
     open: () => ipcRenderer.invoke("settingsWindow:open")
   },
   line: {
-    activateCapsule: () => ipcRenderer.invoke("line:activateCapsule"),
+    activateMain: () => ipcRenderer.invoke("line:activateMain"),
     onPlacementChanged: (callback: (edge: "left" | "right" | "top" | "bottom") => void) => {
       const listener = (_event: Electron.IpcRendererEvent, edge: "left" | "right" | "top" | "bottom") => callback(edge);
       ipcRenderer.on("line:placementChanged", listener);
@@ -73,34 +71,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
       const listener = () => callback();
       ipcRenderer.on("line:refreshAppearance", listener);
       return () => ipcRenderer.removeListener("line:refreshAppearance", listener);
-    }
-  },
-  capsule: {
-    syncPresentation: (presentation: CapsulePresentation) => ipcRenderer.invoke("capsule:syncPresentation", presentation),
-    getPresentation: (): Promise<CapsulePresentation | null> => ipcRenderer.invoke("capsule:getPresentation"),
-    updateDraft: (query: string) => ipcRenderer.invoke("capsule:updateDraft", query),
-    submit: (query: string) => ipcRenderer.invoke("capsule:submit", query),
-    cancel: (clearQuery: boolean) => ipcRenderer.invoke("capsule:cancel", clearQuery),
-    setComposing: (composing: boolean) => ipcRenderer.invoke("capsule:setComposing", composing),
-    onPresentationChanged: (callback: (presentation: CapsulePresentation) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, presentation: CapsulePresentation) => callback(presentation);
-      ipcRenderer.on("capsule:presentationChanged", listener);
-      return () => ipcRenderer.removeListener("capsule:presentationChanged", listener);
-    },
-    onDraftChanged: (callback: (query: string) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, query: string) => callback(query);
-      ipcRenderer.on("capsule:draftChanged", listener);
-      return () => ipcRenderer.removeListener("capsule:draftChanged", listener);
-    },
-    onSubmitRequested: (callback: (query: string) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, query: string) => callback(query);
-      ipcRenderer.on("capsule:submitRequested", listener);
-      return () => ipcRenderer.removeListener("capsule:submitRequested", listener);
-    },
-    onCancelRequested: (callback: (clearQuery: boolean) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, clearQuery: boolean) => callback(clearQuery);
-      ipcRenderer.on("capsule:cancelRequested", listener);
-      return () => ipcRenderer.removeListener("capsule:cancelRequested", listener);
     }
   },
   app: {

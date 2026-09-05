@@ -4,21 +4,17 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.ts"), "utf8");
-const viewportSource = fs.readFileSync(path.join(root, "src", "renderer", "controllers", "useShellViewportMetrics.ts"), "utf8");
 const maximizeControllerSource = fs.readFileSync(path.join(root, "electron", "compatibilityNativeMaximizeController.ts"), "utf8");
 
 assert.match(mainSource, /normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode\(requestedWindowPresentationMode\);[\s\S]*?windowPresentationRuntime\.configure\(resolveProductWindowPresentationMode\(normalizedRequestedWindowPresentationMode\), preferences\.themePreference, preferences\.windowMaterial\);[\s\S]*?source: "preference-compatibility"[\s\S]*?windowLayoutManager = new WindowLayoutManager\(new WindowLayoutStore\(path\.join\(app\.getPath\("userData"\), "config", windowPresentationRuntime\.layoutFileName\)\)\);[\s\S]*?await windowLayoutManager\.load\(\);/u);
 assert.match(mainSource, /presentationSwitchEnabled: false/u);
 assert.doesNotMatch(mainSource, /CAP7CE_WINDOW_PRESENTATION_MODE/u);
 assert.match(mainSource, /createApplicationWindow\("main", \{[\s\S]*?\.\.\.getMainWindowPresentationOptions\(\)[\s\S]*?paintWhenInitiallyHidden: true/u);
-assert.match(mainSource, /const getShellContentBounds = \(bounds: Electron\.Rectangle\) => shellWindowPresentationSizing\.getContentBounds\(bounds\)/u);
-assert.match(mainSource, /resolveResizeTargetState\(activeShellState, getShellContentBounds\(currentBounds\), getShellContentWorkArea\(currentDisplay\.workArea\)\)/u);
-assert.match(mainSource, /windowLayoutManager\.captureBounds\(\{ state, bounds, display:/u);
+assert.doesNotMatch(mainSource, /shellWindowPresentationSizing|resolveResizeTargetState|scheduleResizeSettledCheck/u);
+assert.match(mainSource, /windowLayoutManager\.captureBounds\(\{ state: "normal", bounds, display:/u);
 assert.match(mainSource, /compatibilityNativeMaximizeController\.attach\(mainWindow\);/u);
 assert.match(maximizeControllerSource, /window\.on\("maximize", this\.handleMaximize\);/u);
 assert.match(maximizeControllerSource, /window\.on\("unmaximize", this\.handleRestore\);/u);
-assert.match(mainSource, /miniStandardHeight: miniDefaultHeightPx,[\s\S]*?titlebarHeight: windowPresentationRuntime\.titlebarHeight/u);
-assert.match(viewportSource, /window\.innerHeight - currentTitlebarHeight/u);
 assert.match(mainSource, /windowPresentationRuntime\.getBrowserOptions\("preview", nativeTheme\.shouldUseDarkColors\)/u);
 assert.match(mainSource, /const refreshWindowPresentationAppearance = async \(\) => \{[\s\S]*?nativeTheme\.themeSource !== preferences\.themePreference[\s\S]*?nativeTheme\.themeSource = preferences\.themePreference[\s\S]*?applyMainWindowAppearance/u);
 assert.match(mainSource, /const preferences = await getUserPreferences\(\);[\s\S]*?nativeTheme\.themeSource = preferences\.themePreference;[\s\S]*?windowPresentationRuntime\.configure/u);
@@ -26,10 +22,9 @@ assert.match(mainSource, /const preferences = await getUserPreferences\(\);[\s\S
 console.log(JSON.stringify({
   presentationPolicyLoadedBeforeMainWindow: true,
   stableLayoutNamespaceForcedAtProductEntry: true,
-  contentHeightDrivesResizeThresholds: true,
+  legacyResizeThresholdsRemoved: true,
   outerBoundsDriveLayoutMemory: true,
   nativeMaximizeRestoreHooked: true,
-  rendererViewportExcludesTitlebar: true,
   previewWindowUsesActivePresentationPolicy: true,
   nativeMicaThemeFollowsPreference: true
 }));

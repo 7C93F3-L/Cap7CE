@@ -264,33 +264,11 @@
   white-space: nowrap;
 }
 
-.cap-shell-micro .cap7ce-top-capsule,
-.cap-shell-mini .cap7ce-top-capsule {
-  left: 15px;
-  top: 5px;
-  width: calc(100% - var(--cap-edge-inset) - var(--cap-control-rail));
-  transform: none;
-}
-
-.cap-shell-micro .cap7ce-search-capsule-unified,
-.cap-shell-mini .cap7ce-search-capsule-unified {
-  left: auto;
-  top: auto;
-  width: 100%;
-  margin: 0 0 6px;
-  transform: none;
-}
-
 .cap-shell-normal .cap7ce-search-capsule-unified,
 .cap-shell-settings .cap7ce-search-capsule-unified {
   left: auto;
   top: auto;
   transform: none;
-}
-
-.cap-shell-micro .cap7ce-capsule-status,
-.cap-shell-mini .cap7ce-capsule-status {
-  display: none;
 }
 
 .cap-shell-normal .cap7ce-capsule-status,

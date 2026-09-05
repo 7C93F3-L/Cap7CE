@@ -60,7 +60,7 @@ const LineWindowApp = () => {
     <div
       className={`app theme-${effectiveTheme} cap-shell cap-line-window cap-line-window-${edge}`}
       style={style}
-      onClick={() => void window.cap7ce?.line.activateCapsule()}
+      onClick={() => void window.cap7ce?.line.activateMain()}
     >
       <div className="cap-standby-line" aria-hidden="true" />
     </div>

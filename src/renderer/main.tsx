@@ -27,16 +27,11 @@ const rendererSearchParams = new URLSearchParams(window.location.search);
 const windowKind = rendererSearchParams.get("window");
 const isSettingsWindow = windowKind === "settings", isPreviewWindow = windowKind === "preview";
 const isLineWindow = windowKind === "line";
-const isCompatibilityCapsuleWindow = windowKind === "compatibility-capsule";
 if (isSettingsWindow) {
   void import("./settings-window/SettingsWindowApp").then(({ default: SettingsWindowApp }) => root.render(<React.StrictMode><SettingsWindowApp /></React.StrictMode>));
 } else if (isLineWindow) {
   void import("./LineWindowApp").then(({ default: LineWindowApp }) => {
     root.render(<LineWindowApp />);
-  });
-} else if (isCompatibilityCapsuleWindow) {
-  void import("./CompatibilityCapsuleWindowApp").then(({ default: CompatibilityCapsuleWindowApp }) => {
-    root.render(<CompatibilityCapsuleWindowApp />);
   });
 } else if (isPreviewWindow) {
   void import("./PreviewWindowApp").then(({ default: PreviewWindowApp }) => {

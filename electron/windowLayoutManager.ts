@@ -1,6 +1,5 @@
 import {
   detectWindowDockEdge,
-  getEdgeAnchoredCapsuleBounds,
   inferTaskbarEdge,
   resolveRememberedWindowBounds,
   selectWindowLayoutDisplay
@@ -32,21 +31,6 @@ export const toWindowLayoutDisplaySnapshot = (display: ShellLayoutDisplayLike): 
   workArea: { ...display.workArea },
   scaleFactor: display.scaleFactor
 });
-
-export const getDefaultShellLayoutBounds = (
-  state: "standby" | "capsule" | "micro" | "mini" | "normal" | "settings",
-  workArea: WindowLayoutBounds,
-  sizes: { capsuleWidth: number; capsuleHeight: number; capsuleEdge?: "top" | "bottom"; microHeight: number; miniHeight: number; edgeGap: number }
-): WindowLayoutBounds => {
-  const bottom = workArea.y + workArea.height;
-  const centerX = workArea.x + Math.round(workArea.width / 2);
-  if (state === "capsule") return getEdgeAnchoredCapsuleBounds(workArea, { width: sizes.capsuleWidth, height: sizes.capsuleHeight }, sizes.capsuleEdge ?? "bottom", sizes.edgeGap);
-  if (state === "micro") return { width: 540, height: sizes.microHeight, x: centerX - 270, y: bottom - sizes.microHeight - sizes.edgeGap };
-  if (state === "mini") return { width: 300, height: sizes.miniHeight, x: centerX - 150, y: bottom - sizes.miniHeight - sizes.edgeGap };
-  const width = Math.min(1280, workArea.width);
-  const height = Math.min(760, workArea.height);
-  return { width, height, x: workArea.x + Math.round((workArea.width - width) / 2), y: workArea.y + Math.round((workArea.height - height) / 2) };
-};
 
 export class WindowLayoutManager {
   private document: WindowLayoutDocument = createDefaultWindowLayoutDocument();

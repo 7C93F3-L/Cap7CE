@@ -6,7 +6,6 @@ import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useSearchIndexRefresh } from "./controllers/useSearchIndexRefresh";
-import { useShellViewportMetrics } from "./controllers/useShellViewportMetrics";
 import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSettingsDataSynchronization } from "./controllers/useSettingsDataSynchronization";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
@@ -40,7 +39,6 @@ import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results
 import { SkimView, type SkimViewProps } from "./skim/SkimView";
 import { countSkimRootLocations } from "./skim/SkimRootSections";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
-import { useCompatibilityCapsuleBridge } from "./window-presentation/useCompatibilityCapsuleBridge";
 import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
 import type {
@@ -65,7 +63,7 @@ import type {
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 import { skimDefaultFileExtensionSet } from "../../electron/formatCapabilities";
-type ShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
+type ShellState = "standby" | "normal" | "settings";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
 type DialogName = "addDroppedDirectories" | "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
 const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] => {
@@ -85,7 +83,7 @@ const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] 
 };
 type KeywordEditScrollSnapshot = {
   scrollMemory: ResultGridScrollMemory;
-  shellState: Extract<ShellState, "micro" | "mini" | "normal">;
+  shellState: Extract<ShellState, "normal">;
   search: SearchState;
 };
 type SkimReturnContext = {
@@ -245,7 +243,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const navigationEntriesRef = useRef<AppView[]>(["home"]);
   const navigationIndexRef = useRef(0);
   const [theme, setTheme] = useState<ThemeMode>("system");
-  const [languagePreference, setLanguagePreference] = useState<LanguagePreference>("system");
+  const [, setLanguagePreference] = useState<LanguagePreference>("system");
   const [, setResolvedLanguage] = useState(() => getActiveLanguage());
   const systemTheme = useSystemThemeMode();
   const [appearanceColors, setAppearanceColors] = useState<AppearanceColors>(defaultAppearanceColors);
@@ -346,11 +344,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [, setIsLoadingCacheStats] = useState(true);
   const [contextMenu, setContextMenu] = useState<ResultsContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
-  const { isAlwaysOnTop, applyAlwaysOnTop, syncAlwaysOnTop, setAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOnTopController();
+  const { isAlwaysOnTop, applyAlwaysOnTop, setAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOnTopController();
   const [isMaximized, setIsMaximized] = useState(false);
   const [, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
-  const { windowPresentationMode } = useShellViewportMetrics();
-  const isCompatibilityMode = windowPresentationMode === "compatibility";
   const [filesPendingDelete, setFilesPendingDelete] = useState<ImageIndexItem[]>([]);
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
   const [deleteFilesFeedback, setDeleteFilesFeedback] = useState<DeleteFilesFeedback | null>(null);
@@ -383,9 +379,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const skimForwardPathsRef = useRef<string[]>([]);
   const keywordEditScrollSnapshotRef = useRef<KeywordEditScrollSnapshot | null>(null);
   const directoryDeleteInFlightRef = useRef(false);
-  const capsuleInputRef = useRef<HTMLInputElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const previousShellStateRef = useRef<ShellState>("standby");
   const resultsInitializedRef = useRef(false);
 
   useEffect(() => () => {
@@ -485,36 +479,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, []);
 
   useEffect(() => {
-    if (stableUi) return;
-    const previousShellState = previousShellStateRef.current;
-    const preserveBounds = (
-      (previousShellState === "normal" || previousShellState === "settings") &&
-      (shellState === "normal" || shellState === "settings")
-    );
-    void window.cap7ce?.window.setShellState(
-      shellState,
-      preserveBounds ? { preserveBounds: true } : undefined
-    ).then(() => {
-      syncAlwaysOnTop();
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          void window.cap7ce?.window.revealAfterShellStateReady();
-        });
-      });
-    });
-  }, [shellState, stableUi, syncAlwaysOnTop]);
-
-  useEffect(() => {
     if (shellState !== "normal" && shellState !== "settings") {
       setIsMaximized(false);
     }
   }, [shellState]);
 
   useEffect(() => {
-    const contentViewActive = stableUi || (
-      (view === "results" || view === "skim")
-      && (shellState === "micro" || shellState === "mini" || shellState === "normal")
-    );
+    const contentViewActive = true;
     const syncContentActivity = () => {
       const active = contentViewActive && document.visibilityState === "visible" && document.hasFocus();
       void window.cap7ce?.cache.setContentViewActive(active);
@@ -530,56 +501,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       window.removeEventListener("blur", syncContentActivity);
       document.removeEventListener("visibilitychange", syncContentActivity);
     };
-  }, [cancelSearch, shellState, stableUi, view]);
+  }, [cancelSearch]);
 
   useEffect(() => {
-    const resultGridMounted = stableUi || (
-      view === "results"
-      && (shellState === "micro" || shellState === "mini" || shellState === "normal")
-    );
+    const resultGridMounted = true;
     if (!resultGridMounted) {
       void window.cap7ce?.cache.discardQueuedInteractiveThumbnails();
     }
-  }, [shellState, stableUi, view]);
-
-  useEffect(() => {
-    if (stableUi) return undefined;
-    const unsubscribe = window.cap7ce?.window.onShellStateChanged?.((nextShellState) => {
-      if (nextShellState === "standby") {
-        resetShellBehaviorState();
-      }
-      if (nextShellState === "micro" || nextShellState === "mini" || nextShellState === "normal") {
-        setView((currentView) => {
-          if (currentView !== "settings") {
-            return currentView;
-          }
-
-          const entries = navigationEntriesRef.current;
-          const previousIndex = Math.max(0, navigationIndexRef.current - 1);
-          const previousView = entries[previousIndex] && entries[previousIndex] !== "settings"
-            ? entries[previousIndex]
-            : "results";
-          navigationEntriesRef.current = entries.slice(0, previousIndex + 1);
-          navigationIndexRef.current = previousIndex;
-          return previousView;
-        });
-      }
-      setShellState((currentShellState) => currentShellState === nextShellState ? currentShellState : nextShellState);
-      void syncAlwaysOnTop();
-    });
-    return () => unsubscribe?.();
-  }, [resetShellBehaviorState, stableUi, syncAlwaysOnTop]);
-
-  useEffect(() => {
-    if (shellState !== "capsule") {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => {
-      capsuleInputRef.current?.focus();
-    }, 80);
-    return () => window.clearTimeout(timer);
-  }, [shellState]);
+  }, []);
 
   const closeNavigationOverlays = useCallback(() => {
     setContextMenu(null);
@@ -702,7 +631,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           if (preferences) {
             const resolvedLanguage = resolveLanguagePreference(preferences.languagePreference, navigator.language);
             setActiveLanguage(resolvedLanguage);
-            setLanguagePreference(preferences.languagePreference);
             setResolvedLanguage(resolvedLanguage);
             setTheme(preferences.themePreference);
             setAppearanceColors(normalizeAppearanceColors(preferences.appearanceColors));
@@ -855,7 +783,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     const appliedPreference = preferences?.languagePreference ?? nextLanguagePreference;
     const resolvedLanguage = resolveLanguagePreference(appliedPreference, navigator.language);
     setActiveLanguage(resolvedLanguage);
-    setLanguagePreference(appliedPreference);
     setResolvedLanguage(resolvedLanguage);
   };
 
@@ -989,9 +916,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         }
   );
 
-  const showCommandResults = (nextSearch: SearchState, nextShellState: Exclude<ShellState, "standby" | "capsule" | "settings"> = "normal") => {
+  const showCommandResults = (nextSearch: SearchState) => {
     resetSettingsViewState(true);
-    setShellState(nextShellState);
+    setShellState("normal");
     setSearch(nextSearch);
     void runSearch(nextSearch);
   };
@@ -1027,24 +954,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     return true;
   };
 
-  const setCommandShellMode = (mode: "line" | "cap" | "micro" | "mini" | "normal") => {
+  const setCommandShellMode = (mode: "line" | "normal") => {
     if (mode === "line") return void enterStandby();
-
-    if (mode === "cap") {
-      resetSettingsViewState(true);
-      setShellState("capsule");
-      return;
-    }
 
     const preserveSkimView = view === "skim";
     if (!preserveSkimView) {
       resetSettingsViewState(true);
     }
-    const nextShellState = mode;
-    if (nextShellState === "micro") {
-      void window.cap7ce?.window.setShellState("micro", { forceBounds: true });
-    }
-    setShellState(nextShellState);
+    setShellState("normal");
     if (!preserveSkimView && !resultsInitializedRef.current) {
       const nextSearch = { ...getCommandBaseSearch(), query: "" };
       setSearch(nextSearch);
@@ -1054,16 +971,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateShellModeShortcut?.((mode) => {
-      if (stableUi) {
-        if (mode === "standby") setCommandShellMode("line"); else window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
-        return;
-      }
-      setCommandShellMode(mode === "standby" ? "line" : mode === "capsule" ? "cap" : mode);
+      if (mode === "standby") setCommandShellMode("line");
       if (mode === "standby" || dialog) return;
       window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
     });
     return () => unsubscribe?.();
-  }, [dialog, setCommandShellMode, stableUi]);
+  }, [dialog, setCommandShellMode]);
 
   const commandOperationFailed = (message: string) => ({ ok: false as const, message });
 
@@ -1577,52 +1490,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const collapseShellToStandby = enterStandby;
-  const expandCapsuleToResults = useCallback((submittedSearch: SearchState) => {
-    resetShellBehaviorState();
-    const targetShellState = isCompatibilityMode ? "normal" : "micro";
-    if (targetShellState === "micro") void window.cap7ce?.window.setShellState("micro", { forceBounds: true });
-    setShellState(targetShellState);
-    const invocation = parseAssistantInvocation(submittedSearch.query.trim());
-    const nextSearch = { ...submittedSearch, query: invocation.query };
-    const aiRequested = invocation.requested && aiRecognitionEnabled;
-    if (invocation.requested && !aiRecognitionEnabled) showQuickCommandNotice(t("search.aiRecognitionDisabled"));
-    if (aiRequested) aiSearchBeta.activate();
-    setSearch(nextSearch);
-    aiSearchBeta.cancelActive();
-    void runSearch(nextSearch, { aiEnhanced: aiRequested || (aiRecognitionEnabled && aiSearchBeta.enabled) });
-  }, [aiRecognitionEnabled, aiSearchBeta, isCompatibilityMode, resetShellBehaviorState, runSearch, showQuickCommandNotice]);
-
-  const submitCapsuleInput = (query = search.query) => {
-    const nextSearch = { ...search, query: query.trim() };
-    setSearch(nextSearch);
-    if (submitQuickCommandIfNeeded(nextSearch)) {
-      return;
-    }
-
-    expandCapsuleToResults(nextSearch);
-  };
-
-  const compatibilityCapsulePresentation = useMemo(() => ({
-    query: search.query,
-    placeholder: searchInputFeedback, operationHintVisible,
-    ariaLabel: t("search.action"),
-    theme: effectiveTheme,
-    appearanceColors
-  }), [appearanceColors, effectiveTheme, languagePreference, operationHintVisible, search.query, searchInputFeedback]);
-  useCompatibilityCapsuleBridge({
-    active: isCompatibilityMode && shellState === "capsule",
-    presentation: compatibilityCapsulePresentation,
-    onDraftChange: (query) => {
-      clearQuickCommandNotice();
-      setSearch((current) => ({ ...current, query }));
-    },
-    onSubmit: submitCapsuleInput,
-    onCancel: (clearQuery) => {
-      if (clearQuery) setSearch((current) => ({ ...current, query: "" }));
-      collapseShellToStandby();
-    }
-  });
-
   const refreshDirectories = (nextDirectories: DirectoryItem[]) => {
     setDirectories(nextDirectories);
     setDirectoryServiceUnavailable(false);
@@ -1893,14 +1760,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const captureKeywordEditScrollSnapshot = () => {
-    if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
+    if (shellState !== "normal") {
       keywordEditScrollSnapshotRef.current = null;
       return;
     }
 
     const scrollContainer = document.querySelector<HTMLElement>(".cap-results-view .image-grid");
     const offset = scrollContainer
-      ? shellState === "micro" ? scrollContainer.scrollLeft : scrollContainer.scrollTop
+      ? scrollContainer.scrollTop
       : resultScrollMemoryRef.current.offset;
     const scrollMemory = {
       ...resultScrollMemoryRef.current,
@@ -2161,11 +2028,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     const returnContext = skimReturnContextRef.current;
     skimReturnContextRef.current = null;
     if (returnContext) {
-      if (
-        returnContext.shellState !== "micro"
-        && returnContext.shellState !== "mini"
-        && returnContext.shellState !== "normal"
-      ) {
+      if (returnContext.shellState !== "normal") {
         setShellState(returnContext.shellState);
       }
       if (returnContext.view === "results" && !resultsInitializedRef.current) {
@@ -2180,7 +2043,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return;
     }
     restoreViewAfterSkim("results");
-    if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
+    if (shellState !== "normal") {
       setShellState("normal");
     }
   }, [cancelSkimRead, clearSkimFeedback, openResults, resetSkimLocation, restoreViewAfterSkim, shellState, skimCurrentPath]);
@@ -2193,13 +2056,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return;
     }
     const returnView: Exclude<AppView, "skim"> = view === "home" ? "results" : view;
-    const returnShellState = shellState === "standby" || shellState === "capsule"
+    const returnShellState = shellState === "standby"
       ? "normal"
       : shellState;
     skimReturnContextRef.current = { view: returnView, shellState: returnShellState };
     resetSkimLocation();
     skimForwardPathsRef.current = [];
-    if (shellState !== "micro" && shellState !== "mini" && shellState !== "normal") {
+    if (shellState !== "normal") {
       setShellState("normal");
     }
     navigateTo("skim");
@@ -2208,7 +2071,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const openSkim = useCallback(() => {
     if (view === "skim") {
-      if (shellState === "standby" || shellState === "capsule") {
+      if (shellState === "standby") {
         setShellState("normal");
       }
       return;
@@ -2281,7 +2144,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const refreshCurrentPage = async () => {
     if (
       shellState === "standby"
-      || shellState === "capsule"
       || dialog
       || contextMenu
       || editingDirectoryId
@@ -2370,9 +2232,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, [dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettingsWindow, openSkimAtLocation, view]);
 
   useEffect(() => {
-    const unsubscribe = window.cap7ce?.window.onActivateCapsuleShortcut?.(() => {
+    const unsubscribe = window.cap7ce?.window.onFocusMainSearch?.(() => {
       window.setTimeout(() => {
-        capsuleInputRef.current?.focus();
         searchInputRef.current?.focus();
       }, 80);
     });
@@ -2435,12 +2296,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           return;
         }
 
-        if (shellState === "capsule") {
-          setSearch((currentSearch) => ({ ...currentSearch, query: "" }));
-          collapseShellToStandby();
-          return;
-        }
-
         if (view === "results" && selectedResultImageId) {
           setClearSelectionRequestId((requestId) => requestId + 1);
           return;
@@ -2457,11 +2312,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         return;
       }
 
-      const searchResultsVisible = stableUi || (
-        shellState === "micro"
-        || shellState === "mini"
-        || shellState === "normal"
-      ) && (view === "home" || view === "results");
+      const searchResultsVisible = true;
       if (
         quickActionGlobalEnabled
         && searchResultsVisible
@@ -2478,23 +2329,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         return;
       }
 
-      if (!stableUi && matchesShortcutEvent(event, shortcutActions.activateSkim)) {
-        event.preventDefault();
-        event.stopPropagation();
-        closeNavigationOverlays();
-        openSkim();
-        return;
-      }
-
-      if (!stableUi && matchesShortcutEvent(event, shortcutActions.openSettings)) {
-        event.preventDefault();
-        event.stopPropagation();
-        closeNavigationOverlays();
-        if (shellState !== "settings") {
-          openSettingsWindow();
-        }
-        return;
-      }
     };
 
     window.addEventListener("keydown", handleWindowShortcutKeyDown);

@@ -11,15 +11,6 @@ export interface AppearanceColors {
   accentColor: string;
 }
 
-export interface CompatibilityCapsulePresentation {
-  query: string;
-  placeholder: string;
-  operationHintVisible: boolean;
-  ariaLabel: string;
-  theme: ResolvedThemeMode;
-  appearanceColors: AppearanceColors;
-}
-
 export type PreviewNavigateDirection = -1 | 1;
 
 export type PreviewItemAction = "editKeywords" | "deleteFile";
@@ -145,7 +136,6 @@ export interface PdfPreviewMetadata {
 export interface PreviewWindowControlState {
   isMaximized: boolean;
   isAlwaysOnTop: boolean;
-  miniStandardHeight: number;
 }
 
 export interface PreviewContentSize {
