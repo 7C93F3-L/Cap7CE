@@ -131,8 +131,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
     layoutStore: store,
     lockWebContentsZoom: () => undefined,
     preloadPath: "preload.js",
-    rendererPath: "index.html",
-    presentationMode: () => "compatibility"
+    rendererPath: "index.html"
   });
   assert.equal(await controller.open(), true);
   assert.equal(created.length, 1);
@@ -181,9 +180,10 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(stableActionStyles, /cap-stable-settings-button[\s\S]*?cap-settings-pill[\s\S]*?cap-stable-settings-link[\s\S]*?cap-stable-settings-color-button/u);
   assert.match(stableActionStyles, /min-height: 28px[\s\S]*?border-radius: 999px[\s\S]*?linear-gradient\(45deg, var\(--theme-color\), var\(--accent-color\)\)/u);
   assert.match(stableActionStyles, /cap-settings-expand-toggle\[aria-expanded="true"\][\s\S]*?background: var\(--stable-settings-hover\)/u);
-  assert.match(settingsAppSource, /cap-stable-settings-card-with-body[\s\S]*?<QuickActionSettingsRows stableUi/u);
+  assert.match(settingsAppSource, /cap-stable-settings-card-with-body[\s\S]*?<QuickActionSettingsRows quickActionGlobalEnabled=/u);
   assert.doesNotMatch(settingsAppSource, /quickActionsExpanded|setQuickActionsExpanded/u);
-  assert.match(quickActionSource, /if \(!stableUi && !expanded\)[\s\S]*?!stableUi && <span className="cap-settings-label"[\s\S]*?!stableUi && <button className="cap-settings-pill cap-settings-expand-toggle"/u);
+  assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
+  assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.restoreDefaultWindow/u);
   assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-command-body[\s\S]*?<QuickCommandSettingsRows stableUi/u);
   assert.doesNotMatch(settingsAppSource, /quickCommandsExpanded|setQuickCommandsExpanded/u);
@@ -273,8 +273,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(preloadSource, /directories:[\s\S]*?directories:changed[\s\S]*?preferences:[\s\S]*?preferences:changed/u);
   assert.match(appSource, /onOpenSettings:\s*\(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/u);
   assert.match(appSource, /useSettingsDataSynchronization/u);
-  assert.match(mainSource, /const openSettings = async[\s\S]*?settingsWindowController\?\.open\(\)[\s\S]*?openLegacySettings/u);
-  assert.match(mainSource, /preview:openSettings[\s\S]*?isIndependentSettingsWindowEnabled[\s\S]*?closePreviewSession/u);
+  assert.match(mainSource, /const openSettings = async \(\) => Boolean\(await settingsWindowController\?\.open\(\)\)/u);
+  assert.match(mainSource, /preview:openSettings[\s\S]*?return openSettings\(\)/u);
+  assert.doesNotMatch(mainSource, /openLegacySettings|isIndependentSettingsWindowEnabled/u);
   assert.match(preferenceIpcSource, /updateAndBroadcast[\s\S]*?broadcastPreferencesChanged/u);
   assert.match(directoryIpcSource, /decorateAndBroadcast[\s\S]*?broadcastDirectoriesChanged/u);
   assert.doesNotMatch(settingsAppSource, /SettingsView|ipcRenderer|localStorage|stable-ui-canvas|[A-Z]:\\/u);

@@ -32,7 +32,7 @@ import type { SearchCapsuleLabelVisibility } from "./search/Cap7CESearchCapsule"
 import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplayExtensions } from "./search/searchViewModel";
 import { parseAssistantInvocation } from "./assistant/assistantInvocation";
 import { hasAiSearchScopeChanged, useAiSearchBeta } from "./ai-search";
-import { defaultShortcutActions, defaultStableShortcutActions, getShortcutFromKeyboardEvent, normalizeShortcutActions, normalizeStableShortcutActions } from "./shortcutActions";
+import { defaultStableShortcutActions, getShortcutFromKeyboardEvent, normalizeStableShortcutActions } from "./shortcutActions";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
 import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results/ResultsContextMenuLayer";
@@ -63,7 +63,7 @@ import type {
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 import { skimDefaultFileExtensionSet } from "../../electron/formatCapabilities";
-type ShellState = "standby" | "normal" | "settings";
+type ShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
 type DialogName = "addDroppedDirectories" | "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
 const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] => {
@@ -255,7 +255,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [aiRecognitionEnabled, setAiRecognitionEnabled] = useState(true);
   const [quickActionGlobalEnabled, setQuickActionGlobalEnabled] = useState(true);
   const [commandEnabled, setCommandEnabled] = useState(true);
-  const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(stableUi ? defaultStableShortcutActions : defaultShortcutActions);
+  const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(defaultStableShortcutActions);
   const [unavailableShortcutActionIds, setUnavailableShortcutActionIds] = useState<ShortcutActionId[]>([]);
   const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
   const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
@@ -479,7 +479,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, []);
 
   useEffect(() => {
-    if (shellState !== "normal" && shellState !== "settings") {
+    if (shellState !== "normal") {
       setIsMaximized(false);
     }
   }, [shellState]);
@@ -643,7 +643,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
             setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
             setCommandEnabled(preferences.commandEnabled);
-            setShortcutActions(stableUi ? normalizeStableShortcutActions(preferences.stableShortcutActions) : normalizeShortcutActions(preferences.shortcutActions));
+            setShortcutActions(normalizeStableShortcutActions(preferences.stableShortcutActions));
             setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
             setSkimDisplay(preferences.skimDisplay);
             setSkimSidebarFolders(preferences.skimSidebarFolders);
@@ -875,12 +875,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const updateShortcutActions = async (nextShortcutActions: ShortcutActionPreferences): Promise<ShortcutActionsUpdateResult | null> => {
-    const normalizedShortcutActions = stableUi ? normalizeStableShortcutActions(nextShortcutActions) : normalizeShortcutActions(nextShortcutActions);
+    const normalizedShortcutActions = normalizeStableShortcutActions(nextShortcutActions);
     try {
       const result = await window.cap7ce?.preferences.updateShortcutActions(normalizedShortcutActions);
       if (!result) return null;
       if (result.applied) {
-        setShortcutActions(stableUi ? normalizeStableShortcutActions(result.preferences.stableShortcutActions) : normalizeShortcutActions(result.preferences.shortcutActions));
+        setShortcutActions(normalizeStableShortcutActions(result.preferences.stableShortcutActions));
         setUnavailableShortcutActionIds(result.unavailableActionIds);
       }
       return result;
@@ -1109,7 +1109,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const maximizeCommandWindow = async () => {
     try {
-      if (shellState !== "normal" && shellState !== "settings") {
+      if (shellState !== "normal") {
         resetSettingsViewState(true);
         const applied = await window.cap7ce?.window.setShellState("normal");
         if (applied === false) {
@@ -1361,7 +1361,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
     void executeQuickCommand(quickCommandResult.command, {
       defaultAppearanceColors,
-      defaultShortcutActions: stableUi ? defaultStableShortcutActions : defaultShortcutActions,
+      defaultShortcutActions: defaultStableShortcutActions,
       currentAppearanceColors: appearanceColors,
       openSettings: () => openSettingsWindow(),
       openSkim,
@@ -2115,13 +2115,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = window.cap7ce?.window.onOpenSettingsRequested?.(() => {
-      if (dialog !== "editKeywords") openSettingsWindow();
-    });
-    return () => unsubscribe?.();
-  }, [dialog, openSettingsWindow]);
-
-  useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onToggleSkimLocationPickerRequested?.(() => {
       if (dialog === "editKeywords" || isAddingDirectory) return;
       setStableSkimToggleRequestId((requestId) => requestId + 1);
@@ -2160,7 +2153,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return;
     }
 
-    if (shellState === "settings" || view === "settings") {
+    if (view === "settings") {
       const directoryIds = directories.map((directory) => directory.id);
       const countedDirectories = directoryIds.length > 0
         ? await window.cap7ce?.directories.refreshFileCounts(directoryIds)

@@ -29,7 +29,7 @@ assert.match(transformSource, /\[sessionId\][\s\S]*?setTransform\(initialTransfo
 assert.match(shellStyles, /preview-image-transform-canvas\.is-pannable[\s\S]*?cursor: grab/u);
 
 assert.match(mainSource, /previewWindow\.isMaximized\(\)[\s\S]*?isPreviewNativeSnapActive\(\)[\s\S]*?latestPreviewContentSize\.sessionId/u);
-assert.match(mainSource, /previewWindowPresentationSizing\.resolveBounds\(\{ contentWidth, contentHeight, currentBounds: currentPreviewBounds/u);
+assert.match(mainSource, /stablePreviewWindowSizing\.resolveBounds\(\{ contentWidth, contentHeight, currentBounds: currentPreviewBounds/u);
 for (const provider of ["video", "audio", "text", "pdf", "archive", "font", "epub", "mobi"]) {
   assert.match(previewSource, new RegExp(`provider === "${provider}"`, "u"));
 }

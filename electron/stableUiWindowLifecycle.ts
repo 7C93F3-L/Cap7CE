@@ -1,8 +1,20 @@
 import type { BrowserWindow } from "electron";
 import type { WindowLayoutBounds } from "./windowLayoutTypes";
-import { STABLE_TITLEBAR_HEIGHT, type WindowMaterial, type WindowPresentationBrowserOptions, type WindowPresentationTheme } from "./windowPresentationPolicy";
 
-export const STABLE_UI_TITLEBAR_HEIGHT = STABLE_TITLEBAR_HEIGHT;
+export type WindowMaterial = "acrylic" | "mica";
+export type StableWindowTheme = "light" | "dark";
+export type StableWindowSurface = "main" | "preview" | "settings";
+export interface StableWindowBrowserOptions {
+  frame: boolean;
+  transparent: boolean;
+  backgroundColor: string;
+  roundedCorners: true;
+  titleBarStyle: "hidden";
+  titleBarOverlay: { color: string; symbolColor: string; height: number };
+}
+
+export const STABLE_UI_TITLEBAR_HEIGHT = 40;
+export const STABLE_UI_LAYOUT_FILE_NAME = "window-layout-stable-ui.json";
 export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = 0.82;
 export const STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE = { width: 1600, height: 1000 } as const;
 export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 170 } as const;
@@ -30,37 +42,32 @@ export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds)
   };
 };
 
-export const resolveWindowLayoutMemoryEnabled = (configured: boolean, stableUiEnabled: boolean) => stableUiEnabled || configured;
+export const resolveStableWindowTheme = (preference: "system" | "light" | "dark", systemUsesDarkColors: boolean): StableWindowTheme => (
+  preference === "system" ? (systemUsesDarkColors ? "dark" : "light") : preference
+);
 
-export const resolveStableUiBrowserOptions = (
-  options: WindowPresentationBrowserOptions,
-  enabled: boolean
-): WindowPresentationBrowserOptions => {
-  if (!enabled) return options;
-  const stableOptions: WindowPresentationBrowserOptions = {
-    ...options,
+export const getStableWindowSymbolColor = (theme: StableWindowTheme) => (
+  theme === "dark" ? "#D8D8D8" : "#242424"
+);
+
+export const getStableWindowBrowserOptions = (theme: StableWindowTheme): StableWindowBrowserOptions => ({
     frame: true,
     transparent: false,
     backgroundColor: "#00000000",
     roundedCorners: true,
     titleBarStyle: "hidden",
-    titleBarOverlay: options.titleBarOverlay ? { ...options.titleBarOverlay, height: STABLE_UI_TITLEBAR_HEIGHT } : undefined
-  };
-  delete stableOptions.backgroundMaterial;
-  return stableOptions;
-};
+    titleBarOverlay: { color: "#00000000", symbolColor: getStableWindowSymbolColor(theme), height: STABLE_UI_TITLEBAR_HEIGHT }
+});
 
-export const getStableUiSafeBackgroundColor = (theme: WindowPresentationTheme) => (
+export const getStableUiSafeBackgroundColor = (theme: StableWindowTheme) => (
   theme === "dark" ? "#202020" : "#F3F3F3"
 );
 
 export const applyStableUiWindowMaterial = (
   window: BrowserWindow,
-  enabled: boolean,
-  theme: WindowPresentationTheme,
+  theme: StableWindowTheme,
   material: WindowMaterial = "acrylic"
-): "unchanged" | WindowMaterial | "solid" => {
-  if (!enabled) return "unchanged";
+): WindowMaterial | "solid" => {
   try {
     window.setBackgroundMaterial(material);
     window.setBackgroundColor("#00000000");

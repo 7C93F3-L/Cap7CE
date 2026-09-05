@@ -50,7 +50,7 @@ export const useSettingsDataSynchronization = (options: SettingsDataSynchronizat
     current.setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
     current.setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
     current.setCommandEnabled(preferences.commandEnabled);
-    current.setShortcutActions(preferences.shortcutActions);
+    current.setShortcutActions(preferences.stableShortcutActions);
     current.setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
     current.setSkimDisplay(preferences.skimDisplay);
     current.setSkimSidebarFolders(preferences.skimSidebarFolders);

@@ -12,16 +12,13 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const {
       getUserPreferences,
       updateSearchLabelVisibilityPreference,
-      updateShortcutActionsPreference,
       updateStableShortcutActionsPreference,
       updateSkimDisplayPreference,
       updateSkimSidebarFoldersPreference,
       updateSkimSystemLocationsCollapsedPreference,
       updateSkimSortPreference,
       updateEdgeCollapsePreference,
-      updateRememberWindowLayoutPreference,
       updateUiFontSizePreference,
-      updateWindowPresentationModePreference,
       updateSortPreference
     } = require("../dist-electron/preferenceStore.js");
 
@@ -34,7 +31,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(defaults.searchLabelVisibility.ai, true);
     assert.deepEqual(defaults.skimSidebarFolders, []);
     assert.equal(defaults.skimSystemLocationsCollapsed, false);
-    assert.equal(defaults.shortcutActions.cycleDirectory, "Alt+Q");
+    assert.equal("shortcutActions" in defaults, false);
     assert.deepEqual({
       open: defaults.stableShortcutActions.activateCapsule,
       hide: defaults.stableShortcutActions.activateStandby,
@@ -44,8 +41,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       directory: defaults.stableShortcutActions.cycleDirectory
     }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+2", settings: "Alt+3", reset: "Alt+4", directory: "Alt+Q" });
     assert.equal(defaults.edgeCollapseEnabled, false);
-    assert.equal(defaults.rememberWindowLayout, false);
-    assert.equal(defaults.windowPresentationMode, "stable");
+    assert.equal("rememberWindowLayout" in defaults, false);
+    assert.equal("windowPresentationMode" in defaults, false);
     assert.equal(defaults.uiFontSize, 13);
     assert.deepEqual(defaults.sortPreference, {
       sortField: "modified_at",
@@ -61,6 +58,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const sidebarFolder = path.join(testRoot, "Sidebar Folder");
     await fs.writeFile(legacyPreferencesPath, JSON.stringify({
       edgeSnapEnabled: false,
+      rememberWindowLayout: false,
+      windowPresentationMode: "compatibility",
       uiFontSize: 99,
       skimDisplay: {
         mode: "all",
@@ -81,27 +80,21 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     const migrated = await getUserPreferences();
     assert.equal(migrated.skimDisplay.mode, "all");
     assert.equal(migrated.skimDisplay.searchMode, "skim");
-    assert.equal(migrated.shortcutActions.cycleDirectory, "Alt+Q");
+    assert.equal("shortcutActions" in migrated, false);
     assert.equal(migrated.stableShortcutActions.activateStandby, "Alt+1");
     assert.deepEqual(migrated.skimSidebarFolders, [sidebarFolder]);
     assert.equal(migrated.skimSystemLocationsCollapsed, false);
     assert.equal(migrated.edgeCollapseEnabled, false);
     assert.equal("edgeSnapEnabled" in migrated, false);
-    assert.equal(migrated.rememberWindowLayout, false);
-    assert.equal(migrated.windowPresentationMode, "stable");
+    assert.equal("rememberWindowLayout" in migrated, false);
+    assert.equal("windowPresentationMode" in migrated, false);
     assert.equal(migrated.uiFontSize, 13);
 
-    const updatedShortcuts = await updateShortcutActionsPreference({
-      ...migrated.shortcutActions,
-      cycleDirectory: "Alt+W"
-    });
-    assert.equal(updatedShortcuts.shortcutActions.cycleDirectory, "Alt+W");
     const updatedStableShortcuts = await updateStableShortcutActionsPreference({
       ...migrated.stableShortcutActions,
       cycleDirectory: "Alt+E"
     });
     assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "Alt+E");
-    assert.equal(updatedStableShortcuts.shortcutActions.cycleDirectory, "Alt+W");
 
     const updated = await updateSkimDisplayPreference({
       mode: "custom",
@@ -126,11 +119,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateSkimSidebarFoldersPreference([sidebarFolder, secondSidebarFolder, sidebarFolder]);
     await updateSkimSystemLocationsCollapsedPreference(true);
     await updateEdgeCollapsePreference(true);
-    await updateRememberWindowLayoutPreference(true);
     await updateUiFontSizePreference(16);
-    const invalidMode = await updateWindowPresentationModePreference("invalid");
-    assert.equal(invalidMode.windowPresentationMode, "stable");
-    await updateWindowPresentationModePreference("compatibility");
     const reloaded = await getUserPreferences();
     assert.equal(reloaded.skimDisplay.mode, "custom");
     assert.equal(reloaded.skimDisplay.searchMode, "all");
@@ -141,14 +130,13 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual(reloaded.skimSidebarFolders, [sidebarFolder, secondSidebarFolder]);
     assert.equal(reloaded.skimSystemLocationsCollapsed, true);
     assert.equal(reloaded.edgeCollapseEnabled, true);
-    assert.equal(reloaded.rememberWindowLayout, true);
-    assert.equal(reloaded.windowPresentationMode, "compatibility");
+    assert.equal("rememberWindowLayout" in reloaded, false);
+    assert.equal("windowPresentationMode" in reloaded, false);
     assert.equal(reloaded.uiFontSize, 16);
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
       legacySkimPreferencesMigrated: true,
-      legacyDirectoryCycleShortcutMigrated: true,
       directoryCycleShortcutPersisted: true,
       customExtensionsNormalized: true,
       skimModePersisted: true,
@@ -158,8 +146,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       skimSidebarFoldersNormalizedAndPersisted: true,
       skimSystemLocationsCollapsedPersisted: true,
       edgeCollapsePreferencePersisted: true,
-      windowLayoutMemoryPreferencesPersisted: true,
-      windowPresentationModePersisted: true,
+      retiredWindowPreferencesIgnored: true,
       uiFontSizePersisted: true
     }));
   } finally {

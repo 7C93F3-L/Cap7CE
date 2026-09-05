@@ -304,8 +304,14 @@ assert.deepEqual(mainLayer.activity.alwaysOnTop.at(-1), { active: true, level: "
 assert.equal(mainLayer.activity.focus, 1);
 previewActive = true;
 layerController.setPreviewCollapsedLayerActive(true);
+assert.deepEqual(mainLayer.activity.alwaysOnTop.at(-1), { active: true, level: "screen-saver" });
+assert.equal(mainLayer.window.isAlwaysOnTop(), true, "active preview must not suppress the main fixed layer");
 assert.deepEqual(previewLayer.activity.alwaysOnTop.at(-1), { active: true, level: "floating" });
 assert.equal(previewLayer.activity.focus, 0);
+mainFixed = false;
+layerController.apply();
+assert.deepEqual(mainLayer.activity.alwaysOnTop.at(-1), { active: false, level: undefined });
+assert.equal(mainLayer.window.isAlwaysOnTop(), false, "main fixed state remains independently mutable while preview is active");
 previewFixed = true;
 layerController.apply();
 assert.deepEqual(previewLayer.activity.alwaysOnTop.at(-1), { active: true, level: "screen-saver" });

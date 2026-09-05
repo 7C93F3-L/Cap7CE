@@ -12,7 +12,6 @@ const created = createBrowserWindowWithDiagnostics({
   create: (options) => ({ ...createdWindow, options }),
   diagnostics,
   options: { width: 300, height: 156 },
-  presentationMode: "compatibility",
   surface: "main"
 });
 
@@ -24,32 +23,30 @@ assert.throws(() => createBrowserWindowWithDiagnostics({
   create: () => { throw creationError; },
   diagnostics,
   options: { width: 500, height: 400 },
-  presentationMode: "compatibility",
   surface: "preview"
 }), creationError);
 assert.deepEqual(entries, [{
   level: "error",
   event: "window.creation.failed",
-  data: { surface: "preview", presentationMode: "compatibility", error: creationError }
+  data: { surface: "preview", error: creationError }
 }]);
 const diagnosticFailureCreationError = new Error("window failure remains authoritative");
 assert.throws(() => createBrowserWindowWithDiagnostics({
   create: () => { throw diagnosticFailureCreationError; },
   diagnostics: { log: () => { throw new Error("diagnostic write failed"); } },
   options: {},
-  presentationMode: "cap7ce",
   surface: "line"
 }), diagnosticFailureCreationError);
 for (const surface of ["main", "preview", "settings", "line", "startup-hint"]) {
   assert.ok(mainSource.includes(`createApplicationWindow("${surface}"`), `Missing diagnosed window surface: ${surface}`);
 }
-assert.match(mainSource, /runtimeDiagnostics\.log\("info", "window\.presentation\.startup", \{ requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime\.mode, source:/u);
+assert.doesNotMatch(mainSource, /window\.presentation|presentationMode/u);
 
 console.log(JSON.stringify({
   successfulCreationRemainsSilent: true,
   creationFailureRecordedAndRethrown: true,
   diagnosticFailureDoesNotMaskCreationError: true,
-  diagnosticContainsOnlySurfaceModeAndError: true,
+  diagnosticContainsOnlySurfaceAndError: true,
   allApplicationWindowSurfacesCovered: true,
-  startupModeRecorded: true
+  retiredPresentationModeNotDiagnosed: true
 }));

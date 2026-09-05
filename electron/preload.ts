@@ -17,7 +17,6 @@ type RuntimeDiagnosticsExportResult =
 contextBridge.exposeInMainWorld("cap7ce", {
   window: {
     setShellState: (state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => ipcRenderer.invoke("window:setShellState", state, options),
-    revealAfterShellStateReady: () => ipcRenderer.invoke("window:revealAfterShellStateReady"),
     setAlwaysOnTop: (enabled: boolean) => ipcRenderer.invoke("window:setAlwaysOnTop", enabled),
     getAlwaysOnTop: () => ipcRenderer.invoke("window:getAlwaysOnTop"),
     toggleNormalMaximized: () => ipcRenderer.invoke("window:toggleNormalMaximized"),
@@ -30,11 +29,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
       const listener = (_event: Electron.IpcRendererEvent, enabled: boolean) => callback(enabled);
       ipcRenderer.on("window:alwaysOnTopChanged", listener);
       return () => ipcRenderer.removeListener("window:alwaysOnTopChanged", listener);
-    },
-    onOpenSettingsRequested: (callback: () => void) => {
-      const listener = () => callback();
-      ipcRenderer.on("window:openSettingsRequested", listener);
-      return () => ipcRenderer.removeListener("window:openSettingsRequested", listener);
     },
     onToggleSkimLocationPickerRequested: (callback: () => void) => {
       const listener = () => callback();
@@ -75,7 +69,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
   },
   app: {
     quit: () => ipcRenderer.invoke("app:quit"),
-    switchWindowPresentationMode: (mode: "stable" | "cap7ce" | "compatibility") => ipcRenderer.invoke("app:switchWindowPresentationMode", mode),
     openReleasePage: () => ipcRenderer.invoke("app:openReleasePage"),
     checkForUpdates: () => ipcRenderer.invoke("app:checkForUpdates"),
     downloadUpdate: () => ipcRenderer.invoke("app:downloadUpdate"),
@@ -242,8 +235,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateSkimSort: (skimSortPreference: { sortField: "file_name" | "modified_at"; sortDirection: "asc" | "desc" }) => ipcRenderer.invoke("preferences:updateSkimSort", skimSortPreference),
     updateAppearanceColors: (appearanceColors: { themeColor: string; accentColor: string }) => ipcRenderer.invoke("preferences:updateAppearanceColors", appearanceColors),
     updateEdgeCollapse: (enabled: boolean) => ipcRenderer.invoke("preferences:updateEdgeCollapse", enabled),
-    updateRememberWindowLayout: (enabled: boolean) => ipcRenderer.invoke("preferences:updateRememberWindowLayout", enabled),
-    updateWindowPresentationMode: (mode: "stable" | "cap7ce" | "compatibility") => ipcRenderer.invoke("preferences:updateWindowPresentationMode", mode),
     updateStandbyLineVisible: (standbyLineVisible: boolean) => ipcRenderer.invoke("preferences:updateStandbyLineVisible", standbyLineVisible),
     updateLaunchAtLogin: (launchAtLogin: boolean) => ipcRenderer.invoke("preferences:updateLaunchAtLogin", launchAtLogin),
     updateSystemNotifications: (enabled: boolean) => ipcRenderer.invoke("preferences:updateSystemNotifications", enabled),

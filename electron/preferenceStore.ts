@@ -2,7 +2,7 @@ import { app } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { skimDefaultFileExtensionSet } from "./formatCapabilities";
-import { DEFAULT_WINDOW_PRESENTATION_MODE, normalizeWindowPresentationMode, type WindowMaterial, type WindowPresentationMode } from "./windowPresentationPolicy";
+import type { WindowMaterial } from "./stableUiWindowLifecycle";
 
 type ThemeMode = "system" | "light" | "dark";
 type LanguagePreference = "system" | "zh-CN" | "en-US";
@@ -42,8 +42,6 @@ export interface UserPreferencesResponse {
   };
   appearanceColors: AppearanceColors;
   edgeCollapseEnabled: boolean;
-  rememberWindowLayout: boolean;
-  windowPresentationMode: WindowPresentationMode;
   windowMaterial: WindowMaterial;
   uiFontSize: 12 | 13 | 14 | 15 | 16;
   alwaysOnTop: boolean;
@@ -60,7 +58,6 @@ export interface UserPreferencesResponse {
   skimDisplay: SkimDisplayPreferences;
   skimSidebarFolders: string[];
   skimSystemLocationsCollapsed: boolean;
-  shortcutActions: ShortcutActionPreferences;
   stableShortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }
@@ -83,8 +80,6 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     accentColor: "#68C3C0"
   },
   edgeCollapseEnabled: false,
-  rememberWindowLayout: false,
-  windowPresentationMode: DEFAULT_WINDOW_PRESENTATION_MODE,
   windowMaterial: "acrylic",
   uiFontSize: 13,
   alwaysOnTop: false,
@@ -112,16 +107,6 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   },
   skimSidebarFolders: [],
   skimSystemLocationsCollapsed: false,
-  shortcutActions: {
-    activateCapsule: "Alt+`",
-    activateMicro: "Alt+1",
-    activateMini: "Alt+2",
-    activateNormal: "Alt+3",
-    activateStandby: "Alt+4",
-    activateSkim: "Alt+5",
-    cycleDirectory: "Alt+Q",
-    openSettings: "Alt+6"
-  },
   stableShortcutActions: {
     activateCapsule: "Alt+`",
     activateMicro: "Alt+Shift+1",
@@ -212,7 +197,7 @@ const normalizeAppearanceColors = (appearanceColors: unknown, defaults = default
 
 const normalizeShortcutActions = (
   shortcutActions: unknown,
-  defaults = defaultPreferences().shortcutActions
+  defaults = defaultPreferences().stableShortcutActions
 ): ShortcutActionPreferences => {
   const parsedShortcuts = shortcutActions as Partial<Record<string, unknown>> | undefined;
   if (!parsedShortcuts || !isShortcutValue(parsedShortcuts.activateSkim)) {
@@ -251,8 +236,6 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       },
       appearanceColors: normalizeAppearanceColors(parsed.appearanceColors, defaults.appearanceColors),
       edgeCollapseEnabled: typeof parsed.edgeCollapseEnabled === "boolean" ? parsed.edgeCollapseEnabled : defaults.edgeCollapseEnabled,
-      rememberWindowLayout: typeof parsed.rememberWindowLayout === "boolean" ? parsed.rememberWindowLayout : defaults.rememberWindowLayout,
-      windowPresentationMode: normalizeWindowPresentationMode(parsed.windowPresentationMode),
       windowMaterial: parsed.windowMaterial === "mica" ? "mica" : "acrylic",
       uiFontSize: [12, 13, 14, 15, 16].includes(Number(parsed.uiFontSize)) ? Number(parsed.uiFontSize) as UserPreferencesResponse["uiFontSize"] : defaults.uiFontSize,
       alwaysOnTop: typeof parsed.alwaysOnTop === "boolean" ? parsed.alwaysOnTop : defaults.alwaysOnTop,
@@ -304,7 +287,6 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       skimSystemLocationsCollapsed: typeof parsed.skimSystemLocationsCollapsed === "boolean"
         ? parsed.skimSystemLocationsCollapsed
         : defaults.skimSystemLocationsCollapsed,
-      shortcutActions: normalizeShortcutActions(parsed.shortcutActions, defaults.shortcutActions),
       stableShortcutActions: normalizeShortcutActions(parsed.stableShortcutActions, defaults.stableShortcutActions),
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : defaults.updatedAt
     };
@@ -399,24 +381,6 @@ export const updateAppearanceColorsPreference = async (appearanceColors: UserPre
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     appearanceColors: normalizeAppearanceColors(appearanceColors),
-    updatedAt: new Date().toISOString()
-  };
-  await savePreferences(nextPreferences);
-  return nextPreferences;
-};
-
-export const updateRememberWindowLayoutPreference = async (rememberWindowLayout: boolean) => {
-  const preferences = await readPreferences();
-  const nextPreferences = { ...preferences, rememberWindowLayout, updatedAt: new Date().toISOString() };
-  await savePreferences(nextPreferences);
-  return nextPreferences;
-};
-
-export const updateWindowPresentationModePreference = async (windowPresentationMode: WindowPresentationMode) => {
-  const preferences = await readPreferences();
-  const nextPreferences: UserPreferencesResponse = {
-    ...preferences,
-    windowPresentationMode: normalizeWindowPresentationMode(windowPresentationMode),
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);
@@ -584,17 +548,6 @@ export const updateSkimSystemLocationsCollapsedPreference = async (skimSystemLoc
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     skimSystemLocationsCollapsed: Boolean(skimSystemLocationsCollapsed),
-    updatedAt: new Date().toISOString()
-  };
-  await savePreferences(nextPreferences);
-  return nextPreferences;
-};
-
-export const updateShortcutActionsPreference = async (shortcutActions: UserPreferencesResponse["shortcutActions"]) => {
-  const preferences = await readPreferences();
-  const nextPreferences: UserPreferencesResponse = {
-    ...preferences,
-    shortcutActions: normalizeShortcutActions(shortcutActions),
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

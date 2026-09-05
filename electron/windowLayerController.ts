@@ -35,7 +35,7 @@ export class WindowLayerController {
       && previewWindow.isVisible()
     );
 
-    if (mainWindow && !mainWindow.isDestroyed() && !previewIsActive) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       this.applyWindowLayer(mainWindow, this.options.getMainFixed(), this.mainCollapsedLayerActive, true);
     }
     if (previewIsActive && previewWindow && !previewWindow.isDestroyed()) {

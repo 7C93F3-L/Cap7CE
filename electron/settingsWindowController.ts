@@ -1,7 +1,6 @@
 import type { BrowserWindow, BrowserWindowConstructorOptions } from "electron";
 import { SETTINGS_WINDOW_MINIMUM_SIZE, SettingsWindowLayoutStore, createSettingsWindowLayoutProfile, resolveSettingsWindowInitialBounds } from "./settingsWindowLayout";
 import type { WindowLayoutDisplaySnapshot } from "./windowLayoutTypes";
-import type { WindowPresentationMode } from "./windowPresentationPolicy";
 interface SettingsWindowControllerOptions {
   browserOptions: () => BrowserWindowConstructorOptions;
   createWindow: (options: BrowserWindowConstructorOptions) => BrowserWindow;
@@ -15,7 +14,6 @@ interface SettingsWindowControllerOptions {
   lockWebContentsZoom: (webContents: Electron.WebContents) => void;
   prepareWindow?: (window: BrowserWindow) => void;
   preloadPath: string;
-  presentationMode: () => WindowPresentationMode;
   rendererPath: string;
 }
 export class SettingsWindowController {
@@ -116,9 +114,7 @@ export class SettingsWindowController {
 
     const loadPromise = this.options.devServerUrl
       ? this.loadDevelopmentRenderer(createdWindow, this.options.devServerUrl)
-      : createdWindow.loadFile(this.options.rendererPath, {
-        query: { window: "settings", presentation: this.options.presentationMode() }
-      });
+      : createdWindow.loadFile(this.options.rendererPath, { query: { window: "settings" } });
     void loadPromise.catch((error) => console.warn("[settings-window] failed to load renderer", error));
     return true;
   }
@@ -141,7 +137,6 @@ export class SettingsWindowController {
   private loadDevelopmentRenderer(targetWindow: BrowserWindow, devServerUrl: string) {
     const settingsUrl = new URL(devServerUrl);
     settingsUrl.searchParams.set("window", "settings");
-    settingsUrl.searchParams.set("presentation", this.options.presentationMode());
     return targetWindow.loadURL(settingsUrl.toString());
   }
 

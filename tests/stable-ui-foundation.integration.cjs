@@ -4,16 +4,10 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
-const {
-  getWindowLayoutFileName,
-  isStableWindowPresentationMode
-} = require("../dist-electron/windowPresentationPolicy.js");
+const { STABLE_UI_LAYOUT_FILE_NAME } = require("../dist-electron/stableUiWindowLifecycle.js");
 
 void (async () => {
-  assert.equal(isStableWindowPresentationMode("stable"), true);
-  assert.equal(isStableWindowPresentationMode("cap7ce"), false);
-  assert.equal(isStableWindowPresentationMode("compatibility"), false);
-  assert.equal(getWindowLayoutFileName("stable"), "window-layout-stable-ui.json");
+  assert.equal(STABLE_UI_LAYOUT_FILE_NAME, "window-layout-stable-ui.json");
 
   const rendererEntry = read("src/renderer/main.tsx");
   const globalStyles = read("src/renderer/styles.css");
@@ -36,12 +30,11 @@ void (async () => {
     || /rendererSearchParams\.get\("presentation"\)/.test(rendererEntry)) {
     throw new Error("The product main Renderer must assemble only the stable UI root.");
   }
-  if (!mainSource.includes('mainUrl.searchParams.set("presentation", windowPresentationRuntime.mode)')
-    || !mainSource.includes('query: { presentation: windowPresentationRuntime.mode }')) {
-    throw new Error("Development and packaged main windows must receive the same presentation mode query.");
+  if (/presentationMode|windowPresentationRuntime|searchParams\.set\("presentation"/.test(mainSource)) {
+    throw new Error("The stable window host must not retain a presentation-mode branch.");
   }
-  if (!mainSource.includes('windowPresentationRuntime.layoutFileName')) {
-    throw new Error("Stable UI must use the formal presentation policy layout namespace.");
+  if (!mainSource.includes("STABLE_UI_LAYOUT_FILE_NAME")) {
+    throw new Error("Stable UI must use its fixed layout namespace.");
   }
   if (/resolveResizeTargetState|scheduleResizeSettledCheck|forceApplyDefaultMicroBounds/.test(mainSource)) {
     throw new Error("Stable UI must not retain legacy resize-state settling or size presets.");
@@ -49,7 +42,7 @@ void (async () => {
   if (rootSource.includes("setShellState(") || rootSource.includes("size-contract")) {
     throw new Error("Stable UI development root must not select a legacy shell shape or size contract.");
   }
-  assert.match(appSource, /if \(stableUi\) void window\.cap7ce\?\.window\.setShellState\("standby"\); else setShellState\("standby"\);/);
+  assert.match(appSource, /window\.cap7ce\?\.window\.setShellState\("standby"\)/);
   assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\("line"\);[\s\S]*?window\.setTimeout/);
   if (!titlebarSource.includes("<WindowPinButton") || !pinButtonSource.includes("aria-pressed={pinned}")) {
     throw new Error("Stable main and preview foundations must share the existing accessible pin control.");

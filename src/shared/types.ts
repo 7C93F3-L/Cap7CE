@@ -500,14 +500,8 @@ export interface SkimDisplayPreferences {
   showHiddenFiles: boolean;
 }
 
-export type WindowPresentationMode = "stable" | "cap7ce" | "compatibility";
 export type WindowMaterial = "acrylic" | "mica";
 export type UiFontSize = 12 | 13 | 14 | 15 | 16;
-
-export interface WindowPresentationSwitchResult {
-  status: "restarting" | "unchanged" | "busy" | "failed";
-  targetMode: WindowPresentationMode;
-}
 
 export interface UserPreferences {
   themePreference: ThemeMode;
@@ -522,8 +516,6 @@ export interface UserPreferences {
   };
   appearanceColors: AppearanceColors;
   edgeCollapseEnabled: boolean;
-  rememberWindowLayout: boolean;
-  windowPresentationMode: WindowPresentationMode;
   windowMaterial: WindowMaterial;
   uiFontSize: UiFontSize;
   alwaysOnTop: boolean;
@@ -540,7 +532,6 @@ export interface UserPreferences {
   skimDisplay: SkimDisplayPreferences;
   skimSidebarFolders: string[];
   skimSystemLocationsCollapsed: boolean;
-  shortcutActions: ShortcutActionPreferences;
   stableShortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }

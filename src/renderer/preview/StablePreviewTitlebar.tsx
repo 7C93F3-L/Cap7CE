@@ -1,4 +1,4 @@
-import { getWindowPresentationSymbolColor } from "../../../electron/windowPresentationPolicy";
+import { getStableWindowSymbolColor } from "../../../electron/stableUiWindowLifecycle";
 import type { WindowMaterial } from "../../shared/types";
 import WindowPinButton from "../window-presentation/WindowPinButton";
 import WindowTitlebarPortal from "../window-presentation/WindowTitlebarPortal";
@@ -16,7 +16,7 @@ const StablePreviewTitlebar = ({ pinned, label, onTogglePinned, theme, windowMat
   <WindowTitlebarPortal>
     <header
       className={`app theme-${theme} preview-stable-titlebar`}
-      style={{ color: getWindowPresentationSymbolColor(theme) }}
+      style={{ color: getStableWindowSymbolColor(theme) }}
       data-window-material={windowMaterial}
       data-window-controls="true"
     >

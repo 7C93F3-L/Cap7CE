@@ -1,10 +1,10 @@
 # Cap7CE 软件架构
 
 > 当前版本：0.9.9
-> 更新日期：2026-09-02
+> 更新日期：2026-09-06
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
-0.9.9 兼容窗口专项 C0 至 C9 已冻结为历史完成基线。新版稳定 UI 的 U0 迁移所有权、回退边界、热点文件体量和测试基线记录在 `docs/STABLE_UI_MIGRATION_BASELINE.md`；U1 共用视觉基础、开发入口和自由缩放隔离边界记录在 `docs/STABLE_UI_FOUNDATION.md`；U2 响应式空壳边界记录在 `docs/STABLE_UI_RESPONSIVE_SHELL.md`；U3 正式搜索和结果复用边界记录在 `docs/STABLE_UI_SEARCH_RESULTS.md`；U4 左侧栏与目录动作边界记录在 `docs/STABLE_UI_SIDEBAR.md`；U5 并排 Skim 及文件动作复用边界记录在 `docs/STABLE_UI_SKIM.md`；U6 独立 Settings 单实例宿主、U7 正式设置内容与共享状态边界记录在 `docs/STABLE_UI_SETTINGS_WINDOW.md`；U8–U10 Preview 与窗口生命周期收口记录在 `docs/STABLE_UI_WINDOW_LIFECYCLE.md`；U11 主题、视觉和无障碍收口记录在 `docs/STABLE_UI_FINISHING_AUDIT.md`；D0 正式默认宿主、三模式回退和数据边界记录在 `docs/STABLE_UI_DEFAULT_HOST.md`。后续界面入口必须复用其中列出的正式业务动作与状态权威，不能从兼容专项继续追加行为或建立平行业务链。
+0.9.9 兼容窗口专项 C0 至 C9 与新版稳定 UI 的 U0 至 U11 记录均为历史迁移依据。当前产品已完成稳定窗口宿主收口：主窗口、独立 Settings 与 Preview 只装配新版 Renderer、40 DIP Window Controls Overlay 和同一套 Acrylic / Mica 材质运行时，不再保留可执行的 Cap7CE / compatibility 外壳或模式切换。后续界面入口必须复用正式业务动作与状态权威，不能从历史专项恢复平行业务链。
 
 ## 1. 项目定位
 
@@ -17,7 +17,7 @@ Cap7CE 的核心能力包括：
 - 为支持格式生成缩略图、模型输入图和预览缓存。
 - 通过本地 `llama.cpp` 与 GGUF 视觉模型按需判断搜索候选。
 - 将人工、嵌入、派生及历史 AI 证据按独立所有权保存在 SQLite；当前 AI 深度匹配结果只保留在会话中。
-- 在 micro / mini / normal 展开形态中搜索、预览、拖拽、打开和管理本地素材。
+- 在单一自由响应式主窗口中搜索、预览、拖拽、打开和管理本地素材。
 
 ## 2. 技术栈
 
@@ -39,25 +39,25 @@ Cap7CE 的核心能力包括：
 
 Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统能力通过 preload 白名单 API 进入主进程。
 
-运行诊断完全保留在本机：`runtimeDiagnostics.ts` 以 2 MB × 5 的 JSONL 轮转上限记录会话、搜索边界、资源快照和异常事件，默认不记录搜索词、文件名、完整路径或嵌入元数据；窗口诊断只记录启动时实际外壳模式、受控切换状态、窗口类别和已脱敏异常。详细记录仅是本次运行内的临时状态。Electron Crashpad 使用 `uploadToServer: false`，不会自动上传。诊断导出只收集受限数量和体积的日志及最近崩溃报告，文字日志在写入 ZIP 前再次脱敏；应用不提供远程提交入口。
+运行诊断完全保留在本机：`runtimeDiagnostics.ts` 以 2 MB × 5 的 JSONL 轮转上限记录会话、搜索边界、资源快照和异常事件，默认不记录搜索词、文件名、完整路径或嵌入元数据；窗口创建失败只记录窗口类别和已脱敏异常。详细记录仅是本次运行内的临时状态。Electron Crashpad 使用 `uploadToServer: false`，不会自动上传。诊断导出只收集受限数量和体积的日志及最近崩溃报告，文字日志在写入 ZIP 前再次脱敏；应用不提供远程提交入口。
 
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 按实际 presentation 创建主 `BrowserWindow`。缺失或非法偏好默认使用正式 `stable` 宿主：主窗口、独立 Settings 与 Preview 使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽高的 82%、最大 1600×1000 居中。明确保存的旧 `cap7ce` 和 `compatibility` 偏好仍由过渡期窗口策略安全读取，但所有产品 Renderer 已统一进入 stable 内容树；主窗口只额外装配待机线使用的不可聚焦 `lineWindow`，不再创建 Capsule 窗口。所有窗口的 DevTools 能力仅在未打包开发环境开启。
+- 以唯一稳定策略创建主 `BrowserWindow`、独立 Settings 与 Preview：统一使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽高的 82%、最大 1600×1000 居中。主窗口只额外装配待机线使用的不可聚焦 `lineWindow`；旧模式偏好即使仍留在历史 JSON 中也会被忽略，不迁移、不执行。所有窗口的 DevTools 能力仅在未打包开发环境开启。
 - `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。边缘收起由设置页与托盘菜单共用同一偏好控制，不再附带拖动结束后的自绘位置吸附。stable 与 compatibility 的贴靠和分屏完全交由 Windows Snap；检测到系统 Snap 几何时暂停边缘收起。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
 - 主窗口内容始终使用单一 normal / 自由响应式布局，拖动与缩放不触发 Capsule、micro 或 mini 形态转换；旧自动 resize settle、阈值回弹、底部居中修正和分形态布局记忆均已删除。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点；唯一尺寸动作把主窗口恢复为当前工作区 82%、最大 1600×1000 的居中 bounds。
 - 主窗口原生关闭与 Alt+1 只向 Renderer 发出同一个安全 standby 请求，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。真正退出时 `isQuitting` 允许原生 close 继续完成，不反向进入隐藏链路。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
 - 创建托盘图标和右键菜单；托盘图标单击、第二实例和全局窗口快捷动作复用同一个主窗口恢复入口，冷启动时到达过早的第二实例请求延迟到主窗口 ready 后执行。恢复 normal 时已有 skim 会话保持当前内容视图。
-- 通过托盘气泡发送可关闭的 Windows 系统通知，显式使用 Cap7CE 图标并尊重系统安静时间；主界面按钮、全局快捷动作、托盘、通知点击和 Preview 统一复用同一个 Settings 打开动作。stable 宿主恢复或聚焦独立 Settings，旧外壳继续走原主窗口 Settings 回退，避免两个 Renderer 同时持有设置事务。
+- 通过托盘气泡发送可关闭的 Windows 系统通知，显式使用 Cap7CE 图标并尊重系统安静时间；主界面按钮、全局快捷动作、托盘、通知点击和 Preview 统一复用同一个独立 Settings 打开动作，避免多个 Renderer 同时持有设置事务。
 - 控制主窗口、line 与预览窗口共享的 `alwaysOnTop` 置顶状态并持久化。
 - `Alt+\`` 和 line 单击复用统一主窗口激活入口：先退出边缘收起、隐藏 line、显示并聚焦主窗口，再聚焦现有搜索框；不创建第二套搜索窗口或草稿交接链。
 - 创建独立的冷启动提示窗口；启动提示窗口必须只关闭自己，不能控制主窗口生命周期。
-- 首次实际预览时按需创建并复用独立、可缩放的 `previewWindow`；旧宿主仍保持原外壳与“预览替代主窗口”的恢复语义。stable 的主窗口、Settings 和 Preview 可以同时存在，打开 Preview 不隐藏主窗口，普通关闭只结束预览会话并隐藏自身、不改变主窗口几何，但会把键盘焦点交还主窗口；编辑关键词、删除文件和切换 Skim 位置才显式恢复主窗口内容状态。预览窗口不进入主窗口状态机和任务栏，内容自适应、Snap / 最大化保护、边缘收起和关闭后两分钟空 Renderer 复用保持统一。
+- 首次实际预览时按需创建并复用独立、可缩放的 `previewWindow`。主窗口、Settings 和 Preview 可以同时存在，打开 Preview 不隐藏主窗口，普通关闭只结束预览会话并隐藏自身、不改变主窗口几何，但会把键盘焦点交还主窗口；编辑关键词、删除文件和切换 Skim 位置才显式恢复主窗口内容状态。预览窗口拥有原生最小化与任务栏入口；内容自适应、Snap / 最大化保护、边缘收起和关闭后两分钟空 Renderer 复用保持统一。
 - 预览内容切换后根据最新图片尺寸重新计算窗口大小；最大化期间只记录最新目标尺寸，恢复时再应用。
 - 主窗口只在自由拖动结束后延迟记录有效布局，不再二次改写用户停放位置；Preview 不再监听拖动结束执行位置吸附。两类窗口继续分别维护程序移动保护和独立边缘收起会话。预览收起期间的内容自适应尺寸更新保存的展开 bounds，并重新计算对应屏外位置，避免以 collapsed bounds 错误锚定或产生展开闪动。
-- 注册、暂停、恢复并验证可配置全局快捷动作；运行时只注册显示并聚焦主搜索、隐藏到 line、切换 Skim、打开 Settings 和恢复默认窗口五项全局动作，目录循环继续由 Renderer 处理。旧偏好字段暂由迁移层安全读取，但不再注册 Capsule、micro 或 mini 形态动作；快捷键映射候选只有实际注册成功才允许写入偏好，运行期临时冲突不改写用户总开关。
+- 注册、暂停、恢复并验证可配置全局快捷动作；运行时只注册显示并聚焦主搜索、隐藏到 line、切换 Skim、打开 Settings 和恢复默认窗口五项全局动作，目录循环继续由 Renderer 处理。旧快捷配置字段留在历史 JSON 时会被忽略；快捷键映射候选只有实际注册成功才允许写入正式稳定配置，运行期临时冲突不改写用户总开关。
 - 启动、停止、扫描和记录 `llama.cpp` / `llama-server` 状态。
 - 扫描 GGUF 模型目录并保存模型选择。
 - 处理文件系统能力：打开文件、打开路径、复制路径、删除到回收站、原生拖拽。
@@ -67,14 +67,10 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 | 模块 | 职责 |
 | --- | --- |
-| `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览 / Settings 窗口外壳模式与 stable 材质的稳定类型、能力策略及主进程运行期装配；缺失或非法偏好一律规范化为 `stable`，已有明确旧偏好保持原值。stable 使用 40 DIP WCO 与用户选择的 Acrylic / Mica，并保留主题纯色回退；cap7ce 保持透明自绘参数，compatibility 使用不透明 WCO、36 DIP 标题栏和 Mica；三种模式分别使用 `window-layout-stable-ui.json`、`window-layout.json` 与 `window-layout-compatibility.json`。主进程通过只读壳层指标返回本次实际生效模式，Renderer 不按保存值猜测 |
-| `stableUiWindowLifecycle.ts` | 正式 stable 宿主的 40 DIP WCO、Acrylic / Mica 运行时应用与主题纯色回退、工作区 82% 且最大 1600×1000 的初始自由 bounds、默认开启的布局记忆策略，以及新版不再注册的旧尺寸快捷动作判定；不改写或迁移旧宿主布局文件 |
-| `windowPresentationGeometry.ts` | 过渡期 presentation 的内容 bounds、真实外框 bounds、工作区和最小尺寸转换；标题栏只增加外框高度，不挤压现有内容。主窗口不再通过内容尺寸推断或切换旧形态 |
-| `previewWindowPresentationSizing.ts` | 预览内容尺寸到真实窗口外框的纯几何适配；Cap7CE 模式保持原尺寸，兼容模式额外增加标题栏高度，新版 Preview 使用信息栏当前宽度与右/底 5px 边距计算外框；各模式均保持当前外框中心，并在狭窄工作区内统一约束最小值、85% 最大内容尺寸和完整外框可见性 |
-| `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置。主进程另以工作区网格几何识别 stable / compatibility 的左右及分区 Snap，在系统管理窗口期间暂停布局记忆、内容尺寸改写和边缘收起；普通自由停放及 Cap7CE 模式不受影响 |
+| `stableUiWindowLifecycle.ts` / `stableWindowRuntime.ts` | 主窗口、Preview 与 Settings 唯一稳定外壳的 40 DIP WCO、主题符号色、Acrylic / Mica 运行时应用与主题纯色回退，以及工作区 82%、最大 1600×1000、最小 300×170 的自由主窗口 bounds；布局固定写入 `window-layout-stable-ui.json`，不读取、迁移或删除旧宿主布局文件 |
+| `stablePreviewWindowSizing.ts` | Preview 内容尺寸到稳定窗口外框的纯几何适配；固定计入 40 DIP 标题栏、信息栏当前宽度与右/底 5px 边距，保持当前外框中心，并在狭窄工作区内约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `src/renderer/window-presentation/WindowTitlebarPortal.tsx` / `stable-ui/StableTitlebar.tsx` / `preview/StablePreviewTitlebar.tsx` | 主窗口与 Preview 的 WCO 标题栏统一通过共享 Portal 宿主挂载到 `document.body`，不得直接留在会动画、裁剪或滚动的应用内容树中，避免虚拟网格滚动重算后覆盖 Windows 原生拖动命中区。各标题栏使用 `titlebar-area-*` 环境变量限定安全区域，并复用既有置顶图标、状态与统一动作；系统最小化 / 最大化 / 关闭继续由 Windows 绘制 |
-| `windowPresentationSwitchRuntime.ts` | 窗口模式切换的单次事务、受限 IPC 与启动恢复；先记录旧 / 新模式，再持久化偏好并刷新窗口布局和诊断数据，随后受控 relaunch。新进程须在主 Renderer 完成加载后清除启动标记；重复请求、写入 / 刷新失败、启动超时或上次启动未完成时回退旧模式，避免双实例和半切换状态。每次请求、重启、确认、超时和回滚只向本机诊断写稳定模式与状态枚举。开发任务只在子进程异常退出时联动终止，使 Electron 正常 relaunch 后 Vite 页面服务继续存活；打包版不依赖该开发编排。原有退出 IPC 同域注册，继续只接受主 Renderer |
-| `browserWindowDiagnostics.ts` | 主窗口、Settings、预览、line 与启动提示共用的原生 BrowserWindow 创建失败边界；记录窗口类别、当前外壳模式和经运行诊断统一脱敏的异常后原样抛出，不吞掉 Electron 创建失败，也不接触用户搜索或路径 |
+| `browserWindowDiagnostics.ts` | 主窗口、Settings、预览、line 与启动提示共用的原生 BrowserWindow 创建失败边界；只记录窗口类别和经运行诊断统一脱敏的异常后原样抛出，不吞掉 Electron 创建失败，也不接触用户搜索或路径 |
 | `windowLayoutTypes.ts` / `windowLayoutGeometry.ts` | 窗口布局记忆的版本化稳定类型，以及显示器选择、work area 映射、边缘 / 任务栏方向、四向 line 与完整 bounds 恢复的纯几何能力 |
 | `windowLayoutStore.ts` / `windowLayoutManager.ts` | 按单一记忆开关捕获与恢复主窗口最后有效自由 bounds，只保留 normal 槽；不迁移或删除磁盘上的旧记录，显示器缺失时仍按工作区夹回可见范围 |
 | `settingsWindowController.ts` / `settingsWindowLayout.ts` / `settingsWindowIpc.ts` / `settingsDataBroadcast.ts` | stable 的独立 Settings 单实例生命周期、受限主 Renderer 打开入口、版本化专属 bounds 及主 / Settings Renderer 状态广播；关闭只隐藏自身，重复打开还原并聚焦，显示器缺失或 work area 变化时复用公共布局几何夹回可见区域，不读写主窗口 normal 记录 |
@@ -82,7 +78,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
 | `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：仅在距离非任务栏边缘 5 DIP 内判断为停靠、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
 | `directoryStore.ts` | 已添加目录配置、目录显示名与持久化 |
-| `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听、窗口模式启动 / 切换 / 创建失败事件，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
+| `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听、窗口创建失败事件，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
 | `runtimeDiagnosticBundle.ts` / `diagnosticsIpc.ts` | 对主 Renderer 开放运行信息读取、会话级详细记录和脱敏 ZIP 导出；导出限制单文件、总体积与崩溃报告数量，不接收 Renderer 任意路径 |
 | `searchIpc.ts` | 正式搜索、取消和显式刷新三个 channel 的 sender 校验与任务取消表；调用既有搜索 / 快照服务，并向运行诊断只提交查询长度、范围、排序、结果数及可选的格式聚合，不提交搜索文字或文件路径 |
 | `directoryAddService.ts` | Settings、skim、拖入与未来入口共用的目录候选转换、规范化、去重、父子包含检测和结构化添加结果 |
@@ -304,12 +300,12 @@ Cap7CE 0.9.9 的正式窗口状态已收口为主窗口显示与隐藏生命周�
 - 主题色 / 副色使用自绘拾色浮层，包含明度 / 饱和度、色相和 HEX 三项控制；HEX 文本支持带或不带 `#` 的逐字符输入，输入与滑块实时同步。浮层复用右键菜单的主题、圆角和动效，点击外部保存，`Esc` 取消并恢复原值。
 - 标签和缩略图共用新版右键菜单视觉、最大圆角 hover 与窗口内定位约束。
 - 缩略图 Hover 使用 40% 黑色蒙版；Selected / 多选使用 60% 黑色蒙版；Selected + Hover 保持 60%。蒙版在缩略图容器内独立渐变，内部图片在 Hover / 键盘焦点时轻微放大、Selected 后固定保持放大；缩略图容器本身不缩放或位移，透明图片不增加黑色防漏底。
-- 图片预览使用独立且可缩放的 `BrowserWindow`，跟随主题、复用右侧窗口控制栏，并可切换最大化与共享置顶状态。
+- 图片预览使用独立且可缩放的 `BrowserWindow`，跟随主题、使用 Windows 原生窗口控制按钮，并可切换最大化与共享置顶状态。
 - 同一预览会话切换图片时不叠加前后图片；旧图随目标切换清除，新图加载完成后自然渐显。等待提示延迟 180ms 出现，已缓存或快速就绪的图片不会短暂显示等待状态；关闭预览后结果网格定位到最后浏览项目。
 - 主窗口、预览窗口、缩略图和搜索结果滚动区域复用统一圆角变量。
 - 主窗口外壳不使用 CSS 阴影，避免透明窗口圆角出现合成残影；Windows 透明无边框窗口的原生阴影可能不可见，当前不额外模拟外部阴影。
 - 关键词编辑窗口使用响应式胶囊面板，micro 为左右布局，mini / normal 为纵向布局。
-- 旧 Settings 页面保留当前内容结构，使用新版胶囊视觉和行内任务状态；稳定 UI 独立 Settings 在 U7 按八个新版分类组合现有偏好、目录和任务能力，两种入口由偏好 / 目录变更广播保持正式状态同步。新版较详细文案优先，尚未一一对应的增删改项允许后续补齐；窗口材质由 stable Settings 在 Acrylic / Mica 间选择并实时同步三窗口，纯色只作为失败回退；12–16px 字体大小只作用于 stable 宿主与共享浮层，旧宿主和文件内容排版不随之缩放。
+- 独立 Settings 按八个新版分类组合现有偏好、目录和任务能力，并由偏好 / 目录变更广播保持主窗口与 Preview 的正式状态同步；窗口材质可在 Acrylic / Mica 间选择并实时同步三窗口，纯色只作为失败回退；12–16px 字体大小作用于稳定宿主与共享浮层，文件内容排版不随之缩放。
 - Settings 的 llama.cpp 版本与视觉模型选择使用 Renderer 自绘列表：触发按钮与同排按钮等高，不显示描边或展开箭头，并沿用原有宽度和禁用条件；列表通过 Portal 复用右键菜单视觉并按视口上下定位，鼠标仅对实际 hover 项显示主题色，键盘导航项保留背景反馈。组件支持点击外部、滚动、失焦或 `Esc` 关闭，以及方向键、Home / End、Enter / Space 选择；首项空值会清除并持久化当前选择，非空值继续由 Store 验证实际版本或模型。成功切换或取消后，主进程仅在服务闲置时同步当前配置到进程状态，避免旧启动失败提示残留；服务运行期间仍由 Renderer 和主进程双重禁止切换。
 - 大型文件预览和批量删除复用 `WaitingIndicator`；等待图标使用主题渐变并围绕中心轴旋转。
 - 文件夹拖入、删除及缓存清理等确认层复用全窗口背景与居中内容动效；normal 的通用编辑面板宽度不得覆盖这些全窗口确认层，背景从首帧覆盖完整内容区域，提示内容再独立淡入。
@@ -472,7 +468,7 @@ Settings 当前覆盖：
 - 主题色。
 - 副色。
 - 线状胶囊显示 / 不显示。
-- 边缘收起；stable / compatibility 的窗口贴靠由 Windows Snap 提供。
+- 边缘收起；窗口贴靠由 Windows Snap 提供。
 - 新版稳定界面 / 旧 Cap7CE 透明自绘模式 / Windows 原生按钮兼容模式切换；点击后通过受控重启应用，按三个模式循环，切换失败自动回退原模式。
 - 快捷动作：激活胶囊、激活 micro、激活 mini、激活 normal、激活 standby、进入 skim、窗口内目录切换、打开设置。
 - 全局快捷键开关。
@@ -487,7 +483,7 @@ Settings 当前覆盖：
 - 扫描 / 识别任务在“索引”区域内展开，展示进度、成功 / 失败数、当前文件、完成、取消、失败和重试状态。
 - 缓存清理成功使用行内反馈；缓存失败与文件删除失败复用当前新版确认弹层和重试流程。
 
-stable 默认全局窗口快捷动作依次为 Alt + 反引号、`Alt+1`、`Alt+2`、`Alt+3`、`Alt+4`，分别显示并聚焦主窗口、隐藏主窗口并显示 line、展开或收起 Skim、打开 Settings、以默认大小和位置显示主窗口。旧宿主继续使用 Alt + 反引号与 `Alt+1` 至 `Alt+6` 对应 capsule / micro / mini / normal / standby / skim / Settings。两套配置独立保存；另有默认 `Alt+Q` 的“目录切换”在 stable 主窗口及旧 micro、mini、normal 搜索结果界面生效，按“所有已添加目录 → 各已添加目录 → 所有已添加目录”稳定循环，保留其他搜索条件并复用手动目录标签的刷新与输入框临时反馈；按键自动重复不触发连续切换。快捷指令继续独立生效，不与快捷动作互相替代。
+默认全局窗口快捷动作依次为 Alt + 反引号、`Alt+1`、`Alt+2`、`Alt+3`、`Alt+4`，分别显示并聚焦主窗口、隐藏主窗口并显示 line、展开或收起 Skim、打开 Settings、以默认大小和位置显示主窗口。配置只保存一套稳定快捷映射；另有默认 `Alt+Q` 的“目录切换”在主窗口搜索结果界面生效，按“所有已添加目录 → 各已添加目录 → 所有已添加目录”稳定循环，保留其他搜索条件并复用手动目录标签的刷新与输入框临时反馈；按键自动重复不触发连续切换。快捷指令继续独立生效，不与快捷动作互相替代。
 
 全局快捷动作的可用性以主进程 `globalShortcut.register` 的真实结果为准。胶囊、micro、mini、normal、standby、skim 和 Settings 的全局组合在启动、开关和修改时检查；注册失败的快捷键映射候选不写入偏好。“目录切换”只参与 Renderer 内部重复检查，不参与系统级可用性探测。开发版、打包版或其他程序造成的运行期临时占用只记入本次运行的不可用项，不得自动关闭或改写用户保存的全局快捷动作总开关；未冲突的组合继续注册，下次启动时重新尝试全部组合。进入录入状态时临时暂停 Cap7CE 全部全局快捷键，避免旧动作抢先触发，完成、取消或离开配置页后恢复最后一次有效配置。
 
@@ -554,7 +550,7 @@ stable 默认全局窗口快捷动作依次为 Alt + 反引号、`Alt+1`、`Alt+
 
 ## 16. 0.9.9 当前稳定状态
 
-Cap7CE 0.9.9 的产品 Renderer 已统一为新版 stable：主窗口、独立 Settings 与 Preview 使用 40 DIP Window Controls Overlay 和可实时切换的 Acrylic / Mica，系统拒绝所选材质时回退安全纯色；采用连续响应式布局并允许三窗口并存。旧主 Renderer、旧 Preview 展示分支、独立与同窗 Capsule、micro/mini 自动形态转换和分形态布局记忆均已删除；过渡期 presentation 策略与旧偏好读取将在下一轮独立收口，磁盘上的旧布局和用户数据不主动清理。当前稳定边界还包括虚拟化搜索与 skim 网格、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、逐词证据可信度排序、15 秒可取消扫描快照、失败抑制后的原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。普通 JPG / JPEG / PNG / WEBP 仅在尺寸、像素量或文件体积超过受限阈值时生成 2560px 预览缓存，轻量源文件直接读取。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；Preview 的单文件手动关键词在信息边栏内以标签方式编辑，经受限 Preview 保存链复用统一规范化与索引写入，并通知主窗口刷新当前结果；多选编辑继续使用共享浮动编辑卡片。HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、共享查看范围、自绘滚动条、主题感知图标与拾色器、输入框内快捷指令和标签切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入按需 AI 搜索，系统解码能力不会扩大 AI、自动优化或模型输入边界；OCR 与不可见的全目录 AI 深度索引未接入。
+Cap7CE 0.9.9 的产品 Renderer 与原生窗口宿主均已统一为新版 stable：主窗口、独立 Settings 与 Preview 使用 40 DIP Window Controls Overlay 和可实时切换的 Acrylic / Mica，系统拒绝所选材质时回退安全纯色；采用连续响应式布局并允许三窗口并存。旧主 Renderer、旧 Preview 展示分支、独立与同窗 Capsule、micro/mini 自动形态转换、分形态布局记忆、旧 presentation 策略、兼容最大化控制器、模式切换 IPC 和对应偏好字段均已删除；磁盘上的旧布局和已有用户数据不主动清理，历史偏好 JSON 中多余字段由当前读取器安全忽略。当前稳定边界还包括虚拟化搜索与 skim 网格、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、逐词证据可信度排序、15 秒可取消扫描快照、失败抑制后的原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。普通 JPG / JPEG / PNG / WEBP 仅在尺寸、像素量或文件体积超过受限阈值时生成 2560px 预览缓存，轻量源文件直接读取。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；Preview 的单文件手动关键词在信息边栏内以标签方式编辑，经受限 Preview 保存链复用统一规范化与索引写入，并通知主窗口刷新当前结果；多选编辑继续使用共享浮动编辑卡片。HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、共享查看范围、自绘滚动条、主题感知图标与拾色器、输入框内快捷指令和标签切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入按需 AI 搜索，系统解码能力不会扩大 AI、自动优化或模型输入边界；OCR 与不可见的全目录 AI 深度索引未接入。
 
 A7 补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不再属于全局样式入口。Settings 新界面共用的 AI 详情网格基底归入 `src/renderer/settings-window/SettingsWindowApp.css`；旧 Home、旧 Settings、旧 AI 控制区和旧目录表格的零调用组件及样式已移除。最终审计同时移除了已由 SVG、独立关键词编辑卡片和新 Settings 控件替代的零调用图标、胶囊、状态 pill 与旧关键词编辑布局规则；动态窗口过渡、共享菜单、主题、壳层和预览兼容规则继续保留全局所有权。
 

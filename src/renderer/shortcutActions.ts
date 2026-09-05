@@ -1,16 +1,5 @@
 import type { ShortcutActionPreferences } from "../shared/types";
 
-export const defaultShortcutActions: ShortcutActionPreferences = {
-  activateCapsule: "Alt+`",
-  activateMicro: "Alt+1",
-  activateMini: "Alt+2",
-  activateNormal: "Alt+3",
-  activateStandby: "Alt+4",
-  activateSkim: "Alt+5",
-  cycleDirectory: "Alt+Q",
-  openSettings: "Alt+6"
-};
-
 export const defaultStableShortcutActions: ShortcutActionPreferences = {
   activateCapsule: "Alt+`",
   activateMicro: "Alt+Shift+1",
@@ -21,19 +10,6 @@ export const defaultStableShortcutActions: ShortcutActionPreferences = {
   cycleDirectory: "Alt+Q",
   openSettings: "Alt+3"
 };
-
-export const normalizeShortcutActions = (
-  shortcutActions?: Partial<ShortcutActionPreferences>
-): ShortcutActionPreferences => ({
-  activateCapsule: shortcutActions?.activateCapsule || defaultShortcutActions.activateCapsule,
-  activateMicro: shortcutActions?.activateMicro || defaultShortcutActions.activateMicro,
-  activateMini: shortcutActions?.activateMini || defaultShortcutActions.activateMini,
-  activateNormal: shortcutActions?.activateNormal || defaultShortcutActions.activateNormal,
-  activateStandby: shortcutActions?.activateStandby || defaultShortcutActions.activateStandby,
-  activateSkim: shortcutActions?.activateSkim || defaultShortcutActions.activateSkim,
-  cycleDirectory: shortcutActions?.cycleDirectory || defaultShortcutActions.cycleDirectory,
-  openSettings: shortcutActions?.openSettings || defaultShortcutActions.openSettings
-});
 
 export const normalizeStableShortcutActions = (
   shortcutActions?: Partial<ShortcutActionPreferences>

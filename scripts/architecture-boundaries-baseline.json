@@ -1,6 +1,6 @@
 {
   "maxLines": {
-    "src/renderer/App.tsx": 2527,
+    "src/renderer/App.tsx": 2520,
     "src/renderer/main.tsx": 58,
     "src/renderer/window-presentation/WindowPinButton.tsx": 31,
     "src/renderer/stable-ui/StableTitlebar.tsx": 27,
@@ -65,14 +65,15 @@
     "src/renderer/settings/ShortcutSettingsPanels.css": 141,
     "src/renderer/settings/SkimDisplaySettingsRows.css": 92,
     "src/renderer/settings/SettingsFooter.css": 155,
-    "electron/main.ts": 3055,
-    "electron/windowPresentationRuntime.ts": 64,
-    "electron/settingsWindowController.ts": 171,
+    "electron/main.ts": 2901,
+    "electron/stableWindowRuntime.ts": 51,
+    "electron/stableUiWindowLifecycle.ts": 81,
+    "electron/stablePreviewWindowSizing.ts": 59,
+    "electron/settingsWindowController.ts": 166,
     "electron/settingsDataBroadcast.ts": 15,
     "electron/settingsWindowLayout.ts": 127,
     "electron/settingsWindowIpc.ts": 20,
     "electron/settingsWindowHost.ts": 4,
-    "electron/previewWindowPresentationSizing.ts": 61,
     "electron/lineWindowController.ts": 159
   },
   "stableUiMigration": {
@@ -161,7 +162,7 @@
       {
         "id": "shortcuts",
         "sourceAnchors": [
-          { "path": "src/renderer/shortcutActions.ts", "contains": "defaultShortcutActions" },
+          { "path": "src/renderer/shortcutActions.ts", "contains": "defaultStableShortcutActions" },
           { "path": "src/renderer/App.tsx", "contains": "handleWindowShortcutKeyDown" },
           { "path": "electron/main.ts", "contains": "registerConfiguredGlobalShortcuts" }
         ]

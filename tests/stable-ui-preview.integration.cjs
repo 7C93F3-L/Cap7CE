@@ -26,8 +26,9 @@ const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const sidebarDataSource = read("src/renderer/preview/previewSidebarData.ts");
 const navigationTargetSource = read("src/renderer/preview/previewNavigationTarget.ts");
 
-assert.match(mainSource, /const previewUrl = new URL\(devServerUrl\);[\s\S]*?previewUrl\.searchParams\.set\("window", "preview"\);[\s\S]*?previewUrl\.searchParams\.set\("presentation", windowPresentationRuntime\.mode\)/u);
-assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
+assert.match(mainSource, /const previewUrl = new URL\(devServerUrl\);[\s\S]*?previewUrl\.searchParams\.set\("window", "preview"\)/u);
+assert.match(mainSource, /query: \{ window: "preview" \}/u);
+assert.doesNotMatch(mainSource, /presentationMode|windowPresentationRuntime/u);
 assert.match(previewSource, /<PreviewInformationSidebar/u);
 assert.match(previewSource, /<StablePreviewTitlebar/u);
 assert.doesNotMatch(previewSource, /isStableUiPreview|isCompatibilityWindow|WindowControlRail|CompatibilityTitlebar/u);
@@ -103,8 +104,8 @@ assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]
 assert.match(shellStyles, /\.preview-stable-shell \.preview-image-transform-canvas[\s\S]*?background: transparent/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-image-transform-canvas[\s\S]*?border-radius: 0/u);
 assert.match(shellStyles, /\.preview-image-transform-canvas > \.preview-window-image[\s\S]*?border-radius: 0/u);
-assert.match(mainSource, /minimizable: isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
-assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\) \? getStablePreviewContentChrome\(sidebarWidth\) : \{\}/u);
+assert.match(mainSource, /minimizable: true/u);
+assert.match(mainSource, /\.\.\.getStablePreviewContentChrome\(sidebarWidth\)/u);
 assert.match(previewSource, /previewSidebarWidth = previewSidebarLayout\.expanded \? previewSidebarLayout\.width : 40/u);
 assert.match(previewSource, /className="preview-window-shell preview-stable-shell"[\s\S]*?--preview-sidebar-width": `\$\{previewSidebarLayout\.width\}px`/u);
 assert.doesNotMatch(sidebarSource, /style=\{\{ "--preview-sidebar-width"/u);
@@ -125,8 +126,8 @@ assert.match(previewSource, /preview-audio-identity[\s\S]*?getFormatIconSvg\(pre
 for (const providerClass of ["preview-text-panel", "preview-pdf-panel", "preview-archive-panel", "preview-font-panel", "preview-epub-panel", "preview-mobi-panel", "preview-audio-panel", "preview-video"]) {
   assert.match(providerStyles, new RegExp(`\\.preview-window-stable-ui \\.${providerClass}`, "u"));
 }
-assert.match(mainSource, /skipTaskbar: !isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
-assert.match(mainSource, /previewWindow\.setSkipTaskbar\(!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\)/u);
+assert.match(mainSource, /skipTaskbar: false/u);
+assert.match(mainSource, /previewWindow\.setSkipTaskbar\(false\)/u);
 assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw - 220px\)/u);
 assert.match(accessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.preview-window-stable-ui \*/u);
 

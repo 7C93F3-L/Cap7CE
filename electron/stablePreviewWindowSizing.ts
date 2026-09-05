@@ -1,7 +1,7 @@
 import type { Rectangle } from "electron";
-import { toWindowOuterMinimumSize } from "./windowPresentationGeometry";
+import { STABLE_UI_TITLEBAR_HEIGHT } from "./stableUiWindowLifecycle";
 
-interface PreviewWindowPresentationSizingOptions {
+interface StablePreviewWindowSizingOptions {
   minimumWidth: number;
   minimumHeight: number;
   horizontalPadding: number;
@@ -11,27 +11,25 @@ interface PreviewWindowPresentationSizingOptions {
 
 export const getStablePreviewContentChrome = (sidebarWidth = 40) => ({ horizontalPadding: Math.min(420, Math.max(40, Math.round(sidebarWidth))) + 5, verticalChrome: 5 } as const);
 
-export class PreviewWindowPresentationSizing {
-  constructor(private readonly options: PreviewWindowPresentationSizingOptions) {}
+export class StablePreviewWindowSizing {
+  constructor(private readonly options: StablePreviewWindowSizingOptions) {}
 
-  getOuterMinimumSize(titlebarHeight: number) {
-    return toWindowOuterMinimumSize({ width: this.options.minimumWidth, height: this.options.minimumHeight }, titlebarHeight);
+  getOuterMinimumSize() {
+    return { width: this.options.minimumWidth, height: this.options.minimumHeight + STABLE_UI_TITLEBAR_HEIGHT };
   }
 
-  resolveBounds({ contentWidth, contentHeight, currentBounds, workArea, titlebarHeight, horizontalPadding = this.options.horizontalPadding, verticalChrome = this.options.verticalChrome }: {
+  resolveBounds({ contentWidth, contentHeight, currentBounds, workArea, horizontalPadding = this.options.horizontalPadding, verticalChrome = this.options.verticalChrome }: {
     contentWidth: number;
     contentHeight: number;
     currentBounds: Rectangle | null;
     workArea: Rectangle;
-    titlebarHeight: number;
     horizontalPadding?: number;
     verticalChrome?: number;
   }): Rectangle {
-    const safeTitlebarHeight = Number.isFinite(titlebarHeight) ? Math.max(0, Math.round(titlebarHeight)) : 0;
     const maximumWidth = Math.max(1, Math.floor(workArea.width * this.options.workAreaRatio));
     const maximumContentHeight = Math.max(1, Math.min(
       Math.floor(workArea.height * this.options.workAreaRatio),
-      workArea.height - safeTitlebarHeight
+      workArea.height - STABLE_UI_TITLEBAR_HEIGHT
     ));
     const minimumWidth = Math.min(this.options.minimumWidth, maximumWidth);
     const minimumContentHeight = Math.min(this.options.minimumHeight, maximumContentHeight);
@@ -44,7 +42,7 @@ export class PreviewWindowPresentationSizing {
     const scale = Math.min(1, availableContentWidth / safeContentWidth, availableContentHeight / safeContentHeight);
     const width = Math.min(maximumWidth, Math.max(minimumWidth, Math.round(safeContentWidth * scale) + safeHorizontalPadding));
     const contentWindowHeight = Math.min(maximumContentHeight, Math.max(minimumContentHeight, Math.round(safeContentHeight * scale) + safeVerticalChrome));
-    const height = contentWindowHeight + safeTitlebarHeight;
+    const height = contentWindowHeight + STABLE_UI_TITLEBAR_HEIGHT;
     const anchorX = currentBounds ? currentBounds.x + Math.round(currentBounds.width / 2) : workArea.x + Math.round(workArea.width / 2);
     const anchorY = currentBounds ? currentBounds.y + Math.round(currentBounds.height / 2) : workArea.y + Math.round(workArea.height / 2);
     const maximumX = Math.max(workArea.x, workArea.x + workArea.width - width);

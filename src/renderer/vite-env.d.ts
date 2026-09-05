@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats, WindowPresentationSwitchResult } from "../shared/types";
+import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 
-type Cap7CEShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
+type Cap7CEShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
 type Cap7CEAlwaysOnTopState = { enabled: boolean; actual: boolean; windowId: number | null };
 
@@ -11,13 +11,11 @@ declare global {
     cap7ce?: {
       window: {
         setShellState: (state: Cap7CEShellState, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => Promise<boolean>;
-        revealAfterShellStateReady: () => Promise<boolean>;
         setAlwaysOnTop: (enabled: boolean) => Promise<Cap7CEAlwaysOnTopState>;
         getAlwaysOnTop: () => Promise<Cap7CEAlwaysOnTopState>;
         toggleNormalMaximized: () => Promise<{ isMaximized: boolean; lastNormalBounds: Cap7CEWindowBounds | null }>;
         onShellStateChanged: (callback: (state: Cap7CEShellState) => void) => () => void;
         onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => () => void;
-        onOpenSettingsRequested: (callback: () => void) => () => void;
         onToggleSkimLocationPickerRequested: (callback: () => void) => () => void;
         onActivateSkimRequested: (callback: () => void) => () => void;
         onFocusMainSearch: (callback: () => void) => () => void;
@@ -33,7 +31,6 @@ declare global {
       };
       app: {
         quit: () => Promise<boolean>;
-        switchWindowPresentationMode: (mode: UserPreferences["windowPresentationMode"]) => Promise<WindowPresentationSwitchResult>;
         openReleasePage: () => Promise<boolean>;
         checkForUpdates: () => Promise<{
           status: "up_to_date" | "update_available" | "failed";
@@ -155,8 +152,6 @@ declare global {
         updateSkimSort: (skimSortPreference: UserPreferences["skimSortPreference"]) => Promise<UserPreferences>;
         updateAppearanceColors: (appearanceColors: UserPreferences["appearanceColors"]) => Promise<UserPreferences>;
         updateEdgeCollapse: (enabled: UserPreferences["edgeCollapseEnabled"]) => Promise<UserPreferences>;
-        updateRememberWindowLayout: (enabled: UserPreferences["rememberWindowLayout"]) => Promise<UserPreferences>;
-        updateWindowPresentationMode: (mode: UserPreferences["windowPresentationMode"]) => Promise<UserPreferences>;
         updateStandbyLineVisible: (standbyLineVisible: UserPreferences["standbyLineVisible"]) => Promise<UserPreferences>;
         updateLaunchAtLogin: (launchAtLogin: UserPreferences["launchAtLogin"]) => Promise<UserPreferences>;
         updateSystemNotifications: (enabled: UserPreferences["systemNotificationsEnabled"]) => Promise<UserPreferences>;
