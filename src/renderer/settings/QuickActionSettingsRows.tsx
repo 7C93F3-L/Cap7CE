@@ -8,21 +8,25 @@ import type {
 } from "../../shared/types";
 import {
   defaultShortcutActions,
+  defaultStableShortcutActions,
   formatShortcutLabel,
   getShortcutFromKeyboardEvent,
-  normalizeShortcutActions
+  normalizeShortcutActions,
+  normalizeStableShortcutActions
 } from "../shortcutActions";
 
 const getShortcutActionItems = (stableUi = false): Array<{ id: ShortcutActionId; name: string }> => ([
   { id: "activateCapsule", name: t(stableUi ? "shortcut.focusMainSearch" : "shortcut.activateCapsule") },
-  { id: "activateMicro", name: t("shortcut.activateMicro") },
-  { id: "activateMini", name: t("shortcut.activateMini") },
-  { id: "activateNormal", name: t(stableUi ? "shortcut.restoreDefaultWindowSize" : "shortcut.activateNormal") },
-  { id: "activateStandby", name: t("shortcut.activateLine") },
-  { id: "activateSkim", name: t("shortcut.activateSkim") },
+  ...(!stableUi ? [
+    { id: "activateMicro" as const, name: t("shortcut.activateMicro") },
+    { id: "activateMini" as const, name: t("shortcut.activateMini") }
+  ] : []),
+  { id: "activateStandby", name: t(stableUi ? "shortcut.hideToLine" : "shortcut.activateLine") },
+  { id: "activateSkim", name: t(stableUi ? "shortcut.toggleSkim" : "shortcut.activateSkim") },
   { id: "openSettings", name: t("shortcut.openSettings") },
+  { id: "activateNormal", name: t(stableUi ? "shortcut.restoreDefaultWindow" : "shortcut.activateNormal") },
   { id: "cycleDirectory", name: t("shortcut.cycleDirectory") }
-] as Array<{ id: ShortcutActionId; name: string }>).filter((item) => !stableUi || (item.id !== "activateMicro" && item.id !== "activateMini"));
+] as Array<{ id: ShortcutActionId; name: string }>);
 
 export interface QuickActionSettingsRowsProps {
   quickActionGlobalEnabled: boolean;
@@ -105,7 +109,9 @@ export const QuickActionSettingsRows = ({
       return;
     }
     if (result.applied) {
-      setShortcutActionDrafts(normalizeShortcutActions(result.preferences.shortcutActions));
+      setShortcutActionDrafts(stableUi
+        ? normalizeStableShortcutActions(result.preferences.stableShortcutActions)
+        : normalizeShortcutActions(result.preferences.shortcutActions));
       setDraftUnavailableActionIds([]);
       return;
     }
@@ -116,8 +122,9 @@ export const QuickActionSettingsRows = ({
     if (capturingShortcutActionId) {
       await finishShortcutCapture();
     }
-    setShortcutActionDrafts(defaultShortcutActions);
-    const result = await onShortcutActionsChange(defaultShortcutActions);
+    const defaultActions = stableUi ? defaultStableShortcutActions : defaultShortcutActions;
+    setShortcutActionDrafts(defaultActions);
+    const result = await onShortcutActionsChange(defaultActions);
     setDraftUnavailableActionIds(result?.applied ? [] : result?.unavailableActionIds ?? []);
   };
 

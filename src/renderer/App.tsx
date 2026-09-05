@@ -43,11 +43,7 @@ import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplay
 import { parseAssistantInvocation } from "./assistant/assistantInvocation";
 import { hasAiSearchScopeChanged, useAiSearchBeta } from "./ai-search";
 import { SettingsView } from "./settings/SettingsView";
-import {
-  defaultShortcutActions,
-  getShortcutFromKeyboardEvent,
-  normalizeShortcutActions
-} from "./shortcutActions";
+import { defaultShortcutActions, defaultStableShortcutActions, getShortcutFromKeyboardEvent, normalizeShortcutActions, normalizeStableShortcutActions } from "./shortcutActions";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
 import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results/ResultsContextMenuLayer";
@@ -279,7 +275,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [aiRecognitionEnabled, setAiRecognitionEnabled] = useState(true);
   const [quickActionGlobalEnabled, setQuickActionGlobalEnabled] = useState(true);
   const [commandEnabled, setCommandEnabled] = useState(true);
-  const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(defaultShortcutActions);
+  const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(stableUi ? defaultStableShortcutActions : defaultShortcutActions);
   const [unavailableShortcutActionIds, setUnavailableShortcutActionIds] = useState<ShortcutActionId[]>([]);
   const [quickActionsExpanded, setQuickActionsExpanded] = useState(false);
   const [quickCommandsExpanded, setQuickCommandsExpanded] = useState(false);
@@ -794,7 +790,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
             setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
             setCommandEnabled(preferences.commandEnabled);
-            setShortcutActions(normalizeShortcutActions(preferences.shortcutActions));
+            setShortcutActions(stableUi ? normalizeStableShortcutActions(preferences.stableShortcutActions) : normalizeShortcutActions(preferences.shortcutActions));
             setSearchCapsuleLabelVisibility(preferences.searchLabelVisibility);
             setSkimDisplay(preferences.skimDisplay);
             setSkimSidebarFolders(preferences.skimSidebarFolders);
@@ -1031,14 +1027,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const updateShortcutActions = async (nextShortcutActions: ShortcutActionPreferences): Promise<ShortcutActionsUpdateResult | null> => {
-    const normalizedShortcutActions = normalizeShortcutActions(nextShortcutActions);
+    const normalizedShortcutActions = stableUi ? normalizeStableShortcutActions(nextShortcutActions) : normalizeShortcutActions(nextShortcutActions);
     try {
       const result = await window.cap7ce?.preferences.updateShortcutActions(normalizedShortcutActions);
-      if (!result) {
-        return null;
-      }
+      if (!result) return null;
       if (result.applied) {
-        setShortcutActions(normalizeShortcutActions(result.preferences.shortcutActions));
+        setShortcutActions(stableUi ? normalizeStableShortcutActions(result.preferences.stableShortcutActions) : normalizeShortcutActions(result.preferences.shortcutActions));
         setUnavailableShortcutActionIds(result.unavailableActionIds);
       }
       return result;
@@ -1547,7 +1541,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
     void executeQuickCommand(quickCommandResult.command, {
       defaultAppearanceColors,
-      defaultShortcutActions,
+      defaultShortcutActions: stableUi ? defaultStableShortcutActions : defaultShortcutActions,
       currentAppearanceColors: appearanceColors,
       openSettings,
       openSkim,

@@ -58,7 +58,3 @@ export const applyStableUiWindowMaterial = (
     return "solid";
   }
 };
-
-export const isStableUiLegacySizeShortcut = (actionId: string) => (
-  actionId === "activateMicro" || actionId === "activateMini"
-);

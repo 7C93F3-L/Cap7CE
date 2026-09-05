@@ -551,6 +551,7 @@ export interface UserPreferences {
   skimSidebarFolders: string[];
   skimSystemLocationsCollapsed: boolean;
   shortcutActions: ShortcutActionPreferences;
+  stableShortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }
 

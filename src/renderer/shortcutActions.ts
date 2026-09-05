@@ -11,6 +11,17 @@ export const defaultShortcutActions: ShortcutActionPreferences = {
   openSettings: "Alt+6"
 };
 
+export const defaultStableShortcutActions: ShortcutActionPreferences = {
+  activateCapsule: "Alt+`",
+  activateMicro: "Alt+Shift+1",
+  activateMini: "Alt+Shift+2",
+  activateNormal: "Alt+4",
+  activateStandby: "Alt+1",
+  activateSkim: "Alt+2",
+  cycleDirectory: "Alt+Q",
+  openSettings: "Alt+3"
+};
+
 export const normalizeShortcutActions = (
   shortcutActions?: Partial<ShortcutActionPreferences>
 ): ShortcutActionPreferences => ({
@@ -22,6 +33,19 @@ export const normalizeShortcutActions = (
   activateSkim: shortcutActions?.activateSkim || defaultShortcutActions.activateSkim,
   cycleDirectory: shortcutActions?.cycleDirectory || defaultShortcutActions.cycleDirectory,
   openSettings: shortcutActions?.openSettings || defaultShortcutActions.openSettings
+});
+
+export const normalizeStableShortcutActions = (
+  shortcutActions?: Partial<ShortcutActionPreferences>
+): ShortcutActionPreferences => ({
+  activateCapsule: shortcutActions?.activateCapsule || defaultStableShortcutActions.activateCapsule,
+  activateMicro: shortcutActions?.activateMicro || defaultStableShortcutActions.activateMicro,
+  activateMini: shortcutActions?.activateMini || defaultStableShortcutActions.activateMini,
+  activateNormal: shortcutActions?.activateNormal || defaultStableShortcutActions.activateNormal,
+  activateStandby: shortcutActions?.activateStandby || defaultStableShortcutActions.activateStandby,
+  activateSkim: shortcutActions?.activateSkim || defaultStableShortcutActions.activateSkim,
+  cycleDirectory: shortcutActions?.cycleDirectory || defaultStableShortcutActions.cycleDirectory,
+  openSettings: shortcutActions?.openSettings || defaultStableShortcutActions.openSettings
 });
 
 export const formatShortcutLabel = (shortcut: string) => shortcut

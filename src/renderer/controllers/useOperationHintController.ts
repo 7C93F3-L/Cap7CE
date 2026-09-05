@@ -64,7 +64,9 @@ export const useOperationHintController = ({
   const selectRandomOperationHint = useCallback(() => {
     setOperationHintKey((currentKey) => {
       const availableHints = operationHintDefinitions.filter((hint) => {
-        if (stableUi && (hint.shortcutActionId === "activateMicro" || hint.shortcutActionId === "activateMini")) return false;
+        if (stableUi && (hint.shortcutActionId === "activateMicro" || hint.shortcutActionId === "activateMini")) {
+          return false;
+        }
         if (hint.requiresCommands && !commandEnabled) {
           return false;
         }
@@ -100,7 +102,7 @@ export const useOperationHintController = ({
 
   const operationHintDefinition = operationHintDefinitions.find((hint) => hint.key === operationHintKey);
   return enabled && query.length === 0
-    ? t(stableUi && operationHintKey === "search.guide.activateCapsule" ? "search.guide.focusMainSearch" : stableUi && operationHintKey === "search.guide.activateNormal" ? "search.guide.restoreDefaultWindowSize" : operationHintKey, operationHintDefinition?.shortcutActionId
+    ? t(stableUi && operationHintKey === "search.guide.activateCapsule" ? "search.guide.focusMainSearch" : stableUi && operationHintKey === "search.guide.activateNormal" ? "search.guide.restoreDefaultWindow" : stableUi && operationHintKey === "search.guide.activateLine" ? "search.guide.hideToLine" : stableUi && operationHintKey === "search.guide.activateSkim" ? "search.guide.toggleSkim" : operationHintKey, operationHintDefinition?.shortcutActionId
       ? { shortcut: shortcutActions[operationHintDefinition.shortcutActionId] }
       : {})
     : "";

@@ -8,7 +8,6 @@ const {
   STABLE_UI_TITLEBAR_HEIGHT,
   STABLE_UI_MINIMUM_OUTER_SIZE,
   applyStableUiWindowMaterial,
-  isStableUiLegacySizeShortcut,
   resolveStableUiBrowserOptions,
   resolveStableUiDefaultWindowBounds,
   resolveWindowLayoutMemoryEnabled
@@ -34,10 +33,6 @@ assert.equal(browserOptions.frame, true);
 assert.equal(browserOptions.transparent, false);
 assert.equal(browserOptions.backgroundMaterial, undefined);
 assert.equal(browserOptions.titleBarOverlay.height, 40);
-assert.equal(isStableUiLegacySizeShortcut("activateMicro"), true);
-assert.equal(isStableUiLegacySizeShortcut("activateMini"), true);
-assert.equal(isStableUiLegacySizeShortcut("activateNormal"), false);
-
 const acrylicCalls = [];
 assert.equal(applyStableUiWindowMaterial({
   setBackgroundMaterial: (material) => acrylicCalls.push(["material", material]),
@@ -63,6 +58,7 @@ const mainSource = read("electron/main.ts");
 const runtimeSource = read("electron/windowPresentationRuntime.ts");
 const settingsSource = read("src/renderer/settings-window/SettingsWindowApp.tsx");
 const quickActionsSource = read("src/renderer/settings/QuickActionSettingsRows.tsx");
+const shortcutActionsSource = read("src/renderer/shortcutActions.ts");
 const hintSource = read("src/renderer/controllers/useOperationHintController.ts");
 const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
 const stableTitlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
@@ -82,13 +78,17 @@ assert.match(mainSource, /const revealPreviewWindow = \(\) => \{[\s\S]*?!isStabl
 assert.match(mainSource, /if \(wasActive && restoreMain\) \{[\s\S]*?if \(!isStableWindowPresentationMode[\s\S]*?mainWindow\.show\(\);[\s\S]*?\}[\s\S]*?mainWindow\.focus\(\);/u);
 assert.match(mainSource, /preview:toggleSkimLocationPicker[\s\S]*?closePreviewSession\(\);[\s\S]*?showAndFocusMainWindow\(\);[\s\S]*?sendToggleSkimLocationPickerToRenderer/u);
 assert.match(mainSource, /preview:itemAction[\s\S]*?closePreviewSession\(\);[\s\S]*?showAndFocusMainWindow\(\);[\s\S]*?mainWindow\.webContents\.send/u);
-assert.match(mainSource, /isStableUiLegacySizeShortcut\(id\)\) continue/u);
-assert.match(mainSource, /activateShellModeShortcut\(mode, mode === "normal"\)/u);
-assert.match(mainSource, /applyDefaultSizePreset[\s\S]*?resolveStableUiDefaultWindowBounds/u);
+assert.doesNotMatch(mainSource, /isStableUiLegacySizeShortcut/u);
+assert.match(mainSource, /restoreStableDefaultBounds[\s\S]*?dockedShellController\?\.reset\(false\)[\s\S]*?resolveStableUiDefaultWindowBounds[\s\S]*?rememberUserMovedShellBounds\(defaultBounds\)/u);
+assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)[\s\S]*?activateStandby[\s\S]*?activateSkim[\s\S]*?openSettings[\s\S]*?activateNormal/u);
+assert.match(mainSource, /getActiveShortcutActions[\s\S]*?preferences\.stableShortcutActions[\s\S]*?preferences\.shortcutActions/u);
+assert.match(mainSource, /activateCapsuleShortcut[\s\S]*?dockedShellController\?\.restore\(false\)[\s\S]*?showAndFocusMainWindow/u);
 assert.match(mainSource, /const activateCapsuleShortcut[\s\S]*?isStableWindowPresentationMode[\s\S]*?sendActivateCapsuleShortcutToRenderer/u);
 assert.match(mainSource, /const shouldWaitForTargetLayout = !isStableWindowPresentationMode[\s\S]*?!mainWindow\.isVisible/u);
 assert.match(settingsSource, /<QuickActionSettingsRows stableUi/u);
-assert.match(quickActionsSource, /item\.id !== "activateMicro" && item\.id !== "activateMini"/u);
+assert.match(quickActionsSource, /!stableUi[\s\S]*?activateMicro[\s\S]*?activateMini/u);
+assert.match(quickActionsSource, /shortcut\.hideToLine[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.restoreDefaultWindow/u);
+assert.match(shortcutActionsSource, /defaultStableShortcutActions[\s\S]*?activateCapsule: "Alt\+`"[\s\S]*?activateNormal: "Alt\+4"[\s\S]*?activateStandby: "Alt\+1"[\s\S]*?activateSkim: "Alt\+2"[\s\S]*?openSettings: "Alt\+3"/u);
 assert.match(hintSource, /stableUi && \(hint\.shortcutActionId === "activateMicro" \|\| hint\.shortcutActionId === "activateMini"\)/u);
 assert.match(foundationStyles, /env\(titlebar-area-height, 40px\)/u);
 assert.match(foundationStyles, /\.cap-stable-titlebar\s*\{[\s\S]*?z-index:\s*60/u);
@@ -105,8 +105,8 @@ console.log(JSON.stringify({
   responsiveInitialBoundsVerified: true,
   stableMinimumOuterSizeVerified: true,
   freeWindowLayoutProfileVerified: true,
-  legacySizeShortcutsSuppressedInStableUi: true,
-  defaultSizeShortcutIsOneShot: true,
+  responsiveDefaultBoundsResetVerified: true,
+  stableShortcutProfileVerified: true,
   capsuleReplacedByMainSearchFocus: true,
   mainSettingsPreviewCoexistenceVerified: true,
   previewCloseFocusReturnVerified: true,

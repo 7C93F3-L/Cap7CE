@@ -35,7 +35,7 @@ import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registe
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference, updateWindowPresentationModePreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateRememberWindowLayoutPreference, updateSearchLabelVisibilityPreference, updateShortcutActionsPreference, updateStableShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference, updateWindowPresentationModePreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
 import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
@@ -70,7 +70,7 @@ import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { isStableWindowPresentationMode, WindowPresentationRuntime } from "./windowPresentationRuntime";
 import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
-import { isStableUiLegacySizeShortcut, resolveStableUiDefaultWindowBounds, resolveWindowLayoutMemoryEnabled, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
+import { resolveStableUiDefaultWindowBounds, resolveWindowLayoutMemoryEnabled, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { getStablePreviewContentChrome, PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
@@ -200,6 +200,10 @@ const registeredShellModeShortcuts = new Map<string, string>();
 type ShortcutActionId = "activateCapsule" | "activateMicro" | "activateMini" | "activateNormal" | "activateStandby" | "activateSkim" | "cycleDirectory" | "openSettings";
 type GlobalShortcutActionId = Exclude<ShortcutActionId, "cycleDirectory">;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
+type ShortcutPreferenceProfiles = { shortcutActions: ShortcutActionPreferences; stableShortcutActions: ShortcutActionPreferences };
+const getActiveShortcutActions = (preferences: ShortcutPreferenceProfiles) => (
+  isStableWindowPresentationMode(windowPresentationRuntime.mode) ? preferences.stableShortcutActions : preferences.shortcutActions
+);
 let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
 let modelInputCacheCleanupPromise: Promise<void> | null = null;
 let rendererContentViewActive = false;
@@ -1059,6 +1063,7 @@ const showAndFocusMainWindow = () => {
 const activateCapsuleShortcut = (source: "cursor" | "line" = "cursor") => {
   if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) {
     capsuleWindowController.clearPendingTarget();
+    dockedShellController?.restore(false);
     if (!showAndFocusMainWindow()) return false;
     sendActivateCapsuleShortcutToRenderer();
     return true;
@@ -1125,12 +1130,13 @@ const unregisterShellModeShortcuts = () => {
   registeredShellModeShortcuts.clear();
 };
 
-const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings", applyDefaultSizePreset = false): Promise<boolean> => {
+const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "standby" | "skim" | "settings", restoreStableDefaultBounds = false): Promise<boolean> => {
   if (mode === "settings") {
     return openSettings();
   }
 
   if (mode === "skim") {
+    if (isStableWindowPresentationMode(windowPresentationRuntime.mode)) dockedShellController?.restore(false);
     if (!showAndFocusMainWindow()) return false;
     sendActivateSkimToRenderer();
     return true;
@@ -1138,12 +1144,17 @@ const activateShellModeShortcut = async (mode: "micro" | "mini" | "normal" | "st
   if (mode === "standby") {
     return requestSafeMainWindowHide();
   }
-  if (!showAndFocusMainWindow()) return false;
-  if (mode === "normal" && applyDefaultSizePreset && isStableWindowPresentationMode(windowPresentationRuntime.mode) && mainWindow) {
+  if (restoreStableDefaultBounds && isStableWindowPresentationMode(windowPresentationRuntime.mode) && mainWindow) {
+    dockedShellController?.reset(false);
+    if (!showAndFocusMainWindow()) return false;
     if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    const defaultBounds = resolveStableUiDefaultWindowBounds(screen.getDisplayMatching(mainWindow.getBounds()).workArea);
     markProgrammaticResize(); markProgrammaticMove();
-    const presetBounds = resolveStableUiDefaultWindowBounds(screen.getDisplayMatching(mainWindow.getBounds()).workArea); mainWindow.setBounds(presetBounds, true); rememberUserMovedShellBounds(presetBounds);
+    mainWindow.setBounds(defaultBounds, true);
+    rememberUserMovedShellBounds(defaultBounds);
+    return true;
   }
+  if (!showAndFocusMainWindow()) return false;
   sendActivateShellModeShortcutToRenderer(mode);
   return true;
 };
@@ -1158,17 +1169,23 @@ const registerShellModeShortcuts = (shortcutActions: {
 }) => {
   unregisterShellModeShortcuts();
   const unavailableActionIds = new Set<GlobalShortcutActionId>();
-  const shortcutModes = [
-    { id: "activateMicro", shortcut: shortcutActions.activateMicro, mode: "micro" },
-    { id: "activateMini", shortcut: shortcutActions.activateMini, mode: "mini" },
-    { id: "activateNormal", shortcut: shortcutActions.activateNormal, mode: "normal" },
-    { id: "activateStandby", shortcut: shortcutActions.activateStandby, mode: "standby" },
-    { id: "activateSkim", shortcut: shortcutActions.activateSkim, mode: "skim" },
-    { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" }
-  ] as const;
+  const shortcutModes = isStableWindowPresentationMode(windowPresentationRuntime.mode)
+    ? [
+      { id: "activateStandby", shortcut: shortcutActions.activateStandby, mode: "standby" },
+      { id: "activateSkim", shortcut: shortcutActions.activateSkim, mode: "skim" },
+      { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" },
+      { id: "activateNormal", shortcut: shortcutActions.activateNormal, mode: "normal" }
+    ] as const
+    : [
+      { id: "activateMicro", shortcut: shortcutActions.activateMicro, mode: "micro" },
+      { id: "activateMini", shortcut: shortcutActions.activateMini, mode: "mini" },
+      { id: "activateNormal", shortcut: shortcutActions.activateNormal, mode: "normal" },
+      { id: "activateStandby", shortcut: shortcutActions.activateStandby, mode: "standby" },
+      { id: "activateSkim", shortcut: shortcutActions.activateSkim, mode: "skim" },
+      { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" }
+    ] as const;
 
   for (const { id, shortcut, mode } of shortcutModes) {
-    if (isStableWindowPresentationMode(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
     if (!shortcut) continue;
     try {
       const registered = globalShortcut.register(shortcut, () => {
@@ -1204,20 +1221,27 @@ const registerConfiguredGlobalShortcuts = (shortcutActions: ShortcutActionPrefer
 };
 
 const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) => {
-  const shortcutEntries: Array<[GlobalShortcutActionId, string]> = [
-    ["activateCapsule", shortcutActions.activateCapsule],
-    ["activateMicro", shortcutActions.activateMicro],
-    ["activateMini", shortcutActions.activateMini],
-    ["activateNormal", shortcutActions.activateNormal],
-    ["activateStandby", shortcutActions.activateStandby],
-    ["activateSkim", shortcutActions.activateSkim],
-    ["openSettings", shortcutActions.openSettings]
-  ];
+  const shortcutEntries: Array<[GlobalShortcutActionId, string]> = isStableWindowPresentationMode(windowPresentationRuntime.mode)
+    ? [
+      ["activateCapsule", shortcutActions.activateCapsule],
+      ["activateStandby", shortcutActions.activateStandby],
+      ["activateSkim", shortcutActions.activateSkim],
+      ["openSettings", shortcutActions.openSettings],
+      ["activateNormal", shortcutActions.activateNormal]
+    ]
+    : [
+      ["activateCapsule", shortcutActions.activateCapsule],
+      ["activateMicro", shortcutActions.activateMicro],
+      ["activateMini", shortcutActions.activateMini],
+      ["activateNormal", shortcutActions.activateNormal],
+      ["activateStandby", shortcutActions.activateStandby],
+      ["activateSkim", shortcutActions.activateSkim],
+      ["openSettings", shortcutActions.openSettings]
+    ];
   const unavailableActionIds = new Set<GlobalShortcutActionId>();
   const registeredShortcuts: string[] = [];
 
   for (const [id, shortcut] of shortcutEntries) {
-    if (isStableWindowPresentationMode(windowPresentationRuntime.mode) && isStableUiLegacySizeShortcut(id)) continue;
     if (!shortcut) {
       unavailableActionIds.add(id);
       continue;
@@ -1303,7 +1327,7 @@ const showBackgroundRunNotificationOnce = async (
   preferences: Awaited<ReturnType<typeof getUserPreferences>>
 ) => {
   if (!preferences.systemNotificationsEnabled || preferences.backgroundRunNotificationShown) return;
-  const configuredShortcut = preferences.shortcutActions.activateCapsule;
+  const configuredShortcut = getActiveShortcutActions(preferences).activateCapsule;
   const shortcutAvailable = preferences.quickActionGlobalEnabled
     && !unavailableGlobalShortcutActionIds.has("activateCapsule");
   const content = shortcutAvailable
@@ -2381,9 +2405,9 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     }, 7_000);
   }
   if (quickActionGlobalEnabled) {
-    registerConfiguredGlobalShortcuts(preferences.shortcutActions);
+    registerConfiguredGlobalShortcuts(getActiveShortcutActions(preferences));
   } else {
-    probeGlobalShortcutActions(preferences.shortcutActions);
+    probeGlobalShortcutActions(getActiveShortcutActions(preferences));
   }
   void showBackgroundRunNotificationOnce(preferences).catch((error) => {
     console.warn("[system-notification] failed to persist first-run state", error);
@@ -3504,12 +3528,12 @@ ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, next
     quickActionGlobalEnabled = false;
     unregisterConfiguredGlobalShortcuts();
     const currentPreferences = await getUserPreferences();
-    probeGlobalShortcutActions(currentPreferences.shortcutActions);
+    probeGlobalShortcutActions(getActiveShortcutActions(currentPreferences));
     return broadcastSettingsData("preferences:changed", await updateQuickActionGlobalEnabledPreference(false));
   }
 
   const currentPreferences = await getUserPreferences();
-  registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
+  registerConfiguredGlobalShortcuts(getActiveShortcutActions(currentPreferences));
   const preferences = broadcastSettingsData("preferences:changed", await updateQuickActionGlobalEnabledPreference(true));
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   return preferences;
@@ -3534,7 +3558,7 @@ ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActio
 
   if (unavailableActionIds.size > 0) {
     if (quickActionGlobalEnabled && !shortcutCaptureActive) {
-      registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
+      registerConfiguredGlobalShortcuts(getActiveShortcutActions(currentPreferences));
     }
     return {
       applied: false,
@@ -3545,10 +3569,12 @@ ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActio
 
   let preferences;
   try {
-    preferences = await updateShortcutActionsPreference(candidateShortcutActions);
+    preferences = isStableWindowPresentationMode(windowPresentationRuntime.mode)
+      ? await updateStableShortcutActionsPreference(candidateShortcutActions)
+      : await updateShortcutActionsPreference(candidateShortcutActions);
   } catch (error) {
     if (quickActionGlobalEnabled) {
-      registerConfiguredGlobalShortcuts(currentPreferences.shortcutActions);
+      registerConfiguredGlobalShortcuts(getActiveShortcutActions(currentPreferences));
     }
     throw error;
   }
@@ -3586,11 +3612,11 @@ ipcMain.handle("preferences:endShortcutCapture", async () => {
   const preferences = await getUserPreferences();
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   if (!quickActionGlobalEnabled) {
-    probeGlobalShortcutActions(preferences.shortcutActions);
+    probeGlobalShortcutActions(getActiveShortcutActions(preferences));
     return shortcutAvailabilityResponse();
   }
 
-  registerConfiguredGlobalShortcuts(preferences.shortcutActions);
+  registerConfiguredGlobalShortcuts(getActiveShortcutActions(preferences));
   return shortcutAvailabilityResponse();
 });
 

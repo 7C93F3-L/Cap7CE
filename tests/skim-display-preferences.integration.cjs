@@ -13,6 +13,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       getUserPreferences,
       updateSearchLabelVisibilityPreference,
       updateShortcutActionsPreference,
+      updateStableShortcutActionsPreference,
       updateSkimDisplayPreference,
       updateSkimSidebarFoldersPreference,
       updateSkimSystemLocationsCollapsedPreference,
@@ -34,6 +35,14 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual(defaults.skimSidebarFolders, []);
     assert.equal(defaults.skimSystemLocationsCollapsed, false);
     assert.equal(defaults.shortcutActions.cycleDirectory, "Alt+Q");
+    assert.deepEqual({
+      open: defaults.stableShortcutActions.activateCapsule,
+      hide: defaults.stableShortcutActions.activateStandby,
+      skim: defaults.stableShortcutActions.activateSkim,
+      settings: defaults.stableShortcutActions.openSettings,
+      reset: defaults.stableShortcutActions.activateNormal,
+      directory: defaults.stableShortcutActions.cycleDirectory
+    }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+2", settings: "Alt+3", reset: "Alt+4", directory: "Alt+Q" });
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal(defaults.rememberWindowLayout, false);
     assert.equal(defaults.windowPresentationMode, "stable");
@@ -73,6 +82,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(migrated.skimDisplay.mode, "all");
     assert.equal(migrated.skimDisplay.searchMode, "skim");
     assert.equal(migrated.shortcutActions.cycleDirectory, "Alt+Q");
+    assert.equal(migrated.stableShortcutActions.activateStandby, "Alt+1");
     assert.deepEqual(migrated.skimSidebarFolders, [sidebarFolder]);
     assert.equal(migrated.skimSystemLocationsCollapsed, false);
     assert.equal(migrated.edgeCollapseEnabled, false);
@@ -86,6 +96,12 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       cycleDirectory: "Alt+W"
     });
     assert.equal(updatedShortcuts.shortcutActions.cycleDirectory, "Alt+W");
+    const updatedStableShortcuts = await updateStableShortcutActionsPreference({
+      ...migrated.stableShortcutActions,
+      cycleDirectory: "Alt+E"
+    });
+    assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "Alt+E");
+    assert.equal(updatedStableShortcuts.shortcutActions.cycleDirectory, "Alt+W");
 
     const updated = await updateSkimDisplayPreference({
       mode: "custom",

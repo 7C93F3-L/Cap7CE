@@ -61,6 +61,7 @@ export interface UserPreferencesResponse {
   skimSidebarFolders: string[];
   skimSystemLocationsCollapsed: boolean;
   shortcutActions: ShortcutActionPreferences;
+  stableShortcutActions: ShortcutActionPreferences;
   updatedAt: string;
 }
 
@@ -120,6 +121,16 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     activateSkim: "Alt+5",
     cycleDirectory: "Alt+Q",
     openSettings: "Alt+6"
+  },
+  stableShortcutActions: {
+    activateCapsule: "Alt+`",
+    activateMicro: "Alt+Shift+1",
+    activateMini: "Alt+Shift+2",
+    activateNormal: "Alt+4",
+    activateStandby: "Alt+1",
+    activateSkim: "Alt+2",
+    cycleDirectory: "Alt+Q",
+    openSettings: "Alt+3"
   },
   updatedAt: new Date().toISOString()
 });
@@ -294,6 +305,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
         ? parsed.skimSystemLocationsCollapsed
         : defaults.skimSystemLocationsCollapsed,
       shortcutActions: normalizeShortcutActions(parsed.shortcutActions, defaults.shortcutActions),
+      stableShortcutActions: normalizeShortcutActions(parsed.stableShortcutActions, defaults.stableShortcutActions),
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : defaults.updatedAt
     };
   } catch (error) {
@@ -583,6 +595,17 @@ export const updateShortcutActionsPreference = async (shortcutActions: UserPrefe
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     shortcutActions: normalizeShortcutActions(shortcutActions),
+    updatedAt: new Date().toISOString()
+  };
+  await savePreferences(nextPreferences);
+  return nextPreferences;
+};
+
+export const updateStableShortcutActionsPreference = async (stableShortcutActions: UserPreferencesResponse["stableShortcutActions"]) => {
+  const preferences = await readPreferences();
+  const nextPreferences: UserPreferencesResponse = {
+    ...preferences,
+    stableShortcutActions: normalizeShortcutActions(stableShortcutActions, defaultPreferences().stableShortcutActions),
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

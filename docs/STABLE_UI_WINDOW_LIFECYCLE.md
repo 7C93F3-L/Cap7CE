@@ -20,8 +20,8 @@
 
 ## 3. 入口与预设
 
-- 新版不注册 micro / mini 全局快捷动作，独立 Settings 也不显示这两项；旧偏好值、旧界面设置和旧宿主行为不迁移、不删除。
-- 原 normal 快捷动作在新版标记为“恢复默认窗口尺寸”，只在用户按下该全局快捷键时应用一次当前工作区 90% 的预设，不切换 Renderer、业务状态或持续约束后续缩放。托盘、第二实例、Capsule 提交等普通恢复入口只显示并聚焦主窗口，不应用尺寸预设。
+- stable 使用独立快捷键配置：`Alt+反引号` 显示并聚焦主窗口且保留几何，`Alt+1` 进入安全 standby 并显示 line，`Alt+2` 显示主窗口并展开或收起 Skim，`Alt+3` 打开或聚焦独立 Settings，`Alt+4` 显示主窗口并恢复当前工作区 90% 的默认大小和居中位置；`Alt+Q` 继续循环目录。micro / mini 不在新版注册或显示。
+- `Alt+4` 在应用默认 bounds 前结束旧贴边收起会话并退出最大化，只改变窗口几何；托盘、第二实例与普通唤起只显示并聚焦主窗口，不重置尺寸。stable 与旧宿主分别保存快捷动作配置，旧宿主仍执行 micro / mini / normal 等原动作。
 - 原 Capsule 快捷动作和 line 单击在新版标记为“显示主窗口并聚焦搜索”，不创建或显示 Capsule。兼容 Capsule 的 BrowserWindow、Renderer、IPC 与旧宿主测试仍保留为迁移回退，不属于新版可达路径。
 - standby 只负责安全结束临时交互后隐藏主窗口；line 仍是无业务状态的独立装饰窗口。由 standby 恢复新版主窗口时只恢复可见性、任务栏和焦点，不改变自由 bounds。
 
@@ -29,6 +29,6 @@
 
 `tests/stable-ui-window-lifecycle.integration.cjs` 守护 40 DIP WCO、Acrylic / Mica 选择与纯色回退、90% 初始几何、单一自由布局槽、快捷动作收口、Capsule 替代入口和三窗口并存。兼容与稳定 WCO 标题栏必须共同使用 `WindowTitlebarPortal` 脱离虚拟网格和其他可滚动内容树，防止滚动重算再次覆盖 Windows 原生拖动命中区；对应标题栏测试同时守护共享宿主与两个消费者。旧窗口策略、兼容 Capsule、Preview、line、Snap 和布局测试继续参与完整测试，防止新版分支改变迁移回退。
 
-人工验收应覆盖：自由拖动与缩放不回弹；Alt+3 只执行一次尺寸预设；Capsule 快捷键与 line 点击只聚焦主搜索；standby、原生关闭、托盘和第二实例恢复；主窗口 / Settings / Preview 同时可见及分别关闭；中文 IME、Esc、快速重复唤起、最大化、Snap、双屏和显示器恢复；不得出现 Capsule 残影或重复窗口。
+人工验收应覆盖：自由拖动与缩放不回弹；五项 stable 快捷动作与 `Alt+Q` 使用各自配置；`Alt+4` 只重置几何；主窗口隐藏后 `Alt+反引号` 与 `Alt+2` 能正常恢复；standby、原生关闭、托盘和第二实例恢复；主窗口 / Settings / Preview 同时可见及分别关闭；中文 IME、Esc、快速重复唤起、最大化、Snap、双屏和显示器恢复；不得出现 Capsule 残影或重复窗口。
 
 主题、颜色、可访问性、减少动态效果和中英文溢出的 U11 结论见 `docs/STABLE_UI_FINISHING_AUDIT.md`；D0 默认宿主边界见 `docs/STABLE_UI_DEFAULT_HOST.md`。
