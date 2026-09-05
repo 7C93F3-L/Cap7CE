@@ -1,0 +1,48 @@
+.cap-stable-settings-card-with-body {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.cap-stable-settings-card-with-body > .cap-stable-settings-control,
+.cap-stable-settings-card-with-body .cap-settings-expandable-shell,
+.cap-stable-settings-card-with-body .cap-settings-expandable-inner,
+.cap-stable-settings-card-with-body .cap-settings-quick-actions-panel,
+.cap-stable-settings-card-with-body .cap-settings-quick-actions-header {
+  display: contents;
+}
+
+.cap-stable-settings-card-with-body .cap-settings-quick-actions-header > .cap-settings-quick-actions-controls {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  display: flex;
+  gap: 8px;
+}
+
+.cap-stable-settings-card-with-body .cap-settings-quick-actions-list {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stable-settings-border);
+}
+
+.cap-stable-settings-card-with-body .cap-settings-quick-action-row {
+  padding-inline: 0;
+}
+
+@media (max-width: 700px) {
+  .cap-stable-settings-card-with-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cap-stable-settings-card-with-body .cap-settings-quick-actions-header > .cap-settings-quick-actions-controls {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .cap-stable-settings-card-with-body .cap-settings-quick-actions-list {
+    grid-row: 3;
+  }
+}

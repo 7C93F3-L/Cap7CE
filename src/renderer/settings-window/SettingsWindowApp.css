@@ -197,9 +197,7 @@
   min-width: 0;
 }
 
-.cap-stable-settings-button,
-.cap-stable-settings-readonly,
-.cap-stable-settings-link {
+.cap-stable-settings-readonly {
   min-height: 28px;
   padding: 4px 12px;
   box-sizing: border-box;
@@ -211,24 +209,10 @@
   font-size: var(--cap-ui-font-control);
 }
 
-.cap-stable-settings-button:not(:disabled):hover,
-.cap-stable-settings-link:hover {
-  background: color-mix(in srgb, var(--stable-settings-theme-color) 34%, var(--stable-settings-hover));
-}
-
-.cap-stable-settings-button:disabled {
-  opacity: .48;
-}
-
 .cap-stable-settings-readonly {
   display: inline-flex;
   align-items: center;
   color: var(--stable-settings-secondary);
-}
-
-.cap-stable-settings-link {
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .cap-stable-settings-toggle {
@@ -383,14 +367,6 @@
   place-content: center;
   gap: 10px;
   background: var(--stable-settings-surface);
-}
-
-.cap-stable-settings-loading button {
-  min-height: 28px;
-  border: 0;
-  border-radius: 14px;
-  color: inherit;
-  background: var(--stable-settings-hover);
 }
 
 .cap-stable-settings-empty {

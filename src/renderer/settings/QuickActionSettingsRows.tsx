@@ -28,26 +28,26 @@ export interface QuickActionSettingsRowsProps {
   quickActionGlobalEnabled: boolean;
   shortcutActions: ShortcutActionPreferences;
   unavailableShortcutActionIds: ShortcutActionId[];
-  expanded: boolean;
+  expanded?: boolean;
   stableUi?: boolean;
   onGlobalEnabledChange: (enabled: boolean) => void;
   onShortcutActionsChange: (shortcutActions: ShortcutActionPreferences) => Promise<ShortcutActionsUpdateResult | null>;
   onShortcutCaptureStart: () => Promise<boolean>;
   onShortcutCaptureEnd: () => Promise<ShortcutAvailabilityResult>;
-  onExpandedChange: (expanded: boolean) => void;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 export const QuickActionSettingsRows = ({
   quickActionGlobalEnabled,
   shortcutActions,
   unavailableShortcutActionIds,
-  expanded,
+  expanded = false,
   stableUi = false,
   onGlobalEnabledChange,
   onShortcutActionsChange,
   onShortcutCaptureStart,
   onShortcutCaptureEnd,
-  onExpandedChange
+  onExpandedChange = () => undefined
 }: QuickActionSettingsRowsProps) => {
   const collapseTimerRef = useRef<number | null>(null);
   const [closing, setClosing] = useState(false);
@@ -164,7 +164,7 @@ export const QuickActionSettingsRows = ({
     return () => window.removeEventListener("keydown", handleShortcutCapture, true);
   }, [capturingShortcutActionId, shortcutActionDrafts]);
 
-  if (!expanded) {
+  if (!stableUi && !expanded) {
     return (
       <div className="cap-settings-row">
         <button className="cap-settings-pill" type="button" onClick={() => onGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
@@ -182,13 +182,13 @@ export const QuickActionSettingsRows = ({
       <div className="cap-settings-expandable-inner">
         <div className="cap-settings-quick-actions-panel">
           <div className="cap-settings-quick-actions-header">
-            <span className="cap-settings-label">{t("settings.quickActions")}</span>
+            {!stableUi && <span className="cap-settings-label">{t("settings.quickActions")}</span>}
             <div className="cap-settings-quick-actions-controls">
               <button className="cap-settings-pill" type="button" disabled={capturingShortcutActionId !== null} onClick={() => onGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
                 {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
               </button>
               <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
-              <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => void closeShortcutConfiguration()} title={t("settings.finishQuickActionsHint")} aria-expanded="true">{t("settings.finishConfiguration")}</button>
+              {!stableUi && <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => void closeShortcutConfiguration()} title={t("settings.finishQuickActionsHint")} aria-expanded="true">{t("settings.finishConfiguration")}</button>}
             </div>
           </div>
           <div className="cap-settings-quick-actions-list">

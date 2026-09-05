@@ -1,17 +1,3 @@
-.cap-stable-settings-color-button {
-  min-height: 28px;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 4px 6px 4px 12px;
-  border: 0;
-  border-radius: 999px;
-  color: inherit;
-  background: var(--stable-settings-hover);
-  font: inherit;
-  font-size: var(--cap-ui-font-control);
-}
-
 .cap-stable-settings-color-button i {
   width: 20px;
   height: 20px;
@@ -19,13 +5,6 @@
   border: 2px solid rgb(255 255 255 / 72%);
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 12%);
-}
-
-.cap-stable-settings-color-button:hover,
-.cap-stable-settings-color-button:focus-visible {
-  color: var(--dialog-action-hover-text);
-  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
-  outline: 0;
 }
 
 .context-menu.cap-stable-settings-color-picker {

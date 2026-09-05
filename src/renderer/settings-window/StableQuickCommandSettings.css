@@ -1,0 +1,70 @@
+.cap-stable-settings-card-with-command-body {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.cap-stable-settings-card-with-command-body > .cap-stable-settings-control {
+  display: contents;
+}
+
+.cap-stable-settings-card-with-command-body .cap-stable-settings-command-toggle {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+}
+
+.cap-stable-settings-card-with-command-body .cap-settings-quick-commands-panel-stable {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  gap: 0;
+  margin-top: 8px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--stable-settings-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.cap-stable-settings-card-with-command-body .cap-settings-quick-command-groups {
+  column-gap: 44px;
+}
+
+.cap-stable-settings-card-with-command-body .cap-settings-quick-command-group {
+  gap: 7px;
+  margin-bottom: 22px;
+}
+
+.cap-stable-settings-card-with-command-body .cap-settings-quick-command-item {
+  grid-template-columns: minmax(116px, 142px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.cap-stable-settings-card-with-command-body .cap-settings-command-pill {
+  justify-content: flex-start;
+  max-width: none;
+  height: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--stable-settings-hover);
+  font-family: "Cascadia Mono", "Consolas", monospace;
+  line-height: 20px;
+}
+
+@media (max-width: 700px) {
+  .cap-stable-settings-card-with-command-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cap-stable-settings-card-with-command-body .cap-stable-settings-command-toggle {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .cap-stable-settings-card-with-command-body .cap-settings-quick-commands-panel-stable {
+    grid-row: 3;
+  }
+
+  .cap-stable-settings-card-with-command-body .cap-settings-quick-command-groups {
+    column-count: 1;
+  }
+}

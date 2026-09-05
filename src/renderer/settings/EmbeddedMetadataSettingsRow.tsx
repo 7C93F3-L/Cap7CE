@@ -13,7 +13,7 @@ const initialStatus: EmbeddedMetadataTaskStatus = {
   activeDurationMs: 0
 };
 
-export const EmbeddedMetadataSettingsRow = () => {
+export const EmbeddedMetadataSettingsRow = ({ stableUi = false }: { stableUi?: boolean }) => {
   const [status, setStatus] = useState(initialStatus);
   const [isCompleteNoticeVisible, setIsCompleteNoticeVisible] = useState(false);
   const completeNoticeTimerRef = useRef<number | null>(null);
@@ -59,32 +59,40 @@ export const EmbeddedMetadataSettingsRow = () => {
     ? t("settings.embeddedMetadataStopHint")
     : t("settings.embeddedMetadataCheckHint");
 
+  const actionButton = (
+    <button
+      className={stableUi ? "cap-stable-settings-button" : "cap-settings-pill"}
+      type="button"
+      title={actionHint}
+      disabled={!api || status.phase === "cancelling"}
+      onClick={() => {
+        if (!api) return;
+        if (isRunning) void api.cancelBackfill();
+        else void api.startBackfill().then((value) => {
+          setStatus(value);
+          if (value.totalCount !== 0) return;
+          setIsCompleteNoticeVisible(true);
+          if (completeNoticeTimerRef.current !== null) window.clearTimeout(completeNoticeTimerRef.current);
+          completeNoticeTimerRef.current = window.setTimeout(() => {
+            setIsCompleteNoticeVisible(false);
+            completeNoticeTimerRef.current = null;
+          }, 2000);
+        });
+      }}
+    >
+      {actionText}
+    </button>
+  );
+
+  if (stableUi) {
+    return <div className="cap-stable-settings-action-line"><span>{statusText}</span>{actionButton}</div>;
+  }
+
   return (
     <div className="cap-settings-row">
       <span className="cap-settings-label">{t("settings.embeddedMetadata")}</span>
       {statusText ? <span className="cap-settings-value">{statusText}</span> : null}
-      <button
-        className="cap-settings-pill"
-        type="button"
-        title={actionHint}
-        disabled={!api || status.phase === "cancelling"}
-        onClick={() => {
-          if (!api) return;
-          if (isRunning) void api.cancelBackfill();
-          else void api.startBackfill().then((value) => {
-            setStatus(value);
-            if (value.totalCount !== 0) return;
-            setIsCompleteNoticeVisible(true);
-            if (completeNoticeTimerRef.current !== null) window.clearTimeout(completeNoticeTimerRef.current);
-            completeNoticeTimerRef.current = window.setTimeout(() => {
-              setIsCompleteNoticeVisible(false);
-              completeNoticeTimerRef.current = null;
-            }, 2000);
-          });
-        }}
-      >
-        {actionText}
-      </button>
+      {actionButton}
     </div>
   );
 };

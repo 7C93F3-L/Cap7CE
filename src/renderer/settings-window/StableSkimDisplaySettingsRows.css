@@ -42,11 +42,6 @@
   gap: 6px;
 }
 
-.cap-settings-skim-restore-button:hover:not(:disabled) {
-  color: var(--dialog-action-hover-text);
-  background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
-}
-
 .cap-settings-skim-display-stable .cap-settings-skim-format-groups {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;

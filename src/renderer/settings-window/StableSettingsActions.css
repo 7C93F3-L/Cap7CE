@@ -1,0 +1,58 @@
+.cap-settings-window-foundation .cap-stable-settings-button,
+.cap-settings-window-foundation .cap-settings-pill,
+.cap-settings-window-foundation .cap-stable-settings-link,
+.cap-settings-window-foundation .cap-stable-settings-color-button,
+.cap-settings-window-foundation.cap-stable-settings-loading button {
+  min-width: 34px;
+  min-height: 28px;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 999px;
+  color: inherit;
+  background: var(--stable-settings-hover);
+  font: inherit;
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
+  text-decoration: none;
+  white-space: nowrap;
+  transform: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.cap-settings-window-foundation .cap-stable-settings-button:hover:not(:disabled),
+.cap-settings-window-foundation .cap-stable-settings-button:focus-visible,
+.cap-settings-window-foundation .cap-settings-pill:hover:not(:disabled),
+.cap-settings-window-foundation .cap-settings-pill:focus-visible,
+.cap-settings-window-foundation .cap-stable-settings-link:hover:not(:disabled),
+.cap-settings-window-foundation .cap-stable-settings-link:focus-visible,
+.cap-settings-window-foundation .cap-stable-settings-color-button:hover:not(:disabled),
+.cap-settings-window-foundation .cap-stable-settings-color-button:focus-visible,
+.cap-settings-window-foundation.cap-stable-settings-loading button:hover:not(:disabled),
+.cap-settings-window-foundation.cap-stable-settings-loading button:focus-visible {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  transform: none;
+}
+
+.cap-settings-window-foundation .cap-settings-expand-toggle[aria-expanded="true"] {
+  color: inherit;
+  background: var(--stable-settings-hover);
+}
+
+.cap-settings-window-foundation .cap-settings-expand-toggle[aria-expanded="true"]:hover:not(:disabled) {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+}
+
+.cap-settings-window-foundation .cap-stable-settings-button:disabled,
+.cap-settings-window-foundation .cap-settings-pill:disabled,
+.cap-settings-window-foundation .cap-stable-settings-color-button:disabled,
+.cap-settings-window-foundation.cap-stable-settings-loading button:disabled {
+  opacity: .48;
+}

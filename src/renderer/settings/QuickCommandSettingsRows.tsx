@@ -163,11 +163,12 @@ export const getDangerousQuickCommandItems = () => [
 ];
 
 export interface QuickCommandSettingsRowsProps {
-  expanded: boolean;
-  onExpandedChange: (expanded: boolean) => void;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+  stableUi?: boolean;
 }
 
-export const QuickCommandSettingsRows = ({ expanded, onExpandedChange }: QuickCommandSettingsRowsProps) => {
+export const QuickCommandSettingsRows = ({ expanded = false, onExpandedChange = () => undefined, stableUi = false }: QuickCommandSettingsRowsProps) => {
   const collapseTimerRef = useRef<number | null>(null);
   const [closing, setClosing] = useState(false);
 
@@ -189,13 +190,47 @@ export const QuickCommandSettingsRows = ({ expanded, onExpandedChange }: QuickCo
     }
   }, []);
 
-  if (!expanded) {
+  if (!stableUi && !expanded) {
     return (
       <div className="cap-settings-row">
         <span className="cap-settings-label">{t("settings.quickCommands")}</span>
         <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={() => onExpandedChange(true)} title={t("settings.openQuickCommandsHint")} aria-expanded="false">{t("common.view")}</button>
       </div>
     );
+  }
+
+  const commandGroups = (
+    <div className="cap-settings-quick-command-groups">
+      {getQuickCommandGroups().map((group) => (
+        <section className="cap-settings-quick-command-group" key={group.title}>
+          <h3>{group.title}</h3>
+          <div className="cap-settings-quick-command-list">
+            {group.items.map((item) => (
+              <div className="cap-settings-quick-command-item" key={item.command}>
+                <span className="cap-settings-command-pill">{item.command}</span>
+                <span className="cap-settings-command-description">{item.description}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+      <section className="cap-settings-quick-command-group cap-settings-quick-command-danger" key="danger">
+        <h3>{t("settings.confirmationCommands")}</h3>
+        <p>{t("settings.confirmationCommandHint")}</p>
+        <div className="cap-settings-quick-command-list">
+          {getDangerousQuickCommandItems().map((item) => (
+            <div className="cap-settings-quick-command-item" key={item.command}>
+              <span className="cap-settings-command-pill">{item.command}</span>
+              <span className="cap-settings-command-description">{item.description}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+
+  if (stableUi) {
+    return <div className="cap-settings-quick-commands-panel cap-settings-quick-commands-panel-stable">{commandGroups}</div>;
   }
 
   return (
@@ -206,33 +241,7 @@ export const QuickCommandSettingsRows = ({ expanded, onExpandedChange }: QuickCo
             <span className="cap-settings-label">{t("settings.quickCommands")}</span>
             <button className="cap-settings-pill cap-settings-expand-toggle" type="button" onClick={closeQuickCommands} title={t("settings.closeQuickCommandsHint")} aria-expanded="true">{t("settings.closeQuickCommands")}</button>
           </div>
-          <div className="cap-settings-quick-command-groups">
-            {getQuickCommandGroups().map((group) => (
-              <section className="cap-settings-quick-command-group" key={group.title}>
-                <h3>{group.title}</h3>
-                <div className="cap-settings-quick-command-list">
-                  {group.items.map((item) => (
-                    <div className="cap-settings-quick-command-item" key={item.command}>
-                      <span className="cap-settings-command-pill">{item.command}</span>
-                      <span className="cap-settings-command-description">{item.description}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-            <section className="cap-settings-quick-command-group cap-settings-quick-command-danger" key="danger">
-              <h3>{t("settings.confirmationCommands")}</h3>
-              <p>{t("settings.confirmationCommandHint")}</p>
-              <div className="cap-settings-quick-command-list">
-                {getDangerousQuickCommandItems().map((item) => (
-                  <div className="cap-settings-quick-command-item" key={item.command}>
-                    <span className="cap-settings-command-pill">{item.command}</span>
-                    <span className="cap-settings-command-description">{item.description}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
+          {commandGroups}
         </div>
       </div>
     </div>
