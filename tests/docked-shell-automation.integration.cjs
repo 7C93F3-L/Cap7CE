@@ -4,6 +4,7 @@ const path = require("node:path");
 const {
   DockedShellController,
   dockedShellDockThresholdPx,
+  dockedShellDockReleaseThresholdPx,
   dockedShellPeekThicknessPx,
   dockedShellRevealThicknessPx
 } = require("../dist-electron/dockedShellController.js");
@@ -66,7 +67,8 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
   return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setBounds: (nextBounds) => { bounds = { ...nextBounds }; }, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; } };
 };
 
-assert.equal(dockedShellDockThresholdPx, 5);
+assert.equal(dockedShellDockThresholdPx, 16);
+assert.equal(dockedShellDockReleaseThresholdPx, 24);
 assert.equal(dockedShellPeekThicknessPx, 5);
 assert.equal(dockedShellRevealThicknessPx, 2);
 
@@ -116,6 +118,16 @@ assert.deepEqual(cornerPrefersAllowedEdge.controller.toggle(), { status: "collap
 const nearEdgeWithoutSnap = createController({ initialBounds: { x: 990, y: 200, width: 900, height: 600 } });
 assert.deepEqual(nearEdgeWithoutSnap.controller.toggle(), { status: "blocked", reason: "not-docked" });
 assert.equal(nearEdgeWithoutSnap.controller.hasActiveSession(), false);
+
+const tolerantDock = createController({ initialBounds: { x: 1005, y: 180, width: 900, height: 600 } });
+tolerantDock.sample({ x: 1200, y: 300 }, 0);
+assert.equal(tolerantDock.controller.hasActiveSession(), true);
+tolerantDock.setBounds({ x: 997, y: 180, width: 900, height: 600 });
+tolerantDock.sample({ x: 1200, y: 300 }, 1);
+assert.equal(tolerantDock.controller.hasActiveSession(), true);
+tolerantDock.setBounds({ x: 995, y: 180, width: 900, height: 600 });
+tolerantDock.sample({ x: 1200, y: 300 }, 2);
+assert.equal(tolerantDock.controller.hasActiveSession(), false);
 
 const displaySeam = createController({
   initialBounds: rightBounds,
@@ -321,6 +333,7 @@ console.log(JSON.stringify({
   fourDirectionNativeBoundsVerified: true,
   taskbarEdgeExcluded: true,
   edgeSnapPreferenceIndependent: true,
+  tolerantDockHysteresisVerified: true,
   immediateCollapseAndRevealVerified: true,
   temporaryCollapsedLayerVerified: true,
   edgeGapIncludedInHoverRegion: true,

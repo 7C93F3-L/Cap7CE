@@ -51,7 +51,8 @@ interface DockSession {
 }
 
 const collapsibleShellStates = new Set(["micro", "mini", "normal"]);
-export const dockedShellDockThresholdPx = 5;
+export const dockedShellDockThresholdPx = 16;
+export const dockedShellDockReleaseThresholdPx = 24;
 export const dockedShellPeekThicknessPx = 5;
 export const dockedShellRevealThicknessPx = 2;
 
@@ -287,7 +288,7 @@ export class DockedShellController {
     const bounds = this.options.window.getBounds();
     const display = this.options.getDisplay(bounds);
     const taskbarEdge = inferTaskbarEdge(display.bounds, display.workArea) ?? "bottom";
-    const threshold = this.options.dockThreshold ?? dockedShellDockThresholdPx;
+    const threshold = this.options.dockThreshold ?? dockedShellDockReleaseThresholdPx;
     return this.session.edge !== taskbarEdge
       && detectWindowDockEdge(bounds, display.workArea, threshold, this.session.edge, [taskbarEdge]) === this.session.edge;
   }
