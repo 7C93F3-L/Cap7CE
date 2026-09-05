@@ -18,15 +18,11 @@ import "./results/ResultSectionCard.css";
 import "./results/ResultsView.css";
 import "./search/Cap7CESearchCapsule.css";
 import "./ai-search/AiSearchBeta.css";
-import "./search/HomeView.css";
 import "./settings/SettingsSelect.css";
 import "./settings/ShortcutSettingsPanels.css";
 import "./settings/SkimDisplaySettingsRows.css";
 import "./settings/SettingsFooter.css";
-import "./settings/RuntimeModelSettingsSection.css";
 import "./settings/RuntimeDiagnosticsRows.css";
-import "./settings/DirectoryAiSettingsRows.css";
-import "./settings/SettingsView.css";
 import "./window-presentation/CompatibilityTitlebar.css";
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 const rendererSearchParams = new URLSearchParams(window.location.search);
@@ -34,7 +30,6 @@ const windowKind = rendererSearchParams.get("window");
 const isSettingsWindow = windowKind === "settings", isPreviewWindow = windowKind === "preview";
 const isLineWindow = windowKind === "line";
 const isCompatibilityCapsuleWindow = windowKind === "compatibility-capsule";
-const isStableUiRoot = rendererSearchParams.get("presentation") === "stable";
 if (isSettingsWindow) {
   void import("./settings-window/SettingsWindowApp").then(({ default: SettingsWindowApp }) => root.render(<React.StrictMode><SettingsWindowApp /></React.StrictMode>));
 } else if (isLineWindow) {
@@ -53,19 +48,11 @@ if (isSettingsWindow) {
       </React.StrictMode>
     );
   });
-} else if (isStableUiRoot) {
+} else {
   void Promise.all([import("./App"), import("./stable-ui/StableUiRoot")]).then(([{ default: App }, { default: StableUiRoot }]) => {
     root.render(
       <React.StrictMode>
         <App stableUiRenderer={StableUiRoot} />
-      </React.StrictMode>
-    );
-  });
-} else {
-  void import("./App").then(({ default: App }) => {
-    root.render(
-      <React.StrictMode>
-        <App />
       </React.StrictMode>
     );
   });

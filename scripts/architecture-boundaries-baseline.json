@@ -1,7 +1,7 @@
 {
   "maxLines": {
-    "src/renderer/App.tsx": 3313,
-    "src/renderer/main.tsx": 73,
+    "src/renderer/App.tsx": 2693,
+    "src/renderer/main.tsx": 60,
     "src/renderer/CompatibilityCapsuleWindowApp.tsx": 66,
     "src/renderer/CompatibilityCapsuleWindowApp.css": 4,
     "src/renderer/search/QuickSearchCapsule.tsx": 77,
@@ -65,14 +65,10 @@
     "src/renderer/results/ResultGrid.css": 202,
     "src/renderer/results/ResultsView.css": 102,
     "src/renderer/search/Cap7CESearchCapsule.css": 324,
-    "src/renderer/search/HomeView.css": 62,
     "src/renderer/settings/SettingsSelect.css": 68,
     "src/renderer/settings/ShortcutSettingsPanels.css": 141,
     "src/renderer/settings/SkimDisplaySettingsRows.css": 92,
     "src/renderer/settings/SettingsFooter.css": 155,
-    "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
-    "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
-    "src/renderer/settings/SettingsView.css": 253,
     "electron/main.ts": 3668,
     "electron/windowPresentationRuntime.ts": 64,
     "electron/settingsWindowController.ts": 171,
@@ -113,7 +109,6 @@
         "id": "directories",
         "sourceAnchors": [
           { "path": "src/renderer/App.tsx", "contains": "const loadDirectories" },
-          { "path": "src/renderer/settings/DirectoryAiSettingsRows.tsx", "contains": "export const DirectoryAiSettingsRows" },
           { "path": "electron/directoryManagementIpc.ts", "contains": "registerDirectoryManagementIpc" },
           { "path": "electron/directoryAddService.ts", "contains": "export const addDirectoryCandidates" }
         ]
@@ -125,16 +120,14 @@
           { "path": "src/renderer/controllers/useSkimReadController.ts", "contains": "export const useSkimReadController" },
           { "path": "src/renderer/skim/SkimView.tsx", "contains": "export const SkimView" },
           { "path": "src/renderer/stable-ui/StableSkimSlot.tsx", "contains": "const StableSkimSlot" },
-          { "path": "src/renderer/stable-ui/stableSkimTypes.ts", "contains": "export interface StableSkimProps" },
-          { "path": "src/renderer/SkimLocationPicker.tsx", "contains": "const SkimLocationPicker" }
+          { "path": "src/renderer/stable-ui/stableSkimTypes.ts", "contains": "export interface StableSkimProps" }
         ]
       },
       {
         "id": "settings",
         "sourceAnchors": [
-          { "path": "src/renderer/App.tsx", "contains": "function openSettings" },
+          { "path": "src/renderer/App.tsx", "contains": "onOpenSettings: () => void window.cap7ce?.settingsWindow.open()" },
           { "path": "src/renderer/settings-window/SettingsWindowApp.tsx", "contains": "const SettingsWindowApp" },
-          { "path": "src/renderer/settings/SettingsView.tsx", "contains": "export const SettingsView" },
           { "path": "electron/settingsWindowController.ts", "contains": "export class SettingsWindowController" },
           { "path": "electron/settingsWindowLayout.ts", "contains": "export class SettingsWindowLayoutStore" },
           { "path": "electron/preferenceIpc.ts", "contains": "registerPreferenceIpc" }
@@ -167,7 +160,7 @@
         "sourceAnchors": [
           { "path": "src/renderer/results/ResultsView.tsx", "contains": "window.cap7ce?.files.startDrag" },
           { "path": "src/renderer/skim/SkimView.tsx", "contains": "window.cap7ce?.files.startDrag" },
-          { "path": "src/renderer/App.tsx", "contains": "onDropCapture" },
+          { "path": "src/renderer/App.tsx", "contains": "onDirectoryDrop={startDroppedDirectoryAdd}" },
           { "path": "electron/fileDragService.ts", "contains": "startNativeFileDrag" }
         ]
       },

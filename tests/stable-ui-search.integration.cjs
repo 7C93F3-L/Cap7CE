@@ -20,8 +20,8 @@ const sharedMenuStyles = read("src/renderer/components/ResponsiveFileContextMenu
 
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
-assert.match(appSource, /stableUiRenderer\?: StableUiRenderer/);
-assert.match(appSource, /resultContent=\{<ResultsView \{\.\.\.createResultsViewProps\(true\)\} \/>\}/);
+assert.match(appSource, /stableUiRenderer: StableUiRenderer/);
+assert.match(appSource, /resultContent=\{<ResultsView \{\.\.\.createResultsViewProps\(\)\} \/>\}/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
 assert.match(appSource, /if \(!stableUi \|\| isLoadingDirectories \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)/);
@@ -29,7 +29,7 @@ assert.match(appSource, /const cycleSearchDirectory = \(\) => \{[\s\S]*?director
 assert.match(appSource, /const searchResultsVisible = stableUi \|\|[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
-assert.match(appSource, /responsive: responsiveLayout/);
+assert.match(appSource, /responsive: true/);
 assert.match(menuAdapterSource, /state\.responsive[\s\S]*ResponsiveResultsContextMenuLayer[\s\S]*LegacyResultsContextMenuLayer/);
 assert.match(appSource, /if \(stableUi\) return;/);
 assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);

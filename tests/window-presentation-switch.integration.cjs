@@ -122,25 +122,27 @@ const run = async () => {
   assert.deepEqual(staleLaunch.calls.at(-1), ["stalePreference", "compatibility"]);
   assert.equal(staleLaunch.diagnostics.at(-1).event, "window.presentation.switch.stale_launch_rolled_back");
 
-  const [appearanceSource, settingsWindowSource, rowSource, preloadSource, zhSource, enSource, packageSource, mainSource] = await Promise.all([
-    fs.readFile(path.join(__dirname, "../src/renderer/settings/AppearanceSettingsSections.tsx"), "utf8"),
+  const [settingsWindowSource, preloadSource, zhSource, enSource, packageSource, mainSource] = await Promise.all([
     fs.readFile(path.join(__dirname, "../src/renderer/settings-window/SettingsWindowApp.tsx"), "utf8"),
-    fs.readFile(path.join(__dirname, "../src/renderer/settings/WindowPresentationModeSettingsRow.tsx"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/preload.ts"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/localization.ts"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/locales/en-US.ts"), "utf8"),
     fs.readFile(path.join(__dirname, "../package.json"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/main.ts"), "utf8")
   ]);
-  assert.doesNotMatch(appearanceSource, /WindowPresentationModeSettingsRow|windowPresentationMode/u);
   assert.doesNotMatch(settingsWindowSource, /WindowPresentationModeSettingsRow|switchWindowPresentationMode|stableSettings\.windowMode/u);
-  assert.match(rowSource, /activeMode === "stable" \? "compatibility" : activeMode === "compatibility" \? "cap7ce" : "stable"/);
-  assert.match(rowSource, /getWindowPresentationModeLabel/);
-  assert.match(rowSource, /disabled=\{status === "switching"\}/);
+  await Promise.all([
+    "AppearanceSettingsSections.tsx",
+    "WindowPresentationModeSettingsRow.tsx"
+  ].map(async (fileName) => {
+    await assert.rejects(
+      fs.access(path.join(__dirname, "../src/renderer/settings", fileName)),
+      (error) => error?.code === "ENOENT"
+    );
+  }));
   assert.match(preloadSource, /app:switchWindowPresentationMode/);
   assert.match(mainSource, /presentationSwitchEnabled: false/u);
   assert.doesNotMatch(mainSource, /resolveStartupMode\(/u);
-  assert.match(rowSource, /settings\.windowModeSwitchDescription/);
   for (const key of ["settings.stableMode", "settings.compatibilityMode", "settings.cap7ceMode", "settings.windowModeSwitchDescription", "settings.switchWindowMode", "settings.switchingWindowMode", "settings.switchToStableHint", "settings.switchToCompatibilityHint", "settings.switchToCap7CEHint", "settings.windowModeSwitchFailed"]) {
     assert.ok(zhSource.includes(`"${key}"`), `Missing Chinese text: ${key}`);
     assert.ok(enSource.includes(`"${key}"`), `Missing English text: ${key}`);
@@ -163,7 +165,7 @@ const run = async () => {
     controlledRestartDiagnosticsVerified: true,
     developmentRendererSurvivesControlledRestart: true,
     productSwitchEntryRetired: true,
-    legacySwitchImplementationIsolated: true
+    legacySettingsSwitchRowsRemoved: true
   }));
 };
 

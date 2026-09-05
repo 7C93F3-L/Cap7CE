@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "./appearance";
 import { executeQuickCommand, type QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
@@ -12,18 +12,15 @@ import { useSettingsDataSynchronization } from "./controllers/useSettingsDataSyn
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import { getImageContextMenuStyle } from "./ImageContextMenu";
-import SkimLocationPicker from "./SkimLocationPicker";
 import { getKeywordEditorExitDelay } from "./keywordEditorInteraction";
 import {
   AddDroppedDirectoriesPanel,
-  ClearCachePanel,
   DeleteDirectoryPanel,
   DeleteFilesPanel,
   ReplaceDirectoriesPanel
 } from "./dialogs/ConfirmationPanels";
 import KeywordEditorCard from "./dialogs/KeywordEditorCard";
 import type {
-  CacheClearFeedback,
   DeleteFilesFeedback,
   DroppedDirectory,
   KeywordEditSession
@@ -32,17 +29,10 @@ import { getCommonKeywords } from "./dialogs/keywordEditorModel";
 import { normalizeWindowsPathKey } from "./filePath";
 import { formatDisplayMessage } from "./formatting";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
-import {
-  Cap7CESearchCapsule,
-  standardSearchLabelGroups,
-  type SearchCapsuleLabelVisibility
-} from "./search/Cap7CESearchCapsule";
-import { HomeView } from "./search/HomeView";
-import { QuickSearchCapsule } from "./search/QuickSearchCapsule";
+import type { SearchCapsuleLabelVisibility } from "./search/Cap7CESearchCapsule";
 import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplayExtensions } from "./search/searchViewModel";
 import { parseAssistantInvocation } from "./assistant/assistantInvocation";
 import { hasAiSearchScopeChanged, useAiSearchBeta } from "./ai-search";
-import { SettingsView } from "./settings/SettingsView";
 import { defaultShortcutActions, defaultStableShortcutActions, getShortcutFromKeyboardEvent, normalizeShortcutActions, normalizeStableShortcutActions } from "./shortcutActions";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
@@ -50,8 +40,6 @@ import ResultsContextMenuLayer, { type ResultsContextMenuState } from "./results
 import { SkimView, type SkimViewProps } from "./skim/SkimView";
 import { countSkimRootLocations } from "./skim/SkimRootSections";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
-import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
-import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
 import { useCompatibilityCapsuleBridge } from "./window-presentation/useCompatibilityCapsuleBridge";
 import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
@@ -78,10 +66,6 @@ import type {
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 import { skimDefaultFileExtensionSet } from "../../electron/formatCapabilities";
 type ShellState = "standby" | "capsule" | "micro" | "mini" | "normal" | "settings";
-type ShellTransition = {
-  from: ShellState;
-  to: ShellState;
-};
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
 type DialogName = "addDroppedDirectories" | "deleteDirectory" | "replaceDirectories" | "deleteFiles" | "editKeywords" | "clearCache" | "clearSkimCache" | null;
 const readDroppedDirectories = (dataTransfer: DataTransfer): DroppedDirectory[] => {
@@ -138,8 +122,6 @@ const sortSkimBrowseEntries = (entries: SkimBrowseEntry[], options: SkimBrowseOp
     return direction * (fieldOrder || nameOrder);
   });
 };
-const shellTransitionDurationMs = 560;
-const DEBUG_WINDOW_BOUNDS = false;
 const emptyVisualCacheStats: VisualCacheStats = {
   cacheCount: 0,
   totalBytes: 0,
@@ -255,10 +237,10 @@ const formatDirectoryAddFeedback = (result: DirectoryAddResult) => {
 };
 
 interface AppProps {
-  stableUiRenderer?: StableUiRenderer;
+  stableUiRenderer: StableUiRenderer;
 }
 const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
-  const stableUi = Boolean(StableUiRenderer);
+  const stableUi = true;
   const [view, setView] = useState<AppView>("home");
   const navigationEntriesRef = useRef<AppView[]>(["home"]);
   const navigationIndexRef = useRef(0);
@@ -268,17 +250,15 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const systemTheme = useSystemThemeMode();
   const [appearanceColors, setAppearanceColors] = useState<AppearanceColors>(defaultAppearanceColors);
   const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize); const [windowMaterial, setWindowMaterial] = useState<WindowMaterial>("acrylic");
-  const [standbyLineVisible, setStandbyLineVisible] = useState(true);
-  const [launchAtLogin, setLaunchAtLogin] = useState(false);
-  const [systemNotificationsEnabled, setSystemNotificationsEnabled] = useState(true);
+  const [, setStandbyLineVisible] = useState(true);
+  const [, setLaunchAtLogin] = useState(false);
+  const [, setSystemNotificationsEnabled] = useState(true);
   const [operationHintsEnabled, setOperationHintsEnabled] = useState(true);
   const [aiRecognitionEnabled, setAiRecognitionEnabled] = useState(true);
   const [quickActionGlobalEnabled, setQuickActionGlobalEnabled] = useState(true);
   const [commandEnabled, setCommandEnabled] = useState(true);
   const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(stableUi ? defaultStableShortcutActions : defaultShortcutActions);
   const [unavailableShortcutActionIds, setUnavailableShortcutActionIds] = useState<ShortcutActionId[]>([]);
-  const [quickActionsExpanded, setQuickActionsExpanded] = useState(false);
-  const [quickCommandsExpanded, setQuickCommandsExpanded] = useState(false);
   const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
   const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
   const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
@@ -337,8 +317,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     () => sortSkimBrowseEntries(visibleSkimEntries, skimBrowseOptions),
     [skimBrowseOptions, visibleSkimEntries]
   );
-  const [skimLocationPickerOpen, setSkimLocationPickerOpen] = useState(false);
-  const [skimLocationPickerClosing, setSkimLocationPickerClosing] = useState(false);
   const [skimLocations, setSkimLocations] = useState<SkimLocationShortcut[]>([
     { id: "computer", kind: "computer", path: null }
   ]);
@@ -353,9 +331,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     llamaRuntimeSettings,
     llamaRuntimeProcessState,
     ggufModelSettings,
-    isLoadingLlamaRuntime,
-    isLoadingGgufModels,
-    isChangingLlamaRuntimeState,
     refreshLlamaRuntimeSettings,
     refreshGgufModelSettings,
     updateSelectedLlamaRuntime,
@@ -363,33 +338,18 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     startLlamaRuntimeServer,
     stopLlamaRuntimeServer
   } = useRuntimeModelController();
-  const [visualCacheStats, setVisualCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
-  const [skimCacheStats, setSkimCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
+  const [, setVisualCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
+  const [, setSkimCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
   const [thumbnailOptimizationStatus, setThumbnailOptimizationStatus] = useState<ThumbnailOptimizationStatus>(emptyThumbnailOptimizationStatus);
   const thumbnailOptimizationPhaseRef = useRef<ThumbnailOptimizationStatus["phase"]>(emptyThumbnailOptimizationStatus.phase);
   const thumbnailOptimizationStatsTimerRef = useRef<number | null>(null);
-  const [isLoadingCacheStats, setIsLoadingCacheStats] = useState(true);
-  const [isClearingCache, setIsClearingCache] = useState(false);
-  const [cacheClearToken, setCacheClearToken] = useState<string | null>(null);
-  const [cacheClearFeedback, setCacheClearFeedback] = useState<CacheClearFeedback | null>(null);
-  const [skimCacheClearToken, setSkimCacheClearToken] = useState<string | null>(null);
-  const [skimCacheClearFeedback, setSkimCacheClearFeedback] = useState<CacheClearFeedback | null>(null);
-  const [isClearingSkimCache, setIsClearingSkimCache] = useState(false);
-  const {
-    message: cacheInlineFeedback,
-    show: showCacheInlineFeedback
-  } = useTransientFeedback();
-  const {
-    message: skimCacheInlineFeedback,
-    show: showSkimCacheInlineFeedback
-  } = useTransientFeedback();
+  const [, setIsLoadingCacheStats] = useState(true);
   const [contextMenu, setContextMenu] = useState<ResultsContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
-  const [shellTransition, setShellTransition] = useState<ShellTransition | null>(null);
   const { isAlwaysOnTop, applyAlwaysOnTop, syncAlwaysOnTop, setAlwaysOnTop, toggleAlwaysOnTop } = useAlwaysOnTopController();
   const [isMaximized, setIsMaximized] = useState(false);
-  const [lastNormalBounds, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
-  const { shellViewportHeight, miniStandardHeight, windowPresentationMode } = useShellViewportMetrics();
+  const [, setLastNormalBounds] = useState<Cap7CEWindowBounds | null>(null);
+  const { windowPresentationMode } = useShellViewportMetrics();
   const isCompatibilityMode = windowPresentationMode === "compatibility";
   const [filesPendingDelete, setFilesPendingDelete] = useState<ImageIndexItem[]>([]);
   const [isDeletingFiles, setIsDeletingFiles] = useState(false);
@@ -415,15 +375,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const resultScrollMemoryRef = useRef(createInitialResultGridScrollMemory());
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const skimLocationPickerCloseTimerRef = useRef<number | null>(null);
-  const skimLocationPickerCloseActionRef = useRef<(() => void) | null>(null);
   const directoryPathResolutionRequestRef = useRef(0);
   const searchTaskIdRef = useRef<string | null>(null);
   const viewDisplaySearchTimerRef = useRef<number | null>(null);
   const skimReturnContextRef = useRef<SkimReturnContext | null>(null);
   const lastClosedSkimPathRef = useRef<string | null>(null);
   const skimForwardPathsRef = useRef<string[]>([]);
-  const settingsOpenedFromSkimRef = useRef(false);
   const keywordEditScrollSnapshotRef = useRef<KeywordEditScrollSnapshot | null>(null);
   const directoryDeleteInFlightRef = useRef(false);
   const capsuleInputRef = useRef<HTMLInputElement | null>(null);
@@ -435,13 +392,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     if (keywordEditorExitTimerRef.current !== null) {
       window.clearTimeout(keywordEditorExitTimerRef.current);
     }
-    if (skimLocationPickerCloseTimerRef.current !== null) {
-      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
-    }
   }, []);
   const directoryOptions = useMemo(() => [createAllDirectoriesOption(directories), ...directories], [directories]);
   const totalFileCount = directoryOptions[0]?.fileCount ?? null;
-  const selectedDirectory = directoryOptions.find((directory) => directory.id === search.directoryId) ?? directoryOptions[0];
   const effectiveTheme: ResolvedThemeMode = theme === "system" ? systemTheme : theme;
   const uiFontStyle = useUiFontSize(stableUi ? uiFontSize : defaultUiFontSize);
   const appThemeStyle = {
@@ -552,25 +505,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, [shellState, stableUi, syncAlwaysOnTop]);
 
   useEffect(() => {
-    const previousShellState = previousShellStateRef.current;
-    if (previousShellState === shellState) {
-      return undefined;
-    }
-
-    previousShellStateRef.current = shellState;
-    setShellTransition({ from: previousShellState, to: shellState });
-    const timer = window.setTimeout(() => {
-      setShellTransition((currentTransition) => (
-        currentTransition?.from === previousShellState && currentTransition.to === shellState
-          ? null
-          : currentTransition
-      ));
-    }, shellTransitionDurationMs);
-
-    return () => window.clearTimeout(timer);
-  }, [shellState]);
-
-  useEffect(() => {
     if (shellState !== "normal" && shellState !== "settings") {
       setIsMaximized(false);
     }
@@ -649,20 +583,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const closeNavigationOverlays = useCallback(() => {
     setContextMenu(null);
-    if (skimLocationPickerCloseTimerRef.current !== null) {
-      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
-      skimLocationPickerCloseTimerRef.current = null;
-    }
-    skimLocationPickerCloseActionRef.current = null;
-    setSkimLocationPickerOpen(false);
-    setSkimLocationPickerClosing(false);
   }, []);
 
   const dismissCancellableDialog = useCallback((notifyReplacementCancellation = false) => {
     setDirectoryToDelete(null); setDroppedDirectories([]); setPendingDirectoryAddResult(null);
     setFilesPendingDelete([]); setDeleteFilesFeedback(null);
-    setCacheClearToken(null); setCacheClearFeedback(null);
-    setSkimCacheClearToken(null); setSkimCacheClearFeedback(null);
     setDialog(null);
     if (notifyReplacementCancellation) {
       if (directoryAddFeedbackTargetRef.current === "skim") showSkimFeedback(t("command.cancelled"));
@@ -686,14 +611,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const enterStandby = useCallback(() => {
     if (
-      isAddingDirectory || isClearingCache || isClearingSkimCache
+      isAddingDirectory
       || isDeletingFiles || isSavingMetadata || keywordSaveInFlightRef.current
       || directoryDeleteInFlightRef.current
     ) return;
     dismissTransientInteractionsForStandby();
     resetShellBehaviorState();
     if (stableUi) void window.cap7ce?.window.setShellState("standby"); else setShellState("standby");
-  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isClearingCache, isClearingSkimCache, isDeletingFiles, isSavingMetadata, resetShellBehaviorState, stableUi]);
+  }, [dismissTransientInteractionsForStandby, isAddingDirectory, isDeletingFiles, isSavingMetadata, resetShellBehaviorState, stableUi]);
 
   const navigateTo = useCallback((nextView: AppView) => {
     const entries = navigationEntriesRef.current;
@@ -962,10 +887,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  const previewAppearanceColors = (nextAppearanceColors: AppearanceColors) => {
-    setAppearanceColors(normalizeAppearanceColors(nextAppearanceColors));
-  };
-
   const updateStandbyLineVisible = (nextStandbyLineVisible: boolean) => {
     setStandbyLineVisible(nextStandbyLineVisible);
     void window.cap7ce?.preferences.updateStandbyLineVisible(nextStandbyLineVisible);
@@ -1040,20 +961,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return null;
     }
   };
-
-  const beginShortcutCapture = useCallback(async () => (
-    await window.cap7ce?.preferences.beginShortcutCapture() ?? false
-  ), []);
-
-  const endShortcutCapture = useCallback(async () => {
-    const availability = await window.cap7ce?.preferences.endShortcutCapture();
-    setUnavailableShortcutActionIds(availability?.unavailableActionIds ?? []);
-    const preferences = await window.cap7ce?.preferences.get();
-    if (preferences) {
-      setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
-    }
-    return availability ?? { unavailableActionIds: [] };
-  }, []);
 
   const updateCommandEnabled = async (nextCommandEnabled: boolean) => {
     setCommandEnabled(nextCommandEnabled);
@@ -1543,7 +1450,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       defaultAppearanceColors,
       defaultShortcutActions: stableUi ? defaultStableShortcutActions : defaultShortcutActions,
       currentAppearanceColors: appearanceColors,
-      openSettings,
+      openSettings: () => openSettingsWindow(),
       openSkim,
       openSkimRoot: () => {
         if (view === "skim") {
@@ -1716,33 +1623,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   });
 
-  const toggleNormalMaximized = useCallback(async () => {
-    const nextState = await window.cap7ce?.window.toggleNormalMaximized();
-    if (nextState) {
-      setIsMaximized(nextState.isMaximized);
-      setLastNormalBounds(nextState.lastNormalBounds);
-    }
-  }, []);
-
-  const cycleShellWindow = useCallback(() => {
-    if (shellState === "normal" || shellState === "settings") {
-      void toggleNormalMaximized();
-      return;
-    }
-
-    if (shellState === "micro") {
-      setShellState("mini");
-      return;
-    }
-
-    if (shellState === "mini") {
-      setShellState("normal");
-      return;
-    }
-
-    setShellState("micro");
-  }, [shellState, toggleNormalMaximized]);
-
   const refreshDirectories = (nextDirectories: DirectoryItem[]) => {
     setDirectories(nextDirectories);
     setDirectoryServiceUnavailable(false);
@@ -1881,10 +1761,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       setSkimSystemLocationsCollapsed(!nextCollapsed);
     }
   }, [skimSystemLocationsCollapsed]);
-
-  const removeSkimSidebarFolder = useCallback(async (folderPath: string) => {
-    await removeSkimSidebarFolders([folderPath]);
-  }, [removeSkimSidebarFolders]);
 
   const cancelDroppedDirectoryAdd = () => {
     if (isAddingDirectory) return;
@@ -2310,13 +2186,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, [cancelSkimRead, clearSkimFeedback, openResults, resetSkimLocation, restoreViewAfterSkim, shellState, skimCurrentPath]);
 
   const openSkimAtLocation = useCallback((nextPath: string | null) => {
-    if (skimLocationPickerCloseTimerRef.current !== null) {
-      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
-      skimLocationPickerCloseTimerRef.current = null;
-    }
-    skimLocationPickerCloseActionRef.current = null;
-    setSkimLocationPickerOpen(false);
-    setSkimLocationPickerClosing(false);
     if (view === "skim") {
       void loadSkimLocation(nextPath).then((loaded) => {
         if (loaded) skimForwardPathsRef.current = [];
@@ -2353,46 +2222,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     });
   }, [loadSkimLocation]);
 
-  const closeSkimLocationPicker = useCallback((afterClose?: () => void) => {
-    if (
-      !skimLocationPickerOpen
-      || skimLocationPickerClosing
-      || skimLocationPickerCloseTimerRef.current !== null
-    ) return;
-    skimLocationPickerCloseActionRef.current = afterClose ?? null;
-    setSkimLocationPickerClosing(true);
-    skimLocationPickerCloseTimerRef.current = window.setTimeout(() => {
-      skimLocationPickerCloseTimerRef.current = null;
-      setSkimLocationPickerOpen(false);
-      setSkimLocationPickerClosing(false);
-      const closeAction = skimLocationPickerCloseActionRef.current;
-      skimLocationPickerCloseActionRef.current = null;
-      closeAction?.();
-    }, 280);
-  }, [skimLocationPickerClosing, skimLocationPickerOpen]);
-
-  const toggleSkimLocationPicker = useCallback(() => {
-    if (dialog === "editKeywords" || isAddingDirectory) return;
-    if (skimLocationPickerOpen) {
-      closeSkimLocationPicker();
-      return;
-    }
-    setContextMenu(null);
-    setSkimLocationPickerClosing(false);
-    setSkimLocationPickerOpen(true);
-    void window.cap7ce?.skim.listLocations().then((nextLocations) => {
-      if (nextLocations?.length) setSkimLocations(nextLocations);
-    });
-  }, [closeSkimLocationPicker, dialog, isAddingDirectory, skimLocationPickerOpen]);
-
-  const handleSkimLocationPickerExit = useCallback(() => {
-    if (view === "skim") {
-      closeSkimLocationPicker(closeSkim);
-      return;
-    }
-    closeSkimLocationPicker();
-  }, [closeSkim, closeSkimLocationPicker, view]);
-
   const navigateSkimParent = useCallback((closeAtRoot: boolean) => {
     if (skimCurrentPath === null) {
       if (closeAtRoot) closeSkim();
@@ -2418,38 +2247,24 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     });
   }, [loadSkimLocation]);
 
-  function openSettings(section?: "quick" | "cmd") {
-    settingsOpenedFromSkimRef.current = view === "skim";
-    if (view === "skim") {
-      cancelSkimRead();
-      clearSkimFeedback();
-    }
-    if (section === "quick") {
-      setQuickActionsExpanded(true);
-    }
-    if (section === "cmd") {
-      setQuickCommandsExpanded(true);
-    }
-    setShellState("settings");
-    navigateTo("settings");
-    void refreshLlamaRuntimeSettings();
-    void refreshGgufModelSettings();
-    void refreshVisualCacheStats();
-  }
+  const openSettingsWindow = useCallback(() => {
+    void window.cap7ce?.settingsWindow.open();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onOpenSettingsRequested?.(() => {
-      if (dialog !== "editKeywords") openSettings();
+      if (dialog !== "editKeywords") openSettingsWindow();
     });
     return () => unsubscribe?.();
-  }, [dialog, openSettings]);
+  }, [dialog, openSettingsWindow]);
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onToggleSkimLocationPickerRequested?.(() => {
-      toggleSkimLocationPicker();
+      if (dialog === "editKeywords" || isAddingDirectory) return;
+      setStableSkimToggleRequestId((requestId) => requestId + 1);
     });
     return () => unsubscribe?.();
-  }, [toggleSkimLocationPicker]);
+  }, [dialog, isAddingDirectory]);
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateSkimRequested?.(() => {
@@ -2463,42 +2278,15 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     return () => unsubscribe?.();
   }, [dialog, openSkim, stableUi]);
 
-  const closeSettings = () => {
-    setShellState("normal");
-    if (settingsOpenedFromSkimRef.current) {
-      settingsOpenedFromSkimRef.current = false;
-      const previousIndex = navigationIndexRef.current - 1;
-      if (previousIndex >= 0) navigationIndexRef.current = previousIndex;
-      closeNavigationOverlays();
-      setView("skim");
-      void loadSkimLocation(skimCurrentPath);
-      return;
-    }
-    const previousIndex = navigationIndexRef.current - 1;
-    const previousView = previousIndex >= 0 ? navigationEntriesRef.current[previousIndex] : null;
-    if (previousView === "results" && resultsInitializedRef.current) {
-      navigateBack();
-      return;
-    }
-
-    const nextSearch = { ...search, query: "" };
-    setSearch(nextSearch);
-    resetSettingsViewState(true);
-    void runSearch(nextSearch);
-  };
-
   const refreshCurrentPage = async () => {
     if (
       shellState === "standby"
       || shellState === "capsule"
       || dialog
       || contextMenu
-      || skimLocationPickerOpen
       || editingDirectoryId
       || pendingQuickCommandConfirmation
       || isAddingDirectory
-      || isClearingCache
-      || isClearingSkimCache
       || isDeletingFiles
       || isSavingMetadata
     ) {
@@ -2554,17 +2342,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           navigateSkimBack();
           return;
         }
-        if (shellState === "settings" || view === "settings") {
-          closeSettings();
-          return;
-        }
         navigateBack();
       } else if (view === "skim") {
         navigateSkimForward();
       } else {
         const nextIndex = navigationIndexRef.current + 1;
         if (navigationEntriesRef.current[nextIndex] === "settings") {
-          openSettings();
+          openSettingsWindow();
           return;
         }
         if (navigationEntriesRef.current[nextIndex] === "skim") {
@@ -2583,7 +2367,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [closeSettings, dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettings, openSkimAtLocation, shellState, view]);
+  }, [dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettingsWindow, openSkimAtLocation, view]);
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateCapsuleShortcut?.(() => {
@@ -2633,11 +2417,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
         if (dialog) {
           if (
-            isAddingDirectory || isClearingCache || isClearingSkimCache || isDeletingFiles
+            isAddingDirectory || isDeletingFiles
             || directoryDeleteInFlightRef.current
             || deleteFilesFeedback?.status === "succeeded"
-            || cacheClearFeedback?.status === "succeeded"
-            || skimCacheClearFeedback?.status === "succeeded"
           ) return;
           dismissCancellableDialog(dialog === "replaceDirectories");
           return;
@@ -2709,7 +2491,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         event.stopPropagation();
         closeNavigationOverlays();
         if (shellState !== "settings") {
-          openSettings();
+          openSettingsWindow();
         }
         return;
       }
@@ -2720,7 +2502,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, [
     closeNavigationOverlays,
     collapseShellToStandby,
-    cacheClearFeedback,
     contextMenu,
     cycleSearchDirectory,
     deleteFilesFeedback,
@@ -2728,12 +2509,10 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     directories,
     editingDirectoryId,
     isAddingDirectory,
-    isClearingCache,
-    isClearingSkimCache,
     isDeletingFiles,
     isSavingMetadata,
     openSkim,
-    openSettings,
+    openSettingsWindow,
     pendingQuickCommandConfirmation,
     quickActionGlobalEnabled,
     search,
@@ -2741,156 +2520,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     showQuickCommandNotice,
     showSkimFeedback,
     shellState,
-    skimCacheClearFeedback,
     skimCurrentPath,
     stableUi,
     shortcutActions,
     view
   ]);
 
-  const clearVisualCaches = async () => {
-    if (isClearingCache) return null;
-
-    const isRetry = cacheClearFeedback?.status === "failed";
-    let token = cacheClearToken;
-    try {
-      if (!token || isRetry) {
-        token = await window.cap7ce?.cache.authorizeClear() ?? null;
-      }
-    } catch (error) {
-      setCacheClearFeedback({
-        status: "failed",
-        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheUnavailable"))
-      });
-      return null;
-    }
-    if (!token) {
-      setCacheClearFeedback({ status: "failed", message: t("error.cacheUnavailable") });
-      return null;
-    }
-
-    setIsClearingCache(true);
-    try {
-      const stats = await window.cap7ce?.cache.clearAll(token);
-      if (!stats) {
-        throw new Error(t("error.cacheUnavailable"));
-      }
-      setVisualCacheStats(stats);
-      setCacheClearToken(null);
-      if (isRetry) {
-        setCacheClearFeedback({ status: "succeeded", message: "" });
-      } else {
-        setCacheClearFeedback(null);
-        setDialog(null);
-        showCacheInlineFeedback(t("settings.cacheCleared"));
-      }
-      return stats ?? null;
-    } catch (error) {
-      setCacheClearToken(null);
-      setCacheClearFeedback({
-        status: "failed",
-        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheFailed"))
-      });
-      return null;
-    } finally {
-      setIsClearingCache(false);
-    }
-  };
-
-  const requestClearThumbnailCache = async () => {
-    try {
-      const token = await window.cap7ce?.cache.authorizeClear();
-      if (!token) {
-        throw new Error(t("error.cacheUnavailable"));
-      }
-      setCacheClearToken(token);
-      setCacheClearFeedback(null);
-      setDialog("clearCache");
-    } catch (error) {
-      setCacheClearToken(null);
-      setCacheClearFeedback({
-        status: "failed",
-        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheUnavailable"))
-      });
-      setDialog("clearCache");
-    }
-  };
-
-  const clearSkimCaches = async () => {
-    if (isClearingSkimCache) return null;
-    const isRetry = skimCacheClearFeedback?.status === "failed";
-    let token = skimCacheClearToken;
-    try {
-      if (!token || isRetry) token = await window.cap7ce?.skimCache.authorizeClear() ?? null;
-      if (!token) throw new Error(t("error.cacheUnavailable"));
-      setIsClearingSkimCache(true);
-      const stats = await window.cap7ce?.skimCache.clear(token);
-      if (!stats) throw new Error(t("error.cacheUnavailable"));
-      setSkimCacheStats(stats);
-      setSkimCacheClearToken(null);
-      if (isRetry) {
-        setSkimCacheClearFeedback({ status: "succeeded", message: "" });
-      } else {
-        setSkimCacheClearFeedback(null);
-        setDialog(null);
-        showSkimCacheInlineFeedback(t("settings.skimCacheCleared"));
-      }
-      return stats;
-    } catch (error) {
-      setSkimCacheClearToken(null);
-      setSkimCacheClearFeedback({
-        status: "failed",
-        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheFailed"))
-      });
-      return null;
-    } finally {
-      setIsClearingSkimCache(false);
-    }
-  };
-
-  const requestClearSkimCache = async () => {
-    try {
-      const token = await window.cap7ce?.skimCache.authorizeClear();
-      if (!token) throw new Error(t("error.cacheUnavailable"));
-      setSkimCacheClearToken(token);
-      setSkimCacheClearFeedback(null);
-      setDialog("clearSkimCache");
-    } catch (error) {
-      setSkimCacheClearToken(null);
-      setSkimCacheClearFeedback({
-        status: "failed",
-        message: formatDisplayMessage(error instanceof Error ? error.message : t("error.cacheUnavailable"))
-      });
-      setDialog("clearSkimCache");
-    }
-  };
-
-  const isExpandedShell = shellState !== "standby" && shellState !== "capsule";
-  const showShellSettingsToggle = miniStandardHeight !== null && shellViewportHeight >= miniStandardHeight;
-  const isLargeShell = shellState === "normal" || shellState === "settings";
-  const shellCycleLabel = isLargeShell ? (isMaximized ? t("window.restore") : t("window.maximize")) : t("window.changeMode");
-  const shellControlActions: WindowControlAction[] = shellState === "capsule" || isCompatibilityMode
-    ? []
-    : [
-      { id: "standby", label: t("window.collapse"), icon: "line", onClick: collapseShellToStandby },
-      { id: "cycle", label: shellCycleLabel, icon: "expand", pressed: isMaximized, onClick: cycleShellWindow },
-      { id: "pin", label: isAlwaysOnTop ? t("window.unfix") : t("window.fix"), icon: isAlwaysOnTop ? "pinOn" : "pinOff", pressed: isAlwaysOnTop, onClick: () => void toggleAlwaysOnTop(shellState) }
-    ];
-  const activeView = isExpandedShell && view === "home" ? "results" : view;
-  useEffect(() => {
-    if (skimLocationPickerCloseTimerRef.current !== null) {
-      window.clearTimeout(skimLocationPickerCloseTimerRef.current);
-      skimLocationPickerCloseTimerRef.current = null;
-    }
-    skimLocationPickerCloseActionRef.current = null;
-    setSkimLocationPickerOpen(false);
-    setSkimLocationPickerClosing(false);
-  }, [dialog, shellState, view]);
-  const shellTransitionClass = shellTransition
-    ? ` cap-shell-transition cap-transition-${shellTransition.from}-to-${shellTransition.to}`
-    : "";
-  const hasLastNormalBounds = lastNormalBounds !== null;
-  const acceptsDirectoryDrop = (stableUi || shellState === "micro" || shellState === "mini" || shellState === "normal" || shellState === "settings") && dialog === null && !isAddingDirectory;
+  const acceptsDirectoryDrop = dialog === null && !isAddingDirectory;
   const startDroppedDirectoryAdd = (dataTransfer: DataTransfer) => {
     if (internalNativeDragRef.current) {
       internalNativeDragRef.current = false;
@@ -2901,44 +2537,15 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     if (nextDroppedDirectories.length === 0) return;
     setContextMenu(null);
     setDroppedDirectories(nextDroppedDirectories);
-    directoryAddFeedbackTargetRef.current = stableUi ? "search" : view === "skim" ? "skim" : "search";
+    directoryAddFeedbackTargetRef.current = "search";
     setDialog("addDroppedDirectories");
   };
 
   const resultStatusNode = <ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />;
-  const searchCapsuleNode = (
-    <Cap7CESearchCapsule
-      search={search}
-      directoryName={selectedDirectory.name}
-      directories={directoryOptions}
-      labelVisibility={searchCapsuleLabelVisibility}
-      status={resultStatusNode}
-      inputFeedback={searchInputFeedback}
-      inputFeedbackIsGuide={operationHintVisible}
-      unified
-      autoSearchOnQueryClear
-      skimDisplayMode={skimDisplay.searchMode}
-      enabledLabelGroups={standardSearchLabelGroups}
-      aiSearchEnabled={aiSearchBeta.enabled}
-      aiSearchBusy={aiSearchBeta.busy}
-      imageContextMenuOpen={contextMenu !== null}
-      inputRef={searchInputRef}
-      onSearchChange={(nextSearch) => {
-        clearQuickCommandNotice();
-        updateResultsSearch(nextSearch);
-      }}
-      onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
-      onSkimDisplayModeChange={(searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })}
-      onSearchOptionsChange={updateResultsSearchOptions}
-      onSearch={() => submitSearch(search)}
-      onAiSearchToggle={toggleAiSearchBeta}
-      onImageContextMenuClose={closeContextMenu}
-    />
-  );
-  const createResultsViewProps = (responsiveLayout: boolean): ResultsViewProps => ({
-    shellState: responsiveLayout ? "normal" : shellState,
-    responsiveLayout,
-    searchCapsule: responsiveLayout ? null : searchCapsuleNode,
+  const createResultsViewProps = (): ResultsViewProps => ({
+    shellState: "normal",
+    responsiveLayout: true,
+    searchCapsule: null,
     images: searchResults,
     isSearching: isSearching || aiSearchBeta.busy,
     aiSearchPhase: aiSearchBeta.phase,
@@ -2958,20 +2565,20 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onContextMenu: (event, item, selectedItems, preview) => {
       event.preventDefault();
       event.stopPropagation();
-      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: responsiveLayout ? "normal" : shellState, responsive: responsiveLayout });
+      setContextMenu({ x: event.clientX, y: event.clientY, item, items: selectedItems, preview, shellState: "normal", responsive: true });
     },
     onContextMenuClose: closeContextMenu,
     onOpenImage: (item) => invokeFileAction("open", item),
     onShowInFolder: (item) => invokeFileAction("showInFolder", item),
     onDeleteItems: requestDeleteFiles,
-    onOpenSkim: stableUi ? () => undefined : openSkim,
+    onOpenSkim: () => undefined,
     onAiSearchSectionToggle: () => aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults)
   });
-  const createSkimViewProps = (responsiveLayout: boolean, active = true): SkimViewProps => ({
+  const createSkimViewProps = (active = true): SkimViewProps => ({
     search: { ...search, ...skimSortPreference }, visualSessionId: skimVisualSessionId,
     entries: sortedSkimEntries, currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs,
     isLoading: isSkimLoading, feedback: skimFeedback, theme: effectiveTheme, appearanceColors,
-    shellState: responsiveLayout ? "normal" : shellState, responsiveLayout, embedded: responsiveLayout, active,
+    shellState: "normal", responsiveLayout: true, embedded: true, active,
     isAddingDirectory, inputFeedback: searchInputFeedback, inputFeedbackIsGuide: operationHintVisible,
     labelVisibility: searchCapsuleLabelVisibility, skimDisplayMode: skimDisplay.mode, searchInputRef,
     onSearchChange: (nextSearch) => setSearch({ ...nextSearch, sortField: search.sortField, sortDirection: search.sortDirection }),
@@ -3013,14 +2620,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     />
   ) : null;
   const keywordEditorLayer = dialog === "editKeywords" && keywordEditSession ? (
-    <KeywordEditorCard session={keywordEditSession} keywords={editKeywords} error={editMetadataError} isSaving={isSavingMetadata} isClosing={isKeywordEditorClosing} menuStyle={contextMenuStyle} theme={effectiveTheme} showBackdrop={!stableUi} onKeywordsChange={setEditKeywords} onSave={saveEditedKeywords} onCancel={cancelEditKeywords} onExitComplete={finishKeywordEditorClose} />
+    <KeywordEditorCard session={keywordEditSession} keywords={editKeywords} error={editMetadataError} isSaving={isSavingMetadata} isClosing={isKeywordEditorClosing} menuStyle={contextMenuStyle} theme={effectiveTheme} showBackdrop={false} onKeywordsChange={setEditKeywords} onSave={saveEditedKeywords} onCancel={cancelEditKeywords} onExitComplete={finishKeywordEditorClose} />
   ) : null;
   const droppedDirectoryPanel = dialog === "addDroppedDirectories" && droppedDirectories.length > 0 ? (
     <AddDroppedDirectoriesPanel directories={droppedDirectories} isAdding={isAddingDirectory} onConfirm={() => void confirmDroppedDirectoryAdd()} onCancel={cancelDroppedDirectoryAdd} />
   ) : null;
   const directoryDialogLayer = <>
     {droppedDirectoryPanel}
-    {(stableUi || activeView === "settings") && dialog === "deleteDirectory" && <DeleteDirectoryPanel onConfirm={confirmDeleteDirectory} onCancel={() => { setDirectoryToDelete(null); setDialog(null); }} />}
+    {dialog === "deleteDirectory" && <DeleteDirectoryPanel onConfirm={confirmDeleteDirectory} onCancel={() => { setDirectoryToDelete(null); setDialog(null); }} />}
     {dialog === "replaceDirectories" && pendingDirectoryAddResult && (
       <ReplaceDirectoriesPanel conflictCount={pendingDirectoryAddResult.conflicts.length} replacedCount={pendingDirectoryAddResult.conflicts.reduce((count, conflict) => count + conflict.existingDirectories.length, 0)} isAdding={isAddingDirectory} onConfirm={confirmDirectoryReplacement} onCancel={() => {
         if (isAddingDirectory) return;
@@ -3032,8 +2639,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     )}
   </>;
 
-  if (StableUiRenderer && view !== "settings") {
-    return (
+  return (
       <StableUiRenderer
         theme={effectiveTheme}
         themeStyle={appThemeStyle} windowMaterial={windowMaterial}
@@ -3044,7 +2650,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         inputFeedback={searchInputFeedback}
         inputFeedbackIsGuide={operationHintVisible}
         resultStatus={resultStatusNode}
-        resultContent={<ResultsView {...createResultsViewProps(true)} />}
+        resultContent={<ResultsView {...createResultsViewProps()} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
         sidebar={{
           search, directories: directoryOptions,
@@ -3063,7 +2669,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
-          renderContent: (active) => <SkimView {...createSkimViewProps(true, active)} />,
+          renderContent: (active) => <SkimView {...createSkimViewProps(active)} />,
           onOpen: () => openSkimLocation(skimCurrentPath), onBack: () => navigateSkimParent(false),
           onOpenRoot: () => openSkimLocation(null), onOpenPath: openSkimLocation,
           onDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
@@ -3077,234 +2683,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         onDirectoryDrop={startDroppedDirectoryAdd}
         onDismissOverlay={closeContextMenu}
       />
-    );
-  }
-
-  return (
-    <div
-      className={`app theme-${effectiveTheme} cap-shell cap-shell-${shellState}${isCompatibilityMode ? " cap-shell-compatibility" : ""}${shellTransitionClass}${isAlwaysOnTop ? " cap-shell-always-on-top" : ""}${isMaximized ? " cap-shell-maximized" : ""}${hasLastNormalBounds ? " cap-shell-has-restore-bounds" : ""}${dialog ? " cap-shell-dialog-open" : ""}${dialog === "editKeywords" ? " cap-shell-keyword-editor-open" : ""}`}
-      style={appThemeStyle}
-      onDragOverCapture={(event: ReactDragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = acceptsDirectoryDrop && !internalNativeDragRef.current ? "copy" : "none";
-      }}
-      onDropCapture={(event: ReactDragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        startDroppedDirectoryAdd(event.dataTransfer);
-      }}
-      onClick={() => {
-        setContextMenu(null);
-      }}
-    >
-      {DEBUG_WINDOW_BOUNDS && (shellState === "standby" || shellState === "capsule") && (
-        <div className="cap-debug-window-viewport" aria-hidden="true" />
-      )}
-      {shellState === "capsule" && (
-        <QuickSearchCapsule
-          ariaLabel={t("search.action")}
-          inputRef={capsuleInputRef}
-          operationHintVisible={operationHintVisible}
-          placeholder={searchInputFeedback}
-          value={search.query}
-          onCancel={() => {
-            setSearch((current) => ({ ...current, query: "" }));
-            collapseShellToStandby();
-          }}
-          onChange={(query) => {
-            clearQuickCommandNotice();
-            setSearch((current) => ({ ...current, query }));
-          }}
-          onSubmit={submitCapsuleInput}
-        />
-      )}
-      {isExpandedShell && (
-        isCompatibilityMode && <CompatibilityTitlebar pinned={isAlwaysOnTop} label={isAlwaysOnTop ? t("window.unfix") : t("window.fix")} onTogglePinned={() => void toggleAlwaysOnTop(shellState)} theme={effectiveTheme} />
-      )}
-      {isExpandedShell && (
-        <WindowControlRail
-          actions={shellControlActions}
-          showSkim={showShellSettingsToggle}
-          skimActive={skimLocationPickerOpen}
-          skimCurrent={false}
-          skimExpanded={skimLocationPickerOpen}
-          skimLabel={skimLocationPickerOpen ? t("skim.locationPicker.close") : t("skim.locationPicker.open")}
-          onSkim={toggleSkimLocationPicker}
-          settingsActive={shellState === "settings"}
-          showSettings={showShellSettingsToggle}
-          settingsLabel={shellState === "settings" && settingsOpenedFromSkimRef.current ? t("window.returnSkim") : undefined}
-          onSettings={shellState === "settings" ? closeSettings : openSettings}
-        />
-      )}
-      {isExpandedShell && (
-        <>
-          <div className="cap-shell-content">
-            {directoryDialogLayer}
-            {activeView === "home" && (
-              <HomeView
-                search={search}
-                directoryName={selectedDirectory.name}
-                directories={directoryOptions}
-                labelVisibility={searchCapsuleLabelVisibility}
-                onSearchChange={setSearch}
-                onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
-                onSearch={openResults}
-                onSearchOptionsChange={updateResultsSearchOptions}
-              />
-            )}
-            {activeView === "results" && deleteFilesPanel}
-            {isExpandedShell && activeView === "results" && dialog !== "deleteFiles" && <ResultsView {...createResultsViewProps(false)} />}
-            {activeView === "skim" && <SkimView {...createSkimViewProps(false)} />}
-            {activeView === "settings" && dialog === "clearCache" && (
-              <ClearCachePanel
-                isClearing={isClearingCache}
-                feedback={cacheClearFeedback}
-                onConfirm={clearVisualCaches}
-                onCancel={() => {
-                  if (cacheClearFeedback?.status === "succeeded") return;
-                  setCacheClearToken(null);
-                  setCacheClearFeedback(null);
-                  setDialog(null);
-                }}
-                onComplete={() => {
-                  setCacheClearToken(null);
-                  setCacheClearFeedback(null);
-                  setDialog(null);
-                }}
-              />
-            )}
-            {activeView === "settings" && dialog === "clearSkimCache" && (
-              <ClearCachePanel
-                isClearing={isClearingSkimCache}
-                feedback={skimCacheClearFeedback}
-                skim
-                onConfirm={clearSkimCaches}
-                onCancel={() => {
-                  if (skimCacheClearFeedback?.status === "succeeded") return;
-                  setSkimCacheClearToken(null);
-                  setSkimCacheClearFeedback(null);
-                  setDialog(null);
-                }}
-                onComplete={() => {
-                  setSkimCacheClearToken(null);
-                  setSkimCacheClearFeedback(null);
-                  setDialog(null);
-                }}
-              />
-            )}
-            {activeView === "settings" && dialog !== "replaceDirectories" && dialog !== "clearCache" && dialog !== "clearSkimCache" && (
-              <SettingsView
-                search={search}
-                quickCommandNotice={searchInputFeedback}
-                inputFeedbackIsGuide={operationHintVisible}
-                searchInputRef={searchInputRef}
-                directoryName={selectedDirectory.name}
-                status="ready"
-                searchDirectories={directoryOptions}
-                labelVisibility={searchCapsuleLabelVisibility}
-                theme={theme}
-                menuStyle={contextMenuStyle}
-                languagePreference={languagePreference}
-                appearanceColors={appearanceColors}
-                standbyLineVisible={standbyLineVisible}
-                launchAtLogin={launchAtLogin}
-                systemNotificationsEnabled={systemNotificationsEnabled}
-                operationHintsEnabled={operationHintsEnabled}
-                aiRecognitionEnabled={aiRecognitionEnabled}
-                aiSearchEnabled={aiSearchBeta.enabled}
-                aiSearchBusy={aiSearchBeta.busy}
-                quickActionGlobalEnabled={quickActionGlobalEnabled}
-                shortcutActions={shortcutActions}
-                unavailableShortcutActionIds={unavailableShortcutActionIds}
-                quickActionsExpanded={quickActionsExpanded}
-                quickCommandsExpanded={quickCommandsExpanded}
-                skimDisplay={skimDisplay}
-                directories={directories}
-                totalFileCount={totalFileCount}
-                isLoadingDirectories={isLoadingDirectories}
-                isAddingDirectory={isAddingDirectory}
-                directoryServiceUnavailable={directoryServiceUnavailable}
-                llamaRuntimeSettings={llamaRuntimeSettings}
-                llamaRuntimeProcessState={llamaRuntimeProcessState}
-                ggufModelSettings={ggufModelSettings}
-                isLoadingLlamaRuntime={isLoadingLlamaRuntime}
-                isLoadingGgufModels={isLoadingGgufModels}
-                isChangingLlamaRuntimeState={isChangingLlamaRuntimeState}
-                visualCacheStats={visualCacheStats}
-                skimCacheStats={skimCacheStats}
-                thumbnailOptimizationStatus={thumbnailOptimizationStatus}
-                isLoadingCacheStats={isLoadingCacheStats}
-                isClearingCache={isClearingCache}
-                isClearingSkimCache={isClearingSkimCache}
-                cacheInlineFeedback={cacheInlineFeedback}
-                skimCacheInlineFeedback={skimCacheInlineFeedback}
-                editingDirectoryId={editingDirectoryId}
-                onSearchChange={(nextSearch) => {
-                  clearQuickCommandNotice();
-                  setSearch(nextSearch);
-                }}
-                onLabelVisibilityChange={updateSearchCapsuleLabelVisibility}
-                onSearchOptionsChange={updateResultsSearchOptions}
-                onThemeChange={updateTheme}
-                onLanguageChange={updateLanguage}
-                onAppearanceColorsPreview={previewAppearanceColors}
-                onAppearanceColorsChange={updateAppearanceColors}
-                onStandbyLineVisibleChange={updateStandbyLineVisible}
-                onLaunchAtLoginChange={updateLaunchAtLogin}
-                onSystemNotificationsChange={updateSystemNotifications}
-                onOperationHintsChange={updateOperationHints}
-                onAutoCacheOptimizationChange={updateAutoCacheOptimization}
-                onAiRecognitionEnabledChange={updateAiRecognitionEnabled}
-                onAiSearchToggle={toggleAiSearchBeta}
-                onQuickActionGlobalEnabledChange={updateQuickActionGlobalEnabled}
-                onShortcutActionsChange={updateShortcutActions}
-                onShortcutCaptureStart={beginShortcutCapture}
-                onShortcutCaptureEnd={endShortcutCapture}
-                onQuickActionsExpandedChange={setQuickActionsExpanded}
-                onQuickCommandsExpandedChange={setQuickCommandsExpanded}
-                onSkimDisplayChange={updateSkimDisplay}
-                onSearch={() => submitSearch(search)}
-                onStartAdd={addDirectory}
-                onLlamaRuntimeChange={updateSelectedLlamaRuntime}
-                onRefreshLlamaRuntime={refreshLlamaRuntimeSettings}
-                onGgufModelChange={updateSelectedGgufModel}
-                onRefreshGgufModels={refreshGgufModelSettings}
-                onStartLlamaRuntime={startLlamaRuntimeServer}
-                onStopLlamaRuntime={stopLlamaRuntimeServer}
-                onClearCache={requestClearThumbnailCache}
-                onClearSkimCache={requestClearSkimCache}
-                onEditDirectory={setEditingDirectoryId}
-                onCancelDirectoryEdit={() => setEditingDirectoryId(null)}
-                onDirectoryNameChange={updateDirectoryName}
-                onDeleteDirectory={(id) => {
-                  setDirectoryToDelete(id);
-                  setDialog("deleteDirectory");
-                }}
-              />
-            )}
-            {skimLocationPickerOpen && showShellSettingsToggle && dialog === null && (
-              <SkimLocationPicker
-                activeView={activeView}
-                locations={skimSystemLocationsCollapsed
-                  ? skimLocations.filter((location) => location.kind === "computer" || location.kind === "desktop" || location.kind === "starred")
-                  : skimLocations}
-                inSkim={view === "skim"}
-                closing={skimLocationPickerClosing}
-                systemLocationsCollapsed={skimSystemLocationsCollapsed}
-                onSelect={(path) => closeSkimLocationPicker(() => openSkimAtLocation(path))}
-                onDismiss={closeSkimLocationPicker}
-                onExit={handleSkimLocationPickerExit}
-                onToggleSystemLocations={() => void toggleSkimSystemLocations()}
-                menuStyle={contextMenuStyle}
-                onRemoveSidebarFolder={(path) => void removeSkimSidebarFolder(path)}
-              />
-            )}
-          </div>
-        </>
-      )}
-      {contextMenuLayer}
-      {keywordEditorLayer}
-    </div>
   );
+
 };
 
 

@@ -94,7 +94,7 @@ assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-s
 assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
 assert.match(appSource, /resultContent=\{<ResultsView[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
-assert.match(appSource, /showBackdrop=\{!stableUi\}/u);
+assert.match(appSource, /showBackdrop=\{false\}/u);
 assert.match(keywordEditorSource, /showBackdrop && <KeywordEditorBackdrop/u);
 
 assert.doesNotMatch(combinedShellSource, /window\.cap7ce|setShellState|shellState|\bmicro\b|\bmini\b|\bnormal\b/);

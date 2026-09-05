@@ -7,7 +7,6 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 const appSource = read("src/renderer/App.tsx");
 const previewSource = read("src/renderer/PreviewWindowApp.tsx");
 const mainSource = read("electron/main.ts");
-const viewportMetricsSource = read("src/renderer/controllers/useShellViewportMetrics.ts");
 const titlebarSource = read("src/renderer/window-presentation/CompatibilityTitlebar.tsx");
 const stableTitlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
 const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
@@ -15,24 +14,12 @@ const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.t
 const titlebarStyles = read("src/renderer/window-presentation/CompatibilityTitlebar.css");
 const rendererEntry = read("src/renderer/main.tsx");
 
-if (!/windowPresentationMode:\s*windowPresentationRuntime\.mode/.test(mainSource)
-  || !/setWindowPresentationMode\(metrics\.windowPresentationMode\)/.test(viewportMetricsSource)
-  || !/isCompatibilityMode\s*=\s*windowPresentationMode\s*===\s*"compatibility"/.test(appSource)) {
-  throw new Error("Renderer must derive the compatibility shell from the presentation mode active in the main process.");
+if (!/windowPresentationMode:\s*windowPresentationRuntime\.mode/.test(mainSource)) {
+  throw new Error("The main process must continue publishing presentation state while compatibility preview remains supported.");
 }
 
-if (!/shellState\s*===\s*"capsule"\s*\|\|\s*isCompatibilityMode[\s\S]*?\?\s*\[\]/.test(appSource)) {
-  throw new Error("Compatibility mode must remove only the existing top window actions from the right rail.");
-}
-
-for (const marker of ["showSkim={showShellSettingsToggle}", "showSettings={showShellSettingsToggle}", "<WindowControlRail"]) {
-  if (!appSource.includes(marker)) {
-    throw new Error(`Existing right-rail behavior must remain connected: ${marker}`);
-  }
-}
-
-if (!/isCompatibilityMode\s*&&\s*<CompatibilityTitlebar/.test(appSource)) {
-  throw new Error("Compatibility titlebar must render only for the compatibility main shell.");
+if (/CompatibilityTitlebar|WindowControlRail/.test(appSource)) {
+  throw new Error("The product main Renderer must not retain the compatibility titlebar or right rail.");
 }
 
 if (!/isCompatibilityWindow\s*&&\s*<CompatibilityTitlebar/.test(previewSource)) {
@@ -105,7 +92,7 @@ console.log(JSON.stringify({
   pinControlAccessibleAndShared: true,
   titlebarIsolatedFromScrollableShell: true,
   allWcoTitlebarsSharePortalBoundary: true,
-  existingRightRailEntriesPreserved: true,
+  legacyMainTitlebarAndRailRemoved: true,
   compatibilityContentOffsetVerified: true,
   nativeOuterCornersPreserved: true,
   micaTitlebarAndCaptionSizingVerified: true

@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.ts"), "utf8");
 const lineControllerSource = fs.readFileSync(path.join(root, "electron", "lineWindowController.ts"), "utf8");
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
+const rendererEntry = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 const previewSource = fs.readFileSync(path.join(root, "src", "renderer", "PreviewWindowApp.tsx"), "utf8");
 const railSource = fs.readFileSync(path.join(root, "src", "renderer", "WindowControlRail.tsx"), "utf8");
 const shellStyles = fs.readFileSync(path.join(root, "src", "renderer", "styles.css"), "utf8");
@@ -33,8 +34,8 @@ assert.match(mainWindowCreation, /\.\.\.getMainWindowPresentationOptions\(\)/u);
 assert.match(previewWindowCreation, /\.\.\.windowPresentationRuntime\.getBrowserOptions\("preview", nativeTheme\.shouldUseDarkColors\)/u);
 assert.doesNotMatch(previewWindowCreation, /transparent: false/u);
 assert.match(presentationPolicySource, /if \(!surfacePolicy\.usesWindowControlsOverlay\) \{[\s\S]*?frame: false,[\s\S]*?transparent: true,[\s\S]*?backgroundColor: "#00000000"/u);
-assert.match(appSource, /const shellControlActions: WindowControlAction\[\] = shellState === "capsule" \|\| isCompatibilityMode[\s\S]*?id: "standby"[\s\S]*?id: "cycle"[\s\S]*?id: "pin"/u);
-assert.match(appSource, /<WindowControlRail[\s\S]*?actions=\{shellControlActions\}[\s\S]*?showSkim=\{showShellSettingsToggle\}[\s\S]*?showSettings=\{showShellSettingsToggle\}/u);
+assert.doesNotMatch(appSource, /<WindowControlRail|<CompatibilityTitlebar|<HomeView|<SettingsView|from "\.\/WindowControlRail"|from "\.\/settings\/SettingsView"/u);
+assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\} \/>/u);
 assert.match(previewSource, /id: "close"[\s\S]*?id: "maximize"[\s\S]*?id: "pin"/u);
 assert.match(previewSource, /<WindowControlRail[\s\S]*?actions=\{previewControlActions\}[\s\S]*?showSkim=\{showSettings\}[\s\S]*?showSettings=\{showSettings\}/u);
 assert.match(railSource, /\{actions\.map\(\(action\) => \(/u);
@@ -45,8 +46,8 @@ assert.match(shellStyles, /inset: 0 var\(--cap-control-rail\) 0 0;/u);
 
 console.log(JSON.stringify({
   cap7ceTransparentWindowCreationFrozen: true,
-  mainWindowControlActionsFrozen: true,
+  legacyMainControlRailRemoved: true,
   previewWindowControlActionsFrozen: true,
-  skimAndSettingsRailBaselineFrozen: true,
+  previewSkimAndSettingsRailBaselineFrozen: true,
   rightRailWidthBaselineFrozen: true
 }));

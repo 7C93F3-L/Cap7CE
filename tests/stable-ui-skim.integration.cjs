@@ -18,7 +18,7 @@ const rootSectionsStyles = read("src/renderer/skim/SkimRootSections.css");
 const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
-assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(true, active\)\} \/>/);
+assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(active\)\} \/>/);
 assert.match(appSource, /onBack: \(\) => navigateSkimParent\(false\)/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);

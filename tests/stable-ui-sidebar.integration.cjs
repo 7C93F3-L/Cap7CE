@@ -27,10 +27,10 @@ for (const marker of [
 ]) assert.ok(sidebarTypesSource.includes(marker), `Stable sidebar contract is missing ${marker}.`);
 
 assert.match(appSource, /sidebar=\{\{[\s\S]*?directories: directoryOptions[\s\S]*?onAiSearchToggle: toggleAiSearchBeta[\s\S]*?onAddDirectory: \(\) => void addDirectory\(\)[\s\S]*?onOpenSettings: \(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/);
-assert.match(appSource, /function openSettings\(section\?/);
+assert.match(appSource, /const openSettingsWindow = useCallback\(\(\) => \{[\s\S]*?settingsWindow\.open\(\)/u);
 assert.match(appSource, /const directoryDialogLayer =/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
-assert.match(appSource, /if \(StableUiRenderer && view !== "settings"\)/);
+assert.match(appSource, /return \([\s\S]*?<StableUiRenderer/u);
 assert.match(rootSource, /onDirectoryDrop\(event\.dataTransfer\)/);
 assert.match(shellSource, /<StableShellSidebar \{\.\.\.sidebar\}/);
 assert.doesNotMatch(`${rootSource}\n${shellSource}\n${sidebarSource}`, /window\.cap7ce|from "\.\.\/App"/);

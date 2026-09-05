@@ -31,9 +31,10 @@ void (async () => {
   const stableUiStyles = `${foundationStyles}\n${accessibilityStyles}`;
   const packageJson = JSON.parse(read("package.json"));
 
-  if (!/rendererSearchParams\.get\("presentation"\)\s*===\s*"stable"/.test(rendererEntry)
-    || !rendererEntry.includes('import("./stable-ui/StableUiRoot")')) {
-    throw new Error("Stable UI Renderer root must be reachable from the formal stable presentation mode.");
+  if (!rendererEntry.includes('Promise.all([import("./App"), import("./stable-ui/StableUiRoot")])')
+    || !rendererEntry.includes('<App stableUiRenderer={StableUiRoot} />')
+    || /rendererSearchParams\.get\("presentation"\)/.test(rendererEntry)) {
+    throw new Error("The product main Renderer must assemble only the stable UI root.");
   }
   if (!mainSource.includes('mainUrl.searchParams.set("presentation", windowPresentationRuntime.mode)')
     || !mainSource.includes('query: { presentation: windowPresentationRuntime.mode }')) {
@@ -106,7 +107,7 @@ void (async () => {
   assert.doesNotMatch(packageJson.scripts.dev, /CAP7CE_WINDOW_PRESENTATION_MODE|SIZE_CONTRACT/u);
 
   console.log(JSON.stringify({
-    formalStableRendererEntryVerified: true,
+    stableOnlyRendererEntryVerified: true,
     stableDefaultLayoutIsolated: true,
     sharedPinControlVerified: true,
     scrollIsolatedTitlebarPortalVerified: true,

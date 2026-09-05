@@ -10,7 +10,7 @@ assert.match(mainSource, /const requestSafeMainWindowHide = \(\) => sendActivate
 assert.match(mainSource, /if \(mode === "standby"\) \{\s*return requestSafeMainWindowHide\(\);\s*\}/u);
 assert.match(mainSource, /mainWindow\.on\("close", \(event\) => \{\s*if \(isQuitting\) \{\s*return;\s*\}\s*event\.preventDefault\(\);\s*requestSafeMainWindowHide\(\);\s*\}\);/u);
 assert.doesNotMatch(mainSource, /mainWindow\.on\("close",[\s\S]{0,220}?mainWindow\?\.hide\(\)/u);
-assert.match(appSource, /const enterStandby = useCallback\(\(\) => \{[\s\S]*?isAddingDirectory \|\| isClearingCache \|\| isClearingSkimCache[\s\S]*?isDeletingFiles \|\| isSavingMetadata \|\| keywordSaveInFlightRef\.current[\s\S]*?directoryDeleteInFlightRef\.current[\s\S]*?dismissTransientInteractionsForStandby\(\);[\s\S]*?setShellState\("standby"\);/u);
+assert.match(appSource, /const enterStandby = useCallback\(\(\) => \{[\s\S]*?isAddingDirectory[\s\S]*?isDeletingFiles \|\| isSavingMetadata \|\| keywordSaveInFlightRef\.current[\s\S]*?directoryDeleteInFlightRef\.current[\s\S]*?dismissTransientInteractionsForStandby\(\);[\s\S]*?window\.cap7ce\?\.window\.setShellState\("standby"\)/u);
 assert.match(mainSource, /const applyStandaloneLineMode = \(\) => \{[\s\S]*?mainWindow\.hide\(\);\s*if \(standbyLineVisible\) \{\s*lineWindowController\.show\(\);/u);
 assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInteractiveThumbnailRenders\(\)\)/u);
 assert.match(mainSource, /compatibilityNativeMaximizeController\.attach\(mainWindow\);/u);

@@ -58,7 +58,7 @@ assert.match(bridgeSource, /capsule\.onDraftChanged\(\(query\) => callbacksRef\.
 assert.match(bridgeSource, /capsule\.onSubmitRequested\(\(query\) => callbacksRef\.current\.onSubmit\(query\)\)/u);
 assert.match(bridgeSource, /capsule\.onCancelRequested\(\(clearQuery\) => callbacksRef\.current\.onCancel\(clearQuery\)\)/u);
 assert.doesNotMatch(bridgeSource, /if \(!active\) return undefined;[\s\S]*?capsule\.onSubmitRequested/u);
-assert.match(appSource, /<QuickSearchCapsule/u);
+assert.doesNotMatch(appSource, /<QuickSearchCapsule/u);
 assert.match(appSource, /placeholder: searchInputFeedback,[\s\S]*?operationHintVisible,/u);
 assert.match(controllerSource, /operationHintVisible: candidate\.operationHintVisible === true/u);
 assert.match(capsuleAppSource, /<QuickSearchCapsule[\s\S]*?operationHintVisible=\{presentation\.operationHintVisible\}/u);
@@ -78,7 +78,7 @@ console.log(JSON.stringify({
   capsuleIpcSendersRestricted: true,
   sharedImeAndSubmitGuardPreserved: true,
   lineMainPreviewCapsuleMutualExclusionCovered: true,
-  cap7ceSameWindowCapsulePreserved: true,
+  cap7ceSameWindowCapsuleRendererRemoved: true,
   operationHintColorStateShared: true,
   compatibilitySearchUsesNormalWindow: true,
   compatibilityNormalUsesSharedAlt3Activation: true,
