@@ -219,7 +219,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAccessibilityStyles, /cap-stable-settings-copy p[\s\S]*?overflow-wrap: anywhere/u);
   assert.match(settingsStyles, /cap-stable-settings-shell[\s\S]*?grid-template-columns: 176px minmax\(0, 1fr\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation\s*\{[^}]*?(?:background|backdrop-filter):/u);
-  assert.match(settingsStyles, /cap-stable-settings-search[\s\S]*?height: 34px/u);
+  assert.match(settingsStyles, /cap-stable-settings-search[\s\S]*?height: 34px[\s\S]*?border-radius: var\(--radius-pill\)/u);
+  assert.doesNotMatch(settingsAccessibilityStyles, /cap-stable-settings-search:focus-within/u);
+  assert.match(settingsAppSource, /filterQuery[\s\S]*?searchCompositionRef[\s\S]*?onCompositionStart[\s\S]*?onCompositionEnd[\s\S]*?setFilterQuery/u);
   assert.match(settingsAppSource, /<StableUiIcon name="search" className="cap-stable-settings-search-icon" \/>/u);
   assert.match(settingsStyles, /cap-stable-settings-search-icon \{ width: 16px; height: 16px; color: var\(--stable-settings-secondary\); \}/u);
   assert.match(settingsStyles, /cap-stable-settings-section-cards\s*\{[\s\S]*?gap: 0;[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--stable-settings-card\)/u);
@@ -234,6 +236,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsStyles, /cap-stable-settings-card \+ \.cap-stable-settings-card \{ border-top: 1px solid var\(--stable-settings-border\); \}/u);
   assert.match(settingsStyles, /cap-stable-settings-card-expanded[\s\S]*?align-items: stretch[\s\S]*?@media \(max-width: 700px\)[\s\S]*?grid-template-columns: 52px minmax\(0, 1fr\)/u);
   assert.match(stableSkimStyles, /cap-settings-skim-display-stable[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?cap-settings-skim-extension\[data-selected="true"\]/u);
+  assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?min-height: 24px[\s\S]*?height: 24px[\s\S]*?border-radius: var\(--radius-pill\)/u);
   assert.match(skimDisplaySource, /stableUi[\s\S]*?cap-settings-skim-category-control[\s\S]*?role="switch"[\s\S]*?settings\.hiddenFiles/u);
   assert.match(settingsAppSource, /<EmbeddedMetadataSettingsRow stableUi \/>/u);
   assert.doesNotMatch(settingsAppSource, /SettingCard title="settings\.embeddedMetadata"[^>]*cap-stable-settings-card-expanded/u);

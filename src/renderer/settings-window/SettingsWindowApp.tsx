@@ -85,11 +85,13 @@ const SettingsWindowApp = () => {
   const { preferences, runtime } = controller;
   const [activeCategory, setActiveCategory] = useState<CategoryId>("general");
   const [query, setQuery] = useState("");
+  const [filterQuery, setFilterQuery] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
   const [dialogBusy, setDialogBusy] = useState(false);
   const [systemDark, setSystemDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const normalizedQuery = query.trim();
+  const searchCompositionRef = useRef(false);
+  const normalizedQuery = filterQuery.trim();
   const uiFontStyle = useUiFontSize(preferences?.uiFontSize ?? defaultUiFontSize);
 
   useEffect(() => {
@@ -99,7 +101,7 @@ const SettingsWindowApp = () => {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  const visibleCategories = useMemo(() => categoryDefinitions.filter((category) => matchesQuery(query, categorySearchKeys[category.id].map((key) => t(key)))), [query, controller.languageRevision]);
+  const visibleCategories = useMemo(() => categoryDefinitions.filter((category) => matchesQuery(filterQuery, categorySearchKeys[category.id].map((key) => t(key)))), [filterQuery, controller.languageRevision]);
   useEffect(() => {
     if (visibleCategories.some((category) => category.id === activeCategory)) return;
     if (visibleCategories[0]) setActiveCategory(visibleCategories[0].id);
@@ -161,7 +163,7 @@ const SettingsWindowApp = () => {
   return <div className={`cap-settings-window-foundation theme-${effectiveTheme}`} data-language={getActiveLanguage()} style={menuStyle}>
     <div className="cap-settings-window-drag-region" aria-hidden="true" />
     <div className="cap-stable-settings-shell">
-      <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => setQuery(event.target.value)} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} onClick={() => { setActiveCategory(category.id); setQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><SettingsCategoryIcon name={category.icon} /><span>{t(category.label)}</span></button>)}</nav></aside>
+      <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => { const value = event.target.value; setQuery(value); if (!searchCompositionRef.current) setFilterQuery(value); }} onCompositionStart={() => { searchCompositionRef.current = true; }} onCompositionEnd={(event) => { searchCompositionRef.current = false; const value = event.currentTarget.value; setQuery(value); setFilterQuery(value); }} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} onClick={() => { setActiveCategory(category.id); setQuery(""); setFilterQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><SettingsCategoryIcon name={category.icon} /><span>{t(category.label)}</span></button>)}</nav></aside>
       <div className="cap-stable-settings-content-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical"><main className="cap-stable-settings-content cap-main-scroll-viewport" ref={scrollRef}><div className="cap-stable-settings-content-track">{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel">{category.id === "browse" ? <header className="cap-stable-settings-page-heading"><h1>{t(category.label)}</h1><p>{t("stableSettings.desc.skimDisplay")}</p></header> : <h1>{t(category.label)}</h1>}{renderCategory(category.id)}</article>)}</div></main><CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" /></div>
     </div>
     {dialog && <SettingsConfirmationDialog message={dialog.message} busy={dialogBusy} confirmLabel={dialog.confirmLabel} onCancel={() => setDialog(null)} onConfirm={() => void confirmDialog()} />}

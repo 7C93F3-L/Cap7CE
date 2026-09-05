@@ -66,9 +66,10 @@
   width: auto;
   min-width: 52px;
   max-width: none;
-  height: 28px;
+  min-height: 24px;
+  height: 24px;
   padding-inline: 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-pill);
   color: var(--stable-settings-text);
   background: transparent;
   font-size: var(--cap-ui-font-secondary);
