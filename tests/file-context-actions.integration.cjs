@@ -122,7 +122,8 @@ assert.match(previewSource, /onContextMenu=\{\(event\) => \{\s*event\.preventDef
 assert.doesNotMatch(previewSource, /setContextMenu|deleteAction/);
 assert.match(previewSource, /if \(previewData\.skimActive\) \{\s*closePreview\(\);/);
 assert.match(previewSource, /if \(pendingLongSpaceAction\) \{\s*requestKeywordEdit\(pendingLongSpaceAction\);/);
-assert.match(previewSource, /if \(isStableUiPreview\)[\s\S]*?setPreviewKeywordEditorOpen\(true\)[\s\S]*?preview\.requestItemAction\(\{\s*action: "editKeywords"/);
+assert.match(previewSource, /const requestKeywordEdit[\s\S]*?setPreviewKeywordEditorOpen\(true\)/);
+assert.doesNotMatch(previewSource, /preview\.requestItemAction\(\{\s*action: "editKeywords"/);
 assert.match(skimSource, /ResponsiveSkimContextMenuLayer/);
 assert.match(skimSource, /fileShortcutAction === "addDirectory"/);
 assert.match(skimSource, /fileShortcutAction === "addToSidebar"/);

@@ -17,7 +17,7 @@
   position: absolute;
   inset:
     var(--content-edge-gap)
-    calc(var(--window-control-rail-width) + var(--custom-scrollbar-hit-size))
+    var(--custom-scrollbar-hit-size)
     var(--content-edge-gap)
     var(--content-edge-gap);
   min-width: 0;
@@ -27,6 +27,32 @@
   overflow: hidden;
   border-radius: var(--radius-thumb);
   -webkit-app-region: no-drag;
+}
+
+.preview-visual-with-metadata {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-thumb);
+}
+
+.preview-visual-with-metadata > .preview-window-image,
+.preview-visual-with-metadata > .preview-video {
+  grid-area: 1 / 1;
+}
+
+.preview-text-heading {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.preview-text-heading strong {
+  display: block;
 }
 
 .preview-window-image {
@@ -544,7 +570,7 @@
 .preview-window-scrollbar-slot {
   position: absolute;
   top: var(--content-edge-gap);
-  right: var(--window-control-rail-width);
+  right: 0;
   bottom: var(--content-edge-gap);
   width: var(--custom-scrollbar-hit-size);
   display: grid;

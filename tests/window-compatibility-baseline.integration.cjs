@@ -8,7 +8,6 @@ const lineControllerSource = fs.readFileSync(path.join(root, "electron", "lineWi
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
 const rendererEntry = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 const previewSource = fs.readFileSync(path.join(root, "src", "renderer", "PreviewWindowApp.tsx"), "utf8");
-const railSource = fs.readFileSync(path.join(root, "src", "renderer", "WindowControlRail.tsx"), "utf8");
 const shellStyles = fs.readFileSync(path.join(root, "src", "renderer", "styles.css"), "utf8");
 const presentationPolicySource = fs.readFileSync(path.join(root, "electron", "windowPresentationPolicy.ts"), "utf8");
 
@@ -36,18 +35,15 @@ assert.doesNotMatch(previewWindowCreation, /transparent: false/u);
 assert.match(presentationPolicySource, /if \(!surfacePolicy\.usesWindowControlsOverlay\) \{[\s\S]*?frame: false,[\s\S]*?transparent: true,[\s\S]*?backgroundColor: "#00000000"/u);
 assert.doesNotMatch(appSource, /<WindowControlRail|<CompatibilityTitlebar|<HomeView|<SettingsView|from "\.\/WindowControlRail"|from "\.\/settings\/SettingsView"/u);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\} \/>/u);
-assert.match(previewSource, /id: "close"[\s\S]*?id: "maximize"[\s\S]*?id: "pin"/u);
-assert.match(previewSource, /<WindowControlRail[\s\S]*?actions=\{previewControlActions\}[\s\S]*?showSkim=\{showSettings\}[\s\S]*?showSettings=\{showSettings\}/u);
-assert.match(railSource, /\{actions\.map\(\(action\) => \(/u);
-assert.match(railSource, /\{showSkim && onSkim && \(/u);
-assert.match(railSource, /\{showSettings && \(/u);
+assert.match(previewSource, /<StablePreviewTitlebar[\s\S]*?<PreviewInformationSidebar/u);
+assert.doesNotMatch(previewSource, /WindowControlRail|CompatibilityTitlebar|isCompatibilityWindow|isStableUiPreview/u);
 assert.match(shellStyles, /--cap-control-rail: var\(--window-control-rail-width\);/u);
 assert.match(shellStyles, /inset: 0 var\(--cap-control-rail\) 0 0;/u);
 
 console.log(JSON.stringify({
   cap7ceTransparentWindowCreationFrozen: true,
   legacyMainControlRailRemoved: true,
-  previewWindowControlActionsFrozen: true,
-  previewSkimAndSettingsRailBaselineFrozen: true,
+  legacyPreviewControlRailRemoved: true,
+  stablePreviewShellOnly: true,
   rightRailWidthBaselineFrozen: true
 }));

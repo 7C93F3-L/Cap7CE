@@ -3,8 +3,6 @@ import { t, type TranslationKey } from "../../../electron/localization";
 
 interface PreviewEmbeddedMetadataProps {
   data: PreviewEmbeddedMetadataData;
-  variant: "summary" | "details" | "sheet";
-  expanded?: boolean;
 }
 
 const metadataKindLabels: Record<PreviewEmbeddedMetadataKind, TranslationKey> = {
@@ -38,35 +36,14 @@ const MetadataRows = ({ data }: { data: PreviewEmbeddedMetadataData }) => (
   </dl>
 );
 
-const PreviewEmbeddedMetadata = ({ data, variant, expanded = false }: PreviewEmbeddedMetadataProps) => {
+const PreviewEmbeddedMetadata = ({ data }: PreviewEmbeddedMetadataProps) => {
   const rows = getMetadataRows(data);
   if (rows.length === 0) return null;
 
-  if (variant === "summary") {
-    return (
-      <div className="preview-embedded-metadata-summary" title={rows.map((row) => `${row.label}: ${row.text}`).join(" · ")}>
-        {rows.slice(0, 2).map((row) => `${row.label}: ${row.text}`).join(" · ")}
-      </div>
-    );
-  }
-
-  if (variant === "details") {
-    return (
-      <section className="preview-embedded-metadata-details" aria-label={t("preview.metadata.heading")}>
-        <h2>{t("preview.metadata.heading")}</h2>
-        <MetadataRows data={data} />
-      </section>
-    );
-  }
-
   return (
-    <section className={`preview-embedded-metadata-layer${expanded ? " is-expanded" : ""}`}>
-      <div className="preview-embedded-metadata-sheet" onClick={(event) => event.stopPropagation()}>
-        <div className="preview-embedded-metadata-sheet-content">
-          <h2>{t("preview.metadata.heading")}</h2>
-          <MetadataRows data={data} />
-        </div>
-      </div>
+    <section className="preview-embedded-metadata-details" aria-label={t("preview.metadata.heading")}>
+      <h2>{t("preview.metadata.heading")}</h2>
+      <MetadataRows data={data} />
     </section>
   );
 };

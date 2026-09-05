@@ -28,10 +28,9 @@ const navigationTargetSource = read("src/renderer/preview/previewNavigationTarge
 
 assert.match(mainSource, /const previewUrl = new URL\(devServerUrl\);[\s\S]*?previewUrl\.searchParams\.set\("window", "preview"\);[\s\S]*?previewUrl\.searchParams\.set\("presentation", windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /query: \{ window: "preview", presentation: windowPresentationRuntime\.mode \}/u);
-assert.match(previewSource, /const isStableUiPreview = new URLSearchParams\(window\.location\.search\)\.get\("presentation"\) === "stable"/u);
-assert.match(previewSource, /isStableUiPreview && <PreviewInformationSidebar/u);
-assert.match(previewSource, /isStableUiPreview && <StablePreviewTitlebar/u);
-assert.match(previewSource, /!isStableUiPreview && <WindowControlRail/u);
+assert.match(previewSource, /<PreviewInformationSidebar/u);
+assert.match(previewSource, /<StablePreviewTitlebar/u);
+assert.doesNotMatch(previewSource, /isStableUiPreview|isCompatibilityWindow|WindowControlRail|CompatibilityTitlebar/u);
 assert.match(titlebarSource, /<WindowTitlebarPortal>[\s\S]*?<header/u);
 assert.match(titlebarSource, /<WindowPinButton/u);
 assert.match(titlebarStyles, /\.preview-stable-titlebar\s*\{[\s\S]*?app-region: drag;/u);
@@ -39,13 +38,13 @@ assert.match(titlebarStyles, /\.preview-stable-titlebar-pin\s*\{[\s\S]*?app-regi
 assert.match(titlebarStyles, /\.preview-stable-titlebar-pin-icon\s*\{[\s\S]*?width: 24px;[\s\S]*?height: 24px;/u);
 assert.match(previewSource, /isPreviewNavigationSuppressedTarget/u);
 assert.match(navigationTargetSource, /data-preview-navigation-suppressed/u);
-assert.match(previewSource, /!isStableUiPreview && previewData\.embeddedMetadata[\s\S]*?variant="sheet"/u);
+assert.doesNotMatch(previewSource, /embeddedMetadataExpanded|variant="sheet"/u);
 
 assert.match(resultsSource, /buildPreviewSidebarData\(image\)/u);
 assert.match(sidebarDataSource, /manualKeywords: item\.keywords/u);
 assert.match(sidebarDataSource, /userDescription: item\.userDescription/u);
 assert.match(sidebarDataSource, /searchEvidence: item\.searchEvidence/u);
-assert.match(sidebarSource, /PreviewEmbeddedMetadata[\s\S]*?variant="details"/u);
+assert.match(sidebarSource, /<PreviewEmbeddedMetadata key=\{data\.sessionId\} data=\{data\.embeddedMetadata\} \/>/u);
 assert.match(sidebarSource, /<PreviewManualKeywordsSection[\s\S]*?manualKeywords=\{data\.manualKeywords \?\? \[\]\}[\s\S]*?onSave=\{onSaveKeywords\}/u);
 assert.match(manualKeywordsSectionSource, /<KeywordTagEditor[\s\S]*?initialKeywords=\{manualKeywords\}[\s\S]*?onSave=\{onSave\}/u);
 assert.match(manualKeywordsSectionSource, /editorOpen \? "preview\.sidebar\.clearKeywords" : "context\.editKeywords"/u);
@@ -85,9 +84,9 @@ assert.match(sidebarStyles, /preview-sidebar-section-heading button:not\(:disabl
 assert.match(sidebarStyles, /preview-sidebar-keywords span \{ min-width: 40px; text-align: center; \}/u);
 assert.match(sidebarStyles, /preview-sidebar-path:hover \{ color: var\(--theme-color\); \}/u);
 assert.match(previewSource, /--preview-action-hover-text": getTextColorForBackground\(previewData\.appearanceColors\.themeColor, previewData\.appearanceColors\.accentColor\)/u);
-assert.match(previewSource, /useUiFontSize\(isStableUiPreview \? uiFontSize : defaultUiFontSize\)/u);
+assert.match(previewSource, /useUiFontSize\(uiFontSize\)/u);
 assert.match(previewSource, /preferences\.onChanged\(\(preferences\) => \{[\s\S]*?setUiFontSize\(preferences\.uiFontSize\);[\s\S]*?setWindowMaterial\(preferences\.windowMaterial\);/u);
-assert.match(previewSource, /data-window-material=\{isStableUiPreview \? windowMaterial : undefined\}/u);
+assert.match(previewSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(previewSource, /<StablePreviewTitlebar[\s\S]*?windowMaterial=\{windowMaterial\}/u);
 assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(materialContrastStyles, /\.preview-window-stable-ui\[data-window-material="mica"\][\s\S]*?--preview-stable-card: #ffffff[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
@@ -98,14 +97,21 @@ assert.doesNotMatch(sidebarSource, /className="is-danger"/u);
 assert.match(sidebarStyles, /\.preview-sidebar-scroll::-webkit-scrollbar \{ width: 0; height: 0; \}/u);
 assert.match(sidebarStyles, /\.preview-information-sidebar > \.cap-custom-scrollbar-vertical \{ position: absolute; top: 58px; right: 4px; bottom: 0;/u);
 assert.match(titlebarStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;/u);
+assert.match(titlebarStyles, /--preview-titlebar-height: 40px/u);
+assert.match(shellStyles, /inset: var\(--preview-titlebar-height, 40px\) 0 0/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]*?inset: 0 5px 5px 0/u);
+assert.match(shellStyles, /\.preview-stable-shell \.preview-image-transform-canvas[\s\S]*?background: transparent/u);
+assert.match(shellStyles, /\.preview-stable-shell \.preview-image-transform-canvas[\s\S]*?border-radius: 0/u);
+assert.match(shellStyles, /\.preview-image-transform-canvas > \.preview-window-image[\s\S]*?border-radius: 0/u);
 assert.match(mainSource, /minimizable: isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /isStableWindowPresentationMode\(windowPresentationRuntime\.mode\) \? getStablePreviewContentChrome\(sidebarWidth\) : \{\}/u);
-assert.match(previewSource, /previewSidebarWidth = isStableUiPreview \? \(previewSidebarLayout\.expanded \? previewSidebarLayout\.width : 40\) : undefined/u);
-assert.match(previewSource, /infoDimensions = previewData\.info\?\.kind === "folder"[\s\S]*?isStableUiPreview \? 580 : 460[\s\S]*?hasExtendedInfoFallback \? 450 : 380[\s\S]*?hasExtendedInfoFallback \? 360 : 240/u);
+assert.match(previewSource, /previewSidebarWidth = previewSidebarLayout\.expanded \? previewSidebarLayout\.width : 40/u);
+assert.match(previewSource, /className="preview-window-shell preview-stable-shell"[\s\S]*?--preview-sidebar-width": `\$\{previewSidebarLayout\.width\}px`/u);
+assert.doesNotMatch(sidebarSource, /style=\{\{ "--preview-sidebar-width"/u);
+assert.match(previewSource, /infoDimensions = previewData\.info\?\.kind === "folder"[\s\S]*?\{ width: 600, height: 580 \}[\s\S]*?hasExtendedInfoFallback \? 450 : 380/u);
 assert.doesNotMatch(previewSource, /new ResizeObserver[\s\S]*?panel\.scrollHeight/u);
 assert.match(previewSource, /preview-info-heading[\s\S]*?getFormatIconSvg\(previewData\.info\.extension\)[\s\S]*?previewInfoFormat[\s\S]*?previewData\.info\.name/u);
-assert.match(previewSource, /preview-info-panel" data-preview-navigation-suppressed=\{isStableUiPreview \? "true" : undefined\}/u);
+assert.match(previewSource, /preview-info-panel" data-preview-navigation-suppressed="true"/u);
 assert.match(previewSource, /preview\.contentSize\(\{[\s\S]*?sidebarWidth: previewSidebarWidth/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content\s*\{[\s\S]*?inset: 0 5px 5px 0;/u);
 assert.match(shellStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
@@ -129,7 +135,7 @@ console.log(JSON.stringify({
   stablePreviewTitlebarAndNativeMinimizePresent: true,
   stablePreviewNativeTaskbarMinimizePresent: true,
   stablePreviewSingleWindowSurfacePresent: true,
-  legacyPreviewFallbackPreserved: true,
+  legacyPreviewDisplayRemoved: true,
   singleProviderLifecyclePreserved: true,
   formalInformationSidebarPresent: true,
   cardBasedInformationLayoutVerified: true,

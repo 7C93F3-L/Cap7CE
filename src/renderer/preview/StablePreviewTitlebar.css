@@ -1,5 +1,5 @@
 .preview-window-stable-ui {
-  --compatibility-titlebar-height: 40px;
+  --preview-titlebar-height: 40px;
   border: 0;
   border-radius: 0;
   background: transparent;

@@ -19,7 +19,7 @@
 .preview-stable-shell {
   --preview-sidebar-current-width: var(--preview-sidebar-width, 320px);
   position: absolute;
-  inset: var(--compatibility-titlebar-height, 0) 0 0;
+  inset: var(--preview-titlebar-height, 40px) 0 0;
   display: grid;
   grid-template-columns: var(--preview-sidebar-current-width) minmax(0, 1fr);
   overflow: hidden;
@@ -43,8 +43,7 @@
   background: var(--preview-stable-surface);
 }
 
-.preview-stable-shell .preview-window-scrollbar-slot,
-.preview-window-compatibility .preview-stable-shell .preview-window-scrollbar-slot {
+.preview-stable-shell .preview-window-scrollbar-slot {
   top: 5px;
   right: 5px;
   bottom: 5px;
@@ -53,8 +52,11 @@
 .preview-stable-shell .preview-image-transform-canvas {
   width: 100%;
   height: 100%;
+  border-radius: 0;
+  background: transparent;
   touch-action: none;
 }
+.preview-stable-shell .preview-image-transform-canvas > .preview-window-image { border-radius: 0; }
 
 .preview-stable-shell .preview-image-transform-canvas.is-pannable {
   cursor: grab;

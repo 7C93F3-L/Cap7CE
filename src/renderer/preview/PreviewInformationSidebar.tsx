@@ -55,7 +55,6 @@ const PreviewInformationSidebar = ({
   return (
   <aside
     className={`preview-information-sidebar${expanded ? " is-expanded" : " is-collapsed"}`}
-    style={{ "--preview-sidebar-width": `${width}px` } as React.CSSProperties}
     data-preview-navigation-suppressed="true"
     aria-label={t("preview.sidebar.heading")}
   >
@@ -89,7 +88,7 @@ const PreviewInformationSidebar = ({
             : <p className="preview-sidebar-empty">{data.skimActive ? t("preview.sidebar.skimEvidence") : t("preview.sidebar.noEvidence")}</p>}
         </section>
         {data.embeddedMetadata
-          ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} variant="details" />
+          ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />
           : <section className="preview-sidebar-section"><h2>{t("preview.metadata.heading")}</h2><p className="preview-sidebar-empty">{t("preview.sidebar.noEmbeddedMetadata")}</p></section>}
         <section className="preview-sidebar-section">
           <h2>{t("preview.sidebar.fileActions")}</h2>

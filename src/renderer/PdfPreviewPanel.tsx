@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { PreviewWindowData } from "../shared/types";
 import { t } from "../../electron/localization";
-import PreviewEmbeddedMetadata from "./preview/PreviewEmbeddedMetadata";
 import WaitingIndicator from "./WaitingIndicator";
 
 const initialMountedPageCount = 3;
@@ -155,7 +154,6 @@ const PdfPreviewPanel = ({
       <header>
         <div className="preview-text-heading">
           <strong>{data.fileName}</strong>
-          {data.embeddedMetadata && <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} variant="summary" />}
         </div>
         <nav aria-label={t("preview.pdfNavigation")}>
           <button
