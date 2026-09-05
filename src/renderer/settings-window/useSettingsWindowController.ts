@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveLanguagePreference, setActiveLanguage } from "../../../electron/localization";
 import type {
   AppearanceColors,
@@ -36,6 +36,7 @@ export const useSettingsWindowController = () => {
   const [isAddingDirectory, setIsAddingDirectory] = useState(false);
   const [error, setError] = useState("");
   const [languageRevision, setLanguageRevision] = useState(0);
+  const refreshAllPromiseRef = useRef<Promise<void> | null>(null);
   const runtime = useRuntimeModelController();
 
   const applyPreferences = useCallback((nextPreferences: UserPreferences | null | undefined) => {
@@ -69,30 +70,38 @@ export const useSettingsWindowController = () => {
     return nextDirectories ?? [];
   }, []);
 
-  const refreshAll = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
-    try {
-      const [nextPreferences, nextDirectories, availability] = await Promise.all([
-        window.cap7ce?.preferences.get(),
-        window.cap7ce?.directories.list(),
-        window.cap7ce?.preferences.shortcutAvailability(),
-        refreshCaches(),
-        runtime.refreshLlamaRuntimeSettings(),
-        runtime.refreshGgufModelSettings()
-      ]);
-      applyPreferences(nextPreferences);
-      if (nextDirectories) setDirectories(nextDirectories);
-      setUnavailableShortcutActionIds(availability?.unavailableActionIds ?? []);
-    } catch {
-      setError("load");
-    } finally {
-      setIsLoading(false);
+  const refreshAll = useCallback((showLoading = true) => {
+    if (refreshAllPromiseRef.current) return refreshAllPromiseRef.current;
+    if (showLoading) {
+      setIsLoading(true);
+      setError("");
     }
+    const refreshPromise = (async () => {
+      try {
+        const [nextPreferences, nextDirectories, availability] = await Promise.all([
+          window.cap7ce?.preferences.get(),
+          window.cap7ce?.directories.list(),
+          window.cap7ce?.preferences.shortcutAvailability(),
+          refreshCaches(),
+          runtime.refreshLlamaRuntimeSettings(),
+          runtime.refreshGgufModelSettings()
+        ]);
+        applyPreferences(nextPreferences);
+        if (nextDirectories) setDirectories(nextDirectories);
+        setUnavailableShortcutActionIds(availability?.unavailableActionIds ?? []);
+      } catch {
+        if (showLoading) setError("load");
+      } finally {
+        if (showLoading) setIsLoading(false);
+        refreshAllPromiseRef.current = null;
+      }
+    })();
+    refreshAllPromiseRef.current = refreshPromise;
+    return refreshPromise;
   }, [applyPreferences, refreshCaches, runtime.refreshGgufModelSettings, runtime.refreshLlamaRuntimeSettings]);
 
   useEffect(() => {
-    void refreshAll();
+    void refreshAll(true);
   }, [refreshAll]);
 
   useEffect(() => window.cap7ce?.cache.onOptimizationStatusChanged((status) => {
@@ -114,7 +123,7 @@ export const useSettingsWindowController = () => {
   }), []);
 
   useEffect(() => {
-    const refreshOnFocus = () => { void refreshAll(); };
+    const refreshOnFocus = () => { void refreshAll(false); };
     window.addEventListener("focus", refreshOnFocus);
     return () => window.removeEventListener("focus", refreshOnFocus);
   }, [refreshAll]);

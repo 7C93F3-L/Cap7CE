@@ -254,6 +254,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(embeddedMetadataSource, /if \(stableUi\)[\s\S]*?cap-stable-settings-action-line/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
+  assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);
+  assert.match(settingsControllerSource, /if \(showLoading\) \{[\s\S]*?setIsLoading\(true\)[\s\S]*?if \(showLoading\) setIsLoading\(false\)/u);
+  assert.match(settingsControllerSource, /refreshAll\(true\)[\s\S]*?const refreshOnFocus = \(\) => \{ void refreshAll\(false\); \};[\s\S]*?addEventListener\("focus", refreshOnFocus\)/u);
   assert.match(preloadSource, /settingsWindow:[\s\S]*?settingsWindow:open/u);
   assert.match(preloadSource, /directories:[\s\S]*?directories:changed[\s\S]*?preferences:[\s\S]*?preferences:changed/u);
   assert.match(appSource, /onOpenSettings:\s*\(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/u);
