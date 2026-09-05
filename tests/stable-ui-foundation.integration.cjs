@@ -85,6 +85,7 @@ void (async () => {
   assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
   assert.match(materialContrastStyles, /\.cap-stable-ui\[data-window-material="mica"\][\s\S]*?--cap-stable-surface: rgb\(246 246 246 \/ 96%\)[\s\S]*?theme-dark[\s\S]*?rgb\(24 24 24 \/ 96%\)/u);
   assert.match(materialContrastStyles, /--cap-stable-surface-soft: #ffffff[\s\S]*?--cap-stable-search-surface: #ffffff/u);
+  assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="mica"\][\s\S]*?--cap-stable-search-surface: var\(--cap-stable-navigation-state\)/u);
   assert.match(materialContrastStyles, /--cap-stable-flyout-surface: color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\)[\s\S]*?cap-stable-sidebar-flyout button\.is-selected[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\)/u);
   assert.match(materialContrastStyles, /:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-stable-skim-slot\s*\{\s*--cap-stable-skim-hover-surface: rgb\(31 31 31 \/ 5%\);\s*--cap-stable-selected-surface: rgb\(31 31 31 \/ 8%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 46%\)/u);
   assert.match(foundationStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-stable-font-size\)/u);

@@ -16,6 +16,7 @@
   --cap-stable-flyout-surface: color-mix(in srgb, var(--panel-bg) 80%, transparent);
   --cap-stable-hover: rgb(255 255 255 / 12%);
   --cap-stable-navigation-state: rgb(0 0 0 / 42%);
+  --cap-stable-search-surface: var(--cap-stable-navigation-state);
   --cap-stable-material-border: rgb(255 255 255 / 12%);
 }
 
@@ -56,11 +57,16 @@
   --dialog-surface: rgb(28 28 28 / 98%);
   --dialog-control-surface: rgb(255 255 255 / 11%);
   --cap-stable-navigation-state: rgb(0 0 0 / 42%);
+  --cap-stable-search-surface: var(--cap-stable-navigation-state);
   --cap-stable-material-border: rgb(255 255 255 / 12%);
 }
 
 .cap-settings-window-foundation[data-window-material="mica"] :is(.cap-stable-settings-content-frame, .cap-stable-settings-section-cards) {
   box-shadow: inset 0 0 0 1px var(--cap-stable-material-border);
+}
+
+.cap-settings-window-foundation:not(.theme-dark)[data-window-material="mica"] .cap-settings-skim-format-group {
+  background: #ffffff;
 }
 
 .preview-window-stable-ui[data-window-material="mica"] {

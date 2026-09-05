@@ -204,6 +204,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /data-window-material=\{preferences\.windowMaterial\}/u);
   assert.match(materialContrastStyles, /\.cap-settings-window-foundation\[data-window-material="mica"\][\s\S]*?--stable-settings-card: #ffffff[\s\S]*?--cap-stable-navigation-state: #ffffff[\s\S]*?--cap-stable-search-surface: #ffffff[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
+  assert.match(materialContrastStyles, /cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-settings-skim-format-group\s*\{\s*background: #ffffff;/u);
+  assert.match(materialContrastStyles, /cap-settings-window-foundation\.theme-dark\[data-window-material="mica"\][\s\S]*?--cap-stable-search-surface: var\(--cap-stable-navigation-state\)/u);
   assert.match(settingsAppSource, /<FontSizeSetting value=\{preferences\.uiFontSize\}[\s\S]*?controller\.updateUiFontSize/u);
   assert.match(fontSizeSettingSource, /type="range" min=\{12\} max=\{16\} step=\{1\}/u);
   assert.match(fontSizeSettingSource, /uiFontSize\.small[\s\S]*?uiFontSize\.standard[\s\S]*?uiFontSize\.large/u);
