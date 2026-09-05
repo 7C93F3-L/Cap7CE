@@ -166,6 +166,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(settingsAppSource, /<select|type="color"/u);
   assert.match(settingsAppSource, /<StableSettingsSelect[\s\S]*?menuStyle=\{menuStyle\}/u);
   assert.match(settingsAppSource, /<AppearanceColorSettingsControl[\s\S]*?onPreview=\{controller\.previewAppearanceColors\}/u);
+  assert.match(appearanceColorSource, /cap-stable-settings-colors[\s\S]*?themeColor[\s\S]*?accentColor[\s\S]*?cap-stable-settings-button[\s\S]*?common\.restoreDefault/u);
+  assert.match(appearanceColorSource, /defaultAppearanceColors[\s\S]*?onChange\(defaultAppearanceColors\)/u);
   assert.match(stableSelectSource, /<SettingsSelect[\s\S]*?menuClassName="cap-stable-settings-select-menu"/u);
   assert.match(sharedSelectSource, /menuClassName\?[\s\S]*?cap-settings-select-menu\$\{menuClassName/u);
   assert.match(stableSelectStyles, /cap-stable-settings-select-menu[\s\S]*?backdrop-filter[\s\S]*?linear-gradient/u);

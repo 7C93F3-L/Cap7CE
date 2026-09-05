@@ -1,6 +1,7 @@
 import { useRef, useState, type CSSProperties } from "react";
 import { t } from "../../../electron/localization";
 import type { AppearanceColors } from "../../shared/types";
+import { defaultAppearanceColors } from "../appearance";
 import ColorPickerPopover from "../ColorPickerPopover";
 import "./AppearanceColorSettingsControl.css";
 
@@ -40,6 +41,17 @@ const AppearanceColorSettingsControl = ({
       <div className="cap-stable-settings-colors">
         {renderColorButton("themeColor", t("appearance.themeColor"))}
         {renderColorButton("accentColor", t("appearance.accentColor"))}
+        <button
+          type="button"
+          className="cap-stable-settings-button"
+          title={t("settings.resetAppearanceHint")}
+          onClick={() => {
+            setActiveColor(null);
+            onChange(defaultAppearanceColors);
+          }}
+        >
+          {t("common.restoreDefault")}
+        </button>
       </div>
       {activeColor && (
         <ColorPickerPopover
