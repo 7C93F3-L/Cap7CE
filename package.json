@@ -17,9 +17,6 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "concurrently --kill-others-on-fail -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
-    "dev:cap7ce": "cross-env CAP7CE_WINDOW_PRESENTATION_MODE=cap7ce npm run dev",
-    "dev:compatibility": "cross-env CAP7CE_WINDOW_PRESENTATION_MODE=compatibility npm run dev",
-    "dev:stable-ui": "cross-env CAP7CE_WINDOW_PRESENTATION_MODE=stable npm run dev",
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "build:electron": "tsc -p tsconfig.electron.json",

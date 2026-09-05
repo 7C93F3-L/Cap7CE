@@ -44,6 +44,10 @@ export const normalizeWindowPresentationMode = (value: unknown): WindowPresentat
     : DEFAULT_WINDOW_PRESENTATION_MODE
 );
 
+export const resolveProductWindowPresentationMode = (_value: unknown): WindowPresentationMode => (
+  DEFAULT_WINDOW_PRESENTATION_MODE
+);
+
 export const getWindowLayoutFileName = (mode: WindowPresentationMode) => (
   mode === "stable"
     ? "window-layout-stable-ui.json"

@@ -69,7 +69,7 @@ import { DEFAULT_WINDOW_RESIZE_THRESHOLDS, isStableResizeBounds, resolveResizeTa
 import { CompatibilityNativeMaximizeController, isNativeSnapArrangement } from "./compatibilityNativeMaximizeController";
 import { ShellWindowPresentationSizing } from "./shellWindowPresentationSizing";
 import { isStableWindowPresentationMode, WindowPresentationRuntime } from "./windowPresentationRuntime";
-import { normalizeWindowPresentationMode } from "./windowPresentationPolicy";
+import { normalizeWindowPresentationMode, resolveProductWindowPresentationMode } from "./windowPresentationPolicy";
 import { resolveStableUiDefaultWindowBounds, resolveWindowLayoutMemoryEnabled, STABLE_UI_MINIMUM_OUTER_SIZE } from "./stableUiWindowLifecycle";
 import { createWindowPresentationSwitchRuntime } from "./windowPresentationSwitchRuntime";
 import { getStablePreviewContentChrome, PreviewWindowPresentationSizing } from "./previewWindowPresentationSizing";
@@ -184,12 +184,13 @@ const createApplicationWindow = (surface: BrowserWindowSurface, options: Browser
   options, presentationMode: windowPresentationRuntime.mode, surface
 });
 let windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", windowPresentationRuntime.layoutFileName)));
-const windowPresentationSwitchRuntime = createWindowPresentationSwitchRuntime({
+createWindowPresentationSwitchRuntime({
   registrar: ipcMain, isSenderAllowed: isMainSenderAllowed, markerPath: path.join(app.getPath("userData"), "config", "window-presentation-switch.json"),
   getActiveMode: () => windowPresentationRuntime.mode, updatePreference: updateWindowPresentationModePreference,
-  flushBeforeRestart: async () => { await Promise.all([windowLayoutManager.flush(), runtimeDiagnostics.flush()]); }, relaunch: () => { delete process.env.CAP7CE_WINDOW_PRESENTATION_MODE; app.relaunch(); },
+  flushBeforeRestart: async () => { await Promise.all([windowLayoutManager.flush(), runtimeDiagnostics.flush()]); }, relaunch: () => { app.relaunch(); },
   setQuitting: () => { isQuitting = true; }, quit: () => app.quit(),
-  onDiagnostic: (level, event, data) => runtimeDiagnostics.log(level, event, data)
+  onDiagnostic: (level, event, data) => runtimeDiagnostics.log(level, event, data),
+  presentationSwitchEnabled: false
 });
 let standbyLineVisible = true;
 let systemNotificationsEnabled = true;
@@ -2220,7 +2221,6 @@ const createWindow = () => {
   });
   windowPresentationRuntime.applyMainWindowAppearance(mainWindow, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors);
   lockWebContentsZoom(mainWindow.webContents);
-  mainWindow.webContents.once("did-finish-load", () => { void windowPresentationSwitchRuntime.completeStartup(windowPresentationRuntime.mode); });
   dockedShellController = installDockedShell({
     window: mainWindow, enabled: edgeCollapseEnabled, enableDebugShortcut: Boolean(process.env.VITE_DEV_SERVER_URL),
     fixed: shellAlwaysOnTop,
@@ -2349,11 +2349,10 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   }
   const preferences = await getUserPreferences();
   if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
-  const hasDevelopmentWindowModeOverride = !app.isPackaged && Boolean(process.env.CAP7CE_WINDOW_PRESENTATION_MODE);
-  const requestedWindowPresentationMode = hasDevelopmentWindowModeOverride ? process.env.CAP7CE_WINDOW_PRESENTATION_MODE : preferences.windowPresentationMode;
+  const requestedWindowPresentationMode = preferences.windowPresentationMode;
   const normalizedRequestedWindowPresentationMode = normalizeWindowPresentationMode(requestedWindowPresentationMode);
-  windowPresentationRuntime.configure(await windowPresentationSwitchRuntime.resolveStartupMode(normalizedRequestedWindowPresentationMode), preferences.themePreference, preferences.windowMaterial);
-  runtimeDiagnostics.log("info", "window.presentation.startup", { requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime.mode, source: hasDevelopmentWindowModeOverride ? "development-override" : "preference" });
+  windowPresentationRuntime.configure(resolveProductWindowPresentationMode(normalizedRequestedWindowPresentationMode), preferences.themePreference, preferences.windowMaterial);
+  runtimeDiagnostics.log("info", "window.presentation.startup", { requestedMode: normalizedRequestedWindowPresentationMode, activeMode: windowPresentationRuntime.mode, source: "preference-compatibility" });
   settingsWindowController = new SettingsWindowController({
     browserOptions: () => windowPresentationRuntime.getBrowserOptions("settings", nativeTheme.shouldUseDarkColors), createWindow: (options) => createApplicationWindow("settings", options),
     devServerUrl: process.env.VITE_DEV_SERVER_URL, devToolsEnabled: !app.isPackaged, getDisplayMatching: (bounds) => toWindowLayoutDisplaySnapshot(screen.getDisplayMatching(bounds)),

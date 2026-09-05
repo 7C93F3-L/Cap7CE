@@ -98,18 +98,19 @@ void (async () => {
   assert.match(foundationStyles, /::-webkit-scrollbar-thumb:hover,[\s\S]*?background:\s*var\(--scrollbar-thumb-hover\)/u);
   assert.doesNotMatch(foundationStyles, /--cap-stable-scrollbar/u);
   assert.match(accessibilityStyles, /\.cap-stable-titlebar \*[\s\S]*?transition-duration:\s*0ms !important/u);
-  assert.match(packageJson.scripts["dev:stable-ui"], /CAP7CE_WINDOW_PRESENTATION_MODE=stable/);
-  assert.match(packageJson.scripts["dev:cap7ce"], /CAP7CE_WINDOW_PRESENTATION_MODE=cap7ce/);
-  assert.match(packageJson.scripts["dev:compatibility"], /CAP7CE_WINDOW_PRESENTATION_MODE=compatibility/);
+  assert.match(packageJson.scripts.dev, /npm:dev:renderer[\s\S]*?npm:dev:electron/u);
+  assert.equal(packageJson.scripts["dev:stable-ui"], undefined);
+  assert.equal(packageJson.scripts["dev:cap7ce"], undefined);
+  assert.equal(packageJson.scripts["dev:compatibility"], undefined);
   assert.equal(packageJson.scripts["dev:stable-ui:outer"], undefined);
-  assert.doesNotMatch(packageJson.scripts["dev:stable-ui"], /SIZE_CONTRACT/);
+  assert.doesNotMatch(packageJson.scripts.dev, /CAP7CE_WINDOW_PRESENTATION_MODE|SIZE_CONTRACT/u);
 
   console.log(JSON.stringify({
     formalStableRendererEntryVerified: true,
     stableDefaultLayoutIsolated: true,
     sharedPinControlVerified: true,
     scrollIsolatedTitlebarPortalVerified: true,
-    legacyHostDevelopmentCommandsPreserved: true,
+    stableOnlyDevelopmentCommandVerified: true,
     legacyResizeStateSettlingBypassed: true,
     nativeCloseUsesSafeStandbyChain: true,
     legacySizePresetNotAppliedAtStartup: true,

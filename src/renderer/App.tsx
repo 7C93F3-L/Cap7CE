@@ -3207,7 +3207,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
                 appearanceColors={appearanceColors}
                 standbyLineVisible={standbyLineVisible}
                 launchAtLogin={launchAtLogin}
-                windowPresentationMode={windowPresentationMode}
                 systemNotificationsEnabled={systemNotificationsEnabled}
                 operationHintsEnabled={operationHintsEnabled}
                 aiRecognitionEnabled={aiRecognitionEnabled}

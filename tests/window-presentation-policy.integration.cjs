@@ -8,6 +8,7 @@ const {
   getWindowPresentationPolicy,
   getWindowPresentationSymbolColor,
   normalizeWindowPresentationMode,
+  resolveProductWindowPresentationMode,
   resolveWindowPresentationTheme
 } = require("../dist-electron/windowPresentationPolicy.js");
 
@@ -17,6 +18,9 @@ assert.equal(normalizeWindowPresentationMode("invalid"), "stable");
 assert.equal(normalizeWindowPresentationMode("stable"), "stable");
 assert.equal(normalizeWindowPresentationMode("cap7ce"), "cap7ce");
 assert.equal(normalizeWindowPresentationMode("compatibility"), "compatibility");
+for (const requestedMode of [undefined, "invalid", "stable", "cap7ce", "compatibility"]) {
+  assert.equal(resolveProductWindowPresentationMode(requestedMode), "stable");
+}
 
 const stablePolicy = getWindowPresentationPolicy();
 assert.equal(stablePolicy.mode, "stable");
@@ -88,6 +92,7 @@ assert.equal(resolveWindowPresentationTheme("light", true), "light");
 
 console.log(JSON.stringify({
   stableUiIsDefaultPresentationMode: true,
+  productEntryAlwaysUsesStableUi: true,
   legacyCap7CEWindowPolicyPreserved: true,
   invalidModesFallbackSafely: true,
   compatibilityCapabilitiesDeclaredReadOnly: true,

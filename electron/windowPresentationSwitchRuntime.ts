@@ -32,6 +32,7 @@ interface WindowPresentationSwitchRuntimeOptions {
   startupTimeoutMs?: number;
   now?: () => Date;
   onDiagnostic?: (level: "info" | "warn" | "error", event: string, data: Record<string, unknown>) => void;
+  presentationSwitchEnabled?: boolean;
 }
 
 const isWindowPresentationMode = (value: unknown): value is WindowPresentationMode => (
@@ -215,28 +216,29 @@ export class WindowPresentationSwitchRuntime {
 
 export const createWindowPresentationSwitchRuntime = (options: WindowPresentationSwitchRuntimeOptions) => {
   const runtime = new WindowPresentationSwitchRuntime(options);
+  const registrations = [
+    {
+      kind: "handle" as const,
+      channel: "app:quit",
+      listener: () => {
+        options.setQuitting();
+        options.quit();
+        return true;
+      }
+    },
+    ...(options.presentationSwitchEnabled === false ? [] : [{
+      kind: "handle" as const,
+      channel: "app:switchWindowPresentationMode",
+      listener: (_event: IpcMainInvokeEvent, targetMode: unknown) => {
+        if (!isWindowPresentationMode(targetMode)) throw new Error("Invalid window presentation mode.");
+        return runtime.requestSwitch(targetMode);
+      }
+    }])
+  ];
   registerIpcDomain({
     registrar: options.registrar,
     isSenderAllowed: options.isSenderAllowed,
-    registrations: [
-      {
-        kind: "handle",
-        channel: "app:quit",
-        listener: () => {
-          options.setQuitting();
-          options.quit();
-          return true;
-        }
-      },
-      {
-        kind: "handle",
-        channel: "app:switchWindowPresentationMode",
-        listener: (_event, targetMode: unknown) => {
-          if (!isWindowPresentationMode(targetMode)) throw new Error("Invalid window presentation mode.");
-          return runtime.requestSwitch(targetMode);
-        }
-      }
-    ]
+    registrations
   });
   return runtime;
 };

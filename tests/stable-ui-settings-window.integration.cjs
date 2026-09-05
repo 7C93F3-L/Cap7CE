@@ -216,6 +216,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(fontSizeSettingStyles, /webkit-slider-thumb/u);
   assert.match(settingsAppSource, /useUiFontSize\(preferences\?\.uiFontSize \?\? defaultUiFontSize\)/u);
   assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
+  assert.doesNotMatch(settingsAppSource, /stableSettings\.windowMode|switchWindowPresentationMode|WindowPresentationModeSettingsRow/u);
   assert.doesNotMatch(settingsAppSource, /settings\.rememberWindowLayout|stableSettings\.desc\.rememberWindows/u);
   assert.match(settingsAppSource, /category === "browse"[\s\S]*?<SkimDisplaySettingsRows stableUi/u);
   assert.match(settingsAppSource, /id: "browse", label: "settings\.skimDisplay"/u);

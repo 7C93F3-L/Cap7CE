@@ -1,9 +1,8 @@
 import { useRef, useState, type CSSProperties } from "react";
 import { t } from "../../../electron/localization";
-import type { AppearanceColors, LanguagePreference, ThemeMode, WindowPresentationMode } from "../../shared/types";
+import type { AppearanceColors, LanguagePreference, ThemeMode } from "../../shared/types";
 import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "../appearance";
 import ColorPickerPopover from "../ColorPickerPopover";
-import { WindowPresentationModeSettingsRow } from "./WindowPresentationModeSettingsRow";
 
 export interface AppearanceSettingsSectionsProps {
   theme: ThemeMode;
@@ -14,7 +13,6 @@ export interface AppearanceSettingsSectionsProps {
   rememberWindowLayout: boolean;
   standbyLineVisible: boolean;
   launchAtLogin: boolean;
-  windowPresentationMode: WindowPresentationMode;
   systemNotificationsEnabled: boolean;
   operationHintsEnabled: boolean;
   onThemeChange: (theme: ThemeMode) => void;
@@ -62,7 +60,6 @@ export const AppearanceSettingsSections = ({
   rememberWindowLayout,
   standbyLineVisible,
   launchAtLogin,
-  windowPresentationMode,
   systemNotificationsEnabled,
   operationHintsEnabled,
   onThemeChange,
@@ -177,7 +174,6 @@ export const AppearanceSettingsSections = ({
             {launchAtLogin ? t("settings.launchAtLoginOn") : t("settings.launchAtLoginOff")}
           </button>
         </div>
-        <WindowPresentationModeSettingsRow activeMode={windowPresentationMode} />
       </section>
 
       {activeColorPicker && (

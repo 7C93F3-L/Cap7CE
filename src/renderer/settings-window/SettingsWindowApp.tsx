@@ -13,7 +13,6 @@ import { QuickCommandSettingsRows } from "../settings/QuickCommandSettingsRows";
 import { RuntimeDiagnosticsRows } from "../settings/RuntimeDiagnosticsRows";
 import { SettingsFooter } from "../settings/SettingsFooter";
 import { SkimDisplaySettingsRows } from "../settings/SkimDisplaySettingsRows";
-import { getWindowPresentationModeLabel, getWindowPresentationSwitchTarget } from "../settings/WindowPresentationModeSettingsRow";
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";
 import SettingsConfirmationDialog from "./SettingsConfirmationDialog";
 import FontSizeSetting from "./FontSizeSetting";
@@ -41,7 +40,7 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; icon: 
   { id: "about", label: "stableSettings.category.about", icon: "about" }
 ];
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
-  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.windowMode", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line", "stableSettings.desc.windowMode"],
+  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
   appearance: ["stableSettings.category.appearance", "stableSettings.material", "stableSettings.uiFontSize", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.uiFontSize", "stableSettings.desc.theme", "stableSettings.desc.colors"],
   browse: ["settings.skimDisplay", "stableSettings.desc.skimDisplay"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.idleUnload", "stableSettings.runtimeInfo", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.idleUnload", "stableSettings.desc.runtimeInfo"],
@@ -133,7 +132,6 @@ const SettingsWindowApp = () => {
       <SettingsSection title="stableSettings.section.windows">
         <SettingCard title="settings.edgeCollapse" description="stableSettings.desc.edgeCollapse" query={normalizedQuery}><SettingsToggle enabled={preferences.edgeCollapseEnabled} onChange={(enabled) => toggle("edgeCollapseEnabled", enabled)} /></SettingCard>
         <SettingCard title="settings.standbyLine" description="stableSettings.desc.line" query={normalizedQuery}><SettingsToggle enabled={preferences.standbyLineVisible} onChange={(enabled) => toggle("standbyLineVisible", enabled)} /></SettingCard>
-        <SettingCard title="stableSettings.windowMode" description="stableSettings.desc.windowMode" query={normalizedQuery}><button type="button" className="cap-stable-settings-button" onClick={() => void window.cap7ce?.app.switchWindowPresentationMode(getWindowPresentationSwitchTarget(preferences.windowPresentationMode))}>{getWindowPresentationModeLabel(getWindowPresentationSwitchTarget(preferences.windowPresentationMode))}</button></SettingCard>
       </SettingsSection>
     </>;
     if (category === "appearance") return <>

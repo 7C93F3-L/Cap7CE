@@ -30,7 +30,8 @@ const createHarness = async (overrides = {}) => {
     quit: () => calls.push(["quit"]),
     onDiagnostic: (level, event, data) => diagnostics.push({ level, event, data }),
     startupTimeoutMs: overrides.startupTimeoutMs ?? 40,
-    now: () => new Date("2026-08-30T08:00:00.000Z")
+    now: () => new Date("2026-08-30T08:00:00.000Z"),
+    presentationSwitchEnabled: overrides.presentationSwitchEnabled
   });
   return { root, handles, calls, diagnostics, runtime, setActiveMode: (mode) => { activeMode = mode; } };
 };
@@ -55,6 +56,9 @@ const run = async () => {
     ["window.presentation.switch.result", "restarting"],
     ["window.presentation.switch.result", "busy"]
   ]);
+
+  const retiredProductEntry = await createHarness({ presentationSwitchEnabled: false });
+  assert.deepEqual([...retiredProductEntry.handles.keys()], ["app:quit"]);
 
   const successfulProducer = await createHarness();
   await successfulProducer.runtime.requestSwitch("compatibility");
@@ -118,19 +122,24 @@ const run = async () => {
   assert.deepEqual(staleLaunch.calls.at(-1), ["stalePreference", "compatibility"]);
   assert.equal(staleLaunch.diagnostics.at(-1).event, "window.presentation.switch.stale_launch_rolled_back");
 
-  const [appearanceSource, rowSource, preloadSource, zhSource, enSource, packageSource] = await Promise.all([
+  const [appearanceSource, settingsWindowSource, rowSource, preloadSource, zhSource, enSource, packageSource, mainSource] = await Promise.all([
     fs.readFile(path.join(__dirname, "../src/renderer/settings/AppearanceSettingsSections.tsx"), "utf8"),
+    fs.readFile(path.join(__dirname, "../src/renderer/settings-window/SettingsWindowApp.tsx"), "utf8"),
     fs.readFile(path.join(__dirname, "../src/renderer/settings/WindowPresentationModeSettingsRow.tsx"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/preload.ts"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/localization.ts"), "utf8"),
     fs.readFile(path.join(__dirname, "../electron/locales/en-US.ts"), "utf8"),
-    fs.readFile(path.join(__dirname, "../package.json"), "utf8")
+    fs.readFile(path.join(__dirname, "../package.json"), "utf8"),
+    fs.readFile(path.join(__dirname, "../electron/main.ts"), "utf8")
   ]);
-  assert.match(appearanceSource, /settings\.launchAtLogin[\s\S]*?<WindowPresentationModeSettingsRow activeMode=\{windowPresentationMode\}/);
+  assert.doesNotMatch(appearanceSource, /WindowPresentationModeSettingsRow|windowPresentationMode/u);
+  assert.doesNotMatch(settingsWindowSource, /WindowPresentationModeSettingsRow|switchWindowPresentationMode|stableSettings\.windowMode/u);
   assert.match(rowSource, /activeMode === "stable" \? "compatibility" : activeMode === "compatibility" \? "cap7ce" : "stable"/);
   assert.match(rowSource, /getWindowPresentationModeLabel/);
   assert.match(rowSource, /disabled=\{status === "switching"\}/);
   assert.match(preloadSource, /app:switchWindowPresentationMode/);
+  assert.match(mainSource, /presentationSwitchEnabled: false/u);
+  assert.doesNotMatch(mainSource, /resolveStartupMode\(/u);
   assert.match(rowSource, /settings\.windowModeSwitchDescription/);
   for (const key of ["settings.stableMode", "settings.compatibilityMode", "settings.cap7ceMode", "settings.windowModeSwitchDescription", "settings.switchWindowMode", "settings.switchingWindowMode", "settings.switchToStableHint", "settings.switchToCompatibilityHint", "settings.switchToCap7CEHint", "settings.windowModeSwitchFailed"]) {
     assert.ok(zhSource.includes(`"${key}"`), `Missing Chinese text: ${key}`);
@@ -139,8 +148,12 @@ const run = async () => {
   const developmentScript = JSON.parse(packageSource).scripts.dev;
   assert.match(developmentScript, /--kill-others-on-fail/u);
   assert.doesNotMatch(developmentScript, /(?:^|\s)-k(?:\s|$)/u);
+  const packageScripts = JSON.parse(packageSource).scripts;
+  assert.equal(packageScripts["dev:cap7ce"], undefined);
+  assert.equal(packageScripts["dev:compatibility"], undefined);
+  assert.equal(packageScripts["dev:stable-ui"], undefined);
 
-  await Promise.all([first, successfulProducer, failedFlush, timeoutProducer, staleLaunch].map(({ root }) => fs.rm(root, { recursive: true, force: true })));
+  await Promise.all([first, retiredProductEntry, successfulProducer, failedFlush, timeoutProducer, staleLaunch].map(({ root }) => fs.rm(root, { recursive: true, force: true })));
   console.log(JSON.stringify({
     senderValidationVerified: true,
     duplicateSwitchSuppressed: true,
@@ -149,7 +162,8 @@ const run = async () => {
     staleLaunchRolledBack: true,
     controlledRestartDiagnosticsVerified: true,
     developmentRendererSurvivesControlledRestart: true,
-    settingsTargetModeRowVerified: true
+    productSwitchEntryRetired: true,
+    legacySwitchImplementationIsolated: true
   }));
 };
 

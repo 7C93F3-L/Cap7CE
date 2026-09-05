@@ -1,6 +1,6 @@
 {
   "maxLines": {
-    "src/renderer/App.tsx": 3315,
+    "src/renderer/App.tsx": 3313,
     "src/renderer/main.tsx": 73,
     "src/renderer/CompatibilityCapsuleWindowApp.tsx": 66,
     "src/renderer/CompatibilityCapsuleWindowApp.css": 4,
@@ -32,7 +32,7 @@
     "src/renderer/stable-ui/StableSearchInput.tsx": 46,
     "src/renderer/stable-ui/stableUiRendererTypes.ts": 26,
     "src/renderer/stable-ui/StableSearchResults.css": 53,
-    "src/renderer/settings-window/SettingsWindowApp.tsx": 180,
+    "src/renderer/settings-window/SettingsWindowApp.tsx": 173,
     "src/renderer/settings-window/SettingsWindowApp.css": 501,
     "src/renderer/settings-window/SettingsWindowAccessibility.css": 36,
     "src/renderer/settings-window/SettingsWindowUpdateControl.tsx": 134,
@@ -73,7 +73,7 @@
     "src/renderer/settings/RuntimeModelSettingsSection.css": 65,
     "src/renderer/settings/DirectoryAiSettingsRows.css": 51,
     "src/renderer/settings/SettingsView.css": 253,
-    "electron/main.ts": 3770,
+    "electron/main.ts": 3668,
     "electron/windowPresentationRuntime.ts": 64,
     "electron/settingsWindowController.ts": 171,
     "electron/settingsDataBroadcast.ts": 15,
