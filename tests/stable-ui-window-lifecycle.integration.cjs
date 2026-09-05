@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const {
   STABLE_UI_TITLEBAR_HEIGHT,
+  STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE,
   STABLE_UI_MINIMUM_OUTER_SIZE,
   applyStableUiWindowMaterial,
   resolveStableUiBrowserOptions,
@@ -14,9 +15,12 @@ const {
 } = require("../dist-electron/stableUiWindowLifecycle.js");
 
 assert.equal(STABLE_UI_TITLEBAR_HEIGHT, 40);
+assert.deepEqual(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE, { width: 1600, height: 1000 });
 assert.deepEqual(STABLE_UI_MINIMUM_OUTER_SIZE, { width: 300, height: 170 });
-assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 96, y: 52, width: 1728, height: 936 });
-assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 1920, y: 0, width: 1366, height: 728 }), { x: 1989, y: 37, width: 1229, height: 655 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 173, y: 94, width: 1574, height: 853 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 1920, y: 0, width: 1366, height: 728 }), { x: 2043, y: 66, width: 1120, height: 597 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 3440, height: 1400 }), { x: 920, y: 200, width: 1600, height: 1000 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 240, height: 150 }), { x: 0, y: 0, width: 240, height: 150 });
 assert.equal(resolveWindowLayoutMemoryEnabled(false, true), true);
 assert.equal(resolveWindowLayoutMemoryEnabled(false, false), false);
 assert.equal(resolveWindowLayoutMemoryEnabled(true, false), true);

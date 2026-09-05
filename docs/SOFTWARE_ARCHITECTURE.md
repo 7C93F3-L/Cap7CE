@@ -44,9 +44,9 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 按实际 presentation 创建主 `BrowserWindow`。缺失或非法偏好默认使用正式 `stable` 宿主：主窗口、独立 Settings 与 Preview 使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽高的 90% 居中且不再使用固定最大尺寸。明确保存的旧 `cap7ce` 继续使用透明自绘窗口，`compatibility` 继续使用不透明 WCO、36 DIP 标题栏和 Mica，本轮不改写已有偏好。主窗口同时装配只负责待机线展示的不可聚焦 `lineWindow` 和旧宿主 Capsule 控制器；stable 不进入 Capsule 显示链。所有窗口的 DevTools 能力仅在未打包开发环境开启。
+- 按实际 presentation 创建主 `BrowserWindow`。缺失或非法偏好默认使用正式 `stable` 宿主：主窗口、独立 Settings 与 Preview 使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽高的 82%、最大 1600×1000 居中。明确保存的旧 `cap7ce` 继续使用透明自绘窗口，`compatibility` 继续使用不透明 WCO、36 DIP 标题栏和 Mica，本轮不改写已有偏好。主窗口同时装配只负责待机线展示的不可聚焦 `lineWindow` 和旧宿主 Capsule 控制器；stable 不进入 Capsule 显示链。所有窗口的 DevTools 能力仅在未打包开发环境开启。
 - `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。边缘收起由设置页与托盘菜单共用同一偏好控制，不再附带拖动结束后的自绘位置吸附。stable 与 compatibility 的贴靠和分屏完全交由 Windows Snap；检测到系统 Snap 几何时暂停边缘收起。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
-- 旧宿主继续管理 capsule / micro / mini / normal / Settings 主窗口状态。stable 的正式窗口表面只有主窗口、独立 Settings、Preview 和原有 line，不迁移或继续扩展 Capsule；内容始终使用单一 normal / 自由响应式布局，拖动与缩放不触发形态转换。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点。stable 不注册 micro / mini；唯一尺寸动作把主窗口恢复为当前工作区 90% 的居中 bounds，不进入旧 shell state。
+- 旧宿主继续管理 capsule / micro / mini / normal / Settings 主窗口状态。stable 的正式窗口表面只有主窗口、独立 Settings、Preview 和原有 line，不迁移或继续扩展 Capsule；内容始终使用单一 normal / 自由响应式布局，拖动与缩放不触发形态转换。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点。stable 不注册 micro / mini；唯一尺寸动作把主窗口恢复为当前工作区 82%、最大 1600×1000 的居中 bounds，不进入旧 shell state。
 - 全局 Alt+4、兼容主窗口原生关闭与 capsule 失焦只向 Renderer 发出同一个安全 standby 请求，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。真正退出时 `isQuitting` 允许原生 close 继续完成，不反向进入隐藏链路。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
 - 创建托盘图标和右键菜单；托盘图标单击、第二实例和全局窗口快捷动作复用同一个主窗口恢复入口，冷启动时到达过早的第二实例请求延迟到主窗口 ready 后执行。恢复 normal 时已有 skim 会话保持当前内容视图。
@@ -68,7 +68,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | 模块 | 职责 |
 | --- | --- |
 | `windowPresentationPolicy.ts` / `windowPresentationRuntime.ts` | 主窗口 / 预览 / Settings 窗口外壳模式与 stable 材质的稳定类型、能力策略及主进程运行期装配；缺失或非法偏好一律规范化为 `stable`，已有明确旧偏好保持原值。stable 使用 40 DIP WCO 与用户选择的 Acrylic / Mica，并保留主题纯色回退；cap7ce 保持透明自绘参数，compatibility 使用不透明 WCO、36 DIP 标题栏和 Mica；三种模式分别使用 `window-layout-stable-ui.json`、`window-layout.json` 与 `window-layout-compatibility.json`。主进程通过只读壳层指标返回本次实际生效模式，Renderer 不按保存值猜测 |
-| `stableUiWindowLifecycle.ts` | 正式 stable 宿主的 40 DIP WCO、Acrylic / Mica 运行时应用与主题纯色回退、工作区 90% 的初始自由 bounds、默认开启的布局记忆策略，以及新版不再注册的旧尺寸快捷动作判定；不改写或迁移旧宿主布局文件 |
+| `stableUiWindowLifecycle.ts` | 正式 stable 宿主的 40 DIP WCO、Acrylic / Mica 运行时应用与主题纯色回退、工作区 82% 且最大 1600×1000 的初始自由 bounds、默认开启的布局记忆策略，以及新版不再注册的旧尺寸快捷动作判定；不改写或迁移旧宿主布局文件 |
 | `windowPresentationGeometry.ts` / `shellWindowPresentationSizing.ts` | 兼容宿主的内容 bounds、真实外框 bounds、工作区和最小尺寸转换，以及主窗口 micro / mini / normal / Settings 的统一尺寸解析；标题栏只增加外框高度，不挤压现有内容，resize 形态阈值继续按内容尺寸判断 |
 | `previewWindowPresentationSizing.ts` | 预览内容尺寸到真实窗口外框的纯几何适配；Cap7CE 模式保持原尺寸，兼容模式额外增加标题栏高度，新版 Preview 使用信息栏当前宽度与右/底 5px 边距计算外框；各模式均保持当前外框中心，并在狭窄工作区内统一约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `compatibilityNativeMaximizeController.ts` | 兼容主窗口原生最大化 / 还原适配；micro / mini 最大化前记录形态与完整展开 bounds，统一进入 normal 最大化，还原时回到原形态和位置。主进程另以工作区网格几何识别 stable / compatibility 的左右及分区 Snap，在系统管理窗口期间暂停布局记忆、内容尺寸改写和边缘收起；普通自由停放及 Cap7CE 模式不受影响 |
@@ -293,7 +293,7 @@ micro / mini / normal 不是完全独立页面，而是旧搜索胶囊的不同�
 
 Cap7CE 模式的同窗 capsule 继续使用主进程全局光标位置判断窗口是否接收鼠标，并按光标距离以 50 / 100 / 200 ms 自适应调度；离开时停止计时并恢复普通鼠标事件。兼容模式不把不透明 WCO 主窗口压缩成胶囊，而由独立透明 Capsule 接收输入；草稿、提交、Esc、失焦和 IME 状态通过专用白名单同步，搜索与快捷指令仍在隐藏的主 Renderer 执行。独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复。主进程监听显示器 `workArea` / `bounds` 变化，并分别将可见 line 与当前模式的 Capsule 重新贴合工作区；旧外壳 micro、mini、normal 与 Settings 不自动移动，也不通过该机制推测其他应用的全屏状态。独立 Settings 在隐藏后重开或下次启动时按自己的版本化记录执行显示恢复。该策略不恢复 edge hidden。
 
-旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。stable 旁路旧 resize 形态推断，按整窗 `300 × 170` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；只有恢复默认窗口动作会主动应用当前工作区 90% 的居中 bounds。
+旧 Renderer 可拉伸主窗口的最小边界为 micro 基准内容尺寸 `300 × 156`。默认位置进入 micro 时，横向拉伸保持以窗口中心为锚点向两侧变化；其他旧形态不额外引入并行缩放规则。stable 旁路旧 resize 形态推断，按整窗 `300 × 170` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；只有恢复默认窗口动作会主动应用当前工作区 82%、最大 1600×1000 的居中 bounds。
 
 旧主窗口的 capsule、micro、mini、normal 与 Settings 状态仍属于同一业务状态机；Cap7CE 同窗 Capsule 与兼容独立 Capsule 复用同一个 `QuickSearchCapsule` 输入组件。旧 micro、mini、normal 与 Settings 使用 `WindowControlRail`，控制栏固定在右侧，窗口按钮保持同一 DOM 顺序，按钮自身为原生 `no-drag`，按钮间隙和控制栏空白为原生 `drag`。稳定 UI 的 Settings 独立 Renderer 由 `src/renderer/main.tsx` 按 `window=settings` 分流；U7 的 `SettingsWindowApp` 不导入旧完整 `SettingsView`，而是复用其既有领域组件和同一组 preload 动作。新版 Settings 的目录管理入口由主界面目录列表替代，自定义查看使用常驻展开适配，line 归入通用窗口设置；旧 Settings 的目录管理和折叠配置不变。Capsule 不提供拖动区域，支持 `Esc` 或失焦收回；line 由独立 Renderer 绘制待机线，点击时只通过受限 IPC 复用既有 Capsule 激活动作。
 
