@@ -17,6 +17,7 @@ const layoutSource = read("src/renderer/preview/usePreviewSidebarLayout.ts");
 const keyboardSource = read("src/renderer/preview/previewSidebarKeyboard.ts");
 const shellStyles = read("src/renderer/preview/StablePreviewShell.css");
 const fileInfoStyles = read("src/renderer/preview/StablePreviewFileInfo.css");
+const providerStyles = read("src/renderer/preview/StablePreviewProviders.css");
 const sidebarStyles = read("src/renderer/preview/StablePreviewSidebar.css");
 const accessibilityStyles = read("src/renderer/preview/StablePreviewAccessibility.css");
 const responsiveStyles = read("src/renderer/preview/StablePreviewResponsive.css");
@@ -106,8 +107,13 @@ assert.match(shellStyles, /\.preview-window-stable-ui\s*\{[\s\S]*?font-family:\s
 assert.match(sidebarStyles, /preview-sidebar-file-heading strong[^\n]*font-size:\s*var\(--cap-ui-font-heading\)/u);
 assert.match(shellStyles, /--preview-stable-surface: rgb\(255 255 255 \/ 50%\)[\s\S]*?theme-dark[\s\S]*?rgb\(26 26 26 \/ 58%\)[\s\S]*?background: var\(--preview-stable-surface\)/u);
 assert.match(shellStyles, /@import "\.\/StablePreviewFileInfo\.css"/u);
+assert.match(shellStyles, /@import "\.\/StablePreviewProviders\.css"/u);
 assert.match(fileInfoStyles, /\.preview-window-stable-ui \.preview-info-heading[\s\S]*?\.preview-info-format-icon[\s\S]*?\.preview-info-panel dl[\s\S]*?background: var\(--preview-stable-card\)/u);
 assert.match(fileInfoStyles, /\.preview-window-stable-ui \.preview-info-panel \{[^}]*height: auto; max-height: 100%;/u);
+assert.match(previewSource, /preview-audio-identity[\s\S]*?getFormatIconSvg\(previewData\.info\?\.extension \?\? ""\)[\s\S]*?preview-audio-format-icon/u);
+for (const providerClass of ["preview-text-panel", "preview-pdf-panel", "preview-archive-panel", "preview-font-panel", "preview-epub-panel", "preview-mobi-panel", "preview-audio-panel", "preview-video"]) {
+  assert.match(providerStyles, new RegExp(`\\.preview-window-stable-ui \\.${providerClass}`, "u"));
+}
 assert.match(mainSource, /skipTaskbar: !isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)/u);
 assert.match(mainSource, /previewWindow\.setSkipTaskbar\(!isStableWindowPresentationMode\(windowPresentationRuntime\.mode\)\)/u);
 assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw - 220px\)/u);

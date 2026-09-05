@@ -1,0 +1,259 @@
+.preview-window-stable-ui .preview-text-panel,
+.preview-window-stable-ui .preview-media-panel,
+.preview-window-stable-ui .preview-pdf-panel,
+.preview-window-stable-ui .preview-archive-panel,
+.preview-window-stable-ui .preview-font-panel,
+.preview-window-stable-ui .preview-epub-panel,
+.preview-window-stable-ui .preview-mobi-panel {
+  border-radius: 0;
+  background: transparent;
+}
+
+.preview-window-stable-ui .preview-text-panel,
+.preview-window-stable-ui .preview-pdf-panel,
+.preview-window-stable-ui .preview-archive-panel,
+.preview-window-stable-ui .preview-font-panel {
+  width: 100%;
+}
+
+.preview-window-stable-ui .preview-text-panel > header,
+.preview-window-stable-ui .preview-pdf-panel > header,
+.preview-window-stable-ui .preview-archive-panel > header {
+  min-height: 56px;
+  margin: 16px 18px 0;
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: var(--preview-stable-card);
+  color: var(--preview-stable-muted);
+}
+
+.preview-window-stable-ui .preview-text-panel pre,
+.preview-window-stable-ui .preview-markdown-content {
+  margin: 14px 18px 18px;
+  padding: 20px 22px;
+  border-radius: 22px;
+  background: var(--preview-stable-card);
+}
+
+.preview-window-stable-ui .preview-markdown-content {
+  font-size: 14px;
+  line-height: 1.78;
+}
+
+.preview-window-stable-ui .preview-markdown-content pre {
+  margin: 0 0 1em;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-main) 8%, transparent);
+}
+
+.preview-window-stable-ui .preview-pdf-panel nav button {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-main) 7%, transparent);
+}
+
+.preview-window-stable-ui .preview-pdf-panel nav button:hover:not(:disabled) {
+  color: var(--preview-action-hover-text);
+  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+}
+
+.preview-window-stable-ui .preview-pdf-scroll {
+  margin: 14px 18px 18px;
+  padding: 18px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--text-main) 5%, transparent);
+}
+
+.preview-window-stable-ui .preview-pdf-page {
+  margin-bottom: 18px;
+  border-radius: 8px;
+  box-shadow: 0 5px 22px rgb(0 0 0 / 16%);
+}
+
+.preview-window-stable-ui .preview-archive-truncated {
+  margin: 10px 34px 0;
+  color: var(--preview-stable-muted);
+}
+
+.preview-window-stable-ui .preview-archive-list {
+  margin: 14px 18px 18px;
+  padding: 8px 16px;
+  border-radius: 22px;
+  background: var(--preview-stable-card);
+}
+
+.preview-window-stable-ui .preview-archive-entry {
+  min-height: 38px;
+  padding: 7px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-main) 10%, transparent);
+  border-radius: 0;
+}
+
+.preview-window-stable-ui .preview-archive-entry:nth-child(odd) {
+  background: transparent;
+}
+
+.preview-window-stable-ui .preview-archive-entry:last-child {
+  border-bottom: 0;
+}
+
+.preview-window-stable-ui .preview-font-panel {
+  padding: 24px;
+}
+
+.preview-window-stable-ui .preview-font-panel > header,
+.preview-window-stable-ui .preview-font-axes,
+.preview-window-stable-ui .preview-font-sample {
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: var(--preview-stable-card);
+}
+
+.preview-window-stable-ui .preview-font-panel > header {
+  align-items: center;
+}
+
+.preview-window-stable-ui .preview-font-axes {
+  margin-top: 12px;
+}
+
+.preview-window-stable-ui .preview-font-samples {
+  gap: 14px;
+  padding-top: 14px;
+}
+
+.preview-window-stable-ui .preview-font-sample > p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.preview-window-stable-ui .preview-epub-scroll,
+.preview-window-stable-ui .preview-mobi-scroll {
+  padding: 26px clamp(22px, 5vw, 56px) 48px;
+}
+
+.preview-window-stable-ui .preview-epub-scroll > header,
+.preview-window-stable-ui .preview-mobi-scroll > header,
+.preview-window-stable-ui .preview-epub-scroll article,
+.preview-window-stable-ui .preview-mobi-scroll article {
+  max-width: 720px;
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: 24px;
+  background: var(--preview-stable-card);
+}
+
+.preview-window-stable-ui .preview-epub-scroll > header,
+.preview-window-stable-ui .preview-mobi-scroll > header {
+  margin-bottom: 16px;
+}
+
+.preview-window-stable-ui .preview-epub-scroll article,
+.preview-window-stable-ui .preview-mobi-scroll article {
+  margin-bottom: 16px;
+}
+
+.preview-window-stable-ui .preview-epub-scroll > header img,
+.preview-window-stable-ui .preview-mobi-scroll > header img {
+  border-radius: 12px;
+}
+
+.preview-window-stable-ui .preview-audio-panel {
+  width: min(100% - 36px, 620px);
+  height: auto;
+  padding: clamp(24px, 6vw, 48px);
+  border-radius: 28px;
+  background: var(--preview-stable-card);
+}
+
+.preview-window-stable-ui .preview-audio-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.preview-window-stable-ui .preview-audio-identity > div {
+  min-width: 0;
+}
+
+.preview-window-stable-ui .preview-audio-identity span {
+  color: var(--preview-stable-muted);
+  font-size: var(--cap-ui-font-secondary);
+  font-weight: 600;
+}
+
+.preview-window-stable-ui .preview-audio-identity strong {
+  display: block;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.preview-window-stable-ui .preview-audio-format-icon {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  opacity: .82;
+}
+
+.preview-window-stable-ui .preview-audio-format-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-window-stable-ui .preview-audio-panel audio {
+  min-height: 40px;
+}
+
+.preview-window-stable-ui .preview-visual-with-metadata {
+  width: calc(100% - 36px);
+  height: calc(100% - 36px);
+  border-radius: 18px;
+  background: #000;
+  box-shadow: 0 5px 22px rgb(0 0 0 / 18%);
+}
+
+.preview-window-stable-ui .preview-video {
+  border-radius: 18px;
+}
+
+@media (max-width: 640px) {
+  .preview-window-stable-ui .preview-text-panel > header,
+  .preview-window-stable-ui .preview-pdf-panel > header,
+  .preview-window-stable-ui .preview-archive-panel > header {
+    margin: 12px 12px 0;
+  }
+
+  .preview-window-stable-ui .preview-text-panel pre,
+  .preview-window-stable-ui .preview-markdown-content,
+  .preview-window-stable-ui .preview-pdf-scroll,
+  .preview-window-stable-ui .preview-archive-list {
+    margin: 12px;
+  }
+
+  .preview-window-stable-ui .preview-font-panel {
+    padding: 14px;
+  }
+
+  .preview-window-stable-ui .preview-audio-panel {
+    width: calc(100% - 24px);
+    padding: 22px;
+  }
+
+  .preview-window-stable-ui .preview-audio-format-icon {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+  }
+
+  .preview-window-stable-ui .preview-epub-scroll > header,
+  .preview-window-stable-ui .preview-mobi-scroll > header {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .preview-window-stable-ui .preview-epub-scroll > header img,
+  .preview-window-stable-ui .preview-mobi-scroll > header img {
+    width: 84px;
+    max-height: 120px;
+  }
+}

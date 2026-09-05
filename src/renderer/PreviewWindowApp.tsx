@@ -813,7 +813,15 @@ const PreviewWindowApp = () => {
         ) : (previewData.provider === "audio" || previewData.provider === "video") && !showInfoFallback ? (
           previewData.provider === "audio" ? (
             <section className="preview-media-panel preview-audio-panel" data-preview-provider-interactive="true">
-              <strong>{previewData.fileName}</strong>
+              {isStableUiPreview ? (
+                <div className="preview-audio-identity">
+                  <SvgIcon svg={getFormatIconSvg(previewData.info?.extension ?? "")} className="cap-svg-icon preview-audio-format-icon" />
+                  <div>
+                    <span>{previewInfoFormat}</span>
+                    <strong>{previewData.fileName}</strong>
+                  </div>
+                </div>
+              ) : <strong>{previewData.fileName}</strong>}
               <audio
                 key={previewData.sessionId}
                 ref={(element) => { mediaRef.current = element; }}
