@@ -6,7 +6,6 @@ import CustomScrollbar from "./CustomScrollbar";
 import SvgIcon from "./components/SvgIcon";
 import { getFormatIconSvg } from "./formatIcons";
 import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
-import ImageContextMenu, { getImageContextMenuStyle } from "./ImageContextMenu";
 import WaitingIndicator from "./WaitingIndicator";
 import WindowControlRail, { type WindowControlAction } from "./WindowControlRail";
 import PdfPreviewPanel from "./PdfPreviewPanel";
@@ -18,7 +17,7 @@ import { usePreviewSidebarLayout } from "./preview/usePreviewSidebarLayout";
 import { getPreviewWheelNavigationDirection, isPreviewNavigationSuppressedTarget } from "./preview/previewNavigationTarget";
 import { usePreviewImageTransform } from "./preview/usePreviewImageTransform";
 import CompatibilityTitlebar from "./window-presentation/CompatibilityTitlebar";
-import { buildFileContextMenuGroups, getFileContextShortcutAction } from "./fileContextActions";
+import { getFileContextShortcutAction } from "./fileContextActions";
 import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
@@ -111,7 +110,6 @@ const PreviewWindowApp = () => {
   const [showInfoFallback, setShowInfoFallback] = useState(false);
   const [fontRuntimeFailed, setFontRuntimeFailed] = useState(false);
   const [showPreviewLoadingIndicator, setShowPreviewLoadingIndicator] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [viewportHeight, setViewportHeight] = useState(() => window.innerHeight);
   const [windowControlState, setWindowControlState] = useState(defaultPreviewWindowControlState);
   const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
@@ -145,7 +143,6 @@ const PreviewWindowApp = () => {
   }, [previewData]);
   const requestKeywordEdit = useCallback((data: PreviewWindowData) => {
     if (data.skimActive) return;
-    setContextMenu(null);
     if (isStableUiPreview) {
       setPreviewKeywordSaveError("");
       setPreviewKeywordEditorOpen(true);
@@ -210,7 +207,6 @@ const PreviewWindowApp = () => {
       const isImageProvider = !data.provider || data.provider === "image";
       setIsPreviewLoading(isImageProvider);
       if (!isImageProvider) {
-        setContextMenu(null);
         void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
         return;
       }
@@ -220,7 +216,6 @@ const PreviewWindowApp = () => {
         }
         previewLoadingIndicatorTimerRef.current = null;
       }, previewLoadingIndicatorDelayMs);
-      setContextMenu(null);
       void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
     });
     window.cap7ce?.preview.requestData();
@@ -323,7 +318,6 @@ const PreviewWindowApp = () => {
       setShowInfoFallback(false);
       setFontRuntimeFailed(false);
       setShowPreviewLoadingIndicator(false);
-      setContextMenu(null);
       previewKeywordSavePendingRef.current = false;
       setPreviewKeywordEditorOpen(false);
       setPreviewKeywordSavePending(false);
@@ -369,15 +363,10 @@ const PreviewWindowApp = () => {
       if (isEditableKeyboardTarget(event.target)) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        if (contextMenu) {
-          setContextMenu(null);
-          return;
-        }
         closePreview();
         return;
       }
       if (isStableUiPreview && isPreviewNavigationSuppressedTarget(event.target)) return;
-      if (contextMenu) return;
       if (isPlainSpaceShortcut(event)) {
         event.preventDefault();
         if (event.repeat || !previewData) return;
@@ -464,7 +453,7 @@ const PreviewWindowApp = () => {
       window.removeEventListener("blur", cancelSpaceHold);
       cancelSpaceHold();
     };
-  }, [closePreview, contextMenu, previewData, requestKeywordEdit, spaceHoldController]);
+  }, [closePreview, previewData, requestKeywordEdit, spaceHoldController]);
 
   const savePreviewKeywords = useCallback(async (keywords: string[]) => {
     if (!previewData || previewData.skimActive || previewKeywordSavePendingRef.current) return;
@@ -555,19 +544,14 @@ const PreviewWindowApp = () => {
       style={themeStyle}
       role="dialog"
       aria-label={previewData.fileName}
-      onClick={() => setContextMenu(null)}
       onContextMenu={(event) => {
         event.preventDefault();
-        if (isStableUiPreview && isPreviewNavigationSuppressedTarget(event.target)) return;
-        setContextMenu({ x: event.clientX, y: event.clientY });
       }}
       onWheelCapture={(event) => {
         if (isStableUiPreview && isImageProvider && (event.target as Element).closest?.("[data-preview-image-canvas='true']") && imageTransform.handleWheel(event)) {
-          setContextMenu(null);
           return;
         }
         if (isStableUiPreview && (isPreviewNavigationSuppressedTarget(event.target) || (event.target as Element).closest?.("[data-preview-provider-interactive='true']"))) {
-          setContextMenu(null);
           return;
         }
         const contentScroll = previewData.provider === "text"
@@ -583,7 +567,6 @@ const PreviewWindowApp = () => {
             : null;
         if (contentScroll && !showInfoFallback) {
           event.preventDefault();
-          setContextMenu(null);
           const deltaMultiplier = event.deltaMode === 1
             ? 16
             : event.deltaMode === 2
@@ -597,7 +580,6 @@ const PreviewWindowApp = () => {
           return;
         }
         event.preventDefault();
-        setContextMenu(null);
         const now = window.performance.now();
         if (now - wheelThrottleRef.current < 200) {
           return;
@@ -707,7 +689,6 @@ const PreviewWindowApp = () => {
           }}
           onClick={(event) => {
             event.stopPropagation();
-            setContextMenu(null);
             if (!isStableUiPreview && previewData.embeddedMetadata) setEmbeddedMetadataExpanded((current) => !current);
           }}
           />
@@ -949,97 +930,6 @@ const PreviewWindowApp = () => {
         settingsLabel={t("window.openSettings")}
         onSettings={() => { void window.cap7ce?.preview.openSettings(); }}
       />}
-      {contextMenu && (
-        <ImageContextMenu
-          key={`preview:${previewData.filePath}:${contextMenu.x}:${contextMenu.y}`}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          theme={previewData.theme}
-          menuStyle={getImageContextMenuStyle(previewData.theme, previewData.appearanceColors)}
-          header={{
-            format: previewData.info?.kind === "folder"
-              ? t("fileInfo.folder")
-              : (() => {
-                const extension = previewData.fileName.slice(previewData.fileName.lastIndexOf(".") + 1);
-                return extension && extension !== previewData.fileName ? extension.toUpperCase() : t("fileInfo.file");
-              })(),
-            fileName: previewData.fileName,
-            filePath: previewData.filePath,
-            primaryDetail: previewData.info?.kind === "folder"
-              ? folderStats
-                ? t("fileInfo.size", { size: formatPreviewBytes(folderStats.totalSize) })
-                : undefined
-              : t("fileInfo.size", { size: formatPreviewBytes(previewData.fileSize) }),
-            details: previewData.info?.kind === "folder"
-              ? folderStats
-                ? [t("fileInfo.compactContents", { files: folderStats.fileCount, folders: folderStats.folderCount })]
-                : [t("fileInfo.calculating")]
-              : []
-          }}
-          groups={buildFileContextMenuGroups({
-            viewLabel: t("context.view"),
-            actionsLabel: t("context.actions"),
-            primaryViewAction: {
-              id: "close",
-              label: t("preview.close"),
-              onSelect: () => {
-                setContextMenu(null);
-                closePreview();
-              }
-            },
-            openAction: {
-              id: "open",
-              label: t("context.open"),
-              onSelect: async () => {
-                setContextMenu(null);
-                const result = await window.cap7ce?.files.open(previewData.filePath);
-                if (result === "") closePreview();
-              }
-            },
-            showInFolderAction: {
-              id: "showInFolder",
-              label: t("context.showInFolder"),
-              onSelect: () => {
-                setContextMenu(null);
-                void window.cap7ce?.files.showInFolder(previewData.filePath);
-              }
-            },
-            copyPathsAction: {
-              id: "copyPath",
-              label: t("context.copyPath"),
-              onSelect: () => {
-                setContextMenu(null);
-                void window.cap7ce?.files.copyPaths([previewData.filePath]);
-              }
-            },
-            editKeywordsAction: !previewData.skimActive
-              ? {
-                id: "editKeywords",
-                label: t("context.editKeywords"),
-                onSelect: () => {
-                  setContextMenu(null);
-                  requestKeywordEdit(previewData);
-                }
-              }
-              : undefined,
-            editKeywordsShortcut: t("context.holdSpaceShortcut"),
-            deleteAction: !previewData.skimActive
-              ? {
-                id: "delete",
-                label: t("context.deleteFile"),
-                onSelect: () => {
-                  setContextMenu(null);
-                  void window.cap7ce?.preview.requestItemAction({
-                    action: "deleteFile",
-                    itemId: previewData.itemId,
-                    filePath: previewData.filePath
-                  });
-                }
-              }
-              : undefined
-          })}
-        />
-      )}
     </main>
   );
 };

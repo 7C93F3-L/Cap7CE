@@ -15,6 +15,8 @@ assert.match(previewSource, /isPreviewNavigationSuppressedTarget\(event\.target\
 assert.match(previewSource, /getPreviewWheelNavigationDirection\(event\.deltaX, event\.deltaY\)/u);
 assert.match(previewSource, /isImageProvider[\s\S]*?imageTransform\.handleWheel\(event\)/u);
 assert.match(previewSource, /data-preview-provider-interactive="true"/u);
+assert.doesNotMatch(previewSource, /ImageContextMenu|buildFileContextMenuGroups|setContextMenu/u);
+assert.match(previewSource, /onContextMenu=\{\(event\) => \{\s*event\.preventDefault\(\);\s*\}\}/u);
 assert.match(targetSource, /data-preview-navigation-suppressed[\s\S]*?\.context-menu[\s\S]*?input[\s\S]*?textarea[\s\S]*?select/u);
 
 assert.match(transformSource, /minimumZoom = 1/u);
