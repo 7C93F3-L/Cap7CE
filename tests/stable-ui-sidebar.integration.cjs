@@ -64,6 +64,7 @@ assert.doesNotMatch(sidebarStyles, /\.cap-stable-switch/u);
 assert.match(sidebarSource, /<StableUiIcon name="folder" active=\{selected\}/u);
 assert.match(sidebarSource, /cap-stable-directory-list-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical/u);
 assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScrollRef\} orientation="vertical" \/>/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
 assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
 assert.match(sidebarSource, /name="sort" sortDirection=\{search\.sortDirection\} className="cap-stable-sidebar-icon cap-stable-sort-icon"/u);
 assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stable-footer-icon cap-stable-skim-icon"/u);
