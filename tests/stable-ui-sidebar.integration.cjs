@@ -84,6 +84,7 @@ assert.match(sidebarStyles, /\.app \.cap-stable-directory-item input:focus,[\s\S
 assert.match(sidebarStyles, /\.cap-stable-footer-icon \{ width: 20px; height: 20px;[^}]*\} \.cap-stable-skim-icon \{ width: 22px; height: 22px; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout \{[^}]*background: var\(--cap-stable-flyout-surface\);[^}]*font: inherit;/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button \{[^}]*border-radius: 999px;/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-selected \{ background: light-dark\(#ffffff, #000000\); \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button:hover \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
 assert.match(sidebarStyles, /\.cap-stable-flyout-title \{[^}]*color: inherit; font-size: inherit;/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-danger \{ color: inherit; \}/u);
