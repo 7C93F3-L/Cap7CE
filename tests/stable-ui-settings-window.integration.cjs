@@ -31,6 +31,7 @@ const quickActionSource = fs.readFileSync(path.join(root, "src", "renderer", "se
 const quickCommandSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "QuickCommandSettingsRows.tsx"), "utf8");
 const runtimeDiagnosticsSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "RuntimeDiagnosticsRows.tsx"), "utf8");
 const settingsStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.css"), "utf8");
+const navigationStateStyles = fs.readFileSync(path.join(root, "src", "renderer", "stable-ui", "StableNavigationState.css"), "utf8");
 const stableSkimStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "StableSkimDisplaySettingsRows.css"), "utf8");
 const settingsAccessibilityStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowAccessibility.css"), "utf8");
 const preferenceIpcSource = fs.readFileSync(path.join(root, "electron", "preferenceIpc.ts"), "utf8");
@@ -197,6 +198,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsControllerSource, /previewAppearanceColors[\s\S]*?setPreferences/u);
   assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[^}]*font-size:\s*(?:14|15|16)px/u);
+  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button:hover,[\s\S]*?button\.is-active \{[\s\S]*?background: var\(--cap-stable-navigation-state\);/u);
+  assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 24%\);/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /<FontSizeSetting value=\{preferences\.uiFontSize\}[\s\S]*?controller\.updateUiFontSize/u);
   assert.match(fontSizeSettingSource, /type="range" min=\{12\} max=\{16\} step=\{1\}/u);
@@ -224,6 +227,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsStyles, /cap-stable-settings-shell[\s\S]*?grid-template-columns: 176px minmax\(0, 1fr\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation\s*\{[^}]*?(?:background|backdrop-filter):/u);
   assert.match(settingsStyles, /cap-stable-settings-search[\s\S]*?height: 34px[\s\S]*?border-radius: var\(--radius-pill\)/u);
+  assert.match(settingsStyles, /cap-stable-settings-search[\s\S]*?background: var\(--cap-stable-navigation-state\)/u);
+  assert.match(settingsStyles, /\.cap-stable-settings-search input::placeholder \{ color: var\(--cap-stable-search-placeholder\); opacity: 1; \}/u);
+  assert.match(navigationStateStyles, /--cap-stable-search-placeholder: rgb\(31 31 31 \/ 54%\);[\s\S]*?theme-dark[\s\S]*?--cap-stable-search-placeholder: rgb\(244 244 244 \/ 48%\);/u);
   assert.doesNotMatch(settingsAccessibilityStyles, /cap-stable-settings-search:focus-within/u);
   assert.match(settingsAppSource, /filterQuery[\s\S]*?searchCompositionRef[\s\S]*?onCompositionStart[\s\S]*?onCompositionEnd[\s\S]*?setFilterQuery/u);
   assert.match(settingsAppSource, /<StableUiIcon name="search" className="cap-stable-settings-search-icon" \/>/u);

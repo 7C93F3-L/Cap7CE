@@ -68,7 +68,7 @@
   padding: 6px 12px;
   border-radius: var(--cap-stable-radius-pill);
   color: var(--cap-stable-text-muted);
-  background: var(--cap-stable-surface-soft);
+  background: var(--cap-stable-navigation-state);
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }

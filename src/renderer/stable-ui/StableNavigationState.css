@@ -1,0 +1,13 @@
+.cap-stable-ui,
+.cap-stable-titlebar,
+.cap-settings-window-foundation {
+  --cap-stable-navigation-state: rgb(255 255 255 / 50%);
+  --cap-stable-search-placeholder: rgb(31 31 31 / 54%);
+}
+
+.cap-stable-ui.theme-dark,
+.cap-stable-titlebar.theme-dark,
+.cap-settings-window-foundation.theme-dark {
+  --cap-stable-navigation-state: rgb(0 0 0 / 24%);
+  --cap-stable-search-placeholder: rgb(244 244 244 / 48%);
+}

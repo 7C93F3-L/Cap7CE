@@ -1,3 +1,4 @@
+@import "./StableNavigationState.css";
 .cap-stable-sidebar { container-type: inline-size; position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; min-height: 0; box-sizing: border-box; padding: 6px; overflow: hidden; app-region: drag; -webkit-app-region: drag; }
 .cap-stable-sidebar button,
 .cap-stable-sidebar input,
@@ -7,11 +8,8 @@
 .cap-stable-sidebar-controls { display: grid; gap: 4px; }
 .cap-stable-sidebar-control,
 .cap-stable-directory-item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; width: 100%; min-width: 0; min-height: 40px; box-sizing: border-box; padding: 4px 6px; border: 0; border-radius: var(--cap-stable-radius-pill); color: inherit; background: transparent; font: inherit; text-align: left; }
-.cap-stable-sidebar-control:hover,
-.cap-stable-sidebar-control[aria-pressed="true"],
-.cap-stable-sidebar-control[aria-expanded="true"] { background: rgb(255 255 255 / 50%); }
-.cap-stable-directory-item:hover,
-.cap-stable-directory-item.is-selected { background: rgb(255 255 255 / 50%); }
+.cap-stable-sidebar-control:hover { background: var(--cap-stable-navigation-state); } .cap-stable-sidebar-control[aria-pressed="true"], .cap-stable-sidebar-control[aria-expanded="true"] { background: var(--cap-stable-navigation-state); }
+.cap-stable-directory-item:hover { background: var(--cap-stable-navigation-state); } .cap-stable-directory-item.is-selected { background: var(--cap-stable-navigation-state); }
 .cap-stable-sidebar-icon { width: 20px; height: 20px; justify-self: center; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; } .cap-stable-sidebar-icon svg { width: 100%; height: 100%; fill: currentColor; stroke: none; } .cap-stable-sort-icon { width: 30px; height: 30px; }
 .cap-stable-control-copy { display: grid; min-width: 0; }
 .cap-stable-control-copy strong,
@@ -24,27 +22,26 @@
 .cap-stable-directory-heading { display: flex; align-items: center; min-height: 26px; margin: 0 4px 4px 8px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-section-font-size); }
 .cap-stable-directory-heading span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-directory-heading button { display: grid; place-items: center; width: 26px; height: 26px; margin-left: auto; padding: 0; border: 0; border-radius: 7px; color: inherit; background: transparent; }
-.cap-stable-directory-heading button:hover { background: rgb(255 255 255 / 50%); }
+.cap-stable-directory-heading button:hover { background: var(--cap-stable-navigation-state); }
 .cap-stable-directory-heading button:disabled { opacity: .4; }
 .cap-stable-directory-heading .cap-stable-sidebar-icon { width: 16px; height: 16px; }
 .cap-stable-all-directories-row { margin-bottom: 4px; } .cap-stable-directory-list-frame { min-width: 0; min-height: 0; align-items: start; } .cap-stable-directory-list { display: grid; align-self: start; align-content: start; gap: 4px; height: auto !important; max-height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .cap-stable-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) 28px; align-items: center; min-width: 0; }
 .cap-stable-directory-item { grid-template-columns: 28px minmax(0, 1fr) auto; min-height: 34px; padding-block: 3px; }
 .cap-stable-directory-item.is-editing { background: transparent; }
-.cap-stable-directory-item input { min-width: 0; height: 24px; padding: 0 8px; border: 0; border-radius: 999px; outline: 0; color: inherit; background: rgb(255 255 255 / 50%); font: inherit; }
+.cap-stable-directory-item input { min-width: 0; height: 24px; padding: 0 8px; border: 0; border-radius: 999px; outline: 0; color: inherit; background: var(--cap-stable-navigation-state); font: inherit; }
 .app .cap-stable-directory-item input:focus,
 .app .cap-stable-directory-item input:focus-visible { outline: 0; outline-offset: 0; box-shadow: none; }
 .cap-stable-directory-count { padding-left: 4px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
 .cap-stable-directory-more { display: grid; place-items: center; width: 24px; height: 24px; margin-left: 2px; padding: 0; border: 0; border-radius: 6px; color: inherit; background: transparent; opacity: 0; }
 .cap-stable-directory-row:hover .cap-stable-directory-more,
 .cap-stable-directory-more:focus-visible { opacity: .72; }
-.cap-stable-directory-more:hover { background: rgb(255 255 255 / 50%); opacity: 1; }
+.cap-stable-directory-more:hover { background: var(--cap-stable-navigation-state); opacity: 1; }
 .cap-stable-directory-more .cap-stable-sidebar-icon { width: 16px; height: 16px; }
 .cap-stable-directory-message { padding: 8px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); text-align: center; }
 .cap-stable-sidebar-footer { position: absolute; right: 6px; bottom: 6px; left: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-top: 4px; padding-top: 4px; }
 .cap-stable-sidebar-footer button { display: grid; place-items: center; width: 36px; height: 36px; box-sizing: border-box; padding: 0; border: 0; border-radius: 10px; color: inherit; background: transparent; }
-.cap-stable-sidebar-footer button:hover,
-.cap-stable-sidebar-footer button.is-active { background: rgb(255 255 255 / 50%); }
+.cap-stable-sidebar-footer button:hover { background: var(--cap-stable-navigation-state); } .cap-stable-sidebar-footer button.is-active { background: var(--cap-stable-navigation-state); }
 .cap-stable-footer-icon { width: 20px; height: 20px; } .cap-stable-skim-icon { width: 22px; height: 22px; }
 .cap-stable-settings-button > .cap-stable-footer-icon { grid-area: 1 / 1; } .cap-stable-settings-icon-active { display: none; }
 .cap-stable-settings-button:active .cap-stable-settings-icon { display: none; } .cap-stable-settings-button:active .cap-stable-settings-icon-active { display: block; }

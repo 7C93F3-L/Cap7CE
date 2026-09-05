@@ -11,7 +11,7 @@
 }
 .app .cap-stable-search-slot input:focus,
 .app .cap-stable-search-slot input:focus-visible { outline: 0; outline-offset: 0; box-shadow: none; }
-.cap-stable-search-slot input::placeholder { color: var(--cap-stable-text-muted); }
+.cap-stable-search-slot input::placeholder { color: var(--cap-stable-search-placeholder); opacity: 1; }
 .cap-stable-search-icon { width: 16px; height: 16px; color: var(--cap-stable-text-muted); }
 .cap-stable-search-feedback {
   position: absolute;
