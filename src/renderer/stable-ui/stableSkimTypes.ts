@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { SkimBreadcrumb, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
 
 export interface StableSkimProps {
+  toggleRequestId: number;
   currentPath: string | null;
   breadcrumbs: SkimBreadcrumb[];
   isLoading: boolean;

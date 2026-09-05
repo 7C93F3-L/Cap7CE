@@ -7,7 +7,7 @@ import type { StableSkimProps } from "./stableSkimTypes";
 import { useStableShellLayout } from "./useStableShellLayout";
 import "./StableMainShell.css";
 const StableMainShell = ({ resultContent, sidebar, skim }: { resultContent: ReactNode; sidebar: StableSidebarProps; skim: StableSkimProps }) => {
-  const { shellStyle, skimOpen, sidebarWidth, skimWidth, skimMaximumWidth, resizeSidebar, resizeSkim, resizeSidebarByKeyboard, resizeSkimByKeyboard, resetSidebarWidth, resetSkimWidth, toggleSkim } = useStableShellLayout(skim.onOpen);
+  const { shellStyle, skimOpen, sidebarWidth, skimWidth, skimMaximumWidth, resizeSidebar, resizeSkim, resizeSidebarByKeyboard, resizeSkimByKeyboard, resetSidebarWidth, resetSkimWidth, toggleSkim } = useStableShellLayout(skim.onOpen, skim.toggleRequestId);
 
   return (
     <section className={`cap-stable-main-shell${skimOpen ? " is-skim-open" : ""}`} style={shellStyle}>

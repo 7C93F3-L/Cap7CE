@@ -287,6 +287,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
   const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
   const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
+  const [stableSkimToggleRequestId, setStableSkimToggleRequestId] = useState(0);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
   const [searchCapsuleLabelVisibility, setSearchCapsuleLabelVisibility] = useState<SearchCapsuleLabelVisibility>({
@@ -2458,10 +2459,15 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateSkimRequested?.(() => {
-      if (dialog !== "editKeywords") openSkim();
+      if (dialog === "editKeywords") return;
+      if (stableUi) {
+        setStableSkimToggleRequestId((requestId) => requestId + 1);
+      } else {
+        openSkim();
+      }
     });
     return () => unsubscribe?.();
-  }, [dialog, openSkim]);
+  }, [dialog, openSkim, stableUi]);
 
   const closeSettings = () => {
     setShellState("normal");
@@ -2681,8 +2687,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         || shellState === "normal"
       ) && (view === "home" || view === "results");
       if (
-        !stableUi
-        &&
         quickActionGlobalEnabled
         && searchResultsVisible
         && !dialog
@@ -3061,6 +3065,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           onOpenSettings: () => void window.cap7ce?.settingsWindow.open()
         }}
         skim={{
+          toggleRequestId: stableSkimToggleRequestId,
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
