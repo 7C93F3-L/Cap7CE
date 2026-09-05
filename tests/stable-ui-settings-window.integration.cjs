@@ -187,6 +187,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(settingsAppSource, /quickCommandsExpanded|setQuickCommandsExpanded/u);
   assert.match(quickCommandSource, /if \(!stableUi && !expanded\)[\s\S]*?if \(stableUi\)[\s\S]*?cap-settings-quick-commands-panel-stable/u);
   assert.match(stableQuickCommandStyles, /grid-column: 2[\s\S]*?grid-column: 1 \/ -1[\s\S]*?column-count: 1/u);
+  assert.match(stableQuickCommandStyles, /cap-settings-quick-command-groups[\s\S]*?column-gap: 24px[\s\S]*?cap-settings-quick-command-item[\s\S]*?display: contents[\s\S]*?cap-settings-quick-command-list[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\)[\s\S]*?column-gap: 10px/u);
+  assert.match(stableQuickCommandStyles, /cap-settings-command-pill[\s\S]*?overflow: visible[\s\S]*?cap-settings-command-description[\s\S]*?text-overflow: clip[\s\S]*?white-space: normal/u);
   assert.match(settingsAppSource, /category === "search-ai"[\s\S]*?stableSettings\.runtimeInfo[\s\S]*?cap-stable-settings-runtime-info[\s\S]*?category === "cache"/u);
   assert.match(settingsAppSource, /category === "diagnostics"[\s\S]*?stableSettings\.diagnostics[\s\S]*?<RuntimeDiagnosticsRows stableUi \/>/u);
   assert.doesNotMatch(settingsAppSource, /category === "diagnostics"[\s\S]*?settings\.details/u);
