@@ -17,6 +17,7 @@
   --cap-stable-text-muted: rgb(31 31 31 / 54%);
   --cap-stable-surface: rgb(255 255 255 / 50%);
   --cap-stable-surface-soft: rgb(255 255 255 / 30%);
+  --cap-stable-grid-surface: var(--cap-stable-surface-soft);
   --cap-stable-flyout-surface: rgb(246 246 246 / 80%);
   --cap-stable-hover: rgb(31 31 31 / 8%);
   --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 22%, transparent);

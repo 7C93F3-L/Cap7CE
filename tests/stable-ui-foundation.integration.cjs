@@ -91,6 +91,8 @@ void (async () => {
   assert.match(foundationStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-stable-font-size\)/u);
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
+  assert.match(foundationStyles, /--cap-stable-grid-surface:\s*var\(--cap-stable-surface-soft\)/u);
+  assert.match(materialContrastStyles, /data-window-material="acrylic"[\s\S]*?--cap-stable-grid-surface: rgb\(255 255 255 \/ 46%\)[\s\S]*?--cap-stable-skim-hover-surface: rgb\(255 255 255 \/ 62%\)[\s\S]*?--cap-stable-selected-surface: rgb\(255 255 255 \/ 78%\)/u);
   assert.match(foundationStyles, /--cap-stable-focus:\s*var\(--accent-color/u);
   assert.match(foundationStyles, /scrollbar-color:\s*var\(--scrollbar-thumb\) transparent/u);
   assert.match(foundationStyles, /::-webkit-scrollbar-thumb:hover,[\s\S]*?background:\s*var\(--scrollbar-thumb-hover\)/u);

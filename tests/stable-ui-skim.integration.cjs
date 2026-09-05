@@ -71,6 +71,7 @@ assert.match(
   "Stable Skim entries should use the stronger stable surface when hovered or keyboard-focused."
 );
 assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\.selected\s*\{\s*background: var\(--cap-stable-selected-surface\);\s*\}/u);
+assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\s*\{[^}]*background: var\(--cap-stable-grid-surface\);/u);
 assert.match(panelStyles, /--cap-stable-selected-surface: light-dark\(rgb\(255 255 255 \/ 68%\), rgb\(26 26 26 \/ 68%\)\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > \.cap-stable-skim-address-hit-area\s*\{[^}]*min-width: 24px;[^}]*flex: 0 0 24px;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > button:focus-visible,[^\n]*\.cap-stable-skim-address input:focus-visible\s*\{[^}]*outline: none;[^}]*box-shadow: none;/u);
