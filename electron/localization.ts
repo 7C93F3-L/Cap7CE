@@ -447,6 +447,8 @@ export const zhCN = {
   "settings.embeddedMetadataStopped": "已停止 {processed}/{total}",
   "settings.embeddedMetadataFailed": "处理失败 {failed} 个",
   "settings.embeddedMetadataComplete": "元数据已完整",
+  "settings.embeddedMetadataChecking": "正在检查…",
+  "settings.embeddedMetadataRequestFailed": "检查失败，请重试",
   "settings.embeddedMetadataCheck": "检查",
   "settings.embeddedMetadataCheckHint": "点击补齐元数据",
   "settings.embeddedMetadataStop": "停止",

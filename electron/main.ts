@@ -1672,7 +1672,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     }
     handleThumbnailOptimizationStatusForNotification(status);
   });
-  configureEmbeddedMetadataRuntime(ipcMain, () => mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null);
+  configureEmbeddedMetadataRuntime(ipcMain, () => mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null, () => settingsWindowController?.getWebContents() ?? null);
   if (preferences.autoCacheOptimizationEnabled) {
     scheduleDirectoryThumbnailOptimization(await listDirectories());
   }

@@ -72,7 +72,7 @@
     "electron/stableWindowRuntime.ts": 51,
     "electron/stableUiWindowLifecycle.ts": 81,
     "electron/stablePreviewWindowSizing.ts": 59,
-    "electron/settingsWindowController.ts": 166,
+    "electron/settingsWindowController.ts": 171,
     "electron/settingsDataBroadcast.ts": 15,
     "electron/settingsWindowLayout.ts": 127,
     "electron/settingsWindowIpc.ts": 20,

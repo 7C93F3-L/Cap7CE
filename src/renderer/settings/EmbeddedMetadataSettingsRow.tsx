@@ -16,6 +16,8 @@ const initialStatus: EmbeddedMetadataTaskStatus = {
 export const EmbeddedMetadataSettingsRow = ({ stableUi = false }: { stableUi?: boolean }) => {
   const [status, setStatus] = useState(initialStatus);
   const [isCompleteNoticeVisible, setIsCompleteNoticeVisible] = useState(false);
+  const [isRequestPending, setIsRequestPending] = useState(false);
+  const [requestError, setRequestError] = useState(false);
   const completeNoticeTimerRef = useRef<number | null>(null);
   const api = window.cap7ce?.embeddedMetadata;
   const isRunning = status.phase === "running" || status.phase === "cancelling";
@@ -24,8 +26,14 @@ export const EmbeddedMetadataSettingsRow = ({ stableUi = false }: { stableUi?: b
   useEffect(() => {
     if (!api) return;
     let active = true;
-    void api.status().then((value) => { if (active) setStatus(value); });
-    const unsubscribe = api.onStatusChanged((value) => { if (active) setStatus(value); });
+    void api.status()
+      .then((value) => { if (active) setStatus(value); })
+      .catch(() => { if (active) setRequestError(true); });
+    const unsubscribe = api.onStatusChanged((value) => {
+      if (!active) return;
+      setStatus(value);
+      setRequestError(false);
+    });
     return () => {
       active = false;
       unsubscribe();
@@ -33,22 +41,26 @@ export const EmbeddedMetadataSettingsRow = ({ stableUi = false }: { stableUi?: b
     };
   }, [api]);
 
-  const statusText = isRunning
-    ? t("settings.embeddedMetadataProgress", {
-      processed: status.processedCount,
-      total: status.totalCount,
-      failed: status.failedCount
-    })
-    : status.phase === "cancelled"
-      ? t("settings.embeddedMetadataStopped", {
-        processed: status.processedCount,
-        total: status.totalCount
-      })
-      : status.phase === "failed"
-        ? t("settings.embeddedMetadataFailed", { failed: status.failedCount })
-        : isCompleteNoticeVisible
-          ? t("settings.embeddedMetadataComplete")
-          : "";
+  const statusText = isRequestPending
+    ? t("settings.embeddedMetadataChecking")
+    : requestError
+      ? t("settings.embeddedMetadataRequestFailed")
+      : isRunning
+        ? t("settings.embeddedMetadataProgress", {
+          processed: status.processedCount,
+          total: status.totalCount,
+          failed: status.failedCount
+        })
+        : status.phase === "cancelled"
+          ? t("settings.embeddedMetadataStopped", {
+            processed: status.processedCount,
+            total: status.totalCount
+          })
+          : status.phase === "failed"
+            ? t("settings.embeddedMetadataFailed", { failed: status.failedCount })
+            : status.phase === "completed" || isCompleteNoticeVisible
+              ? t("settings.embeddedMetadataComplete")
+              : "";
 
   const actionText = isRunning
     ? t("settings.embeddedMetadataStop")
@@ -64,20 +76,30 @@ export const EmbeddedMetadataSettingsRow = ({ stableUi = false }: { stableUi?: b
       className={stableUi ? "cap-stable-settings-button" : "cap-settings-pill"}
       type="button"
       title={actionHint}
-      disabled={!api || status.phase === "cancelling"}
-      onClick={() => {
+      disabled={!api || status.phase === "cancelling" || isRequestPending}
+      onClick={async () => {
         if (!api) return;
-        if (isRunning) void api.cancelBackfill();
-        else void api.startBackfill().then((value) => {
-          setStatus(value);
-          if (value.totalCount !== 0) return;
-          setIsCompleteNoticeVisible(true);
-          if (completeNoticeTimerRef.current !== null) window.clearTimeout(completeNoticeTimerRef.current);
-          completeNoticeTimerRef.current = window.setTimeout(() => {
-            setIsCompleteNoticeVisible(false);
-            completeNoticeTimerRef.current = null;
-          }, 2000);
-        });
+        setIsRequestPending(true);
+        setRequestError(false);
+        try {
+          if (isRunning) {
+            await api.cancelBackfill();
+          } else {
+            const value = await api.startBackfill();
+            setStatus(value);
+            if (value.totalCount !== 0) return;
+            setIsCompleteNoticeVisible(true);
+            if (completeNoticeTimerRef.current !== null) window.clearTimeout(completeNoticeTimerRef.current);
+            completeNoticeTimerRef.current = window.setTimeout(() => {
+              setIsCompleteNoticeVisible(false);
+              completeNoticeTimerRef.current = null;
+            }, 2000);
+          }
+        } catch {
+          setRequestError(true);
+        } finally {
+          setIsRequestPending(false);
+        }
       }}
     >
       {actionText}

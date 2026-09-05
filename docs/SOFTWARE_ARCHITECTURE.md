@@ -104,7 +104,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `visualPropertyService.ts` / `visualPropertyWorker.ts` / `visualPropertyRuntime.ts` | I8b 视觉属性后台增量链路；监听正式搜索代表图成功与删除事件，自动优化发现的同一既有缓存身份每次进程只通知一次并在大量发现时分批让出前台；候选先批量核对文件 / 源 / 算法版本，再由单个低并发 Worker 解码既有 300px 缓存、批量写库并隔离单项失败；不阻塞缩略图返回，也不接搜索词或结果分类 |
 | `embeddedMetadataService.ts` / `embeddedMetadataWorker.ts` | I6b 后台增量队列与可终止 Worker；自动增量在窗口聚焦时限速、失焦时恢复正常速度，Settings 显式补齐保持正常速度；每个候选隔离读取并在完成后回收 Worker，避免异构解析器长期复用造成内存累积；结果小批量原子写入，取消保留已落盘批次，文件级失败不阻断后续候选 |
 | `embeddedMetadataPreviewProbe.ts` | Skim 单文件临时嵌入信息探针；仅在正式 Store 缺少当前源版本的处理状态时复用隔离 Worker，预览先显示、结果随后按会话和路径校验补入，不写数据库，切换、关闭或超时立即终止 |
-| `embeddedMetadataRuntime.ts` / `embeddedMetadataIpc.ts` | 嵌入元数据运行期装配、扫描后增量入队、目录删除协作、主窗口 sender 校验、显式补齐 / 取消 IPC 与状态推送；避免继续把领域编排堆入 `main.ts` |
+| `embeddedMetadataRuntime.ts` / `embeddedMetadataIpc.ts` | 嵌入元数据运行期装配、扫描后增量入队、目录删除协作、主窗口与独立 Settings sender 校验、显式补齐 / 取消 IPC，以及向两窗口同步任务状态；避免继续把领域编排堆入 `main.ts` |
 | `imageDimensionTypes.ts` / `visualSourceDimensions.ts` | 源图尺寸索引的稳定任务类型与受限只读能力；直接读取 JPG、PNG、WEBP、AVIF、TIFF、GIF、SVG、BMP 的元数据或安全文件头，遵循 EXIF 方向，不解码整张像素、不生成缩略图，也不覆盖非视觉格式与依赖 Shell 的可选格式 |
 | `imageDimensionService.ts` / `imageDimensionWorker.ts` / `imageDimensionRuntime.ts` | 启动候选发现与扫描后增量补齐 `images.image_width / image_height` 的低优先级单 Worker 链路；独立于自动缓存开关，前台窗口活动时限速推进，按 source revision 去重与拒绝迟到结果，批量写库并在目录删除时丢弃候选 |
 | `imageSearchService.ts` | 并行读取统一 SQLite 结果与内存扫描快照，补充尚未持久化的新文件、按完整快照核对存在性并按路径去重；只有视觉结果生成缩略图 URL |

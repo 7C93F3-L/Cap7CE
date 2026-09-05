@@ -56,6 +56,11 @@ export class SettingsWindowController {
     return true;
   }
 
+  getWebContents() {
+    if (!this.settingsWindow || this.settingsWindow.isDestroyed()) return null;
+    return this.settingsWindow.webContents;
+  }
+
   private async create() {
     if (!this.initialized) {
       await this.options.layoutStore.load();

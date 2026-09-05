@@ -48,19 +48,27 @@ export const setEmbeddedMetadataForegroundActive = (active: boolean) => {
 
 export const configureEmbeddedMetadataRuntime = (
   registrar: IpcRegistrar,
-  getMainWebContents: () => Electron.WebContents | null
+  getMainWebContents: () => Electron.WebContents | null,
+  getSettingsWebContents: () => Electron.WebContents | null
 ) => {
   configureSearchIndexChangeRuntime(getMainWebContents);
+  const getActiveWebContents = () => {
+    const candidates = [getMainWebContents(), getSettingsWebContents()];
+    return candidates.filter((webContents, index) => webContents
+      && !webContents.isDestroyed()
+      && candidates.indexOf(webContents) === index) as Electron.WebContents[];
+  };
   registerEmbeddedMetadataIpc({
     registrar,
-    isSenderAllowed: (event) => event.sender === getMainWebContents(),
+    isSenderAllowed: (event) => getActiveWebContents().includes(event.sender),
     getStatus: embeddedMetadataService.status,
     startBackfill: embeddedMetadataService.startBackfill,
     cancelBackfill: embeddedMetadataService.cancel
   });
   embeddedMetadataService.onStatusChanged((status) => {
-    const webContents = getMainWebContents();
-    if (webContents && !webContents.isDestroyed()) webContents.send("embeddedMetadata:statusChanged", status);
+    for (const webContents of getActiveWebContents()) {
+      webContents.send("embeddedMetadata:statusChanged", status);
+    }
   });
   void enqueueImageDimensionsForDirectories([]).catch((error) => {
     console.warn("[image-dimensions] startup candidate discovery failed", error);

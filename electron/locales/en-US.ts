@@ -447,6 +447,8 @@ export const enUS = defineLocale({
   "settings.embeddedMetadataStopped": "Stopped at {processed}/{total}",
   "settings.embeddedMetadataFailed": "{failed} files failed",
   "settings.embeddedMetadataComplete": "Metadata is complete",
+  "settings.embeddedMetadataChecking": "Checking…",
+  "settings.embeddedMetadataRequestFailed": "Check failed. Try again.",
   "settings.embeddedMetadataCheck": "Check",
   "settings.embeddedMetadataCheckHint": "Click to backfill metadata",
   "settings.embeddedMetadataStop": "Stop",

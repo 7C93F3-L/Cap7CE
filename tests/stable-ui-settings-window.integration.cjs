@@ -13,6 +13,8 @@ const settingsConfirmationSource = fs.readFileSync(path.join(root, "src", "rende
 const settingsCategoryIconSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsCategoryIcon.tsx"), "utf8");
 const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
+const embeddedMetadataSettingsSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
+const embeddedMetadataRuntimeSource = fs.readFileSync(path.join(root, "electron", "embeddedMetadataRuntime.ts"), "utf8");
 const fontSizeSettingSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "FontSizeSetting.tsx"), "utf8");
 const fontSizeSettingStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "FontSizeSetting.css"), "utf8");
 const stableSelectSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "StableSettingsSelect.tsx"), "utf8");
@@ -142,6 +144,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.deepEqual(created[0].calls.slice(-3), ["restore", "show", "focus"]);
   assert.equal(controller.send("preferences:changed", { themePreference: "dark" }), true);
   assert.deepEqual(created[0].sent.at(-1), ["preferences:changed", { themePreference: "dark" }]);
+  assert.equal(controller.getWebContents(), created[0].webContents);
   const closeEvent = { prevented: false, preventDefault() { this.prevented = true; } };
   created[0].emit("close", closeEvent);
   assert.equal(closeEvent.prevented, true);
@@ -264,6 +267,10 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   const embeddedMetadataSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
   assert.match(embeddedMetadataSource, /className=\{stableUi \? "cap-stable-settings-button" : "cap-settings-pill"\}/u);
   assert.match(embeddedMetadataSource, /if \(stableUi\)[\s\S]*?cap-stable-settings-action-line/u);
+  assert.match(embeddedMetadataSettingsSource, /isRequestPending[\s\S]*?settings\.embeddedMetadataChecking[\s\S]*?settings\.embeddedMetadataRequestFailed/u);
+  assert.match(embeddedMetadataSettingsSource, /await api\.startBackfill\(\)[\s\S]*?catch \{[\s\S]*?setRequestError\(true\)/u);
+  assert.match(mainSource, /configureEmbeddedMetadataRuntime\([\s\S]*?settingsWindowController\?\.getWebContents\(\)/u);
+  assert.match(embeddedMetadataRuntimeSource, /getActiveWebContents[\s\S]*?includes\(event\.sender\)[\s\S]*?for \(const webContents of getActiveWebContents\(\)\)/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);
