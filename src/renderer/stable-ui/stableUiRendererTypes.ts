@@ -1,10 +1,10 @@
 import type { ComponentType, CSSProperties, ReactNode, Ref } from "react";
-import type { ResolvedThemeMode, SearchState } from "../../shared/types";
+import type { ResolvedThemeMode, SearchState, WindowMaterial } from "../../shared/types";
 import type { StableSidebarProps } from "./stableSidebarTypes";
 import type { StableSkimProps } from "./stableSkimTypes";
 
 export interface StableUiRendererProps {
-  theme: ResolvedThemeMode; themeStyle: CSSProperties;
+  theme: ResolvedThemeMode; themeStyle: CSSProperties; windowMaterial: WindowMaterial;
   pinned: boolean; pinLabel: string;
   search: SearchState;
   searchInputRef: Ref<HTMLInputElement>;

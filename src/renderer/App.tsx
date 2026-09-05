@@ -73,7 +73,7 @@ import type {
   SkimLocationShortcut,
   SortDirection,
   SortField,
-  ThumbnailOptimizationStatus, UiFontSize, VisualCacheStats, ThemeMode
+  ThumbnailOptimizationStatus, UiFontSize, VisualCacheStats, ThemeMode, WindowMaterial
 } from "../shared/types";
 import { getActiveLanguage, resolveLanguagePreference, setActiveLanguage, t, type TranslationKey } from "../../electron/localization";
 import { skimDefaultFileExtensionSet } from "../../electron/formatCapabilities";
@@ -267,7 +267,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [, setResolvedLanguage] = useState(() => getActiveLanguage());
   const systemTheme = useSystemThemeMode();
   const [appearanceColors, setAppearanceColors] = useState<AppearanceColors>(defaultAppearanceColors);
-  const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize);
+  const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize); const [windowMaterial, setWindowMaterial] = useState<WindowMaterial>("acrylic");
   const [standbyLineVisible, setStandbyLineVisible] = useState(true);
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [systemNotificationsEnabled, setSystemNotificationsEnabled] = useState(true);
@@ -781,7 +781,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setResolvedLanguage(resolvedLanguage);
             setTheme(preferences.themePreference);
             setAppearanceColors(normalizeAppearanceColors(preferences.appearanceColors));
-            setUiFontSize(preferences.uiFontSize);
+            setUiFontSize(preferences.uiFontSize); setWindowMaterial(preferences.windowMaterial);
             applyAlwaysOnTop(preferences.alwaysOnTop);
             setStandbyLineVisible(preferences.standbyLineVisible);
             setLaunchAtLogin(preferences.launchAtLogin);
@@ -1834,7 +1834,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchCapsuleLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
+  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchCapsuleLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
 
   const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
     try {
@@ -3036,7 +3036,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     return (
       <StableUiRenderer
         theme={effectiveTheme}
-        themeStyle={appThemeStyle}
+        themeStyle={appThemeStyle} windowMaterial={windowMaterial}
         pinned={isAlwaysOnTop}
         pinLabel={isAlwaysOnTop ? t("window.unfix") : t("window.fix")}
         search={search}

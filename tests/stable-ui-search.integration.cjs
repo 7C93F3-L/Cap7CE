@@ -50,7 +50,7 @@ assert.match(gridSource, /interactive=\{!responsiveLayout\}/);
 assert.match(gridSource, /: <div className="empty-result-row">\{message\}<\/div>/);
 assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); background: var\(--cap-stable-surface-soft\); \}/u);
 assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-search-icon" \/>/u);
-assert.match(foundationStyles, /\.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-navigation-state\);/u);
+assert.match(foundationStyles, /\.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-search-surface\);/u);
 assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-stable-titlebar,[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?\.cap-stable-titlebar\.theme-dark,[\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 24%\);/u);
 assert.match(stableResultsStyles, /\.cap-stable-search-slot input::placeholder \{ color: var\(--cap-stable-search-placeholder\); opacity: 1; \}/u);
 assert.match(stableResultsStyles, /\.app \.cap-stable-search-slot input:focus,[\s\S]*?input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);

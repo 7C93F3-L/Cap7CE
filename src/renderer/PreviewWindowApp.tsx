@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats, UiFontSize } from "../shared/types";
+import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats, UiFontSize, WindowMaterial } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import SvgIcon from "./components/SvgIcon";
 import { getFormatIconSvg } from "./formatIcons";
@@ -25,6 +25,7 @@ import { setActiveLanguage, t } from "../../electron/localization";
 import { COMPATIBILITY_TITLEBAR_HEIGHT } from "../../electron/windowPresentationPolicy";
 import { getTextColorForBackground } from "./appearance";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
+import "./stable-ui/StableMaterialContrast.css";
 
 const isCompatibilityWindow = new URLSearchParams(window.location.search).get("presentation") === "compatibility";
 const isStableUiPreview = new URLSearchParams(window.location.search).get("presentation") === "stable";
@@ -103,6 +104,7 @@ const getMobiFallbackMessage = (reason: MobiPreviewFallbackReason) => {
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
   const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize);
+  const [windowMaterial, setWindowMaterial] = useState<WindowMaterial>("acrylic");
   const [displaySrc, setDisplaySrc] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -226,8 +228,15 @@ const PreviewWindowApp = () => {
   }, []);
 
   useEffect(() => {
-    void window.cap7ce?.preferences.get().then((preferences) => preferences && setUiFontSize(preferences.uiFontSize));
-    return window.cap7ce?.preferences.onChanged((preferences) => setUiFontSize(preferences.uiFontSize));
+    void window.cap7ce?.preferences.get().then((preferences) => {
+      if (!preferences) return;
+      setUiFontSize(preferences.uiFontSize);
+      setWindowMaterial(preferences.windowMaterial);
+    });
+    return window.cap7ce?.preferences.onChanged((preferences) => {
+      setUiFontSize(preferences.uiFontSize);
+      setWindowMaterial(preferences.windowMaterial);
+    });
   }, []);
 
   useEffect(() => window.cap7ce?.preview.onEmbeddedMetadata((update) => {
@@ -542,6 +551,7 @@ const PreviewWindowApp = () => {
   return (
     <main
       className={`app theme-${previewData.theme} preview-window-root${isCompatibilityWindow ? " preview-window-compatibility" : ""}${isStableUiPreview ? " preview-window-stable-ui" : ""}${windowControlState.isMaximized ? " preview-window-maximized" : ""}`}
+      data-window-material={isStableUiPreview ? windowMaterial : undefined}
       style={themeStyle}
       role="dialog"
       aria-label={previewData.fileName}
@@ -598,7 +608,7 @@ const PreviewWindowApp = () => {
       }}
     >
       {isCompatibilityWindow && <CompatibilityTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
-      {isStableUiPreview && <StablePreviewTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} />}
+      {isStableUiPreview && <StablePreviewTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} windowMaterial={windowMaterial} />}
       <div className={`preview-window-shell${isStableUiPreview ? " preview-stable-shell" : ""}`}>
         {isStableUiPreview && <PreviewInformationSidebar
           data={previewData}

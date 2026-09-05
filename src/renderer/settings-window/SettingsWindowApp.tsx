@@ -27,6 +27,7 @@ import "./StableQuickActionSettings.css";
 import "./StableQuickCommandSettings.css";
 import "./StableRuntimeDiagnostics.css";
 import "./StableSkimDisplaySettingsRows.css";
+import "../stable-ui/StableMaterialContrast.css";
 type CategoryId = "general" | "appearance" | "browse" | "search-ai" | "cache" | "shortcuts" | "diagnostics" | "about";
 type DialogState = { message: string; confirmLabel?: string; action: () => Promise<unknown> } | null;
 const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; icon: SettingsCategoryIconName }> = [
@@ -160,7 +161,7 @@ const SettingsWindowApp = () => {
     return <><SettingsSection title="stableSettings.section.application"><SettingCard title="stableSettings.currentVersion" description="stableSettings.desc.version" query={normalizedQuery}><button type="button" className="cap-stable-settings-link" onClick={() => void window.cap7ce?.app.openReleasePage()}>0.9.9</button></SettingCard><SettingCard title="settings.versionUpdate" description="stableSettings.desc.update" query={normalizedQuery} className="cap-stable-settings-card-expanded"><SettingsWindowUpdateControl /></SettingCard><SettingCard title="stableSettings.license" description="stableSettings.desc.license" query={normalizedQuery}><span className="cap-stable-settings-readonly">{t("stableSettings.licenseValue")}</span></SettingCard></SettingsSection><SettingsFooter /></>;
   };
 
-  return <div className={`cap-settings-window-foundation theme-${effectiveTheme}`} data-language={getActiveLanguage()} style={menuStyle}>
+  return <div className={`cap-settings-window-foundation theme-${effectiveTheme}`} data-window-material={preferences.windowMaterial} data-language={getActiveLanguage()} style={menuStyle}>
     <div className="cap-settings-window-drag-region" aria-hidden="true" />
     <div className="cap-stable-settings-shell">
       <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => { const value = event.target.value; setQuery(value); if (!searchCompositionRef.current) setFilterQuery(value); }} onCompositionStart={() => { searchCompositionRef.current = true; }} onCompositionEnd={(event) => { searchCompositionRef.current = false; const value = event.currentTarget.value; setQuery(value); setFilterQuery(value); }} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} onClick={() => { setActiveCategory(category.id); setQuery(""); setFilterQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><SettingsCategoryIcon name={category.icon} /><span>{t(category.label)}</span></button>)}</nav></aside>

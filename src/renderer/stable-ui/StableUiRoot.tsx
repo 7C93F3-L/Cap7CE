@@ -4,13 +4,13 @@ import StableTitlebar from "./StableTitlebar";
 import type { StableUiRendererProps } from "./stableUiRendererTypes";
 import "./StableUiFoundation.css";
 import "./StableSearchResults.css";
-const StableUiRoot = ({ theme, themeStyle, pinned, pinLabel, search, searchInputRef, inputFeedback, inputFeedbackIsGuide, resultStatus, resultContent, overlayContent, sidebar, skim, directoryDropEnabled, onTogglePinned, onSearchChange, onSearchOptionsChange, onSearch, onDirectoryDrop, onDismissOverlay }: StableUiRendererProps) => {
+const StableUiRoot = ({ theme, themeStyle, windowMaterial, pinned, pinLabel, search, searchInputRef, inputFeedback, inputFeedbackIsGuide, resultStatus, resultContent, overlayContent, sidebar, skim, directoryDropEnabled, onTogglePinned, onSearchChange, onSearchOptionsChange, onSearch, onDirectoryDrop, onDismissOverlay }: StableUiRendererProps) => {
   return (
-    <div className={`app theme-${theme} cap-stable-ui`} style={themeStyle} onClick={onDismissOverlay}
+    <div className={`app theme-${theme} cap-stable-ui`} data-window-material={windowMaterial} style={themeStyle} onClick={onDismissOverlay}
       onDragOverCapture={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = directoryDropEnabled ? "copy" : "none"; }}
       onDropCapture={(event) => { event.preventDefault(); if (directoryDropEnabled) onDirectoryDrop(event.dataTransfer); }}>
       <StableTitlebar
-        theme={theme} themeStyle={themeStyle}
+        theme={theme} themeStyle={themeStyle} windowMaterial={windowMaterial}
         pinned={pinned} pinLabel={pinLabel}
         searchInput={<StableSearchInput search={search} inputRef={searchInputRef} inputFeedback={inputFeedback} inputFeedbackIsGuide={inputFeedbackIsGuide} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />}
         resultStatus={resultStatus}

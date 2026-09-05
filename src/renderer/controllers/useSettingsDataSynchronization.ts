@@ -16,7 +16,7 @@ interface SettingsDataSynchronizationOptions {
   setLanguagePreference: Dispatch<SetStateAction<LanguagePreference>>;
   setResolvedLanguage: Dispatch<SetStateAction<"zh-CN" | "en-US">>;
   setAppearanceColors: Dispatch<SetStateAction<AppearanceColors>>;
-  setUiFontSize: Dispatch<SetStateAction<UserPreferences["uiFontSize"]>>;
+  setUiFontSize: Dispatch<SetStateAction<UserPreferences["uiFontSize"]>>; setWindowMaterial: Dispatch<SetStateAction<UserPreferences["windowMaterial"]>>;
   setStandbyLineVisible: Dispatch<SetStateAction<boolean>>;
   setLaunchAtLogin: Dispatch<SetStateAction<boolean>>;
   setSystemNotificationsEnabled: Dispatch<SetStateAction<boolean>>;
@@ -42,7 +42,7 @@ export const useSettingsDataSynchronization = (options: SettingsDataSynchronizat
     current.setLanguagePreference(preferences.languagePreference);
     current.setResolvedLanguage(resolvedLanguage);
     current.setAppearanceColors(preferences.appearanceColors);
-    current.setUiFontSize(preferences.uiFontSize);
+    current.setUiFontSize(preferences.uiFontSize); current.setWindowMaterial(preferences.windowMaterial);
     current.setStandbyLineVisible(preferences.standbyLineVisible);
     current.setLaunchAtLogin(preferences.launchAtLogin);
     current.setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);

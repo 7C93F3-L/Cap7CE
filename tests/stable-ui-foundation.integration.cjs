@@ -26,6 +26,7 @@ void (async () => {
   const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
   const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.tsx");
   const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
+  const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
   const accessibilityStyles = read("src/renderer/stable-ui/StableUiAccessibility.css");
   const stableUiStyles = `${foundationStyles}\n${accessibilityStyles}`;
   const packageJson = JSON.parse(read("package.json"));
@@ -79,6 +80,13 @@ void (async () => {
   assert.match(typographySource, /uiFontSizeOptions: UiFontSize\[\] = \[12, 13, 14, 15, 16\]/u);
   assert.match(typographySource, /document\.documentElement\.style\.setProperty\("--cap-ui-font-base", `\$\{size\}px`\)/u);
   assert.match(appSource, /useUiFontSize\(stableUi \? uiFontSize : defaultUiFontSize\)/u);
+  assert.match(appSource, /setWindowMaterial\(preferences\.windowMaterial\)[\s\S]*?windowMaterial=\{windowMaterial\}/u);
+  assert.match(rootSource, /data-window-material=\{windowMaterial\}[\s\S]*?<StableTitlebar[\s\S]*?windowMaterial=\{windowMaterial\}/u);
+  assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
+  assert.match(materialContrastStyles, /\.cap-stable-ui\[data-window-material="mica"\][\s\S]*?--cap-stable-surface: rgb\(246 246 246 \/ 96%\)[\s\S]*?theme-dark[\s\S]*?rgb\(24 24 24 \/ 96%\)/u);
+  assert.match(materialContrastStyles, /--cap-stable-surface-soft: #ffffff[\s\S]*?--cap-stable-search-surface: #ffffff/u);
+  assert.match(materialContrastStyles, /--cap-stable-flyout-surface: color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\)[\s\S]*?cap-stable-sidebar-flyout button\.is-selected[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\)/u);
+  assert.match(materialContrastStyles, /:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-stable-skim-slot\s*\{\s*--cap-stable-skim-hover-surface: rgb\(31 31 31 \/ 5%\);\s*--cap-stable-selected-surface: rgb\(31 31 31 \/ 8%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 46%\)/u);
   assert.match(foundationStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-stable-font-size\)/u);
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);

@@ -67,7 +67,7 @@ for (const marker of ["grid-template-rows: 40px 18px minmax(0, 1fr)", ".cap-stab
 }
 assert.match(
   panelStyles,
-  /\.cap-stable-skim-content \.cap-skim-entry:hover,\s*\.cap-stable-skim-content \.cap-skim-entry:focus-visible\s*\{\s*background: var\(--cap-stable-surface\);\s*\}/u,
+  /\.cap-stable-skim-content \.cap-skim-entry:hover,\s*\.cap-stable-skim-content \.cap-skim-entry:focus-visible\s*\{\s*background: var\(--cap-stable-skim-hover-surface\);\s*\}/u,
   "Stable Skim entries should use the stronger stable surface when hovered or keyboard-focused."
 );
 assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\.selected\s*\{\s*background: var\(--cap-stable-selected-surface\);\s*\}/u);

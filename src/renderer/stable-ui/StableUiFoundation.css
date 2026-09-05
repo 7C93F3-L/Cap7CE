@@ -1,4 +1,4 @@
-@import "./StableUiAccessibility.css";
+@import "./StableUiAccessibility.css"; @import "./StableMaterialContrast.css";
 
 .cap-stable-ui, .cap-stable-titlebar {
   --cap-stable-titlebar-height: env(titlebar-area-height, 40px);
@@ -68,7 +68,7 @@
   padding: 6px 12px;
   border-radius: var(--cap-stable-radius-pill);
   color: var(--cap-stable-text-muted);
-  background: var(--cap-stable-navigation-state);
+  background: var(--cap-stable-search-surface);
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }

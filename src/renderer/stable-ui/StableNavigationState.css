@@ -2,6 +2,7 @@
 .cap-stable-titlebar,
 .cap-settings-window-foundation {
   --cap-stable-navigation-state: rgb(255 255 255 / 50%);
+  --cap-stable-search-surface: var(--cap-stable-navigation-state);
   --cap-stable-search-placeholder: rgb(31 31 31 / 54%);
 }
 
