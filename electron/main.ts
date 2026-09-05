@@ -103,6 +103,7 @@ const broadcastSettingsData = createSettingsDataBroadcaster({ sendToMain: (chann
 const isMainSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
   mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents
 );
+const isSettingsSenderAllowed = (event: IpcMainInvokeEvent) => event.sender === settingsWindowController?.getWebContents();
 let startupHintWindow: BrowserWindow | null = null;
 let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
@@ -1796,7 +1797,7 @@ ipcMain.handle("app:openReleasePage", async () => {
 });
 
 ipcMain.handle("app:checkForUpdates", async (event) => {
-  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+  if (!isMainSenderAllowed(event) && !isSettingsSenderAllowed(event)) {
     return {
       status: "failed",
       currentVersion: app.getVersion()
@@ -1816,7 +1817,7 @@ ipcMain.handle("app:checkForUpdates", async (event) => {
 });
 
 ipcMain.handle("app:downloadUpdate", async (event) => {
-  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || !pendingAppUpdateDownload) {
+  if ((!isMainSenderAllowed(event) && !isSettingsSenderAllowed(event)) || !pendingAppUpdateDownload) {
     return { status: "failed" };
   }
   if (!app.isPackaged) {
@@ -1834,9 +1835,7 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
   const launcherPath = path.join(app.getPath("temp"), `Cap7CE-update-launcher-${updateSessionId}.vbs`);
   const failureLogPath = path.join(app.getPath("temp"), "Cap7CE-update-last-failure.log");
   const sendDownloadProgress = (progress: AppUpdateDownloadProgress) => {
-    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
-      mainWindow.webContents.send("app:updateDownloadProgress", progress);
-    }
+    settingsWindowController?.send("app:updateDownloadProgress", progress);
   };
   appUpdateDownloadActive = true;
   appUpdateDownloadAbortController = new AbortController();
@@ -1918,7 +1917,7 @@ ipcMain.handle("app:downloadUpdate", async (event) => {
 });
 
 ipcMain.handle("app:cancelUpdateDownload", (event) => {
-  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents || !appUpdateDownloadAbortController) {
+  if ((!isMainSenderAllowed(event) && !isSettingsSenderAllowed(event)) || !appUpdateDownloadAbortController) {
     return false;
   }
   appUpdateDownloadAbortController?.abort();
@@ -2703,7 +2702,7 @@ registerRuntimeModelIpc({
 
 registerDiagnosticsIpc({
   registrar: ipcMain,
-  isSenderAllowed: isMainSenderAllowed,
+  isSenderAllowed: (event) => isMainSenderAllowed(event) || isSettingsSenderAllowed(event),
   diagnostics: runtimeDiagnostics,
   appVersion: app.getVersion(),
   documentsPath: app.getPath("documents"),
@@ -2711,8 +2710,8 @@ registerDiagnosticsIpc({
     path.join(app.getPath("userData"), "logs", "app-update.log"),
     path.join(app.getPath("userData"), "logs", "llama-runtime.log")
   ],
-  chooseExportPath: async (defaultPath) => {
-    const result = await dialog.showSaveDialog(mainWindow!, {
+  chooseExportPath: async (defaultPath, event) => {
+    const result = await dialog.showSaveDialog(BrowserWindow.fromWebContents(event.sender) ?? mainWindow!, {
       defaultPath,
       filters: [{ name: "ZIP", extensions: ["zip"] }]
     });

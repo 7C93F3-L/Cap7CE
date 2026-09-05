@@ -271,6 +271,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(embeddedMetadataSettingsSource, /await api\.startBackfill\(\)[\s\S]*?catch \{[\s\S]*?setRequestError\(true\)/u);
   assert.match(mainSource, /configureEmbeddedMetadataRuntime\([\s\S]*?settingsWindowController\?\.getWebContents\(\)/u);
   assert.match(embeddedMetadataRuntimeSource, /getActiveWebContents[\s\S]*?includes\(event\.sender\)[\s\S]*?for \(const webContents of getActiveWebContents\(\)\)/u);
+  assert.match(mainSource, /isSettingsSenderAllowed[\s\S]*?app:checkForUpdates[\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?app:downloadUpdate[\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?app:cancelUpdateDownload[\s\S]*?isSettingsSenderAllowed\(event\)/u);
+  assert.match(mainSource, /sendDownloadProgress[\s\S]*?settingsWindowController\?\.send\("app:updateDownloadProgress"/u);
+  assert.match(mainSource, /registerDiagnosticsIpc\([\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?BrowserWindow\.fromWebContents\(event\.sender\)/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);

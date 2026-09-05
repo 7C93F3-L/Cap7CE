@@ -2,6 +2,8 @@
 
 ## 0.9.9
 
+- 修复独立 Settings 的诊断与版本更新动作仍被主窗口专属权限拒绝的问题：日志和崩溃报告位置、详细记录、诊断包导出、更新检查、下载与取消现在认可 Settings 发送者；诊断保存对话框跟随实际发起窗口，更新进度直接返回 Settings，未知 Renderer 继续被拒绝。
+
 - 修复独立 Settings 中“嵌入元数据”检查按钮仍被主窗口专属 IPC 权限拒绝的问题；显式补齐、取消和任务状态现在由主窗口与 Settings 共用同一服务并同步广播，按钮左侧显示正在检查、处理进度、完成或失败反馈。
 
 - 窗口宿主完成 stable-only 收口：主窗口、独立 Settings 与 Preview 统一由 40 DIP WCO 和同一套 Acrylic / Mica 运行时创建，移除旧 Cap7CE / compatibility 外壳策略、模式切换事务、兼容最大化控制器、旧设置回退入口及相关 IPC / preload / 偏好字段；主窗口状态只保留 normal / standby，最大化与分屏回归 Windows 原生语义。窗口布局固定使用 `window-layout-stable-ui.json` 并默认记忆，历史偏好 JSON 的多余字段和旧布局文件保留在磁盘但不再读取或改写。

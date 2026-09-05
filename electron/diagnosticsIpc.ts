@@ -16,7 +16,7 @@ export interface RegisterDiagnosticsIpcOptions {
   appVersion: string;
   documentsPath: string;
   additionalLogPaths: string[];
-  chooseExportPath: (defaultPath: string) => Promise<string | null>;
+  chooseExportPath: (defaultPath: string, event: IpcMainInvokeEvent) => Promise<string | null>;
 }
 
 const exportFileName = () => {
@@ -53,8 +53,8 @@ export const registerDiagnosticsIpc = ({
       {
         kind: "handle",
         channel: "diagnostics:export",
-        listener: async (): Promise<RuntimeDiagnosticsExportResult> => {
-          const destinationPath = await chooseExportPath(path.join(documentsPath, exportFileName()));
+        listener: async (event): Promise<RuntimeDiagnosticsExportResult> => {
+          const destinationPath = await chooseExportPath(path.join(documentsPath, exportFileName()), event);
           if (!destinationPath) return { status: "cancelled" };
           const operation = diagnostics.startOperation("diagnostics.export");
           try {
