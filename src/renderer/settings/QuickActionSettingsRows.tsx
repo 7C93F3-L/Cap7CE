@@ -138,8 +138,8 @@ export const QuickActionSettingsRows = ({
         <div className="cap-settings-quick-actions-panel">
           <div className="cap-settings-quick-actions-header">
             <div className="cap-settings-quick-actions-controls">
-              <button className="cap-settings-pill" type="button" disabled={capturingShortcutActionId !== null} onClick={() => onGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
-                {quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}
+              <button className="cap-stable-settings-toggle" type="button" role="switch" aria-checked={quickActionGlobalEnabled} data-checked={quickActionGlobalEnabled} disabled={capturingShortcutActionId !== null} onClick={() => onGlobalEnabledChange(!quickActionGlobalEnabled)} title={quickActionGlobalEnabled ? t("settings.disableQuickActionsHint") : t("settings.enableQuickActionsHint")}>
+                <span>{quickActionGlobalEnabled ? t("settings.enabled") : t("settings.disabled")}</span><i aria-hidden="true" />
               </button>
               <button className="cap-settings-pill" type="button" onClick={resetShortcutActions} title={t("settings.resetQuickActionsHint")}>{t("common.restoreDefault")}</button>
             </div>

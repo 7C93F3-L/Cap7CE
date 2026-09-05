@@ -184,6 +184,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(stableActionStyles, /min-height: 28px[\s\S]*?border-radius: 999px[\s\S]*?linear-gradient\(45deg, var\(--theme-color\), var\(--accent-color\)\)/u);
   assert.match(stableActionStyles, /cap-settings-expand-toggle\[aria-expanded="true"\][\s\S]*?background: var\(--stable-settings-hover\)/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-body[\s\S]*?<QuickActionSettingsRows quickActionGlobalEnabled=/u);
+  assert.match(quickActionSource, /className="cap-stable-settings-toggle"[\s\S]*?role="switch"[\s\S]*?aria-checked=\{quickActionGlobalEnabled\}[\s\S]*?data-checked=\{quickActionGlobalEnabled\}/u);
   assert.doesNotMatch(settingsAppSource, /quickActionsExpanded|setQuickActionsExpanded/u);
   assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
   assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.restoreDefaultWindow/u);
