@@ -32,24 +32,6 @@
   outline: none;
 }
 
-.result-section-card-aiDeepMatch[data-ai-phase="starting"] h2,
-.result-section-card-aiDeepMatch[data-ai-phase="starting"] p,
-.result-section-card-aiDeepMatch[data-ai-phase="running"] h2,
-.result-section-card-aiDeepMatch[data-ai-phase="running"] p {
-  animation: cap7ce-ai-section-text-breathe 1.4s ease-in-out infinite;
-}
-
-@keyframes cap7ce-ai-section-text-breathe {
-  0%,
-  100% {
-    color: var(--window-control-color);
-  }
-
-  50% {
-    color: var(--theme-color);
-  }
-}
-
 .result-section-card h2,
 .result-section-card p {
   margin: 0;
@@ -60,10 +42,10 @@
   align-items: baseline;
   gap: 0.12em;
   font-size: calc(var(--cap-ui-font-base) + 7px);
-  font-weight: 450;
+  font-weight: 600;
   line-height: 1.08;
   letter-spacing: -0.025em;
-  color: var(--theme-color);
+  color: var(--text-main);
 }
 
 .result-section-card h2 span {
@@ -74,18 +56,9 @@
 .result-section-card p {
   display: -webkit-box;
   overflow: hidden;
-  color: var(--window-control-color);
+  color: color-mix(in srgb, var(--text-main) 62%, transparent);
   font-size: var(--cap-ui-font-secondary);
   line-height: 1.3;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .result-section-card-aiDeepMatch[data-ai-phase="starting"] h2,
-  .result-section-card-aiDeepMatch[data-ai-phase="starting"] p,
-  .result-section-card-aiDeepMatch[data-ai-phase="running"] h2,
-  .result-section-card-aiDeepMatch[data-ai-phase="running"] p {
-    animation: none;
-  }
 }

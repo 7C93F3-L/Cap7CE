@@ -45,7 +45,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       {!all && <span className="cap-stable-directory-count">{count}</span>}
     </button>;
     if (all) return <div className="cap-stable-all-directories-row" key={directory.id}>{directoryButton}</div>;
-    return <div className="cap-stable-directory-row" key={directory.id} onContextMenu={(event) => openDirectoryFlyout(directory, event)}>
+    return <div className={`cap-stable-directory-row${selected ? " is-selected" : ""}`} key={directory.id} onContextMenu={(event) => openDirectoryFlyout(directory, event)}>
       {directoryButton}
       <button className="cap-stable-directory-more" type="button" aria-label={t("common.manage")} onClick={(event) => openDirectoryFlyout(directory, event)}><StableSidebarIcon name="more" /></button>
     </div>;

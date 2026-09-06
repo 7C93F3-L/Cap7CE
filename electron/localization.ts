@@ -160,6 +160,7 @@ export const zhCN = {
   "stableSettings.rename": "重命名",
   "stableSettings.update.readOnlyMaterial": "后续功能",
   "search.inputLabel": "搜索关键词",
+  "search.clearQuery": "清空搜索关键词",
   "search.action": "搜索",
   "search.aiEnhance": "AI增强",
   "search.aiEnhanceCompleted": "AI 深度匹配完成",

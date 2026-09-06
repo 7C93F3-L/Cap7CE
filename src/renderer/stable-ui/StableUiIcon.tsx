@@ -1,6 +1,7 @@
 import type { SortDirection } from "../../shared/types";
 import aiEnhanceIcon from "../assets/icons/icon-stable-ai-enhance.svg?raw";
 import aiEnhanceActiveIcon from "../assets/icons/icon-stable-ai-enhance-active.svg?raw";
+import clearSearchIcon from "../assets/icons/icon-stable-clear-search.svg?raw";
 import folderIcon from "../assets/icons/icon-stable-folder.svg?raw";
 import folderSelectedIcon from "../assets/icons/icon-stable-folder-selected.svg?raw";
 import scopeIcon from "../assets/icons/icon-stable-search-scope.svg?raw";
@@ -14,7 +15,7 @@ import sortAscIcon from "../assets/icons/icon-sort-asc.svg?raw";
 import sortDescIcon from "../assets/icons/icon-sort-desc.svg?raw";
 import SvgIcon from "../components/SvgIcon";
 
-export type StableUiIconName = "ai" | "folder" | "scope" | "search" | "settings" | "skim" | "sort";
+export type StableUiIconName = "ai" | "clearSearch" | "folder" | "scope" | "search" | "settings" | "skim" | "sort";
 
 const StableUiIcon = ({ name, active = false, sortDirection = "asc", className = "cap-stable-sidebar-icon" }: {
   name: StableUiIconName;
@@ -23,7 +24,8 @@ const StableUiIcon = ({ name, active = false, sortDirection = "asc", className =
   className?: string;
 }) => {
   const svg = name === "ai" ? (active ? aiEnhanceActiveIcon : aiEnhanceIcon)
-    : name === "folder" ? (active ? folderSelectedIcon : folderIcon)
+    : name === "clearSearch" ? clearSearchIcon
+      : name === "folder" ? (active ? folderSelectedIcon : folderIcon)
       : name === "scope" ? (active ? scopeActiveIcon : scopeIcon)
         : name === "settings" ? (active ? settingsActiveIcon : settingsIcon)
           : name === "skim" ? (active ? skimActiveIcon : skimIcon)

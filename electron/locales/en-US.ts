@@ -160,6 +160,7 @@ export const enUS = defineLocale({
   "stableSettings.rename": "Rename",
   "stableSettings.update.readOnlyMaterial": "Future feature",
   "search.inputLabel": "Search Keywords",
+  "search.clearQuery": "Clear search keywords",
   "search.action": "Search",
   "search.aiEnhance": "AI Enhance",
   "search.aiEnhanceCompleted": "AI deep matching completed",

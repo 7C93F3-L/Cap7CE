@@ -14,6 +14,7 @@ const skimToolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const sidebarTypesSource = read("src/renderer/stable-ui/stableSidebarTypes.ts");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
+const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
 const brandLogo = read("src/renderer/assets/icons/logo-cap7ce.svg");
 
 for (const marker of [
@@ -74,8 +75,13 @@ assert.match(sidebarSource, /aria-label=\{t\("stableSettings\.rename"\)\}/u);
 assert.match(sidebarSource, />\{t\("stableSettings\.rename"\)\}<\/button>/u);
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; \}/u);
-assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;/u);
-assert.match(sidebarStyles, /\.cap-stable-directory-item:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-item\.is-selected \{ background: var\(--cap-stable-navigation-state\); \}/u);
+assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;[\s\S]*?\.cap-stable-directory-row \{ display: block; width: 32px; margin-inline: auto; border-radius: 9px; \}/u);
+assert.match(sidebarSource, /className=\{`cap-stable-directory-row\$\{selected \? " is-selected" : ""\}`\}/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-row \{[^}]*grid-template-columns: minmax\(0, 1fr\) 32px;/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-row:hover, \.cap-stable-directory-row\.is-selected \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-row > \.cap-stable-directory-item\.is-selected \{ background: transparent; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-more \{[^}]*justify-self: center;[^}]*width: 24px; height: 24px;[^}]*margin-left: 0;[^}]*border-radius: 50%;/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-more:hover \{ color: var\(--text-main\); background: var\(--cap-stable-directory-more-hover, color-mix\(in srgb, currentColor 14%, transparent\)\); opacity: 1; \}/u);
+assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-directory-more-hover: rgb\(255 255 255 \/ 24%\);/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-control:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?aria-pressed="true"[\s\S]*?aria-expanded="true"[^}]*background: var\(--cap-stable-navigation-state\);/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-footer button:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-sidebar-footer button\.is-active \{ background: var\(--cap-stable-navigation-state\); \}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-item\.is-editing \{ background: transparent; \}/u);

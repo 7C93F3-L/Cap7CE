@@ -17,7 +17,6 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGui
     event.preventDefault();
     if (!composingRef.current) onSearch();
   };
-
   return (
     <form className="cap-stable-search-slot" role="search" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
       <StableUiIcon name="search" className="cap-stable-search-icon" />
@@ -37,6 +36,7 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, inputFeedbackIsGui
           if (clearedQuery) onSearchOptionsChange(nextSearch);
         }}
       />
+      {search.query.length > 0 && <button className="cap-stable-search-clear" type="button" title={t("search.clearQuery")} aria-label={t("search.clearQuery")} onPointerDown={(event) => event.preventDefault()} onClick={(event) => { const nextSearch = { ...search, query: "" }; onSearchChange(nextSearch); onSearchOptionsChange(nextSearch); event.currentTarget.form?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true }); }}><StableUiIcon name="clearSearch" className="cap-stable-search-clear-icon" /></button>}
       {!search.query && !inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback" title={inputFeedback}>{inputFeedback}</span>}
     </form>
   );
