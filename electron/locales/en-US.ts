@@ -71,7 +71,7 @@ export const enUS = defineLocale({
   "filter.addedDirectories": "Added",
   "filter.allAddedDirectories": "All Added Folders",
   "stableUi.sidebar.aiEnhance": "AI Enhance",
-  "stableUi.sidebar.searchScope": "Search Scope",
+  "stableUi.sidebar.searchScope": "View Scope",
   "stableUi.sidebar.scopeDefault": "Default Scope",
   "stableUi.sidebar.scopeAll": "All Formats",
   "stableUi.sidebar.scopeCustom": "Custom Scope",

@@ -71,7 +71,7 @@ export const zhCN = {
   "filter.addedDirectories": "已添加",
   "filter.allAddedDirectories": "所有已添加目录",
   "stableUi.sidebar.aiEnhance": "AI 增强",
-  "stableUi.sidebar.searchScope": "搜索范围",
+  "stableUi.sidebar.searchScope": "查看范围",
   "stableUi.sidebar.scopeDefault": "默认范围",
   "stableUi.sidebar.scopeAll": "全部范围",
   "stableUi.sidebar.scopeCustom": "自定义范围",

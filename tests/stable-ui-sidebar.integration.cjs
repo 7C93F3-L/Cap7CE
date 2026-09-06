@@ -16,6 +16,8 @@ const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
 const brandLogo = read("src/renderer/assets/icons/logo-cap7ce.svg");
+const zhLocalizationSource = read("electron/localization.ts");
+const enLocalizationSource = read("electron/locales/en-US.ts");
 
 for (const marker of [
   "onAiSearchToggle",
@@ -59,6 +61,8 @@ for (const marker of [
 ]) assert.ok(sidebarStyles.includes(marker), `Stable sidebar styles are missing ${marker}.`);
 
 assert.match(brandLogo, /viewBox="0 0 58\.77 15"/u);
+assert.match(zhLocalizationSource, /"stableUi\.sidebar\.searchScope": "查看范围"/u);
+assert.match(enLocalizationSource, /"stableUi\.sidebar\.searchScope": "View Scope"/u);
 assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
 assert.match(sidebarSource, /<StableUiIcon name="ai" active=\{aiSearchEnabled\}/u);
 assert.doesNotMatch(sidebarSource, /cap-stable-switch/u);
