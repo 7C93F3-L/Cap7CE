@@ -77,6 +77,11 @@
   backdrop-filter: blur(18px) saturate(125%);
 }
 
+.context-menu.cap-stable-settings-select-menu button {
+  font-size: var(--cap-ui-font-control);
+  line-height: var(--cap-ui-line-control);
+}
+
 .context-menu.cap-stable-settings-select-menu button:hover,
 .context-menu.cap-stable-settings-select-menu button.is-active {
   color: var(--dialog-action-hover-text);
