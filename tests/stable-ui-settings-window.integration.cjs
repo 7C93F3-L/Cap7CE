@@ -189,7 +189,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(quickActionSource, /className="cap-stable-settings-toggle"[\s\S]*?role="switch"[\s\S]*?aria-checked=\{quickActionGlobalEnabled\}[\s\S]*?data-checked=\{quickActionGlobalEnabled\}/u);
   assert.doesNotMatch(settingsAppSource, /quickActionsExpanded|setQuickActionsExpanded/u);
   assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
-  assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.restoreDefaultWindow/u);
+  assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.restoreDefaultWindow[\s\S]*?shortcut\.openSettings[\s\S]*?shortcut\.cycleDirectory/u);
   assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-command-body[\s\S]*?<QuickCommandSettingsRows stableUi/u);
   assert.doesNotMatch(settingsAppSource, /quickCommandsExpanded|setQuickCommandsExpanded/u);

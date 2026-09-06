@@ -313,8 +313,8 @@
 | `shortcut.focusMainSearch` | 显示主窗口并聚焦搜索 | | Show main window and focus search | 快捷动作名称 |
 | `shortcut.hideToLine` | 关闭主窗口并保持后台运行 | | Close main window and keep running in the background | 快捷动作名称 |
 | `shortcut.toggleSkim` | 展开 / 收起 skim | | Expand / collapse skim | 快捷动作名称 |
-| `shortcut.openSettings` | 打开设置 | | Open Settings | 快捷动作名称 |
 | `shortcut.restoreDefaultWindow` | 默认大小和位置打开主窗口 | | Open main window at default size and position | 快捷动作名称 |
+| `shortcut.openSettings` | 打开设置 | | Open Settings | 快捷动作名称 |
 | `shortcut.cycleDirectory` | 目录切换 | | Cycle folders | 窗口内快捷动作 |
 
 ## 7. Settings：llama.cpp、视觉模型与详情

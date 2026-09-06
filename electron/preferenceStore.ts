@@ -109,11 +109,11 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   skimSystemLocationsCollapsed: false,
   stableShortcutActions: {
     focusMainSearch: "Alt+`",
-    restoreDefaultWindow: "Alt+4",
+    restoreDefaultWindow: "Alt+3",
     hideToLine: "Alt+1",
     toggleSkim: "Alt+2",
     cycleDirectory: "Alt+Q",
-    openSettings: "Alt+3"
+    openSettings: "Alt+4"
   },
   updatedAt: new Date().toISOString()
 });
@@ -205,7 +205,7 @@ const normalizeShortcutActions = (
     hideToLine: "activateStandby",
     toggleSkim: "activateSkim"
   };
-  return (Object.keys(defaults) as ShortcutActionId[]).reduce<ShortcutActionPreferences>((currentShortcuts, shortcutId) => {
+  const normalized = (Object.keys(defaults) as ShortcutActionId[]).reduce<ShortcutActionPreferences>((currentShortcuts, shortcutId) => {
     const legacyShortcutId = legacyAliases[shortcutId];
     const shortcutValue = isShortcutActionId(shortcutId)
       ? parsedShortcuts[shortcutId] ?? (legacyShortcutId ? parsedShortcuts[legacyShortcutId] : undefined)
@@ -217,6 +217,10 @@ const normalizeShortcutActions = (
         : defaults[shortcutId]
     };
   }, { ...defaults });
+  if (normalized.restoreDefaultWindow === "Alt+4" && normalized.openSettings === "Alt+3") {
+    return { ...normalized, restoreDefaultWindow: "Alt+3", openSettings: "Alt+4" };
+  }
+  return normalized;
 };
 
 const readPreferences = async (): Promise<UserPreferencesResponse> => {

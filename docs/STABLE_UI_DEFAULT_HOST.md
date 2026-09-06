@@ -15,7 +15,7 @@
 - 普通启动直接装配 stable 主界面；目录和偏好就绪后执行一次“全部目录”空查询，Skim 默认收起。
 - 主窗口使用 `window-layout-stable-ui.json` 的单一自由 bounds 并默认记忆；无有效记录时按工作区 82%、最大 1600×1000 居中。
 - Settings 使用独立单实例窗口；Preview 使用独立单实例窗口并保留 Provider 会话与内容尺寸链；三者可以同时存在。
-- `Alt+反引号` 显示并聚焦主窗口搜索，`Alt+1` 隐藏主窗口并按偏好显示 line，`Alt+2` 展开 / 收起 Skim，`Alt+3` 打开 Settings，`Alt+4` 恢复默认大小和位置，`Alt+Q` 循环目录。
+- `Alt+反引号` 显示并聚焦主窗口搜索，`Alt+1` 隐藏主窗口并按偏好显示 line，`Alt+2` 展开 / 收起 Skim，`Alt+3` 恢复默认大小和位置，`Alt+4` 打开 Settings，`Alt+Q` 循环目录。
 
 ## 3. 守门与验收
 

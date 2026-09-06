@@ -39,7 +39,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       settings: defaults.stableShortcutActions.openSettings,
       reset: defaults.stableShortcutActions.restoreDefaultWindow,
       directory: defaults.stableShortcutActions.cycleDirectory
-    }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+2", settings: "Alt+3", reset: "Alt+4", directory: "Alt+Q" });
+    }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+2", settings: "Alt+4", reset: "Alt+3", directory: "Alt+Q" });
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal("rememberWindowLayout" in defaults, false);
     assert.equal("windowPresentationMode" in defaults, false);
@@ -53,7 +53,23 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       sortDirection: "asc"
     });
 
-    const legacyPreferencesPath = path.join(app.getPath("userData"), "config", "preferences.json");
+    const preferencesPath = path.join(app.getPath("userData"), "config", "preferences.json");
+    await fs.mkdir(path.dirname(preferencesPath), { recursive: true });
+    await fs.writeFile(preferencesPath, JSON.stringify({
+      stableShortcutActions: {
+        focusMainSearch: "Alt+`",
+        restoreDefaultWindow: "Alt+4",
+        hideToLine: "Alt+1",
+        toggleSkim: "Alt+2",
+        cycleDirectory: "Alt+Q",
+        openSettings: "Alt+3"
+      }
+    }));
+    const refreshedDefaults = await getUserPreferences();
+    assert.equal(refreshedDefaults.stableShortcutActions.restoreDefaultWindow, "Alt+3");
+    assert.equal(refreshedDefaults.stableShortcutActions.openSettings, "Alt+4");
+
+    const legacyPreferencesPath = preferencesPath;
     await fs.mkdir(path.dirname(legacyPreferencesPath), { recursive: true });
     const sidebarFolder = path.join(testRoot, "Sidebar Folder");
     await fs.writeFile(legacyPreferencesPath, JSON.stringify({
