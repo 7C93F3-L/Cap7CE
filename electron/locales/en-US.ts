@@ -16,6 +16,7 @@ export const enUS = defineLocale({
   "common.done": "Done",
   "common.refresh": "Refresh",
   "common.refreshing": "Refreshing",
+  "common.refreshed": "Refreshed",
   "common.restoreDefault": "Restore Defaults",
   "common.view": "View",
   "common.manage": "Manage",

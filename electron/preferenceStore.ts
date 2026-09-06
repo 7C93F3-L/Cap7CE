@@ -121,7 +121,7 @@ const defaultPreferences = (): UserPreferencesResponse => ({
 const isThemeMode = (value: unknown): value is ThemeMode => value === "system" || value === "light" || value === "dark";
 const isLanguagePreference = (value: unknown): value is LanguagePreference => value === "system" || value === "zh-CN" || value === "en-US";
 const normalizeSortField = (value: unknown, fallback: SortField): SortField => (
-  value === "modified_at" || value === "created_at"
+  value === "modified_at"
     ? "modified_at"
     : value === "file_name"
       ? "file_name"
@@ -160,34 +160,18 @@ export const normalizeSkimSidebarFolders = (value: unknown): string[] => {
   return folders;
 };
 const isHexColor = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
-const isShortcutActionId = (value: string): value is ShortcutActionId => (
-  value === "focusMainSearch"
-  || value === "restoreDefaultWindow"
-  || value === "hideToLine"
-  || value === "toggleSkim"
-  || value === "cycleDirectory"
-  || value === "openSettings"
-);
 const isShortcutValue = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const isReservedEscapeShortcut = (value: string) => /(^|\+)(esc|escape)$/i.test(value.replace(/\s+/g, ""));
 
 const normalizeAppearanceColors = (appearanceColors: unknown, defaults = defaultPreferences().appearanceColors): AppearanceColors => {
-  const parsedColors = appearanceColors as (Partial<AppearanceColors> & {
-    light?: Partial<AppearanceColors>;
-    dark?: Partial<AppearanceColors>;
-  }) | undefined;
-  const migratedColors = parsedColors?.light ?? parsedColors?.dark;
+  const parsedColors = appearanceColors as Partial<AppearanceColors> | undefined;
   return {
     themeColor: isHexColor(parsedColors?.themeColor)
       ? parsedColors.themeColor.toUpperCase()
-      : isHexColor(migratedColors?.themeColor)
-        ? migratedColors.themeColor.toUpperCase()
-        : defaults.themeColor,
+      : defaults.themeColor,
     accentColor: isHexColor(parsedColors?.accentColor)
       ? parsedColors.accentColor.toUpperCase()
-      : isHexColor(migratedColors?.accentColor)
-        ? migratedColors.accentColor.toUpperCase()
-        : defaults.accentColor
+      : defaults.accentColor
   };
 };
 
@@ -199,17 +183,8 @@ const normalizeShortcutActions = (
   if (!parsedShortcuts) {
     return { ...defaults };
   }
-  const legacyAliases: Partial<Record<ShortcutActionId, string>> = {
-    focusMainSearch: "activateCapsule",
-    restoreDefaultWindow: "activateNormal",
-    hideToLine: "activateStandby",
-    toggleSkim: "activateSkim"
-  };
-  const normalized = (Object.keys(defaults) as ShortcutActionId[]).reduce<ShortcutActionPreferences>((currentShortcuts, shortcutId) => {
-    const legacyShortcutId = legacyAliases[shortcutId];
-    const shortcutValue = isShortcutActionId(shortcutId)
-      ? parsedShortcuts[shortcutId] ?? (legacyShortcutId ? parsedShortcuts[legacyShortcutId] : undefined)
-      : undefined;
+  return (Object.keys(defaults) as ShortcutActionId[]).reduce<ShortcutActionPreferences>((currentShortcuts, shortcutId) => {
+    const shortcutValue = parsedShortcuts[shortcutId];
     return {
       ...currentShortcuts,
       [shortcutId]: isShortcutValue(shortcutValue) && !isReservedEscapeShortcut(shortcutValue)
@@ -217,16 +192,12 @@ const normalizeShortcutActions = (
         : defaults[shortcutId]
     };
   }, { ...defaults });
-  if (normalized.restoreDefaultWindow === "Alt+4" && normalized.openSettings === "Alt+3") {
-    return { ...normalized, restoreDefaultWindow: "Alt+3", openSettings: "Alt+4" };
-  }
-  return normalized;
 };
 
 const readPreferences = async (): Promise<UserPreferencesResponse> => {
   try {
     const content = await fs.readFile(preferencesPath(), "utf8");
-    const parsed = JSON.parse(content) as Partial<UserPreferencesResponse> & { formatLabelVisible?: boolean };
+    const parsed = JSON.parse(content) as Partial<UserPreferencesResponse>;
     const defaults = defaultPreferences();
     const parsedLabelVisibility = parsed.searchLabelVisibility;
 
@@ -272,9 +243,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
         sort: typeof parsedLabelVisibility?.sort === "boolean" ? parsedLabelVisibility.sort : defaults.searchLabelVisibility.sort,
         format: typeof parsedLabelVisibility?.format === "boolean"
           ? parsedLabelVisibility.format
-          : typeof parsed.formatLabelVisible === "boolean"
-            ? parsed.formatLabelVisible
-            : defaults.searchLabelVisibility.format,
+          : defaults.searchLabelVisibility.format,
         skimDisplay: typeof parsedLabelVisibility?.skimDisplay === "boolean"
           ? parsedLabelVisibility.skimDisplay
           : defaults.searchLabelVisibility.skimDisplay,

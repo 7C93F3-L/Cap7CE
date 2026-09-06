@@ -34,13 +34,6 @@
   white-space: nowrap;
 }
 
-.cap-settings-select-runtime,
-.cap-settings-select-model {
-  flex-basis: 230px;
-  width: 230px;
-  max-width: 230px;
-}
-
 .context-menu.cap-settings-select-menu {
   min-width: 0;
   max-width: calc(100vw - 10px);

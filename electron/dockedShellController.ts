@@ -50,7 +50,7 @@ interface DockSession {
   expandedBounds: WindowLayoutBounds;
 }
 
-const collapsibleShellStates = new Set(["micro", "mini", "normal"]);
+const collapsibleShellStates = new Set(["normal"]);
 export const dockedShellDockThresholdPx = 16;
 export const dockedShellDockReleaseThresholdPx = 24;
 export const dockedShellPeekThicknessPx = 5;

@@ -224,32 +224,6 @@ textarea,
   fill: currentColor;
 }
 
-.cap-sort-svg-icon {
-  width: 24px;
-  height: 24px;
-}
-
-.context-menu-mini {
-  max-width: min(180px, calc(100vw - 10px));
-}
-
-.cap-skim-empty-entry {
-  border: 0;
-  color: var(--muted);
-  background: transparent;
-  cursor: pointer;
-}
-
-.cap-empty-result-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: inherit;
-}
-
-.cap7ce-pill,
 .cap-settings-pill {
   min-width: 34px;
   height: 20px;
@@ -272,7 +246,6 @@ textarea,
     box-shadow 500ms ease;
 }
 
-.cap7ce-pill:hover,
 .cap-settings-pill:hover:not(:disabled) {
   background: var(--chip-bg-hover);
   color: var(--theme-on-color);
@@ -289,7 +262,6 @@ textarea,
   transform: translateY(-1px);
 }
 
-.cap7ce-pill:disabled,
 .cap-settings-pill:disabled {
   opacity: 0.52;
 }
@@ -352,9 +324,7 @@ textarea,
   background: transparent;
 }
 
-.home-view,
-.results-view,
-.settings-view {
+.results-view {
   height: calc(100% - 34px);
   position: relative;
 }
@@ -386,7 +356,6 @@ textarea,
 }
 
 
-.cap7ce-label-menu,
 .context-menu {
   position: fixed;
   z-index: 1000;
@@ -424,13 +393,11 @@ textarea,
   }
 }
 
-.cap7ce-label-menu *,
 .context-menu * {
   pointer-events: auto;
   -webkit-app-region: no-drag;
 }
 
-.cap7ce-label-menu button,
 .context-menu button {
   height: 24px;
   display: flex;
@@ -447,7 +414,6 @@ textarea,
     color 500ms ease;
 }
 
-.cap7ce-label-menu button:hover,
 .context-menu button:hover {
   background: var(--theme-color);
   color: var(--theme-on-color);
@@ -493,8 +459,7 @@ textarea,
   white-space: nowrap;
 }
 
-.context-menu-file-format,
-.context-menu-file-details span {
+.context-menu-file-format {
   display: block;
   overflow: hidden;
   white-space: nowrap;
@@ -528,16 +493,7 @@ textarea,
   flex: 0 0 auto;
 }
 
-.context-menu-file-details {
-  display: grid;
-  gap: 0;
-  color: var(--accent-color);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .cap7ce-filter-chip-motion,
-  .cap7ce-filter-chip-motion.cap7ce-filter-chip-closing,
-  .cap7ce-file-format-label,
   .cap7ce-menu-motion-surface,
   .cap-settings-expandable-shell {
     animation: none;

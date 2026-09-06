@@ -38,7 +38,7 @@ import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupServi
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateOperationHintsPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
-import { backfillFilePathEvidence, deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, getImageDatabasePath, getLegacyImageDatabasePath, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
+import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
 import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
@@ -53,7 +53,7 @@ import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNa
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
 import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import { resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
-import { lockWebContentsZoom } from "./webContentsZoomPolicy";
+import { installMainWindowInputPolicy, lockWebContentsZoom } from "./webContentsInputPolicy";
 import { LineWindowController } from "./lineWindowController";
 import { installDockedShell } from "./dockedShellAutomation";
 import { previewDockedShell } from "./previewDockedShell";
@@ -1520,7 +1520,7 @@ const createWindow = () => {
     }
   });
   stableWindowRuntime.applyMainWindowAppearance(mainWindow, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors);
-  lockWebContentsZoom(mainWindow.webContents);
+  lockWebContentsZoom(mainWindow.webContents); installMainWindowInputPolicy(mainWindow.webContents);
   dockedShellController = installDockedShell({
     window: mainWindow, enabled: edgeCollapseEnabled, enableDebugShortcut: Boolean(process.env.VITE_DEV_SERVER_URL),
     fixed: shellAlwaysOnTop,
@@ -1612,12 +1612,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
       currentVersion: app.getVersion(),
       argumentVersion: completedUpdateVersionArgument,
       installMarkerPath: path.join(path.dirname(process.execPath), ".cap7ce-update-completed"),
-      versionStatePath: path.join(app.getPath("userData"), "config", "app-version.json"),
-      legacyUserDataPaths: [
-        path.join(app.getPath("userData"), "config", "preferences.json"),
-        getImageDatabasePath(),
-        getLegacyImageDatabasePath()
-      ]
+      versionStatePath: path.join(app.getPath("userData"), "config", "app-version.json")
     }).catch((error) => {
       console.warn("[app-update] failed to resolve completed update", error);
       return completedUpdateVersionArgument;
@@ -1628,11 +1623,6 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     console.warn("[office-preview] failed to reset temporary root", error);
   });
   await ensureImageDatabase();
-  try {
-    await backfillFilePathEvidence(await listDirectories());
-  } catch (error) {
-    console.warn("[search-path-evidence] failed to backfill existing catalog paths", error);
-  }
   const preferences = await getUserPreferences();
   if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
   stableWindowRuntime.configure(preferences.themePreference, preferences.windowMaterial);

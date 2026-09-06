@@ -45,6 +45,11 @@ contextBridge.exposeInMainWorld("cap7ce", {
       ipcRenderer.on("window:focusMainSearch", listener);
       return () => ipcRenderer.removeListener("window:focusMainSearch", listener);
     },
+    onRefreshCurrentPageRequested: (callback: () => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("window:refreshCurrentPageRequested", listener);
+      return () => ipcRenderer.removeListener("window:refreshCurrentPageRequested", listener);
+    },
     onActivateShellModeShortcut: (callback: (mode: "normal" | "standby") => void) => {
       const listener = (_event: Electron.IpcRendererEvent, mode: "normal" | "standby") => callback(mode);
       ipcRenderer.on("window:activateShellModeShortcut", listener);

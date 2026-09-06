@@ -138,11 +138,6 @@
   background-clip: content-box;
 }
 
-.cap-stable-section-label {
-  color: var(--cap-stable-text-muted);
-  font-size: var(--cap-stable-section-font-size);
-}
-
 @media (max-width: 760px) {
   .cap-stable-result-count { display: none; }
   .cap-stable-titlebar-pin { margin-left: auto; }

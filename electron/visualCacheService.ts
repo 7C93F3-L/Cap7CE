@@ -155,8 +155,6 @@ export const getVisualCacheDirectories = () => (
   )]
 );
 
-export const getLegacyVisualCacheDirectory = () => path.join(app.getPath("userData"), "cache");
-
 const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
   const normalizedFilePath = normalizedPathForKey(filePath);
   const normalizedDirectoryPath = normalizedPathForKey(directoryPath);
@@ -165,7 +163,7 @@ const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
 };
 
 export const isCap7CECachePath = (filePath: string) => (
-  [...getVisualCacheDirectories(), getLegacyVisualCacheDirectory()]
+  getVisualCacheDirectories()
     .some((cacheDirectory) => isPathInsideDirectory(filePath, cacheDirectory))
 );
 

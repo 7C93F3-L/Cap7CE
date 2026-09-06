@@ -5,12 +5,14 @@ const { registerDirectoryManagementIpc } = require("../dist-electron/directoryMa
 
 const run = async () => {
   const appSource = fs.readFileSync(path.join(__dirname, "..", "src", "renderer", "App.tsx"), "utf8");
-  const resultRefreshSource = appSource.slice(
-    appSource.indexOf('if (view === "home" || view === "results")'),
-    appSource.indexOf("  };", appSource.indexOf('if (view === "home" || view === "results")'))
+  const refreshSource = appSource.slice(
+    appSource.indexOf("const refreshCurrentPage"),
+    appSource.indexOf("  };", appSource.indexOf("const refreshCurrentPage"))
   );
+  const resultRefreshSource = refreshSource.slice(refreshSource.indexOf('if (view === "home" || view === "results")'));
   assert.match(resultRefreshSource, /directories\.refreshFileCounts\(directoryIds\)/u);
   assert.doesNotMatch(resultRefreshSource, /search\.refresh/u);
+  assert.doesNotMatch(refreshSource, /shellState === "standby"/u);
 
   const handles = new Map();
   const calls = [];

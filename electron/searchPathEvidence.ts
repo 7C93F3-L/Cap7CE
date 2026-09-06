@@ -1,8 +1,6 @@
 import path from "node:path";
 import type { PersistedDirectory } from "./directoryStore";
 
-export const SEARCH_PATH_EVIDENCE_VERSION = 1;
-
 export const toSearchTerms = (query: string) => query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
 
 export const normalizeSearchEvidence = (value: string) => value.toLocaleLowerCase();

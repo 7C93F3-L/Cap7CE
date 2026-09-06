@@ -305,7 +305,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(featureDocSource, /亚克力[\s\S]*?云母[\s\S]*?安全纯色/u);
 
   await fs.promises.rm(temporaryRoot, { recursive: true, force: true });
-  console.log(JSON.stringify({ singleInstanceVerified: true, independentBoundsVerified: true, rendererEntryVerified: true, senderGuardVerified: true, sharedStateBroadcastVerified: true, formalSettingsContentVerified: true, shellVisualLayoutVerified: true, legacyFallbackGuarded: true }));
+  console.log(JSON.stringify({ singleInstanceVerified: true, independentBoundsVerified: true, rendererEntryVerified: true, senderGuardVerified: true, sharedStateBroadcastVerified: true, formalSettingsContentVerified: true, shellVisualLayoutVerified: true, retiredFallbackAbsent: true }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

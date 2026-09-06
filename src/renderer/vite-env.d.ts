@@ -19,6 +19,7 @@ declare global {
         onToggleSkimLocationPickerRequested: (callback: () => void) => () => void;
         onActivateSkimRequested: (callback: () => void) => () => void;
         onFocusMainSearch: (callback: () => void) => () => void;
+        onRefreshCurrentPageRequested: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "normal" | "standby") => void) => () => void;
       };
       settingsWindow: {
@@ -164,7 +165,7 @@ declare global {
         updateSkimDisplay: (skimDisplay: UserPreferences["skimDisplay"]) => Promise<UserPreferences>;
         updateSkimSidebarFolders: (skimSidebarFolders: UserPreferences["skimSidebarFolders"]) => Promise<UserPreferences>;
         updateSkimSystemLocationsCollapsed: (collapsed: boolean) => Promise<UserPreferences>;
-        updateShortcutActions: (shortcutActions: UserPreferences["shortcutActions"]) => Promise<ShortcutActionsUpdateResult>;
+        updateShortcutActions: (shortcutActions: UserPreferences["stableShortcutActions"]) => Promise<ShortcutActionsUpdateResult>;
         shortcutAvailability: () => Promise<ShortcutAvailabilityResult>;
         beginShortcutCapture: () => Promise<boolean>;
         endShortcutCapture: () => Promise<ShortcutAvailabilityResult>;

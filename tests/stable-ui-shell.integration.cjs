@@ -29,6 +29,7 @@ const skimStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
 const scrollbarStyles = read("src/renderer/CustomScrollbar.css");
 const globalStyles = read("src/renderer/styles.css");
 const appSource = read("src/renderer/App.tsx");
+const refreshShortcutSource = read("src/renderer/controllers/useCurrentPageRefreshShortcut.ts");
 const dialogShellSource = read("src/renderer/dialogs/DialogShell.tsx");
 const dialogShellStyles = read("src/renderer/dialogs/DialogShell.css");
 const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.tsx");
@@ -67,7 +68,6 @@ for (const marker of [
   "@media (max-width: 920px) and (min-height: 360px)",
   "@media (max-width: 560px)",
   "@media (max-height: 359.98px)",
-  "grid-auto-flow: column",
   ".cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { --cap-stable-grid-page-padding: 10px 2px 2px 10px; grid-template-columns: minmax(0, 1fr); }",
   ".cap-stable-main-shell .cap-stable-directory-list-frame { grid-template-columns: minmax(0, 1fr); }",
   ".cap-stable-main-shell .cap-stable-directory-list-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0;",
@@ -100,6 +100,9 @@ assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-s
 assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
 assert.match(appSource, /resultContent=\{<ResultsView[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
+assert.match(appSource, /useCurrentPageRefreshShortcut\(\{[\s\S]*?refresh: refreshCurrentPage,[\s\S]*?t\("common\.refreshed"\)/u);
+assert.match(refreshShortcutSource, /event\.key !== "F5"[\s\S]*?requestRefresh\(\)/u);
+assert.match(refreshShortcutSource, /onRefreshCurrentPageRequested\(requestRefresh\)/u);
 assert.match(appSource, /showBackdrop=\{false\}/u);
 assert.match(keywordEditorSource, /showBackdrop && <KeywordEditorBackdrop/u);
 

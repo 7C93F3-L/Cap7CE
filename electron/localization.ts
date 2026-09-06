@@ -16,6 +16,7 @@ export const zhCN = {
   "common.done": "完成",
   "common.refresh": "刷新",
   "common.refreshing": "刷新中",
+  "common.refreshed": "已刷新",
   "common.restoreDefault": "恢复默认",
   "common.view": "查看",
   "common.manage": "管理",

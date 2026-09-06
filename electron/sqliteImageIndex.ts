@@ -1,6 +1,5 @@
 import { app } from "electron";
 import { createRequire } from "node:module";
-import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import initSqlJs from "sql.js";
@@ -9,7 +8,7 @@ import type { ScannedFile, ScannedImageFile } from "./imageScanner";
 import type { PersistedDirectory } from "./directoryStore";
 import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import { applyKeywordBatchDelta, normalizeKeywordList, parseKeywordText } from "./keywordRules";
-import { escapeSqlLikeTerm, getDirectoryTermMatches, getRelativeDirectoryEvidence, SEARCH_PATH_EVIDENCE_VERSION, toSearchTerms } from "./searchPathEvidence";
+import { escapeSqlLikeTerm, getDirectoryTermMatches, getRelativeDirectoryEvidence, toSearchTerms } from "./searchPathEvidence";
 import {
   getSearchableExtensionsForNaturalKind,
   planSearchQuery,
@@ -51,7 +50,6 @@ const requireFromHere = createRequire(__filename);
 
 const indexDirectory = () => path.join(app.getPath("userData"), "index");
 export const getImageDatabasePath = () => path.join(indexDirectory(), "cap7ce-index.db");
-export const getLegacyImageDatabasePath = () => path.join(indexDirectory(), "image-everything.db");
 
 export interface PendingImageRecognitionItem {
   id: number;
@@ -189,7 +187,6 @@ const classifyRecognitionFailure = (aiError: string): { type: RecognitionFailure
 };
 
 let sqlRuntimePromise: Promise<SqlJsStatic> | null = null;
-let databaseFileNameMigrationPromise: Promise<void> | null = null;
 let databaseAccessQueue: Promise<void> = Promise.resolve();
 
 const acquireDatabaseAccess = async () => {
@@ -210,56 +207,11 @@ const getSqlRuntime = () => {
   return sqlRuntimePromise;
 };
 
-export const migrateLegacyDatabaseFileName = async (
-  databasePath = getImageDatabasePath(),
-  legacyDatabasePath = getLegacyImageDatabasePath()
-) => {
-  const [databaseExists, legacyDatabaseExists] = await Promise.all([
-    fs.stat(databasePath).then(() => true).catch((error) => {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-      throw error;
-    }),
-    fs.stat(legacyDatabasePath).then(() => true).catch((error) => {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-      throw error;
-    })
-  ]);
-
-  if (databaseExists) {
-    if (legacyDatabaseExists) {
-      console.warn("[sqlite-index] both current and legacy database files exist; using cap7ce-index.db without overwriting either file");
-    }
-    return;
-  }
-  if (!legacyDatabaseExists) return;
-
-  const backupBasePath = `${legacyDatabasePath}.pre-cap7ce-name-v1.bak`;
-  for (let suffix = 0; ; suffix += 1) {
-    const backupPath = suffix === 0 ? backupBasePath : `${backupBasePath}.${suffix}`;
-    try {
-      await fs.copyFile(legacyDatabasePath, backupPath, fsConstants.COPYFILE_EXCL);
-      break;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-    }
-  }
-  await fs.rename(legacyDatabasePath, databasePath);
-};
-
-const ensureDatabaseFileNameMigration = () => {
-  if (!databaseFileNameMigrationPromise) {
-    databaseFileNameMigrationPromise = migrateLegacyDatabaseFileName();
-  }
-  return databaseFileNameMigrationPromise;
-};
-
 const loadDatabase = async (): Promise<Database> => {
-  const release = await acquireDatabaseAccess();
+    const release = await acquireDatabaseAccess();
   try {
     const SQL = await getSqlRuntime();
-    await ensureDatabaseFileNameMigration();
     const databasePath = getImageDatabasePath();
-    await ensureMetadataOwnershipMigrationBackup();
     let database: Database;
     try {
       database = new SQL.Database(await fs.readFile(databasePath));
@@ -267,7 +219,7 @@ const loadDatabase = async (): Promise<Database> => {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
       database = new SQL.Database();
     }
-    migrate(database);
+    ensureDatabaseSchema(database);
     const close = database.close.bind(database);
     let closed = false;
     database.close = () => {
@@ -292,86 +244,7 @@ const saveDatabase = async (database: Database) => {
   await fs.rename(tempPath, databasePath);
 };
 
-const ensureColumn = (database: Database, tableName: string, columnName: string, definition: string) => {
-  const columns = database.exec(`PRAGMA table_info(${tableName})`)[0]?.values ?? [];
-  const exists = columns.some((column) => String(column[1]) === columnName);
-  if (!exists) {
-    database.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
-  }
-};
-
-const backfillFileCatalogFromImages = (database: Database) => {
-  const migrationKey = "file_catalog_backfill_v1";
-  const migrationCompleted = database.exec(
-    "SELECT value FROM index_metadata WHERE key = :key",
-    { ":key": migrationKey }
-  )[0]?.values[0]?.[0] === "completed";
-  if (migrationCompleted) return;
-
-  database.run("BEGIN TRANSACTION");
-  try {
-    const rows = database.exec(`
-      SELECT file_path, file_name, file_size, created_at, modified_at, indexed_at, directory_id, "exists"
-      FROM images
-    `)[0]?.values ?? [];
-    const statement = database.prepare(`
-      INSERT OR IGNORE INTO files (
-        file_path,
-        file_name,
-        extension,
-        file_size,
-        created_at,
-        modified_at,
-        indexed_at,
-        directory_id,
-        "exists"
-      ) VALUES (
-        :file_path,
-        :file_name,
-        :extension,
-        :file_size,
-        :created_at,
-        :modified_at,
-        :indexed_at,
-        :directory_id,
-        :exists
-      )
-    `);
-    try {
-      for (const row of rows) {
-        const fileName = String(row[1]);
-        statement.run({
-          ":file_path": String(row[0]),
-          ":file_name": fileName,
-          ":extension": path.extname(fileName).toLowerCase(),
-          ":file_size": Number(row[2]),
-          ":created_at": String(row[3]),
-          ":modified_at": String(row[4]),
-          ":indexed_at": String(row[5]),
-          ":directory_id": String(row[6]),
-          ":exists": Number(row[7] ?? 1)
-        });
-        statement.reset();
-      }
-    } finally {
-      statement.free();
-    }
-    database.run(
-      "INSERT OR REPLACE INTO index_metadata (key, value) VALUES (:key, 'completed')",
-      { ":key": migrationKey }
-    );
-    database.run("COMMIT");
-  } catch (error) {
-    try {
-      database.run("ROLLBACK");
-    } catch {
-      // Preserve the original migration error.
-    }
-    throw error;
-  }
-};
-
-const migrate = (database: Database) => {
+const ensureDatabaseSchema = (database: Database) => {
   database.exec(`
     CREATE TABLE IF NOT EXISTS images (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -399,7 +272,6 @@ const migrate = (database: Database) => {
       file_name TEXT NOT NULL,
       extension TEXT NOT NULL,
       relative_directory TEXT NOT NULL DEFAULT '',
-      path_evidence_version INTEGER NOT NULL DEFAULT 0,
       file_size INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       modified_at TEXT NOT NULL,
@@ -422,22 +294,7 @@ const migrate = (database: Database) => {
       scanned_at TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS index_metadata (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
   `);
-
-  const hasLegacyImageMetadata = (database.exec("PRAGMA table_info(images)")[0]?.values ?? [])
-    .some((column) => String(column[1]) === "caption");
-  if (hasLegacyImageMetadata) {
-    ensureColumn(database, "images", "ai_error", "TEXT NOT NULL DEFAULT ''");
-    ensureColumn(database, "images", "ai_failed_at", "TEXT");
-    ensureColumn(database, "images", "manual_index", "INTEGER NOT NULL DEFAULT 0 CHECK (manual_index IN (0, 1))");
-  }
-  ensureColumn(database, "files", "relative_directory", "TEXT NOT NULL DEFAULT ''");
-  ensureColumn(database, "files", "path_evidence_version", "INTEGER NOT NULL DEFAULT 0");
-  backfillFileCatalogFromImages(database);
   ensureIndexMetadataSchema(database);
 };
 
@@ -446,31 +303,7 @@ const firstResultValue = (database: Database, sql: string, params?: Record<strin
   return result[0]?.values[0]?.[0];
 };
 
-const ensurePathEvidenceMigrationBackup = async () => {
-  const databasePath = getImageDatabasePath();
-  const backupPath = `${databasePath}.pre-path-v1.bak`;
-  try {
-    await fs.copyFile(databasePath, backupPath, fsConstants.COPYFILE_EXCL);
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code !== "ENOENT" && code !== "EEXIST") throw error;
-  }
-};
-
-const ensureMetadataOwnershipMigrationBackup = async () => {
-  const databasePath = getImageDatabasePath();
-  const backupPath = `${databasePath}.pre-metadata-ownership-v1.bak`;
-  try {
-    await fs.copyFile(databasePath, backupPath, fsConstants.COPYFILE_EXCL);
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code !== "ENOENT" && code !== "EEXIST") throw error;
-  }
-};
-
 export const ensureImageDatabase = async () => {
-  await ensureDatabaseFileNameMigration();
-  await ensurePathEvidenceMigrationBackup();
   const database = await loadDatabase();
   await saveDatabase(database);
   database.close();
@@ -760,56 +593,6 @@ export const writeVisualPropertyBatch = async (
   }
 };
 
-export const backfillFilePathEvidence = async (directories: PersistedDirectory[]) => {
-  const directoryById = new Map(directories.map((directory) => [directory.id, directory]));
-  const database = await loadDatabase();
-  let updatedCount = 0;
-  try {
-    const rows = database.exec(
-      "SELECT id, file_path, directory_id FROM files WHERE path_evidence_version < :version",
-      { ":version": SEARCH_PATH_EVIDENCE_VERSION }
-    )[0]?.values ?? [];
-    if (rows.length === 0) return 0;
-
-    database.run("BEGIN TRANSACTION");
-    const statement = database.prepare(`
-      UPDATE files
-      SET relative_directory = :relative_directory,
-          path_evidence_version = :path_evidence_version
-      WHERE id = :id
-    `);
-    try {
-      for (const row of rows) {
-        const directory = directoryById.get(String(row[2]));
-        if (!directory) continue;
-        const relativeDirectory = getRelativeDirectoryEvidence(directory.path, String(row[1]));
-        if (relativeDirectory === null) continue;
-        statement.run({
-          ":id": Number(row[0]),
-          ":relative_directory": relativeDirectory,
-          ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION
-        });
-        statement.reset();
-        updatedCount += 1;
-      }
-    } finally {
-      statement.free();
-    }
-    database.run("COMMIT");
-    if (updatedCount > 0) await saveDatabase(database);
-    return updatedCount;
-  } catch (error) {
-    try {
-      database.run("ROLLBACK");
-    } catch {
-      // Preserve the original migration error.
-    }
-    throw error;
-  } finally {
-    database.close();
-  }
-};
-
 export const getExistingImageCountsByDirectory = async (directoryIds: string[]): Promise<Record<string, number>> => {
   const counts: Record<string, number> = Object.fromEntries(directoryIds.map((id) => [id, 0]));
   const database = await loadDatabase();
@@ -946,7 +729,6 @@ export const writeScannedImagesToIndex = async (
         file_name,
         extension,
         relative_directory,
-        path_evidence_version,
         file_size,
         created_at,
         modified_at,
@@ -958,7 +740,6 @@ export const writeScannedImagesToIndex = async (
         :file_name,
         :extension,
         :relative_directory,
-        :path_evidence_version,
         :file_size,
         :created_at,
         :modified_at,
@@ -970,7 +751,6 @@ export const writeScannedImagesToIndex = async (
         file_name = excluded.file_name,
         extension = excluded.extension,
         relative_directory = excluded.relative_directory,
-        path_evidence_version = excluded.path_evidence_version,
         file_size = excluded.file_size,
         created_at = excluded.created_at,
         modified_at = excluded.modified_at,
@@ -1032,7 +812,6 @@ export const writeScannedImagesToIndex = async (
           ":file_name": file.file_name,
           ":extension": file.extension,
           ":relative_directory": relativeDirectory,
-          ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION,
           ":file_size": file.file_size,
           ":created_at": file.created_at,
           ":modified_at": file.modified_at,
@@ -1212,8 +991,7 @@ export const reassignDirectoryImages = async (
     `);
     const updatePathEvidenceStatement = database.prepare(`
       UPDATE files
-      SET relative_directory = :relative_directory,
-          path_evidence_version = :path_evidence_version
+      SET relative_directory = :relative_directory
       WHERE id = :id
     `);
     const clearScanStatement = database.prepare(`
@@ -1246,8 +1024,7 @@ export const reassignDirectoryImages = async (
             if (relativeDirectory === null) continue;
             updatePathEvidenceStatement.run({
               ":id": Number(row[0]),
-              ":relative_directory": relativeDirectory,
-              ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION
+              ":relative_directory": relativeDirectory
             });
             updatePathEvidenceStatement.reset();
           }
@@ -1267,7 +1044,7 @@ export const reassignDirectoryImages = async (
     try {
       database.run("ROLLBACK");
     } catch {
-      // Preserve the original migration error.
+      // Preserve the original reassignment error.
     }
     throw error;
   } finally {
@@ -1409,10 +1186,10 @@ const upsertFileCatalogFromImageRecord = (
   database.run(`
     INSERT INTO files (
       file_path, file_name, extension, file_size, created_at, modified_at,
-      relative_directory, path_evidence_version, indexed_at, directory_id, "exists"
+      relative_directory, indexed_at, directory_id, "exists"
     ) VALUES (
       :file_path, :file_name, :extension, :file_size, :created_at, :modified_at,
-      :relative_directory, :path_evidence_version, :indexed_at, :directory_id, 1
+      :relative_directory, :indexed_at, :directory_id, 1
     )
     ON CONFLICT(file_path) DO UPDATE SET
       file_name = excluded.file_name,
@@ -1421,7 +1198,6 @@ const upsertFileCatalogFromImageRecord = (
       created_at = excluded.created_at,
       modified_at = excluded.modified_at,
       relative_directory = excluded.relative_directory,
-      path_evidence_version = excluded.path_evidence_version,
       indexed_at = excluded.indexed_at,
       directory_id = excluded.directory_id,
       "exists" = 1
@@ -1433,7 +1209,6 @@ const upsertFileCatalogFromImageRecord = (
     ":created_at": image.created_at,
     ":modified_at": image.modified_at,
     ":relative_directory": getRelativeDirectoryEvidence(image.directory_path, image.file_path) ?? "",
-    ":path_evidence_version": SEARCH_PATH_EVIDENCE_VERSION,
     ":indexed_at": indexedAt,
     ":directory_id": image.directory_id
   });

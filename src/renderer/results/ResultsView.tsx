@@ -400,7 +400,7 @@ export const ResultsView = ({ images, isSearching, aiSearchPhase, aiSearchProgre
 
     const inTile = Boolean(targetElement.closest('[data-result-tile="true"]'));
     const inControls = Boolean(targetElement.closest('[data-window-controls="true"]'));
-    const inMenu = Boolean(targetElement.closest('[data-context-menu="true"], .cap7ce-label-menu'));
+    const inMenu = Boolean(targetElement.closest('[data-context-menu="true"]'));
     const inSettings = Boolean(targetElement.closest('[data-settings-view="true"]'));
     const willClear = !(inTile || inControls || inMenu || inSettings);
 

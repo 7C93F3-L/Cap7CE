@@ -8,7 +8,6 @@ type AppUpdateCompletionOptions = {
   argumentVersion?: string | null;
   installMarkerPath: string;
   versionStatePath: string;
-  legacyUserDataPaths?: string[];
 };
 
 const readVersionText = async (targetPath: string): Promise<string | null> => {
@@ -31,26 +30,15 @@ const readPreviousVersion = async (targetPath: string): Promise<string | null> =
   }
 };
 
-const pathExists = async (targetPath: string) => {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 export const consumeAppUpdateCompletion = async ({
   currentVersion,
   argumentVersion,
   installMarkerPath,
-  versionStatePath,
-  legacyUserDataPaths = []
+  versionStatePath
 }: AppUpdateCompletionOptions): Promise<string | null> => {
-  const [markerVersion, previousVersion, legacyUserDataPresence] = await Promise.all([
+  const [markerVersion, previousVersion] = await Promise.all([
     readVersionText(installMarkerPath),
-    readPreviousVersion(versionStatePath),
-    Promise.all(legacyUserDataPaths.map(pathExists))
+    readPreviousVersion(versionStatePath)
   ]);
   await fs.rm(installMarkerPath, { force: true }).catch(() => undefined);
 
@@ -61,9 +49,7 @@ export const consumeAppUpdateCompletion = async ({
       ? normalizedCurrentVersion
       : normalizedCurrentVersion && previousVersion && previousVersion !== normalizedCurrentVersion
         ? normalizedCurrentVersion
-        : normalizedCurrentVersion && !previousVersion && legacyUserDataPresence.some(Boolean)
-          ? normalizedCurrentVersion
-          : null;
+        : null;
 
   await fs.mkdir(path.dirname(versionStatePath), { recursive: true });
   await fs.writeFile(versionStatePath, `${JSON.stringify({ version: currentVersion }, null, 2)}\n`, "utf8");

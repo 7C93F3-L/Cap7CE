@@ -4,6 +4,7 @@ import { executeQuickCommand, type QuickCommandConfirmationRequest } from "./com
 import { parseQuickCommand } from "./commandParser";
 import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController";
 import { useContentViewActivity } from "./controllers/useContentViewActivity";
+import { useCurrentPageRefreshShortcut } from "./controllers/useCurrentPageRefreshShortcut";
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useSearchIndexRefresh } from "./controllers/useSearchIndexRefresh";
@@ -137,22 +138,14 @@ const emptyThumbnailOptimizationStatus: ThumbnailOptimizationStatus = {
   activeDurationMs: 0
 };
 
-const normalizeAppearanceColors = (appearanceColors?: Partial<AppearanceColors> & {
-  light?: Partial<AppearanceColors>;
-  dark?: Partial<AppearanceColors>;
-}): AppearanceColors => {
-  const migratedColors = appearanceColors?.light ?? appearanceColors?.dark;
+const normalizeAppearanceColors = (appearanceColors?: Partial<AppearanceColors>): AppearanceColors => {
   return {
     themeColor: isHexColor(appearanceColors?.themeColor)
       ? appearanceColors.themeColor.toUpperCase()
-      : isHexColor(migratedColors?.themeColor)
-        ? migratedColors.themeColor.toUpperCase()
-        : defaultAppearanceColors.themeColor,
+      : defaultAppearanceColors.themeColor,
     accentColor: isHexColor(appearanceColors?.accentColor)
       ? appearanceColors.accentColor.toUpperCase()
-      : isHexColor(migratedColors?.accentColor)
-        ? migratedColors.accentColor.toUpperCase()
-        : defaultAppearanceColors.accentColor
+      : defaultAppearanceColors.accentColor
   };
 };
 
@@ -708,7 +701,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         includedExtensions: getSearchDisplayExtensions(options?.display ?? skimDisplay)
       };
       let response = (await window.cap7ce?.search.images(searchRequest, taskId)) ?? emptySearchResponse;
-      if (searchTaskIdRef.current !== taskId) return;
+      if (searchTaskIdRef.current !== taskId) return false;
       if (
         !Array.isArray(response)
         && nextSearch.fileFormat !== "all"
@@ -722,15 +715,17 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           includedExtensions: searchRequest.includedExtensions
         };
         response = (await window.cap7ce?.search.images(searchRequest, taskId)) ?? emptySearchResponse;
-        if (searchTaskIdRef.current !== taskId) return;
+        if (searchTaskIdRef.current !== taskId) return false;
       }
       const baseResults = Array.isArray(response) ? response : response.images;
       setSearchResults(options?.preserveAiResults ? aiSearchBeta.mergePreservedResults(baseResults) : baseResults);
       if (options?.aiEnhanced) void aiSearchBeta.start(searchRequest, baseResults);
+      return true;
     } catch {
-      if (searchTaskIdRef.current !== taskId) return;
+      if (searchTaskIdRef.current !== taskId) return false;
       setSearchResults([]);
       setSearchError(t("search.failed"));
+      return false;
     } finally {
       if (searchTaskIdRef.current === taskId) {
         searchTaskIdRef.current = null;
@@ -2087,8 +2082,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const refreshCurrentPage = async () => {
     if (
-      shellState === "standby"
-      || dialog
+      dialog
       || contextMenu
       || editingDirectoryId
       || pendingQuickCommandConfirmation
@@ -2096,12 +2090,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       || isDeletingFiles
       || isSavingMetadata
     ) {
-      return;
+      return false;
     }
 
     if (view === "skim") {
-      await loadSkimLocation(skimCurrentPath);
-      return;
+      return loadSkimLocation(skimCurrentPath);
     }
 
     if (view === "settings") {
@@ -2115,7 +2108,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         refreshLlamaRuntimeSettings(),
         refreshGgufModelSettings()
       ]);
-      return;
+      return true;
     }
 
     if (view === "home" || view === "results") {
@@ -2126,9 +2119,17 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         ? await window.cap7ce?.directories.refreshFileCounts(directoryIds)
         : undefined;
       if (countedDirectories) refreshDirectories(countedDirectories);
-      await runSearch(search, { navigate: false });
+      return runSearch(search, { navigate: false });
     }
+
+    return false;
   };
+
+  useCurrentPageRefreshShortcut({
+    refresh: refreshCurrentPage,
+    onRefreshed: () => view === "skim" ? showSkimFeedback(t("common.refreshed")) : showQuickCommandNotice(t("common.refreshed")),
+    onFailed: () => view === "skim" ? showSkimFeedback(t("error.refreshFailed")) : showQuickCommandNotice(t("error.refreshFailed"))
+  });
 
   useEffect(() => {
     const preventSideButtonDefault = (event: MouseEvent) => {
@@ -2196,18 +2197,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   useEffect(() => {
     const handleWindowShortcutKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) {
-        return;
-      }
-
-      if (event.key === "F5") {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!event.repeat) {
-          void refreshCurrentPage().catch(() => {
-            if (view === "skim") showSkimFeedback(t("error.refreshFailed"));
-            else showQuickCommandNotice(t("error.refreshFailed"));
-          });
-        }
         return;
       }
 

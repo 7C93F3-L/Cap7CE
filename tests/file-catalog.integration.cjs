@@ -9,7 +9,6 @@ const testRoot = path.join(os.tmpdir(), `cap7ce-file-catalog-${process.pid}-${Da
 const userDataPath = path.join(testRoot, "user-data");
 const sourceDirectory = path.join(testRoot, "sources");
 const databasePath = path.join(userDataPath, "index", "cap7ce-index.db");
-const legacyDatabasePath = path.join(userDataPath, "index", "image-everything.db");
 const directoryId = "catalog-directory";
 const replacementDirectoryId = "catalog-parent-directory";
 const emptyDirectoryId = "catalog-empty-directory";
@@ -34,50 +33,9 @@ app.whenReady().then(async () => {
     await fs.writeFile(documentPath, "docx");
     await fs.writeFile(path.join(sourceDirectory, "ignored.exe"), "exe");
 
-    const legacyDatabase = new SQL.Database();
-    legacyDatabase.exec(`
-      CREATE TABLE images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_path TEXT NOT NULL UNIQUE,
-        file_name TEXT NOT NULL,
-        file_size INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        modified_at TEXT NOT NULL,
-        image_width INTEGER,
-        image_height INTEGER,
-        caption TEXT NOT NULL DEFAULT '',
-        keywords TEXT NOT NULL DEFAULT '',
-        indexed_at TEXT NOT NULL,
-        directory_id TEXT NOT NULL,
-        ai_error TEXT NOT NULL DEFAULT '',
-        ai_failed_at TEXT,
-        manual_index INTEGER NOT NULL DEFAULT 0 CHECK (manual_index IN (0, 1)),
-        "exists" INTEGER NOT NULL DEFAULT 1 CHECK ("exists" IN (0, 1))
-      );
-    `);
-    legacyDatabase.run(`
-      INSERT INTO images (
-        file_path, file_name, file_size, created_at, modified_at,
-        caption, keywords, indexed_at, directory_id, "exists"
-      ) VALUES (
-        :file_path, :file_name, 3, :created_at, :modified_at,
-        '', '', :indexed_at, :directory_id, 1
-      )
-    `, {
-      ":file_path": imagePath,
-      ":file_name": path.basename(imagePath),
-      ":created_at": timestamp,
-      ":modified_at": timestamp,
-      ":indexed_at": timestamp,
-      ":directory_id": directoryId
-    });
-    await fs.writeFile(legacyDatabasePath, legacyDatabase.export());
-    legacyDatabase.close();
-
     const { scanImageDirectories } = require("../dist-electron/imageScanner.js");
     const {
       deleteDirectoryImages,
-      backfillFilePathEvidence,
       ensureImageDatabase,
       getCompletedFileScanDirectoryIds,
       getExistingFileCountsByDirectory,
@@ -86,7 +44,6 @@ app.whenReady().then(async () => {
       filterPendingVisualPropertyCandidates,
       listPendingEmbeddedMetadataCandidates,
       listPendingImageDimensionCandidates,
-      migrateLegacyDatabaseFileName,
       reassignDirectoryImages,
       searchIndexedImages,
       updateImageRecognition,
@@ -108,20 +65,15 @@ app.whenReady().then(async () => {
       updatedAt: timestamp
     };
     await ensureImageDatabase();
-    await fs.access(`${legacyDatabasePath}.pre-cap7ce-name-v1.bak`);
-    await assert.rejects(fs.access(legacyDatabasePath), (error) => error?.code === "ENOENT");
-    await fs.access(`${databasePath}.pre-path-v1.bak`);
-    const migratedFileDatabase = new SQL.Database(await fs.readFile(databasePath));
-    const migratedFileColumns = migratedFileDatabase.exec("PRAGMA table_info(files)")[0]?.values ?? [];
-    const migratedUserMetadataColumns = migratedFileDatabase.exec("PRAGMA table_info(file_user_metadata)")[0]?.values ?? [];
-    const migratedAiMetadataColumns = migratedFileDatabase.exec("PRAGMA table_info(image_ai_metadata)")[0]?.values ?? [];
-    migratedFileDatabase.close();
-    assert.ok(!migratedFileColumns.some((column) => String(column[1]) === "user_keywords"));
-    assert.ok(migratedUserMetadataColumns.some((column) => String(column[1]) === "keywords"));
-    assert.ok(migratedAiMetadataColumns.some((column) => String(column[1]) === "caption"));
-    await fs.access(`${databasePath}.pre-metadata-ownership-v1.bak`);
-    assert.equal(await backfillFilePathEvidence([directory]), 1);
-    assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 1);
+    const initializedDatabase = new SQL.Database(await fs.readFile(databasePath));
+    const fileColumns = initializedDatabase.exec("PRAGMA table_info(files)")[0]?.values ?? [];
+    const userMetadataColumns = initializedDatabase.exec("PRAGMA table_info(file_user_metadata)")[0]?.values ?? [];
+    const aiMetadataColumns = initializedDatabase.exec("PRAGMA table_info(image_ai_metadata)")[0]?.values ?? [];
+    initializedDatabase.close();
+    assert.ok(fileColumns.some((column) => String(column[1]) === "relative_directory"));
+    assert.ok(userMetadataColumns.some((column) => String(column[1]) === "keywords"));
+    assert.ok(aiMetadataColumns.some((column) => String(column[1]) === "caption"));
+    assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 0);
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), false);
     await assert.rejects(
       () => scanImageDirectories([directory], { isCancelled: () => true }),
@@ -189,11 +141,11 @@ app.whenReady().then(async () => {
     assert.deepEqual(await listPendingEmbeddedMetadataCandidates([directoryId]), []);
     const pathEvidenceDatabase = new SQL.Database(await fs.readFile(databasePath));
     const pathEvidenceRow = pathEvidenceDatabase.exec(
-      "SELECT relative_directory, path_evidence_version FROM files WHERE file_path = :file_path",
+      "SELECT relative_directory FROM files WHERE file_path = :file_path",
       { ":file_path": documentPath }
     )[0]?.values[0];
     pathEvidenceDatabase.close();
-    assert.deepEqual(pathEvidenceRow, ["nested", 1]);
+    assert.deepEqual(pathEvidenceRow, ["nested"]);
     assert.equal((await getExistingFileCountsByDirectory([directoryId]))[directoryId], 3);
     assert.equal((await getCompletedFileScanDirectoryIds([directoryId])).has(directoryId), true);
     assert.deepEqual(await getImageIndexQualityStats(directoryId), {
@@ -317,11 +269,11 @@ app.whenReady().then(async () => {
     }]);
     const reassignedDatabase = new SQL.Database(await fs.readFile(databasePath));
     const reassignedPathRow = reassignedDatabase.exec(
-      "SELECT relative_directory, path_evidence_version FROM files WHERE file_path = :file_path",
+      "SELECT relative_directory FROM files WHERE file_path = :file_path",
       { ":file_path": documentPath }
     )[0]?.values[0];
     reassignedDatabase.close();
-    assert.deepEqual(reassignedPathRow, ["sources/nested", 1]);
+    assert.deepEqual(reassignedPathRow, ["sources/nested"]);
     assert.equal((await getExistingFileCountsByDirectory([directoryId, replacementDirectoryId]))[replacementDirectoryId], 2);
     assert.deepEqual(await getImageIndexQualityStats(replacementDirectoryId), {
       totalFiles: 2,
@@ -347,36 +299,9 @@ app.whenReady().then(async () => {
     assert.equal((await getExistingFileCountsByDirectory([emptyDirectoryId]))[emptyDirectoryId], 0);
     assert.equal((await getCompletedFileScanDirectoryIds([emptyDirectoryId])).has(emptyDirectoryId), true);
 
-    const collisionRoot = path.join(testRoot, "database-name-collision");
-    const collisionCurrentPath = path.join(collisionRoot, "cap7ce-index.db");
-    const collisionLegacyPath = path.join(collisionRoot, "image-everything.db");
-    await fs.mkdir(collisionRoot, { recursive: true });
-    await fs.writeFile(collisionCurrentPath, "current-database");
-    await fs.writeFile(collisionLegacyPath, "legacy-database");
-    await migrateLegacyDatabaseFileName(collisionCurrentPath, collisionLegacyPath);
-    assert.equal(await fs.readFile(collisionCurrentPath, "utf8"), "current-database");
-    assert.equal(await fs.readFile(collisionLegacyPath, "utf8"), "legacy-database");
-
-    const occupiedBackupRoot = path.join(testRoot, "occupied-migration-backup");
-    const occupiedBackupCurrentPath = path.join(occupiedBackupRoot, "cap7ce-index.db");
-    const occupiedBackupLegacyPath = path.join(occupiedBackupRoot, "image-everything.db");
-    const occupiedBackupPath = `${occupiedBackupLegacyPath}.pre-cap7ce-name-v1.bak`;
-    await fs.mkdir(occupiedBackupRoot, { recursive: true });
-    await fs.writeFile(occupiedBackupLegacyPath, "latest-legacy-database");
-    await fs.writeFile(occupiedBackupPath, "earlier-backup");
-    await migrateLegacyDatabaseFileName(occupiedBackupCurrentPath, occupiedBackupLegacyPath);
-    assert.equal(await fs.readFile(occupiedBackupCurrentPath, "utf8"), "latest-legacy-database");
-    assert.equal(await fs.readFile(occupiedBackupPath, "utf8"), "earlier-backup");
-    assert.equal(await fs.readFile(`${occupiedBackupPath}.1`, "utf8"), "latest-legacy-database");
-
     console.log(JSON.stringify({
-      legacyImagesBackfilled: true,
-      legacyDatabaseFileNameMigrated: true,
-      databaseFileNameCollisionPreservedBoth: true,
-      occupiedMigrationBackupPreserved: true,
+      currentSchemaInitialized: true,
       userAndAiMetadataTablesSeparated: true,
-      legacyPathEvidenceBackfilledWithoutSourceScan: true,
-      migrationBackupCreated: true,
       relativeDirectoryStoredAndReassigned: true,
       mixedFormatsCataloged: 3,
       allSupportedFileStatsUnified: true,

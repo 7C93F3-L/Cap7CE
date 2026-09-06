@@ -5,7 +5,7 @@ const { app, BrowserWindow } = require("electron");
 const {
   isPageZoomShortcut,
   lockWebContentsZoom
-} = require("../dist-electron/webContentsZoomPolicy.js");
+} = require("../dist-electron/webContentsInputPolicy.js");
 
 const input = (overrides = {}) => ({
   alt: false,

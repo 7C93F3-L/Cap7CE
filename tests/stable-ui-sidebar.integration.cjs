@@ -114,5 +114,5 @@ console.log(JSON.stringify({
   formalDirectoryTransactionsReused: true,
   directoryDropAndIndependentSettingsActionGuarded: true,
   collapsedSidebarAndFooterVerified: true,
-  stableIconStatesAndLegacySortIconsVerified: true
+  stableIconStatesAndSortIconsVerified: true
 }));

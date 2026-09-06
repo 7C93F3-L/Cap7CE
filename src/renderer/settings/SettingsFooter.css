@@ -1,11 +1,3 @@
-.cap-settings-view .cap7ce-signature {
-  position: static;
-  width: max-content;
-  margin: 74px auto 0;
-  transform: none;
-  pointer-events: none;
-}
-
 .cap7ce-signature {
   position: absolute;
   left: 50%;

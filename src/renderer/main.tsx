@@ -13,7 +13,6 @@ import "./dialogs/ConfirmationPanels.css";
 import "./ColorPickerPopover.css";
 import "./results/ResultGrid.css";
 import "./results/ResultSectionCard.css";
-import "./ai-search/AiSearchBeta.css";
 import "./settings/SettingsSelect.css";
 import "./settings/ShortcutSettingsPanels.css";
 import "./settings/SkimDisplaySettingsRows.css";

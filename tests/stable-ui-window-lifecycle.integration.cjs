@@ -83,6 +83,6 @@ console.log(JSON.stringify({
   fixedStableLayoutNamespaceVerified: true,
   nativeMaximizeAndSnapLifecycleVerified: true,
   legacyPresentationContractsRemoved: true,
-  oldPreferenceFieldsSafelyIgnored: true,
+  retiredPreferenceFieldsAbsent: true,
   scrollingCannotReparentNativeDragRegion: true
 }));

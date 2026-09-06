@@ -9,7 +9,7 @@ const testRoot = path.join(os.tmpdir(), `cap7ce-metadata-ownership-${process.pid
 const userDataPath = path.join(testRoot, "user-data");
 const sourceDirectory = path.join(testRoot, "sources");
 const aiSourcePath = path.join(sourceDirectory, "ai-source.png");
-const manualSourcePath = path.join(sourceDirectory, "legacy-manual.webp");
+const manualSourcePath = path.join(sourceDirectory, "manual.webp");
 const databasePath = path.join(userDataPath, "index", "cap7ce-index.db");
 const directoryId = "metadata-ownership-directory";
 const initialTimestamp = new Date("2026-06-15T00:00:00.000Z").toISOString();
@@ -49,55 +49,6 @@ app.whenReady().then(async () => {
     await fs.writeFile(aiSourcePath, "ai-source");
     await fs.writeFile(manualSourcePath, "manual-source");
 
-    const legacyDatabase = new SQL.Database();
-    legacyDatabase.exec(`
-      CREATE TABLE images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        file_path TEXT NOT NULL UNIQUE,
-        file_name TEXT NOT NULL,
-        file_size INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        modified_at TEXT NOT NULL,
-        image_width INTEGER,
-        image_height INTEGER,
-        caption TEXT NOT NULL DEFAULT '',
-        keywords TEXT NOT NULL DEFAULT '',
-        indexed_at TEXT NOT NULL,
-        directory_id TEXT NOT NULL,
-        ai_error TEXT NOT NULL DEFAULT '',
-        ai_failed_at TEXT,
-        manual_index INTEGER NOT NULL DEFAULT 0 CHECK (manual_index IN (0, 1)),
-        "exists" INTEGER NOT NULL DEFAULT 1 CHECK ("exists" IN (0, 1))
-      );
-    `);
-    const insertLegacy = legacyDatabase.prepare(`
-      INSERT INTO images (
-        file_path, file_name, file_size, created_at, modified_at,
-        caption, keywords, indexed_at, directory_id, manual_index, "exists"
-      ) VALUES (
-        :file_path, :file_name, :file_size, :created_at, :modified_at,
-        :caption, :keywords, :indexed_at, :directory_id, :manual_index, 1
-      )
-    `);
-    try {
-      insertLegacy.run({
-        ":file_path": aiSourcePath, ":file_name": path.basename(aiSourcePath), ":file_size": 9,
-        ":created_at": initialTimestamp, ":modified_at": initialTimestamp,
-        ":caption": "旧 AI 描述", ":keywords": "旧AI词", ":indexed_at": initialTimestamp,
-        ":directory_id": directoryId, ":manual_index": 0
-      });
-      insertLegacy.run({
-        ":file_path": manualSourcePath, ":file_name": path.basename(manualSourcePath), ":file_size": 13,
-        ":created_at": initialTimestamp, ":modified_at": initialTimestamp,
-        ":caption": "旧人工描述", ":keywords": "旧人工词", ":indexed_at": initialTimestamp,
-        ":directory_id": directoryId, ":manual_index": 1
-      });
-    } finally {
-      insertLegacy.free();
-    }
-    await fs.writeFile(databasePath, legacyDatabase.export());
-    legacyDatabase.close();
-
     const {
       deleteDirectoryImages,
       ensureImageDatabase,
@@ -112,27 +63,12 @@ app.whenReady().then(async () => {
     } = require("../dist-electron/sqliteImageIndex.js");
 
     await ensureImageDatabase();
-    await fs.access(`${databasePath}.pre-metadata-ownership-v1.bak`);
-
-    const migratedDatabase = await loadRawDatabase(SQL);
-    const imageColumns = migratedDatabase.exec("PRAGMA table_info(images)")[0]?.values ?? [];
-    const fileColumns = migratedDatabase.exec("PRAGMA table_info(files)")[0]?.values ?? [];
-    const userColumns = migratedDatabase.exec("PRAGMA table_info(file_user_metadata)")[0]?.values ?? [];
-    const aiColumns = migratedDatabase.exec("PRAGMA table_info(image_ai_metadata)")[0]?.values ?? [];
-    migratedDatabase.close();
-    assert.ok(!imageColumns.some((column) => ["caption", "keywords", "manual_index"].includes(String(column[1]))));
-    assert.ok(!fileColumns.some((column) => String(column[1]) === "user_keywords"));
+    const initializedDatabase = await loadRawDatabase(SQL);
+    const userColumns = initializedDatabase.exec("PRAGMA table_info(file_user_metadata)")[0]?.values ?? [];
+    const aiColumns = initializedDatabase.exec("PRAGMA table_info(image_ai_metadata)")[0]?.values ?? [];
+    initializedDatabase.close();
     assert.ok(userColumns.some((column) => String(column[1]) === "description"));
     assert.ok(aiColumns.some((column) => String(column[1]) === "caption"));
-
-    assert.deepEqual(await readMetadata(SQL, aiSourcePath), {
-      id: 1, aiCaption: "旧 AI 描述", aiKeywords: "旧AI词", aiError: "",
-      userDescription: "", userKeywords: ""
-    });
-    assert.deepEqual(await readMetadata(SQL, manualSourcePath), {
-      id: 2, aiCaption: "", aiKeywords: "", aiError: "",
-      userDescription: "旧人工描述", userKeywords: "旧人工词"
-    });
 
     const aiStat = await fs.stat(aiSourcePath);
     const aiFile = {
@@ -144,22 +80,45 @@ app.whenReady().then(async () => {
       created_at: aiStat.birthtime.toISOString(),
       modified_at: aiStat.mtime.toISOString()
     };
+    const manualStat = await fs.stat(manualSourcePath);
+    const manualFile = {
+      directory_id: directoryId,
+      directory_path: sourceDirectory,
+      file_path: manualSourcePath,
+      file_name: path.basename(manualSourcePath),
+      file_size: manualStat.size,
+      created_at: manualStat.birthtime.toISOString(),
+      modified_at: manualStat.mtime.toISOString()
+    };
+    await writeScannedImagesToIndex([directoryId], [aiFile, manualFile], initialTimestamp);
+    await updateImageRecognition(1, "初始 AI 描述", ["初始AI词"], initialTimestamp);
+    await upsertFileManualKeywords(manualFile, ["人工词"], initialTimestamp);
+
+    assert.deepEqual(await readMetadata(SQL, aiSourcePath), {
+      id: 1, aiCaption: "初始 AI 描述", aiKeywords: "初始AI词", aiError: "",
+      userDescription: "", userKeywords: ""
+    });
+    assert.deepEqual(await readMetadata(SQL, manualSourcePath), {
+      id: 2, aiCaption: "", aiKeywords: "", aiError: "",
+      userDescription: "", userKeywords: "人工词"
+    });
+
     await upsertFileManualKeywords(aiFile, ["人工新增词", "产品A"], new Date("2026-06-15T01:00:00.000Z").toISOString());
 
     let separatedRow = await readMetadata(SQL, aiSourcePath);
-    assert.equal(separatedRow.aiCaption, "旧 AI 描述");
-    assert.equal(separatedRow.aiKeywords, "旧AI词");
+    assert.equal(separatedRow.aiCaption, "初始 AI 描述");
+    assert.equal(separatedRow.aiKeywords, "初始AI词");
     assert.equal(separatedRow.userKeywords, "人工新增词,产品A");
 
     const baseSearch = {
       directoryId: "all", fileFormat: "all", sortField: "file_name",
       sortDirection: "asc"
     };
-    assert.equal((await searchIndexedImages({ ...baseSearch, query: "旧AI词" })).images.length, 1);
+    assert.equal((await searchIndexedImages({ ...baseSearch, query: "初始AI词" })).images.length, 1);
     const userSearch = await searchIndexedImages({ ...baseSearch, query: "人工新增词" });
     assert.equal(userSearch.images.length, 1);
     assert.deepEqual(userSearch.images[0].keywords, ["人工新增词", "产品A"]);
-    assert.deepEqual(userSearch.images[0].aiKeywords, ["旧AI词"]);
+    assert.deepEqual(userSearch.images[0].aiKeywords, ["初始AI词"]);
 
     await updateImageRecognition(1, "新 AI 描述", ["新AI词"], new Date().toISOString());
     separatedRow = await readMetadata(SQL, aiSourcePath);
@@ -181,18 +140,9 @@ app.whenReady().then(async () => {
       totalVisualImages: 2, pendingVisualImages: 0
     });
 
-    const manualStat = await fs.stat(manualSourcePath);
-    await writeScannedImagesToIndex([directoryId], [aiFile, {
-      directory_id: directoryId,
-      directory_path: sourceDirectory,
-      file_path: manualSourcePath,
-      file_name: path.basename(manualSourcePath),
-      file_size: manualStat.size,
-      created_at: manualStat.birthtime.toISOString(),
-      modified_at: manualStat.mtime.toISOString()
-    }], new Date("2026-06-15T02:00:00.000Z").toISOString());
+    await writeScannedImagesToIndex([directoryId], [aiFile, manualFile], new Date("2026-06-15T02:00:00.000Z").toISOString());
     assert.equal((await readMetadata(SQL, aiSourcePath)).userKeywords, "人工新增词,产品A");
-    assert.equal((await readMetadata(SQL, manualSourcePath)).userKeywords, "旧人工词");
+    assert.equal((await readMetadata(SQL, manualSourcePath)).userKeywords, "人工词");
 
     await deleteDirectoryImages(directoryId);
     const deletedDatabase = await loadRawDatabase(SQL);
@@ -210,8 +160,7 @@ app.whenReady().then(async () => {
     assert.equal(await getPendingImageRecognitionCount(), 1);
 
     console.log(JSON.stringify({
-      legacyOwnershipMigrated: true,
-      legacyManualDescriptionPreserved: true,
+      currentMetadataSchemaInitialized: true,
       userAndAiKeywordsCoexist: true,
       aiUpdatePreservedUserKeywords: true,
       aiFailurePreservedUserKeywords: true,

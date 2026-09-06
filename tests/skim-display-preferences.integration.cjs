@@ -66,16 +66,11 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       }
     }));
     const refreshedDefaults = await getUserPreferences();
-    assert.equal(refreshedDefaults.stableShortcutActions.restoreDefaultWindow, "Alt+3");
-    assert.equal(refreshedDefaults.stableShortcutActions.openSettings, "Alt+4");
+    assert.equal(refreshedDefaults.stableShortcutActions.restoreDefaultWindow, "Alt+4");
+    assert.equal(refreshedDefaults.stableShortcutActions.openSettings, "Alt+3");
 
-    const legacyPreferencesPath = preferencesPath;
-    await fs.mkdir(path.dirname(legacyPreferencesPath), { recursive: true });
     const sidebarFolder = path.join(testRoot, "Sidebar Folder");
-    await fs.writeFile(legacyPreferencesPath, JSON.stringify({
-      edgeSnapEnabled: false,
-      rememberWindowLayout: false,
-      windowPresentationMode: "compatibility",
+    await fs.writeFile(preferencesPath, JSON.stringify({
       uiFontSize: 99,
       skimDisplay: {
         mode: "all",
@@ -84,20 +79,18 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       },
       skimSidebarFolders: [sidebarFolder, sidebarFolder.toUpperCase(), app.getPath("desktop"), app.getPath("downloads"), path.parse(sidebarFolder).root, "", 42],
       stableShortcutActions: {
-        activateCapsule: "Alt+`",
-        activateMicro: "Alt+1",
-        activateMini: "Alt+2",
-        activateNormal: "Alt+3",
-        activateStandby: "Alt+4",
-        activateSkim: "Alt+5",
+        focusMainSearch: "Alt+`",
+        restoreDefaultWindow: "Alt+3",
+        hideToLine: "Alt+4",
+        toggleSkim: "Alt+5",
+        cycleDirectory: "Alt+Q",
         openSettings: "Alt+6"
       }
     }));
-    const migrated = await getUserPreferences();
-    assert.equal(migrated.skimDisplay.mode, "all");
-    assert.equal(migrated.skimDisplay.searchMode, "skim");
-    assert.equal("shortcutActions" in migrated, false);
-    assert.deepEqual(migrated.stableShortcutActions, {
+    const normalized = await getUserPreferences();
+    assert.equal(normalized.skimDisplay.mode, "all");
+    assert.equal(normalized.skimDisplay.searchMode, "skim");
+    assert.deepEqual(normalized.stableShortcutActions, {
       focusMainSearch: "Alt+`",
       restoreDefaultWindow: "Alt+3",
       hideToLine: "Alt+4",
@@ -105,18 +98,13 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       cycleDirectory: "Alt+Q",
       openSettings: "Alt+6"
     });
-    assert.equal("activateMicro" in migrated.stableShortcutActions, false);
-    assert.equal("activateMini" in migrated.stableShortcutActions, false);
-    assert.deepEqual(migrated.skimSidebarFolders, [sidebarFolder]);
-    assert.equal(migrated.skimSystemLocationsCollapsed, false);
-    assert.equal(migrated.edgeCollapseEnabled, false);
-    assert.equal("edgeSnapEnabled" in migrated, false);
-    assert.equal("rememberWindowLayout" in migrated, false);
-    assert.equal("windowPresentationMode" in migrated, false);
-    assert.equal(migrated.uiFontSize, 13);
+    assert.deepEqual(normalized.skimSidebarFolders, [sidebarFolder]);
+    assert.equal(normalized.skimSystemLocationsCollapsed, false);
+    assert.equal(normalized.edgeCollapseEnabled, false);
+    assert.equal(normalized.uiFontSize, 13);
 
     const updatedStableShortcuts = await updateStableShortcutActionsPreference({
-      ...migrated.stableShortcutActions,
+      ...normalized.stableShortcutActions,
       cycleDirectory: "Alt+E"
     });
     assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "Alt+E");
@@ -155,13 +143,11 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual(reloaded.skimSidebarFolders, [sidebarFolder, secondSidebarFolder]);
     assert.equal(reloaded.skimSystemLocationsCollapsed, true);
     assert.equal(reloaded.edgeCollapseEnabled, true);
-    assert.equal("rememberWindowLayout" in reloaded, false);
-    assert.equal("windowPresentationMode" in reloaded, false);
     assert.equal(reloaded.uiFontSize, 16);
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
-      legacySkimPreferencesMigrated: true,
+      skimPreferencesNormalized: true,
       directoryCycleShortcutPersisted: true,
       customExtensionsNormalized: true,
       skimModePersisted: true,
@@ -171,7 +157,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       skimSidebarFoldersNormalizedAndPersisted: true,
       skimSystemLocationsCollapsedPersisted: true,
       edgeCollapsePreferencePersisted: true,
-      retiredWindowPreferencesIgnored: true,
+      invalidUiFontSizeRejected: true,
       uiFontSizePersisted: true
     }));
   } finally {

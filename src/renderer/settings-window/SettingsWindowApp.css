@@ -314,8 +314,7 @@
 }
 
 .cap-stable-settings-colors,
-.cap-stable-settings-action-line,
-.cap-stable-settings-directory-summary {
+.cap-stable-settings-action-line {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -327,61 +326,6 @@
   flex: 1;
   color: var(--stable-settings-secondary);
   font-size: var(--cap-ui-font-secondary);
-}
-
-.cap-stable-settings-directories {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.cap-stable-settings-directories > p {
-  margin: 4px 2px;
-  color: var(--stable-settings-secondary);
-  font-size: var(--cap-ui-font-secondary);
-}
-
-.cap-stable-settings-directory {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 4px 8px 4px 12px;
-  border-radius: 17px;
-  background: var(--stable-settings-hover);
-}
-
-.cap-stable-settings-directory span,
-.cap-stable-settings-directory input {
-  min-width: 0;
-}
-
-.cap-stable-settings-directory strong,
-.cap-stable-settings-directory small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cap-stable-settings-directory strong {
-  font-size: var(--cap-ui-font-control);
-  font-weight: 500;
-}
-
-.cap-stable-settings-directory small,
-.cap-stable-settings-directory em {
-  color: var(--stable-settings-secondary);
-  font-size: var(--cap-ui-font-caption);
-  font-style: normal;
-}
-
-.cap-stable-settings-directory button {
-  border: 0;
-  color: inherit;
-  background: transparent;
-  font-size: var(--cap-ui-font-caption);
 }
 
 .cap-stable-settings-command-toggle {

@@ -17,7 +17,7 @@ assert.equal(getShellMousePollDelay({ x: 100, y: 100 }, bounds, 0), shellMouseAc
 assert.equal(getShellMousePollDelay({ x: 100, y: 100 }, bounds, 3), shellMouseActivePollMs);
 
 console.log(JSON.stringify({
-  capsuleBoundsUsedDirectly: true,
+  shellBoundsUsedDirectly: true,
   insideRemainsResponsive: true,
   nearbyRemainsResponsive: true,
   mediumDistanceBacksOff: true,

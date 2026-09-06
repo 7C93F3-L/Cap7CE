@@ -1,6 +1,7 @@
 import type { Input, WebContents } from "electron";
 
 type PageZoomInput = Pick<Input, "alt" | "code" | "control" | "key" | "meta">;
+type RefreshShortcutInput = Pick<Input, "alt" | "code" | "control" | "isAutoRepeat" | "key" | "meta" | "shift" | "type">;
 
 const pageZoomKeys = new Set(["-", "_", "=", "+", "0"]);
 const pageZoomCodes = new Set([
@@ -39,4 +40,27 @@ export const lockWebContentsZoom = (webContents: WebContents) => {
     restoreDefaultZoom();
   });
   webContents.on("did-finish-load", restoreDefaultZoom);
+};
+
+export const isMainWindowRefreshShortcut = (input: RefreshShortcutInput) => (
+  input.type === "keyDown"
+  && !input.alt
+  && !input.control
+  && !input.meta
+  && !input.shift
+  && (input.key === "F5" || input.code === "F5")
+);
+
+export const installMainWindowInputPolicy = (
+  webContents: WebContents,
+  requestRefresh = () => webContents.send("window:refreshCurrentPageRequested")
+) => {
+  webContents.on("before-input-event", (event, input) => {
+    if (!isMainWindowRefreshShortcut(input)) return;
+
+    event.preventDefault();
+    if (!input.isAutoRepeat) {
+      requestRefresh();
+    }
+  });
 };
