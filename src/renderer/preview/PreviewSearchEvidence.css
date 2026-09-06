@@ -1,0 +1,34 @@
+.preview-sidebar-evidence {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preview-sidebar-evidence li {
+  display: grid;
+  grid-template-columns: minmax(72px, .55fr) minmax(0, 1fr);
+  gap: 10px;
+  min-height: 26px;
+  box-sizing: border-box;
+  align-items: start;
+  padding: 5px 10px;
+  border-radius: 13px;
+  background: var(--preview-sidebar-control);
+  font-size: var(--cap-ui-font-secondary);
+  line-height: 1.45;
+}
+
+.preview-sidebar-evidence strong {
+  min-width: 0;
+  color: var(--preview-sidebar-muted);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.preview-sidebar-evidence span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  user-select: text;
+}

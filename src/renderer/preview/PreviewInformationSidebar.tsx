@@ -4,6 +4,7 @@ import { t } from "../../../electron/localization";
 import CustomScrollbar from "../CustomScrollbar";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
 import PreviewManualKeywordsSection from "./PreviewManualKeywordsSection";
+import PreviewSearchEvidence from "./PreviewSearchEvidence";
 import { previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
@@ -81,12 +82,7 @@ const PreviewInformationSidebar = ({
           <button className="preview-sidebar-path" type="button" title={data.filePath} onClick={onShowInFolder}>{data.filePath}</button>
         </section>
         <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
-        <section className="preview-sidebar-section">
-          <h2>{t("preview.sidebar.currentEvidence")}</h2>
-          {data.searchEvidence?.terms.length
-            ? <div className="preview-sidebar-evidence">{data.searchEvidence.terms.map((term) => <span key={`${term.term}:${term.bestSource}`}>{term.term}</span>)}</div>
-            : <p className="preview-sidebar-empty">{data.skimActive ? t("preview.sidebar.skimEvidence") : t("preview.sidebar.noEvidence")}</p>}
-        </section>
+        <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />
         {data.embeddedMetadata
           ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />
           : <section className="preview-sidebar-section"><h2>{t("preview.metadata.heading")}</h2><p className="preview-sidebar-empty">{t("preview.sidebar.noEmbeddedMetadata")}</p></section>}
