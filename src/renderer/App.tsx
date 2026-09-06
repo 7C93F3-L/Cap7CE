@@ -898,36 +898,16 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         }
   );
 
-  const showCommandResults = (nextSearch: SearchState) => {
-    resetSettingsViewState(true);
-    setShellState("normal");
-    setSearch(nextSearch);
-    void runSearch(nextSearch);
-  };
-
-  const showCommandDirectory = (directoryName: string) => {
-    const directory = findDirectoryByCommandName(directoryName);
-    if (!directory) {
-      return false;
-    }
-
-    showCommandResults({
-      ...getCommandBaseSearch(),
-      query: "",
-      directoryId: directory.id
-    });
-    return true;
-  };
-
-  const selectCommandDirectoryLabel = (directoryName: string) => {
-    const directory = findDirectoryByCommandName(directoryName);
+  const selectCommandDirectory = (directoryName: string) => {
+    const directory = directoryName.toLowerCase() === "all"
+      ? directoryOptions.find((candidate) => candidate.id === "all")
+      : findDirectoryByCommandName(directoryName);
     if (!directory) {
       return false;
     }
 
     const nextSearch = { ...getCommandBaseSearch(), directoryId: directory.id };
-    setSearch(nextSearch);
-    void runSearch(nextSearch);
+    updateResultsSearch(nextSearch, true);
     return true;
   };
 
@@ -1204,7 +1184,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     updateResultsSearchOptions({ ...search, directoryId: directoryOptions[nextIndex].id });
   };
 
-  const updateSkimDisplay = (nextSkimDisplay: SkimDisplayPreferences) => {
+  const updateSkimDisplay = (nextSkimDisplay: SkimDisplayPreferences, announceChange = true) => {
     const changedDisplayMode = nextSkimDisplay.searchMode !== skimDisplay.searchMode
       ? nextSkimDisplay.searchMode
       : (nextSkimDisplay.mode !== skimDisplay.mode ? nextSkimDisplay.mode : null);
@@ -1231,7 +1211,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     void window.cap7ce?.preferences.updateSkimDisplay(nextSkimDisplay).then((preferences) => {
       if (preferences) setSkimDisplay(preferences.skimDisplay);
     });
-    if (changedDisplayMode) {
+    if (changedDisplayMode && announceChange) {
       showQuickCommandNotice(t(`search.displaySwitched.${changedDisplayMode}` as TranslationKey));
     }
   };
@@ -1351,14 +1331,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         (await updateShortcutActions(nextShortcutActions))?.applied ?? false
       ),
       updateCommandEnabled,
-      showAllFiles: () => {
-        showCommandResults({ ...getCommandBaseSearch(), query: "", directoryId: "all", fileFormat: "all" });
-      },
-      showDirectory: showCommandDirectory,
+      selectDirectory: selectCommandDirectory,
+      setSearchScope: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode }, false),
       setShellMode: setCommandShellMode,
       maximizeWindow: maximizeCommandWindow,
       setAlwaysOnTop: setCommandAlwaysOnTop,
-      selectDirectoryLabel: selectCommandDirectoryLabel,
       setSortDirection: (sortDirection) => updateResultsSearch({ ...getCommandBaseSearch(), sortDirection }, true),
       setSortField: (sortField) => updateResultsSearch({ ...getCommandBaseSearch(), sortField }, true),
       addDirectory: addCommandDirectory,

@@ -3,7 +3,6 @@ import type { TranslationKey } from "../../electron/localization";
 export const quickCommandDomains = [
   "see",
   "win",
-  "tag",
   "dir",
   "cache",
   "ai",
@@ -31,17 +30,18 @@ export interface QuickCommandSpec {
 }
 
 export const quickCommandSpecs: QuickCommandSpec[] = [
-  { domain: "see", action: "all" },
   { domain: "see", action: "dir", requiredArgs: 1, missingArgumentKey: "command.missingDirectoryName" },
+  { domain: "see", action: "scope", fixedArgs: ["default"] },
+  { domain: "see", action: "scope", fixedArgs: ["all"] },
+  { domain: "see", action: "scope", fixedArgs: ["custom"] },
+  { domain: "see", action: "sort", fixedArgs: ["asc"] },
+  { domain: "see", action: "sort", fixedArgs: ["desc"] },
+  { domain: "see", action: "sort", fixedArgs: ["name"] },
+  { domain: "see", action: "sort", fixedArgs: ["time"] },
   { domain: "win", action: "line" },
   { domain: "win", action: "max" },
   { domain: "win", action: "top", fixedArgs: ["on"] },
   { domain: "win", action: "top", fixedArgs: ["off"] },
-  { domain: "tag", action: "dir", requiredArgs: 1, missingArgumentKey: "command.missingDirectoryName" },
-  { domain: "tag", action: "sort", fixedArgs: ["asc"] },
-  { domain: "tag", action: "sort", fixedArgs: ["desc"] },
-  { domain: "tag", action: "sort", fixedArgs: ["name"] },
-  { domain: "tag", action: "sort", fixedArgs: ["time"] },
   { domain: "dir", action: "add", requiredArgs: 1, missingArgumentKey: "command.missingDirectoryPath" },
   { domain: "dir", action: "delete", requiredArgs: 1, missingArgumentKey: "command.missingDirectoryName" },
   { domain: "dir", action: "rename", requiredArgs: 2, missingArgumentKey: "command.missingDirectoryName" },

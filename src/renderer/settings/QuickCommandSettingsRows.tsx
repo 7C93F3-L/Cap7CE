@@ -21,8 +21,15 @@ export const getQuickCommandGroups = (): Array<{
   {
     title: t("commands.group.view"),
     items: [
-      { command: "see:all", description: t("commands.view.all") },
-      { command: t("commands.example.viewDirectory"), description: t("commands.view.directory") }
+      { command: "see:dir all", description: t("commands.view.allDirectories") },
+      { command: t("commands.example.viewDirectory"), description: t("commands.view.directory") },
+      { command: "see:scope default", description: t("commands.view.scopeDefault") },
+      { command: "see:scope all", description: t("commands.view.scopeAll") },
+      { command: "see:scope custom", description: t("commands.view.scopeCustom") },
+      { command: "see:sort asc", description: t("commands.view.sortAsc") },
+      { command: "see:sort desc", description: t("commands.view.sortDesc") },
+      { command: "see:sort name", description: t("commands.view.sortName") },
+      { command: "see:sort time", description: t("commands.view.sortTime") }
     ]
   },
   {
@@ -32,16 +39,6 @@ export const getQuickCommandGroups = (): Array<{
       { command: "win:max", description: t("commands.window.max") },
       { command: "win:top on", description: t("commands.window.pin") },
       { command: "win:top off", description: t("commands.window.unpin") }
-    ]
-  },
-  {
-    title: t("commands.group.tags"),
-    items: [
-      { command: t("commands.example.selectDirectory"), description: t("commands.tags.selectDirectory") },
-      { command: "tag:sort asc", description: t("commands.tags.sortAsc") },
-      { command: "tag:sort desc", description: t("commands.tags.sortDesc") },
-      { command: "tag:sort name", description: t("commands.tags.sortName") },
-      { command: "tag:sort time", description: t("commands.tags.sortTime") }
     ]
   },
   {

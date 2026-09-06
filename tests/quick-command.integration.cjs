@@ -73,10 +73,11 @@ assert.equal(parseQuickCommand("cache:model").type, "unknown");
 assert.equal(parseQuickCommand("set:quick").type, "unknown");
 assert.equal(parseQuickCommand("set:cmd").type, "unknown");
 assert.equal(parseQuickCommand("win:normal").type, "unknown");
-assert.equal(parseQuickCommand("tag:dir").type, "missing-argument");
-assert.equal(parseQuickCommand("tag:sort").type, "unknown");
-assert.equal(parseQuickCommand("tag:show all").type, "unknown");
-assert.equal(parseQuickCommand("tag:hide ai").type, "unknown");
+assert.equal(parseQuickCommand("see:all").type, "unknown");
+assert.equal(parseQuickCommand("see:dir").type, "missing-argument");
+assert.equal(parseQuickCommand("see:scope").type, "unknown");
+assert.equal(parseQuickCommand("tag:dir all").type, "search");
+assert.equal(parseQuickCommand("tag:sort name").type, "search");
 
 const calls = [];
 const operation = async () => ({ ok: true });
@@ -91,6 +92,11 @@ const context = new Proxy({
   currentAppearanceColors: { themeColor: "#000000", accentColor: "#ffffff" },
   defaultAppearanceColors: { themeColor: "#000000", accentColor: "#ffffff" },
   defaultShortcutActions: {},
+  selectDirectory: (directoryName) => {
+    calls.push(["directory", directoryName]);
+    return true;
+  },
+  setSearchScope: (mode) => calls.push(["scope", mode]),
   setSortField: (field) => calls.push(["sort-field", field]),
   addDirectory: async (directoryPath) => ({ ok: true, message: directoryPath }),
   updateEdgeCollapse: async (enabled) => calls.push(["edge", enabled]),
@@ -114,8 +120,13 @@ const execute = async (raw) => {
     const result = await executeQuickCommand(parsed.command, passiveContext);
     assert.notEqual(result.status, "pending", `help command must have an executor: ${item.command}`);
   }
-  await execute("tag:sort name");
-  await execute("tag:sort time");
+  await execute("see:dir all");
+  await execute("see:dir Pictures");
+  await execute("see:scope default");
+  await execute("see:scope all");
+  await execute("see:scope custom");
+  await execute("see:sort name");
+  await execute("see:sort time");
   await execute("dir:add C:/Pictures");
   await execute("edge:on");
   await execute("app:notify off");
@@ -125,11 +136,16 @@ const execute = async (raw) => {
   assert.equal(thumbnailClear.status, "confirmation");
   await thumbnailClear.confirmation.execute();
   assert.deepEqual(calls, [
+    ["directory", "all"],
+    ["directory", "Pictures"],
+    ["scope", "skim"],
+    ["scope", "all"],
+    ["scope", "custom"],
     ["sort-field", "file_name"],
     ["sort-field", "modified_at"],
     ["edge", true], ["notify", false], ["cache-auto", true], ["ai-deep", false]
   ]);
-  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 8 }));
+  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 13 }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

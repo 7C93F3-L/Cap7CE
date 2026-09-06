@@ -399,7 +399,6 @@
 | `commands.group.settings`          | 设置页类                              | 设置页                              |      | 分类标题             |
 | `commands.group.view`              | 查看类                               | 查看                               |      | 分类标题             |
 | `commands.group.window`            | 窗口模式类                             | 窗口模式                             |      | 分类标题             |
-| `commands.group.tags`              | 标签类                               | 目录与排序                            |      | 分类标题             |
 | `commands.group.directory`         | 目录类                               | 目录                               |      | 分类标题             |
 | `commands.group.appearance`        | 外观类                               | 外观                               |      | 分类标题             |
 | `commands.group.appBehavior`       | 软件行为                              |                                  |      | 分类标题             |
@@ -413,17 +412,19 @@
 | `commands.group.cache`             | 缓存类                               | 缓存                               |      | 分类标题             |
 | `commands.group.ai`                | AI                                |                                  |      | 分类标题             |
 | `commands.set.open`                | 打开设置页                             | 打开设置                             |      | `set:`           |
-| `commands.view.all`                | 查看全部已添加文件                         |                                  |      | `see:all`        |
-| `commands.view.directory`          | 查看指定目录                            |                                  |      | `see:dir`        |
+| `commands.view.allDirectories`     |                                     | 选择全部目录                           |      | `see:dir all`    |
+| `commands.view.directory`          | 查看指定目录                            | 选择指定目录                           |      | `see:dir`        |
+| `commands.view.scopeDefault`       |                                     | 切换为默认查看范围                        |      | `see:scope default` |
+| `commands.view.scopeAll`           |                                     | 切换为全部查看范围                        |      | `see:scope all`  |
+| `commands.view.scopeCustom`        |                                     | 切换为自定义查看范围                       |      | `see:scope custom` |
+| `commands.view.sortAsc`            |                                     | 切换为升序排序                          |      | `see:sort asc`   |
+| `commands.view.sortDesc`           |                                     | 切换为降序排序                          |      | `see:sort desc`  |
+| `commands.view.sortName`           |                                     | 按名称排序                            |      | `see:sort name`  |
+| `commands.view.sortTime`           |                                     | 按修改时间排序                          |      | `see:sort time`  |
 | `commands.window.standby`          | 切换到待机线状态                          | 切换为 line 模式                      |      | `win:line`       |
 | `commands.window.max`              | 最大化 / 标准大窗口状态                     | 窗口最大化                            |      | `win:max`        |
 | `commands.window.pin`              | 固定窗口                              |                                  | Pin Window | `win:top on`     |
 | `commands.window.unpin`            | 取消固定窗口                            |                                  | Unpin Window | `win:top off`    |
-| `commands.tags.selectDirectory`    | 选择指定目录标签                          | 选择指定目录                           |      | `tag:dir "目录名称"` |
-| `commands.tags.sortAsc`            | 切换为递增排序                           | 切换为升序排序                           |      | `tag:sort asc`   |
-| `commands.tags.sortDesc`           | 切换为递减排序                           | 切换为降序排序                           |      | `tag:sort desc`  |
-| `commands.tags.sortName`           | 按名称排序                             |                                  |      | `tag:sort name`  |
-| `commands.tags.sortTime`           | 按修改时间排序                           |                                  |      | `tag:sort time`  |
 | `commands.directory.add`           | 添加目录                              |                                  |      | `dir:add`        |
 | `commands.directory.rename`        | 重命名目录显示名                          |                                  |      | `dir:rename`     |
 | `commands.directory.refresh`       | 刷新目录统计 / 状态                       |                                  |      | `dir:refresh`    |
@@ -484,13 +485,13 @@
 | `command.taskRunning`                 | 已有任务正在运行                |      |      | 任务冲突            |
 | `command.directoryNotFound`           | 未找到目录                   |      |      | 目录操作            |
 | `command.directoryNameEmpty`          | 目录名称不能为空                |      |      | 重命名             |
-| `command.viewedAll`                   | 已查看全部文件                 |      |      | `see:all`       |
-| `command.viewedDirectory`             | 已查看目录：{name}            |      |      | `see:dir`       |
+| `command.allDirectoriesSelected`      |                          | 已选择全部目录 |      | `see:dir all`   |
 | `command.windowChanged`               | 已切换 {mode}              |      |      | 窗口模式            |
 | `command.windowMaximized`             | 已最大化窗口                  |      |      | 窗口模式            |
 | `command.windowPinEnabled`            | 已固定窗口                 |      | Window pinned | 固定窗口            |
 | `command.windowPinDisabled`           | 已取消固定窗口                 |      | Window unpinned | 固定窗口            |
 | `command.directorySelected`           | 已选择目录：{name}            |      |      | 目录切换            |
+| `command.scopeChanged`                |                          | 查看范围已切换为：{scope} |      | 查看范围            |
 | `command.sortAsc`                     | 已切换递增排序                 | 已切换升序排序 |      | 排序              |
 | `command.sortDesc`                    | 已切换递减排序                 | 已切换降序排序 |      | 排序              |
 | `command.sortByName`                  | 已切换为按名称排序               |      |      | 排序              |

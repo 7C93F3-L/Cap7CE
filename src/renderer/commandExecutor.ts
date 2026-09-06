@@ -1,4 +1,4 @@
-import type { AppearanceColors, LanguagePreference, ShortcutActionPreferences, ThemeMode } from "../shared/types";
+import type { AppearanceColors, LanguagePreference, ShortcutActionPreferences, SkimDisplayMode, ThemeMode } from "../shared/types";
 import type { ParsedQuickCommand } from "./commandParser";
 import { t } from "../../electron/localization";
 
@@ -40,12 +40,11 @@ export interface QuickCommandExecutorContext {
   updateQuickActionGlobalEnabled: (enabled: boolean) => Promise<boolean>;
   updateShortcutActions: (shortcutActions: ShortcutActionPreferences) => Promise<boolean>;
   updateCommandEnabled: (enabled: boolean) => Promise<void>;
-  showAllFiles: () => void;
-  showDirectory: (directoryName: string) => boolean;
+  selectDirectory: (directoryName: string) => boolean;
+  setSearchScope: (mode: SkimDisplayMode) => void;
   setShellMode: () => void;
   maximizeWindow: () => Promise<CommandOperationResult>;
   setAlwaysOnTop: (enabled: boolean) => Promise<CommandOperationResult>;
-  selectDirectoryLabel: (directoryName: string) => boolean;
   setSortDirection: (direction: CommandSortDirection) => void;
   setSortField: (field: CommandSortField) => void;
   addDirectory: (directoryPath: string) => Promise<CommandOperationResult>;
@@ -79,16 +78,36 @@ export const executeQuickCommand = async (
   context: QuickCommandExecutorContext
 ): Promise<QuickCommandExecutionResult> => {
   if (command.domain === "see") {
-    if (command.action === "all") {
-      context.showAllFiles();
-      return { status: "handled", message: t("command.viewedAll"), clearInput: true };
-    }
     if (command.action === "dir") {
       const directoryName = command.args[0] ?? "";
-      if (!context.showDirectory(directoryName)) {
+      if (!context.selectDirectory(directoryName)) {
         return { status: "failed", message: t("command.directoryNotFound"), clearInput: false };
       }
-      return { status: "handled", message: t("command.viewedDirectory", { name: directoryName }), clearInput: true };
+      return {
+        status: "handled",
+        message: directoryName.toLowerCase() === "all"
+          ? t("command.allDirectoriesSelected")
+          : t("command.directorySelected", { name: directoryName }),
+        clearInput: true
+      };
+    }
+    if (command.action === "scope") {
+      const mode = command.args[0] === "default" ? "skim" : command.args[0] as SkimDisplayMode;
+      context.setSearchScope(mode);
+      const scope = mode === "skim"
+        ? t("stableUi.sidebar.scopeDefault")
+        : mode === "all" ? t("stableUi.sidebar.scopeAll") : t("stableUi.sidebar.scopeCustom");
+      return { status: "handled", message: t("command.scopeChanged", { scope }), clearInput: true };
+    }
+    if (command.action === "sort") {
+      if (command.args[0] === "asc" || command.args[0] === "desc") {
+        context.setSortDirection(command.args[0]);
+        return { status: "handled", message: command.args[0] === "asc" ? t("command.sortAsc") : t("command.sortDesc"), clearInput: true };
+      }
+      if (command.args[0] === "name" || command.args[0] === "time") {
+        context.setSortField(command.args[0] === "name" ? "file_name" : "modified_at");
+        return { status: "handled", message: command.args[0] === "name" ? t("command.sortByName") : t("command.sortByTime"), clearInput: true };
+      }
     }
   }
 
@@ -109,26 +128,6 @@ export const executeQuickCommand = async (
       return result.ok
         ? { status: "handled", message: enabled ? t("command.windowPinEnabled") : t("command.windowPinDisabled"), clearInput: true }
         : { status: "failed", message: result.message, clearInput: false };
-    }
-  }
-
-  if (command.domain === "tag") {
-    if (command.action === "dir") {
-      const directoryName = command.args[0] ?? "";
-      if (!context.selectDirectoryLabel(directoryName)) {
-        return { status: "failed", message: t("command.directoryNotFound"), clearInput: false };
-      }
-      return { status: "handled", message: t("command.directorySelected", { name: directoryName }), clearInput: true };
-    }
-    if (command.action === "sort") {
-      if (command.args[0] === "asc" || command.args[0] === "desc") {
-        context.setSortDirection(command.args[0]);
-        return { status: "handled", message: command.args[0] === "asc" ? t("command.sortAsc") : t("command.sortDesc"), clearInput: true };
-      }
-      if (command.args[0] === "name" || command.args[0] === "time") {
-        context.setSortField(command.args[0] === "name" ? "file_name" : "modified_at");
-        return { status: "handled", message: command.args[0] === "name" ? t("command.sortByName") : t("command.sortByTime"), clearInput: true };
-      }
     }
   }
 
