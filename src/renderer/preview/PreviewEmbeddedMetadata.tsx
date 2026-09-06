@@ -21,14 +21,14 @@ const metadataKindLabels: Record<PreviewEmbeddedMetadataKind, TranslationKey> = 
 };
 
 const getMetadataRows = (data: PreviewEmbeddedMetadataData) => [
-  ...data.items.map((item) => ({ label: t(metadataKindLabels[item.kind]), text: item.text })),
-  ...(data.capturedAt ? [{ label: t("preview.metadata.capturedAt"), text: new Date(data.capturedAt).toLocaleString() }] : [])
+  ...data.items.map((item) => ({ label: t(metadataKindLabels[item.kind]), text: item.text, isVisualContent: item.kind === "visual_content" })),
+  ...(data.capturedAt ? [{ label: t("preview.metadata.capturedAt"), text: new Date(data.capturedAt).toLocaleString(), isVisualContent: false }] : [])
 ];
 
 const MetadataRows = ({ data }: { data: PreviewEmbeddedMetadataData }) => (
   <dl className="preview-embedded-metadata-list">
     {getMetadataRows(data).map((row, index) => (
-      <div key={`${row.label}:${index}`}>
+      <div className={row.isVisualContent ? "is-visual-content" : undefined} key={`${row.label}:${index}`}>
         <dt>{row.label}</dt>
         <dd>{row.text}</dd>
       </div>

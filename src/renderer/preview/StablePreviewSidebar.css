@@ -1,6 +1,6 @@
 .preview-information-sidebar {
   --preview-sidebar-muted: color-mix(in srgb, var(--text-main) 58%, transparent);
-  --preview-sidebar-card: rgb(255 255 255 / 60%);
+  --preview-sidebar-card: var(--preview-stable-card);
   --preview-sidebar-control: color-mix(in srgb, var(--app-bg) 76%, transparent);
   --keyword-tag-surface: var(--preview-sidebar-control);
   --keyword-input-surface: var(--preview-sidebar-control);
@@ -82,7 +82,17 @@
 .preview-sidebar-file-card { gap: 10px; }
 .preview-sidebar-file-heading strong,
 .preview-sidebar-file-heading span { display: block; }
-.preview-sidebar-file-heading strong { overflow: hidden; font-size: var(--cap-ui-font-heading); text-overflow: ellipsis; white-space: nowrap; }
+.preview-sidebar-file-heading strong {
+  max-height: calc(1.45em * 6);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  font-size: var(--cap-ui-font-heading);
+  line-height: 1.45;
+  text-overflow: clip;
+  white-space: normal;
+  scrollbar-width: thin;
+}
 .preview-sidebar-file-heading span,
 .preview-sidebar-empty,
 .preview-sidebar-section h2,
@@ -94,7 +104,7 @@
 .preview-sidebar-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; user-select: text; }
 .preview-sidebar-path,
 .preview-sidebar-description { margin: 0; overflow-wrap: anywhere; font-size: var(--cap-ui-font-control); line-height: 1.55; user-select: text; }
-.preview-sidebar-path { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.preview-sidebar-path { width: 100%; max-height: calc(1.55em * 6); padding: 0; overflow-x: hidden; overflow-y: auto; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; scrollbar-width: thin; }
 .preview-sidebar-path:hover { color: var(--theme-color); }
 .preview-sidebar-description { margin-top: 10px; }
 .preview-sidebar-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

@@ -26,7 +26,7 @@
   grid-template-columns: minmax(74px, auto) minmax(0, 1fr);
   gap: 14px;
 }
-
+.preview-embedded-metadata-list > div.is-visual-content { grid-template-columns: minmax(0, 1fr); gap: 0; } .preview-embedded-metadata-list > div.is-visual-content dt { display: none; }
 .preview-embedded-metadata-list dt {
   color: var(--accent-color);
 }
