@@ -163,7 +163,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.deepEqual(broadcasts, [["main", "preferences:changed", canonicalPreferences], ["settings", "preferences:changed", canonicalPreferences], ["preview", "preferences:changed", canonicalPreferences]]);
 
   assert.match(rendererEntrySource, /windowKind === "settings"[\s\S]*?import\("\.\/settings-window\/SettingsWindowApp"\)/u);
-  assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"search-ai"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
+  assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"search-ai"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?appearance\.themeModeLabel[\s\S]*?appearance\.configureLabel[\s\S]*?stableSettings\.uiFontSize/u);
@@ -185,6 +185,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(stableActionStyles, /min-height: 28px[\s\S]*?border-radius: 999px[\s\S]*?linear-gradient\(45deg, var\(--theme-color\), var\(--accent-color\)\)/u);
   assert.match(stableActionStyles, /cap-settings-expand-toggle\[aria-expanded="true"\][\s\S]*?background: var\(--stable-settings-hover\)/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-body[\s\S]*?<QuickActionSettingsRows quickActionGlobalEnabled=/u);
+  assert.match(settingsAppSource, /cap-stable-settings-shortcut-groups[\s\S]*?cap-stable-settings-card-with-body[\s\S]*?cap-stable-settings-card-with-command-body/u);
   assert.match(quickActionSource, /className="cap-stable-settings-toggle"[\s\S]*?role="switch"[\s\S]*?aria-checked=\{quickActionGlobalEnabled\}[\s\S]*?data-checked=\{quickActionGlobalEnabled\}/u);
   assert.doesNotMatch(settingsAppSource, /quickActionsExpanded|setQuickActionsExpanded/u);
   assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
@@ -209,6 +210,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /data-window-material=\{preferences\.windowMaterial\}/u);
   assert.match(materialContrastStyles, /\.cap-settings-window-foundation\[data-window-material="mica"\][\s\S]*?--stable-settings-card: #ffffff[\s\S]*?--cap-stable-navigation-state: #ffffff[\s\S]*?--cap-stable-search-surface: #ffffff[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
+  assert.match(materialContrastStyles, /data-window-material="mica"[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-section-cards[\s\S]*?box-shadow: none;[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-card[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\);/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-settings-skim-format-group\s*\{\s*background: #ffffff;/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation\.theme-dark\[data-window-material="mica"\][\s\S]*?--cap-stable-search-surface: var\(--cap-stable-navigation-state\)/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="acrylic"\][\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 68%\)[\s\S]*?--cap-stable-search-surface: rgb\(255 255 255 \/ 68%\)[\s\S]*?cap-settings-window-foundation\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 42%\)[\s\S]*?--cap-stable-search-surface: rgb\(0 0 0 \/ 42%\)/u);
@@ -247,6 +249,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /<StableUiIcon name="search" className="cap-stable-settings-search-icon" \/>/u);
   assert.match(settingsStyles, /cap-stable-settings-search-icon \{ width: 16px; height: 16px; color: var\(--stable-settings-secondary\); \}/u);
   assert.match(settingsStyles, /cap-stable-settings-section-cards\s*\{[\s\S]*?gap: 0;[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--stable-settings-card\)/u);
+  assert.match(settingsStyles, /cap-stable-settings-shortcut-groups \.cap-stable-settings-section-cards\s*\{[\s\S]*?gap: 16px;[\s\S]*?background: transparent;[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-card\s*\{[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--stable-settings-card\);/u);
+  assert.match(settingsStyles, /cap-stable-settings-section > h2\s*\{[\s\S]*?margin: 0 0 8px;/u);
   assert.match(settingsAppSource, /cap-stable-settings-content-track[\s\S]*?shownCategories\.map/u);
   assert.match(settingsAppSource, /SettingsCategoryIcon[\s\S]*?icon: "general"[\s\S]*?icon: "about"[\s\S]*?<SettingsCategoryIcon name=\{category\.icon\} \/>/u);
   assert.doesNotMatch(settingsAppSource, /data-short|short: "(?:⚙|◐|▣|AI|◫|⌨|!|\?)"/u);

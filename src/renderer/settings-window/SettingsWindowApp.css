@@ -195,7 +195,7 @@
 }
 
 .cap-stable-settings-section > h2 {
-  margin: 0 0 8px 8px;
+  margin: 0 0 8px;
   color: var(--stable-settings-secondary);
   font-size: var(--cap-ui-font-control);
   font-weight: 600;
@@ -206,6 +206,20 @@
   gap: 0;
   border-radius: 22px;
   background: var(--stable-settings-card);
+}
+
+.cap-stable-settings-shortcut-groups .cap-stable-settings-section-cards {
+  gap: 16px;
+  background: transparent;
+}
+
+.cap-stable-settings-shortcut-groups .cap-stable-settings-card {
+  border-radius: 22px;
+  background: var(--stable-settings-card);
+}
+
+.cap-stable-settings-shortcut-groups .cap-stable-settings-card + .cap-stable-settings-card {
+  border-top: 0;
 }
 
 .cap-stable-settings-card {

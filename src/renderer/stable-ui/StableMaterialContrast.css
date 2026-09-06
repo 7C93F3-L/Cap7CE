@@ -100,6 +100,14 @@
   box-shadow: inset 0 0 0 1px var(--cap-stable-material-border);
 }
 
+.cap-settings-window-foundation[data-window-material="mica"] .cap-stable-settings-shortcut-groups .cap-stable-settings-section-cards {
+  box-shadow: none;
+}
+
+.cap-settings-window-foundation[data-window-material="mica"] .cap-stable-settings-shortcut-groups .cap-stable-settings-card {
+  box-shadow: inset 0 0 0 1px var(--cap-stable-material-border);
+}
+
 .cap-settings-window-foundation:not(.theme-dark)[data-window-material="mica"] .cap-settings-skim-format-group {
   background: #ffffff;
 }

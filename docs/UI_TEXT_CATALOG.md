@@ -100,7 +100,7 @@
 | ------------------------------ | ---------------------------------------------- | -------------------------------------- | --- | ------------------ |
 | `search.inputLabel`            | 搜索关键词                                          |                                        |     | 输入框 aria-label     |
 | `search.action`                | 搜索                                             |                                        |     | 旧搜索按钮 / aria-label |
-| `search.aiEnhance` | AI增强 |  | AI Enhance | 顶部 AI 深度匹配总开关 |
+| `search.aiEnhance` | AI 增强 |  | AI Enhance | 顶部 AI 深度匹配总开关 |
 | `search.aiEnhanceCompleted` | AI 深度匹配完成 |  | AI deep matching completed | 搜索框临时反馈 |
 | `search.aiRecognitionDisabled` | AI 深度匹配已关闭，请先在设置中开启。 |  | AI deep matching is disabled. Enable it in Settings first. | 设置总许可关闭反馈 |
 | `search.aiStartFailed` / `search.aiFailed` | AI 深度匹配启动失败。/ AI 深度匹配失败。 |  | Failed to start AI deep matching. / AI deep matching failed. | Renderer 启动与主进程兜底反馈 |
@@ -266,26 +266,28 @@
 | ---------------------------------- | ----------------------------- | ------------------------- | --- | --------------- |
 | `settings.language`                | 语言 / Language                 |                           | Language / 语言 | Settings 双语语言入口 |
 | `settings.languageSystem`          | 跟随系统 / System                 |                           | 跟随系统 / System | Settings 系统语言值 |
-| `settings.themeMode`               | 模式切换                          | 外观切换                      |     | 建议核对名称          |
-| `settings.appearance`              | 配置外观                          |                           |     | 外观区             |
+| `appearance.themeModeLabel`        | 主题模式                          |                           | Theme Mode | 主题模式选择 |
+| `appearance.configureLabel`        | 主题颜色                          |                           | Theme Colors | 颜色1 / 颜色2 配置 |
 | `settings.editColorHint`           | 单击修改                          |                           |     | 颜色按钮 title      |
-| `settings.themeColor`              | 主题色                           | 颜色1                       |     | 外观颜色            |
-| `settings.accentColor`             | 副色                            | 颜色2                       |     | 外观颜色            |
-| `settings.standbyLine`             | 线状胶囊                          | line                      |     | 与“待机线”命名需核对     |
+| `appearance.themeColor`            | 颜色1                           |                           | Color 1 | 外观颜色 |
+| `appearance.accentColor`           | 颜色2                           |                           | Color 2 | 外观颜色 |
+| `settings.standbyLine`             | line                            |                           | line | line 显示开关 |
 | `settings.visible`                 | 显示                            |                           |     | 待机线状态           |
 | `settings.hidden`                  | 不显示                           |                           |     | 待机线状态           |
-| `settings.edgeCollapse`            | 边缘收起                          |                           |     | 窗口边缘收起开关       |
+| `settings.edgeCollapse`            | 边缘自动收起                       |                           | Edge Auto-hide | 主窗口与预览窗口的屏幕外缘自动收起 |
 | `settings.enabled`                 | 打开                            |                           |     | 开关状态            |
 | `settings.disabled`                | 关闭                            |                           |     | 开关状态            |
-| `settings.launchAtLogin`           | 开机运行                          |                           |     | Windows 登录启动     |
-| `settings.launchAtLoginOn`         | 启动                            |                           |     | 开机运行状态          |
-| `settings.launchAtLoginOff`        | 关闭                            |                           |     | 开机运行状态          |
-| `settings.operationHints`          | 操作提示                          |                           |     | 搜索框操作提示设置       |
+| `settings.launchAtLogin`           | 登录时启动                         |                           | Launch at Sign-in | Windows 登录启动 |
+| `settings.launchAtLoginOn`         | 启动                            |                           | On | 登录启动状态 |
+| `settings.launchAtLoginOff`        | 关闭                            |                           | Off | 登录启动状态 |
+| `settings.operationHints`          | 操作提示                          |                           | Operation Tips | 搜索框操作提示设置 |
 | `settings.operationHintsOn`        | 显示                            |                           |     | 操作提示开启状态        |
 | `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |
-| `settings.systemNotifications`     | 系统通知                          |                           | Notifications | 系统通知开关       |
-| `settings.skimDisplay`             | 自定义查看                        |                           |     | 格式范围配置          |
-| `settings.skimDisplaySummary`      | 已选 {selected} / {total} 种格式，选择“自定义”后应用。 | | {selected} / {total} formats selected. Choose “Custom” to apply. | 自定义查看摘要 |
+| `settings.systemNotifications`     | 系统通知                          |                           | System Notifications | 后台运行与缓存完成通知 |
+| `settings.skimDisplay`             | 自定义范围                        |                           | Custom Scope | 格式范围配置 |
+| `settings.skimDisplaySummary`      | 已选 {selected} / {total} 种格式，在查看范围中选择“自定义”后应用。 | | {selected} / {total} formats selected. Choose “Custom” under View Scope to apply. | 自定义范围摘要 |
+| `settings.skimCache`               | Skim 缓存                       |                           | Skim Cache | Skim 独立缓存 |
+| `settings.embeddedMetadata`        | 嵌入信息                         |                           | Embedded Information | 嵌入信息补齐 |
 | `format.category.visual`           | 图像                            |                           |     | 自定义查看分类        |
 | `format.category.video`            | 视频                            |                           |     | 自定义查看分类        |
 | `format.category.audio`            | 音频                            |                           |     | 自定义查看分类        |
@@ -309,7 +311,7 @@
 | `settings.confirmationCommands`    | 需二次确认类                        |                           |     | 快捷指令分组          |
 | `settings.confirmationCommandHint` | 危险操作执行前将在输入框内要求输入 y / n 二次确认。 | 执行前将在输入框内要求输入 y / n 二次确认。 |     | 快捷指令说明          |
 | `shortcut.focusMainSearch` | 显示主窗口并聚焦搜索 | | Show main window and focus search | 快捷动作名称 |
-| `shortcut.hideToLine` | 关闭主窗口并显示 line | | Close main window and show line | 快捷动作名称 |
+| `shortcut.hideToLine` | 关闭主窗口并保持后台运行 | | Close main window and keep running in the background | 快捷动作名称 |
 | `shortcut.toggleSkim` | 展开 / 收起 skim | | Expand / collapse skim | 快捷动作名称 |
 | `shortcut.openSettings` | 打开设置 | | Open Settings | 快捷动作名称 |
 | `shortcut.restoreDefaultWindow` | 默认大小和位置打开主窗口 | | Open main window at default size and position | 快捷动作名称 |
@@ -331,7 +333,7 @@
 | `model.selectionMissing`          | 所选模型缺失           |      |     | 视觉模型状态                    |
 | `model.directoryMissing`          | 模型目录缺失           |      |     | 视觉模型状态                    |
 | `model.notFound`                  | 未找到模型            |      |     | 视觉模型状态                    |
-| `settings.selectRuntime`          | 选择 llama.cpp 版本  |      |     | select aria-label / title |
+| `settings.selectRuntime`          | llama.cpp 版本  |      | llama.cpp Version | select aria-label / title |
 | `settings.selectVersion`          | 选择版本             |      |     | 空选项                       |
 | `settings.refreshRuntime`         | 刷新 llama.cpp 版本  |      |     | 按钮 title                  |
 | `settings.startServer`            | 启动 llama-server  |      |     | 按钮 title                  |
