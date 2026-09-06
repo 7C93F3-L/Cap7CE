@@ -1,22 +1,3 @@
-.preview-sidebar-resize-handle {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  right: -3px;
-  bottom: 0;
-  width: 7px;
-  cursor: ew-resize;
-}
-
-.preview-sidebar-resize-handle:focus-visible {
-  background: color-mix(in srgb, var(--accent-color) 24%, transparent);
-}
-
-.preview-sidebar-resize-handle:focus-visible {
-  outline: 1px solid var(--accent-color);
-  outline-offset: -2px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .preview-window-stable-ui *,
   .preview-window-stable-ui *::before,

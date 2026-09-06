@@ -230,8 +230,18 @@
   box-shadow: 0 5px 22px rgb(0 0 0 / 18%);
 }
 
+.preview-window-stable-ui .preview-video-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--preview-content-radius, 12px);
+  box-shadow: none;
+}
+
 .preview-window-stable-ui .preview-video {
-  border-radius: 18px;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--preview-content-radius, 12px);
+  object-fit: contain;
 }
 
 @media (max-width: 640px) {

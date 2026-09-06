@@ -261,7 +261,6 @@ export const enUS = defineLocale({
   "preview.sidebar.heading": "File information",
   "preview.sidebar.expand": "Expand file information",
   "preview.sidebar.collapse": "Collapse file information",
-  "preview.sidebar.resize": "Resize file information sidebar",
   "preview.sidebar.fileInfo": "File information",
   "preview.sidebar.dimensions": "Dimensions",
   "preview.sidebar.location": "Location",

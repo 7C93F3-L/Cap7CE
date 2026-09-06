@@ -1,75 +1,32 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { handlePreviewSidebarKeyboardResize, previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
+import { useEffect, useRef, useState } from "react";
 
 const previewSidebarStorageKey = "cap7ce.preview.sidebar-layout.v1";
-export const previewSidebarDefaultWidth = 320;
+export const previewSidebarExpandedWidth = 280;
 
-const clampPreviewSidebarWidth = (width: number) => Math.min(
-  previewSidebarMaximumWidth,
-  Math.max(previewSidebarMinimumWidth, Math.round(width))
-);
-
-const readStoredLayout = () => {
+const readStoredExpanded = () => {
   try {
-    const stored = JSON.parse(window.localStorage.getItem(previewSidebarStorageKey) ?? "null") as { expanded?: unknown; width?: unknown } | null;
-    return {
-      expanded: typeof stored?.expanded === "boolean" ? stored.expanded : true,
-      width: typeof stored?.width === "number" ? clampPreviewSidebarWidth(stored.width) : previewSidebarDefaultWidth
-    };
+    const stored = JSON.parse(window.localStorage.getItem(previewSidebarStorageKey) ?? "null") as { expanded?: unknown } | null;
+    return typeof stored?.expanded === "boolean" ? stored.expanded : true;
   } catch {
-    return { expanded: true, width: previewSidebarDefaultWidth };
+    return true;
   }
 };
 
 export const usePreviewSidebarLayout = () => {
-  const initialLayoutRef = useRef<ReturnType<typeof readStoredLayout> | null>(null);
-  if (!initialLayoutRef.current) initialLayoutRef.current = readStoredLayout();
-  const [expanded, setExpanded] = useState(initialLayoutRef.current.expanded);
-  const [width, setWidth] = useState(initialLayoutRef.current.width);
-  const resizeStartRef = useRef<{ pointerX: number; width: number } | null>(null);
+  const initialExpandedRef = useRef<boolean | null>(null);
+  if (initialExpandedRef.current === null) initialExpandedRef.current = readStoredExpanded();
+  const [expanded, setExpanded] = useState(initialExpandedRef.current);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(previewSidebarStorageKey, JSON.stringify({ expanded, width }));
+      window.localStorage.setItem(previewSidebarStorageKey, JSON.stringify({ expanded }));
     } catch {
       // A blocked storage backend must not prevent Preview from rendering.
     }
-  }, [expanded, width]);
-
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!resizeStartRef.current) return;
-      setWidth(clampPreviewSidebarWidth(resizeStartRef.current.width + event.clientX - resizeStartRef.current.pointerX));
-    };
-    const finishResize = () => {
-      if (!resizeStartRef.current) return;
-      resizeStartRef.current = null;
-      document.documentElement.classList.remove("is-resizing-preview-sidebar");
-    };
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", finishResize);
-    window.addEventListener("pointercancel", finishResize);
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", finishResize);
-      window.removeEventListener("pointercancel", finishResize);
-      document.documentElement.classList.remove("is-resizing-preview-sidebar");
-    };
-  }, []);
-
-  const beginResize = useCallback((event: React.PointerEvent) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    resizeStartRef.current = { pointerX: event.clientX, width };
-    document.documentElement.classList.add("is-resizing-preview-sidebar");
-  }, [width]);
+  }, [expanded]);
 
   return {
     expanded,
-    width,
-    toggleExpanded: () => setExpanded((current) => !current),
-    beginResize,
-    resizeByKeyboard: (event: ReactKeyboardEvent<HTMLElement>) => handlePreviewSidebarKeyboardResize(event, setWidth),
-    resetWidth: () => setWidth(previewSidebarDefaultWidth)
+    toggleExpanded: () => setExpanded((current) => !current)
   };
 };

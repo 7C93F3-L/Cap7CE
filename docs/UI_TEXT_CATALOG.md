@@ -204,7 +204,6 @@
 | `preview.unpin`               | 取消固定窗口            | 取消固定窗口    | Unpin Window | 预览控制栏           |
 | `preview.loading`             | 正在加载预览…           |         |     | 等待状态            |
 | `preview.sidebar.expand` / `preview.sidebar.collapse` | 展开文件信息 / 收起文件信息 | | Expand / Collapse file information | Preview 边栏按钮 aria-label |
-| `preview.sidebar.resize` | 调整文件信息栏宽度 | | Resize file information sidebar | Preview 键盘分隔线 aria-label |
 | `preview.metadata.heading`    | 嵌入信息                |         | Embedded Information | 预览元数据标题与折叠入口 |
 | `preview.metadata.visualContent` | 画面内容             |         | Visual Content | 图片、视频生成内容 |
 | `preview.metadata.title`      | 标题                    |         | Title | 文档嵌入标题 |

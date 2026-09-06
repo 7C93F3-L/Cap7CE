@@ -5,13 +5,11 @@ import CustomScrollbar from "../CustomScrollbar";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
 import PreviewManualKeywordsSection from "./PreviewManualKeywordsSection";
 import PreviewSearchEvidence from "./PreviewSearchEvidence";
-import { previewSidebarMaximumWidth, previewSidebarMinimumWidth } from "./previewSidebarKeyboard";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
-  data: PreviewWindowData; expanded: boolean; width: number;
+  data: PreviewWindowData; expanded: boolean;
   onToggleExpanded: () => void;
-  onBeginResize: (event: React.PointerEvent) => void; onResizeByKeyboard: (event: React.KeyboardEvent<HTMLElement>) => void;
-  onResetWidth: () => void; onOpen: () => void;
+  onOpen: () => void;
   onShowInFolder: () => void; onCopyPath: () => void;
   keywordEditorOpen: boolean; keywordSavePending: boolean; keywordSaveError: string;
   onEditKeywords: () => void; onCancelKeywordEdit: () => void;
@@ -36,11 +34,7 @@ const getFileFormat = (data: PreviewWindowData) => {
 const PreviewInformationSidebar = ({
   data,
   expanded,
-  width,
   onToggleExpanded,
-  onBeginResize,
-  onResizeByKeyboard,
-  onResetWidth,
   onOpen,
   onShowInFolder,
   onCopyPath,
@@ -97,7 +91,6 @@ const PreviewInformationSidebar = ({
         </section>
       </div>
       <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
-      <div className="preview-sidebar-resize-handle" role="separator" tabIndex={0} aria-orientation="vertical" aria-label={t("preview.sidebar.resize")} aria-valuemin={previewSidebarMinimumWidth} aria-valuemax={previewSidebarMaximumWidth} aria-valuenow={width} onPointerDown={onBeginResize} onKeyDown={onResizeByKeyboard} onDoubleClick={onResetWidth} />
     </>}
   </aside>
   );

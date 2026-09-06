@@ -1,7 +1,6 @@
 @import "./StablePreviewAccessibility.css";
 @import "./StablePreviewFileInfo.css";
 @import "./StablePreviewProviders.css";
-@import "./StablePreviewResponsive.css";
 @import "./StablePreviewSidebar.css";
 
 .preview-window-stable-ui {
@@ -17,7 +16,7 @@
   display: contents;
 }
 .preview-stable-shell {
-  --preview-sidebar-current-width: var(--preview-sidebar-width, 320px);
+  --preview-sidebar-current-width: var(--preview-sidebar-width, 280px);
   position: absolute;
   inset: var(--preview-titlebar-height, 40px) 0 0;
   display: grid;
@@ -38,8 +37,9 @@
 }
 
 .preview-stable-shell .preview-window-content {
+  --preview-content-radius: 12px;
   inset: 0 5px 5px 0;
-  border-radius: 12px;
+  border-radius: var(--preview-content-radius);
   background: var(--preview-stable-surface);
 }
 

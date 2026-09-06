@@ -11,7 +11,7 @@ import PdfPreviewPanel from "./PdfPreviewPanel";
 import FontPreviewPanel from "./FontPreviewPanel";
 import PreviewInformationSidebar from "./preview/PreviewInformationSidebar";
 import StablePreviewTitlebar from "./preview/StablePreviewTitlebar";
-import { usePreviewSidebarLayout } from "./preview/usePreviewSidebarLayout";
+import { previewSidebarExpandedWidth, usePreviewSidebarLayout } from "./preview/usePreviewSidebarLayout";
 import { getPreviewWheelNavigationDirection, isPreviewNavigationSuppressedTarget } from "./preview/previewNavigationTarget";
 import { usePreviewImageTransform } from "./preview/usePreviewImageTransform";
 import { getFileContextShortcutAction } from "./fileContextActions";
@@ -107,7 +107,7 @@ const PreviewWindowApp = () => {
   const [previewKeywordSavePending, setPreviewKeywordSavePending] = useState(false);
   const [previewKeywordSaveError, setPreviewKeywordSaveError] = useState("");
   const previewSidebarLayout = usePreviewSidebarLayout();
-  const previewSidebarWidth = previewSidebarLayout.expanded ? previewSidebarLayout.width : 40;
+  const previewSidebarWidth = previewSidebarLayout.expanded ? previewSidebarExpandedWidth : 40;
   const wheelThrottleRef = useRef(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const imageTransform = usePreviewImageTransform(previewData?.sessionId ?? "", imageRef, true);
@@ -550,19 +550,15 @@ const PreviewWindowApp = () => {
       <StablePreviewTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} windowMaterial={windowMaterial} />
       <div
         className="preview-window-shell preview-stable-shell"
-        style={{ "--preview-sidebar-width": `${previewSidebarLayout.width}px` } as CSSProperties}
+        style={{ "--preview-sidebar-width": `${previewSidebarExpandedWidth}px` } as CSSProperties}
       >
         <PreviewInformationSidebar
           data={previewData}
           expanded={previewSidebarLayout.expanded}
-          width={previewSidebarLayout.width}
           keywordEditorOpen={previewKeywordEditorOpen}
           keywordSavePending={previewKeywordSavePending}
           keywordSaveError={previewKeywordSaveError}
           onToggleExpanded={previewSidebarLayout.toggleExpanded}
-          onBeginResize={previewSidebarLayout.beginResize}
-          onResizeByKeyboard={previewSidebarLayout.resizeByKeyboard}
-          onResetWidth={previewSidebarLayout.resetWidth}
           onOpen={() => {
             void window.cap7ce?.files.open(previewData.filePath).then((result) => {
               if (result === "") closePreview();
@@ -776,7 +772,7 @@ const PreviewWindowApp = () => {
               />
             </section>
           ) : (
-            <div className="preview-visual-with-metadata" data-preview-provider-interactive="true">
+            <div className="preview-visual-with-metadata preview-video-canvas" data-preview-provider-interactive="true">
               <video
                 key={previewData.sessionId}
                 ref={(element) => { mediaRef.current = element; }}

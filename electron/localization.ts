@@ -261,7 +261,6 @@ export const zhCN = {
   "preview.sidebar.heading": "文件信息",
   "preview.sidebar.expand": "展开文件信息",
   "preview.sidebar.collapse": "收起文件信息",
-  "preview.sidebar.resize": "调整文件信息栏宽度",
   "preview.sidebar.fileInfo": "文件信息",
   "preview.sidebar.dimensions": "尺寸",
   "preview.sidebar.location": "位置",

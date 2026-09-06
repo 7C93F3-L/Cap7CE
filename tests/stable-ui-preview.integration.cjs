@@ -18,13 +18,11 @@ const keywordEditorSource = read("src/renderer/keywords/KeywordTagEditor.tsx");
 const keywordEditorStyles = read("src/renderer/keywords/KeywordTagEditor.css");
 const manualMetadataRuntimeSource = read("electron/manualMetadataRuntime.ts");
 const layoutSource = read("src/renderer/preview/usePreviewSidebarLayout.ts");
-const keyboardSource = read("src/renderer/preview/previewSidebarKeyboard.ts");
 const shellStyles = read("src/renderer/preview/StablePreviewShell.css");
 const fileInfoStyles = read("src/renderer/preview/StablePreviewFileInfo.css");
 const providerStyles = read("src/renderer/preview/StablePreviewProviders.css");
 const sidebarStyles = read("src/renderer/preview/StablePreviewSidebar.css");
 const accessibilityStyles = read("src/renderer/preview/StablePreviewAccessibility.css");
-const responsiveStyles = read("src/renderer/preview/StablePreviewResponsive.css");
 const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const sidebarDataSource = read("src/renderer/preview/previewSidebarData.ts");
@@ -77,18 +75,18 @@ assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{scrollRef\} o
 assert.doesNotMatch(sidebarSource, /window\.cap7ce/u);
 
 assert.match(layoutSource, /cap7ce\.preview\.sidebar-layout\.v1/u);
-assert.match(keyboardSource, /previewSidebarMinimumWidth = 280/u);
-assert.match(keyboardSource, /previewSidebarMaximumWidth = 420/u);
-assert.match(layoutSource, /previewSidebarDefaultWidth = 320/u);
-assert.match(keyboardSource, /new Set\(\["Home", "End", "ArrowLeft", "ArrowRight"\]\)\.has\(event\.key\)/u);
-assert.match(keyboardSource, /event\.key === "ArrowLeft"[\s\S]*?currentWidth - 8[\s\S]*?currentWidth \+ 8/u);
+assert.match(layoutSource, /previewSidebarExpandedWidth = 280/u);
+assert.match(layoutSource, /JSON\.stringify\(\{ expanded \}\)/u);
+assert.doesNotMatch(layoutSource, /setWidth|pointermove|resizeByKeyboard|resetWidth/u);
 assert.match(sidebarSource, /aria-label=\{t\(expanded \? "preview\.sidebar\.collapse" : "preview\.sidebar\.expand"\)\}/u);
 assert.match(sidebarSource, /onPointerUp=\{\(event\) => event\.currentTarget\.blur\(\)\}/u);
 assert.doesNotMatch(sidebarSource, /canShowSecondaryActions|onOpenSkim|onOpenSettings|preview-sidebar-secondary-actions/u);
 assert.doesNotMatch(previewSource, /canShowSecondaryActions=\{showSettings\}/u);
-assert.match(sidebarSource, /role="separator"[\s\S]*?tabIndex=\{0\}[\s\S]*?aria-valuenow=\{width\}[\s\S]*?onKeyDown=\{onResizeByKeyboard\}/u);
+assert.doesNotMatch(sidebarSource, /preview-sidebar-resize-handle|role="separator"|onBeginResize|onResizeByKeyboard|onResetWidth/u);
+assert.doesNotMatch(sidebarStyles, /is-resizing-preview-sidebar/u);
 assert.match(shellStyles, /@import "\.\/StablePreviewSidebar\.css"/u);
 assert.match(shellStyles, /preview-information-sidebar\.is-collapsed[\s\S]*?40px/u);
+assert.match(shellStyles, /--preview-sidebar-current-width: var\(--preview-sidebar-width, 280px\)/u);
 assert.match(sidebarStyles, /preview-sidebar-section\s*\{[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--preview-sidebar-card\)/u);
 assert.match(sidebarStyles, /--preview-sidebar-card: var\(--preview-stable-card\)/u);
 assert.match(fileInfoStyles, /\.preview-window-stable-ui \{[^}]*--preview-heading-text: #111111;/u);
@@ -125,10 +123,14 @@ assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content[\s\S]
 assert.match(shellStyles, /\.preview-stable-shell \.preview-image-transform-canvas[\s\S]*?background: transparent/u);
 assert.match(shellStyles, /\.preview-stable-shell \.preview-image-transform-canvas[\s\S]*?border-radius: 0/u);
 assert.match(shellStyles, /\.preview-image-transform-canvas > \.preview-window-image[\s\S]*?border-radius: 0/u);
+assert.match(previewSource, /className="preview-visual-with-metadata preview-video-canvas"/u);
+assert.match(shellStyles, /\.preview-stable-shell \.preview-window-content\s*\{[\s\S]*?--preview-content-radius: 12px;[\s\S]*?border-radius: var\(--preview-content-radius\);/u);
+assert.match(providerStyles, /\.preview-window-stable-ui \.preview-video-canvas \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?border-radius: var\(--preview-content-radius, 12px\);[\s\S]*?box-shadow: none;/u);
+assert.match(providerStyles, /\.preview-window-stable-ui \.preview-video \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?border-radius: var\(--preview-content-radius, 12px\);[\s\S]*?object-fit: contain;/u);
 assert.match(mainSource, /minimizable: true/u);
 assert.match(mainSource, /\.\.\.getStablePreviewContentChrome\(sidebarWidth\)/u);
-assert.match(previewSource, /previewSidebarWidth = previewSidebarLayout\.expanded \? previewSidebarLayout\.width : 40/u);
-assert.match(previewSource, /className="preview-window-shell preview-stable-shell"[\s\S]*?--preview-sidebar-width": `\$\{previewSidebarLayout\.width\}px`/u);
+assert.match(previewSource, /previewSidebarWidth = previewSidebarLayout\.expanded \? previewSidebarExpandedWidth : 40/u);
+assert.match(previewSource, /className="preview-window-shell preview-stable-shell"[\s\S]*?--preview-sidebar-width": `\$\{previewSidebarExpandedWidth\}px`/u);
 assert.doesNotMatch(sidebarSource, /style=\{\{ "--preview-sidebar-width"/u);
 assert.match(previewSource, /infoDimensions = previewData\.info\?\.kind === "folder"[\s\S]*?\{ width: 600, height: 580 \}[\s\S]*?hasExtendedInfoFallback \? 450 : 380/u);
 assert.doesNotMatch(previewSource, /new ResizeObserver[\s\S]*?panel\.scrollHeight/u);
@@ -149,10 +151,8 @@ for (const providerClass of ["preview-text-panel", "preview-pdf-panel", "preview
 }
 assert.match(mainSource, /skipTaskbar: false/u);
 assert.match(mainSource, /previewWindow\.setSkipTaskbar\(false\)/u);
-assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw - 220px\)/u);
 assert.match(accessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.preview-window-stable-ui \*/u);
-assert.doesNotMatch(accessibilityStyles, /\.preview-sidebar-resize-handle:hover/u);
-assert.match(accessibilityStyles, /\.preview-sidebar-resize-handle:focus-visible \{\s*background: color-mix\(in srgb, var\(--accent-color\) 24%, transparent\);/u);
+assert.doesNotMatch(accessibilityStyles, /preview-sidebar-resize-handle/u);
 
 console.log(JSON.stringify({
   formalStablePreviewEntryPresent: true,
@@ -164,9 +164,9 @@ console.log(JSON.stringify({
   formalInformationSidebarPresent: true,
   cardBasedInformationLayoutVerified: true,
   embeddedMetadataMovedWithoutStableDuplication: true,
-  sidebarLayoutPersistenceBounded: true,
+  sidebarExpandedStatePersistenceVerified: true,
   sidebarScrollNavigationSuppressed: true,
   existingFileActionsReused: true,
-  keyboardSidebarResizeVerified: true,
-  narrowPreviewAndReducedMotionVerified: true
+  fixedTwoStateSidebarWidthVerified: true,
+  reducedMotionVerified: true
 }));
