@@ -8,7 +8,6 @@
   cursor: ew-resize;
 }
 
-.preview-sidebar-resize-handle:hover,
 .preview-sidebar-resize-handle:focus-visible {
   background: color-mix(in srgb, var(--accent-color) 24%, transparent);
 }

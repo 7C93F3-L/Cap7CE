@@ -25,7 +25,7 @@
   padding: 0 8px;
   border: 0;
   border-radius: 10px;
-  color: inherit;
+  color: var(--preview-heading-text, var(--text-main));
   background: transparent;
   text-align: left;
 }

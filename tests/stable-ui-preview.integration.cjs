@@ -91,7 +91,11 @@ assert.match(shellStyles, /@import "\.\/StablePreviewSidebar\.css"/u);
 assert.match(shellStyles, /preview-information-sidebar\.is-collapsed[\s\S]*?40px/u);
 assert.match(sidebarStyles, /preview-sidebar-section\s*\{[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--preview-sidebar-card\)/u);
 assert.match(sidebarStyles, /--preview-sidebar-card: var\(--preview-stable-card\)/u);
-assert.match(fileInfoStyles, /\.preview-window-stable-ui\.theme-dark \{ --preview-stable-card: rgb\(24 24 24 \/ 52%\); \}/u);
+assert.match(fileInfoStyles, /\.preview-window-stable-ui \{[^}]*--preview-heading-text: #111111;/u);
+assert.match(fileInfoStyles, /\.preview-window-stable-ui\.theme-dark \{[^}]*--preview-heading-text: #d8d8d8;/u);
+assert.match(sidebarStyles, /\.preview-sidebar-header \{[^}]*color: var\(--preview-heading-text, var\(--text-main\)\);/u);
+assert.doesNotMatch(sidebarStyles, /theme-dark \.preview-sidebar-header/u);
+assert.match(fileInfoStyles, /\.preview-window-stable-ui\.theme-dark \{[^}]*--preview-stable-card: rgb\(24 24 24 \/ 52%\);/u);
 assert.match(sidebarStyles, /preview-sidebar-actions\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
 assert.match(sidebarStyles, /preview-sidebar-actions button:hover \{ color: var\(--preview-action-hover-text\); background: linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}/u);
 assert.match(sidebarStyles, /preview-sidebar-section-heading button \{[\s\S]*?color: var\(--preview-sidebar-muted\)/u);
@@ -147,6 +151,8 @@ assert.match(mainSource, /skipTaskbar: false/u);
 assert.match(mainSource, /previewWindow\.setSkipTaskbar\(false\)/u);
 assert.match(responsiveStyles, /@media \(max-width: 640px\)[\s\S]*?calc\(100vw - 220px\)/u);
 assert.match(accessibilityStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.preview-window-stable-ui \*/u);
+assert.doesNotMatch(accessibilityStyles, /\.preview-sidebar-resize-handle:hover/u);
+assert.match(accessibilityStyles, /\.preview-sidebar-resize-handle:focus-visible \{\s*background: color-mix\(in srgb, var\(--accent-color\) 24%, transparent\);/u);
 
 console.log(JSON.stringify({
   formalStablePreviewEntryPresent: true,

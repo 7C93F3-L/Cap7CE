@@ -1,5 +1,5 @@
-.preview-window-stable-ui { --preview-stable-card: rgb(255 255 255 / 58%); --preview-stable-muted: color-mix(in srgb, var(--text-main) 58%, transparent); }
-.preview-window-stable-ui.theme-dark { --preview-stable-card: rgb(24 24 24 / 52%); }
+.preview-window-stable-ui { --preview-stable-card: rgb(255 255 255 / 58%); --preview-stable-muted: color-mix(in srgb, var(--text-main) 58%, transparent); --preview-heading-text: #111111; }
+.preview-window-stable-ui.theme-dark { --preview-stable-card: rgb(24 24 24 / 52%); --preview-heading-text: #d8d8d8; }
 .preview-window-stable-ui .preview-info-panel { width: min(100%, 760px); height: auto; max-height: 100%; box-sizing: border-box; padding: clamp(24px, 5vw, 52px); overflow-x: hidden; overflow-y: auto; border-radius: 0; background: transparent; scrollbar-width: none; }
 .preview-window-stable-ui .preview-info-panel::-webkit-scrollbar { width: 0; height: 0; }
 .preview-window-stable-ui .preview-info-heading { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
