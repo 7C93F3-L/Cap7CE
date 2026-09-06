@@ -355,8 +355,8 @@
 | `settings.mainModelInfo`          | 主模型大小 / 修改时间     |      |     | 详情字段                      |
 | `settings.mmprojInfo`             | mmproj 大小 / 修改时间 |      |     | 详情字段                      |
 | `settings.modelInventory`         | 可用模型 / GGUF 文件   |      | Available Models / GGUF Files | 显示可加载模型组合数 / GGUF 文件数 |
-| `settings.versionUpdate`          | 版本更新             |      | Version Update | 用户主动更新入口 |
-| `settings.updateNotChecked`       | 尚未检查             |      | Not checked | 更新状态 |
+| `settings.versionUpdate`          | 版本与更新           |      | Version and Updates | 当前版本与用户主动更新入口 |
+| `settings.updateCurrentVersion`   | 当前版本 {version}   |      | Current version {version} | 初始更新状态 |
 | `settings.checkForUpdates`        | 检查更新             |      | Check for Updates | 更新按钮 |
 | `settings.updateChecking`         | 正在检查最新版本        |      | Checking for the latest version | 更新状态 |
 | `settings.updateUpToDate`         | 已是最新版本 {version} |      | Latest: {version} | 更新状态 |

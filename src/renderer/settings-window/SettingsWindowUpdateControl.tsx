@@ -98,7 +98,7 @@ export const SettingsWindowUpdateControl = () => {
                     ? t(reasonKey)
                     : status === "failed"
                       ? t("settings.updateCheckFailed")
-                      : t("settings.updateNotChecked");
+                      : t("settings.updateCurrentVersion", { version: "0.9.9" });
 
   const action = status === "update_available"
     ? download

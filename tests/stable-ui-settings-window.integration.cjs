@@ -181,7 +181,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(appearanceColorSource, /<ColorPickerPopover[\s\S]*?className="cap-stable-settings-color-picker"[\s\S]*?onPreview[\s\S]*?onCommit/u);
   assert.match(colorPickerSource, /className\?[\s\S]*?cap-color-picker\$\{className/u);
   assert.match(appearanceColorStyles, /cap-stable-settings-color-picker[\s\S]*?backdrop-filter/u);
-  assert.match(stableActionStyles, /cap-stable-settings-button[\s\S]*?cap-settings-pill[\s\S]*?cap-stable-settings-link[\s\S]*?cap-stable-settings-color-button/u);
+  assert.match(stableActionStyles, /cap-stable-settings-button[\s\S]*?cap-settings-pill[\s\S]*?cap-stable-settings-color-button/u);
+  assert.doesNotMatch(stableActionStyles, /cap-stable-settings-link/u);
+  assert.doesNotMatch(settingsAppSource, /stableSettings\.currentVersion|cap-stable-settings-readonly/u);
   assert.match(stableActionStyles, /min-height: 28px[\s\S]*?border-radius: 999px[\s\S]*?linear-gradient\(45deg, var\(--theme-color\), var\(--accent-color\)\)/u);
   assert.match(stableActionStyles, /cap-settings-expand-toggle\[aria-expanded="true"\][\s\S]*?background: var\(--stable-settings-hover\)/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-body[\s\S]*?<QuickActionSettingsRows quickActionGlobalEnabled=/u);

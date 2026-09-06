@@ -1,6 +1,5 @@
 .cap-settings-window-foundation .cap-stable-settings-button,
 .cap-settings-window-foundation .cap-settings-pill,
-.cap-settings-window-foundation .cap-stable-settings-link,
 .cap-settings-window-foundation .cap-stable-settings-color-button,
 .cap-settings-window-foundation.cap-stable-settings-loading button {
   min-width: 34px;
@@ -29,8 +28,6 @@
 .cap-settings-window-foundation .cap-stable-settings-button:focus-visible,
 .cap-settings-window-foundation .cap-settings-pill:hover:not(:disabled),
 .cap-settings-window-foundation .cap-settings-pill:focus-visible,
-.cap-settings-window-foundation .cap-stable-settings-link:hover:not(:disabled),
-.cap-settings-window-foundation .cap-stable-settings-link:focus-visible,
 .cap-settings-window-foundation .cap-stable-settings-color-button:hover:not(:disabled),
 .cap-settings-window-foundation .cap-stable-settings-color-button:focus-visible,
 .cap-settings-window-foundation.cap-stable-settings-loading button:hover:not(:disabled),

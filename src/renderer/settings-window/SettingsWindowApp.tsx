@@ -47,7 +47,7 @@ const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
   cache: ["stableSettings.category.cache", "stableSettings.cacheOptimization", "stableSettings.formalCache", "settings.skimCache", "settings.embeddedMetadata", "stableSettings.desc.cacheOptimization", "stableSettings.desc.formalCache", "stableSettings.desc.skimCache", "stableSettings.desc.metadata"],
   shortcuts: ["stableSettings.category.shortcuts", "settings.quickActions", "settings.quickCommands", "stableSettings.desc.quickActions", "stableSettings.desc.quickCommands"],
   diagnostics: ["stableSettings.category.diagnostics", "stableSettings.diagnostics", "settings.applicationLog", "settings.crashReports", "settings.diagnosticsBundle", "stableSettings.desc.diagnostics"],
-  about: ["stableSettings.category.about", "stableSettings.currentVersion", "settings.versionUpdate", "stableSettings.license", "stableSettings.desc.version", "stableSettings.desc.update", "stableSettings.desc.license"]
+  about: ["stableSettings.category.about", "settings.versionUpdate", "stableSettings.license", "stableSettings.desc.update", "stableSettings.desc.license"]
 };
 
 const matchesQuery = (query: string, values: string[]) => {
@@ -66,11 +66,11 @@ const SettingsSection = ({ title, children }: { title: TranslationKey; children:
 );
 
 const SettingCard = ({ title, description, query, keywords = [], children, className = "" }: {
-  title: TranslationKey; description: TranslationKey; query: string; keywords?: string[]; children: ReactNode; className?: string;
+  title: TranslationKey; description: TranslationKey; query: string; keywords?: string[]; children?: ReactNode; className?: string;
 }) => matchesQuery(query, [t(title), t(description), ...keywords]) ? (
   <div className={`cap-stable-settings-card${className ? ` ${className}` : ""}`}>
     <div className="cap-stable-settings-copy"><h3>{t(title)}</h3><p>{t(description)}</p></div>
-    <div className="cap-stable-settings-control">{children}</div>
+    {children !== undefined && <div className="cap-stable-settings-control">{children}</div>}
   </div>
 ) : null;
 
@@ -155,7 +155,7 @@ const SettingsWindowApp = () => {
     </>;
     if (category === "shortcuts") return <div className="cap-stable-settings-shortcut-groups"><SettingsSection title="stableSettings.section.keyboard"><SettingCard title="settings.quickActions" description="stableSettings.desc.quickActions" query={normalizedQuery} className="cap-stable-settings-card-with-body"><QuickActionSettingsRows quickActionGlobalEnabled={preferences.quickActionGlobalEnabled} shortcutActions={preferences.stableShortcutActions} unavailableShortcutActionIds={controller.unavailableShortcutActionIds} onGlobalEnabledChange={(enabled) => toggle("quickActionGlobalEnabled", enabled)} onShortcutActionsChange={controller.updateShortcutActions} onShortcutCaptureStart={controller.beginShortcutCapture} onShortcutCaptureEnd={controller.endShortcutCapture} /></SettingCard><SettingCard title="settings.quickCommands" description="stableSettings.desc.quickCommands" query={normalizedQuery} className="cap-stable-settings-card-with-command-body"><div className="cap-stable-settings-command-toggle"><SettingsToggle enabled={preferences.commandEnabled} onChange={(enabled) => toggle("commandEnabled", enabled)} /></div><QuickCommandSettingsRows stableUi /></SettingCard></SettingsSection></div>;
     if (category === "diagnostics") return <SettingsSection title="stableSettings.section.application"><SettingCard title="stableSettings.diagnostics" description="stableSettings.desc.diagnostics" query={normalizedQuery} className="cap-stable-settings-card-expanded"><RuntimeDiagnosticsRows stableUi /></SettingCard></SettingsSection>;
-    return <><SettingsSection title="stableSettings.section.application"><SettingCard title="stableSettings.currentVersion" description="stableSettings.desc.version" query={normalizedQuery}><button type="button" className="cap-stable-settings-link" onClick={() => void window.cap7ce?.app.openReleasePage()}>0.9.9</button></SettingCard><SettingCard title="settings.versionUpdate" description="stableSettings.desc.update" query={normalizedQuery} className="cap-stable-settings-card-expanded"><SettingsWindowUpdateControl /></SettingCard><SettingCard title="stableSettings.license" description="stableSettings.desc.license" query={normalizedQuery}><span className="cap-stable-settings-readonly">{t("stableSettings.licenseValue")}</span></SettingCard></SettingsSection><SettingsFooter /></>;
+    return <><SettingsSection title="stableSettings.section.application"><SettingCard title="settings.versionUpdate" description="stableSettings.desc.update" query={normalizedQuery} className="cap-stable-settings-card-expanded"><SettingsWindowUpdateControl /></SettingCard><SettingCard title="stableSettings.license" description="stableSettings.desc.license" query={normalizedQuery} /></SettingsSection><SettingsFooter /></>;
   };
 
   return <div className={`cap-settings-window-foundation theme-${effectiveTheme}`} data-window-material={preferences.windowMaterial} data-language={getActiveLanguage()} style={menuStyle}>

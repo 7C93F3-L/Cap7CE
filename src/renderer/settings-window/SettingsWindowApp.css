@@ -266,24 +266,6 @@
   min-width: 0;
 }
 
-.cap-stable-settings-readonly {
-  min-height: 28px;
-  padding: 4px 12px;
-  box-sizing: border-box;
-  border: 0;
-  border-radius: 14px;
-  color: inherit;
-  background: var(--stable-settings-hover);
-  font: inherit;
-  font-size: var(--cap-ui-font-control);
-}
-
-.cap-stable-settings-readonly {
-  display: inline-flex;
-  align-items: center;
-  color: var(--stable-settings-secondary);
-}
-
 .cap-stable-settings-toggle {
   display: inline-flex;
   align-items: center;

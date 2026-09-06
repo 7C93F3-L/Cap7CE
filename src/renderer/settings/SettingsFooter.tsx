@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { t } from "../../../electron/localization";
 import iconSignatureCap7CESvg from "../assets/icons/icon-signature-cap7ce.svg?raw";
 import SvgIcon from "../components/SvgIcon";
 
@@ -87,16 +86,7 @@ export const SettingsFooter = () => {
       <div className="cap7ce-signature" aria-label="Cap7CE">
         <SvgIcon svg={iconSignatureCap7CESvg} className="cap-svg-icon cap-signature-svg-icon" />
         <small>
-          <button
-            className="cap7ce-release-link"
-            type="button"
-            title={t("settings.openReleasesHint")}
-            aria-label={t("settings.openReleasesHint")}
-            onClick={() => void window.cap7ce?.app.openReleasePage()}
-          >
-            0.9.9
-          </button>
-          {" · 7C93F3-L & "}
+          {"7C93F3-L & "}
           <button
             className="cap7ce-echo-trigger"
             type="button"
