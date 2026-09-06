@@ -37,7 +37,7 @@ for (const resetCall of [
   assert.ok(appSource.includes(resetCall), `standby cleanup is missing ${resetCall}`);
 }
 assert.match(appSource, /isAddingDirectory[\s\S]*?isDeletingFiles \|\| isSavingMetadata \|\| keywordSaveInFlightRef\.current[\s\S]*?directoryDeleteInFlightRef\.current[\s\S]*?dismissTransientInteractionsForStandby\(\);[\s\S]*?window\.cap7ce\?\.window\.setShellState\("standby"\)/u);
-assert.match(appSource, /if \(mode === "line"\) return void enterStandby\(\)/u);
+assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\(\)/u);
 assert.match(appSource, /const collapseShellToStandby = enterStandby/u);
 
 assert.match(controllerSource, /private lineWindow: BrowserWindow \| null = null/u);

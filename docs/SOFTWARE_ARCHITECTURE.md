@@ -505,9 +505,9 @@ Settings 当前覆盖：
 - 执行器负责将命令分流到现有 UI / 设置 / 文件能力。
 - 危险命令进入输入框内 `y / n` 确认态。
 
-白名单领域包括 `see:`、`win:`、`dir:`、`cache:`、`ai:`、`skim:`、`set:`、`ui:`、`line:`、`edge:`、`key:`、`cmd:`、`lang:`、`llama:`、`model:`、`app:`。`see:` 统一控制主窗口左侧栏的目录、查看范围和排序，其中 `default` 在指令层映射内部 `skim` 范围值；`skim:` 用于确定性进入 skim，`skim:root` 返回其根目录；独立 skim 缓存归入缓存领域，通过 `cache:skim` 确认后清理。
+白名单领域包括 `see:`、`win:`、`dir:`、`cache:`、`ai:`、`skim:`、`set:`、`ui:`、`line:`、`edge:`、`key:`、`cmd:`、`lang:`、`llama:`、`model:`、`app:`。`see:` 统一控制主窗口左侧栏的目录、查看范围和排序，其中 `default` 在指令层映射内部 `skim` 范围值；`skim:` 除进入和返回根目录外，还控制其独立查看范围、排序及 Windows 隐藏文件偏好。独立 skim 缓存归入缓存领域，通过 `cache:skim` 确认后清理。
 
-已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 目录与排序类、运行时 / 模型类，以及二次确认类命令。旧 Settings 子页跳转、`win:normal`、`see:all` 和整个 `tag:` 领域已随对应界面能力退役，不保留无效果或概念重复的兼容入口。目录路径添加复用 `directories:addCandidates`；`see:dir`、`see:scope` 与 `see:sort` 复用主窗口左侧栏的正式搜索入口，并保留未被本次指令修改的其他搜索条件。贴边收起、系统通知、自动缓存优化和 AI 深度匹配复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
+已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 目录与排序类、运行时 / 模型类，以及二次确认类命令。旧 Settings 子页跳转、`win:normal`、`see:all`、`ai:deep` 和整个 `tag:` 领域已随对应界面能力退役，不保留无效果、概念重复或语义过时的兼容入口。目录路径添加复用 `directories:addCandidates`；`see:dir`、`see:scope` 与 `see:sort` 复用主窗口左侧栏的正式搜索入口，并保留未被本次指令修改的其他搜索条件。`ui:acrylic|mica`、`ui:font`、`win:reset` 及新增 Skim 指令分别复用正式偏好和窗口动作；`ai:on|off` 控制全局 AI 能力，`ai:search on|off` 只控制当前搜索。贴边收起、系统通知和自动缓存优化继续复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
 
 ## 14. 风险和开发约束
 

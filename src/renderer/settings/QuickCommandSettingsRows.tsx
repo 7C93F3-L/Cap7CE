@@ -9,7 +9,16 @@ export const getQuickCommandGroups = (): Array<{
     title: t("commands.group.skim"),
     items: [
       { command: "skim:", description: t("commands.skim.open") },
-      { command: "skim:root", description: t("commands.skim.root") }
+      { command: "skim:root", description: t("commands.skim.root") },
+      { command: "skim:scope default", description: t("commands.skim.scopeDefault") },
+      { command: "skim:scope all", description: t("commands.skim.scopeAll") },
+      { command: "skim:scope custom", description: t("commands.skim.scopeCustom") },
+      { command: "skim:sort asc", description: t("commands.skim.sortAsc") },
+      { command: "skim:sort desc", description: t("commands.skim.sortDesc") },
+      { command: "skim:sort name", description: t("commands.skim.sortName") },
+      { command: "skim:sort time", description: t("commands.skim.sortTime") },
+      { command: "skim:hidden on", description: t("commands.skim.hiddenEnable") },
+      { command: "skim:hidden off", description: t("commands.skim.hiddenDisable") }
     ]
   },
   {
@@ -37,6 +46,7 @@ export const getQuickCommandGroups = (): Array<{
     items: [
       { command: "win:line", description: t("commands.window.line") },
       { command: "win:max", description: t("commands.window.max") },
+      { command: "win:reset", description: t("commands.window.reset") },
       { command: "win:top on", description: t("commands.window.pin") },
       { command: "win:top off", description: t("commands.window.unpin") }
     ]
@@ -55,6 +65,9 @@ export const getQuickCommandGroups = (): Array<{
       { command: "ui:light", description: t("commands.appearance.light") },
       { command: "ui:dark", description: t("commands.appearance.dark") },
       { command: "ui:auto", description: t("commands.appearance.system") },
+      { command: "ui:acrylic", description: t("commands.appearance.acrylic") },
+      { command: "ui:mica", description: t("commands.appearance.mica") },
+      ...([12, 13, 14, 15, 16] as const).map((size) => ({ command: `ui:font ${size}`, description: t("commands.appearance.fontSize", { size }) })),
       { command: "ui:main #RRGGBB", description: t("commands.appearance.themeColor") },
       { command: "ui:accent #RRGGBB", description: t("commands.appearance.accentColor") },
       { command: "ui:reset", description: t("commands.appearance.reset") }
@@ -128,8 +141,10 @@ export const getQuickCommandGroups = (): Array<{
   {
     title: t("commands.group.ai"),
     items: [
-      { command: "ai:deep on", description: t("commands.ai.deepEnable") },
-      { command: "ai:deep off", description: t("commands.ai.deepDisable") }
+      { command: "ai:on", description: t("commands.ai.enable") },
+      { command: "ai:off", description: t("commands.ai.disable") },
+      { command: "ai:search on", description: t("commands.ai.searchEnable") },
+      { command: "ai:search off", description: t("commands.ai.searchDisable") }
     ]
   }
 ];

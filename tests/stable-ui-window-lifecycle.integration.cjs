@@ -66,6 +66,7 @@ assert.match(mainSource, /const getShellMinimumSize = \(_state: Cap7CEShellState
 assert.match(mainSource, /const openSettings = async \(\) => Boolean\(await settingsWindowController\?\.open\(\)\)/u);
 assert.match(mainSource, /previewWindow\.on\("unmaximize", applyLatestPreviewContentSize\)/u);
 assert.match(mainSource, /restoreStableDefaultBounds[\s\S]*?resolveStableUiDefaultWindowBounds[\s\S]*?rememberUserMovedShellBounds\(defaultBounds\)/u);
+assert.match(mainSource, /state === "normal" && options\?\.forceBounds[\s\S]*?activateShellModeShortcut\("normal", true\)/u);
 assert.match(mainSource, /mainWindow\.on\("maximize"[\s\S]*?mainWindow\.on\("unmaximize"/u);
 for (const source of [mainSource, preferenceSource, preloadSource, sharedTypesSource]) {
   assert.doesNotMatch(source, /WindowPresentation|windowPresentation|presentationMode|compatibilityNative/u);

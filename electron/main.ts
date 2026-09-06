@@ -1208,9 +1208,7 @@ const applyStandaloneLineMode = () => {
 
 const applyShellWindowState = (state: string, options: { preserveBounds?: boolean } = {}) => {
   if (!mainWindow || !isShellWindowState(state)) return false;
-  if (state === "standby") {
-    return applyStandaloneLineMode();
-  }
+  if (state === "standby") return applyStandaloneLineMode();
   lineWindowController.hide();
   resetDockedShellPosition();
 
@@ -1747,6 +1745,7 @@ ipcMain.handle("window:setShellState", (_event, state: string, options?: { force
   if (state === "standby") {
     return applyStandaloneLineMode();
   }
+  if (state === "normal" && options?.forceBounds) return activateShellModeShortcut("normal", true);
   if (state === "normal" && state === activeShellState) {
     dockedShellController?.restore(true);
     return true;

@@ -43,7 +43,7 @@ void (async () => {
     throw new Error("Stable UI development root must not select a legacy shell shape or size contract.");
   }
   assert.match(appSource, /window\.cap7ce\?\.window\.setShellState\("standby"\)/);
-  assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\("line"\);[\s\S]*?window\.setTimeout/);
+  assert.match(appSource, /if \(mode === "standby"\) setCommandShellMode\(\);[\s\S]*?window\.setTimeout/);
   if (!titlebarSource.includes("<WindowPinButton") || !pinButtonSource.includes("aria-pressed={pinned}")) {
     throw new Error("Stable main and preview foundations must share the existing accessible pin control.");
   }

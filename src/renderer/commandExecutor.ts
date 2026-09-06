@@ -1,4 +1,4 @@
-import type { AppearanceColors, LanguagePreference, ShortcutActionPreferences, SkimDisplayMode, ThemeMode } from "../shared/types";
+import type { AppearanceColors, LanguagePreference, ShortcutActionPreferences, SkimDisplayMode, ThemeMode, UiFontSize, WindowMaterial } from "../shared/types";
 import type { ParsedQuickCommand } from "./commandParser";
 import { t } from "../../electron/localization";
 
@@ -28,6 +28,8 @@ export interface QuickCommandExecutorContext {
   openSkim: () => void;
   openSkimRoot: () => void;
   updateTheme: (theme: ThemeMode) => void;
+  updateWindowMaterial: (material: WindowMaterial) => Promise<void>;
+  updateUiFontSize: (size: UiFontSize) => Promise<void>;
   updateLanguage: (language: LanguagePreference) => Promise<void>;
   updateAppearanceColors: (appearanceColors: AppearanceColors) => void;
   updateStandbyLineVisible: (visible: boolean) => void;
@@ -42,7 +44,13 @@ export interface QuickCommandExecutorContext {
   updateCommandEnabled: (enabled: boolean) => Promise<void>;
   selectDirectory: (directoryName: string) => boolean;
   setSearchScope: (mode: SkimDisplayMode) => void;
+  setSkimScope: (mode: SkimDisplayMode) => void;
+  setSkimHiddenFiles: (enabled: boolean) => void;
+  setSkimSortDirection: (direction: CommandSortDirection) => void;
+  setSkimSortField: (field: CommandSortField) => void;
+  setCurrentAiSearch: (enabled: boolean) => CommandOperationResult;
   setShellMode: () => void;
+  resetWindow: () => Promise<CommandOperationResult>;
   maximizeWindow: () => Promise<CommandOperationResult>;
   setAlwaysOnTop: (enabled: boolean) => Promise<CommandOperationResult>;
   setSortDirection: (direction: CommandSortDirection) => void;
@@ -122,6 +130,12 @@ export const executeQuickCommand = async (
         ? { status: "handled", message: t("command.windowMaximized"), clearInput: true }
         : { status: "failed", message: result.message, clearInput: false };
     }
+    if (command.action === "reset") {
+      const result = await context.resetWindow();
+      return result.ok
+        ? { status: "handled", message: t("command.windowReset"), clearInput: true }
+        : { status: "failed", message: result.message, clearInput: false };
+    }
     if (command.action === "top" && (command.args[0] === "on" || command.args[0] === "off")) {
       const enabled = command.args[0] === "on";
       const result = await context.setAlwaysOnTop(enabled);
@@ -190,6 +204,29 @@ export const executeQuickCommand = async (
       context.openSkimRoot();
       return { status: "handled", message: t("command.skimRootOpened"), clearInput: true };
     }
+    if (command.action === "scope") {
+      const mode = command.args[0] === "default" ? "skim" : command.args[0] as SkimDisplayMode;
+      context.setSkimScope(mode);
+      const scope = mode === "skim"
+        ? t("stableUi.sidebar.scopeDefault")
+        : mode === "all" ? t("stableUi.sidebar.scopeAll") : t("stableUi.sidebar.scopeCustom");
+      return { status: "handled", message: t("command.skimScopeChanged", { scope }), clearInput: true };
+    }
+    if (command.action === "sort") {
+      if (command.args[0] === "asc" || command.args[0] === "desc") {
+        context.setSkimSortDirection(command.args[0]);
+        return { status: "handled", message: command.args[0] === "asc" ? t("command.skimSortAsc") : t("command.skimSortDesc"), clearInput: true };
+      }
+      if (command.args[0] === "name" || command.args[0] === "time") {
+        context.setSkimSortField(command.args[0] === "name" ? "file_name" : "modified_at");
+        return { status: "handled", message: command.args[0] === "name" ? t("command.skimSortByName") : t("command.skimSortByTime"), clearInput: true };
+      }
+    }
+    if (command.action === "hidden" && (command.args[0] === "on" || command.args[0] === "off")) {
+      const enabled = command.args[0] === "on";
+      context.setSkimHiddenFiles(enabled);
+      return { status: "handled", message: enabled ? t("command.skimHiddenShown") : t("command.skimHiddenHidden"), clearInput: true };
+    }
   }
 
   if (command.domain === "ui") {
@@ -197,6 +234,15 @@ export const executeQuickCommand = async (
       context.updateTheme(command.action === "auto" ? "system" : command.action);
       const themeLabel = command.action === "light" ? t("theme.lightMode") : command.action === "dark" ? t("theme.darkMode") : t("theme.system");
       return { status: "handled", message: t("command.themeChanged", { theme: themeLabel }), clearInput: true };
+    }
+    if (command.action === "acrylic" || command.action === "mica") {
+      await context.updateWindowMaterial(command.action);
+      return { status: "handled", message: command.action === "acrylic" ? t("command.materialAcrylic") : t("command.materialMica"), clearInput: true };
+    }
+    if (command.action === "font") {
+      const size = Number(command.args[0]) as UiFontSize;
+      await context.updateUiFontSize(size);
+      return { status: "handled", message: t("command.uiFontSizeChanged", { size }), clearInput: true };
     }
     if (command.action === "main" || command.action === "accent") {
       const nextColor = command.args[0] ?? "";
@@ -368,10 +414,18 @@ export const executeQuickCommand = async (
     return { status: "handled", message: enabled ? t("command.autoCacheEnabled") : t("command.autoCacheDisabled"), clearInput: true };
   }
 
-  if (command.domain === "ai" && command.action === "deep" && (command.args[0] === "on" || command.args[0] === "off")) {
-    const enabled = command.args[0] === "on";
+  if (command.domain === "ai" && (command.action === "on" || command.action === "off")) {
+    const enabled = command.action === "on";
     await context.updateAiRecognitionEnabled(enabled);
-    return { status: "handled", message: enabled ? t("command.aiDeepEnabled") : t("command.aiDeepDisabled"), clearInput: true };
+    return { status: "handled", message: enabled ? t("command.aiEnabled") : t("command.aiDisabled"), clearInput: true };
+  }
+
+  if (command.domain === "ai" && command.action === "search" && (command.args[0] === "on" || command.args[0] === "off")) {
+    const enabled = command.args[0] === "on";
+    const result = context.setCurrentAiSearch(enabled);
+    return result.ok
+      ? { status: "handled", message: enabled ? t("command.aiSearchEnabled") : t("command.aiSearchDisabled"), clearInput: true }
+      : { status: "failed", message: result.message, clearInput: false };
   }
 
   if (command.domain === "cache" && command.action === "skim") {

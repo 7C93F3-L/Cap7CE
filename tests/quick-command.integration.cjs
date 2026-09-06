@@ -78,6 +78,7 @@ assert.equal(parseQuickCommand("see:dir").type, "missing-argument");
 assert.equal(parseQuickCommand("see:scope").type, "unknown");
 assert.equal(parseQuickCommand("tag:dir all").type, "search");
 assert.equal(parseQuickCommand("tag:sort name").type, "search");
+assert.equal(parseQuickCommand("ai:deep on").type, "unknown");
 
 const calls = [];
 const operation = async () => ({ ok: true });
@@ -86,7 +87,8 @@ const passiveContext = new Proxy({
   defaultAppearanceColors: { themeColor: "#000000", accentColor: "#ffffff" },
   defaultShortcutActions: {},
   directoryExists: () => true,
-  getLlamaStopBlocker: () => null
+  getLlamaStopBlocker: () => null,
+  setCurrentAiSearch: () => ({ ok: true })
 }, { get: (target, property) => property in target ? target[property] : operation });
 const context = new Proxy({
   currentAppearanceColors: { themeColor: "#000000", accentColor: "#ffffff" },
@@ -97,12 +99,26 @@ const context = new Proxy({
     return true;
   },
   setSearchScope: (mode) => calls.push(["scope", mode]),
+  setSkimScope: (mode) => calls.push(["skim-scope", mode]),
+  setSkimHiddenFiles: (enabled) => calls.push(["skim-hidden", enabled]),
+  setSkimSortDirection: (direction) => calls.push(["skim-sort-direction", direction]),
+  setSkimSortField: (field) => calls.push(["skim-sort-field", field]),
+  setCurrentAiSearch: (enabled) => {
+    calls.push(["ai-search", enabled]);
+    return { ok: true };
+  },
+  updateWindowMaterial: async (material) => calls.push(["material", material]),
+  updateUiFontSize: async (size) => calls.push(["font", size]),
+  resetWindow: async () => {
+    calls.push(["window-reset"]);
+    return { ok: true };
+  },
   setSortField: (field) => calls.push(["sort-field", field]),
   addDirectory: async (directoryPath) => ({ ok: true, message: directoryPath }),
   updateEdgeCollapse: async (enabled) => calls.push(["edge", enabled]),
   updateSystemNotifications: async (enabled) => calls.push(["notify", enabled]),
   updateAutoCacheOptimization: async (enabled) => calls.push(["cache-auto", enabled]),
-  updateAiRecognitionEnabled: async (enabled) => calls.push(["ai-deep", enabled]),
+  updateAiRecognitionEnabled: async (enabled) => calls.push(["ai", enabled]),
   clearThumbnailCache: operation
 }, { get: (target, property) => property in target ? target[property] : operation });
 
@@ -127,11 +143,31 @@ const execute = async (raw) => {
   await execute("see:scope custom");
   await execute("see:sort name");
   await execute("see:sort time");
+  await execute("skim:scope default");
+  await execute("skim:scope all");
+  await execute("skim:scope custom");
+  await execute("skim:sort asc");
+  await execute("skim:sort desc");
+  await execute("skim:sort name");
+  await execute("skim:sort time");
+  await execute("skim:hidden on");
+  await execute("skim:hidden off");
+  await execute("ui:acrylic");
+  await execute("ui:mica");
+  await execute("ui:font 12");
+  await execute("ui:font 13");
+  await execute("ui:font 14");
+  await execute("ui:font 15");
+  await execute("ui:font 16");
+  await execute("win:reset");
+  await execute("ai:on");
+  await execute("ai:off");
+  await execute("ai:search on");
+  await execute("ai:search off");
   await execute("dir:add C:/Pictures");
   await execute("edge:on");
   await execute("app:notify off");
   await execute("cache:auto on");
-  await execute("ai:deep off");
   const thumbnailClear = await execute("cache:thumb");
   assert.equal(thumbnailClear.status, "confirmation");
   await thumbnailClear.confirmation.execute();
@@ -143,9 +179,17 @@ const execute = async (raw) => {
     ["scope", "custom"],
     ["sort-field", "file_name"],
     ["sort-field", "modified_at"],
-    ["edge", true], ["notify", false], ["cache-auto", true], ["ai-deep", false]
+    ["skim-scope", "skim"], ["skim-scope", "all"], ["skim-scope", "custom"],
+    ["skim-sort-direction", "asc"], ["skim-sort-direction", "desc"],
+    ["skim-sort-field", "file_name"], ["skim-sort-field", "modified_at"],
+    ["skim-hidden", true], ["skim-hidden", false],
+    ["material", "acrylic"], ["material", "mica"],
+    ["font", 12], ["font", 13], ["font", 14], ["font", 15], ["font", 16],
+    ["window-reset"],
+    ["ai", true], ["ai", false], ["ai-search", true], ["ai-search", false],
+    ["edge", true], ["notify", false], ["cache-auto", true]
   ]);
-  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 13 }));
+  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 33 }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

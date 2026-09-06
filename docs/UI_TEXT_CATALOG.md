@@ -412,6 +412,15 @@
 | `commands.group.cache`             | 缓存类                               | 缓存                               |      | 分类标题             |
 | `commands.group.ai`                | AI                                |                                  |      | 分类标题             |
 | `commands.set.open`                | 打开设置页                             | 打开设置                             |      | `set:`           |
+| `commands.skim.scopeDefault`       |                                     | 切换为默认查看范围                        |      | `skim:scope default` |
+| `commands.skim.scopeAll`           |                                     | 切换为全部查看范围                        |      | `skim:scope all` |
+| `commands.skim.scopeCustom`        |                                     | 切换为自定义查看范围                       |      | `skim:scope custom` |
+| `commands.skim.sortAsc`            |                                     | 切换为升序排序                          |      | `skim:sort asc`  |
+| `commands.skim.sortDesc`           |                                     | 切换为降序排序                          |      | `skim:sort desc` |
+| `commands.skim.sortName`           |                                     | 按名称排序                            |      | `skim:sort name` |
+| `commands.skim.sortTime`           |                                     | 按修改时间排序                          |      | `skim:sort time` |
+| `commands.skim.hiddenEnable`       |                                     | 显示 Windows 隐藏文件                 |      | `skim:hidden on` |
+| `commands.skim.hiddenDisable`      |                                     | 隐藏 Windows 隐藏文件                 |      | `skim:hidden off` |
 | `commands.view.allDirectories`     |                                     | 选择全部目录                           |      | `see:dir all`    |
 | `commands.view.directory`          | 查看指定目录                            | 选择指定目录                           |      | `see:dir`        |
 | `commands.view.scopeDefault`       |                                     | 切换为默认查看范围                        |      | `see:scope default` |
@@ -423,6 +432,7 @@
 | `commands.view.sortTime`           |                                     | 按修改时间排序                          |      | `see:sort time`  |
 | `commands.window.standby`          | 切换到待机线状态                          | 切换为 line 模式                      |      | `win:line`       |
 | `commands.window.max`              | 最大化 / 标准大窗口状态                     | 窗口最大化                            |      | `win:max`        |
+| `commands.window.reset`            |                                     | 复位主窗口                            |      | `win:reset`      |
 | `commands.window.pin`              | 固定窗口                              |                                  | Pin Window | `win:top on`     |
 | `commands.window.unpin`            | 取消固定窗口                            |                                  | Unpin Window | `win:top off`    |
 | `commands.directory.add`           | 添加目录                              |                                  |      | `dir:add`        |
@@ -431,6 +441,9 @@
 | `commands.appearance.light`        | 切换亮色模式                            | 切换明亮模式                            |      | `ui:light`；需统一   |
 | `commands.appearance.dark`         | 切换暗色模式                            | 切换黑暗模式                            |      | `ui:dark`；需统一    |
 | `commands.appearance.system`       | 跟随系统主题                            |                                  |      | `ui:auto`        |
+| `commands.appearance.acrylic`      |                                     | 切换为亚克力材质                         |      | `ui:acrylic`     |
+| `commands.appearance.mica`         |                                     | 切换为云母材质                          |      | `ui:mica`        |
+| `commands.appearance.fontSize`     |                                     | 将界面字体大小设为 {size}                 |      | `ui:font 12-16`  |
 | `commands.appearance.themeColor`   | 设置主题色                             | 设置颜色1                             |      | `ui:main`        |
 | `commands.appearance.accentColor`  | 设置副色                              | 设置颜色2                              |      | `ui:accent`      |
 | `commands.appearance.reset`        | 恢复默认外观配置                          |                                  |      | `ui:reset`       |
@@ -459,8 +472,10 @@
 | `commands.model.select`            | 切换视觉模型                            |                                  |      | `model:use`      |
 | `commands.cache.autoEnable`        | 开启自动缓存优化                          |                                  |      | `cache:auto on`  |
 | `commands.cache.autoDisable`       | 关闭自动缓存优化                          |                                  |      | `cache:auto off` |
-| `commands.ai.deepEnable`           | 开启 AI 深度匹配                         |                                  |      | `ai:deep on`     |
-| `commands.ai.deepDisable`          | 关闭 AI 深度匹配                         |                                  |      | `ai:deep off`    |
+| `commands.ai.enable`               |                                     | 启用 AI 增强能力                       |      | `ai:on`          |
+| `commands.ai.disable`              |                                     | 禁用 AI 增强能力                       |      | `ai:off`         |
+| `commands.ai.searchEnable`         |                                     | 开启当前搜索的 AI 增强                    |      | `ai:search on`   |
+| `commands.ai.searchDisable`        |                                     | 关闭当前搜索的 AI 增强                    |      | `ai:search off`  |
 | `commands.confirm.deleteDirectory` | 删除目录、索引和相关缓存，需二次确认                | 删除目录、索引和相关缓存                     |      | `dir:delete`     |
 | `commands.confirm.quit`            | 真正退出 Cap7CE，需二次确认                 | 关闭 Cap7CE 运行进程                   |      | `app:quit`       |
 | `commands.confirm.stopRuntime`     | 停止 llama.cpp / llama-server，需二次确认 | 停止 llama.cpp / llama-server      |      | `llama:stop`     |
@@ -488,10 +503,18 @@
 | `command.allDirectoriesSelected`      |                          | 已选择全部目录 |      | `see:dir all`   |
 | `command.windowChanged`               | 已切换 {mode}              |      |      | 窗口模式            |
 | `command.windowMaximized`             | 已最大化窗口                  |      |      | 窗口模式            |
+| `command.windowReset`                 |                          | 已复位主窗口 |      | 窗口模式            |
 | `command.windowPinEnabled`            | 已固定窗口                 |      | Window pinned | 固定窗口            |
 | `command.windowPinDisabled`           | 已取消固定窗口                 |      | Window unpinned | 固定窗口            |
 | `command.directorySelected`           | 已选择目录：{name}            |      |      | 目录切换            |
 | `command.scopeChanged`                |                          | 查看范围已切换为：{scope} |      | 查看范围            |
+| `command.skimScopeChanged`            |                          | Skim 查看范围已切换为：{scope} |      | Skim 查看范围       |
+| `command.skimSortAsc`                 |                          | Skim 已切换为升序排序 |      | Skim 排序          |
+| `command.skimSortDesc`                |                          | Skim 已切换为降序排序 |      | Skim 排序          |
+| `command.skimSortByName`              |                          | Skim 已切换为按名称排序 |      | Skim 排序          |
+| `command.skimSortByTime`              |                          | Skim 已切换为按修改时间排序 |      | Skim 排序          |
+| `command.skimHiddenShown`             |                          | Skim 已显示 Windows 隐藏文件 |      | Skim              |
+| `command.skimHiddenHidden`            |                          | Skim 已隐藏 Windows 隐藏文件 |      | Skim              |
 | `command.sortAsc`                     | 已切换递增排序                 | 已切换升序排序 |      | 排序              |
 | `command.sortDesc`                    | 已切换递减排序                 | 已切换降序排序 |      | 排序              |
 | `command.sortByName`                  | 已切换为按名称排序               |      |      | 排序              |
@@ -505,6 +528,9 @@
 | `command.directoryAddNeedsConfirmation` | 请确认是否替换已添加的子目录       |      |      | 目录冲突确认          |
 | `command.settingsOpened`              | 已打开设置页                  | 已打开设置 |      | Settings        |
 | `command.themeChanged`                | 已切换{theme}              |      |      | 主题切换            |
+| `command.materialAcrylic`             |                          | 已切换为亚克力材质 |      | 窗口材质            |
+| `command.materialMica`                |                          | 已切换为云母材质 |      | 窗口材质            |
+| `command.uiFontSizeChanged`           |                          | 界面字体大小已设为 {size} |      | 字体大小            |
 | `command.invalidColor`                | 颜色值无效                   |      |      | 外观              |
 | `command.themeColorSet`               | 已设置主题色                  | 已设置颜色1 |      | 外观              |
 | `command.accentColorSet`              | 已设置副色                   | 已设置颜色2 |      | 外观              |
@@ -528,8 +554,10 @@
 | `command.edgeCollapseDisabled`         | 已关闭窗口贴边自动收起              |      |      | 窗口行为            |
 | `command.autoCacheEnabled`             | 已开启自动缓存优化                |      |      | 缓存              |
 | `command.autoCacheDisabled`            | 已关闭自动缓存优化                |      |      | 缓存              |
-| `command.aiDeepEnabled`                | 已开启 AI 深度匹配               |      |      | AI               |
-| `command.aiDeepDisabled`               | 已关闭 AI 深度匹配               |      |      | AI               |
+| `command.aiEnabled`                    |                          | 已启用 AI 增强能力 |      | AI               |
+| `command.aiDisabled`                   |                          | 已禁用 AI 增强能力 |      | AI               |
+| `command.aiSearchEnabled`              |                          | 已开启当前搜索的 AI 增强 |      | AI               |
+| `command.aiSearchDisabled`             |                          | 已关闭当前搜索的 AI 增强 |      | AI               |
 | `command.runtimeListRefreshed`        | 已刷新 llama.cpp 版本列表      |      |      | llama.cpp       |
 | `command.runtimeStarted`              | 已启动 llama.cpp           |      |      | llama.cpp       |
 | `command.runtimeSelected`             | 已切换 llama.cpp 版本：{name} |      |      | llama.cpp       |

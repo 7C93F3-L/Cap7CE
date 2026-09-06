@@ -764,6 +764,16 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     setTheme(nextTheme);
     void window.cap7ce?.preferences.updateTheme(nextTheme);
   };
+  const updateWindowMaterial = async (nextMaterial: WindowMaterial) => {
+    setWindowMaterial(nextMaterial);
+    const preferences = await window.cap7ce?.preferences.updateWindowMaterial(nextMaterial);
+    if (preferences) setWindowMaterial(preferences.windowMaterial);
+  };
+  const updateUiFontSize = async (nextSize: UiFontSize) => {
+    setUiFontSize(nextSize);
+    const preferences = await window.cap7ce?.preferences.updateUiFontSize(nextSize);
+    if (preferences) setUiFontSize(preferences.uiFontSize);
+  };
 
   const updateLanguage = async (nextLanguagePreference: LanguagePreference) => {
     const preferences = await window.cap7ce?.preferences.updateLanguage(nextLanguagePreference);
@@ -786,17 +796,17 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     showQuickCommandNotice(t(noticeKey));
   };
 
-  const updateSkimSort = (nextSearch: SearchState) => {
+  const updateSkimSort = (nextSearch: SearchState, announceChange = true) => {
     const nextSkimSortPreference = {
       sortField: nextSearch.sortField,
       sortDirection: nextSearch.sortDirection
     };
     setSkimSortPreference(nextSkimSortPreference);
     void window.cap7ce?.preferences.updateSkimSort(nextSkimSortPreference);
-    if (
+    if (announceChange && (
       nextSkimSortPreference.sortField !== skimSortPreference.sortField
       || nextSkimSortPreference.sortDirection !== skimSortPreference.sortDirection
-    ) {
+    )) {
       showSortNotice(nextSkimSortPreference.sortField, nextSkimSortPreference.sortDirection);
     }
   };
@@ -1076,6 +1086,19 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
+  const resetCommandWindow = async () => {
+    try {
+      const applied = await window.cap7ce?.window.setShellState("normal", { forceBounds: true });
+      if (applied === false) return commandOperationFailed(t("error.normalWindowSwitchFailed"));
+      resetSettingsViewState(true);
+      setShellState("normal");
+      setIsMaximized(false);
+      return { ok: true as const };
+    } catch (error) {
+      return commandOperationFailed(error instanceof Error ? error.message : t("error.normalWindowSwitchFailed"));
+    }
+  };
+
   const setCommandAlwaysOnTop = async (enabled: boolean) => {
     try {
       const state = await setAlwaysOnTop(enabled);
@@ -1155,6 +1178,19 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
     aiSearchBeta.activate();
     void aiSearchBeta.start(lastResultSearchRef.current, searchResults);
+  };
+
+  const setCommandAiSearch = (enabled: boolean) => {
+    if (enabled && !aiRecognitionEnabled) return commandOperationFailed(t("search.aiRecognitionDisabled"));
+    if (!enabled) {
+      aiSearchBeta.deactivate();
+    } else if (aiSearchBeta.phase === "paused_user") {
+      aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults);
+    } else if (!aiSearchBeta.busy) {
+      if (!aiSearchBeta.enabled) aiSearchBeta.activate();
+      void aiSearchBeta.start(lastResultSearchRef.current, searchResults);
+    }
+    return { ok: true as const };
   };
 
   const addCommandDirectory = async (directoryPath: string) => {
@@ -1317,6 +1353,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         }
       },
       updateTheme,
+      updateWindowMaterial,
+      updateUiFontSize,
       updateLanguage,
       updateAppearanceColors,
       updateStandbyLineVisible,
@@ -1333,7 +1371,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       updateCommandEnabled,
       selectDirectory: selectCommandDirectory,
       setSearchScope: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode }, false),
+      setSkimScope: (mode) => updateSkimDisplay({ ...skimDisplay, mode }, false),
+      setSkimHiddenFiles: (showHiddenFiles) => updateSkimDisplay({ ...skimDisplay, showHiddenFiles }, false),
+      setSkimSortDirection: (sortDirection) => updateSkimSort({ ...search, ...skimSortPreference, sortDirection }, false),
+      setSkimSortField: (sortField) => updateSkimSort({ ...search, ...skimSortPreference, sortField }, false),
+      setCurrentAiSearch: setCommandAiSearch,
       setShellMode: setCommandShellMode,
+      resetWindow: resetCommandWindow,
       maximizeWindow: maximizeCommandWindow,
       setAlwaysOnTop: setCommandAlwaysOnTop,
       setSortDirection: (sortDirection) => updateResultsSearch({ ...getCommandBaseSearch(), sortDirection }, true),
