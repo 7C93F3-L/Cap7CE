@@ -1,24 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
-
-const minimumZoom = 1;
-const maximumZoom = 6;
-const zoomStep = 1.18;
-
-interface ImageTransformState {
-  zoom: number;
-  panX: number;
-  panY: number;
-}
-
-const initialTransform: ImageTransformState = { zoom: minimumZoom, panX: 0, panY: 0 };
-
+import { getRightDragTransform, initialPreviewImageTransform as initialTransform, maximumPreviewZoom as maximumZoom, minimumPreviewZoom as minimumZoom, previewZoomStep as zoomStep, type PreviewImageTransformState as ImageTransformState } from "./previewImageTransformMath";
 const clamp = (value: number, limit: number) => Math.min(limit, Math.max(-limit, value));
 
 export const usePreviewImageTransform = (sessionId: string, imageRef: React.RefObject<HTMLImageElement | null>, enabled: boolean) => {
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [transform, setTransform] = useState(initialTransform);
-  const [dragging, setDragging] = useState(false);
-  const dragStartRef = useRef<{ pointerId: number; x: number; y: number; panX: number; panY: number } | null>(null);
+  const [gesture, setGesture] = useState<"pan" | "zoom" | null>(null);
+  const dragStartRef = useRef<{ pointerId: number; mode: "pan" | "zoom"; x: number; y: number; transform: ImageTransformState; anchorX: number; anchorY: number } | null>(null);
 
   const getPanLimits = useCallback((zoom: number) => {
     const canvas = canvasRef.current;
@@ -41,7 +29,7 @@ export const usePreviewImageTransform = (sessionId: string, imageRef: React.RefO
   useEffect(() => {
     setTransform(initialTransform);
     dragStartRef.current = null;
-    setDragging(false);
+    setGesture(null);
   }, [sessionId]);
 
   useEffect(() => {
@@ -75,26 +63,37 @@ export const usePreviewImageTransform = (sessionId: string, imageRef: React.RefO
   }, [clampTransform, enabled]);
 
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!enabled || (event.button !== 0 && event.button !== 2)) return;
     const limits = getPanLimits(transform.zoom);
-    if (!enabled || event.button !== 0 || (limits.x <= 0 && limits.y <= 0)) return;
+    if (event.button === 0 && limits.x <= 0 && limits.y <= 0) return;
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
-    dragStartRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, panX: transform.panX, panY: transform.panY };
-    setDragging(true);
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const mode = event.button === 2 ? "zoom" : "pan";
+    dragStartRef.current = {
+      pointerId: event.pointerId, mode, x: event.clientX, y: event.clientY, transform,
+      anchorX: event.clientX - bounds.left - bounds.width / 2,
+      anchorY: event.clientY - bounds.top - bounds.height / 2
+    };
+    setGesture(mode);
   }, [enabled, getPanLimits, transform]);
 
   const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     const start = dragStartRef.current;
     if (!start || start.pointerId !== event.pointerId) return;
     event.preventDefault();
-    setTransform((current) => clampTransform({ ...current, panX: start.panX + event.clientX - start.x, panY: start.panY + event.clientY - start.y }));
+    if (start.mode === "pan") {
+      setTransform((current) => clampTransform({ ...current, panX: start.transform.panX + event.clientX - start.x, panY: start.transform.panY + event.clientY - start.y }));
+      return;
+    }
+    setTransform(clampTransform(getRightDragTransform(start.transform, start.y, event.clientY, start.anchorX, start.anchorY)));
   }, [clampTransform]);
 
   const finishPointer = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (dragStartRef.current?.pointerId !== event.pointerId) return;
     dragStartRef.current = null;
-    setDragging(false);
+    setGesture(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }, []);
 
@@ -104,7 +103,8 @@ export const usePreviewImageTransform = (sessionId: string, imageRef: React.RefO
     imageStyle: { transform: `translate3d(${transform.panX}px, ${transform.panY}px, 0) scale(${transform.zoom})` } as CSSProperties,
     zoomed: transform.zoom > minimumZoom,
     pannable: panLimits.x > 0 || panLimits.y > 0,
-    dragging,
+    dragging: gesture === "pan",
+    zoomDragging: gesture === "zoom",
     handleWheel,
     handlePointerDown,
     handlePointerMove,

@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const previewSource = read("src/renderer/PreviewWindowApp.tsx");
 const transformSource = read("src/renderer/preview/usePreviewImageTransform.ts");
+const transformMathSource = read("src/renderer/preview/previewImageTransformMath.ts");
 const targetSource = read("src/renderer/preview/previewNavigationTarget.ts");
 const shellStyles = read("src/renderer/preview/StablePreviewShell.css");
 const mainSource = read("electron/main.ts");
@@ -19,14 +20,21 @@ assert.doesNotMatch(previewSource, /ImageContextMenu|buildFileContextMenuGroups|
 assert.match(previewSource, /onContextMenu=\{\(event\) => \{\s*event\.preventDefault\(\);\s*\}\}/u);
 assert.match(targetSource, /data-preview-navigation-suppressed[\s\S]*?\.context-menu[\s\S]*?input[\s\S]*?textarea[\s\S]*?select/u);
 
-assert.match(transformSource, /minimumZoom = 1/u);
-assert.match(transformSource, /maximumZoom = 6/u);
+assert.match(transformMathSource, /minimumPreviewZoom = 1/u);
+assert.match(transformMathSource, /maximumPreviewZoom = 6/u);
+assert.match(transformMathSource, /rightDragPixelsPerDoubling = 200/u);
 assert.match(transformSource, /pointerX - \(pointerX - current\.panX\) \* ratio/u);
+assert.match(transformSource, /event\.button !== 0 && event\.button !== 2/u);
+assert.match(transformSource, /mode = event\.button === 2 \? "zoom" : "pan"/u);
+assert.match(transformMathSource, /start\.zoom \* 2 \*\* \(\(startY - currentY\) \/ rightDragPixelsPerDoubling\)/u);
+assert.match(transformMathSource, /anchorX - \(anchorX - start\.panX\) \* ratio/u);
 assert.match(transformSource, /Math\.max\(0, \(image\.naturalWidth \* fit \* zoom - bounds\.width\) \/ 2\)/u);
 assert.match(transformSource, /limits\.x <= 0 && limits\.y <= 0/u);
 assert.match(transformSource, /ResizeObserver\(reconcile\)/u);
 assert.match(transformSource, /\[sessionId\][\s\S]*?setTransform\(initialTransform\)/u);
 assert.match(shellStyles, /preview-image-transform-canvas\.is-pannable[\s\S]*?cursor: grab/u);
+assert.match(shellStyles, /preview-image-transform-canvas\.is-zoom-dragging[\s\S]*?cursor: ns-resize/u);
+assert.match(previewSource, /zoomDragging[\s\S]*?onLostPointerCapture=\{imageTransform\.finishPointer\}/u);
 
 assert.match(mainSource, /previewWindow\.isMaximized\(\)[\s\S]*?isPreviewNativeSnapActive\(\)[\s\S]*?latestPreviewContentSize\.sessionId/u);
 assert.match(mainSource, /stablePreviewWindowSizing\.resolveBounds\(\{ contentWidth, contentHeight, currentBounds: currentPreviewBounds/u);

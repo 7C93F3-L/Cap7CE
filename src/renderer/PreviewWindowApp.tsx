@@ -591,12 +591,13 @@ const PreviewWindowApp = () => {
         )}
         {isImageProvider ? <div
           ref={imageTransform.canvasRef}
-          className={`preview-visual-with-metadata preview-image-transform-canvas${imageTransform.pannable ? " is-pannable" : ""}${imageTransform.dragging ? " is-dragging" : ""}`}
+          className={`preview-visual-with-metadata preview-image-transform-canvas${imageTransform.pannable ? " is-pannable" : ""}${imageTransform.dragging ? " is-dragging" : ""}${imageTransform.zoomDragging ? " is-zoom-dragging" : ""}`}
           data-preview-image-canvas="true"
           onPointerDown={imageTransform.handlePointerDown}
           onPointerMove={imageTransform.handlePointerMove}
           onPointerUp={imageTransform.finishPointer}
           onPointerCancel={imageTransform.finishPointer}
+          onLostPointerCapture={imageTransform.finishPointer}
           onDoubleClick={imageTransform.reset}
         >
           <img

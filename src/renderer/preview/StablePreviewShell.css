@@ -66,6 +66,6 @@
   cursor: grabbing;
 }
 
-.preview-stable-shell .preview-image-transform-canvas.is-dragging > .preview-window-image {
-  transition: none;
-}
+.preview-stable-shell .preview-image-transform-canvas.is-zoom-dragging { cursor: ns-resize; }
+
+.preview-stable-shell .preview-image-transform-canvas:is(.is-dragging, .is-zoom-dragging) > .preview-window-image { transition: none; }
