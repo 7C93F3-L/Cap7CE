@@ -16,7 +16,6 @@
   height: 20px;
 }
 
-.cap-settings-select:focus,
 .cap-settings-select:focus-visible,
 .cap-settings-select.is-open {
   background: var(--chip-bg);

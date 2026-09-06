@@ -27,6 +27,7 @@ const stableQuickCommandStyles = fs.readFileSync(path.join(root, "src", "rendere
 const stableRuntimeDiagnosticStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "StableRuntimeDiagnostics.css"), "utf8");
 const customScrollbarStyles = fs.readFileSync(path.join(root, "src", "renderer", "CustomScrollbar.css"), "utf8");
 const sharedSelectSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SettingsSelect.tsx"), "utf8");
+const sharedSelectStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SettingsSelect.css"), "utf8");
 const colorPickerSource = fs.readFileSync(path.join(root, "src", "renderer", "ColorPickerPopover.tsx"), "utf8");
 const skimDisplaySource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SkimDisplaySettingsRows.tsx"), "utf8");
 const quickActionSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "QuickActionSettingsRows.tsx"), "utf8");
@@ -176,6 +177,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(sharedSelectSource, /menuClassName\?[\s\S]*?cap-settings-select-menu\$\{menuClassName/u);
   assert.match(stableSelectStyles, /cap-stable-settings-select-menu[\s\S]*?backdrop-filter[\s\S]*?linear-gradient/u);
   assert.match(stableSelectStyles, /\.context-menu\.cap-stable-settings-select-menu button \{[\s\S]*?font-size: var\(--cap-ui-font-control\);[\s\S]*?line-height: var\(--cap-ui-line-control\);/u);
+  assert.doesNotMatch(sharedSelectStyles, /\.cap-settings-select:focus,/u);
   assert.match(settingsAppSource, /settings\.selectRuntime[\s\S]*?cap-stable-settings-model-line[\s\S]*?settings\.visionModel[\s\S]*?cap-stable-settings-model-line/u);
   assert.match(stableSelectStyles, /cap-stable-settings-model-line[\s\S]*?width: 402px[\s\S]*?grid-template-columns: 270px 58px 58px[\s\S]*?gap: 8px[\s\S]*?width: 270px[\s\S]*?cap-stable-settings-model-actions[\s\S]*?display: contents[\s\S]*?:only-child[\s\S]*?grid-column: 3/u);
   assert.match(appearanceColorSource, /<ColorPickerPopover[\s\S]*?className="cap-stable-settings-color-picker"[\s\S]*?onPreview[\s\S]*?onCommit/u);
