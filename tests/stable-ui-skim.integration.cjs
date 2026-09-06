@@ -26,6 +26,8 @@ assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ 
 assert.match(appSource, /onActivateSkimRequested[\s\S]*?setStableSkimToggleRequestId/u);
 assert.doesNotMatch(appSource, /if \(stableUi\)/u);
 assert.match(appSource, /toggleRequestId: stableSkimToggleRequestId/u);
+assert.match(appSource, /event\.target instanceof Element[\s\S]*?closest\("\.cap-stable-skim-slot"\)[\s\S]*?if \(targetsSkim\) \{\s*navigateSkimParent\(false\);\s*return;/u);
+assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
 assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimOpen\)\} \/>/);
 assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.toggleRequestId\)/u);
 assert.match(layoutSource, /useState\(false\)/);

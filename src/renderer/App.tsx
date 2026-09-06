@@ -2167,13 +2167,19 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
       event.preventDefault();
       if (dialog === "editKeywords") return;
+      const targetsSkim = event.target instanceof Element
+        && event.target.closest(".cap-stable-skim-slot") !== null;
       if (event.button === 3) {
+        if (targetsSkim) {
+          navigateSkimParent(false);
+          return;
+        }
         if (view === "skim") {
           navigateSkimBack();
           return;
         }
         navigateBack();
-      } else if (view === "skim") {
+      } else if (targetsSkim || view === "skim") {
         navigateSkimForward();
       } else {
         const nextIndex = navigationIndexRef.current + 1;
@@ -2197,7 +2203,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, openSettingsWindow, openSkimAtLocation, view]);
+  }, [dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, navigateSkimParent, openSettingsWindow, openSkimAtLocation, view]);
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onFocusMainSearch?.(() => {
