@@ -1,7 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { PreviewWindowData } from "../shared/types";
 import { t } from "../../electron/localization";
+import CustomScrollbar from "./CustomScrollbar";
 import WaitingIndicator from "./WaitingIndicator";
+import { usePdfPreviewZoom } from "./preview/usePdfPreviewZoom";
 
 const initialMountedPageCount = 3;
 const mountedPageBatchSize = 3;
@@ -9,11 +11,13 @@ const mountedPageBatchSize = 3;
 const PdfPage = ({
   data,
   pageNumber,
+  zoom,
   scrollRootRef,
   onError
 }: {
   data: PreviewWindowData & { pdfPreview: NonNullable<PreviewWindowData["pdfPreview"]> };
   pageNumber: number;
+  zoom: number;
   scrollRootRef: RefObject<HTMLDivElement>;
   onError: () => void;
 }) => {
@@ -50,7 +54,7 @@ const PdfPage = ({
       className="preview-pdf-page"
       data-pdf-page={pageNumber}
       aria-label={t("preview.pdfPageLabel", { page: pageNumber })}
-      style={{ aspectRatio }}
+      style={{ aspectRatio, width: `${zoom * 100}%` }}
     >
       {source && <img
         src={source}
@@ -85,6 +89,7 @@ const PdfPreviewPanel = ({
   ));
   const bottomSentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
+  const pdfZoom = usePdfPreviewZoom(data.sessionId, scrollRef);
 
   useLayoutEffect(() => {
     setCurrentPage(1);
@@ -169,24 +174,38 @@ const PdfPreviewPanel = ({
             title={t("preview.pdfNextPage")}
             onClick={() => goToPage(currentPage + 1)}
           >›</button>
+          <span className="preview-pdf-zoom-controls">
+            <button type="button" disabled={pdfZoom.atMinimum} title={t("preview.pdfZoomOut")} onClick={pdfZoom.zoomOut}>−</button>
+            <button className="preview-pdf-zoom-value" type="button" title={t("preview.pdfFitWidth")} onClick={pdfZoom.resetZoom}>{pdfZoom.zoomPercent}%</button>
+            <button type="button" disabled={pdfZoom.atMaximum} title={t("preview.pdfZoomIn")} onClick={pdfZoom.zoomIn}>+</button>
+          </span>
         </nav>
       </header>
       <div
         ref={scrollRef}
-        className="preview-pdf-scroll cap-main-scroll-viewport"
+        className={`preview-pdf-scroll cap-main-scroll-viewport${pdfZoom.pannable ? " is-pannable" : ""}${pdfZoom.dragging ? " is-dragging" : ""}${pdfZoom.zoomDragging ? " is-zoom-dragging" : ""}`}
+        data-preview-pdf-scroll="true"
         onScroll={updateCurrentPage}
+        onWheel={pdfZoom.handleWheel}
+        onPointerDown={pdfZoom.handlePointerDown}
+        onPointerMove={pdfZoom.handlePointerMove}
+        onPointerUp={pdfZoom.finishPointer}
+        onPointerCancel={pdfZoom.finishPointer}
+        onLostPointerCapture={pdfZoom.finishPointer}
       >
         {Array.from({ length: mountedPageCount }, (_, index) => (
           <PdfPage
             key={`${data.sessionId}:${index + 1}`}
             data={data}
             pageNumber={index + 1}
+            zoom={pdfZoom.zoom}
             scrollRootRef={scrollRef}
             onError={onError}
           />
         ))}
         <div ref={bottomSentinelRef} className="preview-pdf-bottom-sentinel" aria-hidden="true" />
       </div>
+      <CustomScrollbar scrollContainerRef={scrollRef} orientation="horizontal" />
     </section>
   );
 };

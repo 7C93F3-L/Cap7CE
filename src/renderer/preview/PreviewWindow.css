@@ -268,12 +268,12 @@
 }
 
 .preview-pdf-panel {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
-
 .preview-pdf-panel > header {
   display: flex;
   flex: 0 0 auto;
@@ -329,7 +329,7 @@
 .preview-pdf-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   padding: 4px 18px 18px;
   scrollbar-width: none;
@@ -343,11 +343,10 @@
 
 .preview-pdf-page {
   position: relative;
-  width: min(100%, 860px);
+  width: 100%;
   margin: 0 auto 14px;
   overflow: hidden;
   background: #ffffff;
-  border-radius: 4px;
   box-shadow: 0 2px 14px rgb(0 0 0 / 14%);
 }
 

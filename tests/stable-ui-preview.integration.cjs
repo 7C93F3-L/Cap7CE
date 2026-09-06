@@ -107,6 +107,7 @@ assert.match(previewSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(previewSource, /<StablePreviewTitlebar[\s\S]*?windowMaterial=\{windowMaterial\}/u);
 assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(materialContrastStyles, /\.preview-window-stable-ui\[data-window-material="mica"\][\s\S]*?--preview-stable-card: #ffffff[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
+assert.match(materialContrastStyles, /data-window-material="mica"\][^\n]*:is\([^)]*\.preview-sidebar-section[^)]*\.preview-embedded-metadata-details[^)]*\)[\s\S]*?box-shadow: inset 0 0 0 1px var\(--preview-stable-material-border\)/u);
 assert.match(previewSource, /index\.updateManualKeywords\([\s\S]*?previewData\.filePath[\s\S]*?keywords\.join\(","\)[\s\S]*?manualKeywords: normalizedKeywords/u);
 assert.match(manualMetadataRuntimeSource, /isSingleSenderAllowed: \(event, filePath\)[\s\S]*?event\.sender === previewWindow\.webContents[\s\S]*?activePreviewData\.filePath/u);
 assert.match(manualMetadataRuntimeSource, /manualKeywords: keywords[\s\S]*?preview:manualKeywordsUpdated/u);

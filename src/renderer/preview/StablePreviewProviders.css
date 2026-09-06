@@ -56,6 +56,25 @@
   background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
 }
 
+.preview-window-stable-ui .preview-pdf-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid color-mix(in srgb, var(--text-main) 12%, transparent);
+}
+
+.preview-window-stable-ui .preview-pdf-panel nav .preview-pdf-zoom-value {
+  width: 54px;
+  font-size: var(--cap-ui-font-caption);
+}
+
+.preview-window-stable-ui .preview-pdf-scroll.is-pannable { cursor: grab; }
+.preview-window-stable-ui .preview-pdf-scroll.is-dragging { cursor: grabbing; }
+.preview-window-stable-ui .preview-pdf-scroll.is-zoom-dragging { cursor: ns-resize; }
+.preview-window-stable-ui .preview-pdf-panel > .cap-custom-scrollbar-horizontal { right: 24px; bottom: 8px; left: 24px; }
+
 .preview-window-stable-ui .preview-pdf-scroll {
   margin: 14px 18px 18px;
   padding: 18px;
@@ -65,7 +84,6 @@
 
 .preview-window-stable-ui .preview-pdf-page {
   margin-bottom: 18px;
-  border-radius: 8px;
   box-shadow: 0 5px 22px rgb(0 0 0 / 16%);
 }
 

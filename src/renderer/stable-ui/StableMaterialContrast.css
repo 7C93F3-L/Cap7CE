@@ -124,7 +124,7 @@
   --preview-sidebar-control: rgb(255 255 255 / 11%);
 }
 
-.preview-window-stable-ui[data-window-material="mica"] :is(.preview-window-content, .preview-sidebar-section, .preview-info-notice, .preview-info-panel dl) {
+.preview-window-stable-ui[data-window-material="mica"] :is(.preview-window-content, .preview-sidebar-section, .preview-embedded-metadata-details, .preview-info-notice, .preview-info-panel dl) {
   box-shadow: inset 0 0 0 1px var(--preview-stable-material-border);
 }
 

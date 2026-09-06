@@ -509,7 +509,7 @@ const PreviewWindowApp = () => {
         if (isImageProvider && (event.target as Element).closest?.("[data-preview-image-canvas='true']") && imageTransform.handleWheel(event)) {
           return;
         }
-        if (isPreviewNavigationSuppressedTarget(event.target) || (event.target as Element).closest?.("[data-preview-provider-interactive='true']")) {
+        if (isPreviewNavigationSuppressedTarget(event.target) || (event.target as Element).closest?.("[data-preview-provider-interactive='true'], [data-preview-pdf-scroll='true']")) {
           return;
         }
         const contentScroll = previewData.provider === "text"
