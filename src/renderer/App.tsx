@@ -7,6 +7,7 @@ import { useContentViewActivity } from "./controllers/useContentViewActivity";
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useSearchIndexRefresh } from "./controllers/useSearchIndexRefresh";
+import { useSkimNavigationHistory } from "./controllers/useSkimNavigationHistory";
 import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSettingsDataSynchronization } from "./controllers/useSettingsDataSynchronization";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
@@ -299,6 +300,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     clearFeedback: clearSkimFeedback,
     showFeedback: showSkimFeedback
   });
+  const {
+    open: openStableSkimLocation,
+    back: navigateStableSkimBack,
+    forward: navigateStableSkimForward
+  } = useSkimNavigationHistory(loadSkimLocation);
   const visibleSkimEntries = useMemo(() => {
     if (skimDisplay.mode === "all") return skimEntries;
     const customExtensions = new Set(skimDisplay.customExtensions);
@@ -2058,12 +2064,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     openSkimAtLocation(null);
   }, [openSkimAtLocation, shellState, view]);
 
-  const openSkimLocation = useCallback((nextPath: string | null) => {
-    void loadSkimLocation(nextPath).then((loaded) => {
-      if (loaded) skimForwardPathsRef.current = [];
-    });
-  }, [loadSkimLocation]);
-
   const navigateSkimParent = useCallback((closeAtRoot: boolean) => {
     if (skimCurrentPath === null) {
       if (closeAtRoot) closeSkim();
@@ -2171,7 +2171,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         && event.target.closest(".cap-stable-skim-slot") !== null;
       if (event.button === 3) {
         if (targetsSkim) {
-          navigateSkimParent(false);
+          navigateStableSkimBack();
           return;
         }
         if (view === "skim") {
@@ -2179,7 +2179,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           return;
         }
         navigateBack();
-      } else if (targetsSkim || view === "skim") {
+      } else if (targetsSkim) {
+        navigateStableSkimForward();
+      } else if (view === "skim") {
         navigateSkimForward();
       } else {
         const nextIndex = navigationIndexRef.current + 1;
@@ -2203,7 +2205,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       window.removeEventListener("mouseup", handleSideButtonNavigation, true);
       window.removeEventListener("auxclick", preventSideButtonDefault, true);
     };
-  }, [dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, navigateSkimParent, openSettingsWindow, openSkimAtLocation, view]);
+  }, [dialog, navigateBack, navigateForward, navigateSkimBack, navigateSkimForward, navigateStableSkimBack, navigateStableSkimForward, openSettingsWindow, openSkimAtLocation, view]);
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onFocusMainSearch?.(() => {
@@ -2381,8 +2383,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     visualSessionId: skimVisualSessionId,
     entries: sortedSkimEntries, currentPath: skimCurrentPath,
     isLoading: isSkimLoading, theme: effectiveTheme, appearanceColors, active,
-    isAddingDirectory, onOpenBreadcrumb: openSkimLocation,
-    onOpenEntry: (entry) => { if (entry.kind === "drive" || entry.kind === "folder") openSkimLocation(entry.path); },
+    isAddingDirectory, onOpenBreadcrumb: openStableSkimLocation,
+    onOpenEntry: (entry) => { if (entry.kind === "drive" || entry.kind === "folder") openStableSkimLocation(entry.path); },
     onAddEntries: (entries) => void addSkimEntries(entries), sidebarFolderPaths: skimSidebarFolders,
     sidebarKnownPaths: skimLocations.flatMap((location) => location.path ? [location.path] : []),
     onAddSidebarFolders: (folderPaths) => void addSkimSidebarFolders(folderPaths),
@@ -2467,8 +2469,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
           renderContent: (active) => <SkimView {...createSkimViewProps(active)} />,
-          onOpen: () => openSkimLocation(skimCurrentPath), onBack: () => navigateSkimParent(false),
-          onOpenRoot: () => openSkimLocation(null), onOpenPath: openSkimLocation,
+          onOpen: () => openStableSkimLocation(skimCurrentPath), onBack: navigateStableSkimBack,
+          onOpenRoot: () => openStableSkimLocation(null), onOpenPath: openStableSkimLocation,
           onDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
           onSortChange: (sortField, sortDirection) => updateSkimSort({ ...search, sortField, sortDirection })
         }}

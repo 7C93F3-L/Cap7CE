@@ -21,6 +21,7 @@
     "src/renderer/stable-ui/stableSkimTypes.ts": 22,
     "src/renderer/stable-ui/useStableShellLayout.ts": 25,
     "src/renderer/stable-ui/useStableShellResize.ts": 54,
+    "src/renderer/controllers/useSkimNavigationHistory.ts": 54,
     "src/renderer/stable-ui/StableMainShell.css": 88,
     "src/renderer/stable-ui/StableShellResize.css": 32,
     "src/renderer/stable-ui/StableSkimPanel.css": 29,
@@ -117,6 +118,7 @@
         "sourceAnchors": [
           { "path": "src/renderer/App.tsx", "contains": "const openSkimAtLocation" },
           { "path": "src/renderer/controllers/useSkimReadController.ts", "contains": "export const useSkimReadController" },
+          { "path": "src/renderer/controllers/useSkimNavigationHistory.ts", "contains": "export const useSkimNavigationHistory" },
           { "path": "src/renderer/skim/SkimView.tsx", "contains": "export const SkimView" },
           { "path": "src/renderer/stable-ui/StableSkimSlot.tsx", "contains": "const StableSkimSlot" },
           { "path": "src/renderer/stable-ui/stableSkimTypes.ts", "contains": "export interface StableSkimProps" }

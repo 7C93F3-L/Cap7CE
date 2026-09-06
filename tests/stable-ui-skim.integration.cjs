@@ -17,17 +17,21 @@ const responsiveMenuSource = read("src/renderer/skim/ResponsiveSkimContextMenuLa
 const rootSectionsSource = read("src/renderer/skim/SkimRootSections.tsx");
 const rootSectionsStyles = read("src/renderer/skim/SkimRootSections.css");
 const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
+const navigationHistorySource = read("src/renderer/controllers/useSkimNavigationHistory.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
 assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(active\)\} \/>/);
-assert.match(appSource, /onBack: \(\) => navigateSkimParent\(false\)/);
+assert.match(appSource, /onBack: navigateStableSkimBack/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
 assert.match(appSource, /onActivateSkimRequested[\s\S]*?setStableSkimToggleRequestId/u);
 assert.doesNotMatch(appSource, /if \(stableUi\)/u);
 assert.match(appSource, /toggleRequestId: stableSkimToggleRequestId/u);
-assert.match(appSource, /event\.target instanceof Element[\s\S]*?closest\("\.cap-stable-skim-slot"\)[\s\S]*?if \(targetsSkim\) \{\s*navigateSkimParent\(false\);\s*return;/u);
+assert.match(appSource, /event\.target instanceof Element[\s\S]*?closest\("\.cap-stable-skim-slot"\)[\s\S]*?if \(targetsSkim\) \{\s*navigateStableSkimBack\(\);\s*return;/u);
 assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
+for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
+  assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
+}
 assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimOpen\)\} \/>/);
 assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.toggleRequestId\)/u);
 assert.match(layoutSource, /useState\(false\)/);
