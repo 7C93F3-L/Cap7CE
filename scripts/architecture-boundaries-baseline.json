@@ -21,6 +21,7 @@
     "src/renderer/stable-ui/stableSkimTypes.ts": 22,
     "src/renderer/stable-ui/useStableShellLayout.ts": 25,
     "src/renderer/stable-ui/useStableShellResize.ts": 54,
+    "src/renderer/stable-ui/useStableShellSizeMemory.ts": 45,
     "src/renderer/controllers/useSkimNavigationHistory.ts": 54,
     "src/renderer/stable-ui/StableMainShell.css": 88,
     "src/renderer/stable-ui/StableShellResize.css": 32,

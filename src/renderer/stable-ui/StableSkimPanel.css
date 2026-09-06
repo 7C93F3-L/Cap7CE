@@ -15,7 +15,7 @@
 .cap-stable-skim-address input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--cap-stable-text); background: transparent; font: inherit; }
 .cap-stable-skim-status { padding: 0 10px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); line-height: var(--cap-ui-line-control); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-skim-content { min-width: 0; min-height: 0; overflow: hidden; }
-.cap-stable-skim-content > .cap-skim-view.is-embedded { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; padding: var(--cap-stable-grid-page-padding); overflow: hidden; }
+.cap-stable-skim-content > .cap-skim-view.is-embedded { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; padding: var(--cap-stable-grid-page-padding); overflow: hidden; } .cap-stable-skim-content .empty-result-row { color: var(--cap-stable-text-muted); }
 .cap-stable-skim-content .cap-skim-grid-frame { border-radius: var(--cap-stable-radius-sm); }
 .cap-stable-skim-content .cap-skim-entry { border-radius: var(--cap-stable-radius-sm); background: var(--cap-stable-grid-surface); }
 .cap-stable-skim-content .cap-skim-entry:hover, .cap-stable-skim-content .cap-skim-entry:focus-visible { background: var(--cap-stable-skim-hover-surface); } .cap-stable-skim-content .cap-skim-entry.selected { background: var(--cap-stable-selected-surface); }

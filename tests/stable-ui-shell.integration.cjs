@@ -10,7 +10,8 @@ const shellFiles = [
   "src/renderer/stable-ui/StableSkimSlot.tsx",
   "src/renderer/stable-ui/StableSkimToolbar.tsx",
   "src/renderer/stable-ui/useStableShellLayout.ts",
-  "src/renderer/stable-ui/useStableShellResize.ts"
+  "src/renderer/stable-ui/useStableShellResize.ts",
+  "src/renderer/stable-ui/useStableShellSizeMemory.ts"
 ];
 
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
@@ -19,6 +20,7 @@ const mainShellSource = read(shellFiles[0]);
 const sidebarSource = read(shellFiles[1]);
 const layoutSource = read(shellFiles[4]);
 const resizeSource = read(shellFiles[5]);
+const sizeMemorySource = read(shellFiles[6]);
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
@@ -43,15 +45,19 @@ assert.match(resizeSource, /event\.key === "ArrowLeft"[\s\S]*?event\.key === "Ar
 
 for (const marker of [
   "stableSidebarDefaultWidth = 176",
-  "useState(stableSidebarDefaultWidth)",
-  "useState(360)",
+  "useStableShellSizeMemory()",
+  "useState(initialWidthsRef.current.sidebarWidth)",
+  "useState(initialWidthsRef.current.skimWidth)",
   "clamp(event.clientX, 40, 320)",
   "Math.floor((viewportWidth - sidebarWidth) / 2)",
   "clamp(window.innerWidth - event.clientX, 280, skimMaximumWidth)",
   "resetSidebarWidth: () => setSidebarWidth(stableSidebarDefaultWidth)",
-  "resetSkimWidth: () => setSkimWidth(360)"
+  "resetSkimWidth: () => setSkimWidth(stableSkimDefaultWidth)"
 ]) {
-  assert.ok(`${layoutSource}\n${resizeSource}`.includes(marker), `Stable UI shell layout is missing ${marker}.`);
+  assert.ok(`${layoutSource}\n${resizeSource}\n${sizeMemorySource}`.includes(marker), `Stable UI shell layout is missing ${marker}.`);
+}
+for (const marker of ["cap7ce.main.shell-sizes.v1", "Number.isFinite", "clamp(stored.sidebarWidth, 40, 320)", "clamp(stored.skimWidth, 280, stableSkimStoredMaximumWidth)", "window.setTimeout", "JSON.stringify({ sidebarWidth, skimWidth })"]) {
+  assert.ok(sizeMemorySource.includes(marker), `Stable UI shell size memory is missing ${marker}.`);
 }
 
 for (const marker of [
