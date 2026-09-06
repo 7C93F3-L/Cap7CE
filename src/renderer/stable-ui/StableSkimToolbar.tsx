@@ -46,7 +46,6 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
       <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>
     </div>
     {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} onClose={() => setFlyout(null)}>
-      <span className="cap-stable-flyout-title">{t("sort.parent")}</span>
       {(["modified_at", "file_name"] as SortField[]).map((field) => <button type="button" className={sortField === field ? "is-selected" : ""} key={field} onClick={() => { onSortChange(field, sortDirection); setFlyout(null); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")}</button>)}
       {(["desc", "asc"] as SortDirection[]).map((direction) => <button type="button" className={sortDirection === direction ? "is-selected" : ""} key={direction} onClick={() => { onSortChange(sortField, direction); setFlyout(null); }}>{direction === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}</button>)}
     </StableSidebarFlyout>}

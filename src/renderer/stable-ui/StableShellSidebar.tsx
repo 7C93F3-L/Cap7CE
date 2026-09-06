@@ -82,7 +82,6 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       </button>
     </div>
     {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} onClose={closeFlyout}>
-      <span className="cap-stable-flyout-title">{t("sort.parent")}</span>
       {(["modified_at", "file_name"] as SortField[]).map((field) => <button type="button" className={search.sortField === field ? "is-selected" : ""} key={field} onClick={() => { selectSortField(field); closeFlyout(); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")}</button>)}
       {(["desc", "asc"] as SortDirection[]).map((direction) => <button type="button" className={search.sortDirection === direction ? "is-selected" : ""} key={direction} onClick={() => { selectSortDirection(direction); closeFlyout(); }}>{direction === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}</button>)}
     </StableSidebarFlyout>}

@@ -207,7 +207,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsControllerSource, /previewAppearanceColors[\s\S]*?setPreferences/u);
   assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[^}]*font-size:\s*(?:14|15|16)px/u);
-  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button:hover,[\s\S]*?button\.is-active \{[\s\S]*?background: var\(--cap-stable-navigation-state\);/u);
+  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button:hover \{[\s\S]*?background: var\(--cap-stable-navigation-state\);[\s\S]*?button\.is-active \{[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
   assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 24%\);/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /data-window-material=\{preferences\.windowMaterial\}/u);

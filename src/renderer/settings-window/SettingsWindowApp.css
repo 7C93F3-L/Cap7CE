@@ -118,9 +118,13 @@
   color: inherit;
 }
 
-.cap-stable-settings-navigation nav button:hover,
-.cap-stable-settings-navigation nav button.is-active {
+.cap-stable-settings-navigation nav button:hover {
   background: var(--cap-stable-navigation-state);
+}
+
+.cap-stable-settings-navigation nav button.is-active {
+  color: var(--dialog-action-hover-text, var(--theme-on-color));
+  background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
 }
 
 .cap-stable-settings-content-frame {
