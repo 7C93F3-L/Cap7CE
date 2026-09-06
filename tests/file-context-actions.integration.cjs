@@ -111,6 +111,7 @@ for (const marker of ["compactHeightBreakpoint = 360", "stableTitlebarBottom = 4
   assert.ok(responsiveMenuSource.includes(marker), `Responsive file context menu is missing ${marker}.`);
 }
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu\.is-compact[\s\S]*grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
+assert.match(responsiveMenuStyles, /\.responsive-file-context-menu:not\(\.is-compact\) \.responsive-file-context-menu-actions \+ \.responsive-file-context-menu-actions \{ margin-top: 5px; \}/);
 assert.match(responsiveMenuSource, /action\.shortcut[\s\S]*<kbd>/);
 assert.match(responsiveResultsMenuSource, /fileContextShortcutLabels\.primaryView[\s\S]*fileContextShortcutLabels\.delete/);
 assert.match(resultsSource, /getFileContextShortcutAction\s*\(event\)/);

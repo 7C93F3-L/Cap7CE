@@ -85,7 +85,8 @@ void (async () => {
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
   assert.match(foundationStyles, /--cap-stable-grid-surface:\s*var\(--cap-stable-surface-soft\)/u);
-  assert.match(materialContrastStyles, /data-window-material="acrylic"[\s\S]*?--cap-stable-grid-surface: rgb\(255 255 255 \/ 46%\)[\s\S]*?--cap-stable-skim-hover-surface: rgb\(255 255 255 \/ 62%\)[\s\S]*?--cap-stable-selected-surface: rgb\(255 255 255 \/ 78%\)/u);
+  assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\][\s\S]*?--cap-stable-grid-surface: rgb\(255 255 255 \/ 46%\)[\s\S]*?--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\)[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 68%\)[\s\S]*?\.cap-stable-titlebar:not\(\.theme-dark\)\[data-window-material="acrylic"\][\s\S]*?--cap-stable-search-surface: rgb\(255 255 255 \/ 68%\)[\s\S]*?--cap-stable-skim-hover-surface: rgb\(255 255 255 \/ 62%\)[\s\S]*?--cap-stable-selected-surface: rgb\(255 255 255 \/ 78%\)/u);
+  assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-skim-address-surface: rgb\(0 0 0 \/ 42%\)[\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 42%\)[\s\S]*?\.cap-stable-titlebar\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-search-surface: rgb\(0 0 0 \/ 42%\)/u);
   assert.match(foundationStyles, /--cap-stable-focus:\s*var\(--accent-color/u);
   assert.match(foundationStyles, /scrollbar-color:\s*var\(--scrollbar-thumb\) transparent/u);
   assert.match(foundationStyles, /::-webkit-scrollbar-thumb:hover,[\s\S]*?background:\s*var\(--scrollbar-thumb-hover\)/u);

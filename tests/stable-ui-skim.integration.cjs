@@ -10,6 +10,7 @@ const slotSource = read("src/renderer/stable-ui/StableSkimSlot.tsx");
 const toolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const contractSource = read("src/renderer/stable-ui/stableSkimTypes.ts");
 const panelStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
+const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
 const skimViewStyles = read("src/renderer/skim/SkimView.css");
 const skimViewSource = read("src/renderer/skim/SkimView.tsx");
 const responsiveMenuSource = read("src/renderer/skim/ResponsiveSkimContextMenuLayer.tsx");
@@ -75,6 +76,8 @@ assert.match(
 assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\.selected\s*\{\s*background: var\(--cap-stable-selected-surface\);\s*\}/u);
 assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\s*\{[^}]*background: var\(--cap-stable-grid-surface\);/u);
 assert.match(panelStyles, /--cap-stable-selected-surface: light-dark\(rgb\(255 255 255 \/ 68%\), rgb\(26 26 26 \/ 68%\)\);/u);
+assert.match(panelStyles, /background: var\(--cap-stable-skim-address-surface, var\(--cap-stable-surface-soft\)\);/u);
+assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > \.cap-stable-skim-address-hit-area\s*\{[^}]*min-width: 24px;[^}]*flex: 0 0 24px;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > button:focus-visible,[^\n]*\.cap-stable-skim-address input:focus-visible\s*\{[^}]*outline: none;[^}]*box-shadow: none;/u);
 assert.doesNotMatch(`${shellSource}\n${slotSource}\n${toolbarSource}\n${contractSource}`, /window\.cap7ce|setShellState|navigateTo\("skim"\)/);

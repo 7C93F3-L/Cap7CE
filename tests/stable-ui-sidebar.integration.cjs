@@ -74,6 +74,7 @@ assert.match(sidebarSource, /aria-label=\{t\("stableSettings\.rename"\)\}/u);
 assert.match(sidebarSource, />\{t\("stableSettings\.rename"\)\}<\/button>/u);
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; \}/u);
+assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-item:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-item\.is-selected \{ background: var\(--cap-stable-navigation-state\); \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-control:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?aria-pressed="true"[\s\S]*?aria-expanded="true"[^}]*background: var\(--cap-stable-navigation-state\);/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-footer button:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-sidebar-footer button\.is-active \{ background: var\(--cap-stable-navigation-state\); \}/u);

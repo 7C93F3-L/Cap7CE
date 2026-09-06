@@ -65,7 +65,7 @@
   .cap-stable-directory-more,
   .cap-stable-directory-message { display: none; }
   .cap-stable-sidebar-control,
-  .cap-stable-directory-item { grid-template-columns: 1fr; width: 32px; height: 32px; min-height: 32px; margin-inline: auto; padding: 4px; border-radius: 9px; }
+  .cap-stable-directory-item { grid-template-columns: minmax(0, 1fr); width: 32px; height: 32px; min-height: 32px; margin-inline: auto; padding: 4px; border-radius: 9px; }
   .cap-stable-directory-row { display: block; width: 32px; margin-inline: auto; }
   .cap-stable-directory-section { margin-top: 4px; padding: 4px 0 76px; }
   .cap-stable-directory-heading { justify-content: center; min-height: 32px; margin: 0 0 4px; }

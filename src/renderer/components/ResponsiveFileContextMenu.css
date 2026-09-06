@@ -27,6 +27,7 @@
 .responsive-file-context-menu-name { display: flex; min-width: 0; overflow: hidden; font-size: var(--cap-ui-font-control); white-space: nowrap; }
 .responsive-file-context-menu-detail { min-width: 0; overflow: hidden; color: color-mix(in srgb, currentColor 58%, transparent); font-size: var(--cap-ui-font-secondary); text-overflow: ellipsis; white-space: nowrap; }
 .responsive-file-context-menu-actions { display: grid; grid-template-rows: repeat(3, 30px); gap: 1px; padding: 5px 0 0; border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
+.responsive-file-context-menu:not(.is-compact) .responsive-file-context-menu-actions + .responsive-file-context-menu-actions { margin-top: 5px; }
 .responsive-file-context-menu-actions button { display: flex; min-width: 0; height: 30px; align-items: center; gap: 8px; padding: 0 9px; overflow: hidden; border: 0; border-radius: 999px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-ui-font-control); text-align: left; white-space: nowrap; }
 .responsive-file-context-menu-actions button > span { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
 .responsive-file-context-menu-actions button > kbd { flex: 0 0 auto; color: color-mix(in srgb, currentColor 58%, transparent); font-family: var(--cap-ui-font-family); font-size: var(--cap-ui-font-caption); line-height: 1; }

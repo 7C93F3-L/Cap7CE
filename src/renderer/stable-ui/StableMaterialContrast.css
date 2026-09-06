@@ -1,5 +1,30 @@
 .cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"] {
   --cap-stable-grid-surface: rgb(255 255 255 / 46%);
+  --cap-stable-skim-address-surface: rgb(255 255 255 / 68%);
+  --cap-stable-navigation-state: rgb(255 255 255 / 68%);
+}
+
+.cap-stable-titlebar:not(.theme-dark)[data-window-material="acrylic"] {
+  --cap-stable-search-surface: rgb(255 255 255 / 68%);
+}
+
+.cap-stable-ui.theme-dark[data-window-material="acrylic"] {
+  --cap-stable-skim-address-surface: rgb(0 0 0 / 42%);
+  --cap-stable-navigation-state: rgb(0 0 0 / 42%);
+}
+
+.cap-stable-titlebar.theme-dark[data-window-material="acrylic"] {
+  --cap-stable-search-surface: rgb(0 0 0 / 42%);
+}
+
+.cap-settings-window-foundation:not(.theme-dark)[data-window-material="acrylic"] {
+  --cap-stable-navigation-state: rgb(255 255 255 / 68%);
+  --cap-stable-search-surface: rgb(255 255 255 / 68%);
+}
+
+.cap-settings-window-foundation.theme-dark[data-window-material="acrylic"] {
+  --cap-stable-navigation-state: rgb(0 0 0 / 42%);
+  --cap-stable-search-surface: rgb(0 0 0 / 42%);
 }
 
 .cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"] .cap-stable-skim-slot {
