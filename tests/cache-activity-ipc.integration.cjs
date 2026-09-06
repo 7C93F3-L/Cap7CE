@@ -12,7 +12,10 @@ const run = async () => {
     isMainSenderAllowed: (event) => event.sender.id === 1,
     getCacheStats: () => ({ count: 12 }),
     getOptimizationStatus: () => ({ phase: "running" }),
-    setContentViewActive: (active) => calls.push(["content", active]),
+    setContentViewActive: (active) => {
+      calls.push(["content", active]);
+      return active;
+    },
     discardQueuedInteractiveThumbnails: () => {
       calls.push(["discard"]);
       return 4;
@@ -39,7 +42,7 @@ const run = async () => {
   assert.deepEqual(calls, []);
 
   assert.equal(await handles.get("cache:setContentViewActive")(trustedEvent, true), true);
-  assert.equal(await handles.get("cache:setContentViewActive")(trustedEvent, 1), true);
+  assert.equal(await handles.get("cache:setContentViewActive")(trustedEvent, 1), false);
   assert.equal(await handles.get("cache:discardQueuedInteractiveThumbnails")(trustedEvent), 4);
   assert.equal(await handles.get("cache:setGridInteractionActive")(trustedEvent, true), true);
   assert.equal(await handles.get("cache:setGridInteractionActive")(trustedEvent, "true"), true);

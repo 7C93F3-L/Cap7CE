@@ -257,6 +257,7 @@ const syncThumbnailOptimizationActivity = () => {
   searchScanSnapshotService.setActive(contentViewActive);
   setThumbnailOptimizationForegroundActive(foregroundWindowActive);
   setVisualPropertyForegroundActive(foregroundWindowActive);
+  return contentViewActive;
 };
 
 const cancelActiveSearchTasks = () => {
@@ -2859,7 +2860,7 @@ registerCacheActivityIpc({
     if (!rendererContentViewActive) {
       resumeThumbnailOptimization("grid-interaction");
     }
-    syncThumbnailOptimizationActivity();
+    return syncThumbnailOptimizationActivity();
   },
   discardQueuedInteractiveThumbnails: discardQueuedInteractiveThumbnailRenders,
   setGridInteractionActive: (active) => {

@@ -204,7 +204,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 D0 将 U1 的开发隔离根节点提升为正式第三种 presentation：主进程在开发服务与打包 `loadFile` 中都传入实际 `presentation`，`src/renderer/main.tsx` 仅在 `presentation=stable` 时动态装配新版主界面，`PreviewWindowApp.tsx` 使用同一判定装配稳定 Preview；cap7ce 与 compatibility 继续进入旧 Renderer。`stable-ui/StableUiFoundation.css` 独立持有新版间距、圆角、表面透明度、文字层级、标题栏安全区和滚动条变量，`StableUiAccessibility.css` 持有主内容与 Portal 标题栏的焦点及减少动态效果规则，不修改旧全局样式。`WindowPinButton.tsx` 持有兼容主窗口、兼容 Preview 和新版标题栏共用的图标、可访问状态及鼠标失焦行为；Settings 不装配该按钮。stable 使用正式 `window-layout-stable-ui.json` 并按用户偏好持久化置顶；不套用旧 micro / mini 界面状态，在 resize settle 前旁路旧形态推断和 micro 位置修正。缺失或非法偏好默认 stable，已有 cap7ce / compatibility 偏好、旧布局、旧 Renderer 和旧状态机均不迁移、不删除。
 
-D1 固定 stable 首次内容边界：目录与偏好加载完成后，`App.tsx` 只触发一次空查询、全部目录、全部格式的正式搜索，并保留用户排序偏好；不再依赖旧 shell 形态激活事件。`useStableShellLayout.ts` 默认关闭 Skim 且不在挂载时读取位置，只有用户点击左下角 Skim 按钮后才调用唯一的 `useSkimReadController`。stable 空结果使用非交互文案容器，不显示进入 Skim 的引导，也不提供主窗口中央点击热区；旧宿主的空状态行为保持不变。
+D1 固定 stable 首次内容边界：目录与偏好加载完成且 `useContentViewActivity.ts` 收到主进程的前台内容活动确认后，`App.tsx` 只触发一次空查询、全部目录、全部格式的正式搜索，并保留用户排序偏好；确认链保证实时扫描先恢复再发出搜索，失焦、隐藏及快速焦点切换仍取消或拒绝迟到确认，不恢复冷启动索引写入，也不绕过扫描与缓存的后台节流。`useStableShellLayout.ts` 默认关闭 Skim 且不在挂载时读取位置，只有用户点击左下角 Skim 按钮后才调用唯一的 `useSkimReadController`。stable 空结果使用非交互文案容器，不显示进入 Skim 的引导，也不提供主窗口中央点击热区；旧宿主的空状态行为保持不变。
 
 D2 补齐 stable Preview 的原生窗口边界：`StablePreviewTitlebar.tsx` 通过共用 `WindowTitlebarPortal` 将 40 DIP 拖动区与内容、滚动和动画树隔离，并复用 `WindowPinButton` 与现有 Preview 固定动作；固定按钮自身明确为非拖动区。Preview `BrowserWindow` 只在 stable presentation 下启用 Windows 原生最小化并加入任务栏，避免原生最小化因 `skipTaskbar` 退化成无法从任务栏恢复的隐藏状态；旧 cap7ce / compatibility 继续保持既有能力。`StablePreviewTitlebar.css` 清除旧透明 Preview 根节点的边框与窗口圆角，由 Windows 有框窗口独占外缘；`StablePreviewShell.css` 让 stable 内容区使用自身的 5px 内边距，不再为已经移除的旧控制栏预留右侧宽度。Provider、导航、尺寸计算和边栏数据链均未改变。
 

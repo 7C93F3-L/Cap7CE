@@ -3,6 +3,7 @@ import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "
 import { executeQuickCommand, type QuickCommandConfirmationRequest } from "./commandExecutor";
 import { parseQuickCommand } from "./commandParser";
 import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController";
+import { useContentViewActivity } from "./controllers/useContentViewActivity";
 import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useSearchIndexRefresh } from "./controllers/useSearchIndexRefresh";
@@ -481,24 +482,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   }, [shellState]);
 
-  useEffect(() => {
-    const contentViewActive = true;
-    const syncContentActivity = () => {
-      const active = contentViewActive && document.visibilityState === "visible" && document.hasFocus();
-      void window.cap7ce?.cache.setContentViewActive(active);
-      if (!active) cancelSearch();
-    };
-
-    syncContentActivity();
-    window.addEventListener("focus", syncContentActivity);
-    window.addEventListener("blur", syncContentActivity);
-    document.addEventListener("visibilitychange", syncContentActivity);
-    return () => {
-      window.removeEventListener("focus", syncContentActivity);
-      window.removeEventListener("blur", syncContentActivity);
-      document.removeEventListener("visibilitychange", syncContentActivity);
-    };
-  }, [cancelSearch]);
+  const contentViewActivityConfirmed = useContentViewActivity(cancelSearch);
 
   useEffect(() => {
     const resultGridMounted = true;
@@ -750,11 +734,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   useEffect(() => {
-    if (isLoadingDirectories || resultsInitializedRef.current) return;
+    if (isLoadingDirectories || !contentViewActivityConfirmed || resultsInitializedRef.current) return;
     const initialSearch = { ...emptySearch, sortField: search.sortField, sortDirection: search.sortDirection };
     setSearch(initialSearch);
     void runSearch(initialSearch, { navigate: false });
-  }, [isLoadingDirectories]);
+  }, [contentViewActivityConfirmed, isLoadingDirectories]);
 
   const updateResultsSearch = (nextSearch: SearchState, refresh = false) => {
     setSearch(nextSearch);

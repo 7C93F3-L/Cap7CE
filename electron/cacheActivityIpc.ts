@@ -6,7 +6,7 @@ export interface CacheActivityIpcDependencies {
   isMainSenderAllowed: (event: IpcMainInvokeEvent) => boolean;
   getCacheStats: () => unknown;
   getOptimizationStatus: () => unknown;
-  setContentViewActive: (active: boolean) => void;
+  setContentViewActive: (active: boolean) => boolean;
   discardQueuedInteractiveThumbnails: () => number;
   setGridInteractionActive: (active: boolean) => void;
 }
@@ -38,8 +38,7 @@ export const registerCacheActivityIpc = ({
         channel: "cache:setContentViewActive",
         listener: (event, active: unknown) => {
           if (!isMainSenderAllowed(event)) return false;
-          setContentViewActive(active === true);
-          return true;
+          return setContentViewActive(active === true);
         }
       },
       {
