@@ -507,7 +507,7 @@ Settings 当前覆盖：
 
 白名单领域包括 `see:`、`win:`、`tag:`、`dir:`、`cache:`、`ai:`、`skim:`、`set:`、`ui:`、`line:`、`edge:`、`key:`、`cmd:`、`lang:`、`llama:`、`model:`、`app:`。`skim:` 用于确定性进入 skim，`skim:root` 返回其根目录；独立 skim 缓存归入缓存领域，通过 `cache:skim` 确认后清理。
 
-已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 标签类、目录 / 运行时 / 模型类，以及二次确认类命令。目录路径添加复用 `directories:addCandidates`，名称 / 修改时间排序与方向排序复用正式搜索偏好入口；贴边收起、系统通知、自动缓存优化和 AI 深度匹配复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
+已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 目录与排序类、运行时 / 模型类，以及二次确认类命令。旧 Settings 子页跳转、`win:normal`、无参数标签展开和标签显隐指令已随对应界面能力退役，不再保留无效果的兼容入口。目录路径添加复用 `directories:addCandidates`，指定目录切换、名称 / 修改时间排序与方向排序复用正式搜索偏好入口；贴边收起、系统通知、自动缓存优化和 AI 深度匹配复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
 
 ## 14. 风险和开发约束
 

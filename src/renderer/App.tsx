@@ -884,11 +884,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  const updateSearchLabelVisibility = (nextVisibility: SearchLabelVisibilityPreferences) => {
-    setSearchLabelVisibility(nextVisibility);
-    void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
-  };
-
   const findDirectoryByCommandName = (directoryName: string) => (
     directories.find((directory) => directory.name === directoryName)
   );
@@ -930,35 +925,17 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       return false;
     }
 
-    setSearchLabelVisibility((currentVisibility) => {
-      const nextVisibility = { ...currentVisibility, directory: true };
-      void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
-      return nextVisibility;
-    });
     const nextSearch = { ...getCommandBaseSearch(), directoryId: directory.id };
     setSearch(nextSearch);
     void runSearch(nextSearch);
     return true;
   };
 
-  const setCommandShellMode = (mode: "line" | "normal") => {
-    if (mode === "line") return void enterStandby();
-
-    const preserveSkimView = view === "skim";
-    if (!preserveSkimView) {
-      resetSettingsViewState(true);
-    }
-    setShellState("normal");
-    if (!preserveSkimView && !resultsInitializedRef.current) {
-      const nextSearch = { ...getCommandBaseSearch(), query: "" };
-      setSearch(nextSearch);
-      void runSearch(nextSearch);
-    }
-  };
+  const setCommandShellMode = () => void enterStandby();
 
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateShellModeShortcut?.((mode) => {
-      if (mode === "standby") setCommandShellMode("line");
+      if (mode === "standby") setCommandShellMode();
       if (mode === "standby" || dialog) return;
       window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
     });
@@ -1381,31 +1358,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       setShellMode: setCommandShellMode,
       maximizeWindow: maximizeCommandWindow,
       setAlwaysOnTop: setCommandAlwaysOnTop,
-      showDirectoryLabel: () => {
-        setSearchLabelVisibility((currentVisibility) => {
-          const nextVisibility = { ...currentVisibility, directory: true };
-          void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
-          return nextVisibility;
-        });
-      },
       selectDirectoryLabel: selectCommandDirectoryLabel,
-      showSortLabel: () => {
-        setSearchLabelVisibility((currentVisibility) => {
-          const nextVisibility = { ...currentVisibility, sort: true };
-          void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
-          return nextVisibility;
-        });
-      },
       setSortDirection: (sortDirection) => updateResultsSearch({ ...getCommandBaseSearch(), sortDirection }, true),
       setSortField: (sortField) => updateResultsSearch({ ...getCommandBaseSearch(), sortField }, true),
-      setAllLabelsVisible: (visible) => updateSearchLabelVisibility({ directory: visible, sort: visible, format: visible, skimDisplay: visible, ai: visible }),
-      setLabelVisible: (label, visible) => {
-        setSearchLabelVisibility((currentVisibility) => {
-          const nextVisibility = { ...currentVisibility, [label]: visible };
-          void window.cap7ce?.preferences.updateSearchLabelVisibility(nextVisibility);
-          return nextVisibility;
-        });
-      },
       addDirectory: addCommandDirectory,
       refreshDirectoryStatus: refreshCommandDirectoryStatus,
       refreshLlamaRuntimes: refreshCommandLlamaRuntimes,

@@ -15,9 +15,7 @@ export const getQuickCommandGroups = (): Array<{
   {
     title: t("commands.group.settings"),
     items: [
-      { command: "set:", description: t("commands.set.open") },
-      { command: "set:quick", description: t("commands.set.quick") },
-      { command: "set:cmd", description: t("commands.set.commands") }
+      { command: "set:", description: t("commands.set.open") }
     ]
   },
   {
@@ -31,7 +29,6 @@ export const getQuickCommandGroups = (): Array<{
     title: t("commands.group.window"),
     items: [
       { command: "win:line", description: t("commands.window.line") },
-      { command: "win:normal", description: t("commands.window.normal") },
       { command: "win:max", description: t("commands.window.max") },
       { command: "win:top on", description: t("commands.window.pin") },
       { command: "win:top off", description: t("commands.window.unpin") }
@@ -40,21 +37,11 @@ export const getQuickCommandGroups = (): Array<{
   {
     title: t("commands.group.tags"),
     items: [
-      { command: "tag:dir", description: t("commands.tags.showDirectory") },
       { command: t("commands.example.selectDirectory"), description: t("commands.tags.selectDirectory") },
-      { command: "tag:sort", description: t("commands.tags.showSort") },
       { command: "tag:sort asc", description: t("commands.tags.sortAsc") },
       { command: "tag:sort desc", description: t("commands.tags.sortDesc") },
       { command: "tag:sort name", description: t("commands.tags.sortName") },
-      { command: "tag:sort time", description: t("commands.tags.sortTime") },
-      { command: "tag:show all", description: t("commands.tags.showAll") },
-      { command: "tag:hide all", description: t("commands.tags.hideAll") },
-      { command: "tag:hide dir", description: t("commands.tags.hideDirectory") },
-      { command: "tag:hide sort", description: t("commands.tags.hideSort") },
-      { command: "tag:show skim", description: t("commands.tags.showSkim") },
-      { command: "tag:hide skim", description: t("commands.tags.hideSkim") },
-      { command: "tag:show ai", description: t("commands.tags.showAi") },
-      { command: "tag:hide ai", description: t("commands.tags.hideAi") }
+      { command: "tag:sort time", description: t("commands.tags.sortTime") }
     ]
   },
   {

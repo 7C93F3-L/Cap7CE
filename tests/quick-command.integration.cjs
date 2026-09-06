@@ -70,6 +70,13 @@ assert.equal(coveredSpecs.size, quickCommandSpecs.length, "help must cover every
 assert.equal(parseQuickCommand("idx:clear all").type, "search");
 assert.equal(parseQuickCommand("cache:preview").type, "unknown");
 assert.equal(parseQuickCommand("cache:model").type, "unknown");
+assert.equal(parseQuickCommand("set:quick").type, "unknown");
+assert.equal(parseQuickCommand("set:cmd").type, "unknown");
+assert.equal(parseQuickCommand("win:normal").type, "unknown");
+assert.equal(parseQuickCommand("tag:dir").type, "missing-argument");
+assert.equal(parseQuickCommand("tag:sort").type, "unknown");
+assert.equal(parseQuickCommand("tag:show all").type, "unknown");
+assert.equal(parseQuickCommand("tag:hide ai").type, "unknown");
 
 const calls = [];
 const operation = async () => ({ ok: true });
@@ -85,8 +92,6 @@ const context = new Proxy({
   defaultAppearanceColors: { themeColor: "#000000", accentColor: "#ffffff" },
   defaultShortcutActions: {},
   setSortField: (field) => calls.push(["sort-field", field]),
-  setLabelVisible: (label, visible) => calls.push(["label", label, visible]),
-  showSortLabel: () => calls.push(["show-sort"]),
   addDirectory: async (directoryPath) => ({ ok: true, message: directoryPath }),
   updateEdgeCollapse: async (enabled) => calls.push(["edge", enabled]),
   updateSystemNotifications: async (enabled) => calls.push(["notify", enabled]),
@@ -111,8 +116,6 @@ const execute = async (raw) => {
   }
   await execute("tag:sort name");
   await execute("tag:sort time");
-  await execute("tag:show skim");
-  await execute("tag:hide ai");
   await execute("dir:add C:/Pictures");
   await execute("edge:on");
   await execute("app:notify off");
@@ -122,12 +125,11 @@ const execute = async (raw) => {
   assert.equal(thumbnailClear.status, "confirmation");
   await thumbnailClear.confirmation.execute();
   assert.deepEqual(calls, [
-    ["show-sort"], ["sort-field", "file_name"],
-    ["show-sort"], ["sort-field", "modified_at"],
-    ["label", "skimDisplay", true], ["label", "ai", false],
+    ["sort-field", "file_name"],
+    ["sort-field", "modified_at"],
     ["edge", true], ["notify", false], ["cache-auto", true], ["ai-deep", false]
   ]);
-  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 10 }));
+  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 8 }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

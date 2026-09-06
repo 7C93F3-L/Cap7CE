@@ -2,10 +2,8 @@ import type { AppearanceColors, LanguagePreference, ShortcutActionPreferences, T
 import type { ParsedQuickCommand } from "./commandParser";
 import { t } from "../../electron/localization";
 
-type CommandShellMode = "line" | "normal";
 type CommandSortDirection = "asc" | "desc";
 type CommandSortField = "file_name" | "modified_at";
-type CommandLabel = "directory" | "sort" | "skimDisplay" | "ai";
 type CommandOperationResult = { ok: true; message?: string } | { ok: false; message: string };
 
 export interface QuickCommandConfirmationRequest {
@@ -26,7 +24,7 @@ export interface QuickCommandExecutorContext {
   defaultAppearanceColors: AppearanceColors;
   defaultShortcutActions: ShortcutActionPreferences;
   currentAppearanceColors: AppearanceColors;
-  openSettings: (section?: "quick" | "cmd") => void;
+  openSettings: () => void;
   openSkim: () => void;
   openSkimRoot: () => void;
   updateTheme: (theme: ThemeMode) => void;
@@ -44,16 +42,12 @@ export interface QuickCommandExecutorContext {
   updateCommandEnabled: (enabled: boolean) => Promise<void>;
   showAllFiles: () => void;
   showDirectory: (directoryName: string) => boolean;
-  setShellMode: (mode: CommandShellMode) => void;
+  setShellMode: () => void;
   maximizeWindow: () => Promise<CommandOperationResult>;
   setAlwaysOnTop: (enabled: boolean) => Promise<CommandOperationResult>;
-  showDirectoryLabel: () => void;
   selectDirectoryLabel: (directoryName: string) => boolean;
-  showSortLabel: () => void;
   setSortDirection: (direction: CommandSortDirection) => void;
   setSortField: (field: CommandSortField) => void;
-  setAllLabelsVisible: (visible: boolean) => void;
-  setLabelVisible: (label: CommandLabel, visible: boolean) => void;
   addDirectory: (directoryPath: string) => Promise<CommandOperationResult>;
   refreshDirectoryStatus: () => Promise<CommandOperationResult>;
   refreshLlamaRuntimes: () => Promise<CommandOperationResult>;
@@ -99,9 +93,9 @@ export const executeQuickCommand = async (
   }
 
   if (command.domain === "win") {
-    if (command.action === "line" || command.action === "normal") {
-      context.setShellMode(command.action);
-      return { status: "handled", message: t("command.windowChanged", { mode: command.action }), clearInput: true };
+    if (command.action === "line") {
+      context.setShellMode();
+      return { status: "handled", message: t("command.windowChanged", { mode: "line" }), clearInput: true };
     }
     if (command.action === "max") {
       const result = await context.maximizeWindow();
@@ -120,57 +114,21 @@ export const executeQuickCommand = async (
 
   if (command.domain === "tag") {
     if (command.action === "dir") {
-      if (!command.args[0]) {
-        context.showDirectoryLabel();
-        return { status: "handled", message: t("command.directoryLabelShown"), clearInput: true };
-      }
-      const directoryName = command.args[0];
+      const directoryName = command.args[0] ?? "";
       if (!context.selectDirectoryLabel(directoryName)) {
         return { status: "failed", message: t("command.directoryNotFound"), clearInput: false };
       }
       return { status: "handled", message: t("command.directorySelected", { name: directoryName }), clearInput: true };
     }
     if (command.action === "sort") {
-      if (!command.args[0]) {
-        context.showSortLabel();
-        return { status: "handled", message: t("command.sortLabelShown"), clearInput: true };
-      }
       if (command.args[0] === "asc" || command.args[0] === "desc") {
-        context.showSortLabel();
         context.setSortDirection(command.args[0]);
         return { status: "handled", message: command.args[0] === "asc" ? t("command.sortAsc") : t("command.sortDesc"), clearInput: true };
       }
       if (command.args[0] === "name" || command.args[0] === "time") {
-        context.showSortLabel();
         context.setSortField(command.args[0] === "name" ? "file_name" : "modified_at");
         return { status: "handled", message: command.args[0] === "name" ? t("command.sortByName") : t("command.sortByTime"), clearInput: true };
       }
-    }
-    if (command.action === "show" && command.args[0] === "all") {
-      context.setAllLabelsVisible(true);
-      return { status: "handled", message: t("command.allLabelsShown"), clearInput: true };
-    }
-    if (command.action === "hide") {
-      if (command.args[0] === "all") {
-        context.setAllLabelsVisible(false);
-        return { status: "handled", message: t("command.allLabelsHidden"), clearInput: true };
-      }
-      if (command.args[0] === "dir") {
-        context.setLabelVisible("directory", false);
-        return { status: "handled", message: t("command.directoryLabelHidden"), clearInput: true };
-      }
-      if (command.args[0] === "sort") {
-        context.setLabelVisible("sort", false);
-        return { status: "handled", message: t("command.sortLabelHidden"), clearInput: true };
-      }
-      if (command.args[0] === "skim" || command.args[0] === "ai") {
-        context.setLabelVisible(command.args[0] === "skim" ? "skimDisplay" : "ai", false);
-        return { status: "handled", message: command.args[0] === "skim" ? t("command.skimLabelHidden") : t("command.aiLabelHidden"), clearInput: true };
-      }
-    }
-    if (command.action === "show" && (command.args[0] === "skim" || command.args[0] === "ai")) {
-      context.setLabelVisible(command.args[0] === "skim" ? "skimDisplay" : "ai", true);
-      return { status: "handled", message: command.args[0] === "skim" ? t("command.skimLabelShown") : t("command.aiLabelShown"), clearInput: true };
     }
   }
 
@@ -221,14 +179,6 @@ export const executeQuickCommand = async (
     if (command.action === "") {
       context.openSettings();
       return { status: "handled", message: t("command.settingsOpened"), clearInput: true };
-    }
-    if (command.action === "quick") {
-      context.openSettings("quick");
-      return { status: "handled", message: t("command.quickActionsOpened"), clearInput: true };
-    }
-    if (command.action === "cmd") {
-      context.openSettings("cmd");
-      return { status: "handled", message: t("command.quickCommandsOpened"), clearInput: true };
     }
   }
 

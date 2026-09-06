@@ -399,7 +399,7 @@
 | `commands.group.settings`          | 设置页类                              | 设置页                              |      | 分类标题             |
 | `commands.group.view`              | 查看类                               | 查看                               |      | 分类标题             |
 | `commands.group.window`            | 窗口模式类                             | 窗口模式                             |      | 分类标题             |
-| `commands.group.tags`              | 标签类                               | 标签                               |      | 分类标题             |
+| `commands.group.tags`              | 标签类                               | 目录与排序                            |      | 分类标题             |
 | `commands.group.directory`         | 目录类                               | 目录                               |      | 分类标题             |
 | `commands.group.appearance`        | 外观类                               | 外观                               |      | 分类标题             |
 | `commands.group.appBehavior`       | 软件行为                              |                                  |      | 分类标题             |
@@ -413,30 +413,17 @@
 | `commands.group.cache`             | 缓存类                               | 缓存                               |      | 分类标题             |
 | `commands.group.ai`                | AI                                |                                  |      | 分类标题             |
 | `commands.set.open`                | 打开设置页                             | 打开设置                             |      | `set:`           |
-| `commands.set.quick`               | 快捷动作配置                            |                                  |      | `set:quick`      |
-| `commands.set.commands`            | 查看快捷指令                            |                                  |      | `set:cmd`        |
 | `commands.view.all`                | 查看全部已添加文件                         |                                  |      | `see:all`        |
 | `commands.view.directory`          | 查看指定目录                            |                                  |      | `see:dir`        |
 | `commands.window.standby`          | 切换到待机线状态                          | 切换为 line 模式                      |      | `win:line`       |
-| `commands.window.normal`           | 切换到 normal 状态                     | 切换为 normal 模式                    |      | `win:normal`     |
 | `commands.window.max`              | 最大化 / 标准大窗口状态                     | 窗口最大化                            |      | `win:max`        |
 | `commands.window.pin`              | 固定窗口                              |                                  | Pin Window | `win:top on`     |
 | `commands.window.unpin`            | 取消固定窗口                            |                                  | Unpin Window | `win:top off`    |
-| `commands.tags.showDirectory`      | 显示目录标签                            |                                  |      | `tag:dir`        |
-| `commands.tags.selectDirectory`    | 选择指定目录标签                          |                                  |      | `tag:dir "目录名称"` |
-| `commands.tags.showSort`           | 显示排序标签                            |                                  |      | `tag:sort`       |
+| `commands.tags.selectDirectory`    | 选择指定目录标签                          | 选择指定目录                           |      | `tag:dir "目录名称"` |
 | `commands.tags.sortAsc`            | 切换为递增排序                           | 切换为升序排序                           |      | `tag:sort asc`   |
 | `commands.tags.sortDesc`           | 切换为递减排序                           | 切换为降序排序                           |      | `tag:sort desc`  |
 | `commands.tags.sortName`           | 按名称排序                             |                                  |      | `tag:sort name`  |
 | `commands.tags.sortTime`           | 按修改时间排序                           |                                  |      | `tag:sort time`  |
-| `commands.tags.showAll`            | 显示所有标签                            |                                  |      | `tag:show all`   |
-| `commands.tags.hideAll`            | 隐藏所有标签                            |                                  |      | `tag:hide all`   |
-| `commands.tags.hideDirectory`      | 隐藏目录标签                            |                                  |      | `tag:hide dir`   |
-| `commands.tags.hideSort`           | 隐藏排序标签                            |                                  |      | `tag:hide sort`  |
-| `commands.tags.showSkim`           | 显示查看范围标签                          |                                  |      | `tag:show skim`  |
-| `commands.tags.hideSkim`           | 隐藏查看范围标签                          |                                  |      | `tag:hide skim`  |
-| `commands.tags.showAi`             | 显示 AI 增强标签                         |                                  |      | `tag:show ai`    |
-| `commands.tags.hideAi`             | 隐藏 AI 增强标签                         |                                  |      | `tag:hide ai`    |
 | `commands.directory.add`           | 添加目录                              |                                  |      | `dir:add`        |
 | `commands.directory.rename`        | 重命名目录显示名                          |                                  |      | `dir:rename`     |
 | `commands.directory.refresh`       | 刷新目录统计 / 状态                       |                                  |      | `dir:refresh`    |
@@ -503,21 +490,11 @@
 | `command.windowMaximized`             | 已最大化窗口                  |      |      | 窗口模式            |
 | `command.windowPinEnabled`            | 已固定窗口                 |      | Window pinned | 固定窗口            |
 | `command.windowPinDisabled`           | 已取消固定窗口                 |      | Window unpinned | 固定窗口            |
-| `command.directoryLabelShown`         | 已显示目录标签                 |      |      | 标签操作            |
-| `command.directorySelected`           | 已选择目录：{name}            |      |      | 标签操作            |
-| `command.sortLabelShown`              | 已显示排序标签                 |      |      | 标签操作            |
+| `command.directorySelected`           | 已选择目录：{name}            |      |      | 目录切换            |
 | `command.sortAsc`                     | 已切换递增排序                 | 已切换升序排序 |      | 排序              |
 | `command.sortDesc`                    | 已切换递减排序                 | 已切换降序排序 |      | 排序              |
 | `command.sortByName`                  | 已切换为按名称排序               |      |      | 排序              |
 | `command.sortByTime`                  | 已切换为按修改时间排序             |      |      | 排序              |
-| `command.allLabelsShown`              | 已显示所有标签                 |      |      | 标签操作            |
-| `command.allLabelsHidden`             | 已隐藏所有标签                 |      |      | 标签操作            |
-| `command.directoryLabelHidden`        | 已隐藏目录标签                 |      |      | 标签操作            |
-| `command.sortLabelHidden`             | 已隐藏排序标签                 |      |      | 标签操作            |
-| `command.skimLabelShown`              | 已显示查看范围标签               |      |      | 标签操作            |
-| `command.skimLabelHidden`             | 已隐藏查看范围标签               |      |      | 标签操作            |
-| `command.aiLabelShown`                | 已显示 AI 增强标签              |      |      | 标签操作            |
-| `command.aiLabelHidden`               | 已隐藏 AI 增强标签              |      |      | 标签操作            |
 | `command.confirmDeleteDirectory`      | 确认删除目录“{name}”？输入 y / n |      |      | 二次确认            |
 | `command.directoryDeleted`            | 已删除目录：{name}            |      |      | 目录              |
 | `command.directoryDeleteFailed`       | 删除目录失败                  |      |      | 目录              |
@@ -526,8 +503,6 @@
 | `command.directoryAdded`              | 已添加目录                   |      |      | 目录              |
 | `command.directoryAddNeedsConfirmation` | 请确认是否替换已添加的子目录       |      |      | 目录冲突确认          |
 | `command.settingsOpened`              | 已打开设置页                  | 已打开设置 |      | Settings        |
-| `command.quickActionsOpened`          | 已打开快捷动作配置               |      |      | Settings        |
-| `command.quickCommandsOpened`         | 已打开快捷指令                 |      |      | Settings        |
 | `command.themeChanged`                | 已切换{theme}              |      |      | 主题切换            |
 | `command.invalidColor`                | 颜色值无效                   |      |      | 外观              |
 | `command.themeColorSet`               | 已设置主题色                  | 已设置颜色1 |      | 外观              |
