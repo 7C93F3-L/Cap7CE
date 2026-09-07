@@ -18,7 +18,12 @@ const forbiddenIdentifiers = [
   "LegacyResultsContextMenuLayer",
   "LegacySkimContextMenuLayer",
   "activateMicro",
-  "activateMini"
+  "activateMini",
+  "appUpdateCompletion",
+  "appUpdateLauncher",
+  "update-helper.ps1",
+  "helper-ready",
+  "helper-failed"
 ];
 
 const collectFiles = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

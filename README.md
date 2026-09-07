@@ -138,7 +138,7 @@ npm run dev
 npm run build
 npm test
 npm run pack
-npm run dist
+npm run dist:installer
 ```
 
 | 命令              | 用途                         |
@@ -147,7 +147,7 @@ npm run dist
 | `npm run build` | 构建 Renderer 和 Electron 主进程 |
 | `npm test`      | 运行仓库内可独立完成的集成测试            |
 | `npm run pack`  | 生成未安装的应用目录，用于打包检查          |
-| `npm run dist`  | 生成 Windows x64 portable 构建 |
+| `npm run dist:installer` | 生成 Windows x64 NSIS 安装器 |
 
 `npm run build` 通过不代表安装包已经验证。发布前仍需执行打包并进行人工交互测试。
 
@@ -312,7 +312,7 @@ npm run dev
 npm run build
 npm test
 npm run pack
-npm run dist
+npm run dist:installer
 ```
 
 | Command         | Purpose                                                             |
@@ -321,7 +321,7 @@ npm run dist
 | `npm run build` | Build the Renderer and Electron main process                        |
 | `npm test`      | Run the self-contained integration tests included in the repository |
 | `npm run pack`  | Generate an unpacked application directory for packaging checks     |
-| `npm run dist`  | Generate a Windows x64 portable build                               |
+| `npm run dist:installer` | Generate a Windows x64 NSIS installer                         |
 
 A successful `npm run build` does not validate the packaged application. Packaging and manual interaction tests are still required before release.
 

@@ -1,5 +1,10 @@
 const assert = require("node:assert/strict");
 const { createHash } = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const projectRoot = path.resolve(__dirname, "..");
+const readProjectFile = (relativePath) => fs.readFileSync(path.join(projectRoot, relativePath), "utf8");
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const release = (version, overrides = {}) => {
@@ -22,6 +27,41 @@ const release = (version, overrides = {}) => {
 
 (async () => {
   const { checkForAppUpdate, selectLatestAppUpdate } = require("../dist-electron/appUpdateService.js");
+
+  const retiredFiles = [
+    "electron/appUpdateCompletion.ts",
+    "electron/appUpdateDiagnostics.ts",
+    "electron/appUpdateLauncher.ts",
+    "build/update-helper.ps1",
+    "tests/app-update-completion.integration.cjs",
+    "tests/app-update-launcher.integration.cjs",
+    "tests/update-helper.integration.ps1"
+  ];
+  for (const relativePath of retiredFiles) {
+    assert.equal(fs.existsSync(path.join(projectRoot, relativePath)), false, `${relativePath} must remain retired`);
+  }
+
+  const packageJson = JSON.parse(readProjectFile("package.json"));
+  assert.equal(packageJson.scripts.dist, undefined, "the retired portable distribution command must stay removed");
+  assert.match(packageJson.scripts["dist:installer"], /electron-builder --win nsis --x64 --publish never/u);
+  assert.deepEqual(packageJson.build.win.target, [{ target: "nsis", arch: ["x64"] }]);
+  const packagedInputs = JSON.stringify({ files: packageJson.build.files, extraResources: packageJson.build.extraResources });
+  assert.doesNotMatch(packagedInputs, /update-helper|appUpdateCompletion|appUpdateLauncher/iu);
+
+  const currentUpdateSources = [
+    "electron/main.ts",
+    "electron/preload.ts",
+    "electron/appUpdateService.ts",
+    "electron/appUpdateDownloadService.ts",
+    "electron/appUpdateIpc.ts"
+  ].map(readProjectFile).join("\n");
+  assert.doesNotMatch(currentUpdateSources, /helper-ready|helper-failed|appUpdateCompletion|appUpdateLauncher|update-helper\.ps1/iu);
+
+  const readme = readProjectFile("README.md");
+  assert.doesNotMatch(readme, /npm run dist(?:\s|`|$)/u, "README must not advertise the retired portable command");
+  assert.match(readme, /npm run dist:installer/u);
+  const architecture = readProjectFile("docs/SOFTWARE_ARCHITECTURE.md");
+  assert.doesNotMatch(architecture, /筛选受限命名的 Windows x64 ZIP|可见 PowerShell 更新助手/u);
 
   const latest = selectLatestAppUpdate([
     release("0.9.8"),
@@ -64,7 +104,9 @@ const release = (version, overrides = {}) => {
     releaseIdentityAndDigestRequired: true,
     legacyZipRejected: true,
     untrustedUrlRejected: true,
-    rendererReceivesNoAssetUrl: true
+    rendererReceivesNoAssetUrl: true,
+    retiredUpdaterSourcesAbsent: true,
+    nsisDistributionDocsCurrent: true
   }));
 })().catch((error) => {
   console.error(error);

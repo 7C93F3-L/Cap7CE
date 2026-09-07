@@ -1,7 +1,7 @@
 {
   "maxLines": {
     "scripts/clean-electron-build.cjs": 19,
-    "scripts/stable-only-artifact-check.cjs": 53,
+    "scripts/stable-only-artifact-check.cjs": 58,
     "src/renderer/App.tsx": 2428,
     "src/renderer/directoryListActions.ts": 11,
     "src/renderer/main.tsx": 49,
@@ -74,7 +74,7 @@
     "src/renderer/settings/ShortcutSettingsPanels.css": 141,
     "src/renderer/settings/SkimDisplaySettingsRows.css": 92,
     "src/renderer/settings/SettingsFooter.css": 120,
-    "electron/main.ts": 2887,
+    "electron/main.ts": 2705,
     "electron/stableWindowRuntime.ts": 51,
     "electron/stableUiWindowLifecycle.ts": 81,
     "electron/stablePreviewWindowSizing.ts": 59,
