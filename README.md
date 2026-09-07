@@ -2,7 +2,7 @@
 
 [中文](#中文) · [English](#english)
 
-> **Preview software.** Cap7CE is under active development. Back up important files before using file-management features.
+> **Cap7CE 1.0.0.** The first stable Windows x64 release. Back up important files before using file-management features.
 
 ![Cap7CE normal mode in dark theme](docs/assets/screenshots/normal-dark.png)
 
@@ -33,13 +33,19 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 当前状态
 
-- 当前版本：`0.9.9`
-- 发布阶段：Preview
+- 当前版本：`1.0.0`
+- 发布阶段：正式版
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
 - 源码许可证：PolyForm Noncommercial 1.0.0（仅限非商业用途）
 
-Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安装包可能未经代码签名，并可能触发 Windows SmartScreen 提示。
+当前安装器未经代码签名，首次运行时可能出现 Windows“未知发布者”或 SmartScreen 提示。
+
+### 下载与安装
+
+请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest) 下载 `Cap7CE-Setup-1.0.0-x64.exe`。安装器支持选择安装目录、创建开始菜单和桌面快捷方式，以及覆盖安装。软件内更新只在用户主动检查和确认后下载、校验并启动正式安装器。
+
+用户配置、SQLite 索引和视觉缓存位于 `%APPDATA%\Cap7CE`；`models` 与 `llama.cpp` 位于所选程序副本旁。安装和覆盖升级不会主动修改这些内容，卸载时只有明确勾选对应清理选项才会删除。
 
 ### 主要功能
 
@@ -48,8 +54,8 @@ Preview 版本仍可能存在兼容性、性能和界面问题。首次公开安
 - 新执行的 AI 识别会跟随当前软件语言生成中文或英文描述与关键词。
 - 按关键词、文件名、目录、查看范围和排序方式筛选。
 - 使用 skim 浏览磁盘和目录中的多种项目文件，通过快速访问边栏或在搜索框粘贴本机文件、目录的完整路径直达对应位置，并预览视觉、文本、文档、归档、字体、音频和视频内容。
-- 提供 capsule、micro、mini、normal 和 Settings 窗口形态。
-- 提供 Cap7CE 透明自绘模式与使用 Windows 原生窗口按钮的兼容模式。
+- 使用单一响应式主窗口，并在同一工作区展开或收起 Skim。
+- 提供独立 Settings 与 Preview 窗口，支持 Windows 原生标题栏按钮、亚克力与云母材质。
 - 支持缩略图、独立预览窗口、多选和关键词编辑。
 - 支持打开文件、定位路径、拖拽导出和移入回收站。
 - 支持明亮、黑暗、跟随系统主题及中英文界面。
@@ -93,7 +99,7 @@ Cap7CE/
 
 每个 `llama.cpp` 版本使用独立子目录。`models` 可以包含子目录；Cap7CE 会递归扫描 `.gguf` 文件，并尝试将主模型与 `mmproj` 配对。
 
-官方多文件压缩包已预先创建空的 `llama.cpp` 与 `models` 目录；软件仍不内置运行时或模型文件。
+正式安装器不内置运行时或模型文件，也不主动创建 `llama.cpp` 与 `models`；需要 AI 功能时可在 Cap7CE 程序目录旁自行创建这两个目录。
 
 运行时和模型必须由用户从其官方或可信来源单独获取，并遵守各自的许可证与使用条款。Cap7CE 项目不为第三方运行时或模型提供再分发授权。
 
@@ -167,7 +173,7 @@ npm run dist:installer
 - 复杂文档格式主要提供代表图预览，不是完整文档编辑器或解析器。
 - 部分相机、Office 和媒体格式的预览能力取决于本机已安装的系统扩展、应用组件或解码器。
 - 当前未对所有 GPU、CPU-only 运行时和 Windows 版本完成兼容性验证。
-- Preview 版本的数据结构和行为仍可能变化。
+- 首个正式版仍可能存在尚未覆盖的硬件、系统组件或文件格式兼容问题。
 
 ### 文档
 
@@ -207,13 +213,19 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current version: `0.9.9`
-- Release stage: Preview
+- Current version: `1.0.0`
+- Release stage: Stable
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
 - Source-available license: PolyForm Noncommercial 1.0.0 (noncommercial use only)
 
-Preview releases may still contain compatibility, performance, and UI issues. Early public builds may be unsigned and can trigger a Windows SmartScreen warning.
+The installer is currently unsigned, so Windows may show an Unknown Publisher or SmartScreen warning when it is first run.
+
+### Download and installation
+
+Download `Cap7CE-Setup-1.0.0-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest). The installer supports choosing an installation directory, creating Start Menu and desktop shortcuts, and installing over an existing copy. In-app updates download, verify, and launch the official installer only after explicit user actions.
+
+Preferences, the SQLite index, and visual caches are stored under `%APPDATA%\Cap7CE`; `models` and `llama.cpp` stay beside the selected application copy. Installation and upgrades do not modify this content. Uninstallation removes it only when the corresponding cleanup option is explicitly selected.
 
 ### Features
 
@@ -222,8 +234,8 @@ Preview releases may still contain compatibility, performance, and UI issues. Ea
 - New AI recognition runs generate Chinese or English descriptions and keywords according to the current app language.
 - Filter by keywords, file name, directory, view scope, and sort order.
 - Use skim to browse project files across disks and folders, jump to common locations from the Quick Access sidebar or by pasting a full local file or folder path into search, and preview visual, text, document, archive, font, audio, and video content.
-- Use capsule, micro, mini, normal, and Settings window forms.
-- Choose between the transparent custom Cap7CE mode and a compatibility mode with native Windows controls.
+- Use a single responsive main window with an integrated, collapsible Skim workspace.
+- Open independent Settings and Preview windows with native Windows titlebar controls and Acrylic or Mica materials.
 - Browse thumbnails, open an independent preview window, select multiple files, and edit keywords.
 - Open files, reveal paths, drag files to other applications, and move files to the Recycle Bin.
 - Use light, dark, or system themes with Chinese and English interfaces.
@@ -267,7 +279,7 @@ Cap7CE/
 
 Keep each `llama.cpp` version in a separate subdirectory. The `models` directory may contain nested directories; Cap7CE scans `.gguf` files recursively and attempts to pair each main model with its `mmproj`.
 
-The official multi-file archive includes empty `llama.cpp` and `models` directories. Runtime and model files are still not bundled.
+The official installer does not bundle runtime or model files and does not create `llama.cpp` or `models` automatically. Create these directories beside the Cap7CE application when AI features are needed.
 
 Users must obtain runtimes and models separately from official or otherwise trusted sources and comply with their respective licenses and terms. The Cap7CE project does not grant redistribution rights for third-party runtimes or models.
 
@@ -341,7 +353,7 @@ A successful `npm run build` does not validate the packaged application. Packagi
 - Complex document formats are represented by preview images; Cap7CE is not a full document editor or parser.
 - Preview support for some camera, Office, and media formats depends on installed Windows extensions, application components, or codecs.
 - Not every GPU, CPU-only runtime, or Windows version has been tested.
-- Preview data structures and behavior may still change.
+- The first stable release may still encounter hardware, system-component, or file-format compatibility gaps that have not yet been covered.
 
 ### Documentation
 
