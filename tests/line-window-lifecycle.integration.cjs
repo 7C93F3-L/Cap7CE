@@ -24,7 +24,7 @@ assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInter
 assert.match(mainSource, /mainWindow\.on\("hide", \(\) => \{[\s\S]*?discardQueuedInteractiveThumbnailRenders\(\);\s*\}\);/u);
 assert.doesNotMatch(mainSource, /appTray\.on\("double-click"|openNormalFromTray/u);
 assert.match(mainSource, /const contentViewActive = Boolean\([\s\S]*?rendererContentViewActive[\s\S]*?setSkimShellThumbnailActivity\(contentViewActive\)/u);
-assert.match(mainSource, /const isVisibleAndFocused = \(window: BrowserWindow \| null\)[\s\S]*?window\.isVisible\(\) && window\.isFocused\(\)[\s\S]*?isVisibleAndFocused\(mainWindow\) \|\| isVisibleAndFocused\(previewWindow\)[\s\S]*?setThumbnailOptimizationForegroundActive\(foregroundWindowActive\)/u);
+assert.match(mainSource, /const isVisibleAndFocused = \(window: BrowserWindow \| null\)[\s\S]*?window\.isVisible\(\) && window\.isFocused\(\)[\s\S]*?isVisibleAndFocused\(mainWindow\)[\s\S]*?settingsWindowController\?\.isVisibleAndFocused\(\)[\s\S]*?isVisibleAndFocused\(previewWindow\)[\s\S]*?setThumbnailOptimizationForegroundActive\(foregroundWindowActive\)/u);
 assert.match(mainSource, /if \(preferences\.autoCacheOptimizationEnabled\) \{\s*scheduleDirectoryThumbnailOptimization\(await listDirectories\(\)\);\s*\}/u);
 
 assert.match(appSource, /const dismissTransientInteractionsForStandby = useCallback/u);

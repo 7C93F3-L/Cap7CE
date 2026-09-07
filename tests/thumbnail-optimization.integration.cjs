@@ -29,6 +29,7 @@ const candidateFor = async (filePath) => {
 
 app.whenReady().then(async () => {
   const service = require("../dist-electron/thumbnailOptimizationService.js");
+  const { ThumbnailOptimizationDiscovery } = require("../dist-electron/thumbnailOptimizationDiscovery.js");
   const thumbnailService = require("../dist-electron/thumbnailService.js");
   const { createFileSourceRevision } = require("../dist-electron/fileSourceRevision.js");
   const { cachedThumbnailFailureCode, ThumbnailFailureLogPolicy } = require("../dist-electron/thumbnailFailurePolicy.js");
@@ -77,7 +78,17 @@ app.whenReady().then(async () => {
     await service.setThumbnailOptimizationEnabled(true);
     service.setThumbnailOptimizationForegroundActive(false);
     const preexistingCandidate = await candidateFor(preexistingFile);
-    await service.enqueueThumbnailOptimizationCandidates([preexistingCandidate]);
+    let releaseDiscovery;
+    const discoveryGate = new Promise((resolve) => { releaseDiscovery = resolve; });
+    const discovery = new ThumbnailOptimizationDiscovery(async () => {
+      await discoveryGate;
+      return [preexistingCandidate];
+    });
+    discovery.schedule([testRoot]);
+    assert.equal(service.getThumbnailOptimizationStatus().phase, "discovering");
+    releaseDiscovery();
+    await discovery.waitForIdle();
+    assert.equal(service.getThumbnailOptimizationStatus().phase, "completed");
     await waitFor(() => lifecycleEvents.filter((event) => (
       event.kind === "available" && event.filePath === preexistingFile
     )).length > preexistingAvailabilityCount);
@@ -246,6 +257,7 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       backgroundQueueContinues: true,
+      discoveryStatusVisibleUntilCandidateFilteringCompletes: true,
       cachedRepresentativesAnnouncedOnce: true,
       foregroundFocusThrottlesQueue: true,
       foregroundBlurResumesQueue: true,

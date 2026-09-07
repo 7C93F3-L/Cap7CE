@@ -19,7 +19,7 @@ type QueuedThumbnailOptimizationCandidate = ThumbnailOptimizationCandidate & {
 
 export interface ThumbnailOptimizationStatus {
   enabled: boolean;
-  phase: "disabled" | "ready" | "running" | "completed";
+  phase: "disabled" | "ready" | "discovering" | "running" | "completed";
   queuedCount: number;
   processedCount: number;
   failedCount: number;
@@ -45,6 +45,7 @@ let workerPromise: Promise<void> | null = null;
 let statusListener: StatusListener | null = null;
 let foregroundActive = false;
 let enabledRevision = 0;
+let discoveryCount = 0;
 
 const foregroundYieldMs = 750;
 const backgroundYieldMs = 120;
@@ -79,6 +80,8 @@ export const getThumbnailOptimizationStatus = (): ThumbnailOptimizationStatus =>
   enabled,
   phase: !enabled
     ? "disabled"
+    : discoveryCount > 0
+      ? "discovering"
     : activePathKey !== null || queue.length > 0
       ? "running"
       : completed
@@ -170,6 +173,23 @@ export const setThumbnailOptimizationForegroundActive = (active: boolean) => {
   startWorker();
 };
 
+export const beginThumbnailOptimizationDiscovery = (): (() => void) => {
+  if (!enabled) return () => undefined;
+  const discoveryRevision = enabledRevision;
+  let finished = false;
+  discoveryCount += 1;
+  completed = false;
+  emitStatus();
+  return () => {
+    if (finished) return;
+    finished = true;
+    if (!enabled || discoveryRevision !== enabledRevision) return;
+    discoveryCount = Math.max(0, discoveryCount - 1);
+    emitStatus();
+    startWorker();
+  };
+};
+
 export const enqueueThumbnailOptimizationCandidates = async (candidates: ThumbnailOptimizationCandidate[]) => {
   if (!enabled || candidates.length === 0) {
     return;
@@ -240,6 +260,7 @@ export const setThumbnailOptimizationEnabled = async (nextEnabled: boolean) => {
   processedCount = 0;
   failedCount = 0;
   activeDurationMs = 0;
+  discoveryCount = 0;
   failedCacheKeys.clear();
 
   if (!enabled) {

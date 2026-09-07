@@ -542,7 +542,7 @@ export interface VisualCacheStats {
 
 export interface ThumbnailOptimizationStatus {
   enabled: boolean;
-  phase: "disabled" | "ready" | "running" | "completed";
+  phase: "disabled" | "ready" | "discovering" | "running" | "completed";
   queuedCount: number;
   processedCount: number;
   failedCount: number;

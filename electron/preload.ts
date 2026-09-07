@@ -290,8 +290,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
     setContentViewActive: (active: boolean) => ipcRenderer.invoke("cache:setContentViewActive", active),
     setGridInteractionActive: (active: boolean) => ipcRenderer.invoke("cache:setGridInteractionActive", active),
     discardQueuedInteractiveThumbnails: () => ipcRenderer.invoke("cache:discardQueuedInteractiveThumbnails"),
-    onOptimizationStatusChanged: (callback: (status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, status: { enabled: boolean; phase: "disabled" | "ready" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => callback(status);
+    onOptimizationStatusChanged: (callback: (status: { enabled: boolean; phase: "disabled" | "ready" | "discovering" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, status: { enabled: boolean; phase: "disabled" | "ready" | "discovering" | "running" | "completed"; queuedCount: number; processedCount: number; failedCount: number; activeDurationMs: number }) => callback(status);
       ipcRenderer.on("cache:optimizationStatusChanged", listener);
       return () => ipcRenderer.removeListener("cache:optimizationStatusChanged", listener);
     },

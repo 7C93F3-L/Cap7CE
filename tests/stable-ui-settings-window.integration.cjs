@@ -13,6 +13,7 @@ const settingsConfirmationSource = fs.readFileSync(path.join(root, "src", "rende
 const settingsCategoryIconSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsCategoryIcon.tsx"), "utf8");
 const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
+const formattingSource = fs.readFileSync(path.join(root, "src", "renderer", "formatting.ts"), "utf8");
 const embeddedMetadataSettingsSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
 const embeddedMetadataRuntimeSource = fs.readFileSync(path.join(root, "electron", "embeddedMetadataRuntime.ts"), "utf8");
 const fontSizeSettingSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "FontSizeSetting.tsx"), "utf8");
@@ -58,6 +59,7 @@ class FakeWindow {
     this.destroyed = false;
     this.minimized = false;
     this.visible = false;
+    this.focused = false;
     this.maximized = false;
     this.listeners = new Map();
     this.onceListeners = new Map();
@@ -72,11 +74,12 @@ class FakeWindow {
   isDestroyed() { return this.destroyed; }
   isMinimized() { return this.minimized; }
   isVisible() { return this.visible; }
+  isFocused() { return this.focused; }
   isMaximized() { return this.maximized; }
   restore() { this.minimized = false; this.calls.push("restore"); }
   show() { this.visible = true; this.calls.push("show"); }
-  focus() { this.calls.push("focus"); }
-  hide() { this.visible = false; this.calls.push("hide"); }
+  focus() { this.focused = true; this.calls.push("focus"); }
+  hide() { this.visible = false; this.focused = false; this.calls.push("hide"); }
   destroy() { this.destroyed = true; this.emit("closed"); }
   getBounds() { return { ...this.bounds }; }
   setBounds(bounds) { this.bounds = { ...bounds }; this.calls.push("setBounds"); }
@@ -139,6 +142,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.equal(await controller.open(), true);
   assert.equal(created.length, 1);
   created[0].emit("ready-to-show");
+  assert.equal(controller.isVisibleAndFocused(), true);
   created[0].minimized = true;
   assert.equal(await controller.open(), true);
   assert.equal(created.length, 1);
@@ -150,6 +154,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   created[0].emit("close", closeEvent);
   assert.equal(closeEvent.prevented, true);
   assert.equal(created[0].visible, false);
+  assert.equal(controller.isVisibleAndFocused(), false);
   assert.match(created[0].loaded, /window=settings/u);
   await controller.flush();
 
@@ -166,6 +171,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(rendererEntrySource, /windowKind === "settings"[\s\S]*?import\("\.\/settings-window\/SettingsWindowApp"\)/u);
   assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"search-ai"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
+  assert.match(settingsAppSource, /formatThumbnailOptimizationStatus\(controller\.thumbnailOptimizationStatus\)/u);
+  assert.match(formattingSource, /status\.phase === "discovering"[\s\S]*?stableSettings\.optimizationChecking[\s\S]*?stableSettings\.optimizationNoWork[\s\S]*?stableSettings\.optimizationCompleted/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?appearance\.themeModeLabel[\s\S]*?appearance\.configureLabel[\s\S]*?stableSettings\.uiFontSize/u);
   assert.doesNotMatch(settingsAppSource, /<select|type="color"/u);
@@ -281,6 +288,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(embeddedMetadataSettingsSource, /isRequestPending[\s\S]*?settings\.embeddedMetadataChecking[\s\S]*?settings\.embeddedMetadataRequestFailed/u);
   assert.match(embeddedMetadataSettingsSource, /await api\.startBackfill\(\)[\s\S]*?catch \{[\s\S]*?setRequestError\(true\)/u);
   assert.match(mainSource, /configureEmbeddedMetadataRuntime\([\s\S]*?settingsWindowController\?\.getWebContents\(\)/u);
+  assert.match(mainSource, /setThumbnailOptimizationStatusListener\([\s\S]*?settingsWindowController\?\.send\("cache:optimizationStatusChanged", status\)/u);
+  assert.match(mainSource, /isVisibleAndFocused\(mainWindow\)[\s\S]*?settingsWindowController\?\.isVisibleAndFocused\(\)[\s\S]*?isVisibleAndFocused\(previewWindow\)/u);
   assert.match(embeddedMetadataRuntimeSource, /getActiveWebContents[\s\S]*?includes\(event\.sender\)[\s\S]*?for \(const webContents of getActiveWebContents\(\)\)/u);
   assert.match(mainSource, /isSettingsSenderAllowed[\s\S]*?app:checkForUpdates[\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?app:downloadUpdate[\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?app:cancelUpdateDownload[\s\S]*?isSettingsSenderAllowed\(event\)/u);
   assert.match(mainSource, /sendDownloadProgress[\s\S]*?settingsWindowController\?\.send\("app:updateDownloadProgress"/u);

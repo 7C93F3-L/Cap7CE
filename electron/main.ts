@@ -48,6 +48,7 @@ import { registerCacheActivityIpc } from "./cacheActivityIpc";
 import { registerCacheClearIpc } from "./cacheClearIpc";
 import { clearAllVisualCaches, clearThumbnailCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
+import { ThumbnailOptimizationDiscovery } from "./thumbnailOptimizationDiscovery";
 import { readVisualCacheImage } from "./visualCacheService";
 import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNameService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
@@ -220,23 +221,10 @@ const enqueueScannedThumbnails = (images: ScannedImageFile[]) => {
   });
 };
 
-let thumbnailOptimizationDiscoveryQueue: Promise<void> = Promise.resolve();
-
-const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[]) => {
-  if (directories.length === 0 || !getThumbnailOptimizationStatus().enabled) return;
-  const task = thumbnailOptimizationDiscoveryQueue.then(async () => {
-    if (!getThumbnailOptimizationStatus().enabled) return;
-    const scanResult = await scanImageDirectories(directories, {
-      isCancelled: () => !getThumbnailOptimizationStatus().enabled
-    });
-    await enqueueThumbnailOptimizationCandidates(toThumbnailOptimizationCandidates(scanResult.images));
-  });
-  thumbnailOptimizationDiscoveryQueue = task.catch((error) => {
-    if ((error as NodeJS.ErrnoException)?.code !== "ECANCELED") {
-      console.warn("[thumbnail-optimization] added directory scan failed", error);
-    }
-  });
-};
+const thumbnailOptimizationDiscovery = new ThumbnailOptimizationDiscovery<PersistedDirectory>(async (directories, isCancelled) => (
+  toThumbnailOptimizationCandidates((await scanImageDirectories(directories, { isCancelled })).images)
+));
+const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[]) => thumbnailOptimizationDiscovery.schedule(directories);
 
 const isVisibleAndFocused = (window: BrowserWindow | null) => Boolean(
   window && !window.isDestroyed() && window.isVisible() && window.isFocused()
@@ -251,7 +239,9 @@ const syncThumbnailOptimizationActivity = () => {
     && mainWindow.isFocused()
     && activeShellState === "normal"
   );
-  const foregroundWindowActive = isVisibleAndFocused(mainWindow) || isVisibleAndFocused(previewWindow);
+  const foregroundWindowActive = isVisibleAndFocused(mainWindow)
+    || settingsWindowController?.isVisibleAndFocused() === true
+    || isVisibleAndFocused(previewWindow);
   setSkimShellThumbnailActivity(contentViewActive);
   setSearchShellVisualActivity(contentViewActive);
   searchScanSnapshotService.setActive(contentViewActive);
@@ -1660,8 +1650,11 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
       mainWindow.webContents.send("cache:optimizationStatusChanged", status);
     }
+    settingsWindowController?.send("cache:optimizationStatusChanged", status);
     handleThumbnailOptimizationStatusForNotification(status);
   });
+  app.on("browser-window-focus", syncThumbnailOptimizationActivity);
+  app.on("browser-window-blur", syncThumbnailOptimizationActivity);
   configureEmbeddedMetadataRuntime(ipcMain, () => mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null, () => settingsWindowController?.getWebContents() ?? null);
   if (preferences.autoCacheOptimizationEnabled) {
     scheduleDirectoryThumbnailOptimization(await listDirectories());
@@ -2370,7 +2363,7 @@ registerDirectoryManagementIpc({
   pauseThumbnailOptimization,
   pauseThumbnailRendering,
   waitForThumbnailDiscovery: async () => {
-    await thumbnailOptimizationDiscoveryQueue;
+    await thumbnailOptimizationDiscovery.waitForIdle();
   },
   invalidateSearchSnapshot: (directoryIds) => searchScanSnapshotService.invalidate(directoryIds),
   deleteDirectoryIndex: deleteDirectoryImages,

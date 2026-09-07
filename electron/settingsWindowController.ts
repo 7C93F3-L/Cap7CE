@@ -57,9 +57,9 @@ export class SettingsWindowController {
   }
 
   getWebContents() {
-    if (!this.settingsWindow || this.settingsWindow.isDestroyed()) return null;
-    return this.settingsWindow.webContents;
+    return !this.settingsWindow || this.settingsWindow.isDestroyed() ? null : this.settingsWindow.webContents;
   }
+  isVisibleAndFocused() { return Boolean(this.settingsWindow && !this.settingsWindow.isDestroyed() && this.settingsWindow.isVisible() && this.settingsWindow.isFocused()); }
 
   private async create() {
     if (!this.initialized) {
