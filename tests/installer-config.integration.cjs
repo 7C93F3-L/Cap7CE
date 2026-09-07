@@ -36,6 +36,10 @@ assert.match(packageJson.scripts["dist:installer"], /electron-builder --win nsis
 assert.match(customNsis, /!macro customRemoveFiles/);
 assert.match(customNsis, /!macro customUnInstallSection/);
 assert.match(customNsis, /!macro customUnInit/);
+assert.match(customNsis, /!macro customPageAfterChangeDir/);
+assert.match(customNsis, /!undef MUI_PAGE_CUSTOMFUNCTION_PRE/);
+assert.match(customNsis, /!define MUI_PAGE_CUSTOMFUNCTION_PRE cap7ceInstallFilesPre/);
+assert.match(customNsis, /Goto cap7ce_install_files_pre_done[\s\S]*Call instFilesPre/);
 assert.equal((customNsis.match(/Section \/o/g) || []).length, 2);
 assert.match(customNsis, /0x400/, "recursive cleanup must detect reparse points");
 assert.match(customNsis, /GetFileAttributesW\(w r0\)i\.r1/);

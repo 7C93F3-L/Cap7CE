@@ -19,6 +19,25 @@
   !undef UNINSTALL_URL_README
 !endif
 
+# electron-builder normally treats the directory page value as a parent and
+# appends APP_FILENAME before the install page opens. Keep its default path and
+# detected-install path, but treat a path explicitly chosen by the user as the
+# final installation directory.
+!macro customPageAfterChangeDir
+  !ifdef MUI_PAGE_CUSTOMFUNCTION_PRE
+    !undef MUI_PAGE_CUSTOMFUNCTION_PRE
+  !endif
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE cap7ceInstallFilesPre
+
+  Function cap7ceInstallFilesPre
+    Goto cap7ce_install_files_pre_done
+    # Keep electron-builder's generated function referenced so its strict NSIS
+    # warning policy remains enabled, but never execute the path-appending code.
+    Call instFilesPre
+    cap7ce_install_files_pre_done:
+  FunctionEnd
+!macroend
+
 LangString cap7ceCleanupUserData 1033 "Remove user data"
 LangString cap7ceCleanupUserData 2052 "删除用户数据"
 LangString cap7ceCleanupAiContent 1033 "Remove models and llama.cpp from this installation"

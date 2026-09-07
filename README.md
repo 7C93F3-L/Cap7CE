@@ -43,7 +43,7 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 下载与安装
 
-请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest) 下载 `Cap7CE-Setup-1.0.0-x64.exe`。安装器支持选择安装目录、创建开始菜单和桌面快捷方式，以及覆盖安装。软件内更新只在用户主动检查和确认后下载、校验并启动正式安装器。
+请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest) 下载 `Cap7CE-Setup-1.0.0-x64.exe`。安装器支持选择最终安装目录、创建开始菜单和桌面快捷方式，以及覆盖安装；不会在用户选择的路径下再自动添加 `Cap7CE` 子目录。软件内更新只在用户主动检查和确认后下载、校验并启动正式安装器。
 
 用户配置、SQLite 索引和视觉缓存位于 `%APPDATA%\Cap7CE`；`models` 与 `llama.cpp` 位于所选程序副本旁。安装和覆盖升级不会主动修改这些内容，卸载时只有明确勾选对应清理选项才会删除。
 
@@ -223,7 +223,7 @@ The installer is currently unsigned, so Windows may show an Unknown Publisher or
 
 ### Download and installation
 
-Download `Cap7CE-Setup-1.0.0-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest). The installer supports choosing an installation directory, creating Start Menu and desktop shortcuts, and installing over an existing copy. In-app updates download, verify, and launch the official installer only after explicit user actions.
+Download `Cap7CE-Setup-1.0.0-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest). The installer lets you choose the final installation directory without appending another `Cap7CE` subfolder, creates Start Menu and desktop shortcuts, and can install over an existing copy. In-app updates download, verify, and launch the official installer only after explicit user actions.
 
 Preferences, the SQLite index, and visual caches are stored under `%APPDATA%\Cap7CE`; `models` and `llama.cpp` stay beside the selected application copy. Installation and upgrades do not modify this content. Uninstallation removes it only when the corresponding cleanup option is explicitly selected.
 
