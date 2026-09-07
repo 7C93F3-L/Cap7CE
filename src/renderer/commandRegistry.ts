@@ -101,8 +101,6 @@ export const quickCommandSpecs: QuickCommandSpec[] = [
   { domain: "model", action: "use", requiredArgs: 1, missingArgumentKey: "command.missingModelName" },
   { domain: "app", action: "startup", fixedArgs: ["on"] },
   { domain: "app", action: "startup", fixedArgs: ["off"] },
-  { domain: "app", action: "hints", fixedArgs: ["on"] },
-  { domain: "app", action: "hints", fixedArgs: ["off"] },
   { domain: "app", action: "notify", fixedArgs: ["on"] },
   { domain: "app", action: "notify", fixedArgs: ["off"] },
   { domain: "app", action: "quit" }

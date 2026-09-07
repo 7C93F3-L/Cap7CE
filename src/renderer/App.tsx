@@ -5,7 +5,6 @@ import { parseQuickCommand } from "./commandParser";
 import { useAlwaysOnTopController } from "./controllers/useAlwaysOnTopController";
 import { useContentViewActivity } from "./controllers/useContentViewActivity";
 import { useCurrentPageRefreshShortcut } from "./controllers/useCurrentPageRefreshShortcut";
-import { useOperationHintController } from "./controllers/useOperationHintController";
 import { useRuntimeModelController } from "./controllers/useRuntimeModelController";
 import { useSearchIndexRefresh } from "./controllers/useSearchIndexRefresh";
 import { useSkimNavigationHistory } from "./controllers/useSkimNavigationHistory";
@@ -53,7 +52,6 @@ import type {
   ResolvedThemeMode,
   SearchLabelVisibilityPreferences,
   SearchState,
-  ShortcutActionId,
   ShortcutActionPreferences,
   ShortcutActionsUpdateResult,
   SkimBrowseEntry,
@@ -245,12 +243,10 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [, setStandbyLineVisible] = useState(true);
   const [, setLaunchAtLogin] = useState(false);
   const [, setSystemNotificationsEnabled] = useState(true);
-  const [operationHintsEnabled, setOperationHintsEnabled] = useState(true);
   const [aiRecognitionEnabled, setAiRecognitionEnabled] = useState(true);
   const [quickActionGlobalEnabled, setQuickActionGlobalEnabled] = useState(true);
   const [commandEnabled, setCommandEnabled] = useState(true);
   const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(defaultStableShortcutActions);
-  const [unavailableShortcutActionIds, setUnavailableShortcutActionIds] = useState<ShortcutActionId[]>([]);
   const [skimDisplay, setSkimDisplay] = useState<SkimDisplayPreferences>(defaultSkimDisplayPreferences);
   const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
   const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
@@ -399,16 +395,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     "--accent-on-color": getTextColorForBackground(appearanceColors.accentColor)
   } as CSSProperties;
   const contextMenuStyle = getFileContextMenuStyle(effectiveTheme, appearanceColors);
-  const operationHint = useOperationHintController({
-    query: search.query,
-    enabled: operationHintsEnabled,
-    commandEnabled,
-    quickActionGlobalEnabled,
-    unavailableShortcutActionIds,
-    shortcutActions
-  });
-  const searchInputFeedback = quickCommandNotice || operationHint;
-  const operationHintVisible = quickCommandNotice.length === 0 && operationHint.length > 0;
+  const searchInputFeedback = quickCommandNotice;
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
   }, []);
@@ -597,7 +584,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         const cacheOptimizationStatus = await window.cap7ce?.cache.optimizationStatus();
         const preferences = await window.cap7ce?.preferences.get();
         const loadedSkimLocations = await window.cap7ce?.skim.listLocations();
-        const shortcutAvailability = await window.cap7ce?.preferences.shortcutAvailability();
         if (isMounted) {
           setDirectories(loadedDirectories);
           if (missingFileCountIds.length > 0) {
@@ -619,7 +605,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setStandbyLineVisible(preferences.standbyLineVisible);
             setLaunchAtLogin(preferences.launchAtLogin);
             setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);
-            setOperationHintsEnabled(preferences.operationHintsEnabled);
             setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
             setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
             setCommandEnabled(preferences.commandEnabled);
@@ -643,7 +628,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             }));
           }
           if (loadedSkimLocations?.length) setSkimLocations(loadedSkimLocations);
-          setUnavailableShortcutActionIds(shortcutAvailability?.unavailableActionIds ?? []);
           if (cacheOptimizationStatus) {
             thumbnailOptimizationPhaseRef.current = cacheOptimizationStatus.phase;
             setThumbnailOptimizationStatus(cacheOptimizationStatus);
@@ -822,14 +806,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  const updateOperationHints = async (enabled: boolean) => {
-    setOperationHintsEnabled(enabled);
-    const preferences = await window.cap7ce?.preferences.updateOperationHints(enabled);
-    if (preferences) {
-      setOperationHintsEnabled(preferences.operationHintsEnabled);
-    }
-  };
-
   const updateAutoCacheOptimization = async (enabled: boolean) => {
     const preferences = await window.cap7ce?.preferences.updateAutoCacheOptimization(enabled);
     const status = await window.cap7ce?.cache.optimizationStatus();
@@ -858,9 +834,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     if (!nextQuickActionGlobalEnabled) {
       setQuickActionGlobalEnabled(false);
     }
-    return window.cap7ce?.preferences.updateQuickActionGlobalEnabled(nextQuickActionGlobalEnabled).then(async (preferences) => {
-      const shortcutAvailability = await window.cap7ce?.preferences.shortcutAvailability();
-      setUnavailableShortcutActionIds(shortcutAvailability?.unavailableActionIds ?? []);
+    return window.cap7ce?.preferences.updateQuickActionGlobalEnabled(nextQuickActionGlobalEnabled).then((preferences) => {
       if (preferences) {
         setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
         return preferences.quickActionGlobalEnabled;
@@ -876,7 +850,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       if (!result) return null;
       if (result.applied) {
         setShortcutActions(normalizeStableShortcutActions(result.preferences.stableShortcutActions));
-        setUnavailableShortcutActionIds(result.unavailableActionIds);
       }
       return result;
     } catch {
@@ -1359,7 +1332,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       updateEdgeCollapse: async (enabled) => { await window.cap7ce?.preferences.updateEdgeCollapse(enabled); },
       updateLaunchAtLogin,
       updateSystemNotifications,
-      updateOperationHints,
       updateAutoCacheOptimization,
       updateAiRecognitionEnabled,
       updateQuickActionGlobalEnabled,
@@ -1542,7 +1514,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setOperationHintsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
+  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
 
   const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
     try {
@@ -2415,7 +2387,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         search={search}
         searchInputRef={searchInputRef}
         inputFeedback={searchInputFeedback}
-        inputFeedbackIsGuide={operationHintVisible}
         resultStatus={resultStatusNode}
         resultContent={(active) => <ResultsView key={search.directoryId} {...createResultsViewProps(active)} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}

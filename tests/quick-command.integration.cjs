@@ -58,6 +58,7 @@ const helpItems = [
   ...getQuickCommandGroups().flatMap((group) => group.items),
   ...getDangerousQuickCommandItems()
 ];
+assert.equal(getQuickCommandGroups()[0].items[0].command, "set:", "Settings commands must remain the first group");
 const coveredSpecs = new Set();
 for (const item of helpItems) {
   const parsed = parseQuickCommand(item.command);
@@ -72,6 +73,7 @@ assert.equal(parseQuickCommand("cache:preview").type, "unknown");
 assert.equal(parseQuickCommand("cache:model").type, "unknown");
 assert.equal(parseQuickCommand("set:quick").type, "unknown");
 assert.equal(parseQuickCommand("set:cmd").type, "unknown");
+assert.equal(parseQuickCommand("app:hints on").type, "unknown");
 assert.equal(parseQuickCommand("win:normal").type, "unknown");
 assert.equal(parseQuickCommand("see:all").type, "unknown");
 assert.equal(parseQuickCommand("see:dir").type, "missing-argument");

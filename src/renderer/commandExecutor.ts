@@ -36,7 +36,6 @@ export interface QuickCommandExecutorContext {
   updateEdgeCollapse: (enabled: boolean) => Promise<void>;
   updateLaunchAtLogin: (enabled: boolean) => Promise<void>;
   updateSystemNotifications: (enabled: boolean) => Promise<void>;
-  updateOperationHints: (enabled: boolean) => Promise<void>;
   updateAutoCacheOptimization: (enabled: boolean) => Promise<void>;
   updateAiRecognitionEnabled: (enabled: boolean) => Promise<void>;
   updateQuickActionGlobalEnabled: (enabled: boolean) => Promise<boolean>;
@@ -451,15 +450,6 @@ export const executeQuickCommand = async (
       return {
         status: "handled",
         message: enabled ? t("command.launchAtLoginEnabled") : t("command.launchAtLoginDisabled"),
-        clearInput: true
-      };
-    }
-    if (command.action === "hints" && (command.args[0] === "on" || command.args[0] === "off")) {
-      const enabled = command.args[0] === "on";
-      await context.updateOperationHints(enabled);
-      return {
-        status: "handled",
-        message: enabled ? t("command.operationHintsEnabled") : t("command.operationHintsDisabled"),
         clearInput: true
       };
     }

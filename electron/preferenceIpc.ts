@@ -14,7 +14,6 @@ export interface PreferenceIpcDependencies {
   getPreferences: () => Promise<UserPreferencesResponse>;
   broadcastPreferencesChanged: (preferences: UserPreferencesResponse) => void;
   updateSkimSort: PreferenceUpdater<UserPreferencesResponse["skimSortPreference"]>;
-  updateOperationHints: PreferenceUpdater<boolean>;
   updateCommandEnabled: PreferenceUpdater<boolean>;
   updateSearchLabelVisibility: PreferenceUpdater<UserPreferencesResponse["searchLabelVisibility"]>;
   updateSkimDisplay: PreferenceUpdater<UserPreferencesResponse["skimDisplay"]>;
@@ -45,7 +44,6 @@ export const registerPreferenceIpc = ({
   getPreferences,
   broadcastPreferencesChanged,
   updateSkimSort,
-  updateOperationHints,
   updateCommandEnabled,
   updateSearchLabelVisibility,
   updateSkimDisplay,
@@ -89,11 +87,6 @@ export const registerPreferenceIpc = ({
         listener: (_event, skimSortPreference: UserPreferencesResponse["skimSortPreference"]) => (
           updateAndBroadcast(updateSkimSort(skimSortPreference))
         )
-      },
-      {
-        kind: "handle",
-        channel: "preferences:updateOperationHints",
-        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(updateOperationHints(Boolean(nextEnabled)))
       },
       {
         kind: "handle",

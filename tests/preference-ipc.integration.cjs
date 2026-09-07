@@ -25,7 +25,6 @@ const run = async () => {
     getPreferences: async () => response,
     broadcastPreferencesChanged: () => undefined,
     updateSkimSort: capture("skimSort"),
-    updateOperationHints: capture("operationHints"),
     updateCommandEnabled: capture("commandEnabled"),
     updateSearchLabelVisibility: capture("searchLabelVisibility"),
     updateSkimDisplay: capture("skimDisplay"),
@@ -54,7 +53,6 @@ const run = async () => {
   assert.deepEqual([...handles.keys()], [
     "preferences:get",
     "preferences:updateSkimSort",
-    "preferences:updateOperationHints",
     "preferences:updateCommandEnabled",
     "preferences:updateSearchLabelVisibility",
     "preferences:updateSkimDisplay",
@@ -86,7 +84,6 @@ const run = async () => {
   };
   const sidebarFolders = ["C:\\Work", "D:\\Assets"];
   await handles.get("preferences:updateSkimSort")(event, skimSort);
-  await handles.get("preferences:updateOperationHints")(event, 1);
   await handles.get("preferences:updateCommandEnabled")(event, 0);
   await handles.get("preferences:updateSearchLabelVisibility")(event, {
     directory: 1,
@@ -113,7 +110,6 @@ const run = async () => {
 
   assert.deepEqual(calls, [
     ["skimSort", skimSort],
-    ["operationHints", true],
     ["commandEnabled", false],
     ["searchLabelVisibility", {
       directory: true,
@@ -158,7 +154,6 @@ const run = async () => {
     getPreferences: async () => disabledResponse,
     broadcastPreferencesChanged: () => undefined,
     updateSkimSort: async () => disabledResponse,
-    updateOperationHints: async () => disabledResponse,
     updateCommandEnabled: async () => disabledResponse,
     updateSearchLabelVisibility: async () => disabledResponse,
     updateSkimDisplay: async () => disabledResponse,

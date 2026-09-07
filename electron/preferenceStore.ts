@@ -49,7 +49,6 @@ export interface UserPreferencesResponse {
   launchAtLogin: boolean;
   systemNotificationsEnabled: boolean;
   backgroundRunNotificationShown: boolean;
-  operationHintsEnabled: boolean;
   autoCacheOptimizationEnabled: boolean;
   aiRecognitionEnabled: boolean;
   quickActionGlobalEnabled: boolean;
@@ -87,7 +86,6 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   launchAtLogin: false,
   systemNotificationsEnabled: true,
   backgroundRunNotificationShown: false,
-  operationHintsEnabled: true,
   autoCacheOptimizationEnabled: true,
   aiRecognitionEnabled: true,
   quickActionGlobalEnabled: true,
@@ -227,9 +225,6 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       backgroundRunNotificationShown: typeof parsed.backgroundRunNotificationShown === "boolean"
         ? parsed.backgroundRunNotificationShown
         : defaults.backgroundRunNotificationShown,
-      operationHintsEnabled: typeof parsed.operationHintsEnabled === "boolean"
-        ? parsed.operationHintsEnabled
-        : defaults.operationHintsEnabled,
       autoCacheOptimizationEnabled: typeof parsed.autoCacheOptimizationEnabled === "boolean"
         ? parsed.autoCacheOptimizationEnabled
         : defaults.autoCacheOptimizationEnabled,
@@ -422,17 +417,6 @@ export const markBackgroundRunNotificationShown = async () => {
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     backgroundRunNotificationShown: true,
-    updatedAt: new Date().toISOString()
-  };
-  await savePreferences(nextPreferences);
-  return nextPreferences;
-};
-
-export const updateOperationHintsPreference = async (operationHintsEnabled: boolean) => {
-  const preferences = await readPreferences();
-  const nextPreferences: UserPreferencesResponse = {
-    ...preferences,
-    operationHintsEnabled,
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

@@ -50,9 +50,9 @@ for (const marker of [
   "if (!composingRef.current) onSearch()",
   "const clearedQuery = search.query.trim().length > 0"
 ]) assert.ok(inputSource.includes(marker), `Stable search input is missing ${marker}.`);
-assert.match(inputSource, /placeholder=\{inputFeedbackIsGuide \? inputFeedback : inputFeedback \? "" : t\("search\.inputLabel"\)\}/u);
-assert.match(inputSource, /\{!inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback"/u);
-assert.match(inputSource, /cap-stable-search-slot\$\{!inputFeedbackIsGuide && inputFeedback \? " is-showing-feedback" : ""\}/u);
+assert.match(inputSource, /placeholder=\{inputFeedback \? "" : t\("search\.inputLabel"\)\}/u);
+assert.match(inputSource, /\{inputFeedback && <span className="cap-stable-search-feedback"/u);
+assert.match(inputSource, /cap-stable-search-slot\$\{inputFeedback \? " is-showing-feedback" : ""\}/u);
 assert.match(inputSource, /search\.query\.length > 0[\s\S]*?className="cap-stable-search-clear"[\s\S]*?query: ""[\s\S]*?onSearchChange\(nextSearch\); onSearchOptionsChange\(nextSearch\)[\s\S]*?focus\(\{ preventScroll: true \}\)/u);
 
 assert.doesNotMatch(resultsSource, /responsiveLayout|shellState/);

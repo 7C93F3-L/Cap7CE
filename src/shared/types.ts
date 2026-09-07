@@ -521,7 +521,6 @@ export interface UserPreferences {
   launchAtLogin: boolean;
   systemNotificationsEnabled: boolean;
   backgroundRunNotificationShown: boolean;
-  operationHintsEnabled: boolean;
   autoCacheOptimizationEnabled: boolean;
   aiRecognitionEnabled: boolean;
   quickActionGlobalEnabled: boolean;

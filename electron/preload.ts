@@ -243,7 +243,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateStandbyLineVisible: (standbyLineVisible: boolean) => ipcRenderer.invoke("preferences:updateStandbyLineVisible", standbyLineVisible),
     updateLaunchAtLogin: (launchAtLogin: boolean) => ipcRenderer.invoke("preferences:updateLaunchAtLogin", launchAtLogin),
     updateSystemNotifications: (enabled: boolean) => ipcRenderer.invoke("preferences:updateSystemNotifications", enabled),
-    updateOperationHints: (enabled: boolean) => ipcRenderer.invoke("preferences:updateOperationHints", enabled),
     updateAutoCacheOptimization: (enabled: boolean) => ipcRenderer.invoke("preferences:updateAutoCacheOptimization", enabled),
     updateAiRecognitionEnabled: (enabled: boolean) => ipcRenderer.invoke("preferences:updateAiRecognitionEnabled", enabled),
     updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: boolean) => ipcRenderer.invoke("preferences:updateQuickActionGlobalEnabled", quickActionGlobalEnabled),

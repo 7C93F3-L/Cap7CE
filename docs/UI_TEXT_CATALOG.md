@@ -159,28 +159,6 @@
 | `search.emptyUnrecognized`     | 没有未识别图片                                        | 没有未识别文件                                |     | 空结果                |
 | `search.failed`                | 搜索失败。                                          |                                        |     | 搜索失败兜底             |
 | `search.fileMissing`           | 文件已不存在                                         |                                        |     | 预览 / 操作反馈          |
-| `search.guide.search`          | 在此键入关键词进行搜索。                                  |                                        |     | 首次操作提示            |
-| `search.guide.showCurrent`     | 搜索框留空并按下回车键，可浏览当前范围内的内容。                       |                                        |     | 随机操作提示            |
-| `search.guide.focusMainSearch` | 按下 {shortcut}，显示主窗口并聚焦搜索框。 | | Press {shortcut} to show the main window and focus search. | 动态快捷键提示 |
-| `search.guide.restoreDefaultWindow` | 按下 {shortcut}，以默认大小和位置显示主窗口。 | | Press {shortcut} to show the main window at its default size and position. | 动态快捷键提示 |
-| `search.guide.hideToLine` | 按下 {shortcut}，关闭主窗口并显示 line。 | | Press {shortcut} to close the main window and show line. | 动态快捷键提示 |
-| `search.guide.toggleSkim` | 按下 {shortcut}，展开或收起 skim。 | | Press {shortcut} to expand or collapse skim. | 动态快捷键提示 |
-| `search.guide.openSettings` | 按下 {shortcut}，快速打开设置界面。 | | Press {shortcut} to open Settings quickly. | 动态快捷键提示 |
-| `search.guide.preview`         | 选中一个搜索结果，按下空格键即可快速预览。                         |                                        |     | 随机操作提示            |
-| `search.guide.previewNavigate` | 快速预览时，可使用鼠标滚轮或方向键切换文件。                        |                                        |     | 随机操作提示            |
-| `search.guide.previewContextMenu` | 快速预览窗口也支持右键菜单。                              |                                        |     | 随机操作提示            |
-| `search.guide.multiSelect`     | 按住 Ctrl 或 Shift 点击缩略图，可以选择多个文件。                 |                                        |     | 随机操作提示            |
-| `search.guide.batchActions`    | 选择多个文件后，可以批量修改关键词或删除文件。                       |                                        |     | 随机操作提示            |
-| `search.guide.dragResult`      | 搜索结果可以直接拖至其他应用。                                |                                        |     | 随机操作提示            |
-| `search.guide.labels`          | 点击顶部标签，可以切换目录、状态、排序或文件格式。                      |                                        |     | 随机操作提示            |
-| `search.guide.hideLabel`       | 右键单击顶部标签，可以隐藏对应标签。                              |                                        |     | 随机操作提示            |
-| `search.guide.labelMenu`       | 右键单击搜索区域，可以统一隐藏或显示标签。                           |                                        |     | 随机操作提示            |
-| `search.guide.commandDark`     | 键入 ui:dark 并按下回车键，可切换至黑暗模式。                     |                                        |     | 快捷指令开启时显示        |
-| `search.guide.viewCommands`    | 在设置页中可以查看所有快捷指令。                                |                                        |     | 随机操作提示            |
-| `search.guide.editShortcuts`   | 在设置页中可以修改快捷动作。                                  |                                        |     | 随机操作提示            |
-| `search.guide.trayNormal`      | 单击系统托盘图标，可以快速打开 normal 模式。                      |                                        |     | 随机操作提示            |
-| `search.guide.focusSearch`     | 按下 Ctrl+`，可以快速将焦点移回搜索框。                         |                                        |     | 随机操作提示            |
-| `search.guide.resultContextMenu` | 右键单击搜索结果，可以查看更多文件操作。                         |                                        |     | 随机操作提示            |
 
 ## 4. 窗口控制、预览与右键菜单
 
@@ -280,9 +258,6 @@
 | `settings.launchAtLogin`           | 登录时启动                         |                           | Launch at Sign-in | Windows 登录启动 |
 | `settings.launchAtLoginOn`         | 启动                            |                           | On | 登录启动状态 |
 | `settings.launchAtLoginOff`        | 关闭                            |                           | Off | 登录启动状态 |
-| `settings.operationHints`          | 操作提示                          |                           | Operation Tips | 搜索框操作提示设置 |
-| `settings.operationHintsOn`        | 显示                            |                           |     | 操作提示开启状态        |
-| `settings.operationHintsOff`       | 关闭                            |                           |     | 操作提示关闭状态        |
 | `settings.systemNotifications`     | 系统通知                          |                           | System Notifications | 后台运行与缓存完成通知 |
 | `settings.skimDisplay`             | 自定义范围                        |                           | Custom Scope | 格式范围配置 |
 | `settings.skimDisplaySummary`      | 已选 {selected} / {total} 种格式，在查看范围中选择“自定义”后应用。 | | {selected} / {total} formats selected. Choose “Custom” under View Scope to apply. | 自定义范围摘要 |
@@ -396,7 +371,7 @@
 
 | 文案 ID                              | 当前中文                              | 确认中文                             | 英文   | 使用位置 / 备注        |
 | ---------------------------------- | --------------------------------- | -------------------------------- | ---- | ---------------- |
-| `commands.group.settings`          | 设置页类                              | 设置页                              |      | 分类标题             |
+| `commands.group.settings`          | 设置                                | 设置                               |      | 分类标题             |
 | `commands.group.view`              | 查看类                               | 查看                               |      | 分类标题             |
 | `commands.group.window`            | 窗口模式类                             | 窗口模式                             |      | 分类标题             |
 | `commands.group.directory`         | 目录类                               | 目录                               |      | 分类标题             |
@@ -449,8 +424,6 @@
 | `commands.appearance.reset`        | 恢复默认外观配置                          |                                  |      | `ui:reset`       |
 | `commands.app.startupEnable`       | 开启开机运行                            |                                  |      | `app:startup on` |
 | `commands.app.startupDisable`      | 关闭开机运行                            |                                  |      | `app:startup off` |
-| `commands.app.hintsEnable`         | 显示操作提示                            |                                  |      | `app:hints on`   |
-| `commands.app.hintsDisable`        | 关闭操作提示                            |                                  |      | `app:hints off`  |
 | `commands.app.notificationsEnable` | 开启系统通知                            |                                  |      | `app:notify on`  |
 | `commands.app.notificationsDisable`| 关闭系统通知                            |                                  |      | `app:notify off` |
 | `commands.edge.enable`             | 开启窗口贴边自动收起                        |                                  |      | `edge:on`        |
@@ -546,8 +519,6 @@
 | `command.parserDisabled`              | 已禁用快捷指令解析               |      |      | 快捷指令            |
 | `command.launchAtLoginEnabled`         | 已开启开机运行                  |      |      | 软件行为            |
 | `command.launchAtLoginDisabled`        | 已关闭开机运行                  |      |      | 软件行为            |
-| `command.operationHintsEnabled`        | 已显示操作提示                  |      |      | 软件行为            |
-| `command.operationHintsDisabled`       | 已关闭操作提示                  |      |      | 软件行为            |
 | `command.notificationsEnabled`         | 已开启系统通知                  |      |      | 软件行为            |
 | `command.notificationsDisabled`        | 已关闭系统通知                  |      |      | 软件行为            |
 | `command.edgeCollapseEnabled`          | 已开启窗口贴边自动收起              |      |      | 窗口行为            |

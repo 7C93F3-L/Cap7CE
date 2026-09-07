@@ -6,6 +6,12 @@ export const getQuickCommandGroups = (): Array<{
   items: Array<{ command: string; description: string }>;
 }> => [
   {
+    title: t("commands.group.settings"),
+    items: [
+      { command: "set:", description: t("commands.set.open") }
+    ]
+  },
+  {
     title: t("commands.group.skim"),
     items: [
       { command: "skim:", description: t("commands.skim.open") },
@@ -19,12 +25,6 @@ export const getQuickCommandGroups = (): Array<{
       { command: "skim:sort time", description: t("commands.skim.sortTime") },
       { command: "skim:hidden on", description: t("commands.skim.hiddenEnable") },
       { command: "skim:hidden off", description: t("commands.skim.hiddenDisable") }
-    ]
-  },
-  {
-    title: t("commands.group.settings"),
-    items: [
-      { command: "set:", description: t("commands.set.open") }
     ]
   },
   {
@@ -78,8 +78,6 @@ export const getQuickCommandGroups = (): Array<{
     items: [
       { command: "app:startup on", description: t("commands.app.startupEnable") },
       { command: "app:startup off", description: t("commands.app.startupDisable") },
-      { command: "app:hints on", description: t("commands.app.hintsEnable") },
-      { command: "app:hints off", description: t("commands.app.hintsDisable") },
       { command: "app:notify on", description: t("commands.app.notificationsEnable") },
       { command: "app:notify off", description: t("commands.app.notificationsDisable") },
       { command: "edge:on", description: t("commands.edge.enable") },

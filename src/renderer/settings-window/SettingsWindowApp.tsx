@@ -40,7 +40,7 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; icon: 
   { id: "about", label: "stableSettings.category.about", icon: "about" }
 ];
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
-  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.operationHints", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.hints", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
+  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
   appearance: ["stableSettings.category.appearance", "stableSettings.material", "stableSettings.uiFontSize", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.uiFontSize", "stableSettings.desc.theme", "stableSettings.desc.colors"],
   browse: ["settings.skimDisplay", "stableSettings.desc.skimDisplay"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.runtimeInfo", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.runtimeInfo"],
@@ -127,7 +127,6 @@ const SettingsWindowApp = () => {
         <SettingCard title="settings.language" description="stableSettings.desc.language" query={normalizedQuery}><StableSettingsSelect menuStyle={menuStyle} label={t("settings.language")} value={preferences.languagePreference} options={[{ value: "system", label: getActiveLanguage() === "zh-CN" ? "跟随系统" : "Use System Setting" }, { value: "zh-CN", label: "中文" }, { value: "en-US", label: "English" }]} onChange={(value) => void controller.updateLanguage(value as UserPreferences["languagePreference"])} /></SettingCard>
         <SettingCard title="settings.launchAtLogin" description="stableSettings.desc.launch" query={normalizedQuery}><SettingsToggle enabled={preferences.launchAtLogin} onChange={(enabled) => toggle("launchAtLogin", enabled)} /></SettingCard>
         <SettingCard title="settings.systemNotifications" description="stableSettings.desc.notifications" query={normalizedQuery}><SettingsToggle enabled={preferences.systemNotificationsEnabled} onChange={(enabled) => toggle("systemNotificationsEnabled", enabled)} /></SettingCard>
-        <SettingCard title="settings.operationHints" description="stableSettings.desc.hints" query={normalizedQuery}><SettingsToggle enabled={preferences.operationHintsEnabled} onChange={(enabled) => toggle("operationHintsEnabled", enabled)} /></SettingCard>
       </SettingsSection>
       <SettingsSection title="stableSettings.section.windows">
         <SettingCard title="settings.edgeCollapse" description="stableSettings.desc.edgeCollapse" query={normalizedQuery}><SettingsToggle enabled={preferences.edgeCollapseEnabled} onChange={(enabled) => toggle("edgeCollapseEnabled", enabled)} /></SettingCard>

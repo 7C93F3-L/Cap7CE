@@ -9,7 +9,6 @@ export interface StableUiRendererProps {
   search: SearchState;
   searchInputRef: Ref<HTMLInputElement>;
   inputFeedback: string;
-  inputFeedbackIsGuide: boolean;
   resultStatus: ReactNode; resultContent: (active: boolean) => ReactNode; overlayContent: ReactNode;
   sidebar: StableSidebarProps;
   skim: StableSkimProps;
