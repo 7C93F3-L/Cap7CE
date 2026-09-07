@@ -31,6 +31,15 @@
   padding-inline: 0;
 }
 
+.cap-settings-window-foundation .cap-settings-quick-action-hint.capture {
+  color: var(--text-secondary);
+}
+
+.cap-settings-window-foundation .cap-settings-shortcut-pill[data-shortcut-capturing="true"] {
+  color: var(--dialog-action-hover-text);
+  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+}
+
 @media (max-width: 700px) {
   .cap-stable-settings-card-with-body {
     grid-template-columns: minmax(0, 1fr);

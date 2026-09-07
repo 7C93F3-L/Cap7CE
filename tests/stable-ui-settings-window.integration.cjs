@@ -201,7 +201,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(settingsAppSource, /quickActionsExpanded|setQuickActionsExpanded/u);
   assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
   assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.restoreDefaultWindow[\s\S]*?shortcut\.openSettings[\s\S]*?shortcut\.cycleDirectory/u);
-  assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1/u);
+  assert.match(quickActionSource, /handleShortcutCaptureOutsideClick[\s\S]*?data-shortcut-capturing="true"[\s\S]*?settings\.shortcutCaptureCancelHint/u);
+  assert.doesNotMatch(quickActionSource, /isCapturing && \([\s\S]*?<button[^>]*common\.cancel/u);
+  assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1[\s\S]*?data-shortcut-capturing="true"[\s\S]*?linear-gradient/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-command-body[\s\S]*?<QuickCommandSettingsRows stableUi/u);
   assert.doesNotMatch(settingsAppSource, /quickCommandsExpanded|setQuickCommandsExpanded/u);
   assert.match(quickCommandSource, /if \(!stableUi && !expanded\)[\s\S]*?if \(stableUi\)[\s\S]*?cap-settings-quick-commands-panel-stable/u);

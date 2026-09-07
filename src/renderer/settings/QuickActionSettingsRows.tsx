@@ -128,8 +128,20 @@ export const QuickActionSettingsRows = ({
       });
     };
 
+    const handleShortcutCaptureOutsideClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-shortcut-capturing="true"]')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      void finishShortcutCapture();
+    };
+
     window.addEventListener("keydown", handleShortcutCapture, true);
-    return () => window.removeEventListener("keydown", handleShortcutCapture, true);
+    window.addEventListener("click", handleShortcutCaptureOutsideClick, true);
+    return () => {
+      window.removeEventListener("keydown", handleShortcutCapture, true);
+      window.removeEventListener("click", handleShortcutCaptureOutsideClick, true);
+    };
   }, [capturingShortcutActionId, shortcutActionDrafts]);
 
   return (
@@ -157,20 +169,21 @@ export const QuickActionSettingsRows = ({
                   {!isCapturing && isUnavailable && (
                     <span className="cap-settings-quick-action-hint unavailable">{t("settings.shortcutUnavailable")}</span>
                   )}
+                  {isCapturing && (
+                    <span className="cap-settings-quick-action-hint capture" aria-live="polite">{t("settings.shortcutCaptureCancelHint")}</span>
+                  )}
                   <div className="cap-settings-quick-action-controls">
                     <button
                       className="cap-settings-pill cap-settings-shortcut-pill"
                       type="button"
-                      title={t("settings.editShortcutActionHint")}
+                      data-shortcut-capturing={isCapturing}
+                      title={isCapturing ? t("settings.cancelShortcutCaptureHint") : t("settings.editShortcutActionHint")}
                       onClick={() => {
                         if (!isCapturing) void startShortcutCapture(item.id);
                       }}
                     >
                       {isCapturing ? t("settings.captureShortcut") : formatShortcutLabel(shortcutActionDrafts[item.id])}
                     </button>
-                    {isCapturing && (
-                      <button className="cap-settings-pill" type="button" onClick={() => void finishShortcutCapture()} title={t("settings.cancelShortcutCaptureHint")}>{t("common.cancel")}</button>
-                    )}
                   </div>
                 </div>
               );
