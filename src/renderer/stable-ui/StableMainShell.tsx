@@ -8,7 +8,7 @@ import { useStableKeyboardRegion } from "./useStableKeyboardRegion";
 import { useStableShellLayout } from "./useStableShellLayout";
 import "./StableMainShell.css";
 export default function StableMainShell({ resultContent, sidebar, skim }: { resultContent: (active: boolean) => ReactNode; sidebar: StableSidebarProps; skim: StableSkimProps }) {
-  const { shellStyle, skimOpen, sidebarWidth, skimWidth, skimMaximumWidth, resizeSidebar, resizeSkim, resizeSidebarByKeyboard, resizeSkimByKeyboard, resetSidebarWidth, resetSkimWidth, toggleSkim } = useStableShellLayout(skim.onOpen, skim.toggleRequestId);
+  const { shellStyle, skimOpen, sidebarWidth, skimWidth, skimMaximumWidth, resizeSidebar, resizeSkim, resizeSidebarByKeyboard, resizeSkimByKeyboard, resetSidebarWidth, resetSkimWidth, toggleSkim } = useStableShellLayout(skim.onOpen, skim.toggleRequestId, skim.openRequestId);
   const [resultsKeyboardActive, skimKeyboardActive, activateKeyboardRegion] = useStableKeyboardRegion(skimOpen);
   return (
     <section className={`cap-stable-main-shell${skimOpen ? " is-skim-open" : ""}`} style={shellStyle}

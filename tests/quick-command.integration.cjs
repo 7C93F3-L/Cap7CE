@@ -100,6 +100,8 @@ const context = new Proxy({
     calls.push(["directory", directoryName]);
     return true;
   },
+  openSkim: () => calls.push(["skim-open"]),
+  openSkimRoot: () => calls.push(["skim-root"]),
   setSearchScope: (mode) => calls.push(["scope", mode]),
   setSkimScope: (mode) => calls.push(["skim-scope", mode]),
   setSkimHiddenFiles: (enabled) => calls.push(["skim-hidden", enabled]),
@@ -129,6 +131,8 @@ const execute = async (raw) => {
   assert.equal(parsed.type, "valid", raw);
   const result = await executeQuickCommand(parsed.command, context);
   assert.notEqual(result.status, "pending", raw);
+  assert.equal(typeof result.message, "string", `${raw} must return feedback`);
+  assert.notEqual(result.message.trim(), "", `${raw} must return non-empty feedback`);
   return result;
 };
 
@@ -137,6 +141,8 @@ const execute = async (raw) => {
     const parsed = parseQuickCommand(item.command);
     const result = await executeQuickCommand(parsed.command, passiveContext);
     assert.notEqual(result.status, "pending", `help command must have an executor: ${item.command}`);
+    assert.equal(typeof result.message, "string", `help command must return feedback: ${item.command}`);
+    assert.notEqual(result.message.trim(), "", `help command must return non-empty feedback: ${item.command}`);
   }
   await execute("see:dir all");
   await execute("see:dir Pictures");
@@ -145,6 +151,8 @@ const execute = async (raw) => {
   await execute("see:scope custom");
   await execute("see:sort name");
   await execute("see:sort time");
+  await execute("skim:");
+  await execute("skim:root");
   await execute("skim:scope default");
   await execute("skim:scope all");
   await execute("skim:scope custom");
@@ -181,6 +189,8 @@ const execute = async (raw) => {
     ["scope", "custom"],
     ["sort-field", "file_name"],
     ["sort-field", "modified_at"],
+    ["skim-open"],
+    ["skim-root"],
     ["skim-scope", "skim"], ["skim-scope", "all"], ["skim-scope", "custom"],
     ["skim-sort-direction", "asc"], ["skim-sort-direction", "desc"],
     ["skim-sort-field", "file_name"], ["skim-sort-field", "modified_at"],

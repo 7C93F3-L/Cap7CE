@@ -3,6 +3,7 @@ import type { SkimBreadcrumb, SkimDisplayMode, SortDirection, SortField } from "
 
 export interface StableSkimProps {
   toggleRequestId: number;
+  openRequestId: number;
   currentPath: string | null;
   breadcrumbs: SkimBreadcrumb[];
   isLoading: boolean;

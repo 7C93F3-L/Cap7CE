@@ -28,7 +28,7 @@ assert.match(resultsSource, /active: boolean[\s\S]*?useEffect\(\(\) => \{[\s\S]*
 assert.match(appSource, /if \(selectedResultImageId\) \{[\s\S]*?setClearSelectionRequestId/u);
 assert.doesNotMatch(appSource, /view === "results" && selectedResultImageId/u);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
-assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
+assert.match(appSource, /onSearch=\{submitSearch\}/);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
 assert.match(appSource, /if \(isLoadingDirectories \|\| !contentViewActivityConfirmed \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)[\s\S]*?\[contentViewActivityConfirmed, isLoadingDirectories\]/u);
 assert.match(contentViewActivitySource, /setContentViewActive\(true\)\.then\(\(accepted\)[\s\S]*?setActivityConfirmed\(accepted === true\)/u);
@@ -47,12 +47,13 @@ assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);
 for (const marker of [
   "onCompositionStart",
   "onCompositionEnd",
-  "if (!composingRef.current) onSearch()",
+  "if (composingRef.current) return",
+  "querySelector(\"input\")?.value ?? search.query",
+  "onSearch({ ...search, query: submittedQuery })",
   "const clearedQuery = search.query.trim().length > 0"
 ]) assert.ok(inputSource.includes(marker), `Stable search input is missing ${marker}.`);
-assert.match(inputSource, /placeholder=\{inputFeedback \? "" : t\("search\.inputLabel"\)\}/u);
-assert.match(inputSource, /\{inputFeedback && <span className="cap-stable-search-feedback"/u);
-assert.match(inputSource, /cap-stable-search-slot\$\{inputFeedback \? " is-showing-feedback" : ""\}/u);
+assert.match(inputSource, /placeholder=\{inputFeedback \|\| t\("search\.inputLabel"\)\}/u);
+assert.doesNotMatch(inputSource, /cap-stable-search-feedback|is-showing-feedback/u);
 assert.match(inputSource, /search\.query\.length > 0[\s\S]*?className="cap-stable-search-clear"[\s\S]*?query: ""[\s\S]*?onSearchChange\(nextSearch\); onSearchOptionsChange\(nextSearch\)[\s\S]*?focus\(\{ preventScroll: true \}\)/u);
 
 assert.doesNotMatch(resultsSource, /responsiveLayout|shellState/);
@@ -72,7 +73,7 @@ assert.match(stableResultsStyles, /\.cap-stable-search-clear \{[^}]*width: 24px;
 assert.match(stableResultsStyles, /\.cap-stable-search-clear:hover \{ background: color-mix\(in srgb, currentColor 14%, transparent\); \}[\s\S]*?\.cap-stable-search-clear-icon[^}]*width: 16px; height: 16px;/u);
 assert.match(stableResultsStyles, /@container \(max-width: 180px\) \{ \.cap-stable-search-clear \{ display: none; \} \}/u);
 assert.match(stableResultsStyles, /\.app \.cap-stable-search-slot input:focus,[\s\S]*?input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
-assert.match(stableResultsStyles, /\.cap-stable-search-slot\.is-showing-feedback input,[\s\S]*?visibility: hidden;[\s\S]*?:focus-within \.cap-stable-search-feedback \{ display: none; \}/u);
+assert.doesNotMatch(stableResultsStyles, /cap-stable-search-feedback|is-showing-feedback/u);
 
 for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(state.item)", "onCopyPaths(state.items)", "onEditKeywords(state.items)", "onDelete(state.items)"]) {
   assert.ok(menuSource.includes(marker), `Formal results context menu is missing ${marker}.`);

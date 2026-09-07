@@ -252,6 +252,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
   const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
   const [stableSkimToggleRequestId, setStableSkimToggleRequestId] = useState(0);
+  const [stableSkimOpenRequestId, setStableSkimOpenRequestId] = useState(0);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
   const [, setSearchLabelVisibility] = useState<SearchLabelVisibilityPreferences>({
@@ -1315,13 +1316,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       defaultShortcutActions: defaultStableShortcutActions,
       currentAppearanceColors: appearanceColors,
       openSettings: () => openSettingsWindow(),
-      openSkim,
+      openSkim: () => {
+        void openStableSkimLocation(skimCurrentPath);
+        setStableSkimOpenRequestId((requestId) => requestId + 1);
+      },
       openSkimRoot: () => {
-        if (view === "skim") {
-          void loadSkimLocation(null);
-        } else {
-          openSkim();
-        }
+        void openStableSkimLocation(null);
+        setStableSkimOpenRequestId((requestId) => requestId + 1);
       },
       updateTheme,
       updateWindowMaterial,
@@ -2404,6 +2405,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         }}
         skim={{
           toggleRequestId: stableSkimToggleRequestId,
+          openRequestId: stableSkimOpenRequestId,
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
@@ -2417,7 +2419,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         onTogglePinned={() => { void toggleAlwaysOnTop("stable-ui"); }}
         onSearchChange={(nextSearch) => { clearQuickCommandNotice(); updateResultsSearch(nextSearch); }}
         onSearchOptionsChange={updateResultsSearchOptions}
-        onSearch={() => submitSearch(search)}
+        onSearch={submitSearch}
         onDirectoryDrop={startDroppedDirectoryAdd}
         onDismissOverlay={closeContextMenu}
       />

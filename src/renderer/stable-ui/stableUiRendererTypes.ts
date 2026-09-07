@@ -16,7 +16,7 @@ export interface StableUiRendererProps {
   onTogglePinned: () => void;
   onSearchChange: (search: SearchState) => void;
   onSearchOptionsChange: (search: SearchState) => void;
-  onSearch: () => void;
+  onSearch: (search: SearchState) => void;
   onDirectoryDrop: (dataTransfer: DataTransfer) => void;
   onDismissOverlay: () => void;
 }

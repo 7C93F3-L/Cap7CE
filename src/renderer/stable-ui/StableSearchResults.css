@@ -13,17 +13,6 @@
 .app .cap-stable-search-slot input:focus-visible { outline: 0; outline-offset: 0; box-shadow: none; }
 .cap-stable-search-slot input::placeholder { color: var(--cap-stable-search-placeholder); opacity: 1; }
 .cap-stable-search-icon { width: 16px; height: 16px; color: var(--cap-stable-text-muted); } .cap-stable-search-clear { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 24px; margin-right: -7px; padding: 0; border: 0; border-radius: 50%; color: var(--cap-stable-text); background: color-mix(in srgb, currentColor 8%, transparent); } .cap-stable-search-clear:hover { background: color-mix(in srgb, currentColor 14%, transparent); } .cap-stable-search-clear:active { background: color-mix(in srgb, currentColor 18%, transparent); } .cap-stable-search-clear-icon, .cap-stable-search-clear-icon svg { display: block; width: 16px; height: 16px; } @container (max-width: 180px) { .cap-stable-search-clear { display: none; } }
-.cap-stable-search-feedback {
-  position: absolute;
-  inset: 0 12px 0 36px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  color: var(--cap-stable-text-muted);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-} .cap-stable-search-slot.is-showing-feedback input, .cap-stable-search-slot.is-showing-feedback .cap-stable-search-clear { visibility: hidden; } .cap-stable-search-slot.is-showing-feedback:focus-within input, .cap-stable-search-slot.is-showing-feedback:focus-within .cap-stable-search-clear { visibility: visible; } .cap-stable-search-slot.is-showing-feedback:focus-within .cap-stable-search-feedback { display: none; }
 .cap-stable-results-slot > .cap-results-view {
   display: flex;
   flex-direction: column;
