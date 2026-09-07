@@ -10,7 +10,6 @@ import { VirtualImageGrid } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
 import type { AiResultSectionPhase, AiResultSectionProgress } from "./ResultSectionCard";
 import type { ResultGridScrollMemory } from "../virtualGridLayout";
-
 type SpacePressSnapshot = {
   index: number;
   items: ImageIndexItem[];
@@ -25,7 +24,7 @@ const toFullImageUrl = (filePath: string) => `cap7ce://image/?path=${encodeURICo
 const toSearchShellPreviewUrl = (filePath: string) => `cap7ce://search-shell-preview/?path=${encodeURIComponent(filePath)}`;
 
 export interface ResultsViewProps {
-  images: ImageIndexItem[];
+  active: boolean; images: ImageIndexItem[];
   isSearching: boolean;
   aiSearchPhase: AiResultSectionPhase;
   aiSearchProgress: AiResultSectionProgress;
@@ -49,7 +48,7 @@ export interface ResultsViewProps {
   onAiSearchSectionToggle: () => void;
 }
 
-export const ResultsView = ({ images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onAiSearchSectionToggle }: ResultsViewProps) => {
+export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onAiSearchSectionToggle }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -448,6 +447,7 @@ export const ResultsView = ({ images, isSearching, aiSearchPhase, aiSearchProgre
   }, [gridMetrics.columnCount, images.length, resultGridLayoutItems, selectImageByIndex, selectedImageIndex]);
 
   useEffect(() => {
+    if (!active) return undefined;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (spaceReleaseGuardRef.current.shouldSuppressKeyDown(event.code)) {
         event.preventDefault();
@@ -572,7 +572,7 @@ export const ResultsView = ({ images, isSearching, aiSearchPhase, aiSearchProgre
       // Preserve an active hold across that listener refresh; the dedicated
       // unmount effect and explicit interaction changes own cancellation.
     };
-  }, [cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
+  }, [active, cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
   return (
     <main className="results-view cap-results-view" data-results-view="true">
       <VirtualImageGrid

@@ -23,7 +23,10 @@ const sharedMenuStyles = read("src/renderer/components/ResponsiveFileContextMenu
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
 assert.match(appSource, /stableUiRenderer: StableUiRenderer/);
-assert.match(appSource, /resultContent=\{<ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(\)\} \/>\}/);
+assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}/);
+assert.match(resultsSource, /active: boolean[\s\S]*?useEffect\(\(\) => \{[\s\S]*?if \(!active\) return undefined;[\s\S]*?window\.addEventListener\("keydown", handleKeyDown, true\)/u);
+assert.match(appSource, /if \(selectedResultImageId\) \{[\s\S]*?setClearSelectionRequestId/u);
+assert.doesNotMatch(appSource, /view === "results" && selectedResultImageId/u);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);

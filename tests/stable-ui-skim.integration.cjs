@@ -13,6 +13,7 @@ const panelStyles = read("src/renderer/stable-ui/StableSkimPanel.css");
 const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
 const skimViewStyles = read("src/renderer/skim/SkimView.css");
 const skimViewSource = read("src/renderer/skim/SkimView.tsx");
+const skimKeyboardSelectionSource = read("src/renderer/skim/useSkimKeyboardSelection.ts");
 const responsiveMenuSource = read("src/renderer/skim/ResponsiveSkimContextMenuLayer.tsx");
 const rootSectionsSource = read("src/renderer/skim/SkimRootSections.tsx");
 const rootSectionsStyles = read("src/renderer/skim/SkimRootSections.css");
@@ -48,6 +49,11 @@ for (const marker of ["onClick={startPathEditing}", "event.target.closest(\"butt
 for (const marker of ["active?: boolean", "if (!active) return undefined", "is-embedded", "window.matchMedia(\"(max-height: 359.98px)\")"]) {
   assert.ok(skimViewSource.includes(marker), `Stable Skim view is missing ${marker}.`);
 }
+for (const marker of ["getSkimGridNavigationIndex", "getSkimKeyboardNavigationPaths", "systemLocationsCollapsed", "starredLocationsCollapsed", "drivesCollapsed", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "getScrollTopToRevealItem", "getScrollLeftToRevealItem", "onClearSelection"]) {
+  assert.ok(skimKeyboardSelectionSource.includes(marker), `Skim keyboard selection is missing ${marker}.`);
+}
+assert.match(skimViewSource, /useSkimKeyboardSelection\(\{ active, currentPath,[\s\S]*?onSelectEntry:[\s\S]*?onSelectRootPath: selectRootPath,[\s\S]*?onClearSelection: clearSelection/u);
+assert.match(skimViewSource, /focusedElement\.closest\('\[data-skim-view="true"\] button'\)[\s\S]*?focusedElement\.blur\(\)/u);
 assert.doesNotMatch(skimViewSource, /Cap7CESearchCapsule|embedded\?: boolean|responsiveLayout\?: boolean/);
 for (const marker of ["currentPath === null", "<SkimRootSections", "rootLocations: SkimLocationShortcut[]", "onToggleSystemLocations"]) {
   assert.ok(skimViewSource.includes(marker), `Stable Skim root bridge is missing ${marker}.`);

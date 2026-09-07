@@ -2240,7 +2240,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           return;
         }
 
-        if (view === "results" && selectedResultImageId) {
+        if (selectedResultImageId) {
           setClearSelectionRequestId((requestId) => requestId + 1);
           return;
         }
@@ -2319,8 +2319,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const resultStatusNode = <ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />;
-  const createResultsViewProps = (): ResultsViewProps => ({
-    images: searchResults,
+  const createResultsViewProps = (active: boolean): ResultsViewProps => ({
+    active, images: searchResults,
     isSearching: isSearching || aiSearchBeta.busy,
     aiSearchPhase: aiSearchBeta.phase,
     aiSearchProgress: aiSearchBeta.progress,
@@ -2417,7 +2417,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         inputFeedback={searchInputFeedback}
         inputFeedbackIsGuide={operationHintVisible}
         resultStatus={resultStatusNode}
-        resultContent={<ResultsView key={search.directoryId} {...createResultsViewProps()} />}
+        resultContent={(active) => <ResultsView key={search.directoryId} {...createResultsViewProps(active)} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
         sidebar={{
           search, directories: directoryOptions,

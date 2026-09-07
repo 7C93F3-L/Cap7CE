@@ -10,7 +10,7 @@ export interface StableUiRendererProps {
   searchInputRef: Ref<HTMLInputElement>;
   inputFeedback: string;
   inputFeedbackIsGuide: boolean;
-  resultStatus: ReactNode; resultContent: ReactNode; overlayContent: ReactNode;
+  resultStatus: ReactNode; resultContent: (active: boolean) => ReactNode; overlayContent: ReactNode;
   sidebar: StableSidebarProps;
   skim: StableSkimProps;
   directoryDropEnabled: boolean;

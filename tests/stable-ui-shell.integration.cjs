@@ -37,6 +37,7 @@ const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
 assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\}\s*\/>/);
+assert.match(mainShellSource, /\{resultContent\(!skimOpen\)\}/u);
 assert.match(titlebarSource, /\{searchInput\}/);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
@@ -99,7 +100,7 @@ assert.match(confirmationPanelsSource, /<DialogShell[\s\S]*?warningGradientSvg/u
 assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-stable-flyout-surface\)\)/u);
 assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
-assert.match(appSource, /resultContent=\{<ResultsView[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
+assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
 assert.match(appSource, /useCurrentPageRefreshShortcut\(\{[\s\S]*?refresh: refreshCurrentPage,[\s\S]*?t\("common\.refreshed"\)/u);
 assert.match(refreshShortcutSource, /event\.key !== "F5"[\s\S]*?requestRefresh\(\)/u);
 assert.match(refreshShortcutSource, /onRefreshCurrentPageRequested\(requestRefresh\)/u);

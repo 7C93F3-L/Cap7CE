@@ -17,6 +17,7 @@ import SvgIcon from "../components/SvgIcon";
 import CustomScrollbar from "../CustomScrollbar";
 import ResponsiveSkimContextMenuLayer from "./ResponsiveSkimContextMenuLayer";
 import SkimRootSections from "./SkimRootSections";
+import { useSkimKeyboardSelection } from "./useSkimKeyboardSelection";
 import { resolveFileContentPreview } from "../contentPreview";
 import { getDirectoryPath, isWindowsRootPath, normalizeWindowsPathKey } from "../filePath";
 import { formatDisplayMessage } from "../formatting";
@@ -207,6 +208,11 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
     : contextMenuRemovableSidebarFolderPaths.length > 0
       ? "remove"
       : "unavailable";
+  const clearSelection = useCallback(() => {
+    const focusedElement = document.activeElement;
+    if (focusedElement instanceof HTMLElement && focusedElement.closest('[data-skim-view="true"] button')) focusedElement.blur();
+    setSelectedPaths(new Set()); setActivePath(null); selectionAnchorPathRef.current = null;
+  }, []);
   const getEntryIcon = (entry: SkimBrowseEntry) => {
     if (entry.kind === "drive") return skimDiskSvg;
     if (entry.kind === "folder") {
@@ -223,12 +229,7 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
     return () => mediaQuery.removeEventListener("change", updateLayout);
   }, []);
 
-  useEffect(() => {
-    setSelectedPaths(new Set());
-    setActivePath(null);
-    setContextMenu(null);
-    selectionAnchorPathRef.current = null;
-  }, [currentPath]);
+  useEffect(() => { clearSelection(); setContextMenu(null); }, [clearSelection, currentPath]);
 
   useEffect(() => () => {
     previewRequestGuard.invalidate();
@@ -343,12 +344,19 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
     selectionAnchorPathRef.current = entry.path;
   }, [entries]);
 
+  const selectKeyboardEntry = useCallback((entry: SkimBrowseEntry) => selectEntry(entry, false, false), [selectEntry]);
+
   const selectRootPath = useCallback((path: string) => {
     setSelectedPaths(new Set([path]));
     setActivePath(path);
     selectionAnchorPathRef.current = path;
     setContextMenu(null);
   }, []);
+
+  useSkimKeyboardSelection({ active, currentPath, entries, rootLocations, systemLocationsCollapsed, starredLocationsCollapsed: rootStarredCollapsed, drivesCollapsed: rootDrivesCollapsed,
+    activePath, selectedPathCount: selectedPaths.size, contextMenuOpen: contextMenu !== null,
+    columnCount: gridLayout.columnCount, cellSize: gridLayout.cellSize, horizontal: isHorizontalGrid, scrollContainerRef,
+    onSelectEntry: selectKeyboardEntry, onSelectRootPath: selectRootPath, onClearSelection: clearSelection });
 
   const openRootLocationContextMenu = useCallback((event: React.MouseEvent<HTMLButtonElement>, location: SkimLocationShortcut) => {
     if (!location.path) return;
@@ -508,7 +516,7 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
     const handleSelectionKeyDown = (event: KeyboardEvent) => {
       if (isEditableKeyboardTarget(event.target)) return;
       if (contextMenu) {
-        if (event.key === "Escape") setContextMenu(null);
+        if (event.key === "Escape") { event.preventDefault(); setContextMenu(null); }
         return;
       }
 
@@ -567,10 +575,6 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
         return;
       }
 
-      if (event.key !== "Escape" || selectedPaths.size === 0) return;
-      setSelectedPaths(new Set());
-      setActivePath(null);
-      selectionAnchorPathRef.current = null;
     };
     window.addEventListener("keydown", handleSelectionKeyDown);
     return () => window.removeEventListener("keydown", handleSelectionKeyDown);
@@ -584,12 +588,7 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
         "--cap-grid-target-size": `${gridTargetThumbSize}px`,
         "--cap-grid-gap": `${imageGridGap}px`
       } as CSSProperties}
-      onClick={() => {
-      setContextMenu(null);
-      setSelectedPaths(new Set());
-      setActivePath(null);
-      selectionAnchorPathRef.current = null;
-      }}
+      onClick={() => { setContextMenu(null); clearSelection(); }}
     >
       <div className={`cap-skim-grid-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-${isHorizontalGrid ? "horizontal" : "vertical"}`}>
         <section
