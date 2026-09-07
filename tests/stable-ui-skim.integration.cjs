@@ -33,7 +33,7 @@ assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
 for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
   assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
 }
-assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimOpen\)\} \/>/);
+assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimKeyboardActive\)\} \/>/);
 assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.toggleRequestId\)/u);
 assert.match(layoutSource, /useState\(false\)/);
 assert.match(layoutSource, /handledSkimToggleRequestIdRef[\s\S]*?useEffect[\s\S]*?toggleSkim\(\)/u);
