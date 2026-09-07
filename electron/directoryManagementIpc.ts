@@ -1,4 +1,4 @@
-import type { PersistedDirectory } from "./directoryStore";
+import type { DirectoryMoveDirection, PersistedDirectory } from "./directoryStore";
 import type { IpcMainInvokeEvent } from "electron";
 import type { DirectoryAddRequest, DirectoryAddResult } from "./directoryAddService";
 import type { ImageScanResult, ScannedFile, ScannedImageFile } from "./imageScanner";
@@ -9,6 +9,7 @@ export interface DirectoryManagementIpcDependencies {
   listDirectories: () => Promise<PersistedDirectory[]>;
   broadcastDirectoriesChanged: (directories: PersistedDirectory[]) => void;
   updateDirectoryName: (id: string, name: string) => Promise<PersistedDirectory[]>;
+  moveDirectory: (id: string, direction: DirectoryMoveDirection) => Promise<PersistedDirectory[]>;
   decorateDirectories: (directories: PersistedDirectory[]) => Promise<PersistedDirectory[]>;
   selectDirectoryCandidates: (event: IpcMainInvokeEvent) => Promise<string[] | null>;
   createCancelledDirectoryAddResult: () => Promise<DirectoryAddResult>;
@@ -53,6 +54,7 @@ export const registerDirectoryManagementIpc = ({
   listDirectories,
   broadcastDirectoriesChanged,
   updateDirectoryName,
+  moveDirectory,
   decorateDirectories,
   selectDirectoryCandidates,
   createCancelledDirectoryAddResult,
@@ -99,6 +101,16 @@ export const registerDirectoryManagementIpc = ({
         listener: async (_event, id: string, name: string) => (
           decorateAndBroadcast(await updateDirectoryName(id, name))
         )
+      },
+      {
+        kind: "handle",
+        channel: "directories:move",
+        listener: async (_event, id: string, direction: unknown) => {
+          if (direction !== "up" && direction !== "down") {
+            throw new Error("Invalid directory move direction.");
+          }
+          return decorateAndBroadcast(await moveDirectory(id, direction));
+        }
       },
       {
         kind: "handle",

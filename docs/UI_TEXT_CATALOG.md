@@ -112,6 +112,7 @@
 | `search.aiVisionInvalidResponse` | llama-server 返回了无效响应。 |  | llama-server returned an invalid response. | 模型 JSON 失败反馈 |
 | `runtime.visionStartupFailed` / `runtime.visionUnavailable` | llama-server 启动或视觉模型加载失败。/ llama-server 已启动，但健康检查或模型状态不可用。 |  | llama-server failed to start or load the vision model. / llama-server started, but its health check or model state is unavailable. | AI 深度匹配启动兜底反馈 |
 | `search.directorySelect`       | 目录选择                                           |                                        |     | 图标提示               |
+| `stableUi.sidebar.moveDirectoryUp` / `stableUi.sidebar.moveDirectoryDown` | 上移 / 下移 | | Move Up / Move Down | 已添加目录管理浮层 |
 | `skim.locationPicker.open`     | skim 边栏                                        |                                        | skim sidebar | 主窗口与预览窗口入口 title / aria-label |
 | `skim.locationPicker.close`    | 收起 skim 边栏                                     |                                        | Close skim sidebar | 主窗口与预览窗口入口 title / aria-label |
 | `search.directorySwitched`     | 已切换到目录 {name}                                  |                                        |     | 目录标签反馈            |

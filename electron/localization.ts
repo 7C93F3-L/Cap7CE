@@ -155,6 +155,8 @@ export const zhCN = {
   "stableSettings.confirmClearCache": "确定清理正式视觉缓存吗？自动缓存优化将关闭。",
   "stableSettings.confirmClearSkimCache": "确定清理独立 Skim 缓存吗？源文件不会受到影响。",
   "stableSettings.rename": "重命名",
+  "stableUi.sidebar.moveDirectoryUp": "上移",
+  "stableUi.sidebar.moveDirectoryDown": "下移",
   "stableSettings.update.readOnlyMaterial": "后续功能",
   "search.inputLabel": "搜索关键词",
   "search.clearQuery": "清空搜索关键词",

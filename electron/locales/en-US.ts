@@ -155,6 +155,8 @@ export const enUS = defineLocale({
   "stableSettings.confirmClearCache": "Clear the formal visual cache? Automatic cache optimization will be disabled.",
   "stableSettings.confirmClearSkimCache": "Clear the separate Skim cache? Source files will not be affected.",
   "stableSettings.rename": "Rename",
+  "stableUi.sidebar.moveDirectoryUp": "Move Up",
+  "stableUi.sidebar.moveDirectoryDown": "Move Down",
   "stableSettings.update.readOnlyMaterial": "Future feature",
   "search.inputLabel": "Search Keywords",
   "search.clearQuery": "Clear search keywords",

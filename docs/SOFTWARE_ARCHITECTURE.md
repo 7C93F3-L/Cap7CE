@@ -79,7 +79,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `src/renderer/settings-window/SettingsWindowApp.tsx` / `useSettingsWindowController.ts` / `SettingsWindowUpdateControl.tsx` / `SettingsConfirmationDialog.tsx` / `SettingsWindowAccessibility.css` | 独立 Settings 的八分类页面组合、本地条目筛选、正式偏好与领域任务控制器、应用更新状态、共享确认弹窗适配，以及键盘焦点 / 长文案 / 减少动态效果；直接复用 preload 白名单，不持有第二份持久化、目录、缓存、快捷键、诊断、运行时或模型服务。窗口材质通过白名单偏好链选择 Acrylic / Mica，并同步刷新 stable 三窗口或回退安全纯色；字体大小通过正式偏好链在 12–16px 五档间选择并同步 stable 窗口；新版快捷列表只显示五项窗口动作与目录循环并读取 stable 专用快捷配置 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
 | `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：仅在距离非任务栏边缘 5 DIP 内判断为停靠、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
-| `directoryStore.ts` | 已添加目录配置、目录显示名与持久化 |
+| `directoryStore.ts` | 已添加目录配置、目录显示名、用户排列顺序与原子持久化；顺序调整只交换配置数组位置，不触碰索引和源文件 |
 | `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听、窗口创建失败事件，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
 | `runtimeDiagnosticBundle.ts` / `diagnosticsIpc.ts` | 对主 Renderer 开放运行信息读取、会话级详细记录和脱敏 ZIP 导出；导出限制单文件、总体积与崩溃报告数量，不接收 Renderer 任意路径 |
 | `searchIpc.ts` | 正式搜索、取消和显式刷新三个 channel 的 sender 校验与任务取消表；调用既有搜索 / 快照服务，并向运行诊断只提交查询长度、范围、排序、结果数及可选的格式聚合，不提交搜索文字或文件路径 |

@@ -1647,6 +1647,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     setEditingDirectoryId(null);
   };
 
+  const moveDirectory = async (id: string, direction: "up" | "down") => {
+    const nextDirectories = await window.cap7ce?.directories.move(id, direction);
+    if (nextDirectories) refreshDirectories(nextDirectories);
+  };
+
   const deleteDirectoryById = async (directoryId: string) => {
     const deletedDirectories = await window.cap7ce?.directories.delete(directoryId);
     const reloadedDirectories = await window.cap7ce?.directories.list();
@@ -2400,6 +2405,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           onAddDirectory: () => void addDirectory(),
           onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),
+          onMoveDirectory: (id, direction) => void moveDirectory(id, direction),
           onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
           onOpenSettings: () => void window.cap7ce?.settingsWindow.open()
         }}

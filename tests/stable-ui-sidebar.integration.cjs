@@ -25,6 +25,7 @@ for (const marker of [
   "onSearchDisplayModeChange",
   "onAddDirectory",
   "onDirectoryNameChange",
+  "onMoveDirectory",
   "onDeleteDirectory",
   "onOpenSettings"
 ]) assert.ok(sidebarTypesSource.includes(marker), `Stable sidebar contract is missing ${marker}.`);
@@ -47,6 +48,7 @@ for (const marker of [
   "editingDirectoryId === directory.id",
   "onDoubleClick",
   "onContextMenu",
+  "is-menu-open",
   "directory.fileCount"
 ]) assert.ok(sidebarSource.includes(marker), `Stable sidebar display is missing ${marker}.`);
 
@@ -78,12 +80,16 @@ assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stab
 assert.match(sidebarSource, /cap-stable-settings-button[\s\S]*?<StableUiIcon name="settings"[\s\S]*?<StableUiIcon name="settings" active/u);
 assert.match(sidebarSource, /aria-label=\{t\("stableSettings\.rename"\)\}/u);
 assert.match(sidebarSource, />\{t\("stableSettings\.rename"\)\}<\/button>/u);
+assert.match(sidebarSource, /disabled=\{flyoutDirectoryIndex <= 0\}[\s\S]*?onMoveDirectory\(flyout\.directory\.id, "up"\)[\s\S]*?stableUi\.sidebar\.moveDirectoryUp/u);
+assert.match(sidebarSource, /disabled=\{flyoutDirectoryIndex < 0 \|\| flyoutDirectoryIndex >= addedDirectories\.length - 1\}[\s\S]*?onMoveDirectory\(flyout\.directory\.id, "down"\)[\s\S]*?stableUi\.sidebar\.moveDirectoryDown/u);
+assert.match(sidebarSource, /cap-stable-sidebar-flyout-separator" role="separator"/u);
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; transform: translateY\(-2px\); \}/u);
 assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;[\s\S]*?\.cap-stable-directory-row \{ display: block; width: 32px; margin-inline: auto; border-radius: 9px; \}/u);
-assert.match(sidebarSource, /className=\{`cap-stable-directory-row\$\{selected \? " is-selected" : ""\}`\}/u);
+assert.match(sidebarSource, /className=\{`cap-stable-directory-row\$\{selected \? " is-selected" : ""\}\$\{menuOpen \? " is-menu-open" : ""\}`\}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-row \{[^}]*grid-template-columns: minmax\(0, 1fr\) 32px;/u);
-assert.match(sidebarStyles, /\.cap-stable-directory-row:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-row\.is-selected \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}[\s\S]*?\.cap-stable-directory-row > \.cap-stable-directory-item\.is-selected \{ background: transparent; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-row:hover, \.cap-stable-directory-row\.is-menu-open \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-row\.is-selected \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}[\s\S]*?\.cap-stable-directory-row > \.cap-stable-directory-item\.is-selected \{ background: transparent; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-row\.is-menu-open \.cap-stable-directory-more,[\s\S]*?opacity: \.72;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-more \{[^}]*justify-self: center;[^}]*width: 24px; height: 24px;[^}]*margin-left: 0;[^}]*border-radius: 50%;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-more:hover \{ color: var\(--text-main\); background: var\(--cap-stable-directory-more-hover, color-mix\(in srgb, currentColor 14%, transparent\)\); opacity: 1; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-row\.is-selected:hover \.cap-stable-directory-more \{ opacity: 1; \}[\s\S]*?theme-dark:is\(\[data-window-material="acrylic"\], \[data-window-material="mica"\]\)[^}]*background: rgb\(0 0 0 \/ 32%\);/u);
@@ -101,6 +107,8 @@ assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button:hover \{ backgro
 assert.doesNotMatch(sidebarSource, /cap-stable-flyout-title/u);
 assert.doesNotMatch(skimToolbarSource, /cap-stable-flyout-title/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-danger \{ color: inherit; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button:disabled[^}]*opacity: 0\.45/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout-separator \{[^}]*height: 1px;/u);
 assert.match(sidebarFlyoutSource, /document\.querySelector<HTMLElement>\("\.cap-stable-ui"\) \?\? document\.body/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-footer-icon\s*\{[^}]*opacity:/u);
 assert.match(stableUiIconSource, /icon-sort-asc\.svg\?raw/u);

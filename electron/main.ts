@@ -21,7 +21,7 @@ import { setVisualPropertyForegroundActive } from "./visualPropertyRuntime";
 import { AppUpdateDownloadError, checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadErrorCode, type AppUpdateDownloadProgress } from "./appUpdateService";
 import { consumeAppUpdateCompletion } from "./appUpdateCompletion";
 import { createAppUpdateLauncherScript, resolveWindowsPowerShellPath } from "./appUpdateLauncher";
-import { applyDirectoryFileCounts, deleteDirectory, listDirectories, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
+import { applyDirectoryFileCounts, deleteDirectory, listDirectories, moveDirectory, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
 import { startNativeFileDrag } from "./fileDragService";
@@ -2344,6 +2344,7 @@ registerDirectoryManagementIpc({
   registrar: ipcMain, broadcastDirectoriesChanged: (directories) => broadcastSettingsData("directories:changed", directories),
   listDirectories,
   updateDirectoryName,
+  moveDirectory,
   decorateDirectories: withSqliteImageCounts,
   selectDirectoryCandidates: async (event) => {
     const options: OpenDialogOptions = {

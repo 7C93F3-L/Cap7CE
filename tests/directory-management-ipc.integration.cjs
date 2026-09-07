@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { registerDirectoryManagementIpc } = require("../dist-electron/directoryManagementIpc.js");
+const { moveDirectoryInList } = require("../dist-electron/directoryStore.js");
 
 const run = async () => {
   const appSource = fs.readFileSync(path.join(__dirname, "..", "src", "renderer", "App.tsx"), "utf8");
@@ -18,6 +19,7 @@ const run = async () => {
   const calls = [];
   const originalDirectories = [{ id: "one", name: "Original", path: "C:\\Original", indexedCount: 1 }];
   const renamedDirectories = [{ id: "one", name: "Renamed", path: "C:\\Original", indexedCount: 1 }];
+  const movedDirectories = [{ id: "two", name: "Second" }, ...originalDirectories];
   const addedDirectory = { id: "added", name: "Added", indexedCount: 0 };
   registerDirectoryManagementIpc({
     registrar: {
@@ -32,6 +34,10 @@ const run = async () => {
     updateDirectoryName: async (id, name) => {
       calls.push(["updateName", id, name]);
       return renamedDirectories;
+    },
+    moveDirectory: async (id, direction) => {
+      calls.push(["move", id, direction]);
+      return movedDirectories;
     },
     decorateDirectories: async (directories) => {
       calls.push(["decorate", directories]);
@@ -86,6 +92,7 @@ const run = async () => {
   assert.deepEqual([...handles.keys()], [
     "directories:list",
     "directories:updateName",
+    "directories:move",
     "directories:selectAndAdd",
     "directories:addCandidates",
     "directories:refreshFileCounts",
@@ -98,6 +105,8 @@ const run = async () => {
   assert.deepEqual(await handles.get("directories:updateName")(event, "one", "Renamed"), [
     { id: "one", name: "Renamed", path: "C:\\Original", indexedCount: 7 }
   ]);
+  assert.deepEqual(await handles.get("directories:move")(event, "one", "down"), movedDirectories.map((directory) => ({ ...directory, indexedCount: 7 })));
+  await assert.rejects(handles.get("directories:move")(event, "one", "sideways"), /Invalid directory move direction/);
   assert.deepEqual(await handles.get("directories:selectAndAdd")(event), {
     cancelled: false,
     directories: [{ ...addedDirectory, indexedCount: 7 }]
@@ -123,6 +132,8 @@ const run = async () => {
     ["decorate", originalDirectories],
     ["updateName", "one", "Renamed"],
     ["decorate", renamedDirectories],
+    ["move", "one", "down"],
+    ["decorate", movedDirectories],
     ["select"],
     ["addCandidates", { candidates: ["C:\\Added"] }],
     ["decorate", [addedDirectory]],
@@ -171,6 +182,7 @@ const run = async () => {
     listDirectories: async () => [],
     broadcastDirectoriesChanged: () => undefined,
     updateDirectoryName: async () => [],
+    moveDirectory: async () => [],
     decorateDirectories: async (directories) => {
       cancelledCalls.push(["decorate", directories]);
       return directories;
@@ -216,6 +228,17 @@ const run = async () => {
     ["decorate", []],
     ["decorate", []]
   ]);
+
+  const storedDirectories = [
+    { id: "one", name: "One" },
+    { id: "two", name: "Two" },
+    { id: "three", name: "Three" }
+  ];
+  assert.deepEqual(moveDirectoryInList(storedDirectories, "two", "up").map((directory) => directory.id), ["two", "one", "three"]);
+  assert.deepEqual(moveDirectoryInList(storedDirectories, "two", "down").map((directory) => directory.id), ["one", "three", "two"]);
+  assert.equal(moveDirectoryInList(storedDirectories, "one", "up"), storedDirectories);
+  assert.equal(moveDirectoryInList(storedDirectories, "three", "down"), storedDirectories);
+  assert.equal(moveDirectoryInList(storedDirectories, "missing", "up"), storedDirectories);
 
   console.log("Directory management IPC integration tests passed.");
 };

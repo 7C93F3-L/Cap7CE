@@ -86,6 +86,7 @@ declare global {
         addCandidates: (request: DirectoryAddRequest) => Promise<DirectoryAddResult>;
         refreshFileCounts: (directoryIds: string[]) => Promise<DirectoryItem[]>;
         updateName: (id: string, name: string) => Promise<DirectoryItem[]>;
+        move: (id: string, direction: "up" | "down") => Promise<DirectoryItem[]>;
         delete: (id: string) => Promise<DirectoryItem[]>;
         onChanged: (callback: (directories: DirectoryItem[]) => void) => () => void;
       };

@@ -147,6 +147,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
     addCandidates: (request: unknown) => ipcRenderer.invoke("directories:addCandidates", request),
     refreshFileCounts: (directoryIds: string[]) => ipcRenderer.invoke("directories:refreshFileCounts", directoryIds),
     updateName: (id: string, name: string) => ipcRenderer.invoke("directories:updateName", id, name),
+    move: (id: string, direction: "up" | "down") => ipcRenderer.invoke("directories:move", id, direction),
     delete: (id: string) => ipcRenderer.invoke("directories:delete", id),
     onChanged: (callback: (directories: unknown) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, directories: unknown) => callback(directories);

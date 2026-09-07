@@ -9,11 +9,14 @@ import type { StableSidebarProps } from "./stableSidebarTypes";
 import "./StableSidebar.css";
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
 interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; }
-const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onSearchDisplayModeChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
+const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onSearchDisplayModeChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
   const [flyout, setFlyout] = useState<FlyoutState>(null);
   const directoryScrollRef = useRef<HTMLDivElement | null>(null);
   const allDirectories = directories[0];
   const addedDirectories = directories.slice(1);
+  const flyoutDirectoryIndex = flyout?.kind === "directory"
+    ? addedDirectories.findIndex((directory) => directory.id === flyout.directory.id)
+    : -1;
   const sortValue = `${search.sortField === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · ${search.sortDirection === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}`;
   const scopeValue = skimDisplayMode === "all" ? t("stableUi.sidebar.scopeAll") : skimDisplayMode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault");
   const aiValue = aiSearchBusy ? t("search.section.aiMatching.title") : aiSearchEnabled ? t("common.enabled") : t("search.section.aiPaused.title");
@@ -25,6 +28,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
   const closeFlyout = () => setFlyout(null);
   const renderDirectory = (directory: DirectoryItem, all = false) => {
     const selected = search.directoryId === directory.id;
+    const menuOpen = flyout?.kind === "directory" && flyout.directory.id === directory.id;
     const count = directory.fileCount ?? "…";
     const title = all ? t("stableUi.sidebar.allDirectories") : `${directory.path}\n${t("settings.directoryFileCountHint")}：${count}`;
     if (!all && editingDirectoryId === directory.id) {
@@ -45,7 +49,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       {!all && <span className="cap-stable-directory-count">{count}</span>}
     </button>;
     if (all) return <div className="cap-stable-all-directories-row" key={directory.id}>{directoryButton}</div>;
-    return <div className={`cap-stable-directory-row${selected ? " is-selected" : ""}`} key={directory.id} onContextMenu={(event) => openDirectoryFlyout(directory, event)}>
+    return <div className={`cap-stable-directory-row${selected ? " is-selected" : ""}${menuOpen ? " is-menu-open" : ""}`} key={directory.id} onContextMenu={(event) => openDirectoryFlyout(directory, event)}>
       {directoryButton}
       <button className="cap-stable-directory-more" type="button" aria-label={t("common.manage")} onClick={(event) => openDirectoryFlyout(directory, event)}><StableSidebarIcon name="more" /></button>
     </div>;
@@ -89,6 +93,9 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={skimDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
     </StableSidebarFlyout>}
     {flyout?.kind === "directory" && <StableSidebarFlyout anchor={flyout.anchor} label={flyout.directory.name} onClose={closeFlyout}>
+      <button type="button" disabled={flyoutDirectoryIndex <= 0} onClick={() => { onMoveDirectory(flyout.directory.id, "up"); closeFlyout(); }}>{t("stableUi.sidebar.moveDirectoryUp")}</button>
+      <button type="button" disabled={flyoutDirectoryIndex < 0 || flyoutDirectoryIndex >= addedDirectories.length - 1} onClick={() => { onMoveDirectory(flyout.directory.id, "down"); closeFlyout(); }}>{t("stableUi.sidebar.moveDirectoryDown")}</button>
+      <div className="cap-stable-sidebar-flyout-separator" role="separator" />
       <button type="button" onClick={() => { onEditDirectory(flyout.directory.id); closeFlyout(); }}>{t("stableSettings.rename")}</button>
       <button type="button" className="is-danger" onClick={() => { onDeleteDirectory(flyout.directory.id); closeFlyout(); }}>{t("common.delete")}</button>
     </StableSidebarFlyout>}

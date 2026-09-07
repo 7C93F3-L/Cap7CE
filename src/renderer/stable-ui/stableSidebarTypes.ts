@@ -17,6 +17,7 @@ export interface StableSidebarProps {
   onEditDirectory: (id: string) => void;
   onCancelDirectoryEdit: () => void;
   onDirectoryNameChange: (id: string, name: string) => void;
+  onMoveDirectory: (id: string, direction: "up" | "down") => void;
   onDeleteDirectory: (id: string) => void;
   onOpenSettings: () => void;
 }

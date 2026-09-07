@@ -25,6 +25,8 @@ export interface DirectoryScanSummary {
   scanError?: string;
 }
 
+export type DirectoryMoveDirection = "up" | "down";
+
 interface DirectoryConfig {
   version: 1;
   directories: PersistedDirectory[];
@@ -143,6 +145,31 @@ export const updateDirectoryName = async (id: string, name: string): Promise<Per
 
   await writeConfig(nextConfig);
   return nextConfig.directories;
+};
+
+export const moveDirectoryInList = (
+  directories: PersistedDirectory[],
+  id: string,
+  direction: DirectoryMoveDirection
+): PersistedDirectory[] => {
+  const currentIndex = directories.findIndex((directory) => directory.id === id);
+  if (currentIndex < 0) return directories;
+  const targetIndex = currentIndex + (direction === "up" ? -1 : 1);
+  if (targetIndex < 0 || targetIndex >= directories.length) return directories;
+  const reorderedDirectories = [...directories];
+  [reorderedDirectories[currentIndex], reorderedDirectories[targetIndex]] = [
+    reorderedDirectories[targetIndex],
+    reorderedDirectories[currentIndex]
+  ];
+  return reorderedDirectories;
+};
+
+export const moveDirectory = async (id: string, direction: DirectoryMoveDirection): Promise<PersistedDirectory[]> => {
+  const config = await readConfig();
+  const directories = moveDirectoryInList(config.directories, id, direction);
+  if (directories === config.directories) return directories;
+  await writeConfig({ version: 1, directories });
+  return directories;
 };
 
 export const deleteDirectory = async (id: string): Promise<PersistedDirectory[]> => {
