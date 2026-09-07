@@ -1,7 +1,8 @@
 import { app } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { getLlamaRuntimeSettings } from "./llamaRuntimeStore";
+import { getAiContentPaths } from "./aiContentPaths";
+import { t } from "./localization";
 
 export type GgufModelFileKind = "model" | "mmproj";
 export type GgufModelPairingStatus = "paired" | "missing_mmproj";
@@ -57,11 +58,6 @@ const configPath = () => path.join(app.getPath("userData"), "config", "gguf-mode
 
 const normalizeRelativePath = (relativePath: string) => relativePath.split(path.sep).join("/");
 const isMmprojName = (fileName: string) => /(^|[-_.])mmproj([-_.]|$)/i.test(path.parse(fileName).name);
-
-const resolveModelsRoot = async () => {
-  const runtimeSettings = await getLlamaRuntimeSettings();
-  return path.resolve(runtimeSettings.runtimeRoot, "..", "models");
-};
 
 const defaultConfig = (): PersistedGgufModelConfig => ({
   selectedModelId: "",
@@ -195,7 +191,7 @@ const pairVisionModels = (files: GgufModelFile[]): GgufVisionModel[] => {
 };
 
 const buildSettings = async (): Promise<GgufModelSettingsResponse> => {
-  const modelsRoot = await resolveModelsRoot();
+  const { modelsRoot } = getAiContentPaths();
   const config = await readConfig();
   if (!(await isDirectory(modelsRoot))) {
     return {
@@ -289,5 +285,3 @@ export const getSelectedGgufModelRuntime = async (): Promise<SelectedGgufModelRu
     mmprojPath: path.join(settings.modelsRoot, ...selectedModel.mmprojFile.relativePath.split("/"))
   };
 };
-
-import { t } from "./localization";

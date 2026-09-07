@@ -406,6 +406,8 @@ SQLite 在同一个数据库中保持相互分离的职责：`files` 保存全�
 
 当前路线是集成 `llama.cpp`，使用本地 GGUF 视觉模型，不再依赖 Ollama 作为主路线。
 
+`electron/aiContentPaths.ts` 是运行时与模型目录的单一解析边界。打包态只使用当前 `Cap7CE.exe` 所在目录内的 `llama.cpp` 与 `models`，不读取 `PORTABLE_EXECUTABLE_DIR`、父目录或 `resources` 相邻候选；开发态只使用 `app.getAppPath()` 对应的仓库目录。路径解析不创建、迁移、复制或删除目录，缺失时 Store 返回既有安全状态。多个程序副本各自读取本目录 AI 内容，但继续共享 `%APPDATA%\Cap7CE` 中的选择配置；用户切换程序副本后，若已保存的版本或模型在该副本中不存在，会按现有状态明确提示重新选择。
+
 模型系统包括：
 - llama.cpp 目录扫描。
 - `llama-server.exe` 选择、启动、停止和状态检查。
@@ -530,7 +532,7 @@ Settings 当前覆盖：
 
 | 路径 | 说明 |
 | --- | --- |
-| `electron/` | 主进程、IPC、窗口、索引、缓存、文件系统、llama.cpp、模型管理 |
+| `electron/` | 主进程、IPC、窗口、索引、缓存、文件系统、llama.cpp、模型管理；`aiContentPaths.ts` 固定开发态与当前程序副本的 AI 内容路径边界 |
 | `electron/preload.ts` | Renderer 安全 API 暴露 |
 | `src/renderer/` | stable React UI、搜索与 Skim 编排、Settings、Preview、样式和快捷指令 |
 | `src/renderer/dialogs/` | 关键词编辑与确认面板的纯 UI、局部类型和纯计算模型；确认类内容共用 `DialogShell` 浮层表面与按钮边界，业务状态仍由顶层编排持有 |
@@ -547,7 +549,7 @@ Settings 当前覆盖：
 | `dist-electron/` | Electron 主进程构建输出 |
 | `release/` | 打包输出目录 |
 
-用户配置、索引和缓存位于 `%APPDATA%\Cap7CE`。当前开发阶段不迁移旧 `%APPDATA%\Image Everything`，也不要自动删除旧目录。
+用户配置、索引和缓存位于 `%APPDATA%\Cap7CE`。每个程序副本的模型与运行时分别位于其 `models` 和 `llama.cpp` 子目录，应用不主动创建或迁移。当前开发阶段不迁移旧 `%APPDATA%\Image Everything`，也不要自动删除旧目录。
 
 ## 16. 0.9.9 当前稳定状态
 

@@ -1,6 +1,8 @@
 import { app } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { getAiContentPaths } from "./aiContentPaths";
+import { t } from "./localization";
 
 export type LlamaRuntimeStatus =
   | "available"
@@ -31,26 +33,6 @@ interface PersistedLlamaRuntimeConfig {
 
 const configPath = () => path.join(app.getPath("userData"), "config", "llama-runtime.json");
 
-const uniquePaths = (paths: string[]) => [
-  ...new Map(paths.map((candidate) => [path.resolve(candidate).toLowerCase(), path.resolve(candidate)])).values()
-];
-
-const runtimeRootCandidates = () => {
-  if (!app.isPackaged) {
-    return uniquePaths([
-      path.join(app.getAppPath(), "llama.cpp"),
-      path.join(process.cwd(), "llama.cpp")
-    ]);
-  }
-
-  const executableDirectory = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.execPath);
-  return uniquePaths([
-    path.resolve(executableDirectory, "..", "llama.cpp"),
-    path.join(executableDirectory, "llama.cpp"),
-    path.resolve(process.resourcesPath, "..", "..", "llama.cpp")
-  ]);
-};
-
 const isDirectory = async (candidatePath: string) => {
   try {
     return (await fs.stat(candidatePath)).isDirectory();
@@ -74,19 +56,10 @@ const isFile = async (candidatePath: string) => {
 };
 
 const resolveRuntimeRoot = async () => {
-  const candidates = runtimeRootCandidates();
-  for (const candidate of candidates) {
-    if (await isDirectory(candidate)) {
-      return {
-        runtimeRoot: candidate,
-        exists: true
-      };
-    }
-  }
-
+  const { runtimeRoot } = getAiContentPaths();
   return {
-    runtimeRoot: candidates[0],
-    exists: false
+    runtimeRoot,
+    exists: await isDirectory(runtimeRoot)
   };
 };
 
@@ -215,5 +188,3 @@ export const updateSelectedLlamaRuntime = async (selectedVersion: string) => {
   });
   return buildSettings();
 };
-
-import { t } from "./localization";
