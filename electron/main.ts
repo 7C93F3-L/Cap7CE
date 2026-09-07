@@ -76,7 +76,7 @@ import { closeFontPreviewSession, FontPreviewError, inspectFontPreviewSource, is
 import { closeEpubPreviewSession, EpubPreviewError, openEpubPreviewSession } from "./epubPreviewService";
 import { closeMobiPreviewSession, MobiPreviewError, openMobiPreviewSession } from "./mobiPreviewService";
 const applicationName = "Cap7CE";
-const windowsAppUserModelId = "com.cap7ce.app";
+const windowsAppUserModelId = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
 app.setName(applicationName);
 if (process.platform === "win32" && app.isPackaged) {
