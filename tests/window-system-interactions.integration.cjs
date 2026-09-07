@@ -16,7 +16,7 @@ assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInter
 assert.match(mainSource, /mainWindow\.on\("maximize", \(\) => mainWindow\?\.setHasShadow\(false\)\);/u);
 assert.match(mainSource, /window:toggleNormalMaximized[\s\S]*?mainWindow\.isMaximized\(\)[\s\S]*?mainWindow\.unmaximize\(\)[\s\S]*?mainWindow\.maximize\(\)/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
-assert.match(mainSource, /appTray\.on\("balloon-click", \(\) => void openSettings\(\)\)/u);
+assert.doesNotMatch(mainSource, /displayBalloon|balloon-click/u);
 assert.match(mainSource, /app\.on\("second-instance", \(\) => \{[\s\S]*?pendingSecondInstanceActivation = true;[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /mainWindow\.once\("ready-to-show", \(\) => \{[\s\S]*?if \(pendingSecondInstanceActivation\) \{[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /\{ id: "hideToLine", shortcut: shortcutActions\.hideToLine, mode: "standby" \}[\s\S]*?\{ id: "toggleSkim", shortcut: shortcutActions\.toggleSkim, mode: "skim" \}[\s\S]*?\{ id: "openSettings", shortcut: shortcutActions\.openSettings, mode: "settings" \}[\s\S]*?\{ id: "restoreDefaultWindow", shortcut: shortcutActions\.restoreDefaultWindow, mode: "normal" \}/u);
@@ -28,7 +28,7 @@ console.log(JSON.stringify({
   lineAppearsOnlyAfterMainHide: true,
   minimizeRemainsNativeOnly: true,
   nativeMaximizeLifecycleVerified: true,
-  trayAndNotificationUseRestoreEntry: true,
+  trayUsesRestoreEntry: true,
   secondInstanceUsesRestoreEntry: true,
   earlySecondInstanceDeferredUntilReady: true,
   altModeShortcutsShareMainWindowEntry: true,

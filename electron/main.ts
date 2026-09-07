@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, protocol, screen, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, Notification, protocol, screen, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -67,6 +67,7 @@ import { resolveStableUiDefaultWindowBounds, STABLE_UI_LAYOUT_FILE_NAME, STABLE_
 import { StableWindowRuntime } from "./stableWindowRuntime";
 import { getStablePreviewContentChrome, StablePreviewWindowSizing } from "./stablePreviewWindowSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
+import { createSystemNotificationService } from "./systemNotificationService";
 import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
 import { createSettingsDataBroadcaster } from "./settingsDataBroadcast";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
@@ -1052,25 +1053,23 @@ const isMainWindowInBackground = () => (
   Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isFocused())
 );
 
-const showSystemNotification = (title: string, content: string, options: { force?: boolean } = {}) => {
-  if ((!systemNotificationsEnabled && !options.force) || process.platform !== "win32" || !appTray) {
-    return false;
-  }
-  try {
-    appTray.displayBalloon({
-      iconType: "custom",
-      icon: path.join(app.getAppPath(), "build", "notification-icon.png"),
-      title,
-      content,
-      noSound: true,
-      respectQuietTime: true
-    });
-    return true;
-  } catch (error) {
-    console.warn("[system-notification] failed", error);
-    return false;
-  }
-};
+const systemNotificationService = createSystemNotificationService({
+  platform: process.platform,
+  isPackaged: app.isPackaged,
+  iconPath: path.join(app.getAppPath(), "build", "notification-icon.png"),
+  isSupported: () => Notification.isSupported(),
+  createNotification: (options) => new Notification(options),
+  registerActivationHandler: (handler) => Notification.handleActivation(handler),
+  onActivated: () => openSettings(),
+  diagnostics: runtimeDiagnostics
+});
+
+const showSystemNotification = (title: string, body: string, options: { force?: boolean } = {}) => systemNotificationService.show({
+  title,
+  body,
+  enabled: systemNotificationsEnabled,
+  force: options.force
+});
 
 const showBackgroundRunNotificationOnce = async (
   preferences: Awaited<ReturnType<typeof getUserPreferences>>
@@ -1131,7 +1130,6 @@ const createAppTray = () => {
   appTray = new Tray(path.join(app.getAppPath(), "build", "icon.ico"));
   appTray.setToolTip("Cap7CE");
   appTray.on("click", () => void activateShellModeShortcut("normal"));
-  appTray.on("balloon-click", () => void openSettings());
   updateTrayMenu();
 };
 
@@ -1623,6 +1621,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
     layoutStore: new SettingsWindowLayoutStore(path.join(app.getPath("userData"), "config", "settings-window-layout.json")), lockWebContentsZoom,
     preloadPath: path.join(__dirname, "preload.js"), prepareWindow: (window) => stableWindowRuntime.applySettingsWindowAppearance(window, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors), rendererPath: path.join(__dirname, "../dist/index.html")
   });
+  systemNotificationService.initialize();
   windowLayoutManager = new WindowLayoutManager(new WindowLayoutStore(path.join(app.getPath("userData"), "config", STABLE_UI_LAYOUT_FILE_NAME)));
   await windowLayoutManager.load();
   windowLayoutManager.setPreferences({ rememberWindowLayout: true });
