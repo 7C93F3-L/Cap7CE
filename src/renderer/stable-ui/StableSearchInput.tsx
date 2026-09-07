@@ -41,5 +41,4 @@ const StableSearchInput = ({ search, inputRef, inputFeedback, onSearchChange, on
     </form>
   );
 };
-
 export default StableSearchInput;

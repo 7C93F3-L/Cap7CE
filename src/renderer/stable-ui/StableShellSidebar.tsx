@@ -2,6 +2,7 @@ import { useRef, useState, type MouseEvent } from "react";
 import { t } from "../../../electron/localization";
 import type { DirectoryItem, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
+import StableDirectoryFlyout from "./StableDirectoryFlyout";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableSidebarIcon from "./StableSidebarIcons";
 import StableUiIcon from "./StableUiIcon";
@@ -14,9 +15,6 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
   const directoryScrollRef = useRef<HTMLDivElement | null>(null);
   const allDirectories = directories[0];
   const addedDirectories = directories.slice(1);
-  const flyoutDirectoryIndex = flyout?.kind === "directory"
-    ? addedDirectories.findIndex((directory) => directory.id === flyout.directory.id)
-    : -1;
   const sortValue = `${search.sortField === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · ${search.sortDirection === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}`;
   const scopeValue = skimDisplayMode === "all" ? t("stableUi.sidebar.scopeAll") : skimDisplayMode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault");
   const aiValue = aiSearchBusy ? t("search.section.aiMatching.title") : aiSearchEnabled ? t("common.enabled") : t("search.section.aiPaused.title");
@@ -92,13 +90,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("stableUi.sidebar.searchScope")} onClose={closeFlyout}>
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={skimDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
     </StableSidebarFlyout>}
-    {flyout?.kind === "directory" && <StableSidebarFlyout anchor={flyout.anchor} label={flyout.directory.name} onClose={closeFlyout}>
-      <button type="button" disabled={flyoutDirectoryIndex <= 0} onClick={() => { onMoveDirectory(flyout.directory.id, "up"); closeFlyout(); }}>{t("stableUi.sidebar.moveDirectoryUp")}</button>
-      <button type="button" disabled={flyoutDirectoryIndex < 0 || flyoutDirectoryIndex >= addedDirectories.length - 1} onClick={() => { onMoveDirectory(flyout.directory.id, "down"); closeFlyout(); }}>{t("stableUi.sidebar.moveDirectoryDown")}</button>
-      <div className="cap-stable-sidebar-flyout-separator" role="separator" />
-      <button type="button" onClick={() => { onEditDirectory(flyout.directory.id); closeFlyout(); }}>{t("stableSettings.rename")}</button>
-      <button type="button" className="is-danger" onClick={() => { onDeleteDirectory(flyout.directory.id); closeFlyout(); }}>{t("common.delete")}</button>
-    </StableSidebarFlyout>}
+    {flyout?.kind === "directory" && <StableDirectoryFlyout anchor={flyout.anchor} directory={flyout.directory} directories={addedDirectories} onMove={onMoveDirectory} onEdit={onEditDirectory} onDelete={onDeleteDirectory} onClose={closeFlyout} />}
   </aside>;
 };
 

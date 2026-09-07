@@ -26,7 +26,7 @@
 .cap-stable-directory-heading button:disabled { opacity: .4; }
 .cap-stable-directory-heading .cap-stable-sidebar-icon { width: 16px; height: 16px; }
 .cap-stable-all-directories-row { margin-bottom: 4px; } .cap-stable-directory-list-frame { min-width: 0; min-height: 0; align-items: start; } .cap-stable-directory-list { display: grid; align-self: start; align-content: start; gap: 4px; height: auto !important; max-height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; }
-.cap-stable-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: center; min-width: 0; border-radius: var(--cap-stable-radius-pill); } .cap-stable-directory-row:hover, .cap-stable-directory-row.is-menu-open { background: var(--cap-stable-navigation-state); } .cap-stable-directory-row.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); } .cap-stable-directory-row > .cap-stable-directory-item:hover, .cap-stable-directory-row > .cap-stable-directory-item.is-selected { background: transparent; }
+.cap-stable-directory-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: center; min-width: 0; border-radius: var(--cap-stable-radius-pill); } .cap-stable-directory-row:hover { background: var(--cap-stable-navigation-state); } .cap-stable-directory-row.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); } .cap-stable-directory-row > .cap-stable-directory-item:hover, .cap-stable-directory-row > .cap-stable-directory-item.is-selected { background: transparent; }
 .cap-stable-directory-item { grid-template-columns: 28px minmax(0, 1fr) auto; min-height: 34px; padding-block: 3px; }
 .cap-stable-directory-item.is-editing { background: transparent; }
 .cap-stable-directory-item input { min-width: 0; height: 24px; padding: 0 8px; border: 0; border-radius: 999px; outline: 0; color: inherit; background: var(--cap-stable-navigation-state); font: inherit; }
@@ -35,7 +35,6 @@
 .cap-stable-directory-count { padding-left: 4px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); } .cap-stable-directory-item.is-selected .cap-stable-directory-count, .cap-stable-directory-row.is-selected .cap-stable-directory-count { color: inherit; }
 .cap-stable-directory-more { display: grid; place-items: center; justify-self: center; width: 24px; height: 24px; margin-left: 0; padding: 0; border: 0; border-radius: 50%; color: inherit; background: transparent; opacity: 0; }
 .cap-stable-directory-row:hover .cap-stable-directory-more,
-.cap-stable-directory-row.is-menu-open .cap-stable-directory-more,
 .cap-stable-directory-more:focus-visible { opacity: .72; }
 .cap-stable-directory-row.is-selected:hover .cap-stable-directory-more { opacity: 1; }
 .cap-stable-directory-more:hover { color: var(--text-main); background: var(--cap-stable-directory-more-hover, color-mix(in srgb, currentColor 14%, transparent)); opacity: 1; }
@@ -52,10 +51,8 @@
 .cap-stable-sidebar-flyout { position: fixed; z-index: 50; display: grid; width: 184px; max-height: min(240px, calc(100vh - 10px)); box-sizing: border-box; gap: 2px; padding: 5px; border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 12px; color: var(--cap-stable-text); background: var(--cap-stable-flyout-surface); box-shadow: 0 10px 24px rgb(0 0 0 / 16%); overflow: auto; font: inherit; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); -webkit-app-region: no-drag; }
 .cap-stable-sidebar-flyout button { min-height: 30px; padding: 5px 9px; border: 0; border-radius: 999px; color: inherit; background: transparent; font: inherit; text-align: left; }
 .cap-stable-sidebar-flyout button:hover { background: var(--cap-stable-navigation-state); }
-.cap-stable-sidebar-flyout button:disabled { color: var(--cap-stable-text-muted); background: transparent; opacity: 0.45; cursor: default; }
 .cap-stable-sidebar-flyout button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); }
 .cap-stable-sidebar-flyout button.is-danger { color: inherit; }
-.cap-stable-sidebar-flyout-separator { height: 1px; margin: 3px 7px; background: color-mix(in srgb, currentColor 12%, transparent); }
 
 @container (max-width: 95px) {
   .cap-stable-sidebar { padding-inline: 4px; }

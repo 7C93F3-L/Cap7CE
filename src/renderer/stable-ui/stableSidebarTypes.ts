@@ -1,5 +1,4 @@
 import type { DirectoryItem, SearchState, SkimDisplayMode } from "../../shared/types";
-
 export interface StableSidebarProps {
   search: SearchState;
   directories: DirectoryItem[];

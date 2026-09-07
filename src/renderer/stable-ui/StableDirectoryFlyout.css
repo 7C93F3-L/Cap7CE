@@ -1,0 +1,4 @@
+.cap-stable-directory-row.is-menu-open { background: var(--cap-stable-navigation-state); }
+.cap-stable-directory-row.is-menu-open .cap-stable-directory-more { opacity: .72; }
+.cap-stable-sidebar-flyout button:disabled { color: var(--cap-stable-text-muted); background: transparent; opacity: .45; cursor: default; }
+.cap-stable-sidebar-flyout-separator { height: 1px; margin: 3px 7px; background: color-mix(in srgb, currentColor 12%, transparent); }

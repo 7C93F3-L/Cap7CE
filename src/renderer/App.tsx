@@ -27,6 +27,7 @@ import type {
   KeywordEditSession
 } from "./dialogs/dialogTypes";
 import { getCommonKeywords } from "./dialogs/keywordEditorModel";
+import { moveDirectoryAndRefresh } from "./directoryListActions";
 import { normalizeWindowsPathKey } from "./filePath";
 import { formatDisplayMessage } from "./formatting";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
@@ -41,6 +42,7 @@ import { SkimView, type SkimViewProps } from "./skim/SkimView";
 import { countSkimRootLocations } from "./skim/SkimRootSections";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
+import { useStableSkimCommands } from "./stable-ui/useStableSkimCommands";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
 import type {
   AppView,
@@ -251,8 +253,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [skimSidebarFolders, setSkimSidebarFolders] = useState<string[]>([]);
   const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
   const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
-  const [stableSkimToggleRequestId, setStableSkimToggleRequestId] = useState(0);
-  const [stableSkimOpenRequestId, setStableSkimOpenRequestId] = useState(0);
   const [search, setSearch] = useState<SearchState>(emptySearch);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
   const [, setSearchLabelVisibility] = useState<SearchLabelVisibilityPreferences>({
@@ -295,6 +295,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     back: navigateStableSkimBack,
     forward: navigateStableSkimForward
   } = useSkimNavigationHistory(loadSkimLocation);
+  const stableSkimCommands = useStableSkimCommands(openStableSkimLocation, skimCurrentPath);
   const visibleSkimEntries = useMemo(() => {
     if (skimDisplay.mode === "all") return skimEntries;
     const customExtensions = new Set(skimDisplay.customExtensions);
@@ -1316,14 +1317,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       defaultShortcutActions: defaultStableShortcutActions,
       currentAppearanceColors: appearanceColors,
       openSettings: () => openSettingsWindow(),
-      openSkim: () => {
-        void openStableSkimLocation(skimCurrentPath);
-        setStableSkimOpenRequestId((requestId) => requestId + 1);
-      },
-      openSkimRoot: () => {
-        void openStableSkimLocation(null);
-        setStableSkimOpenRequestId((requestId) => requestId + 1);
-      },
+      openSkim: stableSkimCommands.openCurrent,
+      openSkimRoot: stableSkimCommands.openRoot,
       updateTheme,
       updateWindowMaterial,
       updateUiFontSize,
@@ -1645,11 +1640,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       refreshDirectories(nextDirectories);
     }
     setEditingDirectoryId(null);
-  };
-
-  const moveDirectory = async (id: string, direction: "up" | "down") => {
-    const nextDirectories = await window.cap7ce?.directories.move(id, direction);
-    if (nextDirectories) refreshDirectories(nextDirectories);
   };
 
   const deleteDirectoryById = async (directoryId: string) => {
@@ -2048,7 +2038,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onToggleSkimLocationPickerRequested?.(() => {
       if (dialog === "editKeywords" || isAddingDirectory) return;
-      setStableSkimToggleRequestId((requestId) => requestId + 1);
+      stableSkimCommands.requestToggle();
     });
     return () => unsubscribe?.();
   }, [dialog, isAddingDirectory]);
@@ -2056,7 +2046,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onActivateSkimRequested?.(() => {
       if (dialog === "editKeywords") return;
-      setStableSkimToggleRequestId((requestId) => requestId + 1);
+      stableSkimCommands.requestToggle();
     });
     return () => unsubscribe?.();
   }, [dialog]);
@@ -2405,13 +2395,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           onAddDirectory: () => void addDirectory(),
           onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),
-          onMoveDirectory: (id, direction) => void moveDirectory(id, direction),
+          onMoveDirectory: (id, direction) => void moveDirectoryAndRefresh(id, direction, refreshDirectories),
           onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
           onOpenSettings: () => void window.cap7ce?.settingsWindow.open()
         }}
         skim={{
-          toggleRequestId: stableSkimToggleRequestId,
-          openRequestId: stableSkimOpenRequestId,
+          requests: stableSkimCommands.requests,
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,

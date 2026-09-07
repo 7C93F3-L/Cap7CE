@@ -11,7 +11,9 @@ const shellFiles = [
   "src/renderer/stable-ui/StableSkimToolbar.tsx",
   "src/renderer/stable-ui/useStableShellLayout.ts",
   "src/renderer/stable-ui/useStableShellResize.ts",
-  "src/renderer/stable-ui/useStableShellSizeMemory.ts"
+  "src/renderer/stable-ui/useStableShellSizeMemory.ts",
+  "src/renderer/stable-ui/useStableSkimVisibility.ts",
+  "src/renderer/stable-ui/useStableSkimCommands.ts"
 ];
 
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");

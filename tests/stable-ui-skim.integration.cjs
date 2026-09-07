@@ -18,6 +18,8 @@ const responsiveMenuSource = read("src/renderer/skim/ResponsiveSkimContextMenuLa
 const rootSectionsSource = read("src/renderer/skim/SkimRootSections.tsx");
 const rootSectionsStyles = read("src/renderer/skim/SkimRootSections.css");
 const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
+const commandSource = read("src/renderer/stable-ui/useStableSkimCommands.ts");
+const visibilitySource = read("src/renderer/stable-ui/useStableSkimVisibility.ts");
 const navigationHistorySource = read("src/renderer/controllers/useSkimNavigationHistory.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
@@ -25,26 +27,27 @@ assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSk
 assert.match(appSource, /onBack: navigateStableSkimBack/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
-assert.match(appSource, /onActivateSkimRequested[\s\S]*?setStableSkimToggleRequestId/u);
+assert.match(appSource, /onActivateSkimRequested[\s\S]*?stableSkimCommands\.requestToggle/u);
 assert.doesNotMatch(appSource, /if \(stableUi\)/u);
-assert.match(appSource, /toggleRequestId: stableSkimToggleRequestId/u);
-assert.match(appSource, /openRequestId: stableSkimOpenRequestId/u);
-assert.match(appSource, /openSkim: \(\) => \{[\s\S]*?openStableSkimLocation\(skimCurrentPath\)[\s\S]*?setStableSkimOpenRequestId/u);
-assert.match(appSource, /openSkimRoot: \(\) => \{[\s\S]*?openStableSkimLocation\(null\)[\s\S]*?setStableSkimOpenRequestId/u);
+assert.match(appSource, /requests: stableSkimCommands\.requests/u);
+assert.match(appSource, /openSkim: stableSkimCommands\.openCurrent/u);
+assert.match(appSource, /openSkimRoot: stableSkimCommands\.openRoot/u);
+assert.match(commandSource, /void openLocation\(path\)[\s\S]*?openId: current\.openId \+ 1/u);
 assert.match(appSource, /event\.target instanceof Element[\s\S]*?closest\("\.cap-stable-skim-slot"\)[\s\S]*?if \(targetsSkim\) \{\s*navigateStableSkimBack\(\);\s*return;/u);
 assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
 for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
   assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
 }
 assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(skimKeyboardActive\)\} \/>/);
-assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.toggleRequestId, skim\.openRequestId\)/u);
-assert.match(layoutSource, /useState\(false\)/);
-assert.match(layoutSource, /handledSkimToggleRequestIdRef[\s\S]*?useEffect[\s\S]*?toggleSkim\(\)/u);
-assert.match(layoutSource, /handledSkimOpenRequestIdRef[\s\S]*?setSkimOpen\(true\)/u);
-assert.match(layoutSource, /if \(!open\) onSkimOpen\(\)/);
+assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.requests\)/u);
+assert.match(layoutSource, /useStableSkimVisibility\(onSkimOpen, requests\)/u);
+assert.match(visibilitySource, /useState\(false\)/);
+assert.match(visibilitySource, /handledToggleIdRef[\s\S]*?useEffect[\s\S]*?toggleSkim\(\)/u);
+assert.match(visibilitySource, /handledOpenIdRef[\s\S]*?setSkimOpen\(true\)/u);
+assert.match(visibilitySource, /if \(!open\) onSkimOpen\(\)/);
 assert.doesNotMatch(slotSource, /StablePlaceholderGrid|aria-label="Skim 布局占位区"/);
 
-for (const marker of ["toggleRequestId", "openRequestId", "currentPath", "breadcrumbs", "onOpenPath", "onSortChange", "onDisplayModeChange", "renderContent: (active: boolean)"]) {
+for (const marker of ["StableSkimRequests", "toggleId", "openId", "currentPath", "breadcrumbs", "onOpenPath", "onSortChange", "onDisplayModeChange", "renderContent: (active: boolean)"]) {
   assert.ok(contractSource.includes(marker), `Stable Skim contract is missing ${marker}.`);
 }
 for (const marker of ["onClick={startPathEditing}", "event.target.closest(\"button\")", "onOpenRoot", "breadcrumb.path", "cap-stable-skim-address-hit-area", "sortField", "displayMode"]) {
