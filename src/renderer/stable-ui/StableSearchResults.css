@@ -23,7 +23,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
-}
+} .cap-stable-search-slot.is-showing-feedback input, .cap-stable-search-slot.is-showing-feedback .cap-stable-search-clear { visibility: hidden; } .cap-stable-search-slot.is-showing-feedback:focus-within input, .cap-stable-search-slot.is-showing-feedback:focus-within .cap-stable-search-clear { visibility: visible; } .cap-stable-search-slot.is-showing-feedback:focus-within .cap-stable-search-feedback { display: none; }
 .cap-stable-results-slot > .cap-results-view {
   display: flex;
   flex-direction: column;

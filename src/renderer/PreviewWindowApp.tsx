@@ -20,6 +20,7 @@ import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
 import { getTextColorForBackground } from "./appearance";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
+import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import "./stable-ui/StableMaterialContrast.css";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
@@ -106,6 +107,7 @@ const PreviewWindowApp = () => {
   const [previewKeywordEditorOpen, setPreviewKeywordEditorOpen] = useState(false);
   const [previewKeywordSavePending, setPreviewKeywordSavePending] = useState(false);
   const [previewKeywordSaveError, setPreviewKeywordSaveError] = useState("");
+  const { message: copiedPreviewSessionId, show: showPreviewPathCopied } = useTransientFeedback(1800);
   const previewSidebarLayout = usePreviewSidebarLayout();
   const previewSidebarWidth = previewSidebarLayout.expanded ? previewSidebarExpandedWidth : 40;
   const wheelThrottleRef = useRef(0);
@@ -376,7 +378,7 @@ const PreviewWindowApp = () => {
         } else if (fileShortcutAction === "showInFolder") {
           void window.cap7ce?.files.showInFolder(previewData.filePath);
         } else if (fileShortcutAction === "copyPaths") {
-          void window.cap7ce?.files.copyPaths([previewData.filePath]);
+          void window.cap7ce?.files.copyPaths([previewData.filePath]).then((count) => { if (count > 0) showPreviewPathCopied(previewData.sessionId); }, () => undefined);
         } else if (fileShortcutAction === "delete") {
           void window.cap7ce?.preview.requestItemAction({
             action: "deleteFile",
@@ -432,7 +434,7 @@ const PreviewWindowApp = () => {
       window.removeEventListener("blur", cancelSpaceHold);
       cancelSpaceHold();
     };
-  }, [closePreview, previewData, requestKeywordEdit, spaceHoldController]);
+  }, [closePreview, previewData, requestKeywordEdit, showPreviewPathCopied, spaceHoldController]);
 
   const savePreviewKeywords = useCallback(async (keywords: string[]) => {
     if (!previewData || previewData.skimActive || previewKeywordSavePendingRef.current) return;
@@ -565,7 +567,8 @@ const PreviewWindowApp = () => {
             });
           }}
           onShowInFolder={() => { void window.cap7ce?.files.showInFolder(previewData.filePath); }}
-          onCopyPath={() => { void window.cap7ce?.files.copyPaths([previewData.filePath]); }}
+          onCopyPath={() => { void window.cap7ce?.files.copyPaths([previewData.filePath]).then((count) => { if (count > 0) showPreviewPathCopied(previewData.sessionId); }, () => undefined); }}
+          copyPathCopied={copiedPreviewSessionId === previewData.sessionId}
           onEditKeywords={() => requestKeywordEdit(previewData)}
           onCancelKeywordEdit={() => {
             if (previewKeywordSavePending) return;

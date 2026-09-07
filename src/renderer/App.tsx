@@ -2381,7 +2381,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       menuStyle={contextMenuStyle}
       onOpen={(item) => void invokeFileAction("open", item)}
       onShowInFolder={(item) => void invokeFileAction("showInFolder", item)}
-      onCopyPaths={(items) => { setContextMenu(null); void window.cap7ce?.files.copyPaths(items.map((item) => item.filePath)); }}
+      onCopyPaths={(items) => { setContextMenu(null); void window.cap7ce?.files.copyPaths(items.map((item) => item.filePath)).then((count) => { if (count > 0) showQuickCommandNotice(t("clipboard.copied")); }, () => undefined); }}
       onEditKeywords={requestEditKeywords}
       onDelete={requestDeleteFiles}
     />

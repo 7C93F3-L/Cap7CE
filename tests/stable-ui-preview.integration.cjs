@@ -73,6 +73,8 @@ assert.match(sidebarSource, /preview-sidebar-section preview-sidebar-file-card[\
 assert.match(sidebarSource, /className="preview-sidebar-path"[\s\S]*?onClick=\{onShowInFolder\}/u);
 assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{scrollRef\} orientation="vertical" \/>/u);
 assert.doesNotMatch(sidebarSource, /window\.cap7ce/u);
+assert.match(previewSource, /useTransientFeedback\(1800\)[\s\S]*?copyPathCopied=\{copiedPreviewSessionId === previewData\.sessionId\}/u);
+assert.match(sidebarSource, /t\(copyPathCopied \? "clipboard\.copied" : "context\.copyPath"\)/u);
 
 assert.match(layoutSource, /cap7ce\.preview\.sidebar-layout\.v1/u);
 assert.match(layoutSource, /previewSidebarExpandedWidth = 280/u);

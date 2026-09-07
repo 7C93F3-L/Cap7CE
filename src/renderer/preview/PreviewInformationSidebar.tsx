@@ -10,7 +10,7 @@ interface PreviewInformationSidebarProps {
   data: PreviewWindowData; expanded: boolean;
   onToggleExpanded: () => void;
   onOpen: () => void;
-  onShowInFolder: () => void; onCopyPath: () => void;
+  onShowInFolder: () => void; onCopyPath: () => void; copyPathCopied: boolean;
   keywordEditorOpen: boolean; keywordSavePending: boolean; keywordSaveError: string;
   onEditKeywords: () => void; onCancelKeywordEdit: () => void;
   onSaveKeywords: (keywords: string[]) => void; onDelete: () => void;
@@ -38,6 +38,7 @@ const PreviewInformationSidebar = ({
   onOpen,
   onShowInFolder,
   onCopyPath,
+  copyPathCopied,
   keywordEditorOpen,
   keywordSavePending,
   keywordSaveError,
@@ -85,7 +86,7 @@ const PreviewInformationSidebar = ({
           <div className="preview-sidebar-actions">
             <button type="button" onClick={onOpen}>{t("context.open")}</button>
             <button type="button" onClick={onShowInFolder}>{t("context.showInFolder")}</button>
-            <button type="button" onClick={onCopyPath}>{t("context.copyPath")}</button>
+            <button type="button" onClick={onCopyPath}>{t(copyPathCopied ? "clipboard.copied" : "context.copyPath")}</button>
             {!data.skimActive && <button type="button" onClick={onDelete}>{t("context.deleteFile")}</button>}
           </div>
         </section>

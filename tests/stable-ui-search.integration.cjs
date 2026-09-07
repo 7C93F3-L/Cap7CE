@@ -39,6 +39,7 @@ assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSe
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
+assert.match(appSource, /onCopyPaths=\{\(items\)[\s\S]*?showQuickCommandNotice\(t\("clipboard\.copied"\)\)/u);
 assert.match(menuAdapterSource, /<ResponsiveResultsContextMenuLayer \{\.\.\.props\} \/>/);
 assert.doesNotMatch(menuAdapterSource, /LegacyResultsContextMenuLayer|state\.responsive/);
 assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);
@@ -50,7 +51,8 @@ for (const marker of [
   "const clearedQuery = search.query.trim().length > 0"
 ]) assert.ok(inputSource.includes(marker), `Stable search input is missing ${marker}.`);
 assert.match(inputSource, /placeholder=\{inputFeedbackIsGuide \? inputFeedback : inputFeedback \? "" : t\("search\.inputLabel"\)\}/u);
-assert.match(inputSource, /\{!search\.query && !inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback"/u);
+assert.match(inputSource, /\{!inputFeedbackIsGuide && inputFeedback && <span className="cap-stable-search-feedback"/u);
+assert.match(inputSource, /cap-stable-search-slot\$\{!inputFeedbackIsGuide && inputFeedback \? " is-showing-feedback" : ""\}/u);
 assert.match(inputSource, /search\.query\.length > 0[\s\S]*?className="cap-stable-search-clear"[\s\S]*?query: ""[\s\S]*?onSearchChange\(nextSearch\); onSearchOptionsChange\(nextSearch\)[\s\S]*?focus\(\{ preventScroll: true \}\)/u);
 
 assert.doesNotMatch(resultsSource, /responsiveLayout|shellState/);
@@ -70,6 +72,7 @@ assert.match(stableResultsStyles, /\.cap-stable-search-clear \{[^}]*width: 24px;
 assert.match(stableResultsStyles, /\.cap-stable-search-clear:hover \{ background: color-mix\(in srgb, currentColor 14%, transparent\); \}[\s\S]*?\.cap-stable-search-clear-icon[^}]*width: 16px; height: 16px;/u);
 assert.match(stableResultsStyles, /@container \(max-width: 180px\) \{ \.cap-stable-search-clear \{ display: none; \} \}/u);
 assert.match(stableResultsStyles, /\.app \.cap-stable-search-slot input:focus,[\s\S]*?input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
+assert.match(stableResultsStyles, /\.cap-stable-search-slot\.is-showing-feedback input,[\s\S]*?visibility: hidden;[\s\S]*?:focus-within \.cap-stable-search-feedback \{ display: none; \}/u);
 
 for (const marker of ["state.preview", "onOpen(state.item)", "onShowInFolder(state.item)", "onCopyPaths(state.items)", "onEditKeywords(state.items)", "onDelete(state.items)"]) {
   assert.ok(menuSource.includes(marker), `Formal results context menu is missing ${marker}.`);
