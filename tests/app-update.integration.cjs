@@ -1,142 +1,71 @@
 const assert = require("node:assert/strict");
-const fs = require("node:fs/promises");
-const os = require("node:os");
-const path = require("node:path");
+const { createHash } = require("node:crypto");
 
-const release = (version, overrides = {}) => ({
-  tag_name: `v${version}`,
-  draft: false,
-  assets: [{
-    name: `Cap7CE-${version}-win-x64.zip`,
-    state: "uploaded",
-    browser_download_url: `https://github.com/7C93F3-L/Cap7CE/releases/download/v${version}/Cap7CE-${version}-win-x64.zip`
-  }],
-  ...overrides
-});
+const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+const release = (version, overrides = {}) => {
+  const payload = Buffer.from(`installer-${version}`);
+  return {
+    tag_name: `v${version}`,
+    draft: false,
+    prerelease: false,
+    assets: [{
+      id: Number(version.replaceAll(".", "")) + 100,
+      name: `Cap7CE-Setup-${version}-x64.exe`,
+      state: "uploaded",
+      size: payload.length,
+      digest: `sha256:${sha256(payload)}`,
+      browser_download_url: `https://github.com/7C93F3-L/Cap7CE/releases/download/v${version}/Cap7CE-Setup-${version}-x64.exe`
+    }],
+    ...overrides
+  };
+};
 
 (async () => {
-  const { checkForAppUpdate, downloadAppUpdate, selectLatestAppUpdate } = require("../dist-electron/appUpdateService.js");
+  const { checkForAppUpdate, selectLatestAppUpdate } = require("../dist-electron/appUpdateService.js");
 
   const latest = selectLatestAppUpdate([
-    release("0.8.1"),
-    release("0.9.0", { draft: true }),
-    release("0.8.2", {
-      assets: [{
-        name: "Cap7CE-0.8.2-win-x64.zip",
-        state: "uploaded",
-        browser_download_url: "https://example.com/Cap7CE-0.8.2-win-x64.zip"
-      }]
-    })
+    release("0.9.8"),
+    release("1.0.0", { draft: true }),
+    release("0.9.9", { assets: [{
+      id: 999,
+      name: "Cap7CE-Setup-0.9.9-x64.exe",
+      state: "uploaded",
+      size: 100,
+      digest: `sha256:${"a".repeat(64)}`,
+      browser_download_url: "https://example.com/Cap7CE-Setup-0.9.9-x64.exe"
+    }] })
   ]);
-  assert.deepEqual(latest, {
-    version: "0.8.1",
-    downloadUrl: "https://github.com/7C93F3-L/Cap7CE/releases/download/v0.8.1/Cap7CE-0.8.1-win-x64.zip"
-  });
+  assert.equal(latest.version, "0.9.8");
+  assert.equal(latest.assetName, "Cap7CE-Setup-0.9.8-x64.exe");
+  assert.equal(latest.uploadState, "uploaded");
+  assert.equal(latest.digest.length, 64);
 
-  const available = await checkForAppUpdate(
-    "0.8.0",
-    async () => ({
-      ok: true,
-      json: async () => [release("0.8.1")]
-    })
-  );
+  const invalidRelease = release("1.0.0");
+  invalidRelease.assets[0].digest = null;
+  assert.equal(selectLatestAppUpdate([invalidRelease]), null, "missing GitHub digest must reject the asset");
+  assert.equal(selectLatestAppUpdate([release("1.0.0", { prerelease: true })]), null, "prerelease installers must not enter the stable update channel");
+  const zipRelease = release("1.0.0");
+  zipRelease.assets[0].name = "Cap7CE-1.0.0-win-x64.zip";
+  assert.equal(selectLatestAppUpdate([zipRelease]), null, "legacy ZIP assets must never be selected");
+
+  const available = await checkForAppUpdate("0.9.9", async () => ({ ok: true, json: async () => [release("1.0.0")] }));
   assert.equal(available.status, "update_available");
-  assert.equal(available.latestVersion, "0.8.1");
-  assert.equal(available.downloadUrl, "https://github.com/7C93F3-L/Cap7CE/releases/download/v0.8.1/Cap7CE-0.8.1-win-x64.zip");
+  assert.equal(available.latestVersion, "1.0.0");
+  assert.equal(available.asset.assetId, 200);
+  assert.equal("downloadUrl" in available, false, "trusted asset details stay internal instead of becoming renderer parameters");
 
-  const current = await checkForAppUpdate(
-    "0.8.1",
-    async () => ({
-      ok: true,
-      json: async () => [release("0.8.1"), release("0.8.0")]
-    })
-  );
+  const current = await checkForAppUpdate("1.0.0", async () => ({ ok: true, json: async () => [release("1.0.0")] }));
   assert.equal(current.status, "up_to_date");
-  assert.equal(current.latestVersion, "0.8.1");
-  assert.equal(current.downloadUrl, undefined);
+  assert.equal(current.asset, undefined);
+  assert.equal((await checkForAppUpdate("0.9.9", async () => ({ ok: false }))).status, "failed");
 
-  const unavailable = await checkForAppUpdate(
-    "0.8.0",
-    async () => ({ ok: false })
-  );
-  assert.equal(unavailable.status, "failed");
-
-  const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "cap7ce-update-test-"));
-  try {
-    const destinationPath = path.join(temporaryRoot, "Cap7CE-0.8.3-win-x64.zip");
-    const payload = Buffer.from("test-update-package");
-    const progress = [];
-    const downloaded = await downloadAppUpdate(
-      {
-        version: "0.8.3",
-        downloadUrl: release("0.8.3").assets[0].browser_download_url
-      },
-      destinationPath,
-      (entry) => progress.push(entry),
-      async () => new Response(payload, { headers: { "content-length": String(payload.length) } })
-    );
-    assert.equal(downloaded.receivedBytes, payload.length);
-    assert.deepEqual(await fs.readFile(destinationPath), payload);
-    assert.equal(progress.at(-1).percent, 100);
-    assert.equal(progress[0].completed, false);
-    assert.equal(progress.at(-1).completed, true);
-    await assert.rejects(fs.access(`${destinationPath}.part`));
-
-    const stalledDestinationPath = path.join(temporaryRoot, "stalled.zip");
-    const stalledBody = new ReadableStream({
-      cancel() {}
-    });
-    await assert.rejects(
-      downloadAppUpdate(
-        {
-          version: "0.8.3",
-          downloadUrl: release("0.8.3").assets[0].browser_download_url
-        },
-        stalledDestinationPath,
-        () => undefined,
-        async () => new Response(stalledBody, { headers: { "content-length": "100" } }),
-        50
-      ),
-      /stopped receiving data/
-    );
-    await assert.rejects(fs.access(stalledDestinationPath));
-
-    const cancelledDestinationPath = path.join(temporaryRoot, "cancelled.zip");
-    const cancelledController = new AbortController();
-    const cancelledBody = new ReadableStream({ cancel() {} });
-    const cancelledDownload = downloadAppUpdate(
-      {
-        version: "0.8.3",
-        downloadUrl: release("0.8.3").assets[0].browser_download_url
-      },
-      cancelledDestinationPath,
-      () => undefined,
-      async () => new Response(cancelledBody, { headers: { "content-length": "100" } }),
-      5_000,
-      cancelledController.signal
-    );
-    cancelledController.abort();
-    await assert.rejects(cancelledDownload, (error) => error.code === "cancelled");
-    await assert.rejects(fs.access(cancelledDestinationPath));
-    await assert.rejects(fs.access(`${cancelledDestinationPath}.part`));
-
-    await assert.rejects(
-      downloadAppUpdate(
-        {
-          version: "0.8.3",
-          downloadUrl: release("0.8.3").assets[0].browser_download_url
-        },
-        path.join(temporaryRoot, "limited.zip"),
-        () => undefined,
-        async () => new Response(null, { status: 429 })
-      ),
-      (error) => error.code === "rate_limited"
-    );
-  } finally {
-    await fs.rm(temporaryRoot, { recursive: true, force: true });
-  }
-
-  console.log("App update integration checks passed.");
+  console.log(JSON.stringify({
+    exactInstallerAssetSelected: true,
+    releaseIdentityAndDigestRequired: true,
+    legacyZipRejected: true,
+    untrustedUrlRejected: true,
+    rendererReceivesNoAssetUrl: true
+  }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

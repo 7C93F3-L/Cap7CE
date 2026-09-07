@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { resolveWindowsPowerShellPath } from "./appUpdateLauncher";
+import { resolveWindowsPowerShellPath } from "./windowsPowerShellPath";
 
 const execFileAsync = promisify(execFile);
 

@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../electron/appUpdateTypes";
 
 type Cap7CEShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -33,23 +34,13 @@ declare global {
       app: {
         quit: () => Promise<boolean>;
         openReleasePage: () => Promise<boolean>;
-        checkForUpdates: () => Promise<{
-          status: "up_to_date" | "update_available" | "failed";
-          currentVersion: string;
-          latestVersion?: string;
-        }>;
-        downloadUpdate: () => Promise<{
-          status: "installing" | "unsupported" | "busy" | "cancelled" | "failed";
-          version?: string;
-          reason?: "cancelled" | "rate_limited" | "network" | "disk_space" | "security" | "incomplete" | "invalid" | "unknown";
-        }>;
-        cancelUpdateDownload: () => Promise<boolean>;
-        onUpdateDownloadProgress: (callback: (progress: {
-          receivedBytes: number;
-          totalBytes: number | null;
-          percent: number | null;
-          completed?: boolean;
-        }) => void) => () => void;
+        getUpdateState: () => Promise<AppUpdatePublicState>;
+        checkForUpdates: () => Promise<AppUpdateCheckResponse>;
+        downloadUpdate: () => Promise<AppUpdateActionResponse>;
+        pauseUpdateDownload: () => Promise<boolean>;
+        discardUpdate: () => Promise<boolean>;
+        installUpdate: () => Promise<AppUpdateActionResponse>;
+        onUpdateDownloadProgress: (callback: (progress: AppUpdateDownloadProgress) => void) => () => void;
       };
       preview: {
         open: (data: PreviewWindowData) => Promise<boolean>;

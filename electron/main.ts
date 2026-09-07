@@ -13,14 +13,12 @@ import { bootstrapRuntimeDiagnostics } from "./runtimeDiagnosticsBootstrap";
 import { RuntimeDiagnostics } from "./runtimeDiagnostics";
 import { createThumbnailFailureResponse } from "./thumbnailFailureResponse";
 import { registerSearchIpc } from "./searchIpc";
-import { writeAppUpdateDiagnostic } from "./appUpdateDiagnostics";
 import { aiSearchService } from "./aiSearchRuntime";
 import { configureEmbeddedMetadataRuntime, discardEmbeddedMetadataForDirectory, writeScannedFilesWithEmbeddedMetadata } from "./embeddedMetadataRuntime";
 import { createEmbeddedMetadataPreviewCoordinator } from "./embeddedMetadataPreviewProbe";
 import { setVisualPropertyForegroundActive } from "./visualPropertyRuntime";
-import { AppUpdateDownloadError, checkForAppUpdate, downloadAppUpdate, type AppUpdateDownload, type AppUpdateDownloadErrorCode, type AppUpdateDownloadProgress } from "./appUpdateService";
-import { consumeAppUpdateCompletion } from "./appUpdateCompletion";
-import { createAppUpdateLauncherScript, resolveWindowsPowerShellPath } from "./appUpdateLauncher";
+import { AppUpdateDownloadService, resolveAppUpdateRootDirectory } from "./appUpdateDownloadService";
+import { registerAppUpdateIpc } from "./appUpdateIpc";
 import { applyDirectoryFileCounts, deleteDirectory, listDirectories, moveDirectory, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
 import { copyFileItemsToClipboard, normalizeFilePathsForClipboard } from "./fileClipboardService";
@@ -101,6 +99,13 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
   });
 };
 let mainWindow: BrowserWindow | null = null, settingsWindowController: SettingsWindowController | null = null;
+const appUpdateDownloadService = new AppUpdateDownloadService({
+  rootDirectory: resolveAppUpdateRootDirectory(process.env.LOCALAPPDATA, app.getPath("userData")),
+  currentVersion: app.getVersion(),
+  openInstaller: (installerPath) => shell.openPath(installerPath),
+  onProgress: (progress) => settingsWindowController?.send("app:updateDownloadProgress", progress),
+  diagnostics: runtimeDiagnostics
+});
 const broadcastSettingsData = createSettingsDataBroadcaster({ sendToMain: (channel, value) => mainWindow?.webContents.send(channel, value), sendToSettings: (channel, value) => { settingsWindowController?.send(channel, value); }, sendToPreview: (channel, value) => previewWindow?.webContents.send(channel, value) });
 const isMainSenderAllowed = (event: IpcMainInvokeEvent) => Boolean(
   mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents
@@ -111,45 +116,7 @@ let previewWindow: BrowserWindow | null = null;
 let appTray: Tray | null = null;
 let pendingSecondInstanceActivation = false;
 let mainWindowReadyForActivation = false;
-let pendingAppUpdateDownload: AppUpdateDownload | null = null;
-let appUpdateDownloadActive = false;
-let appUpdateDownloadAbortController: AbortController | null = null;
 let isQuitting = false;
-const completedUpdateVersionArgument = process.argv
-  .map((argument) => argument.match(/^--cap7ce-updated=(\d+\.\d+\.\d+)$/)?.[1] ?? null)
-  .find((version): version is string => version !== null) ?? null;
-
-const cleanupStaleAppUpdateLaunchers = async (): Promise<void> => {
-  const tempDirectory = app.getPath("temp");
-  const entries = await fs.readdir(tempDirectory, { withFileTypes: true });
-  const staleBefore = Date.now() - 20_000;
-  await Promise.all(entries
-    .filter((entry) => entry.isFile()
-      && entry.name.startsWith("Cap7CE-update-launcher-")
-      && (entry.name.endsWith(".vbs") || entry.name.endsWith(".cmd")))
-    .map(async (entry) => {
-      const launcherPath = path.join(tempDirectory, entry.name);
-      const launcherStats = await fs.stat(launcherPath).catch(() => null);
-      if (launcherStats && launcherStats.mtimeMs <= staleBefore) {
-        await fs.rm(launcherPath, { force: true }).catch(() => undefined);
-      }
-    }));
-};
-
-const cleanupStaleAppUpdateDownloads = async (): Promise<void> => {
-  const tempDirectory = app.getPath("temp");
-  const entries = await fs.readdir(tempDirectory, { withFileTypes: true });
-  const staleBefore = Date.now() - 24 * 60 * 60 * 1000;
-  await Promise.all(entries
-    .filter((entry) => entry.isDirectory() && /^Cap7CE-update-\d+\.\d+\.\d+-[0-9a-f-]{36}$/i.test(entry.name))
-    .map(async (entry) => {
-      const candidatePath = path.join(tempDirectory, entry.name);
-      const stat = await fs.stat(candidatePath).catch(() => null);
-      if (stat && stat.mtimeMs < staleBefore) {
-        await fs.rm(candidatePath, { recursive: true, force: true }).catch(() => undefined);
-      }
-    }));
-};
 
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let programmaticResizeGuardUntil = 0;
@@ -1595,17 +1562,9 @@ if (hasSingleInstanceLock) {
 
 if (hasSingleInstanceLock) app.whenReady().then(async () => {
   await runtimeDiagnostics.initialize();
-  const completedUpdateVersion = app.isPackaged
-    ? await consumeAppUpdateCompletion({
-      currentVersion: app.getVersion(),
-      argumentVersion: completedUpdateVersionArgument,
-      installMarkerPath: path.join(path.dirname(process.execPath), ".cap7ce-update-completed"),
-      versionStatePath: path.join(app.getPath("userData"), "config", "app-version.json")
-    }).catch((error) => {
-      console.warn("[app-update] failed to resolve completed update", error);
-      return completedUpdateVersionArgument;
-    })
-    : completedUpdateVersionArgument;
+  await appUpdateDownloadService.initialize().catch((error) => {
+    runtimeDiagnostics.log("error", "app_update.initialize_failed", { error });
+  });
   registerLocalImageProtocol();
   await prepareOfficePreviewTemporaryRoot().catch((error) => {
     console.warn("[office-preview] failed to reset temporary root", error);
@@ -1660,15 +1619,6 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   }
   void createStartupHintWindow();
   createAppTray();
-  if (completedUpdateVersion) {
-    setTimeout(() => {
-      showSystemNotification(
-        t("notification.updateCompletedTitle"),
-        t("notification.updateCompletedContent", { version: completedUpdateVersion }),
-        { force: true }
-      );
-    }, 7_000);
-  }
   if (quickActionGlobalEnabled) {
     registerConfiguredGlobalShortcuts(getActiveShortcutActions(preferences));
   } else {
@@ -1677,15 +1627,6 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   void showBackgroundRunNotificationOnce(preferences).catch((error) => {
     console.warn("[system-notification] failed to persist first-run state", error);
   });
-  setTimeout(() => {
-    void cleanupStaleAppUpdateLaunchers().catch((error) => {
-      console.warn("[app-update] failed to clean stale launchers", error);
-    });
-    void cleanupStaleAppUpdateDownloads().catch((error) => {
-      console.warn("[app-update] failed to clean stale downloads", error);
-    });
-  }, 30_000);
-
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -1778,132 +1719,18 @@ ipcMain.handle("app:openReleasePage", async () => {
   return true;
 });
 
-ipcMain.handle("app:checkForUpdates", async (event) => {
-  if (!isMainSenderAllowed(event) && !isSettingsSenderAllowed(event)) {
-    return {
-      status: "failed",
-      currentVersion: app.getVersion()
-    };
-  }
-  const result = await checkForAppUpdate(app.getVersion());
-  pendingAppUpdateDownload = result.status === "update_available"
-    && result.latestVersion
-    && result.downloadUrl
-    ? { version: result.latestVersion, downloadUrl: result.downloadUrl }
-    : null;
-  return {
-    status: result.status,
-    currentVersion: result.currentVersion,
-    ...(result.latestVersion ? { latestVersion: result.latestVersion } : {})
-  };
-});
-
-ipcMain.handle("app:downloadUpdate", async (event) => {
-  if ((!isMainSenderAllowed(event) && !isSettingsSenderAllowed(event)) || !pendingAppUpdateDownload) {
-    return { status: "failed" };
-  }
-  if (!app.isPackaged) {
-    return { status: "unsupported", version: pendingAppUpdateDownload.version };
-  }
-  if (appUpdateDownloadActive) {
-    return { status: "busy", version: pendingAppUpdateDownload.version };
-  }
-  const update = pendingAppUpdateDownload;
-  const updateSessionId = randomUUID();
-  const updateRoot = path.join(app.getPath("temp"), `Cap7CE-update-${update.version}-${updateSessionId}`);
-  const packagePath = path.join(updateRoot, `Cap7CE-${update.version}-win-x64.zip`);
-  const helperPath = path.join(updateRoot, "update-helper.ps1");
-  // Keep the executing launcher outside updateRoot so the helper can remove the download directory safely.
-  const launcherPath = path.join(app.getPath("temp"), `Cap7CE-update-launcher-${updateSessionId}.vbs`);
-  const failureLogPath = path.join(app.getPath("temp"), "Cap7CE-update-last-failure.log");
-  const sendDownloadProgress = (progress: AppUpdateDownloadProgress) => {
-    settingsWindowController?.send("app:updateDownloadProgress", progress);
-  };
-  appUpdateDownloadActive = true;
-  appUpdateDownloadAbortController = new AbortController();
-  try {
-    void cleanupStaleAppUpdateDownloads().catch(() => undefined);
-    await downloadAppUpdate(update, packagePath, sendDownloadProgress, fetch, undefined, appUpdateDownloadAbortController.signal);
-    appUpdateDownloadAbortController = null;
-    await fs.copyFile(path.join(app.getAppPath(), "build", "update-helper.ps1"), helperPath);
-    const helperReadyPath = path.join(updateRoot, "helper-ready");
-    const helperFailedPath = path.join(updateRoot, "helper-failed");
-    await fs.rm(failureLogPath, { force: true }).catch(() => undefined);
-    await fs.access(resolveWindowsPowerShellPath());
-    await fs.writeFile(launcherPath, createAppUpdateLauncherScript({
-      helperPath,
-      packagePath,
-      installDirectory: path.dirname(process.execPath),
-      expectedVersion: update.version,
-      currentProcessId: process.pid,
-      executableName: path.basename(process.execPath)
-    }), "utf8");
-    const launchError = await shell.openPath(launcherPath);
-    if (launchError) {
-      throw new Error(`Update launcher could not be opened: ${launchError}`);
-    }
-    await new Promise<void>((resolve, reject) => {
-      let settled = false;
-      const finish = (error?: Error) => {
-        if (settled) return;
-        settled = true;
-        clearInterval(readyPoll);
-        clearTimeout(readyTimeout);
-        if (error) reject(error);
-        else resolve();
-      };
-      const checkReady = () => {
-        void Promise.all([
-          fs.access(helperReadyPath).then(() => true).catch(() => false),
-          fs.readFile(helperFailedPath, "utf8").catch(() => "")
-        ]).then(([ready, failure]) => {
-          if (ready) finish();
-          else if (failure) finish(new Error(`Update helper failed before it was ready: ${failure.trim()}`));
-        });
-      };
-      const readyPoll = setInterval(checkReady, 100);
-      const readyTimeout = setTimeout(() => {
-        finish(new Error("Update helper did not become ready in time."));
-      }, 300_000);
-      checkReady();
-    });
-    pendingAppUpdateDownload = null;
+registerAppUpdateIpc({
+  registrar: ipcMain,
+  isSenderAllowed: (event) => isMainSenderAllowed(event) || isSettingsSenderAllowed(event),
+  currentVersion: app.getVersion(),
+  isPackaged: app.isPackaged,
+  service: appUpdateDownloadService,
+  requestQuit: () => {
     setTimeout(() => {
       isQuitting = true;
       app.quit();
-    }, 500);
-    return { status: "installing", version: update.version };
-  } catch (error) {
-    console.warn("[app-update] automatic update failed", error);
-    const failureReason: AppUpdateDownloadErrorCode = error instanceof AppUpdateDownloadError
-      ? error.code
-      : error instanceof Error && /downloaded update package|expected Cap7CE layout|expand-archive|archive/i.test(error.message)
-        ? "invalid"
-        : ((error as NodeJS.ErrnoException)?.code === "ENOSPC" ? "disk_space" : "unknown");
-    const helperLogPath = path.join(updateRoot, "update-helper.log");
-    const helperLog = await fs.readFile(helperLogPath, "utf8").catch(() => "");
-    const failureDetails = [
-      `${new Date().toISOString()} Cap7CE ${app.getVersion()} update preparation failed.`,
-      error instanceof Error ? `${error.name}: ${error.message}` : String(error),
-      helperLog.trim()
-    ].filter(Boolean).join("\n");
-    await fs.writeFile(failureLogPath, `${failureDetails}\n`, "utf8").catch(() => undefined);
-    await writeAppUpdateDiagnostic(app.getPath("userData"), failureDetails).catch(() => undefined);
-    await fs.rm(updateRoot, { recursive: true, force: true }).catch(() => undefined);
-    await fs.rm(launcherPath, { force: true }).catch(() => undefined);
-    return { status: failureReason === "cancelled" ? "cancelled" : "failed", version: update.version, reason: failureReason };
-  } finally {
-    appUpdateDownloadAbortController = null;
-    appUpdateDownloadActive = false;
+    }, 250);
   }
-});
-
-ipcMain.handle("app:cancelUpdateDownload", (event) => {
-  if ((!isMainSenderAllowed(event) && !isSettingsSenderAllowed(event)) || !appUpdateDownloadAbortController) {
-    return false;
-  }
-  appUpdateDownloadAbortController?.abort();
-  return true;
 });
 
 ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
@@ -2690,7 +2517,6 @@ registerDiagnosticsIpc({
   appVersion: app.getVersion(),
   documentsPath: app.getPath("documents"),
   additionalLogPaths: [
-    path.join(app.getPath("userData"), "logs", "app-update.log"),
     path.join(app.getPath("userData"), "logs", "llama-runtime.log")
   ],
   chooseExportPath: async (defaultPath, event) => {

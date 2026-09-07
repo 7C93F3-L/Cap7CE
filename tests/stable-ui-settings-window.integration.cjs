@@ -9,6 +9,8 @@ const preloadSource = fs.readFileSync(path.join(root, "electron", "preload.ts"),
 const rendererEntrySource = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 const appSource = fs.readFileSync(path.join(root, "src", "renderer", "App.tsx"), "utf8");
 const settingsAppSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.tsx"), "utf8");
+const settingsUpdateControlSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowUpdateControl.tsx"), "utf8");
+const settingsUpdatePresentationSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "settingsWindowUpdatePresentation.ts"), "utf8");
 const settingsConfirmationSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsConfirmationDialog.tsx"), "utf8");
 const settingsCategoryIconSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsCategoryIcon.tsx"), "utf8");
 const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
@@ -41,6 +43,7 @@ const stableSkimStyles = fs.readFileSync(path.join(root, "src", "renderer", "set
 const settingsAccessibilityStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowAccessibility.css"), "utf8");
 const preferenceIpcSource = fs.readFileSync(path.join(root, "electron", "preferenceIpc.ts"), "utf8");
 const directoryIpcSource = fs.readFileSync(path.join(root, "electron", "directoryManagementIpc.ts"), "utf8");
+const appUpdateIpcSource = fs.readFileSync(path.join(root, "electron", "appUpdateIpc.ts"), "utf8");
 const architectureSource = fs.readFileSync(path.join(root, "docs", "SOFTWARE_ARCHITECTURE.md"), "utf8");
 const featureDocSource = fs.readFileSync(path.join(root, "docs", "STABLE_UI_SETTINGS_WINDOW.md"), "utf8");
 const { SettingsWindowController } = require("../dist-electron/settingsWindowController.js");
@@ -293,8 +296,13 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(mainSource, /setThumbnailOptimizationStatusListener\([\s\S]*?settingsWindowController\?\.send\("cache:optimizationStatusChanged", status\)/u);
   assert.match(mainSource, /isVisibleAndFocused\(mainWindow\)[\s\S]*?settingsWindowController\?\.isVisibleAndFocused\(\)[\s\S]*?isVisibleAndFocused\(previewWindow\)/u);
   assert.match(embeddedMetadataRuntimeSource, /getActiveWebContents[\s\S]*?includes\(event\.sender\)[\s\S]*?for \(const webContents of getActiveWebContents\(\)\)/u);
-  assert.match(mainSource, /isSettingsSenderAllowed[\s\S]*?app:checkForUpdates[\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?app:downloadUpdate[\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?app:cancelUpdateDownload[\s\S]*?isSettingsSenderAllowed\(event\)/u);
-  assert.match(mainSource, /sendDownloadProgress[\s\S]*?settingsWindowController\?\.send\("app:updateDownloadProgress"/u);
+  assert.match(mainSource, /registerAppUpdateIpc\([\s\S]*?isSenderAllowed: \(event\) => isMainSenderAllowed\(event\) \|\| isSettingsSenderAllowed\(event\)[\s\S]*?service: appUpdateDownloadService/u);
+  assert.match(appUpdateIpcSource, /app:checkForUpdates[\s\S]*?app:downloadUpdate[\s\S]*?app:pauseUpdateDownload[\s\S]*?app:discardUpdate[\s\S]*?app:installUpdate/u);
+  assert.match(appUpdateIpcSource, /if \(!isSenderAllowed\(event\)\)[\s\S]*?service\.setAvailableAsset\(result\.asset\)/u);
+  assert.match(mainSource, /onProgress:[\s\S]*?settingsWindowController\?\.send\("app:updateDownloadProgress"/u);
+  assert.match(settingsUpdateControlSource, /\(result\.receivedBytes \?\? 0\) > 0[\s\S]*?setStatus\("resumable"\)/u);
+  assert.match(settingsUpdateControlSource, /result\?\.reason === "invalid" \? "download_failed" : "install_failed"/u);
+  assert.match(settingsUpdatePresentationSource, /status === "install_failed"[\s\S]*?settings\.updateInstallerOpenFailed/u);
   assert.match(mainSource, /registerDiagnosticsIpc\([\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?BrowserWindow\.fromWebContents\(event\.sender\)/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);

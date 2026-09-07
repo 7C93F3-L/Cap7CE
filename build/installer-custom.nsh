@@ -19,8 +19,8 @@
   !undef UNINSTALL_URL_README
 !endif
 
-LangString cap7ceCleanupUserData 1033 "Remove shared user data (%APPDATA%\Cap7CE; affects all copies)"
-LangString cap7ceCleanupUserData 2052 "删除共享用户数据（%APPDATA%\Cap7CE；影响所有副本）"
+LangString cap7ceCleanupUserData 1033 "Remove user data"
+LangString cap7ceCleanupUserData 2052 "删除用户数据"
 LangString cap7ceCleanupAiContent 1033 "Remove models and llama.cpp from this installation"
 LangString cap7ceCleanupAiContent 2052 "删除此安装目录中的 models 和 llama.cpp"
 LangString cap7ceUninstallUnsafePath 1033 "Cap7CE program files were not found in the uninstall directory. Nothing was removed."

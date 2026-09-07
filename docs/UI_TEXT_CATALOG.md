@@ -339,11 +339,30 @@
 | `settings.updateAvailable`        | 发现新版本 {version}   |      | New: {version} | 更新状态 |
 | `settings.downloadUpdateNow`      | 立即下载             |      | Download Now | 更新按钮 |
 | `settings.updateDownloading`      | 正在下载 {percent}% · {received} / {total} |      | Downloading {percent}% · {received} / {total} | 下载进度 |
-| `settings.updateDownloadingButton` | 下载中              |      | Downloading | 下载按钮状态 |
-| `settings.updateInstalling`       | 下载完成，正在启动更新程序 |      | Download complete. Starting the updater | 更新状态 |
-| `settings.updateInstallingButton` | 更新中               |      | Updating | 更新按钮状态 |
-| `settings.updateUnsupported`      | 开发模式不支持自动替换，请使用打包版测试 |      | Automatic replacement is unavailable in development mode. Test with a packaged build. | 开发版边界 |
+| `settings.pauseUpdate`            | 暂停                 |      | Pause | 下载按钮 |
+| `settings.updatePausing`          | 暂停中               |      | Pausing | 下载按钮状态 |
+| `settings.updatePaused`           | 已暂停 {version} 下载，可稍后继续 |      | {version} download paused. You can resume later | 更新状态 |
+| `settings.resumeUpdate`           | 继续下载             |      | Resume | 下载按钮 |
+| `settings.updateVerifying`        | 下载完成，正在验证安装器 |      | Download complete. Verifying installer. | 更新状态 |
+| `settings.updateVerifyingButton`  | 验证中               |      | Verifying | 更新按钮状态 |
+| `settings.updateReady`            | {version} 已下载，可以安装 |      | {version} is ready to install | 更新状态 |
+| `settings.installUpdateNow`       | 立即安装             |      | Install Now | 更新按钮 |
+| `settings.discardUpdate`          | 放弃更新             |      | Discard Update | 清理按钮 |
+| `settings.updateDiscarding`       | 正在清理下载         |      | Removing download | 清理状态 |
+| `settings.confirmDiscardUpdate`   | 删除已经下载的更新文件？ |      | Delete the downloaded update files? | 确认弹层 |
+| `settings.confirmInstallUpdate`   | Cap7CE 将启动安装程序并安全退出。是否继续？ |      | Cap7CE will start the installer and exit safely. Continue? | 确认弹层 |
+| `settings.updateInstalling`       | 正在启动安装程序并退出 Cap7CE |      | Starting the installer and exiting Cap7CE | 更新状态 |
+| `settings.updateInstallingButton` | 正在启动             |      | Starting | 更新按钮状态 |
+| `settings.updateInstallerOpenFailed` | 无法启动安装程序，Cap7CE 将继续运行 |      | The installer could not be started. Cap7CE will remain open | 更新失败 |
+| `settings.updateUnsupported`      | 开发模式不能启动安装程序，请使用安装版测试 |      | The installer cannot be started in development mode. Test with an installed build. | 开发版边界 |
 | `settings.downloadUpdateAgain`    | 再次下载             |      | Download Again | 重试按钮 |
+| `settings.updateDownloadFailed`   | 更新失败，详情已记录 |      | Update failed. Details recorded | 更新失败 |
+| `settings.updateRateLimited`      | 下载请求受限，请稍后再试 |      | Download limited. Try again later | 更新失败 |
+| `settings.updateNetworkFailed`    | 下载已中断，请检查网络 |      | Download interrupted. Check your network | 可续传失败 |
+| `settings.updateDiskSpaceFailed`  | 磁盘空间不足         |      | Not enough disk space | 更新失败 |
+| `settings.updateSecurityFailed`   | 更新失败，请检查安全软件 |      | Update failed. Check security software | 更新失败 |
+| `settings.updateIncomplete`       | 下载尚未完成，可以继续下载 |      | The download is incomplete and can be resumed | 可续传失败 |
+| `settings.updateInvalid`          | 下载文件无效，已自动清理 |      | Invalid download removed | 更新失败 |
 | `settings.updateCheckFailed`      | 检查失败，请重试       |      | Check failed. Try again. | 更新失败 |
 
 ## 8. 编辑、删除与缓存弹层

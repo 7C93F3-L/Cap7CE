@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
+import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "./appUpdateTypes";
 
 interface RuntimeDiagnosticsInfo {
   logDirectory: string;
@@ -75,11 +76,14 @@ contextBridge.exposeInMainWorld("cap7ce", {
   app: {
     quit: () => ipcRenderer.invoke("app:quit"),
     openReleasePage: () => ipcRenderer.invoke("app:openReleasePage"),
-    checkForUpdates: () => ipcRenderer.invoke("app:checkForUpdates"),
-    downloadUpdate: () => ipcRenderer.invoke("app:downloadUpdate"),
-    cancelUpdateDownload: () => ipcRenderer.invoke("app:cancelUpdateDownload"),
-    onUpdateDownloadProgress: (callback: (progress: { receivedBytes: number; totalBytes: number | null; percent: number | null; completed?: boolean }) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, progress: { receivedBytes: number; totalBytes: number | null; percent: number | null; completed?: boolean }) => callback(progress);
+    getUpdateState: (): Promise<AppUpdatePublicState> => ipcRenderer.invoke("app:getUpdateState"),
+    checkForUpdates: (): Promise<AppUpdateCheckResponse> => ipcRenderer.invoke("app:checkForUpdates"),
+    downloadUpdate: (): Promise<AppUpdateActionResponse> => ipcRenderer.invoke("app:downloadUpdate"),
+    pauseUpdateDownload: (): Promise<boolean> => ipcRenderer.invoke("app:pauseUpdateDownload"),
+    discardUpdate: (): Promise<boolean> => ipcRenderer.invoke("app:discardUpdate"),
+    installUpdate: (): Promise<AppUpdateActionResponse> => ipcRenderer.invoke("app:installUpdate"),
+    onUpdateDownloadProgress: (callback: (progress: AppUpdateDownloadProgress) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, progress: AppUpdateDownloadProgress) => callback(progress);
       ipcRenderer.on("app:updateDownloadProgress", listener);
       return () => ipcRenderer.removeListener("app:updateDownloadProgress", listener);
     }

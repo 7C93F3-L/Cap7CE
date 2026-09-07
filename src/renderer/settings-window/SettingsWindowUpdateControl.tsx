@@ -1,31 +1,48 @@
 import { useEffect, useState } from "react";
 import { t } from "../../../electron/localization";
-import { formatCacheSize } from "../formatting";
+import type { AppUpdateDownloadErrorCode, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../../electron/appUpdateTypes";
+import { getUpdatePrimaryLabel, getUpdateStatusLabel, isUpdateActionDisabled, type UpdateStatus } from "./settingsWindowUpdatePresentation";
 
-type UpdateStatus = "idle" | "checking" | "up_to_date" | "update_available" | "downloading" | "cancelling" | "cancelled" | "installing" | "unsupported" | "failed" | "download_failed";
+interface SettingsWindowUpdateControlProps {
+  requestConfirmation: (message: string, action: () => Promise<unknown>) => void;
+}
 
-export const SettingsWindowUpdateControl = () => {
+const statusFromPublicState = (state: AppUpdatePublicState): UpdateStatus => state.status;
+
+export const SettingsWindowUpdateControl = ({ requestConfirmation }: SettingsWindowUpdateControlProps) => {
   const [status, setStatus] = useState<UpdateStatus>("idle");
-  const [version, setVersion] = useState("");
-  const [failureReason, setFailureReason] = useState<string | null>(null);
-  const [progress, setProgress] = useState<{ receivedBytes: number; totalBytes: number | null; percent: number | null } | null>(null);
+  const [version, setVersion] = useState("0.9.9");
+  const [failureReason, setFailureReason] = useState<AppUpdateDownloadErrorCode | null>(null);
+  const [progress, setProgress] = useState<Pick<AppUpdateDownloadProgress, "receivedBytes" | "totalBytes" | "percent"> | null>(null);
 
-  useEffect(() => window.cap7ce?.app.onUpdateDownloadProgress((nextProgress) => {
-    setProgress(nextProgress);
-    setStatus(nextProgress.completed ? "installing" : "downloading");
-  }), []);
+  const applyPublicState = (state: AppUpdatePublicState) => {
+    if (state.version) setVersion(state.version);
+    if (state.receivedBytes !== undefined && state.totalBytes !== undefined && state.percent !== undefined) {
+      setProgress({ receivedBytes: state.receivedBytes, totalBytes: state.totalBytes, percent: state.percent });
+    }
+    setStatus(statusFromPublicState(state));
+  };
+
+  useEffect(() => {
+    void window.cap7ce?.app.getUpdateState().then(applyPublicState);
+    return window.cap7ce?.app.onUpdateDownloadProgress((nextProgress) => {
+      setProgress(nextProgress);
+      setStatus(nextProgress.phase);
+    });
+  }, []);
 
   const check = async () => {
     setStatus("checking");
     setFailureReason(null);
     try {
       const result = await window.cap7ce?.app.checkForUpdates();
-      if (!result) {
-        setStatus("failed");
-        return;
-      }
+      if (!result) return setStatus("failed");
       setVersion(result.latestVersion || result.currentVersion);
-      setStatus(result.status);
+      if (result.downloadState.status === "resumable" || result.downloadState.status === "ready") {
+        applyPublicState(result.downloadState);
+      } else {
+        setStatus(result.status);
+      }
     } catch {
       setStatus("failed");
     }
@@ -34,100 +51,72 @@ export const SettingsWindowUpdateControl = () => {
   const download = async () => {
     setStatus("downloading");
     setFailureReason(null);
-    setProgress(null);
     try {
       const result = await window.cap7ce?.app.downloadUpdate();
-      if (!result) {
-        setStatus("download_failed");
-        return;
-      }
+      if (!result) return setStatus("download_failed");
       if (result.version) setVersion(result.version);
       if (result.status === "failed") {
         setFailureReason(result.reason ?? null);
-        setStatus(result.reason === "cancelled" ? "cancelled" : "download_failed");
-        return;
+        if ((result.receivedBytes ?? 0) > 0) {
+          setProgress({ receivedBytes: result.receivedBytes ?? 0, totalBytes: result.totalBytes ?? 0, percent: result.percent ?? 0 });
+          setStatus("resumable");
+        } else {
+          setStatus("download_failed");
+        }
+      } else if (result.status === "paused") {
+        setStatus("resumable");
+      } else if (result.status === "busy") {
+        setStatus("downloading");
+      } else {
+        setStatus(result.status);
       }
-      setStatus(result.status === "busy" ? "downloading" : result.status);
     } catch {
       setStatus("download_failed");
     }
   };
 
-  const cancel = async () => {
-    setStatus("cancelling");
-    const cancelled = await window.cap7ce?.app.cancelUpdateDownload();
-    setStatus(cancelled ? "cancelled" : "downloading");
+  const pause = async () => {
+    setStatus("pausing");
+    const paused = await window.cap7ce?.app.pauseUpdateDownload();
+    if (!paused) setStatus("downloading");
   };
 
-  const reasonKey = failureReason === "rate_limited"
-    ? "settings.updateRateLimited"
-    : failureReason === "network"
-      ? "settings.updateNetworkFailed"
-      : failureReason === "disk_space"
-        ? "settings.updateDiskSpaceFailed"
-        : failureReason === "security"
-          ? "settings.updateSecurityFailed"
-          : failureReason === "incomplete"
-            ? "settings.updateIncomplete"
-            : failureReason === "invalid"
-              ? "settings.updateInvalid"
-              : "settings.updateDownloadFailed";
-  const statusLabel = status === "checking"
-    ? t("settings.updateChecking")
-    : status === "up_to_date"
-      ? t("settings.updateUpToDate", { version })
-      : status === "update_available"
-        ? t("settings.updateAvailable", { version })
-        : status === "downloading"
-          ? progress?.totalBytes
-            ? t("settings.updateDownloading", {
-              percent: Math.round(progress.percent ?? 0),
-              received: formatCacheSize(progress.receivedBytes),
-              total: formatCacheSize(progress.totalBytes)
-            })
-            : t("settings.updateDownloadingUnknownTotal", { received: formatCacheSize(progress?.receivedBytes ?? 0) })
-          : status === "cancelling"
-            ? t("settings.updateCancelling")
-            : status === "cancelled"
-              ? t("settings.updateCancelled")
-              : status === "installing"
-                ? t("settings.updateInstalling")
-                : status === "unsupported"
-                  ? t("settings.updateUnsupported")
-                  : status === "download_failed"
-                    ? t(reasonKey)
-                    : status === "failed"
-                      ? t("settings.updateCheckFailed")
-                      : t("settings.updateCurrentVersion", { version: "0.9.9" });
+  const discard = async () => {
+    setStatus("discarding");
+    const discarded = await window.cap7ce?.app.discardUpdate();
+    setProgress(null);
+    setFailureReason(null);
+    setStatus(discarded ? "idle" : "download_failed");
+  };
 
-  const action = status === "update_available"
+  const install = async () => {
+    setStatus("installing");
+    const result = await window.cap7ce?.app.installUpdate();
+    if (!result || result.status === "failed") {
+      setFailureReason(result?.reason ?? "unknown");
+      setStatus(result?.reason === "invalid" ? "download_failed" : "install_failed");
+    }
+  };
+
+  const statusLabel = getUpdateStatusLabel(status, version, progress, failureReason);
+
+  const primaryAction = status === "update_available" || status === "resumable" || status === "download_failed"
     ? download
     : status === "downloading"
-      ? cancel
-      : check;
-  const actionLabel = status === "checking"
-    ? t("settings.updateCheckingButton")
-    : status === "downloading"
-      ? t("common.cancel")
-      : status === "cancelling"
-        ? t("settings.updateCancellingButton")
-        : status === "installing"
-          ? t("settings.updateInstallingButton")
-          : status === "update_available"
-            ? t("settings.downloadUpdateNow")
-            : t("settings.checkForUpdates");
+      ? pause
+      : status === "ready" || status === "install_failed"
+        ? () => requestConfirmation(t("settings.confirmInstallUpdate"), install)
+        : check;
+  const primaryLabel = getUpdatePrimaryLabel(status);
+  const disabled = isUpdateActionDisabled(status);
 
   return (
     <div className="cap-stable-settings-action-line">
       <span>{statusLabel}</span>
-      <button
-        type="button"
-        className="cap-stable-settings-button"
-        disabled={status === "checking" || status === "cancelling" || status === "installing"}
-        onClick={() => void action()}
-      >
-        {actionLabel}
-      </button>
+      <div className="cap-stable-settings-model-actions">
+        {(status === "resumable" || status === "ready" || status === "install_failed") && <button type="button" className="cap-stable-settings-button" onClick={() => requestConfirmation(t("settings.confirmDiscardUpdate"), discard)}>{t("settings.discardUpdate")}</button>}
+        <button type="button" className="cap-stable-settings-button" disabled={disabled} onClick={() => void primaryAction()}>{primaryLabel}</button>
+      </div>
     </div>
   );
 };
