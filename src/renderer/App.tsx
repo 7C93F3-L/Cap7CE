@@ -742,6 +742,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   }, [contentViewActivityConfirmed, isLoadingDirectories]);
 
   const updateResultsSearch = (nextSearch: SearchState, refresh = false) => {
+    if (nextSearch.directoryId !== search.directoryId) {
+      resultScrollMemoryRef.current = createInitialResultGridScrollMemory();
+    }
     setSearch(nextSearch);
     if (nextSearch.sortField !== search.sortField || nextSearch.sortDirection !== search.sortDirection) {
       void window.cap7ce?.preferences.updateSort({
@@ -2414,7 +2417,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         inputFeedback={searchInputFeedback}
         inputFeedbackIsGuide={operationHintVisible}
         resultStatus={resultStatusNode}
-        resultContent={<ResultsView {...createResultsViewProps()} />}
+        resultContent={<ResultsView key={search.directoryId} {...createResultsViewProps()} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
         sidebar={{
           search, directories: directoryOptions,

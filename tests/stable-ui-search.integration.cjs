@@ -23,7 +23,7 @@ const sharedMenuStyles = read("src/renderer/components/ResponsiveFileContextMenu
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
 assert.match(appSource, /stableUiRenderer: StableUiRenderer/);
-assert.match(appSource, /resultContent=\{<ResultsView \{\.\.\.createResultsViewProps\(\)\} \/>\}/);
+assert.match(appSource, /resultContent=\{<ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(\)\} \/>\}/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /onSearch=\{\(\) => submitSearch\(search\)\}/);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
@@ -32,6 +32,7 @@ assert.match(contentViewActivitySource, /setContentViewActive\(true\)\.then\(\(a
 assert.match(contentViewActivitySource, /if \(!active\) \{[\s\S]*?setActivityConfirmed\(false\)[\s\S]*?cancelSearch\(\)[\s\S]*?setContentViewActive\(false\)/u);
 assert.match(contentViewActivitySource, /requestVersion !== requestVersionRef\.current \|\| !isDocumentActive\(\)/u);
 assert.match(appSource, /const cycleSearchDirectory = \(\) => \{[\s\S]*?directoryOptions\.findIndex[\s\S]*?\(currentIndex \+ 1\) % directoryOptions\.length[\s\S]*?updateResultsSearchOptions/u);
+assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSearch\.directoryId !== search\.directoryId[\s\S]*?resultScrollMemoryRef\.current = createInitialResultGridScrollMemory\(\)/u);
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);

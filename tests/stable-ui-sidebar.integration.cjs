@@ -63,6 +63,7 @@ for (const marker of [
 assert.match(brandLogo, /viewBox="0 0 58\.77 15"/u);
 assert.match(zhLocalizationSource, /"stableUi\.sidebar\.searchScope": "查看范围"/u);
 assert.match(enLocalizationSource, /"stableUi\.sidebar\.searchScope": "View Scope"/u);
+assert.match(zhLocalizationSource, /"skim\.open": "打开 skim"[\s\S]*?"skim\.exit": "收起 skim"/u);
 assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
 assert.match(sidebarSource, /<StableUiIcon name="ai" active=\{aiSearchEnabled\}/u);
 assert.doesNotMatch(sidebarSource, /cap-stable-switch/u);
@@ -78,7 +79,7 @@ assert.match(sidebarSource, /cap-stable-settings-button[\s\S]*?<StableUiIcon nam
 assert.match(sidebarSource, /aria-label=\{t\("stableSettings\.rename"\)\}/u);
 assert.match(sidebarSource, />\{t\("stableSettings\.rename"\)\}<\/button>/u);
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
-assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; transform: translateY\(-2px\); \}/u);
 assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;[\s\S]*?\.cap-stable-directory-row \{ display: block; width: 32px; margin-inline: auto; border-radius: 9px; \}/u);
 assert.match(sidebarSource, /className=\{`cap-stable-directory-row\$\{selected \? " is-selected" : ""\}`\}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-row \{[^}]*grid-template-columns: minmax\(0, 1fr\) 32px;/u);
