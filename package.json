@@ -118,6 +118,9 @@
     "appId": "Cap7CE",
     "productName": "Cap7CE",
     "copyright": "Copyright © 2026 7C93F3-L",
+    "extraMetadata": {
+      "description": ""
+    },
     "icon": "build/icon.ico",
     "electronDist": "node_modules/electron/dist",
     "directories": {

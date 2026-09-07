@@ -10,6 +10,8 @@ const bitmap = fs.readFileSync(path.join(projectRoot, "build", "installerSidebar
 
 assert.equal(packageJson.version, "1.0.0");
 assert.equal(packageJson.build.appId, "Cap7CE");
+assert.ok(packageJson.description, "the source package should retain its project description");
+assert.equal(packageJson.build.extraMetadata.description, "");
 assert.match(mainSource, /windowsAppUserModelId = "Cap7CE"/);
 
 assert.deepEqual(packageJson.build.win.target, [{ target: "nsis", arch: ["x64"] }]);
