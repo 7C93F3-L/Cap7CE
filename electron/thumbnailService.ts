@@ -37,7 +37,7 @@ const failedInteractiveThumbnailRevisions = new Map<string, string>();
 const thumbnailRenderPauseReasons = new Set<string>();
 let activeThumbnailRenderCount = 0;
 let interactiveTasksSinceBackground = 0;
-const maximumConcurrentThumbnailRenders = 2;
+const maximumConcurrentThumbnailRenders = 1;
 const maximumInteractiveTasksBeforeBackground = 4;
 const maximumFailedInteractiveThumbnailRevisions = 50_000;
 

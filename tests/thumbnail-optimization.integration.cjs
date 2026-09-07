@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
@@ -7,6 +8,16 @@ const { app } = require("electron");
 
 const testRoot = path.join(os.tmpdir(), `cap7ce-thumbnail-optimization-${process.pid}-${Date.now()}`);
 app.setPath("userData", path.join(testRoot, "user-data"));
+
+const thumbnailServiceSource = fsSync.readFileSync(
+  path.resolve(__dirname, "..", "electron", "thumbnailService.ts"),
+  "utf8"
+);
+assert.match(
+  thumbnailServiceSource,
+  /const maximumConcurrentThumbnailRenders = 1;/,
+  "Sharp-backed search thumbnail jobs must remain serialized after native failure storms"
+);
 
 const waitFor = async (predicate, timeoutMs = 5000) => {
   const startedAt = Date.now();
@@ -275,7 +286,8 @@ app.whenReady().then(async () => {
       deletedDirectoryCandidatesDiscarded: true,
       unrelatedDirectoryCandidatesPreserved: true,
       queuedDirectoryRendersCancelled: true,
-      cacheClearWaitedForActiveRenders: true
+      cacheClearWaitedForActiveRenders: true,
+      corruptSourceRenderingSerialized: true
     }));
   } finally {
     stopLifecycleListener();
