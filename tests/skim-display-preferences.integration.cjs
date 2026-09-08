@@ -35,11 +35,12 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.deepEqual({
       open: defaults.stableShortcutActions.focusMainSearch,
       hide: defaults.stableShortcutActions.hideToLine,
+      windowMode: defaults.stableShortcutActions.toggleWindowMode,
       skim: defaults.stableShortcutActions.toggleSkim,
       settings: defaults.stableShortcutActions.openSettings,
       reset: defaults.stableShortcutActions.restoreDefaultWindow,
       directory: defaults.stableShortcutActions.cycleDirectory
-    }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+3", settings: "Alt+4", reset: "Alt+2", directory: "Alt+Q" });
+    }, { open: "Alt+`", hide: "Alt+1", windowMode: "Alt+3", skim: "Alt+4", settings: "Alt+5", reset: "Alt+2", directory: "Alt+Q" });
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal("rememberWindowLayout" in defaults, false);
     assert.equal("windowPresentationMode" in defaults, false);
@@ -66,8 +67,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       }
     }));
     const refreshedDefaults = await getUserPreferences();
-    assert.equal(refreshedDefaults.stableShortcutActions.restoreDefaultWindow, "Alt+4");
-    assert.equal(refreshedDefaults.stableShortcutActions.openSettings, "Alt+3");
+    assert.deepEqual(refreshedDefaults.stableShortcutActions, defaults.stableShortcutActions);
 
     const sidebarFolder = path.join(testRoot, "Sidebar Folder");
     await fs.writeFile(preferencesPath, JSON.stringify({
@@ -82,6 +82,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
         focusMainSearch: "Alt+`",
         restoreDefaultWindow: "Alt+3",
         hideToLine: "Alt+4",
+        toggleWindowMode: "Alt+7",
         toggleSkim: "Alt+5",
         cycleDirectory: "Alt+Q",
         openSettings: "Alt+6"
@@ -94,6 +95,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       focusMainSearch: "Alt+`",
       restoreDefaultWindow: "Alt+3",
       hideToLine: "Alt+4",
+      toggleWindowMode: "Alt+7",
       toggleSkim: "Alt+5",
       cycleDirectory: "Alt+Q",
       openSettings: "Alt+6"

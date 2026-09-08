@@ -272,6 +272,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
       focusMainSearch: string;
       restoreDefaultWindow: string;
       hideToLine: string;
+      toggleWindowMode: string;
       toggleSkim: string;
       cycleDirectory: string;
       openSettings: string;

@@ -150,6 +150,7 @@ export type ShortcutActionId =
   | "focusMainSearch"
   | "restoreDefaultWindow"
   | "hideToLine"
+  | "toggleWindowMode"
   | "toggleSkim"
   | "cycleDirectory"
   | "openSettings";

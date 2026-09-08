@@ -290,8 +290,9 @@
 | `settings.confirmationCommandHint` | 危险操作执行前将在输入框内要求输入 y / n 二次确认。 | 执行前将在输入框内要求输入 y / n 二次确认。 |     | 快捷指令说明          |
 | `shortcut.focusMainSearch` | 显示主窗口并聚焦搜索 | | Show main window and focus search | 快捷动作名称 |
 | `shortcut.hideToLine` | 关闭主窗口并保持后台运行 | | Close main window and keep running in the background | 快捷动作名称 |
-| `shortcut.toggleSkim` | 展开 / 收起 skim | | Expand / collapse skim | 快捷动作名称 |
 | `shortcut.restoreDefaultWindow` | 默认大小和位置打开主窗口 | | Open main window at default size and position | 快捷动作名称 |
+| `shortcut.toggleWindowMode` | 切换窗口模式 | | Switch window mode | 快捷动作名称 |
+| `shortcut.toggleSkim` | 展开 / 收起 skim | | Expand / collapse skim | 快捷动作名称 |
 | `shortcut.openSettings` | 打开设置 | | Open Settings | 快捷动作名称 |
 | `shortcut.cycleDirectory` | 目录切换 | | Cycle folders | 窗口内快捷动作 |
 
@@ -650,7 +651,7 @@
 以下仅是扫描结果，不代表已决定修改：
 
 1. 主题状态同时存在“浅色 / 深色”“明亮 / 黑暗”“亮色模式 / 暗色模式”。
-2. 旧窗口模式切换与 Capsule / micro / mini 已退役；当前只保留主窗口显示、隐藏至 line、Skim 切换和默认几何恢复。
+2. 旧 Capsule / micro / mini 形态切换已退役；当前窗口模式只指标准窗口与边缘收起之间的切换。
 3. 同一功能存在“线状胶囊”“待机线”“待机线条”三种名称。
 4. 同一颜色角色存在“副色”，后续可确认是否统一为“强调色”。
 5. Settings 使用“快捷动作”，快捷指令分类使用“快捷键类”，执行反馈又使用“全局快捷键”。三者可能需要明确层级。

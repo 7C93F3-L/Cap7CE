@@ -142,7 +142,7 @@ let quickActionGlobalEnabled = true;
 let shortcutCaptureActive = false;
 let registeredMainSearchShortcut: string | null = null;
 const registeredShellModeShortcuts = new Map<string, string>();
-type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleSkim" | "cycleDirectory" | "openSettings";
+type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleWindowMode" | "toggleSkim" | "cycleDirectory" | "openSettings";
 type GlobalShortcutActionId = Exclude<ShortcutActionId, "cycleDirectory">;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type ShortcutPreferenceProfiles = { stableShortcutActions: ShortcutActionPreferences };
@@ -896,36 +896,30 @@ const activateShellModeShortcut = async (mode: "normal" | "standby" | "skim" | "
   return true;
 };
 
-const registerShellModeShortcuts = (shortcutActions: {
-  restoreDefaultWindow: string;
-  hideToLine: string;
-  toggleSkim: string;
-  openSettings: string;
-}) => {
+const registerShellModeShortcuts = (shortcutActions: ShortcutActionPreferences) => {
   unregisterShellModeShortcuts();
   const unavailableActionIds = new Set<GlobalShortcutActionId>();
-  const shortcutModes = [
-    { id: "hideToLine", shortcut: shortcutActions.hideToLine, mode: "standby" },
-    { id: "toggleSkim", shortcut: shortcutActions.toggleSkim, mode: "skim" },
-    { id: "openSettings", shortcut: shortcutActions.openSettings, mode: "settings" },
-    { id: "restoreDefaultWindow", shortcut: shortcutActions.restoreDefaultWindow, mode: "normal" }
-  ] as const;
+  const shortcutRegistrations: Array<[GlobalShortcutActionId, string, () => void]> = [
+    ["hideToLine", shortcutActions.hideToLine, () => { void activateShellModeShortcut("standby"); }],
+    ["restoreDefaultWindow", shortcutActions.restoreDefaultWindow, () => { void activateShellModeShortcut("normal", true); }],
+    ["toggleWindowMode", shortcutActions.toggleWindowMode, () => { void toggleEdgeCollapseWindowMode(); }],
+    ["toggleSkim", shortcutActions.toggleSkim, () => { void activateShellModeShortcut("skim"); }],
+    ["openSettings", shortcutActions.openSettings, () => { void activateShellModeShortcut("settings"); }]
+  ];
 
-  for (const { id, shortcut, mode } of shortcutModes) {
+  for (const [id, shortcut, activate] of shortcutRegistrations) {
     if (!shortcut) continue;
     try {
-      const registered = globalShortcut.register(shortcut, () => {
-        void activateShellModeShortcut(mode, mode === "normal");
-      });
+      const registered = globalShortcut.register(shortcut, activate);
       if (registered) {
         registeredShellModeShortcuts.set(id, shortcut);
       } else {
         unavailableActionIds.add(id);
-        console.warn("[shortcut] failed to register shell mode shortcut", { id, shortcut, mode });
+        console.warn("[shortcut] failed to register shell mode shortcut", { id, shortcut });
       }
     } catch (error) {
       unavailableActionIds.add(id);
-      console.warn("[shortcut] failed to register shell mode shortcut", { id, shortcut, mode, error });
+      console.warn("[shortcut] failed to register shell mode shortcut", { id, shortcut, error });
     }
   }
   return unavailableActionIds;
@@ -950,6 +944,7 @@ const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) 
   const shortcutEntries: Array<[GlobalShortcutActionId, string]> = [
     ["focusMainSearch", shortcutActions.focusMainSearch],
     ["hideToLine", shortcutActions.hideToLine],
+    ["toggleWindowMode", shortcutActions.toggleWindowMode],
     ["toggleSkim", shortcutActions.toggleSkim],
     ["openSettings", shortcutActions.openSettings],
     ["restoreDefaultWindow", shortcutActions.restoreDefaultWindow]
@@ -1126,6 +1121,7 @@ const setEdgeCollapseEnabled = async (enabled: boolean) => {
   sendEdgeCollapseEnabledToRenderer();
   return preferences;
 };
+const toggleEdgeCollapseWindowMode = async () => broadcastSettingsData("preferences:changed", await setEdgeCollapseEnabled(!edgeCollapseEnabled));
 
 const openSettings = async () => Boolean(await settingsWindowController?.open());
 
@@ -2580,14 +2576,7 @@ ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, next
   return preferences;
 });
 
-ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: {
-  focusMainSearch: string;
-  restoreDefaultWindow: string;
-  hideToLine: string;
-  toggleSkim: string;
-  cycleDirectory: string;
-  openSettings: string;
-}) => {
+ipcMain.handle("preferences:updateShortcutActions", async (_event, shortcutActions: ShortcutActionPreferences) => {
   const currentPreferences = await getUserPreferences();
   const candidateShortcutActions = shortcutActions as ShortcutActionPreferences;
   quickActionGlobalEnabled = currentPreferences.quickActionGlobalEnabled;

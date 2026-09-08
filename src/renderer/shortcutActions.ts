@@ -4,8 +4,9 @@ export const defaultStableShortcutActions: ShortcutActionPreferences = {
   focusMainSearch: "Alt+`",
   hideToLine: "Alt+1",
   restoreDefaultWindow: "Alt+2",
-  toggleSkim: "Alt+3",
-  openSettings: "Alt+4",
+  toggleWindowMode: "Alt+3",
+  toggleSkim: "Alt+4",
+  openSettings: "Alt+5",
   cycleDirectory: "Alt+Q"
 };
 
@@ -15,6 +16,7 @@ export const normalizeStableShortcutActions = (
   focusMainSearch: shortcutActions?.focusMainSearch || defaultStableShortcutActions.focusMainSearch,
   restoreDefaultWindow: shortcutActions?.restoreDefaultWindow || defaultStableShortcutActions.restoreDefaultWindow,
   hideToLine: shortcutActions?.hideToLine || defaultStableShortcutActions.hideToLine,
+  toggleWindowMode: shortcutActions?.toggleWindowMode || defaultStableShortcutActions.toggleWindowMode,
   toggleSkim: shortcutActions?.toggleSkim || defaultStableShortcutActions.toggleSkim,
   cycleDirectory: shortcutActions?.cycleDirectory || defaultStableShortcutActions.cycleDirectory,
   openSettings: shortcutActions?.openSettings || defaultStableShortcutActions.openSettings
