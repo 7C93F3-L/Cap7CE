@@ -177,6 +177,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"search-ai"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /formatThumbnailOptimizationStatus\(controller\.thumbnailOptimizationStatus\)/u);
+  assert.match(settingsAppSource, /settings\.edgeCollapse[\s\S]*?settings\.standardWindowMode[\s\S]*?settings\.edgeCollapseMode/u);
+  assert.match(settingsAppSource, /<StableSettingsSelect[^>]*label=\{t\("settings\.edgeCollapse"\)\}[^>]*value=\{preferences\.edgeCollapseEnabled \? "edge-collapse" : "standard"\}[^>]*settings\.standardWindowMode[^>]*settings\.edgeCollapseMode[^>]*onChange=\{\(value\) => toggle\("edgeCollapseEnabled", value === "edge-collapse"\)\}/u);
+  assert.match(mainSource, /edgeCollapseEnabled \? t\("tray\.disableEdgeCollapse"\) : t\("tray\.enableEdgeCollapse"\)/u);
   assert.match(formattingSource, /status\.phase === "discovering"[\s\S]*?stableSettings\.optimizationChecking[\s\S]*?stableSettings\.optimizationNoWork[\s\S]*?stableSettings\.optimizationCompleted/u);
   assert.match(settingsAppSource, /SettingsWindowUpdateControl/u);
   assert.match(settingsAppSource, /category === "appearance"[\s\S]*?stableSettings\.material[\s\S]*?appearance\.themeModeLabel[\s\S]*?appearance\.configureLabel[\s\S]*?stableSettings\.uiFontSize/u);

@@ -41,7 +41,7 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; icon: 
   { id: "about", label: "stableSettings.category.about", icon: "about" }
 ];
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
-  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.edgeCollapse", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
+  general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.edgeCollapse", "settings.standardWindowMode", "settings.edgeCollapseMode", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
   appearance: ["stableSettings.category.appearance", "stableSettings.material", "stableSettings.uiFontSize", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.uiFontSize", "stableSettings.desc.theme", "stableSettings.desc.colors"],
   browse: ["settings.skimDisplay", "stableSettings.desc.skimDisplay"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.runtimeInfo", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.runtimeInfo"],
@@ -124,7 +124,7 @@ const SettingsWindowApp = () => {
         <SettingCard title="settings.systemNotifications" description="stableSettings.desc.notifications" query={normalizedQuery}><SettingsToggle enabled={preferences.systemNotificationsEnabled} onChange={(enabled) => toggle("systemNotificationsEnabled", enabled)} /></SettingCard>
       </SettingsSection>
       <SettingsSection title="stableSettings.section.windows">
-        <SettingCard title="settings.edgeCollapse" description="stableSettings.desc.edgeCollapse" query={normalizedQuery}><SettingsToggle enabled={preferences.edgeCollapseEnabled} onChange={(enabled) => toggle("edgeCollapseEnabled", enabled)} /></SettingCard>
+        <SettingCard title="settings.edgeCollapse" description="stableSettings.desc.edgeCollapse" query={normalizedQuery}><StableSettingsSelect menuStyle={menuStyle} label={t("settings.edgeCollapse")} value={preferences.edgeCollapseEnabled ? "edge-collapse" : "standard"} options={[{ value: "standard", label: t("settings.standardWindowMode") }, { value: "edge-collapse", label: t("settings.edgeCollapseMode") }]} onChange={(value) => toggle("edgeCollapseEnabled", value === "edge-collapse")} /></SettingCard>
         <SettingCard title="settings.standbyLine" description="stableSettings.desc.line" query={normalizedQuery}><SettingsToggle enabled={preferences.standbyLineVisible} onChange={(enabled) => toggle("standbyLineVisible", enabled)} /></SettingCard>
       </SettingsSection>
     </>;

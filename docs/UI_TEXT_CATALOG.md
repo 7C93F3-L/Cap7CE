@@ -253,7 +253,9 @@
 | `settings.standbyLine`             | line                            |                           | line | line 显示开关 |
 | `settings.visible`                 | 显示                            |                           |     | 待机线状态           |
 | `settings.hidden`                  | 不显示                           |                           |     | 待机线状态           |
-| `settings.edgeCollapse`            | 边缘自动收起                       |                           | Edge Auto-hide | 主窗口与预览窗口的边缘收起开关   |
+| `settings.edgeCollapse`            | 窗口模式                         |                           | Window Mode | 主窗口与预览窗口的窗口模式     |
+| `settings.standardWindowMode`      | 标准窗口                         |                           | Standard Window | 保留最大化与 Windows 贴靠     |
+| `settings.edgeCollapseMode`        | 边缘收起                         |                           | Edge Auto-hide | 贴边自动隐藏窗口            |
 | `settings.enabled`                 | 打开                            |                           |     | 开关状态            |
 | `settings.disabled`                | 关闭                            |                           |     | 开关状态            |
 | `settings.launchAtLogin`           | 登录时启动                         |                           | Launch at Sign-in | Windows 登录启动 |
@@ -634,8 +636,8 @@
 | ---------------------- | --------- | ------- | --- | --------- |
 | `tray.hideStandbyLine` | 隐藏待机线     | 隐藏 line |     | 托盘菜单      |
 | `tray.showStandbyLine` | 显示待机线     | 显示 line |     | 托盘菜单      |
-| `tray.disableEdgeCollapse` | 关闭边缘收起 | | Disable Edge Collapse | 托盘菜单 |
-| `tray.enableEdgeCollapse` | 打开边缘收起 | | Enable Edge Collapse | 托盘菜单 |
+| `tray.disableEdgeCollapse` | 切换至标准窗口 | | Switch to Standard Window | 托盘菜单 |
+| `tray.enableEdgeCollapse` | 切换至边缘收起 | | Switch to Edge Auto-hide | 托盘菜单 |
 | `tray.openSettings`    | 打开设置页     | 打开设置    |     | 托盘菜单      |
 | `tray.quit`            | 退出 Cap7CE |         |     | 托盘菜单      |
 | `notification.backgroundRunTitle` | Cap7CE 已在后台运行 | | Cap7CE is running in the background | 首次后台提示 |
