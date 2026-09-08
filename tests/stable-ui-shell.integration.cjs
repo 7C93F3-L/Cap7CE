@@ -113,8 +113,8 @@ assert.match(confirmationPanelsSource, /<DialogShell[\s\S]*?warningGradientSvg/u
 assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-stable-flyout-surface\)\)/u);
 assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
-assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer \{\s*pointer-events: none;/u);
-assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer > \.cap-dialog-surface \{\s*pointer-events: auto;/u);
+assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer,[\s\S]*?\.cap-dialog-layer\.is-stable \{\s*pointer-events: none;/u);
+assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer > \.cap-dialog-surface,[\s\S]*?\.cap-dialog-layer\.is-stable > \.cap-dialog-surface \{\s*pointer-events: auto;/u);
 assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
 assert.match(appSource, /useCurrentPageRefreshShortcut\(\{[\s\S]*?refresh: refreshCurrentPage,[\s\S]*?t\("common\.refreshed"\)/u);
 assert.match(refreshShortcutSource, /event\.key !== "F5"[\s\S]*?requestRefresh\(\)/u);

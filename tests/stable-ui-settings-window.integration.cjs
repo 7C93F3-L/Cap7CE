@@ -249,6 +249,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
   assert.match(settingsAppSource, /aria-current=\{activeCategory === category\.id \? "page" : undefined\}/u);
   assert.match(settingsAppSource, /<SettingsConfirmationDialog[\s\S]*?message=\{dialog\.message\}/u);
+  assert.match(settingsAppSource, /useInertElement<HTMLDivElement>\(dialog !== null\)[\s\S]*?ref=\{dragRegionRef\}/u);
+  assert.match(settingsAppSource, /useInertElement<HTMLDivElement>\(dialog !== null\)[\s\S]*?ref=\{settingsShellRef\}/u);
   assert.match(settingsConfirmationSource, /<DialogShell label=\{message\} stable>[\s\S]*?cap-dialog-warning-icon[\s\S]*?cap-dialog-actions/u);
   assert.match(dialogShellSource, /role="alertdialog"[\s\S]*?aria-label=\{label\}/u);
   assert.match(settingsAccessibilityStyles, /cap-settings-window-foundation button:focus-visible[\s\S]*?var\(--stable-settings-focus\)/u);
