@@ -1,5 +1,6 @@
 {
   "strictMaxLines": {
+    "scripts/architecture-boundaries-check.cjs": 175,
     "scripts/clean-electron-build.cjs": 19,
     "scripts/stable-only-artifact-check.cjs": 58,
     "src/renderer/App.tsx": 2434,
