@@ -1,9 +1,5 @@
 @import "./StableNavigationState.css";
-.cap-stable-sidebar { container-type: inline-size; position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; min-height: 0; box-sizing: border-box; padding: 6px; overflow: hidden; app-region: drag; -webkit-app-region: drag; }
-.cap-stable-sidebar button,
-.cap-stable-sidebar input,
-.cap-stable-sidebar .cap-stable-directory-list,
-.cap-stable-sidebar .cap-custom-scrollbar { app-region: no-drag; -webkit-app-region: no-drag; }
+.cap-stable-sidebar { container-type: inline-size; position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; min-height: 0; box-sizing: border-box; padding: 6px; overflow: hidden; app-region: no-drag; -webkit-app-region: no-drag; }
 .cap-stable-brand { display: flex; align-items: center; min-height: 34px; padding: 0 6px 4px; } .cap-stable-brand-logo { display: block; width: 78px; height: 20px; background: currentColor; opacity: .72; -webkit-mask: url("../assets/icons/logo-cap7ce.svg") center / contain no-repeat; mask: url("../assets/icons/logo-cap7ce.svg") center / contain no-repeat; }
 .cap-stable-sidebar-controls { display: grid; gap: 4px; }
 .cap-stable-sidebar-control,

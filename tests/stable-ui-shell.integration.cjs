@@ -89,8 +89,9 @@ for (const marker of [
   assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);
 }
 assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sidebar is missing its compact container layout.");
-assert.match(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: drag;[^}]*-webkit-app-region: drag;/u);
-assert.match(sidebarStyles, /\.cap-stable-sidebar button,[\s\S]*?\.cap-stable-sidebar \.cap-stable-directory-list,[\s\S]*?\.cap-stable-sidebar \.cap-custom-scrollbar \{ app-region: no-drag; -webkit-app-region: no-drag; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: no-drag;[^}]*-webkit-app-region: no-drag;/u);
+assert.doesNotMatch(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: drag;/u);
+assert.match(foundationStyles, /\.cap-stable-titlebar \{[\s\S]*?app-region: drag;[\s\S]*?-webkit-app-region: drag;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
 assert.match(foundationStyles, /\.cap-stable-search-slot \{[\s\S]*?width: min\(clamp\(120px, 42vw, 560px\), calc\(100% - 56px\)\);/u);
 assert.match(foundationStyles, /\.cap-stable-titlebar-pin-icon \{ width: 24px; height: 24px; \}/u);
