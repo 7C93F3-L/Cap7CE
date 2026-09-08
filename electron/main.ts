@@ -54,7 +54,7 @@ import type { PreviewContentSize, PreviewItemActionRequest, PreviewNavigateDirec
 import { resolveLanguagePreference, setActiveLanguage, t, type LanguagePreference } from "./localization";
 import { installMainWindowInputPolicy, lockWebContentsZoom } from "./webContentsInputPolicy";
 import { LineWindowController } from "./lineWindowController";
-import { installDockedShell } from "./dockedShellAutomation";
+import { installDockedShell } from "./dockedShellAutomation"; import { applyEdgeCollapseWindowMode } from "./edgeCollapseWindowMode";
 import { previewDockedShell } from "./previewDockedShell";
 import { WindowLayerController } from "./windowLayerController";
 import { getDirectionalLineBounds, isNativeSnapArrangement } from "./windowLayoutGeometry";
@@ -459,7 +459,7 @@ const createPreviewWindow = () => {
     skipTaskbar: false,
     resizable: true,
     minimizable: true,
-    maximizable: true,
+    maximizable: !edgeCollapseEnabled,
     fullscreenable: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -733,9 +733,8 @@ const markProgrammaticMove = () => {
   clearMoveSettledCheck();
 };
 const isProgrammaticMoveGuardActive = () => Date.now() < programmaticMoveGuardUntil;
-const isNativeSnapActive = (bounds = mainWindow?.getBounds()) => Boolean(bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
-const isPreviewNativeSnapActive = (bounds = previewWindow?.getBounds()) => Boolean(bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
-
+const isNativeSnapActive = (bounds = mainWindow?.getBounds()) => Boolean(bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea)); const isPreviewNativeSnapActive = (bounds = previewWindow?.getBounds()) => Boolean(bounds && isNativeSnapArrangement(bounds, screen.getDisplayMatching(bounds).workArea));
+const applyMainEdgeCollapseWindowMode = () => applyEdgeCollapseWindowMode({ enabled: edgeCollapseEnabled, getRestoredBounds: () => getShellWindowBounds("normal"), isNativeSnapActive, markProgrammaticMove, window: mainWindow }); const applyPreviewEdgeCollapseWindowMode = () => applyEdgeCollapseWindowMode({ enabled: edgeCollapseEnabled, getRestoredBounds: () => previewWindow?.getNormalBounds() ?? getShellWindowBounds("normal"), isNativeSnapActive: isPreviewNativeSnapActive, markProgrammaticMove: markPreviewProgrammaticMove, window: previewWindow });
 const rememberUserMovedShellBounds = (bounds: Electron.Rectangle) => {
   const shellState = activeShellState;
   if (
@@ -1120,8 +1119,9 @@ const setStandbyLineVisible = async (nextStandbyLineVisible: boolean) => {
 const setEdgeCollapseEnabled = async (enabled: boolean) => {
   const preferences = await updateEdgeCollapsePreference(enabled);
   edgeCollapseEnabled = preferences.edgeCollapseEnabled;
-  dockedShellController?.setEnabled(edgeCollapseEnabled);
-  previewDockedShell.setEnabled(edgeCollapseEnabled);
+  if (!edgeCollapseEnabled) { dockedShellController?.setEnabled(false); previewDockedShell.setEnabled(false); }
+  applyMainEdgeCollapseWindowMode(); applyPreviewEdgeCollapseWindowMode();
+  if (edgeCollapseEnabled) { dockedShellController?.setEnabled(true); previewDockedShell.setEnabled(true); }
   updateTrayMenu();
   sendEdgeCollapseEnabledToRenderer();
   return preferences;
@@ -1466,7 +1466,7 @@ const createWindow = () => {
     title: "Cap7CE",
     skipTaskbar: false,
     ...getMainWindowOptions(),
-    hasShadow: true,
+    maximizable: !edgeCollapseEnabled, hasShadow: true,
     show: false,
     paintWhenInitiallyHidden: true,
     webPreferences: {

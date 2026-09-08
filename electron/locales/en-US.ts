@@ -109,7 +109,7 @@ export const enUS = defineLocale({
   "stableSettings.desc.language": "Choose the interface language. The system option uses the current Windows display language.",
   "stableSettings.desc.launch": "Start Cap7CE after you sign in to Windows.",
   "stableSettings.desc.notifications": "Show the initial background-running notice and notifications when background cache optimization finishes.",
-  "stableSettings.desc.edgeCollapse": "Automatically hide the main or preview window when docked to an outer screen edge, excluding taskbar edges and seams between displays.",
+  "stableSettings.desc.edgeCollapse": "Automatically hide the main or preview window at an outer screen edge. Enabling this disables maximize and Windows Snap; disabling it restores both. Taskbar edges and seams between displays are excluded.",
   "stableSettings.desc.material": "Choose Acrylic or Mica for the main, Settings, and preview windows. If unavailable, a solid background is used.",
   "stableSettings.material": "Window material",
   "stableSettings.material.acrylic": "Acrylic",
