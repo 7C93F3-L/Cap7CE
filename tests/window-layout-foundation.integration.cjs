@@ -33,6 +33,12 @@ assert.deepEqual(
 assert.equal(geometry.detectWindowDockEdge({ x: 5, y: 5, width: 500, height: 300 }, workArea, 12, "top"), "top");
 assert.equal(geometry.detectWindowDockEdge({ x: 5, y: 5, width: 500, height: 300 }, workArea, 12, "left"), "left");
 assert.equal(geometry.detectWindowDockEdge({ x: 200, y: 200, width: 500, height: 300 }, workArea, 12), null);
+assert.equal(geometry.detectWindowScreenBoundaryEdge({ x: 1, y: 200, width: 500, height: 300 }, { x: 0, y: 0, width: 1920, height: 1080 }), null);
+assert.equal(geometry.detectWindowScreenBoundaryEdge({ x: 0, y: 200, width: 500, height: 300 }, { x: 0, y: 0, width: 1920, height: 1080 }), "left");
+assert.equal(geometry.detectWindowScreenBoundaryEdge({ x: -1, y: 200, width: 500, height: 300 }, { x: 0, y: 0, width: 1920, height: 1080 }), "left");
+assert.equal(geometry.detectWindowScreenBoundaryEdge({ x: 1420, y: 200, width: 500, height: 300 }, { x: 0, y: 0, width: 1920, height: 1080 }), "right");
+assert.equal(geometry.detectWindowScreenBoundaryEdge({ x: -3, y: -5, width: 500, height: 300 }, { x: 0, y: 0, width: 1920, height: 1080 }), "top");
+assert.equal(geometry.detectWindowScreenBoundaryEdge({ x: -3, y: -3, width: 500, height: 300 }, { x: 0, y: 0, width: 1920, height: 1080 }, "top"), "top");
 assert.equal(geometry.inferTaskbarEdge({ x: 0, y: 0, width: 1920, height: 1080 }, workArea), "bottom");
 assert.equal(
   geometry.inferTaskbarEdge({ x: 0, y: 0, width: 1920, height: 1080 }, { x: 48, y: 0, width: 1872, height: 1080 }),

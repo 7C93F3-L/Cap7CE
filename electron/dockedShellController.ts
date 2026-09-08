@@ -1,4 +1,4 @@
-import { clampWindowLayoutBounds, detectWindowDockEdge, inferTaskbarEdge } from "./windowLayoutGeometry";
+import { clampWindowLayoutBounds, detectWindowScreenBoundaryEdge, inferTaskbarEdge } from "./windowLayoutGeometry";
 import { getShellMousePollDelay } from "./shellMousePollingPolicy";
 import type { WindowDockEdge, WindowLayoutBounds, WindowLayoutDisplaySnapshot } from "./windowLayoutTypes";
 
@@ -22,7 +22,6 @@ interface DockedShellWindow {
 
 interface DockedShellControllerOptions {
   collapsibleStates?: ReadonlySet<string>;
-  dockThreshold?: number;
   enabled: boolean;
   fixed?: boolean;
   getCursorPoint: () => { x: number; y: number };
@@ -47,14 +46,12 @@ interface DockSession {
   armed: boolean;
   display: WindowLayoutDisplaySnapshot;
   edge: WindowDockEdge;
-  edgeInset: number;
   expandedBounds: WindowLayoutBounds;
 }
 
 const collapsibleShellStates = new Set(["normal"]);
-export const dockedShellDockThresholdPx = 16;
-export const dockedShellDockReleaseThresholdPx = 24;
-export const dockedShellPeekThicknessPx = 5;
+const windowDockEdges: readonly WindowDockEdge[] = ["left", "right", "top", "bottom"];
+export const dockedShellPeekThicknessPx = 2;
 export const dockedShellRevealThicknessPx = 2;
 
 export class DockedShellController {
@@ -219,6 +216,14 @@ export class DockedShellController {
     this.suppressFor(durationMs);
   }
 
+  handleUserMoveCompleted() {
+    if (!this.enabled || this.disposed || this.minimizeSuspended) return;
+    if (!this.collapsed) this.session = null;
+    this.armNextSession = true;
+    this.suppressedUntil = this.now();
+    this.sampleCursor(this.options.getCursorPoint(), this.suppressedUntil);
+  }
+
   suppressFor(durationMs: number) {
     this.suppressedUntil = Math.max(this.suppressedUntil, this.now() + Math.max(0, durationMs));
   }
@@ -297,21 +302,23 @@ export class DockedShellController {
     const expandedBounds = window.getBounds();
     const display = this.options.getDisplay(expandedBounds);
     const taskbarEdge = inferTaskbarEdge(display.bounds, display.workArea) ?? "bottom";
-    const threshold = this.options.dockThreshold ?? dockedShellDockThresholdPx;
-    const nearestEdge = detectWindowDockEdge(expandedBounds, display.workArea, threshold);
-    const edge = detectWindowDockEdge(expandedBounds, display.workArea, threshold, null, [taskbarEdge]);
+    const nearestEdge = detectWindowScreenBoundaryEdge(expandedBounds, display.bounds);
+    const nonTaskbarEdge = detectWindowScreenBoundaryEdge(expandedBounds, display.bounds, null, [taskbarEdge]);
+    const seamEdges = this.options.isDockEdgeExposed
+      ? windowDockEdges.filter((edge) => !this.options.isDockEdgeExposed!(display, edge, expandedBounds))
+      : [];
+    const edge = detectWindowScreenBoundaryEdge(expandedBounds, display.bounds, null, [taskbarEdge, ...seamEdges]);
     if (!edge) {
       this.session = null;
+      this.armNextSession = false;
+      if (nonTaskbarEdge && seamEdges.includes(nonTaskbarEdge)) {
+        return { status: "blocked", reason: "display-seam" };
+      }
       return { status: "blocked", reason: nearestEdge === taskbarEdge ? "taskbar-edge" : "not-docked" };
-    }
-    if (this.options.isDockEdgeExposed && !this.options.isDockEdgeExposed(display, edge, expandedBounds)) {
-      this.session = null;
-      return { status: "blocked", reason: "display-seam" };
     }
     const session = {
       edge,
       display,
-      edgeInset: this.getEdgeInset(expandedBounds, display.workArea, edge),
       expandedBounds,
       armed: false
     };
@@ -327,9 +334,10 @@ export class DockedShellController {
     const bounds = this.options.window.getBounds();
     const display = this.options.getDisplay(bounds);
     const taskbarEdge = inferTaskbarEdge(display.bounds, display.workArea) ?? "bottom";
-    const threshold = this.options.dockThreshold ?? dockedShellDockReleaseThresholdPx;
-    return this.session.edge !== taskbarEdge
-      && detectWindowDockEdge(bounds, display.workArea, threshold, this.session.edge, [taskbarEdge]) === this.session.edge;
+    return display.id === this.session.display.id
+      && this.session.edge !== taskbarEdge
+      && (!this.options.isDockEdgeExposed || this.options.isDockEdgeExposed(display, this.session.edge, bounds))
+      && detectWindowScreenBoundaryEdge(bounds, display.bounds, this.session.edge, [taskbarEdge]) === this.session.edge;
   }
 
   private isCollapsedSessionValid() {
@@ -397,14 +405,14 @@ export class DockedShellController {
     const maximumX = Math.max(workArea.x, workArea.x + workArea.width - bounds.width);
     const maximumY = Math.max(workArea.y, workArea.y + workArea.height - bounds.height);
     const x = session.edge === "left"
-      ? Math.min(maximumX, workArea.x + session.edgeInset)
+      ? workArea.x
       : session.edge === "right"
-        ? Math.max(workArea.x, maximumX - session.edgeInset)
+        ? maximumX
         : Math.min(maximumX, Math.max(workArea.x, bounds.x));
     const y = session.edge === "top"
-      ? Math.min(maximumY, workArea.y + session.edgeInset)
+      ? workArea.y
       : session.edge === "bottom"
-        ? Math.max(workArea.y, maximumY - session.edgeInset)
+        ? maximumY
         : Math.min(maximumY, Math.max(workArea.y, bounds.y));
     return { ...bounds, x, y };
   }
@@ -412,17 +420,6 @@ export class DockedShellController {
   private captureExpandedBounds(bounds: WindowLayoutBounds, session: DockSession) {
     session.display = this.options.getDisplay(bounds);
     session.expandedBounds = this.alignBoundsToSessionEdge(bounds, session);
-  }
-
-  private getEdgeInset(bounds: WindowLayoutBounds, workArea: WindowLayoutBounds, edge: WindowDockEdge) {
-    const inset = edge === "left"
-      ? bounds.x - workArea.x
-      : edge === "right"
-        ? workArea.x + workArea.width - bounds.x - bounds.width
-        : edge === "top"
-          ? bounds.y - workArea.y
-          : workArea.y + workArea.height - bounds.y - bounds.height;
-    return Math.max(0, Math.round(inset));
   }
 
   private getRevealScreenBounds(session: DockSession): WindowLayoutBounds {

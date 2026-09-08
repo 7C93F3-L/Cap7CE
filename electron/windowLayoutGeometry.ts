@@ -127,6 +127,26 @@ export const detectWindowDockEdge = (
   return nearestEdges[0]?.edge ?? null;
 };
 
+export const detectWindowScreenBoundaryEdge = (
+  bounds: WindowLayoutBounds,
+  displayBounds: WindowLayoutBounds,
+  preferredEdge: WindowDockEdge | null = null,
+  excludedEdges: readonly WindowDockEdge[] = []
+): WindowDockEdge | null => {
+  const edgeOverflows: Array<{ edge: WindowDockEdge; overflow: number }> = [
+    { edge: "left", overflow: displayBounds.x - bounds.x },
+    { edge: "right", overflow: bounds.x + bounds.width - displayBounds.x - displayBounds.width },
+    { edge: "top", overflow: displayBounds.y - bounds.y },
+    { edge: "bottom", overflow: bounds.y + bounds.height - displayBounds.y - displayBounds.height }
+  ];
+  const candidates = edgeOverflows.filter(({ edge, overflow }) => overflow >= 0 && !excludedEdges.includes(edge));
+  if (candidates.length === 0) return null;
+  const maximumOverflow = Math.max(...candidates.map(({ overflow }) => overflow));
+  const furthestEdges = candidates.filter(({ overflow }) => overflow === maximumOverflow);
+  if (preferredEdge && furthestEdges.some(({ edge }) => edge === preferredEdge)) return preferredEdge;
+  return furthestEdges[0]?.edge ?? null;
+};
+
 export const inferTaskbarEdge = (
   displayBounds: WindowLayoutBounds,
   workArea: WindowLayoutBounds

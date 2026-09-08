@@ -3,8 +3,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const {
   DockedShellController,
-  dockedShellDockThresholdPx,
-  dockedShellDockReleaseThresholdPx,
   dockedShellPeekThicknessPx,
   dockedShellRevealThicknessPx
 } = require("../dist-electron/dockedShellController.js");
@@ -70,9 +68,7 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
   return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setBounds: (nextBounds) => { bounds = { ...nextBounds }; }, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; }, setMinimized: (nextMinimized) => { minimized = nextMinimized; } };
 };
 
-assert.equal(dockedShellDockThresholdPx, 16);
-assert.equal(dockedShellDockReleaseThresholdPx, 24);
-assert.equal(dockedShellPeekThicknessPx, 5);
+assert.equal(dockedShellPeekThicknessPx, 2);
 assert.equal(dockedShellRevealThicknessPx, 2);
 
 const createWindowModeProbe = ({ maximized = false, minimized = false } = {}) => {
@@ -116,7 +112,7 @@ const leftBounds = { x: 0, y: 200, width: 900, height: 600 };
 const left = createController({ initialBounds: leftBounds });
 assert.deepEqual(left.controller.toggle(), { status: "collapsed", edge: "left" });
 assert.equal(left.controller.hasActiveSession(), true);
-assert.deepEqual(left.getBounds(), { ...leftBounds, x: -895 });
+assert.deepEqual(left.getBounds(), { ...leftBounds, x: -898 });
 assert.equal(left.appliedBounds.at(-1).animate, false);
 assert.equal(left.presentation.shadow, false);
 assert.deepEqual(left.controller.getState(), { edge: "left" });
@@ -136,38 +132,44 @@ assert.deepEqual(left.activity.collapsedLayers, [true, false]);
 const rightBounds = { x: 1020, y: 180, width: 900, height: 600 };
 const right = createController({ initialBounds: rightBounds });
 assert.deepEqual(right.controller.toggle(), { status: "collapsed", edge: "right" });
-assert.deepEqual(right.getBounds(), { ...rightBounds, x: 1915 });
+assert.deepEqual(right.getBounds(), { ...rightBounds, x: 1918 });
 
 const topBounds = { x: 500, y: 0, width: 900, height: 600 };
 const top = createController({ initialBounds: topBounds });
 assert.deepEqual(top.controller.toggle(), { status: "collapsed", edge: "top" });
-assert.deepEqual(top.getBounds(), { ...topBounds, y: -595 });
+assert.deepEqual(top.getBounds(), { ...topBounds, y: -598 });
 
 const bottomBounds = { x: 500, y: 480, width: 900, height: 600 };
 const bottom = createController({ initialBounds: bottomBounds, display: topTaskbarDisplay });
 assert.deepEqual(bottom.controller.toggle(), { status: "collapsed", edge: "bottom" });
-assert.deepEqual(bottom.getBounds(), { ...bottomBounds, y: 1075 });
+assert.deepEqual(bottom.getBounds(), { ...bottomBounds, y: 1078 });
 
-const blockedTaskbar = createController({ initialBounds: { x: 500, y: 440, width: 900, height: 600 } });
+const blockedTaskbar = createController({ initialBounds: { x: 500, y: 480, width: 900, height: 600 } });
 assert.deepEqual(blockedTaskbar.controller.toggle(), { status: "blocked", reason: "taskbar-edge" });
 assert.equal(blockedTaskbar.appliedBounds.length, 0);
 
-const cornerPrefersAllowedEdge = createController({ initialBounds: { x: 0, y: 440, width: 900, height: 600 } });
+const cornerPrefersAllowedEdge = createController({ initialBounds: { x: 0, y: 480, width: 900, height: 600 } });
 assert.deepEqual(cornerPrefersAllowedEdge.controller.toggle(), { status: "collapsed", edge: "left" });
 
 const nearEdgeWithoutSnap = createController({ initialBounds: { x: 990, y: 200, width: 900, height: 600 } });
 assert.deepEqual(nearEdgeWithoutSnap.controller.toggle(), { status: "blocked", reason: "not-docked" });
 assert.equal(nearEdgeWithoutSnap.controller.hasActiveSession(), false);
 
-const tolerantDock = createController({ initialBounds: { x: 1005, y: 180, width: 900, height: 600 } });
-tolerantDock.sample({ x: 1200, y: 300 }, 0);
-assert.equal(tolerantDock.controller.hasActiveSession(), true);
-tolerantDock.setBounds({ x: 997, y: 180, width: 900, height: 600 });
-tolerantDock.sample({ x: 1200, y: 300 }, 1);
-assert.equal(tolerantDock.controller.hasActiveSession(), true);
-tolerantDock.setBounds({ x: 995, y: 180, width: 900, height: 600 });
-tolerantDock.sample({ x: 1200, y: 300 }, 2);
-assert.equal(tolerantDock.controller.hasActiveSession(), false);
+const onePixelInside = createController({ initialBounds: { x: 1019, y: 180, width: 900, height: 600 } });
+assert.deepEqual(onePixelInside.controller.toggle(), { status: "blocked", reason: "not-docked" });
+assert.equal(onePixelInside.controller.hasActiveSession(), false);
+
+const onePixelOutside = createController({ initialBounds: { x: 1021, y: 180, width: 900, height: 600 } });
+assert.deepEqual(onePixelOutside.controller.toggle(), { status: "collapsed", edge: "right" });
+assert.deepEqual(onePixelOutside.controller.getExpandedBounds(), rightBounds);
+assert.deepEqual(onePixelOutside.getBounds(), { ...rightBounds, x: 1918 });
+
+const exactBoundaryRelease = createController({ initialBounds: rightBounds });
+exactBoundaryRelease.sample({ x: 1200, y: 300 }, 0);
+assert.equal(exactBoundaryRelease.controller.hasActiveSession(), true);
+exactBoundaryRelease.setBounds({ x: 1019, y: 180, width: 900, height: 600 });
+exactBoundaryRelease.sample({ x: 1200, y: 300 }, 1);
+assert.equal(exactBoundaryRelease.controller.hasActiveSession(), false);
 
 const displaySeam = createController({
   initialBounds: rightBounds,
@@ -176,11 +178,25 @@ const displaySeam = createController({
 assert.deepEqual(displaySeam.controller.toggle(), { status: "blocked", reason: "display-seam" });
 assert.equal(displaySeam.controller.getState(), null);
 
+const secondDisplay = {
+  id: 2,
+  bounds: { x: 1920, y: 0, width: 1280, height: 1024 },
+  workArea: { x: 1920, y: 0, width: 1280, height: 984 },
+  scaleFactor: 1.25
+};
+const movedFullyToSecondDisplay = createController({
+  initialBounds: { x: 2300, y: 120, width: 900, height: 600 },
+  display: secondDisplay,
+  isDockEdgeExposed: (_display, edge) => edge !== "left"
+});
+assert.deepEqual(movedFullyToSecondDisplay.controller.toggle(), { status: "collapsed", edge: "right" });
+assert.deepEqual(movedFullyToSecondDisplay.getBounds(), { x: 3198, y: 120, width: 900, height: 600 });
+
 const automatic = createController({ initialBounds: leftBounds });
 automatic.sample({ x: 200, y: 300 }, 0);
 automatic.sample({ x: 1200, y: 300 }, 1);
 assert.deepEqual(automatic.controller.getState(), { edge: "left" });
-assert.deepEqual(automatic.getBounds(), { ...leftBounds, x: -895 });
+assert.deepEqual(automatic.getBounds(), { ...leftBounds, x: -898 });
 automatic.sample({ x: 0, y: 300 }, 2);
 assert.equal(automatic.controller.getState(), null);
 assert.deepEqual(automatic.getBounds(), leftBounds);
@@ -194,7 +210,7 @@ minimizedWhileCollapsed.setMinimized(true);
 minimizedWhileCollapsed.controller.handleMinimize();
 minimizedWhileCollapsed.sample({ x: 0, y: 300 }, 1);
 assert.deepEqual(minimizedWhileCollapsed.controller.getState(), { edge: "left" });
-assert.deepEqual(minimizedWhileCollapsed.getBounds(), { ...leftBounds, x: -895 });
+assert.deepEqual(minimizedWhileCollapsed.getBounds(), { ...leftBounds, x: -898 });
 assert.deepEqual(minimizedWhileCollapsed.activity.collapsedLayers, [true, false]);
 minimizedWhileCollapsed.setMinimized(false);
 assert.equal(minimizedWhileCollapsed.controller.handleRestore(), true);
@@ -227,10 +243,24 @@ edgeGap.sample({ x: 1200, y: 300 }, 0);
 edgeGap.sample({ x: 1918, y: 300 }, 1);
 assert.equal(edgeGap.controller.getState(), null);
 edgeGap.sample({ x: 1000, y: 300 }, 2);
-assert.deepEqual(edgeGap.controller.getState(), { edge: "right" });
+assert.equal(edgeGap.controller.getState(), null);
+
+const settledAtBoundary = createController({ initialBounds: rightBounds });
+settledAtBoundary.controller.handleUserMoveCompleted();
+assert.equal(settledAtBoundary.controller.hasActiveSession(), true);
+settledAtBoundary.sample({ x: 1000, y: 300 }, 1);
+assert.deepEqual(settledAtBoundary.controller.getState(), { edge: "right" });
+
+const settledInside = createController({ initialBounds: { x: 1019, y: 180, width: 900, height: 600 } });
+settledInside.controller.handleUserMoveCompleted();
+assert.equal(settledInside.controller.hasActiveSession(), false);
+settledInside.setBounds(rightBounds);
+settledInside.sample({ x: 1000, y: 300 }, 1);
+assert.equal(settledInside.controller.hasActiveSession(), true);
+assert.equal(settledInside.controller.getState(), null);
 
 const highDpiRight = createController({
-  initialBounds: rightGapBounds,
+  initialBounds: rightBounds,
   display: { ...bottomTaskbarDisplay, scaleFactor: 1.5 },
   applyNativeBounds: (bounds) => bounds.x < 1900 ? { ...bounds, x: bounds.x + 1 } : bounds
 });
@@ -238,10 +268,10 @@ assert.deepEqual(highDpiRight.controller.toggle(), { status: "collapsed", edge: 
 for (let cycle = 0; cycle < 60; cycle += 1) {
   highDpiRight.sample({ x: 1919, y: 300 }, cycle * 2 + 1);
   assert.equal(highDpiRight.controller.hasActiveSession(), true);
-  assert.equal(highDpiRight.getBounds().x, rightGapBounds.x + 1);
+  assert.equal(highDpiRight.getBounds().x, rightBounds.x + 1);
   highDpiRight.sample({ x: 1000, y: 300 }, cycle * 2 + 2);
   assert.deepEqual(highDpiRight.controller.getState(), { edge: "right" });
-  assert.deepEqual(highDpiRight.controller.getExpandedBounds(), rightGapBounds);
+  assert.deepEqual(highDpiRight.controller.getExpandedBounds(), rightBounds);
 }
 
 const userMoved = createController({ initialBounds: leftBounds });
@@ -296,7 +326,7 @@ assert.deepEqual(preview.controller.toggle(), { status: "collapsed", edge: "righ
 assert.deepEqual(preview.controller.getExpandedBounds(), rightBounds);
 assert.equal(preview.controller.updateExpandedBounds({ x: 1000, y: 140, width: 800, height: 500 }), true);
 assert.deepEqual(preview.controller.getExpandedBounds(), { x: 1120, y: 140, width: 800, height: 500 });
-assert.deepEqual(preview.getBounds(), { x: 1915, y: 140, width: 800, height: 500 });
+assert.deepEqual(preview.getBounds(), { x: 1918, y: 140, width: 800, height: 500 });
 preview.sample({ x: 1919, y: 200 }, 1);
 assert.deepEqual(preview.getBounds(), { x: 1120, y: 140, width: 800, height: 500 });
 
@@ -395,6 +425,8 @@ assert.match(automationSource, /getState: \(\) => controller\.getState\(\)/u);
 assert.match(automationSource, /hasActiveSession: \(\) => controller\.hasActiveSession\(\)/u);
 assert.match(automationSource, /window\.on\("minimize", suspendMinimizedWindow\)/u);
 assert.match(automationSource, /window\.on\("restore", restoreMinimizedWindow\)/u);
+assert.match(automationSource, /window\.on\("moved", settleMovedWindow\)/u);
+assert.match(automationSource, /window\.removeListener\("moved", settleMovedWindow\)/u);
 assert.match(windowModeSource, /window\.setMaximizable\(false\)/u);
 assert.match(windowModeSource, /window\.setMaximizable\(true\)/u);
 assert.equal((mainSource.match(/maximizable: !edgeCollapseEnabled/gu) ?? []).length, 2);
@@ -411,7 +443,8 @@ console.log(JSON.stringify({
   fourDirectionNativeBoundsVerified: true,
   taskbarEdgeExcluded: true,
   edgeSnapPreferenceIndependent: true,
-  tolerantDockHysteresisVerified: true,
+  exactScreenBoundaryEligibilityVerified: true,
+  userMoveSettlementVerified: true,
   immediateCollapseAndRevealVerified: true,
   temporaryCollapsedLayerVerified: true,
   edgeGapIncludedInHoverRegion: true,
