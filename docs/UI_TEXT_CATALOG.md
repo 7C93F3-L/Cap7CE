@@ -253,7 +253,7 @@
 | `settings.standbyLine`             | line                            |                           | line | line 显示开关 |
 | `settings.visible`                 | 显示                            |                           |     | 待机线状态           |
 | `settings.hidden`                  | 不显示                           |                           |     | 待机线状态           |
-| `settings.edgeCollapse`            | 边缘自动收起                       |                           | Edge Auto-hide | 主窗口与预览窗口的屏幕外缘自动收起 |
+| `settings.edgeCollapse`            | 边缘自动收起                       |                           | Edge Auto-hide | 主窗口与预览窗口的边缘收起开关   |
 | `settings.enabled`                 | 打开                            |                           |     | 开关状态            |
 | `settings.disabled`                | 关闭                            |                           |     | 开关状态            |
 | `settings.launchAtLogin`           | 登录时启动                         |                           | Launch at Sign-in | Windows 登录启动 |
