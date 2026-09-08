@@ -9,6 +9,7 @@ const {
   dockedShellRevealThicknessPx
 } = require("../dist-electron/dockedShellController.js");
 const { WindowLayerController } = require("../dist-electron/windowLayerController.js");
+const { applyEdgeCollapseWindowMode } = require("../dist-electron/edgeCollapseWindowMode.js");
 
 const bottomTaskbarDisplay = {
   id: 1,
@@ -25,6 +26,7 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
   let bounds = { ...initialBounds };
   let activeDisplay = display;
   let clock = 0;
+  let minimized = false;
   const presentation = { shadow: true };
   const activity = { collapsedLayers: [], focus: 0, hideLine: 0, markProgrammaticMove: 0, markProgrammaticResize: 0, moveTop: 0 };
   const cursor = { x: bounds.x + 20, y: bounds.y + 20 };
@@ -35,7 +37,8 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
     getBounds: () => ({ ...bounds }),
     hasShadow: () => presentation.shadow,
     isDestroyed: () => false,
-    isVisible: () => true,
+    isMinimized: () => minimized,
+    isVisible: () => !minimized,
     moveTop: () => { activity.moveTop += 1; },
     setBounds: (nextBounds, animate) => {
       bounds = { ...applyNativeBounds({ ...nextBounds }) };
@@ -64,13 +67,50 @@ const createController = ({ initialBounds, display = bottomTaskbarDisplay, enabl
     clock = now;
     controller.sampleCursor(point, now);
   };
-  return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setBounds: (nextBounds) => { bounds = { ...nextBounds }; }, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; } };
+  return { activity, appliedBounds, context, controller, getBounds: () => ({ ...bounds }), presentation, sample, setBounds: (nextBounds) => { bounds = { ...nextBounds }; }, setDisplay: (nextDisplay) => { activeDisplay = nextDisplay; }, setMinimized: (nextMinimized) => { minimized = nextMinimized; } };
 };
 
 assert.equal(dockedShellDockThresholdPx, 16);
 assert.equal(dockedShellDockReleaseThresholdPx, 24);
 assert.equal(dockedShellPeekThicknessPx, 5);
 assert.equal(dockedShellRevealThicknessPx, 2);
+
+const createWindowModeProbe = ({ maximized = false, minimized = false } = {}) => {
+  let maximizable = true;
+  const activity = { bounds: [], unmaximize: 0 };
+  const window = {
+    getNormalBounds: () => ({ x: 120, y: 90, width: 900, height: 600 }),
+    isDestroyed: () => false,
+    isMaximized: () => maximized,
+    isMinimized: () => minimized,
+    setBounds: (bounds) => { activity.bounds.push({ ...bounds }); },
+    setMaximizable: (value) => { maximizable = value; },
+    unmaximize: () => { activity.unmaximize += 1; maximized = false; }
+  };
+  return { activity, getMaximizable: () => maximizable, window };
+};
+
+const edgeModeWindow = createWindowModeProbe({ maximized: true });
+let edgeModeMoves = 0;
+assert.equal(applyEdgeCollapseWindowMode({
+  enabled: true,
+  getRestoredBounds: edgeModeWindow.window.getNormalBounds,
+  isNativeSnapActive: () => true,
+  markProgrammaticMove: () => { edgeModeMoves += 1; },
+  window: edgeModeWindow.window
+}), true);
+assert.equal(edgeModeWindow.getMaximizable(), false);
+assert.equal(edgeModeWindow.activity.unmaximize, 1);
+assert.equal(edgeModeMoves, 1);
+assert.deepEqual(edgeModeWindow.activity.bounds, [{ x: 120, y: 90, width: 900, height: 600 }]);
+assert.equal(applyEdgeCollapseWindowMode({
+  enabled: false,
+  getRestoredBounds: edgeModeWindow.window.getNormalBounds,
+  isNativeSnapActive: () => false,
+  markProgrammaticMove: () => {},
+  window: edgeModeWindow.window
+}), true);
+assert.equal(edgeModeWindow.getMaximizable(), true);
 
 const leftBounds = { x: 0, y: 200, width: 900, height: 600 };
 const left = createController({ initialBounds: leftBounds });
@@ -147,6 +187,32 @@ assert.deepEqual(automatic.getBounds(), leftBounds);
 assert.equal(automatic.activity.focus, 0);
 assert.equal(automatic.activity.moveTop, 1);
 assert.deepEqual(automatic.activity.collapsedLayers, [true, false]);
+
+const minimizedWhileCollapsed = createController({ initialBounds: leftBounds });
+assert.deepEqual(minimizedWhileCollapsed.controller.toggle(), { status: "collapsed", edge: "left" });
+minimizedWhileCollapsed.setMinimized(true);
+minimizedWhileCollapsed.controller.handleMinimize();
+minimizedWhileCollapsed.sample({ x: 0, y: 300 }, 1);
+assert.deepEqual(minimizedWhileCollapsed.controller.getState(), { edge: "left" });
+assert.deepEqual(minimizedWhileCollapsed.getBounds(), { ...leftBounds, x: -895 });
+assert.deepEqual(minimizedWhileCollapsed.activity.collapsedLayers, [true, false]);
+minimizedWhileCollapsed.setMinimized(false);
+assert.equal(minimizedWhileCollapsed.controller.handleRestore(), true);
+assert.equal(minimizedWhileCollapsed.controller.getState(), null);
+assert.equal(minimizedWhileCollapsed.controller.hasActiveSession(), true);
+assert.deepEqual(minimizedWhileCollapsed.getBounds(), leftBounds);
+assert.equal(minimizedWhileCollapsed.presentation.shadow, true);
+assert.deepEqual(minimizedWhileCollapsed.activity.collapsedLayers, [true, false]);
+
+const disabledWhileMinimized = createController({ initialBounds: leftBounds });
+disabledWhileMinimized.controller.toggle();
+disabledWhileMinimized.setMinimized(true);
+disabledWhileMinimized.controller.handleMinimize();
+disabledWhileMinimized.controller.setEnabled(false);
+disabledWhileMinimized.setMinimized(false);
+assert.equal(disabledWhileMinimized.controller.handleRestore(), true);
+assert.deepEqual(disabledWhileMinimized.getBounds(), leftBounds);
+assert.equal(disabledWhileMinimized.controller.hasActiveSession(), false);
 
 automatic.context.interactionBlocked = true;
 automatic.sample({ x: 1200, y: 300 }, 3);
@@ -320,12 +386,18 @@ assert.ok(lineLayerApplications >= 5);
 const root = path.resolve(__dirname, "..");
 const controllerSource = fs.readFileSync(path.join(root, "electron", "dockedShellController.ts"), "utf8");
 const automationSource = fs.readFileSync(path.join(root, "electron", "dockedShellAutomation.ts"), "utf8");
+const windowModeSource = fs.readFileSync(path.join(root, "electron", "edgeCollapseWindowMode.ts"), "utf8");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.ts"), "utf8");
 const rendererSource = fs.readFileSync(path.join(root, "src", "renderer", "main.tsx"), "utf8");
 assert.match(automationSource, /enableDebugShortcut && globalShortcut\.register\(debugShortcut/u);
 assert.match(automationSource, /setFixed: \(nextFixed: boolean\) => controller\.setFixed\(nextFixed\)/u);
 assert.match(automationSource, /getState: \(\) => controller\.getState\(\)/u);
 assert.match(automationSource, /hasActiveSession: \(\) => controller\.hasActiveSession\(\)/u);
+assert.match(automationSource, /window\.on\("minimize", suspendMinimizedWindow\)/u);
+assert.match(automationSource, /window\.on\("restore", restoreMinimizedWindow\)/u);
+assert.match(windowModeSource, /window\.setMaximizable\(false\)/u);
+assert.match(windowModeSource, /window\.setMaximizable\(true\)/u);
+assert.equal((mainSource.match(/maximizable: !edgeCollapseEnabled/gu) ?? []).length, 2);
 assert.doesNotMatch(automationSource, /ipcMain/u);
 assert.match(controllerSource, /window\.setBounds\(this\.getCollapsedWindowBounds\(session\), false\)/u);
 assert.match(mainSource, /mainWindow\.on\("move", \(\) => \{[\s\S]*?isProgrammaticMoveGuardActive\(\) \|\| dockedShellController\?\.hasActiveSession\(\)/u);
@@ -345,6 +417,8 @@ console.log(JSON.stringify({
   edgeGapIncludedInHoverRegion: true,
   highDpiRepeatedRevealAnchorStable: true,
   programmaticMoveGuardForwarded: true,
+  nativeSnapCapabilityFollowsPreference: true,
+  minimizedCollapsedSessionRestored: true,
   windowPresentationRestored: true,
   rendererTranslationRemoved: true,
   fixedWindowSuppressionVerified: true,

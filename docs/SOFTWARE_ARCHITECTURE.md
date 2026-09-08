@@ -1,7 +1,7 @@
 # Cap7CE 软件架构
 
 > 当前版本：1.0.0
-> 更新日期：2026-09-07
+> 更新日期：2026-09-08
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
 0.9.9 兼容窗口专项 C0 至 C9 与新版稳定 UI 的 U0 至 U11 记录均为历史迁移依据。当前产品已完成稳定窗口宿主收口：主窗口、独立 Settings 与 Preview 只装配新版 Renderer、40 DIP Window Controls Overlay 和同一套 Acrylic / Mica 材质运行时，不再保留可执行的 Cap7CE / compatibility 外壳或模式切换。后续界面入口必须复用正式业务动作与状态权威，不能从历史专项恢复平行业务链。
@@ -47,7 +47,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
 - 以唯一稳定策略创建主 `BrowserWindow`、独立 Settings 与 Preview：统一使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽高的 82%、最大 1600×1000 居中。主窗口只额外装配待机线使用的不可聚焦 `lineWindow`；旧模式偏好即使仍留在历史 JSON 中也会被忽略，不迁移、不执行。所有窗口的 DevTools 能力仅在未打包开发环境开启。
-- `dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：在非任务栏边缘附近建立会话，鼠标离开后把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。边缘收起由设置页与托盘菜单共用同一偏好控制，不再附带拖动结束后的自绘位置吸附。stable 与 compatibility 的贴靠和分屏完全交由 Windows Snap；检测到系统 Snap 几何时暂停边缘收起。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
+- `edgeCollapseWindowMode.ts`、`dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：偏好关闭时恢复原生最大化与 Windows Snap；偏好开启时先退出已有最大化或 Snap 几何，再停用最大化资格并启用收起，Settings 始终保持普通窗口能力。在非任务栏边缘附近建立会话后，鼠标离开会把原生 BrowserWindow 一次性移到显示器外并保留 5 DIP 真实窗口边沿，同时临时使用低于任务栏的 `floating` 层级避免被普通窗口遮挡；鼠标到达对应物理屏幕最外沿后立即恢复完整展开 bounds、撤销临时层级并在不抢焦点的情况下提升至普通窗口前方。最小化只暂停轮询、释放临时层级并保留收起会话，任务栏还原后恢复完整窗口；真正隐藏才清除会话。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
 - 主窗口内容始终使用单一 normal / 自由响应式布局，拖动与缩放不触发 Capsule、micro 或 mini 形态转换；旧自动 resize settle、阈值回弹、底部居中修正和分形态布局记忆均已删除。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点；唯一尺寸动作把主窗口恢复为当前工作区 82%、最大 1600×1000 的居中 bounds。
 - 主窗口原生关闭与 Alt+1 只向 Renderer 发出同一个安全 standby 请求，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。真正退出时 `isQuitting` 允许原生 close 继续完成，不反向进入隐藏链路。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
@@ -78,7 +78,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 | `settingsWindowController.ts` / `settingsWindowLayout.ts` / `settingsWindowIpc.ts` / `settingsDataBroadcast.ts` | stable 的独立 Settings 单实例生命周期、受限主 Renderer 打开入口、版本化专属 bounds 及主 / Settings Renderer 状态广播；关闭只隐藏自身，重复打开还原并聚焦，显示器缺失或 work area 变化时复用公共布局几何夹回可见区域，不读写主窗口 normal 记录。诊断与版本更新 IPC 只认可主窗口或 Settings 的当前 WebContents；诊断导出对话框归属实际发送窗口，更新进度返回 Settings |
 | `src/renderer/settings-window/SettingsWindowApp.tsx` / `useSettingsWindowController.ts` / `SettingsWindowUpdateControl.tsx` / `SettingsConfirmationDialog.tsx` / `SettingsWindowAccessibility.css` | 独立 Settings 的八分类页面组合、本地条目筛选、正式偏好与领域任务控制器、应用更新状态、共享确认弹窗适配，以及键盘焦点 / 长文案 / 减少动态效果；直接复用 preload 白名单，不持有第二份持久化、目录、缓存、快捷键、诊断、运行时或模型服务。窗口材质通过白名单偏好链选择 Acrylic / Mica，并同步刷新 stable 三窗口或回退安全纯色；字体大小通过正式偏好链在 12–16px 五档间选择并同步 stable 窗口；新版快捷列表只显示五项窗口动作与目录循环并读取 stable 专用快捷配置 |
 | `lineWindowController.ts` | 复用同一个透明、不可聚焦的 line BrowserWindow；line 位置只根据当前显示器任务栏占用的 work area 方向推断，无法判断时回退底部，不跟随主窗口停靠记录；按动态 placement 在上下显示横线、左右显示竖线，根据真实窗口尺寸二次校正 bounds / shape，并向专用 Renderer 同步方向 |
-| `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：仅在距离非任务栏边缘 5 DIP 内判断为停靠、管理各自 dock session、固定暂停、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
+| `edgeCollapseWindowMode.ts` / `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起窗口能力、控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：按偏好互斥切换原生最大化 / Windows Snap 与边缘收起，仅在距离非任务栏边缘 5 DIP 内判断为停靠，管理各自 dock session、固定暂停、最小化暂停及任务栏还原展开、收起态展开 bounds 更新、以原生越界 bounds 保留 5 DIP 真实边沿、以屏幕最外 2 DIP 作为即时恢复区，并独立协调持久固定、收起临时浮动层级与 line 层级；同时负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
 | `directoryStore.ts` | 已添加目录配置、目录显示名、用户排列顺序与原子持久化；顺序调整只交换配置数组位置，不触碰索引和源文件 |
 | `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听、窗口创建失败事件，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
 | `runtimeDiagnosticBundle.ts` / `diagnosticsIpc.ts` | 对主 Renderer 开放运行信息读取、会话级详细记录和脱敏 ZIP 导出；导出限制单文件、总体积与崩溃报告数量，不接收 Renderer 任意路径 |

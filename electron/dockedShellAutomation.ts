@@ -54,9 +54,13 @@ export const installDockedShell = ({
   const shortcutRegistered = enableDebugShortcut && globalShortcut.register(debugShortcut, () => controller.toggle());
   const suppressWindowChange = () => controller.noteUserWindowInteraction();
   const resetHiddenWindow = () => controller.reset(false);
+  const suspendMinimizedWindow = () => controller.handleMinimize();
+  const restoreMinimizedWindow = () => controller.handleRestore();
   window.on("will-move", suppressWindowChange);
   window.on("will-resize", suppressWindowChange);
   window.on("hide", resetHiddenWindow);
+  window.on("minimize", suspendMinimizedWindow);
+  window.on("restore", restoreMinimizedWindow);
   controller.start();
 
   return {
@@ -75,6 +79,8 @@ export const installDockedShell = ({
       window.removeListener("will-move", suppressWindowChange);
       window.removeListener("will-resize", suppressWindowChange);
       window.removeListener("hide", resetHiddenWindow);
+      window.removeListener("minimize", suspendMinimizedWindow);
+      window.removeListener("restore", restoreMinimizedWindow);
       if (shortcutRegistered) globalShortcut.unregister(debugShortcut);
     }
   };

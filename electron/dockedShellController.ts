@@ -13,6 +13,7 @@ interface DockedShellWindow {
   getBounds: () => WindowLayoutBounds;
   hasShadow: () => boolean;
   isDestroyed: () => boolean;
+  isMinimized: () => boolean;
   isVisible: () => boolean;
   moveTop: () => void;
   setBounds: (bounds: WindowLayoutBounds, animate?: boolean) => void;
@@ -64,7 +65,9 @@ export class DockedShellController {
   private enabled: boolean;
   private fixed: boolean;
   private lastCursorPoint: { x: number; y: number } | null = null;
+  private minimizeSuspended = false;
   private pollTimer: NodeJS.Timeout | null = null;
+  private resetPendingAfterRestore = false;
   private restoreShadow: boolean | null = null;
   private session: DockSession | null = null;
   private started = false;
@@ -86,7 +89,7 @@ export class DockedShellController {
 
   start() {
     this.started = true;
-    if (this.enabled) this.schedulePoll(0);
+    if (this.enabled && !this.minimizeSuspended) this.schedulePoll(0);
   }
 
   setEnabled(enabled: boolean) {
@@ -94,9 +97,31 @@ export class DockedShellController {
     if (!enabled) {
       this.stopPolling();
       this.reset(false);
-    } else if (this.started) {
+    } else if (this.started && !this.minimizeSuspended) {
       this.schedulePoll(0);
     }
+  }
+
+  handleMinimize() {
+    if (this.disposed) return false;
+    this.minimizeSuspended = true;
+    this.stopPolling();
+    if (this.collapsed) this.setCollapsedLayerActive(false);
+    return this.collapsed;
+  }
+
+  handleRestore() {
+    if (this.disposed) return false;
+    const wasCollapsed = this.collapsed;
+    this.minimizeSuspended = false;
+    if (wasCollapsed) this.expand(false);
+    if (this.session) this.session.armed = false;
+    if (this.resetPendingAfterRestore || !this.enabled) {
+      this.resetPendingAfterRestore = false;
+      this.reset(false);
+    }
+    if (this.enabled && this.started) this.schedulePoll(0);
+    return wasCollapsed;
   }
 
   setFixed(fixed: boolean) {
@@ -174,6 +199,12 @@ export class DockedShellController {
 
   reset(focus = false) {
     const wasCollapsed = this.collapsed;
+    if (!this.options.window.isDestroyed() && this.options.window.isMinimized()) {
+      this.minimizeSuspended = true;
+      this.resetPendingAfterRestore = true;
+      this.setCollapsedLayerActive(false);
+      return wasCollapsed;
+    }
     if (wasCollapsed) this.restoreExpandedBounds(focus);
     this.setCollapsedLayerActive(false);
     this.collapsed = false;
@@ -205,7 +236,15 @@ export class DockedShellController {
     if (!this.enabled || this.disposed) return;
     const { window } = this.options;
     const context = this.options.getShellContext();
-    if (window.isDestroyed() || !window.isVisible() || !this.isCollapsibleState(context.state) || context.maximized) {
+    if (window.isDestroyed()) {
+      this.reset(false);
+      return;
+    }
+    if (window.isMinimized()) {
+      this.handleMinimize();
+      return;
+    }
+    if (!window.isVisible() || !this.isCollapsibleState(context.state) || context.maximized) {
       this.reset(false);
       return;
     }
@@ -416,7 +455,7 @@ export class DockedShellController {
   }
 
   private schedulePoll(delayMs: number) {
-    if (!this.enabled || this.disposed || this.pollTimer !== null) return;
+    if (!this.enabled || this.disposed || this.minimizeSuspended || this.pollTimer !== null) return;
     this.pollTimer = setTimeout(() => {
       this.pollTimer = null;
       const point = this.options.getCursorPoint();
