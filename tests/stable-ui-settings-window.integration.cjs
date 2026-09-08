@@ -249,8 +249,11 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
   assert.match(settingsAppSource, /aria-current=\{activeCategory === category\.id \? "page" : undefined\}/u);
   assert.match(settingsAppSource, /<SettingsConfirmationDialog[\s\S]*?message=\{dialog\.message\}/u);
-  assert.match(settingsAppSource, /useInertElement<HTMLDivElement>\(dialog !== null\)[\s\S]*?ref=\{dragRegionRef\}/u);
   assert.match(settingsAppSource, /useInertElement<HTMLDivElement>\(dialog !== null\)[\s\S]*?ref=\{settingsShellRef\}/u);
+  assert.doesNotMatch(settingsAppSource, /dragRegionRef/u);
+  assert.match(settingsAppSource, /document\.visibilityState === "hidden"[\s\S]*?setDialog\(null\)[\s\S]*?addEventListener\("visibilitychange", clearHiddenConfirmation\)/u);
+  assert.match(settingsAppSource, /if \(dialogBusy\) return;[\s\S]*?const pendingDialog = dialog;[\s\S]*?currentDialog === pendingDialog \? null : currentDialog/u);
+  assert.match(settingsStyles, /\.cap-settings-window-drag-region \{[\s\S]*?app-region: drag;[\s\S]*?-webkit-app-region: drag;/u);
   assert.match(settingsConfirmationSource, /<DialogShell label=\{message\} stable>[\s\S]*?cap-dialog-warning-icon[\s\S]*?cap-dialog-actions/u);
   assert.match(dialogShellSource, /role="alertdialog"[\s\S]*?aria-label=\{label\}/u);
   assert.match(settingsAccessibilityStyles, /cap-settings-window-foundation button:focus-visible[\s\S]*?var\(--stable-settings-focus\)/u);

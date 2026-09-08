@@ -112,6 +112,9 @@ assert.match(dialogShellSource, /cap-dialog-layer[\s\S]*?cap-dialog-surface[\s\S
 assert.match(confirmationPanelsSource, /<DialogShell[\s\S]*?warningGradientSvg/u);
 assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-stable-flyout-surface\)\)/u);
 assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
+assert.match(dialogShellStyles, /\.cap-stable-ui \.cap-dialog-layer,\s*\.cap-dialog-layer\.is-stable \{[^}]*top: var\(--cap-stable-titlebar-height, 40px\);[^}]*right: 0;[^}]*bottom: 0;[^}]*left: 0;/u);
+assert.doesNotMatch(dialogShellStyles, /\.cap-stable-ui \.cap-dialog-layer,\s*\.cap-dialog-layer\.is-stable \{[^}]*app-region:/u);
+assert.match(dialogShellStyles, /\.cap-stable-ui \.cap-dialog-surface,\s*\.cap-dialog-layer\.is-stable \.cap-dialog-surface \{[^}]*app-region: no-drag;[^}]*-webkit-app-region: no-drag;/u);
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
 assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer,[\s\S]*?\.cap-dialog-layer\.is-stable \{\s*pointer-events: none;/u);
 assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer > \.cap-dialog-surface,[\s\S]*?\.cap-dialog-layer\.is-stable > \.cap-dialog-surface \{\s*pointer-events: auto;/u);

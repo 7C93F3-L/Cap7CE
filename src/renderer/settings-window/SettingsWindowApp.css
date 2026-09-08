@@ -43,6 +43,7 @@
   inset: 0 138px auto 0;
   height: 40px;
   app-region: drag;
+  -webkit-app-region: drag;
   pointer-events: none;
 }
 
