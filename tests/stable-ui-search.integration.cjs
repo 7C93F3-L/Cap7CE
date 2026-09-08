@@ -9,6 +9,7 @@ const appSource = read("src/renderer/App.tsx");
 const contentViewActivitySource = read("src/renderer/controllers/useContentViewActivity.ts");
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const inputSource = read("src/renderer/stable-ui/StableSearchInput.tsx");
+const resultStatusSource = read("src/renderer/results/ResultStatus.tsx");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const gridSource = read("src/renderer/results/VirtualResultGrids.tsx");
 const stableResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css");
@@ -29,6 +30,12 @@ assert.match(appSource, /if \(selectedResultImageId\) \{[\s\S]*?setClearSelectio
 assert.doesNotMatch(appSource, /view === "results" && selectedResultImageId/u);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /onSearch=\{submitSearch\}/);
+const resultStatusCall = appSource.match(/const resultStatusNode = <ResultStatus[\s\S]*?\/>;/u)?.[0] ?? "";
+assert.match(appSource, /const selectedDirectoryFileCount = directoryOptions\.find\(\(\{ id \}\) => id === search\.directoryId\)\?\.fileCount \?\? null;/u);
+assert.match(resultStatusCall, /fileCount=\{selectedDirectoryFileCount\}/u);
+assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0 \|\| search\.fileFormat !== "all"\}/u);
+assert.doesNotMatch(resultStatusCall, /directoryId/u);
+assert.match(resultStatusSource, /hasActiveSearch[\s\S]*?search\.resultCount[\s\S]*?search\.fileCount[\s\S]*?fileCount \?\? "…"/u);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
 assert.match(appSource, /if \(isLoadingDirectories \|\| !contentViewActivityConfirmed \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)[\s\S]*?\[contentViewActivityConfirmed, isLoadingDirectories\]/u);
 assert.match(contentViewActivitySource, /setContentViewActive\(true\)\.then\(\(accepted\)[\s\S]*?setActivityConfirmed\(accepted === true\)/u);
@@ -90,6 +97,7 @@ console.log(JSON.stringify({
   singleSearchAuthorityBridged: true,
   imeAndClearSubmissionGuarded: true,
   stableInitialAllDirectorySearchVerified: true,
+  directoryBrowsingFileCountLabelVerified: true,
   stableEmptyResultIsNotInteractive: true,
   formalVirtualResultsAndFileActionsReused: true,
   responsiveGridDirectionVerified: true,

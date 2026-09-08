@@ -385,7 +385,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   }, []);
   const directoryOptions = useMemo(() => [createAllDirectoriesOption(directories), ...directories], [directories]);
-  const totalFileCount = directoryOptions[0]?.fileCount ?? null;
+  const selectedDirectoryFileCount = directoryOptions.find(({ id }) => id === search.directoryId)?.fileCount ?? null;
   const effectiveTheme: ResolvedThemeMode = theme === "system" ? systemTheme : theme;
   const uiFontStyle = useUiFontSize(uiFontSize);
   const appThemeStyle = {
@@ -2286,7 +2286,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     setDialog("addDroppedDirectories");
   };
 
-  const resultStatusNode = <ResultStatus resultCount={searchResults.length} totalFileCount={totalFileCount} hasActiveSearch={search.query.trim().length > 0 || search.directoryId !== "all" || search.fileFormat !== "all"} isSearching={isSearching || aiSearchBeta.busy} />;
+  const resultStatusNode = <ResultStatus
+    resultCount={searchResults.length}
+    fileCount={selectedDirectoryFileCount}
+    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all"}
+    isSearching={isSearching || aiSearchBeta.busy}
+  />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({
     active, images: searchResults,
     isSearching: isSearching || aiSearchBeta.busy,

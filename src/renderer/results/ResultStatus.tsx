@@ -2,19 +2,19 @@ import { t } from "../../../electron/localization";
 
 const ResultStatus = ({
   resultCount,
-  totalFileCount,
+  fileCount,
   hasActiveSearch,
   isSearching
 }: {
   resultCount: number;
-  totalFileCount: number | null;
+  fileCount: number | null;
   hasActiveSearch: boolean;
   isSearching: boolean;
 }) => {
   if (isSearching) return t("search.searching");
   return hasActiveSearch
     ? t("search.resultCount", { count: resultCount })
-    : t("search.fileCount", { count: totalFileCount ?? "…" });
+    : t("search.fileCount", { count: fileCount ?? "…" });
 };
 
 export default ResultStatus;
