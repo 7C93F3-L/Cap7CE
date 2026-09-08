@@ -32,6 +32,10 @@ const keywordEditorCardCss = fs.readFileSync(
   path.join(__dirname, "../src/renderer/dialogs/KeywordEditorCard.css"),
   "utf8"
 );
+const keywordEditorCardSource = fs.readFileSync(
+  path.join(__dirname, "../src/renderer/dialogs/KeywordEditorCard.tsx"),
+  "utf8"
+);
 
 assert.doesNotMatch(
   resultsViewSource,
@@ -48,6 +52,10 @@ assert.match(keywordEditorCardCss, /\.keyword-editor-card \.context-menu-file-fo
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*border-radius: 12px;/s);
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea\s*\{[^}]*scrollbar-width: none;/s);
 assert.match(keywordEditorCardCss, /textarea\.keyword-editor-textarea::\-webkit-scrollbar\s*\{[^}]*width: 0;[^}]*height: 0;/s);
+assert.match(keywordEditorCardSource, /className="keyword-editor-close"[\s\S]*?tabIndex=\{-1\}[\s\S]*?onPointerDown=\{\(event\) => event\.preventDefault\(\)\}[\s\S]*?onClick=\{onCancel\}/);
+assert.match(keywordEditorCardSource, /aria-label=\{t\("common\.close"\)\}/);
+assert.match(keywordEditorCardCss, /\.keyword-editor-card \.keyword-editor-close\s*\{[^}]*color: color-mix\(in srgb, var\(--text-main\) 62%, transparent\);/s);
+assert.match(keywordEditorCardCss, /\.keyword-editor-card \.keyword-editor-close:hover\s*\{[^}]*color: var\(--text-main\);[^}]*background: color-mix\(in srgb, var\(--text-main\) 12%, transparent\);/s);
 
 const position = clampFloatingCardPosition(
   { x: 790, y: 590 },

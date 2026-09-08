@@ -10,6 +10,7 @@ import {
   shouldSubmitKeywordEditor
 } from "../keywordEditorInteraction";
 import { formatCacheSize } from "../formatting";
+import StableUiIcon from "../stable-ui/StableUiIcon";
 import type { KeywordEditSession } from "./dialogTypes";
 import KeywordEditorBackdrop from "./KeywordEditorBackdrop";
 
@@ -161,6 +162,18 @@ const KeywordEditorCard = ({
           if (isClosing && event.animationName === "cap7ce-keyword-card-exit") onExitComplete();
         }}
       >
+        <button
+          type="button"
+          className="keyword-editor-close"
+          tabIndex={-1}
+          title={t("common.close")}
+          aria-label={t("common.close")}
+          disabled={isSaving || isClosing}
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={onCancel}
+        >
+          <StableUiIcon name="clearSearch" className="keyword-editor-close-icon" />
+        </button>
         <div className="context-menu-file-header keyword-editor-card-header" title={headerTooltip}>
           {isSingle ? (
             <>
