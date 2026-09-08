@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-> 当前版本：1.0.0
+> 当前版本：1.0.1
 > 更新日期：2026-09-08
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
@@ -37,7 +37,7 @@ Cap7CE 的核心能力包括：
 | PSD 读取 | ag-psd |
 | 文件预览与缩略图 | 自有视觉缓存与 IPC |
 
-1.0.0 使用 Electron 43.2.0、Vite 7.3.6 与 electron-builder 26.15.3。生产与完整依赖审计均保持 0 条漏洞；升级时不得使用 `npm audit fix --force` 强制降级或跨越兼容边界。
+1.0.1 使用 Electron 43.2.0、Vite 7.3.6 与 electron-builder 26.15.3。生产与完整依赖审计均保持 0 条漏洞；升级时不得使用 `npm audit fix --force` 强制降级或跨越兼容边界。
 
 Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统能力通过 preload 白名单 API 进入主进程。
 
@@ -176,7 +176,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 ## 5. Renderer 架构
 
-`src/renderer/App.tsx` 当前承担 1.0.0 的应用级状态和交互编排，产品主窗口的展示结构由 `StableUiRoot` 持有：
+`src/renderer/App.tsx` 当前承担 1.0.1 的应用级状态和交互编排，产品主窗口的展示结构由 `StableUiRoot` 持有：
 - 稳定搜索输入与统一提交流程；快捷指令优先，其次识别盘符或 UNC 开头的完整 Windows 文件或目录路径并在主进程确认真实可读后进入 skim，文件路径取其父目录，其余内容执行正式搜索。路径校验失败时保留原输入并显示临时提示。
 - 稳定主窗口接收资源管理器单个或多个文件夹拖入；preload 仅通过 Electron `webUtils.getPathForFile()` 提取拖放文件对象的真实路径，Renderer 先复用全窗口确认层，再把确认后的集合交给统一目录添加服务。
 - 左侧栏提供查看范围、目录、排序和 AI 增强控制；目录项在展开与收起状态下均通过 150 ms 延迟的非交互浮层分行显示名称、复用顶部统计文案的文件数量和路径，浮层固定从目录行右侧展开、与边栏菜单同为 184px 最大宽度并按窗口剩余空间继续收缩，过长名称单行省略，过长路径保留首尾并从中间省略；“全部目录”没有路径，第三行直接显示当前已加载的已添加目录数量。目录右键与三点按钮统一以目录整行作为管理菜单锚点；“打开路径”复用现有文件打开能力直接在资源管理器中打开目录，不新增 IPC。悬停浮层与管理菜单互斥，并在移出、按下或列表滚动时立即关闭，不依赖延迟较长的系统 `title`。正式搜索入口与结果页不再提供识别状态、动态文件格式标签或显隐菜单，扩展名继续作为普通搜索词使用。skim 按“查看范围、排序、面包屑”排列，使排序入口在两种内容视图中均位于第二项。
@@ -202,7 +202,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 - 轻提示、菜单、浮层和局部状态管理。
 - standby 不保存临时弹层上下文；从后台重新唤起时只恢复原内容视图，不恢复未提交的编辑或确认层。关键词编辑在正常可见窗口内取消时仍保留原有退场动效和结果滚动位置恢复规则。
 
-`src/renderer/styles.css` 是 1.0.0 UI 的全局样式入口，保留统一窗口壳层、共享菜单、主题变量、动态窗口过渡与兼容规则；`src/renderer/typography.css` 只持有新版跨窗口共用的字体族、六级语义字号及对应行高变量，`src/renderer/typography.ts` 将持久化的 12–16px 基准写入文档根变量，使主窗口、Skim、稳定 Preview、独立 Settings、Portal 标题栏、响应式菜单和窗口内弹窗实时消费同一规范；旧 Cap7CE / compatibility 宿主固定使用 13px 基准，文件内容预览继续保留各 Provider 的独立排版。独立页面、设置区块、关键词编辑、预览、滚动条和等待状态样式由对应领域文件持有。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。“版本与更新”行显示当前版本，仅在用户点击时检查更新；发现新版后显示版本号并将按钮切换为“立即下载”，再次点击才开始下载安装器并在行内显示进度。`electron/appUpdateService.ts` 只从正式 GitHub Release 中选择与版本、标签严格对应且状态为 uploaded 的 `Cap7CE-Setup-<version>-x64.exe`，并要求可信的资产 ID、大小、SHA-256 摘要及 GitHub HTTPS 地址；这些内部参数不接受 Renderer 输入，也不回传可复用下载地址。`electron/appUpdateDownloadService.ts` 将一个可信更新持久化到 `%LOCALAPPDATA%\Cap7CE\updates`，通过 `.part`、元数据和严格校验的 HTTP Range / Content-Range 支持暂停、断网及重启后的续传；服务器忽略或错误响应断点时从零安全重试，完整文件必须同时通过精确大小和 SHA-256 校验后才原子重命名为安装器。`electron/appUpdateIpc.ts` 独立守护 Settings IPC 权限与单下载状态；已完成安装器可跨重启保留，用户确认“立即安装”后主进程先用系统 Shell 成功打开安装器，再请求统一退出流程安全结束旧进程，打开失败则保持应用运行。新版启动时清理等于或早于当前版本的安装器与断点文件；流程不后台检查或下载，不修改 `%APPDATA%\Cap7CE` 用户数据，也不再包含 ZIP 自替换、VBScript 或 PowerShell 更新助手链路。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
+`src/renderer/styles.css` 是 1.0.1 UI 的全局样式入口，保留统一窗口壳层、共享菜单、主题变量、动态窗口过渡与兼容规则；`src/renderer/typography.css` 只持有新版跨窗口共用的字体族、六级语义字号及对应行高变量，`src/renderer/typography.ts` 将持久化的 12–16px 基准写入文档根变量，使主窗口、Skim、稳定 Preview、独立 Settings、Portal 标题栏、响应式菜单和窗口内弹窗实时消费同一规范；旧 Cap7CE / compatibility 宿主固定使用 13px 基准，文件内容预览继续保留各 Provider 的独立排版。独立页面、设置区块、关键词编辑、预览、滚动条和等待状态样式由对应领域文件持有。Settings 可操作按钮统一提供经过审校的本地化 `title` 悬停说明；状态开关根据当前状态描述下一次点击结果。“版本与更新”行显示当前版本，仅在用户点击时检查更新；发现新版后显示版本号并将按钮切换为“立即下载”，再次点击才开始下载安装器并在行内显示进度。`electron/appUpdateService.ts` 只从正式 GitHub Release 中选择与版本、标签严格对应且状态为 uploaded 的 `Cap7CE-Setup-<version>-x64.exe`，并要求可信的资产 ID、大小、SHA-256 摘要及 GitHub HTTPS 地址；这些内部参数不接受 Renderer 输入，也不回传可复用下载地址。`electron/appUpdateDownloadService.ts` 将一个可信更新持久化到 `%LOCALAPPDATA%\Cap7CE\updates`，通过 `.part`、元数据和严格校验的 HTTP Range / Content-Range 支持暂停、断网及重启后的续传；服务器忽略或错误响应断点时从零安全重试，完整文件必须同时通过精确大小和 SHA-256 校验后才原子重命名为安装器。`electron/appUpdateIpc.ts` 独立守护 Settings IPC 权限与单下载状态；已完成安装器可跨重启保留，用户确认“立即安装”后主进程先用系统 Shell 成功打开安装器，再请求统一退出流程安全结束旧进程，打开失败则保持应用运行。新版启动时清理等于或早于当前版本的安装器与断点文件；流程不后台检查或下载，不修改 `%APPDATA%\Cap7CE` 用户数据，也不再包含 ZIP 自替换、VBScript 或 PowerShell 更新助手链路。普通界面默认禁止文本选择；`input`、`textarea` 和 `contenteditable` 保留文本选择、复制、剪切、粘贴和 Ctrl+A。
 
 D0 将 U1 的开发隔离根节点提升为正式第三种 presentation：主进程在开发服务与打包 `loadFile` 中都传入实际 `presentation`，`src/renderer/main.tsx` 仅在 `presentation=stable` 时动态装配新版主界面，`PreviewWindowApp.tsx` 使用同一判定装配稳定 Preview；cap7ce 与 compatibility 继续进入旧 Renderer。`stable-ui/StableUiFoundation.css` 独立持有新版间距、圆角、表面透明度、文字层级、标题栏安全区和滚动条变量，`StableUiAccessibility.css` 持有主内容与 Portal 标题栏的焦点及减少动态效果规则，不修改旧全局样式。`WindowPinButton.tsx` 持有兼容主窗口、兼容 Preview 和新版标题栏共用的图标、可访问状态及鼠标失焦行为；Settings 不装配该按钮。stable 使用正式 `window-layout-stable-ui.json` 并按用户偏好持久化置顶；不套用旧 micro / mini 界面状态，在 resize settle 前旁路旧形态推断和 micro 位置修正。缺失或非法偏好默认 stable，已有 cap7ce / compatibility 偏好、旧布局、旧 Renderer 和旧状态机均不迁移、不删除。
 
@@ -274,7 +274,7 @@ MOBI 属于正式非视觉文件名搜索范围，内容预览使用独立 `mobi
 
 ## 6. UI 状态系统
 
-Cap7CE 1.0.0 的正式窗口状态已收口为主窗口显示与隐藏生命周期：
+Cap7CE 1.0.1 的正式窗口状态已收口为主窗口显示与隐藏生命周期：
 
 - `standby`：主窗口隐藏状态；待机线偏好开启且主窗口与预览窗口均不可见时显示独立 `lineWindow`，偏好关闭时不保留该窗口及 Renderer。托盘在后台开启 line 时不改写保留的窗口形态，但可立即显示 line；Settings 等主窗口可见状态下开启时则等待窗口收起。`Alt+2` 不会主动改变该偏好。
 - `normal`：完整搜索结果窗口。
@@ -290,7 +290,7 @@ Cap7CE 1.0.0 的正式窗口状态已收口为主窗口显示与隐藏生命周�
 
 产品主窗口的 Renderer 入口只装配 `App` 与 `StableUiRoot`；旧 Home、同窗 Settings、micro/mini/normal 页面树及其右侧控制栏已退出 Renderer。`App` 继续作为搜索、目录、Skim、快捷动作和弹层的应用级状态编排层，稳定 UI 只消费其现有动作与 Props。Settings 由 `src/renderer/main.tsx` 按 `window=settings` 分流到独立单实例 `SettingsWindowApp`，不再存在旧完整 Settings 页面。Preview 也只装配 `StablePreviewTitlebar`、稳定内容壳和信息边栏，旧兼容标题栏、右侧控制栏及内容内嵌元数据分支已删除；所有 Provider、导航、窗口尺寸与文件动作仍复用原有链路。独立 Capsule Renderer、桥接 Hook、专用 preload/IPC 及主进程控制器均已删除；line 继续由独立 Renderer 绘制待机线，点击时通过受限 IPC 复用主窗口激活与搜索聚焦动作。
 
-## 7. 1.0.0 UI 结构
+## 7. 1.0.1 UI 结构
 
 当前 UI 结构包括：
 - 统一搜索胶囊：目录、识别状态、排序、格式标签进入同一胶囊系统；全部标签默认显示，显隐偏好分别持久化，排序默认递减。
@@ -409,7 +409,7 @@ SQLite 在同一个数据库中保持相互分离的职责：`files` 保存全�
 
 `electron/aiContentPaths.ts` 是运行时与模型目录的单一解析边界。打包态只使用当前 `Cap7CE.exe` 所在目录内的 `llama.cpp` 与 `models`，不读取 `PORTABLE_EXECUTABLE_DIR`、父目录或 `resources` 相邻候选；开发态只使用 `app.getAppPath()` 对应的仓库目录。路径解析不创建、迁移、复制或删除目录，缺失时 Store 返回既有安全状态。多个程序副本各自读取本目录 AI 内容，但继续共享 `%APPDATA%\Cap7CE` 中的选择配置；用户切换程序副本后，若已保存的版本或模型在该副本中不存在，会按现有状态明确提示重新选择。
 
-Windows 分发在 1.0.0 中使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器。首次安装的默认目录、已安装路径检测、覆盖升级、注册表、开始菜单、桌面快捷方式、完成页运行选项及卸载主流程均服从 electron-builder / NSIS 默认机制；安装器通过受支持的 `include` 挂钩取消目录页之后自动追加 `Cap7CE` 的步骤，因此默认位置仍是 `%LOCALAPPDATA%\Programs\Cap7CE`，已有安装仍定位到登记目录，而用户手动输入的路径直接作为最终安装目录。相同挂钩同时补充默认卸载不具备的内容保护。`models` 与 `llama.cpp` 不随安装包创建、迁移或覆盖，普通卸载时先原样保留；卸载组件页提供两个默认不选中的独立选项，分别删除共享 `%APPDATA%\Cap7CE` 和当前安装目录的 AI 内容。原生空间统计使用构建时已知的程序体积，并在勾选 AI 内容时计入当前两个目录的实时大小；不递归统计共享用户数据，避免大型缓存拖慢卸载器启动。可选清理在目标本身是 Windows 符号链接或目录联接时只移除链接，不进入链接目标，普通真实目录继续交给 NSIS 原生删除。安装器和卸载器显式使用 `build/setup.ico`，安装器 EXE 的 Windows 文件说明留空，Windows 卸载登记和快捷方式不写入网址或备注；卸载显示名中的版本来自当前构建版本，不属于固定 `appId`。安装与卸载界面仅包含英文和简体中文，按 Windows 界面语言自动选择且不显示语言选择页；不支持的语言回退英文。许可证页展示仓库中的 PolyForm Noncommercial 英文原文，完成页默认勾选运行 Cap7CE；最终侧栏图直接使用经过尺寸、位深、压缩方式和对比度检查的 `build/installerSidebar.bmp`。
+Windows 分发在 1.0.1 中使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器。首次安装的默认目录、已安装路径检测、覆盖升级、注册表、开始菜单、桌面快捷方式、完成页运行选项及卸载主流程均服从 electron-builder / NSIS 默认机制；安装器通过受支持的 `include` 挂钩取消目录页之后自动追加 `Cap7CE` 的步骤，因此默认位置仍是 `%LOCALAPPDATA%\Programs\Cap7CE`，已有安装仍定位到登记目录，而用户手动输入的路径直接作为最终安装目录。相同挂钩同时补充默认卸载不具备的内容保护。`models` 与 `llama.cpp` 不随安装包创建、迁移或覆盖，普通卸载时先原样保留；卸载组件页提供两个默认不选中的独立选项，分别删除共享 `%APPDATA%\Cap7CE` 和当前安装目录的 AI 内容。原生空间统计使用构建时已知的程序体积，并在勾选 AI 内容时计入当前两个目录的实时大小；不递归统计共享用户数据，避免大型缓存拖慢卸载器启动。可选清理在目标本身是 Windows 符号链接或目录联接时只移除链接，不进入链接目标，普通真实目录继续交给 NSIS 原生删除。安装器和卸载器显式使用 `build/setup.ico`，安装器 EXE 的 Windows 文件说明留空，Windows 卸载登记和快捷方式不写入网址或备注；卸载显示名中的版本来自当前构建版本，不属于固定 `appId`。安装与卸载界面仅包含英文和简体中文，按 Windows 界面语言自动选择且不显示语言选择页；不支持的语言回退英文。许可证页展示仓库中的 PolyForm Noncommercial 英文原文，完成页默认勾选运行 Cap7CE；最终侧栏图直接使用经过尺寸、位深、压缩方式和对比度检查的 `build/installerSidebar.bmp`。
 
 模型系统包括：
 - llama.cpp 目录扫描。
@@ -495,7 +495,7 @@ Settings 当前覆盖：
 
 `Esc` 是固定的窗口内取消键，不属于可配置快捷动作，也不能分配给其他快捷动作。它只按当前交互层级取消快捷键录入、快捷指令确认、菜单、标签展开、编辑、确认弹层或结果选择；没有可取消内容时不切换页面、不收起窗口，也不退出软件。正在执行且不能安全中断的删除、缓存清理或保存任务不会被 `Esc` 隐藏。
 
-旧版通用 Modal 组件及其专用遮罩样式已经移除。Settings 内容结构已经进入 1.0.0 稳定状态，后续不要按旧设计稿重排页面。
+旧版通用 Modal 组件及其专用遮罩样式已经移除。Settings 内容结构已经进入 1.0.1 稳定状态，后续不要按旧设计稿重排页面。
 
 ## 13. 快捷指令架构
 
@@ -554,9 +554,9 @@ Settings 当前覆盖：
 
 用户配置、索引和缓存位于 `%APPDATA%\Cap7CE`。每个程序副本的模型与运行时分别位于其 `models` 和 `llama.cpp` 子目录，应用不主动创建或迁移。当前开发阶段不迁移旧 `%APPDATA%\Image Everything`，也不要自动删除旧目录。
 
-## 16. 1.0.0 当前稳定状态
+## 16. 1.0.1 当前稳定状态
 
-Cap7CE 1.0.0 的产品 Renderer 与原生窗口宿主均已统一为新版 stable：主窗口、独立 Settings 与 Preview 使用 40 DIP Window Controls Overlay 和可实时切换的 Acrylic / Mica，系统拒绝所选材质时回退安全纯色；采用连续响应式布局并允许三窗口并存。旧主 Renderer、旧 Preview 展示分支、独立与同窗 Capsule、micro/mini 自动形态转换、分形态布局记忆、旧 presentation 策略、兼容最大化控制器、模式切换 IPC 和对应偏好字段均已删除；磁盘上的旧布局和已有用户数据不主动清理，历史偏好 JSON 中多余字段由当前读取器安全忽略。当前稳定边界还包括虚拟化搜索与 skim 网格、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、逐词证据可信度排序、15 秒可取消扫描快照、失败抑制后的原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。普通 JPG / JPEG / PNG / WEBP 仅在尺寸、像素量或文件体积超过受限阈值时生成 2560px 预览缓存，轻量源文件直接读取。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；Preview 的单文件手动关键词在信息边栏内以标签方式编辑，经受限 Preview 保存链复用统一规范化与索引写入，并通知主窗口刷新当前结果；多选编辑继续使用共享浮动编辑卡片。HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、共享查看范围、自绘滚动条、主题感知图标与拾色器、输入框内快捷指令和查看条件切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入按需 AI 搜索，系统解码能力不会扩大 AI、自动优化或模型输入边界；OCR 与不可见的全目录 AI 深度索引未接入。
+Cap7CE 1.0.1 的产品 Renderer 与原生窗口宿主均已统一为新版 stable：主窗口、独立 Settings 与 Preview 使用 40 DIP Window Controls Overlay 和可实时切换的 Acrylic / Mica，系统拒绝所选材质时回退安全纯色；采用连续响应式布局并允许三窗口并存。旧主 Renderer、旧 Preview 展示分支、独立与同窗 Capsule、micro/mini 自动形态转换、分形态布局记忆、旧 presentation 策略、兼容最大化控制器、模式切换 IPC 和对应偏好字段均已删除；磁盘上的旧布局和已有用户数据不主动清理，历史偏好 JSON 中多余字段由当前读取器安全忽略。当前稳定边界还包括虚拟化搜索与 skim 网格、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、逐词证据可信度排序、15 秒可取消扫描快照、失败抑制后的原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。普通 JPG / JPEG / PNG / WEBP 仅在尺寸、像素量或文件体积超过受限阈值时生成 2560px 预览缓存，轻量源文件直接读取。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；Preview 的单文件手动关键词在信息边栏内以标签方式编辑，经受限 Preview 保存链复用统一规范化与索引写入，并通知主窗口刷新当前结果；多选编辑继续使用共享浮动编辑卡片。HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、共享查看范围、自绘滚动条、主题感知图标与拾色器、输入框内快捷指令和查看条件切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入按需 AI 搜索，系统解码能力不会扩大 AI、自动优化或模型输入边界；OCR 与不可见的全目录 AI 深度索引未接入。
 
 L6 最终审计补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不属于全局样式入口。搜索结果与 Skim 只使用 `ResponsiveFileContextMenu`，菜单主题变量、动作类型与文件名拆分工具位于 `fileContextMenuShared.ts`；旧分栏菜单组件、旧 Results / Skim 适配层、旧搜索胶囊、占位网格、专用 CSS 和零调用图标均已删除。`scripts/architecture-boundaries-baseline.json` 直接守护当前 stable 搜索、菜单、Skim 与窗口入口；`build:electron` 在编译前只清理 `dist-electron` 和对应的 TypeScript 增量缓存，完整 `build` 随后扫描 Renderer 与 Electron 生产输出，不得发现旧宿主、兼容标题栏或 Capsule 入口标识。
 
