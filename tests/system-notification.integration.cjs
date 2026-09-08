@@ -126,6 +126,8 @@ assert.match(mainSource, /const windowsAppUserModelId = "Cap7CE"/u);
 assert.match(mainSource, /registerActivationHandler: \(handler\) => Notification\.handleActivation\(handler\)/u);
 assert.match(mainSource, /settingsWindowController = new SettingsWindowController[\s\S]*systemNotificationService\.initialize\(\)/u);
 assert.match(mainSource, /createNotification: \(options\) => new Notification\(options\)/u);
+assert.match(mainSource, /onInstallerOpened: \(version\) => appUpdateInstallIntentStore\.record\(version\)/u);
+assert.match(mainSource, /notification\.updateCompletedTitle[\s\S]*notification\.updateCompletedContent[\s\S]*force: true[\s\S]*appUpdateInstallIntentStore\.clear\(version\)/u);
 assert.doesNotMatch(mainSource, /displayBalloon|balloon-click/u);
 
 console.log(JSON.stringify({
@@ -134,6 +136,7 @@ console.log(JSON.stringify({
   silentNotificationOptionsVerified: true,
   notificationActivationOpensSettings: true,
   diagnosticContentRedactionVerified: true,
+  installerUpdateCompletionNotificationWired: true,
   trayBalloonFallbackRemoved: true,
   appUserModelIdMatchesInstaller: true
 }));

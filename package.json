@@ -62,7 +62,7 @@
     "test:directory-management-ipc": "node tests/directory-management-ipc.integration.cjs",
     "test:virtual-grid-layout": "node tests/virtual-grid-layout.integration.cjs",
     "test:result-section-layout": "node tests/result-section-layout.integration.cjs",
-    "test:app-update": "node tests/app-update.integration.cjs && node tests/app-update-download.integration.cjs && node tests/app-update-ipc.integration.cjs",
+    "test:app-update": "node tests/app-update.integration.cjs && node tests/app-update-download.integration.cjs && node tests/app-update-install-intent.integration.cjs && node tests/app-update-ipc.integration.cjs",
     "test:web-contents-zoom": "electron tests/web-contents-zoom.integration.cjs",
     "test:devtools-policy": "electron tests/devtools-policy.integration.cjs",
     "test:shell-mouse-polling": "node tests/shell-mouse-polling.integration.cjs",

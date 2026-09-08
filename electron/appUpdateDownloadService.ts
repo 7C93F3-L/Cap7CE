@@ -35,6 +35,7 @@ export interface AppUpdateDownloadServiceOptions {
   currentVersion: string;
   fetchDownload?: typeof fetch;
   openInstaller: (installerPath: string) => Promise<string>;
+  onInstallerOpened?: (version: string) => Promise<void>;
   onProgress: (progress: AppUpdateDownloadProgress) => void;
   diagnostics: AppUpdateDiagnostics;
   inactivityTimeoutMs?: number;
@@ -261,6 +262,11 @@ export class AppUpdateDownloadService {
     if (openError) {
       safeLog(this.options.diagnostics, "error", "app_update.installer_open_failed", { version: asset.version, assetId: asset.assetId, error: openError });
       return { status: "failed", version: asset.version, reason: "unknown" };
+    }
+    if (this.options.onInstallerOpened) {
+      await this.options.onInstallerOpened(asset.version).catch((error) => {
+        safeLog(this.options.diagnostics, "warn", "app_update.install_intent_write_failed", { version: asset.version, assetId: asset.assetId, error });
+      });
     }
     safeLog(this.options.diagnostics, "info", "app_update.installer_opened", { version: asset.version, assetId: asset.assetId });
     return { status: "installing", version: asset.version };

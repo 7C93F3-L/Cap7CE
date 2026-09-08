@@ -46,6 +46,7 @@ const createService = (root, options = {}) => {
   const progress = [];
   const diagnostics = [];
   const opened = [];
+  const installIntents = [];
   const service = new AppUpdateDownloadService({
     rootDirectory: root,
     currentVersion: options.currentVersion ?? "0.9.9",
@@ -54,12 +55,13 @@ const createService = (root, options = {}) => {
       opened.push(installerPath);
       return options.openError?.() ?? "";
     },
+    onInstallerOpened: async (version) => { installIntents.push(version); },
     onProgress: (entry) => progress.push(entry),
     diagnostics: { log: (level, event, data = {}) => diagnostics.push({ level, event, data }) },
     inactivityTimeoutMs: options.inactivityTimeoutMs ?? 100,
     getAvailableDiskBytes: options.getAvailableDiskBytes ?? (async () => Number.MAX_SAFE_INTEGER)
   });
-  return { service, progress, diagnostics, opened };
+  return { service, progress, diagnostics, opened, installIntents };
 };
 const fullResponse = (bytes = payload, headers = {}) => new Response(bytes, {
   status: 200,
@@ -197,9 +199,11 @@ const resumeResponse = (bytes, start, total = payload.length, headers = {}) => n
     const openHarness = createService(freshRoot, { openError: () => openError });
     await openHarness.service.initialize();
     assert.equal((await openHarness.service.openReadyInstaller()).status, "failed");
+    assert.deepEqual(openHarness.installIntents, []);
     openError = "";
     assert.equal((await openHarness.service.openReadyInstaller()).status, "installing");
     assert.equal(openHarness.opened[0], finalPath(freshRoot, asset()));
+    assert.deepEqual(openHarness.installIntents, ["1.0.0"]);
 
     const obsoleteRoot = path.join(temporaryRoot, "obsolete");
     await fs.mkdir(obsoleteRoot, { recursive: true });

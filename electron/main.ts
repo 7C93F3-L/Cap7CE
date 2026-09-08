@@ -18,6 +18,7 @@ import { configureEmbeddedMetadataRuntime, discardEmbeddedMetadataForDirectory, 
 import { createEmbeddedMetadataPreviewCoordinator } from "./embeddedMetadataPreviewProbe";
 import { setVisualPropertyForegroundActive } from "./visualPropertyRuntime";
 import { AppUpdateDownloadService, resolveAppUpdateRootDirectory } from "./appUpdateDownloadService";
+import { AppUpdateInstallIntentStore } from "./appUpdateInstallIntent";
 import { registerAppUpdateIpc } from "./appUpdateIpc";
 import { applyDirectoryFileCounts, deleteDirectory, listDirectories, moveDirectory, replaceDirectories, type PersistedDirectory, updateDirectoryName } from "./directoryStore";
 import { moveIndexedImagesToTrash } from "./fileOperationService";
@@ -99,10 +100,13 @@ const applyLaunchAtLoginPreference = (launchAtLogin: boolean) => {
   });
 };
 let mainWindow: BrowserWindow | null = null, settingsWindowController: SettingsWindowController | null = null;
+const appUpdateRootDirectory = resolveAppUpdateRootDirectory(process.env.LOCALAPPDATA, app.getPath("userData"));
+const appUpdateInstallIntentStore = new AppUpdateInstallIntentStore(appUpdateRootDirectory);
 const appUpdateDownloadService = new AppUpdateDownloadService({
-  rootDirectory: resolveAppUpdateRootDirectory(process.env.LOCALAPPDATA, app.getPath("userData")),
+  rootDirectory: appUpdateRootDirectory,
   currentVersion: app.getVersion(),
   openInstaller: (installerPath) => shell.openPath(installerPath),
+  onInstallerOpened: (version) => appUpdateInstallIntentStore.record(version),
   onProgress: (progress) => settingsWindowController?.send("app:updateDownloadProgress", progress),
   diagnostics: runtimeDiagnostics
 });
@@ -1031,6 +1035,7 @@ const showSystemNotification = (title: string, body: string, options: { force?: 
   enabled: systemNotificationsEnabled,
   force: options.force
 });
+const showCompletedUpdateNotification = (version: string | null) => { if (!version) return; setTimeout(() => { if (showSystemNotification(t("notification.updateCompletedTitle"), t("notification.updateCompletedContent", { version }), { force: true })) void appUpdateInstallIntentStore.clear(version).catch((error) => runtimeDiagnostics.log("warn", "app_update.install_intent_clear_failed", { error })); }, 7_000); };
 
 const showBackgroundRunNotificationOnce = async (
   preferences: Awaited<ReturnType<typeof getUserPreferences>>
@@ -1585,6 +1590,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   shellAlwaysOnTop = preferences.alwaysOnTop;
   standbyLineVisible = preferences.standbyLineVisible;
   systemNotificationsEnabled = preferences.systemNotificationsEnabled;
+  const completedUpdateVersion = app.isPackaged ? await appUpdateInstallIntentStore.getCompletedVersion(app.getVersion()).catch((error) => { runtimeDiagnostics.log("warn", "app_update.install_intent_read_failed", { error }); return null; }) : null;
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
@@ -1615,6 +1621,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   }
   void createStartupHintWindow();
   createAppTray();
+  showCompletedUpdateNotification(completedUpdateVersion);
   if (quickActionGlobalEnabled) {
     registerConfiguredGlobalShortcuts(getActiveShortcutActions(preferences));
   } else {
