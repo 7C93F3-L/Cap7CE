@@ -1,7 +1,8 @@
 .cap-stable-skim-slot { --cap-stable-skim-hover-surface: var(--cap-stable-surface); --cap-stable-selected-surface: light-dark(rgb(255 255 255 / 68%), rgb(26 26 26 / 68%)); display: none; grid-template-rows: 40px 18px minmax(0, 1fr); }
 .cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { display: grid; }
-.cap-stable-skim-toolbar { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px 32px; align-items: center; gap: 4px; padding: 4px; }
+.cap-stable-skim-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 32px 32px; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; }
 .cap-stable-skim-tool { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; color: inherit; background: transparent; }
+.cap-stable-skim-exit-tool { display: none; }
 .cap-stable-skim-tool:hover { background: var(--cap-stable-hover); }
 .cap-stable-skim-tool:disabled { opacity: .3; }
 .cap-stable-skim-tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; } .cap-stable-skim-tool .cap-stable-sidebar-icon svg { width: 100%; height: 100%; fill: currentColor; stroke: none; }
@@ -20,6 +21,11 @@
 .cap-stable-skim-content .cap-skim-grid-frame { border-radius: var(--cap-stable-radius-sm); }
 .cap-stable-skim-content .cap-skim-entry { border-radius: var(--cap-stable-radius-sm); background: var(--cap-stable-grid-surface); }
 .cap-stable-skim-content .cap-skim-entry:hover, .cap-stable-skim-content .cap-skim-entry:focus-visible { background: var(--cap-stable-skim-hover-surface); } .cap-stable-skim-content .cap-skim-entry.selected { background: var(--cap-stable-selected-surface); }
+
+@media (max-width: 560px) {
+  .cap-stable-skim-toolbar { grid-template-columns: 32px minmax(0, 1fr) 32px 32px; }
+  .cap-stable-skim-exit-tool { display: grid; }
+}
 
 @media (max-height: 359.98px) {
   .cap-stable-skim-slot { grid-template-rows: minmax(0, 1fr); }

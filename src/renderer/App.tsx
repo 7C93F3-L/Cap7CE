@@ -2411,7 +2411,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
           renderContent: (active) => <SkimView {...createSkimViewProps(active)} />,
-          onOpen: () => openStableSkimLocation(skimCurrentPath), onBack: navigateStableSkimBack,
+          onOpen: () => openStableSkimLocation(skimCurrentPath),
           onOpenRoot: () => openStableSkimLocation(null), onOpenPath: openStableSkimLocation,
           onDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
           onSortChange: (sortField, sortDirection) => updateSkimSort({ ...search, sortField, sortDirection })

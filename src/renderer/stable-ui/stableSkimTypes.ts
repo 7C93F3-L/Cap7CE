@@ -13,7 +13,6 @@ export interface StableSkimProps {
   sortDirection: SortDirection;
   renderContent: (active: boolean) => ReactNode;
   onOpen: () => void;
-  onBack: () => void;
   onOpenRoot: () => void;
   onOpenPath: (path: string) => void;
   onDisplayModeChange: (mode: SkimDisplayMode) => void;

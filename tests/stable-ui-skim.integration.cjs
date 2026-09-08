@@ -25,7 +25,7 @@ const formattingSource = read("src/renderer/formatting.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
 assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(active\)\} \/>/);
-assert.match(appSource, /onBack: navigateStableSkimBack/);
+assert.doesNotMatch(appSource, /onBack: navigateStableSkimBack/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
 assert.match(appSource, /onActivateSkimRequested[\s\S]*?stableSkimCommands\.requestToggle/u);
@@ -39,7 +39,7 @@ assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
 for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
   assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
 }
-assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(!interactionLocked && skimKeyboardActive\)\} \/>/);
+assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(!interactionLocked && skimKeyboardActive\)\} onToggleSkim=\{toggleSkim\} \/>/);
 assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.requests\)/u);
 assert.match(layoutSource, /useStableSkimVisibility\(onSkimOpen, requests\)/u);
 assert.match(visibilitySource, /useState\(false\)/);
@@ -57,6 +57,8 @@ for (const marker of ["onClick={startPathEditing}", "event.target.closest(\"butt
 assert.match(toolbarSource, /setFlyout\(\(current\) => current\?\.kind === kind \? null : \{ kind, anchor \}\)/u);
 assert.equal((toolbarSource.match(/onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/g) ?? []).length, 2);
 assert.equal((toolbarSource.match(/placement="below"/g) ?? []).length, 2);
+assert.match(toolbarSource, /cap-stable-skim-exit-tool[\s\S]*?title=\{t\("skim\.exit"\)\}[\s\S]*?name="skim" active/u);
+assert.doesNotMatch(toolbarSource, /common\.back|onBack/u);
 for (const marker of ["active?: boolean", "if (!active) return undefined", "is-embedded", "window.matchMedia(\"(max-height: 359.98px)\")"]) {
   assert.ok(skimViewSource.includes(marker), `Stable Skim view is missing ${marker}.`);
 }
@@ -108,8 +110,10 @@ for (const marker of ["Error invoking remote method", ".replace(/^(?:Error:\\s*)
 }
 assert.match(panelStyles, /\.cap-stable-skim-content \.empty-result-row \{ color: var\(--cap-stable-text-muted\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-tool \.cap-stable-sort-icon \{ transform: none; \}/u);
+assert.match(panelStyles, /\.cap-stable-skim-exit-tool \{ display: none; \}[\s\S]*?@media \(max-width: 560px\)[\s\S]*?\.cap-stable-skim-exit-tool \{ display: grid; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > \.cap-stable-skim-address-hit-area\s*\{[^}]*min-width: 24px;[^}]*flex: 0 0 24px;/u);
+assert.match(panelStyles, /\.cap-stable-skim-toolbar \{[^}]*padding: 4px 4px 4px 10px;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > button:focus-visible,[^\n]*\.cap-stable-skim-address input:focus-visible\s*\{[^}]*outline: none;[^}]*box-shadow: none;/u);
 assert.doesNotMatch(`${shellSource}\n${slotSource}\n${toolbarSource}\n${contractSource}`, /window\.cap7ce|setShellState|navigateTo\("skim"\)/);
 

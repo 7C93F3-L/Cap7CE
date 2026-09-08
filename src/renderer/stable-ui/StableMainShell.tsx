@@ -23,7 +23,7 @@ export default function StableMainShell({ resultContent, sidebar, skim, interact
       <button className="cap-stable-resizer cap-stable-skim-resizer" type="button" role="separator" aria-orientation="vertical" aria-label={t("stableUi.resizeSkim")} aria-valuemin={280} aria-valuemax={skimMaximumWidth} aria-valuenow={skimWidth}
         onPointerDown={(event) => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={resizeSkim}
         onKeyDown={resizeSkimByKeyboard} onDoubleClick={resetSkimWidth} />
-      <StableSkimSlot {...skim} content={skim.renderContent(!interactionLocked && skimKeyboardActive)} />
+      <StableSkimSlot {...skim} content={skim.renderContent(!interactionLocked && skimKeyboardActive)} onToggleSkim={toggleSkim} />
     </section>
   );
 }

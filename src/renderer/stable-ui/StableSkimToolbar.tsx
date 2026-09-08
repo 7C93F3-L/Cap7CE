@@ -6,9 +6,9 @@ import StableUiIcon from "./StableUiIcon";
 import type { StableSkimProps } from "./stableSkimTypes";
 
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | null;
-type StableSkimToolbarProps = Omit<StableSkimProps, "renderContent" | "onOpen" | "isLoading" | "feedback" | "entryCount">;
+type StableSkimToolbarProps = Omit<StableSkimProps, "renderContent" | "onOpen" | "isLoading" | "feedback" | "entryCount"> & { onToggleSkim: () => void };
 
-const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, sortDirection, onBack, onOpenRoot, onOpenPath, onDisplayModeChange, onSortChange }: StableSkimToolbarProps) => {
+const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, sortDirection, onToggleSkim, onOpenRoot, onOpenPath, onDisplayModeChange, onSortChange }: StableSkimToolbarProps) => {
   const [editingPath, setEditingPath] = useState(false);
   const [pathDraft, setPathDraft] = useState(currentPath ?? "");
   const [flyout, setFlyout] = useState<FlyoutState>(null);
@@ -31,8 +31,8 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
 
   return <>
     <div className="cap-stable-skim-toolbar">
-      <button className="cap-stable-skim-tool" type="button" title={t("common.back")} aria-label={t("common.back")} disabled={currentPath === null} onClick={onBack}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5-7 7 7 7" /></svg>
+      <button className="cap-stable-skim-tool cap-stable-skim-exit-tool" type="button" title={t("skim.exit")} aria-label={t("skim.exit")} aria-pressed="true" onClick={() => { setFlyout(null); onToggleSkim(); }}>
+        <StableUiIcon name="skim" active className="cap-stable-sidebar-icon cap-stable-skim-icon" />
       </button>
       {editingPath ? <form className="cap-stable-skim-address" onSubmit={submitPath}>
         <input autoFocus value={pathDraft} aria-label={t("stableUi.skim.path")} onChange={(event) => setPathDraft(event.currentTarget.value)} onBlur={() => setEditingPath(false)} onKeyDown={(event) => {
