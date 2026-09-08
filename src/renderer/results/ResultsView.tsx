@@ -4,10 +4,11 @@ import type { AppearanceColors, ImageIndexItem, PreviewWindowData } from "../../
 import { buildPreviewSidebarData } from "../preview/previewSidebarData";
 import { resolveFileContentPreview } from "../contentPreview";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
-import { createSpaceHoldController, createSpaceReleaseGuard, isPlainSpaceShortcut } from "../keywordEditorInteraction";
+import { isPlainSpaceShortcut } from "../keywordEditorInteraction";
 import { getFileContextShortcutAction } from "../fileContextActions";
 import { VirtualImageGrid } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
+import { useResultsSpaceHold } from "./useResultsSpaceHold";
 import type { AiResultSectionPhase, AiResultSectionProgress } from "./ResultSectionCard";
 import type { ResultGridScrollMemory } from "../virtualGridLayout";
 type SpacePressSnapshot = {
@@ -60,8 +61,6 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
   const previewSessionCounterRef = useRef(0);
   const previewOpenRequestRef = useRef(0);
   const previewIndexRef = useRef<number | null>(null);
-  const [isSpaceHolding, setIsSpaceHolding] = useState(false);
-  const spaceReleaseGuardRef = useRef(createSpaceReleaseGuard());
   const updateGridMetrics = useCallback((nextMetrics: { left: number; right: number; columnCount: number }) => {
     setGridMetrics((currentMetrics) => {
       if (currentMetrics.left === nextMetrics.left && currentMetrics.right === nextMetrics.right && currentMetrics.columnCount === nextMetrics.columnCount) {
@@ -155,43 +154,10 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
     }
   }, [images, openPreviewAtIndex]);
 
-  const spaceHoldControllerRef = useRef<ReturnType<typeof createSpaceHoldController<SpacePressSnapshot>> | null>(null);
-  if (!spaceHoldControllerRef.current) {
-    spaceHoldControllerRef.current = createSpaceHoldController<SpacePressSnapshot>({
-      delayMs: 350,
-      schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
-      cancelScheduled: (handle) => window.clearTimeout(handle as number),
-      onShortPress: () => undefined,
-      onLongPress: () => undefined
-    });
-  }
-  const spaceHoldController = spaceHoldControllerRef.current;
-  spaceHoldController.updateHandlers({
-    onShortPress: (snapshot) => {
-      setIsSpaceHolding(false);
-      openPreviewAtIndex(snapshot.index);
-    },
-    onLongPress: (snapshot) => {
-      setIsSpaceHolding(false);
-      spaceReleaseGuardRef.current.activate();
-      onEditKeywords(snapshot.items);
-    }
+  const { isSpaceHolding, startSpaceHold, isSpaceHoldActive, releaseSpaceHold, cancelPendingSpaceHold, cancelSpaceHold } = useResultsSpaceHold<SpacePressSnapshot>({
+    onShortPress: (snapshot) => openPreviewAtIndex(snapshot.index),
+    onLongPress: (snapshot) => onEditKeywords(snapshot.items)
   });
-
-  const cancelPendingSpaceHold = useCallback(() => {
-    spaceHoldController.cancel();
-    setIsSpaceHolding(false);
-  }, [spaceHoldController]);
-
-  const cancelSpaceHold = useCallback(() => {
-    spaceReleaseGuardRef.current.cancel();
-    cancelPendingSpaceHold();
-  }, [cancelPendingSpaceHold]);
-
-  useEffect(() => () => {
-    spaceReleaseGuardRef.current.cancel();
-    spaceHoldController.cancel();
-  }, [spaceHoldController]);
 
   useEffect(() => {
     if (keywordEditorOpen) {
@@ -447,29 +413,6 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
   }, [gridMetrics.columnCount, images.length, resultGridLayoutItems, selectImageByIndex, selectedImageIndex]);
 
   useEffect(() => {
-    const handleSpaceReleaseGuardKeyDown = (event: KeyboardEvent) => {
-      if (!spaceReleaseGuardRef.current.shouldSuppressKeyDown(event.code)) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    };
-    const handleSpaceReleaseGuardKeyUp = (event: KeyboardEvent) => {
-      if (!spaceReleaseGuardRef.current.consumeKeyUp(event.code)) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      cancelPendingSpaceHold();
-    };
-
-    window.addEventListener("keydown", handleSpaceReleaseGuardKeyDown, true);
-    window.addEventListener("keyup", handleSpaceReleaseGuardKeyUp, true);
-    window.addEventListener("blur", cancelSpaceHold);
-    return () => {
-      window.removeEventListener("keydown", handleSpaceReleaseGuardKeyDown, true);
-      window.removeEventListener("keyup", handleSpaceReleaseGuardKeyUp, true);
-      window.removeEventListener("blur", cancelSpaceHold);
-    };
-  }, [cancelPendingSpaceHold, cancelSpaceHold]);
-
-  useEffect(() => {
     if (!active) return undefined;
     const handleKeyDown = (event: KeyboardEvent) => {
 
@@ -530,10 +473,10 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
         }
         const activeItem = images[selectedImageIndex];
         const selectedItems = images.filter((image) => selectedImageIds.has(image.id));
-        if (spaceHoldController.start({
+        startSpaceHold({
           index: selectedImageIndex,
           items: selectedItems.length > 0 ? selectedItems : [activeItem]
-        })) setIsSpaceHolding(true);
+        });
         return;
       }
 
@@ -568,9 +511,9 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.code !== "Space" || !spaceHoldController.isActive()) return;
+      if (event.code !== "Space" || !isSpaceHoldActive()) return;
       event.preventDefault();
-      spaceHoldController.release();
+      releaseSpaceHold();
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
@@ -579,7 +522,7 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("keyup", handleKeyUp, true);
     };
-  }, [active, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
+  }, [active, imageContextMenuOpen, images, isSpaceHoldActive, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, releaseSpaceHold, selectedImageIds, selectedImageIndex, startSpaceHold]);
   return (
     <main className="results-view cap-results-view" data-results-view="true">
       <VirtualImageGrid
