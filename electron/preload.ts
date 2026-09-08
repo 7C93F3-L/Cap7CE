@@ -15,6 +15,13 @@ type RuntimeDiagnosticsExportResult =
   | { status: "cancelled" }
   | { status: "failed"; message: string };
 
+let lineWindowVisible = false;
+const lineVisibilityCallbacks = new Set<(visible: boolean) => void>();
+ipcRenderer.on("line:visibilityChanged", (_event, visible: boolean) => {
+  lineWindowVisible = Boolean(visible);
+  for (const callback of lineVisibilityCallbacks) callback(lineWindowVisible);
+});
+
 contextBridge.exposeInMainWorld("cap7ce", {
   window: {
     setShellState: (state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => ipcRenderer.invoke("window:setShellState", state, options),
@@ -62,6 +69,11 @@ contextBridge.exposeInMainWorld("cap7ce", {
   },
   line: {
     activateMain: () => ipcRenderer.invoke("line:activateMain"),
+    onVisibilityChanged: (callback: (visible: boolean) => void) => {
+      lineVisibilityCallbacks.add(callback);
+      callback(lineWindowVisible);
+      return () => lineVisibilityCallbacks.delete(callback);
+    },
     onPlacementChanged: (callback: (edge: "left" | "right" | "top" | "bottom") => void) => {
       const listener = (_event: Electron.IpcRendererEvent, edge: "left" | "right" | "top" | "bottom") => callback(edge);
       ipcRenderer.on("line:placementChanged", listener);

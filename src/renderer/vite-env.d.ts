@@ -28,6 +28,7 @@ declare global {
       };
       line: {
         activateMain: () => Promise<boolean>;
+        onVisibilityChanged: (callback: (visible: boolean) => void) => () => void;
         onPlacementChanged: (callback: (edge: "left" | "right" | "top" | "bottom") => void) => () => void;
         onRefreshAppearance: (callback: () => void) => () => void;
       };

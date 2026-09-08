@@ -48,8 +48,15 @@ assert.match(controllerSource, /loadPromise\.then\(\(\) => \{\s*if \(this\.lineW
 assert.doesNotMatch(controllerSource, /show\(\)[\s\S]*?isLoadingMainFrame\(\)[\s\S]*?showInactive\(\)/u);
 assert.match(controllerSource, /getPlacement\(this\.lineWindow\.getBounds\(\), this\.edge\)[\s\S]*?line:placementChanged/u);
 assert.match(preloadSource, /onPlacementChanged:[\s\S]*?line:placementChanged/u);
+assert.match(preloadSource, /lineWindowVisible = false[\s\S]*?line:visibilityChanged[\s\S]*?lineVisibilityCallbacks[\s\S]*?callback\(lineWindowVisible\)/u);
 assert.match(lineAppSource, /cap-line-window-\$\{edge\}/u);
+assert.match(lineAppSource, /onVisibilityChanged\(setVisible\)[\s\S]*?is-line-visible/u);
 assert.match(lineStyleSource, /cap-line-window-top[\s\S]*?cap-line-window-bottom[\s\S]*?cap-line-window-left[\s\S]*?cap-line-window-right/u);
+assert.match(controllerSource, /webContents\.send\("line:visibilityChanged", false\)[\s\S]*?\.hide\(\)[\s\S]*?\.showInactive\(\)[\s\S]*?webContents\.send\("line:visibilityChanged", true\)/u);
+assert.match(lineStyleSource, /animation-play-state: paused[\s\S]*?is-line-visible[\s\S]*?animation-play-state: running[\s\S]*?will-change: transform/u);
+assert.match(lineStyleSource, /background-size: 360px 100%[\s\S]*?@keyframes standbyLineFlowHorizontal \{[\s\S]*?translate3d\(-360px, 0, 0\)/u);
+assert.match(lineStyleSource, /background-size: 100% 360px[\s\S]*?@keyframes standbyLineFlowVertical \{[\s\S]*?translate3d\(0, -360px, 0\)/u);
+assert.doesNotMatch(lineStyleSource, /@keyframes[\s\S]*?background-position/u);
 
 console.log(JSON.stringify({
   startupCreationGuardedByPreference: true,
@@ -68,5 +75,7 @@ console.log(JSON.stringify({
   contentViewAndForegroundCacheActivitySeparated: true,
   startupCacheOptimizationDiscoveryRestored: true,
   fourDirectionPlacementForwarded: true,
-  horizontalAndVerticalLineStylesPresent: true
+  horizontalAndVerticalLineStylesPresent: true,
+  hiddenLineAnimationPaused: true,
+  compositorOnlyLineMotionVerified: true
 }));

@@ -62,7 +62,7 @@ export class LineWindowController {
     createdWindow.on("close", (event) => {
       if (this.options.isQuitting()) return;
       event.preventDefault();
-      createdWindow.hide();
+      this.hide();
     });
     createdWindow.on("closed", () => {
       if (this.lineWindow === createdWindow) this.lineWindow = null;
@@ -80,6 +80,7 @@ export class LineWindowController {
 
   hide() {
     if (!this.lineWindow || this.lineWindow.isDestroyed() || !this.lineWindow.isVisible()) return false;
+    this.lineWindow.webContents.send("line:visibilityChanged", false);
     this.lineWindow.hide();
     return true;
   }
@@ -96,6 +97,7 @@ export class LineWindowController {
     this.applyAlwaysOnTop();
     this.refreshAppearance();
     this.lineWindow.showInactive();
+    this.lineWindow.webContents.send("line:visibilityChanged", true);
     return true;
   }
 

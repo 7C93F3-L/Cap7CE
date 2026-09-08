@@ -20,6 +20,7 @@ const LineWindowApp = () => {
   ));
   const [appearanceColors, setAppearanceColors] = useState(defaultAppearanceColors);
   const [edge, setEdge] = useState<LineEdge>("bottom");
+  const [visible, setVisible] = useState(false);
 
   const refreshAppearance = useCallback(async () => {
     const preferences = await window.cap7ce?.preferences.get();
@@ -42,6 +43,8 @@ const LineWindowApp = () => {
 
   useEffect(() => window.cap7ce?.line.onPlacementChanged(setEdge), []);
 
+  useEffect(() => window.cap7ce?.line.onVisibilityChanged(setVisible), []);
+
   useEffect(() => {
     const media = window.matchMedia?.("(prefers-color-scheme: dark)");
     if (!media) return undefined;
@@ -58,7 +61,7 @@ const LineWindowApp = () => {
 
   return (
     <div
-      className={`app theme-${effectiveTheme} cap-shell cap-line-window cap-line-window-${edge}`}
+      className={`app theme-${effectiveTheme} cap-shell cap-line-window cap-line-window-${edge}${visible ? " is-line-visible" : ""}`}
       style={style}
       onClick={() => void window.cap7ce?.line.activateMain()}
     >

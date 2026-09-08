@@ -21,7 +21,7 @@
     "electron/stablePreviewWindowSizing.ts": 59,
     "electron/settingsWindowController.ts": 171,
     "electron/settingsWindowLayout.ts": 127,
-    "electron/lineWindowController.ts": 159
+    "electron/lineWindowController.ts": 161
   },
   "maintenanceMaxLines": {
     "src/renderer/directoryListActions.ts": 20,
