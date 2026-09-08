@@ -31,7 +31,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
   };
   useEffect(() => () => { if (directoryTooltipTimerRef.current !== null) window.clearTimeout(directoryTooltipTimerRef.current); }, []);
   const openFlyout = (kind: "sort" | "scope", event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); hideDirectoryTooltip(); setFlyout({ kind, anchor: event.currentTarget.getBoundingClientRect() }); };
-  const openDirectoryFlyout = (directory: DirectoryItem, event: MouseEvent<HTMLElement>) => { event.preventDefault(); event.stopPropagation(); hideDirectoryTooltip(); setFlyout({ kind: "directory", anchor: event.currentTarget.getBoundingClientRect(), directory }); };
+  const openDirectoryFlyout = (directory: DirectoryItem, event: MouseEvent<HTMLElement>) => { event.preventDefault(); event.stopPropagation(); hideDirectoryTooltip(); const anchor = event.currentTarget.closest<HTMLElement>(".cap-stable-directory-row") ?? event.currentTarget; setFlyout({ kind: "directory", anchor: anchor.getBoundingClientRect(), directory }); };
   const selectSortField = (sortField: SortField) => onSearchOptionsChange({ ...search, sortField });
   const selectSortDirection = (sortDirection: SortDirection) => onSearchOptionsChange({ ...search, sortDirection });
   const selectDirectory = (directoryId: string) => onSearchOptionsChange({ ...search, directoryId });

@@ -94,6 +94,7 @@ assert.match(directoryTooltipSource, /stableUi\.sidebar\.addedDirectories[\s\S]*
 assert.match(sidebarSource, /directoryCount=\{addedDirectories\.length\}/u);
 assert.match(appSource, /onOpenDirectory: \(path\) => void window\.cap7ce\?\.files\.open\(path\)/u);
 assert.match(sidebarSource, /<StableDirectoryFlyout[^>]*onOpen=\{onOpenDirectory\}/u);
+assert.match(sidebarSource, /openDirectoryFlyout[\s\S]*?currentTarget\.closest<HTMLElement>\("\.cap-stable-directory-row"\)[\s\S]*?anchor\.getBoundingClientRect\(\)/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-tooltip \{[^}]*background: var\(--cap-stable-flyout-surface\);[^}]*pointer-events: none;/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout \{[^}]*width: 184px;[\s\S]*?\.cap-stable-directory-tooltip \{[^}]*max-width: 184px;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-tooltip-title \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;[\s\S]*?\.cap-stable-directory-tooltip-count \{[^}]*text-overflow: ellipsis;[\s\S]*?\.cap-stable-directory-tooltip-path > span:first-child \{[^}]*text-overflow: ellipsis;/u);
