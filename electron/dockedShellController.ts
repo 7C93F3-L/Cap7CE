@@ -218,10 +218,12 @@ export class DockedShellController {
 
   handleUserMoveCompleted() {
     if (!this.enabled || this.disposed || this.minimizeSuspended) return;
+    if (this.options.getShellContext().interactionBlocked) return;
     if (!this.collapsed) this.session = null;
     this.armNextSession = true;
     this.suppressedUntil = this.now();
     this.sampleCursor(this.options.getCursorPoint(), this.suppressedUntil);
+    if (!this.collapsed && this.session) this.settleExpandedBoundsToSessionEdge(this.session);
   }
 
   suppressFor(durationMs: number) {
@@ -420,6 +422,25 @@ export class DockedShellController {
   private captureExpandedBounds(bounds: WindowLayoutBounds, session: DockSession) {
     session.display = this.options.getDisplay(bounds);
     session.expandedBounds = this.alignBoundsToSessionEdge(bounds, session);
+  }
+
+  private settleExpandedBoundsToSessionEdge(session: DockSession) {
+    const { window } = this.options;
+    if (window.isDestroyed()) return false;
+    const currentBounds = window.getBounds();
+    const nextBounds = this.alignBoundsToSessionEdge(currentBounds, session);
+    session.expandedBounds = nextBounds;
+    if (
+      currentBounds.x === nextBounds.x
+      && currentBounds.y === nextBounds.y
+      && currentBounds.width === nextBounds.width
+      && currentBounds.height === nextBounds.height
+    ) {
+      return false;
+    }
+    this.options.markProgrammaticMove();
+    window.setBounds(nextBounds, false);
+    return true;
   }
 
   private getRevealScreenBounds(session: DockSession): WindowLayoutBounds {

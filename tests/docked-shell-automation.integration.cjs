@@ -178,6 +178,15 @@ const displaySeam = createController({
 assert.deepEqual(displaySeam.controller.toggle(), { status: "blocked", reason: "display-seam" });
 assert.equal(displaySeam.controller.getState(), null);
 
+const displaySeamMoveSettlement = createController({
+  initialBounds: { x: 1027, y: 180, width: 900, height: 600 },
+  isDockEdgeExposed: (_display, edge) => edge !== "right"
+});
+displaySeamMoveSettlement.controller.handleUserMoveCompleted();
+assert.equal(displaySeamMoveSettlement.controller.hasActiveSession(), false);
+assert.deepEqual(displaySeamMoveSettlement.getBounds(), { x: 1027, y: 180, width: 900, height: 600 });
+assert.equal(displaySeamMoveSettlement.appliedBounds.length, 0);
+
 const secondDisplay = {
   id: 2,
   bounds: { x: 1920, y: 0, width: 1280, height: 1024 },
@@ -248,8 +257,20 @@ assert.equal(edgeGap.controller.getState(), null);
 const settledAtBoundary = createController({ initialBounds: rightBounds });
 settledAtBoundary.controller.handleUserMoveCompleted();
 assert.equal(settledAtBoundary.controller.hasActiveSession(), true);
+assert.equal(settledAtBoundary.appliedBounds.length, 0);
 settledAtBoundary.sample({ x: 1000, y: 300 }, 1);
 assert.deepEqual(settledAtBoundary.controller.getState(), { edge: "right" });
+
+const settledPastBoundary = createController({ initialBounds: { x: 1027, y: 180, width: 900, height: 600 } });
+settledPastBoundary.controller.handleUserMoveCompleted();
+assert.equal(settledPastBoundary.controller.hasActiveSession(), true);
+assert.equal(settledPastBoundary.controller.getState(), null);
+assert.deepEqual(settledPastBoundary.getBounds(), rightBounds);
+assert.deepEqual(settledPastBoundary.appliedBounds, [{ bounds: rightBounds, animate: false }]);
+assert.equal(settledPastBoundary.activity.markProgrammaticMove, 1);
+settledPastBoundary.sample({ x: 1000, y: 300 }, 1);
+assert.deepEqual(settledPastBoundary.controller.getState(), { edge: "right" });
+assert.equal(settledPastBoundary.activity.markProgrammaticMove, 2);
 
 const settledInside = createController({ initialBounds: { x: 1019, y: 180, width: 900, height: 600 } });
 settledInside.controller.handleUserMoveCompleted();
@@ -258,6 +279,12 @@ settledInside.setBounds(rightBounds);
 settledInside.sample({ x: 1000, y: 300 }, 1);
 assert.equal(settledInside.controller.hasActiveSession(), true);
 assert.equal(settledInside.controller.getState(), null);
+
+const blockedMoveSettlement = createController({ initialBounds: { x: 1027, y: 180, width: 900, height: 600 } });
+blockedMoveSettlement.context.interactionBlocked = true;
+blockedMoveSettlement.controller.handleUserMoveCompleted();
+assert.equal(blockedMoveSettlement.controller.hasActiveSession(), false);
+assert.equal(blockedMoveSettlement.appliedBounds.length, 0);
 
 const highDpiRight = createController({
   initialBounds: rightBounds,
@@ -445,6 +472,7 @@ console.log(JSON.stringify({
   edgeSnapPreferenceIndependent: true,
   exactScreenBoundaryEligibilityVerified: true,
   userMoveSettlementVerified: true,
+  overflowReleaseAlignmentVerified: true,
   immediateCollapseAndRevealVerified: true,
   temporaryCollapsedLayerVerified: true,
   edgeGapIncludedInHoverRegion: true,
