@@ -87,6 +87,8 @@ assert.match(sidebarSource, /window\.setTimeout\([\s\S]*?, 150\)/u);
 assert.match(sidebarSource, /onPointerEnter=\{\(event\) => showDirectoryTooltipSoon\(directory, (?:true|false), event\)\}[\s\S]*?onPointerLeave=\{hideDirectoryTooltip\}[\s\S]*?onPointerDown=\{hideDirectoryTooltip\}/u);
 assert.match(sidebarSource, /onScroll=\{hideDirectoryTooltip\}/u);
 assert.match(sidebarSource, /directoryTooltip && flyout === null/u);
+assert.match(sidebarSource, /const openFlyout = [\s\S]*?setFlyout\(\(current\) => current\?\.kind === kind \? null : \{ kind, anchor \}\)/u);
+assert.equal((sidebarSource.match(/onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/g) ?? []).length, 2);
 assert.match(sidebarSource, /aria-label=\{accessibleLabel\}/u);
 assert.doesNotMatch(sidebarSource, /type="button" title=\{title\} aria-pressed/u);
 assert.match(directoryTooltipSource, /const left = anchor\.right \+ 5[\s\S]*?Math\.min\(184, window\.innerWidth - left - 5\)[\s\S]*?createPortal\([\s\S]*?role="tooltip"[\s\S]*?cap-stable-directory-tooltip-title[\s\S]*?directory\.name[\s\S]*?cap-stable-directory-tooltip-count[\s\S]*?search\.fileCount[\s\S]*?directory\.fileCount[\s\S]*?pathLeading[\s\S]*?pathTrailing/u);

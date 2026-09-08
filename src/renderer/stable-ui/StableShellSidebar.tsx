@@ -30,7 +30,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     directoryTooltipTimerRef.current = window.setTimeout(() => { directoryTooltipTimerRef.current = null; setDirectoryTooltip({ anchor, directoryId: directory.id, all }); }, 150);
   };
   useEffect(() => () => { if (directoryTooltipTimerRef.current !== null) window.clearTimeout(directoryTooltipTimerRef.current); }, []);
-  const openFlyout = (kind: "sort" | "scope", event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); hideDirectoryTooltip(); setFlyout({ kind, anchor: event.currentTarget.getBoundingClientRect() }); };
+  const openFlyout = (kind: "sort" | "scope", event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); hideDirectoryTooltip(); const anchor = event.currentTarget.getBoundingClientRect(); setFlyout((current) => current?.kind === kind ? null : { kind, anchor }); };
   const openDirectoryFlyout = (directory: DirectoryItem, event: MouseEvent<HTMLElement>) => { event.preventDefault(); event.stopPropagation(); hideDirectoryTooltip(); const anchor = event.currentTarget.closest<HTMLElement>(".cap-stable-directory-row") ?? event.currentTarget; setFlyout({ kind: "directory", anchor: anchor.getBoundingClientRect(), directory }); };
   const selectSortField = (sortField: SortField) => onSearchOptionsChange({ ...search, sortField });
   const selectSortDirection = (sortDirection: SortDirection) => onSearchOptionsChange({ ...search, sortDirection });
@@ -70,10 +70,10 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>
         <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span>
       </button>
-      <button className="cap-stable-sidebar-control" type="button" title={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}>
+      <button className="cap-stable-sidebar-control" type="button" title={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("sort", event)}>
         <StableUiIcon name="sort" sortDirection={search.sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><span className="cap-stable-control-chevron">›</span>
       </button>
-      <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.searchScope")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}>
+      <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.searchScope")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}>
         <StableUiIcon name="scope" active={flyout?.kind === "scope"} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.searchScope")}</strong><small>{scopeValue}</small></span><span className="cap-stable-control-chevron">›</span>
       </button>
     </div>
