@@ -5,6 +5,7 @@
 .cap-stable-skim-tool:hover { background: var(--cap-stable-hover); }
 .cap-stable-skim-tool:disabled { opacity: .3; }
 .cap-stable-skim-tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; } .cap-stable-skim-tool .cap-stable-sidebar-icon svg { width: 100%; height: 100%; fill: currentColor; stroke: none; }
+.cap-stable-skim-tool .cap-stable-sort-icon { transform: none; }
 .cap-stable-skim-address { display: flex; align-items: center; min-width: 0; height: 32px; box-sizing: border-box; padding: 2px 9px; border-radius: var(--cap-stable-radius-pill); color: var(--cap-stable-text-muted); background: var(--cap-stable-skim-address-surface, var(--cap-stable-surface-soft)); overflow: hidden; }
 .cap-stable-skim-address > button,
 .cap-stable-skim-address > span > button { min-width: 0; padding: 3px 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
