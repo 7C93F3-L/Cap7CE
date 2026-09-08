@@ -21,6 +21,7 @@ const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
 const commandSource = read("src/renderer/stable-ui/useStableSkimCommands.ts");
 const visibilitySource = read("src/renderer/stable-ui/useStableSkimVisibility.ts");
 const navigationHistorySource = read("src/renderer/controllers/useSkimNavigationHistory.ts");
+const formattingSource = read("src/renderer/formatting.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
 assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(active\)\} \/>/);
@@ -99,6 +100,9 @@ assert.match(panelStyles, /background: var\(--cap-stable-skim-address-surface, v
 assert.match(panelStyles, /\.cap-stable-skim-address \{[^}]*cursor: text;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > button,[\s\S]*?\.cap-stable-skim-address > span > button \{[^}]*cursor: default;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address input \{[^}]*cursor: text;/u);
+for (const marker of ["Error invoking remote method", ".replace(/^(?:Error:\\s*)+/iu", ".trim()"] ) {
+  assert.ok(formattingSource.includes(marker), `Display-message formatting is missing ${marker}.`);
+}
 assert.match(panelStyles, /\.cap-stable-skim-content \.empty-result-row \{ color: var\(--cap-stable-text-muted\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-tool \.cap-stable-sort-icon \{ transform: none; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
@@ -112,6 +116,7 @@ console.log(JSON.stringify({
   skimClosedUntilExplicitToggle: true,
   pathBreadcrumbSortAndScopeControlsVerified: true,
   addressBarTextCursorVerified: true,
+  skimIpcErrorEnvelopeRemoved: true,
   formalVirtualGridAndFileActionsReused: true,
   responsiveSkimGridTargetVerified: true,
   hiddenPanelKeyboardIsolationVerified: true,

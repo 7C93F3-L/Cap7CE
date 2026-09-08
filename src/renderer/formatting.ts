@@ -34,5 +34,9 @@ export const formatDisplayMessage = (message?: string) => {
     return "";
   }
 
-  return message.replace(/fetch\s*failed/gi, t("error.connectionFailed"));
+  return message
+    .replace(/^Error invoking remote method '[^']+':\s*/iu, "")
+    .replace(/^(?:Error:\s*)+/iu, "")
+    .replace(/fetch\s*failed/giu, t("error.connectionFailed"))
+    .trim();
 };
