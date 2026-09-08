@@ -12,6 +12,7 @@ const settingsAppSource = fs.readFileSync(path.join(root, "src", "renderer", "se
 const settingsUpdateControlSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowUpdateControl.tsx"), "utf8");
 const settingsUpdatePresentationSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "settingsWindowUpdatePresentation.ts"), "utf8");
 const settingsConfirmationSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsConfirmationDialog.tsx"), "utf8");
+const settingsConfirmationControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsConfirmation.ts"), "utf8");
 const settingsCategoryIconSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsCategoryIcon.tsx"), "utf8");
 const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
@@ -251,10 +252,12 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
   assert.match(settingsAppSource, /aria-current=\{activeCategory === category\.id \? "page" : undefined\}/u);
   assert.match(settingsAppSource, /<SettingsConfirmationDialog[\s\S]*?message=\{dialog\.message\}/u);
+  assert.match(settingsAppSource, /useSettingsConfirmation\(\)[\s\S]*?onCancel=\{cancelDialog\}[\s\S]*?confirmDialog\(\)/u);
   assert.match(settingsAppSource, /useInertElement<HTMLDivElement>\(dialog !== null\)[\s\S]*?ref=\{settingsShellRef\}/u);
   assert.doesNotMatch(settingsAppSource, /dragRegionRef/u);
-  assert.match(settingsAppSource, /document\.visibilityState === "hidden"[\s\S]*?setDialog\(null\)[\s\S]*?addEventListener\("visibilitychange", clearHiddenConfirmation\)/u);
-  assert.match(settingsAppSource, /if \(dialogBusy\) return;[\s\S]*?const pendingDialog = dialog;[\s\S]*?currentDialog === pendingDialog \? null : currentDialog/u);
+  assert.doesNotMatch(settingsAppSource, /clearHiddenConfirmation|setDialogBusy|pendingDialog/u);
+  assert.match(settingsConfirmationControllerSource, /document\.visibilityState === "hidden"[\s\S]*?setDialog\(null\)[\s\S]*?addEventListener\("visibilitychange", clearHiddenConfirmation\)/u);
+  assert.match(settingsConfirmationControllerSource, /if \(dialogBusy\) return;[\s\S]*?const pendingDialog = dialog;[\s\S]*?currentDialog === pendingDialog \? null : currentDialog/u);
   assert.match(settingsStyles, /\.cap-settings-window-drag-region \{[\s\S]*?app-region: drag;[\s\S]*?-webkit-app-region: drag;/u);
   assert.match(settingsConfirmationSource, /<DialogShell label=\{message\} stable>[\s\S]*?cap-dialog-warning-icon[\s\S]*?cap-dialog-actions/u);
   assert.match(dialogShellSource, /role="alertdialog"[\s\S]*?aria-label=\{label\}/u);
