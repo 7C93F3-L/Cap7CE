@@ -132,6 +132,7 @@ assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-danger \{ co
 assert.match(directoryFlyoutStyles, /\.cap-stable-sidebar-flyout button:disabled[^}]*opacity: \.45/u);
 assert.match(directoryFlyoutStyles, /\.cap-stable-sidebar-flyout-separator \{[^}]*height: 1px;/u);
 assert.match(sidebarFlyoutSource, /document\.querySelector<HTMLElement>\("\.cap-stable-ui"\) \?\? document\.body/u);
+assert.match(sidebarFlyoutSource, /placement === "below"[\s\S]*?anchor\.right - 184[\s\S]*?anchor\.bottom \+ 5/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-footer-icon\s*\{[^}]*opacity:/u);
 assert.match(stableUiIconSource, /icon-sort-asc\.svg\?raw/u);
 assert.match(stableUiIconSource, /sortDirection === "asc" \? sortAscIcon : sortDescIcon/u);

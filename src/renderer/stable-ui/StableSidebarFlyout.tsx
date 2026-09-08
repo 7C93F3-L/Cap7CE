@@ -1,12 +1,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-interface StableSidebarFlyoutProps { anchor: DOMRect; label: string; children: ReactNode; onClose: () => void; }
+interface StableSidebarFlyoutProps { anchor: DOMRect; label: string; children: ReactNode; onClose: () => void; placement?: "right" | "below"; }
 
-const StableSidebarFlyout = ({ anchor, label, children, onClose }: StableSidebarFlyoutProps) => {
+const StableSidebarFlyout = ({ anchor, label, children, onClose, placement = "right" }: StableSidebarFlyoutProps) => {
   const flyoutRef = useRef<HTMLDivElement | null>(null);
-  const left = Math.max(5, Math.min(anchor.right + 5, window.innerWidth - 195));
-  const top = Math.max(5, Math.min(anchor.top, window.innerHeight - 250)); const portalHost = document.querySelector<HTMLElement>(".cap-stable-ui") ?? document.body;
+  const left = placement === "below" ? Math.max(5, Math.min(anchor.right - 184, window.innerWidth - 189)) : Math.max(5, Math.min(anchor.right + 5, window.innerWidth - 195));
+  const top = placement === "below" ? Math.max(5, Math.min(anchor.bottom + 5, window.innerHeight - 250)) : Math.max(5, Math.min(anchor.top, window.innerHeight - 250)); const portalHost = document.querySelector<HTMLElement>(".cap-stable-ui") ?? document.body;
   useEffect(() => {
     const closeOnPointerDown = (event: PointerEvent) => { if (!flyoutRef.current?.contains(event.target as Node)) onClose(); };
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };

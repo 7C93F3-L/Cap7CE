@@ -15,7 +15,8 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
   useEffect(() => { if (!editingPath) setPathDraft(currentPath ?? ""); }, [currentPath, editingPath]);
   const openFlyout = (kind: "sort" | "scope", event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    setFlyout({ kind, anchor: event.currentTarget.getBoundingClientRect() });
+    const anchor = event.currentTarget.getBoundingClientRect();
+    setFlyout((current) => current?.kind === kind ? null : { kind, anchor });
   };
   const submitPath = (event: FormEvent) => {
     event.preventDefault();
@@ -42,14 +43,14 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
         {breadcrumbs.map((breadcrumb) => <span key={breadcrumb.path}><span aria-hidden="true">›</span><button type="button" title={breadcrumb.path} onClick={() => onOpenPath(breadcrumb.path)}>{breadcrumb.name}</button></span>)}
         <span className="cap-stable-skim-address-hit-area" aria-hidden="true" />
       </div>}
-      <button className="cap-stable-skim-tool" type="button" title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onClick={(event) => openFlyout("sort", event)}><StableUiIcon name="sort" sortDirection={sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /></button>
-      <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>
+      <button className="cap-stable-skim-tool" type="button" title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("sort", event)}><StableUiIcon name="sort" sortDirection={sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /></button>
+      <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>
     </div>
-    {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} onClose={() => setFlyout(null)}>
+    {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} placement="below" onClose={() => setFlyout(null)}>
       {(["modified_at", "file_name"] as SortField[]).map((field) => <button type="button" className={sortField === field ? "is-selected" : ""} key={field} onClick={() => { onSortChange(field, sortDirection); setFlyout(null); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")}</button>)}
       {(["desc", "asc"] as SortDirection[]).map((direction) => <button type="button" className={sortDirection === direction ? "is-selected" : ""} key={direction} onClick={() => { onSortChange(sortField, direction); setFlyout(null); }}>{direction === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}</button>)}
     </StableSidebarFlyout>}
-    {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("skim.display.parent")} onClose={() => setFlyout(null)}>
+    {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("skim.display.parent")} placement="below" onClose={() => setFlyout(null)}>
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={displayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { onDisplayModeChange(mode); setFlyout(null); }}>{t(`skim.display.${mode}` as TranslationKey)}</button>)}
     </StableSidebarFlyout>}
   </>;

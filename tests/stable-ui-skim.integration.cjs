@@ -54,6 +54,9 @@ for (const marker of ["StableSkimRequests", "toggleId", "openId", "currentPath",
 for (const marker of ["onClick={startPathEditing}", "event.target.closest(\"button\")", "onOpenRoot", "breadcrumb.path", "cap-stable-skim-address-hit-area", "sortField", "displayMode"]) {
   assert.ok(toolbarSource.includes(marker), `Stable Skim toolbar is missing ${marker}.`);
 }
+assert.match(toolbarSource, /setFlyout\(\(current\) => current\?\.kind === kind \? null : \{ kind, anchor \}\)/u);
+assert.equal((toolbarSource.match(/onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/g) ?? []).length, 2);
+assert.equal((toolbarSource.match(/placement="below"/g) ?? []).length, 2);
 for (const marker of ["active?: boolean", "if (!active) return undefined", "is-embedded", "window.matchMedia(\"(max-height: 359.98px)\")"]) {
   assert.ok(skimViewSource.includes(marker), `Stable Skim view is missing ${marker}.`);
 }
