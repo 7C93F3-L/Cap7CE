@@ -147,7 +147,7 @@ const KeywordEditorCard = ({
           visibility: position ? "visible" : "hidden"
         }}
         role="dialog"
-        aria-modal="false"
+        aria-modal="true"
         aria-label={t("context.editKeywords")}
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}

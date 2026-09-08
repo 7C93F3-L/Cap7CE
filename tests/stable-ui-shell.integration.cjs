@@ -24,6 +24,7 @@ const layoutSource = read(shellFiles[4]);
 const resizeSource = read(shellFiles[5]);
 const sizeMemorySource = read(shellFiles[6]);
 const keyboardRegionSource = read("src/renderer/stable-ui/useStableKeyboardRegion.ts");
+const inertElementSource = read("src/renderer/stable-ui/useInertElement.ts");
 const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
@@ -39,11 +40,14 @@ const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.t
 const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\}\s*\/>/);
+assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} interactionLocked=\{backgroundInteractionLocked\}\s*\/>/);
+assert.match(titlebarSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{titlebarRef\}/u);
+assert.match(mainShellSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{shellRef\}/u);
+assert.match(inertElementSource, /elementRef\.current\.inert = inert/u);
 assert.match(mainShellSource, /useStableKeyboardRegion\(skimOpen\)/u);
 assert.match(mainShellSource, /onPointerDownCapture=\{activateKeyboardRegion\} onFocusCapture=\{activateKeyboardRegion\}/u);
-assert.match(mainShellSource, /\{resultContent\(resultsKeyboardActive\)\}/u);
-assert.match(mainShellSource, /skim\.renderContent\(skimKeyboardActive\)/u);
+assert.match(mainShellSource, /\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
+assert.match(mainShellSource, /skim\.renderContent\(!interactionLocked && skimKeyboardActive\)/u);
 assert.match(keyboardRegionSource, /useEffect\(\(\) => setKeyboardRegion\(skimOpen \? "skim" : "results"\), \[skimOpen\]\)/u);
 assert.match(keyboardRegionSource, /\.cap-stable-skim-slot[\s\S]*?setKeyboardRegion\("skim"\)[\s\S]*?\.cap-stable-results-slot[\s\S]*?setKeyboardRegion\("results"\)/u);
 assert.match(titlebarSource, /\{searchInput\}/);
@@ -109,12 +113,16 @@ assert.match(confirmationPanelsSource, /<DialogShell[\s\S]*?warningGradientSvg/u
 assert.match(dialogShellStyles, /background: var\(--dialog-surface, var\(--cap-stable-flyout-surface\)\)/u);
 assert.match(dialogShellStyles, /backdrop-filter: blur\(18px\)/u);
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/u);
+assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer \{\s*pointer-events: none;/u);
+assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer > \.cap-dialog-surface \{\s*pointer-events: auto;/u);
 assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
 assert.match(appSource, /useCurrentPageRefreshShortcut\(\{[\s\S]*?refresh: refreshCurrentPage,[\s\S]*?t\("common\.refreshed"\)/u);
 assert.match(refreshShortcutSource, /event\.key !== "F5"[\s\S]*?requestRefresh\(\)/u);
 assert.match(refreshShortcutSource, /onRefreshCurrentPageRequested\(requestRefresh\)/u);
 assert.match(appSource, /showBackdrop=\{false\}/u);
 assert.match(keywordEditorSource, /showBackdrop && <KeywordEditorBackdrop/u);
+assert.match(appSource, /backgroundInteractionLocked=\{dialog !== null\}/u);
+assert.match(keywordEditorSource, /aria-modal="true"/u);
 
 assert.doesNotMatch(combinedShellSource, /window\.cap7ce|setShellState|shellState|\bmicro\b|\bmini\b|\bnormal\b/);
 assert.doesNotMatch(combinedShellSource, /stable-ui-canvas|prototypes[\\/]|C:\\Users\\|示例目录|Example/);

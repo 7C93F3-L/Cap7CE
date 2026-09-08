@@ -447,13 +447,31 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
   }, [gridMetrics.columnCount, images.length, resultGridLayoutItems, selectImageByIndex, selectedImageIndex]);
 
   useEffect(() => {
+    const handleSpaceReleaseGuardKeyDown = (event: KeyboardEvent) => {
+      if (!spaceReleaseGuardRef.current.shouldSuppressKeyDown(event.code)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    const handleSpaceReleaseGuardKeyUp = (event: KeyboardEvent) => {
+      if (!spaceReleaseGuardRef.current.consumeKeyUp(event.code)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      cancelPendingSpaceHold();
+    };
+
+    window.addEventListener("keydown", handleSpaceReleaseGuardKeyDown, true);
+    window.addEventListener("keyup", handleSpaceReleaseGuardKeyUp, true);
+    window.addEventListener("blur", cancelSpaceHold);
+    return () => {
+      window.removeEventListener("keydown", handleSpaceReleaseGuardKeyDown, true);
+      window.removeEventListener("keyup", handleSpaceReleaseGuardKeyUp, true);
+      window.removeEventListener("blur", cancelSpaceHold);
+    };
+  }, [cancelPendingSpaceHold, cancelSpaceHold]);
+
+  useEffect(() => {
     if (!active) return undefined;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (spaceReleaseGuardRef.current.shouldSuppressKeyDown(event.code)) {
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
 
       if (isEditableKeyboardTarget(event.target)) {
         return;
@@ -550,12 +568,6 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (spaceReleaseGuardRef.current.consumeKeyUp(event.code)) {
-        event.preventDefault();
-        event.stopPropagation();
-        cancelPendingSpaceHold();
-        return;
-      }
       if (event.code !== "Space" || !spaceHoldController.isActive()) return;
       event.preventDefault();
       spaceHoldController.release();
@@ -563,16 +575,11 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
 
     window.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("keyup", handleKeyUp, true);
-    window.addEventListener("blur", cancelSpaceHold);
     return () => {
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("keyup", handleKeyUp, true);
-      window.removeEventListener("blur", cancelSpaceHold);
-      // This effect also refreshes when result data or action handlers change.
-      // Preserve an active hold across that listener refresh; the dedicated
-      // unmount effect and explicit interaction changes own cancellation.
     };
-  }, [active, cancelPendingSpaceHold, cancelSpaceHold, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
+  }, [active, imageContextMenuOpen, images, keywordEditorOpen, moveSelection, onDeleteItems, onFeedback, onOpenImage, onShowInFolder, selectedImageIds, selectedImageIndex, spaceHoldController]);
   return (
     <main className="results-view cap-results-view" data-results-view="true">
       <VirtualImageGrid

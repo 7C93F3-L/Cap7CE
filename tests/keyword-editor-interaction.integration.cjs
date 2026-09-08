@@ -42,6 +42,17 @@ assert.doesNotMatch(
   /window\.removeEventListener\("blur", cancelSpaceHold\);\s*spaceHoldController\.cancel\(\);/,
   "refreshing result keyboard listeners must not cancel an in-progress Space hold"
 );
+assert.match(
+  resultsViewSource,
+  /handleSpaceReleaseGuardKeyDown[\s\S]*?shouldSuppressKeyDown\(event\.code\)[\s\S]*?stopImmediatePropagation\(\)/u,
+  "the Space release guard must suppress key repeat independently of result activity"
+);
+assert.match(
+  resultsViewSource,
+  /handleSpaceReleaseGuardKeyUp[\s\S]*?consumeKeyUp\(event\.code\)[\s\S]*?stopImmediatePropagation\(\)[\s\S]*?cancelPendingSpaceHold\(\)/u,
+  "the independent guard must consume the Space release that opened the editor"
+);
+assert.match(resultsViewSource, /window\.addEventListener\("blur", cancelSpaceHold\)[\s\S]*?\}, \[cancelPendingSpaceHold, cancelSpaceHold\]\)/u);
 assert.match(keywordEditorBackdropSource, /data-keyword-editor-backdrop="true"/);
 assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-dark\s*\{[^}]*rgb\(0 0 0 \/ 0\.22\)/s);
 assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-light\s*\{[^}]*rgb\(255 255 255 \/ 0\.28\)/s);

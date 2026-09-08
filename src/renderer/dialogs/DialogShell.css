@@ -29,6 +29,14 @@
   animation: cap7ce-dialog-content-enter 280ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
 }
 
+.cap-stable-ui > .cap-dialog-layer {
+  pointer-events: none;
+}
+
+.cap-stable-ui > .cap-dialog-layer > .cap-dialog-surface {
+  pointer-events: auto;
+}
+
 .cap-stable-ui .cap-dialog-content,
 .cap-dialog-layer.is-stable .cap-dialog-content {
   gap: 14px;

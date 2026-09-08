@@ -2391,6 +2391,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         resultStatus={resultStatusNode}
         resultContent={(active) => <ResultsView key={search.directoryId} {...createResultsViewProps(active)} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
+        backgroundInteractionLocked={dialog !== null}
         sidebar={{
           search, directories: directoryOptions,
           skimDisplayMode: skimDisplay.searchMode, aiSearchEnabled: aiSearchBeta.enabled, aiSearchBusy: aiSearchBeta.busy,
