@@ -2402,7 +2402,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),
           onMoveDirectory: (id, direction) => void moveDirectoryAndRefresh(id, direction, refreshDirectories),
-          onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
+          onOpenDirectory: (path) => void window.cap7ce?.files.open(path), onDeleteDirectory: (id) => { setDirectoryToDelete(id); setDialog("deleteDirectory"); },
           onOpenSettings: () => void window.cap7ce?.settingsWindow.open()
         }}
         skim={{

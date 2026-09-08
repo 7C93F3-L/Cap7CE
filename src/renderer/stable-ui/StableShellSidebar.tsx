@@ -12,7 +12,7 @@ import "./StableSidebar.css";
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
 type DirectoryTooltipState = { anchor: DOMRect; directoryId: string; all: boolean } | null;
 interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; }
-const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onSearchDisplayModeChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
+const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onSearchDisplayModeChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
   const [flyout, setFlyout] = useState<FlyoutState>(null);
   const [directoryTooltip, setDirectoryTooltip] = useState<DirectoryTooltipState>(null);
   const directoryTooltipTimerRef = useRef<number | null>(null);
@@ -102,7 +102,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("stableUi.sidebar.searchScope")} onClose={closeFlyout}>
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={skimDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
     </StableSidebarFlyout>}
-    {flyout?.kind === "directory" && <StableDirectoryFlyout anchor={flyout.anchor} directory={flyout.directory} directories={addedDirectories} onMove={onMoveDirectory} onEdit={onEditDirectory} onDelete={onDeleteDirectory} onClose={closeFlyout} />}
+    {flyout?.kind === "directory" && <StableDirectoryFlyout anchor={flyout.anchor} directory={flyout.directory} directories={addedDirectories} onMove={onMoveDirectory} onOpen={onOpenDirectory} onEdit={onEditDirectory} onDelete={onDeleteDirectory} onClose={closeFlyout} />}
     {directoryTooltip && flyout === null && (() => { const directory = directories.find((candidate) => candidate.id === directoryTooltip.directoryId); return directory ? <StableDirectoryTooltip anchor={directoryTooltip.anchor} directory={directory} all={directoryTooltip.all} directoryCount={addedDirectories.length} /> : null; })()}
   </aside>;
 };

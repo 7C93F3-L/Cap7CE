@@ -29,6 +29,7 @@ for (const marker of [
   "onAddDirectory",
   "onDirectoryNameChange",
   "onMoveDirectory",
+  "onOpenDirectory",
   "onDeleteDirectory",
   "onOpenSettings"
 ]) assert.ok(sidebarTypesSource.includes(marker), `Stable sidebar contract is missing ${marker}.`);
@@ -88,15 +89,19 @@ assert.match(sidebarSource, /onScroll=\{hideDirectoryTooltip\}/u);
 assert.match(sidebarSource, /directoryTooltip && flyout === null/u);
 assert.match(sidebarSource, /aria-label=\{accessibleLabel\}/u);
 assert.doesNotMatch(sidebarSource, /type="button" title=\{title\} aria-pressed/u);
-assert.match(directoryTooltipSource, /createPortal\([\s\S]*?role="tooltip"[\s\S]*?directory\.name[\s\S]*?search\.fileCount[\s\S]*?directory\.fileCount[\s\S]*?pathLeading[\s\S]*?pathTrailing/u);
+assert.match(directoryTooltipSource, /const left = anchor\.right \+ 5[\s\S]*?Math\.min\(184, window\.innerWidth - left - 5\)[\s\S]*?createPortal\([\s\S]*?role="tooltip"[\s\S]*?cap-stable-directory-tooltip-title[\s\S]*?directory\.name[\s\S]*?cap-stable-directory-tooltip-count[\s\S]*?search\.fileCount[\s\S]*?directory\.fileCount[\s\S]*?pathLeading[\s\S]*?pathTrailing/u);
 assert.match(directoryTooltipSource, /stableUi\.sidebar\.addedDirectories[\s\S]*?directoryCount/u);
 assert.match(sidebarSource, /directoryCount=\{addedDirectories\.length\}/u);
+assert.match(appSource, /onOpenDirectory: \(path\) => void window\.cap7ce\?\.files\.open\(path\)/u);
+assert.match(sidebarSource, /<StableDirectoryFlyout[^>]*onOpen=\{onOpenDirectory\}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-tooltip \{[^}]*background: var\(--cap-stable-flyout-surface\);[^}]*pointer-events: none;/u);
-assert.match(sidebarStyles, /\.cap-stable-directory-tooltip-heading \{[^}]*display: flex;[^}]*gap: 12px;[\s\S]*?\.cap-stable-directory-tooltip-path > span:first-child \{[^}]*text-overflow: ellipsis;/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout \{[^}]*width: 184px;[\s\S]*?\.cap-stable-directory-tooltip \{[^}]*max-width: 184px;/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-tooltip-title \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;[\s\S]*?\.cap-stable-directory-tooltip-count \{[^}]*text-overflow: ellipsis;[\s\S]*?\.cap-stable-directory-tooltip-path > span:first-child \{[^}]*text-overflow: ellipsis;/u);
 assert.match(directoryFlyoutSource, />\{t\("stableSettings\.rename"\)\}<\/button>/u);
 assert.match(directoryFlyoutSource, /disabled=\{directoryIndex <= 0\}[\s\S]*?onMove\(directory\.id, "up"\)[\s\S]*?stableUi\.sidebar\.moveDirectoryUp/u);
 assert.match(directoryFlyoutSource, /disabled=\{directoryIndex < 0 \|\| directoryIndex >= directories\.length - 1\}[\s\S]*?onMove\(directory\.id, "down"\)[\s\S]*?stableUi\.sidebar\.moveDirectoryDown/u);
 assert.match(directoryFlyoutSource, /cap-stable-sidebar-flyout-separator" role="separator"/u);
+assert.match(directoryFlyoutSource, /onOpen\(directory\.path\)[\s\S]*?t\("context\.showInFolder"\)[\s\S]*?t\("stableSettings\.rename"\)/u);
 assert.match(sidebarStyles, /\.cap-stable-settings-button:active \.cap-stable-settings-icon-active \{ display: block; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px; transform: translateY\(-2px\); \}/u);
 assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;[\s\S]*?\.cap-stable-directory-row \{ display: block; width: 32px; margin-inline: auto; border-radius: 9px; \}/u);
