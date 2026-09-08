@@ -16,8 +16,8 @@ import {
 const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }> => ([
   { id: "focusMainSearch", name: t("shortcut.focusMainSearch") },
   { id: "hideToLine", name: t("shortcut.hideToLine") },
-  { id: "toggleSkim", name: t("shortcut.toggleSkim") },
   { id: "restoreDefaultWindow", name: t("shortcut.restoreDefaultWindow") },
+  { id: "toggleSkim", name: t("shortcut.toggleSkim") },
   { id: "openSettings", name: t("shortcut.openSettings") },
   { id: "cycleDirectory", name: t("shortcut.cycleDirectory") }
 ] as Array<{ id: ShortcutActionId; name: string }>);

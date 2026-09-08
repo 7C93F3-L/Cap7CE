@@ -2,11 +2,11 @@ import type { ShortcutActionPreferences } from "../shared/types";
 
 export const defaultStableShortcutActions: ShortcutActionPreferences = {
   focusMainSearch: "Alt+`",
-  restoreDefaultWindow: "Alt+3",
   hideToLine: "Alt+1",
-  toggleSkim: "Alt+2",
-  cycleDirectory: "Alt+Q",
-  openSettings: "Alt+4"
+  restoreDefaultWindow: "Alt+2",
+  toggleSkim: "Alt+3",
+  openSettings: "Alt+4",
+  cycleDirectory: "Alt+Q"
 };
 
 export const normalizeStableShortcutActions = (

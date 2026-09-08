@@ -39,7 +39,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       settings: defaults.stableShortcutActions.openSettings,
       reset: defaults.stableShortcutActions.restoreDefaultWindow,
       directory: defaults.stableShortcutActions.cycleDirectory
-    }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+2", settings: "Alt+4", reset: "Alt+3", directory: "Alt+Q" });
+    }, { open: "Alt+`", hide: "Alt+1", skim: "Alt+3", settings: "Alt+4", reset: "Alt+2", directory: "Alt+Q" });
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal("rememberWindowLayout" in defaults, false);
     assert.equal("windowPresentationMode" in defaults, false);
