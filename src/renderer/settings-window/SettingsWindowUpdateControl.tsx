@@ -11,7 +11,7 @@ const statusFromPublicState = (state: AppUpdatePublicState): UpdateStatus => sta
 
 export const SettingsWindowUpdateControl = ({ requestConfirmation }: SettingsWindowUpdateControlProps) => {
   const [status, setStatus] = useState<UpdateStatus>("idle");
-  const [version, setVersion] = useState("1.0.1");
+  const [version, setVersion] = useState("1.0.2");
   const [failureReason, setFailureReason] = useState<AppUpdateDownloadErrorCode | null>(null);
   const [progress, setProgress] = useState<Pick<AppUpdateDownloadProgress, "receivedBytes" | "totalBytes" | "percent"> | null>(null);
 
