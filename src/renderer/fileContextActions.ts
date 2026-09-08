@@ -38,6 +38,19 @@ export const getFileContextShortcutAction = (event: FileContextShortcutEvent): F
   return null;
 };
 
+export const copyFilePathsWithFeedback = async (
+  paths: string[],
+  copiedMessage: string,
+  onFeedback: (message: string) => void
+) => {
+  try {
+    const copiedCount = await window.cap7ce?.files.copyPaths(paths);
+    if (copiedCount && copiedCount > 0) onFeedback(copiedMessage);
+  } catch {
+    // Keep the existing silent failure behavior; the IPC layer records failures.
+  }
+};
+
 type FileContextMenuActionInput = Omit<FileContextMenuAction, "shortcut">;
 
 interface BuildFileContextMenuGroupsOptions {

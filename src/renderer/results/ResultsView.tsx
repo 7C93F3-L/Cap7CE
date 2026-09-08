@@ -5,7 +5,7 @@ import { buildPreviewSidebarData } from "../preview/previewSidebarData";
 import { resolveFileContentPreview } from "../contentPreview";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { isPlainSpaceShortcut } from "../keywordEditorInteraction";
-import { getFileContextShortcutAction } from "../fileContextActions";
+import { copyFilePathsWithFeedback, getFileContextShortcutAction } from "../fileContextActions";
 import { VirtualImageGrid } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
 import { useResultsSpaceHold } from "./useResultsSpaceHold";
@@ -429,7 +429,7 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
       if (fileShortcutAction === "copyPaths" && selectedItems.length > 0) {
         event.preventDefault();
         event.stopPropagation();
-        if (!event.repeat) void window.cap7ce?.files.copyPaths(selectedItems.map((image) => image.filePath));
+        if (!event.repeat) void copyFilePathsWithFeedback(selectedItems.map((image) => image.filePath), t("clipboard.copied"), onFeedback);
         return;
       }
 

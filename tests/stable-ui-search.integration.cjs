@@ -46,7 +46,7 @@ assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSe
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);
-assert.match(appSource, /onCopyPaths=\{\(items\)[\s\S]*?showQuickCommandNotice\(t\("clipboard\.copied"\)\)/u);
+assert.match(appSource, /onCopyPaths=\{\(items\)[\s\S]*?copyFilePathsWithFeedback\(items\.map[\s\S]*?t\("clipboard\.copied"\), showQuickCommandNotice\)/u);
 assert.match(menuAdapterSource, /<ResponsiveResultsContextMenuLayer \{\.\.\.props\} \/>/);
 assert.doesNotMatch(menuAdapterSource, /LegacyResultsContextMenuLayer|state\.responsive/);
 assert.doesNotMatch(rootSource, /window\.cap7ce|from "\.\.\/App"/);

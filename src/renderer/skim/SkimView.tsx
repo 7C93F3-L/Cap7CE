@@ -22,7 +22,7 @@ import { resolveFileContentPreview } from "../contentPreview";
 import { getDirectoryPath, isWindowsRootPath, normalizeWindowsPathKey } from "../filePath";
 import { formatDisplayMessage } from "../formatting";
 import { getFormatIconSvgByName } from "../formatIcons";
-import { getFileContextShortcutAction } from "../fileContextActions";
+import { copyFilePathsWithFeedback, getFileContextShortcutAction } from "../fileContextActions";
 import { isEditableKeyboardTarget } from "../keyboardTarget";
 import { createPreviewRequestGuard } from "../previewRequestGuard";
 import {
@@ -505,7 +505,7 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
     if (action === "preview") void openPreview(contextMenu.item);
     else if (action === "open") openEntry(contextMenu.item);
     else if (action === "showInFolder") showEntryInFolder(contextMenu.item, contextMenu.items.length);
-    else if (action === "copyPaths") void window.cap7ce?.files.copyPaths(contextMenu.items.map((entry) => entry.path));
+    else if (action === "copyPaths") void copyFilePathsWithFeedback(contextMenu.items.map((entry) => entry.path), t("clipboard.copied"), onFeedback);
     else if (action === "addDirectory" && !isAddingDirectory) onAddEntries(contextMenu.items);
     else if (action === "addToSidebar" && contextMenuSidebarAction === "add") onAddSidebarFolders(contextMenuMissingSidebarFolderPaths);
     else if (action === "addToSidebar" && contextMenuSidebarAction === "remove") onRemoveSidebarFolders(contextMenuRemovableSidebarFolderPaths);
@@ -527,7 +527,7 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
       if (fileShortcutAction === "copyPaths" && actionableEntries.length > 0) {
         event.preventDefault();
         event.stopPropagation();
-        if (!event.repeat) void window.cap7ce?.files.copyPaths(actionableEntries.map((entry) => entry.path));
+        if (!event.repeat) void copyFilePathsWithFeedback(actionableEntries.map((entry) => entry.path), t("clipboard.copied"), onFeedback);
         return;
       }
 

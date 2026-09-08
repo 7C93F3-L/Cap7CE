@@ -12,6 +12,7 @@ import { useSkimReadController } from "./controllers/useSkimReadController";
 import { useSettingsDataSynchronization } from "./controllers/useSettingsDataSynchronization";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
+import { copyFilePathsWithFeedback } from "./fileContextActions";
 import { getFileContextMenuStyle } from "./fileContextMenuShared";
 import { getKeywordEditorExitDelay } from "./keywordEditorInteraction";
 import {
@@ -93,7 +94,6 @@ type SkimReturnContext = {
   view: Exclude<AppView, "skim">;
   shellState: ShellState;
 };
-
 const defaultSkimBrowseOptions: SkimBrowseOptions = {
   query: "",
   fileFormat: "all",
@@ -2354,7 +2354,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       menuStyle={contextMenuStyle}
       onOpen={(item) => void invokeFileAction("open", item)}
       onShowInFolder={(item) => void invokeFileAction("showInFolder", item)}
-      onCopyPaths={(items) => { setContextMenu(null); void window.cap7ce?.files.copyPaths(items.map((item) => item.filePath)).then((count) => { if (count > 0) showQuickCommandNotice(t("clipboard.copied")); }, () => undefined); }}
+      onCopyPaths={(items) => { setContextMenu(null); void copyFilePathsWithFeedback(items.map((item) => item.filePath), t("clipboard.copied"), showQuickCommandNotice); }}
       onEditKeywords={requestEditKeywords}
       onDelete={requestDeleteFiles}
     />

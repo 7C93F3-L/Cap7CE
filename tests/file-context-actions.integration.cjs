@@ -21,6 +21,7 @@ actionModule._compile(output, sourcePath);
 
 const {
   buildFileContextMenuGroups,
+  copyFilePathsWithFeedback,
   fileContextShortcutLabels,
   getFileContextShortcutAction
 } = actionModule.exports;
@@ -115,6 +116,7 @@ assert.match(responsiveMenuStyles, /\.responsive-file-context-menu:not\(\.is-com
 assert.match(responsiveMenuSource, /action\.shortcut[\s\S]*<kbd>/);
 assert.match(responsiveResultsMenuSource, /fileContextShortcutLabels\.primaryView[\s\S]*fileContextShortcutLabels\.delete/);
 assert.match(resultsSource, /getFileContextShortcutAction\s*\(event\)/);
+assert.match(resultsSource, /copyFilePathsWithFeedback\(selectedItems\.map[\s\S]*?t\("clipboard\.copied"\), onFeedback\)/u);
 assert.doesNotMatch(previewSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(previewSource, /getFileContextShortcutAction\s*\(event\)/);
 assert.match(previewSource, /createSpaceHoldController<PreviewWindowData>/);
@@ -130,8 +132,27 @@ assert.match(skimSource, /fileShortcutAction === "addToSidebar"/);
 assert.match(skimSource, /contextMenuSidebarAction === "remove"/);
 assert.match(skimSource, /onRemoveSidebarFolders\(removableSidebarFolderPaths\)/);
 assert.match(skimSource, /onRemoveSidebarFolders\(contextMenuRemovableSidebarFolderPaths\)/);
+assert.equal((skimSource.match(/copyFilePathsWithFeedback\(/g) ?? []).length, 2);
 assert.match(responsiveSkimMenuSource, /action\("addDirectory"/);
 assert.match(responsiveSkimMenuSource, /action\("addToSidebar"/);
 assert.match(responsiveSkimMenuSource, /fileContextShortcutLabels\.addDirectory[\s\S]*fileContextShortcutLabels\.addToSidebar/);
 
-console.log("file context actions integration passed");
+void (async () => {
+  const feedback = [];
+  global.window = {
+    cap7ce: {
+      files: {
+        copyPaths: async (paths) => paths.length
+      }
+    }
+  };
+  await copyFilePathsWithFeedback(["C:\\one", "C:\\two"], "Copied", (message) => feedback.push(message));
+  assert.deepEqual(feedback, ["Copied"]);
+  global.window.cap7ce.files.copyPaths = async () => 0;
+  await copyFilePathsWithFeedback(["C:\\one"], "Copied", (message) => feedback.push(message));
+  assert.deepEqual(feedback, ["Copied"]);
+  console.log("file context actions integration passed");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
