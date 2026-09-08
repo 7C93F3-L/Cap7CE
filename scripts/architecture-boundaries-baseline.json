@@ -35,6 +35,7 @@
     "src/renderer/stable-ui/StableShellSidebar.tsx": 125,
     "src/renderer/stable-ui/StableSidebar.css": 100,
     "src/renderer/stable-ui/StableDirectoryFlyout.tsx": 40,
+    "src/renderer/stable-ui/StableDirectoryTooltip.tsx": 30,
     "src/renderer/stable-ui/StableDirectoryFlyout.css": 20,
     "src/renderer/stable-ui/StableSidebarFlyout.tsx": 40,
     "src/renderer/stable-ui/StableSidebarIcons.tsx": 30,

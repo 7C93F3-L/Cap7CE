@@ -49,6 +49,14 @@
 .cap-stable-sidebar-flyout button:hover { background: var(--cap-stable-navigation-state); }
 .cap-stable-sidebar-flyout button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); }
 .cap-stable-sidebar-flyout button.is-danger { color: inherit; }
+.cap-stable-directory-tooltip { position: fixed; z-index: 49; display: grid; width: max-content; max-width: min(300px, calc(100vw - 10px)); box-sizing: border-box; gap: 2px; padding: 8px 10px; border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 12px; color: var(--cap-stable-text); background: var(--cap-stable-flyout-surface); box-shadow: 0 10px 24px rgb(0 0 0 / 16%); pointer-events: none; font: inherit; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.cap-stable-directory-tooltip-heading { display: flex; align-items: baseline; min-width: 0; gap: 12px; }
+.cap-stable-directory-tooltip-heading strong { min-width: 0; overflow: hidden; font-size: var(--cap-stable-body-font-size); text-overflow: ellipsis; white-space: nowrap; }
+.cap-stable-directory-tooltip-heading small { flex: 0 0 auto; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-directory-tooltip-path { display: flex; min-width: 0; overflow: hidden; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); white-space: nowrap; }
+.cap-stable-directory-tooltip-summary { color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-directory-tooltip-path > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.cap-stable-directory-tooltip-path > span:last-child:not(:first-child) { flex: 0 0 auto; }
 
 @container (max-width: 95px) {
   .cap-stable-sidebar { padding-inline: 4px; }
