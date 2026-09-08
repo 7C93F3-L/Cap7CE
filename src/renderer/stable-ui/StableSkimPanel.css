@@ -6,14 +6,14 @@
 .cap-stable-skim-tool:disabled { opacity: .3; }
 .cap-stable-skim-tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; } .cap-stable-skim-tool .cap-stable-sidebar-icon svg { width: 100%; height: 100%; fill: currentColor; stroke: none; }
 .cap-stable-skim-tool .cap-stable-sort-icon { transform: none; }
-.cap-stable-skim-address { display: flex; align-items: center; min-width: 0; height: 32px; box-sizing: border-box; padding: 2px 9px; border-radius: var(--cap-stable-radius-pill); color: var(--cap-stable-text-muted); background: var(--cap-stable-skim-address-surface, var(--cap-stable-surface-soft)); overflow: hidden; }
+.cap-stable-skim-address { display: flex; align-items: center; min-width: 0; height: 32px; box-sizing: border-box; padding: 2px 9px; border-radius: var(--cap-stable-radius-pill); color: var(--cap-stable-text-muted); background: var(--cap-stable-skim-address-surface, var(--cap-stable-surface-soft)); cursor: text; overflow: hidden; }
 .cap-stable-skim-address > button,
-.cap-stable-skim-address > span > button { min-width: 0; padding: 3px 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap-stable-skim-address > span > button { min-width: 0; padding: 3px 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; cursor: default; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-skim-address > button:hover,
 .cap-stable-skim-address > span > button:hover { color: var(--cap-stable-text); background: var(--cap-stable-hover); } .cap-stable-skim-address > button:focus-visible, .cap-stable-skim-address > span > button:focus-visible, .cap-stable-skim-address input:focus, .cap-stable-skim-address input:focus-visible { outline: none; outline-offset: 0; box-shadow: none; }
 .cap-stable-skim-address > span { display: flex; min-width: 0; align-items: center; }
 .cap-stable-skim-address > span > span { flex: 0 0 auto; opacity: .55; } .cap-stable-skim-address > .cap-stable-skim-address-hit-area { min-width: 24px; height: 100%; flex: 0 0 24px; }
-.cap-stable-skim-address input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--cap-stable-text); background: transparent; font: inherit; }
+.cap-stable-skim-address input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--cap-stable-text); background: transparent; cursor: text; font: inherit; }
 .cap-stable-skim-status { padding: 0 10px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); line-height: var(--cap-ui-line-control); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-skim-content { min-width: 0; min-height: 0; overflow: hidden; }
 .cap-stable-skim-content > .cap-skim-view.is-embedded { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; padding: var(--cap-stable-grid-page-padding); overflow: hidden; } .cap-stable-skim-content .empty-result-row { color: var(--cap-stable-text-muted); }

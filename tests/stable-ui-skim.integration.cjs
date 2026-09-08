@@ -96,6 +96,9 @@ assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\.selected\
 assert.match(panelStyles, /\.cap-stable-skim-content \.cap-skim-entry\s*\{[^}]*background: var\(--cap-stable-grid-surface\);/u);
 assert.match(panelStyles, /--cap-stable-selected-surface: light-dark\(rgb\(255 255 255 \/ 68%\), rgb\(26 26 26 \/ 68%\)\);/u);
 assert.match(panelStyles, /background: var\(--cap-stable-skim-address-surface, var\(--cap-stable-surface-soft\)\);/u);
+assert.match(panelStyles, /\.cap-stable-skim-address \{[^}]*cursor: text;/u);
+assert.match(panelStyles, /\.cap-stable-skim-address > button,[\s\S]*?\.cap-stable-skim-address > span > button \{[^}]*cursor: default;/u);
+assert.match(panelStyles, /\.cap-stable-skim-address input \{[^}]*cursor: text;/u);
 assert.match(panelStyles, /\.cap-stable-skim-content \.empty-result-row \{ color: var\(--cap-stable-text-muted\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-tool \.cap-stable-sort-icon \{ transform: none; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
@@ -108,6 +111,7 @@ console.log(JSON.stringify({
   searchAndSkimRemainOrthogonal: true,
   skimClosedUntilExplicitToggle: true,
   pathBreadcrumbSortAndScopeControlsVerified: true,
+  addressBarTextCursorVerified: true,
   formalVirtualGridAndFileActionsReused: true,
   responsiveSkimGridTargetVerified: true,
   hiddenPanelKeyboardIsolationVerified: true,
