@@ -40,6 +40,27 @@
   background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
 }
 
+.cap-settings-window-foundation .cap-settings-quick-action-controls {
+  display: grid;
+  grid-template-columns: 112px 28px;
+  gap: 6px;
+}
+
+.cap-settings-window-foundation .cap-settings-shortcut-pill[data-shortcut-unassigned="true"] {
+  color: var(--stable-settings-secondary);
+}
+
+.cap-settings-window-foundation .cap-settings-shortcut-clear-button {
+  width: 28px;
+  min-width: 28px;
+  padding-inline: 0;
+}
+
+.cap-settings-window-foundation .cap-settings-shortcut-clear-icon {
+  width: 14px;
+  height: 14px;
+}
+
 @media (max-width: 700px) {
   .cap-stable-settings-card-with-body {
     grid-template-columns: minmax(0, 1fr);

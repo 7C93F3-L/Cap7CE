@@ -4,6 +4,7 @@
 .keyword-tag-editor-tag > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .keyword-tag-editor-tag > button { display: grid; place-items: center; width: 18px; height: 18px; flex: 0 0 18px; padding: 0; border: 0; border-radius: 50%; color: inherit; background: transparent; font: inherit; line-height: 1; }
 .keyword-tag-editor-tag > button:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.keyword-tag-editor-remove-icon { width: 12px; height: 12px; }
 .keyword-tag-editor-entry { display: flex; min-width: 0; }
 .keyword-tag-editor-entry input { width: 100%; min-width: 0; height: 30px; box-sizing: border-box; padding: 0 11px; border: 0; border-radius: 999px; outline: 0; color: inherit; background: var(--keyword-input-surface, rgb(255 255 255 / 52%)); font: inherit; font-size: var(--cap-ui-font-secondary); }
 .keyword-tag-editor-entry input:focus-visible { outline: 0; }

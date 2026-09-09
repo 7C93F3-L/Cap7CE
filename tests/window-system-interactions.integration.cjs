@@ -20,6 +20,8 @@ assert.doesNotMatch(mainSource, /displayBalloon|balloon-click/u);
 assert.match(mainSource, /app\.on\("second-instance", \(\) => \{[\s\S]*?pendingSecondInstanceActivation = true;[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /mainWindow\.once\("ready-to-show", \(\) => \{[\s\S]*?if \(pendingSecondInstanceActivation\) \{[\s\S]*?void activateShellModeShortcut\("normal"\);/u);
 assert.match(mainSource, /\["hideToLine", shortcutActions\.hideToLine,[\s\S]*?activateShellModeShortcut\("standby"\)[\s\S]*?\["restoreDefaultWindow", shortcutActions\.restoreDefaultWindow,[\s\S]*?activateShellModeShortcut\("normal", true\)[\s\S]*?\["toggleWindowMode", shortcutActions\.toggleWindowMode,[\s\S]*?toggleEdgeCollapseWindowMode\(\)[\s\S]*?\["toggleSkim", shortcutActions\.toggleSkim,[\s\S]*?activateShellModeShortcut\("skim"\)[\s\S]*?\["openSettings", shortcutActions\.openSettings,[\s\S]*?activateShellModeShortcut\("settings"\)/u);
+assert.match(mainSource, /if \(shortcutActions\.focusMainSearch && !registerMainSearchShortcut\(shortcutActions\.focusMainSearch\)\)[\s\S]*?for \(const \[id, shortcut\] of shortcutEntries\) \{\s*if \(!shortcut\) continue;/u);
+assert.match(mainSource, /const shortcutAvailable = Boolean\(configuredShortcut\) && preferences\.quickActionGlobalEnabled/u);
 assert.match(mainSource, /const toggleEdgeCollapseWindowMode = async \(\) => broadcastSettingsData\("preferences:changed", await setEdgeCollapseEnabled\(!edgeCollapseEnabled\)\);/u);
 assert.doesNotMatch(mainSource, /mode: "micro"|mode: "mini"/u);
 

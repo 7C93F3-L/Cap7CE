@@ -12,6 +12,8 @@ import {
   getShortcutFromKeyboardEvent,
   normalizeStableShortcutActions
 } from "../shortcutActions";
+import clearIcon from "../assets/icons/icon-stable-clear-search.svg?raw";
+import SvgIcon from "../components/SvgIcon";
 
 const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }> => ([
   { id: "focusMainSearch", name: t("shortcut.focusMainSearch") },
@@ -97,6 +99,11 @@ export const QuickActionSettingsRows = ({
     setDraftUnavailableActionIds(result.unavailableActionIds);
   };
 
+  const clearShortcutAction = (shortcutActionId: ShortcutActionId) => {
+    if (!shortcutActionDrafts[shortcutActionId]) return;
+    void updateShortcutAction(shortcutActionId, "");
+  };
+
   const resetShortcutActions = async () => {
     if (capturingShortcutActionId) {
       await finishShortcutCapture();
@@ -160,7 +167,8 @@ export const QuickActionSettingsRows = ({
           <div className="cap-settings-quick-actions-list">
             {getShortcutActionItems().map((item) => {
               const isCapturing = capturingShortcutActionId === item.id;
-              const hasInternalConflict = getShortcutActionItems().some((otherItem) => (
+              const shortcut = shortcutActionDrafts[item.id];
+              const hasInternalConflict = Boolean(shortcut) && getShortcutActionItems().some((otherItem) => (
                 otherItem.id !== item.id && shortcutActionDrafts[otherItem.id] === shortcutActionDrafts[item.id]
               ));
               const isUnavailable = hasInternalConflict || unavailableShortcutActionIds.includes(item.id) || draftUnavailableActionIds.includes(item.id);
@@ -178,13 +186,21 @@ export const QuickActionSettingsRows = ({
                       className="cap-settings-pill cap-settings-shortcut-pill"
                       type="button"
                       data-shortcut-capturing={isCapturing}
+                      data-shortcut-unassigned={!shortcut}
                       title={isCapturing ? t("settings.cancelShortcutCaptureHint") : t("settings.editShortcutActionHint")}
                       onClick={() => {
                         if (!isCapturing) void startShortcutCapture(item.id);
                       }}
                     >
-                      {isCapturing ? t("settings.captureShortcut") : formatShortcutLabel(shortcutActionDrafts[item.id])}
+                      {isCapturing ? t("settings.captureShortcut") : shortcut ? formatShortcutLabel(shortcut) : t("settings.shortcutUnassigned")}
                     </button>
+                    {shortcut && <button
+                      className="cap-settings-pill cap-settings-shortcut-clear-button"
+                      type="button"
+                      disabled={capturingShortcutActionId !== null}
+                      aria-label={`${t("settings.clearShortcutAction")}: ${item.name}`}
+                      onClick={() => clearShortcutAction(item.id)}
+                    ><SvgIcon svg={clearIcon} className="cap-svg-icon cap-settings-shortcut-clear-icon" /></button>}
                   </div>
                 </div>
               );

@@ -65,7 +65,10 @@ assert.match(keywordEditorSource, /parseKeywordText\(inputValue\)[\s\S]*?normali
 assert.match(keywordEditorSource, /clearRequestVersionRef[\s\S]*?setKeywords\(\[\]\)[\s\S]*?setInputValue\(""\)/u);
 assert.match(keywordEditorSource, /onCompositionStart[\s\S]*?onCompositionEnd[\s\S]*?nativeEvent\.isComposing/u);
 assert.match(keywordEditorSource, /event\.key !== "Escape"[\s\S]*?event\.stopPropagation\(\)[\s\S]*?onCancel\(\)/u);
+assert.match(keywordEditorSource, /icon-stable-clear-search\.svg\?raw[\s\S]*?<SvgIcon[^>]*keyword-tag-editor-remove-icon/u);
+assert.doesNotMatch(keywordEditorSource, />×</u);
 assert.match(keywordEditorStyles, /keyword-tag-editor-tag[\s\S]*?border-radius: 999px/u);
+assert.match(keywordEditorStyles, /keyword-tag-editor-remove-icon \{ width: 12px; height: 12px; \}/u);
 assert.match(keywordEditorStyles, /keyword-tag-editor-entry input:focus-visible \{ outline: 0; \}/u);
 assert.match(keywordEditorStyles, /keyword-tag-editor-actions button:not\(:disabled\):hover \{ color: var\(--preview-action-hover-text\); background: linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}/u);
 assert.match(sidebarSource, /data-preview-navigation-suppressed="true"/u);

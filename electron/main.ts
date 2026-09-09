@@ -937,7 +937,7 @@ const unregisterConfiguredGlobalShortcuts = () => {
 const registerConfiguredGlobalShortcuts = (shortcutActions: ShortcutActionPreferences) => {
   unregisterConfiguredGlobalShortcuts();
   const unavailableActionIds = registerShellModeShortcuts(shortcutActions);
-  if (!registerMainSearchShortcut(shortcutActions.focusMainSearch)) {
+  if (shortcutActions.focusMainSearch && !registerMainSearchShortcut(shortcutActions.focusMainSearch)) {
     unavailableActionIds.add("focusMainSearch");
   }
   unavailableGlobalShortcutActionIds = unavailableActionIds;
@@ -957,10 +957,7 @@ const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) 
   const registeredShortcuts: string[] = [];
 
   for (const [id, shortcut] of shortcutEntries) {
-    if (!shortcut) {
-      unavailableActionIds.add(id);
-      continue;
-    }
+    if (!shortcut) continue;
     try {
       if (globalShortcut.register(shortcut, () => undefined)) {
         registeredShortcuts.push(shortcut);
@@ -1042,7 +1039,7 @@ const showBackgroundRunNotificationOnce = async (
 ) => {
   if (!preferences.systemNotificationsEnabled || preferences.backgroundRunNotificationShown) return;
   const configuredShortcut = getActiveShortcutActions(preferences).focusMainSearch;
-  const shortcutAvailable = preferences.quickActionGlobalEnabled
+  const shortcutAvailable = Boolean(configuredShortcut) && preferences.quickActionGlobalEnabled
     && !unavailableGlobalShortcutActionIds.has("focusMainSearch");
   const content = shortcutAvailable
     ? t("notification.backgroundRunContent", { shortcut: configuredShortcut })

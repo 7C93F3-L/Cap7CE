@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "../../../electron/keywordRules";
 import { t } from "../../../electron/localization";
+import clearIcon from "../assets/icons/icon-stable-clear-search.svg?raw";
+import SvgIcon from "../components/SvgIcon";
 import "./KeywordTagEditor.css";
 
 interface KeywordTagEditorProps {
@@ -60,7 +62,7 @@ const KeywordTagEditor = ({ initialKeywords, clearRequestVersion, isSaving, erro
             disabled={isSaving}
             aria-label={t("preview.sidebar.removeKeyword", { keyword })}
             onClick={() => setKeywords((current) => current.filter((candidate) => candidate !== keyword))}
-          >×</button>
+          ><SvgIcon svg={clearIcon} className="cap-svg-icon keyword-tag-editor-remove-icon" /></button>
         </span>)}
       </div>}
       <div className="keyword-tag-editor-entry">

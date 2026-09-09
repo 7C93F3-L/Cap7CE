@@ -210,9 +210,13 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
   assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.restoreDefaultWindow[\s\S]*?shortcut\.toggleWindowMode[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.openSettings[\s\S]*?shortcut\.cycleDirectory/u);
   assert.match(shortcutActionsSource, /focusMainSearch: "Alt\+`"[\s\S]*?hideToLine: "Alt\+1"[\s\S]*?restoreDefaultWindow: "Alt\+2"[\s\S]*?toggleWindowMode: "Alt\+3"[\s\S]*?toggleSkim: "Alt\+4"[\s\S]*?openSettings: "Alt\+5"/u);
+  assert.match(shortcutActionsSource, /focusMainSearch: shortcutActions\?\.focusMainSearch \?\? defaultStableShortcutActions\.focusMainSearch[\s\S]*?openSettings: shortcutActions\?\.openSettings \?\? defaultStableShortcutActions\.openSettings/u);
   assert.match(quickActionSource, /handleShortcutCaptureOutsideClick[\s\S]*?data-shortcut-capturing="true"[\s\S]*?settings\.shortcutCaptureCancelHint/u);
+  assert.match(quickActionSource, /clearShortcutAction[\s\S]*?updateShortcutAction\(shortcutActionId, ""\)[\s\S]*?Boolean\(shortcut\)[\s\S]*?settings\.shortcutUnassigned[\s\S]*?cap-settings-shortcut-clear-button[\s\S]*?settings\.clearShortcutAction/u);
   assert.doesNotMatch(quickActionSource, /isCapturing && \([\s\S]*?<button[^>]*common\.cancel/u);
-  assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1[\s\S]*?data-shortcut-capturing="true"[\s\S]*?linear-gradient/u);
+  assert.match(quickActionSource, /icon-stable-clear-search\.svg\?raw[\s\S]*?<SvgIcon[^>]*cap-settings-shortcut-clear-icon/u);
+  assert.doesNotMatch(quickActionSource, />×</u);
+  assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1[\s\S]*?data-shortcut-capturing="true"[\s\S]*?linear-gradient[\s\S]*?grid-template-columns: 112px 28px[\s\S]*?cap-settings-shortcut-clear-button[\s\S]*?cap-settings-shortcut-clear-icon[\s\S]*?width: 14px;[\s\S]*?height: 14px;/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-command-body[\s\S]*?<QuickCommandSettingsRows stableUi/u);
   assert.doesNotMatch(settingsAppSource, /quickCommandsExpanded|setQuickCommandsExpanded/u);
   assert.match(quickCommandSource, /if \(!stableUi && !expanded\)[\s\S]*?if \(stableUi\)[\s\S]*?cap-settings-quick-commands-panel-stable/u);

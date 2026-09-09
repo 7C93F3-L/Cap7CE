@@ -514,6 +514,8 @@ export const zhCN = {
   "settings.configure": "配置",
   "settings.shortcutUnavailable": "当前设置不可用，需重新设置",
   "settings.captureShortcut": "按下组合键…",
+  "settings.shortcutUnassigned": "未设置",
+  "settings.clearShortcutAction": "清除快捷键",
   "settings.shortcutCaptureCancelHint": "Esc 取消",
   "settings.quickCommands": "快捷指令",
   "settings.closeQuickCommands": "关闭查看",

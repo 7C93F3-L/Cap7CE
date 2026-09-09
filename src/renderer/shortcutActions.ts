@@ -13,13 +13,13 @@ export const defaultStableShortcutActions: ShortcutActionPreferences = {
 export const normalizeStableShortcutActions = (
   shortcutActions?: Partial<ShortcutActionPreferences>
 ): ShortcutActionPreferences => ({
-  focusMainSearch: shortcutActions?.focusMainSearch || defaultStableShortcutActions.focusMainSearch,
-  restoreDefaultWindow: shortcutActions?.restoreDefaultWindow || defaultStableShortcutActions.restoreDefaultWindow,
-  hideToLine: shortcutActions?.hideToLine || defaultStableShortcutActions.hideToLine,
-  toggleWindowMode: shortcutActions?.toggleWindowMode || defaultStableShortcutActions.toggleWindowMode,
-  toggleSkim: shortcutActions?.toggleSkim || defaultStableShortcutActions.toggleSkim,
-  cycleDirectory: shortcutActions?.cycleDirectory || defaultStableShortcutActions.cycleDirectory,
-  openSettings: shortcutActions?.openSettings || defaultStableShortcutActions.openSettings
+  focusMainSearch: shortcutActions?.focusMainSearch ?? defaultStableShortcutActions.focusMainSearch,
+  restoreDefaultWindow: shortcutActions?.restoreDefaultWindow ?? defaultStableShortcutActions.restoreDefaultWindow,
+  hideToLine: shortcutActions?.hideToLine ?? defaultStableShortcutActions.hideToLine,
+  toggleWindowMode: shortcutActions?.toggleWindowMode ?? defaultStableShortcutActions.toggleWindowMode,
+  toggleSkim: shortcutActions?.toggleSkim ?? defaultStableShortcutActions.toggleSkim,
+  cycleDirectory: shortcutActions?.cycleDirectory ?? defaultStableShortcutActions.cycleDirectory,
+  openSettings: shortcutActions?.openSettings ?? defaultStableShortcutActions.openSettings
 });
 
 export const formatShortcutLabel = (shortcut: string) => shortcut

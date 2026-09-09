@@ -189,9 +189,11 @@ const normalizeShortcutActions = (
     const shortcutValue = parsedShortcuts[shortcutId];
     return {
       ...currentShortcuts,
-      [shortcutId]: isShortcutValue(shortcutValue) && !isReservedEscapeShortcut(shortcutValue)
-        ? shortcutValue
-        : defaults[shortcutId]
+      [shortcutId]: typeof shortcutValue === "string" && shortcutValue.trim().length === 0
+        ? ""
+        : isShortcutValue(shortcutValue) && !isReservedEscapeShortcut(shortcutValue)
+          ? shortcutValue
+          : defaults[shortcutId]
     };
   }, { ...defaults });
 };

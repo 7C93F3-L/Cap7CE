@@ -514,6 +514,8 @@ export const enUS = defineLocale({
   "settings.configure": "Configure",
   "settings.shortcutUnavailable": "This shortcut is unavailable. Choose another.",
   "settings.captureShortcut": "Press a shortcut…",
+  "settings.shortcutUnassigned": "Not set",
+  "settings.clearShortcutAction": "Clear shortcut",
   "settings.shortcutCaptureCancelHint": "Esc to cancel",
   "settings.quickCommands": "Quick Commands",
   "settings.closeQuickCommands": "Close List",

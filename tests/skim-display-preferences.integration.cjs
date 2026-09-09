@@ -79,7 +79,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       },
       skimSidebarFolders: [sidebarFolder, sidebarFolder.toUpperCase(), app.getPath("desktop"), app.getPath("downloads"), path.parse(sidebarFolder).root, "", 42],
       stableShortcutActions: {
-        focusMainSearch: "Alt+`",
+        focusMainSearch: "",
         restoreDefaultWindow: "Alt+3",
         hideToLine: "Alt+4",
         toggleWindowMode: "Alt+7",
@@ -92,7 +92,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(normalized.skimDisplay.mode, "all");
     assert.equal(normalized.skimDisplay.searchMode, "skim");
     assert.deepEqual(normalized.stableShortcutActions, {
-      focusMainSearch: "Alt+`",
+      focusMainSearch: "",
       restoreDefaultWindow: "Alt+3",
       hideToLine: "Alt+4",
       toggleWindowMode: "Alt+7",
@@ -107,9 +107,9 @@ app.setPath("userData", path.join(testRoot, "user-data"));
 
     const updatedStableShortcuts = await updateStableShortcutActionsPreference({
       ...normalized.stableShortcutActions,
-      cycleDirectory: "Alt+E"
+      cycleDirectory: ""
     });
-    assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "Alt+E");
+    assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "");
 
     const updated = await updateSkimDisplayPreference({
       mode: "custom",
@@ -146,11 +146,13 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     assert.equal(reloaded.skimSystemLocationsCollapsed, true);
     assert.equal(reloaded.edgeCollapseEnabled, true);
     assert.equal(reloaded.uiFontSize, 16);
+    assert.equal(reloaded.stableShortcutActions.focusMainSearch, "");
+    assert.equal(reloaded.stableShortcutActions.cycleDirectory, "");
 
     console.log(JSON.stringify({
       defaultSkimModeSeeded: true,
       skimPreferencesNormalized: true,
-      directoryCycleShortcutPersisted: true,
+      disabledShortcutsPersisted: true,
       customExtensionsNormalized: true,
       skimModePersisted: true,
       independentSearchModePersisted: true,
