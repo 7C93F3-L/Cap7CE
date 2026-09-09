@@ -20,10 +20,14 @@ assert.doesNotMatch(mainSource, /if \(mode === "standby"\) \{\s*applyStandaloneL
 assert.match(mainSource, /ipcMain\.handle\("line:activateMain"[\s\S]*?return activateMainSearchShortcut\(\);/u);
 assert.match(lineAppSource, /window\.cap7ce\?\.line\.activateMain\(\)/u);
 assert.match(mainSource, /appTray\.on\("click", \(\) => void activateShellModeShortcut\("normal"\)\)/u);
-assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => discardQueuedInteractiveThumbnailRenders\(\)\)/u);
+assert.match(mainSource, /mainWindow\.on\("blur", syncThumbnailOptimizationActivity\)/u);
+assert.doesNotMatch(mainSource, /mainWindow\.on\("blur", \(\) => \{[\s\S]*?cancelActiveSearchTasks\(\)/u);
+assert.match(mainSource, /mainWindow\.on\("minimize", \(\) => \{\s*syncThumbnailOptimizationActivity\(\);\s*cancelActiveSearchTasks\(\);\s*discardQueuedInteractiveThumbnailRenders\(\);\s*\}\)/u);
+assert.match(mainSource, /mainWindow\.on\("restore", syncThumbnailOptimizationActivity\)/u);
 assert.match(mainSource, /mainWindow\.on\("hide", \(\) => \{[\s\S]*?discardQueuedInteractiveThumbnailRenders\(\);\s*\}\);/u);
 assert.doesNotMatch(mainSource, /appTray\.on\("double-click"|openNormalFromTray/u);
 assert.match(mainSource, /const contentViewActive = Boolean\([\s\S]*?rendererContentViewActive[\s\S]*?setSkimShellThumbnailActivity\(contentViewActive\)/u);
+assert.match(mainSource, /const searchScanActive = Boolean\([\s\S]*?mainWindow\.isVisible\(\)[\s\S]*?!mainWindow\.isMinimized\(\)[\s\S]*?activeShellState === "normal"[\s\S]*?searchScanSnapshotService\.setActive\(searchScanActive\)/u);
 assert.match(mainSource, /const isVisibleAndFocused = \(window: BrowserWindow \| null\)[\s\S]*?window\.isVisible\(\) && window\.isFocused\(\)[\s\S]*?isVisibleAndFocused\(mainWindow\)[\s\S]*?settingsWindowController\?\.isVisibleAndFocused\(\)[\s\S]*?isVisibleAndFocused\(previewWindow\)[\s\S]*?setThumbnailOptimizationForegroundActive\(foregroundWindowActive\)/u);
 assert.match(mainSource, /if \(preferences\.autoCacheOptimizationEnabled\) \{\s*scheduleDirectoryThumbnailOptimization\(await listDirectories\(\)\);\s*\}/u);
 
@@ -72,6 +76,8 @@ console.log(JSON.stringify({
   standbyShortcutUsesRendererEntry: true,
   trayClickUsesNormalShortcutEntry: true,
   minimizedAndHiddenThumbnailQueuesDiscarded: true,
+  visibleUnfocusedSearchScanPreserved: true,
+  hiddenAndMinimizedSearchCancellationPreserved: true,
   contentViewAndForegroundCacheActivitySeparated: true,
   startupCacheOptimizationDiscoveryRestored: true,
   fourDirectionPlacementForwarded: true,

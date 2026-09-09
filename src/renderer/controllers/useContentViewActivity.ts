@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-const isDocumentActive = () => document.visibilityState === "visible" && document.hasFocus();
+const isDocumentVisible = () => document.visibilityState === "visible";
+const isDocumentActive = () => isDocumentVisible() && document.hasFocus();
 
 export const useContentViewActivity = (cancelSearch: () => void) => {
   const [activityConfirmed, setActivityConfirmed] = useState(false);
@@ -14,7 +15,7 @@ export const useContentViewActivity = (cancelSearch: () => void) => {
       const requestVersion = ++requestVersionRef.current;
       if (!active) {
         setActivityConfirmed(false);
-        cancelSearch();
+        if (!isDocumentVisible()) cancelSearch();
         void window.cap7ce?.cache.setContentViewActive(false).catch(() => undefined);
         return;
       }

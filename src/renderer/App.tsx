@@ -1414,7 +1414,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   useSearchIndexRefresh((force) => {
-    if (!resultsInitializedRef.current || (!force && !lastResultSearchRef.current.query.trim())) return;
+    if (!contentViewActivityConfirmed || !resultsInitializedRef.current || (!force && !lastResultSearchRef.current.query.trim())) return;
     void runSearch(lastResultSearchRef.current, { navigate: false, preserveAiResults: true });
   });
 

@@ -211,12 +211,15 @@ const syncThumbnailOptimizationActivity = () => {
     && mainWindow.isFocused()
     && activeShellState === "normal"
   );
+  const searchScanActive = Boolean(mainWindow && !mainWindow.isDestroyed()
+    && mainWindow.isVisible() && !mainWindow.isMinimized()
+    && activeShellState === "normal");
   const foregroundWindowActive = isVisibleAndFocused(mainWindow)
     || settingsWindowController?.isVisibleAndFocused() === true
     || isVisibleAndFocused(previewWindow);
   setSkimShellThumbnailActivity(contentViewActive);
   setSearchShellVisualActivity(contentViewActive);
-  searchScanSnapshotService.setActive(contentViewActive);
+  searchScanSnapshotService.setActive(searchScanActive);
   setThumbnailOptimizationForegroundActive(foregroundWindowActive);
   setVisualPropertyForegroundActive(foregroundWindowActive);
   return contentViewActive;
@@ -1501,17 +1504,19 @@ const createWindow = () => {
   });
 
   mainWindow.on("focus", syncThumbnailOptimizationActivity);
-  mainWindow.on("blur", () => {
-    syncThumbnailOptimizationActivity();
-    cancelActiveSearchTasks();
-  });
+  mainWindow.on("blur", syncThumbnailOptimizationActivity);
   mainWindow.on("show", syncThumbnailOptimizationActivity);
   mainWindow.on("hide", () => {
     syncThumbnailOptimizationActivity();
     cancelActiveSearchTasks();
     discardQueuedInteractiveThumbnailRenders();
   });
-  mainWindow.on("minimize", () => discardQueuedInteractiveThumbnailRenders());
+  mainWindow.on("minimize", () => {
+    syncThumbnailOptimizationActivity();
+    cancelActiveSearchTasks();
+    discardQueuedInteractiveThumbnailRenders();
+  });
+  mainWindow.on("restore", syncThumbnailOptimizationActivity);
   mainWindow.on("maximize", () => mainWindow?.setHasShadow(false));
   mainWindow.on("unmaximize", () => mainWindow?.setHasShadow(true));
   mainWindow.on("close", (event) => {

@@ -42,8 +42,10 @@ assert.match(appSource, /await window\.cap7ce\?\.search\.images\(searchRequest, 
 assert.doesNotMatch(appSource, /setSearchError\(""\);\s*resultsInitializedRef\.current = true;/u);
 assert.match(appSource, /const runSearch = async[\s\S]*?nextSearch\.query\.trim\(\) !== lastResultSearchRef\.current\.query\.trim\(\)[\s\S]*?resultScrollMemoryRef\.current = createInitialResultGridScrollMemory\(\)[\s\S]*?document\.querySelector<HTMLElement>\("\.cap-results-view \.image-grid"\)\?\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)[\s\S]*?lastResultSearchRef\.current = nextSearch/u);
 assert.match(contentViewActivitySource, /setContentViewActive\(true\)\.then\(\(accepted\)[\s\S]*?setActivityConfirmed\(accepted === true\)/u);
-assert.match(contentViewActivitySource, /if \(!active\) \{[\s\S]*?setActivityConfirmed\(false\)[\s\S]*?cancelSearch\(\)[\s\S]*?setContentViewActive\(false\)/u);
+assert.match(contentViewActivitySource, /const isDocumentVisible = \(\) => document\.visibilityState === "visible"/u);
+assert.match(contentViewActivitySource, /if \(!active\) \{[\s\S]*?setActivityConfirmed\(false\)[\s\S]*?if \(!isDocumentVisible\(\)\) cancelSearch\(\)[\s\S]*?setContentViewActive\(false\)/u);
 assert.match(contentViewActivitySource, /requestVersion !== requestVersionRef\.current \|\| !isDocumentActive\(\)/u);
+assert.match(appSource, /useSearchIndexRefresh\(\(force\) => \{\s*if \(\s*!contentViewActivityConfirmed[\s\S]*?!resultsInitializedRef\.current[\s\S]*?!lastResultSearchRef\.current\.query\.trim\(\)/u);
 assert.match(appSource, /const cycleSearchDirectory = \(\) => \{[\s\S]*?directoryOptions\.findIndex[\s\S]*?\(currentIndex \+ 1\) % directoryOptions\.length[\s\S]*?updateResultsSearchOptions/u);
 assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSearch\.directoryId !== search\.directoryId[\s\S]*?resultScrollMemoryRef\.current = createInitialResultGridScrollMemory\(\)/u);
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
@@ -101,6 +103,8 @@ console.log(JSON.stringify({
   singleSearchAuthorityBridged: true,
   imeAndClearSubmissionGuarded: true,
   changedOrClearedSearchReturnsToCurrentDirectoryTop: true,
+  visibleUnfocusedSearchPreserved: true,
+  unfocusedIndexRefreshSuppressed: true,
   stableInitialAllDirectorySearchVerified: true,
   directoryBrowsingFileCountLabelVerified: true,
   stableEmptyResultIsNotInteractive: true,
