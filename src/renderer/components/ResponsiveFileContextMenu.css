@@ -32,7 +32,8 @@
 .responsive-file-context-menu-actions button > span { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
 .responsive-file-context-menu-actions button > kbd { flex: 0 0 auto; color: color-mix(in srgb, currentColor 58%, transparent); font-family: var(--cap-ui-font-family); font-size: var(--cap-ui-font-caption); line-height: 1; }
 .responsive-file-context-menu-actions button:hover:not(:disabled),
-.responsive-file-context-menu-actions button:focus-visible { color: var(--theme-on-color); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); outline: 0; }
+.responsive-file-context-menu-actions button:focus-visible { background: var(--context-menu-control-hover); outline: 0; }
+.responsive-file-context-menu-actions button:active:not(:disabled) { background: var(--context-menu-control-pressed); }
 .responsive-file-context-menu-actions button:hover:not(:disabled) > kbd,
 .responsive-file-context-menu-actions button:focus-visible > kbd { color: inherit; }
 .responsive-file-context-menu-actions button:disabled { opacity: .45; }

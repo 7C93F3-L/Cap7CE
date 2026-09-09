@@ -93,7 +93,8 @@ for (const marker of ["compactHeightBreakpoint = 360", "createPortal", "stableTi
 }
 assert.match(sharedMenuStyles, /grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
 assert.match(sharedMenuStyles, /width: min\(520px, calc\(100vw - 10px\)\)/);
-assert.match(sharedMenuStyles, /border-radius: 999px[\s\S]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\)/);
+assert.match(sharedMenuStyles, /border-radius: 999px[\s\S]*background: var\(--context-menu-control-hover\)[\s\S]*background: var\(--context-menu-control-pressed\)/);
+assert.doesNotMatch(sharedMenuStyles, /button:hover:not\(:disabled\)[^}]*linear-gradient/u);
 assert.match(sharedMenuStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
 
 console.log(JSON.stringify({

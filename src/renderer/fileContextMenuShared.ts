@@ -19,7 +19,9 @@ export const getFileContextMenuStyle = (
   "--panel-bg": theme === "dark" ? "#212121" : "#fafafa",
   "--border-soft": theme === "dark" ? "#2a2a2a" : "#ececec",
   "--text-main": theme === "dark" ? "#b2b2b2" : "#111111",
-  "--window-control-color": theme === "dark" ? "#4f4f4f" : "#9b9b9b"
+  "--window-control-color": theme === "dark" ? "#4f4f4f" : "#9b9b9b",
+  "--context-menu-control-hover": theme === "dark" ? "rgb(255 255 255 / 14%)" : "rgb(31 31 31 / 12%)",
+  "--context-menu-control-pressed": theme === "dark" ? "rgb(255 255 255 / 20%)" : "rgb(31 31 31 / 17%)"
 } as CSSProperties);
 
 export interface FileContextMenuAction {
