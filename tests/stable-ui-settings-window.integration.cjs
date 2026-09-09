@@ -315,6 +315,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(mainSource, /onProgress:[\s\S]*?settingsWindowController\?\.send\("app:updateDownloadProgress"/u);
   assert.match(settingsUpdateControlSource, /\(result\.receivedBytes \?\? 0\) > 0[\s\S]*?setStatus\("resumable"\)/u);
   assert.match(settingsUpdateControlSource, /result\?\.reason === "invalid" \? "download_failed" : "install_failed"/u);
+  assert.match(settingsUpdateControlSource, /window\.cap7ce\?\.app\.openReleasePage\(\)[\s\S]*?settings\.viewReleases/u);
   assert.match(settingsUpdatePresentationSource, /status === "install_failed"[\s\S]*?settings\.updateInstallerOpenFailed/u);
   assert.match(mainSource, /registerDiagnosticsIpc\([\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?BrowserWindow\.fromWebContents\(event\.sender\)/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);

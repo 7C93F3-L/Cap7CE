@@ -114,6 +114,7 @@ export const SettingsWindowUpdateControl = ({ requestConfirmation }: SettingsWin
     <div className="cap-stable-settings-action-line">
       <span>{statusLabel}</span>
       <div className="cap-stable-settings-model-actions">
+        <button type="button" className="cap-stable-settings-button" onClick={() => void window.cap7ce?.app.openReleasePage()}>{t("settings.viewReleases")}</button>
         {(status === "resumable" || status === "ready" || status === "install_failed") && <button type="button" className="cap-stable-settings-button" onClick={() => requestConfirmation(t("settings.confirmDiscardUpdate"), discard)}>{t("settings.discardUpdate")}</button>}
         <button type="button" className="cap-stable-settings-button" disabled={disabled} onClick={() => void primaryAction()}>{primaryLabel}</button>
       </div>
