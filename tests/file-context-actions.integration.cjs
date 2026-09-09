@@ -115,7 +115,9 @@ for (const marker of ["compactHeightBreakpoint = 360", "stableTitlebarBottom = 4
 assert.doesNotMatch(responsiveMenuSource, /title=\{action\.label\}/u);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu\.is-compact[\s\S]*grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
 assert.match(sharedMenuStyleSource, /"--cap-stable-flyout-surface": "color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\)"/u);
+assert.match(sharedMenuStyleSource, /"--dialog-action-hover-text": getTextColorForBackground\(appearanceColors\.themeColor, appearanceColors\.accentColor\)/u);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu \{[^}]*background: var\(--cap-stable-flyout-surface\);/u);
+assert.match(responsiveMenuStyles, /\.responsive-file-context-menu-info strong \{[^}]*justify-self: start;[^}]*border-radius: 999px;[^}]*color: var\(--dialog-action-hover-text\);[^}]*background: linear-gradient\(45deg, var\(--theme-color\), var\(--accent-color\)\);[^}]*font-weight: 700;/u);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu:not\(\.is-compact\) \.responsive-file-context-menu-actions \+ \.responsive-file-context-menu-actions \{ margin-top: 5px; \}/);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu \{[^}]*animation: var\(--cap-stable-flyout-enter\);/u);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu-actions button \{[^}]*transition: var\(--cap-stable-control-transition\);/u);

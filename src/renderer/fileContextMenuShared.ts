@@ -1,13 +1,6 @@
 import type { CSSProperties } from "react";
 import type { AppearanceColors, ResolvedThemeMode } from "../shared/types";
-
-const getTextColorForBackground = (color: string) => {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return "#191919";
-  const red = Number.parseInt(color.slice(1, 3), 16);
-  const green = Number.parseInt(color.slice(3, 5), 16);
-  const blue = Number.parseInt(color.slice(5, 7), 16);
-  return red * 0.299 + green * 0.587 + blue * 0.114 > 160 ? "#191919" : "#ffffff";
-};
+import { getTextColorForBackground } from "./appearance";
 
 export const getFileContextMenuStyle = (
   theme: ResolvedThemeMode,
@@ -16,6 +9,7 @@ export const getFileContextMenuStyle = (
   "--theme-color": appearanceColors.themeColor,
   "--accent-color": appearanceColors.accentColor,
   "--theme-on-color": getTextColorForBackground(appearanceColors.themeColor),
+  "--dialog-action-hover-text": getTextColorForBackground(appearanceColors.themeColor, appearanceColors.accentColor),
   "--panel-bg": theme === "dark" ? "#212121" : "#fafafa",
   "--border-soft": theme === "dark" ? "#2a2a2a" : "#ececec",
   "--text-main": theme === "dark" ? "#b2b2b2" : "#111111",

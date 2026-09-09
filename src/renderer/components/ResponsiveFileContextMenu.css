@@ -23,7 +23,7 @@
 }
 
 .responsive-file-context-menu-info { display: grid; gap: 2px; min-width: 0; padding: 7px 9px 8px; }
-.responsive-file-context-menu-info strong { overflow: hidden; font-size: var(--cap-ui-font-heading); font-weight: 650; line-height: var(--cap-ui-line-body); text-overflow: ellipsis; white-space: nowrap; }
+.responsive-file-context-menu-info strong { display: inline-flex; max-width: 100%; min-height: 20px; box-sizing: border-box; align-items: center; justify-self: start; padding: 1px 7px; overflow: hidden; border-radius: 999px; color: var(--dialog-action-hover-text); background: linear-gradient(45deg, var(--theme-color), var(--accent-color)); font-size: var(--cap-ui-font-heading); font-weight: 700; line-height: var(--cap-ui-line-body); letter-spacing: .02em; text-overflow: ellipsis; white-space: nowrap; }
 .responsive-file-context-menu-name { display: flex; min-width: 0; overflow: hidden; font-size: var(--cap-ui-font-control); white-space: nowrap; }
 .responsive-file-context-menu-detail { min-width: 0; overflow: hidden; color: color-mix(in srgb, currentColor 58%, transparent); font-size: var(--cap-ui-font-secondary); text-overflow: ellipsis; white-space: nowrap; }
 .responsive-file-context-menu-actions { display: grid; grid-template-rows: repeat(3, 30px); gap: 1px; padding: 5px 0 0; border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
