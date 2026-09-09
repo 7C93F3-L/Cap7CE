@@ -676,7 +676,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     clearQuickCommandNotice();
     setIsSearching(true);
     setSearchError("");
-    resultsInitializedRef.current = true;
     lastResultSearchRef.current = nextSearch;
     if (options?.navigate !== false) {
       navigateTo("results");
@@ -704,6 +703,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         if (searchTaskIdRef.current !== taskId) return false;
       }
       const baseResults = Array.isArray(response) ? response : response.images;
+      resultsInitializedRef.current = true;
       setSearchResults(options?.preserveAiResults ? aiSearchBeta.mergePreservedResults(baseResults) : baseResults);
       if (options?.aiEnhanced) void aiSearchBeta.start(searchRequest, baseResults);
       return true;
