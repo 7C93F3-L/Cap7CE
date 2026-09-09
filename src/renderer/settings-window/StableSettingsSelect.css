@@ -89,10 +89,12 @@
 
 .context-menu.cap-stable-settings-select-menu button:hover:not([aria-selected="true"]),
 .context-menu.cap-stable-settings-select-menu button.is-active {
+  color: var(--text-main);
   background: var(--context-menu-control-hover);
 }
 
 .context-menu.cap-stable-settings-select-menu button:active:not([aria-selected="true"]) {
+  color: var(--text-main);
   background: var(--context-menu-control-pressed);
 }
 
