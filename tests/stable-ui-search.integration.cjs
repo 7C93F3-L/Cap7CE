@@ -40,6 +40,7 @@ assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActi
 assert.match(appSource, /if \(isLoadingDirectories \|\| !contentViewActivityConfirmed \|\| resultsInitializedRef\.current\) return;[\s\S]*?const initialSearch = \{ \.\.\.emptySearch, sortField: search\.sortField, sortDirection: search\.sortDirection \};[\s\S]*?runSearch\(initialSearch, \{ navigate: false \}\)[\s\S]*?\[contentViewActivityConfirmed, isLoadingDirectories\]/u);
 assert.match(appSource, /await window\.cap7ce\?\.search\.images\(searchRequest, taskId\)[\s\S]*?const baseResults = Array\.isArray\(response\) \? response : response\.images;[\s\S]*?resultsInitializedRef\.current = true;[\s\S]*?setSearchResults/u);
 assert.doesNotMatch(appSource, /setSearchError\(""\);\s*resultsInitializedRef\.current = true;/u);
+assert.match(appSource, /const runSearch = async[\s\S]*?nextSearch\.query\.trim\(\) !== lastResultSearchRef\.current\.query\.trim\(\)[\s\S]*?resultScrollMemoryRef\.current = createInitialResultGridScrollMemory\(\)[\s\S]*?document\.querySelector<HTMLElement>\("\.cap-results-view \.image-grid"\)\?\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)[\s\S]*?lastResultSearchRef\.current = nextSearch/u);
 assert.match(contentViewActivitySource, /setContentViewActive\(true\)\.then\(\(accepted\)[\s\S]*?setActivityConfirmed\(accepted === true\)/u);
 assert.match(contentViewActivitySource, /if \(!active\) \{[\s\S]*?setActivityConfirmed\(false\)[\s\S]*?cancelSearch\(\)[\s\S]*?setContentViewActive\(false\)/u);
 assert.match(contentViewActivitySource, /requestVersion !== requestVersionRef\.current \|\| !isDocumentActive\(\)/u);
@@ -98,6 +99,7 @@ assert.match(sharedMenuStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]
 console.log(JSON.stringify({
   singleSearchAuthorityBridged: true,
   imeAndClearSubmissionGuarded: true,
+  changedOrClearedSearchReturnsToCurrentDirectoryTop: true,
   stableInitialAllDirectorySearchVerified: true,
   directoryBrowsingFileCountLabelVerified: true,
   stableEmptyResultIsNotInteractive: true,

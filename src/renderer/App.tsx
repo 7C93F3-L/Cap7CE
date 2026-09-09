@@ -665,6 +665,10 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     nextSearch = search,
     options?: { navigate?: boolean; display?: SkimDisplayPreferences; aiEnhanced?: boolean; preserveAiResults?: boolean }
   ) => {
+    if (nextSearch.query.trim() !== lastResultSearchRef.current.query.trim()) {
+      resultScrollMemoryRef.current = createInitialResultGridScrollMemory();
+      document.querySelector<HTMLElement>(".cap-results-view .image-grid")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
     if (viewDisplaySearchTimerRef.current !== null) {
       window.clearTimeout(viewDisplaySearchTimerRef.current);
       viewDisplaySearchTimerRef.current = null;
@@ -2425,9 +2429,5 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         onDismissOverlay={closeContextMenu}
       />
   );
-
 };
-
-
-
 export default App;
