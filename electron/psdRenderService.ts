@@ -3,7 +3,7 @@ import path from "node:path";
 import { Worker } from "node:worker_threads";
 import { createCanvas, ImageData } from "@napi-rs/canvas";
 import { initializeCanvas, readPsd } from "ag-psd";
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 import {
   getReliableFirstPsdArtboardBounds,
   type PsdArtboardBounds
@@ -99,7 +99,7 @@ const readEmbeddedThumbnail = async (sourcePath: string): Promise<PsdThumbnail |
 };
 
 const encodePng = async (
-  input: Buffer | sharp.Sharp,
+  input: Buffer | Sharp,
   swapRedAndBlue = false
 ) => {
   let pipeline = Buffer.isBuffer(input) ? sharp(input) : input;

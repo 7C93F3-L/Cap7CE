@@ -1,7 +1,7 @@
 import { nativeImage, type NativeImage } from "electron";
 import fs from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 import { readCdrFlattenedPreview } from "./cdrRenderService";
 import { renderPdfFirstPage } from "./pdfRenderService";
 import { renderPsdFlattenedPreview } from "./psdRenderService";
@@ -237,7 +237,7 @@ const calculateTargetSize = (sourceSize: ImageSize, strategy: VisualRenderStrate
 
 export { readVisualSourceDimensions };
 
-const createSharpPipeline = async (entry: VisualCacheEntry): Promise<sharp.Sharp> => {
+const createSharpPipeline = async (entry: VisualCacheEntry): Promise<Sharp> => {
   const extension = path.extname(entry.sourcePath).toLowerCase();
   const input = extension === ".svg"
     ? await readSafeSvg(entry.sourcePath)

@@ -1,6 +1,6 @@
 {
   "name": "cap7ce",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "productName": "Cap7CE",
   "description": "Windows local file search, browsing and preview tool built with Electron, React, TypeScript and SQLite.",
   "author": "7C93F3-L",
@@ -256,7 +256,7 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "sharp": "^0.35.1",
+    "sharp": "^0.35.4",
     "sql.js": "^1.14.1",
     "word-extractor": "^1.0.4"
   },
