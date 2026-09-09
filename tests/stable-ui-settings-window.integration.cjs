@@ -191,7 +191,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(stableSelectSource, /<SettingsSelect[\s\S]*?menuClassName="cap-stable-settings-select-menu"/u);
   assert.match(sharedSelectSource, /menuClassName\?[\s\S]*?cap-settings-select-menu\$\{menuClassName/u);
   assert.match(stableSelectStyles, /cap-stable-settings-select-menu[\s\S]*?backdrop-filter[\s\S]*?button:hover:not\(\[aria-selected="true"\]\)[\s\S]*?background: var\(--context-menu-control-hover\)[\s\S]*?button\[aria-selected="true"\][\s\S]*?linear-gradient/u);
-  assert.match(stableSelectStyles, /\.context-menu\.cap-stable-settings-select-menu button \{[\s\S]*?font-size: var\(--cap-ui-font-control\);[\s\S]*?line-height: var\(--cap-ui-line-control\);/u);
+  assert.match(stableSelectStyles, /\.context-menu\.cap-stable-settings-select-menu button \{[\s\S]*?font-size: var\(--cap-ui-font-control\);[\s\S]*?line-height: var\(--cap-ui-line-control\);[\s\S]*?transition: var\(--cap-stable-control-transition\);/u);
+  assert.match(stableSelectStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?cap-stable-settings-select-menu button \{ transition: none; \}/u);
   assert.doesNotMatch(sharedSelectStyles, /\.cap-settings-select:focus,/u);
   assert.match(settingsAppSource, /settings\.selectRuntime[\s\S]*?cap-stable-settings-model-line[\s\S]*?settings\.visionModel[\s\S]*?cap-stable-settings-model-line/u);
   assert.match(stableSelectStyles, /cap-stable-settings-model-line[\s\S]*?width: 402px[\s\S]*?grid-template-columns: 270px 58px 58px[\s\S]*?gap: 8px[\s\S]*?width: 270px[\s\S]*?cap-stable-settings-model-actions[\s\S]*?display: contents[\s\S]*?:only-child[\s\S]*?grid-column: 3/u);

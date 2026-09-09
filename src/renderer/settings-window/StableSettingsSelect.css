@@ -80,6 +80,7 @@
 .context-menu.cap-stable-settings-select-menu button {
   font-size: var(--cap-ui-font-control);
   line-height: var(--cap-ui-line-control);
+  transition: var(--cap-stable-control-transition);
 }
 
 .context-menu.cap-stable-settings-select-menu button:hover:not([aria-selected="true"]),
@@ -107,4 +108,8 @@
     min-width: 0;
     max-width: none;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context-menu.cap-stable-settings-select-menu button { transition: none; }
 }
