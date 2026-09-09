@@ -19,7 +19,7 @@
   -webkit-backdrop-filter: blur(18px);
   app-region: no-drag;
   -webkit-app-region: no-drag;
-  animation: cap7ce-context-menu-enter 180ms cubic-bezier(0.22, 0.85, 0.18, 1) both;
+  animation: var(--cap-stable-flyout-enter);
 }
 
 .responsive-file-context-menu-info { display: grid; gap: 2px; min-width: 0; padding: 7px 9px 8px; }

@@ -22,7 +22,8 @@ export const getFileContextMenuStyle = (
   "--window-control-color": theme === "dark" ? "#4f4f4f" : "#9b9b9b",
   "--context-menu-control-hover": theme === "dark" ? "rgb(255 255 255 / 14%)" : "rgb(31 31 31 / 12%)",
   "--context-menu-control-pressed": theme === "dark" ? "rgb(255 255 255 / 20%)" : "rgb(31 31 31 / 17%)",
-  "--cap-stable-control-transition": "background 180ms ease, color 180ms ease"
+  "--cap-stable-control-transition": "background 180ms ease, color 180ms ease",
+  "--cap-stable-flyout-enter": "cap7ce-context-menu-enter 180ms cubic-bezier(0.22, 0.85, 0.18, 1) both"
 } as CSSProperties);
 
 export interface FileContextMenuAction {
