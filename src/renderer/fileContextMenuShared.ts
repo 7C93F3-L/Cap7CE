@@ -20,6 +20,7 @@ export const getFileContextMenuStyle = (
   "--border-soft": theme === "dark" ? "#2a2a2a" : "#ececec",
   "--text-main": theme === "dark" ? "#b2b2b2" : "#111111",
   "--window-control-color": theme === "dark" ? "#4f4f4f" : "#9b9b9b",
+  "--cap-stable-flyout-surface": "color-mix(in srgb, var(--panel-bg) 80%, transparent)",
   "--context-menu-control-hover": theme === "dark" ? "rgb(255 255 255 / 14%)" : "rgb(31 31 31 / 12%)",
   "--context-menu-control-pressed": theme === "dark" ? "rgb(255 255 255 / 20%)" : "rgb(31 31 31 / 17%)",
   "--cap-stable-control-transition": "background 180ms ease, color 180ms ease",

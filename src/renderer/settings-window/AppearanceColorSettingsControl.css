@@ -8,9 +8,28 @@
 }
 
 .context-menu.cap-stable-settings-color-picker {
+  width: 228px;
+  min-width: 228px;
+  max-width: min(228px, calc(100vw - 10px));
   border: 1px solid color-mix(in srgb, var(--text-main) 8%, transparent);
   border-radius: var(--radius-menu);
-  background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  background: var(--cap-stable-flyout-surface);
   box-shadow: 0 8px 18px rgb(0 0 0 / 12%);
   backdrop-filter: blur(18px) saturate(125%);
+}
+
+.cap-stable-settings-color-picker .cap-color-picker-motion-surface {
+  animation: var(--cap-stable-flyout-enter);
+}
+
+.cap-stable-settings-color-picker :is(.cap-color-picker-saturation, .cap-color-picker-hue, .cap-color-picker-hex) {
+  width: 206px;
+}
+
+.cap-stable-settings-color-picker .cap-color-picker-saturation {
+  height: 150px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cap-stable-settings-color-picker .cap-color-picker-motion-surface { animation: none; }
 }

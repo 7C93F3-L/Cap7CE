@@ -10,7 +10,7 @@
   border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
   border-radius: 12px;
   color: var(--text-main);
-  background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  background: var(--cap-stable-flyout-surface);
   box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
   font-family: var(--cap-ui-font-family);
   font-size: var(--cap-ui-font-body);

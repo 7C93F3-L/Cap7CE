@@ -72,7 +72,7 @@
   padding: 6px;
   border: 1px solid color-mix(in srgb, var(--text-main) 8%, transparent);
   border-radius: var(--radius-menu);
-  background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  background: var(--cap-stable-flyout-surface);
   box-shadow: 0 8px 18px rgb(0 0 0 / 12%);
   backdrop-filter: blur(18px) saturate(125%);
 }
