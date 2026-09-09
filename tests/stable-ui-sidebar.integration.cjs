@@ -59,7 +59,7 @@ for (const marker of [
 for (const marker of [
   ".cap-stable-brand-logo",
   ".cap-stable-all-directories-row",
-  ".cap-stable-sidebar-control:hover",
+  ".cap-stable-sidebar-control:where(:hover, :focus-visible)",
   ".cap-stable-directory-item.is-selected",
   ".cap-stable-directory-list",
   "@container (max-width: 95px)",
@@ -110,22 +110,23 @@ assert.match(sidebarStyles, /\.cap-stable-sort-icon \{ width: 30px; height: 30px
 assert.match(sidebarStyles, /@container \(max-width: 95px\)[\s\S]*?\.cap-stable-directory-item \{ grid-template-columns: minmax\(0, 1fr\); width: 32px;[\s\S]*?\.cap-stable-directory-row \{ display: block; width: 32px; margin-inline: auto; border-radius: 9px; \}/u);
 assert.match(sidebarSource, /className=\{`cap-stable-directory-row\$\{selected \? " is-selected" : ""\}\$\{menuOpen \? " is-menu-open" : ""\}`\}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-row \{[^}]*grid-template-columns: minmax\(0, 1fr\) 32px;/u);
-assert.match(sidebarStyles, /\.cap-stable-directory-row:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-row\.is-selected \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}[\s\S]*?\.cap-stable-directory-row > \.cap-stable-directory-item\.is-selected \{ background: transparent; \}/u);
-assert.match(directoryFlyoutStyles, /\.cap-stable-directory-row\.is-menu-open \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-directory-row\.is-menu-open \.cap-stable-directory-more \{ opacity: \.72; \}/u);
+assert.match(sidebarStyles, /\.cap-stable-directory-row:hover \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-directory-row:active \{ background: var\(--cap-stable-control-pressed\); \}[\s\S]*?\.cap-stable-directory-row\.is-selected \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}[\s\S]*?\.cap-stable-directory-row > \.cap-stable-directory-item\.is-selected \{ background: transparent; \}/u);
+assert.match(directoryFlyoutStyles, /\.cap-stable-directory-row\.is-menu-open \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-directory-row\.is-menu-open \.cap-stable-directory-more \{ opacity: \.72; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-more \{[^}]*justify-self: center;[^}]*width: 24px; height: 24px;[^}]*margin-left: 0;[^}]*border-radius: 50%;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-more:hover \{ color: var\(--text-main\); background: var\(--cap-stable-directory-more-hover, color-mix\(in srgb, currentColor 14%, transparent\)\); opacity: 1; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-row\.is-selected:hover \.cap-stable-directory-more \{ opacity: 1; \}[\s\S]*?theme-dark:is\(\[data-window-material="acrylic"\], \[data-window-material="mica"\]\)[^}]*background: rgb\(0 0 0 \/ 32%\);/u);
-assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-directory-more-hover: rgb\(255 255 255 \/ 24%\);/u);
-assert.match(sidebarStyles, /\.cap-stable-sidebar-control:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?aria-pressed="true"[\s\S]*?aria-expanded="true"[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
-assert.match(sidebarStyles, /\.cap-stable-sidebar-footer button:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?\.cap-stable-sidebar-footer button\.is-active \{ background: var\(--cap-stable-navigation-state\); \}/u);
+assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-control-hover: rgb\(255 255 255 \/ 18%\);[\s\S]*?--cap-stable-control-pressed: rgb\(255 255 255 \/ 24%\);[\s\S]*?--cap-stable-directory-more-hover: rgb\(255 255 255 \/ 24%\);/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-control:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-sidebar-control:active \{ background: var\(--cap-stable-control-pressed\); \}[\s\S]*?aria-pressed="true"[\s\S]*?aria-expanded="true"[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-footer button:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?button:active \{ background: var\(--cap-stable-control-pressed\); \}[\s\S]*?\.cap-stable-sidebar-footer button\.is-active \{ background: var\(--cap-stable-navigation-state\); \}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-item\.is-editing \{ background: transparent; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-item input \{[^}]*border-radius: 999px; outline: 0;[^}]*background: var\(--cap-stable-navigation-state\);/u);
 assert.match(navigationStateStyles, /--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?theme-dark[\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 24%\);/u);
+assert.match(navigationStateStyles, /--cap-stable-control-hover: rgb\(31 31 31 \/ 12%\);[\s\S]*?--cap-stable-control-pressed: rgb\(31 31 31 \/ 17%\);[\s\S]*?theme-dark[\s\S]*?--cap-stable-control-hover: rgb\(255 255 255 \/ 14%\);[\s\S]*?--cap-stable-control-pressed: rgb\(255 255 255 \/ 20%\);/u);
 assert.match(sidebarStyles, /\.app \.cap-stable-directory-item input:focus,[\s\S]*?input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-footer-icon \{ width: 20px; height: 20px;[^}]*\} \.cap-stable-skim-icon \{ width: 22px; height: 22px; \}/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout \{[^}]*background: var\(--cap-stable-flyout-surface\);[^}]*font: inherit;/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button \{[^}]*border-radius: 999px;/u);
-assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button:hover \{ background: var\(--cap-stable-navigation-state\); \}[\s\S]*?button\.is-selected \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}/u);
+assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button:where\(:hover, :focus-visible\):not\(:disabled\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?button:active:not\(:disabled\) \{ background: var\(--cap-stable-control-pressed\); \}[\s\S]*?button\.is-selected \{[^}]*linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\); \}/u);
 assert.doesNotMatch(sidebarSource, /cap-stable-flyout-title/u);
 assert.doesNotMatch(skimToolbarSource, /cap-stable-flyout-title/u);
 assert.match(sidebarStyles, /\.cap-stable-sidebar-flyout button\.is-danger \{ color: inherit; \}/u);

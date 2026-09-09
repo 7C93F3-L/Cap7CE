@@ -110,6 +110,7 @@ for (const marker of ["Error invoking remote method", ".replace(/^(?:Error:\\s*)
 }
 assert.match(panelStyles, /\.cap-stable-skim-content \.empty-result-row \{ color: var\(--cap-stable-text-muted\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-tool \.cap-stable-sort-icon \{ transform: none; \}/u);
+assert.match(panelStyles, /\.cap-stable-skim-tool:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-skim-tool:active \{ background: var\(--cap-stable-control-pressed\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-exit-tool \{ display: none; \}[\s\S]*?@media \(max-width: 560px\)[\s\S]*?\.cap-stable-skim-exit-tool \{ display: grid; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > \.cap-stable-skim-address-hit-area\s*\{[^}]*min-width: 24px;[^}]*flex: 0 0 24px;/u);

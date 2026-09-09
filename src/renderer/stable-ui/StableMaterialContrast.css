@@ -11,6 +11,8 @@
 .cap-stable-ui.theme-dark[data-window-material="acrylic"] {
   --cap-stable-skim-address-surface: rgb(0 0 0 / 42%);
   --cap-stable-navigation-state: rgb(0 0 0 / 42%);
+  --cap-stable-control-hover: rgb(255 255 255 / 18%);
+  --cap-stable-control-pressed: rgb(255 255 255 / 24%);
   --cap-stable-directory-more-hover: rgb(255 255 255 / 24%);
 }
 

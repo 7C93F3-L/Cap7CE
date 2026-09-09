@@ -2,6 +2,8 @@
 .cap-stable-titlebar,
 .cap-settings-window-foundation {
   --cap-stable-navigation-state: rgb(255 255 255 / 50%);
+  --cap-stable-control-hover: rgb(31 31 31 / 12%);
+  --cap-stable-control-pressed: rgb(31 31 31 / 17%);
   --cap-stable-search-surface: var(--cap-stable-navigation-state);
   --cap-stable-search-placeholder: rgb(31 31 31 / 54%);
 }
@@ -10,5 +12,7 @@
 .cap-stable-titlebar.theme-dark,
 .cap-settings-window-foundation.theme-dark {
   --cap-stable-navigation-state: rgb(0 0 0 / 24%);
+  --cap-stable-control-hover: rgb(255 255 255 / 14%);
+  --cap-stable-control-pressed: rgb(255 255 255 / 20%);
   --cap-stable-search-placeholder: rgb(244 244 244 / 48%);
 }
