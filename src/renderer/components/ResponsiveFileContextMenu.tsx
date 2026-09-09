@@ -100,7 +100,6 @@ const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, d
           ref={(element) => { if (element) actionRefs.current.set(action.id, element); else actionRefs.current.delete(action.id); }}
           type="button"
           role="menuitem"
-          title={action.label}
           disabled={action.disabled}
           key={action.id}
           onClick={() => { onClose(); action.onSelect(); }}

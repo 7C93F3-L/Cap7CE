@@ -111,6 +111,7 @@ assert.match(responsiveResultsMenuSource, /actionGroups=\{\[[\s\S]*preview[\s\S]
 for (const marker of ["compactHeightBreakpoint = 360", "stableTitlebarBottom = 45", "viewportGap = 5", "data-layout", "createPortal", "MiddleEllipsisFileName"]) {
   assert.ok(responsiveMenuSource.includes(marker), `Responsive file context menu is missing ${marker}.`);
 }
+assert.doesNotMatch(responsiveMenuSource, /title=\{action\.label\}/u);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu\.is-compact[\s\S]*grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu:not\(\.is-compact\) \.responsive-file-context-menu-actions \+ \.responsive-file-context-menu-actions \{ margin-top: 5px; \}/);
 assert.match(responsiveMenuStyles, /button:hover:not\(:disabled\),[\s\S]*?button:focus-visible \{ background: var\(--context-menu-control-hover\); outline: 0; \}[\s\S]*?button:active:not\(:disabled\) \{ background: var\(--context-menu-control-pressed\); \}/u);
