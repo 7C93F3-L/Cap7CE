@@ -9,6 +9,7 @@ import {
 } from "react";
 import type React from "react";
 import { createPortal } from "react-dom";
+import ChevronIcon from "../components/ChevronIcon";
 
 const viewportMenuGap = 5;
 
@@ -206,6 +207,7 @@ export const SettingsSelect = ({
         onKeyDown={handleKeyDown}
       >
         <span className="cap-settings-select-value" title={selectedOption?.label}>{selectedOption?.label}</span>
+        <ChevronIcon className="cap-settings-select-chevron" />
       </button>
       {isOpen && anchor && createPortal(
         <div

@@ -37,11 +37,14 @@
 }
 
 .cap-skim-root-group-chevron {
-  width: 24px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  font-size: 18px;
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+  transition: transform 140ms ease;
+}
+
+.cap-skim-root-group.is-collapsed .cap-skim-root-group-chevron {
+  transform: rotate(-90deg);
 }
 
 .cap-skim-root-group.is-collapsed {

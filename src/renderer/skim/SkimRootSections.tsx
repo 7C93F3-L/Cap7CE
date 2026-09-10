@@ -1,6 +1,7 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { SkimBrowseEntry, SkimLocationShortcut, SkimLocationShortcutKind } from "../../shared/types";
+import ChevronIcon from "../components/ChevronIcon";
 import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
 import SvgIcon from "../components/SvgIcon";
 import computerSvg from "../assets/icons/skim-location-computer.svg?raw";
@@ -99,7 +100,7 @@ const RootGroup = ({ title, collapsed, onToggle, children }: { title: string; co
   <section className={`cap-skim-root-group${collapsed ? " is-collapsed" : ""}`}>
     <button className="cap-skim-root-group-header" type="button" title={`${collapsed ? t("common.expand") : t("common.collapse")} ${title}`}
       aria-expanded={!collapsed} onClick={(event) => { event.stopPropagation(); onToggle(); }}>
-      <span>{title}</span><span className="cap-skim-root-group-chevron" aria-hidden="true">{collapsed ? "›" : "⌄"}</span>
+      <span>{title}</span><ChevronIcon className="cap-skim-root-group-chevron" />
     </button>
     {!collapsed && <div className="cap-skim-root-group-grid">{children}</div>}
   </section>

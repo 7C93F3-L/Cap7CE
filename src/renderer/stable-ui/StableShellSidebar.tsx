@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { t } from "../../../electron/localization";
 import type { DirectoryItem, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
+import ChevronIcon from "../components/ChevronIcon";
 import CustomScrollbar from "../CustomScrollbar";
 import StableDirectoryFlyout from "./StableDirectoryFlyout";
 import StableDirectoryTooltip from "./StableDirectoryTooltip";
@@ -71,10 +72,10 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
         <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span>
       </button>
       <button className="cap-stable-sidebar-control" type="button" title={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("sort", event)}>
-        <StableUiIcon name="sort" sortDirection={search.sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><span className="cap-stable-control-chevron">›</span>
+        <StableUiIcon name="sort" sortDirection={search.sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><ChevronIcon className="cap-stable-control-chevron" />
       </button>
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.searchScope")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}>
-        <StableUiIcon name="scope" active={flyout?.kind === "scope"} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.searchScope")}</strong><small>{scopeValue}</small></span><span className="cap-stable-control-chevron">›</span>
+        <StableUiIcon name="scope" active={flyout?.kind === "scope"} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.searchScope")}</strong><small>{scopeValue}</small></span><ChevronIcon className="cap-stable-control-chevron" />
       </button>
     </div>
 

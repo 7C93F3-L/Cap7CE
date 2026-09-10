@@ -190,6 +190,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(appearanceColorSource, /defaultAppearanceColors[\s\S]*?onChange\(defaultAppearanceColors\)/u);
   assert.match(stableSelectSource, /<SettingsSelect[\s\S]*?menuClassName="cap-stable-settings-select-menu"/u);
   assert.match(sharedSelectSource, /menuClassName\?[\s\S]*?cap-settings-select-menu\$\{menuClassName/u);
+  assert.match(sharedSelectSource, /<ChevronIcon className="cap-settings-select-chevron" \/>/u);
+  assert.match(sharedSelectStyles, /\.cap-settings-select-chevron\s*\{[\s\S]*?width: 12px;[\s\S]*?height: 12px;[\s\S]*?\.cap-settings-select\.is-open \.cap-settings-select-chevron\s*\{[\s\S]*?rotate\(180deg\)/u);
+  assert.doesNotMatch(stableSelectStyles, /cap-stable-settings-select::after/u);
   assert.match(stableSelectStyles, /cap-stable-settings-select-menu[\s\S]*?background: var\(--cap-stable-flyout-surface\)[\s\S]*?backdrop-filter[\s\S]*?button:hover:not\(\[aria-selected="true"\]\)[\s\S]*?color: var\(--text-main\);[\s\S]*?background: var\(--context-menu-control-hover\)[\s\S]*?button:active:not\(\[aria-selected="true"\]\)[\s\S]*?color: var\(--text-main\);[\s\S]*?button\[aria-selected="true"\][\s\S]*?color: var\(--dialog-action-hover-text\);[\s\S]*?linear-gradient/u);
   assert.match(stableSelectStyles, /\.context-menu\.cap-stable-settings-select-menu button \{[\s\S]*?font-size: var\(--cap-ui-font-control\);[\s\S]*?line-height: var\(--cap-ui-line-control\);[\s\S]*?transition: var\(--cap-stable-control-transition\);/u);
   assert.match(stableSelectStyles, /cap-stable-settings-select-menu \.cap7ce-menu-motion-surface \{[\s\S]*?animation: var\(--cap-stable-flyout-enter\);/u);

@@ -74,9 +74,12 @@ for (const marker of ["currentPath === null", "<SkimRootSections", "rootLocation
 for (const marker of ["skim.root.systemLocations", "skim.root.starredFolders", "skim.root.thisPc", "starredLocationsCollapsed", "drivesCollapsed", "onStarredContextMenu"]) {
   assert.ok(rootSectionsSource.includes(marker), `Stable Skim root sections are missing ${marker}.`);
 }
+assert.match(rootSectionsSource, /<ChevronIcon className="cap-skim-root-group-chevron" \/>/u);
+assert.doesNotMatch(rootSectionsSource, /[›⌄]/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-sections\s*\{[\s\S]*?display: grid/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-group-grid\s*\{[\s\S]*?width: 100%;[\s\S]*?repeat\(auto-fill, minmax\(var\(--cap-grid-target-size, 120px\), 1fr\)\)/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-group-header\s*\{[\s\S]*?width: 100%;[\s\S]*?cursor: pointer/u);
+assert.match(rootSectionsStyles, /\.cap-skim-root-group-chevron\s*\{[\s\S]*?width: 14px;[\s\S]*?height: 14px;[\s\S]*?\.cap-skim-root-group\.is-collapsed \.cap-skim-root-group-chevron\s*\{[\s\S]*?rotate\(-90deg\)/u);
 assert.match(rootSectionsStyles, /\.cap-skim-view\.is-horizontal \.cap-skim-root-sections\s*\{[\s\S]*?display: flex/u);
 assert.match(skimViewStyles, /\.cap-stable-skim-content \.cap-skim-grid-virtualized\s*\{\s*display: block;\s*\}/u);
 assert.match(skimViewSource, /responsiveSkimGridTargetThumbSize = 120/u);

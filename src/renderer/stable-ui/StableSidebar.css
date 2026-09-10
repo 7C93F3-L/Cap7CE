@@ -13,7 +13,7 @@
 .cap-stable-directory-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-stable-control-copy strong { font-size: var(--cap-stable-font-size); font-weight: 500; line-height: var(--cap-ui-line-compact); }
 .cap-stable-control-copy small { color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); line-height: var(--cap-ui-line-caption); }
-.cap-stable-control-chevron { padding-left: 4px; color: var(--cap-stable-text-muted); font-size: 16px; }
+.cap-stable-control-chevron { width: 14px; height: 14px; margin-left: 4px; color: var(--cap-stable-text-muted); transform: rotate(-90deg); }
 .cap-stable-directory-section { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; margin-top: 8px; padding: 8px 0 48px; border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); }
 .cap-stable-directory-heading { display: flex; align-items: center; min-height: 26px; margin: 0 4px 4px 8px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-section-font-size); }
 .cap-stable-directory-heading span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

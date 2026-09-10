@@ -8,6 +8,7 @@ const appSource = read("src/renderer/App.tsx");
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
 const sidebarSource = read("src/renderer/stable-ui/StableShellSidebar.tsx");
+const sidebarIconSource = read("src/renderer/stable-ui/StableSidebarIcons.tsx");
 const directoryFlyoutSource = read("src/renderer/stable-ui/StableDirectoryFlyout.tsx");
 const directoryTooltipSource = read("src/renderer/stable-ui/StableDirectoryTooltip.tsx");
 const sidebarFlyoutSource = read("src/renderer/stable-ui/StableSidebarFlyout.tsx");
@@ -80,6 +81,9 @@ assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScro
 assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
 assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
 assert.match(sidebarSource, /name="sort" sortDirection=\{search\.sortDirection\} className="cap-stable-sidebar-icon cap-stable-sort-icon"/u);
+assert.equal((sidebarSource.match(/<ChevronIcon className="cap-stable-control-chevron" \/>/g) ?? []).length, 2);
+assert.doesNotMatch(sidebarSource, />›<\/span>/u);
+assert.match(sidebarIconSource, /add: <path d="M12 5v14M5 12h14" \/>/u);
 assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stable-footer-icon cap-stable-skim-icon"/u);
 assert.match(sidebarSource, /cap-stable-settings-button[\s\S]*?<StableUiIcon name="settings"[\s\S]*?<StableUiIcon name="settings" active/u);
 assert.match(sidebarSource, /aria-label=\{t\("stableSettings\.rename"\)\}/u);

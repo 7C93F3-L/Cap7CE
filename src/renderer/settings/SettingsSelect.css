@@ -34,6 +34,18 @@
   white-space: nowrap;
 }
 
+.cap-settings-select-chevron {
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+  opacity: .62;
+  transition: transform 140ms ease;
+}
+
+.cap-settings-select.is-open .cap-settings-select-chevron {
+  transform: rotate(180deg);
+}
+
 .context-menu.cap-settings-select-menu {
   min-width: 0;
   max-width: calc(100vw - 10px);

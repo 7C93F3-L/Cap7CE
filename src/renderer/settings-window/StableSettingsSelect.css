@@ -16,22 +16,6 @@
   cursor: pointer;
 }
 
-.cap-stable-settings-select::after {
-  width: 6px;
-  height: 6px;
-  flex: 0 0 auto;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  content: "";
-  opacity: .62;
-  transform: translateY(-2px) rotate(45deg);
-  transition: transform 140ms ease;
-}
-
-.cap-stable-settings-select.is-open::after {
-  transform: translateY(2px) rotate(225deg);
-}
-
 .cap-stable-settings-select:hover:not(:disabled),
 .cap-stable-settings-select:focus-visible,
 .cap-stable-settings-select.is-open {
