@@ -103,7 +103,7 @@
   color: inherit;
   text-align: left;
   background: transparent;
-  transition: background-color 140ms ease;
+  transition: var(--cap-stable-control-transition);
   app-region: no-drag;
 }
 
@@ -120,7 +120,7 @@
 }
 
 .cap-stable-settings-navigation nav button:hover {
-  background: var(--cap-stable-navigation-state);
+  background: var(--cap-stable-control-hover);
 }
 
 .cap-stable-settings-navigation nav button.is-active {

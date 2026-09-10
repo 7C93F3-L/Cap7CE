@@ -235,7 +235,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsControllerSource, /previewAppearanceColors[\s\S]*?setPreferences/u);
   assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[^}]*font-size:\s*(?:14|15|16)px/u);
-  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button:hover \{[\s\S]*?background: var\(--cap-stable-navigation-state\);[\s\S]*?button\.is-active \{[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
+  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?button:hover \{[\s\S]*?background: var\(--cap-stable-control-hover\);[\s\S]*?button\.is-active \{[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
   assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 24%\);/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /data-window-material=\{preferences\.windowMaterial\}/u);
@@ -326,7 +326,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsUpdateControlSource, /window\.cap7ce\?\.app\.openReleasePage\(\)[\s\S]*?settings\.viewReleases/u);
   assert.match(settingsUpdatePresentationSource, /status === "install_failed"[\s\S]*?settings\.updateInstallerOpenFailed/u);
   assert.match(mainSource, /registerDiagnosticsIpc\([\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?BrowserWindow\.fromWebContents\(event\.sender\)/u);
-  assert.match(stableSkimStyles, /cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:hover:not\(:disabled\)[\s\S]*?background: var\(--stable-settings-card\)/u);
+  assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:is\(:hover, :focus-visible\):not\(:disabled\)[\s\S]*?background: var\(--cap-stable-control-hover\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);
   assert.match(settingsControllerSource, /if \(showLoading\) \{[\s\S]*?setIsLoading\(true\)[\s\S]*?if \(showLoading\) setIsLoading\(false\)/u);

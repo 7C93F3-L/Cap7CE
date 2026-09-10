@@ -73,7 +73,7 @@
   color: var(--stable-settings-text);
   background: transparent;
   font-size: var(--cap-ui-font-secondary);
-  transition: background 160ms ease, color 160ms ease;
+  transition: var(--cap-stable-control-transition);
 }
 
 .cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"] {
@@ -82,13 +82,13 @@
   transform: none;
 }
 
-.cap-settings-skim-display-stable .cap-settings-skim-extension:hover:not(:disabled) {
+.cap-settings-skim-display-stable .cap-settings-skim-extension:is(:hover, :focus-visible):not(:disabled) {
   color: var(--stable-settings-text);
-  background: var(--stable-settings-card);
+  background: var(--cap-stable-control-hover);
   transform: none;
 }
 
-.cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"]:hover:not(:disabled) {
+.cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"]:is(:hover, :focus-visible):not(:disabled) {
   color: var(--dialog-action-hover-text);
   background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
   transform: none;
