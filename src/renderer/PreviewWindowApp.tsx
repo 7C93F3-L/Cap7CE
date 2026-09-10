@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats, UiFontSize, WindowMaterial } from "../shared/types";
+import type { AppearanceColors, ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats, ThemeMode, UiFontSize, WindowMaterial } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import SvgIcon from "./components/SvgIcon";
 import { getFormatIconSvg } from "./formatIcons";
@@ -21,6 +21,7 @@ import { setActiveLanguage, t } from "../../electron/localization";
 import { getTextColorForBackground } from "./appearance";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
+import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
 import "./stable-ui/StableMaterialContrast.css";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
@@ -94,6 +95,8 @@ const getMobiFallbackMessage = (reason: MobiPreviewFallbackReason) => {
 
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
+  const [themePreference, setThemePreference] = useState<ThemeMode | null>(null);
+  const [appearanceColors, setAppearanceColors] = useState<AppearanceColors | null>(null);
   const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize);
   const [windowMaterial, setWindowMaterial] = useState<WindowMaterial>("acrylic");
   const [displaySrc, setDisplaySrc] = useState("");
@@ -124,6 +127,7 @@ const PreviewWindowApp = () => {
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
   const pendingLongSpaceActionRef = useRef<PreviewWindowData | null>(null);
   const previewKeywordSavePendingRef = useRef(false);
+  const systemTheme = useSystemThemeMode();
   const uiFontStyle = useUiFontSize(uiFontSize);
   const closePreview = useCallback(() => {
     mediaRef.current?.pause();
@@ -207,10 +211,14 @@ const PreviewWindowApp = () => {
   useEffect(() => {
     void window.cap7ce?.preferences.get().then((preferences) => {
       if (!preferences) return;
+      setThemePreference(preferences.themePreference);
+      setAppearanceColors(preferences.appearanceColors);
       setUiFontSize(preferences.uiFontSize);
       setWindowMaterial(preferences.windowMaterial);
     });
     return window.cap7ce?.preferences.onChanged((preferences) => {
+      setThemePreference(preferences.themePreference);
+      setAppearanceColors(preferences.appearanceColors);
       setUiFontSize(preferences.uiFontSize);
       setWindowMaterial(preferences.windowMaterial);
     });
@@ -461,23 +469,27 @@ const PreviewWindowApp = () => {
     }
   }, [previewData]);
 
+  const effectiveTheme = themePreference === null
+    ? previewData?.theme ?? systemTheme
+    : themePreference === "system" ? systemTheme : themePreference;
+  const effectiveAppearanceColors = appearanceColors ?? previewData?.appearanceColors;
   const themeStyle = useMemo(() => {
-    if (!previewData) {
+    if (!effectiveAppearanceColors) {
       return {} as CSSProperties;
     }
-    const isDark = previewData.theme === "dark";
+    const isDark = effectiveTheme === "dark";
     return {
       ...uiFontStyle,
-      "--theme-color": previewData.appearanceColors.themeColor,
-      "--accent-color": previewData.appearanceColors.accentColor,
-      "--preview-action-hover-text": getTextColorForBackground(previewData.appearanceColors.themeColor, previewData.appearanceColors.accentColor),
+      "--theme-color": effectiveAppearanceColors.themeColor,
+      "--accent-color": effectiveAppearanceColors.accentColor,
+      "--preview-action-hover-text": getTextColorForBackground(effectiveAppearanceColors.themeColor, effectiveAppearanceColors.accentColor),
       "--app-bg": isDark ? "#191919" : "#ffffff",
       "--panel-bg": isDark ? "#282828" : "#f2f2f2",
       "--text-main": isDark ? "#b2b2b2" : "#111111",
       "--icon-muted": isDark ? "#4f4f4f" : "#777777",
       "--border-soft": isDark ? "#2a2a2a" : "#ececec"
     } as CSSProperties;
-  }, [previewData, uiFontStyle]);
+  }, [effectiveAppearanceColors, effectiveTheme, uiFontStyle]);
 
   const togglePreviewAlwaysOnTop = () => {
     void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);
@@ -499,7 +511,7 @@ const PreviewWindowApp = () => {
 
   return (
     <main
-      className={`app theme-${previewData.theme} preview-window-root preview-window-stable-ui${windowControlState.isMaximized ? " preview-window-maximized" : ""}`}
+      className={`app theme-${effectiveTheme} preview-window-root preview-window-stable-ui${windowControlState.isMaximized ? " preview-window-maximized" : ""}`}
       data-window-material={windowMaterial}
       style={themeStyle}
       role="dialog"
@@ -549,7 +561,7 @@ const PreviewWindowApp = () => {
         if (direction) window.cap7ce?.preview.navigate(direction);
       }}
     >
-      <StablePreviewTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={previewData.theme} windowMaterial={windowMaterial} />
+      <StablePreviewTitlebar pinned={windowControlState.isAlwaysOnTop} label={windowControlState.isAlwaysOnTop ? t("preview.unpin") : t("preview.pin")} onTogglePinned={togglePreviewAlwaysOnTop} theme={effectiveTheme} windowMaterial={windowMaterial} />
       <div
         className="preview-window-shell preview-stable-shell"
         style={{ "--preview-sidebar-width": `${previewSidebarExpandedWidth}px` } as CSSProperties}

@@ -107,9 +107,11 @@ assert.match(sidebarStyles, /preview-sidebar-keywords span \{ min-width: 40px; t
 assert.match(sidebarStyles, /preview-sidebar-file-heading strong\s*\{[^}]*max-height: calc\(1\.45em \* 6\);[^}]*overflow-y: auto;[^}]*overflow-wrap: anywhere;[^}]*text-overflow: clip;[^}]*white-space: normal;/u);
 assert.match(sidebarStyles, /preview-sidebar-path \{[^}]*max-height: calc\(1\.55em \* 6\);[^}]*overflow-y: auto;[^}]*scrollbar-width: thin;/u);
 assert.match(sidebarStyles, /preview-sidebar-path:hover \{ color: var\(--theme-color\); \}/u);
-assert.match(previewSource, /--preview-action-hover-text": getTextColorForBackground\(previewData\.appearanceColors\.themeColor, previewData\.appearanceColors\.accentColor\)/u);
+assert.match(previewSource, /useSystemThemeMode\(\)[\s\S]*?effectiveTheme = themePreference === null[\s\S]*?previewData\?\.theme \?\? systemTheme[\s\S]*?themePreference === "system" \? systemTheme : themePreference/u);
+assert.match(previewSource, /effectiveAppearanceColors = appearanceColors \?\? previewData\?\.appearanceColors[\s\S]*?--preview-action-hover-text": getTextColorForBackground\(effectiveAppearanceColors\.themeColor, effectiveAppearanceColors\.accentColor\)/u);
 assert.match(previewSource, /useUiFontSize\(uiFontSize\)/u);
-assert.match(previewSource, /preferences\.onChanged\(\(preferences\) => \{[\s\S]*?setUiFontSize\(preferences\.uiFontSize\);[\s\S]*?setWindowMaterial\(preferences\.windowMaterial\);/u);
+assert.match(previewSource, /preferences\.onChanged\(\(preferences\) => \{[\s\S]*?setThemePreference\(preferences\.themePreference\);[\s\S]*?setAppearanceColors\(preferences\.appearanceColors\);[\s\S]*?setUiFontSize\(preferences\.uiFontSize\);[\s\S]*?setWindowMaterial\(preferences\.windowMaterial\);/u);
+assert.match(previewSource, /className=\{`app theme-\$\{effectiveTheme\}[\s\S]*?<StablePreviewTitlebar[\s\S]*?theme=\{effectiveTheme\}/u);
 assert.match(previewSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(previewSource, /<StablePreviewTitlebar[\s\S]*?windowMaterial=\{windowMaterial\}/u);
 assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
