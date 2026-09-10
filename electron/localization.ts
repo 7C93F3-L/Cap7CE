@@ -108,7 +108,7 @@ export const zhCN = {
   "stableSettings.section.application": "Cap7CE",
   "stableSettings.desc.language": "选择界面语言；“跟随系统”将使用当前 Windows 显示语言。",
   "stableSettings.desc.launch": "登录 Windows 后自动启动 Cap7CE。",
-  "stableSettings.desc.notifications": "显示首次后台运行提示，以及后台缓存优化完成通知。",
+  "stableSettings.desc.notifications": "显示首次后台运行提示，以及自动缓存优化完成通知。",
   "stableSettings.desc.edgeCollapse": "标准窗口模式保留窗口最大化与窗口贴靠功能；边缘收起模式会在窗口贴在屏幕边缘时自动隐藏。",
   "stableSettings.desc.material": "选择主窗口、设置与预览窗口使用的亚克力或云母效果；不可用时自动使用纯色背景。",
   "stableSettings.material": "窗口材质",

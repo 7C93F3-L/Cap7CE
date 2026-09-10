@@ -38,6 +38,19 @@ export interface SystemNotificationService {
   show(request: SystemNotificationRequest): boolean;
 }
 
+export interface CacheCompletionNotificationContext {
+  processedCount: number;
+  activeDurationMs: number;
+  minimumActiveDurationMs: number;
+}
+
+export const shouldShowCacheCompletionNotification = (
+  context: CacheCompletionNotificationContext
+) => (
+  context.processedCount > 0
+  && context.activeDurationMs >= context.minimumActiveDurationMs
+);
+
 const safeLog = (
   diagnostics: SystemNotificationDiagnostics,
   level: "info" | "warn" | "error",

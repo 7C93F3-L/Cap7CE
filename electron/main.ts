@@ -66,7 +66,7 @@ import { resolveStableUiDefaultWindowBounds, STABLE_UI_LAYOUT_FILE_NAME, STABLE_
 import { StableWindowRuntime } from "./stableWindowRuntime";
 import { getStablePreviewContentChrome, StablePreviewWindowSizing } from "./stablePreviewWindowSizing";
 import { createBrowserWindowWithDiagnostics, type BrowserWindowSurface } from "./browserWindowDiagnostics";
-import { createSystemNotificationService } from "./systemNotificationService";
+import { createSystemNotificationService, shouldShowCacheCompletionNotification } from "./systemNotificationService";
 import { registerSettingsWindowIpc, SettingsWindowController, SettingsWindowLayoutStore } from "./settingsWindowHost";
 import { createSettingsDataBroadcaster } from "./settingsDataBroadcast";
 import { closePdfPreviewSession, openPdfPreviewSession, renderPdfPreviewPage } from "./pdfPreviewService";
@@ -168,14 +168,12 @@ let activeSkimFolderStatsTask: { sessionId: string; path: string; cancelled: boo
 let activeFileInfoFolderStatsTask: { taskId: string; path: string; cancelled: boolean } | null = null;
 let latestSkimFolderStatsUpdate: ({ sessionId: string; path: string } & Awaited<ReturnType<typeof collectSkimFolderStats>>) | null = null;
 let cacheNotificationBatchBaseline: Pick<ThumbnailOptimizationStatus, "processedCount" | "failedCount" | "activeDurationMs"> | null = null;
-let lastCacheCompletionNotificationAt = 0;
 const previewSourceFallbackExtensions = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp"]);
 type Cap7CEShellState = "standby" | "normal";
 const shellWindowStates = new Set<Cap7CEShellState>(["standby", "normal"]);
 const standbyVisualLengthPx = 180;
 const standbyInteractionThicknessPx = 15;
 const backgroundTaskNotificationMinimumMs = 60_000;
-const cacheCompletionNotificationCooldownMs = 30 * 60_000;
 
 const toThumbnailOptimizationCandidates = (images: ScannedImageFile[]): ThumbnailOptimizationCandidate[] => (
   images.map((image) => ({
@@ -1014,10 +1012,6 @@ const updateTrayMenu = () => {
   ]));
 };
 
-const isMainWindowInBackground = () => (
-  Boolean(mainWindow && !mainWindow.isDestroyed() && !mainWindow.isFocused())
-);
-
 const systemNotificationService = createSystemNotificationService({
   platform: process.platform,
   isPackaged: app.isPackaged,
@@ -1072,22 +1066,18 @@ const handleThumbnailOptimizationStatusForNotification = (status: ThumbnailOptim
   const processedCount = status.processedCount - baseline.processedCount;
   const failedCount = status.failedCount - baseline.failedCount;
   const activeDurationMs = status.activeDurationMs - baseline.activeDurationMs;
-  const now = Date.now();
-  if (
-    processedCount <= 0
-    || activeDurationMs < backgroundTaskNotificationMinimumMs
-    || !isMainWindowInBackground()
-    || now - lastCacheCompletionNotificationAt < cacheCompletionNotificationCooldownMs
-  ) {
+  if (!shouldShowCacheCompletionNotification({
+    processedCount,
+    activeDurationMs,
+    minimumActiveDurationMs: backgroundTaskNotificationMinimumMs
+  })) {
     return;
   }
 
   const content = failedCount > 0
     ? t("notification.cacheCompletedWithFailures", { count: processedCount, failed: failedCount })
     : t("notification.cacheCompleted", { count: processedCount });
-  if (showSystemNotification(t("notification.cacheCompletedTitle"), content)) {
-    lastCacheCompletionNotificationAt = now;
-  }
+  showSystemNotification(t("notification.cacheCompletedTitle"), content);
 };
 
 const createAppTray = () => {

@@ -1,11 +1,30 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { createSystemNotificationService } = require("../dist-electron/systemNotificationService.js");
+const {
+  createSystemNotificationService,
+  shouldShowCacheCompletionNotification
+} = require("../dist-electron/systemNotificationService.js");
 
 const root = path.resolve(__dirname, "..");
 const mainSource = fs.readFileSync(path.join(root, "electron", "main.ts"), "utf8");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+
+assert.equal(shouldShowCacheCompletionNotification({
+  processedCount: 1,
+  activeDurationMs: 60_000,
+  minimumActiveDurationMs: 60_000
+}), true);
+assert.equal(shouldShowCacheCompletionNotification({
+  processedCount: 0,
+  activeDurationMs: 60_000,
+  minimumActiveDurationMs: 60_000
+}), false);
+assert.equal(shouldShowCacheCompletionNotification({
+  processedCount: 1,
+  activeDurationMs: 59_999,
+  minimumActiveDurationMs: 60_000
+}), false);
 
 const createHarness = ({
   platform = "win32",
@@ -129,6 +148,7 @@ assert.match(mainSource, /createNotification: \(options\) => new Notification\(o
 assert.match(mainSource, /onInstallerOpened: \(version\) => appUpdateInstallIntentStore\.record\(version\)/u);
 assert.match(mainSource, /notification\.updateCompletedTitle[\s\S]*notification\.updateCompletedContent[\s\S]*force: true[\s\S]*appUpdateInstallIntentStore\.clear\(version\)/u);
 assert.doesNotMatch(mainSource, /displayBalloon|balloon-click/u);
+assert.doesNotMatch(mainSource, /isMainWindowInBackground|cacheCompletionNotificationCooldownMs|lastCacheCompletionNotificationAt/u);
 
 console.log(JSON.stringify({
   packagedWindowsToastOnly: true,
@@ -137,6 +157,8 @@ console.log(JSON.stringify({
   notificationActivationOpensSettings: true,
   diagnosticContentRedactionVerified: true,
   installerUpdateCompletionNotificationWired: true,
+  cacheCompletionNotificationPolicyVerified: true,
+  cacheCompletionFocusAndCooldownSuppressionRemoved: true,
   trayBalloonFallbackRemoved: true,
   appUserModelIdMatchesInstaller: true
 }));
