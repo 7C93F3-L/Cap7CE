@@ -81,8 +81,8 @@ assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-sea
 assert.match(foundationStyles, /\.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-search-surface\);/u);
 assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-stable-titlebar,[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?\.cap-stable-titlebar\.theme-dark,[\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 24%\);/u);
 assert.match(stableResultsStyles, /\.cap-stable-search-slot input::placeholder \{ color: var\(--cap-stable-search-placeholder\); opacity: 1; \}/u);
-assert.match(stableResultsStyles, /\.cap-stable-search-clear \{[^}]*width: 24px; height: 24px;[^}]*margin-right: -7px;[^}]*border-radius: 50%;[^}]*color: var\(--cap-stable-text\);[^}]*background: color-mix\(in srgb, currentColor 8%, transparent\);/u);
-assert.match(stableResultsStyles, /\.cap-stable-search-clear:hover \{ background: color-mix\(in srgb, currentColor 14%, transparent\); \}[\s\S]*?\.cap-stable-search-clear-icon[^}]*width: 16px; height: 16px;/u);
+assert.match(stableResultsStyles, /\.cap-stable-search-clear \{[^}]*width: 24px; height: 24px;[^}]*margin-right: -7px;[^}]*border-radius: 50%;[^}]*color: var\(--cap-stable-text\);[^}]*background: var\(--cap-stable-hover\);[^}]*transition: var\(--cap-stable-control-transition\);/u);
+assert.match(stableResultsStyles, /\.cap-stable-search-clear:hover \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-search-clear:active \{ background: var\(--cap-stable-control-pressed\); \}[\s\S]*?\.cap-stable-search-clear-icon[^}]*width: 16px; height: 16px;/u);
 assert.match(stableResultsStyles, /@container \(max-width: 180px\) \{ \.cap-stable-search-clear \{ display: none; \} \}/u);
 assert.match(stableResultsStyles, /\.app \.cap-stable-search-slot input:focus,[\s\S]*?input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 assert.doesNotMatch(stableResultsStyles, /cap-stable-search-feedback|is-showing-feedback/u);

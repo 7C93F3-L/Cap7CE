@@ -105,7 +105,7 @@ assert.match(navigationStateStyles, /\.preview-window-stable-ui \{[\s\S]*?--cap-
 assert.match(sidebarStyles, /\.preview-sidebar-header \{[^}]*transition: var\(--cap-stable-control-transition\);[^}]*\}[\s\S]*?\.preview-sidebar-header:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-hover\); \}[\s\S]*?\.preview-sidebar-header:active \{ background: var\(--cap-stable-control-hover\); \}/u);
 assert.match(materialContrastStyles, /\.preview-window-stable-ui\.theme-dark\[data-window-material="acrylic"\] \{[^}]*--cap-stable-control-hover: rgb\(255 255 255 \/ 18%\);[^}]*--cap-stable-control-pressed: rgb\(255 255 255 \/ 24%\);/u);
 assert.match(materialContrastStyles, /\.preview-window-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\] \{[^}]*--cap-stable-hover: rgb\(31 31 31 \/ 10%\);[^}]*--cap-stable-control-hover: rgb\(31 31 31 \/ 15%\);[^}]*--cap-stable-control-pressed: rgb\(31 31 31 \/ 20%\);/u);
-assert.match(materialContrastStyles, /\.preview-window-stable-ui\[data-window-material="mica"\] \{[^}]*--cap-stable-hover: rgb\(31 31 31 \/ 10%\);[^}]*\}[\s\S]*?\.preview-window-stable-ui\.theme-dark\[data-window-material="mica"\] \{[^}]*--cap-stable-hover: rgb\(255 255 255 \/ 12%\);/u);
+assert.match(materialContrastStyles, /\.preview-window-stable-ui:not\(\.theme-dark\)\[data-window-material="mica"\] \{[^}]*--cap-stable-hover: var\(--cap-mica-light-hover-surface\);[^}]*\}[\s\S]*?\.preview-window-stable-ui\.theme-dark\[data-window-material="mica"\] \{[^}]*--cap-stable-hover: rgb\(255 255 255 \/ 12%\);/u);
 assert.match(fileInfoStyles, /\.preview-window-stable-ui\.theme-dark \{[^}]*--preview-stable-card: rgb\(24 24 24 \/ 52%\);/u);
 assert.match(sidebarStyles, /preview-sidebar-actions\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
 assert.match(sidebarStyles, /preview-sidebar-actions button:hover \{ color: var\(--preview-action-hover-text\); background: var\(--cap-accent-gradient\); \}/u);
@@ -123,7 +123,8 @@ assert.match(previewSource, /className=\{`app theme-\$\{effectiveTheme\}[\s\S]*?
 assert.match(previewSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(previewSource, /<StablePreviewTitlebar[\s\S]*?windowMaterial=\{windowMaterial\}/u);
 assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
-assert.match(materialContrastStyles, /\.preview-window-stable-ui\[data-window-material="mica"\][\s\S]*?--preview-stable-card: #ffffff[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
+assert.match(materialContrastStyles, /\.preview-window-stable-ui:not\(\.theme-dark\)\[data-window-material="mica"\] \{[\s\S]*?--preview-stable-surface: var\(--cap-mica-light-content-surface\);[\s\S]*?--preview-stable-card: var\(--cap-mica-light-card-surface\);[\s\S]*?--preview-stable-material-border: var\(--cap-mica-light-border\);[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
+assert.match(materialContrastStyles, /\.preview-window-stable-ui:not\(\.theme-dark\)\[data-window-material="mica"\] \.preview-information-sidebar \{[\s\S]*?--preview-sidebar-control: var\(--cap-mica-light-hover-surface\);/u);
 assert.match(materialContrastStyles, /data-window-material="mica"\][^\n]*:is\([^)]*\.preview-sidebar-section[^)]*\.preview-embedded-metadata-details[^)]*\)[\s\S]*?box-shadow: inset 0 0 0 1px var\(--preview-stable-material-border\)/u);
 assert.match(previewSource, /index\.updateManualKeywords\([\s\S]*?previewData\.filePath[\s\S]*?keywords\.join\(","\)[\s\S]*?manualKeywords: normalizedKeywords/u);
 assert.match(manualMetadataRuntimeSource, /isSingleSenderAllowed: \(event, filePath\)[\s\S]*?event\.sender === previewWindow\.webContents[\s\S]*?activePreviewData\.filePath/u);
