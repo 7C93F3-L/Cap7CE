@@ -1,7 +1,7 @@
 .cap-stable-skim-slot { --cap-stable-skim-hover-surface: var(--cap-stable-surface); --cap-stable-selected-surface: light-dark(rgb(255 255 255 / 68%), rgb(26 26 26 / 68%)); display: none; grid-template-rows: 40px 18px minmax(0, 1fr); }
 .cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { display: grid; }
 .cap-stable-skim-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 32px 32px; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; }
-.cap-stable-skim-tool { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; color: inherit; background: transparent; }
+.cap-stable-skim-tool { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; color: inherit; background: transparent; transition: var(--cap-stable-control-transition); }
 .cap-stable-skim-exit-tool { display: none; }
 .cap-stable-skim-tool:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-stable-skim-tool:active { background: var(--cap-stable-control-pressed); }
@@ -10,9 +10,11 @@
 .cap-stable-skim-tool .cap-stable-sort-icon { transform: none; }
 .cap-stable-skim-address { display: flex; align-items: center; min-width: 0; height: 32px; box-sizing: border-box; padding: 2px 9px; border-radius: var(--cap-stable-radius-pill); color: var(--cap-stable-text-muted); background: var(--cap-stable-skim-address-surface, var(--cap-stable-surface-soft)); cursor: text; overflow: hidden; }
 .cap-stable-skim-address > button,
-.cap-stable-skim-address > span > button { min-width: 0; padding: 3px 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; cursor: default; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap-stable-skim-address > span > button { min-width: 0; padding: 3px 4px; border: 0; border-radius: 6px; color: inherit; background: transparent; cursor: default; font: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: var(--cap-stable-control-transition); }
 .cap-stable-skim-address > button:hover,
 .cap-stable-skim-address > span > button:hover { color: var(--cap-stable-text); background: var(--cap-stable-hover); } .cap-stable-skim-address > button:focus-visible, .cap-stable-skim-address > span > button:focus-visible, .cap-stable-skim-address input:focus, .cap-stable-skim-address input:focus-visible { outline: none; outline-offset: 0; box-shadow: none; }
+.cap-stable-skim-address > button:active,
+.cap-stable-skim-address > span > button:active { background: var(--cap-stable-control-hover); }
 .cap-stable-skim-address > span { display: flex; min-width: 0; align-items: center; }
 .cap-stable-skim-address > span > span { flex: 0 0 auto; opacity: .55; } .cap-stable-skim-address > .cap-stable-skim-address-hit-area { min-width: 24px; height: 100%; flex: 0 0 24px; }
 .cap-stable-skim-address input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--cap-stable-text); background: transparent; cursor: text; font: inherit; }

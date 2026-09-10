@@ -1,6 +1,8 @@
 .cap-stable-ui,
 .cap-stable-titlebar,
-.cap-settings-window-foundation {
+.cap-settings-window-foundation,
+.preview-window-stable-ui {
+  --cap-stable-hover: rgb(31 31 31 / 8%);
   --cap-stable-navigation-state: rgb(255 255 255 / 50%);
   --cap-stable-control-hover: rgb(31 31 31 / 12%);
   --cap-stable-control-pressed: rgb(31 31 31 / 17%);
@@ -12,7 +14,9 @@
 
 .cap-stable-ui.theme-dark,
 .cap-stable-titlebar.theme-dark,
-.cap-settings-window-foundation.theme-dark {
+.cap-settings-window-foundation.theme-dark,
+.preview-window-stable-ui.theme-dark {
+  --cap-stable-hover: rgb(255 255 255 / 8%);
   --cap-stable-navigation-state: rgb(0 0 0 / 24%);
   --cap-stable-control-hover: rgb(255 255 255 / 14%);
   --cap-stable-control-pressed: rgb(255 255 255 / 20%);

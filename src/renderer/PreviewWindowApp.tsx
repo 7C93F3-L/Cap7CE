@@ -22,7 +22,6 @@ import { getTextColorForBackground } from "./appearance";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
 import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
-import "./stable-ui/StableMaterialContrast.css";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
   isMaximized: false,

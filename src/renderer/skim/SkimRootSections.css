@@ -27,6 +27,7 @@
   font-size: var(--cap-stable-section-font-size);
   line-height: 22px;
   text-align: left;
+  transition: var(--cap-stable-control-transition);
 }
 
 .cap-skim-root-group-header:hover,
@@ -41,6 +42,10 @@
   height: 14px;
   margin-right: 5px;
   transition: transform 140ms ease;
+}
+
+.cap-skim-root-group-header:active {
+  background: var(--cap-stable-control-hover);
 }
 
 .cap-skim-root-group.is-collapsed .cap-skim-root-group-chevron {

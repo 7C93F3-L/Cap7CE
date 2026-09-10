@@ -20,6 +20,7 @@ void (async () => {
   const titlebarPortalSource = read("src/renderer/window-presentation/WindowTitlebarPortal.tsx");
   const pinButtonSource = read("src/renderer/window-presentation/WindowPinButton.tsx");
   const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
+  const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
   const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
   const accessibilityStyles = read("src/renderer/stable-ui/StableUiAccessibility.css");
   const stableUiStyles = `${foundationStyles}\n${accessibilityStyles}`;
@@ -66,6 +67,10 @@ void (async () => {
     }
   }
   assert.match(foundationStyles, /\.cap-stable-ui\.theme-dark[\s\S]*?color-scheme:\s*dark/u);
+  assert.match(foundationStyles, /^@import "\.\/StableUiAccessibility\.css"; @import "\.\/StableNavigationState\.css"; @import "\.\/StableMaterialContrast\.css";/u);
+  assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation,[\s\S]*?\.preview-window-stable-ui \{[\s\S]*?--cap-stable-hover: rgb\(31 31 31 \/ 8%\);[\s\S]*?--cap-stable-control-hover: rgb\(31 31 31 \/ 12%\);[\s\S]*?--cap-stable-control-pressed: rgb\(31 31 31 \/ 17%\);/u);
+  assert.match(navigationStateStyles, /\.preview-window-stable-ui\.theme-dark \{[\s\S]*?--cap-stable-hover: rgb\(255 255 255 \/ 8%\);[\s\S]*?--cap-stable-control-hover: rgb\(255 255 255 \/ 14%\);[\s\S]*?--cap-stable-control-pressed: rgb\(255 255 255 \/ 20%\);/u);
+  assert.doesNotMatch(foundationStyles, /--cap-stable-(?:hover|control-hover|control-pressed):/u);
   assert.match(rendererEntry, /import "\.\/styles\.css";/u);
   assert.match(globalStyles, /^@import "\.\/typography\.css";/u);
   assert.match(typographyStyles, /--cap-ui-font-base:\s*13px[\s\S]*?--cap-ui-font-page-title:[\s\S]*?--cap-ui-font-heading:[\s\S]*?--cap-ui-font-caption:/u);

@@ -16,6 +16,11 @@
   --cap-stable-directory-more-hover: rgb(255 255 255 / 24%);
 }
 
+.preview-window-stable-ui.theme-dark[data-window-material="acrylic"] {
+  --cap-stable-control-hover: rgb(255 255 255 / 18%);
+  --cap-stable-control-pressed: rgb(255 255 255 / 24%);
+}
+
 .cap-stable-titlebar.theme-dark[data-window-material="acrylic"] {
   --cap-stable-search-surface: rgb(0 0 0 / 42%);
 }
@@ -55,6 +60,14 @@
   --cap-stable-navigation-state: rgb(0 0 0 / 42%);
   --cap-stable-search-surface: var(--cap-stable-navigation-state);
   --cap-stable-material-border: rgb(255 255 255 / 12%);
+}
+
+.preview-window-stable-ui[data-window-material="mica"] {
+  --cap-stable-hover: rgb(31 31 31 / 10%);
+}
+
+.preview-window-stable-ui.theme-dark[data-window-material="mica"] {
+  --cap-stable-hover: rgb(255 255 255 / 12%);
 }
 
 .cap-stable-ui[data-window-material="mica"] :is(.cap-stable-results-slot, .cap-stable-skim-slot) {

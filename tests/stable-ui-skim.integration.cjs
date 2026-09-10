@@ -79,6 +79,7 @@ assert.doesNotMatch(rootSectionsSource, /[›⌄]/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-sections\s*\{[\s\S]*?display: grid/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-group-grid\s*\{[\s\S]*?width: 100%;[\s\S]*?repeat\(auto-fill, minmax\(var\(--cap-grid-target-size, 120px\), 1fr\)\)/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-group-header\s*\{[\s\S]*?width: 100%;[\s\S]*?cursor: pointer/u);
+assert.match(rootSectionsStyles, /\.cap-skim-root-group-header\s*\{[^}]*transition: var\(--cap-stable-control-transition\);[^}]*\}[\s\S]*?\.cap-skim-root-group-header:hover,[\s\S]*?background: var\(--cap-stable-hover\);[\s\S]*?\.cap-skim-root-group-header:active \{\s*background: var\(--cap-stable-control-hover\);\s*\}/u);
 assert.match(rootSectionsStyles, /\.cap-skim-root-group-chevron\s*\{[\s\S]*?width: 14px;[\s\S]*?height: 14px;[\s\S]*?\.cap-skim-root-group\.is-collapsed \.cap-skim-root-group-chevron\s*\{[\s\S]*?rotate\(-90deg\)/u);
 assert.match(rootSectionsStyles, /\.cap-skim-view\.is-horizontal \.cap-skim-root-sections\s*\{[\s\S]*?display: flex/u);
 assert.match(skimViewStyles, /\.cap-stable-skim-content \.cap-skim-grid-virtualized\s*\{\s*display: block;\s*\}/u);
@@ -107,12 +108,14 @@ assert.match(panelStyles, /--cap-stable-selected-surface: light-dark\(rgb\(255 2
 assert.match(panelStyles, /background: var\(--cap-stable-skim-address-surface, var\(--cap-stable-surface-soft\)\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-address \{[^}]*cursor: text;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > button,[\s\S]*?\.cap-stable-skim-address > span > button \{[^}]*cursor: default;/u);
+assert.match(panelStyles, /\.cap-stable-skim-address > button,[\s\S]*?\.cap-stable-skim-address > span > button \{[^}]*transition: var\(--cap-stable-control-transition\);[^}]*\}[\s\S]*?button:hover,[\s\S]*?background: var\(--cap-stable-hover\);[\s\S]*?button:active,[\s\S]*?background: var\(--cap-stable-control-hover\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-address input \{[^}]*cursor: text;/u);
 for (const marker of ["Error invoking remote method", ".replace(/^(?:Error:\\s*)+/iu", ".trim()"] ) {
   assert.ok(formattingSource.includes(marker), `Display-message formatting is missing ${marker}.`);
 }
 assert.match(panelStyles, /\.cap-stable-skim-content \.empty-result-row \{ color: var\(--cap-stable-text-muted\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-tool \.cap-stable-sort-icon \{ transform: none; \}/u);
+assert.match(panelStyles, /\.cap-stable-skim-tool \{[^}]*transition: var\(--cap-stable-control-transition\);/u);
 assert.match(panelStyles, /\.cap-stable-skim-tool:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-skim-tool:active \{ background: var\(--cap-stable-control-pressed\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-exit-tool \{ display: none; \}[\s\S]*?@media \(max-width: 560px\)[\s\S]*?\.cap-stable-skim-exit-tool \{ display: grid; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);

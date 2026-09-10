@@ -1,4 +1,4 @@
-@import "./StableUiAccessibility.css"; @import "./StableMaterialContrast.css";
+@import "./StableUiAccessibility.css"; @import "./StableNavigationState.css"; @import "./StableMaterialContrast.css";
 
 .cap-stable-ui, .cap-stable-titlebar {
   --cap-stable-titlebar-height: env(titlebar-area-height, 40px);
@@ -19,7 +19,6 @@
   --cap-stable-surface-soft: rgb(255 255 255 / 30%);
   --cap-stable-grid-surface: var(--cap-stable-surface-soft);
   --cap-stable-flyout-surface: rgb(246 246 246 / 80%);
-  --cap-stable-hover: rgb(31 31 31 / 8%);
   --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 22%, transparent);
   --cap-stable-focus: var(--accent-color, #68c3c0);
   --cap-stable-caption-hover: rgb(0 0 0 / 10%);
@@ -39,7 +38,6 @@
     --cap-stable-surface: rgb(26 26 26 / 58%);
     --cap-stable-surface-soft: rgb(26 26 26 / 36%);
     --cap-stable-flyout-surface: rgb(32 32 32 / 80%);
-    --cap-stable-hover: rgb(255 255 255 / 8%);
     --cap-stable-selected: color-mix(in srgb, var(--theme-color, #7c93f3) 34%, transparent);
     --cap-stable-caption-hover: rgb(255 255 255 / 10%);
     color-scheme: dark;
