@@ -235,6 +235,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(settingsAppSource, /category === "diagnostics"[\s\S]*?settings\.details/u);
   assert.match(runtimeDiagnosticsSource, /if \(stableUi\)[\s\S]*?cap-stable-runtime-diagnostics-list/u);
   assert.match(stableRuntimeDiagnosticStyles, /cap-stable-runtime-diagnostics-row[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?@media \(max-width: 900px\)/u);
+  assert.match(stableRuntimeDiagnosticStyles, /cap-stable-settings-runtime-info > div:last-child\s*\{\s*border-bottom: 0;\s*\}/u);
   assert.match(settingsControllerSource, /previewAppearanceColors[\s\S]*?setPreferences/u);
   assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[^}]*font-size:\s*(?:14|15|16)px/u);

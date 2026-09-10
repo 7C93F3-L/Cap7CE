@@ -50,6 +50,10 @@
   border-bottom: 1px solid var(--stable-settings-border);
 }
 
+.cap-stable-settings-runtime-info > div:last-child {
+  border-bottom: 0;
+}
+
 .cap-stable-settings-runtime-info dt,
 .cap-stable-settings-runtime-info dd {
   min-width: 0;
