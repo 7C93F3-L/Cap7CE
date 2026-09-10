@@ -40,7 +40,7 @@
 .cap-stable-directory-message { padding: 8px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); text-align: center; }
 .cap-stable-sidebar-footer { position: absolute; right: 6px; bottom: 6px; left: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-top: 4px; padding-top: 4px; }
 .cap-stable-sidebar-footer button { display: grid; place-items: center; width: 36px; height: 36px; box-sizing: border-box; padding: 0; border: 0; border-radius: 10px; color: inherit; background: transparent; transition: var(--cap-stable-control-transition); }
-.cap-stable-sidebar-footer button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); } .cap-stable-sidebar-footer button:active { background: var(--cap-stable-control-pressed); } .cap-stable-sidebar-footer button.is-active { background: var(--cap-stable-navigation-state); }
+.cap-stable-sidebar-footer button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); } .cap-stable-sidebar-footer button:active { background: var(--cap-stable-control-pressed); } .cap-stable-sidebar-footer button.is-active { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
 .cap-stable-footer-icon { width: 20px; height: 20px; } .cap-stable-skim-icon { width: 22px; height: 22px; }
 .cap-stable-settings-button > .cap-stable-footer-icon { grid-area: 1 / 1; } .cap-stable-settings-icon-active { display: none; }
 .cap-stable-settings-button:active .cap-stable-settings-icon { display: none; } .cap-stable-settings-button:active .cap-stable-settings-icon-active { display: block; }
