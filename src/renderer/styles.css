@@ -1,4 +1,4 @@
-@import "./typography.css";
+@import "./typography.css"; @import "./accentGradient.css";
 :root {
   --radius-panel: 16px;
   --radius-menu: 14px;
@@ -49,13 +49,6 @@ button {
   cursor: default;
   background: transparent;
   color: inherit;
-}
-
-.app,
-.cap-settings-window-foundation,
-.context-menu,
-.responsive-file-context-menu {
-  --cap-accent-gradient: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
 }
 
 .app {

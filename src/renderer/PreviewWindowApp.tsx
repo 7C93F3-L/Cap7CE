@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { AppearanceColors, ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats, ThemeMode, UiFontSize, WindowMaterial } from "../shared/types";
+import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPreviewFallbackReason, MobiPreviewFallbackReason, PreviewWindowControlState, PreviewWindowData, SkimFolderStats } from "../shared/types";
 import CustomScrollbar from "./CustomScrollbar";
 import SvgIcon from "./components/SvgIcon";
 import { getFormatIconSvg } from "./formatIcons";
@@ -18,10 +18,8 @@ import { getFileContextShortcutAction } from "./fileContextActions";
 import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
-import { getTextColorForBackground } from "./appearance";
-import { defaultUiFontSize, useUiFontSize } from "./typography";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
-import { useSystemThemeMode } from "./controllers/useSystemThemeMode";
+import { usePreviewAppearance } from "./preview/usePreviewAppearance";
 
 const defaultPreviewWindowControlState: PreviewWindowControlState = {
   isMaximized: false,
@@ -94,10 +92,7 @@ const getMobiFallbackMessage = (reason: MobiPreviewFallbackReason) => {
 
 const PreviewWindowApp = () => {
   const [previewData, setPreviewData] = useState<PreviewWindowData | null>(null);
-  const [themePreference, setThemePreference] = useState<ThemeMode | null>(null);
-  const [appearanceColors, setAppearanceColors] = useState<AppearanceColors | null>(null);
-  const [uiFontSize, setUiFontSize] = useState<UiFontSize>(defaultUiFontSize);
-  const [windowMaterial, setWindowMaterial] = useState<WindowMaterial>("acrylic");
+  const { effectiveTheme, themeStyle, windowMaterial } = usePreviewAppearance(previewData);
   const [displaySrc, setDisplaySrc] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -126,8 +121,6 @@ const PreviewWindowApp = () => {
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
   const pendingLongSpaceActionRef = useRef<PreviewWindowData | null>(null);
   const previewKeywordSavePendingRef = useRef(false);
-  const systemTheme = useSystemThemeMode();
-  const uiFontStyle = useUiFontSize(uiFontSize);
   const closePreview = useCallback(() => {
     mediaRef.current?.pause();
     if (previewData?.provider === "folderInfo") {
@@ -205,22 +198,6 @@ const PreviewWindowApp = () => {
     });
     window.cap7ce?.preview.requestData();
     return () => unsubscribe?.();
-  }, []);
-
-  useEffect(() => {
-    void window.cap7ce?.preferences.get().then((preferences) => {
-      if (!preferences) return;
-      setThemePreference(preferences.themePreference);
-      setAppearanceColors(preferences.appearanceColors);
-      setUiFontSize(preferences.uiFontSize);
-      setWindowMaterial(preferences.windowMaterial);
-    });
-    return window.cap7ce?.preferences.onChanged((preferences) => {
-      setThemePreference(preferences.themePreference);
-      setAppearanceColors(preferences.appearanceColors);
-      setUiFontSize(preferences.uiFontSize);
-      setWindowMaterial(preferences.windowMaterial);
-    });
   }, []);
 
   useEffect(() => window.cap7ce?.preview.onEmbeddedMetadata((update) => {
@@ -467,28 +444,6 @@ const PreviewWindowApp = () => {
       setPreviewKeywordSavePending(false);
     }
   }, [previewData]);
-
-  const effectiveTheme = themePreference === null
-    ? previewData?.theme ?? systemTheme
-    : themePreference === "system" ? systemTheme : themePreference;
-  const effectiveAppearanceColors = appearanceColors ?? previewData?.appearanceColors;
-  const themeStyle = useMemo(() => {
-    if (!effectiveAppearanceColors) {
-      return {} as CSSProperties;
-    }
-    const isDark = effectiveTheme === "dark";
-    return {
-      ...uiFontStyle,
-      "--theme-color": effectiveAppearanceColors.themeColor,
-      "--accent-color": effectiveAppearanceColors.accentColor,
-      "--preview-action-hover-text": getTextColorForBackground(effectiveAppearanceColors.themeColor, effectiveAppearanceColors.accentColor),
-      "--app-bg": isDark ? "#191919" : "#ffffff",
-      "--panel-bg": isDark ? "#282828" : "#f2f2f2",
-      "--text-main": isDark ? "#b2b2b2" : "#111111",
-      "--icon-muted": isDark ? "#4f4f4f" : "#777777",
-      "--border-soft": isDark ? "#2a2a2a" : "#ececec"
-    } as CSSProperties;
-  }, [effectiveAppearanceColors, effectiveTheme, uiFontStyle]);
 
   const togglePreviewAlwaysOnTop = () => {
     void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);

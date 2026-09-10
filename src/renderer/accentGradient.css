@@ -1,0 +1,6 @@
+.app,
+.cap-settings-window-foundation,
+.context-menu,
+.responsive-file-context-menu {
+  --cap-accent-gradient: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
+}

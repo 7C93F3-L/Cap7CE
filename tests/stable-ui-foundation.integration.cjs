@@ -15,6 +15,7 @@ void (async () => {
 
   const rendererEntry = read("src/renderer/main.tsx");
   const globalStyles = read("src/renderer/styles.css");
+  const accentGradientStyles = read("src/renderer/accentGradient.css");
   const typographyStyles = read("src/renderer/typography.css");
   const typographySource = read("src/renderer/typography.ts");
   const mainSource = read("electron/main.ts");
@@ -71,8 +72,9 @@ void (async () => {
     }
   }
   assert.match(foundationStyles, /\.cap-stable-ui\.theme-dark[\s\S]*?color-scheme:\s*dark/u);
-  assert.match(globalStyles, /\.app,\s*\.cap-settings-window-foundation,\s*\.context-menu,\s*\.responsive-file-context-menu \{\s*--cap-accent-gradient: linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);\s*\}/u);
-  assert.equal((globalStyles.match(/--cap-accent-gradient:/gu) || []).length, 1);
+  assert.match(globalStyles, /@import "\.\/accentGradient\.css";/u);
+  assert.match(accentGradientStyles, /\.app,\s*\.cap-settings-window-foundation,\s*\.context-menu,\s*\.responsive-file-context-menu \{\s*--cap-accent-gradient: linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);\s*\}/u);
+  assert.equal((accentGradientStyles.match(/--cap-accent-gradient:/gu) || []).length, 1);
   const intentionalDirectionalGradients = new Set([
     "src/renderer/styles.css|--standby-flow-gradient:",
     "src/renderer/LineWindowApp.css|background:",
@@ -88,7 +90,7 @@ void (async () => {
       const declarationEnd = source.indexOf(";", gradientIndex);
       const declaration = source.slice(declarationStart, declarationEnd >= 0 ? declarationEnd + 1 : source.length).trim();
       const usesAccentColors = /var\(--(?:theme-color|accent-color|stable-settings-theme-color|stable-settings-focus)\)/u.test(declaration);
-      const isSharedGradient = relativePath === "src/renderer/styles.css" && declaration.startsWith("--cap-accent-gradient:");
+      const isSharedGradient = relativePath === "src/renderer/accentGradient.css" && declaration.startsWith("--cap-accent-gradient:");
       const isIntentionalDirectionalGradient = [...intentionalDirectionalGradients].some((entry) => {
         const [allowedPath, declarationPrefix] = entry.split("|");
         return relativePath === allowedPath && declaration.startsWith(declarationPrefix);

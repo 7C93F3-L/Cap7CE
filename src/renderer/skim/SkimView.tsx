@@ -43,7 +43,6 @@ import type {
 } from "../../shared/types";
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
-
 const deriveSkimSidebarFolderPaths = (entries: SkimBrowseEntry[]) => {
   const seen = new Set<string>();
   const paths: string[] = [];
