@@ -122,6 +122,7 @@ assert.match(panelStyles, /\.cap-stable-skim-tool \{[^}]*transition: var\(--cap-
 assert.match(panelStyles, /\.cap-stable-skim-tool:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-skim-tool:active \{ background: var\(--cap-stable-control-pressed\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-exit-tool \{ display: none; \}[\s\S]*?@media \(max-width: 560px\)[\s\S]*?\.cap-stable-skim-exit-tool \{ display: grid; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
+assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="mica"\] \.cap-stable-skim-slot \{[^}]*--cap-stable-skim-hover-surface: rgb\(30 30 30 \/ 96%\);[^}]*--cap-stable-selected-surface: rgb\(20 20 20 \/ 96%\);/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\] \.cap-skim-root-group-header:where\(:hover, :focus-visible\) \{\s*background: var\(--cap-stable-control-hover\);\s*\}[\s\S]*?\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\] \.cap-skim-root-group-header:active \{\s*background: var\(--cap-stable-control-pressed\);\s*\}/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > \.cap-stable-skim-address-hit-area\s*\{[^}]*min-width: 24px;[^}]*flex: 0 0 24px;/u);
 assert.match(panelStyles, /\.cap-stable-skim-toolbar \{[^}]*padding: 4px 4px 4px 10px;/u);

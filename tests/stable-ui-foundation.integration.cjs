@@ -120,10 +120,10 @@ void (async () => {
   for (const token of ["--cap-mica-light-content-surface", "--cap-mica-light-control-surface", "--cap-mica-light-card-surface", "--cap-mica-light-search-surface", "--cap-mica-light-hover-surface", "--cap-mica-light-border"]) {
     assert.equal((materialContrastStyles.match(new RegExp(`${token}:`, "gu")) ?? []).length, 1, `${token} must have one shared definition.`);
   }
-  assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="mica"\][\s\S]*?--cap-stable-search-surface: var\(--cap-stable-navigation-state\)/u);
+  assert.match(materialContrastStyles, /\.cap-stable-ui\.theme-dark\[data-window-material="mica"\],[\s\S]*?\.cap-stable-titlebar\.theme-dark\[data-window-material="mica"\] \{[\s\S]*?--cap-stable-surface: rgb\(24 24 24 \/ 96%\);[\s\S]*?--cap-stable-surface-soft: rgb\(40 40 40 \/ 92%\);[\s\S]*?--cap-stable-search-surface: var\(--cap-stable-surface\);/u);
   assert.match(materialContrastStyles, /--cap-stable-flyout-surface: color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\)[\s\S]*?cap-stable-sidebar-flyout button\.is-selected[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\)/u);
   assert.match(materialContrastStyles, /\.cap-stable-titlebar\[data-window-material="mica"\] \.cap-stable-search-slot,\s*\.cap-stable-ui\[data-window-material="mica"\] \.cap-stable-skim-address,\s*\.cap-settings-window-foundation\[data-window-material="mica"\] \.cap-stable-settings-search \{\s*box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\);\s*\}/u);
-  assert.match(materialContrastStyles, /:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-stable-skim-slot\s*\{\s*--cap-stable-skim-hover-surface: rgb\(31 31 31 \/ 5%\);\s*--cap-stable-selected-surface: rgb\(31 31 31 \/ 8%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 46%\)/u);
+  assert.match(materialContrastStyles, /:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-stable-skim-slot\s*\{\s*--cap-stable-skim-hover-surface: rgb\(31 31 31 \/ 5%\);\s*--cap-stable-selected-surface: rgb\(31 31 31 \/ 8%\);[\s\S]*?theme-dark[\s\S]*?--cap-stable-skim-hover-surface: rgb\(30 30 30 \/ 96%\);[\s\S]*?--cap-stable-selected-surface: rgb\(20 20 20 \/ 96%\)/u);
   assert.match(foundationStyles, /font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-stable-font-size\)/u);
   assert.doesNotMatch(foundationStyles, /@media\s*\(prefers-color-scheme:\s*dark\)/u);
   assert.match(foundationStyles, /--cap-stable-selected:\s*color-mix\(in srgb, var\(--theme-color/u);
