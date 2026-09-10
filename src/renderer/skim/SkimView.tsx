@@ -38,7 +38,8 @@ import type {
   ResolvedThemeMode,
   SkimBrowseEntry,
   SkimLocationShortcut,
-  SkimPreviewInfo
+  SkimPreviewInfo,
+  WindowMaterial
 } from "../../shared/types";
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
@@ -63,6 +64,7 @@ export interface SkimViewProps {
   isLoading: boolean;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
+  windowMaterial: WindowMaterial;
   isAddingDirectory: boolean;
   onOpenBreadcrumb: (path: string) => void;
   onOpenEntry: (entry: SkimBrowseEntry) => void;
@@ -127,7 +129,7 @@ const SkimEntryVisual = ({ entry, sessionId, scrollContainerRef, fallbackSvg }: 
   );
 };
 
-export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, theme, appearanceColors, isAddingDirectory, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, rootLocations, systemLocationsCollapsed, onToggleSystemLocations, onFeedback, onNativeDragStateChange, active = true }: SkimViewProps) => {
+export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, theme, appearanceColors, windowMaterial, isAddingDirectory, onOpenBreadcrumb, onOpenEntry, onAddEntries, sidebarFolderPaths, sidebarKnownPaths, onAddSidebarFolders, onRemoveSidebarFolders, rootLocations, systemLocationsCollapsed, onToggleSystemLocations, onFeedback, onNativeDragStateChange, active = true }: SkimViewProps) => {
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const gridScrollFrameRef = useRef<number | null>(null);
   const gridResizeFrameRef = useRef<number | null>(null);
@@ -697,7 +699,7 @@ export const SkimView = ({ visualSessionId, entries, currentPath, isLoading, the
       {contextMenu && (
         <ResponsiveSkimContextMenuLayer
           key={`skim:${contextMenu.item.path}:${contextMenu.x}:${contextMenu.y}`}
-          state={contextMenu} theme={theme} appearanceColors={appearanceColors}
+          state={contextMenu} theme={theme} appearanceColors={appearanceColors} windowMaterial={windowMaterial}
           isAddingDirectory={isAddingDirectory} sidebarAction={contextMenuSidebarAction}
           onClose={() => setContextMenu(null)}
           onAction={handleContextMenuAction}

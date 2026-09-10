@@ -25,6 +25,9 @@ const formattingSource = read("src/renderer/formatting.ts");
 
 assert.equal((appSource.match(/useSkimReadController\(/g) ?? []).length, 1, "Stable UI must reuse the single formal Skim read controller.");
 assert.match(appSource, /renderContent: \(active\) => <SkimView \{\.\.\.createSkimViewProps\(active\)\} \/>/);
+assert.match(appSource, /isLoading: isSkimLoading, theme: effectiveTheme, appearanceColors, windowMaterial, active/u);
+assert.match(skimViewSource, /windowMaterial: WindowMaterial[\s\S]*?<ResponsiveSkimContextMenuLayer[\s\S]*?windowMaterial=\{windowMaterial\}/u);
+assert.match(responsiveMenuSource, /windowMaterial: WindowMaterial[\s\S]*?getFileContextMenuStyle\(theme, appearanceColors, windowMaterial\)/u);
 assert.doesNotMatch(appSource, /onBack: navigateStableSkimBack/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
@@ -119,6 +122,7 @@ assert.match(panelStyles, /\.cap-stable-skim-tool \{[^}]*transition: var\(--cap-
 assert.match(panelStyles, /\.cap-stable-skim-tool:where\(:hover, :focus-visible\) \{ background: var\(--cap-stable-control-hover\); \}[\s\S]*?\.cap-stable-skim-tool:active \{ background: var\(--cap-stable-control-pressed\); \}/u);
 assert.match(panelStyles, /\.cap-stable-skim-exit-tool \{ display: none; \}[\s\S]*?@media \(max-width: 560px\)[\s\S]*?\.cap-stable-skim-exit-tool \{ display: grid; \}/u);
 assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\]\s*\{[^}]*--cap-stable-skim-address-surface: rgb\(255 255 255 \/ 68%\);/u);
+assert.match(materialContrastStyles, /\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\] \.cap-skim-root-group-header:where\(:hover, :focus-visible\) \{\s*background: var\(--cap-stable-control-hover\);\s*\}[\s\S]*?\.cap-stable-ui:not\(\.theme-dark\)\[data-window-material="acrylic"\] \.cap-skim-root-group-header:active \{\s*background: var\(--cap-stable-control-pressed\);\s*\}/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > \.cap-stable-skim-address-hit-area\s*\{[^}]*min-width: 24px;[^}]*flex: 0 0 24px;/u);
 assert.match(panelStyles, /\.cap-stable-skim-toolbar \{[^}]*padding: 4px 4px 4px 10px;/u);
 assert.match(panelStyles, /\.cap-stable-skim-address > button:focus-visible,[^\n]*\.cap-stable-skim-address input:focus-visible\s*\{[^}]*outline: none;[^}]*box-shadow: none;/u);

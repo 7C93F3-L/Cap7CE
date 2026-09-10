@@ -396,7 +396,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     "--theme-on-color": getTextColorForBackground(appearanceColors.themeColor),
     "--accent-on-color": getTextColorForBackground(appearanceColors.accentColor)
   } as CSSProperties;
-  const contextMenuStyle = getFileContextMenuStyle(effectiveTheme, appearanceColors);
+  const contextMenuStyle = getFileContextMenuStyle(effectiveTheme, appearanceColors, windowMaterial);
   const searchInputFeedback = quickCommandNotice;
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);
@@ -2327,7 +2327,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const createSkimViewProps = (active = true): SkimViewProps => ({
     visualSessionId: skimVisualSessionId,
     entries: sortedSkimEntries, currentPath: skimCurrentPath,
-    isLoading: isSkimLoading, theme: effectiveTheme, appearanceColors, active,
+    isLoading: isSkimLoading, theme: effectiveTheme, appearanceColors, windowMaterial, active,
     isAddingDirectory, onOpenBreadcrumb: openStableSkimLocation,
     onOpenEntry: (entry) => { if (entry.kind === "drive" || entry.kind === "folder") openStableSkimLocation(entry.path); },
     onAddEntries: (entries) => void addSkimEntries(entries), sidebarFolderPaths: skimSidebarFolders,

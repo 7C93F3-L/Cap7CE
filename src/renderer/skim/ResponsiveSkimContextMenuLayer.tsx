@@ -1,5 +1,5 @@
 import { t } from "../../../electron/localization";
-import type { AppearanceColors } from "../../shared/types";
+import type { AppearanceColors, WindowMaterial } from "../../shared/types";
 import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
 import ResponsiveFileContextMenu, { type ResponsiveFileContextMenuItem } from "../components/ResponsiveFileContextMenu";
 import { fileContextShortcutLabels } from "../fileContextActions";
@@ -12,13 +12,14 @@ interface ResponsiveSkimContextMenuLayerProps {
   state: SkimContextMenuState;
   theme: "light" | "dark";
   appearanceColors: AppearanceColors;
+  windowMaterial: WindowMaterial;
   isAddingDirectory: boolean;
   sidebarAction: "add" | "remove" | "unavailable";
   onClose: () => void;
   onAction: (action: FileContextMenuAction) => void;
 }
 
-const ResponsiveSkimContextMenuLayer = ({ state, theme, appearanceColors, isAddingDirectory, sidebarAction, onClose, onAction }: ResponsiveSkimContextMenuLayerProps) => {
+const ResponsiveSkimContextMenuLayer = ({ state, theme, appearanceColors, windowMaterial, isAddingDirectory, sidebarAction, onClose, onAction }: ResponsiveSkimContextMenuLayerProps) => {
   const { dimensions, folderStats } = useSkimContextMenuMetadata(state);
   const action = (id: FileContextMenuAction, label: string, shortcut: string, disabled = false): ResponsiveFileContextMenuItem => ({
     id, label, shortcut, disabled, onSelect: () => onAction(id)
@@ -35,7 +36,7 @@ const ResponsiveSkimContextMenuLayer = ({ state, theme, appearanceColors, isAddi
       : t("skim.sidebar.alreadyStarred");
 
   return <ResponsiveFileContextMenu
-    x={state.x} y={state.y} theme={theme} menuStyle={getFileContextMenuStyle(theme, appearanceColors)}
+    x={state.x} y={state.y} theme={theme} menuStyle={getFileContextMenuStyle(theme, appearanceColors, windowMaterial)}
     format={state.item.kind === "folder" ? t("fileInfo.folder") : state.item.extension.slice(1).toUpperCase() || t("fileInfo.file")}
     fileName={state.item.label || state.item.name}
     detail={detail}

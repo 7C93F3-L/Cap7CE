@@ -242,6 +242,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 24%\);/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /data-window-material=\{preferences\.windowMaterial\}/u);
+  assert.match(settingsAppSource, /getFileContextMenuStyle\(effectiveTheme, preferences\.appearanceColors, preferences\.windowMaterial\)/u);
   assert.match(materialContrastStyles, /\.cap-settings-window-foundation\[data-window-material="mica"\][\s\S]*?--stable-settings-card: #ffffff[\s\S]*?--cap-stable-navigation-state: #ffffff[\s\S]*?--cap-stable-search-surface: #ffffff[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
   assert.match(materialContrastStyles, /data-window-material="mica"[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-section-cards[\s\S]*?box-shadow: none;[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-card[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\);/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-settings-skim-format-group\s*\{\s*background: #ffffff;/u);

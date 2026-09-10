@@ -1,3 +1,11 @@
+.cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"],
+.cap-settings-window-foundation:not(.theme-dark)[data-window-material="acrylic"],
+.preview-window-stable-ui:not(.theme-dark)[data-window-material="acrylic"] {
+  --cap-stable-hover: rgb(31 31 31 / 10%);
+  --cap-stable-control-hover: rgb(31 31 31 / 15%);
+  --cap-stable-control-pressed: rgb(31 31 31 / 20%);
+}
+
 .cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"] {
   --cap-stable-grid-surface: rgb(255 255 255 / 46%);
   --cap-stable-skim-address-surface: rgb(255 255 255 / 68%);
@@ -36,8 +44,16 @@
 }
 
 .cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"] .cap-stable-skim-slot {
-  --cap-stable-skim-hover-surface: rgb(255 255 255 / 62%);
+  --cap-stable-skim-hover-surface: rgb(255 255 255 / 68%);
   --cap-stable-selected-surface: rgb(255 255 255 / 78%);
+}
+
+.cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"] .cap-skim-root-group-header:where(:hover, :focus-visible) {
+  background: var(--cap-stable-control-hover);
+}
+
+.cap-stable-ui:not(.theme-dark)[data-window-material="acrylic"] .cap-skim-root-group-header:active {
+  background: var(--cap-stable-control-pressed);
 }
 
 .cap-stable-ui[data-window-material="mica"],

@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
-import type { AppearanceColors, ResolvedThemeMode } from "../shared/types";
+import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../shared/types";
 import { getTextColorForBackground } from "./appearance";
 
 export const getFileContextMenuStyle = (
   theme: ResolvedThemeMode,
-  appearanceColors: AppearanceColors
+  appearanceColors: AppearanceColors,
+  windowMaterial: WindowMaterial
 ): CSSProperties => ({
   "--theme-color": appearanceColors.themeColor,
   "--accent-color": appearanceColors.accentColor,
@@ -15,8 +16,8 @@ export const getFileContextMenuStyle = (
   "--text-main": theme === "dark" ? "#b2b2b2" : "#111111",
   "--window-control-color": theme === "dark" ? "#4f4f4f" : "#9b9b9b",
   "--cap-stable-flyout-surface": "color-mix(in srgb, var(--panel-bg) 80%, transparent)",
-  "--context-menu-control-hover": theme === "dark" ? "rgb(255 255 255 / 14%)" : "rgb(31 31 31 / 12%)",
-  "--context-menu-control-pressed": theme === "dark" ? "rgb(255 255 255 / 20%)" : "rgb(31 31 31 / 17%)",
+  "--context-menu-control-hover": theme === "dark" ? "rgb(255 255 255 / 14%)" : windowMaterial === "acrylic" ? "rgb(31 31 31 / 15%)" : "rgb(31 31 31 / 12%)",
+  "--context-menu-control-pressed": theme === "dark" ? "rgb(255 255 255 / 20%)" : windowMaterial === "acrylic" ? "rgb(31 31 31 / 20%)" : "rgb(31 31 31 / 17%)",
   "--cap-stable-control-transition": "background 180ms ease, color 180ms ease",
   "--cap-stable-flyout-enter": "cap7ce-context-menu-enter 180ms cubic-bezier(0.22, 0.85, 0.18, 1) both"
 } as CSSProperties);
