@@ -1,6 +1,6 @@
 # Cap7CE stable 唯一宿主
 
-> 当前状态：1.0.3 stable-only
+> 当前状态：1.0.4 stable-only
 >
 > 历史说明：本文最初记录 D0 将 stable 提升为默认宿主；旧 `cap7ce` / `compatibility` 回退链现已退役。
 

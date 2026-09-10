@@ -8,7 +8,7 @@ const mainSource = fs.readFileSync(path.join(projectRoot, "electron", "main.ts")
 const customNsis = fs.readFileSync(path.join(projectRoot, "build", "installer-custom.nsh"), "utf8");
 const bitmap = fs.readFileSync(path.join(projectRoot, "build", "installerSidebar.bmp"));
 
-assert.equal(packageJson.version, "1.0.3");
+assert.equal(packageJson.version, "1.0.4");
 assert.equal(packageJson.build.appId, "Cap7CE");
 assert.ok(packageJson.description, "the source package should retain its project description");
 assert.equal(packageJson.build.extraMetadata.description, "");
