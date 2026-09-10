@@ -4,6 +4,10 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
+const listCssFiles = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+  const entryPath = path.join(directory, entry.name);
+  return entry.isDirectory() ? listCssFiles(entryPath) : entry.name.endsWith(".css") ? [entryPath] : [];
+});
 const { STABLE_UI_LAYOUT_FILE_NAME } = require("../dist-electron/stableUiWindowLifecycle.js");
 
 void (async () => {
@@ -67,6 +71,35 @@ void (async () => {
     }
   }
   assert.match(foundationStyles, /\.cap-stable-ui\.theme-dark[\s\S]*?color-scheme:\s*dark/u);
+  assert.match(globalStyles, /\.app,\s*\.cap-settings-window-foundation,\s*\.context-menu,\s*\.responsive-file-context-menu \{\s*--cap-accent-gradient: linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);\s*\}/u);
+  assert.equal((globalStyles.match(/--cap-accent-gradient:/gu) || []).length, 1);
+  const intentionalDirectionalGradients = new Set([
+    "src/renderer/styles.css|--standby-flow-gradient:",
+    "src/renderer/LineWindowApp.css|background:",
+    "src/renderer/settings-window/FontSizeSetting.css|background:"
+  ]);
+  const directAccentGradientViolations = [];
+  for (const absolutePath of listCssFiles(path.join(root, "src", "renderer"))) {
+    const relativePath = path.relative(root, absolutePath).replaceAll("\\", "/");
+    const source = fs.readFileSync(absolutePath, "utf8");
+    let gradientIndex = source.indexOf("linear-gradient(");
+    while (gradientIndex >= 0) {
+      const declarationStart = Math.max(source.lastIndexOf("\n", gradientIndex), source.lastIndexOf("{", gradientIndex)) + 1;
+      const declarationEnd = source.indexOf(";", gradientIndex);
+      const declaration = source.slice(declarationStart, declarationEnd >= 0 ? declarationEnd + 1 : source.length).trim();
+      const usesAccentColors = /var\(--(?:theme-color|accent-color|stable-settings-theme-color|stable-settings-focus)\)/u.test(declaration);
+      const isSharedGradient = relativePath === "src/renderer/styles.css" && declaration.startsWith("--cap-accent-gradient:");
+      const isIntentionalDirectionalGradient = [...intentionalDirectionalGradients].some((entry) => {
+        const [allowedPath, declarationPrefix] = entry.split("|");
+        return relativePath === allowedPath && declaration.startsWith(declarationPrefix);
+      });
+      if (usesAccentColors && !isSharedGradient && !isIntentionalDirectionalGradient) {
+        directAccentGradientViolations.push(`${relativePath}: ${declaration}`);
+      }
+      gradientIndex = source.indexOf("linear-gradient(", gradientIndex + 1);
+    }
+  }
+  assert.deepEqual(directAccentGradientViolations, [], "Theme/accent UI gradients must reuse --cap-accent-gradient.");
   assert.match(foundationStyles, /^@import "\.\/StableUiAccessibility\.css"; @import "\.\/StableNavigationState\.css"; @import "\.\/StableMaterialContrast\.css";/u);
   assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation,[\s\S]*?\.preview-window-stable-ui \{[\s\S]*?--cap-stable-hover: rgb\(31 31 31 \/ 8%\);[\s\S]*?--cap-stable-control-hover: rgb\(31 31 31 \/ 12%\);[\s\S]*?--cap-stable-control-pressed: rgb\(31 31 31 \/ 17%\);/u);
   assert.match(navigationStateStyles, /\.preview-window-stable-ui\.theme-dark \{[\s\S]*?--cap-stable-hover: rgb\(255 255 255 \/ 8%\);[\s\S]*?--cap-stable-control-hover: rgb\(255 255 255 \/ 14%\);[\s\S]*?--cap-stable-control-pressed: rgb\(255 255 255 \/ 20%\);/u);

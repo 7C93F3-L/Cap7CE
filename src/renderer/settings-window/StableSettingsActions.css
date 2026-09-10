@@ -33,7 +33,7 @@
 .cap-settings-window-foundation.cap-stable-settings-loading button:hover:not(:disabled),
 .cap-settings-window-foundation.cap-stable-settings-loading button:focus-visible {
   color: var(--dialog-action-hover-text);
-  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  background: var(--cap-accent-gradient);
   transform: none;
 }
 
@@ -44,7 +44,7 @@
 
 .cap-settings-window-foundation .cap-settings-expand-toggle[aria-expanded="true"]:hover:not(:disabled) {
   color: var(--dialog-action-hover-text);
-  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  background: var(--cap-accent-gradient);
 }
 
 .cap-settings-window-foundation .cap-stable-settings-button:disabled,

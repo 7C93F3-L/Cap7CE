@@ -11,7 +11,7 @@
 .keyword-tag-editor-entry input::placeholder { color: var(--preview-sidebar-muted, currentColor); }
 .keyword-tag-editor-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .keyword-tag-editor-actions button { min-height: 30px; padding: 5px 12px; border: 0; border-radius: 999px; color: inherit; background: var(--preview-sidebar-control); font: inherit; font-size: var(--cap-ui-font-secondary); }
-.keyword-tag-editor-actions button:not(:disabled):hover { color: var(--preview-action-hover-text); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); }
+.keyword-tag-editor-actions button:not(:disabled):hover { color: var(--preview-action-hover-text); background: var(--cap-accent-gradient); }
 .keyword-tag-editor button:disabled,
 .keyword-tag-editor input:disabled { opacity: .5; }
 .keyword-tag-editor-status { min-height: 15px; color: var(--preview-sidebar-muted, currentColor); font-size: var(--cap-ui-font-secondary); line-height: var(--cap-ui-line-caption); }

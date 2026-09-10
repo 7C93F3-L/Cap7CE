@@ -125,7 +125,7 @@
 
 .cap-stable-settings-navigation nav button.is-active {
   color: var(--dialog-action-hover-text, var(--theme-on-color));
-  background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
+  background: var(--cap-accent-gradient);
 }
 
 .cap-stable-settings-content-frame {

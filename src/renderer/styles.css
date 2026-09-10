@@ -51,6 +51,13 @@ button {
   color: inherit;
 }
 
+.app,
+.cap-settings-window-foundation,
+.context-menu,
+.responsive-file-context-menu {
+  --cap-accent-gradient: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
+}
+
 .app {
   --content-edge-gap: 12px;
   --window-control-rail-width: 30px;

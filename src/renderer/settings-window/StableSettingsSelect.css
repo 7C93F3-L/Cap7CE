@@ -20,7 +20,7 @@
 .cap-stable-settings-select:focus-visible,
 .cap-stable-settings-select.is-open {
   color: var(--dialog-action-hover-text);
-  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  background: var(--cap-accent-gradient);
   outline: 0;
 }
 
@@ -84,7 +84,7 @@
 
 .context-menu.cap-stable-settings-select-menu button[aria-selected="true"] {
   color: var(--dialog-action-hover-text);
-  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  background: var(--cap-accent-gradient);
 }
 
 @media (max-width: 700px) {

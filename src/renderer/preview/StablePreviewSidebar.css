@@ -131,6 +131,6 @@
 
 .preview-sidebar-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
 .preview-sidebar-actions button { min-height: 30px; padding: 5px 12px; border: 0; border-radius: 999px; color: inherit; background: var(--preview-sidebar-control); font-size: var(--cap-ui-font-secondary); }
-.preview-sidebar-actions button:hover { color: var(--preview-action-hover-text); background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%); }
+.preview-sidebar-actions button:hover { color: var(--preview-action-hover-text); background: var(--cap-accent-gradient); }
 .preview-sidebar-header:where(:hover, :focus-visible) { background: var(--cap-stable-hover); }
 .preview-sidebar-header:active { background: var(--cap-stable-control-hover); }

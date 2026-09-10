@@ -193,7 +193,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(sharedSelectSource, /<ChevronIcon className="cap-settings-select-chevron" \/>/u);
   assert.match(sharedSelectStyles, /\.cap-settings-select-chevron\s*\{[\s\S]*?width: 12px;[\s\S]*?height: 12px;[\s\S]*?\.cap-settings-select\.is-open \.cap-settings-select-chevron\s*\{[\s\S]*?rotate\(180deg\)/u);
   assert.doesNotMatch(stableSelectStyles, /cap-stable-settings-select::after/u);
-  assert.match(stableSelectStyles, /cap-stable-settings-select-menu[\s\S]*?background: var\(--cap-stable-flyout-surface\)[\s\S]*?backdrop-filter[\s\S]*?button:hover:not\(\[aria-selected="true"\]\)[\s\S]*?color: var\(--text-main\);[\s\S]*?background: var\(--context-menu-control-hover\)[\s\S]*?button:active:not\(\[aria-selected="true"\]\)[\s\S]*?color: var\(--text-main\);[\s\S]*?button\[aria-selected="true"\][\s\S]*?color: var\(--dialog-action-hover-text\);[\s\S]*?linear-gradient/u);
+  assert.match(stableSelectStyles, /cap-stable-settings-select-menu[\s\S]*?background: var\(--cap-stable-flyout-surface\)[\s\S]*?backdrop-filter[\s\S]*?button:hover:not\(\[aria-selected="true"\]\)[\s\S]*?color: var\(--text-main\);[\s\S]*?background: var\(--context-menu-control-hover\)[\s\S]*?button:active:not\(\[aria-selected="true"\]\)[\s\S]*?color: var\(--text-main\);[\s\S]*?button\[aria-selected="true"\][\s\S]*?color: var\(--dialog-action-hover-text\);[\s\S]*?background: var\(--cap-accent-gradient\)/u);
   assert.match(stableSelectStyles, /\.context-menu\.cap-stable-settings-select-menu button \{[\s\S]*?font-size: var\(--cap-ui-font-control\);[\s\S]*?line-height: var\(--cap-ui-line-control\);[\s\S]*?transition: var\(--cap-stable-control-transition\);/u);
   assert.match(stableSelectStyles, /cap-stable-settings-select-menu \.cap7ce-menu-motion-surface \{[\s\S]*?animation: var\(--cap-stable-flyout-enter\);/u);
   assert.match(stableSelectStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?cap-stable-settings-select-menu \.cap7ce-menu-motion-surface \{ animation: none; \}[\s\S]*?cap-stable-settings-select-menu button \{ transition: none; \}/u);
@@ -208,7 +208,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(stableActionStyles, /cap-stable-settings-button[\s\S]*?cap-settings-pill[\s\S]*?cap-stable-settings-color-button/u);
   assert.doesNotMatch(stableActionStyles, /cap-stable-settings-link/u);
   assert.doesNotMatch(settingsAppSource, /stableSettings\.currentVersion|cap-stable-settings-readonly/u);
-  assert.match(stableActionStyles, /min-height: 28px[\s\S]*?border-radius: 999px[\s\S]*?linear-gradient\(45deg, var\(--theme-color\), var\(--accent-color\)\)/u);
+  assert.match(stableActionStyles, /min-height: 28px[\s\S]*?border-radius: 999px[\s\S]*?background: var\(--cap-accent-gradient\)/u);
   assert.match(stableActionStyles, /cap-settings-expand-toggle\[aria-expanded="true"\][\s\S]*?background: var\(--stable-settings-hover\)/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-body[\s\S]*?<QuickActionSettingsRows quickActionGlobalEnabled=/u);
   assert.match(settingsAppSource, /cap-stable-settings-shortcut-groups[\s\S]*?cap-stable-settings-card-with-body[\s\S]*?cap-stable-settings-card-with-command-body/u);
@@ -223,7 +223,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.doesNotMatch(quickActionSource, /isCapturing && \([\s\S]*?<button[^>]*common\.cancel/u);
   assert.match(quickActionSource, /icon-stable-clear-search\.svg\?raw[\s\S]*?<SvgIcon[^>]*cap-settings-shortcut-clear-icon/u);
   assert.doesNotMatch(quickActionSource, />×</u);
-  assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1[\s\S]*?data-shortcut-capturing="true"[\s\S]*?linear-gradient[\s\S]*?grid-template-columns: 112px 28px[\s\S]*?cap-settings-shortcut-clear-button[\s\S]*?cap-settings-shortcut-clear-icon[\s\S]*?width: 14px;[\s\S]*?height: 14px;/u);
+  assert.match(stableQuickActionStyles, /display: contents[\s\S]*?grid-column: 2[\s\S]*?grid-column: 1 \/ -1[\s\S]*?data-shortcut-capturing="true"[\s\S]*?background: var\(--cap-accent-gradient\)[\s\S]*?grid-template-columns: 112px 28px[\s\S]*?cap-settings-shortcut-clear-button[\s\S]*?cap-settings-shortcut-clear-icon[\s\S]*?width: 14px;[\s\S]*?height: 14px;/u);
   assert.match(settingsAppSource, /cap-stable-settings-card-with-command-body[\s\S]*?<QuickCommandSettingsRows stableUi/u);
   assert.doesNotMatch(settingsAppSource, /quickCommandsExpanded|setQuickCommandsExpanded/u);
   assert.match(quickCommandSource, /if \(!stableUi && !expanded\)[\s\S]*?if \(stableUi\)[\s\S]*?cap-settings-quick-commands-panel-stable/u);
@@ -238,7 +238,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsControllerSource, /previewAppearanceColors[\s\S]*?setPreferences/u);
   assert.match(settingsStyles, /\.cap-settings-window-foundation\s*\{[\s\S]*?font-family:\s*var\(--cap-ui-font-family\)[\s\S]*?font-size:\s*var\(--cap-ui-font-body\)/u);
   assert.doesNotMatch(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[^}]*font-size:\s*(?:14|15|16)px/u);
-  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?button:hover \{[\s\S]*?background: var\(--cap-stable-control-hover\);[\s\S]*?button\.is-active \{[\s\S]*?linear-gradient\(45deg, var\(--theme-color\) 0%, var\(--accent-color\) 100%\);/u);
+  assert.match(settingsStyles, /\.cap-stable-settings-navigation nav button\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?button:hover \{[\s\S]*?background: var\(--cap-stable-control-hover\);[\s\S]*?button\.is-active \{[\s\S]*?background: var\(--cap-accent-gradient\);/u);
   assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-settings-window-foundation[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?theme-dark[\s\S]*?rgb\(0 0 0 \/ 24%\);/u);
   assert.match(settingsAppSource, /preferences\.windowMaterial[\s\S]*?stableSettings\.material\.acrylic[\s\S]*?stableSettings\.material\.mica[\s\S]*?controller\.updateWindowMaterial/u);
   assert.match(settingsAppSource, /data-window-material=\{preferences\.windowMaterial\}/u);
@@ -329,7 +329,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsUpdateControlSource, /window\.cap7ce\?\.app\.openReleasePage\(\)[\s\S]*?settings\.viewReleases/u);
   assert.match(settingsUpdatePresentationSource, /status === "install_failed"[\s\S]*?settings\.updateInstallerOpenFailed/u);
   assert.match(mainSource, /registerDiagnosticsIpc\([\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?BrowserWindow\.fromWebContents\(event\.sender\)/u);
-  assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?cap-settings-skim-extension\[data-selected="true"\][\s\S]*?linear-gradient[\s\S]*?cap-settings-skim-extension:is\(:hover, :focus-visible\):not\(:disabled\)[\s\S]*?background: var\(--cap-stable-control-hover\)/u);
+  assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?cap-settings-skim-extension\[data-selected="true"\][\s\S]*?background: var\(--cap-accent-gradient\)[\s\S]*?cap-settings-skim-extension:is\(:hover, :focus-visible\):not\(:disabled\)[\s\S]*?background: var\(--cap-stable-control-hover\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);
   assert.match(settingsControllerSource, /if \(showLoading\) \{[\s\S]*?setIsLoading\(true\)[\s\S]*?if \(showLoading\) setIsLoading\(false\)/u);

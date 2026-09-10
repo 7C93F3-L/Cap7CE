@@ -78,7 +78,7 @@
 
 .cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"] {
   color: var(--dialog-action-hover-text);
-  background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
+  background: var(--cap-accent-gradient);
   transform: none;
 }
 
@@ -90,7 +90,7 @@
 
 .cap-settings-skim-display-stable .cap-settings-skim-extension[data-selected="true"]:is(:hover, :focus-visible):not(:disabled) {
   color: var(--dialog-action-hover-text);
-  background: linear-gradient(135deg, var(--stable-settings-theme-color), var(--stable-settings-focus));
+  background: var(--cap-accent-gradient);
   transform: none;
 }
 

@@ -77,7 +77,7 @@
 .cap-stable-ui .cap-dialog-surface .cap-dialog-actions button:hover:not(:disabled),
 .cap-dialog-layer.is-stable .cap-dialog-surface .cap-dialog-actions button:hover:not(:disabled) {
   color: var(--dialog-action-hover-text, var(--theme-on-color));
-  background: linear-gradient(45deg, var(--theme-color) 0%, var(--accent-color) 100%);
+  background: var(--cap-accent-gradient);
   transform: none;
 }
 

@@ -53,7 +53,7 @@
 
 .preview-window-stable-ui .preview-pdf-panel nav button:hover:not(:disabled) {
   color: var(--preview-action-hover-text);
-  background: linear-gradient(45deg, var(--theme-color), var(--accent-color));
+  background: var(--cap-accent-gradient);
 }
 
 .preview-window-stable-ui .preview-pdf-zoom-controls {
