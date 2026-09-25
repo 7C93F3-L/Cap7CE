@@ -36,15 +36,15 @@ Cap7CE 的核心能力包括：
 | PDF 渲染 | PDF.js / `@napi-rs/canvas` |
 | PSD 读取 | ag-psd |
 | 文件预览与缩略图 | 自有视觉缓存与 IPC |
-| 独立 Core、原生目录、SC/1 与 CR/2 Reader | .NET 8 / C# 12 / Microsoft.Data.Sqlite（P3.1 独立产品纵切，尚未接入 Electron） |
+| 独立 Core、原生目录、SC/1 与 CR/2 Reader | .NET 8 / C# 12 / Microsoft.Data.Sqlite（P3.2 仅有测试 / 诊断主进程控制器，尚未接入产品运行链） |
 
 1.0.4 使用 Electron 43.2.0、Vite 7.3.6 与 electron-builder 26.15.3。生产与完整依赖审计均保持 0 条漏洞；升级时不得使用 `npm audit fix --force` 强制降级或跨越兼容边界。
 
 Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统能力通过 preload 白名单 API 进入主进程。
 
-### 2.1 P1.0–P1.4 独立 Core、P2.0–P2.3 Reader 与 P3.1 产品纵切
+### 2.1 P1.0–P1.4 独立 Core、P2.0–P2.3 Reader 与 P3.1–P3.2 产品纵切
 
-`core/Cap7CE.Core.sln` 是全盘基础目录方向的独立 .NET 8 工程，目前不属于 1.0.4 Electron 运行链，也不进入 Electron Builder 产物：
+`core/Cap7CE.Core.sln` 是全盘基础目录方向的独立 .NET 8 工程，目前不属于 1.0.4 产品运行链，也不进入 Electron Builder 产物；P3.2 仅由独立 Electron 主进程模块在测试 / 诊断入口连接仓库构建输出：
 
 - `Cap7CE.Core.Protocol` 定义 SC/1 版本化请求 / 响应、严格 JSON 和 4 字节长度前缀帧；单帧硬上限 1 MiB。
 - `Cap7CE.Core.Reader.Protocol` 是不依赖其他生产项目的 CR/1 二进制契约层。32 字节固定头包含魔数、头长、主 / 次版本、请求 / 响应类别、固定操作、标志、非零请求 ID、负载长度和状态码；负载最大 1 MiB，在分配内存前校验。它不拥有管道、服务、Win32、NTFS、SQLite、文件系统、进程或网络能力。
@@ -53,23 +53,25 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 - `Cap7CE.Core.Catalog` 唯一拥有新的原生 SQLite 目录。P1 的 schema v1 只保存卷标识、稳定文件引用、父引用、名称、扩展名、目录标志、属性、存在状态和可选大小 / 时间，不保存源文件正文或缩略图；卷、节点、任务、全局目录版本、提交快照与检查点由明确模型管理。当前 P3.1 产品纵切使用下述 schema v2，不能原位升级 v1，必须重建。
 - P1 Catalog 每批最多写入 10,000 条合成记录，记录、检查点、快照号和目录版本在同一事务提交；读取只允许 `ready` / `catchingUp` 卷并以稳定文件引用做最多 200 条的 keyset 分页。卷状态只能沿 `disabled → discovering → building → ready` 及冻结的离线、降级、追赶、重建分支切换。
 - P1 Catalog 以保存的 Journal 身份与检查点连续性判断 `catchingUp` 或 `needsRebuild`；离线与降级卷不向普通查询返回旧结果。schema v1 开始重建时在一个事务内采用新 Journal 身份、清空该卷可重建节点、归零检查点并提高目录版本，绝不操作源文件；schema v2 的重建发布规则见下文。
-- `Cap7CE.Core.Adapters.Abstractions` 只定义有界分页元数据来源；正式 Electron 运行链仍未引用真实 MFT / USN 适配器。
-- `Cap7CE.Core.Host` 是普通权限 Core 的唯一组合根。直接运行只输出 `catalog-cli-fixture-ready` 后退出；测试可以显式启动一次性合成管道，或通过 `--catalog-readonly` 让独立进程只读校验临时目录并执行有界查询。Reader 客户端入口连接前要求当前令牌非管理员，拒绝过宽管道权限，并通过管道服务端 PID、SCM PID、固定二进制路径、文件版本、LocalSystem、Demand Start、Restricted Service SID 和唯一 `SeChangeNotifyPrivilege` 反向核验服务。P2.2 的 `--reader-volume-probe` 不接受路径参数，只把 Reader 返回的分页元数据写入系统临时目录中的一次性 Catalog，验证初建、连续增量、取消、断档和重建后立即删除；普通输出不回显卷、文件名、路径、SID 或临时位置。P2.3 的无参数 `--reader-lifecycle-client` 只连接构建时固定的生命周期端点；普通账户只能查询配置 / 状态并启动服务，版本不符返回结构化 `repair-required`，不会自行请求提权。
+- `Cap7CE.Core.Adapters.Abstractions` 只定义有界分页元数据来源；正式 Electron 产品运行链仍未引用真实 MFT / USN 适配器。
+- `Cap7CE.Core.Host` 是普通权限 Core 的唯一组合根。直接运行只输出 `catalog-cli-fixture-ready` 后退出；测试可以显式启动一次性合成管道，或通过 `--catalog-readonly` 让独立进程只读校验临时目录并执行有界查询。P3.2 的固定 `--catalog-controller-probe` 只接受 `cap7ce-core-p32-` 加 32 位小写十六进制令牌，并把空 Catalog 限定在由该令牌派生的系统临时目录，不接受客户端路径。Reader 客户端入口连接前要求当前令牌非管理员，拒绝过宽管道权限，并通过管道服务端 PID、SCM PID、固定二进制路径、文件版本、LocalSystem、Demand Start、Restricted Service SID 和唯一 `SeChangeNotifyPrivilege` 反向核验服务。P2.2 的 `--reader-volume-probe` 不接受路径参数，只把 Reader 返回的分页元数据写入系统临时目录中的一次性 Catalog，验证初建、连续增量、取消、断档和重建后立即删除；普通输出不回显卷、文件名、路径、SID 或临时位置。P2.3 的无参数 `--reader-lifecycle-client` 只连接构建时固定的生命周期端点；普通账户只能查询配置 / 状态并启动服务，版本不符返回结构化 `repair-required`，不会自行请求提权。
 - `Cap7CE.Core.Tests` 可以引用全部 Core 项目，但生产项目不得依赖测试项目；P1.3 会启动独立子进程打开含真实未提交 WAL 页的事务并强制终止，随后验证旧快照完整、从检查点续传到 6,000 条、离线 / 降级恢复、Journal 断档和身份替换；P1.4 另以 10 万条合成记录验证 CLI 进程的只读打开、文件名命中 / 未命中、扩展名命中、200 条分页全遍历、资源上限和运行前后目录完全不变。故障注入及合成数据库生成代码只存在于 Tests。
 
-SC/1 只允许当前 Windows 用户连接；Host 从系统管道句柄核对客户端 PID，客户端核对 Host 启动事件与握手返回的 PID。首帧还必须以一次性 256-bit 密钥完成握手，密钥不写入命令行、环境变量、磁盘或日志。搜索页最多 200 条，后续页使用带 HMAC、查询、排序、卷范围、目录版本和五分钟有效期的 opaque cursor；页源只读取当前页，不先收集整批结果。每项请求均有 deadline，活动请求可由另一请求取消。握手失败即关闭会话，错误响应只返回固定结构，不附带异常、路径或本机内容。
+SC/1 只允许当前 Windows 用户连接；Host 从系统管道句柄核对客户端 PID，客户端核对 Host 启动事件与握手返回的 PID。首帧还必须以一次性 256-bit 密钥完成握手，密钥不写入命令行、环境变量、磁盘或日志。P3.2 的 `coreProtocolClient.ts` 在分配前执行相同的 1 MiB 帧上限，核对协议、Host 名称、产品版本、PID、页上限、合成标记和所需能力，并以请求表独立处理并发响应、deadline、取消、断连和固定错误。搜索页最多 200 条，后续页使用带 HMAC、查询、排序、卷范围、目录版本和五分钟有效期的 opaque cursor；页源只读取当前页，不先收集整批结果。握手失败即关闭会话，错误响应只返回固定结构，不附带异常、路径或本机内容。
 
 P1.4 的性能数字只作为同一测试链的回归基线：样本是自动生成的临时目录，运行会受到操作系统缓存和当时负载影响，不能当作真实磁盘初建速度，也不能据此声称达到 Everything 的能力。自动门槛故意只防止秒级能力变成不可接受的退化，不追逐正常的毫秒波动。
 
-四个基础项目之间禁止互相引用；普通 Host 组合 SC/1、Reader Protocol、Catalog 和适配器，Reader Host 只依赖 Reader Protocol。`scripts/core-architecture-check.cjs` 固定检查七项目集合、依赖方向、传输所有权、Electron 未接入和打包排除，并把真实文件系统能力精确限制在 Reader Host 与普通 Core 的一次性 P2.2 验证入口；`scripts/core-reader-architecture-check.cjs` 独立禁止 CR/1 契约层拥有 JSON、传输、网络、SQLite、服务托管、NTFS、原生互操作或进程控制，`scripts/core-reader-host-architecture-check.cjs` 固定服务 / 客户端身份、显式 DACL、远程拒绝、三项只读卷控制码、无源卷写入和临时目录清理，`scripts/core-reader-lifecycle-architecture-check.cjs` 另行冻结正式目录形状、普通账户最小服务权限、版本错配、失败回滚、多账户拒绝和卸载边界。SQLite 实现仍只在 Catalog；Reader Host 只例外访问受保护配置、原子汇总和授权 NTFS 卷元数据。`core/Directory.Build.props` 统一启用 nullable、warnings-as-errors、确定性构建、NuGet 锁文件，并把输出放入不跟踪的 `core/artifacts/`。根目录 `global.json` 将开发 SDK 固定为 .NET 8.0.425 的最新补丁兼容范围；`core/NuGet.Config` 只映射 Microsoft.Data.Sqlite 与 SQLitePCLRaw，锁文件固定 Microsoft.Data.Sqlite 8.0.31 和 SQLitePCLRaw 2.1.12，npm Core 命令继续关闭 .NET CLI 遥测。
+四个基础项目之间禁止互相引用；普通 Host 组合 SC/1、Reader Protocol、Catalog 和适配器，Reader Host 只依赖 Reader Protocol。`scripts/core-architecture-check.cjs` 固定检查七项目集合、依赖方向、传输所有权和打包排除，并把真实文件系统能力精确限制在授权边界；`scripts/core-electron-controller-architecture-check.cjs` 另行冻结 P3.2 的按需探针、单次恢复、优雅退出、无 Renderer IPC、无直接 Reader 启动及不打包 Core。`scripts/core-reader-architecture-check.cjs` 独立禁止 CR/1 契约层拥有 JSON、传输、网络、SQLite、服务托管、NTFS、原生互操作或进程控制，`scripts/core-reader-host-architecture-check.cjs` 固定服务 / 客户端身份、显式 DACL、远程拒绝、三项只读卷控制码、无源卷写入和临时目录清理，`scripts/core-reader-lifecycle-architecture-check.cjs` 另行冻结正式目录形状、普通账户最小服务权限、版本错配、失败回滚、多账户拒绝和卸载边界。SQLite 实现仍只在 Catalog；Reader Host 只例外访问受保护配置、原子汇总和授权 NTFS 卷元数据。`core/Directory.Build.props` 统一启用 nullable、warnings-as-errors、确定性构建、NuGet 锁文件，并把输出放入不跟踪的 `core/artifacts/`。根目录 `global.json` 将开发 SDK 固定为 .NET 8.0.425 的最新补丁兼容范围；`core/NuGet.Config` 只映射 Microsoft.Data.Sqlite 与 SQLitePCLRaw，锁文件固定 Microsoft.Data.Sqlite 8.0.31 和 SQLitePCLRaw 2.1.12，npm Core 命令继续关闭 .NET CLI 遥测。
 
-当前 Electron 搜索、`sql.js`、Skim 和 Renderer 不读取 Core。P2.2 仅在用户明确许可的真实 NTFS 机械盘上，以临时手动服务完成 378,896 条记录、93 页的初建和断档后重建，耗时约 13.3 秒和 13.0 秒；连续增量区间为 0 条，打开快照后取消、断档判断、数据库完整性和清理均通过。P2.3 进一步以临时服务验证 `%ProgramFiles%\Cap7CE\NtfsReader\v1`、`%ProgramData%\Cap7CE\NtfsReader\v1`、服务 DACL、普通账户无 UAC Demand Start、空闲停止、超时、重复启动、强杀后恢复、第二账户拒绝、版本错配、升级回滚和卸载零残留；真实 Windows 重启后，服务保持 Demand Start 且从未自动启动，程序版本、哈希与权限边界持续有效，普通账户随后仍可无 UAC 按需启动并在空闲后停止。Reader 没有读取文件正文、写源卷或联网；全部验证结束后服务、Reader 进程、受保护目录、临时账户和普通 Core 临时数据库均不存在。这不构成安装器、开机启动或产品接入授权，进入 P3 或 Electron 调用方仍需独立确认。
+当前 Electron 正式搜索、`sql.js`、Skim、preload 和 Renderer 不读取 Core。P3.2 的主进程控制器没有从 `electron/main.ts` 装配，只能由测试 / 诊断代码显式创建；打包态固定返回 `packaged-core-not-installed`，仓库 Host 缺失返回 `core-host-missing`，因此不改变既有搜索。控制器只启动自己拥有的普通 Core Host，不直接启动 Reader；Core 崩溃最多自动恢复一次，退出先请求 `core.shutdown` 并关闭会话，超时后才终止自己的子进程。P2.2 仅在用户明确许可的真实 NTFS 机械盘上，以临时手动服务完成 378,896 条记录、93 页的初建和断档后重建，耗时约 13.3 秒和 13.0 秒；连续增量区间为 0 条，打开快照后取消、断档判断、数据库完整性和清理均通过。P2.3 进一步以临时服务验证 `%ProgramFiles%\Cap7CE\NtfsReader\v1`、`%ProgramData%\Cap7CE\NtfsReader\v1`、服务 DACL、普通账户无 UAC Demand Start、空闲停止、超时、重复启动、强杀后恢复、第二账户拒绝、版本错配、升级回滚和卸载零残留；真实 Windows 重启后，服务保持 Demand Start 且从未自动启动，程序版本、哈希与权限边界持续有效，普通账户随后仍可无 UAC 按需启动并在空闲后停止。Reader 没有读取文件正文、写源卷或联网；全部验证结束后服务、Reader 进程、受保护目录、临时账户和普通 Core 临时数据库均不存在。这仍不构成安装器、开机启动或正式产品接入授权。
 
 P3.0 冻结全盘基础目录作为第一条 Core 产品纵切；P3.1a–P3.1d 只在独立 Core 内实现，不连接 Electron、正式搜索、Skim、现有 `sql.js`、安装器或主界面。Catalog v2 使用每用户持久化的原生 SQLite，保存多卷状态、稳定文件引用、父引用、基本事实、目录路径缓存和保存范围；普通 Core 负责发现、选择、初建、Journal 追赶、断档重建和 SC/1 有界查询，高权限 Reader 仍只返回授权 NTFS 卷的目录元数据。
 
 Catalog v2 的全量初建不复用增量逐批正式写入：它先把 Reader 页写入同目录、GUID 命名且可丢弃的临时 SQLite，临时库关闭 WAL、同步写和正式查询二级索引，只保留节点主键；目录父子图在普通 Core 内迭代解析为路径缓存，随后在正式 Catalog 的单个事务中发布节点与路径、删除本次快照中已不存在的旧节点并切换卷为 `ready`。稳定身份仍存在时不会先删除正式节点，因此保存范围不会在重建中被误级联删除；崩溃遗留的合法临时构建文件在下一次初始化时清理。Journal 增量继续直接写正式 Catalog，并把记录、检查点、卷状态和目录版本保持在原事务边界。分段计时只记录页数、记录数、Reader 读取、临时写入、路径生成、正式发布和总耗时，不输出文件名、路径、卷标识或 SID。
 
 P3.1d 在授权 E 盘完成受控真实验证：407,332 条记录、100 页的单次初建约 34.8 秒，其中 Reader 基本事实读取约 24.5 秒、临时构建库写入约 4.2 秒、目录路径约 0.12 秒、正式发布约 3.6 秒；完整产品链另测得初建约 39.4 秒、热启动约 0.25 秒、闭窗期增量约 1.14 秒、有界查询约 2.06 秒、断档重建约 40.6 秒，Catalog 为 156,864,512 字节，峰值工作集 93,163,520 字节。大小、创建时间、修改时间、属性、直接子项、目录后代、保存范围、分页、重命名、移动、删除、稳定身份、Journal 断档、重建与完整性全部通过；验证未读取文件正文、未写源卷、未联网，受控源盘样本、临时 Catalog、临时服务、进程及 Program Files / ProgramData 实验目录均零残留。这些数值受机械盘、缓存和当时负载影响，只是当前实现的真实基线，不是固定性能承诺。
+
+P3.2 新增 `electron/core/coreProtocolClient.ts`、`coreHostController.ts` 与独立类型边界，但不修改 `electron/main.ts`。控制器只接受调用方在测试 / 诊断环境提供的绝对 Host 构建路径，不把路径、管道名、密钥、文件名或查询结果写入诊断；日志只含阶段、耗时、重启次数和固定原因码。进程级测试以空的临时 Catalog 验证 ready / hello、PID 与版本、deadline、取消、能力状态、`core.shutdown`、Shell 侧断连、首次崩溃恢复和第二次崩溃停止；临时 Catalog 随 Host 退出清理，不打开正式每用户 Catalog。
 
 运行诊断完全保留在本机：`runtimeDiagnostics.ts` 以 2 MB × 5 的 JSONL 轮转上限记录会话、搜索边界、资源快照和异常事件，默认不记录搜索词、文件名、完整路径或嵌入元数据；窗口创建失败只记录窗口类别和已脱敏异常。详细记录仅是本次运行内的临时状态。Electron Crashpad 使用 `uploadToServer: false`，不会自动上传。诊断导出只收集受限数量和体积的日志及最近崩溃报告，文字日志在写入 ZIP 前再次脱敏；应用不提供远程提交入口。
 
@@ -111,6 +113,7 @@ P3.1d 在授权 E 盘完成受控真实验证：407,332 条记录、100 页的�
 | `edgeCollapseWindowMode.ts` / `dockedShellController.ts` / `dockedShellAutomation.ts` / `previewDockedShell.ts` / `windowLayerController.ts` | 主窗口与预览窗口共用的边缘收起窗口能力、控制器、通用生命周期装配、预览专用适配与窗口层级仲裁：按偏好互斥切换原生最大化 / Windows Snap 与边缘收起，只接受准确接触或越过非任务栏物理屏幕外沿的窗口边界，并排除多显示器接缝；管理各自 dock session、手动拖动结束确认及越界窗口原尺寸贴边归正、固定暂停、最小化暂停及任务栏还原展开、收起态展开 bounds 更新、以原生越界 bounds 保留 2 DIP 真实边沿并以同一 2 DIP 屏幕外沿作为即时恢复区，同时独立协调持久固定、收起临时浮动层级与 line 层级；还负责自适应鼠标轮询、交互抑制、阴影恢复、programmatic move / resize guard 与显示器配置变化后的安全展开夹取；不新增 Renderer IPC，额外调试快捷键仅主窗口开发版注册 |
 | `directoryStore.ts` | 已添加目录配置、目录显示名、用户排列顺序与原子持久化；顺序调整只交换配置数组位置，不触碰索引和源文件 |
 | `runtimeDiagnostics.ts` / `runtimeDiagnosticsBootstrap.ts` | 低开销 JSONL 轮转、异常退出会话标记、进程资源边界快照、Electron Renderer / 子进程异常监听、窗口创建失败事件，以及只保存在本机的 Crashpad 启动；诊断失败不得阻断应用启动或退出 |
+| `core/coreProtocolClient.ts` / `core/coreHostController.ts` | P3.2 测试 / 诊断专用的 SC/1 帧、握手、请求与取消客户端，以及普通 Core Host 的按需启动、结构化 unavailable / failed 状态、一次限次恢复和退出收尾；当前不由 `main.ts` 装配，不注册 IPC，不启动 Reader，不打开正式 Catalog，也不进入安装包 |
 | `runtimeDiagnosticBundle.ts` / `diagnosticsIpc.ts` | 对主 Renderer 开放运行信息读取、会话级详细记录和脱敏 ZIP 导出；导出限制单文件、总体积与崩溃报告数量，不接收 Renderer 任意路径 |
 | `searchIpc.ts` | 正式搜索、取消和显式刷新三个 channel 的 sender 校验与任务取消表；调用既有搜索 / 快照服务，并向运行诊断只提交查询长度、范围、排序、结果数及可选的格式聚合，不提交搜索文字或文件路径 |
 | `directoryAddService.ts` | Settings、skim、拖入与未来入口共用的目录候选转换、规范化、去重、父子包含检测和结构化添加结果 |

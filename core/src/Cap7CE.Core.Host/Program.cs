@@ -151,10 +151,13 @@ Console.CancelKeyPress += (_, eventArgs) =>
 try
 {
     ProductCoreRuntime? runtime = null;
-    if (options.Mode == CoreHostMode.CatalogServer)
+    if (options.Mode is CoreHostMode.CatalogServer or CoreHostMode.CatalogControllerProbe)
     {
+        var catalogPath = options.Mode == CoreHostMode.CatalogControllerProbe
+            ? ControllerProbeCatalog.ResolveDatabasePath(options.PipeName!)
+            : ProductCoreRuntime.DefaultCatalogPath();
         runtime = new ProductCoreRuntime(
-            new CatalogV2Database(ProductCoreRuntime.DefaultCatalogPath()),
+            new CatalogV2Database(catalogPath),
             new ReaderV2CatalogSessionFactory());
         await runtime.InitializeAsync(shutdown.Token);
     }

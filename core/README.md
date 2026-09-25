@@ -1,6 +1,6 @@
 # Cap7CE Core
 
-`core/` 是全盘基础目录方向的独立 .NET 8 工程。P1.0–P3.1 已完成普通 Core、原生 SQLite Catalog、SC/1、CR/2、受限 Reader、真实 NTFS 初建 / 增量 / 断档重建和独立查询纵切。当前仍不连接 Electron、正式搜索、Skim、Renderer 或安装器，也不进入 Cap7CE 1.0.4 安装包。
+`core/` 是全盘基础目录方向的独立 .NET 8 工程。P1.0–P3.2 已完成普通 Core、原生 SQLite Catalog、SC/1、CR/2、受限 Reader、真实 NTFS 初建 / 增量 / 断档重建、独立查询纵切，以及测试 / 诊断专用的 Electron 主进程控制器。当前仍不接正式搜索、Skim、Renderer、主界面或安装器，也不进入 Cap7CE 1.0.4 安装包。
 
 ## 项目职责
 
@@ -41,9 +41,16 @@
 - 全量初建使用可丢弃的 SQLite staging 库，完成后在正式 Catalog 单事务发布；取消和下次初始化会清理合法临时构建文件。
 - 授权 E 盘完成 407,332 条记录的受控真实验证；只保留聚合耗时、体积、内存和布尔结果，不保留真实名称、路径、卷身份或 SID。
 
+## P3.2 控制器边界
+
+- `electron/core/` 的 SC/1 客户端与 Host 控制器只由测试 / 诊断入口显式创建，`electron/main.ts` 不装配，不注册 preload 或 Renderer IPC。
+- 控制器核对 ready、协议、Host PID、版本、帧 / 页上限和能力表；Core 崩溃最多自动恢复一次，退出先请求 `core.shutdown` 并关闭会话，超时才终止自己创建的进程。
+- 当前只启动固定 `--catalog-controller-probe`，Catalog 位于随机系统临时目录并随测试清理，不打开正式每用户 Catalog；打包态固定报告 Core 尚未安装。
+- 控制器只启动普通 Core Host，不直接启动 Reader；诊断只记录阶段、耗时、重启数与固定状态码。
+
 ## 当前明确没有接入
 
-- Electron Core 控制器、IPC 与进程生命周期接入。
+- `electron/main.ts` 产品装配、Core IPC 与正常应用生命周期接入。
 - Renderer、“此电脑”入口或正式搜索接入。
 - Skim、现有 `sql.js` 或用户深度资料迁移。
 - 正式能力安装器、产品升级 / 修复 / 移除与发布打包。

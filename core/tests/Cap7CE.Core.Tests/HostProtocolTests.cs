@@ -10,10 +10,24 @@ internal static class HostProtocolTests
     {
         FreezesLifecycleClientActivation();
         FreezesP31ProbeActivation();
+        FreezesP32ControllerProbeActivation();
         await RejectsMissingHandshakeAsync();
         await RejectsWrongSecretAsync();
         await RejectsWrongClientIdentityAsync();
         await RunsAuthenticatedSessionAsync();
+    }
+
+    private static void FreezesP32ControllerProbeActivation()
+    {
+        const string pipeName = "cap7ce-core-p32-0123456789abcdef0123456789abcdef";
+        TestAssert.True(
+            CoreHostOptions.TryParse(["--catalog-controller-probe", "--pipe-name", pipeName], out var probe),
+            "P3.2 controller probe option");
+        TestAssert.Equal(CoreHostMode.CatalogControllerProbe, probe.Mode,
+            "P3.2 controller probe mode");
+        TestAssert.False(
+            CoreHostOptions.TryParse(["--catalog-controller-probe", "--pipe-name", "cap7ce-core-p32-invalid"], out _),
+            "P3.2 controller probe must reject arbitrary names");
     }
 
     private static void FreezesLifecycleClientActivation()

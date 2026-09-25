@@ -2,6 +2,7 @@
   "strictMaxLines": {
     "scripts/architecture-boundaries-check.cjs": 175,
     "scripts/core-architecture-check.cjs": 169,
+    "scripts/core-electron-controller-architecture-check.cjs": 90,
     "scripts/core-reader-architecture-check.cjs": 80,
     "scripts/core-reader-host-architecture-check.cjs": 99,
     "scripts/core-reader-lifecycle-architecture-check.cjs": 91,
@@ -26,7 +27,10 @@
     "electron/stablePreviewWindowSizing.ts": 59,
     "electron/settingsWindowController.ts": 171,
     "electron/settingsWindowLayout.ts": 127,
-    "electron/lineWindowController.ts": 161
+    "electron/lineWindowController.ts": 161,
+    "electron/core/coreProtocolTypes.ts": 60,
+    "electron/core/coreProtocolClient.ts": 200,
+    "electron/core/coreHostController.ts": 300
   },
   "maintenanceMaxLines": {
     "src/renderer/directoryListActions.ts": 20,

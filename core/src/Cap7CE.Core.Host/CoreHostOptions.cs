@@ -5,6 +5,7 @@ public enum CoreHostMode
     Describe,
     SyntheticServer,
     CatalogServer,
+    CatalogControllerProbe,
     CatalogReadOnly,
     ReaderFixtureClient,
     ReaderFixtureDisconnect,
@@ -16,7 +17,7 @@ public enum CoreHostMode
 
 public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
 {
-    private static readonly string[] PipePrefixes = ["cap7ce-core-p11-", "cap7ce-core-p31-"];
+    private static readonly string[] PipePrefixes = ["cap7ce-core-p11-", "cap7ce-core-p31-", "cap7ce-core-p32-"];
 
     public static bool TryParse(string[] args, out CoreHostOptions options)
     {
@@ -86,6 +87,15 @@ public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
             return true;
         }
 
+        if (args.Length == 3
+            && args[0] == "--catalog-controller-probe"
+            && args[1] == "--pipe-name"
+            && IsValidControllerProbePipeName(args[2]))
+        {
+            options = new CoreHostOptions(CoreHostMode.CatalogControllerProbe, args[2]);
+            return true;
+        }
+
         options = new CoreHostOptions(CoreHostMode.Describe, null);
         return false;
     }
@@ -110,4 +120,9 @@ public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
         value.Length is > 20 and <= 128
         && PipePrefixes.Any(prefix => value.StartsWith(prefix, StringComparison.Ordinal))
         && value.All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
+
+    private static bool IsValidControllerProbePipeName(string value) =>
+        value.StartsWith("cap7ce-core-p32-", StringComparison.Ordinal)
+        && value.Length == "cap7ce-core-p32-".Length + 32
+        && value["cap7ce-core-p32-".Length..].All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
 }

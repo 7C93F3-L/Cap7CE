@@ -74,6 +74,7 @@ for (const filePath of coreSourceFiles) {
   const isReaderHostSource = relativePath.startsWith("core/src/Cap7CE.Core.Reader.Host/");
   const isVolumeProbeSource = relativePath === "core/src/Cap7CE.Core.Host/ReaderVolumeCli.cs";
   const isProductCoreRuntime = relativePath === "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs";
+  const isControllerProbeCatalog = relativePath === "core/src/Cap7CE.Core.Host/ControllerProbeCatalog.cs";
   const isP31ValidationSource = relativePath === "core/src/Cap7CE.Core.Host/CoreP31ValidationCli.cs";
   const isReaderV2SessionSource = relativePath === "core/src/Cap7CE.Core.Host/ReaderV2CatalogSession.cs";
   const isReaderLifecycleSource = ["core/src/Cap7CE.Core.Host/ReaderLifecycleCli.cs",
@@ -81,7 +82,7 @@ for (const filePath of coreSourceFiles) {
   const allowedCapabilities = isCatalogSource ? ["catalog database implementation", "real file-system access"]
     : isReaderHostSource ? ["package-owned Windows service implementation", "NTFS Reader implementation", "real file-system access"]
     : isVolumeProbeSource ? ["catalog database implementation", "real file-system access"]
-    : isProductCoreRuntime ? ["real file-system access"]
+    : isProductCoreRuntime || isControllerProbeCatalog ? ["real file-system access"]
     : isP31ValidationSource ? ["catalog database implementation", "real file-system access"]
     : isReaderV2SessionSource ? ["package-owned Windows service implementation"]
     : isReaderLifecycleSource ? ["package-owned Windows service implementation"] : [];
@@ -112,6 +113,7 @@ const crashTests = read("core/tests/Cap7CE.Core.Tests/CatalogCrashWorker.cs"), r
 for (const [source, anchor, description] of [
   [hostOptions, "--synthetic-server", "explicit synthetic activation"], [hostOptions, "--catalog-readonly", "explicit read-only CLI activation"],
   [hostOptions, "--catalog-server", "explicit product catalog activation"], [hostOptions, "--core-p31-probe", "explicit P3.1 real-probe activation"],
+  [hostOptions, "--catalog-controller-probe", "explicit P3.2 temporary controller-probe activation"],
   [hostOptions, "--core-p31-initial-probe", "bounded P3.1 initial-build probe activation"],
   [hostProgram, "Console.In.ReadLineAsync", "stdin-only session secret"], [pipeServer, "PipeOptions.CurrentUserOnly", "same-user pipe isolation"],
   [catalogCli, "CatalogReadOnlyReport", "aggregate read-only CLI report"], [catalogDatabase, "SqliteOpenMode.ReadOnly", "native catalog read-only mode"],
