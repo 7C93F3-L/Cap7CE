@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Cap7CE.Core.Reader.Protocol</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Reader.Protocol</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Reader.Protocol" />
+  </ItemGroup>
+</Project>

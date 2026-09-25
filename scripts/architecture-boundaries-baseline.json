@@ -1,6 +1,11 @@
 {
   "strictMaxLines": {
     "scripts/architecture-boundaries-check.cjs": 175,
+    "scripts/core-architecture-check.cjs": 169,
+    "scripts/core-reader-architecture-check.cjs": 80,
+    "scripts/core-reader-host-architecture-check.cjs": 99,
+    "scripts/core-reader-lifecycle-architecture-check.cjs": 91,
+    "scripts/core-reader-volume-architecture-check.cjs": 70,
     "scripts/clean-electron-build.cjs": 19,
     "scripts/stable-only-artifact-check.cjs": 58,
     "src/renderer/App.tsx": 2434,

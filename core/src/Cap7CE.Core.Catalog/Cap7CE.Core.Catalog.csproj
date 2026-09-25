@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Cap7CE.Core.Catalog</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Catalog</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Catalog" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.31" />
+  </ItemGroup>
+</Project>

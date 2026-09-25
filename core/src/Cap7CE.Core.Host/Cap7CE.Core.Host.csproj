@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>Cap7CE.Core.Host</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Host</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Host" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cap7CE.Core.Protocol\Cap7CE.Core.Protocol.csproj" />
+    <ProjectReference Include="..\Cap7CE.Core.Reader.Protocol\Cap7CE.Core.Reader.Protocol.csproj" />
+    <ProjectReference Include="..\Cap7CE.Core.Catalog\Cap7CE.Core.Catalog.csproj" />
+    <ProjectReference Include="..\Cap7CE.Core.Adapters.Abstractions\Cap7CE.Core.Adapters.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

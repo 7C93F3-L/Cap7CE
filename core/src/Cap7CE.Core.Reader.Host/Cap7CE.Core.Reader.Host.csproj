@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>Cap7CE.Core.Reader.Host</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Reader.Host</RootNamespace>
+    <DefineConstants Condition="'$(P23LifecycleProfile)' == 'true'">$(DefineConstants);P23_LIFECYCLE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Reader.Host" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cap7CE.Core.Reader.Protocol\Cap7CE.Core.Reader.Protocol.csproj" />
+  </ItemGroup>
+</Project>

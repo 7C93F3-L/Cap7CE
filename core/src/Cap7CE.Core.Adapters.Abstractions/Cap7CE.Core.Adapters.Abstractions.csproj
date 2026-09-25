@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Cap7CE.Core.Adapters.Abstractions</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Adapters</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="AdapterAbstractions" />
+  </ItemGroup>
+</Project>

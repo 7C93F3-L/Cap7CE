@@ -3,6 +3,8 @@ dist/
 dist-electron/
 release/
 artifacts/
+core/**/bin/
+core/**/obj/
 models/
 llama.cpp/
 TestFiles/

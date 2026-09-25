@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>Cap7CE.Core.Tests</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Protocol\Cap7CE.Core.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Reader.Protocol\Cap7CE.Core.Reader.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Reader.Host\Cap7CE.Core.Reader.Host.csproj" />
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Catalog\Cap7CE.Core.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Adapters.Abstractions\Cap7CE.Core.Adapters.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Host\Cap7CE.Core.Host.csproj" />
+  </ItemGroup>
+</Project>
