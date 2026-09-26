@@ -13,7 +13,7 @@ const {
 const root = path.resolve(__dirname, "..");
 const executablePath = path.join(
   root, "core", "artifacts", "bin", "Cap7CE.Core.Host", "Release",
-  "net8.0-windows", "Cap7CE.Core.Host.exe"
+  "net10.0-windows", "Cap7CE.Core.Host.exe"
 );
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));

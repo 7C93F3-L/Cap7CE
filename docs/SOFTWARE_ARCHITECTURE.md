@@ -36,7 +36,7 @@ Cap7CE 的核心能力包括：
 | PDF 渲染 | PDF.js / `@napi-rs/canvas` |
 | PSD 读取 | ag-psd |
 | 文件预览与缩略图 | 自有视觉缓存与 IPC |
-| 独立 Core、原生目录、SC/1 与 CR/2 Reader | .NET 8 / C# 12 / Microsoft.Data.Sqlite（P3.2 仅有测试 / 诊断主进程控制器，尚未接入产品运行链） |
+| 独立 Core、原生目录、SC/1 与 CR/2 Reader | .NET 10 / C# 12 / Microsoft.Data.Sqlite（P3.2 仅有测试 / 诊断主进程控制器，尚未接入产品运行链） |
 
 1.0.4 使用 Electron 43.2.0、Vite 7.3.6 与 electron-builder 26.15.3。生产与完整依赖审计均保持 0 条漏洞；升级时不得使用 `npm audit fix --force` 强制降级或跨越兼容边界。
 
@@ -44,7 +44,7 @@ Renderer 不直接访问 Node、文件系统、SQLite 或本地进程。系统�
 
 ### 2.1 P1.0–P1.4 独立 Core、P2.0–P2.3 Reader 与 P3.1–P3.2 产品纵切
 
-`core/Cap7CE.Core.sln` 是全盘基础目录方向的独立 .NET 8 工程，目前不属于 1.0.4 产品运行链，也不进入 Electron Builder 产物；P3.2 仅由独立 Electron 主进程模块在测试 / 诊断入口连接仓库构建输出：
+`core/Cap7CE.Core.sln` 是全盘基础目录方向的独立 .NET 10 工程，目前不属于 1.0.4 产品运行链，也不进入 Electron Builder 产物；P3.2 仅由独立 Electron 主进程模块在测试 / 诊断入口连接仓库构建输出：
 
 - `Cap7CE.Core.Protocol` 定义 SC/1 版本化请求 / 响应、严格 JSON 和 4 字节长度前缀帧；单帧硬上限 1 MiB。
 - `Cap7CE.Core.Reader.Protocol` 是不依赖其他生产项目的 CR/1 二进制契约层。32 字节固定头包含魔数、头长、主 / 次版本、请求 / 响应类别、固定操作、标志、非零请求 ID、负载长度和状态码；负载最大 1 MiB，在分配内存前校验。它不拥有管道、服务、Win32、NTFS、SQLite、文件系统、进程或网络能力。
@@ -61,7 +61,7 @@ SC/1 只允许当前 Windows 用户连接；Host 从系统管道句柄核对客�
 
 P1.4 的性能数字只作为同一测试链的回归基线：样本是自动生成的临时目录，运行会受到操作系统缓存和当时负载影响，不能当作真实磁盘初建速度，也不能据此声称达到 Everything 的能力。自动门槛故意只防止秒级能力变成不可接受的退化，不追逐正常的毫秒波动。
 
-四个基础项目之间禁止互相引用；普通 Host 组合 SC/1、Reader Protocol、Catalog 和适配器，Reader Host 只依赖 Reader Protocol。`scripts/core-architecture-check.cjs` 固定检查七项目集合、依赖方向、传输所有权和打包排除，并把真实文件系统能力精确限制在授权边界；`scripts/core-electron-controller-architecture-check.cjs` 另行冻结 P3.2 的按需探针、单次恢复、优雅退出、无 Renderer IPC、无直接 Reader 启动及不打包 Core。`scripts/core-reader-architecture-check.cjs` 独立禁止 CR/1 契约层拥有 JSON、传输、网络、SQLite、服务托管、NTFS、原生互操作或进程控制，`scripts/core-reader-host-architecture-check.cjs` 固定服务 / 客户端身份、显式 DACL、远程拒绝、三项只读卷控制码、无源卷写入和临时目录清理，`scripts/core-reader-lifecycle-architecture-check.cjs` 另行冻结正式目录形状、普通账户最小服务权限、版本错配、失败回滚、多账户拒绝和卸载边界。SQLite 实现仍只在 Catalog；Reader Host 只例外访问受保护配置、原子汇总和授权 NTFS 卷元数据。`core/Directory.Build.props` 统一启用 nullable、warnings-as-errors、确定性构建、NuGet 锁文件，并把输出放入不跟踪的 `core/artifacts/`。根目录 `global.json` 将开发 SDK 固定为 .NET 8.0.425 的最新补丁兼容范围；`core/NuGet.Config` 只映射 Microsoft.Data.Sqlite 与 SQLitePCLRaw，锁文件固定 Microsoft.Data.Sqlite 8.0.31 和 SQLitePCLRaw 2.1.12，npm Core 命令继续关闭 .NET CLI 遥测。
+四个基础项目之间禁止互相引用；普通 Host 组合 SC/1、Reader Protocol、Catalog 和适配器，Reader Host 只依赖 Reader Protocol。`scripts/core-architecture-check.cjs` 固定检查七项目集合、依赖方向、传输所有权和打包排除，并把真实文件系统能力精确限制在授权边界；`scripts/core-electron-controller-architecture-check.cjs` 另行冻结 P3.2 的按需探针、单次恢复、优雅退出、无 Renderer IPC、无直接 Reader 启动及不打包 Core。`scripts/core-reader-architecture-check.cjs` 独立禁止 CR/1 契约层拥有 JSON、传输、网络、SQLite、服务托管、NTFS、原生互操作或进程控制，`scripts/core-reader-host-architecture-check.cjs` 固定服务 / 客户端身份、显式 DACL、远程拒绝、三项只读卷控制码、无源卷写入和临时目录清理，`scripts/core-reader-lifecycle-architecture-check.cjs` 另行冻结正式目录形状、普通账户最小服务权限、版本错配、失败回滚、多账户拒绝和卸载边界。SQLite 实现仍只在 Catalog；Reader Host 只例外访问受保护配置、原子汇总和授权 NTFS 卷元数据。`core/Directory.Build.props` 统一启用 nullable、warnings-as-errors、确定性构建、NuGet 锁文件，并把输出放入不跟踪的 `core/artifacts/`。根目录 `global.json` 将开发 SDK 固定为 .NET 10.0.401 的最新补丁兼容范围；`core/NuGet.Config` 只映射 Microsoft.Data.Sqlite 与 SQLitePCLRaw，锁文件固定 Microsoft.Data.Sqlite 10.0.12 和 SQLitePCLRaw 2.1.12，npm Core 命令继续关闭 .NET CLI 遥测。
 
 当前 Electron 正式搜索、`sql.js`、Skim、preload 和 Renderer 不读取 Core。P3.2 的主进程控制器没有从 `electron/main.ts` 装配，只能由测试 / 诊断代码显式创建；打包态固定返回 `packaged-core-not-installed`，仓库 Host 缺失返回 `core-host-missing`，因此不改变既有搜索。控制器只启动自己拥有的普通 Core Host，不直接启动 Reader；Core 崩溃最多自动恢复一次，退出先请求 `core.shutdown` 并关闭会话，超时后才终止自己的子进程。P2.2 仅在用户明确许可的真实 NTFS 机械盘上，以临时手动服务完成 378,896 条记录、93 页的初建和断档后重建，耗时约 13.3 秒和 13.0 秒；连续增量区间为 0 条，打开快照后取消、断档判断、数据库完整性和清理均通过。P2.3 进一步以临时服务验证 `%ProgramFiles%\Cap7CE\NtfsReader\v1`、`%ProgramData%\Cap7CE\NtfsReader\v1`、服务 DACL、普通账户无 UAC Demand Start、空闲停止、超时、重复启动、强杀后恢复、第二账户拒绝、版本错配、升级回滚和卸载零残留；真实 Windows 重启后，服务保持 Demand Start 且从未自动启动，程序版本、哈希与权限边界持续有效，普通账户随后仍可无 UAC 按需启动并在空闲后停止。Reader 没有读取文件正文、写源卷或联网；全部验证结束后服务、Reader 进程、受保护目录、临时账户和普通 Core 临时数据库均不存在。这仍不构成安装器、开机启动或正式产品接入授权。
 

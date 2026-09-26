@@ -1,6 +1,6 @@
 # Cap7CE Core
 
-`core/` 是全盘基础目录方向的独立 .NET 8 工程。P1.0–P3.2 已完成普通 Core、原生 SQLite Catalog、SC/1、CR/2、受限 Reader、真实 NTFS 初建 / 增量 / 断档重建、独立查询纵切，以及测试 / 诊断专用的 Electron 主进程控制器。当前仍不接正式搜索、Skim、Renderer、主界面或安装器，也不进入 Cap7CE 1.0.4 安装包。
+`core/` 是全盘基础目录方向的独立 .NET 10 工程。P1.0–P3.2 已完成普通 Core、原生 SQLite Catalog、SC/1、CR/2、受限 Reader、真实 NTFS 初建 / 增量 / 断档重建、独立查询纵切，以及测试 / 诊断专用的 Electron 主进程控制器。当前仍不接正式搜索、Skim、Renderer、主界面或安装器，也不进入 Cap7CE 1.0.4 安装包。
 
 ## 项目职责
 

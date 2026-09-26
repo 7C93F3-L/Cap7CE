@@ -18,7 +18,7 @@ const expectedProjects = new Map([
     "core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", "core/src/Cap7CE.Core.Adapters.Abstractions/Cap7CE.Core.Adapters.Abstractions.csproj", "core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj"
   ]]
 ]);
-const allowedPackages = new Map([["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", [["Microsoft.Data.Sqlite", "8.0.31"]]]]);
+const allowedPackages = new Map([["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", [["Microsoft.Data.Sqlite", "10.0.12"]]]]);
 for (const [projectPath, expectedReferences] of expectedProjects) {
   const absoluteProjectPath = path.join(root, projectPath);
   if (!fs.existsSync(absoluteProjectPath)) {
@@ -47,7 +47,7 @@ for (const projectPath of expectedProjects.keys()) {
 }
 const propsSource = read("core/Directory.Build.props");
 for (const required of [
-  "<TargetFramework>net8.0</TargetFramework>", "<Nullable>enable</Nullable>",
+  "<TargetFramework>net10.0</TargetFramework>", "<Nullable>enable</Nullable>",
   "<TreatWarningsAsErrors>true</TreatWarningsAsErrors>", "<IsPackable>false</IsPackable>", "core/artifacts"
 ]) {
   const normalizedProps = required === "core/artifacts" ? normalize(propsSource) : propsSource;
@@ -132,8 +132,8 @@ for (const anchor of ["<clear />", "https://api.nuget.org/v3/index.json", "Micro
   if (!nugetConfig.includes(anchor)) failures.push(`Core NuGet configuration is missing ${anchor}.`);
 }
 const catalogLock = JSON.parse(read("core/src/Cap7CE.Core.Catalog/packages.lock.json"));
-if (catalogLock.dependencies?.["net8.0"]?.["Microsoft.Data.Sqlite"]?.resolved !== "8.0.31"
-    || catalogLock.dependencies?.["net8.0"]?.["SQLitePCLRaw.bundle_e_sqlite3"]?.resolved !== "2.1.12") {
+if (catalogLock.dependencies?.["net10.0"]?.["Microsoft.Data.Sqlite"]?.resolved !== "10.0.12"
+    || catalogLock.dependencies?.["net10.0"]?.["SQLitePCLRaw.bundle_e_sqlite3"]?.resolved !== "2.1.12") {
   failures.push("Core native SQLite dependency graph is not locked to the reviewed versions.");
 }
 const packageJson = JSON.parse(read("package.json"));

@@ -28,7 +28,7 @@ This file is a human-readable inventory for Cap7CE 1.0.4 and its unshipped Core 
 | `@img/sharp-win32-x64` / bundled libvips components | Apache-2.0 AND LGPL-3.0-or-later |
 | `sql.js` | MIT |
 | `pako` | MIT AND Zlib |
-| Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 8.0.31 | MIT; used only by the isolated, currently unshipped .NET Core catalog |
+| Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used only by the isolated, currently unshipped .NET Core catalog |
 | SQLitePCLRaw 2.1.12 packages | Apache-2.0; used only by the isolated, currently unshipped .NET Core catalog |
 | SQLite native library supplied through SQLitePCLRaw | SQLite is in the public domain; the packaging components remain Apache-2.0 |
 

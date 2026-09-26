@@ -1,20 +1,21 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0-windows7.0": {
+    "net10.0-windows7.0": {
       "Microsoft.Data.Sqlite": {
         "type": "Transitive",
-        "resolved": "8.0.31",
-        "contentHash": "WBM+0lBcUKeItKCAdBuTariYoV2tAICxE4FSzFDxlZXx9mO1YSr9NBD7vX2tYrKCHKOhpdwVJPa7fMD6zVHDjw==",
+        "resolved": "10.0.12",
+        "contentHash": "xUq9xUc653ue7ac2rMfCaf8UQN+U3zS8poWYlugycpvJllplMM0Mk7v/+MM0CTlu9zGvbGML4BPH8YWhrUOfGw==",
         "dependencies": {
-          "Microsoft.Data.Sqlite.Core": "8.0.31",
-          "SQLitePCLRaw.bundle_e_sqlite3": "2.1.12"
+          "Microsoft.Data.Sqlite.Core": "10.0.12",
+          "SQLitePCLRaw.bundle_e_sqlite3": "2.1.12",
+          "SQLitePCLRaw.core": "2.1.12"
         }
       },
       "Microsoft.Data.Sqlite.Core": {
         "type": "Transitive",
-        "resolved": "8.0.31",
-        "contentHash": "o6muD6VLO/Et5Cmi5UGSvj5cwjTpc26/OP6z96+4aK4YhCmKlSHkFTEKCiR/JzDDI6E/qrkfEt9ybu9J0tiKrQ==",
+        "resolved": "10.0.12",
+        "contentHash": "2aL9eL5HQr0V4b8V909SD+jQAx6qnTTl7sT/v3D8dIvmr2UGdpZIQxqm1pj2Js3e4EYTvpw0oMH7DjapJJuPPw==",
         "dependencies": {
           "SQLitePCLRaw.core": "2.1.12"
         }
@@ -31,10 +32,7 @@
       "SQLitePCLRaw.core": {
         "type": "Transitive",
         "resolved": "2.1.12",
-        "contentHash": "ETpNw9DY3ckWLgRRAeCHj+GKOuPi61aeczkXhgHexUvqoZBAYg8RYESE2J7O1M7+o6QbdSEZwrw9bfqztUVWXg==",
-        "dependencies": {
-          "System.Memory": "4.5.3"
-        }
+        "contentHash": "ETpNw9DY3ckWLgRRAeCHj+GKOuPi61aeczkXhgHexUvqoZBAYg8RYESE2J7O1M7+o6QbdSEZwrw9bfqztUVWXg=="
       },
       "SQLitePCLRaw.lib.e_sqlite3": {
         "type": "Transitive",
@@ -49,18 +47,13 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
-      "System.Memory": {
-        "type": "Transitive",
-        "resolved": "4.5.3",
-        "contentHash": "3oDzvc/zzetpTKWMShs1AADwZjQ/36HnsufHRPcOjyRAAMLDlu2iD33MBI2opxnezcVUtXyqDXXjoFMOU9c7SA=="
-      },
       "cap7ce.core.adapters.abstractions": {
         "type": "Project"
       },
       "cap7ce.core.catalog": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Data.Sqlite": "[8.0.31, )"
+          "Microsoft.Data.Sqlite": "[10.0.12, )"
         }
       },
       "cap7ce.core.protocol": {
