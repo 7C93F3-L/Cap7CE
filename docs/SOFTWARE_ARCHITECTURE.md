@@ -435,7 +435,7 @@ skim 缓存位于独立的 `skim-cache/thumbnails`、`skim-cache/previews` 和 `
 
 历史 `.capmo` 模型输入图仍属于可重建缓存，自动缓存优化可清理既有通用 AI 元数据已完成项目的遗留输入；按需 AI 搜索直接从受限视觉输入准备 300px 单图，不创建新的全目录模型输入队列。清理不扫描源目录、不删除缩略图或预览缓存，失败也不影响搜索或查询确认词。
 
-Electron 在任何数据路径读取前将 `userData` 固定为 `%APPDATA%\Cap7CE`。数据库、配置、预览缓存和缩略图缓存均只写入 Cap7CE 当前目录；数据库文件固定为 `index/cap7ce-index.db`。当前开发阶段没有旧用户数据兼容要求，不读取或迁移旧 `%APPDATA%\Image Everything`、`index/image-everything.db`、旧缓存目录或历史备份文件。
+Electron 在任何数据路径读取前通过 `electron/applicationDataPaths.ts` 将产品数据根固定为 `%LOCALAPPDATA%\Cap7CE`，并将 Electron `userData` 指向其中的 `UserData` 子目录。目录配置、普通 SQLite 索引、预览缓存、缩略图缓存、日志和崩溃数据均只写入 `UserData`；普通数据库文件固定为 `UserData/index/cap7ce-index.db`。全盘搜索 Catalog、更新暂存、模型和 `llama.cpp` 分别使用同一产品根下的 `Core`、`updates`、`models` 与 `llama.cpp`，从而与只读程序目录分离。路径解析本身不迁移旧 `%APPDATA%\Cap7CE`；已有开发机器的数据迁移由不随产品发布的独立工具显式执行，应用启动不会猜测、合并或删除旧目录。
 
 SQLite 在同一个数据库中保持相互分离的职责：`files` 保存全部白名单文件的路径、名称、扩展名、大小、时间、目录 ID、相对目录与存在状态；`images` 只保存视觉文件事实和尺寸；`file_user_metadata` 以文件路径保存所有格式统一的人工描述、关键词与更新时间；`image_ai_metadata` 以视觉记录 ID 保存可重建的 AI caption、关键词、识别时间与失败状态；`file_embedded_metadata_state` / `file_embedded_search_evidence` 保存稀疏嵌入元数据；`file_visual_properties` 只保存可重建的低级视觉数值及处理状态。人工、AI、嵌入信息和派生视觉事实不能修改彼此所有权。数据库启动时直接确保当前表与索引存在，不识别或改写历史列；正常目录扫描直接写入当前文件目录与路径证据。目录替换保留元数据，目录删除和缺失清理通过事务及外键级联清理，不留下孤立记录。
 
@@ -473,9 +473,9 @@ SQLite 在同一个数据库中保持相互分离的职责：`files` 保存全�
 
 当前路线是集成 `llama.cpp`，使用本地 GGUF 视觉模型，不再依赖 Ollama 作为主路线。
 
-`electron/aiContentPaths.ts` 是运行时与模型目录的单一解析边界。打包态只使用当前 `Cap7CE.exe` 所在目录内的 `llama.cpp` 与 `models`，不读取 `PORTABLE_EXECUTABLE_DIR`、父目录或 `resources` 相邻候选；开发态只使用 `app.getAppPath()` 对应的仓库目录。路径解析不创建、迁移、复制或删除目录，缺失时 Store 返回既有安全状态。多个程序副本各自读取本目录 AI 内容，但继续共享 `%APPDATA%\Cap7CE` 中的选择配置；用户切换程序副本后，若已保存的版本或模型在该副本中不存在，会按现有状态明确提示重新选择。
+`electron/aiContentPaths.ts` 是运行时与模型目录的单一解析边界。打包态从 Electron `userData` 的父目录取得 `%LOCALAPPDATA%\Cap7CE` 产品数据根，只使用其中的 `llama.cpp` 与 `models`；程序文件可因此安全安装到普通用户不可写的 Program Files。开发态仍只使用 `app.getAppPath()` 对应的仓库目录，保留现有开发资源工作流。路径解析不创建、迁移、复制或删除目录，缺失时 Store 返回既有安全状态；选择配置保存在 `UserData/config`，若已保存的版本或模型不存在，会按现有状态明确提示重新选择。
 
-Windows 分发在 1.0.4 中使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器。首次安装的默认目录、已安装路径检测、覆盖升级、注册表、开始菜单、桌面快捷方式、完成页运行选项及卸载主流程均服从 electron-builder / NSIS 默认机制；安装器通过受支持的 `include` 挂钩取消目录页之后自动追加 `Cap7CE` 的步骤，因此默认位置仍是 `%LOCALAPPDATA%\Programs\Cap7CE`，已有安装仍定位到登记目录，而用户手动输入的路径直接作为最终安装目录。相同挂钩同时补充默认卸载不具备的内容保护。`models` 与 `llama.cpp` 不随安装包创建、迁移或覆盖，普通卸载时先原样保留；卸载组件页提供两个默认不选中的独立选项，分别删除共享用户数据与当前安装目录的 AI 内容。共享用户数据选项同时清理 `%APPDATA%\Cap7CE` 和可重建的 `%LOCALAPPDATA%\Cap7CE\Core` 全盘 Catalog，不再显示第三个 Catalog 选项。原生空间统计使用构建时已知的程序体积，并在勾选 AI 内容时计入当前两个目录的实时大小；不递归统计共享用户数据，避免大型缓存拖慢卸载器启动。可选清理在目标本身是 Windows 符号链接或目录联接时只移除链接，不进入链接目标，普通真实目录继续交给 NSIS 原生删除。安装器和卸载器显式使用 `build/setup.ico`，安装器 EXE 的 Windows 文件说明留空，Windows 卸载登记和快捷方式不写入网址或备注；卸载显示名中的版本来自当前构建版本，不属于固定 `appId`。安装与卸载界面仅包含英文和简体中文，按 Windows 界面语言自动选择且不显示语言选择页；不支持的语言回退英文。许可证页展示仓库中的 PolyForm Noncommercial 英文原文，完成页默认勾选运行 Cap7CE；最终侧栏图直接使用经过尺寸、位深、压缩方式和对比度检查的 `build/installerSidebar.bmp`。
+Windows 分发使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器，并采用 64 位按机器安装：首次安装默认进入 `%ProgramFiles%\Cap7CE`，安装、覆盖升级、修复和卸载由 Windows 按需显示 UAC；生成的 `Cap7CE.exe` 保持普通用户权限运行，不以管理员身份启动。已安装路径检测、注册表、开始菜单、桌面快捷方式、完成页运行选项及卸载主流程继续服从 electron-builder / NSIS 默认机制；安装器通过受支持的 `include` 挂钩取消目录页之后自动追加 `Cap7CE` 的步骤，已有安装仍定位到登记目录，而用户手动输入的路径直接作为最终安装目录。`models` 与 `llama.cpp` 不随安装包创建、迁移或覆盖，打包态改从 `%LOCALAPPDATA%\Cap7CE` 读取。卸载组件页保留两个默认不选中的独立选项：用户数据选项清理当前用户的 `UserData`、`updates`、可重建的 `Core` Catalog，并兼容清理旧版 `%APPDATA%\Cap7CE`；AI 内容选项清理当前用户的 `models` 与 `llama.cpp`。原生空间统计使用构建时已知的程序体积，并在勾选 AI 内容时计入 Local 产品根下两个目录的实时大小；不递归统计其他用户数据，避免大型缓存或 Catalog 拖慢卸载器启动。可选清理在目标本身是 Windows 符号链接或目录联接时只移除链接，不进入链接目标，普通真实目录继续交给 NSIS 原生删除。安装器和卸载器显式使用 `build/setup.ico`，安装器 EXE 的 Windows 文件说明留空，Windows 卸载登记和快捷方式不写入网址或备注；卸载显示名中的版本来自当前构建版本，不属于固定 `appId`。安装与卸载界面仅包含英文和简体中文，按 Windows 界面语言自动选择且不显示语言选择页；不支持的语言回退英文。许可证页展示仓库中的 PolyForm Noncommercial 英文原文，完成页默认勾选运行 Cap7CE；最终侧栏图直接使用经过尺寸、位深、压缩方式和对比度检查的 `build/installerSidebar.bmp`。
 
 应用内更新的完成确认由 `appUpdateInstallIntent.ts` 持有：旧进程仅在可信安装器成功启动后，于更新目录记录目标版本；新进程只在打包版本与目标完全一致时显示并消费一次更新成功通知。低于目标的其他程序副本保留待完成记录，高于目标的版本清理过期记录，首次安装不创建记录。
 

@@ -76,6 +76,7 @@ import { ArchivePreviewError, closeArchivePreviewSession, openArchivePreviewSess
 import { closeFontPreviewSession, FontPreviewError, inspectFontPreviewSource, isFontPreviewRequestAuthorized, openFontPreviewSession } from "./fontPreviewService";
 import { closeEpubPreviewSession, EpubPreviewError, openEpubPreviewSession } from "./epubPreviewService";
 import { closeMobiPreviewSession, MobiPreviewError, openMobiPreviewSession } from "./mobiPreviewService";
+import { resolveApplicationDataPaths } from "./applicationDataPaths";
 const applicationName = "Cap7CE";
 const windowsAppUserModelId = "Cap7CE";
 const releasePageUrl = "https://github.com/7C93F3-L/Cap7CE/releases";
@@ -83,7 +84,7 @@ app.setName(applicationName);
 if (process.platform === "win32" && app.isPackaged) {
   app.setAppUserModelId(windowsAppUserModelId);
 }
-app.setPath("userData", path.join(app.getPath("appData"), applicationName));
+app.setPath("userData", resolveApplicationDataPaths({ applicationName, localAppDataPath: process.env.LOCALAPPDATA, fallbackAppDataPath: app.getPath("appData") }).userDataRoot);
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const runtimeDiagnostics = hasSingleInstanceLock
   ? bootstrapRuntimeDiagnostics()
@@ -122,7 +123,6 @@ let appTray: Tray | null = null;
 let pendingSecondInstanceActivation = false;
 let mainWindowReadyForActivation = false;
 let isQuitting = false;
-
 let resizeRepaintTimer: NodeJS.Timeout | null = null;
 let programmaticResizeGuardUntil = 0;
 let moveSettledTimer: NodeJS.Timeout | null = null;

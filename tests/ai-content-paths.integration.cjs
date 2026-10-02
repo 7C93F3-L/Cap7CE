@@ -9,6 +9,7 @@ const path = require("node:path");
   const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "cap7ce-ai-content-paths-"));
   const developmentRoot = path.join(temporaryRoot, "development root");
   const executablePath = path.join(temporaryRoot, "已安装 Cap7CE", "Cap7CE.exe");
+  const userDataPath = path.join(temporaryRoot, "local data", "Cap7CE", "UserData");
   const originalLoad = Module._load;
 
   Module._load = function loadWithElectronMock(request, parent, isMain) {
@@ -16,7 +17,11 @@ const path = require("node:path");
       return {
         app: {
           isPackaged: true,
-          getAppPath: () => developmentRoot
+          getAppPath: () => developmentRoot,
+          getPath: (name) => {
+            assert.equal(name, "userData");
+            return userDataPath;
+          }
         }
       };
     }
@@ -28,17 +33,20 @@ const path = require("node:path");
     const packagedPaths = resolveAiContentPaths({
       isPackaged: true,
       appPath: developmentRoot,
-      executablePath
+      executablePath,
+      userDataPath
     });
     const expectedProgramRoot = path.dirname(executablePath);
+    const expectedContentRoot = path.dirname(userDataPath);
     assert.equal(packagedPaths.programRoot, expectedProgramRoot);
-    assert.equal(packagedPaths.runtimeRoot, path.join(expectedProgramRoot, "llama.cpp"));
-    assert.equal(packagedPaths.modelsRoot, path.join(expectedProgramRoot, "models"));
+    assert.equal(packagedPaths.runtimeRoot, path.join(expectedContentRoot, "llama.cpp"));
+    assert.equal(packagedPaths.modelsRoot, path.join(expectedContentRoot, "models"));
 
     const developmentPaths = resolveAiContentPaths({
       isPackaged: false,
       appPath: developmentRoot,
-      executablePath
+      executablePath,
+      userDataPath
     });
     assert.equal(developmentPaths.programRoot, developmentRoot);
     assert.equal(developmentPaths.runtimeRoot, path.join(developmentRoot, "llama.cpp"));
@@ -62,7 +70,7 @@ const path = require("node:path");
     assert.doesNotMatch(pathModuleSource, /node:fs|mkdir|rename|copyFile|rm\(/);
 
     console.log(JSON.stringify({
-      packagedPathsStayBesideExecutable: true,
+      packagedPathsUseWritableLocalDataRoot: true,
       developmentPathsStayInsideAppRoot: true,
       resolutionDoesNotCreateDirectories: true,
       portableEmptyDirectoryHookRemoved: true

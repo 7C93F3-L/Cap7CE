@@ -5,6 +5,8 @@ const path = require("node:path");
 const projectRoot = path.resolve(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 const mainSource = fs.readFileSync(path.join(projectRoot, "electron", "main.ts"), "utf8");
+const applicationDataPathsSource = fs.readFileSync(
+  path.join(projectRoot, "electron", "applicationDataPaths.ts"), "utf8");
 const customNsis = fs.readFileSync(path.join(projectRoot, "build", "installer-custom.nsh"), "utf8");
 const capabilityNsis = fs.readFileSync(
   path.join(projectRoot, "build", "installer-core-capability-dev.nsh"), "utf8");
@@ -16,10 +18,14 @@ assert.equal(packageJson.build.appId, "Cap7CE");
 assert.ok(packageJson.description, "the source package should retain its project description");
 assert.equal(packageJson.build.extraMetadata.description, "");
 assert.match(mainSource, /windowsAppUserModelId = "Cap7CE"/);
+assert.match(mainSource, /resolveApplicationDataPaths/);
+assert.match(mainSource, /app\.setPath\("userData", resolveApplicationDataPaths/);
+assert.doesNotMatch(mainSource, /path\.join\(app\.getPath\("appData"\), applicationName\)/);
+assert.match(applicationDataPathsSource, /path\.join\(productRoot, "UserData"\)/);
 
 assert.deepEqual(packageJson.build.win.target, [{ target: "nsis", arch: ["x64"] }]);
 assert.equal(packageJson.build.nsis.oneClick, false);
-assert.equal(packageJson.build.nsis.perMachine, false);
+assert.equal(packageJson.build.nsis.perMachine, true);
 assert.equal(packageJson.build.nsis.allowElevation, true);
 assert.equal(packageJson.build.nsis.allowToChangeInstallationDirectory, true);
 assert.equal(packageJson.build.nsis.artifactName, "Cap7CE-Setup-${version}-x64.${ext}");
@@ -97,6 +103,12 @@ assert.match(customNsis, /!define APP_DESCRIPTION ""/);
 assert.match(customNsis, /!undef UNINSTALL_URL_INFO_ABOUT/);
 assert.match(customNsis, /\$INSTDIR\\models/);
 assert.match(customNsis, /\$INSTDIR\\llama\.cpp/);
+assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\UserData/);
+assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\updates/);
+assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\models/);
+assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\llama\.cpp/);
+assert.match(customNsis, /\$APPDATA\\Cap7CE/,
+  "the explicit user-data cleanup choice must also cover legacy roaming data");
 assert.doesNotMatch(customNsis, /CreateDirectory "\$INSTDIR\\(?:models|llama\.cpp)"/);
 assert.match(customNsis, /\$INSTDIR\\resources\\app\.asar/);
 assert.match(customNsis, /\$LOCALAPPDATA\\\$\{APP_INSTALLER_STORE_FILE\}/);
