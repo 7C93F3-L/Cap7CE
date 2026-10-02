@@ -33,7 +33,16 @@ const maximumStringLength = 2_000;
 export const redactDiagnosticText = (value: string): string => value
   .replace(/\\\\[^\\\s]+\\[^\s"']+/g, "<network-path>")
   .replace(/[A-Za-z]:\\[^\r\n"']+/g, "<local-path>")
-  .replace(/file:\/\/\/[^\s"']+/gi, "<file-url>");
+  .replace(/file:\/\/\/[^\s"']+/gi, "<file-url>")
+  .replace(/\bS-\d-\d+(?:-\d+)+\b/gi, "<sid>")
+  .replace(/\b[^\s\\/:*?"<>|]+\.[A-Za-z][A-Za-z0-9]{0,15}\b/g, "<file-name>");
+
+const sensitiveDiagnosticKeys = new Set([
+  "accountname", "accountsid", "directory", "directorypath", "directories",
+  "file", "filename", "filenames", "filepath", "files", "fullpath", "path", "paths",
+  "sid", "sourcepath", "targetpath", "usersid", "volume", "volumeid", "volumeids",
+  "volumelabel", "volumelabels", "volumes"
+]);
 
 const sanitizeValue = (value: unknown, depth = 0): unknown => {
   if (depth > 4) return "<truncated>";
@@ -50,7 +59,10 @@ const sanitizeValue = (value: unknown, depth = 0): unknown => {
   if (typeof value === "object") {
     return Object.fromEntries(Object.entries(value as Record<string, unknown>)
       .slice(0, 50)
-      .map(([key, item]) => [key, sanitizeValue(item, depth + 1)]));
+      .map(([key, item]) => [
+        key,
+        sensitiveDiagnosticKeys.has(key.toLowerCase()) ? "<redacted>" : sanitizeValue(item, depth + 1)
+      ]));
   }
   return String(value);
 };

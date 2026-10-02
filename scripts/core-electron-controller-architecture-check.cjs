@@ -4,72 +4,80 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const failures = [];
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
-const controllerPath = "electron/core/coreHostController.ts";
-const clientPath = "electron/core/coreProtocolClient.ts";
-const typesPath = "electron/core/coreProtocolTypes.ts";
-const testPath = "tests/core-host-controller.integration.cjs";
+const paths = {
+  controller: "electron/core/coreHostController.ts",
+  launch: "electron/core/coreHostLaunchProfile.ts",
+  client: "electron/core/coreProtocolClient.ts",
+  types: "electron/core/coreProtocolTypes.ts",
+  productTypes: "electron/core/coreProductProtocolTypes.ts",
+  capability: "electron/computerSearchCapability.ts",
+  runtime: "electron/computerSearchRuntime.ts",
+  ipc: "electron/computerSearchIpc.ts",
+  publicTypes: "electron/computerSearchTypes.ts",
+  controllerTest: "tests/core-host-controller.integration.cjs",
+  ipcTest: "tests/computer-search-ipc.integration.cjs"
+};
 
-for (const relativePath of [controllerPath, clientPath, typesPath, testPath]) {
-  if (!fs.existsSync(path.join(root, relativePath))) failures.push(`Missing P3.2 Core controller boundary: ${relativePath}.`);
+for (const relativePath of Object.values(paths)) {
+  if (!fs.existsSync(path.join(root, relativePath))) failures.push(`Missing Core Electron boundary: ${relativePath}.`);
 }
 
 if (failures.length === 0) {
-  const controller = read(controllerPath);
-  const client = read(clientPath);
-  const test = read(testPath);
+  const controller = read(paths.controller);
+  const launch = read(paths.launch);
+  const client = read(paths.client);
+  const runtime = read(paths.runtime);
+  const capability = read(paths.capability);
+  const ipc = read(paths.ipc);
+  const controllerTest = read(paths.controllerTest);
+  const controllerBoundary = `${controller}\n${launch}\n${client}`;
   for (const [source, anchor, description] of [
-    [controller, "packaged-core-not-installed", "packaged-not-installed fallback"],
-    [controller, "--catalog-controller-probe", "explicit temporary probe activation"],
-    [controller, "core.shutdown", "graceful Core shutdown"],
-    [controller, "this.restartCount >= 1", "single automatic restart ceiling"],
-    [controller, "child.kill()", "owned-process timeout termination"],
-    [client, "\\\\\\\\.\\\\pipe\\\\", "local named-pipe transport"],
-    [client, "writeUInt32LE", "SC/1 length-prefixed framing"],
+    [controller, "packaged-core-not-installed", "probe packaged fallback"],
+    [launch, "--catalog-controller-probe", "temporary probe activation"],
+    [launch, "--catalog-server", "product catalog activation"],
+    [controller, "core.shutdown", "graceful shutdown"],
+    [controller, "this.restartCount >= 1", "single restart ceiling"],
     [client, "expectedServerProcessId", "server PID verification"],
-    [test, "deadline-exceeded", "deadline coverage"],
-    [test, "core-crash-restart-exhausted", "crash restart coverage"]
-  ]) {
-    if (!source.includes(anchor)) failures.push(`P3.2 Core controller is missing ${description}.`);
-  }
+    [runtime, "catalog.resolveScope", "stable path-to-scope resolution"],
+    [runtime, "randomBytes(24)", "opaque result authorization"],
+    [runtime, "resolveAuthorizedItem", "session result authorization lookup"],
+    [runtime, "resolved.rootFileReference", "directory-or-volume scope distinction"],
+    [runtime, ': { kind: "all-volumes" }', "drive-root volume scope selection"],
+    [runtime, "Cap7CE.Core.Host.exe", "fixed installed host path"],
+    [capability, "Cap7CE.Core.Setup.exe", "fixed packaged Setup path"],
+    [capability, "--activation-coordinator", "authenticated capability coordinator"],
+    [ipc, "computerSearch:search", "separate product search IPC"],
+    [ipc, "computerSearch:configureCapability", "product capability lifecycle IPC"],
+    [ipc, "computerSearch:open", "authorized result invocation IPC"],
+    [ipc, "computerSearch:startDrag", "authorized native drag IPC"],
+    [controllerTest, "core-crash-restart-exhausted", "restart coverage"]
+  ]) if (!source.includes(anchor)) failures.push(`Core Electron boundary is missing ${description}.`);
 
-  const combined = `${controller}\n${client}`;
   for (const [pattern, description] of [
     [/from ["']electron["']|require\(["']electron["']\)/, "Electron API dependency"],
     [/ipcMain|ipcRenderer|contextBridge/, "Renderer IPC exposure"],
-    [/search:images|\bSkim\b|sql\.js|electron-builder|nsis/i, "later-round integration"],
     [/Reader\.Host|Cap7CE\.Core\.Reader\.Host/, "direct Reader launch"]
-  ]) {
-    if (pattern.test(combined)) failures.push(`P3.2 Core controller introduces ${description}.`);
+  ]) if (pattern.test(controllerBoundary)) failures.push(`Core controller introduces ${description}.`);
+  if (/search:images|sql\.js/i.test(`${runtime}\n${ipc}`)) failures.push("Computer search must not reuse formal search IPC or sql.js.");
+  const main = read("electron/main.ts");
+  const preload = read("electron/preload.ts");
+  const app = read("src/renderer/App.tsx");
+  if (!main.includes("registerComputerSearchIpc") || !main.includes("createComputerSearchRuntime")) {
+    failures.push("main.ts must assemble the P3.5 domain registration only.");
+  }
+  if (!preload.includes("computerSearch:status") || !preload.includes("computerSearch:cancel")) {
+    failures.push("preload.ts must expose the isolated P3.5 bridge.");
+  }
+  if (/coreHostController|CoreHostController|Cap7CE\.Core/i.test(`${main}\n${preload}\n${app}`)) {
+    failures.push("App, preload, and main must not directly own the Core controller.");
   }
 }
 
-for (const integrationPath of ["electron/main.ts", "electron/preload.ts", "src/renderer/App.tsx"]) {
-  const source = read(integrationPath);
-  if (/coreHostController|CoreHostController|Cap7CE\.Core/i.test(source)) {
-    failures.push(`${integrationPath} activates Core before P3.3.`);
-  }
-}
-
-const packageJson = JSON.parse(read("package.json"));
-if (packageJson.build.files.some((entry) => typeof entry === "string" && entry.replaceAll("\\", "/").startsWith("core/"))) {
-  failures.push("P3.2 must not package Core.");
-}
-if (packageJson.build.extraResources.some((entry) => typeof entry?.from === "string"
-    && entry.from.replaceAll("\\", "/").startsWith("core/"))) {
-  failures.push("P3.2 must not add Core to Electron Builder extraResources.");
-}
-
-if (failures.length > 0) {
+if (failures.length) {
   console.error("Core Electron controller architecture checks failed:\n");
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
-} else {
-  console.log(JSON.stringify({
-    status: "passed",
-    activation: "test-diagnostic-only",
-    rendererIpc: false,
-    packagedCore: false,
-    directReaderLaunch: false,
-    automaticRestartLimit: 1
-  }));
-}
+} else console.log(JSON.stringify({
+  status: "passed", activation: "skim-search-demand", rendererIpc: true,
+  packagedCore: true, directReaderLaunch: false, automaticRestartLimit: 1
+}));

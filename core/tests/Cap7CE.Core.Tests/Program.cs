@@ -6,11 +6,18 @@ using Cap7CE.Core.Host;
 using Cap7CE.Core.Protocol;
 using Cap7CE.Core.Reader.Protocol;
 using Cap7CE.Core.Reader.Host;
+using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
 if (args is ["--catalog-crash-worker"])
 {
     return await CatalogCrashWorker.RunAsync();
+}
+
+if (args is ["--setup-identity-client", var pipeName, var expectedServer]
+    && uint.TryParse(expectedServer, out var expectedServerProcessId))
+{
+    return await CapabilitySetupIdentityTests.RunClientAsync(pipeName, expectedServerProcessId);
 }
 
 var expectedLayers = new Dictionary<Assembly, string>
@@ -20,7 +27,8 @@ var expectedLayers = new Dictionary<Assembly, string>
     [typeof(ReaderHostAssembly).Assembly] = ReaderHostAssembly.Role,
     [typeof(CatalogAssembly).Assembly] = CatalogAssembly.Role,
     [typeof(AdapterAbstractionsAssembly).Assembly] = AdapterAbstractionsAssembly.Role,
-    [typeof(CoreHostScaffold).Assembly] = "Host"
+    [typeof(CoreHostScaffold).Assembly] = "Host",
+    [typeof(CapabilitySetupPlanner).Assembly] = "Setup"
 };
 foreach (var (assembly, expectedLayer) in expectedLayers)
 {
@@ -35,6 +43,9 @@ TestAssert.True(status.ProtocolImplemented, "protocol must be implemented");
 TestAssert.True(status.CatalogImplemented, "catalog must be implemented");
 TestAssert.False(status.RealAdapterConnected, "real adapter must remain disconnected");
 TestAssert.True(status.SyntheticFixtureAvailable, "synthetic fixture must be available");
+var nativeDependencyProbe = await CatalogNativeDependencyProbe.RunAsync();
+TestAssert.Equal("passed", nativeDependencyProbe.Status, "native catalog dependency probe");
+TestAssert.False(nativeDependencyProbe.SourceFilesRead, "native catalog dependency probe source boundary");
 
 await ProtocolFrameTests.RunAsync();
 await ReaderProtocolTests.RunAsync();
@@ -45,6 +56,11 @@ await CatalogDatabaseTests.RunAsync();
 await CatalogRecoveryTests.RunAsync();
 var readOnlyBaseline = await CatalogReadOnlyCliTests.RunAsync();
 var catalogV2 = await CatalogV2Tests.RunAsync();
+await CapabilitySetupContractTests.RunAsync();
+await CapabilitySetupPayloadTests.RunAsync();
+await CapabilitySetupIdentityTests.RunAsync();
+await CapabilitySetupTransactionTests.RunAsync();
+CapabilitySetupVersionTests.Run();
 
 Console.WriteLine(JsonSerializer.Serialize(new
 {
@@ -66,7 +82,10 @@ Console.WriteLine(JsonSerializer.Serialize(new
     catalogFixtures = "temporary-only",
     catalogCrashRecovery = true,
     catalogContinuityRecovery = true,
+    catalogReaderInterruptionRecovery = true,
+    catalogClosedPeriodIncrementalRecovery = true,
     catalogReadOnlyCli = true,
+    catalogNativeDependencyProbe = nativeDependencyProbe.Status,
     catalogSyntheticBaselineRows = readOnlyBaseline.Rows,
     catalogSyntheticOpenAndValidateMs = readOnlyBaseline.OpenAndValidateMs,
     catalogSyntheticFirstPageMs = readOnlyBaseline.FirstPageMs,
@@ -78,11 +97,14 @@ Console.WriteLine(JsonSerializer.Serialize(new
     catalogSyntheticDatabaseBytes = readOnlyBaseline.DatabaseBytes,
     catalogSyntheticDatabaseBytesPerRow = readOnlyBaseline.DatabaseBytesPerRow,
     catalogSyntheticPeakRssBytes = readOnlyBaseline.PeakRssBytes,
-    realFileSystemAccessDuringAutomatedTests = false,
+    sourceFilesReadDuringAutomatedTests = false,
+    temporaryCapabilityPayloadVerified = true,
     realNtfsAdapterBuilt = true,
     readerServiceExecutableBuilt = true,
     readerServiceInstalled = false,
     serviceInstalled = false,
+    capabilitySetup = "native-aot-transaction-core",
+    systemMutationDuringSetupTests = false,
     electronConnected = false
 }));
 return 0;

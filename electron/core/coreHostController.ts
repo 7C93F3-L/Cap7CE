@@ -1,14 +1,16 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { access, rm } from "node:fs/promises";
-import os from "node:os";
+import { access } from "node:fs/promises";
 import path from "node:path";
-import { CoreProtocolClient } from "./coreProtocolClient";
+import { CoreProtocolClient, type CorePendingRequest } from "./coreProtocolClient";
+import {
+  createCoreHostLaunchProfile, type CoreHostLaunchMode, waitForExit, withTimeout
+} from "./coreHostLaunchProfile";
 import { CoreCapabilityStatus, CoreClientError, coreProtocolVersion } from "./coreProtocolTypes";
 
 const requiredCapabilities = [
   "capability.status", "volume.list", "volume.selection", "catalog.status",
-  "catalog.build", "catalog.rebuild", "catalog.cancel", "search.start",
+  "catalog.build", "catalog.rebuild", "catalog.cancel", "catalog.resolveScope", "search.start",
   "search.nextPage", "search.cancel", "core.shutdown"
 ] as const;
 
@@ -39,6 +41,7 @@ export interface CoreHostControllerOptions {
   diagnostics?: CoreControllerDiagnostics;
   startupTimeoutMs?: number;
   stopTimeoutMs?: number;
+  launchMode?: CoreHostLaunchMode;
 }
 
 interface ReadyMessage {
@@ -49,32 +52,16 @@ interface ReadyMessage {
   catalogSchemaVersion: number | null;
 }
 
-const waitForExit = (child: ChildProcessWithoutNullStreams): Promise<void> => {
-  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
-  return new Promise((resolve) => child.once("exit", () => resolve()));
-};
-
-const withTimeout = async (work: Promise<void>, timeoutMs: number): Promise<boolean> => {
-  let timer: NodeJS.Timeout | undefined;
-  const timedOut = new Promise<boolean>((resolve) => {
-    timer = setTimeout(() => resolve(false), timeoutMs);
-  });
-  const completed = work.then(() => true, () => true);
-  const result = await Promise.race([completed, timedOut]);
-  if (timer) clearTimeout(timer);
-  return result;
-};
-
 export class CoreHostController {
   private state: CoreControllerState = "stopped";
   private reason: CoreControllerReason | undefined;
   private child: ChildProcessWithoutNullStreams | null = null;
   private client: CoreProtocolClient | null = null;
-  private pipeName: string | null = null;
   private restartCount = 0;
   private desiredRunning = false;
   private stopping = false;
   private launchPromise: Promise<CoreControllerSnapshot> | null = null;
+  private launchCleanup: (() => Promise<void>) | null = null;
   private serverProductVersion: string | undefined;
 
   constructor(private readonly options: CoreHostControllerOptions) {}
@@ -100,7 +87,9 @@ export class CoreHostController {
     this.desiredRunning = true;
     this.stopping = false;
     this.restartCount = 0;
-    if (this.options.packaged) return this.setUnavailable("packaged-core-not-installed");
+    if (this.options.packaged && (this.options.launchMode ?? "probe") === "probe") {
+      return this.setUnavailable("packaged-core-not-installed");
+    }
     if (!this.options.executablePath || !path.isAbsolute(this.options.executablePath)) {
       return this.setUnavailable("core-host-missing");
     }
@@ -118,6 +107,21 @@ export class CoreHostController {
     return this.client.request<CoreCapabilityStatus>("capability.status", {}, 5_000);
   }
 
+  request<T>(operation: string, body: Record<string, unknown>, deadlineMs?: number): Promise<T> {
+    if (this.state !== "ready" || !this.client) throw new CoreClientError("core-not-ready");
+    return this.client.request<T>(operation, body, deadlineMs);
+  }
+
+  startRequest<T>(operation: string, body: Record<string, unknown>, deadlineMs?: number): CorePendingRequest<T> {
+    if (this.state !== "ready" || !this.client) throw new CoreClientError("core-not-ready");
+    return this.client.startRequest<T>(operation, body, deadlineMs);
+  }
+
+  cancelRequest(requestId: string): Promise<boolean> {
+    if (this.state !== "ready" || !this.client) throw new CoreClientError("core-not-ready");
+    return this.client.cancel(requestId);
+  }
+
   async stop(): Promise<CoreControllerSnapshot> {
     this.desiredRunning = false;
     this.stopping = true;
@@ -126,7 +130,7 @@ export class CoreHostController {
     if (inFlight) await inFlight.catch(() => undefined);
     const child = this.child;
     const client = this.client;
-    const pipeName = this.pipeName;
+    const cleanup = this.launchCleanup;
     if (client) {
       await client.request<{ accepted: boolean }>("core.shutdown", {}, 3_000).catch(() => undefined);
       client.close();
@@ -137,8 +141,8 @@ export class CoreHostController {
     }
     this.child = null;
     this.client = null;
-    this.pipeName = null;
-    if (pipeName) await this.cleanupProbeCatalog(pipeName);
+    this.launchCleanup = null;
+    if (cleanup) await cleanup();
     this.state = "stopped";
     this.reason = undefined;
     this.stopping = false;
@@ -172,13 +176,14 @@ export class CoreHostController {
     this.reason = undefined;
     const startedAt = Date.now();
     const token = randomBytes(16).toString("hex");
-    const pipeName = `cap7ce-core-p32-${token}`;
+    const profile = createCoreHostLaunchProfile(this.options.launchMode ?? "probe", token);
+    const pipeName = profile.pipeName;
     const sessionSecret = randomBytes(32).toString("base64");
     this.options.diagnostics?.log("info", "core.controller.starting", {
       phase: recovery ? "recovery" : "startup",
       restartCount: this.restartCount
     });
-    const child = spawn(executablePath, ["--catalog-controller-probe", "--pipe-name", pipeName], {
+    const child = spawn(executablePath, profile.arguments, {
       cwd: path.dirname(executablePath),
       windowsHide: true,
       shell: false,
@@ -207,10 +212,10 @@ export class CoreHostController {
       }
       this.child = child;
       this.client = client;
-      this.pipeName = pipeName;
+      this.launchCleanup = profile.cleanup;
       this.state = "ready";
       this.serverProductVersion = this.options.productVersion;
-      child.once("exit", () => this.handleUnexpectedExit(child, pipeName));
+      child.once("exit", () => this.handleUnexpectedExit(child));
       this.options.diagnostics?.log("info", "core.controller.ready", {
         durationMs: Date.now() - startedAt,
         restartCount: this.restartCount
@@ -219,18 +224,19 @@ export class CoreHostController {
     } catch (error) {
       if (child.exitCode === null && child.signalCode === null) child.kill();
       await withTimeout(waitForExit(child), this.options.stopTimeoutMs ?? 3_000);
-      await this.cleanupProbeCatalog(pipeName);
+      await profile.cleanup();
       throw error;
     }
   }
 
-  private handleUnexpectedExit(child: ChildProcessWithoutNullStreams, pipeName: string): void {
+  private handleUnexpectedExit(child: ChildProcessWithoutNullStreams): void {
     if (this.child !== child) return;
     this.client?.close();
     this.child = null;
     this.client = null;
-    this.pipeName = null;
-    void this.cleanupProbeCatalog(pipeName);
+    const cleanup = this.launchCleanup;
+    this.launchCleanup = null;
+    if (cleanup) void cleanup();
     if (this.stopping || !this.desiredRunning) return;
     if (this.restartCount >= 1) {
       this.state = "failed";
@@ -282,12 +288,5 @@ export class CoreHostController {
     this.reason = reason;
     this.options.diagnostics?.log("warn", "core.controller.unavailable", { reason });
     return this.snapshot();
-  }
-
-  private async cleanupProbeCatalog(pipeName: string): Promise<void> {
-    const token = pipeName.slice("cap7ce-core-p32-".length);
-    if (!/^[0-9a-f]{32}$/.test(token)) return;
-    const probeRoot = path.join(os.tmpdir(), `Cap7CE-Core-P32-${token}`);
-    await rm(probeRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }).catch(() => undefined);
   }
 }

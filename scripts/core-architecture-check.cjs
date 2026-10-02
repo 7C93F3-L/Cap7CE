@@ -9,13 +9,15 @@ const expectedProjects = new Map([
   ["core/src/Cap7CE.Core.Reader.Host/Cap7CE.Core.Reader.Host.csproj", ["core/src/Cap7CE.Core.Reader.Protocol/Cap7CE.Core.Reader.Protocol.csproj"]],
   ["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", []],
   ["core/src/Cap7CE.Core.Adapters.Abstractions/Cap7CE.Core.Adapters.Abstractions.csproj", []],
+  ["core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj", []],
   ["core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj", [
     "core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj", "core/src/Cap7CE.Core.Reader.Protocol/Cap7CE.Core.Reader.Protocol.csproj",
     "core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", "core/src/Cap7CE.Core.Adapters.Abstractions/Cap7CE.Core.Adapters.Abstractions.csproj"
   ]],
   ["core/tests/Cap7CE.Core.Tests/Cap7CE.Core.Tests.csproj", [
     "core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj", "core/src/Cap7CE.Core.Reader.Protocol/Cap7CE.Core.Reader.Protocol.csproj", "core/src/Cap7CE.Core.Reader.Host/Cap7CE.Core.Reader.Host.csproj",
-    "core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", "core/src/Cap7CE.Core.Adapters.Abstractions/Cap7CE.Core.Adapters.Abstractions.csproj", "core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj"
+    "core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", "core/src/Cap7CE.Core.Adapters.Abstractions/Cap7CE.Core.Adapters.Abstractions.csproj", "core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj",
+    "core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj"
   ]]
 ]);
 const allowedPackages = new Map([["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", [["Microsoft.Data.Sqlite", "10.0.12"]]]]);
@@ -75,17 +77,25 @@ for (const filePath of coreSourceFiles) {
   const isVolumeProbeSource = relativePath === "core/src/Cap7CE.Core.Host/ReaderVolumeCli.cs";
   const isProductCoreRuntime = relativePath === "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs";
   const isControllerProbeCatalog = relativePath === "core/src/Cap7CE.Core.Host/ControllerProbeCatalog.cs";
-  const isP31ValidationSource = relativePath === "core/src/Cap7CE.Core.Host/CoreP31ValidationCli.cs";
+  const isRealValidationSource = ["CoreP31ValidationCli.cs", "CoreP37ValidationCli.cs", "CoreP37ProbeCoordination.cs"].some(name => relativePath === `core/src/Cap7CE.Core.Host/${name}`);
   const isReaderV2SessionSource = relativePath === "core/src/Cap7CE.Core.Host/ReaderV2CatalogSession.cs";
   const isReaderLifecycleSource = ["core/src/Cap7CE.Core.Host/ReaderLifecycleCli.cs",
     "core/src/Cap7CE.Core.Host/ReaderServiceController.cs"].includes(relativePath);
+  const isSetupPayloadVerifier = relativePath === "core/src/Cap7CE.Core.Setup/CapabilitySetupPayloadVerifier.cs";
+  const isSetupPeerIdentity = relativePath === "core/src/Cap7CE.Core.Setup/CapabilitySetupPeerIdentity.cs";
+  const isSetupWindowsFileBoundary = [
+    "core/src/Cap7CE.Core.Setup/CapabilitySetupWindowsBackend.cs",
+    "core/src/Cap7CE.Core.Setup/CapabilitySetupWindowsAcl.cs",
+    "core/src/Cap7CE.Core.Setup/CapabilitySetupWindowsFileSystem.cs", "core/src/Cap7CE.Core.Setup/CapabilitySetupWindowsCleanup.cs", "core/src/Cap7CE.Core.Setup/CapabilitySetupWindowsVerifier.cs"
+  ].includes(relativePath);
   const allowedCapabilities = isCatalogSource ? ["catalog database implementation", "real file-system access"]
     : isReaderHostSource ? ["package-owned Windows service implementation", "NTFS Reader implementation", "real file-system access"]
     : isVolumeProbeSource ? ["catalog database implementation", "real file-system access"]
     : isProductCoreRuntime || isControllerProbeCatalog ? ["real file-system access"]
-    : isP31ValidationSource ? ["catalog database implementation", "real file-system access"]
+    : isRealValidationSource ? ["catalog database implementation", "real file-system access"]
     : isReaderV2SessionSource ? ["package-owned Windows service implementation"]
-    : isReaderLifecycleSource ? ["package-owned Windows service implementation"] : [];
+    : isReaderLifecycleSource ? ["package-owned Windows service implementation"]
+    : isSetupPayloadVerifier || isSetupPeerIdentity || isSetupWindowsFileBoundary ? ["real file-system access"] : [];
   const forbiddenSource = forbiddenP11Source.filter(([, capability]) => !allowedCapabilities.includes(capability));
   for (const [pattern, capability] of forbiddenSource) {
     if (pattern.test(source)) {
@@ -94,7 +104,10 @@ for (const filePath of coreSourceFiles) {
   }
   if (/System\.IO\.Pipes|NamedPipe(?:Server|Client)Stream/.test(source)
       && !relativePath.startsWith("core/src/Cap7CE.Core.Host/")
-      && !relativePath.startsWith("core/src/Cap7CE.Core.Reader.Host/")) {
+      && !relativePath.startsWith("core/src/Cap7CE.Core.Reader.Host/")
+      && !["core/src/Cap7CE.Core.Setup/CapabilitySetupActivationPipe.cs",
+        "core/src/Cap7CE.Core.Setup/CapabilitySetupPeerIdentity.cs",
+        "core/src/Cap7CE.Core.Setup/CapabilitySetupActivationProtocol.cs"].includes(relativePath)) {
     failures.push(`${relativePath} owns pipe transport outside an authorized Host boundary.`);
   }
 }
@@ -109,9 +122,11 @@ const productRuntime = read("core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs");
 const coreProtocol = read("core/src/Cap7CE.Core.Protocol/CoreProtocol.cs");
 const p31Tests = read("core/tests/Cap7CE.Core.Tests/CatalogV2Tests.cs");
 const p31Probe = read("core/src/Cap7CE.Core.Host/CoreP31ValidationCli.cs");
+const nativeDependencyProbe = read("core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs");
 const crashTests = read("core/tests/Cap7CE.Core.Tests/CatalogCrashWorker.cs"), readOnlyCliTests = read("core/tests/Cap7CE.Core.Tests/CatalogReadOnlyCliTests.cs");
 for (const [source, anchor, description] of [
   [hostOptions, "--synthetic-server", "explicit synthetic activation"], [hostOptions, "--catalog-readonly", "explicit read-only CLI activation"],
+  [hostOptions, "--catalog-native-dependency-probe", "fixed native SQLite deployment probe activation"],
   [hostOptions, "--catalog-server", "explicit product catalog activation"], [hostOptions, "--core-p31-probe", "explicit P3.1 real-probe activation"],
   [hostOptions, "--catalog-controller-probe", "explicit P3.2 temporary controller-probe activation"],
   [hostOptions, "--core-p31-initial-probe", "bounded P3.1 initial-build probe activation"],
@@ -123,7 +138,8 @@ for (const [source, anchor, description] of [
   [catalogV2Snapshot, "PRAGMA journal_mode = OFF", "disposable P3.1 bulk-build staging database"],
   [synchronization, "CatalogReaderDiscontinuityException", "P3.1 discontinuity recovery"], [synchronization, "BeginCatchUpAsync", "P3.1 incremental catch-up"],
   [productRuntime, "DefaultCatalogPath", "per-user product catalog location"], [coreProtocol, "P31Capabilities", "SC/1 P3.1 operation allowlist"],
-  [p31Tests, "RunsMultiVolumeVerticalSliceAsync", "multi-volume product vertical slice"], [p31Probe, "RequireStandardClient", "standard-user real probe"]
+  [p31Tests, "RunsMultiVolumeVerticalSliceAsync", "multi-volume product vertical slice"], [p31Probe, "RequireStandardClient", "standard-user real probe"],
+  [nativeDependencyProbe, "Data Source=:memory:", "in-memory native SQLite deployment probe"]
 ]) {
   if (!source.includes(anchor)) failures.push(`Core is missing ${description}.`);
 }
@@ -138,12 +154,8 @@ if (catalogLock.dependencies?.["net10.0"]?.["Microsoft.Data.Sqlite"]?.resolved !
 }
 const packageJson = JSON.parse(read("package.json"));
 const packagedFiles = packageJson.build?.files ?? [];
-const extraResources = packageJson.build?.extraResources ?? [];
 if (packagedFiles.some((entry) => typeof entry === "string" && normalize(entry).startsWith("core/"))) {
-    failures.push("Electron Builder must not package Core during isolated P1 work.");
-}
-if (extraResources.some((entry) => typeof entry?.from === "string" && normalize(entry.from).startsWith("core/"))) {
-    failures.push("Electron Builder extraResources must not include Core during isolated P1 work.");
+    failures.push("Electron Builder files must not bypass the Core capability resource boundary.");
 }
 if (!packageJson.scripts?.["build:core"] || !packageJson.scripts?.["test:core"]
     || !packageJson.scripts?.["probe:core-p31"] || !packageJson.scripts?.["probe:core-p31-initial"]) {

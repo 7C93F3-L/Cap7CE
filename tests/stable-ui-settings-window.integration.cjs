@@ -16,6 +16,7 @@ const settingsConfirmationControllerSource = fs.readFileSync(path.join(root, "sr
 const settingsCategoryIconSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsCategoryIcon.tsx"), "utf8");
 const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "dialogs", "DialogShell.tsx"), "utf8");
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
+const settingsCacheStatsVisibilitySource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsCacheStatsVisibility.ts"), "utf8");
 const formattingSource = fs.readFileSync(path.join(root, "src", "renderer", "formatting.ts"), "utf8");
 const embeddedMetadataSettingsSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
 const embeddedMetadataRuntimeSource = fs.readFileSync(path.join(root, "electron", "embeddedMetadataRuntime.ts"), "utf8");
@@ -176,6 +177,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(rendererEntrySource, /windowKind === "settings"[\s\S]*?import\("\.\/settings-window\/SettingsWindowApp"\)/u);
   assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"search-ai"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
+  assert.match(settingsAppSource, /useSettingsCacheStatsVisibility[\s\S]*?activeCategory === "cache"[\s\S]*?controller\.refreshCaches/u);
+  assert.match(settingsCacheStatsVisibilitySource, /useSettingsCacheStatsVisibility[\s\S]*?addEventListener\("focus", refreshCacheStats\)/u);
+  assert.doesNotMatch(settingsControllerSource, /preferences\.shortcutAvailability\(\),\s*refreshCaches\(\)/u);
   assert.match(settingsAppSource, /formatThumbnailOptimizationStatus\(controller\.thumbnailOptimizationStatus\)/u);
   assert.match(settingsAppSource, /settings\.edgeCollapse[\s\S]*?settings\.standardWindowMode[\s\S]*?settings\.edgeCollapseMode/u);
   assert.match(settingsAppSource, /<StableSettingsSelect[^>]*label=\{t\("settings\.edgeCollapse"\)\}[^>]*value=\{preferences\.edgeCollapseEnabled \? "edge-collapse" : "standard"\}[^>]*settings\.standardWindowMode[^>]*settings\.edgeCollapseMode[^>]*onChange=\{\(value\) => toggle\("edgeCollapseEnabled", value === "edge-collapse"\)\}/u);

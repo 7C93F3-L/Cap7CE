@@ -53,6 +53,46 @@ public static class ReaderLifecycleCli
         }
     }
 
+    public static async Task<ReaderLifecycleCliReport> RunCapabilityAsync(
+        CancellationToken cancellationToken)
+        => await RunEndpointAsync(ReaderClientConstants.Capability, cancellationToken);
+
+    public static async Task<ReaderLifecycleCliReport> RunP37LifecycleAsync(
+        CancellationToken cancellationToken)
+        => await RunEndpointAsync(ReaderClientConstants.P37Lifecycle, cancellationToken);
+
+    private static async Task<ReaderLifecycleCliReport> RunEndpointAsync(
+        ReaderServiceEndpoint endpoint,
+        CancellationToken cancellationToken)
+    {
+        RequireStandardClient();
+        try
+        {
+            var start = await ReaderServiceController.EnsureStartedAsync(
+                endpoint, cancellationToken);
+            var identity = await ReaderServiceClient.ConnectAndDisconnectAsync(
+                endpoint, cancellationToken);
+            return new(
+                "passed", null, true,
+                start.StartedByClient, start.AlreadyRunning, start.ProhibitedRightsDenied,
+                identity.Passed, identity.ExpectedBinaryPath, identity.ExpectedBinaryVersion,
+                identity.DemandStart, false,
+                false, false, false, false);
+        }
+        catch (ReaderRepairRequiredException error)
+        {
+            return Boundary("repair-required", error.Reason);
+        }
+        catch (ReaderServiceAccessDeniedException)
+        {
+            return Boundary("access-denied", "service-dacl");
+        }
+        catch (ReaderServiceUnavailableException)
+        {
+            return Boundary("not-installed", "service-missing");
+        }
+    }
+
     public static string Serialize(ReaderLifecycleCliReport report) => JsonSerializer.Serialize(report);
 
     private static ReaderLifecycleCliReport Boundary(string status, string reason) => new(

@@ -15,5 +15,6 @@
     <ProjectReference Include="..\..\src\Cap7CE.Core.Catalog\Cap7CE.Core.Catalog.csproj" />
     <ProjectReference Include="..\..\src\Cap7CE.Core.Adapters.Abstractions\Cap7CE.Core.Adapters.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Cap7CE.Core.Host\Cap7CE.Core.Host.csproj" />
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Setup\Cap7CE.Core.Setup.csproj" />
   </ItemGroup>
 </Project>

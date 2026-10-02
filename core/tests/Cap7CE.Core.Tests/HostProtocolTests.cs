@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Cap7CE.Core.Host;
 using Cap7CE.Core.Protocol;
+using Cap7CE.Core.Reader.Host;
 
 namespace Cap7CE.Core.Tests;
 
@@ -10,11 +11,23 @@ internal static class HostProtocolTests
     {
         FreezesLifecycleClientActivation();
         FreezesP31ProbeActivation();
+        FreezesP37ProbeActivation();
+        FreezesP37LifecycleActivation();
         FreezesP32ControllerProbeActivation();
+        FreezesP35ProductActivation();
         await RejectsMissingHandshakeAsync();
         await RejectsWrongSecretAsync();
         await RejectsWrongClientIdentityAsync();
         await RunsAuthenticatedSessionAsync();
+        FreezesCapabilityReaderDataDirectory();
+    }
+
+    private static void FreezesCapabilityReaderDataDirectory()
+    {
+        ReaderHostConstants.UseCapabilityProfile();
+        TestAssert.True(ReaderHostConstants.DataDirectory.EndsWith(
+            @"\Cap7CE\NtfsReader\v1", StringComparison.OrdinalIgnoreCase),
+            "capability reader uses the versioned service data directory");
     }
 
     private static void FreezesP32ControllerProbeActivation()
@@ -30,6 +43,15 @@ internal static class HostProtocolTests
             "P3.2 controller probe must reject arbitrary names");
     }
 
+    private static void FreezesP35ProductActivation()
+    {
+        const string pipeName = "cap7ce-core-p35-0123456789abcdef0123456789abcdef";
+        TestAssert.True(
+            CoreHostOptions.TryParse(["--catalog-server", "--pipe-name", pipeName], out var product),
+            "P3.5 product controller option");
+        TestAssert.Equal(CoreHostMode.CatalogServer, product.Mode, "P3.5 product controller mode");
+    }
+
     private static void FreezesLifecycleClientActivation()
     {
         TestAssert.True(
@@ -40,6 +62,14 @@ internal static class HostProtocolTests
         TestAssert.False(
             CoreHostOptions.TryParse(["--reader-lifecycle-client", "unexpected"], out _),
             "reader lifecycle client must reject free arguments");
+        TestAssert.True(
+            CoreHostOptions.TryParse(["--reader-capability-lifecycle-client"], out var capability),
+            "reader capability lifecycle client option");
+        TestAssert.Equal(CoreHostMode.ReaderCapabilityLifecycleClient, capability.Mode,
+            "reader capability lifecycle client mode");
+        TestAssert.False(
+            CoreHostOptions.TryParse(["--reader-capability-lifecycle-client", "unexpected"], out _),
+            "reader capability lifecycle client must reject free arguments");
     }
 
     private static void FreezesP31ProbeActivation()
@@ -52,6 +82,30 @@ internal static class HostProtocolTests
         TestAssert.False(
             CoreHostOptions.TryParse(["--core-p31-initial-probe", "unexpected"], out _),
             "P3.1 initial probe must reject free arguments");
+    }
+
+    private static void FreezesP37ProbeActivation()
+    {
+        TestAssert.True(
+            CoreHostOptions.TryParse(["--core-p37-probe"], out var recovery),
+            "P3.7 recovery probe option");
+        TestAssert.Equal(CoreHostMode.CoreP37Probe, recovery.Mode,
+            "P3.7 recovery probe mode");
+        TestAssert.False(
+            CoreHostOptions.TryParse(["--core-p37-probe", "unexpected"], out _),
+            "P3.7 recovery probe must reject free arguments");
+    }
+
+    private static void FreezesP37LifecycleActivation()
+    {
+        TestAssert.True(
+            CoreHostOptions.TryParse(["--reader-p37-lifecycle-client"], out var lifecycle),
+            "P3.7 lifecycle client option");
+        TestAssert.Equal(CoreHostMode.ReaderP37LifecycleClient, lifecycle.Mode,
+            "P3.7 lifecycle client mode");
+        TestAssert.False(
+            CoreHostOptions.TryParse(["--reader-p37-lifecycle-client", "unexpected"], out _),
+            "P3.7 lifecycle client must reject free arguments");
     }
 
     private static async Task RejectsMissingHandshakeAsync()

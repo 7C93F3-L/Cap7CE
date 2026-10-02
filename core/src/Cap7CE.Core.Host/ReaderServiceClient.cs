@@ -108,9 +108,14 @@ internal static class ReaderServiceClient
 
     public static async Task<ReaderServiceIdentityResult> ConnectAndDisconnectAsync(
         CancellationToken cancellationToken)
+        => await ConnectAndDisconnectAsync(ReaderClientConstants.Legacy, cancellationToken);
+
+    public static async Task<ReaderServiceIdentityResult> ConnectAndDisconnectAsync(
+        ReaderServiceEndpoint endpoint,
+        CancellationToken cancellationToken)
     {
-        using var connection = await ReaderNativeClient.ConnectAsync(ReaderClientConstants.Legacy, cancellationToken);
-        var identity = ReaderServiceIdentity.Verify(ReaderClientConstants.Legacy, connection.ServerProcessId);
+        using var connection = await ReaderNativeClient.ConnectAsync(endpoint, cancellationToken);
+        var identity = ReaderServiceIdentity.Verify(endpoint, connection.ServerProcessId);
         if (!identity.Passed) throw new UnauthorizedAccessException(identity.Stage);
         return identity;
     }

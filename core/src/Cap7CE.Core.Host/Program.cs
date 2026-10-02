@@ -15,6 +15,26 @@ if (options.Mode == CoreHostMode.Describe)
     return 0;
 }
 
+if (options.Mode == CoreHostMode.CatalogNativeDependencyProbe)
+{
+    try
+    {
+        var report = await CatalogNativeDependencyProbe.RunAsync();
+        Console.WriteLine(JsonSerializer.Serialize(new
+        {
+            status = report.Status,
+            inMemory = report.InMemory,
+            sourceFilesRead = report.SourceFilesRead
+        }));
+        return 0;
+    }
+    catch
+    {
+        Console.Error.WriteLine(JsonSerializer.Serialize(new { status = "failed", error = "native-sqlite-unavailable" }));
+        return 9;
+    }
+}
+
 if (options.Mode == CoreHostMode.CatalogReadOnly)
 {
     using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
@@ -103,12 +123,42 @@ if (options.Mode is CoreHostMode.CoreP31Probe or CoreHostMode.CoreP31InitialProb
     }
 }
 
-if (options.Mode == CoreHostMode.ReaderLifecycleClient)
+if (options.Mode == CoreHostMode.CoreP37Probe)
+{
+    using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(15));
+    try
+    {
+        var report = await CoreP37ValidationCli.RunAsync(timeout.Token);
+        Console.WriteLine(CoreP37ValidationCli.Serialize(report));
+        return report.Status == "passed" ? 0 : 10;
+    }
+    catch (OperationCanceledException)
+    {
+        Console.Error.WriteLine(JsonSerializer.Serialize(new { status = "failed", error = "core-p37-timeout" }));
+        return 10;
+    }
+    catch
+    {
+        Console.Error.WriteLine(JsonSerializer.Serialize(new { status = "failed", error = "core-p37-failed" }));
+        return 10;
+    }
+}
+
+if (options.Mode is CoreHostMode.ReaderLifecycleClient
+    or CoreHostMode.ReaderCapabilityLifecycleClient
+    or CoreHostMode.ReaderP37LifecycleClient)
 {
     using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
     try
     {
-        var report = await ReaderLifecycleCli.RunAsync(timeout.Token);
+        var report = options.Mode switch
+        {
+            CoreHostMode.ReaderCapabilityLifecycleClient =>
+                await ReaderLifecycleCli.RunCapabilityAsync(timeout.Token),
+            CoreHostMode.ReaderP37LifecycleClient =>
+                await ReaderLifecycleCli.RunP37LifecycleAsync(timeout.Token),
+            _ => await ReaderLifecycleCli.RunAsync(timeout.Token)
+        };
         Console.WriteLine(ReaderLifecycleCli.Serialize(report));
         return report.Status is "passed" or "repair-required" or "access-denied" or "not-installed" ? 0 : 7;
     }

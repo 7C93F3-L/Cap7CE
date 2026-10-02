@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const listCssFiles = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
   const entryPath = path.join(directory, entry.name);
+  if (entry.isDirectory() && entry.name.endsWith("-prototype")) return [];
   return entry.isDirectory() ? listCssFiles(entryPath) : entry.name.endsWith(".css") ? [entryPath] : [];
 });
 const { STABLE_UI_LAYOUT_FILE_NAME } = require("../dist-electron/stableUiWindowLifecycle.js");

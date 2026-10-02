@@ -49,6 +49,7 @@ export interface ImageScanResult {
 
 export interface ImageScanControl {
   isCancelled: () => boolean;
+  yieldForBackgroundWork?: () => Promise<void>;
 }
 
 const throwIfCancelled = (control?: ImageScanControl) => {
@@ -75,6 +76,8 @@ const scanDirectoryRecursive = async (
 
   let entries: import("node:fs").Dir;
   throwIfCancelled(control);
+  await control?.yieldForBackgroundWork?.();
+  throwIfCancelled(control);
   try {
     entries = await fs.opendir(currentPath);
   } catch {
@@ -82,6 +85,7 @@ const scanDirectoryRecursive = async (
   }
 
   for await (const entry of entries) {
+    await control?.yieldForBackgroundWork?.();
     throwIfCancelled(control);
     const entryPath = path.join(currentPath, entry.name);
 

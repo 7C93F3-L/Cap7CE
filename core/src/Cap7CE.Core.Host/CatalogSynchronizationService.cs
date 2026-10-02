@@ -116,10 +116,45 @@ public sealed class CatalogSynchronizationService
         }
         catch (CatalogReaderDiscontinuityException)
         {
-            catalogVolume = await catalog.MarkNeedsRebuildAsync(catalogVolume.VolumeId, token);
-            return await BuildSnapshotAsync(reader, readerVolume, catalogVolume, inspection, true, token);
+            return await RetryOrRebuildAsync(reader, readerVolume, catalogVolume.VolumeId, token);
         }
     }
+
+    private async Task<CatalogSynchronizationMeasurement> RetryOrRebuildAsync(
+        ICatalogReaderSession reader,
+        CatalogReaderVolume readerVolume,
+        string volumeId,
+        CancellationToken token)
+    {
+        var current = await catalog.ReadVolumeAsync(volumeId, token)
+            ?? throw new InvalidDataException("catalog-volume-missing");
+        var inspection = await reader.InspectAsync(readerVolume, token);
+        if (CanResumeCatchUp(current, inspection))
+        {
+            try
+            {
+                return await CatchUpAsync(reader, readerVolume, current, inspection, token);
+            }
+            catch (CatalogReaderDiscontinuityException)
+            {
+                current = await catalog.ReadVolumeAsync(volumeId, token)
+                    ?? throw new InvalidDataException("catalog-volume-missing");
+                inspection = await reader.InspectAsync(readerVolume, token);
+            }
+        }
+        current = await catalog.MarkNeedsRebuildAsync(current.VolumeId, token);
+        return await BuildSnapshotAsync(reader, readerVolume, current, inspection, true, token);
+    }
+
+    private static bool CanResumeCatchUp(
+        CatalogV2VolumeSnapshot volume,
+        CatalogReaderInspection inspection) =>
+        volume.State == CatalogV2VolumeState.CatchingUp
+        && string.Equals(volume.JournalId, inspection.JournalId.ToString("X16"), StringComparison.Ordinal)
+        && volume.CheckpointUsn is long checkpoint
+        && checkpoint >= inspection.FirstUsn
+        && checkpoint >= inspection.LowestValidUsn
+        && checkpoint <= inspection.NextUsn;
 
     private async Task<CatalogSynchronizationMeasurement> BuildSnapshotAsync(
         ICatalogReaderSession reader,
@@ -216,10 +251,13 @@ public sealed class CatalogSynchronizationService
         var readerReadMilliseconds = 0d;
         var records = 0L;
         var pages = 0;
+        var targetUsn = inspection.NextUsn;
         var cursor = volume.CheckpointUsn
             ?? throw new InvalidDataException("catalog-checkpoint-missing");
+        if (targetUsn < cursor) throw new CatalogReaderDiscontinuityException();
         for (var pageNumber = 0; pageNumber < 1_000_000; pageNumber++)
         {
+            if (cursor >= targetUsn) break;
             token.ThrowIfCancellationRequested();
             var readerWatch = System.Diagnostics.Stopwatch.StartNew();
             var page = await reader.ReadJournalPageAsync(
@@ -235,19 +273,24 @@ public sealed class CatalogSynchronizationService
             {
                 throw new CatalogReaderDiscontinuityException();
             }
+            var boundedRecords = page.Response.Records
+                .Where(record => record.Usn < targetUsn)
+                .ToArray();
+            var nextCheckpoint = Math.Min(page.Response.NextUsn, targetUsn);
             volume = await catalog.ApplyBatchAsync(new CatalogV2WriteBatch(
                 volume.VolumeId,
                 volume.JournalId,
                 volume.CheckpointUsn,
                 volume.CatalogRevision,
-                page.Response.NextUsn,
+                nextCheckpoint,
                 page.Response.FirstUsn,
                 page.Response.LowestValidUsn,
-                page.Response.Records.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray()), token);
-            records = checked(records + page.Response.Records.Count);
+                boundedRecords.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray()), token);
+            records = checked(records + boundedRecords.Length);
             pages++;
-            cursor = page.Response.NextUsn;
-            if (page.EndOfStream) break;
+            cursor = nextCheckpoint;
+            if (cursor >= targetUsn) break;
+            if (page.EndOfStream) throw new CatalogReaderDiscontinuityException();
             if (pageNumber == 999_999) throw new InvalidDataException("reader-journal-page-limit");
         }
         await catalog.CompleteSynchronizationAsync(volume.VolumeId, token);

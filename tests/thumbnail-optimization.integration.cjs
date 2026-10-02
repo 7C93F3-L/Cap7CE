@@ -89,6 +89,21 @@ app.whenReady().then(async () => {
     await service.setThumbnailOptimizationEnabled(true);
     service.setThumbnailOptimizationForegroundActive(false);
     const preexistingCandidate = await candidateFor(preexistingFile);
+    let foregroundDiscoveryYieldCount = 0;
+    const foregroundDiscovery = new ThumbnailOptimizationDiscovery(async (_directories, _isCancelled, yieldForBackgroundWork) => {
+      for (let index = 0; index < 32; index += 1) {
+        await yieldForBackgroundWork();
+        foregroundDiscoveryYieldCount += 1;
+      }
+      return [];
+    });
+    foregroundDiscovery.setForegroundActive(true);
+    const foregroundDiscoveryStartedAt = Date.now();
+    foregroundDiscovery.schedule([testRoot]);
+    await foregroundDiscovery.waitForIdle();
+    assert.equal(foregroundDiscoveryYieldCount, 32);
+    assert.ok(Date.now() - foregroundDiscoveryStartedAt >= 70, "foreground discovery must yield between bounded batches");
+
     let releaseDiscovery;
     const discoveryGate = new Promise((resolve) => { releaseDiscovery = resolve; });
     const discovery = new ThumbnailOptimizationDiscovery(async () => {
@@ -268,6 +283,7 @@ app.whenReady().then(async () => {
 
     console.log(JSON.stringify({
       backgroundQueueContinues: true,
+      foregroundDiscoveryYieldsBetweenBatches: true,
       discoveryStatusVisibleUntilCandidateFilteringCompletes: true,
       cachedRepresentativesAnnouncedOnce: true,
       foregroundFocusThrottlesQueue: true,

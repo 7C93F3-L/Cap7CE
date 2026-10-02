@@ -6,6 +6,9 @@ const projectRoot = path.resolve(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 const mainSource = fs.readFileSync(path.join(projectRoot, "electron", "main.ts"), "utf8");
 const customNsis = fs.readFileSync(path.join(projectRoot, "build", "installer-custom.nsh"), "utf8");
+const capabilityNsis = fs.readFileSync(
+  path.join(projectRoot, "build", "installer-core-capability-dev.nsh"), "utf8");
+const capabilityBuilder = require(path.join(projectRoot, "build", "core-capability-dev.electron-builder.cjs"));
 const bitmap = fs.readFileSync(path.join(projectRoot, "build", "installerSidebar.bmp"));
 
 assert.equal(packageJson.version, "1.0.4");
@@ -34,6 +37,43 @@ assert.equal(packageJson.build.nsis.script, undefined, "the standard electron-bu
 
 assert.equal(packageJson.scripts.dist, undefined);
 assert.match(packageJson.scripts["dist:installer"], /electron-builder --win nsis --x64 --publish never/);
+assert.match(packageJson.scripts["dist:installer"], /npm run publish:core-product-capability/);
+assert.match(packageJson.scripts["dist:installer"], /core-product-installer-smoke\.cjs/);
+assert.match(packageJson.scripts.pack, /npm run publish:core-product-capability/);
+assert.match(packageJson.scripts["dist:core-capability-installer"], /npm run publish:core-capability/);
+assert.match(packageJson.scripts["dist:core-capability-installer"], /core-capability-dev\.electron-builder\.cjs/);
+assert.match(packageJson.scripts["dist:core-capability-installer"], /core-capability-installer-smoke\.cjs/);
+const regularCapabilityResource = packageJson.build.extraResources.find(
+  (entry) => entry.to === "core-capability/v1");
+assert.deepEqual(regularCapabilityResource, {
+  from: "core/artifacts/product-capability/v1/bundle",
+  to: "core-capability/v1",
+  filter: ["**/*"]
+});
+assert.deepEqual(packageJson.build.extraResources.find(
+  (entry) => entry.to === "licenses/core-dependencies"), {
+  from: "third_party/core-dependencies",
+  to: "licenses/core-dependencies",
+  filter: ["LICENSE-*"]
+});
+
+assert.equal(capabilityBuilder.appId, "Cap7CE.Core.P33c.Dev");
+assert.equal(capabilityBuilder.productName, "Cap7CE Core P3.3c Development");
+assert.equal(capabilityBuilder.directories.output, "release/core-capability-dev");
+assert.equal(capabilityBuilder.win.executableName, "Cap7CE-Core-P33c-Development");
+assert.equal(capabilityBuilder.nsis.artifactName, "Cap7CE-Core-P33c-Dev-Setup-${version}-x64.${ext}");
+assert.equal(capabilityBuilder.nsis.createDesktopShortcut, false);
+assert.equal(capabilityBuilder.nsis.createStartMenuShortcut, false);
+assert.equal(capabilityBuilder.nsis.runAfterFinish, false);
+assert.equal(capabilityBuilder.nsis.include, "build/installer-core-capability-dev.nsh");
+const capabilityResource = capabilityBuilder.extraResources.find(
+  (entry) => entry.to === "core-capability/v1");
+assert.deepEqual(capabilityResource, {
+  from: "core/artifacts/capability/v1/bundle",
+  to: "core-capability/v1",
+  filter: ["**/*"]
+});
+assert.match(capabilityNsis, /\$\{BUILD_RESOURCES_DIR\}\\installer-custom\.nsh/);
 
 assert.match(customNsis, /!macro customRemoveFiles/);
 assert.match(customNsis, /!macro customUnInstallSection/);
@@ -60,6 +100,16 @@ assert.match(customNsis, /\$INSTDIR\\llama\.cpp/);
 assert.doesNotMatch(customNsis, /CreateDirectory "\$INSTDIR\\(?:models|llama\.cpp)"/);
 assert.match(customNsis, /\$INSTDIR\\resources\\app\.asar/);
 assert.match(customNsis, /\$LOCALAPPDATA\\\$\{APP_INSTALLER_STORE_FILE\}/);
+assert.match(customNsis, /Cap7CE\.Core\.Setup\.exe/);
+assert.match(customNsis, /--activation-coordinator --action remove --catalog \$1/);
+assert.match(customNsis, /SectionGetFlags 1 \$0/,
+  "the product Catalog must follow the existing user-data cleanup choice");
+assert.doesNotMatch(customNsis, /cap7ceCleanupCoreCatalog|CAP7CE_CLEAN_CORE_CATALOG_SECTION/,
+  "the product Catalog must not create a separate uninstall option");
+assert.doesNotMatch(customNsis, /CAP7CE_PRESERVE_CORE_CATALOG/,
+  "Catalog preservation is represented by leaving user-data cleanup unselected");
+assert.match(customNsis, /\$\{ifNot\} \$\{isUpdated\}[\s\S]*Call un\.cap7ceRemoveCoreCapability/,
+  "app updates must preserve an already enabled Core capability");
 
 assert.equal(bitmap.toString("ascii", 0, 2), "BM");
 assert.equal(bitmap.readInt32LE(18), 164);

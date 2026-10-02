@@ -1,8 +1,16 @@
 const assert = require("node:assert/strict");
+const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const { app } = require("electron");
+
+const visualCacheServiceSource = fsSync.readFileSync(
+  path.resolve(__dirname, "..", "electron", "visualCacheService.ts"),
+  "utf8"
+);
+assert.match(visualCacheServiceSource, /const maximumConcurrentCacheStatReads = 2;/u);
+assert.match(visualCacheServiceSource, /cacheStatsQueue\.then[\s\S]*?formalCacheStatsPromise[\s\S]*?skimCacheStatsPromise/u);
 
 const testRoot = path.join(os.tmpdir(), `cap7ce-skim-cache-${process.pid}-${Date.now()}`);
 const userDataPath = path.join(testRoot, "user-data");

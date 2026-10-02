@@ -44,6 +44,12 @@ export interface PreviewSearchEvidence {
   classification: string;
 }
 
+export interface PreviewSourceAuthorization {
+  kind: "computer-search";
+  taskId: string;
+  authorizationId: string;
+}
+
 export interface PreviewWindowData {
   sessionId: string;
   itemId: string;
@@ -94,6 +100,7 @@ export interface PreviewWindowData {
     themeColor: string;
     accentColor: string;
   };
+  sourceAuthorization?: PreviewSourceAuthorization;
 }
 
 export interface PreviewContentSize {

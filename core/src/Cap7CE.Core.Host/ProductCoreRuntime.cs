@@ -58,6 +58,32 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
             await catalog.ReadRevisionAsync(token));
     }
 
+    public async Task<CatalogResolveScopeResponse> ResolveScopeAsync(
+        CatalogResolveScopeRequest request,
+        CancellationToken token)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var (displayName, relativePath) = ParseLocalDirectoryPath(request.Path);
+        var volume = (await catalog.ReadVolumesAsync(token)).SingleOrDefault(candidate =>
+            string.Equals(candidate.DisplayName, displayName, StringComparison.OrdinalIgnoreCase));
+        if (volume is null)
+        {
+            return new CatalogResolveScopeResponse(false, null, null, null, null, false);
+        }
+        var status = ToStatus(volume);
+        if (relativePath.Length == 0)
+        {
+            return new CatalogResolveScopeResponse(
+                true, volume.VolumeId, null, volume.DisplayName, status.State, status.Queryable);
+        }
+        var directory = await catalog.ResolveDirectoryAsync(volume.VolumeId, relativePath, token);
+        return directory is null
+            ? new CatalogResolveScopeResponse(false, volume.VolumeId, null, volume.DisplayName,
+                status.State, status.Queryable)
+            : new CatalogResolveScopeResponse(true, volume.VolumeId, directory.Identity.FileReference,
+                volume.DisplayName, status.State, status.Queryable);
+    }
+
     public CatalogBuildResponse StartSynchronization(CatalogBuildRequest request, bool rebuild)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -156,6 +182,26 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         "saved-scope" when scope.SavedScopeId is not null => CatalogQueryScope.Saved(scope.SavedScopeId),
         _ => throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Search scope is invalid.")
     };
+
+    private static (string DisplayName, string RelativePath) ParseLocalDirectoryPath(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 32767 || value.IndexOf('\0') >= 0)
+        {
+            throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Catalog scope path is invalid.");
+        }
+        var normalized = value.Replace('/', '\\');
+        if (normalized.Length < 3 || !char.IsAsciiLetter(normalized[0]) || normalized[1] != ':'
+            || normalized[2] != '\\' || normalized.IndexOf(':', 2) >= 0)
+        {
+            throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Catalog scope path is invalid.");
+        }
+        var segments = normalized[3..].TrimEnd('\\').Split('\\', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Any(segment => segment is "." or ".."))
+        {
+            throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Catalog scope path is invalid.");
+        }
+        return ($"{char.ToUpperInvariant(normalized[0])}:", string.Join('\\', segments));
+    }
 
     private static string ClassifyTaskFailure(Exception error) => error switch
     {

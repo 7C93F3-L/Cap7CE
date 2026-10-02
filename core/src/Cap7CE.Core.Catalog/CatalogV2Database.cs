@@ -424,7 +424,8 @@ public sealed class CatalogV2Database
         }
 
         await UpsertNodesAsync(connection, transaction, "catalog_nodes_v2", batch.Nodes, token);
-        if (volume.State == CatalogV2VolumeState.CatchingUp)
+        if (volume.State == CatalogV2VolumeState.CatchingUp
+            && batch.Nodes.Any(node => node.IsDirectory))
         {
             await RebuildDirectoryPathsAsync(connection, transaction, batch.VolumeId, token);
         }
@@ -491,20 +492,11 @@ public sealed class CatalogV2Database
             """);
         AppendScopeSql(sql, command, query.Scope);
         sql.Append("""
-            )
-            SELECT n.volume_id, n.file_reference, n.name,
-            """);
-        sql.Append(pathExpression);
-        sql.Append("""
-             AS relative_path,
-                   n.extension, n.is_directory, n.attributes, n.size_bytes,
-                   n.created_utc_ticks, n.modified_utc_ticks
+            ),
+            matched_keys(volume_id, file_reference, name) AS MATERIALIZED (
+            SELECT n.volume_id, n.file_reference, n.name
             FROM catalog_nodes_v2 n
             JOIN catalog_volumes_v2 v ON v.volume_id = n.volume_id
-            LEFT JOIN catalog_directory_paths_v2 dp
-                ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference
-            LEFT JOIN catalog_directory_paths_v2 pp
-                ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference
             """);
         if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes)
         {
@@ -534,9 +526,8 @@ public sealed class CatalogV2Database
         }
         for (var index = 0; index < terms.Length; index++)
         {
-            sql.Append(" AND (n.name LIKE $term").Append(index)
-                .Append(" ESCAPE '\\' COLLATE NOCASE OR ").Append(pathExpression).Append(" LIKE $term").Append(index)
-                .Append(" ESCAPE '\\' COLLATE NOCASE)");
+            sql.Append(" AND n.name LIKE $term").Append(index)
+                .Append(" ESCAPE '\\' COLLATE NOCASE");
             command.Parameters.AddWithValue("$term" + index, "%" + EscapeLike(terms[index]) + "%");
         }
         if (query.After is not null)
@@ -551,8 +542,26 @@ public sealed class CatalogV2Database
             command.Parameters.AddWithValue("$afterVolume", query.After.VolumeId);
             command.Parameters.AddWithValue("$afterReference", query.After.FileReference);
         }
-        sql.Append(" ORDER BY n.name COLLATE NOCASE, n.volume_id, n.file_reference LIMIT $limit;");
+        sql.Append(" ORDER BY n.name COLLATE NOCASE, n.volume_id, n.file_reference LIMIT $limit");
         command.Parameters.AddWithValue("$limit", query.PageSize + 1);
+        sql.Append("""
+            )
+            SELECT n.volume_id, n.file_reference, n.name,
+            """);
+        sql.Append(pathExpression);
+        sql.Append("""
+             AS relative_path,
+                   n.extension, n.is_directory, n.attributes, n.size_bytes,
+                   n.created_utc_ticks, n.modified_utc_ticks
+            FROM matched_keys m
+            JOIN catalog_nodes_v2 n
+                ON n.volume_id = m.volume_id AND n.file_reference = m.file_reference
+            LEFT JOIN catalog_directory_paths_v2 dp
+                ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference
+            LEFT JOIN catalog_directory_paths_v2 pp
+                ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference
+            ORDER BY m.name COLLATE NOCASE, m.volume_id, m.file_reference;
+            """);
         command.CommandText = sql.ToString();
         var items = new List<CatalogV2QueryItem>(query.PageSize + 1);
         await using var reader = await command.ExecuteReaderAsync(token);
@@ -587,6 +596,35 @@ public sealed class CatalogV2Database
             CatalogEntryType.Any,
             pageSize,
             after), token);
+
+    public async Task<CatalogResolvedDirectory?> ResolveDirectoryAsync(
+        string volumeId,
+        string relativePath,
+        CancellationToken token = default)
+    {
+        RequireText(volumeId, 64, nameof(volumeId));
+        ArgumentNullException.ThrowIfNull(relativePath);
+        if (relativePath.Length > 32767) throw new ArgumentOutOfRangeException(nameof(relativePath));
+        await using var connection = await OpenAsync(true, token);
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT p.file_reference, p.relative_path
+            FROM catalog_directory_paths_v2 p
+            JOIN catalog_nodes_v2 n
+              ON n.volume_id = p.volume_id AND n.file_reference = p.file_reference
+            WHERE p.volume_id = $volume AND p.relative_path = $path COLLATE NOCASE
+              AND n.exists_flag = 1 AND n.is_directory = 1
+            LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$volume", volumeId);
+        command.Parameters.AddWithValue("$path", relativePath);
+        await using var reader = await command.ExecuteReaderAsync(token);
+        return await reader.ReadAsync(token)
+            ? new CatalogResolvedDirectory(
+                new CatalogEntryIdentity(volumeId, reader.GetString(0)),
+                reader.GetString(1))
+            : null;
+    }
 
     public static string EncodeFileReference(ulong value) => value.ToString("X16");
 

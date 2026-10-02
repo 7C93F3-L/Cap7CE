@@ -5,6 +5,10 @@
     <AssemblyName>Cap7CE.Core.Reader.Host</AssemblyName>
     <RootNamespace>Cap7CE.Core.Reader.Host</RootNamespace>
     <DefineConstants Condition="'$(P23LifecycleProfile)' == 'true'">$(DefineConstants);P23_LIFECYCLE</DefineConstants>
+    <DefineConstants Condition="'$(P33CapabilityProfile)' == 'true'">$(DefineConstants);P33_CAPABILITY</DefineConstants>
+    <DefineConstants Condition="'$(P37RecoveryProfile)' == 'true'">$(DefineConstants);P37_RECOVERY</DefineConstants>
+    <DefineConstants Condition="'$(P37LifecycleProfile)' == 'true'">$(DefineConstants);P37_LIFECYCLE</DefineConstants>
+    <DefineConstants Condition="'$(P38ProductProfile)' == 'true'">$(DefineConstants);P38_PRODUCT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Reader.Host" />

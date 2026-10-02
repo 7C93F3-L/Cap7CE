@@ -7,6 +7,7 @@ namespace Cap7CE.Core.Tests;
 internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
 {
     private readonly Dictionary<string, VolumeState> volumes;
+    private (string DisplayName, ReaderMftRecordV2 Record)? addDuringNextJournalRead;
 
     public SyntheticCatalogReader()
     {
@@ -30,6 +31,9 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
     }
 
     public bool SlowReads { get; set; }
+    public bool FailNextSnapshotRead { get; set; }
+    public bool FailNextJournalReadAsDiscontinuous { get; set; }
+    public int SnapshotOpenCount { get; private set; }
 
     public Task<ICatalogReaderSession> ConnectAsync(CancellationToken token) =>
         Task.FromResult<ICatalogReaderSession>(new Session(this));
@@ -57,6 +61,9 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
         volume.Nodes.Add(record.FileReference, record);
         volume.AppendJournal(record, 0x00000100, exists: true);
     }
+
+    public void AddDuringNextJournalRead(string displayName, ReaderMftRecordV2 record) =>
+        addDuringNextJournalRead = (displayName, record);
 
     public void Delete(string displayName, ulong reference)
     {
@@ -117,6 +124,7 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
         public Task<CatalogReaderSnapshot> OpenSnapshotAsync(CatalogReaderVolume volume, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
+            owner.SnapshotOpenCount++;
             var state = Find(volume);
             var id = new ReaderOpaqueId(state.ReaderId.First, checked((ulong)state.SnapshotSequence++));
             var records = state.Nodes.Values.OrderBy(record => record.FileReference).ToArray();
@@ -133,6 +141,11 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
         {
             if (owner.SlowReads) await Task.Delay(100, token);
             token.ThrowIfCancellationRequested();
+            if (owner.FailNextSnapshotRead)
+            {
+                owner.FailNextSnapshotRead = false;
+                throw new IOException("synthetic-reader-disconnected");
+            }
             if (!snapshots.TryGetValue(snapshotId, out var records)) throw new InvalidDataException("snapshot-missing");
             var start = checked((int)cursor);
             var count = Math.Min(checked((int)limit), records.Length - start);
@@ -156,6 +169,11 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
             CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
+            if (owner.FailNextJournalReadAsDiscontinuous)
+            {
+                owner.FailNextJournalReadAsDiscontinuous = false;
+                throw new CatalogReaderDiscontinuityException();
+            }
             var state = Find(volume);
             if (journalId != state.JournalId
                 || startingUsn < state.FirstUsn
@@ -163,6 +181,13 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
                 || startingUsn > state.NextUsn)
             {
                 throw new CatalogReaderDiscontinuityException();
+            }
+            if (owner.addDuringNextJournalRead is { } scheduled
+                && string.Equals(scheduled.DisplayName, state.DisplayName, StringComparison.Ordinal))
+            {
+                state.Nodes.Add(scheduled.Record.FileReference, scheduled.Record);
+                state.AppendJournal(scheduled.Record, 0x00000100, exists: true);
+                owner.addDuringNextJournalRead = null;
             }
             var records = state.Journal
                 .Where(record => record.Usn >= startingUsn)

@@ -103,7 +103,7 @@ assert.match(foundationStyles, /@media \(max-width: 760px\) \{[\s\S]*?\.cap-stab
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[\s\S]*?background: var\(--scrollbar-thumb\);/u);
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb:hover\s*\{[\s\S]*?background: var\(--scrollbar-thumb-hover\);/u);
 assert.match(resultStyles, /\.cap-stable-results-slot > \.cap-results-view\s*\{[\s\S]*?padding: var\(--cap-stable-grid-page-padding\);/u);
-assert.match(skimStyles, /\.cap-stable-skim-content > \.cap-skim-view\.is-embedded\s*\{[\s\S]*?padding: var\(--cap-stable-grid-page-padding\);/u);
+assert.match(skimStyles, /\.cap-stable-skim-content > \.cap-skim-view\.is-embedded,\s*\.cap-computer-search-browse > \.cap-skim-view\.is-embedded\s*\{[\s\S]*?padding: var\(--cap-stable-grid-page-padding\);/u);
 assert.doesNotMatch(shellStyles, /\.cap-stable-main-shell \.cap-scroll-viewport-frame \{ grid-template-columns:/u);
 assert.doesNotMatch(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[^}]*box-shadow:/u);
 assert.equal((globalStyles.match(/--scroll-thumb: color-mix\(in srgb, var\(--text-main\) 42%, transparent\);/gu) || []).length, 2);

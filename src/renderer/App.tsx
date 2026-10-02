@@ -337,7 +337,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [, setSkimCacheStats] = useState<VisualCacheStats>(emptyVisualCacheStats);
   const [thumbnailOptimizationStatus, setThumbnailOptimizationStatus] = useState<ThumbnailOptimizationStatus>(emptyThumbnailOptimizationStatus);
   const thumbnailOptimizationPhaseRef = useRef<ThumbnailOptimizationStatus["phase"]>(emptyThumbnailOptimizationStatus.phase);
-  const thumbnailOptimizationStatsTimerRef = useRef<number | null>(null);
   const [, setIsLoadingCacheStats] = useState(true);
   const [contextMenu, setContextMenu] = useState<ResultsContextMenuState | null>(null);
   const [shellState, setShellState] = useState<ShellState>("standby");
@@ -425,43 +424,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     ));
   }, []);
   useEffect(() => {
-    const refreshOptimizationCacheStats = () => {
-      void window.cap7ce?.cache.stats().then((stats) => {
-        if (stats) {
-          setVisualCacheStats(stats);
-        }
-      });
-    };
-
     const unsubscribe = window.cap7ce?.cache.onOptimizationStatusChanged((status) => {
-      const previousPhase = thumbnailOptimizationPhaseRef.current;
       thumbnailOptimizationPhaseRef.current = status.phase;
       setThumbnailOptimizationStatus(status);
-
-      if (status.phase === "running") {
-        if (thumbnailOptimizationStatsTimerRef.current === null) {
-          thumbnailOptimizationStatsTimerRef.current = window.setTimeout(() => {
-            thumbnailOptimizationStatsTimerRef.current = null;
-            refreshOptimizationCacheStats();
-          }, 5000);
-        }
-      } else {
-        if (thumbnailOptimizationStatsTimerRef.current !== null) {
-          window.clearTimeout(thumbnailOptimizationStatsTimerRef.current);
-          thumbnailOptimizationStatsTimerRef.current = null;
-        }
-        if (status.phase === "completed" && previousPhase !== "completed") {
-          refreshOptimizationCacheStats();
-        }
-      }
     });
-    return () => {
-      unsubscribe?.();
-      if (thumbnailOptimizationStatsTimerRef.current !== null) {
-        window.clearTimeout(thumbnailOptimizationStatsTimerRef.current);
-        thumbnailOptimizationStatsTimerRef.current = null;
-      }
-    };
+    return () => unsubscribe?.();
   }, []);
 
   useEffect(() => {
@@ -583,19 +550,19 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         const missingFileCountIds = loadedDirectories
           .filter((directory) => directory.fileCount === null)
           .map((directory) => directory.id);
+        if (isMounted) {
+          setDirectories(loadedDirectories);
+          setDirectoryServiceUnavailable(false);
+          if (missingFileCountIds.length > 0) {
+            void window.cap7ce?.directories.refreshFileCounts(missingFileCountIds).then((countedDirectories) => {
+              if (isMounted && countedDirectories) setDirectories(countedDirectories);
+            }).catch(() => undefined);
+          }
+        }
         const cacheOptimizationStatus = await window.cap7ce?.cache.optimizationStatus();
         const preferences = await window.cap7ce?.preferences.get();
         const loadedSkimLocations = await window.cap7ce?.skim.listLocations();
         if (isMounted) {
-          setDirectories(loadedDirectories);
-          if (missingFileCountIds.length > 0) {
-            void window.cap7ce?.directories.refreshFileCounts(missingFileCountIds).then((countedDirectories) => {
-              if (isMounted && countedDirectories) {
-                setDirectories(countedDirectories);
-              }
-            }).catch(() => undefined);
-          }
-          setDirectoryServiceUnavailable(false);
           if (preferences) {
             const resolvedLanguage = resolveLanguagePreference(preferences.languagePreference, navigator.language);
             setActiveLanguage(resolvedLanguage);
@@ -2414,11 +2381,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
           currentPath: skimCurrentPath, breadcrumbs: skimBreadcrumbs, isLoading: isSkimLoading,
           feedback: skimFeedback, entryCount: sortedSkimEntries.length + (skimCurrentPath === null ? countSkimRootLocations(skimLocations) : 0), displayMode: skimDisplay.mode,
           sortField: skimSortPreference.sortField, sortDirection: skimSortPreference.sortDirection,
-          renderContent: (active) => <SkimView {...createSkimViewProps(active)} />,
+          theme: effectiveTheme, appearanceColors, windowMaterial, renderContent: (active) => <SkimView {...createSkimViewProps(active)} />,
           onOpen: () => openStableSkimLocation(skimCurrentPath),
           onOpenRoot: () => openStableSkimLocation(null), onOpenPath: openStableSkimLocation,
           onDisplayModeChange: (mode) => updateSkimDisplay({ ...skimDisplay, mode }),
-          onSortChange: (sortField, sortDirection) => updateSkimSort({ ...search, sortField, sortDirection })
+          onSortChange: (sortField, sortDirection) => updateSkimSort({ ...search, sortField, sortDirection }), onNativeDragStateChange: (dragActive) => { internalNativeDragRef.current = dragActive; }
         }}
         directoryDropEnabled={acceptsDirectoryDrop}
         onTogglePinned={() => { void toggleAlwaysOnTop("stable-ui"); }}

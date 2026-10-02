@@ -2,6 +2,7 @@
 
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../electron/appUpdateTypes";
+import type { ComputerSearchAuthorization, ComputerSearchAuthorizationBatch, ComputerSearchCapabilityOptions, ComputerSearchCapabilityRequest, ComputerSearchCapabilityResult, ComputerSearchNextPageRequest, ComputerSearchPage, ComputerSearchRequest, ComputerSearchStatus } from "../../electron/computerSearchTypes";
 
 type Cap7CEShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -108,6 +109,20 @@ declare global {
         readFileInfoFolderStats: (request: { taskId: string; path: string }) => Promise<SkimFolderStats | null>;
         cancelFileInfoFolderStats: (taskId: string) => Promise<boolean>;
         onFolderStats: (callback: (update: SkimFolderStatsUpdate) => void) => () => void;
+      };
+      computerSearch: {
+        status: () => Promise<ComputerSearchStatus>;
+        capabilityOptions: () => Promise<ComputerSearchCapabilityOptions>;
+        configureCapability: (request: ComputerSearchCapabilityRequest) => Promise<ComputerSearchCapabilityResult>;
+        search: (request: ComputerSearchRequest) => Promise<ComputerSearchPage>;
+        nextPage: (request: ComputerSearchNextPageRequest) => Promise<ComputerSearchPage>;
+        cancel: (taskId: string) => Promise<boolean>;
+        open: (request: ComputerSearchAuthorization) => Promise<string>;
+        showInFolder: (request: ComputerSearchAuthorization) => Promise<boolean>;
+        copyPaths: (request: ComputerSearchAuthorizationBatch) => Promise<number>;
+        inspect: (request: ComputerSearchAuthorization) => Promise<SkimPreviewInfo>;
+        readTextPreview: (request: ComputerSearchAuthorization) => Promise<SkimTextPreview>;
+        startDrag: (request: ComputerSearchAuthorizationBatch) => void;
       };
       search: {
         images: (search: SearchState, taskId: string) => Promise<ImageSearchResponse>;

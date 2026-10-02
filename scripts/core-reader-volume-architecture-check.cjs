@@ -29,7 +29,7 @@ for (const [source, anchor, description] of [
   [config, "AuthorizedVolumeLetters", "explicit multi-volume allowlist"],
   [service, "ReaderCapabilities.SnapshotPaging | ReaderCapabilities.JournalPaging", "real capability handshake"],
   [service, "ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts", "CR/2 capability handshake"],
-  [service, "ReaderStatus.JournalDiscontinuous", "structured discontinuity"],
+  [service, "ReaderStatus.JournalDiscontinuous", "structured discontinuity"], [service, "An explicitly authorized volume may be offline", "offline volume enumeration"],
   [service, "snapshot?.Dispose()", "snapshot cancellation cleanup"],
   [cli, "BeginRebuildAsync", "catalog rebuild recovery"],
   [cli, "CatalogVolumeState.CatchingUp", "incremental catch-up"],

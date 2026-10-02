@@ -9,6 +9,9 @@ const {
 const {
   CoreProtocolClient
 } = require("../dist-electron/core/coreProtocolClient.js");
+const {
+  createCoreHostLaunchProfile
+} = require("../dist-electron/core/coreHostLaunchProfile.js");
 
 const root = path.resolve(__dirname, "..");
 const executablePath = path.join(
@@ -139,6 +142,18 @@ const verifyStructuredUnavailableStates = async () => {
   assert.equal((await missing.start()).reason, "core-host-missing");
 };
 
+const verifyLaunchProfiles = async () => {
+  const product = createCoreHostLaunchProfile("product", "a".repeat(32));
+  assert.equal(product.pipeName, `cap7ce-core-p35-${"a".repeat(32)}`);
+  assert.deepEqual(product.arguments, ["--catalog-server", "--pipe-name", product.pipeName]);
+  await product.cleanup();
+
+  const probe = createCoreHostLaunchProfile("probe", "b".repeat(32));
+  assert.equal(probe.pipeName, `cap7ce-core-p32-${"b".repeat(32)}`);
+  assert.deepEqual(probe.arguments, ["--catalog-controller-probe", "--pipe-name", probe.pipeName]);
+  await probe.cleanup();
+};
+
 const verifyGracefulLifecycle = async () => {
   const events = [];
   const controller = new CoreHostController({
@@ -209,18 +224,38 @@ const verifySingleCrashRecovery = async () => {
   }
 };
 
+const verifyCrashDuringApplicationStop = async () => {
+  const events = [];
+  const controller = new CoreHostController({
+    packaged: false,
+    executablePath,
+    productVersion: "1.0.4",
+    diagnostics: { log: (level, event, data = {}) => events.push({ level, event, data }) }
+  });
+  const ready = await controller.start();
+  assert.equal(ready.state, "ready");
+  process.kill(ready.processId);
+  assert.equal((await controller.stop()).state, "stopped");
+  await delay(100);
+  assert.equal(controller.snapshot().state, "stopped");
+  assert.equal(events.filter((entry) => entry.event === "core.controller.restarting").length, 0);
+};
+
 const run = async () => {
   assert.equal(process.platform, "win32", "Core controller integration is Windows-only.");
   assert.equal(fs.existsSync(executablePath), true, "Build Core before running the controller integration test.");
+  await verifyLaunchProfiles();
   await verifyStructuredUnavailableStates();
   await verifyProtocolDeadlinesAndCancellation();
   await verifyGracefulLifecycle();
   await verifySingleCrashRecovery();
+  await verifyCrashDuringApplicationStop();
   console.log(JSON.stringify({
     coreHostController: "ok",
     rendererIpc: false,
     packagedCore: false,
-    automaticRestarts: 1
+    automaticRestarts: 1,
+    crashDuringApplicationStop: "stopped"
   }));
 };
 

@@ -117,6 +117,10 @@ public sealed record CatalogV2QueryPage(
     CatalogQueryCursorKey? Next,
     long CatalogRevision);
 
+public sealed record CatalogResolvedDirectory(
+    CatalogEntryIdentity Identity,
+    string RelativePath);
+
 public sealed record CatalogSavedScope(
     string ScopeId,
     CatalogEntryIdentity Root,

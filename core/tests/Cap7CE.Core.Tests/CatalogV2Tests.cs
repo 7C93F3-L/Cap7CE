@@ -52,8 +52,41 @@ internal static class CatalogV2Tests
             await runtime.SelectVolumesAsync(
                 new VolumeSelectionRequest(discovered.Volumes.Select(volume => volume.VolumeId).ToArray()),
                 CancellationToken.None);
+            reader.FailNextSnapshotRead = true;
+            var interrupted = await WaitForTaskAsync(
+                runtime,
+                runtime.StartSynchronization(new CatalogBuildRequest([]), false).TaskId,
+                "failed");
+            TestAssert.Equal("io-failure", interrupted.ErrorCode,
+                "Reader interruption must return a bounded product task failure");
+            TestAssert.False((await FindVolumeAsync(runtime, "A:")).Queryable,
+                "interrupted initial build must not publish a partial Catalog");
             await RunTaskAsync(runtime, runtime.StartSynchronization(new CatalogBuildRequest([]), false));
             await AssertInitialQueriesAsync(database, discovered.Volumes);
+            var snapshotCount = reader.SnapshotOpenCount;
+            reader.Add("A:", new ReaderMftRecordV2(
+                29, 10, 290, 132_000_000_000_000_029, 133_000_000_000_000_029,
+                0x20, false, "transient-journal.psd", ".psd"));
+            reader.FailNextJournalReadAsDiscontinuous = true;
+            await RunTaskAsync(runtime, runtime.StartSynchronization(new CatalogBuildRequest([]), false));
+            TestAssert.Equal(snapshotCount, reader.SnapshotOpenCount,
+                "a transient discontinuity retries from fresh journal metadata without rebuilding");
+            TestAssert.Equal(1, (await SearchAsync(database, "transient-journal", 20)).Items.Count,
+                "the retried incremental pass applies the pending journal record");
+            reader.Add("A:", new ReaderMftRecordV2(
+                30, 10, 300, 132_000_000_000_000_030, 133_000_000_000_000_030,
+                0x20, false, "bounded-current.psd", ".psd"));
+            reader.AddDuringNextJournalRead("A:", new ReaderMftRecordV2(
+                31, 10, 310, 132_000_000_000_000_031, 133_000_000_000_000_031,
+                0x20, false, "bounded-later.psd", ".psd"));
+            await RunTaskAsync(runtime, runtime.StartSynchronization(new CatalogBuildRequest([]), false));
+            TestAssert.Equal(1, (await SearchAsync(database, "bounded-current", 20)).Items.Count,
+                "incremental synchronization reaches its captured high-water mark");
+            TestAssert.Equal(0, (await SearchAsync(database, "bounded-later", 20)).Items.Count,
+                "changes created during synchronization wait for the next bounded pass");
+            await RunTaskAsync(runtime, runtime.StartSynchronization(new CatalogBuildRequest([]), false));
+            TestAssert.Equal(1, (await SearchAsync(database, "bounded-later", 20)).Items.Count,
+                "the next synchronization resumes at the prior high-water mark");
         }
 
         reader.RenameAndMove("A:", 11, 5, "gamma.png");
@@ -115,6 +148,12 @@ internal static class CatalogV2Tests
         TestAssert.False(page.Items[0].Identity == second.Items[0].Identity, "stable cross-volume identity");
 
         var volumeA = discovered.Single(volume => volume.DisplayName == "A:");
+        var resolvedAssets = await database.ResolveDirectoryAsync(volumeA.VolumeId, "assets");
+        TestAssert.True(resolvedAssets is not null, "directory path resolves to stable identity");
+        TestAssert.Equal(CatalogV2Database.EncodeFileReference(10), resolvedAssets!.Identity.FileReference,
+            "resolved directory identity");
+        TestAssert.True(await database.ResolveDirectoryAsync(volumeA.VolumeId, "missing") is null,
+            "unknown directory path does not resolve");
         var root = CatalogV2Database.EncodeFileReference(5);
         var children = await database.GetChildrenAsync(
             new CatalogEntryIdentity(volumeA.VolumeId, root), 20);
@@ -129,6 +168,8 @@ internal static class CatalogV2Tests
             null));
         var alpha = descendants.Items.Single();
         TestAssert.Equal("assets\\alpha.png", alpha.RelativePath, "directory descendant path");
+        TestAssert.Equal(0, (await SearchAsync(database, @"assets\alpha", 20)).Items.Count,
+            "ordinary search matches names rather than materialized paths");
         TestAssert.Equal(1_024L, alpha.SizeBytes, "file size fact");
         TestAssert.True(alpha.CreatedUtcTicks is > 0 && alpha.ModifiedUtcTicks is > 0,
             "creation and modified facts");
@@ -185,6 +226,23 @@ internal static class CatalogV2Tests
             "build", CoreOperations.CatalogBuild, new CatalogBuildRequest([])));
         await WaitForTaskAsync(runtime, build.TaskId, "completed");
 
+        var resolvedScope = ProtocolClient.ReadBody<CatalogResolveScopeResponse>(await client.RequestAsync(
+            "resolve-scope", CoreOperations.CatalogResolveScope,
+            new CatalogResolveScopeRequest(@"A:\assets")));
+        TestAssert.True(resolvedScope.Resolved && resolvedScope.Queryable,
+            "SC/1 resolves a Skim path to a queryable stable scope");
+        TestAssert.Equal(CatalogV2Database.EncodeFileReference(10), resolvedScope.RootFileReference!,
+            "SC/1 resolved scope identity");
+        var resolvedVolumeRoot = ProtocolClient.ReadBody<CatalogResolveScopeResponse>(await client.RequestAsync(
+            "resolve-volume-root", CoreOperations.CatalogResolveScope,
+            new CatalogResolveScopeRequest(@"A:\")));
+        TestAssert.True(resolvedVolumeRoot.Resolved && resolvedVolumeRoot.Queryable,
+            "SC/1 resolves a drive root to a queryable volume scope");
+        TestAssert.Equal(volumes.Volumes.Single(volume => volume.DisplayName == "A:").VolumeId,
+            resolvedVolumeRoot.VolumeId!, "SC/1 drive root keeps the stable volume identity");
+        TestAssert.True(resolvedVolumeRoot.RootFileReference is null,
+            "SC/1 drive root uses the existing volume filter without a synthetic directory identity");
+
         var first = ProtocolClient.ReadBody<SearchPageResponse>(await client.RequestAsync(
             "search-first",
             CoreOperations.SearchStart,
@@ -235,10 +293,10 @@ internal static class CatalogV2Tests
     private static async Task RunTaskAsync(ProductCoreRuntime runtime, CatalogBuildResponse task)
     {
         TestAssert.True(task.Accepted, "catalog task accepted");
-        await WaitForTaskAsync(runtime, task.TaskId, "completed");
+        _ = await WaitForTaskAsync(runtime, task.TaskId, "completed");
     }
 
-    private static async Task WaitForTaskAsync(
+    private static async Task<CoreCatalogTaskStatus> WaitForTaskAsync(
         ProductCoreRuntime runtime,
         string taskId,
         string expected)
@@ -250,7 +308,7 @@ internal static class CatalogV2Tests
             if (task.State != "running")
             {
                 TestAssert.Equal(expected, task.State, $"catalog task {task.ErrorCode}");
-                return;
+                return task;
             }
             await Task.Delay(10);
         }

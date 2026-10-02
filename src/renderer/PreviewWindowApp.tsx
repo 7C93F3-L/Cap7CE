@@ -133,6 +133,25 @@ const PreviewWindowApp = () => {
     setPreviewKeywordSaveError("");
     setPreviewKeywordEditorOpen(true);
   }, []);
+  const openPreviewSource = useCallback((data: PreviewWindowData) => {
+    const request = data.sourceAuthorization;
+    const operation = request
+      ? window.cap7ce?.computerSearch.open(request)
+      : window.cap7ce?.files.open(data.filePath);
+    void operation?.then((result) => { if (result === "") closePreview(); }, () => undefined);
+  }, [closePreview]);
+  const showPreviewSourceInFolder = useCallback((data: PreviewWindowData) => {
+    const request = data.sourceAuthorization;
+    if (request) void window.cap7ce?.computerSearch.showInFolder(request);
+    else void window.cap7ce?.files.showInFolder(data.filePath);
+  }, []);
+  const copyPreviewSourcePath = useCallback((data: PreviewWindowData) => {
+    const request = data.sourceAuthorization;
+    const operation = request
+      ? window.cap7ce?.computerSearch.copyPaths({ taskId: request.taskId, authorizationIds: [request.authorizationId] })
+      : window.cap7ce?.files.copyPaths([data.filePath]);
+    void operation?.then((count) => { if (count > 0) showPreviewPathCopied(data.sessionId); }, () => undefined);
+  }, [showPreviewPathCopied]);
   const spaceHoldControllerRef = useRef<ReturnType<typeof createSpaceHoldController<PreviewWindowData>> | null>(null);
   if (!spaceHoldControllerRef.current) {
     spaceHoldControllerRef.current = createSpaceHoldController<PreviewWindowData>({
@@ -356,13 +375,11 @@ const PreviewWindowApp = () => {
         event.stopPropagation();
         if (event.repeat) return;
         if (fileShortcutAction === "open") {
-          void window.cap7ce?.files.open(previewData.filePath).then((result) => {
-            if (result === "") closePreview();
-          });
+          openPreviewSource(previewData);
         } else if (fileShortcutAction === "showInFolder") {
-          void window.cap7ce?.files.showInFolder(previewData.filePath);
+          showPreviewSourceInFolder(previewData);
         } else if (fileShortcutAction === "copyPaths") {
-          void window.cap7ce?.files.copyPaths([previewData.filePath]).then((count) => { if (count > 0) showPreviewPathCopied(previewData.sessionId); }, () => undefined);
+          copyPreviewSourcePath(previewData);
         } else if (fileShortcutAction === "delete") {
           void window.cap7ce?.preview.requestItemAction({
             action: "deleteFile",
@@ -418,7 +435,7 @@ const PreviewWindowApp = () => {
       window.removeEventListener("blur", cancelSpaceHold);
       cancelSpaceHold();
     };
-  }, [closePreview, previewData, requestKeywordEdit, showPreviewPathCopied, spaceHoldController]);
+  }, [closePreview, copyPreviewSourcePath, openPreviewSource, previewData, requestKeywordEdit, showPreviewSourceInFolder, spaceHoldController]);
 
   const savePreviewKeywords = useCallback(async (keywords: string[]) => {
     if (!previewData || previewData.skimActive || previewKeywordSavePendingRef.current) return;
@@ -527,13 +544,9 @@ const PreviewWindowApp = () => {
           keywordSavePending={previewKeywordSavePending}
           keywordSaveError={previewKeywordSaveError}
           onToggleExpanded={previewSidebarLayout.toggleExpanded}
-          onOpen={() => {
-            void window.cap7ce?.files.open(previewData.filePath).then((result) => {
-              if (result === "") closePreview();
-            });
-          }}
-          onShowInFolder={() => { void window.cap7ce?.files.showInFolder(previewData.filePath); }}
-          onCopyPath={() => { void window.cap7ce?.files.copyPaths([previewData.filePath]).then((count) => { if (count > 0) showPreviewPathCopied(previewData.sessionId); }, () => undefined); }}
+          onOpen={() => openPreviewSource(previewData)}
+          onShowInFolder={() => showPreviewSourceInFolder(previewData)}
+          onCopyPath={() => copyPreviewSourcePath(previewData)}
           copyPathCopied={copiedPreviewSessionId === previewData.sessionId}
           onEditKeywords={() => requestKeywordEdit(previewData)}
           onCancelKeywordEdit={() => {

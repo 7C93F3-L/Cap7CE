@@ -1,6 +1,7 @@
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.ComponentModel;
 using Cap7CE.Core.Reader.Protocol;
 using Microsoft.Win32.SafeHandles;
 
@@ -24,9 +25,16 @@ internal static class ReaderVolumeService
             stage = "open-volume";
             foreach (var driveLetter in config.AuthorizedVolumeLetters)
             {
-                volumes.Add(ReaderNtfsVolume.Open(driveLetter));
+                try
+                {
+                    volumes.Add(ReaderNtfsVolume.Open(driveLetter));
+                }
+                catch (Exception error) when (error is Win32Exception or NotSupportedException)
+                {
+                    // An explicitly authorized volume may be offline. Keep the Reader available so
+                    // the ordinary Core can observe an empty enumeration and freeze that volume.
+                }
             }
-            var primaryVolume = volumes[0];
 
             stage = "create-pipe";
             using var pipe = ReaderNativePipe.Create(config.AllowedSid);
@@ -87,9 +95,9 @@ internal static class ReaderVolumeService
                         ReaderPayloadCodec.RequireEmpty(request.Payload.Span);
                         await WriteSuccessAsync(pipe, request,
                             ReaderPayloadCodec.EncodeStatusResponse(new ReaderStatusResponse(
-                                true, false, true, true,
+                                volumes.Count > 0, false, true, true,
                                 helloFrame.Header.MajorVersion == ReaderProtocol.CurrentMajorVersion ? 2u : 1u,
-                                primaryVolume.VolumeId)),
+                                volumes.FirstOrDefault()?.VolumeId ?? default)),
                             ReaderFrameFlags.None, deadline.Token);
                         break;
 
@@ -286,7 +294,7 @@ internal static class ReaderVolumeService
                     remoteRejected,
                     clientChecked,
                     processBound,
-                    true,
+                    volumes.Count > 0,
                     false,
                     false));
             }

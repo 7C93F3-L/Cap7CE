@@ -125,6 +125,11 @@ export interface PreviewWindowData {
   theme: ResolvedThemeMode;
   language: ResolvedLanguage;
   appearanceColors: AppearanceColors;
+  sourceAuthorization?: {
+    kind: "computer-search";
+    taskId: string;
+    authorizationId: string;
+  };
 }
 
 export interface PdfPreviewMetadata {

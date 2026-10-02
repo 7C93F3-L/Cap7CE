@@ -3,6 +3,10 @@ import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequ
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "./appUpdateTypes";
+import type {
+  ComputerSearchAuthorization, ComputerSearchAuthorizationBatch,
+  ComputerSearchCapabilityRequest, ComputerSearchNextPageRequest, ComputerSearchRequest
+} from "./computerSearchTypes";
 
 interface RuntimeDiagnosticsInfo {
   logDirectory: string;
@@ -205,6 +209,21 @@ contextBridge.exposeInMainWorld("cap7ce", {
       ipcRenderer.on("skim:folderStats", listener);
       return () => ipcRenderer.removeListener("skim:folderStats", listener);
     }
+  },
+  computerSearch: {
+    status: () => ipcRenderer.invoke("computerSearch:status"),
+    capabilityOptions: () => ipcRenderer.invoke("computerSearch:capabilityOptions"),
+    configureCapability: (request: ComputerSearchCapabilityRequest) =>
+      ipcRenderer.invoke("computerSearch:configureCapability", request),
+    search: (request: ComputerSearchRequest) => ipcRenderer.invoke("computerSearch:search", request),
+    nextPage: (request: ComputerSearchNextPageRequest) => ipcRenderer.invoke("computerSearch:nextPage", request),
+    cancel: (taskId: string) => ipcRenderer.invoke("computerSearch:cancel", taskId),
+    open: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:open", request),
+    showInFolder: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:showInFolder", request),
+    copyPaths: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.invoke("computerSearch:copyPaths", request),
+    inspect: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:inspect", request),
+    readTextPreview: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readTextPreview", request),
+    startDrag: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.send("computerSearch:startDrag", request)
   },
   search: {
     images: (search: unknown, taskId: string) => ipcRenderer.invoke("search:images", search, taskId),

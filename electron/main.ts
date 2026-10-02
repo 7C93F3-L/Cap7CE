@@ -13,6 +13,7 @@ import { bootstrapRuntimeDiagnostics } from "./runtimeDiagnosticsBootstrap";
 import { RuntimeDiagnostics } from "./runtimeDiagnostics";
 import { createThumbnailFailureResponse } from "./thumbnailFailureResponse";
 import { registerSearchIpc } from "./searchIpc";
+import { registerComputerSearchIpc } from "./computerSearchIpc"; import { createComputerSearchRuntime } from "./computerSearchRuntime"; import { authorizeComputerSearchPreviewData } from "./computerSearchPreviewAuthorization"; import { handleComputerSearchVisualRequest, isComputerSearchVisualHost } from "./computerSearchVisualProtocol";
 import { aiSearchService } from "./aiSearchRuntime";
 import { configureEmbeddedMetadataRuntime, discardEmbeddedMetadataForDirectory, writeScannedFilesWithEmbeddedMetadata } from "./embeddedMetadataRuntime";
 import { createEmbeddedMetadataPreviewCoordinator } from "./embeddedMetadataPreviewProbe";
@@ -155,6 +156,7 @@ let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
 let modelInputCacheCleanupPromise: Promise<void> | null = null;
 let rendererContentViewActive = false;
 let searchIpcController: ReturnType<typeof registerSearchIpc> | null = null;
+const computerSearchRuntime = createComputerSearchRuntime({ packaged: app.isPackaged, productVersion: app.getVersion(), resourcesPath: process.resourcesPath, beginVisualSession: beginSkimVisualSession, cancelVisualSession: cancelSkimVisualSession });
 let previewWindowLoaded = false;
 let previewSessionActive = false;
 let activePreviewData: PreviewWindowData | null = null;
@@ -191,8 +193,8 @@ const enqueueScannedThumbnails = (images: ScannedImageFile[]) => {
   });
 };
 
-const thumbnailOptimizationDiscovery = new ThumbnailOptimizationDiscovery<PersistedDirectory>(async (directories, isCancelled) => (
-  toThumbnailOptimizationCandidates((await scanImageDirectories(directories, { isCancelled })).images)
+const thumbnailOptimizationDiscovery = new ThumbnailOptimizationDiscovery<PersistedDirectory>(async (directories, isCancelled, yieldForBackgroundWork) => (
+  toThumbnailOptimizationCandidates((await scanImageDirectories(directories, { isCancelled, yieldForBackgroundWork })).images)
 ));
 const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[]) => thumbnailOptimizationDiscovery.schedule(directories);
 
@@ -215,7 +217,7 @@ const syncThumbnailOptimizationActivity = () => {
   const foregroundWindowActive = isVisibleAndFocused(mainWindow)
     || settingsWindowController?.isVisibleAndFocused() === true
     || isVisibleAndFocused(previewWindow);
-  setSkimShellThumbnailActivity(contentViewActive);
+  thumbnailOptimizationDiscovery.setForegroundActive(foregroundWindowActive); setSkimShellThumbnailActivity(contentViewActive);
   setSearchShellVisualActivity(contentViewActive);
   searchScanSnapshotService.setActive(searchScanActive);
   setThumbnailOptimizationForegroundActive(foregroundWindowActive);
@@ -1250,10 +1252,13 @@ const registerLocalImageProtocol = () => {
       && url.hostname !== "skim-thumbnail"
       && url.hostname !== "skim-preview"
       && url.hostname !== "skim-media"
+      && !isComputerSearchVisualHost(url.hostname)
       && url.hostname !== "pdf-page"
     ) {
       return new Response("Not found", { status: 404 });
     }
+
+    const computerSearchVisual = await handleComputerSearchVisualRequest(url, { runtime: computerSearchRuntime, requestVisualCache: requestSkimVisualCache, requestShellThumbnailCache: requestSkimShellThumbnailCache, requestShellPreviewCache: requestSkimShellPreviewCache, shouldUseSourceFileForPreview, fetchSourceFile: (sourcePath) => net.fetch(pathToFileURL(sourcePath).toString()), readVisualCacheImage }); if (computerSearchVisual) return computerSearchVisual;
 
     const filePath = url.searchParams.get("path");
     if (!filePath) {
@@ -1587,7 +1592,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
   await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
-  createWindow();
+  createWindow(); thumbnailOptimizationDiscovery.setForegroundActive(true);
   nativeTheme.on("updated", () => { if (stableWindowRuntime.usesSystemTheme) void refreshStableWindowAppearance(); });
   if (standbyLineVisible) {
     lineWindowController.create();
@@ -1637,6 +1642,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  void computerSearchRuntime.stop();
   void windowLayoutManager.flush().catch((error) => console.warn("[window-layout] final write failed", error));
   void settingsWindowController?.flush().catch((error) => console.warn("[settings-window] final write failed", error)); settingsWindowController?.destroy();
   closeStartupHintWindow();
@@ -1732,6 +1738,8 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
   if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
     return false;
   }
+  const authorizedPreviewData = authorizeComputerSearchPreviewData(data, computerSearchRuntime);
+  if (!authorizedPreviewData) return false; data = authorizedPreviewData;
   if (
     !data
     || typeof data.sessionId !== "string"
@@ -2474,6 +2482,10 @@ searchIpcController = registerSearchIpc({
   refresh: (directoryIds) => searchScanSnapshotService.invalidate(directoryIds),
   diagnostics: runtimeDiagnostics
 });
+registerComputerSearchIpc({ registrar: ipcMain, isSenderAllowed: isMainSenderAllowed, isActionSenderAllowed: (event) => isMainSenderAllowed(event) || Boolean(previewWindow && !previewWindow.isDestroyed() && event.sender === previewWindow.webContents), runtime: computerSearchRuntime,
+  openPath: (filePath) => shell.openPath(filePath), showItemInFolder: (filePath) => shell.showItemInFolder(filePath), writeClipboardText: (text) => clipboard.writeText(text),
+  inspectItem: async (filePath, kind) => inspectSkimEntry(filePath, kind, (await listDirectories()).map((directory) => directory.path)), readTextPreview: readSkimTextPreview,
+  startFileDrag: (sender, filePaths) => dockedShellController ? dockedShellController.runSuppressed(() => startNativeFileDrag(sender, filePaths)) : startNativeFileDrag(sender, filePaths) });
 
 registerManualMetadataRuntime({
   registrar: ipcMain, isMainSenderAllowed,

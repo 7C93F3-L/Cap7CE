@@ -1,0 +1,115 @@
+const assert = require("node:assert/strict");
+const { registerComputerSearchIpc } = require("../dist-electron/computerSearchIpc.js");
+
+const handlers = new Map();
+const events = new Map();
+const calls = [];
+const authorizationId = "A".repeat(32);
+const authorizedItem = { authorizationId, path: "E:\\Catalog\\poster.psd", isDirectory: false };
+const runtime = {
+  status: async () => ({ state: "ready", searchAvailable: true, catalogRevision: 7, volumes: [] }),
+  capabilityOptions: async () => ({ bundleAvailable: true, runtimeReady: true, busy: false, volumes: [],
+    runtimeInstall: { phase: "idle", receivedBytes: 0, totalBytes: null } }),
+  configureCapability: async (request) => { calls.push(["configureCapability", request]);
+    return { status: "completed", reason: "capability-ready" }; },
+  search: async (request) => {
+    calls.push(["search", request]);
+    return { taskId: request.taskId, items: [], nextCursor: "cursor-1", isComplete: false, catalogRevision: 7 };
+  },
+  nextPage: async (request) => {
+    calls.push(["nextPage", request]);
+    return { taskId: request.taskId, items: [], nextCursor: null, isComplete: true, catalogRevision: 7 };
+  },
+  cancel: async (taskId) => { calls.push(["cancel", taskId]); return true; },
+  resolveAuthorizedItem: (request) => request.taskId === "task-1" && request.authorizationId === authorizationId
+    ? authorizedItem : null,
+  resolveAuthorizedItems: (request) => request.taskId === "task-1"
+    && request.authorizationIds.every((id) => id === authorizationId) ? [authorizedItem] : null,
+  getVisualSessionId: () => "computer-search:task-1",
+  stop: async () => undefined
+};
+
+registerComputerSearchIpc({
+  registrar: { handle: (channel, listener) => handlers.set(channel, listener), on: (channel, listener) => events.set(channel, listener) },
+  isSenderAllowed: (event) => event.allowed === true,
+  isActionSenderAllowed: (event) => event.actionAllowed === true,
+  runtime,
+  openPath: async (filePath) => { calls.push(["open", filePath]); return ""; },
+  showItemInFolder: (filePath) => calls.push(["showInFolder", filePath]),
+  writeClipboardText: (text) => calls.push(["clipboard", text]),
+  inspectItem: async (filePath, kind) => { calls.push(["inspect", filePath, kind]); return { path: filePath, kind }; },
+  readTextPreview: async (filePath) => { calls.push(["text", filePath]); return { content: "sample" }; },
+  startFileDrag: (_sender, filePaths) => calls.push(["drag", filePaths])
+});
+
+assert.deepEqual([...handlers.keys()], [
+  "computerSearch:status", "computerSearch:capabilityOptions", "computerSearch:configureCapability",
+  "computerSearch:search", "computerSearch:nextPage", "computerSearch:cancel",
+  "computerSearch:open", "computerSearch:showInFolder", "computerSearch:copyPaths",
+  "computerSearch:inspect", "computerSearch:readTextPreview"
+]);
+assert.deepEqual([...events.keys()], ["computerSearch:startDrag"]);
+assert.equal(handlers.has("search:images"), false);
+
+const run = async () => {
+  await assert.rejects(() => handlers.get("computerSearch:status")({ allowed: false }), /not allowed/);
+  assert.equal((await handlers.get("computerSearch:status")({ allowed: true })).catalogRevision, 7);
+  assert.equal((await handlers.get("computerSearch:capabilityOptions")({ allowed: true })).bundleAvailable, true);
+  await assert.rejects(() => handlers.get("computerSearch:configureCapability")({ allowed: true }, {
+    action: "enable", volumeLetters: ["e"], removeCatalog: false
+  }), /invalid-capability-request/);
+  await assert.rejects(() => handlers.get("computerSearch:configureCapability")({ allowed: true }, {
+    action: "remove", volumeLetters: ["E"], removeCatalog: false
+  }), /invalid-capability-request/);
+  assert.equal((await handlers.get("computerSearch:configureCapability")({ allowed: true }, {
+    action: "enable", volumeLetters: ["C", "E"], removeCatalog: false
+  })).status, "completed");
+  await assert.rejects(() => handlers.get("computerSearch:search")({ allowed: true }, {
+    taskId: "task-1", query: "   ", scopePath: null
+  }), /invalid-request/);
+  await assert.rejects(() => handlers.get("computerSearch:search")({ allowed: true }, {
+    taskId: "task-1", query: "poster", scopePath: "relative"
+  }), /invalid-request/);
+  const first = await handlers.get("computerSearch:search")({ allowed: true }, {
+    taskId: "task-1", query: "  poster  ", scopePath: "E:\\References"
+  });
+  assert.equal(first.nextCursor, "cursor-1");
+  assert.deepEqual(calls[1], ["search", { taskId: "task-1", query: "poster", scopePath: "E:\\References" }]);
+  await assert.rejects(() => handlers.get("computerSearch:nextPage")({ allowed: true }, {
+    taskId: "task-1", cursor: ""
+  }), /invalid-cursor/);
+  assert.equal((await handlers.get("computerSearch:nextPage")({ allowed: true }, {
+    taskId: "task-1", cursor: "cursor-1"
+  })).isComplete, true);
+  assert.equal(await handlers.get("computerSearch:cancel")({ allowed: true }, "task-1"), true);
+  assert.deepEqual(calls.slice(2, 4), [
+    ["nextPage", { taskId: "task-1", cursor: "cursor-1" }], ["cancel", "task-1"]
+  ]);
+  const authorization = { taskId: "task-1", authorizationId, path: "C:\\not-authorized.txt" };
+  await assert.rejects(() => handlers.get("computerSearch:open")({ actionAllowed: false }, authorization), /not allowed/);
+  await assert.rejects(() => handlers.get("computerSearch:open")({ actionAllowed: true }, {
+    taskId: "task-1", authorizationId: "B".repeat(32)
+  }), /authorization-expired/);
+  assert.equal(await handlers.get("computerSearch:open")({ actionAllowed: true }, authorization), "");
+  assert.equal(await handlers.get("computerSearch:showInFolder")({ actionAllowed: true }, authorization), true);
+  assert.equal(await handlers.get("computerSearch:copyPaths")({ actionAllowed: true }, {
+    taskId: "task-1", authorizationIds: [authorizationId]
+  }), 1);
+  assert.equal((await handlers.get("computerSearch:inspect")({ actionAllowed: true }, authorization)).path, authorizedItem.path);
+  assert.equal((await handlers.get("computerSearch:readTextPreview")({ actionAllowed: true }, authorization)).content, "sample");
+  events.get("computerSearch:startDrag")({ actionAllowed: true, sender: { id: 1 } }, {
+    taskId: "task-1", authorizationIds: [authorizationId]
+  });
+  assert.deepEqual(calls.slice(4), [
+    ["open", authorizedItem.path],
+    ["showInFolder", authorizedItem.path],
+    ["clipboard", authorizedItem.path],
+    ["inspect", authorizedItem.path, "file"],
+    ["text", authorizedItem.path],
+    ["drag", [authorizedItem.path]]
+  ]);
+  console.log(JSON.stringify({ computerSearchIpc: "ok", channels: handlers.size + events.size,
+    formalSearchUntouched: true, arbitraryPathsRejected: true }));
+};
+
+run().catch((error) => { console.error(error); process.exitCode = 1; });

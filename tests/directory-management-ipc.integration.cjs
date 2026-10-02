@@ -14,9 +14,18 @@ const run = async () => {
   assert.match(resultRefreshSource, /directories\.refreshFileCounts\(directoryIds\)/u);
   assert.doesNotMatch(resultRefreshSource, /search\.refresh/u);
   assert.doesNotMatch(refreshSource, /shellState === "standby"/u);
+  const startupLoadSource = appSource.slice(
+    appSource.indexOf("const loadDirectories = async"),
+    appSource.indexOf("loadDirectories();")
+  );
+  assert.ok(
+    startupLoadSource.indexOf("setDirectories(loadedDirectories)") < startupLoadSource.indexOf("cache.optimizationStatus()"),
+    "persisted directories should render before auxiliary startup requests"
+  );
 
   const handles = new Map();
   const calls = [];
+  let decorationShouldFail = false;
   const originalDirectories = [{ id: "one", name: "Original", path: "C:\\Original", indexedCount: 1 }];
   const renamedDirectories = [{ id: "one", name: "Renamed", path: "C:\\Original", indexedCount: 1 }];
   const movedDirectories = [{ id: "two", name: "Second" }, ...originalDirectories];
@@ -41,6 +50,7 @@ const run = async () => {
     },
     decorateDirectories: async (directories) => {
       calls.push(["decorate", directories]);
+      if (decorationShouldFail) throw new Error("index unavailable");
       return directories.map((directory) => ({ ...directory, indexedCount: 7 }));
     },
     selectDirectoryCandidates: async () => {
@@ -100,7 +110,7 @@ const run = async () => {
   ]);
   const event = { sender: { id: 1 } };
   assert.deepEqual(await handles.get("directories:list")(event), [
-    { id: "one", name: "Original", path: "C:\\Original", indexedCount: 7 }
+    { id: "one", name: "Original", path: "C:\\Original", indexedCount: 1 }
   ]);
   assert.deepEqual(await handles.get("directories:updateName")(event, "one", "Renamed"), [
     { id: "one", name: "Renamed", path: "C:\\Original", indexedCount: 7 }
@@ -129,7 +139,6 @@ const run = async () => {
   assert.deepEqual(await handles.get("directories:delete")(event, "one"), []);
   assert.deepEqual(calls, [
     ["list"],
-    ["decorate", originalDirectories],
     ["updateName", "one", "Renamed"],
     ["decorate", renamedDirectories],
     ["move", "one", "down"],
@@ -160,6 +169,9 @@ const run = async () => {
     ["resumeRendering", "directory-delete:one"],
     ["resumeOptimization", "directory-delete:one"]
   ]);
+  decorationShouldFail = true;
+  assert.deepEqual(await handles.get("directories:updateName")(event, "one", "Renamed"), renamedDirectories);
+  decorationShouldFail = false;
   await assert.rejects(handles.get("directories:delete")(event, "fail"), /delete failed/);
   assert.deepEqual(calls.slice(-8), [
     ["list"],

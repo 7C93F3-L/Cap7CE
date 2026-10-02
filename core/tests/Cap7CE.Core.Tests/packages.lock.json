@@ -76,6 +76,9 @@
       },
       "cap7ce.core.reader.protocol": {
         "type": "Project"
+      },
+      "cap7ce.core.setup": {
+        "type": "Project"
       }
     }
   }

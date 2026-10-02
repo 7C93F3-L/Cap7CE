@@ -13,14 +13,14 @@ public sealed class ReaderV2CatalogSessionFactory : ICatalogReaderSessionFactory
     {
         for (var attempt = 0; attempt < MaximumConnectAttempts; attempt++)
         {
-            _ = await ReaderServiceController.EnsureStartedAsync(ReaderClientConstants.Legacy, token);
+            _ = await ReaderServiceController.EnsureStartedAsync(ReaderClientConstants.Product, token);
             using var connectionDeadline = CancellationTokenSource.CreateLinkedTokenSource(token);
             connectionDeadline.CancelAfter(ConnectDeadlines[attempt]);
             ReaderPipeConnection connection;
             try
             {
                 connection = await ReaderNativeClient.ConnectAsync(
-                    ReaderClientConstants.Legacy,
+                    ReaderClientConstants.Product,
                     connectionDeadline.Token);
             }
             catch (OperationCanceledException) when (!token.IsCancellationRequested && attempt + 1 < MaximumConnectAttempts)
@@ -33,7 +33,7 @@ public sealed class ReaderV2CatalogSessionFactory : ICatalogReaderSessionFactory
             }
             try
             {
-                var identity = ReaderServiceIdentity.Verify(ReaderClientConstants.Legacy, connection.ServerProcessId);
+                var identity = ReaderServiceIdentity.Verify(ReaderClientConstants.Product, connection.ServerProcessId);
                 if (!identity.Passed) throw new UnauthorizedAccessException(identity.Stage);
                 return await ReaderV2CatalogSession.ConnectAsync(connection, token);
             }

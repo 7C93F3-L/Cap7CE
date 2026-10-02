@@ -21,7 +21,7 @@ import AppearanceColorSettingsControl from "./AppearanceColorSettingsControl";
 import StableSettingsSelect from "./StableSettingsSelect";
 import SettingsCategoryIcon, { type SettingsCategoryIconName } from "./SettingsCategoryIcon";
 import { useSettingsConfirmation } from "./useSettingsConfirmation";
-import { useSettingsWindowController } from "./useSettingsWindowController";
+import { useSettingsCacheStatsVisibility, useSettingsWindowController } from "./useSettingsWindowController";
 import "./SettingsWindowApp.css";
 import "./StableSettingsActions.css";
 import "./StableQuickActionSettings.css";
@@ -103,11 +103,11 @@ const SettingsWindowApp = () => {
   }, []);
 
   const visibleCategories = useMemo(() => categoryDefinitions.filter((category) => matchesQuery(filterQuery, categorySearchKeys[category.id].map((key) => t(key)))), [filterQuery, controller.languageRevision]);
+  useSettingsCacheStatsVisibility(activeCategory === "cache" || Boolean(normalizedQuery && visibleCategories.some((category) => category.id === "cache")), controller.refreshCaches);
   useEffect(() => {
     if (visibleCategories.some((category) => category.id === activeCategory)) return;
     if (visibleCategories[0]) setActiveCategory(visibleCategories[0].id);
   }, [activeCategory, visibleCategories]);
-
   if (controller.isLoading || !preferences) {
     return <div className="cap-settings-window-foundation cap-stable-settings-loading"><div className="cap-settings-window-drag-region" aria-hidden="true" /><p>{controller.error ? t("stableSettings.loadFailed") : t("stableSettings.loading")}</p>{controller.error && <button type="button" onClick={() => void controller.refreshAll()}>{t("common.retry")}</button>}</div>;
   }

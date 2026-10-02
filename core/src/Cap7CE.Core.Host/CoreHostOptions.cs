@@ -6,18 +6,22 @@ public enum CoreHostMode
     SyntheticServer,
     CatalogServer,
     CatalogControllerProbe,
+    CatalogNativeDependencyProbe,
     CatalogReadOnly,
     ReaderFixtureClient,
     ReaderFixtureDisconnect,
     ReaderVolumeProbe,
     CoreP31Probe,
     CoreP31InitialProbe,
-    ReaderLifecycleClient
+    CoreP37Probe,
+    ReaderLifecycleClient,
+    ReaderCapabilityLifecycleClient,
+    ReaderP37LifecycleClient
 }
 
 public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
 {
-    private static readonly string[] PipePrefixes = ["cap7ce-core-p11-", "cap7ce-core-p31-", "cap7ce-core-p32-"];
+    private static readonly string[] PipePrefixes = ["cap7ce-core-p11-", "cap7ce-core-p31-", "cap7ce-core-p32-", "cap7ce-core-p35-"];
 
     public static bool TryParse(string[] args, out CoreHostOptions options)
     {
@@ -30,6 +34,12 @@ public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
         if (args is ["--catalog-readonly"])
         {
             options = new CoreHostOptions(CoreHostMode.CatalogReadOnly, null);
+            return true;
+        }
+
+        if (args is ["--catalog-native-dependency-probe"])
+        {
+            options = new CoreHostOptions(CoreHostMode.CatalogNativeDependencyProbe, null);
             return true;
         }
 
@@ -63,9 +73,27 @@ public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
             return true;
         }
 
+        if (args is ["--core-p37-probe"])
+        {
+            options = new CoreHostOptions(CoreHostMode.CoreP37Probe, null);
+            return true;
+        }
+
         if (args is ["--reader-lifecycle-client"])
         {
             options = new CoreHostOptions(CoreHostMode.ReaderLifecycleClient, null);
+            return true;
+        }
+
+        if (args is ["--reader-capability-lifecycle-client"])
+        {
+            options = new CoreHostOptions(CoreHostMode.ReaderCapabilityLifecycleClient, null);
+            return true;
+        }
+
+        if (args is ["--reader-p37-lifecycle-client"])
+        {
+            options = new CoreHostOptions(CoreHostMode.ReaderP37LifecycleClient, null);
             return true;
         }
 

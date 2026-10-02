@@ -2,7 +2,7 @@
 
 Cap7CE source code is made available under PolyForm Noncommercial 1.0.0. Third-party software included in the source tree, dependency graph, or packaged runtime remains subject to its own license.
 
-This file is a human-readable inventory for Cap7CE 1.0.4 and its unshipped Core development tree. `package-lock.json` and the Core `packages.lock.json` files are the authoritative locked dependency inventories. Before publishing a binary release, the release process must regenerate and verify the complete license report and ship the applicable license texts and notices with the release.
+This file is a human-readable inventory for Cap7CE 1.0.4 and its opt-in Core capability. The regular package now carries the dormant, deterministic capability payload; it is installed into protected system locations only after the user explicitly enables or repairs full-disk search. `package-lock.json` and the Core `packages.lock.json` files are the authoritative locked dependency inventories. Before publishing a binary release, the release process must regenerate and verify the complete license report.
 
 ## Primary runtime components
 
@@ -28,8 +28,8 @@ This file is a human-readable inventory for Cap7CE 1.0.4 and its unshipped Core 
 | `@img/sharp-win32-x64` / bundled libvips components | Apache-2.0 AND LGPL-3.0-or-later |
 | `sql.js` | MIT |
 | `pako` | MIT AND Zlib |
-| Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used only by the isolated, currently unshipped .NET Core catalog |
-| SQLitePCLRaw 2.1.12 packages | Apache-2.0; used only by the isolated, currently unshipped .NET Core catalog |
+| Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used by the opt-in .NET Core catalog capability |
+| SQLitePCLRaw 2.1.12 packages | Apache-2.0; used by the opt-in .NET Core catalog capability |
 | SQLite native library supplied through SQLitePCLRaw | SQLite is in the public domain; the packaging components remain Apache-2.0 |
 
 The installed production dependency graph also contains components under MIT, Apache-2.0, ISC, 0BSD, Zlib, and LGPL-3.0-or-later terms. Their exact versions are locked in `package-lock.json`.
@@ -39,6 +39,8 @@ Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entrie
 Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active preview session. Binary packaging copies its MIT license to `resources/licenses/opentype.js`.
 
 Cap7CE uses selected Microsoft Fluent UI System Icons as editable SVG geometry in the stable UI. The icons are adapted for Cap7CE state and sizing while remaining subject to the upstream MIT license.
+
+The Core capability uses Microsoft.Data.Sqlite 10.0.12 and SQLitePCLRaw 2.1.12. Binary packaging copies the applicable MIT and Apache-2.0 texts to `resources/licenses/core-dependencies`; SQLite itself is in the public domain.
 
 Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
 

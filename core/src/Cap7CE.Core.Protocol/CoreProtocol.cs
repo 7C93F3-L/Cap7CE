@@ -27,6 +27,7 @@ public static class CoreOperations
     public const string CatalogBuild = "catalog.build";
     public const string CatalogRebuild = "catalog.rebuild";
     public const string CatalogCancel = "catalog.cancel";
+    public const string CatalogResolveScope = "catalog.resolveScope";
     public const string SearchStart = "search.start";
     public const string SearchNextPage = "search.nextPage";
     public const string SearchCancel = "search.cancel";
@@ -49,6 +50,7 @@ public static class CoreOperations
         CatalogBuild,
         CatalogRebuild,
         CatalogCancel,
+        CatalogResolveScope,
         SearchStart,
         SearchNextPage,
         SearchCancel,

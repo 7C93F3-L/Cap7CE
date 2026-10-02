@@ -13,6 +13,7 @@ import type {
   VisualCacheStats
 } from "../../shared/types";
 import { useRuntimeModelController } from "../controllers/useRuntimeModelController";
+export { useSettingsCacheStatsVisibility } from "./useSettingsCacheStatsVisibility";
 
 const emptyCacheStats: VisualCacheStats = { cacheCount: 0, totalBytes: 0, cachePaths: [] };
 const emptyOptimizationStatus: ThumbnailOptimizationStatus = {
@@ -82,7 +83,6 @@ export const useSettingsWindowController = () => {
           window.cap7ce?.preferences.get(),
           window.cap7ce?.directories.list(),
           window.cap7ce?.preferences.shortcutAvailability(),
-          refreshCaches(),
           runtime.refreshLlamaRuntimeSettings(),
           runtime.refreshGgufModelSettings()
         ]);
@@ -98,7 +98,7 @@ export const useSettingsWindowController = () => {
     })();
     refreshAllPromiseRef.current = refreshPromise;
     return refreshPromise;
-  }, [applyPreferences, refreshCaches, runtime.refreshGgufModelSettings, runtime.refreshLlamaRuntimeSettings]);
+  }, [applyPreferences, runtime.refreshGgufModelSettings, runtime.refreshLlamaRuntimeSettings]);
 
   useEffect(() => {
     void refreshAll(true);

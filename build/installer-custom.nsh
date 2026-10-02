@@ -46,6 +46,10 @@ LangString cap7ceUninstallUnsafePath 1033 "Cap7CE program files were not found i
 LangString cap7ceUninstallUnsafePath 2052 "卸载目录中未找到 Cap7CE 程序文件，未删除任何内容。"
 LangString cap7ceUninstallPreserveFailed 1033 "Cap7CE could not safely preserve models or llama.cpp. Nothing was removed."
 LangString cap7ceUninstallPreserveFailed 2052 "Cap7CE 无法安全保留 models 或 llama.cpp，未删除任何内容。"
+LangString cap7ceCapabilitySetupMissing 1033 "The Cap7CE full-disk search cleanup component is missing. Nothing was removed."
+LangString cap7ceCapabilitySetupMissing 2052 "Cap7CE 全盘搜索清理组件缺失，未删除任何内容。"
+LangString cap7ceCapabilityCleanupFailed 1033 "Cap7CE could not remove the full-disk search components. Nothing was removed."
+LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索组件，未删除任何内容。"
 
 !ifdef BUILD_UNINSTALLER
   Var /GLOBAL cap7cePreserveRoot
@@ -92,6 +96,39 @@ LangString cap7ceUninstallPreserveFailed 2052 "Cap7CE 无法安全保留 models 
       Rename "$cap7cePreserveRoot\llama.cpp" "$INSTDIR\llama.cpp"
     ${endif}
     RMDir "$cap7cePreserveRoot"
+  FunctionEnd
+
+  Function un.cap7ceRemoveCoreCapability
+    # The full-disk Catalog is rebuildable per-user data. Follow the existing
+    # user-data choice instead of presenting a separate uninstall option.
+    SectionGetFlags 1 $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    StrCpy $1 "preserve"
+    ${if} $0 != 0
+      StrCpy $1 "remove"
+    ${endif}
+
+    # A user who never enabled the capability must not see an unnecessary UAC
+    # prompt during uninstall. If no protected payload exists, only apply the
+    # explicit per-user Catalog choice with the same reparse-safe helper.
+    ${ifNot} ${FileExists} "$PROGRAMFILES64\Cap7CE\Core\v1\Cap7CE.Core.Host.exe"
+    ${andIfNot} ${FileExists} "$PROGRAMFILES64\Cap7CE\NtfsReader\v1\Cap7CE.Core.Reader.Host.exe"
+      ${if} $1 == "remove"
+        Push "$LOCALAPPDATA\Cap7CE\Core"
+        Call un.cap7ceRemoveSelectedPath
+      ${endif}
+      Return
+    ${endif}
+
+    ${ifNot} ${FileExists} "$INSTDIR\resources\core-capability\v1\Cap7CE.Core.Setup.exe"
+      Abort "$(cap7ceCapabilitySetupMissing)"
+    ${endif}
+    nsExec::ExecToStack /TIMEOUT=360000 '"$INSTDIR\resources\core-capability\v1\Cap7CE.Core.Setup.exe" --activation-coordinator --action remove --catalog $1'
+    Pop $0
+    Pop $1
+    ${if} $0 != 0
+      Abort "$(cap7ceCapabilityCleanupFailed)"
+    ${endif}
   FunctionEnd
 
   Function un.cap7ceRemoveApplicationFiles
@@ -151,10 +188,11 @@ LangString cap7ceUninstallPreserveFailed 2052 "Cap7CE 无法安全保留 models 
 !endif
 
 !macro customUnInit
-  # The standard uninstall section is index 0; the two sections appended by
-  # customUnInstallSection are indexes 1 and 2. Use electron-builder's known
-  # application size and only scan the two local AI directories. Recursively
-  # sizing shared app data here could delay the uninstall UI for large caches.
+  # The standard uninstall section is index 0; the user-data and per-copy AI
+  # sections appended by customUnInstallSection are indexes 1 and 2. Use
+  # electron-builder's known application size and only scan the two local AI
+  # directories. Recursively sizing shared app data here could delay the
+  # uninstall UI for large caches, including a large full-disk Catalog.
   !ifdef ESTIMATED_SIZE
     SectionSetSize 0 ${ESTIMATED_SIZE}
   !else
@@ -171,6 +209,12 @@ LangString cap7ceUninstallPreserveFailed 2052 "Cap7CE 无法安全保留 models 
 !macroend
 
 !macro customRemoveFiles
+  # App updates replace the per-user application only. Keep an already enabled
+  # protected capability in place; a future version mismatch is surfaced by
+  # the existing explicit Repair action instead of silently disabling search.
+  ${ifNot} ${isUpdated}
+    Call un.cap7ceRemoveCoreCapability
+  ${endif}
   Call un.cap7ceRemoveApplicationFiles
   ${if} $installMode == "all"
     SetShellVarContext current

@@ -77,8 +77,15 @@ export const registerDirectoryManagementIpc = ({
   resumeThumbnailRendering,
   resumeThumbnailOptimization
 }: DirectoryManagementIpcDependencies): void => {
+  const decorateSafely = async (directories: PersistedDirectory[]) => {
+    try {
+      return await decorateDirectories(directories);
+    } catch {
+      return directories;
+    }
+  };
   const decorateAndBroadcast = async (directories: PersistedDirectory[]) => {
-    const decoratedDirectories = await decorateDirectories(directories);
+    const decoratedDirectories = await decorateSafely(directories);
     broadcastDirectoriesChanged(decoratedDirectories);
     return decoratedDirectories;
   };
@@ -93,7 +100,7 @@ export const registerDirectoryManagementIpc = ({
       {
         kind: "handle",
         channel: "directories:list",
-        listener: async () => decorateDirectories(await listDirectories())
+        listener: async () => listDirectories()
       },
       {
         kind: "handle",
@@ -142,7 +149,7 @@ export const registerDirectoryManagementIpc = ({
           const allDirectories = await listDirectories();
           const directories = allDirectories.filter((directory) => requestedIds.has(directory.id));
           if (directories.length === 0) {
-            return decorateDirectories(allDirectories);
+            return decorateSafely(allDirectories);
           }
           const scanResult = await scanDirectories(directories);
           seedScanSnapshot(directories, scanResult);

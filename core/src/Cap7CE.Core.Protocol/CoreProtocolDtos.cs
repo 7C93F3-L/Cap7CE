@@ -88,6 +88,16 @@ public sealed record CatalogStatusResponse(
     IReadOnlyList<CoreCatalogTaskStatus> Tasks,
     long CatalogRevision);
 
+public sealed record CatalogResolveScopeRequest(string Path);
+
+public sealed record CatalogResolveScopeResponse(
+    bool Resolved,
+    string? VolumeId,
+    string? RootFileReference,
+    string? DisplayName,
+    string? State,
+    bool Queryable);
+
 public sealed record CoreCatalogTaskStatus(
     string TaskId,
     string Kind,

@@ -3,12 +3,13 @@ import { t, type TranslationKey } from "../../../electron/localization";
 import type { SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableUiIcon from "./StableUiIcon";
-import type { StableSkimProps } from "./stableSkimTypes";
+import StableSkimSearchBox from "./StableSkimSearchBox";
+import type { StableSkimProps, StableSkimSearchControls } from "./stableSkimTypes";
 
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | null;
-type StableSkimToolbarProps = Omit<StableSkimProps, "renderContent" | "onOpen" | "isLoading" | "feedback" | "entryCount"> & { onToggleSkim: () => void };
+type StableSkimToolbarProps = Omit<StableSkimProps, "renderContent" | "onOpen" | "isLoading" | "feedback" | "entryCount" | "theme" | "appearanceColors" | "windowMaterial" | "onNativeDragStateChange"> & { onToggleSkim: () => void; search: StableSkimSearchControls };
 
-const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, sortDirection, onToggleSkim, onOpenRoot, onOpenPath, onDisplayModeChange, onSortChange }: StableSkimToolbarProps) => {
+const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, sortDirection, onToggleSkim, onOpenRoot, onOpenPath, onDisplayModeChange, onSortChange, search }: StableSkimToolbarProps) => {
   const [editingPath, setEditingPath] = useState(false);
   const [pathDraft, setPathDraft] = useState(currentPath ?? "");
   const [flyout, setFlyout] = useState<FlyoutState>(null);
@@ -34,7 +35,7 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
       <button className="cap-stable-skim-tool cap-stable-skim-exit-tool" type="button" title={t("skim.exit")} aria-label={t("skim.exit")} aria-pressed="true" onClick={() => { setFlyout(null); onToggleSkim(); }}>
         <StableUiIcon name="skim" active className="cap-stable-sidebar-icon cap-stable-skim-icon" />
       </button>
-      {editingPath ? <form className="cap-stable-skim-address" onSubmit={submitPath}>
+      {search.active ? <StableSkimSearchBox {...search} /> : editingPath ? <form className="cap-stable-skim-address" onSubmit={submitPath}>
         <input autoFocus value={pathDraft} aria-label={t("stableUi.skim.path")} onChange={(event) => setPathDraft(event.currentTarget.value)} onBlur={() => setEditingPath(false)} onKeyDown={(event) => {
           if (event.key === "Escape") { event.preventDefault(); setPathDraft(currentPath ?? ""); setEditingPath(false); }
         }} />
@@ -43,8 +44,9 @@ const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, s
         {breadcrumbs.map((breadcrumb) => <span key={breadcrumb.path}><span aria-hidden="true">›</span><button type="button" title={breadcrumb.path} onClick={() => onOpenPath(breadcrumb.path)}>{breadcrumb.name}</button></span>)}
         <span className="cap-stable-skim-address-hit-area" aria-hidden="true" />
       </div>}
-      <button className="cap-stable-skim-tool" type="button" title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("sort", event)}><StableUiIcon name="sort" sortDirection={sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /></button>
-      <button className="cap-stable-skim-tool" type="button" title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>
+      <button className={`cap-stable-skim-tool cap-computer-search-toggle${search.active ? " is-active" : ""}`} type="button" title={t(search.active ? "computerSearch.exit" : "computerSearch.enter")} aria-label={t(search.active ? "computerSearch.exit" : "computerSearch.enter")} aria-pressed={search.active} onClick={() => { setFlyout(null); search.active ? search.onExit() : search.onEnter(); }}><StableUiIcon name="search" active={search.active} /></button>
+      <button className="cap-stable-skim-tool" type="button" disabled={search.active} title={t("sort.parent")} aria-label={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("sort", event)}><StableUiIcon name="sort" sortDirection={sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /></button>
+      <button className="cap-stable-skim-tool" type="button" disabled={search.active} title={t("skim.display.parent")} aria-label={t("skim.display.parent")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}><StableUiIcon name="scope" active={flyout?.kind === "scope"} /></button>
     </div>
     {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} placement="below" onClose={() => setFlyout(null)}>
       {(["modified_at", "file_name"] as SortField[]).map((field) => <button type="button" className={sortField === field ? "is-selected" : ""} key={field} onClick={() => { onSortChange(field, sortDirection); setFlyout(null); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")}</button>)}

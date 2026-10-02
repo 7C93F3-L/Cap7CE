@@ -16,7 +16,12 @@ const run = async () => {
 
     const diagnostics = new RuntimeDiagnostics({ userDataPath: root, maxLogBytes: 700, retainedLogFiles: 2 });
     await diagnostics.initialize();
-    diagnostics.log("error", "test.failure", { error: new Error("Failed at C:\\Users\\Alice\\Secret\\image.png") });
+    diagnostics.log("error", "test.failure", {
+      error: new Error("Failed at C:\\Users\\Alice\\Secret\\image.png for S-1-5-21-123-456-789-1001"),
+      fileName: "private-asset.psd",
+      volumeIds: ["private-volume-identity"],
+      files: ["private-list-item.ai"]
+    });
     diagnostics.logDetailed("test.detail", { value: "hidden until enabled" });
     diagnostics.setDetailedLoggingEnabled(true);
     diagnostics.logDetailed("test.detail", { value: "visible" });
@@ -29,7 +34,7 @@ const run = async () => {
     assert.match(initialLogs, /session\.unclean_exit/);
     assert.match(initialLogs, /test\.failure/);
     assert.match(initialLogs, /<local-path>/);
-    assert.doesNotMatch(initialLogs, /Alice|Secret|image\.png/);
+    assert.doesNotMatch(initialLogs, /Alice|Secret|image\.png|private-asset|private-volume|private-list-item|S-1-5-21/);
     assert.equal((initialLogs.match(/test\.detail/g) || []).length, 1);
 
     for (let index = 0; index < 20; index += 1) {
@@ -40,7 +45,9 @@ const run = async () => {
     assert.equal(fs.existsSync(`${diagnostics.runtimeLogPath}.3`), false);
 
     const appUpdateLog = path.join(logDirectory, "app-update.log");
-    await fsp.writeFile(appUpdateLog, "source C:\\Users\\Alice\\Downloads\\update.zip\n", "utf8");
+    await fsp.writeFile(appUpdateLog,
+      "source C:\\Users\\Alice\\Downloads\\update.zip\nsid S-1-5-21-123-456-789-1001\n",
+      "utf8");
     const crashPath = path.join(diagnostics.crashDirectory, "completed", "sample.dmp");
     await fsp.mkdir(path.dirname(crashPath), { recursive: true });
     await fsp.writeFile(crashPath, Buffer.from([1, 2, 3, 4]));
@@ -60,7 +67,7 @@ const run = async () => {
       .filter(([name]) => /\.(?:json|jsonl|log|txt)$/.test(name))
       .map(([, bytes]) => strFromU8(bytes))
       .join("\n");
-    assert.doesNotMatch(exportedText, /Alice|Downloads|update\.zip/);
+    assert.doesNotMatch(exportedText, /Alice|Downloads|update\.zip|S-1-5-21/);
     assert.match(exportedText, /<local-path>/);
 
     diagnostics.markCleanExitSync();

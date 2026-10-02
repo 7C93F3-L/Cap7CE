@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "capabilityId": "cap7ce-core",
+  "capabilityVersion": "1.0.0",
+  "runtime": {
+    "frameworkName": "Microsoft.NETCore.App",
+    "minimumVersion": "10.0.12",
+    "architecture": "win-x64",
+    "installerUrl": "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-win-x64.exe",
+    "installerSha512": "b937ae539c4ab21f885b033178dadea98018baad777252c76251e760d81c18463b2f802e86b6a67ea066690e9ede2d66a6bc3c3e614e391505e98c4c41121400",
+    "presentation": "foreground",
+    "installArguments": [
+      "/install",
+      "/norestart"
+    ],
+    "repairArguments": [
+      "/repair",
+      "/norestart"
+    ],
+    "successExitCodes": [
+      0,
+      3010
+    ],
+    "automaticRestart": false
+  },
+  "layout": {
+    "coreProgramDirectory": "%ProgramFiles%\\Cap7CE\\Core\\v1",
+    "readerProgramDirectory": "%ProgramFiles%\\Cap7CE\\NtfsReader\\v1",
+    "readerDataDirectory": "%ProgramData%\\Cap7CE\\NtfsReader\\v1",
+    "catalogDirectory": "%LocalAppData%\\Cap7CE\\Core"
+  },
+  "ownership": {
+    "runtime": "shared-external-never-remove",
+    "programFiles": "cap7ce-capability",
+    "programData": "cap7ce-capability",
+    "catalog": "per-user-separate-choice"
+  },
+  "payloadManifestRequiredAtBuild": true,
+  "systemMutationImplemented": true
+}

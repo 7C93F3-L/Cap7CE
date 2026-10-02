@@ -129,6 +129,11 @@ const skimVisualCacheTypes: readonly SkimVisualCacheType[] = [
 
 let cachedVisualCacheDirectories: string[] | null = null;
 let visualCacheInitializationPromise: Promise<void> | null = null;
+let cacheStatsQueue: Promise<void> = Promise.resolve();
+let formalCacheStatsPromise: Promise<VisualCacheStats> | null = null;
+let skimCacheStatsPromise: Promise<VisualCacheStats> | null = null;
+
+const maximumConcurrentCacheStatReads = 2;
 
 const normalizedPathForKey = (filePath: string) => {
   const resolvedPath = path.resolve(filePath);
@@ -188,20 +193,39 @@ const getVisualCacheTypeStats = async (type: VisualCacheType) => {
     ...imageFiles.map((entry) => path.join(cachePath, entry.name)),
     ...metadataEntries.map((entry) => path.join(metadataPath, entry.name))
   ];
-  const fileSizes = await Promise.all(
-    filePaths.map(async (filePath) => (await fs.stat(filePath)).size)
+  let nextFileIndex = 0;
+  let totalBytes = 0;
+  const readNextFileSize = async () => {
+    while (nextFileIndex < filePaths.length) {
+      const filePath = filePaths[nextFileIndex];
+      nextFileIndex += 1;
+      try {
+        totalBytes += (await fs.stat(filePath)).size;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      }
+    }
+  };
+  await Promise.all(
+    Array.from(
+      { length: Math.min(maximumConcurrentCacheStatReads, filePaths.length) },
+      () => readNextFileSize()
+    )
   );
 
   return {
     cacheCount: imageFiles.length,
-    totalBytes: fileSizes.reduce((sum, fileSize) => sum + fileSize, 0),
+    totalBytes,
     cachePaths: [...new Set([cachePath, metadataPath])]
   };
 };
 
 const getCacheStats = async (types: readonly VisualCacheType[]): Promise<VisualCacheStats> => {
   await initializeVisualCacheDirectories();
-  const statsByType = await Promise.all(types.map(getVisualCacheTypeStats));
+  const statsByType: VisualCacheStats[] = [];
+  for (const type of types) {
+    statsByType.push(await getVisualCacheTypeStats(type));
+  }
 
   return {
     cacheCount: statsByType.reduce((sum, stats) => sum + stats.cacheCount, 0),
@@ -210,8 +234,26 @@ const getCacheStats = async (types: readonly VisualCacheType[]): Promise<VisualC
   };
 };
 
-export const getVisualCacheStats = () => getCacheStats(formalVisualCacheTypes);
-export const getSkimVisualCacheStats = () => getCacheStats(skimVisualCacheTypes);
+const enqueueCacheStats = (types: readonly VisualCacheType[]) => {
+  const result = cacheStatsQueue.then(
+    () => getCacheStats(types),
+    () => getCacheStats(types)
+  );
+  cacheStatsQueue = result.then(() => undefined, () => undefined);
+  return result;
+};
+
+export const getVisualCacheStats = () => {
+  formalCacheStatsPromise ??= enqueueCacheStats(formalVisualCacheTypes)
+    .finally(() => { formalCacheStatsPromise = null; });
+  return formalCacheStatsPromise;
+};
+
+export const getSkimVisualCacheStats = () => {
+  skimCacheStatsPromise ??= enqueueCacheStats(skimVisualCacheTypes)
+    .finally(() => { skimCacheStatsPromise = null; });
+  return skimCacheStatsPromise;
+};
 
 const clearCacheTypes = async (types: readonly VisualCacheType[]) => {
   await initializeVisualCacheDirectories();

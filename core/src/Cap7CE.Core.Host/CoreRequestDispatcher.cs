@@ -65,6 +65,7 @@ public sealed class CoreRequestDispatcher
                 CoreOperations.CatalogBuild when runtime is not null => StartCatalogTask(request, rebuild: false),
                 CoreOperations.CatalogRebuild when runtime is not null => StartCatalogTask(request, rebuild: true),
                 CoreOperations.CatalogCancel when runtime is not null => CancelCatalogTask(request),
+                CoreOperations.CatalogResolveScope when runtime is not null => await ResolveScopeAsync(request, linkedCancellation.Token),
                 CoreOperations.CoreShutdown when runtime is not null => await ShutdownAsync(request),
                 CoreOperations.SearchStart => await StartSearchAsync(request, linkedCancellation.Token),
                 CoreOperations.SearchNextPage => await NextPageAsync(request, linkedCancellation.Token),
@@ -251,6 +252,17 @@ public sealed class CoreRequestDispatcher
     {
         var response = runtime!.CancelTask(ReadBody<CatalogCancelRequest>(request));
         return CoreResponseEnvelope.Success(request.RequestId, 0, response);
+    }
+
+    private async Task<CoreResponseEnvelope> ResolveScopeAsync(
+        CoreRequestEnvelope request,
+        CancellationToken token)
+    {
+        var response = await runtime!.ResolveScopeAsync(ReadBody<CatalogResolveScopeRequest>(request), token);
+        return CoreResponseEnvelope.Success(
+            request.RequestId,
+            await runtime.Catalog.ReadRevisionAsync(token),
+            response);
     }
 
     private async Task<CoreResponseEnvelope> ShutdownAsync(CoreRequestEnvelope request)
