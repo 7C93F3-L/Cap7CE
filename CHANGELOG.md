@@ -7,6 +7,7 @@
 - 常规 NSIS 安装改为按机器安装，首次安装默认进入 64 位 `%ProgramFiles%\Cap7CE`，安装、覆盖升级、修复和卸载由 Windows 按需显示 UAC；Cap7CE 应用进程继续以普通用户权限运行。
 - Electron 配置、目录索引、视觉缓存、日志与崩溃数据统一写入 `%LOCALAPPDATA%\Cap7CE\UserData`；全盘 Catalog、应用更新、模型和 `llama.cpp` 分别留在同一产品根下的 `Core`、`updates`、`models` 与 `llama.cpp`，不再要求对程序目录写入。
 - 卸载器现以当前用户的 Local 数据布局计算 AI 内容体积；既有“删除用户数据”选项同时覆盖 `UserData`、应用更新、全盘 Catalog 和旧版 `%APPDATA%\Cap7CE`，模型与 `llama.cpp` 仍由原有独立选项控制。
+- 机器级程序与受保护全盘搜索组件共用 `%ProgramFiles%\Cap7CE` 产品根时，覆盖更新只替换应用文件，并在清理期间安全暂存和恢复独立 Setup 管理的 `Core` 与 `NtfsReader` 子目录。
 
 ### 前台响应与缓存统计修复
 

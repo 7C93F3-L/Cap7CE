@@ -44,8 +44,8 @@ LangString cap7ceCleanupAiContent 1033 "Remove models and llama.cpp for this use
 LangString cap7ceCleanupAiContent 2052 "删除当前用户的 models 和 llama.cpp"
 LangString cap7ceUninstallUnsafePath 1033 "Cap7CE program files were not found in the uninstall directory. Nothing was removed."
 LangString cap7ceUninstallUnsafePath 2052 "卸载目录中未找到 Cap7CE 程序文件，未删除任何内容。"
-LangString cap7ceUninstallPreserveFailed 1033 "Cap7CE could not safely preserve models or llama.cpp. Nothing was removed."
-LangString cap7ceUninstallPreserveFailed 2052 "Cap7CE 无法安全保留 models 或 llama.cpp，未删除任何内容。"
+LangString cap7ceUninstallPreserveFailed 1033 "Cap7CE could not safely preserve protected or user-managed content. Nothing was removed."
+LangString cap7ceUninstallPreserveFailed 2052 "Cap7CE 无法安全保留受保护组件或用户内容，未删除任何内容。"
 LangString cap7ceCapabilitySetupMissing 1033 "The Cap7CE full-disk search cleanup component is missing. Nothing was removed."
 LangString cap7ceCapabilitySetupMissing 2052 "Cap7CE 全盘搜索清理组件缺失，未删除任何内容。"
 LangString cap7ceCapabilityCleanupFailed 1033 "Cap7CE could not remove the full-disk search components. Nothing was removed."
@@ -55,6 +55,8 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
   Var /GLOBAL cap7cePreserveRoot
   Var /GLOBAL cap7cePreservedModels
   Var /GLOBAL cap7cePreservedLlama
+  Var /GLOBAL cap7cePreservedCore
+  Var /GLOBAL cap7cePreservedReader
 
   # Keep NSIS' native recursive removal for real directories, but never recurse
   # when the selected root itself is a link or junction.
@@ -88,12 +90,18 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
       Pop $0
   FunctionEnd
 
-  Function un.cap7ceRestoreAiContent
+  Function un.cap7ceRestorePreservedContent
     ${if} $cap7cePreservedModels == "1"
       Rename "$cap7cePreserveRoot\models" "$INSTDIR\models"
     ${endif}
     ${if} $cap7cePreservedLlama == "1"
       Rename "$cap7cePreserveRoot\llama.cpp" "$INSTDIR\llama.cpp"
+    ${endif}
+    ${if} $cap7cePreservedCore == "1"
+      Rename "$cap7cePreserveRoot\Core" "$INSTDIR\Core"
+    ${endif}
+    ${if} $cap7cePreservedReader == "1"
+      Rename "$cap7cePreserveRoot\NtfsReader" "$INSTDIR\NtfsReader"
     ${endif}
     RMDir "$cap7cePreserveRoot"
   FunctionEnd
@@ -134,6 +142,8 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
   Function un.cap7ceRemoveApplicationFiles
     StrCpy $cap7cePreservedModels "0"
     StrCpy $cap7cePreservedLlama "0"
+    StrCpy $cap7cePreservedCore "0"
+    StrCpy $cap7cePreservedReader "0"
 
     ${ifNot} ${FileExists} "$INSTDIR\${PRODUCT_FILENAME}.exe"
       Abort "$(cap7ceUninstallUnsafePath)"
@@ -167,20 +177,48 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
       Rename "$INSTDIR\llama.cpp" "$cap7cePreserveRoot\llama.cpp"
       ${if} ${Errors}
         CreateDirectory "$INSTDIR"
-        Call un.cap7ceRestoreAiContent
+        Call un.cap7ceRestorePreservedContent
         Abort "$(cap7ceUninstallPreserveFailed)"
       ${endif}
       StrCpy $cap7cePreservedLlama "1"
+    ${endif}
+
+    # The machine-wide app shares its product root with the separately managed
+    # protected search capability. Updates must replace only app files.
+    System::Call 'kernel32::GetFileAttributesW(w "$INSTDIR\Core")i.r1'
+    ${if} $1 != -1
+      ClearErrors
+      Rename "$INSTDIR\Core" "$cap7cePreserveRoot\Core"
+      ${if} ${Errors}
+        CreateDirectory "$INSTDIR"
+        Call un.cap7ceRestorePreservedContent
+        Abort "$(cap7ceUninstallPreserveFailed)"
+      ${endif}
+      StrCpy $cap7cePreservedCore "1"
+    ${endif}
+
+    System::Call 'kernel32::GetFileAttributesW(w "$INSTDIR\NtfsReader")i.r1'
+    ${if} $1 != -1
+      ClearErrors
+      Rename "$INSTDIR\NtfsReader" "$cap7cePreserveRoot\NtfsReader"
+      ${if} ${Errors}
+        CreateDirectory "$INSTDIR"
+        Call un.cap7ceRestorePreservedContent
+        Abort "$(cap7ceUninstallPreserveFailed)"
+      ${endif}
+      StrCpy $cap7cePreservedReader "1"
     ${endif}
 
     SetOutPath $TEMP
     RMDir /r "$INSTDIR"
 
     CreateDirectory "$INSTDIR"
-    Call un.cap7ceRestoreAiContent
+    Call un.cap7ceRestorePreservedContent
 
     ${if} $cap7cePreservedModels != "1"
     ${andIf} $cap7cePreservedLlama != "1"
+    ${andIf} $cap7cePreservedCore != "1"
+    ${andIf} $cap7cePreservedReader != "1"
       RMDir "$INSTDIR"
     ${endif}
 
