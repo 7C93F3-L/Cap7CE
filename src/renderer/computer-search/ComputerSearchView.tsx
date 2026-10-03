@@ -2,7 +2,8 @@ import { useRef } from "react";
 import type { ComputerSearchState } from "../../../electron/computerSearchTypes";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../shared/types";
-import { TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
+import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
+import { getDirectoryPath } from "../filePath";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import ComputerSearchResultContextMenu from "./ComputerSearchResultContextMenu";
 import ComputerSearchResultVisual from "./ComputerSearchResultVisual";
@@ -75,11 +76,11 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     ref={scrollContainerRef}
     onClick={() => actions.clearSelection()}
   >
-    <div className="cap-computer-search-grid">{items.map((item) => {
+    <div className="cap-computer-search-grid cap-skim-grid">{items.map((item) => {
       const selected = actions.selectedIds.has(item.authorizationId);
       const active = actions.activeId === item.authorizationId;
       return <button
-        className={`cap-computer-search-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
+        className={`cap-computer-search-entry cap-skim-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
         type="button"
         key={item.authorizationId}
         title={item.path}
@@ -106,8 +107,8 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
         }}
       >
         <ComputerSearchResultVisual item={item} taskId={taskId} scrollContainerRef={scrollContainerRef} />
-        <TwoLineMiddleEllipsisFileName fileName={item.name} className="cap-computer-search-name" />
-        <small>{item.path}</small>
+        <TwoLineMiddleEllipsisFileName fileName={item.name} className="cap-computer-search-name cap-skim-entry-name" />
+        <MiddleEllipsisFileName fileName={getDirectoryPath(item.path)} className="cap-computer-search-path cap-skim-entry-path" />
       </button>;
     })}</div>
     {nextCursor && <button className="cap-computer-search-more" type="button" disabled={busy} onClick={() => void loadMore()}>{busy ? t("computerSearch.loading") : t("computerSearch.loadMore")}</button>}

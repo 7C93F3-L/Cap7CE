@@ -10,17 +10,9 @@
 .cap-computer-search-content, .cap-computer-search-browse { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; }
 .cap-computer-search-browse.is-hidden { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
 .cap-computer-search-results { position: absolute; inset: 0; overflow: auto; padding: var(--cap-stable-grid-page-padding); box-sizing: border-box; }
-.cap-computer-search-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--cap-stable-grid-gap); }
-.cap-computer-search-entry { min-width: 0; padding: 7px; border: 0; border-radius: var(--cap-stable-radius-sm); color: inherit; background: var(--cap-stable-grid-surface); text-align: left; font: inherit; }
-.cap-computer-search-entry:where(:hover, :focus-visible) { background: var(--cap-stable-skim-hover-surface); }
-.cap-computer-search-entry.selected { background: var(--cap-stable-selected-surface); }
-.cap-computer-search-grid .cap-computer-search-name, .cap-computer-search-grid small { display: block; min-width: 0; overflow: hidden; }
-.cap-computer-search-grid .cap-computer-search-name { padding-top: 5px; font-weight: 500; }
-.cap-computer-search-grid small { padding-top: 2px; color: var(--cap-stable-text-muted); text-overflow: ellipsis; white-space: nowrap; }
-.cap-computer-search-visual { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1.32; border-radius: var(--cap-stable-radius-sm); color: var(--cap-stable-text-muted); background: var(--cap-stable-surface-soft); overflow: hidden; }
-.cap-computer-search-visual > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--cap-stable-surface-soft); }
-.cap-computer-search-format-icon { width: 38px; height: 38px; }
-.cap-computer-search-visual.is-folder .cap-svg-icon { width: 38px; height: 38px; color: color-mix(in srgb, var(--theme-color) 70%, var(--cap-stable-text)); }
+.cap-computer-search-grid { --cap-grid-target-size: 120px; --cap-grid-gap: 5px; overflow: visible; contain: layout; }
+.cap-computer-search-entry { font: inherit; }
+.cap-computer-search-visual.is-folder { color: color-mix(in srgb, var(--theme-color) 70%, var(--cap-stable-text)); }
 .cap-computer-search-empty, .cap-computer-search-state { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 7px; padding: 18px; color: var(--cap-stable-text-muted); text-align: center; }
 .cap-computer-search-empty > .cap-svg-icon, .cap-computer-search-state > .cap-svg-icon { width: 30px; height: 30px; }
 .cap-computer-search-empty strong, .cap-computer-search-state strong { color: var(--cap-stable-text); font-weight: 500; }
@@ -35,8 +27,7 @@
   .cap-stable-skim-slot.is-computer-search-active .cap-stable-skim-toolbar { display: grid; }
   .cap-stable-skim-slot.is-computer-search-active .cap-stable-skim-status { display: block; }
   .cap-computer-search-results { overflow-x: auto; overflow-y: hidden; }
-  .cap-computer-search-grid { display: flex; height: 100%; }
-  .cap-computer-search-entry { width: 138px; flex: 0 0 138px; }
-  .cap-computer-search-visual { height: 112px; aspect-ratio: auto; }
+  .cap-computer-search-grid { display: flex; height: 100%; align-items: center; }
+  .cap-computer-search-entry { width: 138px; height: 138px; flex: 0 0 138px; }
   .cap-computer-search-more { display: inline-block; margin: auto 8px; }
 }

@@ -32,11 +32,12 @@ const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef }: {
   }, [item.authorizationId, scrollContainerRef, taskId]);
 
   const thumbnailUrl = `cap7ce://computer-search-thumbnail/?task=${encodeURIComponent(taskId)}&authorization=${encodeURIComponent(item.authorizationId)}`;
-  return <span className={`cap-computer-search-visual${item.isDirectory ? " is-folder" : ""}`} ref={visualRef}>
+  return <span className={`cap-skim-entry-visual cap-computer-search-visual${item.isDirectory ? " is-folder" : ""}`} ref={visualRef}>
     {item.isDirectory
-      ? <StableUiIcon name="folder" />
-      : <SvgIcon svg={getFormatIconSvgByName(item.iconName)} className="cap-svg-icon cap-computer-search-format-icon" />}
+      ? <StableUiIcon name="folder" className="cap-skim-entry-icon" />
+      : <SvgIcon svg={getFormatIconSvgByName(item.iconName)} className="cap-svg-icon cap-skim-entry-icon" />}
     {visible && !failed && <img
+      className="cap-skim-entry-thumbnail"
       src={thumbnailUrl}
       alt=""
       draggable={false}

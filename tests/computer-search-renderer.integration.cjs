@@ -36,10 +36,13 @@ assert.match(view, /status\?\.state !== "not-enabled" && <strong>/u);
 assert.match(view, /status\?\.state === "repair-required"[\s\S]*?configureCapability\("repair"\)/u);
 assert.doesNotMatch(controller, /if \(page\.isComplete\) taskRef\.current = null/u);
 assert.match(view, /ComputerSearchResultVisual[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[\s\S]*?onDragStart/u);
+assert.match(view, /cap-computer-search-grid cap-skim-grid[\s\S]*?cap-computer-search-entry cap-skim-entry/u);
+assert.match(view, /cap-computer-search-name cap-skim-entry-name[\s\S]*?getDirectoryPath\(item\.path\)[\s\S]*?cap-computer-search-path cap-skim-entry-path/u);
 assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
 assert.match(actions, /computerSearch\.inspect\(request\)[\s\S]*?sourceAuthorization/u);
 assert.match(actions, /computerSearch\.copyPaths\(\{[\s\S]*?authorizationIds/u);
 assert.match(visual, /IntersectionObserver[\s\S]*?computer-search-thumbnail/u);
+assert.match(visual, /cap-skim-entry-visual cap-computer-search-visual[\s\S]*?cap-skim-entry-icon[\s\S]*?className="cap-skim-entry-thumbnail"/u);
 assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 
 console.log(JSON.stringify({
@@ -52,6 +55,8 @@ console.log(JSON.stringify({
   scopeErrorsOverrideZeroCount: true,
   authorizedResultActions: true,
   visibleOnlyVisuals: true,
+  skimGridPresentationReused: true,
+  thumbnailFallbackOverlapPrevented: true,
   searchInputFocusOutlineRemoved: true,
   searchEntryCapabilityActivation: true
 }));
