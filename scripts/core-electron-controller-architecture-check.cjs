@@ -14,6 +14,7 @@ const paths = {
   runtime: "electron/computerSearchRuntime.ts",
   ipc: "electron/computerSearchIpc.ts",
   publicTypes: "electron/computerSearchTypes.ts",
+  developmentBuild: "scripts/core-development-host-build.cjs",
   controllerTest: "tests/core-host-controller.integration.cjs",
   ipcTest: "tests/computer-search-ipc.integration.cjs"
 };
@@ -27,6 +28,7 @@ if (failures.length === 0) {
   const launch = read(paths.launch);
   const client = read(paths.client);
   const runtime = read(paths.runtime);
+  const developmentBuild = read(paths.developmentBuild);
   const capability = read(paths.capability);
   const ipc = read(paths.ipc);
   const controllerTest = read(paths.controllerTest);
@@ -44,6 +46,9 @@ if (failures.length === 0) {
     [runtime, "resolved.rootFileReference", "directory-or-volume scope distinction"],
     [runtime, ': { kind: "all-volumes" }', "drive-root volume scope selection"],
     [runtime, "Cap7CE.Core.Host.exe", "fixed installed host path"],
+    [runtime, "core/artifacts/development-product-host/Cap7CE.Core.Host.exe", "isolated development product host path"],
+    [developmentBuild, 'selectCapabilityBuildProfile(["--product"])', "product-profile development host build"],
+    [developmentBuild, 'path.join(artifactsRoot, "development-product-host")', "isolated development host output"],
     [capability, "Cap7CE.Core.Setup.exe", "fixed packaged Setup path"],
     [capability, "--activation-coordinator", "authenticated capability coordinator"],
     [ipc, "computerSearch:search", "separate product search IPC"],
@@ -52,6 +57,14 @@ if (failures.length === 0) {
     [ipc, "computerSearch:startDrag", "authorized native drag IPC"],
     [controllerTest, "core-crash-restart-exhausted", "restart coverage"]
   ]) if (!source.includes(anchor)) failures.push(`Core Electron boundary is missing ${description}.`);
+
+  const packageJson = JSON.parse(read("package.json"));
+  if (packageJson.scripts?.["publish:core-development-host"] !== "node scripts/core-development-host-build.cjs") {
+    failures.push("Core development host must have one fixed product-profile build command.");
+  }
+  if (!packageJson.scripts?.["dev:electron"]?.includes("npm run publish:core-development-host")) {
+    failures.push("Electron development startup must prepare the isolated product-profile Core Host.");
+  }
 
   for (const [pattern, description] of [
     [/from ["']electron["']|require\(["']electron["']\)/, "Electron API dependency"],
@@ -79,5 +92,6 @@ if (failures.length) {
   process.exitCode = 1;
 } else console.log(JSON.stringify({
   status: "passed", activation: "skim-search-demand", rendererIpc: true,
-  packagedCore: true, directReaderLaunch: false, automaticRestartLimit: 1
+  packagedCore: true, isolatedDevelopmentProductHost: true,
+  directReaderLaunch: false, automaticRestartLimit: 1
 }));

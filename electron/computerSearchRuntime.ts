@@ -78,7 +78,7 @@ const controllerFailure = (snapshot: CoreControllerSnapshot): ComputerSearchStat
 
 const defaultExecutablePath = (packaged: boolean): string => packaged
   ? path.join(process.env.ProgramFiles ?? "C:\\Program Files", "Cap7CE", "Core", "v1", "Cap7CE.Core.Host.exe")
-  : path.resolve(__dirname, "../core/artifacts/bin/Cap7CE.Core.Host/Release/net10.0-windows/Cap7CE.Core.Host.exe");
+  : path.resolve(__dirname, "../core/artifacts/development-product-host/Cap7CE.Core.Host.exe");
 
 export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSearchRuntime => {
   const controller = new CoreHostController({

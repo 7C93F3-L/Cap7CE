@@ -61,7 +61,7 @@
 
 - Setup 以锁定的 Microsoft ILCompiler 10.0.12 发布成 `win-x64` NativeAOT 原生单文件；P3.8 复建产物为 5,345,792 bytes。它不依赖机器上的 `Microsoft.NETCore.App`，而 Core / Reader 继续保持体积更小的 framework-dependent 形状。
 - `CapabilitySetupJsonContext` 在编译期生成所有 JSON 元数据，泛型枚举转换器保持既有 camelCase 契约；AOT 分析、未知字段拒绝和普通 .NET 测试使用同一代码路径。
-- `npm run publish:core-capability` 保留 P3.3c 隔离开发身份，`npm run publish:core-product-capability` 另以正式服务 / 管道身份生成产品 bundle；两者都是固定双层能力包，顶层只有 Setup 和 `payload`。18 个 Core / Reader 文件只保留 win-x64 原生 SQLite 资产且不带符号；嵌入清单逐文件固定长度与 SHA-256，并拒绝 traversal、重复目标、缺失、多余、篡改和 reparse point。
+- `npm run publish:core-capability` 保留 P3.3c 隔离开发身份，`npm run publish:core-product-capability` 另以正式服务 / 管道身份生成产品 bundle；`npm run publish:core-development-host` 仅生成 Electron 开发态所需的隔离产品配置 Host，防止能力测试覆盖正在使用的运行产物。两种能力包都是固定双层结构，顶层只有 Setup 和 `payload`。18 个 Core / Reader 文件只保留 win-x64 原生 SQLite 资产且不带符号；嵌入清单逐文件固定长度与 SHA-256，并拒绝 traversal、重复目标、缺失、多余、篡改和 reparse point。
 - 固定事务计划把载荷暂存与哈希验证放在替换前，把安装 / 移除验证放在所有权提交 / 清除前；Windows 后端还会在执行前绑定动作与完整计划，外部不能重排、删减或把另一动作的后端混用。任一步失败都会把可能部分完成的失败步骤与此前步骤倒序补偿，单个补偿失败不会中止其余回滚，并以 `rollbackIncomplete` 结构化报告而不伪装成功。
 - 一次性高熵命名管道使用显式 ACL；客户端核对服务端 PID，服务端核对真实客户端 PID、同一 Setup 映像哈希，并从客户端令牌取得 SID 与 LocalAppData。固定请求不含 SID、路径或服务名，只含 schema、动作、Catalog 选择和最多 26 个无重复大写盘符；盘符为空时保留开发断连探针模式。
 - Windows 后端固定当前能力服务身份、Program Files / ProgramData / token-derived LocalAppData 位置、受保护 ACL、Demand Start、LocalSystem、Restricted Service SID、仅 `SeChangeNotifyPrivilege`、请求账户最小服务 DACL、备份、复核和倒序恢复。带盘符的启用 / 修复会写入 30 分钟的 `volume` 会话配置，只授权所选本地卷；未读文件正文、未写源卷、未联网。
