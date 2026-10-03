@@ -2,6 +2,7 @@
 .cap-computer-search-box { display: flex; align-items: center; gap: 6px; min-width: 0; height: 32px; box-sizing: border-box; padding: 2px 7px 2px 9px; border-radius: var(--cap-stable-radius-pill); color: var(--cap-stable-text); background: var(--cap-stable-skim-address-surface, var(--cap-stable-surface-soft)); }
 .cap-computer-search-box > .cap-svg-icon { width: 16px; height: 16px; flex: 0 0 16px; color: var(--cap-stable-text-muted); }
 .cap-computer-search-box input { width: 100%; min-width: 0; border: 0; outline: 0; color: inherit; background: transparent; font: inherit; }
+.app .cap-computer-search-box input:focus-visible { outline: 0; outline-offset: 0; box-shadow: none; }
 .cap-computer-search-box input:disabled { opacity: .62; }
 .cap-computer-search-box button { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 24px; border: 0; border-radius: 50%; color: var(--cap-stable-text-muted); background: transparent; }
 .cap-computer-search-box button:hover { background: var(--cap-stable-control-hover); }

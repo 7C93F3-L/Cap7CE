@@ -39,7 +39,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     const progress = status?.volumes.reduce((total, volume) => total + volume.processed, 0) ?? 0;
     return <section className="cap-computer-search-state">
       <StableUiIcon name="search" />
-      <strong>{status ? t(stateKeys[status.state]) : t("computerSearch.state.starting")}</strong>
+      {status?.state !== "not-enabled" && <strong>{status ? t(stateKeys[status.state]) : t("computerSearch.state.starting")}</strong>}
       {progress > 0 && <span>{t("common.countItems", { count: progress.toLocaleString() })}</span>}
       {capabilityFeedback === "restart-required" && <span>{t("computerSearch.capability.restartRequired")}</span>}
       {capabilityFeedback === "unavailable" && <span>{t("computerSearch.capability.unavailable")}</span>}
@@ -53,9 +53,6 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
         && <span>{t("computerSearch.capability.verifying")}</span>}
       {capabilityBusy && capabilityOptions?.runtimeInstall.phase === "installing"
         && <span>{t("computerSearch.capability.installingRuntime")}</span>}
-      {status?.state === "not-enabled" && <button type="button" disabled={capabilityBusy}
-        onClick={() => void configureCapability("enable")}>{t(capabilityBusy
-          ? "computerSearch.capability.preparing" : "computerSearch.capability.enable")}</button>}
       {status?.state === "repair-required" && <button type="button" disabled={capabilityBusy}
         onClick={() => void configureCapability("repair")}>{t(capabilityBusy
           ? "computerSearch.capability.preparing" : "computerSearch.capability.repair")}</button>}

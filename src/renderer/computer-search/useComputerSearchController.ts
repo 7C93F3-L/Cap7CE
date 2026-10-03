@@ -19,8 +19,9 @@ export const useComputerSearchController = (currentPath: string | null) => {
   const [capabilityOptions, setCapabilityOptions] = useState<ComputerSearchCapabilityOptions | null>(null);
   const taskRef = useRef<string | null>(null);
   const requestSequence = useRef(0);
+  const enterSequence = useRef(0);
   const activeRef = useRef(false);
-  const statusRefreshInFlightRef = useRef(false);
+  const statusRefreshInFlightRef = useRef<Promise<ComputerSearchStatus | null> | null>(null);
   const scopeLabel = useMemo(() => {
     if (!currentPath) return t("skim.computer");
     const trimmed = currentPath.replace(/[\\/]+$/, "");
@@ -31,21 +32,28 @@ export const useComputerSearchController = (currentPath: string | null) => {
   const refreshStatus = useCallback(async () => {
     const api = window.cap7ce?.computerSearch;
     if (!api) {
-      setStatus({ state: "unavailable", reason: "bridge-unavailable", searchAvailable: false,
-        catalogRevision: 0, volumes: [] });
-      return;
+      const next: ComputerSearchStatus = { state: "unavailable", reason: "bridge-unavailable",
+        searchAvailable: false, catalogRevision: 0, volumes: [] };
+      setStatus(next);
+      return next;
     }
-    if (statusRefreshInFlightRef.current) return;
-    statusRefreshInFlightRef.current = true;
-    try {
-      const next = await api.status();
-      if (activeRef.current) setStatus(next);
-    } catch {
-      // A busy catalog can transiently miss one status deadline. Keep the last
-      // observable state so the active-mode poll can recover on its next pass.
-    } finally {
-      statusRefreshInFlightRef.current = false;
-    }
+    if (statusRefreshInFlightRef.current) return statusRefreshInFlightRef.current;
+    const request = (async () => {
+      try {
+        const next = await api.status();
+        if (activeRef.current) setStatus(next);
+        return next;
+      } catch {
+        // A busy catalog can transiently miss one status deadline. Keep the last
+        // observable state so the active-mode poll can recover on its next pass.
+        return null;
+      }
+    })();
+    statusRefreshInFlightRef.current = request;
+    void request.finally(() => {
+      if (statusRefreshInFlightRef.current === request) statusRefreshInFlightRef.current = null;
+    });
+    return request;
   }, []);
 
   const cancelActive = useCallback(() => {
@@ -54,19 +62,8 @@ export const useComputerSearchController = (currentPath: string | null) => {
     if (taskId) void window.cap7ce?.computerSearch.cancel(taskId);
   }, []);
 
-  const enter = useCallback(() => {
-    activeRef.current = true;
-    setActive(true);
-    setItems([]);
-    setNextCursor(null);
-    setSubmittedQuery("");
-    setError(null);
-    setCapabilityFeedback(null);
-    setStatus({ state: "starting", searchAvailable: false, catalogRevision: 0, volumes: [] });
-    void refreshStatus();
-  }, [refreshStatus]);
-
   const exit = useCallback(() => {
+    enterSequence.current += 1;
     activeRef.current = false;
     cancelActive();
     setBusy(false);
@@ -129,7 +126,7 @@ export const useComputerSearchController = (currentPath: string | null) => {
       const volumeLetters = options.volumes.map((volume) => volume.driveLetter);
       if (volumeLetters.length === 0) { setCapabilityFeedback("unavailable"); return; }
       const result = await api.configureCapability({ action, volumeLetters, removeCatalog: false });
-      setCapabilityFeedback(result.status);
+      setCapabilityFeedback(result.reason === "activation-elevation-cancelled" ? null : result.status);
       if (result.status === "completed") {
         setStatus({ state: "starting", searchAvailable: false, catalogRevision: 0, volumes: [] });
         await refreshStatus();
@@ -137,6 +134,22 @@ export const useComputerSearchController = (currentPath: string | null) => {
     } catch { setCapabilityFeedback("failed"); }
     finally { if (activeRef.current) setCapabilityBusy(false); }
   }, [capabilityBusy, refreshStatus]);
+
+  const enter = useCallback(() => {
+    const sequence = ++enterSequence.current;
+    activeRef.current = true;
+    setActive(true);
+    setItems([]);
+    setNextCursor(null);
+    setSubmittedQuery("");
+    setError(null);
+    setCapabilityFeedback(null);
+    setStatus({ state: "starting", searchAvailable: false, catalogRevision: 0, volumes: [] });
+    void refreshStatus().then((nextStatus) => {
+      if (!activeRef.current || enterSequence.current !== sequence || nextStatus?.state !== "not-enabled") return;
+      void configureCapability("enable");
+    });
+  }, [configureCapability, refreshStatus]);
 
   useEffect(() => {
     if (!capabilityBusy) return;

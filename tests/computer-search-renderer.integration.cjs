@@ -10,6 +10,7 @@ const controller = read("src/renderer/computer-search/useComputerSearchControlle
 const view = read("src/renderer/computer-search/ComputerSearchView.tsx");
 const actions = read("src/renderer/computer-search/useComputerSearchResultActions.ts");
 const visual = read("src/renderer/computer-search/ComputerSearchResultVisual.tsx");
+const styles = read("src/renderer/computer-search/ComputerSearch.css");
 
 assert.match(toolbar, /aria-pressed=\{search\.active\}/u);
 assert.match(toolbar, /search\.active \? search\.onExit\(\) : search\.onEnter\(\)/u);
@@ -21,13 +22,17 @@ assert.match(controller, /event\.key !== "Escape"[\s\S]*?exit\(\)/u);
 assert.match(controller, /cancelActive\(\)[\s\S]*?taskRef\.current !== taskId/u);
 assert.match(controller, /setItems\(\(current\) => \[\.\.\.current, \.\.\.page\.items\]\)/u);
 assert.match(controller, /useEffect\(\(\) => \(\) => \{ activeRef\.current = false; cancelActive\(\); \}/u);
-assert.match(controller, /if \(statusRefreshInFlightRef\.current\) return;[\s\S]*?finally \{[\s\S]*?statusRefreshInFlightRef\.current = false/u);
+assert.match(controller, /if \(statusRefreshInFlightRef\.current\) return statusRefreshInFlightRef\.current;[\s\S]*?statusRefreshInFlightRef\.current = request[\s\S]*?statusRefreshInFlightRef\.current === request[\s\S]*?statusRefreshInFlightRef\.current = null/u);
 assert.doesNotMatch(controller, /reason: "status-failed"/u,
   "one transient status timeout must not stop active catalog polling");
 assert.match(slot, /controller\.error === "scope-offline"[\s\S]*?controller\.error === "scope-not-indexed"[\s\S]*?controller\.submittedQuery/u);
 assert.match(controller, /taskId: taskRef\.current/u);
 assert.match(controller, /capabilityOptions\(\)[\s\S]*?configureCapability\(\{ action, volumeLetters, removeCatalog: false \}\)/u);
-assert.match(view, /status\?\.state === "not-enabled"[\s\S]*?configureCapability\("enable"\)/u);
+assert.match(controller, /refreshStatus\(\)\.then\(\(nextStatus\)[\s\S]*?nextStatus\?\.state !== "not-enabled"[\s\S]*?configureCapability\("enable"\)/u);
+assert.match(controller, /const sequence = \+\+enterSequence\.current[\s\S]*?enterSequence\.current !== sequence/u);
+assert.match(controller, /result\.reason === "activation-elevation-cancelled" \? null : result\.status/u);
+assert.doesNotMatch(view, /configureCapability\("enable"\)/u);
+assert.match(view, /status\?\.state !== "not-enabled" && <strong>/u);
 assert.match(view, /status\?\.state === "repair-required"[\s\S]*?configureCapability\("repair"\)/u);
 assert.doesNotMatch(controller, /if \(page\.isComplete\) taskRef\.current = null/u);
 assert.match(view, /ComputerSearchResultVisual[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[\s\S]*?onDragStart/u);
@@ -35,6 +40,7 @@ assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
 assert.match(actions, /computerSearch\.inspect\(request\)[\s\S]*?sourceAuthorization/u);
 assert.match(actions, /computerSearch\.copyPaths\(\{[\s\S]*?authorizationIds/u);
 assert.match(visual, /IntersectionObserver[\s\S]*?computer-search-thumbnail/u);
+assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 
 console.log(JSON.stringify({
   computerSearchRenderer: "ok",
@@ -46,5 +52,6 @@ console.log(JSON.stringify({
   scopeErrorsOverrideZeroCount: true,
   authorizedResultActions: true,
   visibleOnlyVisuals: true,
-  explicitCapabilityActivation: true
+  searchInputFocusOutlineRemoved: true,
+  searchEntryCapabilityActivation: true
 }));
