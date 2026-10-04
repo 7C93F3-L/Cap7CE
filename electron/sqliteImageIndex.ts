@@ -45,6 +45,7 @@ import {
   type ImageDimensionCandidate,
   type ImageDimensionWriteRecord
 } from "./imageDimensionTypes";
+import { resolveSearchModifiedTimeRange, type SearchModifiedTimeRange, type SearchTimePreset } from "./searchFilters";
 
 const requireFromHere = createRequire(__filename);
 
@@ -64,6 +65,9 @@ export interface ImageSearchState {
   sortField: "file_name" | "modified_at";
   sortDirection: "asc" | "desc";
   includedExtensions?: string[];
+  selectedExtensions?: string[];
+  timePreset?: SearchTimePreset;
+  modifiedTimeRange?: SearchModifiedTimeRange;
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -1516,6 +1520,18 @@ const appendIncludedExtensionsFilter = (
   where.push(`${column} IN (${keys.join(", ")})`);
 };
 
+const appendModifiedTimeFilter = (
+  where: string[],
+  params: Record<string, SqlValue>,
+  search: Pick<ImageSearchState, "timePreset" | "modifiedTimeRange">
+) => {
+  const range = resolveSearchModifiedTimeRange(search.timePreset, search.modifiedTimeRange);
+  if (!range) return;
+  where.push("(f.modified_at >= :catalog_filter_modified_start AND f.modified_at < :catalog_filter_modified_end)");
+  params[":catalog_filter_modified_start"] = new Date(range.startMs).toISOString();
+  params[":catalog_filter_modified_end"] = new Date(range.endMs).toISOString();
+};
+
 const getNaturalConditionSql = (
   plannedTerm: PlannedSearchTerm,
   termIndex: number,
@@ -1601,6 +1617,8 @@ export const searchIndexedCatalog = async (
 
   appendCatalogFileFormatFilter(where, params, normalizeFileFormat(search.fileFormat));
   appendIncludedExtensionsFilter(where, params, search.includedExtensions, "catalog_included_extension");
+  appendIncludedExtensionsFilter(where, params, search.selectedExtensions, "catalog_selected_extension");
+  appendModifiedTimeFilter(where, params, search);
   params[":ai_query_model_id"] = search.aiQueryModelId ?? "";
   params[":ai_query_prompt_version"] = search.aiQueryPromptVersion ?? 0;
   queryPlan.terms.forEach((plannedTerm, termIndex) => {

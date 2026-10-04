@@ -156,7 +156,7 @@ assert.match(directoryFlyoutStyles, /\.cap-stable-sidebar-flyout button:disabled
 assert.match(directoryFlyoutStyles, /\.cap-stable-sidebar-flyout-separator \{[^}]*height: 1px;/u);
 assert.match(sidebarStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.cap-stable-sidebar-flyout \{ animation: none; \}[\s\S]*?\.cap-stable-directory-tooltip \{ animation: none; \}[\s\S]*?cap-stable-sidebar-flyout button \{ transition: none; \}/u);
 assert.match(sidebarFlyoutSource, /document\.querySelector<HTMLElement>\("\.cap-stable-ui"\) \?\? document\.body/u);
-assert.match(sidebarFlyoutSource, /placement === "below"[\s\S]*?anchor\.right - 184[\s\S]*?anchor\.bottom \+ 5/u);
+assert.match(sidebarFlyoutSource, /width = 184[\s\S]*?anchor\.right - width[\s\S]*?placement === "below"[\s\S]*?anchor\.bottom \+ 5/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-footer-icon\s*\{[^}]*opacity:/u);
 assert.match(stableUiIconSource, /icon-sort-asc\.svg\?raw/u);
 assert.match(stableUiIconSource, /sortDirection === "asc" \? sortAscIcon : sortDescIcon/u);

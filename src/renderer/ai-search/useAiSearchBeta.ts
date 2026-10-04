@@ -69,7 +69,10 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       query: search.query,
       directoryId: search.directoryId,
       fileFormat: search.fileFormat,
-      includedExtensions: search.includedExtensions ?? []
+      includedExtensions: search.includedExtensions ?? [],
+      selectedExtensions: search.selectedExtensions ?? [],
+      timePreset: search.timePreset ?? "all",
+      modifiedTimeRange: search.modifiedTimeRange ?? null
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

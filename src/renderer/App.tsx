@@ -154,7 +154,8 @@ const emptySearch: SearchState = {
   directoryId: "all",
   fileFormat: "all",
   sortField: "modified_at",
-  sortDirection: "desc"
+  sortDirection: "desc",
+  timePreset: "all"
 };
 
 const normalizeShortcutForMatch = (shortcut: string) => shortcut.replace(/\s+/g, "").toLowerCase();
@@ -254,6 +255,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [skimSystemLocationsCollapsed, setSkimSystemLocationsCollapsed] = useState(false);
   const [skimSortPreference, setSkimSortPreference] = useState(defaultSkimSortPreference);
   const [search, setSearch] = useState<SearchState>(emptySearch);
+  const [searchAvailableFormats, setSearchAvailableFormats] = useState<string[]>([]);
   const lastResultSearchRef = useRef<SearchState>(emptySearch);
   const [, setSearchLabelVisibility] = useState<SearchLabelVisibilityPreferences>({
     directory: true,
@@ -674,6 +676,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         if (searchTaskIdRef.current !== taskId) return false;
       }
       const baseResults = Array.isArray(response) ? response : response.images;
+      setSearchAvailableFormats(Array.isArray(response) ? [] : response.availableFormats);
       resultsInitializedRef.current = true;
       setSearchResults(options?.preserveAiResults ? aiSearchBeta.mergePreservedResults(baseResults) : baseResults);
       if (options?.aiEnhanced) void aiSearchBeta.start(searchRequest, baseResults);
@@ -1406,11 +1409,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       search.query.trim().length > 0
       || search.directoryId !== "all"
       || search.fileFormat !== "all"
+      || (search.selectedExtensions?.length ?? 0) > 0
+      || (search.timePreset ?? "all") !== "all"
     ) {
       return;
     }
 
-    const nextSearch = { ...search, query: "", directoryId: "all", fileFormat: "all" };
+    const nextSearch = { ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined };
     setSearch(nextSearch);
     await runSearch(nextSearch, { navigate: false });
   };
@@ -2260,7 +2265,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const resultStatusNode = <ResultStatus
     resultCount={searchResults.length}
     fileCount={selectedDirectoryFileCount}
-    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all"}
+    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all"}
     isSearching={isSearching || aiSearchBeta.busy}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({
@@ -2365,6 +2370,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         backgroundInteractionLocked={dialog !== null}
         explore={{
           searchDisplayMode: skimDisplay.searchMode,
+          availableFormats: searchAvailableFormats,
           onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })
         }}
         sidebar={{

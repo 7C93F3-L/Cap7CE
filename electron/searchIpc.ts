@@ -13,6 +13,8 @@ interface SearchRequestShape {
   sortField?: unknown;
   sortDirection?: unknown;
   includedExtensions?: unknown;
+  selectedExtensions?: unknown;
+  timePreset?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -25,7 +27,9 @@ const summarizeSearch = (search: unknown) => {
     fileFormat: typeof request.fileFormat === "string" ? request.fileFormat.slice(0, 30) : "unknown",
     sortField: request.sortField,
     sortDirection: request.sortDirection,
-    includedExtensionCount: Array.isArray(request.includedExtensions) ? request.includedExtensions.length : 0
+    includedExtensionCount: Array.isArray(request.includedExtensions) ? request.includedExtensions.length : 0,
+    selectedExtensionCount: Array.isArray(request.selectedExtensions) ? request.selectedExtensions.length : 0,
+    timePreset: typeof request.timePreset === "string" ? request.timePreset.slice(0, 20) : "all"
   };
 };
 

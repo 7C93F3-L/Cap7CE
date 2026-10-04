@@ -13,6 +13,7 @@ import type { VisualPropertyVector } from "./visualPropertyTypes";
 import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getSelectedGgufModelId } from "./ggufModelStore";
 import { aiQueryEvidencePersistenceEnabled, aiQueryPromptVersion } from "./aiQueryEvidenceStore";
+import { resolveSearchModifiedTimeRange } from "./searchFilters";
 import { searchIndexedCatalog, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
 
 const canonicalizeFileFormat = (fileFormat: string) => {
@@ -197,6 +198,8 @@ export const searchImagesWithAddedDirectories = async (
   onScannedImages?.(scanResult.images);
   const terms = queryPlan.terms.map((plannedTerm) => plannedTerm.term);
   const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
+  const selectedExtensions = getIncludedExtensionSet(search.selectedExtensions);
+  const modifiedTimeRange = resolveSearchModifiedTimeRange(search.timePreset, search.modifiedTimeRange);
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const directoryById = new Map(directoriesToScan.map((directory) => [directory.id, directory]));
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
@@ -230,6 +233,11 @@ export const searchImagesWithAddedDirectories = async (
     const capability = getFileFormatCapability(file.extension);
     if (!capability?.canSearch) continue;
     if (includedExtensions && !includedExtensions.has(file.extension)) continue;
+    if (selectedExtensions && !selectedExtensions.has(file.extension)) continue;
+    if (modifiedTimeRange) {
+      const modifiedMs = new Date(file.modified_at).getTime();
+      if (!Number.isFinite(modifiedMs) || modifiedMs < modifiedTimeRange.startMs || modifiedMs >= modifiedTimeRange.endMs) continue;
+    }
     const fileFormat = getFileFormat(file.file_name);
     if (selectedFileFormat !== "all" && fileFormat !== selectedFileFormat) continue;
 

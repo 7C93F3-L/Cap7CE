@@ -419,6 +419,23 @@ app.whenReady().then(async () => {
     assert.deepEqual(compactRange.images.map((item) => item.fileName), ["notes.txt", "plain.txt", "visual.png"]);
     assert.deepEqual(compactRange.availableFormats, ["png", "txt"]);
 
+    const selectedFormats = await searchImagesWithAddedDirectories({
+      ...baseSearch,
+      selectedExtensions: [".mp3", ".png"]
+    }, directories);
+    assert.deepEqual(selectedFormats.images.map((item) => item.fileName), ["sound.mp3", "visual.png"]);
+    assert.deepEqual(selectedFormats.availableFormats, ["docx", "gguf", "md", "mp3", "png", "txt"]);
+
+    const customTimeRange = await searchImagesWithAddedDirectories({
+      ...baseSearch,
+      timePreset: "custom",
+      modifiedTimeRange: {
+        startMs: new Date("2026-07-03T00:00:00.000Z").getTime(),
+        endMs: new Date("2026-07-05T00:00:00.000Z").getTime()
+      }
+    }, directories);
+    assert.deepEqual(customTimeRange.images.map((item) => item.fileName), ["notes.txt", "plain.txt"]);
+
     const directoryFilter = await searchImagesWithAddedDirectories({
       ...baseSearch,
       directoryId: secondDirectory.id

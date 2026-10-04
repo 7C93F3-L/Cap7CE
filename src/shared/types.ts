@@ -1,3 +1,5 @@
+import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
+
 export type AppView = "home" | "results" | "skim" | "settings";
 
 export type ThemeMode = "system" | "light" | "dark";
@@ -454,6 +456,9 @@ export interface SearchState {
   sortField: SortField;
   sortDirection: SortDirection;
   includedExtensions?: string[];
+  selectedExtensions?: string[];
+  timePreset?: SearchTimePreset;
+  modifiedTimeRange?: SearchModifiedTimeRange;
 }
 
 export interface AiSearchStartRequest {

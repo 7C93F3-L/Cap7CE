@@ -6,10 +6,25 @@ const {
   planSearchQuery
 } = require("../dist-electron/searchQueryPlanner.js");
 const { getSearchResultEvidence } = require("../dist-electron/searchEvidenceMatcher.js");
+const { resolveSearchModifiedTimeRange } = require("../dist-electron/searchFilters.js");
 
 const referenceNow = new Date(2026, 7, 22, 14, 30, 0, 0);
 const plan = (query) => planSearchQuery(query, referenceNow);
 const firstCondition = (query) => plan(query).terms[0].conditions[0];
+
+assert.deepEqual(resolveSearchModifiedTimeRange("year", undefined, referenceNow), {
+  startMs: new Date(2026, 0, 1).getTime(),
+  endMs: new Date(2027, 0, 1).getTime()
+});
+assert.deepEqual(resolveSearchModifiedTimeRange("last-year", undefined, referenceNow), {
+  startMs: new Date(2025, 0, 1).getTime(),
+  endMs: new Date(2026, 0, 1).getTime()
+});
+assert.deepEqual(resolveSearchModifiedTimeRange("older", undefined, referenceNow), {
+  startMs: 0,
+  endMs: new Date(2025, 0, 1).getTime()
+});
+assert.equal(resolveSearchModifiedTimeRange("all", undefined, referenceNow), null);
 
 assert.ok(getSearchableExtensionsForNaturalKind("image").includes(".png"));
 assert.ok(getSearchableExtensionsForNaturalKind("image").includes(".heic"));

@@ -1,9 +1,10 @@
 .cap-stable-explore-bar {
   position: relative;
   z-index: 4;
-  display: flex;
+  display: grid; grid-template-columns: minmax(310px, 390px) minmax(0, 1fr);
   min-width: 0;
   flex: 0 0 auto;
+  min-height: 116px; box-sizing: border-box;
   padding: 10px 12px 6px;
   color: var(--cap-stable-text);
   background: transparent;
@@ -13,9 +14,9 @@
   display: grid;
   grid-template-rows: 38px 30px;
   align-content: start;
-  width: min(390px, 100%);
+  width: 100%;
   min-width: 0;
-  gap: 4px;
+  gap: 4px; padding-right: 14px;
 }
 
 .cap-stable-explore-bar .cap-stable-search-slot {
@@ -30,7 +31,6 @@
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }
-
 .cap-stable-explore-actions {
   display: flex;
   align-items: center;
@@ -54,7 +54,6 @@
   font-size: var(--cap-stable-section-font-size);
   transition: var(--cap-stable-control-transition);
 }
-
 .cap-stable-explore-actions > button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-stable-explore-actions > button:active,
 .cap-stable-explore-actions > button.is-open { background: var(--cap-stable-control-pressed); }
@@ -63,11 +62,12 @@
 .cap-stable-explore-sort-icon { transform: translateY(-1px); }
 
 @container (max-width: 410px) {
+  .cap-stable-explore-bar { grid-template-columns: minmax(0, 1fr); min-height: 78px; }
   .cap-stable-explore-actions > button { flex: 1 1 0; }
 }
 
 @media (max-height: 359.98px) {
-  .cap-stable-explore-bar { padding-block: 6px 3px; }
+  .cap-stable-explore-bar { grid-template-columns: minmax(0, 1fr); min-height: 43px; padding-block: 6px 3px; }
   .cap-stable-explore-primary { grid-template-rows: 34px; }
   .cap-stable-explore-bar .cap-stable-search-slot { height: 34px; }
   .cap-stable-explore-actions { display: none; }

@@ -24,6 +24,17 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.includedExtensions === undefined || (
       Array.isArray(search.includedExtensions)
       && search.includedExtensions.every((extension) => typeof extension === "string")
+    ))
+    && (search.selectedExtensions === undefined || (
+      Array.isArray(search.selectedExtensions)
+      && search.selectedExtensions.every((extension) => typeof extension === "string")
+    ))
+    && (search.timePreset === undefined || ["week", "month", "year", "last-year", "older", "all", "custom"].includes(String(search.timePreset)))
+    && (search.modifiedTimeRange === undefined || (
+      typeof search.modifiedTimeRange === "object"
+      && search.modifiedTimeRange !== null
+      && Number.isFinite((search.modifiedTimeRange as Record<string, unknown>).startMs)
+      && Number.isFinite((search.modifiedTimeRange as Record<string, unknown>).endMs)
     ));
 };
 
