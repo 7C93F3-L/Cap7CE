@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent, type WheelEvent } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { FileFormatCategory } from "../../../electron/formatCapabilities";
 import type { SearchState } from "../../shared/types";
@@ -99,14 +99,21 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
   const updateFormatDraft = (format: string) => setFormatDraft((current) => toggleExtensions(current, getExtensionsForCanonicalFormat(format)));
   const customRangeLabel = search.timePreset === "custom" && search.modifiedTimeRange
     ? t("explore.time.range", { start: toDateInput(search.modifiedTimeRange.startMs).replace(/-/g, "."), end: toDateInput(search.modifiedTimeRange.endMs - 1).replace(/-/g, ".") }) : "";
+  const scrollFiltersHorizontally = (event: WheelEvent<HTMLDivElement>) => {
+    const rail = event.currentTarget;
+    if (rail.scrollWidth <= rail.clientWidth || (event.target as HTMLElement).closest('input[type="range"]')) return;
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (delta === 0) return;
+    event.preventDefault();
+    rail.scrollLeft += delta;
+  };
 
-  return <div className="cap-stable-explore-filters">
+  return <div className="cap-stable-explore-filters" onWheel={scrollFiltersHorizontally}>
     <section className="cap-stable-time-filter">
       <header><strong>{t("explore.time")}</strong><button type="button" title={t("explore.editTime")} aria-label={t("explore.editTime")} aria-expanded={flyout?.kind === "dates"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("dates", event)}><EditGlyph /></button>{customRangeLabel && <span>{customRangeLabel}</span>}</header>
       <div className="cap-stable-time-control"><div className="cap-stable-time-rails" aria-hidden="true"><i /><i /><i /></div><input className={search.timePreset === "custom" ? "is-custom" : ""} type="range" min="0" max={timePresets.length - 1} step="1" value={timeIndex} aria-label={t("explore.time")} onChange={(event) => setTimeIndex(Number(event.target.value))} onPointerUp={(event) => commitTime(Number(event.currentTarget.value))} onKeyUp={(event) => commitTime(Number(event.currentTarget.value))} onBlur={(event) => commitTime(Number(event.currentTarget.value))} /></div>
       <div className="cap-stable-time-labels">{timePresets.map((preset, index) => <button type="button" className={search.timePreset !== "custom" && presetIndex === index ? "is-selected" : ""} key={preset} onClick={() => { setTimeIndex(index); commitTime(index); }}><i aria-hidden="true" />{t(timeLabels[preset])}</button>)}</div>
     </section>
-    <StableImageFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />
     <section className="cap-stable-file-type-filter">
       <header><strong>{t("explore.fileTypes")}</strong><button type="button" title={t("explore.editFormats")} aria-label={t("explore.editFormats")} aria-expanded={flyout?.kind === "formats"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("formats", event)}><EditGlyph /></button>{selectedSummary && <span>{selectedSummary}</span>}</header>
       <div className="cap-stable-file-type-options">
@@ -114,6 +121,7 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
         <button type="button" className={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension))) ? "is-selected" : ""} aria-expanded={flyout?.kind === "other"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("other", event)}><TypeGlyph type="other" /><span>{t("explore.fileTypes.other")}</span></button>
       </div>
     </section>
+    <StableImageFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>
