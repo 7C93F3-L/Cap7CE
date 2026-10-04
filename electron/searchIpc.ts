@@ -50,6 +50,10 @@ interface SearchRequestShape {
   jsonItemCountPreset?: unknown;
   jsonItemCountRange?: unknown;
   jsonRootKind?: unknown;
+  threeDModelTypes?: unknown;
+  threeDStructures?: unknown;
+  threeDTriangleCountPreset?: unknown;
+  threeDTriangleCountRange?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -88,7 +92,10 @@ const summarizeSearch = (search: unknown) => {
       request.textCharacterCountPreset, request.textCharacterCountRange, request.textLineCountPreset, request.textLineCountRange,
       request.csvRecordCountPreset, request.csvRecordCountRange, request.csvColumnCountPreset, request.csvColumnCountRange,
       request.jsonItemCountPreset, request.jsonItemCountRange, request.jsonRootKind
-    ].some((value) => value !== undefined)
+    ].some((value) => value !== undefined),
+    threeDModelTypeCount: Array.isArray(request.threeDModelTypes) ? request.threeDModelTypes.length : 0,
+    threeDStructureCount: Array.isArray(request.threeDStructures) ? request.threeDStructures.length : 0,
+    threeDTriangleCount: typeof request.threeDTriangleCountPreset === "string" || typeof request.threeDTriangleCountRange === "object"
   };
 };
 

@@ -8,6 +8,7 @@ import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPr
 import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchFilters";
 import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets, searchDocumentImageCompositions } from "./documentSearchFilters";
 import { searchArtboardCountPresets } from "./artboardSearchFilters";
+import { normalizeThreeDTriangleCountRange, searchThreeDModelTypes, searchThreeDStructures, searchThreeDTriangleCountPresets } from "./threeDSearchFilters";
 import {
   normalizeSearchCountRange,
   searchDataColumnCountPresets,
@@ -84,7 +85,11 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.csvColumnCountRange === undefined || normalizeSearchCountRange(search.csvColumnCountRange) !== null)
     && (search.jsonItemCountPreset === undefined || searchDataRecordCountPresets.includes(String(search.jsonItemCountPreset) as (typeof searchDataRecordCountPresets)[number]))
     && (search.jsonItemCountRange === undefined || normalizeSearchCountRange(search.jsonItemCountRange) !== null)
-    && (search.jsonRootKind === undefined || searchJsonRootKinds.includes(String(search.jsonRootKind) as (typeof searchJsonRootKinds)[number]));
+    && (search.jsonRootKind === undefined || searchJsonRootKinds.includes(String(search.jsonRootKind) as (typeof searchJsonRootKinds)[number]))
+    && (search.threeDModelTypes === undefined || (Array.isArray(search.threeDModelTypes) && search.threeDModelTypes.every((value) => searchThreeDModelTypes.includes(String(value) as (typeof searchThreeDModelTypes)[number]))))
+    && (search.threeDStructures === undefined || (Array.isArray(search.threeDStructures) && search.threeDStructures.every((value) => searchThreeDStructures.includes(String(value) as (typeof searchThreeDStructures)[number]))))
+    && (search.threeDTriangleCountPreset === undefined || searchThreeDTriangleCountPresets.includes(String(search.threeDTriangleCountPreset) as (typeof searchThreeDTriangleCountPresets)[number]))
+    && (search.threeDTriangleCountRange === undefined || normalizeThreeDTriangleCountRange(search.threeDTriangleCountRange) !== null);
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

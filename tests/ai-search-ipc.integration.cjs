@@ -21,7 +21,7 @@ const run = async () => {
     excludeFilePaths: []
   };
   assert.deepEqual(await handles.get("aiSearch:start")(event, request), { accepted: true, totalCandidates: 2, visualTerms: ["沙漠"] });
-  assert.deepEqual(await handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, artboardCountPreset: "2-5", textCharacterCountPreset: "up-to-100", jsonRootKind: "array" } }), { accepted: true, totalCandidates: 2, visualTerms: ["沙漠"] });
+  assert.deepEqual(await handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, artboardCountPreset: "2-5", textCharacterCountPreset: "up-to-100", jsonRootKind: "array", threeDModelTypes: ["polygon"], threeDStructures: ["rigged"], threeDTriangleCountPreset: "10k-100k" } }), { accepted: true, totalCandidates: 2, visualTerms: ["沙漠"] });
   assert.equal(sent[0][0], "aiSearch:update");
   assert.equal(await handles.get("aiSearch:cancel")(event, "session-123"), true);
   assert.deepEqual(cancelled, { sessionId: "session-123", discard: false });
@@ -30,6 +30,7 @@ const run = async () => {
   await assert.rejects(handles.get("aiSearch:start")(event, { ...request, sessionId: "x" }), /参数无效/);
   await assert.rejects(handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, csvColumnCountPreset: "invalid" } }), /参数无效/);
   await assert.rejects(handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, artboardCountPreset: "invalid" } }), /参数无效/);
+  await assert.rejects(handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, threeDStructures: ["invalid"] } }), /参数无效/);
   console.log("AI search IPC validation and update forwarding tests passed.");
 };
 

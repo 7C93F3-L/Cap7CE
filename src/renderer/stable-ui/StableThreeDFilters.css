@@ -1,0 +1,19 @@
+.cap-stable-three-d-model-type-filter, .cap-stable-three-d-structure-filter { width: 270px; }
+.cap-stable-three-d-model-type-options, .cap-stable-three-d-structure-options { display: grid; grid-template-columns: repeat(3, 86px); gap: 4px; }
+.cap-stable-three-d-model-type-options button, .cap-stable-three-d-structure-options button { display: grid; grid-template-rows: 36px 22px; place-items: center; min-height: 62px; padding: 2px 5px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-three-d-model-type-options button:where(:hover, :focus-visible), .cap-stable-three-d-structure-options button:where(:hover, :focus-visible), .cap-stable-three-d-triangle-options button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
+.cap-stable-three-d-model-type-options button.is-selected, .cap-stable-three-d-structure-options button.is-selected, .cap-stable-three-d-triangle-options button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
+.cap-stable-three-d-model-type-options i, .cap-stable-three-d-structure-options i { position: relative; display: block; width: 34px; height: 28px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 5px; }
+.cap-stable-three-d-model-type-options i::before { content: ""; position: absolute; inset: 5px; border: 2px solid currentColor; transform: rotate(30deg) skew(-8deg); }
+.cap-stable-three-d-model-type-options i.is-cad::before { inset: 4px 7px; border-radius: 50%; transform: none; }
+.cap-stable-three-d-model-type-options i.is-scene::before { inset: 5px 3px; border-width: 0 0 2px 2px; transform: skew(-22deg); }
+.cap-stable-three-d-structure-options i::before, .cap-stable-three-d-structure-options i::after { content: ""; position: absolute; border-radius: 50%; background: currentColor; }
+.cap-stable-three-d-structure-options i::before { width: 8px; height: 8px; top: 8px; left: 4px; box-shadow: 16px -5px 0 currentColor, 18px 11px 0 currentColor; }
+.cap-stable-three-d-structure-options i::after { width: 22px; height: 2px; top: 13px; left: 6px; border-radius: 0; transform: rotate(-16deg); box-shadow: 2px 7px 0 currentColor; }
+.cap-stable-three-d-triangle-filter { width: 380px; }
+.cap-stable-three-d-triangle-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding-top: 10px; }
+.cap-stable-three-d-triangle-options button { min-height: 44px; padding: 4px 6px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-three-d-triangle-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.cap-stable-three-d-triangle-fields label { display: grid; gap: 5px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-three-d-triangle-fields input { width: 100%; min-width: 0; height: 34px; box-sizing: border-box; padding: 0 9px; border: 0; border-radius: 9px; outline: 0; color: var(--cap-stable-text); background: var(--cap-stable-navigation-state); font: inherit; }
+.cap-stable-three-d-triangle-flyout button:disabled { opacity: .4; }

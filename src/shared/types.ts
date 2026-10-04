@@ -5,6 +5,7 @@ import type { SearchAudioChannel, SearchAudioDurationPreset, SearchAudioDuration
 import type { SearchFileSizePreset, SearchFileSizeRange } from "../../electron/fileSizeSearchFilters";
 import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange, SearchDocumentImageComposition } from "../../electron/documentSearchFilters";
 import type { SearchArtboardCountPreset } from "../../electron/artboardSearchFilters";
+import type { SearchThreeDModelType, SearchThreeDStructure, SearchThreeDTriangleCountPreset, SearchThreeDTriangleCountRange } from "../../electron/threeDSearchFilters";
 import type {
   SearchCountRange,
   SearchDataColumnCountPreset,
@@ -508,6 +509,10 @@ export interface SearchState {
   jsonItemCountPreset?: SearchDataRecordCountPreset;
   jsonItemCountRange?: SearchCountRange;
   jsonRootKind?: SearchJsonRootKind;
+  threeDModelTypes?: SearchThreeDModelType[];
+  threeDStructures?: SearchThreeDStructure[];
+  threeDTriangleCountPreset?: SearchThreeDTriangleCountPreset;
+  threeDTriangleCountRange?: SearchThreeDTriangleCountRange;
 }
 
 export interface AiSearchStartRequest {

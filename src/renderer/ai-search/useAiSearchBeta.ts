@@ -107,7 +107,11 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       csvColumnCountRange: search.csvColumnCountRange ?? null,
       jsonItemCountPreset: search.jsonItemCountPreset ?? null,
       jsonItemCountRange: search.jsonItemCountRange ?? null,
-      jsonRootKind: search.jsonRootKind ?? null
+      jsonRootKind: search.jsonRootKind ?? null,
+      threeDModelTypes: search.threeDModelTypes ?? [],
+      threeDStructures: search.threeDStructures ?? [],
+      threeDTriangleCountPreset: search.threeDTriangleCountPreset ?? null,
+      threeDTriangleCountRange: search.threeDTriangleCountRange ?? null
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

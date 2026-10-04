@@ -72,3 +72,4 @@ export const isArtboardDocumentOnlyExtensionSelection = (selectedExtensions: rea
 export const isTextOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "text");
 export const isCsvOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension === ".csv");
 export const isJsonOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension === ".json");
+export const isThreeDOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "threeD");

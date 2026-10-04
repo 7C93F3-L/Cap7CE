@@ -35,6 +35,8 @@ const textDataFiltersSource = read("src/renderer/stable-ui/StableTextDataFilters
 const textDataFilterStateSource = read("src/renderer/stable-ui/textDataFilterState.ts");
 const artboardFilterSource = read("src/renderer/stable-ui/StableArtboardFilter.tsx");
 const artboardFilterStateSource = read("src/renderer/stable-ui/artboardFilterState.ts");
+const threeDFiltersSource = read("src/renderer/stable-ui/StableThreeDFilters.tsx");
+const threeDFilterStateSource = read("src/renderer/stable-ui/threeDFilterState.ts");
 const exploreTypeFilterStateSource = read("src/renderer/stable-ui/exploreTypeFilterState.ts");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
@@ -101,6 +103,7 @@ assert.match(exploreFormatFiltersSource, /isVideoOnlyExtensionSelection[\s\S]*?c
 assert.match(exploreFormatFiltersSource, /isAudioOnlyExtensionSelection[\s\S]*?category === "audio"/u);
 assert.match(exploreFormatFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?extension === "\.pdf"[\s\S]*?category === "document"/u);
 assert.match(exploreFormatFiltersSource, /isArtboardDocumentOnlyExtensionSelection[\s\S]*?extension === "\.ai"[\s\S]*?extension === "\.cdr"[\s\S]*?extension === "\.psd"/u);
+assert.match(exploreFormatFiltersSource, /isThreeDOnlyExtensionSelection[\s\S]*?category === "threeD"/u);
 assert.match(exploreFormatSummarySource, /canonicalizeSelectedFormats\(extensions\)\.length < 2[\s\S]*?kind: "type"[\s\S]*?kind: "format"/u);
 assert.match(randomBrowseSource, /scorePath\(left\.filePath, seed\)[\s\S]*?state\.enabled \? orderRandomBrowseItems\(items, state\.seed\)/u);
 assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current\.batchNumber \+ 1/u);
@@ -124,7 +127,10 @@ assert.match(textDataFiltersSource, /isJsonOnlyExtensionSelection[\s\S]*?explore
 assert.match(textDataFilterStateSource, /textCharacterCountPreset: undefined[\s\S]*?textLineCountPreset: undefined[\s\S]*?csvRecordCountPreset: undefined[\s\S]*?csvColumnCountPreset: undefined[\s\S]*?jsonItemCountPreset: undefined[\s\S]*?jsonRootKind: undefined/u);
 assert.match(artboardFilterSource, /isArtboardDocumentOnlyExtensionSelection[\s\S]*?explore\.artboardCount[\s\S]*?artboardCountPreset:[\s\S]*?artboardCountRange:/u);
 assert.match(artboardFilterStateSource, /artboardCountPreset: undefined[\s\S]*?artboardCountRange: undefined/u);
-assert.match(exploreTypeFilterStateSource, /clearArtboardFilters\(clearTextDataFilters\(clearDocumentFilters\(clearMediaFilters\(search\)\)\)\)[\s\S]*?hasArtboardFilters\(search\)[\s\S]*?retainArtboardFilters/u);
+assert.match(threeDFiltersSource, /isThreeDOnlyExtensionSelection[\s\S]*?explore\.threeDModelType[\s\S]*?explore\.threeDStructure[\s\S]*?explore\.threeDTriangleCount/u);
+assert.match(threeDFiltersSource, /supportedThreeDFactExtensions[\s\S]*?hasMetadataSupport/u);
+assert.match(threeDFilterStateSource, /threeDModelTypes: undefined[\s\S]*?threeDStructures: undefined[\s\S]*?threeDTriangleCountPreset: undefined[\s\S]*?threeDTriangleCountRange: undefined/u);
+assert.match(exploreTypeFilterStateSource, /clearThreeDFilters\(clearArtboardFilters\(clearTextDataFilters\(clearDocumentFilters\(clearMediaFilters\(search\)\)\)\)\)[\s\S]*?hasThreeDFilters\(search\)[\s\S]*?retainApplicableThreeDFilters/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

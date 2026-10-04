@@ -21,6 +21,7 @@ import { hasAudioSearchFacets } from "./audioSearchFilters";
 import { hasDocumentSearchFacets } from "./documentSearchFilters";
 import { hasArtboardSearchFacet } from "./artboardSearchFilters";
 import { hasTextDataSearchFacets } from "./textDataSearchFilters";
+import { hasThreeDMetadataFacets, matchesThreeDModelTypes } from "./threeDSearchFilters";
 import { matchesSearchFileSize } from "./fileSizeSearchFilters";
 
 const canonicalizeFileFormat = (fileFormat: string) => {
@@ -207,7 +208,7 @@ export const searchImagesWithAddedDirectories = async (
   const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
   const selectedExtensions = getIncludedExtensionSet(search.selectedExtensions);
   const modifiedTimeRange = resolveSearchModifiedTimeRange(search.timePreset, search.modifiedTimeRange);
-  const requiresIndexedFacets = hasImageSearchFacets(search) || hasVideoSearchFacets(search) || hasAudioSearchFacets(search) || hasDocumentSearchFacets(search) || hasArtboardSearchFacet(search) || hasTextDataSearchFacets(search);
+  const requiresIndexedFacets = hasImageSearchFacets(search) || hasVideoSearchFacets(search) || hasAudioSearchFacets(search) || hasDocumentSearchFacets(search) || hasArtboardSearchFacet(search) || hasTextDataSearchFacets(search) || hasThreeDMetadataFacets(search);
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const directoryById = new Map(directoriesToScan.map((directory) => [directory.id, directory]));
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
@@ -242,6 +243,7 @@ export const searchImagesWithAddedDirectories = async (
     if (!capability?.canSearch) continue;
     if (includedExtensions && !includedExtensions.has(file.extension)) continue;
     if (selectedExtensions && !selectedExtensions.has(file.extension)) continue;
+    if (!matchesThreeDModelTypes(file.extension, search.threeDModelTypes)) continue;
     if (modifiedTimeRange) {
       const modifiedMs = new Date(file.modified_at).getTime();
       if (!Number.isFinite(modifiedMs) || modifiedMs < modifiedTimeRange.startMs || modifiedMs >= modifiedTimeRange.endMs) continue;
