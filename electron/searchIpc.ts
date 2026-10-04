@@ -29,6 +29,9 @@ interface SearchRequestShape {
   videoDimensionFilter?: unknown;
   videoVisualColors?: unknown;
   videoColorTraits?: unknown;
+  audioDurationPreset?: unknown;
+  audioDurationRange?: unknown;
+  audioChannels?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -56,7 +59,9 @@ const summarizeSearch = (search: unknown) => {
     videoResolutionCount: Array.isArray(request.videoResolutions) ? request.videoResolutions.length : 0,
     videoDimensionFiltered: typeof request.videoDimensionFilter === "object" && request.videoDimensionFilter !== null,
     videoVisualColorCount: Array.isArray(request.videoVisualColors) ? request.videoVisualColors.length : 0,
-    videoColorTraitCount: Array.isArray(request.videoColorTraits) ? request.videoColorTraits.length : 0
+    videoColorTraitCount: Array.isArray(request.videoColorTraits) ? request.videoColorTraits.length : 0,
+    audioDuration: typeof request.audioDurationPreset === "string" || typeof request.audioDurationRange === "object",
+    audioChannelCount: Array.isArray(request.audioChannels) ? request.audioChannels.length : 0
   };
 };
 

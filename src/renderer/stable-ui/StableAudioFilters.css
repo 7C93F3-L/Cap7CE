@@ -1,0 +1,21 @@
+.cap-stable-audio-duration-filter { width: 350px; }
+.cap-stable-audio-duration-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding-top: 10px; }
+.cap-stable-audio-duration-options button { min-height: 44px; padding: 4px 7px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-audio-duration-options button:where(:hover, :focus-visible), .cap-stable-audio-channel-options button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
+.cap-stable-audio-duration-options button.is-selected, .cap-stable-audio-channel-options button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
+.cap-stable-audio-channel-filter { width: 250px; }
+.cap-stable-audio-channel-options { display: grid; grid-template-columns: repeat(3, 78px); gap: 4px; }
+.cap-stable-audio-channel-options button { display: grid; grid-template-rows: 42px 22px; place-items: center; min-height: 68px; padding: 2px 4px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-audio-channel-options i { position: relative; display: block; width: 34px; height: 26px; }
+.cap-stable-audio-channel-options i::before, .cap-stable-audio-channel-options i::after { content: ""; position: absolute; top: 4px; width: 8px; height: 18px; border: 2px solid currentColor; border-radius: 50%; }
+.cap-stable-audio-channel-options i::before { left: 4px; }
+.cap-stable-audio-channel-options i::after { right: 4px; }
+.cap-stable-audio-channel-options i.is-mono::after { display: none; }
+.cap-stable-audio-channel-options i.is-mono::before { left: 13px; }
+.cap-stable-audio-channel-options i.is-multichannel { width: 42px; }
+.cap-stable-audio-channel-options i.is-multichannel::before { left: 0; box-shadow: 14px 0 0 -2px currentColor; }
+.cap-stable-audio-channel-options i.is-multichannel::after { right: 0; }
+.cap-stable-audio-duration-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.cap-stable-audio-duration-fields label { display: grid; gap: 5px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-audio-duration-fields input { width: 100%; min-width: 0; height: 34px; box-sizing: border-box; padding: 0 9px; border: 0; border-radius: 9px; outline: 0; color: var(--cap-stable-text); background: var(--cap-stable-navigation-state); font: inherit; }
+.cap-stable-audio-flyout button:disabled { opacity: .4; }

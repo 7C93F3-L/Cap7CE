@@ -1,6 +1,7 @@
 import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
 import type { SearchImageAnimationMode, SearchImageAspectRatio, SearchImageAspectRatioValue, SearchImageColorTrait, SearchImageDimensionFilter, SearchVisualColor } from "../../electron/imageSearchFilters";
 import type { SearchVideoAspectRatio, SearchVideoAspectRatioValue, SearchVideoColorTrait, SearchVideoDimensionFilter, SearchVideoDurationPreset, SearchVideoDurationRange, SearchVideoResolution, SearchVideoVisualColor } from "../../electron/videoSearchFilters";
+import type { SearchAudioChannel, SearchAudioDurationPreset, SearchAudioDurationRange } from "../../electron/audioSearchFilters";
 
 export type AppView = "home" | "results" | "skim" | "settings";
 
@@ -475,6 +476,9 @@ export interface SearchState {
   videoDimensionFilter?: SearchVideoDimensionFilter;
   videoVisualColors?: SearchVideoVisualColor[];
   videoColorTraits?: SearchVideoColorTrait[];
+  audioDurationPreset?: SearchAudioDurationPreset;
+  audioDurationRange?: SearchAudioDurationRange;
+  audioChannels?: SearchAudioChannel[];
 }
 
 export interface AiSearchStartRequest {

@@ -4,6 +4,7 @@ import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from
 import { t } from "./localization";
 import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchImageAnimationModes, searchImageAspectRatios, searchImageColorTraits, searchVisualColors } from "./imageSearchFilters";
 import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normalizeVideoDurationRange, searchVideoAspectRatios, searchVideoColorTraits, searchVideoDurationPresets, searchVideoResolutions, searchVideoVisualColors } from "./videoSearchFilters";
+import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPresets } from "./audioSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -51,7 +52,10 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.videoResolutions === undefined || (Array.isArray(search.videoResolutions) && search.videoResolutions.every((resolution) => searchVideoResolutions.includes(String(resolution) as (typeof searchVideoResolutions)[number]))))
     && (search.videoDimensionFilter === undefined || normalizeVideoDimensionFilter(search.videoDimensionFilter) !== null)
     && (search.videoVisualColors === undefined || (Array.isArray(search.videoVisualColors) && search.videoVisualColors.every((color) => searchVideoVisualColors.includes(String(color) as (typeof searchVideoVisualColors)[number]))))
-    && (search.videoColorTraits === undefined || (Array.isArray(search.videoColorTraits) && search.videoColorTraits.every((trait) => searchVideoColorTraits.includes(String(trait) as (typeof searchVideoColorTraits)[number]))));
+    && (search.videoColorTraits === undefined || (Array.isArray(search.videoColorTraits) && search.videoColorTraits.every((trait) => searchVideoColorTraits.includes(String(trait) as (typeof searchVideoColorTraits)[number]))))
+    && (search.audioDurationPreset === undefined || searchAudioDurationPresets.includes(String(search.audioDurationPreset) as (typeof searchAudioDurationPresets)[number]))
+    && (search.audioDurationRange === undefined || normalizeAudioDurationRange(search.audioDurationRange) !== null)
+    && (search.audioChannels === undefined || (Array.isArray(search.audioChannels) && search.audioChannels.every((channel) => searchAudioChannels.includes(String(channel) as (typeof searchAudioChannels)[number]))));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

@@ -32,4 +32,7 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || valueKey(next.videoDimensionFilter) !== valueKey(previous.videoDimensionFilter)
   || stringListKey(next.videoVisualColors) !== stringListKey(previous.videoVisualColors)
   || stringListKey(next.videoColorTraits) !== stringListKey(previous.videoColorTraits)
+  || next.audioDurationPreset !== previous.audioDurationPreset
+  || valueKey(next.audioDurationRange) !== valueKey(previous.audioDurationRange)
+  || stringListKey(next.audioChannels) !== stringListKey(previous.audioChannels)
 );

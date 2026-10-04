@@ -86,7 +86,10 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       videoResolutions: search.videoResolutions ?? [],
       videoDimensionFilter: search.videoDimensionFilter ?? null,
       videoVisualColors: search.videoVisualColors ?? [],
-      videoColorTraits: search.videoColorTraits ?? []
+      videoColorTraits: search.videoColorTraits ?? [],
+      audioDurationPreset: search.audioDurationPreset ?? null,
+      audioDurationRange: search.audioDurationRange ?? null,
+      audioChannels: search.audioChannels ?? []
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

@@ -6,6 +6,7 @@ import { ensureAnimationFactSchema } from "./animationFactStore";
 import { ensureAiQueryEvidenceSchema } from "./aiQueryEvidenceStore";
 import { ensureVideoFactSchema } from "./videoFactStore";
 import { ensureVideoColorSchema } from "./videoColorStore";
+import { ensureAudioFactSchema } from "./audioFactStore";
 
 export interface StoredUserMetadata {
   description: string;
@@ -57,6 +58,7 @@ export const ensureIndexMetadataSchema = (database: Database) => {
   ensureAnimationFactSchema(database);
   ensureVideoFactSchema(database);
   ensureVideoColorSchema(database);
+  ensureAudioFactSchema(database);
   ensureAiQueryEvidenceSchema(database);
 };
 

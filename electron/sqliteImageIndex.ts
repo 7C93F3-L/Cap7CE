@@ -43,6 +43,17 @@ import { replaceVideoFact } from "./videoFactStore";
 import { VIDEO_FACT_EXTRACTOR_VERSION, supportedVideoFactExtensions, type VideoFactCandidate, type VideoFactWriteRecord } from "./videoFactTypes";
 import { replaceVideoColorRecord } from "./videoColorStore";
 import { VIDEO_COLOR_REPRESENTATIVE_VERSION, type VideoColorCandidate, type VideoColorWriteRecord } from "./videoColorTypes";
+import { replaceAudioFact } from "./audioFactStore";
+import { AUDIO_FACT_EXTRACTOR_VERSION, supportedAudioFactExtensions, type AudioFactCandidate, type AudioFactWriteRecord } from "./audioFactTypes";
+import {
+  hasAudioSearchFacets,
+  normalizeAudioDurationRange,
+  searchAudioChannels,
+  searchAudioDurationPresets,
+  type SearchAudioChannel,
+  type SearchAudioDurationPreset,
+  type SearchAudioDurationRange
+} from "./audioSearchFilters";
 import {
   IMAGE_DIMENSION_EXTRACTOR_VERSION,
   supportedImageDimensionExtensions,
@@ -124,6 +135,9 @@ export interface ImageSearchState {
   videoDimensionFilter?: SearchVideoDimensionFilter;
   videoVisualColors?: SearchVideoVisualColor[];
   videoColorTraits?: SearchVideoColorTrait[];
+  audioDurationPreset?: SearchAudioDurationPreset;
+  audioDurationRange?: SearchAudioDurationRange;
+  audioChannels?: SearchAudioChannel[];
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -579,6 +593,61 @@ export const writeVideoFactBatch = async (records: VideoFactWriteRecord[]) => {
       const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
       if (currentRevision !== record.result.sourceRevision) continue;
       replaceVideoFact(database, record.filePath, record.result, new Date().toISOString());
+      writtenCount += 1;
+    }
+    database.run("COMMIT");
+    if (writtenCount > 0) await saveDatabase(database);
+    return writtenCount;
+  } catch (error) {
+    try { database.run("ROLLBACK"); } catch { /* Preserve the original error. */ }
+    throw error;
+  } finally {
+    readSource.free();
+    database.close();
+  }
+};
+
+const supportedAudioFactExtensionSet = new Set<string>(supportedAudioFactExtensions);
+
+export const listPendingAudioFactCandidates = async (directoryIds?: string[]): Promise<AudioFactCandidate[]> => {
+  const database = await loadDatabase();
+  try {
+    const requestedIds = new Set(directoryIds ?? []);
+    const rows = database.exec(`
+      SELECT file.file_path, file.file_size, file.modified_at, file.directory_id, file.extension,
+             fact.source_revision, fact.extractor_version
+      FROM files AS file
+      LEFT JOIN file_audio_facts AS fact ON fact.file_id = file.id
+      WHERE file."exists" = 1
+      ORDER BY file.id
+    `)[0]?.values ?? [];
+    return rows.flatMap((row) => {
+      if (requestedIds.size > 0 && !requestedIds.has(String(row[3]))) return [];
+      if (!supportedAudioFactExtensionSet.has(String(row[4]).toLowerCase())) return [];
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[1]), modifiedAt: String(row[2]) });
+      if (String(row[5] ?? "") === sourceRevision && Number(row[6]) === AUDIO_FACT_EXTRACTOR_VERSION) return [];
+      return [{ filePath: String(row[0]), sourceRevision }];
+    });
+  } finally {
+    database.close();
+  }
+};
+
+export const writeAudioFactBatch = async (records: AudioFactWriteRecord[]) => {
+  if (records.length === 0) return 0;
+  const database = await loadDatabase();
+  const readSource = database.prepare(`SELECT file_size, modified_at FROM files WHERE file_path = :file_path COLLATE NOCASE AND "exists" = 1 LIMIT 1`);
+  let writtenCount = 0;
+  try {
+    database.run("BEGIN TRANSACTION");
+    for (const record of records) {
+      if (record.result.extractorVersion !== AUDIO_FACT_EXTRACTOR_VERSION) continue;
+      const source = readSource.get({ ":file_path": record.filePath });
+      readSource.reset();
+      if (source.length === 0) continue;
+      const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
+      if (currentRevision !== record.result.sourceRevision) continue;
+      replaceAudioFact(database, record.filePath, record.result, new Date().toISOString());
       writtenCount += 1;
     }
     database.run("COMMIT");
@@ -1856,6 +1925,26 @@ const matchesVideoFacets = (fact: IndexedVideoFact, search: ImageSearchState) =>
   return true;
 };
 
+interface IndexedAudioFact { durationMs: number; channelCount: number }
+
+const matchesAudioFacets = (fact: IndexedAudioFact, search: ImageSearchState) => {
+  const durationRange = normalizeAudioDurationRange(search.audioDurationRange);
+  if (durationRange) {
+    if (durationRange.minSeconds !== undefined && fact.durationMs < durationRange.minSeconds * 1000) return false;
+    if (durationRange.maxSeconds !== undefined && fact.durationMs > durationRange.maxSeconds * 1000) return false;
+  } else if (searchAudioDurationPresets.includes(search.audioDurationPreset as SearchAudioDurationPreset)) {
+    if (search.audioDurationPreset === "under-5s" && fact.durationMs >= 5_000) return false;
+    if (search.audioDurationPreset === "5s-30s" && (fact.durationMs < 5_000 || fact.durationMs >= 30_000)) return false;
+    if (search.audioDurationPreset === "30s-5m" && (fact.durationMs < 30_000 || fact.durationMs >= 300_000)) return false;
+    if (search.audioDurationPreset === "over-5m" && fact.durationMs < 300_000) return false;
+  }
+  const channels = [...new Set(search.audioChannels ?? [])].filter((channel): channel is SearchAudioChannel => searchAudioChannels.includes(channel as SearchAudioChannel));
+  if (channels.length > 0 && !channels.some((channel) => (
+    channel === "mono" ? fact.channelCount === 1 : channel === "stereo" ? fact.channelCount === 2 : fact.channelCount > 2
+  ))) return false;
+  return true;
+};
+
 const appendImageFacetFilters = (where: string[], params: Record<string, SqlValue>, search: ImageSearchState) => {
   const colors = [...new Set(search.visualColors ?? [])].filter((color): color is SearchVisualColor => searchVisualColors.includes(color as SearchVisualColor));
   const colorConditions = colors.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
@@ -2019,6 +2108,13 @@ export const searchIndexedCatalog = async (
   const videoColorJoinSql = hasVideoColorConditions
     ? "LEFT JOIN file_video_color_facts AS video_color ON video_color.file_id = f.id"
     : "";
+  const hasAudioConditions = hasAudioSearchFacets(search);
+  const audioFactSelectSql = hasAudioConditions
+    ? "audio_fact.status, audio_fact.extractor_version, audio_fact.source_revision, audio_fact.duration_ms, audio_fact.channel_count"
+    : "NULL, NULL, NULL, NULL, NULL";
+  const audioFactJoinSql = hasAudioConditions
+    ? "LEFT JOIN file_audio_facts AS audio_fact ON audio_fact.file_id = f.id"
+    : "";
 
   try {
     const rows = database.exec(`
@@ -2047,6 +2143,7 @@ export const searchIndexedCatalog = async (
         ${animationSelectSql},
         ${videoFactSelectSql},
         ${videoColorSelectSql},
+        ${audioFactSelectSql},
         query_cache.keywords,
         query_cache.source_revision,
         query_cache.model_id,
@@ -2067,6 +2164,7 @@ export const searchIndexedCatalog = async (
       ${animationJoinSql}
       ${videoFactJoinSql}
       ${videoColorJoinSql}
+      ${audioFactJoinSql}
       WHERE ${where.join(" AND ")}
       ORDER BY ${sortColumn} ${sortDirection}, f.id ASC
     `, params)[0]?.values ?? [];
@@ -2078,6 +2176,7 @@ export const searchIndexedCatalog = async (
     const animationFactsByFilePath: Record<string, boolean> = {};
     const videoFactsByFilePath: Record<string, IndexedVideoFact> = {};
     const videoColorsByFilePath: Record<string, VisualPropertyVector> = {};
+    const audioFactsByFilePath: Record<string, IndexedAudioFact> = {};
     for (const row of rows) {
       const filePath = String(row[1]);
       const fileName = String(row[2]);
@@ -2094,7 +2193,8 @@ export const searchIndexedCatalog = async (
       const animationOffset = 23 + (hasVisualPropertyConditions ? visualPropertyDatabaseColumns.length : 0);
       const videoFactOffset = animationOffset + 4;
       const videoColorOffset = videoFactOffset + 6;
-      const queryCacheOffset = videoColorOffset + 4 + (hasVideoColorConditions ? visualPropertyDatabaseColumns.length : 0);
+      const audioFactOffset = videoColorOffset + 4 + (hasVideoColorConditions ? visualPropertyDatabaseColumns.length : 0);
+      const queryCacheOffset = audioFactOffset + 5;
       const queryCacheValid = imageId !== null
         && String(row[queryCacheOffset + 1] ?? "") === createFileSourceRevision({
           fileSize: Number(row[4] ?? 0),
@@ -2181,6 +2281,18 @@ export const searchIndexedCatalog = async (
           modifiedAt: String(row[6] ?? "")
         })
       ) videoColorsByFilePath[filePath] = inflateVisualPropertyValues(row, videoColorOffset + 4);
+      if (
+        hasAudioConditions
+        && String(row[audioFactOffset] ?? "") === "indexed"
+        && Number(row[audioFactOffset + 1]) === AUDIO_FACT_EXTRACTOR_VERSION
+        && String(row[audioFactOffset + 2] ?? "") === createFileSourceRevision({
+          fileSize: Number(row[4] ?? 0),
+          modifiedAt: String(row[6] ?? "")
+        })
+      ) audioFactsByFilePath[filePath] = {
+        durationMs: Number(row[audioFactOffset + 3]),
+        channelCount: Number(row[audioFactOffset + 4])
+      };
     }
 
     const catalogStateParams: Record<string, SqlValue> = {};
@@ -2238,9 +2350,15 @@ export const searchIndexedCatalog = async (
         return fact !== undefined && matchesVideoFacets(fact, search);
       })
       : animationFilteredImages;
-    const filteredImages = hasVideoColorConditions
+    const videoFilteredImages = hasVideoColorConditions
       ? videoMetadataFilteredImages.filter((image) => videoColorsByFilePath[image.filePath] !== undefined)
       : videoMetadataFilteredImages;
+    const filteredImages = hasAudioConditions
+      ? videoFilteredImages.filter((image) => {
+        const fact = audioFactsByFilePath[image.filePath];
+        return fact !== undefined && matchesAudioFacets(fact, search);
+      })
+      : videoFilteredImages;
     return {
       images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),
