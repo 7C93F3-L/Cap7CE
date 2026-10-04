@@ -39,7 +39,7 @@ assert.match(appSource, /onSearch=\{submitSearch\}/);
 const resultStatusCall = appSource.match(/const resultStatusNode = <ResultStatus[\s\S]*?\/>;/u)?.[0] ?? "";
 assert.match(appSource, /const selectedDirectoryFileCount = directoryOptions\.find\(\(\{ id \}\) => id === search\.directoryId\)\?\.fileCount \?\? null;/u);
 assert.match(resultStatusCall, /fileCount=\{selectedDirectoryFileCount\}/u);
-assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0[\s\S]*?search\.visualColors\?\.length[\s\S]*?search\.imageAspectRatios\?\.length/u);
+assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0[\s\S]*?hasImageFilters\(search\)/u);
 assert.doesNotMatch(resultStatusCall, /directoryId/u);
 assert.match(resultStatusSource, /hasActiveSearch[\s\S]*?search\.resultCount[\s\S]*?search\.fileCount[\s\S]*?fileCount \?\? "…"/u);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
@@ -79,8 +79,8 @@ assert.match(randomBrowseSource, /scorePath\(left\.filePath, seed\)[\s\S]*?state
 assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current\.batchNumber \+ 1/u);
 assert.doesNotMatch(randomBrowseSource, /Math\.random/u);
 assert.match(appSource, /active, images: randomBrowse\.items/u);
-assert.match(appSource, /fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"[\s\S]*?visualColors: undefined[\s\S]*?imageAspectRatios: undefined/u);
-assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?visualColors:[\s\S]*?imageAspectRatios:/u);
+assert.match(appSource, /clearImageFilters\(\{ \.\.\.search, fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"/u);
+assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?StableImageColorFilter[\s\S]*?StableImageRatioFilter[\s\S]*?StableImageDimensionFilter/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

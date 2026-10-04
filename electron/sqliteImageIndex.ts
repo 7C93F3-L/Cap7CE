@@ -47,13 +47,21 @@ import {
 } from "./imageDimensionTypes";
 import {
   resolveSearchModifiedTimeRange,
+  type SearchModifiedTimeRange,
+  type SearchTimePreset
+} from "./searchFilters";
+import {
+  normalizeImageAspectRatioValues,
+  normalizeImageDimensionFilter,
   searchImageAspectRatios,
+  searchImageColorTraits,
   searchVisualColors,
   type SearchImageAspectRatio,
-  type SearchModifiedTimeRange,
-  type SearchTimePreset,
+  type SearchImageAspectRatioValue,
+  type SearchImageColorTrait,
+  type SearchImageDimensionFilter,
   type SearchVisualColor
-} from "./searchFilters";
+} from "./imageSearchFilters";
 
 const requireFromHere = createRequire(__filename);
 
@@ -77,7 +85,10 @@ export interface ImageSearchState {
   timePreset?: SearchTimePreset;
   modifiedTimeRange?: SearchModifiedTimeRange;
   visualColors?: SearchVisualColor[];
+  imageColorTraits?: SearchImageColorTrait[];
   imageAspectRatios?: SearchImageAspectRatio[];
+  imageAspectRatioValues?: SearchImageAspectRatioValue[];
+  imageDimensionFilter?: SearchImageDimensionFilter;
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -1590,6 +1601,7 @@ const visualPropertyMetricColumn = (metric: VisualPropertyMetric) => {
     brightnessMean: "brightness_mean",
     brightnessMedian: "brightness_median",
     saturationMean: "saturation_mean",
+    highSaturationRatio: "high_saturation_ratio",
     lowSaturationRatio: "low_saturation_ratio",
     borderWhiteRatio: "border_white_ratio",
     borderBlackRatio: "border_black_ratio",
@@ -1614,12 +1626,37 @@ const imageAspectRatioSql: Record<SearchImageAspectRatio, string> = {
   tall: "(i.image_width > 0 AND i.image_height >= i.image_width * 2)"
 };
 
-const appendImageFacetFilters = (where: string[], search: ImageSearchState) => {
+const appendImageFacetFilters = (where: string[], params: Record<string, SqlValue>, search: ImageSearchState) => {
   const colors = [...new Set(search.visualColors ?? [])].filter((color): color is SearchVisualColor => searchVisualColors.includes(color as SearchVisualColor));
   const colorConditions = colors.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
   if (colorConditions.length > 0) where.push(`(${colorConditions.map(getVisualPropertyConditionSql).join(" OR ")})`);
+  const traits = [...new Set(search.imageColorTraits ?? [])].filter((trait): trait is SearchImageColorTrait => searchImageColorTraits.includes(trait as SearchImageColorTrait));
+  const traitConditions = traits.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
+  if (traitConditions.length > 0) where.push(`(${traitConditions.map(getVisualPropertyConditionSql).join(" OR ")})`);
   const ratios = [...new Set(search.imageAspectRatios ?? [])].filter((ratio): ratio is SearchImageAspectRatio => searchImageAspectRatios.includes(ratio as SearchImageAspectRatio));
-  if (ratios.length > 0) where.push(`(${ratios.map((ratio) => imageAspectRatioSql[ratio]).join(" OR ")})`);
+  const ratioValues = normalizeImageAspectRatioValues(search.imageAspectRatioValues);
+  const ratioConditions = ratios.map((ratio) => imageAspectRatioSql[ratio]);
+  ratioValues.forEach((ratio, index) => {
+    const widthKey = `:facet_ratio_width_${index}`;
+    const heightKey = `:facet_ratio_height_${index}`;
+    params[widthKey] = ratio.width;
+    params[heightKey] = ratio.height;
+    ratioConditions.push(`(i.image_width > 0 AND i.image_height > 0 AND ABS(i.image_width * ${heightKey} - i.image_height * ${widthKey}) <= i.image_height * ${widthKey} * 0.02)`);
+  });
+  if (ratioConditions.length > 0) where.push(`(${ratioConditions.join(" OR ")})`);
+  const dimensions = normalizeImageDimensionFilter(search.imageDimensionFilter);
+  if (dimensions?.mode === "exact") {
+    params[":facet_exact_width"] = dimensions.width;
+    params[":facet_exact_height"] = dimensions.height;
+    where.push("(i.image_width = :facet_exact_width AND i.image_height = :facet_exact_height)");
+  } else if (dimensions) {
+    for (const [field, column] of [["minWidth", "i.image_width >="], ["minHeight", "i.image_height >="], ["maxWidth", "i.image_width <="], ["maxHeight", "i.image_height <="]] as const) {
+      if (!dimensions[field]) continue;
+      const key = `:facet_${field}`;
+      params[key] = dimensions[field];
+      where.push(`${column} ${key}`);
+    }
+  }
 };
 
 export const searchIndexedCatalog = async (
@@ -1645,7 +1682,7 @@ export const searchIndexedCatalog = async (
   appendIncludedExtensionsFilter(where, params, search.includedExtensions, "catalog_included_extension");
   appendIncludedExtensionsFilter(where, params, search.selectedExtensions, "catalog_selected_extension");
   appendModifiedTimeFilter(where, params, search);
-  appendImageFacetFilters(where, search);
+  appendImageFacetFilters(where, params, search);
   params[":ai_query_model_id"] = search.aiQueryModelId ?? "";
   params[":ai_query_prompt_version"] = search.aiQueryPromptVersion ?? 0;
   queryPlan.terms.forEach((plannedTerm, termIndex) => {
@@ -1703,7 +1740,7 @@ export const searchIndexedCatalog = async (
       ORDER BY evidence_kind
     ) AS embedded_result
   )`;
-  const hasVisualPropertyConditions = (search.visualColors?.length ?? 0) > 0 || queryPlan.terms.some((plannedTerm) => (
+  const hasVisualPropertyConditions = (search.visualColors?.length ?? 0) > 0 || (search.imageColorTraits?.length ?? 0) > 0 || queryPlan.terms.some((plannedTerm) => (
     plannedTerm.conditions.some((condition) => condition.type === "visualProperty")
   ));
   const visualPropertySelectSql = hasVisualPropertyConditions
@@ -1894,7 +1931,7 @@ export const searchIndexedCatalog = async (
       availableFormats.add(normalizedFormat);
     }
 
-    const filteredImages = (search.visualColors?.length ?? 0) > 0
+    const filteredImages = (search.visualColors?.length ?? 0) > 0 || (search.imageColorTraits?.length ?? 0) > 0
       ? images.filter((image) => visualPropertiesByFilePath[image.filePath] !== undefined)
       : images;
     return {

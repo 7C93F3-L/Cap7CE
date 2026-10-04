@@ -2,6 +2,7 @@ import type { ImageIndexItem, SearchState } from "../../shared/types";
 
 const filePathKey = (filePath: string) => filePath.toLocaleLowerCase();
 const stringListKey = (values: string[] | undefined) => [...(values ?? [])].sort().join("\u0000");
+const valueKey = (value: unknown) => JSON.stringify(value ?? null);
 
 export const mergeAiSearchResults = (baseResults: ImageIndexItem[], preservedMatches: ImageIndexItem[]) => {
   const knownPaths = new Set(baseResults.map((item) => filePathKey(item.filePath)));
@@ -18,5 +19,8 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || next.modifiedTimeRange?.startMs !== previous.modifiedTimeRange?.startMs
   || next.modifiedTimeRange?.endMs !== previous.modifiedTimeRange?.endMs
   || stringListKey(next.visualColors) !== stringListKey(previous.visualColors)
+  || stringListKey(next.imageColorTraits) !== stringListKey(previous.imageColorTraits)
   || stringListKey(next.imageAspectRatios) !== stringListKey(previous.imageAspectRatios)
+  || valueKey(next.imageAspectRatioValues) !== valueKey(previous.imageAspectRatioValues)
+  || valueKey(next.imageDimensionFilter) !== valueKey(previous.imageDimensionFilter)
 );

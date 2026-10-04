@@ -74,7 +74,10 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       timePreset: search.timePreset ?? "all",
       modifiedTimeRange: search.modifiedTimeRange ?? null,
       visualColors: search.visualColors ?? [],
-      imageAspectRatios: search.imageAspectRatios ?? []
+      imageColorTraits: search.imageColorTraits ?? [],
+      imageAspectRatios: search.imageAspectRatios ?? [],
+      imageAspectRatioValues: search.imageAspectRatioValues ?? [],
+      imageDimensionFilter: search.imageDimensionFilter ?? null
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

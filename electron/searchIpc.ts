@@ -16,7 +16,10 @@ interface SearchRequestShape {
   selectedExtensions?: unknown;
   timePreset?: unknown;
   visualColors?: unknown;
+  imageColorTraits?: unknown;
   imageAspectRatios?: unknown;
+  imageAspectRatioValues?: unknown;
+  imageDimensionFilter?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -33,7 +36,10 @@ const summarizeSearch = (search: unknown) => {
     selectedExtensionCount: Array.isArray(request.selectedExtensions) ? request.selectedExtensions.length : 0,
     timePreset: typeof request.timePreset === "string" ? request.timePreset.slice(0, 20) : "all",
     visualColorCount: Array.isArray(request.visualColors) ? request.visualColors.length : 0,
-    imageAspectRatioCount: Array.isArray(request.imageAspectRatios) ? request.imageAspectRatios.length : 0
+    imageColorTraitCount: Array.isArray(request.imageColorTraits) ? request.imageColorTraits.length : 0,
+    imageAspectRatioCount: (Array.isArray(request.imageAspectRatios) ? request.imageAspectRatios.length : 0)
+      + (Array.isArray(request.imageAspectRatioValues) ? request.imageAspectRatioValues.length : 0),
+    imageDimensionFiltered: typeof request.imageDimensionFilter === "object" && request.imageDimensionFilter !== null
   };
 };
 

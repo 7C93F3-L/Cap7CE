@@ -14,6 +14,8 @@ import {
 } from "./exploreFormatFilters";
 import { getExploreFormatSummary } from "./exploreFormatSummary";
 import StableImageFilters from "./StableImageFilters";
+import StableFilterEditGlyph from "./StableFilterEditGlyph";
+import { retainImageFilters } from "./imageFilterState";
 import "./StableExploreFilters.css";
 
 type FilterFlyoutKind = "dates" | "formats" | "other";
@@ -54,7 +56,6 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
 
-const EditGlyph = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 16-1 4 4-1L19 8l-3-3L5 16Z" /><path d="m14.5 6.5 3 3" /></svg>;
 const TypeGlyph = ({ type }: { type: ExplorePrimaryFileType | "other" }) => <span className={`cap-stable-type-glyph is-${type}`} aria-hidden="true"><i /><b /></span>;
 
 const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
@@ -101,7 +102,7 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
   const toggleGroup = (extensions: readonly string[]) => {
     const nextExtensions = toggleExtensions(search.selectedExtensions ?? [], extensions);
     const preserveImageFilters = isImageOnlyExtensionSelection(nextExtensions);
-    applySearch({ ...search, selectedExtensions: nextExtensions.length ? nextExtensions : undefined, visualColors: preserveImageFilters ? search.visualColors : undefined, imageAspectRatios: preserveImageFilters ? search.imageAspectRatios : undefined });
+    applySearch(retainImageFilters({ ...search, selectedExtensions: nextExtensions.length ? nextExtensions : undefined }, preserveImageFilters));
   };
   const updateFormatDraft = (format: string) => setFormatDraft((current) => toggleExtensions(current, getExtensionsForCanonicalFormat(format)));
   const customRangeLabel = search.timePreset === "custom" && search.modifiedTimeRange
@@ -118,25 +119,25 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
 
   return <div className="cap-stable-explore-filters" onWheel={scrollFiltersHorizontally}>
     <section className="cap-stable-time-filter">
-      <header><strong>{t("explore.time")}</strong><button type="button" title={t("explore.editTime")} aria-label={t("explore.editTime")} aria-expanded={flyout?.kind === "dates"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("dates", event)}><EditGlyph /></button>{customRangeLabel && <span>{customRangeLabel}</span>}</header>
+      <header><strong>{t("explore.time")}</strong><button type="button" title={t("explore.editTime")} aria-label={t("explore.editTime")} aria-expanded={flyout?.kind === "dates"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("dates", event)}><StableFilterEditGlyph /></button>{customRangeLabel && <span>{customRangeLabel}</span>}</header>
       <div className="cap-stable-time-control"><div className="cap-stable-time-rails" aria-hidden="true"><i /><i /><i /></div><input className={search.timePreset === "custom" ? "is-custom" : ""} type="range" min="0" max={timePresets.length - 1} step="1" value={timeIndex} aria-label={t("explore.time")} onChange={(event) => setTimeIndex(Number(event.target.value))} onPointerUp={(event) => commitTime(Number(event.currentTarget.value))} onPointerCancel={(event) => commitTime(Number(event.currentTarget.value))} onKeyUp={(event) => { if (timeAdjustmentKeys.has(event.key)) commitTime(Number(event.currentTarget.value)); }} /></div>
       <div className="cap-stable-time-labels">{timePresets.map((preset, index) => <button type="button" className={search.timePreset !== "custom" && presetIndex === index ? "is-selected" : ""} aria-pressed={search.timePreset !== "custom" && presetIndex === index} key={preset} onClick={() => { setTimeIndex(index); commitTime(index); }}><i aria-hidden="true" />{t(timeLabels[preset])}</button>)}</div>
     </section>
     <section className="cap-stable-file-type-filter">
-      <header><strong>{t("explore.fileTypes")}</strong><button type="button" title={t("explore.editFormats")} aria-label={t("explore.editFormats")} aria-expanded={flyout?.kind === "formats"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("formats", event)}><EditGlyph /></button>{selectedSummary && <span>{selectedSummary}</span>}</header>
+      <header><strong>{t("explore.fileTypes")}</strong><button type="button" title={t("explore.editFormats")} aria-label={t("explore.editFormats")} aria-expanded={flyout?.kind === "formats"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("formats", event)}><StableFilterEditGlyph /></button>{selectedSummary && <span>{selectedSummary}</span>}</header>
       <div className="cap-stable-file-type-options">
         {primaryTypes.map((type) => { const extensions = getPrimaryFileTypeExtensions(availableFormats, type); return <button type="button" className={isGroupSelected(selected, extensions) ? "is-selected" : ""} disabled={extensions.length === 0} aria-pressed={isGroupSelected(selected, extensions)} key={type} onClick={() => toggleGroup(extensions)}><TypeGlyph type={type} /><span>{t(primaryLabels[type])}</span></button>; })}
         <button type="button" className={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension))) ? "is-selected" : ""} aria-pressed={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension)))} aria-expanded={flyout?.kind === "other"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("other", event)}><TypeGlyph type="other" /><span>{t("explore.fileTypes.other")}</span></button>
       </div>
     </section>
-    <StableImageFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />
+    <StableImageFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>
     </StableSidebarFlyout>}
     {flyout?.kind === "formats" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editFormats")} placement="below" align="start" width={460} maximumHeight={520} className="cap-stable-explore-flyout cap-stable-format-flyout" onClose={() => setFlyout(null)}>
       {categoryOrder.map((category) => { const formats = formatGroups.get(category); return formats?.length ? <section key={category}><strong>{t(categoryLabels[category])}</strong><div>{formats.map((format) => { const extensions = getExtensionsForCanonicalFormat(format); const pressed = isGroupSelected(new Set(formatDraft), extensions); return <button type="button" className={pressed ? "is-selected" : ""} aria-pressed={pressed} key={format} onClick={() => updateFormatDraft(format)}>{format.toUpperCase()}</button>; })}</div></section> : null; })}
-      <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFormatDraft([])}>{t("explore.clearFilters")}</button><button type="button" className="is-selected" onClick={() => { const preserveImageFilters = isImageOnlyExtensionSelection(formatDraft); applySearch({ ...search, selectedExtensions: formatDraft.length ? [...formatDraft].sort() : undefined, visualColors: preserveImageFilters ? search.visualColors : undefined, imageAspectRatios: preserveImageFilters ? search.imageAspectRatios : undefined }); setFlyout(null); }}>{t("common.confirm")}</button></div>
+      <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFormatDraft([])}>{t("explore.clearFilters")}</button><button type="button" className="is-selected" onClick={() => { const preserveImageFilters = isImageOnlyExtensionSelection(formatDraft); applySearch(retainImageFilters({ ...search, selectedExtensions: formatDraft.length ? [...formatDraft].sort() : undefined }, preserveImageFilters)); setFlyout(null); }}>{t("common.confirm")}</button></div>
     </StableSidebarFlyout>}
     {flyout?.kind === "other" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.fileTypes.other")} placement="below" align="end" width={390} maximumHeight={240} className="cap-stable-explore-flyout cap-stable-other-flyout" onClose={() => setFlyout(null)}>
       {otherTypes.map((type) => { const extensions = getOtherFileTypeExtensions(availableFormats, type); const pressed = isGroupSelected(selected, extensions); return <button type="button" className={pressed ? "is-selected" : ""} aria-pressed={pressed} disabled={extensions.length === 0} key={type} onClick={() => toggleGroup(extensions)}>{t(otherLabels[type])}</button>; })}

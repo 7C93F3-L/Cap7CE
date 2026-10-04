@@ -5,15 +5,6 @@ export interface SearchModifiedTimeRange {
   endMs: number;
 }
 
-export const searchVisualColors = [
-  "red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink",
-  "black-background", "gray-tone", "white-background", "transparent-background"
-] as const;
-export type SearchVisualColor = typeof searchVisualColors[number];
-
-export const searchImageAspectRatios = ["portrait", "landscape", "square", "wide", "tall"] as const;
-export type SearchImageAspectRatio = typeof searchImageAspectRatios[number];
-
 const startOfLocalDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate());
 const addLocalDays = (value: Date, days: number) => new Date(value.getFullYear(), value.getMonth(), value.getDate() + days);
 

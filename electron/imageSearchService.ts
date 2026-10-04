@@ -15,6 +15,7 @@ import { getSelectedGgufModelId } from "./ggufModelStore";
 import { aiQueryEvidencePersistenceEnabled, aiQueryPromptVersion } from "./aiQueryEvidenceStore";
 import { resolveSearchModifiedTimeRange } from "./searchFilters";
 import { searchIndexedCatalog, type ImageSearchResult, type ImageSearchState, type ImageSearchResponse } from "./sqliteImageIndex";
+import { hasImageSearchFacets } from "./imageSearchFilters";
 
 const canonicalizeFileFormat = (fileFormat: string) => {
   if (fileFormat === "jpeg") return "jpg";
@@ -200,7 +201,7 @@ export const searchImagesWithAddedDirectories = async (
   const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
   const selectedExtensions = getIncludedExtensionSet(search.selectedExtensions);
   const modifiedTimeRange = resolveSearchModifiedTimeRange(search.timePreset, search.modifiedTimeRange);
-  const requiresIndexedImageFacets = (search.visualColors?.length ?? 0) > 0 || (search.imageAspectRatios?.length ?? 0) > 0;
+  const requiresIndexedImageFacets = hasImageSearchFacets(search);
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const directoryById = new Map(directoriesToScan.map((directory) => [directory.id, directory]));
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);

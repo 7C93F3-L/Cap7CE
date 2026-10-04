@@ -7,6 +7,7 @@ export type VisualPropertyMetric =
   | "brightnessMean"
   | "brightnessMedian"
   | "saturationMean"
+  | "highSaturationRatio"
   | "lowSaturationRatio"
   | "borderWhiteRatio"
   | "borderBlackRatio"
@@ -77,6 +78,30 @@ export const visualPropertySemanticDefinitions: readonly VisualPropertySemanticD
     strength: "soft",
     aliases: ["暗色", "暗图", "偏暗", "深色"],
     constraints: [{ metric: "darkRatio", operator: ">", value: 7000 }]
+  },
+  {
+    semantic: "bright-image",
+    strength: "soft",
+    aliases: ["明亮", "亮色", "亮图", "偏亮"],
+    constraints: [{ metric: "brightnessMean", operator: ">", value: 6500 }]
+  },
+  {
+    semantic: "vivid-image",
+    strength: "soft",
+    aliases: ["鲜艳", "高饱和", "高饱和度"],
+    constraints: [
+      { metric: "saturationMean", operator: ">", value: 4000 },
+      { metric: "highSaturationRatio", operator: ">", value: 3500 }
+    ]
+  },
+  {
+    semantic: "muted-image",
+    strength: "soft",
+    aliases: ["低饱和", "低饱和度", "柔和色"],
+    constraints: [
+      { metric: "saturationMean", operator: "<=", value: 2000 },
+      { metric: "lowSaturationRatio", operator: ">", value: 6000 }
+    ]
   },
   {
     semantic: "gray-tone",

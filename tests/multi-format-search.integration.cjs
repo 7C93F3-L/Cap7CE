@@ -222,8 +222,13 @@ app.whenReady().then(async () => {
     assert.equal(redQuery.images[0].searchEvidence.weakestSource, "visualPropertySoft");
     assert.equal(redQuery.images[0].searchEvidence.classification, "visualSimilarity");
     assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, visualColors: ["red"] }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageColorTraits: ["muted-image"] }, directories)).images.map((item) => item.fileName), ["visual.png"]);
     assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["landscape"] }, directories)).images.map((item) => item.fileName), ["visual.png"]);
     assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["wide"] }, directories)).images, []);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatioValues: [{ width: 16, height: 9 }] }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageDimensionFilter: { mode: "range", minWidth: 1500, minHeight: 800 } }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageDimensionFilter: { mode: "range", minWidth: 2000 } }, directories)).images, []);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageDimensionFilter: { mode: "exact", width: 1600, height: 900 } }, directories)).images.map((item) => item.fileName), ["visual.png"]);
     const grayQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "灰色调" }, directories);
     assert.deepEqual(grayQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(grayQuery.images[0].searchEvidence.weakestSource, "visualPropertySoft");
@@ -443,6 +448,8 @@ app.whenReady().then(async () => {
     assert.deepEqual(redImageFilter.images, [], "stale visual properties must not satisfy explicit color filters");
     const blueImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, visualColors: ["blue"] }, directories);
     assert.deepEqual(blueImageFilter.images, []);
+    const mutedImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageColorTraits: ["muted-image"] }, directories);
+    assert.deepEqual(mutedImageFilter.images, [], "stale visual properties must not satisfy explicit color characteristic filters");
     const landscapeImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["landscape"] }, directories);
     assert.deepEqual(landscapeImageFilter.images, [], "unknown current dimensions must not satisfy explicit ratio filters");
     const wideImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["wide"] }, directories);
