@@ -6,7 +6,7 @@ import StableExploreFilters from "./StableExploreFilters";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableUiIcon from "./StableUiIcon";
 import type { StableExploreProps } from "./stableExploreTypes";
-import { hasMediaFilters } from "./mediaFilterState";
+import { hasExploreTypeFilters } from "./exploreTypeFilterState";
 import { hasFileSizeFilter } from "./fileSizeFilterState";
 import "./StableExploreBar.css";
 import "./StableExploreCommands.css";
@@ -33,7 +33,7 @@ const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplay
   const [filterFlyoutCloseRequest, setFilterFlyoutCloseRequest] = useState(0);
   const scopeValue = searchDisplayMode === "all" ? t("stableUi.sidebar.scopeAll") : searchDisplayMode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault");
   const sortValue = `${search.sortField === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · ${search.sortDirection === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}`;
-  const hasActiveFilters = search.fileFormat !== "all" || Boolean(search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasMediaFilters(search));
+  const hasActiveFilters = search.fileFormat !== "all" || Boolean(search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasExploreTypeFilters(search));
   const closeFlyout = () => setFlyout(null);
   const openFlyout = (kind: "scope" | "sort", event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();

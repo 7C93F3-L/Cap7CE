@@ -54,6 +54,20 @@ import {
   type SearchAudioDurationPreset,
   type SearchAudioDurationRange
 } from "./audioSearchFilters";
+import { replaceDocumentFact } from "./documentFactStore";
+import {
+  DOCUMENT_FACT_EXTRACTOR_VERSION,
+  supportedDocumentFactExtensions,
+  type DocumentContentCountKind,
+  type DocumentFactCandidate,
+  type DocumentFactWriteRecord
+} from "./documentFactTypes";
+import {
+  hasDocumentSearchFacets,
+  matchesDocumentContentCount,
+  type SearchDocumentContentCountPreset,
+  type SearchDocumentContentCountRange
+} from "./documentSearchFilters";
 import {
   IMAGE_DIMENSION_EXTRACTOR_VERSION,
   supportedImageDimensionExtensions,
@@ -141,6 +155,8 @@ export interface ImageSearchState {
   audioDurationPreset?: SearchAudioDurationPreset;
   audioDurationRange?: SearchAudioDurationRange;
   audioChannels?: SearchAudioChannel[];
+  documentContentCountPreset?: SearchDocumentContentCountPreset;
+  documentContentCountRange?: SearchDocumentContentCountRange;
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -651,6 +667,61 @@ export const writeAudioFactBatch = async (records: AudioFactWriteRecord[]) => {
       const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
       if (currentRevision !== record.result.sourceRevision) continue;
       replaceAudioFact(database, record.filePath, record.result, new Date().toISOString());
+      writtenCount += 1;
+    }
+    database.run("COMMIT");
+    if (writtenCount > 0) await saveDatabase(database);
+    return writtenCount;
+  } catch (error) {
+    try { database.run("ROLLBACK"); } catch { /* Preserve the original error. */ }
+    throw error;
+  } finally {
+    readSource.free();
+    database.close();
+  }
+};
+
+const supportedDocumentFactExtensionSet = new Set<string>(supportedDocumentFactExtensions);
+
+export const listPendingDocumentFactCandidates = async (directoryIds?: string[]): Promise<DocumentFactCandidate[]> => {
+  const database = await loadDatabase();
+  try {
+    const requestedIds = new Set(directoryIds ?? []);
+    const rows = database.exec(`
+      SELECT file.file_path, file.file_size, file.modified_at, file.directory_id, file.extension,
+             fact.source_revision, fact.extractor_version
+      FROM files AS file
+      LEFT JOIN file_document_facts AS fact ON fact.file_id = file.id
+      WHERE file."exists" = 1
+      ORDER BY file.id
+    `)[0]?.values ?? [];
+    return rows.flatMap((row) => {
+      if (requestedIds.size > 0 && !requestedIds.has(String(row[3]))) return [];
+      if (!supportedDocumentFactExtensionSet.has(String(row[4]).toLowerCase())) return [];
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[1]), modifiedAt: String(row[2]) });
+      if (String(row[5] ?? "") === sourceRevision && Number(row[6]) === DOCUMENT_FACT_EXTRACTOR_VERSION) return [];
+      return [{ filePath: String(row[0]), sourceRevision }];
+    });
+  } finally {
+    database.close();
+  }
+};
+
+export const writeDocumentFactBatch = async (records: DocumentFactWriteRecord[]) => {
+  if (records.length === 0) return 0;
+  const database = await loadDatabase();
+  const readSource = database.prepare(`SELECT file_size, modified_at FROM files WHERE file_path = :file_path COLLATE NOCASE AND "exists" = 1 LIMIT 1`);
+  let writtenCount = 0;
+  try {
+    database.run("BEGIN TRANSACTION");
+    for (const record of records) {
+      if (record.result.extractorVersion !== DOCUMENT_FACT_EXTRACTOR_VERSION) continue;
+      const source = readSource.get({ ":file_path": record.filePath });
+      readSource.reset();
+      if (source.length === 0) continue;
+      const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
+      if (currentRevision !== record.result.sourceRevision) continue;
+      replaceDocumentFact(database, record.filePath, record.result, new Date().toISOString());
       writtenCount += 1;
     }
     database.run("COMMIT");
@@ -1965,6 +2036,12 @@ const matchesAudioFacets = (fact: IndexedAudioFact, search: ImageSearchState) =>
   return true;
 };
 
+interface IndexedDocumentFact { contentCount: number; countKind: DocumentContentCountKind }
+
+const matchesDocumentFacets = (fact: IndexedDocumentFact, search: ImageSearchState) => (
+  matchesDocumentContentCount(fact.contentCount, search.documentContentCountPreset, search.documentContentCountRange)
+);
+
 const appendImageFacetFilters = (where: string[], params: Record<string, SqlValue>, search: ImageSearchState) => {
   const colors = [...new Set(search.visualColors ?? [])].filter((color): color is SearchVisualColor => searchVisualColors.includes(color as SearchVisualColor));
   const colorConditions = colors.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
@@ -2136,6 +2213,13 @@ export const searchIndexedCatalog = async (
   const audioFactJoinSql = hasAudioConditions
     ? "LEFT JOIN file_audio_facts AS audio_fact ON audio_fact.file_id = f.id"
     : "";
+  const hasDocumentConditions = hasDocumentSearchFacets(search);
+  const documentFactSelectSql = hasDocumentConditions
+    ? "document_fact.status, document_fact.extractor_version, document_fact.source_revision, document_fact.content_count, document_fact.count_kind"
+    : "NULL, NULL, NULL, NULL, NULL";
+  const documentFactJoinSql = hasDocumentConditions
+    ? "LEFT JOIN file_document_facts AS document_fact ON document_fact.file_id = f.id"
+    : "";
 
   try {
     const rows = database.exec(`
@@ -2165,6 +2249,7 @@ export const searchIndexedCatalog = async (
         ${videoFactSelectSql},
         ${videoColorSelectSql},
         ${audioFactSelectSql},
+        ${documentFactSelectSql},
         query_cache.keywords,
         query_cache.source_revision,
         query_cache.model_id,
@@ -2186,6 +2271,7 @@ export const searchIndexedCatalog = async (
       ${videoFactJoinSql}
       ${videoColorJoinSql}
       ${audioFactJoinSql}
+      ${documentFactJoinSql}
       WHERE ${where.join(" AND ")}
       ORDER BY ${sortColumn} ${sortDirection}, f.id ASC
     `, params)[0]?.values ?? [];
@@ -2198,6 +2284,7 @@ export const searchIndexedCatalog = async (
     const videoFactsByFilePath: Record<string, IndexedVideoFact> = {};
     const videoColorsByFilePath: Record<string, VisualPropertyVector> = {};
     const audioFactsByFilePath: Record<string, IndexedAudioFact> = {};
+    const documentFactsByFilePath: Record<string, IndexedDocumentFact> = {};
     for (const row of rows) {
       const filePath = String(row[1]);
       const fileName = String(row[2]);
@@ -2215,7 +2302,8 @@ export const searchIndexedCatalog = async (
       const videoFactOffset = animationOffset + 4;
       const videoColorOffset = videoFactOffset + 6;
       const audioFactOffset = videoColorOffset + 4 + (hasVideoColorConditions ? visualPropertyDatabaseColumns.length : 0);
-      const queryCacheOffset = audioFactOffset + 5;
+      const documentFactOffset = audioFactOffset + 5;
+      const queryCacheOffset = documentFactOffset + 5;
       const queryCacheValid = imageId !== null
         && String(row[queryCacheOffset + 1] ?? "") === createFileSourceRevision({
           fileSize: Number(row[4] ?? 0),
@@ -2314,6 +2402,18 @@ export const searchIndexedCatalog = async (
         durationMs: Number(row[audioFactOffset + 3]),
         channelCount: Number(row[audioFactOffset + 4])
       };
+      if (
+        hasDocumentConditions
+        && String(row[documentFactOffset] ?? "") === "indexed"
+        && Number(row[documentFactOffset + 1]) === DOCUMENT_FACT_EXTRACTOR_VERSION
+        && String(row[documentFactOffset + 2] ?? "") === createFileSourceRevision({
+          fileSize: Number(row[4] ?? 0),
+          modifiedAt: String(row[6] ?? "")
+        })
+      ) documentFactsByFilePath[filePath] = {
+        contentCount: Number(row[documentFactOffset + 3]),
+        countKind: String(row[documentFactOffset + 4]) as DocumentContentCountKind
+      };
     }
 
     const catalogStateParams: Record<string, SqlValue> = {};
@@ -2374,12 +2474,18 @@ export const searchIndexedCatalog = async (
     const videoFilteredImages = hasVideoColorConditions
       ? videoMetadataFilteredImages.filter((image) => videoColorsByFilePath[image.filePath] !== undefined)
       : videoMetadataFilteredImages;
-    const filteredImages = hasAudioConditions
+    const audioFilteredImages = hasAudioConditions
       ? videoFilteredImages.filter((image) => {
         const fact = audioFactsByFilePath[image.filePath];
         return fact !== undefined && matchesAudioFacets(fact, search);
       })
       : videoFilteredImages;
+    const filteredImages = hasDocumentConditions
+      ? audioFilteredImages.filter((image) => {
+        const fact = documentFactsByFilePath[image.filePath];
+        return fact !== undefined && matchesDocumentFacets(fact, search);
+      })
+      : audioFilteredImages;
     return {
       images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),

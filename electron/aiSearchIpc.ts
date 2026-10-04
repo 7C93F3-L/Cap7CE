@@ -6,6 +6,7 @@ import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchI
 import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normalizeVideoDurationRange, searchVideoAspectRatios, searchVideoColorTraits, searchVideoDurationPresets, searchVideoResolutions, searchVideoVisualColors } from "./videoSearchFilters";
 import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPresets } from "./audioSearchFilters";
 import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchFilters";
+import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets } from "./documentSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -58,7 +59,9 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.videoColorTraits === undefined || (Array.isArray(search.videoColorTraits) && search.videoColorTraits.every((trait) => searchVideoColorTraits.includes(String(trait) as (typeof searchVideoColorTraits)[number]))))
     && (search.audioDurationPreset === undefined || searchAudioDurationPresets.includes(String(search.audioDurationPreset) as (typeof searchAudioDurationPresets)[number]))
     && (search.audioDurationRange === undefined || normalizeAudioDurationRange(search.audioDurationRange) !== null)
-    && (search.audioChannels === undefined || (Array.isArray(search.audioChannels) && search.audioChannels.every((channel) => searchAudioChannels.includes(String(channel) as (typeof searchAudioChannels)[number]))));
+    && (search.audioChannels === undefined || (Array.isArray(search.audioChannels) && search.audioChannels.every((channel) => searchAudioChannels.includes(String(channel) as (typeof searchAudioChannels)[number]))))
+    && (search.documentContentCountPreset === undefined || searchDocumentContentCountPresets.includes(String(search.documentContentCountPreset) as (typeof searchDocumentContentCountPresets)[number]))
+    && (search.documentContentCountRange === undefined || normalizeDocumentContentCountRange(search.documentContentCountRange) !== null);
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

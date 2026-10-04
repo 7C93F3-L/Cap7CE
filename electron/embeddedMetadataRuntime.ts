@@ -11,6 +11,7 @@ import { configureSearchIndexChangeRuntime, notifySearchIndexChanged } from "./s
 import { discardVideoFactsForDirectory, enqueueVideoFactsForDirectories } from "./videoFactRuntime";
 import { discardVideoColorsForDirectory, enqueueVideoColorsForDirectories } from "./videoColorRuntime";
 import { discardAudioFactsForDirectory, enqueueAudioFactsForDirectories } from "./audioFactRuntime";
+import { discardDocumentFactsForDirectory, enqueueDocumentFactsForDirectories } from "./documentFactRuntime";
 import {
   listPendingEmbeddedMetadataCandidates,
   writeEmbeddedMetadataBatch,
@@ -39,6 +40,7 @@ export const writeScannedFilesWithEmbeddedMetadata = async (
   void enqueueVideoFactsForDirectories(directoryIds);
   void enqueueVideoColorsForDirectories(directoryIds);
   void enqueueAudioFactsForDirectories(directoryIds);
+  void enqueueDocumentFactsForDirectories(directoryIds);
   return result;
 };
 
@@ -48,6 +50,7 @@ export const discardEmbeddedMetadataForDirectory = async (directoryPath: string)
   discardVideoFactsForDirectory(directoryPath);
   discardVideoColorsForDirectory(directoryPath);
   discardAudioFactsForDirectory(directoryPath);
+  discardDocumentFactsForDirectory(directoryPath);
   await embeddedMetadataService.discardDirectory(directoryPath);
 };
 
@@ -93,5 +96,8 @@ export const configureEmbeddedMetadataRuntime = (
   });
   void enqueueAudioFactsForDirectories([]).catch((error) => {
     console.warn("[audio-facts] startup candidate discovery failed", error);
+  });
+  void enqueueDocumentFactsForDirectories([]).catch((error) => {
+    console.warn("[document-facts] startup candidate discovery failed", error);
   });
 };

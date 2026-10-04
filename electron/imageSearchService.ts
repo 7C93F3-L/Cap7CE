@@ -18,6 +18,7 @@ import { searchIndexedCatalog, type ImageSearchResult, type ImageSearchState, ty
 import { hasImageSearchFacets } from "./imageSearchFilters";
 import { hasVideoSearchFacets } from "./videoSearchFilters";
 import { hasAudioSearchFacets } from "./audioSearchFilters";
+import { hasDocumentSearchFacets } from "./documentSearchFilters";
 import { matchesSearchFileSize } from "./fileSizeSearchFilters";
 
 const canonicalizeFileFormat = (fileFormat: string) => {
@@ -204,7 +205,7 @@ export const searchImagesWithAddedDirectories = async (
   const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
   const selectedExtensions = getIncludedExtensionSet(search.selectedExtensions);
   const modifiedTimeRange = resolveSearchModifiedTimeRange(search.timePreset, search.modifiedTimeRange);
-  const requiresIndexedFacets = hasImageSearchFacets(search) || hasVideoSearchFacets(search) || hasAudioSearchFacets(search);
+  const requiresIndexedFacets = hasImageSearchFacets(search) || hasVideoSearchFacets(search) || hasAudioSearchFacets(search) || hasDocumentSearchFacets(search);
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const directoryById = new Map(directoriesToScan.map((directory) => [directory.id, directory]));
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);

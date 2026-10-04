@@ -29,6 +29,9 @@ const audioFiltersSource = read("src/renderer/stable-ui/StableAudioFilters.tsx")
 const audioFilterStateSource = read("src/renderer/stable-ui/audioFilterState.ts");
 const mediaFiltersSource = read("src/renderer/stable-ui/StableMediaFilters.tsx");
 const mediaFilterStateSource = read("src/renderer/stable-ui/mediaFilterState.ts");
+const documentFiltersSource = read("src/renderer/stable-ui/StableDocumentFilters.tsx");
+const documentFilterStateSource = read("src/renderer/stable-ui/documentFilterState.ts");
+const exploreTypeFilterStateSource = read("src/renderer/stable-ui/exploreTypeFilterState.ts");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
@@ -48,8 +51,8 @@ assert.match(appSource, /onSearch=\{submitSearch\}/);
 const resultStatusCall = appSource.match(/const resultStatusNode = <ResultStatus[\s\S]*?\/>;/u)?.[0] ?? "";
 assert.match(appSource, /const selectedDirectoryFileCount = directoryOptions\.find\(\(\{ id \}\) => id === search\.directoryId\)\?\.fileCount \?\? null;/u);
 assert.match(resultStatusCall, /fileCount=\{selectedDirectoryFileCount\}/u);
-assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0[\s\S]*?hasMediaFilters\(search\)/u);
-assert.match(resultStatusCall, /hasMediaFilters\(search\)/u);
+assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0[\s\S]*?hasExploreTypeFilters\(search\)/u);
+assert.match(resultStatusCall, /hasExploreTypeFilters\(search\)/u);
 assert.doesNotMatch(resultStatusCall, /directoryId/u);
 assert.match(resultStatusSource, /hasActiveSearch[\s\S]*?search\.resultCount[\s\S]*?search\.fileCount[\s\S]*?fileCount \?\? "…"/u);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
@@ -91,12 +94,13 @@ assert.match(exploreFormatFiltersSource, /getExtensionsForCanonicalFormat[\s\S]*
 assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?extension !== "\.pdf"[\s\S]*?category === "visual"/u);
 assert.match(exploreFormatFiltersSource, /isVideoOnlyExtensionSelection[\s\S]*?category === "video"/u);
 assert.match(exploreFormatFiltersSource, /isAudioOnlyExtensionSelection[\s\S]*?category === "audio"/u);
+assert.match(exploreFormatFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?extension === "\.pdf"[\s\S]*?category === "document"/u);
 assert.match(exploreFormatSummarySource, /canonicalizeSelectedFormats\(extensions\)\.length < 2[\s\S]*?kind: "type"[\s\S]*?kind: "format"/u);
 assert.match(randomBrowseSource, /scorePath\(left\.filePath, seed\)[\s\S]*?state\.enabled \? orderRandomBrowseItems\(items, state\.seed\)/u);
 assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current\.batchNumber \+ 1/u);
 assert.doesNotMatch(randomBrowseSource, /Math\.random/u);
 assert.match(appSource, /active, images: randomBrowse\.items/u);
-assert.match(appSource, /clearMediaFilters\(\{ \.\.\.search, fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"/u);
+assert.match(appSource, /clearExploreTypeFilters\(\{ \.\.\.search, fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"/u);
 assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?StableImageColorFilter[\s\S]*?StableImageRatioFilter[\s\S]*?StableImageDimensionFilter[\s\S]*?StableImageAnimationFilter/u);
 assert.match(videoFiltersSource, /if \(!isVideoOnlyExtensionSelection[\s\S]*?return null[\s\S]*?explore\.videoDuration[\s\S]*?explore\.videoRatios[\s\S]*?explore\.videoResolution[\s\S]*?StableVideoColorFilter/u);
 assert.match(videoFiltersSource, /videoDurationPreset:[\s\S]*?videoDurationRange: undefined/u);
@@ -106,6 +110,9 @@ assert.match(audioFiltersSource, /if \(!isAudioOnlyExtensionSelection[\s\S]*?ret
 assert.match(audioFiltersSource, /audioDurationPreset:[\s\S]*?audioDurationRange: undefined[\s\S]*?audioChannels:/u);
 assert.match(audioFilterStateSource, /audioDurationPreset: undefined[\s\S]*?audioDurationRange: undefined[\s\S]*?audioChannels: undefined/u);
 assert.match(mediaFilterStateSource, /clearAudioFilters\(clearVideoFilters\(clearImageFilters\(search\)\)\)[\s\S]*?hasImageFilters\(search\) \|\| hasVideoFilters\(search\) \|\| hasAudioFilters\(search\)[\s\S]*?retainApplicableMediaFilters/u);
+assert.match(documentFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?explore\.documentContentCount[\s\S]*?documentContentCountPreset:[\s\S]*?documentContentCountRange:/u);
+assert.match(documentFilterStateSource, /documentContentCountPreset: undefined[\s\S]*?documentContentCountRange: undefined/u);
+assert.match(exploreTypeFilterStateSource, /clearDocumentFilters\(clearMediaFilters\(search\)\)[\s\S]*?hasMediaFilters\(search\) \|\| hasDocumentFilters\(search\)[\s\S]*?retainApplicableMediaFilters/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

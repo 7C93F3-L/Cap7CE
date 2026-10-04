@@ -2,7 +2,6 @@ import { fileFormatCapabilities, type FileFormatCategory } from "../../../electr
 
 export type ExplorePrimaryFileType = "image" | "video" | "audio" | "document";
 export type ExploreOtherFileType = "text" | "project" | "threeD" | "archive" | "data" | "font" | "model";
-
 const canonicalFormat = (extension: string) => {
   const normalized = extension.trim().replace(/^\./, "").toLowerCase();
   if (normalized === "jpeg") return "jpg";
@@ -72,3 +71,4 @@ export const canonicalizeSelectedFormats = (selectedExtensions: readonly string[
 export const isImageOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension !== ".pdf" && fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "visual");
 export const isVideoOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "video");
 export const isAudioOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "audio");
+export const isDocumentOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension === ".pdf" || fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "document");

@@ -45,7 +45,7 @@ import { countSkimRootLocations } from "./skim/SkimRootSections";
 import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGridScrollMemory } from "./virtualGridLayout";
 import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
 import { useStableSkimCommands } from "./stable-ui/useStableSkimCommands";
-import { clearMediaFilters, hasMediaFilters } from "./stable-ui/mediaFilterState";
+import { clearExploreTypeFilters, hasExploreTypeFilters } from "./stable-ui/exploreTypeFilterState";
 import { clearFileSizeFilter, hasFileSizeFilter } from "./stable-ui/fileSizeFilterState";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
 import type {
@@ -1120,8 +1120,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
   const clearExploreFilters = () => {
     randomBrowse.clear();
-    const nextSearch = clearFileSizeFilter(clearMediaFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined }));
-    if (search.fileFormat !== "all" || search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasMediaFilters(search)) updateResultsSearchOptions(nextSearch);
+    const nextSearch = clearFileSizeFilter(clearExploreTypeFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined }));
+    if (search.fileFormat !== "all" || search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasExploreTypeFilters(search)) updateResultsSearchOptions(nextSearch);
   };
 
   const toggleAiSearchBeta = () => {
@@ -1422,12 +1422,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       || (search.selectedExtensions?.length ?? 0) > 0
       || (search.timePreset ?? "all") !== "all"
       || hasFileSizeFilter(search)
-      || hasMediaFilters(search)
+      || hasExploreTypeFilters(search)
     ) {
       return;
     }
 
-    const nextSearch = clearFileSizeFilter(clearMediaFilters({ ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined }));
+    const nextSearch = clearFileSizeFilter(clearExploreTypeFilters({ ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined }));
     setSearch(nextSearch);
     await runSearch(nextSearch, { navigate: false });
   };
@@ -2277,7 +2277,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const resultStatusNode = <ResultStatus
     resultCount={searchResults.length}
     fileCount={selectedDirectoryFileCount}
-    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasMediaFilters(search)}
+    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasExploreTypeFilters(search)}
     isSearching={isSearching || aiSearchBeta.busy}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({

@@ -8,6 +8,7 @@ import { setEmbeddedMetadataForegroundActive } from "./embeddedMetadataRuntime";
 import { setVideoFactForegroundActive } from "./videoFactRuntime";
 import { setVideoColorForegroundActive } from "./videoColorRuntime";
 import { setAudioFactForegroundActive } from "./audioFactRuntime";
+import { setDocumentFactForegroundActive } from "./documentFactRuntime";
 
 export const visualPropertyService = createVisualPropertyService({
   filterPendingCandidates: filterPendingVisualPropertyCandidates,
@@ -26,6 +27,7 @@ export const setVisualPropertyForegroundActive = (active: boolean) => {
   setVideoFactForegroundActive(active);
   setVideoColorForegroundActive(active);
   setAudioFactForegroundActive(active);
+  setDocumentFactForegroundActive(active);
 };
 
 onThumbnailLifecycle((event) => {

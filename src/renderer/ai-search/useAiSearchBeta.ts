@@ -91,7 +91,9 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       videoColorTraits: search.videoColorTraits ?? [],
       audioDurationPreset: search.audioDurationPreset ?? null,
       audioDurationRange: search.audioDurationRange ?? null,
-      audioChannels: search.audioChannels ?? []
+      audioChannels: search.audioChannels ?? [],
+      documentContentCountPreset: search.documentContentCountPreset ?? null,
+      documentContentCountRange: search.documentContentCountRange ?? null
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey
