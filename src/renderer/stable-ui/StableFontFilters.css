@@ -1,0 +1,11 @@
+.cap-stable-font-filter { width: max-content; min-width: 170px; }
+.cap-stable-font-filter > div { display: flex; gap: 4px; padding-top: 10px; }
+.cap-stable-font-filter button { min-width: 64px; min-height: 44px; padding: 4px 9px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-font-filter button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
+.cap-stable-font-filter button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
+.cap-stable-font-filter.is-fontWeights .is-thin { font-weight: 200; }
+.cap-stable-font-filter.is-fontWeights .is-regular { font-weight: 400; }
+.cap-stable-font-filter.is-fontWeights .is-medium { font-weight: 500; }
+.cap-stable-font-filter.is-fontWeights .is-bold { font-weight: 700; }
+.cap-stable-font-filter.is-fontWeights .is-black { font-weight: 900; }
+.cap-stable-font-filter.is-fontStyles .is-italic { font-style: italic; }

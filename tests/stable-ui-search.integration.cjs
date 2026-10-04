@@ -37,6 +37,8 @@ const artboardFilterSource = read("src/renderer/stable-ui/StableArtboardFilter.t
 const artboardFilterStateSource = read("src/renderer/stable-ui/artboardFilterState.ts");
 const threeDFiltersSource = read("src/renderer/stable-ui/StableThreeDFilters.tsx");
 const threeDFilterStateSource = read("src/renderer/stable-ui/threeDFilterState.ts");
+const fontFiltersSource = read("src/renderer/stable-ui/StableFontFilters.tsx");
+const fontFilterStateSource = read("src/renderer/stable-ui/fontFilterState.ts");
 const exploreTypeFilterStateSource = read("src/renderer/stable-ui/exploreTypeFilterState.ts");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
@@ -130,6 +132,8 @@ assert.match(artboardFilterStateSource, /artboardCountPreset: undefined[\s\S]*?a
 assert.match(threeDFiltersSource, /isThreeDOnlyExtensionSelection[\s\S]*?explore\.threeDModelType[\s\S]*?explore\.threeDStructure[\s\S]*?explore\.threeDTriangleCount/u);
 assert.match(threeDFiltersSource, /supportedThreeDFactExtensions[\s\S]*?hasMetadataSupport/u);
 assert.match(threeDFilterStateSource, /threeDModelTypes: undefined[\s\S]*?threeDStructures: undefined[\s\S]*?threeDTriangleCountPreset: undefined[\s\S]*?threeDTriangleCountRange: undefined/u);
+assert.match(fontFiltersSource, /isFontOnlyExtensionSelection[\s\S]*?explore\.fontWeight[\s\S]*?explore\.fontStyle[\s\S]*?explore\.fontCharacters[\s\S]*?explore\.fontKind/u);
+assert.match(fontFilterStateSource, /fontWeights: undefined[\s\S]*?fontStyles: undefined[\s\S]*?fontCharacterSets: undefined[\s\S]*?fontKinds: undefined/u);
 assert.match(exploreTypeFilterStateSource, /clearThreeDFilters\(clearArtboardFilters\(clearTextDataFilters\(clearDocumentFilters\(clearMediaFilters\(search\)\)\)\)\)[\s\S]*?hasThreeDFilters\(search\)[\s\S]*?retainApplicableThreeDFilters/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 

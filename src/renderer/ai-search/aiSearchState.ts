@@ -61,4 +61,8 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || next.archiveEntryCountPreset !== previous.archiveEntryCountPreset
   || valueKey(next.archiveEntryCountRange) !== valueKey(previous.archiveEntryCountRange)
   || stringListKey(next.archiveStructures) !== stringListKey(previous.archiveStructures)
+  || stringListKey(next.fontWeights) !== stringListKey(previous.fontWeights)
+  || stringListKey(next.fontStyles) !== stringListKey(previous.fontStyles)
+  || stringListKey(next.fontCharacterSets) !== stringListKey(previous.fontCharacterSets)
+  || stringListKey(next.fontKinds) !== stringListKey(previous.fontKinds)
 );

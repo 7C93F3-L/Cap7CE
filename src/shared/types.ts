@@ -7,6 +7,7 @@ import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange,
 import type { SearchArtboardCountPreset } from "../../electron/artboardSearchFilters";
 import type { SearchThreeDModelType, SearchThreeDStructure, SearchThreeDTriangleCountPreset, SearchThreeDTriangleCountRange } from "../../electron/threeDSearchFilters";
 import type { SearchArchiveContentType, SearchArchiveEntryCountPreset, SearchArchiveEntryCountRange, SearchArchiveStructure } from "../../electron/archiveSearchFilters";
+import type { SearchFontCharacterSet, SearchFontKind, SearchFontStyle, SearchFontWeight } from "../../electron/fontSearchFilters";
 import type {
   SearchCountRange,
   SearchDataColumnCountPreset,
@@ -518,6 +519,10 @@ export interface SearchState {
   archiveEntryCountPreset?: SearchArchiveEntryCountPreset;
   archiveEntryCountRange?: SearchArchiveEntryCountRange;
   archiveStructures?: SearchArchiveStructure[];
+  fontWeights?: SearchFontWeight[];
+  fontStyles?: SearchFontStyle[];
+  fontCharacterSets?: SearchFontCharacterSet[];
+  fontKinds?: SearchFontKind[];
 }
 
 export interface AiSearchStartRequest {

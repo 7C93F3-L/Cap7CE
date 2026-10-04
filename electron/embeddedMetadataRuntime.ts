@@ -15,6 +15,7 @@ import { discardDocumentFactsForDirectory, enqueueDocumentFactsForDirectories } 
 import { discardTextDataFactsForDirectory, enqueueTextDataFactsForDirectories } from "./textDataFactRuntime";
 import { discardThreeDFactsForDirectory, enqueueThreeDFactsForDirectories } from "./threeDFactRuntime";
 import { discardArchiveFactsForDirectory, enqueueArchiveFactsForDirectories } from "./archiveFactRuntime";
+import { discardFontFactsForDirectory, enqueueFontFactsForDirectories } from "./fontFactRuntime";
 import {
   listPendingEmbeddedMetadataCandidates,
   writeEmbeddedMetadataBatch,
@@ -47,6 +48,7 @@ export const writeScannedFilesWithEmbeddedMetadata = async (
   void enqueueTextDataFactsForDirectories(directoryIds);
   void enqueueThreeDFactsForDirectories(directoryIds);
   void enqueueArchiveFactsForDirectories(directoryIds);
+  void enqueueFontFactsForDirectories(directoryIds);
   return result;
 };
 
@@ -60,6 +62,7 @@ export const discardEmbeddedMetadataForDirectory = async (directoryPath: string)
   discardTextDataFactsForDirectory(directoryPath);
   discardThreeDFactsForDirectory(directoryPath);
   discardArchiveFactsForDirectory(directoryPath);
+  discardFontFactsForDirectory(directoryPath);
   await embeddedMetadataService.discardDirectory(directoryPath);
 };
 
@@ -117,5 +120,8 @@ export const configureEmbeddedMetadataRuntime = (
   });
   void enqueueArchiveFactsForDirectories([]).catch((error) => {
     console.warn("[archive-facts] startup candidate discovery failed", error);
+  });
+  void enqueueFontFactsForDirectories([]).catch((error) => {
+    console.warn("[font-facts] startup candidate discovery failed", error);
   });
 };

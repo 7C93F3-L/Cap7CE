@@ -58,6 +58,10 @@ interface SearchRequestShape {
   archiveEntryCountPreset?: unknown;
   archiveEntryCountRange?: unknown;
   archiveStructures?: unknown;
+  fontWeights?: unknown;
+  fontStyles?: unknown;
+  fontCharacterSets?: unknown;
+  fontKinds?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -102,7 +106,11 @@ const summarizeSearch = (search: unknown) => {
     threeDTriangleCount: typeof request.threeDTriangleCountPreset === "string" || typeof request.threeDTriangleCountRange === "object",
     archiveContentTypeCount: Array.isArray(request.archiveContentTypes) ? request.archiveContentTypes.length : 0,
     archiveEntryCount: typeof request.archiveEntryCountPreset === "string" || typeof request.archiveEntryCountRange === "object",
-    archiveStructureCount: Array.isArray(request.archiveStructures) ? request.archiveStructures.length : 0
+    archiveStructureCount: Array.isArray(request.archiveStructures) ? request.archiveStructures.length : 0,
+    fontWeightCount: Array.isArray(request.fontWeights) ? request.fontWeights.length : 0,
+    fontStyleCount: Array.isArray(request.fontStyles) ? request.fontStyles.length : 0,
+    fontCharacterSetCount: Array.isArray(request.fontCharacterSets) ? request.fontCharacterSets.length : 0,
+    fontKindCount: Array.isArray(request.fontKinds) ? request.fontKinds.length : 0
   };
 };
 

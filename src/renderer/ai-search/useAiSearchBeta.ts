@@ -115,7 +115,11 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       archiveContentTypes: search.archiveContentTypes ?? [],
       archiveEntryCountPreset: search.archiveEntryCountPreset ?? null,
       archiveEntryCountRange: search.archiveEntryCountRange ?? null,
-      archiveStructures: search.archiveStructures ?? []
+      archiveStructures: search.archiveStructures ?? [],
+      fontWeights: search.fontWeights ?? [],
+      fontStyles: search.fontStyles ?? [],
+      fontCharacterSets: search.fontCharacterSets ?? [],
+      fontKinds: search.fontKinds ?? []
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey
