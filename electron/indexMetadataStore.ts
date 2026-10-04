@@ -10,6 +10,7 @@ import { ensureAudioFactSchema } from "./audioFactStore";
 import { ensureDocumentFactSchema } from "./documentFactStore";
 import { ensureTextDataFactSchema } from "./textDataFactStore";
 import { ensureThreeDFactSchema } from "./threeDFactStore";
+import { ensureArchiveFactSchema } from "./archiveFactStore";
 
 export interface StoredUserMetadata {
   description: string;
@@ -65,6 +66,7 @@ export const ensureIndexMetadataSchema = (database: Database) => {
   ensureDocumentFactSchema(database);
   ensureTextDataFactSchema(database);
   ensureThreeDFactSchema(database);
+  ensureArchiveFactSchema(database);
   ensureAiQueryEvidenceSchema(database);
 };
 

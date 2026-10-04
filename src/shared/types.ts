@@ -6,6 +6,7 @@ import type { SearchFileSizePreset, SearchFileSizeRange } from "../../electron/f
 import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange, SearchDocumentImageComposition } from "../../electron/documentSearchFilters";
 import type { SearchArtboardCountPreset } from "../../electron/artboardSearchFilters";
 import type { SearchThreeDModelType, SearchThreeDStructure, SearchThreeDTriangleCountPreset, SearchThreeDTriangleCountRange } from "../../electron/threeDSearchFilters";
+import type { SearchArchiveContentType, SearchArchiveEntryCountPreset, SearchArchiveEntryCountRange, SearchArchiveStructure } from "../../electron/archiveSearchFilters";
 import type {
   SearchCountRange,
   SearchDataColumnCountPreset,
@@ -513,6 +514,10 @@ export interface SearchState {
   threeDStructures?: SearchThreeDStructure[];
   threeDTriangleCountPreset?: SearchThreeDTriangleCountPreset;
   threeDTriangleCountRange?: SearchThreeDTriangleCountRange;
+  archiveContentTypes?: SearchArchiveContentType[];
+  archiveEntryCountPreset?: SearchArchiveEntryCountPreset;
+  archiveEntryCountRange?: SearchArchiveEntryCountRange;
+  archiveStructures?: SearchArchiveStructure[];
 }
 
 export interface AiSearchStartRequest {

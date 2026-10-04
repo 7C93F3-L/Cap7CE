@@ -54,6 +54,10 @@ interface SearchRequestShape {
   threeDStructures?: unknown;
   threeDTriangleCountPreset?: unknown;
   threeDTriangleCountRange?: unknown;
+  archiveContentTypes?: unknown;
+  archiveEntryCountPreset?: unknown;
+  archiveEntryCountRange?: unknown;
+  archiveStructures?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -95,7 +99,10 @@ const summarizeSearch = (search: unknown) => {
     ].some((value) => value !== undefined),
     threeDModelTypeCount: Array.isArray(request.threeDModelTypes) ? request.threeDModelTypes.length : 0,
     threeDStructureCount: Array.isArray(request.threeDStructures) ? request.threeDStructures.length : 0,
-    threeDTriangleCount: typeof request.threeDTriangleCountPreset === "string" || typeof request.threeDTriangleCountRange === "object"
+    threeDTriangleCount: typeof request.threeDTriangleCountPreset === "string" || typeof request.threeDTriangleCountRange === "object",
+    archiveContentTypeCount: Array.isArray(request.archiveContentTypes) ? request.archiveContentTypes.length : 0,
+    archiveEntryCount: typeof request.archiveEntryCountPreset === "string" || typeof request.archiveEntryCountRange === "object",
+    archiveStructureCount: Array.isArray(request.archiveStructures) ? request.archiveStructures.length : 0
   };
 };
 

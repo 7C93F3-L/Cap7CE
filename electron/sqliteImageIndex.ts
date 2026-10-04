@@ -119,6 +119,23 @@ import {
   type SearchThreeDTriangleCountPreset,
   type SearchThreeDTriangleCountRange
 } from "./threeDSearchFilters";
+import { replaceArchiveFact } from "./archiveFactStore";
+import {
+  ARCHIVE_FACT_EXTRACTOR_VERSION,
+  supportedArchiveFactExtensions,
+  type ArchiveFactCandidate,
+  type ArchiveFactWriteRecord
+} from "./archiveFactTypes";
+import {
+  hasArchiveSearchFacets,
+  matchesArchiveEntryCount,
+  searchArchiveContentTypes,
+  searchArchiveStructures,
+  type SearchArchiveContentType,
+  type SearchArchiveEntryCountPreset,
+  type SearchArchiveEntryCountRange,
+  type SearchArchiveStructure
+} from "./archiveSearchFilters";
 import {
   IMAGE_DIMENSION_EXTRACTOR_VERSION,
   supportedImageDimensionExtensions,
@@ -226,6 +243,10 @@ export interface ImageSearchState {
   threeDStructures?: SearchThreeDStructure[];
   threeDTriangleCountPreset?: SearchThreeDTriangleCountPreset;
   threeDTriangleCountRange?: SearchThreeDTriangleCountRange;
+  archiveContentTypes?: SearchArchiveContentType[];
+  archiveEntryCountPreset?: SearchArchiveEntryCountPreset;
+  archiveEntryCountRange?: SearchArchiveEntryCountRange;
+  archiveStructures?: SearchArchiveStructure[];
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -901,6 +922,61 @@ export const writeThreeDFactBatch = async (records: ThreeDFactWriteRecord[]) => 
       const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
       if (currentRevision !== record.result.sourceRevision) continue;
       replaceThreeDFact(database, record.filePath, record.result, new Date().toISOString());
+      writtenCount += 1;
+    }
+    database.run("COMMIT");
+    if (writtenCount > 0) await saveDatabase(database);
+    return writtenCount;
+  } catch (error) {
+    try { database.run("ROLLBACK"); } catch { /* Preserve the original error. */ }
+    throw error;
+  } finally {
+    readSource.free();
+    database.close();
+  }
+};
+
+const supportedArchiveFactExtensionSet = new Set<string>(supportedArchiveFactExtensions);
+
+export const listPendingArchiveFactCandidates = async (directoryIds?: string[]): Promise<ArchiveFactCandidate[]> => {
+  const database = await loadDatabase();
+  try {
+    const requestedIds = new Set(directoryIds ?? []);
+    const rows = database.exec(`
+      SELECT file.file_path, file.file_size, file.modified_at, file.directory_id, file.extension,
+             fact.source_revision, fact.extractor_version
+      FROM files AS file
+      LEFT JOIN file_archive_facts AS fact ON fact.file_id = file.id
+      WHERE file."exists" = 1
+      ORDER BY file.id
+    `)[0]?.values ?? [];
+    return rows.flatMap((row) => {
+      if (requestedIds.size > 0 && !requestedIds.has(String(row[3]))) return [];
+      if (!supportedArchiveFactExtensionSet.has(String(row[4]).toLowerCase())) return [];
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[1]), modifiedAt: String(row[2]) });
+      if (String(row[5] ?? "") === sourceRevision && Number(row[6]) === ARCHIVE_FACT_EXTRACTOR_VERSION) return [];
+      return [{ filePath: String(row[0]), sourceRevision }];
+    });
+  } finally {
+    database.close();
+  }
+};
+
+export const writeArchiveFactBatch = async (records: ArchiveFactWriteRecord[]) => {
+  if (records.length === 0) return 0;
+  const database = await loadDatabase();
+  const readSource = database.prepare(`SELECT file_size, modified_at FROM files WHERE file_path = :file_path COLLATE NOCASE AND "exists" = 1 LIMIT 1`);
+  let writtenCount = 0;
+  try {
+    database.run("BEGIN TRANSACTION");
+    for (const record of records) {
+      if (record.result.extractorVersion !== ARCHIVE_FACT_EXTRACTOR_VERSION) continue;
+      const source = readSource.get({ ":file_path": record.filePath });
+      readSource.reset();
+      if (source.length === 0) continue;
+      const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
+      if (currentRevision !== record.result.sourceRevision) continue;
+      replaceArchiveFact(database, record.filePath, record.result, new Date().toISOString());
       writtenCount += 1;
     }
     database.run("COMMIT");
@@ -2263,6 +2339,28 @@ interface IndexedThreeDFact {
   hasRig: boolean;
 }
 
+interface IndexedArchiveFact {
+  fileCountKnown: boolean;
+  fileCount: number;
+  structureKnown: boolean;
+  hasDirectories: boolean;
+  contentTypes: Set<SearchArchiveContentType>;
+}
+
+const matchesArchiveFacets = (fact: IndexedArchiveFact, search: ImageSearchState) => {
+  const contentTypes = [...new Set(search.archiveContentTypes ?? [])].filter((value): value is SearchArchiveContentType => (
+    searchArchiveContentTypes.includes(value as SearchArchiveContentType)
+  ));
+  if (contentTypes.length > 0 && !contentTypes.some((value) => fact.contentTypes.has(value))) return false;
+  if ((search.archiveEntryCountPreset || search.archiveEntryCountRange)
+    && (!fact.fileCountKnown || !matchesArchiveEntryCount(fact.fileCount, search.archiveEntryCountPreset, search.archiveEntryCountRange))) return false;
+  const structures = [...new Set(search.archiveStructures ?? [])].filter((value): value is SearchArchiveStructure => (
+    searchArchiveStructures.includes(value as SearchArchiveStructure)
+  ));
+  if (structures.length > 0 && (!fact.structureKnown || !structures.some((value) => value === "nested" ? fact.hasDirectories : !fact.hasDirectories))) return false;
+  return true;
+};
+
 const matchesThreeDMetadataFacets = (fact: IndexedThreeDFact, search: ImageSearchState) => {
   const structures = [...new Set(search.threeDStructures ?? [])].filter((value): value is SearchThreeDStructure => (
     searchThreeDStructures.includes(value as SearchThreeDStructure)
@@ -2471,6 +2569,13 @@ export const searchIndexedCatalog = async (
   const threeDFactJoinSql = hasThreeDMetadataConditions
     ? "LEFT JOIN file_three_d_facts AS three_d_fact ON three_d_fact.file_id = f.id"
     : "";
+  const hasArchiveConditions = hasArchiveSearchFacets(search);
+  const archiveFactSelectSql = hasArchiveConditions
+    ? "archive_fact.status, archive_fact.extractor_version, archive_fact.source_revision, archive_fact.listing_complete, archive_fact.file_count_known, archive_fact.file_count, archive_fact.structure_known, archive_fact.has_directories, archive_fact.has_image, archive_fact.has_video, archive_fact.has_audio, archive_fact.has_document, archive_fact.has_project, archive_fact.has_three_d, archive_fact.has_program, archive_fact.has_other"
+    : "NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL";
+  const archiveFactJoinSql = hasArchiveConditions
+    ? "LEFT JOIN file_archive_facts AS archive_fact ON archive_fact.file_id = f.id"
+    : "";
 
   try {
     const rows = database.exec(`
@@ -2503,6 +2608,7 @@ export const searchIndexedCatalog = async (
         ${documentFactSelectSql},
         ${textDataFactSelectSql},
         ${threeDFactSelectSql},
+        ${archiveFactSelectSql},
         query_cache.keywords,
         query_cache.source_revision,
         query_cache.model_id,
@@ -2527,6 +2633,7 @@ export const searchIndexedCatalog = async (
       ${documentFactJoinSql}
       ${textDataFactJoinSql}
       ${threeDFactJoinSql}
+      ${archiveFactJoinSql}
       WHERE ${where.join(" AND ")}
       ORDER BY ${sortColumn} ${sortDirection}, f.id ASC
     `, params)[0]?.values ?? [];
@@ -2542,6 +2649,7 @@ export const searchIndexedCatalog = async (
     const documentFactsByFilePath: Record<string, IndexedDocumentFact> = {};
     const textDataFactsByFilePath: Record<string, IndexedTextDataFact> = {};
     const threeDFactsByFilePath: Record<string, IndexedThreeDFact> = {};
+    const archiveFactsByFilePath: Record<string, IndexedArchiveFact> = {};
     for (const row of rows) {
       const filePath = String(row[1]);
       const fileName = String(row[2]);
@@ -2562,7 +2670,8 @@ export const searchIndexedCatalog = async (
       const documentFactOffset = audioFactOffset + 5;
       const textDataFactOffset = documentFactOffset + 9;
       const threeDFactOffset = textDataFactOffset + 9;
-      const queryCacheOffset = threeDFactOffset + 9;
+      const archiveFactOffset = threeDFactOffset + 9;
+      const queryCacheOffset = archiveFactOffset + 16;
       const queryCacheValid = imageId !== null
         && String(row[queryCacheOffset + 1] ?? "") === createFileSourceRevision({
           fileSize: Number(row[4] ?? 0),
@@ -2709,6 +2818,21 @@ export const searchIndexedCatalog = async (
         rigKnown: Number(row[threeDFactOffset + 7]) === 1,
         hasRig: Number(row[threeDFactOffset + 8]) === 1
       };
+      if (
+        hasArchiveConditions
+        && String(row[archiveFactOffset] ?? "") === "indexed"
+        && Number(row[archiveFactOffset + 1]) === ARCHIVE_FACT_EXTRACTOR_VERSION
+        && String(row[archiveFactOffset + 2] ?? "") === createFileSourceRevision({
+          fileSize: Number(row[4] ?? 0),
+          modifiedAt: String(row[6] ?? "")
+        })
+      ) archiveFactsByFilePath[filePath] = {
+        fileCountKnown: Number(row[archiveFactOffset + 4]) === 1,
+        fileCount: Number(row[archiveFactOffset + 5]),
+        structureKnown: Number(row[archiveFactOffset + 6]) === 1,
+        hasDirectories: Number(row[archiveFactOffset + 7]) === 1,
+        contentTypes: new Set(searchArchiveContentTypes.filter((_, index) => Number(row[archiveFactOffset + 8 + index]) === 1))
+      };
     }
 
     const catalogStateParams: Record<string, SqlValue> = {};
@@ -2790,12 +2914,18 @@ export const searchIndexedCatalog = async (
     const threeDTypeFilteredImages = hasThreeDModelTypeFacet(search)
       ? textDataFilteredImages.filter((image) => matchesThreeDModelTypes(image.extension, search.threeDModelTypes))
       : textDataFilteredImages;
-    const filteredImages = hasThreeDMetadataConditions
+    const threeDFilteredImages = hasThreeDMetadataConditions
       ? threeDTypeFilteredImages.filter((image) => {
         const fact = threeDFactsByFilePath[image.filePath];
         return fact !== undefined && matchesThreeDMetadataFacets(fact, search);
       })
       : threeDTypeFilteredImages;
+    const filteredImages = hasArchiveConditions
+      ? threeDFilteredImages.filter((image) => {
+        const fact = archiveFactsByFilePath[image.filePath];
+        return fact !== undefined && matchesArchiveFacets(fact, search);
+      })
+      : threeDFilteredImages;
     return {
       images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),

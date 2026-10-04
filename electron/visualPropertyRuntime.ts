@@ -11,6 +11,7 @@ import { setAudioFactForegroundActive } from "./audioFactRuntime";
 import { setDocumentFactForegroundActive } from "./documentFactRuntime";
 import { setTextDataFactForegroundActive } from "./textDataFactRuntime";
 import { setThreeDFactForegroundActive } from "./threeDFactRuntime";
+import { setArchiveFactForegroundActive } from "./archiveFactRuntime";
 
 export const visualPropertyService = createVisualPropertyService({
   filterPendingCandidates: filterPendingVisualPropertyCandidates,
@@ -32,6 +33,7 @@ export const setVisualPropertyForegroundActive = (active: boolean) => {
   setDocumentFactForegroundActive(active);
   setTextDataFactForegroundActive(active);
   setThreeDFactForegroundActive(active);
+  setArchiveFactForegroundActive(active);
 };
 
 onThumbnailLifecycle((event) => {

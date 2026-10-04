@@ -3,13 +3,7 @@ import { t, type TranslationKey } from "../../../electron/localization";
 import type { FileFormatCategory } from "../../../electron/formatCapabilities";
 import type { SearchState } from "../../shared/types";
 import StableSidebarFlyout from "./StableSidebarFlyout";
-import {
-  getExtensionsForCanonicalFormat,
-  getFormatSelectionGroups,
-  getOtherFileTypeExtensions,
-  getPrimaryFileTypeExtensions,
-  type ExploreOtherFileType, type ExplorePrimaryFileType
-} from "./exploreFormatFilters";
+import { getExtensionsForCanonicalFormat, getFormatSelectionGroups, getOtherFileTypeExtensions, getPrimaryFileTypeExtensions, type ExploreOtherFileType, type ExplorePrimaryFileType } from "./exploreFormatFilters";
 import { getExploreFormatSummary } from "./exploreFormatSummary";
 import StableFilterEditGlyph from "./StableFilterEditGlyph";
 import StableMediaFilters from "./StableMediaFilters";
@@ -18,6 +12,7 @@ import StableDocumentFilters from "./StableDocumentFilters";
 import StableTextDataFilters from "./StableTextDataFilters";
 import StableArtboardFilter from "./StableArtboardFilter";
 import StableThreeDFilters from "./StableThreeDFilters";
+import StableArchiveFilters from "./StableArchiveFilters";
 import { retainApplicableExploreTypeFilters } from "./exploreTypeFilterState";
 import "./StableExploreFilters.css";
 type FilterFlyoutKind = "dates" | "formats" | "other";
@@ -114,7 +109,6 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
     setFlyout(null);
     rail.scrollLeft += delta;
   };
-
   return <div className="cap-stable-explore-filters" onWheel={scrollFiltersHorizontally}>
     <section className="cap-stable-time-filter">
       <header><strong>{t("explore.time")}</strong><button type="button" title={t("explore.editTime")} aria-label={t("explore.editTime")} aria-expanded={flyout?.kind === "dates"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("dates", event)}><StableFilterEditGlyph /></button>{customRangeLabel && <span>{customRangeLabel}</span>}</header>
@@ -134,6 +128,7 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
     <StableDocumentFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableTextDataFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableThreeDFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
+    <StableArchiveFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>
@@ -147,5 +142,4 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
     </StableSidebarFlyout>}
   </div>;
 };
-
 export default StableExploreFilters;

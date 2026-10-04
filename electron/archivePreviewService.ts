@@ -62,7 +62,8 @@ const parseFields = (block: string) => {
 
 export const parseArchiveListOutput = (
   output: string,
-  outputTruncated = false
+  outputTruncated = false,
+  maximumEntries = maximumArchiveEntries
 ): ArchivePreviewData => {
   const parsedEntries: ArchivePreviewEntry[] = [];
   let totalUncompressedSize = 0;
@@ -77,7 +78,7 @@ export const parseArchiveListOutput = (
 
     discoveredEntries += 1;
     totalUncompressedSize += size;
-    if (parsedEntries.length >= maximumArchiveEntries) continue;
+    if (parsedEntries.length >= maximumEntries) continue;
     parsedEntries.push({
       path: entryPath,
       size,

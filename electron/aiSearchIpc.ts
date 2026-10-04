@@ -9,6 +9,7 @@ import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchF
 import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets, searchDocumentImageCompositions } from "./documentSearchFilters";
 import { searchArtboardCountPresets } from "./artboardSearchFilters";
 import { normalizeThreeDTriangleCountRange, searchThreeDModelTypes, searchThreeDStructures, searchThreeDTriangleCountPresets } from "./threeDSearchFilters";
+import { normalizeArchiveEntryCountRange, searchArchiveContentTypes, searchArchiveEntryCountPresets, searchArchiveStructures } from "./archiveSearchFilters";
 import {
   normalizeSearchCountRange,
   searchDataColumnCountPresets,
@@ -89,7 +90,11 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.threeDModelTypes === undefined || (Array.isArray(search.threeDModelTypes) && search.threeDModelTypes.every((value) => searchThreeDModelTypes.includes(String(value) as (typeof searchThreeDModelTypes)[number]))))
     && (search.threeDStructures === undefined || (Array.isArray(search.threeDStructures) && search.threeDStructures.every((value) => searchThreeDStructures.includes(String(value) as (typeof searchThreeDStructures)[number]))))
     && (search.threeDTriangleCountPreset === undefined || searchThreeDTriangleCountPresets.includes(String(search.threeDTriangleCountPreset) as (typeof searchThreeDTriangleCountPresets)[number]))
-    && (search.threeDTriangleCountRange === undefined || normalizeThreeDTriangleCountRange(search.threeDTriangleCountRange) !== null);
+    && (search.threeDTriangleCountRange === undefined || normalizeThreeDTriangleCountRange(search.threeDTriangleCountRange) !== null)
+    && (search.archiveContentTypes === undefined || (Array.isArray(search.archiveContentTypes) && search.archiveContentTypes.every((value) => searchArchiveContentTypes.includes(String(value) as (typeof searchArchiveContentTypes)[number]))))
+    && (search.archiveEntryCountPreset === undefined || searchArchiveEntryCountPresets.includes(String(search.archiveEntryCountPreset) as (typeof searchArchiveEntryCountPresets)[number]))
+    && (search.archiveEntryCountRange === undefined || normalizeArchiveEntryCountRange(search.archiveEntryCountRange) !== null)
+    && (search.archiveStructures === undefined || (Array.isArray(search.archiveStructures) && search.archiveStructures.every((value) => searchArchiveStructures.includes(String(value) as (typeof searchArchiveStructures)[number]))));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

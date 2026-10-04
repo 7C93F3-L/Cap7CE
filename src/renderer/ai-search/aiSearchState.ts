@@ -57,4 +57,8 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || stringListKey(next.threeDStructures) !== stringListKey(previous.threeDStructures)
   || next.threeDTriangleCountPreset !== previous.threeDTriangleCountPreset
   || valueKey(next.threeDTriangleCountRange) !== valueKey(previous.threeDTriangleCountRange)
+  || stringListKey(next.archiveContentTypes) !== stringListKey(previous.archiveContentTypes)
+  || next.archiveEntryCountPreset !== previous.archiveEntryCountPreset
+  || valueKey(next.archiveEntryCountRange) !== valueKey(previous.archiveEntryCountRange)
+  || stringListKey(next.archiveStructures) !== stringListKey(previous.archiveStructures)
 );

@@ -111,7 +111,11 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       threeDModelTypes: search.threeDModelTypes ?? [],
       threeDStructures: search.threeDStructures ?? [],
       threeDTriangleCountPreset: search.threeDTriangleCountPreset ?? null,
-      threeDTriangleCountRange: search.threeDTriangleCountRange ?? null
+      threeDTriangleCountRange: search.threeDTriangleCountRange ?? null,
+      archiveContentTypes: search.archiveContentTypes ?? [],
+      archiveEntryCountPreset: search.archiveEntryCountPreset ?? null,
+      archiveEntryCountRange: search.archiveEntryCountRange ?? null,
+      archiveStructures: search.archiveStructures ?? []
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey
