@@ -7,6 +7,9 @@ export type SearchVisualColor = typeof searchVisualColors[number];
 export const searchImageColorTraits = ["bright-image", "dark-image", "vivid-image", "muted-image"] as const;
 export type SearchImageColorTrait = typeof searchImageColorTraits[number];
 
+export const searchImageAnimationModes = ["animated", "static"] as const;
+export type SearchImageAnimationMode = typeof searchImageAnimationModes[number];
+
 export const searchImageAspectRatios = ["portrait", "landscape", "square", "wide", "tall"] as const;
 export type SearchImageAspectRatio = typeof searchImageAspectRatios[number];
 
@@ -50,5 +53,5 @@ export const normalizeImageDimensionFilter = (value: unknown): SearchImageDimens
 
 export const hasImageSearchFacets = (search: {
   visualColors?: readonly unknown[]; imageColorTraits?: readonly unknown[]; imageAspectRatios?: readonly unknown[];
-  imageAspectRatioValues?: readonly unknown[]; imageDimensionFilter?: unknown;
-}) => Boolean(search.visualColors?.length || search.imageColorTraits?.length || search.imageAspectRatios?.length || search.imageAspectRatioValues?.length || search.imageDimensionFilter);
+  imageAspectRatioValues?: readonly unknown[]; imageDimensionFilter?: unknown; imageAnimation?: unknown;
+}) => Boolean(search.visualColors?.length || search.imageColorTraits?.length || search.imageAspectRatios?.length || search.imageAspectRatioValues?.length || search.imageDimensionFilter || search.imageAnimation);

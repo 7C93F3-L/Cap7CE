@@ -80,7 +80,7 @@ assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current
 assert.doesNotMatch(randomBrowseSource, /Math\.random/u);
 assert.match(appSource, /active, images: randomBrowse\.items/u);
 assert.match(appSource, /clearImageFilters\(\{ \.\.\.search, fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"/u);
-assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?StableImageColorFilter[\s\S]*?StableImageRatioFilter[\s\S]*?StableImageDimensionFilter/u);
+assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?StableImageColorFilter[\s\S]*?StableImageRatioFilter[\s\S]*?StableImageDimensionFilter[\s\S]*?StableImageAnimationFilter/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

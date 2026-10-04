@@ -2,7 +2,7 @@ import type { IpcMainInvokeEvent } from "electron";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import { t } from "./localization";
-import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchImageAspectRatios, searchImageColorTraits, searchVisualColors } from "./imageSearchFilters";
+import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchImageAnimationModes, searchImageAspectRatios, searchImageColorTraits, searchVisualColors } from "./imageSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -41,7 +41,8 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.imageColorTraits === undefined || (Array.isArray(search.imageColorTraits) && search.imageColorTraits.every((trait) => searchImageColorTraits.includes(String(trait) as (typeof searchImageColorTraits)[number]))))
     && (search.imageAspectRatios === undefined || (Array.isArray(search.imageAspectRatios) && search.imageAspectRatios.every((ratio) => searchImageAspectRatios.includes(String(ratio) as (typeof searchImageAspectRatios)[number]))))
     && (search.imageAspectRatioValues === undefined || (Array.isArray(search.imageAspectRatioValues) && normalizeImageAspectRatioValues(search.imageAspectRatioValues).length === search.imageAspectRatioValues.length))
-    && (search.imageDimensionFilter === undefined || normalizeImageDimensionFilter(search.imageDimensionFilter) !== null);
+    && (search.imageDimensionFilter === undefined || normalizeImageDimensionFilter(search.imageDimensionFilter) !== null)
+    && (search.imageAnimation === undefined || searchImageAnimationModes.includes(String(search.imageAnimation) as (typeof searchImageAnimationModes)[number]));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

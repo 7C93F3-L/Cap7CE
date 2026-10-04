@@ -6,7 +6,6 @@ import StableFilterEditGlyph from "./StableFilterEditGlyph";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import { formatDimensionSummary } from "./imageFilterOptions";
 import "./StableImageDimensionFilter.css";
-
 type DimensionDraft = { mode: "range" | "exact"; minWidth: string; minHeight: string; maxWidth: string; maxHeight: string; width: string; height: string };
 const emptyDraft = (): DimensionDraft => ({ mode: "range", minWidth: "", minHeight: "", maxWidth: "", maxHeight: "", width: "", height: "" });
 const toDraft = (filter?: SearchImageDimensionFilter): DimensionDraft => filter?.mode === "exact"

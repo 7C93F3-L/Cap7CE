@@ -23,4 +23,5 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || stringListKey(next.imageAspectRatios) !== stringListKey(previous.imageAspectRatios)
   || valueKey(next.imageAspectRatioValues) !== valueKey(previous.imageAspectRatioValues)
   || valueKey(next.imageDimensionFilter) !== valueKey(previous.imageDimensionFilter)
+  || next.imageAnimation !== previous.imageAnimation
 );

@@ -1,0 +1,8 @@
+.cap-stable-image-animation-filter { width: 170px; }
+.cap-stable-image-animation-filter > div { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.cap-stable-image-animation-filter > div > button { display: grid; grid-template-rows: 38px 22px; place-items: center; min-height: 64px; padding: 3px 6px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-image-animation-filter > div > button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
+.cap-stable-image-animation-filter > div > button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
+.cap-stable-image-animation-filter i { position: relative; display: block; width: 31px; height: 25px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 4px; }
+.cap-stable-image-animation-filter i.is-animated::before { position: absolute; inset: 5px 8px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); content: ""; }
+.cap-stable-image-animation-filter i.is-static::before { position: absolute; inset: 5px; border-radius: 2px; background: currentColor; content: ""; }

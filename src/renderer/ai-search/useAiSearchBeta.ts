@@ -77,7 +77,8 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       imageColorTraits: search.imageColorTraits ?? [],
       imageAspectRatios: search.imageAspectRatios ?? [],
       imageAspectRatioValues: search.imageAspectRatioValues ?? [],
-      imageDimensionFilter: search.imageDimensionFilter ?? null
+      imageDimensionFilter: search.imageDimensionFilter ?? null,
+      imageAnimation: search.imageAnimation ?? "all"
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

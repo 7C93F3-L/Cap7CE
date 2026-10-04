@@ -20,6 +20,7 @@ interface SearchRequestShape {
   imageAspectRatios?: unknown;
   imageAspectRatioValues?: unknown;
   imageDimensionFilter?: unknown;
+  imageAnimation?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -39,7 +40,8 @@ const summarizeSearch = (search: unknown) => {
     imageColorTraitCount: Array.isArray(request.imageColorTraits) ? request.imageColorTraits.length : 0,
     imageAspectRatioCount: (Array.isArray(request.imageAspectRatios) ? request.imageAspectRatios.length : 0)
       + (Array.isArray(request.imageAspectRatioValues) ? request.imageAspectRatioValues.length : 0),
-    imageDimensionFiltered: typeof request.imageDimensionFilter === "object" && request.imageDimensionFilter !== null
+    imageDimensionFiltered: typeof request.imageDimensionFilter === "object" && request.imageDimensionFilter !== null,
+    imageAnimation: typeof request.imageAnimation === "string" ? request.imageAnimation.slice(0, 12) : "all"
   };
 };
 

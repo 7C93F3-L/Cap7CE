@@ -229,6 +229,8 @@ app.whenReady().then(async () => {
     assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageDimensionFilter: { mode: "range", minWidth: 1500, minHeight: 800 } }, directories)).images.map((item) => item.fileName), ["visual.png"]);
     assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageDimensionFilter: { mode: "range", minWidth: 2000 } }, directories)).images, []);
     assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageDimensionFilter: { mode: "exact", width: 1600, height: 900 } }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAnimation: "animated" }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAnimation: "static" }, directories)).images, []);
     const grayQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "灰色调" }, directories);
     assert.deepEqual(grayQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(grayQuery.images[0].searchEvidence.weakestSource, "visualPropertySoft");
@@ -247,6 +249,10 @@ app.whenReady().then(async () => {
     const animationQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "动图" }, directories);
     assert.deepEqual(animationQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(animationQuery.images[0].searchEvidence.weakestSource, "fileCategory");
+    await writeAnimationFactBatch([{ filePath: visualFile.file_path, result: { sourceRevision: animationCandidate.sourceRevision, extractorVersion: 1, status: "indexed", isAnimated: false, errorCode: "" } }]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAnimation: "static" }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAnimation: "animated" }, directories)).images, []);
+    await writeAnimationFactBatch([{ filePath: visualFile.file_path, result: { sourceRevision: animationCandidate.sourceRevision, extractorVersion: 1, status: "indexed", isAnimated: true, errorCode: "" } }]);
     await writeVisualPropertyBatch([{
       filePath: visualFile.file_path,
       record: { ...visualPropertyRecord, sourceRevision: "stale-source-revision" }
@@ -454,6 +460,8 @@ app.whenReady().then(async () => {
     assert.deepEqual(landscapeImageFilter.images, [], "unknown current dimensions must not satisfy explicit ratio filters");
     const wideImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["wide"] }, directories);
     assert.deepEqual(wideImageFilter.images, []);
+    const animatedImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageAnimation: "animated" }, directories);
+    assert.deepEqual(animatedImageFilter.images, [], "stale animation facts must not satisfy explicit animation filters");
 
     const directoryFilter = await searchImagesWithAddedDirectories({
       ...baseSearch,

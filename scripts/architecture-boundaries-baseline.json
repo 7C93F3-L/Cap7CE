@@ -115,6 +115,8 @@
     "src/renderer/stable-ui/StableImageFilters.css": 20,
     "src/renderer/stable-ui/StableFilterEditGlyph.tsx": 10,
     "src/renderer/stable-ui/StableImageColorFilter.tsx": 30,
+    "src/renderer/stable-ui/StableImageAnimationFilter.tsx": 20,
+    "src/renderer/stable-ui/StableImageAnimationFilter.css": 10,
     "src/renderer/stable-ui/StableImageRatioFilter.tsx": 30,
     "src/renderer/stable-ui/StableImageDimensionFilter.tsx": 40,
     "src/renderer/stable-ui/StableImageDimensionFilter.css": 10,

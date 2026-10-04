@@ -7,7 +7,8 @@ export const clearImageFilters = (search: SearchState): SearchState => ({
   imageColorTraits: undefined,
   imageAspectRatios: undefined,
   imageAspectRatioValues: undefined,
-  imageDimensionFilter: undefined
+  imageDimensionFilter: undefined,
+  imageAnimation: undefined
 });
 
 export const retainImageFilters = (search: SearchState, retain: boolean): SearchState => retain ? search : clearImageFilters(search);

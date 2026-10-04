@@ -53,6 +53,7 @@ import {
 import {
   normalizeImageAspectRatioValues,
   normalizeImageDimensionFilter,
+  searchImageAnimationModes,
   searchImageAspectRatios,
   searchImageColorTraits,
   searchVisualColors,
@@ -60,6 +61,7 @@ import {
   type SearchImageAspectRatioValue,
   type SearchImageColorTrait,
   type SearchImageDimensionFilter,
+  type SearchImageAnimationMode,
   type SearchVisualColor
 } from "./imageSearchFilters";
 
@@ -89,6 +91,7 @@ export interface ImageSearchState {
   imageAspectRatios?: SearchImageAspectRatio[];
   imageAspectRatioValues?: SearchImageAspectRatioValue[];
   imageDimensionFilter?: SearchImageDimensionFilter;
+  imageAnimation?: SearchImageAnimationMode;
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -1657,6 +1660,11 @@ const appendImageFacetFilters = (where: string[], params: Record<string, SqlValu
       where.push(`${column} ${key}`);
     }
   }
+  if (search.imageAnimation === "animated") where.push(`(animation.status = 'indexed' AND animation.extractor_version = ${ANIMATION_FACT_EXTRACTOR_VERSION} AND animation.is_animated = 1)`);
+  if (search.imageAnimation === "static") {
+    const extensionKeys = supportedAnimationFactExtensions.map((extension, index) => { const key = `:facet_animation_extension_${index}`; params[key] = extension; return key; });
+    where.push(`(i.id IS NOT NULL AND (f.extension NOT IN (${extensionKeys.join(", ")}) OR (animation.status = 'indexed' AND animation.extractor_version = ${ANIMATION_FACT_EXTRACTOR_VERSION} AND animation.is_animated = 0)))`);
+  }
 };
 
 export const searchIndexedCatalog = async (
@@ -1750,7 +1758,7 @@ export const searchIndexedCatalog = async (
   const visualPropertyJoinSql = hasVisualPropertyConditions
     ? "LEFT JOIN file_visual_properties AS property ON property.file_id = f.id"
     : "";
-  const hasAnimationConditions = queryPlan.terms.some((plannedTerm) => plannedTerm.conditions.some((condition) => condition.type === "animation"));
+  const hasAnimationConditions = searchImageAnimationModes.includes(search.imageAnimation as SearchImageAnimationMode) || queryPlan.terms.some((plannedTerm) => plannedTerm.conditions.some((condition) => condition.type === "animation"));
   const animationSelectSql = hasAnimationConditions
     ? "animation.status, animation.extractor_version, animation.source_revision, animation.is_animated"
     : "NULL, NULL, NULL, NULL";
@@ -1931,9 +1939,14 @@ export const searchIndexedCatalog = async (
       availableFormats.add(normalizedFormat);
     }
 
-    const filteredImages = (search.visualColors?.length ?? 0) > 0 || (search.imageColorTraits?.length ?? 0) > 0
+    const visualFilteredImages = (search.visualColors?.length ?? 0) > 0 || (search.imageColorTraits?.length ?? 0) > 0
       ? images.filter((image) => visualPropertiesByFilePath[image.filePath] !== undefined)
       : images;
+    const filteredImages = search.imageAnimation === "animated"
+      ? visualFilteredImages.filter((image) => animationFactsByFilePath[image.filePath] === true)
+      : search.imageAnimation === "static"
+        ? visualFilteredImages.filter((image) => image.resultKind === "visual" && (!supportedAnimationFactExtensions.includes(image.extension as (typeof supportedAnimationFactExtensions)[number]) || animationFactsByFilePath[image.filePath] === false))
+        : visualFilteredImages;
     return {
       images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),

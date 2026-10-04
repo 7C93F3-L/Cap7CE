@@ -1,6 +1,7 @@
 import type { SearchState } from "../../shared/types";
 import { isImageOnlyExtensionSelection } from "./exploreFormatFilters";
 import StableImageColorFilter from "./StableImageColorFilter";
+import StableImageAnimationFilter from "./StableImageAnimationFilter";
 import StableImageDimensionFilter from "./StableImageDimensionFilter";
 import StableImageRatioFilter from "./StableImageRatioFilter";
 import "./StableImageFilters.css";
@@ -15,6 +16,7 @@ const StableImageFilters = ({ search, onFlyoutOpen, onSearchOptionsChange }: Sta
     <StableImageColorFilter {...props} />
     <StableImageRatioFilter {...props} />
     <StableImageDimensionFilter {...props} />
+    <StableImageAnimationFilter search={search} onSearchOptionsChange={onSearchOptionsChange} />
   </>;
 };
 

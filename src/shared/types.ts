@@ -1,5 +1,5 @@
 import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
-import type { SearchImageAspectRatio, SearchImageAspectRatioValue, SearchImageColorTrait, SearchImageDimensionFilter, SearchVisualColor } from "../../electron/imageSearchFilters";
+import type { SearchImageAnimationMode, SearchImageAspectRatio, SearchImageAspectRatioValue, SearchImageColorTrait, SearchImageDimensionFilter, SearchVisualColor } from "../../electron/imageSearchFilters";
 
 export type AppView = "home" | "results" | "skim" | "settings";
 
@@ -465,6 +465,7 @@ export interface SearchState {
   imageAspectRatios?: SearchImageAspectRatio[];
   imageAspectRatioValues?: SearchImageAspectRatioValue[];
   imageDimensionFilter?: SearchImageDimensionFilter;
+  imageAnimation?: SearchImageAnimationMode;
 }
 
 export interface AiSearchStartRequest {
