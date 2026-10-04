@@ -200,6 +200,7 @@ export const searchImagesWithAddedDirectories = async (
   const includedExtensions = getIncludedExtensionSet(search.includedExtensions);
   const selectedExtensions = getIncludedExtensionSet(search.selectedExtensions);
   const modifiedTimeRange = resolveSearchModifiedTimeRange(search.timePreset, search.modifiedTimeRange);
+  const requiresIndexedImageFacets = (search.visualColors?.length ?? 0) > 0 || (search.imageAspectRatios?.length ?? 0) > 0;
   const directoryTermMatches = getDirectoryTermMatches(directoriesToScan, terms);
   const directoryById = new Map(directoriesToScan.map((directory) => [directory.id, directory]));
   const selectedFileFormat = normalizeFileFormat(search.fileFormat);
@@ -247,6 +248,7 @@ export const searchImagesWithAddedDirectories = async (
       resultByPath.set(key, mergeScannedMetadata(existing, file));
       continue;
     }
+    if (requiresIndexedImageFacets) continue;
     const matchesQuery = queryPlan.terms.every((plannedTerm, termIndex) => (
       fileMatchesDeterministicSearchTerm(file, plannedTerm.term, directoryTermMatches[termIndex])
       || matchesAnyNaturalSearchCondition({

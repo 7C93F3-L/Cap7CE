@@ -1411,11 +1411,13 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       || search.fileFormat !== "all"
       || (search.selectedExtensions?.length ?? 0) > 0
       || (search.timePreset ?? "all") !== "all"
+      || (search.visualColors?.length ?? 0) > 0
+      || (search.imageAspectRatios?.length ?? 0) > 0
     ) {
       return;
     }
 
-    const nextSearch = { ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined };
+    const nextSearch = { ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined, visualColors: undefined, imageAspectRatios: undefined };
     setSearch(nextSearch);
     await runSearch(nextSearch, { navigate: false });
   };
@@ -2265,7 +2267,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const resultStatusNode = <ResultStatus
     resultCount={searchResults.length}
     fileCount={selectedDirectoryFileCount}
-    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all"}
+    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all" || (search.visualColors?.length ?? 0) > 0 || (search.imageAspectRatios?.length ?? 0) > 0}
     isSearching={isSearching || aiSearchBeta.busy}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({

@@ -17,6 +17,7 @@ const exploreBarStyles = read("src/renderer/stable-ui/StableExploreBar.css");
 const exploreFiltersSource = read("src/renderer/stable-ui/StableExploreFilters.tsx");
 const exploreFiltersStyles = read("src/renderer/stable-ui/StableExploreFilters.css");
 const exploreFormatFiltersSource = read("src/renderer/stable-ui/exploreFormatFilters.ts");
+const imageFiltersSource = read("src/renderer/stable-ui/StableImageFilters.tsx");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
@@ -36,7 +37,7 @@ assert.match(appSource, /onSearch=\{submitSearch\}/);
 const resultStatusCall = appSource.match(/const resultStatusNode = <ResultStatus[\s\S]*?\/>;/u)?.[0] ?? "";
 assert.match(appSource, /const selectedDirectoryFileCount = directoryOptions\.find\(\(\{ id \}\) => id === search\.directoryId\)\?\.fileCount \?\? null;/u);
 assert.match(resultStatusCall, /fileCount=\{selectedDirectoryFileCount\}/u);
-assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0 \|\| search\.fileFormat !== "all" \|\| \(search\.selectedExtensions\?\.length \?\? 0\) > 0 \|\| \(search\.timePreset \?\? "all"\) !== "all"\}/u);
+assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0[\s\S]*?search\.visualColors\?\.length[\s\S]*?search\.imageAspectRatios\?\.length/u);
 assert.doesNotMatch(resultStatusCall, /directoryId/u);
 assert.match(resultStatusSource, /hasActiveSearch[\s\S]*?search\.resultCount[\s\S]*?search\.fileCount[\s\S]*?fileCount \?\? "…"/u);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
@@ -62,6 +63,8 @@ assert.match(exploreFiltersSource, /timePresets = \["week", "month", "year", "la
 assert.match(exploreFiltersSource, /timePreset: "custom", modifiedTimeRange: \{ startMs, endMs:/u);
 assert.match(exploreFiltersSource, /selectedExtensions: nextExtensions\.length \? nextExtensions : undefined/u);
 assert.match(exploreFormatFiltersSource, /getExtensionsForCanonicalFormat[\s\S]*?canonicalFormat\(capability\.extension\) === canonicalFormat\(format\)/u);
+assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?extension !== "\.pdf"[\s\S]*?category === "visual"/u);
+assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?visualColors:[\s\S]*?imageAspectRatios:/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

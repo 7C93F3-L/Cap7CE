@@ -108,6 +108,8 @@
     "src/renderer/stable-ui/StableExploreFilters.tsx": 150,
     "src/renderer/stable-ui/StableExploreFilters.css": 75,
     "src/renderer/stable-ui/exploreFormatFilters.ts": 75,
+    "src/renderer/stable-ui/StableImageFilters.tsx": 50,
+    "src/renderer/stable-ui/StableImageFilters.css": 20,
     "src/renderer/stable-ui/stableExploreTypes.ts": 10,
     "src/renderer/stable-ui/StableSidebar.css": 100,
     "src/renderer/stable-ui/StableDirectoryFlyout.tsx": 40,

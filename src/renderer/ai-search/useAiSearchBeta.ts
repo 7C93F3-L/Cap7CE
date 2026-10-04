@@ -72,7 +72,9 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       includedExtensions: search.includedExtensions ?? [],
       selectedExtensions: search.selectedExtensions ?? [],
       timePreset: search.timePreset ?? "all",
-      modifiedTimeRange: search.modifiedTimeRange ?? null
+      modifiedTimeRange: search.modifiedTimeRange ?? null,
+      visualColors: search.visualColors ?? [],
+      imageAspectRatios: search.imageAspectRatios ?? []
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

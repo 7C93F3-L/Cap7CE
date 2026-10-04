@@ -15,6 +15,8 @@ interface SearchRequestShape {
   includedExtensions?: unknown;
   selectedExtensions?: unknown;
   timePreset?: unknown;
+  visualColors?: unknown;
+  imageAspectRatios?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -29,7 +31,9 @@ const summarizeSearch = (search: unknown) => {
     sortDirection: request.sortDirection,
     includedExtensionCount: Array.isArray(request.includedExtensions) ? request.includedExtensions.length : 0,
     selectedExtensionCount: Array.isArray(request.selectedExtensions) ? request.selectedExtensions.length : 0,
-    timePreset: typeof request.timePreset === "string" ? request.timePreset.slice(0, 20) : "all"
+    timePreset: typeof request.timePreset === "string" ? request.timePreset.slice(0, 20) : "all",
+    visualColorCount: Array.isArray(request.visualColors) ? request.visualColors.length : 0,
+    imageAspectRatioCount: Array.isArray(request.imageAspectRatios) ? request.imageAspectRatios.length : 0
   };
 };
 

@@ -2,6 +2,7 @@ import type { IpcMainInvokeEvent } from "electron";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import { t } from "./localization";
+import { searchImageAspectRatios, searchVisualColors } from "./searchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -35,7 +36,9 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
       && search.modifiedTimeRange !== null
       && Number.isFinite((search.modifiedTimeRange as Record<string, unknown>).startMs)
       && Number.isFinite((search.modifiedTimeRange as Record<string, unknown>).endMs)
-    ));
+    ))
+    && (search.visualColors === undefined || (Array.isArray(search.visualColors) && search.visualColors.every((color) => searchVisualColors.includes(String(color) as (typeof searchVisualColors)[number]))))
+    && (search.imageAspectRatios === undefined || (Array.isArray(search.imageAspectRatios) && search.imageAspectRatios.every((ratio) => searchImageAspectRatios.includes(String(ratio) as (typeof searchImageAspectRatios)[number]))));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

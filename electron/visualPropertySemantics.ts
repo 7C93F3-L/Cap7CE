@@ -108,15 +108,25 @@ const definitionByAlias = new Map(
     definition.aliases.map((alias) => [alias.toLocaleLowerCase(), definition] as const)
   ))
 );
+const definitionBySemantic = new Map(
+  visualPropertySemanticDefinitions.map((definition) => [definition.semantic, definition] as const)
+);
+
+const toCondition = (definition: VisualPropertySemanticDefinition): VisualPropertySemanticCondition => ({
+  type: "visualProperty",
+  semantic: definition.semantic,
+  strength: definition.strength,
+  constraints: definition.constraints.map((constraint) => ({ ...constraint }))
+});
 
 export const getVisualPropertySemanticCondition = (term: string): VisualPropertySemanticCondition | null => {
   const definition = definitionByAlias.get(term.toLocaleLowerCase());
-  return definition ? {
-    type: "visualProperty",
-    semantic: definition.semantic,
-    strength: definition.strength,
-    constraints: definition.constraints.map((constraint) => ({ ...constraint }))
-  } : null;
+  return definition ? toCondition(definition) : null;
+};
+
+export const getVisualPropertySemanticConditionBySemantic = (semantic: string) => {
+  const definition = definitionBySemantic.get(semantic);
+  return definition ? toCondition(definition) : null;
 };
 
 const getMetricValue = (properties: VisualPropertyVector, metric: VisualPropertyMetric) => {

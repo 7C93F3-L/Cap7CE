@@ -1,0 +1,15 @@
+.cap-stable-image-color-filter { --cap-image-color-red: #f22228; --cap-image-color-orange: #ff931f; --cap-image-color-yellow: #ffea18; --cap-image-color-green: #27d345; --cap-image-color-cyan: #17ced7; --cap-image-color-blue: #243bdf; --cap-image-color-purple: #a32bd3; --cap-image-color-pink: #ef68ae; --cap-image-color-black-background: #111; --cap-image-color-gray-tone: #999; --cap-image-color-white-background: #f3f3f3; width: 270px; }
+.cap-stable-color-options { display: grid; grid-template-columns: repeat(8, 24px); gap: 7px; padding-top: 4px; }
+.cap-stable-color-options button { position: relative; width: 22px; height: 22px; padding: 0; border: 2px solid color-mix(in srgb, var(--cap-stable-text) 82%, transparent); border-radius: 50%; background: var(--cap-color-swatch); }
+.cap-stable-color-options button.is-transparent-background { background-color: #fff; background-image: linear-gradient(45deg, #bbb 25%, transparent 25%), linear-gradient(-45deg, #bbb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #bbb 75%), linear-gradient(-45deg, transparent 75%, #bbb 75%); background-position: 0 0, 0 5px, 5px -5px, -5px 0; background-size: 10px 10px; }
+.cap-stable-color-options button.is-selected::after { position: absolute; inset: -6px; border: 2px solid var(--accent-color); border-radius: 50%; content: ""; }
+.cap-stable-image-ratio-filter { width: 390px; }
+.cap-stable-ratio-options { display: grid; grid-template-columns: repeat(5, 72px); gap: 4px; }
+.cap-stable-ratio-options button { display: grid; grid-template-rows: 42px 22px; place-items: center; min-height: 68px; padding: 2px 4px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-ratio-options button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
+.cap-stable-ratio-options button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
+.cap-stable-ratio-options i { display: block; width: 21px; height: 32px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 3px; }
+.cap-stable-ratio-options i.is-landscape { width: 32px; height: 21px; }
+.cap-stable-ratio-options i.is-square { width: 27px; height: 27px; }
+.cap-stable-ratio-options i.is-wide { width: 38px; height: 14px; }
+.cap-stable-ratio-options i.is-tall { width: 12px; height: 38px; }

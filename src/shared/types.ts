@@ -1,4 +1,4 @@
-import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
+import type { SearchImageAspectRatio, SearchModifiedTimeRange, SearchTimePreset, SearchVisualColor } from "../../electron/searchFilters";
 
 export type AppView = "home" | "results" | "skim" | "settings";
 
@@ -459,6 +459,8 @@ export interface SearchState {
   selectedExtensions?: string[];
   timePreset?: SearchTimePreset;
   modifiedTimeRange?: SearchModifiedTimeRange;
+  visualColors?: SearchVisualColor[];
+  imageAspectRatios?: SearchImageAspectRatio[];
 }
 
 export interface AiSearchStartRequest {

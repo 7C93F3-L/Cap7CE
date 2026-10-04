@@ -9,9 +9,11 @@ import {
   getFormatSelectionGroups,
   getOtherFileTypeExtensions,
   getPrimaryFileTypeExtensions,
+  isImageOnlyExtensionSelection,
   type ExploreOtherFileType,
   type ExplorePrimaryFileType
 } from "./exploreFormatFilters";
+import StableImageFilters from "./StableImageFilters";
 import "./StableExploreFilters.css";
 
 type FilterFlyoutKind = "dates" | "formats" | "other";
@@ -91,7 +93,8 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
   };
   const toggleGroup = (extensions: readonly string[]) => {
     const nextExtensions = toggleExtensions(search.selectedExtensions ?? [], extensions);
-    applySearch({ ...search, selectedExtensions: nextExtensions.length ? nextExtensions : undefined });
+    const preserveImageFilters = isImageOnlyExtensionSelection(nextExtensions);
+    applySearch({ ...search, selectedExtensions: nextExtensions.length ? nextExtensions : undefined, visualColors: preserveImageFilters ? search.visualColors : undefined, imageAspectRatios: preserveImageFilters ? search.imageAspectRatios : undefined });
   };
   const updateFormatDraft = (format: string) => setFormatDraft((current) => toggleExtensions(current, getExtensionsForCanonicalFormat(format)));
   const customRangeLabel = search.timePreset === "custom" && search.modifiedTimeRange
@@ -103,6 +106,7 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
       <div className="cap-stable-time-control"><div className="cap-stable-time-rails" aria-hidden="true"><i /><i /><i /></div><input className={search.timePreset === "custom" ? "is-custom" : ""} type="range" min="0" max={timePresets.length - 1} step="1" value={timeIndex} aria-label={t("explore.time")} onChange={(event) => setTimeIndex(Number(event.target.value))} onPointerUp={(event) => commitTime(Number(event.currentTarget.value))} onKeyUp={(event) => commitTime(Number(event.currentTarget.value))} onBlur={(event) => commitTime(Number(event.currentTarget.value))} /></div>
       <div className="cap-stable-time-labels">{timePresets.map((preset, index) => <button type="button" className={search.timePreset !== "custom" && presetIndex === index ? "is-selected" : ""} key={preset} onClick={() => { setTimeIndex(index); commitTime(index); }}><i aria-hidden="true" />{t(timeLabels[preset])}</button>)}</div>
     </section>
+    <StableImageFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />
     <section className="cap-stable-file-type-filter">
       <header><strong>{t("explore.fileTypes")}</strong><button type="button" title={t("explore.editFormats")} aria-label={t("explore.editFormats")} aria-expanded={flyout?.kind === "formats"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("formats", event)}><EditGlyph /></button>{selectedSummary && <span>{selectedSummary}</span>}</header>
       <div className="cap-stable-file-type-options">
@@ -116,7 +120,7 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
     </StableSidebarFlyout>}
     {flyout?.kind === "formats" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editFormats")} placement="below" align="start" width={460} maximumHeight={520} className="cap-stable-explore-flyout cap-stable-format-flyout" onClose={() => setFlyout(null)}>
       {categoryOrder.map((category) => { const formats = formatGroups.get(category); return formats?.length ? <section key={category}><strong>{t(categoryLabels[category])}</strong><div>{formats.map((format) => { const extensions = getExtensionsForCanonicalFormat(format); return <button type="button" className={isGroupSelected(new Set(formatDraft), extensions) ? "is-selected" : ""} key={format} onClick={() => updateFormatDraft(format)}>{format.toUpperCase()}</button>; })}</div></section> : null; })}
-      <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFormatDraft([])}>{t("explore.clearFilters")}</button><button type="button" className="is-selected" onClick={() => { applySearch({ ...search, selectedExtensions: formatDraft.length ? [...formatDraft].sort() : undefined }); setFlyout(null); }}>{t("common.confirm")}</button></div>
+      <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFormatDraft([])}>{t("explore.clearFilters")}</button><button type="button" className="is-selected" onClick={() => { const preserveImageFilters = isImageOnlyExtensionSelection(formatDraft); applySearch({ ...search, selectedExtensions: formatDraft.length ? [...formatDraft].sort() : undefined, visualColors: preserveImageFilters ? search.visualColors : undefined, imageAspectRatios: preserveImageFilters ? search.imageAspectRatios : undefined }); setFlyout(null); }}>{t("common.confirm")}</button></div>
     </StableSidebarFlyout>}
     {flyout?.kind === "other" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.fileTypes.other")} placement="below" align="end" width={390} maximumHeight={240} className="cap-stable-explore-flyout cap-stable-other-flyout" onClose={() => setFlyout(null)}>
       {otherTypes.map((type) => { const extensions = getOtherFileTypeExtensions(availableFormats, type); return <button type="button" className={isGroupSelected(selected, extensions) ? "is-selected" : ""} disabled={extensions.length === 0} key={type} onClick={() => toggleGroup(extensions)}>{t(otherLabels[type])}</button>; })}

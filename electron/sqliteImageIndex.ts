@@ -36,7 +36,7 @@ import {
   type VisualPropertyVector,
   type VisualPropertyWriteRecord
 } from "./visualPropertyTypes";
-import type { VisualPropertyMetric, VisualPropertySemanticCondition } from "./visualPropertySemantics";
+import { getVisualPropertySemanticConditionBySemantic, type VisualPropertyMetric, type VisualPropertySemanticCondition } from "./visualPropertySemantics";
 import { replaceAnimationFact } from "./animationFactStore";
 import { ANIMATION_FACT_EXTRACTOR_VERSION, supportedAnimationFactExtensions, type AnimationFactCandidate, type AnimationFactWriteRecord } from "./animationFactTypes";
 import {
@@ -45,7 +45,15 @@ import {
   type ImageDimensionCandidate,
   type ImageDimensionWriteRecord
 } from "./imageDimensionTypes";
-import { resolveSearchModifiedTimeRange, type SearchModifiedTimeRange, type SearchTimePreset } from "./searchFilters";
+import {
+  resolveSearchModifiedTimeRange,
+  searchImageAspectRatios,
+  searchVisualColors,
+  type SearchImageAspectRatio,
+  type SearchModifiedTimeRange,
+  type SearchTimePreset,
+  type SearchVisualColor
+} from "./searchFilters";
 
 const requireFromHere = createRequire(__filename);
 
@@ -68,6 +76,8 @@ export interface ImageSearchState {
   selectedExtensions?: string[];
   timePreset?: SearchTimePreset;
   modifiedTimeRange?: SearchModifiedTimeRange;
+  visualColors?: SearchVisualColor[];
+  imageAspectRatios?: SearchImageAspectRatio[];
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -1596,6 +1606,22 @@ const getVisualPropertyConditionSql = (condition: VisualPropertySemanticConditio
   )).join(" AND ")}
 )`;
 
+const imageAspectRatioSql: Record<SearchImageAspectRatio, string> = {
+  portrait: "(i.image_width > 0 AND i.image_width * 10 < i.image_height * 9 AND i.image_height < i.image_width * 2)",
+  landscape: "(i.image_height > 0 AND i.image_width * 10 > i.image_height * 11 AND i.image_width < i.image_height * 2)",
+  square: "(i.image_width > 0 AND i.image_height > 0 AND i.image_width * 10 BETWEEN i.image_height * 9 AND i.image_height * 11)",
+  wide: "(i.image_height > 0 AND i.image_width >= i.image_height * 2)",
+  tall: "(i.image_width > 0 AND i.image_height >= i.image_width * 2)"
+};
+
+const appendImageFacetFilters = (where: string[], search: ImageSearchState) => {
+  const colors = [...new Set(search.visualColors ?? [])].filter((color): color is SearchVisualColor => searchVisualColors.includes(color as SearchVisualColor));
+  const colorConditions = colors.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
+  if (colorConditions.length > 0) where.push(`(${colorConditions.map(getVisualPropertyConditionSql).join(" OR ")})`);
+  const ratios = [...new Set(search.imageAspectRatios ?? [])].filter((ratio): ratio is SearchImageAspectRatio => searchImageAspectRatios.includes(ratio as SearchImageAspectRatio));
+  if (ratios.length > 0) where.push(`(${ratios.map((ratio) => imageAspectRatioSql[ratio]).join(" OR ")})`);
+};
+
 export const searchIndexedCatalog = async (
   search: ImageSearchState,
   directories: PersistedDirectory[],
@@ -1619,6 +1645,7 @@ export const searchIndexedCatalog = async (
   appendIncludedExtensionsFilter(where, params, search.includedExtensions, "catalog_included_extension");
   appendIncludedExtensionsFilter(where, params, search.selectedExtensions, "catalog_selected_extension");
   appendModifiedTimeFilter(where, params, search);
+  appendImageFacetFilters(where, search);
   params[":ai_query_model_id"] = search.aiQueryModelId ?? "";
   params[":ai_query_prompt_version"] = search.aiQueryPromptVersion ?? 0;
   queryPlan.terms.forEach((plannedTerm, termIndex) => {
@@ -1676,7 +1703,7 @@ export const searchIndexedCatalog = async (
       ORDER BY evidence_kind
     ) AS embedded_result
   )`;
-  const hasVisualPropertyConditions = queryPlan.terms.some((plannedTerm) => (
+  const hasVisualPropertyConditions = (search.visualColors?.length ?? 0) > 0 || queryPlan.terms.some((plannedTerm) => (
     plannedTerm.conditions.some((condition) => condition.type === "visualProperty")
   ));
   const visualPropertySelectSql = hasVisualPropertyConditions
@@ -1867,8 +1894,11 @@ export const searchIndexedCatalog = async (
       availableFormats.add(normalizedFormat);
     }
 
+    const filteredImages = (search.visualColors?.length ?? 0) > 0
+      ? images.filter((image) => visualPropertiesByFilePath[image.filePath] !== undefined)
+      : images;
     return {
-      images,
+      images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),
       directoryIdByFilePath,
       knownCatalogFilePaths,

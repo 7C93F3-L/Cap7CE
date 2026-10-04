@@ -221,6 +221,9 @@ app.whenReady().then(async () => {
     assert.deepEqual(redQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(redQuery.images[0].searchEvidence.weakestSource, "visualPropertySoft");
     assert.equal(redQuery.images[0].searchEvidence.classification, "visualSimilarity");
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, visualColors: ["red"] }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["landscape"] }, directories)).images.map((item) => item.fileName), ["visual.png"]);
+    assert.deepEqual((await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["wide"] }, directories)).images, []);
     const grayQuery = await searchImagesWithAddedDirectories({ ...baseSearch, query: "灰色调" }, directories);
     assert.deepEqual(grayQuery.images.map((item) => item.fileName), ["visual.png"]);
     assert.equal(grayQuery.images[0].searchEvidence.weakestSource, "visualPropertySoft");
@@ -435,6 +438,15 @@ app.whenReady().then(async () => {
       }
     }, directories);
     assert.deepEqual(customTimeRange.images.map((item) => item.fileName), ["notes.txt", "plain.txt"]);
+
+    const redImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, visualColors: ["red"] }, directories);
+    assert.deepEqual(redImageFilter.images, [], "stale visual properties must not satisfy explicit color filters");
+    const blueImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, visualColors: ["blue"] }, directories);
+    assert.deepEqual(blueImageFilter.images, []);
+    const landscapeImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["landscape"] }, directories);
+    assert.deepEqual(landscapeImageFilter.images, [], "unknown current dimensions must not satisfy explicit ratio filters");
+    const wideImageFilter = await searchImagesWithAddedDirectories({ ...baseSearch, imageAspectRatios: ["wide"] }, directories);
+    assert.deepEqual(wideImageFilter.images, []);
 
     const directoryFilter = await searchImagesWithAddedDirectories({
       ...baseSearch,

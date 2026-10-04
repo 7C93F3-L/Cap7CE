@@ -17,4 +17,6 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || next.timePreset !== previous.timePreset
   || next.modifiedTimeRange?.startMs !== previous.modifiedTimeRange?.startMs
   || next.modifiedTimeRange?.endMs !== previous.modifiedTimeRange?.endMs
+  || stringListKey(next.visualColors) !== stringListKey(previous.visualColors)
+  || stringListKey(next.imageAspectRatios) !== stringListKey(previous.imageAspectRatios)
 );
