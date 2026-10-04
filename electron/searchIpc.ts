@@ -37,6 +37,8 @@ interface SearchRequestShape {
   documentContentCountPreset?: unknown;
   documentContentCountRange?: unknown;
   documentImageComposition?: unknown;
+  artboardCountPreset?: unknown;
+  artboardCountRange?: unknown;
   textCharacterCountPreset?: unknown;
   textCharacterCountRange?: unknown;
   textLineCountPreset?: unknown;
@@ -81,6 +83,7 @@ const summarizeSearch = (search: unknown) => {
     audioChannelCount: Array.isArray(request.audioChannels) ? request.audioChannels.length : 0,
     documentContentCount: typeof request.documentContentCountPreset === "string" || typeof request.documentContentCountRange === "object",
     documentImageComposition: typeof request.documentImageComposition === "string" ? request.documentImageComposition.slice(0, 24) : "all",
+    artboardCount: typeof request.artboardCountPreset === "string" || typeof request.artboardCountRange === "object",
     textDataFiltered: [
       request.textCharacterCountPreset, request.textCharacterCountRange, request.textLineCountPreset, request.textLineCountRange,
       request.csvRecordCountPreset, request.csvRecordCountRange, request.csvColumnCountPreset, request.csvColumnCountRange,

@@ -51,6 +51,21 @@ const readPreviewEntry = async (
   handle: fs.FileHandle,
   fileSize: number
 ): Promise<ZipPreviewEntry> => {
+  const entries = await readCentralDirectoryEntries(handle, fileSize);
+  const previews = new Map(entries.map((entry) => [entry.name, entry]));
+  for (const name of preferredPreviewNames) {
+    const entry = previews.get(name);
+    if (entry) {
+      return entry;
+    }
+  }
+  throw new Error("CDR 不包含可用的第一页或缩略图预览。");
+};
+
+const readCentralDirectoryEntries = async (
+  handle: fs.FileHandle,
+  fileSize: number
+): Promise<ZipPreviewEntry[]> => {
   const tailLength = Math.min(fileSize, maximumZipTailBytes);
   const tailOffset = fileSize - tailLength;
   const tail = await readExact(handle, tailOffset, tailLength);
@@ -82,7 +97,7 @@ const readPreviewEntry = async (
     centralDirectoryOffset,
     centralDirectorySize
   );
-  const entries = new Map<string, ZipPreviewEntry>();
+  const entries: ZipPreviewEntry[] = [];
   let offset = 0;
   for (let index = 0; index < entryCount; index += 1) {
     if (
@@ -110,26 +125,38 @@ const readPreviewEntry = async (
       .toString((flags & 0x0800) !== 0 ? "utf8" : "latin1")
       .replace(/\\/g, "/")
       .toLowerCase();
-    if (preferredPreviewNames.includes(name)) {
-      entries.set(name, {
-        name,
-        flags,
-        compressionMethod,
-        compressedSize,
-        uncompressedSize,
-        localHeaderOffset
-      });
-    }
+    entries.push({
+      name,
+      flags,
+      compressionMethod,
+      compressedSize,
+      uncompressedSize,
+      localHeaderOffset
+    });
     offset = nextOffset;
   }
+  return entries;
+};
 
-  for (const name of preferredPreviewNames) {
-    const entry = entries.get(name);
-    if (entry) {
-      return entry;
+export const readCdrPageCount = async (sourcePath: string) => {
+  const handle = await fs.open(sourcePath, "r");
+  try {
+    const stat = await handle.stat();
+    const entries = await readCentralDirectoryEntries(handle, stat.size);
+    const pageNumbers = new Set<number>();
+    for (const entry of entries) {
+      const match = /^previews\/page([1-9]\d*)\.png$/i.exec(entry.name);
+      if (!match) continue;
+      const pageNumber = Number(match[1]);
+      if (Number.isSafeInteger(pageNumber) && pageNumber <= 100_000) pageNumbers.add(pageNumber);
     }
+    if (pageNumbers.size === 0) throw new Error("cdr-page-previews-missing");
+    const maximumPage = Math.max(...pageNumbers);
+    if (maximumPage !== pageNumbers.size) throw new Error("cdr-page-previews-incomplete");
+    return maximumPage;
+  } finally {
+    await handle.close();
   }
-  throw new Error("CDR 不包含可用的第一页或缩略图预览。");
 };
 
 const decodePreviewEntry = async (

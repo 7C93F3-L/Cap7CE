@@ -40,6 +40,8 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || next.documentContentCountPreset !== previous.documentContentCountPreset
   || valueKey(next.documentContentCountRange) !== valueKey(previous.documentContentCountRange)
   || next.documentImageComposition !== previous.documentImageComposition
+  || next.artboardCountPreset !== previous.artboardCountPreset
+  || valueKey(next.artboardCountRange) !== valueKey(previous.artboardCountRange)
   || next.textCharacterCountPreset !== previous.textCharacterCountPreset
   || valueKey(next.textCharacterCountRange) !== valueKey(previous.textCharacterCountRange)
   || next.textLineCountPreset !== previous.textLineCountPreset

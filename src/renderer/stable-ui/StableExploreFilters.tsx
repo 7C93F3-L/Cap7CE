@@ -16,6 +16,7 @@ import StableMediaFilters from "./StableMediaFilters";
 import StableFileSizeFilter from "./StableFileSizeFilter";
 import StableDocumentFilters from "./StableDocumentFilters";
 import StableTextDataFilters from "./StableTextDataFilters";
+import StableArtboardFilter from "./StableArtboardFilter";
 import { retainApplicableExploreTypeFilters } from "./exploreTypeFilterState";
 import "./StableExploreFilters.css";
 type FilterFlyoutKind = "dates" | "formats" | "other";
@@ -55,7 +56,6 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
 const TypeGlyph = ({ type }: { type: ExplorePrimaryFileType | "other" }) => <span className={`cap-stable-type-glyph is-${type}`} aria-hidden="true"><i /><b /></span>;
-
 const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
@@ -70,7 +70,6 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
   const selectedSummary = `${summaryItems.slice(0, 2).map((item) => item.kind === "type" ? t(typeLabels[item.value]) : item.value.toUpperCase()).join("  ")}${summaryItems.length > 2 ? `  +${summaryItems.length - 2}` : ""}`;
   useEffect(() => setTimeIndex(presetIndex), [presetIndex]);
   useLayoutEffect(() => setFlyout(null), [closeFlyoutRequest]);
-
   const applySearch = (next: SearchState) => onSearchOptionsChange(next);
   const openFlyout = (kind: FilterFlyoutKind, event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -128,6 +127,7 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
         <button type="button" className={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension))) ? "is-selected" : ""} aria-pressed={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension)))} aria-expanded={flyout?.kind === "other"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("other", event)}><TypeGlyph type="other" /><span>{t("explore.fileTypes.other")}</span></button>
       </div>
     </section>
+    <StableArtboardFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableMediaFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableDocumentFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />

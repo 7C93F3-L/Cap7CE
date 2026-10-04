@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { app } = require("electron");
 const { strToU8, zipSync } = require("fflate");
+const { writePsd } = require("ag-psd");
 
 const createPdf = (pageCount, withImage = false) => {
   const objects = [];
@@ -49,6 +50,8 @@ app.whenReady().then(async () => {
     const migratedColumns = migrationDatabase.exec("PRAGMA table_info(file_document_facts)")[0]?.values ?? [];
     assert.ok(migratedColumns.some((row) => row[1] === "has_embedded_images"));
     assert.ok(migratedColumns.some((row) => row[1] === "image_composition_known"));
+    assert.ok(migratedColumns.some((row) => row[1] === "artboard_count_known"));
+    assert.ok(migratedColumns.some((row) => row[1] === "artboard_count"));
     migrationDatabase.close();
 
     await fs.mkdir(directoryPath, { recursive: true });
@@ -58,7 +61,10 @@ app.whenReady().then(async () => {
       longPdf: path.join(directoryPath, "long-document.pdf"),
       docx: path.join(directoryPath, "seven-pages.docx"),
       pptx: path.join(directoryPath, "twelve-slides.pptx"),
-      xlsx: path.join(directoryPath, "three-sheets.xlsx")
+      xlsx: path.join(directoryPath, "three-sheets.xlsx"),
+      ai: path.join(directoryPath, "four-artboards.ai"),
+      cdr: path.join(directoryPath, "three-pages.cdr"),
+      psd: path.join(directoryPath, "two-artboards.psd")
     };
     await fs.writeFile(files.pdf, createPdf(3));
     await fs.writeFile(files.imagePdf, createPdf(1, true));
@@ -66,9 +72,18 @@ app.whenReady().then(async () => {
     await fs.writeFile(files.docx, zipSync({ "docProps/app.xml": strToU8("<Properties><Pages>7</Pages></Properties>"), "word/media/image1.png": strToU8("image") }));
     await fs.writeFile(files.pptx, zipSync({ "ppt/presentation.xml": strToU8(`<p:presentation xmlns:p="p"><p:sldIdLst>${Array.from({ length: 12 }, (_, index) => `<p:sldId id="${index + 1}"/>`).join("")}</p:sldIdLst></p:presentation>`) }));
     await fs.writeFile(files.xlsx, zipSync({ "xl/workbook.xml": strToU8("<workbook><sheets><sheet name=\"A\"/><sheet name=\"B\"/><sheet name=\"C\"/></sheets></workbook>"), "xl/media/image1.jpeg": strToU8("image") }));
+    await fs.writeFile(files.ai, createPdf(4));
+    await fs.writeFile(files.cdr, zipSync({ "previews/thumbnail.png": strToU8("thumbnail"), "previews/page1.png": strToU8("one"), "previews/page2.png": strToU8("two"), "previews/page3.png": strToU8("three") }));
+    await fs.writeFile(files.psd, Buffer.from(writePsd({
+      width: 200, height: 100, artboards: { count: 2 },
+      children: [
+        { name: "A", artboard: { rect: { top: 0, left: 0, bottom: 100, right: 100 } }, children: [] },
+        { name: "B", artboard: { rect: { top: 0, left: 100, bottom: 100, right: 200 } }, children: [] }
+      ]
+    })));
     await Promise.all(Object.values(files).map((filePath) => fs.utimes(filePath, new Date(timestamp), new Date(timestamp))));
 
-    const { readDocumentFact } = require("../dist-electron/documentFactExtractor.js");
+    const { readArtboardFact, readDocumentFact } = require("../dist-electron/documentFactExtractor.js");
     const { inspectDocumentFactBatch } = require("../dist-electron/documentFactInspector.js");
     assert.deepEqual(await readDocumentFact(files.pdf), { contentCount: 3, countKind: "pages", imageCompositionKnown: true, hasEmbeddedImages: false });
     assert.deepEqual(await readDocumentFact(files.imagePdf), { contentCount: 1, countKind: "pages", imageCompositionKnown: true, hasEmbeddedImages: true });
@@ -76,6 +91,9 @@ app.whenReady().then(async () => {
     assert.deepEqual(await readDocumentFact(files.docx), { contentCount: 7, countKind: "pages", imageCompositionKnown: true, hasEmbeddedImages: true });
     assert.deepEqual(await readDocumentFact(files.pptx), { contentCount: 12, countKind: "slides", imageCompositionKnown: true, hasEmbeddedImages: false });
     assert.deepEqual(await readDocumentFact(files.xlsx), { contentCount: 3, countKind: "sheets", imageCompositionKnown: true, hasEmbeddedImages: true });
+    assert.equal(await readArtboardFact(files.ai), 4);
+    assert.equal(await readArtboardFact(files.cdr), 3);
+    assert.equal(await readArtboardFact(files.psd), 2);
 
     const directory = { id: "document-directory", name: "documents", path: directoryPath, indexedCount: 0, createdAt: timestamp, updatedAt: timestamp };
     const { scanImageDirectories } = require("../dist-electron/imageScanner.js");
@@ -86,11 +104,11 @@ app.whenReady().then(async () => {
     const scan = await scanImageDirectories([directory]);
     await writeScannedImagesToIndex([directory.id], scan.images, scan.scannedAt, scan.files);
     const candidates = await listPendingDocumentFactCandidates([directory.id]);
-    assert.equal(candidates.length, 6);
+    assert.equal(candidates.length, 9);
     const inspected = await inspectDocumentFactBatch(candidates);
     const records = candidates.map((candidate, index) => ({ filePath: candidate.filePath, result: inspected[index] }));
     assert.ok(inspected.every((result) => result.status === "indexed"));
-    assert.equal(await writeDocumentFactBatch(records), 6);
+    assert.equal(await writeDocumentFactBatch(records), 9);
     assert.deepEqual(await listPendingDocumentFactCandidates([directory.id]), []);
 
     searchScanSnapshotService.setActive(false);
@@ -103,6 +121,13 @@ app.whenReady().then(async () => {
     assert.deepEqual(await search({ documentContentCountRange: { minCount: 3, maxCount: 3 } }), ["three-pages.pdf", "three-sheets.xlsx"]);
     assert.deepEqual(await search({ documentImageComposition: "with-images" }), ["image-page.pdf", "seven-pages.docx", "three-sheets.xlsx"]);
     assert.deepEqual(await search({ documentImageComposition: "without-images" }), ["three-pages.pdf", "twelve-slides.pptx"]);
+    const searchArtboards = async (facets) => (await searchImagesWithAddedDirectories({
+      query: "", directoryId: "all", fileFormat: "all", sortField: "file_name", sortDirection: "asc",
+      selectedExtensions: [".ai", ".cdr", ".psd"], ...facets
+    }, [directory])).images.map((item) => item.fileName);
+    assert.deepEqual(await searchArtboards({ artboardCountPreset: "one" }), []);
+    assert.deepEqual(await searchArtboards({ artboardCountPreset: "2-5" }), ["four-artboards.ai", "three-pages.cdr", "two-artboards.psd"]);
+    assert.deepEqual(await searchArtboards({ artboardCountRange: { minCount: 3, maxCount: 3 } }), ["three-pages.cdr"]);
 
     await fs.appendFile(files.docx, "changed");
     const changedScan = await scanImageDirectories([directory]);

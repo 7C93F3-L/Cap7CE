@@ -10,6 +10,8 @@ const failed = (candidate: DocumentFactCandidate, errorCode: string): DocumentFa
   countKind: "pages",
   imageCompositionKnown: false,
   hasEmbeddedImages: false,
+  artboardCountKnown: false,
+  artboardCount: 0,
   errorCode
 });
 

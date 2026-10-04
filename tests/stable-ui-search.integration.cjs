@@ -33,6 +33,8 @@ const documentFiltersSource = read("src/renderer/stable-ui/StableDocumentFilters
 const documentFilterStateSource = read("src/renderer/stable-ui/documentFilterState.ts");
 const textDataFiltersSource = read("src/renderer/stable-ui/StableTextDataFilters.tsx");
 const textDataFilterStateSource = read("src/renderer/stable-ui/textDataFilterState.ts");
+const artboardFilterSource = read("src/renderer/stable-ui/StableArtboardFilter.tsx");
+const artboardFilterStateSource = read("src/renderer/stable-ui/artboardFilterState.ts");
 const exploreTypeFilterStateSource = read("src/renderer/stable-ui/exploreTypeFilterState.ts");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
@@ -83,6 +85,7 @@ assert.match(exploreFiltersSource, /const scrollFiltersHorizontally = [\s\S]*?ra
 assert.match(exploreFiltersSource, /className="cap-stable-explore-filters" onWheel=\{scrollFiltersHorizontally\}/u);
 assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableMediaFilters/u);
 assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableFileSizeFilter[\s\S]*?<StableMediaFilters/u);
+assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableArtboardFilter[\s\S]*?<StableFileSizeFilter/u);
 assert.match(fileSizeFilterSource, /under-1mb[\s\S]*?1mb-10mb[\s\S]*?10mb-100mb[\s\S]*?100mb-1gb[\s\S]*?1gb-or-more/u);
 assert.match(fileSizeFilterSource, /explore\.minimumFileSize[\s\S]*?explore\.maximumFileSize[\s\S]*?\["KB", "MB", "GB"\]/u);
 assert.match(fileSizeFilterStateSource, /fileSizePreset: undefined, fileSizeRange: undefined[\s\S]*?Boolean\(search\.fileSizePreset \|\| search\.fileSizeRange\)/u);
@@ -97,6 +100,7 @@ assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?e
 assert.match(exploreFormatFiltersSource, /isVideoOnlyExtensionSelection[\s\S]*?category === "video"/u);
 assert.match(exploreFormatFiltersSource, /isAudioOnlyExtensionSelection[\s\S]*?category === "audio"/u);
 assert.match(exploreFormatFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?extension === "\.pdf"[\s\S]*?category === "document"/u);
+assert.match(exploreFormatFiltersSource, /isArtboardDocumentOnlyExtensionSelection[\s\S]*?extension === "\.ai"[\s\S]*?extension === "\.cdr"[\s\S]*?extension === "\.psd"/u);
 assert.match(exploreFormatSummarySource, /canonicalizeSelectedFormats\(extensions\)\.length < 2[\s\S]*?kind: "type"[\s\S]*?kind: "format"/u);
 assert.match(randomBrowseSource, /scorePath\(left\.filePath, seed\)[\s\S]*?state\.enabled \? orderRandomBrowseItems\(items, state\.seed\)/u);
 assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current\.batchNumber \+ 1/u);
@@ -118,7 +122,9 @@ assert.match(textDataFiltersSource, /isTextOnlyExtensionSelection[\s\S]*?explore
 assert.match(textDataFiltersSource, /isCsvOnlyExtensionSelection[\s\S]*?explore\.csvRecordCount[\s\S]*?explore\.csvColumnCount/u);
 assert.match(textDataFiltersSource, /isJsonOnlyExtensionSelection[\s\S]*?explore\.jsonItemCount[\s\S]*?explore\.jsonRootKind/u);
 assert.match(textDataFilterStateSource, /textCharacterCountPreset: undefined[\s\S]*?textLineCountPreset: undefined[\s\S]*?csvRecordCountPreset: undefined[\s\S]*?csvColumnCountPreset: undefined[\s\S]*?jsonItemCountPreset: undefined[\s\S]*?jsonRootKind: undefined/u);
-assert.match(exploreTypeFilterStateSource, /clearTextDataFilters\(clearDocumentFilters\(clearMediaFilters\(search\)\)\)[\s\S]*?hasMediaFilters\(search\) \|\| hasDocumentFilters\(search\) \|\| hasTextDataFilters\(search\)[\s\S]*?retainApplicableTextDataFilters/u);
+assert.match(artboardFilterSource, /isArtboardDocumentOnlyExtensionSelection[\s\S]*?explore\.artboardCount[\s\S]*?artboardCountPreset:[\s\S]*?artboardCountRange:/u);
+assert.match(artboardFilterStateSource, /artboardCountPreset: undefined[\s\S]*?artboardCountRange: undefined/u);
+assert.match(exploreTypeFilterStateSource, /clearArtboardFilters\(clearTextDataFilters\(clearDocumentFilters\(clearMediaFilters\(search\)\)\)\)[\s\S]*?hasArtboardFilters\(search\)[\s\S]*?retainArtboardFilters/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

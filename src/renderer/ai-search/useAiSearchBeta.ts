@@ -95,6 +95,8 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       documentContentCountPreset: search.documentContentCountPreset ?? null,
       documentContentCountRange: search.documentContentCountRange ?? null,
       documentImageComposition: search.documentImageComposition ?? null,
+      artboardCountPreset: search.artboardCountPreset ?? null,
+      artboardCountRange: search.artboardCountRange ?? null,
       textCharacterCountPreset: search.textCharacterCountPreset ?? null,
       textCharacterCountRange: search.textCharacterCountRange ?? null,
       textLineCountPreset: search.textLineCountPreset ?? null,

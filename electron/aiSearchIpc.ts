@@ -7,6 +7,7 @@ import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normali
 import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPresets } from "./audioSearchFilters";
 import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchFilters";
 import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets, searchDocumentImageCompositions } from "./documentSearchFilters";
+import { searchArtboardCountPresets } from "./artboardSearchFilters";
 import {
   normalizeSearchCountRange,
   searchDataColumnCountPresets,
@@ -71,6 +72,8 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.documentContentCountPreset === undefined || searchDocumentContentCountPresets.includes(String(search.documentContentCountPreset) as (typeof searchDocumentContentCountPresets)[number]))
     && (search.documentContentCountRange === undefined || normalizeDocumentContentCountRange(search.documentContentCountRange) !== null)
     && (search.documentImageComposition === undefined || searchDocumentImageCompositions.includes(String(search.documentImageComposition) as (typeof searchDocumentImageCompositions)[number]))
+    && (search.artboardCountPreset === undefined || searchArtboardCountPresets.includes(String(search.artboardCountPreset) as (typeof searchArtboardCountPresets)[number]))
+    && (search.artboardCountRange === undefined || normalizeSearchCountRange(search.artboardCountRange) !== null)
     && (search.textCharacterCountPreset === undefined || searchTextCharacterCountPresets.includes(String(search.textCharacterCountPreset) as (typeof searchTextCharacterCountPresets)[number]))
     && (search.textCharacterCountRange === undefined || normalizeSearchCountRange(search.textCharacterCountRange) !== null)
     && (search.textLineCountPreset === undefined || searchTextLineCountPresets.includes(String(search.textLineCountPreset) as (typeof searchTextLineCountPresets)[number]))

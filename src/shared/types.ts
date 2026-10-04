@@ -4,6 +4,7 @@ import type { SearchVideoAspectRatio, SearchVideoAspectRatioValue, SearchVideoCo
 import type { SearchAudioChannel, SearchAudioDurationPreset, SearchAudioDurationRange } from "../../electron/audioSearchFilters";
 import type { SearchFileSizePreset, SearchFileSizeRange } from "../../electron/fileSizeSearchFilters";
 import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange, SearchDocumentImageComposition } from "../../electron/documentSearchFilters";
+import type { SearchArtboardCountPreset } from "../../electron/artboardSearchFilters";
 import type {
   SearchCountRange,
   SearchDataColumnCountPreset,
@@ -494,6 +495,8 @@ export interface SearchState {
   documentContentCountPreset?: SearchDocumentContentCountPreset;
   documentContentCountRange?: SearchDocumentContentCountRange;
   documentImageComposition?: SearchDocumentImageComposition;
+  artboardCountPreset?: SearchArtboardCountPreset;
+  artboardCountRange?: SearchCountRange;
   textCharacterCountPreset?: SearchTextCharacterCountPreset;
   textCharacterCountRange?: SearchCountRange;
   textLineCountPreset?: SearchTextLineCountPreset;

@@ -1,15 +1,43 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { readPsd } from "ag-psd";
 import { strFromU8, unzipSync } from "fflate";
+import { readCdrPageCount } from "./cdrRenderService";
 import type { DocumentContentCountKind } from "./documentFactTypes";
 
 const maximumDocumentBytes = 256 * 1024 * 1024;
+const maximumArtboardDocumentBytes = 512 * 1024 * 1024;
 const maximumMetadataEntryBytes = 2 * 1024 * 1024;
 const maximumPdfCompositionPages = 64;
 type PdfJsModule = typeof import("pdfjs-dist");
 const importEsmModule = new Function("specifier", "return import(specifier);") as (specifier: string) => Promise<PdfJsModule>;
 let pdfJsPromise: Promise<PdfJsModule> | null = null;
 const loadPdfJs = () => (pdfJsPromise ??= importEsmModule("pdfjs-dist/legacy/build/pdf.mjs"));
+
+const readPdfPageCount = async (filePath: string) => {
+  const sourceData = new Uint8Array(await fs.readFile(filePath));
+  const { getDocument } = await loadPdfJs();
+  const loadingTask = getDocument({
+    data: sourceData,
+    disableAutoFetch: true,
+    disableRange: true,
+    disableStream: true,
+    enableXfa: false,
+    isEvalSupported: false,
+    stopAtErrors: true,
+    useSystemFonts: true,
+    useWorkerFetch: false,
+    verbosity: 0
+  });
+  let document: Awaited<typeof loadingTask.promise> | null = null;
+  try {
+    document = await loadingTask.promise;
+    return positiveCount(String(document.numPages));
+  } finally {
+    if (document) await document.destroy().catch(() => undefined);
+    else await loadingTask.destroy().catch(() => undefined);
+  }
+};
 
 const readZipFact = async (filePath: string, entryName: string, mediaPrefix: string) => {
   const source = new Uint8Array(await fs.readFile(filePath));
@@ -85,6 +113,35 @@ const readPdfFact = async (filePath: string) => {
     if (document) await document.destroy().catch(() => undefined);
     else await loadingTask.destroy().catch(() => undefined);
   }
+};
+
+const readPsdArtboardCount = async (filePath: string) => {
+  const source = await fs.readFile(filePath);
+  const psd = readPsd(source, {
+    logMissingFeatures: false,
+    skipCompositeImageData: true,
+    skipLayerImageData: true,
+    skipLinkedFilesData: true,
+    skipThumbnail: true,
+    throwForMissingFeatures: false
+  });
+  const declaredCount = psd.artboards?.count;
+  const topLevelCount = (psd.children ?? []).filter((layer) => layer.artboard !== undefined).length;
+  const count = declaredCount === undefined ? topLevelCount : declaredCount;
+  if (!Number.isSafeInteger(count) || count < 0 || count > 100_000 || (declaredCount !== undefined && count !== topLevelCount)) {
+    throw new Error("psd-artboard-count-invalid");
+  }
+  return count;
+};
+
+export const readArtboardFact = async (filePath: string) => {
+  const stat = await fs.stat(filePath);
+  if (!stat.isFile() || stat.size <= 0 || stat.size > maximumArtboardDocumentBytes) throw new Error("artboard-source-unavailable");
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === ".ai") return readPdfPageCount(filePath);
+  if (extension === ".cdr") return readCdrPageCount(filePath);
+  if (extension === ".psd") return readPsdArtboardCount(filePath);
+  throw new Error("artboard-format-unsupported");
 };
 
 export const readDocumentFact = async (filePath: string): Promise<{ contentCount: number; countKind: DocumentContentCountKind; imageCompositionKnown: boolean; hasEmbeddedImages: boolean }> => {

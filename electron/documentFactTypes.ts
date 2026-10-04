@@ -1,6 +1,6 @@
 export const DOCUMENT_FACT_EXTRACTOR_VERSION = 2;
 
-export const supportedDocumentFactExtensions = [".pdf", ".docx", ".pptx", ".xlsx"] as const;
+export const supportedDocumentFactExtensions = [".pdf", ".docx", ".pptx", ".xlsx", ".ai", ".cdr", ".psd"] as const;
 export type DocumentContentCountKind = "pages" | "slides" | "sheets";
 
 export interface DocumentFactCandidate { filePath: string; sourceRevision: string }
@@ -12,6 +12,8 @@ export interface DocumentFactResult {
   countKind: DocumentContentCountKind;
   imageCompositionKnown: boolean;
   hasEmbeddedImages: boolean;
+  artboardCountKnown: boolean;
+  artboardCount: number;
   errorCode: string;
 }
 export interface DocumentFactWriteRecord { filePath: string; result: DocumentFactResult }

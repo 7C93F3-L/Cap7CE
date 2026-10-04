@@ -70,6 +70,11 @@ import {
   type SearchDocumentContentCountRange,
   type SearchDocumentImageComposition
 } from "./documentSearchFilters";
+import {
+  hasArtboardSearchFacet,
+  matchesArtboardCount,
+  type SearchArtboardCountPreset
+} from "./artboardSearchFilters";
 import { replaceTextDataFact } from "./textDataFactStore";
 import {
   TEXT_DATA_FACT_EXTRACTOR_VERSION,
@@ -186,6 +191,8 @@ export interface ImageSearchState {
   documentContentCountPreset?: SearchDocumentContentCountPreset;
   documentContentCountRange?: SearchDocumentContentCountRange;
   documentImageComposition?: SearchDocumentImageComposition;
+  artboardCountPreset?: SearchArtboardCountPreset;
+  artboardCountRange?: SearchCountRange;
   textCharacterCountPreset?: SearchTextCharacterCountPreset;
   textCharacterCountRange?: SearchCountRange;
   textLineCountPreset?: SearchTextLineCountPreset;
@@ -2131,11 +2138,21 @@ const matchesAudioFacets = (fact: IndexedAudioFact, search: ImageSearchState) =>
   return true;
 };
 
-interface IndexedDocumentFact { contentCount: number; countKind: DocumentContentCountKind; imageCompositionKnown: boolean; hasEmbeddedImages: boolean }
+interface IndexedDocumentFact {
+  contentCount: number;
+  countKind: DocumentContentCountKind;
+  imageCompositionKnown: boolean;
+  hasEmbeddedImages: boolean;
+  artboardCountKnown: boolean;
+  artboardCount: number;
+}
 
 const matchesDocumentFacets = (fact: IndexedDocumentFact, search: ImageSearchState) => (
-  matchesDocumentContentCount(fact.contentCount, search.documentContentCountPreset, search.documentContentCountRange)
-  && (!search.documentImageComposition || (fact.imageCompositionKnown && matchesDocumentImageComposition(fact.hasEmbeddedImages, search.documentImageComposition)))
+  (!hasDocumentSearchFacets(search) || (
+    matchesDocumentContentCount(fact.contentCount, search.documentContentCountPreset, search.documentContentCountRange)
+    && (!search.documentImageComposition || (fact.imageCompositionKnown && matchesDocumentImageComposition(fact.hasEmbeddedImages, search.documentImageComposition)))
+  ))
+  && (!hasArtboardSearchFacet(search) || (fact.artboardCountKnown && matchesArtboardCount(fact.artboardCount, search.artboardCountPreset, search.artboardCountRange)))
 );
 
 interface IndexedTextDataFact {
@@ -2331,10 +2348,10 @@ export const searchIndexedCatalog = async (
   const audioFactJoinSql = hasAudioConditions
     ? "LEFT JOIN file_audio_facts AS audio_fact ON audio_fact.file_id = f.id"
     : "";
-  const hasDocumentConditions = hasDocumentSearchFacets(search);
+  const hasDocumentConditions = hasDocumentSearchFacets(search) || hasArtboardSearchFacet(search);
   const documentFactSelectSql = hasDocumentConditions
-    ? "document_fact.status, document_fact.extractor_version, document_fact.source_revision, document_fact.content_count, document_fact.count_kind, document_fact.image_composition_known, document_fact.has_embedded_images"
-    : "NULL, NULL, NULL, NULL, NULL, NULL, NULL";
+    ? "document_fact.status, document_fact.extractor_version, document_fact.source_revision, document_fact.content_count, document_fact.count_kind, document_fact.image_composition_known, document_fact.has_embedded_images, document_fact.artboard_count_known, document_fact.artboard_count"
+    : "NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL";
   const documentFactJoinSql = hasDocumentConditions
     ? "LEFT JOIN file_document_facts AS document_fact ON document_fact.file_id = f.id"
     : "";
@@ -2431,7 +2448,7 @@ export const searchIndexedCatalog = async (
       const videoColorOffset = videoFactOffset + 6;
       const audioFactOffset = videoColorOffset + 4 + (hasVideoColorConditions ? visualPropertyDatabaseColumns.length : 0);
       const documentFactOffset = audioFactOffset + 5;
-      const textDataFactOffset = documentFactOffset + 7;
+      const textDataFactOffset = documentFactOffset + 9;
       const queryCacheOffset = textDataFactOffset + 9;
       const queryCacheValid = imageId !== null
         && String(row[queryCacheOffset + 1] ?? "") === createFileSourceRevision({
@@ -2543,7 +2560,9 @@ export const searchIndexedCatalog = async (
         contentCount: Number(row[documentFactOffset + 3]),
         countKind: String(row[documentFactOffset + 4]) as DocumentContentCountKind,
         imageCompositionKnown: Number(row[documentFactOffset + 5]) === 1,
-        hasEmbeddedImages: Number(row[documentFactOffset + 6]) === 1
+        hasEmbeddedImages: Number(row[documentFactOffset + 6]) === 1,
+        artboardCountKnown: Number(row[documentFactOffset + 7]) === 1,
+        artboardCount: Number(row[documentFactOffset + 8])
       };
       if (
         hasTextDataConditions
