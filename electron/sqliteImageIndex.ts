@@ -65,6 +65,7 @@ import {
   type SearchModifiedTimeRange,
   type SearchTimePreset
 } from "./searchFilters";
+import { resolveSearchFileSizeFilter, type SearchFileSizePreset, type SearchFileSizeRange } from "./fileSizeSearchFilters";
 import {
   normalizeImageAspectRatioValues,
   normalizeImageDimensionFilter,
@@ -121,6 +122,8 @@ export interface ImageSearchState {
   selectedExtensions?: string[];
   timePreset?: SearchTimePreset;
   modifiedTimeRange?: SearchModifiedTimeRange;
+  fileSizePreset?: SearchFileSizePreset;
+  fileSizeRange?: SearchFileSizeRange;
   visualColors?: SearchVisualColor[];
   imageColorTraits?: SearchImageColorTrait[];
   imageAspectRatios?: SearchImageAspectRatio[];
@@ -1804,6 +1807,23 @@ const appendModifiedTimeFilter = (
   params[":catalog_filter_modified_end"] = new Date(range.endMs).toISOString();
 };
 
+const appendFileSizeFilter = (
+  where: string[],
+  params: Record<string, SqlValue>,
+  search: Pick<ImageSearchState, "fileSizePreset" | "fileSizeRange">
+) => {
+  const filter = resolveSearchFileSizeFilter(search.fileSizePreset, search.fileSizeRange);
+  if (!filter) return;
+  if (filter.minBytes !== undefined) {
+    where.push("f.file_size >= :catalog_filter_file_size_minimum");
+    params[":catalog_filter_file_size_minimum"] = filter.minBytes;
+  }
+  if (filter.maxBytes !== undefined) {
+    where.push(`f.file_size ${filter.maximumInclusive ? "<=" : "<"} :catalog_filter_file_size_maximum`);
+    params[":catalog_filter_file_size_maximum"] = filter.maxBytes;
+  }
+};
+
 const getNaturalConditionSql = (
   plannedTerm: PlannedSearchTerm,
   termIndex: number,
@@ -2017,6 +2037,7 @@ export const searchIndexedCatalog = async (
   appendIncludedExtensionsFilter(where, params, search.includedExtensions, "catalog_included_extension");
   appendIncludedExtensionsFilter(where, params, search.selectedExtensions, "catalog_selected_extension");
   appendModifiedTimeFilter(where, params, search);
+  appendFileSizeFilter(where, params, search);
   appendImageFacetFilters(where, params, search);
   appendVideoColorFacetFilters(where, search);
   params[":ai_query_model_id"] = search.aiQueryModelId ?? "";

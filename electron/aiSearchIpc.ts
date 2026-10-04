@@ -5,6 +5,7 @@ import { t } from "./localization";
 import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchImageAnimationModes, searchImageAspectRatios, searchImageColorTraits, searchVisualColors } from "./imageSearchFilters";
 import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normalizeVideoDurationRange, searchVideoAspectRatios, searchVideoColorTraits, searchVideoDurationPresets, searchVideoResolutions, searchVideoVisualColors } from "./videoSearchFilters";
 import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPresets } from "./audioSearchFilters";
+import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -39,6 +40,8 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
       && Number.isFinite((search.modifiedTimeRange as Record<string, unknown>).startMs)
       && Number.isFinite((search.modifiedTimeRange as Record<string, unknown>).endMs)
     ))
+    && (search.fileSizePreset === undefined || searchFileSizePresets.includes(String(search.fileSizePreset) as (typeof searchFileSizePresets)[number]))
+    && (search.fileSizeRange === undefined || normalizeFileSizeRange(search.fileSizeRange) !== null)
     && (search.visualColors === undefined || (Array.isArray(search.visualColors) && search.visualColors.every((color) => searchVisualColors.includes(String(color) as (typeof searchVisualColors)[number]))))
     && (search.imageColorTraits === undefined || (Array.isArray(search.imageColorTraits) && search.imageColorTraits.every((trait) => searchImageColorTraits.includes(String(trait) as (typeof searchImageColorTraits)[number]))))
     && (search.imageAspectRatios === undefined || (Array.isArray(search.imageAspectRatios) && search.imageAspectRatios.every((ratio) => searchImageAspectRatios.includes(String(ratio) as (typeof searchImageAspectRatios)[number]))))

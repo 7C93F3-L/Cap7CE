@@ -18,6 +18,7 @@ import { searchIndexedCatalog, type ImageSearchResult, type ImageSearchState, ty
 import { hasImageSearchFacets } from "./imageSearchFilters";
 import { hasVideoSearchFacets } from "./videoSearchFilters";
 import { hasAudioSearchFacets } from "./audioSearchFilters";
+import { matchesSearchFileSize } from "./fileSizeSearchFilters";
 
 const canonicalizeFileFormat = (fileFormat: string) => {
   if (fileFormat === "jpeg") return "jpg";
@@ -242,6 +243,7 @@ export const searchImagesWithAddedDirectories = async (
       const modifiedMs = new Date(file.modified_at).getTime();
       if (!Number.isFinite(modifiedMs) || modifiedMs < modifiedTimeRange.startMs || modifiedMs >= modifiedTimeRange.endMs) continue;
     }
+    if (!matchesSearchFileSize(file.file_size, search.fileSizePreset, search.fileSizeRange)) continue;
     const fileFormat = getFileFormat(file.file_name);
     if (selectedFileFormat !== "all" && fileFormat !== selectedFileFormat) continue;
 

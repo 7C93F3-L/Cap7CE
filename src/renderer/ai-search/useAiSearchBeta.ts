@@ -73,6 +73,8 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       selectedExtensions: search.selectedExtensions ?? [],
       timePreset: search.timePreset ?? "all",
       modifiedTimeRange: search.modifiedTimeRange ?? null,
+      fileSizePreset: search.fileSizePreset ?? null,
+      fileSizeRange: search.fileSizeRange ?? null,
       visualColors: search.visualColors ?? [],
       imageColorTraits: search.imageColorTraits ?? [],
       imageAspectRatios: search.imageAspectRatios ?? [],

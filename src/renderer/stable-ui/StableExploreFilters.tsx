@@ -14,6 +14,7 @@ import { getExploreFormatSummary } from "./exploreFormatSummary";
 import StableFilterEditGlyph from "./StableFilterEditGlyph";
 import StableMediaFilters from "./StableMediaFilters";
 import { retainApplicableMediaFilters } from "./mediaFilterState";
+import StableFileSizeFilter from "./StableFileSizeFilter";
 import "./StableExploreFilters.css";
 type FilterFlyoutKind = "dates" | "formats" | "other";
 type FilterFlyout = { kind: FilterFlyoutKind; anchor: DOMRect } | null;
@@ -127,6 +128,7 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
         <button type="button" className={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension))) ? "is-selected" : ""} aria-pressed={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension)))} aria-expanded={flyout?.kind === "other"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("other", event)}><TypeGlyph type="other" /><span>{t("explore.fileTypes.other")}</span></button>
       </div>
     </section>
+    <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableMediaFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>

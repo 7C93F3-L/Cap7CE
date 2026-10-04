@@ -16,6 +16,8 @@ const stableResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css
 const exploreBarStyles = read("src/renderer/stable-ui/StableExploreBar.css");
 const exploreFiltersSource = read("src/renderer/stable-ui/StableExploreFilters.tsx");
 const exploreFiltersStyles = read("src/renderer/stable-ui/StableExploreFilters.css");
+const fileSizeFilterSource = read("src/renderer/stable-ui/StableFileSizeFilter.tsx");
+const fileSizeFilterStateSource = read("src/renderer/stable-ui/fileSizeFilterState.ts");
 const exploreFormatFiltersSource = read("src/renderer/stable-ui/exploreFormatFilters.ts");
 const exploreFormatSummarySource = read("src/renderer/stable-ui/exploreFormatSummary.ts");
 const randomBrowseSource = read("src/renderer/explore/useRandomBrowse.ts");
@@ -75,6 +77,10 @@ assert.match(exploreFiltersSource, /selectedExtensions: nextExtensions\.length \
 assert.match(exploreFiltersSource, /const scrollFiltersHorizontally = [\s\S]*?rail\.scrollLeft \+= delta/u);
 assert.match(exploreFiltersSource, /className="cap-stable-explore-filters" onWheel=\{scrollFiltersHorizontally\}/u);
 assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableMediaFilters/u);
+assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableFileSizeFilter[\s\S]*?<StableMediaFilters/u);
+assert.match(fileSizeFilterSource, /under-1mb[\s\S]*?1mb-10mb[\s\S]*?10mb-100mb[\s\S]*?100mb-1gb[\s\S]*?1gb-or-more/u);
+assert.match(fileSizeFilterSource, /explore\.minimumFileSize[\s\S]*?explore\.maximumFileSize[\s\S]*?\["KB", "MB", "GB"\]/u);
+assert.match(fileSizeFilterStateSource, /fileSizePreset: undefined, fileSizeRange: undefined[\s\S]*?Boolean\(search\.fileSizePreset \|\| search\.fileSizeRange\)/u);
 assert.match(mediaFiltersSource, /<StableImageFilters[\s\S]*?<StableVideoFilters[\s\S]*?<StableAudioFilters/u);
 assert.match(exploreFiltersSource, /useLayoutEffect\(\(\) => setFlyout\(null\), \[closeFlyoutRequest\]\)/u);
 assert.match(exploreFiltersSource, /if \(nextFlyout\) onFlyoutOpen\(\)/u);
