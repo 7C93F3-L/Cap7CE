@@ -8,6 +8,7 @@ import { ensureVideoFactSchema } from "./videoFactStore";
 import { ensureVideoColorSchema } from "./videoColorStore";
 import { ensureAudioFactSchema } from "./audioFactStore";
 import { ensureDocumentFactSchema } from "./documentFactStore";
+import { ensureTextDataFactSchema } from "./textDataFactStore";
 
 export interface StoredUserMetadata {
   description: string;
@@ -61,6 +62,7 @@ export const ensureIndexMetadataSchema = (database: Database) => {
   ensureVideoColorSchema(database);
   ensureAudioFactSchema(database);
   ensureDocumentFactSchema(database);
+  ensureTextDataFactSchema(database);
   ensureAiQueryEvidenceSchema(database);
 };
 

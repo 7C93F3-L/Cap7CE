@@ -7,6 +7,14 @@ import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normali
 import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPresets } from "./audioSearchFilters";
 import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchFilters";
 import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets, searchDocumentImageCompositions } from "./documentSearchFilters";
+import {
+  normalizeSearchCountRange,
+  searchDataColumnCountPresets,
+  searchDataRecordCountPresets,
+  searchJsonRootKinds,
+  searchTextCharacterCountPresets,
+  searchTextLineCountPresets
+} from "./textDataSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -62,7 +70,18 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.audioChannels === undefined || (Array.isArray(search.audioChannels) && search.audioChannels.every((channel) => searchAudioChannels.includes(String(channel) as (typeof searchAudioChannels)[number]))))
     && (search.documentContentCountPreset === undefined || searchDocumentContentCountPresets.includes(String(search.documentContentCountPreset) as (typeof searchDocumentContentCountPresets)[number]))
     && (search.documentContentCountRange === undefined || normalizeDocumentContentCountRange(search.documentContentCountRange) !== null)
-    && (search.documentImageComposition === undefined || searchDocumentImageCompositions.includes(String(search.documentImageComposition) as (typeof searchDocumentImageCompositions)[number]));
+    && (search.documentImageComposition === undefined || searchDocumentImageCompositions.includes(String(search.documentImageComposition) as (typeof searchDocumentImageCompositions)[number]))
+    && (search.textCharacterCountPreset === undefined || searchTextCharacterCountPresets.includes(String(search.textCharacterCountPreset) as (typeof searchTextCharacterCountPresets)[number]))
+    && (search.textCharacterCountRange === undefined || normalizeSearchCountRange(search.textCharacterCountRange) !== null)
+    && (search.textLineCountPreset === undefined || searchTextLineCountPresets.includes(String(search.textLineCountPreset) as (typeof searchTextLineCountPresets)[number]))
+    && (search.textLineCountRange === undefined || normalizeSearchCountRange(search.textLineCountRange) !== null)
+    && (search.csvRecordCountPreset === undefined || searchDataRecordCountPresets.includes(String(search.csvRecordCountPreset) as (typeof searchDataRecordCountPresets)[number]))
+    && (search.csvRecordCountRange === undefined || normalizeSearchCountRange(search.csvRecordCountRange) !== null)
+    && (search.csvColumnCountPreset === undefined || searchDataColumnCountPresets.includes(String(search.csvColumnCountPreset) as (typeof searchDataColumnCountPresets)[number]))
+    && (search.csvColumnCountRange === undefined || normalizeSearchCountRange(search.csvColumnCountRange) !== null)
+    && (search.jsonItemCountPreset === undefined || searchDataRecordCountPresets.includes(String(search.jsonItemCountPreset) as (typeof searchDataRecordCountPresets)[number]))
+    && (search.jsonItemCountRange === undefined || normalizeSearchCountRange(search.jsonItemCountRange) !== null)
+    && (search.jsonRootKind === undefined || searchJsonRootKinds.includes(String(search.jsonRootKind) as (typeof searchJsonRootKinds)[number]));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

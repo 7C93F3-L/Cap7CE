@@ -37,6 +37,17 @@ interface SearchRequestShape {
   documentContentCountPreset?: unknown;
   documentContentCountRange?: unknown;
   documentImageComposition?: unknown;
+  textCharacterCountPreset?: unknown;
+  textCharacterCountRange?: unknown;
+  textLineCountPreset?: unknown;
+  textLineCountRange?: unknown;
+  csvRecordCountPreset?: unknown;
+  csvRecordCountRange?: unknown;
+  csvColumnCountPreset?: unknown;
+  csvColumnCountRange?: unknown;
+  jsonItemCountPreset?: unknown;
+  jsonItemCountRange?: unknown;
+  jsonRootKind?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -69,7 +80,12 @@ const summarizeSearch = (search: unknown) => {
     audioDuration: typeof request.audioDurationPreset === "string" || typeof request.audioDurationRange === "object",
     audioChannelCount: Array.isArray(request.audioChannels) ? request.audioChannels.length : 0,
     documentContentCount: typeof request.documentContentCountPreset === "string" || typeof request.documentContentCountRange === "object",
-    documentImageComposition: typeof request.documentImageComposition === "string" ? request.documentImageComposition.slice(0, 24) : "all"
+    documentImageComposition: typeof request.documentImageComposition === "string" ? request.documentImageComposition.slice(0, 24) : "all",
+    textDataFiltered: [
+      request.textCharacterCountPreset, request.textCharacterCountRange, request.textLineCountPreset, request.textLineCountRange,
+      request.csvRecordCountPreset, request.csvRecordCountRange, request.csvColumnCountPreset, request.csvColumnCountRange,
+      request.jsonItemCountPreset, request.jsonItemCountRange, request.jsonRootKind
+    ].some((value) => value !== undefined)
   };
 };
 

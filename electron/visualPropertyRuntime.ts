@@ -9,6 +9,7 @@ import { setVideoFactForegroundActive } from "./videoFactRuntime";
 import { setVideoColorForegroundActive } from "./videoColorRuntime";
 import { setAudioFactForegroundActive } from "./audioFactRuntime";
 import { setDocumentFactForegroundActive } from "./documentFactRuntime";
+import { setTextDataFactForegroundActive } from "./textDataFactRuntime";
 
 export const visualPropertyService = createVisualPropertyService({
   filterPendingCandidates: filterPendingVisualPropertyCandidates,
@@ -28,6 +29,7 @@ export const setVisualPropertyForegroundActive = (active: boolean) => {
   setVideoColorForegroundActive(active);
   setAudioFactForegroundActive(active);
   setDocumentFactForegroundActive(active);
+  setTextDataFactForegroundActive(active);
 };
 
 onThumbnailLifecycle((event) => {

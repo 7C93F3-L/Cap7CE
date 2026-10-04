@@ -27,6 +27,8 @@ assert.deepEqual(mergeAiSearchResults(base, ai).map((item) => item.filePath), ["
 const search = { query: "沙漠", directoryId: "all", fileFormat: "all", sortField: "file_name", sortDirection: "asc" };
 assert.equal(hasAiSearchScopeChanged(search, { ...search, sortDirection: "desc" }), false);
 assert.equal(hasAiSearchScopeChanged(search, { ...search, directoryId: "design" }), true);
+assert.equal(hasAiSearchScopeChanged(search, { ...search, textLineCountPreset: "11-50" }), true);
+assert.equal(hasAiSearchScopeChanged(search, { ...search, jsonRootKind: "array" }), true);
 
 const testSingleImageRequest = async () => {
   const originalFetch = global.fetch;

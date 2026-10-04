@@ -15,6 +15,7 @@ import StableFilterEditGlyph from "./StableFilterEditGlyph";
 import StableMediaFilters from "./StableMediaFilters";
 import StableFileSizeFilter from "./StableFileSizeFilter";
 import StableDocumentFilters from "./StableDocumentFilters";
+import StableTextDataFilters from "./StableTextDataFilters";
 import { retainApplicableExploreTypeFilters } from "./exploreTypeFilterState";
 import "./StableExploreFilters.css";
 type FilterFlyoutKind = "dates" | "formats" | "other";
@@ -42,7 +43,6 @@ const categoryLabels: Record<FileFormatCategory, TranslationKey> = {
   project: "explore.fileTypes.project", model: "explore.fileTypes.model"
 };
 const typeLabels = { ...primaryLabels, ...otherLabels };
-
 const pad = (value: number) => String(value).padStart(2, "0");
 const toDateInput = (timestamp: number) => { const date = new Date(timestamp); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; };
 const parseDateInput = (value: string) => { const [year, month, day] = value.split("-").map(Number); return new Date(year, month - 1, day).getTime(); };
@@ -54,7 +54,6 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
   return [...next].sort();
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
-
 const TypeGlyph = ({ type }: { type: ExplorePrimaryFileType | "other" }) => <span className={`cap-stable-type-glyph is-${type}`} aria-hidden="true"><i /><b /></span>;
 
 const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
@@ -132,6 +131,7 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableMediaFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableDocumentFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
+    <StableTextDataFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>

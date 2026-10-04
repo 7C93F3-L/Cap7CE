@@ -94,7 +94,18 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       audioChannels: search.audioChannels ?? [],
       documentContentCountPreset: search.documentContentCountPreset ?? null,
       documentContentCountRange: search.documentContentCountRange ?? null,
-      documentImageComposition: search.documentImageComposition ?? null
+      documentImageComposition: search.documentImageComposition ?? null,
+      textCharacterCountPreset: search.textCharacterCountPreset ?? null,
+      textCharacterCountRange: search.textCharacterCountRange ?? null,
+      textLineCountPreset: search.textLineCountPreset ?? null,
+      textLineCountRange: search.textLineCountRange ?? null,
+      csvRecordCountPreset: search.csvRecordCountPreset ?? null,
+      csvRecordCountRange: search.csvRecordCountRange ?? null,
+      csvColumnCountPreset: search.csvColumnCountPreset ?? null,
+      csvColumnCountRange: search.csvColumnCountRange ?? null,
+      jsonItemCountPreset: search.jsonItemCountPreset ?? null,
+      jsonItemCountRange: search.jsonItemCountRange ?? null,
+      jsonRootKind: search.jsonRootKind ?? null
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

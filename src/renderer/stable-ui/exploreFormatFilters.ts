@@ -1,5 +1,4 @@
 import { fileFormatCapabilities, type FileFormatCategory } from "../../../electron/formatCapabilities";
-
 export type ExplorePrimaryFileType = "image" | "video" | "audio" | "document";
 export type ExploreOtherFileType = "text" | "project" | "threeD" | "archive" | "data" | "font" | "model";
 const canonicalFormat = (extension: string) => {
@@ -8,14 +7,12 @@ const canonicalFormat = (extension: string) => {
   if (normalized === "tiff") return "tif";
   return normalized;
 };
-
 const primaryCategories: Record<ExplorePrimaryFileType, readonly FileFormatCategory[]> = {
   image: ["visual"],
   video: ["video"],
   audio: ["audio"],
   document: ["document"]
 };
-
 const otherCategory: Record<ExploreOtherFileType, FileFormatCategory> = {
   text: "text",
   project: "project",
@@ -25,7 +22,6 @@ const otherCategory: Record<ExploreOtherFileType, FileFormatCategory> = {
   font: "font",
   model: "model"
 };
-
 export const getAvailableSearchExtensions = (availableFormats: readonly string[]) => {
   const available = new Set(availableFormats.map(canonicalFormat));
   return fileFormatCapabilities
@@ -72,3 +68,6 @@ export const isImageOnlyExtensionSelection = (selectedExtensions: readonly strin
 export const isVideoOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "video");
 export const isAudioOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "audio");
 export const isDocumentOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension === ".pdf" || fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "document");
+export const isTextOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "text");
+export const isCsvOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension === ".csv");
+export const isJsonOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension === ".json");

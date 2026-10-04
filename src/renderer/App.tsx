@@ -1394,8 +1394,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   useSearchIndexRefresh((force) => {
-    if (!contentViewActivityConfirmed || !resultsInitializedRef.current || (!force && !lastResultSearchRef.current.query.trim())) return;
-    void runSearch(lastResultSearchRef.current, { navigate: false, preserveAiResults: true });
+    const activeSearch = lastResultSearchRef.current;
+    if (!contentViewActivityConfirmed || !resultsInitializedRef.current || (!force && !activeSearch.query.trim() && !hasExploreTypeFilters(activeSearch))) return;
+    void runSearch(activeSearch, { navigate: false, preserveAiResults: true });
   });
 
   const openResults = () => {

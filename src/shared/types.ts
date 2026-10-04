@@ -4,6 +4,14 @@ import type { SearchVideoAspectRatio, SearchVideoAspectRatioValue, SearchVideoCo
 import type { SearchAudioChannel, SearchAudioDurationPreset, SearchAudioDurationRange } from "../../electron/audioSearchFilters";
 import type { SearchFileSizePreset, SearchFileSizeRange } from "../../electron/fileSizeSearchFilters";
 import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange, SearchDocumentImageComposition } from "../../electron/documentSearchFilters";
+import type {
+  SearchCountRange,
+  SearchDataColumnCountPreset,
+  SearchDataRecordCountPreset,
+  SearchJsonRootKind,
+  SearchTextCharacterCountPreset,
+  SearchTextLineCountPreset
+} from "../../electron/textDataSearchFilters";
 
 export type AppView = "home" | "results" | "skim" | "settings";
 
@@ -486,6 +494,17 @@ export interface SearchState {
   documentContentCountPreset?: SearchDocumentContentCountPreset;
   documentContentCountRange?: SearchDocumentContentCountRange;
   documentImageComposition?: SearchDocumentImageComposition;
+  textCharacterCountPreset?: SearchTextCharacterCountPreset;
+  textCharacterCountRange?: SearchCountRange;
+  textLineCountPreset?: SearchTextLineCountPreset;
+  textLineCountRange?: SearchCountRange;
+  csvRecordCountPreset?: SearchDataRecordCountPreset;
+  csvRecordCountRange?: SearchCountRange;
+  csvColumnCountPreset?: SearchDataColumnCountPreset;
+  csvColumnCountRange?: SearchCountRange;
+  jsonItemCountPreset?: SearchDataRecordCountPreset;
+  jsonItemCountRange?: SearchCountRange;
+  jsonRootKind?: SearchJsonRootKind;
 }
 
 export interface AiSearchStartRequest {

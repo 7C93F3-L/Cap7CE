@@ -21,12 +21,14 @@ const run = async () => {
     excludeFilePaths: []
   };
   assert.deepEqual(await handles.get("aiSearch:start")(event, request), { accepted: true, totalCandidates: 2, visualTerms: ["沙漠"] });
+  assert.deepEqual(await handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, textCharacterCountPreset: "up-to-100", jsonRootKind: "array" } }), { accepted: true, totalCandidates: 2, visualTerms: ["沙漠"] });
   assert.equal(sent[0][0], "aiSearch:update");
   assert.equal(await handles.get("aiSearch:cancel")(event, "session-123"), true);
   assert.deepEqual(cancelled, { sessionId: "session-123", discard: false });
   assert.equal(await handles.get("aiSearch:cancel")(event, "session-123", true), true);
   assert.deepEqual(cancelled, { sessionId: "session-123", discard: true });
   await assert.rejects(handles.get("aiSearch:start")(event, { ...request, sessionId: "x" }), /参数无效/);
+  await assert.rejects(handles.get("aiSearch:start")(event, { ...request, search: { ...request.search, csvColumnCountPreset: "invalid" } }), /参数无效/);
   console.log("AI search IPC validation and update forwarding tests passed.");
 };
 

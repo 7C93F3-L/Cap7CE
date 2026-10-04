@@ -31,6 +31,8 @@ const mediaFiltersSource = read("src/renderer/stable-ui/StableMediaFilters.tsx")
 const mediaFilterStateSource = read("src/renderer/stable-ui/mediaFilterState.ts");
 const documentFiltersSource = read("src/renderer/stable-ui/StableDocumentFilters.tsx");
 const documentFilterStateSource = read("src/renderer/stable-ui/documentFilterState.ts");
+const textDataFiltersSource = read("src/renderer/stable-ui/StableTextDataFilters.tsx");
+const textDataFilterStateSource = read("src/renderer/stable-ui/textDataFilterState.ts");
 const exploreTypeFilterStateSource = read("src/renderer/stable-ui/exploreTypeFilterState.ts");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
@@ -64,7 +66,7 @@ assert.match(contentViewActivitySource, /setContentViewActive\(true\)\.then\(\(a
 assert.match(contentViewActivitySource, /const isDocumentVisible = \(\) => document\.visibilityState === "visible"/u);
 assert.match(contentViewActivitySource, /if \(!active\) \{[\s\S]*?setActivityConfirmed\(false\)[\s\S]*?if \(!isDocumentVisible\(\)\) cancelSearch\(\)[\s\S]*?setContentViewActive\(false\)/u);
 assert.match(contentViewActivitySource, /requestVersion !== requestVersionRef\.current \|\| !isDocumentActive\(\)/u);
-assert.match(appSource, /useSearchIndexRefresh\(\(force\) => \{\s*if \(\s*!contentViewActivityConfirmed[\s\S]*?!resultsInitializedRef\.current[\s\S]*?!lastResultSearchRef\.current\.query\.trim\(\)/u);
+assert.match(appSource, /useSearchIndexRefresh\(\(force\) => \{[\s\S]*?const activeSearch = lastResultSearchRef\.current;[\s\S]*?!activeSearch\.query\.trim\(\)[\s\S]*?!hasExploreTypeFilters\(activeSearch\)/u);
 assert.match(appSource, /const cycleSearchDirectory = \(\) => \{[\s\S]*?directoryOptions\.findIndex[\s\S]*?\(currentIndex \+ 1\) % directoryOptions\.length[\s\S]*?updateResultsSearchOptions/u);
 assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSearch\.directoryId !== search\.directoryId[\s\S]*?resultScrollMemoryRef\.current = createInitialResultGridScrollMemory\(\)/u);
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
@@ -112,7 +114,11 @@ assert.match(audioFilterStateSource, /audioDurationPreset: undefined[\s\S]*?audi
 assert.match(mediaFilterStateSource, /clearAudioFilters\(clearVideoFilters\(clearImageFilters\(search\)\)\)[\s\S]*?hasImageFilters\(search\) \|\| hasVideoFilters\(search\) \|\| hasAudioFilters\(search\)[\s\S]*?retainApplicableMediaFilters/u);
 assert.match(documentFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?explore\.documentContentCount[\s\S]*?documentContentCountPreset:[\s\S]*?documentContentCountRange:[\s\S]*?explore\.documentComposition[\s\S]*?documentImageComposition:/u);
 assert.match(documentFilterStateSource, /documentContentCountPreset: undefined[\s\S]*?documentContentCountRange: undefined[\s\S]*?documentImageComposition: undefined/u);
-assert.match(exploreTypeFilterStateSource, /clearDocumentFilters\(clearMediaFilters\(search\)\)[\s\S]*?hasMediaFilters\(search\) \|\| hasDocumentFilters\(search\)[\s\S]*?retainApplicableMediaFilters/u);
+assert.match(textDataFiltersSource, /isTextOnlyExtensionSelection[\s\S]*?explore\.textCharacterCount[\s\S]*?explore\.textLineCount/u);
+assert.match(textDataFiltersSource, /isCsvOnlyExtensionSelection[\s\S]*?explore\.csvRecordCount[\s\S]*?explore\.csvColumnCount/u);
+assert.match(textDataFiltersSource, /isJsonOnlyExtensionSelection[\s\S]*?explore\.jsonItemCount[\s\S]*?explore\.jsonRootKind/u);
+assert.match(textDataFilterStateSource, /textCharacterCountPreset: undefined[\s\S]*?textLineCountPreset: undefined[\s\S]*?csvRecordCountPreset: undefined[\s\S]*?csvColumnCountPreset: undefined[\s\S]*?jsonItemCountPreset: undefined[\s\S]*?jsonRootKind: undefined/u);
+assert.match(exploreTypeFilterStateSource, /clearTextDataFilters\(clearDocumentFilters\(clearMediaFilters\(search\)\)\)[\s\S]*?hasMediaFilters\(search\) \|\| hasDocumentFilters\(search\) \|\| hasTextDataFilters\(search\)[\s\S]*?retainApplicableTextDataFilters/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

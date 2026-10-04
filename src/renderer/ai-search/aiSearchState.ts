@@ -40,4 +40,15 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || next.documentContentCountPreset !== previous.documentContentCountPreset
   || valueKey(next.documentContentCountRange) !== valueKey(previous.documentContentCountRange)
   || next.documentImageComposition !== previous.documentImageComposition
+  || next.textCharacterCountPreset !== previous.textCharacterCountPreset
+  || valueKey(next.textCharacterCountRange) !== valueKey(previous.textCharacterCountRange)
+  || next.textLineCountPreset !== previous.textLineCountPreset
+  || valueKey(next.textLineCountRange) !== valueKey(previous.textLineCountRange)
+  || next.csvRecordCountPreset !== previous.csvRecordCountPreset
+  || valueKey(next.csvRecordCountRange) !== valueKey(previous.csvRecordCountRange)
+  || next.csvColumnCountPreset !== previous.csvColumnCountPreset
+  || valueKey(next.csvColumnCountRange) !== valueKey(previous.csvColumnCountRange)
+  || next.jsonItemCountPreset !== previous.jsonItemCountPreset
+  || valueKey(next.jsonItemCountRange) !== valueKey(previous.jsonItemCountRange)
+  || next.jsonRootKind !== previous.jsonRootKind
 );
