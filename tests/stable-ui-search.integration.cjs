@@ -65,6 +65,9 @@ assert.match(exploreFiltersSource, /selectedExtensions: nextExtensions\.length \
 assert.match(exploreFiltersSource, /const scrollFiltersHorizontally = [\s\S]*?rail\.scrollLeft \+= delta/u);
 assert.match(exploreFiltersSource, /className="cap-stable-explore-filters" onWheel=\{scrollFiltersHorizontally\}/u);
 assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableImageFilters/u);
+assert.match(exploreFiltersSource, /useLayoutEffect\(\(\) => setFlyout\(null\), \[closeFlyoutRequest\]\)/u);
+assert.match(exploreFiltersSource, /if \(nextFlyout\) onFlyoutOpen\(\)/u);
+assert.match(exploreFiltersSource, /if \(search\.timePreset === timePreset && !search\.modifiedTimeRange\) return/u);
 assert.match(exploreFormatFiltersSource, /getExtensionsForCanonicalFormat[\s\S]*?canonicalFormat\(capability\.extension\) === canonicalFormat\(format\)/u);
 assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?extension !== "\.pdf"[\s\S]*?category === "visual"/u);
 assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?visualColors:[\s\S]*?imageAspectRatios:/u);

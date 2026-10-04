@@ -87,6 +87,9 @@ assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScro
 assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
 assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
 assert.match(exploreBarSource, /name="sort" sortDirection=\{search\.sortDirection\}/u);
+assert.match(exploreBarSource, /closeFlyoutRequest=\{filterFlyoutCloseRequest\} onFlyoutOpen=\{closeFlyout\}/u);
+assert.match(exploreBarSource, /if \(mode !== searchDisplayMode\) onSearchDisplayModeChange\(mode\)/u);
+assert.match(exploreBarSource, /if \(field !== search\.sortField \|\| direction !== search\.sortDirection\) onSearchOptionsChange/u);
 assert.doesNotMatch(sidebarSource, /name="sort"|name="scope"|ChevronIcon/u);
 assert.doesNotMatch(sidebarSource, />›<\/span>/u);
 assert.match(sidebarIconSource, /add: <path d="M12 5v14M5 12h14" \/>/u);

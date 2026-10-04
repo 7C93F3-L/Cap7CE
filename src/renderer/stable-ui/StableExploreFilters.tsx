@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent, type WheelEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent, type WheelEvent } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { FileFormatCategory } from "../../../electron/formatCapabilities";
 import type { SearchState } from "../../shared/types";
@@ -55,7 +55,7 @@ const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]
 const EditGlyph = () => <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 16-1 4 4-1L19 8l-3-3L5 16Z" /><path d="m14.5 6.5 3 3" /></svg>;
 const TypeGlyph = ({ type }: { type: ExplorePrimaryFileType | "other" }) => <span className={`cap-stable-type-glyph is-${type}`} aria-hidden="true"><i /><b /></span>;
 
-const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
   const presetIndex = Math.max(0, timePresets.indexOf(search.timePreset === "custom" ? "all" : (search.timePreset ?? "all")));
@@ -67,6 +67,7 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
   const formatGroups = useMemo(() => getFormatSelectionGroups(availableFormats), [availableFormats]);
   const selectedSummary = canonicalizeSelectedFormats(search.selectedExtensions ?? []).slice(0, 3).map((format) => format.toUpperCase()).join("  ");
   useEffect(() => setTimeIndex(presetIndex), [presetIndex]);
+  useLayoutEffect(() => setFlyout(null), [closeFlyoutRequest]);
 
   const applySearch = (next: SearchState) => onSearchOptionsChange(next);
   const openFlyout = (kind: FilterFlyoutKind, event: MouseEvent<HTMLButtonElement>) => {
@@ -77,10 +78,13 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
     }
     if (kind === "formats") setFormatDraft(search.selectedExtensions ?? []);
     const anchor = event.currentTarget.getBoundingClientRect();
-    setFlyout((current) => current?.kind === kind ? null : { kind, anchor });
+    const nextFlyout = flyout?.kind === kind ? null : { kind, anchor };
+    if (nextFlyout) onFlyoutOpen();
+    setFlyout(nextFlyout);
   };
   const commitTime = (index = timeIndex) => {
     const timePreset = timePresets[index];
+    if (search.timePreset === timePreset && !search.modifiedTimeRange) return;
     applySearch({ ...search, timePreset, modifiedTimeRange: undefined });
   };
   const applyDateRange = () => {
@@ -105,6 +109,7 @@ const StableExploreFilters = ({ search, availableFormats, onSearchOptionsChange 
     const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
     if (delta === 0) return;
     event.preventDefault();
+    setFlyout(null);
     rail.scrollLeft += delta;
   };
 
