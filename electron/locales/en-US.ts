@@ -94,6 +94,8 @@ export const enUS = defineLocale({
   "explore.editTime": "Edit date range",
   "explore.editFormats": "Choose exact file formats",
   "explore.clearFilters": "Clear filters",
+  "explore.randomBrowse": "Random browse",
+  "explore.nextBatch": "Next batch",
   "explore.startDate": "Start date",
   "explore.endDate": "End date",
   "explore.imageColors": "Image Colors",

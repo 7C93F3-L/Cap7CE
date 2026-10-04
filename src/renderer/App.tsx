@@ -31,6 +31,7 @@ import { getCommonKeywords } from "./dialogs/keywordEditorModel";
 import { moveDirectoryAndRefresh } from "./directoryListActions";
 import { normalizeWindowsPathKey } from "./filePath";
 import { formatDisplayMessage } from "./formatting";
+import { useRandomBrowse } from "./explore/useRandomBrowse";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplayExtensions } from "./search/searchViewModel";
 import { parseAssistantInvocation } from "./assistant/assistantInvocation";
@@ -367,6 +368,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const aiSearchBeta = useAiSearchBeta({ setResults: setSearchResults, onFeedback: showQuickCommandNotice });
   const [pendingQuickCommandConfirmation, setPendingQuickCommandConfirmation] = useState<QuickCommandConfirmationRequest | null>(null);
   const resultScrollMemoryRef = useRef(createInitialResultGridScrollMemory());
+  const resetResultPresentation = useCallback(() => { resultScrollMemoryRef.current = createInitialResultGridScrollMemory(); setClearSelectionRequestId((requestId) => requestId + 1); document.querySelector<HTMLElement>(".cap-results-view .image-grid")?.scrollTo({ top: 0, left: 0, behavior: "auto" }); }, []);
+  const randomBrowse = useRandomBrowse(searchResults, resetResultPresentation);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const directoryPathResolutionRequestRef = useRef(0);
@@ -1112,6 +1115,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     } else if (sortChanged) {
       showSortNotice(nextSearch.sortField, nextSearch.sortDirection);
     }
+  };
+  const clearExploreFilters = () => {
+    randomBrowse.clear();
+    const nextSearch = { ...search, fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined, visualColors: undefined, imageAspectRatios: undefined };
+    if (search.fileFormat !== "all" || search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || search.visualColors?.length || search.imageAspectRatios?.length) updateResultsSearchOptions(nextSearch);
   };
 
   const toggleAiSearchBeta = () => {
@@ -2271,7 +2279,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     isSearching={isSearching || aiSearchBeta.busy}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({
-    active, images: searchResults,
+    active, images: randomBrowse.items,
     isSearching: isSearching || aiSearchBeta.busy,
     aiSearchPhase: aiSearchBeta.phase,
     aiSearchProgress: aiSearchBeta.progress,
@@ -2373,7 +2381,10 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         explore={{
           searchDisplayMode: skimDisplay.searchMode,
           availableFormats: searchAvailableFormats,
-          onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })
+          randomBrowseEnabled: randomBrowse.enabled, randomBatchNumber: randomBrowse.batchNumber, randomBrowseBusy: isSearching || aiSearchBeta.busy,
+          onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode }),
+          onToggleRandomBrowse: randomBrowse.toggle, onDisableRandomBrowse: randomBrowse.disable,
+          onNextRandomBatch: randomBrowse.next, onClearExploreFilters: clearExploreFilters
         }}
         sidebar={{
           search, directories: directoryOptions,

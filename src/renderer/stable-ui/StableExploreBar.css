@@ -4,7 +4,7 @@
   display: grid; grid-template-columns: minmax(310px, 390px) minmax(0, 1fr);
   min-width: 0;
   flex: 0 0 auto;
-  min-height: 116px; box-sizing: border-box;
+  min-height: 118px; box-sizing: border-box;
   padding: 10px 12px 6px;
   color: var(--cap-stable-text);
   background: transparent;
@@ -12,7 +12,7 @@
 
 .cap-stable-explore-primary {
   display: grid;
-  grid-template-rows: 38px 30px;
+  grid-template-rows: 38px 30px 30px;
   align-content: start;
   width: 100%;
   min-width: 0;
@@ -60,9 +60,8 @@
 .cap-stable-explore-actions > button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .cap-stable-explore-action-icon { width: 16px; height: 16px; flex: 0 0 16px; }
 .cap-stable-explore-sort-icon { transform: translateY(-1px); }
-
 @container (max-width: 410px) {
-  .cap-stable-explore-bar { grid-template-columns: minmax(0, 1fr); min-height: 78px; }
+  .cap-stable-explore-bar { grid-template-columns: minmax(0, 1fr); min-height: 106px; }
   .cap-stable-explore-actions > button { flex: 1 1 0; }
 }
 
@@ -71,4 +70,5 @@
   .cap-stable-explore-primary { grid-template-rows: 34px; }
   .cap-stable-explore-bar .cap-stable-search-slot { height: 34px; }
   .cap-stable-explore-actions { display: none; }
+  .cap-stable-explore-commands { display: none; }
 }

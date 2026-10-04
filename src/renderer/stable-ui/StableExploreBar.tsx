@@ -7,6 +7,7 @@ import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableUiIcon from "./StableUiIcon";
 import type { StableExploreProps } from "./stableExploreTypes";
 import "./StableExploreBar.css";
+import "./StableExploreCommands.css";
 
 type ExploreFlyout = { kind: "scope" | "sort"; anchor: DOMRect } | null;
 
@@ -26,11 +27,12 @@ const sortOptions: Array<{ field: SortField; direction: SortDirection }> = [
   { field: "file_name", direction: "desc" }
 ];
 
-const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplayMode, availableFormats, onSearchChange, onSearchOptionsChange, onSearch, onSearchDisplayModeChange }: StableExploreBarProps) => {
+const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplayMode, availableFormats, randomBrowseEnabled, randomBatchNumber, randomBrowseBusy, onSearchChange, onSearchOptionsChange, onSearch, onSearchDisplayModeChange, onToggleRandomBrowse, onDisableRandomBrowse, onNextRandomBatch, onClearExploreFilters }: StableExploreBarProps) => {
   const [flyout, setFlyout] = useState<ExploreFlyout>(null);
   const [filterFlyoutCloseRequest, setFilterFlyoutCloseRequest] = useState(0);
   const scopeValue = searchDisplayMode === "all" ? t("stableUi.sidebar.scopeAll") : searchDisplayMode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault");
   const sortValue = `${search.sortField === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · ${search.sortDirection === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}`;
+  const hasActiveFilters = search.fileFormat !== "all" || Boolean(search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || search.visualColors?.length || search.imageAspectRatios?.length);
   const closeFlyout = () => setFlyout(null);
   const openFlyout = (kind: "scope" | "sort", event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -52,13 +54,18 @@ const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplay
           <span>{sortValue}</span>
         </button>
       </div>
+      <div className="cap-stable-explore-commands">
+        <button className={`cap-stable-explore-random${randomBrowseEnabled ? " is-active" : ""}`} type="button" role="switch" aria-checked={randomBrowseEnabled} disabled={randomBrowseBusy} onClick={onToggleRandomBrowse}><span>{t("explore.randomBrowse")}</span><i aria-hidden="true"><b /></i></button>
+        <button type="button" disabled={!randomBrowseEnabled || randomBrowseBusy} onClick={onNextRandomBatch}>{t("explore.nextBatch")}{randomBrowseEnabled && <small>{randomBatchNumber}</small>}</button>
+        <button type="button" disabled={(!hasActiveFilters && !randomBrowseEnabled) || randomBrowseBusy} onClick={onClearExploreFilters}>{t("explore.clearFilters")}</button>
+      </div>
     </div>
     <StableExploreFilters search={search} availableFormats={availableFormats} closeFlyoutRequest={filterFlyoutCloseRequest} onFlyoutOpen={closeFlyout} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("stableUi.sidebar.searchScope")} placement="below" onClose={closeFlyout}>
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={searchDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { if (mode !== searchDisplayMode) onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
     </StableSidebarFlyout>}
     {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} placement="below" onClose={closeFlyout}>
-      {sortOptions.map(({ field, direction }) => <button type="button" className={search.sortField === field && search.sortDirection === direction ? "is-selected" : ""} key={`${field}-${direction}`} onClick={() => { if (field !== search.sortField || direction !== search.sortDirection) onSearchOptionsChange({ ...search, sortField: field, sortDirection: direction }); closeFlyout(); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · {direction === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}</button>)}
+      {sortOptions.map(({ field, direction }) => <button type="button" className={search.sortField === field && search.sortDirection === direction ? "is-selected" : ""} key={`${field}-${direction}`} onClick={() => { if (randomBrowseEnabled) onDisableRandomBrowse(); if (field !== search.sortField || direction !== search.sortDirection) onSearchOptionsChange({ ...search, sortField: field, sortDirection: direction }); closeFlyout(); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · {direction === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}</button>)}
     </StableSidebarFlyout>}
   </section>;
 };

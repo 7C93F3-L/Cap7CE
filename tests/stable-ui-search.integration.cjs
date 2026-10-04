@@ -18,6 +18,7 @@ const exploreFiltersSource = read("src/renderer/stable-ui/StableExploreFilters.t
 const exploreFiltersStyles = read("src/renderer/stable-ui/StableExploreFilters.css");
 const exploreFormatFiltersSource = read("src/renderer/stable-ui/exploreFormatFilters.ts");
 const exploreFormatSummarySource = read("src/renderer/stable-ui/exploreFormatSummary.ts");
+const randomBrowseSource = read("src/renderer/explore/useRandomBrowse.ts");
 const imageFiltersSource = read("src/renderer/stable-ui/StableImageFilters.tsx");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
@@ -74,6 +75,11 @@ assert.doesNotMatch(exploreFiltersSource, /onBlur=\{\(event\) => commitTime/u);
 assert.match(exploreFormatFiltersSource, /getExtensionsForCanonicalFormat[\s\S]*?canonicalFormat\(capability\.extension\) === canonicalFormat\(format\)/u);
 assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?extension !== "\.pdf"[\s\S]*?category === "visual"/u);
 assert.match(exploreFormatSummarySource, /canonicalizeSelectedFormats\(extensions\)\.length < 2[\s\S]*?kind: "type"[\s\S]*?kind: "format"/u);
+assert.match(randomBrowseSource, /scorePath\(left\.filePath, seed\)[\s\S]*?state\.enabled \? orderRandomBrowseItems\(items, state\.seed\)/u);
+assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current\.batchNumber \+ 1/u);
+assert.doesNotMatch(randomBrowseSource, /Math\.random/u);
+assert.match(appSource, /active, images: randomBrowse\.items/u);
+assert.match(appSource, /fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"[\s\S]*?visualColors: undefined[\s\S]*?imageAspectRatios: undefined/u);
 assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?visualColors:[\s\S]*?imageAspectRatios:/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 

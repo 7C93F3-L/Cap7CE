@@ -94,6 +94,8 @@ export const zhCN = {
   "explore.editTime": "编辑日期范围",
   "explore.editFormats": "精确选择文件格式",
   "explore.clearFilters": "清除筛选",
+  "explore.randomBrowse": "随机浏览",
+  "explore.nextBatch": "换一批",
   "explore.startDate": "开始日期",
   "explore.endDate": "结束日期",
   "explore.imageColors": "图像色彩",

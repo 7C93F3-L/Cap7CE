@@ -90,6 +90,8 @@ assert.match(exploreBarSource, /name="sort" sortDirection=\{search\.sortDirectio
 assert.match(exploreBarSource, /closeFlyoutRequest=\{filterFlyoutCloseRequest\} onFlyoutOpen=\{closeFlyout\}/u);
 assert.match(exploreBarSource, /if \(mode !== searchDisplayMode\) onSearchDisplayModeChange\(mode\)/u);
 assert.match(exploreBarSource, /if \(field !== search\.sortField \|\| direction !== search\.sortDirection\) onSearchOptionsChange/u);
+assert.match(exploreBarSource, /explore\.randomBrowse[\s\S]*?explore\.nextBatch[\s\S]*?explore\.clearFilters/u);
+assert.match(exploreBarSource, /if \(randomBrowseEnabled\) onDisableRandomBrowse\(\)/u);
 assert.match(sidebarFlyoutSource, /window\.addEventListener\("resize", onClose\)[\s\S]*?window\.removeEventListener\("resize", onClose\)/u);
 assert.doesNotMatch(sidebarSource, /name="sort"|name="scope"|ChevronIcon/u);
 assert.doesNotMatch(sidebarSource, />›<\/span>/u);
