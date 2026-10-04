@@ -18,6 +18,8 @@ const shellFiles = [
 
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const titlebarSource = read("src/renderer/stable-ui/StableTitlebar.tsx");
+const exploreBarSource = read("src/renderer/stable-ui/StableExploreBar.tsx");
+const exploreBarStyles = read("src/renderer/stable-ui/StableExploreBar.css");
 const mainShellSource = read(shellFiles[0]);
 const sidebarSource = read(shellFiles[1]);
 const layoutSource = read(shellFiles[4]);
@@ -40,7 +42,7 @@ const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.t
 const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} interactionLocked=\{backgroundInteractionLocked\}\s*\/>/);
+assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
 assert.match(titlebarSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{titlebarRef\}/u);
 assert.match(mainShellSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{shellRef\}/u);
 assert.match(inertElementSource, /elementRef\.current\.inert = inert/u);
@@ -50,7 +52,9 @@ assert.match(mainShellSource, /\{resultContent\(!interactionLocked && resultsKey
 assert.match(mainShellSource, /skim\.renderContent\(!interactionLocked && skimKeyboardActive\)/u);
 assert.match(keyboardRegionSource, /useEffect\(\(\) => setKeyboardRegion\(skimOpen \? "skim" : "results"\), \[skimOpen\]\)/u);
 assert.match(keyboardRegionSource, /\.cap-stable-skim-slot[\s\S]*?setKeyboardRegion\("skim"\)[\s\S]*?\.cap-stable-results-slot[\s\S]*?setKeyboardRegion\("results"\)/u);
-assert.match(titlebarSource, /\{searchInput\}/);
+assert.doesNotMatch(titlebarSource, /searchInput|StableSearchInput/u);
+assert.match(exploreBarSource, /<StableSearchInput[\s\S]*?onSearch=\{onSearch\}/u);
+assert.match(mainShellSource, /\{resultsToolbar\}\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
 assert.match(mainShellSource, /role="separator"[\s\S]*?aria-valuenow=\{sidebarWidth\}[\s\S]*?onKeyDown=\{resizeSidebarByKeyboard\}/u);
@@ -97,7 +101,7 @@ assert.match(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: no-drag;[^}
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: drag;/u);
 assert.match(foundationStyles, /\.cap-stable-titlebar \{[\s\S]*?app-region: drag;[\s\S]*?-webkit-app-region: drag;/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
-assert.match(foundationStyles, /\.cap-stable-search-slot \{[\s\S]*?width: min\(clamp\(120px, 42vw, 560px\), calc\(100% - 56px\)\);/u);
+assert.match(exploreBarStyles, /\.cap-stable-explore-bar \.cap-stable-search-slot \{[\s\S]*?width: 100%;[\s\S]*?height: 38px;/u);
 assert.match(foundationStyles, /\.cap-stable-titlebar-pin-icon \{ width: 24px; height: 24px; \}/u);
 assert.match(foundationStyles, /@media \(max-width: 760px\) \{[\s\S]*?\.cap-stable-result-count \{ display: none; \}[\s\S]*?\.cap-stable-titlebar-pin \{ margin-left: auto; \}[\s\S]*?\}/u);
 assert.match(scrollbarStyles, /\.cap-custom-scrollbar-thumb\s*\{[\s\S]*?background: var\(--scrollbar-thumb\);/u);

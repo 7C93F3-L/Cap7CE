@@ -8,6 +8,8 @@ const appSource = read("src/renderer/App.tsx");
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
 const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
 const sidebarSource = read("src/renderer/stable-ui/StableShellSidebar.tsx");
+const exploreBarSource = read("src/renderer/stable-ui/StableExploreBar.tsx");
+const exploreTypesSource = read("src/renderer/stable-ui/stableExploreTypes.ts");
 const sidebarIconSource = read("src/renderer/stable-ui/StableSidebarIcons.tsx");
 const directoryFlyoutSource = read("src/renderer/stable-ui/StableDirectoryFlyout.tsx");
 const directoryTooltipSource = read("src/renderer/stable-ui/StableDirectoryTooltip.tsx");
@@ -27,7 +29,6 @@ const enLocalizationSource = read("electron/locales/en-US.ts");
 for (const marker of [
   "onAiSearchToggle",
   "onSearchOptionsChange",
-  "onSearchDisplayModeChange",
   "onAddDirectory",
   "onDirectoryNameChange",
   "onMoveDirectory",
@@ -35,8 +36,12 @@ for (const marker of [
   "onDeleteDirectory",
   "onOpenSettings"
 ]) assert.ok(sidebarTypesSource.includes(marker), `Stable sidebar contract is missing ${marker}.`);
+for (const marker of ["searchDisplayMode", "onSearchDisplayModeChange"]) {
+  assert.ok(exploreTypesSource.includes(marker), `Stable explore contract is missing ${marker}.`);
+}
 
 assert.match(appSource, /sidebar=\{\{[\s\S]*?directories: directoryOptions[\s\S]*?onAiSearchToggle: toggleAiSearchBeta[\s\S]*?onAddDirectory: \(\) => void addDirectory\(\)[\s\S]*?onOpenSettings: \(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/);
+assert.match(appSource, /explore=\{\{[\s\S]*?searchDisplayMode: skimDisplay\.searchMode[\s\S]*?onSearchDisplayModeChange:/u);
 assert.match(appSource, /const openSettingsWindow = useCallback\(\(\) => \{[\s\S]*?settingsWindow\.open\(\)/u);
 assert.match(appSource, /const directoryDialogLayer =/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
@@ -47,16 +52,16 @@ assert.doesNotMatch(`${rootSource}\n${shellSource}\n${sidebarSource}`, /window\.
 
 for (const marker of [
   "cap-stable-brand-logo",
-  "search.sortField",
-  "search.sortDirection",
   "search.directoryId",
-  "skimDisplayMode",
   "editingDirectoryId === directory.id",
   "onDoubleClick",
   "onContextMenu",
   "is-menu-open",
   "directory.fileCount"
 ]) assert.ok(sidebarSource.includes(marker), `Stable sidebar display is missing ${marker}.`);
+for (const marker of ["search.sortField", "search.sortDirection", "searchDisplayMode", "StableSearchInput", "StableSidebarFlyout"]) {
+  assert.ok(exploreBarSource.includes(marker), `Stable explore bar is missing ${marker}.`);
+}
 
 for (const marker of [
   ".cap-stable-brand-logo",
@@ -81,8 +86,8 @@ assert.match(sidebarSource, /cap-stable-directory-list-frame cap-scroll-viewport
 assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScrollRef\} orientation="vertical" \/>/u);
 assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
 assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
-assert.match(sidebarSource, /name="sort" sortDirection=\{search\.sortDirection\} className="cap-stable-sidebar-icon cap-stable-sort-icon"/u);
-assert.equal((sidebarSource.match(/<ChevronIcon className="cap-stable-control-chevron" \/>/g) ?? []).length, 2);
+assert.match(exploreBarSource, /name="sort" sortDirection=\{search\.sortDirection\}/u);
+assert.doesNotMatch(sidebarSource, /name="sort"|name="scope"|ChevronIcon/u);
 assert.doesNotMatch(sidebarSource, />›<\/span>/u);
 assert.match(sidebarIconSource, /add: <path d="M12 5v14M5 12h14" \/>/u);
 assert.match(sidebarSource, /name="skim" active=\{skimOpen\} className="cap-stable-footer-icon cap-stable-skim-icon"/u);
@@ -92,8 +97,8 @@ assert.match(sidebarSource, /window\.setTimeout\([\s\S]*?, 150\)/u);
 assert.match(sidebarSource, /onPointerEnter=\{\(event\) => showDirectoryTooltipSoon\(directory, (?:true|false), event\)\}[\s\S]*?onPointerLeave=\{hideDirectoryTooltip\}[\s\S]*?onPointerDown=\{hideDirectoryTooltip\}/u);
 assert.match(sidebarSource, /onScroll=\{hideDirectoryTooltip\}/u);
 assert.match(sidebarSource, /directoryTooltip && flyout === null/u);
-assert.match(sidebarSource, /const openFlyout = [\s\S]*?setFlyout\(\(current\) => current\?\.kind === kind \? null : \{ kind, anchor \}\)/u);
-assert.equal((sidebarSource.match(/onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/g) ?? []).length, 2);
+assert.match(exploreBarSource, /const openFlyout = [\s\S]*?setFlyout\(\(current\) => current\?\.kind === kind \? null : \{ kind, anchor \}\)/u);
+assert.equal((exploreBarSource.match(/onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/g) ?? []).length, 2);
 assert.match(sidebarSource, /aria-label=\{accessibleLabel\}/u);
 assert.doesNotMatch(sidebarSource, /type="button" title=\{title\} aria-pressed/u);
 assert.match(directoryTooltipSource, /const left = anchor\.right \+ 5[\s\S]*?Math\.min\(184, window\.innerWidth - left - 5\)[\s\S]*?createPortal\([\s\S]*?role="tooltip"[\s\S]*?cap-stable-directory-tooltip-title[\s\S]*?directory\.name[\s\S]*?cap-stable-directory-tooltip-count[\s\S]*?search\.fileCount[\s\S]*?directory\.fileCount[\s\S]*?pathLeading[\s\S]*?pathTrailing/u);

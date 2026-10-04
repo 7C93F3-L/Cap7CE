@@ -1,27 +1,23 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { t } from "../../../electron/localization";
-import type { DirectoryItem, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
-import ChevronIcon from "../components/ChevronIcon";
+import type { DirectoryItem } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
 import StableDirectoryFlyout from "./StableDirectoryFlyout";
 import StableDirectoryTooltip from "./StableDirectoryTooltip";
-import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableSidebarIcon from "./StableSidebarIcons";
 import StableUiIcon from "./StableUiIcon";
 import type { StableSidebarProps } from "./stableSidebarTypes";
 import "./StableSidebar.css";
-type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
+type FlyoutState = { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
 type DirectoryTooltipState = { anchor: DOMRect; directoryId: string; all: boolean } | null;
 interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; }
-const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onSearchDisplayModeChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
+const StableShellSidebar = ({ search, directories, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
   const [flyout, setFlyout] = useState<FlyoutState>(null);
   const [directoryTooltip, setDirectoryTooltip] = useState<DirectoryTooltipState>(null);
   const directoryTooltipTimerRef = useRef<number | null>(null);
   const directoryScrollRef = useRef<HTMLDivElement | null>(null);
   const allDirectories = directories[0];
   const addedDirectories = directories.slice(1);
-  const sortValue = `${search.sortField === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · ${search.sortDirection === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}`;
-  const scopeValue = skimDisplayMode === "all" ? t("stableUi.sidebar.scopeAll") : skimDisplayMode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault");
   const aiValue = aiSearchBusy ? t("search.section.aiMatching.title") : aiSearchEnabled ? t("common.enabled") : t("search.section.aiPaused.title");
   const hideDirectoryTooltip = () => { if (directoryTooltipTimerRef.current !== null) window.clearTimeout(directoryTooltipTimerRef.current); directoryTooltipTimerRef.current = null; setDirectoryTooltip(null); };
   const showDirectoryTooltipSoon = (directory: DirectoryItem, all: boolean, event: PointerEvent<HTMLElement>) => {
@@ -31,10 +27,7 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
     directoryTooltipTimerRef.current = window.setTimeout(() => { directoryTooltipTimerRef.current = null; setDirectoryTooltip({ anchor, directoryId: directory.id, all }); }, 150);
   };
   useEffect(() => () => { if (directoryTooltipTimerRef.current !== null) window.clearTimeout(directoryTooltipTimerRef.current); }, []);
-  const openFlyout = (kind: "sort" | "scope", event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); hideDirectoryTooltip(); const anchor = event.currentTarget.getBoundingClientRect(); setFlyout((current) => current?.kind === kind ? null : { kind, anchor }); };
   const openDirectoryFlyout = (directory: DirectoryItem, event: MouseEvent<HTMLElement>) => { event.preventDefault(); event.stopPropagation(); hideDirectoryTooltip(); const anchor = event.currentTarget.closest<HTMLElement>(".cap-stable-directory-row") ?? event.currentTarget; setFlyout({ kind: "directory", anchor: anchor.getBoundingClientRect(), directory }); };
-  const selectSortField = (sortField: SortField) => onSearchOptionsChange({ ...search, sortField });
-  const selectSortDirection = (sortDirection: SortDirection) => onSearchOptionsChange({ ...search, sortDirection });
   const selectDirectory = (directoryId: string) => onSearchOptionsChange({ ...search, directoryId });
   const closeFlyout = () => setFlyout(null);
   const renderDirectory = (directory: DirectoryItem, all = false) => {
@@ -71,12 +64,6 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>
         <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span>
       </button>
-      <button className="cap-stable-sidebar-control" type="button" title={t("sort.parent")} aria-expanded={flyout?.kind === "sort"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("sort", event)}>
-        <StableUiIcon name="sort" sortDirection={search.sortDirection} className="cap-stable-sidebar-icon cap-stable-sort-icon" /><span className="cap-stable-control-copy"><strong>{t("sort.parent")}</strong><small>{sortValue}</small></span><ChevronIcon className="cap-stable-control-chevron" />
-      </button>
-      <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.searchScope")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}>
-        <StableUiIcon name="scope" active={flyout?.kind === "scope"} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.searchScope")}</strong><small>{scopeValue}</small></span><ChevronIcon className="cap-stable-control-chevron" />
-      </button>
     </div>
 
     <section className="cap-stable-directory-section">
@@ -96,13 +83,6 @@ const StableShellSidebar = ({ search, directories, skimDisplayMode, aiSearchEnab
         <StableUiIcon name="settings" active className="cap-stable-footer-icon cap-stable-settings-icon-active" />
       </button>
     </div>
-    {flyout?.kind === "sort" && <StableSidebarFlyout anchor={flyout.anchor} label={t("sort.parent")} onClose={closeFlyout}>
-      {(["modified_at", "file_name"] as SortField[]).map((field) => <button type="button" className={search.sortField === field ? "is-selected" : ""} key={field} onClick={() => { selectSortField(field); closeFlyout(); }}>{field === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")}</button>)}
-      {(["desc", "asc"] as SortDirection[]).map((direction) => <button type="button" className={search.sortDirection === direction ? "is-selected" : ""} key={direction} onClick={() => { selectSortDirection(direction); closeFlyout(); }}>{direction === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}</button>)}
-    </StableSidebarFlyout>}
-    {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("stableUi.sidebar.searchScope")} onClose={closeFlyout}>
-      {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={skimDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
-    </StableSidebarFlyout>}
     {flyout?.kind === "directory" && <StableDirectoryFlyout anchor={flyout.anchor} directory={flyout.directory} directories={addedDirectories} onMove={onMoveDirectory} onOpen={onOpenDirectory} onEdit={onEditDirectory} onDelete={onDeleteDirectory} onClose={closeFlyout} />}
     {directoryTooltip && flyout === null && (() => { const directory = directories.find((candidate) => candidate.id === directoryTooltip.directoryId); return directory ? <StableDirectoryTooltip anchor={directoryTooltip.anchor} directory={directory} all={directoryTooltip.all} directoryCount={addedDirectories.length} /> : null; })()}
   </aside>;

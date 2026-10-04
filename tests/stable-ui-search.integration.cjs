@@ -13,8 +13,8 @@ const resultStatusSource = read("src/renderer/results/ResultStatus.tsx");
 const resultsSource = read("src/renderer/results/ResultsView.tsx");
 const gridSource = read("src/renderer/results/VirtualResultGrids.tsx");
 const stableResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css");
+const exploreBarStyles = read("src/renderer/stable-ui/StableExploreBar.css");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
-const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
 const menuSource = read("src/renderer/results/ResponsiveResultsContextMenuLayer.tsx");
@@ -78,7 +78,7 @@ assert.match(resultSectionStyles, /\.result-section-card h2\s*\{[^}]*font-weight
 assert.match(resultSectionStyles, /\.result-section-card p\s*\{[^}]*color: color-mix\(in srgb, var\(--text-main\) 62%, transparent\);/u);
 assert.doesNotMatch(resultSectionStyles, /animation:|@keyframes|cap7ce-ai-section-text-breathe/u);
 assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-search-icon" \/>/u);
-assert.match(foundationStyles, /\.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-search-surface\);/u);
+assert.match(exploreBarStyles, /\.cap-stable-explore-bar \.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-search-surface\);/u);
 assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-stable-titlebar,[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?\.cap-stable-titlebar\.theme-dark,[\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 24%\);/u);
 assert.match(stableResultsStyles, /\.cap-stable-search-slot input::placeholder \{ color: var\(--cap-stable-search-placeholder\); opacity: 1; \}/u);
 assert.match(stableResultsStyles, /\.cap-stable-search-clear \{[^}]*width: 24px; height: 24px;[^}]*margin-right: -7px;[^}]*border-radius: 50%;[^}]*color: var\(--cap-stable-text\);[^}]*background: var\(--cap-stable-hover\);[^}]*transition: var\(--cap-stable-control-transition\);/u);

@@ -29,6 +29,7 @@
   background: var(--cap-stable-surface);
   overflow: hidden;
 }
+.cap-stable-results-slot { container-type: inline-size; display: flex; flex-direction: column; }
 @media (max-width: 920px) and (min-height: 360px) {
   .cap-stable-main-shell.is-skim-open { grid-template-columns: var(--cap-stable-sidebar-rendered-width) minmax(0, 1fr); }
   .cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }

@@ -106,7 +106,7 @@
   box-shadow: inset 0 0 0 1px var(--cap-stable-material-border);
 }
 
-.cap-stable-titlebar[data-window-material="mica"] .cap-stable-search-slot,
+.cap-stable-ui[data-window-material="mica"] .cap-stable-explore-bar .cap-stable-search-slot,
 .cap-stable-ui[data-window-material="mica"] .cap-stable-skim-address,
 .cap-settings-window-foundation[data-window-material="mica"] .cap-stable-settings-search {
   box-shadow: inset 0 0 0 1px var(--cap-stable-material-border);

@@ -2363,12 +2363,15 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         resultContent={(active) => <ResultsView key={search.directoryId} {...createResultsViewProps(active)} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
         backgroundInteractionLocked={dialog !== null}
+        explore={{
+          searchDisplayMode: skimDisplay.searchMode,
+          onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode })
+        }}
         sidebar={{
           search, directories: directoryOptions,
-          skimDisplayMode: skimDisplay.searchMode, aiSearchEnabled: aiSearchBeta.enabled, aiSearchBusy: aiSearchBeta.busy,
+          aiSearchEnabled: aiSearchBeta.enabled, aiSearchBusy: aiSearchBeta.busy,
           isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId,
           onAiSearchToggle: toggleAiSearchBeta, onSearchOptionsChange: updateResultsSearchOptions,
-          onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode }),
           onAddDirectory: () => void addDirectory(),
           onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),

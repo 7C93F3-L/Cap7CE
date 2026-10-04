@@ -58,19 +58,6 @@
   -webkit-app-region: drag;
 }
 
-.cap-stable-search-slot {
-  align-self: center;
-  width: min(clamp(120px, 42vw, 560px), calc(100% - 56px));
-  height: 32px;
-  margin-left: 10px;
-  box-sizing: border-box;
-  padding: 6px 12px;
-  border-radius: var(--cap-stable-radius-pill);
-  color: var(--cap-stable-text-muted);
-  background: var(--cap-stable-search-surface);
-  app-region: no-drag;
-  -webkit-app-region: no-drag;
-}
 .cap-stable-result-count {
   align-self: center;
   margin-left: auto;

@@ -1,6 +1,7 @@
 import type { ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import type { ResolvedThemeMode, SearchState, WindowMaterial } from "../../shared/types";
 import type { StableSidebarProps } from "./stableSidebarTypes";
+import type { StableExploreProps } from "./stableExploreTypes";
 import type { StableSkimProps } from "./stableSkimTypes";
 
 export interface StableUiRendererProps {
@@ -11,6 +12,7 @@ export interface StableUiRendererProps {
   inputFeedback: string;
   resultStatus: ReactNode; resultContent: (active: boolean) => ReactNode; overlayContent: ReactNode;
   backgroundInteractionLocked: boolean;
+  explore: StableExploreProps;
   sidebar: StableSidebarProps;
   skim: StableSkimProps;
   directoryDropEnabled: boolean;

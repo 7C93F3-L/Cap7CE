@@ -7,15 +7,14 @@ interface StableTitlebarProps {
   theme: ResolvedThemeMode; themeStyle: CSSProperties; windowMaterial: WindowMaterial;
   pinned: boolean; pinLabel: string;
   interactionLocked: boolean;
-  searchInput: ReactNode; resultStatus: ReactNode;
+  resultStatus: ReactNode;
   onTogglePinned: () => void;
 }
-const StableTitlebar = ({ theme, themeStyle, windowMaterial, pinned, pinLabel, interactionLocked, searchInput, resultStatus, onTogglePinned }: StableTitlebarProps) => {
+const StableTitlebar = ({ theme, themeStyle, windowMaterial, pinned, pinLabel, interactionLocked, resultStatus, onTogglePinned }: StableTitlebarProps) => {
   const titlebarRef = useInertElement<HTMLElement>(interactionLocked);
   return (
     <WindowTitlebarPortal>
       <header ref={titlebarRef} className={`app theme-${theme} cap-stable-titlebar`} style={themeStyle} data-window-material={windowMaterial} data-window-controls="true">
-        {searchInput}
         <span className="cap-stable-result-count">{resultStatus}</span>
         <WindowPinButton
           className="cap-stable-titlebar-pin"

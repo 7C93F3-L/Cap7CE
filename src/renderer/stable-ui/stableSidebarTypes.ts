@@ -1,8 +1,7 @@
-import type { DirectoryItem, SearchState, SkimDisplayMode } from "../../shared/types";
+import type { DirectoryItem, SearchState } from "../../shared/types";
 export interface StableSidebarProps {
   search: SearchState;
   directories: DirectoryItem[];
-  skimDisplayMode: SkimDisplayMode;
   aiSearchEnabled: boolean;
   aiSearchBusy: boolean;
   isLoadingDirectories: boolean;
@@ -11,7 +10,6 @@ export interface StableSidebarProps {
   editingDirectoryId: string | null;
   onAiSearchToggle: () => void;
   onSearchOptionsChange: (search: SearchState) => void;
-  onSearchDisplayModeChange: (mode: SkimDisplayMode) => void;
   onAddDirectory: () => void;
   onEditDirectory: (id: string) => void;
   onCancelDirectoryEdit: () => void;
