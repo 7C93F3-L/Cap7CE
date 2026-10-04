@@ -11,6 +11,7 @@ import { searchArtboardCountPresets } from "./artboardSearchFilters";
 import { normalizeThreeDTriangleCountRange, searchThreeDModelTypes, searchThreeDStructures, searchThreeDTriangleCountPresets } from "./threeDSearchFilters";
 import { normalizeArchiveEntryCountRange, searchArchiveContentTypes, searchArchiveEntryCountPresets, searchArchiveStructures } from "./archiveSearchFilters";
 import { searchFontCharacterSets, searchFontKinds, searchFontStyles, searchFontWeights } from "./fontSearchFilters";
+import { searchModelParameterCounts, searchModelPrecisions } from "./modelSearchFilters";
 import {
   normalizeSearchCountRange,
   searchDataColumnCountPresets,
@@ -99,7 +100,9 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.fontWeights === undefined || (Array.isArray(search.fontWeights) && search.fontWeights.every((value) => searchFontWeights.includes(String(value) as (typeof searchFontWeights)[number]))))
     && (search.fontStyles === undefined || (Array.isArray(search.fontStyles) && search.fontStyles.every((value) => searchFontStyles.includes(String(value) as (typeof searchFontStyles)[number]))))
     && (search.fontCharacterSets === undefined || (Array.isArray(search.fontCharacterSets) && search.fontCharacterSets.every((value) => searchFontCharacterSets.includes(String(value) as (typeof searchFontCharacterSets)[number]))))
-    && (search.fontKinds === undefined || (Array.isArray(search.fontKinds) && search.fontKinds.every((value) => searchFontKinds.includes(String(value) as (typeof searchFontKinds)[number]))));
+    && (search.fontKinds === undefined || (Array.isArray(search.fontKinds) && search.fontKinds.every((value) => searchFontKinds.includes(String(value) as (typeof searchFontKinds)[number]))))
+    && (search.modelParameterCounts === undefined || (Array.isArray(search.modelParameterCounts) && search.modelParameterCounts.every((value) => searchModelParameterCounts.includes(String(value) as (typeof searchModelParameterCounts)[number]))))
+    && (search.modelPrecisions === undefined || (Array.isArray(search.modelPrecisions) && search.modelPrecisions.every((value) => searchModelPrecisions.includes(String(value) as (typeof searchModelPrecisions)[number]))));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

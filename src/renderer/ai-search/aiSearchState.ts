@@ -65,4 +65,6 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || stringListKey(next.fontStyles) !== stringListKey(previous.fontStyles)
   || stringListKey(next.fontCharacterSets) !== stringListKey(previous.fontCharacterSets)
   || stringListKey(next.fontKinds) !== stringListKey(previous.fontKinds)
+  || stringListKey(next.modelParameterCounts) !== stringListKey(previous.modelParameterCounts)
+  || stringListKey(next.modelPrecisions) !== stringListKey(previous.modelPrecisions)
 );

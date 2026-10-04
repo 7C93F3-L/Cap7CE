@@ -62,6 +62,8 @@ interface SearchRequestShape {
   fontStyles?: unknown;
   fontCharacterSets?: unknown;
   fontKinds?: unknown;
+  modelParameterCounts?: unknown;
+  modelPrecisions?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -110,7 +112,9 @@ const summarizeSearch = (search: unknown) => {
     fontWeightCount: Array.isArray(request.fontWeights) ? request.fontWeights.length : 0,
     fontStyleCount: Array.isArray(request.fontStyles) ? request.fontStyles.length : 0,
     fontCharacterSetCount: Array.isArray(request.fontCharacterSets) ? request.fontCharacterSets.length : 0,
-    fontKindCount: Array.isArray(request.fontKinds) ? request.fontKinds.length : 0
+    fontKindCount: Array.isArray(request.fontKinds) ? request.fontKinds.length : 0,
+    modelParameterCount: Array.isArray(request.modelParameterCounts) ? request.modelParameterCounts.length : 0,
+    modelPrecisionCount: Array.isArray(request.modelPrecisions) ? request.modelPrecisions.length : 0
   };
 };
 

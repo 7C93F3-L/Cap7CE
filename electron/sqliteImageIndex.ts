@@ -155,6 +155,21 @@ import {
   type SearchFontStyle,
   type SearchFontWeight
 } from "./fontSearchFilters";
+import { replaceModelFact } from "./modelFactStore";
+import {
+  MODEL_FACT_EXTRACTOR_VERSION,
+  supportedModelFactExtensions,
+  type ModelFactCandidate,
+  type ModelFactWriteRecord
+} from "./modelFactTypes";
+import {
+  hasModelSearchFacets,
+  matchesModelParameterCount,
+  searchModelParameterCounts,
+  searchModelPrecisions,
+  type SearchModelParameterCount,
+  type SearchModelPrecision
+} from "./modelSearchFilters";
 import {
   IMAGE_DIMENSION_EXTRACTOR_VERSION,
   supportedImageDimensionExtensions,
@@ -270,6 +285,8 @@ export interface ImageSearchState {
   fontStyles?: SearchFontStyle[];
   fontCharacterSets?: SearchFontCharacterSet[];
   fontKinds?: SearchFontKind[];
+  modelParameterCounts?: SearchModelParameterCount[];
+  modelPrecisions?: SearchModelPrecision[];
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -1053,6 +1070,59 @@ export const writeFontFactBatch = async (records: FontFactWriteRecord[]) => {
       const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
       if (currentRevision !== record.result.sourceRevision) continue;
       replaceFontFact(database, record.filePath, record.result, new Date().toISOString());
+      writtenCount += 1;
+    }
+    database.run("COMMIT");
+    if (writtenCount > 0) await saveDatabase(database);
+    return writtenCount;
+  } catch (error) {
+    try { database.run("ROLLBACK"); } catch { /* Preserve the original error. */ }
+    throw error;
+  } finally {
+    readSource.free();
+    database.close();
+  }
+};
+
+const supportedModelFactExtensionSet = new Set<string>(supportedModelFactExtensions);
+
+export const listPendingModelFactCandidates = async (directoryIds?: string[]): Promise<ModelFactCandidate[]> => {
+  const database = await loadDatabase();
+  try {
+    const requestedIds = new Set(directoryIds ?? []);
+    const rows = database.exec(`
+      SELECT file.file_path, file.file_size, file.modified_at, file.directory_id, file.extension,
+             fact.source_revision, fact.extractor_version
+      FROM files AS file
+      LEFT JOIN file_model_facts AS fact ON fact.file_id = file.id
+      WHERE file."exists" = 1
+      ORDER BY file.id
+    `)[0]?.values ?? [];
+    return rows.flatMap((row) => {
+      if (requestedIds.size > 0 && !requestedIds.has(String(row[3]))) return [];
+      if (!supportedModelFactExtensionSet.has(String(row[4]).toLowerCase())) return [];
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[1]), modifiedAt: String(row[2]) });
+      if (String(row[5] ?? "") === sourceRevision && Number(row[6]) === MODEL_FACT_EXTRACTOR_VERSION) return [];
+      return [{ filePath: String(row[0]), sourceRevision }];
+    });
+  } finally { database.close(); }
+};
+
+export const writeModelFactBatch = async (records: ModelFactWriteRecord[]) => {
+  if (records.length === 0) return 0;
+  const database = await loadDatabase();
+  const readSource = database.prepare(`SELECT file_size, modified_at FROM files WHERE file_path = :file_path COLLATE NOCASE AND "exists" = 1 LIMIT 1`);
+  let writtenCount = 0;
+  try {
+    database.run("BEGIN TRANSACTION");
+    for (const record of records) {
+      if (record.result.extractorVersion !== MODEL_FACT_EXTRACTOR_VERSION) continue;
+      const source = readSource.get({ ":file_path": record.filePath });
+      readSource.reset();
+      if (source.length === 0) continue;
+      const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
+      if (currentRevision !== record.result.sourceRevision) continue;
+      replaceModelFact(database, record.filePath, record.result, new Date().toISOString());
       writtenCount += 1;
     }
     database.run("COMMIT");
@@ -2431,6 +2501,11 @@ interface IndexedFontFact {
   variable: boolean;
 }
 
+interface IndexedModelFact {
+  parameterCount: number;
+  precision: SearchModelPrecision;
+}
+
 const matchesArchiveFacets = (fact: IndexedArchiveFact, search: ImageSearchState) => {
   const contentTypes = [...new Set(search.archiveContentTypes ?? [])].filter((value): value is SearchArchiveContentType => (
     searchArchiveContentTypes.includes(value as SearchArchiveContentType)
@@ -2454,6 +2529,18 @@ const matchesFontFacets = (fact: IndexedFontFact, search: ImageSearchState) => {
   if (characterSets.some((value) => value === "latin" ? !fact.supportsLatin : !fact.supportsChinese)) return false;
   const kinds = [...new Set(search.fontKinds ?? [])].filter((value): value is SearchFontKind => searchFontKinds.includes(value as SearchFontKind));
   if (kinds.length > 0 && !kinds.some((value) => value === "variable" ? fact.variable : !fact.variable)) return false;
+  return true;
+};
+
+const matchesModelFacets = (fact: IndexedModelFact, search: ImageSearchState) => {
+  const parameterCounts = [...new Set(search.modelParameterCounts ?? [])].filter((value): value is SearchModelParameterCount => (
+    searchModelParameterCounts.includes(value as SearchModelParameterCount)
+  ));
+  if (parameterCounts.length > 0 && !parameterCounts.some((value) => matchesModelParameterCount(fact.parameterCount, value))) return false;
+  const precisions = [...new Set(search.modelPrecisions ?? [])].filter((value): value is SearchModelPrecision => (
+    searchModelPrecisions.includes(value as SearchModelPrecision)
+  ));
+  if (precisions.length > 0 && !precisions.includes(fact.precision)) return false;
   return true;
 };
 
@@ -2679,6 +2766,13 @@ export const searchIndexedCatalog = async (
   const fontFactJoinSql = hasFontConditions
     ? "LEFT JOIN file_font_facts AS font_fact ON font_fact.file_id = f.id"
     : "";
+  const hasModelConditions = hasModelSearchFacets(search);
+  const modelFactSelectSql = hasModelConditions
+    ? "model_fact.status, model_fact.extractor_version, model_fact.source_revision, model_fact.parameter_count, model_fact.precision"
+    : "NULL, NULL, NULL, NULL, NULL";
+  const modelFactJoinSql = hasModelConditions
+    ? "LEFT JOIN file_model_facts AS model_fact ON model_fact.file_id = f.id"
+    : "";
 
   try {
     const rows = database.exec(`
@@ -2713,6 +2807,7 @@ export const searchIndexedCatalog = async (
         ${threeDFactSelectSql},
         ${archiveFactSelectSql},
         ${fontFactSelectSql},
+        ${modelFactSelectSql},
         query_cache.keywords,
         query_cache.source_revision,
         query_cache.model_id,
@@ -2739,6 +2834,7 @@ export const searchIndexedCatalog = async (
       ${threeDFactJoinSql}
       ${archiveFactJoinSql}
       ${fontFactJoinSql}
+      ${modelFactJoinSql}
       WHERE ${where.join(" AND ")}
       ORDER BY ${sortColumn} ${sortDirection}, f.id ASC
     `, params)[0]?.values ?? [];
@@ -2756,6 +2852,7 @@ export const searchIndexedCatalog = async (
     const threeDFactsByFilePath: Record<string, IndexedThreeDFact> = {};
     const archiveFactsByFilePath: Record<string, IndexedArchiveFact> = {};
     const fontFactsByFilePath: Record<string, IndexedFontFact> = {};
+    const modelFactsByFilePath: Record<string, IndexedModelFact> = {};
     for (const row of rows) {
       const filePath = String(row[1]);
       const fileName = String(row[2]);
@@ -2778,7 +2875,8 @@ export const searchIndexedCatalog = async (
       const threeDFactOffset = textDataFactOffset + 9;
       const archiveFactOffset = threeDFactOffset + 9;
       const fontFactOffset = archiveFactOffset + 16;
-      const queryCacheOffset = fontFactOffset + 8;
+      const modelFactOffset = fontFactOffset + 8;
+      const queryCacheOffset = modelFactOffset + 5;
       const queryCacheValid = imageId !== null
         && String(row[queryCacheOffset + 1] ?? "") === createFileSourceRevision({
           fileSize: Number(row[4] ?? 0),
@@ -2955,6 +3053,19 @@ export const searchIndexedCatalog = async (
         supportsChinese: Number(row[fontFactOffset + 6]) === 1,
         variable: Number(row[fontFactOffset + 7]) === 1
       };
+      if (
+        hasModelConditions
+        && String(row[modelFactOffset] ?? "") === "indexed"
+        && Number(row[modelFactOffset + 1]) === MODEL_FACT_EXTRACTOR_VERSION
+        && String(row[modelFactOffset + 2] ?? "") === createFileSourceRevision({
+          fileSize: Number(row[4] ?? 0),
+          modifiedAt: String(row[6] ?? "")
+        })
+        && searchModelPrecisions.includes(String(row[modelFactOffset + 4]) as SearchModelPrecision)
+      ) modelFactsByFilePath[filePath] = {
+        parameterCount: Number(row[modelFactOffset + 3]),
+        precision: String(row[modelFactOffset + 4]) as SearchModelPrecision
+      };
     }
 
     const catalogStateParams: Record<string, SqlValue> = {};
@@ -3048,12 +3159,18 @@ export const searchIndexedCatalog = async (
         return fact !== undefined && matchesArchiveFacets(fact, search);
       })
       : threeDFilteredImages;
-    const filteredImages = hasFontConditions
+    const fontFilteredImages = hasFontConditions
       ? archiveFilteredImages.filter((image) => {
         const fact = fontFactsByFilePath[image.filePath];
         return fact !== undefined && matchesFontFacets(fact, search);
       })
       : archiveFilteredImages;
+    const filteredImages = hasModelConditions
+      ? fontFilteredImages.filter((image) => {
+        const fact = modelFactsByFilePath[image.filePath];
+        return fact !== undefined && matchesModelFacets(fact, search);
+      })
+      : fontFilteredImages;
     return {
       images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),

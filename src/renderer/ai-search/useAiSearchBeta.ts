@@ -119,7 +119,9 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       fontWeights: search.fontWeights ?? [],
       fontStyles: search.fontStyles ?? [],
       fontCharacterSets: search.fontCharacterSets ?? [],
-      fontKinds: search.fontKinds ?? []
+      fontKinds: search.fontKinds ?? [],
+      modelParameterCounts: search.modelParameterCounts ?? [],
+      modelPrecisions: search.modelPrecisions ?? []
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey
