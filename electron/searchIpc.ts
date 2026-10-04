@@ -36,6 +36,7 @@ interface SearchRequestShape {
   audioChannels?: unknown;
   documentContentCountPreset?: unknown;
   documentContentCountRange?: unknown;
+  documentImageComposition?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -67,7 +68,8 @@ const summarizeSearch = (search: unknown) => {
     videoColorTraitCount: Array.isArray(request.videoColorTraits) ? request.videoColorTraits.length : 0,
     audioDuration: typeof request.audioDurationPreset === "string" || typeof request.audioDurationRange === "object",
     audioChannelCount: Array.isArray(request.audioChannels) ? request.audioChannels.length : 0,
-    documentContentCount: typeof request.documentContentCountPreset === "string" || typeof request.documentContentCountRange === "object"
+    documentContentCount: typeof request.documentContentCountPreset === "string" || typeof request.documentContentCountRange === "object",
+    documentImageComposition: typeof request.documentImageComposition === "string" ? request.documentImageComposition.slice(0, 24) : "all"
   };
 };
 

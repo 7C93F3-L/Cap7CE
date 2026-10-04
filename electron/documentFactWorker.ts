@@ -1,5 +1,5 @@
 import { parentPort } from "node:worker_threads";
-import { readDocumentContentCount } from "./documentFactExtractor";
+import { readDocumentFact } from "./documentFactExtractor";
 import { DOCUMENT_FACT_EXTRACTOR_VERSION, type DocumentFactCandidate, type DocumentFactResult } from "./documentFactTypes";
 
 const failed = (candidate: DocumentFactCandidate, errorCode: string): DocumentFactResult => ({
@@ -8,12 +8,14 @@ const failed = (candidate: DocumentFactCandidate, errorCode: string): DocumentFa
   status: "failed",
   contentCount: 0,
   countKind: "pages",
+  imageCompositionKnown: false,
+  hasEmbeddedImages: false,
   errorCode
 });
 
 parentPort?.on("message", async (request: { id: number; candidate: DocumentFactCandidate }) => {
   try {
-    const fact = await readDocumentContentCount(request.candidate.filePath);
+    const fact = await readDocumentFact(request.candidate.filePath);
     parentPort?.postMessage({ id: request.id, result: {
       sourceRevision: request.candidate.sourceRevision,
       extractorVersion: DOCUMENT_FACT_EXTRACTOR_VERSION,

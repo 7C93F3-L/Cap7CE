@@ -110,8 +110,8 @@ assert.match(audioFiltersSource, /if \(!isAudioOnlyExtensionSelection[\s\S]*?ret
 assert.match(audioFiltersSource, /audioDurationPreset:[\s\S]*?audioDurationRange: undefined[\s\S]*?audioChannels:/u);
 assert.match(audioFilterStateSource, /audioDurationPreset: undefined[\s\S]*?audioDurationRange: undefined[\s\S]*?audioChannels: undefined/u);
 assert.match(mediaFilterStateSource, /clearAudioFilters\(clearVideoFilters\(clearImageFilters\(search\)\)\)[\s\S]*?hasImageFilters\(search\) \|\| hasVideoFilters\(search\) \|\| hasAudioFilters\(search\)[\s\S]*?retainApplicableMediaFilters/u);
-assert.match(documentFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?explore\.documentContentCount[\s\S]*?documentContentCountPreset:[\s\S]*?documentContentCountRange:/u);
-assert.match(documentFilterStateSource, /documentContentCountPreset: undefined[\s\S]*?documentContentCountRange: undefined/u);
+assert.match(documentFiltersSource, /isDocumentOnlyExtensionSelection[\s\S]*?explore\.documentContentCount[\s\S]*?documentContentCountPreset:[\s\S]*?documentContentCountRange:[\s\S]*?explore\.documentComposition[\s\S]*?documentImageComposition:/u);
+assert.match(documentFilterStateSource, /documentContentCountPreset: undefined[\s\S]*?documentContentCountRange: undefined[\s\S]*?documentImageComposition: undefined/u);
 assert.match(exploreTypeFilterStateSource, /clearDocumentFilters\(clearMediaFilters\(search\)\)[\s\S]*?hasMediaFilters\(search\) \|\| hasDocumentFilters\(search\)[\s\S]*?retainApplicableMediaFilters/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 

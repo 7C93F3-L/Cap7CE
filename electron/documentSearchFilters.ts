@@ -1,5 +1,7 @@
 export const searchDocumentContentCountPresets = ["one", "2-10", "11-50", "51-100", "over-100"] as const;
 export type SearchDocumentContentCountPreset = typeof searchDocumentContentCountPresets[number];
+export const searchDocumentImageCompositions = ["without-images", "with-images"] as const;
+export type SearchDocumentImageComposition = typeof searchDocumentImageCompositions[number];
 
 export interface SearchDocumentContentCountRange { minCount?: number; maxCount?: number }
 
@@ -18,7 +20,8 @@ export const normalizeDocumentContentCountRange = (value: unknown): SearchDocume
 export const hasDocumentSearchFacets = (search: {
   documentContentCountPreset?: unknown;
   documentContentCountRange?: unknown;
-}) => Boolean(search.documentContentCountPreset || search.documentContentCountRange);
+  documentImageComposition?: unknown;
+}) => Boolean(search.documentContentCountPreset || search.documentContentCountRange || search.documentImageComposition);
 
 export const matchesDocumentContentCount = (
   count: number,
@@ -38,3 +41,7 @@ export const matchesDocumentContentCount = (
   if (preset === "51-100") return count >= 51 && count <= 100;
   return count > 100;
 };
+
+export const matchesDocumentImageComposition = (hasEmbeddedImages: boolean, composition: unknown) => (
+  composition === "with-images" ? hasEmbeddedImages : composition === "without-images" ? !hasEmbeddedImages : true
+);

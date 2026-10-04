@@ -8,6 +8,8 @@ const failed = (candidate: DocumentFactCandidate, errorCode: string): DocumentFa
   status: "failed",
   contentCount: 0,
   countKind: "pages",
+  imageCompositionKnown: false,
+  hasEmbeddedImages: false,
   errorCode
 });
 

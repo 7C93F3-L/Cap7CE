@@ -39,4 +39,5 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || stringListKey(next.audioChannels) !== stringListKey(previous.audioChannels)
   || next.documentContentCountPreset !== previous.documentContentCountPreset
   || valueKey(next.documentContentCountRange) !== valueKey(previous.documentContentCountRange)
+  || next.documentImageComposition !== previous.documentImageComposition
 );

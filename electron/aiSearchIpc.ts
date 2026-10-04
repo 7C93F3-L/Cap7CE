@@ -6,7 +6,7 @@ import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchI
 import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normalizeVideoDurationRange, searchVideoAspectRatios, searchVideoColorTraits, searchVideoDurationPresets, searchVideoResolutions, searchVideoVisualColors } from "./videoSearchFilters";
 import { normalizeAudioDurationRange, searchAudioChannels, searchAudioDurationPresets } from "./audioSearchFilters";
 import { normalizeFileSizeRange, searchFileSizePresets } from "./fileSizeSearchFilters";
-import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets } from "./documentSearchFilters";
+import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets, searchDocumentImageCompositions } from "./documentSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -61,7 +61,8 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.audioDurationRange === undefined || normalizeAudioDurationRange(search.audioDurationRange) !== null)
     && (search.audioChannels === undefined || (Array.isArray(search.audioChannels) && search.audioChannels.every((channel) => searchAudioChannels.includes(String(channel) as (typeof searchAudioChannels)[number]))))
     && (search.documentContentCountPreset === undefined || searchDocumentContentCountPresets.includes(String(search.documentContentCountPreset) as (typeof searchDocumentContentCountPresets)[number]))
-    && (search.documentContentCountRange === undefined || normalizeDocumentContentCountRange(search.documentContentCountRange) !== null);
+    && (search.documentContentCountRange === undefined || normalizeDocumentContentCountRange(search.documentContentCountRange) !== null)
+    && (search.documentImageComposition === undefined || searchDocumentImageCompositions.includes(String(search.documentImageComposition) as (typeof searchDocumentImageCompositions)[number]));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {
