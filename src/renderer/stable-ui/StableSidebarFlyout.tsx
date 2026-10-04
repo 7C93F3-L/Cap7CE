@@ -15,7 +15,8 @@ const StableSidebarFlyout = ({ anchor, label, children, onClose, placement = "ri
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     document.addEventListener("pointerdown", closeOnPointerDown);
     window.addEventListener("keydown", closeOnEscape);
-    return () => { document.removeEventListener("pointerdown", closeOnPointerDown); window.removeEventListener("keydown", closeOnEscape); };
+    window.addEventListener("resize", onClose);
+    return () => { document.removeEventListener("pointerdown", closeOnPointerDown); window.removeEventListener("keydown", closeOnEscape); window.removeEventListener("resize", onClose); };
   }, [onClose]);
   return createPortal(
     <div ref={flyoutRef} className={`cap-stable-sidebar-flyout${className ? ` ${className}` : ""}`} role="dialog" aria-label={label} style={style} onClick={(event) => event.stopPropagation()}>{children}</div>,

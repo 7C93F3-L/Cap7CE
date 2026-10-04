@@ -17,6 +17,7 @@ const exploreBarStyles = read("src/renderer/stable-ui/StableExploreBar.css");
 const exploreFiltersSource = read("src/renderer/stable-ui/StableExploreFilters.tsx");
 const exploreFiltersStyles = read("src/renderer/stable-ui/StableExploreFilters.css");
 const exploreFormatFiltersSource = read("src/renderer/stable-ui/exploreFormatFilters.ts");
+const exploreFormatSummarySource = read("src/renderer/stable-ui/exploreFormatSummary.ts");
 const imageFiltersSource = read("src/renderer/stable-ui/StableImageFilters.tsx");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
@@ -68,8 +69,11 @@ assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S
 assert.match(exploreFiltersSource, /useLayoutEffect\(\(\) => setFlyout\(null\), \[closeFlyoutRequest\]\)/u);
 assert.match(exploreFiltersSource, /if \(nextFlyout\) onFlyoutOpen\(\)/u);
 assert.match(exploreFiltersSource, /if \(search\.timePreset === timePreset && !search\.modifiedTimeRange\) return/u);
+assert.match(exploreFiltersSource, /onPointerCancel[\s\S]*?timeAdjustmentKeys\.has\(event\.key\)/u);
+assert.doesNotMatch(exploreFiltersSource, /onBlur=\{\(event\) => commitTime/u);
 assert.match(exploreFormatFiltersSource, /getExtensionsForCanonicalFormat[\s\S]*?canonicalFormat\(capability\.extension\) === canonicalFormat\(format\)/u);
 assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?extension !== "\.pdf"[\s\S]*?category === "visual"/u);
+assert.match(exploreFormatSummarySource, /canonicalizeSelectedFormats\(extensions\)\.length < 2[\s\S]*?kind: "type"[\s\S]*?kind: "format"/u);
 assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?visualColors:[\s\S]*?imageAspectRatios:/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 

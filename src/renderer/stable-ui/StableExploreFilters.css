@@ -1,9 +1,9 @@
-.cap-stable-explore-filters { display: flex; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.cap-stable-explore-filters { display: flex; min-width: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; scrollbar-width: none; }
 .cap-stable-explore-filters::-webkit-scrollbar { display: none; }
 .cap-stable-explore-filters > section { flex: 0 0 auto; min-width: 0; padding: 0 18px; border-left: 1px solid color-mix(in srgb, currentColor 16%, transparent); }
 .cap-stable-explore-filters header { display: flex; align-items: center; min-height: 32px; gap: 7px; white-space: nowrap; }
 .cap-stable-explore-filters header strong { font-size: var(--cap-stable-body-font-size); font-weight: 500; }
-.cap-stable-explore-filters header span { color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
+.cap-stable-explore-filters header span { max-width: 110px; overflow: hidden; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); text-overflow: ellipsis; }
 .cap-stable-explore-filters header button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; color: inherit; background: transparent; }
 .cap-stable-explore-filters header button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-stable-explore-filters header svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -15,7 +15,7 @@
 .cap-stable-time-control input[type="range"]::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -6px; border: 3px solid white; border-radius: 50%; appearance: none; background: var(--theme-color); box-shadow: 0 1px 5px rgb(0 0 0 / 24%); }
 .cap-stable-time-filter input[type="range"].is-custom { opacity: .5; }
 .cap-stable-time-rails { position: absolute; top: 8px; right: 9px; left: 9px; height: 6px; }
-.cap-stable-time-rails i { position: absolute; height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--theme-color), var(--accent-color)); opacity: .82; }
+.cap-stable-time-rails i { position: absolute; height: 6px; border-radius: 999px; background: var(--cap-accent-gradient); opacity: .82; }
 .cap-stable-time-rails i:nth-child(1) { left: 0; width: 40%; }
 .cap-stable-time-rails i:nth-child(2) { left: 60%; width: 20%; }
 .cap-stable-time-rails i:nth-child(3) { right: 0; width: 6px; }
