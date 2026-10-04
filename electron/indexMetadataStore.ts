@@ -4,6 +4,8 @@ import { ensureEmbeddedMetadataSchema } from "./embeddedMetadataStore";
 import { ensureVisualPropertySchema } from "./visualPropertyStore";
 import { ensureAnimationFactSchema } from "./animationFactStore";
 import { ensureAiQueryEvidenceSchema } from "./aiQueryEvidenceStore";
+import { ensureVideoFactSchema } from "./videoFactStore";
+import { ensureVideoColorSchema } from "./videoColorStore";
 
 export interface StoredUserMetadata {
   description: string;
@@ -53,6 +55,8 @@ export const ensureIndexMetadataSchema = (database: Database) => {
   ensureEmbeddedMetadataSchema(database);
   ensureVisualPropertySchema(database);
   ensureAnimationFactSchema(database);
+  ensureVideoFactSchema(database);
+  ensureVideoColorSchema(database);
   ensureAiQueryEvidenceSchema(database);
 };
 

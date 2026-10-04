@@ -5,6 +5,8 @@ import { setImageDimensionForegroundActive } from "./imageDimensionRuntime";
 import { setAnimationFactForegroundActive } from "./animationFactRuntime";
 import { notifySearchIndexChanged } from "./searchIndexChangeRuntime";
 import { setEmbeddedMetadataForegroundActive } from "./embeddedMetadataRuntime";
+import { setVideoFactForegroundActive } from "./videoFactRuntime";
+import { setVideoColorForegroundActive } from "./videoColorRuntime";
 
 export const visualPropertyService = createVisualPropertyService({
   filterPendingCandidates: filterPendingVisualPropertyCandidates,
@@ -20,6 +22,8 @@ export const setVisualPropertyForegroundActive = (active: boolean) => {
   setImageDimensionForegroundActive(active);
   setAnimationFactForegroundActive(active);
   setEmbeddedMetadataForegroundActive(active);
+  setVideoFactForegroundActive(active);
+  setVideoColorForegroundActive(active);
 };
 
 onThumbnailLifecycle((event) => {

@@ -3,6 +3,7 @@ import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import { t } from "./localization";
 import { normalizeImageAspectRatioValues, normalizeImageDimensionFilter, searchImageAnimationModes, searchImageAspectRatios, searchImageColorTraits, searchVisualColors } from "./imageSearchFilters";
+import { normalizeVideoAspectRatioValues, normalizeVideoDimensionFilter, normalizeVideoDurationRange, searchVideoAspectRatios, searchVideoColorTraits, searchVideoDurationPresets, searchVideoResolutions, searchVideoVisualColors } from "./videoSearchFilters";
 
 export interface AiSearchIpcDependencies {
   registrar: IpcRegistrar;
@@ -42,7 +43,15 @@ const isSearchState = (value: unknown): value is AiSearchStartRequest["search"] 
     && (search.imageAspectRatios === undefined || (Array.isArray(search.imageAspectRatios) && search.imageAspectRatios.every((ratio) => searchImageAspectRatios.includes(String(ratio) as (typeof searchImageAspectRatios)[number]))))
     && (search.imageAspectRatioValues === undefined || (Array.isArray(search.imageAspectRatioValues) && normalizeImageAspectRatioValues(search.imageAspectRatioValues).length === search.imageAspectRatioValues.length))
     && (search.imageDimensionFilter === undefined || normalizeImageDimensionFilter(search.imageDimensionFilter) !== null)
-    && (search.imageAnimation === undefined || searchImageAnimationModes.includes(String(search.imageAnimation) as (typeof searchImageAnimationModes)[number]));
+    && (search.imageAnimation === undefined || searchImageAnimationModes.includes(String(search.imageAnimation) as (typeof searchImageAnimationModes)[number]))
+    && (search.videoDurationPreset === undefined || searchVideoDurationPresets.includes(String(search.videoDurationPreset) as (typeof searchVideoDurationPresets)[number]))
+    && (search.videoDurationRange === undefined || normalizeVideoDurationRange(search.videoDurationRange) !== null)
+    && (search.videoAspectRatios === undefined || (Array.isArray(search.videoAspectRatios) && search.videoAspectRatios.every((ratio) => searchVideoAspectRatios.includes(String(ratio) as (typeof searchVideoAspectRatios)[number]))))
+    && (search.videoAspectRatioValues === undefined || (Array.isArray(search.videoAspectRatioValues) && normalizeVideoAspectRatioValues(search.videoAspectRatioValues).length === search.videoAspectRatioValues.length))
+    && (search.videoResolutions === undefined || (Array.isArray(search.videoResolutions) && search.videoResolutions.every((resolution) => searchVideoResolutions.includes(String(resolution) as (typeof searchVideoResolutions)[number]))))
+    && (search.videoDimensionFilter === undefined || normalizeVideoDimensionFilter(search.videoDimensionFilter) !== null)
+    && (search.videoVisualColors === undefined || (Array.isArray(search.videoVisualColors) && search.videoVisualColors.every((color) => searchVideoVisualColors.includes(String(color) as (typeof searchVideoVisualColors)[number]))))
+    && (search.videoColorTraits === undefined || (Array.isArray(search.videoColorTraits) && search.videoColorTraits.every((trait) => searchVideoColorTraits.includes(String(trait) as (typeof searchVideoColorTraits)[number]))));
 };
 
 const parseStartRequest = (value: unknown): AiSearchStartRequest => {

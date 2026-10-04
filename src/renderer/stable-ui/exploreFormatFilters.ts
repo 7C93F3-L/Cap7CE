@@ -66,9 +66,8 @@ export const getFormatSelectionGroups = (availableFormats: readonly string[]) =>
 export const getExtensionsForCanonicalFormat = (format: string) => fileFormatCapabilities
   .filter((capability) => capability.canSearch && canonicalFormat(capability.extension) === canonicalFormat(format))
   .map((capability) => capability.extension);
-
 export const canonicalizeSelectedFormats = (selectedExtensions: readonly string[]) => [
   ...new Set(selectedExtensions.map(canonicalFormat))
 ];
-export const isImageOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0
-  && selectedExtensions.every((extension) => extension !== ".pdf" && fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "visual");
+export const isImageOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => extension !== ".pdf" && fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "visual");
+export const isVideoOnlyExtensionSelection = (selectedExtensions: readonly string[]) => selectedExtensions.length > 0 && selectedExtensions.every((extension) => fileFormatCapabilities.find((capability) => capability.extension === extension)?.category === "video");

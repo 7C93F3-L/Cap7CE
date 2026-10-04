@@ -20,6 +20,9 @@ const exploreFormatFiltersSource = read("src/renderer/stable-ui/exploreFormatFil
 const exploreFormatSummarySource = read("src/renderer/stable-ui/exploreFormatSummary.ts");
 const randomBrowseSource = read("src/renderer/explore/useRandomBrowse.ts");
 const imageFiltersSource = read("src/renderer/stable-ui/StableImageFilters.tsx");
+const videoFiltersSource = read("src/renderer/stable-ui/StableVideoFilters.tsx");
+const videoColorFilterSource = read("src/renderer/stable-ui/StableVideoColorFilter.tsx");
+const videoFilterStateSource = read("src/renderer/stable-ui/videoFilterState.ts");
 const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
@@ -40,6 +43,7 @@ const resultStatusCall = appSource.match(/const resultStatusNode = <ResultStatus
 assert.match(appSource, /const selectedDirectoryFileCount = directoryOptions\.find\(\(\{ id \}\) => id === search\.directoryId\)\?\.fileCount \?\? null;/u);
 assert.match(resultStatusCall, /fileCount=\{selectedDirectoryFileCount\}/u);
 assert.match(resultStatusCall, /hasActiveSearch=\{search\.query\.trim\(\)\.length > 0[\s\S]*?hasImageFilters\(search\)/u);
+assert.match(resultStatusCall, /hasImageFilters\(search\) \|\| hasVideoFilters\(search\)/u);
 assert.doesNotMatch(resultStatusCall, /directoryId/u);
 assert.match(resultStatusSource, /hasActiveSearch[\s\S]*?search\.resultCount[\s\S]*?search\.fileCount[\s\S]*?fileCount \?\? "…"/u);
 assert.match(appSource, /const contentViewActivityConfirmed = useContentViewActivity\(cancelSearch\)/u);
@@ -67,6 +71,7 @@ assert.match(exploreFiltersSource, /selectedExtensions: nextExtensions\.length \
 assert.match(exploreFiltersSource, /const scrollFiltersHorizontally = [\s\S]*?rail\.scrollLeft \+= delta/u);
 assert.match(exploreFiltersSource, /className="cap-stable-explore-filters" onWheel=\{scrollFiltersHorizontally\}/u);
 assert.match(exploreFiltersSource, /className="cap-stable-file-type-filter"[\s\S]*?<StableImageFilters/u);
+assert.match(exploreFiltersSource, /<StableImageFilters[\s\S]*?<StableVideoFilters/u);
 assert.match(exploreFiltersSource, /useLayoutEffect\(\(\) => setFlyout\(null\), \[closeFlyoutRequest\]\)/u);
 assert.match(exploreFiltersSource, /if \(nextFlyout\) onFlyoutOpen\(\)/u);
 assert.match(exploreFiltersSource, /if \(search\.timePreset === timePreset && !search\.modifiedTimeRange\) return/u);
@@ -74,6 +79,7 @@ assert.match(exploreFiltersSource, /onPointerCancel[\s\S]*?timeAdjustmentKeys\.h
 assert.doesNotMatch(exploreFiltersSource, /onBlur=\{\(event\) => commitTime/u);
 assert.match(exploreFormatFiltersSource, /getExtensionsForCanonicalFormat[\s\S]*?canonicalFormat\(capability\.extension\) === canonicalFormat\(format\)/u);
 assert.match(exploreFormatFiltersSource, /isImageOnlyExtensionSelection[\s\S]*?extension !== "\.pdf"[\s\S]*?category === "visual"/u);
+assert.match(exploreFormatFiltersSource, /isVideoOnlyExtensionSelection[\s\S]*?category === "video"/u);
 assert.match(exploreFormatSummarySource, /canonicalizeSelectedFormats\(extensions\)\.length < 2[\s\S]*?kind: "type"[\s\S]*?kind: "format"/u);
 assert.match(randomBrowseSource, /scorePath\(left\.filePath, seed\)[\s\S]*?state\.enabled \? orderRandomBrowseItems\(items, state\.seed\)/u);
 assert.match(randomBrowseSource, /current\.seed \+ 1[\s\S]*?batchNumber: current\.batchNumber \+ 1/u);
@@ -81,6 +87,10 @@ assert.doesNotMatch(randomBrowseSource, /Math\.random/u);
 assert.match(appSource, /active, images: randomBrowse\.items/u);
 assert.match(appSource, /clearImageFilters\(\{ \.\.\.search, fileFormat: "all"[\s\S]*?selectedExtensions: undefined[\s\S]*?timePreset: "all"/u);
 assert.match(imageFiltersSource, /if \(!isImageOnlyExtensionSelection[\s\S]*?return null[\s\S]*?StableImageColorFilter[\s\S]*?StableImageRatioFilter[\s\S]*?StableImageDimensionFilter[\s\S]*?StableImageAnimationFilter/u);
+assert.match(videoFiltersSource, /if \(!isVideoOnlyExtensionSelection[\s\S]*?return null[\s\S]*?explore\.videoDuration[\s\S]*?explore\.videoRatios[\s\S]*?explore\.videoResolution[\s\S]*?StableVideoColorFilter/u);
+assert.match(videoFiltersSource, /videoDurationPreset:[\s\S]*?videoDurationRange: undefined/u);
+assert.match(videoColorFilterSource, /searchVideoVisualColors[\s\S]*?videoVisualColors:[\s\S]*?searchVideoColorTraits[\s\S]*?videoColorTraits:/u);
+assert.match(videoFilterStateSource, /videoDurationPreset: undefined[\s\S]*?videoAspectRatios: undefined[\s\S]*?videoResolutions: undefined[\s\S]*?videoVisualColors: undefined[\s\S]*?videoColorTraits: undefined/u);
 assert.match(exploreFiltersStyles, /cap-stable-time-rails i:nth-child\(1\)[^}]*width: 40%[\s\S]*?nth-child\(2\)[^}]*left: 60%[\s\S]*?nth-child\(3\)[^}]*right: 0/u);
 
 for (const marker of [

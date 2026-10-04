@@ -24,4 +24,12 @@ export const hasAiSearchScopeChanged = (previous: SearchState, next: SearchState
   || valueKey(next.imageAspectRatioValues) !== valueKey(previous.imageAspectRatioValues)
   || valueKey(next.imageDimensionFilter) !== valueKey(previous.imageDimensionFilter)
   || next.imageAnimation !== previous.imageAnimation
+  || next.videoDurationPreset !== previous.videoDurationPreset
+  || valueKey(next.videoDurationRange) !== valueKey(previous.videoDurationRange)
+  || stringListKey(next.videoAspectRatios) !== stringListKey(previous.videoAspectRatios)
+  || valueKey(next.videoAspectRatioValues) !== valueKey(previous.videoAspectRatioValues)
+  || stringListKey(next.videoResolutions) !== stringListKey(previous.videoResolutions)
+  || valueKey(next.videoDimensionFilter) !== valueKey(previous.videoDimensionFilter)
+  || stringListKey(next.videoVisualColors) !== stringListKey(previous.videoVisualColors)
+  || stringListKey(next.videoColorTraits) !== stringListKey(previous.videoColorTraits)
 );

@@ -30,11 +30,11 @@ const colorColumns = visualColorFamilies.flatMap((family) => [
 ]);
 export const visualPropertyDatabaseColumns = [...scalarColumns, ...colorColumns];
 const propertyColumns = visualPropertyDatabaseColumns;
-const ratioColumnSql = propertyColumns.map((column) => (
+export const visualPropertyRatioColumnSql = propertyColumns.map((column) => (
   `${column} INTEGER CHECK (${column} BETWEEN 0 AND ${VISUAL_PROPERTY_RATIO_SCALE})`
 )).join(",\n      ");
 
-const normalizeErrorCode = (value: string) => {
+export const normalizeVisualPropertyErrorCode = (value: string) => {
   const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/gu, "-").replace(/^-+|-+$/gu, "");
   return normalized.slice(0, 64);
 };
@@ -46,7 +46,7 @@ const assertRatio = (value: number, name: string) => {
   return value;
 };
 
-const flattenProperties = (properties: VisualPropertyVector) => {
+export const flattenVisualProperties = (properties: VisualPropertyVector) => {
   const values: Record<string, number> = {
     transparent_ratio: properties.transparentRatio,
     semitransparent_ratio: properties.semitransparentRatio,
@@ -109,7 +109,7 @@ export const ensureVisualPropertySchema = (database: Database) => {
       status TEXT NOT NULL CHECK (status IN ('indexed', 'failed')),
       error_code TEXT NOT NULL DEFAULT '',
       indexed_at TEXT NOT NULL,
-      ${ratioColumnSql},
+      ${visualPropertyRatioColumnSql},
       FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE CASCADE
     );
 
@@ -162,7 +162,7 @@ export const replaceVisualPropertyRecord = (
     throw new Error("Indexed visual properties require a property vector.");
   }
   const values = record.status === "indexed" && record.properties
-    ? flattenProperties(record.properties)
+    ? flattenVisualProperties(record.properties)
     : null;
   const columns = propertyColumns.join(", ");
   const parameters = propertyColumns.map((column) => `:${column}`).join(", ");
@@ -185,7 +185,7 @@ export const replaceVisualPropertyRecord = (
     ":source_revision": record.sourceRevision,
     ":analyzer_version": record.analyzerVersion,
     ":status": record.status,
-    ":error_code": record.status === "failed" ? normalizeErrorCode(record.errorCode) || "unknown" : "",
+    ":error_code": record.status === "failed" ? normalizeVisualPropertyErrorCode(record.errorCode) || "unknown" : "",
     ":indexed_at": indexedAt,
     ...Object.fromEntries(propertyColumns.map((column) => [`:${column}`, values?.[column] ?? null]))
   });

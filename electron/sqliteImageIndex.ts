@@ -39,6 +39,10 @@ import {
 import { getVisualPropertySemanticConditionBySemantic, type VisualPropertyMetric, type VisualPropertySemanticCondition } from "./visualPropertySemantics";
 import { replaceAnimationFact } from "./animationFactStore";
 import { ANIMATION_FACT_EXTRACTOR_VERSION, supportedAnimationFactExtensions, type AnimationFactCandidate, type AnimationFactWriteRecord } from "./animationFactTypes";
+import { replaceVideoFact } from "./videoFactStore";
+import { VIDEO_FACT_EXTRACTOR_VERSION, supportedVideoFactExtensions, type VideoFactCandidate, type VideoFactWriteRecord } from "./videoFactTypes";
+import { replaceVideoColorRecord } from "./videoColorStore";
+import { VIDEO_COLOR_REPRESENTATIVE_VERSION, type VideoColorCandidate, type VideoColorWriteRecord } from "./videoColorTypes";
 import {
   IMAGE_DIMENSION_EXTRACTOR_VERSION,
   supportedImageDimensionExtensions,
@@ -64,6 +68,26 @@ import {
   type SearchImageAnimationMode,
   type SearchVisualColor
 } from "./imageSearchFilters";
+import {
+  hasVideoColorSearchFacets,
+  hasVideoMetadataSearchFacets,
+  normalizeVideoAspectRatioValues,
+  normalizeVideoDimensionFilter,
+  normalizeVideoDurationRange,
+  searchVideoAspectRatios,
+  searchVideoColorTraits,
+  searchVideoDurationPresets,
+  searchVideoResolutions,
+  searchVideoVisualColors,
+  type SearchVideoAspectRatio,
+  type SearchVideoAspectRatioValue,
+  type SearchVideoColorTrait,
+  type SearchVideoDimensionFilter,
+  type SearchVideoDurationPreset,
+  type SearchVideoDurationRange,
+  type SearchVideoResolution,
+  type SearchVideoVisualColor
+} from "./videoSearchFilters";
 
 const requireFromHere = createRequire(__filename);
 
@@ -92,6 +116,14 @@ export interface ImageSearchState {
   imageAspectRatioValues?: SearchImageAspectRatioValue[];
   imageDimensionFilter?: SearchImageDimensionFilter;
   imageAnimation?: SearchImageAnimationMode;
+  videoDurationPreset?: SearchVideoDurationPreset;
+  videoDurationRange?: SearchVideoDurationRange;
+  videoAspectRatios?: SearchVideoAspectRatio[];
+  videoAspectRatioValues?: SearchVideoAspectRatioValue[];
+  videoResolutions?: SearchVideoResolution[];
+  videoDimensionFilter?: SearchVideoDimensionFilter;
+  videoVisualColors?: SearchVideoVisualColor[];
+  videoColorTraits?: SearchVideoColorTrait[];
   aiQueryModelId?: string;
   aiQueryPromptVersion?: number;
 }
@@ -502,6 +534,153 @@ export const writeImageDimensionBatch = async (records: ImageDimensionWriteRecor
   } finally {
     readSource.free();
     updateDimensions.free();
+    database.close();
+  }
+};
+
+const supportedVideoFactExtensionSet = new Set<string>(supportedVideoFactExtensions);
+
+export const listPendingVideoFactCandidates = async (directoryIds?: string[]): Promise<VideoFactCandidate[]> => {
+  const database = await loadDatabase();
+  try {
+    const requestedIds = new Set(directoryIds ?? []);
+    const rows = database.exec(`
+      SELECT file.file_path, file.file_size, file.modified_at, file.directory_id, file.extension,
+             fact.source_revision, fact.extractor_version
+      FROM files AS file
+      LEFT JOIN file_video_facts AS fact ON fact.file_id = file.id
+      WHERE file."exists" = 1
+      ORDER BY file.id
+    `)[0]?.values ?? [];
+    return rows.flatMap((row) => {
+      if (requestedIds.size > 0 && !requestedIds.has(String(row[3]))) return [];
+      if (!supportedVideoFactExtensionSet.has(String(row[4]).toLowerCase())) return [];
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[1]), modifiedAt: String(row[2]) });
+      if (String(row[5] ?? "") === sourceRevision && Number(row[6]) === VIDEO_FACT_EXTRACTOR_VERSION) return [];
+      return [{ filePath: String(row[0]), sourceRevision }];
+    });
+  } finally {
+    database.close();
+  }
+};
+
+export const writeVideoFactBatch = async (records: VideoFactWriteRecord[]) => {
+  if (records.length === 0) return 0;
+  const database = await loadDatabase();
+  const readSource = database.prepare(`SELECT file_size, modified_at FROM files WHERE file_path = :file_path COLLATE NOCASE AND "exists" = 1 LIMIT 1`);
+  let writtenCount = 0;
+  try {
+    database.run("BEGIN TRANSACTION");
+    for (const record of records) {
+      if (record.result.extractorVersion !== VIDEO_FACT_EXTRACTOR_VERSION) continue;
+      const source = readSource.get({ ":file_path": record.filePath });
+      readSource.reset();
+      if (source.length === 0) continue;
+      const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
+      if (currentRevision !== record.result.sourceRevision) continue;
+      replaceVideoFact(database, record.filePath, record.result, new Date().toISOString());
+      writtenCount += 1;
+    }
+    database.run("COMMIT");
+    if (writtenCount > 0) await saveDatabase(database);
+    return writtenCount;
+  } catch (error) {
+    try { database.run("ROLLBACK"); } catch { /* Preserve the original error. */ }
+    throw error;
+  } finally {
+    readSource.free();
+    database.close();
+  }
+};
+
+export const listPendingVideoColorCandidates = async (directoryIds?: string[]): Promise<VideoColorCandidate[]> => {
+  const database = await loadDatabase();
+  try {
+    const requestedIds = new Set(directoryIds ?? []);
+    const rows = database.exec(`
+      SELECT file.file_path, file.file_size, file.modified_at, file.directory_id, file.extension,
+             color.source_revision, color.analyzer_version, color.representative_version
+      FROM files AS file
+      LEFT JOIN file_video_color_facts AS color ON color.file_id = file.id
+      WHERE file."exists" = 1
+      ORDER BY file.id
+    `)[0]?.values ?? [];
+    return rows.flatMap((row) => {
+      if (requestedIds.size > 0 && !requestedIds.has(String(row[3]))) return [];
+      if (!supportedVideoFactExtensionSet.has(String(row[4]).toLowerCase())) return [];
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[1]), modifiedAt: String(row[2]) });
+      if (
+        String(row[5] ?? "") === sourceRevision
+        && Number(row[6]) === VISUAL_PROPERTY_ANALYZER_VERSION
+        && Number(row[7]) === VIDEO_COLOR_REPRESENTATIVE_VERSION
+      ) return [];
+      return [{ filePath: String(row[0]), sourceRevision }];
+    });
+  } finally {
+    database.close();
+  }
+};
+
+export const filterPendingVideoColorAnalysisCandidates = async (
+  candidates: VisualPropertyAnalysisCandidate[]
+): Promise<VisualPropertyAnalysisCandidate[]> => {
+  if (candidates.length === 0) return [];
+  const database = await loadDatabase();
+  const statement = database.prepare(`
+    SELECT file.file_size, file.modified_at, color.source_revision,
+           color.analyzer_version, color.representative_version
+    FROM files AS file
+    LEFT JOIN file_video_color_facts AS color ON color.file_id = file.id
+    WHERE file.file_path = :file_path COLLATE NOCASE AND file."exists" = 1
+    LIMIT 1
+  `);
+  try {
+    const pending: VisualPropertyAnalysisCandidate[] = [];
+    for (const candidate of candidates) {
+      const row = statement.get({ ":file_path": candidate.filePath });
+      statement.reset();
+      if (row.length === 0) continue;
+      const sourceRevision = createFileSourceRevision({ fileSize: Number(row[0]), modifiedAt: String(row[1]) });
+      if (sourceRevision !== candidate.sourceRevision) continue;
+      if (
+        String(row[2] ?? "") === sourceRevision
+        && Number(row[3]) === VISUAL_PROPERTY_ANALYZER_VERSION
+        && Number(row[4]) === VIDEO_COLOR_REPRESENTATIVE_VERSION
+      ) continue;
+      pending.push(candidate);
+    }
+    return pending;
+  } finally {
+    statement.free();
+    database.close();
+  }
+};
+
+export const writeVideoColorBatch = async (records: VideoColorWriteRecord[]) => {
+  if (records.length === 0) return 0;
+  const database = await loadDatabase();
+  const readSource = database.prepare(`SELECT file_size, modified_at FROM files WHERE file_path = :file_path COLLATE NOCASE AND "exists" = 1 LIMIT 1`);
+  let writtenCount = 0;
+  try {
+    database.run("BEGIN TRANSACTION");
+    for (const record of records) {
+      if (record.record.analyzerVersion !== VISUAL_PROPERTY_ANALYZER_VERSION) continue;
+      const source = readSource.get({ ":file_path": record.filePath });
+      readSource.reset();
+      if (source.length === 0) continue;
+      const currentRevision = createFileSourceRevision({ fileSize: Number(source[0]), modifiedAt: String(source[1]) });
+      if (currentRevision !== record.record.sourceRevision) continue;
+      replaceVideoColorRecord(database, record.filePath, record.record, new Date().toISOString());
+      writtenCount += 1;
+    }
+    database.run("COMMIT");
+    if (writtenCount > 0) await saveDatabase(database);
+    return writtenCount;
+  } catch (error) {
+    try { database.run("ROLLBACK"); } catch { /* Preserve the original error. */ }
+    throw error;
+  } finally {
+    readSource.free();
     database.close();
   }
 };
@@ -1613,11 +1792,11 @@ const visualPropertyMetricColumn = (metric: VisualPropertyMetric) => {
   return scalarColumns[metric as keyof typeof scalarColumns];
 };
 
-const getVisualPropertyConditionSql = (condition: VisualPropertySemanticCondition) => `(
-  property.status = 'indexed'
-  AND property.analyzer_version = ${VISUAL_PROPERTY_ANALYZER_VERSION}
+const getVisualPropertyConditionSql = (condition: VisualPropertySemanticCondition, alias = "property") => `(
+  ${alias}.status = 'indexed'
+  AND ${alias}.analyzer_version = ${VISUAL_PROPERTY_ANALYZER_VERSION}
   AND ${condition.constraints.map((constraint) => (
-    `property.${visualPropertyMetricColumn(constraint.metric)} ${constraint.operator} ${constraint.value}`
+    `${alias}.${visualPropertyMetricColumn(constraint.metric)} ${constraint.operator} ${constraint.value}`
   )).join(" AND ")}
 )`;
 
@@ -1629,13 +1808,61 @@ const imageAspectRatioSql: Record<SearchImageAspectRatio, string> = {
   tall: "(i.image_width > 0 AND i.image_height >= i.image_width * 2)"
 };
 
+interface IndexedVideoFact { durationMs: number; width: number; height: number }
+
+const matchesVideoAspectRatio = (fact: IndexedVideoFact, ratio: SearchVideoAspectRatio) => {
+  if (ratio === "portrait") return fact.width * 10 < fact.height * 9 && fact.height < fact.width * 2;
+  if (ratio === "landscape") return fact.width * 10 > fact.height * 11 && fact.width < fact.height * 2;
+  if (ratio === "square") return fact.width * 10 >= fact.height * 9 && fact.width * 10 <= fact.height * 11;
+  if (ratio === "wide") return fact.width >= fact.height * 2;
+  return fact.height >= fact.width * 2;
+};
+
+const videoResolutionBounds: Record<SearchVideoResolution, readonly [number, number]> = {
+  "720p": [720, 1080], "1080p": [1080, 1440], "2k": [1440, 2160], "4k": [2160, 4320], "8k": [4320, Number.POSITIVE_INFINITY]
+};
+
+const matchesVideoFacets = (fact: IndexedVideoFact, search: ImageSearchState) => {
+  const durationRange = normalizeVideoDurationRange(search.videoDurationRange);
+  if (durationRange) {
+    if (durationRange.minSeconds !== undefined && fact.durationMs < durationRange.minSeconds * 1000) return false;
+    if (durationRange.maxSeconds !== undefined && fact.durationMs > durationRange.maxSeconds * 1000) return false;
+  } else if (searchVideoDurationPresets.includes(search.videoDurationPreset as SearchVideoDurationPreset)) {
+    const duration = fact.durationMs;
+    if (search.videoDurationPreset === "under-15s" && duration >= 15_000) return false;
+    if (search.videoDurationPreset === "15s-1m" && (duration < 15_000 || duration >= 60_000)) return false;
+    if (search.videoDurationPreset === "1m-5m" && (duration < 60_000 || duration >= 300_000)) return false;
+    if (search.videoDurationPreset === "over-5m" && duration < 300_000) return false;
+  }
+  const ratios = [...new Set(search.videoAspectRatios ?? [])].filter((ratio): ratio is SearchVideoAspectRatio => searchVideoAspectRatios.includes(ratio as SearchVideoAspectRatio));
+  const ratioValues = normalizeVideoAspectRatioValues(search.videoAspectRatioValues);
+  if (ratios.length + ratioValues.length > 0 && !ratios.some((ratio) => matchesVideoAspectRatio(fact, ratio)) && !ratioValues.some((ratio) => (
+    Math.abs(fact.width * ratio.height - fact.height * ratio.width) <= fact.height * ratio.width * 0.02
+  ))) return false;
+  const resolutions = [...new Set(search.videoResolutions ?? [])].filter((resolution): resolution is SearchVideoResolution => searchVideoResolutions.includes(resolution as SearchVideoResolution));
+  const shortEdge = Math.min(fact.width, fact.height);
+  if (resolutions.length > 0 && !resolutions.some((resolution) => {
+    const [minimum, maximum] = videoResolutionBounds[resolution];
+    return shortEdge >= minimum && shortEdge < maximum;
+  })) return false;
+  const dimensions = normalizeVideoDimensionFilter(search.videoDimensionFilter);
+  if (dimensions?.mode === "exact" && (fact.width !== dimensions.width || fact.height !== dimensions.height)) return false;
+  if (dimensions?.mode === "range") {
+    if (dimensions.minWidth && fact.width < dimensions.minWidth) return false;
+    if (dimensions.minHeight && fact.height < dimensions.minHeight) return false;
+    if (dimensions.maxWidth && fact.width > dimensions.maxWidth) return false;
+    if (dimensions.maxHeight && fact.height > dimensions.maxHeight) return false;
+  }
+  return true;
+};
+
 const appendImageFacetFilters = (where: string[], params: Record<string, SqlValue>, search: ImageSearchState) => {
   const colors = [...new Set(search.visualColors ?? [])].filter((color): color is SearchVisualColor => searchVisualColors.includes(color as SearchVisualColor));
   const colorConditions = colors.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
-  if (colorConditions.length > 0) where.push(`(${colorConditions.map(getVisualPropertyConditionSql).join(" OR ")})`);
+  if (colorConditions.length > 0) where.push(`(${colorConditions.map((condition) => getVisualPropertyConditionSql(condition)).join(" OR ")})`);
   const traits = [...new Set(search.imageColorTraits ?? [])].filter((trait): trait is SearchImageColorTrait => searchImageColorTraits.includes(trait as SearchImageColorTrait));
   const traitConditions = traits.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
-  if (traitConditions.length > 0) where.push(`(${traitConditions.map(getVisualPropertyConditionSql).join(" OR ")})`);
+  if (traitConditions.length > 0) where.push(`(${traitConditions.map((condition) => getVisualPropertyConditionSql(condition)).join(" OR ")})`);
   const ratios = [...new Set(search.imageAspectRatios ?? [])].filter((ratio): ratio is SearchImageAspectRatio => searchImageAspectRatios.includes(ratio as SearchImageAspectRatio));
   const ratioValues = normalizeImageAspectRatioValues(search.imageAspectRatioValues);
   const ratioConditions = ratios.map((ratio) => imageAspectRatioSql[ratio]);
@@ -1667,6 +1894,17 @@ const appendImageFacetFilters = (where: string[], params: Record<string, SqlValu
   }
 };
 
+const appendVideoColorFacetFilters = (where: string[], search: ImageSearchState) => {
+  const colors = [...new Set(search.videoVisualColors ?? [])].filter((color): color is SearchVideoVisualColor => searchVideoVisualColors.includes(color as SearchVideoVisualColor));
+  const colorConditions = colors.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
+  const traits = [...new Set(search.videoColorTraits ?? [])].filter((trait): trait is SearchVideoColorTrait => searchVideoColorTraits.includes(trait as SearchVideoColorTrait));
+  const traitConditions = traits.map(getVisualPropertySemanticConditionBySemantic).filter((condition): condition is VisualPropertySemanticCondition => condition !== null);
+  const conditions = [...colorConditions, ...traitConditions];
+  if (conditions.length > 0) {
+    where.push(`(video_color.representative_version = ${VIDEO_COLOR_REPRESENTATIVE_VERSION} AND (${conditions.map((condition) => getVisualPropertyConditionSql(condition, "video_color")).join(" OR ")}))`);
+  }
+};
+
 export const searchIndexedCatalog = async (
   search: ImageSearchState,
   directories: PersistedDirectory[],
@@ -1691,6 +1929,7 @@ export const searchIndexedCatalog = async (
   appendIncludedExtensionsFilter(where, params, search.selectedExtensions, "catalog_selected_extension");
   appendModifiedTimeFilter(where, params, search);
   appendImageFacetFilters(where, params, search);
+  appendVideoColorFacetFilters(where, search);
   params[":ai_query_model_id"] = search.aiQueryModelId ?? "";
   params[":ai_query_prompt_version"] = search.aiQueryPromptVersion ?? 0;
   queryPlan.terms.forEach((plannedTerm, termIndex) => {
@@ -1765,6 +2004,21 @@ export const searchIndexedCatalog = async (
   const animationJoinSql = hasAnimationConditions
     ? "LEFT JOIN file_animation_facts AS animation ON animation.file_id = f.id"
     : "";
+  const hasVideoMetadataConditions = hasVideoMetadataSearchFacets(search);
+  const hasVideoColorConditions = hasVideoColorSearchFacets(search);
+  const videoFactSelectSql = hasVideoMetadataConditions
+    ? "video_fact.status, video_fact.extractor_version, video_fact.source_revision, video_fact.duration_ms, video_fact.width, video_fact.height"
+    : "NULL, NULL, NULL, NULL, NULL, NULL";
+  const videoFactJoinSql = hasVideoMetadataConditions
+    ? "LEFT JOIN file_video_facts AS video_fact ON video_fact.file_id = f.id"
+    : "";
+  const videoColorSelectSql = hasVideoColorConditions
+    ? `video_color.status, video_color.analyzer_version, video_color.representative_version, video_color.source_revision,
+        ${visualPropertyDatabaseColumns.map((column) => `video_color.${column}`).join(", ")}`
+    : "NULL, NULL, NULL, NULL";
+  const videoColorJoinSql = hasVideoColorConditions
+    ? "LEFT JOIN file_video_color_facts AS video_color ON video_color.file_id = f.id"
+    : "";
 
   try {
     const rows = database.exec(`
@@ -1791,6 +2045,8 @@ export const searchIndexedCatalog = async (
         ${embeddedEvidenceSelectSql},
         ${visualPropertySelectSql},
         ${animationSelectSql},
+        ${videoFactSelectSql},
+        ${videoColorSelectSql},
         query_cache.keywords,
         query_cache.source_revision,
         query_cache.model_id,
@@ -1809,6 +2065,8 @@ export const searchIndexedCatalog = async (
        AND query_cache.prompt_version = :ai_query_prompt_version
       ${visualPropertyJoinSql}
       ${animationJoinSql}
+      ${videoFactJoinSql}
+      ${videoColorJoinSql}
       WHERE ${where.join(" AND ")}
       ORDER BY ${sortColumn} ${sortDirection}, f.id ASC
     `, params)[0]?.values ?? [];
@@ -1818,6 +2076,8 @@ export const searchIndexedCatalog = async (
     const embeddedEvidenceByFilePath: Record<string, EmbeddedSearchEvidence[]> = {};
     const visualPropertiesByFilePath: Record<string, VisualPropertyVector> = {};
     const animationFactsByFilePath: Record<string, boolean> = {};
+    const videoFactsByFilePath: Record<string, IndexedVideoFact> = {};
+    const videoColorsByFilePath: Record<string, VisualPropertyVector> = {};
     for (const row of rows) {
       const filePath = String(row[1]);
       const fileName = String(row[2]);
@@ -1832,7 +2092,9 @@ export const searchIndexedCatalog = async (
         ? { type: "pending" as const, label: t("recognition.pending") }
         : classifyRecognitionFailure(aiError);
       const animationOffset = 23 + (hasVisualPropertyConditions ? visualPropertyDatabaseColumns.length : 0);
-      const queryCacheOffset = animationOffset + 4;
+      const videoFactOffset = animationOffset + 4;
+      const videoColorOffset = videoFactOffset + 6;
+      const queryCacheOffset = videoColorOffset + 4 + (hasVideoColorConditions ? visualPropertyDatabaseColumns.length : 0);
       const queryCacheValid = imageId !== null
         && String(row[queryCacheOffset + 1] ?? "") === createFileSourceRevision({
           fileSize: Number(row[4] ?? 0),
@@ -1896,6 +2158,29 @@ export const searchIndexedCatalog = async (
           modifiedAt: String(row[6] ?? "")
         })
       ) animationFactsByFilePath[filePath] = Number(row[animationOffset + 3]) === 1;
+      if (
+        hasVideoMetadataConditions
+        && String(row[videoFactOffset] ?? "") === "indexed"
+        && Number(row[videoFactOffset + 1]) === VIDEO_FACT_EXTRACTOR_VERSION
+        && String(row[videoFactOffset + 2] ?? "") === createFileSourceRevision({
+          fileSize: Number(row[4] ?? 0),
+          modifiedAt: String(row[6] ?? "")
+        })
+      ) videoFactsByFilePath[filePath] = {
+        durationMs: Number(row[videoFactOffset + 3]),
+        width: Number(row[videoFactOffset + 4]),
+        height: Number(row[videoFactOffset + 5])
+      };
+      if (
+        hasVideoColorConditions
+        && String(row[videoColorOffset] ?? "") === "indexed"
+        && Number(row[videoColorOffset + 1]) === VISUAL_PROPERTY_ANALYZER_VERSION
+        && Number(row[videoColorOffset + 2]) === VIDEO_COLOR_REPRESENTATIVE_VERSION
+        && String(row[videoColorOffset + 3] ?? "") === createFileSourceRevision({
+          fileSize: Number(row[4] ?? 0),
+          modifiedAt: String(row[6] ?? "")
+        })
+      ) videoColorsByFilePath[filePath] = inflateVisualPropertyValues(row, videoColorOffset + 4);
     }
 
     const catalogStateParams: Record<string, SqlValue> = {};
@@ -1942,11 +2227,20 @@ export const searchIndexedCatalog = async (
     const visualFilteredImages = (search.visualColors?.length ?? 0) > 0 || (search.imageColorTraits?.length ?? 0) > 0
       ? images.filter((image) => visualPropertiesByFilePath[image.filePath] !== undefined)
       : images;
-    const filteredImages = search.imageAnimation === "animated"
+    const animationFilteredImages = search.imageAnimation === "animated"
       ? visualFilteredImages.filter((image) => animationFactsByFilePath[image.filePath] === true)
       : search.imageAnimation === "static"
         ? visualFilteredImages.filter((image) => image.resultKind === "visual" && (!supportedAnimationFactExtensions.includes(image.extension as (typeof supportedAnimationFactExtensions)[number]) || animationFactsByFilePath[image.filePath] === false))
         : visualFilteredImages;
+    const videoMetadataFilteredImages = hasVideoMetadataConditions
+      ? animationFilteredImages.filter((image) => {
+        const fact = videoFactsByFilePath[image.filePath];
+        return fact !== undefined && matchesVideoFacets(fact, search);
+      })
+      : animationFilteredImages;
+    const filteredImages = hasVideoColorConditions
+      ? videoMetadataFilteredImages.filter((image) => videoColorsByFilePath[image.filePath] !== undefined)
+      : videoMetadataFilteredImages;
     return {
       images: filteredImages,
       availableFormats: [...availableFormats].sort((left, right) => left.localeCompare(right, "en", { sensitivity: "base" })),

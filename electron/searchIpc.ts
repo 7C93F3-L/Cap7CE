@@ -21,6 +21,14 @@ interface SearchRequestShape {
   imageAspectRatioValues?: unknown;
   imageDimensionFilter?: unknown;
   imageAnimation?: unknown;
+  videoDurationPreset?: unknown;
+  videoDurationRange?: unknown;
+  videoAspectRatios?: unknown;
+  videoAspectRatioValues?: unknown;
+  videoResolutions?: unknown;
+  videoDimensionFilter?: unknown;
+  videoVisualColors?: unknown;
+  videoColorTraits?: unknown;
 }
 
 const summarizeSearch = (search: unknown) => {
@@ -41,7 +49,14 @@ const summarizeSearch = (search: unknown) => {
     imageAspectRatioCount: (Array.isArray(request.imageAspectRatios) ? request.imageAspectRatios.length : 0)
       + (Array.isArray(request.imageAspectRatioValues) ? request.imageAspectRatioValues.length : 0),
     imageDimensionFiltered: typeof request.imageDimensionFilter === "object" && request.imageDimensionFilter !== null,
-    imageAnimation: typeof request.imageAnimation === "string" ? request.imageAnimation.slice(0, 12) : "all"
+    imageAnimation: typeof request.imageAnimation === "string" ? request.imageAnimation.slice(0, 12) : "all",
+    videoDuration: typeof request.videoDurationPreset === "string" || typeof request.videoDurationRange === "object",
+    videoAspectRatioCount: (Array.isArray(request.videoAspectRatios) ? request.videoAspectRatios.length : 0)
+      + (Array.isArray(request.videoAspectRatioValues) ? request.videoAspectRatioValues.length : 0),
+    videoResolutionCount: Array.isArray(request.videoResolutions) ? request.videoResolutions.length : 0,
+    videoDimensionFiltered: typeof request.videoDimensionFilter === "object" && request.videoDimensionFilter !== null,
+    videoVisualColorCount: Array.isArray(request.videoVisualColors) ? request.videoVisualColors.length : 0,
+    videoColorTraitCount: Array.isArray(request.videoColorTraits) ? request.videoColorTraits.length : 0
   };
 };
 

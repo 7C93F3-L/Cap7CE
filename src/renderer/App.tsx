@@ -46,6 +46,7 @@ import { createInitialResultGridScrollMemory, getResultLayoutMode, type ResultGr
 import type { StableUiRenderer } from "./stable-ui/stableUiRendererTypes";
 import { useStableSkimCommands } from "./stable-ui/useStableSkimCommands";
 import { clearImageFilters, hasImageFilters } from "./stable-ui/imageFilterState";
+import { clearVideoFilters, hasVideoFilters } from "./stable-ui/videoFilterState";
 import { defaultUiFontSize, useUiFontSize } from "./typography";
 import type {
   AppView,
@@ -1119,8 +1120,8 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
   const clearExploreFilters = () => {
     randomBrowse.clear();
-    const nextSearch = clearImageFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined });
-    if (search.fileFormat !== "all" || search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasImageFilters(search)) updateResultsSearchOptions(nextSearch);
+    const nextSearch = clearVideoFilters(clearImageFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined }));
+    if (search.fileFormat !== "all" || search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasImageFilters(search) || hasVideoFilters(search)) updateResultsSearchOptions(nextSearch);
   };
 
   const toggleAiSearchBeta = () => {
@@ -1421,11 +1422,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       || (search.selectedExtensions?.length ?? 0) > 0
       || (search.timePreset ?? "all") !== "all"
       || hasImageFilters(search)
+      || hasVideoFilters(search)
     ) {
       return;
     }
 
-    const nextSearch = clearImageFilters({ ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined });
+    const nextSearch = clearVideoFilters(clearImageFilters({ ...search, query: "", directoryId: "all", fileFormat: "all", selectedExtensions: undefined, timePreset: "all" as const, modifiedTimeRange: undefined }));
     setSearch(nextSearch);
     await runSearch(nextSearch, { navigate: false });
   };
@@ -2275,7 +2277,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const resultStatusNode = <ResultStatus
     resultCount={searchResults.length}
     fileCount={selectedDirectoryFileCount}
-    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all" || hasImageFilters(search)}
+    hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all" || hasImageFilters(search) || hasVideoFilters(search)}
     isSearching={isSearching || aiSearchBeta.busy}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({

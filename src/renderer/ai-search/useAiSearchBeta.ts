@@ -78,7 +78,15 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
       imageAspectRatios: search.imageAspectRatios ?? [],
       imageAspectRatioValues: search.imageAspectRatioValues ?? [],
       imageDimensionFilter: search.imageDimensionFilter ?? null,
-      imageAnimation: search.imageAnimation ?? "all"
+      imageAnimation: search.imageAnimation ?? "all",
+      videoDurationPreset: search.videoDurationPreset ?? null,
+      videoDurationRange: search.videoDurationRange ?? null,
+      videoAspectRatios: search.videoAspectRatios ?? [],
+      videoAspectRatioValues: search.videoAspectRatioValues ?? [],
+      videoResolutions: search.videoResolutions ?? [],
+      videoDimensionFilter: search.videoDimensionFilter ?? null,
+      videoVisualColors: search.videoVisualColors ?? [],
+      videoColorTraits: search.videoColorTraits ?? []
     });
     const canResume = activeSessionIdRef.current !== null
       && activeScopeRef.current === scopeKey

@@ -8,6 +8,8 @@ import {
 } from "./imageDimensionRuntime";
 import { discardAnimationFactsForDirectory, enqueueAnimationFactsForDirectories } from "./animationFactRuntime";
 import { configureSearchIndexChangeRuntime, notifySearchIndexChanged } from "./searchIndexChangeRuntime";
+import { discardVideoFactsForDirectory, enqueueVideoFactsForDirectories } from "./videoFactRuntime";
+import { discardVideoColorsForDirectory, enqueueVideoColorsForDirectories } from "./videoColorRuntime";
 import {
   listPendingEmbeddedMetadataCandidates,
   writeEmbeddedMetadataBatch,
@@ -33,12 +35,16 @@ export const writeScannedFilesWithEmbeddedMetadata = async (
   void embeddedMetadataService.enqueueDirectories(directoryIds);
   void enqueueImageDimensionsForDirectories(directoryIds);
   void enqueueAnimationFactsForDirectories(directoryIds);
+  void enqueueVideoFactsForDirectories(directoryIds);
+  void enqueueVideoColorsForDirectories(directoryIds);
   return result;
 };
 
 export const discardEmbeddedMetadataForDirectory = async (directoryPath: string) => {
   discardImageDimensionsForDirectory(directoryPath);
   discardAnimationFactsForDirectory(directoryPath);
+  discardVideoFactsForDirectory(directoryPath);
+  discardVideoColorsForDirectory(directoryPath);
   await embeddedMetadataService.discardDirectory(directoryPath);
 };
 
@@ -75,5 +81,11 @@ export const configureEmbeddedMetadataRuntime = (
   });
   void enqueueAnimationFactsForDirectories([]).catch((error) => {
     console.warn("[animation-facts] startup candidate discovery failed", error);
+  });
+  void enqueueVideoFactsForDirectories([]).catch((error) => {
+    console.warn("[video-facts] startup candidate discovery failed", error);
+  });
+  void enqueueVideoColorsForDirectories([]).catch((error) => {
+    console.warn("[video-colors] startup candidate discovery failed", error);
   });
 };
