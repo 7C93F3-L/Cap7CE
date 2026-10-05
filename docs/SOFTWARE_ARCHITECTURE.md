@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+工作区标签基础位于 `src/renderer/workspace/`：`workspaceTabs.ts` 以纯 reducer 管理固定全部目录、目录去重、唯一 Skim 标签、打开顺序、活动标签和关闭回退；`useWorkspaceTabs.ts` 仅提供 React 状态接入。目录快照复用 `SearchState`、`SkimDisplayMode` 与 `ResultGridScrollMemory`，包含独立随机批次和选择，写入时深复制并约束目录身份。Skim 标签仅保存身份，导航与搜索会话仍由原有 Skim 控制器持有，后续布局接入不得复制这些链路。当前基础模块尚未接入正式界面，无 IPC、查询、持久化或窗口生命周期职责。`test:workspace-tabs` 验证状态隔离和领域依赖边界，并纳入完整测试与架构检查。
+
 > 当前版本：1.0.4
 > 更新日期：2026-09-25
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。

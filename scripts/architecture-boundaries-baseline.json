@@ -182,7 +182,9 @@
     "src/renderer/settings/SettingsFooter.css": 150,
     "electron/settingsDataBroadcast.ts": 30,
     "electron/settingsWindowIpc.ts": 30,
-    "electron/settingsWindowHost.ts": 20
+    "electron/settingsWindowHost.ts": 20,
+    "src/renderer/workspace/workspaceTabs.ts": 75,
+    "src/renderer/workspace/useWorkspaceTabs.ts": 10
   },
   "stableUiMigration": {
     "requiredSurfaceIds": [
