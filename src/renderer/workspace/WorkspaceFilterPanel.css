@@ -17,6 +17,7 @@
 .cap-workspace-filter-panel .cap-stable-file-size-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cap-workspace-filter-panel :where(.cap-stable-font-filter, .cap-stable-model-filter) > div { flex-wrap: wrap; }
 .cap-workspace-filter-panel .cap-stable-archive-content-options { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cap-workspace-filter-panel :where(.cap-stable-audio-channel-options, .cap-stable-three-d-model-type-options, .cap-stable-three-d-structure-options) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cap-workspace-filter-panel > footer { flex: 0 0 auto; padding: 6px 10px; border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
 .cap-workspace-filter-panel > footer button { width: 100%; min-height: 28px; border: 0; border-radius: 8px; color: inherit; background: var(--cap-stable-control-hover); font: inherit; }
 .cap-workspace-filter-panel > footer button:disabled { opacity: .4; }
