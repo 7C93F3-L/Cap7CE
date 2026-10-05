@@ -8,10 +8,10 @@ import "./ComputerSearch.css";
 
 const ComputerSearchSkimSlot = ({
   content, isLoading, feedback, entryCount, onToggleSkim,
-  theme, appearanceColors, windowMaterial, onNativeDragStateChange, ...toolbarProps
+  theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, ...toolbarProps
 }:
   StableSkimSlotProps) => {
-  const controller = useComputerSearchController(toolbarProps.currentPath);
+  const controller = useComputerSearchController(toolbarProps.currentPath, foreground);
   const search = {
     active: controller.active, query: controller.query, scopeLabel: controller.scopeLabel,
     canSubmit: controller.canSubmit, busy: controller.busy, onEnter: controller.enter,
@@ -39,6 +39,7 @@ const ComputerSearchSkimSlot = ({
       <div className={`cap-computer-search-browse${controller.active ? " is-hidden" : ""}`}>{content}</div>
       {controller.active && <ComputerSearchView
         controller={controller}
+        foreground={foreground}
         theme={theme}
         appearanceColors={appearanceColors}
         windowMaterial={windowMaterial}

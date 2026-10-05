@@ -12,10 +12,11 @@ interface ResultActionOptions {
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
   onNativeDragStateChange: (active: boolean) => void;
+  foreground?: boolean;
 }
 
 export const useComputerSearchResultActions = ({
-  items, taskId, theme, appearanceColors, onNativeDragStateChange
+  items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground = true
 }: ResultActionOptions) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -182,7 +183,11 @@ export const useComputerSearchResultActions = ({
   }, [onNativeDragStateChange, selectedIds, selectedItems, taskId]);
 
   useEffect(() => {
+    if (!foreground) setContextMenu(null);
+  }, [foreground]);
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!foreground) return;
       if (isEditableKeyboardTarget(event.target)) return;
       if (contextMenu) {
         if (event.key === "Escape") { event.preventDefault(); setContextMenu(null); }
@@ -202,7 +207,7 @@ export const useComputerSearchResultActions = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeId, contextMenu, copyPaths, items, openItem, openPreview, selectedItems, showInFolder]);
+  }, [activeId, contextMenu, copyPaths, foreground, items, openItem, openPreview, selectedItems, showInFolder]);
 
   return {
     selectedIds, activeId, selectedItems, contextMenu, feedback,

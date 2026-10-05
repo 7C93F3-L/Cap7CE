@@ -5,7 +5,7 @@ import { t } from "../../../electron/localization";
 export type ComputerSearchError = "scope-not-indexed" | "scope-offline" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
-export const useComputerSearchController = (currentPath: string | null) => {
+export const useComputerSearchController = (currentPath: string | null, foreground = true) => {
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
@@ -71,12 +71,12 @@ export const useComputerSearchController = (currentPath: string | null) => {
   }, [cancelActive]);
 
   useEffect(() => {
-    if (!active || !status || !["starting", "building", "syncing"].includes(status.state)) return;
+    if (!foreground || !active || !status || !["starting", "building", "syncing"].includes(status.state)) return;
     const timer = window.setInterval(() => void refreshStatus(), 1_500);
     return () => window.clearInterval(timer);
-  }, [active, refreshStatus, status]);
+  }, [active, foreground, refreshStatus, status]);
   useEffect(() => {
-    if (!active) return;
+    if (!active || !foreground) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
@@ -84,7 +84,7 @@ export const useComputerSearchController = (currentPath: string | null) => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [active, exit]);
+  }, [active, foreground, exit]);
   useEffect(() => () => { activeRef.current = false; cancelActive(); }, [cancelActive]);
 
   const readError = (value: unknown): ComputerSearchError => {

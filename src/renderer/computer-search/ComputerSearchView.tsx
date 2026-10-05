@@ -22,8 +22,9 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true }: {
   controller: ComputerSearchController;
+  foreground?: boolean;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
   windowMaterial: WindowMaterial;
@@ -34,7 +35,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const taskId = controller.taskId ?? "";
   const actions = useComputerSearchResultActions({
-    items, taskId, theme, appearanceColors, onNativeDragStateChange
+    items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground
   });
   if (!status || !status.searchAvailable) {
     const progress = status?.volumes.reduce((total, volume) => total + volume.processed, 0) ?? 0;

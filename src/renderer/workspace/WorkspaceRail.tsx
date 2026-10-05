@@ -7,7 +7,7 @@ export default function WorkspaceRail({ skimOpen, directoriesOpen, filtersVisibl
   return <nav className="cap-workspace-rail" aria-label={t("workspace.navigation")}>
     <button type="button" aria-label={t("skim.name")} title={t("skim.name")} aria-pressed={skimOpen} onClick={onSkim}><StableUiIcon name="skim" active={skimOpen} /></button>
     <button type="button" aria-label={t("stableUi.sidebar.addedDirectories")} title={t("stableUi.sidebar.addedDirectories")} aria-expanded={directoriesOpen} onClick={onDirectories}><StableUiIcon name="folder" active={directoriesOpen} /></button>
-    <button type="button" aria-label={t("workspace.filters")} title={t("workspace.filters")} aria-pressed={filtersVisible} onClick={onFilters}><StableUiIcon name="scope" active={filtersVisible} /></button>
+    {!skimOpen && <button type="button" aria-label={t("workspace.filters")} title={t("workspace.filters")} aria-pressed={filtersVisible} onClick={onFilters}><StableUiIcon name="scope" active={filtersVisible} /></button>}
     <button type="button" className="cap-workspace-settings" aria-label={t("window.openSettings")} title={t("window.openSettings")} onClick={onSettings}><StableUiIcon name="settings" /></button>
   </nav>;
 }

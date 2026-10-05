@@ -1,4 +1,7 @@
 .cap-workspace-shell { --cap-stable-sidebar-rendered-width: 44px; grid-template-rows: 36px minmax(0, 1fr); }
+.cap-workspace-shell.is-skim-open { grid-template-columns: 44px minmax(0, 1fr); }
+.cap-workspace-shell.is-skim-open > .cap-stable-results-slot { display: none; }
+.cap-workspace-shell > .cap-stable-skim-slot { grid-column: 2 !important; }
 .cap-workspace-rail { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; gap: 4px; min-height: 0; padding: 2px 4px 6px; box-sizing: border-box; app-region: no-drag; -webkit-app-region: no-drag; }
 .cap-workspace-rail button, .cap-workspace-ai { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; color: var(--cap-stable-text); background: transparent; }
 .cap-workspace-rail button:hover, .cap-workspace-ai:hover { background: var(--cap-stable-control-hover); }

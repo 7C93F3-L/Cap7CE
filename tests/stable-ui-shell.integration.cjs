@@ -46,8 +46,7 @@ assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s
 assert.match(titlebarSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{titlebarRef\}/u);
 assert.match(mainShellSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{shellRef\}/u);
 assert.match(inertElementSource, /elementRef\.current\.inert = inert/u);
-assert.match(mainShellSource, /useStableKeyboardRegion\(skimOpen\)/u);
-assert.match(mainShellSource, /onPointerDownCapture=\{activateKeyboardRegion\} onFocusCapture=\{activateKeyboardRegion\}/u);
+assert.match(mainShellSource, /resultsKeyboardActive = !skimOpen, skimKeyboardActive = skimOpen/u);
 assert.match(mainShellSource, /\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
 assert.match(mainShellSource, /skim\.renderContent\(!interactionLocked && skimKeyboardActive\)/u);
 assert.match(keyboardRegionSource, /useEffect\(\(\) => setKeyboardRegion\(skimOpen \? "skim" : "results"\), \[skimOpen\]\)/u);
@@ -57,7 +56,6 @@ assert.match(exploreBarSource, /<StableSearchInput[\s\S]*?onSearch=\{onSearch\}/
 assert.match(mainShellSource, /\{resultsToolbar\}\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(read("src/renderer/workspace/WorkspaceRail.tsx"), /aria-pressed=\{skimOpen\}/);
-assert.match(mainShellSource, /role="separator"[\s\S]*?aria-valuenow=\{skimWidth\}[\s\S]*?onKeyDown=\{resizeSkimByKeyboard\}/u);
 assert.match(mainShellSource, /<WorkspaceTabBar[\s\S]*?onClose=\{navigation.close\}/u);
 assert.match(read("src/renderer/workspace/WorkspaceShell.css"), /@media \(max-height: 359.98px\)[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\)/u);
 assert.match(mainShellSource, /aria-label=\{t\("stableUi\.resultsRegion"\)\}/u);

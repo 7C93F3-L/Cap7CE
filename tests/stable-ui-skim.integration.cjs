@@ -42,8 +42,10 @@ assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
 for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
   assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
 }
-assert.match(shellSource, /<StableSkimSlot \{\.\.\.skim\} content=\{skim\.renderContent\(!interactionLocked && skimKeyboardActive\)\} onToggleSkim=\{toggleSkim\} \/>/);
-assert.match(shellSource, /useStableShellLayout\(skim\.onOpen, skim\.requests\)/u);
+assert.match(shellSource, /navigation.skimPresent && <StableSkimSlot[\s\S]*?foreground=\{!interactionLocked && skimOpen\}[\s\S]*?onToggleSkim=\{\(\) => navigation.close\("skim"\)\}/u);
+assert.match(shellSource, /useWorkspaceDirectoryNavigation\(sidebar, skim\)/u);
+assert.match(read("src/renderer/workspace/useWorkspaceSkimRequests.ts"), /previous\.openId !== requests\.openId[\s\S]*?previous\.toggleId !== requests\.toggleId/u);
+assert.match(read("src/renderer/workspace/WorkspaceShell.css"), /is-skim-open > \.cap-stable-results-slot \{ display: none; \}/u);
 assert.match(layoutSource, /useStableSkimVisibility\(onSkimOpen, requests\)/u);
 assert.match(visibilitySource, /useState\(false\)/);
 assert.match(visibilitySource, /handledToggleIdRef[\s\S]*?useEffect[\s\S]*?toggleSkim\(\)/u);

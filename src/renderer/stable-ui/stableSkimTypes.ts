@@ -34,5 +34,6 @@ export interface StableSkimProps {
 
 export type StableSkimSlotProps = Omit<StableSkimProps, "renderContent" | "onOpen"> & {
   content: ReactNode;
+  foreground?: boolean;
   onToggleSkim: () => void;
 };
