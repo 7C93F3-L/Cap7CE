@@ -53,3 +53,14 @@ for (const file of ["workspaceTabs.ts", "useWorkspaceTabs.ts"]) {
   assert.doesNotMatch(text, /window\.|localStorage|cap7ce|electron\/|from ["'].*App["']/, "workspace state must remain free of business IO and persistence");
 }
 console.log("Workspace tab identity, snapshot isolation, close fallback and ownership checks passed.");
+
+const { getWorkspaceTabOverflow } = require("../src/renderer/workspace/workspaceTabOverflow.ts");
+const tabs = Array.from({ length: 8 }, (_, index) => ({ id: String(index), name: `Directory ${index}`, closable: index !== 0 }));
+for (const width of [0, 80, 240, 400, 960, 1600]) {
+  const { visible, hidden } = getWorkspaceTabOverflow(tabs, "7", width);
+  assert.ok(visible.some((tab) => tab.id === "7"), "active tab always remains visible");
+  assert.equal(new Set([...visible, ...hidden].map((tab) => tab.id)).size, tabs.length);
+  assert.equal(visible.length + hidden.length, tabs.length);
+  if (width >= 280) assert.equal(visible[0].id, "0", "fixed tab has priority when there is room");
+}
+assert.deepEqual(getWorkspaceTabOverflow([], "missing", 100), { visible: [], hidden: [] });

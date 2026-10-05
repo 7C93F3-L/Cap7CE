@@ -1,6 +1,10 @@
 import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
+  "workspace.tabs": "Workspace tabs",
+  "workspace.moreTabs": "More tabs",
+  "workspace.navigation": "Workspace navigation",
+  "workspace.filters": "Detail filters",
   "common.add": "Add",
   "common.open": "Open",
   "common.close": "Close",

@@ -103,7 +103,7 @@
     "src/renderer/stable-ui/StableUiRoot.tsx": 40,
     "src/renderer/stable-ui/StableUiFoundation.css": 175,
     "src/renderer/stable-ui/StableUiAccessibility.css": 40,
-    "src/renderer/stable-ui/StableMainShell.tsx": 40,
+    "src/renderer/stable-ui/StableMainShell.tsx": 10,
     "src/renderer/stable-ui/StableShellSidebar.tsx": 100,
     "src/renderer/stable-ui/StableExploreBar.tsx": 75,
     "src/renderer/stable-ui/StableExploreBar.css": 75,
@@ -184,7 +184,15 @@
     "electron/settingsWindowIpc.ts": 30,
     "electron/settingsWindowHost.ts": 20,
     "src/renderer/workspace/workspaceTabs.ts": 75,
-    "src/renderer/workspace/useWorkspaceTabs.ts": 10
+    "src/renderer/workspace/useWorkspaceTabs.ts": 10,
+    "src/renderer/workspace/WorkspaceShell.tsx": 40,
+    "src/renderer/workspace/WorkspaceShell.css": 50,
+    "src/renderer/workspace/WorkspaceTabBar.tsx": 40,
+    "src/renderer/workspace/WorkspaceDirectoryPicker.tsx": 30,
+    "src/renderer/workspace/WorkspaceRail.tsx": 20,
+    "src/renderer/workspace/useWorkspaceDirectoryNavigation.ts": 50,
+    "src/renderer/workspace/workspaceTabOverflow.ts": 20,
+    "src/shared/workspaceTypes.ts": 10
   },
   "stableUiMigration": {
     "requiredSurfaceIds": [

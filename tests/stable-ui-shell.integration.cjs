@@ -5,7 +5,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const shellFiles = [
-  "src/renderer/stable-ui/StableMainShell.tsx",
+  "src/renderer/workspace/WorkspaceShell.tsx",
   "src/renderer/stable-ui/StableShellSidebar.tsx",
   "src/renderer/stable-ui/StableSkimSlot.tsx",
   "src/renderer/stable-ui/StableSkimToolbar.tsx",
@@ -56,8 +56,10 @@ assert.doesNotMatch(titlebarSource, /searchInput|StableSearchInput/u);
 assert.match(exploreBarSource, /<StableSearchInput[\s\S]*?onSearch=\{onSearch\}/u);
 assert.match(mainShellSource, /\{resultsToolbar\}\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
 assert.match(titlebarSource, /\{resultStatus\}/);
-assert.match(sidebarSource, /aria-pressed=\{skimOpen\}/);
-assert.match(mainShellSource, /role="separator"[\s\S]*?aria-valuenow=\{sidebarWidth\}[\s\S]*?onKeyDown=\{resizeSidebarByKeyboard\}/u);
+assert.match(read("src/renderer/workspace/WorkspaceRail.tsx"), /aria-pressed=\{skimOpen\}/);
+assert.match(mainShellSource, /role="separator"[\s\S]*?aria-valuenow=\{skimWidth\}[\s\S]*?onKeyDown=\{resizeSkimByKeyboard\}/u);
+assert.match(mainShellSource, /<WorkspaceTabBar[\s\S]*?onClose=\{navigation.close\}/u);
+assert.match(read("src/renderer/workspace/WorkspaceShell.css"), /@media \(max-height: 359.98px\)[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\)/u);
 assert.match(mainShellSource, /aria-label=\{t\("stableUi\.resultsRegion"\)\}/u);
 assert.match(resizeSource, /event\.key === "ArrowLeft"[\s\S]*?event\.key === "ArrowRight"/u);
 

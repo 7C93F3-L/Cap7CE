@@ -1,6 +1,10 @@
 import { enUS } from "./locales/en-US";
 
 export const zhCN = {
+  "workspace.tabs": "工作区标签",
+  "workspace.moreTabs": "更多标签",
+  "workspace.navigation": "工作区导航",
+  "workspace.filters": "详细信息筛选",
   "common.add": "添加",
   "common.open": "打开",
   "common.close": "关闭",

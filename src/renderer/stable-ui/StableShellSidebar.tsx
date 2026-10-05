@@ -10,8 +10,8 @@ import type { StableSidebarProps } from "./stableSidebarTypes";
 import "./StableSidebar.css";
 type FlyoutState = { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
 type DirectoryTooltipState = { anchor: DOMRect; directoryId: string; all: boolean } | null;
-interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; }
-const StableShellSidebar = ({ search, directories, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim }: StableShellSidebarProps) => {
+interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; directoryOnly?: boolean; }
+const StableShellSidebar = ({ search, directories, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim, directoryOnly = false }: StableShellSidebarProps) => {
   const [flyout, setFlyout] = useState<FlyoutState>(null);
   const [directoryTooltip, setDirectoryTooltip] = useState<DirectoryTooltipState>(null);
   const directoryTooltipTimerRef = useRef<number | null>(null);
@@ -58,7 +58,7 @@ const StableShellSidebar = ({ search, directories, aiSearchEnabled, aiSearchBusy
       <button className="cap-stable-directory-more" type="button" aria-label={t("common.manage")} onClick={(event) => openDirectoryFlyout(directory, event)}><StableSidebarIcon name="more" /></button>
     </div>;
   };
-  return <aside className="cap-stable-sidebar">
+  return <aside className={`cap-stable-sidebar${directoryOnly ? " is-directory-only" : ""}`}>
     <div className="cap-stable-brand" aria-label="Cap7CE"><span className="cap-stable-brand-logo" aria-hidden="true" /></div>
     <div className="cap-stable-sidebar-controls">
       <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>

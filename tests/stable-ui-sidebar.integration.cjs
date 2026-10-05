@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const appSource = read("src/renderer/App.tsx");
 const rootSource = read("src/renderer/stable-ui/StableUiRoot.tsx");
-const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
+const shellSource = read("src/renderer/workspace/WorkspaceShell.tsx");
 const sidebarSource = read("src/renderer/stable-ui/StableShellSidebar.tsx");
 const exploreBarSource = read("src/renderer/stable-ui/StableExploreBar.tsx");
 const sidebarFlyoutSource = read("src/renderer/stable-ui/StableSidebarFlyout.tsx");
@@ -47,7 +47,8 @@ assert.match(appSource, /const directoryDialogLayer =/);
 assert.match(appSource, /overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/);
 assert.match(appSource, /return \([\s\S]*?<StableUiRenderer/u);
 assert.match(rootSource, /onDirectoryDrop\(event\.dataTransfer\)/);
-assert.match(shellSource, /<StableShellSidebar \{\.\.\.sidebar\}/);
+assert.match(read("src/renderer/workspace/WorkspaceDirectoryPicker.tsx"), /<StableShellSidebar \{\.\.\.sidebar\} directoryOnly/);
+assert.match(shellSource, /<WorkspaceRail[\s\S]*?<WorkspaceDirectoryPicker sidebar=\{sidebar\}/u);
 assert.doesNotMatch(`${rootSource}\n${shellSource}\n${sidebarSource}`, /window\.cap7ce|from "\.\.\/App"/);
 
 for (const marker of [

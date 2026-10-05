@@ -5,7 +5,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const appSource = read("src/renderer/App.tsx");
-const shellSource = read("src/renderer/stable-ui/StableMainShell.tsx");
+const shellSource = read("src/renderer/workspace/WorkspaceShell.tsx");
 const slotSource = read("src/renderer/stable-ui/StableSkimSlot.tsx");
 const toolbarSource = read("src/renderer/stable-ui/StableSkimToolbar.tsx");
 const contractSource = read("src/renderer/stable-ui/stableSkimTypes.ts");
