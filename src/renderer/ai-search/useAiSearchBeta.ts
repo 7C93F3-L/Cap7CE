@@ -182,6 +182,13 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
     return mergeAiSearchResults(baseResults, preservedMatchesRef.current);
   }, []);
   const busy = phase === "starting" || phase === "running";
+  const capture = () => ({ enabled, phase, progress, matches: preservedMatchesRef.current });
+  const restore = (snapshot: ReturnType<typeof capture>) => {
+    cancelActive(); setEnabled(snapshot.enabled); setProgress(snapshot.progress);
+    preservedMatchesRef.current = snapshot.matches;
+    const nextPhase = snapshot.phase === "starting" || snapshot.phase === "running" ? "paused_user" : snapshot.phase;
+    setPhase(nextPhase); phaseRef.current = nextPhase;
+  };
   const toggleCurrentSearch = useCallback((search: SearchState, currentResults: ImageIndexItem[]) => {
     if (phaseRef.current === "starting" || phaseRef.current === "running") {
       pauseActive();
@@ -190,5 +197,5 @@ export const useAiSearchBeta = ({ setResults, onFeedback }: UseAiSearchBetaOptio
     }
   }, [enabled, pauseActive, start]);
 
-  return { enabled, busy, phase, progress, activate, deactivate, start, toggleCurrentSearch, cancelActive, mergePreservedResults };
+  return { enabled, busy, phase, progress, activate, deactivate, start, toggleCurrentSearch, cancelActive, mergePreservedResults, capture, restore };
 };

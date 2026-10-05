@@ -1,3 +1,4 @@
+import type { WorkspaceSearchBridge } from "../../shared/workspaceTypes";
 import type { ComponentType, CSSProperties, ReactNode, Ref } from "react";
 import type { ResolvedThemeMode, SearchState, WindowMaterial } from "../../shared/types";
 import type { StableSidebarProps } from "./stableSidebarTypes";
@@ -7,7 +8,7 @@ import type { StableSkimProps } from "./stableSkimTypes";
 export interface StableUiRendererProps {
   theme: ResolvedThemeMode; themeStyle: CSSProperties; windowMaterial: WindowMaterial;
   pinned: boolean; pinLabel: string;
-  search: SearchState;
+  search: SearchState; workspace: WorkspaceSearchBridge;
   searchInputRef: Ref<HTMLInputElement>;
   inputFeedback: string;
   resultStatus: ReactNode; resultContent: (active: boolean) => ReactNode; overlayContent: ReactNode;

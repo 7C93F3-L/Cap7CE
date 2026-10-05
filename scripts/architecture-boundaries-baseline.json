@@ -190,9 +190,11 @@
     "src/renderer/workspace/WorkspaceTabBar.tsx": 40,
     "src/renderer/workspace/WorkspaceDirectoryPicker.tsx": 30,
     "src/renderer/workspace/WorkspaceRail.tsx": 20,
-    "src/renderer/workspace/useWorkspaceDirectoryNavigation.ts": 75,
+    "src/renderer/workspace/useWorkspaceDirectoryNavigation.ts": 50,
     "src/renderer/workspace/workspaceTabOverflow.ts": 20,
-    "src/shared/workspaceTypes.ts": 10,
+    "src/shared/workspaceTypes.ts": 30,
+    "src/renderer/workspace/useWorkspaceSearchSessions.ts": 125,
+    "src/renderer/results/useResultSelectionMemory.ts": 10,
     "src/renderer/workspace/useWorkspaceSkimRequests.ts": 20
   },
   "stableUiMigration": {

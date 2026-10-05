@@ -11,6 +11,8 @@ import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resul
 import { useResultsSpaceHold } from "./useResultsSpaceHold";
 import type { AiResultSectionPhase, AiResultSectionProgress } from "./ResultSectionCard";
 import type { ResultGridScrollMemory } from "../virtualGridLayout";
+import { useResultSelectionMemory } from "./useResultSelectionMemory";
+import type { WorkspaceSelectionMemory } from "../../shared/workspaceTypes";
 type SpacePressSnapshot = {
   index: number;
   items: ImageIndexItem[];
@@ -25,6 +27,7 @@ const toFullImageUrl = (filePath: string) => `cap7ce://image/?path=${encodeURICo
 const toSearchShellPreviewUrl = (filePath: string) => `cap7ce://search-shell-preview/?path=${encodeURIComponent(filePath)}`;
 
 export interface ResultsViewProps {
+  selectionMemory?: WorkspaceSelectionMemory;
   active: boolean; images: ImageIndexItem[];
   isSearching: boolean;
   aiSearchPhase: AiResultSectionPhase;
@@ -49,14 +52,11 @@ export interface ResultsViewProps {
   onAiSearchSectionToggle: () => void;
 }
 
-export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onAiSearchSectionToggle }: ResultsViewProps) => {
+export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onEditKeywords, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onAiSearchSectionToggle, selectionMemory }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
-  const [selectedImageIds, setSelectedImageIds] = useState<Set<string>>(
-    () => new Set(selectedImageId ? [selectedImageId] : [])
-  );
-  const selectionAnchorIdRef = useRef<string | null>(selectedImageId);
+  const { selectedImageIds, setSelectedImageIds, selectionAnchorIdRef } = useResultSelectionMemory(selectedImageId, selectionMemory);
   const handledClearSelectionRequestIdRef = useRef(clearSelectionRequestId);
   const previewSessionCounterRef = useRef(0);
   const previewOpenRequestRef = useRef(0);

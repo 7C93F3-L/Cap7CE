@@ -1,8 +1,8 @@
 # Cap7CE 软件架构
 
-工作区标签基础位于 `src/renderer/workspace/`：`workspaceTabs.ts` 以纯 reducer 管理固定全部目录、目录去重、唯一 Skim 标签、打开顺序、活动标签和关闭回退；`useWorkspaceTabs.ts` 仅提供 React 状态接入。目录快照复用 `SearchState`、`SkimDisplayMode` 与 `ResultGridScrollMemory`，包含独立随机批次和选择，写入时深复制并约束目录身份。Skim 标签仅保存身份，导航与搜索会话仍由原有 Skim 控制器持有，后续布局接入不得复制这些链路。基础模块已供目录标签骨架消费，业务快照尚未接入正式搜索；模块无 IPC、查询、持久化或窗口生命周期职责。`test:workspace-tabs` 验证状态隔离和领域依赖边界，并纳入完整测试与架构检查。
+工作区标签基础位于 `src/renderer/workspace/`：`workspaceTabs.ts` 以纯 reducer 管理固定全部目录、目录去重、唯一 Skim 标签、打开顺序、活动标签和关闭回退；`useWorkspaceTabs.ts` 仅提供 React 状态接入。目录快照复用 `SearchState`、`SkimDisplayMode` 与 `ResultGridScrollMemory`，包含独立随机批次和选择，写入时深复制并约束目录身份。Skim 标签仅保存身份，导航与搜索会话仍由原有 Skim 控制器持有，后续布局接入不得复制这些链路。纯状态模块无 IPC、查询、持久化或窗口生命周期职责。`test:workspace-tabs` 验证状态隔离和领域依赖边界，并纳入完整测试与架构检查。
 
-工作区布局第一阶段由 `WorkspaceShell.tsx` 组合左侧 `WorkspaceRail`、顶部 `WorkspaceTabBar` 和真实结果；`StableMainShell` 保留为装配入口。`useWorkspaceDirectoryNavigation` 把标签操作及快捷指令产生的目录选择接回唯一正式搜索动作；这一阶段仍使用当前搜索条件，每标签业务快照恢复留待下一阶段接入。`WorkspaceDirectoryPicker` 复用 `StableShellSidebar` 的目录专用模式，保留原有目录管理、排序、统计和悬停路径信息，不复制目录服务。`workspaceTabOverflow.ts` 保证活动标签可见，余项进入更多菜单；跨视图展示契约放在 `src/shared/workspaceTypes.ts`。AI 入口进入顶部；详细筛选按钮暂控制现有筛选轨道的显示。Skim 插槽及其搜索控制器保持挂载和既有能力，后续再迁入唯一标签。新增领域样式由 `WorkspaceShell.css` 持有，原壳层 CSS 继续提供 Skim 兼容规则；低高度仍保留新导航入口。
+工作区布局第一阶段由 `WorkspaceShell.tsx` 组合左侧 `WorkspaceRail`、顶部 `WorkspaceTabBar` 和真实结果；`StableMainShell` 保留为装配入口。`useWorkspaceDirectoryNavigation` 负责展示身份、外部目录选择和 Skim 请求的适配。`WorkspaceDirectoryPicker` 复用 `StableShellSidebar` 的目录专用模式，保留原有目录管理、排序、统计和悬停路径信息，不复制目录服务。`workspaceTabOverflow.ts` 保证活动标签可见，余项进入更多菜单；跨视图展示契约放在 `src/shared/workspaceTypes.ts`。AI 入口进入顶部；详细筛选按钮暂控制现有筛选轨道的显示。Skim 插槽及其搜索控制器保持挂载和既有能力，后续再迁入唯一标签。新增领域样式由 `WorkspaceShell.css` 持有，原壳层 CSS 继续提供 Skim 兼容规则；低高度仍保留新导航入口。
 
 > 当前版本：1.0.4
 > 更新日期：2026-09-25
@@ -652,3 +652,5 @@ L6 最终审计补充：中间省略文件名的单行与双行布局由 `src/re
 - 新功能谨慎加入，先确认不会破坏 stable 窗口生命周期、搜索入口、托盘后台和索引缓存链路。
 - UI 调整尽量限定在目标组件和相关 CSS，避免牵动主进程窗口生命周期。
 - 搜索、识别、缓存和 SQLite 是业务核心，除明确任务外不要顺手修改。
+
+工作区目录会话由 `useWorkspaceSearchSessions` 在顶层组合既有搜索、随机浏览和 AI 控制器。每标签保存查询草稿、已提交条件、查看模式、随机种子 / 批次、滚动及多选；进程内缓存保留结果和 AI 证据，切换暂停原 AI 任务，返回后由用户继续。切换先取消旧搜索，既有任务身份检查拒绝迟到结果；索引变动标记缓存失效，返回标签时通过唯一搜索动作刷新。`useResultSelectionMemory` 在结果视图内恢复并回报选择，代次检查拒绝旧视图的回报。关闭删除会话，重新打开使用新默认条件；所有会话只在当前进程内存在，不新增 IPC、数据库或持久化布局。

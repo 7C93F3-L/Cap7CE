@@ -52,7 +52,7 @@ const sharedMenuStyles = read("src/renderer/components/ResponsiveFileContextMenu
 assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
 assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
 assert.match(appSource, /stableUiRenderer: StableUiRenderer/);
-assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}/);
+assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{workspace\.viewKey\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}/);
 assert.match(resultsSource, /active: boolean[\s\S]*?useEffect\(\(\) => \{[\s\S]*?if \(!active\) return undefined;[\s\S]*?window\.addEventListener\("keydown", handleKeyDown, true\)/u);
 assert.match(appSource, /if \(selectedResultImageId\) \{[\s\S]*?setClearSelectionRequestId/u);
 assert.doesNotMatch(appSource, /view === "results" && selectedResultImageId/u);
@@ -76,7 +76,7 @@ assert.match(contentViewActivitySource, /if \(!active\) \{[\s\S]*?setActivityCon
 assert.match(contentViewActivitySource, /requestVersion !== requestVersionRef\.current \|\| !isDocumentActive\(\)/u);
 assert.match(appSource, /useSearchIndexRefresh\(\(force\) => \{[\s\S]*?const activeSearch = lastResultSearchRef\.current;[\s\S]*?!activeSearch\.query\.trim\(\)[\s\S]*?!hasExploreTypeFilters\(activeSearch\)/u);
 assert.match(appSource, /const cycleSearchDirectory = \(\) => \{[\s\S]*?directoryOptions\.findIndex[\s\S]*?\(currentIndex \+ 1\) % directoryOptions\.length[\s\S]*?updateResultsSearchOptions/u);
-assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSearch\.directoryId !== search\.directoryId[\s\S]*?resultScrollMemoryRef\.current = createInitialResultGridScrollMemory\(\)/u);
+assert.match(appSource, /const updateResultsSearch = \(nextSearch:[\s\S]*?nextSearch\.directoryId !== search\.directoryId[\s\S]*?workspace\.selectDirectory\(nextSearch\.directoryId\)/u);
 assert.match(appSource, /const searchResultsVisible = true;[\s\S]*?if \(\s*quickActionGlobalEnabled[\s\S]*?matchesShortcutEvent\(event, shortcutActions\.cycleDirectory\)[\s\S]*?cycleSearchDirectory\(\)/u);
 assert.match(appSource, /onOpenImage: \(item\) => invokeFileAction\("open", item\)/);
 assert.match(appSource, /onDeleteItems: requestDeleteFiles/);

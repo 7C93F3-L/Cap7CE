@@ -42,7 +42,7 @@ const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.t
 const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
+assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} workspace=\{workspace\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
 assert.match(titlebarSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{titlebarRef\}/u);
 assert.match(mainShellSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{shellRef\}/u);
 assert.match(inertElementSource, /elementRef\.current\.inert = inert/u);
@@ -122,7 +122,7 @@ assert.match(dialogShellStyles, /\.cap-stable-ui \.cap-dialog-surface,\s*\.cap-d
 assert.match(dialogShellStyles, /cap-dialog-actions button:hover:not\(:disabled\)[\s\S]*?background: var\(--cap-accent-gradient\)/u);
 assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer,[\s\S]*?\.cap-dialog-layer\.is-stable \{\s*pointer-events: none;/u);
 assert.match(dialogShellStyles, /\.cap-stable-ui > \.cap-dialog-layer > \.cap-dialog-surface,[\s\S]*?\.cap-dialog-layer\.is-stable > \.cap-dialog-surface \{\s*pointer-events: auto;/u);
-assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{search\.directoryId\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
+assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{workspace\.viewKey\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}[\s\S]*?overlayContent=\{<>\{contextMenuLayer\}\{keywordEditorLayer\}\{deleteFilesPanel\}\{directoryDialogLayer\}<\/>\}/u);
 assert.match(appSource, /useCurrentPageRefreshShortcut\(\{[\s\S]*?refresh: refreshCurrentPage,[\s\S]*?t\("common\.refreshed"\)/u);
 assert.match(refreshShortcutSource, /event\.key !== "F5"[\s\S]*?requestRefresh\(\)/u);
 assert.match(refreshShortcutSource, /onRefreshCurrentPageRequested\(requestRefresh\)/u);

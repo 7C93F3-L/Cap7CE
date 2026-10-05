@@ -1,3 +1,4 @@
+import { useWorkspaceSearchSessions } from "./workspace/useWorkspaceSearchSessions";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { defaultAppearanceColors, getTextColorForBackground, isHexColor } from "./appearance";
 import { executeQuickCommand, type QuickCommandConfirmationRequest } from "./commandExecutor";
@@ -699,6 +700,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
+  const workspace = useWorkspaceSearchSessions({ search, initialSearch: emptySearch, display: skimDisplay, setSearch, setDisplay: setSkimDisplay, random: randomBrowse, ai: aiSearchBeta, results: searchResults, setResults: setSearchResults, formats: searchAvailableFormats, setFormats: setSearchAvailableFormats,
+    error: searchError, setError: setSearchError, searching: isSearching, scroll: resultScrollMemoryRef, submitted: lastResultSearchRef, initialized: resultsInitializedRef, setSelectedId: setSelectedResultImageId,
+    cancel: () => { if (viewDisplaySearchTimerRef.current !== null) { window.clearTimeout(viewDisplaySearchTimerRef.current); viewDisplaySearchTimerRef.current = null; } cancelSearch(); clearQuickCommandNotice(); setContextMenu(null); }, refresh: (nextSearch, display) => { void runSearch(nextSearch, { navigate: false, display, preserveAiResults: true }); } });
   useEffect(() => {
     if (isLoadingDirectories || !contentViewActivityConfirmed || resultsInitializedRef.current) return;
     const initialSearch = { ...emptySearch, sortField: search.sortField, sortDirection: search.sortDirection };
@@ -708,7 +712,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const updateResultsSearch = (nextSearch: SearchState, refresh = false) => {
     if (nextSearch.directoryId !== search.directoryId) {
-      resultScrollMemoryRef.current = createInitialResultGridScrollMemory();
+      workspace.selectDirectory(nextSearch.directoryId); return;
     }
     setSearch(nextSearch);
     if (nextSearch.sortField !== search.sortField || nextSearch.sortDirection !== search.sortDirection) {
@@ -1202,7 +1206,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       }
     }
     void window.cap7ce?.preferences.updateSkimDisplay(nextSkimDisplay).then((preferences) => {
-      if (preferences) setSkimDisplay(preferences.skimDisplay);
+      if (preferences) setSkimDisplay((current) => ({ ...preferences.skimDisplay, searchMode: current.searchMode }));
     });
     if (changedDisplayMode && announceChange) {
       showQuickCommandNotice(t(`search.displaySwitched.${changedDisplayMode}` as TranslationKey));
@@ -1394,6 +1398,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   useSearchIndexRefresh((force) => {
+    workspace.invalidate();
     const activeSearch = lastResultSearchRef.current;
     if (!contentViewActivityConfirmed || !resultsInitializedRef.current || (!force && !activeSearch.query.trim() && !hasExploreTypeFilters(activeSearch))) return;
     void runSearch(activeSearch, { navigate: false, preserveAiResults: true });
@@ -2147,12 +2152,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onFocusMainSearch?.(() => {
       window.setTimeout(() => {
-        searchInputRef.current?.focus();
+        if (workspace.activeId === "skim") document.querySelector<HTMLInputElement>(".cap-computer-search-box input, .cap-stable-skim-address input")?.focus(); else searchInputRef.current?.focus();
       }, 80);
     });
 
     return () => unsubscribe?.();
-  }, []);
+  }, [workspace.activeId]);
 
   useEffect(() => {
     const handleWindowShortcutKeyDown = (event: KeyboardEvent) => {
@@ -2282,7 +2287,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     isSearching={isSearching || aiSearchBeta.busy}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({
-    active, images: randomBrowse.items,
+    active, images: randomBrowse.items, selectionMemory: workspace.selectionMemory,
     isSearching: isSearching || aiSearchBeta.busy,
     aiSearchPhase: aiSearchBeta.phase,
     aiSearchProgress: aiSearchBeta.progress,
@@ -2374,11 +2379,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         themeStyle={appThemeStyle} windowMaterial={windowMaterial}
         pinned={isAlwaysOnTop}
         pinLabel={isAlwaysOnTop ? t("window.unfix") : t("window.fix")}
-        search={search}
+        search={search} workspace={workspace}
         searchInputRef={searchInputRef}
         inputFeedback={searchInputFeedback}
         resultStatus={resultStatusNode}
-        resultContent={(active) => <ResultsView key={search.directoryId} {...createResultsViewProps(active)} />}
+        resultContent={(active) => <ResultsView key={workspace.viewKey} {...createResultsViewProps(active)} />}
         overlayContent={<>{contextMenuLayer}{keywordEditorLayer}{deleteFilesPanel}{directoryDialogLayer}</>}
         backgroundInteractionLocked={dialog !== null}
         explore={{

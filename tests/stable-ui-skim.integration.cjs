@@ -43,7 +43,7 @@ for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded"
   assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
 }
 assert.match(shellSource, /navigation.skimPresent && <StableSkimSlot[\s\S]*?foreground=\{!interactionLocked && skimOpen\}[\s\S]*?onToggleSkim=\{\(\) => navigation.close\("skim"\)\}/u);
-assert.match(shellSource, /useWorkspaceDirectoryNavigation\(sidebar, skim\)/u);
+assert.match(shellSource, /useWorkspaceDirectoryNavigation\(sidebar, skim, workspace\)/u);
 assert.match(read("src/renderer/workspace/useWorkspaceSkimRequests.ts"), /previous\.openId !== requests\.openId[\s\S]*?previous\.toggleId !== requests\.toggleId/u);
 assert.match(read("src/renderer/workspace/WorkspaceShell.css"), /is-skim-open > \.cap-stable-results-slot \{ display: none; \}/u);
 assert.match(layoutSource, /useStableSkimVisibility\(onSkimOpen, requests\)/u);

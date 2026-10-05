@@ -1,3 +1,4 @@
+import type { WorkspaceSearchBridge } from "../../shared/workspaceTypes";
 import { useState, type ReactNode } from "react";
 import { t } from "../../../electron/localization";
 import StableSkimSlot from "../stable-ui/StableSkimSlot";
@@ -12,10 +13,10 @@ import WorkspaceDirectoryPicker from "./WorkspaceDirectoryPicker";
 import "../stable-ui/StableMainShell.css";
 import "./WorkspaceShell.css";
 
-export default function WorkspaceShell({ resultsToolbar, resultContent, sidebar, skim, interactionLocked }: { resultsToolbar: ReactNode; resultContent: (active: boolean) => ReactNode; sidebar: StableSidebarProps; skim: StableSkimProps; interactionLocked: boolean }) {
+export default function WorkspaceShell({ resultsToolbar, resultContent, sidebar, skim, workspace, interactionLocked }: { resultsToolbar: ReactNode; resultContent: (active: boolean) => ReactNode; sidebar: StableSidebarProps; skim: StableSkimProps; workspace: WorkspaceSearchBridge; interactionLocked: boolean }) {
   const [directoriesOpen, setDirectoriesOpen] = useState(false);
   const [filtersVisible, setFiltersVisible] = useState(true);
-  const navigation = useWorkspaceDirectoryNavigation(sidebar, skim);
+  const navigation = useWorkspaceDirectoryNavigation(sidebar, skim, workspace);
   const { skimOpen } = navigation;
   const resultsKeyboardActive = !skimOpen, skimKeyboardActive = skimOpen;
   const shellRef = useInertElement<HTMLElement>(interactionLocked);

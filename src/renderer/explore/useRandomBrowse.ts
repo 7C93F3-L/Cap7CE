@@ -24,6 +24,7 @@ export const useRandomBrowse = <T extends { filePath: string }>(items: readonly 
   const disable = useCallback(() => { setState((current) => current.enabled ? { ...current, enabled: false } : current); onOrderChange(); }, [onOrderChange]);
   const next = useCallback(() => { setState((current) => current.enabled ? { enabled: true, seed: (current.seed + 1) >>> 0, batchNumber: current.batchNumber + 1 } : current); onOrderChange(); }, [onOrderChange]);
   const clear = useCallback(() => { setState({ enabled: false, seed: 0, batchNumber: 0 }); onOrderChange(); }, [onOrderChange]);
+  const restore = useCallback((next: typeof state) => setState({ ...next }), []);
   const orderedItems = useMemo(() => state.enabled ? orderRandomBrowseItems(items, state.seed) : [...items], [items, state.enabled, state.seed]);
-  return { ...state, items: orderedItems, toggle, disable, next, clear };
+  return { ...state, items: orderedItems, toggle, disable, next, clear, restore };
 };
