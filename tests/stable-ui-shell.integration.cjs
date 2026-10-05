@@ -9,10 +9,6 @@ const shellFiles = [
   "src/renderer/stable-ui/StableShellSidebar.tsx",
   "src/renderer/stable-ui/StableSkimSlot.tsx",
   "src/renderer/stable-ui/StableSkimToolbar.tsx",
-  "src/renderer/stable-ui/useStableShellLayout.ts",
-  "src/renderer/stable-ui/useStableShellResize.ts",
-  "src/renderer/stable-ui/useStableShellSizeMemory.ts",
-  "src/renderer/stable-ui/useStableSkimVisibility.ts",
   "src/renderer/stable-ui/useStableSkimCommands.ts"
 ];
 
@@ -22,12 +18,8 @@ const exploreBarSource = read("src/renderer/stable-ui/StableExploreBar.tsx");
 const exploreBarStyles = read("src/renderer/stable-ui/StableExploreBar.css");
 const mainShellSource = read(shellFiles[0]);
 const sidebarSource = read(shellFiles[1]);
-const layoutSource = read(shellFiles[4]);
-const resizeSource = read(shellFiles[5]);
-const sizeMemorySource = read(shellFiles[6]);
-const keyboardRegionSource = read("src/renderer/stable-ui/useStableKeyboardRegion.ts");
+const shellStyles = read("src/renderer/workspace/WorkspaceShell.css");
 const inertElementSource = read("src/renderer/stable-ui/useInertElement.ts");
-const shellStyles = read("src/renderer/stable-ui/StableMainShell.css");
 const sidebarStyles = read("src/renderer/stable-ui/StableSidebar.css");
 const foundationStyles = read("src/renderer/stable-ui/StableUiFoundation.css");
 const resultStyles = read("src/renderer/stable-ui/StableSearchResults.css");
@@ -42,15 +34,13 @@ const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.t
 const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} workspace=\{workspace\} filters=\{[\s\S]*?\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
+assert.match(rootSource, /<WorkspaceShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} workspace=\{workspace\} filters=\{[\s\S]*?\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
 assert.match(titlebarSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{titlebarRef\}/u);
 assert.match(mainShellSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{shellRef\}/u);
 assert.match(inertElementSource, /elementRef\.current\.inert = inert/u);
 assert.match(mainShellSource, /resultsKeyboardActive = !skimOpen, skimKeyboardActive = skimOpen/u);
 assert.match(mainShellSource, /\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
 assert.match(mainShellSource, /skim\.renderContent\(!interactionLocked && skimKeyboardActive\)/u);
-assert.match(keyboardRegionSource, /useEffect\(\(\) => setKeyboardRegion\(skimOpen \? "skim" : "results"\), \[skimOpen\]\)/u);
-assert.match(keyboardRegionSource, /\.cap-stable-skim-slot[\s\S]*?setKeyboardRegion\("skim"\)[\s\S]*?\.cap-stable-results-slot[\s\S]*?setKeyboardRegion\("results"\)/u);
 assert.doesNotMatch(titlebarSource, /searchInput|StableSearchInput/u);
 assert.match(exploreBarSource, /<StableSearchInput[\s\S]*?onSearch=\{onSearch\}/u);
 assert.match(mainShellSource, /\{!skimOpen && resultsToolbar\}\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
@@ -59,43 +49,9 @@ assert.match(read("src/renderer/workspace/WorkspaceRail.tsx"), /aria-pressed=\{s
 assert.match(mainShellSource, /<WorkspaceTabBar[\s\S]*?onClose=\{navigation.close\}/u);
 assert.match(read("src/renderer/workspace/WorkspaceShell.css"), /@media \(max-height: 359.98px\)[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\)/u);
 assert.match(mainShellSource, /aria-label=\{t\("stableUi\.resultsRegion"\)\}/u);
-assert.match(resizeSource, /event\.key === "ArrowLeft"[\s\S]*?event\.key === "ArrowRight"/u);
-
-for (const marker of [
-  "stableSidebarDefaultWidth = 176",
-  "useStableShellSizeMemory()",
-  "useState(initialWidthsRef.current.sidebarWidth)",
-  "useState(initialWidthsRef.current.skimWidth)",
-  "clamp(event.clientX, 40, 320)",
-  "Math.floor((viewportWidth - sidebarWidth) / 2)",
-  "clamp(window.innerWidth - event.clientX, 280, skimMaximumWidth)",
-  "resetSidebarWidth: () => setSidebarWidth(stableSidebarDefaultWidth)",
-  "resetSkimWidth: () => setSkimWidth(stableSkimDefaultWidth)"
-]) {
-  assert.ok(`${layoutSource}\n${resizeSource}\n${sizeMemorySource}`.includes(marker), `Stable UI shell layout is missing ${marker}.`);
-}
-for (const marker of ["cap7ce.main.shell-sizes.v1", "Number.isFinite", "clamp(stored.sidebarWidth, 40, 320)", "clamp(stored.skimWidth, 280, stableSkimStoredMaximumWidth)", "window.setTimeout", "JSON.stringify({ sidebarWidth, skimWidth })"]) {
-  assert.ok(sizeMemorySource.includes(marker), `Stable UI shell size memory is missing ${marker}.`);
-}
-
-for (const marker of [
-  "--cap-stable-sidebar-width: 176px",
-  "--cap-stable-skim-width: 360px",
-  "--cap-stable-skim-rendered-width: min(var(--cap-stable-skim-width), var(--cap-stable-skim-maximum-width))",
-  "@media (max-width: 920px) and (min-height: 360px)",
-  "@media (max-width: 560px)",
-  "@media (max-height: 359.98px)",
-  ".cap-stable-main-shell, .cap-stable-main-shell.is-skim-open { --cap-stable-grid-page-padding: 10px 2px 2px 10px; grid-template-columns: minmax(0, 1fr); }",
-  ".cap-stable-main-shell .cap-stable-directory-list-frame { grid-template-columns: minmax(0, 1fr); }",
-  ".cap-stable-main-shell .cap-stable-directory-list-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0;",
-  "--cap-stable-grid-page-padding: 10px 2px 2px 10px",
-  ".cap-stable-main-shell .cap-scroll-viewport-frame-horizontal { grid-template-rows: minmax(0, 1fr) var(--custom-scrollbar-hit-size); }",
-  ".cap-stable-main-shell .cap-scroll-viewport-frame-horizontal > .cap-custom-scrollbar-horizontal { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; width: 100%; }",
-  ".cap-stable-main-shell.is-skim-open .cap-stable-skim-slot { grid-column: 1; margin-left: var(--cap-stable-edge-gap); }",
-  ".cap-stable-main-shell.is-skim-open .cap-stable-results-slot { display: none; }"
-]) {
-  assert.ok(shellStyles.includes(marker), `Stable UI responsive shell is missing ${marker}.`);
-}
+for (const marker of ["grid-template-columns: 44px minmax(0, 1fr)", "grid-template-rows: 30px minmax(0, 1fr)", "--cap-stable-grid-page-padding: 10px 2px 2px 10px", "container-type: inline-size", "grid-row: 2; width: 100%;"]) assert.ok(shellStyles.includes(marker), `Workspace shell is missing ${marker}`);
+for (const file of ["StableMainShell.tsx", "StableMainShell.css", "StableShellResize.css", "useStableShellLayout.ts", "useStableShellResize.ts", "useStableShellSizeMemory.ts", "useStableSkimVisibility.ts", "useStableKeyboardRegion.ts"]) assert.equal(fs.existsSync(path.join(root, "src/renderer/stable-ui", file)), false, `Retired parallel shell must stay removed: ${file}`);
+assert.match(read("src/renderer/workspace/useWorkspaceOverlayDismiss.ts"), /stopImmediatePropagation[\s\S]*?closeDirectories[\s\S]*?closeFilters/u);
 assert.ok(sidebarStyles.includes("@container (max-width: 95px)"), "Stable UI sidebar is missing its compact container layout.");
 assert.match(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: no-drag;[^}]*-webkit-app-region: no-drag;/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-sidebar \{[^}]*app-region: drag;/u);
@@ -137,10 +93,10 @@ assert.match(combinedShellSource, /aria-hidden="true"/);
 
 console.log(JSON.stringify({
   responsiveShellCompositionVerified: true,
-  resizeRangesVerified: true,
+  workspaceLayoutVerified: true,
   narrowAndLowWindowLayoutsVerified: true,
   noBusinessDataOrLegacyShapeState: true,
-  keyboardResizeAndLocalizedRegionsVerified: true,
+  keyboardDismissAndLocalizedRegionsVerified: true,
   stablePinIconMatchesCaptionScale: true
 }));
 

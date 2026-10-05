@@ -8,8 +8,6 @@
 .cap-workspace-filter-scroll-frame { position: relative; flex: 1 1 auto; min-height: 0; }
 .cap-workspace-filter-scroll-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0; }
 .cap-workspace-filter-scroll { height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
-.cap-workspace-filter-panel .cap-stable-explore-filters { display: flex; flex-direction: column; overflow: visible; padding: 0 8px 10px; gap: 10px; }
-.cap-workspace-filter-panel .cap-stable-explore-filters > section { width: auto; min-width: 0; padding: 4px 4px 10px; border-left: 0; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
 .cap-workspace-filter-panel .cap-stable-file-type-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .cap-workspace-filter-panel .cap-stable-file-type-options > button { width: auto; min-width: 0; padding-inline: 1px; }
 .cap-workspace-filter-panel .cap-stable-video-ratio-options, .cap-workspace-filter-panel .cap-stable-ratio-options { grid-template-columns: repeat(5, minmax(0, 1fr)); }

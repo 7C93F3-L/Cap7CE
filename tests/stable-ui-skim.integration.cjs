@@ -17,9 +17,7 @@ const skimKeyboardSelectionSource = read("src/renderer/skim/useSkimKeyboardSelec
 const responsiveMenuSource = read("src/renderer/skim/ResponsiveSkimContextMenuLayer.tsx");
 const rootSectionsSource = read("src/renderer/skim/SkimRootSections.tsx");
 const rootSectionsStyles = read("src/renderer/skim/SkimRootSections.css");
-const layoutSource = read("src/renderer/stable-ui/useStableShellLayout.ts");
 const commandSource = read("src/renderer/stable-ui/useStableSkimCommands.ts");
-const visibilitySource = read("src/renderer/stable-ui/useStableSkimVisibility.ts");
 const navigationHistorySource = read("src/renderer/controllers/useSkimNavigationHistory.ts");
 const formattingSource = read("src/renderer/formatting.ts");
 
@@ -46,11 +44,6 @@ assert.match(shellSource, /navigation.skimPresent && <StableSkimSlot[\s\S]*?fore
 assert.match(shellSource, /useWorkspaceDirectoryNavigation\(sidebar, skim, workspace\)/u);
 assert.match(read("src/renderer/workspace/useWorkspaceSkimRequests.ts"), /previous\.openId !== requests\.openId[\s\S]*?previous\.toggleId !== requests\.toggleId/u);
 assert.match(read("src/renderer/workspace/WorkspaceShell.css"), /is-skim-open > \.cap-stable-results-slot \{ display: none; \}/u);
-assert.match(layoutSource, /useStableSkimVisibility\(onSkimOpen, requests\)/u);
-assert.match(visibilitySource, /useState\(false\)/);
-assert.match(visibilitySource, /handledToggleIdRef[\s\S]*?useEffect[\s\S]*?toggleSkim\(\)/u);
-assert.match(visibilitySource, /handledOpenIdRef[\s\S]*?setSkimOpen\(true\)/u);
-assert.match(visibilitySource, /if \(!open\) onSkimOpen\(\)/);
 assert.doesNotMatch(slotSource, /StablePlaceholderGrid|aria-label="Skim 布局占位区"/);
 
 for (const marker of ["StableSkimRequests", "toggleId", "openId", "currentPath", "breadcrumbs", "onOpenPath", "onSortChange", "onDisplayModeChange", "renderContent: (active: boolean)"]) {

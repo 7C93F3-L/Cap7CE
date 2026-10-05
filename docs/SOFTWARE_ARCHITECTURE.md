@@ -2,10 +2,10 @@
 
 工作区标签基础位于 `src/renderer/workspace/`：`workspaceTabs.ts` 以纯 reducer 管理固定全部目录、目录去重、唯一 Skim 标签、打开顺序、活动标签和关闭回退；`useWorkspaceTabs.ts` 仅提供 React 状态接入。目录快照复用 `SearchState`、`SkimDisplayMode` 与 `ResultGridScrollMemory`，包含独立随机批次和选择，写入时深复制并约束目录身份。Skim 标签仅保存身份，导航与搜索会话仍由原有 Skim 控制器持有，后续布局接入不得复制这些链路。纯状态模块无 IPC、查询、持久化或窗口生命周期职责。`test:workspace-tabs` 验证状态隔离和领域依赖边界，并纳入完整测试与架构检查。
 
-工作区布局第一阶段由 `WorkspaceShell.tsx` 组合左侧 `WorkspaceRail`、顶部 `WorkspaceTabBar` 和真实结果；`StableMainShell` 保留为装配入口。`useWorkspaceDirectoryNavigation` 负责展示身份、外部目录选择和 Skim 请求的适配。`WorkspaceDirectoryPicker` 复用 `StableShellSidebar` 的目录专用模式，保留原有目录管理、排序、统计和悬停路径信息，不复制目录服务。`workspaceTabOverflow.ts` 保证活动标签可见，余项进入更多菜单；跨视图展示契约放在 `src/shared/workspaceTypes.ts`。AI 入口进入顶部，Skim 进入唯一标签；筛选面板由目录标签条件驱动。新增领域样式由 `WorkspaceShell.css` 持有，原壳层 CSS 继续提供 Skim 兼容规则；低高度仍保留新导航入口。
+当前工作区布局由 `WorkspaceShell.tsx` 组合左侧 `WorkspaceRail`、顶部 `WorkspaceTabBar` 和真实结果，由 `StableUiRoot` 直接装配。`useWorkspaceDirectoryNavigation` 负责展示身份、外部目录选择和 Skim 请求的适配。`WorkspaceDirectoryPicker` 复用 `StableShellSidebar` 的目录专用模式，保留原有目录管理、排序、统计和悬停路径信息，不复制目录服务。`workspaceTabOverflow.ts` 保证活动标签可见，余项进入更多菜单；跨视图展示契约放在 `src/shared/workspaceTypes.ts`。AI 入口进入顶部，Skim 进入唯一标签；筛选面板由目录标签条件驱动。工作区壳层样式由 `WorkspaceShell.css` 持有，筛选和紧凑工具各自持有领域样式；低高度仍保留新导航入口。
 
 > 当前版本：1.0.4
-> 更新日期：2026-09-25
+> 更新日期：2026-10-05
 > 本文用于后续开发对话承接项目结构、边界和稳定约束。它不是更新日志。
 
 0.9.9 兼容窗口专项 C0 至 C9 与新版稳定 UI 的 U0 至 U11 记录均为历史迁移依据。当前产品已完成稳定窗口宿主收口：主窗口、独立 Settings 与 Preview 只装配新版 Renderer、40 DIP Window Controls Overlay 和同一套 Acrylic / Mica 材质运行时，不再保留可执行的 Cap7CE / compatibility 外壳或模式切换。后续界面入口必须复用正式业务动作与状态权威，不能从历史专项恢复平行业务链。
@@ -658,3 +658,5 @@ L6 最终审计补充：中间省略文件名的单行与双行布局由 `src/re
 `WorkspaceFilterPanel` 复用唯一 `StableExploreFilters` 实例，按时间、种类、大小、适用格式详细条件纵向排列，沿用既有查询与派生事实。面板独立滚动，宽窗口进入右侧网格列，中窄和低高度使用窗口内浮层；关闭只隐藏控件，左栏仍显示生效条件组数。首次启动仅宽且足够高的窗口默认展开。标签切换、关闭面板或进入 Skim 会卸载筛选草稿，未确认内容不跨会话；查询条件继续由工作区目录会话持有。
 
 工作区交互由 `WorkspaceToolbarTools` 在窄 / 低窗口把同一组查看范围、排序、随机和清除动作装入可滚动弹层；目录和 Skim 工具只随当前前台视图提供入口，切换时关闭旧弹层。`WorkspaceTabBar` 提供方向键、Home / End 切换、Delete 关闭及焦点恢复，文件键盘控制器通过共享 `isWorkspaceControlKeyboardTarget` 排除工作区控件，防止标签 Delete 误触文件删除。`useStableFlyoutInteractions` 持有弹层互斥、滚动 / 缩放关闭、Esc 消费和返回触发点的焦点；`useWorkspaceOverlayDismiss` 再关闭外层目录 / 筛选浮层，Esc 不穿透清除结果选择。弹层宽高受窗口内标题栏以下可用空间约束。
+
+工作区收口已删除零调用的 `StableMainShell` 适配层、旧并排壳层 / 分隔线 CSS、宽度记忆 / 调整、旧 Skim 显示请求消费和键盘区域 Hook；历史 U2 / U4 / A5 段落中的这些文件与并排说明仅是迁移记录，当前代码不再使用。既有 `useStableSkimCommands` 继续产生请求，消费方只有工作区标签。横向筛选滚轮、轨道和隐藏断点已删除，共享筛选组件直接持有纵向排列。没有清理磁盘上的历史布局键，也没有数据迁移。架构守门降低 App 上限至 2431 行，适配 Hook 上限至 40 行，测试阻止已退役外壳重新出现。

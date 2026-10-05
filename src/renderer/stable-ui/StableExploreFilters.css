@@ -1,6 +1,5 @@
-.cap-stable-explore-filters { display: flex; min-width: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; scrollbar-width: none; }
-.cap-stable-explore-filters::-webkit-scrollbar { display: none; }
-.cap-stable-explore-filters > section { flex: 0 0 auto; min-width: 0; padding: 0 18px; border-left: 1px solid color-mix(in srgb, currentColor 16%, transparent); }
+.cap-stable-explore-filters { display: flex; flex-direction: column; min-width: 0; overflow: visible; padding: 0 8px 10px; gap: 10px; }
+.cap-stable-explore-filters > section { width: auto; min-width: 0; padding: 4px 4px 10px; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
 .cap-stable-explore-filters header { display: flex; align-items: center; min-height: 32px; gap: 7px; white-space: nowrap; }
 .cap-stable-explore-filters header strong { font-size: var(--cap-stable-body-font-size); font-weight: 500; }
 .cap-stable-explore-filters header span { max-width: 110px; overflow: hidden; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); text-overflow: ellipsis; }
@@ -51,5 +50,3 @@
 .cap-stable-format-flyout > section button { min-height: 30px; padding-inline: 13px; }
 .cap-stable-other-flyout { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .cap-stable-other-flyout > button { text-align: center; }
-@container (max-width: 410px) { .cap-stable-explore-filters { display: none; } }
-@media (max-height: 359.98px) { .cap-stable-explore-filters { display: none; } }

@@ -14,7 +14,6 @@ import { useWorkspaceDirectoryNavigation } from "./useWorkspaceDirectoryNavigati
 import WorkspaceTabBar from "./WorkspaceTabBar";
 import WorkspaceRail from "./WorkspaceRail";
 import WorkspaceDirectoryPicker from "./WorkspaceDirectoryPicker";
-import "../stable-ui/StableMainShell.css";
 import "./WorkspaceShell.css";
 
 export default function WorkspaceShell({ resultsToolbar, resultContent, sidebar, skim, workspace, filters, interactionLocked }: { resultsToolbar: ReactNode; resultContent: (active: boolean) => ReactNode; sidebar: StableSidebarProps; skim: StableSkimProps; workspace: WorkspaceSearchBridge; filters: { search: SearchState; availableFormats: string[]; onChange: (search: SearchState) => void; onClear: () => void }; interactionLocked: boolean }) {

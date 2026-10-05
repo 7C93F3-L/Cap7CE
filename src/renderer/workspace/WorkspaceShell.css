@@ -1,7 +1,7 @@
-.cap-workspace-shell { --cap-stable-sidebar-rendered-width: 44px; grid-template-rows: 36px minmax(0, 1fr); }
+.cap-workspace-shell { --cap-stable-grid-page-padding: 10px 2px 10px 10px; position: absolute; top: var(--cap-stable-titlebar-height); right: 0; bottom: 0; left: 0; display: grid; min-width: 0; min-height: 0; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: 36px minmax(0, 1fr); }
 .cap-workspace-shell.is-skim-open { grid-template-columns: 44px minmax(0, 1fr); }
 .cap-workspace-shell.is-skim-open > .cap-stable-results-slot { display: none; }
-.cap-workspace-shell > .cap-stable-skim-slot { grid-column: 2 !important; }
+.cap-workspace-shell > .cap-stable-skim-slot { grid-column: 2; }
 .cap-workspace-rail { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; gap: 4px; min-height: 0; padding: 2px 4px 6px; box-sizing: border-box; app-region: no-drag; -webkit-app-region: no-drag; }
 .cap-workspace-rail button, .cap-workspace-ai { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 9px; color: var(--cap-stable-text); background: transparent; }
 .cap-workspace-rail button:hover, .cap-workspace-ai:hover { background: var(--cap-stable-control-hover); }
@@ -18,18 +18,19 @@
 .cap-workspace-tab-close:hover, .cap-workspace-more:hover { background: var(--cap-stable-control-hover); }
 .cap-workspace-more { flex: 0 0 32px; border-radius: 9px; color: var(--cap-stable-text); }
 .cap-workspace-shell > .cap-stable-results-slot { grid-column: 2; grid-row: 2; }
-.cap-workspace-shell > .cap-stable-skim-slot { grid-column: 3; grid-row: 2; }
+.cap-workspace-shell > .cap-stable-skim-slot { grid-row: 2; }
 .cap-workspace-directory-picker { position: absolute; z-index: 45; top: 36px; left: 44px; width: min(300px, calc(100vw - 54px)); height: min(460px, calc(100vh - var(--cap-stable-titlebar-height) - 44px)); box-sizing: border-box; border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 12px; color: var(--cap-stable-text); background: var(--cap-stable-flyout-surface); box-shadow: 0 10px 24px rgb(0 0 0 / 16%); }
 .cap-workspace-directory-picker .cap-stable-sidebar.is-directory-only { display: grid !important; grid-template-rows: minmax(0, 1fr); height: 100%; }
 .cap-workspace-directory-picker .cap-stable-brand, .cap-workspace-directory-picker .cap-stable-sidebar-controls, .cap-workspace-directory-picker .cap-stable-sidebar-footer { display: none; }
 .cap-workspace-directory-picker .cap-stable-directory-section { margin-top: 0; padding: 2px 0; border: 0; }
 .cap-workspace-directory-picker .cap-stable-directory-list-frame { grid-template-columns: minmax(0, 1fr); }
 .cap-workspace-directory-picker .cap-custom-scrollbar-vertical { position: absolute; right: 0; top: 0; bottom: 0; }
-@media (max-width: 920px) {
-  .cap-workspace-shell.is-skim-open { grid-template-columns: 44px minmax(0, 1fr); }
-  .cap-workspace-shell.is-skim-open > .cap-stable-skim-slot { grid-column: 2; }
-}
+.cap-workspace-shell > :where(.cap-stable-results-slot, .cap-stable-skim-slot) { min-width: 0; min-height: 0; margin: 0 var(--cap-stable-edge-gap) var(--cap-stable-edge-gap) 0; border-radius: var(--cap-stable-radius-md); background: var(--cap-stable-surface); overflow: hidden; }
+.cap-workspace-shell > .cap-stable-results-slot { container-type: inline-size; display: flex; flex-direction: column; }
 @media (max-height: 359.98px) {
+  .cap-workspace-shell { --cap-stable-grid-page-padding: 10px 2px 2px 10px; }
+  .cap-workspace-shell .cap-scroll-viewport-frame-horizontal { grid-template-rows: minmax(0, 1fr) var(--custom-scrollbar-hit-size); }
+  .cap-workspace-shell .cap-scroll-viewport-frame-horizontal > .cap-custom-scrollbar-horizontal { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; width: 100%; }
   .cap-workspace-shell, .cap-workspace-shell.is-skim-open { grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: 30px minmax(0, 1fr); }
   .cap-workspace-rail { gap: 0; padding-block: 0; }
   .cap-workspace-rail button { flex-basis: 30px; height: 30px; }

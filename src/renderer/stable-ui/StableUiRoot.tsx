@@ -1,4 +1,4 @@
-import StableMainShell from "./StableMainShell";
+import WorkspaceShell from "../workspace/WorkspaceShell";
 import StableExploreBar from "./StableExploreBar";
 import StableTitlebar from "./StableTitlebar";
 import type { StableUiRendererProps } from "./stableUiRendererTypes";
@@ -16,7 +16,7 @@ const StableUiRoot = ({ theme, themeStyle, windowMaterial, pinned, pinLabel, sea
         resultStatus={resultStatus}
         onTogglePinned={onTogglePinned}
       />
-      <StableMainShell resultsToolbar={<StableExploreBar key={`toolbar:${workspace.viewKey}`} {...explore} search={search} searchInputRef={searchInputRef} inputFeedback={inputFeedback} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />} resultContent={resultContent} sidebar={sidebar} skim={skim} workspace={workspace} filters={{ search, availableFormats: explore.availableFormats, onChange: onSearchOptionsChange, onClear: explore.onClearExploreFilters }} interactionLocked={backgroundInteractionLocked} />
+      <WorkspaceShell resultsToolbar={<StableExploreBar key={`toolbar:${workspace.viewKey}`} {...explore} search={search} searchInputRef={searchInputRef} inputFeedback={inputFeedback} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />} resultContent={resultContent} sidebar={sidebar} skim={skim} workspace={workspace} filters={{ search, availableFormats: explore.availableFormats, onChange: onSearchOptionsChange, onClear: explore.onClearExploreFilters }} interactionLocked={backgroundInteractionLocked} />
       {overlayContent}
     </div>
   );
