@@ -93,7 +93,7 @@ assert.match(exploreBarSource, /if \(mode !== searchDisplayMode\) onSearchDispla
 assert.match(exploreBarSource, /if \(field !== search\.sortField \|\| direction !== search\.sortDirection\) onSearchOptionsChange/u);
 assert.match(exploreBarSource, /explore\.randomBrowse[\s\S]*?explore\.nextBatch[\s\S]*?explore\.clearFilters/u);
 assert.match(exploreBarSource, /if \(randomBrowseEnabled\) onDisableRandomBrowse\(\)/u);
-assert.match(sidebarFlyoutSource, /window\.addEventListener\("resize", onClose\)[\s\S]*?window\.removeEventListener\("resize", onClose\)/u);
+assert.match(read("src/renderer/stable-ui/useStableFlyoutInteractions.ts"), /window\.addEventListener\("resize", dismiss\)[\s\S]*?window\.removeEventListener\("resize", dismiss\)/u);
 assert.doesNotMatch(sidebarSource, /name="sort"|name="scope"|ChevronIcon/u);
 assert.doesNotMatch(sidebarSource, />›<\/span>/u);
 assert.match(sidebarIconSource, /add: <path d="M12 5v14M5 12h14" \/>/u);
@@ -163,7 +163,7 @@ assert.match(directoryFlyoutStyles, /\.cap-stable-sidebar-flyout button:disabled
 assert.match(directoryFlyoutStyles, /\.cap-stable-sidebar-flyout-separator \{[^}]*height: 1px;/u);
 assert.match(sidebarStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.cap-stable-sidebar-flyout \{ animation: none; \}[\s\S]*?\.cap-stable-directory-tooltip \{ animation: none; \}[\s\S]*?cap-stable-sidebar-flyout button \{ transition: none; \}/u);
 assert.match(sidebarFlyoutSource, /document\.querySelector<HTMLElement>\("\.cap-stable-ui"\) \?\? document\.body/u);
-assert.match(sidebarFlyoutSource, /width = 184[\s\S]*?anchor\.right - width[\s\S]*?placement === "below"[\s\S]*?anchor\.bottom \+ 5/u);
+assert.match(sidebarFlyoutSource, /width = 184[\s\S]*?anchor\.right - resolvedWidth[\s\S]*?placement === "below"[\s\S]*?anchor\.bottom \+ 5/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-footer-icon\s*\{[^}]*opacity:/u);
 assert.match(stableUiIconSource, /icon-sort-asc\.svg\?raw/u);
 assert.match(stableUiIconSource, /sortDirection === "asc" \? sortAscIcon : sortDescIcon/u);

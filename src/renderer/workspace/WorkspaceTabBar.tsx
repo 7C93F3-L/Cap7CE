@@ -12,6 +12,7 @@ const TabTitle = ({ name }: { name: string }) => {
 export default function WorkspaceTabBar({ tabs, activeId, onSelect, onClose }: {
   tabs: WorkspaceTabItem[]; activeId: string; onSelect: (id: string) => void; onClose: (id: string) => void;
 }) {
+  const pendingFocus = useRef(false);
   const barRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
@@ -22,13 +23,20 @@ export default function WorkspaceTabBar({ tabs, activeId, onSelect, onClose }: {
     setWidth(element.clientWidth); observer.observe(element);
     return () => observer.disconnect();
   }, []);
+  useLayoutEffect(() => { if (pendingFocus.current) { barRef.current?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true }); pendingFocus.current = false; } }, [activeId, tabs]);
   const { visible, hidden } = getWorkspaceTabOverflow(tabs, activeId, width);
-  return <div ref={barRef} className="cap-workspace-tabs" role="tablist" aria-label={t("workspace.tabs")}>
+  return <div ref={barRef} className="cap-workspace-tabs" role="tablist" aria-label={t("workspace.tabs")} onKeyDown={(event) => {
+    if (!(event.target as Element).matches('[role="tab"]')) return;
+    const index = tabs.findIndex((tab) => tab.id === activeId);
+    const target = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : event.key === "ArrowLeft" ? (index - 1 + tabs.length) % tabs.length : event.key === "ArrowRight" ? (index + 1) % tabs.length : -1;
+    if (target >= 0) { event.preventDefault(); event.stopPropagation(); pendingFocus.current = true; onSelect(tabs[target].id); }
+    else if (event.key === "Delete" && tabs[index]?.closable) { event.preventDefault(); pendingFocus.current = true; onClose(activeId); }
+  }}>
     {visible.map((tab) => <div className={`cap-workspace-tab${tab.id === activeId ? " is-active" : ""}`} key={tab.id}>
-      <button type="button" role="tab" aria-selected={tab.id === activeId} aria-controls="workspace-results" title={tab.path ?? tab.name} onClick={() => onSelect(tab.id)}>
+      <button type="button" role="tab" tabIndex={tab.id === activeId ? 0 : -1} aria-selected={tab.id === activeId} aria-controls={tab.id === "skim" ? "workspace-skim" : "workspace-results"} title={tab.path ?? tab.name} onClick={() => onSelect(tab.id)}>
         <TabTitle name={tab.name} />
       </button>
-      {tab.closable && <button type="button" className="cap-workspace-tab-close" aria-label={`${t("common.close")} ${tab.name}`} onClick={() => onClose(tab.id)}>×</button>}
+      {tab.closable && <button type="button" className="cap-workspace-tab-close" aria-label={`${t("common.close")} ${tab.name}`} tabIndex={-1} onClick={() => { pendingFocus.current = true; onClose(tab.id); }}>×</button>}
     </div>)}
     {hidden.length > 0 && <button type="button" className="cap-workspace-more" aria-label={t("workspace.moreTabs")} aria-expanded={anchor !== null} onClick={(event) => setAnchor(anchor ? null : event.currentTarget.getBoundingClientRect())}>···</button>}
     {anchor && hidden.length > 0 && <StableSidebarFlyout anchor={anchor} label={t("workspace.moreTabs")} placement="below" onClose={() => setAnchor(null)}>

@@ -53,7 +53,7 @@ assert.match(keyboardRegionSource, /useEffect\(\(\) => setKeyboardRegion\(skimOp
 assert.match(keyboardRegionSource, /\.cap-stable-skim-slot[\s\S]*?setKeyboardRegion\("skim"\)[\s\S]*?\.cap-stable-results-slot[\s\S]*?setKeyboardRegion\("results"\)/u);
 assert.doesNotMatch(titlebarSource, /searchInput|StableSearchInput/u);
 assert.match(exploreBarSource, /<StableSearchInput[\s\S]*?onSearch=\{onSearch\}/u);
-assert.match(mainShellSource, /\{resultsToolbar\}\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
+assert.match(mainShellSource, /\{!skimOpen && resultsToolbar\}\{resultContent\(!interactionLocked && resultsKeyboardActive\)\}/u);
 assert.match(titlebarSource, /\{resultStatus\}/);
 assert.match(read("src/renderer/workspace/WorkspaceRail.tsx"), /aria-pressed=\{skimOpen\}/);
 assert.match(mainShellSource, /<WorkspaceTabBar[\s\S]*?onClose=\{navigation.close\}/u);

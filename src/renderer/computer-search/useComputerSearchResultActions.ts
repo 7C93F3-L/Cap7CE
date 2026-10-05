@@ -3,7 +3,7 @@ import type { ComputerSearchAuthorization, ComputerSearchItem } from "../../../e
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { AppearanceColors, PreviewWindowData, ResolvedThemeMode } from "../../shared/types";
 import { getFileContextShortcutAction } from "../fileContextActions";
-import { isEditableKeyboardTarget } from "../keyboardTarget";
+import { isEditableKeyboardTarget, isWorkspaceControlKeyboardTarget } from "../keyboardTarget";
 import type { ComputerSearchContextMenuState } from "./ComputerSearchResultContextMenu";
 
 interface ResultActionOptions {
@@ -188,7 +188,7 @@ export const useComputerSearchResultActions = ({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!foreground) return;
-      if (isEditableKeyboardTarget(event.target)) return;
+      if (isEditableKeyboardTarget(event.target) || isWorkspaceControlKeyboardTarget(event.target)) return;
       if (contextMenu) {
         if (event.key === "Escape") { event.preventDefault(); setContextMenu(null); }
         return;

@@ -3,7 +3,7 @@ import { getActiveLanguage, t } from "../../../electron/localization";
 import type { AppearanceColors, ImageIndexItem, PreviewWindowData } from "../../shared/types";
 import { buildPreviewSidebarData } from "../preview/previewSidebarData";
 import { resolveFileContentPreview } from "../contentPreview";
-import { isEditableKeyboardTarget } from "../keyboardTarget";
+import { isEditableKeyboardTarget, isWorkspaceControlKeyboardTarget } from "../keyboardTarget";
 import { isPlainSpaceShortcut } from "../keywordEditorInteraction";
 import { copyFilePathsWithFeedback, getFileContextShortcutAction } from "../fileContextActions";
 import { VirtualImageGrid } from "./VirtualResultGrids";
@@ -416,7 +416,7 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
     if (!active) return undefined;
     const handleKeyDown = (event: KeyboardEvent) => {
 
-      if (isEditableKeyboardTarget(event.target)) {
+      if (isEditableKeyboardTarget(event.target) || isWorkspaceControlKeyboardTarget(event.target)) {
         return;
       }
 

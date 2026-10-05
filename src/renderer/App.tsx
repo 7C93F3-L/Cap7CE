@@ -2152,7 +2152,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   useEffect(() => {
     const unsubscribe = window.cap7ce?.window.onFocusMainSearch?.(() => {
       window.setTimeout(() => {
-        if (workspace.activeId === "skim") document.querySelector<HTMLInputElement>(".cap-computer-search-box input, .cap-stable-skim-address input")?.focus(); else searchInputRef.current?.focus();
+        if (workspace.activeId === "skim") (document.querySelector<HTMLElement>(".cap-computer-search-box input, .cap-stable-skim-address input") ?? document.querySelector<HTMLElement>(".cap-computer-search-toggle"))?.focus(); else searchInputRef.current?.focus();
       }, 80);
     });
 

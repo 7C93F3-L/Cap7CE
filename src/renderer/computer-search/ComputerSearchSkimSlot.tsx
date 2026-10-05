@@ -32,8 +32,8 @@ const ComputerSearchSkimSlot = ({
                 unavailable: "computerSearch.state.unavailable"
               } as const)[controller.status.state]) : t("computerSearch.state.starting")
     : feedback || (isLoading ? t("skim.loading") : t("skim.entryCount", { count: entryCount }));
-  return <aside className={`cap-stable-skim-slot${controller.active ? " is-computer-search-active" : ""}`} aria-label={t("skim.name")}>
-    <StableSkimToolbar {...toolbarProps} search={search} onToggleSkim={onToggleSkim} />
+  return <aside id="workspace-skim" className={`cap-stable-skim-slot${controller.active ? " is-computer-search-active" : ""}`} aria-label={t("skim.name")}>
+    <StableSkimToolbar {...toolbarProps} foreground={foreground} search={search} onToggleSkim={onToggleSkim} />
     <div className="cap-stable-skim-status" role="status">{status}</div>
     <div className="cap-stable-skim-content"><div className="cap-computer-search-content">
       <div className={`cap-computer-search-browse${controller.active ? " is-hidden" : ""}`}>{content}</div>

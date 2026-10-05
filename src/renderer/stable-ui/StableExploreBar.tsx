@@ -1,6 +1,7 @@
 import { useState, type MouseEvent, type Ref } from "react";
 import { t } from "../../../electron/localization";
 import type { SearchState, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
+import WorkspaceToolbarTools from "../workspace/WorkspaceToolbarTools";
 import StableSearchInput from "./StableSearchInput";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableUiIcon from "./StableUiIcon";
@@ -42,7 +43,7 @@ const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplay
   return <section className="cap-stable-explore-bar" aria-label="搜索与素材筛选">
     <div className="cap-stable-explore-primary">
       <StableSearchInput search={search} inputRef={searchInputRef} inputFeedback={inputFeedback} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />
-      <div className="cap-stable-explore-actions">
+      <WorkspaceToolbarTools><div className="cap-stable-explore-actions">
         <button className={flyout?.kind === "scope" ? "is-open" : ""} type="button" title={t("stableUi.sidebar.searchScope")} aria-expanded={flyout?.kind === "scope"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("scope", event)}>
           <StableUiIcon name="scope" className="cap-stable-explore-action-icon" />
           <span>{scopeValue}</span>
@@ -56,7 +57,7 @@ const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplay
         <button className={`cap-stable-explore-random${randomBrowseEnabled ? " is-active" : ""}`} type="button" role="switch" aria-checked={randomBrowseEnabled} disabled={randomBrowseBusy} onClick={onToggleRandomBrowse}><span>{t("explore.randomBrowse")}</span><i aria-hidden="true"><b /></i></button>
         <button type="button" disabled={!randomBrowseEnabled || randomBrowseBusy} onClick={onNextRandomBatch}>{t("explore.nextBatch")}{randomBrowseEnabled && <small>{randomBatchNumber}</small>}</button>
         <button type="button" disabled={(!hasActiveFilters && !randomBrowseEnabled) || randomBrowseBusy} onClick={onClearExploreFilters}>{t("explore.clearFilters")}</button>
-      </div>
+      </div></WorkspaceToolbarTools>
     </div>
     {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("stableUi.sidebar.searchScope")} placement="below" onClose={closeFlyout}>
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={searchDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { if (mode !== searchDisplayMode) onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}

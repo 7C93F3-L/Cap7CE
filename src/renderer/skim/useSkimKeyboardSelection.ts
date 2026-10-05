@@ -1,6 +1,6 @@
 import { useEffect, useMemo, type RefObject } from "react";
 import type { SkimBrowseEntry, SkimLocationShortcut } from "../../shared/types";
-import { isEditableKeyboardTarget } from "../keyboardTarget";
+import { isEditableKeyboardTarget, isWorkspaceControlKeyboardTarget } from "../keyboardTarget";
 import { getScrollLeftToRevealItem, getScrollTopToRevealItem, imageGridGap } from "../virtualGridLayout";
 
 type SkimSelectionDirection = "left" | "right" | "up" | "down";
@@ -92,7 +92,7 @@ export const useSkimKeyboardSelection = ({
   useEffect(() => {
     if (!active) return undefined;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || isEditableKeyboardTarget(event.target)) return;
+      if (event.defaultPrevented || isEditableKeyboardTarget(event.target) || isWorkspaceControlKeyboardTarget(event.target)) return;
       if (contextMenuOpen) {
         if (event.key === "Escape") event.preventDefault();
         return;

@@ -2,6 +2,7 @@ import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
   "workspace.activeFilters": "{count} filter groups",
+  "workspace.tools": "View and browse tools",
   "workspace.tabs": "Workspace tabs",
   "workspace.moreTabs": "More tabs",
   "workspace.navigation": "Workspace navigation",

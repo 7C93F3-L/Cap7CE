@@ -2,6 +2,7 @@ import type { SearchState } from "../../shared/types";
 import WorkspaceFilterPanel from "./WorkspaceFilterPanel";
 import { workspaceFilterCount } from "./workspaceFilterSummary";
 import type { WorkspaceSearchBridge } from "../../shared/workspaceTypes";
+import { useWorkspaceOverlayDismiss } from "./useWorkspaceOverlayDismiss";
 import { useState, type ReactNode } from "react";
 import { t } from "../../../electron/localization";
 import StableSkimSlot from "../stable-ui/StableSkimSlot";
@@ -22,6 +23,7 @@ export default function WorkspaceShell({ resultsToolbar, resultContent, sidebar,
   const navigation = useWorkspaceDirectoryNavigation(sidebar, skim, workspace);
   const { skimOpen } = navigation;
   const filterCount = workspaceFilterCount(filters.search);
+  useWorkspaceOverlayDismiss(directoriesOpen, filtersVisible && !skimOpen && !interactionLocked, Boolean(sidebar.editingDirectoryId), () => setDirectoriesOpen(false), () => setFiltersVisible(false));
   const resultsKeyboardActive = !skimOpen, skimKeyboardActive = skimOpen;
   const shellRef = useInertElement<HTMLElement>(interactionLocked);
   return <section ref={shellRef} className={`cap-stable-main-shell cap-workspace-shell${skimOpen ? " is-skim-open" : ""}${filtersVisible && !skimOpen ? " has-filter-panel" : ""}`}>
@@ -30,7 +32,7 @@ export default function WorkspaceShell({ resultsToolbar, resultContent, sidebar,
       <WorkspaceTabBar tabs={navigation.tabs} activeId={navigation.activeId} onSelect={navigation.select} onClose={navigation.close} />
       {!skimOpen && <button className="cap-workspace-ai" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-label={t("stableUi.sidebar.aiEnhance")} aria-pressed={sidebar.aiSearchEnabled} onClick={sidebar.onAiSearchToggle}><StableUiIcon name="ai" active={sidebar.aiSearchEnabled} /></button>}
     </header>
-    <section id="workspace-results" className="cap-stable-results-slot" aria-label={t("stableUi.resultsRegion")}>{resultsToolbar}{resultContent(!interactionLocked && resultsKeyboardActive)}</section>
+    <section id="workspace-results" className="cap-stable-results-slot" aria-label={t("stableUi.resultsRegion")}>{!skimOpen && resultsToolbar}{resultContent(!interactionLocked && resultsKeyboardActive)}</section>
     {navigation.skimPresent && <StableSkimSlot {...skim} foreground={!interactionLocked && skimOpen} content={skim.renderContent(!interactionLocked && skimKeyboardActive)} onToggleSkim={() => navigation.close("skim")} />}
     {filtersVisible && !skimOpen && <WorkspaceFilterPanel key={workspace.viewKey} {...filters} count={filterCount} onClose={() => setFiltersVisible(false)} />}
     {directoriesOpen && !interactionLocked && <WorkspaceDirectoryPicker sidebar={sidebar} onSelect={navigation.selectDirectory} onClose={() => setDirectoriesOpen(false)} />}

@@ -7,12 +7,13 @@ import StableSkimSearchBox from "./StableSkimSearchBox";
 import type { StableSkimProps, StableSkimSearchControls } from "./stableSkimTypes";
 
 type FlyoutState = { kind: "sort" | "scope"; anchor: DOMRect } | null;
-type StableSkimToolbarProps = Omit<StableSkimProps, "renderContent" | "onOpen" | "isLoading" | "feedback" | "entryCount" | "theme" | "appearanceColors" | "windowMaterial" | "onNativeDragStateChange"> & { onToggleSkim: () => void; search: StableSkimSearchControls };
+type StableSkimToolbarProps = Omit<StableSkimProps, "renderContent" | "onOpen" | "isLoading" | "feedback" | "entryCount" | "theme" | "appearanceColors" | "windowMaterial" | "onNativeDragStateChange"> & { foreground?: boolean; onToggleSkim: () => void; search: StableSkimSearchControls };
 
-const StableSkimToolbar = ({ currentPath, breadcrumbs, displayMode, sortField, sortDirection, onToggleSkim, onOpenRoot, onOpenPath, onDisplayModeChange, onSortChange, search }: StableSkimToolbarProps) => {
+const StableSkimToolbar = ({ foreground = true, currentPath, breadcrumbs, displayMode, sortField, sortDirection, onToggleSkim, onOpenRoot, onOpenPath, onDisplayModeChange, onSortChange, search }: StableSkimToolbarProps) => {
   const [editingPath, setEditingPath] = useState(false);
   const [pathDraft, setPathDraft] = useState(currentPath ?? "");
   const [flyout, setFlyout] = useState<FlyoutState>(null);
+  useEffect(() => { if (!foreground) setFlyout(null); }, [foreground]);
   useEffect(() => { if (!editingPath) setPathDraft(currentPath ?? ""); }, [currentPath, editingPath]);
   const openFlyout = (kind: "sort" | "scope", event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();

@@ -2,6 +2,7 @@ import { enUS } from "./locales/en-US";
 
 export const zhCN = {
   "workspace.activeFilters": "{count} 项条件",
+  "workspace.tools": "查看与浏览工具",
   "workspace.tabs": "工作区标签",
   "workspace.moreTabs": "更多标签",
   "workspace.navigation": "工作区导航",

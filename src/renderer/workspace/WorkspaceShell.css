@@ -34,7 +34,6 @@
   .cap-workspace-rail { gap: 0; padding-block: 0; }
   .cap-workspace-rail button { flex-basis: 30px; height: 30px; }
   .cap-workspace-header, .cap-workspace-tabs { height: 28px; }
-  .cap-workspace-shell > .cap-stable-results-slot .cap-stable-explore-commands { display: none; }
   .cap-workspace-shell > .cap-stable-results-slot, .cap-workspace-shell.is-skim-open > .cap-stable-skim-slot { grid-column: 2; margin-left: 0; }
   .cap-workspace-directory-picker { top: 0; height: calc(100vh - var(--cap-stable-titlebar-height) - 6px); }
 }
