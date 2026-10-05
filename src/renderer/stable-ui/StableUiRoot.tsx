@@ -16,7 +16,7 @@ const StableUiRoot = ({ theme, themeStyle, windowMaterial, pinned, pinLabel, sea
         resultStatus={resultStatus}
         onTogglePinned={onTogglePinned}
       />
-      <StableMainShell resultsToolbar={<StableExploreBar key={workspace.viewKey} {...explore} search={search} searchInputRef={searchInputRef} inputFeedback={inputFeedback} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />} resultContent={resultContent} sidebar={sidebar} skim={skim} workspace={workspace} filters={{ search, availableFormats: explore.availableFormats, onChange: onSearchOptionsChange, onClear: explore.onClearExploreFilters }} interactionLocked={backgroundInteractionLocked} />
+      <StableMainShell resultsToolbar={<StableExploreBar key={`toolbar:${workspace.viewKey}`} {...explore} search={search} searchInputRef={searchInputRef} inputFeedback={inputFeedback} onSearchChange={onSearchChange} onSearchOptionsChange={onSearchOptionsChange} onSearch={onSearch} />} resultContent={resultContent} sidebar={sidebar} skim={skim} workspace={workspace} filters={{ search, availableFormats: explore.availableFormats, onChange: onSearchOptionsChange, onClear: explore.onClearExploreFilters }} interactionLocked={backgroundInteractionLocked} />
       {overlayContent}
     </div>
   );

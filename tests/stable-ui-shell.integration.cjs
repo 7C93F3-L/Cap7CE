@@ -143,3 +143,5 @@ console.log(JSON.stringify({
   keyboardResizeAndLocalizedRegionsVerified: true,
   stablePinIconMatchesCaptionScale: true
 }));
+
+assert.match(rootSource, /key=\{`toolbar:\$\{workspace\.viewKey\}`\}/u, "toolbar and result siblings must have separate key namespaces");
