@@ -2,7 +2,6 @@ import { useState, type MouseEvent, type Ref } from "react";
 import { t } from "../../../electron/localization";
 import type { SearchState, SkimDisplayMode, SortDirection, SortField } from "../../shared/types";
 import StableSearchInput from "./StableSearchInput";
-import StableExploreFilters from "./StableExploreFilters";
 import StableSidebarFlyout from "./StableSidebarFlyout";
 import StableUiIcon from "./StableUiIcon";
 import type { StableExploreProps } from "./stableExploreTypes";
@@ -28,9 +27,8 @@ const sortOptions: Array<{ field: SortField; direction: SortDirection }> = [
   { field: "file_name", direction: "desc" }
 ];
 
-const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplayMode, availableFormats, randomBrowseEnabled, randomBatchNumber, randomBrowseBusy, onSearchChange, onSearchOptionsChange, onSearch, onSearchDisplayModeChange, onToggleRandomBrowse, onDisableRandomBrowse, onNextRandomBatch, onClearExploreFilters }: StableExploreBarProps) => {
+const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplayMode, randomBrowseEnabled, randomBatchNumber, randomBrowseBusy, onSearchChange, onSearchOptionsChange, onSearch, onSearchDisplayModeChange, onToggleRandomBrowse, onDisableRandomBrowse, onNextRandomBatch, onClearExploreFilters }: StableExploreBarProps) => {
   const [flyout, setFlyout] = useState<ExploreFlyout>(null);
-  const [filterFlyoutCloseRequest, setFilterFlyoutCloseRequest] = useState(0);
   const scopeValue = searchDisplayMode === "all" ? t("stableUi.sidebar.scopeAll") : searchDisplayMode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault");
   const sortValue = `${search.sortField === "modified_at" ? t("sort.field.modifiedAt") : t("sort.field.name")} · ${search.sortDirection === "desc" ? t("sort.direction.desc") : t("sort.direction.asc")}`;
   const hasActiveFilters = search.fileFormat !== "all" || Boolean(search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasExploreTypeFilters(search));
@@ -38,7 +36,6 @@ const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplay
   const openFlyout = (kind: "scope" | "sort", event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     const anchor = event.currentTarget.getBoundingClientRect();
-    setFilterFlyoutCloseRequest((request) => request + 1);
     setFlyout((current) => current?.kind === kind ? null : { kind, anchor });
   };
 
@@ -61,7 +58,6 @@ const StableExploreBar = ({ search, searchInputRef, inputFeedback, searchDisplay
         <button type="button" disabled={(!hasActiveFilters && !randomBrowseEnabled) || randomBrowseBusy} onClick={onClearExploreFilters}>{t("explore.clearFilters")}</button>
       </div>
     </div>
-    <StableExploreFilters search={search} availableFormats={availableFormats} closeFlyoutRequest={filterFlyoutCloseRequest} onFlyoutOpen={closeFlyout} onSearchOptionsChange={onSearchOptionsChange} />
     {flyout?.kind === "scope" && <StableSidebarFlyout anchor={flyout.anchor} label={t("stableUi.sidebar.searchScope")} placement="below" onClose={closeFlyout}>
       {(["skim", "all", "custom"] as SkimDisplayMode[]).map((mode) => <button type="button" className={searchDisplayMode === mode ? "is-selected" : ""} key={mode} onClick={() => { if (mode !== searchDisplayMode) onSearchDisplayModeChange(mode); closeFlyout(); }}>{mode === "all" ? t("stableUi.sidebar.scopeAll") : mode === "custom" ? t("stableUi.sidebar.scopeCustom") : t("stableUi.sidebar.scopeDefault")}</button>)}
     </StableSidebarFlyout>}

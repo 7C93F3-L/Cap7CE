@@ -42,7 +42,7 @@ const confirmationPanelsSource = read("src/renderer/dialogs/ConfirmationPanels.t
 const keywordEditorSource = read("src/renderer/dialogs/KeywordEditorCard.tsx");
 const combinedShellSource = shellFiles.map(read).join("\n");
 
-assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} workspace=\{workspace\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
+assert.match(rootSource, /<StableMainShell resultsToolbar=\{<StableExploreBar[\s\S]*?\/>\} resultContent=\{resultContent\} sidebar=\{sidebar\} skim=\{skim\} workspace=\{workspace\} filters=\{[\s\S]*?\} interactionLocked=\{backgroundInteractionLocked\} \/>/u);
 assert.match(titlebarSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{titlebarRef\}/u);
 assert.match(mainShellSource, /useInertElement<HTMLElement>\(interactionLocked\)[\s\S]*?ref=\{shellRef\}/u);
 assert.match(inertElementSource, /elementRef\.current\.inert = inert/u);

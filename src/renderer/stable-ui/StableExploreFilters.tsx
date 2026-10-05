@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent, type WheelEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { FileFormatCategory } from "../../../electron/formatCapabilities";
 import type { SearchState } from "../../shared/types";
@@ -102,16 +102,7 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
   const updateFormatDraft = (format: string) => setFormatDraft((current) => toggleExtensions(current, getExtensionsForCanonicalFormat(format)));
   const customRangeLabel = search.timePreset === "custom" && search.modifiedTimeRange
     ? t("explore.time.range", { start: toDateInput(search.modifiedTimeRange.startMs).replace(/-/g, "."), end: toDateInput(search.modifiedTimeRange.endMs - 1).replace(/-/g, ".") }) : "";
-  const scrollFiltersHorizontally = (event: WheelEvent<HTMLDivElement>) => {
-    const rail = event.currentTarget;
-    if (rail.scrollWidth <= rail.clientWidth || (event.target as HTMLElement).closest('input[type="range"]')) return;
-    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    if (delta === 0) return;
-    event.preventDefault();
-    setFlyout(null);
-    rail.scrollLeft += delta;
-  };
-  return <div className="cap-stable-explore-filters" onWheel={scrollFiltersHorizontally}>
+  return <div className="cap-stable-explore-filters">
     <section className="cap-stable-time-filter">
       <header><strong>{t("explore.time")}</strong><button type="button" title={t("explore.editTime")} aria-label={t("explore.editTime")} aria-expanded={flyout?.kind === "dates"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("dates", event)}><StableFilterEditGlyph /></button>{customRangeLabel && <span>{customRangeLabel}</span>}</header>
       <div className="cap-stable-time-control"><div className="cap-stable-time-rails" aria-hidden="true"><i /><i /><i /></div><input className={search.timePreset === "custom" ? "is-custom" : ""} type="range" min="0" max={timePresets.length - 1} step="1" value={timeIndex} aria-label={t("explore.time")} onChange={(event) => setTimeIndex(Number(event.target.value))} onPointerUp={(event) => commitTime(Number(event.currentTarget.value))} onPointerCancel={(event) => commitTime(Number(event.currentTarget.value))} onKeyUp={(event) => { if (timeAdjustmentKeys.has(event.key)) commitTime(Number(event.currentTarget.value)); }} /></div>
@@ -124,8 +115,8 @@ const StableExploreFilters = ({ search, availableFormats, closeFlyoutRequest, on
         <button type="button" className={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension))) ? "is-selected" : ""} aria-pressed={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension)))} aria-expanded={flyout?.kind === "other"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("other", event)}><TypeGlyph type="other" /><span>{t("explore.fileTypes.other")}</span></button>
       </div>
     </section>
-    <StableArtboardFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
+    <StableArtboardFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableMediaFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableDocumentFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     <StableTextDataFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />

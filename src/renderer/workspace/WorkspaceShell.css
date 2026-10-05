@@ -19,8 +19,6 @@
 .cap-workspace-more { flex: 0 0 32px; border-radius: 9px; color: var(--cap-stable-text); }
 .cap-workspace-shell > .cap-stable-results-slot { grid-column: 2; grid-row: 2; }
 .cap-workspace-shell > .cap-stable-skim-slot { grid-column: 3; grid-row: 2; }
-.cap-workspace-shell.is-filters-hidden .cap-stable-explore-filters { display: none; }
-.cap-workspace-shell.is-filters-hidden .cap-stable-explore-bar { grid-template-columns: minmax(0, 1fr); }
 .cap-workspace-directory-picker { position: absolute; z-index: 45; top: 36px; left: 44px; width: min(300px, calc(100vw - 54px)); height: min(460px, calc(100vh - var(--cap-stable-titlebar-height) - 44px)); box-sizing: border-box; border: 1px solid color-mix(in srgb, currentColor 12%, transparent); border-radius: 12px; color: var(--cap-stable-text); background: var(--cap-stable-flyout-surface); box-shadow: 0 10px 24px rgb(0 0 0 / 16%); }
 .cap-workspace-directory-picker .cap-stable-sidebar.is-directory-only { display: grid !important; grid-template-rows: minmax(0, 1fr); height: 100%; }
 .cap-workspace-directory-picker .cap-stable-brand, .cap-workspace-directory-picker .cap-stable-sidebar-controls, .cap-workspace-directory-picker .cap-stable-sidebar-footer { display: none; }

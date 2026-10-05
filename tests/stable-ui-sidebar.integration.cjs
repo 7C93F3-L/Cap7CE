@@ -88,7 +88,7 @@ assert.match(sidebarSource, /<CustomScrollbar scrollContainerRef=\{directoryScro
 assert.match(sidebarStyles, /\.cap-stable-directory-list-frame \{[^}]*align-items: start;[^}]*\}[\s\S]*?\.cap-stable-directory-list \{[^}]*align-self: start;[^}]*height: auto !important;[^}]*max-height: 100%;/u);
 assert.match(sidebarSource, /<StableUiIcon name="skim" active=\{skimOpen\}/u);
 assert.match(exploreBarSource, /name="sort" sortDirection=\{search\.sortDirection\}/u);
-assert.match(exploreBarSource, /closeFlyoutRequest=\{filterFlyoutCloseRequest\} onFlyoutOpen=\{closeFlyout\}/u);
+assert.match(read("src/renderer/workspace/WorkspaceFilterPanel.tsx"), /<StableExploreFilters search=\{search\}/u);
 assert.match(exploreBarSource, /if \(mode !== searchDisplayMode\) onSearchDisplayModeChange\(mode\)/u);
 assert.match(exploreBarSource, /if \(field !== search\.sortField \|\| direction !== search\.sortDirection\) onSearchOptionsChange/u);
 assert.match(exploreBarSource, /explore\.randomBrowse[\s\S]*?explore\.nextBatch[\s\S]*?explore\.clearFilters/u);

@@ -1,7 +1,7 @@
 .cap-stable-explore-bar {
   position: relative;
   z-index: 4;
-  display: grid; grid-template-columns: minmax(310px, 390px) minmax(0, 1fr);
+  display: grid; grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   flex: 0 0 auto;
   min-height: 118px; box-sizing: border-box;
@@ -16,7 +16,7 @@
   align-content: start;
   width: 100%;
   min-width: 0;
-  gap: 4px; padding-right: 14px;
+  gap: 4px; padding-right: 0;
 }
 
 .cap-stable-explore-bar .cap-stable-search-slot {
