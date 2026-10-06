@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`SkimRootSections`提供可选纯展示`catalogTiles`：Catalog首页直接复用`thumb`、`result-file-card`及`cap-catalog-file-grid`的尺寸、5px间距、悬停与选中样式；默认Skim展示保持原样。目录结果的文件夹使用同一原有`skim-folder.svg`，不使用导航栏的线框图标。没有新增查询、缩略图或导航链路。
+
 统一页面的默认目录动作直接调用`useCatalogDirectoryNavigation.open`，后退、前进、上一级和首页均在原上下文导航；收藏快捷入口仍复用原页面身份。显式Skim动作仍可打开独立browse上下文，Skim图标只根据上下文kind点亮，不能由普通目录浏览状态触发。
 
 `CatalogVolumeRootResolver`只读解析磁盘根目录：优先使用显式目录路径；NTFS枚举遗漏根MFT记录5时，从现存节点的父引用取完整64位身份（含实际序列号）。非NTFS、无证据或多个序列号拒绝推断；不猜固定完整引用、不把普通孤立目录当根、不修改Catalog。结果沿用原`directoryFileReference`及签名direct-children查询，不扩大查询范围。

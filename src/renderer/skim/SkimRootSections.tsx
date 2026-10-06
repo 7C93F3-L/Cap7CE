@@ -41,6 +41,7 @@ const resolveLocationLabel = (location: SkimLocationShortcut) => (
 );
 
 interface SkimRootSectionsProps {
+  catalogTiles?: boolean;
   drives: SkimBrowseEntry[];
   locations: SkimLocationShortcut[];
   systemLocationsCollapsed: boolean;
@@ -60,6 +61,7 @@ export const countSkimRootLocations = (locations: SkimLocationShortcut[]) => (
 );
 
 interface RootTileProps {
+  catalogTiles?: boolean;
   path: string;
   label: string;
   secondaryLabel?: string;
@@ -70,7 +72,7 @@ interface RootTileProps {
   onContextMenu?: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-const RootTile = ({ path, label, secondaryLabel, icon, selected, onSelect, onOpen, onContextMenu }: RootTileProps) => {
+const RootTile = ({ path, label, secondaryLabel, icon, selected, onSelect, onOpen, onContextMenu, catalogTiles = false }: RootTileProps) => {
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -79,7 +81,7 @@ const RootTile = ({ path, label, secondaryLabel, icon, selected, onSelect, onOpe
 
   return (
     <button
-      className={`cap-skim-entry cap-skim-root-entry${selected ? " selected active" : ""}`}
+      className={`${catalogTiles ? "thumb" : "cap-skim-entry"} cap-skim-root-entry${selected ? " selected active" : ""}`}
       type="button"
       title={path}
       aria-label={secondaryLabel ? `${label} ${secondaryLabel}` : label}
@@ -89,44 +91,48 @@ const RootTile = ({ path, label, secondaryLabel, icon, selected, onSelect, onOpe
       onKeyDown={handleKeyDown}
       onContextMenu={onContextMenu}
     >
-      <span className="cap-skim-entry-visual"><SvgIcon svg={icon} className="cap-svg-icon cap-skim-entry-icon" /></span>
+      {catalogTiles ? <span className="result-file-card">
+        <SvgIcon svg={icon} className="cap-svg-icon result-file-card-icon" />
+        <TwoLineMiddleEllipsisFileName fileName={label} className="result-file-card-name" />
+        {secondaryLabel && <MiddleEllipsisFileName fileName={secondaryLabel} className="result-file-card-name" />}
+      </span> : <><span className="cap-skim-entry-visual"><SvgIcon svg={icon} className="cap-svg-icon cap-skim-entry-icon" /></span>
       <TwoLineMiddleEllipsisFileName fileName={label} className="cap-skim-entry-name" />
-      {secondaryLabel && <MiddleEllipsisFileName fileName={secondaryLabel} className="cap-skim-entry-path" />}
+      {secondaryLabel && <MiddleEllipsisFileName fileName={secondaryLabel} className="cap-skim-entry-path" />}</>}
     </button>
   );
 };
 
-const RootGroup = ({ title, collapsed, onToggle, children }: { title: string; collapsed: boolean; onToggle: () => void; children: ReactNode }) => (
+const RootGroup = ({ title, collapsed, onToggle, children, catalogTiles = false }: { title: string; collapsed: boolean; onToggle: () => void; children: ReactNode; catalogTiles?: boolean }) => (
   <section className={`cap-skim-root-group${collapsed ? " is-collapsed" : ""}`}>
     <button className="cap-skim-root-group-header" type="button" title={`${collapsed ? t("common.expand") : t("common.collapse")} ${title}`}
       aria-expanded={!collapsed} onClick={(event) => { event.stopPropagation(); onToggle(); }}>
       <span>{title}</span><ChevronIcon className="cap-skim-root-group-chevron" />
     </button>
-    {!collapsed && <div className="cap-skim-root-group-grid">{children}</div>}
+    {!collapsed && <div className={`cap-skim-root-group-grid${catalogTiles ? " cap-catalog-file-grid" : ""}`}>{children}</div>}
   </section>
 );
 
-const SkimRootSections = ({ drives, locations, systemLocationsCollapsed, starredLocationsCollapsed, drivesCollapsed, selectedPath, onSelectPath, onOpenPath, onToggleSystemLocations, onToggleStarredLocations, onToggleDrives, onStarredContextMenu }: SkimRootSectionsProps) => {
+const SkimRootSections = ({ drives, locations, systemLocationsCollapsed, starredLocationsCollapsed, drivesCollapsed, selectedPath, onSelectPath, onOpenPath, onToggleSystemLocations, onToggleStarredLocations, onToggleDrives, onStarredContextMenu, catalogTiles = false }: SkimRootSectionsProps) => {
   const systemLocations = locations.filter((location) => location.kind !== "computer" && location.kind !== "starred");
   const starredLocations = locations.filter((location) => location.kind === "starred" && location.path);
   const locationTile = (location: SkimLocationShortcut, starred = false) => {
     if (!location.path) return null;
     const label = resolveLocationLabel(location);
-    return <RootTile key={location.id} path={location.path} label={label} icon={locationIcons[location.kind]}
+    return <RootTile key={location.id} catalogTiles={catalogTiles} path={location.path} label={label} icon={locationIcons[location.kind]}
       selected={selectedPath === location.path} onSelect={() => onSelectPath(location.path!)} onOpen={() => onOpenPath(location.path!)}
       onContextMenu={starred ? (event) => onStarredContextMenu(event, location) : undefined} />;
   };
 
   return (
     <div className="cap-skim-root-sections">
-      <RootGroup title={t("skim.root.systemLocations")} collapsed={systemLocationsCollapsed} onToggle={onToggleSystemLocations}>
+      <RootGroup catalogTiles={catalogTiles} title={t("skim.root.systemLocations")} collapsed={systemLocationsCollapsed} onToggle={onToggleSystemLocations}>
         {systemLocations.map((location) => locationTile(location))}
       </RootGroup>
-      {starredLocations.length > 0 && <RootGroup title={t("skim.root.starredFolders")} collapsed={starredLocationsCollapsed} onToggle={onToggleStarredLocations}>
+      {starredLocations.length > 0 && <RootGroup catalogTiles={catalogTiles} title={t("skim.root.starredFolders")} collapsed={starredLocationsCollapsed} onToggle={onToggleStarredLocations}>
         {starredLocations.map((location) => locationTile(location, true))}
       </RootGroup>}
-      <RootGroup title={t("skim.root.thisPc")} collapsed={drivesCollapsed} onToggle={onToggleDrives}>
-        {drives.map((drive) => <RootTile key={drive.path} path={drive.path} label={drive.label || drive.name}
+      <RootGroup catalogTiles={catalogTiles} title={t("skim.root.thisPc")} collapsed={drivesCollapsed} onToggle={onToggleDrives}>
+        {drives.map((drive) => <RootTile key={drive.path} catalogTiles={catalogTiles} path={drive.path} label={drive.label || drive.name}
           secondaryLabel={drive.label ? drive.name : undefined} icon={diskSvg} selected={selectedPath === drive.path}
           onSelect={() => onSelectPath(drive.path)} onOpen={() => onOpenPath(drive.path)} />)}
       </RootGroup>

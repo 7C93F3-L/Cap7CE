@@ -27,7 +27,7 @@ export default function CatalogHome({ volumes, onOpen }: {
   })), [volumes]);
   return <section className="cap-catalog-home cap-skim-grid-virtualized">
     {failed && <button type="button" onClick={() => setRetry(value => value + 1)}>{t("common.retry")}</button>}
-    <SkimRootSections drives={drives} locations={locations} selectedPath={selectedPath}
+    <SkimRootSections catalogTiles drives={drives} locations={locations} selectedPath={selectedPath}
       systemLocationsCollapsed={systemCollapsed} starredLocationsCollapsed={true} drivesCollapsed={drivesCollapsed}
       onSelectPath={setSelectedPath} onOpenPath={onOpen} onToggleSystemLocations={() => setSystemCollapsed(value => !value)}
       onToggleDrives={() => setDrivesCollapsed(value => !value)} onToggleStarredLocations={() => {}} onStarredContextMenu={() => {}} />

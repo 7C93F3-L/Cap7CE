@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 import type { ComputerSearchItem } from "../../../electron/computerSearchTypes";
 import SvgIcon from "../components/SvgIcon";
 import { getFormatIconSvgByName } from "../formatIcons";
-import StableUiIcon from "../stable-ui/StableUiIcon";
+import skimFolderSvg from "../assets/icons/skim-folder.svg?raw";
 import { useViewportThumbnail } from "./useViewportThumbnail";
 import { TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
 import { VideoThumbnailIndicator, videoThumbnailExtensions } from "../results/ResultThumbnail";
@@ -25,7 +25,7 @@ const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef, foregrou
   return <span className="cap-computer-search-thumbnail-visual" ref={thumbnail.visualRef}>
     {!thumbnail.image && <span className="result-file-card">
       {item.isDirectory
-        ? <StableUiIcon name="folder" className="result-file-card-icon" />
+        ? <SvgIcon svg={skimFolderSvg} className="cap-svg-icon result-file-card-icon" />
         : <SvgIcon svg={getFormatIconSvgByName(item.iconName)} className="cap-svg-icon result-file-card-icon" />}
       <TwoLineMiddleEllipsisFileName fileName={item.name} className="result-file-card-name" />
     </span>}
