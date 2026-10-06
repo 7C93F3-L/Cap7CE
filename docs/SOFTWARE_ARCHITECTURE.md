@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`useViewportThumbnail`分开管理短期授权请求与已解码画面。IntersectionObserver始终跟踪实际视口（零rootMargin）；失焦取消新请求并释放租约，但保留仍可见的像素。`viewportThumbnailImage`仅通过现有授权URL加载图片，解码后绘制最多512px的方形内存画布，立即断开原Image来源，不复用过期URL、不读取/导出画布像素、不新增缓存或放宽CORS。展示画布在新图解码完成后同步替换；源身份/路径/大小/时间/属性变化立即失效，移出视口或卸载清空内存画布。迟到租约释放、迟到解码不提交；背景无新读取。目录修订通知和五秒刷新门禁继续保留。
+
 `CatalogHome`复用`SkimRootSections`的系统目录与此电脑展示。系统位置通过既有只读`skim.listLocations`获取并排除独立星标；磁盘入口由Core状态构造，不调用旧目录读取。无范围、无关键词、无筛选时Controller的idleHome门禁禁止空全盘查询；输入或筛选仍走Core搜索，直接首页动作复用现有浏览上下文与导航历史，保留原搜索页现场。
 
 统一文件结果复用`ResultGrid.css`中的方格、格式卡片、铺满缩略图及悬停/选择效果，局部`ComputerSearchResultGrid.css`负责自适应150px/5px网格。`ComputerSearchResultVisual`保留授权ID、可见范围租约和失败回退；没有导入旧ImageIndex数据源、目录扫描或全目录缩略图生产。图片不额外占用名称/路径行，名称与路径仍可通过title及现有详情动作查看。旧Skim位置导航卡片保留原展示语义。

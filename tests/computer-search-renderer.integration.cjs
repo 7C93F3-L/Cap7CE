@@ -50,7 +50,7 @@ assert.match(viewport, /rootMargin: "0px"/u);
 assert.match(viewport, /if \(disposed\) \{ release\(id\); return; \}/u);
 assert.match(visual, /useViewportThumbnail\(taskId, item.authorizationId, foreground/u);
 assert.match(view, /scrollContainerRef=\{scrollContainerRef\} foreground=\{foreground\}/u);
-assert.match(visual, /!thumbnail.url[\s\S]*?result-file-card[\s\S]*?result-file-card-name[\s\S]*?thumbnail-image-frame/u);
+assert.match(visual, /!thumbnail.image[\s\S]*?result-file-card[\s\S]*?result-file-card-name[\s\S]*?thumbnail-image-frame/u);
 assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 
 console.log(JSON.stringify({

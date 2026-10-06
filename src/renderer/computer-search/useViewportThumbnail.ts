@@ -1,15 +1,28 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { loadThumbnailImage } from "./viewportThumbnailImage";
 
 export function useViewportThumbnail(taskId: string, authorizationId: string, foreground: boolean,
-  scrollContainerRef: RefObject<HTMLElement | null>) {
+  scrollContainerRef: RefObject<HTMLElement | null>, sourceKey = JSON.stringify([taskId, authorizationId])) {
   const visualRef = useRef<HTMLSpanElement | null>(null);
   const [visible, setVisible] = useState(false), [failed, setFailed] = useState(false);
-  const [lease, setLease] = useState<{ taskId: string; authorizationId: string; id: string } | null>(null);
-  const currentLease = useRef<string | null>(null);
+  const [image, setImage] = useState<{ key: string; pixels: HTMLCanvasElement } | null>(null);
+  const currentImage = useRef<typeof image>(null);
+  const clearImage = useCallback(() => {
+    if (currentImage.current) currentImage.current.pixels.width = currentImage.current.pixels.height = 0;
+    currentImage.current = null; setImage(null);
+  }, []);
+  useEffect(() => () => {
+    if (currentImage.current) currentImage.current.pixels.width = currentImage.current.pixels.height = 0;
+    currentImage.current = null;
+  }, []);
   useEffect(() => {
-    setVisible(false); setFailed(false);
+    if (currentImage.current?.key !== sourceKey) clearImage();
+    setFailed(false);
+  }, [sourceKey, taskId, authorizationId, clearImage]);
+  useEffect(() => { if (!visible) clearImage(); }, [visible, clearImage]);
+  useEffect(() => {
     const target = visualRef.current;
-    if (!foreground || !target || typeof IntersectionObserver === "undefined") return;
+    if (!target || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(records => {
       for (const record of records) if (record.target === target) {
         setVisible(record.isIntersecting);
@@ -18,26 +31,30 @@ export function useViewportThumbnail(taskId: string, authorizationId: string, fo
     }, { root: scrollContainerRef.current, rootMargin: "0px" });
     observer.observe(target);
     return () => observer.disconnect();
-  }, [taskId, authorizationId, foreground, scrollContainerRef]);
+  }, [scrollContainerRef]);
   useEffect(() => {
-    setLease(null);
     const api = window.cap7ce?.computerSearch;
     if (!taskId || !foreground || !visible || failed || !api?.acquireThumbnail) return;
     let disposed = false, acquired: string | null = null;
+    const abort = new AbortController();
     const release = (id: string) => { void api.releaseThumbnail({ taskId, leaseId: id }).catch(() => undefined); };
-    void api.acquireThumbnail({ taskId, authorizationId }).then(id => {
+    void api.acquireThumbnail({ taskId, authorizationId }).then(async id => {
       if (!id) return;
       if (disposed) { release(id); return; }
-      acquired = id; currentLease.current = id;
-      setLease({ taskId, authorizationId, id });
+      acquired = id;
+      try {
+        const pixels = await loadThumbnailImage(`cap7ce://computer-search-thumbnail/?task=${encodeURIComponent(taskId)}&authorization=${encodeURIComponent(authorizationId)}&lease=${encodeURIComponent(id)}`, abort.signal);
+        if (disposed) { pixels.width = pixels.height = 0; return; }
+        const previous = currentImage.current;
+        currentImage.current = { key: sourceKey, pixels }; setImage(currentImage.current);
+        if (previous) previous.pixels.width = previous.pixels.height = 0;
+      } catch { if (!disposed) setFailed(true); }
     }, () => { /* Keep the format icon when no thumbnail interest can be granted. */ });
     return () => {
       disposed = true;
-      if (currentLease.current === acquired) currentLease.current = null;
+      abort.abort();
       if (acquired) release(acquired);
     };
-  }, [taskId, authorizationId, foreground, visible, failed]);
-  const url = foreground && visible && !failed && lease?.taskId === taskId && lease.authorizationId === authorizationId
-    ? `cap7ce://computer-search-thumbnail/?task=${encodeURIComponent(taskId)}&authorization=${encodeURIComponent(authorizationId)}&lease=${encodeURIComponent(lease.id)}` : null;
-  return { visualRef, url, fail: () => { if (lease && currentLease.current === lease.id) setFailed(true); } };
+  }, [taskId, authorizationId, foreground, visible, failed, sourceKey]);
+  return { visualRef, image: visible && image?.key === sourceKey ? image.pixels : null };
 }
