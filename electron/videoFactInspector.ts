@@ -41,9 +41,11 @@ const failed = (candidate: VideoFactCandidate, errorCode: string): VideoFactResu
 
 export const inspectVideoFactBatch = (
   candidates: VideoFactCandidate[],
-  timeoutMs = 20_000
+  timeoutMs = 20_000,
+  signal?: AbortSignal
 ): Promise<VideoFactResult[]> => {
   if (candidates.length === 0) return Promise.resolve([]);
+  if (signal?.aborted) return Promise.resolve(candidates.map((candidate) => failed(candidate, "video-properties-cancelled")));
   if (process.platform !== "win32") return Promise.resolve(candidates.map((candidate) => failed(candidate, "video-properties-platform-unsupported")));
   return new Promise((resolve) => {
     const child = spawn(resolveWindowsPowerShellPath(), ["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCommand], {
@@ -56,7 +58,12 @@ export const inspectVideoFactBatch = (
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
       resolve(results);
+    };
+    const abort = () => {
+      child.kill();
+      finish(candidates.map((candidate) => failed(candidate, "video-properties-cancelled")));
     };
     const timer = setTimeout(() => {
       child.kill();
@@ -66,6 +73,11 @@ export const inspectVideoFactBatch = (
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => { if (stdout.length < 256 * 1024) stdout += chunk; });
     child.on("error", () => finish(candidates.map((candidate) => failed(candidate, "video-properties-process-failed"))));
+    child.stdin.on("error", () => {
+      if (settled) return;
+      child.kill();
+      finish(candidates.map((candidate) => failed(candidate, "video-properties-process-failed")));
+    });
     child.on("close", (code) => {
       if (settled) return;
       if (code !== 0) return finish(candidates.map((candidate) => failed(candidate, "video-properties-process-failed")));
@@ -90,6 +102,8 @@ export const inspectVideoFactBatch = (
         finish(candidates.map((candidate) => failed(candidate, "video-properties-invalid-response")));
       }
     });
-    child.stdin.end(JSON.stringify(candidates.map((candidate, id) => ({ id, filePath: candidate.filePath }))));
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
+    if (!settled) child.stdin.end(JSON.stringify(candidates.map((candidate, id) => ({ id, filePath: candidate.filePath }))));
   });
 };

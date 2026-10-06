@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using Cap7CE.Core.Catalog;
 using Cap7CE.Core.Protocol;
 using Cap7CE.Core.Reader.Protocol;
+using Cap7CE.Core.Host.MetadataExtraction;
+using Cap7CE.Core.Host.CatalogMaintenance;
 
 namespace Cap7CE.Core.Host;
 
@@ -11,16 +13,24 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     private readonly CatalogSynchronizationService synchronizer;
     private readonly ConcurrentDictionary<string, RuntimeTask> tasks = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource shutdown = new();
+    private readonly CatalogReaderOwnership readerOwnership = new();
+    private readonly ICatalogReaderSessionFactory readerFactory;
 
     public ProductCoreRuntime(
         CatalogV2Database catalog,
-        ICatalogReaderSessionFactory readerFactory)
+        ICatalogReaderSessionFactory readerFactory,
+        FileFactHostSession? fileFacts = null)
     {
         this.catalog = catalog;
+        this.readerFactory = readerFactory;
         synchronizer = new CatalogSynchronizationService(catalog, readerFactory);
+        FileFacts = fileFacts;
     }
 
     public CatalogV2Database Catalog => catalog;
+    public FileFactHostSession? FileFacts { get; }
+    public CatalogChangeSignal ChangeSignal { get; } = new();
+    public bool MaintenanceEnabled { get; private set; }
 
     public static string DefaultCatalogPath()
     {
@@ -29,11 +39,25 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         return Path.Combine(local, "Cap7CE", "Core", "v1", "catalog.db");
     }
 
-    public Task InitializeAsync(CancellationToken token = default) => catalog.InitializeAsync(token);
+    public async Task InitializeAsync(CancellationToken token = default)
+    {
+        await catalog.InitializeAsync(token); ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token));
+    }
+
+    public async Task ActivateMaintenanceAsync(
+        Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
+        CancellationToken token = default)
+    {
+        if (MaintenanceEnabled) throw new InvalidOperationException("reader-monitor-already-configured");
+        ChangeSignal.SetState("starting");
+        await CatalogMaintenanceActivation.StartAsync(readerOwnership, catalog, readerFactory, ChangeSignal, resolveRoots, token);
+        MaintenanceEnabled = true;
+    }
 
     public async Task<VolumeListResponse> DiscoverVolumesAsync(CancellationToken token)
     {
-        var volumes = await synchronizer.DiscoverAsync(token);
+        var volumes = await readerOwnership.RunExclusiveAsync(synchronizer.DiscoverAsync, token);
+        ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token));
         return new VolumeListResponse(volumes.Select(ToStatus).ToArray());
     }
 
@@ -42,11 +66,12 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         CancellationToken token)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await catalog.SetVolumeSelectionAsync(request.VolumeIds, token);
-        return new VolumeSelectionResponse((await catalog.ReadVolumesAsync(token))
-            .Where(volume => volume.Selected)
-            .Select(volume => volume.VolumeId)
-            .ToArray());
+        return await readerOwnership.RunExclusiveAsync(async ownershipToken => {
+            await catalog.SetVolumeSelectionAsync(request.VolumeIds, ownershipToken);
+            ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(ownershipToken));
+            return new VolumeSelectionResponse((await catalog.ReadVolumesAsync(ownershipToken))
+                .Where(volume => volume.Selected).Select(volume => volume.VolumeId).ToArray());
+        }, token);
     }
 
     public async Task<CatalogStatusResponse> ReadStatusAsync(CancellationToken token)
@@ -73,15 +98,17 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         var status = ToStatus(volume);
         if (relativePath.Length == 0)
         {
+            var root = await catalog.ResolveDirectoryAsync(volume.VolumeId, string.Empty, token);
             return new CatalogResolveScopeResponse(
-                true, volume.VolumeId, null, volume.DisplayName, status.State, status.Queryable);
+                true, volume.VolumeId, null, volume.DisplayName, status.State, status.Queryable,
+                root?.Identity.FileReference);
         }
         var directory = await catalog.ResolveDirectoryAsync(volume.VolumeId, relativePath, token);
         return directory is null
             ? new CatalogResolveScopeResponse(false, volume.VolumeId, null, volume.DisplayName,
                 status.State, status.Queryable)
             : new CatalogResolveScopeResponse(true, volume.VolumeId, directory.Identity.FileReference,
-                volume.DisplayName, status.State, status.Queryable);
+                volume.DisplayName, status.State, status.Queryable, directory.Identity.FileReference);
     }
 
     public CatalogBuildResponse StartSynchronization(CatalogBuildRequest request, bool rebuild)
@@ -100,7 +127,9 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         {
             try
             {
-                var measurements = await synchronizer.SynchronizeAsync(request.VolumeIds, rebuild, cancellation.Token);
+                var measurements = await readerOwnership.RunExclusiveAsync(
+                    ownershipToken => synchronizer.SynchronizeAsync(request.VolumeIds, rebuild, ownershipToken), cancellation.Token);
+                ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(cancellation.Token));
                 runtimeTask.Complete("completed", null, measurements);
             }
             catch (OperationCanceledException)
@@ -134,29 +163,26 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     public async Task<CatalogV2QueryPage> QueryAsync(
         SearchStartRequest request,
         CatalogQueryCursorKey? after,
-        CancellationToken token)
+        CancellationToken token,
+        long? expectedCatalogRevision = null)
     {
-        var scope = ToScope(request.Scope);
-        var type = request.EntryType switch
+        ArgumentNullException.ThrowIfNull(request);
+        try
         {
-            null or "any" => CatalogEntryType.Any,
-            "file" => CatalogEntryType.File,
-            "directory" => CatalogEntryType.Directory,
-            _ => throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Entry type is invalid.")
-        };
-        return await catalog.QueryAsync(new CatalogV2Query(
-            request.Query,
-            request.VolumeIds,
-            scope,
-            request.Extension,
-            type,
-            request.PageSize,
-            after), token);
+            var query = ProductSearchQueryMapper.Map(request, after);
+            if (expectedCatalogRevision is { } expected) query = query with { ExpectedRevision = new(expected) };
+            return await catalog.QueryAsync(query, token);
+        }
+        catch (CatalogConcurrencyException) when (expectedCatalogRevision is not null)
+        { throw new CoreProtocolException(CoreErrorCodes.InvalidCursor, "Catalog changed during pagination."); }
+        catch (ArgumentException) { throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Search parameters are invalid."); }
     }
 
     public async Task ShutdownAsync()
     {
         shutdown.Cancel();
+        await readerOwnership.ShutdownAsync();
+        ChangeSignal.SetState("stopped");
         var pending = tasks.Values.Select(task => task.Work).Where(task => task is not null).Cast<Task>().ToArray();
         if (pending.Length > 0)
         {
@@ -169,19 +195,9 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     {
         await ShutdownAsync();
         foreach (var task in tasks.Values) task.Dispose();
+        await readerOwnership.DisposeAsync();
         shutdown.Dispose();
     }
-
-    private static CatalogQueryScope ToScope(CoreSearchScopeRequest? scope) => scope?.Kind switch
-    {
-        null or "all-volumes" => CatalogQueryScope.AllVolumes(),
-        "directory-descendants" when scope.VolumeId is not null && scope.RootFileReference is not null =>
-            CatalogQueryScope.Descendants(scope.VolumeId, scope.RootFileReference),
-        "direct-children" when scope.VolumeId is not null && scope.RootFileReference is not null =>
-            CatalogQueryScope.DirectChildren(scope.VolumeId, scope.RootFileReference),
-        "saved-scope" when scope.SavedScopeId is not null => CatalogQueryScope.Saved(scope.SavedScopeId),
-        _ => throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Search scope is invalid.")
-    };
 
     private static (string DisplayName, string RelativePath) ParseLocalDirectoryPath(string value)
     {

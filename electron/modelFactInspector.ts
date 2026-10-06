@@ -21,23 +21,28 @@ const getWorkerPath = () => path.join(__dirname, "modelFactWorker.js").replace(
   `${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`
 );
 
-const inspectOne = async (candidate: ModelFactCandidate, timeoutMs: number): Promise<ModelFactResult> => {
+const inspectOne = async (candidate: ModelFactCandidate, timeoutMs: number, signal?: AbortSignal): Promise<ModelFactResult> => {
+  if (signal?.aborted) return failed(candidate, "model-fact-cancelled");
   try {
     const stat = await fs.lstat(candidate.filePath);
     if (!stat.isFile() || stat.isSymbolicLink()) return failed(candidate, "model-fact-source-unavailable");
   } catch { return failed(candidate, "model-fact-source-unavailable"); }
+  if (signal?.aborted) return failed(candidate, "model-fact-cancelled");
   return new Promise((resolve) => {
-    const worker = new Worker(getWorkerPath(), { workerData: { sourcePath: candidate.filePath } });
+    const worker = new Worker(getWorkerPath(), { workerData: { sourcePath: candidate.filePath },
+      ...(signal ? { resourceLimits: { maxOldGenerationSizeMb: 256 } } : {}) });
     let settled = false;
     const finish = (result: ModelFactResult) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
       worker.removeAllListeners();
-      if (worker.threadId > 0) void worker.terminate();
-      resolve(result);
+      const retired = worker.threadId > 0 ? worker.terminate().catch(() => undefined) : Promise.resolve();
+      void retired.then(() => resolve(result));
     };
-    const timer = setTimeout(() => { void worker.terminate(); finish(failed(candidate, "model-fact-timeout")); }, timeoutMs);
+    const abort = () => finish(failed(candidate, "model-fact-cancelled"));
+    const timer = setTimeout(() => finish(failed(candidate, "model-fact-timeout")), timeoutMs);
     timer.unref?.();
     worker.once("error", () => finish(failed(candidate, "model-fact-worker-failed")));
     worker.once("message", (response: ModelFactWorkerResponse) => {
@@ -51,11 +56,13 @@ const inspectOne = async (candidate: ModelFactCandidate, timeoutMs: number): Pro
         errorCode: ""
       });
     });
-    worker.once("exit", (code) => { if (!settled && code !== 0) finish(failed(candidate, "model-fact-worker-failed")); });
+    worker.once("exit", () => { if (!settled) finish(failed(candidate, "model-fact-worker-failed")); });
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
   });
 };
-export const inspectModelFactBatch = async (candidates: ModelFactCandidate[], timeoutMs = 30_000) => {
+export const inspectModelFactBatch = async (candidates: ModelFactCandidate[], timeoutMs = 30_000, signal?: AbortSignal) => {
   const results: ModelFactResult[] = [];
-  for (const candidate of candidates) results.push(await inspectOne(candidate, timeoutMs));
+  for (const candidate of candidates) results.push(await inspectOne(candidate, timeoutMs, signal));
   return results;
 };

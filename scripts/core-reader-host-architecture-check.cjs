@@ -8,8 +8,8 @@ const hostRoot = path.join(root, "core/src/Cap7CE.Core.Reader.Host");
 const expectedHostFiles = [
   "Cap7CE.Core.Reader.Host.csproj", "packages.lock.json", "Program.cs",
   "ReaderFixtureService.cs", "ReaderHostAssembly.cs", "ReaderHostConstants.cs",
-  "ReaderNativePipe.cs", "ReaderNtfsVolume.cs", "ReaderProbeResult.cs", "ReaderServiceConfig.cs",
-  "ReaderVolumeService.cs", "ReaderWindowsService.cs"
+  "ReaderNativePipe.cs", "ReaderNtfsVolume.cs", "ReaderJournalWaitIo.cs", "ReaderProbeResult.cs", "ReaderServiceConfig.cs",
+  "ReaderJournalWaitCoordinator.cs", "ReaderJournalWaitChannel.cs", "ReaderVolumeService.cs", "ReaderWindowsService.cs"
 ];
 const actualHostFiles = fs.readdirSync(hostRoot).filter((name) => !name.startsWith(".")).sort();
 if (JSON.stringify(actualHostFiles) !== JSON.stringify([...expectedHostFiles].sort())) {
@@ -19,6 +19,7 @@ if (JSON.stringify(actualHostFiles) !== JSON.stringify([...expectedHostFiles].so
 const hostSources = actualHostFiles.filter((name) => name.endsWith(".cs"))
   .map((name) => [name, fs.readFileSync(path.join(hostRoot, name), "utf8")]);
 const hostCombined = hostSources.map(([, source]) => source).join("\n");
+require("./core-reader-journal-wait-boundary-check.cjs")(root, failures);
 for (const [pattern, capability] of [
   [/System\.Net|HttpClient|Socket\b/, "network API"],
   [/Microsoft\.Data\.Sqlite|System\.Data\.SQLite/, "catalog access"],

@@ -3,16 +3,20 @@ using System.Text.Json;
 using Cap7CE.Core.Adapters;
 using Cap7CE.Core.Catalog;
 using Cap7CE.Core.Protocol;
+using Cap7CE.Core.Host.MetadataExtraction;
+using Cap7CE.Core.Host.CatalogMaintenance;
 
 namespace Cap7CE.Core.Host;
 
 public sealed class CoreRequestDispatcher
 {
     private readonly ConcurrentDictionary<string, CancellationTokenSource> activeRequests = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim executionSlots = new(2, 2);
     private readonly IMetadataSearchSource source;
     private readonly SearchCursorCodec cursors;
     private readonly ProductCoreRuntime? runtime;
     private readonly ProductSearchCursorCodec? productCursors;
+    private readonly CatalogMaintenanceRequestHandler? maintenance;
 
     public CoreRequestDispatcher(IMetadataSearchSource source, SearchCursorCodec cursors)
     {
@@ -24,13 +28,15 @@ public sealed class CoreRequestDispatcher
     {
         this.runtime = runtime;
         productCursors = cursors;
+        maintenance = new(runtime.ChangeSignal);
         source = null!;
         this.cursors = null!;
     }
 
     public IReadOnlyList<string> Capabilities => runtime is null
         ? CoreOperations.P11Capabilities
-        : CoreOperations.P31Capabilities;
+        : CoreOperations.P31Capabilities.Concat(runtime.FileFacts is null ? [] : CoreOperations.FileFactCapabilities)
+            .Concat(runtime.MaintenanceEnabled ? [CoreOperations.CatalogAwaitChanges] : Array.Empty<string>()).ToArray();
 
     public bool SyntheticFixture => runtime is null;
 
@@ -56,21 +62,14 @@ public sealed class CoreRequestDispatcher
             sessionCancellationToken);
         try
         {
-            return request.Operation switch
+            if (request.Operation == CoreOperations.CatalogAwaitChanges && runtime?.MaintenanceEnabled == true)
+                return await maintenance!.DispatchAsync(request, linkedCancellation.Token);
+            await executionSlots.WaitAsync(linkedCancellation.Token);
+            try
             {
-                CoreOperations.CapabilityStatus when runtime is not null => await CapabilityStatusAsync(request, linkedCancellation.Token),
-                CoreOperations.VolumeList when runtime is not null => await VolumeListAsync(request, linkedCancellation.Token),
-                CoreOperations.VolumeSelection when runtime is not null => await VolumeSelectionAsync(request, linkedCancellation.Token),
-                CoreOperations.CatalogStatus when runtime is not null => await CatalogStatusAsync(request, linkedCancellation.Token),
-                CoreOperations.CatalogBuild when runtime is not null => StartCatalogTask(request, rebuild: false),
-                CoreOperations.CatalogRebuild when runtime is not null => StartCatalogTask(request, rebuild: true),
-                CoreOperations.CatalogCancel when runtime is not null => CancelCatalogTask(request),
-                CoreOperations.CatalogResolveScope when runtime is not null => await ResolveScopeAsync(request, linkedCancellation.Token),
-                CoreOperations.CoreShutdown when runtime is not null => await ShutdownAsync(request),
-                CoreOperations.SearchStart => await StartSearchAsync(request, linkedCancellation.Token),
-                CoreOperations.SearchNextPage => await NextPageAsync(request, linkedCancellation.Token),
-                _ => Failure(request, CoreErrorCodes.UnknownOperation, "dispatch", false, "Operation is not supported.")
-            };
+                return await Task.Run(() => ExecuteOperationAsync(request, linkedCancellation.Token), linkedCancellation.Token);
+            }
+            finally { executionSlots.Release(); }
         }
         catch (OperationCanceledException)
         {
@@ -102,6 +101,25 @@ public sealed class CoreRequestDispatcher
         }
     }
 
+    private async Task<CoreResponseEnvelope> ExecuteOperationAsync(CoreRequestEnvelope request, CancellationToken token) =>
+        request.Operation switch
+        {
+            CoreOperations.CapabilityStatus when runtime is not null => await CapabilityStatusAsync(request, token),
+            CoreOperations.VolumeList when runtime is not null => await VolumeListAsync(request, token),
+            CoreOperations.VolumeSelection when runtime is not null => await VolumeSelectionAsync(request, token),
+            CoreOperations.CatalogStatus when runtime is not null => await CatalogStatusAsync(request, token),
+            CoreOperations.CatalogBuild when runtime is not null => StartCatalogTask(request, rebuild: false),
+            CoreOperations.CatalogRebuild when runtime is not null => StartCatalogTask(request, rebuild: true),
+            CoreOperations.CatalogCancel when runtime is not null => CancelCatalogTask(request),
+            CoreOperations.CatalogResolveScope when runtime is not null => await ResolveScopeAsync(request, token),
+            CoreOperations.CoreShutdown when runtime is not null => await ShutdownAsync(request),
+            CoreOperations.SearchStart => await StartSearchAsync(request, token),
+            CoreOperations.SearchNextPage => await NextPageAsync(request, token),
+            _ when runtime?.FileFacts is { } facts && FileFactRequestHandler.Supports(request.Operation) =>
+                await FileFactRequestHandler.DispatchAsync(facts, request, token),
+            _ => Failure(request, CoreErrorCodes.UnknownOperation, "dispatch", false, "Operation is not supported.")
+        };
+
     private async Task<CoreResponseEnvelope> StartSearchAsync(
         CoreRequestEnvelope request,
         CancellationToken cancellationToken)
@@ -121,14 +139,12 @@ public sealed class CoreRequestDispatcher
 
         if (runtime is not null)
         {
-            if (string.IsNullOrWhiteSpace(body.Query))
-            {
-                throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Product catalog search requires a query.");
-            }
             var productPage = await runtime.QueryAsync(body, null, cancellationToken);
             return ProductPageResponse(request, body, productPage);
         }
 
+        if (body.TextTarget is not null || body.Facts is not null || body.FileConditions is not null)
+            throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Fixture does not support product filters.");
         var page = await source.ReadPageAsync(
             new MetadataSearchPageRequest(body.Query, 0, body.PageSize, body.Sort, body.VolumeIds),
             cancellationToken);
@@ -155,8 +171,11 @@ public sealed class CoreRequestDispatcher
                 productCursor.VolumeIds,
                 productCursor.Scope,
                 productCursor.Extension,
-                productCursor.EntryType);
-            var productPage = await runtime.QueryAsync(start, productCursor.After, cancellationToken);
+                productCursor.EntryType,
+                productCursor.TextTarget,
+                productCursor.Facts,
+                productCursor.FileConditions);
+            var productPage = await runtime.QueryAsync(start, productCursor.After, cancellationToken, productCursor.CatalogRevision);
             return ProductPageResponse(request, start, productPage);
         }
 
@@ -185,7 +204,11 @@ public sealed class CoreRequestDispatcher
             return Failure(request, CoreErrorCodes.InvalidRequest, "validation", false, "Cancellation target is invalid.");
         }
         var accepted = activeRequests.TryGetValue(body.TargetRequestId, out var cancellation);
-        if (accepted) cancellation!.Cancel();
+        if (accepted)
+        {
+            try { cancellation!.Cancel(); }
+            catch (ObjectDisposedException) { accepted = false; }
+        }
         return CoreResponseEnvelope.Success(
             request.RequestId,
             runtime is null ? source.CatalogRevision : 0,
@@ -272,7 +295,7 @@ public sealed class CoreRequestDispatcher
         return CoreResponseEnvelope.Success(request.RequestId, 0, new CoreShutdownResponse(true));
     }
 
-    private static T ReadBody<T>(CoreRequestEnvelope request)
+    internal static T ReadBody<T>(CoreRequestEnvelope request)
         where T : class
     {
         if (request.Body.ValueKind != JsonValueKind.Object)
@@ -283,7 +306,7 @@ public sealed class CoreRequestDispatcher
             ?? throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Request body is missing.");
     }
 
-    private static void RequireEmptyBody(CoreRequestEnvelope request)
+    internal static void RequireEmptyBody(CoreRequestEnvelope request)
     {
         if (request.Body.ValueKind != JsonValueKind.Object || request.Body.EnumerateObject().Any())
         {
@@ -333,9 +356,12 @@ public sealed class CoreRequestDispatcher
             start.Extension,
             start.EntryType ?? "any",
             page.Next,
-            page.CatalogRevision));
+            page.CatalogRevision,
+            TextTarget: start.TextTarget,
+            Facts: start.Facts,
+            FileConditions: start.FileConditions));
         return CoreResponseEnvelope.Success(request.RequestId, page.CatalogRevision,
-            new SearchPageResponse(items, nextCursor, nextCursor is null, page.CatalogRevision));
+            new SearchPageResponse(items, nextCursor, nextCursor is null, page.CatalogRevision, page.FactRevision));
     }
 
     private CoreResponseEnvelope Failure(

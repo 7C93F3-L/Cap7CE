@@ -50,7 +50,8 @@ const readDecodedChunks = async (filePath: string, encoding: TextEncoding, bomBy
     }
     const finalText = decoder.decode();
     if (finalText) onText(finalText);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && /^text-data-[a-z-]+$/.test(error.message)) throw error;
     throw new Error("text-data-encoding-unsupported");
   }
 };
@@ -83,6 +84,7 @@ const readCsvCounts = async (filePath: string, encoding: TextEncoding, bomBytes:
   let columnCount = 0;
   let currentColumns = 1;
   let recordStarted = false;
+  let fieldStarted = false;
   let inQuotes = false;
   let quotePending = false;
   let skipLineFeed = false;
@@ -93,6 +95,7 @@ const readCsvCounts = async (filePath: string, encoding: TextEncoding, bomBytes:
     }
     currentColumns = 1;
     recordStarted = false;
+    fieldStarted = false;
   };
   const consume = (character: string) => {
     if (inQuotes) {
@@ -108,16 +111,20 @@ const readCsvCounts = async (filePath: string, encoding: TextEncoding, bomBytes:
       }
       inQuotes = false;
       quotePending = false;
+      if (character !== "," && character !== "\r" && character !== "\n") throw new Error("text-data-csv-invalid");
     }
     if (skipLineFeed) {
       skipLineFeed = false;
       if (character === "\n") return;
     }
     if (character === "\"") {
+      if (fieldStarted) throw new Error("text-data-csv-invalid");
       inQuotes = true;
+      fieldStarted = true;
       recordStarted = true;
     } else if (character === ",") {
       currentColumns += 1;
+      fieldStarted = false;
       recordStarted = true;
     } else if (character === "\r") {
       finishRecord();
@@ -125,6 +132,7 @@ const readCsvCounts = async (filePath: string, encoding: TextEncoding, bomBytes:
     } else if (character === "\n") {
       finishRecord();
     } else {
+      fieldStarted = true;
       recordStarted = true;
     }
   };

@@ -13,24 +13,29 @@ const getWorkerPath = () => path.join(__dirname, "fontMetadataWorker.js").replac
   `${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`
 );
 
-const inspectOne = async (candidate: FontFactCandidate, timeoutMs: number): Promise<FontFactResult> => {
+const inspectOne = async (candidate: FontFactCandidate, timeoutMs: number, signal?: AbortSignal): Promise<FontFactResult> => {
+  if (signal?.aborted) return failed(candidate, "font-fact-cancelled");
   try {
     const stat = await fs.lstat(candidate.filePath);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.size > maximumFontBytes) return failed(candidate, "font-fact-source-unavailable");
   } catch { return failed(candidate, "font-fact-source-unavailable"); }
+  if (signal?.aborted) return failed(candidate, "font-fact-cancelled");
   return new Promise((resolve) => {
     const request: FontMetadataWorkerRequest = { sourcePath: candidate.filePath, language: "en-US" };
-    const worker = new Worker(getWorkerPath(), { workerData: request });
+    const worker = new Worker(getWorkerPath(), { workerData: request,
+      ...(signal ? { resourceLimits: { maxOldGenerationSizeMb: 128 } } : {}) });
     let settled = false;
     const finish = (result: FontFactResult) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
       worker.removeAllListeners();
-      if (worker.threadId > 0) void worker.terminate();
-      resolve(result);
+      const retired = worker.threadId > 0 ? worker.terminate().catch(() => undefined) : Promise.resolve();
+      void retired.then(() => resolve(result));
     };
-    const timer = setTimeout(() => { void worker.terminate(); finish(failed(candidate, "font-fact-timeout")); }, timeoutMs);
+    const abort = () => finish(failed(candidate, "font-fact-cancelled"));
+    const timer = setTimeout(() => finish(failed(candidate, "font-fact-timeout")), timeoutMs);
     timer.unref?.();
     worker.once("error", () => finish(failed(candidate, "font-fact-worker-failed")));
     worker.once("message", (response: FontMetadataWorkerResponse) => {
@@ -47,12 +52,14 @@ const inspectOne = async (candidate: FontFactCandidate, timeoutMs: number): Prom
         errorCode: ""
       });
     });
-    worker.once("exit", (code) => { if (!settled && code !== 0) finish(failed(candidate, "font-fact-worker-failed")); });
+    worker.once("exit", () => { if (!settled) finish(failed(candidate, "font-fact-worker-failed")); });
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
   });
 };
 
-export const inspectFontFactBatch = async (candidates: FontFactCandidate[], timeoutMs = 10_000) => {
+export const inspectFontFactBatch = async (candidates: FontFactCandidate[], timeoutMs = 10_000, signal?: AbortSignal) => {
   const results: FontFactResult[] = [];
-  for (const candidate of candidates) results.push(await inspectOne(candidate, timeoutMs));
+  for (const candidate of candidates) results.push(await inspectOne(candidate, timeoutMs, signal));
   return results;
 };

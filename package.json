@@ -20,7 +20,7 @@
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "clean:electron": "node scripts/clean-electron-build.cjs",
-    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json",
+    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && npm run build:preload && npm run build:metadata-media",
     "build": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
@@ -28,17 +28,17 @@
     "publish:core-product-capability": "node scripts/core-capability-payload-build.cjs --product",
     "publish:core-development-host": "node scripts/core-development-host-build.cjs",
     "test": "npm run test:workspace-tabs && npm run build:electron && npm run test:quick-command && npm run test:manual-metadata-ipc && npm run test:line-window-lifecycle && npm run test:window-layout-baseline && npm run test:browser-window-diagnostics && npm run test:main-window-input-policy && npm run test:stable-preview-window-sizing && npm run test:window-system-interactions && npm run test:stable-ui-foundation && npm run test:stable-ui-shell && npm run test:stable-ui-search && npm run test:random-browse && npm run test:stable-ui-sidebar && npm run test:stable-ui-skim && npm run test:stable-ui-settings-window && npm run test:stable-ui-preview && npm run test:stable-ui-preview-interaction && npm run test:stable-ui-window-lifecycle && npm run test:window-layout-memory && npm run test:docked-shell-automation && npm run test:integration",
-    "test:integration": "npm run test:architecture-boundaries && npm run test:core && npm run test:core-setup-native && npm run test:core-capability-payload && npm run test:core-controller && npm run test:computer-search-ipc && npm run test:window-layout-foundation && npm run test:ipc-registration && npm run test:file-ipc && npm run test:runtime-model-ipc && npm run test:search-ipc && npm run test:diagnostics-ipc && npm run test:runtime-diagnostics && npm run test:preference-ipc && npm run test:cache-activity-ipc && npm run test:cache-clear-ipc && npm run test:ai-search-ipc && npm run test:ai-search && npm run test:llama-runtime-idle && npm run test:ai-query-evidence && npm run test:directory-management-ipc && npm run test:embedded-metadata-ipc && npm run test:embedded-metadata-service && npm run test:visual-property-service && npm run test:image-dimension-service && npm run test:video-fact && npm run test:audio-fact && npm run test:document-fact && npm run test:three-d-fact && npm run test:archive-fact && npm run test:font-fact && npm run test:model-fact && npm run test:text-data-fact && npm run test:virtual-grid-layout && npm run test:result-section-layout && npm run test:app-update && npm run test:installer-config && npm run test:system-notification && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:devtools-policy && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:application-data-paths && npm run test:ai-content-paths && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:embedded-metadata && npm run test:visual-property && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:keyword-editor-interaction && npm run test:file-context-actions && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:search-evidence && npm run test:search-query-planner && npm run test:file-catalog && npm run test:multi-format-search && npm run test:file-size-filter && npm run test:search-scan-snapshot && npm run test:thumbnail-optimization && npm run test:file-drag && npm run test:file-clipboard && npm run test:file-operation && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
-    "test:workspace-tabs": "node tests/workspace-tabs.integration.cjs",
-    "test:architecture-boundaries": "node tests/workspace-tabs.integration.cjs && node scripts/architecture-boundaries-check.cjs && npm run test:core-architecture",
+    "test:integration": "npm run test:preload-sandbox && npm run test:architecture-boundaries && npm run test:core && npm run test:core-setup-native && npm run test:core-capability-payload && npm run test:core-controller && npm run test:computer-search-ipc && npm run test:window-layout-foundation && npm run test:ipc-registration && npm run test:file-ipc && npm run test:runtime-model-ipc && npm run test:search-ipc && npm run test:diagnostics-ipc && npm run test:runtime-diagnostics && npm run test:preference-ipc && npm run test:cache-activity-ipc && npm run test:cache-clear-ipc && npm run test:ai-search-ipc && npm run test:ai-search && npm run test:llama-runtime-idle && npm run test:ai-query-evidence && npm run test:directory-management-ipc && npm run test:embedded-metadata-ipc && npm run test:embedded-metadata-service && npm run test:visual-property-service && npm run test:image-dimension-service && npm run test:video-fact && npm run test:audio-fact && npm run test:document-fact && npm run test:three-d-fact && npm run test:archive-fact && npm run test:font-fact && npm run test:model-fact && npm run test:text-data-fact && npm run test:virtual-grid-layout && npm run test:result-section-layout && npm run test:app-update && npm run test:installer-config && npm run test:system-notification && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:devtools-policy && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:application-data-paths && npm run test:ai-content-paths && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:embedded-metadata && npm run test:visual-property && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:keyword-editor-interaction && npm run test:file-context-actions && npm run test:skim-visual-cache && npm run test:skim-content-preview && npm run test:search-evidence && npm run test:search-query-planner && npm run test:file-catalog && npm run test:multi-format-search && npm run test:file-size-filter && npm run test:search-scan-snapshot && npm run test:thumbnail-optimization && npm run test:file-drag && npm run test:file-clipboard && npm run test:file-operation && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
+    "test:workspace-tabs": "node tests/workspace-tabs.integration.cjs && node tests/catalog-workspace-contexts.integration.cjs && node tests/computer-search-task-identity.integration.cjs && node tests/svg-icon-identity.integration.cjs",
+    "test:architecture-boundaries": "node tests/workspace-tabs.integration.cjs && node scripts/architecture-boundaries-check.cjs && node scripts/favorite-directory-boundary-check.cjs && npm run test:core-architecture",
     "test:core-architecture": "node scripts/core-architecture-check.cjs && node scripts/core-capability-setup-architecture-check.cjs && node scripts/core-capability-setup-windows-check.cjs && node scripts/core-capability-installer-architecture-check.cjs && node scripts/core-electron-controller-architecture-check.cjs && node scripts/core-product-electron-integration-architecture-check.cjs && node scripts/core-reader-architecture-check.cjs && node scripts/core-reader-host-architecture-check.cjs && node scripts/core-reader-volume-architecture-check.cjs && node scripts/core-reader-lifecycle-architecture-check.cjs && node scripts/core-p37-recovery-architecture-check.cjs && node scripts/core-p37-lifecycle-architecture-check.cjs && node scripts/core-p37-reboot-architecture-check.cjs && npm run test:core-formalization",
     "test:core-formalization": "node scripts/core-formalization-architecture-check.cjs",
     "test:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet run --project core/tests/Cap7CE.Core.Tests/Cap7CE.Core.Tests.csproj --configuration Release",
     "test:core-setup-native": "npm run publish:core-setup && node scripts/core-setup-native-smoke.cjs",
     "test:core-capability-payload": "npm run publish:core-capability && node scripts/core-capability-payload-smoke.cjs",
-    "test:core-controller": "node tests/core-host-controller.integration.cjs",
-    "test:computer-search-ipc": "node tests/computer-search-capability.integration.cjs && node tests/computer-search-catalog-bootstrap.integration.cjs && node tests/computer-search-ipc.integration.cjs && node tests/computer-search-renderer.integration.cjs",
-    "test:computer-search-renderer": "node tests/computer-search-renderer.integration.cjs",
+    "test:core-controller": "node tests/core-host-controller.integration.cjs && node tests/core-metadata-protocol.integration.cjs && node tests/core-catalog-change-protocol.integration.cjs && node tests/core-catalog-change-watcher.integration.cjs && node tests/metadata-build-controller.integration.cjs && node tests/metadata-build-runtime.integration.cjs && node tests/metadata-change-drain.integration.cjs && node tests/metadata-build-preferences.integration.cjs && node tests/metadata-build-restoration.integration.cjs && node tests/image-metadata-inspector.integration.cjs",
+    "test:computer-search-ipc": "node tests/computer-search-capability.integration.cjs && node tests/computer-search-catalog-bootstrap.integration.cjs && node tests/computer-search-ipc.integration.cjs && node tests/computer-search-thumbnail-leases.integration.cjs && npm run test:computer-search-renderer && node tests/computer-search-runtime-browse.integration.cjs && node tests/computer-search-maintenance-runtime.integration.cjs && node tests/computer-search-change-ipc.integration.cjs && node tests/favorite-directory-store.integration.cjs && node tests/favorite-directory-ipc.integration.cjs && node tests/computer-search-fact-conditions.integration.cjs && node tests/computer-search-base-adapter.integration.cjs && node tests/catalog-system-events.integration.cjs",
+    "test:computer-search-renderer": "node tests/computer-search-renderer.integration.cjs && node tests/computer-search-result-refresh.integration.cjs && node tests/computer-search-text-data.integration.cjs && node tests/computer-search-archive.integration.cjs",
     "probe:core-reader-service": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p21-service-probe.ps1",
     "probe:core-reader-volume": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p22-volume-probe.ps1",
     "probe:core-p31": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p31-real-probe.ps1",
@@ -108,18 +108,18 @@
     "test:font-preview": "electron tests/font-preview.integration.cjs",
     "test:embedded-metadata": "node tests/embedded-metadata.integration.cjs",
     "test:visual-property": "node tests/visual-property.integration.cjs",
-    "test:embedded-metadata-ipc": "node tests/embedded-metadata-ipc.integration.cjs",
+    "test:embedded-metadata-ipc": "node tests/embedded-metadata-ipc.integration.cjs && node tests/legacy-metadata-startup.integration.cjs",
     "test:embedded-metadata-service": "node tests/embedded-metadata-service.integration.cjs",
     "test:visual-property-service": "node tests/visual-property-service.integration.cjs && npm run test:visual-property-semantics",
     "test:image-dimension-service": "node tests/image-dimension-service.integration.cjs",
-    "test:video-fact": "electron tests/video-fact.integration.cjs",
-    "test:audio-fact": "electron tests/audio-fact.integration.cjs",
-    "test:document-fact": "electron tests/document-fact.integration.cjs",
-    "test:three-d-fact": "electron tests/three-d-fact.integration.cjs",
-    "test:archive-fact": "electron tests/archive-fact.integration.cjs",
-    "test:font-fact": "electron tests/font-fact.integration.cjs",
-    "test:model-fact": "electron tests/model-fact.integration.cjs",
-    "test:text-data-fact": "electron tests/text-data-fact.integration.cjs",
+    "test:video-fact": "node tests/video-metadata-frames.integration.cjs && node tests/video-fact-cancellation.integration.cjs && node tests/metadata-worker.integration.cjs && electron tests/video-fact.integration.cjs",
+    "test:audio-fact": "node tests/audio-fact-cancellation.integration.cjs && electron tests/audio-fact.integration.cjs",
+    "test:document-fact": "node tests/document-fact-cancellation.integration.cjs && electron tests/document-fact.integration.cjs",
+    "test:three-d-fact": "node tests/three-d-known-properties.integration.cjs && electron tests/three-d-fact.integration.cjs",
+    "test:archive-fact": "node tests/archive-metadata-reader.integration.cjs && electron tests/archive-fact.integration.cjs",
+    "test:font-fact": "node tests/font-fact-cancellation.integration.cjs && electron tests/font-fact.integration.cjs",
+    "test:model-fact": "node tests/model-fact-cancellation.integration.cjs && electron tests/model-fact.integration.cjs",
+    "test:text-data-fact": "node tests/text-data-known-properties.integration.cjs && electron tests/text-data-fact.integration.cjs",
     "test:visual-property-semantics": "node tests/visual-property-semantics.integration.cjs",
     "test:animated-image-preview": "electron tests/animated-image-preview.integration.cjs && npm run build:electron && node tests/animation-fact.integration.cjs",
     "test:avif-visual-format": "electron tests/avif-visual-format.integration.cjs",
@@ -150,7 +150,10 @@
     "test:epub-preview": "node tests/epub-preview.integration.cjs",
     "test:mobi-preview": "node tests/mobi-preview.integration.cjs",
     "test:installer-config": "node tests/installer-config.integration.cjs",
-    "test:system-notification": "node tests/system-notification.integration.cjs"
+    "test:system-notification": "node tests/system-notification.integration.cjs",
+    "build:metadata-media": "node scripts/metadata-media-build.cjs",
+    "build:preload": "node scripts/build-preload.cjs",
+    "test:preload-sandbox": "electron tests/preload-sandbox.integration.cjs"
   },
   "build": {
     "appId": "Cap7CE",
@@ -253,6 +256,20 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "native/artifacts/metadata-media/v1",
+        "to": "metadata-media/v1",
+        "filter": [
+          "Cap7CE.Media.Metadata.exe"
+        ]
+      },
+      {
+        "from": "third_party/metadata-media",
+        "to": "licenses/metadata-media",
+        "filter": [
+          "LICENSE-*"
+        ]
       }
     ],
     "win": {
@@ -325,6 +342,7 @@
     "electron-builder": "^26.15.3",
     "typescript": "^5.7.2",
     "vite": "^7.3.6",
-    "wait-on": "^8.0.1"
+    "wait-on": "^8.0.1",
+    "esbuild": "0.28.1"
   }
 }

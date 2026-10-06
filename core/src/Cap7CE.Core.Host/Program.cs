@@ -206,12 +206,16 @@ try
         var catalogPath = options.Mode == CoreHostMode.CatalogControllerProbe
             ? ControllerProbeCatalog.ResolveDatabasePath(options.PipeName!)
             : ProductCoreRuntime.DefaultCatalogPath();
-        runtime = new ProductCoreRuntime(
-            new CatalogV2Database(catalogPath),
-            new ReaderV2CatalogSessionFactory());
+        var catalog = new CatalogV2Database(catalogPath);
+        runtime = new ProductCoreRuntime(catalog, new ReaderV2CatalogSessionFactory(),
+            new Cap7CE.Core.Host.MetadataExtraction.FileFactHostSession(catalogPath, resolveOwnedStorage: options.Mode == CoreHostMode.CatalogServer
+                ? token => Cap7CE.Core.Host.MetadataExtraction.ProductOwnedStorageResolver.ResolveAsync(catalog, token) : null));
         await runtime.InitializeAsync(shutdown.Token);
     }
     await using var runtimeScope = runtime;
+    if (options.Mode == CoreHostMode.CatalogServer && runtime is not null)
+        await runtime.ActivateMaintenanceAsync((ready, token) =>
+            Cap7CE.Core.Host.MetadataExtraction.ProductOwnedStorageResolver.ResolveAsync(runtime.Catalog, ready, token), shutdown.Token);
     await using var server = new CorePipeServer(options.PipeName!, runtime);
     Console.WriteLine(JsonSerializer.Serialize(new
     {

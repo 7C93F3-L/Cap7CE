@@ -38,6 +38,8 @@ export class CoreProtocolClient {
   private receiveBuffer = Buffer.alloc(0);
   private sequence = 0;
   private closed = false;
+  private capabilities = new Set<string>();
+  supports(operation: string): boolean { return !this.closed && this.capabilities.has(operation); }
 
   private constructor(private readonly socket: net.Socket) {
     socket.on("data", (chunk) => this.consume(chunk));
@@ -70,6 +72,7 @@ export class CoreProtocolClient {
     if (!Number.isInteger(deadlineMs) || deadlineMs < 1 || deadlineMs > 120_000) {
       throw new CoreClientError("invalid-deadline");
     }
+    if (!Number.isSafeInteger(this.sequence + 1)) throw new CoreClientError("request-sequence-exhausted");
     const requestId = `shell-${++this.sequence}-${randomBytes(4).toString("hex")}`;
     const frame = this.encodeFrame({ protocolVersion: coreProtocolVersion, requestId, operation, deadlineMs, body });
     const response = new Promise<CoreResponseEnvelope>((resolve, reject) => {
@@ -137,6 +140,7 @@ export class CoreProtocolClient {
       this.close();
       throw new CoreClientError("handshake-mismatch");
     }
+    this.capabilities = new Set(capabilities);
   }
 
   private encodeFrame(value: unknown): Buffer {

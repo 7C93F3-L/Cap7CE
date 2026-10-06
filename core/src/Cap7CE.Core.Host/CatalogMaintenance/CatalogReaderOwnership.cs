@@ -1,0 +1,82 @@
+namespace Cap7CE.Core.Host.CatalogMaintenance;
+
+// The continuous monitor and explicit discover/select/synchronize operations
+// share one owner. Cancellation is followed by awaiting its entire retirement,
+// including the Reader session's async disposal, before another lease starts.
+public sealed class CatalogReaderOwnership : IAsyncDisposable
+{
+    private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly CancellationTokenSource shutdown = new();
+    private Func<CancellationToken, Task>? monitor;
+    private CancellationTokenSource? monitorCancellation;
+    private Task? monitorTask;
+    private bool stopped;
+    public string? LastMonitorFailure { get; private set; }
+
+    public async Task ActivateAsync(Func<CancellationToken, Task> monitor, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(monitor);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, shutdown.Token);
+        await gate.WaitAsync(linked.Token);
+        try {
+            if (stopped) throw new ObjectDisposedException(nameof(CatalogReaderOwnership));
+            if (this.monitor is not null) throw new InvalidOperationException("reader-monitor-already-configured");
+            this.monitor = monitor; StartMonitor();
+        }
+        finally { gate.Release(); }
+    }
+
+    public async Task<T> RunExclusiveAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(token, shutdown.Token);
+        await gate.WaitAsync(linked.Token);
+        try {
+            if (stopped) throw new ObjectDisposedException(nameof(CatalogReaderOwnership));
+            await RetireMonitorAsync();
+            linked.Token.ThrowIfCancellationRequested();
+            return await operation(linked.Token);
+        }
+        finally { StartMonitor(); gate.Release(); }
+    }
+
+    private void StartMonitor()
+    {
+        if (monitor is null || stopped || shutdown.IsCancellationRequested || monitorTask is not null) return;
+        LastMonitorFailure = null;
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token);
+        monitorCancellation = cancellation;
+        var run = monitor;
+        monitorTask = Task.Run(async () => {
+            try { await run(cancellation.Token); }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            catch (Exception error) when (error is not OutOfMemoryException) {
+                // A failed monitor stays stopped until a meaningful explicit
+                // operation or new owner. No automatic failed-connect loop.
+                LastMonitorFailure = error is NotSupportedException ? "reader-wait-unavailable" : "reader-monitor-failed";
+            }
+        }, CancellationToken.None);
+    }
+
+    private async Task RetireMonitorAsync()
+    {
+        monitorCancellation?.Cancel();
+        try { if (monitorTask is not null) await monitorTask; }
+        finally {
+            monitorTask = null;
+            monitorCancellation?.Dispose(); monitorCancellation = null;
+        }
+    }
+
+    public async Task ShutdownAsync()
+    {
+        shutdown.Cancel();
+        await gate.WaitAsync();
+        try { stopped = true; await RetireMonitorAsync(); }
+        finally { gate.Release(); }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        await ShutdownAsync(); shutdown.Dispose(); gate.Dispose();
+    }
+}

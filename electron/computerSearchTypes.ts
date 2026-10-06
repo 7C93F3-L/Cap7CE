@@ -1,4 +1,5 @@
 import type { FilePreviewKind } from "./formatCapabilities";
+import type { ComputerSearchFacts, ComputerSearchFileConditions } from "../src/shared/computerSearchFactTypes";
 
 export type ComputerSearchState =
   | "not-enabled" | "starting" | "building" | "syncing" | "ready"
@@ -57,6 +58,9 @@ export interface ComputerSearchRequest {
   taskId: string;
   query: string;
   scopePath: string | null;
+  scopeKind?: "direct-children";
+  facts?: ComputerSearchFacts;
+  fileConditions?: ComputerSearchFileConditions;
 }
 
 export interface ComputerSearchNextPageRequest { taskId: string; cursor: string }

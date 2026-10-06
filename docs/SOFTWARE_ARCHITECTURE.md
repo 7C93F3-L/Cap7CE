@@ -1,5 +1,167 @@
 # Cap7CE 软件架构
 
+视频事实提取器v2通过`VideoMetadataFrameClient`拥有一个普通权限、隐藏的`Cap7CE.Media.Metadata`原生辅助进程。程序使用Windows Media Editing，在10/50/90%三个时间点生成长边最多160px的内存像素流；复用纯RGBA分析器，对29项定点指标取代表帧均值。色彩是抽样结果，不声称描述视频每一帧。流不落盘，也不调用Shell缩略图缓存；辅助程序不发现目录、不写源文件、不联网。Windows解码不可用时保留标量提取后备，未知色彩不满足色彩筛选。
+
+辅助进程输入限256KiB，输出限512KiB，单次Native内部9秒/Main客户端4秒超时；取消或异常先终止并等待所拥有进程退出，再进入后备读取。最多16次请求或工作后RSS超过192MiB即回收；JS读取Worker报告自身及辅助程序RSS，维持既有256MiB软回收策略，这些不是硬峰值上限。原生程序观察直接父进程退出，避免Main强制终止JS Worker后留存解码器。程序通过锁定依赖的NativeAOT构建，约5.4MB独立可执行文件，无需用户安装.NET；Windows媒体解码支持仍取决于系统。构建产物与正式安装包验证分开。
+
+事实schema11复用`file_fact_image_details`保存ImageDimensions和Video的视觉向量，主键包含事实kind，视频禁止动画布尔字段。读写和筛选按父事实kind关联，仍受文件身份/卷epoch/内容修订/提取器版本保护；替换视频事实不会修改同身份图像向量。视频色彩、明暗和时长/尺寸/比例在Core查询中求交集，Renderer只转换既有选择，不拼接旧库结果。实验旧schema仍拒绝，不迁移正式用户数据。
+
+`configureEmbeddedMetadataRuntime`保留旧只读状态/事件及显式事务IPC装配，移除启动时对旧目录库的十一类自动候选补查，包括会生成缓存的旧视频色彩链。默认Catalog工作区不调用旧目录增加/搜索链，属性提取通过独立Core授权任务启动；本轮不迁移或清除旧数据库和缓存。
+
+`CatalogApplicationRoot`独立装配统一工作区、既有标题栏/置顶和前台活动确认；`useCatalogApplicationPreferences`只读偏好及事件，初次读取受事件修订/卸载围栏保护，主题、字体、颜色、语言与窗口材质沿用现有能力。`useCatalogWindowCommands`仅转发原生搜索定位、Skim、窗口模式通知和F5刷新；目录快捷键直接切换收藏，输入合成与无修饰键编辑保护复用现有规则。Main仍拥有窗口状态机，Root不枚举旧目录或启动旧搜索。默认Main Renderer入口现已切到此装配；Settings、Line和Preview独立入口保留。
+
+搜索上下文的“上一级”复用目录导航计算父路径，但打开独立浏览上下文；浏览上下文自身仍使用原历史动作。因此搜索范围和查询不会被浏览工具栏替换，返回原页仍保留查询现场。
+
+`CatalogWorkspace`的Skim入口通过共享`CatalogContextActions`打开独立browse上下文，搜索与浏览按范围和类型分别去重。再次调用回到先前搜索上下文，若已关闭则回到常驻全部文件页；不清空搜索页的查询、过滤、选择与滚动。搜索结果打开文件夹同样打开浏览上下文，浏览内复用既有目录历史，卷根上一级进入磁盘视图。浏览根可关闭，全部文件搜索根常驻。`CatalogVolumeGrid`是纯展示，只从Core状态列出本地盘符，不枚举源磁盘；不可查询卷禁用。共享动作提供路径、浏览模式、搜索定位和刷新，顶层窗口不复制导航。浏览根详细筛选或关键词使用全盘查询，进入磁盘后使用解析身份；左侧筛选保持。这些模块已作为默认Main Renderer工作区。
+
+`ComputerSearchThumbnailLeases`将缩略图兴趣与查询/预览授权分开：只对仍有效的结果授权授予独立随机短期票据，全局最多512且不淘汰活动票据。每票据复用Skim图像与Shell队列会话；释放撤销排队任务，已开始的最多2个普通解码和1个Shell任务安全收尾，不强制终止共享解码。协议读取前后检查票据，取消后不返回缓存字节；预览保留原查询会话。真实失败保留查询级有限失败集合，Shell超时仍打开查询级熔断；撤销/迟到任务不能污染新兴趣。`computerSearchThumbnailIpc`独立注册只接受授权/票据，无源路径接口。
+
+`useViewportThumbnail`连续观察零预取边距的实际滚动视口。进入且前台时先请求短期票据，再创建图片；离开、隐藏、失败、关闭或授权替换释放票据，晚到授予直接释放。未提供IntersectionObserver时只显示格式图标。`ComputerSearchResultVisual`仅组合图标与此Hook，隐藏页面不继续持有缩略图兴趣；源缩略图缓存仍按既有缓存键复用。Main已移除旧全目录缩略图发现/启动及候选入队入口，旧搜索扫描保持禁用；旧缓存文件和历史偏好未迁移或删除。Settings不再显示自动缓存优化开关。
+
+`useMetadataBuild`分别保护Hook所有者代次与只读观察顺序。禁用/卸载使旧动作结果失效，前后台切换使旧状态读取失效；动作开始撤销之前的观察，动作进行中不派发状态读取。较晚到达的旧状态不得覆盖新的动作结果或较新的读取；前后台切换仍不取消Main建库生命周期。
+
+`CatalogContextView`通过`useCatalogDirectoryNavigation`管理每页面的当前目录和浏览/范围语义，历史复用可指定初始位置的`useSkimNavigationHistory`，不复制Skim导航实现。双击/Enter/右键打开文件夹走页面导航，普通文件保持既有授权调用与预览链。空关键词的文件夹浏览提交`direct-children`；关键词提交和收藏范围保持递归搜索。返回、前进、上一级及路径输入都由同一导航动作更新范围并取消旧查询；隐藏页面保留自己的目录、草稿、选择和历史。此组件已进入默认工作区，真实原生组件和用户视觉验收仍待完成。
+
+统一浏览的普通文件夹入口复用`computerSearch:search`与Core签名分页：显式`scopeKind: direct-children`只接受本地目录范围，查询直接子项并保留文件夹。`catalog.resolveScope`另返回`directoryFileReference`，从Catalog目录路径解析实际卷根身份；原`rootFileReference: null`仍表示元数据授权/递归查询的整卷范围。缺失子项目录身份时拒绝查询，不回退全卷，也不枚举源目录。用户设置文件类型或详细属性时仍与子项范围取交集。此边界已接默认启动，目录历史继续复用Skim导航Hook。
+
+统一工作区只挂载一个`MetadataBuildSlot`，保存全局建库范围草稿、收起状态及进度。当前页面报告基础搜索可用状态，启动中不清空已知全局可用状态；元数据进度只读分发到各页面刷新门禁，后台页面仅积累变化，前台按原节流/操作门禁刷新。页面查询与过滤保持各自状态，建库授权与范围不随页面切换复制。
+
+`CatalogWorkspace`在独立Renderer领域装配235px收藏与筛选列、复用标签导航及有界上下文。每个`CatalogContextView`独立持有查询/过滤Hook及结果视图，隐藏保留滚动和选择，关闭卸载取消自己的请求；活动视图把同一筛选组件放入固定侧栏Host，不把状态移回App。小窗口改用235px可收起浮层。常驻查询启动仅读取Core状态，未启用时明确按钮才准备能力；Escape清空输入而不退出页面。私有实际组件合成联测通过，默认入口和旧后台生产退休已接线，原生产品验收仍待完成，文件夹层级浏览已复用既有导航和Core签名子项查询。
+
+共享`SvgIcon`用每实例React身份和`svgIdNamespace`重写本地内联SVG的id、url片段、href及无障碍标题引用。颜色字面量和外部地址保留；隐藏页面的渐变定义不再被其他页面同格式图标引用。这是渲染身份修复，不是对外来SVG的安全清洗。纯函数测试覆盖引用以及所有现有图标资产；实际多页面验证图标显示。
+
+每个`useComputerSearchController`挂载实例使用`computerSearchTaskIdentity`创建独立随机owner与递增请求身份，提交和替换共享同一实例计数，不依赖系统时钟/查询代次。Main授权及缩略图会话仍以taskId隔离；关闭一个上下文只取消该实例当前/替换请求。固定相同时钟的双实际Hook私有合成联测复现旧重号后确认结果隔离、关闭另一页不串线及重查新身份，正式工作区已装配，原生验收仍待完成。
+
+统一Catalog工作区上下文基础位于`catalog-workspace/catalogWorkspaceContexts`，共享入口类型在`src/shared/catalogWorkspaceTypes.d.ts`。全部文件根页面常驻；同范围点击激活既有身份，父子范围可独立打开，关闭再打开生成新身份。收藏别名更新只更新标题，取消收藏不关闭或切换页面。最多32个上下文，满时明确拒绝新页面而不暗中淘汰；该基础已接默认入口，不持有旧目录数据库/文件操作。
+
+Renderer收藏入口划分为`favorite-directories/useFavoriteDirectories`及纯展示`FavoriteDirectoryList`。Hook仅调用独立收藏API，单次操作门禁、卸载代次围栏、失败保留上次成功列表；展示组件仅接收数据/动作，直接打开、显式上下排序、编辑显示名及取消收藏均不启动目录建库。235px私有合成视图已验证直接打开/排序/别名/保存失败/移除后保留打开上下文；正式工作区装配已完成，真实原生验收仍待完成。
+
+收藏目录配置由`ComputerSearchRuntime`装配至固定LocalAppData/Cap7CE/Core路径，不读取旧目录库，关闭时等待配置写入退休。`favoriteDirectoryIpc`复用Main sender门禁，新增目录仅保存路径快捷入口，选择动作才打开原生文件夹对话框，取消或列表读取不创建配置；所有操作都不启动Core/提取。`favoriteDirectoryBridge`使用共享API，原生选择与配置注册分开；收藏视图与统一默认浏览已接入，不导入旧目录索引统计。
+
+`favoriteDirectories/FavoriteDirectoryStore`仅管理固定应用配置中的快捷目录、显示名和上下顺序，共享类型复用`DirectoryItem`的入口字段，不携带旧索引统计。该域不依赖Core、目录扫描、事实提取或缩略图服务，移除收藏不触及文件库。读取最多1MiB、最多256项；修改串行并先写独占临时文件再替换，失败保留旧配置与缓存，不删除未成功创建的临时文件。非法已有配置拒绝覆盖。首次读取不创建配置；产品入口已接统一浏览，真实原生验收仍待完成。
+
+`CoreRequestIdentityTracker`由单个SC/1帧读取者拥有。Electron既有`shell-递增序号-随机nonce`请求ID按写入顺序验证，只保留最高序号即可拒绝旧请求及更换nonce的重放；同会话不能切换ID形式。其他合法ID会话最多保留4096个身份，满后拒绝新请求并结束会话，不淘汰旧项而允许重放。客户端在安全整数耗尽前拒绝发出请求。百万请求身份验证及真实隔离pipe重复/切换测试用于守护这一边界，不代表整进程硬内存上限。
+
+目录修订由`computerSearchChangeIpc`只向许可的Main Renderer订阅者发送数字，不含路径、Reader操作或提取权限；订阅有界，视图销毁/取消即释放。`computerSearchChangeBridge`在多个视图间共享一个订阅并校验修订。列表刷新门禁同时接收Catalog修订和相关元数据进度，文件名/路径查询无需提取授权也能更新；初始及重复修订不再查询，前台/操作门禁、有界重试、5秒合并及保留加载范围沿用现有替换链。界面仍待人工交互验收。
+
+`ComputerSearchRuntime`在已认证Host就绪且缓存能力允许时装配`CoreCatalogChangeWatcher`，按进程重置观察修订，只有数据修订变化才通知内部元数据补建入口。提取任务不占通知等待链；已有授权由运行时自行守护，通知不创建授权。关闭进入共享停止门禁，阻止状态查询重启等待，先退休通知，再结束提取，最后关闭Host。Renderer文件列表事件已接，人工交互及真实原生组件验证尚待完成。
+
+`MetadataChangeDrain`合并初次扫描及提取期间的Catalog事件，等待当前控制器退休后仅调用`startChanges`；有界派发仍有剩余提示则继续，无提示时停止。暂停/退出用代次围栏撤销尚未执行的通知，再取消并等待现有控制器。`MetadataBuildRuntime`允许已完成授权在启动时身份复核后恢复提示处理，初次扫描完成也处理留下的提示；已完成后的用户暂停会撤销Host策略并保存paused。只读状态不触发恢复或提取。产品运行时已装配通知与补建；真实原生事件尚待验收。
+
+`CoreCatalogChangeWatcher`拥有单个Core进程的通知等待，超时不调用消费方；同进程失败保持停止，后续普通状态观察不重试。更换进程或关闭时先取消并等待旧回复退休，再开启新等待，进程序号独立重置。消费回调只交付通知，不在等待通道执行长时间提取。该所有者已隔离验证并接入产品运行时。
+
+正式元数据会话通过`ProductOwnedStorageResolver`补充固定应用存储的身份排除，用户保存的授权范围保持原样。配置、发现、派发、领取及续租/提交前复核当前就绪卷与实际目录；排除改变会撤销旧租约并重置派发器，身份无法核验则拒绝发出提取票据。状态读取和暂停不触发目录复核。ProgramData使用应用自身根目录，避免读取Reader受保护配置；没有修改系统权限或排除同名个人目录。
+
+Main的`CoreCatalogChangeProtocol`使用共享`catalogMaintenanceTypes`和已认证会话等待变更，固定25秒等待/30秒请求，严格核验有限状态、原因、修订、安全整数及序号与changed一致性。`CoreProtocolClient`只缓存已核验Hello的能力集合，`CoreHostController.supports`在ready时读取，不新增探测请求；关闭即失效，原有200/300行上限保留。`coreAbortableRequest`承载既有Metadata协议的定向取消/回复退休语义，供长等待复用，不创建Host或读写源文件。通知所有者和UI消费已接，真实组件与人工交互仍待验收。
+
+SC/1可选`catalog.awaitChanges`由`CatalogMaintenanceRequestHandler`负责，一次仅允许一个最多25秒的等待，走独立通道并保留既有deadline、定向取消和会话结束门禁，两个前台执行槽不被占用。`CatalogChangeSignal`仅保存修订和有界状态通知，状态序号独立于数据修订，超时不读数据库；旧客户端序号可重新取快照。`CatalogMaintenanceActivation`装配独占监视及状态通知，`ProductOwnedStorageResolver`只核验固定LocalAppData/Cap7CE及ProgramData/Cap7CE目录，不把任意数据库父目录或素材目录当作自有根。正式CatalogServer代码已装配这一入口，ControllerProbe保持隔离；监视不创建元数据表或授权提取。Main侧通知等待已装配，Renderer事件消费已接，本机安装组件尚未替换，原生事件未验收。
+
+`CatalogMaintenance/CatalogJournalMonitor`作为独占所有者的监视委托，只有已选且就绪卷才连接Reader，必须支持原生journal等待；空闲30秒超时只再次等待，不查询Catalog、目录或USN页。每轮最多16页并轮流处理磁盘，未完成批次短暂让出执行；25分钟后先关闭旧会话再续接。journal更换/截断和自有目录移出复用`SynchronizeConnectedAsync`及同一已认证Reader进行有界补全恢复，每次实例最多3次恢复；事务发布后才通知修订。不可用卷冻结，旧能力不降为快速轮询。`core-catalog-maintenance-boundary-check`守护无网络、无源文件操作、无自建计时器及上述协调边界。当前已由可控多卷事件和数据库样本验证，尚未激活生产循环，也未验证本机原生磁盘等待。
+
+`CatalogMaintenance/CatalogReaderOwnership`协调后台监视租约与显式目录发现、卷选择、同步/重建；后者先取消并等待监视任务及其Reader会话异步释放，再执行，多个显式操作串行。`ProductCoreRuntime`已将这些操作及关闭接入此边界；只读查询不占用Reader所有权。关闭同时取消正在执行与等候的显式操作，并等待所属监视完成；监视失败不自动循环重连，只有后续显式操作才允许重新尝试。监视委托为独立入口，生产原生事件循环尚未激活。
+
+`CatalogMaintenance/CatalogJournalPageOwner`把每个就绪卷的页面核验、自有根物理复核、旧父关系读取、分类、目录暂存与事务发布串行组合。原始USN边界先校验，曾保存的检查点改变即退休；自身页只推进内存，外部页提交后才推进持久游标并清暂存。任何处理中断都退休该实例，新的所有者从数据库检查点重建，目录移出、journal代次改变或容量超界要求补全恢复。没有根的卷仍核验就绪修订；根必须同时存在于Catalog目录集合及实际文件系统。此类不拥有Reader连接、计时器或自动轮询，真实持续事件所有者仍待接入。
+
+`CatalogMaintenance/CatalogOwnedDirectoryStage`只在所有者内存保留最多4096个最新自有目录事件；超界要求补全恢复，不使用自身写入来冲洗队列。外部事件出现时按身份合并、保留全部变更原因，并生成同时包含这些目录边的提交；仅成功提交的同一准备对象能清空暂存。`CatalogV2Database.ApplyMaintenanceBatchAsync`在ready状态以原检查点和全局修订作并发围栏，原子更新节点、目录缓存、外部提示和新检查点，不增加每页状态转换写入；空批及全自有批拒绝。节点的内部提示抑制标记仅允许目录，不存入表，不向Renderer暴露；曾属于外部的目录仍保留提示。原同步批入口保持既有状态约束。该边界已隔离验证，连续所有者与真实原生事件尚待接入。
+
+`Queries/CatalogStorageDirectoryReader`在就绪卷和固定Catalog修订的只读快照内，分页读取自有目录父关系或最多4096个事件身份的旧父关系；目录缓存总量超过65536即拒绝，不创建事实表。`CatalogMaintenance/CatalogOwnedDirectoryIndex`按稳定父身份分类，处理同页新建/改名、文件移入、目录移出、删除及失败重放，同名文件不能证明所有权。自有目录事件单独返回：持续所有者必须在下一次外部提交中保存这些目录边，或保持游标未持久推进，避免重启后丢掉新子目录身份。自有目录移出要求补全可能曾忽略的新子文件。此阶段只提供分类/读取边界，尚未启用持续所有者。
+
+CR/2增加身份限定的`JournalWaitAny`及`JournalChangeWait`能力位。二进制请求最多32卷/30秒，仅含已授权卷身份、journal代次和USN；响应只含唤醒卷身份或空超时，普通Core核对响应未扩大请求卷。`ReaderJournalWaitIo`使用只读卷句柄及overlapped USN等待，输入/输出/事件保留到内核完成，取消或异常先CancelIoEx并等待退休再释放；`ReaderJournalWaitCoordinator`合并多卷等待并在唤醒/超时/失败后等待其余操作结束。已认证服务保留一个下一帧读取，用`ReaderJournalWaitChannel`在断开/定向取消时立即结束等待，正常唤醒保留下一帧给原请求循环。没有该能力的组件不会被假装支持；现有安装组件未替换，原生卷事件与用户侧持续维护仍未验收。
+
+`CatalogMaintenance/CatalogJournalAdvanceCursor`将连续读取位置与持久检查点分开：已核验为自有存储的页面只推进内存游标，不产生Catalog/WAL写入；有外部事件时保留原持久前缀，Catalog提交完全匹配的新检查点后才推进。页面核验journal代次、连续性、USN边界、最多4096条，拒绝过期批次和无提交的外部推进；重启可重新读忽略过的自有前缀。此类不拥有原生监听或目录分类，尚未接连续Reader；实际自有目录过滤和原生取消仍须完成。
+
+`FileFactOwnedStorage`为后续持续维护提供内部自有存储排除边界：只读属性句柄核验实际目录身份，再与就绪且已选卷的Catalog目录缓存核对；同名用户目录不按名称排除。`NativeFileFactSourceGuard.CaptureDirectory`拒绝文件、整盘根、重解析/offline/recall目录及这些属性的祖先，不改变既有文件提取门禁。排除生成新策略副本，不改用户授权记录；根被替换或Catalog身份不符时拒绝继续复用。尚未接生产配置或USN过滤，仅由隔离临时样本验证。
+
+`MetadataBuildController.startChanges`复用既有单文件提取/源身份核验/取消链，只以`metadataChangeDiscovery`消费提示代替初次全盘发现。每次最多64页后给提取留出处理时段，未消费完通过内部`hasPendingChanges`留给所有者继续；分母来自就绪卷的去重未完成任务，历史完成项及重叠提示不累加。增量轮跳过暂不可用卷并保留待办，空轮不创建Worker，完成后无空查询轮询。该入口尚未接产品自动唤醒，首次建库仍沿用既有全扫等待语义。
+
+SC/1增加`metadata.consumeChanges`，由既有`FileFactRequestHandler`进入会话门禁，与配置、暂停及派发共用串行锁。未显式配置或已暂停时拒绝；同一配置内提供者集合固定，修改须重新配置并安全重放剩余提示。每请求仅一个有界生产步骤，不提供路径或内容读取入口；Main协议适配固定128项、复制规格并严格核验结果。该接口尚未加入自动后台唤醒或连续USN链。
+
+`FileFactChangeDispatcher`是显式驱动的数据库队列生产者，构造不创建库或启动读取。每步最多一个提供者发现页，授权范围及提供者配置在构造时复制，所有提供者及分页入队后才确认提示；崩溃重放依赖任务身份/版本去重。账本支持序号键集读页，离线旧提示保留但不阻塞后面的就绪磁盘。确认在同一写事务验证原Catalog修订、卷就绪及提示序号；分页中Catalog变动重新发现，避免暂不可查询时误确认。空允许范围完全休眠。产品所有者须将步骤与授权变更串行化；自动调度、连续USN及自身存储排除仍待接入。
+
+`FileFactDiscovery.ReadChangedPageAsync`复用初次发现的源版本、授权范围、格式、安全属性和卷就绪条件，再与单个身份/子树/卷重建提示相交。`FileFactChangedScope`仅生成参数化SQL，不读取文件；目标变更序号及范围进入发现游标哈希，旧变更游标不得用于新序号或扩大为全盘发现。子树查找以稳定父引用递归并消除环，所有发现结果仍有界分页。该查询边界已可用，自动消费者尚未启用。
+
+事实schema10增加`file_fact_catalog_changes`身份变更账本。USN增量批次在基础节点更新的同一事务中记录文件/文件夹身份，重复身份合并并保留子树扫描提示；初次MFT批量写入不逐条记账，重建使用卷级提示。自增序号随重复变更推进，确认仅删除完全匹配的身份及序号，旧消费者不能删掉后来发生的变更；读页和确认最多512项。不读取源内容、不启动提取，未授权时没有事实表也不会新建账本。此阶段只完成持久提示，消费、唤醒及连续USN读取仍待接入。
+
+Catalog增量节点携带`MayChangeFileFormat`，由USN改名原因产生；事实失效域只查询这批改名文件的原扩展名，格式不变时复用事实，格式变化时在同一Catalog事务中增加源内容修订。首次MFT快照及普通内容更新不增加逐文件格式查询；改扩展名后，即使大小/时间相同，也拒绝旧读取器发布及旧子类型数量复用。此边界仅负责失效，变更后自动派发仍待接入。
+
+`archiveMetadataReader`提供压缩包事实读取基础，只执行7z技术清单命令，不解压。每次使用独立WASM实例，将依赖二进制的内存声明在内存副本中限制为256MiB，不修改依赖文件；NODEFS只允许读取当前获准文件，禁止源写入和相邻分卷访问。虚拟挂载点只在WASM文件系统中创建。清单输出最多4MiB，截断或跳过不可表示条目时数量/扁平结构保留未知；完整空归档保留已知零。压缩包事实schema9、队列schema8增加Archive类型；完整清单要求已知数量及结构，部分清单只保留正向内容类型/嵌套证据。细节以固定内容类型位集与父事实、修订、源版本、队列完成原子发布。类型和结构各组取并集，再与计数条件相交，未知值不匹配；SC1类型化条件进入签名分页，Main严格校验及指定版本2，Renderer复用共享压缩包控件。读取运行在所属OS元数据进程内，超时/取消由所有者终止，自动回收实例使用的线性内存。旧实验schema拒绝，不迁移正式用户库。WASM线性内存上限不是进程RSS上限。
+
+文本/数据事实schema8、队列schema7增加TextData类型；`FileFactTextDataDetails`使用text/csv/json子类型，只保留对应的字符/行、记录/列或根类型/条目数量，已知零与无关字段缺失保持区别。父事实、细节、修订和任务完成共用源版本保护与事务。`FileFactTextDataPropertySql`对子类型及数量条件取交集，范围与根类型随SC1签名分页保存；Main严格校验并使用读取器版本2，Renderer复用共享文本/数据控件，非法范围及混合详细领域不扩大查询。`textDataMetadataInspector`只在所属OS提取进程调用有界读取器，按子类型省略旧计数占位字段，不保存正文、生成缩略图或访问旧sql.js；取消/超时由进程所有者终止读取。
+
+`textDataFactExtractor`版本2在64KiB流式读取中保留Unicode及跨块CSV状态，拒绝未加引号字段中的引号和闭合引号后的非分隔内容，解析失败不冒充编码失败。维持CSV标题计入记录、空物理记录跳过和取最大列数的既有定义；空文本/CSV及空JSON容器仍为已知零，JSON标量根不支持。读取范围仍为文本/CSV256MiB、JSON64MiB，计数读取不保存正文。
+
+`useComputerSearchMetadataRefresh`消费前台建库进度变化，只为当前属性查询安排有界刷新；正常更新间隔至少5秒，完成/暂停/失败刷新剩余变化，未变化及已完成状态不继续查询。`MetadataResultRefreshGate`用单调观察序号保护跨建库轮次与异步完成，失败最多3次后等待新变化。`readComputerSearchReplacement`只使用新查询的签名游标，重建已经加载的结果范围；原结果及授权任务保留到替换准备好，失败保留原列表。控制器在手动查询、分页、隐藏或退出时取消替换任务，拒绝过期响应，使用已提交查询而非输入草稿。已选文件或右键菜单打开时延后替换；网格以稳定文件ID作为React键，避免授权ID变化导致整体卸载。建库显示槽只报告进度，查询调度仍在computer-search职责域中。
+
+三维事实schema7、队列schema6增加ThreeD类型与`FileFactThreeDDetails`，保留可空安全长整数三角面数及可空动画/骨架布尔值；至少一项已知才发布Indexed。细节与父事实、修订和队列完成原子写入并受源版本保护。`FileFactThreeDPropertySql`将结构选择取并集，再与数量范围相交；静态要求动画/骨架均为已知false，全选仍不匹配未知结构。类型化条件随SC1签名分页保存，Main严格校验并指定读取器版本；共享三维控件映射数量预设、自定义范围和结构，模型类型只取扩展名交集，无需详细属性授权。`threeDFactExtractor`版本2区分计数未知与已知零：缺失/非法图元、索引、accessor计数或部分可解析几何不发布已知部分总数，点/线图元及空mesh列表仍为已知零。非数组动画/骨架字段保留未知，GLB声明长度必须匹配实际文件长度；GLTF只使用声明计数，不跟随外部buffer URL。`threeDMetadataInspector`在所属OS提取进程内调用读取器，将未知字段省略，取消/超时沿用进程所有者，正常完成按RSS阈值回收；旧实验schema拒绝，不迁移正式用户库。
+
+文档事实schema6、队列schema5增加Document类型与`FileFactDocumentDetails`。内容数量与pages/slides/sheets类型成对可空，图像组成采用可空布尔值，画板数采用可空非负整数；已知零画板不冒充缺失，未知图像组成不匹配“无图像”。细节、父事实、修订和队列完成共用事务及源版本。`FileFactDocumentPropertySql`在同一查询内组合内容/画板数量范围和图像组成，拒绝其他领域向量与尺寸/时长；类型化条件随SC1签名分页保存。Renderer文档/项目控件复用既有预设与自定义范围，非法范围失败关闭；主进程严格校验并指定读取器版本。Core使用`metadataExtraction/documentMetadataInspector`直接在所属OS提取进程内调用文档解析器，避免临时线程反复加载/卸载原生PDF依赖；进程具有256MiB主JS堆，取消/超时由所有者退出/终止进程并释放源句柄，完成后按RSS阈值回收，不将JS堆上限称为原生内存硬上限。旧读取器`documentFactInspector`支持可选取消，取消前不启动解析，取消/超时/无响应退出均等待所属Worker结束，未传信号的旧调用保持原资源设置。文档读取保持既有有界PDF/Office/画板解析，CDR仅遍历本地ZIP目录而不启动渲染子进程，不生成缩略图。旧实验库拒绝、不迁移正式用户库。
+
+模型事实schema5、队列schema4增加Model类型与`FileFactModelDetails`，将1..9007199254740991参数量和固定七类精度与父事实、源版本、事实修订及队列完成原子发布。`FileFactModelPropertySql`复用同一查询谓词筛选参数区间并集与精度并集的交集，未知信息不匹配，模型拒绝尺寸/时长及其他领域向量。类型化模型条件随SC1签名分页保存。`computerSearchModelConditions`严格校验并深拷贝条件，Renderer适配保留十亿分档的排他上界。隔离提取Worker复用GGUF/safetensors文件头解析器，支持取消、超时和等待所属解析线程退场；Core调用设置256MiB解析线程JS堆上限，不表示原生内存硬上限，也不加载模型或读取张量内容。共享左侧面板增加模型详细选择。旧实验schema拒绝，正式用户库尚未切换。
+
+字体事实schema4、队列schema3增加Font类型与`FileFactFontDetails`；完整已知向量由字重1..1000及四个布尔值组成，协议缺失值保留null并拒绝，不冒充false。向量、父事实、事实修订和队列完成原子发布。`FileFactFontPropertySql`在同一源版本保护的查询中筛选字重并集、样式/可变布尔状态及字符支持交集，字体拒绝尺寸/时长等其他领域条件，未知字体细节不匹配。SC1签名分页保留类型化字体条件。`computerSearchFontConditions`映射既有选择，同组样式/类型全选表示不限制，中文+西文均要求支持。读取Worker复用受限字体解析器，主进程及Worker严格校验字段并采用当前提取器版本；共享左侧面板已接字体详细选择。旧实验库不迁移，正式用户库尚未切换。
+
+`fontFactInspector`增加可选取消信号，在读取前/创建线程前检查取消，取消/超时/无响应退出等待自身解析Worker退场；Core调用使用128MiB解析线程JS堆上限，未传信号的旧调用保持既有资源设置。字体详细属性已进入Core存储和共享筛选。
+
+音频事实通过同一源版本、租约与普通权限Broker发布：事实schema3、队列schema2增加Audio类型，`FileFactAudioDetails`只存受父事实保护的可空已知声道，细节写入与时长/修订/队列完成共用事务；旧实验schema仍拒绝，不迁移正式库。`FileFactAudioPropertySql`把最多3个声道区间取并集，再与时长和文件范围取交集，未知声道不匹配；音频拒绝尺寸/比例/颜色条件。SC1签名分页保持声道选择。`audioFactInspector`支持取消、有限输出和子进程清理，隔离Worker复用读取器，不访问旧sql.js。`computerSearchAudioConditions`复用精确秒到毫秒转换，映射既有声道与时长选择；共享左侧面板已显示音频详细条件。自动化覆盖生成WAV、取消和管道异常、事务回滚、内容失效、未知声道与区间并集。
+
+`WorkspaceShell`复用同一个左侧筛选面板，Skim展开时保留网格列和侧栏宽度；`useComputerSearchFilters`独立保存Core筛选会话，切换目录标签不串用条件，关闭Skim或明确退出搜索清除该会话。`useComputerSearchFilterActivation`在前台条件改变时复用统一搜索入口。图像颜色/动画/尺寸/比例、视频尺寸/比例/时长/分辨率与基本文件条件进入同一Core查询；Core暂不显示尚未支持的其他详细属性，目录页仍保留完整面板。共享详细领域类型在`src/shared/searchFilterTypes.d.ts`，Core专用Skim参数在自己的领域类型中。未初始化属性库时，详细查询在只读快照内返回零匹配与覆盖修订0，不初始化属性域、不授权读取；非法条件、部分或未知schema仍拒绝。
+
+`FileFactImagePropertySql`在同一受源版本保护的事实查询中加入可空动画筛选及有界视觉条件组，固定指标/比较符白名单，数值只作SQL参数。每组替代条件OR、替代内及组间AND，颜色条件要求`properties_present`，未知属性不当成0或静态。候选估算与最终过滤共用同一谓词，签名分页持有全部条件。`computerSearchVisualConditions`在主进程深拷贝并校验条件；`computerSearchImageConditions`复用原色彩语义把颜色/色调选择各自映射为并集，再与尺寸/比例/时间等条件组合；混用图像/视频详细条件拒绝。共享左侧面板已接图像与视频标量选择，其他详细领域继续补齐。
+
+文件事实schema提升为2，增加`file_fact_image_details`，按固定29个0..10000整数指标保存颜色向量，用`properties_present`区分未知与已知全零，`is_animated`保留未知/静态/动画。细节行挂到同一图像事实身份，源版本与提取器版本复用父事实；写入/替换/清除细节与父事实、修订号和队列完成共用事务，不替换用户文件。旧实验schema拒绝而不迁移或清理，新实验库由私有装配者新建。`FileFactImageMetrics`为唯一指标顺序/白名单，SQL不解析任意JSON。`FileFactImageDetailsTests`覆盖重开、未知、越界、原子回滚、提取器降级拒绝和源失效。正式Worker已调用图像读取器，将向量扁平化并严格验证后传到Broker；Core图像读取器版本独立为2，旧sql.js尺寸读取器版本保持1。图像属性组合查询已进入同一Core查询。
+
+`metadataExtraction/imageMetadataInspector` 是隔离 Worker 内使用的只读图像读取器，复用尺寸读取、受限动画头探测和视觉属性纯分析器。只解码首帧，将分析输出限制到300×300，不创建缩略图；SVG复用外部引用拒绝规则，方向修正与尺寸一致。JPEG/TIFF/BMP按静态格式处理，GIF/PNG/WebP探测不完整时为未知，AVIF/SVG动画未探测时也为未知；颜色不可解码不冒充已知颜色。正式Worker已经沿用超时/源身份门禁调用读取器，结果经固定向量校验进入事实存储，组合查询与共享图像面板已经接线。测试使用自建图像覆盖红色/透明背景、方向、GIF动画、未知SVG、拒绝外部引用及不写源/不生成缓存。
+
+`MetadataBuildController` 将单次 Worker 超时/异常退出作为有源版本保护的失败结果发布，沿用 Core 前后物理身份核验及失败缓存，继续后续源；连续三次异常停止扫描，第三项不发布失败，关闭 Worker 并向 Core 暂停以撤销租约。正常读取结果重置连续异常计数；启动/发送/协议错误仍中止，不归因于文件。取消始终优先，不缓存取消结果。`computerSearchBaseConditions` 在调用旧条件解析器前后拒绝非法自定义大小、日期及未知预设，避免条件丢失后回退为更宽查询。
+
+`FileFactShortEdgeRangeSql` 用短边区间并集支持多个分辨率档，查询计划与最终谓词共用，分页保留选择；空、反向或非正整数区间拒绝。`computerSearchScalarConditions` 将尺寸、图像/视频比例、时长和分辨率纯适配到Core；十进制秒用整数缩放处理毫秒上下界，无法命中整数毫秒的点范围转为明确空文件条件。`useComputerSearchController` 可接共享条件快照，条件改变取消旧页并重新提交，隐藏页不主动提交；共享界面已经传入图像颜色/动画和视频标量条件，其他媒体领域待接入。
+
+`FileFactAspectRangeSql` 单独校验与构造最多40个比例区间的精确并集，支持开/闭端点；整体仍与尺寸/时长/基本条件取交集，查询计划估算和最终查询复用同一谓词，签名分页保留选择。区间端点以整数交叉相乘，限制至千万级，避免自定义比例容差经过浮点除法。`computerSearchBaseConditions` 为现有UI基础条件提供纯适配：格式别名及查看范围取交集，显式空扩展名集合表示无匹配；预设大小结束点及日期结束点从排他转为Core包含边界，日期全程BigInt换算FILETIME。该适配已经装配共享左侧面板。
+
+`CatalogFileConditions` 与 `CoreSearchFileConditions` 承载有界扩展名集合、文件大小和修改时间范围；同类扩展名用 OR，范围/文本/目录/事实按 AND。SQL 使用参数，基本条件不依赖事实域初始化；条件随签名游标保存，多格式列表支持至128项，游标上限与 Electron 的64KiB边界一致。修改时间沿用 Catalog 的 Windows FILETIME，以十进制字符串通过 JavaScript，由 Host 精确解析 Int64；不将其当 Unix 毫秒。`computerSearchFileConditions` 是 Electron 的对应校验边界，拒绝不安全数值和畸形范围。完整 Renderer 筛选适配尚未完成。
+
+`computerSearchFactConditions` 将共享的尺寸、比例和视频时长条件校验后映射为 Core facts，不允许 Renderer 指定提取器版本；版本来自当前读取器常量。IPC 拒绝未知字段、不安全数值和反向区间。过滤直接进入同一 Core 查询，分页由 Host 签名条件持有，不在 Renderer 拼接旧库结果；左侧通用筛选面板仍待完成全部能力的适配。
+
+Core 搜索页已接空查询文件浏览和名称/路径默认匹配：进入可查询状态后自动提交，清空文本回到空查询，目录变化取消旧任务并重新查询，只有当前请求能解除忙状态。`hasSubmitted` 区分尚未提交与已提交的空文本，结果页不再把空文本当成没有结果。授权/分页沿用同一 Core 会话，目录浏览/收藏入口和完整事实筛选面板尚未统一。Core 结果缩略图的观察预取边距已设为0，仅进入视口的结果才发起缩略图请求；整个旧缩略图后台链仍待独立收口。
+
+`metadataBuildRuntime` 复用 ComputerSearchRuntime 的认证连接和 Catalog 初始化链，仅在明确请求后创建一次提取扫描；status 只读 Catalog 和任务快照，暂停使尚未完成的启动准备失效，退出/能力变更先停止提取再关闭 Host。`metadataBuildIpc` 独立校验主窗口来源、明确同意及稳定范围标识，`metadataBuildBridge` 提供状态、开始、暂停、恢复与目录范围解析的白名单方法。`useMetadataBuild` 只在前台运行阶段串行刷新展示状态，隐藏或退出搜索页不停止后台任务；无进行中的任务时不轮询。`MetadataBuildSlot` 组合展示、范围草稿与明确动作，不访问源；`MetadataBuildScopePanel` 提供磁盘勾选及上下顺序，`MetadataBuildDirectoryScopes` 通过 Core 将本地路径解析为稳定目录标识，支持多个允许/排除范围；目录控制默认折叠，解析不授权内容提取。
+
+`electron/metadataBuildPreferences` 单独持有 `%LOCALAPPDATA%\Cap7CE\Core\metadata-build.json`，只保存明确开始时的范围、顺序、范围显示路径与授权记录，不保存文件内容或进度快照。创建独占临时文件、同步并原子替换自己的配置；尺寸/结构有界校验，畸形记录不视为授权。配置读写独立于只读提取模块。配置版本2增加active/paused/completed运行意图，旧实验配置拒绝而不迁移。`MetadataBuildLifecycle`持有授权及串行原子写入，读取状态不启动内容提取；产品所有者在Core准备好后显式执行一次恢复，只恢复active授权。基础Catalog仍在同步时延后恢复，由现有产品状态观察在就绪后重试，不增加空闲提取轮询；恢复前检查所有选中卷，并按显示路径重新解析每个文件夹，要求卷ID和稳定文件引用完全一致；缺失、重建或重绑定失败关闭，不回退到全盘。用户暂停保存paused，正常退出只取消当前进程工作而保留意图；完成或错误分别保存completed/paused，防止重启重复完整扫描或自动重复失败。停止等待配置写入完成，写入失败仍在finally停止Core。未开始草稿不跨重启保存，持续增量仍待实现。
+
+`src/renderer/metadata-build/MetadataBuildPanel` 为建库提示和进度提供纯展示组件，接收快照与明确操作回调；不拥有 IPC、源访问、授权持久化或后台任务。状态契约唯一声明于 `src/shared/metadataBuildTypes.d.ts`，Electron 仅作类型重导出，不改变运行时输出目录。未知总量不显示百分比，暂停时未知进度不显示运行中的进度条，完成仅表示本轮处理。私有本机预览已连接正式后台控制器与实际样本；已通过独立 metadataBuild IPC/预加载白名单接入 Core 搜索页，实际 Windows 主界面仍待人工验证。自动守门限制该组件体量及运行时依赖。
+
+`metadataExtraction/MetadataBuildController` 负责一次明确启动的后台扫描：按所选卷分页发现尺寸/视频任务，确认本轮总量后按卷顺序派发到单进程读取器；暂停向 Core 传播取消并撤销票据，恢复重新检查剩余任务、复用已完成事实。运行期间等候不可用卷或未到期租约，空领取不等于完成；扫描完成后停止轮询。进度仅统计本轮处理，不将任务账本当作全盘覆盖率，ETA 按类别使用有界样本，缺少样本/分母或等待时返回未知。`metadataBuildProgress` 提供展示状态、有限样本估算和可取消让步；两者不读取源或数据库。Core 的发现、账本和领取可限定当前卷，领取同时约束当前读取器类别/版本，避免任务交给不匹配的解析器。这是新流程的派发契约，不提供旧用户库迁移或旧队列兼容；旧实验格式需要时整体重建。Host 显式装配休眠的事实会话，查询或启动 Host 不初始化事实表；只有 metadata.configure 明确同意后才激活。
+
+`Host/MetadataRecovery/FileFactRecoveryCheckpoint` 在事实域首次激活前，为已有 Catalog 创建私有一致性 SQLite 恢复点。源连接只读，原生 backup 每批 256 页、批间让步并检查取消，90 秒上限；输出仅使用私有恢复目录中的新 GUID 文件，CreateNew 保证所有权，校验 quick_check 后原子改名且不覆盖。取消/失败仅删除本次自建 partial；已有事实域不在每次启动重复备份。该模块不恢复或初始化源库；装配者成功返回后才可进入 HostSession 初始化。临时库测试覆盖备份早于表创建、再次启用不重复备份、复制途中取消、失败目标保留、缺失源不创建。尚未接入生产首次启用流程。
+
+`electron/core/coreMetadataProtocol.ts` 是现有已认证 `CoreProtocolClient` 上的显式元数据协议适配，不创建 Host、不自动配置或启用提取。验证发现页、票据、账本、状态和数字枚举，源版本四项仅接受不溢出 Int64 的精确十进制字符串；Worker 只接收路径与读取类别，发布请求只有租约和事实结果，源版本仍由 Host 持有。测试覆盖无明确确认不发请求、FILETIME 不经过 Number、非法路径/溢出/响应拒绝和结果映射。已由后台建库服务复用，Host 休眠装配和 Core 搜索页控制已接线；完整统一结果网格尚待切换。
+
+`electron/metadataExtraction/` 提供由显式建库服务装配的独立内容提取进程和客户端。客户端一次只接受一个任务，无等待队列；退休进程退出前不启动替代进程，异常退出/取消/超时均拒绝本次结果并允许后续重新启动。进程隐藏运行，Node 堆上限 256 MiB，Sharp 单线程且不保留缓存；任务后 RSS 超过 256 MiB 时退休（不是原生内存硬上限）。读取器复用现有尺寸/视频实现；视频读取支持 AbortSignal，停止时结束自身启动的 PowerShell，并留出退出宽限期后仅终止自身子进程。客户端不访问数据库或启动扫描；源身份与精确版本仍由 Core Broker 在读取前后核验，取消结果不能作为永久失败发布。`metadata-worker.integration.cjs` 用生成图像和独立假 Worker 验证源不变、中文路径、进程复用/回收、并发拒绝、超时、取消、异常与 IPC 校验；尚未启用生产后台。
+
+Core 的 `Cap7CE.Core.Catalog/FileFacts/` 提供显式启用的文件事实存储基础库，已由明确开始请求启用，尚未替换原常规搜索。它仅扩展已有 Catalog v2 数据库，用独立域版本保存图像尺寸、视频标量及版本化失败状态；身份复用 `CatalogEntryIdentity`，属性与收藏、基础节点无级联删除关系。源版本使用精确 Windows FILETIME、大小、卷代次和内容代次；事务内验证后发布，读取只返回当前可查询节点的有效版本。独立事实修订号在发布与失效时原子递增，为后续组合分页提供版本依据。库不读取源文件、启动提取器或迁移用户库。`FileFactDatabaseTests` 使用临时库验证精度、复用、失效、过期发布拒绝、失败缓存和所有权。
+
+`FileFactSourceResolver` 在同一只读快照中解析 Catalog 管理的本地卷路径与源版本，拒绝目录链缺失、非本地卷及非法路径段；解析不打开源文件。普通权限提取端仍必须在打开前后核对实际卷/文件身份和精确版本，不能把数据库路径视为读取授权。路径解析与异常父链由 `FileFactDatabaseTests` 验证。
+
+同域的 `FileFactQueue` 是显式启用的持久派发账本：用户范围和卷顺序存入独立队列版本表，空允许范围默认不派发；目录范围沿 Catalog 父身份链匹配，排除优先。任务按身份/属性类别/提取器版本去重，有限期租约支持续租、过期恢复和范围代次保护；完成任务与事实发布处于同一 SQLite 事务。改变范围保留已有事实并拒绝旧租约，目录移出范围也拒绝结果。提取进程、有界并发、覆盖率/进度与 UI 属于后续 Host 装配，库本身不启动它们。`FileFactQueueTests` 验证持久恢复、范围、排序、去重和注入完成失败的事务回滚；架构检查禁止该域直接访问源文件、网络或进程。
+
+`FileFactDiscovery` 从已有 Catalog 按卷优先级与文件身份键集分批发现任务，每页最多 512 项，允许/排除规则复用队列范围匹配。它只读取事实域和基础节点，跳过不安全/缺失源版本，以及同源已有有效或失败事实的文件；不收集全盘路径、不打开源文件。游标指纹绑定范围、类别、提取器版本和规范化扩展名，参数变化拒绝复用。发现采用实时分页，游标前的新变更仍需下一次扫描或同步消费者补齐；当前已接本轮后台扫描和进度，扫描检查点与自动 USN 入队尚未实现。`FileFactDiscoveryTests` 验证跨卷分页、排除、失败复用、失效再发现与取消。
+
+Host 的 `MetadataExtraction/NativeFileFactSourceGuard` 提供普通账户、仅 FILE_READ_ATTRIBUTES 的物理源核验：只打开已存在的本地 NTFS 文件，仅接受本地固定/可移除盘，拒绝映射网络盘、目录、重解析点、offline/recall 标志，比较文件句柄与根句柄的实际卷序列，阻止父目录联接跨卷造成身份混淆。身份沿用 Reader 的卷/FRN 编码；大小和 FILETIME 以整数比较。它不读取内容、不启动进程、不赋予读取授权，也不自动开始建库。临时中文文件测试验证不改内容、精确时间、移动后身份保持与旧源拒绝；架构守门禁止提权、源写入和网络。
+
+`MetadataExtraction/FileFactExtractionBroker` 将持久队列、Catalog 路径与物理源门禁组合为显式初始化的普通权限提取派发边界。默认最多一个在途任务，内部上限两个；只有已核验路径进入票据，完成时再次核验，源版本来自服务持有的租约，不由结果提供方改写。范围变化撤销所有旧票据；续租和过期恢复复用队列，路径/身份暂时不可用时保留有限租约后重试，不记录永久提取失败，避免重命名同源版本被错误锁死。Empty 表示暂无可领取任务，不能当作全部建库完成。该类不启动提取器、不读取内容，Host IPC 与后台发现循环由独立领域模块装配，Broker 本身不拥有 UI 或进程。`FileFactExtractionBrokerTests` 用自建中文临时源验证完整派发/发布、范围撤销、移动恢复、同步落后阻断及失败缓存。
+
+`FileFactQueueDiagnostics` 在只读快照内按当前可查询范围和指定类别/提取器版本统计持久任务状态；有效租约和过期待恢复任务分开，返回下一租约到期时间。该账本反映已发现任务，不能代表全盘分母或完整属性覆盖率；后台控制器还须结合发现是否结束、源失联与卷状态判断完成，避免 Empty 被当作完成。状态读取支持原生 SQLite 取消，不修改租约。Broker 临时库测试覆盖统计、到期恢复、版本隔离与范围暂停。
+
+可选 `FileFactHostSession` / `FileFactRequestHandler` 提供 metadata 配置、发现、领取、续租、完成、暂停和账本状态的领域 IPC。配置前验证明确确认与范围，首次激活初始化事实域；可重建的新库无需历史迁移或备份，装配者可按实验回退需求提供可选一致性恢复点；查询状态、拒绝确认和非法范围不会初始化表。暂停保留事实和任务并撤销旧票据，恢复重领；发现页与入队受同一会话范围串行约束。只有 `ProductCoreRuntime` 显式注入会话时才发布这些能力；生产入口已注入休眠会话，当前不启用用户库迁移；首次后台提取由主窗口明确同意启动，之后产品所有者可在重启时恢复经过身份复核的active授权。字段复用事实域模型，源版本在 SC/1 帧中保持精确字符串。`FileFactHostSessionTests` 验证拒绝请求不写库、恢复点先于初始化、中文票据、暂停拒绝发布及恢复；Worker、后台循环与进度控制已接线；可选恢复点不作为新库初始化前提，同意、范围和运行意图已接跨重启持久化，持续增量仍待实现。
+
+已有 Catalog 同步链提供可选事实失效钩子：`CatalogFactChangeClassifier` 将 USN 内容/权限等相关原因映射到节点失效标志；`FileFactCatalogInvalidation` 在基础批次的同一事务中保留全部事件的失效语义，避免后续重命名覆盖前序写入原因。断档状态转换和开始重建递增卷代次。仅已显式初始化事实域的库执行这些钩子，普通 Catalog 不自动创建事实表。USN 原因分类、同批次写入后重命名、批次失败回滚和重建复用拒绝由 `FileFactCatalogIntegrationTests` 验证；直接绕过 Catalog 同步链的内容变化仍需显式失效接口。
+
+`CatalogV2Database.QueryAsync` 的库级契约可组合名称/完整卷路径、现有目录范围、扩展名和事实条件；默认仍是名称查询；产品 SC/1 请求已支持可选文本目标与标量事实条件，并允许空关键词浏览，Electron/Renderer 尚未接新字段。`FileFactQuerySql` 持有尺寸、精确有理数比例和视频时长谓词，先匹配源/提取器版本再返回命中；无关键词全盘属性查询用有界候选估计选择查询顺序，目录/文本查询保留优化器选择。基础与事实修订号在同一读取快照取得；严格版本校验可拒绝已改变的结果，实时键集分页则允许事实增长并报告新版本，游标之前的新命中需刷新。`FileFactQueryTests` 验证跨卷同名分页、条件交集、路径字面转义、覆盖增长与各查询顺序。源版本 JSON 固定传输精确十进制字符串，拒绝数字、重复及未知字段；源版本转换器用于事实发布边界，已装配产品提取 IPC，源版本仍由 Host 所有。
+
+`ProductSearchQueryMapper` 独立持有 SC/1 搜索范围、类型、文本目标和事实 DTO 到 Catalog 查询的转换，不访问源文件或 Reader。签名产品游标保存完整文本/事实条件，基础 Catalog 变化仍使游标失效，事实发布可继续分页并返回新的事实修订号。没有事实条件时省略新增响应字段，旧请求保留名称匹配语义；合成夹具拒绝不支持的新条件，避免静默忽略。`ProductFactSearchTests` 验证 UTF-8 中文路径、空查询、条件交集、条件保持、事实增长和无效输入的验证错误。
+
+`Queries/CatalogQueryExecution` 将查询取消绑定到当前连接的原生 SQLite interrupt，注册先于连接销毁释放，并将对应中断映射为取消。`CoreRequestDispatcher` 在两个有界执行槽中运行数据库请求，保持管道读取和取消处理可用；排队时间计入原有截止时间，取消不排在数据库槽之后。`CatalogQueryCancellationTests` 验证正在执行的原生扫描被中断；`CoreRequestSchedulingTests` 验证并发上限、排队截止时间、取消优先和槽复用。
+
 工作区标签基础位于 `src/renderer/workspace/`：`workspaceTabs.ts` 以纯 reducer 管理固定全部目录、目录去重、唯一 Skim 标签、打开顺序、活动标签和关闭回退；`useWorkspaceTabs.ts` 仅提供 React 状态接入。目录快照复用 `SearchState`、`SkimDisplayMode` 与 `ResultGridScrollMemory`，包含独立随机批次和选择，写入时深复制并约束目录身份。Skim 标签仅保存身份，导航与搜索会话仍由原有 Skim 控制器持有，后续布局接入不得复制这些链路。纯状态模块无 IPC、查询、持久化或窗口生命周期职责。`test:workspace-tabs` 验证状态隔离和领域依赖边界，并纳入完整测试与架构检查。
 
 当前工作区布局由 `WorkspaceShell.tsx` 组合左侧 `WorkspaceRail`、顶部 `WorkspaceTabBar` 和真实结果，由 `StableUiRoot` 直接装配。`useWorkspaceDirectoryNavigation` 负责展示身份、外部目录选择和 Skim 请求的适配。`WorkspaceDirectoryPicker` 复用 `StableShellSidebar` 的目录专用模式，保留原有目录管理、排序、统计和悬停路径信息，不复制目录服务。`workspaceTabOverflow.ts` 保证活动标签可见，余项进入更多菜单；跨视图展示契约放在 `src/shared/workspaceTypes.ts`。AI 入口进入顶部，Skim 进入唯一标签；筛选面板由目录标签条件驱动。工作区壳层样式由 `WorkspaceShell.css` 持有，筛选和紧凑工具各自持有领域样式；低高度仍保留新导航入口。
@@ -660,3 +822,19 @@ L6 最终审计补充：中间省略文件名的单行与双行布局由 `src/re
 工作区交互由 `WorkspaceToolbarTools` 在窄 / 低窗口把同一组查看范围、排序、随机和清除动作装入可滚动弹层；目录和 Skim 工具只随当前前台视图提供入口，切换时关闭旧弹层。`WorkspaceTabBar` 提供方向键、Home / End 切换、Delete 关闭及焦点恢复，文件键盘控制器通过共享 `isWorkspaceControlKeyboardTarget` 排除工作区控件，防止标签 Delete 误触文件删除。`useStableFlyoutInteractions` 持有弹层互斥、滚动 / 缩放关闭、Esc 消费和返回触发点的焦点；`useWorkspaceOverlayDismiss` 再关闭外层目录 / 筛选浮层，Esc 不穿透清除结果选择。弹层宽高受窗口内标题栏以下可用空间约束。
 
 工作区收口已删除零调用的 `StableMainShell` 适配层、旧并排壳层 / 分隔线 CSS、宽度记忆 / 调整、旧 Skim 显示请求消费和键盘区域 Hook；历史 U2 / U4 / A5 段落中的这些文件与并排说明仅是迁移记录，当前代码不再使用。既有 `useStableSkimCommands` 继续产生请求，消费方只有工作区标签。横向筛选滚轮、轨道和隐藏断点已删除，共享筛选组件直接持有纵向排列。没有清理磁盘上的历史布局键，也没有数据迁移。架构守门降低 App 上限至 2431 行，适配 Hook 上限至 40 行，测试阻止已退役外壳重新出现。
+
+Catalog v2 uses private SQLite connection caches with its existing WAL journal mode. Foreground queries read committed snapshots while maintenance holds a write transaction; shared-cache table locks must not serialize them. CatalogWalConcurrencyTests holds an uncommitted revision write and verifies a bounded reader sees the prior committed revision, then verifies rollback. The legacy CatalogDatabase connection policy is unchanged. See https://www.sqlite.org/sharedcache.html for the distinct shared-cache table-lock behavior.
+
+`core/catalogSystemEvents` is a Main-only adapter for powerMonitor resume and Windows WM_DEVICECHANGE arrival/removal/topology notifications. It coalesces event bursts and serializes refresh calls, removes OS listeners when the main window closes or the app quits, and has no idle poll or failed-connection retry timer. `ComputerSearchRuntime.refreshStorage` only refreshes an already-ready Host through the existing discovery/selection/synchronization owner; it preserves query authorization and does not grant metadata extraction. Unused/stopping Hosts are not launched by OS events. Real sleep/physical device validation remains separate from synthetic adapter tests.
+
+Reader NTFS basic facts use OpenFileById with FILE_FLAG_OPEN_REPARSE_POINT and FILE_FLAG_OPEN_NO_RECALL, plus directory backup semantics only when needed. Attribute lookup refers to the original NTFS entry rather than following a junction/symlink or requesting remote file recall; detailed extraction continues to reject reparse/offline/recall identities. The minimal Reader token and source-content boundary are unchanged. Flags follow https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-openfilebyid .
+
+File-fact queue diagnostics force the persisted job table before exact Catalog identity lookups with CROSS JOIN, preventing a tiny ledger from traversing an entire selected volume. Discovery evaluates the supported extension before recursive include/exclude ancestry via CASE; scope identity semantics are unchanged. FileFactScopeScaleTests exercises a three-image scope alongside 150,000 unrelated entries with deep parent chains, under native-query cancellation deadlines.
+
+FileFactChangeDispatcher acknowledges hints from unselected volumes in one bounded page transaction instead of one RPC per identity. Exact-sequence removal still preserves newer hints; offline selected volumes remain durable and later ready-volume work is not starved. The page cursor never advances beyond the first related ready hint until its providers finish.
+
+Dispatcher cursors and hint acknowledgment fence the changed volume's Catalog revision, not the global revision. A change on another volume cannot restart provider discovery or prevent acknowledgment; changes to the relevant volume still force replay, and exact hint sequences still protect newer generations. A regression changes the other volume before every bounded page while all related providers finish.
+
+The Electron preload retains separate source bridge domains and is bundled by scripts/build-preload.cjs after TypeScript validation. Its deployed sandbox artifact has Electron as its only runtime import, because sandbox preloads cannot load relative CommonJS modules. Sandbox and context isolation remain enabled. A real BrowserWindow integration verifies metadata, favorites, Catalog notifications and existing window actions without exposing Node to the page.
+
+CatalogDirectoryPathChanges checks existing directory identity, parent, name and existence before the owning batch upsert. Attribute/time updates skip the full-volume path cache rebuild while still committing metadata, invalidations and checkpoints; creation, deletion, rename and move retain the existing atomic structural rebuild. A SQLite deletion-audit regression verifies zero path rewrites for timestamp updates and descendant correctness for structural changes.

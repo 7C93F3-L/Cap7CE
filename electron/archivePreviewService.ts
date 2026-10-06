@@ -68,13 +68,17 @@ export const parseArchiveListOutput = (
   const parsedEntries: ArchivePreviewEntry[] = [];
   let totalUncompressedSize = 0;
   let discoveredEntries = 0;
+  let skippedEntries = false;
 
   for (const block of output.split(/\r?\n\r?\n/)) {
     const fields = parseFields(block);
     const entryPath = fields.get("Path");
     const size = parseByteCount(fields.get("Size"));
-    if (entryPath === undefined || size === null) continue;
-    if (!entryPath || entryPath.length > maximumArchivePathLength || /[\u0000-\u001f]/.test(entryPath)) continue;
+    if (entryPath === undefined || size === null) {
+      if (!fields.has("Type") && (fields.has("Size") || fields.has("Folder") || fields.has("Attributes"))) skippedEntries = true;
+      continue;
+    }
+    if (!entryPath || entryPath.length > maximumArchivePathLength || /[\u0000-\u001f]/.test(entryPath)) { skippedEntries = true; continue; }
 
     discoveredEntries += 1;
     totalUncompressedSize += size;
@@ -91,7 +95,7 @@ export const parseArchiveListOutput = (
     entries: parsedEntries,
     entryCount: discoveredEntries,
     totalUncompressedSize,
-    truncated: outputTruncated || discoveredEntries > parsedEntries.length
+    truncated: outputTruncated || skippedEntries || discoveredEntries > parsedEntries.length
   };
 };
 

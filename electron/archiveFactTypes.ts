@@ -1,6 +1,6 @@
 import type { SearchArchiveContentType } from "./archiveSearchFilters";
 
-export const ARCHIVE_FACT_EXTRACTOR_VERSION = 1;
+export const ARCHIVE_FACT_EXTRACTOR_VERSION = 2;
 export const supportedArchiveFactExtensions = [".7z", ".rar", ".zip"] as const;
 
 export interface ArchiveFactCandidate { filePath: string; sourceRevision: string }

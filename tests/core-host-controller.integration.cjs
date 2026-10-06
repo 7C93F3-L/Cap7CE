@@ -168,6 +168,8 @@ const verifyGracefulLifecycle = async () => {
     controller.start()
   ]);
   assert.equal(ready.state, "ready");
+  assert.equal(controller.supports("catalog.status"), true, "optional operations use the authenticated cached capability set");
+  assert.equal(controller.supports("not-advertised"), false);
   assert.equal(concurrentReady.processId, ready.processId);
   assert.equal(repeatedReady.processId, ready.processId);
   assert.equal(events.filter((entry) => entry.event === "core.controller.starting").length, 1);
@@ -191,6 +193,7 @@ const verifyGracefulLifecycle = async () => {
     usesNetwork: false
   });
   assert.equal((await controller.stop()).state, "stopped");
+  assert.equal(controller.supports("catalog.status"), false, "stopped host cannot retain usable capability claims");
   const diagnosticText = JSON.stringify(events);
   assert.doesNotMatch(diagnosticText, /Cap7CE\.Core\.Host\.exe|cap7ce-core-p32-|catalog\.db/i);
 };

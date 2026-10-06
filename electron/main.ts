@@ -1,4 +1,5 @@
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, Notification, protocol, screen, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, Notification, powerMonitor, protocol, screen, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { installCatalogSystemEvents } from "./core/catalogSystemEvents";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -29,12 +30,11 @@ import { registerFileIpc } from "./fileIpc";
 import { canUseSearchShellThumbnail, getFileFormatCapability } from "./formatCapabilities";
 import { getGgufModelSettings, updateSelectedGgufModel } from "./ggufModelStore";
 import { searchImagesWithAddedDirectories } from "./imageSearchService";
-import { scanImageDirectories, type ScannedImageFile } from "./imageScanner";
+import { scanImageDirectories } from "./imageScanner";
 import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
-import { cleanupRecognizedModelInputCaches } from "./modelInputCacheCleanupService";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
@@ -47,8 +47,7 @@ import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSe
 import { registerCacheActivityIpc } from "./cacheActivityIpc";
 import { registerCacheClearIpc } from "./cacheClearIpc";
 import { clearAllVisualCaches, clearThumbnailCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
-import { discardThumbnailOptimizationCandidatesForDirectory, enqueueThumbnailOptimizationCandidates, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationCandidate, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
-import { ThumbnailOptimizationDiscovery } from "./thumbnailOptimizationDiscovery";
+import { discardThumbnailOptimizationCandidatesForDirectory, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNameService";
 import { ensurePreviewImagePath, readVisualSourceDimensions, shouldUseSourceFileForPreview } from "./visualRenderService";
@@ -153,10 +152,10 @@ type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type ShortcutPreferenceProfiles = { stableShortcutActions: ShortcutActionPreferences };
 const getActiveShortcutActions = (preferences: ShortcutPreferenceProfiles) => preferences.stableShortcutActions;
 let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
-let modelInputCacheCleanupPromise: Promise<void> | null = null;
 let rendererContentViewActive = false;
 let searchIpcController: ReturnType<typeof registerSearchIpc> | null = null;
 const computerSearchRuntime = createComputerSearchRuntime({ packaged: app.isPackaged, productVersion: app.getVersion(), resourcesPath: process.resourcesPath, beginVisualSession: beginSkimVisualSession, cancelVisualSession: cancelSkimVisualSession });
+let stopCatalogSystemEvents: (() => void) | undefined;
 let previewWindowLoaded = false;
 let previewSessionActive = false;
 let activePreviewData: PreviewWindowData | null = null;
@@ -177,27 +176,6 @@ const standbyVisualLengthPx = 180;
 const standbyInteractionThicknessPx = 15;
 const backgroundTaskNotificationMinimumMs = 60_000;
 
-const toThumbnailOptimizationCandidates = (images: ScannedImageFile[]): ThumbnailOptimizationCandidate[] => (
-  images.map((image) => ({
-    filePath: image.file_path,
-    fileName: image.file_name,
-    fileSize: image.file_size,
-    modifiedAt: image.modified_at,
-    modifiedMs: image.modified_ms
-  }))
-);
-
-const enqueueScannedThumbnails = (images: ScannedImageFile[]) => {
-  void enqueueThumbnailOptimizationCandidates(toThumbnailOptimizationCandidates(images)).catch((error) => {
-    console.warn("[thumbnail-optimization] candidate filtering failed", error);
-  });
-};
-
-const thumbnailOptimizationDiscovery = new ThumbnailOptimizationDiscovery<PersistedDirectory>(async (directories, isCancelled, yieldForBackgroundWork) => (
-  toThumbnailOptimizationCandidates((await scanImageDirectories(directories, { isCancelled, yieldForBackgroundWork })).images)
-));
-const scheduleDirectoryThumbnailOptimization = (directories: PersistedDirectory[]) => thumbnailOptimizationDiscovery.schedule(directories);
-
 const isVisibleAndFocused = (window: BrowserWindow | null) => Boolean(
   window && !window.isDestroyed() && window.isVisible() && window.isFocused()
 );
@@ -211,15 +189,12 @@ const syncThumbnailOptimizationActivity = () => {
     && mainWindow.isFocused()
     && activeShellState === "normal"
   );
-  const searchScanActive = Boolean(mainWindow && !mainWindow.isDestroyed()
-    && mainWindow.isVisible() && !mainWindow.isMinimized()
-    && activeShellState === "normal");
   const foregroundWindowActive = isVisibleAndFocused(mainWindow)
     || settingsWindowController?.isVisibleAndFocused() === true
     || isVisibleAndFocused(previewWindow);
-  thumbnailOptimizationDiscovery.setForegroundActive(foregroundWindowActive); setSkimShellThumbnailActivity(contentViewActive);
+  setSkimShellThumbnailActivity(contentViewActive);
   setSearchShellVisualActivity(contentViewActive);
-  searchScanSnapshotService.setActive(searchScanActive);
+  searchScanSnapshotService.setActive(false);
   setThumbnailOptimizationForegroundActive(foregroundWindowActive);
   setVisualPropertyForegroundActive(foregroundWindowActive);
   return contentViewActive;
@@ -229,26 +204,6 @@ const cancelActiveSearchTasks = () => {
   searchIpcController?.cancelAll();
 };
 
-const scheduleRecognizedModelInputCacheCleanup = () => {
-  if (!getThumbnailOptimizationStatus().enabled || modelInputCacheCleanupPromise) {
-    return modelInputCacheCleanupPromise ?? Promise.resolve();
-  }
-
-  modelInputCacheCleanupPromise = cleanupRecognizedModelInputCaches()
-    .then((result) => {
-      if (result.deletedCount > 0) {
-        console.info("[model-input-cache] cleaned recognized cache entries", result);
-      }
-    })
-    .catch((error) => {
-      console.warn("[model-input-cache] historical cleanup failed", error);
-    })
-    .finally(() => {
-      modelInputCacheCleanupPromise = null;
-    });
-
-  return modelInputCacheCleanupPromise;
-};
 const edgeGapPx = 5;
 const programmaticResizeGuardMs = 420;
 const moveSettleDelayMs = 180;
@@ -1470,6 +1425,7 @@ const createWindow = () => {
       contextIsolation: true, devTools: !app.isPackaged, nodeIntegration: false
     }
   });
+  stopCatalogSystemEvents?.(); stopCatalogSystemEvents = installCatalogSystemEvents(mainWindow, powerMonitor, async () => { if (!isQuitting) await computerSearchRuntime.refreshStorage?.(); });
   stableWindowRuntime.applyMainWindowAppearance(mainWindow, nativeTheme.themeSource, nativeTheme.shouldUseDarkColors);
   lockWebContentsZoom(mainWindow.webContents); installMainWindowInputPolicy(mainWindow.webContents);
   dockedShellController = installDockedShell({
@@ -1591,8 +1547,8 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   quickActionGlobalEnabled = preferences.quickActionGlobalEnabled;
   applyLaunchAtLoginPreference(preferences.launchAtLogin);
   setThumbnailOptimizationSort(preferences.sortPreference.sortField, preferences.sortPreference.sortDirection);
-  await setThumbnailOptimizationEnabled(preferences.autoCacheOptimizationEnabled);
-  createWindow(); thumbnailOptimizationDiscovery.setForegroundActive(true);
+  await setThumbnailOptimizationEnabled(false);
+  createWindow();
   nativeTheme.on("updated", () => { if (stableWindowRuntime.usesSystemTheme) void refreshStableWindowAppearance(); });
   if (standbyLineVisible) {
     lineWindowController.create();
@@ -1613,9 +1569,6 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   app.on("browser-window-focus", syncThumbnailOptimizationActivity);
   app.on("browser-window-blur", syncThumbnailOptimizationActivity);
   configureEmbeddedMetadataRuntime(ipcMain, () => mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null, () => settingsWindowController?.getWebContents() ?? null);
-  if (preferences.autoCacheOptimizationEnabled) {
-    scheduleDirectoryThumbnailOptimization(await listDirectories());
-  }
   void createStartupHintWindow();
   createAppTray();
   showCompletedUpdateNotification(completedUpdateVersion);
@@ -1642,6 +1595,7 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
+  stopCatalogSystemEvents?.();
   void computerSearchRuntime.stop();
   void windowLayoutManager.flush().catch((error) => console.warn("[window-layout] final write failed", error));
   void settingsWindowController?.flush().catch((error) => console.warn("[settings-window] final write failed", error)); settingsWindowController?.destroy();
@@ -2145,7 +2099,6 @@ const addDirectoryCandidatesWithIndexMigrationInternal = async (request: Directo
       ...result.added.map((directory) => directory.id),
       ...result.replacements.flatMap((replacement) => replacement.replacedDirectories.map((directory) => directory.id))
     ]);
-    scheduleDirectoryThumbnailOptimization(result.added);
   } catch (error) {
     const replacementIds = new Set(result.replacements.map((replacement) => replacement.directory.id));
     const restoredDirectories = [
@@ -2192,9 +2145,7 @@ registerDirectoryManagementIpc({
   applyDirectoryFileCounts,
   pauseThumbnailOptimization,
   pauseThumbnailRendering,
-  waitForThumbnailDiscovery: async () => {
-    await thumbnailOptimizationDiscovery.waitForIdle();
-  },
+  waitForThumbnailDiscovery: async () => {},
   invalidateSearchSnapshot: (directoryIds) => searchScanSnapshotService.invalidate(directoryIds),
   deleteDirectoryIndex: deleteDirectoryImages,
   discardEmbeddedMetadataCandidates: discardEmbeddedMetadataForDirectory,
@@ -2476,7 +2427,7 @@ searchIpcController = registerSearchIpc({
   search: (search, directories, options) => searchImagesWithAddedDirectories(
     search as Parameters<typeof searchImagesWithAddedDirectories>[0],
     directories,
-    enqueueScannedThumbnails,
+    () => {},
     options
   ),
   refresh: (directoryIds) => searchScanSnapshotService.invalidate(directoryIds),
@@ -2562,11 +2513,8 @@ registerPreferenceIpc({
     systemNotificationsEnabled = enabled;
   },
   updateAutoCacheOptimization: updateAutoCacheOptimizationPreference, updateAiRecognitionEnabled: updateAiRecognitionEnabledPreference,
-  setAutoCacheOptimizationEnabled: setThumbnailOptimizationEnabled,
-  scheduleAutoCacheOptimization: async () => {
-    scheduleDirectoryThumbnailOptimization(await listDirectories());
-    void scheduleRecognizedModelInputCacheCleanup();
-  }
+  setAutoCacheOptimizationEnabled: async () => setThumbnailOptimizationEnabled(false),
+  scheduleAutoCacheOptimization: async () => {}
 });
 
 ipcMain.handle("preferences:updateQuickActionGlobalEnabled", async (_event, nextQuickActionGlobalEnabled: boolean) => {

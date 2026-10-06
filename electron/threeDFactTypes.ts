@@ -1,4 +1,4 @@
-export const THREE_D_FACT_EXTRACTOR_VERSION = 1;
+export const THREE_D_FACT_EXTRACTOR_VERSION = 2;
 
 export const supportedThreeDFactExtensions = [".glb", ".gltf", ".obj", ".stl"] as const;
 

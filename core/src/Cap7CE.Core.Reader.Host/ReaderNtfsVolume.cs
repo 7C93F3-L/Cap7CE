@@ -15,6 +15,7 @@ internal sealed class ReaderNtfsVolume : IDisposable
     private const uint ShareReadWriteDelete = 0x00000007;
     private const uint OpenExisting = 3;
     private const uint BackupSemantics = 0x02000000;
+    private const uint OpenNoRecall = 0x00100000, OpenReparsePoint = 0x00200000;
     private const uint EnumUsnData = 0x000900B3;
     private const uint QueryUsnJournal = 0x000900F4;
     private const uint ReadUsnJournal = 0x000900BB;
@@ -99,6 +100,15 @@ internal sealed class ReaderNtfsVolume : IDisposable
             BinaryPrimitives.ReadUInt64LittleEndian(random[8..]));
         if (id.IsEmpty) id = new ReaderOpaqueId(1, 1);
         return new ReaderNtfsSnapshot(this, id, journal);
+    }
+
+    public Task WaitForJournalChangeAsync(ulong journalId, long startingUsn, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        var current = QueryJournal();
+        if (current.JournalId != journalId || startingUsn < current.FirstUsn || startingUsn < current.LowestValidUsn
+            || startingUsn != current.NextUsn) return Task.CompletedTask;
+        return ReaderJournalWaitIo.WaitAsync(DisplayName[0], journalId, startingUsn, token);
     }
 
     public ReaderNtfsJournalPage ReadJournal(
@@ -199,7 +209,7 @@ internal sealed class ReaderNtfsVolume : IDisposable
             FileReadAttributes,
             ShareReadWriteDelete,
             IntPtr.Zero,
-            isDirectory ? BackupSemantics : 0);
+            OpenNoRecall | OpenReparsePoint | (isDirectory ? BackupSemantics : 0));
         if (handle.IsInvalid)
         {
             return null;
@@ -300,7 +310,7 @@ internal sealed class ReaderNtfsVolume : IDisposable
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct ReadJournalData
+    internal struct ReadJournalData
     {
         public long StartUsn;
         public uint ReasonMask;

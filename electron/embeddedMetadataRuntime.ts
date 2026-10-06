@@ -97,37 +97,4 @@ export const configureEmbeddedMetadataRuntime = (
       webContents.send("embeddedMetadata:statusChanged", status);
     }
   });
-  void enqueueImageDimensionsForDirectories([]).catch((error) => {
-    console.warn("[image-dimensions] startup candidate discovery failed", error);
-  });
-  void enqueueAnimationFactsForDirectories([]).catch((error) => {
-    console.warn("[animation-facts] startup candidate discovery failed", error);
-  });
-  void enqueueVideoFactsForDirectories([]).catch((error) => {
-    console.warn("[video-facts] startup candidate discovery failed", error);
-  });
-  void enqueueVideoColorsForDirectories([]).catch((error) => {
-    console.warn("[video-colors] startup candidate discovery failed", error);
-  });
-  void enqueueAudioFactsForDirectories([]).catch((error) => {
-    console.warn("[audio-facts] startup candidate discovery failed", error);
-  });
-  void enqueueDocumentFactsForDirectories([]).catch((error) => {
-    console.warn("[document-facts] startup candidate discovery failed", error);
-  });
-  void enqueueTextDataFactsForDirectories([]).catch((error) => {
-    console.warn("[text-data-facts] startup candidate discovery failed", error);
-  });
-  void enqueueThreeDFactsForDirectories([]).catch((error) => {
-    console.warn("[three-d-facts] startup candidate discovery failed", error);
-  });
-  void enqueueArchiveFactsForDirectories([]).catch((error) => {
-    console.warn("[archive-facts] startup candidate discovery failed", error);
-  });
-  void enqueueFontFactsForDirectories([]).catch((error) => {
-    console.warn("[font-facts] startup candidate discovery failed", error);
-  });
-  void enqueueModelFactsForDirectories([]).catch((error) => {
-    console.warn("[model-facts] startup candidate discovery failed", error);
-  });
 };

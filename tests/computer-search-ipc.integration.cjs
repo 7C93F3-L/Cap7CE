@@ -43,6 +43,7 @@ registerComputerSearchIpc({
 });
 
 assert.deepEqual([...handlers.keys()], [
+  "computerSearch:acquireThumbnail", "computerSearch:releaseThumbnail",
   "computerSearch:status", "computerSearch:capabilityOptions", "computerSearch:configureCapability",
   "computerSearch:search", "computerSearch:nextPage", "computerSearch:cancel",
   "computerSearch:open", "computerSearch:showInFolder", "computerSearch:copyPaths",
@@ -65,7 +66,7 @@ const run = async () => {
     action: "enable", volumeLetters: ["C", "E"], removeCatalog: false
   })).status, "completed");
   await assert.rejects(() => handlers.get("computerSearch:search")({ allowed: true }, {
-    taskId: "task-1", query: "   ", scopePath: null
+    taskId: "task-1", query: 1, scopePath: null
   }), /invalid-request/);
   await assert.rejects(() => handlers.get("computerSearch:search")({ allowed: true }, {
     taskId: "task-1", query: "poster", scopePath: "relative"
@@ -108,6 +109,19 @@ const run = async () => {
     ["text", authorizedItem.path],
     ["drag", [authorizedItem.path]]
   ]);
+  await handlers.get("computerSearch:search")({ allowed: true }, { taskId: "browse", query: "   ", scopePath: null });
+  assert.deepEqual(calls.at(-1), ["search", { taskId: "browse", query: "", scopePath: null }]);
+  await handlers.get("computerSearch:search")({ allowed: true }, { taskId: "children", query: "", scopePath: "E:\\", scopeKind: "direct-children" });
+  assert.equal(calls.at(-1)[1].scopeKind, "direct-children");
+  for (const request of [{ scopePath: null, scopeKind: "direct-children" }, { scopePath: "E:\\", scopeKind: "recursive" }])
+    await assert.rejects(handlers.get("computerSearch:search")({ allowed: true }, { taskId: "invalid-children", query: "", ...request }), /invalid-request/);
+  await handlers.get("computerSearch:search")({ allowed: true }, { taskId: "facts", query: "", scopePath: null,
+    facts: { kind: "video", minimumDurationMilliseconds: 30000 } });
+  assert.deepEqual(calls.at(-1)[1].facts, { kind: "video", minimumDurationMilliseconds: 30000 });
+  const beforeInvalid = calls.length;
+  await assert.rejects(handlers.get("computerSearch:search")({ allowed: true }, { taskId: "facts", query: "", scopePath: null,
+    facts: { kind: "video", extractorVersion: 99 } }));
+  assert.equal(calls.length, beforeInvalid);
   console.log(JSON.stringify({ computerSearchIpc: "ok", channels: handlers.size + events.size,
     formalSearchUntouched: true, arbitraryPathsRejected: true }));
 };

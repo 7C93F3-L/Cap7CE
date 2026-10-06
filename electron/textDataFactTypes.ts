@@ -1,4 +1,4 @@
-export const TEXT_DATA_FACT_EXTRACTOR_VERSION = 1;
+export const TEXT_DATA_FACT_EXTRACTOR_VERSION = 2;
 
 export const supportedTextFactExtensions = [".txt", ".md", ".html", ".ini", ".css", ".js", ".py"] as const;
 export const supportedCsvFactExtensions = [".csv"] as const;

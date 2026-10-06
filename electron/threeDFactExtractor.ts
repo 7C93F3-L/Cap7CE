@@ -16,48 +16,53 @@ interface ThreeDSourceFact {
   hasRig: boolean;
 }
 
-const safeCount = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : 0;
-
 const primitiveTriangleCount = (document: Record<string, unknown>) => {
   const accessors = Array.isArray(document.accessors) ? document.accessors : [];
   const meshes = Array.isArray(document.meshes) ? document.meshes : [];
   let total = 0;
+  let known = document.meshes === undefined || Array.isArray(document.meshes);
   for (const meshValue of meshes) {
-    if (!meshValue || typeof meshValue !== "object") continue;
+    if (!meshValue || typeof meshValue !== "object" || Array.isArray(meshValue)) { known = false; continue; }
     const primitives = Array.isArray((meshValue as Record<string, unknown>).primitives)
       ? (meshValue as Record<string, unknown>).primitives as unknown[]
       : [];
+    if (!Array.isArray((meshValue as Record<string, unknown>).primitives) || primitives.length === 0) known = false;
     for (const primitiveValue of primitives) {
-      if (!primitiveValue || typeof primitiveValue !== "object") continue;
+      if (!primitiveValue || typeof primitiveValue !== "object" || Array.isArray(primitiveValue)) { known = false; continue; }
       const primitive = primitiveValue as Record<string, unknown>;
+      const mode = primitive.mode === undefined ? 4 : primitive.mode;
+      if (!Number.isSafeInteger(mode) || Number(mode) < 0 || Number(mode) > 6) { known = false; continue; }
+      // Point/line primitives have a known zero triangle contribution.
+      if (Number(mode) < 4) continue;
       const attributes = primitive.attributes && typeof primitive.attributes === "object"
         ? primitive.attributes as Record<string, unknown>
         : {};
       const accessorIndexValue = primitive.indices === undefined ? attributes.POSITION : primitive.indices;
-      if (!Number.isSafeInteger(accessorIndexValue) || Number(accessorIndexValue) < 0) continue;
+      if (!Number.isSafeInteger(accessorIndexValue) || Number(accessorIndexValue) < 0) { known = false; continue; }
       const accessorIndex = Number(accessorIndexValue);
       const accessor = accessors[accessorIndex];
-      const elementCount = accessor && typeof accessor === "object"
-        ? safeCount((accessor as Record<string, unknown>).count)
-        : 0;
-      const mode = primitive.mode === undefined ? 4 : safeCount(primitive.mode);
+      const count = accessor && typeof accessor === "object" && !Array.isArray(accessor)
+        ? (accessor as Record<string, unknown>).count : undefined;
+      if (!Number.isSafeInteger(count) || Number(count) <= 0 || Number(mode) === 4 && Number(count) % 3 !== 0) { known = false; continue; }
+      const elementCount = Number(count);
       const triangles = mode === 4 ? Math.floor(elementCount / 3) : mode === 5 || mode === 6 ? Math.max(0, elementCount - 2) : 0;
       total += triangles;
       if (!Number.isSafeInteger(total)) throw new Error("three-d-triangle-count-overflow");
     }
   }
-  return total;
+  return { known, count: known ? total : 0 };
 };
 
 const parseGltfDocument = (value: unknown): ThreeDSourceFact => {
-  if (!value || typeof value !== "object") throw new Error("three-d-invalid-gltf");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("three-d-invalid-gltf");
   const document = value as Record<string, unknown>;
+  const triangles = primitiveTriangleCount(document);
   return {
-    triangleCountKnown: true,
-    triangleCount: primitiveTriangleCount(document),
-    animationKnown: true,
+    triangleCountKnown: triangles.known,
+    triangleCount: triangles.count,
+    animationKnown: document.animations === undefined || Array.isArray(document.animations),
     hasAnimation: Array.isArray(document.animations) && document.animations.length > 0,
-    rigKnown: true,
+    rigKnown: document.skins === undefined || Array.isArray(document.skins),
     hasRig: Array.isArray(document.skins) && document.skins.length > 0
   };
 };
@@ -75,6 +80,7 @@ const readGlb = async (filePath: string) => {
     const { bytesRead } = await handle.read(header, 0, header.length, 0);
     if (bytesRead < header.length || header.readUInt32LE(0) !== glbMagic || header.readUInt32LE(4) !== 2) throw new Error("three-d-invalid-glb");
     const declaredLength = header.readUInt32LE(8);
+    if ((await handle.stat()).size !== declaredLength) throw new Error("three-d-incomplete-glb");
     const jsonLength = header.readUInt32LE(12);
     if (header.readUInt32LE(16) !== glbJsonChunkType || jsonLength <= 0 || jsonLength > maximumJsonBytes || 20 + jsonLength > declaredLength) throw new Error("three-d-invalid-glb-json");
     const json = Buffer.alloc(jsonLength);

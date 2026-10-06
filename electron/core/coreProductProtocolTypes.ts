@@ -31,6 +31,7 @@ export interface CoreResolvedScope {
   resolved: boolean;
   volumeId: string | null;
   rootFileReference: string | null;
+  directoryFileReference?: string | null;
   displayName: string | null;
   state: string | null;
   queryable: boolean;

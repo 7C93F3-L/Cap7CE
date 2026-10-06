@@ -3,6 +3,7 @@ export interface WorkspaceTabItem {
   name: string;
   path?: string;
   closable: boolean;
+  controlsId?: string;
 }
 
 export type WorkspaceTabIdentity = { id: string; kind: "all" | "directory"; directoryId: string } | { id: "skim"; kind: "skim" };

@@ -51,6 +51,7 @@ internal sealed class ReaderV2CatalogSession : ICatalogReaderSession
 {
     private readonly ReaderPipeConnection connection;
     private ulong requestId = 1;
+    public bool SupportsJournalChangeWait { get; private set; }
 
     private ReaderV2CatalogSession(ReaderPipeConnection connection) => this.connection = connection;
 
@@ -76,6 +77,7 @@ internal sealed class ReaderV2CatalogSession : ICatalogReaderSession
         {
             throw new UnauthorizedAccessException("reader-cr2-hello");
         }
+        session.SupportsJournalChangeWait = hello.Capabilities.HasFlag(ReaderCapabilities.JournalChangeWait);
         return session;
     }
 
@@ -198,6 +200,19 @@ internal sealed class ReaderV2CatalogSession : ICatalogReaderSession
             // Disconnect is the bounded fallback when the Reader has already stopped.
         }
         connection.Dispose();
+    }
+
+    public async Task<ReaderJournalWaitResponse> WaitForChangesAsync(IReadOnlyList<ReaderJournalWaitCursor> cursors,
+        uint waitMilliseconds, CancellationToken token)
+    {
+        if (!SupportsJournalChangeWait) throw new NotSupportedException("reader-journal-wait-unavailable");
+        var requested = cursors.ToArray();
+        var response = await ExchangeSuccessAsync(ReaderOperation.JournalWaitAny,
+            ReaderPayloadCodec.EncodeJournalWaitRequest(new(requested, waitMilliseconds)), ReaderFrameFlags.None, token);
+        var result = ReaderPayloadCodec.DecodeJournalWaitResponse(response.Payload.Span);
+        if (result.ChangedVolumes.Any(id => !requested.Any(cursor => cursor.VolumeId == id)))
+            throw new ReaderProtocolException("journal-wait-unrequested-volume");
+        return result;
     }
 
     private async Task<ReaderFrame> ExchangeSuccessAsync(

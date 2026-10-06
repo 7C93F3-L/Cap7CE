@@ -7,6 +7,12 @@ import type {
 } from "./computerSearchTypes";
 import type { ComputerSearchRuntime } from "./computerSearchRuntime";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
+import { registerMetadataBuildIpc } from "./metadataExtraction/metadataBuildIpc";
+import { readComputerSearchFacts } from "./computerSearchFactConditions";
+import { readComputerSearchFileConditions } from "./computerSearchFileConditions";
+import { registerComputerSearchChangeIpc } from "./computerSearchChangeIpc";
+import { registerFavoriteDirectoryIpc } from "./favoriteDirectories/favoriteDirectoryIpc";
+import { registerComputerSearchThumbnailIpc } from "./computerSearchThumbnailIpc";
 
 export interface RegisterComputerSearchIpcOptions {
   registrar: IpcRegistrar;
@@ -28,12 +34,18 @@ const isTaskId = (value: unknown): value is string =>
 
 const readSearchRequest = (value: unknown): ComputerSearchRequest => {
   if (!isRecord(value) || !isTaskId(value.taskId) || typeof value.query !== "string"
-    || value.query.trim().length < 1 || value.query.length > 512
+    || value.query.length > 512
     || !(value.scopePath === null || (typeof value.scopePath === "string"
       && value.scopePath.length <= 32767 && /^[A-Za-z]:\\/.test(value.scopePath)))) {
     throw new Error("computer-search-invalid-request");
   }
-  return { taskId: value.taskId, query: value.query.trim(), scopePath: value.scopePath };
+  const facts = readComputerSearchFacts(value.facts);
+  const fileConditions = readComputerSearchFileConditions(value.fileConditions);
+  if (value.scopeKind !== undefined && (value.scopeKind !== "direct-children" || value.scopePath === null))
+    throw new Error("computer-search-invalid-request");
+  return { taskId: value.taskId, query: value.query.trim(), scopePath: value.scopePath,
+    ...(value.scopeKind ? { scopeKind: value.scopeKind as "direct-children" } : {}),
+    ...(facts ? { facts } : {}), ...(fileConditions ? { fileConditions } : {}) };
 };
 
 const readNextPageRequest = (value: unknown): ComputerSearchNextPageRequest => {
@@ -93,6 +105,10 @@ export const registerComputerSearchIpc = ({
   registrar, isSenderAllowed, isActionSenderAllowed, runtime, openPath, showItemInFolder, writeClipboardText,
   inspectItem, readTextPreview, startFileDrag
 }: RegisterComputerSearchIpcOptions): void => {
+  registerComputerSearchChangeIpc(registrar, isSenderAllowed, runtime);
+  registerComputerSearchThumbnailIpc({ registrar, isSenderAllowed, runtime });
+  if (runtime.favoriteDirectories) registerFavoriteDirectoryIpc(registrar, isSenderAllowed, runtime.favoriteDirectories);
+  if (runtime.metadataBuild) registerMetadataBuildIpc(registrar, isSenderAllowed, runtime.metadataBuild);
   registerIpcDomain({
     registrar,
     isSenderAllowed,

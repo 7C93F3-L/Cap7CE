@@ -180,7 +180,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsAppSource, /useSettingsCacheStatsVisibility[\s\S]*?activeCategory === "cache"[\s\S]*?controller\.refreshCaches/u);
   assert.match(settingsCacheStatsVisibilitySource, /useSettingsCacheStatsVisibility[\s\S]*?addEventListener\("focus", refreshCacheStats\)/u);
   assert.doesNotMatch(settingsControllerSource, /preferences\.shortcutAvailability\(\),\s*refreshCaches\(\)/u);
-  assert.match(settingsAppSource, /formatThumbnailOptimizationStatus\(controller\.thumbnailOptimizationStatus\)/u);
+  assert.doesNotMatch(settingsAppSource, /formatThumbnailOptimizationStatus\(controller\.thumbnailOptimizationStatus\)|<SettingCard title="stableSettings\.cacheOptimization"/u);
   assert.match(settingsAppSource, /settings\.edgeCollapse[\s\S]*?settings\.standardWindowMode[\s\S]*?settings\.edgeCollapseMode/u);
   assert.match(settingsAppSource, /<StableSettingsSelect[^>]*label=\{t\("settings\.edgeCollapse"\)\}[^>]*value=\{preferences\.edgeCollapseEnabled \? "edge-collapse" : "standard"\}[^>]*settings\.standardWindowMode[^>]*settings\.edgeCollapseMode[^>]*onChange=\{\(value\) => toggle\("edgeCollapseEnabled", value === "edge-collapse"\)\}/u);
   assert.match(mainSource, /edgeCollapseEnabled \? t\("tray\.disableEdgeCollapse"\) : t\("tray\.enableEdgeCollapse"\)/u);

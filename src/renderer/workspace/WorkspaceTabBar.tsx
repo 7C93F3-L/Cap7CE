@@ -33,7 +33,7 @@ export default function WorkspaceTabBar({ tabs, activeId, onSelect, onClose }: {
     else if (event.key === "Delete" && tabs[index]?.closable) { event.preventDefault(); pendingFocus.current = true; onClose(activeId); }
   }}>
     {visible.map((tab) => <div className={`cap-workspace-tab${tab.id === activeId ? " is-active" : ""}`} key={tab.id}>
-      <button type="button" role="tab" tabIndex={tab.id === activeId ? 0 : -1} aria-selected={tab.id === activeId} aria-controls={tab.id === "skim" ? "workspace-skim" : "workspace-results"} title={tab.path ?? tab.name} onClick={() => onSelect(tab.id)}>
+      <button type="button" role="tab" tabIndex={tab.id === activeId ? 0 : -1} aria-selected={tab.id === activeId} aria-controls={tab.controlsId ?? (tab.id === "skim" ? "workspace-skim" : "workspace-results")} title={tab.path ?? tab.name} onClick={() => onSelect(tab.id)}>
         <TabTitle name={tab.name} />
       </button>
       {tab.closable && <button type="button" className="cap-workspace-tab-close" aria-label={`${t("common.close")} ${tab.name}`} tabIndex={-1} onClick={() => { pendingFocus.current = true; onClose(tab.id); }}>×</button>}

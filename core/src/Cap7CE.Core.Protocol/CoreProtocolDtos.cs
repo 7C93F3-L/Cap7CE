@@ -24,7 +24,13 @@ public sealed record SearchStartRequest(
     IReadOnlyList<string> VolumeIds,
     CoreSearchScopeRequest? Scope = null,
     string? Extension = null,
-    string? EntryType = null);
+    string? EntryType = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    string? TextTarget = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    CoreSearchFactFilter? Facts = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    CoreSearchFileConditions? FileConditions = null);
 
 public sealed record CoreSearchScopeRequest(
     string Kind,
@@ -55,7 +61,9 @@ public sealed record SearchPageResponse(
     IReadOnlyList<BasicSearchItem> Items,
     string? NextCursor,
     bool IsComplete,
-    long CatalogRevision);
+    long CatalogRevision,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    long? FactRevision = null);
 
 public sealed record CapabilityStatusResponse(
     string State,
@@ -96,7 +104,8 @@ public sealed record CatalogResolveScopeResponse(
     string? RootFileReference,
     string? DisplayName,
     string? State,
-    bool Queryable);
+    bool Queryable,
+    string? DirectoryFileReference = null);
 
 public sealed record CoreCatalogTaskStatus(
     string TaskId,
@@ -113,3 +122,6 @@ public sealed record CatalogCancelRequest(string TaskId);
 public sealed record CatalogCancelResponse(bool Accepted);
 
 public sealed record CoreShutdownResponse(bool Accepted);
+
+public sealed record CatalogAwaitChangesRequest(long AfterSequence, int WaitMilliseconds = 25_000);
+public sealed record CatalogChangeNotice(long Sequence, long CatalogRevision, string State, string? Reason, bool Changed);

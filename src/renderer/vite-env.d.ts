@@ -3,6 +3,7 @@
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../electron/appUpdateTypes";
 import type { ComputerSearchAuthorization, ComputerSearchAuthorizationBatch, ComputerSearchCapabilityOptions, ComputerSearchCapabilityRequest, ComputerSearchCapabilityResult, ComputerSearchNextPageRequest, ComputerSearchPage, ComputerSearchRequest, ComputerSearchStatus } from "../../electron/computerSearchTypes";
+import type { MetadataBuildApi } from "../shared/metadataBuildTypes";
 
 type Cap7CEShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -11,6 +12,7 @@ type Cap7CEAlwaysOnTopState = { enabled: boolean; actual: boolean; windowId: num
 declare global {
   interface Window {
     cap7ce?: {
+      metadataBuild: MetadataBuildApi;
       window: {
         setShellState: (state: Cap7CEShellState, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => Promise<boolean>;
         setAlwaysOnTop: (enabled: boolean) => Promise<Cap7CEAlwaysOnTopState>;
@@ -110,13 +112,17 @@ declare global {
         cancelFileInfoFolderStats: (taskId: string) => Promise<boolean>;
         onFolderStats: (callback: (update: SkimFolderStatsUpdate) => void) => () => void;
       };
+      favoriteDirectories: import("../shared/favoriteDirectoryTypes").FavoriteDirectoryApi;
       computerSearch: {
+        onCatalogChanged: (callback: (revision: number) => void) => () => void;
         status: () => Promise<ComputerSearchStatus>;
         capabilityOptions: () => Promise<ComputerSearchCapabilityOptions>;
         configureCapability: (request: ComputerSearchCapabilityRequest) => Promise<ComputerSearchCapabilityResult>;
         search: (request: ComputerSearchRequest) => Promise<ComputerSearchPage>;
         nextPage: (request: ComputerSearchNextPageRequest) => Promise<ComputerSearchPage>;
         cancel: (taskId: string) => Promise<boolean>;
+        acquireThumbnail: (request: ComputerSearchAuthorization) => Promise<string | null>;
+        releaseThumbnail: (request: { taskId: string; leaseId: string }) => Promise<boolean>;
         open: (request: ComputerSearchAuthorization) => Promise<string>;
         showInFolder: (request: ComputerSearchAuthorization) => Promise<boolean>;
         copyPaths: (request: ComputerSearchAuthorizationBatch) => Promise<number>;

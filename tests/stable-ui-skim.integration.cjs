@@ -37,7 +37,7 @@ assert.match(appSource, /openSkimRoot: stableSkimCommands\.openRoot/u);
 assert.match(commandSource, /void openLocation\(path\)[\s\S]*?openId: current\.openId \+ 1/u);
 assert.match(appSource, /event\.target instanceof Element[\s\S]*?closest\("\.cap-stable-skim-slot"\)[\s\S]*?if \(targetsSkim\) \{\s*navigateStableSkimBack\(\);\s*return;/u);
 assert.doesNotMatch(appSource, /if \(targetsSkim\) \{\s*navigateSkimBack\(\)/u);
-for (const marker of ["locations: [null]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
+for (const marker of ["initialLocation: Location = null", "locations: [initialLocation]", "navigationRequestRef", "if (!loaded", "locations.slice(0, history.index + 1)", "const targetIndex = history.index - 1", "const targetIndex = history.index + 1"]) {
   assert.ok(navigationHistorySource.includes(marker), `Stable Skim navigation history is missing ${marker}.`);
 }
 assert.match(shellSource, /navigation.skimPresent && <StableSkimSlot[\s\S]*?foreground=\{!interactionLocked && skimOpen\}[\s\S]*?onToggleSkim=\{\(\) => navigation.close\("skim"\)\}/u);

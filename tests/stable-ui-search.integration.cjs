@@ -49,8 +49,8 @@ const menuSource = read("src/renderer/results/ResponsiveResultsContextMenuLayer.
 const sharedMenuSource = read("src/renderer/components/ResponsiveFileContextMenu.tsx");
 const sharedMenuStyles = read("src/renderer/components/ResponsiveFileContextMenu.css");
 
-assert.match(rendererEntry, /Promise\.all\(\[import\("\.\/App"\), import\("\.\/stable-ui\/StableUiRoot"\)\]\)/);
-assert.match(rendererEntry, /<App stableUiRenderer=\{StableUiRoot\}\s*\/>/);
+assert.match(rendererEntry, /import\("\.\/catalog-workspace\/CatalogApplicationRoot"\)/);
+assert.match(rendererEntry, /<CatalogApplicationRoot\s*\/>/);
 assert.match(appSource, /stableUiRenderer: StableUiRenderer/);
 assert.match(appSource, /resultContent=\{\(active\) => <ResultsView key=\{workspace\.viewKey\} \{\.\.\.createResultsViewProps\(active\)\} \/>\}/);
 assert.match(resultsSource, /active: boolean[\s\S]*?useEffect\(\(\) => \{[\s\S]*?if \(!active\) return undefined;[\s\S]*?window\.addEventListener\("keydown", handleKeyDown, true\)/u);

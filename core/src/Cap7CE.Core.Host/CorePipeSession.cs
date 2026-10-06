@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Cap7CE.Core.Protocol;
@@ -10,7 +9,7 @@ public sealed class CorePipeSession
     private readonly CoreRequestDispatcher dispatcher;
     private readonly byte[] expectedSecret;
     private readonly int clientProcessId;
-    private readonly ConcurrentDictionary<string, byte> requestIds = new(StringComparer.Ordinal);
+    private readonly CoreRequestIdentityTracker requestIds = new();
     private readonly SemaphoreSlim writeLock = new(1, 1);
 
     public CorePipeSession(byte[] expectedSecret, int clientProcessId)
@@ -47,7 +46,7 @@ public sealed class CorePipeSession
                 "handshake", false, "A valid session handshake must be the first request."), cancellationToken);
             return;
         }
-        if (!requestIds.TryAdd(hello.RequestId, 0)) return;
+        if (requestIds.Register(hello.RequestId) != CoreRequestIdentityResult.Accepted) return;
 
         var handshakeResponse = ValidateHandshake(hello);
         await WriteAsync(stream, handshakeResponse, cancellationToken);
@@ -77,11 +76,14 @@ public sealed class CorePipeSession
                         "validation", false, "Request envelope is invalid."), sessionEnded.Token);
                     continue;
                 }
-                if (!requestIds.TryAdd(request.RequestId, 0))
+                var identityResult = requestIds.Register(request.RequestId);
+                if (identityResult != CoreRequestIdentityResult.Accepted)
                 {
                     await WriteAsync(stream, CoreResponseEnvelope.Failure(
-                        request.RequestId, 1, CoreErrorCodes.DuplicateRequest,
-                        "validation", false, "Request identifier was already used."), sessionEnded.Token);
+                        request.RequestId, 1, identityResult == CoreRequestIdentityResult.Duplicate
+                            ? CoreErrorCodes.DuplicateRequest : CoreErrorCodes.InvalidRequest,
+                        "validation", false, "Request identity was rejected."), sessionEnded.Token);
+                    if (identityResult == CoreRequestIdentityResult.CapacityExceeded) break;
                     continue;
                 }
                 if (request.ProtocolVersion != CoreProtocol.CurrentVersion)

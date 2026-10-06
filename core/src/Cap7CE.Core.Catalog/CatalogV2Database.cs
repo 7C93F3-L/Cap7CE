@@ -190,6 +190,7 @@ public sealed class CatalogV2Database
         {
             throw new CatalogStateTransitionException("Catalog volume is not ready to build.");
         }
+        await FileFacts.FileFactCatalogInvalidation.ApplyVolumeAsync(connection, transaction, volumeId, token);
         var revision = NextRevision(await ReadRevisionAsync(connection, transaction, token));
         using (var update = connection.CreateCommand())
         {
@@ -402,11 +403,23 @@ public sealed class CatalogV2Database
         return (await ReadVolumeAsync(volumeId, token))!;
     }
 
-    public async Task<CatalogV2VolumeSnapshot> ApplyBatchAsync(
+    public Task<CatalogV2VolumeSnapshot> ApplyBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default)
+        => ApplyBatchCoreAsync(batch, false, token);
+
+    // An external event publishes its checkpoint and any staged owned directory
+    // ancestry atomically, without readiness-state writes around each page.
+    public Task<CatalogV2VolumeSnapshot> ApplyMaintenanceBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default)
+        => ApplyBatchCoreAsync(batch, true, token);
+
+    private async Task<CatalogV2VolumeSnapshot> ApplyBatchCoreAsync(
         CatalogV2WriteBatch batch,
-        CancellationToken token = default)
+        bool maintenance,
+        CancellationToken token)
     {
         ValidateBatch(batch);
+        if (maintenance && (batch.Nodes.Count == 0 || batch.Nodes.All(node => node.SuppressFileFactChangeHint)
+            || batch.ExpectedCheckpointUsn is not { } expected || batch.NextCheckpointUsn <= expected))
+            throw new ArgumentException("Maintenance requires an external change and an advancing durable checkpoint.", nameof(batch));
         await using var connection = await OpenAsync(false, token);
         using var transaction = connection.BeginTransaction();
         var volume = await ReadVolumeAsync(connection, transaction, batch.VolumeId, token)
@@ -418,14 +431,19 @@ public sealed class CatalogV2Database
         {
             throw new CatalogConcurrencyException("Catalog v2 batch is stale.");
         }
-        if (volume.State is not (CatalogV2VolumeState.Building or CatalogV2VolumeState.CatchingUp))
+        if (maintenance ? volume.State != CatalogV2VolumeState.Ready
+            : volume.State is not (CatalogV2VolumeState.Building or CatalogV2VolumeState.CatchingUp))
         {
             throw new CatalogStateTransitionException("Catalog v2 accepts batches only while synchronizing.");
         }
 
+        var pathsChanged = (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
+            && await CatalogDirectoryPathChanges.RequiresRebuildAsync(connection, transaction, batch.Nodes, token);
+        await FileFacts.FileFactCatalogInvalidation.ApplyNodesAsync(connection, transaction, batch.Nodes, token);
         await UpsertNodesAsync(connection, transaction, "catalog_nodes_v2", batch.Nodes, token);
-        if (volume.State == CatalogV2VolumeState.CatchingUp
-            && batch.Nodes.Any(node => node.IsDirectory))
+        if (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
+            await FileFacts.FileFactChangeLog.RecordAsync(connection, transaction, batch.Nodes, token);
+        if (pathsChanged)
         {
             await RebuildDirectoryPathsAsync(connection, transaction, batch.VolumeId, token);
         }
@@ -481,12 +499,46 @@ public sealed class CatalogV2Database
     {
         ValidateQuery(query);
         await using var connection = await OpenAsync(true, token);
-        var revision = await ReadRevisionAsync(connection, null, token);
+        return await Queries.CatalogQueryExecution.RunAsync(connection, token,
+            () => ReadQueryPageAsync(connection, query, token));
+    }
+
+    private static async Task<CatalogV2QueryPage> ReadQueryPageAsync(
+        SqliteConnection connection, CatalogV2Query query, CancellationToken token)
+    {
+        if (query.Facts is not null)
+        {
+            FileFacts.FileFactQuerySql.Validate(query.Facts);
+        }
+        using var transaction = connection.BeginTransaction(deferred: true);
+        var revision = await ReadRevisionAsync(connection, transaction, token);
+        long? factRevision = null;
+        var factsAvailable = true;
+        if (query.Facts is not null)
+        {
+            using var factState = connection.CreateCommand();
+            factState.Transaction = transaction;
+            factState.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE name GLOB 'file_fact_*';";
+            factsAvailable = Convert.ToInt32(await factState.ExecuteScalarAsync(token)) != 0;
+            if (factsAvailable)
+            {
+                await FileFacts.FileFactSchema.ValidateAsync(connection, token);
+                factState.CommandText = "SELECT fact_revision FROM file_fact_state WHERE singleton = 1;";
+                factRevision = Convert.ToInt64(await factState.ExecuteScalarAsync(token));
+            }
+            else factRevision = 0;
+        }
+        if (query.ExpectedRevision is { } expected
+            && (expected.CatalogRevision != revision || (expected.FactRevision is not null && expected.FactRevision != factRevision)))
+            throw new CatalogConcurrencyException("Catalog query revision changed.");
+        if (!factsAvailable) return new([], null, revision, factRevision);
+        var factPlan = await FileFacts.FileFactQuerySql.ChoosePlanAsync(query, connection, transaction, token);
         const string pathExpression = "CASE WHEN n.is_directory = 1 THEN COALESCE(dp.relative_path, n.name) "
             + "WHEN pp.relative_path IS NULL OR pp.relative_path = '' THEN n.name "
             + "ELSE pp.relative_path || '\\' || n.name END";
         var terms = query.Query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         using var command = connection.CreateCommand();
+        command.Transaction = transaction;
         var sql = new StringBuilder("""
             WITH RECURSIVE scope_nodes(volume_id, file_reference) AS (
             """);
@@ -495,14 +547,18 @@ public sealed class CatalogV2Database
             ),
             matched_keys(volume_id, file_reference, name) AS MATERIALIZED (
             SELECT n.volume_id, n.file_reference, n.name
-            FROM catalog_nodes_v2 n
-            JOIN catalog_volumes_v2 v ON v.volume_id = n.volume_id
             """);
+        FileFacts.FileFactQuerySql.AppendSource(sql, factPlan);
         if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes)
         {
             sql.Append(" JOIN scope_nodes sn ON sn.volume_id = n.volume_id AND sn.file_reference = n.file_reference ");
         }
+        if (query.Facts is not null) FileFacts.FileFactQuerySql.AppendJoin(sql, factPlan);
+        if (query.TextTarget != CatalogQueryTextTarget.Name)
+            sql.Append(" LEFT JOIN catalog_directory_paths_v2 dp ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference LEFT JOIN catalog_directory_paths_v2 pp ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference ");
         sql.Append(" WHERE n.exists_flag = 1 AND v.selected = 1 AND v.state IN ('ready', 'catchingUp') ");
+        if (query.Facts is not null) FileFacts.FileFactQuerySql.AppendPredicate(sql, command, query.Facts);
+        if (query.FileConditions is not null) CatalogFileConditionSql.Append(sql, command, query.FileConditions);
         if (query.VolumeIds.Count > 0)
         {
             sql.Append(" AND n.volume_id IN (");
@@ -526,8 +582,15 @@ public sealed class CatalogV2Database
         }
         for (var index = 0; index < terms.Length; index++)
         {
-            sql.Append(" AND n.name LIKE $term").Append(index)
-                .Append(" ESCAPE '\\' COLLATE NOCASE");
+            var parameter = "$term" + index;
+            var nameMatch = $"n.name LIKE {parameter} ESCAPE '\\' COLLATE NOCASE";
+            var pathMatch = $"(v.display_name || '\\' || ({pathExpression})) LIKE {parameter} ESCAPE '\\' COLLATE NOCASE";
+            sql.Append(" AND (").Append(query.TextTarget switch
+            {
+                CatalogQueryTextTarget.Name => nameMatch,
+                CatalogQueryTextTarget.Path => pathMatch,
+                _ => nameMatch + " OR " + pathMatch
+            }).Append(')');
             command.Parameters.AddWithValue("$term" + index, "%" + EscapeLike(terms[index]) + "%");
         }
         if (query.After is not null)
@@ -581,7 +644,7 @@ public sealed class CatalogV2Database
             var last = items[^1];
             next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference);
         }
-        return new CatalogV2QueryPage(items, next, revision);
+        return new CatalogV2QueryPage(items, next, revision, factRevision);
     }
 
     public Task<CatalogV2QueryPage> GetChildrenAsync(
@@ -971,6 +1034,8 @@ public sealed class CatalogV2Database
         {
             throw new CatalogConcurrencyException("Catalog v2 volume state changed before commit.");
         }
+        if (next == CatalogV2VolumeState.NeedsRebuild)
+            await FileFacts.FileFactCatalogInvalidation.ApplyVolumeAsync(connection, transaction, volumeId, token);
         await SetRevisionAsync(connection, transaction, revision, token);
         transaction.Commit();
         return (await ReadVolumeAsync(volumeId, token))!;
@@ -1033,13 +1098,13 @@ public sealed class CatalogV2Database
         return await reader.ReadAsync(token) ? ReadVolume(reader) : null;
     }
 
-    private async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token)
+    internal async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token)
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
             Mode = readOnly ? SqliteOpenMode.ReadOnly : SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared,
+            Cache = SqliteCacheMode.Private,
             Pooling = true
         }.ToString());
         await connection.OpenAsync(token);
@@ -1095,6 +1160,8 @@ public sealed class CatalogV2Database
         foreach (var node in batch.Nodes)
         {
             ValidateIdentity(node.Identity);
+            if (node.SuppressFileFactChangeHint && !node.IsDirectory)
+                throw new ArgumentException("Only trusted owned directory ancestry may suppress change hints.", nameof(batch));
             if (!string.Equals(node.Identity.VolumeId, batch.VolumeId, StringComparison.Ordinal))
             {
                 throw new ArgumentException("Catalog v2 node belongs to another volume.", nameof(batch));
@@ -1144,7 +1211,8 @@ public sealed class CatalogV2Database
     {
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(query.Scope);
-        if (query.Query.Length > 512 || query.PageSize is < 1 or > CatalogV2Contract.MaximumPageSize
+        if (query.FileConditions is not null) CatalogFileConditionSql.Validate(query.FileConditions);
+        if (!Enum.IsDefined(query.TextTarget) || query.Query.Length > 512 || query.PageSize is < 1 or > CatalogV2Contract.MaximumPageSize
             || query.VolumeIds.Count > 32
             || query.Query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length > CatalogV2Contract.MaximumQueryTerms)
         {
@@ -1163,7 +1231,7 @@ public sealed class CatalogV2Database
         }
     }
 
-    private static void ValidateIdentity(CatalogEntryIdentity identity)
+    internal static void ValidateIdentity(CatalogEntryIdentity identity)
     {
         ArgumentNullException.ThrowIfNull(identity);
         RequireText(identity.VolumeId, 64, nameof(identity.VolumeId));

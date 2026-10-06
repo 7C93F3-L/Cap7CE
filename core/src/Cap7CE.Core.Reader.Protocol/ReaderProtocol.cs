@@ -36,7 +36,8 @@ public enum ReaderOperation : ushort
     MftCloseSnapshot = 6,
     JournalReadBatch = 7,
     Cancel = 8,
-    VolumeEnumerate = 9
+    VolumeEnumerate = 9,
+    JournalWaitAny = 10
 }
 
 [Flags]

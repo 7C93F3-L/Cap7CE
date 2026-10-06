@@ -26,7 +26,7 @@ public sealed class ProductSearchCursorCodec
 
     public ProductSearchCursorToken Read(string value, long revision)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.Length > 8_192) throw Invalid();
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 65_536) throw Invalid();
         var parts = value.Split('.');
         if (parts.Length != 2) throw Invalid();
         try
@@ -79,4 +79,7 @@ public sealed record ProductSearchCursorToken(
     string EntryType,
     CatalogQueryCursorKey? After,
     long CatalogRevision,
-    long ExpiresAtUnixMilliseconds = 0);
+    long ExpiresAtUnixMilliseconds = 0,
+    string? TextTarget = null,
+    CoreSearchFactFilter? Facts = null,
+    CoreSearchFileConditions? FileConditions = null);

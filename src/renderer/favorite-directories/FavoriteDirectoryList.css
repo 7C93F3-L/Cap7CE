@@ -1,0 +1,16 @@
+.cap-favorite-directories { display: flex; flex-direction: column; min-height: 0; padding: 6px; color: var(--cap-stable-text); font-size: var(--cap-stable-body-font-size); }
+.cap-favorite-directories button { border: 0; border-radius: 7px; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+.cap-favorite-directories button:hover { background: var(--cap-stable-control-hover); }
+.cap-favorite-directories button:disabled { opacity: .4; cursor: default; }
+.cap-favorite-directories button[aria-current="page"] { color: var(--theme-on-color); background: var(--cap-accent-gradient); }
+.cap-favorite-directories > header { display: flex; align-items: center; gap: 3px; min-height: 32px; padding-left: 6px; }
+.cap-favorite-directories > header strong { flex: 1; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); font-weight: 500; }
+.cap-favorite-directories > header button { width: 26px; height: 26px; font-size: 18px; }
+.cap-favorite-rows { max-height: 210px; overflow-y: auto; overscroll-behavior: contain; }
+.cap-favorite-open { display: block; min-height: 30px; width: 100%; padding: 5px 8px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap-favorite-actions { display: flex; gap: 2px; padding: 2px 4px 5px; }
+.cap-favorite-actions button { min-height: 24px; padding: 2px 5px; font-size: var(--cap-stable-secondary-font-size); }
+.cap-favorite-row form { display: flex; gap: 2px; padding: 2px; }
+.cap-favorite-row input { min-width: 0; width: 100%; padding: 5px; border: 1px solid var(--theme-color); border-radius: 5px; color: inherit; background: var(--cap-stable-surface); font: inherit; }
+.cap-favorite-row form button { flex: 0 0 24px; }
+.cap-favorite-directories p, .cap-favorite-error { padding: 4px 6px; margin: 0; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }

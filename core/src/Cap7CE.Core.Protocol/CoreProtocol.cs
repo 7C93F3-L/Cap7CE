@@ -24,6 +24,7 @@ public static class CoreOperations
     public const string VolumeList = "volume.list";
     public const string VolumeSelection = "volume.selection";
     public const string CatalogStatus = "catalog.status";
+    public const string CatalogAwaitChanges = "catalog.awaitChanges";
     public const string CatalogBuild = "catalog.build";
     public const string CatalogRebuild = "catalog.rebuild";
     public const string CatalogCancel = "catalog.cancel";
@@ -32,6 +33,17 @@ public static class CoreOperations
     public const string SearchNextPage = "search.nextPage";
     public const string SearchCancel = "search.cancel";
     public const string CoreShutdown = "core.shutdown";
+    public const string FileFactConfigure = "metadata.configure";
+    public const string FileFactDiscover = "metadata.discover";
+    public const string FileFactConsumeChanges = "metadata.consumeChanges";
+    public const string FileFactClaim = "metadata.claim";
+    public const string FileFactPause = "metadata.pause";
+    public const string FileFactRenew = "metadata.renew";
+    public const string FileFactComplete = "metadata.complete";
+    public const string FileFactStatus = "metadata.status";
+
+    public static readonly IReadOnlyList<string> FileFactCapabilities =
+        [FileFactConfigure, FileFactDiscover, FileFactConsumeChanges, FileFactClaim, FileFactPause, FileFactRenew, FileFactComplete, FileFactStatus];
 
     public static readonly IReadOnlyList<string> P11Capabilities =
     [

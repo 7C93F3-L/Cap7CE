@@ -18,6 +18,7 @@ internal static class ReaderVolumeService
         var clientChecked = false;
         var processBound = false;
         var volumes = new List<ReaderNtfsVolume>();
+        Task<ReaderFrame>? pendingRead = null;
         ReaderNtfsVolume.ReaderNtfsSnapshot? snapshot = null;
         try
         {
@@ -64,7 +65,7 @@ internal static class ReaderVolumeService
                     ReaderProtocol.MaximumRecordsPerPage,
                     ReaderCapabilities.SnapshotPaging | ReaderCapabilities.JournalPaging
                     | (helloFrame.Header.MajorVersion == ReaderProtocol.CurrentMajorVersion
-                        ? ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts
+                        ? ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts | ReaderCapabilities.JournalChangeWait
                         : ReaderCapabilities.None))),
                 ReaderFrameFlags.None,
                 deadline.Token);
@@ -74,7 +75,8 @@ internal static class ReaderVolumeService
             var complete = false;
             while (!complete)
             {
-                var request = await ReaderFrameCodec.ReadAsync(pipe, deadline.Token);
+                var request = await (pendingRead ?? ReaderFrameCodec.ReadAsync(pipe, deadline.Token));
+                pendingRead = null;
                 if (request.Header.RequestId <= lastRequestId)
                 {
                     throw new ReaderProtocolException("non-monotonic-request-id");
@@ -237,6 +239,27 @@ internal static class ReaderVolumeService
                         }
                         break;
 
+                    case ReaderOperation.JournalWaitAny:
+                        var waitRequest = ReaderPayloadCodec.DecodeJournalWaitRequest(request.Payload.Span);
+                        if (waitRequest.Cursors.Any(cursor => !volumes.Any(candidate => candidate.VolumeId == cursor.VolumeId))) {
+                            await WriteErrorAsync(pipe, request, ReaderStatus.UnsupportedVolume, deadline.Token);
+                            break;
+                        }
+                        using (var waitLifetime = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token)) {
+                            var waiting = ReaderJournalWaitCoordinator.WaitAsync(waitRequest, (cursor, token) =>
+                                volumes.Single(candidate => candidate.VolumeId == cursor.VolumeId).WaitForJournalChangeAsync(cursor.JournalId, cursor.StartingUsn, token),
+                                waitLifetime.Token);
+                            // Keep one next-frame read to retire native waits on
+                            // disconnect, or an explicit cancel while waiting.
+                            pendingRead = ReaderFrameCodec.ReadAsync(pipe, deadline.Token);
+                            var joined = await ReaderJournalWaitChannel.CompleteAsync(request, waiting, pendingRead, waitLifetime);
+                            if (joined.Cancellation is { } cancel) {
+                                pendingRead = null;
+                                await WriteErrorAsync(pipe, cancel, ReaderStatus.Cancelled, deadline.Token); complete = true;
+                            } else await WriteSuccessAsync(pipe, request, ReaderPayloadCodec.EncodeJournalWaitResponse(joined.Response!), ReaderFrameFlags.None, deadline.Token);
+                        }
+                        break;
+
                     case ReaderOperation.Cancel:
                         _ = ReaderPayloadCodec.DecodeCancelRequest(request.Payload.Span);
                         snapshot?.Dispose();
@@ -282,6 +305,9 @@ internal static class ReaderVolumeService
         }
         finally
         {
+            if (pendingRead is not null) {
+                try { await pendingRead; } catch (Exception error) when (error is not OutOfMemoryException) { }
+            }
             snapshot?.Dispose();
             foreach (var volume in volumes) volume.Dispose();
             try

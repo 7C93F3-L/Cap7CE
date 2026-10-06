@@ -46,7 +46,10 @@ public sealed record CatalogV2NodeRecord(
     bool Exists,
     long? SizeBytes,
     long? CreatedUtcTicks,
-    long? ModifiedUtcTicks);
+    long? ModifiedUtcTicks,
+    bool InvalidatesFileFacts = false,
+    bool MayChangeFileFormat = false,
+    bool SuppressFileFactChangeHint = false);
 
 public sealed record CatalogV2VolumeSnapshot(
     string VolumeId,
@@ -92,6 +95,9 @@ public sealed record CatalogQueryCursorKey(
     string VolumeId,
     string FileReference);
 
+public enum CatalogQueryTextTarget { Name, Path, NameOrPath }
+public sealed record CatalogQueryRevision(long CatalogRevision, long? FactRevision = null);
+
 public sealed record CatalogV2Query(
     string Query,
     IReadOnlyList<string> VolumeIds,
@@ -99,7 +105,11 @@ public sealed record CatalogV2Query(
     string? Extension,
     CatalogEntryType EntryType,
     int PageSize,
-    CatalogQueryCursorKey? After);
+    CatalogQueryCursorKey? After,
+    FileFacts.FileFactQueryFilter? Facts = null,
+    CatalogQueryTextTarget TextTarget = CatalogQueryTextTarget.Name,
+    CatalogQueryRevision? ExpectedRevision = null,
+    CatalogFileConditions? FileConditions = null);
 
 public sealed record CatalogV2QueryItem(
     CatalogEntryIdentity Identity,
@@ -115,7 +125,8 @@ public sealed record CatalogV2QueryItem(
 public sealed record CatalogV2QueryPage(
     IReadOnlyList<CatalogV2QueryItem> Items,
     CatalogQueryCursorKey? Next,
-    long CatalogRevision);
+    long CatalogRevision,
+    long? FactRevision = null);
 
 public sealed record CatalogResolvedDirectory(
     CatalogEntryIdentity Identity,

@@ -2,3 +2,5 @@
 *.mp4 binary
 *.pdf binary
 *.png binary
+third_party/metadata-media/LICENSE-Windows-SDK.rtf binary
+third_party/metadata-media/LICENSE-dotnet-third-party.txt -whitespace

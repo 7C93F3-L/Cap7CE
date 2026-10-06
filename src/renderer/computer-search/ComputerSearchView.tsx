@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ComputerSearchState } from "../../../electron/computerSearchTypes";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../shared/types";
@@ -22,21 +22,27 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory }: {
   controller: ComputerSearchController;
   foreground?: boolean;
+  onOpenDirectory?: (path: string) => void;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
   windowMaterial: WindowMaterial;
   onNativeDragStateChange: (active: boolean) => void;
 }) => {
-  const { status, items, busy, error, submittedQuery, nextCursor, scopeLabel, loadMore, refreshStatus,
+  const { status, items, busy, error, hasSubmitted, nextCursor, scopeLabel, loadMore, refreshStatus,
     capabilityBusy, capabilityFeedback, capabilityOptions, configureCapability } = controller;
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const taskId = controller.taskId ?? "";
   const actions = useComputerSearchResultActions({
-    items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground
+    items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground, onOpenDirectory
   });
+  const interactionBlocked = actions.selectedIds.size > 0 || actions.contextMenu !== null;
+  useEffect(() => {
+    controller.setInteractionBlocked(interactionBlocked);
+    return () => controller.setInteractionBlocked(false);
+  }, [controller.setInteractionBlocked, interactionBlocked]);
   if (!status || !status.searchAvailable) {
     const progress = status?.volumes.reduce((total, volume) => total + volume.processed, 0) ?? 0;
     return <section className="cap-computer-search-state">
@@ -58,10 +64,13 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       {status?.state === "repair-required" && <button type="button" disabled={capabilityBusy}
         onClick={() => void configureCapability("repair")}>{t(capabilityBusy
           ? "computerSearch.capability.preparing" : "computerSearch.capability.repair")}</button>}
+      {status?.state === "not-enabled" && <button type="button" disabled={capabilityBusy}
+        onClick={() => void configureCapability("enable")}>{t(capabilityBusy
+          ? "computerSearch.capability.preparing" : "computerSearch.capability.enable")}</button>}
       {status?.state === "unavailable" && <button type="button" onClick={() => void refreshStatus()}>{t("common.retry")}</button>}
     </section>;
   }
-  if (!submittedQuery) return <section className="cap-computer-search-empty">
+  if (!hasSubmitted) return <section className="cap-computer-search-empty">
     <StableUiIcon name="search" /><strong>{t("computerSearch.placeholder", { scope: scopeLabel })}</strong>
     <span>{t("computerSearch.hint")}</span>
   </section>;
@@ -83,7 +92,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       return <button
         className={`cap-computer-search-entry cap-skim-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
         type="button"
-        key={item.authorizationId}
+        key={item.id}
         title={item.path}
         aria-label={item.name}
         aria-pressed={selected}
@@ -107,7 +116,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
           }
         }}
       >
-        <ComputerSearchResultVisual item={item} taskId={taskId} scrollContainerRef={scrollContainerRef} />
+        <ComputerSearchResultVisual item={item} taskId={taskId} scrollContainerRef={scrollContainerRef} foreground={foreground} />
         <TwoLineMiddleEllipsisFileName fileName={item.name} className="cap-computer-search-name cap-skim-entry-name" />
         <MiddleEllipsisFileName fileName={getDirectoryPath(item.path)} className="cap-computer-search-path cap-skim-entry-path" />
       </button>;

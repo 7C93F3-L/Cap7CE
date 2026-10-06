@@ -7,7 +7,7 @@ const expectedFiles = [
   "Cap7CE.Core.Reader.Protocol.csproj",
   "ReaderFrame.cs",
   "ReaderFrameCodec.cs",
-  "ReaderMessages.cs",
+  "ReaderMessages.cs", "ReaderJournalWaitCodec.cs",
   "ReaderPayloadCodec.cs",
   "ReaderProtocol.cs",
   "ReaderProtocolAssembly.cs",
@@ -70,7 +70,7 @@ if (failures.length) {
   console.log(JSON.stringify({
     status: "passed",
     protocol: "CR/1+CR/2-binary",
-    fixedOperations: 9,
+    fixedOperations: 10,
     maximumPayloadBytes: 1024 * 1024,
     transportImplemented: true,
     serviceInstalled: false,

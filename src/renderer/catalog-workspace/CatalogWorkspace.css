@@ -1,0 +1,47 @@
+@import "../workspace/WorkspaceShell.css";
+@import "../stable-ui/StableSkimPanel.css";
+@import "../skim/SkimView.css";
+@import "../computer-search/ComputerSearch.css";
+.cap-catalog-workspace { position: absolute; inset: var(--cap-stable-titlebar-height) 0 0; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: 36px minmax(0, 1fr); gap: 5px; min-width: 0; min-height: 0; --cap-stable-grid-page-padding: 10px; }
+.cap-catalog-workspace.has-sidebar { grid-template-columns: 44px 235px minmax(0, 1fr); }
+.cap-catalog-rail { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; gap: 4px; padding: 2px 4px 6px; }
+.cap-catalog-rail button { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border: 0; border-radius: 9px; color: var(--cap-stable-text); background: transparent; }
+.cap-catalog-rail button:hover { background: var(--cap-stable-control-hover); }
+.cap-catalog-rail button[aria-expanded="true"] { color: var(--theme-on-color); background: var(--cap-accent-gradient); }
+.cap-catalog-rail .cap-catalog-settings { margin-top: auto; }
+.cap-catalog-header { grid-column: 2; grid-row: 1; display: flex; min-width: 0; padding-right: 5px; }
+.has-sidebar > .cap-catalog-header { grid-column: 3; }
+.cap-catalog-sidebar { grid-column: 2; grid-row: 1 / -1; display: flex; flex-direction: column; min-height: 0; border-radius: 12px; background: var(--cap-stable-flyout-surface); overflow: hidden; }
+.cap-catalog-sidebar[hidden], .cap-catalog-context[hidden] { display: none; }
+.cap-catalog-filter-host { position: relative; flex: 1; min-height: 0; }
+.cap-catalog-workspace .cap-catalog-filter-host > .cap-workspace-filter-panel { position: absolute; inset: 0; width: 100%; margin: 0; border: 0; box-shadow: none; }
+.cap-catalog-body { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; min-width: 0; min-height: 0; margin: 0 5px 5px 0; }
+.has-sidebar > .cap-catalog-body { grid-column: 3; }
+.cap-catalog-contexts { position: relative; flex: 1; min-width: 0; min-height: 0; }
+.cap-catalog-context { height: 100%; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.cap-catalog-directory-toolbar { display: flex; gap: 3px; flex: 0 0 auto; min-width: 0; padding: 4px 6px; align-items: center; }
+.cap-catalog-directory-toolbar button { flex: 0 0 auto; color: var(--cap-stable-text); border: 0; border-radius: 6px; background: transparent; padding: 4px 7px; font: inherit; }
+.cap-catalog-directory-toolbar button:hover { background: var(--cap-stable-control-hover); }
+.cap-catalog-directory-toolbar button:disabled { opacity: .35; }
+.cap-catalog-directory-toolbar input { flex: 1; width: 0; min-width: 0; color: var(--cap-stable-text-muted); background: transparent; border: 0; border-radius: 6px; padding: 4px; font: inherit; }
+.cap-catalog-rail button[aria-pressed="true"] { color: var(--theme-on-color); background: var(--cap-accent-gradient); }
+.cap-catalog-volume-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); align-content: start; gap: 8px; padding: 8px; }
+.cap-catalog-volume-grid button { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--cap-stable-text); font: inherit; padding: 15px; border: 0; border-radius: 10px; background: var(--cap-stable-surface); }
+.cap-catalog-volume-grid button:disabled { opacity: .5; }
+.cap-catalog-volume-grid .cap-stable-sidebar-icon { width: 48px; height: 48px; }
+.cap-catalog-query { flex: 0 0 36px; margin: 4px 8px; }
+.cap-catalog-status { flex: 0 0 auto; min-height: 22px; padding: 3px 10px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); }
+.cap-catalog-results { position: relative; flex: 1; min-height: 0; border-radius: 12px; overflow: hidden; background: var(--cap-stable-surface); }
+.cap-catalog-results .cap-skim-entry { color: var(--cap-stable-text); background: var(--cap-stable-grid-surface, var(--panel-bg)); border-radius: var(--cap-stable-radius-sm, 10px); }
+.cap-catalog-results .cap-skim-entry:hover { background: var(--cap-stable-control-hover); }
+.cap-catalog-results .cap-skim-entry.selected { background: var(--cap-stable-selected-surface, color-mix(in srgb, var(--theme-color) 34%, var(--panel-bg))); }
+.cap-catalog-results .cap-skim-entry-icon { width: 80%; height: 80%; }
+.cap-catalog-results .cap-skim-entry-icon svg { width: 100%; height: 100%; }
+.cap-catalog-body > .cap-metadata-build-slot { flex: 0 0 auto; }
+.cap-catalog-limit { position: absolute; z-index: 50; right: 10px; bottom: 10px; max-width: calc(100% - 20px); padding: 10px; border-radius: 10px; color: var(--cap-stable-text); background: var(--cap-stable-flyout-surface); }
+.cap-catalog-limit button { color: inherit; background: transparent; border: 0; font: inherit; }
+@media (max-width: 849.98px), (max-height: 359.98px) {
+  .cap-catalog-workspace.has-sidebar { grid-template-columns: 44px minmax(0, 1fr); }
+  .has-sidebar > .cap-catalog-header, .has-sidebar > .cap-catalog-body { grid-column: 2; }
+  .cap-catalog-sidebar { position: absolute; z-index: 40; top: 36px; bottom: 5px; left: 44px; width: min(235px, calc(100% - 54px)); border: 1px solid color-mix(in srgb, currentColor 12%, transparent); box-shadow: 0 8px 22px rgb(0 0 0 / 15%); }
+}

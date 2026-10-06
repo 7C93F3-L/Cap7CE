@@ -51,12 +51,22 @@ public sealed class CatalogSynchronizationService
         CancellationToken token = default)
     {
         await using var reader = await readerFactory.ConnectAsync(token);
+        return await SynchronizeConnectedAsync(reader, requestedVolumeIds, forceRebuild, token);
+    }
+
+    // The exclusive maintenance owner reuses its authenticated session during
+    // recovery; this method never connects or disposes a competing Reader.
+    public async Task<IReadOnlyList<CatalogSynchronizationMeasurement>> SynchronizeConnectedAsync(
+        ICatalogReaderSession reader, IReadOnlyList<string> requestedVolumeIds, bool forceRebuild, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(reader); ArgumentNullException.ThrowIfNull(requestedVolumeIds);
+        var requested = requestedVolumeIds.ToArray();
         var readerVolumes = (await reader.ListVolumesAsync(token))
             .ToDictionary(volume => volume.CatalogId, StringComparer.Ordinal);
         var catalogVolumes = await catalog.ReadVolumesAsync(token);
         var targets = catalogVolumes
             .Where(volume => volume.Selected
-                && (requestedVolumeIds.Count == 0 || requestedVolumeIds.Contains(volume.VolumeId, StringComparer.Ordinal)))
+                && (requested.Length == 0 || requested.Contains(volume.VolumeId, StringComparer.Ordinal)))
             .ToArray();
         var measurements = new List<CatalogSynchronizationMeasurement>(targets.Length);
         foreach (var target in targets)
@@ -328,7 +338,9 @@ public sealed class CatalogSynchronizationService
         record.Exists,
         record.IsDirectory || record.SizeBytes > long.MaxValue ? null : (long?)record.SizeBytes,
         ValidTime(record.CreationFileTimeUtc),
-        ValidTime(record.LastWriteFileTimeUtc));
+        ValidTime(record.LastWriteFileTimeUtc),
+        InvalidatesFileFacts: CatalogFactChangeClassifier.Invalidates(record.Reason),
+        MayChangeFileFormat: CatalogFactChangeClassifier.MayChangeFormat(record.Reason));
 
     private static long? ValidTime(long? value) => value is >= 0 ? value : null;
 }

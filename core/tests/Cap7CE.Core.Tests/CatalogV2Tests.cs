@@ -242,6 +242,27 @@ internal static class CatalogV2Tests
             resolvedVolumeRoot.VolumeId!, "SC/1 drive root keeps the stable volume identity");
         TestAssert.True(resolvedVolumeRoot.RootFileReference is null,
             "SC/1 drive root uses the existing volume filter without a synthetic directory identity");
+        TestAssert.Equal(CatalogV2Database.EncodeFileReference(5), resolvedVolumeRoot.DirectoryFileReference!,
+            "drive child browsing resolves the actual catalog root identity");
+        TestAssert.Equal(resolvedScope.RootFileReference!, resolvedScope.DirectoryFileReference!,
+            "folder child browsing shares its stable directory identity");
+        var rootChildren = ProtocolClient.ReadBody<SearchPageResponse>(await client.RequestAsync(
+            "browse-root-children", CoreOperations.SearchStart, new SearchStartRequest(
+                "", 1, CoreSearchSorts.NameAscending, [resolvedVolumeRoot.VolumeId!],
+                new CoreSearchScopeRequest("direct-children", resolvedVolumeRoot.VolumeId,
+                    resolvedVolumeRoot.DirectoryFileReference), EntryType: "any")));
+        TestAssert.Equal("assets", rootChildren.Items.Single().Name, "first root child is a folder");
+        TestAssert.True(rootChildren.Items.Single().IsDirectory, "child query preserves folder type");
+        var rootChildrenNext = ProtocolClient.ReadBody<SearchPageResponse>(await client.RequestAsync(
+            "browse-root-children-next", CoreOperations.SearchNextPage, new SearchNextPageRequest(rootChildren.NextCursor!)));
+        TestAssert.Equal("shared.txt", rootChildrenNext.Items.Single().Name, "signed child cursor excludes nested files and other volumes");
+        TestAssert.True(rootChildrenNext.NextCursor is null, "root itself is excluded from child browsing");
+        var folderChildren = ProtocolClient.ReadBody<SearchPageResponse>(await client.RequestAsync(
+            "browse-folder-children", CoreOperations.SearchStart, new SearchStartRequest(
+                "", 100, CoreSearchSorts.NameAscending, [resolvedScope.VolumeId!],
+                new CoreSearchScopeRequest("direct-children", resolvedScope.VolumeId,
+                    resolvedScope.DirectoryFileReference), EntryType: "any")));
+        TestAssert.Equal("alpha.png", folderChildren.Items.Single().Name, "folder browsing contains direct children only");
 
         var first = ProtocolClient.ReadBody<SearchPageResponse>(await client.RequestAsync(
             "search-first",

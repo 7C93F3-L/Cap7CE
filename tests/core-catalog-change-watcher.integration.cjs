@@ -1,0 +1,38 @@
+const assert = require("node:assert/strict");
+const { CoreCatalogChangeWatcher } = require("../dist-electron/core/coreCatalogChangeWatcher.js");
+const turn = () => new Promise(resolve => setImmediate(resolve));
+(async () => {
+  const calls = [], notices = []; let active = 0, maximum = 0;
+  const watcher = new CoreCatalogChangeWatcher({ wait(sequence, signal) {
+    active++; maximum = Math.max(maximum, active);
+    let resolve, reject;
+    const response = new Promise((yes, no) => { resolve = yes; reject = no; });
+    const call = { sequence, signal, resolve, reject }; calls.push(call);
+    return response.finally(() => active--);
+  } }, notice => notices.push(notice));
+  await watcher.observe(1, false); assert.equal(calls.length, 0);
+  await watcher.observe(1, true); assert.equal(calls.length, 1);
+  await watcher.observe(1, true); assert.equal(calls.length, 1);
+  calls[0].resolve({ sequence: 0, catalogRevision: 0, changed: false }); await turn();
+  assert.equal(notices.length, 0, "quiet timeout produces no callback");
+  calls[1].resolve({ sequence: 3, catalogRevision: 4, changed: true }); await turn();
+  assert.equal(notices.length, 1); assert.equal(calls[2].sequence, 3);
+  let switched = false;
+  const switching = watcher.observe(2, true).then(() => { switched = true; }); await turn();
+  assert.equal(calls[2].signal.aborted, true); assert.equal(switched, false);
+  assert.equal(calls.length, 3, "cancellation alone cannot open another wait");
+  calls[2].resolve({ sequence: 4, changed: true }); await switching;
+  assert.equal(notices.length, 1, "late aborted reply cannot publish");
+  assert.equal(calls[3].sequence, 0, "new process resets sequence");
+  calls[3].reject(Error("connection-lost")); await turn();
+  assert.equal(watcher.hasFailed(), true);
+  await Promise.all([watcher.observe(2, true), watcher.observe(2, true)]);
+  assert.equal(calls.length, 4, "ordinary observations cannot retry a failed process");
+  await watcher.stop(); await watcher.observe(3, true);
+  let stopped = false; const stopping = watcher.stop().then(() => { stopped = true; }); await turn();
+  assert.equal(stopped, false); assert.equal(calls[4].signal.aborted, true);
+  calls[4].reject(Error("cancelled")); await stopping;
+  assert.equal(active, 0); assert.equal(maximum, 1);
+  assert.equal(watcher.hasFailed(), false);
+  console.log("Catalog watcher quiet waits, process handoff, failure latch and joined shutdown passed.");
+})().catch(error => { console.error(error); process.exitCode = 1; });

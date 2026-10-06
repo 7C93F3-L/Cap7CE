@@ -31,6 +31,9 @@ This file is a human-readable inventory for Cap7CE 1.0.4 and its opt-in Core cap
 | Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used by the opt-in .NET Core catalog capability |
 | SQLitePCLRaw 2.1.12 packages | Apache-2.0; used by the opt-in .NET Core catalog capability |
 | SQLite native library supplied through SQLitePCLRaw | SQLite is in the public domain; the packaging components remain Apache-2.0 |
+| C#/WinRT runtime 2.2.0 | MIT; used by the bounded native video metadata helper |
+| Windows SDK for .NET projections 10.0.19041.57 | Microsoft Windows SDK license; the actual media codecs are supplied by Windows |
+| .NET 10 NativeAOT runtime | MIT and included third-party notices; statically linked into the media helper |
 
 The installed production dependency graph also contains components under MIT, Apache-2.0, ISC, 0BSD, Zlib, and LGPL-3.0-or-later terms. Their exact versions are locked in `package-lock.json`.
 
@@ -41,6 +44,8 @@ Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active
 Cap7CE uses selected Microsoft Fluent UI System Icons as editable SVG geometry in the stable UI. The icons are adapted for Cap7CE state and sizing while remaining subject to the upstream MIT license.
 
 The Core capability uses Microsoft.Data.Sqlite 10.0.12 and SQLitePCLRaw 2.1.12. Binary packaging copies the applicable MIT and Apache-2.0 texts to `resources/licenses/core-dependencies`; SQLite itself is in the public domain.
+
+The native video metadata helper is published as a standalone NativeAOT executable. Its Windows SDK, C#/WinRT and .NET runtime license texts and notices are bundled under `resources/licenses/metadata-media`. Its managed compiler dependencies are recorded in `native/Cap7CE.Media.Metadata/packages.lock.json`; Windows SDK targeting pack version is fixed in the project file.
 
 Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
 

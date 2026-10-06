@@ -3,6 +3,9 @@ import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequ
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "./appUpdateTypes";
+import { createMetadataBuildBridge } from "./metadataExtraction/metadataBuildBridge";
+import { createComputerSearchChangeBridge } from "./computerSearchChangeBridge";
+import { createFavoriteDirectoryBridge } from "./favoriteDirectories/favoriteDirectoryBridge";
 import type {
   ComputerSearchAuthorization, ComputerSearchAuthorizationBatch,
   ComputerSearchCapabilityRequest, ComputerSearchNextPageRequest, ComputerSearchRequest
@@ -27,6 +30,8 @@ ipcRenderer.on("line:visibilityChanged", (_event, visible: boolean) => {
 });
 
 contextBridge.exposeInMainWorld("cap7ce", {
+  metadataBuild: createMetadataBuildBridge(ipcRenderer),
+  favoriteDirectories: createFavoriteDirectoryBridge(ipcRenderer),
   window: {
     setShellState: (state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => ipcRenderer.invoke("window:setShellState", state, options),
     setAlwaysOnTop: (enabled: boolean) => ipcRenderer.invoke("window:setAlwaysOnTop", enabled),
@@ -211,6 +216,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
     }
   },
   computerSearch: {
+    ...createComputerSearchChangeBridge(ipcRenderer),
     status: () => ipcRenderer.invoke("computerSearch:status"),
     capabilityOptions: () => ipcRenderer.invoke("computerSearch:capabilityOptions"),
     configureCapability: (request: ComputerSearchCapabilityRequest) =>
@@ -218,6 +224,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
     search: (request: ComputerSearchRequest) => ipcRenderer.invoke("computerSearch:search", request),
     nextPage: (request: ComputerSearchNextPageRequest) => ipcRenderer.invoke("computerSearch:nextPage", request),
     cancel: (taskId: string) => ipcRenderer.invoke("computerSearch:cancel", taskId),
+    acquireThumbnail: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:acquireThumbnail", request),
+    releaseThumbnail: (request: { taskId: string; leaseId: string }) => ipcRenderer.invoke("computerSearch:releaseThumbnail", request),
     open: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:open", request),
     showInFolder: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:showInFolder", request),
     copyPaths: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.invoke("computerSearch:copyPaths", request),

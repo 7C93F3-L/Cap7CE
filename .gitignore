@@ -5,6 +5,8 @@ release/
 artifacts/
 core/**/bin/
 core/**/obj/
+native/**/bin/
+native/**/obj/
 models/
 llama.cpp/
 TestFiles/

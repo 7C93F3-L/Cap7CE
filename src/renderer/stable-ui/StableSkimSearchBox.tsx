@@ -7,7 +7,7 @@ const StableSkimSearchBox = ({ query, scopeLabel, canSubmit, onExit, onQueryChan
   StableSkimSearchControls) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
-  const submit = (event: FormEvent) => { event.preventDefault(); if (canSubmit && query.trim()) onSubmit(); };
+  const submit = (event: FormEvent) => { event.preventDefault(); if (canSubmit) onSubmit(); };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== "Escape") return;
     event.preventDefault();

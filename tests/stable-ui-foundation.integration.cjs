@@ -32,10 +32,10 @@ void (async () => {
   const stableUiStyles = `${foundationStyles}\n${accessibilityStyles}`;
   const packageJson = JSON.parse(read("package.json"));
 
-  if (!rendererEntry.includes('Promise.all([import("./App"), import("./stable-ui/StableUiRoot")])')
-    || !rendererEntry.includes('<App stableUiRenderer={StableUiRoot} />')
+  if (!rendererEntry.includes('import("./catalog-workspace/CatalogApplicationRoot")')
+    || !rendererEntry.includes('<CatalogApplicationRoot />')
     || /rendererSearchParams\.get\("presentation"\)/.test(rendererEntry)) {
-    throw new Error("The product main Renderer must assemble only the stable UI root.");
+    throw new Error("The product main Renderer must assemble the unified Catalog root.");
   }
   if (/presentationMode|windowPresentationRuntime|searchParams\.set\("presentation"/.test(mainSource)) {
     throw new Error("The stable window host must not retain a presentation-mode branch.");

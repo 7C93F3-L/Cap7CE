@@ -111,6 +111,7 @@ export class CoreHostController {
     if (this.state !== "ready" || !this.client) throw new CoreClientError("core-not-ready");
     return this.client.request<T>(operation, body, deadlineMs);
   }
+  supports(operation: string): boolean { return this.state === "ready" && Boolean(this.client?.supports(operation)); }
 
   startRequest<T>(operation: string, body: Record<string, unknown>, deadlineMs?: number): CorePendingRequest<T> {
     if (this.state !== "ready" || !this.client) throw new CoreClientError("core-not-ready");

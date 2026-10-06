@@ -113,7 +113,7 @@ internal static class ReaderProtocolTests
         TestAssert.False(boundary.ReadsFileContent, "reader content boundary");
         TestAssert.False(boundary.WritesSourceVolumes, "reader source write boundary");
         TestAssert.False(boundary.OpensNetworkListeners, "reader network boundary");
-        TestAssert.Equal(9, boundary.Operations.Count, "reader operation count");
+        TestAssert.Equal(10, boundary.Operations.Count, "reader operation count");
         TestAssert.Equal(1, boundary.MaximumConcurrentRequests, "reader concurrency limit");
         TestAssert.Equal(64, boundary.MaximumRequestedPages, "reader page request limit");
         TestAssert.Equal(50_000, ReaderProtocol.MaximumRecordsPerFrame, "reader record frame limit");

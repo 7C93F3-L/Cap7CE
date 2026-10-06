@@ -13,10 +13,11 @@ interface ResultActionOptions {
   appearanceColors: AppearanceColors;
   onNativeDragStateChange: (active: boolean) => void;
   foreground?: boolean;
+  onOpenDirectory?: (path: string) => void;
 }
 
 export const useComputerSearchResultActions = ({
-  items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground = true
+  items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground = true, onOpenDirectory
 }: ResultActionOptions) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -76,10 +77,11 @@ export const useComputerSearchResultActions = ({
   }, [items]);
 
   const openItem = useCallback((item: ComputerSearchItem) => {
+    if (item.isDirectory && onOpenDirectory) { onOpenDirectory(item.path); return; }
     void window.cap7ce?.computerSearch.open(authorization(item)).then((message) => {
       if (message) showFeedback(t("computerSearch.actionFailed"));
     }, () => showFeedback(t("computerSearch.actionFailed")));
-  }, [authorization, showFeedback]);
+  }, [authorization, showFeedback, onOpenDirectory]);
 
   const showInFolder = useCallback((item: ComputerSearchItem) => {
     void window.cap7ce?.computerSearch.showInFolder(authorization(item)).catch(() => {

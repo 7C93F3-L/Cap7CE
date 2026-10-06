@@ -71,7 +71,7 @@ if (failures.length) {
 console.log(JSON.stringify({
   status: "passed",
   decision: "proceed-to-formal-product-lifecycle",
-  productSurface: "skim-computer-search",
+  productSurface: "unified-catalog-workspace",
   regularPackageConnected: true,
-  baseSearchConvergenceAuthorized: false
+  baseSearchConvergenceAuthorized: true
 }));

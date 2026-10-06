@@ -22,9 +22,11 @@ export const handleComputerSearchVisualRequest = async (
   if (!isComputerSearchVisualHost(url.hostname)) return null;
   const taskId = url.searchParams.get("task") ?? "";
   const authorizationId = url.searchParams.get("authorization") ?? "";
-  const item = dependencies.runtime.resolveAuthorizedItem({ taskId, authorizationId });
-  const sessionId = dependencies.runtime.getVisualSessionId(taskId);
+  const authorization = { taskId, authorizationId }, leaseId = url.searchParams.get("lease") ?? "";
+  const item = dependencies.runtime.resolveAuthorizedItem(authorization);
   const preview = url.hostname === "computer-search-preview";
+  const sessionId = preview ? dependencies.runtime.getVisualSessionId(taskId)
+    : dependencies.runtime.thumbnailLeases.session(authorization, leaseId);
   if (!item || !sessionId || (preview && item.isDirectory)) {
     return new Response("Computer search visual request is unavailable", { status: 403 });
   }
@@ -34,6 +36,9 @@ export const handleComputerSearchVisualRequest = async (
       : !preview && (!item.canThumbnail || item.isDirectory)
         ? await dependencies.requestShellThumbnailCache(sessionId, item.path)
         : await dependencies.requestVisualCache(sessionId, item.path, preview ? "preview" : "thumbnail");
+    if (!dependencies.runtime.resolveAuthorizedItem(authorization)
+      || (!preview && !dependencies.runtime.thumbnailLeases.session(authorization, leaseId)))
+      return new Response("Computer search visual request is unavailable", { status: 403 });
     if (preview && await dependencies.shouldUseSourceFileForPreview(item.path)) {
       return dependencies.fetchSourceFile(item.path);
     }
@@ -45,7 +50,8 @@ export const handleComputerSearchVisualRequest = async (
     return new Response(body, {
       headers: { "Content-Type": image.mimeType, "Cache-Control": "no-store" }
     });
-  } catch {
+  } catch (error) {
+    if (!preview) dependencies.runtime.thumbnailLeases.failed(authorization, leaseId, error);
     return new Response("Computer search visual request is unavailable", { status: 404 });
   }
 };

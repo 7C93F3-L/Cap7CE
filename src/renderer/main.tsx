@@ -38,10 +38,10 @@ if (isSettingsWindow) {
     );
   });
 } else {
-  void Promise.all([import("./App"), import("./stable-ui/StableUiRoot")]).then(([{ default: App }, { default: StableUiRoot }]) => {
+  void import("./catalog-workspace/CatalogApplicationRoot").then(({ default: CatalogApplicationRoot }) => {
     root.render(
       <React.StrictMode>
-        <App stableUiRenderer={StableUiRoot} />
+        <CatalogApplicationRoot />
       </React.StrictMode>
     );
   });

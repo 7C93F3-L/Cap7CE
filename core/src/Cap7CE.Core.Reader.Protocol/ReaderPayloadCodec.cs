@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Cap7CE.Core.Reader.Protocol;
 
-public static class ReaderPayloadCodec
+public static partial class ReaderPayloadCodec
 {
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 

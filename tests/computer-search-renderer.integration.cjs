@@ -10,6 +10,7 @@ const controller = read("src/renderer/computer-search/useComputerSearchControlle
 const view = read("src/renderer/computer-search/ComputerSearchView.tsx");
 const actions = read("src/renderer/computer-search/useComputerSearchResultActions.ts");
 const visual = read("src/renderer/computer-search/ComputerSearchResultVisual.tsx");
+const viewport = read("src/renderer/computer-search/useViewportThumbnail.ts");
 const styles = read("src/renderer/computer-search/ComputerSearch.css");
 
 assert.match(toolbar, /aria-pressed=\{search\.active\}/u);
@@ -31,7 +32,10 @@ assert.match(controller, /capabilityOptions\(\)[\s\S]*?configureCapability\(\{ a
 assert.match(controller, /refreshStatus\(\)\.then\(\(nextStatus\)[\s\S]*?nextStatus\?\.state !== "not-enabled"[\s\S]*?configureCapability\("enable"\)/u);
 assert.match(controller, /const sequence = \+\+enterSequence\.current[\s\S]*?enterSequence\.current !== sequence/u);
 assert.match(controller, /result\.reason === "activation-elevation-cancelled" \? null : result\.status/u);
-assert.doesNotMatch(view, /configureCapability\("enable"\)/u);
+assert.match(view, /status\?\.state === "not-enabled"[\s\S]*?onClick=\{\(\) => void configureCapability\("enable"\)\}/u,
+  "A persistent startup view requires an explicit enable action instead of automatic installation");
+assert.match(controller, /persistent && foreground && !active\) enter\(false\)/u);
+assert.match(controller, /nextStatus\?\.state !== "not-enabled" \|\| !activateCapability/u);
 assert.match(view, /status\?\.state !== "not-enabled" && <strong>/u);
 assert.match(view, /status\?\.state === "repair-required"[\s\S]*?configureCapability\("repair"\)/u);
 assert.doesNotMatch(controller, /if \(page\.isComplete\) taskRef\.current = null/u);
@@ -41,7 +45,11 @@ assert.match(view, /cap-computer-search-name cap-skim-entry-name[\s\S]*?getDirec
 assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
 assert.match(actions, /computerSearch\.inspect\(request\)[\s\S]*?sourceAuthorization/u);
 assert.match(actions, /computerSearch\.copyPaths\(\{[\s\S]*?authorizationIds/u);
-assert.match(visual, /IntersectionObserver[\s\S]*?computer-search-thumbnail/u);
+assert.match(viewport, /IntersectionObserver[\s\S]*?computer-search-thumbnail/u);
+assert.match(viewport, /rootMargin: "0px"/u);
+assert.match(viewport, /if \(disposed\) \{ release\(id\); return; \}/u);
+assert.match(visual, /useViewportThumbnail\(taskId, item.authorizationId, foreground/u);
+assert.match(view, /scrollContainerRef=\{scrollContainerRef\} foreground=\{foreground\}/u);
 assert.match(visual, /cap-skim-entry-visual cap-computer-search-visual[\s\S]*?cap-skim-entry-icon[\s\S]*?className="cap-skim-entry-thumbnail"/u);
 assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 

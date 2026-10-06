@@ -14,6 +14,8 @@ const extensionsByModelType: Record<SearchThreeDModelType, readonly string[]> = 
   cad: [".3dm", ".dwg", ".dxf", ".iges", ".igs", ".step", ".stp"],
   scene: [".c4d", ".max", ".skp"]
 };
+export const getThreeDModelTypeExtensions = (types: readonly SearchThreeDModelType[]) =>
+  [...new Set(types.flatMap(type => extensionsByModelType[type]))];
 
 export const normalizeThreeDTriangleCountRange = (value: unknown): SearchThreeDTriangleCountRange | null => {
   if (!value || typeof value !== "object") return null;

@@ -13,7 +13,8 @@ public enum ReaderCapabilities : uint
     JournalPaging = 2,
     SyntheticFixture = 4,
     MultiVolume = 8,
-    BasicFacts = 16
+    BasicFacts = 16,
+    JournalChangeWait = 32
 }
 
 public sealed record ReaderHelloRequest(byte[] Nonce, uint ClientProcessId);

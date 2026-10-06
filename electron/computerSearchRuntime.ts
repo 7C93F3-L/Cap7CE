@@ -11,8 +11,24 @@ import { startComputerSearchCatalogSynchronization } from "./computerSearchCatal
 import { CoreHostController, type CoreControllerSnapshot } from "./core/coreHostController";
 import type { CoreCatalogStatus, CoreResolvedScope, CoreSearchPage } from "./core/coreProductProtocolTypes";
 import { getFileFormatCapability } from "./formatCapabilities";
+import type { MetadataBuildApi } from "../src/shared/metadataBuildTypes";
+import { CoreMetadataProtocol } from "./core/coreMetadataProtocol";
+import { createMetadataBuildRuntime } from "./metadataExtraction/metadataBuildRuntime";
+import { createMetadataBuildPreferenceStore } from "./metadataBuildPreferences";
+import { toCoreSearchFacts } from "./computerSearchFactConditions";
+import { readComputerSearchFileConditions } from "./computerSearchFileConditions";
+import { CoreCatalogChangeProtocol } from "./core/coreCatalogChangeProtocol";
+import { CoreCatalogChangeWatcher } from "./core/coreCatalogChangeWatcher";
+import { FavoriteDirectoryStore } from "./favoriteDirectories/favoriteDirectoryStore";
+import type { FavoriteDirectoryRegistry } from "../src/shared/favoriteDirectoryTypes";
+import { ComputerSearchThumbnailLeases } from "./computerSearchThumbnailLeases";
 
 export interface ComputerSearchRuntime {
+  thumbnailLeases: ComputerSearchThumbnailLeases;
+  metadataBuild?: MetadataBuildApi;
+  favoriteDirectories?: FavoriteDirectoryRegistry;
+  subscribeCatalogChanges?: (callback: (revision: number) => void) => () => void;
+  refreshStorage?: () => Promise<void>;
   status(): Promise<ComputerSearchStatus>;
   capabilityOptions(): Promise<ComputerSearchCapabilityOptions>;
   configureCapability(request: ComputerSearchCapabilityRequest): Promise<ComputerSearchCapabilityResult>;
@@ -32,6 +48,8 @@ interface RuntimeOptions {
   executablePath?: string;
   beginVisualSession?: (sessionId: string) => boolean;
   cancelVisualSession?: (sessionId: string) => boolean;
+  metadataPreferencesPath?: string;
+  favoritePreferencesPath?: string;
 }
 interface SearchContext { requestId: string; volumeNames: Map<string, string> }
 interface AuthorizationSession { items: Map<string, ComputerSearchItem>; visualSessionId: string }
@@ -92,11 +110,14 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
   });
   const active = new Map<string, SearchContext>();
   const authorizationSessions = new Map<string, AuthorizationSession>();
+  const thumbnailLeases = new ComputerSearchThumbnailLeases(request => authorizationSessions.get(request.taskId)?.items.get(request.authorizationId) ?? null,
+    id => options.beginVisualSession?.(id), id => options.cancelVisualSession?.(id));
   const cancelledTasks = new Set<string>();
   const runningTasks = new Set<string>();
   let catalogSessionInitialized = false;
   let catalogInitialization: Promise<CoreCatalogStatus> | null = null;
   let lastCatalogStatus: ComputerSearchStatus | null = null;
+  let stopping: Promise<void> | undefined;
 
   const readInitializedCatalog = async (): Promise<CoreCatalogStatus> => {
     const current = await controller.request<CoreCatalogStatus>("catalog.status", {}, 5_000);
@@ -110,6 +131,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
   };
 
   const releaseAuthorizationSession = (taskId: string) => {
+    thumbnailLeases.releaseTask(taskId);
     const session = authorizationSessions.get(taskId);
     if (!session) return false;
     authorizationSessions.delete(taskId);
@@ -127,8 +149,11 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
   };
 
   const readCatalog = async (): Promise<CoreCatalogStatus> => {
+    if (stopping) throw new Error("computer-search-stopping");
     const snapshot = await controller.start();
     if (snapshot.state !== "ready") throw new Error(controllerFailure(snapshot).reason ?? snapshot.state);
+    if (stopping) throw new Error("computer-search-stopping");
+    await observeHost(snapshot);
     return readInitializedCatalog();
   };
 
@@ -183,12 +208,53 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     }
   };
 
+  const metadataBuild = createMetadataBuildRuntime(new CoreMetadataProtocol({ request: controller.request.bind(controller),
+    startRequest: controller.startRequest.bind(controller), cancel: controller.cancelRequest.bind(controller) }), readCatalog,
+    { resolveScope: (path) => controller.request<CoreResolvedScope>("catalog.resolveScope", { path }, 5_000),
+      preferences: options.metadataPreferencesPath || process.env.LOCALAPPDATA
+        ? createMetadataBuildPreferenceStore(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")) : undefined });
+  const favorites = options.favoritePreferencesPath || process.env.LOCALAPPDATA
+    ? new FavoriteDirectoryStore(options.favoritePreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "favorite-directories.json")) : undefined;
+  let observedRevision: number | undefined;
+  let observedProcess: number | undefined;
+  const changeListeners = new Set<(revision: number) => void>();
+  const watcher = new CoreCatalogChangeWatcher(new CoreCatalogChangeProtocol({ request: controller.request.bind(controller),
+    startRequest: controller.startRequest.bind(controller), cancel: controller.cancelRequest.bind(controller) }), notice => {
+      if (notice.catalogRevision === observedRevision) return;
+      observedRevision = notice.catalogRevision;
+      for (const listener of changeListeners) { try { listener(notice.catalogRevision); } catch { /* A retired view cannot stop maintenance. */ } }
+      void metadataBuild.notifyCatalogChange().catch(() => undefined);
+    });
+  const observeHost = async (snapshot: CoreControllerSnapshot) => {
+    if (observedProcess !== snapshot.processId) { observedProcess = snapshot.processId; observedRevision = undefined; }
+    await watcher.observe(snapshot.processId, controller.supports?.("catalog.awaitChanges") ?? false);
+  };
   return {
+    metadataBuild, thumbnailLeases,
+    favoriteDirectories: favorites,
+    async refreshStorage() {
+      if (stopping || controller.snapshot().state !== "ready") return;
+      if (catalogInitialization) await catalogInitialization.catch(() => undefined);
+      if (stopping) return;
+      catalogSessionInitialized = false;
+      const catalog = await readInitializedCatalog();
+      if (!stopping) lastCatalogStatus = classifyComputerSearchCatalog(catalog);
+    },
+    subscribeCatalogChanges(callback) {
+      if (changeListeners.size >= 32) throw new Error("computer-search-too-many-observers");
+      changeListeners.add(callback);
+      if (observedRevision !== undefined) { try { callback(observedRevision); } catch { /* A view may already be closing. */ } }
+      return () => { changeListeners.delete(callback); };
+    },
     async status() {
+      if (stopping) return recoverComputerSearchStatus(lastCatalogStatus);
       const snapshot = await controller.start();
       if (snapshot.state !== "ready") return controllerFailure(snapshot);
+      if (stopping) return recoverComputerSearchStatus(lastCatalogStatus);
       try {
+        await observeHost(snapshot);
         const next = classifyComputerSearchCatalog(await readInitializedCatalog());
+        void metadataBuild.restore().catch(() => undefined);
         lastCatalogStatus = next;
         return next;
       } catch { return recoverComputerSearchStatus(lastCatalogStatus); }
@@ -202,6 +268,8 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       return capability.configure(request);
     },
     async search(request) {
+      if (request.scopeKind !== undefined && (request.scopeKind !== "direct-children" || request.scopePath === null))
+        throw new Error("computer-search-invalid-request");
       await this.cancel(request.taskId);
       cancelledTasks.delete(request.taskId);
       runningTasks.add(request.taskId);
@@ -220,13 +288,20 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
             throw new Error(resolved.state === "offline" ? "scope-offline" : "scope-not-indexed");
           }
           volumeIds = [resolved.volumeId];
-          scope = resolved.rootFileReference
+          if (request.scopeKind === "direct-children" && !resolved.directoryFileReference)
+            throw new Error("scope-not-indexed");
+          scope = request.scopeKind === "direct-children"
+            ? { kind: "direct-children", volumeId: resolved.volumeId, rootFileReference: resolved.directoryFileReference }
+            : resolved.rootFileReference
             ? { kind: "directory-descendants", volumeId: resolved.volumeId,
               rootFileReference: resolved.rootFileReference }
             : { kind: "all-volumes" };
         }
         const pending = controller.startRequest<CoreSearchPage>("search.start", {
-          query: request.query, pageSize: 100, sort: "name-ascending", volumeIds, scope, entryType: "any"
+          query: request.query, pageSize: 100, sort: "name-ascending", volumeIds, scope,
+          entryType: request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: "name-or-path",
+          ...(request.facts ? { facts: toCoreSearchFacts(request.facts) } : {}),
+          ...(request.fileConditions ? { fileConditions: readComputerSearchFileConditions(request.fileConditions) } : {})
         }, 30_000);
         return await complete(request.taskId, pending, names);
       } finally {
@@ -268,14 +343,24 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     },
     getVisualSessionId(taskId) { return authorizationSessions.get(taskId)?.visualSessionId ?? null; },
     async stop() {
-      active.clear();
-      cancelledTasks.clear();
-      runningTasks.clear();
-      for (const taskId of [...authorizationSessions.keys()]) releaseAuthorizationSession(taskId);
-      await controller.stop();
-      catalogSessionInitialized = false;
-      catalogInitialization = null;
-      lastCatalogStatus = null;
+      if (stopping) return stopping;
+      stopping = (async () => {
+        await watcher.stop();
+        try { await metadataBuild.shutdown(); }
+        finally {
+        active.clear();
+        cancelledTasks.clear();
+        runningTasks.clear();
+        for (const taskId of [...authorizationSessions.keys()]) releaseAuthorizationSession(taskId);
+        await favorites?.waitForIdle();
+        await controller.stop();
+        catalogSessionInitialized = false;
+        catalogInitialization = null;
+        lastCatalogStatus = null;
+        observedRevision = undefined; observedProcess = undefined;
+        }
+      })().finally(() => { stopping = undefined; });
+      return stopping;
     }
   };
 };

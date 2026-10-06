@@ -32,6 +32,9 @@ public sealed record CatalogReaderJournalPage(
 
 public interface ICatalogReaderSession : IAsyncDisposable
 {
+    bool SupportsJournalChangeWait => false;
+    Task<ReaderJournalWaitResponse> WaitForChangesAsync(IReadOnlyList<ReaderJournalWaitCursor> cursors, uint waitMilliseconds,
+        CancellationToken token) => Task.FromException<ReaderJournalWaitResponse>(new NotSupportedException("reader-journal-wait-unavailable"));
     Task<IReadOnlyList<CatalogReaderVolume>> ListVolumesAsync(CancellationToken token);
     Task<CatalogReaderInspection> InspectAsync(CatalogReaderVolume volume, CancellationToken token);
     Task<CatalogReaderSnapshot> OpenSnapshotAsync(CatalogReaderVolume volume, CancellationToken token);
