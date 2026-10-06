@@ -98,7 +98,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         var status = ToStatus(volume);
         if (relativePath.Length == 0)
         {
-            var root = await catalog.ResolveDirectoryAsync(volume.VolumeId, string.Empty, token);
+            var root = await Cap7CE.Core.Catalog.Queries.CatalogVolumeRootResolver.ResolveAsync(catalog, volume.VolumeId, token);
             return new CatalogResolveScopeResponse(
                 true, volume.VolumeId, null, volume.DisplayName, status.State, status.Queryable,
                 root?.Identity.FileReference);

@@ -26,7 +26,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   const querySetter = useRef<(value: string) => void>(() => {});
   const clearQuery = useCallback(() => querySetter.current(""), []);
   const navigation = useCatalogDirectoryNavigation(context.scopePath, clearQuery, context.kind === "browse");
-  const openDirectory = context.kind === "browse" ? navigation.open : onOpenBrowser;
+  const openDirectory = navigation.open;
   const toggleBrowser = useCallback(() => onToggleBrowser(navigation.path), [onToggleBrowser, navigation.path]);
   const controller = useComputerSearchController(navigation.path, foreground, filters.conditions, undefined, true, navigation.browseChildren, navigation.path === null);
   querySetter.current = controller.setQuery;
@@ -55,9 +55,9 @@ export default function CatalogContextView({ context, selected, foreground, filt
     onAuxClick={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}>
     {selected && filterHost && createPortal(<WorkspaceFilterPanel {...filters.panel} count={workspaceFilterCount(filters.panel.search)} onClose={onHideSidebar} />, filterHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
-      onUp={context.kind === "browse" ? navigation.up : () => onOpenBrowser(navigation.parentPath)}
+      onUp={navigation.up}
       onOpen={openDirectory} onReset={context.kind === "browse" ? toggleBrowser : navigation.reset}
-      onHome={() => context.kind === "browse" ? navigation.openBrowser(null) : onOpenBrowser(null)} />
+      onHome={() => navigation.openBrowser(null)} />
     <CatalogQueryToolbar inputRef={inputRef} name={controller.scopeLabel} query={controller.query} enabled={controller.canSubmit} busy={controller.busy}
       onChange={controller.setQuery} onSubmit={() => void controller.submit()} />
     <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")

@@ -24,16 +24,16 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   const [metadataProgress, setMetadataProgress] = useState<MetadataBuildProgress | null>(null);
   const activeActions = useRef<CatalogContextActions | null>(null), report = useRef(onActiveActions);
   report.current = onActiveActions;
-  const [browsing, setBrowsing] = useState(false);
   const cycleFavorite = useCallback(() => {
     const index = favorites.directories.findIndex(directory => directory.path === activeActions.current?.currentPath);
     workspace.open(favorites.directories[index + 1] ?? null);
   }, [favorites.directories, workspace.open]);
   const reportActions = useCallback((actions: CatalogContextActions | null) => {
-    activeActions.current = actions; setBrowsing(actions?.browseChildren ?? false);
+    activeActions.current = actions;
     report.current?.(actions ? { ...actions, cycleFavorite } : null);
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
+  const browsing = active.kind === "browse";
   const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
   return <section ref={ref} className={`cap-catalog-workspace${sidebarVisible ? " has-sidebar" : ""}`}>
     <nav className="cap-catalog-rail" aria-label={t("workspace.navigation")}>
