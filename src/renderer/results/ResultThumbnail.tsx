@@ -4,12 +4,12 @@ import SvgIcon from "../components/SvgIcon";
 import { TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
 import { getFormatIconSvg } from "../formatIcons";
 
-const videoThumbnailExtensions = new Set([
+export const videoThumbnailExtensions = new Set([
   ".avi", ".m4v", ".mkv", ".mov", ".mp4", ".webm", ".wmv", ".mpg", ".mpeg",
   ".mts", ".m2ts", ".mxf", ".flv", ".rmvb", ".3gp"
 ]);
 
-const VideoThumbnailIndicator = () => (
+export const VideoThumbnailIndicator = () => (
   <span className="video-thumbnail-indicator" aria-hidden="true">
     <svg viewBox="0 0 28 28" focusable="false">
       <path d="M9.8 4.65C8.3 3.7 6.35 4.78 6.35 6.55v14.9c0 1.77 1.95 2.85 3.45 1.9l11.63-7.45c1.37-.88 1.37-2.92 0-3.8L9.8 4.65Z" />

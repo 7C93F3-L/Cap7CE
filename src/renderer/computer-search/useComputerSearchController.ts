@@ -8,12 +8,13 @@ import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentit
 export type ComputerSearchError = "scope-not-indexed" | "scope-offline" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
-export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false) => {
+export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false) => {
   const conditionKey = JSON.stringify(conditions ?? {});
   const selectedConditions = useMemo(() => JSON.parse(conditionKey) as ComputerSearchConditions, [conditionKey]);
   const [active, setActive] = useState(false);
   const [nextTaskId] = useState<ReturnType<typeof createComputerSearchTaskIdGenerator>>(createComputerSearchTaskIdGenerator);
   const [query, setQuery] = useState("");
+  const atHome = idleHome && !query.trim() && !conditions?.facts && !conditions?.fileConditions;
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [status, setStatus] = useState<ComputerSearchStatus | null>(null);
@@ -120,7 +121,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const submit = useCallback(async () => {
     const searchQuery = query.trim();
     const api = window.cap7ce?.computerSearch;
-    if (!api || !status?.searchAvailable) return;
+    if (!api || !status?.searchAvailable || atHome) return;
     cancelActive();
     const sequence = ++requestSequence.current;
     const taskId = nextTaskId("search");
@@ -142,7 +143,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     } finally {
       if (activeRef.current && requestSequence.current === sequence) setBusy(false);
     }
-  }, [cancelActive, currentPath, query, status?.searchAvailable, selectedConditions, nextTaskId, browseChildren]);
+  }, [cancelActive, currentPath, query, status?.searchAvailable, selectedConditions, nextTaskId, browseChildren, atHome]);
   const refreshResults = useCallback(async (): Promise<"applied" | "failed" | "deferred"> => {
     const api = window.cap7ce?.computerSearch;
     if (!api || !activeRef.current || !foregroundRef.current || !hasSubmitted
@@ -176,11 +177,11 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setInteractionBlocked(false);
     cancelActive();
     setBusy(false);
-  }, [currentPath, cancelActive, conditionKey, browseChildren]);
+  }, [currentPath, cancelActive, conditionKey, browseChildren, atHome]);
   useEffect(() => {
-    if (!active || !foreground || !status?.searchAvailable || busy) return;
+    if (!active || !foreground || !status?.searchAvailable || busy || atHome) return;
     if (!hasSubmitted || (!query.trim() && submittedQuery)) void submit();
-  }, [active, foreground, status?.searchAvailable, busy, hasSubmitted, query, submittedQuery, submit]);
+  }, [active, foreground, status?.searchAvailable, busy, hasSubmitted, query, submittedQuery, submit, atHome]);
 
   const configureCapability = useCallback(async (action: "enable" | "repair") => {
     const api = window.cap7ce?.computerSearch;

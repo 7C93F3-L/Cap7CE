@@ -1,0 +1,27 @@
+.cap-catalog-file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+  gap: 5px;
+  align-content: start;
+}
+.cap-catalog-file-grid > .thumb {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  color: var(--cap-stable-text);
+  background: var(--cap-stable-grid-surface, var(--panel-bg));
+  font: inherit;
+}
+.cap-computer-search-thumbnail-visual {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cap-catalog-file-grid .result-file-card,
+.cap-catalog-file-grid .result-file-card-name { color: var(--cap-stable-text); }
+.cap-catalog-file-grid .result-file-card-icon { width: clamp(38px, 33.6%, 58px); height: clamp(38px, 33.6%, 58px); }
+@media (max-height: 359.98px) {
+  .cap-catalog-file-grid { display: flex; height: 100%; align-items: center; }
+  .cap-catalog-file-grid > .thumb { width: 138px; height: 138px; flex: 0 0 138px; }
+}

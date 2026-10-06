@@ -13,7 +13,7 @@ import { workspaceFilterCount } from "../workspace/workspaceFilterSummary";
 import CatalogQueryToolbar from "./CatalogQueryToolbar";
 import CatalogDirectoryToolbar from "./CatalogDirectoryToolbar";
 import { useCatalogDirectoryNavigation } from "./useCatalogDirectoryNavigation";
-import CatalogVolumeGrid from "./CatalogVolumeGrid";
+import CatalogHome from "./CatalogHome";
 
 export default function CatalogContextView({ context, selected, foreground, filterHost, onHideSidebar, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onToggleBrowser, ...appearance }: CatalogWorkspaceAppearance & {
   context: CatalogWorkspaceContext; selected: boolean; foreground: boolean;
@@ -28,7 +28,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   const navigation = useCatalogDirectoryNavigation(context.scopePath, clearQuery, context.kind === "browse");
   const openDirectory = context.kind === "browse" ? navigation.open : onOpenBrowser;
   const toggleBrowser = useCallback(() => onToggleBrowser(navigation.path), [onToggleBrowser, navigation.path]);
-  const controller = useComputerSearchController(navigation.path, foreground, filters.conditions, undefined, true, navigation.browseChildren);
+  const controller = useComputerSearchController(navigation.path, foreground, filters.conditions, undefined, true, navigation.browseChildren, navigation.path === null);
   querySetter.current = controller.setQuery;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actions = useMemo<CatalogContextActions>(() => ({ currentPath: navigation.path, browseChildren: navigation.browseChildren,
@@ -56,14 +56,15 @@ export default function CatalogContextView({ context, selected, foreground, filt
     {selected && filterHost && createPortal(<WorkspaceFilterPanel {...filters.panel} count={workspaceFilterCount(filters.panel.search)} onClose={onHideSidebar} />, filterHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
       onUp={context.kind === "browse" ? navigation.up : () => onOpenBrowser(navigation.parentPath)}
-      onOpen={openDirectory} onReset={context.kind === "browse" ? toggleBrowser : navigation.reset} />
+      onOpen={openDirectory} onReset={context.kind === "browse" ? toggleBrowser : navigation.reset}
+      onHome={() => context.kind === "browse" ? navigation.openBrowser(null) : onOpenBrowser(null)} />
     <CatalogQueryToolbar inputRef={inputRef} name={controller.scopeLabel} query={controller.query} enabled={controller.canSubmit} busy={controller.busy}
       onChange={controller.setQuery} onSubmit={() => void controller.submit()} />
     <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
-    <div className="cap-catalog-results">{navigation.browseChildren && navigation.path === null && !controller.submittedQuery
+    <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions && controller.status?.searchAvailable
-      ? <CatalogVolumeGrid volumes={controller.status.volumes} onOpen={navigation.open} />
+      ? <CatalogHome volumes={controller.status.volumes} onOpen={openDirectory} />
       : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} {...appearance} />}</div>
   </section>;
 }

@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+`CatalogHome`复用`SkimRootSections`的系统目录与此电脑展示。系统位置通过既有只读`skim.listLocations`获取并排除独立星标；磁盘入口由Core状态构造，不调用旧目录读取。无范围、无关键词、无筛选时Controller的idleHome门禁禁止空全盘查询；输入或筛选仍走Core搜索，直接首页动作复用现有浏览上下文与导航历史，保留原搜索页现场。
+
+统一文件结果复用`ResultGrid.css`中的方格、格式卡片、铺满缩略图及悬停/选择效果，局部`ComputerSearchResultGrid.css`负责自适应150px/5px网格。`ComputerSearchResultVisual`保留授权ID、可见范围租约和失败回退；没有导入旧ImageIndex数据源、目录扫描或全目录缩略图生产。图片不额外占用名称/路径行，名称与路径仍可通过title及现有详情动作查看。旧Skim位置导航卡片保留原展示语义。
+
 视频事实提取器v2通过`VideoMetadataFrameClient`拥有一个普通权限、隐藏的`Cap7CE.Media.Metadata`原生辅助进程。程序使用Windows Media Editing，在10/50/90%三个时间点生成长边最多160px的内存像素流；复用纯RGBA分析器，对29项定点指标取代表帧均值。色彩是抽样结果，不声称描述视频每一帧。流不落盘，也不调用Shell缩略图缓存；辅助程序不发现目录、不写源文件、不联网。Windows解码不可用时保留标量提取后备，未知色彩不满足色彩筛选。
 
 辅助进程输入限256KiB，输出限512KiB，单次Native内部9秒/Main客户端4秒超时；取消或异常先终止并等待所拥有进程退出，再进入后备读取。最多16次请求或工作后RSS超过192MiB即回收；JS读取Worker报告自身及辅助程序RSS，维持既有256MiB软回收策略，这些不是硬峰值上限。原生程序观察直接父进程退出，避免Main强制终止JS Worker后留存解码器。程序通过锁定依赖的NativeAOT构建，约5.4MB独立可执行文件，无需用户安装.NET；Windows媒体解码支持仍取决于系统。构建产物与正式安装包验证分开。

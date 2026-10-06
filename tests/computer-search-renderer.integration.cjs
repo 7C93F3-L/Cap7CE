@@ -40,8 +40,8 @@ assert.match(view, /status\?\.state !== "not-enabled" && <strong>/u);
 assert.match(view, /status\?\.state === "repair-required"[\s\S]*?configureCapability\("repair"\)/u);
 assert.doesNotMatch(controller, /if \(page\.isComplete\) taskRef\.current = null/u);
 assert.match(view, /ComputerSearchResultVisual[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[\s\S]*?onDragStart/u);
-assert.match(view, /cap-computer-search-grid cap-skim-grid[\s\S]*?cap-computer-search-entry cap-skim-entry/u);
-assert.match(view, /cap-computer-search-name cap-skim-entry-name[\s\S]*?getDirectoryPath\(item\.path\)[\s\S]*?cap-computer-search-path cap-skim-entry-path/u);
+assert.match(view, /cap-computer-search-grid cap-catalog-file-grid[\s\S]*?thumb cap-computer-search-entry/u);
+assert.doesNotMatch(view, /cap-skim-entry-name|cap-skim-entry-path/u);
 assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
 assert.match(actions, /computerSearch\.inspect\(request\)[\s\S]*?sourceAuthorization/u);
 assert.match(actions, /computerSearch\.copyPaths\(\{[\s\S]*?authorizationIds/u);
@@ -50,7 +50,7 @@ assert.match(viewport, /rootMargin: "0px"/u);
 assert.match(viewport, /if \(disposed\) \{ release\(id\); return; \}/u);
 assert.match(visual, /useViewportThumbnail\(taskId, item.authorizationId, foreground/u);
 assert.match(view, /scrollContainerRef=\{scrollContainerRef\} foreground=\{foreground\}/u);
-assert.match(visual, /cap-skim-entry-visual cap-computer-search-visual[\s\S]*?cap-skim-entry-icon[\s\S]*?className="cap-skim-entry-thumbnail"/u);
+assert.match(visual, /!thumbnail.url[\s\S]*?result-file-card[\s\S]*?result-file-card-name[\s\S]*?thumbnail-image-frame/u);
 assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 
 console.log(JSON.stringify({
@@ -63,7 +63,7 @@ console.log(JSON.stringify({
   scopeErrorsOverrideZeroCount: true,
   authorizedResultActions: true,
   visibleOnlyVisuals: true,
-  skimGridPresentationReused: true,
+  directoryGridPresentationReused: true,
   thumbnailFallbackOverlapPrevented: true,
   searchInputFocusOutlineRemoved: true,
   searchEntryCapabilityActivation: true

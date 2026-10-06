@@ -2,13 +2,13 @@ import { useEffect, useRef } from "react";
 import type { ComputerSearchState } from "../../../electron/computerSearchTypes";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../shared/types";
-import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
-import { getDirectoryPath } from "../filePath";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import ComputerSearchResultContextMenu from "./ComputerSearchResultContextMenu";
 import ComputerSearchResultVisual from "./ComputerSearchResultVisual";
 import { useComputerSearchResultActions } from "./useComputerSearchResultActions";
 import type { ComputerSearchController } from "./useComputerSearchController";
+import "../results/ResultGrid.css";
+import "./ComputerSearchResultGrid.css";
 
 const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   "not-enabled": "computerSearch.state.notEnabled",
@@ -86,11 +86,11 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     ref={scrollContainerRef}
     onClick={() => actions.clearSelection()}
   >
-    <div className="cap-computer-search-grid cap-skim-grid">{items.map((item) => {
+    <div className="cap-computer-search-grid cap-catalog-file-grid">{items.map((item) => {
       const selected = actions.selectedIds.has(item.authorizationId);
       const active = actions.activeId === item.authorizationId;
       return <button
-        className={`cap-computer-search-entry cap-skim-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
+        className={`thumb cap-computer-search-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
         type="button"
         key={item.id}
         title={item.path}
@@ -117,8 +117,6 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
         }}
       >
         <ComputerSearchResultVisual item={item} taskId={taskId} scrollContainerRef={scrollContainerRef} foreground={foreground} />
-        <TwoLineMiddleEllipsisFileName fileName={item.name} className="cap-computer-search-name cap-skim-entry-name" />
-        <MiddleEllipsisFileName fileName={getDirectoryPath(item.path)} className="cap-computer-search-path cap-skim-entry-path" />
       </button>;
     })}</div>
     {nextCursor && <button className="cap-computer-search-more" type="button" disabled={busy} onClick={() => void loadMore()}>{busy ? t("computerSearch.loading") : t("computerSearch.loadMore")}</button>}
