@@ -70,6 +70,18 @@ const run = async () => {
   });
   assert.equal(building.state, "building");
   assert.equal(building.searchAvailable, false);
+  for (const pendingState of ['building', 'needsRebuild']) {
+    const partial = classifyComputerSearchCatalog({
+      volumes: [volume('volume-c', pendingState, true), {...volume('volume-e', 'ready', true), queryable:true}],
+      tasks: [], catalogRevision:6
+    });
+    assert.equal(partial.searchAvailable, true, 'one rebuilding volume must not block a ready volume');
+    const deselected = classifyComputerSearchCatalog({
+      volumes: [volume('volume-c', pendingState, true), {...volume('volume-e', 'ready', false), queryable:true}],
+      tasks: [], catalogRevision:6
+    });
+    assert.equal(deselected.searchAvailable, false, 'deselected volumes do not grant search availability');
+  }
   assert.equal(recoverComputerSearchStatus(catchingUp), catchingUp,
     "one transient Core status timeout keeps the last successful queryable status");
   const unavailable = recoverComputerSearchStatus(null);

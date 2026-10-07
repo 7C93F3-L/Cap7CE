@@ -69,8 +69,8 @@ export default function CatalogContextView({ context, selected, foreground, filt
     <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
-      && !filters.conditions.facts && !filters.conditions.fileConditions && controller.status?.searchAvailable
-      ? <CatalogHome volumes={controller.status.volumes} onOpen={openDirectory} />
+      && !filters.conditions.facts && !filters.conditions.fileConditions
+      ? <CatalogHome volumes={controller.status?.volumes ?? []} onOpen={openDirectory} />
       : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} onSelectionChange={setSelection} {...appearance} />}</div>
   </section>;
 }

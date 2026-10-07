@@ -78,7 +78,7 @@ export const classifyComputerSearchCatalog = (catalog: CoreCatalogStatus): Compu
   } else if (queryable) {
     state = "ready";
   }
-  return { state, reason, searchAvailable: queryable && state !== "building" && state !== "needs-rebuild",
+  return { state, reason, searchAvailable: queryable,
     catalogRevision: catalog.catalogRevision, volumes };
 };
 
