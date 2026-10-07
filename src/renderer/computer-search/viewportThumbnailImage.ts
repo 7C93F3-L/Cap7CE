@@ -18,12 +18,12 @@ export async function loadThumbnailImage(url: string, signal: AbortSignal): Prom
     await image.decode();
     signal.throwIfAborted();
     const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = Math.min(512, Math.max(image.naturalWidth, image.naturalHeight));
+    const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
     const context = canvas.getContext("2d");
     if (!context) throw new Error("thumbnail-canvas-unavailable");
-    const crop = Math.min(image.naturalWidth, image.naturalHeight);
-    context.drawImage(image, (image.naturalWidth - crop) / 2, (image.naturalHeight - crop) / 2,
-      crop, crop, 0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
     return canvas;
   } finally { signal.removeEventListener("abort", abort); image.src = ""; }
 }

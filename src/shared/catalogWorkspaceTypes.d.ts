@@ -3,12 +3,14 @@ export interface CatalogWorkspaceContext {
   kind: "search" | "browse";
   scopePath: string | null;
   name: string;
+  displayName?: string;
 }
 export interface CatalogWorkspaceState {
   contexts: CatalogWorkspaceContext[];
   activeId: string;
   nextId: number;
   openLimitReached: boolean;
+  homeName: string;
 }
 import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "./types";
 

@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { t } from "../../../electron/localization";
 import type { CatalogContextActions, CatalogWorkspaceContext, CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTypes";
 import type { MetadataBuildProgress } from "../../shared/metadataBuildTypes";
@@ -8,32 +8,38 @@ import { useComputerSearchController } from "../computer-search/useComputerSearc
 import { useComputerSearchFilters } from "../computer-search/useComputerSearchFilters";
 import { useComputerSearchMetadataRefresh } from "../computer-search/useComputerSearchMetadataRefresh";
 import { useInertElement } from "../stable-ui/useInertElement";
-import WorkspaceFilterPanel from "../workspace/WorkspaceFilterPanel";
+import CatalogTopFilters from "./CatalogTopFilters";
 import { workspaceFilterCount } from "../workspace/workspaceFilterSummary";
-import CatalogQueryToolbar from "./CatalogQueryToolbar";
+import CatalogDetails from "./CatalogDetails";
+import type { CatalogGridMode, CatalogSelection } from "../../shared/catalogPresentationTypes";
 import CatalogDirectoryToolbar from "./CatalogDirectoryToolbar";
 import { useCatalogDirectoryNavigation } from "./useCatalogDirectoryNavigation";
 import CatalogHome from "./CatalogHome";
 
-export default function CatalogContextView({ context, selected, foreground, filterHost, onHideSidebar, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onToggleBrowser, ...appearance }: CatalogWorkspaceAppearance & {
+export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, ...appearance }: CatalogWorkspaceAppearance & {
   context: CatalogWorkspaceContext; selected: boolean; foreground: boolean;
-  filterHost: HTMLElement | null; onHideSidebar: () => void;
+  filterHost: HTMLElement | null; detailsHost: HTMLElement | null;
   metadataProgress: MetadataBuildProgress | null; onSearchAvailable: (available: boolean) => void;
   onActiveActions: (actions: CatalogContextActions | null) => void;
-  onOpenBrowser: (path: string | null) => void; onToggleBrowser: (path: string | null) => void;
+  onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
 }) {
   const filters = useComputerSearchFilters(true);
+  const [searchMode, setSearchMode] = useState(Boolean(context.scopePath));
+  const [gridMode, setGridMode] = useState<CatalogGridMode>(context.scopePath ? "gallery" : "square");
+  const [selection, setSelection] = useState<CatalogSelection | null>(null);
   const querySetter = useRef<(value: string) => void>(() => {});
   const clearQuery = useCallback(() => querySetter.current(""), []);
   const navigation = useCatalogDirectoryNavigation(context.scopePath, clearQuery, context.kind === "browse");
+  useEffect(() => setSelection(null), [navigation.path]);
   const openDirectory = navigation.open;
-  const toggleBrowser = useCallback(() => onToggleBrowser(navigation.path), [onToggleBrowser, navigation.path]);
+  const toggleBrowser = useCallback(() => onOpenBrowser(navigation.path), [onOpenBrowser, navigation.path]);
+  useEffect(() => onLocation(context.id, navigation.path), [context.id, navigation.path, onLocation]);
   const controller = useComputerSearchController(navigation.path, foreground, filters.conditions, undefined, true, navigation.browseChildren, navigation.path === null);
   querySetter.current = controller.setQuery;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actions = useMemo<CatalogContextActions>(() => ({ currentPath: navigation.path, browseChildren: navigation.browseChildren,
     openBrowser: onOpenBrowser, toggleBrowser,
-    focusSearch: () => inputRef.current?.focus(), refresh: async () => await controller.refreshResults() === "applied"
+    focusSearch: () => { setSearchMode(true); requestAnimationFrame(() => inputRef.current?.focus()); }, refresh: async () => await controller.refreshResults() === "applied"
   }), [navigation.path, navigation.browseChildren, onOpenBrowser, toggleBrowser, controller.refreshResults]);
   useEffect(() => {
     if (!selected) return;
@@ -53,18 +59,18 @@ export default function CatalogContextView({ context, selected, foreground, filt
       event.preventDefault(); event.stopPropagation(); event.button === 3 ? navigation.back() : navigation.forward();
     } }} onMouseDown={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}
     onAuxClick={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}>
-    {selected && filterHost && createPortal(<WorkspaceFilterPanel {...filters.panel} count={workspaceFilterCount(filters.panel.search)} onClose={onHideSidebar} />, filterHost)}
+    {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={workspaceFilterCount(filters.panel.search)} />, filterHost)}
+    {selected && detailsHost && createPortal(<CatalogDetails selection={selection?.taskId === controller.taskId ? selection : null} path={navigation.path} count={controller.items.length} foreground={foreground} />, detailsHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
       onUp={navigation.up}
-      onOpen={openDirectory} onReset={context.kind === "browse" ? toggleBrowser : navigation.reset}
-      onHome={() => navigation.openBrowser(null)} />
-    <CatalogQueryToolbar inputRef={inputRef} name={controller.scopeLabel} query={controller.query} enabled={controller.canSubmit} busy={controller.busy}
-      onChange={controller.setQuery} onSubmit={() => void controller.submit()} />
+      onOpen={openDirectory} onHome={() => navigation.openBrowser(null)} inputRef={inputRef}
+      searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
+      onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={() => setGridMode(value => value === "square" ? "gallery" : "square")} />
     <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions && controller.status?.searchAvailable
       ? <CatalogHome volumes={controller.status.volumes} onOpen={openDirectory} />
-      : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} {...appearance} />}</div>
+      : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} onSelectionChange={setSelection} {...appearance} />}</div>
   </section>;
 }

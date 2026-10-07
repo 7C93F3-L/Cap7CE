@@ -2,6 +2,8 @@ import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
   "catalogWorkspace.volumeUnavailable": "Not ready to browse",
+  "catalogWorkspace.newTab": "New tab",
+  "catalogWorkspace.files": "Files and favorites",
   "catalogWorkspace.back": "Back",
   "catalogWorkspace.forward": "Forward",
   "catalogWorkspace.up": "Parent folder",

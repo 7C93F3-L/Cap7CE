@@ -10,7 +10,7 @@ window.cap7ce={skim:{listLocations:async()=>[]},preview:{onNavigate:()=>noop,onC
 favoriteDirectories:{list:async()=>[{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}]},
 metadataBuild:{status:async()=>({volumes:[],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
 computerSearch:{status:async()=>({state:'ready',searchAvailable:true,catalogRevision:1,volumes:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:'ready',queryable:true,processed:2,total:2}))}),onCatalogChanged:()=>noop,
-search:async request=>{probe.requests.push(request);const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
+search:async request=>{probe.requests.push(request);const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
 createRoot(document.getElementById('root')).render(<CatalogWorkspace theme="dark" appearanceColors={{}} windowMaterial="none" onOpenSettings={noop}/>);
 `;
 app.whenReady().then(async()=>{
@@ -26,23 +26,51 @@ app.whenReady().then(async()=>{
   await win.loadFile(path.join(root,'index.html'));await ready("document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry').length===2");
   const active="document.querySelector('[role=tabpanel]:not([hidden])')";
   const openDrive=async name=>{await run(`(()=>{const b=[...document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry')].find(b=>b.textContent.includes('${name}'));b.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))})()`);await ready("probe.requests.at(-1)?.scopePath==="+JSON.stringify(name+'\\'));};
+
   await openDrive('X:');await ready(`${active}.querySelector('.cap-computer-search-entry')`);
-  assert.equal(await run("document.querySelectorAll('[role=tab]').length"),1,'drive opens in current tab');
+  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),1,'drive opens in current page');
+  assert.equal(await run("document.querySelectorAll('[role=tab]').length"),0,'single page does not display redundant tabs');
   assert.equal(await run(`${active}.id`),'catalog:all');
-  assert.equal(await run("document.querySelector('.cap-catalog-rail button').getAttribute('aria-pressed')"),'false','ordinary browsing does not enter skim mode');
   assert.equal(await run("probe.requests.at(-1).scopeKind"),'direct-children');
   await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`);
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Folder'");
-  assert.equal(await run("document.querySelectorAll('[role=tab]').length"),1,'nested directory keeps tab owner');
   await run(`${active}.querySelector('.cap-catalog-directory-toolbar button').click()`);
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\'");
   await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar button')[2].click()`);
   await ready(`${active}.querySelector('.cap-catalog-home')`);
   await openDrive('Y:');
-  assert.equal(await run("document.querySelectorAll('[role=tab]').length"),1,'another disk does not add a skim tab');
   await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar button')[3].click()`);
   await ready(`${active}.querySelector('.cap-catalog-home')`);
-  console.log('Catalog navigation: drive, nested folder, back/up/home and second disk retain the current tab and normal mode.');
+  const before=await run('probe.requests.length');
+  await run("document.querySelectorAll('.cap-catalog-layout-tools button')[0].click()");
+  await ready("document.querySelector('.cap-catalog-filter-host').hidden");
+  await run("document.querySelectorAll('.cap-catalog-layout-tools button')[1].click()");
+  assert.equal(await run("document.querySelector('.cap-catalog-details-host').hidden"),true);
+  await run("document.querySelector('.cap-catalog-brand').click()");
+  await ready("document.querySelector('.cap-catalog-sidebar').classList.contains('is-collapsed')");
+  await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))");
+  assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),'68');
+  assert.equal(await run('probe.requests.length'),before,'layout controls never change query scope');
+  await run("document.querySelector('.cap-favorite-row .cap-favorite-open').click()");
+  await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Favorite'");
+  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),1,'ordinary favorite replaces current page');
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'true','favorite defaults to search');
+  assert.equal(await run(`${active}.querySelector('.cap-computer-search-grid').classList.contains('is-gallery')`),true);
+  await run("document.querySelectorAll('.cap-catalog-layout-tools button')[1].click()");
+  await run(`${active}.querySelector('.cap-computer-search-entry').click()`);
+  await ready("document.querySelector('.cap-catalog-details-host').textContent.includes('file.txt')");
+  assert.equal(await run("document.querySelector('.cap-catalog-details-host').textContent.includes('2026')"),true,'Catalog FILETIME dates use the NTFS epoch');
+  const oldRequests=await run('probe.requests.length');
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click();${active}.querySelector('.cap-catalog-grid-toggle').click()`);
+  assert.equal(await run(`${active}.querySelector('.cap-computer-search-grid').classList.contains('is-square')`),true);
+  assert.equal(await run('probe.requests.length'),oldRequests,'address and grid modes are presentation only');
+  assert.equal(await run("document.querySelectorAll('.cap-catalog-layout-tools button').length"),2,'only panel controls remain');
+  assert.equal(await run("document.querySelectorAll('[role=tab],.cap-catalog-header').length"),0,'tab UI is removed');
+  await run("document.querySelector('.cap-favorite-row .cap-favorite-open').dispatchEvent(new MouseEvent('click',{bubbles:true,ctrlKey:true}))");
+  await ready("document.querySelectorAll('[role=tabpanel]').length===1");
+  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),1,'modified favorite click retains a single current page');
+  console.log('Catalog design: current-page navigation, independent panels, sidebar width, favorite defaults, selection details, two grids and no tab UI passed.');
+
  }catch(error){console.error(error.stack);process.exitCode=1}
  finally{win?.destroy();if(path.dirname(path.resolve(root))!==path.resolve(os.tmpdir()))throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}
 });

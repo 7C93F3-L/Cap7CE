@@ -22,7 +22,7 @@ createRoot(document.getElementById('root')).render(<React.StrictMode><App/></Rea
 `;
 app.whenReady().then(async () => {
   try {
-    const png = nativeImage.createFromBitmap(Buffer.from([0,0,255,255]), {width:1,height:1}).toPNG();
+    const png = nativeImage.createFromBitmap(Buffer.from([0,0,255,255,0,255,0,255]), {width:2,height:1}).toPNG();
     protocol.handle('cap7ce', async () => { await wait(protocolDelay); return new Response(png,{headers:{'content-type':'image/png'}}); });
     const bundle = esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',write:false,define:{'process.env.NODE_ENV':'"development"'}}).outputFiles[0].text;
     fs.writeFileSync(path.join(temporaryRoot,'fixture.js'),bundle);
@@ -34,6 +34,7 @@ app.whenReady().then(async () => {
     const acquired = () => run("probe.events.filter(e=>e.kind==='acquire').length");
     await window.loadFile(path.join(temporaryRoot,'index.html'));
     await ready("document.querySelector('[data-ready]')");
+    assert.equal(await run('probe.pictures.at(-1).width/probe.pictures.at(-1).height'),2,'decoded thumbnail retains original aspect ratio');
     await run("probe.transitions=[];probe.observer=new MutationObserver(()=>probe.transitions.push(document.querySelectorAll('[data-ready]').length));probe.observer.observe(document.querySelector('#viewport'),{childList:true,subtree:true})");
     await run("probe.update({foreground:false})");await wait(100);
     assert.equal(await count(),1,'blur retains decoded pixels');
@@ -68,7 +69,7 @@ app.whenReady().then(async () => {
     await run("probe.update({foreground:true})");await ready("document.querySelector('[data-ready]')");
     await run("probe.update({mounted:false})");await wait(100);
     assert.equal(await run('probe.pictures.at(-1).width'),0,'unmount releases retained pixels');
-    console.log('Thumbnail pixels survive blur/owner handoff; source changes, viewport exit, late acquisition/decode and unmount release ownership.');
+    console.log('Thumbnail pixels preserve aspect and survive blur/owner handoff; source changes, viewport exit, late acquisition/decode and unmount release ownership.');
     window.destroy();
     if(path.dirname(temporaryRoot)!==path.resolve(os.tmpdir()))throw Error('unexpected test cleanup root');
     fs.rmSync(temporaryRoot,{recursive:true,force:true});app.exit(0);

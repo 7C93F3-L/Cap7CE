@@ -1,12 +1,16 @@
 # Cap7CE 软件架构
 
+Catalog当前产品布局由领域组件组合：CatalogSidebar提供可拖宽至52px图标模式的目录导航、布局开关和设置；useCatalogLayout只持有进程内布局状态与受限拖动。目录快捷入口与既有原生浏览动作使用replace动作替换当前页面并退休旧查询；不显示新建按钮或标签栏，Ctrl点击也不创建隐藏页面。顶部条件宿主作为壳层Grid第一行跨越内容与详情列，下方内容和详情共享第二行，收起条件后首行自动折叠。CatalogTopFilters复用唯一StableExploreFilters条件组件并横向排列、滚动，选中的详细条件仍由各页Hook持有。CatalogDirectoryToolbar在同一行转换面包屑/路径编辑与范围搜索，转换不改变查询或导航；默认收藏搜索、此电脑面包屑，重启恢复默认。CatalogDetails纯展示当前目录、选中文件或多选汇总，预览按钮复用既有授权动作，不为目录计算递归大小。信息栏和顶部条件分别可隐藏，窄窗口信息栏作为覆盖层。
+
+CatalogResultTile只持有当前缩略图的比例展示，ComputerSearchView继续使用唯一文件动作Hook，选择通过共享CatalogSelection回报页面。两套网格均显示名称：此电脑默认方形contain缩略图，收藏默认等高原比例卡片；选中不改变卡片尺寸。首次可见解码得到比例后更新卡宽，极端比例限制卡宽而保持图像完整；每次离屏仍释放像素。viewportThumbnailImage保留原比例缩放，长边最多512px、内存仍不超过512平方像素，不增加源读取或缓存；新租约/失焦/迟到响应保护不变。MetadataBuildSlot的floating展示默认隐藏空闲任务，仅用户打开控制或存在任务/错误时浮在底部，完成提示3秒消失；原授权、范围、暂停与恢复动作不变。App/Main/global styles未增加页面职责，新增组件由领域边界守门。
+
 `SkimRootSections`提供可选纯展示`catalogTiles`：Catalog首页直接复用`thumb`、`result-file-card`及`cap-catalog-file-grid`的尺寸、5px间距、悬停与选中样式；默认Skim展示保持原样。目录结果的文件夹使用同一原有`skim-folder.svg`，不使用导航栏的线框图标。没有新增查询、缩略图或导航链路。
 
-统一页面的默认目录动作直接调用`useCatalogDirectoryNavigation.open`，后退、前进、上一级和首页均在原上下文导航；收藏快捷入口仍复用原页面身份。显式Skim动作仍可打开独立browse上下文，Skim图标只根据上下文kind点亮，不能由普通目录浏览状态触发。
+统一页面的默认目录动作直接调用`useCatalogDirectoryNavigation.open`，后退、前进、上一级和首页均在原上下文导航；收藏快捷入口和既有原生浏览动作在当前页替换范围，左栏只反映工具面板展开状态。
 
 `CatalogVolumeRootResolver`只读解析磁盘根目录：优先使用显式目录路径；NTFS枚举遗漏根MFT记录5时，从现存节点的父引用取完整64位身份（含实际序列号）。非NTFS、无证据或多个序列号拒绝推断；不猜固定完整引用、不把普通孤立目录当根、不修改Catalog。结果沿用原`directoryFileReference`及签名direct-children查询，不扩大查询范围。
 
-`useViewportThumbnail`分开管理短期授权请求与已解码画面。IntersectionObserver始终跟踪实际视口（零rootMargin）；失焦取消新请求并释放租约，但保留仍可见的像素。`viewportThumbnailImage`仅通过现有授权URL加载图片，解码后绘制最多512px的方形内存画布，立即断开原Image来源，不复用过期URL、不读取/导出画布像素、不新增缓存或放宽CORS。展示画布在新图解码完成后同步替换；源身份/路径/大小/时间/属性变化立即失效，移出视口或卸载清空内存画布。迟到租约释放、迟到解码不提交；背景无新读取。目录修订通知和五秒刷新门禁继续保留。
+`useViewportThumbnail`分开管理短期授权请求与已解码画面。IntersectionObserver始终跟踪实际视口（零rootMargin）；失焦取消新请求并释放租约，但保留仍可见的像素。`viewportThumbnailImage`仅通过现有授权URL加载图片，解码后绘制长边最多512px并保留原比例的内存画布，立即断开原Image来源，不复用过期URL、不读取/导出画布像素、不新增缓存或放宽CORS。展示画布在新图解码完成后同步替换；源身份/路径/大小/时间/属性变化立即失效，移出视口或卸载清空内存画布。迟到租约释放、迟到解码不提交；背景无新读取。目录修订通知和五秒刷新门禁继续保留。
 
 `CatalogHome`复用`SkimRootSections`的系统目录与此电脑展示。系统位置通过既有只读`skim.listLocations`获取并排除独立星标；磁盘入口由Core状态构造，不调用旧目录读取。无范围、无关键词、无筛选时Controller的idleHome门禁禁止空全盘查询；输入或筛选仍走Core搜索，首页动作在当前上下文复用目录历史。
 
@@ -22,9 +26,9 @@
 
 `CatalogApplicationRoot`独立装配统一工作区、既有标题栏/置顶和前台活动确认；`useCatalogApplicationPreferences`只读偏好及事件，初次读取受事件修订/卸载围栏保护，主题、字体、颜色、语言与窗口材质沿用现有能力。`useCatalogWindowCommands`仅转发原生搜索定位、Skim、窗口模式通知和F5刷新；目录快捷键直接切换收藏，输入合成与无修饰键编辑保护复用现有规则。Main仍拥有窗口状态机，Root不枚举旧目录或启动旧搜索。默认Main Renderer入口现已切到此装配；Settings、Line和Preview独立入口保留。
 
-各上下文的上一级、首页与进入目录均复用同一目录历史动作，在当前页面改变浏览位置；跨标签的查询、选择及滚动仍由各页面独立保存。显式Skim入口才创建或选择独立浏览上下文。
+各上下文的上一级、首页与进入目录均复用同一目录历史动作，在当前页面改变浏览位置；跨标签的查询、选择及滚动仍由各页面独立保存。显式新标签动作创建独立上下文。
 
-`CatalogWorkspace`的Skim入口通过共享`CatalogContextActions`打开独立browse上下文，搜索与浏览按范围和类型分别去重。再次调用回到先前搜索上下文，若已关闭则回到常驻全部文件页；不清空搜索页的查询、过滤、选择与滚动。搜索结果打开文件夹在当前上下文进入目录，浏览内复用既有目录历史，卷根上一级进入磁盘视图。浏览根可关闭，全部文件搜索根常驻。`CatalogVolumeGrid`是纯展示，只从Core状态列出本地盘符，不枚举源磁盘；不可查询卷禁用。共享动作提供路径、浏览模式、搜索定位和刷新，顶层窗口不复制导航。浏览根详细筛选或关键词使用全盘查询，进入磁盘后使用解析身份；左侧筛选保持。这些模块已作为默认Main Renderer工作区。
+`CatalogWorkspace`通过共享`CatalogContextActions`创建独立文件页面，不清空其他页面的查询、过滤、选择与滚动。搜索结果打开文件夹在当前上下文进入目录，浏览内复用既有目录历史，卷根上一级进入磁盘视图；所有标签均可关闭。`CatalogVolumeGrid`是纯展示，只从Core状态列出本地盘符，不枚举源磁盘；不可查询卷禁用。共享动作提供路径、浏览模式、搜索定位和刷新，顶层窗口不复制导航。根目录详细筛选或关键词使用全盘查询，进入磁盘后使用解析身份。这些模块已作为默认Main Renderer工作区。
 
 `ComputerSearchThumbnailLeases`将缩略图兴趣与查询/预览授权分开：只对仍有效的结果授权授予独立随机短期票据，全局最多512且不淘汰活动票据。每票据复用Skim图像与Shell队列会话；释放撤销排队任务，已开始的最多2个普通解码和1个Shell任务安全收尾，不强制终止共享解码。协议读取前后检查票据，取消后不返回缓存字节；预览保留原查询会话。真实失败保留查询级有限失败集合，Shell超时仍打开查询级熔断；撤销/迟到任务不能污染新兴趣。`computerSearchThumbnailIpc`独立注册只接受授权/票据，无源路径接口。
 

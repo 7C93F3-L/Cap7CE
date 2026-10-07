@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { t } from "../../../electron/localization";
 import type { FavoriteDirectory } from "../../shared/favoriteDirectoryTypes";
 import "./FavoriteDirectoryList.css";
+import StableUiIcon from "../stable-ui/StableUiIcon";
 
 export interface FavoriteDirectoryListProps {
   directories: readonly FavoriteDirectory[];
@@ -15,6 +16,8 @@ export interface FavoriteDirectoryListProps {
   onRename: (id: string, name: string) => Promise<boolean>;
   onRemove: (id: string) => void;
   onMove: (id: string, direction: "up" | "down") => void;
+  showIcons?: boolean;
+  onOpenNew?: (directory: FavoriteDirectory | null) => void;
 }
 
 const pathKey = (value: string | null) => value?.replace(/[\\/]+$/, "").toLowerCase();
@@ -32,7 +35,9 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
   };
   return <nav className="cap-favorite-directories" aria-label={t("favorites.title")}>
     <button type="button" className="cap-favorite-open" aria-current={props.globalActive ? "page" : undefined}
-      onClick={() => props.onOpen(null)}>{t("favorites.allFiles")}</button>
+      title={props.showIcons ? t("skim.computer") : t("favorites.allFiles")}
+      onClick={event => (event.ctrlKey || event.metaKey) && props.onOpenNew ? props.onOpenNew(null) : props.onOpen(null)}>
+      {props.showIcons && <StableUiIcon name="skim" />}<span>{props.showIcons ? t("skim.computer") : t("favorites.allFiles")}</span></button>
     <header><strong>{t("favorites.title")}</strong>
       <button type="button" disabled={props.busy} title={t("favorites.add")} aria-label={t("favorites.add")} onClick={props.onChoose}>+</button>
       <button type="button" title={t("common.manage")} aria-label={t("common.manage")} aria-expanded={managing}
@@ -49,7 +54,8 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
           <button type="button" disabled={props.busy} title={t("common.cancel")} aria-label={t("common.cancel")} onClick={() => setEditing(null)}>×</button>
         </form> : <button className="cap-favorite-open" type="button" title={directory.path}
           aria-current={!props.globalActive && pathKey(directory.path) === pathKey(props.activePath) ? "page" : undefined}
-          onClick={() => props.onOpen(directory)}>{directory.name}</button>}
+          onClick={event => (event.ctrlKey || event.metaKey) && props.onOpenNew ? props.onOpenNew(directory) : props.onOpen(directory)}>
+          {props.showIcons && <StableUiIcon name="folder" />}<span>{directory.name}</span></button>}
         {managing && editing !== directory.id && <div className="cap-favorite-actions">
           <button type="button" disabled={props.busy || index === 0} aria-label={t("favorites.up")} title={t("favorites.up")} onClick={() => props.onMove(directory.id, "up")}>↑</button>
           <button type="button" disabled={props.busy || index === props.directories.length - 1} aria-label={t("favorites.down")} title={t("favorites.down")} onClick={() => props.onMove(directory.id, "down")}>↓</button>

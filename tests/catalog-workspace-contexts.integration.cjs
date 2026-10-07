@@ -1,7 +1,27 @@
 const assert = require("node:assert/strict");
 const { createCatalogWorkspace, catalogWorkspaceReducer: reduce, maximumCatalogContexts } = require("../src/renderer/catalog-workspace/catalogWorkspaceContexts.ts");
 let state = createCatalogWorkspace("All files");
-assert.equal(reduce(state, { type: "close", id: state.activeId }), state);
+const freshHome = reduce(state, { type: "close", id: state.activeId });
+assert.notEqual(freshHome.activeId, state.activeId, "Closing the last page creates a fresh query owner");
+assert.equal(freshHome.contexts.length, 1);
+assert.equal(freshHome.contexts[0].name, "All files");
+assert.equal(freshHome.contexts[0].scopePath, null);
+let tabs = reduce(state, { type: "new-tab", scopePath: null, name: "New tab" });
+tabs = reduce(tabs, { type: "new-tab", scopePath: null, name: "New tab" });
+assert.equal(tabs.contexts.length, 3, "Explicit new-page actions do not deduplicate");
+const tabOwner = tabs.activeId;
+tabs = reduce(tabs, { type: "location", id: tabOwner, path: "Y:\\Folder" });
+assert.equal(tabs.contexts.at(-1).displayName, "Folder");
+assert.equal(tabs.contexts[0].displayName, undefined);
+assert.equal(reduce(tabs, { type: "location", id: tabOwner, path: "Y:\\Folder" }), tabs);
+tabs = reduce(tabs, { type: "close", id: "catalog:all" });
+assert.equal(tabs.activeId, tabOwner, "The initial home is closable without switching an inactive page");
+tabs = reduce(tabs, { type: "location", id: tabOwner, path: null });
+assert.equal(tabs.contexts.at(-1).displayName, undefined);
+const replaced = reduce(tabs, { type: "replace", scopePath: "Y:\\Favorite", name: "Favorite" });
+assert.equal(replaced.contexts.length, tabs.contexts.length, "A directory click replaces the current page without adding tabs");
+assert.notEqual(replaced.activeId, tabs.activeId, "Changing the directory retires its former query owner");
+assert.equal(replaced.contexts[0], tabs.contexts[0], "Other open pages retain their query identity");
 state = reduce(state, { type: "open", scopePath: "Y:\\Fixtures", name: "Fixtures" });
 const first = state.contexts[1], firstId = state.activeId;
 state = reduce(state, { type: "open", scopePath: "y:/fixtures/", name: "Another alias" });
@@ -36,7 +56,7 @@ state = reduce(state, { type: "open", kind: "browse", scopePath: null, name: "Sk
 const browserRoot = state.activeId;
 assert.notEqual(browserRoot, "catalog:all");
 state = reduce(state, { type: "close", id: browserRoot });
-assert.equal(state.contexts.some(context => context.id === browserRoot), false, "Only the search root is pinned");
+assert.equal(state.contexts.some(context => context.id === browserRoot), false, "Every page is closable");
 assert.equal(state.contexts.find(context => context.id === searchOwner.id), searchOwner);
 for (let index = state.contexts.length; index < maximumCatalogContexts; index++)
   state = reduce(state, { type: "open", scopePath: `Y:\\Folder${index}`, name: `Folder${index}` });

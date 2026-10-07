@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { ComputerSearchState } from "../../../electron/computerSearchTypes";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../shared/types";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import ComputerSearchResultContextMenu from "./ComputerSearchResultContextMenu";
-import ComputerSearchResultVisual from "./ComputerSearchResultVisual";
+import CatalogResultTile from "./CatalogResultTile";
+import type { CatalogGridMode, CatalogSelection } from "../../shared/catalogPresentationTypes";
 import { useComputerSearchResultActions } from "./useComputerSearchResultActions";
 import type { ComputerSearchController } from "./useComputerSearchController";
 import "../results/ResultGrid.css";
@@ -22,10 +23,12 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", onSelectionChange }: {
   controller: ComputerSearchController;
   foreground?: boolean;
   onOpenDirectory?: (path: string) => void;
+  gridMode?: CatalogGridMode;
+  onSelectionChange?: (selection: CatalogSelection) => void;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
   windowMaterial: WindowMaterial;
@@ -39,6 +42,10 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground, onOpenDirectory
   });
   const interactionBlocked = actions.selectedIds.size > 0 || actions.contextMenu !== null;
+  const selection = useMemo(() => ({ items: actions.selectedItems, taskId,
+    openPreview: () => { if (actions.selectedItems[0]) void actions.openPreview(actions.selectedItems[0]); }
+  }), [actions.selectedItems, actions.openPreview, taskId]);
+  useEffect(() => { onSelectionChange?.(selection); }, [selection, onSelectionChange]);
   useEffect(() => {
     controller.setInteractionBlocked(interactionBlocked);
     return () => controller.setInteractionBlocked(false);
@@ -86,10 +93,10 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     ref={scrollContainerRef}
     onClick={() => actions.clearSelection()}
   >
-    <div className="cap-computer-search-grid cap-catalog-file-grid">{items.map((item) => {
+    <div className={`cap-computer-search-grid cap-catalog-file-grid is-${gridMode}`}>{items.map((item) => {
       const selected = actions.selectedIds.has(item.authorizationId);
       const active = actions.activeId === item.authorizationId;
-      return <button
+      return <CatalogResultTile item={item} visual={{ taskId, scrollContainerRef, foreground, showName: true }}
         className={`thumb cap-computer-search-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
         type="button"
         key={item.id}
@@ -115,9 +122,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
             if (!event.repeat) void actions.openPreview(item);
           }
         }}
-      >
-        <ComputerSearchResultVisual item={item} taskId={taskId} scrollContainerRef={scrollContainerRef} foreground={foreground} />
-      </button>;
+      />;
     })}</div>
     {nextCursor && <button className="cap-computer-search-more" type="button" disabled={busy} onClick={() => void loadMore()}>{busy ? t("computerSearch.loading") : t("computerSearch.loadMore")}</button>}
     {actions.feedback && <div className="cap-computer-search-feedback" role="status">{actions.feedback}</div>}

@@ -12,9 +12,18 @@
 .cap-catalog-rail button[aria-expanded="true"] { color: var(--theme-on-color); background: var(--cap-accent-gradient); }
 .cap-catalog-rail .cap-catalog-settings { margin-top: auto; }
 .cap-catalog-header { grid-column: 2; grid-row: 1; display: flex; min-width: 0; padding-right: 5px; }
+.cap-catalog-header .cap-workspace-tabs { flex: 1; min-width: 0; }
+.cap-catalog-new-tab { flex: 0 0 32px; margin: 2px 0 2px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--cap-stable-text); font-size: 22px; cursor: pointer; }
+.cap-catalog-new-tab:hover { background: var(--cap-stable-control-hover); }
 .has-sidebar > .cap-catalog-header { grid-column: 3; }
 .cap-catalog-sidebar { grid-column: 2; grid-row: 1 / -1; display: flex; flex-direction: column; min-height: 0; border-radius: 12px; background: var(--cap-stable-flyout-surface); overflow: hidden; }
 .cap-catalog-sidebar[hidden], .cap-catalog-context[hidden] { display: none; }
+.cap-catalog-files-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.cap-catalog-files-panel[hidden] { display: none; }
+.cap-catalog-files-panel > header { display: flex; align-items: center; justify-content: space-between; flex: 0 0 34px; padding: 0 10px; font-size: var(--cap-stable-secondary-font-size); color: var(--cap-stable-text-muted); }
+.cap-catalog-files-panel > header button { border: 0; background: transparent; color: inherit; cursor: pointer; }
+.cap-catalog-files-panel .cap-favorite-directories { flex: 1; max-height: none; }
+.has-both-panels .cap-catalog-files-panel { flex: 0 1 auto; max-height: 36%; border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
 .cap-catalog-filter-host { position: relative; flex: 1; min-height: 0; }
 .cap-catalog-workspace .cap-catalog-filter-host > .cap-workspace-filter-panel { position: absolute; inset: 0; width: 100%; margin: 0; border: 0; box-shadow: none; }
 .cap-catalog-body { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; min-width: 0; min-height: 0; margin: 0 5px 5px 0; }

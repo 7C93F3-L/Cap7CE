@@ -8,11 +8,13 @@ import { TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileN
 import { VideoThumbnailIndicator, videoThumbnailExtensions } from "../results/ResultThumbnail";
 import { getThumbnailSourceKey } from "./viewportThumbnailImage";
 
-const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef, foreground = true }: {
+const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef, foreground = true, showName = false, onRatio }: {
   item: ComputerSearchItem;
   taskId: string;
   foreground?: boolean;
   scrollContainerRef: RefObject<HTMLElement | null>;
+  showName?: boolean;
+  onRatio?: (ratio: number) => void;
 }) => {
   const thumbnail = useViewportThumbnail(taskId, item.authorizationId, foreground, scrollContainerRef, getThumbnailSourceKey(item));
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,7 +23,8 @@ const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef, foregrou
     if (!target || !image) return;
     target.width = image.width; target.height = image.height;
     target.getContext("2d")?.drawImage(image, 0, 0);
-  }, [thumbnail.image]);
+    onRatio?.(image.width / image.height);
+  }, [thumbnail.image, onRatio]);
   return <span className="cap-computer-search-thumbnail-visual" ref={thumbnail.visualRef}>
     {!thumbnail.image && <span className="result-file-card">
       {item.isDirectory
@@ -30,7 +33,8 @@ const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef, foregrou
       <TwoLineMiddleEllipsisFileName fileName={item.name} className="result-file-card-name" />
     </span>}
     {thumbnail.image && <><span className="thumbnail-image-frame"><canvas ref={canvasRef} aria-hidden="true" /></span>
-      {videoThumbnailExtensions.has(item.extension.toLowerCase()) && <VideoThumbnailIndicator />}</>}
+      {videoThumbnailExtensions.has(item.extension.toLowerCase()) && <VideoThumbnailIndicator />}
+      {showName && <span className="cap-catalog-thumbnail-name" title={item.name}>{item.name}</span>}</>}
   </span>;
 };
 

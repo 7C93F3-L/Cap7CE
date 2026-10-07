@@ -1,16 +1,16 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type CSSProperties } from "react";
 import { t } from "../../../electron/localization";
 import type { MetadataBuildProgress } from "../../shared/metadataBuildTypes";
-import FavoriteDirectoryList from "../favorite-directories/FavoriteDirectoryList";
+import CatalogSidebar from "./CatalogSidebar";
 import { useFavoriteDirectories } from "../favorite-directories/useFavoriteDirectories";
 import { useInertElement } from "../stable-ui/useInertElement";
-import StableUiIcon from "../stable-ui/StableUiIcon";
-import WorkspaceTabBar from "../workspace/WorkspaceTabBar";
+import { useCatalogLayout } from "./useCatalogLayout";
 import CatalogContextView from "./CatalogContextView";
 import type { CatalogContextActions, CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTypes";
 import { useCatalogWorkspaceContexts } from "./useCatalogWorkspaceContexts";
 import MetadataBuildSlot from "../metadata-build/MetadataBuildSlot";
 import "./CatalogWorkspace.css";
+import "./CatalogDesign.css";
 
 export default function CatalogWorkspace({ foreground = true, interactionLocked = false, onOpenSettings, onActiveActions, ...appearance }: CatalogWorkspaceAppearance & {
   foreground?: boolean; interactionLocked?: boolean; onOpenSettings: () => void;
@@ -18,8 +18,9 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
 }) {
   const favorites = useFavoriteDirectories();
   const workspace = useCatalogWorkspaceContexts(favorites.directories);
-  const [sidebarVisible, setSidebarVisible] = useState(() => window.innerWidth >= 850 && window.innerHeight >= 360);
+  const layout = useCatalogLayout();
   const [filterHost, setFilterHost] = useState<HTMLDivElement | null>(null);
+  const [detailsHost, setDetailsHost] = useState<HTMLDivElement | null>(null);
   const [searchAvailable, setSearchAvailable] = useState(false);
   const [metadataProgress, setMetadataProgress] = useState<MetadataBuildProgress | null>(null);
   const activeActions = useRef<CatalogContextActions | null>(null), report = useRef(onActiveActions);
@@ -33,32 +34,23 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     report.current?.(actions ? { ...actions, cycleFavorite } : null);
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
-  const browsing = active.kind === "browse";
   const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
-  return <section ref={ref} className={`cap-catalog-workspace${sidebarVisible ? " has-sidebar" : ""}`}>
-    <nav className="cap-catalog-rail" aria-label={t("workspace.navigation")}>
-      <button type="button" aria-label={t("skim.name")} title={t("skim.name")} aria-pressed={browsing}
-        onClick={() => activeActions.current?.toggleBrowser()}><StableUiIcon name="skim" active={browsing} /></button>
-      <button type="button" aria-label={t("favorites.title")} title={t("favorites.title")} aria-expanded={sidebarVisible}
-        onClick={() => setSidebarVisible(value => !value)}><StableUiIcon name="folder" active={sidebarVisible} /></button>
-      <button type="button" className="cap-catalog-settings" aria-label={t("window.openSettings")} title={t("window.openSettings")} onClick={onOpenSettings}><StableUiIcon name="settings" /></button>
-    </nav>
-    <header className="cap-catalog-header"><WorkspaceTabBar tabs={workspace.contexts.map(context => ({ id: context.id,
-      controlsId: context.id, name: context.id === "catalog:all" ? t("favorites.allFiles") : context.name,
-      path: context.scopePath ?? undefined, closable: context.id !== "catalog:all" }))}
-      activeId={workspace.activeId} onSelect={workspace.select} onClose={workspace.close} /></header>
-    <aside className="cap-catalog-sidebar" hidden={!sidebarVisible}>
-      <FavoriteDirectoryList {...favorites} activePath={active.scopePath} globalActive={active.scopePath === null}
-        onOpen={workspace.open} onChoose={() => void favorites.choose()} onRetry={() => void favorites.reload()}
-        onRename={favorites.rename} onRemove={id => void favorites.remove(id)} onMove={(id, direction) => void favorites.move(id, direction)} />
-      <div className="cap-catalog-filter-host" ref={setFilterHost} />
-    </aside>
-    <div className="cap-catalog-body"><MetadataBuildSlot enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} />
+  return <section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
+    style={{ "--cap-catalog-sidebar-width": `${layout.width}px` } as CSSProperties}>
+    <CatalogSidebar layout={layout} onSettings={onOpenSettings}
+      favorites={{ ...favorites, activePath: active.scopePath, globalActive: active.scopePath === null,
+        onOpen: workspace.open, onChoose: () => void favorites.choose(), onRetry: () => void favorites.reload(),
+        onRename: favorites.rename, onRemove: id => void favorites.remove(id), onMove: (id, direction) => void favorites.move(id, direction) }} />
+    <div className="cap-catalog-filter-host" hidden={!layout.filtersVisible} ref={setFilterHost} />
+    <div className="cap-catalog-main">
+    <div className="cap-catalog-body">
     <div className="cap-catalog-contexts">{workspace.contexts.map(context => <CatalogContextView key={context.id}
       context={context} selected={workspace.activeId === context.id} foreground={foreground && !interactionLocked && workspace.activeId === context.id}
-      filterHost={sidebarVisible ? filterHost : null} onHideSidebar={() => setSidebarVisible(false)}
-      onOpenBrowser={workspace.openBrowser} onToggleBrowser={workspace.toggleBrowser}
-      metadataProgress={metadataProgress} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div></div>
+      filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null}
+      onOpenBrowser={workspace.openBrowser} onLocation={workspace.location}
+      metadataProgress={metadataProgress} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
+      <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div>
+    <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost} />
     {workspace.openLimitReached && <div className="cap-catalog-limit" role="alert">{t("catalogWorkspace.limit")} <button type="button" onClick={workspace.dismissLimit}>{t("common.close")}</button></div>}
   </section>;
 }

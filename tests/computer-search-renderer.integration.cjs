@@ -39,7 +39,9 @@ assert.match(controller, /nextStatus\?\.state !== "not-enabled" \|\| !activateCa
 assert.match(view, /status\?\.state !== "not-enabled" && <strong>/u);
 assert.match(view, /status\?\.state === "repair-required"[\s\S]*?configureCapability\("repair"\)/u);
 assert.doesNotMatch(controller, /if \(page\.isComplete\) taskRef\.current = null/u);
-assert.match(view, /ComputerSearchResultVisual[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[\s\S]*?onDragStart/u);
+assert.match(view, /CatalogResultTile[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[\s\S]*?onDragStart/u);
+assert.match(read("src/renderer/computer-search/CatalogResultTile.tsx"), /ComputerSearchResultVisual item=\{item\} \{\.\.\.visual\}/u,
+  "Layout tiles must retain the authorized visual component");
 assert.match(view, /cap-computer-search-grid cap-catalog-file-grid[\s\S]*?thumb cap-computer-search-entry/u);
 assert.doesNotMatch(view, /cap-skim-entry-name|cap-skim-entry-path/u);
 assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
@@ -49,7 +51,7 @@ assert.match(viewport, /IntersectionObserver[\s\S]*?computer-search-thumbnail/u)
 assert.match(viewport, /rootMargin: "0px"/u);
 assert.match(viewport, /if \(disposed\) \{ release\(id\); return; \}/u);
 assert.match(visual, /useViewportThumbnail\(taskId, item.authorizationId, foreground/u);
-assert.match(view, /scrollContainerRef=\{scrollContainerRef\} foreground=\{foreground\}/u);
+assert.match(view, /visual=\{\{ taskId, scrollContainerRef, foreground/u);
 assert.match(visual, /!thumbnail.image[\s\S]*?result-file-card[\s\S]*?result-file-card-name[\s\S]*?thumbnail-image-frame/u);
 assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 
