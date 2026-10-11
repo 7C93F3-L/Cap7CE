@@ -128,7 +128,7 @@
     "test:file-context-actions": "node tests/file-context-actions.integration.cjs",
     "test:search-evidence": "node tests/search-evidence.integration.cjs",
     "test:search-query-planner": "node tests/search-query-planner.integration.cjs",
-    "test:skim-visual-cache": "electron tests/skim-visual-cache.integration.cjs",
+    "test:skim-visual-cache": "electron tests/skim-visual-cache.integration.cjs && electron tests/visual-invalid-source.integration.cjs",
     "test:skim-content-preview": "electron tests/skim-content-preview.integration.cjs",
     "test:file-catalog": "electron tests/file-catalog.integration.cjs",
     "test:multi-format-search": "electron tests/multi-format-search.integration.cjs",

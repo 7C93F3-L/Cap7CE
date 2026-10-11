@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+图像尺寸与视觉渲染的 Sharp 输入统一通过 `visualSourceDimensions.readSharpSourceBuffer` 读取普通文件字节，上限 256 MiB，读取时扩大的文件拒绝处理；SVG 继续走既有安全解析。Windows libvips 的路径输入错误分支已在无效合成文件上复现原生进程终止，尺寸探测、缩略图渲染及 WebP 预览判断因此不再把源路径直接传给 Sharp。缓存键、授权和视口调度保持原链路，失败只返回格式图标。`visual-invalid-source.integration.cjs` 守护连续坏图读取不退出、正常图片渲染及超限拒绝。
+
 Catalog 的 useCatalogAttributeAvailability 在当前路径、格式及属性种类范围内复用已授权 computerSearch.search 作只读存在性探测；每个临时 owner 最终取消，不请求缩略图、不开始提取，不据全局任务计数推断目录覆盖率。图像/视频色彩另检验视觉向量存在；字段组通过原生 disabled fieldset 保留展示并阻止交互。存在属性时仍明确提醒覆盖可能不完整，不宣称建库完成。CatalogAttributeNotice 负责底部可关闭提示，范围或状态改变后重新显示；顶部不为提示增高。既有任务浮层显示时优先隐藏属性提示，避免重叠；提取入口仅打开已有控制。根首页筛选自动转为搜索地址行，清除条件恢复首页；首页按钮同时清除关键词与条件。空结果按关键词/条件区分，右栏无选择时展示搜索范围。
 
 Catalog当前产品布局由领域组件组合：CatalogSidebar提供可拖宽至52px图标模式的目录导航、布局开关和设置；useCatalogLayout只持有进程内布局状态与受限拖动。目录快捷入口与既有原生浏览动作使用replace动作替换当前页面并退休旧查询；不显示新建按钮或标签栏，Ctrl点击也不创建隐藏页面。顶部条件宿主作为壳层Grid第一行跨越内容与详情列，下方内容和详情共享第二行，收起条件后首行自动折叠。CatalogTopFilters复用唯一StableExploreFilters条件组件并横向排列、滚动，选中的详细条件仍由各页Hook持有。CatalogDirectoryToolbar在同一行转换面包屑/路径编辑与范围搜索，转换不改变查询或导航；默认收藏搜索、此电脑面包屑，重启恢复默认。CatalogDetails纯展示当前目录、选中文件或多选汇总，预览按钮复用既有授权动作，不为目录计算递归大小。信息栏和顶部条件分别可隐藏，窄窗口信息栏作为覆盖层。

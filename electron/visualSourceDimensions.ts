@@ -9,6 +9,30 @@ export interface ImageSize {
 }
 
 export const maximumVisualInputPixels = 150_000_000;
+export const maximumVisualInputBytes = 256 * 1024 * 1024;
+
+// libvips' Windows file-input error path can terminate the native process.
+// Use bounded Node I/O and give Sharp bytes, including for malformed sources.
+export const readSharpSourceBuffer = async (sourcePath: string): Promise<Buffer> => {
+  const handle = await fs.open(sourcePath, "r");
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || stat.size > maximumVisualInputBytes) {
+      throw new Error("图像文件超过读取上限或不是普通文件。");
+    }
+    const buffer = Buffer.alloc(stat.size + 1);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, offset, buffer.length - offset, offset);
+      if (!bytesRead) break;
+      offset += bytesRead;
+    }
+    if (offset > stat.size) throw new Error("图像文件在读取期间发生变化。");
+    return buffer.subarray(0, offset);
+  } finally {
+    await handle.close();
+  }
+};
 export const sharpSourceExtensions = new Set([
   ".jpg",
   ".jpeg",
@@ -89,7 +113,7 @@ export const readVisualSourceDimensions = async (sourcePath: string): Promise<Im
   if (extension === ".bmp") return readBmpSize(sourcePath);
   if (!sharpSourceExtensions.has(extension)) return null;
 
-  const input = extension === ".svg" ? await readSafeSvg(sourcePath) : sourcePath;
+  const input = extension === ".svg" ? await readSafeSvg(sourcePath) : await readSharpSourceBuffer(sourcePath);
   const metadata = await sharp(input, {
     animated: false,
     limitInputPixels: maximumVisualInputPixels

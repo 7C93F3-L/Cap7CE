@@ -15,6 +15,7 @@ import {
   maximumVisualInputPixels as maximumInputPixels,
   readBmpSize,
   readSafeSvg,
+  readSharpSourceBuffer,
   readVisualSourceDimensions,
   sharpSourceExtensions,
   type ImageSize
@@ -181,7 +182,7 @@ export const shouldUseSourceFileForPreview = async (
 
   try {
     if (extension === ".webp") {
-      const metadata = await sharp(sourcePath, {
+      const metadata = await sharp(await readSharpSourceBuffer(sourcePath), {
         limitInputPixels: maximumInputPixels
       }).metadata();
       if ((metadata.pages ?? 1) > 1) {
@@ -241,7 +242,7 @@ const createSharpPipeline = async (entry: VisualCacheEntry): Promise<Sharp> => {
   const extension = path.extname(entry.sourcePath).toLowerCase();
   const input = extension === ".svg"
     ? await readSafeSvg(entry.sourcePath)
-    : entry.sourcePath;
+    : await readSharpSourceBuffer(entry.sourcePath);
 
   return sharp(input, {
     page: 0,
