@@ -79,6 +79,9 @@ app.whenReady().then(async()=>{
   await run("document.querySelector('.cap-stable-file-type-options > button').click()");
   await ready(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')==='true'`);
   await ready("document.querySelector('.cap-catalog-attribute-notice').textContent.includes('尚无')");
+  assert.equal(await run("Boolean(document.querySelector('.cap-catalog-attribute-notice').closest('.cap-catalog-top-filters'))"),false,'attribute notice belongs to content overlay');
+  await run("document.querySelector('.cap-catalog-attribute-notice button[aria-label]').click()");
+  await ready("!document.querySelector('.cap-catalog-attribute-notice')");
   assert.equal(await run("document.querySelector('.cap-stable-metadata-filters').disabled"),true,'missing scoped attributes disable detailed conditions');
   assert.equal(await run("document.querySelector('.cap-catalog-details header').textContent"),'当前搜索');
   assert.equal(await run("document.querySelector('.cap-catalog-details').textContent.includes('搜索范围')"),true);

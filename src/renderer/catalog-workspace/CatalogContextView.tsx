@@ -14,6 +14,7 @@ import CatalogDetails from "./CatalogDetails";
 import type { CatalogGridMode, CatalogSelection } from "../../shared/catalogPresentationTypes";
 import CatalogDirectoryToolbar from "./CatalogDirectoryToolbar";
 import { useCatalogDirectoryNavigation } from "./useCatalogDirectoryNavigation";
+import CatalogAttributeNotice from "./CatalogAttributeNotice";
 import CatalogHome from "./CatalogHome";
 import { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailability";
 
@@ -66,7 +67,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       event.preventDefault(); event.stopPropagation(); event.button === 3 ? navigation.back() : navigation.forward();
     } }} onMouseDown={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}
     onAuxClick={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}>
-    {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={filterCount} attributes={attributes} onMetadata={onMetadata} />, filterHost)}
+    {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={filterCount} attributes={attributes} />, filterHost)}
     {selected && detailsHost && createPortal(<CatalogDetails selection={selection?.taskId === controller.taskId ? selection : null} path={navigation.path} count={controller.items.length} foreground={foreground} searching={searching} filterCount={filterCount} />, detailsHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
       onUp={navigation.up}
@@ -79,5 +80,6 @@ export default function CatalogContextView({ context, selected, foreground, filt
       && !filters.conditions.facts && !filters.conditions.fileConditions
       ? <CatalogHome volumes={controller.status?.volumes ?? []} onOpen={openDirectory} />
       : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
+    {attributes.relevant && <CatalogAttributeNotice key={JSON.stringify([navigation.path, attributes.message])} message={attributes.message} onMetadata={onMetadata} />}
   </section>;
 }
