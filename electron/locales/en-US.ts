@@ -636,6 +636,8 @@ export const enUS = defineLocale({
   "computerSearch.empty": "No results found",
   "computerSearch.emptyHint": "Try a shorter query or search another location",
   "computerSearch.loadMore": "Load more results",
+  "computerSearch.pageLoading": "Loading more files…",
+  "computerSearch.pageFailed": "More files could not be loaded. You can still browse the displayed files.",
   "computerSearch.loading": "Searching…",
   "computerSearch.resultCount": "{scope} · “{query}” · {count} results",
   "computerSearch.state.notEnabled": "This PC search is not enabled; skim browsing is unaffected",

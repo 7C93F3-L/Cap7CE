@@ -3,6 +3,7 @@ import type { ComputerSearchCapabilityOptions, ComputerSearchCapabilityResult, C
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { ComputerSearchConditions } from "../../shared/computerSearchFactTypes";
 import { readComputerSearchReplacement } from "./computerSearchResultRefresh";
+import { readComputerSearchContinuation } from "./computerSearchContinuation";
 import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentity";
 
 export type ComputerSearchError = "scope-not-indexed" | "scope-offline" | "failed" | null;
@@ -29,6 +30,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   interactionRef.current = interactionBlocked;
   foregroundRef.current = foreground;
   const [error, setError] = useState<ComputerSearchError>(null);
+  const [pageError, setPageError] = useState<ComputerSearchError>(null);
   const [capabilityBusy, setCapabilityBusy] = useState(false);
   const [capabilityFeedback, setCapabilityFeedback] = useState<ComputerSearchCapabilityFeedback>(null);
   const [capabilityOptions, setCapabilityOptions] = useState<ComputerSearchCapabilityOptions | null>(null);
@@ -126,7 +128,8 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const sequence = ++requestSequence.current;
     const taskId = nextTaskId("search");
     taskRef.current = taskId;
-    setBusy(true); setHasSubmitted(true); setError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
+    busyRef.current = true;
+    setBusy(true); setHasSubmitted(true); setError(null); setPageError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
     try {
       const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath,
         ...(browseChildren && currentPath !== null && !searchQuery ? { scopeKind: "direct-children" as const } : {}),
@@ -162,7 +165,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       if (!page || !isCurrent()) return "deferred";
       replacementTaskRef.current = null;
       taskRef.current = taskId;
-      setItems(page.items); setNextCursor(page.nextCursor); setError(null);
+      setItems(page.items); setNextCursor(page.nextCursor); setError(null); setPageError(null);
       if (oldTaskId) void api.cancel(oldTaskId);
       return "applied";
     } catch { return isCurrent() ? "failed" : "deferred"; }
@@ -175,6 +178,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     requestSequence.current++;
     setHasSubmitted(false);
     setInteractionBlocked(false);
+    setPageError(null);
     cancelActive();
     setBusy(false);
   }, [currentPath, cancelActive, conditionKey, browseChildren, atHome]);
@@ -233,19 +237,36 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const taskId = taskRef.current;
     const cursor = nextCursor;
     const api = window.cap7ce?.computerSearch;
-    if (!api || !taskId || !cursor || busy) return;
+    if (!api || !taskId || !cursor || busyRef.current || !activeRef.current || !foregroundRef.current) return;
     cancelReplacement();
-    setBusy(true); setError(null);
+    const sequence = requestSequence.current;
+    const replacementId = nextTaskId("refresh");
+    replacementTaskRef.current = replacementId;
+    const isCurrent = () => activeRef.current && taskRef.current === taskId
+      && requestSequence.current === sequence && replacementTaskRef.current === replacementId;
+    busyRef.current = true;
+    setBusy(true);
     try {
-      const page = await api.nextPage({ taskId, cursor });
-      if (!activeRef.current || taskRef.current !== taskId) return;
-      setItems((current) => [...current, ...page.items]); setNextCursor(page.nextCursor);
+      const result = await readComputerSearchContinuation(api, { taskId: replacementId,
+        query: submittedQuery, scopePath: currentPath,
+        ...(browseChildren && currentPath !== null && !submittedQuery ? { scopeKind: "direct-children" as const } : {}),
+        facts: selectedConditions.facts, fileConditions: selectedConditions.fileConditions },
+      taskId, cursor, items.length, isCurrent, Boolean(pageError));
+      if (!result || !isCurrent()) return;
+      const { page, replaced } = result;
+      if (replaced) { taskRef.current = replacementId; setItems(page.items); void api.cancel(taskId); }
+      else setItems((current) => [...current, ...page.items]);
+      setNextCursor(page.nextCursor); setPageError(null);
     } catch (cause) {
-      if (activeRef.current && taskRef.current === taskId) setError(readError(cause));
-    } finally { if (activeRef.current && taskRef.current === taskId) setBusy(false); }
-  }, [busy, nextCursor, cancelReplacement]);
+      if (isCurrent()) setPageError(readError(cause));
+    } finally {
+      if (replacementTaskRef.current === replacementId) replacementTaskRef.current = null;
+      if (taskRef.current !== replacementId) void api.cancel(replacementId);
+      if (activeRef.current && requestSequence.current === sequence) { busyRef.current = false; setBusy(false); }
+    }
+  }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError]);
 
-  return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, scopeLabel,
+  return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, pageError, scopeLabel,
     taskId: taskRef.current,
     canSubmit: Boolean(status?.searchAvailable), capabilityBusy, capabilityFeedback, capabilityOptions,
     enter, exit, setQuery, submit, loadMore, refreshStatus, configureCapability,

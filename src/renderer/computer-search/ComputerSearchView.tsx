@@ -8,6 +8,7 @@ import CatalogResultTile from "./CatalogResultTile";
 import type { CatalogGridMode, CatalogSelection } from "../../shared/catalogPresentationTypes";
 import { useComputerSearchResultActions } from "./useComputerSearchResultActions";
 import type { ComputerSearchController } from "./useComputerSearchController";
+import { useComputerSearchScrollPaging } from "./useComputerSearchScrollPaging";
 import "../results/ResultGrid.css";
 import "./ComputerSearchResultGrid.css";
 
@@ -35,9 +36,13 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
   windowMaterial: WindowMaterial;
   onNativeDragStateChange: (active: boolean) => void;
 }) => {
-  const { status, items, busy, error, hasSubmitted, nextCursor, scopeLabel, loadMore, refreshStatus,
+  const { status, items, busy, error, pageError, hasSubmitted, nextCursor, scopeLabel, loadMore, refreshStatus,
     capabilityBusy, capabilityFeedback, capabilityOptions, configureCapability } = controller;
   const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const pageEndRef = useRef<HTMLDivElement | null>(null);
+  useComputerSearchScrollPaging(scrollContainerRef, pageEndRef,
+    foreground && Boolean(status?.searchAvailable) && hasSubmitted && !busy && !error && !pageError,
+    nextCursor, loadMore);
   const taskId = controller.taskId ?? "";
   const actions = useComputerSearchResultActions({
     items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground, onOpenDirectory
@@ -125,7 +130,11 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
         }}
       />;
     })}</div>
-    {nextCursor && <button className="cap-computer-search-more" type="button" disabled={busy} onClick={() => void loadMore()}>{busy ? t("computerSearch.loading") : t("computerSearch.loadMore")}</button>}
+    {nextCursor && <div ref={pageEndRef} className="cap-computer-search-page-status" role="status">
+      {pageError ? <><span>{t("computerSearch.pageFailed")}</span><button type="button" disabled={busy}
+        onClick={event => { event.stopPropagation(); void loadMore(); }}>{t("common.retry")}</button></>
+        : busy ? t("computerSearch.pageLoading") : null}
+    </div>}
     {actions.feedback && <div className="cap-computer-search-feedback" role="status">{actions.feedback}</div>}
     {actions.contextMenu && <ComputerSearchResultContextMenu
       state={actions.contextMenu}

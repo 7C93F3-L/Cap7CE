@@ -16,10 +16,11 @@
 .cap-computer-search-empty, .cap-computer-search-state { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 7px; padding: 18px; color: var(--cap-stable-text-muted); text-align: center; }
 .cap-computer-search-empty > .cap-svg-icon, .cap-computer-search-state > .cap-svg-icon { width: 30px; height: 30px; }
 .cap-computer-search-empty strong, .cap-computer-search-state strong { color: var(--cap-stable-text); font-weight: 500; }
-.cap-computer-search-state button, .cap-computer-search-more { min-height: 32px; padding: 0 14px; border: 0; border-radius: var(--cap-stable-radius-pill); color: inherit; background: var(--cap-stable-surface-soft); }
+.cap-computer-search-state button, .cap-computer-search-page-status button { min-height: 32px; padding: 0 14px; border: 0; border-radius: var(--cap-stable-radius-pill); color: inherit; background: var(--cap-stable-surface-soft); }
 .cap-computer-search-state button:disabled { opacity: .58; }
-.cap-computer-search-state button:hover, .cap-computer-search-more:hover:not(:disabled) { background: var(--cap-stable-control-hover); }
-.cap-computer-search-more { display: block; margin: 10px auto 0; }
+.cap-computer-search-state button:hover, .cap-computer-search-page-status button:hover:not(:disabled) { background: var(--cap-stable-control-hover); }
+.cap-computer-search-page-status { min-height: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--cap-stable-text-muted); font-size: 12px; }
+.cap-computer-search-page-status:not(:empty) { padding: 10px 0; }
 .cap-computer-search-feedback { position: sticky; left: 50%; bottom: 8px; width: max-content; max-width: calc(100% - 16px); margin: 8px auto 0; padding: 5px 10px; border-radius: var(--cap-stable-radius-pill); color: var(--cap-stable-text); background: var(--cap-stable-flyout-surface); box-shadow: 0 4px 14px rgb(0 0 0 / 14%); }
 
 @media (max-height: 359.98px) {
@@ -29,5 +30,7 @@
   .cap-computer-search-results { overflow-x: auto; overflow-y: hidden; }
   .cap-computer-search-grid { display: flex; height: 100%; align-items: center; }
   .cap-computer-search-entry { width: 138px; height: 138px; flex: 0 0 138px; }
-  .cap-computer-search-more { display: inline-block; margin: auto 8px; }
+  .cap-computer-search-results { display: flex; align-items: center; }
+  .cap-computer-search-grid { flex: 0 0 auto; }
+  .cap-computer-search-page-status { flex: 0 0 auto; min-width: 1px; min-height: 100%; }
 }

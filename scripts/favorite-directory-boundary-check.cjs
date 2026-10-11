@@ -13,6 +13,8 @@ const files = new Map([
   ["src/renderer/catalog-workspace/useCatalogWorkspaceContexts.ts", 45],
   ["src/renderer/computer-search/computerSearchTaskIdentity.ts", 35],
   ["src/renderer/computer-search/useViewportThumbnail.ts", 75],
+  ["src/renderer/computer-search/useComputerSearchScrollPaging.ts", 35],
+  ["src/renderer/computer-search/computerSearchContinuation.ts", 45],
   ["electron/computerSearchThumbnailLeases.ts", 90],
   ["electron/computerSearchThumbnailIpc.ts", 45],
   ["src/renderer/catalog-workspace/CatalogWorkspace.tsx", 90],

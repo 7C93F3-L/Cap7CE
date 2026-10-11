@@ -636,6 +636,8 @@ export const zhCN = {
   "computerSearch.empty": "没有找到结果",
   "computerSearch.emptyHint": "尝试更短的关键词或切换搜索位置",
   "computerSearch.loadMore": "加载更多结果",
+  "computerSearch.pageLoading": "正在加载后续文件…",
+  "computerSearch.pageFailed": "后续文件暂未加载，已显示的文件仍可浏览。",
   "computerSearch.loading": "正在搜索…",
   "computerSearch.resultCount": "{scope} · “{query}” · {count} 个结果",
   "computerSearch.state.notEnabled": "此电脑搜索尚未启用，Skim 浏览不受影响",

@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`useComputerSearchScrollPaging` 只观察结果滚动容器末端，接近末端时请求下一页，后台、忙碌、错误及耗尽时停止，无定时轮询。缩略图继续由独立的零扩展视口观察器管理。`computerSearchContinuation` 保留 Core 签名、修订和有效期校验；续页失效时复用 `readComputerSearchReplacement`，以新 owner 在原关键词、路径、直接子项范围及条件下读取已加载数量加一页，成功后才切换授权并退休旧 owner，失败或过期响应取消新 owner。Controller 用同步 busy 门禁阻止重复续载，以页面错误保留旧网格，失败重试不复用已退休查询；没有数据库迁移或新 IPC。
+
 `SettingsMetadataBuildControl` 提供设置“缓存与索引”中的建库入口；`settingsWindowBridge` 使用共享 `SettingsWindowApi`，仅派发打开面板请求。`settingsWindowIpc` 仅允许当前 Settings WebContents 请求该入口；Main 复用 `showAndFocusMainWindow` 恢复窗口并通知 Catalog，`useCatalogLayout` 幂等展开现有 MetadataBuildSlot。设置不持有第二份建库控制、范围草稿或提取授权，不扩大 metadataBuild API 的 sender 权限；左栏删除重复入口，底部提示及任务入口保留。
 
 图像尺寸与视觉渲染的 Sharp 输入统一通过 `visualSourceDimensions.readSharpSourceBuffer` 读取普通文件字节，上限 256 MiB，读取时扩大的文件拒绝处理；SVG 继续走既有安全解析。Windows libvips 的路径输入错误分支已在无效合成文件上复现原生进程终止，尺寸探测、缩略图渲染及 WebP 预览判断因此不再把源路径直接传给 Sharp。缓存键、授权和视口调度保持原链路，失败只返回格式图标。`visual-invalid-source.integration.cjs` 守护连续坏图读取不退出、正常图片渲染及超限拒绝。
