@@ -61,7 +61,7 @@
 .cap-catalog-details dt { color: var(--cap-stable-text-muted); margin-top: 8px; }
 .cap-catalog-details dd { margin: 0; overflow-wrap: anywhere; user-select: text; }
 .cap-catalog-details > button { margin-top: 14px; color: inherit; background: var(--cap-stable-control-hover); padding: 7px; border: 0; border-radius: 7px; cursor: pointer; }
-.cap-catalog-design .cap-metadata-build-slot.is-floating { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 35; border-radius: 12px; background: var(--cap-stable-flyout-surface); box-shadow: 0 5px 20px #0003; }
+.cap-catalog-design .cap-metadata-build-slot.is-floating { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 35; border-radius: 12px; background: rgb(from color-mix(in srgb, var(--cap-stable-surface) 78%, black) r g b / 1); box-shadow: 0 5px 20px #0003; }
 .cap-metadata-build-slot.is-compact { display: flex; align-items: center; gap: 12px; color: var(--cap-stable-text); font-size: 12px; }
 .cap-metadata-build-slot.is-compact progress { flex: 1; min-width: 60px; }
 .cap-metadata-build-slot.is-compact button { background: transparent; color: inherit; border: 0; cursor: pointer; }
@@ -84,7 +84,7 @@
 @media(max-width: 700px), (max-height: 440px) { .cap-catalog-attribute-notice { left: 96px; } }
 
 
-.cap-catalog-attribute-notice { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 34; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--cap-stable-flyout-surface); box-shadow: 0 5px 20px #0003; color: var(--cap-stable-text-muted); font-size: 12px; }
+.cap-catalog-attribute-notice { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 34; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: rgb(from color-mix(in srgb, var(--cap-stable-surface) 78%, black) r g b / 1); box-shadow: 0 5px 20px #0003; color: var(--cap-stable-text-muted); font-size: 12px; }
 .cap-catalog-attribute-notice > span { flex: 1; min-width: 0; }
 .cap-catalog-attribute-notice button { flex: 0 0 auto; color: var(--cap-stable-text); background: transparent; border: 0; border-radius: 6px; padding: 4px; font: inherit; cursor: pointer; }
 .cap-catalog-attribute-notice button:hover { background: var(--cap-stable-control-hover); }
