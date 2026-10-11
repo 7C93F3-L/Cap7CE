@@ -1733,6 +1733,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
   const requestId = ++previewOpenRequestId;
   embeddedMetadataPreviewCoordinator.cancel();
   const previewMetadata = await readPreviewEmbeddedMetadata(data.filePath, { fileSize: data.fileSize, modifiedAt: data.modifiedAt }).catch(() => ({ metadata: null, isCurrent: false }));
+  if (requestId !== previewOpenRequestId) return false;
   let preparedData: PreviewWindowData = {
     ...data, embeddedMetadata: previewMetadata.metadata ?? undefined,
     pdfPreview: undefined,
@@ -1874,7 +1875,6 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
     closeOfficePreviewSession();
     closePdfPreviewSession();
   }
-
   logPreviewLifecycle("open-request", {
     sessionId: data.sessionId,
     source: data.skimActive ? "skim" : "results",

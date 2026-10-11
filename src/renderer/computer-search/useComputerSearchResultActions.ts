@@ -4,6 +4,7 @@ import { getActiveLanguage, t } from "../../../electron/localization";
 import type { AppearanceColors, PreviewWindowData, ResolvedThemeMode } from "../../shared/types";
 import { getFileContextShortcutAction } from "../fileContextActions";
 import { isEditableKeyboardTarget, isWorkspaceControlKeyboardTarget } from "../keyboardTarget";
+import { createPreviewRequestGuard } from "../previewRequestGuard";
 import type { ComputerSearchContextMenuState } from "./ComputerSearchResultContextMenu";
 
 interface ResultActionOptions {
@@ -25,6 +26,7 @@ export const useComputerSearchResultActions = ({
   const [feedback, setFeedback] = useState("");
   const selectionAnchorRef = useRef<string | null>(null);
   const previewAuthorizationRef = useRef<string | null>(null);
+  const previewRequestGuard = useMemo(() => createPreviewRequestGuard(), []);
   const feedbackTimerRef = useRef<number | null>(null);
 
   const showFeedback = useCallback((message: string) => {
@@ -34,15 +36,17 @@ export const useComputerSearchResultActions = ({
   }, []);
 
   useEffect(() => {
+    previewRequestGuard.invalidate();
     setSelectedIds(new Set());
     setActiveId(null);
     setContextMenu(null);
     selectionAnchorRef.current = null;
     previewAuthorizationRef.current = null;
-  }, [taskId]);
+  }, [taskId, previewRequestGuard]);
   useEffect(() => () => {
+    previewRequestGuard.invalidate();
     if (feedbackTimerRef.current !== null) window.clearTimeout(feedbackTimerRef.current);
-  }, []);
+  }, [previewRequestGuard]);
 
   const selectedItems = useMemo(
     () => items.filter((item) => selectedIds.has(item.authorizationId)),
@@ -100,16 +104,18 @@ export const useComputerSearchResultActions = ({
   }, [showFeedback, taskId]);
 
   const openPreview = useCallback(async (item: ComputerSearchItem) => {
+    const requestId = previewRequestGuard.begin();
     const request = authorization(item);
     try {
       const info = await window.cap7ce?.computerSearch.inspect(request);
-      if (!info) return;
+      if (!info || !previewRequestGuard.isCurrent(requestId)) return;
       let provider: PreviewWindowData["provider"] = item.isDirectory ? "folderInfo" : item.previewKind;
       let textPreview;
       if (provider === "text") {
         try { textPreview = await window.cap7ce?.computerSearch.readTextPreview(request); }
         catch { provider = "fileInfo"; }
       }
+      if (!previewRequestGuard.isCurrent(requestId)) return;
       const sessionId = `computer-search:${Date.now()}:${item.authorizationId.slice(0, 8)}`;
       const data: PreviewWindowData = {
         sessionId,
@@ -131,11 +137,13 @@ export const useComputerSearchResultActions = ({
       };
       previewAuthorizationRef.current = item.authorizationId;
       const opened = await window.cap7ce?.preview.open(data);
+      if (!previewRequestGuard.isCurrent(requestId)) return;
       if (!opened) showFeedback(t("computerSearch.actionFailed"));
+      else if (provider === "folderInfo") void window.cap7ce?.skim.startFolderStats({ sessionId, path: info.path });
     } catch {
-      showFeedback(t("computerSearch.actionFailed"));
+      if (previewRequestGuard.isCurrent(requestId)) showFeedback(t("computerSearch.actionFailed"));
     }
-  }, [appearanceColors, authorization, showFeedback, theme]);
+  }, [appearanceColors, authorization, showFeedback, theme, previewRequestGuard]);
 
   useEffect(() => {
     const unsubscribeNavigate = window.cap7ce?.preview.onNavigate((direction) => {
@@ -147,9 +155,11 @@ export const useComputerSearchResultActions = ({
       selectionAnchorRef.current = nextItem.authorizationId;
       void openPreview(nextItem);
     });
-    const unsubscribeClosed = window.cap7ce?.preview.onClosed(() => { previewAuthorizationRef.current = null; });
+    const unsubscribeClosed = window.cap7ce?.preview.onClosed(() => {
+      previewRequestGuard.invalidate(); previewAuthorizationRef.current = null;
+    });
     return () => { unsubscribeNavigate?.(); unsubscribeClosed?.(); };
-  }, [items, openPreview]);
+  }, [items, openPreview, previewRequestGuard]);
 
   const openContextMenu = useCallback((event: ReactMouseEvent, item: ComputerSearchItem) => {
     event.preventDefault();

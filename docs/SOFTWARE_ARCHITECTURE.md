@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`computerSearchPreviewAuthorization` 为图像预览生成主图与 `computer-search-preview-thumbnail` 回退地址，两者均绑定已有查询授权及预览视觉会话；网格 `computer-search-thumbnail` 继续要求独立短期视口票据，预览回退不借用或创建网格票据。`computerSearchVisualProtocol` 在直接预览策略允许时先读取原图，保留 GIF / 动图，不以静态提取成功为前提；源读取失败返回可回退的响应。转换型图像与系统图像沿用既有渲染服务，异步返回前再次核验授权。`useComputerSearchResultActions` 复用 `createPreviewRequestGuard`，新文件请求、关闭、查询 owner 更换和卸载均淘汰迟到检查；目录预览打开后调用原 `skim.startFolderStats`，原会话门禁和取消链不变。Main 的原 `preview:open` 处理函数在元数据读取结束后复查原请求编号，避免旧请求覆盖新文件或重新打开已关闭预览。没有新增路径 IPC、缓存迁移或预览窗口状态机。
+
 `useComputerSearchScrollPaging` 对无关键词的直接子项目录逐页补齐基本清单，每页完成后让出事件循环，后台、忙碌及耗尽时停止；全盘或关键词查询只在接近滚动末端时续载。失败保留旧网格和错误提示，后续末端滚动可重试，冷却阻止连续失败请求，不设置按钮或后台重试循环。缩略图继续由独立的零扩展视口观察器管理。Core 通过 `search.live` 能力声明支持签名实时续页：显式 `continuation: live` 保留签名、范围、条件、排序锚点和有效期校验，每页读取当前修订；默认严格游标仍要求原修订。Main 仅在能力可用时选择实时模式，Controller 按稳定身份去重，索引通知继续刷新当前范围以收敛分页期间的新增、删除与改名。超时等失效凭据仍由 `computerSearchContinuation` 复用 `readComputerSearchReplacement`，在原范围及条件下恢复已加载数量加一页，成功后才切换授权并退休旧 owner。同步 busy 门禁及请求身份拒绝重复续载和迟到页；没有数据库迁移或新 IPC。
 
 `CatalogVirtualGrid` 只负责视口测量和可见卡片挂载，使用被动滚动监听、ResizeObserver 与单帧合并，不持有文件动作或读取缩略图。纯函数 `catalogGridLayout` 提供方形、等高原比例和紧凑横向布局，方形按行直接计算可见范围，原比例按有序行位置二分定位；完整基本清单仍占用与条目数成正比的内存，DOM 与解码像素受视口限制。普通目录补齐前滚动范围逐步增长，不承诺全盘结果的随机跳页。ComputerSearchView 保持唯一选择、预览、右键及拖出动作，CatalogResultTile 将解码比例回报布局；两模块均由领域体量守门。

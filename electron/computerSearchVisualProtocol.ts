@@ -13,6 +13,7 @@ interface ComputerSearchVisualProtocolDependencies {
 
 export const isComputerSearchVisualHost = (hostname: string) => (
   hostname === "computer-search-thumbnail" || hostname === "computer-search-preview"
+    || hostname === "computer-search-preview-thumbnail"
 );
 
 export const handleComputerSearchVisualRequest = async (
@@ -24,24 +25,30 @@ export const handleComputerSearchVisualRequest = async (
   const authorizationId = url.searchParams.get("authorization") ?? "";
   const authorization = { taskId, authorizationId }, leaseId = url.searchParams.get("lease") ?? "";
   const item = dependencies.runtime.resolveAuthorizedItem(authorization);
-  const preview = url.hostname === "computer-search-preview";
+  const preview = url.hostname !== "computer-search-thumbnail";
+  const fallback = url.hostname === "computer-search-preview-thumbnail";
   const sessionId = preview ? dependencies.runtime.getVisualSessionId(taskId)
     : dependencies.runtime.thumbnailLeases.session(authorization, leaseId);
   if (!item || !sessionId || (preview && item.isDirectory)) {
     return new Response("Computer search visual request is unavailable", { status: 403 });
   }
   try {
-    const cachePath = preview && item.canShellPreview
+    // Source previews (including animation) must not depend on a successful
+    // static cache render. Only the explicitly requested fallback makes a thumb.
+    if (preview && !fallback && item.canDirectPreview
+      && await dependencies.shouldUseSourceFileForPreview(item.path)) {
+      if (!dependencies.runtime.resolveAuthorizedItem(authorization))
+        return new Response("Computer search visual request is unavailable", { status: 403 });
+      return await dependencies.fetchSourceFile(item.path);
+    }
+    const cachePath = preview && !fallback && item.canShellPreview
       ? await dependencies.requestShellPreviewCache(sessionId, item.path)
-      : !preview && (!item.canThumbnail || item.isDirectory)
+      : (!preview || fallback) && (!item.canThumbnail || item.isDirectory)
         ? await dependencies.requestShellThumbnailCache(sessionId, item.path)
-        : await dependencies.requestVisualCache(sessionId, item.path, preview ? "preview" : "thumbnail");
+        : await dependencies.requestVisualCache(sessionId, item.path, preview && !fallback ? "preview" : "thumbnail");
     if (!dependencies.runtime.resolveAuthorizedItem(authorization)
       || (!preview && !dependencies.runtime.thumbnailLeases.session(authorization, leaseId)))
       return new Response("Computer search visual request is unavailable", { status: 403 });
-    if (preview && await dependencies.shouldUseSourceFileForPreview(item.path)) {
-      return dependencies.fetchSourceFile(item.path);
-    }
     const image = await dependencies.readVisualCacheImage(cachePath);
     const body = image.buffer.buffer.slice(
       image.buffer.byteOffset,

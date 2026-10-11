@@ -29,6 +29,8 @@ export const authorizeComputerSearchPreviewData = (
       : data.provider === "audio" || data.provider === "video"
         ? `cap7ce://skim-media/?path=${encodeURIComponent(canonicalPath)}`
         : "",
-    thumbnailUrl: `cap7ce://computer-search-thumbnail/?task=${task}&authorization=${authorization}`
+    thumbnailUrl: data.provider === "image"
+      ? `cap7ce://computer-search-preview-thumbnail/?task=${task}&authorization=${authorization}`
+      : ""
   };
 };
