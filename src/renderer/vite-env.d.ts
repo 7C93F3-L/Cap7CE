@@ -4,6 +4,7 @@ import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, Delet
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../electron/appUpdateTypes";
 import type { ComputerSearchAuthorization, ComputerSearchAuthorizationBatch, ComputerSearchCapabilityOptions, ComputerSearchCapabilityRequest, ComputerSearchCapabilityResult, ComputerSearchNextPageRequest, ComputerSearchPage, ComputerSearchRequest, ComputerSearchStatus } from "../../electron/computerSearchTypes";
 import type { MetadataBuildApi } from "../shared/metadataBuildTypes";
+import type { SettingsWindowApi } from "../shared/settingsWindowTypes";
 
 type Cap7CEShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -26,9 +27,7 @@ declare global {
         onRefreshCurrentPageRequested: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "normal" | "standby") => void) => () => void;
       };
-      settingsWindow: {
-        open: () => Promise<boolean>;
-      };
+      settingsWindow: SettingsWindowApi;
       line: {
         activateMain: () => Promise<boolean>;
         onVisibilityChanged: (callback: (visible: boolean) => void) => () => void;

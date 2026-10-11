@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`SettingsMetadataBuildControl` 提供设置“缓存与索引”中的建库入口；`settingsWindowBridge` 使用共享 `SettingsWindowApi`，仅派发打开面板请求。`settingsWindowIpc` 仅允许当前 Settings WebContents 请求该入口；Main 复用 `showAndFocusMainWindow` 恢复窗口并通知 Catalog，`useCatalogLayout` 幂等展开现有 MetadataBuildSlot。设置不持有第二份建库控制、范围草稿或提取授权，不扩大 metadataBuild API 的 sender 权限；左栏删除重复入口，底部提示及任务入口保留。
+
 图像尺寸与视觉渲染的 Sharp 输入统一通过 `visualSourceDimensions.readSharpSourceBuffer` 读取普通文件字节，上限 256 MiB，读取时扩大的文件拒绝处理；SVG 继续走既有安全解析。Windows libvips 的路径输入错误分支已在无效合成文件上复现原生进程终止，尺寸探测、缩略图渲染及 WebP 预览判断因此不再把源路径直接传给 Sharp。缓存键、授权和视口调度保持原链路，失败只返回格式图标。`visual-invalid-source.integration.cjs` 守护连续坏图读取不退出、正常图片渲染及超限拒绝。
 
 Catalog 的 useCatalogAttributeAvailability 在当前路径、格式及属性种类范围内复用已授权 computerSearch.search 作只读存在性探测；每个临时 owner 最终取消，不请求缩略图、不开始提取，不据全局任务计数推断目录覆盖率。图像/视频色彩另检验视觉向量存在；字段组通过原生 disabled fieldset 保留展示并阻止交互。存在属性时仍明确提醒覆盖可能不完整，不宣称建库完成。CatalogAttributeNotice 负责底部可关闭提示，范围或状态改变后重新显示；顶部不为提示增高。既有任务浮层显示时优先隐藏属性提示，避免重叠；提取入口仅打开已有控制。根首页筛选自动转为搜索地址行，清除条件恢复首页；首页按钮同时清除关键词与条件。空结果按关键词/条件区分，右栏无选择时展示搜索范围。

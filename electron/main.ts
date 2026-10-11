@@ -2627,7 +2627,7 @@ registerCacheActivityIpc({
     }
   }
 });
-registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, openSettings });
+registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, isSettingsSenderAllowed, openSettings, openMetadataBuild: () => { if (!showAndFocusMainWindow()) return false; mainWindow?.webContents.send("settingsWindow:metadataBuildRequested"); return true; } });
 const clearFormalVisualCacheSafely = async (clear: typeof clearAllVisualCaches) => {
   const renderingPauseReason = "cache-clear";
   await pauseThumbnailRendering(renderingPauseReason);

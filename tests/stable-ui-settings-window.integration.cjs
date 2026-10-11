@@ -117,10 +117,24 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   registerSettingsWindowIpc({
     registrar: { handle: (channel, listener) => handles.set(channel, listener), on: () => undefined },
     isMainSenderAllowed: (event) => event.sender.id === 1,
-    openSettings: async () => true
+    isSettingsSenderAllowed: (event) => event.sender.id === 2,
+    openSettings: async () => true,
+    openMetadataBuild: () => true
   });
   assert.equal(await handles.get("settingsWindow:open")({ sender: { id: 2 } }), false);
   assert.equal(await handles.get("settingsWindow:open")({ sender: { id: 1 } }), true);
+  assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 1 } }), false);
+  assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 3 } }), false);
+  assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 2 } }), true);
+  const { createSettingsWindowBridge } = require("../dist-electron/settingsWindowBridge.js");
+  const listeners = new Map(), invoked = [];
+  const bridge = createSettingsWindowBridge({ invoke: async channel => { invoked.push(channel); return true; }, on: (channel, callback) => listeners.set(channel, callback), removeListener: channel => listeners.delete(channel) });
+  await bridge.openMetadataBuild();
+  assert.deepEqual(invoked, ["settingsWindow:openMetadataBuild"]);
+  let requested = 0;
+  const unsubscribe = bridge.onMetadataBuildRequested(() => requested++);
+  listeners.get("settingsWindow:metadataBuildRequested")();
+  assert.equal(requested, 1); unsubscribe(); assert.equal(listeners.size, 0);
 
   const temporaryRoot = await fs.promises.mkdtemp(path.join(os.tmpdir(), "cap7ce-settings-window-"));
   const layoutPath = path.join(temporaryRoot, "settings-window-layout.json");
@@ -316,7 +330,8 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(stableSkimStyles, /cap-settings-skim-display-stable[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?cap-settings-skim-extension\[data-selected="true"\]/u);
   assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?min-height: 24px[\s\S]*?height: 24px[\s\S]*?border-radius: var\(--radius-pill\)/u);
   assert.match(skimDisplaySource, /stableUi[\s\S]*?cap-settings-skim-category-control[\s\S]*?role="switch"[\s\S]*?settings\.hiddenFiles/u);
-  assert.match(settingsAppSource, /<EmbeddedMetadataSettingsRow stableUi \/>/u);
+  assert.match(settingsAppSource, /<SettingsIndexSection query=\{normalizedQuery\} \/>/u);
+  assert.match(fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsIndexSection.tsx"), "utf8"), /<EmbeddedMetadataSettingsRow stableUi \/>/u);
   assert.doesNotMatch(settingsAppSource, /SettingCard title="settings\.embeddedMetadata"[^>]*cap-stable-settings-card-expanded/u);
   const embeddedMetadataSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
   assert.match(embeddedMetadataSource, /className=\{stableUi \? "cap-stable-settings-button" : "cap-settings-pill"\}/u);
@@ -341,7 +356,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);
   assert.match(settingsControllerSource, /if \(showLoading\) \{[\s\S]*?setIsLoading\(true\)[\s\S]*?if \(showLoading\) setIsLoading\(false\)/u);
   assert.match(settingsControllerSource, /refreshAll\(true\)[\s\S]*?const refreshOnFocus = \(\) => \{ void refreshAll\(false\); \};[\s\S]*?addEventListener\("focus", refreshOnFocus\)/u);
-  assert.match(preloadSource, /settingsWindow:[\s\S]*?settingsWindow:open/u);
+  assert.match(preloadSource, /settingsWindow: createSettingsWindowBridge\(ipcRenderer\)/u);
   assert.match(preloadSource, /directories:[\s\S]*?directories:changed[\s\S]*?preferences:[\s\S]*?preferences:changed/u);
   assert.match(appSource, /onOpenSettings:\s*\(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/u);
   assert.match(appSource, /useSettingsDataSynchronization/u);

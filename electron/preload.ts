@@ -4,6 +4,7 @@ import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "./appUpdateTypes";
 import { createMetadataBuildBridge } from "./metadataExtraction/metadataBuildBridge";
+import { createSettingsWindowBridge } from "./settingsWindowBridge";
 import { createComputerSearchChangeBridge } from "./computerSearchChangeBridge";
 import { createFavoriteDirectoryBridge } from "./favoriteDirectories/favoriteDirectoryBridge";
 import type {
@@ -73,9 +74,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
       return () => ipcRenderer.removeListener("window:activateShellModeShortcut", listener);
     }
   },
-  settingsWindow: {
-    open: () => ipcRenderer.invoke("settingsWindow:open")
-  },
+  settingsWindow: createSettingsWindowBridge(ipcRenderer),
   line: {
     activateMain: () => ipcRenderer.invoke("line:activateMain"),
     onVisibilityChanged: (callback: (visible: boolean) => void) => {

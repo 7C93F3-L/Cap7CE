@@ -6,9 +6,9 @@ const fixture=`
 import React from 'react';import {createRoot} from 'react-dom/client';
 import CatalogWorkspace from './src/renderer/catalog-workspace/CatalogWorkspace';
 const noop=()=>{},probe=window.probe={requests:[],canceled:[],building:true,attributesAvailable:false,colorsAvailable:false,forceEmpty:false};
-window.cap7ce={skim:{listLocations:async()=>[]},preview:{onNavigate:()=>noop,onClosed:()=>noop},
+window.cap7ce={settingsWindow:{onMetadataBuildRequested:callback=>{probe.openMetadata=callback;return noop}},skim:{listLocations:async()=>[]},preview:{onNavigate:()=>noop,onClosed:()=>noop},
 favoriteDirectories:{list:async()=>[{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}]},
-metadataBuild:{status:async()=>({volumes:[],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
+metadataBuild:{status:async()=>({volumes:[{volumeId:'X:',label:'X:'}],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
 computerSearch:{status:async()=>({state:probe.building?'building':'ready',searchAvailable:!probe.building,catalogRevision:1,volumes:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:probe.building?'building':'ready',queryable:!probe.building,processed:2,total:2}))}),onCatalogChanged:()=>noop,
 search:async request=>{if(!/^[A-Za-z0-9_-]{1,128}$/.test(request.taskId))throw Error("invalid task identity");probe.requests.push(request);if(request.taskId.endsWith('_attribute')&&(!probe.attributesAvailable||(request.facts?.visualGroups&&!probe.colorsAvailable)))return {items:[],nextCursor:null};if(!request.taskId.endsWith('_attribute')&&probe.forceEmpty)return {items:[],nextCursor:null};const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
 createRoot(document.getElementById('root')).render(<CatalogWorkspace theme="dark" appearanceColors={{}} windowMaterial="none" onOpenSettings={noop}/>);
@@ -97,6 +97,13 @@ app.whenReady().then(async()=>{
   await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar button')[3].click()`);
   await ready(`${active}.querySelector('.cap-catalog-home')`);
   assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'0 项条件','home action clears conditions');
+  assert.equal(await run("document.querySelector('[aria-label=\"文件属性建库\"]')===null"),true,'sidebar no longer duplicates the indexing entry');
+  await run('probe.openMetadata()');
+  await ready("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')");
+  await run('probe.openMetadata()');
+  assert.equal(await run("document.querySelectorAll('.cap-metadata-build-slot.is-floating').length"),1,'repeated settings requests keep the original panel open');
+  await run("document.querySelector('.cap-metadata-build-close').click()");
+  await ready("!document.querySelector('.cap-metadata-build-slot.is-floating')");
   console.log('Catalog design: current-page navigation, independent panels, sidebar width, favorite defaults, selection details, two grids and no tab UI passed.');
 
  }catch(error){console.error(error.stack);process.exitCode=1}

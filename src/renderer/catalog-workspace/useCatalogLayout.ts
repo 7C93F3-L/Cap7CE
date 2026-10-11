@@ -5,6 +5,7 @@ export function useCatalogLayout() {
   const [filtersVisible, setFiltersVisible] = useState(true);
   const [detailsVisible, setDetailsVisible] = useState(true);
   const [metadataOpen, setMetadataOpen] = useState(false);
+  useEffect(() => window.cap7ce?.settingsWindow?.onMetadataBuildRequested?.(() => setMetadataOpen(true)), []);
   const drag = useRef<{ x: number; width: number } | null>(null);
   const clamp = (value: number) => Math.max(52, Math.min(320, Math.max(52, window.innerWidth - 300), value));
   useEffect(() => {
