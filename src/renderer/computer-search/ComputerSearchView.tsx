@@ -23,8 +23,9 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", onSelectionChange }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", emptyHint, onSelectionChange }: {
   controller: ComputerSearchController;
+  emptyHint?: string;
   foreground?: boolean;
   onOpenDirectory?: (path: string) => void;
   gridMode?: CatalogGridMode;
@@ -85,7 +86,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     <strong>{t(error === "scope-offline" ? "computerSearch.scopeOffline" : error === "scope-not-indexed" ? "computerSearch.scopeNotIndexed" : "computerSearch.failed")}</strong>
   </section>;
   if (!busy && items.length === 0) return <section className="cap-computer-search-empty"><StableUiIcon name="search" />
-    <strong>{t("computerSearch.empty")}</strong><span>{t("computerSearch.emptyHint")}</span>
+    <strong>{controller.query.trim() ? t("computerSearch.empty") : "没有符合当前条件的文件"}</strong><span>{emptyHint ?? (controller.query.trim() ? t("computerSearch.emptyHint") : "可以减少筛选条件或切换搜索范围。")}</span>
   </section>;
   return <section
     className="cap-computer-search-results"

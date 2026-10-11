@@ -47,7 +47,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     <div className="cap-catalog-contexts">{workspace.contexts.map(context => <CatalogContextView key={context.id}
       context={context} selected={workspace.activeId === context.id} foreground={foreground && !interactionLocked && workspace.activeId === context.id}
       filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null}
-      onOpenBrowser={workspace.openBrowser} onLocation={workspace.location}
+      onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
       <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost} />

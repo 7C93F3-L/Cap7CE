@@ -32,7 +32,7 @@ const toDimensionDraft = (filter?: SearchVideoDimensionFilter): DimensionDraft =
   : emptyDimensions();
 const toDimensionFilter = (draft: DimensionDraft) => normalizeVideoDimensionFilter({ mode: "range", ...Object.fromEntries(Object.entries(draft).map(([key, value]) => [key, toNumber(value)])) });
 
-const StableVideoFilters = ({ search, allowColors = true, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; allowColors?: boolean; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableVideoFilters = ({ search, colorsDisabled = false, allowColors = true, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; allowColors?: boolean; colorsDisabled?: boolean; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const [anchor, setAnchor] = useState<AnchorState>(null);
   const [minimumSeconds, setMinimumSeconds] = useState("");
   const [maximumSeconds, setMaximumSeconds] = useState("");
@@ -74,7 +74,7 @@ const StableVideoFilters = ({ search, allowColors = true, onFlyoutOpen, onSearch
       <header><strong>{t("explore.videoResolution")}</strong><button type="button" title={t("explore.editVideoResolution")} aria-label={t("explore.editVideoResolution")} aria-expanded={anchor?.kind === "resolution"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => open("resolution", event)}><StableFilterEditGlyph /></button></header>
       <div className="cap-stable-video-resolution-options">{searchVideoResolutions.map((resolution) => <button type="button" className={selectedResolutions.includes(resolution) ? "is-selected" : ""} aria-pressed={selectedResolutions.includes(resolution)} key={resolution} onClick={() => { const next = toggleValue(selectedResolutions, resolution); onSearchOptionsChange({ ...search, videoResolutions: next.length ? next : undefined, videoDimensionFilter: undefined }); }}>{resolution.toUpperCase()}</button>)}</div>
     </section>
-    {allowColors && <StableVideoColorFilter search={search} onFlyoutOpen={() => setAnchor(null)} onSearchOptionsChange={onSearchOptionsChange} />}
+    {allowColors && <fieldset className="cap-stable-metadata-colors" disabled={colorsDisabled}><StableVideoColorFilter search={search} onFlyoutOpen={() => setAnchor(null)} onSearchOptionsChange={onSearchOptionsChange} /></fieldset>}
     {anchor?.kind === "duration" && <StableSidebarFlyout anchor={anchor.rect} label={t("explore.editVideoDuration")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout cap-stable-video-flyout" onClose={() => setAnchor(null)}>
       <div className="cap-stable-video-duration-fields"><label>{t("explore.minimumSeconds")}<input type="number" min="0" max="604800" value={minimumSeconds} onChange={(event) => setMinimumSeconds(event.target.value)} /></label><label>{t("explore.maximumSeconds")}<input type="number" min="1" max="604800" value={maximumSeconds} onChange={(event) => setMaximumSeconds(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => { onSearchOptionsChange({ ...search, videoDurationPreset: undefined, videoDurationRange: undefined }); setAnchor(null); }}>{t("explore.clearFilters")}</button><button type="button" className="is-selected" disabled={!durationRange} onClick={() => { if (!durationRange) return; onSearchOptionsChange({ ...search, videoDurationPreset: undefined, videoDurationRange: durationRange }); setAnchor(null); }}>{t("common.confirm")}</button></div>

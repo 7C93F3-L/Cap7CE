@@ -7,13 +7,13 @@ import StableImageRatioFilter from "./StableImageRatioFilter";
 import "./StableImageFilters.css";
 import "./StableImageFilterFlyouts.css";
 
-interface StableImageFiltersProps { search: SearchState; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void; }
+interface StableImageFiltersProps { colorsDisabled?: boolean; search: SearchState; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void; }
 
-const StableImageFilters = ({ search, onFlyoutOpen, onSearchOptionsChange }: StableImageFiltersProps) => {
+const StableImageFilters = ({ search, colorsDisabled = false, onFlyoutOpen, onSearchOptionsChange }: StableImageFiltersProps) => {
   if (!isImageOnlyExtensionSelection(search.selectedExtensions ?? [])) return null;
   const props = { search, onFlyoutOpen, onSearchOptionsChange };
   return <>
-    <StableImageColorFilter {...props} />
+    <fieldset className="cap-stable-metadata-colors" disabled={colorsDisabled}><StableImageColorFilter {...props} /></fieldset>
     <StableImageRatioFilter {...props} />
     <StableImageDimensionFilter {...props} />
     <StableImageAnimationFilter search={search} onSearchOptionsChange={onSearchOptionsChange} />

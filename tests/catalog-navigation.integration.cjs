@@ -5,12 +5,12 @@ app.setPath('userData',root+'-profile');
 const fixture=`
 import React from 'react';import {createRoot} from 'react-dom/client';
 import CatalogWorkspace from './src/renderer/catalog-workspace/CatalogWorkspace';
-const noop=()=>{},probe=window.probe={requests:[],canceled:[],building:true};
+const noop=()=>{},probe=window.probe={requests:[],canceled:[],building:true,attributesAvailable:false,colorsAvailable:false,forceEmpty:false};
 window.cap7ce={skim:{listLocations:async()=>[]},preview:{onNavigate:()=>noop,onClosed:()=>noop},
 favoriteDirectories:{list:async()=>[{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}]},
 metadataBuild:{status:async()=>({volumes:[],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
 computerSearch:{status:async()=>({state:probe.building?'building':'ready',searchAvailable:!probe.building,catalogRevision:1,volumes:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:probe.building?'building':'ready',queryable:!probe.building,processed:2,total:2}))}),onCatalogChanged:()=>noop,
-search:async request=>{probe.requests.push(request);const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
+search:async request=>{if(!/^[A-Za-z0-9_-]{1,128}$/.test(request.taskId))throw Error("invalid task identity");probe.requests.push(request);if(request.taskId.endsWith('_attribute')&&(!probe.attributesAvailable||(request.facts?.visualGroups&&!probe.colorsAvailable)))return {items:[],nextCursor:null};if(!request.taskId.endsWith('_attribute')&&probe.forceEmpty)return {items:[],nextCursor:null};const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
 createRoot(document.getElementById('root')).render(<CatalogWorkspace theme="dark" appearanceColors={{}} windowMaterial="none" onOpenSettings={noop}/>);
 `;
 app.whenReady().then(async()=>{
@@ -73,6 +73,27 @@ app.whenReady().then(async()=>{
   await run("document.querySelector('.cap-favorite-row .cap-favorite-open').dispatchEvent(new MouseEvent('click',{bubbles:true,ctrlKey:true}))");
   await ready("document.querySelectorAll('[role=tabpanel]').length===1");
   assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),1,'modified favorite click retains a single current page');
+  await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar button')[3].click()`);
+  await ready(`${active}.querySelector('.cap-catalog-home')`);
+  await run("document.querySelectorAll('.cap-catalog-layout-tools button')[0].click()");
+  await run("document.querySelector('.cap-stable-file-type-options > button').click()");
+  await ready(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')==='true'`);
+  await ready("document.querySelector('.cap-catalog-attribute-notice').textContent.includes('尚无')");
+  assert.equal(await run("document.querySelector('.cap-stable-metadata-filters').disabled"),true,'missing scoped attributes disable detailed conditions');
+  assert.equal(await run("document.querySelector('.cap-catalog-details header').textContent"),'当前搜索');
+  assert.equal(await run("document.querySelector('.cap-catalog-details').textContent.includes('搜索范围')"),true);
+  await run("document.querySelector('.cap-catalog-filter-actions button').click()");
+  await ready(`${active}.querySelector('.cap-catalog-home')`);
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false','clearing filters restores home breadcrumb');
+  await run("probe.attributesAvailable=true;document.querySelector('.cap-stable-file-type-options > button').click()");
+  await ready("!document.querySelector('.cap-stable-metadata-filters').disabled");
+  assert.equal(await run("document.querySelector('.cap-stable-metadata-colors').disabled"),true,'dimensions do not imply color availability');
+  await run("probe.forceEmpty=true;document.querySelector('.cap-stable-ratio-options button').click()");
+  await ready(`${active}.textContent.includes('没有符合当前条件的文件')`);
+  assert.equal(await run(`${active}.textContent.includes('更短的关键词')`),false,'filter empty state must not suggest shortening an absent keyword');
+  await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar button')[3].click()`);
+  await ready(`${active}.querySelector('.cap-catalog-home')`);
+  assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'0 项条件','home action clears conditions');
   console.log('Catalog design: current-page navigation, independent panels, sidebar width, favorite defaults, selection details, two grids and no tab UI passed.');
 
  }catch(error){console.error(error.stack);process.exitCode=1}

@@ -55,7 +55,7 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
 const TypeGlyph = ({ type }: { type: ExplorePrimaryFileType | "other" }) => <span className={`cap-stable-type-glyph is-${type}`} aria-hidden="true"><i /><b /></span>;
-const StableExploreFilters = ({ search, availableFormats, detailDomains, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableExploreFilters = ({ search, availableFormats, detailDomains, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const supports = (domain: SearchFilterDetailDomain) => detailDomains === undefined || detailDomains.includes(domain);
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
@@ -118,14 +118,16 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, closeFl
       </div>
     </section>
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
+    <fieldset className="cap-stable-metadata-filters" disabled={metadataDisabled}>
     {supports("project") && <StableArtboardFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
-    <StableMediaFilters search={search} detailDomains={detailDomains} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
+    <StableMediaFilters metadataColorsDisabled={metadataColorsDisabled} search={search} detailDomains={detailDomains} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     {supports("document") && <StableDocumentFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
     {(supports("text") || supports("data")) && <StableTextDataFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
     {supports("threeD") && <StableThreeDFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
     {supports("archive") && <StableArchiveFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
     {supports("font") && <StableFontFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />}
     {supports("model") && <StableModelFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />}
+    </fieldset>
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>
