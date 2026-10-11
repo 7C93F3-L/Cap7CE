@@ -39,7 +39,8 @@ public sealed class ProductSearchCursorCodec
             }
             var token = JsonSerializer.Deserialize<ProductSearchCursorToken>(payload, CoreProtocolJson.Options)
                 ?? throw Invalid();
-            if (token.CatalogRevision != revision
+            if ((token.Continuation is not null && token.Continuation != "live")
+                || (token.Continuation != "live" && token.CatalogRevision != revision)
                 || token.ExpiresAtUnixMilliseconds <= timeProvider.GetUtcNow().ToUnixTimeMilliseconds()
                 || token.PageSize is < 1 or > CoreProtocol.MaximumPageSize
                 || token.VolumeIds.Count > CoreProtocol.MaximumVolumeIds
@@ -82,4 +83,5 @@ public sealed record ProductSearchCursorToken(
     long ExpiresAtUnixMilliseconds = 0,
     string? TextTarget = null,
     CoreSearchFactFilter? Facts = null,
-    CoreSearchFileConditions? FileConditions = null);
+    CoreSearchFileConditions? FileConditions = null,
+    string? Continuation = null);

@@ -129,6 +129,18 @@ internal static class ProductFactSearchTests
             var rejected = await SendAsync(CoreOperations.SearchStart, invalid);
             TestAssert.Equal(CoreErrorCodes.InvalidRequest, rejected.Error!.Code, "invalid product filter has validation error");
         }
+        var liveFirst = await SearchAsync(original with { Query = "", PageSize = 1,
+            Continuation = "live", FileConditions = new([".png"]) });
+        var strictFirst = await SearchAsync(original with { Query = "", PageSize = 1 });
+        await catalog.SetVolumeSelectionAsync(["a", "b"]);
+        var liveNext = ProtocolClient.ReadBody<SearchPageResponse>(await SendAsync(CoreOperations.SearchNextPage,
+            new SearchNextPageRequest(liveFirst.NextCursor!)));
+        TestAssert.True(liveNext.CatalogRevision > liveFirst.CatalogRevision, "live page accepts a fresh catalog revision");
+        TestAssert.True(liveNext.Items.Single().Extension == ".png", "live cursor retains file intersection");
+        var strictStale = await SendAsync(CoreOperations.SearchNextPage, new SearchNextPageRequest(strictFirst.NextCursor!));
+        TestAssert.Equal(CoreErrorCodes.InvalidCursor, strictStale.Error!.Code, "strict product query remains revision-bound");
+        var unknownMode = await SendAsync(CoreOperations.SearchStart, original with { Continuation = "unknown" });
+        TestAssert.Equal(CoreErrorCodes.InvalidRequest, unknownMode.Error!.Code, "unrecognized continuation rejected");
         var fixture = new CoreRequestDispatcher(new SyntheticMetadataSearchSource(3), new SearchCursorCodec());
         var unsupported = await fixture.DispatchAsync(new(1, "fixture-facts", CoreOperations.SearchStart, 5_000,
             CoreProtocolJson.ToElement(filtered with { VolumeIds = [SyntheticMetadataSearchSource.VolumeId] })), CancellationToken.None);

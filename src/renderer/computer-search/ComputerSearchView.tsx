@@ -9,6 +9,7 @@ import type { CatalogGridMode, CatalogSelection } from "../../shared/catalogPres
 import { useComputerSearchResultActions } from "./useComputerSearchResultActions";
 import type { ComputerSearchController } from "./useComputerSearchController";
 import { useComputerSearchScrollPaging } from "./useComputerSearchScrollPaging";
+import CatalogVirtualGrid from "./CatalogVirtualGrid";
 import "../results/ResultGrid.css";
 import "./ComputerSearchResultGrid.css";
 
@@ -41,8 +42,8 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const pageEndRef = useRef<HTMLDivElement | null>(null);
   useComputerSearchScrollPaging(scrollContainerRef, pageEndRef,
-    foreground && Boolean(status?.searchAvailable) && hasSubmitted && !busy && !error && !pageError,
-    nextCursor, loadMore);
+    foreground && Boolean(status?.searchAvailable) && hasSubmitted && !busy && !error,
+    nextCursor, loadMore, controller.directoryListing, Boolean(pageError));
   const taskId = controller.taskId ?? "";
   const actions = useComputerSearchResultActions({
     items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground, onOpenDirectory
@@ -99,10 +100,11 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     ref={scrollContainerRef}
     onClick={() => actions.clearSelection()}
   >
-    <div className={`cap-computer-search-grid cap-catalog-file-grid is-${gridMode}`}>{items.map((item) => {
+    <CatalogVirtualGrid items={items} mode={gridMode} rootRef={scrollContainerRef} renderItem={(item, style, onRatio) => {
       const selected = actions.selectedIds.has(item.authorizationId);
       const active = actions.activeId === item.authorizationId;
       return <CatalogResultTile item={item} visual={{ taskId, scrollContainerRef, foreground, showName: true }}
+        style={style} onRatio={onRatio}
         className={`thumb cap-computer-search-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
         type="button"
         key={item.id}
@@ -129,10 +131,9 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
           }
         }}
       />;
-    })}</div>
+    }} />
     {nextCursor && <div ref={pageEndRef} className="cap-computer-search-page-status" role="status">
-      {pageError ? <><span>{t("computerSearch.pageFailed")}</span><button type="button" disabled={busy}
-        onClick={event => { event.stopPropagation(); void loadMore(); }}>{t("common.retry")}</button></>
+      {pageError && !busy ? <span>{t("computerSearch.pageFailed")}</span>
         : busy ? t("computerSearch.pageLoading") : null}
     </div>}
     {actions.feedback && <div className="cap-computer-search-feedback" role="status">{actions.feedback}</div>}

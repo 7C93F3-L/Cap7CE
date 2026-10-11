@@ -5,6 +5,7 @@ const requests = [];
 const volume = { volumeId: "A".repeat(32), displayName: "X:", fileSystem: "NTFS", selected: true,
   state: "ready", processed: 1, total: 1, queryable: true, needsRebuild: false };
 class FixtureController {
+  supports(capability) { return capability === "search.live"; }
   async start() { return { state: "ready" }; }
   async stop() {}
   async cancelRequest() { return true; }
@@ -32,6 +33,7 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     const initial = await runtime.search({ taskId: "empty-browse", query: "", scopePath: null });
     assert.equal(initial.items.length, 1); assert.equal(requests[0].body.entryType, "file");
     assert.equal(requests[0].body.textTarget, "name-or-path"); assert.equal(requests[0].body.query, "");
+    assert.equal(requests[0].body.continuation, "live", "advertised live paging keeps catalog updates from retiring UI continuations");
     await runtime.search({ taskId: "path-search", query: "Library", scopePath: "X:\\Library" });
     assert.equal(requests[1].body.textTarget, "name-or-path"); assert.equal(requests[1].body.entryType, "any");
     assert.deepEqual(requests[1].body.volumeIds, [volume.volumeId]);

@@ -7,9 +7,9 @@ import React,{useState} from 'react';import {createRoot} from 'react-dom/client'
 import ComputerSearchView from './src/renderer/computer-search/ComputerSearchView';
 import {useComputerSearchController} from './src/renderer/computer-search/useComputerSearchController';
 import './src/renderer/computer-search/ComputerSearch.css';
-const noop=()=>{},p=window.probe={requests:[],pages:[],canceled:[],expire:false,fail:false,hold:false,short:false};
+const noop=()=>{},p=window.probe={requests:[],pages:[],canceled:[],expire:false,fail:false,hold:false,short:false,big:false};
 const owners=new Map();
-const page=(taskId,offset)=>{const scope=owners.get(taskId),total=scope==='X:\\Other'?1:p.short?5:350;
+const page=(taskId,offset)=>{const scope=owners.get(taskId),total=scope==='X:\\Other'?1:p.short?5:p.big?50000:350;
  const size=p.short?2:100,end=Math.min(total,offset+size);
  return {taskId,items:Array.from({length:end-offset},(_,n)=>({id:scope+':'+(offset+n),authorizationId:taskId+':'+(offset+n),
  name:'file-'+String(offset+n).padStart(3,'0')+'.txt',path:scope+'\\file-'+(offset+n)+'.txt',extension:'.txt',
@@ -20,11 +20,11 @@ window.cap7ce={preview:{onNavigate:()=>noop,onClosed:()=>noop},computerSearch:{
  nextPage:async request=>{p.pages.push(request);if(p.expire){p.expire=false;throw Error('CoreRemoteError: invalid-cursor')}
  if(p.fail){p.fail=false;throw Error('timeout')}if(p.hold){p.hold=false;await new Promise(r=>p.resume=r)}return page(request.taskId,Number(request.cursor))},
  cancel:async id=>{p.canceled.push(id);return true}}};
-function Fixture(){const [scope,setScope]=useState('X:\\Folder'),[fg,setFg]=useState(true);
- p.scope=setScope;p.foreground=setFg;
- const controller=useComputerSearchController(scope,fg,{fileConditions:{extensions:['.txt']}},undefined,true,true);
+function Fixture(){const [scope,setScope]=useState('X:\\Folder'),[fg,setFg]=useState(true),[complete,setComplete]=useState(false),[grid,setGrid]=useState("square");
+ p.scope=setScope;p.foreground=setFg;p.complete=setComplete;p.grid=setGrid;
+ const controller=useComputerSearchController(scope,fg,{fileConditions:{extensions:['.txt']}},undefined,true,complete);
  p.controller=controller;
- return <div className="host"><ComputerSearchView controller={controller} foreground={fg} theme="dark" appearanceColors={{}}
+ return <div className="host"><ComputerSearchView controller={controller} gridMode={grid} foreground={fg} theme="dark" appearanceColors={{}}
  windowMaterial="none" onNativeDragStateChange={noop}/></div>}
 createRoot(document.getElementById('root')).render(<Fixture/>);
 `;
@@ -38,8 +38,8 @@ app.whenReady().then(async () => {
   fs.writeFileSync(path.join(root, 'index.html'), '<link rel="stylesheet" href="stdin.css"><style>html,body,#root,.host{height:100%;margin:0}.host{position:relative}</style><div id="root"></div><script src="stdin.js"></script>');
   win = new BrowserWindow({ show: false, width: 900, height: 600, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false } });
   const run = code => win.webContents.executeJavaScript(code), wait = ms => new Promise(r => setTimeout(r, ms));
-  const ready = async code => { for (let n = 0; n < 200; n++) { if (await run(code)) return; await wait(20); } throw Error('Timeout: ' + code); };
-  const count = () => run("document.querySelectorAll('.cap-computer-search-entry').length");
+  const ready = async code => { for (let n = 0; n < 1500; n++) { if (await run(code)) return; await wait(20); } console.log(await run("({count:probe.controller.items.length,complete:probe.controller.directoryListing,scope:probe.requests.at(-1)?.scopePath,pages:probe.pages.length,root:(()=>{const r=document.querySelector('.cap-computer-search-results');return r&&[r.scrollWidth,r.clientWidth,r.scrollHeight,r.clientHeight,r.scrollLeft,getComputedStyle(r).overflowY]})()})"));throw Error('Timeout: ' + code); };
+  const count = () => run("Number(document.querySelector('.cap-computer-search-grid')?.dataset.totalCount??0)");
   const scroll = () => run("(()=>{const r=document.querySelector('.cap-computer-search-results');r.scrollTop=r.scrollHeight})()");
   await win.loadFile(path.join(root, 'index.html'));
   await ready('probe.controller.items.length===100&&!probe.controller.busy');
@@ -50,17 +50,17 @@ app.whenReady().then(async () => {
   await ready('probe.controller.items.length===200&&!probe.controller.busy');
   assert.notEqual(await run('probe.controller.taskId'), firstOwner, 'stale cursor replaced under fresh owner');
   assert.equal(await run(`probe.canceled.includes(${JSON.stringify(firstOwner)})`), true);
-  assert.equal(await run('probe.requests.every(r=>r.scopePath==="X:\\\\Folder"&&r.scopeKind==="direct-children"&&r.fileConditions.extensions[0]===".txt")'), true, 'recovery retains scope and filters');
+  assert.equal(await run('probe.requests.every(r=>r.scopePath==="X:\\\\Folder"&&r.scopeKind===undefined&&r.fileConditions.extensions[0]===".txt")'), true, 'recovery retains scope and filters');
   await run('probe.fail=true'); await scroll();
   await ready('!!probe.controller.pageError&&!probe.controller.busy');
   assert.equal(await count(), 200, 'continuation failure preserves displayed grid');
   assert.equal(await run("!!document.querySelector('.cap-computer-search-empty.is-error')"), false);
   const failedCalls = await run('probe.pages.length'); await wait(150);
   assert.equal(await run('probe.pages.length'), failedCalls, 'failure does not cause an automatic retry loop');
-  await run("document.querySelector('.cap-computer-search-page-status button').click()");
+  await run("document.querySelector('.cap-computer-search-results').dispatchEvent(new WheelEvent('wheel',{deltaY:100,bubbles:true}))");
   await ready('probe.controller.items.length===300&&!probe.controller.busy');
   await scroll(); await ready('probe.controller.items.length===350&&!probe.controller.busy');
-  assert.equal(await run("new Set([...document.querySelectorAll('.cap-computer-search-entry')].map(x=>x.getAttribute('aria-label'))).size"), 350);
+  assert.equal(await run("new Set(probe.controller.items.map(x=>x.id)).size"), 350);
   const finishedCalls = await run('probe.pages.length'); await scroll(); await wait(100);
   assert.equal(await run('probe.pages.length'), finishedCalls, 'exhausted directory stops paging');
   await run('probe.scope("X:\\\\Folder2")'); await ready('probe.controller.items.length===100&&!probe.controller.busy');
@@ -79,6 +79,20 @@ app.whenReady().then(async () => {
   await run("(()=>{const r=document.querySelector('.cap-computer-search-results');r.scrollLeft=r.scrollWidth})()");
   await ready('probe.controller.items.length===200&&!probe.controller.busy');
   assert.equal(await run("document.querySelector('.cap-computer-search-results').scrollLeft>0"), true, 'compact horizontal browsing also continues naturally');
+  win.setContentSize(900,600);const largeStarted=Date.now();
+  await run('probe.big=true;probe.complete(true);probe.scope("X:\\\\Large")');
+  await ready('probe.controller.items.length===50000&&!probe.controller.busy');
+  assert.ok(await run("document.querySelectorAll('.cap-computer-search-entry').length")<150,'50k file names do not create 50k DOM cards');
+  await scroll();
+  await ready("[...document.querySelectorAll('.cap-computer-search-entry')].some(x=>x.getAttribute('aria-label')==='file-49999.txt')");
+  assert.equal(await run("!!document.querySelector('.cap-computer-search-page-status button')"),false,'no continuation button is required');
+  console.log({largeDirectory:{files:50000,rendered:await run("document.querySelectorAll('.cap-computer-search-entry').length"),elapsedMs:Date.now()-largeStarted,rendererMemory:app.getAppMetrics().find(x=>x.pid===win.webContents.getOSProcessId())?.memory}});
+  await run('probe.grid("gallery")');await scroll();
+  await ready("[...document.querySelectorAll('.cap-computer-search-entry')].some(x=>x.getAttribute('aria-label')==='file-49999.txt')");
+  assert.ok(await run("document.querySelectorAll('.cap-computer-search-entry').length")<150,'gallery also bounds rendered cards');
+  await run("[...document.querySelectorAll('.cap-computer-search-entry')].find(x=>x.getAttribute('aria-label')==='file-49999.txt').click()");
+  await ready("!!document.querySelector('.cap-computer-search-entry.selected')");
+  await run('probe.scope("X:\\\\Other")');await ready('probe.controller.items.length===1&&!probe.controller.busy');
   console.log('Automatic paging: stale recovery, unchanged scope, preserved errors, bounded retries, exhaustion, background and late-page guards passed.');
  } catch (error) { console.error(error.stack); process.exitCode = 1; }
  finally { win?.destroy(); if (path.dirname(root) !== os.tmpdir()) throw Error('Unsafe fixture root'); fs.rmSync(root, { recursive: true, force: true }); app.exit(process.exitCode ?? 0); }

@@ -30,6 +30,7 @@ public static class CoreOperations
     public const string CatalogCancel = "catalog.cancel";
     public const string CatalogResolveScope = "catalog.resolveScope";
     public const string SearchStart = "search.start";
+    public const string SearchLive = "search.live";
     public const string SearchNextPage = "search.nextPage";
     public const string SearchCancel = "search.cancel";
     public const string CoreShutdown = "core.shutdown";
@@ -66,7 +67,8 @@ public static class CoreOperations
         SearchStart,
         SearchNextPage,
         SearchCancel,
-        CoreShutdown
+        CoreShutdown,
+        SearchLive
     ];
 }
 

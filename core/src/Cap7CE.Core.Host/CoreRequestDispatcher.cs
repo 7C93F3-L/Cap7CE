@@ -125,6 +125,8 @@ public sealed class CoreRequestDispatcher
         CancellationToken cancellationToken)
     {
         var body = ReadBody<SearchStartRequest>(request);
+        if (body.Continuation is not null && (runtime is null || body.Continuation != "live"))
+            throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Search continuation is invalid.");
         if (body.Query is null
             || body.Query.Length > CoreProtocol.MaximumQueryLength
             || body.PageSize is < 1 or > CoreProtocol.MaximumPageSize
@@ -174,8 +176,10 @@ public sealed class CoreRequestDispatcher
                 productCursor.EntryType,
                 productCursor.TextTarget,
                 productCursor.Facts,
-                productCursor.FileConditions);
-            var productPage = await runtime.QueryAsync(start, productCursor.After, cancellationToken, productCursor.CatalogRevision);
+                productCursor.FileConditions,
+                productCursor.Continuation);
+            var productPage = await runtime.QueryAsync(start, productCursor.After, cancellationToken,
+                productCursor.Continuation == "live" ? null : productCursor.CatalogRevision);
             return ProductPageResponse(request, start, productPage);
         }
 
@@ -359,7 +363,8 @@ public sealed class CoreRequestDispatcher
             page.CatalogRevision,
             TextTarget: start.TextTarget,
             Facts: start.Facts,
-            FileConditions: start.FileConditions));
+            FileConditions: start.FileConditions,
+            Continuation: start.Continuation));
         return CoreResponseEnvelope.Success(request.RequestId, page.CatalogRevision,
             new SearchPageResponse(items, nextCursor, nextCursor is null, page.CatalogRevision, page.FactRevision));
     }

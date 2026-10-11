@@ -21,7 +21,7 @@ assert.match(slot, /\{content\}<\/div>[\s\S]*?controller\.active && <ComputerSea
 assert.match(controller, /window\.addEventListener\("keydown", handleKeyDown\)/u);
 assert.match(controller, /event\.key !== "Escape"[\s\S]*?exit\(\)/u);
 assert.match(controller, /cancelActive\(\)[\s\S]*?taskRef\.current !== taskId/u);
-assert.match(controller, /setItems\(\(current\) => \[\.\.\.current, \.\.\.page\.items\]\)/u);
+assert.match(controller, /setItems\(current => \[\.\.\.current, \.\.\.additions\]\)/u);
 assert.match(controller, /useEffect\(\(\) => \(\) => \{ activeRef\.current = false; cancelActive\(\); \}/u);
 assert.match(controller, /if \(statusRefreshInFlightRef\.current\) return statusRefreshInFlightRef\.current;[\s\S]*?statusRefreshInFlightRef\.current = request[\s\S]*?statusRefreshInFlightRef\.current === request[\s\S]*?statusRefreshInFlightRef\.current = null/u);
 assert.doesNotMatch(controller, /reason: "status-failed"/u,
@@ -42,7 +42,8 @@ assert.doesNotMatch(controller, /if \(page\.isComplete\) taskRef\.current = null
 assert.match(view, /CatalogResultTile[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[\s\S]*?onDragStart/u);
 assert.match(read("src/renderer/computer-search/CatalogResultTile.tsx"), /ComputerSearchResultVisual item=\{item\} \{\.\.\.visual\}/u,
   "Layout tiles must retain the authorized visual component");
-assert.match(view, /cap-computer-search-grid cap-catalog-file-grid[\s\S]*?thumb cap-computer-search-entry/u);
+assert.match(read("src/renderer/computer-search/CatalogVirtualGrid.tsx"), /cap-computer-search-grid cap-catalog-file-grid/u);
+assert.match(view, /thumb cap-computer-search-entry/u);
 assert.doesNotMatch(view, /cap-skim-entry-name|cap-skim-entry-path/u);
 assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
 assert.match(actions, /computerSearch\.inspect\(request\)[\s\S]*?sourceAuthorization/u);

@@ -9,6 +9,7 @@ internal static class SearchCursorCodecTests
     public static async Task RunAsync()
     {
         VerifyExpiryAndCatalogRevision();
+        VerifyLiveCursor();
         await VerifyMillionItemPagingAsync();
     }
 
@@ -56,6 +57,23 @@ internal static class SearchCursorCodecTests
             offset = nextOffset;
         }
         TestAssert.Equal((long)itemCount, count, "million-item constant-memory paging");
+    }
+
+    private static void VerifyLiveCursor()
+    {
+        var time = new AdjustableTimeProvider(DateTimeOffset.Parse("2026-01-01T00:00:00Z"));
+        var codec = new ProductSearchCursorCodec(time);
+        var strict = new ProductSearchCursorToken("fixture", 100, [], new("direct-children", "a", "root"),
+            null, "any", new("last.txt", "a", "1"), 7);
+        TestAssert.ThrowsCode(CoreErrorCodes.InvalidCursor, () => codec.Read(codec.Create(strict), 8), "strict cursor keeps revision gate");
+        var live = codec.Create(strict with { Continuation = "live" });
+        var read = codec.Read(live, 8);
+        TestAssert.Equal("root", read.Scope.RootFileReference!, "live cursor retains signed directory scope");
+        TestAssert.Equal("last.txt", read.After!.Name, "live continuation uses the last ordered key");
+        TestAssert.ThrowsCode(CoreErrorCodes.InvalidCursor, () => codec.Read(live[..^3] + "BAD", 8), "live signature remains mandatory");
+        TestAssert.ThrowsCode(CoreErrorCodes.InvalidCursor, () => codec.Read(codec.Create(strict with { Continuation = "unknown" }), 8), "unknown consistency rejected");
+        time.Advance(TimeSpan.FromMinutes(6));
+        TestAssert.ThrowsCode(CoreErrorCodes.InvalidCursor, () => codec.Read(live, 8), "live cursor still has a bounded lifetime");
     }
 
     private sealed class AdjustableTimeProvider(DateTimeOffset now) : TimeProvider

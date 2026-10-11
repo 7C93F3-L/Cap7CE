@@ -1,6 +1,8 @@
 # Cap7CE 软件架构
 
-`useComputerSearchScrollPaging` 只观察结果滚动容器末端，接近末端时请求下一页，后台、忙碌、错误及耗尽时停止，无定时轮询。缩略图继续由独立的零扩展视口观察器管理。`computerSearchContinuation` 保留 Core 签名、修订和有效期校验；续页失效时复用 `readComputerSearchReplacement`，以新 owner 在原关键词、路径、直接子项范围及条件下读取已加载数量加一页，成功后才切换授权并退休旧 owner，失败或过期响应取消新 owner。Controller 用同步 busy 门禁阻止重复续载，以页面错误保留旧网格，失败重试不复用已退休查询；没有数据库迁移或新 IPC。
+`useComputerSearchScrollPaging` 对无关键词的直接子项目录逐页补齐基本清单，每页完成后让出事件循环，后台、忙碌及耗尽时停止；全盘或关键词查询只在接近滚动末端时续载。失败保留旧网格和错误提示，后续末端滚动可重试，冷却阻止连续失败请求，不设置按钮或后台重试循环。缩略图继续由独立的零扩展视口观察器管理。Core 通过 `search.live` 能力声明支持签名实时续页：显式 `continuation: live` 保留签名、范围、条件、排序锚点和有效期校验，每页读取当前修订；默认严格游标仍要求原修订。Main 仅在能力可用时选择实时模式，Controller 按稳定身份去重，索引通知继续刷新当前范围以收敛分页期间的新增、删除与改名。超时等失效凭据仍由 `computerSearchContinuation` 复用 `readComputerSearchReplacement`，在原范围及条件下恢复已加载数量加一页，成功后才切换授权并退休旧 owner。同步 busy 门禁及请求身份拒绝重复续载和迟到页；没有数据库迁移或新 IPC。
+
+`CatalogVirtualGrid` 只负责视口测量和可见卡片挂载，使用被动滚动监听、ResizeObserver 与单帧合并，不持有文件动作或读取缩略图。纯函数 `catalogGridLayout` 提供方形、等高原比例和紧凑横向布局，方形按行直接计算可见范围，原比例按有序行位置二分定位；完整基本清单仍占用与条目数成正比的内存，DOM 与解码像素受视口限制。普通目录补齐前滚动范围逐步增长，不承诺全盘结果的随机跳页。ComputerSearchView 保持唯一选择、预览、右键及拖出动作，CatalogResultTile 将解码比例回报布局；两模块均由领域体量守门。
 
 `SettingsMetadataBuildControl` 提供设置“缓存与索引”中的建库入口；`settingsWindowBridge` 使用共享 `SettingsWindowApi`，仅派发打开面板请求。`settingsWindowIpc` 仅允许当前 Settings WebContents 请求该入口；Main 复用 `showAndFocusMainWindow` 恢复窗口并通知 Catalog，`useCatalogLayout` 幂等展开现有 MetadataBuildSlot。设置不持有第二份建库控制、范围草稿或提取授权，不扩大 metadataBuild API 的 sender 权限；左栏删除重复入口，底部提示及任务入口保留。
 

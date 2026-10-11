@@ -20,6 +20,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [status, setStatus] = useState<ComputerSearchStatus | null>(null);
   const [items, setItems] = useState<ComputerSearchItem[]>([]);
+  const itemIds = useRef(new Set<string>());
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [interactionBlocked, setInteractionBlocked] = useState(false);
@@ -136,6 +137,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
         ...(selectedConditions.facts ? { facts: selectedConditions.facts } : {}),
         ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) });
       if (!activeRef.current || taskRef.current !== taskId) return;
+      itemIds.current = new Set(page.items.map(item => item.id));
       setItems(page.items); setNextCursor(page.nextCursor);
     } catch (cause) {
       if (activeRef.current && taskRef.current === taskId) {
@@ -165,6 +167,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       if (!page || !isCurrent()) return "deferred";
       replacementTaskRef.current = null;
       taskRef.current = taskId;
+      itemIds.current = new Set(page.items.map(item => item.id));
       setItems(page.items); setNextCursor(page.nextCursor); setError(null); setPageError(null);
       if (oldTaskId) void api.cancel(oldTaskId);
       return "applied";
@@ -254,8 +257,15 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       taskId, cursor, items.length, isCurrent, Boolean(pageError));
       if (!result || !isCurrent()) return;
       const { page, replaced } = result;
-      if (replaced) { taskRef.current = replacementId; setItems(page.items); void api.cancel(taskId); }
-      else setItems((current) => [...current, ...page.items]);
+      if (replaced) { taskRef.current = replacementId; itemIds.current = new Set(page.items.map(item => item.id));
+        setItems(page.items); void api.cancel(taskId); }
+      else {
+        const additions = page.items.filter(item => {
+          if (itemIds.current.has(item.id)) return false;
+          itemIds.current.add(item.id); return true;
+        });
+        setItems(current => [...current, ...additions]);
+      }
       setNextCursor(page.nextCursor); setPageError(null);
     } catch (cause) {
       if (isCurrent()) setPageError(readError(cause));
@@ -267,6 +277,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError]);
 
   return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, pageError, scopeLabel,
+    directoryListing: browseChildren && currentPath !== null && !submittedQuery,
     taskId: taskRef.current,
     canSubmit: Boolean(status?.searchAvailable), capabilityBusy, capabilityFeedback, capabilityOptions,
     enter, exit, setQuery, submit, loadMore, refreshStatus, configureCapability,

@@ -55,3 +55,5 @@
 .cap-catalog-file-grid .thumb.selected .cap-catalog-thumbnail-name,
 .cap-catalog-file-grid.is-gallery .thumb.selected .result-file-card-name { background: var(--cap-catalog-caption-solid); color: var(--cap-catalog-caption-selected); }
 .cap-catalog-file-grid.is-gallery .thumb.selected::after { inset: 0; border: 2px solid var(--cap-catalog-caption-selected); border-radius: inherit; opacity: 1; box-sizing: border-box; z-index: 4; }
+.cap-catalog-file-grid.is-virtual { position: relative; display: block; flex-shrink: 0; }
+.cap-catalog-file-grid.is-virtual > .thumb { margin: 0; }
