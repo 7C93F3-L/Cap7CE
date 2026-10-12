@@ -113,7 +113,11 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [active, foreground, exit, persistent]);
-  useEffect(() => () => { activeRef.current = false; cancelActive(); }, [cancelActive]);
+  useEffect(() => {
+    // Fast Refresh replays effects while preserving the enabled state.
+    activeRef.current = active;
+    return () => { activeRef.current = false; cancelActive(); };
+  }, [active, cancelActive]);
 
   const readError = (value: unknown): ComputerSearchError => {
     const message = String(value);

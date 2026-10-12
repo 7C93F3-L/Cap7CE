@@ -22,7 +22,7 @@ assert.match(controller, /window\.addEventListener\("keydown", handleKeyDown\)/u
 assert.match(controller, /event\.key !== "Escape"[\s\S]*?exit\(\)/u);
 assert.match(controller, /cancelActive\(\)[\s\S]*?taskRef\.current !== taskId/u);
 assert.match(controller, /setItems\(current => \[\.\.\.current, \.\.\.additions\]\)/u);
-assert.match(controller, /useEffect\(\(\) => \(\) => \{ activeRef\.current = false; cancelActive\(\); \}/u);
+assert.match(controller, /return \(\) => \{ activeRef\.current = false; cancelActive\(\); \}/u);
 assert.match(controller, /if \(statusRefreshInFlightRef\.current\) return statusRefreshInFlightRef\.current;[\s\S]*?statusRefreshInFlightRef\.current = request[\s\S]*?statusRefreshInFlightRef\.current === request[\s\S]*?statusRefreshInFlightRef\.current = null/u);
 assert.doesNotMatch(controller, /reason: "status-failed"/u,
   "one transient status timeout must not stop active catalog polling");
