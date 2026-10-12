@@ -10,6 +10,7 @@ import { useComputerSearchResultActions } from "./useComputerSearchResultActions
 import type { ComputerSearchController } from "./useComputerSearchController";
 import { useComputerSearchScrollPaging } from "./useComputerSearchScrollPaging";
 import CatalogVirtualGrid from "./CatalogVirtualGrid";
+import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal";
 import "../results/ResultGrid.css";
 import "./ComputerSearchResultGrid.css";
 
@@ -48,6 +49,8 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
   const actions = useComputerSearchResultActions({
     items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground, onOpenDirectory
   });
+  const dismissSelection = useGridSelectionDismissal({ rootRef: scrollContainerRef, foreground,
+    hasSelection: actions.selectedIds.size > 0 || actions.activeId !== null, menuOpen: actions.contextMenu !== null, onClear: actions.clearSelection });
   const interactionBlocked = actions.selectedIds.size > 0 || actions.contextMenu !== null;
   const selection = useMemo(() => ({ items: actions.selectedItems, taskId,
     openPreview: () => { if (actions.selectedItems[0]) void actions.openPreview(actions.selectedItems[0]); }
@@ -98,7 +101,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     className="cap-computer-search-results"
     aria-busy={busy}
     ref={scrollContainerRef}
-    onClick={() => actions.clearSelection()}
+    onClick={dismissSelection}
   >
     <CatalogVirtualGrid items={items} mode={gridMode} rootRef={scrollContainerRef} renderItem={(item, style, onRatio) => {
       const selected = actions.selectedIds.has(item.authorizationId);

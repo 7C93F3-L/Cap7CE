@@ -28,6 +28,10 @@ export const useComputerSearchResultActions = ({
   const previewAuthorizationRef = useRef<string | null>(null);
   const previewRequestGuard = useMemo(() => createPreviewRequestGuard(), []);
   const feedbackTimerRef = useRef<number | null>(null);
+  const clearSelection = useCallback(() => {
+    setSelectedIds(current => current.size ? new Set() : current);
+    setActiveId(null); setContextMenu(null); selectionAnchorRef.current = null;
+  }, []);
 
   const showFeedback = useCallback((message: string) => {
     setFeedback(message);
@@ -199,7 +203,7 @@ export const useComputerSearchResultActions = ({
   }, [foreground]);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!foreground) return;
+      if (!foreground || event.defaultPrevented) return;
       if (isEditableKeyboardTarget(event.target) || isWorkspaceControlKeyboardTarget(event.target)) return;
       if (contextMenu) {
         if (event.key === "Escape") { event.preventDefault(); setContextMenu(null); }
@@ -226,6 +230,6 @@ export const useComputerSearchResultActions = ({
     setContextMenu, selectItem, openItem, openPreview, openContextMenu,
     handleContextMenuAction, startDrag,
     finishDrag: () => onNativeDragStateChange(false),
-    clearSelection: () => { setSelectedIds(new Set()); setActiveId(null); setContextMenu(null); }
+    clearSelection
   };
 };

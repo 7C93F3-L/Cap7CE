@@ -22,7 +22,8 @@ export default function CatalogDirectoryToolbar({ path, canBack, canForward, can
     <button type="button" aria-label={t("skim.computer")} title={t("skim.computer")} onClick={onHome}>⌂</button>
     <button className="cap-catalog-address-toggle" type="button" title={searchMode ? "切换为目录路径" : "切换为搜索"} aria-label="切换搜索与路径" aria-pressed={searchMode} onClick={() => { setEditing(false); onSearchMode(); }}>{searchMode ? "⌕" : "▣"}</button>
     {searchMode ? <input ref={element => { inputRef.current = element; }} value={query} disabled={!enabled} aria-label={t("computerSearch.placeholder", { scope: path ?? t("skim.computer") })}
-      placeholder={t("computerSearch.placeholder", { scope: path ?? t("skim.computer") })} onChange={event => onQuery(event.currentTarget.value)} />
+      placeholder={t("computerSearch.placeholder", { scope: path ?? t("skim.computer") })} onChange={event => onQuery(event.currentTarget.value)}
+      onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onQuery(""); } }} />
       : editing ? <input autoFocus value={draft} aria-label={t("catalogWorkspace.path")} onChange={event => setDraft(event.currentTarget.value)}
         onBlur={() => setEditing(false)} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setEditing(false); setDraft(path ?? ""); } }} />
       : <div className="cap-catalog-breadcrumb" onDoubleClick={() => setEditing(true)} title="双击空白处输入路径">

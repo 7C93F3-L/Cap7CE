@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`useGridSelectionDismissal`只处理前台网格的选择取消事件，首页与文件结果共用该Hook。共享`CatalogTile`提供既有`data-result-tile`标记，详情通过`data-selection-preserve`保留当前操作对象；文档捕获阶段的左键事件排除卡片、详情、菜单、窗口控件和设置。Esc在菜单或输入处理后取消选择，卸载及后台移除监听，不新增轮询。文件选择仍由`useComputerSearchResultActions`持有，取消同步重置当前项及多选锚点；详情继续复用授权预览动作，未增加文件或跨进程入口。
+
 `useComputerSearchController`的所有者Effect在安装时同步启用状态，清理时关闭响应门禁并取消当前/替换查询。开发Fast Refresh保留React状态并重放Effect时，内部响应门禁随之恢复，避免状态仍启用但有效结果被丢弃、busy无法结束。实际React Refresh联测覆盖首页后进入盘符、在途查询退休、迟到响应、错误恢复及卸载；没有调整Core、IPC或索引生命周期。
 
 `computerSearchPreviewAuthorization` 为图像预览生成主图与 `computer-search-preview-thumbnail` 回退地址，两者均绑定已有查询授权及预览视觉会话；网格 `computer-search-thumbnail` 继续要求独立短期视口票据，预览回退不借用或创建网格票据。`computerSearchVisualProtocol` 在直接预览策略允许时先读取原图，保留 GIF / 动图，不以静态提取成功为前提；源读取失败返回可回退的响应。转换型图像与系统图像沿用既有渲染服务，异步返回前再次核验授权。`useComputerSearchResultActions` 复用 `createPreviewRequestGuard`，新文件请求、关闭、查询 owner 更换和卸载均淘汰迟到检查；目录预览打开后调用原 `skim.startFolderStats`，原会话门禁和取消链不变。Main 的原 `preview:open` 处理函数在元数据读取结束后复查原请求编号，避免旧请求覆盖新文件或重新打开已关闭预览。没有新增路径 IPC、缓存迁移或预览窗口状态机。
