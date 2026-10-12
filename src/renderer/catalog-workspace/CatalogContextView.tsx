@@ -78,7 +78,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
-      ? <CatalogHome volumes={controller.status?.volumes ?? []} onOpen={openDirectory} />
+      ? <CatalogHome volumes={controller.status?.volumes ?? []} onOpen={openDirectory} gridMode={gridMode} />
       : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
     {attributes.relevant && <CatalogAttributeNotice key={JSON.stringify([navigation.path, attributes.message])} message={attributes.message} onMetadata={onMetadata} />}
   </section>;

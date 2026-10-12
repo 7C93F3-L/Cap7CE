@@ -1,0 +1,5 @@
+@media (max-height: 359.98px) {
+  .cap-catalog-home { overflow-x: auto; overflow-y: hidden; display: flex; align-items: center; }
+  .cap-catalog-home .cap-skim-root-sections { display: flex; width: max-content; align-items: flex-start; }
+  .cap-catalog-home .cap-skim-root-group { flex: 0 0 auto; }
+}

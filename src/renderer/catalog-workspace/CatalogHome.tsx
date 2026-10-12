@@ -1,16 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComputerSearchVolumeStatus } from "../../../electron/computerSearchTypes";
-import type { SkimBrowseEntry, SkimLocationShortcut } from "../../shared/types";
+import type { SkimLocationShortcut } from "../../shared/types";
+import type { CatalogGridMode } from "../../shared/catalogPresentationTypes";
 import { t } from "../../../electron/localization";
-import SkimRootSections from "../skim/SkimRootSections";
+import { locationIcons, resolveLocationLabel } from "../skim/SkimRootSections";
+import diskSvg from "../assets/icons/skim-disk.svg?raw";
+import CatalogHomeGroup, { type CatalogHomeEntry } from "./CatalogHomeGroup";
+import "./CatalogHome.css";
 
-export default function CatalogHome({ volumes, onOpen }: {
-  volumes: readonly ComputerSearchVolumeStatus[]; onOpen: (path: string) => void;
+export default function CatalogHome({ volumes, onOpen, gridMode }: {
+  volumes: readonly ComputerSearchVolumeStatus[]; onOpen: (path: string) => void; gridMode: CatalogGridMode;
 }) {
   const [locations, setLocations] = useState<SkimLocationShortcut[]>([]);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [systemCollapsed, setSystemCollapsed] = useState(false), [drivesCollapsed, setDrivesCollapsed] = useState(false);
+  const rootRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     let live = true;
     setFailed(false);
@@ -21,15 +26,19 @@ export default function CatalogHome({ volumes, onOpen }: {
     }).catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [retry]);
-  const drives = useMemo<SkimBrowseEntry[]>(() => volumes.filter(volume => /^[A-Za-z]:$/.test(volume.displayName)).map(volume => ({
-    kind: "drive", name: volume.displayName, path: `${volume.displayName}\\`, extension: "", size: null,
-    modifiedAt: null, withinAddedDirectory: false, hidden: false, status: volume.queryable ? "ready" : "error"
+  const drives = useMemo<CatalogHomeEntry[]>(() => volumes.filter(volume => /^[A-Za-z]:$/.test(volume.displayName)).map(volume => ({
+    id: volume.volumeId, name: volume.displayName, path: `${volume.displayName}\\`, icon: diskSvg
   })), [volumes]);
-  return <section className="cap-catalog-home cap-skim-grid-virtualized">
+  const system = useMemo<CatalogHomeEntry[]>(() => locations.filter(location => location.kind !== "computer" && location.path)
+    .map(location => ({ id: location.id, path: location.path!, name: resolveLocationLabel(location), icon: locationIcons[location.kind] })), [locations]);
+  const group = { rootRef, mode: gridMode, selectedPath, onSelect: setSelectedPath, onOpen };
+  return <section ref={rootRef} className="cap-catalog-home" onClick={() => setSelectedPath(null)}>
     {failed && <button type="button" onClick={() => setRetry(value => value + 1)}>{t("common.retry")}</button>}
-    <SkimRootSections catalogTiles drives={drives} locations={locations} selectedPath={selectedPath}
-      systemLocationsCollapsed={systemCollapsed} starredLocationsCollapsed={true} drivesCollapsed={drivesCollapsed}
-      onSelectPath={setSelectedPath} onOpenPath={onOpen} onToggleSystemLocations={() => setSystemCollapsed(value => !value)}
-      onToggleDrives={() => setDrivesCollapsed(value => !value)} onToggleStarredLocations={() => {}} onStarredContextMenu={() => {}} />
+    <div className="cap-skim-root-sections">
+      <CatalogHomeGroup {...group} title={t("skim.root.systemLocations")} items={system}
+        collapsed={systemCollapsed} onToggle={() => setSystemCollapsed(value => !value)} />
+      <CatalogHomeGroup {...group} title={t("skim.root.thisPc")} items={drives}
+        collapsed={drivesCollapsed} onToggle={() => setDrivesCollapsed(value => !value)} />
+    </div>
   </section>;
 }

@@ -43,7 +43,7 @@ assert.match(view, /CatalogResultTile[\s\S]*?onDoubleClick[\s\S]*?onContextMenu[
 assert.match(read("src/renderer/computer-search/CatalogResultTile.tsx"), /ComputerSearchResultVisual item=\{item\} \{\.\.\.visual\}/u,
   "Layout tiles must retain the authorized visual component");
 assert.match(read("src/renderer/computer-search/CatalogVirtualGrid.tsx"), /cap-computer-search-grid cap-catalog-file-grid/u);
-assert.match(view, /thumb cap-computer-search-entry/u);
+assert.match(view, /className="cap-computer-search-entry" selected=\{selected\} active=\{active\}/u);
 assert.doesNotMatch(view, /cap-skim-entry-name|cap-skim-entry-path/u);
 assert.match(actions, /computerSearch\.open\(authorization\(item\)\)/u);
 assert.match(actions, /computerSearch\.inspect\(request\)[\s\S]*?sourceAuthorization/u);
@@ -53,7 +53,7 @@ assert.match(viewport, /rootMargin: "0px"/u);
 assert.match(viewport, /if \(disposed\) \{ release\(id\); return; \}/u);
 assert.match(visual, /useViewportThumbnail\(taskId, item.authorizationId, foreground/u);
 assert.match(view, /visual=\{\{ taskId, scrollContainerRef, foreground/u);
-assert.match(visual, /!thumbnail.image[\s\S]*?result-file-card[\s\S]*?result-file-card-name[\s\S]*?thumbnail-image-frame/u);
+assert.match(visual, /!thumbnail.image[\s\S]*?CatalogIconVisual[\s\S]*?thumbnail-image-frame/u);
 assert.match(styles, /\.app \.cap-computer-search-box input:focus-visible \{ outline: 0; outline-offset: 0; box-shadow: none; \}/u);
 
 console.log(JSON.stringify({

@@ -15,7 +15,7 @@ import starredFolderSvg from "../assets/icons/skim-location-starred-folder.svg?r
 import videosSvg from "../assets/icons/skim-location-videos.svg?raw";
 import "./SkimRootSections.css";
 
-const locationIcons: Record<SkimLocationShortcutKind, string> = {
+export const locationIcons: Record<SkimLocationShortcutKind, string> = {
   computer: computerSvg,
   desktop: desktopSvg,
   downloads: downloadsSvg,
@@ -36,7 +36,7 @@ const locationLabels: Partial<Record<SkimLocationShortcutKind, TranslationKey>> 
   starred: "skim.locationPicker.starred"
 };
 
-const resolveLocationLabel = (location: SkimLocationShortcut) => (
+export const resolveLocationLabel = (location: SkimLocationShortcut) => (
   location.name?.trim() || t(locationLabels[location.kind] ?? "skim.locationPicker.starred")
 );
 

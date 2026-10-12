@@ -1,16 +1,15 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import type { ComputerSearchItem } from "../../../electron/computerSearchTypes";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import type { CatalogGridMode } from "../../shared/catalogPresentationTypes";
 import { catalogGridLayout } from "./catalogGridLayout";
 
-export default function CatalogVirtualGrid({ items, mode, rootRef, renderItem }: {
-  items: ComputerSearchItem[]; mode: CatalogGridMode; rootRef: RefObject<HTMLElement>;
-  renderItem: (item: ComputerSearchItem, style: CSSProperties, onRatio: (ratio: number) => void) => ReactNode;
+export default function CatalogVirtualGrid<T extends { id: string }>({ items, mode, rootRef, renderItem }: {
+  items: T[]; mode: CatalogGridMode; rootRef: RefObject<HTMLElement>;
+  renderItem: (item: T, style: CSSProperties, onRatio: (ratio: number) => void) => ReactNode;
 }) {
   const [viewport, setViewport] = useState({ width: 1, extent: 1, offset: 0, horizontal: false });
   const gridRef = useRef<HTMLDivElement | null>(null);
   const ratios = useRef(new Map<string, number>()), [ratioVersion, setRatioVersion] = useState(0);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const root = rootRef.current ?? gridRef.current?.parentElement;
     if (!root) return;
     let frame = 0;
@@ -18,12 +17,15 @@ export default function CatalogVirtualGrid({ items, mode, rootRef, renderItem }:
       frame = 0;
       const css = getComputedStyle(root), horizontal = css.overflowY === "hidden";
       const width = root.clientWidth - parseFloat(css.paddingLeft || "0") - parseFloat(css.paddingRight || "0");
+      const grid = gridRef.current?.getBoundingClientRect(), bounds = root.getBoundingClientRect();
       const next = { width: Math.max(1, width), horizontal, extent: horizontal ? root.clientWidth : root.clientHeight,
-        offset: horizontal ? root.scrollLeft : root.scrollTop };
+        offset: grid ? (horizontal ? bounds.left + root.clientLeft - grid.left : bounds.top + root.clientTop - grid.top) : 0 };
       setViewport(previous => Object.keys(next).every(key => previous[key as keyof typeof next] === next[key as keyof typeof next]) ? previous : next);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
     const observer = new ResizeObserver(schedule); observer.observe(root);
+    if (gridRef.current) observer.observe(gridRef.current);
+    if (gridRef.current?.parentElement?.parentElement) observer.observe(gridRef.current.parentElement.parentElement);
     root.addEventListener("scroll", schedule, { passive: true }); measure();
     return () => { observer.disconnect(); root.removeEventListener("scroll", schedule); cancelAnimationFrame(frame); };
   }, [rootRef]);

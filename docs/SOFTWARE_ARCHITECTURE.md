@@ -16,7 +16,7 @@ Catalog当前产品布局由领域组件组合：CatalogSidebar提供可拖宽�
 
 CatalogResultTile只持有当前缩略图的比例展示，ComputerSearchView继续使用唯一文件动作Hook，选择通过共享CatalogSelection回报页面。两套网格均显示名称：此电脑默认方形contain缩略图，收藏默认等高原比例卡片；选中不改变卡片尺寸。首次可见解码得到比例后更新卡宽，极端比例限制卡宽而保持图像完整；每次离屏仍释放像素。viewportThumbnailImage保留原比例缩放，长边最多512px、内存仍不超过512平方像素，不增加源读取或缓存；新租约/失焦/迟到响应保护不变。MetadataBuildSlot的floating展示默认隐藏空闲任务，仅用户打开控制或存在任务/错误时浮在底部，完成提示3秒消失；原授权、范围、暂停与恢复动作不变。App/Main/global styles未增加页面职责，新增组件由领域边界守门。
 
-`SkimRootSections`提供可选纯展示`catalogTiles`：Catalog首页直接复用`thumb`、`result-file-card`及`cap-catalog-file-grid`的尺寸、5px间距、悬停与选中样式；默认Skim展示保持原样。目录结果的文件夹使用同一原有`skim-folder.svg`，不使用导航栏的线框图标。没有新增查询、缩略图或导航链路。
+Catalog 首页由 `CatalogHomeGroup` 保留系统位置与盘符分组；组内和目录结果共用 `CatalogVirtualGrid`、`catalogGridLayout`、`CatalogTile` 与 `CatalogIconVisual`，方形、原比例、紧凑横向、名称与选中样式保持同一实现。`CatalogResultTile` 仅组合原有授权缩略图与共享卡片；首页条目只提供本地图标与路径导航，不伪造文件查询授权。虚拟网格在父节点 ref 挂载后绑定滚动容器，以网格相对容器的位置计算可见范围，监听分组尺寸变化，避免下方分组或折叠后漏卡片。系统位置继续复用 Skim 图标与名称映射，文件夹继续使用原 `skim-folder.svg`；旧 Skim 浏览页的导航不变。
 
 统一页面的默认目录动作直接调用`useCatalogDirectoryNavigation.open`，后退、前进、上一级和首页均在原上下文导航；收藏快捷入口和既有原生浏览动作在当前页替换范围，左栏只反映工具面板展开状态。
 

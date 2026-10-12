@@ -105,7 +105,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       const active = actions.activeId === item.authorizationId;
       return <CatalogResultTile item={item} visual={{ taskId, scrollContainerRef, foreground, showName: true }}
         style={style} onRatio={onRatio}
-        className={`thumb cap-computer-search-entry${selected ? " selected" : ""}${active ? " active" : ""}`}
+        className="cap-computer-search-entry" selected={selected} active={active}
         type="button"
         key={item.id}
         title={item.path}
