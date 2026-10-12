@@ -15,6 +15,7 @@ const files = new Map([
   ["src/renderer/computer-search/useViewportThumbnail.ts", 75],
   ["src/renderer/computer-search/useComputerSearchScrollPaging.ts", 50],
   ["src/renderer/computer-search/catalogGridLayout.ts", 60],
+  ["src/renderer/computer-search/catalogJustifiedRows.ts", 45],
   ["src/renderer/computer-search/CatalogVirtualGrid.tsx", 60],
   ["src/renderer/computer-search/computerSearchContinuation.ts", 45],
   ["electron/computerSearchThumbnailLeases.ts", 90],

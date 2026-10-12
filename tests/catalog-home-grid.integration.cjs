@@ -12,7 +12,7 @@ import './src/renderer/computer-search/ComputerSearch.css';
 window.probe={opens:[],thumbnailRequests:0};
 window.cap7ce={skim:{listLocations:async()=>Array.from({length:24},(_,index)=>({id:'system'+index,kind:'desktop',name:'Location '+index,path:'X:\\\\Location'+index}))}};
 const volumes=['X:','Y:','Z:','W:'].map(displayName=>({volumeId:displayName,displayName,queryable:true}));
-const items=[{id:'file',authorizationId:'file-auth',name:'sample.txt',path:'X:\\\\sample.txt',isDirectory:false,extension:'.txt',iconName:'format-txt'}];
+const items=Array.from({length:4},(_,index)=>({id:'file'+index,authorizationId:'file-auth'+index,name:'sample.txt',path:'X:\\\\sample.txt',isDirectory:false,extension:'.txt',iconName:'format-txt'}));
 function Fixture(){const [mode,setMode]=useState('square'),fileRoot=useRef(null);return <>
 <button id="toggle" onClick={()=>setMode(value=>value==='square'?'gallery':'square')}>toggle</button>
 <div id="home" className="pane"><CatalogHome volumes={volumes} gridMode={mode} onOpen={path=>window.probe.opens.push(path)}/></div>
@@ -47,7 +47,8 @@ app.whenReady().then(async()=>{
   await run("document.querySelector('#home .cap-skim-root-group-header').click()");
   await ready("document.querySelectorAll('#home .cap-skim-root-group:first-child .thumb').length===0&&document.querySelectorAll('#home .cap-skim-root-group:last-child .thumb').length===4");
   await run("document.querySelector('#toggle').click()");
-  await ready("document.querySelector('#home .is-gallery .thumb')?.getBoundingClientRect().height===228");
+  await ready("document.querySelector('#home .is-gallery .thumb')?.getBoundingClientRect().height>200&&document.querySelector('#files .is-gallery .thumb')?.getBoundingClientRect().height>200");
+  await wait(40);
   assert.deepEqual(await geometry('#home .thumb'),await geometry('#files .thumb'),'home and file gallery geometry and captions match');
   await run("document.querySelector('#home .thumb').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))");
   assert.equal(await run('probe.opens.length'),2);

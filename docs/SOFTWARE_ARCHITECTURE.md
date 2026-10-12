@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+`catalogJustifiedRows`是原比例网格的纯几何计算：以200px图像高度为目标，根据行内比例和8px间距拟合可用宽度，名称区固定28px。完整行两端对齐，各行高度独立；不足一行不放大。沿用已有极端比例限制及contain展示。`catalogGridLayout`继续负责方形/紧凑布局和可见范围，原比例分支按实际卡片底边二分查找，适应可变行高。缩略图仍只在可见时解码及报告比例，没有新增文件读取、预取或持久缓存。
+
 `useGridSelectionDismissal`只处理前台网格的选择取消事件，首页与文件结果共用该Hook。共享`CatalogTile`提供既有`data-result-tile`标记，详情通过`data-selection-preserve`保留当前操作对象；文档捕获阶段的左键事件排除卡片、详情、菜单、窗口控件和设置。Esc在菜单或输入处理后取消选择，卸载及后台移除监听，不新增轮询。文件选择仍由`useComputerSearchResultActions`持有，取消同步重置当前项及多选锚点；详情继续复用授权预览动作，未增加文件或跨进程入口。
 
 `useComputerSearchController`的所有者Effect在安装时同步启用状态，清理时关闭响应门禁并取消当前/替换查询。开发Fast Refresh保留React状态并重放Effect时，内部响应门禁随之恢复，避免状态仍启用但有效结果被丢弃、busy无法结束。实际React Refresh联测覆盖首页后进入盘符、在途查询退休、迟到响应、错误恢复及卸载；没有调整Core、IPC或索引生命周期。

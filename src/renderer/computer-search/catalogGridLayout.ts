@@ -1,3 +1,5 @@
+import { catalogJustifiedRows } from "./catalogJustifiedRows";
+
 export interface CatalogTilePosition { index: number; left: number; top: number; width: number; height: number }
 
 // Geometry contains no source reads, authorization, React state or thumbnails.
@@ -20,18 +22,12 @@ export function catalogGridLayout(count: number, width: number, horizontal: bool
         });
       } };
   }
-  const positions: CatalogTilePosition[] = [];
-  let left = 0, top = 0;
-  for (let index = 0; index < count; index++) {
-    const cellWidth = Math.min(width, 200 * Math.max(.45, Math.min(2.4, ratio(index))));
-    if (left && left + cellWidth > width) { left = 0; top += 236; }
-    positions.push({ index, left, top, width: cellWidth, height: 228 }); left += cellWidth + gap;
-  }
-  return { height: count ? top + 228 : 0, width,
+  const { positions, height } = catalogJustifiedRows(count, width, ratio);
+  return { height, width,
     visible(start: number, extent: number) {
       let low = 0, high = positions.length;
       while (low < high) { const middle = (low + high) >>> 1;
-        if (positions[middle].top + 228 < start - 236) low = middle + 1; else high = middle;
+        if (positions[middle].top + positions[middle].height < start - 236) low = middle + 1; else high = middle;
       }
       const first = low;
       while (low < positions.length && positions[low].top <= start + extent + 236) low++;
