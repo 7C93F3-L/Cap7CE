@@ -46,7 +46,6 @@
 .cap-catalog-breadcrumb > span { display: flex; align-items: center; flex: 0 0 auto; }
 .cap-catalog-breadcrumb i { font-style: normal; color: var(--cap-stable-text-muted); }
 .cap-catalog-breadcrumb button { white-space: nowrap; }
-.cap-catalog-breadcrumb .cap-catalog-path-edit { margin-left: auto; opacity: .55; }
 .cap-catalog-search-badge { color: var(--theme-color) !important; }
 .cap-catalog-design .cap-catalog-status:empty { display: none; }
 .cap-catalog-design .cap-catalog-status { font-size: 11px; padding: 0 8px 4px; height: auto; }

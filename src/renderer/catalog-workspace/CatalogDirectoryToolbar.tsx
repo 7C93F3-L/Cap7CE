@@ -35,7 +35,6 @@ export default function CatalogDirectoryToolbar({ path, canBack, canForward, can
       : <div className="cap-catalog-breadcrumb" onDoubleClick={() => setEditing(true)} title="双击空白处输入路径">
         <button type="button" onClick={onHome}>{t("skim.computer")}</button>
         {parts.map((part, index) => <span key={index}><i>›</i><button type="button" onClick={() => onOpen(parts.slice(0, index + 1).join("\\") + (index === 0 ? "\\" : ""))}>{part}</button></span>)}
-        <button className="cap-catalog-path-edit" type="button" title={t("catalogWorkspace.path")} onClick={() => setEditing(true)}><CatalogToolbarIcon name="edit" /></button>
       </div>}
     {!searchMode && query.trim() && <button type="button" className="cap-catalog-search-badge" title={query} onClick={onSearchMode}>搜索中</button>}
     <button type="button" className="cap-catalog-grid-toggle" onClick={onGridMode} title={gridMode === "square" ? "切换为原比例网格" : "切换为方形网格"}><CatalogToolbarIcon name="grid" /><span>网格切换</span></button>

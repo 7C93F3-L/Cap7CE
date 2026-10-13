@@ -1,3 +1,4 @@
+import "./StableSidebarFlyout.css";
 import { useRef, type CSSProperties, type ReactNode } from "react";
 import { useStableFlyoutInteractions } from "./useStableFlyoutInteractions";
 import { createPortal } from "react-dom";
