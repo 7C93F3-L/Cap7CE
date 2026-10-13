@@ -1,10 +1,10 @@
 import { createPortal } from "react-dom";
 import { t } from "../../../electron/localization";
 import type { DirectoryItem } from "../../shared/types";
+import "./StableDirectoryTooltip.css";
 
-interface StableDirectoryTooltipProps { anchor: DOMRect; directory: DirectoryItem; all: boolean; directoryCount: number; }
-
-const StableDirectoryTooltip = ({ anchor, directory, all, directoryCount }: StableDirectoryTooltipProps) => {
+interface StableDirectoryTooltipProps { anchor: DOMRect; directory: Pick<DirectoryItem, "name" | "path"> & Partial<Pick<DirectoryItem, "fileCount">>; all: boolean; directoryCount: number; hideFileCount?: boolean; }
+const StableDirectoryTooltip = ({ anchor, directory, all, directoryCount, hideFileCount = false }: StableDirectoryTooltipProps) => {
   const left = anchor.right + 5;
   const width = Math.max(0, Math.min(184, window.innerWidth - left - 5));
   const top = Math.max(5, Math.min(anchor.top, window.innerHeight - 120));
@@ -15,10 +15,10 @@ const StableDirectoryTooltip = ({ anchor, directory, all, directoryCount }: Stab
   return createPortal(
     <div className="cap-stable-directory-tooltip" role="tooltip" style={{ left, top, width }}>
       <strong className="cap-stable-directory-tooltip-title">{all ? t("stableUi.sidebar.allDirectories") : directory.name}</strong>
-      <small className="cap-stable-directory-tooltip-count">{t("search.fileCount", { count: directory.fileCount ?? "…" })}</small>
+      {!hideFileCount && <small className="cap-stable-directory-tooltip-count">{t("search.fileCount", { count: directory.fileCount ?? "…" })}</small>}
       {all
         ? <span className="cap-stable-directory-tooltip-summary">{t("stableUi.sidebar.addedDirectories")}：{directoryCount}</span>
-        : <span className="cap-stable-directory-tooltip-path" aria-label={directory.path}><span>{pathLeading}</span>{pathTrailing && <span>{pathTrailing}</span>}</span>}
+        : directory.path && <span className="cap-stable-directory-tooltip-path" aria-label={directory.path}><span>{pathLeading}</span>{pathTrailing && <span>{pathTrailing}</span>}</span>}
     </div>,
     portalHost
   );
