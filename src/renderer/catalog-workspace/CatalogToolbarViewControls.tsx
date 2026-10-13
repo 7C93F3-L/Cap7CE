@@ -13,7 +13,7 @@ export default function CatalogToolbarViewControls({ sort, onSort, showHidden, o
   return <div className="cap-catalog-view-controls">
     <button type="button" title={label(sort)} aria-label={t("sort.parent")} aria-expanded={anchor !== null}
       onClick={event => setAnchor(anchor ? null : event.currentTarget.getBoundingClientRect())}>
-      <StableUiIcon name="sort" sortDirection={sort.endsWith("ascending") ? "asc" : "desc"} className="cap-catalog-toolbar-icon" /><span>{label(sort)}</span>
+      <StableUiIcon name="sort" sortDirection={sort.endsWith("ascending") ? "asc" : "desc"} className="cap-catalog-toolbar-icon cap-catalog-sort-icon" /><span>{label(sort)}</span>
     </button>
     <button type="button" role="switch" aria-checked={showHidden} aria-label={t("settings.hiddenFiles")} title={t("settings.hiddenFiles")}
       className="cap-catalog-hidden-switch" onClick={onShowHidden}><span>{t("settings.hiddenFiles")}</span><i aria-hidden="true"><b /></i></button>

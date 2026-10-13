@@ -1,6 +1,7 @@
 .cap-catalog-directory-toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .cap-catalog-directory-toolbar .cap-catalog-toolbar-icon { display: inline-flex; width: 16px; height: 16px; flex: 0 0 16px; }
 .cap-catalog-toolbar-icon > svg { display: block; width: 100%; height: 100%; }
+.cap-catalog-sort-icon > svg { transform: scale(1.65); transform-origin: center; }
 .cap-catalog-view-controls { display: flex; flex: 0 0 auto; gap: 3px; align-items: center; }
 .cap-catalog-view-controls button { white-space: nowrap; }
 .cap-catalog-hidden-switch i { position: relative; display: inline-block; width: 28px; height: 14px; border-radius: 7px; background: color-mix(in srgb, currentColor 30%, transparent); }

@@ -41,7 +41,7 @@
 .cap-catalog-design .cap-catalog-directory-toolbar { min-height: 35px; flex: 0 0 auto; padding: 3px 6px; margin-bottom: 0; border-radius: 12px 12px 0 0; background: color-mix(in srgb, var(--cap-stable-surface) 78%, black); }
 .cap-catalog-design .cap-catalog-directory-toolbar button { cursor: pointer; font-size: 13px; }
 .cap-catalog-design .cap-catalog-directory-toolbar button:disabled { opacity: .35; }
-.cap-catalog-design .cap-catalog-directory-toolbar input { flex: 1; min-width: 0; background: transparent; border: 0; border-radius: 6px; outline: none; color: var(--cap-stable-text); padding: 5px; font: inherit; }
+.cap-catalog-design .cap-catalog-directory-toolbar input { flex: 1; min-width: 0; background: transparent; border: 0; border-radius: 6px; outline: none; color: var(--cap-stable-text); padding: 4px; font: inherit; }
 .cap-catalog-breadcrumb { display: flex; align-items: center; flex: 1; min-width: 0; overflow: auto; scrollbar-width: none; }
 .cap-catalog-breadcrumb > span { display: flex; align-items: center; flex: 0 0 auto; }
 .cap-catalog-breadcrumb i { font-style: normal; color: var(--cap-stable-text-muted); }
