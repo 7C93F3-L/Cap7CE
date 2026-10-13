@@ -298,7 +298,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
             : { kind: "all-volumes" };
         }
         const pending = controller.startRequest<CoreSearchPage>("search.start", {
-          query: request.query, pageSize: 100, sort: "name-ascending", volumeIds, scope,
+          query: request.query, pageSize: 100, sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, volumeIds, scope,
           ...(controller.supports?.("search.live") ? { continuation: "live" } : {}),
           entryType: request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: "name-or-path",
           ...(request.facts ? { facts: toCoreSearchFacts(request.facts) } : {}),

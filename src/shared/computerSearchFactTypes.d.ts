@@ -38,4 +38,6 @@ export interface ComputerSearchFacts {
   isAnimated?: boolean;
   visualGroups?: ComputerSearchVisualGroup[];
 }
+export type ComputerSearchSort = "name-ascending" | "name-descending" | "modified-ascending" | "modified-descending";
+export interface ComputerSearchViewOptions { sort?: ComputerSearchSort; excludeHidden?: boolean }
 export interface ComputerSearchConditions { facts?: ComputerSearchFacts; fileConditions?: ComputerSearchFileConditions }

@@ -9,8 +9,8 @@ import CatalogHomeGroup, { type CatalogHomeEntry } from "./CatalogHomeGroup";
 import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal";
 import "./CatalogHome.css";
 
-export default function CatalogHome({ volumes, onOpen, gridMode, foreground = true }: {
-  volumes: readonly ComputerSearchVolumeStatus[]; onOpen: (path: string) => void; gridMode: CatalogGridMode; foreground?: boolean;
+export default function CatalogHome({ volumes, onOpen, gridMode, foreground = true, refreshVersion = 0 }: {
+  volumes: readonly ComputerSearchVolumeStatus[]; onOpen: (path: string) => void; gridMode: CatalogGridMode; foreground?: boolean; refreshVersion?: number;
 }) {
   const [locations, setLocations] = useState<SkimLocationShortcut[]>([]);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
@@ -28,7 +28,7 @@ export default function CatalogHome({ volumes, onOpen, gridMode, foreground = tr
       if (live) setLocations(value.filter(location => location.kind !== "starred"));
     }).catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
-  }, [retry]);
+  }, [retry, refreshVersion]);
   const drives = useMemo<CatalogHomeEntry[]>(() => volumes.filter(volume => /^[A-Za-z]:$/.test(volume.displayName)).map(volume => ({
     id: volume.volumeId, name: volume.displayName, path: `${volume.displayName}\\`, icon: diskSvg
   })), [volumes]);

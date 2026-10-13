@@ -1,5 +1,5 @@
 import type { FilePreviewKind } from "./formatCapabilities";
-import type { ComputerSearchFacts, ComputerSearchFileConditions } from "../src/shared/computerSearchFactTypes";
+import type { ComputerSearchFacts, ComputerSearchFileConditions, ComputerSearchViewOptions } from "../src/shared/computerSearchFactTypes";
 
 export type ComputerSearchState =
   | "not-enabled" | "starting" | "building" | "syncing" | "ready"
@@ -54,7 +54,7 @@ export interface ComputerSearchCapabilityResult {
   reason: string;
 }
 
-export interface ComputerSearchRequest {
+export interface ComputerSearchRequest extends ComputerSearchViewOptions {
   taskId: string;
   query: string;
   scopePath: string | null;

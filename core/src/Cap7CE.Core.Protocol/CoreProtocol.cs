@@ -15,6 +15,10 @@ public static class CoreProtocol
 public static class CoreSearchSorts
 {
     public const string NameAscending = "name-ascending";
+    public const string NameDescending = "name-descending";
+    public const string ModifiedAscending = "modified-ascending";
+    public const string ModifiedDescending = "modified-descending";
+    public static bool IsSupported(string sort) => sort is NameAscending or NameDescending or ModifiedAscending or ModifiedDescending;
 }
 
 public static class CoreOperations

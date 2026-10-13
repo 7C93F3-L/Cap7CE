@@ -45,7 +45,7 @@ public sealed class ProductSearchCursorCodec
                 || token.PageSize is < 1 or > CoreProtocol.MaximumPageSize
                 || token.VolumeIds.Count > CoreProtocol.MaximumVolumeIds
                 || token.Query.Length > CoreProtocol.MaximumQueryLength
-                || token.After is null)
+                || token.After is null || !CoreSearchSorts.IsSupported(token.Sort))
             {
                 throw Invalid();
             }
@@ -84,4 +84,4 @@ public sealed record ProductSearchCursorToken(
     string? TextTarget = null,
     CoreSearchFactFilter? Facts = null,
     CoreSearchFileConditions? FileConditions = null,
-    string? Continuation = null);
+    string? Continuation = null, string Sort = CoreSearchSorts.NameAscending, bool ExcludeHidden = false);

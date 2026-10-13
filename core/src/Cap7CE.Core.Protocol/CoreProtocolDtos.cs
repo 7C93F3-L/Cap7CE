@@ -32,7 +32,7 @@ public sealed record SearchStartRequest(
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     CoreSearchFileConditions? FileConditions = null,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
-    string? Continuation = null);
+    string? Continuation = null, bool ExcludeHidden = false);
 
 public sealed record CoreSearchScopeRequest(
     string Kind,

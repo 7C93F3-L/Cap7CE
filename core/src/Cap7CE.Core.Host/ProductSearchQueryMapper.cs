@@ -76,7 +76,12 @@ internal static class ProductSearchQueryMapper
             conditions.MinimumSizeBytes, conditions.MaximumSizeBytes, FileTime(conditions.MinimumModifiedFileTime),
             FileTime(conditions.MaximumModifiedFileTime)) : null;
         return new(request.Query, request.VolumeIds, scope, request.Extension, type, request.PageSize, after, facts, target,
-            FileConditions: file);
+            FileConditions: file, ExcludeHidden: request.ExcludeHidden, Sort: request.Sort switch {
+                CoreSearchSorts.NameAscending => CatalogQuerySort.NameAscending,
+                CoreSearchSorts.NameDescending => CatalogQuerySort.NameDescending,
+                CoreSearchSorts.ModifiedAscending => CatalogQuerySort.ModifiedAscending,
+                CoreSearchSorts.ModifiedDescending => CatalogQuerySort.ModifiedDescending,
+                _ => throw Invalid("Search sort is invalid.") });
     }
 
     private static FileFactRatio? Ratio(CoreSearchRatio? input) => input is null ? null : new(input.Numerator, input.Denominator);

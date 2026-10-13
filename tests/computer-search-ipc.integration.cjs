@@ -71,11 +71,14 @@ const run = async () => {
   await assert.rejects(() => handlers.get("computerSearch:search")({ allowed: true }, {
     taskId: "task-1", query: "poster", scopePath: "relative"
   }), /invalid-request/);
+  for(const options of [{sort:'bogus'},{excludeHidden:'yes'}])await assert.rejects(()=>handlers.get("computerSearch:search")({allowed:true},{taskId:'invalid-options',query:'',scopePath:null,...options}),/invalid-request/);
   const first = await handlers.get("computerSearch:search")({ allowed: true }, {
     taskId: "task-1", query: "  poster  ", scopePath: "E:\\References"
   });
   assert.equal(first.nextCursor, "cursor-1");
   assert.deepEqual(calls[1], ["search", { taskId: "task-1", query: "poster", scopePath: "E:\\References" }]);
+  await handlers.get("computerSearch:search")({allowed:true},{taskId:'sorted',query:'',scopePath:'X:\\',scopeKind:'direct-children',sort:'modified-descending',excludeHidden:true});
+  assert.equal(calls.at(-1)[1].sort,'modified-descending');assert.equal(calls.at(-1)[1].excludeHidden,true);calls.pop();
   await assert.rejects(() => handlers.get("computerSearch:nextPage")({ allowed: true }, {
     taskId: "task-1", cursor: ""
   }), /invalid-cursor/);

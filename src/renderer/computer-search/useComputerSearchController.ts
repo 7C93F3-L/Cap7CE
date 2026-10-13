@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComputerSearchCapabilityOptions, ComputerSearchCapabilityResult, ComputerSearchItem, ComputerSearchStatus } from "../../../electron/computerSearchTypes";
 import { getActiveLanguage, t } from "../../../electron/localization";
-import type { ComputerSearchConditions } from "../../shared/computerSearchFactTypes";
+import type { ComputerSearchConditions, ComputerSearchViewOptions } from "../../shared/computerSearchFactTypes";
 import { readComputerSearchReplacement } from "./computerSearchResultRefresh";
 import { readComputerSearchContinuation } from "./computerSearchContinuation";
 import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentity";
@@ -9,9 +9,9 @@ import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentit
 export type ComputerSearchError = "scope-not-indexed" | "scope-offline" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
-export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false) => {
-  const conditionKey = JSON.stringify(conditions ?? {});
-  const selectedConditions = useMemo(() => JSON.parse(conditionKey) as ComputerSearchConditions, [conditionKey]);
+export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false, viewOptions?: ComputerSearchViewOptions) => {
+  const conditionKey = JSON.stringify({ ...conditions, ...viewOptions });
+  const selectedConditions = useMemo(() => JSON.parse(conditionKey) as ComputerSearchConditions & ComputerSearchViewOptions, [conditionKey]);
   const [active, setActive] = useState(false);
   const [nextTaskId] = useState<ReturnType<typeof createComputerSearchTaskIdGenerator>>(createComputerSearchTaskIdGenerator);
   const [query, setQuery] = useState("");
@@ -136,7 +136,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     busyRef.current = true;
     setBusy(true); setHasSubmitted(true); setError(null); setPageError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
     try {
-      const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath,
+      const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
         ...(browseChildren && currentPath !== null && !searchQuery ? { scopeKind: "direct-children" as const } : {}),
         ...(selectedConditions.facts ? { facts: selectedConditions.facts } : {}),
         ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) });
@@ -164,7 +164,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const isCurrent = () => activeRef.current && foregroundRef.current && !interactionRef.current
       && !busyRef.current && requestSequence.current === sequence && replacementTaskRef.current === taskId;
     try {
-      const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath,
+      const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
         ...(browseChildren && currentPath !== null && !submittedQuery ? { scopeKind: "direct-children" as const } : {}),
         facts: selectedConditions.facts, ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) },
       items.length, isCurrent);
@@ -255,7 +255,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setBusy(true);
     try {
       const result = await readComputerSearchContinuation(api, { taskId: replacementId,
-        query: submittedQuery, scopePath: currentPath,
+        query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
         ...(browseChildren && currentPath !== null && !submittedQuery ? { scopeKind: "direct-children" as const } : {}),
         facts: selectedConditions.facts, fileConditions: selectedConditions.fileConditions },
       taskId, cursor, items.length, isCurrent, Boolean(pageError));

@@ -76,6 +76,8 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     await runtime.search({ taskId: "recursive-drive", query: "", scopePath: "X:\\" });
     assert.deepEqual(requests.at(-1).body.scope, { kind: "all-volumes" });
     assert.deepEqual(requests.at(-1).body.volumeIds, [volume.volumeId]);
+    await runtime.search({taskId:"ordered-children",query:"",scopePath:"X:\\",scopeKind:"direct-children",sort:"modified-descending",excludeHidden:true});
+    assert.equal(requests.at(-1).body.sort,"modified-descending");assert.equal(requests.at(-1).body.excludeHidden,true);assert.equal(requests.at(-1).body.entryType,"any","hidden control must preserve folder results");
     console.log("Core empty/child browsing, path matching and result authorization tests passed.");
   } finally { await runtime.stop(); controllerModule.CoreHostController = saved; }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

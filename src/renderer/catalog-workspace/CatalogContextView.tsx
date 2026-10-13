@@ -16,6 +16,7 @@ import CatalogDirectoryToolbar from "./CatalogDirectoryToolbar";
 import { useCatalogDirectoryNavigation } from "./useCatalogDirectoryNavigation";
 import CatalogAttributeNotice from "./CatalogAttributeNotice";
 import CatalogHome from "./CatalogHome";
+import { useCatalogViewOptions, useCatalogRefresh } from "./useCatalogToolbarState";
 import { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailability";
 
 export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, ...appearance }: CatalogWorkspaceAppearance & {
@@ -26,7 +27,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   onActiveActions: (actions: CatalogContextActions | null) => void;
   onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
 }) {
-  const filters = useComputerSearchFilters(true);
+  const filters = useComputerSearchFilters(true), view = useCatalogViewOptions();
   const [searchMode, setSearchMode] = useState(Boolean(context.scopePath));
   const [gridMode, setGridMode] = useState<CatalogGridMode>(context.scopePath ? "gallery" : "square");
   const [selection, setSelection] = useState<CatalogSelection | null>(null);
@@ -37,18 +38,18 @@ export default function CatalogContextView({ context, selected, foreground, filt
   const openDirectory = navigation.open;
   const toggleBrowser = useCallback(() => onOpenBrowser(navigation.path), [onOpenBrowser, navigation.path]);
   useEffect(() => onLocation(context.id, navigation.path), [context.id, navigation.path, onLocation]);
-  const controller = useComputerSearchController(navigation.path, foreground, filters.conditions, undefined, true, navigation.browseChildren, navigation.path === null);
+  const controller = useComputerSearchController(navigation.path, foreground, filters.conditions, undefined, true, navigation.browseChildren, navigation.path === null, view.options);
   querySetter.current = controller.setQuery;
   const filterCount = workspaceFilterCount(filters.panel.search), searching = filterCount > 0 || Boolean(controller.query.trim());
   const attributes = useCatalogAttributeAvailability(navigation.path, filters.panel.search.selectedExtensions ?? [], foreground && controller.canSubmit, metadataProgress);
   useEffect(() => { if (navigation.path === null) setSearchMode(searching); }, [navigation.path, searching]);
   const home = () => { filters.clear(); clearQuery(); setSearchMode(false); navigation.openBrowser(null); };
 
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const refresh = useCatalogRefresh(controller, navigation.path === null && !searching, foreground, navigation.path), inputRef = useRef<HTMLInputElement | null>(null);
   const actions = useMemo<CatalogContextActions>(() => ({ currentPath: navigation.path, browseChildren: navigation.browseChildren,
     openBrowser: onOpenBrowser, toggleBrowser,
-    focusSearch: () => { setSearchMode(true); requestAnimationFrame(() => inputRef.current?.focus()); }, refresh: async () => await controller.refreshResults() === "applied"
-  }), [navigation.path, navigation.browseChildren, onOpenBrowser, toggleBrowser, controller.refreshResults]);
+    focusSearch: () => { setSearchMode(true); requestAnimationFrame(() => inputRef.current?.focus()); }, refresh: refresh.refresh
+  }), [navigation.path, navigation.browseChildren, onOpenBrowser, toggleBrowser, refresh.refresh]);
   useEffect(() => {
     if (!selected) return;
     onActiveActions(actions); return () => onActiveActions(null);
@@ -70,7 +71,8 @@ export default function CatalogContextView({ context, selected, foreground, filt
     {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={filterCount} attributes={attributes} />, filterHost)}
     {selected && detailsHost && createPortal(<CatalogDetails selection={selection?.taskId === controller.taskId ? selection : null} path={navigation.path} count={controller.items.length} foreground={foreground} searching={searching} filterCount={filterCount} />, detailsHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
-      onUp={navigation.up}
+      onUp={navigation.up} onRefresh={() => void refresh.refresh()} refreshing={refresh.busy || controller.busy || !foreground}
+      sort={view.sort} onSort={view.setSort} showHidden={view.showHidden} onShowHidden={view.toggleHidden}
       onOpen={openDirectory} onHome={home} inputRef={inputRef}
       searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
       onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={() => setGridMode(value => value === "square" ? "gallery" : "square")} />
@@ -78,7 +80,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
-      ? <CatalogHome volumes={controller.status?.volumes ?? []} onOpen={openDirectory} gridMode={gridMode} foreground={foreground} />
+      ? <CatalogHome volumes={controller.status?.volumes ?? []} onOpen={openDirectory} gridMode={gridMode} foreground={foreground} refreshVersion={refresh.version} />
       : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
     {attributes.relevant && <CatalogAttributeNotice key={JSON.stringify([navigation.path, attributes.message])} message={attributes.message} onMetadata={onMetadata} />}
   </section>;

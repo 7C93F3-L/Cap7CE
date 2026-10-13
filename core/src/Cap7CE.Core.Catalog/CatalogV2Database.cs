@@ -545,8 +545,8 @@ public sealed class CatalogV2Database
         AppendScopeSql(sql, command, query.Scope);
         sql.Append("""
             ),
-            matched_keys(volume_id, file_reference, name) AS MATERIALIZED (
-            SELECT n.volume_id, n.file_reference, n.name
+            matched_keys(volume_id, file_reference, name, modified_utc_ticks) AS MATERIALIZED (
+            SELECT n.volume_id, n.file_reference, n.name, n.modified_utc_ticks
             """);
         FileFacts.FileFactQuerySql.AppendSource(sql, factPlan);
         if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes)
@@ -559,6 +559,7 @@ public sealed class CatalogV2Database
         sql.Append(" WHERE n.exists_flag = 1 AND v.selected = 1 AND v.state IN ('ready', 'catchingUp') ");
         if (query.Facts is not null) FileFacts.FileFactQuerySql.AppendPredicate(sql, command, query.Facts);
         if (query.FileConditions is not null) CatalogFileConditionSql.Append(sql, command, query.FileConditions);
+        if (query.ExcludeHidden) sql.Append(" AND (n.attributes & 2) = 0 ");
         if (query.VolumeIds.Count > 0)
         {
             sql.Append(" AND n.volume_id IN (");
@@ -593,19 +594,8 @@ public sealed class CatalogV2Database
             }).Append(')');
             command.Parameters.AddWithValue("$term" + index, "%" + EscapeLike(terms[index]) + "%");
         }
-        if (query.After is not null)
-        {
-            sql.Append("""
-                 AND (n.name COLLATE NOCASE > $afterName COLLATE NOCASE
-                      OR (n.name = $afterName COLLATE NOCASE AND n.volume_id > $afterVolume)
-                      OR (n.name = $afterName COLLATE NOCASE AND n.volume_id = $afterVolume
-                          AND n.file_reference > $afterReference))
-                """);
-            command.Parameters.AddWithValue("$afterName", query.After.Name);
-            command.Parameters.AddWithValue("$afterVolume", query.After.VolumeId);
-            command.Parameters.AddWithValue("$afterReference", query.After.FileReference);
-        }
-        sql.Append(" ORDER BY n.name COLLATE NOCASE, n.volume_id, n.file_reference LIMIT $limit");
+        CatalogQueryOrdering.AppendAfter(sql, command, query);
+        sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query.Sort, "n")).Append(" LIMIT $limit");
         command.Parameters.AddWithValue("$limit", query.PageSize + 1);
         sql.Append("""
             )
@@ -623,8 +613,8 @@ public sealed class CatalogV2Database
                 ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference
             LEFT JOIN catalog_directory_paths_v2 pp
                 ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference
-            ORDER BY m.name COLLATE NOCASE, m.volume_id, m.file_reference;
             """);
+        sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query.Sort, "m")).Append(';');
         command.CommandText = sql.ToString();
         var items = new List<CatalogV2QueryItem>(query.PageSize + 1);
         await using var reader = await command.ExecuteReaderAsync(token);
@@ -642,7 +632,7 @@ public sealed class CatalogV2Database
         {
             items.RemoveAt(items.Count - 1);
             var last = items[^1];
-            next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference);
+            next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference, last.ModifiedUtcTicks ?? -1);
         }
         return new CatalogV2QueryPage(items, next, revision, factRevision);
     }
@@ -1212,7 +1202,7 @@ public sealed class CatalogV2Database
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(query.Scope);
         if (query.FileConditions is not null) CatalogFileConditionSql.Validate(query.FileConditions);
-        if (!Enum.IsDefined(query.TextTarget) || query.Query.Length > 512 || query.PageSize is < 1 or > CatalogV2Contract.MaximumPageSize
+        if (!Enum.IsDefined(query.Sort) || !Enum.IsDefined(query.TextTarget) || query.Query.Length > 512 || query.PageSize is < 1 or > CatalogV2Contract.MaximumPageSize
             || query.VolumeIds.Count > 32
             || query.Query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length > CatalogV2Contract.MaximumQueryTerms)
         {
