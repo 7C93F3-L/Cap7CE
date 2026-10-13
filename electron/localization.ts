@@ -1,6 +1,7 @@
 import { enUS } from "./locales/en-US";
 
 export const zhCN = {
+  "catalogWorkspace.localDisk": "本地磁盘",
   "catalogWorkspace.volumeUnavailable": "尚不可浏览",
   "catalogWorkspace.newTab": "新标签页",
   "catalogWorkspace.files": "文件与收藏",

@@ -26,7 +26,7 @@ app.whenReady().then(async()=>{
   await win.loadFile(path.join(root,'index.html'));await ready("document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry').length===2");
   const active="document.querySelector('[role=tabpanel]:not([hidden])')";
   const goHome=async()=>{await run(`if(${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')==='true')${active}.querySelector('.cap-catalog-address-toggle').click()`);await ready(`${active}.querySelector('.cap-catalog-breadcrumb > button')`);await run(`${active}.querySelector('.cap-catalog-breadcrumb > button').click()`)};
-  const openDrive=async name=>{await run(`(()=>{const b=[...document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry')].find(b=>b.getAttribute('aria-label')==='${name}');b.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))})()`);await ready("probe.requests.at(-1)?.scopePath==="+JSON.stringify(name+'\\'));};
+  const openDrive=async name=>{await run(`(()=>{const b=[...document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry')].find(b=>b.getAttribute('title').slice(0,2)==='${name}');b.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))})()`);await ready("probe.requests.at(-1)?.scopePath==="+JSON.stringify(name+'\\'));};
 
   assert.equal(await run("document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry').length"),2,'home remains visible even when every volume is building');
   assert.equal(await run('probe.requests.length'),0,'home must not submit an unavailable global query');

@@ -38,6 +38,7 @@ const files = new Map([
   ["src/renderer/computer-search/CatalogName.tsx", 40],
   ["src/renderer/computer-search/catalogNameLabel.ts", 40],
   ["src/renderer/catalog-workspace/CatalogHome.tsx", 60],
+  ["src/renderer/catalog-workspace/useCatalogDriveLabels.ts", 25],
   ["src/renderer/catalog-workspace/CatalogHomeGroup.tsx", 45],
   ["src/shared/catalogPresentationTypes.ts", 20],
   ["src/renderer/catalog-workspace/CatalogContextView.tsx", 90],

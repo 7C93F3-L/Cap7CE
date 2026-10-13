@@ -7,12 +7,14 @@ import { locationIcons, resolveLocationLabel } from "../skim/SkimRootSections";
 import diskSvg from "../assets/icons/skim-disk.svg?raw";
 import CatalogHomeGroup, { type CatalogHomeEntry } from "./CatalogHomeGroup";
 import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal";
+import { useCatalogDriveLabels } from "./useCatalogDriveLabels";
 import "./CatalogHome.css";
 
 export default function CatalogHome({ volumes, onOpen, gridMode, foreground = true, refreshVersion = 0 }: {
   volumes: readonly ComputerSearchVolumeStatus[]; onOpen: (path: string) => void; gridMode: CatalogGridMode; foreground?: boolean; refreshVersion?: number;
 }) {
   const [locations, setLocations] = useState<SkimLocationShortcut[]>([]);
+  const driveLabels = useCatalogDriveLabels(refreshVersion);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [systemCollapsed, setSystemCollapsed] = useState(false), [drivesCollapsed, setDrivesCollapsed] = useState(false);
@@ -30,8 +32,9 @@ export default function CatalogHome({ volumes, onOpen, gridMode, foreground = tr
     return () => { live = false; };
   }, [retry, refreshVersion]);
   const drives = useMemo<CatalogHomeEntry[]>(() => volumes.filter(volume => /^[A-Za-z]:$/.test(volume.displayName)).map(volume => ({
-    id: volume.volumeId, name: volume.displayName, path: `${volume.displayName}\\`, icon: diskSvg
-  })), [volumes]);
+    id: volume.volumeId, name: `${driveLabels.get(volume.displayName.toUpperCase()) || t("catalogWorkspace.localDisk")} (${volume.displayName.toUpperCase()})`,
+    path: `${volume.displayName}\\`, icon: diskSvg
+  })), [volumes, driveLabels]);
   const system = useMemo<CatalogHomeEntry[]>(() => locations.filter(location => location.kind !== "computer" && location.path)
     .map(location => ({ id: location.id, path: location.path!, name: resolveLocationLabel(location), icon: locationIcons[location.kind] })), [locations]);
   const group = { rootRef, mode: gridMode, selectedPath, onSelect: setSelectedPath, onOpen };
