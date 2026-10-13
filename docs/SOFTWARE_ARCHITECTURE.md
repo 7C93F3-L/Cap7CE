@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+统一Catalog网格名称通过独立`CatalogName`展示，`CatalogIconVisual`与缩略图名称复用同一单行组件及领域样式，首页系统位置、盘符、目录和文件保持一致。名称区固定28px；`ResizeObserver`只跟踪已挂载名称的宽度，按实际字体测量交给纯函数`catalogNameLabel`分配首尾空间，文件优先保留扩展名，目录不解释扩展名。完整名称保留title，卸载断开观察，不轮询、不改变网格几何、缩略图请求或旧Skim及其他名称组件。
+
 `catalogJustifiedRows`是原比例网格的纯几何计算：以200px图像高度为目标，根据行内比例和8px间距拟合可用宽度，名称区固定28px。完整行两端对齐，各行高度独立；不足一行不放大。沿用已有极端比例限制及contain展示。`catalogGridLayout`继续负责方形/紧凑布局和可见范围，原比例分支按实际卡片底边二分查找，适应可变行高。缩略图仍只在可见时解码及报告比例，没有新增文件读取、预取或持久缓存。
 
 `useGridSelectionDismissal`只处理前台网格的选择取消事件，首页与文件结果共用该Hook。共享`CatalogTile`提供既有`data-result-tile`标记，详情通过`data-selection-preserve`保留当前操作对象；文档捕获阶段的左键事件排除卡片、详情、菜单、窗口控件和设置。Esc在菜单或输入处理后取消选择，卸载及后台移除监听，不新增轮询。文件选择仍由`useComputerSearchResultActions`持有，取消同步重置当前项及多选锚点；详情继续复用授权预览动作，未增加文件或跨进程入口。

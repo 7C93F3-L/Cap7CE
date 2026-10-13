@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import type { ComputerSearchItem } from "../../../electron/computerSearchTypes";
 import CatalogIconVisual from "./CatalogIconVisual";
+import CatalogName from "./CatalogName";
 import { getFormatIconSvgByName } from "../formatIcons";
 import skimFolderSvg from "../assets/icons/skim-folder.svg?raw";
 import { useViewportThumbnail } from "./useViewportThumbnail";
@@ -25,11 +26,11 @@ const ComputerSearchResultVisual = ({ item, taskId, scrollContainerRef, foregrou
     onRatio?.(image.width / image.height);
   }, [thumbnail.image, onRatio]);
   return <span className="cap-computer-search-thumbnail-visual" ref={thumbnail.visualRef}>
-    {!thumbnail.image && <CatalogIconVisual name={item.name}
+    {!thumbnail.image && <CatalogIconVisual name={item.name} isFile={!item.isDirectory}
       icon={item.isDirectory ? skimFolderSvg : getFormatIconSvgByName(item.iconName)} />}
     {thumbnail.image && <><span className="thumbnail-image-frame"><canvas ref={canvasRef} aria-hidden="true" /></span>
       {videoThumbnailExtensions.has(item.extension.toLowerCase()) && <VideoThumbnailIndicator />}
-      {showName && <span className="cap-catalog-thumbnail-name" title={item.name}>{item.name}</span>}</>}
+      {showName && <CatalogName name={item.name} isFile={!item.isDirectory} className="cap-catalog-thumbnail-name" />}</>}
   </span>;
 };
 

@@ -35,6 +35,8 @@ const files = new Map([
   ["src/renderer/computer-search/CatalogTile.tsx", 20],
   ["src/renderer/results/useGridSelectionDismissal.ts", 45],
   ["src/renderer/computer-search/CatalogIconVisual.tsx", 15],
+  ["src/renderer/computer-search/CatalogName.tsx", 40],
+  ["src/renderer/computer-search/catalogNameLabel.ts", 40],
   ["src/renderer/catalog-workspace/CatalogHome.tsx", 60],
   ["src/renderer/catalog-workspace/CatalogHomeGroup.tsx", 45],
   ["src/shared/catalogPresentationTypes.ts", 20],

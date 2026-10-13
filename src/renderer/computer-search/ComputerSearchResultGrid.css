@@ -32,6 +32,10 @@
   .cap-catalog-file-grid > .thumb { width: 138px; height: 138px; flex: 0 0 138px; }
 }
 
+/* Home entries, icon cards and thumbnails share single-line middle truncation. */
+.cap-catalog-file-grid .result-file-card-name,
+.cap-catalog-file-grid .cap-catalog-thumbnail-name { display: flex; justify-content: center; align-items: center; height: 28px; line-height: 28px; padding: 0 6px; box-sizing: border-box; overflow: hidden; white-space: nowrap; font-size: 11px; }
+
 /* Both catalog layouts retain captions and selection without changing card geometry. */
 .cap-catalog-file-grid.is-square .thumbnail-image-frame { bottom: 28px; }
 .cap-catalog-file-grid.is-square .thumbnail-image-frame > canvas { object-fit: contain; }
@@ -45,7 +49,7 @@
 .cap-catalog-file-grid.is-gallery .thumb.selected { outline: 2px solid var(--cap-stable-text); outline-offset: -2px; }
 .cap-catalog-file-grid.is-gallery .thumb.selected::after { background: transparent; }
 .cap-catalog-file-grid.is-gallery .result-file-card { padding-bottom: 28px; }
-.cap-catalog-file-grid.is-gallery .result-file-card-name { position: absolute; bottom: 0; left: 0; right: 0; min-height: 28px; line-height: 28px; padding: 0 6px; box-sizing: border-box; white-space: nowrap; color: var(--cap-stable-text-muted); background: color-mix(in srgb,var(--cap-stable-surface) 65%,transparent); }
+.cap-catalog-file-grid.is-gallery .result-file-card-name { position: absolute; bottom: 0; left: 0; right: 0; height: 28px; color: var(--cap-stable-text-muted); background: color-mix(in srgb,var(--cap-stable-surface) 65%,transparent); }
 .cap-catalog-file-grid.is-gallery .thumb.selected .result-file-card-name { color: var(--cap-stable-text); background: var(--cap-stable-surface); }
 
 .cap-catalog-thumbnail-name { z-index: 3; }
