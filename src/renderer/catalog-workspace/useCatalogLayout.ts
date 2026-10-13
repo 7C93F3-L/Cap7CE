@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 
+const defaultSidebarWidth = 156;
+
 export function useCatalogLayout() {
-  const [width, setWidth] = useState(156);
+  const [width, setWidth] = useState(defaultSidebarWidth);
   const [filtersVisible, setFiltersVisible] = useState(true);
   const [detailsVisible, setDetailsVisible] = useState(true);
   const [metadataOpen, setMetadataOpen] = useState(false);
@@ -27,6 +29,7 @@ export function useCatalogLayout() {
   return { width, collapsed: width < 90, filtersVisible, detailsVisible, metadataOpen,
     toggleFilters: () => setFiltersVisible(value => !value), toggleDetails: () => setDetailsVisible(value => !value),
     toggleMetadata: () => setMetadataOpen(value => !value), startResize,
+    resetWidth: () => { drag.current = null; setWidth(clamp(defaultSidebarWidth)); },
     resizeKey: (key: string) => { if (key === "ArrowLeft" || key === "ArrowRight") setWidth(value => clamp(value + (key === "ArrowLeft" ? -16 : 16))); },
-    toggleWidth: () => setWidth(value => value < 90 ? 156 : 52) };
+    toggleWidth: () => setWidth(value => value < 90 ? defaultSidebarWidth : 52) };
 }

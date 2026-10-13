@@ -19,6 +19,6 @@ export default function CatalogSidebar({ layout, favorites, onSettings }: {
     <div className="cap-catalog-sidebar-bottom">
       <button type="button" title={t("window.openSettings")} aria-label={t("window.openSettings")} onClick={onSettings}><StableUiIcon name="settings" /><span className="cap-catalog-settings-label">{t("window.openSettings")}</span></button></div>
     <div className="cap-catalog-resizer" role="separator" aria-label="目录栏宽度" aria-orientation="vertical" aria-valuenow={Math.round(layout.width)} aria-valuemin={52} aria-valuemax={320}
-      tabIndex={0} onPointerDown={layout.startResize} onKeyDown={event => { if (event.key.startsWith("Arrow")) { event.preventDefault(); layout.resizeKey(event.key); } }} />
+      tabIndex={0} onPointerDown={layout.startResize} onDoubleClick={layout.resetWidth} onKeyDown={event => { if (event.key.startsWith("Arrow")) { event.preventDefault(); layout.resizeKey(event.key); } }} />
   </aside>;
 }
