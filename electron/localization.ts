@@ -1,6 +1,7 @@
 import { enUS } from "./locales/en-US";
 
 export const zhCN = {
+  "catalogWorkspace.gridSaveFailed": "网格配置未能读取或保存，请稍后再试。",
   "catalogWorkspace.localDisk": "本地磁盘",
   "catalogWorkspace.volumeUnavailable": "尚不可浏览",
   "catalogWorkspace.newTab": "新标签页",

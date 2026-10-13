@@ -4,6 +4,7 @@ export interface CatalogWorkspaceContext {
   scopePath: string | null;
   name: string;
   displayName?: string;
+  favoritePath?: string | null;
 }
 export interface CatalogWorkspaceState {
   contexts: CatalogWorkspaceContext[];

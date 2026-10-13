@@ -1,6 +1,7 @@
 import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
+  "catalogWorkspace.gridSaveFailed": "Grid preferences could not be read or saved. Please try again later.",
   "catalogWorkspace.localDisk": "Local Disk",
   "catalogWorkspace.volumeUnavailable": "Not ready to browse",
   "catalogWorkspace.newTab": "New tab",

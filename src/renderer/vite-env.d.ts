@@ -157,6 +157,8 @@ declare global {
         updateSelected: (selectedModelId: string) => Promise<GgufModelSettings>;
       };
       preferences: {
+        getCatalogGrid: () => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridPreferenceMap>;
+        updateCatalogGrid: (scopePath: string | null, mode: import("../shared/catalogGridPreferenceTypes").CatalogGridMode) => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridPreferenceMap>;
         get: () => Promise<UserPreferences>;
         updateTheme: (themePreference: UserPreferences["themePreference"]) => Promise<UserPreferences>;
         updateWindowMaterial: (material: UserPreferences["windowMaterial"]) => Promise<UserPreferences>;

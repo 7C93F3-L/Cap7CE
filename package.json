@@ -78,7 +78,7 @@
     "test:search-ipc": "node tests/search-ipc.integration.cjs",
     "test:diagnostics-ipc": "node tests/diagnostics-ipc.integration.cjs",
     "test:runtime-diagnostics": "node tests/runtime-diagnostics.integration.cjs",
-    "test:preference-ipc": "node tests/preference-ipc.integration.cjs",
+    "test:preference-ipc": "node tests/preference-ipc.integration.cjs && node tests/catalog-grid-preferences.integration.cjs && electron tests/catalog-grid-preference-view.integration.cjs",
     "test:cache-activity-ipc": "node tests/cache-activity-ipc.integration.cjs",
     "test:cache-clear-ipc": "node tests/cache-clear-ipc.integration.cjs",
     "test:ai-search-ipc": "node tests/ai-search-ipc.integration.cjs",

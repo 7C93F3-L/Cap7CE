@@ -51,6 +51,8 @@ const run = async () => {
   });
 
   assert.deepEqual([...handles.keys()], [
+    "preferences:getCatalogGrid",
+    "preferences:updateCatalogGrid",
     "preferences:get",
     "preferences:updateSkimSort",
     "preferences:updateCommandEnabled",

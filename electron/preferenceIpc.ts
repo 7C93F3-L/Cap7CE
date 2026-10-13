@@ -1,5 +1,6 @@
 import type { UserPreferencesResponse } from "./preferenceStore";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
+import { registerCatalogGridPreferenceIpc } from "./catalogGridPreferenceIpc";
 
 type PreferenceUpdater<T> = (value: T) => Promise<UserPreferencesResponse>;
 type ThemePreference = UserPreferencesResponse["themePreference"];
@@ -68,6 +69,7 @@ export const registerPreferenceIpc = ({
   setAutoCacheOptimizationEnabled,
   scheduleAutoCacheOptimization
 }: PreferenceIpcDependencies): void => {
+  registerCatalogGridPreferenceIpc(registrar);
   const updateAndBroadcast = async (operation: Promise<UserPreferencesResponse>) => {
     const preferences = await operation;
     broadcastPreferencesChanged(preferences);

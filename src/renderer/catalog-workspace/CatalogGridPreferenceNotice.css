@@ -1,0 +1,1 @@
+.cap-catalog-grid-preference-notice { position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 45; padding: 12px; border-radius: 10px; color: var(--cap-stable-text); background: color-mix(in srgb, var(--cap-stable-surface) 78%, black); pointer-events: none; }

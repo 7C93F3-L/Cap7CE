@@ -6,7 +6,7 @@ const pathKey = (value: string | null) => value?.replace(/\//g, "\\").replace(/\
 export type CatalogWorkspaceAction =
   | { type: "open"; scopePath: string | null; name: string; kind?: "search" | "browse" }
   | { type: "new-tab"; scopePath: string | null; name: string }
-  | { type: "replace"; scopePath: string | null; name: string }
+  | { type: "replace"; scopePath: string | null; name: string; favoritePath?: string | null }
   | { type: "location"; id: string; path: string | null }
   | { type: "select" | "close"; id: string }
   | { type: "favorite-names"; directories: readonly FavoriteDirectory[] }
@@ -20,7 +20,7 @@ export function createCatalogWorkspace(name: string): CatalogWorkspaceState {
 // query, filters, selection and scroll; removing a shortcut cannot retire that view.
 export function catalogWorkspaceReducer(state: CatalogWorkspaceState, action: CatalogWorkspaceAction): CatalogWorkspaceState {
   if (action.type === "replace") {
-    const context = { id: `catalog:${state.nextId}`, kind: "search" as const, scopePath: action.scopePath, name: action.name };
+    const context = { id: `catalog:${state.nextId}`, kind: "search" as const, scopePath: action.scopePath, name: action.name, favoritePath: action.favoritePath ?? null };
     return { ...state, contexts: state.contexts.map(value => value.id === state.activeId ? context : value),
       activeId: context.id, nextId: state.nextId + 1, openLimitReached: false };
   }

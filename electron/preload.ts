@@ -274,6 +274,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateSelected: (selectedModelId: string) => ipcRenderer.invoke("ggufModels:updateSelected", selectedModelId)
   },
   preferences: {
+    getCatalogGrid: () => ipcRenderer.invoke("preferences:getCatalogGrid"),
+    updateCatalogGrid: (scopePath: string | null, mode: "square" | "gallery") => ipcRenderer.invoke("preferences:updateCatalogGrid", scopePath, mode),
     get: () => ipcRenderer.invoke("preferences:get"),
     updateTheme: (themePreference: "system" | "light" | "dark") => ipcRenderer.invoke("preferences:updateTheme", themePreference),
     updateWindowMaterial: (material: "acrylic" | "mica") => ipcRenderer.invoke("preferences:updateWindowMaterial", material),

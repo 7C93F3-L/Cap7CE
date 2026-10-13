@@ -7,10 +7,11 @@ export function useCatalogWorkspaceContexts(directories: readonly FavoriteDirect
   const [state, dispatch] = useReducer(catalogWorkspaceReducer, undefined, () => createCatalogWorkspace(t("favorites.allFiles")));
   useEffect(() => { dispatch({ type: "favorite-names", directories }); }, [directories]);
   const open = useCallback((directory: FavoriteDirectory | null) => dispatch({
-    type: "replace", scopePath: directory?.path ?? null, name: directory?.name ?? t("favorites.allFiles")
+    type: "replace", scopePath: directory?.path ?? null, name: directory?.name ?? t("favorites.allFiles"), favoritePath: directory?.path ?? null
   }), []);
   const openBrowser = useCallback((path: string | null) => dispatch({ type: "replace", scopePath: path,
-    name: path ? path.replace(/\\+$/, "").split(/[/\\]/).pop() || path : t("favorites.allFiles") }), []);
+    favoritePath: state.contexts.find(context => context.id === state.activeId)?.favoritePath ?? null,
+    name: path ? path.replace(/\\+$/, "").split(/[/\\]/).pop() || path : t("favorites.allFiles") }), [state.contexts, state.activeId]);
   const location = useCallback((id: string, path: string | null) => dispatch({ type: "location", id, path }), []);
   const select = useCallback((id: string) => dispatch({ type: "select", id }), []);
   const close = useCallback((id: string) => dispatch({ type: "close", id }), []);
