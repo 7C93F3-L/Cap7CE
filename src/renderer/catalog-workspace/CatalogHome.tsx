@@ -9,8 +9,8 @@ import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal"
 import { useCatalogDrives } from "./useCatalogDrives";
 import "./CatalogHome.css";
 
-export default function CatalogHome({ onOpen, gridMode, foreground = true, refreshVersion = 0 }: {
-  onOpen: (path: string) => void; gridMode: CatalogGridMode; foreground?: boolean; refreshVersion?: number;
+export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foreground = true, refreshVersion = 0 }: {
+  onOpen: (path: string) => void; gridMode: CatalogGridMode; gridSize?: number; foreground?: boolean; refreshVersion?: number;
 }) {
   const [locations, setLocations] = useState<SkimLocationShortcut[]>([]);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
@@ -36,7 +36,7 @@ export default function CatalogHome({ onOpen, gridMode, foreground = true, refre
   })), [systemDrives.entries]);
   const system = useMemo<CatalogHomeEntry[]>(() => locations.filter(location => location.kind !== "computer" && location.path)
     .map(location => ({ id: location.id, path: location.path!, name: resolveLocationLabel(location), icon: locationIcons[location.kind] })), [locations]);
-  const group = { rootRef, mode: gridMode, selectedPath, onSelect: setSelectedPath, onOpen };
+  const group = { rootRef, mode: gridMode, size: gridSize, selectedPath, onSelect: setSelectedPath, onOpen };
   return <section ref={rootRef} className="cap-catalog-home" onClick={dismissSelection}>
     {(failed || systemDrives.failed) && <button type="button" onClick={() => setRetry(value => value + 1)}>{t("common.retry")}</button>}
     <div className="cap-skim-root-sections">

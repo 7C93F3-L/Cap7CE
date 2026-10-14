@@ -26,12 +26,13 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", emptyHint, onSelectionChange }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", gridSize = 100, emptyHint, onSelectionChange }: {
   controller: ComputerSearchController;
   emptyHint?: string;
   foreground?: boolean;
   onOpenDirectory?: (path: string) => void;
   gridMode?: CatalogGridMode;
+  gridSize?: number;
   onSelectionChange?: (selection: CatalogSelection) => void;
   theme: ResolvedThemeMode;
   appearanceColors: AppearanceColors;
@@ -103,7 +104,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     ref={scrollContainerRef}
     onClick={dismissSelection}
   >
-    <CatalogVirtualGrid items={items} mode={gridMode} rootRef={scrollContainerRef} renderItem={(item, style, onRatio) => {
+    <CatalogVirtualGrid items={items} mode={gridMode} size={gridSize} rootRef={scrollContainerRef} renderItem={(item, style, onRatio) => {
       const selected = actions.selectedIds.has(item.authorizationId);
       const active = actions.activeId === item.authorizationId;
       return <CatalogResultTile item={item} visual={{ taskId, scrollContainerRef, foreground, showName: true }}

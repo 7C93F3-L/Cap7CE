@@ -46,6 +46,8 @@ app.whenReady().then(async()=>{
   await click(tile(3),{shiftKey:true});assert.equal(await count(),1,'clearing also resets range anchor');
   await click('.cap-catalog-brand');assert.equal(await count(),0,'sidebar clears files');
   await click(tile(0));await click('.cap-catalog-details-name');assert.equal(await count(),1,'details content preserves selection');
+  await click('.cap-catalog-size-toggle');await ready("document.querySelector('.cap-catalog-size-flyout input')");assert.equal(await count(),1,'view size control preserves selected files');
+  await escape('.cap-catalog-size-flyout input');assert.equal(await count(),1,'first Escape closes view size popup without clearing selection');
   await click('.cap-catalog-details button');await ready('probe.opened.length===1');assert.equal(await count(),1,'details preview button works without clearing');
   await run(`document.querySelector(${JSON.stringify(tile(0))}).dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:40,clientY:70}))`);
   await ready("document.querySelector('[data-context-menu]')");

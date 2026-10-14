@@ -18,7 +18,7 @@ import CatalogAttributeNotice from "./CatalogAttributeNotice";
 import CatalogHome from "./CatalogHome";
 import { useCatalogViewOptions, useCatalogRefresh } from "./useCatalogToolbarState";
 import { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailability";
-import { useCatalogGridPreference } from "./useCatalogGridPreference";
+import { useCatalogGridPresentation } from "./useCatalogGridPresentation";
 import CatalogGridPreferenceNotice from "./CatalogGridPreferenceNotice";
 export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, ...appearance }: CatalogWorkspaceAppearance & {
   onMetadata: () => void;
@@ -34,7 +34,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   const querySetter = useRef<(value: string) => void>(() => {});
   const clearQuery = useCallback(() => querySetter.current(""), []);
   const navigation = useCatalogDirectoryNavigation(context.scopePath, clearQuery, context.kind === "browse");
-  const grid = useCatalogGridPreference(context.favoritePath ?? null, navigation.path), gridMode = grid.mode;
+  const grid = useCatalogGridPresentation(context.favoritePath ?? null, navigation.path), gridMode = grid.mode;
   useEffect(() => setSelection(null), [navigation.path]);
   const openDirectory = navigation.open;
   const toggleBrowser = useCallback(() => onOpenBrowser(navigation.path), [onOpenBrowser, navigation.path]);
@@ -75,13 +75,13 @@ export default function CatalogContextView({ context, selected, foreground, filt
       sort={view.sort} onSort={view.setSort} showHidden={view.showHidden} onShowHidden={view.toggleHidden}
       onOpen={openDirectory} onHome={home} inputRef={inputRef}
       searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
-      onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} />
+      onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
     <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
-      ? <CatalogHome onOpen={openDirectory} gridMode={gridMode} foreground={foreground} refreshVersion={refresh.version} />
-      : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
+      ? <CatalogHome onOpen={openDirectory} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} />
+      : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
     {attributes.relevant && <CatalogAttributeNotice key={JSON.stringify([navigation.path, attributes.message])} message={attributes.message} onMetadata={onMetadata} />}
     {grid.error && <CatalogGridPreferenceNotice onDismiss={grid.dismissError} />}
   </section>;

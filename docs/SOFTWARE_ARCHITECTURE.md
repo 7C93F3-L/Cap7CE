@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+CatalogGridSizeControl在网格切换左侧复用StableSidebarFlyout展示50%–200%滑块；仅导入FontSizeSetting.css复用轨道、圆形滑块和刻度的展示样式，主题变量由浮层适配，不依赖设置页状态。小/默认/大标记对应50%/100%/200%，不设独立恢复按钮。尺寸浮层不因网格自身滚动调整而关闭，其他菜单保留原有滚动关闭行为。useCatalogGridSizePreference按帧合并预览，只在交互提交时保存；useCatalogGridPresentation组合模式与大小，沿用同一收藏/此电脑范围和底部失败提示。useCatalogScopedPreference共享初次读取、串行确认和迟到失败围栏；CatalogGridPreferenceStore按校验器复用原子写入，模式仍保存在catalog-grid.json，大小独立保存在catalog-grid-sizes.json，不迁移旧配置或索引。
+
+catalogGridLayout按百分比调整方形目标边长、原比例目标图像高度及紧凑卡片；紧凑高度受视口限制，名称区与间距不缩放。useCatalogGridSizeAnchor仅在单一结果网格调节大小时按首个可见项保持滚动位置，并在绘制前同步虚拟视口；多分组首页不竞争调整同一个滚动容器。布局变化不进入Core查询条件、不新增源读取或缓存策略，缩略图继续按既有视口授权加载。
+
 `CatalogWorkspaceContext.favoritePath`保留页面的收藏入口身份；`useCatalogGridPreference`按此电脑或收藏根路径读取和手动保存网格模式，在收藏内部导航共用该收藏配置，离开收藏范围使用此电脑配置。配置通过独立`catalogGridPreferenceIpc`接入现有preferences桥，`CatalogGridPreferenceStore`串行合并单项修改并原子替换用户配置目录中的catalog-grid.json，路径大小写、分隔符与末尾斜线统一；不修改通用preferences.json、索引或缓存。初次读取不覆盖已手动修改的模式，迟到失败不能撤销较新的选择；失败由独立底部临时浮层提示。
 
 `useCatalogDrives`只在首页挂载、主动刷新或用户重试时，通过既有`skim.read`的空路径分支直接读取系统磁盘与卷标。CatalogHome以系统根路径作为卡片身份和导航路径，不接收Core卷列表，Core未启动或索引不可用时仍展示系统磁盘；进入目录继续复用原有Core导航与授权查询。未增加IPC或索引扫描。卸载取消在途读取并拒绝迟到结果，读取失败保留已有卡片并提供重试，成功刷新替换列表以反映磁盘增减，空卷标使用本地化的本地磁盘名称。
@@ -8,7 +12,7 @@ CatalogDirectoryToolbar的导航、刷新和地址转换复用当前页面动作
 
 统一Catalog网格名称通过独立`CatalogName`展示，`CatalogIconVisual`与缩略图名称复用同一单行组件及领域样式，首页系统位置、盘符、目录和文件保持一致。名称区固定28px；`ResizeObserver`只跟踪已挂载名称的宽度，按实际字体测量交给纯函数`catalogNameLabel`分配首尾空间，文件优先保留扩展名，目录不解释扩展名。完整名称保留title，卸载断开观察，不轮询、不改变网格几何、缩略图请求或旧Skim及其他名称组件。
 
-`catalogJustifiedRows`是原比例网格的纯几何计算：以200px图像高度为目标，根据行内比例和8px间距拟合可用宽度，名称区固定28px。完整行两端对齐，各行高度独立；不足一行不放大。沿用已有极端比例限制及contain展示。`catalogGridLayout`继续负责方形/紧凑布局和可见范围，原比例分支按实际卡片底边二分查找，适应可变行高。缩略图仍只在可见时解码及报告比例，没有新增文件读取、预取或持久缓存。
+`catalogJustifiedRows`是原比例网格的纯几何计算：默认以200px图像高度为目标，按用户视图大小缩放，根据行内比例和8px间距拟合可用宽度，名称区固定28px。完整行两端对齐，各行高度独立；不足一行不放大。沿用已有极端比例限制及contain展示。`catalogGridLayout`继续负责方形/紧凑布局和可见范围，原比例分支按实际卡片底边二分查找，适应可变行高。缩略图仍只在可见时解码及报告比例，没有新增文件读取、预取或持久缓存。
 
 `useGridSelectionDismissal`只处理前台网格的选择取消事件，首页与文件结果共用该Hook。共享`CatalogTile`提供既有`data-result-tile`标记，详情通过`data-selection-preserve`保留当前操作对象；文档捕获阶段的左键事件排除卡片、详情、菜单、窗口控件和设置。Esc在菜单或输入处理后取消选择，卸载及后台移除监听，不新增轮询。文件选择仍由`useComputerSearchResultActions`持有，取消同步重置当前项及多选锚点；详情继续复用授权预览动作，未增加文件或跨进程入口。
 

@@ -158,6 +158,8 @@ declare global {
       };
       preferences: {
         getCatalogGrid: () => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridPreferenceMap>;
+        getCatalogGridSize: () => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridSizePreferenceMap>;
+        updateCatalogGridSize: (scopePath: string | null, size: number) => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridSizePreferenceMap>;
         updateCatalogGrid: (scopePath: string | null, mode: import("../shared/catalogGridPreferenceTypes").CatalogGridMode) => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridPreferenceMap>;
         get: () => Promise<UserPreferences>;
         updateTheme: (themePreference: UserPreferences["themePreference"]) => Promise<UserPreferences>;

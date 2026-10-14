@@ -6,14 +6,16 @@ import CatalogToolbarViewControls from "./CatalogToolbarViewControls";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import type { ComputerSearchSort } from "../../shared/computerSearchFactTypes";
 import type { CatalogGridMode } from "../../shared/catalogPresentationTypes";
+import CatalogGridSizeControl from "./CatalogGridSizeControl";
 
 export default function CatalogDirectoryToolbar({ path, canBack, canForward, canUp, onBack, onForward, onUp, onOpen, onHome,
-  searchMode, onSearchMode, query, onQuery, onSubmit, enabled, inputRef, gridMode, onGridMode, onRefresh, refreshing, sort, onSort, showHidden, onShowHidden }: {
+  searchMode, onSearchMode, query, onQuery, onSubmit, enabled, inputRef, gridMode, onGridMode, gridSize = 100, onGridSize, onGridSizeCommit, onRefresh, refreshing, sort, onSort, showHidden, onShowHidden }: {
   path: string | null; canBack: boolean; canForward: boolean; canUp: boolean;
   onBack: () => void; onForward: () => void; onUp: () => void; onOpen: (path: string) => void; onHome: () => void;
   searchMode: boolean; onSearchMode: () => void; query: string; onQuery: (value: string) => void;
   onSubmit: () => void; enabled: boolean; inputRef: MutableRefObject<HTMLInputElement | null>;
   gridMode: CatalogGridMode; onGridMode: () => void; onRefresh: () => void; refreshing: boolean;
+  gridSize?: number; onGridSize?: (size: number) => void; onGridSizeCommit?: (size: number, force?: boolean) => void;
   sort: ComputerSearchSort; onSort: (sort: ComputerSearchSort) => void; showHidden: boolean; onShowHidden: () => void;
 }) {
   const [editing, setEditing] = useState(false), [draft, setDraft] = useState(path ?? "");
@@ -37,6 +39,7 @@ export default function CatalogDirectoryToolbar({ path, canBack, canForward, can
         {parts.map((part, index) => <span key={index}><i>›</i><button type="button" onClick={() => onOpen(parts.slice(0, index + 1).join("\\") + (index === 0 ? "\\" : ""))}>{part}</button></span>)}
       </div>}
     {!searchMode && query.trim() && <button type="button" className="cap-catalog-search-badge" title={query} onClick={onSearchMode}>搜索中</button>}
+    {onGridSize && onGridSizeCommit && <CatalogGridSizeControl size={gridSize} onPreview={onGridSize} onCommit={onGridSizeCommit} />}
     <button type="button" className="cap-catalog-grid-toggle" onClick={onGridMode} title={gridMode === "square" ? "切换为原比例网格" : "切换为方形网格"}><CatalogToolbarIcon name="grid" /><span>网格切换</span></button>
     <CatalogToolbarViewControls sort={sort} onSort={onSort} showHidden={showHidden} onShowHidden={onShowHidden} />
   </form>;

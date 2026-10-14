@@ -21,7 +21,7 @@
 }
 .cap-catalog-file-grid .result-file-card,
 .cap-catalog-file-grid .result-file-card-name { color: var(--cap-stable-text); }
-.cap-catalog-file-grid .result-file-card-icon { width: clamp(38px, 33.6%, 58px); height: clamp(38px, 33.6%, 58px); }
+.cap-catalog-file-grid .result-file-card-icon { width: clamp(calc(38px * var(--cap-grid-icon-scale,1)), 33.6%, calc(58px * var(--cap-grid-icon-scale,1))); height: clamp(calc(38px * var(--cap-grid-icon-scale,1)), 33.6%, calc(58px * var(--cap-grid-icon-scale,1))); }
 .cap-catalog-file-grid .thumbnail-image-frame { overflow: hidden; }
 .cap-catalog-file-grid .thumbnail-image-frame > canvas { width: 100%; height: 100%; display: block; transition: transform 160ms ease-out; }
 .cap-catalog-file-grid .thumb:hover .thumbnail-image-frame > canvas,
@@ -60,5 +60,5 @@
 .cap-catalog-file-grid .thumb.selected .cap-catalog-thumbnail-name,
 .cap-catalog-file-grid.is-gallery .thumb.selected .result-file-card-name { background: var(--cap-catalog-caption-solid); color: var(--cap-catalog-caption-selected); }
 .cap-catalog-file-grid.is-gallery .thumb.selected::after { inset: 0; border: 2px solid var(--cap-catalog-caption-selected); border-radius: inherit; opacity: 1; box-sizing: border-box; z-index: 4; }
-.cap-catalog-file-grid.is-virtual { position: relative; display: block; flex-shrink: 0; }
+.cap-catalog-file-grid.is-virtual { position: relative; display: block; flex-shrink: 0; overflow-anchor: none; }
 .cap-catalog-file-grid.is-virtual > .thumb { margin: 0; }
