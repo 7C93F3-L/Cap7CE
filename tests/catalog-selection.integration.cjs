@@ -6,7 +6,7 @@ const fixture=String.raw`
 import React,{useState} from 'react';import {createRoot} from 'react-dom/client';
 import CatalogWorkspace from './src/renderer/catalog-workspace/CatalogWorkspace';
 const noop=()=>{},p=window.probe={opened:[],copied:[]};
-window.cap7ce={settingsWindow:{onMetadataBuildRequested:()=>noop},skim:{listLocations:async()=>[]},
+window.cap7ce={settingsWindow:{onMetadataBuildRequested:()=>noop},skim:{listLocations:async()=>[],read:async r=>({taskId:r.taskId,cancelled:false,entries:[{kind:'drive',path:'X:\\'}]}),cancel:async()=>true},
  preview:{onNavigate:()=>noop,onClosed:()=>noop,open:async data=>{p.opened.push(data);return true}},favoriteDirectories:{list:async()=>[]},
  metadataBuild:{status:async()=>({volumes:[],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
  computerSearch:{status:async()=>({state:'ready',searchAvailable:true,catalogRevision:1,volumes:[{displayName:'X:',volumeId:'X:',state:'ready',queryable:true,processed:4,total:4}]}),onCatalogChanged:()=>noop,

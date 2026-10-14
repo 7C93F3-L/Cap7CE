@@ -9,13 +9,12 @@ import CatalogVirtualGrid from './src/renderer/computer-search/CatalogVirtualGri
 import CatalogResultTile from './src/renderer/computer-search/CatalogResultTile';
 import './src/renderer/results/ResultGrid.css';import './src/renderer/computer-search/ComputerSearchResultGrid.css';
 import './src/renderer/computer-search/ComputerSearch.css';
-window.probe={opens:[],thumbnailRequests:0};
-window.cap7ce={skim:{listLocations:async()=>Array.from({length:24},(_,index)=>({id:'system'+index,kind:'desktop',name:'Location '+index,path:'X:\\\\Location'+index}))}};
-const volumes=['X:','Y:','Z:','W:'].map(displayName=>({volumeId:displayName,displayName,queryable:true}));
+window.probe={opens:[],thumbnailRequests:0,driveNames:['X:','Y:','Z:','W:'],failRead:false};
+window.cap7ce={skim:{listLocations:async()=>Array.from({length:24},(_,index)=>({id:'system'+index,kind:'desktop',name:'Location '+index,path:'X:\\\\Location'+index})),read:async r=>{if(window.probe.failRead)throw Error('simulated system enumeration failure');return {taskId:r.taskId,cancelled:false,entries:window.probe.driveNames.map(name=>({kind:'drive',path:name+'\\\\'}))}},cancel:async()=>true}};
 const items=Array.from({length:4},(_,index)=>({id:'file'+index,authorizationId:'file-auth'+index,name:'sample.txt',path:'X:\\\\sample.txt',isDirectory:false,extension:'.txt',iconName:'format-txt'}));
-function Fixture(){const [mode,setMode]=useState('square'),fileRoot=useRef(null);return <>
+function Fixture(){const [mode,setMode]=useState('square'),[version,setVersion]=useState(0),fileRoot=useRef(null);window.probe.refresh=()=>setVersion(v=>v+1);return <>
 <button id="toggle" onClick={()=>setMode(value=>value==='square'?'gallery':'square')}>toggle</button>
-<div id="home" className="pane"><CatalogHome volumes={volumes} gridMode={mode} onOpen={path=>window.probe.opens.push(path)}/></div>
+<div id="home" className="pane"><CatalogHome refreshVersion={version} gridMode={mode} onOpen={path=>window.probe.opens.push(path)}/></div>
 <div id="files" className="pane"><section className="cap-computer-search-results" ref={fileRoot}>
 <CatalogVirtualGrid items={items} mode={mode} rootRef={fileRoot} renderItem={(item,style,onRatio)=><CatalogResultTile key={item.id}
 item={item} style={style} onRatio={onRatio} className="cap-computer-search-entry" selected active visual={{taskId:'fixture',scrollContainerRef:fileRoot,foreground:false,showName:true}}/>}/>
@@ -30,6 +29,8 @@ app.whenReady().then(async()=>{
   :root{--cap-stable-grid-page-padding:10px;--cap-stable-text:#eee;--panel-bg:#222;--cap-ui-font-secondary:11px;--cap-stable-section-font-size:12px}
   body{margin:0}#root{display:flex;gap:10px;padding-top:30px}.pane{position:relative;width:420px;height:min(270px,calc(100vh - 40px))}
   .cap-catalog-home{position:absolute;inset:0;overflow:auto;padding:10px;box-sizing:border-box}
+  /* Equal usable viewport widths isolate shared card geometry from native scrollbar reservation. */
+  .pane .cap-catalog-home,.pane .cap-computer-search-results{scrollbar-width:none}
   </style><link rel="stylesheet" href="fixture.css"><div id="root"></div><script src="fixture.js"></script>`);
   win=new BrowserWindow({show:false,width:950,height:750,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}});
   const run=code=>win.webContents.executeJavaScript(code),wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -55,7 +56,11 @@ app.whenReady().then(async()=>{
   win.setSize(950,330);
   await ready("getComputedStyle(document.querySelector('#home .cap-catalog-home')).overflowY==='hidden'&&document.querySelector('#home .thumb')?.getBoundingClientRect().height===138&&document.querySelector('#files .thumb')?.getBoundingClientRect().height===138");
   assert.deepEqual(await geometry('#home .thumb'),await geometry('#files .thumb'),'compact horizontal geometry matches');
-  console.log('Home and file grids: shared square/gallery/compact geometry, captions, selection, opening, scrolled groups and collapse passed.');
+  await run("probe.failRead=true;probe.refresh()");await ready("document.querySelector('#home .cap-catalog-home > button')");
+  assert.equal(await run("document.querySelector('#home .cap-skim-root-group:last-child .cap-catalog-file-grid').dataset.totalCount"),'4','failed refresh preserves known system drives');
+  await run("probe.failRead=false;probe.driveNames=['X:'];document.querySelector('#home .cap-catalog-home > button').click()");
+  await ready("!document.querySelector('#home .cap-catalog-home > button')&&document.querySelector('#home .cap-skim-root-group:last-child .cap-catalog-file-grid').dataset.totalCount==='1'");
+  console.log('Home and file grids: shared geometry, selection/navigation, Core-independent system drives, failed refresh preservation and retry/removal passed.');
  }catch(error){console.error(error.stack);if(win&&!win.isDestroyed())console.error(await win.webContents.executeJavaScript('({height:innerHeight,media:matchMedia("(max-height:359.98px)").matches,overflow:getComputedStyle(document.querySelector(".cap-catalog-home")).overflowY,tiles:[...document.querySelectorAll(".thumb")].map(x=>({parent:x.closest(".pane").id,width:x.getBoundingClientRect().width,height:x.getBoundingClientRect().height}))})').catch(()=>null));process.exitCode=1}
  finally{win?.destroy();if(path.dirname(path.resolve(root))!==path.resolve(os.tmpdir()))throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}
 });
