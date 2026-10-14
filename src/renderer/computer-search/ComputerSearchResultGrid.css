@@ -22,6 +22,7 @@
 .cap-catalog-file-grid .result-file-card,
 .cap-catalog-file-grid .result-file-card-name { color: var(--cap-stable-text); }
 .cap-catalog-file-grid .result-file-card-icon { width: clamp(38px, 33.6%, 58px); height: clamp(38px, 33.6%, 58px); }
+.cap-catalog-file-grid .thumbnail-image-frame { overflow: hidden; }
 .cap-catalog-file-grid .thumbnail-image-frame > canvas { width: 100%; height: 100%; display: block; transition: transform 160ms ease-out; }
 .cap-catalog-file-grid .thumb:hover .thumbnail-image-frame > canvas,
 .cap-catalog-file-grid .thumb:focus-visible .thumbnail-image-frame > canvas,
