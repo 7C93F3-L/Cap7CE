@@ -7,7 +7,7 @@ export function useCatalogWorkspaceContexts(directories: readonly FavoriteDirect
   const [state, dispatch] = useReducer(catalogWorkspaceReducer, undefined, () => createCatalogWorkspace(t("favorites.allFiles")));
   useEffect(() => { dispatch({ type: "favorite-names", directories }); }, [directories]);
   const open = useCallback((directory: FavoriteDirectory | null) => dispatch({
-    type: "replace", scopePath: directory?.path ?? null, name: directory?.name ?? t("favorites.allFiles"), favoritePath: directory?.path ?? null
+    type: "entry", scopePath: directory?.path ?? null, name: directory?.name ?? t("favorites.allFiles")
   }), []);
   const openBrowser = useCallback((path: string | null) => dispatch({ type: "replace", scopePath: path,
     favoritePath: state.contexts.find(context => context.id === state.activeId)?.favoritePath ?? null,

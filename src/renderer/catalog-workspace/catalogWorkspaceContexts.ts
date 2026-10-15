@@ -5,7 +5,7 @@ export const maximumCatalogContexts = 32;
 const pathKey = (value: string | null) => value?.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase() ?? null;
 export type CatalogWorkspaceAction =
   | { type: "open"; scopePath: string | null; name: string; kind?: "search" | "browse" }
-  | { type: "new-tab"; scopePath: string | null; name: string }
+  | { type: "new-tab" | "entry"; scopePath: string | null; name: string }
   | { type: "replace"; scopePath: string | null; name: string; favoritePath?: string | null }
   | { type: "location"; id: string; path: string | null }
   | { type: "select" | "close"; id: string }
@@ -13,19 +13,26 @@ export type CatalogWorkspaceAction =
   | { type: "dismiss-limit" };
 
 export function createCatalogWorkspace(name: string): CatalogWorkspaceState {
-  return { contexts: [{ id: "catalog:all", kind: "search", scopePath: null, name }], activeId: "catalog:all", nextId: 1, openLimitReached: false, homeName: name };
+  return { contexts: [{ id: "catalog:all", kind: "search", scopePath: null, favoritePath: null, name }], activeId: "catalog:all", nextId: 1, openLimitReached: false, homeName: name };
 }
 
 // Context identity is independent of a saved favorite. Each mounted view owns its
 // query, filters, selection and scroll; removing a shortcut cannot retire that view.
 export function catalogWorkspaceReducer(state: CatalogWorkspaceState, action: CatalogWorkspaceAction): CatalogWorkspaceState {
+  if (action.type === "entry") {
+    const existing = state.contexts.find(context => pathKey(context.favoritePath ?? null) === pathKey(action.scopePath));
+    if (existing) return { ...state, activeId: existing.id, openLimitReached: false };
+    const context = { id: `catalog:${state.nextId}`, kind: "search" as const, scopePath: action.scopePath, favoritePath: action.scopePath, name: action.name }, slot = action.scopePath === null ? -1 : state.contexts.findIndex(value => value.favoritePath != null);
+    return { ...state, contexts: slot < 0 ? [...state.contexts, context] : state.contexts.map((value, index) => index === slot ? context : value),
+      activeId: context.id, nextId: state.nextId + 1, openLimitReached: false };
+  }
   if (action.type === "replace") {
     const context = { id: `catalog:${state.nextId}`, kind: "search" as const, scopePath: action.scopePath, name: action.name, favoritePath: action.favoritePath ?? null };
     return { ...state, contexts: state.contexts.map(value => value.id === state.activeId ? context : value),
       activeId: context.id, nextId: state.nextId + 1, openLimitReached: false };
   }
   if (action.type === "open" || action.type === "new-tab") {
-    const kind = action.type === "new-tab" ? (action.scopePath ? "browse" : "search") : action.kind ?? "search";
+    const kind = action.type === "open" ? action.kind ?? "search" : (action.scopePath ? "browse" : "search");
     const existing = action.type === "open" && state.contexts.find(context => context.kind === kind && pathKey(context.scopePath) === pathKey(action.scopePath));
     if (existing) return { ...state, activeId: existing.id, openLimitReached: false };
     if (state.contexts.length >= maximumCatalogContexts || !Number.isSafeInteger(state.nextId + 1))

@@ -3,23 +3,23 @@ const {app,BrowserWindow}=require('electron'),esbuild=require('esbuild');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'Cap7CE-navigation-'));
 app.setPath('userData',root+'-profile');
 const fixture=`
-import React from 'react';import {createRoot} from 'react-dom/client';
+import React from 'react';import {createRoot} from 'react-dom/client';import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';
 import CatalogWorkspace from './src/renderer/catalog-workspace/CatalogWorkspace';import {useCatalogWindowCommands} from './src/renderer/catalog-workspace/useCatalogWindowCommands';
 const noop=()=>{},probe=window.probe={requests:[],canceled:[],statusReads:0,locationReads:0,driveReads:0,building:true,attributesAvailable:false,colorsAvailable:false,forceEmpty:false};
 window.cap7ce={settingsWindow:{onMetadataBuildRequested:callback=>{probe.openMetadata=callback;return noop}},window:{onRefreshCurrentPageRequested:()=>noop,onFocusMainSearch:()=>noop,onActivateSkimRequested:()=>noop,onToggleSkimLocationPickerRequested:()=>noop,onActivateShellModeShortcut:()=>noop},skim:{listLocations:async()=>{probe.locationReads++;return []},read:async r=>{if(r.path!==null)throw Error('Home must only enumerate roots');probe.driveReads++;return {taskId:r.taskId,cancelled:false,entries:['X:','Y:'].map(name=>({kind:'drive',path:name+'\\\\',label:name==='X:'?'System':''}))}},cancel:async()=>true},preview:{onNavigate:()=>noop,onClosed:()=>noop},
 favoriteDirectories:{list:async()=>[{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}]},
 metadataBuild:{status:async()=>({volumes:[{volumeId:'X:',label:'X:'}],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
 computerSearch:{status:async()=>{probe.statusReads++;return ({state:probe.building?'starting':'ready',searchAvailable:!probe.building,catalogRevision:1,volumes:probe.building?[]:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:'ready',queryable:true,processed:2,total:2}))})},onCatalogChanged:()=>noop,
-search:async request=>{if(!/^[A-Za-z0-9_-]{1,128}$/.test(request.taskId))throw Error("invalid task identity");probe.requests.push(request);if(request.taskId.endsWith('_attribute')&&(!probe.attributesAvailable||(request.facts?.visualGroups&&!probe.colorsAvailable)))return {items:[],nextCursor:null};if(!request.taskId.endsWith('_attribute')&&probe.forceEmpty)return {items:[],nextCursor:null};const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
+search:async request=>{if(!/^[A-Za-z0-9_-]{1,128}$/.test(request.taskId))throw Error("invalid task identity");probe.requests.push(request);if(request.taskId.endsWith('_attribute')&&(!probe.attributesAvailable||(request.facts?.visualGroups&&!probe.colorsAvailable)))return {items:[],nextCursor:null};if(!request.taskId.endsWith('_attribute')&&probe.forceEmpty)return {items:[],nextCursor:null};if(probe.bulk&&request.scopePath==='X:\\\\Folder')return {items:Array.from({length:300},(_,i)=>({id:String(i),authorizationId:request.taskId+'_'+i,name:'file'+i+'.txt',path:request.scopePath+'\\\\file'+i+'.txt',isDirectory:false,extension:'.txt',iconName:'format-txt',canThumbnail:false,canShellPreview:false})),nextCursor:null};const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
 function Harness(){const commands=useCatalogWindowCommands(null);return <CatalogWorkspace onActiveActions={commands.reportActions} theme="dark" appearanceColors={{}} windowMaterial="none" onOpenSettings={noop}/>};createRoot(document.getElementById('root')).render(<Harness/>);
 `;
 app.whenReady().then(async()=>{
  let win;
  try{
-  const output=esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',write:false,
-    loader:{'.svg':'text','.css':'empty'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}}).outputFiles;
-  const js=output.find(file=>file.path.endsWith('.js'))??output[0];fs.writeFileSync(path.join(root,'fixture.js'),js.text);
-  fs.writeFileSync(path.join(root,'index.html'),'<div id="root"></div><script src="fixture.js"></script>');
+  const output=esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',write:false,outfile:path.join(root,'fixture.js'),
+    loader:{'.svg':'text'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}}).outputFiles;
+  const js=output.find(file=>file.path.endsWith('.js'))??output[0];fs.writeFileSync(path.join(root,'fixture.js'),js.text);fs.writeFileSync(path.join(root,'fixture.css'),output.find(file=>file.path.endsWith('.css')).text);
+  fs.writeFileSync(path.join(root,'index.html'),'<link rel="stylesheet" href="fixture.css"><div id="root"></div><script src="fixture.js"></script>');
   win=new BrowserWindow({show:false,width:1100,height:750,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}});
   const run=code=>win.webContents.executeJavaScript(code).catch(error=>{console.error("Failed renderer action:",code);throw error}),wait=ms=>new Promise(r=>setTimeout(r,ms));
   const ready=async code=>{for(let n=0;n<150;n++){if(await run(code))return;await wait(20)}throw Error('Timeout '+code)};
@@ -72,7 +72,7 @@ app.whenReady().then(async()=>{
   assert.equal(await run('probe.requests.length'),before,'layout controls never change query scope');
   await run("document.querySelector('.cap-favorite-row .cap-favorite-open').click()");
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Favorite'");
-  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),1,'ordinary favorite replaces current page');
+  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),2,'Computer and the current favorite retain independent scenes');
   assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'true','favorite defaults to search');
   assert.equal(await run(`${active}.querySelector('.cap-computer-search-grid').classList.contains('is-gallery')`),true);
   await run("document.querySelectorAll('.cap-catalog-layout-tools button')[1].click()");
@@ -86,8 +86,8 @@ app.whenReady().then(async()=>{
   assert.equal(await run("document.querySelectorAll('.cap-catalog-layout-tools button').length"),2,'only panel controls remain');
   assert.equal(await run("document.querySelectorAll('[role=tab],.cap-catalog-header').length"),0,'tab UI is removed');
   await run("document.querySelector('.cap-favorite-row .cap-favorite-open').dispatchEvent(new MouseEvent('click',{bubbles:true,ctrlKey:true}))");
-  await ready("document.querySelectorAll('[role=tabpanel]').length===1");
-  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),1,'modified favorite click retains a single current page');
+  await ready("document.querySelectorAll('[role=tabpanel]').length===2");
+  assert.equal(await run("document.querySelectorAll('[role=tabpanel]:not([hidden])').length"),1,'modified favorite click retains a single visible page');
   await goHome();
   await ready(`${active}.querySelector('.cap-catalog-home')`);
   await run("document.querySelectorAll('.cap-catalog-layout-tools button')[0].click()");
@@ -119,7 +119,41 @@ app.whenReady().then(async()=>{
   assert.equal(await run("document.querySelectorAll('.cap-metadata-build-slot.is-floating').length"),1,'repeated settings requests keep the original panel open');
   await run("document.querySelector('.cap-metadata-build-close').click()");
   await ready("!document.querySelector('.cap-metadata-build-slot.is-floating')");
-  console.log('Catalog design: current-page navigation, independent panels, sidebar width, favorite defaults, selection details, two grids and no tab UI passed.');
+
+  await run("probe.forceEmpty=false;probe.bulk=true;document.querySelector('.cap-favorite-directories > .cap-favorite-open').click()");
+  await goHome();await ready(`${active}.querySelector('.cap-catalog-home')`);await openDrive('X:');
+  await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`);
+  await ready(`${active}.querySelector('.cap-computer-search-grid')?.dataset.totalCount==='300'`);
+  const computerId=await run(`${active}.id`);
+  await run(`${active}.querySelector('.cap-catalog-view-controls > button').click()`);
+  await ready("document.querySelectorAll('.cap-stable-sidebar-flyout button').length===4");
+  await run("document.querySelectorAll('.cap-stable-sidebar-flyout button')[1].click()");
+  await ready("probe.requests.at(-1)?.sort==='name-descending'");
+  await run("if(document.querySelector('.cap-catalog-filter-host').hidden)document.querySelectorAll('.cap-catalog-layout-tools button')[0].click();document.querySelector('.cap-stable-file-size-options button').click()");
+  await ready("probe.requests.at(-1)?.fileConditions&&document.querySelector('.cap-catalog-filter-actions span').textContent==='1 项条件'");
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click()`);
+  await run(`(()=>{const input=${active}.querySelector('.cap-catalog-directory-toolbar input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'draft search');input.dispatchEvent(new Event('input',{bubbles:true}))})()`);
+  await run(`${active}.querySelector('.cap-computer-search-results').scrollTop=700`);
+  await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+  const scroll=await run(`${active}.querySelector('.cap-computer-search-results').scrollTop`);assert.ok(scroll>0);
+  const requests=await run('probe.requests.filter(r=>!r.taskId.endsWith("_attribute")).length');
+  await run("document.querySelector('.cap-favorite-row .cap-favorite-open').click()");
+  await ready(`${active}.id!==${JSON.stringify(computerId)}`);
+  await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+  await run("document.querySelector('.cap-favorite-directories > .cap-favorite-open').click()");
+  await ready(`${active}.id===${JSON.stringify(computerId)}`);
+  await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-directory-toolbar input').value`),'draft search','search mode and draft survive sidebar switching');
+  assert.equal(await run(`${active}.querySelector('.cap-computer-search-results').scrollTop`),scroll,'real CSS hiding preserves scroll position');
+  assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'1 项条件','filter state returns with its entry');
+  assert.ok(await run(`${active}.querySelector('.cap-catalog-view-controls > button').textContent.includes('降序')`),'sort state returns with its entry');
+  assert.equal(await run('probe.requests.filter(r=>!r.taskId.endsWith("_attribute")).length'),requests,'returning to an unchanged scene does not requery it');
+  assert.equal(await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[0].disabled`),false,'back history survives switching');
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click();${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[0].click()`);
+  await ready("probe.requests.at(-1)?.scopePath==='X:\\\\'");
+  await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[1].click()`);
+  await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Folder'");
+  console.log('Catalog navigation and independent browsing scene retention passed.');
 
  }catch(error){console.error(error.stack);process.exitCode=1}
  finally{win?.destroy();if(path.dirname(path.resolve(root))!==path.resolve(os.tmpdir()))throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}

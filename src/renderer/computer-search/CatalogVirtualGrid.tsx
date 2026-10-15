@@ -16,6 +16,7 @@ export default function CatalogVirtualGrid<T extends { id: string }>({ items, mo
     let frame = 0;
     const measure = () => {
       frame = 0;
+      if (!root.clientWidth || !root.clientHeight) return;
       const css = getComputedStyle(root), horizontal = css.overflowY === "hidden";
       const width = root.clientWidth - parseFloat(css.paddingLeft || "0") - parseFloat(css.paddingRight || "0");
       const grid = gridRef.current?.getBoundingClientRect(), bounds = root.getBoundingClientRect();

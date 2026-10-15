@@ -38,7 +38,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   return <section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
-      favorites={{ ...favorites, activePath: active.scopePath, globalActive: active.scopePath === null,
+      favorites={{ ...favorites, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
         onOpen: workspace.open, onChoose: () => void favorites.choose(), onRetry: () => void favorites.reload(),
         onRename: favorites.rename, onRemove: id => void favorites.remove(id), onMove: (id, direction) => void favorites.move(id, direction) }} />
     <div className="cap-catalog-filter-host" hidden={!layout.filtersVisible} ref={setFilterHost} />
