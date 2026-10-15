@@ -93,7 +93,7 @@ public sealed record CatalogQueryScope(
 public sealed record CatalogQueryCursorKey(
     string Name,
     string VolumeId,
-    string FileReference, long? ModifiedUtcTicks = null);
+    string FileReference, long? ModifiedUtcTicks = null, bool? IsDirectory = null);
 
 public enum CatalogQueryTextTarget { Name, Path, NameOrPath }
 public sealed record CatalogQueryRevision(long CatalogRevision, long? FactRevision = null);

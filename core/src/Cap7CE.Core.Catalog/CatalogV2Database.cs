@@ -545,8 +545,8 @@ public sealed class CatalogV2Database
         AppendScopeSql(sql, command, query.Scope);
         sql.Append("""
             ),
-            matched_keys(volume_id, file_reference, name, modified_utc_ticks) AS MATERIALIZED (
-            SELECT n.volume_id, n.file_reference, n.name, n.modified_utc_ticks
+            matched_keys(volume_id, file_reference, name, modified_utc_ticks, is_directory) AS MATERIALIZED (
+            SELECT n.volume_id, n.file_reference, n.name, n.modified_utc_ticks, n.is_directory
             """);
         FileFacts.FileFactQuerySql.AppendSource(sql, factPlan);
         if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes)
@@ -595,7 +595,7 @@ public sealed class CatalogV2Database
             command.Parameters.AddWithValue("$term" + index, "%" + EscapeLike(terms[index]) + "%");
         }
         CatalogQueryOrdering.AppendAfter(sql, command, query);
-        sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query.Sort, "n")).Append(" LIMIT $limit");
+        sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query, "n")).Append(" LIMIT $limit");
         command.Parameters.AddWithValue("$limit", query.PageSize + 1);
         sql.Append("""
             )
@@ -614,7 +614,7 @@ public sealed class CatalogV2Database
             LEFT JOIN catalog_directory_paths_v2 pp
                 ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference
             """);
-        sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query.Sort, "m")).Append(';');
+        sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query, "m")).Append(';');
         command.CommandText = sql.ToString();
         var items = new List<CatalogV2QueryItem>(query.PageSize + 1);
         await using var reader = await command.ExecuteReaderAsync(token);
@@ -632,7 +632,7 @@ public sealed class CatalogV2Database
         {
             items.RemoveAt(items.Count - 1);
             var last = items[^1];
-            next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference, last.ModifiedUtcTicks ?? -1);
+            next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference, last.ModifiedUtcTicks ?? -1, last.IsDirectory);
         }
         return new CatalogV2QueryPage(items, next, revision, factRevision);
     }

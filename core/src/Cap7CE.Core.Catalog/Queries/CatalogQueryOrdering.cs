@@ -7,11 +7,11 @@ public enum CatalogQuerySort { NameAscending, NameDescending, ModifiedAscending,
 
 internal static class CatalogQueryOrdering
 {
-    public static string Order(CatalogQuerySort sort, string alias)
+    public static string Order(CatalogV2Query query, string alias)
     {
         var name = $"{alias}.name COLLATE NOCASE";
         var identity = $"{alias}.volume_id, {alias}.file_reference";
-        return sort switch
+        var order = query.Sort switch
         {
             CatalogQuerySort.NameAscending => $"{name}, {identity}",
             CatalogQuerySort.NameDescending => $"{name} DESC, {identity}",
@@ -19,6 +19,7 @@ internal static class CatalogQueryOrdering
             CatalogQuerySort.ModifiedDescending => $"COALESCE({alias}.modified_utc_ticks, -1) DESC, {name}, {identity}",
             _ => throw new ArgumentException("Invalid query ordering.")
         };
+        return query.Scope.Kind == CatalogQueryScopeKind.DirectChildren ? $"{alias}.is_directory DESC, {order}" : order;
     }
 
     public static void AppendAfter(StringBuilder sql, SqliteCommand command, CatalogV2Query query)
@@ -32,6 +33,12 @@ internal static class CatalogQueryOrdering
             compare = query.Sort == CatalogQuerySort.ModifiedDescending ? "<" : ">";
             name = $"(COALESCE(n.modified_utc_ticks, -1) {compare} $afterModified OR (COALESCE(n.modified_utc_ticks, -1) = $afterModified AND {name}))";
             command.Parameters.AddWithValue("$afterModified", after.ModifiedUtcTicks);
+        }
+        if (query.Scope.Kind == CatalogQueryScopeKind.DirectChildren)
+        {
+            if (after.IsDirectory is null) throw new ArgumentException("Missing directory cursor anchor.");
+            name = $"(n.is_directory < $afterDirectory OR (n.is_directory = $afterDirectory AND {name}))";
+            command.Parameters.AddWithValue("$afterDirectory", after.IsDirectory.Value ? 1 : 0);
         }
         sql.Append(" AND ").Append(name);
         command.Parameters.AddWithValue("$afterName", after.Name);
