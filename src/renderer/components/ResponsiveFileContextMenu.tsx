@@ -24,11 +24,12 @@ interface ResponsiveFileContextMenuProps {
   format: string;
   fileName: string;
   detail: string;
+  showInfo?: boolean;
   actionGroups: [ResponsiveFileContextMenuItem[], ResponsiveFileContextMenuItem[]];
   onClose: () => void;
 }
 
-const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, detail, actionGroups, onClose }: ResponsiveFileContextMenuProps) => {
+const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, detail, showInfo = true, actionGroups, onClose }: ResponsiveFileContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const actionRefs = useRef(new Map<FileContextMenuAction, HTMLButtonElement>());
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
@@ -69,7 +70,7 @@ const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, d
   return createPortal(
     <div
       ref={menuRef}
-      className={`responsive-file-context-menu responsive-file-context-menu-${theme}${compact ? " is-compact" : ""}`}
+      className={`responsive-file-context-menu responsive-file-context-menu-${theme}${compact ? " is-compact" : ""}${showInfo ? "" : " is-actions-only"}`}
       data-context-menu="true"
       data-layout={compact ? "compact" : "standard"}
       style={{ ...menuStyle, left: position?.left ?? x, top: position?.top ?? y, visibility: position ? "visible" : "hidden" }}
@@ -86,15 +87,15 @@ const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, d
         if (!compact) { focusAction((activeIndex + (event.key === "ArrowUp" ? -1 : 1) + actions.length) % actions.length); return; }
         const row = activeIndex % 3;
         const column = Math.floor(activeIndex / 3);
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") focusAction(((column + 1) % 2) * 3 + row);
-        else focusAction(column * 3 + ((row + (event.key === "ArrowUp" ? -1 : 1) + 3) % 3));
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") focusAction(((column + 1) % 2) * 3 + Math.min(row, actionGroups[(column + 1) % 2].length - 1));
+        else { const length = actionGroups[column].length; focusAction(column * 3 + ((row + (event.key === "ArrowUp" ? -1 : 1) + length) % length)); }
       }}
     >
-      <div className="responsive-file-context-menu-info">
+      {showInfo && <div className="responsive-file-context-menu-info">
         <strong>{format}</strong>
         <MiddleEllipsisFileName fileName={fileName} className="responsive-file-context-menu-name" />
         <span className="responsive-file-context-menu-detail" title={detail}>{detail}</span>
-      </div>
+      </div>}
       {actionGroups.map((group, groupIndex) => <div className="responsive-file-context-menu-actions" key={groupIndex}>
         {group.map((action) => <button
           ref={(element) => { if (element) actionRefs.current.set(action.id, element); else actionRefs.current.delete(action.id); }}

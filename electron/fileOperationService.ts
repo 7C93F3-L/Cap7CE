@@ -50,7 +50,7 @@ const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
   return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
 };
 
-const getTrashFailureMessage = (error: unknown) => {
+export const getTrashFailureMessage = (error: unknown) => {
   const code = (error as NodeJS.ErrnoException | undefined)?.code;
   const message = error instanceof Error ? error.message : "";
   if (code === "ENOENT") {
@@ -93,13 +93,13 @@ const moveFileToTrashOnce = async (filePath: string) => {
   }
 };
 
-const moveFileToTrashWithRetry = async (filePath: string) => {
+export const moveFileToTrashWithRetry = async (filePath: string, directory = false) => {
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const stat = await fs.stat(filePath);
-      if (!stat.isFile()) {
+      if (directory ? !stat.isDirectory() : !stat.isFile()) {
         throw new Error(t("file.sourceNotFile"));
       }
       await moveFileToTrashOnce(filePath);

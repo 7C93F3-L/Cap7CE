@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import type { FavoriteDirectoryControls } from "../../shared/favoriteDirectoryTypes";
+import { useComputerSearchFileOperations } from "./useComputerSearchFileOperations";
 import type { ComputerSearchState } from "../../../electron/computerSearchTypes";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../shared/types";
@@ -26,7 +28,8 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", gridSize = 100, emptyHint, onSelectionChange }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", gridSize = 100, emptyHint, onSelectionChange, favorites }: {
+  favorites?: FavoriteDirectoryControls;
   controller: ComputerSearchController;
   emptyHint?: string;
   foreground?: boolean;
@@ -47,12 +50,15 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     foreground && Boolean(status?.searchAvailable) && hasSubmitted && !busy && !error,
     nextCursor, loadMore, controller.directoryListing, Boolean(pageError));
   const taskId = controller.taskId ?? "";
+  const operations = useComputerSearchFileOperations(taskId, favorites), clearSelection = useRef(() => {});
+  const trash = useCallback((targets: typeof items) => { void operations.trash(targets).then(changed => { if (changed) clearSelection.current(); }); }, [operations.trash]);
   const actions = useComputerSearchResultActions({
-    items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground, onOpenDirectory
+    items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground: foreground && !operations.busy, onOpenDirectory, onDelete: trash
   });
+  clearSelection.current = actions.clearSelection;
   const dismissSelection = useGridSelectionDismissal({ rootRef: scrollContainerRef, foreground,
     hasSelection: actions.selectedIds.size > 0 || actions.activeId !== null, menuOpen: actions.contextMenu !== null, onClear: actions.clearSelection });
-  const interactionBlocked = actions.selectedIds.size > 0 || actions.contextMenu !== null;
+  const interactionBlocked = operations.busy || actions.selectedIds.size > 0 || actions.contextMenu !== null;
   const selection = useMemo(() => ({ items: actions.selectedItems, taskId,
     openPreview: () => { if (actions.selectedItems[0]) void actions.openPreview(actions.selectedItems[0]); }
   }), [actions.selectedItems, actions.openPreview, taskId]);
@@ -140,14 +146,16 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       {pageError && !busy ? <span>{t("computerSearch.pageFailed")}</span>
         : busy ? t("computerSearch.pageLoading") : null}
     </div>}
-    {actions.feedback && <div className="cap-computer-search-feedback" role="status">{actions.feedback}</div>}
+    {(operations.feedback || actions.feedback) && <div className="cap-computer-search-feedback" role="status">{operations.feedback || actions.feedback}</div>}
     {actions.contextMenu && <ComputerSearchResultContextMenu
       state={actions.contextMenu}
       theme={theme}
       appearanceColors={appearanceColors}
       windowMaterial={windowMaterial}
       onClose={() => actions.setContextMenu(null)}
-      onAction={actions.handleContextMenuAction}
+      favoriteAction={operations.favoriteAction(actions.contextMenu.item)} favoriteBusy={favorites?.busy}
+      onAction={action => { const state = actions.contextMenu!; if (action === "delete") trash(state.items);
+        else if (action === "addToSidebar") void operations.toggleFavorite(state.item); else actions.handleContextMenuAction(action); }}
     />}
   </section>;
 };

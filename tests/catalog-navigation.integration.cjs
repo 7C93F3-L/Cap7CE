@@ -7,9 +7,9 @@ import React from 'react';import {createRoot} from 'react-dom/client';import './
 import CatalogWorkspace from './src/renderer/catalog-workspace/CatalogWorkspace';import {useCatalogWindowCommands} from './src/renderer/catalog-workspace/useCatalogWindowCommands';
 const noop=()=>{},probe=window.probe={requests:[],canceled:[],statusReads:0,locationReads:0,driveReads:0,building:true,attributesAvailable:false,colorsAvailable:false,forceEmpty:false};
 window.cap7ce={settingsWindow:{onMetadataBuildRequested:callback=>{probe.openMetadata=callback;return noop}},window:{onRefreshCurrentPageRequested:()=>noop,onFocusMainSearch:()=>noop,onActivateSkimRequested:()=>noop,onToggleSkimLocationPickerRequested:()=>noop,onActivateShellModeShortcut:()=>noop},skim:{listLocations:async()=>{probe.locationReads++;return []},read:async r=>{if(r.path!==null)throw Error('Home must only enumerate roots');probe.driveReads++;return {taskId:r.taskId,cancelled:false,entries:['X:','Y:'].map(name=>({kind:'drive',path:name+'\\\\',label:name==='X:'?'System':''}))}},cancel:async()=>true},preview:{onNavigate:()=>noop,onClosed:()=>noop},
-favoriteDirectories:{list:async()=>[{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}]},
+favoriteDirectories:{list:async()=>probe.favorites??= [{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}],add:async path=>{probe.favorites=[...probe.favorites,{id:'new-fav',name:'Folder',path}];return probe.favorites},remove:async id=>{probe.favorites=probe.favorites.filter(f=>f.id!==id);return probe.favorites}},
 metadataBuild:{status:async()=>({volumes:[{volumeId:'X:',label:'X:'}],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
-computerSearch:{status:async()=>{probe.statusReads++;return ({state:probe.building?'starting':'ready',searchAvailable:!probe.building,catalogRevision:1,volumes:probe.building?[]:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:'ready',queryable:true,processed:2,total:2}))})},onCatalogChanged:()=>noop,
+computerSearch:{moveToTrash:async r=>{(probe.trashCalls??=[]).push(r);return probe.trashResult??{success:false,totalCount:r.authorizationIds.length,deletedPaths:[],failedItems:[]}},status:async()=>{probe.statusReads++;return ({state:probe.building?'starting':'ready',searchAvailable:!probe.building,catalogRevision:1,volumes:probe.building?[]:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:'ready',queryable:true,processed:2,total:2}))})},onCatalogChanged:()=>noop,
 search:async request=>{if(!/^[A-Za-z0-9_-]{1,128}$/.test(request.taskId))throw Error("invalid task identity");probe.requests.push(request);if(request.taskId.endsWith('_attribute')&&(!probe.attributesAvailable||(request.facts?.visualGroups&&!probe.colorsAvailable)))return {items:[],nextCursor:null};if(!request.taskId.endsWith('_attribute')&&probe.forceEmpty)return {items:[],nextCursor:null};if(probe.bulk&&request.scopePath==='X:\\\\Folder')return {items:Array.from({length:300},(_,i)=>({id:String(i),authorizationId:request.taskId+'_'+i,name:'file'+i+'.txt',path:request.scopePath+'\\\\file'+i+'.txt',isDirectory:false,extension:'.txt',iconName:'format-txt',canThumbnail:false,canShellPreview:false})),nextCursor:null};const dir=request.scopePath?.length===3;return {items:[{id:request.scopePath,authorizationId:request.taskId,name:dir?'Folder':'file.txt',path:request.scopePath+(dir?'Folder':'\\\\file.txt'),isDirectory:dir,extension:dir?'':'.txt',iconName:dir?'folder':'format-txt',canThumbnail:false,canShellPreview:false,modifiedUtcTicks:(Date.UTC(2026,9,6)+11644473600000)*10000}],nextCursor:null}},cancel:async task=>{probe.canceled.push(task);return true}}};
 function Harness(){const commands=useCatalogWindowCommands(null);return <CatalogWorkspace onActiveActions={commands.reportActions} theme="dark" appearanceColors={{}} windowMaterial="none" onOpenSettings={noop}/>};createRoot(document.getElementById('root')).render(<Harness/>);
 `;
@@ -153,7 +153,37 @@ app.whenReady().then(async()=>{
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\'");
   await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[1].click()`);
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Folder'");
-  console.log('Catalog navigation and independent browsing scene retention passed.');
+  const menuAction=async label=>{await ready("document.querySelector('[role=menu]')");await run(`([...document.querySelectorAll('[role=menuitem]')].find(button=>button.querySelector('span').textContent===${JSON.stringify(label)})).click()`)};
+  await ready(`${active}.querySelector('.cap-computer-search-grid')?.dataset.totalCount==='300'`);
+  await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:900,clientY:650}))`);
+  await ready("document.querySelector('[role=menu]')");
+  assert.equal(await run("!!document.querySelector('.responsive-file-context-menu-info')"),false,'Catalog menu removes duplicate file information');
+  assert.equal(await run("[...document.querySelectorAll('[role=menuitem] span')].some(e=>e.textContent==='添加收藏')"),false,'files do not expose folder favorite actions');
+  await menuAction('删除');await ready('probe.trashCalls?.length===1');
+  assert.equal(await run(`${active}.querySelector('.cap-computer-search-grid').dataset.totalCount`),'300','cancel keeps results');
+  await run(`probe.trashResult={success:false,totalCount:2,deletedPaths:['X:\\\\Folder\\\\file0.txt'],failedItems:[{path:'X:\\\\Folder\\\\file1.txt',error:'locked'}]};${active}.querySelectorAll('.cap-computer-search-entry')[1].dispatchEvent(new MouseEvent('click',{bubbles:true,ctrlKey:true}))`);
+  await ready(`${active}.querySelectorAll('.cap-computer-search-entry[aria-pressed=true]').length===2`);
+  await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`);
+  await menuAction('删除');await ready('probe.trashCalls.length===2');
+  assert.equal(await run('probe.trashCalls.at(-1).authorizationIds.length'),2,'multi-selection shares one delete operation');
+  await ready(`${active}.querySelector('.cap-computer-search-grid').dataset.totalCount==='299'`);
+  assert.equal(await run(`${active}.querySelector('.cap-computer-search-feedback').textContent.includes('locked')`),true,'partial failures retain feedback and remaining items');
+  await run(`probe.trashResult=null;${active}.querySelector('.cap-computer-search-entry').click()`);
+  await ready(`${active}.querySelectorAll('.cap-computer-search-entry[aria-pressed=true]').length===1`);
+  await run("window.dispatchEvent(new KeyboardEvent('keydown',{key:'Delete',code:'Delete',bubbles:true,cancelable:true}))");
+  await ready('probe.trashCalls.length===3');
+  await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[0].click()`);
+  await ready("probe.requests.at(-1)?.scopePath==='X:\\\\'");
+  await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`);
+  await menuAction('添加收藏');await ready('probe.favorites.length===2');
+  assert.equal(await run("document.querySelectorAll('.cap-favorite-row').length"),2,'favorite add updates sidebar without navigation');
+  win.setSize(1100,340);
+  await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:1000,clientY:330}))`);
+  await ready("document.querySelector('[role=menu]')?.dataset.layout==='compact'");
+  assert.ok(await run("document.querySelector('[role=menu]').getBoundingClientRect().bottom<=window.innerHeight"),'compact actions-only menu fits a short window');
+  await menuAction('移除收藏');await ready('probe.favorites.length===1');
+  assert.equal(await run("document.querySelectorAll('.cap-favorite-row').length"),1,'favorite removal updates sidebar only');
+  console.log('Catalog navigation, scene retention, actions-only menu, delete/cancel/partial results, Delete key and folder favorite controls passed.');
 
  }catch(error){console.error(error.stack);process.exitCode=1}
  finally{win?.destroy();if(path.dirname(path.resolve(root))!==path.resolve(os.tmpdir()))throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}

@@ -113,6 +113,7 @@ declare global {
       };
       favoriteDirectories: import("../shared/favoriteDirectoryTypes").FavoriteDirectoryApi;
       computerSearch: {
+        moveToTrash: (request: import("../../electron/computerSearchTypes").ComputerSearchAuthorizationBatch) => Promise<DeleteFilesResult>;
         onCatalogChanged: (callback: (revision: number) => void) => () => void;
         status: () => Promise<ComputerSearchStatus>;
         capabilityOptions: () => Promise<ComputerSearchCapabilityOptions>;

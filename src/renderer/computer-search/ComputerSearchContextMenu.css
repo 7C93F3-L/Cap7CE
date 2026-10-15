@@ -1,0 +1,3 @@
+.responsive-file-context-menu.is-actions-only .responsive-file-context-menu-actions { grid-template-rows: none; grid-auto-rows: 30px; }
+.responsive-file-context-menu.is-actions-only .responsive-file-context-menu-actions:first-child { border: 0; padding: 0; }
+.responsive-file-context-menu.is-actions-only.is-compact { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(360px, calc(100vw - 10px)); }

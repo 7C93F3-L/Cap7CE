@@ -4,7 +4,7 @@ import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../
 import ResponsiveFileContextMenu, { type ResponsiveFileContextMenuItem } from "../components/ResponsiveFileContextMenu";
 import { fileContextShortcutLabels } from "../fileContextActions";
 import { getFileContextMenuStyle } from "../fileContextMenuShared";
-import { formatCacheSize } from "../formatting";
+import "./ComputerSearchContextMenu.css";
 
 export type ComputerSearchContextMenuState = {
   x: number;
@@ -13,10 +13,10 @@ export type ComputerSearchContextMenuState = {
   items: ComputerSearchItem[];
 };
 
-type ResultAction = "preview" | "open" | "showInFolder" | "copyPaths";
+type ResultAction = "preview" | "open" | "showInFolder" | "copyPaths" | "delete" | "addToSidebar";
 
 const ComputerSearchResultContextMenu = ({
-  state, theme, appearanceColors, windowMaterial, onClose, onAction
+  state, theme, appearanceColors, windowMaterial, onClose, onAction, favoriteAction, favoriteBusy = false
 }: {
   state: ComputerSearchContextMenuState;
   theme: ResolvedThemeMode;
@@ -24,22 +24,20 @@ const ComputerSearchResultContextMenu = ({
   windowMaterial: WindowMaterial;
   onClose: () => void;
   onAction: (action: ResultAction) => void;
+  favoriteAction?: "add" | "remove";
+  favoriteBusy?: boolean;
 }) => {
   const action = (id: ResultAction, label: string, shortcut: string): ResponsiveFileContextMenuItem => ({
     id, label, shortcut, onSelect: () => onAction(id)
   });
-  const format = state.item.isDirectory
-    ? t("fileInfo.folder")
-    : state.item.extension.replace(/^\./, "").toUpperCase() || t("fileInfo.file");
-  const detail = state.item.isDirectory ? t("fileInfo.folder") : formatCacheSize(state.item.sizeBytes ?? 0);
   return <ResponsiveFileContextMenu
     x={state.x}
     y={state.y}
     theme={theme}
     menuStyle={getFileContextMenuStyle(theme, appearanceColors, windowMaterial)}
-    format={format}
+    format="" showInfo={false}
     fileName={state.item.name}
-    detail={detail}
+    detail=""
     actionGroups={[
       [
         action("preview", t("skim.preview"), fileContextShortcutLabels.primaryView),
@@ -48,7 +46,9 @@ const ComputerSearchResultContextMenu = ({
       ],
       [action("copyPaths", state.items.length > 1
         ? t("context.copySelectedPaths", { count: state.items.length })
-        : t("context.copyPath"), fileContextShortcutLabels.copyPaths)]
+        : t("context.copyPath"), fileContextShortcutLabels.copyPaths),
+        ...(favoriteAction ? [{ ...action("addToSidebar", t(favoriteAction === "add" ? "catalogActions.addFavorite" : "catalogActions.removeFavorite"), ""), disabled: favoriteBusy }] : []),
+        action("delete", t("common.delete"), fileContextShortcutLabels.delete)]
     ]}
     onClose={onClose}
   />;

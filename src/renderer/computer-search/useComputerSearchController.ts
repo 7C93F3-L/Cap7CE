@@ -5,6 +5,7 @@ import type { ComputerSearchConditions, ComputerSearchViewOptions } from "../../
 import { readComputerSearchReplacement } from "./computerSearchResultRefresh";
 import { readComputerSearchContinuation } from "./computerSearchContinuation";
 import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentity";
+import { useComputerSearchTrashUpdates } from "./useComputerSearchTrashUpdates";
 
 export type ComputerSearchError = "scope-not-indexed" | "scope-offline" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
@@ -20,6 +21,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [status, setStatus] = useState<ComputerSearchStatus | null>(null);
   const [items, setItems] = useState<ComputerSearchItem[]>([]);
+  useComputerSearchTrashUpdates(setItems);
   const itemIds = useRef(new Set<string>());
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

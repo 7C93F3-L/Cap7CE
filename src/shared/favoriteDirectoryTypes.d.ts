@@ -12,3 +12,9 @@ export interface FavoriteDirectoryRegistry {
 export interface FavoriteDirectoryApi extends FavoriteDirectoryRegistry {
   choose(): Promise<FavoriteDirectory[]>;
 }
+export interface FavoriteDirectoryControls {
+  directories: readonly FavoriteDirectory[];
+  busy: boolean;
+  add: (path: string) => Promise<boolean>;
+  remove: (id: string) => Promise<boolean>;
+}

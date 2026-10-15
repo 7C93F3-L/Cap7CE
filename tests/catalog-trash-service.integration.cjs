@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
+const {app}=require('electron');
+const root=path.join(os.tmpdir(),'Cap7CE-catalog-trash-'+process.pid+'-'+Date.now());
+app.setPath('userData',path.join(root,'profile'));
+app.whenReady().then(async()=>{try{
+ const {moveComputerSearchItemsToTrash:trash}=require('../dist-electron/computerSearchTrashService.js');
+ const {moveFileToTrashWithRetry}=require('../dist-electron/fileOperationService.js');
+ await fs.mkdir(path.join(root,'source','folder'),{recursive:true});
+ const single=path.join(root,'source','asset.unregistered'),folder=path.join(root,'source','folder'),child=path.join(folder,'nested.txt');
+ await fs.writeFile(single,'disposable fixture');await fs.writeFile(child,'disposable nested fixture');
+ const item=(p,d=false)=>({path:p,isDirectory:d});
+ const calls=[];
+ const result=await trash([item(child),item(folder,true),item(single),item(single.toUpperCase())],async(p,d)=>{calls.push(p);await moveFileToTrashWithRetry(p,d)});
+ assert.equal(result.success,true);assert.equal(result.totalCount,3);assert.equal(result.deletedPaths.length,3);assert.equal(calls.length,2,'selected nested files are covered by their folder');
+ await assert.rejects(()=>fs.stat(single));await assert.rejects(()=>fs.stat(folder));
+ const safe=path.join(root,'source','safe.txt'),badType=path.join(root,'source','changed');await fs.writeFile(safe,'keep');await fs.mkdir(badType);
+ const cache=path.join(root,'profile','skim-cache','thumbnails','cache.capskth');await fs.mkdir(path.dirname(cache),{recursive:true});await fs.writeFile(cache,'keep cache');
+ let attempted=0;
+ const failed=await trash([item(safe),item(path.parse(root).root,true),item(cache),item(badType),item(path.join(root,'missing'))],async()=>{attempted++;throw Object.assign(Error('locked'),{code:'EPERM'})});
+ assert.equal(attempted,1);assert.equal(failed.success,false);assert.equal(failed.failedItems.length,5);assert.equal(failed.deletedPaths.length,0);
+ assert.equal(await fs.readFile(safe,'utf8'),'keep');assert.equal(await fs.readFile(cache,'utf8'),'keep cache');
+ console.log('Catalog trash: real disposable file/folder recycle, nested multi-select, path dedup, root/cache/type checks and partial failures passed.');
+ }catch(error){console.error(error);process.exitCode=1}finally{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));await fs.rm(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});

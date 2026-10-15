@@ -33,6 +33,7 @@ export function useFavoriteDirectories() {
     directories, busy, error,
     reload: () => run(api => api.list()),
     choose: () => run(api => api.choose()),
+    add: (path: string) => run(api => api.add(path)),
     rename: (id: string, name: string) => run(api => api.rename(id, name)),
     remove: (id: string) => run(api => api.remove(id)),
     move: (id: string, direction: "up" | "down") => run(api => api.move(id, direction))

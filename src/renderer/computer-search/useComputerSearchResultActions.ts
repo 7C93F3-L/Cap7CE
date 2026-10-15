@@ -15,10 +15,11 @@ interface ResultActionOptions {
   onNativeDragStateChange: (active: boolean) => void;
   foreground?: boolean;
   onOpenDirectory?: (path: string) => void;
+  onDelete?: (items: ComputerSearchItem[]) => void;
 }
 
 export const useComputerSearchResultActions = ({
-  items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground = true, onOpenDirectory
+  items, taskId, theme, appearanceColors, onNativeDragStateChange, foreground = true, onOpenDirectory, onDelete
 }: ResultActionOptions) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -220,10 +221,11 @@ export const useComputerSearchResultActions = ({
       if (action === "open" && activeItem) { event.preventDefault(); if (!event.repeat) openItem(activeItem); }
       else if (action === "showInFolder" && activeItem) { event.preventDefault(); if (!event.repeat) showInFolder(activeItem); }
       else if (action === "copyPaths" && selectedItems.length > 0) { event.preventDefault(); if (!event.repeat) copyPaths(selectedItems); }
+      else if (action === "delete" && activeItem && onDelete) { event.preventDefault(); if (!event.repeat) onDelete(selectedItems.length ? selectedItems : [activeItem]); }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeId, contextMenu, copyPaths, foreground, items, openItem, openPreview, selectedItems, showInFolder]);
+  }, [activeId, contextMenu, copyPaths, foreground, items, openItem, openPreview, selectedItems, showInFolder, onDelete]);
 
   return {
     selectedIds, activeId, selectedItems, contextMenu, feedback,

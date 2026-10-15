@@ -1,6 +1,12 @@
 import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
+  "catalogActions.addFavorite": "Add to Favorites",
+  "catalogActions.trashLimit": "Select up to 200 items per deletion.",
+  "catalogActions.removeFavorite": "Remove from Favorites",
+  "catalogActions.trashTitle": "Delete Files or Folders",
+  "catalogActions.trashQuestion": "Move the selected {count} items to the Recycle Bin? Folder contents will also be moved.",
+  "catalogActions.targetChanged": "The item type has changed. Refresh the folder and try again.",
   "catalogWorkspace.gridSaveFailed": "Grid preferences could not be read or saved. Please try again later.",
   "catalogWorkspace.localDisk": "Local Disk",
   "catalogWorkspace.viewSize": "View size",

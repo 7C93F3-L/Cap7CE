@@ -1,6 +1,11 @@
 const fs = require("node:fs"), path = require("node:path");
 const root = path.resolve(__dirname, ".."), failures = [];
 const files = new Map([
+  ["electron/computerSearchTrashIpc.ts", 40],
+  ["electron/computerSearchTrashService.ts", 40],
+  ["src/renderer/computer-search/useComputerSearchFileOperations.ts", 45],
+  ["src/renderer/computer-search/useComputerSearchTrashUpdates.ts", 25],
+  ["src/renderer/computer-search/ComputerSearchContextMenu.css", 10],
   ["electron/favoriteDirectories/favoriteDirectoryStore.ts", 150],
   ["electron/favoriteDirectories/favoriteDirectoryRules.ts", 75],
   ["electron/favoriteDirectories/favoriteDirectoryIpc.ts", 150],

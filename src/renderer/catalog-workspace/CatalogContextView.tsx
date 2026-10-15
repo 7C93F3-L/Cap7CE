@@ -20,8 +20,9 @@ import { useCatalogViewOptions, useCatalogRefresh } from "./useCatalogToolbarSta
 import { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailability";
 import { useCatalogGridPresentation } from "./useCatalogGridPresentation";
 import CatalogGridPreferenceNotice from "./CatalogGridPreferenceNotice";
-export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, ...appearance }: CatalogWorkspaceAppearance & {
-  onMetadata: () => void;
+import type { FavoriteDirectoryControls } from "../../shared/favoriteDirectoryTypes";
+export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, favorites, ...appearance }: CatalogWorkspaceAppearance & {
+  favorites?: FavoriteDirectoryControls; onMetadata: () => void;
   context: CatalogWorkspaceContext; selected: boolean; foreground: boolean;
   filterHost: HTMLElement | null; detailsHost: HTMLElement | null;
   metadataProgress: MetadataBuildProgress | null; onSearchAvailable: (available: boolean) => void;
@@ -81,7 +82,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
       ? <CatalogHome onOpen={openDirectory} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} />
-      : <ComputerSearchView controller={controller} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
+      : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
     {attributes.relevant && <CatalogAttributeNotice key={JSON.stringify([navigation.path, attributes.message])} message={attributes.message} onMetadata={onMetadata} />}
     {grid.error && <CatalogGridPreferenceNotice onDismiss={grid.dismissError} />}
   </section>;

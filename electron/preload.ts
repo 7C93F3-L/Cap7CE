@@ -228,6 +228,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
     open: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:open", request),
     showInFolder: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:showInFolder", request),
     copyPaths: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.invoke("computerSearch:copyPaths", request),
+    moveToTrash: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.invoke("computerSearch:moveToTrash", request),
     inspect: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:inspect", request),
     readTextPreview: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readTextPreview", request),
     startDrag: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.send("computerSearch:startDrag", request)
