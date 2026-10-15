@@ -2,6 +2,7 @@ import "./StableSidebarFlyout.css";
 import { useRef, type CSSProperties, type ReactNode } from "react";
 import { useStableFlyoutInteractions } from "./useStableFlyoutInteractions";
 import { createPortal } from "react-dom";
+import { stableSidebarFlyoutPosition } from "./stableSidebarFlyoutPosition";
 
 interface StableSidebarFlyoutProps { anchor: DOMRect; label: string; children: ReactNode; onClose: () => void; placement?: "right" | "below"; align?: "start" | "end"; width?: number; maximumHeight?: number; className?: string; closeOnScroll?: boolean; returnFocus?: HTMLElement; }
 
@@ -10,8 +11,9 @@ const StableSidebarFlyout = ({ anchor, label, children, onClose, placement = "ri
   const resolvedWidth = Math.min(width, window.innerWidth - 10);
   const resolvedMaximumHeight = Math.max(30, Math.min(maximumHeight, window.innerHeight - 50));
   const belowLeft = align === "start" ? anchor.left : anchor.right - resolvedWidth;
-  const left = placement === "below" ? Math.max(5, Math.min(belowLeft, window.innerWidth - resolvedWidth - 5)) : Math.max(5, Math.min(anchor.right + 5, window.innerWidth - resolvedWidth - 5));
-  const top = placement === "below" ? Math.max(45, Math.min(anchor.bottom + 5, window.innerHeight - resolvedMaximumHeight - 5)) : Math.max(45, Math.min(anchor.top, window.innerHeight - resolvedMaximumHeight - 5)); const portalHost = document.querySelector<HTMLElement>(".cap-stable-ui") ?? document.body;
+  const beside = stableSidebarFlyoutPosition(anchor, resolvedWidth, resolvedMaximumHeight, window.innerWidth, window.innerHeight);
+  const left = placement === "below" ? Math.max(5, Math.min(belowLeft, window.innerWidth - resolvedWidth - 5)) : beside.left;
+  const top = placement === "below" ? Math.max(45, Math.min(anchor.bottom + 5, window.innerHeight - resolvedMaximumHeight - 5)) : beside.top; const portalHost = document.querySelector<HTMLElement>(".cap-stable-ui") ?? document.body;
   const style: CSSProperties = { left, top, width: resolvedWidth, maxHeight: resolvedMaximumHeight };
   useStableFlyoutInteractions(flyoutRef, onClose, closeOnScroll, returnFocus);
   return createPortal(

@@ -4,7 +4,7 @@ import type { CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTy
 import ResponsiveFileContextMenu from "../components/ResponsiveFileContextMenu";
 import { getFileContextMenuStyle } from "../fileContextMenuShared";
 
-export interface FavoriteContextTarget { directory: FavoriteDirectory; x: number; y: number; trigger: HTMLButtonElement }
+export interface FavoriteContextTarget { directory: FavoriteDirectory; anchor: DOMRect; trigger: HTMLButtonElement }
 export default function FavoriteDirectoryContextMenu({ target, index, count, busy, appearance, onClose, onRename, onRemove, onMove, onReveal, onCopyPath }: {
   target: FavoriteContextTarget; index: number; count: number; busy: boolean;
   appearance: Pick<CatalogWorkspaceAppearance, "theme" | "appearanceColors" | "windowMaterial">;
@@ -12,7 +12,7 @@ export default function FavoriteDirectoryContextMenu({ target, index, count, bus
   onMove: (direction: "up" | "down") => void; onReveal?: () => void; onCopyPath?: () => void;
 }) {
   const action = (id: string, label: string, onSelect: () => void, disabled = false) => ({ id, label, onSelect, disabled: busy || disabled });
-  return <ResponsiveFileContextMenu x={target.x} y={target.y} {...appearance}
+  return <ResponsiveFileContextMenu x={target.anchor.right + 5} y={target.anchor.top} anchor={target.anchor} {...appearance}
     menuStyle={getFileContextMenuStyle(appearance.theme, appearance.appearanceColors, appearance.windowMaterial)}
     format="" fileName="" detail="" showInfo={false} returnFocus={target.trigger} onClose={onClose} actionGroups={[
       [action("reveal", t("favorites.openExplorer"), () => onReveal?.(), !onReveal),

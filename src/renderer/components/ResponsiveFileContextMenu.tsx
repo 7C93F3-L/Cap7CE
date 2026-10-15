@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { createPortal } from "react-dom";
 import { MiddleEllipsisFileName } from "./MiddleEllipsisFileName";
 import "./ResponsiveFileContextMenu.css";
+import { stableSidebarFlyoutPosition } from "../stable-ui/stableSidebarFlyoutPosition";
 
 const viewportGap = 5;
 const stableTitlebarBottom = 45;
@@ -25,11 +26,12 @@ interface ResponsiveFileContextMenuProps {
   detail: string;
   showInfo?: boolean;
   returnFocus?: HTMLElement;
+  anchor?: DOMRect;
   actionGroups: [ResponsiveFileContextMenuItem[], ResponsiveFileContextMenuItem[]];
   onClose: () => void;
 }
 
-const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, detail, showInfo = true, returnFocus, actionGroups, onClose }: ResponsiveFileContextMenuProps) => {
+const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, detail, showInfo = true, returnFocus, anchor, actionGroups, onClose }: ResponsiveFileContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const actionRefs = useRef(new Map<string, HTMLButtonElement>());
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
@@ -43,9 +45,10 @@ const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, d
     const bounds = menu.getBoundingClientRect();
     const left = Math.min(Math.max(x, viewportGap), Math.max(viewportGap, viewport.width - bounds.width - viewportGap));
     const maximumTop = Math.max(stableTitlebarBottom, viewport.height - bounds.height - viewportGap);
-    setPosition({ left, top: Math.min(Math.max(y, stableTitlebarBottom), maximumTop) });
+    setPosition(anchor ? stableSidebarFlyoutPosition(anchor, bounds.width, bounds.height, viewport.width, viewport.height)
+      : { left, top: Math.min(Math.max(y, stableTitlebarBottom), maximumTop) });
     menu.focus({ preventScroll: true });
-  }, [compact, detail, fileName, format, viewport, x, y]);
+  }, [anchor, compact, detail, fileName, format, viewport, x, y]);
 
   useEffect(() => {
     const updateViewport = () => setViewport({ width: window.innerWidth, height: window.innerHeight });

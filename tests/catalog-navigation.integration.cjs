@@ -187,7 +187,14 @@ app.whenReady().then(async()=>{
   await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`);
   await menuAction('添加收藏');await ready('probe.favorites.length===2');
   const sidebarMenu=async index=>{await run(`document.querySelectorAll('.cap-favorite-row .cap-favorite-open')[${index}].dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:80,clientY:200}))`);await ready("document.querySelector('[role=menu]')")};
+  win.setSize(1100,750);await ready("window.innerHeight>500&&!document.querySelector('.cap-favorite-row .cap-favorite-open').disabled");
+  await run("new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
+  await run("document.querySelector('.cap-favorite-row .cap-favorite-open').dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}))");
+  await ready("document.querySelector('[role=tooltip]')");
+  const hoverPosition=await run("(()=>{const e=document.querySelector('[role=tooltip]');return [e.style.left,e.style.top]})()");
   const scene=await run(`${active}.id`);await sidebarMenu(0);
+  assert.deepEqual(await run("(()=>{const e=document.querySelector('[role=menu]');return [e.style.left,e.style.top]})()"),hoverPosition,'sidebar context menu shares the hover tooltip anchor rather than mouse coordinates');
+  assert.equal(await run("!!document.querySelector('[role=tooltip]')"),false,'context menu retires the hover tooltip');
   assert.equal(await run(`${active}.id`),scene,'right-clicking an inactive favorite does not navigate');
   assert.deepEqual(await run("[...document.querySelectorAll('[role=menuitem] span')].map(e=>e.textContent)"),['在资源管理器中打开','复制路径','重命名文件夹','上移','下移','移除收藏']);
   assert.equal(await run("document.querySelectorAll('[role=menuitem]')[3].disabled"),true);

@@ -41,10 +41,10 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
     if (editing && !props.directories.some(item => item.id === editing)) setEditing(null);
   }, [editing, props.directories]);
   useEffect(() => setMenu(null), [props.directories, props.busy]);
-  const showMenu = (button: HTMLButtonElement, directory: FavoriteDirectory, x?: number, y?: number) => {
+  const showMenu = (button: HTMLButtonElement, directory: FavoriteDirectory) => {
     if (props.busy) return;
-    tooltip.hide(); const bounds = button.getBoundingClientRect();
-    setMenu({ directory, trigger: button, x: x || bounds.left, y: y || bounds.bottom });
+    tooltip.hide();
+    setMenu({ directory, trigger: button, anchor: button.getBoundingClientRect() });
   };
   const save = async (id: string) => {
     if (props.busy || !draft.trim()) return;
@@ -70,7 +70,7 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
           <button type="button" disabled={props.busy} title={t("common.cancel")} aria-label={t("common.cancel")} onClick={() => setEditing(null)}>×</button>
         </form> : <button disabled={props.busy} className="cap-favorite-open" type="button" title={props.showIcons ? undefined : directory.path} aria-label={`${directory.name}; ${directory.path}`}
           onPointerEnter={event => tooltip.show(event, directory)} onPointerLeave={tooltip.hide} onPointerDown={tooltip.hide}
-          onContextMenu={event => { event.preventDefault(); showMenu(event.currentTarget, directory, event.clientX, event.clientY); }}
+          onContextMenu={event => { event.preventDefault(); showMenu(event.currentTarget, directory); }}
           onKeyDown={event => { if (event.key === "ContextMenu" || event.shiftKey && event.key === "F10") { event.preventDefault(); showMenu(event.currentTarget, directory); } }}
           aria-current={!props.globalActive && pathKey(directory.path) === pathKey(props.activePath) ? "page" : undefined}
           onClick={event => (event.ctrlKey || event.metaKey) && props.onOpenNew ? props.onOpenNew(directory) : props.onOpen(directory)}>

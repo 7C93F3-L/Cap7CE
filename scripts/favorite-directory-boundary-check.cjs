@@ -1,6 +1,7 @@
 const fs = require("node:fs"), path = require("node:path");
 const root = path.resolve(__dirname, ".."), failures = [];
 const files = new Map([
+  ["src/renderer/stable-ui/stableSidebarFlyoutPosition.ts", 15],
   ["electron/windowsShellRenameScript.ts", 140],
   ["electron/windowsShellRename.ts", 40],
   ["electron/directoryRenamePaths.ts", 30],
