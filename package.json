@@ -137,7 +137,7 @@
     "test:thumbnail-optimization": "electron tests/thumbnail-optimization.integration.cjs",
     "test:file-drag": "electron tests/file-drag.integration.cjs",
     "test:file-clipboard": "node tests/file-clipboard.integration.cjs",
-    "test:file-operation": "electron tests/file-operation.integration.cjs && electron tests/catalog-trash-service.integration.cjs",
+    "test:file-operation": "electron tests/file-operation.integration.cjs && electron tests/catalog-trash-service.integration.cjs && electron tests/favorite-folder-rename.integration.cjs",
     "test:manual-index": "electron tests/manual-index.integration.cjs",
     "test:stale-cleanup": "electron tests/stale-image-cleanup.integration.cjs",
     "test:model-input-cleanup": "electron tests/model-input-cache-cleanup.integration.cjs",

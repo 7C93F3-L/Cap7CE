@@ -2,9 +2,11 @@ import { useCallback, useEffect, useReducer } from "react";
 import { t } from "../../../electron/localization";
 import type { FavoriteDirectory } from "../../shared/favoriteDirectoryTypes";
 import { catalogWorkspaceReducer, createCatalogWorkspace } from "./catalogWorkspaceContexts";
+import { useDirectoryRename } from "../favorite-directories/directoryRenameEvents";
 
 export function useCatalogWorkspaceContexts(directories: readonly FavoriteDirectory[]) {
   const [state, dispatch] = useReducer(catalogWorkspaceReducer, undefined, () => createCatalogWorkspace(t("favorites.allFiles")));
+  useDirectoryRename(change => dispatch({ type: "relocate", change }));
   useEffect(() => { dispatch({ type: "favorite-names", directories }); }, [directories]);
   const open = useCallback((directory: FavoriteDirectory | null) => dispatch({
     type: "entry", scopePath: directory?.path ?? null, name: directory?.name ?? t("favorites.allFiles")

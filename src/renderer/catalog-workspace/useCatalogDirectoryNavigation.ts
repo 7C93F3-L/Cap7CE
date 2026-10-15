@@ -1,14 +1,20 @@
 import { useCallback, useState } from "react";
 import { useSkimNavigationHistory } from "../controllers/useSkimNavigationHistory";
 import { getDirectoryPath, normalizeWindowsPathKey } from "../filePath";
+import { renamedDirectoryPath } from "../../../electron/directoryRenamePaths";
+import { useDirectoryRename } from "../favorite-directories/directoryRenameEvents";
 
 export function useCatalogDirectoryNavigation(scopePath: string | null, clearQuery: () => void, browseChildren = false) {
-  const [initial] = useState(() => ({ path: scopePath, browseChildren }));
+  const [initial, setInitial] = useState(() => ({ path: scopePath, browseChildren }));
   const [location, setLocation] = useState(initial);
   const load = useCallback(async (next: typeof initial) => {
     clearQuery(); setLocation(next); return true;
   }, [clearQuery]);
   const history = useSkimNavigationHistory(load, initial);
+  useDirectoryRename(change => {
+    const move = (value: typeof initial) => ({ ...value, path: renamedDirectoryPath(value.path, change) });
+    setInitial(move); setLocation(move); history.mapLocations(move);
+  });
   const open = useCallback((value: string) => {
     const path = value.trim().replace(/\//g, "\\");
     if (!/^[A-Za-z]:\\/.test(path) || /[\0\r\n]/.test(path)) return;

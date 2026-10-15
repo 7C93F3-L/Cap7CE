@@ -1,12 +1,9 @@
-import { app } from "electron";
-import path from "node:path";
-import { CatalogGridPreferenceStore } from "./catalogGridPreferenceStore";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
-import { isCatalogGridSize, readCatalogGridSizes } from "./catalogGridSizeRules";
+import { catalogGridPreferences, catalogGridSizes } from "./catalogGridPreferenceRegistry";
 
 export function registerCatalogGridPreferenceIpc(registrar: IpcRegistrar,
-  store = new CatalogGridPreferenceStore(() => path.join(app.getPath("userData"), "config", "catalog-grid.json")),
-  sizes = new CatalogGridPreferenceStore<number>(() => path.join(app.getPath("userData"), "config", "catalog-grid-sizes.json"), { read: readCatalogGridSizes, valid: isCatalogGridSize })) {
+  store: Pick<typeof catalogGridPreferences, "get" | "update"> = catalogGridPreferences,
+  sizes: Pick<typeof catalogGridSizes, "get" | "update"> = catalogGridSizes) {
   registerIpcDomain({ registrar, registrations: [
     { kind: "handle", channel: "preferences:getCatalogGrid", listener: () => store.get() },
     { kind: "handle", channel: "preferences:updateCatalogGrid", listener: (_event, scopePath, mode) => store.update(scopePath, mode) },

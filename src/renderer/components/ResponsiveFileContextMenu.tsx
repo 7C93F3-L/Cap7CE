@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import type { FileContextMenuAction } from "../../shared/fileContextMenuTypes";
 import { MiddleEllipsisFileName } from "./MiddleEllipsisFileName";
 import "./ResponsiveFileContextMenu.css";
 
@@ -9,7 +8,7 @@ const stableTitlebarBottom = 45;
 const compactHeightBreakpoint = 360;
 
 export interface ResponsiveFileContextMenuItem {
-  id: FileContextMenuAction;
+  id: string;
   label: string;
   shortcut?: string;
   disabled?: boolean;
@@ -25,13 +24,14 @@ interface ResponsiveFileContextMenuProps {
   fileName: string;
   detail: string;
   showInfo?: boolean;
+  returnFocus?: HTMLElement;
   actionGroups: [ResponsiveFileContextMenuItem[], ResponsiveFileContextMenuItem[]];
   onClose: () => void;
 }
 
-const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, detail, showInfo = true, actionGroups, onClose }: ResponsiveFileContextMenuProps) => {
+const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, detail, showInfo = true, returnFocus, actionGroups, onClose }: ResponsiveFileContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const actionRefs = useRef(new Map<FileContextMenuAction, HTMLButtonElement>());
+  const actionRefs = useRef(new Map<string, HTMLButtonElement>());
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   const compact = viewport.height < compactHeightBreakpoint;
@@ -62,9 +62,11 @@ const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, d
     };
   }, [onClose]);
 
-  const focusAction = (index: number) => {
-    const action = actions[index];
-    if (action && !action.disabled) actionRefs.current.get(action.id)?.focus();
+  const focusAction = (index: number, direction = 1) => {
+    for (let attempt = 0; attempt < actions.length; attempt++) {
+      const action = actions[(index + attempt * direction + actions.length) % actions.length];
+      if (action && !action.disabled) { actionRefs.current.get(action.id)?.focus(); return; }
+    }
   };
 
   return createPortal(
@@ -79,12 +81,12 @@ const ResponsiveFileContextMenu = ({ x, y, theme, menuStyle, format, fileName, d
       onClick={(event) => event.stopPropagation()}
       onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); }}
       onKeyDown={(event) => {
-        if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
+        if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); returnFocus?.focus({ preventScroll: true }); return; }
         if (!new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]).has(event.key)) return;
         event.preventDefault();
         const activeIndex = actions.findIndex((action) => actionRefs.current.get(action.id) === document.activeElement);
         if (activeIndex < 0) { focusAction(0); return; }
-        if (!compact) { focusAction((activeIndex + (event.key === "ArrowUp" ? -1 : 1) + actions.length) % actions.length); return; }
+        if (!compact) { const direction = event.key === "ArrowUp" ? -1 : 1; focusAction((activeIndex + direction + actions.length) % actions.length, direction); return; }
         const row = activeIndex % 3;
         const column = Math.floor(activeIndex / 3);
         if (event.key === "ArrowLeft" || event.key === "ArrowRight") focusAction(((column + 1) % 2) * 3 + Math.min(row, actionGroups[(column + 1) % 2].length - 1));

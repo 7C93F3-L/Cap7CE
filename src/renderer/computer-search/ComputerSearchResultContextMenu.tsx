@@ -4,7 +4,6 @@ import type { AppearanceColors, ResolvedThemeMode, WindowMaterial } from "../../
 import ResponsiveFileContextMenu, { type ResponsiveFileContextMenuItem } from "../components/ResponsiveFileContextMenu";
 import { fileContextShortcutLabels } from "../fileContextActions";
 import { getFileContextMenuStyle } from "../fileContextMenuShared";
-import "./ComputerSearchContextMenu.css";
 
 export type ComputerSearchContextMenuState = {
   x: number;

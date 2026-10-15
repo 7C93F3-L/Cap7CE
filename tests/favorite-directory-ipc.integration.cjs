@@ -14,6 +14,7 @@ const { createFavoriteDirectoryBridge } = require("../dist-electron/favoriteDire
     assert.equal(chooserCalls, 0); await assert.rejects(fs.stat(config), { code: "ENOENT" });
     const bridge = createFavoriteDirectoryBridge({ invoke(channel, ...args) { return handlers.get(channel)({ allowed: true }, ...args); } });
     assert.deepEqual(await bridge.list(), []); assert.equal(chooserCalls, 0);
+    assert.deepEqual(await Promise.all([bridge.list(), bridge.list()]), [[], []], 'concurrent startup reads serialize without a false rename-busy error');
     assert.deepEqual(await bridge.choose(), []); assert.equal(chooserCalls, 1);
     await assert.rejects(fs.stat(config), { code: "ENOENT" }, "cancelled picker creates no configuration");
     let items = await bridge.add("x:/Assets"); assert.equal(items[0].path, "X:\\Assets");

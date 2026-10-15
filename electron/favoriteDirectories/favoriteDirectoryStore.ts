@@ -3,6 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { FavoriteDirectory, FavoriteDirectoryRegistry } from "../../src/shared/favoriteDirectoryTypes";
 import { defaultFavoriteName, favoriteId, favoriteName, favoritePath, maximumFavoriteBytes, maximumFavorites, readFavoriteDirectories } from "./favoriteDirectoryRules";
+import { renamedDirectoryPath } from "../directoryRenamePaths";
+import type { DirectoryRename } from "../../src/shared/directoryRenameTypes";
 
 // Persists one application configuration file. It has no asset reads, indexing
 // controller or cache/database ownership; removing a shortcut only changes JSON.
@@ -10,6 +12,7 @@ export class FavoriteDirectoryStore implements FavoriteDirectoryRegistry {
   private cached?: FavoriteDirectory[];
   private tail: Promise<unknown> = Promise.resolve();
   constructor(private readonly filePath: string) {}
+  get renameJournalPath() { return `${this.filePath}.rename-pending`; }
   async waitForIdle(): Promise<void> { await this.tail; }
   list(): Promise<FavoriteDirectory[]> { return this.schedule(async () => this.copy(await this.load())); }
   add(directoryPath: string, name?: string): Promise<FavoriteDirectory[]> {
@@ -26,6 +29,16 @@ export class FavoriteDirectoryStore implements FavoriteDirectoryRegistry {
       const label = favoriteName(name), current = await this.load(); this.requireId(current, id);
       if (current.find(item => item.id === id)!.name === label) return this.copy(current);
       return this.save(current.map(item => item.id === id ? { ...item, name: label } : item));
+    });
+  }
+  relocate(change: DirectoryRename): Promise<FavoriteDirectory[]> {
+    return this.schedule(async () => {
+      const current = await this.load(), next = current.map(item => {
+        const moved = renamedDirectoryPath(item.path, change)!;
+        return moved === item.path ? item : { ...item, path: favoritePath(moved), name: defaultFavoriteName(moved) };
+      });
+      readFavoriteDirectories({ version: 1, directories: next });
+      return this.save(next);
     });
   }
   remove(id: string): Promise<FavoriteDirectory[]> {

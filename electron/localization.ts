@@ -1,6 +1,16 @@
 import { enUS } from "./locales/en-US";
 
 export const zhCN = {
+  "favorites.renameFavoriteConflict": "目标路径已在收藏中，请先检查并移除重复的收藏入口后重试。",
+  "favorites.openExplorer": "在资源管理器中打开",
+  "favorites.renameFolder": "重命名文件夹",
+  "favorites.renameFolderHint": "修改磁盘上的原始文件夹名称",
+  "favorites.renameSavePending": "文件夹已改名，部分配置尚未保存；已保留恢复记录，请重试读取收藏。",
+  "favorites.invalidFolderName": "名称包含不支持的字符、保留名称，或以空格、句点结尾，请修改后重试。",
+  "favorites.renameProtected": "此位置不支持在软件内重命名，可在资源管理器中查看。",
+  "favorites.renameRecovery": "上次改名的路径暂时无法确认，请恢复磁盘连接或检查目录后重试。",
+  "favorites.renameFailed": "文件夹重命名未完成，请检查系统提示或在资源管理器中确认当前名称。",
+  "favorites.operationFailed": "目录操作未完成，请确认目录仍然可访问后重试。",
   "catalogActions.addFavorite": "添加收藏",
   "catalogActions.trashLimit": "一次最多删除200个项目，请分批选择。",
   "catalogActions.removeFavorite": "移除收藏",

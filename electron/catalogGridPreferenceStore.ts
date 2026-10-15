@@ -3,6 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { catalogGridScopeKey, isCatalogGridMode, isCatalogGridScopePath, readCatalogGridPreferences } from "./catalogGridPreferenceRules";
 import type { CatalogGridMode } from "../src/shared/catalogGridPreferenceTypes";
+import type { DirectoryRename } from "../src/shared/directoryRenameTypes";
+import { renameDirectoryPreferenceKeys } from "./directoryRenamePaths";
 
 export class CatalogGridPreferenceStore<T = CatalogGridMode> {
   private writes: Promise<unknown> = Promise.resolve();
@@ -13,10 +15,14 @@ export class CatalogGridPreferenceStore<T = CatalogGridMode> {
     catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return {}; throw error; }
   }
   async get() { await this.writes; return this.read(); }
+  relocate(change: DirectoryRename) { return this.write(values => renameDirectoryPreferenceKeys(values, change)); }
   update(scopePath: unknown, mode: unknown): Promise<Record<string, T>> {
     if (!isCatalogGridScopePath(scopePath) || !this.codec.valid(mode)) return Promise.reject(new Error("catalog-grid-invalid-preference"));
+    return this.write(values => ({ ...values, [catalogGridScopeKey(scopePath)]: mode }));
+  }
+  private write(transform: (values: Record<string, T>) => Record<string, T>): Promise<Record<string, T>> {
     const operation = this.writes.then(async () => {
-      const preferences = await this.read(); preferences[catalogGridScopeKey(scopePath)] = mode;
+      const preferences = transform(await this.read());
       const target = this.filePath(), temporary = `${target}.${randomUUID()}.pending`;
       await fs.mkdir(path.dirname(target), { recursive: true });
       try {

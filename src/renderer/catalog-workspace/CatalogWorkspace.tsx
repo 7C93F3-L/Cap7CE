@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type CSSProperties } from "react";
 import { t } from "../../../electron/localization";
 import type { MetadataBuildProgress } from "../../shared/metadataBuildTypes";
+import FavoriteOperationNotice from "../favorite-directories/FavoriteOperationNotice";
 import CatalogSidebar from "./CatalogSidebar";
 import { useFavoriteDirectories } from "../favorite-directories/useFavoriteDirectories";
 import { useInertElement } from "../stable-ui/useInertElement";
@@ -38,9 +39,9 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   return <section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
-      favorites={{ ...favorites, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
+      favorites={{ ...favorites, appearance, onReveal: favorites.reveal, onCopyPath: favorites.copyPath, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
         onOpen: workspace.open, onChoose: () => void favorites.choose(), onRetry: () => void favorites.reload(),
-        onRename: favorites.rename, onRemove: id => void favorites.remove(id), onMove: (id, direction) => void favorites.move(id, direction) }} />
+        onRename: favorites.renameFolder, onRemove: id => void favorites.remove(id), onMove: (id, direction) => void favorites.move(id, direction) }} />
     <div className="cap-catalog-filter-host" hidden={!layout.filtersVisible} ref={setFilterHost} />
     <div className="cap-catalog-main">
     <div className="cap-catalog-body">
@@ -51,6 +52,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
       <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost} />
+    {favorites.notice && <FavoriteOperationNotice message={favorites.notice} onDismiss={favorites.dismissNotice} onRetry={() => void favorites.reload()} />}
     {workspace.openLimitReached && <div className="cap-catalog-limit" role="alert">{t("catalogWorkspace.limit")} <button type="button" onClick={workspace.dismissLimit}>{t("common.close")}</button></div>}
   </section>;
 }

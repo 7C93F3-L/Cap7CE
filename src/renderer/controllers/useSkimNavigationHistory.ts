@@ -52,6 +52,11 @@ export const useSkimNavigationHistory = <Location = SkimLocation>(
     });
   }, [navigate]);
 
-  return { open, back, forward, canBack: historyRef.current.index > 0,
+  const mapLocations = useCallback((transform: (location: Location) => Location) => {
+    navigationRequestRef.current++;
+    historyRef.current.locations = historyRef.current.locations.map(transform);
+    setRevision(value => value + 1);
+  }, []);
+  return { open, back, forward, mapLocations, canBack: historyRef.current.index > 0,
     canForward: historyRef.current.index + 1 < historyRef.current.locations.length };
 };

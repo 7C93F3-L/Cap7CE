@@ -1,5 +1,7 @@
 const assert = require("node:assert/strict");
-const { createCatalogWorkspace, catalogWorkspaceReducer: reduce, maximumCatalogContexts } = require("../src/renderer/catalog-workspace/catalogWorkspaceContexts.ts");
+const compiled = require("esbuild").buildSync({ entryPoints: [require("node:path").join(__dirname, "../src/renderer/catalog-workspace/catalogWorkspaceContexts.ts")], bundle: true, platform: "node", write: false }).outputFiles[0].text;
+const model = { exports: {} }; new Function("module", "exports", "require", compiled)(model, model.exports, require);
+const { createCatalogWorkspace, catalogWorkspaceReducer: reduce, maximumCatalogContexts } = model.exports;
 let state = createCatalogWorkspace("All files");
 const freshHome = reduce(state, { type: "close", id: state.activeId });
 assert.notEqual(freshHome.activeId, state.activeId, "Closing the last page creates a fresh query owner");

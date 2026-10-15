@@ -20,13 +20,13 @@ app.whenReady().then(async()=>{
       if(!api)return {available:false,nodeAccess:typeof require};
       return {available:true,nodeAccess:typeof require,
         phase:(await api.metadataBuild.status()).progress.phase,
-        favorites:(await api.favoriteDirectories.list()).length,
+        favorites:(await api.favoriteDirectories.list()).length,renameFolder:typeof api.favoriteDirectories.renameFolder,
         pinned:await api.window.getAlwaysOnTop(),
         shellAction:typeof api.window.setShellState,
         changeSubscription:typeof api.computerSearch.onCatalogChanged,trashAction:typeof api.computerSearch.moveToTrash};
     })()`);
     assert.deepEqual(errors,[],'production preload must load inside the sandbox');
-    assert.deepEqual(result,{available:true,nodeAccess:'undefined',phase:'idle',favorites:0,pinned:false,
+    assert.deepEqual(result,{available:true,nodeAccess:'undefined',phase:'idle',favorites:0,renameFolder:'function',pinned:false,
       shellAction:'function',changeSubscription:'function',trashAction:'function'});
     console.log('Production preload exposes domain and existing window bridges in a real isolated sandbox.');
     window.destroy();app.exit(0);

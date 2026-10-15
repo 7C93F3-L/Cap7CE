@@ -1,5 +1,6 @@
 import type { CatalogWorkspaceState } from "../../shared/catalogWorkspaceTypes";
 import type { FavoriteDirectory } from "../../shared/favoriteDirectoryTypes";
+import { relocateCatalogWorkspace } from "./catalogWorkspaceRelocation";
 
 export const maximumCatalogContexts = 32;
 const pathKey = (value: string | null) => value?.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase() ?? null;
@@ -10,15 +11,14 @@ export type CatalogWorkspaceAction =
   | { type: "location"; id: string; path: string | null }
   | { type: "select" | "close"; id: string }
   | { type: "favorite-names"; directories: readonly FavoriteDirectory[] }
+  | { type: "relocate"; change: import("../../shared/directoryRenameTypes").DirectoryRename }
   | { type: "dismiss-limit" };
 
 export function createCatalogWorkspace(name: string): CatalogWorkspaceState {
   return { contexts: [{ id: "catalog:all", kind: "search", scopePath: null, favoritePath: null, name }], activeId: "catalog:all", nextId: 1, openLimitReached: false, homeName: name };
 }
-
-// Context identity is independent of a saved favorite. Each mounted view owns its
-// query, filters, selection and scroll; removing a shortcut cannot retire that view.
 export function catalogWorkspaceReducer(state: CatalogWorkspaceState, action: CatalogWorkspaceAction): CatalogWorkspaceState {
+  if (action.type === "relocate") return relocateCatalogWorkspace(state, action.change);
   if (action.type === "entry") {
     const existing = state.contexts.find(context => pathKey(context.favoritePath ?? null) === pathKey(action.scopePath));
     if (existing) return { ...state, activeId: existing.id, openLimitReached: false };

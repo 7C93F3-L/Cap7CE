@@ -1,11 +1,21 @@
 const fs = require("node:fs"), path = require("node:path");
 const root = path.resolve(__dirname, ".."), failures = [];
 const files = new Map([
+  ["electron/windowsShellRenameScript.ts", 140],
+  ["electron/windowsShellRename.ts", 40],
+  ["electron/directoryRenamePaths.ts", 30],
+  ["electron/favoriteDirectories/favoriteFolderRenameRules.ts", 25],
+  ["electron/favoriteDirectories/favoriteFolderRenameService.ts", 115],
+  ["electron/catalogGridPreferenceRegistry.ts", 20],
+  ["src/shared/directoryRenameTypes.d.ts", 12],
+  ["src/renderer/favorite-directories/directoryRenameEvents.ts", 25],
+  ["src/renderer/favorite-directories/FavoriteDirectoryContextMenu.tsx", 40],
+  ["src/renderer/favorite-directories/FavoriteOperationNotice.tsx", 20],
+  ["src/renderer/catalog-workspace/catalogWorkspaceRelocation.ts", 20],
   ["electron/computerSearchTrashIpc.ts", 40],
   ["electron/computerSearchTrashService.ts", 40],
   ["src/renderer/computer-search/useComputerSearchFileOperations.ts", 45],
   ["src/renderer/computer-search/useComputerSearchTrashUpdates.ts", 25],
-  ["src/renderer/computer-search/ComputerSearchContextMenu.css", 10],
   ["electron/favoriteDirectories/favoriteDirectoryStore.ts", 150],
   ["electron/favoriteDirectories/favoriteDirectoryRules.ts", 75],
   ["electron/favoriteDirectories/favoriteDirectoryIpc.ts", 150],

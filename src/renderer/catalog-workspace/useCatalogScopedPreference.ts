@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { catalogGridScopeKey } from "../../../electron/catalogGridPreferenceRules";
-
+import { renameDirectoryPreferenceKeys } from "../../../electron/directoryRenamePaths";
+import { useDirectoryRename } from "../favorite-directories/directoryRenameEvents";
 export function useCatalogScopedPreference<T>(scope: string | null, fallback: T, codec: {
   read: (value: unknown) => Record<string, T>; load: () => Promise<unknown> | undefined;
   save: (scope: string | null, value: T) => Promise<unknown> | undefined;
@@ -9,6 +10,10 @@ export function useCatalogScopedPreference<T>(scope: string | null, fallback: T,
   const ref = useRef(values); ref.current = values;
   const sequences = useRef(new Map<string, number>()), generation = useRef(0);
   const confirmed = useRef<Record<string, T>>({}), acknowledged = useRef(new Map<string, number>());
+  useDirectoryRename(change => {
+    confirmed.current = renameDirectoryPreferenceKeys(confirmed.current, change);
+    ref.current = renameDirectoryPreferenceKeys(ref.current, change); setValues(ref.current);
+  });
   useEffect(() => {
     const owner = ++generation.current;
     void codec.load()?.then(value => {
@@ -17,7 +22,7 @@ export function useCatalogScopedPreference<T>(scope: string | null, fallback: T,
       setValues(previous => ({ ...saved, ...previous }));
     }).catch(() => { if (generation.current === owner) setError(true); });
     return () => { generation.current++; };
-  }, [codec]);
+  }, [codec, key]);
   const current = () => ref.current[key] ?? fallback;
   const update = (next: T, force = false) => {
     if (!force && current() === next) return;

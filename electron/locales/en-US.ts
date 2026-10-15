@@ -1,6 +1,16 @@
 import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
+  "favorites.renameFavoriteConflict": "The destination is already a favorite. Check and remove the duplicate shortcut before retrying.",
+  "favorites.openExplorer": "Open in File Explorer",
+  "favorites.renameFolder": "Rename folder",
+  "favorites.renameFolderHint": "Change the original folder name on disk",
+  "favorites.renameSavePending": "The folder was renamed. Some preferences could not be saved; a recovery record was kept. Retry loading favorites.",
+  "favorites.invalidFolderName": "Use a valid folder name without reserved names or trailing spaces or periods.",
+  "favorites.renameProtected": "This location cannot be renamed here. Check it in File Explorer.",
+  "favorites.renameRecovery": "The previous rename could not be verified. Reconnect the drive or check the folder and retry.",
+  "favorites.renameFailed": "The folder rename could not be completed. Check the system message or verify its name in File Explorer.",
+  "favorites.operationFailed": "The folder operation could not finish. Check that the folder is accessible and retry.",
   "catalogActions.addFavorite": "Add to Favorites",
   "catalogActions.trashLimit": "Select up to 200 items per deletion.",
   "catalogActions.removeFavorite": "Remove from Favorites",
