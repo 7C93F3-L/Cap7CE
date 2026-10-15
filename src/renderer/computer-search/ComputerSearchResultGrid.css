@@ -1,3 +1,4 @@
+.cap-computer-search-results { overflow-anchor: none; }
 .cap-catalog-file-grid,
 .cap-skim-root-group-grid.cap-catalog-file-grid {
   display: grid;
