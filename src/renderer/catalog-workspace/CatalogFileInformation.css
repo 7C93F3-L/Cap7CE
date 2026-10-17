@@ -4,7 +4,7 @@
 .cap-catalog-file-information .preview-sidebar-scroll { top: 52px; padding: 0 12px 4px; overflow-anchor: none; scrollbar-width: none; }
 .cap-catalog-file-information > .cap-custom-scrollbar-vertical { top: 52px; right: 0; }
 .cap-catalog-file-information .preview-sidebar-file-link { max-height: none; overflow: visible; font: inherit; }
-.cap-catalog-file-information .preview-sidebar-section, .cap-catalog-file-information .preview-embedded-metadata-details { padding: 12px; border-radius: 16px; margin-bottom: 8px; }
+.cap-catalog-file-information .preview-sidebar-section, .cap-catalog-file-information .preview-embedded-metadata-details { padding: 12px; border-radius: 12px; margin-bottom: 8px; }
 .cap-catalog-file-visual { position: relative; width: 100%; aspect-ratio: 1; max-height: 280px; margin: 0 auto 12px; overflow: hidden; border-radius: 10px; }
 .cap-catalog-file-visual .cap-computer-search-thumbnail-visual { position: absolute; inset: 0; pointer-events: none; }
 .cap-catalog-file-visual .thumbnail-image-frame { position: absolute; inset: 0; width: 100%; height: 100%; }

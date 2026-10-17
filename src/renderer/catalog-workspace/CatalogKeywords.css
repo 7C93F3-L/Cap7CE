@@ -1,3 +1,3 @@
 .cap-catalog-keyword-actions { margin-top: 12px; }
 .cap-catalog-keyword-actions button:disabled { opacity: .5; }
-.cap-catalog-details .preview-sidebar-section { --preview-sidebar-muted: var(--cap-stable-text-muted); --preview-sidebar-card: var(--cap-stable-surface); --preview-sidebar-control: var(--cap-stable-control-hover); --keyword-tag-surface: var(--preview-sidebar-control); --keyword-input-surface: var(--preview-sidebar-control); padding: 12px; border-radius: 16px; }
+.cap-catalog-details .preview-sidebar-section { --preview-sidebar-muted: var(--cap-stable-text-muted); --preview-sidebar-card: var(--cap-stable-surface); --preview-sidebar-control: var(--cap-stable-control-hover); --keyword-tag-surface: var(--preview-sidebar-control); --keyword-input-surface: var(--preview-sidebar-control); padding: 12px; border-radius: 12px; }
