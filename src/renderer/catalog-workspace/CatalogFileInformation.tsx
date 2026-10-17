@@ -10,6 +10,7 @@ export default function CatalogFileInformation({ selection, foreground }: { sele
   const information = useCatalogFileInformation(item, selection.taskId, foreground);
   return <div className="cap-catalog-file-information-host" data-selection-preserve="true">
     <PreviewInformationSidebar {...information} expanded showFileActions={false} className="cap-catalog-file-information"
+      heading={item.extension.replace(/^\./u, "").toUpperCase() || "文件"}
       onShowInFolder={selection.showInFolder} renderVisual={scrollRef => <div className="cap-catalog-file-visual">
         <ComputerSearchResultVisual item={item} taskId={selection.taskId} foreground={foreground} scrollContainerRef={scrollRef} />
       </div>} />

@@ -8,7 +8,7 @@ import PreviewSearchEvidence from "./PreviewSearchEvidence";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
   data: FileInformationData; expanded: boolean;
-  showFileActions?: boolean; className?: string; metadataStatus?: "loading" | "unavailable";
+  showFileActions?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
   renderVisual?: (scrollRef: RefObject<HTMLDivElement | null>) => ReactNode;
   onToggleExpanded?: () => void;
   onOpen?: () => void;
@@ -37,7 +37,7 @@ const getFileFormat = (data: FileInformationData) => {
 };
 const PreviewInformationSidebar = ({
   data,
-  showFileActions = true, className = "", renderVisual, metadataStatus,
+  showFileActions = true, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
   expanded,
   onToggleExpanded,
   onOpen,
@@ -61,8 +61,8 @@ const PreviewInformationSidebar = ({
   >
     {onToggleExpanded ? <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} onPointerUp={(event) => event.currentTarget.blur()} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={expanded ? "m15 5-7 7 7 7" : "m9 5 7 7-7 7"} /></svg>
-      {expanded && <strong>{t("preview.sidebar.heading")}</strong>}
-    </button> : <header className="preview-sidebar-header"><strong>{t("preview.sidebar.heading")}</strong></header>}
+      {expanded && <strong>{heading}</strong>}
+    </button> : <header className="preview-sidebar-header"><strong>{heading}</strong></header>}
     {expanded && <>
       <div ref={scrollRef} className="preview-sidebar-scroll cap-main-scroll-viewport">
         {renderVisual?.(scrollRef)}

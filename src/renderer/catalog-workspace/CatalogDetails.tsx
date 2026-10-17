@@ -13,7 +13,7 @@ export default function CatalogDetails({ selection, path, count, foreground, sea
   const ref = useRef<HTMLElement | null>(null), items = selection?.items ?? [], item = items.length === 1 ? items[0] : null;
   if (item && !item.isDirectory && selection) return <CatalogFileInformation selection={selection} foreground={foreground} />;
   return <aside className="cap-catalog-details" ref={ref} aria-label="详细信息" data-selection-preserve="true">
-    <header><strong>{item ? item.isDirectory ? "文件夹" : item.extension.slice(1).toUpperCase() || "文件" : items.length ? "多选信息" : searching ? "当前搜索" : "当前目录"}</strong></header>
+    <header title={item?.name ?? path ?? "此电脑"}><strong>{item ? "文件夹" : items.length ? "多选信息" : searching ? "当前搜索" : path?.replace(/\\+$/, "").split("\\").pop() || "此电脑"}</strong></header>
     {item && selection && <div className="cap-catalog-details-visual"><ComputerSearchResultVisual item={item} taskId={selection.taskId} foreground={foreground} scrollContainerRef={ref} /></div>}
     <strong className="cap-catalog-details-name">{item?.name ?? (items.length ? `已选择 ${items.length} 项` : path?.replace(/\\+$/, "").split("\\").pop() || "此电脑")}</strong>
     <dl>{item ? <><dt>大小</dt><dd>{item.isDirectory ? "未计算" : item.sizeBytes === null ? "—" : bytes(item.sizeBytes)}</dd>

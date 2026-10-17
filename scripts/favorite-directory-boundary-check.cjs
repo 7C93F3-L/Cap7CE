@@ -43,6 +43,8 @@ const files = new Map([
   ["src/renderer/catalog-workspace/CatalogSidebar.css", 35],
   ["src/renderer/catalog-workspace/CatalogPanelIcon.tsx", 15],
   ["src/renderer/catalog-workspace/useCatalogLayout.ts", 45],
+  ["src/renderer/catalog-workspace/useCatalogDetailsWidth.ts", 35],
+  ["src/renderer/catalog-workspace/CatalogDetailsResizer.tsx", 12],
   ["src/renderer/settings-window/SettingsMetadataBuildControl.tsx", 30],
   ["src/renderer/settings-window/SettingsIndexSection.tsx", 35],
   ["electron/settingsWindowBridge.ts", 25],

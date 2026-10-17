@@ -8,7 +8,7 @@ import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoun
 const p=window.probe={reads:[],cancels:[],reveals:0,previews:0},pending=new Map();
 window.cap7ce={computerSearch:{readFileDetails:r=>{p.reads.push(r);return new Promise(resolve=>pending.set(r.requestId,resolve))},cancelFileDetails:async r=>{p.cancels.push(r);return true},acquireThumbnail:async()=>null,releaseThumbnail:async()=>true}};
 const item=name=>({id:name,authorizationId:name,name:name+'.png',path:'X:\\'+name+'.png',extension:'.png',isDirectory:false,canThumbnail:false,iconName:'format-png',sizeBytes:1024,modifiedUtcTicks:null});
-function Fixture(){const [name,setName]=useState('A'),[foreground,setForeground]=useState(true),[theme,setTheme]=useState('dark'),[preview,setPreview]=useState(false),[width,setWidth]=useState(230);
+function Fixture(){const [name,setName]=useState('A'),[foreground,setForeground]=useState(true),[theme,setTheme]=useState('dark'),[preview,setPreview]=useState(false),[width,setWidth]=useState(280);
 p.width=v=>flushSync(()=>setWidth(v));
 p.select=n=>flushSync(()=>setName(n));p.foreground=v=>flushSync(()=>setForeground(v));p.theme=v=>flushSync(()=>setTheme(v));p.preview=()=>flushSync(()=>setPreview(true));
 p.finish=n=>{const r=p.reads.findLast(r=>r.authorizationId===n);pending.get(r.requestId)({info:{kind:'file',path:'X:\\'+n+'.png',name:n+'.png',extension:'.png',size:1024,modifiedAt:'2026-10-17T00:00:00Z',withinAddedDirectory:false},imageWidth:1200,imageHeight:800,embeddedMetadata:{items:[{kind:'software_family',text:n+' software'}],capturedAt:null}})};
@@ -27,13 +27,14 @@ app.whenReady().then(async()=>{let win;try{
  await ready('probe.reads.length===2');await run("probe.finish('A')");await wait(40);
  assert.equal(await run('document.body.innerText.includes("A software")'),false,'late metadata cannot overwrite a new selection');
  await run("probe.finish('B')");await ready('document.body.innerText.includes("B software")');
+ assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'PNG','catalog heading uses the file extension');
  assert.equal(await run('document.body.innerText.includes("1200 × 800")'),true);
  const headings=await run('[...document.querySelectorAll(".preview-sidebar-section h2,.preview-embedded-metadata-details h2")].map(e=>e.innerText)');
  assert.deepEqual(headings,['文件信息','位置','手动关键词','当前匹配依据','嵌入信息']);
  assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),true,'catalog shares preview evidence presentation');
  assert.equal(await run('!!document.querySelector(".preview-sidebar-actions")'),false);assert.equal(await run('document.body.innerText.includes("打开详细预览")'),false);
  await run('document.querySelector(".preview-sidebar-path").click()');assert.equal(await run('probe.reveals'),1,'location reuses the authorized result action');
- for(const theme of ['light','dark']){for(const width of [230]){await run(`probe.width(${width});probe.theme('${theme}');document.documentElement.style.setProperty('--cap-ui-font-base','16px')`);assert.equal(await run('(()=>{const e=document.querySelector(".preview-sidebar-scroll");return e.scrollWidth>e.clientWidth+1})()'),false,'cards fit each supported width at maximum font size');
+ for(const theme of ['light','dark']){for(const width of [220,280,420]){await run(`probe.width(${width});probe.theme('${theme}');document.documentElement.style.setProperty('--cap-ui-font-base','16px')`);assert.equal(await run('(()=>{const e=document.querySelector(".preview-sidebar-scroll");return e.scrollWidth>e.clientWidth+1})()'),false,'cards fit each supported width at maximum font size');
  assert.ok(await run('document.querySelector(".cap-catalog-file-visual").getBoundingClientRect().height')<=280,'thumbnail height is bounded at wide sizes');}}
  const detailReadCount=await run('probe.reads.length');
  await run("probe.select('C');probe.foreground(false)");await wait(220);assert.equal(await run('probe.reads.length'),detailReadCount,'background sidebar does not start detail reads');
