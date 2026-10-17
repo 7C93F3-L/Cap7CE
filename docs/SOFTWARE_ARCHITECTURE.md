@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+StableFilterEditorFlyout.css由StableExploreFilters.css导入，统一筛选编辑浮层的10px内边距、8px区块间距、30px输入框、28px按钮、6px字段/操作间距与底部对齐；字段列使用minmax(0,1fr)并允许标签收缩，避免数字输入的固有最小宽度造成横向溢出。图像/视频比例共用五列快捷项，数量/时长/尺寸采用320px宽度，文件大小保留360px及64px单位列，日期保留360px，视频色彩保留330px。原草稿、确认、清除和条件规范化链路不变。
+
 StableImageColorFilter直接从visualColors/imageColorTraits派生16个圆形选项，两组分别回写原条件并保留其他搜索状态；原浮层、anchor及待确认草稿已移除。四个色彩特征使用领域CSS渐变及现有翻译提示，沿用八列布局与选中圆环，仍受原metadata-colors fieldset可用性限制；视频色彩入口不变。
 
 CatalogTopFilters通过StableFlyoutBoundaryContext提供顶部栏元素引用，StableSidebarFlyout的below布局读取可选边界，在整栏底边下方6px展开并按下方可用高度限制maxHeight，横向保留原入口对齐与窗口夹紧。Portal沿用React上下文，不逐个修改属性编辑器或增加观察器；未提供边界的边栏/工具条入口保持原定位。浮层互斥、Esc、外部点击及滚动/缩放关闭复用useStableFlyoutInteractions。
