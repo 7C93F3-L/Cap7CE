@@ -5,6 +5,7 @@ import { useCatalogFileInformation } from "./useCatalogFileInformation";
 import CatalogKeywords from "./CatalogKeywords";
 import "../preview/PreviewEmbeddedMetadata.css";
 import "./CatalogFileInformation.css";
+import "./CatalogFileCard.css";
 
 export default function CatalogFileInformation({ selection, foreground }: { selection: CatalogSelection; foreground: boolean }) {
   const item = selection.items[0];
