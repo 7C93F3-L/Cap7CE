@@ -1,6 +1,5 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { t } from "../../../electron/localization";
 import type { CatalogContextActions, CatalogWorkspaceContext, CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTypes";
 import type { MetadataBuildProgress } from "../../shared/metadataBuildTypes";
 import ComputerSearchView from "../computer-search/ComputerSearchView";
@@ -11,6 +10,7 @@ import { useInertElement } from "../stable-ui/useInertElement";
 import CatalogTopFilters from "./CatalogTopFilters";
 import { workspaceFilterCount } from "../workspace/workspaceFilterSummary";
 import CatalogDetails from "./CatalogDetails";
+import CatalogQueryNotice from "./CatalogQueryNotice";
 import type { CatalogSelection } from "../../shared/catalogPresentationTypes";
 import CatalogDirectoryToolbar from "./CatalogDirectoryToolbar";
 import { useCatalogDirectoryNavigation } from "./useCatalogDirectoryNavigation";
@@ -20,10 +20,10 @@ import { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailabili
 import { useCatalogGridPresentation } from "./useCatalogGridPresentation";
 import CatalogGridPreferenceNotice from "./CatalogGridPreferenceNotice";
 import type { FavoriteDirectoryControls } from "../../shared/favoriteDirectoryTypes";
-export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, onShowDetails, favorites, ...appearance }: CatalogWorkspaceAppearance & {
+export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, noticeHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, onShowDetails, favorites, ...appearance }: CatalogWorkspaceAppearance & {
   favorites?: FavoriteDirectoryControls; onMetadata: () => void; onShowDetails?: () => void;
   context: CatalogWorkspaceContext; selected: boolean; foreground: boolean;
-  filterHost: HTMLElement | null; detailsHost: HTMLElement | null;
+  filterHost: HTMLElement | null; detailsHost: HTMLElement | null; noticeHost?: HTMLElement | null;
   metadataProgress: MetadataBuildProgress | null; onSearchAvailable: (available: boolean) => void;
   onActiveActions: (actions: CatalogContextActions | null) => void;
   onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
@@ -77,8 +77,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       onOpen={openDirectory} onHome={home} inputRef={inputRef}
       searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
       onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} includeSubfolders={view.includeSubfolders} onIncludeSubfolders={view.toggleSubfolders} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
-    <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")
-      : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
+    {selected && noticeHost && createPortal(<CatalogQueryNotice busy={foreground && controller.busy} invalid={foreground && filters.invalid} />, noticeHost)}
     <div className="cap-catalog-results">{navigation.path === null && !random.enabled && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
       ? <CatalogHome onOpen={openDirectory} favorites={favorites} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />

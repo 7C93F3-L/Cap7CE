@@ -24,6 +24,7 @@ app.whenReady().then(async()=>{
   const run=code=>win.webContents.executeJavaScript(code).catch(error=>{console.error("Failed renderer action:",code);throw error}),wait=ms=>new Promise(r=>setTimeout(r,ms));
   const ready=async code=>{for(let n=0;n<150;n++){if(await run(code))return;await wait(20)}throw Error('Timeout '+code)};
   await win.loadFile(path.join(root,'index.html'));await ready("document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry').length===2");
+  assert.equal(await run('!!document.querySelector(".cap-catalog-status")'),false,'the old permanent count row is removed');
   const active="document.querySelector('[role=tabpanel]:not([hidden])')";
   const goHome=async()=>{await run(`if(${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')==='true')${active}.querySelector('.cap-catalog-address-toggle').click()`);await ready(`${active}.querySelector('.cap-catalog-breadcrumb > button')`);await run(`${active}.querySelector('.cap-catalog-breadcrumb > button').click()`)};
   const openDrive=async name=>{await run(`(()=>{const b=[...document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry')].find(b=>b.getAttribute('title').slice(0,2)==='${name}');b.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))})()`);await ready("probe.requests.at(-1)?.scopePath==="+JSON.stringify(name+'\\'));};

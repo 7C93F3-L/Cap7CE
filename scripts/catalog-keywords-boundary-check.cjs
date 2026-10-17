@@ -18,7 +18,7 @@ module.exports=(root,failures)=>{
   ['electron/catalogAutoKeywordModel.ts',60],['electron/catalogAutoKeywordService.ts',65],['electron/catalogAutoKeywordSource.ts',18],
   ['electron/catalogAutoKeywordRuntime.ts',30],['electron/catalogAutoKeywordIpc.ts',60],['src/shared/catalogAutoKeywordTypes.d.ts',12],
   ['src/renderer/catalog-workspace/useCatalogAutoKeywords.ts',65],['src/renderer/catalog-workspace/CatalogActivity.tsx',36],
-  ['src/renderer/catalog-workspace/CatalogActivity.css',5],['src/renderer/catalog-workspace/CatalogKeywords.tsx',40],
+  ['src/renderer/catalog-workspace/CatalogActivity.css',6],['src/renderer/catalog-workspace/CatalogKeywords.tsx',40],
   ['src/renderer/catalog-workspace/CatalogKeywords.css',8],['src/renderer/catalog-workspace/catalogKeywordIdentity.ts',8],
   ['src/renderer/catalog-workspace/CatalogTransientFeedback.tsx',15],
   ['src/renderer/feedback/BottomNoticeBar.tsx',25],['src/renderer/feedback/BottomNoticeBar.css',12]]);

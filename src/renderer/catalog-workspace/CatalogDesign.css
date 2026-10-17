@@ -27,8 +27,6 @@
 .cap-catalog-breadcrumb i { font-style: normal; color: var(--cap-stable-text-muted); }
 .cap-catalog-breadcrumb button { white-space: nowrap; }
 .cap-catalog-search-badge { color: var(--theme-color) !important; }
-.cap-catalog-design .cap-catalog-status:empty { display: none; }
-.cap-catalog-design .cap-catalog-status { font-size: 11px; padding: 0 8px 4px; height: auto; }
 .cap-catalog-details-host { position: relative; grid-column: 3; grid-row: 2; min-width: 0; min-height: 0; border-radius: 12px; background: var(--cap-stable-grid-surface); }
 .cap-catalog-details-resizer { left: -6px; right: auto; }
 .cap-catalog-details { height: 100%; box-sizing: border-box; overflow: auto; padding: 12px; color: var(--cap-stable-text); font-size: 12px; }

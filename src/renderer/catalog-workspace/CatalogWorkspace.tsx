@@ -26,6 +26,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   const detailsLayout = useCatalogDetailsWidth(layout.width, layout.detailsVisible);
   const [filterHost, setFilterHost] = useState<HTMLDivElement | null>(null);
   const [detailsHost, setDetailsHost] = useState<HTMLDivElement | null>(null);
+  const [noticeHost, setNoticeHost] = useState<HTMLDivElement | null>(null);
   const [searchAvailable, setSearchAvailable] = useState(false);
   const [metadataProgress, setMetadataProgress] = useState<MetadataBuildProgress | null>(null);
   const activeActions = useRef<CatalogContextActions | null>(null), report = useRef(onActiveActions);
@@ -51,10 +52,11 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     <div className="cap-catalog-body">
     <div className="cap-catalog-contexts">{workspace.contexts.map(context => <CatalogContextView key={context.id}
       context={context} selected={workspace.activeId === context.id} foreground={foreground && !interactionLocked && workspace.activeId === context.id}
-      filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null}
+      filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null} noticeHost={noticeHost}
       onShowDetails={layout.showDetails} onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
       <div className="cap-catalog-activity-dock"><CatalogActivityBar />
+      <div className="cap-catalog-query-notice-host" ref={setNoticeHost} />
       <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost}><CatalogDetailsResizer layout={detailsLayout} /></div>
     {favorites.notice && <FavoriteOperationNotice message={favorites.notice} onDismiss={favorites.dismissNotice} onRetry={() => void favorites.reload()} />}
