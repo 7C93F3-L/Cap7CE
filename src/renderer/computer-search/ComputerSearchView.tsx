@@ -99,7 +99,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     <span>{t("computerSearch.hint")}</span>
   </section>;
   if (error) return <section className={`cap-computer-search-empty${error === "scope-preparing" ? "" : " is-error"}`} aria-busy={error === "scope-preparing"}><StableUiIcon name="search" />
-    <strong>{t(error === "scope-offline" ? "computerSearch.scopeOffline" : error === "scope-preparing" ? "computerSearch.scopePreparing" : error === "scope-not-indexed" ? "computerSearch.scopeNotIndexed" : "computerSearch.failed")}</strong>
+    <strong>{t(error === "random-unavailable" ? "computerSearch.randomUnavailable" : error === "scope-offline" ? "computerSearch.scopeOffline" : error === "scope-preparing" ? "computerSearch.scopePreparing" : error === "scope-not-indexed" ? "computerSearch.scopeNotIndexed" : "computerSearch.failed")}</strong>
   </section>;
   if (!busy && items.length === 0) return <section className="cap-computer-search-empty"><StableUiIcon name="search" />
     <strong>{controller.query.trim() ? t("computerSearch.empty") : "没有符合当前条件的文件"}</strong><span>{emptyHint ?? (controller.query.trim() ? t("computerSearch.emptyHint") : "可以减少筛选条件或切换搜索范围。")}</span>

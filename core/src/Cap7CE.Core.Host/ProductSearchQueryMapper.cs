@@ -76,7 +76,7 @@ internal static class ProductSearchQueryMapper
             conditions.MinimumSizeBytes, conditions.MaximumSizeBytes, FileTime(conditions.MinimumModifiedFileTime),
             FileTime(conditions.MaximumModifiedFileTime)) : null;
         return new(request.Query, request.VolumeIds, scope, request.Extension, type, request.PageSize, after, facts, target,
-            FileConditions: file, ExcludeHidden: request.ExcludeHidden, Sort: request.Sort switch {
+            RandomSeed: request.RandomSeed, FileConditions: file, ExcludeHidden: request.ExcludeHidden, Sort: request.Sort switch {
                 CoreSearchSorts.NameAscending => CatalogQuerySort.NameAscending,
                 CoreSearchSorts.NameDescending => CatalogQuerySort.NameDescending,
                 CoreSearchSorts.ModifiedAscending => CatalogQuerySort.ModifiedAscending,

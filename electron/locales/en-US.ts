@@ -673,6 +673,7 @@ export const enUS = defineLocale({
   "computerSearch.state.needsRebuild": "The file catalog must be rebuilt before complete results are available",
   "computerSearch.state.repairRequired": "This PC search needs repair; skim browsing is unaffected",
   "computerSearch.state.unavailable": "This PC search is unavailable; skim browsing remains available",
+  "computerSearch.randomUnavailable": "This Core version does not support random browsing. Update Core and try again.",
   "computerSearch.scopePreparing": "Preparing the file catalog for this location. Contents will appear automatically when ready.",
   "computerSearch.scopeNotIndexed": "This location is not in the Core file catalog",
   "computerSearch.scopeOffline": "The drive for this location is offline",

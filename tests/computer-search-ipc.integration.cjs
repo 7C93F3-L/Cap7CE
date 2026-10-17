@@ -77,6 +77,7 @@ const run = async () => {
     taskId: "task-1", query: "poster", scopePath: "relative"
   }), /invalid-request/);
   for(const options of [{sort:'bogus'},{excludeHidden:'yes'}])await assert.rejects(()=>handlers.get("computerSearch:search")({allowed:true},{taskId:'invalid-options',query:'',scopePath:null,...options}),/invalid-request/);
+  for (const randomSeed of [-1,0x100000000,1.5,'42']) await assert.rejects(()=>handlers.get("computerSearch:search")({allowed:true},{taskId:'invalid-random',query:'',scopePath:null,randomSeed}),/invalid-request/);
   const first = await handlers.get("computerSearch:search")({ allowed: true }, {
     taskId: "task-1", query: "  poster  ", scopePath: "E:\\References"
   });
@@ -84,6 +85,7 @@ const run = async () => {
   assert.deepEqual(calls[1], ["search", { taskId: "task-1", query: "poster", scopePath: "E:\\References" }]);
   await handlers.get("computerSearch:search")({allowed:true},{taskId:'sorted',query:'',scopePath:'X:\\',scopeKind:'direct-children',sort:'modified-descending',excludeHidden:true});
   assert.equal(calls.at(-1)[1].sort,'modified-descending');assert.equal(calls.at(-1)[1].excludeHidden,true);calls.pop();
+  await handlers.get("computerSearch:search")({allowed:true},{taskId:'seed-zero',query:'',scopePath:null,randomSeed:0});assert.equal(calls.at(-1)[1].randomSeed,0);calls.pop();
   await handlers.get("computerSearch:search")({allowed:true},{taskId:'recursive',query:'poster',scopePath:'X:\\Folder',scopeKind:'directory-descendants'});
   assert.equal(calls.at(-1)[1].scopeKind,'directory-descendants');calls.pop();
   for (const scopeKind of ['directory-descendants','bogus']) await assert.rejects(()=>handlers.get("computerSearch:search")({allowed:true},{taskId:'invalid-scope',query:'',scopePath:null,scopeKind}),/invalid-request/);

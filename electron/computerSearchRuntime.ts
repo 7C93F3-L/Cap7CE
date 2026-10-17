@@ -271,12 +271,14 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     async search(request) {
       if (request.scopeKind !== undefined && ((request.scopeKind !== "direct-children" && request.scopeKind !== "directory-descendants") || request.scopePath === null))
         throw new Error("computer-search-invalid-request");
+      if (request.randomSeed !== undefined && (!Number.isInteger(request.randomSeed) || request.randomSeed < 0 || request.randomSeed > 0xffffffff)) throw new Error("computer-search-invalid-request");
       await this.cancel(request.taskId);
       cancelledTasks.delete(request.taskId);
       runningTasks.add(request.taskId);
       try {
         const catalog = await readCatalog();
         if (cancelledTasks.has(request.taskId)) throw new Error("search-cancelled");
+        if (request.randomSeed !== undefined && !controller.supports?.("search.random")) throw new Error("random-browse-unavailable");
         const names = new Map(catalog.volumes.map((volume) => [volume.volumeId, volume.displayName]));
         let scope: Record<string, unknown> = { kind: "all-volumes" };
         let volumeIds: string[] = [];
@@ -300,7 +302,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
             : { kind: "all-volumes" };
         }
         const pending = controller.startRequest<CoreSearchPage>("search.start", {
-          query: request.query, pageSize: 100, sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, volumeIds, scope,
+          query: request.query, pageSize: 100, ...(request.randomSeed !== undefined ? { randomSeed: request.randomSeed } : {}), sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, volumeIds, scope,
           ...(controller.supports?.("search.live") ? { continuation: "live" } : {}),
           entryType: request.scopeKind === "directory-descendants" || request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: "name-or-path",
           ...(request.facts ? { facts: toCoreSearchFacts(request.facts) } : {}),

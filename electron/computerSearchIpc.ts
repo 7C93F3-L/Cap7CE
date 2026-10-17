@@ -46,7 +46,8 @@ const readSearchRequest = (value: unknown): ComputerSearchRequest => {
     throw new Error("computer-search-invalid-request");
   if (value.sort !== undefined && (typeof value.sort !== "string" || !["name-ascending", "name-descending", "modified-ascending", "modified-descending"].includes(value.sort))
     || value.excludeHidden !== undefined && typeof value.excludeHidden !== "boolean") throw new Error("computer-search-invalid-request");
-  return { taskId: value.taskId, query: value.query.trim(), scopePath: value.scopePath,
+  if (value.randomSeed !== undefined && (typeof value.randomSeed !== "number" || !Number.isInteger(value.randomSeed) || value.randomSeed < 0 || value.randomSeed > 0xffffffff)) throw new Error("computer-search-invalid-request");
+  return { taskId: value.taskId, ...(value.randomSeed !== undefined ? { randomSeed: value.randomSeed as number } : {}), query: value.query.trim(), scopePath: value.scopePath,
     ...(value.sort ? { sort: value.sort as ComputerSearchRequest["sort"] } : {}),
     ...(value.excludeHidden !== undefined ? { excludeHidden: value.excludeHidden as boolean } : {}),
     ...(value.scopeKind ? { scopeKind: value.scopeKind as ComputerSearchRequest["scopeKind"] } : {}),

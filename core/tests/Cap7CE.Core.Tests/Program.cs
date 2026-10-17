@@ -60,6 +60,7 @@ var readOnlyBaseline = await CatalogReadOnlyCliTests.RunAsync();
 var catalogV2 = await CatalogV2Tests.RunAsync();
 await CatalogVolumeRootTests.RunAsync();
 await CatalogOrderingTests.RunAsync();
+await CatalogRandomOrderingTests.RunAsync();
 await FileFactDatabaseTests.RunAsync();
 await FileFactImageDetailsTests.RunAsync();
 await FileFactAudioDetailsTests.RunAsync();

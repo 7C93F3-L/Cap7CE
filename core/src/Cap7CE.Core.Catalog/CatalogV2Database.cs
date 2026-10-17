@@ -499,6 +499,7 @@ public sealed class CatalogV2Database
     {
         ValidateQuery(query);
         await using var connection = await OpenAsync(true, token);
+        Queries.CatalogRandomOrdering.Configure(connection, query);
         return await Queries.CatalogQueryExecution.RunAsync(connection, token,
             () => ReadQueryPageAsync(connection, query, token));
     }
@@ -632,7 +633,7 @@ public sealed class CatalogV2Database
         {
             items.RemoveAt(items.Count - 1);
             var last = items[^1];
-            next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference, last.ModifiedUtcTicks ?? -1, last.IsDirectory);
+            next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference, last.ModifiedUtcTicks ?? -1, last.IsDirectory, query.RandomSeed is { } seed ? Queries.CatalogRandomOrdering.Score(last.Identity.VolumeId, last.Identity.FileReference, seed) : null);
         }
         return new CatalogV2QueryPage(items, next, revision, factRevision);
     }

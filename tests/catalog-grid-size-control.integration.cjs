@@ -19,7 +19,7 @@ function Fixture(){const [location,setLocation]=useState([null,'X:\\Folder']);co
 window.probe={navigate:(favorite,path)=>setLocation([favorite,path]),size:grid.size,mode:grid.mode,ref};
 return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{display:'block',margin:'70px 20px 0',width:900,padding:0}}>
 <Toolbar path={location[1]} canBack={false} canForward={false} canUp onBack={noop} onForward={noop} onUp={noop} onOpen={noop} onHome={noop} searchMode={false} onSearchMode={noop} query="" onQuery={noop} onSubmit={noop} enabled inputRef={inputRef}
-gridMode={grid.mode} onGridMode={grid.toggle} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} onRefresh={noop} refreshing={false} sort="name-ascending" onSort={noop} showHidden={false} onShowHidden={noop}/>
+includeSubfolders={false} onIncludeSubfolders={noop} random={{enabled:false,seed:0,batchNumber:0,toggle:noop,disable:noop,next:noop}} gridMode={grid.mode} onGridMode={grid.toggle} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} onRefresh={noop} refreshing={false} sort="name-ascending" onSort={noop} showHidden={false} onShowHidden={noop}/>
 <main style={{position:'relative',height:460}}><section className="cap-computer-search-results" ref={ref}><CatalogVirtualGrid items={items} mode={grid.mode} size={grid.size} rootRef={ref} renderItem={(item,style)=><CatalogTile key={item.id} style={style} data-index={item.id}><span className="cap-catalog-thumbnail-name">File {item.id}</span></CatalogTile>}/></section></main>
 </div></div>};createRoot(document.getElementById('root')).render(<Fixture/>);
 `;

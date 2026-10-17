@@ -7,12 +7,12 @@ import CatalogToolbarIcon from "./CatalogToolbarIcon";
 
 const options: ComputerSearchSort[] = ["name-ascending", "name-descending", "modified-descending", "modified-ascending"];
 const label = (sort: ComputerSearchSort) => `${t(sort.startsWith("name") ? "sort.field.name" : "sort.field.modifiedAt")} · ${t(sort.endsWith("ascending") ? "sort.direction.asc" : "sort.direction.desc")}`;
-export default function CatalogToolbarViewControls({ sort, onSort, showHidden, onShowHidden }: {
-  sort: ComputerSearchSort; onSort: (sort: ComputerSearchSort) => void; showHidden: boolean; onShowHidden: () => void;
+export default function CatalogToolbarViewControls({ sort, onSort, showHidden, onShowHidden, randomEnabled = false }: {
+  randomEnabled?: boolean; sort: ComputerSearchSort; onSort: (sort: ComputerSearchSort) => void; showHidden: boolean; onShowHidden: () => void;
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   return <div className="cap-catalog-view-controls">
-    <button type="button" title={`${t("sort.parent")} · ${label(sort)}`} aria-label={`${t("sort.parent")} · ${label(sort)}`} aria-expanded={anchor !== null}
+    <button type="button" title={randomEnabled ? t("explore.randomBrowse") : `${t("sort.parent")} · ${label(sort)}`} aria-label={`${t("sort.parent")} · ${randomEnabled ? t("explore.randomBrowse") : label(sort)}`} aria-expanded={anchor !== null}
       onClick={event => setAnchor(anchor ? null : event.currentTarget.getBoundingClientRect())}>
       <StableUiIcon name="sort" sortDirection={sort.endsWith("ascending") ? "asc" : "desc"} className="cap-catalog-toolbar-icon cap-catalog-sort-icon" />
     </button>

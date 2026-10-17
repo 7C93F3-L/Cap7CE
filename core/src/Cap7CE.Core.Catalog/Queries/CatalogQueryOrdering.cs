@@ -11,7 +11,7 @@ internal static class CatalogQueryOrdering
     {
         var name = $"{alias}.name COLLATE NOCASE";
         var identity = $"{alias}.volume_id, {alias}.file_reference";
-        var order = query.Sort switch
+        var order = query.RandomSeed is not null ? $"{Queries.CatalogRandomOrdering.Expression(alias)}, {identity}" : query.Sort switch
         {
             CatalogQuerySort.NameAscending => $"{name}, {identity}",
             CatalogQuerySort.NameDescending => $"{name} DESC, {identity}",
@@ -24,10 +24,17 @@ internal static class CatalogQueryOrdering
 
     public static void AppendAfter(StringBuilder sql, SqliteCommand command, CatalogV2Query query)
     {
+        if (query.RandomSeed is { } seed) command.Parameters.AddWithValue("$randomSeed", (long)seed);
         if (query.After is not { } after) return;
         var compare = query.Sort == CatalogQuerySort.NameDescending ? "<" : ">";
         var name = $"(n.name COLLATE NOCASE {compare} $afterName COLLATE NOCASE OR (n.name = $afterName COLLATE NOCASE AND n.volume_id > $afterVolume) OR (n.name = $afterName COLLATE NOCASE AND n.volume_id = $afterVolume AND n.file_reference > $afterReference))";
-        if (query.Sort is CatalogQuerySort.ModifiedAscending or CatalogQuerySort.ModifiedDescending)
+        if (query.RandomSeed is { } randomSeed) {
+            var score = Queries.CatalogRandomOrdering.Expression("n");
+            if (after.RandomScore != Queries.CatalogRandomOrdering.Score(after.VolumeId, after.FileReference, randomSeed)) throw new ArgumentException("Invalid random cursor anchor.");
+            name = $"({score} > $afterRandom OR ({score} = $afterRandom AND (n.volume_id > $afterVolume OR (n.volume_id = $afterVolume AND n.file_reference > $afterReference))))";
+            command.Parameters.AddWithValue("$afterRandom", after.RandomScore!.Value);
+        }
+        else if (query.Sort is CatalogQuerySort.ModifiedAscending or CatalogQuerySort.ModifiedDescending)
         {
             if (after.ModifiedUtcTicks is null) throw new ArgumentException("Missing modified time cursor anchor.");
             compare = query.Sort == CatalogQuerySort.ModifiedDescending ? "<" : ">";

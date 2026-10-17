@@ -39,5 +39,5 @@ export interface ComputerSearchFacts {
   visualGroups?: ComputerSearchVisualGroup[];
 }
 export type ComputerSearchSort = "name-ascending" | "name-descending" | "modified-ascending" | "modified-descending";
-export interface ComputerSearchViewOptions { sort?: ComputerSearchSort; excludeHidden?: boolean; includeSubfolders?: boolean }
+export interface ComputerSearchViewOptions { sort?: ComputerSearchSort; excludeHidden?: boolean; includeSubfolders?: boolean; randomSeed?: number }
 export interface ComputerSearchConditions { facts?: ComputerSearchFacts; fileConditions?: ComputerSearchFileConditions }

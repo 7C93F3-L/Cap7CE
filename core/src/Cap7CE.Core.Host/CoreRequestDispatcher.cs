@@ -130,7 +130,7 @@ public sealed class CoreRequestDispatcher
         if (body.Query is null
             || body.Query.Length > CoreProtocol.MaximumQueryLength
             || body.PageSize is < 1 or > CoreProtocol.MaximumPageSize
-            || !CoreSearchSorts.IsSupported(body.Sort) || (runtime is null && (body.Sort != CoreSearchSorts.NameAscending || body.ExcludeHidden))
+            || !CoreSearchSorts.IsSupported(body.Sort) || (runtime is null && (body.Sort != CoreSearchSorts.NameAscending || body.ExcludeHidden || body.RandomSeed is not null))
             || body.VolumeIds is null
             || body.VolumeIds.Count > CoreProtocol.MaximumVolumeIds
             || (runtime is null && (body.VolumeIds.Count < 1
@@ -177,7 +177,7 @@ public sealed class CoreRequestDispatcher
                 productCursor.TextTarget,
                 productCursor.Facts,
                 productCursor.FileConditions,
-                productCursor.Continuation, productCursor.ExcludeHidden);
+                productCursor.Continuation, productCursor.ExcludeHidden, productCursor.RandomSeed);
             var productPage = await runtime.QueryAsync(start, productCursor.After, cancellationToken,
                 productCursor.Continuation == "live" ? null : productCursor.CatalogRevision);
             return ProductPageResponse(request, start, productPage);
@@ -364,7 +364,7 @@ public sealed class CoreRequestDispatcher
             TextTarget: start.TextTarget,
             Facts: start.Facts,
             FileConditions: start.FileConditions,
-            Continuation: start.Continuation, Sort: start.Sort, ExcludeHidden: start.ExcludeHidden));
+            Continuation: start.Continuation, Sort: start.Sort, ExcludeHidden: start.ExcludeHidden, RandomSeed: start.RandomSeed));
         return CoreResponseEnvelope.Success(request.RequestId, page.CatalogRevision,
             new SearchPageResponse(items, nextCursor, nextCursor is null, page.CatalogRevision, page.FactRevision));
     }

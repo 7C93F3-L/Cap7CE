@@ -2,11 +2,11 @@ const assert = require("node:assert/strict");
 const controllerModule = require("../dist-electron/core/coreHostController.js");
 const saved = controllerModule.CoreHostController;
 const requests = [];
-let scopeState = "ready", scopeResolved = true;
+let scopeState = "ready", scopeResolved = true, randomSupported = true;
 const volume = { volumeId: "A".repeat(32), displayName: "X:", fileSystem: "NTFS", selected: true,
   state: "ready", processed: 1, total: 1, queryable: true, needsRebuild: false };
 class FixtureController {
-  supports(capability) { return capability === "search.live"; }
+  supports(capability) { return capability === "search.live" || capability === "search.random" && randomSupported; }
   async start() { return { state: "ready" }; }
   async stop() {}
   async cancelRequest() { return true; }
@@ -96,6 +96,14 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
       assert.equal(requests.at(-1).body.sort,"modified-descending");assert.equal(requests.at(-1).body.excludeHidden,true);
     }
     await assert.rejects(runtime.search({taskId:"recursive-no-path",query:"",scopePath:null,scopeKind:"directory-descendants"}),/invalid-request/);
+    for (const randomSeed of [0, 42, 0xffffffff]) {
+      await runtime.search({taskId:"random-"+randomSeed,query:"",scopePath:"X:\\Library",scopeKind:"directory-descendants",randomSeed});
+      assert.equal(requests.at(-1).body.randomSeed,randomSeed,"random seed reaches Core without loss, including zero");
+      assert.equal(requests.at(-1).body.scope.kind,"directory-descendants");
+    }
+    for (const randomSeed of [-1, 0x100000000, 1.5, NaN]) await assert.rejects(runtime.search({taskId:"invalid-random",query:"",scopePath:null,randomSeed}),/invalid-request/);
+    randomSupported = false;
+    await assert.rejects(runtime.search({taskId:"old-core-random",query:"",scopePath:null,randomSeed:42}),/random-browse-unavailable/);
     console.log("Core empty/child browsing, path matching and result authorization tests passed.");
   } finally { await runtime.stop(); controllerModule.CoreHostController = saved; }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

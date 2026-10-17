@@ -7,7 +7,7 @@ import { readComputerSearchContinuation } from "./computerSearchContinuation";
 import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentity";
 import { useComputerSearchTrashUpdates } from "./useComputerSearchTrashUpdates";
 
-export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "scope-offline" | "failed" | null;
+export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "scope-offline" | "random-unavailable" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
 const directoryScope = (path: string | null, children: boolean, recursive: boolean | undefined, query: string): Pick<ComputerSearchRequest, "scopeKind"> =>
@@ -20,7 +20,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const [active, setActive] = useState(false);
   const [nextTaskId] = useState<ReturnType<typeof createComputerSearchTaskIdGenerator>>(createComputerSearchTaskIdGenerator);
   const [query, setQuery] = useState("");
-  const atHome = idleHome && !query.trim() && !conditions?.facts && !conditions?.fileConditions;
+  const atHome = idleHome && !query.trim() && !conditions?.facts && !conditions?.fileConditions && viewOptions?.randomSeed === undefined;
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [status, setStatus] = useState<ComputerSearchStatus | null>(null);
@@ -128,6 +128,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const readError = (value: unknown): ComputerSearchError => {
     const message = String(value);
     return message.includes("scope-offline") ? "scope-offline"
+      : message.includes("random-browse-unavailable") ? "random-unavailable"
       : message.includes("scope-preparing") ? "scope-preparing"
       : message.includes("scope-not-indexed") ? "scope-not-indexed" : "failed";
   };
@@ -143,7 +144,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     busyRef.current = true;
     setBusy(true); setHasSubmitted(true); setError(null); setPageError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
     try {
-      const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
+      const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
         ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, searchQuery),
         ...(selectedConditions.facts ? { facts: selectedConditions.facts } : {}),
         ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) });
@@ -171,7 +172,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const isCurrent = () => activeRef.current && foregroundRef.current && !interactionRef.current
       && !busyRef.current && requestSequence.current === sequence && replacementTaskRef.current === taskId;
     try {
-      const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
+      const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
         ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery),
         facts: selectedConditions.facts, ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) },
       items.length, isCurrent);
@@ -262,7 +263,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setBusy(true);
     try {
       const result = await readComputerSearchContinuation(api, { taskId: replacementId,
-        query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
+        query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
         ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery),
         facts: selectedConditions.facts, fileConditions: selectedConditions.fileConditions },
       taskId, cursor, items.length, isCurrent, Boolean(pageError));
@@ -288,7 +289,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError]);
 
   return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, pageError, scopeLabel,
-    directoryListing: (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery,
+    directoryListing: (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery && selectedConditions.randomSeed === undefined,
     taskId: taskRef.current,
     canSubmit: Boolean(status?.searchAvailable), capabilityBusy, capabilityFeedback, capabilityOptions,
     enter, exit, setQuery, submit, loadMore, refreshStatus, configureCapability,

@@ -49,6 +49,8 @@ const files = new Map([
   ["src/shared/settingsWindowTypes.d.ts", 15],
   ["src/renderer/catalog-workspace/useCatalogAttributeAvailability.ts", 55],
   ["src/renderer/catalog-workspace/CatalogTopFilters.tsx", 35],
+  ["src/renderer/catalog-workspace/CatalogRandomControls.tsx", 30],
+  ["src/renderer/catalog-workspace/useCatalogRandomBrowse.ts", 25],
   ["src/renderer/catalog-workspace/CatalogAttributeNotice.tsx", 20],
   ["src/renderer/catalog-workspace/CatalogDetails.tsx", 45],
   ["src/renderer/computer-search/CatalogResultTile.tsx", 35],

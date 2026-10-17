@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+export { useCatalogRandomBrowse } from "./useCatalogRandomBrowse";
 import type { ComputerSearchSort } from "../../shared/computerSearchFactTypes";
 import type { ComputerSearchController } from "../computer-search/useComputerSearchController";
 

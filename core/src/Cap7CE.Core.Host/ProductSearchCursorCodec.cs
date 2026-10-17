@@ -84,4 +84,4 @@ public sealed record ProductSearchCursorToken(
     string? TextTarget = null,
     CoreSearchFactFilter? Facts = null,
     CoreSearchFileConditions? FileConditions = null,
-    string? Continuation = null, string Sort = CoreSearchSorts.NameAscending, bool ExcludeHidden = false);
+    string? Continuation = null, string Sort = CoreSearchSorts.NameAscending, bool ExcludeHidden = false, uint? RandomSeed = null);

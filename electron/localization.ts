@@ -673,6 +673,7 @@ export const zhCN = {
   "computerSearch.state.needsRebuild": "文件目录需要重建，暂不提供不完整结果",
   "computerSearch.state.repairRequired": "此电脑搜索需要修复，Skim 浏览不受影响",
   "computerSearch.state.unavailable": "此电脑搜索当前不可用，可继续使用 Skim 浏览",
+  "computerSearch.randomUnavailable": "当前 Core 尚不支持随机浏览，请更新 Core 后再试",
   "computerSearch.scopePreparing": "正在准备当前位置的文件目录，完成后将自动显示内容",
   "computerSearch.scopeNotIndexed": "当前位置尚未进入 Core 文件目录",
   "computerSearch.scopeOffline": "当前位置所在磁盘当前离线",
