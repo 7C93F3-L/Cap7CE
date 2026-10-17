@@ -18,9 +18,11 @@ const { StableWindowRuntime } = require("../dist-electron/stableWindowRuntime.js
 
 assert.equal(STABLE_UI_TITLEBAR_HEIGHT, 40);
 assert.equal(STABLE_UI_LAYOUT_FILE_NAME, "window-layout-stable-ui.json");
-assert.deepEqual(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE, { width: 1600, height: 1000 });
+assert.deepEqual(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE, { width: 1760, height: 1000 });
 assert.deepEqual(STABLE_UI_MINIMUM_OUTER_SIZE, { width: 300, height: 170 });
-assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 3440, height: 1400 }), { x: 920, y: 200, width: 1600, height: 1000 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 3440, height: 1400 }), { x: 840, y: 200, width: 1760, height: 1000 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 96, y: 94, width: 1728, height: 853 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: -1366, y: 0, width: 1366, height: 728 }), { x: -1297, y: 66, width: 1229, height: 597 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 240, height: 150 }), { x: 0, y: 0, width: 240, height: 150 });
 assert.equal(resolveStableWindowTheme("system", true), "dark");
 assert.equal(resolveStableWindowTheme("light", true), "light");

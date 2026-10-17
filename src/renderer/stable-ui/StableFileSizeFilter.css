@@ -1,5 +1,6 @@
 .cap-stable-file-size-filter { width: 430px; }
 .cap-stable-file-size-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding-top: 10px; }
+.cap-stable-file-size-row { display: contents; }
 .cap-stable-file-size-options button { min-height: 44px; padding: 4px 6px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
 .cap-stable-file-size-options button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-stable-file-size-options button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }

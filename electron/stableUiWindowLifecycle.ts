@@ -15,8 +15,8 @@ export interface StableWindowBrowserOptions {
 
 export const STABLE_UI_TITLEBAR_HEIGHT = 40;
 export const STABLE_UI_LAYOUT_FILE_NAME = "window-layout-stable-ui.json";
-export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = 0.82;
-export const STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE = { width: 1600, height: 1000 } as const;
+export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = { width: 0.9, height: 0.82 } as const;
+export const STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE = { width: 1760, height: 1000 } as const;
 export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 170 } as const;
 
 export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds): WindowLayoutBounds => {
@@ -24,14 +24,14 @@ export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds)
     workArea.width,
     Math.max(
       STABLE_UI_MINIMUM_OUTER_SIZE.width,
-      Math.min(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE.width, Math.round(workArea.width * STABLE_UI_DEFAULT_WORK_AREA_RATIO))
+      Math.min(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE.width, Math.round(workArea.width * STABLE_UI_DEFAULT_WORK_AREA_RATIO.width))
     )
   ));
   const height = Math.max(1, Math.min(
     workArea.height,
     Math.max(
       STABLE_UI_MINIMUM_OUTER_SIZE.height,
-      Math.min(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE.height, Math.round(workArea.height * STABLE_UI_DEFAULT_WORK_AREA_RATIO))
+      Math.min(STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE.height, Math.round(workArea.height * STABLE_UI_DEFAULT_WORK_AREA_RATIO.height))
     )
   ));
   return {

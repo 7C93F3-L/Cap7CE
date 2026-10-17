@@ -154,7 +154,7 @@ app.whenReady().then(async()=>{
   assert.equal(await run(`${active}.textContent.includes('更短的关键词')`),false,'filter empty state must not suggest shortening an absent keyword');
   await goHome();
   await ready(`${active}.querySelector('.cap-catalog-home')`);
-  assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'0 项条件','home action clears conditions');
+  assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'筛选 · 0项','home action clears conditions');
   assert.equal(await run("document.querySelector('[aria-label=\"文件属性建库\"]')===null"),true,'sidebar no longer duplicates the indexing entry');
   await run('probe.openMetadata()');
   await ready("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')");
@@ -173,7 +173,7 @@ app.whenReady().then(async()=>{
   await run("document.querySelectorAll('.cap-stable-sidebar-flyout button')[1].click()");
   await ready("probe.requests.at(-1)?.sort==='name-descending'");
   await run("if(document.querySelector('.cap-catalog-filter-host').hidden)document.querySelectorAll('.cap-catalog-layout-tools button')[0].click();document.querySelector('.cap-stable-file-size-options button').click()");
-  await ready("probe.requests.at(-1)?.fileConditions&&document.querySelector('.cap-catalog-filter-actions span').textContent==='1 项条件'");
+  await ready("probe.requests.at(-1)?.fileConditions&&document.querySelector('.cap-catalog-filter-actions span').textContent==='筛选 · 1项'");
   await run(`${active}.querySelector('.cap-catalog-address-toggle').click()`);
   await run(`(()=>{const input=${active}.querySelector('.cap-catalog-directory-toolbar input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'draft search');input.dispatchEvent(new Event('input',{bubbles:true}))})()`);
   await run(`${active}.querySelector('.cap-computer-search-results').scrollTop=700`);
@@ -188,7 +188,7 @@ app.whenReady().then(async()=>{
   await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
   assert.equal(await run(`${active}.querySelector('.cap-catalog-directory-toolbar input').value`),'draft search','search mode and draft survive sidebar switching');
   assert.equal(await run(`${active}.querySelector('.cap-computer-search-results').scrollTop`),scroll,'real CSS hiding preserves scroll position');
-  assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'1 项条件','filter state returns with its entry');
+  assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'筛选 · 1项','filter state returns with its entry');
   assert.ok(await run(`${active}.querySelector('.cap-catalog-view-controls > button').getAttribute('title').includes('降序')`),'sort state returns with its entry');
   assert.equal(await run('probe.requests.filter(r=>!r.taskId.endsWith("_attribute")).length'),requests,'returning to an unchanged scene does not requery it');
   assert.equal(await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[0].disabled`),false,'back history survives switching');

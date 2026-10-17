@@ -4,6 +4,7 @@ import type { useCatalogAttributeAvailability } from "./useCatalogAttributeAvail
 import { t } from "../../../electron/localization";
 import "./CatalogTopFilters.css";
 import CatalogAttributeNotice from "./CatalogAttributeNotice";
+import { useHorizontalFilterScroll } from "./useHorizontalFilterScroll";
 
 export default function CatalogTopFilters({ search, availableFormats, detailDomains, onChange, onClear, count, attributes, onMetadata }: {
   attributes: ReturnType<typeof useCatalogAttributeAvailability>;
@@ -13,10 +14,11 @@ export default function CatalogTopFilters({ search, availableFormats, detailDoma
   onMetadata?: () => void;
 }) {
   const [close, setClose] = useState(0);
+  const scrollRef = useHorizontalFilterScroll();
   return <section className="cap-catalog-top-filters" aria-label={t("workspace.filters")}>
-    <div className="cap-catalog-top-filter-scroll" onScroll={() => setClose(value => value + 1)}>
+    <div ref={scrollRef} className="cap-catalog-top-filter-scroll" tabIndex={0} onScroll={() => setClose(value => value + 1)}>
       <div className="cap-catalog-top-filter-content">
-        <div className="cap-catalog-filter-actions"><span>{t("workspace.activeFilters", { count })}</span>
+        <div className="cap-catalog-filter-actions"><span>{t("workspace.filterSummary", { count })}</span>
           <button type="button" disabled={!count} onClick={onClear}>{t("explore.clearFilters")}</button></div>
         <StableExploreFilters compactTime allowUnclassified search={search} availableFormats={availableFormats} detailDomains={detailDomains} metadataDisabled={attributes.disabled} metadataColorsDisabled={attributes.colorsDisabled}
           metadataNotice={attributes.message && onMetadata ? <CatalogAttributeNotice message={attributes.message} onMetadata={onMetadata} /> : undefined}

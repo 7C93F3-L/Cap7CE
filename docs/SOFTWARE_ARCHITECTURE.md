@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+CatalogTopFilters通过useHorizontalFilterScroll在实际滚动容器绑定可取消的原生wheel监听，按主方向及像素/行/页单位转换并限制到有效横向范围；仅消费发生位移的事件，Ctrl、无溢出和边界事件保留原行为。滚动仍触发原浮层关闭，Portal内滚轮不经过此DOM宿主；卸载移除监听，无轮询或动画循环。领域CSS隐藏原生滚动条，保留overflow及可聚焦滚动容器；宿主随80px内容自然撑高至88px，取消常规与窄窗口固定高度预留，上下各4px留白。resolveStableUiDefaultWindowBounds仅将默认宽度比例提高到0.9、上限1760，保留高度0.82/1000、工作区限制、居中及已有窗口记忆/恢复链路，不修改状态机或主动覆盖当前尺寸。
+
+CatalogTopFilters的汇总与清除动作按内容定宽，并与筛选标题、第一行快捷项对齐；StableFileSizeFilter使用稳定的三项/两项行包装，CatalogTopFilters.css将两行独立排布，旧纵向宿主通过display:contents保留原五列网格。大小自定义反馈由既有fileSizeRange派生，只展示范围，不增加状态、查询、索引或IPC；单侧边界、包含端点与切换预设的规则不变。
+
 MetadataBuildSlot的floating宿主独立负责窄幅单层表面，MetadataBuildPanel仍为纯展示，标题/计数、进度/异常、范围/操作分行组合；范围编辑在同一表面内替换，不新增任务控制。部分失败的完成结果保留到关闭，正常完成继续短暂提示；关闭状态仅属本次任务展示，不新增持久配置。useCatalogAttributeAvailability仅做存在性探测，不推断覆盖率；可用时不再显示警告，缺少或未知时由CatalogTopFilters向共享类别标题注入纯展示说明按钮并打开原MetadataBuildSlot，不增加底部覆盖层。metadataDirectoryStoreError保存内部cause，MetadataDirectoryBuildStore按读取/写入/替换/校验阶段产生白名单错误码；metadataDirectoryBuildRuntime以可选storageError传递共享进度，computerSearchRuntime复用既有轮转诊断记录无路径/异常正文的阶段与码。写入失败仍停止提取并保留旧记录，不引入第二套任务、数据库迁移或后台重试。
 
 StableExploreFilters展示11个已知类别，CatalogTopFilters启用互斥的“其他”，顶部共12项按六列两行排列；旧纵向宿主保留11类三列布局，不暴露旧查询链未实现的未分类入口。unclassifiedOnly是当前筛选现场的可选状态，workspaceFilterCount将其计入种类条件；选择其他清除类别及不兼容详细属性，选择已知类别退出其他，清除筛选恢复不限。computerSearchBaseConditions依据完整fileFormatCapabilities而非当前可选格式生成excludedExtensions，Main严格校验有界列表并要求search.excludeExtensions能力，SC/1文件条件与ProductSearchCursorToken携带排除列表。CatalogFileConditionSql使用已有扩展名列执行大小写不敏感的NOT IN，保留无扩展名文件并排除目录，继续与范围、关键词、排序、隐藏及其他条件相交。没有数据库迁移、源文件读取、新IPC通道或索引重建，旧Core缺少能力时拒绝查询，不静默放宽。
@@ -344,9 +348,9 @@ P3.6 不把 Core 路径直接变成通用文件能力。`computerSearchRuntime.t
 ## 3. 主进程架构
 
 `electron/main.ts` 是窗口、系统能力和 IPC 编排中心。当前主进程负责：
-- 以唯一稳定策略创建主 `BrowserWindow`、独立 Settings 与 Preview：统一使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽高的 82%、最大 1600×1000 居中。主窗口只额外装配待机线使用的不可聚焦 `lineWindow`；旧模式偏好即使仍留在历史 JSON 中也会被忽略，不迁移、不执行。所有窗口的 DevTools 能力仅在未打包开发环境开启。
+- 以唯一稳定策略创建主 `BrowserWindow`、独立 Settings 与 Preview：统一使用 `frame: true`、40 DIP Window Controls Overlay 和用户选择的 Acrylic / Mica，失败时回退主题安全纯色；首次主窗口按工作区宽度的90%、高度的82%，最大1760×1000 居中。主窗口只额外装配待机线使用的不可聚焦 `lineWindow`；旧模式偏好即使仍留在历史 JSON 中也会被忽略，不迁移、不执行。所有窗口的 DevTools 能力仅在未打包开发环境开启。
 - `edgeCollapseWindowMode.ts`、`dockedShellController.ts` / `dockedShellAutomation.ts` 管理主窗口和预览窗口自身的边缘收起：偏好关闭时恢复原生最大化与 Windows Snap；偏好开启时先退出已有最大化或 Snap 几何，再停用最大化资格并启用收起，Settings 始终保持普通窗口能力。窗口边界只有准确接触或越过非任务栏物理屏幕外沿时才建立会话，距离屏幕仍有 1 DIP 即不响应；相邻显示器覆盖的接缝不算外沿，窗口完整进入另一显示器后按新屏幕重新计算。手动拖动结束会立即确认最终边界；如果窗口已经越界，则先保持原尺寸平移回准确贴边位置并进入 programmatic move guard，随后鼠标离开才把原生 BrowserWindow 一次性移到显示器外，并让真实窗口边沿与鼠标恢复区统一保留 2 DIP；恢复时撤销临时 `floating` 层级并在不抢焦点的情况下提升至普通窗口前方。最小化只暂停轮询、释放临时层级并保留收起会话，任务栏还原后恢复完整窗口；真正隐藏才清除会话。两类窗口复用相同控制器，但固定、停靠与 collapsed 状态相互独立；固定窗口继续使用独立的持久置顶语义并暂停自身收起。窗口移动 / resize 与原生文件拖出期间统一抑制自动收展，程序位置变化进入对应 move / resize guard，独立 line 始终隐藏；显示器拔插、分辨率或任务栏工作区变化时统一取消临时层级和收起会话，并把完整窗口夹回当前可见工作区。
-- 主窗口内容始终使用单一 normal / 自由响应式布局，拖动与缩放不触发 Capsule、micro 或 mini 形态转换；旧自动 resize settle、阈值回弹、底部居中修正和分形态布局记忆均已删除。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点；唯一尺寸动作把主窗口恢复为当前工作区 82%、最大 1600×1000 的居中 bounds。
+- 主窗口内容始终使用单一 normal / 自由响应式布局，拖动与缩放不触发 Capsule、micro 或 mini 形态转换；旧自动 resize settle、阈值回弹、底部居中修正和分形态布局记忆均已删除。standby 只隐藏主窗口并协调独立 line，恢复时只还原可见性、任务栏与焦点；唯一尺寸动作把主窗口恢复为当前工作区宽度90% / 高度82%、最大1760×1000 的居中 bounds。
 - 主窗口原生关闭与 Alt+1 只向 Renderer 发出同一个安全 standby 请求，不允许主进程先行隐藏窗口；Renderer 统一取消未提交的关键词编辑、确认弹层、右键菜单、边栏和快捷指令确认后再切换状态。已经开始执行的目录添加或删除、文件删除、缓存清理及关键词保存会阻止本次收起，不把进行中的操作隐藏到后台。真正退出时 `isQuitting` 允许原生 close 继续完成，不反向进入隐藏链路。
 - 管理窗口显示、隐藏、后台常驻与任务栏隐藏。
 - 创建托盘图标和右键菜单；托盘图标单击、第二实例和全局窗口快捷动作复用同一个主窗口恢复入口，冷启动时到达过早的第二实例请求延迟到主窗口 ready 后执行。恢复 normal 时已有 skim 会话保持当前内容视图。
@@ -367,7 +371,7 @@ P3.6 不把 Core 路径直接变成通用文件能力。`computerSearchRuntime.t
 
 | 模块 | 职责 |
 | --- | --- |
-| `stableUiWindowLifecycle.ts` / `stableWindowRuntime.ts` | 主窗口、Preview 与 Settings 唯一稳定外壳的 40 DIP WCO、主题符号色、Acrylic / Mica 运行时应用与主题纯色回退，以及工作区 82%、最大 1600×1000、最小 300×170 的自由主窗口 bounds；布局固定写入 `window-layout-stable-ui.json`，不读取、迁移或删除旧宿主布局文件 |
+| `stableUiWindowLifecycle.ts` / `stableWindowRuntime.ts` | 主窗口、Preview 与 Settings 唯一稳定外壳的 40 DIP WCO、主题符号色、Acrylic / Mica 运行时应用与主题纯色回退，以及工作区宽度90% / 高度82%、最大1760×1000、最小 300×170 的自由主窗口 bounds；布局固定写入 `window-layout-stable-ui.json`，不读取、迁移或删除旧宿主布局文件 |
 | `stablePreviewWindowSizing.ts` | Preview 内容尺寸到稳定窗口外框的纯几何适配；固定计入 40 DIP 标题栏、信息栏当前宽度与右/底 5px 边距，保持当前外框中心，并在狭窄工作区内约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `src/renderer/window-presentation/WindowTitlebarPortal.tsx` / `stable-ui/StableTitlebar.tsx` / `preview/StablePreviewTitlebar.tsx` | 主窗口与 Preview 的 WCO 标题栏统一通过共享 Portal 宿主挂载到 `document.body`，不得直接留在会动画、裁剪或滚动的应用内容树中，避免虚拟网格滚动重算后覆盖 Windows 原生拖动命中区。各标题栏使用 `titlebar-area-*` 环境变量限定安全区域，并复用既有置顶图标、状态与统一动作；系统最小化 / 最大化 / 关闭继续由 Windows 绘制 |
 | `browserWindowDiagnostics.ts` | 主窗口、Settings、预览、line 与启动提示共用的原生 BrowserWindow 创建失败边界；只记录窗口类别和经运行诊断统一脱敏的异常后原样抛出，不吞掉 Electron 创建失败，也不接触用户搜索或路径 |
@@ -600,7 +604,7 @@ Cap7CE 1.0.4 的正式窗口状态已收口为主窗口显示与隐藏生命周�
 
 独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复；单击 line 只显示主窗口并聚焦已有搜索框。主进程监听显示器 `workArea` / `bounds` 变化并重新贴合可见 line，独立 Settings 在隐藏后重开或下次启动时按自己的版本化记录执行显示恢复。
 
-主窗口按整窗 `300 × 170` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；只有恢复默认窗口动作会主动应用当前工作区 82%、最大 1600×1000 的居中 bounds。
+主窗口按整窗 `300 × 170` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；只有恢复默认窗口动作会主动应用当前工作区宽度90% / 高度82%、最大1760×1000 的居中 bounds。
 
 产品主窗口的 Renderer 入口只装配 `App` 与 `StableUiRoot`；旧 Home、同窗 Settings、micro/mini/normal 页面树及其右侧控制栏已退出 Renderer。`App` 继续作为搜索、目录、Skim、快捷动作和弹层的应用级状态编排层，稳定 UI 只消费其现有动作与 Props。Settings 由 `src/renderer/main.tsx` 按 `window=settings` 分流到独立单实例 `SettingsWindowApp`，不再存在旧完整 Settings 页面。Preview 也只装配 `StablePreviewTitlebar`、稳定内容壳和信息边栏，旧兼容标题栏、右侧控制栏及内容内嵌元数据分支已删除；所有 Provider、导航、窗口尺寸与文件动作仍复用原有链路。独立 Capsule Renderer、桥接 Hook、专用 preload/IPC 及主进程控制器均已删除；line 继续由独立 Renderer 绘制待机线，点击时通过受限 IPC 复用主窗口激活与搜索聚焦动作。
 
