@@ -1,10 +1,6 @@
-import { useState } from "react";
-
 export default function CatalogAttributeNotice({ message, onMetadata }: { message: string; onMetadata: () => void }) {
-  const [dismissed, setDismissed] = useState(false);
-  if (dismissed) return null;
-  return <div className="cap-catalog-attribute-notice" role="status">
-    <span>{message}</span><button type="button" onClick={onMetadata}>文件属性提取</button>
-    <button type="button" aria-label="关闭属性提示" title="关闭属性提示" onClick={() => setDismissed(true)}>×</button>
-  </div>;
+  return <button type="button" className="cap-catalog-attribute-notice" title={`${message} 点击打开文件属性提取。`}
+    aria-label={`${message} 打开文件属性提取`} onClick={onMetadata}>
+    <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 9v5M10 6v.5" /></svg>
+  </button>;
 }

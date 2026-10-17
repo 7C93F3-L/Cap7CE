@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { SearchState } from "../../shared/types";
 import type { SearchFilterDetailDomain } from "../../shared/searchFilterTypes";
@@ -45,7 +45,7 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
   return [...next].sort();
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
-const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, metadataNotice, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; metadataNotice?: ReactNode; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const supports = (domain: SearchFilterDetailDomain) => detailDomains === undefined || detailDomains.includes(domain);
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
@@ -97,7 +97,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
       <div className="cap-stable-time-labels">{timePresets.map((preset, index) => <button type="button" className={search.timePreset !== "custom" && presetIndex === index ? "is-selected" : ""} aria-pressed={search.timePreset !== "custom" && presetIndex === index} key={preset} onClick={() => { setTimeIndex(index); commitTime(index); }}><i aria-hidden="true" />{t(timeLabels[preset])}</button>)}</div>
     </section>
     <section className="cap-stable-file-type-filter">
-      <header><strong>{t("explore.fileTypes")}</strong>{selectedSummary && <span title={selectedSummary}>{selectedSummary}</span>}</header>
+      <header><strong>{t("explore.fileTypes")}</strong>{selectedSummary && <span title={selectedSummary}>{selectedSummary}</span>}{metadataNotice}</header>
       <div className="cap-stable-file-type-options">
         {fileTypes.map((type) => {
           const extensions = type === "image" || type === "video" || type === "audio" || type === "document"

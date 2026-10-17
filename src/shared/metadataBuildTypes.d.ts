@@ -1,4 +1,8 @@
 export type MetadataBuildPhase = "idle" | "preparing" | "discovering" | "extracting" | "waiting" | "pausing" | "paused" | "completed" | "failed";
+export interface MetadataDirectoryStorageError {
+  operation: "read" | "write" | "replace" | "validate";
+  code: string;
+}
 export interface MetadataBuildProgress {
   phase: MetadataBuildPhase;
   volumeId: string | null;
@@ -10,6 +14,7 @@ export interface MetadataBuildProgress {
   progressFraction: number | null;
   remainingSeconds: number | null;
   errorCode: string | null;
+  storageError?: MetadataDirectoryStorageError;
 }
 export interface MetadataBuildPolicy {
   volumeOrder: string[];

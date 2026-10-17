@@ -30,7 +30,7 @@ export function useCatalogAttributeAvailability(path: string | null, extensions:
   }, [key, enabled, tick]);
   const current = result?.key === key ? result : null;
   return { relevant: Boolean(kind), disabled: Boolean(kind) && current?.state !== "available", colorsDisabled: !current?.colors,
-    message: !kind ? "" : current?.state === "available" ? "属性筛选仅搜索已提取属性的文件，结果可能不完整。"
+    message: !kind || current?.state === "available" ? ""
       : current?.state === "missing" ? "当前范围尚无这类可用属性，提取文件属性后可筛选。"
       : current?.state === "unknown" ? "暂时无法确认当前范围的属性状态。" : "正在检查当前范围的文件属性…" };
 }

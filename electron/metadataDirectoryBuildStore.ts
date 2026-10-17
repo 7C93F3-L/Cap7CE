@@ -1,6 +1,8 @@
 import { mkdir, open, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import { directoryStoreError } from "./metadataDirectoryStoreError";
+import type { MetadataDirectoryStorageError } from "../src/shared/metadataBuildTypes";
 
 export interface MetadataDirectoryJob { path: string; scope?: { volumeId: string; rootFileReference: string | null } }
 export interface MetadataDirectoryQueue { version: 1; intent: "active" | "paused"; jobs: MetadataDirectoryJob[] }
@@ -19,7 +21,7 @@ const valid = (value: unknown): value is MetadataDirectoryQueue => {
   catch { return false; }
 };
 // Stores task grants only. Catalog and source files are never opened here.
-export const createMetadataDirectoryStore = (file: string): MetadataDirectoryStore => {
+export const createMetadataDirectoryStore = (file: string, report?: (details: MetadataDirectoryStorageError) => void): MetadataDirectoryStore => {
   let writing = Promise.resolve();
   return {
     async load() {
@@ -32,20 +34,23 @@ export const createMetadataDirectoryStore = (file: string): MetadataDirectorySto
         const value: unknown = JSON.parse(text);
         if (!valid(value)) throw new Error("metadata-directory-invalid-state");
         return value;
-      } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw new Error("metadata-directory-state-unavailable"); }
+      } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw directoryStoreError(error, "read", report); }
     },
     save(value) {
       const snapshot = structuredClone(value);
-      if (!valid(snapshot)) return Promise.reject(new Error("metadata-directory-invalid-state"));
+      if (!valid(snapshot)) return Promise.reject(directoryStoreError(new Error("metadata-directory-invalid-state"), "validate", report));
       const json = JSON.stringify(snapshot);
-      if (Buffer.byteLength(json) > 1024 * 1024) return Promise.reject(new Error("metadata-directory-invalid-state"));
+      if (Buffer.byteLength(json) > 1024 * 1024) return Promise.reject(directoryStoreError(new Error("metadata-directory-invalid-state"), "validate", report));
       const save = writing.catch(() => undefined).then(async () => {
-        await mkdir(path.dirname(file), { recursive: true });
-        const temporary = `${file}.${randomBytes(12).toString("hex")}.tmp`, handle = await open(temporary, "wx", 0o600);
+        let operation: MetadataDirectoryStorageError["operation"] = "write";
         try {
-          try { await handle.writeFile(json, "utf8"); await handle.sync(); } finally { await handle.close(); }
-          await rename(temporary, file);
-        } finally { await unlink(temporary).catch(() => undefined); }
+          await mkdir(path.dirname(file), { recursive: true });
+          const temporary = `${file}.${randomBytes(12).toString("hex")}.tmp`, handle = await open(temporary, "wx", 0o600);
+          try {
+            try { await handle.writeFile(json, "utf8"); await handle.sync(); } finally { await handle.close(); }
+            operation = "replace"; await rename(temporary, file);
+          } finally { await unlink(temporary).catch(() => undefined); }
+        } catch (error) { throw directoryStoreError(error, operation, report); }
       });
       writing = save; return save;
     }

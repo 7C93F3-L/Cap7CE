@@ -52,7 +52,12 @@ export function useMetadataBuild(enabled: boolean, foreground: boolean) {
         includes: status.volumes.map((volume) => ({ volumeId: volume.volumeId, rootFileReference: null })), excludes: [] };
       const next = kind === "start" ? await api.start({ allowMetadataExtraction: true, policy }) : await api[kind]();
       if (live.current && owner.current === epoch) setStatus(next);
-    } catch { if (live.current && owner.current === epoch) setError(true); }
+    } catch {
+      if (live.current && owner.current === epoch) {
+        setError(true);
+        try { const next = await api.status(); if (live.current && owner.current === epoch) setStatus(next); } catch { /* Keep the last task visible. */ }
+      }
+    }
     finally { locked.current = false; if (live.current) setBusy(false); }
   }, [status]);
   return { status, busy, error, action, refresh };

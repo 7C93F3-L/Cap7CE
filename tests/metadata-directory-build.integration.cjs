@@ -31,6 +31,13 @@ function fixture(directoryStore,prior=null){
  try{
   assert.equal(directoryBuildPath('x:/Assets/'),'x:\\Assets');assert.equal(directoryBuildPath('X:\\'),'X:\\');
   for(const p of ['relative','\\\\server\\folder','X:\\a\0','X:\\file:stream'])assert.throws(()=>directoryBuildPath(p));
+  const reports=[],blockedFile=path.join(root,'blocked.json');await fs.mkdir(blockedFile);
+  const blocked=createMetadataDirectoryStore(blockedFile,error=>reports.push(error));
+  await assert.rejects(blocked.save({version:1,intent:'active',jobs:[]}),error=>error.message==='metadata-directory-state-unavailable'&&error.details.operation==='replace'&&!!error.cause);
+  assert.equal(reports[0].operation,'replace');assert.equal(JSON.stringify(reports).includes(root),false,'diagnostics contain no paths or raw exception text');
+  const corruptFile=path.join(root,'corrupt.json');await fs.writeFile(corruptFile,'invalid JSON');
+  await assert.rejects(createMetadataDirectoryStore(corruptFile).load(),error=>error.details.operation==='read'&&error.details.code==='INVALID_STATE');
+  assert.equal(await fs.readFile(corruptFile,'utf8'),'invalid JSON','bad records are preserved');
   const store=createMetadataDirectoryStore(path.join(root,'queue.json')),test=fixture(store),runtime=test.create();
   assert.equal((await runtime.status()).progress.phase,'idle');assert.equal(test.control.configs.length,0);
   const handlers=new Map();registerMetadataBuildIpc({handle:(c,h)=>handlers.set(c,h),on(){}},e=>e.allowed,runtime);
@@ -70,9 +77,10 @@ function fixture(directoryStore,prior=null){
   await c.resume();await until(async()=>(await c.status()).progress.phase==='failed');assert.equal((await c.status()).progress.errorCode,'metadata-directory-changed');
   assert.equal(changed.control.finished.length,0,'recreated path cannot inherit the original directory grant');await c.cancelDirectories();await c.shutdown();
 
-  const broken=fixture({load:async()=>null,save:async()=>{throw Error('disk full')}}),d=broken.create();
+  const broken=fixture({load:async()=>null,save:async()=>{throw Object.assign(Error('private filesystem detail'),{code:'ENOSPC'})}}),d=broken.create();
   await assert.rejects(d.startDirectory({path:'X:\\Assets',allowMetadataExtraction:true}));await d.restore();
   assert.equal(broken.control.configs.length,0,'failed task persistence cannot start extraction');await d.shutdown();
+  assert.deepEqual((await d.status()).progress.storageError,{operation:'write',code:'ENOSPC'},'UI receives bounded storage cause, not a guessed permission diagnosis');
 
   const boundedStore=createMetadataDirectoryStore(path.join(root,'bounded.json')),bounded=fixture(boundedStore),e=bounded.create();bounded.control.building=true;
   for(let i=0;i<32;i++)await e.startDirectory({path:'X:\\Folder'+i,allowMetadataExtraction:true});

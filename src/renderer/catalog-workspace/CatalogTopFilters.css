@@ -33,3 +33,5 @@
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters .cap-stable-archive-content-options i { zoom: .5; flex: none; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary { min-height: 56px; width: max-content; gap: 6px; padding: 4px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary i { zoom: .7; flex: none; }
+
+.cap-catalog-top-filters .cap-catalog-attribute-notice { flex: none; color: var(--cap-stable-text-muted); cursor: pointer; }

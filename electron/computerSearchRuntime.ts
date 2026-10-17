@@ -214,7 +214,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     startRequest: controller.startRequest.bind(controller), cancel: controller.cancelRequest.bind(controller) }), readCatalog,
     { resolveScope: (path) => controller.request<CoreResolvedScope>("catalog.resolveScope", { path }, 5_000),
       directoryStore: options.metadataPreferencesPath || process.env.LOCALAPPDATA
-        ? createMetadataDirectoryStore(path.join(path.dirname(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")), "metadata-directory-build.json")) : undefined,
+        ? createMetadataDirectoryStore(path.join(path.dirname(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")), "metadata-directory-build.json"), details => options.diagnostics?.log("warn", "metadata.directory-store-failed", { ...details })) : undefined,
       preferences: options.metadataPreferencesPath || process.env.LOCALAPPDATA
         ? createMetadataBuildPreferenceStore(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")) : undefined });
   const favorites = options.favoritePreferencesPath || process.env.LOCALAPPDATA

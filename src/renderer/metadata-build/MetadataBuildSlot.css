@@ -4,4 +4,6 @@
 .cap-metadata-build-reopen { font: inherit; color: var(--cap-stable-text); background: var(--cap-stable-surface-soft); border: 0; border-radius: 7px; padding: 5px 10px; cursor: pointer; }
 .cap-metadata-build-slot > [role="alert"] { display: block; padding: 8px; color: var(--cap-stable-text-muted); font-size: 12px; }
 .cap-metadata-build-slot.is-floating.is-compact > span:first-child { flex: 0 1 45%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cap-catalog-design .cap-metadata-build-slot.is-floating:not(.is-compact) { right: auto; width: min(640px, calc(100% - 16px)); padding: 10px 12px; box-sizing: border-box; font-size: var(--cap-stable-body-font-size, 13px); }
+.cap-metadata-build-slot.is-floating > :is(.cap-metadata-build, .cap-metadata-scope) { padding: 0; border: 0; border-radius: 0; background: transparent; }
 @media (max-height: 360px) { .cap-metadata-build-slot { max-height: 95px; padding: 4px; } }

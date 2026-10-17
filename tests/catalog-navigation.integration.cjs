@@ -134,10 +134,11 @@ app.whenReady().then(async()=>{
   await run("document.querySelectorAll('.cap-catalog-layout-tools button')[0].click()");
   await run("document.querySelector('.cap-stable-file-type-options > button').click()");
   await ready(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')==='true'`);
-  await ready("document.querySelector('.cap-catalog-attribute-notice').textContent.includes('尚无')");
-  assert.equal(await run("Boolean(document.querySelector('.cap-catalog-attribute-notice').closest('.cap-catalog-top-filters'))"),false,'attribute notice belongs to content overlay');
-  await run("document.querySelector('.cap-catalog-attribute-notice button[aria-label]').click()");
-  await ready("!document.querySelector('.cap-catalog-attribute-notice')");
+  await ready("document.querySelector('.cap-catalog-attribute-notice')?.title.includes('尚无')");
+  assert.equal(await run("Boolean(document.querySelector('.cap-catalog-attribute-notice').closest('.cap-catalog-top-filters'))"),true,'missing attributes have a contextual header entry');
+  await run("document.querySelector('.cap-catalog-attribute-notice').click()");
+  await ready("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')");
+  await run("document.querySelector('.cap-metadata-build-close').click()");
   assert.equal(await run("document.querySelector('.cap-stable-metadata-filters').disabled"),true,'missing scoped attributes disable detailed conditions');
   assert.equal(await run("document.querySelector('.cap-catalog-details header').textContent"),'当前搜索');
   assert.equal(await run("document.querySelector('.cap-catalog-details').textContent.includes('搜索范围')"),true);
@@ -146,6 +147,7 @@ app.whenReady().then(async()=>{
   assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false','clearing filters restores home breadcrumb');
   await run("probe.attributesAvailable=true;document.querySelector('.cap-stable-file-type-options > button').click()");
   await ready("!document.querySelector('.cap-stable-metadata-filters').disabled");
+  assert.equal(await run("Boolean(document.querySelector('.cap-catalog-attribute-notice'))"),false,'available attributes do not create a recurring warning');
   assert.equal(await run("document.querySelector('.cap-stable-metadata-colors').disabled"),true,'dimensions do not imply color availability');
   await run("probe.forceEmpty=true;document.querySelector('.cap-stable-ratio-options button').click()");
   await ready(`${active}.textContent.includes('没有符合当前条件的文件')`);

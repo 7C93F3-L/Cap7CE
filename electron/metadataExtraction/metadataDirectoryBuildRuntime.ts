@@ -5,6 +5,7 @@ import type { CoreMetadataProtocol } from "../core/coreMetadataProtocol";
 import type { MetadataBuildOwner, MetadataBuildRuntime, MetadataBuildRuntimeOptions } from "./metadataBuildRuntime";
 import { MetadataBuildController } from "./metadataBuildController";
 import { resolveMetadataDirectory } from "./metadataDirectoryScope";
+import { directoryStoreError } from "../metadataDirectoryStoreError";
 
 const emptyProgress = (): MetadataBuildProgress => ({ phase: "preparing", volumeId: null, discovered: 0, processed: 0,
   failed: 0, unsupported: 0, total: null, progressFraction: null, remainingSeconds: null, errorCode: null });
@@ -24,10 +25,11 @@ export function attachMetadataDirectoryBuilds(owner: MetadataBuildOwner, protoco
   const save = async () => {
     saving++;
     try { await options.directoryStore?.save(structuredClone(queue)); }
-    catch {
+    catch (cause) {
       queue.intent = "paused"; cancellation?.abort(); await controller.pause();
-      progress = { ...progress, phase: "failed", errorCode: "metadata-directory-state-unavailable" };
-      throw new Error("metadata-directory-state-unavailable");
+      const error = directoryStoreError(cause, "write");
+      progress = { ...progress, phase: "failed", errorCode: error.message, storageError: error.details };
+      throw error;
     }
     finally { saving--; }
   };
