@@ -10,6 +10,7 @@ import FavoriteDirectoryContextMenu, { type FavoriteContextTarget } from "./Favo
 import CatalogToolbarIcon from "../catalog-workspace/CatalogToolbarIcon";
 import { useFavoriteDirectoryTooltip } from "./useFavoriteDirectoryTooltip";
 import { favoriteDirectoryAnchor } from "./favoriteDirectoryAnchor";
+import FavoriteDirectoryScroll from "./FavoriteDirectoryScroll";
 
 export interface FavoriteDirectoryListProps {
   directories: readonly FavoriteDirectory[];
@@ -62,7 +63,7 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
     <header><strong>{t("favorites.title")}</strong>
       <button type="button" disabled={props.busy} title={t("favorites.add")} aria-label={t("favorites.add")} onClick={props.onChoose}>{props.showIcons ? <StableSidebarIcon name="add" /> : "+"}</button>
     </header>
-    <div className="cap-favorite-rows">
+    <FavoriteDirectoryScroll custom={Boolean(props.showIcons)}>
       {props.directories.map(directory => <div className={`cap-favorite-row${!props.globalActive && pathKey(directory.path) === pathKey(props.activePath) ? " is-selected" : ""}${menu?.directory.id === directory.id ? " is-menu-open" : ""}`} key={directory.id}>
         {editing === directory.id ? <form onSubmit={event => { event.preventDefault(); void save(directory.id); }}>
           <input autoFocus aria-label={t("favorites.renameFolder")} title={t("favorites.renameFolderHint")} maxLength={255} value={draft} disabled={props.busy}
@@ -82,7 +83,7 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
             onClick={event => showMenu(event.currentTarget, directory)}><StableSidebarIcon name="more" /></button>}</>}
       </div>)}
       {!props.busy && !props.error && !props.directories.length && <p>{t("favorites.empty")}</p>}
-    </div>
+    </FavoriteDirectoryScroll>
     {props.error && <div className="cap-favorite-error" role="alert">{t("favorites.failed")} <button type="button" disabled={props.busy} onClick={props.onRetry}>{t("common.retry")}</button></div>}
     {props.metadataMessage && <div className="cap-favorite-error" role="status">{props.metadataMessage}</div>}
     {menu && <FavoriteDirectoryContextMenu target={menu} index={props.directories.findIndex(item => item.id === menu.directory.id)} count={props.directories.length} busy={props.busy}

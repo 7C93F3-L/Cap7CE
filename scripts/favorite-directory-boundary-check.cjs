@@ -29,6 +29,8 @@ const files = new Map([
   ["src/shared/favoriteDirectoryTypes.d.ts", 50],
   ["src/renderer/favorite-directories/useFavoriteDirectories.ts", 75],
   ["src/renderer/favorite-directories/FavoriteDirectoryList.tsx", 100],
+  ["src/renderer/favorite-directories/FavoriteDirectoryScroll.tsx", 20],
+  ["src/renderer/favorite-directories/FavoriteDirectoryScroll.css", 10],
   ["src/renderer/favorite-directories/useFavoriteDirectoryTooltip.ts", 30],
   ["src/renderer/favorite-directories/favoriteDirectoryAnchor.ts", 10],
   ["src/shared/catalogWorkspaceTypes.d.ts", 35],

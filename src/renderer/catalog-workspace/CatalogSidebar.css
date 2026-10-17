@@ -9,7 +9,7 @@
 .cap-catalog-layout-tools button[aria-expanded="true"] .cap-catalog-panel-area { opacity: 1; }
 .cap-catalog-sidebar button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-catalog-sidebar button:focus-visible { outline: 1px solid var(--theme-color); outline-offset: -1px; }
-.cap-catalog-sidebar .cap-favorite-directories { flex: 1; overflow: auto; padding: 2px; }
+.cap-catalog-sidebar .cap-favorite-directories { flex: 1; overflow: hidden; padding: 2px; }
 .cap-catalog-sidebar .cap-favorite-open { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 8px; }
 .cap-catalog-sidebar .cap-favorite-open > .cap-favorite-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .cap-catalog-sidebar .cap-svg-icon { display: block; flex: 0 0 22px; width: 22px; height: 22px; overflow: visible; }

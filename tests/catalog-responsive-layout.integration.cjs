@@ -10,11 +10,11 @@ ipcMain.handle('window:setShellState',async(event,state,options)=>{
 });
 const fixture=String.raw`
 import React,{useState} from 'react';import{createRoot}from'react-dom/client';import{useCatalogLayout}from'./src/renderer/catalog-workspace/useCatalogLayout';import CatalogSidebar from './src/renderer/catalog-workspace/CatalogSidebar';
-import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
+import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogWorkspace.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
 const noop=()=>{},favorites={directories:[{id:'first',name:'First',path:'X:\\First'},{id:'second',name:'Second',path:'X:\\Second'}],activePath:null,globalActive:true,busy:false,error:false,onOpen:noop,onChoose:noop,onRetry:noop,onRename:async()=>true,onRemove:noop,onMove:noop};
 window.directoryProbe={opens:[]};
-function Fixture(){const layout=useCatalogLayout(),[active,setActive]=useState(null);window.probe=layout;return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{position:'absolute',inset:40,gridTemplateColumns:layout.width+'px 1fr'}}>
-<CatalogSidebar layout={layout} favorites={{...favorites,activePath:active?.path??null,globalActive:active===null,onOpen:directory=>{window.directoryProbe.opens.push(directory?.id??null);setActive(directory)}}} onSettings={noop}/><main><button id="auto" onClick={layout.showDetails}>automatic selection</button><button id="edit" onClick={layout.revealDetails}>explicit edit</button><output>{JSON.stringify({filters:layout.filtersVisible,details:layout.detailsVisible,width:layout.width,error:layout.restoreError})}</output></main></div></div>};
+function Fixture(){const layout=useCatalogLayout(),[active,setActive]=useState(null),[many,setMany]=useState(false);window.probe=layout;window.directoryProbe.many=setMany;return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{position:'absolute',inset:40,gridTemplateColumns:layout.width+'px 1fr'}}>
+<CatalogSidebar layout={layout} favorites={{...favorites,directories:many?[...favorites.directories,...Array.from({length:38},(_,i)=>({id:'extra'+i,name:'Extra '+i,path:'X:\\Extra'+i}))]:favorites.directories,activePath:active?.path??null,globalActive:active===null,onOpen:directory=>{window.directoryProbe.opens.push(directory?.id??null);setActive(directory)}}} onSettings={noop}/><main><button id="auto" onClick={layout.showDetails}>automatic selection</button><button id="edit" onClick={layout.revealDetails}>explicit edit</button><output>{JSON.stringify({filters:layout.filtersVisible,details:layout.detailsVisible,width:layout.width,error:layout.restoreError})}</output></main></div></div>};
 createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async()=>{try{
  esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(root,'fixture.js'),loader:{'.svg':'text'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}});
@@ -27,6 +27,18 @@ app.whenReady().then(async()=>{try{
  const key=async key=>{await run(`document.querySelector('.cap-catalog-resizer').dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},bubbles:true,cancelable:true}))`);await frame()};
  const reload=async()=>{const loaded=new Promise(resolve=>win.webContents.once('did-finish-load',resolve));win.reload();await loaded;await ready('!!window.probe');await frame()};
  const stored=()=>run(`localStorage.getItem('${storage}')`);
+ const checkDirectoryScroll=async()=>{
+  const opens=await run('directoryProbe.opens');await run('directoryProbe.many(true)');await ready("!!document.querySelector('.cap-favorite-scrollbar .cap-custom-scrollbar:not(.is-hidden)')");
+  const geometry=await run("(()=>{const root=document.querySelector('.cap-favorite-rows'),bar=document.querySelector('.cap-favorite-scrollbar .cap-custom-scrollbar'),sidebar=document.querySelector('.cap-catalog-sidebar');return {overflow:root.scrollHeight>root.clientHeight,native:getComputedStyle(root).scrollbarWidth,right:sidebar.getBoundingClientRect().right-bar.getBoundingClientRect().right}})()");
+  assert.equal(geometry.overflow,true);assert.equal(geometry.native,'none');assert.equal(geometry.right,2,'custom scrollbar sits at the right edge without covering the resize handle');
+  const thumb=await run("(()=>{const r=document.querySelector('.cap-favorite-scrollbar .cap-custom-scrollbar-thumb').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+10)}})()");
+  win.webContents.sendInputEvent({type:'mouseMove',...thumb});win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...thumb});win.webContents.sendInputEvent({type:'mouseMove',x:thumb.x,y:thumb.y+150});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:thumb.x,y:thumb.y+150});
+  await ready("document.querySelector('.cap-favorite-rows').scrollTop>0");assert.deepEqual(await run('directoryProbe.opens'),opens,'dragging the scrollbar cannot open a directory');
+  await run("document.querySelector('.cap-favorite-rows').scrollTop=0");await frame();
+  const point=await run("(()=>{const r=document.querySelector('.cap-favorite-rows').getBoundingClientRect();return {x:Math.round(r.x+15),y:Math.round(r.y+15)}})()");
+  win.webContents.sendInputEvent({type:'mouseWheel',...point,deltaX:0,deltaY:-80});await ready("document.querySelector('.cap-favorite-rows').scrollTop>0");
+  await run('directoryProbe.many(false)');await ready("!!document.querySelector('.cap-favorite-scrollbar .cap-custom-scrollbar.is-hidden')");
+ };
  await ready('!!window.probe');assert.equal(await run('probe.filtersVisible&&probe.detailsVisible'),true);assert.equal(await stored(),null,'initial layout does not write a width');
  const firstRow='.cap-favorite-row:first-child',more=firstRow+' .cap-favorite-more';
  assert.equal(await run("getComputedStyle(document.querySelector('.cap-favorite-open')).borderRadius"),'999px','expanded navigation uses rounded capsules');
@@ -52,6 +64,7 @@ app.whenReady().then(async()=>{try{
  await run("[...document.querySelectorAll('[role=menuitem]')].find(item=>item.textContent.includes('重命名')).click()");await ready(`!!document.querySelector('${firstRow} form')`);
  assert.equal(await run(`getComputedStyle(document.querySelector('${firstRow}')).display`),'block','renaming still occupies the whole row');
  await run(`document.querySelector('${firstRow} input').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);await ready(`!document.querySelector('${firstRow} form')`);
+ await checkDirectoryScroll();
  await key('ArrowRight');await key('ArrowRight');assert.equal(await run('probe.width'),188);assert.equal(await stored(),'188');
  await resize(400,800);assert.equal(await run('probe.width'),140,'legacy viewport-minus-260 rule limits only rendered width');assert.equal(await stored(),'188');
  await resize(300,800);assert.equal(await run('probe.width'),40);assert.equal(await run('probe.collapsed'),true);await reload();assert.equal(await stored(),'188');assert.equal(await run('probe.width'),40);
@@ -74,6 +87,7 @@ app.whenReady().then(async()=>{try{
  assert.equal(await run("document.querySelector('[role=tooltip]').getBoundingClientRect().left"),narrowLeft,'compact tooltip uses the same sidebar boundary');
  await run(`document.querySelector('${firstRow} .cap-favorite-open').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))`);await ready(`document.querySelector('[role=menu]')?.getBoundingClientRect().left===${narrowLeft}`);
  await run("document.querySelector('[role=menu]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");await ready('!document.querySelector("[role=menu]")');
+ await checkDirectoryScroll();
  await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))");await frame();await key('ArrowRight');await key('ArrowRight');
  const point=await run("(()=>{const r=document.querySelector('.cap-catalog-resizer').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()");
  win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...point});win.webContents.sendInputEvent({type:'mouseMove',x:point.x+40,y:point.y});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+40,y:point.y});await frame();
