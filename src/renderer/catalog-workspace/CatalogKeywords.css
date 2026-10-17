@@ -1,4 +1,2 @@
-.cap-catalog-keyword-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.cap-catalog-keyword-actions button { flex: 1; min-width: 72px; padding: 6px 8px; border: 0; border-radius: 8px; background: var(--preview-sidebar-control); color: inherit; font: inherit; cursor: pointer; }
-.cap-catalog-keyword-actions button:hover:enabled { background: var(--cap-stable-control-hover); }
-.cap-catalog-keyword-actions button:disabled { opacity: .4; cursor: default; }
+.cap-catalog-keyword-actions { margin-top: 12px; }
+.cap-catalog-keyword-actions button:disabled { opacity: .5; }
