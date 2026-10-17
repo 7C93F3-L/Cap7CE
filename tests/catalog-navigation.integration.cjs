@@ -252,6 +252,15 @@ app.whenReady().then(async()=>{
   await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`);
   await menuAction('添加收藏');await ready('probe.favorites.length===2');
   assert.equal(await run("document.querySelectorAll('.cap-favorite-row').length"),2,'favorite add updates sidebar without navigation');
+  const sidebarBefore=await run("document.querySelector('.cap-catalog-sidebar').getBoundingClientRect().width");
+  const sidebarPreference=await run("localStorage.getItem('cap7ce.catalog.sidebar-width.v1')");
+  for(const height of [360,359,170,360]){
+    win.setContentSize(1100,height);await ready(`window.innerHeight===${height}`);await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
+    const layout=await run("(()=>{const sidebar=document.querySelector('.cap-catalog-sidebar'),main=document.querySelector('.cap-catalog-main').getBoundingClientRect();return {sidebar:getComputedStyle(sidebar).display,width:sidebar.getBoundingClientRect().width,resizeVisible:!!document.querySelector('.cap-catalog-resizer').getClientRects().length,mainLeft:main.left,mainRight:main.right,viewport:window.innerWidth}})()");
+    if(height<360){assert.equal(layout.sidebar,'none','legacy low-height layout hides the whole sidebar');assert.equal(layout.resizeVisible,false);assert.ok(layout.mainLeft<=8&&layout.mainRight>=layout.viewport-8,'content fills the released sidebar column')}
+    else{assert.notEqual(layout.sidebar,'none');assert.equal(layout.width,sidebarBefore,'restored height returns the previous sidebar width');assert.equal(layout.resizeVisible,true)}
+    assert.equal(await run("localStorage.getItem('cap7ce.catalog.sidebar-width.v1')"),sidebarPreference,'automatic hiding never overwrites the stored width');
+  }
   win.setSize(1100,340);
   await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:1000,clientY:330}))`);
   await ready("document.querySelector('[role=menu]')?.dataset.layout==='compact'");
