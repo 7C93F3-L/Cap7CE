@@ -12,6 +12,7 @@ import { useComputerSearchResultActions } from "./useComputerSearchResultActions
 import type { ComputerSearchController } from "./useComputerSearchController";
 import { useComputerSearchScrollPaging } from "./useComputerSearchScrollPaging";
 import CatalogVirtualGrid from "./CatalogVirtualGrid";
+import CatalogTransientFeedback from "../catalog-workspace/CatalogTransientFeedback";
 import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal";
 import "../results/ResultGrid.css";
 import "./ComputerSearchResultGrid.css";
@@ -147,7 +148,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       {pageError && !busy ? <span>{t("computerSearch.pageFailed")}</span>
         : busy ? t("computerSearch.pageLoading") : null}
     </div>}
-    {(operations.feedback || actions.feedback) && <div className="cap-computer-search-feedback" role="status">{operations.feedback || actions.feedback}</div>}
+    <CatalogTransientFeedback message={operations.feedback || actions.feedback} />
     {actions.contextMenu && <ComputerSearchResultContextMenu
       state={actions.contextMenu}
       theme={theme}

@@ -14,6 +14,7 @@ import { useCatalogWorkspaceContexts } from "./useCatalogWorkspaceContexts";
 import MetadataBuildSlot from "../metadata-build/MetadataBuildSlot";
 import "./CatalogWorkspace.css";
 import "./CatalogDesign.css";
+import { CatalogActivityProvider, CatalogActivityBar } from "./CatalogActivity";
 
 export default function CatalogWorkspace({ foreground = true, interactionLocked = false, onOpenSettings, onActiveActions, ...appearance }: CatalogWorkspaceAppearance & {
   foreground?: boolean; interactionLocked?: boolean; onOpenSettings: () => void;
@@ -39,7 +40,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
   const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
-  return <section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
+  return <CatalogActivityProvider><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px`, "--cap-catalog-details-width": `${detailsLayout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
       favorites={{ ...favorites, appearance, onReveal: favorites.reveal, onCopyPath: favorites.copyPath, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
@@ -53,9 +54,10 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
       filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null}
       onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
-      <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div>
+      <div className="cap-catalog-activity-dock"><CatalogActivityBar />
+      <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost}><CatalogDetailsResizer layout={detailsLayout} /></div>
     {favorites.notice && <FavoriteOperationNotice message={favorites.notice} onDismiss={favorites.dismissNotice} onRetry={() => void favorites.reload()} />}
     {workspace.openLimitReached && <div className="cap-catalog-limit" role="alert">{t("catalogWorkspace.limit")} <button type="button" onClick={workspace.dismissLimit}>{t("common.close")}</button></div>}
-  </section>;
+  </section></CatalogActivityProvider>;
 }

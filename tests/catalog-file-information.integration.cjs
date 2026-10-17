@@ -34,7 +34,7 @@ app.whenReady().then(async()=>{let win;try{
  assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'PNG','catalog heading uses the file extension');
  await ready('probe.keywordReads.length===2');await run('probe.finishKeywords("A",["stale"]);probe.finishKeywords("B",["已有","blue"]);probe.keywordAuto=true');
  await ready('document.querySelector(".preview-sidebar-keywords")');assert.equal(await run('document.querySelector(".preview-sidebar-keywords").innerText.includes("stale")'),false,'late keyword reads cannot leak into another file');
- const keywordSection='[...document.querySelectorAll(".preview-sidebar-section")].find(e=>e.querySelector("h2")?.innerText==="手动关键词")';
+ const keywordSection='[...document.querySelectorAll(".preview-sidebar-section")].find(e=>e.querySelector("h2")?.innerText==="添加关键词")';
  await run(`(${keywordSection}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor input")');
  await win.webContents.insertText('风景，blue');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Return'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Return'});await wait(30);
  assert.deepEqual(await run('[...document.querySelectorAll(".keyword-tag-editor-tag > span")].map(e=>e.innerText)'),['已有','blue','风景'],'tag editor normalizes separators and duplicate tags');
@@ -52,7 +52,7 @@ app.whenReady().then(async()=>{let win;try{
  await ready('!document.querySelector(".keyword-tag-editor")');assert.deepEqual(await run('probe.tags.B'),[],'cleared keywords are saved explicitly');
  assert.equal(await run('document.body.innerText.includes("1200 × 800")'),true);
  const headings=await run('[...document.querySelectorAll(".preview-sidebar-section h2,.preview-embedded-metadata-details h2")].map(e=>e.innerText)');
- assert.deepEqual(headings,['文件信息','手动关键词','嵌入信息']);
+ assert.deepEqual(headings,['文件信息','添加关键词','嵌入信息']);
  assert.equal(await run('document.querySelector(".preview-sidebar-file-card .preview-sidebar-details > div:last-child dt").innerText'),'位置','location is part of the basic information card');
  assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),false,'catalog omits the retired evidence card');
  assert.equal(await run('!!document.querySelector(".preview-sidebar-actions")'),false);assert.equal(await run('document.body.innerText.includes("打开详细预览")'),false);

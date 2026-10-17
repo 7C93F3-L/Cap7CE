@@ -10,6 +10,7 @@ interface PreviewInformationSidebarProps {
   data: FileInformationData; expanded: boolean;
   showFileActions?: boolean; showSearchEvidence?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
   mergeLocation?: boolean;
+  keywordsSection?: ReactNode;
   renderVisual?: (scrollRef: RefObject<HTMLDivElement | null>) => ReactNode;
   onToggleExpanded?: () => void;
   onOpen?: () => void;
@@ -53,7 +54,7 @@ const PreviewInformationSidebar = ({
   onEditKeywords = noop,
   onCancelKeywordEdit = noop,
   onSaveKeywords = noop,
-  onDelete
+  onDelete, keywordsSection
 }: PreviewInformationSidebarProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileName = <strong title={data.fileName}>{data.fileName}</strong>;
@@ -88,7 +89,7 @@ const PreviewInformationSidebar = ({
           <h2>{t("preview.sidebar.location")}</h2>
           {location}
         </section>}
-        <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} available={keywordsAvailable} readState={keywordsReadState} onRetry={onRetryKeywords} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
+        {keywordsSection ?? <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} available={keywordsAvailable} readState={keywordsReadState} onRetry={onRetryKeywords} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />}
         {showSearchEvidence && <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />}
         {data.embeddedMetadata
           ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />

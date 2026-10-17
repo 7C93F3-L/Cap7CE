@@ -34,7 +34,7 @@ app.whenReady().then(async()=>{let child,client,win;try{
  const errors=[];win.webContents.on('preload-error',(_,__,error)=>errors.push(error.message));await win.loadFile(path.join(root,'index.html'));
  const run=source=>win.webContents.executeJavaScript(source),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  const ready=async condition=>{for(let i=0;i<200;i++){if(await run(condition))return;await wait(20)}throw Error('Timeout '+condition)};
- const section='[...document.querySelectorAll(".preview-sidebar-section")].find(e=>e.querySelector("h2")?.innerText==="手动关键词")';
+ const section='[...document.querySelectorAll(".preview-sidebar-section")].find(e=>e.querySelector("h2")?.innerText==="添加关键词")';
  const search=query=>client.request('search.start',{query,pageSize:100,volumeIds:[],sort:'name-ascending',textTarget:'name-path-or-keywords',scope:{kind:'direct-children',volumeId:'a',rootFileReference:'0000000000000001'}});
  await ready('document.querySelector(".preview-sidebar-keywords")?.innerText.includes("legacytag")');const legacyResults=await search('legacytag');assert.equal(legacyResults.items.length,1,'legacy compatibility is searchable through real Core');
  assert.equal(legacyResults.items[0].createdFileTimeMilliseconds,'13300000000000','Core search responses preserve creation identity beyond JavaScript integer precision');
@@ -43,7 +43,7 @@ app.whenReady().then(async()=>{let child,client,win;try{
  assert.equal((await search('手动测试')).items.length,1,'real Renderer/preload/IPC/Core save participates in scoped search');
  await run(`(${section}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor")');await run(`(${section}).querySelector("button").click()`);await run('document.querySelectorAll(".keyword-tag-editor-actions button")[1].click()');await ready('!document.querySelector(".keyword-tag-editor")');
  assert.equal((await search('legacytag')).items.length,0);assert.equal((await search('手动测试')).items.length,0);
- await stop();await start();await win.loadFile(path.join(root,'index.html'));await ready(`(${section})?.innerText.includes("尚未添加手动关键词")`);
+ await stop();await start();await win.loadFile(path.join(root,'index.html'));await ready(`(${section})?.innerText.includes("尚未添加关键词")`);
  assert.equal((await api.read(item)).keywords.length,0,'empty user value survives Core restart and repeated legacy import');
  assert.deepEqual(fs.readFileSync(legacyPath),before,'old user database is byte-for-byte unchanged');assert.deepEqual(errors,[],'real sandbox preload loads cleanly');
  await stop();console.log('Native keyword round trip: real Renderer, sandbox preload, authorized IPC, Core search, legacy compatibility, clear and restart passed.');

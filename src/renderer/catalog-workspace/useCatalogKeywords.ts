@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ComputerSearchItem } from "../../../electron/computerSearchTypes";
 import type { CatalogKeywordSnapshot } from "../../shared/catalogKeywordTypes";
 import { t } from "../../../electron/localization";
+import { catalogKeywordKey } from "./catalogKeywordIdentity";
 
 interface State extends CatalogKeywordSnapshot { key: string; readState?: "loading" | "unavailable"; editing: boolean; saving: boolean; error: string; }
 const empty = (key: string): State => ({ key, keywords: [], revision: null, readState: "loading", editing: false, saving: false, error: "" });
 export function useCatalogKeywords(item: ComputerSearchItem, taskId: string, foreground: boolean) {
-  const key = `${item.volumeId ?? ""}:${item.fileReference ?? item.path}:${item.createdFileTimeMilliseconds ?? item.createdUtcTicks ?? ""}`;
+  const key = catalogKeywordKey(item);
   const latest = useRef({ key, taskId, authorizationId: item.authorizationId, foreground });
   latest.current = { key, taskId, authorizationId: item.authorizationId, foreground };
   const generation = useRef(0), pendingSave = useRef(false);
@@ -29,7 +30,7 @@ export function useCatalogKeywords(item: ComputerSearchItem, taskId: string, for
     return () => { generation.current++; window.clearTimeout(timer); };
   }, [key, foreground, reload]);
   const current = state.key === key ? state : empty(key);
-  const retry = () => setReload(value => value + 1);
+  const retry = useCallback(() => setReload(value => value + 1), []);
   return { sessionId: key, keywords: current.keywords, available: !current.readState, readState: current.readState,
     editing: current.editing, saving: current.saving, error: current.error, retry,
     edit: () => { if (!current.readState) setState(value => ({ ...value, editing: true, error: "" })); },

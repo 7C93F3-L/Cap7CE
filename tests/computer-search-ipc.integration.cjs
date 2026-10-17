@@ -45,6 +45,7 @@ registerComputerSearchIpc({
 assert.deepEqual([...handlers.keys()], [
   "computerSearch:readFileDetails", "computerSearch:cancelFileDetails",
   "computerSearch:readKeywords", "computerSearch:saveKeywords",
+  "computerSearch:generateKeywords", "computerSearch:cancelGeneratedKeywords",
   "computerSearch:acquireThumbnail", "computerSearch:releaseThumbnail",
   "computerSearch:moveToTrash",
   "computerSearch:status", "computerSearch:capabilityOptions", "computerSearch:configureCapability",

@@ -228,7 +228,8 @@ app.whenReady().then(async()=>{
   await menuAction('删除');await ready('probe.trashCalls.length===2');
   assert.equal(await run('probe.trashCalls.at(-1).authorizationIds.length'),2,'multi-selection shares one delete operation');
   await ready(`${active}.querySelector('.cap-computer-search-grid').dataset.totalCount==='299'`);
-  assert.equal(await run(`${active}.querySelector('.cap-computer-search-feedback').textContent.includes('locked')`),true,'partial failures retain feedback and remaining items');
+  await ready("document.querySelector('.cap-catalog-activity-bar')?.textContent.includes('locked')");
+  assert.equal(await run("document.querySelector('.cap-catalog-activity-bar').textContent.includes('locked')"),true,'partial failures retain feedback in the shared grid strip');
   await run(`probe.trashResult=null;${active}.querySelector('.cap-computer-search-entry').click()`);
   await ready(`${active}.querySelectorAll('.cap-computer-search-entry[aria-pressed=true]').length===1`);
   await run("window.dispatchEvent(new KeyboardEvent('keydown',{key:'Delete',code:'Delete',bubbles:true,cancelable:true}))");

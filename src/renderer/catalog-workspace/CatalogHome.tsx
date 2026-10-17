@@ -11,6 +11,7 @@ import "./CatalogHome.css";
 import type { CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTypes";
 import DirectoryMetadataContextMenu from "../metadata-build/DirectoryMetadataContextMenu";
 import { useDirectoryMetadataMenu } from "../metadata-build/useDirectoryMetadataMenu";
+import CatalogTransientFeedback from "./CatalogTransientFeedback";
 
 export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foreground = true, refreshVersion = 0, ...appearance }: {
   onOpen: (path: string) => void; gridMode: CatalogGridMode; gridSize?: number; foreground?: boolean; refreshVersion?: number;
@@ -51,6 +52,6 @@ export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foregrou
         collapsed={drivesCollapsed} onToggle={() => setDrivesCollapsed(value => !value)} />
     </div>
     {metadata.target && <DirectoryMetadataContextMenu target={metadata.target} appearance={{ theme: "dark", appearanceColors: { themeColor: "#7894f8", accentColor: "#67bec1" }, windowMaterial: "mica", ...appearance }} onClose={metadata.close} onStart={path => { void metadata.start(path); }} />}
-    {metadata.message && <div className="cap-computer-search-feedback" role="status">{metadata.message}</div>}
+    <CatalogTransientFeedback message={metadata.message} />
   </section>;
 }

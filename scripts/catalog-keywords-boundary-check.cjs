@@ -14,4 +14,20 @@ module.exports=(root,failures)=>{
  if(/REFERENCES\s+catalog_nodes/i.test(schema))failures.push('User annotations must survive replacement of automatic Catalog nodes.');
  const ipc=fs.readFileSync(path.join(root,'electron/catalogKeywordsIpc.ts'),'utf8');
  if(ipc.includes('filePath:')||!ipc.includes('resolve(value), words, revision'))failures.push('Keyword writes must resolve current result authorization instead of trusting Renderer paths.');
+ const autoFiles=new Map([
+  ['electron/catalogAutoKeywordModel.ts',60],['electron/catalogAutoKeywordService.ts',65],['electron/catalogAutoKeywordSource.ts',18],
+  ['electron/catalogAutoKeywordRuntime.ts',30],['electron/catalogAutoKeywordIpc.ts',60],['src/shared/catalogAutoKeywordTypes.d.ts',12],
+  ['src/renderer/catalog-workspace/useCatalogAutoKeywords.ts',65],['src/renderer/catalog-workspace/CatalogActivity.tsx',60],
+  ['src/renderer/catalog-workspace/CatalogActivity.css',15],['src/renderer/catalog-workspace/CatalogKeywords.tsx',40],
+  ['src/renderer/catalog-workspace/CatalogKeywords.css',8],['src/renderer/catalog-workspace/catalogKeywordIdentity.ts',8],
+  ['src/renderer/catalog-workspace/CatalogTransientFeedback.tsx',15]]);
+ for(const [file,maximum] of autoFiles){const text=fs.readFileSync(path.join(root,file),'utf8');
+  if(text.split(/\r?\n/).length>maximum)failures.push(`${file} exceeds its automatic keyword domain limit.`);
+  if(file.startsWith('src/renderer/')&&/fetch\(|node:|ipcRenderer|llamaRuntime|visualRenderService/.test(text))failures.push(`${file} bypasses the automatic keyword bridge.`);
+ }
+ const runtime=fs.readFileSync(path.join(root,'electron/catalogAutoKeywordRuntime.ts'),'utf8');
+ if(!runtime.includes('loadModelInputImage')||/ensureThumbnail|prepareAiSearchImage/.test(runtime))failures.push('Automatic keywords must reuse the existing model-input image preparation.');
+ const service=fs.readFileSync(path.join(root,'electron/catalogAutoKeywordService.ts'),'utf8');
+ for(const anchor of ['deps.keywords.read(check())','deps.keywords.write(check(), keywords, current.revision)','deps.fingerprint(check()) !== original','deps.endUse()'])
+  if(!service.includes(anchor))failures.push(`Automatic keyword safety is missing ${anchor}.`);
 };

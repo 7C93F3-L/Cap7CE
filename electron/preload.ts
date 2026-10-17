@@ -234,6 +234,13 @@ contextBridge.exposeInMainWorld("cap7ce", {
     cancelFileDetails: (request: { requestId: string }) => ipcRenderer.invoke("computerSearch:cancelFileDetails", request),
     readKeywords: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readKeywords", request),
     saveKeywords: (request: import("../src/shared/catalogKeywordTypes").CatalogKeywordSaveRequest) => ipcRenderer.invoke("computerSearch:saveKeywords", request),
+    generateKeywords: (request: import("../src/shared/catalogAutoKeywordTypes").CatalogAutoKeywordRequest) => ipcRenderer.invoke("computerSearch:generateKeywords", request),
+    cancelGeneratedKeywords: (request: { requestId: string }) => ipcRenderer.invoke("computerSearch:cancelGeneratedKeywords", request),
+    onAutoKeywordProgress: (callback: (progress: import("../src/shared/catalogAutoKeywordTypes").CatalogAutoKeywordProgress) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, progress: import("../src/shared/catalogAutoKeywordTypes").CatalogAutoKeywordProgress) => callback(progress);
+      ipcRenderer.on("computerSearch:autoKeywordProgress", listener);
+      return () => ipcRenderer.removeListener("computerSearch:autoKeywordProgress", listener);
+    },
     readTextPreview: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readTextPreview", request),
     startDrag: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.send("computerSearch:startDrag", request)
   },

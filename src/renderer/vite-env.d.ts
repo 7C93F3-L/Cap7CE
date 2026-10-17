@@ -130,6 +130,9 @@ declare global {
         readFileDetails: (request: import("../shared/fileInformationTypes").CatalogFileDetailsRequest) => Promise<import("../shared/fileInformationTypes").CatalogFileDetails | null>;
         readKeywords: (request: import("../../electron/computerSearchTypes").ComputerSearchAuthorization) => Promise<import("../shared/catalogKeywordTypes").CatalogKeywordSnapshot>;
         saveKeywords: (request: import("../shared/catalogKeywordTypes").CatalogKeywordSaveRequest) => Promise<import("../shared/catalogKeywordTypes").CatalogKeywordSaveResult>;
+        generateKeywords: (request: import("../shared/catalogAutoKeywordTypes").CatalogAutoKeywordRequest) => Promise<import("../shared/catalogAutoKeywordTypes").CatalogAutoKeywordResult>;
+        cancelGeneratedKeywords: (request: { requestId: string }) => Promise<boolean>;
+        onAutoKeywordProgress: (callback: (progress: import("../shared/catalogAutoKeywordTypes").CatalogAutoKeywordProgress) => void) => () => void;
         cancelFileDetails: (request: { requestId: string }) => Promise<boolean>;
         readTextPreview: (request: ComputerSearchAuthorization) => Promise<SkimTextPreview>;
         startDrag: (request: ComputerSearchAuthorizationBatch) => void;
