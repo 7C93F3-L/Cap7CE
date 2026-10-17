@@ -19,7 +19,7 @@ export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = { width: 0.9, height: 0.82 } as
 export const STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE = { width: 1760, height: 1000 } as const;
 export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 170 } as const;
 
-export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds): WindowLayoutBounds => {
+export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds, position?: Pick<WindowLayoutBounds, "x" | "y">): WindowLayoutBounds => {
   const width = Math.max(1, Math.min(
     workArea.width,
     Math.max(
@@ -37,8 +37,8 @@ export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds)
   return {
     width,
     height,
-    x: workArea.x + Math.round((workArea.width - width) / 2),
-    y: workArea.y + Math.round((workArea.height - height) / 2)
+    x: position ? Math.max(workArea.x, Math.min(position.x, workArea.x + workArea.width - width)) : workArea.x + Math.round((workArea.width - width) / 2),
+    y: position ? Math.max(workArea.y, Math.min(position.y, workArea.y + workArea.height - height)) : workArea.y + Math.round((workArea.height - height) / 2)
   };
 };
 

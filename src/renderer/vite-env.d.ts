@@ -5,6 +5,7 @@ import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownload
 import type { ComputerSearchAuthorization, ComputerSearchAuthorizationBatch, ComputerSearchCapabilityOptions, ComputerSearchCapabilityRequest, ComputerSearchCapabilityResult, ComputerSearchNextPageRequest, ComputerSearchPage, ComputerSearchRequest, ComputerSearchStatus } from "../../electron/computerSearchTypes";
 import type { MetadataBuildApi } from "../shared/metadataBuildTypes";
 import type { SettingsWindowApi } from "../shared/settingsWindowTypes";
+import type { MainWindowStateOptions } from "../shared/mainWindowStateTypes";
 
 type Cap7CEShellState = "standby" | "normal";
 type Cap7CEWindowBounds = { x: number; y: number; width: number; height: number };
@@ -15,7 +16,7 @@ declare global {
     cap7ce?: {
       metadataBuild: MetadataBuildApi;
       window: {
-        setShellState: (state: Cap7CEShellState, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => Promise<boolean>;
+        setShellState: (state: Cap7CEShellState, options?: MainWindowStateOptions) => Promise<boolean>;
         setAlwaysOnTop: (enabled: boolean) => Promise<Cap7CEAlwaysOnTopState>;
         getAlwaysOnTop: () => Promise<Cap7CEAlwaysOnTopState>;
         toggleNormalMaximized: () => Promise<{ isMaximized: boolean; lastNormalBounds: Cap7CEWindowBounds | null }>;

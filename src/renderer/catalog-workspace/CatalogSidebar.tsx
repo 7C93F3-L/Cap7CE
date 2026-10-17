@@ -16,8 +16,8 @@ export default function CatalogSidebar({ layout, favorites, onSettings }: {
   return <aside className={`cap-catalog-sidebar${layout.collapsed ? " is-collapsed" : ""}`}>
     <button className="cap-catalog-brand" type="button" title={layout.collapsed ? "展开目录栏" : "收起目录栏"} aria-label="Cap7CE" onClick={layout.toggleWidth}><span className="cap-catalog-brand-logo" aria-hidden="true" /></button>
     <nav className="cap-catalog-layout-tools" aria-label={t("workspace.navigation")}>
-      <button type="button" title={layout.filtersVisible ? "收起顶部筛选" : "显示顶部筛选"} aria-label={t("workspace.filters")} aria-expanded={layout.filtersVisible} onClick={layout.toggleFilters}><CatalogPanelIcon side="top" /></button>
-      <button type="button" title={layout.detailsVisible ? "收起详细信息" : "显示详细信息"} aria-label="详细信息" aria-expanded={layout.detailsVisible} onClick={layout.toggleDetails}><CatalogPanelIcon side="right" /></button>
+      <button type="button" disabled={layout.restoring} title={layout.filtersVisible ? "收起顶部筛选" : "显示顶部筛选"} aria-label={t("workspace.filters")} aria-expanded={layout.filtersVisible} onClick={layout.toggleFilters}><CatalogPanelIcon side="top" /></button>
+      <button type="button" disabled={layout.restoring} title={layout.detailsVisible ? "收起详细信息" : "显示详细信息"} aria-label="详细信息" aria-expanded={layout.detailsVisible} onClick={layout.toggleDetails}><CatalogPanelIcon side="right" /></button>
     </nav>
     <FavoriteDirectoryList {...favorites} showIcons onMetadata={metadata.busy ? undefined : directory => { void metadata.start(directory.path); }} metadataMessage={metadata.message}
       onAutoKeywords={activity && !activity.busy ? directory => { void activity.startBatch({ favoriteId: directory.id }, directory.name); } : undefined} />

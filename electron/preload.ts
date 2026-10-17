@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
+import type { MainWindowStateOptions } from "../src/shared/mainWindowStateTypes";
 import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
 import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
@@ -34,7 +35,7 @@ contextBridge.exposeInMainWorld("cap7ce", {
   metadataBuild: createMetadataBuildBridge(ipcRenderer),
   favoriteDirectories: createFavoriteDirectoryBridge(ipcRenderer),
   window: {
-    setShellState: (state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => ipcRenderer.invoke("window:setShellState", state, options),
+    setShellState: (state: string, options?: MainWindowStateOptions) => ipcRenderer.invoke("window:setShellState", state, options),
     setAlwaysOnTop: (enabled: boolean) => ipcRenderer.invoke("window:setAlwaysOnTop", enabled),
     getAlwaysOnTop: () => ipcRenderer.invoke("window:getAlwaysOnTop"),
     toggleNormalMaximized: () => ipcRenderer.invoke("window:toggleNormalMaximized"),

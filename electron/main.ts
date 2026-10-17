@@ -1,5 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeTheme, net, Notification, powerMonitor, protocol, screen, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
 import { installCatalogSystemEvents } from "./core/catalogSystemEvents";
+import type { MainWindowStateOptions } from "../src/shared/mainWindowStateTypes";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { createReadStream } from "node:fs";
@@ -829,7 +830,7 @@ const unregisterShellModeShortcuts = () => {
   registeredShellModeShortcuts.clear();
 };
 
-const activateShellModeShortcut = async (mode: "normal" | "standby" | "skim" | "settings", restoreStableDefaultBounds = false): Promise<boolean> => {
+const activateShellModeShortcut = async (mode: "normal" | "standby" | "skim" | "settings", restoreStableDefaultBounds = false, preservePosition = false): Promise<boolean> => {
   if (mode === "settings") {
     return openSettings();
   }
@@ -847,7 +848,7 @@ const activateShellModeShortcut = async (mode: "normal" | "standby" | "skim" | "
     dockedShellController?.reset(false);
     if (!showAndFocusMainWindow()) return false;
     if (mainWindow.isMaximized()) mainWindow.unmaximize();
-    const defaultBounds = resolveStableUiDefaultWindowBounds(screen.getDisplayMatching(mainWindow.getBounds()).workArea);
+    const defaultBounds = resolveStableUiDefaultWindowBounds(screen.getDisplayMatching(mainWindow.getBounds()).workArea, preservePosition ? mainWindow.getBounds() : undefined);
     markProgrammaticResize(); markProgrammaticMove();
     mainWindow.setBounds(defaultBounds, true);
     rememberUserMovedShellBounds(defaultBounds);
@@ -1619,11 +1620,11 @@ ipcMain.handle("line:activateMain", (event) => {
   return activateMainSearchShortcut();
 });
 
-ipcMain.handle("window:setShellState", (_event, state: string, options?: { forceBounds?: boolean; preserveBounds?: boolean }) => {
+ipcMain.handle("window:setShellState", (_event, state: string, options?: MainWindowStateOptions) => {
   if (state === "standby") {
     return applyStandaloneLineMode();
   }
-  if (state === "normal" && options?.forceBounds) return activateShellModeShortcut("normal", true);
+  if (state === "normal" && options?.forceBounds) return activateShellModeShortcut("normal", true, options.preservePosition === true);
   if (state === "normal" && state === activeShellState) {
     dockedShellController?.restore(true);
     return true;

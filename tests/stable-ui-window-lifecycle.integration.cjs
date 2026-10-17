@@ -24,6 +24,9 @@ assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 3440, h
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 96, y: 94, width: 1728, height: 853 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: -1366, y: 0, width: 1366, height: 728 }), { x: -1297, y: 66, width: 1229, height: 597 });
 assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 240, height: 150 }), { x: 0, y: 0, width: 240, height: 150 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 1920, height: 1040 }, { x: 50, y: 70 }), { x: 50, y: 70, width: 1728, height: 853 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: -1366, y: -50, width: 1366, height: 728 }, { x: -200, y: 600 }), { x: -1229, y: 81, width: 1229, height: 597 });
+assert.deepEqual(resolveStableUiDefaultWindowBounds({ x: 0, y: 0, width: 240, height: 150 }, { x: 100, y: 100 }), { x: 0, y: 0, width: 240, height: 150 });
 assert.equal(resolveStableWindowTheme("system", true), "dark");
 assert.equal(resolveStableWindowTheme("light", true), "light");
 assert.deepEqual(getStableWindowBrowserOptions("dark"), {
@@ -68,7 +71,7 @@ assert.match(mainSource, /const getShellMinimumSize = \(_state: Cap7CEShellState
 assert.match(mainSource, /const openSettings = async \(\) => Boolean\(await settingsWindowController\?\.open\(\)\)/u);
 assert.match(mainSource, /previewWindow\.on\("unmaximize", applyLatestPreviewContentSize\)/u);
 assert.match(mainSource, /restoreStableDefaultBounds[\s\S]*?resolveStableUiDefaultWindowBounds[\s\S]*?rememberUserMovedShellBounds\(defaultBounds\)/u);
-assert.match(mainSource, /state === "normal" && options\?\.forceBounds[\s\S]*?activateShellModeShortcut\("normal", true\)/u);
+assert.match(mainSource, /state === "normal" && options\?\.forceBounds[\s\S]*?activateShellModeShortcut\("normal", true, options.preservePosition === true\)/u);
 assert.match(mainSource, /mainWindow\.on\("maximize"[\s\S]*?mainWindow\.on\("unmaximize"/u);
 for (const source of [mainSource, preferenceSource, preloadSource, sharedTypesSource]) {
   assert.doesNotMatch(source, /WindowPresentation|windowPresentation|presentationMode|compatibilityNative/u);

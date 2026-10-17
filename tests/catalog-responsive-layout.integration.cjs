@@ -1,0 +1,61 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const {app,BrowserWindow,ipcMain}=require('electron'),esbuild=require('esbuild');
+const {resolveStableUiDefaultWindowBounds}=require('../dist-electron/stableUiWindowLifecycle.js');
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'Cap7CE-responsive-layout-'));app.setPath('userData',root+'-profile');
+const storage='cap7ce.catalog.sidebar-width.v1';let win,calls=[],fail=false,release=null,delayed=false,workArea={x:0,y:0,width:1600,height:1000};
+ipcMain.handle('window:setShellState',async(event,state,options)=>{
+ assert.equal(event.sender,win.webContents);calls.push({state,options});assert.equal(state,'normal');assert.deepEqual(options,{forceBounds:true,preservePosition:true});
+ if(delayed)await new Promise(resolve=>{release=resolve});if(fail)throw Error('restore-failed');
+ win.setBounds(resolveStableUiDefaultWindowBounds(workArea,options.preservePosition?win.getBounds():undefined));return true;
+});
+const fixture=String.raw`
+import React from 'react';import{createRoot}from'react-dom/client';import{useCatalogLayout}from'./src/renderer/catalog-workspace/useCatalogLayout';import CatalogSidebar from './src/renderer/catalog-workspace/CatalogSidebar';
+import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
+const noop=()=>{},favorites={directories:[],activePath:null,globalActive:true,busy:false,error:false,onOpen:noop,onChoose:noop,onRetry:noop,onRename:async()=>true,onRemove:noop,onMove:noop};
+function Fixture(){const layout=useCatalogLayout();window.probe=layout;return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{position:'absolute',inset:40,gridTemplateColumns:layout.width+'px 1fr'}}>
+<CatalogSidebar layout={layout} favorites={favorites} onSettings={noop}/><main><button id="auto" onClick={layout.showDetails}>automatic selection</button><button id="edit" onClick={layout.revealDetails}>explicit edit</button><output>{JSON.stringify({filters:layout.filtersVisible,details:layout.detailsVisible,width:layout.width,error:layout.restoreError})}</output></main></div></div>};
+createRoot(document.getElementById('root')).render(<Fixture/>);`;
+app.whenReady().then(async()=>{try{
+ esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(root,'fixture.js'),loader:{'.svg':'text'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}});
+ fs.writeFileSync(path.join(root,'index.html'),'<meta charset="utf-8"><link rel="stylesheet" href="fixture.css"><div id="root"></div><script src="fixture.js"></script>');
+ win=new BrowserWindow({show:false,frame:false,x:60,y:70,width:1100,height:800,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false,preload:path.resolve(__dirname,'../dist-electron/preload.js')}});await win.loadFile(path.join(root,'index.html'));
+ const run=c=>win.webContents.executeJavaScript(c),wait=ms=>new Promise(r=>setTimeout(r,ms));const ready=async c=>{for(let n=0;n<180;n++){if(await run(c))return;await wait(20)}throw Error('Timeout '+c)};
+ const frame=()=>run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
+ const resize=async(width,height)=>{win.setSize(width,height);await ready(`window.innerWidth===${width}&&window.innerHeight===${height}`);await frame()};
+ const click=async panel=>{await run(`document.querySelectorAll('.cap-catalog-layout-tools button')[${panel==='filters'?0:1}].click()`);await frame()};
+ const key=async key=>{await run(`document.querySelector('.cap-catalog-resizer').dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},bubbles:true,cancelable:true}))`);await frame()};
+ const reload=async()=>{const loaded=new Promise(resolve=>win.webContents.once('did-finish-load',resolve));win.reload();await loaded;await ready('!!window.probe');await frame()};
+ const stored=()=>run(`localStorage.getItem('${storage}')`);
+ await ready('!!window.probe');assert.equal(await run('probe.filtersVisible&&probe.detailsVisible'),true);assert.equal(await stored(),null,'initial layout does not write a width');
+ await key('ArrowRight');await key('ArrowRight');assert.equal(await run('probe.width'),188);assert.equal(await stored(),'188');
+ await resize(400,800);assert.equal(await run('probe.width'),140,'legacy viewport-minus-260 rule limits only rendered width');assert.equal(await stored(),'188');
+ await resize(300,800);assert.equal(await run('probe.width'),52);assert.equal(await run('probe.collapsed'),true);await reload();assert.equal(await stored(),'188');assert.equal(await run('probe.width'),52);
+ await resize(1100,800);assert.equal(await run('probe.width'),188,'restarting while narrow preserves the expanded preference');
+ await run("document.querySelector('.cap-catalog-brand').click()");await frame();assert.equal(await stored(),'52');await reload();assert.equal(await run('probe.width'),52,'manual collapse persists');
+ await run("document.querySelector('.cap-catalog-brand').click()");await frame();await key('ArrowRight');await key('ArrowRight');
+ const point=await run("(()=>{const r=document.querySelector('.cap-catalog-resizer').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()");
+ win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...point});win.webContents.sendInputEvent({type:'mouseMove',x:point.x+40,y:point.y});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+40,y:point.y});await frame();
+ assert.equal(await run('probe.width'),228);assert.equal(await stored(),'228','actual drag saves only the explicitly chosen width');
+ await resize(899,800);assert.equal(await run('probe.detailsVisible'),false);await resize(930,800);assert.equal(await run('probe.detailsVisible'),false);await resize(960,800);assert.equal(await run('probe.detailsVisible'),true);
+ await click('details');await resize(800,800);await resize(1100,800);assert.equal(await run('probe.detailsVisible'),false,'manual close survives the automatic range');await click('details');assert.equal(calls.length,0);
+ await resize(1100,519);assert.equal(await run('probe.filtersVisible||probe.detailsVisible'),false,'low height hides both panels even with enough width');
+ await resize(1100,540);assert.equal(await run('probe.filtersVisible||probe.detailsVisible'),false,'both panels remain hidden in the height recovery interval');
+ await resize(1100,560);assert.equal(await run('probe.filtersVisible&&probe.detailsVisible'),true,'both restore after height recovery');
+ await click('details');await resize(1100,400);await resize(1100,800);assert.equal(await run('probe.detailsVisible'),false,'manual right-panel close survives height changes');await click('details');
+ await resize(899,400);await resize(930,800);assert.equal(await run('probe.detailsVisible'),false,'height recovery cannot bypass the width recovery threshold');await resize(960,800);assert.equal(await run('probe.detailsVisible'),true);
+ await resize(1100,400);await reload();assert.equal(await run('probe.detailsVisible||probe.filtersVisible'),false,'low-height startup hides both panels');
+ await run("document.getElementById('auto').click()");await frame();assert.equal(calls.length,0);assert.equal(await run('probe.detailsVisible'),false,'selection cannot reopen a height-constrained right panel');
+ await click('details');await ready('probe.detailsVisible&&probe.filtersVisible&&!probe.restoring');assert.equal(calls.length,1,'opening the right panel in a short wide window restores default bounds');calls=[];
+ await click('filters');await resize(1100,400);await resize(1100,800);assert.equal(await run('probe.filtersVisible'),false);await click('filters');assert.equal(calls.length,0);
+ await resize(700,400);await run("document.getElementById('auto').click()");await frame();assert.equal(calls.length,0,'selection alone never enlarges the window');assert.equal(await run('probe.detailsVisible'),false);
+ win.setPosition(60,70);await click('details');await ready('probe.detailsVisible&&probe.filtersVisible&&!probe.restoring');assert.equal(calls.length,1);
+ assert.deepEqual(win.getBounds(),{x:60,y:70,width:1440,height:820},'explicit opening uses default size without recentering');assert.equal(await stored(),'228');
+ await resize(700,400);fail=true;await click('filters');await ready('probe.restoreError&&!probe.restoring');assert.equal(await run('probe.filtersVisible'),false,'failed restore does not falsely expand');
+ fail=false;await click('filters');await ready('probe.filtersVisible&&!probe.restoring&&!probe.restoreError');
+ await resize(700,400);delayed=true;const before=calls.length;await click('filters');await ready('probe.restoring');await run("document.getElementById('edit').click()");await frame();assert.equal(calls.length,before+1,'concurrent explicit actions share one restore');release();delayed=false;await ready('probe.detailsVisible&&probe.filtersVisible&&!probe.restoring');
+ workArea={x:0,y:0,width:800,height:460};await resize(700,400);await click('details');await ready('probe.detailsVisible&&!probe.restoring');assert.deepEqual(win.getSize(),[720,377]);assert.equal(await run('probe.filtersVisible'),false,'small-display override only opens the requested panel');
+ await click('filters');await ready('probe.filtersVisible&&!probe.restoring');await resize(720,360);assert.equal(await run('probe.detailsVisible||probe.filtersVisible'),false,'shrinking again removes the explicit small-display override');
+ assert.equal(await stored(),'228');await resize(1100,800);assert.equal(await run('probe.width'),228);await reload();assert.equal(await run('probe.width'),228);
+ console.log('Responsive panels: native resize/hysteresis, manual state, explicit IPC restoration/position, failure/retry/concurrency, small displays and sidebar drag/restart persistence passed.');
+ }catch(error){console.error(error.stack);process.exitCode=1}finally{win?.destroy();if(path.dirname(root)!==os.tmpdir())throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}
+});

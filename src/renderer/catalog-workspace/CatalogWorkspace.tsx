@@ -15,6 +15,7 @@ import MetadataBuildSlot from "../metadata-build/MetadataBuildSlot";
 import "./CatalogWorkspace.css";
 import "./CatalogDesign.css";
 import { CatalogActivityProvider, CatalogActivityBar } from "./CatalogActivity";
+import BottomNoticeBar from "../feedback/BottomNoticeBar";
 
 export default function CatalogWorkspace({ foreground = true, interactionLocked = false, onOpenSettings, onActiveActions, ...appearance }: CatalogWorkspaceAppearance & {
   foreground?: boolean; interactionLocked?: boolean; onOpenSettings: () => void;
@@ -41,7 +42,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
   const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
-  return <CatalogActivityProvider onShowDetails={layout.showDetails}><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
+  return <CatalogActivityProvider onShowDetails={layout.revealDetails}><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px`, "--cap-catalog-details-width": `${detailsLayout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
       favorites={{ ...favorites, appearance, onReveal: favorites.reveal, onCopyPath: favorites.copyPath, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
@@ -56,6 +57,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
       onShowDetails={layout.showDetails} onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
       <div className="cap-catalog-activity-dock"><CatalogActivityBar />
+      {layout.restoreError && <BottomNoticeBar message="窗口大小未能恢复，请重试展开面板。" actions={<button type="button" aria-label="关闭窗口提醒" onClick={layout.dismissRestoreError}>×</button>} />}
       <div className="cap-catalog-query-notice-host" ref={setNoticeHost} />
       <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost}><CatalogDetailsResizer layout={detailsLayout} /></div>

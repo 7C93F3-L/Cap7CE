@@ -118,7 +118,7 @@ app.whenReady().then(async()=>{
   await run(`${detailsResizer}.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`);assert.equal(await detailsWidth(),'280','double click restores the default');
   await run(`${detailsResizer}.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}))`);assert.equal(await detailsWidth(),'296','keyboard resizing follows the same edge direction');
   assert.equal(await run(`${detailsResizer}.getAttribute('data-selection-preserve')`),'true');
-  win.setSize(900,750);await wait(80);
+  win.setSize(940,750);await wait(80);
   assert.equal(await run("getComputedStyle(document.querySelector('.cap-catalog-details-host')).position"),'absolute','narrow windows retain the overlay layout');
   assert.equal(Math.round(await run("document.querySelector('.cap-catalog-details-host').getBoundingClientRect().width")),296,'overlay uses the chosen width');
   win.setSize(1100,750);await wait(80);
