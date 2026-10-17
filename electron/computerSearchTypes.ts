@@ -77,6 +77,7 @@ export interface ComputerSearchItem {
   fileReference: string;
   sizeBytes: number | null;
   createdUtcTicks: number | null;
+  createdFileTimeMilliseconds?: string | null;
   modifiedUtcTicks: number | null;
   attributes: number | null;
   iconName: string;

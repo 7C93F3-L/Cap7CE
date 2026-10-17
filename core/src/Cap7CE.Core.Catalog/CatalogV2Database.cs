@@ -27,6 +27,7 @@ public sealed class CatalogV2Database
         CleanupAbandonedSnapshotBuilds(directory, Path.GetFileName(databasePath));
         await using var connection = await OpenAsync(false, token);
         await CatalogV2Schema.InitializeAsync(connection, token);
+        await Keywords.CatalogKeywordSchema.InitializeAsync(connection, token);
         using var wal = connection.CreateCommand();
         wal.CommandText = "PRAGMA journal_mode = WAL;";
         if (!string.Equals(Convert.ToString(await wal.ExecuteScalarAsync(token)), "wal", StringComparison.OrdinalIgnoreCase))
@@ -591,7 +592,8 @@ public sealed class CatalogV2Database
             {
                 CatalogQueryTextTarget.Name => nameMatch,
                 CatalogQueryTextTarget.Path => pathMatch,
-                _ => nameMatch + " OR " + pathMatch
+                CatalogQueryTextTarget.NameOrPath => nameMatch + " OR " + pathMatch,
+                _ => nameMatch + " OR " + pathMatch + " OR " + Keywords.CatalogKeywordSchema.Match(parameter)
             }).Append(')');
             command.Parameters.AddWithValue("$term" + index, "%" + EscapeLike(terms[index]) + "%");
         }

@@ -7,6 +7,9 @@ interface PreviewManualKeywordsSectionProps {
   manualKeywords: string[];
   userDescription?: string;
   skimActive: boolean;
+  available?: boolean;
+  readState?: "loading" | "unavailable";
+  onRetry?: () => void;
   editorOpen: boolean;
   savePending: boolean;
   saveError: string;
@@ -15,12 +18,13 @@ interface PreviewManualKeywordsSectionProps {
   onSave: (keywords: string[]) => void;
 }
 
-const PreviewManualKeywordsSection = ({ sessionId, manualKeywords, userDescription, skimActive, editorOpen, savePending, saveError, onEdit, onCancel, onSave }: PreviewManualKeywordsSectionProps) => {
+const PreviewManualKeywordsSection = ({ sessionId, manualKeywords, userDescription, skimActive, available = !skimActive, readState, onRetry, editorOpen, savePending, saveError, onEdit, onCancel, onSave }: PreviewManualKeywordsSectionProps) => {
   const [clearRequestVersion, setClearRequestVersion] = useState(0);
   return <section className="preview-sidebar-section">
       <div className="preview-sidebar-section-heading">
         <h2>{t("preview.sidebar.manualKeywords")}</h2>
-        {!skimActive && <button
+        {readState === "unavailable" && onRetry && <button type="button" onClick={onRetry}>{t("common.retry")}</button>}
+        {available && <button
           type="button"
           disabled={savePending}
           onClick={editorOpen ? () => setClearRequestVersion((version) => version + 1) : onEdit}
@@ -30,7 +34,7 @@ const PreviewManualKeywordsSection = ({ sessionId, manualKeywords, userDescripti
         ? <KeywordTagEditor key={`${sessionId}:${manualKeywords.join("\u0000")}`} initialKeywords={manualKeywords} clearRequestVersion={clearRequestVersion} isSaving={savePending} error={saveError} onSave={onSave} onCancel={onCancel} />
         : manualKeywords.length
           ? <div className="preview-sidebar-keywords">{manualKeywords.map((keyword) => <span key={keyword}>{keyword}</span>)}</div>
-          : <p className="preview-sidebar-empty">{skimActive ? t("common.unavailable") : t("preview.sidebar.noKeywords")}</p>}
+          : <p className="preview-sidebar-empty">{readState === "loading" ? t("common.loading") : !available ? t("common.unavailable") : t("preview.sidebar.noKeywords")}</p>}
       {userDescription && <p className="preview-sidebar-description">{userDescription}</p>}
     </section>;
 };

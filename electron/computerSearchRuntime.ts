@@ -23,10 +23,12 @@ import { CoreCatalogChangeWatcher } from "./core/coreCatalogChangeWatcher";
 import { FavoriteDirectoryStore } from "./favoriteDirectories/favoriteDirectoryStore";
 import type { FavoriteDirectoryRegistry } from "../src/shared/favoriteDirectoryTypes";
 import { ComputerSearchThumbnailLeases } from "./computerSearchThumbnailLeases";
+import { createCatalogKeywordsRuntime, type CatalogKeywordsApi } from "./catalogKeywordsRuntime";
 
 export interface ComputerSearchRuntime {
   thumbnailLeases: ComputerSearchThumbnailLeases;
   metadataBuild?: MetadataBuildApi;
+  keywords?: CatalogKeywordsApi;
   favoriteDirectories?: FavoriteDirectoryRegistry;
   subscribeCatalogChanges?: (callback: (revision: number) => void) => () => void;
   refreshStorage?: () => Promise<void>;
@@ -221,6 +223,8 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     ? new FavoriteDirectoryStore(options.favoritePreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "favorite-directories.json")) : undefined;
   let observedRevision: number | undefined;
   let observedProcess: number | undefined;
+  const keywords = createCatalogKeywordsRuntime({ request: controller.request.bind(controller), start: () => controller.start(),
+    supports: name => controller.supports?.(name) ?? false, processId: () => controller.snapshot().processId, active: () => !stopping });
   const changeListeners = new Set<(revision: number) => void>();
   const watcher = new CoreCatalogChangeWatcher(new CoreCatalogChangeProtocol({ request: controller.request.bind(controller),
     startRequest: controller.startRequest.bind(controller), cancel: controller.cancelRequest.bind(controller) }), notice => {
@@ -234,7 +238,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     await watcher.observe(snapshot.processId, controller.supports?.("catalog.awaitChanges") ?? false);
   };
   return {
-    metadataBuild, thumbnailLeases,
+    metadataBuild, thumbnailLeases, keywords,
     favoriteDirectories: favorites,
     async refreshStorage() {
       if (stopping || controller.snapshot().state !== "ready") return;
@@ -280,6 +284,9 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       runningTasks.add(request.taskId);
       try {
         const catalog = await readCatalog();
+        if (controller.supports?.("search.manualKeywords")) await keywords.prepare(catalog.volumes.filter(volume => volume.queryable).map(volume => volume.volumeId).sort().join("|")).catch(() => {
+          options.diagnostics?.log("warn", "catalog-keywords-import-unavailable", {});
+        });
         if (cancelledTasks.has(request.taskId)) throw new Error("search-cancelled");
         if (request.randomSeed !== undefined && !controller.supports?.("search.random")) throw new Error("random-browse-unavailable");
         if (request.fileConditions?.excludedExtensions?.length && !controller.supports?.("search.excludeExtensions")) throw new Error("computer-search-filter-unavailable");
@@ -308,7 +315,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
         const pending = controller.startRequest<CoreSearchPage>("search.start", {
           query: request.query, pageSize: 100, ...(request.randomSeed !== undefined ? { randomSeed: request.randomSeed } : {}), sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, volumeIds, scope,
           ...(controller.supports?.("search.live") ? { continuation: "live" } : {}),
-          entryType: request.scopeKind === "directory-descendants" || request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: "name-or-path",
+          entryType: request.scopeKind === "directory-descendants" || request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: controller.supports?.("search.manualKeywords") ? "name-path-or-keywords" : "name-or-path",
           ...(request.facts ? { facts: toCoreSearchFacts(request.facts) } : {}),
           ...(request.fileConditions ? { fileConditions: readComputerSearchFileConditions(request.fileConditions) } : {})
         }, 30_000);

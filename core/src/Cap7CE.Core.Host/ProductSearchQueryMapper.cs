@@ -30,6 +30,7 @@ internal static class ProductSearchQueryMapper
             null or "name" => CatalogQueryTextTarget.Name,
             "path" => CatalogQueryTextTarget.Path,
             "name-or-path" => CatalogQueryTextTarget.NameOrPath,
+            "name-path-or-keywords" => CatalogQueryTextTarget.NamePathOrKeywords,
             _ => throw Invalid("Text target is invalid.")
         };
         FileFactQueryFilter? facts = null;

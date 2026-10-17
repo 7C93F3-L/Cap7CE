@@ -5,16 +5,20 @@ const fixture=String.raw`
 import React,{useState} from 'react';import {createRoot} from 'react-dom/client';import {flushSync} from 'react-dom';
 import CatalogDetails from './src/renderer/catalog-workspace/CatalogDetails';import PreviewInformationSidebar from './src/renderer/preview/PreviewInformationSidebar';
 import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
-const p=window.probe={reads:[],cancels:[],reveals:0,previews:0},pending=new Map();
-window.cap7ce={computerSearch:{readFileDetails:r=>{p.reads.push(r);return new Promise(resolve=>pending.set(r.requestId,resolve))},cancelFileDetails:async r=>{p.cancels.push(r);return true},acquireThumbnail:async()=>null,releaseThumbnail:async()=>true}};
+const p=window.probe={reads:[],cancels:[],reveals:0,previews:0,keywordReads:[],saves:[],keywordAuto:false,tags:{},revisions:{}},pending=new Map(),keywordPending=new Map();
+p.finishKeywords=(name,words)=>{p.tags[name]=words;p.revisions[name]='1';keywordPending.get(name)({keywords:words,revision:'1'})};
+window.cap7ce={computerSearch:{readFileDetails:r=>{p.reads.push(r);return new Promise(resolve=>pending.set(r.requestId,resolve))},cancelFileDetails:async r=>{p.cancels.push(r);return true},acquireThumbnail:async()=>null,releaseThumbnail:async()=>true,
+readKeywords:r=>{p.keywordReads.push(r);return p.keywordAuto?Promise.resolve({keywords:p.tags[r.authorizationId]??[],revision:p.revisions[r.authorizationId]??null}):new Promise(resolve=>keywordPending.set(r.authorizationId,resolve))},
+saveKeywords:async r=>{p.saves.push(r);if(p.failSave)throw Error('save failed');if(p.pauseSave)await new Promise(resolve=>p.finishSave=resolve);p.tags[r.authorizationId]=r.keywords;p.revisions[r.authorizationId]='2';return {saved:true,current:{keywords:r.keywords,revision:'2'}}}}};
 const item=name=>({id:name,authorizationId:name,name:name+'.png',path:'X:\\'+name+'.png',extension:'.png',isDirectory:false,canThumbnail:false,iconName:'format-png',sizeBytes:1024,modifiedUtcTicks:null});
-function Fixture(){const [name,setName]=useState('A'),[foreground,setForeground]=useState(true),[theme,setTheme]=useState('dark'),[preview,setPreview]=useState(false),[width,setWidth]=useState(280);
+function Fixture(){const [name,setName]=useState('A'),[foreground,setForeground]=useState(true),[theme,setTheme]=useState('dark'),[preview,setPreview]=useState(false),[width,setWidth]=useState(280),[task,setTask]=useState('task');
+p.task=v=>flushSync(()=>setTask(v));
 p.width=v=>flushSync(()=>setWidth(v));
 p.select=n=>flushSync(()=>setName(n));p.foreground=v=>flushSync(()=>setForeground(v));p.theme=v=>flushSync(()=>setTheme(v));p.preview=()=>flushSync(()=>setPreview(true));
 p.finish=n=>{const r=p.reads.findLast(r=>r.authorizationId===n);pending.get(r.requestId)({info:{kind:'file',path:'X:\\'+n+'.png',name:n+'.png',extension:'.png',size:1024,modifiedAt:'2026-10-17T00:00:00Z',withinAddedDirectory:false},imageWidth:1200,imageHeight:800,embeddedMetadata:{items:[{kind:'software_family',text:n+' software'}],capturedAt:null}})};
 return <div className={'app cap-stable-ui theme-'+theme} style={{height:'100vh',padding:8,boxSizing:'border-box'}}><div style={{height:'100%',width}}>
 {preview?<PreviewInformationSidebar expanded data={{sessionId:'preview',fileName:'preview.png',filePath:'X:\\preview.png',fileSize:1024,modifiedAt:'2026-10-17T00:00:00Z',skimActive:true}} onToggleExpanded={()=>{}}/>:
-<CatalogDetails selection={name?{taskId:'task',items:[item(name)],openPreview:()=>p.previews++,showInFolder:()=>p.reveals++}:null} path="X:\\" count={1} foreground={foreground}/>}
+<CatalogDetails selection={name?{taskId:task,items:[item(name)],openPreview:()=>p.previews++,showInFolder:()=>p.reveals++}:null} path="X:\\" count={1} foreground={foreground}/>}
 </div></div>};createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async()=>{let win;try{
  esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(root,'fixture.js'),loader:{'.svg':'text'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}});
@@ -28,6 +32,24 @@ app.whenReady().then(async()=>{let win;try{
  assert.equal(await run('document.body.innerText.includes("A software")'),false,'late metadata cannot overwrite a new selection');
  await run("probe.finish('B')");await ready('document.body.innerText.includes("B software")');
  assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'PNG','catalog heading uses the file extension');
+ await ready('probe.keywordReads.length===2');await run('probe.finishKeywords("A",["stale"]);probe.finishKeywords("B",["已有","blue"]);probe.keywordAuto=true');
+ await ready('document.querySelector(".preview-sidebar-keywords")');assert.equal(await run('document.querySelector(".preview-sidebar-keywords").innerText.includes("stale")'),false,'late keyword reads cannot leak into another file');
+ const keywordSection='[...document.querySelectorAll(".preview-sidebar-section")].find(e=>e.querySelector("h2")?.innerText==="手动关键词")';
+ await run(`(${keywordSection}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor input")');
+ await win.webContents.insertText('风景，blue');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Return'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Return'});await wait(30);
+ assert.deepEqual(await run('[...document.querySelectorAll(".keyword-tag-editor-tag > span")].map(e=>e.innerText)'),['已有','blue','风景'],'tag editor normalizes separators and duplicate tags');
+ await run('probe.task("new-authorization")');assert.ok(await run('document.querySelector(".keyword-tag-editor").innerText.includes("风景")'),'authorization refresh preserves the edit draft');
+ await ready('probe.reads.length===3');await run('probe.finish("B")');
+ await run('probe.failSave=true;document.querySelectorAll(".keyword-tag-editor-actions button")[1].click()');await ready('document.querySelector(".keyword-tag-editor-status.is-error")');
+ assert.ok(await run('document.querySelector(".keyword-tag-editor").innerText.includes("风景")'),'failed save retains its draft');
+ await run('probe.failSave=false;document.querySelectorAll(".keyword-tag-editor-actions button")[1].click()');await ready('document.querySelector(".preview-sidebar-keywords")');
+ assert.equal(await run('probe.saves.at(-1).taskId'),'new-authorization','saving uses the current result authorization');
+ assert.deepEqual(await run('probe.tags.B'),['已有','blue','风景']);
+ await run(`(${keywordSection}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor")');
+ await run(`(${keywordSection}).querySelector("button").click()`);assert.equal(await run('document.querySelectorAll(".keyword-tag-editor-tag").length'),0,'clear affects the draft');
+ await run('document.querySelectorAll(".keyword-tag-editor-actions button")[0].click()');await ready('document.querySelector(".preview-sidebar-keywords")');assert.equal(await run('probe.tags.B.length'),3,'cancel does not persist draft clearing');
+ await run(`(${keywordSection}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor")');await run(`(${keywordSection}).querySelector("button").click()`);await run('document.querySelectorAll(".keyword-tag-editor-actions button")[1].click()');
+ await ready('!document.querySelector(".keyword-tag-editor")');assert.deepEqual(await run('probe.tags.B'),[],'cleared keywords are saved explicitly');
  assert.equal(await run('document.body.innerText.includes("1200 × 800")'),true);
  const headings=await run('[...document.querySelectorAll(".preview-sidebar-section h2,.preview-embedded-metadata-details h2")].map(e=>e.innerText)');
  assert.deepEqual(headings,['文件信息','位置','手动关键词','当前匹配依据','嵌入信息']);
@@ -36,11 +58,17 @@ app.whenReady().then(async()=>{let win;try{
  await run('document.querySelector(".preview-sidebar-path").click()');assert.equal(await run('probe.reveals'),1,'location reuses the authorized result action');
  for(const theme of ['light','dark']){for(const width of [220,280,420]){await run(`probe.width(${width});probe.theme('${theme}');document.documentElement.style.setProperty('--cap-ui-font-base','16px')`);assert.equal(await run('(()=>{const e=document.querySelector(".preview-sidebar-scroll");return e.scrollWidth>e.clientWidth+1})()'),false,'cards fit each supported width at maximum font size');
  assert.ok(await run('document.querySelector(".cap-catalog-file-visual").getBoundingClientRect().height')<=280,'thumbnail height is bounded at wide sizes');}}
+ await run(`(${keywordSection}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor input")');await win.webContents.insertText('late-save');
+ await run('probe.pauseSave=true;document.querySelectorAll(".keyword-tag-editor-actions button")[1].click()');await ready('typeof probe.finishSave==="function"');
+ await run('probe.select("D")');await ready('probe.keywordReads.some(r=>r.authorizationId==="D")');await run('probe.finishSave()');await wait(30);
+ assert.equal(await run('document.querySelector(".preview-sidebar-file-heading strong").innerText'),'D.png');assert.equal(await run('document.body.innerText.includes("late-save")'),false,'late save responses cannot overwrite a new file');
+ assert.deepEqual(await run('probe.tags.B'),['late-save'],'a requested save still persists for its original file');
+ await run('probe.pauseSave=false;probe.select("B")');await ready('document.querySelector(".preview-sidebar-keywords")');assert.ok(await run('document.querySelector(".preview-sidebar-keywords").innerText.includes("late-save")'),'reopening reads persisted keywords');
  const detailReadCount=await run('probe.reads.length');
  await run("probe.select('C');probe.foreground(false)");await wait(220);assert.equal(await run('probe.reads.length'),detailReadCount,'background sidebar does not start detail reads');
  await run("probe.foreground(true)");await ready('probe.reads.length==='+String(detailReadCount+1));await run('probe.select(null)');assert.ok(await run('probe.cancels.length')>=3,'clearing selection retires its read');
  await run('probe.preview()');await ready('document.querySelector(".preview-sidebar-actions")');assert.equal(await run('document.querySelectorAll(".preview-sidebar-actions button").length'),3,'standalone preview retains its file actions');
  assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'文件信息','standalone preview retains its original heading');
  assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),true,'standalone preview preserves its existing evidence card');
- console.log('Catalog information: shared cards, metadata/dimensions, stale responses, cancellation, narrow themes and preview compatibility passed.');
+ console.log('Catalog information: shared cards, metadata, keyword editing/clear/cancel/save failures, authorization refresh, stale reads/saves, persistence, narrow themes and preview compatibility passed.');
 }catch(e){console.error(e.stack);process.exitCode=1}finally{win?.destroy();fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});

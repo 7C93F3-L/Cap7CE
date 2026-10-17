@@ -91,6 +91,7 @@ await CatalogChangeSignalTests.RunAsync();
 await FileFactOwnedPolicyTests.RunAsync();
 await FileFactQueryTests.RunAsync();
 await UnclassifiedSearchTests.RunAsync();
+await CatalogKeywordTests.RunAsync();
 await CatalogQueryCancellationTests.RunAsync();
 await CatalogWalConcurrencyTests.RunAsync();
 await CatalogDirectoryPathChangesTests.RunAsync();

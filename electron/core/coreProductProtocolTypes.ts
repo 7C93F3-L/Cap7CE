@@ -47,6 +47,7 @@ export interface CoreSearchItem {
   fileReference: string | null;
   sizeBytes: number | null;
   createdUtcTicks: number | null;
+  createdFileTimeMilliseconds?: string | null;
   modifiedUtcTicks: number | null;
   attributes: number | null;
 }

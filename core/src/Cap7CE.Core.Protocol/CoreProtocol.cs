@@ -37,6 +37,10 @@ public static class CoreOperations
     public const string SearchLive = "search.live";
     public const string SearchRandom = "search.random";
     public const string SearchExcludeExtensions = "search.excludeExtensions";
+    public const string KeywordsRead = "keywords.read";
+    public const string KeywordsWrite = "keywords.write";
+    public const string KeywordsImport = "keywords.import";
+    public const string SearchManualKeywords = "search.manualKeywords";
     public const string SearchNextPage = "search.nextPage";
     public const string SearchCancel = "search.cancel";
     public const string CoreShutdown = "core.shutdown";
@@ -74,7 +78,8 @@ public static class CoreOperations
         SearchNextPage,
         SearchCancel,
         CoreShutdown,
-        SearchLive, SearchRandom, SearchExcludeExtensions
+        SearchLive, SearchRandom, SearchExcludeExtensions,
+        KeywordsRead, KeywordsWrite, KeywordsImport, SearchManualKeywords
     ];
 }
 

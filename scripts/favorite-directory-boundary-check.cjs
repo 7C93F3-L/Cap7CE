@@ -67,6 +67,11 @@ const files = new Map([
   ["src/renderer/catalog-workspace/CatalogFileInformation.tsx", 25],
   ["src/renderer/catalog-workspace/CatalogFileInformation.css", 15],
   ["src/renderer/catalog-workspace/useCatalogFileInformation.ts", 40],
+  ["src/renderer/catalog-workspace/useCatalogKeywords.ts", 65],
+  ["src/shared/catalogKeywordTypes.d.ts", 10],
+  ["electron/catalogKeywordsIpc.ts", 35],
+  ["electron/catalogKeywordsRuntime.ts", 80],
+  ["electron/catalogLegacyKeywords.ts", 30],
   ["src/shared/fileInformationTypes.d.ts", 20],
   ["electron/catalogFileDetailsIpc.ts", 40],
   ["electron/catalogFileDetailsReader.ts", 65],
@@ -124,5 +129,6 @@ for (const anchor of ["maximumFavoriteBytes + 1", 'new TextDecoder("utf-8", { fa
 if (/fs\.(?:rm|rmdir|copyFile|cp|stat|lstat|readdir|readFile)\(/.test(store)) failures.push("Favorite persistence must not enumerate, copy or delete source folders, or perform unbounded reads.");
 const rules = fs.readFileSync(path.join(root, "electron/favoriteDirectories/favoriteDirectoryRules.ts"), "utf8");
 if (!rules.includes("maximumFavorites = 256") || !rules.includes("maximumFavoriteBytes = 1024 * 1024")) failures.push("Favorite state must retain explicit entry/byte limits.");
+require("./catalog-keywords-boundary-check.cjs")(root, failures);
 if (failures.length) { console.error(failures.join("\n")); process.exitCode = 1; }
 else console.log("Favorite configuration/source boundary passed.");

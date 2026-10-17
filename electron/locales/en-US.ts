@@ -514,6 +514,7 @@ export const enUS = defineLocale({
   "preview.sidebar.dimensions": "Dimensions",
   "preview.sidebar.location": "Location",
   "preview.sidebar.manualKeywords": "Manual keywords",
+  "preview.sidebar.keywordConflict": "Keywords changed elsewhere. Cancel and reopen the editor.",
   "preview.sidebar.noKeywords": "No manual keywords",
   "preview.sidebar.keywordInputLabel": "Add a manual keyword",
   "preview.sidebar.keywordInputPlaceholder": "Enter a keyword, then press Enter",

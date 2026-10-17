@@ -514,6 +514,7 @@ export const zhCN = {
   "preview.sidebar.dimensions": "尺寸",
   "preview.sidebar.location": "位置",
   "preview.sidebar.manualKeywords": "手动关键词",
+  "preview.sidebar.keywordConflict": "关键词已在其他位置修改，请取消后重新编辑。",
   "preview.sidebar.noKeywords": "尚未添加手动关键词",
   "preview.sidebar.keywordInputLabel": "添加手动关键词",
   "preview.sidebar.keywordInputPlaceholder": "输入关键词后按 Enter",

@@ -9,6 +9,7 @@ import type { ComputerSearchRuntime } from "./computerSearchRuntime";
 import { registerIpcDomain, type IpcRegistrar } from "./ipcRegistration";
 import { registerMetadataBuildIpc } from "./metadataExtraction/metadataBuildIpc";
 import { registerCatalogFileDetailsIpc } from "./catalogFileDetailsIpc";
+import { registerCatalogKeywordsIpc } from "./catalogKeywordsIpc";
 import { readComputerSearchFacts } from "./computerSearchFactConditions";
 import { readComputerSearchFileConditions } from "./computerSearchFileConditions";
 import { registerComputerSearchChangeIpc } from "./computerSearchChangeIpc";
@@ -114,6 +115,7 @@ export const registerComputerSearchIpc = ({
 }: RegisterComputerSearchIpcOptions): void => {
   registerComputerSearchChangeIpc(registrar, isSenderAllowed, runtime);
   registerCatalogFileDetailsIpc({ registrar, isSenderAllowed, inspectItem, resolveItem: value => requireAuthorizedItem(runtime, value) });
+  registerCatalogKeywordsIpc({ registrar, isSenderAllowed, keywords: runtime.keywords, resolveItem: value => requireAuthorizedItem(runtime, value) });
   registerComputerSearchThumbnailIpc({ registrar, isSenderAllowed, runtime });
   registerComputerSearchTrashIpc({ registrar, isSenderAllowed, resolveItems: value => requireAuthorizedItems(runtime, value) });
   if (runtime.favoriteDirectories) registerFavoriteDirectoryIpc(registrar, isSenderAllowed, runtime.favoriteDirectories);

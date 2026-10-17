@@ -14,6 +14,7 @@ interface PreviewInformationSidebarProps {
   onOpen?: () => void;
   onShowInFolder?: () => void; onCopyPath?: () => void; copyPathCopied?: boolean;
   keywordEditorOpen?: boolean; keywordSavePending?: boolean; keywordSaveError?: string;
+  keywordsAvailable?: boolean; keywordsReadState?: "loading" | "unavailable"; onRetryKeywords?: () => void;
   onEditKeywords?: () => void; onCancelKeywordEdit?: () => void;
   onSaveKeywords?: (keywords: string[]) => void; onDelete?: () => void;
 }
@@ -45,6 +46,7 @@ const PreviewInformationSidebar = ({
   onCopyPath,
   copyPathCopied,
   keywordEditorOpen = false,
+  keywordsAvailable, keywordsReadState, onRetryKeywords,
   keywordSavePending = false,
   keywordSaveError = "",
   onEditKeywords = noop,
@@ -82,7 +84,7 @@ const PreviewInformationSidebar = ({
           <h2>{t("preview.sidebar.location")}</h2>
           <button className="preview-sidebar-path" type="button" title={data.filePath} onClick={onShowInFolder}>{data.filePath}</button>
         </section>
-        <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
+        <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} available={keywordsAvailable} readState={keywordsReadState} onRetry={onRetryKeywords} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
         <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />
         {data.embeddedMetadata
           ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />

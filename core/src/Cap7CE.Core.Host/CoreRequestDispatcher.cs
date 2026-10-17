@@ -115,6 +115,8 @@ public sealed class CoreRequestDispatcher
             CoreOperations.CoreShutdown when runtime is not null => await ShutdownAsync(request),
             CoreOperations.SearchStart => await StartSearchAsync(request, token),
             CoreOperations.SearchNextPage => await NextPageAsync(request, token),
+            _ when runtime is not null && Keywords.CatalogKeywordRequestHandler.Supports(request.Operation) =>
+                await Keywords.CatalogKeywordRequestHandler.DispatchAsync(runtime, request, token),
             _ when runtime?.FileFacts is { } facts && FileFactRequestHandler.Supports(request.Operation) =>
                 await FileFactRequestHandler.DispatchAsync(facts, request, token),
             _ => Failure(request, CoreErrorCodes.UnknownOperation, "dispatch", false, "Operation is not supported.")

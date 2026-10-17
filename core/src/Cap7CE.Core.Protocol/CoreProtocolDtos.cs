@@ -58,7 +58,11 @@ public sealed record BasicSearchItem(
     long? SizeBytes = null,
     long? CreatedUtcTicks = null,
     long? ModifiedUtcTicks = null,
-    long? Attributes = null);
+    long? Attributes = null)
+{
+    public string? CreatedFileTimeMilliseconds => CreatedUtcTicks is { } ticks
+        ? (ticks / 10000).ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
+}
 
 public sealed record SearchPageResponse(
     IReadOnlyList<BasicSearchItem> Items,

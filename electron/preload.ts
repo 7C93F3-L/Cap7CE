@@ -232,6 +232,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
     inspect: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:inspect", request),
     readFileDetails: (request: import("../src/shared/fileInformationTypes").CatalogFileDetailsRequest) => ipcRenderer.invoke("computerSearch:readFileDetails", request),
     cancelFileDetails: (request: { requestId: string }) => ipcRenderer.invoke("computerSearch:cancelFileDetails", request),
+    readKeywords: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readKeywords", request),
+    saveKeywords: (request: import("../src/shared/catalogKeywordTypes").CatalogKeywordSaveRequest) => ipcRenderer.invoke("computerSearch:saveKeywords", request),
     readTextPreview: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readTextPreview", request),
     startDrag: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.send("computerSearch:startDrag", request)
   },

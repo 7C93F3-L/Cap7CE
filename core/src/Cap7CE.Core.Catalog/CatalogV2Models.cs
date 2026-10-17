@@ -95,7 +95,7 @@ public sealed record CatalogQueryCursorKey(
     string VolumeId,
     string FileReference, long? ModifiedUtcTicks = null, bool? IsDirectory = null, long? RandomScore = null);
 
-public enum CatalogQueryTextTarget { Name, Path, NameOrPath }
+public enum CatalogQueryTextTarget { Name, Path, NameOrPath, NamePathOrKeywords }
 public sealed record CatalogQueryRevision(long CatalogRevision, long? FactRevision = null);
 
 public sealed record CatalogV2Query(
