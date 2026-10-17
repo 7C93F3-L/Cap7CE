@@ -11,7 +11,7 @@
   --scrollbar-thumb: color-mix(in srgb, var(--stable-settings-text) 42%, transparent);
   --scrollbar-thumb-hover: color-mix(in srgb, var(--stable-settings-text) 62%, transparent);
   --dialog-text: var(--stable-settings-text);
-  --dialog-surface: rgb(246 246 246 / 80%);
+  --dialog-surface: rgb(246 246 246 / 95%);
   --dialog-control-surface: rgb(255 255 255 / 58%);
   --stable-settings-theme-color: #7c93f3;
   --stable-settings-focus: #68c3c0;
@@ -32,7 +32,7 @@
   --stable-settings-card: rgb(38 38 38 / 72%);
   --stable-settings-hover: rgb(255 255 255 / 10%);
   --stable-settings-border: rgb(255 255 255 / 8%);
-  --dialog-surface: rgb(32 32 32 / 80%);
+  --dialog-surface: rgb(32 32 32 / 95%);
   --dialog-control-surface: rgb(255 255 255 / 10%);
   color-scheme: dark;
 }

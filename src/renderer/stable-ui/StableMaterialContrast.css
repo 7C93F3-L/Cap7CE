@@ -75,7 +75,7 @@
 .cap-stable-titlebar:not(.theme-dark)[data-window-material="mica"] {
   --cap-stable-surface: var(--cap-mica-light-content-surface);
   --cap-stable-surface-soft: var(--cap-mica-light-control-surface);
-  --cap-stable-flyout-surface: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  --cap-stable-flyout-surface: color-mix(in srgb, var(--panel-bg) 95%, transparent);
   --cap-stable-hover: var(--cap-mica-light-hover-surface);
 }
 
@@ -87,7 +87,7 @@
 .cap-stable-titlebar.theme-dark[data-window-material="mica"] {
   --cap-stable-surface: rgb(24 24 24 / 96%);
   --cap-stable-surface-soft: rgb(40 40 40 / 92%);
-  --cap-stable-flyout-surface: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+  --cap-stable-flyout-surface: color-mix(in srgb, var(--panel-bg) 95%, transparent);
   --cap-stable-hover: rgb(255 255 255 / 12%);
   --cap-stable-navigation-state: rgb(0 0 0 / 42%);
   --cap-stable-search-surface: var(--cap-stable-surface);

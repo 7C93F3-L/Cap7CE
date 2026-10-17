@@ -114,7 +114,7 @@ for (const marker of ["compactHeightBreakpoint = 360", "stableTitlebarBottom = 4
 }
 assert.doesNotMatch(responsiveMenuSource, /title=\{action\.label\}/u);
 assert.match(responsiveMenuStyles, /\.responsive-file-context-menu\.is-compact[\s\S]*grid-template-columns: minmax\(0, 1\.28fr\) repeat\(2, minmax\(0, 1fr\)\)/);
-assert.match(sharedMenuStyleSource, /"--cap-stable-flyout-surface": "color-mix\(in srgb, var\(--panel-bg\) 80%, transparent\)"/u);
+assert.match(sharedMenuStyleSource, /"--cap-stable-flyout-surface": "color-mix\(in srgb, var\(--panel-bg\) 95%, transparent\)"/u);
 assert.match(sharedMenuStyleSource, /"--dialog-action-hover-text": getTextColorForBackground\(appearanceColors\.themeColor, appearanceColors\.accentColor\)/u);
 assert.match(sharedMenuStyleSource, /windowMaterial: WindowMaterial[\s\S]*?"--context-menu-control-hover":[^\n]*windowMaterial === "acrylic" \? "rgb\(31 31 31 \/ 15%\)"[\s\S]*?"--context-menu-control-pressed":[^\n]*windowMaterial === "acrylic" \? "rgb\(31 31 31 \/ 20%\)"/u);
 assert.match(appSource, /getFileContextMenuStyle\(effectiveTheme, appearanceColors, windowMaterial\)/u);
