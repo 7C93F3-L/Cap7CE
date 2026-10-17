@@ -94,6 +94,13 @@ app.whenReady().then(async()=>{
   const widthBeforeLogo=await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')");
   await run("document.querySelector('.cap-catalog-brand').click()");
   assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),widthBeforeLogo,'logo is display only');
+  const storedSidebarBefore=await run("localStorage.getItem('cap7ce.catalog.sidebar-width.v1')");
+  for(const [width,visible] of [[356,true],[355,false],[300,false],[1100,true]]){
+    win.setContentSize(width,750);await ready(`window.innerWidth===${width}`);await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
+    assert.equal(await run("document.querySelector('.cap-catalog-brand').getClientRects().length>0"),visible,'legacy 95px sidebar breakpoint hides and restores the logo');
+    if(!visible)assert.ok(await run("document.querySelector('.cap-catalog-layout-tools').getBoundingClientRect().top-document.querySelector('.cap-catalog-sidebar').getBoundingClientRect().top<10"),'hidden branding releases its vertical space');
+    assert.equal(await run("localStorage.getItem('cap7ce.catalog.sidebar-width.v1')"),storedSidebarBefore,'logo visibility does not write the sidebar preference');
+  }
   for(let step=0;step<8;step++){await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}))");await wait(10)}
   await ready("document.querySelector('.cap-catalog-sidebar').classList.contains('is-collapsed')");
   assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),'40','sidebar can reach its original minimum');

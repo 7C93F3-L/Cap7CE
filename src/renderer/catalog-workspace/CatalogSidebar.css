@@ -1,3 +1,4 @@
+.cap-catalog-sidebar { container: catalog-sidebar / inline-size; }
 .cap-catalog-brand { display: flex; align-items: center; flex: 0 0 52px; min-width: 0; padding: 8px; border: 0; background: none; color: var(--cap-stable-text); }
 .cap-catalog-brand-logo { display: block; width: 78px; max-width: 100%; height: 20px; background: currentColor; opacity: .72; -webkit-mask: url("../assets/icons/logo-cap7ce.svg") center / contain no-repeat; mask: url("../assets/icons/logo-cap7ce.svg") center / contain no-repeat; }
 .cap-catalog-layout-tools { display: flex; flex-wrap: wrap; flex: 0 0 auto; gap: 5px; padding: 5px; margin-bottom: 18px; }
@@ -29,3 +30,4 @@
 .cap-catalog-sidebar.is-collapsed .cap-favorite-directories p, .cap-catalog-sidebar.is-collapsed .cap-catalog-settings-label { display: none; }
 .cap-catalog-sidebar.is-collapsed .cap-favorite-open, .cap-catalog-sidebar.is-collapsed .cap-catalog-sidebar-bottom button { justify-content: center; padding: 8px 4px; }
 .cap-catalog-sidebar.is-collapsed .cap-favorite-directories > header { justify-content: center; padding-left: 0; }
+@container catalog-sidebar (max-width: 95px) { .cap-catalog-brand { display: none; } }
