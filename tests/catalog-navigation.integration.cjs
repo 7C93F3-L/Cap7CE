@@ -118,9 +118,15 @@ app.whenReady().then(async()=>{
   await run(`${detailsResizer}.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`);assert.equal(await detailsWidth(),'280','double click restores the default');
   await run(`${detailsResizer}.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}))`);assert.equal(await detailsWidth(),'296','keyboard resizing follows the same edge direction');
   assert.equal(await run(`${detailsResizer}.getAttribute('data-selection-preserve')`),'true');
-  win.setSize(940,750);await wait(80);
-  assert.equal(await run("getComputedStyle(document.querySelector('.cap-catalog-details-host')).position"),'absolute','narrow windows retain the overlay layout');
-  assert.equal(Math.round(await run("document.querySelector('.cap-catalog-details-host').getBoundingClientRect().width")),296,'overlay uses the chosen width');
+  const assertSeparateColumns=async()=>{
+    const layout=await run("(()=>{const main=document.querySelector('.cap-catalog-main').getBoundingClientRect(),panel=document.querySelector('.cap-catalog-details-host'),right=panel.getBoundingClientRect();return {hidden:panel.hidden,position:getComputedStyle(panel).position,mainRight:main.right,detailsLeft:right.left,detailsRight:right.right,detailsWidth:right.width,viewport:window.innerWidth}})()");
+    assert.equal(layout.hidden,false);assert.equal(layout.position,'relative','right sidebar stays in its own grid column');
+    assert.ok(layout.mainRight<=layout.detailsLeft,'right sidebar must not cover the content or breadcrumb toolbar');
+    assert.ok(layout.detailsRight<=layout.viewport,'sidebar fits inside the window');assert.equal(Math.round(layout.detailsWidth),296,'resize preserves the chosen width');
+  };
+  for(const width of [940,980,1000,1001,1100]){win.setContentSize(width,750);await ready(`window.innerWidth===${width}`);await run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');await assertSeparateColumns()}
+  win.setContentSize(880,750);await ready("document.querySelector('.cap-catalog-details-host').hidden");
+  win.setContentSize(960,750);await ready("!document.querySelector('.cap-catalog-details-host').hidden");await assertSeparateColumns();
   win.setSize(1100,750);await wait(80);
   await run(`${detailsResizer}.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`);
   assert.equal(await run("document.querySelector('.cap-catalog-details-host').textContent.includes('2026')"),true,'Catalog FILETIME dates use the NTFS epoch');

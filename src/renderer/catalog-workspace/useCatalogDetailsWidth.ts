@@ -7,7 +7,7 @@ export function useCatalogDetailsWidth(sidebarWidth: number, visible: boolean) {
   const change = useCallback((value: number) => { current.current = Math.round(value); setPreferred(current.current); }, []);
   const drag = useRef<{ x: number; width: number; pointerId: number } | null>(null);
   const clamp = useCallback((value: number) => Math.max(minWidth, Math.min(maxWidth, value,
-    viewportWidth - sidebarWidth - 32 - (viewportWidth > 1000 ? 300 : 0))), [sidebarWidth, viewportWidth]);
+    viewportWidth - sidebarWidth - 32 - 300)), [sidebarWidth, viewportWidth]);
   const width = clamp(preferred);
   useEffect(() => {
     const move = (event: globalThis.PointerEvent) => {
