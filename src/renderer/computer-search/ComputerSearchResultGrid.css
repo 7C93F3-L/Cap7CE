@@ -28,7 +28,9 @@
 .cap-catalog-file-grid .thumb:hover .thumbnail-image-frame > canvas,
 .cap-catalog-file-grid .thumb:focus-visible .thumbnail-image-frame > canvas,
 .cap-catalog-file-grid .thumb.selected .thumbnail-image-frame > canvas { transform: scale(1.035); }
-@media (prefers-reduced-motion: reduce) { .cap-catalog-file-grid .thumbnail-image-frame > canvas { transition: none; } }
+.cap-catalog-file-grid .thumb::before { content: ""; position: absolute; inset: 0; z-index: 4; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--cap-stable-text) 50%, transparent); border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 160ms ease-out; }
+.cap-catalog-file-grid .thumb:not(.selected):is(:hover, :focus-visible)::before { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .cap-catalog-file-grid .thumbnail-image-frame > canvas, .cap-catalog-file-grid .thumb::before { transition: none; } }
 @media (max-height: 359.98px) {
   .cap-catalog-file-grid { display: flex; height: 100%; align-items: center; }
   .cap-catalog-file-grid > .thumb { width: 138px; height: 138px; flex: 0 0 138px; }
