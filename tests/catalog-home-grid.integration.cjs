@@ -11,8 +11,8 @@ import CatalogGridScrollbars from './src/renderer/catalog-workspace/CatalogGridS
 import './src/renderer/results/ResultGrid.css';import './src/renderer/computer-search/ComputerSearchResultGrid.css';
 import './src/renderer/computer-search/ComputerSearch.css';
 import './src/renderer/catalog-workspace/CatalogWorkspace.css';
-window.probe={opens:[],thumbnailRequests:0,driveNames:['X:','Y:','Z:','W:'],failRead:false};
-window.cap7ce={skim:{listLocations:async()=>Array.from({length:24},(_,index)=>({id:'system'+index,kind:'desktop',name:'Location '+index,path:'X:\\\\Location'+index})),read:async r=>{if(window.probe.failRead)throw Error('simulated system enumeration failure');return {taskId:r.taskId,cancelled:false,entries:window.probe.driveNames.map(name=>({kind:'drive',path:name+'\\\\'}))}},cancel:async()=>true}};
+window.probe={opens:[],thumbnailRequests:0,locationCount:24,driveNames:['X:','Y:','Z:','W:'],failRead:false};
+window.cap7ce={skim:{listLocations:async()=>Array.from({length:window.probe.locationCount},(_,index)=>({id:'system'+index,kind:'desktop',name:'Location '+index,path:'X:\\\\Location'+index})),read:async r=>{if(window.probe.failRead)throw Error('simulated system enumeration failure');return {taskId:r.taskId,cancelled:false,entries:window.probe.driveNames.map(name=>({kind:'drive',path:name+'\\\\'}))}},cancel:async()=>true}};
 const items=Array.from({length:24},(_,index)=>({id:'file'+index,authorizationId:'file-auth'+index,name:'sample.txt',path:'X:\\\\sample.txt',isDirectory:false,extension:'.txt',iconName:'format-txt'}));
 window.cap7ce.metadataBuild={startDirectory:async request=>{window.probe.metadataRequest=request;return {progress:{phase:'preparing'},directoryTask:{path:request.path,pending:1}}}};
 function Fixture(){const [mode,setMode]=useState('square'),[version,setVersion]=useState(0),fileRoot=useRef(null);window.probe.refresh=()=>setVersion(v=>v+1);return <>
@@ -58,8 +58,10 @@ app.whenReady().then(async()=>{
   assert.equal(await run('probe.opens.length'),1,'scrollbar dragging preserves selection without opening an entry');
   await run("document.querySelector('#home .cap-catalog-home').scrollTop=100000");
   await ready("document.querySelectorAll('#home .cap-skim-root-group:last-child .thumb').length===4");
-  await run("document.querySelector('#home .cap-skim-root-group-header').click()");
-  await ready("document.querySelectorAll('#home .cap-skim-root-group:first-child .thumb').length===0&&document.querySelectorAll('#home .cap-skim-root-group:last-child .thumb').length===4");
+  assert.equal(await run("document.querySelectorAll('#home h3.cap-catalog-home-group-title').length"),2,'both groups retain semantic static headings');
+  assert.equal(await run("document.querySelectorAll('#home .cap-skim-root-group-header,#home .cap-skim-root-group-chevron').length"),0,'home no longer uses interactive collapse headers');
+  await run("document.querySelector('#home .cap-catalog-home-group-title').click();document.querySelector('#home .cap-catalog-home').scrollTop=0");
+  await ready("document.querySelector('#home .cap-skim-root-group:first-child .thumb')");
   await run("document.querySelector('#toggle').click()");
   await ready("document.querySelector('#home .is-gallery .thumb')?.getBoundingClientRect().height>200&&document.querySelector('#files .is-gallery .thumb')?.getBoundingClientRect().height>200");
   await wait(40);
@@ -69,7 +71,6 @@ app.whenReady().then(async()=>{
   win.setSize(950,330);
   await ready("getComputedStyle(document.querySelector('#home .cap-catalog-home')).overflowY==='hidden'&&document.querySelector('#home .thumb')?.getBoundingClientRect().height===138&&document.querySelector('#files .thumb')?.getBoundingClientRect().height===138");
   assert.deepEqual(await geometry('#home .thumb'),await geometry('#files .thumb'),'compact horizontal geometry matches');
-  await run("document.querySelector('#home .cap-skim-root-group-header').click()");
   await ready("document.querySelector('#home .cap-skim-root-group:first-child .cap-catalog-file-grid')?.dataset.totalCount==='24'");
   win.setContentSize(950,127);
   for(let mode=0;mode<2;mode++){
@@ -95,17 +96,16 @@ app.whenReady().then(async()=>{
     await ready(`document.querySelector(${JSON.stringify(selector)}).scrollLeft>0`);
     await run(`document.querySelector(${JSON.stringify(selector)}).scrollLeft=0`);
   }
-  await run("document.querySelector('#home .cap-skim-root-group-header').click()");
+  await run("probe.locationCount=0;probe.refresh()");
   await ready("document.querySelector('#home .cap-catalog-home').scrollWidth<=document.querySelector('#home .cap-catalog-home').clientWidth");
   assert.deepEqual(await wheel(roots[0],{deltaY:100}),{left:0,prevented:false},'a short row without horizontal overflow does not capture the wheel');
   win.setSize(950,330);
-  await run("probe.failRead=true;probe.refresh()");await ready("document.querySelector('#home .cap-catalog-home > button')");
+  await run("probe.locationCount=24;probe.failRead=true;probe.refresh()");await ready("document.querySelector('#home .cap-catalog-home > button')");
   assert.equal(await run("document.querySelector('#home .cap-skim-root-group:last-child .cap-catalog-file-grid').dataset.totalCount"),'4','failed refresh preserves known system drives');
   await run("probe.failRead=false;probe.driveNames=['X:'];document.querySelector('#home .cap-catalog-home > button').click()");
   await ready("!document.querySelector('#home .cap-catalog-home > button')&&document.querySelector('#home .cap-skim-root-group:last-child .cap-catalog-file-grid').dataset.totalCount==='1'");
   win.setSize(950,750);await run("document.querySelector('#home .cap-catalog-home').scrollTop=0");
   await ready("innerHeight>359&&document.querySelector('#home .thumb')?.getBoundingClientRect().height>200&&document.querySelector('#files .thumb')?.getBoundingClientRect().height>200");
-  await run("document.querySelector('#home .cap-skim-root-group-header').click()");
   await ready("document.querySelector('#home .cap-skim-root-group:first-child .cap-skim-root-entry')");
   await run("document.querySelector('#home .cap-skim-root-group:first-child .cap-skim-root-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:120,clientY:80}))");
   await ready("document.querySelector('[role=menuitem]')");

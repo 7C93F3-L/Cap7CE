@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+CatalogHomeGroup始终挂载系统位置和磁盘的共享CatalogVirtualGrid，标题使用静态h3及CatalogHome.css独立样式，保留分组布局并收紧行高；现有max-height:359.98px横向布局通过display:none隐藏标题并释放标题行及行间距，恢复高度后自然显示，不增加状态或卸载网格。CatalogHome移除两组折叠状态与切换回调，不再复用旧Skim可交互标题的按钮、箭头及悬停样式。目录选择、导航、右键和低高度滚动仍沿原链路，不修改旧Skim组件。
+
 useCatalogViewport只监听resize，维护900/960px和520/560px的收起/恢复区间；useCatalogPanelVisibility将高度限制同时用于顶部与右栏，右栏还需满足独立宽度条件；分离手动开关、空间限制和主动展开，在原window.setShellState(normal, forceBounds)链上复用默认尺寸恢复。共享MainWindowStateOptions新增可选preservePosition；Main仍调用activateShellModeShortcut，默认快捷键保持居中，面板请求仅校正越界位置。恢复串行合并，成功后等待两次绘制帧使resize与布局生效再展开，避免恢复后的尺寸事件清除主动展开例外；失败保留收起状态并显示共用底部窄条；工作区卸载丢弃迟到响应。小屏默认尺寸仍不足时允许主动打开的面板显示，再次缩小对应方向时取消例外，右栏在宽度或高度缩小时均取消例外。自动选择使用showDetails，不触发窗口恢复；明确编辑关键词使用revealDetails。
 
 CatalogSidebar的Logo使用带图像语义的静态元素，不接收点击/键盘操作；侧栏自身作为命名inline-size容器，复用旧版max-width:95px条件隐藏整个Logo区块并释放高度，拉宽自然恢复，不增加状态或配置；useCatalogSidebarWidth移除toggleWidth，边缘调整仍复用同一偏好保存链。最小宽度统一为40px并传入分隔条无障碍属性，图标模式将布局按钮收为32px、横向留白收为4px，不改变目录导航、面板开关或设置动作。
@@ -122,7 +124,7 @@ Catalog当前产品布局由领域组件组合：CatalogSidebar提供可拖宽�
 
 CatalogResultTile只持有当前缩略图的比例展示，ComputerSearchView继续使用唯一文件动作Hook，选择通过共享CatalogSelection回报页面。两套网格均显示名称：此电脑默认方形contain缩略图，收藏默认等高原比例卡片；选中不改变卡片尺寸。首次可见解码得到比例后更新卡宽，极端比例限制卡宽而保持图像完整；每次离屏仍释放像素。viewportThumbnailImage保留原比例缩放，长边最多512px、内存仍不超过512平方像素，不增加源读取或缓存；新租约/失焦/迟到响应保护不变。MetadataBuildSlot的floating展示默认隐藏空闲任务，仅用户打开控制或存在任务/错误时浮在底部，完成提示3秒消失；原授权、范围、暂停与恢复动作不变。App/Main/global styles未增加页面职责，新增组件由领域边界守门。
 
-Catalog 首页由 `CatalogHomeGroup` 保留系统位置与盘符分组；组内和目录结果共用 `CatalogVirtualGrid`、`catalogGridLayout`、`CatalogTile` 与 `CatalogIconVisual`，方形、原比例、紧凑横向、名称与选中样式保持同一实现。`CatalogResultTile` 仅组合原有授权缩略图与共享卡片；首页条目只提供本地图标与路径导航，不伪造文件查询授权。虚拟网格在父节点 ref 挂载后绑定滚动容器，以网格相对容器的位置计算可见范围，监听分组尺寸变化，避免下方分组或折叠后漏卡片。系统位置继续复用 Skim 图标与名称映射，文件夹继续使用原 `skim-folder.svg`；旧 Skim 浏览页的导航不变。
+Catalog 首页由 `CatalogHomeGroup` 保留系统位置与盘符分组；组内和目录结果共用 `CatalogVirtualGrid`、`catalogGridLayout`、`CatalogTile` 与 `CatalogIconVisual`，方形、原比例、紧凑横向、名称与选中样式保持同一实现。`CatalogResultTile` 仅组合原有授权缩略图与共享卡片；首页条目只提供本地图标与路径导航，不伪造文件查询授权。虚拟网格在父节点 ref 挂载后绑定滚动容器，以网格相对容器的位置计算可见范围，监听分组尺寸变化，避免下方分组漏卡片。系统位置继续复用 Skim 图标与名称映射，文件夹继续使用原 `skim-folder.svg`；旧 Skim 浏览页的导航不变。
 
 统一页面的默认目录动作直接调用`useCatalogDirectoryNavigation.open`，后退、前进、上一级和首页均在原上下文导航；收藏快捷入口和既有原生浏览动作在当前页替换范围，左栏只反映工具面板展开状态。
 

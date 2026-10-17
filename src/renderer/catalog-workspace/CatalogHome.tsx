@@ -24,7 +24,6 @@ export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foregrou
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
   const systemDrives = useCatalogDrives(refreshVersion, retry);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [systemCollapsed, setSystemCollapsed] = useState(false), [drivesCollapsed, setDrivesCollapsed] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
   const clearSelection = useCallback(() => setSelectedPath(null), []);
   const dismissSelection = useGridSelectionDismissal({ rootRef, foreground, hasSelection: selectedPath !== null, menuOpen: !!metadata.target, onClear: clearSelection });
@@ -50,11 +49,9 @@ export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foregrou
     {(failed || systemDrives.failed) && <button type="button" onClick={() => setRetry(value => value + 1)}>{t("common.retry")}</button>}
     <div className="cap-skim-root-sections">
       <CatalogHomeGroup {...group} title={t("skim.root.systemLocations")} items={system}
-        onContextMenu={(event, item) => { setSelectedPath(item.path); metadata.open(event, item.path); }}
-        collapsed={systemCollapsed} onToggle={() => setSystemCollapsed(value => !value)} />
+        onContextMenu={(event, item) => { setSelectedPath(item.path); metadata.open(event, item.path); }} />
       <CatalogHomeGroup {...group} title={t("skim.root.thisPc")} items={drives}
-        onContextMenu={(event, item) => { setSelectedPath(item.path); metadata.open(event, item.path); }}
-        collapsed={drivesCollapsed} onToggle={() => setDrivesCollapsed(value => !value)} />
+        onContextMenu={(event, item) => { setSelectedPath(item.path); metadata.open(event, item.path); }} />
     </div>
     {metadata.target && menuEntry && <CatalogHomeContextMenu target={metadata.target} entry={menuEntry} favorites={favorites}
       appearance={{ theme: "dark", appearanceColors: { themeColor: "#7894f8", accentColor: "#67bec1" }, windowMaterial: "mica", ...appearance }} onClose={metadata.close} onOpen={onOpen} onMetadata={path => { void metadata.start(path); }} metadataBusy={metadata.busy} />}

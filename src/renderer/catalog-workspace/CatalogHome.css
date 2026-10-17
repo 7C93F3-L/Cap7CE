@@ -1,5 +1,7 @@
 .cap-catalog-home { position: absolute; inset: 0; padding: 10px; overflow: auto; box-sizing: border-box; }
+.cap-catalog-home-group-title { margin: 0; padding: 0 4px; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-section-font-size); font-weight: 400; line-height: 18px; }
 @media (max-height: 359.98px) {
+  .cap-catalog-home-group-title { display: none; }
   .cap-catalog-home { overflow-x: auto; overflow-y: hidden; display: flex; align-items: center; }
   .cap-catalog-home .cap-skim-root-sections { display: flex; width: max-content; align-items: flex-start; }
   .cap-catalog-home .cap-skim-root-group { flex: 0 0 auto; }
