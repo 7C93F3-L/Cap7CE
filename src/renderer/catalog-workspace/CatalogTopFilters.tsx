@@ -1,10 +1,11 @@
-import { useState, type ComponentProps } from "react";
+import { useRef, useState, type ComponentProps } from "react";
 import StableExploreFilters from "../stable-ui/StableExploreFilters";
 import type { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailability";
 import { t } from "../../../electron/localization";
 import "./CatalogTopFilters.css";
 import CatalogAttributeNotice from "./CatalogAttributeNotice";
 import { useHorizontalFilterScroll } from "./useHorizontalFilterScroll";
+import { StableFlyoutBoundaryContext } from "../stable-ui/StableSidebarFlyout";
 
 export default function CatalogTopFilters({ search, availableFormats, detailDomains, onChange, onClear, count, attributes, onMetadata }: {
   attributes: ReturnType<typeof useCatalogAttributeAvailability>;
@@ -15,7 +16,8 @@ export default function CatalogTopFilters({ search, availableFormats, detailDoma
 }) {
   const [close, setClose] = useState(0);
   const scrollRef = useHorizontalFilterScroll();
-  return <section className="cap-catalog-top-filters" aria-label={t("workspace.filters")}>
+  const boundaryRef = useRef<HTMLElement>(null);
+  return <StableFlyoutBoundaryContext.Provider value={boundaryRef}><section ref={boundaryRef} className="cap-catalog-top-filters" aria-label={t("workspace.filters")}>
     <div ref={scrollRef} className="cap-catalog-top-filter-scroll" tabIndex={0} onScroll={() => setClose(value => value + 1)}>
       <div className="cap-catalog-top-filter-content">
         <div className="cap-catalog-filter-actions"><span>{t("workspace.filterSummary", { count })}</span>
@@ -25,5 +27,5 @@ export default function CatalogTopFilters({ search, availableFormats, detailDoma
           closeFlyoutRequest={close} onFlyoutOpen={() => {}} onSearchOptionsChange={onChange} />
       </div>
     </div>
-  </section>;
+  </section></StableFlyoutBoundaryContext.Provider>;
 }

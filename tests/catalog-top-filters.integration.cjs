@@ -181,9 +181,33 @@ app.whenReady().then(async () => {
     await run('document.querySelector(".cap-stable-image-animation-filter button").click()');await ready('probe.search.imageAnimation==="animated"');
     await run('document.querySelector(".cap-stable-image-color-filter header button").click()');await ready('document.querySelector(".cap-stable-sidebar-flyout")');
     await run('document.querySelector(".cap-catalog-top-filter-scroll").scrollLeft=0');await ready('!document.querySelector(".cap-stable-sidebar-flyout")');
+    let positionedEditors=0;
+    for(const [width,height,font,language] of [[1100,700,13,'zh-CN'],[540,220,16,'en-US']]){
+      win.setContentSize(width,height);await frame();
+      await run(`probe.language('${language}');document.documentElement.style.setProperty('--cap-ui-font-base','${font}px');document.querySelector('.cap-stable-ui').style.removeProperty('--cap-ui-font-secondary')`);
+      for(const extension of ['.png','.mp4','.mp3','.pdf','.psd','.txt','.csv','.json','.glb','.zip','.ttf','.gguf']){
+        await run(`probe.setSearch({query:'keep',fileFormat:'all',timePreset:'all',selectedExtensions:[${JSON.stringify(extension)}]})`);
+        const selector='.cap-catalog-top-filters header button:has(> .cap-stable-filter-edit-glyph),.cap-catalog-top-filters .cap-stable-dimension-summary';
+        const count=await run(`document.querySelectorAll(${JSON.stringify(selector)}).length`);
+        for(let index=0;index<count;index++){
+          await run(`document.querySelectorAll(${JSON.stringify(selector)})[${index}].click()`);await ready('document.querySelector(".cap-stable-sidebar-flyout")');
+          const bounds=await run(`(()=>{const e=document.querySelector('.cap-stable-sidebar-flyout');e.getAnimations().forEach(a=>a.finish());const r=e.getBoundingClientRect(),bar=document.querySelector('.cap-catalog-top-filters').getBoundingClientRect();return {top:r.top,barBottom:bar.bottom,bottom:r.bottom,left:r.left,right:r.right,maxHeight:parseFloat(e.style.maxHeight)}})()`);
+          assert.equal(bounds.top,bounds.barBottom+6,'editor starts below the whole filter bar: '+extension+' '+index);
+          assert.ok(bounds.left>=5&&bounds.right<=width-5&&bounds.bottom<=height-5,'editor stays inside the viewport: '+JSON.stringify(bounds));
+          if(height===220)assert.ok(bounds.maxHeight<=height-bounds.top-5,'low windows shrink the popup instead of overlapping filters');
+          win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});await ready('!document.querySelector(".cap-stable-sidebar-flyout")');positionedEditors++;
+        }
+      }
+    }
+    assert.ok(positionedEditors>=60,'all applicable editor families use the common boundary');
+    win.setContentSize(1100,700);await frame();
+    await run(`document.documentElement.style.setProperty('--cap-ui-font-base','13px')`);
     await run('probe.legacy(true)'); await ready('!document.querySelector(".cap-catalog-top-filters")');
     assert.notEqual(await run('getComputedStyle(document.querySelector(".cap-stable-time-control")).display'), 'none', 'legacy vertical filters retain their slider');
     assert.equal(await run('getComputedStyle(document.querySelector(".cap-stable-file-size-row")).display'),'contents','legacy size options retain their existing grid');
+    const legacyAnchorBottom=await run('document.querySelector(".cap-stable-time-filter header button").getBoundingClientRect().bottom');
+    await run('document.querySelector(".cap-stable-time-filter header button").click()');await ready('document.querySelector(".cap-stable-sidebar-flyout")');
+    assert.equal(await run('parseFloat(document.querySelector(".cap-stable-sidebar-flyout").style.top)'),Math.max(45,Math.min(legacyAnchorBottom+5,700-220-5)),'other hosts retain their original below-trigger placement');
     console.log('Catalog top filters: all '+formats.length+' formats in both languages/font sizes, bounded height, no clipped controls, shared scrolling, custom dates and popup dismissal passed; longest '+Math.ceil(longest)+'px.');
   } catch (error) { console.error(error.stack); process.exitCode = 1; }
   finally { win?.destroy(); assert.equal(path.dirname(root), path.resolve(os.tmpdir())); fs.rmSync(root, { recursive: true, force: true }); app.exit(process.exitCode ?? 0); }
