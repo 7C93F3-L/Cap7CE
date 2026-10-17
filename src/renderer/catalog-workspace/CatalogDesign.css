@@ -1,6 +1,7 @@
 /* The catalog design owns only layout and presentation; existing query and file actions are shared. */
 .cap-catalog-design { display: grid; grid-template-columns: var(--cap-catalog-sidebar-width, 156px) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0 8px; padding: 0 8px 8px; box-sizing: border-box; }
 .cap-catalog-design.has-details { grid-template-columns: var(--cap-catalog-sidebar-width, 156px) minmax(0, 1fr) var(--cap-catalog-details-width, 280px); }
+@media (min-height: 360px) { .cap-catalog-design:has(> .cap-catalog-sidebar.is-collapsed) { padding-left: 0; } .cap-catalog-design > .cap-catalog-sidebar.is-collapsed { margin-inline: 4px -4px; } }
 .cap-catalog-design .cap-catalog-sidebar { grid-column: 1; grid-row: 1 / -1; position: relative; left: auto; top: auto; bottom: auto; width: auto; border: 0; box-shadow: none; background: transparent; overflow: visible; }
 .cap-catalog-resizer { position: absolute; right: -6px; top: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; z-index: 45; background: transparent; outline: none; }
 .cap-catalog-main { display: flex; flex-direction: column; min-height: 0; min-width: 0; grid-column: 2; grid-row: 2; }

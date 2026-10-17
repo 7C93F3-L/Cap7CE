@@ -17,17 +17,18 @@
 .cap-catalog-sidebar .cap-favorite-open > .cap-svg-icon, .cap-catalog-sidebar .cap-favorite-open > svg { display: block; flex: 0 0 24px; width: 24px; height: 24px; }
 .cap-catalog-sidebar .cap-favorite-directories > header button { display: grid; place-items: center; padding: 0; }
 .cap-catalog-sidebar .cap-favorite-directories > header svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
-.cap-catalog-sidebar .cap-favorite-rows { max-height: none; }
+.cap-catalog-sidebar .cap-favorite-rows { display: grid; align-content: start; gap: 4px; max-height: none; }
 .cap-catalog-sidebar-bottom { display: grid; flex: 0 0 auto; gap: 4px; padding: 5px; }
 .cap-catalog-sidebar-bottom button { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: var(--cap-stable-text); font: inherit; cursor: pointer; }
 .cap-catalog-sidebar-bottom .cap-catalog-settings-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cap-catalog-sidebar.is-collapsed .cap-catalog-brand { justify-content: center; }
-.cap-catalog-sidebar.is-collapsed .cap-catalog-layout-tools { justify-content: center; padding-inline: 4px; }
+.cap-catalog-sidebar.is-collapsed .cap-favorite-directories { padding-inline: 4px; gap: 4px; }
+.cap-catalog-sidebar.is-collapsed .cap-catalog-layout-tools { justify-content: center; gap: 4px; padding-inline: 4px; }
 .cap-catalog-sidebar.is-collapsed .cap-catalog-layout-tools button { flex-basis: 32px; width: 32px; height: 32px; }
 .cap-catalog-sidebar.is-collapsed .cap-catalog-sidebar-bottom { padding-inline: 4px; }
 .cap-catalog-sidebar.is-collapsed .cap-favorite-label, .cap-catalog-sidebar.is-collapsed .cap-favorite-directories > header strong,
 .cap-catalog-sidebar.is-collapsed .cap-favorite-directories > header button:nth-of-type(2), .cap-catalog-sidebar.is-collapsed .cap-favorite-actions,
 .cap-catalog-sidebar.is-collapsed .cap-favorite-directories p, .cap-catalog-sidebar.is-collapsed .cap-catalog-settings-label { display: none; }
-.cap-catalog-sidebar.is-collapsed .cap-favorite-open, .cap-catalog-sidebar.is-collapsed .cap-catalog-sidebar-bottom button { justify-content: center; padding: 8px 4px; }
+.cap-catalog-sidebar.is-collapsed .cap-favorite-open, .cap-catalog-sidebar.is-collapsed .cap-catalog-sidebar-bottom button { justify-content: center; flex-shrink: 0; width: 32px; height: 32px; min-height: 32px; margin-inline: auto; padding: 4px; border-radius: 9px; }
 .cap-catalog-sidebar.is-collapsed .cap-favorite-directories > header { justify-content: center; padding-left: 0; }
+.cap-catalog-sidebar.is-collapsed .cap-favorite-directories > header button { width: 32px; height: 32px; }
 @container catalog-sidebar (max-width: 95px) { .cap-catalog-brand { display: none; } }
