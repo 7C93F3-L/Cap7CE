@@ -126,6 +126,7 @@ export const zhCN = {
   "explore.time.older": "更早",
   "explore.time.all": "全部",
   "explore.time.custom": "自定义日期",
+  "explore.time.customShort": "自定义",
   "explore.time.range": "{start} ～ {end}",
   "explore.fileTypes": "文件种类",
   "explore.fileTypes.all": "全部格式",

@@ -126,6 +126,7 @@ export const enUS = defineLocale({
   "explore.time.older": "Earlier",
   "explore.time.all": "All",
   "explore.time.custom": "Custom Dates",
+  "explore.time.customShort": "Custom",
   "explore.time.range": "{start} – {end}",
   "explore.fileTypes": "File Types",
   "explore.fileTypes.all": "All Formats",

@@ -1,0 +1,19 @@
+.cap-catalog-top-filters .cap-catalog-top-filter-scroll { flex: 1; width: 100%; }
+.cap-catalog-top-filter-content { display: flex; align-items: flex-start; gap: 8px; width: max-content; min-height: 80px; }
+.cap-catalog-top-filter-content .cap-catalog-filter-actions { flex: 0 0 108px; height: 80px; justify-content: flex-start; gap: 0; }
+.cap-catalog-top-filter-content .cap-catalog-filter-actions > span { display: flex; align-items: center; height: 24px; }
+.cap-catalog-top-filter-content .cap-catalog-filter-actions > button { height: 28px; margin-top: 14px; padding: 0 10px; cursor: pointer; }
+.cap-catalog-top-filter-content .cap-catalog-filter-actions > button:disabled { opacity: .5; cursor: default; }
+.cap-catalog-top-filter-content .cap-catalog-filter-actions > button:where(:hover, :focus-visible):not(:disabled) { color: var(--cap-stable-text); }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters > section:is(.cap-stable-time-filter, .cap-stable-file-type-filter, .cap-stable-file-size-filter) { box-sizing: border-box; height: 80px; max-height: none; overflow: visible; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters > .cap-stable-time-filter { width: max-content; min-width: 176px; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-control { display: none; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels { grid-template-columns: repeat(3, minmax(max-content, 1fr)); gap: 4px; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels button { display: flex; justify-content: center; align-items: center; min-height: 26px; padding: 2px 4px; white-space: nowrap; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels button > i { display: none; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters > .cap-stable-file-type-filter { width: max-content; min-width: 220px; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-file-type-options > button { width: auto; min-width: 36px; min-height: 56px; grid-template-rows: 32px 20px; padding: 0 2px; white-space: nowrap; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters > .cap-stable-file-size-filter { width: 218px; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-file-size-options { gap: 4px; }
