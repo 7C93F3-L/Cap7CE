@@ -30,7 +30,7 @@ app.whenReady().then(async()=>{let win;try{
  await run('document.querySelector(".cap-catalog-layout-tools button:last-child").click()');
  await choose(['A.png','B.png']);await ready('!document.querySelector(".cap-catalog-details-host").hidden');await ready('document.querySelector(".cap-catalog-details .cap-catalog-keyword-actions")');await ready('document.querySelector(".preview-sidebar-keywords")?.innerText==="共同"');
  await run('document.querySelector(".cap-catalog-layout-tools button:last-child").click()');assert.equal(await run('document.querySelector(".cap-catalog-details-host").hidden'),true);
- await context('A.png');await menu('编辑关键词');await ready('!document.querySelector(".cap-catalog-details-host").hidden&&document.querySelector(".keyword-tag-editor")');
+ await context('A.png');assert.ok(await run('(()=>{const labels=[...document.querySelectorAll("[role=menuitem]")].map(e=>e.innerText);return labels.indexOf("删除")<labels.indexOf("编辑关键词")&&labels.at(-1)==="自动添加关键词"})()'));await menu('编辑关键词');await ready('!document.querySelector(".cap-catalog-details-host").hidden&&document.querySelector(".keyword-tag-editor")');
  assert.equal(await run('document.querySelectorAll(".cap-computer-search-entry[aria-pressed=true]").length'),2,'right-click preserves selected files');assert.equal(await run('!!document.querySelector(".keyword-editor-card")'),false,'no center modal');
  await run('document.querySelector(".keyword-tag-editor-tag button").click()');await input('新增');await run('probe.conflict=true');await save();
  await ready('!document.querySelector(".keyword-tag-editor")&&probe.tags.A.includes("新增")');

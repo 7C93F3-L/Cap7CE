@@ -1,7 +1,7 @@
 import type { ComputerSearchAuthorizationBatch } from "../../electron/computerSearchTypes";
 import type { CatalogAutoKeywordPhase } from "./catalogAutoKeywordTypes";
 
-export type CatalogKeywordBatchSource = ComputerSearchAuthorizationBatch | { favoriteId: string } | { locationId: string };
+export type CatalogKeywordBatchSource = ComputerSearchAuthorizationBatch | { favoriteId: string } | { locationId: string } | { driveLetter: string };
 export type CatalogKeywordBatchRequest = CatalogKeywordBatchSource & { requestId: string };
 export interface CatalogKeywordBatchCounts { total: number; processed: number; succeeded: number; failed: number; skipped: number; }
 export interface CatalogKeywordBatchProgress extends CatalogKeywordBatchCounts {

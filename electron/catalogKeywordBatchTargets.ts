@@ -18,7 +18,10 @@ export async function collectKeywordBatchTargets(runtime: ComputerSearchRuntime,
     if (targets.size % 100 === 0) discovered(targets.size);
   };
   let roots: string[], selected: ComputerSearchItem[] = [];
-  if ("locationId" in source) {
+  if ("driveLetter" in source) {
+    if (typeof source.driveLetter !== "string" || !/^[A-Z]$/.test(source.driveLetter)) throw Error("invalid-drive-letter");
+    roots = [`${source.driveLetter}:\\`];
+  } else if ("locationId" in source) {
     const locations = ["desktop", "downloads", "documents", "pictures", "music", "videos"] as const;
     const location = locations.find(value => value === source.locationId);
     if (!location) throw Error("invalid-system-location");

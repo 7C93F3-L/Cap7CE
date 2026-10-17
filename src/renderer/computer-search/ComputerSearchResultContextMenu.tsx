@@ -40,19 +40,20 @@ const ComputerSearchResultContextMenu = ({
     detail=""
     actionGroups={[
       [
-        action("preview", t("skim.preview"), fileContextShortcutLabels.primaryView),
         action("open", t("skim.openItem"), fileContextShortcutLabels.open),
-        action("showInFolder", t("skim.openPath"), fileContextShortcutLabels.showInFolder)
-      ],
-      [...(keywordsAvailable ? [
-        { ...action("editKeywords", "编辑关键词", ""), disabled: keywordsBusy || !state.items.some(item => !item.isDirectory) },
-        { ...action("autoKeywords", "自动添加关键词", ""), disabled: keywordsBusy }
-      ] : []), action("copyPaths", state.items.length > 1
+        action("preview", t("skim.preview"), fileContextShortcutLabels.primaryView),
+        action("showInFolder", t("skim.openPath"), fileContextShortcutLabels.showInFolder),
+        action("copyPaths", state.items.length > 1
         ? t("context.copySelectedPaths", { count: state.items.length })
         : t("context.copyPath"), fileContextShortcutLabels.copyPaths),
-        ...(favoriteAction ? [{ ...action("addToSidebar", t(favoriteAction === "add" ? "catalogActions.addFavorite" : "catalogActions.removeFavorite"), ""), disabled: favoriteBusy }] : []),
+        action("delete", t("common.delete"), fileContextShortcutLabels.delete),
+        ...(favoriteAction ? [{ ...action("addToSidebar", t(favoriteAction === "add" ? "catalogActions.addFavorite" : "catalogActions.removeFavorite"), ""), disabled: favoriteBusy }] : [])
+      ],
+      [
+        ...(keywordsAvailable ? [{ ...action("editKeywords", "编辑关键词", ""), disabled: keywordsBusy || !state.items.some(item => !item.isDirectory) }] : []),
         ...(state.item.isDirectory && state.items.length === 1 ? [action("metadata", t("metadataDirectory.action"), "")] : []),
-        action("delete", t("common.delete"), fileContextShortcutLabels.delete)]
+        ...(keywordsAvailable ? [{ ...action("autoKeywords", "自动添加关键词", ""), disabled: keywordsBusy }] : [])
+      ]
     ]}
     onClose={onClose}
   />;

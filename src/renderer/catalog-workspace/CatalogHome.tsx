@@ -9,17 +9,17 @@ import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal"
 import { useCatalogDrives } from "./useCatalogDrives";
 import "./CatalogHome.css";
 import type { CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTypes";
-import DirectoryMetadataContextMenu from "../metadata-build/DirectoryMetadataContextMenu";
+import CatalogHomeContextMenu from "./CatalogHomeContextMenu";
 import { useDirectoryMetadataMenu } from "../metadata-build/useDirectoryMetadataMenu";
 import CatalogTransientFeedback from "./CatalogTransientFeedback";
 import CatalogGridScrollbars from "./CatalogGridScrollbars";
-import { useCatalogActivity } from "./CatalogActivity";
+import type { FavoriteDirectoryControls } from "../../shared/favoriteDirectoryTypes";
 
-export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foreground = true, refreshVersion = 0, ...appearance }: {
+export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foreground = true, refreshVersion = 0, favorites, ...appearance }: {
   onOpen: (path: string) => void; gridMode: CatalogGridMode; gridSize?: number; foreground?: boolean; refreshVersion?: number;
+  favorites?: FavoriteDirectoryControls;
 } & Partial<CatalogWorkspaceAppearance>) {
   const metadata = useDirectoryMetadataMenu(foreground);
-  const activity = useCatalogActivity();
   const [locations, setLocations] = useState<SkimLocationShortcut[]>([]);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
   const systemDrives = useCatalogDrives(refreshVersion, retry);
@@ -45,6 +45,7 @@ export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foregrou
   const system = useMemo<CatalogHomeEntry[]>(() => locations.filter(location => location.kind !== "computer" && location.path)
     .map(location => ({ id: location.id, path: location.path!, name: resolveLocationLabel(location), icon: locationIcons[location.kind] })), [locations]);
   const group = { rootRef, mode: gridMode, size: gridSize, selectedPath, onSelect: setSelectedPath, onOpen };
+  const menuEntry = [...system, ...drives].find(entry => entry.path === metadata.target?.path);
   return <><section ref={rootRef} className="cap-catalog-home" onClick={dismissSelection}>
     {(failed || systemDrives.failed) && <button type="button" onClick={() => setRetry(value => value + 1)}>{t("common.retry")}</button>}
     <div className="cap-skim-root-sections">
@@ -52,10 +53,11 @@ export default function CatalogHome({ onOpen, gridMode, gridSize = 100, foregrou
         onContextMenu={(event, item) => { setSelectedPath(item.path); metadata.open(event, item.path); }}
         collapsed={systemCollapsed} onToggle={() => setSystemCollapsed(value => !value)} />
       <CatalogHomeGroup {...group} title={t("skim.root.thisPc")} items={drives}
+        onContextMenu={(event, item) => { setSelectedPath(item.path); metadata.open(event, item.path); }}
         collapsed={drivesCollapsed} onToggle={() => setDrivesCollapsed(value => !value)} />
     </div>
-    {metadata.target && <DirectoryMetadataContextMenu target={metadata.target} appearance={{ theme: "dark", appearanceColors: { themeColor: "#7894f8", accentColor: "#67bec1" }, windowMaterial: "mica", ...appearance }} onClose={metadata.close} onStart={path => { void metadata.start(path); }}
-      onAutoKeywords={activity && !activity.busy ? () => { const entry = system.find(value => value.path === metadata.target!.path); if (entry) void activity.startBatch({ locationId: entry.id }, entry.name); } : undefined} />}
+    {metadata.target && menuEntry && <CatalogHomeContextMenu target={metadata.target} entry={menuEntry} favorites={favorites}
+      appearance={{ theme: "dark", appearanceColors: { themeColor: "#7894f8", accentColor: "#67bec1" }, windowMaterial: "mica", ...appearance }} onClose={metadata.close} onOpen={onOpen} onMetadata={path => { void metadata.start(path); }} metadataBusy={metadata.busy} />}
     <CatalogTransientFeedback message={metadata.message} />
   </section><CatalogGridScrollbars scrollContainerRef={rootRef} /></>;
 }
