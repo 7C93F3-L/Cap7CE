@@ -46,7 +46,12 @@ app.whenReady().then(async () => {
   assert.equal(await run('probe.pages.length'), 0, 'offscreen pages are not enumerated eagerly');
   assert.equal(await run("!!document.querySelector('.cap-computer-search-more')"), false, 'manual load-more button removed');
   const firstOwner = await run('probe.controller.taskId');
-  await run('probe.expire=true'); await scroll();
+  await ready("document.querySelector('.cap-catalog-grid-scrollbars > .cap-custom-scrollbar-vertical:not(.is-hidden)')");
+  assert.equal(await run("getComputedStyle(document.querySelector('.cap-computer-search-results')).scrollbarWidth"),'none');
+  await run('probe.expire=true');
+  const thumb=await run("(()=>{const r=document.querySelector('.cap-catalog-grid-scrollbars .cap-custom-scrollbar-vertical .cap-custom-scrollbar-thumb').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+8)}})()");
+  win.webContents.sendInputEvent({type:'mouseMove',...thumb});win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...thumb});
+  win.webContents.sendInputEvent({type:'mouseMove',x:thumb.x,y:thumb.y+650});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:thumb.x,y:thumb.y+650});
   await ready('probe.controller.items.length===200&&!probe.controller.busy');
   assert.notEqual(await run('probe.controller.taskId'), firstOwner, 'stale cursor replaced under fresh owner');
   assert.equal(await run(`probe.canceled.includes(${JSON.stringify(firstOwner)})`), true);

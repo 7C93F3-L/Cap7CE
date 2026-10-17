@@ -32,6 +32,7 @@ app.whenReady().then(async()=>{let win;try{
  assert.equal(await run('document.body.innerText.includes("A software")'),false,'late metadata cannot overwrite a new selection');
  await run("probe.finish('B')");await ready('document.body.innerText.includes("B software")');
  assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'PNG','catalog heading uses the file extension');
+ assert.equal(await run('getComputedStyle(document.querySelector(".cap-catalog-file-information > .cap-custom-scrollbar-vertical")).right'),'0px','right sidebar track sits against its outer edge');
  await ready('probe.keywordReads.length===2');await run('probe.finishKeywords("A",["stale"]);probe.finishKeywords("B",["已有","blue"]);probe.keywordAuto=true');
  await ready('document.querySelector(".preview-sidebar-keywords")');assert.equal(await run('document.querySelector(".preview-sidebar-keywords").innerText.includes("stale")'),false,'late keyword reads cannot leak into another file');
  const keywordSection='[...document.querySelectorAll(".preview-sidebar-section")].find(e=>e.querySelector("h2")?.innerText==="添加关键词")';

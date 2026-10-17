@@ -44,6 +44,14 @@ app.whenReady().then(async()=>{
   assert.equal(await run("document.querySelector('#home .thumb').classList.contains('selected')"),true);
   await run("document.querySelector('#home .thumb').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))");
   assert.equal(await run('probe.opens.length'),1);
+  await ready("document.querySelector('#home .cap-custom-scrollbar-vertical:not(.is-hidden)')");
+  assert.equal(await run("getComputedStyle(document.querySelector('#home .cap-catalog-home')).scrollbarWidth"),'none','home uses the shared painted scrollbar');
+  const thumb=await run("(()=>{const r=document.querySelector('#home .cap-custom-scrollbar-vertical .cap-custom-scrollbar-thumb').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+8)}})()");
+  win.webContents.sendInputEvent({type:'mouseMove',...thumb});win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...thumb});
+  win.webContents.sendInputEvent({type:'mouseMove',x:thumb.x,y:thumb.y+240});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:thumb.x,y:thumb.y+240});
+  await ready("document.querySelector('#home .cap-catalog-home').scrollTop>0");
+  await run("document.querySelector('#home .cap-catalog-home').scrollTop=0");await ready("document.querySelector('#home .thumb.selected')");
+  assert.equal(await run('probe.opens.length'),1,'scrollbar dragging preserves selection without opening an entry');
   await run("document.querySelector('#home .cap-catalog-home').scrollTop=100000");
   await ready("document.querySelectorAll('#home .cap-skim-root-group:last-child .thumb').length===4");
   await run("document.querySelector('#home .cap-skim-root-group-header').click()");

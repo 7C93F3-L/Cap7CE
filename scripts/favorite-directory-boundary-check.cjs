@@ -67,6 +67,8 @@ const files = new Map([
   ["src/renderer/catalog-workspace/CatalogFileInformation.tsx", 25],
   ["src/renderer/catalog-workspace/CatalogFileInformation.css", 15],
   ["src/renderer/catalog-workspace/CatalogFileCard.css", 10],
+  ["src/renderer/catalog-workspace/CatalogGridScrollbars.tsx", 15],
+  ["src/renderer/catalog-workspace/CatalogGridScrollbars.css", 15],
   ["src/renderer/catalog-workspace/useCatalogFileInformation.ts", 40],
   ["src/renderer/catalog-workspace/useCatalogKeywords.ts", 65],
   ["src/shared/catalogKeywordTypes.d.ts", 10],

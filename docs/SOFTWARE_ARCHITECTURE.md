@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+CatalogGridScrollbars在原首页和文件结果滚动容器旁挂载既有CustomScrollbar，直接复用原Ref与拖动/测量，不增加滚动包裹层或查询。领域CSS隐藏原生滚动条，并按现有低窗口断点切换纵向/横向自绘轨道；覆盖层不拦截网格点击，轨道标记selection-preserve，保留续页、可见性和网格布局的唯一滚动来源。右栏仅将既有轨道右边距收为0，独立预览保持原边距。
+
 CatalogFileCard.css仅作用于主界面右栏，收紧基础信息标签/值行、隐藏重复格式、保留完整路径行；独立预览的上下字段布局不变。CatalogFileInformation.css对右栏滚动容器关闭浏览器滚动锚定，关键词编辑器继续使用原preventScroll聚焦和既有外层滚动；不固定卡片高度或裁切关键词，不改变预览生命周期。
 
 feedback/BottomNoticeBar是无状态的共用窄条组件，只接收消息、提示、进度、补充文本和操作插槽；CatalogActivityBar与MetadataBuildSlot的紧凑展示共同使用。BottomNoticeBar.css统一表面透明度固定为1、尺寸及内部排版，CatalogActivity.css只持有浮动停靠与任务避让；两类任务仍由各自控制器管理生命周期。元数据展开面板样式继续独立，未复制状态或IPC，纯展示边界与体量由自动检查守护。

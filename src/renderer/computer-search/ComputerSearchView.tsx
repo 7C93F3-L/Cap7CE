@@ -13,6 +13,7 @@ import type { ComputerSearchController } from "./useComputerSearchController";
 import { useComputerSearchScrollPaging } from "./useComputerSearchScrollPaging";
 import CatalogVirtualGrid from "./CatalogVirtualGrid";
 import CatalogTransientFeedback from "../catalog-workspace/CatalogTransientFeedback";
+import CatalogGridScrollbars from "../catalog-workspace/CatalogGridScrollbars";
 import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal";
 import "../results/ResultGrid.css";
 import "./ComputerSearchResultGrid.css";
@@ -106,7 +107,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
   if (!busy && items.length === 0) return <section className="cap-computer-search-empty"><StableUiIcon name="search" />
     <strong>{controller.query.trim() ? t("computerSearch.empty") : "没有符合当前条件的文件"}</strong><span>{emptyHint ?? (controller.query.trim() ? t("computerSearch.emptyHint") : "可以减少筛选条件或切换搜索范围。")}</span>
   </section>;
-  return <section
+  return <><section
     className="cap-computer-search-results"
     aria-busy={busy}
     ref={scrollContainerRef}
@@ -160,7 +161,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
         else if (action === "metadata") { actions.setContextMenu(null); void operations.metadata(state.item.path); }
         else if (action === "addToSidebar") void operations.toggleFavorite(state.item); else actions.handleContextMenuAction(action); }}
     />}
-  </section>;
+  </section><CatalogGridScrollbars scrollContainerRef={scrollContainerRef} /></>;
 };
 
 export default ComputerSearchView;
