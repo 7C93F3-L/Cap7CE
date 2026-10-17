@@ -14,7 +14,7 @@ const resolve = () => manager.resolveBounds({
   displays: [display],
   currentDisplay: display,
   defaultBounds: () => ({ x: 320, y: 140, width: 1280, height: 760 }),
-  minimumSize: { width: 300, height: 170 }
+  minimumSize: { width: 300, height: 210 }
 });
 
 const run = async () => {

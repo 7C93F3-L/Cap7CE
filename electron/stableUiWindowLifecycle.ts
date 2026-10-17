@@ -17,7 +17,7 @@ export const STABLE_UI_TITLEBAR_HEIGHT = 40;
 export const STABLE_UI_LAYOUT_FILE_NAME = "window-layout-stable-ui.json";
 export const STABLE_UI_DEFAULT_WORK_AREA_RATIO = { width: 0.9, height: 0.82 } as const;
 export const STABLE_UI_DEFAULT_MAXIMUM_OUTER_SIZE = { width: 1760, height: 1000 } as const;
-export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 170 } as const;
+export const STABLE_UI_MINIMUM_OUTER_SIZE = { width: 300, height: 210 } as const;
 
 export const resolveStableUiDefaultWindowBounds = (workArea: WindowLayoutBounds, position?: Pick<WindowLayoutBounds, "x" | "y">): WindowLayoutBounds => {
   const width = Math.max(1, Math.min(

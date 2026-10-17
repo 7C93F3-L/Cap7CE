@@ -431,7 +431,7 @@ P3.6 不把 Core 路径直接变成通用文件能力。`computerSearchRuntime.t
 
 | 模块 | 职责 |
 | --- | --- |
-| `stableUiWindowLifecycle.ts` / `stableWindowRuntime.ts` | 主窗口、Preview 与 Settings 唯一稳定外壳的 40 DIP WCO、主题符号色、Acrylic / Mica 运行时应用与主题纯色回退，以及工作区宽度90% / 高度82%、最大1760×1000、最小 300×170 的自由主窗口 bounds；布局固定写入 `window-layout-stable-ui.json`，不读取、迁移或删除旧宿主布局文件 |
+| `stableUiWindowLifecycle.ts` / `stableWindowRuntime.ts` | 主窗口、Preview 与 Settings 唯一稳定外壳的 40 DIP WCO、主题符号色、Acrylic / Mica 运行时应用与主题纯色回退，以及工作区宽度90% / 高度82%、最大1760×1000、最小 300×210 的自由主窗口 bounds；布局固定写入 `window-layout-stable-ui.json`，不读取、迁移或删除旧宿主布局文件 |
 | `stablePreviewWindowSizing.ts` | Preview 内容尺寸到稳定窗口外框的纯几何适配；固定计入 40 DIP 标题栏、信息栏当前宽度与右/底 5px 边距，保持当前外框中心，并在狭窄工作区内约束最小值、85% 最大内容尺寸和完整外框可见性 |
 | `src/renderer/window-presentation/WindowTitlebarPortal.tsx` / `stable-ui/StableTitlebar.tsx` / `preview/StablePreviewTitlebar.tsx` | 主窗口与 Preview 的 WCO 标题栏统一通过共享 Portal 宿主挂载到 `document.body`，不得直接留在会动画、裁剪或滚动的应用内容树中，避免虚拟网格滚动重算后覆盖 Windows 原生拖动命中区。各标题栏使用 `titlebar-area-*` 环境变量限定安全区域，并复用既有置顶图标、状态与统一动作；系统最小化 / 最大化 / 关闭继续由 Windows 绘制 |
 | `browserWindowDiagnostics.ts` | 主窗口、Settings、预览、line 与启动提示共用的原生 BrowserWindow 创建失败边界；只记录窗口类别和经运行诊断统一脱敏的异常后原样抛出，不吞掉 Electron 创建失败，也不接触用户搜索或路径 |
@@ -664,7 +664,7 @@ Cap7CE 1.0.4 的正式窗口状态已收口为主窗口显示与隐藏生命周�
 
 独立 `lineWindow` 使用 180 px 宽透明窗口承载底部 4 px 连续渐变线；若 Windows 抬高透明窗口的原生高度，只在该独立窗口内按实际高度重新贴底，并将 shape 限制为底部 15 px 有效区域。line 不复用主窗口 Renderer，也不参与主窗口 shape、bounds 或鼠标穿透恢复；单击 line 只显示主窗口并聚焦已有搜索框。主进程监听显示器 `workArea` / `bounds` 变化并重新贴合可见 line，独立 Settings 在隐藏后重开或下次启动时按自己的版本化记录执行显示恢复。
 
-主窗口按整窗 `300 × 170` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；只有恢复默认窗口动作会主动应用当前工作区宽度90% / 高度82%、最大1760×1000 的居中 bounds。
+主窗口按整窗 `300 × 210` 设置自由缩放下限，低矮布局让结果或 Skim 独占可用宽度并把横向滚动条固定在内容底部；只有恢复默认窗口动作会主动应用当前工作区宽度90% / 高度82%、最大1760×1000 的居中 bounds。
 
 产品主窗口的 Renderer 入口只装配 `App` 与 `StableUiRoot`；旧 Home、同窗 Settings、micro/mini/normal 页面树及其右侧控制栏已退出 Renderer。`App` 继续作为搜索、目录、Skim、快捷动作和弹层的应用级状态编排层，稳定 UI 只消费其现有动作与 Props。Settings 由 `src/renderer/main.tsx` 按 `window=settings` 分流到独立单实例 `SettingsWindowApp`，不再存在旧完整 Settings 页面。Preview 也只装配 `StablePreviewTitlebar`、稳定内容壳和信息边栏，旧兼容标题栏、右侧控制栏及内容内嵌元数据分支已删除；所有 Provider、导航、窗口尺寸与文件动作仍复用原有链路。独立 Capsule Renderer、桥接 Hook、专用 preload/IPC 及主进程控制器均已删除；line 继续由独立 Renderer 绘制待机线，点击时通过受限 IPC 复用主窗口激活与搜索聚焦动作。
 
