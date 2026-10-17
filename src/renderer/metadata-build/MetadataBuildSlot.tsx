@@ -5,6 +5,7 @@ import MetadataBuildScopePanel from "./MetadataBuildScopePanel";
 import { useMetadataBuild } from "./useMetadataBuild";
 import "./MetadataBuildSlot.css";
 import { metadataBuildChanged, useDirectoryMetadataAction } from "./useDirectoryMetadataAction";
+import BottomNoticeBar from "../feedback/BottomNoticeBar";
 
 export default function MetadataBuildSlot({ enabled, foreground, onProgress, initiallyCollapsed = false, floating = false, controlsOpen = false, onRequestControls }: {
   enabled: boolean; foreground: boolean; onProgress?: (progress: MetadataBuildProgress) => void; initiallyCollapsed?: boolean;
@@ -35,13 +36,13 @@ export default function MetadataBuildSlot({ enabled, foreground, onProgress, ini
   const status = build.status;
   if (floating && !controlsOpen) {
     if (status.progress.phase === "idle" || status.progress.phase === "completed" && !completedNotice) return null;
-    return <div className="cap-metadata-build-slot is-floating is-compact" role="status">
-      <span title={status.directoryTask?.path}>{status.progress.phase === "completed" && status.progress.failed > 0 ? `本轮提取完成，${status.progress.failed} 项未能提取` : status.directoryTask ? `${status.progress.phase === "failed" ? "目录任务中断" : "目录元数据"} · ${status.directoryTask.path}` : status.progress.phase === "completed" ? "文件属性提取已完成" : status.progress.phase === "paused" ? "文件属性提取已暂停"
-        : status.progress.phase === "failed" ? "文件属性提取暂时中断" : "正在提取文件属性"}</span>
-      <progress max={1} value={status.progress.progressFraction ?? undefined} />
-      <span>{status.progress.processed.toLocaleString()} 项{status.progress.remainingSeconds != null ? ` · 预计还需 ${Math.ceil(status.progress.remainingSeconds / 60)} 分钟` : ""}</span>
-      <button type="button" onClick={onRequestControls}>查看任务</button>
-      {status.progress.phase === "completed" && <button type="button" aria-label="关闭提取结果" onClick={() => setCompletedNotice(false)}>×</button>}</div>;
+    return <BottomNoticeBar className="cap-metadata-build-slot is-floating is-compact" title={status.directoryTask?.path}
+      message={status.progress.phase === "completed" && status.progress.failed > 0 ? `本轮提取完成，${status.progress.failed} 项未能提取` : status.directoryTask ? `${status.progress.phase === "failed" ? "目录任务中断" : "目录元数据"} · ${status.directoryTask.path}` : status.progress.phase === "completed" ? "文件属性提取已完成" : status.progress.phase === "paused" ? "文件属性提取已暂停"
+        : status.progress.phase === "failed" ? "文件属性提取暂时中断" : "正在提取文件属性"}
+      progress={{ label: "文件属性提取", value: status.progress.progressFraction ?? undefined }}
+      detail={`${status.progress.processed.toLocaleString()} 项${status.progress.remainingSeconds != null ? ` · 预计还需 ${Math.ceil(status.progress.remainingSeconds / 60)} 分钟` : ""}`}
+      actions={<><button type="button" onClick={onRequestControls}>查看任务</button>
+        {status.progress.phase === "completed" && <button type="button" aria-label="关闭提取结果" onClick={() => setCompletedNotice(false)}>×</button>}</>} />;
   }
   const policy = draft ?? status.policy;
   const scope = (policy?.volumeOrder ?? status.volumes.map((item) => item.volumeId)).filter((id) =>

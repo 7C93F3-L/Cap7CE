@@ -17,15 +17,20 @@ module.exports=(root,failures)=>{
  const autoFiles=new Map([
   ['electron/catalogAutoKeywordModel.ts',60],['electron/catalogAutoKeywordService.ts',65],['electron/catalogAutoKeywordSource.ts',18],
   ['electron/catalogAutoKeywordRuntime.ts',30],['electron/catalogAutoKeywordIpc.ts',60],['src/shared/catalogAutoKeywordTypes.d.ts',12],
-  ['src/renderer/catalog-workspace/useCatalogAutoKeywords.ts',65],['src/renderer/catalog-workspace/CatalogActivity.tsx',60],
-  ['src/renderer/catalog-workspace/CatalogActivity.css',15],['src/renderer/catalog-workspace/CatalogKeywords.tsx',40],
+  ['src/renderer/catalog-workspace/useCatalogAutoKeywords.ts',65],['src/renderer/catalog-workspace/CatalogActivity.tsx',36],
+  ['src/renderer/catalog-workspace/CatalogActivity.css',5],['src/renderer/catalog-workspace/CatalogKeywords.tsx',40],
   ['src/renderer/catalog-workspace/CatalogKeywords.css',8],['src/renderer/catalog-workspace/catalogKeywordIdentity.ts',8],
-  ['src/renderer/catalog-workspace/CatalogTransientFeedback.tsx',15]]);
+  ['src/renderer/catalog-workspace/CatalogTransientFeedback.tsx',15],
+  ['src/renderer/feedback/BottomNoticeBar.tsx',25],['src/renderer/feedback/BottomNoticeBar.css',12]]);
  for(const [file,maximum] of autoFiles){const text=fs.readFileSync(path.join(root,file),'utf8');
   if(text.split(/\r?\n/).length>maximum)failures.push(`${file} exceeds its automatic keyword domain limit.`);
   if(file.startsWith('src/renderer/')&&/fetch\(|node:|ipcRenderer|llamaRuntime|visualRenderService/.test(text))failures.push(`${file} bypasses the automatic keyword bridge.`);
  }
  const runtime=fs.readFileSync(path.join(root,'electron/catalogAutoKeywordRuntime.ts'),'utf8');
+ const notice=fs.readFileSync(path.join(root,'src/renderer/feedback/BottomNoticeBar.tsx'),'utf8');
+ if(/\buse[A-Z]\w*|window\.|catalog-workspace|metadata-build/.test(notice))failures.push('The shared bottom notice must remain a pure presentation component.');
+ for(const file of ['src/renderer/catalog-workspace/CatalogActivity.tsx','src/renderer/metadata-build/MetadataBuildSlot.tsx'])
+  if(!fs.readFileSync(path.join(root,file),'utf8').includes('<BottomNoticeBar'))failures.push(`${file} must reuse the shared bottom notice.`);
  if(!runtime.includes('loadModelInputImage')||/ensureThumbnail|prepareAiSearchImage/.test(runtime))failures.push('Automatic keywords must reuse the existing model-input image preparation.');
  const service=fs.readFileSync(path.join(root,'electron/catalogAutoKeywordService.ts'),'utf8');
  for(const anchor of ['deps.keywords.read(check())','deps.keywords.write(check(), keywords, current.revision)','deps.fingerprint(check()) !== original','deps.endUse()'])

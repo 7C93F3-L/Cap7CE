@@ -14,10 +14,13 @@ registerMetadataBuildIpc(ipcMain,event=>event.sender===win?.webContents,api);
 const fixture=`
 import React,{useState} from 'react';import {createRoot} from 'react-dom/client';
 import Slot from './src/renderer/metadata-build/MetadataBuildSlot';import {useDirectoryMetadataAction} from './src/renderer/metadata-build/useDirectoryMetadataAction';
+import BottomNoticeBar from './src/renderer/feedback/BottomNoticeBar';
 import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
+import './src/renderer/catalog-workspace/CatalogActivity.css';
 function Fixture(){const [open,setOpen]=useState(false),action=useDirectoryMetadataAction();return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{display:'block',position:'relative',height:'100vh',width:'100%'}}>
 <button id="request" onClick={()=>action.start(${JSON.stringify(folder)})}>folder metadata</button>
-<Slot enabled={false} foreground floating controlsOpen={open} onRequestControls={()=>setOpen(v=>!v)}/></div></div>}
+<div className="cap-catalog-activity-dock"><BottomNoticeBar className="probe-temporary-notice" message="临时提醒" progress={{label:'处理进度'}} actions={<button type="button">取消</button>}/>
+<Slot enabled={false} foreground floating controlsOpen={open} onRequestControls={()=>setOpen(v=>!v)}/></div></div></div>}
 createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async()=>{try{
  esbuild.buildSync({stdin:{contents:fixture,loader:'tsx',resolveDir:repo},bundle:true,platform:'browser',outfile:path.join(root,'fixture.js'),define:{'process.env.NODE_ENV':'"production"'}});
@@ -29,6 +32,15 @@ app.whenReady().then(async()=>{try{
  await win.loadFile(path.join(root,'index.html'));await ready('document.querySelector("#request")');assert.equal(reads,0,'idle home does not wake Core to read metadata status');
  await run('document.querySelector("#request").click()');await ready('document.querySelector(".cap-metadata-build-slot.is-compact")');assert.equal(starts,1);
  assert.equal(await run('document.querySelector(".cap-metadata-build-slot > span").title'),folder);
+ const bars=()=>run(`(()=>{const host=document.querySelector('.cap-catalog-design');host.style.setProperty('--cap-stable-surface','rgba(60,70,90,.18)');return [...document.querySelectorAll('.cap-bottom-notice-bar')].map(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect(),c=document.createElement('canvas');c.width=c.height=1;const x=c.getContext('2d');x.fillStyle=s.backgroundColor;x.fillRect(0,0,1,1);return {alpha:x.getImageData(0,0,1,1).data[3],background:s.backgroundColor,padding:s.padding,radius:s.borderRadius,height:r.height,top:r.top,bottom:r.bottom,clipped:e.scrollWidth>e.clientWidth+1}})})()`);
+ for(const theme of ['light','dark']){
+  await run(`document.querySelector('.app').className='app cap-stable-ui theme-${theme}'`);
+  const [temporary,metadata]=await bars();assert.equal(temporary.alpha,255,'temporary notices are opaque even with a translucent theme surface');assert.equal(metadata.alpha,255);
+  for(const field of ['background','padding','radius','height'])assert.equal(temporary[field],metadata[field],`both bottom strips share ${field}`);
+  assert.ok(temporary.height<=40);assert.ok(temporary.bottom<=metadata.top,'simultaneous strips do not overlap');assert.equal(metadata.clipped,false);
+ }
+ win.setContentSize(380,500);await new Promise(r=>setTimeout(r,50));assert.ok((await bars()).every(bar=>!bar.clipped),'both compact strips fit narrow windows');win.setContentSize(1000,750);
+ await run("document.querySelector('.cap-catalog-design').style.removeProperty('--cap-stable-surface');document.querySelector('.app').className='app cap-stable-ui theme-dark'");
  await clickLabel('查看任务');await ready('document.querySelector(".cap-metadata-build")');
  assert.equal(await run('document.querySelector(".cap-metadata-build-heading strong").innerText'),'正在等待磁盘或任务恢复');
  assert.ok(await run('document.querySelector(".cap-metadata-build-footer").innerText.includes("包含子文件夹")'));

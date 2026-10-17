@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { useCatalogAutoKeywords } from "./useCatalogAutoKeywords";
+import BottomNoticeBar from "../feedback/BottomNoticeBar";
 import "./CatalogActivity.css";
 
 interface Notice { message: string; id: number; }
@@ -27,9 +28,7 @@ export function CatalogActivityBar() {
     ? job.result.added > 0 ? `已添加 ${job.result.added} 个关键词` : "关键词已是最新，无新增项"
     : job.result.status === "cancelled" ? "已取消自动添加关键词" : job.result.message}` : notice?.message;
   if (!message) return null;
-  return <div className="cap-catalog-activity-bar" role="status" aria-live="polite" data-selection-preserve="true">
-    <span title={message}>{message}</span>{busy && <progress aria-label="自动添加关键词" />}
-    {busy ? <button type="button" disabled={job?.phase === "saving" || job?.cancelling} onClick={activity.cancel}>取消</button>
-      : <button type="button" aria-label="关闭临时提醒" onClick={job ? activity.dismiss : activity.clearNotice}>×</button>}
-  </div>;
+  return <BottomNoticeBar className="cap-catalog-activity-bar" message={message} progress={busy ? { label: "自动添加关键词" } : undefined}
+    actions={busy ? <button type="button" disabled={job?.phase === "saving" || job?.cancelling} onClick={activity.cancel}>取消</button>
+      : <button type="button" aria-label="关闭临时提醒" onClick={job ? activity.dismiss : activity.clearNotice}>×</button>} />;
 }
