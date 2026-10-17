@@ -21,6 +21,7 @@ assert.equal(tabs.activeId, tabOwner, "The initial home is closable without swit
 tabs = reduce(tabs, { type: "location", id: tabOwner, path: null });
 assert.equal(tabs.contexts.at(-1).displayName, undefined);
 const replaced = reduce(tabs, { type: "replace", scopePath: "Y:\\Favorite", name: "Favorite" });
+assert.equal(replaced.contexts.find(context => context.id === replaced.activeId).kind, "browse", "Opening the browser uses hierarchical navigation");
 assert.equal(replaced.contexts.length, tabs.contexts.length, "A directory click replaces the current page without adding tabs");
 assert.notEqual(replaced.activeId, tabs.activeId, "Changing the directory retires its former query owner");
 assert.equal(replaced.contexts[0], tabs.contexts[0], "Other open pages retain their query identity");
@@ -79,6 +80,7 @@ const computer = entries.contexts[0];
 entries = reduce(entries, { type: "location", id: computer.id, path: "X:\\Folder" });
 entries = reduce(entries, { type: "entry", scopePath: "Y:\\Favorite", name: "Favorite" });
 const favorite = entries.contexts[1];
+assert.equal(favorite.kind, "browse", "Favorite entry starts in direct-child navigation rather than recursive search");
 entries = reduce(entries, { type: "entry", scopePath: null, name: "Computer" });
 assert.equal(entries.activeId, computer.id);
 assert.equal(entries.contexts[0].displayName, "Folder", "Returning to Computer retains its mounted navigation owner");

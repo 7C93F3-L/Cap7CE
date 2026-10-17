@@ -30,7 +30,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
 }) {
   const filters = useComputerSearchFilters(true), view = useCatalogViewOptions();
-  const [searchMode, setSearchMode] = useState(Boolean(context.scopePath));
+  const [searchMode, setSearchMode] = useState(context.kind === "search" && Boolean(context.scopePath));
   const [selection, setSelection] = useState<CatalogSelection | null>(null);
   const querySetter = useRef<(value: string) => void>(() => {});
   const clearQuery = useCallback(() => querySetter.current(""), []);
