@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import type { CatalogSelection } from "../../shared/catalogPresentationTypes";
 import ComputerSearchResultVisual from "../computer-search/ComputerSearchResultVisual";
+import CatalogFileInformation from "./CatalogFileInformation";
 
 const bytes = (size: number) => size >= 1024 ** 3 ? `${(size / 1024 ** 3).toFixed(2)} GB`
   : size >= 1024 ** 2 ? `${(size / 1024 ** 2).toFixed(2)} MB` : `${(size / 1024).toFixed(1)} KB`;
@@ -10,6 +11,7 @@ export default function CatalogDetails({ selection, path, count, foreground, sea
   selection: CatalogSelection | null; path: string | null; count: number; foreground: boolean; searching?: boolean; filterCount?: number;
 }) {
   const ref = useRef<HTMLElement | null>(null), items = selection?.items ?? [], item = items.length === 1 ? items[0] : null;
+  if (item && !item.isDirectory && selection) return <CatalogFileInformation selection={selection} foreground={foreground} />;
   return <aside className="cap-catalog-details" ref={ref} aria-label="详细信息" data-selection-preserve="true">
     <header><strong>{item ? item.isDirectory ? "文件夹" : item.extension.slice(1).toUpperCase() || "文件" : items.length ? "多选信息" : searching ? "当前搜索" : "当前目录"}</strong></header>
     {item && selection && <div className="cap-catalog-details-visual"><ComputerSearchResultVisual item={item} taskId={selection.taskId} foreground={foreground} scrollContainerRef={ref} /></div>}
@@ -20,6 +22,5 @@ export default function CatalogDetails({ selection, path, count, foreground, sea
         <dt>已知文件大小</dt><dd>{bytes(items.reduce((sum, value) => sum + (value.isDirectory ? 0 : value.sizeBytes ?? 0), 0))}</dd></>
       : searching ? <><dt>搜索范围</dt><dd>{path ?? "此电脑"}</dd><dt>筛选条件</dt><dd>{filterCount} 项</dd><dt>已加载结果</dt><dd>{count} 项</dd></>
       : <><dt>位置</dt><dd>{path ?? "此电脑"}</dd><dt>{path ? "当前结果" : "浏览范围"}</dt><dd>{path ? `${count} 项` : "系统位置与本机磁盘"}</dd></>}</dl>
-    {item && <button type="button" onClick={selection?.openPreview}>打开详细预览</button>}
   </aside>;
 }

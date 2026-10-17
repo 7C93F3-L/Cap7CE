@@ -127,6 +127,8 @@ declare global {
         showInFolder: (request: ComputerSearchAuthorization) => Promise<boolean>;
         copyPaths: (request: ComputerSearchAuthorizationBatch) => Promise<number>;
         inspect: (request: ComputerSearchAuthorization) => Promise<SkimPreviewInfo>;
+        readFileDetails: (request: import("../shared/fileInformationTypes").CatalogFileDetailsRequest) => Promise<import("../shared/fileInformationTypes").CatalogFileDetails | null>;
+        cancelFileDetails: (request: { requestId: string }) => Promise<boolean>;
         readTextPreview: (request: ComputerSearchAuthorization) => Promise<SkimTextPreview>;
         startDrag: (request: ComputerSearchAuthorizationBatch) => void;
       };

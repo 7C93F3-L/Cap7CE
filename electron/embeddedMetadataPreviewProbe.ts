@@ -40,7 +40,7 @@ const toPreviewMetadata = (extraction: EmbeddedMetadataExtraction): PreviewEmbed
 };
 
 export const startEmbeddedMetadataPreviewProbe = (
-  data: PreviewWindowData,
+  data: Pick<PreviewWindowData, "skimActive" | "info" | "embeddedMetadata" | "filePath">,
   {
     createWorker = () => new Worker(path.join(__dirname, "embeddedMetadataWorker.js")),
     timeoutMs = 8_000

@@ -230,7 +230,7 @@ export const useComputerSearchResultActions = ({
   return {
     selectedIds, activeId, selectedItems, contextMenu, feedback,
     setContextMenu, selectItem, openItem, openPreview, openContextMenu,
-    handleContextMenuAction, startDrag,
+    handleContextMenuAction, startDrag, showInFolder,
     finishDrag: () => onNativeDragStateChange(false),
     clearSelection
   };

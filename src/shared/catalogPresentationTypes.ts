@@ -4,6 +4,7 @@ export interface CatalogSelection {
   items: ComputerSearchItem[];
   taskId: string;
   openPreview: () => void;
+  showInFolder?: () => void;
 }
 
 export interface CatalogRandomBrowseState {

@@ -43,6 +43,7 @@ registerComputerSearchIpc({
 });
 
 assert.deepEqual([...handlers.keys()], [
+  "computerSearch:readFileDetails", "computerSearch:cancelFileDetails",
   "computerSearch:acquireThumbnail", "computerSearch:releaseThumbnail",
   "computerSearch:moveToTrash",
   "computerSearch:status", "computerSearch:capabilityOptions", "computerSearch:configureCapability",
@@ -54,6 +55,11 @@ assert.deepEqual([...events.keys()], ["computerSearch:startDrag"]);
 assert.equal(handlers.has("search:images"), false);
 
 const run = async () => {
+  const detailsRequest = { taskId: "task-1", authorizationId, requestId: "details-1" };
+  await assert.rejects(() => handlers.get("computerSearch:readFileDetails")({ allowed: false }, detailsRequest), /not allowed/);
+  await assert.rejects(() => handlers.get("computerSearch:readFileDetails")({ allowed: true }, { ...detailsRequest, authorizationId: "forged" }), /invalid-authorization/);
+  await assert.rejects(() => handlers.get("computerSearch:readFileDetails")({ allowed: true }, { ...detailsRequest, taskId: "expired" }), /authorization-expired/);
+  await assert.rejects(() => handlers.get("computerSearch:cancelFileDetails")({ allowed: false }, detailsRequest), /not allowed/);
   await assert.rejects(() => handlers.get("computerSearch:status")({ allowed: false }), /not allowed/);
   await assert.rejects(() => handlers.get("computerSearch:moveToTrash")({ allowed: false }), /not allowed/);
   await assert.rejects(() => handlers.get("computerSearch:moveToTrash")({ allowed: true }, { paths: ["C:\\forged.txt"] }), /invalid-authorization/);

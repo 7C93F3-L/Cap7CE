@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import type { PreviewWindowData } from "../../shared/types";
+import { useRef, type ReactNode, type RefObject } from "react";
+import type { FileInformationData } from "../../shared/fileInformationTypes";
 import { t } from "../../../electron/localization";
 import CustomScrollbar from "../CustomScrollbar";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
@@ -7,15 +7,19 @@ import PreviewManualKeywordsSection from "./PreviewManualKeywordsSection";
 import PreviewSearchEvidence from "./PreviewSearchEvidence";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
-  data: PreviewWindowData; expanded: boolean;
-  onToggleExpanded: () => void;
-  onOpen: () => void;
-  onShowInFolder: () => void; onCopyPath: () => void; copyPathCopied: boolean;
-  keywordEditorOpen: boolean; keywordSavePending: boolean; keywordSaveError: string;
-  onEditKeywords: () => void; onCancelKeywordEdit: () => void;
-  onSaveKeywords: (keywords: string[]) => void; onDelete: () => void;
+  data: FileInformationData; expanded: boolean;
+  showFileActions?: boolean; className?: string; metadataStatus?: "loading" | "unavailable";
+  renderVisual?: (scrollRef: RefObject<HTMLDivElement | null>) => ReactNode;
+  onToggleExpanded?: () => void;
+  onOpen?: () => void;
+  onShowInFolder?: () => void; onCopyPath?: () => void; copyPathCopied?: boolean;
+  keywordEditorOpen?: boolean; keywordSavePending?: boolean; keywordSaveError?: string;
+  onEditKeywords?: () => void; onCancelKeywordEdit?: () => void;
+  onSaveKeywords?: (keywords: string[]) => void; onDelete?: () => void;
 }
-const formatBytes = (bytes: number) => {
+const noop = () => undefined;
+const formatBytes = (bytes: number | null) => {
+  if (bytes === null) return "—";
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB", "TB"];
   let value = bytes / 1024;
@@ -26,40 +30,42 @@ const formatBytes = (bytes: number) => {
   }
   return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 };
-const getFileFormat = (data: PreviewWindowData) => {
+const getFileFormat = (data: FileInformationData) => {
   if (data.info?.kind === "folder") return t("fileInfo.folder");
   const extension = data.info?.extension || data.fileName.slice(data.fileName.lastIndexOf(".") + 1);
   return extension && extension !== data.fileName ? extension.replace(/^\./u, "").toUpperCase() : t("fileInfo.file");
 };
 const PreviewInformationSidebar = ({
   data,
+  showFileActions = true, className = "", renderVisual, metadataStatus,
   expanded,
   onToggleExpanded,
   onOpen,
   onShowInFolder,
   onCopyPath,
   copyPathCopied,
-  keywordEditorOpen,
-  keywordSavePending,
-  keywordSaveError,
-  onEditKeywords,
-  onCancelKeywordEdit,
-  onSaveKeywords,
+  keywordEditorOpen = false,
+  keywordSavePending = false,
+  keywordSaveError = "",
+  onEditKeywords = noop,
+  onCancelKeywordEdit = noop,
+  onSaveKeywords = noop,
   onDelete
 }: PreviewInformationSidebarProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   return (
   <aside
-    className={`preview-information-sidebar${expanded ? " is-expanded" : " is-collapsed"}`}
+    className={`preview-information-sidebar${expanded ? " is-expanded" : " is-collapsed"}${className ? ` ${className}` : ""}`}
     data-preview-navigation-suppressed="true"
     aria-label={t("preview.sidebar.heading")}
   >
-    <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} onPointerUp={(event) => event.currentTarget.blur()} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
+    {onToggleExpanded ? <button className="preview-sidebar-header" type="button" onClick={onToggleExpanded} onPointerUp={(event) => event.currentTarget.blur()} aria-expanded={expanded} aria-label={t(expanded ? "preview.sidebar.collapse" : "preview.sidebar.expand")}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={expanded ? "m15 5-7 7 7 7" : "m9 5 7 7-7 7"} /></svg>
       {expanded && <strong>{t("preview.sidebar.heading")}</strong>}
-    </button>
+    </button> : <header className="preview-sidebar-header"><strong>{t("preview.sidebar.heading")}</strong></header>}
     {expanded && <>
       <div ref={scrollRef} className="preview-sidebar-scroll cap-main-scroll-viewport">
+        {renderVisual?.(scrollRef)}
         <section className="preview-sidebar-section preview-sidebar-file-card">
           <h2>{t("preview.sidebar.fileInfo")}</h2>
           <div className="preview-sidebar-file-heading">
@@ -69,7 +75,7 @@ const PreviewInformationSidebar = ({
           <dl className="preview-sidebar-details">
             {(data.imageWidth ?? 0) > 0 && (data.imageHeight ?? 0) > 0 && <div><dt>{t("preview.sidebar.dimensions")}</dt><dd>{data.imageWidth} × {data.imageHeight}</dd></div>}
             <div><dt>{t("skim.previewSize")}</dt><dd>{formatBytes(data.fileSize)}</dd></div>
-            <div><dt>{t("skim.previewModified")}</dt><dd>{new Date(data.modifiedAt).toLocaleString()}</dd></div>
+            <div><dt>{t("skim.previewModified")}</dt><dd>{data.modifiedAt ? new Date(data.modifiedAt).toLocaleString() : "—"}</dd></div>
           </dl>
         </section>
         <section className="preview-sidebar-section">
@@ -80,8 +86,8 @@ const PreviewInformationSidebar = ({
         <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />
         {data.embeddedMetadata
           ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />
-          : <section className="preview-sidebar-section"><h2>{t("preview.metadata.heading")}</h2><p className="preview-sidebar-empty">{t("preview.sidebar.noEmbeddedMetadata")}</p></section>}
-        <section className="preview-sidebar-section">
+          : <section className="preview-sidebar-section"><h2>{t("preview.metadata.heading")}</h2><p className="preview-sidebar-empty">{t(metadataStatus === "loading" ? "common.loading" : metadataStatus === "unavailable" ? "common.unavailable" : "preview.sidebar.noEmbeddedMetadata")}</p></section>}
+        {showFileActions && <section className="preview-sidebar-section">
           <h2>{t("preview.sidebar.fileActions")}</h2>
           <div className="preview-sidebar-actions">
             <button type="button" onClick={onOpen}>{t("context.open")}</button>
@@ -89,7 +95,7 @@ const PreviewInformationSidebar = ({
             <button type="button" onClick={onCopyPath}>{t(copyPathCopied ? "clipboard.copied" : "context.copyPath")}</button>
             {!data.skimActive && <button type="button" onClick={onDelete}>{t("context.deleteFile")}</button>}
           </div>
-        </section>
+        </section>}
       </div>
       <CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" />
     </>}

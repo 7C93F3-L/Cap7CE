@@ -45,10 +45,10 @@ app.whenReady().then(async()=>{
   await escape(tile(1));assert.equal(await count(),0,'file Escape clears all selection');
   await click(tile(3),{shiftKey:true});assert.equal(await count(),1,'clearing also resets range anchor');
   await click('.cap-catalog-brand');assert.equal(await count(),0,'sidebar clears files');
-  await click(tile(0));await click('.cap-catalog-details-name');assert.equal(await count(),1,'details content preserves selection');
+  await click(tile(0));await click('.cap-catalog-file-information .preview-sidebar-file-heading strong');assert.equal(await count(),1,'details content preserves selection');
   await click('.cap-catalog-size-toggle');await ready("document.querySelector('.cap-catalog-size-flyout input')");assert.equal(await count(),1,'view size control preserves selected files');
   await escape('.cap-catalog-size-flyout input');assert.equal(await count(),1,'first Escape closes view size popup without clearing selection');
-  await click('.cap-catalog-details button');await ready('probe.opened.length===1');assert.equal(await count(),1,'details preview button works without clearing');
+  assert.equal(await run("document.querySelector('.cap-catalog-file-information').innerText.includes('打开详细预览')"),false);await run("document.body.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true,cancelable:true}))" );await ready('probe.opened.length===1');assert.equal(await count(),1,'Space preview remains available after removing the details button');
   await run(`document.querySelector(${JSON.stringify(tile(0))}).dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:40,clientY:70}))`);
   await ready("document.querySelector('[data-context-menu]')");
   await run("document.querySelector('[data-context-menu]').dispatchEvent(new PointerEvent('pointerdown',{button:0,bubbles:true}))");assert.equal(await count(),1,'menu pointer preserves selection');
@@ -61,7 +61,7 @@ app.whenReady().then(async()=>{
   await run("document.body.dispatchEvent(new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true,cancelable:true}));document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'C',code:'KeyC',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}))");await wait(50);
   assert.equal(await run('probe.opened.length'),1,'cleared active item cannot preview via Space');assert.equal(await run('probe.copied.length'),0,'cleared items are not copied');
   await click(tile(0));await click('.cap-catalog-grid-toggle');assert.equal(await count(),0,'other toolbar areas clear files');
-  console.log('Catalog selection: home/files, outside/blank, multi-select anchor, details preview, menu/input Escape priority, controls and foreground guards passed.');
+  console.log('Catalog selection: home/files, outside/blank, multi-select anchor, shared details, Space preview, menu/input Escape priority, controls and foreground guards passed.');
  }catch(error){console.error(error.stack);process.exitCode=1}
  finally{win?.destroy();if(path.dirname(root)!==os.tmpdir())throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}
 });

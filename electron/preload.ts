@@ -230,6 +230,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
     copyPaths: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.invoke("computerSearch:copyPaths", request),
     moveToTrash: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.invoke("computerSearch:moveToTrash", request),
     inspect: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:inspect", request),
+    readFileDetails: (request: import("../src/shared/fileInformationTypes").CatalogFileDetailsRequest) => ipcRenderer.invoke("computerSearch:readFileDetails", request),
+    cancelFileDetails: (request: { requestId: string }) => ipcRenderer.invoke("computerSearch:cancelFileDetails", request),
     readTextPreview: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readTextPreview", request),
     startDrag: (request: ComputerSearchAuthorizationBatch) => ipcRenderer.send("computerSearch:startDrag", request)
   },

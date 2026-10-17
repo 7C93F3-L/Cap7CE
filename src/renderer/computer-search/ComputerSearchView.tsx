@@ -60,8 +60,9 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     hasSelection: actions.selectedIds.size > 0 || actions.activeId !== null, menuOpen: actions.contextMenu !== null, onClear: actions.clearSelection });
   const interactionBlocked = operations.busy || actions.selectedIds.size > 0 || actions.contextMenu !== null;
   const selection = useMemo(() => ({ items: actions.selectedItems, taskId,
-    openPreview: () => { if (actions.selectedItems[0]) void actions.openPreview(actions.selectedItems[0]); }
-  }), [actions.selectedItems, actions.openPreview, taskId]);
+      openPreview: () => { if (actions.selectedItems[0]) void actions.openPreview(actions.selectedItems[0]); },
+      showInFolder: () => { if (actions.selectedItems[0]) actions.showInFolder(actions.selectedItems[0]); }
+    }), [actions.selectedItems, actions.openPreview, actions.showInFolder, taskId]);
   useEffect(() => { onSelectionChange?.(selection); }, [selection, onSelectionChange]);
   useEffect(() => {
     controller.setInteractionBlocked(interactionBlocked);
