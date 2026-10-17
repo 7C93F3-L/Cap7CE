@@ -1,10 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
-import type { FileFormatCategory } from "../../../electron/formatCapabilities";
 import type { SearchState } from "../../shared/types";
 import type { SearchFilterDetailDomain } from "../../shared/searchFilterTypes";
 import StableSidebarFlyout from "./StableSidebarFlyout";
-import { getExtensionsForCanonicalFormat, getFormatSelectionGroups, getOtherFileTypeExtensions, getPrimaryFileTypeExtensions, type ExploreOtherFileType, type ExplorePrimaryFileType } from "./exploreFormatFilters";
+import { getOtherFileTypeExtensions, getPrimaryFileTypeExtensions, type ExploreOtherFileType, type ExplorePrimaryFileType } from "./exploreFormatFilters";
 import { getExploreFormatSummary } from "./exploreFormatSummary";
 import StableFilterEditGlyph from "./StableFilterEditGlyph";
 import StableMediaFilters from "./StableMediaFilters";
@@ -18,13 +17,11 @@ import StableFontFilters from "./StableFontFilters";
 import StableModelFilters from "./StableModelFilters";
 import { retainApplicableExploreTypeFilters } from "./exploreTypeFilterState";
 import "./StableExploreFilters.css";
-type FilterFlyoutKind = "dates" | "formats" | "other";
+type FilterFlyoutKind = "dates";
 type FilterFlyout = { kind: FilterFlyoutKind; anchor: DOMRect } | null;
 const timePresets = ["week", "month", "year", "last-year", "older", "all"] as const;
 const timeAdjustmentKeys = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"]);
-const primaryTypes: ExplorePrimaryFileType[] = ["image", "video", "audio", "document"];
-const otherTypes: ExploreOtherFileType[] = ["text", "project", "threeD", "archive", "data", "font", "model"];
-const categoryOrder: FileFormatCategory[] = ["visual", "video", "audio", "document", "text", "data", "project", "threeD", "archive", "font", "model"];
+const fileTypes: Array<ExplorePrimaryFileType | ExploreOtherFileType> = ["image", "video", "audio", "document", "text", "project", "threeD", "archive", "data", "font", "model"];
 const timeLabels: Record<(typeof timePresets)[number], TranslationKey> = {
   week: "explore.time.week", month: "explore.time.month", year: "explore.time.year",
   "last-year": "explore.time.lastYear", older: "explore.time.older", all: "explore.time.all"
@@ -35,12 +32,6 @@ const primaryLabels: Record<ExplorePrimaryFileType, TranslationKey> = {
 const otherLabels: Record<ExploreOtherFileType, TranslationKey> = {
   text: "explore.fileTypes.text", project: "explore.fileTypes.project", threeD: "explore.fileTypes.threeD",
   archive: "explore.fileTypes.archive", data: "explore.fileTypes.data", font: "explore.fileTypes.font", model: "explore.fileTypes.model"
-};
-const categoryLabels: Record<FileFormatCategory, TranslationKey> = {
-  visual: "explore.fileTypes.image", video: "explore.fileTypes.video", audio: "explore.fileTypes.audio",
-  document: "explore.fileTypes.document", text: "explore.fileTypes.text", data: "explore.fileTypes.data",
-  archive: "explore.fileTypes.archive", font: "explore.fileTypes.font", threeD: "explore.fileTypes.threeD",
-  project: "explore.fileTypes.project", model: "explore.fileTypes.model"
 };
 const typeLabels = { ...primaryLabels, ...otherLabels };
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -54,7 +45,6 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
   return [...next].sort();
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
-const TypeGlyph = ({ type }: { type: ExplorePrimaryFileType | "other" }) => <span className={`cap-stable-type-glyph is-${type}`} aria-hidden="true"><i /><b /></span>;
 const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const supports = (domain: SearchFilterDetailDomain) => detailDomains === undefined || detailDomains.includes(domain);
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
@@ -64,8 +54,6 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
   const defaultDates = getDefaultDates();
   const [startDate, setStartDate] = useState(defaultDates[0]);
   const [endDate, setEndDate] = useState(defaultDates[1]);
-  const [formatDraft, setFormatDraft] = useState<string[]>(search.selectedExtensions ?? []);
-  const formatGroups = useMemo(() => getFormatSelectionGroups(availableFormats), [availableFormats]);
   const summaryItems = getExploreFormatSummary(availableFormats, search.selectedExtensions ?? []);
   const selectedSummary = `${summaryItems.slice(0, 2).map((item) => item.kind === "type" ? t(typeLabels[item.value]) : item.value.toUpperCase()).join("  ")}${summaryItems.length > 2 ? `  +${summaryItems.length - 2}` : ""}`;
   useEffect(() => setTimeIndex(presetIndex), [presetIndex]);
@@ -77,7 +65,6 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
       setStartDate(toDateInput(search.modifiedTimeRange.startMs));
       setEndDate(toDateInput(search.modifiedTimeRange.endMs - 1));
     }
-    if (kind === "formats") setFormatDraft(search.selectedExtensions ?? []);
     const anchor = event.currentTarget.getBoundingClientRect();
     const nextFlyout = flyout?.kind === kind ? null : { kind, anchor };
     if (nextFlyout) onFlyoutOpen();
@@ -101,7 +88,6 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
     const nextSearch = { ...search, selectedExtensions: nextExtensions.length ? nextExtensions : undefined };
     applySearch(retainApplicableExploreTypeFilters(nextSearch, nextExtensions));
   };
-  const updateFormatDraft = (format: string) => setFormatDraft((current) => toggleExtensions(current, getExtensionsForCanonicalFormat(format)));
   const customRangeLabel = search.timePreset === "custom" && search.modifiedTimeRange
     ? t("explore.time.range", { start: toDateInput(search.modifiedTimeRange.startMs).replace(/-/g, "."), end: toDateInput(search.modifiedTimeRange.endMs - 1).replace(/-/g, ".") }) : "";
   return <div className="cap-stable-explore-filters">
@@ -111,10 +97,14 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
       <div className="cap-stable-time-labels">{timePresets.map((preset, index) => <button type="button" className={search.timePreset !== "custom" && presetIndex === index ? "is-selected" : ""} aria-pressed={search.timePreset !== "custom" && presetIndex === index} key={preset} onClick={() => { setTimeIndex(index); commitTime(index); }}><i aria-hidden="true" />{t(timeLabels[preset])}</button>)}</div>
     </section>
     <section className="cap-stable-file-type-filter">
-      <header><strong>{t("explore.fileTypes")}</strong><button type="button" title={t("explore.editFormats")} aria-label={t("explore.editFormats")} aria-expanded={flyout?.kind === "formats"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("formats", event)}><StableFilterEditGlyph /></button>{selectedSummary && <span>{selectedSummary}</span>}</header>
+      <header><strong>{t("explore.fileTypes")}</strong>{selectedSummary && <span title={selectedSummary}>{selectedSummary}</span>}</header>
       <div className="cap-stable-file-type-options">
-        {primaryTypes.map((type) => { const extensions = getPrimaryFileTypeExtensions(availableFormats, type); return <button type="button" className={isGroupSelected(selected, extensions) ? "is-selected" : ""} disabled={extensions.length === 0} aria-pressed={isGroupSelected(selected, extensions)} key={type} onClick={() => toggleGroup(extensions)}><TypeGlyph type={type} /><span>{t(primaryLabels[type])}</span></button>; })}
-        <button type="button" className={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension))) ? "is-selected" : ""} aria-pressed={otherTypes.some((type) => getOtherFileTypeExtensions(availableFormats, type).some((extension) => selected.has(extension)))} aria-expanded={flyout?.kind === "other"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => openFlyout("other", event)}><TypeGlyph type="other" /><span>{t("explore.fileTypes.other")}</span></button>
+        {fileTypes.map((type) => {
+          const extensions = type === "image" || type === "video" || type === "audio" || type === "document"
+            ? getPrimaryFileTypeExtensions(availableFormats, type) : getOtherFileTypeExtensions(availableFormats, type);
+          const pressed = isGroupSelected(selected, extensions);
+          return <button type="button" className={pressed ? "is-selected" : ""} disabled={extensions.length === 0} aria-pressed={pressed} key={type} onClick={() => toggleGroup(extensions)}>{t(typeLabels[type])}</button>;
+        })}
       </div>
     </section>
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
@@ -131,13 +121,6 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>
-    </StableSidebarFlyout>}
-    {flyout?.kind === "formats" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editFormats")} placement="below" align="start" width={460} maximumHeight={520} className="cap-stable-explore-flyout cap-stable-format-flyout" onClose={() => setFlyout(null)}>
-      {categoryOrder.map((category) => { const formats = formatGroups.get(category); return formats?.length ? <section key={category}><strong>{t(categoryLabels[category])}</strong><div>{formats.map((format) => { const extensions = getExtensionsForCanonicalFormat(format); const pressed = isGroupSelected(new Set(formatDraft), extensions); return <button type="button" className={pressed ? "is-selected" : ""} aria-pressed={pressed} key={format} onClick={() => updateFormatDraft(format)}>{format.toUpperCase()}</button>; })}</div></section> : null; })}
-      <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFormatDraft([])}>{t("explore.clearFilters")}</button><button type="button" className="is-selected" onClick={() => { const nextSearch = { ...search, selectedExtensions: formatDraft.length ? [...formatDraft].sort() : undefined }; applySearch(retainApplicableExploreTypeFilters(nextSearch, formatDraft)); setFlyout(null); }}>{t("common.confirm")}</button></div>
-    </StableSidebarFlyout>}
-    {flyout?.kind === "other" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.fileTypes.other")} placement="below" align="end" width={390} maximumHeight={240} className="cap-stable-explore-flyout cap-stable-other-flyout" onClose={() => setFlyout(null)}>
-      {otherTypes.map((type) => { const extensions = getOtherFileTypeExtensions(availableFormats, type); const pressed = isGroupSelected(selected, extensions); return <button type="button" className={pressed ? "is-selected" : ""} aria-pressed={pressed} disabled={extensions.length === 0} key={type} onClick={() => toggleGroup(extensions)}>{t(otherLabels[type])}</button>; })}
     </StableSidebarFlyout>}
   </div>;
 };

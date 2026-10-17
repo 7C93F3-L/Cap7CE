@@ -15,8 +15,6 @@
 .cap-catalog-top-filters .cap-stable-explore-filters header { min-height: 24px; gap: 4px; }
 .cap-catalog-top-filters .cap-stable-explore-filters header strong { font-size: 12px; }
 .cap-catalog-top-filters .cap-stable-explore-filters header button { width: 22px; height: 22px; }
-.cap-catalog-top-filters .cap-stable-file-type-options > button { width: 36px; min-height: 53px; grid-template-rows: 30px 18px; padding: 0; }
-.cap-catalog-top-filters .cap-stable-type-glyph { transform: scale(.72); }
 .cap-catalog-design .cap-catalog-body { position: relative; flex: 1; min-height: 0; margin: 0; padding: 0; }
 .cap-catalog-design .cap-catalog-context { border-radius: 12px; background: var(--cap-stable-surface); }
 .cap-catalog-design .cap-catalog-results { border-radius: 0 0 12px 12px; background: transparent; }

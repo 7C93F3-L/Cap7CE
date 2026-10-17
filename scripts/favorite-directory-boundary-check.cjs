@@ -49,7 +49,7 @@ const files = new Map([
   ["src/shared/settingsWindowTypes.d.ts", 15],
   ["src/renderer/catalog-workspace/useCatalogAttributeAvailability.ts", 55],
   ["src/renderer/catalog-workspace/CatalogTopFilters.tsx", 35],
-  ["src/renderer/catalog-workspace/CatalogTopFilters.css", 25],
+  ["src/renderer/catalog-workspace/CatalogTopFilters.css", 45],
   ["src/renderer/metadata-build/useDirectoryMetadataAction.ts", 35],
   ["src/renderer/metadata-build/useDirectoryMetadataMenu.ts", 20],
   ["src/renderer/metadata-build/DirectoryMetadataContextMenu.tsx", 20],
