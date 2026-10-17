@@ -22,8 +22,8 @@
 .cap-catalog-design .cap-catalog-directory-toolbar button { cursor: pointer; font-size: 13px; }
 .cap-catalog-design .cap-catalog-directory-toolbar button:disabled { opacity: .35; }
 .cap-catalog-design .cap-catalog-directory-toolbar input { flex: 1; min-width: 0; background: transparent; border: 0; border-radius: 6px; outline: none; color: var(--cap-stable-text); padding: 4px; font: inherit; }
-.cap-catalog-breadcrumb { display: flex; align-items: center; flex: 1; min-width: 0; overflow: auto; scrollbar-width: none; }
-.cap-catalog-breadcrumb > span { display: flex; align-items: center; flex: 0 0 auto; }
+.cap-catalog-breadcrumb { display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; }
+.cap-catalog-breadcrumb-parts > span { display: flex; align-items: center; flex: 0 0 auto; }
 .cap-catalog-breadcrumb i { font-style: normal; color: var(--cap-stable-text-muted); }
 .cap-catalog-breadcrumb button { white-space: nowrap; }
 .cap-catalog-search-badge { color: var(--theme-color) !important; }

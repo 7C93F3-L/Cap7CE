@@ -35,9 +35,11 @@ export default function CatalogDirectoryToolbar({ path, canBack, canForward, can
       onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onQuery(""); } }} />
       : editing ? <input autoFocus value={draft} aria-label={t("catalogWorkspace.path")} onChange={event => setDraft(event.currentTarget.value)}
         onBlur={() => setEditing(false)} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setEditing(false); setDraft(path ?? ""); } }} />
-      : <div className="cap-catalog-breadcrumb" onDoubleClick={() => setEditing(true)} title="双击空白处输入路径">
+      : <div className="cap-catalog-breadcrumb" onClick={event => { if (!(event.target as HTMLElement).closest("button")) setEditing(true); }} title="单击空白处输入路径">
+        <div className="cap-catalog-breadcrumb-parts">
         <button type="button" onClick={onHome}>{t("skim.computer")}</button>
         {parts.map((part, index) => <span key={index}><i>›</i><button type="button" onClick={() => onOpen(parts.slice(0, index + 1).join("\\") + (index === 0 ? "\\" : ""))}>{part}</button></span>)}
+        </div><button type="button" className="cap-catalog-address-edit" aria-label="编辑目录路径" title="编辑目录路径" onClick={() => setEditing(true)} />
       </div>}
     {!searchMode && query.trim() && <button type="button" className="cap-catalog-search-badge" title={query} onClick={onSearchMode}>搜索中</button>}
     <CatalogRandomControls random={random} disabled={!enabled} busy={refreshing} />
