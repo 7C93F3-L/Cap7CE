@@ -5,10 +5,12 @@ import { t } from "../../../electron/localization";
 import { normalizeWindowsPathKey } from "../filePath";
 import { useTransientFeedback } from "../controllers/useTransientFeedback";
 import { reportComputerSearchTrash } from "./useComputerSearchTrashUpdates";
+import { useDirectoryMetadataAction } from "../metadata-build/useDirectoryMetadataAction";
 
 export function useComputerSearchFileOperations(taskId: string, favorites?: FavoriteDirectoryControls) {
   const pending = useRef(false), [busy, setBusy] = useState(false);
   const feedback = useTransientFeedback();
+  const metadata = useDirectoryMetadataAction();
   const trash = useCallback(async (items: ComputerSearchItem[]) => {
     if (pending.current || !items.length) return false;
     if (items.length > 200) { feedback.show(t("catalogActions.trashLimit")); return false; }
@@ -29,6 +31,6 @@ export function useComputerSearchFileOperations(taskId: string, favorites?: Favo
     const current = favorite(item);
     if (!await (current ? favorites.remove(current.id) : favorites.add(item.path))) feedback.show(t("computerSearch.actionFailed"));
   };
-  return { trash, toggleFavorite, busy, feedback: feedback.message,
+  return { trash, toggleFavorite, metadata: metadata.start, busy, feedback: feedback.message || metadata.message,
     favoriteAction: (item: ComputerSearchItem) => item.isDirectory && favorites ? (favorite(item) ? "remove" as const : "add" as const) : undefined };
 }

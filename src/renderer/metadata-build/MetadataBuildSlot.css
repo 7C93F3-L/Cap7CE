@@ -3,4 +3,5 @@
 .cap-metadata-build-slot { max-height: min(300px, 40vh); overflow: auto; padding: 8px; }
 .cap-metadata-build-reopen { font: inherit; color: var(--cap-stable-text); background: var(--cap-stable-surface-soft); border: 0; border-radius: 7px; padding: 5px 10px; cursor: pointer; }
 .cap-metadata-build-slot > [role="alert"] { display: block; padding: 8px; color: var(--cap-stable-text-muted); font-size: 12px; }
+.cap-metadata-build-slot.is-floating.is-compact > span:first-child { flex: 0 1 45%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 @media (max-height: 360px) { .cap-metadata-build-slot { max-height: 95px; padding: 4px; } }

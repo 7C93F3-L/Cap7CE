@@ -48,6 +48,19 @@ internal static class FileFactDiscoveryTests
             }
             TestAssert.True(cursor is null && identities.Count == 4 && identities.Distinct().Count() == 4,
                 "bounded discovery crosses volumes without duplicates and skips unsafe/incomplete nodes");
+            var folderOnly = new FileFactQueuePolicy(["a"], [new("a", "0000000000000002")], []);
+            var folderPage = await discovery.ReadPageAsync(folderOnly, FileFactKind.ImageDimensions, 1, [".png"]);
+            TestAssert.Equal(1, folderPage.Jobs.Count, "explicit folder discovers only descendants");
+            var folderFile = folderPage.Jobs.Single().Identity;
+            await facts.PublishAsync(new(folderFile, (await facts.CaptureAsync(folderFile))!, FileFactKind.ImageDimensions, 1,
+                FileFactState.Indexed, 640, 480));
+            TestAssert.Equal(0, (await discovery.ReadPageAsync(folderOnly, FileFactKind.ImageDimensions, 1, [".png"])).Jobs.Count,
+                "repeated folder request reuses valid facts");
+            TestAssert.Equal(3, (await discovery.ReadPageAsync(all, FileFactKind.ImageDimensions, 1, [".png"])).Jobs.Count,
+                "later whole-volume sweep reuses the same folder facts without another index");
+            await facts.InvalidateContentAsync(folderFile);
+            TestAssert.Equal(1, (await discovery.ReadPageAsync(folderOnly, FileFactKind.ImageDimensions, 1, [".png"])).Jobs.Count,
+                "changed source is discovered again within the folder");
             TestAssert.Equal(new CatalogEntryIdentity("a", "0000000000000012"), identities.Last(), "final ordered discovery identity");
             var failed = new CatalogEntryIdentity("b", "0000000000000012");
             await facts.PublishAsync(new(failed, (await facts.CaptureAsync(failed))!, FileFactKind.ImageDimensions, 1,

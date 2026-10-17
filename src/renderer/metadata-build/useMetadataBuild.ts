@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MetadataBuildStatus } from "../../shared/metadataBuildTypes";
+import { metadataBuildChanged } from "./useDirectoryMetadataAction";
 
 // Visibility gates display refresh, not the main-process build lifetime.
 export function useMetadataBuild(enabled: boolean, foreground: boolean) {
@@ -28,7 +29,9 @@ export function useMetadataBuild(enabled: boolean, foreground: boolean) {
   }, [enabled]);
   useEffect(() => {
     if (enabled && foreground) void refresh();
-    return () => { observation.current++; };
+    const changed = () => { if (enabled && foreground) void refresh(); };
+    window.addEventListener(metadataBuildChanged, changed);
+    return () => { observation.current++; window.removeEventListener(metadataBuildChanged, changed); };
   }, [enabled, foreground, refresh]);
   useEffect(() => {
     if (!enabled || !foreground || !status || ["idle", "paused", "completed", "failed"].includes(status.progress.phase)) return;
@@ -38,7 +41,7 @@ export function useMetadataBuild(enabled: boolean, foreground: boolean) {
     timer = setTimeout(poll, 1000);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [enabled, foreground, status?.progress.phase, refresh]);
-  const action = useCallback(async (kind: "start" | "pause" | "resume", nextPolicy = status?.policy) => {
+  const action = useCallback(async (kind: "start" | "pause" | "resume" | "cancelDirectories", nextPolicy = status?.policy) => {
     const api = window.cap7ce?.metadataBuild;
     if (!api || !status || !live.current || locked.current) return;
     const epoch = owner.current;

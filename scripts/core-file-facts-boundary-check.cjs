@@ -2,6 +2,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 module.exports = (root, sourceFiles, failures) => {
+  for (const [file, maximum] of [["electron/metadataDirectoryBuildStore.ts", 65],
+    ["electron/metadataExtraction/metadataDirectoryBuildRuntime.ts", 140], ["electron/metadataExtraction/metadataDirectoryScope.ts", 35]]) {
+    const text = fs.readFileSync(path.join(root, file), "utf8");
+    if (text.split(/\r?\n/).length > maximum) failures.push(`${file} exceeds its metadata task boundary.`);
+    if (/CoreHostController|sql\.js|databaseService|thumbnailOptimizationService/.test(text)) failures.push(`${file} bypasses the metadata task owner.`);
+  }
   const panel = fs.readFileSync(path.join(root, "src/renderer/metadata-build/MetadataBuildPanel.tsx"), "utf8");
   if (/window\.|electron|node:|fetch\(|useEffect|useState|setInterval/.test(panel) || panel.split(/\r?\n/).length > 100) {
     failures.push("Metadata build panel must remain a bounded presentation component without runtime ownership.");

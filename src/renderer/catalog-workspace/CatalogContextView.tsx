@@ -81,7 +81,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !random.enabled && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
-      ? <CatalogHome onOpen={openDirectory} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} />
+      ? <CatalogHome onOpen={openDirectory} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />
       : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
     {attributes.relevant && <CatalogAttributeNotice key={JSON.stringify([navigation.path, attributes.message])} message={attributes.message} onMetadata={onMetadata} />}
     {grid.error && <CatalogGridPreferenceNotice onDismiss={grid.dismissError} />}

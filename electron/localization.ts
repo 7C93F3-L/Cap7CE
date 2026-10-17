@@ -1,6 +1,9 @@
 import { enUS } from "./locales/en-US";
 
 export const zhCN = {
+  "metadataDirectory.action": "获取/刷新元数据",
+  "metadataDirectory.queued": "目录已加入元数据队列，包含子文件夹；可在任务区查看进度。",
+  "metadataDirectory.failed": "目录元数据任务未能加入，请确认目录可访问后重试。",
   "favorites.renameFavoriteConflict": "目标路径已在收藏中，请先检查并移除重复的收藏入口后重试。",
   "favorites.openExplorer": "在资源管理器中打开",
   "favorites.renameFolder": "重命名文件夹",

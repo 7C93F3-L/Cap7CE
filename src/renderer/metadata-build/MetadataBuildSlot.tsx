@@ -4,11 +4,19 @@ import MetadataBuildPanel from "./MetadataBuildPanel";
 import MetadataBuildScopePanel from "./MetadataBuildScopePanel";
 import { useMetadataBuild } from "./useMetadataBuild";
 import "./MetadataBuildSlot.css";
+import { metadataBuildChanged, useDirectoryMetadataAction } from "./useDirectoryMetadataAction";
 
 export default function MetadataBuildSlot({ enabled, foreground, onProgress, initiallyCollapsed = false, floating = false, controlsOpen = false, onRequestControls }: {
   enabled: boolean; foreground: boolean; onProgress?: (progress: MetadataBuildProgress) => void; initiallyCollapsed?: boolean;
   floating?: boolean; controlsOpen?: boolean; onRequestControls?: () => void;
 }) {
+  const [directoryRequested, setDirectoryRequested] = useState(false);
+  const directory = useDirectoryMetadataAction();
+  useEffect(() => {
+    const changed = () => setDirectoryRequested(true);
+    window.addEventListener(metadataBuildChanged, changed); return () => window.removeEventListener(metadataBuildChanged, changed);
+  }, []);
+  enabled = enabled || directoryRequested;
   const build = useMetadataBuild(enabled, foreground);
   const [collapsed, setCollapsed] = useState(initiallyCollapsed);
   const [editing, setEditing] = useState(false);
@@ -27,7 +35,7 @@ export default function MetadataBuildSlot({ enabled, foreground, onProgress, ini
   if (floating && !controlsOpen) {
     if (status.progress.phase === "idle" || status.progress.phase === "completed" && !completedNotice) return null;
     return <div className="cap-metadata-build-slot is-floating is-compact" role="status">
-      <span>{status.progress.phase === "completed" ? "文件属性提取已完成" : status.progress.phase === "paused" ? "文件属性提取已暂停"
+      <span title={status.directoryTask?.path}>{status.directoryTask ? `目录元数据 · ${status.directoryTask.path}` : status.progress.phase === "completed" ? "文件属性提取已完成" : status.progress.phase === "paused" ? "文件属性提取已暂停"
         : status.progress.phase === "failed" ? "文件属性提取暂时中断" : "正在提取文件属性"}</span>
       <progress max={1} value={status.progress.progressFraction ?? undefined} />
       <span>{status.progress.processed.toLocaleString()} 项{status.progress.remainingSeconds != null ? ` · 预计还需 ${Math.ceil(status.progress.remainingSeconds / 60)} 分钟` : ""}</span>
@@ -44,10 +52,13 @@ export default function MetadataBuildSlot({ enabled, foreground, onProgress, ini
     {collapsed && !controlsOpen ? <button type="button" className="cap-metadata-build-reopen" onClick={() => setCollapsed(false)}>文件属性建库</button>
       : editing ? <MetadataBuildScopePanel status={{ ...status, policy }} onCancel={() => setEditing(false)}
         onApply={(next) => { setDraft(next); setEditing(false); void build.refresh(); }} />
-      : <MetadataBuildPanel progress={status.progress} scopeSummary={summary}
+      : <MetadataBuildPanel progress={status.progress} scopeSummary={status.directoryTask && !draft ? `${status.directoryTask.path} · 包含子文件夹${status.directoryTask.pending > 1 ? ` · 另有 ${status.directoryTask.pending - 1} 个目录等待` : ""}` : summary}
         currentDriveLabel={label} actionBusy={build.busy}
-        onStart={() => void build.action("start", policy)} onPause={() => void build.action("pause")} onResume={() => void build.action(draft ? "start" : "resume", policy)}
-        onChangeScope={() => setEditing(true)} onDismiss={() => { setCollapsed(true); if (floating) onRequestControls?.(); }} />}
+        onStart={() => { if (status.directoryTask && !draft) { if (status.directoryTask.pending) void build.action("resume"); else void directory.start(status.directoryTask.path); } else void build.action("start", policy); }}
+        onPause={() => void build.action("pause")} onResume={() => void build.action(!status.directoryTask && draft ? "start" : "resume", policy)}
+        onCancel={status.directoryTask?.pending ? () => void build.action("cancelDirectories") : undefined}
+        onChangeScope={status.directoryTask?.pending ? undefined : () => setEditing(true)} onDismiss={() => { setCollapsed(true); if (floating) onRequestControls?.(); }} />}
     {build.error && <span role="alert">操作未完成，请重试</span>}
+    {directory.message && <span role="status">{directory.message}</span>}
   </div>;
 }

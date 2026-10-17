@@ -12,6 +12,7 @@ import './src/renderer/computer-search/ComputerSearch.css';
 window.probe={opens:[],thumbnailRequests:0,driveNames:['X:','Y:','Z:','W:'],failRead:false};
 window.cap7ce={skim:{listLocations:async()=>Array.from({length:24},(_,index)=>({id:'system'+index,kind:'desktop',name:'Location '+index,path:'X:\\\\Location'+index})),read:async r=>{if(window.probe.failRead)throw Error('simulated system enumeration failure');return {taskId:r.taskId,cancelled:false,entries:window.probe.driveNames.map(name=>({kind:'drive',path:name+'\\\\'}))}},cancel:async()=>true}};
 const items=Array.from({length:4},(_,index)=>({id:'file'+index,authorizationId:'file-auth'+index,name:'sample.txt',path:'X:\\\\sample.txt',isDirectory:false,extension:'.txt',iconName:'format-txt'}));
+window.cap7ce.metadataBuild={startDirectory:async request=>{window.probe.metadataRequest=request;return {progress:{phase:'preparing'},directoryTask:{path:request.path,pending:1}}}};
 function Fixture(){const [mode,setMode]=useState('square'),[version,setVersion]=useState(0),fileRoot=useRef(null);window.probe.refresh=()=>setVersion(v=>v+1);return <>
 <button id="toggle" onClick={()=>setMode(value=>value==='square'?'gallery':'square')}>toggle</button>
 <div id="home" className="pane"><CatalogHome refreshVersion={version} gridMode={mode} onOpen={path=>window.probe.opens.push(path)}/></div>
@@ -60,7 +61,15 @@ app.whenReady().then(async()=>{
   assert.equal(await run("document.querySelector('#home .cap-skim-root-group:last-child .cap-catalog-file-grid').dataset.totalCount"),'4','failed refresh preserves known system drives');
   await run("probe.failRead=false;probe.driveNames=['X:'];document.querySelector('#home .cap-catalog-home > button').click()");
   await ready("!document.querySelector('#home .cap-catalog-home > button')&&document.querySelector('#home .cap-skim-root-group:last-child .cap-catalog-file-grid').dataset.totalCount==='1'");
-  console.log('Home and file grids: shared geometry, selection/navigation, Core-independent system drives, failed refresh preservation and retry/removal passed.');
+  win.setSize(950,750);await run("document.querySelector('#home .cap-catalog-home').scrollTop=0");
+  await run("document.querySelector('#home .cap-skim-root-group-header').click()");
+  await ready("document.querySelector('#home .cap-skim-root-group:first-child .cap-skim-root-entry')");
+  await run("document.querySelector('#home .cap-skim-root-group:first-child .cap-skim-root-entry').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:120,clientY:80}))");
+  await ready("document.querySelector('[role=menuitem]')");
+  assert.equal(await run("document.querySelector('[role=menuitem] span').textContent"),'获取/刷新元数据');
+  await run("document.querySelector('[role=menuitem]').click()");await ready('probe.metadataRequest');
+  assert.equal(await run('probe.metadataRequest.path'),'X:\\Location0');assert.equal(await run('probe.metadataRequest.allowMetadataExtraction'),true);
+  console.log('Home and file grids: shared geometry, selection/navigation, independent drives, retry and system-folder metadata action passed.');
  }catch(error){console.error(error.stack);if(win&&!win.isDestroyed())console.error(await win.webContents.executeJavaScript('({height:innerHeight,media:matchMedia("(max-height:359.98px)").matches,overflow:getComputedStyle(document.querySelector(".cap-catalog-home")).overflowY,tiles:[...document.querySelectorAll(".thumb")].map(x=>({parent:x.closest(".pane").id,width:x.getBoundingClientRect().width,height:x.getBoundingClientRect().height}))})').catch(()=>null));process.exitCode=1}
  finally{win?.destroy();if(path.dirname(path.resolve(root))!==path.resolve(os.tmpdir()))throw Error('Unsafe fixture root');fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}
 });

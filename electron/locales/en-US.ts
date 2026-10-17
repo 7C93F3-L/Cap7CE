@@ -1,6 +1,9 @@
 import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
+  "metadataDirectory.action": "Get / refresh metadata",
+  "metadataDirectory.queued": "Folder queued, including subfolders. Progress is available in the task panel.",
+  "metadataDirectory.failed": "Could not queue the folder. Check that it is accessible and try again.",
   "favorites.renameFavoriteConflict": "The destination is already a favorite. Check and remove the duplicate shortcut before retrying.",
   "favorites.openExplorer": "Open in File Explorer",
   "favorites.renameFolder": "Rename folder",

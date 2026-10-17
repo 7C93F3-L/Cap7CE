@@ -15,6 +15,7 @@ import type { MetadataBuildApi } from "../src/shared/metadataBuildTypes";
 import { CoreMetadataProtocol } from "./core/coreMetadataProtocol";
 import { createMetadataBuildRuntime } from "./metadataExtraction/metadataBuildRuntime";
 import { createMetadataBuildPreferenceStore } from "./metadataBuildPreferences";
+import { createMetadataDirectoryStore } from "./metadataDirectoryBuildStore";
 import { toCoreSearchFacts } from "./computerSearchFactConditions";
 import { readComputerSearchFileConditions } from "./computerSearchFileConditions";
 import { CoreCatalogChangeProtocol } from "./core/coreCatalogChangeProtocol";
@@ -212,6 +213,8 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
   const metadataBuild = createMetadataBuildRuntime(new CoreMetadataProtocol({ request: controller.request.bind(controller),
     startRequest: controller.startRequest.bind(controller), cancel: controller.cancelRequest.bind(controller) }), readCatalog,
     { resolveScope: (path) => controller.request<CoreResolvedScope>("catalog.resolveScope", { path }, 5_000),
+      directoryStore: options.metadataPreferencesPath || process.env.LOCALAPPDATA
+        ? createMetadataDirectoryStore(path.join(path.dirname(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")), "metadata-directory-build.json")) : undefined,
       preferences: options.metadataPreferencesPath || process.env.LOCALAPPDATA
         ? createMetadataBuildPreferenceStore(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")) : undefined });
   const favorites = options.favoritePreferencesPath || process.env.LOCALAPPDATA

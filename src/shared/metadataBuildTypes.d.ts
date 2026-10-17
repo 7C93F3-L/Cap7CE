@@ -21,6 +21,7 @@ export interface MetadataBuildStatus {
   volumes: { volumeId: string; label: string }[];
   policy: MetadataBuildPolicy | null;
   scopeLabels: Record<string, string>;
+  directoryTask?: { path: string; pending: number };
 }
 export interface MetadataBuildApi {
   resolveScope(path: string): Promise<{ volumeId: string; rootFileReference: string | null; label: string }>;
@@ -28,4 +29,6 @@ export interface MetadataBuildApi {
   start(request: { allowMetadataExtraction: boolean; policy: MetadataBuildPolicy }): Promise<MetadataBuildStatus>;
   pause(): Promise<MetadataBuildStatus>;
   resume(): Promise<MetadataBuildStatus>;
+  startDirectory(request: { path: string; allowMetadataExtraction: boolean }): Promise<MetadataBuildStatus>;
+  cancelDirectories(): Promise<MetadataBuildStatus>;
 }

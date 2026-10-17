@@ -6,16 +6,23 @@ import type { MetadataBuildPreferenceStore } from "../metadataBuildPreferences";
 
 import { MetadataBuildLifecycle } from "../metadataBuildLifecycle";
 import { MetadataChangeDrain } from "./metadataChangeDrain";
+import { attachMetadataDirectoryBuilds } from "./metadataDirectoryBuildRuntime";
+import type { MetadataDirectoryStore } from "../metadataDirectoryBuildStore";
 
 export interface MetadataBuildRuntime extends MetadataBuildApi {
   restore(): Promise<void>;
   shutdown(): Promise<void>;
   notifyCatalogChange(): Promise<void>;
 }
+export interface MetadataBuildOwner extends Omit<MetadataBuildRuntime, "startDirectory" | "cancelDirectories"> {
+  suspendForDirectory(): Promise<void>;
+  releaseDirectory(): Promise<void>;
+}
 // Shares the authenticated Host. Only the product owner restores a saved active grant; status stays read-only.
 export interface MetadataBuildRuntimeOptions extends MetadataBuildOptions {
   resolveScope?: (path: string) => Promise<CoreResolvedScope>;
   preferences?: MetadataBuildPreferenceStore;
+  directoryStore?: MetadataDirectoryStore;
 }
 export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
   readCatalog: () => Promise<CoreCatalogStatus>, options: MetadataBuildRuntimeOptions = {}): MetadataBuildRuntime => {
@@ -61,7 +68,7 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
     volumes = catalog.volumes.filter((volume) => volume.selected).map((volume) => ({ volumeId: volume.volumeId, label: volume.displayName }));
     return catalog;
   };
-  const api: MetadataBuildRuntime = {
+  const api: MetadataBuildOwner = {
     async resolveScope(path) {
       if (typeof path !== "string" || path.length > 32768 || !/^[A-Za-z]:[\\/]/.test(path) || !options.resolveScope) throw new Error("metadata-build-invalid-directory");
       await refreshVolumes();
@@ -133,10 +140,20 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
       if (!maintenanceEnabled) return;
       drain.notify(); await drain.waitForIdle();
     },
+    async suspendForDirectory() {
+      await loadPreferences();
+      revision++; maintenanceEnabled = false; initialSweep = false; drain.reset();
+      await controller.pause(); await drain.waitForIdle();
+    },
+    async releaseDirectory() {
+      if (policy && savedIntent === "active") await api.start({ allowMetadataExtraction: true, policy });
+      else if (policy && savedIntent === "completed") { maintenanceEnabled = true; drain.notify(); await drain.waitForIdle(); }
+      else await protocol.pause();
+    },
     async shutdown() {
       revision++; maintenanceEnabled = false; initialSweep = false; drain.reset();
       await controller.pause(); await drain.waitForIdle(); await lifecycle.flush();
     }
   };
-  return api;
+  return attachMetadataDirectoryBuilds(api, protocol, options, readCatalog);
 };

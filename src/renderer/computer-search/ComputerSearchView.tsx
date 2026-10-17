@@ -155,6 +155,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       onClose={() => actions.setContextMenu(null)}
       favoriteAction={operations.favoriteAction(actions.contextMenu.item)} favoriteBusy={favorites?.busy}
       onAction={action => { const state = actions.contextMenu!; if (action === "delete") trash(state.items);
+        else if (action === "metadata") { actions.setContextMenu(null); void operations.metadata(state.item.path); }
         else if (action === "addToSidebar") void operations.toggleFavorite(state.item); else actions.handleContextMenuAction(action); }}
     />}
   </section>;

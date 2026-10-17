@@ -12,7 +12,7 @@ export type ComputerSearchContextMenuState = {
   items: ComputerSearchItem[];
 };
 
-type ResultAction = "preview" | "open" | "showInFolder" | "copyPaths" | "delete" | "addToSidebar";
+type ResultAction = "preview" | "open" | "showInFolder" | "copyPaths" | "delete" | "addToSidebar" | "metadata";
 
 const ComputerSearchResultContextMenu = ({
   state, theme, appearanceColors, windowMaterial, onClose, onAction, favoriteAction, favoriteBusy = false
@@ -47,6 +47,7 @@ const ComputerSearchResultContextMenu = ({
         ? t("context.copySelectedPaths", { count: state.items.length })
         : t("context.copyPath"), fileContextShortcutLabels.copyPaths),
         ...(favoriteAction ? [{ ...action("addToSidebar", t(favoriteAction === "add" ? "catalogActions.addFavorite" : "catalogActions.removeFavorite"), ""), disabled: favoriteBusy }] : []),
+        ...(state.item.isDirectory && state.items.length === 1 ? [action("metadata", t("metadataDirectory.action"), "")] : []),
         action("delete", t("common.delete"), fileContextShortcutLabels.delete)]
     ]}
     onClose={onClose}

@@ -9,6 +9,7 @@ app.whenReady().then(async()=>{
   try {
     const errors=[];
     ipcMain.handle('metadataBuild:status',()=>({progress:{phase:'idle'},volumes:[]}));
+    ipcMain.handle('metadataBuild:startDirectory',(_event,request)=>({directoryTask:{path:request.path,pending:1},allowed:request.allowMetadataExtraction}));
     ipcMain.handle('favoriteDirectories:list',()=>[]);
     ipcMain.handle('window:getAlwaysOnTop',()=>false);
     window=new BrowserWindow({show:false,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false,
@@ -20,13 +21,15 @@ app.whenReady().then(async()=>{
       if(!api)return {available:false,nodeAccess:typeof require};
       return {available:true,nodeAccess:typeof require,
         phase:(await api.metadataBuild.status()).progress.phase,
+        directory:(await api.metadataBuild.startDirectory({path:'X:\\Assets',allowMetadataExtraction:true})).allowed,
+        cancelDirectories:typeof api.metadataBuild.cancelDirectories,
         favorites:(await api.favoriteDirectories.list()).length,renameFolder:typeof api.favoriteDirectories.renameFolder,
         pinned:await api.window.getAlwaysOnTop(),
         shellAction:typeof api.window.setShellState,
         changeSubscription:typeof api.computerSearch.onCatalogChanged,trashAction:typeof api.computerSearch.moveToTrash};
     })()`);
     assert.deepEqual(errors,[],'production preload must load inside the sandbox');
-    assert.deepEqual(result,{available:true,nodeAccess:'undefined',phase:'idle',favorites:0,renameFolder:'function',pinned:false,
+    assert.deepEqual(result,{available:true,nodeAccess:'undefined',phase:'idle',directory:true,cancelDirectories:'function',favorites:0,renameFolder:'function',pinned:false,
       shellAction:'function',changeSubscription:'function',trashAction:'function'});
     console.log('Production preload exposes domain and existing window bridges in a real isolated sandbox.');
     window.destroy();app.exit(0);

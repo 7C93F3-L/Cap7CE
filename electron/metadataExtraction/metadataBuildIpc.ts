@@ -1,6 +1,7 @@
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 import type { MetadataBuildApi, MetadataBuildPolicy } from "../../src/shared/metadataBuildTypes";
 import { registerIpcDomain, type IpcRegistrar } from "../ipcRegistration";
+import { directoryBuildPath } from "../metadataDirectoryBuildStore";
 
 const readStart = (value: unknown): { allowMetadataExtraction: boolean; policy: MetadataBuildPolicy } => {
   const request = value as { allowMetadataExtraction?: unknown; policy?: MetadataBuildPolicy } | null;
@@ -25,6 +26,11 @@ export const registerMetadataBuildIpc = (registrar: IpcRegistrar,
     { kind: "handle", channel: "metadataBuild:status", listener: () => runtime.status() },
     { kind: "handle", channel: "metadataBuild:start", listener: (_event, value) => runtime.start(readStart(value)) },
     { kind: "handle", channel: "metadataBuild:pause", listener: () => runtime.pause() },
-    { kind: "handle", channel: "metadataBuild:resume", listener: () => runtime.resume() }
+    { kind: "handle", channel: "metadataBuild:resume", listener: () => runtime.resume() },
+    { kind: "handle", channel: "metadataBuild:startDirectory", listener: (_event, value) => {
+      if (value?.allowMetadataExtraction !== true) throw new Error("metadata-build-confirmation-required");
+      return runtime.startDirectory({ path: directoryBuildPath(value.path), allowMetadataExtraction: true });
+    } },
+    { kind: "handle", channel: "metadataBuild:cancelDirectories", listener: () => runtime.cancelDirectories() }
   ] });
 };

@@ -17,11 +17,12 @@ export interface MetadataBuildPanelProps {
   onResume: () => void;
   onChangeScope?: () => void;
   onDismiss?: () => void;
+  onCancel?: () => void;
 }
 
 // Presentation only. Source paths, IPC, consent persistence and task ownership stay outside this view.
 export default function MetadataBuildPanel({ progress, scopeSummary, currentDriveLabel, actionBusy = false,
-  onStart, onPause, onResume, onChangeScope, onDismiss }: MetadataBuildPanelProps) {
+  onStart, onPause, onResume, onChangeScope, onDismiss, onCancel }: MetadataBuildPanelProps) {
   const initial = progress.phase === "idle";
   const stopped = ["idle", "paused", "completed", "failed"].includes(progress.phase);
   const fraction = progress.progressFraction;
@@ -46,11 +47,15 @@ export default function MetadataBuildPanel({ progress, scopeSummary, currentDriv
         {!stopped && progress.phase !== "pausing" && <span className="cap-metadata-build-detail">{
           progress.phase === "waiting" ? "等待恢复后将继续" : remaining}</span>}
         {progress.failed > 0 && <span className="cap-metadata-build-detail">{progress.failed.toLocaleString()} 项未能提取，不影响其余文件</span>}
-        {progress.phase === "failed" && <p>已保存的属性仍可使用，可以稍后重试。</p>}
+        {progress.phase === "failed" && <p>{progress.errorCode === "metadata-directory-changed" ? "目录身份已变化，请取消此任务后重新选择目录。"
+          : progress.errorCode === "metadata-directory-unavailable" ? "目录暂不可访问，请检查磁盘连接及基础目录状态后重试。"
+          : progress.errorCode === "metadata-directory-state-unavailable" ? "目录任务无法保存，请检查配置目录的空间和写入权限后重试。"
+          : "已保存的属性仍可使用，可以稍后重试。"}</p>}
       </div>}
     <div className="cap-metadata-build-footer">
       <span className="cap-metadata-build-detail">{currentDriveLabel && !initial ? `当前磁盘 ${currentDriveLabel} · ` : ""}{scopeSummary}</span>
       <div className="cap-metadata-build-actions">
+        {onCancel && <button type="button" disabled={actionBusy} onClick={onCancel}>取消目录任务</button>}
         {onChangeScope && stopped && <button type="button" disabled={actionBusy} onClick={onChangeScope}>范围与顺序</button>}
         <button type="button" className="cap-metadata-build-primary" disabled={actionBusy || progress.phase === "pausing"}
           onClick={progress.phase === "paused" ? onResume : stopped ? onStart : onPause}>{
