@@ -109,7 +109,7 @@ const files = new Map([
   ["src/renderer/catalog-workspace/CatalogGridPreferenceNotice.tsx", 15],
   ["src/renderer/catalog-workspace/CatalogHomeGroup.tsx", 45],
   ["src/shared/catalogPresentationTypes.ts", 20],
-  ["src/renderer/catalog-workspace/CatalogContextView.tsx", 90],
+  ["src/renderer/catalog-workspace/CatalogContextView.tsx", 93],
   ["src/renderer/catalog-workspace/CatalogQueryNotice.tsx", 25],
   ["src/renderer/catalog-workspace/CatalogQueryToolbar.tsx", 50],
   ["src/renderer/catalog-workspace/useCatalogDirectoryNavigation.ts", 50],

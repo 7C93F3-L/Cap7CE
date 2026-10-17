@@ -99,7 +99,7 @@ app.whenReady().then(async()=>{
   await run("document.querySelector('.cap-favorite-row .cap-favorite-open').click()");
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Favorite'");
   assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),2,'Computer and the current favorite retain independent scenes');
-  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false','favorite defaults to breadcrumbs');
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'true','favorite defaults to its scoped search input');
   assert.equal(await run('probe.requests.at(-1).scopeKind'),'direct-children','favorites use the same current-level query as drive navigation');
   assert.equal(await run(`${active}.querySelector('.cap-computer-search-grid').classList.contains('is-gallery')`),true);
   await run("document.querySelectorAll('.cap-catalog-layout-tools button')[1].click()");
@@ -132,6 +132,8 @@ app.whenReady().then(async()=>{
   await ready("probe.requests.at(-1)?.scopeKind==='direct-children'");
   const oldRequests=await run('probe.requests.length');
   await run(`${active}.querySelector('.cap-catalog-address-toggle').click();${active}.querySelector('.cap-catalog-grid-toggle').click()`);
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false','manual breadcrumbs remain active on the current favorite');
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click()`);
   assert.equal(await run(`${active}.querySelector('.cap-computer-search-grid').classList.contains('is-square')`),true);
   assert.equal(await run('probe.requests.length'),oldRequests,'address and grid modes are presentation only');
   const typeQuery=async value=>{await run(`(()=>{const input=${active}.querySelector('.cap-catalog-directory-toolbar input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}))})()`)};
@@ -276,6 +278,8 @@ app.whenReady().then(async()=>{
   await run(`${active}.querySelector('.cap-computer-search-entry').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))`);
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Folder\\\\Nested'");
   const renameInput=async name=>{await sidebarMenu(1);await menuAction('重命名文件夹');await ready("document.querySelector('.cap-favorite-row input')");await run(`(()=>{const input=document.querySelector('.cap-favorite-row input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(name)});input.dispatchEvent(new Event('input',{bubbles:true}))})()`);await run("document.querySelector('.cap-favorite-row form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))");await ready("!document.querySelector('.cap-favorite-row input')")};
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click()`);
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false');
   await run('probe.cancelRename=true');await renameInput('Cancelled');
   assert.equal(await run('probe.favorites[1].path'),'X:\\Folder','Shell cancellation preserves favorite path');
   assert.equal(await run('probe.requests.at(-1).scopePath'),'X:\\Folder\\Nested','Shell cancellation preserves current location');
@@ -287,6 +291,31 @@ app.whenReady().then(async()=>{
   await run(`${active}.querySelectorAll('.cap-catalog-directory-toolbar > button')[1].click()`);
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Renamed\\\\Nested'");
   assert.equal(await run("document.querySelector('.cap-favorite-actions')===null&&document.querySelectorAll('.cap-favorite-directories > header button').length===1"),true,'temporary management mode is removed');
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false','rename and internal history do not reset a manual breadcrumb choice');
+  const renamedOwner=await run(`${active}.id`);
+  const switchFavorite=async index=>{await run(`document.querySelectorAll('.cap-favorite-row .cap-favorite-open')[${index}].click()`);await ready(`${active}.querySelector('.cap-computer-search-entry')`)};
+  await switchFavorite(0);
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'true','another favorite also defaults to search');
+  await switchFavorite(1);
+  assert.notEqual(await run(`${active}.id`),renamedOwner,'favorite switching still retires the previous result owner');
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'true','reopening a favorite resets manual breadcrumbs to search');
+  assert.equal(await run(`!!${active}.querySelector('.cap-catalog-directory-toolbar input')`),true);
+  assert.equal(await run("document.querySelectorAll('[role=tabpanel]').length"),2,'address mode does not retain more result lists');
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click()`);
+  const retainedOwner=await run(`${active}.id`);
+  await switchFavorite(1);
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'false','clicking the same entry does not leave the current page');
+  await run("document.querySelector('.cap-favorite-directories > .cap-favorite-open').click()");
+  await ready(`${active}.id===${JSON.stringify(computerId)}`);
+  await switchFavorite(1);
+  assert.equal(await run(`${active}.id`),retainedOwner,'Computer switching keeps the favorite page mounted');
+  assert.equal(await run(`${active}.querySelector('.cap-catalog-address-toggle').getAttribute('aria-pressed')`),'true','returning from Computer resets to search even without unmounting');
+  await run(`${active}.querySelector('.cap-catalog-address-toggle').click()`);
+  const reloaded=new Promise(resolve=>win.webContents.once('did-finish-load',resolve));win.reload();await reloaded;
+  await ready("document.querySelector('.cap-favorite-row .cap-favorite-open')");
+  await run("probe.building=false;document.querySelector('.cap-favorite-row .cap-favorite-open').click()");
+  await ready(`${active}.querySelector('.cap-catalog-address-toggle')?.getAttribute('aria-pressed')==='true'`);
+  assert.equal(await run(`!!${active}.querySelector('.cap-catalog-directory-toolbar input')`),true,'fresh renderer startup also defaults favorites to search');
   console.log('Catalog navigation, scene retention, actions-only menu, delete/cancel/partial results, Delete key and folder favorite controls passed.');
 
  }catch(error){console.error(error.stack);process.exitCode=1}

@@ -29,7 +29,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
 }) {
   const random = useCatalogRandomBrowse(), filters = useComputerSearchFilters(true);
-  const [searchMode, setSearchMode] = useState(context.kind === "search" && Boolean(context.scopePath));
+  const [searchMode, setSearchMode] = useState(Boolean(context.scopePath) && (context.favoritePath != null || context.kind === "search"));
   const [selection, setSelection] = useState<CatalogSelection | null>(null);
   const reportSelection = useCallback((value: CatalogSelection) => { setSelection(value); if (value.items.filter(item => !item.isDirectory).length > 1) onShowDetails?.(); }, [onShowDetails]);
   const querySetter = useRef<(value: string) => void>(() => {});
@@ -46,7 +46,10 @@ export default function CatalogContextView({ context, selected, foreground, filt
   querySetter.current = controller.setQuery;
   const filterCount = workspaceFilterCount(filters.panel.search), searching = filterCount > 0 || Boolean(controller.query.trim());
   const attributes = useCatalogAttributeAvailability(navigation.path, filters.panel.search.selectedExtensions ?? [], foreground && controller.canSubmit, metadataProgress);
-  useEffect(() => { if (navigation.path === null) setSearchMode(searching); }, [navigation.path, searching]);
+  useEffect(() => {
+    if (navigation.path === null) setSearchMode(searching);
+    else if (!selected && context.favoritePath != null) setSearchMode(true);
+  }, [navigation.path, searching, selected, context.favoritePath]);
   const home = () => { filters.clear(); clearQuery(); setSearchMode(false); navigation.openBrowser(null); };
   const refresh = useCatalogRefresh(controller, navigation.path === null && !searching, foreground, navigation.path), inputRef = useRef<HTMLInputElement | null>(null);
   const actions = useMemo<CatalogContextActions>(() => ({ currentPath: navigation.path, browseChildren: !view.includeSubfolders,
