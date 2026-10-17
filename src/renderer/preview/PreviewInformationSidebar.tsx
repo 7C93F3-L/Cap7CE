@@ -9,6 +9,7 @@ import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
   data: FileInformationData; expanded: boolean;
   showFileActions?: boolean; showSearchEvidence?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
+  mergeLocation?: boolean;
   renderVisual?: (scrollRef: RefObject<HTMLDivElement | null>) => ReactNode;
   onToggleExpanded?: () => void;
   onOpen?: () => void;
@@ -38,7 +39,7 @@ const getFileFormat = (data: FileInformationData) => {
 };
 const PreviewInformationSidebar = ({
   data,
-  showFileActions = true, showSearchEvidence = true, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
+  showFileActions = true, showSearchEvidence = true, mergeLocation = false, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
   expanded,
   onToggleExpanded,
   onOpen,
@@ -55,6 +56,8 @@ const PreviewInformationSidebar = ({
   onDelete
 }: PreviewInformationSidebarProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const fileName = <strong title={data.fileName}>{data.fileName}</strong>;
+  const location = <button className="preview-sidebar-path" type="button" title={data.filePath} onClick={onShowInFolder}>{data.filePath}</button>;
   return (
   <aside
     className={`preview-information-sidebar${expanded ? " is-expanded" : " is-collapsed"}${className ? ` ${className}` : ""}`}
@@ -71,19 +74,20 @@ const PreviewInformationSidebar = ({
         <section className="preview-sidebar-section preview-sidebar-file-card">
           <h2>{t("preview.sidebar.fileInfo")}</h2>
           <div className="preview-sidebar-file-heading">
-            <strong title={data.fileName}>{data.fileName}</strong>
+            {mergeLocation ? <button className="preview-sidebar-path preview-sidebar-file-link" type="button" title={t("context.showInFolder")} onClick={onShowInFolder}>{fileName}</button> : fileName}
             <span>{getFileFormat(data)}</span>
           </div>
           <dl className="preview-sidebar-details">
             {(data.imageWidth ?? 0) > 0 && (data.imageHeight ?? 0) > 0 && <div><dt>{t("preview.sidebar.dimensions")}</dt><dd>{data.imageWidth} × {data.imageHeight}</dd></div>}
             <div><dt>{t("skim.previewSize")}</dt><dd>{formatBytes(data.fileSize)}</dd></div>
             <div><dt>{t("skim.previewModified")}</dt><dd>{data.modifiedAt ? new Date(data.modifiedAt).toLocaleString() : "—"}</dd></div>
+            {mergeLocation && <div><dt>{t("preview.sidebar.location")}</dt><dd>{location}</dd></div>}
           </dl>
         </section>
-        <section className="preview-sidebar-section">
+        {!mergeLocation && <section className="preview-sidebar-section">
           <h2>{t("preview.sidebar.location")}</h2>
-          <button className="preview-sidebar-path" type="button" title={data.filePath} onClick={onShowInFolder}>{data.filePath}</button>
-        </section>
+          {location}
+        </section>}
         <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} available={keywordsAvailable} readState={keywordsReadState} onRetry={onRetryKeywords} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
         {showSearchEvidence && <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />}
         {data.embeddedMetadata

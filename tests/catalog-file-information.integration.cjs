@@ -52,10 +52,13 @@ app.whenReady().then(async()=>{let win;try{
  await ready('!document.querySelector(".keyword-tag-editor")');assert.deepEqual(await run('probe.tags.B'),[],'cleared keywords are saved explicitly');
  assert.equal(await run('document.body.innerText.includes("1200 × 800")'),true);
  const headings=await run('[...document.querySelectorAll(".preview-sidebar-section h2,.preview-embedded-metadata-details h2")].map(e=>e.innerText)');
- assert.deepEqual(headings,['文件信息','位置','手动关键词','嵌入信息']);
+ assert.deepEqual(headings,['文件信息','手动关键词','嵌入信息']);
+ assert.equal(await run('document.querySelector(".preview-sidebar-file-card .preview-sidebar-details > div:last-child dt").innerText'),'位置','location is part of the basic information card');
  assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),false,'catalog omits the retired evidence card');
  assert.equal(await run('!!document.querySelector(".preview-sidebar-actions")'),false);assert.equal(await run('document.body.innerText.includes("打开详细预览")'),false);
- await run('document.querySelector(".preview-sidebar-path").click()');assert.equal(await run('probe.reveals'),1,'location reuses the authorized result action');
+ await run('document.querySelector(".preview-sidebar-details .preview-sidebar-path").click()');assert.equal(await run('probe.reveals'),1,'location reuses the authorized result action');
+ await run('document.querySelector(".preview-sidebar-file-link").click()');assert.equal(await run('probe.reveals'),2,'file name uses the same reveal-and-select action');
+ win.webContents.focus();await run('document.querySelector(".preview-sidebar-file-link").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Return'});win.webContents.sendInputEvent({type:'char',keyCode:'\r'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Return'});await wait(30);assert.equal(await run('probe.reveals'),3,'file name is keyboard accessible');
  for(const theme of ['light','dark']){for(const width of [220,280,420]){await run(`probe.width(${width});probe.theme('${theme}');document.documentElement.style.setProperty('--cap-ui-font-base','16px')`);assert.equal(await run('(()=>{const e=document.querySelector(".preview-sidebar-scroll");return e.scrollWidth>e.clientWidth+1})()'),false,'cards fit each supported width at maximum font size');
  assert.ok(await run('document.querySelector(".cap-catalog-file-visual").getBoundingClientRect().height')<=280,'thumbnail height is bounded at wide sizes');}}
  await run(`(${keywordSection}).querySelector("button").click()`);await ready('document.querySelector(".keyword-tag-editor input")');await win.webContents.insertText('late-save');
@@ -69,6 +72,7 @@ app.whenReady().then(async()=>{let win;try{
  await run("probe.foreground(true)");await ready('probe.reads.length==='+String(detailReadCount+1));await run('probe.select(null)');assert.ok(await run('probe.cancels.length')>=3,'clearing selection retires its read');
  await run('probe.preview()');await ready('document.querySelector(".preview-sidebar-actions")');assert.equal(await run('document.querySelectorAll(".preview-sidebar-actions button").length'),3,'standalone preview retains its file actions');
  assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'文件信息','standalone preview retains its original heading');
+ assert.equal(await run('!![...document.querySelectorAll(".preview-sidebar-section h2")].find(e=>e.innerText==="位置")'),true,'standalone preview retains its separate location card');
  assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),true,'standalone preview preserves its existing evidence card');
  console.log('Catalog information: shared cards, metadata, keyword editing/clear/cancel/save failures, authorization refresh, stale reads/saves, persistence, narrow themes and preview compatibility passed.');
 }catch(e){console.error(e.stack);process.exitCode=1}finally{win?.destroy();fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});
