@@ -91,10 +91,14 @@ app.whenReady().then(async()=>{
   await ready("document.querySelector('.cap-catalog-filter-host').hidden");
   await run("document.querySelectorAll('.cap-catalog-layout-tools button')[1].click()");
   assert.equal(await run("document.querySelector('.cap-catalog-details-host').hidden"),true);
+  const widthBeforeLogo=await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')");
   await run("document.querySelector('.cap-catalog-brand').click()");
+  assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),widthBeforeLogo,'logo is display only');
+  for(let step=0;step<8;step++){await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}))");await wait(10)}
   await ready("document.querySelector('.cap-catalog-sidebar').classList.contains('is-collapsed')");
+  assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),'40','sidebar can reach its original minimum');
   await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))");
-  assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),'68');
+  assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuenow')"),'56');
   assert.equal(await run('probe.requests.length'),before,'layout controls never change query scope');
   await run("document.querySelector('.cap-favorite-row .cap-favorite-open').click()");
   await ready("probe.requests.at(-1)?.scopePath==='X:\\\\Favorite'");

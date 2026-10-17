@@ -29,10 +29,14 @@ app.whenReady().then(async()=>{try{
  await ready('!!window.probe');assert.equal(await run('probe.filtersVisible&&probe.detailsVisible'),true);assert.equal(await stored(),null,'initial layout does not write a width');
  await key('ArrowRight');await key('ArrowRight');assert.equal(await run('probe.width'),188);assert.equal(await stored(),'188');
  await resize(400,800);assert.equal(await run('probe.width'),140,'legacy viewport-minus-260 rule limits only rendered width');assert.equal(await stored(),'188');
- await resize(300,800);assert.equal(await run('probe.width'),52);assert.equal(await run('probe.collapsed'),true);await reload();assert.equal(await stored(),'188');assert.equal(await run('probe.width'),52);
+ await resize(300,800);assert.equal(await run('probe.width'),40);assert.equal(await run('probe.collapsed'),true);await reload();assert.equal(await stored(),'188');assert.equal(await run('probe.width'),40);
  await resize(1100,800);assert.equal(await run('probe.width'),188,'restarting while narrow preserves the expanded preference');
- await run("document.querySelector('.cap-catalog-brand').click()");await frame();assert.equal(await stored(),'52');await reload();assert.equal(await run('probe.width'),52,'manual collapse persists');
- await run("document.querySelector('.cap-catalog-brand').click()");await frame();await key('ArrowRight');await key('ArrowRight');
+ await run("document.querySelector('.cap-catalog-brand').click()");await frame();assert.equal(await stored(),'188');assert.equal(await run('probe.width'),188,'logo cannot change sidebar width');
+ assert.equal(await run("document.querySelector('.cap-catalog-brand').tagName"),'DIV');assert.equal(await run("document.querySelector('.cap-catalog-brand').tabIndex"),-1,'branding is not an interactive control');
+ for(let step=0;step<10;step++)await key('ArrowLeft');assert.equal(await run('probe.width'),40);assert.equal(await stored(),'40');await reload();assert.equal(await run('probe.width'),40,'manually chosen minimum persists');
+ assert.equal(await run("document.querySelector('.cap-catalog-resizer').getAttribute('aria-valuemin')"),'40');
+ assert.equal(await run("(()=>{const sidebar=document.querySelector('.cap-catalog-sidebar').getBoundingClientRect();return [...document.querySelectorAll('.cap-catalog-sidebar button')].filter(e=>e.getClientRects().length).every(e=>{const r=e.getBoundingClientRect();return r.left>=sidebar.left&&r.right<=sidebar.right})})()"),true,'all visible sidebar controls fit the 40px minimum');
+ await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))");await frame();await key('ArrowRight');await key('ArrowRight');
  const point=await run("(()=>{const r=document.querySelector('.cap-catalog-resizer').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()");
  win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...point});win.webContents.sendInputEvent({type:'mouseMove',x:point.x+40,y:point.y});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+40,y:point.y});await frame();
  assert.equal(await run('probe.width'),228);assert.equal(await stored(),'228','actual drag saves only the explicitly chosen width');

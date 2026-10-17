@@ -1,4 +1,4 @@
-export const defaultSidebarWidth = 156, minimumSidebarWidth = 52, maximumSidebarWidth = 320;
+export const defaultSidebarWidth = 156, minimumSidebarWidth = 40, maximumSidebarWidth = 320;
 const storageKey = "cap7ce.catalog.sidebar-width.v1";
 export function readCatalogSidebarWidth() {
   try {

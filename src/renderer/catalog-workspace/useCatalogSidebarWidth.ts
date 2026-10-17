@@ -24,8 +24,7 @@ export function useCatalogSidebarWidth(viewportWidth: number) {
     event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { x: event.clientX, width, pointerId: event.pointerId };
   };
-  return { width, collapsed: width < 90, startResize,
+  return { width, minWidth: minimum, maxWidth: maximum, collapsed: width < 90, startResize,
     resetWidth: () => { drag.current = null; change(defaultSidebarWidth, true); },
-    resizeKey: (key: string) => { if (key === "ArrowLeft" || key === "ArrowRight") change(Math.min(width + (key === "ArrowLeft" ? -16 : 16), Math.max(minimum, viewportWidth - 260)), true); },
-    toggleWidth: () => { drag.current = null; change(width < 90 ? defaultSidebarWidth : minimum, true); } };
+    resizeKey: (key: string) => { if (key === "ArrowLeft" || key === "ArrowRight") change(Math.min(width + (key === "ArrowLeft" ? -16 : 16), Math.max(minimum, viewportWidth - 260)), true); } };
 }

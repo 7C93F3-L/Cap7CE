@@ -14,7 +14,7 @@ export default function CatalogSidebar({ layout, favorites, onSettings }: {
   const metadata = useDirectoryMetadataAction();
   const activity = useCatalogActivity();
   return <aside className={`cap-catalog-sidebar${layout.collapsed ? " is-collapsed" : ""}`}>
-    <button className="cap-catalog-brand" type="button" title={layout.collapsed ? "展开目录栏" : "收起目录栏"} aria-label="Cap7CE" onClick={layout.toggleWidth}><span className="cap-catalog-brand-logo" aria-hidden="true" /></button>
+    <div className="cap-catalog-brand" role="img" aria-label="Cap7CE"><span className="cap-catalog-brand-logo" aria-hidden="true" /></div>
     <nav className="cap-catalog-layout-tools" aria-label={t("workspace.navigation")}>
       <button type="button" disabled={layout.restoring} title={layout.filtersVisible ? "收起顶部筛选" : "显示顶部筛选"} aria-label={t("workspace.filters")} aria-expanded={layout.filtersVisible} onClick={layout.toggleFilters}><CatalogPanelIcon side="top" /></button>
       <button type="button" disabled={layout.restoring} title={layout.detailsVisible ? "收起详细信息" : "显示详细信息"} aria-label="详细信息" aria-expanded={layout.detailsVisible} onClick={layout.toggleDetails}><CatalogPanelIcon side="right" /></button>
@@ -23,7 +23,7 @@ export default function CatalogSidebar({ layout, favorites, onSettings }: {
       onAutoKeywords={activity && !activity.busy ? directory => { void activity.startBatch({ favoriteId: directory.id }, directory.name); } : undefined} />
     <div className="cap-catalog-sidebar-bottom">
       <button type="button" title={t("window.openSettings")} aria-label={t("window.openSettings")} onClick={onSettings}><StableUiIcon name="settings" /><span className="cap-catalog-settings-label">{t("window.openSettings")}</span></button></div>
-    <div className="cap-catalog-resizer" role="separator" aria-label="目录栏宽度" aria-orientation="vertical" aria-valuenow={Math.round(layout.width)} aria-valuemin={52} aria-valuemax={320}
+    <div className="cap-catalog-resizer" role="separator" aria-label="目录栏宽度" aria-orientation="vertical" aria-valuenow={Math.round(layout.width)} aria-valuemin={layout.minWidth} aria-valuemax={layout.maxWidth}
       tabIndex={0} onPointerDown={layout.startResize} onDoubleClick={layout.resetWidth} onKeyDown={event => { if (event.key.startsWith("Arrow")) { event.preventDefault(); layout.resizeKey(event.key); } }} />
   </aside>;
 }
