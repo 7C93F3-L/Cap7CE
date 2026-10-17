@@ -262,7 +262,7 @@ app.whenReady().then(async()=>{
   assert.deepEqual(await run("(()=>{const e=document.querySelector('[role=menu]');return [e.style.left,e.style.top]})()"),hoverPosition,'sidebar context menu shares the hover tooltip anchor rather than mouse coordinates');
   assert.equal(await run("!!document.querySelector('[role=tooltip]')"),false,'context menu retires the hover tooltip');
   assert.equal(await run(`${active}.id`),scene,'right-clicking an inactive favorite does not navigate');
-  assert.deepEqual(await run("[...document.querySelectorAll('[role=menuitem] span')].map(e=>e.textContent)"),['在资源管理器中打开','复制路径','重命名文件夹','上移','下移','移除收藏','获取/刷新元数据','自动添加关键词']);
+  assert.deepEqual(await run("[...document.querySelectorAll('[role=menuitem] span')].map(e=>e.textContent)"),['在资源管理器中打开','复制路径','重命名文件夹','上移','下移','移除收藏','自动添加关键词','获取/刷新元数据']);
   assert.equal(await run("[...document.querySelectorAll('[role=menuitem]')].find(e=>e.innerText==='上移').disabled"),true);
   await menuAction('获取/刷新元数据');await ready('probe.metadataRequests?.length===2');
   assert.equal(await run('probe.metadataRequests[1].path'),'X:\\Favorite');

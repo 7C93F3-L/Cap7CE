@@ -51,8 +51,8 @@ const ComputerSearchResultContextMenu = ({
       ],
       [
         ...(keywordsAvailable ? [{ ...action("editKeywords", "编辑关键词", ""), disabled: keywordsBusy || !state.items.some(item => !item.isDirectory) }] : []),
-        ...(state.item.isDirectory && state.items.length === 1 ? [action("metadata", t("metadataDirectory.action"), "")] : []),
-        ...(keywordsAvailable ? [{ ...action("autoKeywords", "自动添加关键词", ""), disabled: keywordsBusy }] : [])
+        ...(keywordsAvailable ? [{ ...action("autoKeywords", "自动添加关键词", ""), disabled: keywordsBusy }] : []),
+        ...(state.item.isDirectory && state.items.length === 1 ? [action("metadata", t("metadataDirectory.action"), "")] : [])
       ]
     ]}
     onClose={onClose}

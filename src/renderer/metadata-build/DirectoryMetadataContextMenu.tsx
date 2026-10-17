@@ -13,6 +13,6 @@ export default function DirectoryMetadataContextMenu({ target, appearance, onClo
   return <ResponsiveFileContextMenu x={target.x} y={target.y} theme={appearance.theme}
     menuStyle={getFileContextMenuStyle(appearance.theme, appearance.appearanceColors, appearance.windowMaterial)}
     format="" fileName="" detail="" showInfo={false} onClose={onClose}
-    actionGroups={[basicActions, [{ id: "metadata", label: t("metadataDirectory.action"), disabled: busy, onSelect: () => onStart(target.path) },
-      ...(onAutoKeywords ? [{ id: "autoKeywords", label: "自动添加关键词", disabled: keywordsBusy, onSelect: onAutoKeywords }] : [])]]} />;
+    actionGroups={[basicActions, [...(onAutoKeywords ? [{ id: "autoKeywords", label: "自动添加关键词", disabled: keywordsBusy, onSelect: onAutoKeywords }] : []),
+      { id: "metadata", label: t("metadataDirectory.action"), disabled: busy, onSelect: () => onStart(target.path) }]]} />;
 }

@@ -23,7 +23,7 @@ export default function FavoriteDirectoryContextMenu({ target, index, count, bus
         action("up", t("favorites.up"), () => onMove("up"), index === 0),
         action("down", t("favorites.down"), () => onMove("down"), index === count - 1),
         action("remove", t("catalogActions.removeFavorite"), onRemove)],
-      [action("metadata", t("metadataDirectory.action"), () => onMetadata?.(), !onMetadata),
-        action("autoKeywords", "自动添加关键词", () => onAutoKeywords?.(), !onAutoKeywords)]
+      [action("autoKeywords", "自动添加关键词", () => onAutoKeywords?.(), !onAutoKeywords),
+        action("metadata", t("metadataDirectory.action"), () => onMetadata?.(), !onMetadata)]
     ]} />;
 }

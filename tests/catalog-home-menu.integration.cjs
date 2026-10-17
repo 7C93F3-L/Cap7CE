@@ -23,7 +23,7 @@ app.whenReady().then(async()=>{let win;try{
  const open=async system=>{await run(`[...document.querySelectorAll('.cap-skim-root-entry')].find(e=>e.title.includes('Desktop')===${system}).dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:260,clientY:200}))`);await ready('document.querySelector("[role=menu]")')};
  const click=label=>run(`[...document.querySelectorAll('[role=menuitem]')].find(e=>e.innerText===${JSON.stringify(label)}).click()`);
  await ready('document.querySelectorAll(".cap-skim-root-entry").length===2');await open(false);
- assert.deepEqual(await run('[...document.querySelectorAll("[role=menuitem]")].map(e=>e.innerText)'),['打开','在资源管理器中打开','复制路径','添加收藏','获取/刷新元数据','自动添加关键词']);
+ assert.deepEqual(await run('[...document.querySelectorAll("[role=menuitem]")].map(e=>e.innerText)'),['打开','在资源管理器中打开','复制路径','添加收藏','自动添加关键词','获取/刷新元数据']);
  assert.deepEqual(await run('[probe.metadata.length,probe.batches.length]'),[0,0],'opening a drive menu starts no extraction or AI work');
  await click('复制路径');await ready('probe.copies.length===1');assert.deepEqual(await run('probe.copies[0]'),['X:\\']);
  await open(false);await click('在资源管理器中打开');await ready('probe.opened.length===1');assert.equal(await run('probe.opened[0]'),'X:\\');
