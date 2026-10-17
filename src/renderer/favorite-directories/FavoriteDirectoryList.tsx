@@ -62,7 +62,7 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
       <button type="button" disabled={props.busy} title={t("favorites.add")} aria-label={t("favorites.add")} onClick={props.onChoose}>{props.showIcons ? <StableSidebarIcon name="add" /> : "+"}</button>
     </header>
     <div className="cap-favorite-rows">
-      {props.directories.map(directory => <div className="cap-favorite-row" key={directory.id}>
+      {props.directories.map(directory => <div className={`cap-favorite-row${!props.globalActive && pathKey(directory.path) === pathKey(props.activePath) ? " is-selected" : ""}${menu?.directory.id === directory.id ? " is-menu-open" : ""}`} key={directory.id}>
         {editing === directory.id ? <form onSubmit={event => { event.preventDefault(); void save(directory.id); }}>
           <input autoFocus aria-label={t("favorites.renameFolder")} title={t("favorites.renameFolderHint")} maxLength={255} value={draft} disabled={props.busy}
             onChange={event => setDraft(event.currentTarget.value)} onKeyDown={event => {
@@ -70,13 +70,15 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
             }} />
           <button type="submit" disabled={props.busy || !draft.trim()} title={t("common.save")} aria-label={t("common.save")}>✓</button>
           <button type="button" disabled={props.busy} title={t("common.cancel")} aria-label={t("common.cancel")} onClick={() => setEditing(null)}>×</button>
-        </form> : <button disabled={props.busy} className="cap-favorite-open" type="button" title={props.showIcons ? undefined : directory.path} aria-label={`${directory.name}; ${directory.path}`}
+        </form> : <><button disabled={props.busy} className="cap-favorite-open" type="button" title={props.showIcons ? undefined : directory.path} aria-label={`${directory.name}; ${directory.path}`}
           onPointerEnter={event => tooltip.show(event, directory)} onPointerLeave={tooltip.hide} onPointerDown={tooltip.hide}
           onContextMenu={event => { event.preventDefault(); showMenu(event.currentTarget, directory); }}
           onKeyDown={event => { if (event.key === "ContextMenu" || event.shiftKey && event.key === "F10") { event.preventDefault(); showMenu(event.currentTarget, directory); } }}
           aria-current={!props.globalActive && pathKey(directory.path) === pathKey(props.activePath) ? "page" : undefined}
           onClick={event => (event.ctrlKey || event.metaKey) && props.onOpenNew ? props.onOpenNew(directory) : props.onOpen(directory)}>
-          {props.showIcons && <StableUiIcon name="folder" active={!props.globalActive && pathKey(directory.path) === pathKey(props.activePath)} />}<span className="cap-favorite-label">{directory.name}</span></button>}
+          {props.showIcons && <StableUiIcon name="folder" active={!props.globalActive && pathKey(directory.path) === pathKey(props.activePath)} />}<span className="cap-favorite-label">{directory.name}</span></button>
+          {props.showIcons && <button type="button" className="cap-favorite-more" disabled={props.busy} aria-label={t("common.manage")} title={t("common.manage")} aria-haspopup="menu" aria-expanded={menu?.directory.id === directory.id}
+            onClick={event => showMenu(event.currentTarget, directory)}><StableSidebarIcon name="more" /></button>}</>}
       </div>)}
       {!props.busy && !props.error && !props.directories.length && <p>{t("favorites.empty")}</p>}
     </div>

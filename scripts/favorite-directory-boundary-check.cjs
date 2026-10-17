@@ -46,6 +46,7 @@ const files = new Map([
   ["src/renderer/catalog-workspace/CatalogWorkspace.tsx", 90],
   ["src/renderer/catalog-workspace/CatalogSidebar.tsx", 35],
   ["src/renderer/catalog-workspace/CatalogSidebar.css", 35],
+  ["src/renderer/catalog-workspace/CatalogDirectorySelection.css", 20],
   ["src/renderer/catalog-workspace/CatalogPanelIcon.tsx", 15],
   ["src/renderer/catalog-workspace/useCatalogLayout.ts", 18],
   ["src/renderer/catalog-workspace/useCatalogViewport.ts", 20],

@@ -4,6 +4,7 @@ import StableUiIcon from "../stable-ui/StableUiIcon";
 import CatalogPanelIcon from "./CatalogPanelIcon";
 import type { useCatalogLayout } from "./useCatalogLayout";
 import "./CatalogSidebar.css";
+import "./CatalogDirectorySelection.css";
 import { useDirectoryMetadataAction } from "../metadata-build/useDirectoryMetadataAction";
 import { useCatalogActivity } from "./CatalogActivity";
 

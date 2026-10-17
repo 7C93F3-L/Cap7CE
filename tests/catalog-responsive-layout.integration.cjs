@@ -9,17 +9,18 @@ ipcMain.handle('window:setShellState',async(event,state,options)=>{
  win.setBounds(resolveStableUiDefaultWindowBounds(workArea,options.preservePosition?win.getBounds():undefined));return true;
 });
 const fixture=String.raw`
-import React from 'react';import{createRoot}from'react-dom/client';import{useCatalogLayout}from'./src/renderer/catalog-workspace/useCatalogLayout';import CatalogSidebar from './src/renderer/catalog-workspace/CatalogSidebar';
+import React,{useState} from 'react';import{createRoot}from'react-dom/client';import{useCatalogLayout}from'./src/renderer/catalog-workspace/useCatalogLayout';import CatalogSidebar from './src/renderer/catalog-workspace/CatalogSidebar';
 import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
 const noop=()=>{},favorites={directories:[{id:'first',name:'First',path:'X:\\First'},{id:'second',name:'Second',path:'X:\\Second'}],activePath:null,globalActive:true,busy:false,error:false,onOpen:noop,onChoose:noop,onRetry:noop,onRename:async()=>true,onRemove:noop,onMove:noop};
-function Fixture(){const layout=useCatalogLayout();window.probe=layout;return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{position:'absolute',inset:40,gridTemplateColumns:layout.width+'px 1fr'}}>
-<CatalogSidebar layout={layout} favorites={favorites} onSettings={noop}/><main><button id="auto" onClick={layout.showDetails}>automatic selection</button><button id="edit" onClick={layout.revealDetails}>explicit edit</button><output>{JSON.stringify({filters:layout.filtersVisible,details:layout.detailsVisible,width:layout.width,error:layout.restoreError})}</output></main></div></div>};
+window.directoryProbe={opens:[]};
+function Fixture(){const layout=useCatalogLayout(),[active,setActive]=useState(null);window.probe=layout;return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{position:'absolute',inset:40,gridTemplateColumns:layout.width+'px 1fr'}}>
+<CatalogSidebar layout={layout} favorites={{...favorites,activePath:active?.path??null,globalActive:active===null,onOpen:directory=>{window.directoryProbe.opens.push(directory?.id??null);setActive(directory)}}} onSettings={noop}/><main><button id="auto" onClick={layout.showDetails}>automatic selection</button><button id="edit" onClick={layout.revealDetails}>explicit edit</button><output>{JSON.stringify({filters:layout.filtersVisible,details:layout.detailsVisible,width:layout.width,error:layout.restoreError})}</output></main></div></div>};
 createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async()=>{try{
  esbuild.buildSync({stdin:{contents:fixture,resolveDir:path.resolve(__dirname,'..'),loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(root,'fixture.js'),loader:{'.svg':'text'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}});
  fs.writeFileSync(path.join(root,'index.html'),'<meta charset="utf-8"><link rel="stylesheet" href="fixture.css"><div id="root"></div><script src="fixture.js"></script>');
  win=new BrowserWindow({show:false,frame:false,x:60,y:70,width:1100,height:800,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false,offscreen:true,backgroundThrottling:false,preload:path.resolve(__dirname,'../dist-electron/preload.js')}});await win.loadFile(path.join(root,'index.html'));
- const run=c=>win.webContents.executeJavaScript(c),wait=ms=>new Promise(r=>setTimeout(r,ms));const ready=async c=>{for(let n=0;n<180;n++){if(await run(c))return;await wait(20)}throw Error('Timeout '+c)};
+ const run=c=>win.webContents.executeJavaScript(c).catch(error=>{console.error('Renderer action:',c);throw error}),wait=ms=>new Promise(r=>setTimeout(r,ms));const ready=async c=>{for(let n=0;n<180;n++){if(await run(c))return;await wait(20)}throw Error('Timeout '+c)};
  const frame=()=>run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
  const resize=async(width,height)=>{win.setSize(width,height);await ready(`window.innerWidth===${width}&&window.innerHeight===${height}`);await frame()};
  const click=async panel=>{await run(`document.querySelectorAll('.cap-catalog-layout-tools button')[${panel==='filters'?0:1}].click()`);await frame()};
@@ -27,6 +28,24 @@ app.whenReady().then(async()=>{try{
  const reload=async()=>{const loaded=new Promise(resolve=>win.webContents.once('did-finish-load',resolve));win.reload();await loaded;await ready('!!window.probe');await frame()};
  const stored=()=>run(`localStorage.getItem('${storage}')`);
  await ready('!!window.probe');assert.equal(await run('probe.filtersVisible&&probe.detailsVisible'),true);assert.equal(await stored(),null,'initial layout does not write a width');
+ const firstRow='.cap-favorite-row:first-child',more=firstRow+' .cap-favorite-more';
+ assert.equal(await run("getComputedStyle(document.querySelector('.cap-favorite-open')).borderRadius"),'999px','expanded navigation uses rounded capsules');
+ await run(`document.querySelector('${firstRow} .cap-favorite-open').click()`);await ready(`document.querySelector('${firstRow}').classList.contains('is-selected')`);
+ const selected=await run(`(()=>{const row=document.querySelector('${firstRow}');return {radius:getComputedStyle(row).borderRadius,background:getComputedStyle(row).backgroundImage,buttonBackground:getComputedStyle(row.querySelector('.cap-favorite-open')).backgroundImage}})()`);
+ assert.equal(selected.radius,'999px');assert.match(selected.background,/gradient/);assert.equal(selected.buttonBackground,'none','selection background is painted once across the entire row');
+ const rowPoint=await run(`(()=>{const r=document.querySelector('${firstRow}').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)}})()`);
+ win.webContents.sendInputEvent({type:'mouseMove',...rowPoint});await ready('!!document.querySelector("[role=tooltip]")');
+ await ready(`Number(getComputedStyle(document.querySelector('${more}')).opacity)>0`);await run(`document.querySelector('${more}').focus()`);
+ await run(`document.querySelector('${more}').click()`);await ready('document.querySelector("[role=menu]")');
+ const menuLabels=await run('[...document.querySelectorAll("[role=menuitem]")].map(item=>item.textContent)');
+ assert.deepEqual(await run('directoryProbe.opens'),['first'],'the more button opens the existing menu without navigating');
+ await run("document.querySelector('[role=menu]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");await ready('!document.querySelector("[role=menu]")');
+ assert.equal(await run(`document.activeElement===document.querySelector('${more}')`),true,'Escape restores focus to the more button');
+ await run(`document.querySelector('${firstRow} .cap-favorite-open').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))`);await ready('document.querySelector("[role=menu]")');
+ assert.deepEqual(await run('[...document.querySelectorAll("[role=menuitem]")].map(item=>item.textContent)'),menuLabels,'right click and the more button expose the same directory actions');
+ await run("[...document.querySelectorAll('[role=menuitem]')].find(item=>item.textContent.includes('重命名')).click()");await ready(`!!document.querySelector('${firstRow} form')`);
+ assert.equal(await run(`getComputedStyle(document.querySelector('${firstRow}')).display`),'block','renaming still occupies the whole row');
+ await run(`document.querySelector('${firstRow} input').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);await ready(`!document.querySelector('${firstRow} form')`);
  await key('ArrowRight');await key('ArrowRight');assert.equal(await run('probe.width'),188);assert.equal(await stored(),'188');
  await resize(400,800);assert.equal(await run('probe.width'),140,'legacy viewport-minus-260 rule limits only rendered width');assert.equal(await stored(),'188');
  await resize(300,800);assert.equal(await run('probe.width'),40);assert.equal(await run('probe.collapsed'),true);await reload();assert.equal(await stored(),'188');assert.equal(await run('probe.width'),40);
@@ -41,6 +60,7 @@ app.whenReady().then(async()=>{try{
  assert.deepEqual(compact.visualInsets,[8,8],'compact buttons are centered across the entire visual rail including the content gap');
  for(const button of compact.buttons){assert.equal(button.width,32);assert.equal(button.height,32);assert.equal(button.center,0,'each compact control is centered in the sidebar');}
  assert.equal(compact.buttons[2].radius,'9px','the selected home background is a compact rounded square');
+ assert.equal(await run("[...document.querySelectorAll('.cap-favorite-more')].every(button=>!button.getClientRects().length)"),true,'compact rows retain their square shape without a more-button column');
  await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))");await frame();await key('ArrowRight');await key('ArrowRight');
  const point=await run("(()=>{const r=document.querySelector('.cap-catalog-resizer').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()");
  win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...point});win.webContents.sendInputEvent({type:'mouseMove',x:point.x+40,y:point.y});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+40,y:point.y});await frame();
