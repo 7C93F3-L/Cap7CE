@@ -20,9 +20,9 @@ window.cap7ce={preview:{onNavigate:()=>noop,onClosed:()=>noop},computerSearch:{
  nextPage:async request=>{p.pages.push(request);if(p.expire){p.expire=false;throw Error('CoreRemoteError: invalid-cursor')}
  if(p.fail){p.fail=false;throw Error('timeout')}if(p.hold){p.hold=false;await new Promise(r=>p.resume=r)}return page(request.taskId,Number(request.cursor))},
  cancel:async id=>{p.canceled.push(id);return true}}};
-function Fixture(){const [scope,setScope]=useState('X:\\Folder'),[fg,setFg]=useState(true),[complete,setComplete]=useState(false),[grid,setGrid]=useState("square");
- p.scope=setScope;p.foreground=setFg;p.complete=setComplete;p.grid=setGrid;
- const controller=useComputerSearchController(scope,fg,{fileConditions:{extensions:['.txt']}},undefined,true,complete);
+function Fixture(){const [scope,setScope]=useState('X:\\Folder'),[fg,setFg]=useState(true),[complete,setComplete]=useState(false),[grid,setGrid]=useState("square"),[recursive,setRecursive]=useState(undefined);
+ p.scope=setScope;p.foreground=setFg;p.complete=setComplete;p.grid=setGrid;p.recursive=setRecursive;
+ const controller=useComputerSearchController(scope,fg,{fileConditions:{extensions:['.txt']}},undefined,true,complete,false,{includeSubfolders:recursive});
  p.controller=controller;
  return <div className="host"><ComputerSearchView controller={controller} gridMode={grid} foreground={fg} theme="dark" appearanceColors={{}}
  windowMaterial="none" onNativeDragStateChange={noop}/></div>}
@@ -93,6 +93,13 @@ app.whenReady().then(async () => {
   await run("[...document.querySelectorAll('.cap-computer-search-entry')].find(x=>x.getAttribute('aria-label')==='file-49999.txt').click()");
   await ready("!!document.querySelector('.cap-computer-search-entry.selected')");
   await run('probe.scope("X:\\\\Other")');await ready('probe.controller.items.length===1&&!probe.controller.busy');
+  await run('probe.big=false;probe.complete(false);probe.recursive(true);probe.scope("X:/Recursive")');
+  await ready('probe.controller.items.length===100&&!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants');
+  await run('probe.expire=true;probe.controller.loadMore()');await ready('probe.controller.items.length===200&&!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','stale continuation recovery keeps the selected recursive scope');
+  assert.equal(await run('probe.requests.at(-1).fileConditions.extensions[0]'),'.txt');
+  await run('probe.recursive(false)');await ready('probe.requests.at(-1)?.scopeKind==="direct-children"&&!probe.controller.busy');
   console.log('Automatic paging: stale recovery, unchanged scope, preserved errors, bounded retries, exhaustion, background and late-page guards passed.');
  } catch (error) { console.error(error.stack); process.exitCode = 1; }
  finally { win?.destroy(); if (path.dirname(root) !== os.tmpdir()) throw Error('Unsafe fixture root'); fs.rmSync(root, { recursive: true, force: true }); app.exit(process.exitCode ?? 0); }

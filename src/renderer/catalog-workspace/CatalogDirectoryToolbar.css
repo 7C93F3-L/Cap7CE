@@ -4,10 +4,7 @@
 .cap-catalog-sort-icon > svg { transform: scale(1.65); transform-origin: center; }
 .cap-catalog-view-controls { display: flex; flex: 0 0 auto; gap: 3px; align-items: center; }
 .cap-catalog-view-controls button { white-space: nowrap; }
-.cap-catalog-hidden-switch i { position: relative; display: inline-block; width: 28px; height: 14px; border-radius: 7px; background: color-mix(in srgb, currentColor 30%, transparent); }
-.cap-catalog-hidden-switch b { position: absolute; width: 10px; height: 10px; top: 2px; left: 2px; border-radius: 50%; background: var(--cap-stable-text); }
-.cap-catalog-hidden-switch[aria-checked="true"] i { background: var(--cap-accent-gradient); }
-.cap-catalog-hidden-switch[aria-checked="true"] b { left: 16px; background: var(--theme-on-color); }
-@media (max-width: 900px) {
-  .cap-catalog-grid-toggle > span, .cap-catalog-view-controls > button > span { display: none; }
-}
+.cap-catalog-directory-toolbar > .cap-catalog-grid-toggle,
+.cap-catalog-directory-toolbar > .cap-catalog-size-toggle,
+.cap-catalog-directory-toolbar > .cap-catalog-subfolders-toggle,
+.cap-catalog-directory-toolbar .cap-catalog-view-controls > button { width: 30px; height: 28px; padding: 4px 7px; }

@@ -58,7 +58,7 @@ export interface ComputerSearchRequest extends ComputerSearchViewOptions {
   taskId: string;
   query: string;
   scopePath: string | null;
-  scopeKind?: "direct-children";
+  scopeKind?: "direct-children" | "directory-descendants";
   facts?: ComputerSearchFacts;
   fileConditions?: ComputerSearchFileConditions;
 }

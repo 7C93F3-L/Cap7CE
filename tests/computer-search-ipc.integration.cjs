@@ -84,6 +84,9 @@ const run = async () => {
   assert.deepEqual(calls[1], ["search", { taskId: "task-1", query: "poster", scopePath: "E:\\References" }]);
   await handlers.get("computerSearch:search")({allowed:true},{taskId:'sorted',query:'',scopePath:'X:\\',scopeKind:'direct-children',sort:'modified-descending',excludeHidden:true});
   assert.equal(calls.at(-1)[1].sort,'modified-descending');assert.equal(calls.at(-1)[1].excludeHidden,true);calls.pop();
+  await handlers.get("computerSearch:search")({allowed:true},{taskId:'recursive',query:'poster',scopePath:'X:\\Folder',scopeKind:'directory-descendants'});
+  assert.equal(calls.at(-1)[1].scopeKind,'directory-descendants');calls.pop();
+  for (const scopeKind of ['directory-descendants','bogus']) await assert.rejects(()=>handlers.get("computerSearch:search")({allowed:true},{taskId:'invalid-scope',query:'',scopePath:null,scopeKind}),/invalid-request/);
   await assert.rejects(() => handlers.get("computerSearch:nextPage")({ allowed: true }, {
     taskId: "task-1", cursor: ""
   }), /invalid-cursor/);

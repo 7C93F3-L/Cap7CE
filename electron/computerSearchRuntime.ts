@@ -269,7 +269,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       return capability.configure(request);
     },
     async search(request) {
-      if (request.scopeKind !== undefined && (request.scopeKind !== "direct-children" || request.scopePath === null))
+      if (request.scopeKind !== undefined && ((request.scopeKind !== "direct-children" && request.scopeKind !== "directory-descendants") || request.scopePath === null))
         throw new Error("computer-search-invalid-request");
       await this.cancel(request.taskId);
       cancelledTasks.delete(request.taskId);
@@ -302,7 +302,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
         const pending = controller.startRequest<CoreSearchPage>("search.start", {
           query: request.query, pageSize: 100, sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, volumeIds, scope,
           ...(controller.supports?.("search.live") ? { continuation: "live" } : {}),
-          entryType: request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: "name-or-path",
+          entryType: request.scopeKind === "directory-descendants" || request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: "name-or-path",
           ...(request.facts ? { facts: toCoreSearchFacts(request.facts) } : {}),
           ...(request.fileConditions ? { fileConditions: readComputerSearchFileConditions(request.fileConditions) } : {})
         }, 30_000);

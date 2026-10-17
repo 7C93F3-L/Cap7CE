@@ -89,6 +89,13 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     scopeState = "ready"; scopeResolved = true;
     await runtime.search({ taskId: "scope-recovered", query: "", scopePath: "X:\\Pending", scopeKind: "direct-children" });
     assert.equal(requests.length, dispatched + 1, "the same location recovers after publication");
+    for (const query of ["", "poster"]) {
+      await runtime.search({taskId:"recursive-explicit-"+(query||"all"),query,scopePath:"X:\\Library",scopeKind:"directory-descendants",sort:"modified-descending",excludeHidden:true});
+      assert.deepEqual(requests.at(-1).body.scope,{kind:"directory-descendants",volumeId:volume.volumeId,rootFileReference:"1".repeat(16)});
+      assert.equal(requests.at(-1).body.entryType,"file","flat recursive view excludes folder results even with keywords");
+      assert.equal(requests.at(-1).body.sort,"modified-descending");assert.equal(requests.at(-1).body.excludeHidden,true);
+    }
+    await assert.rejects(runtime.search({taskId:"recursive-no-path",query:"",scopePath:null,scopeKind:"directory-descendants"}),/invalid-request/);
     console.log("Core empty/child browsing, path matching and result authorization tests passed.");
   } finally { await runtime.stop(); controllerModule.CoreHostController = saved; }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

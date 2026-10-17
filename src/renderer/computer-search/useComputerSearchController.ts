@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ComputerSearchCapabilityOptions, ComputerSearchCapabilityResult, ComputerSearchItem, ComputerSearchStatus } from "../../../electron/computerSearchTypes";
+import type { ComputerSearchRequest, ComputerSearchCapabilityOptions, ComputerSearchCapabilityResult, ComputerSearchItem, ComputerSearchStatus } from "../../../electron/computerSearchTypes";
 import { getActiveLanguage, t } from "../../../electron/localization";
 import type { ComputerSearchConditions, ComputerSearchViewOptions } from "../../shared/computerSearchFactTypes";
 import { readComputerSearchReplacement } from "./computerSearchResultRefresh";
@@ -9,6 +9,10 @@ import { useComputerSearchTrashUpdates } from "./useComputerSearchTrashUpdates";
 
 export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "scope-offline" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
+
+const directoryScope = (path: string | null, children: boolean, recursive: boolean | undefined, query: string): Pick<ComputerSearchRequest, "scopeKind"> =>
+  path === null ? {} : recursive !== undefined ? { scopeKind: recursive ? "directory-descendants" : "direct-children" }
+    : children && !query ? { scopeKind: "direct-children" } : {};
 
 export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false, viewOptions?: ComputerSearchViewOptions) => {
   const conditionKey = JSON.stringify({ ...conditions, ...viewOptions });
@@ -140,7 +144,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setBusy(true); setHasSubmitted(true); setError(null); setPageError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
     try {
       const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
-        ...(browseChildren && currentPath !== null && !searchQuery ? { scopeKind: "direct-children" as const } : {}),
+        ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, searchQuery),
         ...(selectedConditions.facts ? { facts: selectedConditions.facts } : {}),
         ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) });
       if (!activeRef.current || taskRef.current !== taskId) return;
@@ -168,7 +172,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       && !busyRef.current && requestSequence.current === sequence && replacementTaskRef.current === taskId;
     try {
       const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
-        ...(browseChildren && currentPath !== null && !submittedQuery ? { scopeKind: "direct-children" as const } : {}),
+        ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery),
         facts: selectedConditions.facts, ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) },
       items.length, isCurrent);
       if (!page || !isCurrent()) return "deferred";
@@ -259,7 +263,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     try {
       const result = await readComputerSearchContinuation(api, { taskId: replacementId,
         query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden,
-        ...(browseChildren && currentPath !== null && !submittedQuery ? { scopeKind: "direct-children" as const } : {}),
+        ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery),
         facts: selectedConditions.facts, fileConditions: selectedConditions.fileConditions },
       taskId, cursor, items.length, isCurrent, Boolean(pageError));
       if (!result || !isCurrent()) return;
@@ -284,7 +288,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError]);
 
   return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, pageError, scopeLabel,
-    directoryListing: browseChildren && currentPath !== null && !submittedQuery,
+    directoryListing: (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery,
     taskId: taskRef.current,
     canSubmit: Boolean(status?.searchAvailable), capabilityBusy, capabilityFeedback, capabilityOptions,
     enter, exit, setQuery, submit, loadMore, refreshStatus, configureCapability,

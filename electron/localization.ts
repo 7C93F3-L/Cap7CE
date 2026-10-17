@@ -26,6 +26,8 @@ export const zhCN = {
   "catalogWorkspace.volumeUnavailable": "尚不可浏览",
   "catalogWorkspace.newTab": "新标签页",
   "catalogWorkspace.files": "文件与收藏",
+  "catalogWorkspace.includeSubfolders": "包含子文件夹",
+  "catalogWorkspace.enterDirectory": "进入目录后可切换",
   "catalogWorkspace.back": "后退",
   "catalogWorkspace.forward": "前进",
   "catalogWorkspace.up": "上一级",

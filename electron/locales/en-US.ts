@@ -26,6 +26,8 @@ export const enUS = defineLocale({
   "catalogWorkspace.volumeUnavailable": "Not ready to browse",
   "catalogWorkspace.newTab": "New tab",
   "catalogWorkspace.files": "Files and favorites",
+  "catalogWorkspace.includeSubfolders": "Include subfolders",
+  "catalogWorkspace.enterDirectory": "Enter a folder to change the scope",
   "catalogWorkspace.back": "Back",
   "catalogWorkspace.forward": "Forward",
   "catalogWorkspace.up": "Parent folder",

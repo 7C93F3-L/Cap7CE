@@ -9,12 +9,13 @@ import type { CatalogGridMode } from "../../shared/catalogPresentationTypes";
 import CatalogGridSizeControl from "./CatalogGridSizeControl";
 
 export default function CatalogDirectoryToolbar({ path, canBack, canForward, canUp, onBack, onForward, onUp, onOpen, onHome,
-  searchMode, onSearchMode, query, onQuery, onSubmit, enabled, inputRef, gridMode, onGridMode, gridSize = 100, onGridSize, onGridSizeCommit, onRefresh, refreshing, sort, onSort, showHidden, onShowHidden }: {
+  searchMode, onSearchMode, query, onQuery, onSubmit, enabled, inputRef, gridMode, onGridMode, includeSubfolders, onIncludeSubfolders, gridSize = 100, onGridSize, onGridSizeCommit, onRefresh, refreshing, sort, onSort, showHidden, onShowHidden }: {
   path: string | null; canBack: boolean; canForward: boolean; canUp: boolean;
   onBack: () => void; onForward: () => void; onUp: () => void; onOpen: (path: string) => void; onHome: () => void;
   searchMode: boolean; onSearchMode: () => void; query: string; onQuery: (value: string) => void;
   onSubmit: () => void; enabled: boolean; inputRef: MutableRefObject<HTMLInputElement | null>;
   gridMode: CatalogGridMode; onGridMode: () => void; onRefresh: () => void; refreshing: boolean;
+  includeSubfolders: boolean; onIncludeSubfolders: () => void;
   gridSize?: number; onGridSize?: (size: number) => void; onGridSizeCommit?: (size: number, force?: boolean) => void;
   sort: ComputerSearchSort; onSort: (sort: ComputerSearchSort) => void; showHidden: boolean; onShowHidden: () => void;
 }) {
@@ -40,7 +41,8 @@ export default function CatalogDirectoryToolbar({ path, canBack, canForward, can
       </div>}
     {!searchMode && query.trim() && <button type="button" className="cap-catalog-search-badge" title={query} onClick={onSearchMode}>搜索中</button>}
     {onGridSize && onGridSizeCommit && <CatalogGridSizeControl size={gridSize} onPreview={onGridSize} onCommit={onGridSizeCommit} />}
-    <button type="button" className="cap-catalog-grid-toggle" onClick={onGridMode} title={gridMode === "square" ? "切换为原比例网格" : "切换为方形网格"}><CatalogToolbarIcon name="grid" /><span>网格切换</span></button>
+    <button type="button" className="cap-catalog-grid-toggle" onClick={onGridMode} aria-label="网格切换" title={`网格切换 · 当前：${gridMode === "square" ? "方形网格" : "原比例网格"}；点击切换为${gridMode === "square" ? "原比例网格" : "方形网格"}`}><CatalogToolbarIcon name="grid" /></button>
+    <button type="button" className="cap-catalog-subfolders-toggle" disabled={path === null} aria-label={t("catalogWorkspace.includeSubfolders")} aria-pressed={includeSubfolders} title={`${t("catalogWorkspace.includeSubfolders")} · ${t(includeSubfolders ? "common.enabled" : "common.disabled")}${path === null ? ` · ${t("catalogWorkspace.enterDirectory")}` : ""}`} onClick={onIncludeSubfolders}><CatalogToolbarIcon name={includeSubfolders ? "files" : "tree"} /></button>
     <CatalogToolbarViewControls sort={sort} onSort={onSort} showHidden={showHidden} onShowHidden={onShowHidden} />
   </form>;
 }

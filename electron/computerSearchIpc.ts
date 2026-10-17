@@ -42,14 +42,14 @@ const readSearchRequest = (value: unknown): ComputerSearchRequest => {
   }
   const facts = readComputerSearchFacts(value.facts);
   const fileConditions = readComputerSearchFileConditions(value.fileConditions);
-  if (value.scopeKind !== undefined && (value.scopeKind !== "direct-children" || value.scopePath === null))
+  if (value.scopeKind !== undefined && ((value.scopeKind !== "direct-children" && value.scopeKind !== "directory-descendants") || value.scopePath === null))
     throw new Error("computer-search-invalid-request");
   if (value.sort !== undefined && (typeof value.sort !== "string" || !["name-ascending", "name-descending", "modified-ascending", "modified-descending"].includes(value.sort))
     || value.excludeHidden !== undefined && typeof value.excludeHidden !== "boolean") throw new Error("computer-search-invalid-request");
   return { taskId: value.taskId, query: value.query.trim(), scopePath: value.scopePath,
     ...(value.sort ? { sort: value.sort as ComputerSearchRequest["sort"] } : {}),
     ...(value.excludeHidden !== undefined ? { excludeHidden: value.excludeHidden as boolean } : {}),
-    ...(value.scopeKind ? { scopeKind: value.scopeKind as "direct-children" } : {}),
+    ...(value.scopeKind ? { scopeKind: value.scopeKind as ComputerSearchRequest["scopeKind"] } : {}),
     ...(facts ? { facts } : {}), ...(fileConditions ? { fileConditions } : {}) };
 };
 

@@ -29,7 +29,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   onActiveActions: (actions: CatalogContextActions | null) => void;
   onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
 }) {
-  const filters = useComputerSearchFilters(true), view = useCatalogViewOptions();
+  const filters = useComputerSearchFilters(true), view = useCatalogViewOptions(context.kind === "search" && context.scopePath !== null);
   const [searchMode, setSearchMode] = useState(context.kind === "search" && Boolean(context.scopePath));
   const [selection, setSelection] = useState<CatalogSelection | null>(null);
   const querySetter = useRef<(value: string) => void>(() => {});
@@ -47,10 +47,10 @@ export default function CatalogContextView({ context, selected, foreground, filt
   useEffect(() => { if (navigation.path === null) setSearchMode(searching); }, [navigation.path, searching]);
   const home = () => { filters.clear(); clearQuery(); setSearchMode(false); navigation.openBrowser(null); };
   const refresh = useCatalogRefresh(controller, navigation.path === null && !searching, foreground, navigation.path), inputRef = useRef<HTMLInputElement | null>(null);
-  const actions = useMemo<CatalogContextActions>(() => ({ currentPath: navigation.path, browseChildren: navigation.browseChildren,
+  const actions = useMemo<CatalogContextActions>(() => ({ currentPath: navigation.path, browseChildren: !view.includeSubfolders,
     openBrowser: onOpenBrowser, toggleBrowser,
     focusSearch: () => { setSearchMode(true); requestAnimationFrame(() => inputRef.current?.focus()); }, refresh: refresh.refresh
-  }), [navigation.path, navigation.browseChildren, onOpenBrowser, toggleBrowser, refresh.refresh]);
+  }), [navigation.path, view.includeSubfolders, onOpenBrowser, toggleBrowser, refresh.refresh]);
   useEffect(() => {
     if (!selected) return;
     onActiveActions(actions); return () => onActiveActions(null);
@@ -76,7 +76,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       sort={view.sort} onSort={view.setSort} showHidden={view.showHidden} onShowHidden={view.toggleHidden}
       onOpen={openDirectory} onHome={home} inputRef={inputRef}
       searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
-      onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
+      onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} includeSubfolders={view.includeSubfolders} onIncludeSubfolders={view.toggleSubfolders} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
     <div className="cap-catalog-status" role="status">{filters.invalid ? t("computerSearch.invalidFilters") : controller.busy ? t("computerSearch.loading")
       : controller.hasSubmitted ? t("skim.entryCount", { count: controller.items.length }) : ""}</div>
     <div className="cap-catalog-results">{navigation.path === null && !controller.query.trim()
