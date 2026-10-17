@@ -1,3 +1,4 @@
+import StableFilterOptionIcon from "./StableFilterOptionIcon";
 import { useState, type MouseEvent } from "react";
 import {
   normalizeVideoAspectRatioValue,
@@ -68,7 +69,7 @@ const StableVideoFilters = ({ search, colorsDisabled = false, allowColors = true
     </section>
     <section className="cap-stable-video-ratio-filter">
       <header><strong>{t("explore.videoRatios")}</strong><button type="button" title={t("explore.editVideoRatios")} aria-label={t("explore.editVideoRatios")} aria-expanded={anchor?.kind === "ratio"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => open("ratio", event)}><StableFilterEditGlyph /></button></header>
-      <div className="cap-stable-video-ratio-options">{searchVideoAspectRatios.map((ratio) => <button type="button" className={selectedRatios.includes(ratio) ? "is-selected" : ""} aria-pressed={selectedRatios.includes(ratio)} key={ratio} onClick={() => { const next = toggleValue(selectedRatios, ratio); onSearchOptionsChange({ ...search, videoAspectRatios: next.length ? next : undefined }); }}><i className={`is-${ratio}`} aria-hidden="true" /><span>{t(ratioLabels[ratio])}</span></button>)}</div>
+      <div className="cap-stable-video-ratio-options">{searchVideoAspectRatios.map((ratio) => <button type="button" className={selectedRatios.includes(ratio) ? "is-selected" : ""} aria-pressed={selectedRatios.includes(ratio)} key={ratio} onClick={() => { const next = toggleValue(selectedRatios, ratio); onSearchOptionsChange({ ...search, videoAspectRatios: next.length ? next : undefined }); }}><StableFilterOptionIcon name={ratio} /><span>{t(ratioLabels[ratio])}</span></button>)}</div>
     </section>
     <section className="cap-stable-video-resolution-filter">
       <header><strong>{t("explore.videoResolution")}</strong><button type="button" title={t("explore.editVideoResolution")} aria-label={t("explore.editVideoResolution")} aria-expanded={anchor?.kind === "resolution"} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => open("resolution", event)}><StableFilterEditGlyph /></button></header>

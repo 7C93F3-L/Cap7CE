@@ -1,3 +1,4 @@
+import StableFilterOptionIcon from "./StableFilterOptionIcon";
 import { useState, type MouseEvent } from "react";
 import {
   normalizeThreeDTriangleCountRange,
@@ -55,11 +56,11 @@ const StableThreeDFilters = ({ search, onFlyoutOpen, onSearchOptionsChange }: { 
   return <>
     <section className="cap-stable-three-d-model-type-filter">
       <header><strong>{t("explore.threeDModelType")}</strong></header>
-      <div className="cap-stable-three-d-model-type-options">{searchThreeDModelTypes.map((value) => <button type="button" className={selectedModelTypes.includes(value) ? "is-selected" : ""} aria-pressed={selectedModelTypes.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedModelTypes, value); onSearchOptionsChange({ ...search, threeDModelTypes: next.length ? next : undefined }); }}><i className={`is-${value}`} aria-hidden="true" /><span>{t(modelTypeLabels[value])}</span></button>)}</div>
+      <div className="cap-stable-three-d-model-type-options">{searchThreeDModelTypes.map((value) => <button type="button" className={selectedModelTypes.includes(value) ? "is-selected" : ""} aria-pressed={selectedModelTypes.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedModelTypes, value); onSearchOptionsChange({ ...search, threeDModelTypes: next.length ? next : undefined }); }}><StableFilterOptionIcon name={value} /><span>{t(modelTypeLabels[value])}</span></button>)}</div>
     </section>
     {hasMetadataSupport && <section className="cap-stable-three-d-structure-filter">
       <header><strong>{t("explore.threeDStructure")}</strong></header>
-      <div className="cap-stable-three-d-structure-options">{searchThreeDStructures.map((value) => <button type="button" className={selectedStructures.includes(value) ? "is-selected" : ""} aria-pressed={selectedStructures.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedStructures, value); onSearchOptionsChange({ ...search, threeDStructures: next.length ? next : undefined }); }}><i className={`is-${value}`} aria-hidden="true" /><span>{t(structureLabels[value])}</span></button>)}</div>
+      <div className="cap-stable-three-d-structure-options">{searchThreeDStructures.map((value) => <button type="button" className={selectedStructures.includes(value) ? "is-selected" : ""} aria-pressed={selectedStructures.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedStructures, value); onSearchOptionsChange({ ...search, threeDStructures: next.length ? next : undefined }); }}><StableFilterOptionIcon name={value} /><span>{t(structureLabels[value])}</span></button>)}</div>
     </section>}
     {hasMetadataSupport && <section className="cap-stable-three-d-triangle-filter">
       <header><strong>{t("explore.threeDTriangleCount")}</strong><button type="button" title={t("explore.editThreeDTriangleCount")} aria-label={t("explore.editThreeDTriangleCount")} aria-expanded={Boolean(anchor)} onPointerDown={(event) => event.stopPropagation()} onClick={openTriangleRange}><StableFilterEditGlyph /></button></header>

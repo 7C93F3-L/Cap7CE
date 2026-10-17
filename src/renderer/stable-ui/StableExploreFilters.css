@@ -5,7 +5,7 @@
 .cap-stable-explore-filters header span { max-width: 110px; overflow: hidden; color: var(--cap-stable-text-muted); font-size: var(--cap-stable-secondary-font-size); text-overflow: ellipsis; }
 .cap-stable-explore-filters header button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; color: inherit; background: transparent; }
 .cap-stable-explore-filters header button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
-.cap-stable-explore-filters header svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.cap-stable-explore-filters header svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .cap-stable-time-filter { width: 390px; }
 .cap-stable-time-control { position: relative; height: 24px; }
 .cap-stable-time-control input[type="range"] { position: absolute; z-index: 2; inset: 0; width: 100%; height: 22px; margin: 0; appearance: none; background: transparent; cursor: grab; }

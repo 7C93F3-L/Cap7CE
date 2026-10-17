@@ -17,7 +17,7 @@
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-time-labels button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-file-type-options { grid-template-columns: repeat(6, max-content); grid-auto-rows: 26px; min-height: 56px; gap: 4px; }
-.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-file-type-options > button { width: auto; min-width: 32px; min-height: 26px; padding: 2px 6px; white-space: nowrap; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-file-type-options > button { display: flex; align-items: center; justify-content: center; gap: 4px; width: auto; min-width: 32px; min-height: 26px; padding: 2px 6px; white-space: nowrap; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div:not(.cap-stable-time-control, .cap-stable-time-labels, .cap-stable-file-type-options, .cap-stable-file-size-options)) { display: grid; grid-template-columns: repeat(var(--cap-filter-columns, 3), max-content); grid-auto-rows: 26px; align-content: center; min-height: 56px; gap: 4px; padding-top: 0; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section:has(> div > button:nth-child(2):last-child, > div > button:nth-child(4):last-child)) { --cap-filter-columns: 2; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section:has(> div > button:nth-child(n+7))) { --cap-filter-columns: 4; }
@@ -27,14 +27,17 @@
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-file-size-options button { min-height: 26px; padding: 2px; font-size: var(--cap-stable-secondary-font-size); line-height: 1.2; white-space: nowrap; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters .cap-stable-color-options { grid-template-columns: repeat(8, 18px); grid-auto-rows: 18px; gap: 5px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters .cap-stable-color-options button { width: 18px; height: 18px; min-width: 0; min-height: 0; padding: 0; }
-.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div:not(.cap-stable-time-labels):has(> button > i)) { grid-auto-rows: 56px; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div:not(.cap-stable-time-labels, .cap-stable-file-type-options):has(> button > .cap-stable-filter-option-icon)) { grid-auto-rows: 56px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :is(.cap-stable-ratio-options, .cap-stable-video-ratio-options) { --cap-filter-columns: 5; }
-.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div:not(.cap-stable-time-labels) > button:has(> i)) { min-width: 32px; min-height: 56px; grid-template-rows: 32px 20px; padding: 0 2px; }
-.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div > button > i) { zoom: .7; transform: none; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div:not(.cap-stable-time-labels, .cap-stable-file-type-options) > button:has(> .cap-stable-filter-option-icon)) { min-width: 32px; min-height: 56px; grid-template-rows: 32px 20px; padding: 0 2px; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :where(section > div > button > .cap-stable-filter-option-icon) { width: 24px; height: 24px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters .cap-stable-archive-content-options { grid-auto-rows: 26px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters .cap-stable-archive-content-options > button { display: flex; align-items: center; min-height: 26px; padding: 2px 6px; gap: 4px; }
-.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters .cap-stable-archive-content-options i { zoom: .5; flex: none; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-explore-filters :is(.cap-stable-archive-content-options, .cap-stable-file-type-options) .cap-stable-filter-option-icon { width: 16px; height: 16px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary { min-height: 56px; width: max-content; gap: 6px; padding: 4px; }
-.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary i { zoom: .7; flex: none; }
+.cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary .cap-stable-filter-option-icon { width: 24px; height: 24px; }
 
 .cap-catalog-top-filters .cap-catalog-attribute-notice { flex: none; color: var(--cap-stable-text-muted); cursor: pointer; }
+.cap-catalog-top-filters header button:has(> .cap-stable-filter-edit-glyph) { opacity: 0; pointer-events: none; }
+.cap-catalog-top-filters section:where(:hover, :focus-within) > header button:has(> .cap-stable-filter-edit-glyph), .cap-catalog-top-filters header button[aria-expanded="true"]:has(> .cap-stable-filter-edit-glyph) { opacity: 1; pointer-events: auto; }
+@media (hover: none) { .cap-catalog-top-filters header button:has(> .cap-stable-filter-edit-glyph) { opacity: 1; pointer-events: auto; } }

@@ -6,6 +6,7 @@ import StableSidebarFlyout from "./StableSidebarFlyout";
 import { getOtherFileTypeExtensions, getPrimaryFileTypeExtensions, type ExploreOtherFileType, type ExplorePrimaryFileType } from "./exploreFormatFilters";
 import { getExploreFormatSummary } from "./exploreFormatSummary";
 import StableFilterEditGlyph from "./StableFilterEditGlyph";
+import StableFilterOptionIcon from "./StableFilterOptionIcon";
 import StableMediaFilters from "./StableMediaFilters";
 import StableFileSizeFilter from "./StableFileSizeFilter";
 import StableDocumentFilters from "./StableDocumentFilters";
@@ -45,7 +46,7 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
   return [...next].sort();
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
-const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, metadataNotice, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; metadataNotice?: ReactNode; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, fileTypeIcons = false, metadataNotice, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; fileTypeIcons?: boolean; metadataNotice?: ReactNode; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const supports = (domain: SearchFilterDetailDomain) => detailDomains === undefined || detailDomains.includes(domain);
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
@@ -103,9 +104,9 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
           const extensions = type === "image" || type === "video" || type === "audio" || type === "document"
             ? getPrimaryFileTypeExtensions(availableFormats, type) : getOtherFileTypeExtensions(availableFormats, type);
           const pressed = isGroupSelected(selected, extensions);
-          return <button type="button" className={pressed ? "is-selected" : ""} disabled={extensions.length === 0} aria-pressed={pressed} key={type} onClick={() => toggleGroup(extensions)}>{t(typeLabels[type])}</button>;
+          return <button type="button" className={pressed ? "is-selected" : ""} disabled={extensions.length === 0} aria-pressed={pressed} key={type} onClick={() => toggleGroup(extensions)}>{fileTypeIcons && <StableFilterOptionIcon name={type} />}{t(typeLabels[type])}</button>;
         })}
-        {allowUnclassified && <button type="button" className={search.unclassifiedOnly ? "is-selected" : ""} aria-pressed={Boolean(search.unclassifiedOnly)} onClick={() => applySearch(retainApplicableExploreTypeFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, unclassifiedOnly: search.unclassifiedOnly ? undefined : true }, []))}>{t("explore.fileTypes.other")}</button>}
+        {allowUnclassified && <button type="button" className={search.unclassifiedOnly ? "is-selected" : ""} aria-pressed={Boolean(search.unclassifiedOnly)} onClick={() => applySearch(retainApplicableExploreTypeFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, unclassifiedOnly: search.unclassifiedOnly ? undefined : true }, []))}>{fileTypeIcons && <StableFilterOptionIcon name="other" />}{t("explore.fileTypes.other")}</button>}
       </div>
     </section>
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />

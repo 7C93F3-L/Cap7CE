@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+StableFilterOptionIcon集中提供筛选快捷项的纯展示SVG，统一24单位画布、1.5笔画、圆角端点和currentColor；替换各属性组件内的CSS伪元素图形，图标CSS负责共享尺寸，CatalogTopFilters.css负责顶部24px及紧凑归档项、文件种类项16px的呈现。比例、声道、三维结构等仍使用原按钮、标签与条件动作，不新增状态或查询。StableExploreFilters通过可选fileTypeIcons在顶部宿主启用12类行内图标，默认纵向宿主保留原文字布局。StableFilterEditGlyph标记仅供顶部域隐藏/显露铅笔，保留按钮占位、可聚焦性和展开状态，触摸入口常显；属性说明按钮不受影响。
+
 CatalogTopFilters通过useHorizontalFilterScroll在实际滚动容器绑定可取消的原生wheel监听，按主方向及像素/行/页单位转换并限制到有效横向范围；仅消费发生位移的事件，Ctrl、无溢出和边界事件保留原行为。滚动仍触发原浮层关闭，Portal内滚轮不经过此DOM宿主；卸载移除监听，无轮询或动画循环。领域CSS隐藏原生滚动条，保留overflow及可聚焦滚动容器；宿主随80px内容自然撑高至88px，取消常规与窄窗口固定高度预留，上下各4px留白。resolveStableUiDefaultWindowBounds仅将默认宽度比例提高到0.9、上限1760，保留高度0.82/1000、工作区限制、居中及已有窗口记忆/恢复链路，不修改状态机或主动覆盖当前尺寸。
 
 CatalogTopFilters的汇总与清除动作按内容定宽，并与筛选标题、第一行快捷项对齐；StableFileSizeFilter使用稳定的三项/两项行包装，CatalogTopFilters.css将两行独立排布，旧纵向宿主通过display:contents保留原五列网格。大小自定义反馈由既有fileSizeRange派生，只展示范围，不增加状态、查询、索引或IPC；单侧边界、包含端点与切换预设的规则不变。

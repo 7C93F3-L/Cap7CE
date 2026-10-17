@@ -51,6 +51,8 @@ const files = new Map([
   ["src/renderer/catalog-workspace/CatalogTopFilters.tsx", 35],
   ["src/renderer/catalog-workspace/useHorizontalFilterScroll.ts", 35],
   ["src/renderer/catalog-workspace/CatalogTopFilters.css", 45],
+  ["src/renderer/stable-ui/StableFilterOptionIcon.tsx", 40],
+  ["src/renderer/stable-ui/StableFilterOptionIcon.css", 5],
   ["src/renderer/metadata-build/useDirectoryMetadataAction.ts", 35],
   ["src/renderer/metadata-build/useDirectoryMetadataMenu.ts", 20],
   ["src/renderer/metadata-build/DirectoryMetadataContextMenu.tsx", 20],

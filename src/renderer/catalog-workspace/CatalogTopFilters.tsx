@@ -20,7 +20,7 @@ export default function CatalogTopFilters({ search, availableFormats, detailDoma
       <div className="cap-catalog-top-filter-content">
         <div className="cap-catalog-filter-actions"><span>{t("workspace.filterSummary", { count })}</span>
           <button type="button" disabled={!count} onClick={onClear}>{t("explore.clearFilters")}</button></div>
-        <StableExploreFilters compactTime allowUnclassified search={search} availableFormats={availableFormats} detailDomains={detailDomains} metadataDisabled={attributes.disabled} metadataColorsDisabled={attributes.colorsDisabled}
+        <StableExploreFilters compactTime allowUnclassified fileTypeIcons search={search} availableFormats={availableFormats} detailDomains={detailDomains} metadataDisabled={attributes.disabled} metadataColorsDisabled={attributes.colorsDisabled}
           metadataNotice={attributes.message && onMetadata ? <CatalogAttributeNotice message={attributes.message} onMetadata={onMetadata} /> : undefined}
           closeFlyoutRequest={close} onFlyoutOpen={() => {}} onSearchOptionsChange={onChange} />
       </div>

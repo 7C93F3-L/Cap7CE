@@ -8,8 +8,3 @@
 .cap-stable-ratio-options button { display: grid; grid-template-rows: 42px 22px; place-items: center; min-height: 68px; padding: 2px 4px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
 .cap-stable-ratio-options button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
 .cap-stable-ratio-options button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
-.cap-stable-ratio-options i { display: block; width: 21px; height: 32px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 3px; }
-.cap-stable-ratio-options i.is-landscape { width: 32px; height: 21px; }
-.cap-stable-ratio-options i.is-square { width: 27px; height: 27px; }
-.cap-stable-ratio-options i.is-wide { width: 38px; height: 14px; }
-.cap-stable-ratio-options i.is-tall { width: 12px; height: 38px; }

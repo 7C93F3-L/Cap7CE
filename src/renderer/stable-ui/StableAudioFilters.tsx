@@ -1,3 +1,4 @@
+import StableFilterOptionIcon from "./StableFilterOptionIcon";
 import { useState, type MouseEvent } from "react";
 import {
   normalizeAudioDurationRange,
@@ -48,7 +49,7 @@ const StableAudioFilters = ({ search, onFlyoutOpen, onSearchOptionsChange }: { s
     </section>
     <section className="cap-stable-audio-channel-filter">
       <header><strong>{t("explore.audioChannels")}</strong></header>
-      <div className="cap-stable-audio-channel-options">{searchAudioChannels.map((channel) => <button type="button" className={selectedChannels.includes(channel) ? "is-selected" : ""} aria-pressed={selectedChannels.includes(channel)} key={channel} onClick={() => { const next = toggleValue(selectedChannels, channel); onSearchOptionsChange({ ...search, audioChannels: next.length ? next : undefined }); }}><i className={`is-${channel}`} aria-hidden="true" /><span>{t(channelLabels[channel])}</span></button>)}</div>
+      <div className="cap-stable-audio-channel-options">{searchAudioChannels.map((channel) => <button type="button" className={selectedChannels.includes(channel) ? "is-selected" : ""} aria-pressed={selectedChannels.includes(channel)} key={channel} onClick={() => { const next = toggleValue(selectedChannels, channel); onSearchOptionsChange({ ...search, audioChannels: next.length ? next : undefined }); }}><StableFilterOptionIcon name={channel} /><span>{t(channelLabels[channel])}</span></button>)}</div>
     </section>
     {anchor && <StableSidebarFlyout anchor={anchor} label={t("explore.editAudioDuration")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout cap-stable-audio-flyout" onClose={() => setAnchor(null)}>
       <div className="cap-stable-audio-duration-fields"><label>{t("explore.minimumSeconds")}<input type="number" min="0" max="604800" value={minimumSeconds} onChange={(event) => setMinimumSeconds(event.target.value)} /></label><label>{t("explore.maximumSeconds")}<input type="number" min="1" max="604800" value={maximumSeconds} onChange={(event) => setMaximumSeconds(event.target.value)} /></label></div>

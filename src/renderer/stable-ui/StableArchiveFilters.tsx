@@ -1,3 +1,4 @@
+import StableFilterOptionIcon from "./StableFilterOptionIcon";
 import { useState, type MouseEvent } from "react";
 import {
   normalizeArchiveEntryCountRange,
@@ -58,7 +59,7 @@ const StableArchiveFilters = ({ search, onFlyoutOpen, onSearchOptionsChange }: {
   return <>
     <section className="cap-stable-archive-content-filter">
       <header><strong>{t("explore.archiveContent")}</strong></header>
-      <div className="cap-stable-archive-content-options">{searchArchiveContentTypes.map((value) => <button type="button" className={selectedContent.includes(value) ? "is-selected" : ""} aria-pressed={selectedContent.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedContent, value); onSearchOptionsChange({ ...search, archiveContentTypes: next.length ? next : undefined }); }}><i className={`is-${value}`} aria-hidden="true" /><span>{t(contentLabels[value])}</span></button>)}</div>
+      <div className="cap-stable-archive-content-options">{searchArchiveContentTypes.map((value) => <button type="button" className={selectedContent.includes(value) ? "is-selected" : ""} aria-pressed={selectedContent.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedContent, value); onSearchOptionsChange({ ...search, archiveContentTypes: next.length ? next : undefined }); }}><StableFilterOptionIcon name={value} /><span>{t(contentLabels[value])}</span></button>)}</div>
     </section>
     <section className="cap-stable-archive-count-filter">
       <header><strong>{t("explore.archiveEntryCount")}</strong><button type="button" title={t("explore.editArchiveEntryCount")} aria-label={t("explore.editArchiveEntryCount")} aria-expanded={Boolean(anchor)} onPointerDown={(event) => event.stopPropagation()} onClick={openCountRange}><StableFilterEditGlyph /></button></header>
@@ -70,7 +71,7 @@ const StableArchiveFilters = ({ search, onFlyoutOpen, onSearchOptionsChange }: {
     </section>
     <section className="cap-stable-archive-structure-filter">
       <header><strong>{t("explore.archiveStructure")}</strong></header>
-      <div className="cap-stable-archive-structure-options">{searchArchiveStructures.map((value) => <button type="button" className={selectedStructures.includes(value) ? "is-selected" : ""} aria-pressed={selectedStructures.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedStructures, value); onSearchOptionsChange({ ...search, archiveStructures: next.length ? next : undefined }); }}><i className={`is-${value}`} aria-hidden="true" /><span>{t(structureLabels[value])}</span></button>)}</div>
+      <div className="cap-stable-archive-structure-options">{searchArchiveStructures.map((value) => <button type="button" className={selectedStructures.includes(value) ? "is-selected" : ""} aria-pressed={selectedStructures.includes(value)} key={value} onClick={() => { const next = toggleValue(selectedStructures, value); onSearchOptionsChange({ ...search, archiveStructures: next.length ? next : undefined }); }}><StableFilterOptionIcon name={value} /><span>{t(structureLabels[value])}</span></button>)}</div>
     </section>
   </>;
 };

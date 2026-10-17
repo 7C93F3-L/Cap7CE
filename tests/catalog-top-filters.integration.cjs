@@ -47,7 +47,19 @@ app.whenReady().then(async () => {
     assert.equal((await wheel({deltaY:120})).prevented,false,'no overflow does not capture wheel events');
     assert.deepEqual(layout.labels, ['本周', '当月', '今年', '去年', '更早', '全部']);
     assert.equal(new Set(layout.rows).size, 2); assert.equal(new Set(layout.headers).size, 1);
-    assert.ok(layout.width<=740,'basic controls including all file categories stay compact: '+layout.width);
+    const editVisibility=()=>run(`(()=>{const e=document.querySelector('.cap-stable-time-filter header button');return {opacity:getComputedStyle(e).opacity,width:e.getBoundingClientRect().width}})()`);
+    win.webContents.sendInputEvent({type:'mouseMove',x:1,y:1});await frame();
+    assert.equal((await editVisibility()).opacity,'0','pencil hidden while its group is idle');
+    await run('document.querySelector(".cap-stable-time-filter header button").focus()');
+    assert.deepEqual(await editVisibility(),{opacity:'1',width:22},'keyboard focus reveals the reserved edit control');
+    await run('document.activeElement.blur()');
+    const hoverPoint=await run('(()=>{const r=document.querySelector(".cap-stable-time-labels button").getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)}})()');
+    win.webContents.sendInputEvent({type:'mouseMove',...hoverPoint});await ready('(getComputedStyle(document.querySelector(".cap-stable-time-filter header button")).opacity)==="1"');
+    assert.equal((await editVisibility()).width,22,'group hover does not move surrounding content');
+    await run('document.querySelector(".cap-stable-time-filter header button").click()');await ready('document.querySelector(".cap-stable-sidebar-flyout")');
+    win.webContents.sendInputEvent({type:'mouseMove',x:1,y:1});await frame();assert.equal((await editVisibility()).opacity,'1','open editor remains visible outside its group');
+    await run('document.querySelector(".cap-stable-time-filter header button").click()');await ready('!document.querySelector(".cap-stable-sidebar-flyout")');
+    assert.ok(layout.width<=860,'basic controls including all file categories stay compact: '+layout.width);
     const spacing=await run(`(()=>{const actions=document.querySelector('.cap-catalog-filter-actions'),size=document.querySelector('.cap-stable-file-size-filter'),buttons=[...size.querySelectorAll('.cap-stable-file-size-options button')];return {actions:actions.getBoundingClientRect().width,size:size.getBoundingClientRect().width,clearTop:actions.querySelector('button').getBoundingClientRect().top,timeTop:document.querySelector('.cap-stable-time-labels button').getBoundingClientRect().top,rows:buttons.map(e=>e.getBoundingClientRect().top),widths:buttons.map(e=>e.getBoundingClientRect().width)}})()`);
     assert.ok(spacing.actions<=80&&spacing.size<=180,'summary and size controls use content widths: '+JSON.stringify(spacing));
     assert.equal(spacing.clearTop,spacing.timeTop,'clear action aligns with the first preset row');
@@ -56,7 +68,7 @@ app.whenReady().then(async () => {
     const types = await run(`(()=>{const group=document.querySelector('.cap-stable-file-type-filter'),buttons=[...group.querySelectorAll('.cap-stable-file-type-options button')];return {labels:buttons.map(e=>e.innerText),rows:buttons.map(e=>e.getBoundingClientRect().top),icons:group.querySelectorAll('svg,.cap-stable-type-glyph').length,edit:group.querySelectorAll('header button').length}})()`);
     assert.deepEqual(types.labels,['图像','视频','音频','文档','文本','项目','三维','压缩包','数据','字体','模型','其他']);
     assert.equal(new Set(types.rows).size,2);assert.equal(types.rows.filter(row=>row===types.rows[0]).length,6);
-    assert.equal(types.icons,0);assert.equal(types.edit,0,'format editor and other-category popup entry removed');
+    assert.equal(types.icons,12);assert.equal(types.edit,0,'format editor and other-category popup entry removed');
     for(const [index,extension] of ['.png','.mp4','.mp3','.pdf','.txt','.aep','.obj','.zip','.csv','.ttf','.gguf'].entries()){
       await run(`document.querySelectorAll('.cap-stable-file-type-options button')[${index}].click()`);
       await ready(`probe.search.selectedExtensions?.includes('${extension}')`);
@@ -133,6 +145,16 @@ app.whenReady().then(async () => {
     await run('probe.language("en-US")'); await frame(); layout = await geometry(); assert.equal(layout.clipped, false, 'English labels fit their groups');
     await run('document.querySelector(".cap-stable-ui").style.setProperty("--cap-ui-font-secondary","14px")'); await frame(); layout = await geometry(); assert.equal(layout.clipped, false, 'larger labels remain reachable by horizontal scrolling');
     await run('probe.details(undefined)');
+    for(const [extension,selector,count,size] of [
+      ['.mp3','.cap-stable-audio-channel-options',3,24],['.glb','.cap-stable-three-d-model-type-options',3,24],
+      ['.glb','.cap-stable-three-d-structure-options',3,24],['.zip','.cap-stable-archive-content-options',8,16],
+      ['.zip','.cap-stable-archive-structure-options',2,24],['.png','.cap-stable-ratio-options',5,24],
+      ['.png','.cap-stable-image-animation-filter > div',2,24]]){
+      await run(`probe.setSearch({query:'keep',timePreset:'all',selectedExtensions:[${JSON.stringify(extension)}]})`);
+      const icons=await run(`Array.from(document.querySelectorAll(${JSON.stringify(selector+' .cap-stable-filter-option-icon')}),e=>({path:e.querySelector('path').getAttribute('d'),width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,stroke:e.getAttribute('stroke-width')}))`);
+      assert.equal(icons.length,count,selector);assert.equal(new Set(icons.map(e=>e.path)).size,count,'each shortcut has a distinct symbol: '+selector);
+      assert.ok(icons.every(e=>e.width===size&&e.height===size&&e.stroke==='1.5'),'uniform SVG size and stroke: '+selector);
+    }
     const formats=await run('probe.formats'); let longest=0;
     for (const language of ['zh-CN','en-US']) for (const size of [11,14]) {
       await run(`probe.language(${JSON.stringify(language)});document.querySelector('.cap-stable-ui').style.setProperty('--cap-ui-font-secondary','${size}px')`);
@@ -145,7 +167,7 @@ app.whenReady().then(async () => {
         if(language==='zh-CN'&&size===11)longest=Math.max(longest,layout.width);
       }
     }
-    assert.ok(longest<=1480,'longest default Chinese combination with all categories stays compact: '+longest);
+    assert.ok(longest<=1600,'longest default Chinese combination with all categories stays compact: '+longest);
     await run(`document.documentElement.style.setProperty('--cap-ui-font-base','16px');document.querySelector('.cap-stable-ui').style.removeProperty('--cap-ui-font-secondary')`);
     for(const language of ['zh-CN','en-US']){
       await run(`probe.language(${JSON.stringify(language)})`);
