@@ -55,6 +55,8 @@ const run = async () => {
     "preferences:updateCatalogGrid",
     "preferences:getCatalogGridSize",
     "preferences:updateCatalogGridSize",
+    "preferences:getCatalogView",
+    "preferences:updateCatalogView",
     "preferences:get",
     "preferences:updateSkimSort",
     "preferences:updateCommandEnabled",

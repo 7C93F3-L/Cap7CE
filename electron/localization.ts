@@ -20,7 +20,7 @@ export const zhCN = {
   "catalogActions.trashTitle": "删除文件或文件夹",
   "catalogActions.trashQuestion": "是否将选中的 {count} 个项目移入回收站？文件夹中的内容也会一并移入。",
   "catalogActions.targetChanged": "项目类型已变化，请刷新目录后重试。",
-  "catalogWorkspace.gridSaveFailed": "网格配置未能读取或保存，请稍后再试。",
+  "catalogWorkspace.gridSaveFailed": "浏览配置未能读取或保存，请稍后再试。",
   "catalogWorkspace.localDisk": "本地磁盘",
   "catalogWorkspace.viewSize": "视图大小",
   "catalogWorkspace.viewSmaller": "小",

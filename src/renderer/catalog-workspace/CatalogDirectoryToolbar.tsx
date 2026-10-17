@@ -40,10 +40,10 @@ export default function CatalogDirectoryToolbar({ path, canBack, canForward, can
         {parts.map((part, index) => <span key={index}><i>›</i><button type="button" onClick={() => onOpen(parts.slice(0, index + 1).join("\\") + (index === 0 ? "\\" : ""))}>{part}</button></span>)}
       </div>}
     {!searchMode && query.trim() && <button type="button" className="cap-catalog-search-badge" title={query} onClick={onSearchMode}>搜索中</button>}
+    <CatalogRandomControls random={random} disabled={!enabled} busy={refreshing} />
     {onGridSize && onGridSizeCommit && <CatalogGridSizeControl size={gridSize} onPreview={onGridSize} onCommit={onGridSizeCommit} />}
     <button type="button" className="cap-catalog-grid-toggle" onClick={onGridMode} aria-label="网格切换" title={`网格切换 · 当前：${gridMode === "square" ? "方形网格" : "原比例网格"}；点击切换为${gridMode === "square" ? "原比例网格" : "方形网格"}`}><CatalogToolbarIcon name="grid" /></button>
-    <button type="button" className="cap-catalog-subfolders-toggle" disabled={path === null} aria-label={t("catalogWorkspace.includeSubfolders")} aria-pressed={includeSubfolders} title={`${t("catalogWorkspace.includeSubfolders")} · ${t(includeSubfolders ? "common.enabled" : "common.disabled")}${path === null ? ` · ${t("catalogWorkspace.enterDirectory")}` : ""}`} onClick={onIncludeSubfolders}><CatalogToolbarIcon name={includeSubfolders ? "files" : "tree"} /></button>
-    <CatalogRandomControls random={random} disabled={!enabled} busy={refreshing} />
-    <CatalogToolbarViewControls randomEnabled={random.enabled} sort={sort} onSort={onSort} showHidden={showHidden} onShowHidden={onShowHidden} />
+    <CatalogToolbarViewControls randomEnabled={random.enabled} sort={sort} onSort={onSort} showHidden={showHidden} onShowHidden={onShowHidden}
+      includeSubfolders={includeSubfolders} onIncludeSubfolders={onIncludeSubfolders} atHome={path === null} />
   </form>;
 }

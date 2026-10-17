@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 export { useCatalogRandomBrowse } from "./useCatalogRandomBrowse";
-import type { ComputerSearchSort } from "../../shared/computerSearchFactTypes";
+export { useCatalogViewOptions } from "./useCatalogViewOptions";
 import type { ComputerSearchController } from "../computer-search/useComputerSearchController";
-
-export function useCatalogViewOptions(initialIncludeSubfolders = false) {
-  const [sort, setSort] = useState<ComputerSearchSort>("name-ascending");
-  const [showHidden, setShowHidden] = useState(false);
-  const [includeSubfolders, setIncludeSubfolders] = useState(initialIncludeSubfolders);
-  return { includeSubfolders, toggleSubfolders: () => setIncludeSubfolders(value => !value), sort, setSort, showHidden, toggleHidden: () => setShowHidden(value => !value), options: { sort, excludeHidden: !showHidden, includeSubfolders } };
-}
 
 export function useCatalogRefresh(controller: ComputerSearchController, atHome: boolean, foreground: boolean, path: string | null) {
   const [version, setVersion] = useState(0), [busy, setBusy] = useState(false);

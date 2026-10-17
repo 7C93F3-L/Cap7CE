@@ -292,6 +292,8 @@ contextBridge.exposeInMainWorld("cap7ce", {
   },
   preferences: {
     getCatalogGrid: () => ipcRenderer.invoke("preferences:getCatalogGrid"),
+    getCatalogView: () => ipcRenderer.invoke("preferences:getCatalogView"),
+    updateCatalogView: (scopePath: string | null, patch: import("../src/shared/catalogViewPreferenceTypes").CatalogViewPreference) => ipcRenderer.invoke("preferences:updateCatalogView", scopePath, patch),
     getCatalogGridSize: () => ipcRenderer.invoke("preferences:getCatalogGridSize"),
     updateCatalogGridSize: (scopePath: string | null, size: number) => ipcRenderer.invoke("preferences:updateCatalogGridSize", scopePath, size),
     updateCatalogGrid: (scopePath: string | null, mode: "square" | "gallery") => ipcRenderer.invoke("preferences:updateCatalogGrid", scopePath, mode),

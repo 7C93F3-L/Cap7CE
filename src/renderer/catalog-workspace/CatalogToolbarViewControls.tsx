@@ -7,15 +7,17 @@ import CatalogToolbarIcon from "./CatalogToolbarIcon";
 
 const options: ComputerSearchSort[] = ["name-ascending", "name-descending", "modified-descending", "modified-ascending"];
 const label = (sort: ComputerSearchSort) => `${t(sort.startsWith("name") ? "sort.field.name" : "sort.field.modifiedAt")} · ${t(sort.endsWith("ascending") ? "sort.direction.asc" : "sort.direction.desc")}`;
-export default function CatalogToolbarViewControls({ sort, onSort, showHidden, onShowHidden, randomEnabled = false }: {
+export default function CatalogToolbarViewControls({ sort, onSort, showHidden, onShowHidden, randomEnabled = false, includeSubfolders, onIncludeSubfolders, atHome }: {
   randomEnabled?: boolean; sort: ComputerSearchSort; onSort: (sort: ComputerSearchSort) => void; showHidden: boolean; onShowHidden: () => void;
+  includeSubfolders: boolean; onIncludeSubfolders: () => void; atHome: boolean;
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   return <div className="cap-catalog-view-controls">
-    <button type="button" title={randomEnabled ? t("explore.randomBrowse") : `${t("sort.parent")} · ${label(sort)}`} aria-label={`${t("sort.parent")} · ${randomEnabled ? t("explore.randomBrowse") : label(sort)}`} aria-expanded={anchor !== null}
+    <button type="button" className="cap-catalog-sort-toggle" title={randomEnabled ? t("explore.randomBrowse") : `${t("sort.parent")} · ${label(sort)}`} aria-label={`${t("sort.parent")} · ${randomEnabled ? t("explore.randomBrowse") : label(sort)}`} aria-expanded={anchor !== null}
       onClick={event => setAnchor(anchor ? null : event.currentTarget.getBoundingClientRect())}>
       <StableUiIcon name="sort" sortDirection={sort.endsWith("ascending") ? "asc" : "desc"} className="cap-catalog-toolbar-icon cap-catalog-sort-icon" />
     </button>
+    <button type="button" className="cap-catalog-subfolders-toggle" disabled={atHome} aria-label={t("catalogWorkspace.includeSubfolders")} aria-pressed={includeSubfolders} title={`${t("catalogWorkspace.includeSubfolders")} · ${t(includeSubfolders ? "common.enabled" : "common.disabled")}${atHome ? ` · ${t("catalogWorkspace.enterDirectory")}` : ""}`} onClick={onIncludeSubfolders}><CatalogToolbarIcon name={includeSubfolders ? "files" : "tree"} /></button>
     <button type="button" role="switch" aria-checked={showHidden} aria-label={t("settings.hiddenFiles")} title={`${t("settings.hiddenFiles")} · ${t(showHidden ? "common.enabled" : "common.disabled")}`}
       className="cap-catalog-hidden-switch" onClick={onShowHidden}><CatalogToolbarIcon name={showHidden ? "eye" : "eyeOff"} /></button>
     {anchor && <StableSidebarFlyout anchor={anchor} label={t("sort.parent")} placement="below" onClose={() => setAnchor(null)}>

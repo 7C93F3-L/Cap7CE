@@ -18,7 +18,15 @@ export class CatalogGridPreferenceStore<T = CatalogGridMode> {
   relocate(change: DirectoryRename) { return this.write(values => renameDirectoryPreferenceKeys(values, change)); }
   update(scopePath: unknown, mode: unknown): Promise<Record<string, T>> {
     if (!isCatalogGridScopePath(scopePath) || !this.codec.valid(mode)) return Promise.reject(new Error("catalog-grid-invalid-preference"));
-    return this.write(values => ({ ...values, [catalogGridScopeKey(scopePath)]: mode }));
+    return this.updateWith(scopePath, () => mode);
+  }
+  updateWith(scopePath: unknown, transform: (current: T | undefined) => T): Promise<Record<string, T>> {
+    if (!isCatalogGridScopePath(scopePath)) return Promise.reject(new Error("catalog-grid-invalid-preference"));
+    return this.write(values => {
+      const key = catalogGridScopeKey(scopePath), next = transform(values[key]);
+      if (!this.codec.valid(next)) throw Error("catalog-grid-invalid-preference");
+      return { ...values, [key]: next };
+    });
   }
   private write(transform: (values: Record<string, T>) => Record<string, T>): Promise<Record<string, T>> {
     const operation = this.writes.then(async () => {

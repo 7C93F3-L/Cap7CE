@@ -168,6 +168,8 @@ declare global {
       };
       preferences: {
         getCatalogGrid: () => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridPreferenceMap>;
+        getCatalogView: () => Promise<import("../shared/catalogViewPreferenceTypes").CatalogViewPreferenceMap>;
+        updateCatalogView: (scopePath: string | null, patch: import("../shared/catalogViewPreferenceTypes").CatalogViewPreference) => Promise<import("../shared/catalogViewPreferenceTypes").CatalogViewPreferenceMap>;
         getCatalogGridSize: () => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridSizePreferenceMap>;
         updateCatalogGridSize: (scopePath: string | null, size: number) => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridSizePreferenceMap>;
         updateCatalogGrid: (scopePath: string | null, mode: import("../shared/catalogGridPreferenceTypes").CatalogGridMode) => Promise<import("../shared/catalogGridPreferenceTypes").CatalogGridPreferenceMap>;

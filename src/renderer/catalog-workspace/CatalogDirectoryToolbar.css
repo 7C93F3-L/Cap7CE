@@ -6,8 +6,8 @@
 .cap-catalog-view-controls button { white-space: nowrap; }
 .cap-catalog-directory-toolbar > .cap-catalog-grid-toggle,
 .cap-catalog-directory-toolbar > .cap-catalog-size-toggle,
-.cap-catalog-directory-toolbar > .cap-catalog-subfolders-toggle,
 .cap-catalog-directory-toolbar .cap-catalog-random-controls > button,
 .cap-catalog-directory-toolbar .cap-catalog-view-controls > button { width: 30px; height: 28px; padding: 4px 7px; }
 
 .cap-catalog-random-toggle[aria-checked="true"] { color: var(--theme-color); }
+.cap-catalog-random-controls { padding-right: 5px; margin-right: 2px; border-right: 1px solid color-mix(in srgb, currentColor 20%, transparent); }

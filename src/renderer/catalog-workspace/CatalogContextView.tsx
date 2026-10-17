@@ -28,14 +28,16 @@ export default function CatalogContextView({ context, selected, foreground, filt
   onActiveActions: (actions: CatalogContextActions | null) => void;
   onOpenBrowser: (path: string | null) => void; onLocation: (id: string, path: string | null) => void;
 }) {
-  const random = useCatalogRandomBrowse(), filters = useComputerSearchFilters(true), view = useCatalogViewOptions(context.kind === "search" && context.scopePath !== null);
+  const random = useCatalogRandomBrowse(), filters = useComputerSearchFilters(true);
   const [searchMode, setSearchMode] = useState(context.kind === "search" && Boolean(context.scopePath));
   const [selection, setSelection] = useState<CatalogSelection | null>(null);
   const reportSelection = useCallback((value: CatalogSelection) => { setSelection(value); if (value.items.filter(item => !item.isDirectory).length > 1) onShowDetails?.(); }, [onShowDetails]);
   const querySetter = useRef<(value: string) => void>(() => {});
   const clearQuery = useCallback(() => querySetter.current(""), []);
   const navigation = useCatalogDirectoryNavigation(context.scopePath, clearQuery, context.kind === "browse");
+  const view = useCatalogViewOptions(context.favoritePath ?? null, navigation.path, context.kind === "search" && context.scopePath !== null);
   const grid = useCatalogGridPresentation(context.favoritePath ?? null, navigation.path), gridMode = grid.mode;
+  const dismissPreferenceError = useCallback(() => { grid.dismissError(); view.dismissError(); }, [grid.dismissError, view.dismissError]);
   useEffect(() => setSelection(null), [navigation.path]);
   const openDirectory = navigation.open;
   const toggleBrowser = useCallback(() => onOpenBrowser(navigation.path), [onOpenBrowser, navigation.path]);
@@ -82,6 +84,6 @@ export default function CatalogContextView({ context, selected, foreground, filt
       && !filters.conditions.facts && !filters.conditions.fileConditions
       ? <CatalogHome onOpen={openDirectory} favorites={favorites} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />
       : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={reportSelection} {...appearance} />}</div>
-    {grid.error && <CatalogGridPreferenceNotice onDismiss={grid.dismissError} />}
+    {(grid.error || view.error) && <CatalogGridPreferenceNotice onDismiss={dismissPreferenceError} />}
   </section>;
 }
