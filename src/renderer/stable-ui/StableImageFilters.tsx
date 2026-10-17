@@ -13,7 +13,7 @@ const StableImageFilters = ({ search, colorsDisabled = false, onFlyoutOpen, onSe
   if (!isImageOnlyExtensionSelection(search.selectedExtensions ?? [])) return null;
   const props = { search, onFlyoutOpen, onSearchOptionsChange };
   return <>
-    <fieldset className="cap-stable-metadata-colors" disabled={colorsDisabled}><StableImageColorFilter {...props} /></fieldset>
+    <fieldset className="cap-stable-metadata-colors" disabled={colorsDisabled}><StableImageColorFilter search={search} onSearchOptionsChange={onSearchOptionsChange} /></fieldset>
     <StableImageRatioFilter {...props} />
     <StableImageDimensionFilter {...props} />
     <StableImageAnimationFilter search={search} onSearchOptionsChange={onSearchOptionsChange} />

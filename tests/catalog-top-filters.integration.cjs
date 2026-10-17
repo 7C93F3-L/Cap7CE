@@ -145,6 +145,21 @@ app.whenReady().then(async () => {
     await run('probe.language("en-US")'); await frame(); layout = await geometry(); assert.equal(layout.clipped, false, 'English labels fit their groups');
     await run('document.querySelector(".cap-stable-ui").style.setProperty("--cap-ui-font-secondary","14px")'); await frame(); layout = await geometry(); assert.equal(layout.clipped, false, 'larger labels remain reachable by horizontal scrolling');
     await run('probe.details(undefined)');
+    await run(`probe.language('zh-CN');probe.setSearch({query:'keep',fileFormat:'all',timePreset:'week',selectedExtensions:['.png'],visualColors:['red']})`);
+    const palette=await run(`(()=>{const group=document.querySelector('.cap-stable-image-color-filter'),buttons=[...group.querySelectorAll('.cap-stable-color-options button')];return {count:buttons.length,rows:buttons.map(e=>e.getBoundingClientRect().top),edit:group.querySelectorAll('header button').length,labels:buttons.slice(12).map(e=>e.title)}})()`);
+    assert.equal(palette.count,16);assert.equal(new Set(palette.rows).size,2);assert.equal(palette.rows.filter(y=>y===palette.rows[0]).length,8);
+    assert.equal(palette.edit,0,'image color traits no longer require an editor');assert.deepEqual(palette.labels,['明亮','暗色','鲜艳','低饱和']);
+    const traits=['bright-image','dark-image','vivid-image','muted-image'];
+    for(let index=0;index<traits.length;index++){
+      await run(`document.querySelector('.cap-stable-image-color-filter .is-${traits[index]}').click()`);
+      assert.deepEqual(await run('probe.search.imageColorTraits'),traits.slice(0,index+1),'trait shortcut applies immediately and combines with the existing selection');
+      assert.deepEqual(await run('[probe.search.query,probe.search.timePreset,probe.search.visualColors]'),['keep','week',['red']]);
+      assert.equal(await run('!!document.querySelector(".cap-stable-sidebar-flyout")'),false);
+    }
+    for(const trait of traits)await run(`document.querySelector('.cap-stable-image-color-filter .is-${trait}').click()`);
+    assert.equal(await run('probe.search.imageColorTraits'),undefined,'toggling off the final trait restores unrestricted characteristics');
+    await run(`probe.setSearch({...probe.search,imageColorTraits:['muted-image']})`);
+    assert.equal(await run('document.querySelector(".cap-stable-image-color-filter .is-muted-image").getAttribute("aria-pressed")'),'true','existing conditions restore their selected circle');
     for(const [extension,selector,count,size] of [
       ['.mp3','.cap-stable-audio-channel-options',3,24],['.glb','.cap-stable-three-d-model-type-options',3,24],
       ['.glb','.cap-stable-three-d-structure-options',3,24],['.zip','.cap-stable-archive-content-options',8,16],
@@ -179,7 +194,7 @@ app.whenReady().then(async () => {
     await run(`document.documentElement.style.setProperty('--cap-ui-font-base','13px')`);
     await run(`probe.language('zh-CN');document.querySelector('.cap-stable-ui').style.setProperty('--cap-ui-font-secondary','11px');probe.setSearch({query:'keep',timePreset:'all',selectedExtensions:['.psd']})`);
     await run('document.querySelector(".cap-stable-image-animation-filter button").click()');await ready('probe.search.imageAnimation==="animated"');
-    await run('document.querySelector(".cap-stable-image-color-filter header button").click()');await ready('document.querySelector(".cap-stable-sidebar-flyout")');
+    await run('document.querySelector(".cap-stable-image-ratio-filter header button").click()');await ready('document.querySelector(".cap-stable-sidebar-flyout")');
     await run('document.querySelector(".cap-catalog-top-filter-scroll").scrollLeft=0');await ready('!document.querySelector(".cap-stable-sidebar-flyout")');
     let positionedEditors=0;
     for(const [width,height,font,language] of [[1100,700,13,'zh-CN'],[540,220,16,'en-US']]){
