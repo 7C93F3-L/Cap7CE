@@ -1,7 +1,7 @@
 import type { CatalogTilePosition } from "./catalogGridLayout";
 
 // A caption has a fixed height; only the image area participates in the ratio.
-export function catalogJustifiedRows(count: number, width: number, ratio: (index: number) => number, target = 200) {
+export function catalogJustifiedRows(count: number, width: number, ratio: (index: number) => number, target = 200, minimumRowItems = 1) {
   const gap = 8, caption = 28;
   const ratios = Array.from({ length: count }, (_, index) => {
     const value = ratio(index);
@@ -13,9 +13,9 @@ export function catalogJustifiedRows(count: number, width: number, ratio: (index
     const first = index;
     let sum = 0;
     do { sum += ratios[index++]; }
-    while (index < count && target * sum + gap * (index - first - 1) < width);
+    while (index < count && (index - first < minimumRowItems || target * sum + gap * (index - first - 1) < width));
     const length = index - first;
-    if (length > 1 && target * sum + gap * (length - 1) >= width) {
+    if (length > minimumRowItems && target * sum + gap * (length - 1) >= width) {
       const previous = sum - ratios[index - 1];
       const withoutLast = (width - gap * (length - 2)) / previous;
       const withLast = (width - gap * (length - 1)) / sum;

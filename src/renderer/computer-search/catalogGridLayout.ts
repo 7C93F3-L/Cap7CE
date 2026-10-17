@@ -8,7 +8,7 @@ export function catalogGridLayout(count: number, width: number, horizontal: bool
   ratio: (index: number) => number, size = 100, compactHeight = Infinity) {
   const gap = gallery ? 8 : 5;
   const scale = normalizeCatalogGridSize(size) / 100;
-  const columns = Math.max(1, Math.floor((width + gap) / (150 * scale + gap)));
+  const columns = Math.max(gallery || horizontal ? 1 : 2, Math.floor((width + gap) / (150 * scale + gap)));
   const cell = horizontal ? Math.max(1, Math.min(138 * scale, compactHeight)) : Math.max(1, (width - (columns - 1) * gap) / columns);
   if (!gallery || horizontal) {
     const stride = cell + gap;
@@ -26,7 +26,7 @@ export function catalogGridLayout(count: number, width: number, horizontal: bool
         });
       } };
   }
-  const { positions, height } = catalogJustifiedRows(count, width, ratio, 200 * scale), buffer = 200 * scale + 36;
+  const { positions, height } = catalogJustifiedRows(count, width, ratio, 200 * scale, width < 300 + gap ? 2 : 1), buffer = 200 * scale + 36;
   return { height, width, position: (index: number): CatalogTilePosition | undefined => positions[index],
     visible(start: number, extent: number) {
       let low = 0, high = positions.length;

@@ -23,6 +23,10 @@ function check(ratios,width,size=100){
 }
 const mixed=Array.from({length:100},(_,i)=>[.55,1.7,1,2.4,.8,1.2,.45][i%7]);
 for(const size of [50,100,200])for(const width of [90,420,900,1200])check(mixed,width,size);
+for(const size of [50,100,200])for(const width of [216,224,300]){
+ const {rows}=check([2.4,2.4,.45,.45,1,1,1],width,size);
+ assert.ok(rows.slice(0,-1).every(row=>row.length>=2),'narrow galleries retain at least two items per complete row without losing aspect ratios');
+}
 assert.ok(new Set(check(mixed,900).rows.map(row=>row[0].height.toFixed(2))).size>2,'rows adapt independently');
 const last=check([1,1,1,1,1,1],1000).rows.at(-1);assert.equal(last.length,1);close(last[0].width,200);close(last[0].height,228);
 check([NaN,Infinity,0,-1,.01,99],700);assert.equal(check([],800).layout.height,0);
@@ -63,6 +67,8 @@ app.whenReady().then(async()=>{
    if(row.tiles.at(-1).index!==22)assert.ok(Math.abs(row.tiles.at(-1).right-width)<.05,'rendered complete row fills both edges')}
    return rows;};
   await win.loadFile(path.join(root,'index.html'));await ready("document.querySelectorAll('.thumb').length>8");await frame();await checkDom();
+  await run('probe.width(820)');await frame();await checkDom();
+  await run('probe.width(244)');await frame();const narrow=await checkDom();assert.ok(narrow.slice(0,-1).every(row=>row.tiles.length>=2),'narrow favorite-style galleries render multiple cards per row');
   await run('probe.width(820)');await frame();await checkDom();
   await run('probe.ref.current.scrollTop=probe.ref.current.scrollHeight');await ready("document.querySelector('[data-index=\"22\"]')");await frame();await checkDom();
   await run('probe.mode("square")');await frame();const square=await run("(()=>{const t=document.querySelector('.thumb').getBoundingClientRect();return [t.width,t.height]})()");close(square[0],square[1]);

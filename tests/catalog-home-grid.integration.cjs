@@ -44,6 +44,17 @@ app.whenReady().then(async()=>{
   const roots=['#home .cap-catalog-home','#files .cap-computer-search-results'];
   const wheel=(selector,options)=>run(`(()=>{const node=document.querySelector(${JSON.stringify(selector)}),event=new WheelEvent('wheel',{bubbles:true,cancelable:true,...${JSON.stringify(options)}});node.dispatchEvent(event);return {left:node.scrollLeft,prevented:event.defaultPrevented}})()`);
   for(const selector of roots)assert.deepEqual(await wheel(selector,{deltaY:45}),{left:0,prevented:false},'normal-height grids retain native vertical wheel behavior');
+  await run("document.querySelectorAll('.pane').forEach(node=>node.style.width='236px')");
+  await ready("document.querySelector('#home .thumb')?.getBoundingClientRect().width===105.5&&document.querySelector('#files .thumb')?.getBoundingClientRect().width===105.5");
+  for(const selector of roots){
+    const tiles=await run(`(()=>{const grid=document.querySelector(${JSON.stringify(selector)}).querySelector('.cap-catalog-file-grid'),r=grid.getBoundingClientRect();return [...grid.children].slice(0,3).map(node=>{const t=node.getBoundingClientRect();return {left:t.left-r.left,top:t.top-r.top,width:t.width,height:t.height}})})()`);
+    assert.equal(tiles[0].top,tiles[1].top,'narrow home and file grids retain two columns');
+    assert.equal(tiles[2].left,tiles[0].left);assert.ok(tiles[2].top>tiles[0].top,'the third item starts the next row');
+    assert.equal(tiles[1].left+tiles[1].width,216,'both cards fit the available width');
+    assert.equal(tiles[0].height,tiles[0].width,'narrow cards remain square');
+  }
+  await run("document.querySelectorAll('.pane').forEach(node=>node.style.width='420px')");
+  await ready("document.querySelector('#home .thumb')?.getBoundingClientRect().width>190&&document.querySelector('#files .thumb')?.getBoundingClientRect().width>190");
   await run("document.querySelector('#home .thumb').click()");
   assert.equal(await run("document.querySelector('#home .thumb').classList.contains('selected')"),true);
   await run("document.querySelector('#home .thumb').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))");
