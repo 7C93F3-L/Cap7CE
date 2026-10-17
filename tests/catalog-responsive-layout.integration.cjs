@@ -31,17 +31,23 @@ app.whenReady().then(async()=>{try{
  const firstRow='.cap-favorite-row:first-child',more=firstRow+' .cap-favorite-more';
  assert.equal(await run("getComputedStyle(document.querySelector('.cap-favorite-open')).borderRadius"),'999px','expanded navigation uses rounded capsules');
  await run(`document.querySelector('${firstRow} .cap-favorite-open').click()`);await ready(`document.querySelector('${firstRow}').classList.contains('is-selected')`);
- const selected=await run(`(()=>{const row=document.querySelector('${firstRow}');return {radius:getComputedStyle(row).borderRadius,background:getComputedStyle(row).backgroundImage,buttonBackground:getComputedStyle(row.querySelector('.cap-favorite-open')).backgroundImage}})()`);
+ const selected=await run(`(()=>{const row=document.querySelector('${firstRow}');return {height:row.getBoundingClientRect().height,radius:getComputedStyle(row).borderRadius,background:getComputedStyle(row).backgroundImage,buttonBackground:getComputedStyle(row.querySelector('.cap-favorite-open')).backgroundImage}})()`);
+ assert.equal(selected.height,36,'expanded directory rows use the compact height');
  assert.equal(selected.radius,'999px');assert.match(selected.background,/gradient/);assert.equal(selected.buttonBackground,'none','selection background is painted once across the entire row');
  const rowPoint=await run(`(()=>{const r=document.querySelector('${firstRow}').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)}})()`);
  win.webContents.sendInputEvent({type:'mouseMove',...rowPoint});await ready('!!document.querySelector("[role=tooltip]")');
+ const expectedLeft=await run("document.querySelector('.cap-catalog-sidebar').getBoundingClientRect().right+5");
+ await ready(`document.querySelector('[role=tooltip]').getBoundingClientRect().left===${expectedLeft}`);
+ assert.equal(await run("document.querySelector('[role=tooltip]').getBoundingClientRect().left"),expectedLeft,'hover tooltip starts outside the whole sidebar, beyond the more-button column');
  await ready(`Number(getComputedStyle(document.querySelector('${more}')).opacity)>0`);await run(`document.querySelector('${more}').focus()`);
  await run(`document.querySelector('${more}').click()`);await ready('document.querySelector("[role=menu]")');
+ await ready(`document.querySelector('[role=menu]').getBoundingClientRect().left===${expectedLeft}`);
  const menuLabels=await run('[...document.querySelectorAll("[role=menuitem]")].map(item=>item.textContent)');
  assert.deepEqual(await run('directoryProbe.opens'),['first'],'the more button opens the existing menu without navigating');
  await run("document.querySelector('[role=menu]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");await ready('!document.querySelector("[role=menu]")');
  assert.equal(await run(`document.activeElement===document.querySelector('${more}')`),true,'Escape restores focus to the more button');
  await run(`document.querySelector('${firstRow} .cap-favorite-open').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))`);await ready('document.querySelector("[role=menu]")');
+ await ready(`document.querySelector('[role=menu]').getBoundingClientRect().left===${expectedLeft}`);
  assert.deepEqual(await run('[...document.querySelectorAll("[role=menuitem]")].map(item=>item.textContent)'),menuLabels,'right click and the more button expose the same directory actions');
  await run("[...document.querySelectorAll('[role=menuitem]')].find(item=>item.textContent.includes('重命名')).click()");await ready(`!!document.querySelector('${firstRow} form')`);
  assert.equal(await run(`getComputedStyle(document.querySelector('${firstRow}')).display`),'block','renaming still occupies the whole row');
@@ -61,6 +67,13 @@ app.whenReady().then(async()=>{try{
  for(const button of compact.buttons){assert.equal(button.width,32);assert.equal(button.height,32);assert.equal(button.center,0,'each compact control is centered in the sidebar');}
  assert.equal(compact.buttons[2].radius,'9px','the selected home background is a compact rounded square');
  assert.equal(await run("[...document.querySelectorAll('.cap-favorite-more')].every(button=>!button.getClientRects().length)"),true,'compact rows retain their square shape without a more-button column');
+ const narrowPoint=await run(`(()=>{const r=document.querySelector('${firstRow} .cap-favorite-open').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)}})()`);
+ win.webContents.sendInputEvent({type:'mouseMove',...narrowPoint});await ready('!!document.querySelector("[role=tooltip]")');
+ const narrowLeft=await run("document.querySelector('.cap-catalog-sidebar').getBoundingClientRect().right+5");
+ await ready(`document.querySelector('[role=tooltip]').getBoundingClientRect().left===${narrowLeft}`);
+ assert.equal(await run("document.querySelector('[role=tooltip]').getBoundingClientRect().left"),narrowLeft,'compact tooltip uses the same sidebar boundary');
+ await run(`document.querySelector('${firstRow} .cap-favorite-open').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))`);await ready(`document.querySelector('[role=menu]')?.getBoundingClientRect().left===${narrowLeft}`);
+ await run("document.querySelector('[role=menu]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");await ready('!document.querySelector("[role=menu]")');
  await run("document.querySelector('.cap-catalog-resizer').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}))");await frame();await key('ArrowRight');await key('ArrowRight');
  const point=await run("(()=>{const r=document.querySelector('.cap-catalog-resizer').getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()");
  win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...point});win.webContents.sendInputEvent({type:'mouseMove',x:point.x+40,y:point.y});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+40,y:point.y});await frame();

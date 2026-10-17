@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import type { FavoriteDirectory } from "../../shared/favoriteDirectoryTypes";
+import { favoriteDirectoryAnchor } from "./favoriteDirectoryAnchor";
 
 export function useFavoriteDirectoryTooltip(enabled: boolean) {
   const [state, setState] = useState<{ anchor: DOMRect; directory: FavoriteDirectory | null } | null>(null);
@@ -10,7 +11,7 @@ export function useFavoriteDirectoryTooltip(enabled: boolean) {
   }, []);
   const show = (event: PointerEvent<HTMLElement>, directory: FavoriteDirectory | null) => {
     hide(); if (!enabled) return;
-    const anchor = event.currentTarget.getBoundingClientRect();
+    const anchor = favoriteDirectoryAnchor(event.currentTarget);
     timer.current = window.setTimeout(() => { timer.current = null; setState({ anchor, directory }); }, 150);
   };
   useEffect(() => {

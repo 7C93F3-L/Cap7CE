@@ -30,6 +30,7 @@ const files = new Map([
   ["src/renderer/favorite-directories/useFavoriteDirectories.ts", 75],
   ["src/renderer/favorite-directories/FavoriteDirectoryList.tsx", 100],
   ["src/renderer/favorite-directories/useFavoriteDirectoryTooltip.ts", 30],
+  ["src/renderer/favorite-directories/favoriteDirectoryAnchor.ts", 10],
   ["src/shared/catalogWorkspaceTypes.d.ts", 35],
   ["src/renderer/catalog-workspace/catalogWorkspaceContexts.ts", 75],
   ["src/renderer/catalog-workspace/useCatalogWorkspaceContexts.ts", 45],

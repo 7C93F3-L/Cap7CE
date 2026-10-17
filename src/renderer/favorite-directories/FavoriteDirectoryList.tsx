@@ -9,6 +9,7 @@ import type { CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTy
 import FavoriteDirectoryContextMenu, { type FavoriteContextTarget } from "./FavoriteDirectoryContextMenu";
 import CatalogToolbarIcon from "../catalog-workspace/CatalogToolbarIcon";
 import { useFavoriteDirectoryTooltip } from "./useFavoriteDirectoryTooltip";
+import { favoriteDirectoryAnchor } from "./favoriteDirectoryAnchor";
 
 export interface FavoriteDirectoryListProps {
   directories: readonly FavoriteDirectory[];
@@ -46,7 +47,7 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
   const showMenu = (button: HTMLButtonElement, directory: FavoriteDirectory) => {
     if (props.busy) return;
     tooltip.hide();
-    setMenu({ directory, trigger: button, anchor: button.getBoundingClientRect() });
+    setMenu({ directory, trigger: button, anchor: favoriteDirectoryAnchor(button) });
   };
   const save = async (id: string) => {
     if (props.busy || !draft.trim()) return;
