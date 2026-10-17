@@ -7,7 +7,7 @@ import { readComputerSearchContinuation } from "./computerSearchContinuation";
 import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentity";
 import { useComputerSearchTrashUpdates } from "./useComputerSearchTrashUpdates";
 
-export type ComputerSearchError = "scope-not-indexed" | "scope-offline" | "failed" | null;
+export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "scope-offline" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
 export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false, viewOptions?: ComputerSearchViewOptions) => {
@@ -124,6 +124,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const readError = (value: unknown): ComputerSearchError => {
     const message = String(value);
     return message.includes("scope-offline") ? "scope-offline"
+      : message.includes("scope-preparing") ? "scope-preparing"
       : message.includes("scope-not-indexed") ? "scope-not-indexed" : "failed";
   };
 

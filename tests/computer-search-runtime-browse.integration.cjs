@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const controllerModule = require("../dist-electron/core/coreHostController.js");
 const saved = controllerModule.CoreHostController;
 const requests = [];
+let scopeState = "ready", scopeResolved = true;
 const volume = { volumeId: "A".repeat(32), displayName: "X:", fileSystem: "NTFS", selected: true,
   state: "ready", processed: 1, total: 1, queryable: true, needsRebuild: false };
 class FixtureController {
@@ -12,7 +13,7 @@ class FixtureController {
   async request(operation, body) {
     if (operation === "volume.list") return { volumes: [volume] };
     if (operation === "catalog.status") return { volumes: [volume], tasks: [], catalogRevision: 1 };
-    if (operation === "catalog.resolveScope") return { resolved: true, queryable: true, volumeId: volume.volumeId,
+    if (operation === "catalog.resolveScope") return { resolved: scopeResolved, queryable: scopeState === "ready", state: scopeState, volumeId: volume.volumeId,
       rootFileReference: body.path === "X:\\" ? null : "1".repeat(16),
       directoryFileReference: body.path === "X:\\MissingRoot" ? null : body.path === "X:\\" ? "5".repeat(16) : "1".repeat(16) };
     if (operation === "volume.selection" || operation === "catalog.build") return {};
@@ -78,6 +79,16 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     assert.deepEqual(requests.at(-1).body.volumeIds, [volume.volumeId]);
     await runtime.search({taskId:"ordered-children",query:"",scopePath:"X:\\",scopeKind:"direct-children",sort:"modified-descending",excludeHidden:true});
     assert.equal(requests.at(-1).body.sort,"modified-descending");assert.equal(requests.at(-1).body.excludeHidden,true);assert.equal(requests.at(-1).body.entryType,"any","hidden control must preserve folder results");
+    const dispatched = requests.length;
+    for (const state of ["building", "discovering", "offline", "ready"]) {
+      scopeState = state; scopeResolved = false;
+      await assert.rejects(runtime.search({ taskId: "scope-" + state, query: "", scopePath: "X:\\Pending", scopeKind: "direct-children" }),
+        state === "offline" ? /scope-offline/ : state === "ready" ? /scope-not-indexed/ : /scope-preparing/);
+    }
+    assert.equal(requests.length, dispatched, "preparing and missing scopes never broaden into whole-drive queries");
+    scopeState = "ready"; scopeResolved = true;
+    await runtime.search({ taskId: "scope-recovered", query: "", scopePath: "X:\\Pending", scopeKind: "direct-children" });
+    assert.equal(requests.length, dispatched + 1, "the same location recovers after publication");
     console.log("Core empty/child browsing, path matching and result authorization tests passed.");
   } finally { await runtime.stop(); controllerModule.CoreHostController = saved; }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

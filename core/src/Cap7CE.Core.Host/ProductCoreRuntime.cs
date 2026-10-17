@@ -13,17 +13,20 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     private readonly CatalogSynchronizationService synchronizer;
     private readonly ConcurrentDictionary<string, RuntimeTask> tasks = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource shutdown = new();
-    private readonly CatalogReaderOwnership readerOwnership = new();
+    private readonly CatalogReaderOwnership readerOwnership;
+    private readonly CatalogPreparationDiagnostics? diagnostics;
     private readonly ICatalogReaderSessionFactory readerFactory;
 
     public ProductCoreRuntime(
         CatalogV2Database catalog,
         ICatalogReaderSessionFactory readerFactory,
-        FileFactHostSession? fileFacts = null)
+        FileFactHostSession? fileFacts = null, CatalogPreparationDiagnostics? diagnostics = null)
     {
         this.catalog = catalog;
         this.readerFactory = readerFactory;
-        synchronizer = new CatalogSynchronizationService(catalog, readerFactory);
+        this.diagnostics = diagnostics;
+        readerOwnership = new(diagnostics);
+        synchronizer = new CatalogSynchronizationService(catalog, readerFactory, diagnostics);
         FileFacts = fileFacts;
     }
 
@@ -50,13 +53,13 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     {
         if (MaintenanceEnabled) throw new InvalidOperationException("reader-monitor-already-configured");
         ChangeSignal.SetState("starting");
-        await CatalogMaintenanceActivation.StartAsync(readerOwnership, catalog, readerFactory, ChangeSignal, resolveRoots, token);
+        await CatalogMaintenanceActivation.StartAsync(readerOwnership, catalog, readerFactory, ChangeSignal, resolveRoots, token, diagnostics);
         MaintenanceEnabled = true;
     }
 
     public async Task<VolumeListResponse> DiscoverVolumesAsync(CancellationToken token)
     {
-        var volumes = await readerOwnership.RunExclusiveAsync(synchronizer.DiscoverAsync, token);
+        var volumes = await readerOwnership.RunExclusiveAsync(synchronizer.DiscoverAsync, token, "discover");
         ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token));
         return new VolumeListResponse(volumes.Select(ToStatus).ToArray());
     }
@@ -71,7 +74,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
             ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(ownershipToken));
             return new VolumeSelectionResponse((await catalog.ReadVolumesAsync(ownershipToken))
                 .Where(volume => volume.Selected).Select(volume => volume.VolumeId).ToArray());
-        }, token);
+        }, token, "select");
     }
 
     public async Task<CatalogStatusResponse> ReadStatusAsync(CancellationToken token)
@@ -128,7 +131,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
             try
             {
                 var measurements = await readerOwnership.RunExclusiveAsync(
-                    ownershipToken => synchronizer.SynchronizeAsync(request.VolumeIds, rebuild, ownershipToken), cancellation.Token);
+                    ownershipToken => synchronizer.SynchronizeAsync(request.VolumeIds, rebuild, ownershipToken), cancellation.Token, rebuild ? "rebuild" : "synchronize");
                 ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(cancellation.Token));
                 runtimeTask.Complete("completed", null, measurements);
             }

@@ -7,7 +7,8 @@ internal static class CatalogReaderOwnershipTests
     private static TaskCompletionSource NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
     public static async Task RunAsync()
     {
-        await using var ownership = new CatalogReaderOwnership();
+        var events = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        await using var ownership = new CatalogReaderOwnership(new Cap7CE.Core.Host.CatalogPreparationDiagnostics((name, _) => events.Enqueue(name)));
         var started = NewSignal(); var retiring = NewSignal(); var retired = NewSignal(); var allowRetirement = NewSignal();
         var restarted = NewSignal(); var monitorCount = 0; var readers = 0; var maxReaders = 0;
         await ownership.ActivateAsync(async token => {
@@ -40,6 +41,8 @@ internal static class CatalogReaderOwnershipTests
         releaseManual.TrySetResult(); TestAssert.Equal(42, await manual, "manual result preserved");
         TestAssert.Equal(99, await next, "queued manual operation completes");
         await restarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        TestAssert.True(events.Contains("monitor-interrupt") && events.Contains("monitor-retired"), "monitor interruption and retirement are diagnosed");
+        TestAssert.True(events.Count(name => name == "monitor-started") >= 2, "restart is diagnosed without changing ownership");
         TestAssert.Equal(1, maxReaders, "monitor and manual callbacks never overlap Reader ownership");
         var activeManual = NewSignal();
         var interrupted = ownership.RunExclusiveAsync(async token => {

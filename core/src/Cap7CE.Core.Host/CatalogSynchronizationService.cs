@@ -17,13 +17,15 @@ public sealed class CatalogSynchronizationService
 {
     private readonly CatalogV2Database catalog;
     private readonly ICatalogReaderSessionFactory readerFactory;
+    private readonly CatalogPreparationDiagnostics? diagnostics;
 
     public CatalogSynchronizationService(
         CatalogV2Database catalog,
-        ICatalogReaderSessionFactory readerFactory)
+        ICatalogReaderSessionFactory readerFactory, CatalogPreparationDiagnostics? diagnostics = null)
     {
         this.catalog = catalog;
         this.readerFactory = readerFactory;
+        this.diagnostics = diagnostics;
     }
 
     public async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> DiscoverAsync(
@@ -57,7 +59,7 @@ public sealed class CatalogSynchronizationService
     // The exclusive maintenance owner reuses its authenticated session during
     // recovery; this method never connects or disposes a competing Reader.
     public async Task<IReadOnlyList<CatalogSynchronizationMeasurement>> SynchronizeConnectedAsync(
-        ICatalogReaderSession reader, IReadOnlyList<string> requestedVolumeIds, bool forceRebuild, CancellationToken token = default)
+        ICatalogReaderSession reader, IReadOnlyList<string> requestedVolumeIds, bool forceRebuild, CancellationToken token = default, string origin = "explicit")
     {
         ArgumentNullException.ThrowIfNull(reader); ArgumentNullException.ThrowIfNull(requestedVolumeIds);
         var requested = requestedVolumeIds.ToArray();
@@ -77,7 +79,13 @@ public sealed class CatalogSynchronizationService
                 await catalog.MarkOfflineAsync(target.VolumeId, token);
                 continue;
             }
-            measurements.Add(await SynchronizeVolumeAsync(reader, readerVolume, target, forceRebuild, token));
+            var activity = diagnostics?.Begin(target.DisplayName, origin);
+            try {
+                measurements.Add(await SynchronizeVolumeAsync(reader, readerVolume, target, forceRebuild, activity, token));
+                activity?.Complete(measurements[^1]);
+            }
+            catch (OperationCanceledException) { activity?.Cancel(); throw; }
+            catch (Exception error) when (error is not OutOfMemoryException) { activity?.Fail(); throw; }
         }
         return measurements;
     }
@@ -87,9 +95,12 @@ public sealed class CatalogSynchronizationService
         CatalogReaderVolume readerVolume,
         CatalogV2VolumeSnapshot catalogVolume,
         bool forceRebuild,
-        CancellationToken token)
+        CatalogPreparationDiagnostics.Activity? activity, CancellationToken token)
     {
         var inspection = await reader.InspectAsync(readerVolume, token);
+        var reason = catalogVolume.State == CatalogV2VolumeState.Building ? "interrupted-build"
+            : CatalogPreparationDiagnostics.RebuildReason(catalogVolume, inspection)
+                ?? (forceRebuild ? "explicit-rebuild" : "marked-for-rebuild");
         if (forceRebuild && catalogVolume.State is not (CatalogV2VolumeState.Disabled or CatalogV2VolumeState.NeedsRebuild))
         {
             catalogVolume = await catalog.MarkNeedsRebuildAsync(catalogVolume.VolumeId, token);
@@ -103,7 +114,7 @@ public sealed class CatalogSynchronizationService
             return await BuildSnapshotAsync(
                 reader, readerVolume, catalogVolume, inspection,
                 catalogVolume.State == CatalogV2VolumeState.NeedsRebuild,
-                token);
+                activity, reason, token);
         }
 
         if (catalogVolume.State != CatalogV2VolumeState.CatchingUp)
@@ -117,16 +128,16 @@ public sealed class CatalogSynchronizationService
         }
         if (catalogVolume.State == CatalogV2VolumeState.NeedsRebuild)
         {
-            return await BuildSnapshotAsync(reader, readerVolume, catalogVolume, inspection, true, token);
+            return await BuildSnapshotAsync(reader, readerVolume, catalogVolume, inspection, true, activity, reason, token);
         }
 
         try
         {
-            return await CatchUpAsync(reader, readerVolume, catalogVolume, inspection, token);
+            return await CatchUpAsync(reader, readerVolume, catalogVolume, inspection, activity, token);
         }
         catch (CatalogReaderDiscontinuityException)
         {
-            return await RetryOrRebuildAsync(reader, readerVolume, catalogVolume.VolumeId, token);
+            return await RetryOrRebuildAsync(reader, readerVolume, catalogVolume.VolumeId, activity, token);
         }
     }
 
@@ -134,8 +145,9 @@ public sealed class CatalogSynchronizationService
         ICatalogReaderSession reader,
         CatalogReaderVolume readerVolume,
         string volumeId,
-        CancellationToken token)
+        CatalogPreparationDiagnostics.Activity? activity, CancellationToken token)
     {
+        activity?.Retry();
         var current = await catalog.ReadVolumeAsync(volumeId, token)
             ?? throw new InvalidDataException("catalog-volume-missing");
         var inspection = await reader.InspectAsync(readerVolume, token);
@@ -143,7 +155,7 @@ public sealed class CatalogSynchronizationService
         {
             try
             {
-                return await CatchUpAsync(reader, readerVolume, current, inspection, token);
+                return await CatchUpAsync(reader, readerVolume, current, inspection, activity, token);
             }
             catch (CatalogReaderDiscontinuityException)
             {
@@ -153,7 +165,7 @@ public sealed class CatalogSynchronizationService
             }
         }
         current = await catalog.MarkNeedsRebuildAsync(current.VolumeId, token);
-        return await BuildSnapshotAsync(reader, readerVolume, current, inspection, true, token);
+        return await BuildSnapshotAsync(reader, readerVolume, current, inspection, true, activity, CatalogPreparationDiagnostics.RebuildReason(current, inspection) ?? "journal-discontinuity", token);
     }
 
     private static bool CanResumeCatchUp(
@@ -172,11 +184,13 @@ public sealed class CatalogSynchronizationService
         CatalogV2VolumeSnapshot volume,
         CatalogReaderInspection inspection,
         bool rebuild,
-        CancellationToken token)
+        CatalogPreparationDiagnostics.Activity? activity, string reason, CancellationToken token)
     {
         var totalWatch = System.Diagnostics.Stopwatch.StartNew();
         var readerReadMilliseconds = 0d;
         var readerWatch = System.Diagnostics.Stopwatch.StartNew();
+        activity?.Rebuild(rebuild ? reason : "initial-build");
+        activity?.Stage("snapshot-open");
         var snapshot = await reader.OpenSnapshotAsync(readerVolume, token);
         readerWatch.Stop();
         readerReadMilliseconds += readerWatch.Elapsed.TotalMilliseconds;
@@ -194,6 +208,7 @@ public sealed class CatalogSynchronizationService
                 snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount),
                 rebuild,
                 token);
+            activity?.Stage("snapshot-read-and-stage");
             var cursor = 0UL;
             for (var pageNumber = 0; pageNumber < 1_000_000; pageNumber++)
             {
@@ -225,6 +240,7 @@ public sealed class CatalogSynchronizationService
             readerWatch.Stop();
             readerReadMilliseconds += readerWatch.Elapsed.TotalMilliseconds;
             snapshotClosed = true;
+            activity?.Stage("directory-paths-and-publish");
             result = await build.PublishAsync(token);
         }
         finally
@@ -255,8 +271,9 @@ public sealed class CatalogSynchronizationService
         CatalogReaderVolume readerVolume,
         CatalogV2VolumeSnapshot volume,
         CatalogReaderInspection inspection,
-        CancellationToken token)
+        CatalogPreparationDiagnostics.Activity? activity, CancellationToken token)
     {
+        activity?.Stage("journal-catch-up");
         var totalWatch = System.Diagnostics.Stopwatch.StartNew();
         var readerReadMilliseconds = 0d;
         var records = 0L;

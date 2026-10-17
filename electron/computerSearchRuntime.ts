@@ -8,7 +8,7 @@ import type {
 } from "./computerSearchTypes";
 import { ComputerSearchCapabilityController } from "./computerSearchCapability";
 import { startComputerSearchCatalogSynchronization } from "./computerSearchCatalogBootstrap";
-import { CoreHostController, type CoreControllerSnapshot } from "./core/coreHostController";
+import { CoreHostController, type CoreControllerSnapshot, type CoreControllerDiagnostics } from "./core/coreHostController";
 import type { CoreCatalogStatus, CoreResolvedScope, CoreSearchPage } from "./core/coreProductProtocolTypes";
 import { getFileFormatCapability } from "./formatCapabilities";
 import type { MetadataBuildApi } from "../src/shared/metadataBuildTypes";
@@ -50,6 +50,7 @@ interface RuntimeOptions {
   cancelVisualSession?: (sessionId: string) => boolean;
   metadataPreferencesPath?: string;
   favoritePreferencesPath?: string;
+  diagnostics?: CoreControllerDiagnostics;
 }
 interface SearchContext { requestId: string; volumeNames: Map<string, string> }
 interface AuthorizationSession { items: Map<string, ComputerSearchItem>; visualSessionId: string }
@@ -103,7 +104,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     packaged: options.packaged,
     executablePath: options.executablePath ?? defaultExecutablePath(options.packaged),
     productVersion: options.productVersion,
-    launchMode: "product"
+    launchMode: "product", diagnostics: options.diagnostics
   });
   const capability = new ComputerSearchCapabilityController({
     packaged: options.packaged, resourcesPath: options.resourcesPath ?? process.resourcesPath
@@ -285,7 +286,8 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
           );
           if (cancelledTasks.has(request.taskId)) throw new Error("search-cancelled");
           if (!resolved.resolved || !resolved.queryable || !resolved.volumeId) {
-            throw new Error(resolved.state === "offline" ? "scope-offline" : "scope-not-indexed");
+            throw new Error(resolved.state === "offline" ? "scope-offline"
+              : ["building", "discovering"].includes(resolved.state ?? "") ? "scope-preparing" : "scope-not-indexed");
           }
           volumeIds = [resolved.volumeId];
           if (request.scopeKind === "direct-children" && !resolved.directoryFileReference)

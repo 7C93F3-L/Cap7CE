@@ -5,14 +5,17 @@ app.setPath('userData', root + '-profile');
 const fixture = String.raw`
 import React,{useState} from 'react';import {createRoot} from 'react-dom/client';
 import {useComputerSearchController} from './src/renderer/computer-search/useComputerSearchController';
-const p=window.probe={requests:[],canceled:[],hold:false,fail:false};
+import {useComputerSearchMetadataRefresh} from './src/renderer/computer-search/useComputerSearchMetadataRefresh';
+const p=window.probe={requests:[],canceled:[],hold:false,fail:false,preparing:false};
 window.cap7ce={computerSearch:{status:async()=>({state:'ready',searchAvailable:true,volumes:[],catalogRevision:1}),
- search:async request=>{p.requests.push(request);if(p.hold){p.hold=false;await new Promise(r=>p.resume=r)}
+ onCatalogChanged:cb=>{p.publish=cb;cb(1);return ()=>{p.publish=null}},
+ search:async request=>{p.requests.push(request);if(p.preparing)throw Error('scope-preparing');if(p.hold){p.hold=false;await new Promise(r=>p.resume=r)}
  if(p.fail){p.fail=false;throw Error('search failed')}
  return {taskId:request.taskId,items:[{id:request.scopePath,name:'Folder',path:request.scopePath+'Folder',isDirectory:true}],nextCursor:null}},
  cancel:async id=>{p.canceled.push(id);return true}}};
 function makeFixture(){return function Fixture(){const [scope,setScope]=useState(null);
  p.scope=setScope;p.controller=useComputerSearchController(scope,true,undefined,undefined,true,true,scope===null);
+ useComputerSearchMetadataRefresh(p.controller.active,true,p.controller.busy||!p.controller.hasSubmitted,p.controller.refreshResults,false);
  return <div>{p.controller.busy?'searching':p.controller.items.map(x=>x.id).join(',')}</div>}}
 const root=createRoot(document.getElementById('root'));let Fixture=makeFixture();
 window.RefreshRuntime.register(Fixture,'SearchFixture');root.render(<Fixture/>);
@@ -49,6 +52,12 @@ app.whenReady().then(async () => {
   assert.equal(await run('probe.controller.taskId'),owner,'late response cannot replace refreshed owner');
   await run('probe.fail=true;probe.scope("E:\\\\")');await ready('probe.controller.error==="failed"&&!probe.controller.busy');
   await run('probe.scope("F:\\\\")');await ready('probe.controller.items.length===1&&!probe.controller.busy&&!probe.controller.error');
+  await run('probe.preparing=true;probe.scope("C:/")');await ready('probe.controller.error==="scope-preparing"&&!probe.controller.busy');
+  const waitingRequests=await run('probe.requests.length');await wait(150);
+  assert.equal(await run('probe.requests.length'),waitingRequests,'preparing scope does not add a retry poll');
+  await run('probe.preparing=false;probe.publish(2)');
+  await ready('probe.controller.items.length===1&&!probe.controller.error');
+  assert.equal(await run('probe.requests.length'),waitingRequests+1,'Catalog publication recovers the waiting location without a click');
   const last=await run('probe.controller.taskId');await run('probe.unmount()');
   assert.equal(await run(`probe.canceled.includes(${JSON.stringify(last)})`),true,'unmount still cancels search');
   console.log('Search lifecycle: Fast Refresh, pending cancellation, late replies, failure recovery and unmount passed.');

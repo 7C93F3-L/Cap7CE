@@ -1,3 +1,4 @@
+import { createCatalogDiagnosticConsumer } from "./coreCatalogDiagnostics";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { access } from "node:fs/promises";
@@ -190,7 +191,8 @@ export class CoreHostController {
       shell: false,
       stdio: ["pipe", "pipe", "pipe"]
     });
-    child.stderr.resume();
+    const consumeDiagnostic = createCatalogDiagnosticConsumer((level, event, data) => this.options.diagnostics?.log(level, event, data));
+    child.stderr.on("data", chunk => consumeDiagnostic(chunk.toString("utf8")));
     child.stdin.end(`${sessionSecret}\n`, "utf8");
     try {
       const ready = await this.readReadyMessage(child, this.options.startupTimeoutMs ?? 10_000);

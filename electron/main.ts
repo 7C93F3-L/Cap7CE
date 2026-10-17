@@ -154,7 +154,7 @@ const getActiveShortcutActions = (preferences: ShortcutPreferenceProfiles) => pr
 let unavailableGlobalShortcutActionIds = new Set<GlobalShortcutActionId>();
 let rendererContentViewActive = false;
 let searchIpcController: ReturnType<typeof registerSearchIpc> | null = null;
-const computerSearchRuntime = createComputerSearchRuntime({ packaged: app.isPackaged, productVersion: app.getVersion(), resourcesPath: process.resourcesPath, beginVisualSession: beginSkimVisualSession, cancelVisualSession: cancelSkimVisualSession });
+const computerSearchRuntime = createComputerSearchRuntime({ packaged: app.isPackaged, productVersion: app.getVersion(), resourcesPath: process.resourcesPath, beginVisualSession: beginSkimVisualSession, cancelVisualSession: cancelSkimVisualSession, diagnostics: runtimeDiagnostics });
 let stopCatalogSystemEvents: (() => void) | undefined;
 let previewWindowLoaded = false;
 let previewSessionActive = false;

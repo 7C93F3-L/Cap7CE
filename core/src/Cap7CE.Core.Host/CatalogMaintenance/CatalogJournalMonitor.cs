@@ -18,9 +18,9 @@ public sealed class CatalogJournalMonitor
     private readonly Action listening;
     public CatalogJournalMonitor(CatalogV2Database catalog, ICatalogReaderSessionFactory factory,
         Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
-        Action<long> published, TimeProvider? time = null, Action? listening = null)
+        Action<long> published, TimeProvider? time = null, Action? listening = null, CatalogPreparationDiagnostics? diagnostics = null)
     {
-        this.catalog = catalog; this.factory = factory; synchronization = new(catalog, factory);
+        this.catalog = catalog; this.factory = factory; synchronization = new(catalog, factory, diagnostics);
         this.resolveRoots = resolveRoots; this.published = published; this.time = time ?? TimeProvider.System;
         this.listening = listening ?? (() => { });
     }
@@ -42,7 +42,7 @@ public sealed class CatalogJournalMonitor
                     continue;
                 }
                 var inspection = await reader.InspectAsync(available, token);
-                if (!IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token);
+                if (!IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token, "monitor-startup");
             }
             ready = await ReadReadyAsync(token);
             var roots = await resolveRoots(ready, token);
@@ -94,9 +94,9 @@ public sealed class CatalogJournalMonitor
     }
     private async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> ReadReadyAsync(CancellationToken token) =>
         (await catalog.ReadVolumesAsync(token)).Where(volume => volume.Selected && volume.State == CatalogV2VolumeState.Ready).ToArray();
-    private async Task RecoverAsync(ICatalogReaderSession reader, string volumeId, CancellationToken token)
+    private async Task RecoverAsync(ICatalogReaderSession reader, string volumeId, CancellationToken token, string origin = "monitor-recovery")
     {
-        await synchronization.SynchronizeConnectedAsync(reader, [volumeId], true, token);
+        await synchronization.SynchronizeConnectedAsync(reader, [volumeId], true, token, origin);
         published(await catalog.ReadRevisionAsync(token));
     }
     private static bool IsContinuous(CatalogV2VolumeSnapshot volume, CatalogReaderInspection inspection) =>

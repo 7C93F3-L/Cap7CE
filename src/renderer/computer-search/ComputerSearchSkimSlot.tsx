@@ -25,6 +25,7 @@ const ComputerSearchSkimSlot = ({
   };
   const status = controller.active
     ? invalidFilters ? t("computerSearch.invalidFilters") : controller.error === "scope-offline" ? t("computerSearch.scopeOffline")
+      : controller.error === "scope-preparing" ? t("computerSearch.scopePreparing")
       : controller.error === "scope-not-indexed" ? t("computerSearch.scopeNotIndexed")
         : controller.error ? t("computerSearch.failed")
           : controller.busy && controller.items.length === 0 ? t("computerSearch.loading")

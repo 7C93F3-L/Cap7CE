@@ -8,10 +8,10 @@ internal static class CatalogMaintenanceActivation
     public static Task StartAsync(CatalogReaderOwnership ownership, CatalogV2Database catalog,
         ICatalogReaderSessionFactory factory, CatalogChangeSignal signal,
         Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
-        CancellationToken token)
+        CancellationToken token, CatalogPreparationDiagnostics? diagnostics = null)
     {
         var monitor = new CatalogJournalMonitor(catalog, factory, resolveRoots, signal.PublishCatalog,
-            listening: () => signal.SetState("watching"));
+            listening: () => signal.SetState("watching"), diagnostics: diagnostics);
         return ownership.ActivateAsync(async lifetime => {
             signal.SetState("starting");
             try { await monitor.RunAsync(lifetime); signal.SetState("idle"); }

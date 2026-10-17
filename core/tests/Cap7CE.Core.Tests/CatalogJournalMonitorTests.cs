@@ -21,9 +21,11 @@ internal static class CatalogJournalMonitorTests
             await sync.SynchronizeAsync([], false);
             var reader = new WaitingCatalogReader(synthetic); var time = new CatalogMonitorTime();
             var publications = Channel.CreateUnbounded<long>(); var resolves = 0;
+            var diagnostics = new System.Collections.Concurrent.ConcurrentQueue<(string Name, System.Text.Json.JsonElement Data)>();
+            var trace = new CatalogPreparationDiagnostics((name, data) => diagnostics.Enqueue((name, System.Text.Json.JsonSerializer.SerializeToElement(data))));
             var monitor = new CatalogJournalMonitor(catalog, reader, (ready, token) => {
                 resolves++; return Task.FromResult<IReadOnlyList<FileFactOwnedStorageRoot>>([]);
-            }, revision => publications.Writer.TryWrite(revision), time);
+            }, revision => publications.Writer.TryWrite(revision), time, diagnostics: trace);
             var work = monitor.RunAsync(cancellation.Token); activeWork = work;
             async Task Wait() => await reader.Waits.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
             async Task Publication() => await publications.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
@@ -32,6 +34,7 @@ internal static class CatalogJournalMonitorTests
             TestAssert.Equal(baseline, await catalog.ReadRevisionAsync(), "quiet timeout has no Catalog writes or notifications");
             TestAssert.Equal(initialInspections, reader.Inspections, "quiet timeout cannot start inspection polling");
             TestAssert.Equal(1, resolves, "quiet timeout cannot query owned directories again");
+            TestAssert.Equal(0, diagnostics.Count, "quiet waits produce no diagnostic traffic");
             TestAssert.Equal(0, reader.PageOrder.Count, "quiet timeout never reads USN pages");
             for (var index = 0; index < 50; index++) synthetic.RenameAndMove("A:", 11, 10, "a-" + index + ".png");
             for (var index = 0; index < 4; index++) synthetic.RenameAndMove("B:", 20, 5, "b-" + index + ".jpg");
@@ -47,6 +50,14 @@ internal static class CatalogJournalMonitorTests
             TestAssert.Equal(snapshots + 1, synthetic.SnapshotOpenCount, "replaced journal rebuilds exactly the affected volume");
             TestAssert.Equal(1, reader.Connects, "completeness recovery reuses the authenticated Reader session");
             TestAssert.True((await catalog.ReadVolumesAsync()).All(volume => volume.State == CatalogV2VolumeState.Ready), "recovered Catalog remains queryable");
+            var rebuild = diagnostics.Single(item => item.Name == "preparation-rebuild");
+            TestAssert.Equal("journal-replaced", rebuild.Data.GetProperty("reason").GetString()!, "automatic recovery records the observed journal cause");
+            TestAssert.Equal("A", rebuild.Data.GetProperty("driveLetter").GetString()!, "diagnostics retain only a drive letter");
+            TestAssert.Equal("monitor-recovery", rebuild.Data.GetProperty("origin").GetString()!, "automatic recovery is distinguished from explicit operations");
+            var completion = diagnostics.Single(item => item.Name == "preparation-completed");
+            TestAssert.Equal(rebuild.Data.GetProperty("activityId").GetString()!, completion.Data.GetProperty("activityId").GetString()!, "recovery stages share one activity");
+            foreach (var key in new[] { "readerReadMilliseconds", "stagingWriteMilliseconds", "directoryPathMilliseconds", "publishMilliseconds", "totalMilliseconds", "records", "pages" })
+                TestAssert.True(completion.Data.GetProperty(key).GetDouble() >= 0, "completed recovery retains existing stage measurement " + key);
             time.Advance(TimeSpan.FromMinutes(26)); reader.Pulses.Writer.TryWrite(true); await Wait();
             TestAssert.Equal(2, reader.Connects, "native session is renewed before its maximum lifetime");
             TestAssert.Equal(1, reader.Disposals, "old session fully retires before renewed session starts");

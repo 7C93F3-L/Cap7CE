@@ -85,6 +85,7 @@ await CatalogOwnedDirectoryStageTests.RunAsync();
 await CatalogJournalPageOwnerTests.RunAsync();
 await CatalogReaderOwnershipTests.RunAsync();
 await CatalogJournalMonitorTests.RunAsync();
+await CatalogPreparationDiagnosticsTests.RunAsync();
 await CatalogChangeSignalTests.RunAsync();
 await FileFactOwnedPolicyTests.RunAsync();
 await FileFactQueryTests.RunAsync();
