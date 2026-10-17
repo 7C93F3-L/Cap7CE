@@ -1,3 +1,4 @@
+.cap-catalog-home { position: absolute; inset: 0; padding: 10px; overflow: auto; box-sizing: border-box; }
 @media (max-height: 359.98px) {
   .cap-catalog-home { overflow-x: auto; overflow-y: hidden; display: flex; align-items: center; }
   .cap-catalog-home .cap-skim-root-sections { display: flex; width: max-content; align-items: flex-start; }
