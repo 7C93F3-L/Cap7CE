@@ -4,6 +4,7 @@ import { getFileFormatCapability } from "../../../electron/formatCapabilities";
 import PreviewManualKeywordsSection from "../preview/PreviewManualKeywordsSection";
 import { useCatalogKeywords } from "./useCatalogKeywords";
 import { useCatalogActivity } from "./CatalogActivity";
+import { useCatalogKeywordEditRequest } from "./useCatalogKeywordEditRequest";
 import "../keywords/KeywordTagEditor.css";
 import "./CatalogKeywords.css";
 
@@ -11,8 +12,11 @@ export default function CatalogKeywords({ item, taskId, foreground }: { item: Co
   const keywords = useCatalogKeywords(item, taskId, foreground), activity = useCatalogActivity();
   const job = activity?.job, matching = job?.key === keywords.sessionId;
   const result = matching ? job?.result : undefined;
-  const busy = matching && !!activity?.busy;
-  useEffect(() => { if (result?.status === "saved") keywords.retry(); }, [result, keywords.retry]);
+  const busy = activity?.busy;
+  useEffect(() => { if (result?.status === "saved" && !keywords.editing) keywords.retry(); }, [result, keywords.editing, keywords.retry]);
+  const batchResult = job?.batch ? job.result : undefined;
+  useEffect(() => { if (batchResult && "succeeded" in batchResult && batchResult.succeeded > 0 && !keywords.editing) keywords.retry(); }, [batchResult, keywords.editing, keywords.retry]);
+  useCatalogKeywordEditRequest(keywords.sessionId, foreground && keywords.available && !activity?.busy, keywords.edit);
   const supported = getFileFormatCapability(item.extension)?.canAIIndex === true;
   return <PreviewManualKeywordsSection sessionId={keywords.sessionId} manualKeywords={keywords.keywords} skimActive={false}
     title="添加关键词" emptyText="尚未添加关键词" available={keywords.available} readState={keywords.readState} onRetry={keywords.retry}

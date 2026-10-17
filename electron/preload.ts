@@ -235,6 +235,11 @@ contextBridge.exposeInMainWorld("cap7ce", {
     readKeywords: (request: ComputerSearchAuthorization) => ipcRenderer.invoke("computerSearch:readKeywords", request),
     saveKeywords: (request: import("../src/shared/catalogKeywordTypes").CatalogKeywordSaveRequest) => ipcRenderer.invoke("computerSearch:saveKeywords", request),
     generateKeywords: (request: import("../src/shared/catalogAutoKeywordTypes").CatalogAutoKeywordRequest) => ipcRenderer.invoke("computerSearch:generateKeywords", request),
+    generateKeywordBatch: (request: import("../src/shared/catalogKeywordBatchTypes").CatalogKeywordBatchRequest) => ipcRenderer.invoke("computerSearch:generateKeywordBatch", request),
+    onKeywordBatchProgress: (callback: (progress: import("../src/shared/catalogKeywordBatchTypes").CatalogKeywordBatchProgress) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, progress: import("../src/shared/catalogKeywordBatchTypes").CatalogKeywordBatchProgress) => callback(progress);
+      ipcRenderer.on("computerSearch:keywordBatchProgress", handler); return () => ipcRenderer.removeListener("computerSearch:keywordBatchProgress", handler);
+    },
     cancelGeneratedKeywords: (request: { requestId: string }) => ipcRenderer.invoke("computerSearch:cancelGeneratedKeywords", request),
     onAutoKeywordProgress: (callback: (progress: import("../src/shared/catalogAutoKeywordTypes").CatalogAutoKeywordProgress) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, progress: import("../src/shared/catalogAutoKeywordTypes").CatalogAutoKeywordProgress) => callback(progress);

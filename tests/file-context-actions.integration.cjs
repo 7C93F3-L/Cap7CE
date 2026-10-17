@@ -133,11 +133,11 @@ assert.match(resultsSource, /getFileContextShortcutAction\s*\(event\)/);
 assert.match(resultsSource, /copyFilePathsWithFeedback\(selectedItems\.map[\s\S]*?t\("clipboard\.copied"\), onFeedback\)/u);
 assert.doesNotMatch(previewSource, /buildFileContextMenuGroups\s*\(/);
 assert.match(previewSource, /getFileContextShortcutAction\s*\(event\)/);
-assert.match(previewSource, /createSpaceHoldController<PreviewWindowData>/);
+assert.doesNotMatch(previewSource, /createSpaceHoldController|pendingLongSpaceAction/);
 assert.match(previewSource, /onContextMenu=\{\(event\) => \{\s*event\.preventDefault\(\);\s*\}\}/);
 assert.doesNotMatch(previewSource, /setContextMenu|deleteAction/);
-assert.match(previewSource, /if \(previewData\.skimActive\) \{\s*closePreview\(\);/);
-assert.match(previewSource, /if \(pendingLongSpaceAction\) \{\s*requestKeywordEdit\(pendingLongSpaceAction\);/);
+assert.match(previewSource, /isPlainSpaceShortcut\(event\)[\s\S]*?closePreview\(\)/);
+
 assert.match(previewSource, /const requestKeywordEdit[\s\S]*?setPreviewKeywordEditorOpen\(true\)/);
 assert.doesNotMatch(previewSource, /preview\.requestItemAction\(\{\s*action: "editKeywords"/);
 assert.match(skimSource, /ResponsiveSkimContextMenuLayer/);

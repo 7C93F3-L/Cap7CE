@@ -28,6 +28,7 @@ export interface FavoriteDirectoryListProps {
   onCopyPath?: (directory: FavoriteDirectory) => void;
   onOpenNew?: (directory: FavoriteDirectory | null) => void;
   onMetadata?: (directory: FavoriteDirectory) => void; metadataMessage?: string;
+  onAutoKeywords?: (directory: FavoriteDirectory) => void;
 }
 
 const pathKey = (value: string | null) => value?.replace(/[\\/]+$/, "").toLowerCase();
@@ -83,6 +84,7 @@ export default function FavoriteDirectoryList(props: FavoriteDirectoryListProps)
     {props.metadataMessage && <div className="cap-favorite-error" role="status">{props.metadataMessage}</div>}
     {menu && <FavoriteDirectoryContextMenu target={menu} index={props.directories.findIndex(item => item.id === menu.directory.id)} count={props.directories.length} busy={props.busy}
       onMetadata={props.onMetadata ? () => props.onMetadata!(menu.directory) : undefined}
+      onAutoKeywords={props.onAutoKeywords ? () => props.onAutoKeywords!(menu.directory) : undefined}
       appearance={props.appearance ?? { theme: "dark", appearanceColors: { themeColor: "#7894f8", accentColor: "#67bec1" }, windowMaterial: "mica" }} onClose={() => setMenu(null)}
       onRename={() => { setDraft(menu.directory.path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || menu.directory.name); setEditing(menu.directory.id); }}
       onRemove={() => props.onRemove(menu.directory.id)} onMove={direction => props.onMove(menu.directory.id, direction)}

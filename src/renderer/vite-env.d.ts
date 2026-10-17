@@ -131,6 +131,8 @@ declare global {
         readKeywords: (request: import("../../electron/computerSearchTypes").ComputerSearchAuthorization) => Promise<import("../shared/catalogKeywordTypes").CatalogKeywordSnapshot>;
         saveKeywords: (request: import("../shared/catalogKeywordTypes").CatalogKeywordSaveRequest) => Promise<import("../shared/catalogKeywordTypes").CatalogKeywordSaveResult>;
         generateKeywords: (request: import("../shared/catalogAutoKeywordTypes").CatalogAutoKeywordRequest) => Promise<import("../shared/catalogAutoKeywordTypes").CatalogAutoKeywordResult>;
+        generateKeywordBatch: (request: import("../shared/catalogKeywordBatchTypes").CatalogKeywordBatchRequest) => Promise<import("../shared/catalogKeywordBatchTypes").CatalogKeywordBatchResult>;
+        onKeywordBatchProgress: (callback: (progress: import("../shared/catalogKeywordBatchTypes").CatalogKeywordBatchProgress) => void) => () => void;
         cancelGeneratedKeywords: (request: { requestId: string }) => Promise<boolean>;
         onAutoKeywordProgress: (callback: (progress: import("../shared/catalogAutoKeywordTypes").CatalogAutoKeywordProgress) => void) => () => void;
         cancelFileDetails: (request: { requestId: string }) => Promise<boolean>;

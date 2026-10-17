@@ -5,12 +5,13 @@ import ResponsiveFileContextMenu from "../components/ResponsiveFileContextMenu";
 import { getFileContextMenuStyle } from "../fileContextMenuShared";
 
 export interface FavoriteContextTarget { directory: FavoriteDirectory; anchor: DOMRect; trigger: HTMLButtonElement }
-export default function FavoriteDirectoryContextMenu({ target, index, count, busy, appearance, onClose, onRename, onRemove, onMove, onReveal, onCopyPath, onMetadata }: {
+export default function FavoriteDirectoryContextMenu({ target, index, count, busy, appearance, onClose, onRename, onRemove, onMove, onReveal, onCopyPath, onMetadata, onAutoKeywords }: {
   target: FavoriteContextTarget; index: number; count: number; busy: boolean;
   appearance: Pick<CatalogWorkspaceAppearance, "theme" | "appearanceColors" | "windowMaterial">;
   onClose: () => void; onRename: () => void; onRemove: () => void;
   onMove: (direction: "up" | "down") => void; onReveal?: () => void; onCopyPath?: () => void;
   onMetadata?: () => void;
+  onAutoKeywords?: () => void;
 }) {
   const action = (id: string, label: string, onSelect: () => void, disabled = false) => ({ id, label, onSelect, disabled: busy || disabled });
   return <ResponsiveFileContextMenu x={target.anchor.right + 5} y={target.anchor.top} anchor={target.anchor} {...appearance}
@@ -19,7 +20,8 @@ export default function FavoriteDirectoryContextMenu({ target, index, count, bus
       [action("reveal", t("favorites.openExplorer"), () => onReveal?.(), !onReveal),
         action("copy", t("context.copyPath"), () => onCopyPath?.(), !onCopyPath),
         action("rename", t("favorites.renameFolder"), onRename, /^[A-Za-z]:\\?$/.test(target.directory.path)),
-        action("metadata", t("metadataDirectory.action"), () => onMetadata?.(), !onMetadata)],
+        action("metadata", t("metadataDirectory.action"), () => onMetadata?.(), !onMetadata),
+        action("autoKeywords", "自动添加关键词", () => onAutoKeywords?.(), !onAutoKeywords)],
       [action("up", t("favorites.up"), () => onMove("up"), index === 0),
         action("down", t("favorites.down"), () => onMove("down"), index === count - 1),
         action("remove", t("catalogActions.removeFavorite"), onRemove)]

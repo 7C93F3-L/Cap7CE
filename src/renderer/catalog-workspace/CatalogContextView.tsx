@@ -20,8 +20,8 @@ import { useCatalogAttributeAvailability } from "./useCatalogAttributeAvailabili
 import { useCatalogGridPresentation } from "./useCatalogGridPresentation";
 import CatalogGridPreferenceNotice from "./CatalogGridPreferenceNotice";
 import type { FavoriteDirectoryControls } from "../../shared/favoriteDirectoryTypes";
-export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, favorites, ...appearance }: CatalogWorkspaceAppearance & {
-  favorites?: FavoriteDirectoryControls; onMetadata: () => void;
+export default function CatalogContextView({ context, selected, foreground, filterHost, detailsHost, metadataProgress, onSearchAvailable, onActiveActions, onOpenBrowser, onLocation, onMetadata, onShowDetails, favorites, ...appearance }: CatalogWorkspaceAppearance & {
+  favorites?: FavoriteDirectoryControls; onMetadata: () => void; onShowDetails?: () => void;
   context: CatalogWorkspaceContext; selected: boolean; foreground: boolean;
   filterHost: HTMLElement | null; detailsHost: HTMLElement | null;
   metadataProgress: MetadataBuildProgress | null; onSearchAvailable: (available: boolean) => void;
@@ -31,6 +31,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   const random = useCatalogRandomBrowse(), filters = useComputerSearchFilters(true), view = useCatalogViewOptions(context.kind === "search" && context.scopePath !== null);
   const [searchMode, setSearchMode] = useState(context.kind === "search" && Boolean(context.scopePath));
   const [selection, setSelection] = useState<CatalogSelection | null>(null);
+  const reportSelection = useCallback((value: CatalogSelection) => { setSelection(value); if (value.items.filter(item => !item.isDirectory).length > 1) onShowDetails?.(); }, [onShowDetails]);
   const querySetter = useRef<(value: string) => void>(() => {});
   const clearQuery = useCallback(() => querySetter.current(""), []);
   const navigation = useCatalogDirectoryNavigation(context.scopePath, clearQuery, context.kind === "browse");
@@ -81,7 +82,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
     <div className="cap-catalog-results">{navigation.path === null && !random.enabled && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions
       ? <CatalogHome onOpen={openDirectory} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />
-      : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={setSelection} {...appearance} />}</div>
+      : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={reportSelection} {...appearance} />}</div>
     {grid.error && <CatalogGridPreferenceNotice onDismiss={grid.dismissError} />}
   </section>;
 }

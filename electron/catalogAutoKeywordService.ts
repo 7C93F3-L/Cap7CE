@@ -13,7 +13,7 @@ interface Dependencies {
 }
 export function createCatalogAutoKeywordService(deps: Dependencies) {
   return async (resolve: () => ComputerSearchItem, signal: AbortSignal, progress: (phase: CatalogAutoKeywordPhase) => void): Promise<CatalogAutoKeywordResult> => {
-    let using = false, committed = false;
+    let using = false, committed = false, phase: CatalogAutoKeywordPhase = "preparing";
     const check = () => { if (signal.aborted) throw Error("cancelled"); return resolve(); };
     try {
       const item = check();
@@ -22,8 +22,8 @@ export function createCatalogAutoKeywordService(deps: Dependencies) {
       const original = await deps.fingerprint(item);
       await deps.keywords.prepare(); check();
       const image = await deps.prepareImage(item.path); check();
-      await deps.beginUse(); using = true; check();
-      const words = normalizeKeywordList(await deps.recognize(image, signal, () => progress("starting"), () => progress("generating")));
+      phase = "starting"; await deps.beginUse(); using = true; check();
+      const words = normalizeKeywordList(await deps.recognize(image, signal, () => progress("starting"), () => { phase = "generating"; progress("generating"); }));
       check();
       if (!words.length || words.length > 20 || words.some(word => word.length > 64 || /[\u0000-\u001f]/u.test(word))) throw Error("模型未返回有效关键词，请重试。");
       progress("saving");
@@ -39,7 +39,7 @@ export function createCatalogAutoKeywordService(deps: Dependencies) {
     } catch (error) {
       if (signal.aborted && !committed) return { status: "cancelled" };
       const message = error instanceof Error ? error.message : "";
-      return { status: "failed", message: /authorization/u.test(message) ? "浏览位置已更新，请重新选择文件后重试。"
+      return { status: "failed", ...(phase === "starting" ? { fatal: true } : {}), message: /authorization/u.test(message) ? "浏览位置已更新，请重新选择文件后重试。"
         : /ENOENT|EACCES|EPERM/u.test(message) ? "文件不存在或无法读取，请检查后重试。"
         : /[\u4e00-\u9fff]/u.test(message) ? message.slice(0, 240) : "自动添加关键词失败，请检查模型服务或关键词保存状态后重试。" };
     } finally { if (using) deps.endUse(); }

@@ -21,7 +21,7 @@ const ResponsiveResultsContextMenuLayer = ({ state, theme, menuStyle, onClose, o
       ],
       [
         action("copyPaths", state.items.length > 1 ? t("context.copySelectedPaths", { count: state.items.length }) : t("context.copyPath"), fileContextShortcutLabels.copyPaths, () => onCopyPaths(state.items)),
-        action("editKeywords", t("context.editKeywords"), t("context.holdSpaceShortcut"), () => onEditKeywords(state.items)),
+        action("editKeywords", t("context.editKeywords"), "", () => onEditKeywords(state.items)),
         action("delete", state.items.length > 1 ? t("context.deleteSelectedFiles", { count: state.items.length }) : t("context.deleteFile"), fileContextShortcutLabels.delete, () => onDelete(state.items))
       ]
     ]}

@@ -86,9 +86,9 @@ const readAuthorization = (value: unknown): ComputerSearchAuthorization => {
   return { taskId: value.taskId, authorizationId: value.authorizationId };
 };
 
-const readAuthorizationBatch = (value: unknown): ComputerSearchAuthorizationBatch => {
+const readAuthorizationBatch = (value: unknown, limit = 200): ComputerSearchAuthorizationBatch => {
   if (!isRecord(value) || !isTaskId(value.taskId) || !Array.isArray(value.authorizationIds)
-    || value.authorizationIds.length < 1 || value.authorizationIds.length > 200
+    || value.authorizationIds.length < 1 || value.authorizationIds.length > limit
     || !value.authorizationIds.every((authorizationId) => typeof authorizationId === "string"
       && /^[A-Za-z0-9_-]{32,128}$/.test(authorizationId))) {
     throw new Error("computer-search-invalid-authorization");
@@ -103,8 +103,8 @@ const requireAuthorizedItem = (runtime: ComputerSearchRuntime, value: unknown) =
   return item;
 };
 
-const requireAuthorizedItems = (runtime: ComputerSearchRuntime, value: unknown) => {
-  const request = readAuthorizationBatch(value);
+const requireAuthorizedItems = (runtime: ComputerSearchRuntime, value: unknown, limit = 200) => {
+  const request = readAuthorizationBatch(value, limit);
   const items = runtime.resolveAuthorizedItems(request);
   if (!items) throw new Error("computer-search-authorization-expired");
   return items;
@@ -117,7 +117,8 @@ export const registerComputerSearchIpc = ({
   registerComputerSearchChangeIpc(registrar, isSenderAllowed, runtime);
   registerCatalogFileDetailsIpc({ registrar, isSenderAllowed, inspectItem, resolveItem: value => requireAuthorizedItem(runtime, value) });
   registerCatalogKeywordsIpc({ registrar, isSenderAllowed, keywords: runtime.keywords, resolveItem: value => requireAuthorizedItem(runtime, value) });
-  registerCatalogAutoKeywordIpc({ registrar, isSenderAllowed, keywords: runtime.keywords, resolveItem: value => requireAuthorizedItem(runtime, value) });
+  registerCatalogAutoKeywordIpc({ registrar, isSenderAllowed, keywords: runtime.keywords, runtime,
+    resolveItems: value => requireAuthorizedItems(runtime, value, 10000), resolveItem: value => requireAuthorizedItem(runtime, value) });
   registerComputerSearchThumbnailIpc({ registrar, isSenderAllowed, runtime });
   registerComputerSearchTrashIpc({ registrar, isSenderAllowed, resolveItems: value => requireAuthorizedItems(runtime, value) });
   if (runtime.favoriteDirectories) registerFavoriteDirectoryIpc(registrar, isSenderAllowed, runtime.favoriteDirectories);

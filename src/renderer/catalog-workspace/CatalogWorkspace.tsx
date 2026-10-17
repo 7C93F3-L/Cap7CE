@@ -40,7 +40,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
   const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
-  return <CatalogActivityProvider><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
+  return <CatalogActivityProvider onShowDetails={layout.showDetails}><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px`, "--cap-catalog-details-width": `${detailsLayout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
       favorites={{ ...favorites, appearance, onReveal: favorites.reveal, onCopyPath: favorites.copyPath, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
@@ -52,7 +52,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     <div className="cap-catalog-contexts">{workspace.contexts.map(context => <CatalogContextView key={context.id}
       context={context} selected={workspace.activeId === context.id} foreground={foreground && !interactionLocked && workspace.activeId === context.id}
       filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null}
-      onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
+      onShowDetails={layout.showDetails} onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
       <div className="cap-catalog-activity-dock"><CatalogActivityBar />
       <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>

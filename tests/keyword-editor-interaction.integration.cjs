@@ -4,8 +4,6 @@ const path = require("node:path");
 const {
   clampFloatingCardPosition,
   centerFloatingCardPosition,
-  createSpaceHoldController,
-  createSpaceReleaseGuard,
   getKeywordEditorTextareaMaximumHeight,
   getKeywordEditorTextareaMinimumHeight,
   getKeywordEditorExitDelay,
@@ -18,10 +16,6 @@ const { getCommonKeywords } = require("../src/renderer/dialogs/keywordEditorMode
 
 const resultsViewSource = fs.readFileSync(
   path.join(__dirname, "../src/renderer/results/ResultsView.tsx"),
-  "utf8"
-);
-const resultsSpaceHoldSource = fs.readFileSync(
-  path.join(__dirname, "../src/renderer/results/useResultsSpaceHold.ts"),
   "utf8"
 );
 const keywordEditorBackdropSource = fs.readFileSync(
@@ -41,23 +35,8 @@ const keywordEditorCardSource = fs.readFileSync(
   "utf8"
 );
 
-assert.doesNotMatch(
-  resultsSpaceHoldSource,
-  /window\.removeEventListener\("blur", cancelSpaceHold\);\s*spaceHoldController\.cancel\(\);/,
-  "refreshing result keyboard listeners must not cancel an in-progress Space hold"
-);
-assert.match(
-  resultsSpaceHoldSource,
-  /handleGuardedKeyDown[\s\S]*?shouldSuppressKeyDown\(event\.code\)[\s\S]*?stopImmediatePropagation\(\)/u,
-  "the Space release guard must suppress key repeat independently of result activity"
-);
-assert.match(
-  resultsSpaceHoldSource,
-  /handleGuardedKeyUp[\s\S]*?consumeKeyUp\(event\.code\)[\s\S]*?stopImmediatePropagation\(\)[\s\S]*?cancelPendingSpaceHold\(\)/u,
-  "the independent guard must consume the Space release that opened the editor"
-);
-assert.match(resultsSpaceHoldSource, /window\.addEventListener\("blur", cancelSpaceHold\)[\s\S]*?\}, \[cancelPendingSpaceHold, cancelSpaceHold\]\)/u);
-assert.match(resultsViewSource, /useResultsSpaceHold<SpacePressSnapshot>[\s\S]*?startSpaceHold\([\s\S]*?isSpaceHoldActive\(\)[\s\S]*?releaseSpaceHold\(\)/u);
+assert.doesNotMatch(resultsViewSource, /useResultsSpaceHold|startSpaceHold|onLongPress/u);
+assert.match(resultsViewSource, /isPlainSpaceShortcut\(event\)[\s\S]*?openPreviewAtIndex\(selectedImageIndex\)/u);
 assert.doesNotMatch(resultsViewSource, /createSpaceHoldController|createSpaceReleaseGuard|releaseGuardRef/u);
 assert.match(keywordEditorBackdropSource, /data-keyword-editor-backdrop="true"/);
 assert.match(keywordEditorBackdropCss, /\.keyword-editor-backdrop-dark\s*\{[^}]*rgb\(0 0 0 \/ 0\.22\)/s);
@@ -133,69 +112,5 @@ assert.deepEqual(getCommonKeywords([
   { keywords: ["产品", "海报", "人物"] },
   { keywords: ["海报", "产品"] }
 ]), ["海报", "产品"]);
-
-const spaceReleaseGuard = createSpaceReleaseGuard();
-assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), false);
-spaceReleaseGuard.activate();
-assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), true);
-assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("KeyA"), false);
-assert.equal(spaceReleaseGuard.consumeKeyUp("KeyA"), false);
-assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), true);
-assert.equal(spaceReleaseGuard.consumeKeyUp("Space"), true);
-assert.equal(spaceReleaseGuard.shouldSuppressKeyDown("Space"), false);
-
-const scheduled = [];
-const shortPresses = [];
-const longPresses = [];
-const controller = createSpaceHoldController({
-  delayMs: 350,
-  schedule: (callback, delayMs) => {
-    const task = { callback, delayMs, cancelled: false };
-    scheduled.push(task);
-    return task;
-  },
-  cancelScheduled: (task) => {
-    task.cancelled = true;
-  },
-  onShortPress: (value) => shortPresses.push(value),
-  onLongPress: (value) => longPresses.push(value)
-});
-
-assert.equal(controller.start("short"), true);
-assert.equal(controller.start("repeat"), false);
-assert.equal(scheduled[0].delayMs, 350);
-assert.equal(controller.release(), true);
-assert.deepEqual(shortPresses, ["short"]);
-assert.deepEqual(longPresses, []);
-
-assert.equal(controller.start("long"), true);
-scheduled[1].callback();
-assert.deepEqual(longPresses, ["long"]);
-assert.equal(controller.release(), true);
-assert.deepEqual(shortPresses, ["short"]);
-
-assert.equal(controller.start("cancelled"), true);
-assert.equal(controller.cancel(), true);
-scheduled[2].callback();
-assert.deepEqual(longPresses, ["long"]);
-
-const updatedLongPresses = [];
-assert.equal(controller.start("rerendered"), true);
-controller.updateHandlers({
-  onShortPress: (value) => shortPresses.push(`updated:${value}`),
-  onLongPress: (value) => updatedLongPresses.push(value)
-});
-scheduled[3].callback();
-assert.deepEqual(longPresses, ["long"]);
-assert.deepEqual(updatedLongPresses, ["rerendered"]);
-controller.release();
-
-const guardedReleaseAfterPendingCancel = createSpaceReleaseGuard();
-guardedReleaseAfterPendingCancel.activate();
-assert.equal(controller.start("opened-editor"), true);
-assert.equal(controller.cancel(), true);
-assert.equal(guardedReleaseAfterPendingCancel.shouldSuppressKeyDown("Space"), true);
-assert.equal(guardedReleaseAfterPendingCancel.consumeKeyUp("Space"), true);
-assert.equal(guardedReleaseAfterPendingCancel.shouldSuppressKeyDown("Space"), false);
 
 console.log("keyword editor interaction integration passed");

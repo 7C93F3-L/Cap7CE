@@ -2,6 +2,7 @@ import { useRef } from "react";
 import type { CatalogSelection } from "../../shared/catalogPresentationTypes";
 import ComputerSearchResultVisual from "../computer-search/ComputerSearchResultVisual";
 import CatalogFileInformation from "./CatalogFileInformation";
+import CatalogBatchKeywords from "./CatalogBatchKeywords";
 
 const bytes = (size: number) => size >= 1024 ** 3 ? `${(size / 1024 ** 3).toFixed(2)} GB`
   : size >= 1024 ** 2 ? `${(size / 1024 ** 2).toFixed(2)} MB` : `${(size / 1024).toFixed(1)} KB`;
@@ -22,5 +23,6 @@ export default function CatalogDetails({ selection, path, count, foreground, sea
         <dt>已知文件大小</dt><dd>{bytes(items.reduce((sum, value) => sum + (value.isDirectory ? 0 : value.sizeBytes ?? 0), 0))}</dd></>
       : searching ? <><dt>搜索范围</dt><dd>{path ?? "此电脑"}</dd><dt>筛选条件</dt><dd>{filterCount} 项</dd><dt>已加载结果</dt><dd>{count} 项</dd></>
       : <><dt>位置</dt><dd>{path ?? "此电脑"}</dd><dt>{path ? "当前结果" : "浏览范围"}</dt><dd>{path ? `${count} 项` : "系统位置与本机磁盘"}</dd></>}</dl>
+    {items.length > 1 && items.some(value => !value.isDirectory) && selection && <CatalogBatchKeywords items={items} taskId={selection.taskId} foreground={foreground} />}
   </aside>;
 }

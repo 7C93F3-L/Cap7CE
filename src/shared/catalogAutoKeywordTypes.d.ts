@@ -5,4 +5,4 @@ export type CatalogAutoKeywordPhase = "preparing" | "starting" | "generating" | 
 export interface CatalogAutoKeywordRequest extends ComputerSearchAuthorization { requestId: string; }
 export interface CatalogAutoKeywordProgress { requestId: string; phase: CatalogAutoKeywordPhase; }
 export type CatalogAutoKeywordResult = { status: "saved"; current: CatalogKeywordSnapshot; added: number }
-  | { status: "cancelled" } | { status: "failed"; message: string };
+  | { status: "cancelled" } | { status: "failed"; message: string; fatal?: boolean };

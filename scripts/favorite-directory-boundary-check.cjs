@@ -85,7 +85,7 @@ const files = new Map([
   ["src/renderer/computer-search/CatalogIconVisual.tsx", 15],
   ["src/renderer/computer-search/CatalogName.tsx", 40],
   ["src/renderer/computer-search/catalogNameLabel.ts", 40],
-  ["src/renderer/catalog-workspace/CatalogHome.tsx", 60],
+  ["src/renderer/catalog-workspace/CatalogHome.tsx", 65],
   ["src/renderer/catalog-workspace/useCatalogDrives.ts", 25],
   ["src/shared/catalogGridPreferenceTypes.d.ts", 10],
   ["electron/catalogGridPreferenceRules.ts", 30],

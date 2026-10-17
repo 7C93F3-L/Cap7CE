@@ -15,7 +15,7 @@ import { previewSidebarExpandedWidth, usePreviewSidebarLayout } from "./preview/
 import { getPreviewWheelNavigationDirection, isPreviewNavigationSuppressedTarget } from "./preview/previewNavigationTarget";
 import { usePreviewImageTransform } from "./preview/usePreviewImageTransform";
 import { getFileContextShortcutAction } from "./fileContextActions";
-import { createSpaceHoldController, isPlainSpaceShortcut } from "./keywordEditorInteraction";
+import { isPlainSpaceShortcut } from "./keywordEditorInteraction";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { setActiveLanguage, t } from "../../electron/localization";
 import { useTransientFeedback } from "./controllers/useTransientFeedback";
@@ -119,7 +119,6 @@ const PreviewWindowApp = () => {
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
-  const pendingLongSpaceActionRef = useRef<PreviewWindowData | null>(null);
   const previewKeywordSavePendingRef = useRef(false);
   const closePreview = useCallback(() => {
     mediaRef.current?.pause();
@@ -152,24 +151,6 @@ const PreviewWindowApp = () => {
       : window.cap7ce?.files.copyPaths([data.filePath]);
     void operation?.then((count) => { if (count > 0) showPreviewPathCopied(data.sessionId); }, () => undefined);
   }, [showPreviewPathCopied]);
-  const spaceHoldControllerRef = useRef<ReturnType<typeof createSpaceHoldController<PreviewWindowData>> | null>(null);
-  if (!spaceHoldControllerRef.current) {
-    spaceHoldControllerRef.current = createSpaceHoldController<PreviewWindowData>({
-      delayMs: 350,
-      schedule: (callback, delayMs) => window.setTimeout(callback, delayMs),
-      cancelScheduled: (handle) => window.clearTimeout(handle as number),
-      onShortPress: () => undefined,
-      onLongPress: () => undefined
-    });
-  }
-  const spaceHoldController = spaceHoldControllerRef.current;
-  spaceHoldController.updateHandlers({
-    onShortPress: closePreview,
-    onLongPress: (data) => {
-      pendingLongSpaceActionRef.current = data;
-    }
-  });
-
   useEffect(() => {
     const unsubscribe = window.cap7ce?.preview.onData((data) => {
       mediaRef.current?.pause();
@@ -354,12 +335,7 @@ const PreviewWindowApp = () => {
       if (isPlainSpaceShortcut(event)) {
         event.preventDefault();
         if (event.repeat || !previewData) return;
-        if (previewData.skimActive) {
-          closePreview();
-          return;
-        }
-        pendingLongSpaceActionRef.current = null;
-        spaceHoldController.start(previewData);
+        closePreview();
         return;
       }
 
@@ -410,32 +386,9 @@ const PreviewWindowApp = () => {
       }
     };
 
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.code !== "Space" || !spaceHoldController.isActive()) return;
-      event.preventDefault();
-      const pendingLongSpaceAction = pendingLongSpaceActionRef.current;
-      pendingLongSpaceActionRef.current = null;
-      spaceHoldController.release();
-      if (pendingLongSpaceAction) {
-        requestKeywordEdit(pendingLongSpaceAction);
-      }
-    };
-
-    const cancelSpaceHold = () => {
-      pendingLongSpaceActionRef.current = null;
-      spaceHoldController.cancel();
-    };
-
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", cancelSpaceHold);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", cancelSpaceHold);
-      cancelSpaceHold();
-    };
-  }, [closePreview, copyPreviewSourcePath, openPreviewSource, previewData, requestKeywordEdit, showPreviewSourceInFolder, spaceHoldController]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closePreview, copyPreviewSourcePath, openPreviewSource, previewData, showPreviewSourceInFolder]);
 
   const savePreviewKeywords = useCallback(async (keywords: string[]) => {
     if (!previewData || previewData.skimActive || previewKeywordSavePendingRef.current) return;

@@ -29,6 +29,7 @@ app.whenReady().then(async()=>{let win,server;try{
   const image=await loadModelInputImage(p);return `data:${image.mimeType};base64,${image.buffer.toString('base64')}`},recognize:async(image,signal,starting,generating)=>{
   starting();generating();return generateImageKeywords({baseUrl:`http://127.0.0.1:${server.address().port}`,modelName:'synthetic'},image,signal)}});
  let owner;registerCatalogAutoKeywordIpc({registrar:ipcMain,isSenderAllowed:event=>event.sender===owner,
+  runtime:{},resolveItems:r=>{if(r.taskId!=='task'||r.authorizationIds?.join()!=='granted')throw Error('authorization-expired');return [item]},
   resolveItem:r=>{if(r.taskId!=='task'||r.authorizationId!=='granted')throw Error('authorization-expired');return item},keywords,createService:async()=>service});
  win=new BrowserWindow({show:false,webPreferences:{preload:path.resolve(__dirname,'../dist-electron/preload.js'),sandbox:true,contextIsolation:true,nodeIntegration:false}});owner=win.webContents;
  await win.loadURL('data:text/html,<meta charset="utf-8"><p>Synthetic local model input fixture</p>');
@@ -36,6 +37,10 @@ app.whenReady().then(async()=>{let win,server;try{
  const result=await window.cap7ce.computerSearch.generateKeywords({taskId:'task',authorizationId:'granted',requestId:'input-test',filePath:'C:\\forged.png'});off();return {result,phases,node:typeof require}})()`);
  assert.equal(result.node,'undefined');assert.equal(result.result.status,'saved');assert.equal(result.result.added,2);
  assert.deepEqual(result.phases,['preparing','starting','generating','saving']);assert.deepEqual(words,['手动保留','合成素材','蓝色']);assert.equal(received,1);
+ const batch=await owner.executeJavaScript(`(async()=>{const progress=[];const off=window.cap7ce.computerSearch.onKeywordBatchProgress(p=>progress.push(p));
+ const result=await window.cap7ce.computerSearch.generateKeywordBatch({taskId:'task',authorizationIds:['granted'],requestId:'batch-input-test'});off();return {result,progress}})()`);
+ assert.equal(batch.result.status,'completed');assert.equal(batch.result.succeeded,1);assert.equal(received,2);
+ assert.ok(batch.progress.some(p=>p.phase==='generating'&&p.total===1&&p.requestId==='batch-input-test'));assert.deepEqual(words,['手动保留','合成素材','蓝色'],'batch appends without duplicate tags');
  assert.deepEqual(await fs.readFile(source),before,'the original file is unchanged');
- await releaseVisualRenderFileHandles();console.log('Automatic keyword input: real isolated preload/IPC, 1536px JPEG cache reuse, no upscaling, local model request and append/save passed.');
+ await releaseVisualRenderFileHandles();console.log('Automatic keyword input: real isolated preload/IPC, 1536px JPEG cache reuse, no upscaling, single/batch local model requests, progress and append/save passed.');
 }catch(error){console.error(error);process.exitCode=1}finally{win?.destroy();if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}app.exit(process.exitCode??0)}});

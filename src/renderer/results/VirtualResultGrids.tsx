@@ -24,7 +24,6 @@ export interface VirtualImageGridProps {
   images: ImageIndexItem[];
   layoutItems?: ResultGridLayoutItem[];
   selectedImageIds: ReadonlySet<string>;
-  isSpaceHolding: boolean;
   scrollTargetIndex: number | null;
   initialScrollMemory: ResultGridScrollMemory;
   isSearching: boolean;
@@ -43,7 +42,7 @@ export interface VirtualImageGridProps {
 
 const EmptySearchResult = ({ message }: { message: string }) => <div className="empty-result-row">{message}</div>;
 
-export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, isSpaceHolding, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onAiSearchSectionToggle }: VirtualImageGridProps) => {
+export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onAiSearchSectionToggle }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const restoreFrameRef = useRef<number | null>(null);
@@ -370,7 +369,7 @@ export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, isSpac
             </div>
           ) : (
             <button
-              className={`thumb${selectedImageIds.has(layoutItem.item.id) ? " selected" : ""}${isSpaceHolding && selectedImageIds.has(layoutItem.item.id) ? " is-space-holding" : ""}`}
+              className={`thumb${selectedImageIds.has(layoutItem.item.id) ? " selected" : ""}`}
               data-result-tile="true"
               data-result-item-id={layoutItem.item.id}
               key={layoutItem.key}

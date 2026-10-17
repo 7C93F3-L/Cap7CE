@@ -17,6 +17,8 @@ import CatalogGridScrollbars from "../catalog-workspace/CatalogGridScrollbars";
 import { useGridSelectionDismissal } from "../results/useGridSelectionDismissal";
 import "../results/ResultGrid.css";
 import "./ComputerSearchResultGrid.css";
+import { useCatalogActivity } from "../catalog-workspace/CatalogActivity";
+import { catalogKeywordSelectionKey } from "../catalog-workspace/catalogKeywordIdentity";
 
 const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   "not-enabled": "computerSearch.state.notEnabled",
@@ -52,6 +54,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     foreground && Boolean(status?.searchAvailable) && hasSubmitted && !busy && !error,
     nextCursor, loadMore, controller.directoryListing, Boolean(pageError));
   const taskId = controller.taskId ?? "";
+  const keywordActivity = useCatalogActivity();
   const operations = useComputerSearchFileOperations(taskId, favorites), clearSelection = useRef(() => {});
   const trash = useCallback((targets: typeof items) => { void operations.trash(targets).then(changed => { if (changed) clearSelection.current(); }); }, [operations.trash]);
   const actions = useComputerSearchResultActions({
@@ -157,7 +160,11 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
       windowMaterial={windowMaterial}
       onClose={() => actions.setContextMenu(null)}
       favoriteAction={operations.favoriteAction(actions.contextMenu.item)} favoriteBusy={favorites?.busy}
+      keywordsAvailable={!!keywordActivity} keywordsBusy={keywordActivity?.busy}
       onAction={action => { const state = actions.contextMenu!; if (action === "delete") trash(state.items);
+        else if (action === "editKeywords") { actions.setContextMenu(null); onSelectionChange?.({ ...selection, items: state.items }); keywordActivity?.requestEdit(catalogKeywordSelectionKey(state.items)); }
+        else if (action === "autoKeywords") { actions.setContextMenu(null); if (state.items.length === 1 && !state.item.isDirectory) void keywordActivity?.start(state.item, taskId);
+          else void keywordActivity?.startBatch({ taskId, authorizationIds: state.items.map(item => item.authorizationId) }, state.items.length === 1 ? state.item.name : `已选择 ${state.items.length} 项`); }
         else if (action === "metadata") { actions.setContextMenu(null); void operations.metadata(state.item.path); }
         else if (action === "addToSidebar") void operations.toggleFavorite(state.item); else actions.handleContextMenuAction(action); }}
     />}

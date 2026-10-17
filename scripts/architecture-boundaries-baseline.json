@@ -149,7 +149,6 @@
     "src/renderer/controllers/useSettingsDataSynchronization.ts": 100,
     "src/renderer/results/ResultsContextMenuLayer.tsx": 50,
     "src/renderer/results/ResponsiveResultsContextMenuLayer.tsx": 50,
-    "src/renderer/results/useResultsSpaceHold.ts": 100,
     "src/renderer/components/ResponsiveFileContextMenu.tsx": 150,
     "src/renderer/skim/ResponsiveSkimContextMenuLayer.tsx": 75,
     "src/renderer/fileContextMenuShared.ts": 75,

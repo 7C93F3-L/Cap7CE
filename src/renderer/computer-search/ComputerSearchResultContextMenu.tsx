@@ -12,10 +12,10 @@ export type ComputerSearchContextMenuState = {
   items: ComputerSearchItem[];
 };
 
-type ResultAction = "preview" | "open" | "showInFolder" | "copyPaths" | "delete" | "addToSidebar" | "metadata";
+type ResultAction = "preview" | "open" | "showInFolder" | "copyPaths" | "delete" | "addToSidebar" | "metadata" | "editKeywords" | "autoKeywords";
 
 const ComputerSearchResultContextMenu = ({
-  state, theme, appearanceColors, windowMaterial, onClose, onAction, favoriteAction, favoriteBusy = false
+  state, theme, appearanceColors, windowMaterial, onClose, onAction, favoriteAction, favoriteBusy = false, keywordsAvailable = false, keywordsBusy = false
 }: {
   state: ComputerSearchContextMenuState;
   theme: ResolvedThemeMode;
@@ -25,6 +25,7 @@ const ComputerSearchResultContextMenu = ({
   onAction: (action: ResultAction) => void;
   favoriteAction?: "add" | "remove";
   favoriteBusy?: boolean;
+  keywordsAvailable?: boolean; keywordsBusy?: boolean;
 }) => {
   const action = (id: ResultAction, label: string, shortcut: string): ResponsiveFileContextMenuItem => ({
     id, label, shortcut, onSelect: () => onAction(id)
@@ -43,7 +44,10 @@ const ComputerSearchResultContextMenu = ({
         action("open", t("skim.openItem"), fileContextShortcutLabels.open),
         action("showInFolder", t("skim.openPath"), fileContextShortcutLabels.showInFolder)
       ],
-      [action("copyPaths", state.items.length > 1
+      [...(keywordsAvailable ? [
+        { ...action("editKeywords", "编辑关键词", ""), disabled: keywordsBusy || !state.items.some(item => !item.isDirectory) },
+        { ...action("autoKeywords", "自动添加关键词", ""), disabled: keywordsBusy }
+      ] : []), action("copyPaths", state.items.length > 1
         ? t("context.copySelectedPaths", { count: state.items.length })
         : t("context.copyPath"), fileContextShortcutLabels.copyPaths),
         ...(favoriteAction ? [{ ...action("addToSidebar", t(favoriteAction === "add" ? "catalogActions.addFavorite" : "catalogActions.removeFavorite"), ""), disabled: favoriteBusy }] : []),
