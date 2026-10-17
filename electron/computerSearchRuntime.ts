@@ -282,6 +282,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
         const catalog = await readCatalog();
         if (cancelledTasks.has(request.taskId)) throw new Error("search-cancelled");
         if (request.randomSeed !== undefined && !controller.supports?.("search.random")) throw new Error("random-browse-unavailable");
+        if (request.fileConditions?.excludedExtensions?.length && !controller.supports?.("search.excludeExtensions")) throw new Error("computer-search-filter-unavailable");
         const names = new Map(catalog.volumes.map((volume) => [volume.volumeId, volume.displayName]));
         let scope: Record<string, unknown> = { kind: "all-volumes" };
         let volumeIds: string[] = [];

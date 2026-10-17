@@ -45,7 +45,7 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
   return [...next].sort();
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
-const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const supports = (domain: SearchFilterDetailDomain) => detailDomains === undefined || detailDomains.includes(domain);
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
@@ -55,7 +55,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
   const [startDate, setStartDate] = useState(defaultDates[0]);
   const [endDate, setEndDate] = useState(defaultDates[1]);
   const summaryItems = getExploreFormatSummary(availableFormats, search.selectedExtensions ?? []);
-  const selectedSummary = `${summaryItems.slice(0, 2).map((item) => item.kind === "type" ? t(typeLabels[item.value]) : item.value.toUpperCase()).join("  ")}${summaryItems.length > 2 ? `  +${summaryItems.length - 2}` : ""}`;
+  const selectedSummary = search.unclassifiedOnly ? t("explore.fileTypes.other") : `${summaryItems.slice(0, 2).map((item) => item.kind === "type" ? t(typeLabels[item.value]) : item.value.toUpperCase()).join("  ")}${summaryItems.length > 2 ? `  +${summaryItems.length - 2}` : ""}`;
   useEffect(() => setTimeIndex(presetIndex), [presetIndex]);
   useLayoutEffect(() => setFlyout(null), [closeFlyoutRequest]);
   const applySearch = (next: SearchState) => onSearchOptionsChange(next);
@@ -85,7 +85,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
   };
   const toggleGroup = (extensions: readonly string[]) => {
     const nextExtensions = toggleExtensions(search.selectedExtensions ?? [], extensions);
-    const nextSearch = { ...search, selectedExtensions: nextExtensions.length ? nextExtensions : undefined };
+    const nextSearch = { ...search, unclassifiedOnly: undefined, selectedExtensions: nextExtensions.length ? nextExtensions : undefined };
     applySearch(retainApplicableExploreTypeFilters(nextSearch, nextExtensions));
   };
   const customRangeLabel = search.timePreset === "custom" && search.modifiedTimeRange
@@ -105,6 +105,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
           const pressed = isGroupSelected(selected, extensions);
           return <button type="button" className={pressed ? "is-selected" : ""} disabled={extensions.length === 0} aria-pressed={pressed} key={type} onClick={() => toggleGroup(extensions)}>{t(typeLabels[type])}</button>;
         })}
+        {allowUnclassified && <button type="button" className={search.unclassifiedOnly ? "is-selected" : ""} aria-pressed={Boolean(search.unclassifiedOnly)} onClick={() => applySearch(retainApplicableExploreTypeFilters({ ...search, fileFormat: "all", selectedExtensions: undefined, unclassifiedOnly: search.unclassifiedOnly ? undefined : true }, []))}>{t("explore.fileTypes.other")}</button>}
       </div>
     </section>
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />

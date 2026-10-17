@@ -475,6 +475,7 @@ export interface SearchState {
   sortDirection: SortDirection;
   includedExtensions?: string[];
   selectedExtensions?: string[];
+  unclassifiedOnly?: boolean;
   timePreset?: SearchTimePreset;
   modifiedTimeRange?: SearchModifiedTimeRange;
   fileSizePreset?: SearchFileSizePreset;

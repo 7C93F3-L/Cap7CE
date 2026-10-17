@@ -7,15 +7,16 @@ import React,{useState} from 'react';import {createRoot} from 'react-dom/client'
 import {flushSync} from 'react-dom';import {fileFormatCapabilities} from './electron/formatCapabilities';
 import Filters from './src/renderer/catalog-workspace/CatalogTopFilters';
 import LegacyFilters from './src/renderer/stable-ui/StableExploreFilters';
+import {workspaceFilterCount} from './src/renderer/workspace/workspaceFilterSummary';
 import {setActiveLanguage} from './electron/localization';
 import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';import './src/renderer/catalog-workspace/CatalogDesign.css';
-const initial={query:'keep',timePreset:'all'},noop=()=>{};
+const initial={query:'keep',fileFormat:'all',timePreset:'all'},noop=()=>{};
 function Fixture(){const [search,setSearch]=useState(initial),[language,setLanguage]=useState('zh-CN'),[legacy,setLegacy]=useState(false),[details,setDetails]=useState([]);
 window.probe={search,setSearch:value=>flushSync(()=>setSearch(value)),language:value=>flushSync(()=>setLanguage(value)),details:value=>flushSync(()=>setDetails(value)),legacy:setLegacy,formats:fileFormatCapabilities.map(c=>c.extension)};setActiveLanguage(language);
 return <div className="app cap-stable-ui theme-dark" style={{padding:16,boxSizing:'border-box',width:'100%',height:'100vh'}}>
 {legacy?<LegacyFilters search={search} availableFormats={['png','mp4','mp3','pdf']} detailDomains={[]} closeFlyoutRequest={0} onFlyoutOpen={noop} onSearchOptionsChange={setSearch}/>:
 <Filters search={search} availableFormats={fileFormatCapabilities.map(c=>c.extension)} detailDomains={details} attributes={{disabled:false,colorsDisabled:false}}
-onChange={setSearch} count={search.timePreset==='all'?0:1} onClear={()=>setSearch(initial)}/>}</div>}
+onChange={setSearch} count={workspaceFilterCount(search)} onClear={()=>setSearch(initial)}/>}</div>}
 createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async () => {
   let win;
@@ -42,7 +43,7 @@ app.whenReady().then(async () => {
     assert.equal(new Set(layout.rows).size, 2); assert.equal(new Set(layout.headers).size, 1);
     assert.ok(layout.width<=740,'basic controls including all file categories stay compact: '+layout.width);
     const types = await run(`(()=>{const group=document.querySelector('.cap-stable-file-type-filter'),buttons=[...group.querySelectorAll('.cap-stable-file-type-options button')];return {labels:buttons.map(e=>e.innerText),rows:buttons.map(e=>e.getBoundingClientRect().top),icons:group.querySelectorAll('svg,.cap-stable-type-glyph').length,edit:group.querySelectorAll('header button').length}})()`);
-    assert.deepEqual(types.labels,['图像','视频','音频','文档','文本','项目','三维','压缩包','数据','字体','模型']);
+    assert.deepEqual(types.labels,['图像','视频','音频','文档','文本','项目','三维','压缩包','数据','字体','模型','其他']);
     assert.equal(new Set(types.rows).size,2);assert.equal(types.rows.filter(row=>row===types.rows[0]).length,6);
     assert.equal(types.icons,0);assert.equal(types.edit,0,'format editor and other-category popup entry removed');
     for(const [index,extension] of ['.png','.mp4','.mp3','.pdf','.txt','.aep','.obj','.zip','.csv','.ttf','.gguf'].entries()){
@@ -57,6 +58,18 @@ app.whenReady().then(async () => {
       await ready(`document.querySelectorAll('.cap-stable-file-type-options [aria-pressed=true]').length===${index}`);
     }
     assert.equal(await run('probe.search.selectedExtensions'),undefined,'clearing last category restores unrestricted types');
+    await run(`probe.setSearch({query:'keep',fileFormat:'all',timePreset:'week',fileSizePreset:'under-1mb',selectedExtensions:['.png'],imageAnimation:'animated'})`);
+    await run('document.querySelectorAll(".cap-stable-file-type-options button")[11].click()');await ready('probe.search.unclassifiedOnly===true');
+    assert.equal(await run('probe.search.selectedExtensions'),undefined);assert.equal(await run('probe.search.imageAnimation'),undefined);
+    assert.deepEqual(await run('[probe.search.query,probe.search.timePreset,probe.search.fileSizePreset]'),['keep','week','under-1mb']);
+    assert.equal(await run('document.querySelectorAll(".cap-stable-file-type-options [aria-pressed=true]").length'),1);
+    await run('document.querySelectorAll(".cap-stable-file-type-options button")[9].click()');await ready('probe.search.selectedExtensions?.includes(".ttf")');
+    assert.equal(await run('probe.search.unclassifiedOnly'),undefined,'known category exits other mode');
+    await run('document.querySelectorAll(".cap-stable-file-type-options button")[11].click()');await ready('probe.search.unclassifiedOnly===true');
+    assert.equal(await run('document.querySelector(".cap-catalog-filter-actions button").disabled'),false,'other is counted as an active filter');
+    await run('document.querySelectorAll(".cap-stable-file-type-options button")[11].click()');await ready('!probe.search.unclassifiedOnly');
+    assert.equal(await run('probe.search.selectedExtensions'),undefined,'second other click restores all types');
+    await run(`probe.setSearch({query:'keep',fileFormat:'all',timePreset:'all'})`);
     if (process.env.CAP_TOP_FILTERS_CAPTURE) fs.writeFileSync(process.env.CAP_TOP_FILTERS_CAPTURE, (await win.webContents.capturePage()).toPNG());
     for (const [index, preset] of ['week', 'month', 'year', 'last-year', 'older', 'all'].entries()) {
       await run(`document.querySelectorAll('.cap-stable-time-labels button')[${index}].click()`); await ready(`probe.search.timePreset==='${preset}'`);

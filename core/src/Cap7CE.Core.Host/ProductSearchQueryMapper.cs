@@ -74,7 +74,7 @@ internal static class ProductSearchQueryMapper
         }
         var file = request.FileConditions is { } conditions ? new CatalogFileConditions(conditions.Extensions,
             conditions.MinimumSizeBytes, conditions.MaximumSizeBytes, FileTime(conditions.MinimumModifiedFileTime),
-            FileTime(conditions.MaximumModifiedFileTime)) : null;
+            FileTime(conditions.MaximumModifiedFileTime), conditions.ExcludedExtensions) : null;
         return new(request.Query, request.VolumeIds, scope, request.Extension, type, request.PageSize, after, facts, target,
             RandomSeed: request.RandomSeed, FileConditions: file, ExcludeHidden: request.ExcludeHidden, Sort: request.Sort switch {
                 CoreSearchSorts.NameAscending => CatalogQuerySort.NameAscending,

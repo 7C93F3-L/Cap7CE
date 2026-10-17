@@ -6,4 +6,5 @@ public sealed record CoreSearchFileConditions(
     long? MinimumSizeBytes = null,
     long? MaximumSizeBytes = null,
     string? MinimumModifiedFileTime = null,
-    string? MaximumModifiedFileTime = null);
+    string? MaximumModifiedFileTime = null,
+    IReadOnlyList<string>? ExcludedExtensions = null);

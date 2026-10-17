@@ -2,11 +2,11 @@ const assert = require("node:assert/strict");
 const controllerModule = require("../dist-electron/core/coreHostController.js");
 const saved = controllerModule.CoreHostController;
 const requests = [];
-let scopeState = "ready", scopeResolved = true, randomSupported = true;
+let scopeState = "ready", scopeResolved = true, randomSupported = true, exclusionSupported = true;
 const volume = { volumeId: "A".repeat(32), displayName: "X:", fileSystem: "NTFS", selected: true,
   state: "ready", processed: 1, total: 1, queryable: true, needsRebuild: false };
 class FixtureController {
-  supports(capability) { return capability === "search.live" || capability === "search.random" && randomSupported; }
+  supports(capability) { return capability === "search.excludeExtensions" && exclusionSupported || capability === "search.live" || capability === "search.random" && randomSupported; }
   async start() { return { state: "ready" }; }
   async stop() {}
   async cancelRequest() { return true; }
@@ -69,6 +69,12 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     await runtime.search({ taskId: "folder-children", query: "", scopePath: "X:\\Library", scopeKind: "direct-children", fileConditions });
     assert.equal(requests.at(-1).body.entryType, "file", "file filters still intersect direct children");
     assert.equal(requests.at(-1).body.scope.rootFileReference, "1".repeat(16));
+    await runtime.search({taskId:"other-files",query:"",scopePath:null,fileConditions:{excludedExtensions:[".png",".MP4"]}});
+    assert.deepEqual(requests.at(-1).body.fileConditions,{excludedExtensions:[".png",".MP4"]});
+    assert.equal(requests.at(-1).body.entryType,"file");
+    const beforeUnsupported=requests.length;exclusionSupported=false;
+    await assert.rejects(runtime.search({taskId:"unsupported-other",query:"",scopePath:null,fileConditions:{excludedExtensions:[".png"]}}),/filter-unavailable/);
+    assert.equal(requests.length,beforeUnsupported,"older Core cannot silently ignore exclusions");exclusionSupported=true;
     const beforeInvalid = requests.length;
     await assert.rejects(runtime.search({ taskId: "missing-root", query: "", scopePath: "X:\\MissingRoot", scopeKind: "direct-children" }), /scope-not-indexed/);
     await assert.rejects(runtime.search({ taskId: "null-root", query: "", scopePath: null, scopeKind: "direct-children" }), /invalid-request/);

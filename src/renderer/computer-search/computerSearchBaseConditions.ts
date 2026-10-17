@@ -2,9 +2,10 @@ import type { SearchState } from "../../shared/types";
 import type { ComputerSearchFileConditions } from "../../shared/computerSearchFactTypes";
 import { normalizeFileSizeRange, resolveSearchFileSizeFilter, searchFileSizePresets } from "../../../electron/fileSizeSearchFilters";
 import { resolveSearchModifiedTimeRange } from "../../../electron/searchFilters";
+import { fileFormatCapabilities } from "../../../electron/formatCapabilities";
 import { getExtensionsForCanonicalFormat } from "../stable-ui/exploreFormatFilters";
 
-type BaseSelection = Pick<SearchState, "fileFormat" | "includedExtensions" | "selectedExtensions"
+type BaseSelection = Pick<SearchState, "fileFormat" | "includedExtensions" | "selectedExtensions" | "unclassifiedOnly"
   | "timePreset" | "modifiedTimeRange" | "fileSizePreset" | "fileSizeRange">;
 const epoch = 116444736000000000n;
 const fileTime = (milliseconds: number): bigint => {
@@ -30,6 +31,7 @@ export const toComputerSearchBaseConditions = (search: BaseSelection, referenceN
     restrict(aliases.length ? aliases : [`.${format}`]);
   }
   if (extensions !== undefined) result.extensions = extensions;
+  if (search.unclassifiedOnly) result.excludedExtensions = fileFormatCapabilities.filter(value => value.canSearch).map(value => value.extension);
   if (search.fileSizeRange && !normalizeFileSizeRange(search.fileSizeRange)) throw new Error("computer-search-invalid-size");
   if (!search.fileSizeRange && search.fileSizePreset && !searchFileSizePresets.includes(search.fileSizePreset))
     throw new Error("computer-search-invalid-size");

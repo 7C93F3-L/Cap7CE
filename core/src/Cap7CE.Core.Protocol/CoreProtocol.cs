@@ -36,6 +36,7 @@ public static class CoreOperations
     public const string SearchStart = "search.start";
     public const string SearchLive = "search.live";
     public const string SearchRandom = "search.random";
+    public const string SearchExcludeExtensions = "search.excludeExtensions";
     public const string SearchNextPage = "search.nextPage";
     public const string SearchCancel = "search.cancel";
     public const string CoreShutdown = "core.shutdown";
@@ -73,7 +74,7 @@ public static class CoreOperations
         SearchNextPage,
         SearchCancel,
         CoreShutdown,
-        SearchLive, SearchRandom
+        SearchLive, SearchRandom, SearchExcludeExtensions
     ];
 }
 

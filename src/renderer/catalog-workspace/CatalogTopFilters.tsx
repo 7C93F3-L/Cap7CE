@@ -16,7 +16,7 @@ export default function CatalogTopFilters({ search, availableFormats, detailDoma
       <div className="cap-catalog-top-filter-content">
         <div className="cap-catalog-filter-actions"><span>{t("workspace.activeFilters", { count })}</span>
           <button type="button" disabled={!count} onClick={onClear}>{t("explore.clearFilters")}</button></div>
-        <StableExploreFilters compactTime search={search} availableFormats={availableFormats} detailDomains={detailDomains} metadataDisabled={attributes.disabled} metadataColorsDisabled={attributes.colorsDisabled}
+        <StableExploreFilters compactTime allowUnclassified search={search} availableFormats={availableFormats} detailDomains={detailDomains} metadataDisabled={attributes.disabled} metadataColorsDisabled={attributes.colorsDisabled}
           closeFlyoutRequest={close} onFlyoutOpen={() => {}} onSearchOptionsChange={onChange} />
       </div>
     </div>

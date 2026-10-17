@@ -8,13 +8,15 @@ public sealed record CatalogFileConditions(
     long? MinimumSizeBytes = null,
     long? MaximumSizeBytes = null,
     long? MinimumModifiedFileTime = null,
-    long? MaximumModifiedFileTime = null);
+    long? MaximumModifiedFileTime = null,
+    IReadOnlyList<string>? ExcludedExtensions = null);
 
 internal static class CatalogFileConditionSql
 {
     public static void Validate(CatalogFileConditions conditions)
     {
-        if (conditions.Extensions is { } extensions && (extensions.Count > 128
+        foreach (var extensions in new[] { conditions.Extensions, conditions.ExcludedExtensions })
+        if (extensions is not null && (extensions.Count > 128
             || extensions.Any(extension => string.IsNullOrWhiteSpace(extension) || extension.Length is < 2 or > 64
                 || !extension.StartsWith('.') || extension.Any(character => char.IsControl(character)
                     || char.IsWhiteSpace(character) || character is '/' or '\\'))
@@ -40,6 +42,17 @@ internal static class CatalogFileConditionSql
                 if (index > 0) sql.Append(',');
                 var parameter = "$fileExtension" + index;
                 sql.Append(parameter); command.Parameters.AddWithValue(parameter, extensions[index]);
+            }
+            sql.Append(')');
+        }
+        if (conditions.ExcludedExtensions is { Count: > 0 } excluded)
+        {
+            sql.Append(" AND n.extension COLLATE NOCASE NOT IN (");
+            for (var index = 0; index < excluded.Count; index++)
+            {
+                if (index > 0) sql.Append(',');
+                var parameter = "$excludedExtension" + index;
+                sql.Append(parameter); command.Parameters.AddWithValue(parameter, excluded[index]);
             }
             sql.Append(')');
         }

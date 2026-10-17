@@ -8,6 +8,11 @@ const loaded = new Module(file,module); loaded.filename=file; loaded.paths=modul
 const {toComputerSearchBaseConditions: map} = loaded.exports;
 const base = {fileFormat:"all"};
 assert.equal(map(base),undefined);
+const other=map({...base,unclassifiedOnly:true});
+assert.ok(other.excludedExtensions.includes(".png")&&other.excludedExtensions.includes(".pdf")&&other.excludedExtensions.includes(".gguf"));
+assert.equal(other.extensions,undefined);assert.equal(new Set(other.excludedExtensions).size,other.excludedExtensions.length);
+assert.ok(other.excludedExtensions.length<=128);
+assert.deepEqual(map({...base,unclassifiedOnly:true,fileSizeRange:{minBytes:7}}).minimumSizeBytes,7);
 assert.deepEqual(map({...base,fileFormat:"jpg"}).extensions.sort(),[".jpeg",".jpg"]);
 assert.deepEqual(map({...base,fileFormat:"jpg",includedExtensions:[".png"],selectedExtensions:[".JPG"]}).extensions,[],"contradictory restrictions cannot broaden the search");
 assert.deepEqual(map({...base,includedExtensions:[]}).extensions,[]);

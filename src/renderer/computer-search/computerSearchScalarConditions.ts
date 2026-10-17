@@ -5,7 +5,7 @@ import { normalizeVideoDimensionFilter, normalizeVideoDurationRange, searchVideo
 import { toComputerSearchBaseConditions } from "./computerSearchBaseConditions";
 import { toComputerSearchAspectRanges } from "./computerSearchAspectConditions";
 
-type ScalarSelection = Pick<SearchState, "fileFormat" | "includedExtensions" | "selectedExtensions" | "timePreset" | "modifiedTimeRange"
+type ScalarSelection = Pick<SearchState, "fileFormat" | "includedExtensions" | "selectedExtensions" | "unclassifiedOnly" | "timePreset" | "modifiedTimeRange"
   | "fileSizePreset" | "fileSizeRange" | "imageDimensionFilter" | "imageAspectRatios" | "imageAspectRatioValues"
   | "videoDimensionFilter" | "videoAspectRatios" | "videoAspectRatioValues" | "videoDurationPreset" | "videoDurationRange" | "videoResolutions">;
 const resolutionRanges: Record<string, ComputerSearchIntegerRange> = {

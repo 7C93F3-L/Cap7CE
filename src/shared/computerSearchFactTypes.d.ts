@@ -11,6 +11,7 @@ export interface ComputerSearchAspectRange {
 }
 export interface ComputerSearchFileConditions {
   extensions?: string[];
+  excludedExtensions?: string[];
   minimumSizeBytes?: number;
   maximumSizeBytes?: number;
   minimumModifiedFileTime?: string;

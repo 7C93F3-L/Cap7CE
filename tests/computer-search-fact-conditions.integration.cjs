@@ -37,6 +37,8 @@ for (const value of [null, [], { extensions: [".png", ".PNG"] }, { extensions: [
   { minimumModifiedFileTime: "10", maximumModifiedFileTime: "9" }, { unknown: 1 }]) {
   assert.throws(() => readComputerSearchFileConditions(value), /invalid-file-conditions/);
 }
+for(const value of [{excludedExtensions:[".png",".PNG"]},{excludedExtensions:[""]},{excludedExtensions:["../foo"]},{excludedExtensions:Array(129).fill(".png")},{excludedExtensions:".png"}]) assert.throws(()=>readComputerSearchFileConditions(value),/invalid-file-conditions/);
+const excludedInput={excludedExtensions:[".PNG",".mp4"]},excludedOutput=readComputerSearchFileConditions(excludedInput);excludedInput.excludedExtensions.length=0;assert.deepEqual(excludedOutput.excludedExtensions,[".PNG",".mp4"]);
 const extensionInput = { extensions: [".PNG", ".mp4"], minimumSizeBytes: 0 };
 const extensionOutput = readComputerSearchFileConditions(extensionInput); extensionInput.extensions.length = 0;
 assert.deepEqual(extensionOutput.extensions, [".PNG", ".mp4"]);

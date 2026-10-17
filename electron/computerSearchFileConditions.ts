@@ -1,18 +1,19 @@
 import type { ComputerSearchFileConditions } from "../src/shared/computerSearchFactTypes";
 
 const invalid = (): never => { throw new Error("computer-search-invalid-file-conditions"); };
-const fields = ["extensions", "minimumSizeBytes", "maximumSizeBytes", "minimumModifiedFileTime", "maximumModifiedFileTime"];
+const fields = ["extensions", "excludedExtensions", "minimumSizeBytes", "maximumSizeBytes", "minimumModifiedFileTime", "maximumModifiedFileTime"];
 export const readComputerSearchFileConditions = (input: unknown): ComputerSearchFileConditions | undefined => {
   if (input === undefined) return undefined;
   if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).some(key => !fields.includes(key))) return invalid();
   const value = input as Record<string, unknown>;
   const result: ComputerSearchFileConditions = {};
-  if (value.extensions !== undefined) {
-    if (!Array.isArray(value.extensions) || value.extensions.length > 128
-      || !value.extensions.every(extension => typeof extension === "string" && extension.length >= 2 && extension.length <= 64
+  for (const field of ["extensions", "excludedExtensions"] as const) if (value[field] !== undefined) {
+    const extensions = value[field];
+    if (!Array.isArray(extensions) || extensions.length > 128
+      || !extensions.every(extension => typeof extension === "string" && extension.length >= 2 && extension.length <= 64
         && extension.startsWith(".") && !/[\s\x00-\x1f\x7f\\/]/.test(extension))
-      || new Set(value.extensions.map(extension => extension.toLowerCase())).size !== value.extensions.length) return invalid();
-    result.extensions = [...value.extensions];
+      || new Set(extensions.map(extension => extension.toLowerCase())).size !== extensions.length) return invalid();
+    result[field] = [...extensions];
   }
   for (const field of ["minimumSizeBytes", "maximumSizeBytes"] as const) {
     if (value[field] !== undefined) {
