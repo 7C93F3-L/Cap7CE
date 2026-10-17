@@ -52,8 +52,8 @@ app.whenReady().then(async()=>{let win;try{
  await ready('!document.querySelector(".keyword-tag-editor")');assert.deepEqual(await run('probe.tags.B'),[],'cleared keywords are saved explicitly');
  assert.equal(await run('document.body.innerText.includes("1200 × 800")'),true);
  const headings=await run('[...document.querySelectorAll(".preview-sidebar-section h2,.preview-embedded-metadata-details h2")].map(e=>e.innerText)');
- assert.deepEqual(headings,['文件信息','位置','手动关键词','当前匹配依据','嵌入信息']);
- assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),true,'catalog shares preview evidence presentation');
+ assert.deepEqual(headings,['文件信息','位置','手动关键词','嵌入信息']);
+ assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),false,'catalog omits the retired evidence card');
  assert.equal(await run('!!document.querySelector(".preview-sidebar-actions")'),false);assert.equal(await run('document.body.innerText.includes("打开详细预览")'),false);
  await run('document.querySelector(".preview-sidebar-path").click()');assert.equal(await run('probe.reveals'),1,'location reuses the authorized result action');
  for(const theme of ['light','dark']){for(const width of [220,280,420]){await run(`probe.width(${width});probe.theme('${theme}');document.documentElement.style.setProperty('--cap-ui-font-base','16px')`);assert.equal(await run('(()=>{const e=document.querySelector(".preview-sidebar-scroll");return e.scrollWidth>e.clientWidth+1})()'),false,'cards fit each supported width at maximum font size');

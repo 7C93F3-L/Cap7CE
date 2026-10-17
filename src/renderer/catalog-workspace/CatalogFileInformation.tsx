@@ -11,7 +11,7 @@ export default function CatalogFileInformation({ selection, foreground }: { sele
   const information = useCatalogFileInformation(item, selection.taskId, foreground);
   const keywords = useCatalogKeywords(item, selection.taskId, foreground);
   return <div className="cap-catalog-file-information-host" data-selection-preserve="true">
-    <PreviewInformationSidebar {...information} expanded showFileActions={false} className="cap-catalog-file-information"
+    <PreviewInformationSidebar {...information} expanded showFileActions={false} showSearchEvidence={false} className="cap-catalog-file-information"
       data={{ ...information.data, sessionId: keywords.sessionId, manualKeywords: keywords.keywords }} keywordsAvailable={keywords.available} keywordsReadState={keywords.readState}
       keywordEditorOpen={keywords.editing} keywordSavePending={keywords.saving} keywordSaveError={keywords.error}
       onEditKeywords={keywords.edit} onCancelKeywordEdit={keywords.cancel} onSaveKeywords={words => { void keywords.save(words); }} onRetryKeywords={keywords.retry}

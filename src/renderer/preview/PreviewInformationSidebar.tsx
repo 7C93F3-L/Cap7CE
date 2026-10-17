@@ -8,7 +8,7 @@ import PreviewSearchEvidence from "./PreviewSearchEvidence";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
   data: FileInformationData; expanded: boolean;
-  showFileActions?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
+  showFileActions?: boolean; showSearchEvidence?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
   renderVisual?: (scrollRef: RefObject<HTMLDivElement | null>) => ReactNode;
   onToggleExpanded?: () => void;
   onOpen?: () => void;
@@ -38,7 +38,7 @@ const getFileFormat = (data: FileInformationData) => {
 };
 const PreviewInformationSidebar = ({
   data,
-  showFileActions = true, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
+  showFileActions = true, showSearchEvidence = true, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
   expanded,
   onToggleExpanded,
   onOpen,
@@ -85,7 +85,7 @@ const PreviewInformationSidebar = ({
           <button className="preview-sidebar-path" type="button" title={data.filePath} onClick={onShowInFolder}>{data.filePath}</button>
         </section>
         <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} available={keywordsAvailable} readState={keywordsReadState} onRetry={onRetryKeywords} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />
-        <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />
+        {showSearchEvidence && <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />}
         {data.embeddedMetadata
           ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />
           : <section className="preview-sidebar-section"><h2>{t("preview.metadata.heading")}</h2><p className="preview-sidebar-empty">{t(metadataStatus === "loading" ? "common.loading" : metadataStatus === "unavailable" ? "common.unavailable" : "preview.sidebar.noEmbeddedMetadata")}</p></section>}
