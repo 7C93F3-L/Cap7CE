@@ -1,0 +1,6 @@
+.cap-catalog-details-card { min-width: 0; padding: 12px; margin-bottom: 8px; border-radius: 16px; background: var(--cap-stable-surface); }
+.cap-catalog-details-card .cap-catalog-details-name { margin-bottom: 10px; }
+.cap-catalog-details .cap-catalog-details-card dl { grid-template-columns: 4.5em minmax(0, 1fr); align-items: baseline; gap: 7px 8px; margin: 0; }
+.cap-catalog-details .cap-catalog-details-card dt { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.cap-catalog-details-card .cap-catalog-details-location, .cap-catalog-details-card .cap-catalog-details-location + dd { grid-column: 1 / -1; }
+.cap-catalog-details-card .cap-catalog-details-location { margin-top: 3px; }
