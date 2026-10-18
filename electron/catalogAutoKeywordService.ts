@@ -3,6 +3,7 @@ import type { CatalogKeywordsApi } from "./catalogKeywordsRuntime";
 import type { CatalogAutoKeywordPhase, CatalogAutoKeywordResult } from "../src/shared/catalogAutoKeywordTypes";
 import { getFileFormatCapability } from "./formatCapabilities";
 import { normalizeKeywordList } from "./keywordRules";
+import { t } from "./localization";
 
 interface Dependencies {
   keywords: CatalogKeywordsApi;
@@ -39,7 +40,7 @@ export function createCatalogAutoKeywordService(deps: Dependencies) {
     } catch (error) {
       if (signal.aborted && !committed) return { status: "cancelled" };
       const message = error instanceof Error ? error.message : "";
-      return { status: "failed", ...(phase === "starting" ? { fatal: true } : {}), message: /authorization/u.test(message) ? "浏览位置已更新，请重新选择文件后重试。"
+      return { status: "failed", ...(phase === "starting" ? { fatal: true } : {}), message: phase === "starting" ? t("catalogKeywords.runtimeUnavailable") : /authorization/u.test(message) ? "浏览位置已更新，请重新选择文件后重试。"
         : /ENOENT|EACCES|EPERM/u.test(message) ? "文件不存在或无法读取，请检查后重试。"
         : /[\u4e00-\u9fff]/u.test(message) ? message.slice(0, 240) : "自动添加关键词失败，请检查模型服务或关键词保存状态后重试。" };
     } finally { if (using) deps.endUse(); }

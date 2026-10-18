@@ -100,17 +100,7 @@
 | ------------------------------ | ---------------------------------------------- | -------------------------------------- | --- | ------------------ |
 | `search.inputLabel`            | 搜索关键词                                          |                                        |     | 输入框 aria-label     |
 | `search.action`                | 搜索                                             |                                        |     | 旧搜索按钮 / aria-label |
-| `search.aiEnhance` | AI 增强 |  | AI Enhance | 顶部 AI 深度匹配总开关 |
-| `search.aiEnhanceCompleted` | AI 深度匹配完成 |  | AI deep matching completed | 搜索框临时反馈 |
-| `search.aiRecognitionDisabled` | AI 深度匹配已关闭，请先在设置中开启。 |  | AI deep matching is disabled. Enable it in Settings first. | 设置总许可关闭反馈 |
-| `search.aiStartFailed` / `search.aiFailed` | AI 深度匹配启动失败。/ AI 深度匹配失败。 |  | Failed to start AI deep matching. / AI deep matching failed. | Renderer 启动与主进程兜底反馈 |
-| `search.aiInvalidRequest` / `search.aiInvalidRequestParameters` | AI 深度匹配请求无效。/ AI 深度匹配请求参数无效。 |  | The AI deep matching request is invalid. / The AI deep matching request parameters are invalid. | IPC 参数校验反馈 |
-| `search.aiConsecutiveInvalidResults` | AI 深度匹配已停止：模型连续返回了无法使用的结果。 |  | AI deep matching stopped because the model returned unusable results repeatedly. | 连续模型失败反馈 |
-| `search.aiVisionEmptyResponse` / `search.aiVisionInvalidScore` | llama-server 没有返回视觉判断结果。/ AI 视觉判断没有返回单个 0、1 或 2。 |  | llama-server returned no visual result. / The AI visual check did not return a single 0, 1, or 2. | 模型响应校验反馈 |
-| `search.aiVisionCancelled` / `search.aiVisionTimeout` | AI 视觉判断已取消。/ AI 视觉判断超时。 |  | The AI visual check was cancelled. / The AI visual check timed out. | 模型请求终止反馈 |
-| `search.aiVisionRequestFailed` | llama-server 视觉判断请求失败（{status}）：{detail} |  | The llama-server visual request failed ({status}): {detail} | 模型 HTTP 失败反馈 |
-| `search.aiVisionInvalidResponse` | llama-server 返回了无效响应。 |  | llama-server returned an invalid response. | 模型 JSON 失败反馈 |
-| `runtime.visionStartupFailed` / `runtime.visionUnavailable` | llama-server 启动或视觉模型加载失败。/ llama-server 已启动，但健康检查或模型状态不可用。 |  | llama-server failed to start or load the vision model. / llama-server started, but its health check or model state is unavailable. | AI 深度匹配启动兜底反馈 |
+| `runtime.visionStartupFailed` / `runtime.visionUnavailable` | llama-server 启动或视觉模型加载失败。/ llama-server 已启动，但健康检查或模型状态不可用。 |  | llama-server failed to start or load the vision model. / llama-server started, but its health check or model state is unavailable. | 共用视觉模型启动兜底反馈 |
 | `search.directorySelect`       | 目录选择                                           |                                        |     | 图标提示               |
 | `stableUi.sidebar.moveDirectoryUp` / `stableUi.sidebar.moveDirectoryDown` | 上移 / 下移 | | Move Up / Move Down | 已添加目录管理浮层 |
 | `skim.locationPicker.open`     | skim 边栏                                        |                                        | skim sidebar | 主窗口与预览窗口入口 title / aria-label |
@@ -143,19 +133,6 @@
 | `search.skippedUnrecognized`   | 搜索结果 {count} 张 · {skippedCount} 张未识别图片未参与关键词搜索 | 搜索结果：{count} · {skippedCount} 个未识别文件未参与内容搜索 |     | 动态结果说明             |
 | `search.resultGridLabel`       | 搜索结果缩略图                                        | 搜索结果                                   |     | aria-label         |
 | `search.unrecognizedGridLabel` | 未识别图片列表                                        | 未识别文件列表                                |     | aria-label         |
-| `search.section.fastMatch.title` | 快速匹配 |  | Quick Match | 明确信息展示分类卡标题 |
-| `search.section.fastMatch.description` | 根据文件信息直接匹配 |  | Matched directly from file information | 展示分类卡说明 |
-| `search.section.possibleSimilarity.title` | 可能相似 |  | Possibly Similar | 已有 AI 与低级视觉属性展示分类卡标题 |
-| `search.section.possibleSimilarity.description` | 根据特征找到相似内容 |  | Similar content found from known features | 展示分类卡说明 |
-| `search.section.aiDeepMatch.title` | AI 深度匹配 |  | AI Deep Match | 按需 AI 搜索的静态分类卡标题 |
-| `search.section.aiDeepMatch.description` | AI 找到可能接近的内容 |  | Content that AI found potentially relevant | 顶部总开关关闭后保留结果时的静态分类说明 |
-| `search.section.aiDeepMatch.completedDescription` | 深度匹配已完成 |  | Deep matching completed | 当前范围全部检查完成 |
-| `search.section.aiMatching.title` | AI 匹配中 |  | AI Matching | 当前范围持续匹配状态 |
-| `search.section.aiMatching.description` | 点击暂停本次深度匹配 |  | Click to pause this deep match | 运行中分类卡整卡操作说明 |
-| `search.section.aiMatching.progressDescription` | 已处理 {processed} / {total}，点击暂停 |  | Processed {processed}/{total} · Click to pause | 运行中分类卡进度与操作说明 |
-| `search.section.aiPaused.title` | AI 已暂停 |  | AI Paused | 用户主动暂停状态 |
-| `search.section.aiPaused.description` | 点击继续进行匹配 |  | Click to continue matching | 暂停状态分类卡整卡操作说明 |
-| `search.section.aiPaused.progressDescription` | 已处理 {processed} / {total}，点击继续 |  | Processed {processed}/{total} · Click to continue | 暂停状态分类卡进度与操作说明 |
 | `search.emptyResult`           | 没有匹配的真实图片                                      | 没有匹配的文件                                |     | 空结果                |
 | `search.emptyUnrecognized`     | 没有未识别图片                                        | 没有未识别文件                                |     | 空结果                |
 | `search.failed`                | 搜索失败。                                          |                                        |     | 搜索失败兜底             |
@@ -221,10 +198,6 @@
 | `settings.addDirectoryActionHint` | 点击添加目录 | Click to add a folder | 添加按钮 title |
 | `settings.expandDirectoriesHint` | 管理已添加目录 | Manage added folders | 展开目录列表 |
 | `settings.collapseDirectoriesHint` | 点击收起列表 | Collapse the folder list | 收起目录列表 |
-| `settings.index` | AI 深度匹配 | AI Deep Match | 全局 AI 能力开关标题 |
-| `settings.enableAiRecognitionHint` | 开启按需 AI 深度匹配 | Enable on-demand AI deep matching | 关闭状态按钮 title |
-| `settings.disableAiRecognitionHint` | 关闭 AI 深度匹配并结束当前任务 | Disable AI deep matching and stop the current task | 开启状态按钮 title |
-| `common.enable` / `common.close` | 开启 / 关闭 | Enable / Disable | 全局 AI 能力开关 |
 | `settings.renameDirectoryHint` | 双击重命名 | Double-click to rename | 目录名 title |
 | `settings.directoryFileCountHint` | 受支持文件数 | Supported file count | 目录文件数量 |
 | `settings.deleteDirectoryActionHint` | 点击移除此目录 | Remove this folder | 删除按钮 title |
@@ -407,7 +380,6 @@
 | `commands.group.model`             | 视觉模型类                             | 视觉模型                             |      | 分类标题             |
 | `commands.group.app`               | 软件操作类                             | 软件操作                             |      | 分类标题             |
 | `commands.group.cache`             | 缓存类                               | 缓存                               |      | 分类标题             |
-| `commands.group.ai`                | AI                                |                                  |      | 分类标题             |
 | `commands.set.open`                | 打开设置页                             | 打开设置                             |      | `set:`           |
 | `commands.skim.scopeDefault`       |                                     | 切换为默认查看范围                        |      | `skim:scope default` |
 | `commands.skim.scopeAll`           |                                     | 切换为全部查看范围                        |      | `skim:scope all` |
@@ -467,10 +439,6 @@
 | `commands.model.select`            | 切换视觉模型                            |                                  |      | `model:use`      |
 | `commands.cache.autoEnable`        | 开启自动缓存优化                          |                                  |      | `cache:auto on`  |
 | `commands.cache.autoDisable`       | 关闭自动缓存优化                          |                                  |      | `cache:auto off` |
-| `commands.ai.enable`               |                                     | 启用 AI 增强能力                       |      | `ai:on`          |
-| `commands.ai.disable`              |                                     | 禁用 AI 增强能力                       |      | `ai:off`         |
-| `commands.ai.searchEnable`         |                                     | 开启当前搜索的 AI 增强                    |      | `ai:search on`   |
-| `commands.ai.searchDisable`        |                                     | 关闭当前搜索的 AI 增强                    |      | `ai:search off`  |
 | `commands.confirm.deleteDirectory` | 删除目录、索引和相关缓存，需二次确认                | 删除目录、索引和相关缓存                     |      | `dir:delete`     |
 | `commands.confirm.quit`            | 真正退出 Cap7CE，需二次确认                 | 关闭 Cap7CE 运行进程                   |      | `app:quit`       |
 | `commands.confirm.stopRuntime`     | 停止 llama.cpp / llama-server，需二次确认 | 停止 llama.cpp / llama-server      |      | `llama:stop`     |
@@ -547,10 +515,6 @@
 | `command.edgeCollapseDisabled`         | 已关闭窗口贴边自动收起              |      |      | 窗口行为            |
 | `command.autoCacheEnabled`             | 已开启自动缓存优化                |      |      | 缓存              |
 | `command.autoCacheDisabled`            | 已关闭自动缓存优化                |      |      | 缓存              |
-| `command.aiEnabled`                    |                          | 已启用 AI 增强能力 |      | AI               |
-| `command.aiDisabled`                   |                          | 已禁用 AI 增强能力 |      | AI               |
-| `command.aiSearchEnabled`              |                          | 已开启当前搜索的 AI 增强 |      | AI               |
-| `command.aiSearchDisabled`             |                          | 已关闭当前搜索的 AI 增强 |      | AI               |
 | `command.runtimeListRefreshed`        | 已刷新 llama.cpp 版本列表      |      |      | llama.cpp       |
 | `command.runtimeStarted`              | 已启动 llama.cpp           |      |      | llama.cpp       |
 | `command.runtimeSelected`             | 已切换 llama.cpp 版本：{name} |      |      | llama.cpp       |
@@ -589,7 +553,6 @@
 | `error.runtimeRefreshFailed`          | 刷新 llama.cpp 版本列表失败                 |                 |     | 快捷指令反馈      |
 | `error.runtimeAlreadyRunning`         | llama.cpp 已在运行                      |                 |     | 快捷指令反馈      |
 | `error.runtimeStartFailed`            | llama.cpp 启动失败                      |                 |     | 快捷指令反馈      |
-| `error.stopAiSearchFirst`             | 请先停止当前 AI 深度匹配                     | Stop the current AI deep match first |     | 模型 / 运行时切换  |
 | `error.runtimeVersionNotFound`        | 未找到 llama.cpp 版本                    |                 |     | 运行时切换       |
 | `error.runtimeSwitchFailed`           | 切换 llama.cpp 版本失败                   |                 |     | 运行时切换       |
 | `error.modelRefreshFailed`            | 刷新视觉模型列表失败                          |                 |     | 模型          |
@@ -790,3 +753,9 @@
 | `catalogCommand.removeExample` | dir:remove "收藏名称" | dir:remove "Favorite name" | 新版快捷指令 |
 | `catalogCommand.runtimeNotFound` | 未找到匹配的运行时版本。 | No matching runtime version was found. | 新版快捷指令 |
 | `catalogCommand.modelNotFound` | 未找到唯一可用模型，请使用模型名称或 ID。 | No unique usable model matches. Use its name or ID. | 新版快捷指令 |
+
+
+| `catalogKeywords.runtimeUnavailable` | 本地模型不可用，请在“搜索与 AI”中检查运行时和模型配置。 | Local model unavailable. Check the runtime and model in Search & AI. | 主动识别的模型启动失败反馈，使用底部窄条 |
+
+
+旧搜索结果的分类卡、运行/暂停提示及对应文案已移除；设置内该分组称为“本地 AI”，历史预览证据中的aiSearch只用于说明旧记录来源。

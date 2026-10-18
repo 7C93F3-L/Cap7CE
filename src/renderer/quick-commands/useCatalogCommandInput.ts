@@ -47,7 +47,7 @@ export function useCatalogCommandInput({ path, query, searchMode, active = true,
         if (own !== generation.current) return;
         const parsed = parseCatalogCommand(raw, preferences?.commandEnabled !== false);
         if (parsed.type === "missing-argument" || parsed.type === "unknown") {
-          runner.notify(parsed.type === "unknown" ? parseQuickCommand(raw).type === "valid" ? t("catalogCommand.retired") : t("command.invalid", { command: parsed.command.raw }) : t("command.missingArgument", { message: parsed.message })); return;
+          runner.notify(parsed.type === "unknown" ? parsed.command.domain === "ai" || parseQuickCommand(raw).type === "valid" ? t("catalogCommand.retired") : t("command.invalid", { command: parsed.command.raw }) : t("command.missingArgument", { message: parsed.message })); return;
         }
         if (parsed.type === "valid") {
           const operation = runner.prepare(parsed.command, page);

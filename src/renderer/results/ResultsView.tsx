@@ -8,7 +8,6 @@ import { isPlainSpaceShortcut } from "../keywordEditorInteraction";
 import { copyFilePathsWithFeedback, getFileContextShortcutAction } from "../fileContextActions";
 import { VirtualImageGrid } from "./VirtualResultGrids";
 import { buildResultGridLayoutItems, getNavigatedResultFileIndex } from "./resultSectionLayout";
-import type { AiResultSectionPhase, AiResultSectionProgress } from "./ResultSectionCard";
 import type { ResultGridScrollMemory } from "../virtualGridLayout";
 import { useResultSelectionMemory } from "./useResultSelectionMemory";
 import type { WorkspaceSelectionMemory } from "../../shared/workspaceTypes";
@@ -24,8 +23,6 @@ export interface ResultsViewProps {
   selectionMemory?: WorkspaceSelectionMemory;
   active: boolean; images: ImageIndexItem[];
   isSearching: boolean;
-  aiSearchPhase: AiResultSectionPhase;
-  aiSearchProgress: AiResultSectionProgress;
   searchError: string;
   contextMenuTheme: "light" | "dark";
   appearanceColors: AppearanceColors;
@@ -43,10 +40,9 @@ export interface ResultsViewProps {
   onOpenImage: (item: ImageIndexItem) => void;
   onShowInFolder: (item: ImageIndexItem) => void;
   onDeleteItems: (items: ImageIndexItem[]) => void;
-  onAiSearchSectionToggle: () => void;
 }
 
-export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSearchProgress, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, onAiSearchSectionToggle, selectionMemory }: ResultsViewProps) => {
+export const ResultsView = ({ active, images, isSearching, searchError, contextMenuTheme, appearanceColors, imageContextMenuOpen, keywordEditorOpen, selectedImageId, clearSelectionRequestId, scrollMemory, onSelectedImageChange, onScrollMemoryChange, onFeedback, onContextMenu, onContextMenuClose, onOpenImage, onShowInFolder, onDeleteItems, selectionMemory }: ResultsViewProps) => {
   const [gridMetrics, setGridMetrics] = useState({ left: 0, right: 0, columnCount: 1 });
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [scrollTargetIndex, setScrollTargetIndex] = useState<number | null>(null);
@@ -63,10 +59,9 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
       return nextMetrics;
     });
   }, []);
-  const showAiStatusSection = ["starting", "running", "paused_user", "completed"].includes(aiSearchPhase);
   const resultGridLayoutItems = useMemo(
-    () => buildResultGridLayoutItems(images, showAiStatusSection),
-    [images, showAiStatusSection]
+    () => buildResultGridLayoutItems(images),
+    [images]
   );
   const selectedImageIndex = selectedImageId ? images.findIndex((image) => image.id === selectedImageId) : -1;
   const activePreviewIndex = previewIndex !== null && images[previewIndex] ? previewIndex : null;
@@ -498,8 +493,6 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
           scrollTargetIndex={scrollTargetIndex}
           initialScrollMemory={scrollMemory}
           isSearching={isSearching}
-          aiSearchPhase={aiSearchPhase}
-          aiSearchProgress={aiSearchProgress}
           searchError={searchError}
           onSelectImage={handleImageClick}
           onScrollMemoryChange={onScrollMemoryChange}
@@ -508,7 +501,6 @@ export const ResultsView = ({ active, images, isSearching, aiSearchPhase, aiSear
           onOpenImage={onOpenImage}
           onStartDrag={startFileDrag}
           onLayoutChange={updateGridMetrics}
-          onAiSearchSectionToggle={onAiSearchSectionToggle}
       />
     </main>
   );

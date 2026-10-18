@@ -4,7 +4,6 @@ import { t } from "../../../electron/localization";
 import type { ImageIndexItem } from "../../shared/types";
 import CustomScrollbar from "../CustomScrollbar";
 import { ResultThumbnailContent } from "./ResultThumbnail";
-import { ResultSectionCard, type AiResultSectionPhase, type AiResultSectionProgress } from "./ResultSectionCard";
 import { getResultLayoutIndexForFileIndex, type ResultGridLayoutItem } from "./resultSectionLayout";
 import {
   captureResultGridScrollMemory,
@@ -27,8 +26,6 @@ export interface VirtualImageGridProps {
   scrollTargetIndex: number | null;
   initialScrollMemory: ResultGridScrollMemory;
   isSearching: boolean;
-  aiSearchPhase: AiResultSectionPhase;
-  aiSearchProgress: AiResultSectionProgress;
   searchError: string;
   onSelectImage: (event: React.MouseEvent, item: ImageIndexItem) => void;
   onScrollMemoryChange: (memory: ResultGridScrollMemory) => void;
@@ -37,12 +34,11 @@ export interface VirtualImageGridProps {
   onOpenImage: (item: ImageIndexItem) => void;
   onStartDrag: (event: React.DragEvent, item: ImageIndexItem) => void;
   onLayoutChange: (metrics: { left: number; right: number; columnCount: number }) => void;
-  onAiSearchSectionToggle: () => void;
 }
 
 const EmptySearchResult = ({ message }: { message: string }) => <div className="empty-result-row">{message}</div>;
 
-export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, scrollTargetIndex, initialScrollMemory, isSearching, aiSearchPhase, aiSearchProgress, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange, onAiSearchSectionToggle }: VirtualImageGridProps) => {
+export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, scrollTargetIndex, initialScrollMemory, isSearching, searchError, onSelectImage, onScrollMemoryChange, onScrollTargetHandled, onContextMenu, onOpenImage, onStartDrag, onLayoutChange }: VirtualImageGridProps) => {
   const containerRef = useRef<HTMLElement | null>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const restoreFrameRef = useRef<number | null>(null);
@@ -63,7 +59,7 @@ export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, scroll
     item
   })), [images, layoutItems]);
   const layoutItemIds = useMemo(
-    () => gridItems.map((layoutItem) => layoutItem.kind === "file" ? layoutItem.item.id : null),
+    () => gridItems.map((layoutItem) => layoutItem.item.id),
     [gridItems]
   );
   const hasGridItems = gridItems.length > 0;
@@ -350,24 +346,7 @@ export const VirtualImageGrid = ({ images, layoutItems, selectedImageIds, scroll
       )}
       {!searchError && hasGridItems && (
         <div className="virtual-grid-spacer" style={{ height: virtualGrid.totalHeight, width: isHorizontalGrid ? virtualGrid.totalWidth : "100%" }} data-rendered-count={virtualGrid.visibleItems.length} data-column-count={virtualGrid.columnCount}>
-          {virtualGrid.visibleItems.map(({ layoutItem, top, left }) => layoutItem.kind === "section" ? (
-            <div
-              className="result-section-layout-cell"
-              key={layoutItem.key}
-              style={{
-                width: virtualGrid.cellSize,
-                height: virtualGrid.cellSize,
-                transform: `translate(${left}px, ${top}px)`
-              }}
-            >
-              <ResultSectionCard
-                section={layoutItem.section}
-                aiPhase={layoutItem.section === "aiDeepMatch" ? aiSearchPhase : "idle"}
-                aiProgress={layoutItem.section === "aiDeepMatch" ? aiSearchProgress : undefined}
-                onAiToggle={layoutItem.section === "aiDeepMatch" ? onAiSearchSectionToggle : undefined}
-              />
-            </div>
-          ) : (
+          {virtualGrid.visibleItems.map(({ layoutItem, top, left }) => (
             <button
               className={`thumb${selectedImageIds.has(layoutItem.item.id) ? " selected" : ""}`}
               data-result-tile="true"

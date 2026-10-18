@@ -44,7 +44,6 @@ const run = async () => {
     updateSystemNotifications: capture("systemNotifications"),
     applySystemNotifications: (enabled) => calls.push(["applySystemNotifications", enabled]),
     updateAutoCacheOptimization: capture("autoCacheOptimization"),
-    updateAiRecognitionEnabled: capture("aiRecognitionEnabled"),
     setAutoCacheOptimizationEnabled: async (enabled) => calls.push(["setAutoCacheOptimizationEnabled", enabled]),
     scheduleAutoCacheOptimization: async () => calls.push(["scheduleAutoCacheOptimization"])
   });
@@ -72,11 +71,11 @@ const run = async () => {
     "preferences:updateStandbyLineVisible",
     "preferences:updateLaunchAtLogin",
     "preferences:updateSystemNotifications",
-    "preferences:updateAiRecognitionEnabled",
     "preferences:updateAutoCacheOptimization"
   ]);
 
   assert.equal(handles.has("preferences:updateSkimDisplay"), false);
+  assert.equal(handles.has("preferences:updateAiRecognitionEnabled"), false);
   const event = { sender: { id: 1 } };
   assert.equal(await handles.get("preferences:get")(event), response);
 
@@ -103,7 +102,6 @@ const run = async () => {
   await handles.get("preferences:updateStandbyLineVisible")(event, 1);
   await handles.get("preferences:updateLaunchAtLogin")(event, "enabled");
   await handles.get("preferences:updateSystemNotifications")(event, 0);
-  await handles.get("preferences:updateAiRecognitionEnabled")(event, 0);
   await handles.get("preferences:updateAutoCacheOptimization")(event, 0);
 
   assert.deepEqual(calls, [
@@ -134,7 +132,6 @@ const run = async () => {
     ["applyLaunchAtLogin", response.launchAtLogin],
     ["systemNotifications", false],
     ["applySystemNotifications", response.systemNotificationsEnabled],
-    ["aiRecognitionEnabled", false],
     ["autoCacheOptimization", false],
     ["setAutoCacheOptimizationEnabled", response.autoCacheOptimizationEnabled],
     ["scheduleAutoCacheOptimization"]
@@ -170,7 +167,6 @@ const run = async () => {
     updateSystemNotifications: async () => disabledResponse,
     applySystemNotifications: () => undefined,
     updateAutoCacheOptimization: async () => disabledResponse,
-    updateAiRecognitionEnabled: async () => disabledResponse,
     setAutoCacheOptimizationEnabled: async (enabled) => disabledCalls.push(["set", enabled]),
     scheduleAutoCacheOptimization: async () => disabledCalls.push(["schedule"])
   });

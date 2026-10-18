@@ -6,7 +6,6 @@ import { useWorkspaceOverlayDismiss } from "./useWorkspaceOverlayDismiss";
 import { useState, type ReactNode } from "react";
 import { t } from "../../../electron/localization";
 import StableSkimSlot from "../stable-ui/StableSkimSlot";
-import StableUiIcon from "../stable-ui/StableUiIcon";
 import type { StableSidebarProps } from "../stable-ui/stableSidebarTypes";
 import type { StableSkimProps } from "../stable-ui/stableSkimTypes";
 import { useInertElement } from "../stable-ui/useInertElement";
@@ -32,7 +31,6 @@ export default function WorkspaceShell({ resultsToolbar, resultContent, sidebar,
     <WorkspaceRail skimOpen={skimOpen} directoriesOpen={directoriesOpen} filtersVisible={filtersVisible} filterCount={filterCount} onSkim={() => { setDirectoriesOpen(false); navigation.openSkim(); }} onDirectories={() => setDirectoriesOpen((open) => !open)} onFilters={() => { setDirectoriesOpen(false); setFiltersVisible((visible) => !visible); }} onSettings={sidebar.onOpenSettings} />
     <header className="cap-workspace-header">
       <WorkspaceTabBar tabs={navigation.tabs} activeId={navigation.activeId} onSelect={navigation.select} onClose={navigation.close} />
-      {!skimOpen && <button className="cap-workspace-ai" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-label={t("stableUi.sidebar.aiEnhance")} aria-pressed={sidebar.aiSearchEnabled} onClick={sidebar.onAiSearchToggle}><StableUiIcon name="ai" active={sidebar.aiSearchEnabled} /></button>}
     </header>
     <section id="workspace-results" className="cap-stable-results-slot" aria-label={t("stableUi.resultsRegion")}>{!skimOpen && resultsToolbar}{resultContent(!interactionLocked && resultsKeyboardActive)}</section>
     {navigation.skimPresent && <StableSkimSlot {...skim} conditions={coreFilters.conditions} invalidFilters={coreFilters.invalid} onSearchExit={coreFilters.clear} foreground={!interactionLocked && skimOpen} content={skim.renderContent(!interactionLocked && skimKeyboardActive)} onToggleSkim={() => navigation.close("skim")} />}

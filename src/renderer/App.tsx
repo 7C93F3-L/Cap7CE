@@ -35,8 +35,6 @@ import { formatDisplayMessage } from "./formatting";
 import { useRandomBrowse } from "./explore/useRandomBrowse";
 import { isEditableKeyboardTarget } from "./keyboardTarget";
 import { emptySearchResponse, getAbsoluteWindowsDirectoryInput, getSearchDisplayExtensions } from "./search/searchViewModel";
-import { parseAssistantInvocation } from "./assistant/assistantInvocation";
-import { hasAiSearchScopeChanged, useAiSearchBeta } from "./ai-search";
 import { defaultStableShortcutActions, getShortcutFromKeyboardEvent, normalizeStableShortcutActions } from "./shortcutActions";
 import ResultStatus from "./results/ResultStatus";
 import { ResultsView, type ResultsViewProps } from "./results/ResultsView";
@@ -250,7 +248,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   const [, setStandbyLineVisible] = useState(true);
   const [, setLaunchAtLogin] = useState(false);
   const [, setSystemNotificationsEnabled] = useState(true);
-  const [aiRecognitionEnabled, setAiRecognitionEnabled] = useState(true);
   const [quickActionGlobalEnabled, setQuickActionGlobalEnabled] = useState(true);
   const [commandEnabled, setCommandEnabled] = useState(true);
   const [shortcutActions, setShortcutActions] = useState<ShortcutActionPreferences>(defaultStableShortcutActions);
@@ -368,7 +365,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     show: showQuickCommandNotice,
     clear: clearQuickCommandNotice
   } = useTransientFeedback();
-  const aiSearchBeta = useAiSearchBeta({ setResults: setSearchResults, onFeedback: showQuickCommandNotice });
   const [pendingQuickCommandConfirmation, setPendingQuickCommandConfirmation] = useState<QuickCommandConfirmationRequest | null>(null);
   const resultScrollMemoryRef = useRef(createInitialResultGridScrollMemory());
   const resetResultPresentation = useCallback(() => { resultScrollMemoryRef.current = createInitialResultGridScrollMemory(); setClearSelectionRequestId((requestId) => requestId + 1); document.querySelector<HTMLElement>(".cap-results-view .image-grid")?.scrollTo({ top: 0, left: 0, behavior: "auto" }); }, []);
@@ -582,7 +578,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
             setStandbyLineVisible(preferences.standbyLineVisible);
             setLaunchAtLogin(preferences.launchAtLogin);
             setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);
-            setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
             setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
             setCommandEnabled(preferences.commandEnabled);
             setShortcutActions(normalizeStableShortcutActions(preferences.stableShortcutActions));
@@ -638,7 +633,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const runSearch = async (
     nextSearch = search,
-    options?: { navigate?: boolean; display?: SkimDisplayPreferences; aiEnhanced?: boolean; preserveAiResults?: boolean }
+    options?: { navigate?: boolean; display?: SkimDisplayPreferences }
   ) => {
     if (nextSearch.query.trim() !== lastResultSearchRef.current.query.trim()) {
       resultScrollMemoryRef.current = createInitialResultGridScrollMemory();
@@ -684,8 +679,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       const baseResults = Array.isArray(response) ? response : response.images;
       setSearchAvailableFormats(Array.isArray(response) ? [] : response.availableFormats);
       resultsInitializedRef.current = true;
-      setSearchResults(options?.preserveAiResults ? aiSearchBeta.mergePreservedResults(baseResults) : baseResults);
-      if (options?.aiEnhanced) void aiSearchBeta.start(searchRequest, baseResults);
+      setSearchResults(baseResults);
       return true;
     } catch {
       if (searchTaskIdRef.current !== taskId) return false;
@@ -700,9 +694,9 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  const workspace = useWorkspaceSearchSessions({ search, initialSearch: emptySearch, display: skimDisplay, setSearch, setDisplay: setSkimDisplay, random: randomBrowse, ai: aiSearchBeta, results: searchResults, setResults: setSearchResults, formats: searchAvailableFormats, setFormats: setSearchAvailableFormats,
+  const workspace = useWorkspaceSearchSessions({ search, initialSearch: emptySearch, display: skimDisplay, setSearch, setDisplay: setSkimDisplay, random: randomBrowse, results: searchResults, setResults: setSearchResults, formats: searchAvailableFormats, setFormats: setSearchAvailableFormats,
     error: searchError, setError: setSearchError, searching: isSearching, scroll: resultScrollMemoryRef, submitted: lastResultSearchRef, initialized: resultsInitializedRef, setSelectedId: setSelectedResultImageId,
-    cancel: () => { if (viewDisplaySearchTimerRef.current !== null) { window.clearTimeout(viewDisplaySearchTimerRef.current); viewDisplaySearchTimerRef.current = null; } cancelSearch(); clearQuickCommandNotice(); setContextMenu(null); }, refresh: (nextSearch, display) => { void runSearch(nextSearch, { navigate: false, display, preserveAiResults: true }); } });
+    cancel: () => { if (viewDisplaySearchTimerRef.current !== null) { window.clearTimeout(viewDisplaySearchTimerRef.current); viewDisplaySearchTimerRef.current = null; } cancelSearch(); clearQuickCommandNotice(); setContextMenu(null); }, refresh: (nextSearch, display) => { void runSearch(nextSearch, { navigate: false, display }); } });
   useEffect(() => {
     if (isLoadingDirectories || !contentViewActivityConfirmed || resultsInitializedRef.current) return;
     const initialSearch = { ...emptySearch, sortField: search.sortField, sortDirection: search.sortDirection };
@@ -722,9 +716,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       });
     }
     if (refresh) {
-      const aiScopeChanged = hasAiSearchScopeChanged(search, nextSearch);
-      if (aiScopeChanged) aiSearchBeta.cancelActive();
-      void runSearch(nextSearch, aiScopeChanged ? { aiEnhanced: aiSearchBeta.enabled } : { preserveAiResults: true });
+      void runSearch(nextSearch);
     }
   };
   const updateTheme = (nextTheme: ThemeMode) => {
@@ -806,13 +798,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       thumbnailOptimizationPhaseRef.current = fallbackStatus.phase;
       setThumbnailOptimizationStatus(fallbackStatus);
     }
-  };
-
-  const updateAiRecognitionEnabled = async (enabled: boolean) => {
-    setAiRecognitionEnabled(enabled);
-    if (!enabled) aiSearchBeta.deactivate();
-    const preferences = await window.cap7ce?.preferences.updateAiRecognitionEnabled(enabled);
-    if (preferences) setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
   };
 
   const updateQuickActionGlobalEnabled = (nextQuickActionGlobalEnabled: boolean) => {
@@ -929,10 +914,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const selectCommandLlamaRuntime = async (version: string) => {
-    if (aiSearchBeta.busy) {
-      return commandOperationFailed(t("error.stopAiSearchFirst"));
-    }
-
     const runtime = llamaRuntimeSettings.versions.find((item) => item.version === version);
     if (!runtime) {
       return commandOperationFailed(t("error.runtimeVersionNotFound"));
@@ -959,10 +940,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const selectCommandVisionModel = async (modelName: string) => {
-    if (aiSearchBeta.busy) {
-      return commandOperationFailed(t("error.stopAiSearchFirst"));
-    }
-
     const model = ggufModelSettings.models.find((item) => (
       item.name === modelName || item.modelFile.name === modelName
     ));
@@ -1068,9 +1045,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
   };
 
   const getCommandLlamaStopBlocker = () => {
-    if (aiSearchBeta.busy) {
-      return t("error.stopAiSearchFirst");
-    }
     if (llamaRuntimeProcessState.status !== "running" && llamaRuntimeProcessState.status !== "starting") {
       return t("error.runtimeNotRunning");
     }
@@ -1128,32 +1102,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     if (search.fileFormat !== "all" || search.selectedExtensions?.length || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasExploreTypeFilters(search)) updateResultsSearchOptions(nextSearch);
   };
 
-  const toggleAiSearchBeta = () => {
-    if (!aiRecognitionEnabled) {
-      showQuickCommandNotice(t("search.aiRecognitionDisabled"));
-      return;
-    }
-    if (aiSearchBeta.enabled) {
-      aiSearchBeta.deactivate();
-      return;
-    }
-    aiSearchBeta.activate();
-    void aiSearchBeta.start(lastResultSearchRef.current, searchResults);
-  };
-
-  const setCommandAiSearch = (enabled: boolean) => {
-    if (enabled && !aiRecognitionEnabled) return commandOperationFailed(t("search.aiRecognitionDisabled"));
-    if (!enabled) {
-      aiSearchBeta.deactivate();
-    } else if (aiSearchBeta.phase === "paused_user") {
-      aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults);
-    } else if (!aiSearchBeta.busy) {
-      if (!aiSearchBeta.enabled) aiSearchBeta.activate();
-      void aiSearchBeta.start(lastResultSearchRef.current, searchResults);
-    }
-    return { ok: true as const };
-  };
-
   const addCommandDirectory = async (directoryPath: string) => {
     if (isAddingDirectory) return commandOperationFailed(t("command.taskRunning"));
     setIsAddingDirectory(true);
@@ -1195,13 +1143,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       const customRangeChanged = nextSkimDisplay.searchMode === "custom"
         && nextSkimDisplay.customExtensions.join("|") !== skimDisplay.customExtensions.join("|");
       if (searchModeChanged) {
-        aiSearchBeta.cancelActive();
-        void runSearch(lastResultSearchRef.current, { navigate: false, display: nextSkimDisplay, aiEnhanced: aiSearchBeta.enabled });
+        void runSearch(lastResultSearchRef.current, { navigate: false, display: nextSkimDisplay });
       } else if (customRangeChanged) {
         viewDisplaySearchTimerRef.current = window.setTimeout(() => {
           viewDisplaySearchTimerRef.current = null;
-          aiSearchBeta.cancelActive();
-          void runSearch(lastResultSearchRef.current, { navigate: false, display: nextSkimDisplay, aiEnhanced: aiSearchBeta.enabled });
+          void runSearch(lastResultSearchRef.current, { navigate: false, display: nextSkimDisplay });
         }, 300);
       }
     }
@@ -1314,7 +1260,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       updateLaunchAtLogin,
       updateSystemNotifications,
       updateAutoCacheOptimization,
-      updateAiRecognitionEnabled,
       updateQuickActionGlobalEnabled,
       updateShortcutActions: async (nextShortcutActions) => (
         (await updateShortcutActions(nextShortcutActions))?.applied ?? false
@@ -1326,7 +1271,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
       setSkimHiddenFiles: (showHiddenFiles) => updateSkimDisplay({ ...skimDisplay, showHiddenFiles }, false),
       setSkimSortDirection: (sortDirection) => updateSkimSort({ ...search, ...skimSortPreference, sortDirection }, false),
       setSkimSortField: (sortField) => updateSkimSort({ ...search, ...skimSortPreference, sortField }, false),
-      setCurrentAiSearch: setCommandAiSearch,
       setShellMode: setCommandShellMode,
       resetWindow: resetCommandWindow,
       maximizeWindow: maximizeCommandWindow,
@@ -1361,16 +1305,12 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
 
   const submitSearch = (nextSearch = search) => {
     const directoryPathResolutionRequest = ++directoryPathResolutionRequestRef.current;
-    const invocation = parseAssistantInvocation(nextSearch.query);
-    const submittedSearch = invocation.requested ? { ...nextSearch, query: invocation.query } : nextSearch;
-    const aiRequested = invocation.requested && aiRecognitionEnabled;
-    if (invocation.requested && !aiRecognitionEnabled) showQuickCommandNotice(t("search.aiRecognitionDisabled"));
-    if (aiRequested) aiSearchBeta.activate();
-    if (!invocation.requested && submitQuickCommandIfNeeded(submittedSearch)) {
+    const submittedSearch = nextSearch;
+    if (submitQuickCommandIfNeeded(submittedSearch)) {
       return;
     }
 
-    const directoryInput = invocation.requested ? null : getAbsoluteWindowsDirectoryInput(submittedSearch.query);
+    const directoryInput = getAbsoluteWindowsDirectoryInput(submittedSearch.query);
     if (directoryInput) {
       void window.cap7ce?.skim.resolveDirectoryPath(directoryInput).then((resolvedPath) => {
         if (directoryPathResolutionRequestRef.current !== directoryPathResolutionRequest) return;
@@ -1390,15 +1330,14 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
 
     setSearch(submittedSearch);
-    aiSearchBeta.cancelActive();
-    void runSearch(submittedSearch, { aiEnhanced: aiRequested || (aiRecognitionEnabled && aiSearchBeta.enabled) });
+    void runSearch(submittedSearch);
   };
 
   useSearchIndexRefresh((force) => {
     workspace.invalidate();
     const activeSearch = lastResultSearchRef.current;
     if (!contentViewActivityConfirmed || !resultsInitializedRef.current || (!force && !activeSearch.query.trim() && !hasExploreTypeFilters(activeSearch))) return;
-    void runSearch(activeSearch, { navigate: false, preserveAiResults: true });
+    void runSearch(activeSearch, { navigate: false });
   });
 
   const openResults = () => {
@@ -1501,7 +1440,7 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     }
   };
 
-  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setAiRecognitionEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
+  useSettingsDataSynchronization({ setTheme, setLanguagePreference, setResolvedLanguage, setAppearanceColors, setUiFontSize, setWindowMaterial, setStandbyLineVisible, setLaunchAtLogin, setSystemNotificationsEnabled, setQuickActionGlobalEnabled, setCommandEnabled, setShortcutActions, setSearchLabelVisibility, setSkimDisplay, setSkimSidebarFolders, setSkimSystemLocationsCollapsed, refreshDirectories });
 
   const saveSkimSidebarFolders = useCallback(async (nextFolders: string[]) => {
     try {
@@ -2281,13 +2220,11 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     resultCount={searchResults.length}
     fileCount={selectedDirectoryFileCount}
     hasActiveSearch={search.query.trim().length > 0 || search.fileFormat !== "all" || (search.selectedExtensions?.length ?? 0) > 0 || (search.timePreset ?? "all") !== "all" || hasFileSizeFilter(search) || hasExploreTypeFilters(search)}
-    isSearching={isSearching || aiSearchBeta.busy}
+    isSearching={isSearching}
   />;
   const createResultsViewProps = (active: boolean): ResultsViewProps => ({
     active, images: randomBrowse.items, selectionMemory: workspace.selectionMemory,
-    isSearching: isSearching || aiSearchBeta.busy,
-    aiSearchPhase: aiSearchBeta.phase,
-    aiSearchProgress: aiSearchBeta.progress,
+    isSearching: isSearching,
     searchError,
     contextMenuTheme: effectiveTheme,
     appearanceColors,
@@ -2309,7 +2246,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     onOpenImage: (item) => invokeFileAction("open", item),
     onShowInFolder: (item) => invokeFileAction("showInFolder", item),
     onDeleteItems: requestDeleteFiles,
-    onAiSearchSectionToggle: () => aiSearchBeta.toggleCurrentSearch(lastResultSearchRef.current, searchResults)
   });
   const createSkimViewProps = (active = true): SkimViewProps => ({
     visualSessionId: skimVisualSessionId,
@@ -2386,16 +2322,15 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         explore={{
           searchDisplayMode: skimDisplay.searchMode,
           availableFormats: searchAvailableFormats,
-          randomBrowseEnabled: randomBrowse.enabled, randomBatchNumber: randomBrowse.batchNumber, randomBrowseBusy: isSearching || aiSearchBeta.busy,
+          randomBrowseEnabled: randomBrowse.enabled, randomBatchNumber: randomBrowse.batchNumber, randomBrowseBusy: isSearching,
           onSearchDisplayModeChange: (searchMode) => updateSkimDisplay({ ...skimDisplay, searchMode }),
           onToggleRandomBrowse: randomBrowse.toggle, onDisableRandomBrowse: randomBrowse.disable,
           onNextRandomBatch: randomBrowse.next, onClearExploreFilters: clearExploreFilters
         }}
         sidebar={{
           search, directories: directoryOptions,
-          aiSearchEnabled: aiSearchBeta.enabled, aiSearchBusy: aiSearchBeta.busy,
           isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId,
-          onAiSearchToggle: toggleAiSearchBeta, onSearchOptionsChange: updateResultsSearchOptions,
+          onSearchOptionsChange: updateResultsSearchOptions,
           onAddDirectory: () => void addDirectory(),
           onEditDirectory: setEditingDirectoryId, onCancelDirectoryEdit: () => setEditingDirectoryId(null),
           onDirectoryNameChange: (id, name) => void updateDirectoryName(id, name),

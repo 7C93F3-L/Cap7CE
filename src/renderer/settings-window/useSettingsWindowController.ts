@@ -135,7 +135,7 @@ export const useSettingsWindowController = () => {
   );
   const previewAppearanceColors = (appearanceColors: AppearanceColors) => setPreferences((current) => current ? { ...current, appearanceColors } : current);
   const updateBooleanPreference = async (
-    key: "edgeCollapseEnabled" | "standbyLineVisible" | "launchAtLogin" | "systemNotificationsEnabled" | "autoCacheOptimizationEnabled" | "aiRecognitionEnabled" | "quickActionGlobalEnabled" | "commandEnabled",
+    key: "edgeCollapseEnabled" | "standbyLineVisible" | "launchAtLogin" | "systemNotificationsEnabled" | "autoCacheOptimizationEnabled" | "quickActionGlobalEnabled" | "commandEnabled",
     enabled: boolean
   ) => {
     const api = window.cap7ce?.preferences;
@@ -146,7 +146,6 @@ export const useSettingsWindowController = () => {
       launchAtLogin: api.updateLaunchAtLogin,
       systemNotificationsEnabled: api.updateSystemNotifications,
       autoCacheOptimizationEnabled: api.updateAutoCacheOptimization,
-      aiRecognitionEnabled: api.updateAiRecognitionEnabled,
       quickActionGlobalEnabled: api.updateQuickActionGlobalEnabled,
       commandEnabled: api.updateCommandEnabled
     }[key] as (value: boolean) => Promise<UserPreferences>;

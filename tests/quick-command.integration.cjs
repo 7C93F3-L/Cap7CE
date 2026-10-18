@@ -90,7 +90,6 @@ const passiveContext = new Proxy({
   defaultShortcutActions: {},
   directoryExists: () => true,
   getLlamaStopBlocker: () => null,
-  setCurrentAiSearch: () => ({ ok: true })
 }, { get: (target, property) => property in target ? target[property] : operation });
 const context = new Proxy({
   currentAppearanceColors: { themeColor: "#000000", accentColor: "#ffffff" },
@@ -107,10 +106,6 @@ const context = new Proxy({
   setSkimHiddenFiles: (enabled) => calls.push(["skim-hidden", enabled]),
   setSkimSortDirection: (direction) => calls.push(["skim-sort-direction", direction]),
   setSkimSortField: (field) => calls.push(["skim-sort-field", field]),
-  setCurrentAiSearch: (enabled) => {
-    calls.push(["ai-search", enabled]);
-    return { ok: true };
-  },
   updateWindowMaterial: async (material) => calls.push(["material", material]),
   updateUiFontSize: async (size) => calls.push(["font", size]),
   resetWindow: async () => {
@@ -122,7 +117,6 @@ const context = new Proxy({
   updateEdgeCollapse: async (enabled) => calls.push(["edge", enabled]),
   updateSystemNotifications: async (enabled) => calls.push(["notify", enabled]),
   updateAutoCacheOptimization: async (enabled) => calls.push(["cache-auto", enabled]),
-  updateAiRecognitionEnabled: async (enabled) => calls.push(["ai", enabled]),
   clearThumbnailCache: operation
 }, { get: (target, property) => property in target ? target[property] : operation });
 
@@ -170,10 +164,6 @@ const execute = async (raw) => {
   await execute("ui:font 15");
   await execute("ui:font 16");
   await execute("win:reset");
-  await execute("ai:on");
-  await execute("ai:off");
-  await execute("ai:search on");
-  await execute("ai:search off");
   await execute("dir:add C:/Pictures");
   await execute("edge:on");
   await execute("app:notify off");
@@ -198,10 +188,9 @@ const execute = async (raw) => {
     ["material", "acrylic"], ["material", "mica"],
     ["font", 12], ["font", 13], ["font", 14], ["font", 15], ["font", 16],
     ["window-reset"],
-    ["ai", true], ["ai", false], ["ai-search", true], ["ai-search", false],
     ["edge", true], ["notify", false], ["cache-auto", true]
   ]);
-  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 33 }));
+  console.log(JSON.stringify({ registrySpecs: quickCommandSpecs.length, helpItems: helpItems.length, helpExecutorsVerified: helpItems.length, focusedPathsVerified: 29 }));
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

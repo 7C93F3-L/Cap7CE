@@ -2,7 +2,6 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { MainWindowStateOptions } from "../src/shared/mainWindowStateTypes";
 import type { PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData } from "./previewTypes";
 import type { KeywordBatchUpdateRequest } from "./keywordTypes";
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate } from "./aiSearchService";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "./appUpdateTypes";
 import { createMetadataBuildBridge } from "./metadataExtraction/metadataBuildBridge";
 import { createSettingsWindowBridge } from "./settingsWindowBridge";
@@ -250,15 +249,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
       return () => ipcRenderer.removeListener("search:indexChanged", listener);
     }
   },
-  aiSearch: {
-    start: (request: AiSearchStartRequest): Promise<AiSearchStartResponse> => ipcRenderer.invoke("aiSearch:start", request),
-    cancel: (sessionId: string, discard = false): Promise<boolean> => ipcRenderer.invoke("aiSearch:cancel", sessionId, discard),
-    onUpdate: (callback: (update: AiSearchUpdate) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, update: AiSearchUpdate) => callback(update);
-      ipcRenderer.on("aiSearch:update", listener);
-      return () => ipcRenderer.removeListener("aiSearch:update", listener);
-    }
-  },
   index: {
     updateManualKeywords: (filePath: string, keywordText: string): Promise<string[]> => (
       ipcRenderer.invoke("index:updateManualKeywords", filePath, keywordText)
@@ -301,7 +291,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateLaunchAtLogin: (launchAtLogin: boolean) => ipcRenderer.invoke("preferences:updateLaunchAtLogin", launchAtLogin),
     updateSystemNotifications: (enabled: boolean) => ipcRenderer.invoke("preferences:updateSystemNotifications", enabled),
     updateAutoCacheOptimization: (enabled: boolean) => ipcRenderer.invoke("preferences:updateAutoCacheOptimization", enabled),
-    updateAiRecognitionEnabled: (enabled: boolean) => ipcRenderer.invoke("preferences:updateAiRecognitionEnabled", enabled),
     updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: boolean) => ipcRenderer.invoke("preferences:updateQuickActionGlobalEnabled", quickActionGlobalEnabled),
     updateCommandEnabled: (commandEnabled: boolean) => ipcRenderer.invoke("preferences:updateCommandEnabled", commandEnabled),
     updateSearchLabelVisibility: (searchLabelVisibility: { directory: boolean; sort: boolean; format: boolean; skimDisplay: boolean; ai: boolean }) => ipcRenderer.invoke("preferences:updateSearchLabelVisibility", searchLabelVisibility),

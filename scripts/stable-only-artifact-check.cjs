@@ -5,6 +5,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const outputDirectories = ["dist", "dist-electron"];
 const textFilePattern = /(?:\.d\.ts|\.js|\.css|\.html)$/u;
 const forbiddenIdentifiers = [
+  "aiSearch:start", "aiSearch:cancel", "preferences:updateAiRecognitionEnabled", "AiSearchService", "aiSearchRuntime", "result-section-card", "ResultSectionCard",
   "WindowPresentationRuntime",
   "WindowPresentationSwitchRuntime",
   "windowPresentationPolicy",

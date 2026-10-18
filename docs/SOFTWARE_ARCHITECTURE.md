@@ -533,8 +533,6 @@ P3.6 不把 Core 路径直接变成通用文件能力。`computerSearchRuntime.t
 | `llamaRuntimeManager.ts` / `llamaRuntimeIdleController.ts` | llama-server 进程生命周期、健康检查、手动 / AI 启动所有权与 AI 空闲回收策略 |
 | `ggufModelStore.ts` | GGUF 主模型与 mmproj 扫描、配对和选择 |
 | `llamaVisionRuntime.ts` | 按需 AI 能力共用的视觉运行时连接入口；复用已就绪服务，否则按现有配置启动并验证视觉模型 |
-| `aiSearchCandidateService.ts` / `aiSearchSingleImageModel.ts` / `aiSearchService.ts` | AI 增强搜索 Beta 的候选规划、1024 最低视觉 token、简短单图单条件评分、程序求交集、逐条件短路与用户暂停检查点；确定性条件先缩小范围，基础结果不等待 AI，未暂停的任务持续至完成 |
-| `aiSearchImageInput.ts` / `aiSearchIpc.ts` / `aiSearchRuntime.ts` | 300px 单图输入、受限 AI 搜索 IPC 与主进程依赖装配；复用通用视觉运行时，不把实现堆入 `main.ts` |
 | `aiQueryEvidenceStore.ts` | 每文件正向查询确认词的紧凑存储、去重上限、源 / 模型 / 提示词版本失效与级联删除；Beta 准确性测试期间持久化关闭，旧查询标签不参与普通搜索 |
 | `fileOperationService.ts` | 路径复制与回收站删除 |
 | `fileDragService.ts` | Windows 原生单文件 / 多文件拖拽 |
@@ -582,7 +580,7 @@ P3.6 不把 Core 路径直接变成通用文件能力。`computerSearchRuntime.t
 - `StableMediaFilters.tsx` 只组合图像、视频、音频三个专属筛选区，`mediaFilterState.ts` 统一承担清除、是否激活及按当前格式保留哪一类专属条件；通用顶部栏因此不依赖各媒体类别的具体字段。
 - 稳定主窗口接收资源管理器单个或多个文件夹拖入；preload 仅通过 Electron `webUtils.getPathForFile()` 提取拖放文件对象的真实路径，Renderer 先复用全窗口确认层，再把确认后的集合交给统一目录添加服务。
 - 左侧栏只提供目录和 AI 增强控制，查看范围与排序由 `StableExploreBar` 复用既有浮层和搜索动作；目录项在展开与收起状态下均通过 150 ms 延迟的非交互浮层分行显示名称、复用顶部统计文案的文件数量和路径，浮层固定从目录行右侧展开、与边栏菜单同为 184px 最大宽度并按窗口剩余空间继续收缩，过长名称单行省略，过长路径保留首尾并从中间省略；“全部目录”没有路径，第三行直接显示当前已加载的已添加目录数量。目录右键与三点按钮统一以目录整行作为管理菜单锚点；“打开路径”复用现有文件打开能力直接在资源管理器中打开目录，不新增 IPC。悬停浮层与管理菜单互斥，并在移出、按下或列表滚动时立即关闭，不依赖延迟较长的系统 `title`。时间条件由 `electron/searchFilters.ts` 解释，图像条件集中在 `electron/imageSearchFilters.ts`，视频时长、比例与分辨率条件集中在 `electron/videoSearchFilters.ts`，音频时长与声道条件集中在 `electron/audioSearchFilters.ts`，文档内容数量与构成条件集中在 `electron/documentSearchFilters.ts`，AI / CDR / PSD 的画板数量条件集中在 `electron/artboardSearchFilters.ts`；同组条件以 OR、不同属性组以 AND 组合，图像和视频比例均允许 2% 尺寸误差，动画、视频、音频、文档与画板事实只接受当前源版本。`imageSearchService.ts` 对尚未落入目录的实时扫描结果执行可由文件状态判断的时间与扩展名条件，必须依赖已索引尺寸、视觉属性、视频、音频、文档或画板事实的专属条件则不混入未知新文件。skim 按“查看范围、排序、面包屑”排列，使排序入口在两种内容视图中均位于第二项。
-- 稳定主窗口使用统一响应式结果网格；AI 分类卡只参与布局，不作为滚动锚点。非空普通结果按“快速匹配、可能相似、AI 深度匹配”展示。结果页“AI增强”标签和输入开头的 `7ce/` 进入同一 Beta 控制器：基础搜索始终先返回，AI 对本轮未命中的视觉候选逐图逐词短路判断并渐进追加，未暂停时持续执行至完成。AI 分类卡即使尚无命中也可作为纯布局项显示运行状态，整卡只负责暂停及从安全检查点继续；顶部标签只做总开关，关闭会彻底丢弃本次任务检查点但保留已到达结果。新查询或候选范围变化废弃旧会话，单纯排序保留现有结果。明确确认的原始视觉词可写入版本化查询缓存，模型响应和图片不落盘。业务结果、选择、Shift 范围、预览、复制、拖拽、删除和关键词编辑仍只使用纯文件数组；分类标题卡不进入业务文件数组。通用文件卡片和 skim 条目的长文件名复用右键菜单的中间省略拆分规则，保留名称首尾与扩展名。用户把结果页输入框中的非空关键词清空后立即执行当前筛选范围的空查询并返回默认网格；快捷命令与 skim 的程序化清空不进入该路径。
+- 稳定主窗口使用统一响应式结果网格，旧结果的分类/状态卡片及全局CSS已移除，不再插入“快速匹配、可能相似、AI 深度匹配”标题项。旧结果页的 AI 增强标签、7ce/调用、逐图评分与暂停/继续控制器已退役；历史搜索证据仍可读取，但不再生成分类卡。业务结果、选择、Shift 范围、预览、复制、拖拽、删除和关键词编辑仍只使用纯文件数组；resultSectionLayout仅保留纯文件布局映射与键盘定位，历史证据分类不影响文件位置。通用文件卡片和 skim 条目的长文件名复用右键菜单的中间省略拆分规则，保留名称首尾与扩展名。用户把结果页输入框中的非空关键词清空后立即执行当前筛选范围的空查询并返回默认网格；快捷命令与 skim 的程序化清空不进入该路径。
 - skim 作为稳定主 Renderer 内的并排浏览面板，不创建旧主窗口页面状态。主左侧栏与 Skim 右侧栏的用户宽度由 `useStableShellSizeMemory.ts` 在 Renderer 本地记忆，拖动停止后短防抖写入；窄窗口只按现有响应规则临时限制实际显示宽度，不覆盖已保存的原始宽度，存储缺失或损坏时分别回退 176px 与 360px。所有内容视图中的输入提交使用同一语义：快捷指令优先，完整 Windows 绝对目录路径经主进程校验后进入对应 skim 位置，普通关键词与空输入进入统一结果页。从磁盘列表开始，只读取当前一级文件夹和全部普通文件，不递归读取后代；符号链接、特殊项目和读取失败项目继续跳过。通用条目携带路径、扩展名、大小、修改时间、已添加目录归属、可选格式能力及临时状态；已登记格式使用 `format-*` 专用图标和对应 Preview Provider，未知格式及无扩展名文件先使用通用文件图标与文件信息预览。当前视口内不由原生视觉渲染器处理的普通文件可按需尝试 Windows Shell 内容缩略图，失败仍静默保留图标。文件夹与文件支持单选、Ctrl/Shift 多选、活动项、共用右键菜单和多文件原生拖出；普通单击只负责选择，格式、文件名、大小及可选尺寸摘要显示在右键菜单顶部。文件夹统计在菜单打开后延迟启动并随菜单关闭协作取消，常见栅格图片仅读取受限元数据，不触发 RAW 或文档渲染。添加操作复用统一目录服务。全部显示不扩大正式索引、正式搜索缩略图或 AI 边界，未来精简范围与动态格式筛选在独立状态中实现。
 - 主窗口与预览窗口发出的 Skim 切换动作统一展开或收起稳定 Skim 边栏；系统位置、星标目录和磁盘入口由稳定 Skim 根页面直接展示。skim 右键“加入边栏”将文件夹本身或文件父目录去重后写入偏好，已全部存在时禁用；星标目录提供“取消快速访问”。
 - 缩略图 hover / selected 黑色蒙版、单选、多选、键盘焦点；结果网格空格直接预览，独立预览空格关闭，不再注册长按计时或释放编辑动作。搜索结果与 skim 的非盘符选择支持 `Ctrl+C` 写入 Windows 文件剪贴板，单选、多选及文件夹共用同一主进程校验入口，输入框、文本域、下拉框和可编辑内容不拦截原生文字复制。
@@ -622,7 +620,7 @@ U2 在 `stable-ui/StableMainShell.tsx` 中只组合侧栏、结果占位区与 S
 
 U3 不在新版模块中创建搜索状态或直接调用搜索、Preview、文件 IPC。`App.tsx` 继续持有唯一的查询、目录偏好、任务取消、结果、选择入口、菜单和编辑事务，并通过 stable presentation 注入的 `StableUiRenderer` 展示适配边界把正式动作交给新版根节点；旧宿主继续走原 Renderer。新版输入组件只处理受控文本、IME composition 和清空查询通知，提交仍回到 `submitSearch` / `runSearch`；目录切换快捷动作在新旧宿主中共同调用 `cycleSearchDirectory`，按唯一 `directoryOptions` 顺序切换并由 `updateResultsSearchOptions` 刷新结果，不在 stable 侧栏建立第二套游标。全局“进入 Skim”动作在 stable 宿主中递增 `toggleRequestId`，由 `useStableShellLayout` 持有的唯一开关响应并复用 `onOpen` 数据入口；旧宿主继续调用原 `openSkim` 页面导航。`ResultsView`、`VirtualImageGrid` 与提取后的 `ResultsContextMenuLayer` 同时服务新旧入口，保持虚拟化、证据分组、选择、Preview、拖出、复制、关键词和删除链唯一。搜索结果与 Skim 共用 `ResponsiveFileContextMenu`：常规高度显示纵向单层菜单，高度低于 360px 时切换为“信息 + 两列动作”的三行横向布局；文件格式、首尾省略的文件名与尺寸 / 大小摘要保持独立信息层，操作项显示既有快捷键说明，菜单通过 Portal 在标题栏下方和视口四周避让，动作 ID 仍交给各自既有 Renderer 动作链执行。菜单不经过主进程 IPC，旧宿主和 Preview 继续使用既有 Renderer 菜单。新版仅向网格传递 `responsiveLayout`：高度低于 360px 时选用既有 horizontal 布局算法，其余尺寸选用 normal 算法，不读取或写入旧 shell state。稳定 UI 模块样式由 `StableSearchResults.css` 持有，共享响应菜单样式由 `components/ResponsiveFileContextMenu.css` 独立持有，不扩大旧全局样式。
 
-U4 由 `stableUiRendererTypes.ts` 和 `stableSidebarTypes.ts` 定义显式展示适配契约，`App.tsx` 继续持有搜索、AI、目录状态和正式事务，只向 `StableShellSidebar.tsx` 传递受控值与动作。侧栏的排序、查看范围、目录筛选、系统选择添加、拖入确认、冲突替换、打开目录、行内重命名和删除均复用既有搜索、文件与目录链；新版模块不直接读取 preload，也不修改目录服务、SQLite 或 AI 任务逻辑。AI 增强入口由线框 / 实心图标和副文案表达状态，不保留重复滑动开关。`StableSidebar.css` 独立持有控制行、目录滚动、选中 / 悬停胶囊、40px 紧凑栏和底部动作布局，目录列表复用共享自动隐藏自绘滚动条；宽度仍是 `StableMainShell.tsx` 的会话状态。`StableUiIcon.tsx` 只负责从独立 SVG 资产中选择新版线框 / 实心、目录开合和旧版升降序形态并通过共用 `SvgIcon` 内嵌，不读取业务状态。Skim 底部动作在 U5 前只切换占位插槽，Settings 动作在 U6 独立宿主完成前暂时进入现有设置页。该轮抽取共用目录确认层后把 `App.tsx` 自动上限从 3334 行降到 3330 行，并为四个新增侧栏职责模块建立独立体量守门。
+U4 由 `stableUiRendererTypes.ts` 和 `stableSidebarTypes.ts` 定义显式展示适配契约，`App.tsx` 继续持有搜索、目录状态和正式事务，只向 `StableShellSidebar.tsx` 传递受控值与动作。侧栏的排序、查看范围、目录筛选、系统选择添加、拖入确认、冲突替换、打开目录、行内重命名和删除均复用既有搜索、文件与目录链；新版模块不直接读取 preload，也不修改目录服务、SQLite 或 AI 任务逻辑。原 AI 增强入口已随即时搜索链路退役。`StableSidebar.css` 独立持有控制行、目录滚动、选中 / 悬停胶囊、40px 紧凑栏和底部动作布局，目录列表复用共享自动隐藏自绘滚动条；宽度仍是 `StableMainShell.tsx` 的会话状态。`StableUiIcon.tsx` 只负责从独立 SVG 资产中选择新版线框 / 实心、目录开合和旧版升降序形态并通过共用 `SvgIcon` 内嵌，不读取业务状态。Skim 底部动作在 U5 前只切换占位插槽，Settings 动作在 U6 独立宿主完成前暂时进入现有设置页。该轮抽取共用目录确认层后把 `App.tsx` 自动上限从 3334 行降到 3330 行，并为四个新增侧栏职责模块建立独立体量守门。
 
 U5 继续由 `App.tsx` 中唯一的 `useSkimReadController` 持有路径、目录读取、会话缩略图和错误反馈，稳定 UI 只通过 `stableSkimTypes.ts` 的受控契约组合工具栏与正式 `SkimView`。嵌入模式隐藏旧搜索胶囊，但继续复用既有虚拟网格、Preview、内容预览、右键文件动作、原生拖出、复制、添加目录及边栏收藏；新模块不直接调用 preload，也不通过 `activeView` 建立第二套 Skim。工具栏提供返回、可点击面包屑、双击地址后按字符编辑路径，以及与搜索结果相互独立的 Skim 排序和查看范围。关闭右侧面板只通过 CSS 隐藏并保留组件、路径、选择和滚动状态；`active` 边界阻止隐藏面板继续响应文件快捷键。低于 360px 时 `responsiveLayout` 只把同一个正式虚拟网格切换为横向算法，窄窗隐藏结果区也不卸载搜索结果。`useStableShellLayout.ts` 只持有 Skim 视觉开关并组合 `useStableShellResize.ts` 的会话宽度，`StableSkimToolbar.tsx` 持有工具栏交互，`StableSkimPanel.css` 持有嵌入布局；本轮同时把 `App.tsx` 体量上限降低到 3315 行。
 
@@ -646,7 +644,7 @@ C1 当时在同一偏好领域增加窗口外壳模式的规范化读写 channel
 
 A6 当前保留 22 条 legacy main IPC：应用更新/退出 4 条、skim 读取与取消 13 条、全局快捷键偏好与捕获 5 条。它们分别共享应用退出与下载控制器、skim 任务/视觉会话/统计取消状态，以及快捷键注册回滚和窗口激活链；继续拆分会跨越既定生命周期所有权或把同一职责分散到装配层两侧。窗口与 preview 生命周期仍按明确边界留在 `main.ts`；line 的状态决策留在装配层，窗口实例生命周期收口到 `lineWindowController.ts`，不以减少直连 channel 数量为目标迁移。U6 新增的 `settingsWindow:open` 由 `settingsWindowIpc.ts` 注册并限制主 Renderer sender，主进程只注入统一打开动作，不扩大 legacy 例外。
 
-A7 按稳定组件边界迁移 CSS，不重命名选择器或调整视觉参数。独立 line 窗口的四向外观、横竖渐变流动和边缘对齐集中在 `src/renderer/LineWindowApp.css`；共享视口框架、自绘横纵滚动条、滑块交互与减少动效覆盖集中在 `src/renderer/CustomScrollbar.css`；搜索胶囊、筛选标签与芯片的兼容组件样式集中在 `src/renderer/search/Cap7CESearchCapsule.css`；预览窗口的图片、文本/Markdown、媒体、PDF、Office 转换结果、压缩包、字体、EPUB/MOBI、通用文件信息、加载状态和减少动效规则集中在 `src/renderer/preview/PreviewWindow.css`；skim 主视图、虚拟网格、条目、缩略图与位置边栏集中在 `src/renderer/skim/SkimView.css`，新版 Skim 根页面的系统位置、星标目录与磁盘分组由 `src/renderer/skim/SkimRootSections.tsx` 和同名 CSS 独立持有；搜索结果的虚拟网格、缩略图、视频标记与格式回退集中在 `src/renderer/results/ResultGrid.css`，可信度分类卡独立集中在 `src/renderer/results/ResultSectionCard.css`，结果页外壳、状态统计、尺寸布局和超宽屏边距集中在 `src/renderer/results/ResultsView.css`；轻量关键词编辑卡片的尺寸、输入框、明暗占位色、错误提示与退出动效集中在 `src/renderer/dialogs/KeywordEditorCard.css`，文件/目录删除、拖入、目录替换和缓存清理确认层集中在 `src/renderer/dialogs/ConfirmationPanels.css`；独立 Settings 的页面框架、分组/行和标题控制区集中在 `src/renderer/settings-window/SettingsWindowApp.css`，自绘下拉选择器及其运行时/模型尺寸变体集中在 `src/renderer/settings/SettingsSelect.css`，快捷操作列表与快捷命令面板集中在 `src/renderer/settings/ShortcutSettingsPanels.css`，页脚签名、发布页链接与来源图层集中在 `src/renderer/settings/SettingsFooter.css`；自绘颜色选择器的色彩面板、色相条、游标与十六进制输入集中在 `src/renderer/ColorPickerPopover.css`。通用 SVG 包装、搜索排序图标、跨搜索与 Settings 共用的胶囊按钮基底、line/capsule 共用占位色、通用详情网格和 Settings/结果项表面规则仍由全局样式提供；原生滚动条基底及其与自绘滚动条共用的明暗主题颜色变量、通用右键菜单基底与菜单动效也继续由全局样式提供。Renderer 入口在全局基础样式之后按固定顺序加载领域样式；主题变量、跨视图壳层、共享文件名省略组件和搜索结果复用的空状态规则继续留在全局样式。
+A7 按稳定组件边界迁移 CSS，不重命名选择器或调整视觉参数。独立 line 窗口的四向外观、横竖渐变流动和边缘对齐集中在 `src/renderer/LineWindowApp.css`；共享视口框架、自绘横纵滚动条、滑块交互与减少动效覆盖集中在 `src/renderer/CustomScrollbar.css`；搜索胶囊、筛选标签与芯片的兼容组件样式集中在 `src/renderer/search/Cap7CESearchCapsule.css`；预览窗口的图片、文本/Markdown、媒体、PDF、Office 转换结果、压缩包、字体、EPUB/MOBI、通用文件信息、加载状态和减少动效规则集中在 `src/renderer/preview/PreviewWindow.css`；skim 主视图、虚拟网格、条目、缩略图与位置边栏集中在 `src/renderer/skim/SkimView.css`，新版 Skim 根页面的系统位置、星标目录与磁盘分组由 `src/renderer/skim/SkimRootSections.tsx` 和同名 CSS 独立持有；搜索结果的虚拟网格、缩略图、视频标记与格式回退集中在 `src/renderer/results/ResultGrid.css`，旧可信度分类卡及其独立CSS现已退役，结果页外壳、状态统计、尺寸布局和超宽屏边距集中在 `src/renderer/results/ResultsView.css`；轻量关键词编辑卡片的尺寸、输入框、明暗占位色、错误提示与退出动效集中在 `src/renderer/dialogs/KeywordEditorCard.css`，文件/目录删除、拖入、目录替换和缓存清理确认层集中在 `src/renderer/dialogs/ConfirmationPanels.css`；独立 Settings 的页面框架、分组/行和标题控制区集中在 `src/renderer/settings-window/SettingsWindowApp.css`，自绘下拉选择器及其运行时/模型尺寸变体集中在 `src/renderer/settings/SettingsSelect.css`，快捷操作列表与快捷命令面板集中在 `src/renderer/settings/ShortcutSettingsPanels.css`，页脚签名、发布页链接与来源图层集中在 `src/renderer/settings/SettingsFooter.css`；自绘颜色选择器的色彩面板、色相条、游标与十六进制输入集中在 `src/renderer/ColorPickerPopover.css`。通用 SVG 包装、搜索排序图标、跨搜索与 Settings 共用的胶囊按钮基底、line/capsule 共用占位色、通用详情网格和 Settings/结果项表面规则仍由全局样式提供；原生滚动条基底及其与自绘滚动条共用的明暗主题颜色变量、通用右键菜单基底与菜单动效也继续由全局样式提供。Renderer 入口在全局基础样式之后按固定顺序加载领域样式；主题变量、跨视图壳层、共享文件名省略组件和搜索结果复用的空状态规则继续留在全局样式。
 
 关键词编辑卡片的主题纯色蒙版由 `src/renderer/dialogs/KeywordEditorBackdrop.tsx` 与 `KeywordEditorBackdrop.css` 独立持有；主窗口只显示浮层卡片，不再叠加白色或黑色蒙版。主窗口的关键词编辑与确认面板由 `StableUiRoot` 统一下发背景交互锁，独立 Settings 的确认面板在自身状态边界只锁定设置内容并保留顶部纯拖动区；`useInertElement.ts` 只负责把这些状态映射到对应元素的浏览器原生 `inert` 属性。Settings 专用 `useSettingsConfirmation.ts` 统一持有确认对象、忙碌状态、打开 / 取消 / 确认事务、页面隐藏清理和异步身份保护；Settings 隐藏或最小化时清除未提交确认，进行中的旧动作不会关闭随后打开的新确认。锁定期间主窗口结果与 Skim 同步退出窗口级键盘活动，所有 `DialogShell` 定位容器只从 40 DIP 原生标题栏下方覆盖内容区并承担居中布局，浮窗表面自身维持 `no-drag`。共用卡片在 `KeywordEditorCard.css` 内采用 95% 主题表面、12px 圆角、背景模糊和文件摘要层级，输入与保存语义保持不变，不把这些样式重新计入全局入口。
 
@@ -750,19 +748,17 @@ Q3 的动画事实由独立 Worker 增量补齐，前台活动时限速、失焦
 
 `sql.js` 的数据库实例仍以整库导出方式持久化，所有通过 `sqliteImageIndex.ts` 加载的读写操作因此共享同一进程内访问队列；数据库实例关闭后才释放下一项。该串行边界避免后台元数据批次与人工关键词、扫描或 AI 写入基于不同快照交错保存而丢失更新。元数据每批最多 24 项，不能把整轮源文件提取包在数据库锁内。
 
-按需 AI 搜索链路：
+主动 AI 关键词链路：
 
 ```text
-查询与基础搜索结果
--> aiSearchCandidateService 应用确定性条件并排除已显示路径
--> aiSearchImageInput 准备单张 300px JPEG
--> aiSearchSingleImageModel 对一个视觉词返回严格 0 / 1 / 2
--> aiSearchService 按用户词序短路并渐进追加结果
--> 结果分类卡从零命中阶段开始显示运行状态，并只负责暂停 / 继续当前检查点
--> 顶部 AI增强 标签只做总开关；关闭会丢弃任务检查点但保留已显示结果
--> Beta 测试阶段仅在当前会话展示结果，不持久化查询标签
--> 准确性验证通过后才允许 aiQueryEvidenceStore 保存完整查询确认词
+单图、多选或明确目录的“自动添加”
+-> CatalogActivityProvider / useCatalogAutoKeywords
+-> catalogAutoKeywordIpc 校验结果授权与任务所有者
+-> catalogAutoKeywordService 按需生成并保存关键词
+-> CatalogActivityBar / BottomNoticeBar 展示进度与失败
 ```
+
+旧即时逐图查询评分链路、分类/状态卡片（含ResultSectionCard组件、样式与入口导入）和 AI 增强总开关已退役，不对全盘搜索追加模型识别。共享的模型选择、llama 运行时、视觉连接与历史搜索证据读取继续保留。启动失败以简短中英文提示指向设置配置；批量遇到模型启动错误停止剩余任务。preferenceStore仅原样兼容已有aiRecognitionEnabled字段，不为新配置创建此字段，无专用写入函数/IPC。设置分组使用“本地 AI”，预览中旧aiSearch来源明确标为“历史 AI 匹配”，仅用于解释已有记录。
 
 三类缓存策略：
 - `capmo1536`：模型识别输入图，最长边约 1536，缓存扩展名为 `.capmo`。
@@ -843,7 +839,7 @@ Windows 分发使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器�
 - 中文关键词搜索。
 - 与 / 或逻辑。
 - 目录标签筛选。
-- AI增强总开关、状态卡暂停 / 同范围继续、关闭后丢弃任务检查点并保留已显示结果。
+- 主动单图/批量识别、取消与关键词保存；模型不可用时的底部提示及批量停止。旧即时 AI 搜索与总开关不再存在。
 - 排序标签支持按名称 / 按修改时间及递增 / 递减组合；非空正式搜索先按逐词证据向量排列，再把该设置作为同证据向量内的稳定次级排序，空查询仍完全按该设置排序。正式搜索与 skim 分别持久化字段和方向，正式搜索偏好继续供自动缓存优化使用，skim 缺少旧配置时默认按名称递增，两种内容视图互不覆盖。
 - 方向键移动焦点。
 - Enter 打开当前项。
@@ -922,7 +918,7 @@ Settings 当前覆盖：
 
 白名单领域包括 `see:`、`win:`、`dir:`、`cache:`、`ai:`、`skim:`、`set:`、`ui:`、`line:`、`edge:`、`key:`、`cmd:`、`lang:`、`llama:`、`model:`、`app:`。`see:` 统一控制主窗口左侧栏的目录、查看范围和排序，其中 `default` 在指令层映射内部 `skim` 范围值；`skim:` 除进入和返回根目录外，还控制其独立查看范围、排序及 Windows 隐藏文件偏好。独立 skim 缓存归入缓存领域，通过 `cache:skim` 确认后清理。
 
-已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 目录与排序类、运行时 / 模型类，以及二次确认类命令。旧 Settings 子页跳转、`win:normal`、`see:all`、`ai:deep` 和整个 `tag:` 领域已随对应界面能力退役，不保留无效果、概念重复或语义过时的兼容入口。目录路径添加复用 `directories:addCandidates`；`see:dir`、`see:scope` 与 `see:sort` 复用主窗口左侧栏的正式搜索入口，并保留未被本次指令修改的其他搜索条件。`ui:acrylic|mica`、`ui:font`、`win:reset` 及新增 Skim 指令分别复用正式偏好和窗口动作；`ai:on|off` 控制全局 AI 能力，`ai:search on|off` 只控制当前搜索。贴边收起、系统通知和自动缓存优化继续复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
+已接入方向包括设置 / 外观 / 开关类、查看 / 窗口 / 目录与排序类、运行时 / 模型类，以及二次确认类命令。旧 Settings 子页跳转、`win:normal`、`see:all`、`ai:deep` 和整个 `tag:` 领域已随对应界面能力退役，不保留无效果、概念重复或语义过时的兼容入口。目录路径添加复用 `directories:addCandidates`；`see:dir`、`see:scope` 与 `see:sort` 复用主窗口左侧栏的正式搜索入口，并保留未被本次指令修改的其他搜索条件。`ui:acrylic|mica`、`ui:font`、`win:reset` 及新增 Skim 指令分别复用正式偏好和窗口动作；`ai:on|off` 与 `ai:search on|off` 已全部退役，ai:前缀保留为明确停用提示，不再进入旧执行器。贴边收起、系统通知和自动缓存优化继续复用现有 Settings 偏好入口。`cache:clear`、`cache:thumb` 与 `cache:skim` 均保持二次确认，其中 `cache:thumb` 只清理正式搜索的普通与 Shell 缩略图缓存，并在清理前停用自动缓存优化。帮助清单与命令表由集成测试逐项核对，危险命令不得绕过确认态。
 
 ## 14. 风险和开发约束
 

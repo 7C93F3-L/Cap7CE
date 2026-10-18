@@ -11,14 +11,13 @@ import "./StableSidebar.css";
 type FlyoutState = { kind: "directory"; anchor: DOMRect; directory: DirectoryItem } | null;
 type DirectoryTooltipState = { anchor: DOMRect; directoryId: string; all: boolean } | null;
 interface StableShellSidebarProps extends StableSidebarProps { skimOpen: boolean; onToggleSkim: () => void; directoryOnly?: boolean; }
-const StableShellSidebar = ({ search, directories, aiSearchEnabled, aiSearchBusy, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onAiSearchToggle, onSearchOptionsChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim, directoryOnly = false }: StableShellSidebarProps) => {
+const StableShellSidebar = ({ search, directories, isLoadingDirectories, isAddingDirectory, directoryServiceUnavailable, editingDirectoryId, onSearchOptionsChange, onAddDirectory, onEditDirectory, onCancelDirectoryEdit, onDirectoryNameChange, onMoveDirectory, onOpenDirectory, onDeleteDirectory, onOpenSettings, skimOpen, onToggleSkim, directoryOnly = false }: StableShellSidebarProps) => {
   const [flyout, setFlyout] = useState<FlyoutState>(null);
   const [directoryTooltip, setDirectoryTooltip] = useState<DirectoryTooltipState>(null);
   const directoryTooltipTimerRef = useRef<number | null>(null);
   const directoryScrollRef = useRef<HTMLDivElement | null>(null);
   const allDirectories = directories[0];
   const addedDirectories = directories.slice(1);
-  const aiValue = aiSearchBusy ? t("search.section.aiMatching.title") : aiSearchEnabled ? t("common.enabled") : t("search.section.aiPaused.title");
   const hideDirectoryTooltip = () => { if (directoryTooltipTimerRef.current !== null) window.clearTimeout(directoryTooltipTimerRef.current); directoryTooltipTimerRef.current = null; setDirectoryTooltip(null); };
   const showDirectoryTooltipSoon = (directory: DirectoryItem, all: boolean, event: PointerEvent<HTMLElement>) => {
     hideDirectoryTooltip();
@@ -60,11 +59,6 @@ const StableShellSidebar = ({ search, directories, aiSearchEnabled, aiSearchBusy
   };
   return <aside className={`cap-stable-sidebar${directoryOnly ? " is-directory-only" : ""}`}>
     <div className="cap-stable-brand" aria-label="Cap7CE"><span className="cap-stable-brand-logo" aria-hidden="true" /></div>
-    <div className="cap-stable-sidebar-controls">
-      <button className="cap-stable-sidebar-control" type="button" title={t("stableUi.sidebar.aiEnhance")} aria-pressed={aiSearchEnabled} onClick={onAiSearchToggle}>
-        <StableUiIcon name="ai" active={aiSearchEnabled} /><span className="cap-stable-control-copy"><strong>{t("stableUi.sidebar.aiEnhance")}</strong><small>{aiValue}</small></span>
-      </button>
-    </div>
 
     <section className="cap-stable-directory-section">
       <div className="cap-stable-directory-heading"><span>{t("stableUi.sidebar.addedDirectories")}</span><button type="button" title={t("settings.addDirectoryActionHint")} aria-label={t("settings.addDirectoryActionHint")} disabled={isAddingDirectory} onClick={onAddDirectory}><StableSidebarIcon name="add" /></button></div>

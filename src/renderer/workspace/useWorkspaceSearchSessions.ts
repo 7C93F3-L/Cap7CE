@@ -1,7 +1,6 @@
 import { useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
 import type { ImageIndexItem, SearchState, SkimDisplayPreferences } from "../../shared/types";
 import type { WorkspaceSearchBridge } from "../../shared/workspaceTypes";
-import type { useAiSearchBeta } from "../ai-search/useAiSearchBeta";
 import type { useRandomBrowse } from "../explore/useRandomBrowse";
 import { createInitialResultGridScrollMemory, type ResultGridScrollMemory } from "../virtualGridLayout";
 import { useWorkspaceTabs } from "./useWorkspaceTabs";
@@ -10,7 +9,7 @@ import { workspaceTabsReducer, type WorkspaceSnapshot, type WorkspaceTab, type W
 interface SessionOptions {
   search: SearchState; initialSearch: SearchState; display: SkimDisplayPreferences;
   setSearch: Dispatch<SetStateAction<SearchState>>; setDisplay: Dispatch<SetStateAction<SkimDisplayPreferences>>;
-  random: ReturnType<typeof useRandomBrowse<ImageIndexItem>>; ai: ReturnType<typeof useAiSearchBeta>;
+  random: ReturnType<typeof useRandomBrowse<ImageIndexItem>>;
   results: ImageIndexItem[]; setResults: Dispatch<SetStateAction<ImageIndexItem[]>>;
   formats: string[]; setFormats: Dispatch<SetStateAction<string[]>>;
   error: string; setError: Dispatch<SetStateAction<string>>; searching: boolean;
@@ -18,7 +17,7 @@ interface SessionOptions {
   initialized: MutableRefObject<boolean>; setSelectedId: Dispatch<SetStateAction<string | null>>;
   cancel: () => void; refresh: (search: SearchState, display: SkimDisplayPreferences) => void;
 }
-type SessionCache = { results: ImageIndexItem[]; formats: string[]; error: string; submitted: SearchState; ai: ReturnType<SessionOptions["ai"]["capture"]> };
+type SessionCache = { results: ImageIndexItem[]; formats: string[]; error: string; submitted: SearchState };
 const directoryIdFor = (tab: WorkspaceTab) => tab.kind === "skim" ? "all" : tab.directoryId;
 
 export const useWorkspaceSearchSessions = (options: SessionOptions) => {
@@ -37,7 +36,7 @@ export const useWorkspaceSearchSessions = (options: SessionOptions) => {
     const tab = current.current.tabs.find((item) => directoryIdFor(item) === id && item.kind !== "skim");
     if (!tab) return;
     apply({ type: "snapshot", id: tab.id, snapshot: { search: options.search, displayMode: options.display.searchMode, randomBrowse: { enabled: options.random.enabled, seed: options.random.seed, batchNumber: options.random.batchNumber }, scroll: options.scroll.current, selectedIds: selectedIds.current } });
-    cache.current.set(id, { results: options.results, formats: options.formats, error: options.error, submitted: structuredClone(options.submitted.current), ai: options.ai.capture() });
+    cache.current.set(id, { results: options.results, formats: options.formats, error: options.error, submitted: structuredClone(options.submitted.current) });
     if (options.searching) dirty.current.add(id);
   };
   const restore = (tab: WorkspaceTab, activate = true) => {
@@ -51,7 +50,6 @@ export const useWorkspaceSearchSessions = (options: SessionOptions) => {
     options.setSearch(structuredClone(snapshot.search));
     options.setDisplay((display) => ({ ...display, searchMode: snapshot.displayMode }));
     options.random.restore(snapshot.randomBrowse);
-    options.ai.restore(saved?.ai ?? { enabled: false, phase: "idle", progress: { processed: 0, total: 0 }, matches: [] });
     options.setResults(saved?.results ?? []); options.setFormats(saved?.formats ?? []); options.setError(saved?.error ?? "");
     options.setSelectedId(snapshot.selectedIds[0] ?? null);
     setViewKey(`${id}:${++generation.current}`);
@@ -70,7 +68,6 @@ export const useWorkspaceSearchSessions = (options: SessionOptions) => {
   const openSkim = () => {
     if (current.current.activeId === "skim") return;
     capture(); options.cancel();
-    const saved = options.ai.capture(); options.ai.restore(saved);
     apply({ type: "open-skim" });
   };
   const select = (id: string) => {
@@ -86,7 +83,7 @@ export const useWorkspaceSearchSessions = (options: SessionOptions) => {
     if (tab.kind !== "skim") { cache.current.delete(tab.directoryId); dirty.current.delete(tab.directoryId); }
     if (previousActive === id) {
       const next = current.current.tabs.find((item) => item.id === current.current.activeId);
-      if (next?.kind === "skim") { options.cancel(); options.ai.restore(options.ai.capture()); }
+      if (next?.kind === "skim") { options.cancel(); }
       else if (next) restore(next);
     } else if (tab.kind !== "skim" && tab.directoryId === activeDirectory.current) restore(current.current.tabs[0], false);
   };

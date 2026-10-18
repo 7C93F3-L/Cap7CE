@@ -529,37 +529,6 @@ export interface SearchState {
   modelPrecisions?: SearchModelPrecision[];
 }
 
-export interface AiSearchStartRequest {
-  sessionId: string;
-  search: SearchState;
-  excludeFilePaths: string[];
-}
-
-export interface AiSearchStartResponse {
-  accepted: boolean;
-  totalCandidates: number;
-  visualTerms: string[];
-  resumed?: boolean;
-  reason?: "empty_query" | "no_visual_terms" | "no_candidates";
-}
-
-export type AiSearchUpdate =
-  | {
-    type: "status";
-    sessionId: string;
-    phase: "starting" | "running" | "paused_user" | "completed" | "cancelled" | "failed";
-    processed: number;
-    total: number;
-    message?: string;
-  }
-  | {
-    type: "batch";
-    sessionId: string;
-    processed: number;
-    total: number;
-    matches: ImageIndexItem[];
-  };
-
 export interface SearchLabelVisibilityPreferences {
   directory: boolean;
   sort: boolean;
@@ -601,7 +570,6 @@ export interface UserPreferences {
   systemNotificationsEnabled: boolean;
   backgroundRunNotificationShown: boolean;
   autoCacheOptimizationEnabled: boolean;
-  aiRecognitionEnabled: boolean;
   quickActionGlobalEnabled: boolean;
   commandEnabled: boolean;
   searchLabelVisibility: SearchLabelVisibilityPreferences;

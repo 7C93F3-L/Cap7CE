@@ -135,15 +135,6 @@ export const getQuickCommandGroups = (): Array<{
       { command: "cache:auto on", description: t("commands.cache.autoEnable") },
       { command: "cache:auto off", description: t("commands.cache.autoDisable") }
     ]
-  },
-  {
-    title: t("commands.group.ai"),
-    items: [
-      { command: "ai:on", description: t("commands.ai.enable") },
-      { command: "ai:off", description: t("commands.ai.disable") },
-      { command: "ai:search on", description: t("commands.ai.searchEnable") },
-      { command: "ai:search off", description: t("commands.ai.searchDisable") }
-    ]
   }
 ];
 

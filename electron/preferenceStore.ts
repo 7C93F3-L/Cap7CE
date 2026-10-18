@@ -50,7 +50,8 @@ export interface UserPreferencesResponse {
   systemNotificationsEnabled: boolean;
   backgroundRunNotificationShown: boolean;
   autoCacheOptimizationEnabled: boolean;
-  aiRecognitionEnabled: boolean;
+  /** Retired preference, retained only to preserve existing configuration. */
+  aiRecognitionEnabled?: boolean;
   quickActionGlobalEnabled: boolean;
   commandEnabled: boolean;
   searchLabelVisibility: SearchLabelVisibilityPreferences;
@@ -87,7 +88,6 @@ const defaultPreferences = (): UserPreferencesResponse => ({
   systemNotificationsEnabled: true,
   backgroundRunNotificationShown: false,
   autoCacheOptimizationEnabled: true,
-  aiRecognitionEnabled: true,
   quickActionGlobalEnabled: true,
   commandEnabled: true,
   searchLabelVisibility: {
@@ -234,9 +234,7 @@ const readPreferences = async (): Promise<UserPreferencesResponse> => {
       autoCacheOptimizationEnabled: typeof parsed.autoCacheOptimizationEnabled === "boolean"
         ? parsed.autoCacheOptimizationEnabled
         : defaults.autoCacheOptimizationEnabled,
-      aiRecognitionEnabled: typeof parsed.aiRecognitionEnabled === "boolean"
-        ? parsed.aiRecognitionEnabled
-        : defaults.aiRecognitionEnabled,
+      ...(typeof parsed.aiRecognitionEnabled === "boolean" ? { aiRecognitionEnabled: parsed.aiRecognitionEnabled } : {}),
       quickActionGlobalEnabled: typeof parsed.quickActionGlobalEnabled === "boolean" ? parsed.quickActionGlobalEnabled : defaults.quickActionGlobalEnabled,
       commandEnabled: typeof parsed.commandEnabled === "boolean" ? parsed.commandEnabled : defaults.commandEnabled,
       searchLabelVisibility: {
@@ -434,17 +432,6 @@ export const updateAutoCacheOptimizationPreference = async (autoCacheOptimizatio
   const nextPreferences: UserPreferencesResponse = {
     ...preferences,
     autoCacheOptimizationEnabled,
-    updatedAt: new Date().toISOString()
-  };
-  await savePreferences(nextPreferences);
-  return nextPreferences;
-};
-
-export const updateAiRecognitionEnabledPreference = async (aiRecognitionEnabled: boolean) => {
-  const preferences = await readPreferences();
-  const nextPreferences: UserPreferencesResponse = {
-    ...preferences,
-    aiRecognitionEnabled,
     updatedAt: new Date().toISOString()
   };
   await savePreferences(nextPreferences);

@@ -29,7 +29,6 @@ const zhLocalizationSource = read("electron/localization.ts");
 const enLocalizationSource = read("electron/locales/en-US.ts");
 
 for (const marker of [
-  "onAiSearchToggle",
   "onSearchOptionsChange",
   "onAddDirectory",
   "onDirectoryNameChange",
@@ -42,7 +41,7 @@ for (const marker of ["searchDisplayMode", "onSearchDisplayModeChange"]) {
   assert.ok(exploreTypesSource.includes(marker), `Stable explore contract is missing ${marker}.`);
 }
 
-assert.match(appSource, /sidebar=\{\{[\s\S]*?directories: directoryOptions[\s\S]*?onAiSearchToggle: toggleAiSearchBeta[\s\S]*?onAddDirectory: \(\) => void addDirectory\(\)[\s\S]*?onOpenSettings: \(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/);
+assert.match(appSource, /sidebar=\{\{[\s\S]*?directories: directoryOptions[\s\S]*?onAddDirectory: \(\) => void addDirectory\(\)[\s\S]*?onOpenSettings: \(\) => void window\.cap7ce\?\.settingsWindow\.open\(\)/);
 assert.match(appSource, /explore=\{\{[\s\S]*?searchDisplayMode: skimDisplay\.searchMode[\s\S]*?onSearchDisplayModeChange:/u);
 assert.match(appSource, /const openSettingsWindow = useCallback\(\(\) => \{[\s\S]*?settingsWindow\.open\(\)/u);
 assert.match(appSource, /const directoryDialogLayer =/);
@@ -81,7 +80,7 @@ assert.match(zhLocalizationSource, /"stableUi\.sidebar\.searchScope": "查看范
 assert.match(enLocalizationSource, /"stableUi\.sidebar\.searchScope": "View Scope"/u);
 assert.match(zhLocalizationSource, /"skim\.open": "打开 skim"[\s\S]*?"skim\.exit": "收起 skim"/u);
 assert.match(sidebarStyles, /logo-cap7ce\.svg/u);
-assert.match(sidebarSource, /<StableUiIcon name="ai" active=\{aiSearchEnabled\}/u);
+assert.doesNotMatch(sidebarSource, /onAiSearchToggle|aiSearchEnabled/);
 assert.doesNotMatch(sidebarSource, /cap-stable-switch/u);
 assert.doesNotMatch(sidebarStyles, /\.cap-stable-switch/u);
 assert.match(sidebarSource, /<StableUiIcon name="folder" active=\{selected\}/u);

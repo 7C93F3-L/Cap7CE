@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../electron/appUpdateTypes";
 import type { ComputerSearchAuthorization, ComputerSearchAuthorizationBatch, ComputerSearchCapabilityOptions, ComputerSearchCapabilityRequest, ComputerSearchCapabilityResult, ComputerSearchNextPageRequest, ComputerSearchPage, ComputerSearchRequest, ComputerSearchStatus } from "../../electron/computerSearchTypes";
 import type { MetadataBuildApi } from "../shared/metadataBuildTypes";
@@ -140,11 +140,6 @@ declare global {
         refresh: (directoryIds?: string[]) => Promise<boolean>;
         onIndexChanged: (callback: () => void) => () => void;
       };
-      aiSearch: {
-        start: (request: AiSearchStartRequest) => Promise<AiSearchStartResponse>;
-        cancel: (sessionId: string, discard?: boolean) => Promise<boolean>;
-        onUpdate: (callback: (update: AiSearchUpdate) => void) => () => void;
-      };
       index: {
         updateManualKeywords: (filePath: string, keywordText: string) => Promise<string[]>;
         updateKeywordsBatch: (request: KeywordBatchUpdateRequest) => Promise<KeywordBatchUpdateResult>;
@@ -181,7 +176,6 @@ declare global {
         updateLaunchAtLogin: (launchAtLogin: UserPreferences["launchAtLogin"]) => Promise<UserPreferences>;
         updateSystemNotifications: (enabled: UserPreferences["systemNotificationsEnabled"]) => Promise<UserPreferences>;
         updateAutoCacheOptimization: (enabled: UserPreferences["autoCacheOptimizationEnabled"]) => Promise<UserPreferences>;
-        updateAiRecognitionEnabled: (enabled: UserPreferences["aiRecognitionEnabled"]) => Promise<UserPreferences>;
         updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: UserPreferences["quickActionGlobalEnabled"]) => Promise<UserPreferences>;
         updateCommandEnabled: (commandEnabled: UserPreferences["commandEnabled"]) => Promise<UserPreferences>;
         updateSearchLabelVisibility: (searchLabelVisibility: UserPreferences["searchLabelVisibility"]) => Promise<UserPreferences>;

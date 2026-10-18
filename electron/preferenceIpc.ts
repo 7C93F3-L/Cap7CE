@@ -34,7 +34,6 @@ export interface PreferenceIpcDependencies {
   updateSystemNotifications: PreferenceUpdater<boolean>;
   applySystemNotifications: (enabled: boolean) => void;
   updateAutoCacheOptimization: PreferenceUpdater<boolean>;
-  updateAiRecognitionEnabled: PreferenceUpdater<boolean>;
   setAutoCacheOptimizationEnabled: (enabled: boolean) => Promise<void>;
   scheduleAutoCacheOptimization: () => Promise<void>;
 }
@@ -63,7 +62,6 @@ export const registerPreferenceIpc = ({
   updateSystemNotifications,
   applySystemNotifications,
   updateAutoCacheOptimization,
-  updateAiRecognitionEnabled,
   setAutoCacheOptimizationEnabled,
   scheduleAutoCacheOptimization
 }: PreferenceIpcDependencies): void => {
@@ -200,11 +198,6 @@ export const registerPreferenceIpc = ({
           broadcastPreferencesChanged(preferences);
           return preferences;
         }
-      },
-      {
-        kind: "handle",
-        channel: "preferences:updateAiRecognitionEnabled",
-        listener: (_event, nextEnabled: boolean) => updateAndBroadcast(updateAiRecognitionEnabled(Boolean(nextEnabled)))
       },
       {
         kind: "handle",

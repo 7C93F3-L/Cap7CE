@@ -42,7 +42,6 @@ const fontFilterStateSource = read("src/renderer/stable-ui/fontFilterState.ts");
 const modelFiltersSource = read("src/renderer/stable-ui/StableModelFilters.tsx");
 const modelFilterStateSource = read("src/renderer/stable-ui/modelFilterState.ts");
 const exploreTypeFilterStateSource = read("src/renderer/stable-ui/exploreTypeFilterState.ts");
-const resultSectionStyles = read("src/renderer/results/ResultSectionCard.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const menuAdapterSource = read("src/renderer/results/ResultsContextMenuLayer.tsx");
 const menuSource = read("src/renderer/results/ResponsiveResultsContextMenuLayer.tsx");
@@ -154,14 +153,12 @@ assert.doesNotMatch(inputSource, /cap-stable-search-feedback|is-showing-feedback
 assert.match(inputSource, /search\.query\.length > 0[\s\S]*?className="cap-stable-search-clear"[\s\S]*?query: ""[\s\S]*?onSearchChange\(nextSearch\); onSearchOptionsChange\(nextSearch\)[\s\S]*?focus\(\{ preventScroll: true \}\)/u);
 
 assert.doesNotMatch(resultsSource, /responsiveLayout|shellState/);
+assert.doesNotMatch(gridSource + stableResultsStyles, /ResultSectionCard|result-section-card|result-section-layout-cell/);
 assert.match(gridSource, /window\.matchMedia\("\(max-height: 359\.98px\)"\)/);
 assert.match(gridSource, /layoutMode = lowHeightLayout \? "micro" : "normal"/);
 assert.match(gridSource, /minimumColumnCount = 2/u);
 assert.match(gridSource, /const EmptySearchResult = \(\{ message \}: \{ message: string \}\) => <div className="empty-result-row">\{message\}<\/div>/);
-assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb,[\s\S]*?\.result-section-card \{ border-radius: var\(--cap-stable-radius-sm\); background: var\(--cap-stable-grid-surface\); \}/u);
-assert.match(resultSectionStyles, /\.result-section-card h2\s*\{[^}]*font-weight: 600;[^}]*color: var\(--text-main\);/u);
-assert.match(resultSectionStyles, /\.result-section-card p\s*\{[^}]*color: color-mix\(in srgb, var\(--text-main\) 62%, transparent\);/u);
-assert.doesNotMatch(resultSectionStyles, /animation:|@keyframes|cap7ce-ai-section-text-breathe/u);
+assert.match(stableResultsStyles, /\.cap-stable-results-slot \.thumb \{ border-radius: var\(--cap-stable-radius-sm\); background: var\(--cap-stable-grid-surface\); \}/u);
 assert.match(inputSource, /<StableUiIcon name="search" className="cap-stable-search-icon" \/>/u);
 assert.match(exploreBarStyles, /\.cap-stable-explore-bar \.cap-stable-search-slot[\s\S]*?background: var\(--cap-stable-search-surface\);/u);
 assert.match(navigationStateStyles, /\.cap-stable-ui,[\s\S]*?\.cap-stable-titlebar,[\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 50%\);[\s\S]*?\.cap-stable-titlebar\.theme-dark,[\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 24%\);/u);

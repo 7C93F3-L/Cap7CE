@@ -20,7 +20,6 @@ interface SettingsDataSynchronizationOptions {
   setStandbyLineVisible: Dispatch<SetStateAction<boolean>>;
   setLaunchAtLogin: Dispatch<SetStateAction<boolean>>;
   setSystemNotificationsEnabled: Dispatch<SetStateAction<boolean>>;
-  setAiRecognitionEnabled: Dispatch<SetStateAction<boolean>>;
   setQuickActionGlobalEnabled: Dispatch<SetStateAction<boolean>>;
   setCommandEnabled: Dispatch<SetStateAction<boolean>>;
   setShortcutActions: Dispatch<SetStateAction<ShortcutActionPreferences>>;
@@ -45,7 +44,6 @@ export const useSettingsDataSynchronization = (options: SettingsDataSynchronizat
     current.setStandbyLineVisible(preferences.standbyLineVisible);
     current.setLaunchAtLogin(preferences.launchAtLogin);
     current.setSystemNotificationsEnabled(preferences.systemNotificationsEnabled);
-    current.setAiRecognitionEnabled(preferences.aiRecognitionEnabled);
     current.setQuickActionGlobalEnabled(preferences.quickActionGlobalEnabled);
     current.setCommandEnabled(preferences.commandEnabled);
     current.setShortcutActions(preferences.stableShortcutActions);

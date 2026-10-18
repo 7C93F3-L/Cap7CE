@@ -37,7 +37,6 @@ export interface QuickCommandExecutorContext {
   updateLaunchAtLogin: (enabled: boolean) => Promise<void>;
   updateSystemNotifications: (enabled: boolean) => Promise<void>;
   updateAutoCacheOptimization: (enabled: boolean) => Promise<void>;
-  updateAiRecognitionEnabled: (enabled: boolean) => Promise<void>;
   updateQuickActionGlobalEnabled: (enabled: boolean) => Promise<boolean>;
   updateShortcutActions: (shortcutActions: ShortcutActionPreferences) => Promise<boolean>;
   updateCommandEnabled: (enabled: boolean) => Promise<void>;
@@ -47,7 +46,6 @@ export interface QuickCommandExecutorContext {
   setSkimHiddenFiles: (enabled: boolean) => void;
   setSkimSortDirection: (direction: CommandSortDirection) => void;
   setSkimSortField: (field: CommandSortField) => void;
-  setCurrentAiSearch: (enabled: boolean) => CommandOperationResult;
   setShellMode: () => void;
   resetWindow: () => Promise<CommandOperationResult>;
   maximizeWindow: () => Promise<CommandOperationResult>;
@@ -411,20 +409,6 @@ export const executeQuickCommand = async (
     const enabled = command.args[0] === "on";
     await context.updateAutoCacheOptimization(enabled);
     return { status: "handled", message: enabled ? t("command.autoCacheEnabled") : t("command.autoCacheDisabled"), clearInput: true };
-  }
-
-  if (command.domain === "ai" && (command.action === "on" || command.action === "off")) {
-    const enabled = command.action === "on";
-    await context.updateAiRecognitionEnabled(enabled);
-    return { status: "handled", message: enabled ? t("command.aiEnabled") : t("command.aiDisabled"), clearInput: true };
-  }
-
-  if (command.domain === "ai" && command.action === "search" && (command.args[0] === "on" || command.args[0] === "off")) {
-    const enabled = command.args[0] === "on";
-    const result = context.setCurrentAiSearch(enabled);
-    return result.ok
-      ? { status: "handled", message: enabled ? t("command.aiSearchEnabled") : t("command.aiSearchDisabled"), clearInput: true }
-      : { status: "failed", message: result.message, clearInput: false };
   }
 
   if (command.domain === "cache" && command.action === "skim") {

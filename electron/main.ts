@@ -9,14 +9,12 @@ import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { addDirectoryCandidates, createCancelledDirectoryAddResult, type DirectoryAddRequest } from "./directoryAddService";
 import { registerDirectoryManagementIpc } from "./directoryManagementIpc";
-import { registerAiSearchIpc } from "./aiSearchIpc";
 import { registerDiagnosticsIpc } from "./diagnosticsIpc";
 import { bootstrapRuntimeDiagnostics } from "./runtimeDiagnosticsBootstrap";
 import { RuntimeDiagnostics } from "./runtimeDiagnostics";
 import { createThumbnailFailureResponse } from "./thumbnailFailureResponse";
 import { registerSearchIpc } from "./searchIpc";
 import { registerComputerSearchIpc } from "./computerSearchIpc"; import { createComputerSearchRuntime } from "./computerSearchRuntime"; import { authorizeComputerSearchPreviewData } from "./computerSearchPreviewAuthorization"; import { handleComputerSearchVisualRequest, isComputerSearchVisualHost } from "./computerSearchVisualProtocol";
-import { aiSearchService } from "./aiSearchRuntime";
 import { discardEmbeddedMetadataForDirectory, writeScannedFilesWithEmbeddedMetadata } from "./embeddedMetadataRuntime"; import { configureSearchIndexChangeRuntime } from "./searchIndexChangeRuntime";
 import { createEmbeddedMetadataPreviewCoordinator } from "./embeddedMetadataPreviewProbe";
 import { setVisualPropertyForegroundActive } from "./visualPropertyRuntime";
@@ -36,7 +34,7 @@ import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
 import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
@@ -2450,12 +2448,6 @@ registerManualMetadataRuntime({
   translate: t
 });
 
-registerAiSearchIpc({
-  registrar: ipcMain,
-  isMainSenderAllowed,
-  startSearch: (request, emit) => aiSearchService.start(request, emit),
-  cancelSearch: (sessionId, discard) => aiSearchService.cancel(sessionId, discard)
-});
 
 registerRuntimeModelIpc({
   registrar: ipcMain,
@@ -2514,7 +2506,7 @@ registerPreferenceIpc({
   applySystemNotifications: (enabled) => {
     systemNotificationsEnabled = enabled;
   },
-  updateAutoCacheOptimization: updateAutoCacheOptimizationPreference, updateAiRecognitionEnabled: updateAiRecognitionEnabledPreference,
+  updateAutoCacheOptimization: updateAutoCacheOptimizationPreference,
   setAutoCacheOptimizationEnabled: async () => setThumbnailOptimizationEnabled(false),
   scheduleAutoCacheOptimization: async () => {}
 });
