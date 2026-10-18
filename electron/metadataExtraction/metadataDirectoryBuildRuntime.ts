@@ -74,6 +74,14 @@ export function attachMetadataDirectoryBuilds(owner: MetadataBuildOwner, protoco
   };
   return {
     resolveScope: path => owner.resolveScope(path), status,
+    async savePolicy(policy) {
+      const revision = ++actionRevision;
+      await load();
+      if (queue.jobs.length || running || closing) throw new Error("metadata-directory-busy");
+      const result = await owner.savePolicy(policy);
+      if (revision !== actionRevision) throw new Error("metadata-build-start-cancelled");
+      current = undefined; return result;
+    },
     async startDirectory(request) {
       const revision = directoryRevision;
       actionRevision++;

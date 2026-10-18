@@ -1,13 +1,11 @@
 import { createEmbeddedMetadataService } from "./embeddedMetadataService";
-import { registerEmbeddedMetadataIpc } from "./embeddedMetadataIpc";
-import type { IpcRegistrar } from "./ipcRegistration";
 import type { ScannedFile, ScannedImageFile } from "./imageScanner";
 import {
   discardImageDimensionsForDirectory,
   enqueueImageDimensionsForDirectories
 } from "./imageDimensionRuntime";
 import { discardAnimationFactsForDirectory, enqueueAnimationFactsForDirectories } from "./animationFactRuntime";
-import { configureSearchIndexChangeRuntime, notifySearchIndexChanged } from "./searchIndexChangeRuntime";
+import { notifySearchIndexChanged } from "./searchIndexChangeRuntime";
 import { discardVideoFactsForDirectory, enqueueVideoFactsForDirectories } from "./videoFactRuntime";
 import { discardVideoColorsForDirectory, enqueueVideoColorsForDirectories } from "./videoColorRuntime";
 import { discardAudioFactsForDirectory, enqueueAudioFactsForDirectories } from "./audioFactRuntime";
@@ -71,30 +69,4 @@ export const discardEmbeddedMetadataForDirectory = async (directoryPath: string)
 
 export const setEmbeddedMetadataForegroundActive = (active: boolean) => {
   embeddedMetadataService.setForegroundActive(active);
-};
-
-export const configureEmbeddedMetadataRuntime = (
-  registrar: IpcRegistrar,
-  getMainWebContents: () => Electron.WebContents | null,
-  getSettingsWebContents: () => Electron.WebContents | null
-) => {
-  configureSearchIndexChangeRuntime(getMainWebContents);
-  const getActiveWebContents = () => {
-    const candidates = [getMainWebContents(), getSettingsWebContents()];
-    return candidates.filter((webContents, index) => webContents
-      && !webContents.isDestroyed()
-      && candidates.indexOf(webContents) === index) as Electron.WebContents[];
-  };
-  registerEmbeddedMetadataIpc({
-    registrar,
-    isSenderAllowed: (event) => getActiveWebContents().includes(event.sender),
-    getStatus: embeddedMetadataService.status,
-    startBackfill: embeddedMetadataService.startBackfill,
-    cancelBackfill: embeddedMetadataService.cancel
-  });
-  embeddedMetadataService.onStatusChanged((status) => {
-    for (const webContents of getActiveWebContents()) {
-      webContents.send("embeddedMetadata:statusChanged", status);
-    }
-  });
 };

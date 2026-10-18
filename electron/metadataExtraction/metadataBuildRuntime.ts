@@ -27,7 +27,7 @@ export interface MetadataBuildRuntimeOptions extends MetadataBuildOptions {
 export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
   readCatalog: () => Promise<CoreCatalogStatus>, options: MetadataBuildRuntimeOptions = {}): MetadataBuildRuntime => {
   const lifecycle = new MetadataBuildLifecycle(options.preferences);
-  let savedIntent: "active" | "paused" | "completed" | null = null;
+  let savedIntent: "configured" | "active" | "paused" | "completed" | null = null;
   let restorationError: string | null = null;
   let restoration: Promise<void> | undefined;
   let maintenanceEnabled = false;
@@ -57,6 +57,7 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
   const progress = () => {
     const current = controller.snapshot();
     return restorationError ? { ...current, phase: "failed" as const, errorCode: restorationError }
+      : savedIntent === "configured" ? { ...current, phase: "idle" as const }
       : savedIntent === "paused" && ["idle", "completed"].includes(current.phase) ? { ...current, phase: "paused" as const }
       : current.phase === "idle" && savedIntent === "completed" ? { ...current, phase: "completed" as const } : current;
   };
@@ -68,6 +69,14 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
     volumes = catalog.volumes.filter((volume) => volume.selected).map((volume) => ({ volumeId: volume.volumeId, label: volume.displayName }));
     return catalog;
   };
+  const selectPolicy = (value: MetadataBuildPolicy): MetadataBuildPolicy => {
+    const selected: MetadataBuildPolicy = structuredClone(value);
+    const allowed = new Set(volumes.map(volume => volume.volumeId));
+    if (!selected || !Array.isArray(selected.volumeOrder) || !Array.isArray(selected.includes) || !Array.isArray(selected.excludes)
+      || !selected.volumeOrder.length || selected.volumeOrder.some(id => !allowed.has(id))
+      || [...selected.includes, ...selected.excludes].some(scope => !scope || !selected.volumeOrder.includes(scope.volumeId))) throw new Error("metadata-build-invalid-policy");
+    return selected;
+  };
   const api: MetadataBuildOwner = {
     async resolveScope(path) {
       if (typeof path !== "string" || path.length > 32768 || !/^[A-Za-z]:[\\/]/.test(path) || !options.resolveScope) throw new Error("metadata-build-invalid-directory");
@@ -78,6 +87,23 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
       return { volumeId: resolved.volumeId, rootFileReference: resolved.rootFileReference, label: path };
     },
     async status() { await refreshVolumes(); return snapshot(); },
+    async savePolicy(value) {
+      if (preparing || !["idle", "paused", "completed", "failed"].includes(controller.snapshot().phase)) throw new Error("metadata-build-busy");
+      preparing = true;
+      const ownRevision = ++revision;
+      try {
+        await refreshVolumes();
+        const selected = selectPolicy(value);
+        if (ownRevision !== revision) throw new Error("metadata-build-start-cancelled");
+        maintenanceEnabled = false; initialSweep = false; drain.reset();
+        await drain.waitForIdle(); await controller.waitForIdle();
+        if (ownRevision !== revision) throw new Error("metadata-build-start-cancelled");
+        if (policy && savedIntent !== "configured") await protocol.pause();
+        await lifecycle.grant(selected, scopeLabels, true);
+        policy = selected; savedIntent = "configured"; restorationError = null;
+        return snapshot();
+      } finally { preparing = false; }
+    },
     async start(request) {
       if (request.allowMetadataExtraction !== true) throw new Error("metadata-build-confirmation-required");
       if (preparing || !["idle", "paused", "completed", "failed"].includes(controller.snapshot().phase)) throw new Error("metadata-build-busy");
@@ -88,13 +114,7 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
         await drain.waitForIdle(); await controller.waitForIdle();
         await refreshVolumes();
         if (ownRevision !== revision) throw new Error("metadata-build-start-cancelled");
-        const selected: MetadataBuildPolicy = JSON.parse(JSON.stringify(request.policy));
-        const allowed = new Set(volumes.map((volume) => volume.volumeId));
-        if (!Array.isArray(selected.volumeOrder) || !Array.isArray(selected.includes) || !Array.isArray(selected.excludes)
-          || selected.volumeOrder.length === 0 || selected.volumeOrder.some((volume) => !allowed.has(volume))
-          || [...selected.includes, ...selected.excludes].some((scope) => !scope || !allowed.has(scope.volumeId))) {
-          throw new Error("metadata-build-invalid-policy");
-        }
+        const selected = selectPolicy(request.policy);
         await lifecycle.grant(selected, scopeLabels);
         savedIntent = "active"; restorationError = null;
         if (ownRevision !== revision) throw new Error("metadata-build-start-cancelled");
@@ -109,7 +129,7 @@ export const createMetadataBuildRuntime = (protocol: CoreMetadataProtocol,
       await loadPreferences();
       const dormant = ["idle", "completed", "failed", "paused"].includes(controller.snapshot().phase);
       await controller.pause(); await drain.waitForIdle();
-      if (policy) { await lifecycle.setIntent("paused"); savedIntent = "paused"; if (dormant) await protocol.pause(); }
+      if (policy && savedIntent !== "configured") { await lifecycle.setIntent("paused"); savedIntent = "paused"; if (dormant) await protocol.pause(); }
       return snapshot();
     },
     async resume() {

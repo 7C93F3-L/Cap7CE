@@ -22,6 +22,8 @@ export interface RegisterComputerSearchIpcOptions {
   registrar: IpcRegistrar;
   isSenderAllowed: (event: IpcMainEvent | IpcMainInvokeEvent) => boolean;
   isActionSenderAllowed: (event: IpcMainEvent | IpcMainInvokeEvent) => boolean;
+  isMetadataSenderAllowed?: RegisterComputerSearchIpcOptions["isSenderAllowed"];
+  onMetadataChanged?: () => void;
   runtime: ComputerSearchRuntime;
   openPath: (filePath: string) => Promise<string>;
   showItemInFolder: (filePath: string) => void;
@@ -111,7 +113,7 @@ const requireAuthorizedItems = (runtime: ComputerSearchRuntime, value: unknown, 
 };
 
 export const registerComputerSearchIpc = ({
-  registrar, isSenderAllowed, isActionSenderAllowed, runtime, openPath, showItemInFolder, writeClipboardText,
+  registrar, isSenderAllowed, isActionSenderAllowed, isMetadataSenderAllowed, onMetadataChanged, runtime, openPath, showItemInFolder, writeClipboardText,
   inspectItem, readTextPreview, startFileDrag
 }: RegisterComputerSearchIpcOptions): void => {
   registerComputerSearchChangeIpc(registrar, isSenderAllowed, runtime);
@@ -122,7 +124,7 @@ export const registerComputerSearchIpc = ({
   registerComputerSearchThumbnailIpc({ registrar, isSenderAllowed, runtime });
   registerComputerSearchTrashIpc({ registrar, isSenderAllowed, resolveItems: value => requireAuthorizedItems(runtime, value) });
   if (runtime.favoriteDirectories) registerFavoriteDirectoryIpc(registrar, isSenderAllowed, runtime.favoriteDirectories);
-  if (runtime.metadataBuild) registerMetadataBuildIpc(registrar, isSenderAllowed, runtime.metadataBuild);
+  if (runtime.metadataBuild) registerMetadataBuildIpc(registrar, isMetadataSenderAllowed ?? isSenderAllowed, runtime.metadataBuild, { isDirectorySenderAllowed: isSenderAllowed, onChanged: onMetadataChanged });
   registerIpcDomain({
     registrar,
     isSenderAllowed,

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, EmbeddedMetadataTaskStatus, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
+import type { AiSearchStartRequest, AiSearchStartResponse, AiSearchUpdate, DeleteFilesResult, DirectoryAddRequest, DirectoryAddResult, DirectoryItem, GgufModelSettings, ImageIndexItem, ImageSearchResponse, KeywordBatchUpdateRequest, KeywordBatchUpdateResult, LlamaRuntimeProcessState, LlamaRuntimeSettings, PreviewContentSize, PreviewEmbeddedMetadata, PreviewItemActionRequest, PreviewManualKeywordsUpdate, PreviewNavigateDirection, PreviewWindowControlState, PreviewWindowData, RuntimeDiagnosticsExportResult, RuntimeDiagnosticsInfo, SearchState, ShortcutActionsUpdateResult, ShortcutAvailabilityResult, SkimFolderStats, SkimFolderStatsUpdate, SkimPreviewInfo, SkimReadRequest, SkimReadResponse, SkimTextPreview, ThumbnailOptimizationStatus, UserPreferences, VisualCacheStats } from "../shared/types";
 import type { AppUpdateActionResponse, AppUpdateCheckResponse, AppUpdateDownloadProgress, AppUpdatePublicState } from "../../electron/appUpdateTypes";
 import type { ComputerSearchAuthorization, ComputerSearchAuthorizationBatch, ComputerSearchCapabilityOptions, ComputerSearchCapabilityRequest, ComputerSearchCapabilityResult, ComputerSearchNextPageRequest, ComputerSearchPage, ComputerSearchRequest, ComputerSearchStatus } from "../../electron/computerSearchTypes";
 import type { MetadataBuildApi } from "../shared/metadataBuildTypes";
@@ -89,12 +89,6 @@ declare global {
         getInfo: () => Promise<RuntimeDiagnosticsInfo>;
         setDetailedLogging: (enabled: boolean) => Promise<RuntimeDiagnosticsInfo>;
         export: () => Promise<RuntimeDiagnosticsExportResult>;
-      };
-      embeddedMetadata: {
-        status: () => Promise<EmbeddedMetadataTaskStatus>;
-        startBackfill: () => Promise<EmbeddedMetadataTaskStatus>;
-        cancelBackfill: () => Promise<boolean>;
-        onStatusChanged: (callback: (status: EmbeddedMetadataTaskStatus) => void) => () => void;
       };
       skim: {
         listLocations: () => Promise<SkimLocationShortcut[]>;

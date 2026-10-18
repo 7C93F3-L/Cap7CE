@@ -17,7 +17,7 @@ import { createThumbnailFailureResponse } from "./thumbnailFailureResponse";
 import { registerSearchIpc } from "./searchIpc";
 import { registerComputerSearchIpc } from "./computerSearchIpc"; import { createComputerSearchRuntime } from "./computerSearchRuntime"; import { authorizeComputerSearchPreviewData } from "./computerSearchPreviewAuthorization"; import { handleComputerSearchVisualRequest, isComputerSearchVisualHost } from "./computerSearchVisualProtocol";
 import { aiSearchService } from "./aiSearchRuntime";
-import { configureEmbeddedMetadataRuntime, discardEmbeddedMetadataForDirectory, writeScannedFilesWithEmbeddedMetadata } from "./embeddedMetadataRuntime";
+import { discardEmbeddedMetadataForDirectory, writeScannedFilesWithEmbeddedMetadata } from "./embeddedMetadataRuntime"; import { configureSearchIndexChangeRuntime } from "./searchIndexChangeRuntime";
 import { createEmbeddedMetadataPreviewCoordinator } from "./embeddedMetadataPreviewProbe";
 import { setVisualPropertyForegroundActive } from "./visualPropertyRuntime";
 import { AppUpdateDownloadService, resolveAppUpdateRootDirectory } from "./appUpdateDownloadService";
@@ -1570,7 +1570,7 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   });
   app.on("browser-window-focus", syncThumbnailOptimizationActivity);
   app.on("browser-window-blur", syncThumbnailOptimizationActivity);
-  configureEmbeddedMetadataRuntime(ipcMain, () => mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null, () => settingsWindowController?.getWebContents() ?? null);
+  configureSearchIndexChangeRuntime(() => mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null);
   void createStartupHintWindow();
   createAppTray();
   showCompletedUpdateNotification(completedUpdateVersion);
@@ -2436,6 +2436,7 @@ searchIpcController = registerSearchIpc({
   diagnostics: runtimeDiagnostics
 });
 registerComputerSearchIpc({ registrar: ipcMain, isSenderAllowed: isMainSenderAllowed, isActionSenderAllowed: (event) => isMainSenderAllowed(event) || Boolean(previewWindow && !previewWindow.isDestroyed() && event.sender === previewWindow.webContents), runtime: computerSearchRuntime,
+  isMetadataSenderAllowed: event => isMainSenderAllowed(event) || isSettingsSenderAllowed(event), onMetadataChanged: () => { mainWindow?.webContents.send("metadataBuild:changed"); settingsWindowController?.send("metadataBuild:changed"); },
   openPath: (filePath) => shell.openPath(filePath), showItemInFolder: (filePath) => shell.showItemInFolder(filePath), writeClipboardText: (text) => clipboard.writeText(text),
   inspectItem: async (filePath, kind) => inspectSkimEntry(filePath, kind, (await listDirectories()).map((directory) => directory.path)), readTextPreview: readSkimTextPreview,
   startFileDrag: (sender, filePaths) => dockedShellController ? dockedShellController.runSuppressed(() => startNativeFileDrag(sender, filePaths)) : startNativeFileDrag(sender, filePaths) });
@@ -2628,7 +2629,7 @@ registerCacheActivityIpc({
     }
   }
 });
-registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, isSettingsSenderAllowed, openSettings, openMetadataBuild: () => { if (!showAndFocusMainWindow()) return false; mainWindow?.webContents.send("settingsWindow:metadataBuildRequested"); return true; } });
+registerSettingsWindowIpc({ registrar: ipcMain, isMainSenderAllowed, isSettingsSenderAllowed, openSettings, notifyMetadataBuild: () => { settingsWindowController?.send("settingsWindow:metadataBuildRequested"); } });
 const clearFormalVisualCacheSafely = async (clear: typeof clearAllVisualCaches) => {
   const renderingPauseReason = "cache-clear";
   await pauseThumbnailRendering(renderingPauseReason);

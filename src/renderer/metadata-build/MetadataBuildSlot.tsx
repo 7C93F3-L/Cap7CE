@@ -34,7 +34,7 @@ export default function MetadataBuildSlot({ enabled, foreground, onProgress, ini
   }, [enabled, foreground, build.status, onProgress]);
   if (!enabled || !build.status || build.status.volumes.length === 0) return null;
   const status = build.status;
-  if (floating && !controlsOpen) {
+  if (floating) {
     if (status.progress.phase === "idle" || status.progress.phase === "completed" && !completedNotice) return null;
     return <BottomNoticeBar className="cap-metadata-build-slot is-floating is-compact" title={status.directoryTask?.path}
       message={status.progress.phase === "completed" && status.progress.failed > 0 ? `本轮提取完成，${status.progress.failed} 项未能提取` : status.directoryTask ? `${status.progress.phase === "failed" ? "目录任务中断" : "目录元数据"} · ${status.directoryTask.path}` : status.progress.phase === "completed" ? "文件属性提取已完成" : status.progress.phase === "paused" ? "文件属性提取已暂停"

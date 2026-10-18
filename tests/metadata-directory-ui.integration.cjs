@@ -20,7 +20,7 @@ import './src/renderer/catalog-workspace/CatalogActivity.css';
 function Fixture(){const [open,setOpen]=useState(false),action=useDirectoryMetadataAction();return <div className="app cap-stable-ui theme-dark"><div className="cap-catalog-design" style={{display:'block',position:'relative',height:'100vh',width:'100%'}}>
 <button id="request" onClick={()=>action.start(${JSON.stringify(folder)})}>folder metadata</button>
 <div className="cap-catalog-activity-dock"><BottomNoticeBar className="probe-temporary-notice" message="临时提醒" progress={{label:'处理进度'}} actions={<button type="button">取消</button>}/>
-<Slot enabled={false} foreground floating controlsOpen={open} onRequestControls={()=>setOpen(v=>!v)}/></div></div></div>}
+<Slot enabled={false} foreground floating controlsOpen={open} onRequestControls={()=>{window.manageRequests=(window.manageRequests||0)+1}}/></div></div></div>}
 createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async()=>{try{
  esbuild.buildSync({stdin:{contents:fixture,loader:'tsx',resolveDir:repo},bundle:true,platform:'browser',outfile:path.join(root,'fixture.js'),define:{'process.env.NODE_ENV':'"production"'}});
@@ -41,25 +41,13 @@ app.whenReady().then(async()=>{try{
  }
  win.setContentSize(380,500);await new Promise(r=>setTimeout(r,50));assert.ok((await bars()).every(bar=>!bar.clipped),'both compact strips fit narrow windows');win.setContentSize(1000,750);
  await run("document.querySelector('.cap-catalog-design').style.removeProperty('--cap-stable-surface');document.querySelector('.app').className='app cap-stable-ui theme-dark'");
- await clickLabel('查看任务');await ready('document.querySelector(".cap-metadata-build")');
- assert.equal(await run('document.querySelector(".cap-metadata-build-heading strong").innerText'),'正在等待磁盘或任务恢复');
- assert.ok(await run('document.querySelector(".cap-metadata-build-footer").innerText.includes("包含子文件夹")'));
- assert.equal(await run('[...document.querySelectorAll("button")].some(e=>e.innerText==="范围与顺序")'),false,'directory run does not edit the global policy');
- await clickLabel('暂停');await ready('document.querySelector(".cap-metadata-build-heading strong").innerText==="已暂停"');
- const pausedReads=reads;await new Promise(r=>setTimeout(r,1100));assert.equal(reads,pausedReads,'paused UI does not poll');
- await clickLabel('继续');await ready('document.querySelector(".cap-metadata-build-heading strong").innerText==="正在提取文件属性"');
- await clickLabel('取消目录任务');await ready('!document.querySelector(".cap-metadata-build-footer").innerText.includes("包含子文件夹")');
- assert.equal(state.policy,null);assert.equal(state.directoryTask,undefined);assert.deepEqual(errors,[]);
- state={...state,progress:{...progress('failed'),processed:0,total:null,progressFraction:null,errorCode:'metadata-directory-state-unavailable',storageError:{operation:'replace',code:'EBUSY'}},directoryTask:{path:folder,pending:1}};
- await run('window.dispatchEvent(new Event("cap-metadata-build-changed"))');await ready('document.querySelector(".cap-metadata-build p")?.innerText.includes("正被占用")');
- const geometry=()=>run(`(()=>{const host=document.querySelector('.cap-metadata-build-slot'),panel=host.querySelector('.cap-metadata-build'),style=getComputedStyle(panel);return {width:host.getBoundingClientRect().width,height:host.getBoundingClientRect().height,border:style.borderTopWidth,background:style.backgroundColor,clipped:panel.scrollWidth>panel.clientWidth+1,buttons:[...panel.querySelectorAll('button')].every(e=>e.scrollWidth<=e.clientWidth+1)}})()`);
- let layout=await geometry();assert.ok(layout.width<=640&&layout.height<180);assert.equal(layout.border,'0px');assert.equal(layout.background,'rgba(0, 0, 0, 0)');assert.equal(layout.clipped,false);assert.equal(layout.buttons,true);
- if(process.env.CAP_METADATA_CAPTURE)fs.writeFileSync(process.env.CAP_METADATA_CAPTURE,(await win.webContents.capturePage()).toPNG());
- win.setContentSize(380,500);await new Promise(r=>setTimeout(r,50));layout=await geometry();assert.ok(layout.width<=364);assert.equal(layout.clipped,false);assert.equal(layout.buttons,true);
- win.setContentSize(1000,750);
+ await clickLabel('查看任务');assert.equal(await run('window.manageRequests'),1);
+ assert.equal(await run('!!document.querySelector(".cap-metadata-build")'),false,'main view keeps only the compact notice');
+ assert.ok(await run('!!document.querySelector(".cap-metadata-build-slot.is-compact")'));
  state={...state,progress:{...progress('completed'),processed:3,failed:1,total:3,progressFraction:1},directoryTask:{path:folder,pending:0}};
- await run('window.dispatchEvent(new Event("cap-metadata-build-changed"))');await ready('document.querySelector(".cap-metadata-build-heading strong")?.innerText.includes("1 项未能提取")');
- await run('document.querySelector(".cap-metadata-build-close").click()');await ready('!document.querySelector(".cap-metadata-build-slot")');
- await run('window.dispatchEvent(new Event("cap-metadata-build-changed"))');await new Promise(r=>setTimeout(r,50));assert.equal(await run('!!document.querySelector(".cap-metadata-build-slot")'),false,'dismissed completion does not return on ordinary status refresh');
- console.log('Directory metadata UI: real sandbox IPC, dormant home, task wakeup/scope, waiting, pause without polling, resume and cancel passed.');
+ await run('window.dispatchEvent(new Event("cap-metadata-build-changed"))');await ready('document.querySelector(".cap-metadata-build-slot")?.textContent.includes("1 项未能提取")');
+ await clickLabel('×');await ready('!document.querySelector(".cap-metadata-build-slot")');
+ await run('window.dispatchEvent(new Event("cap-metadata-build-changed"))');await new Promise(r=>setTimeout(r,50));assert.equal(await run('!!document.querySelector(".cap-metadata-build-slot")'),false,'dismissed completion does not return');
+ assert.deepEqual(errors,[]);
+ console.log('Directory metadata UI: dormant home, sandbox task wakeup, compact notice geometry, unified management entry and completion dismissal passed.');
 }catch(error){console.error(error.stack);process.exitCode=1}finally{win?.destroy();fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});

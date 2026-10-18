@@ -13,14 +13,14 @@ export class MetadataBuildLifecycle {
     await (this.loading ??= (async () => { this.saved = await this.store?.load() ?? null; })());
     return this.saved ? structuredClone(this.saved) : null;
   }
-  async grant(policy: MetadataBuildPolicy, scopeLabels: Record<string, string>): Promise<void> {
+  async grant(policy: MetadataBuildPolicy, scopeLabels: Record<string, string>, configured = false): Promise<void> {
     const selectedLabels = Object.fromEntries([...policy.includes, ...policy.excludes].map(scope => {
       const key = `${scope.volumeId}:${scope.rootFileReference ?? "root"}`; return [key, scopeLabels[key]];
     }).filter(entry => entry[1]));
-    await this.write({ version: 2, consent: true, intent: "active", policy: structuredClone(policy), scopeLabels: selectedLabels });
+    await this.write({ version: 2, consent: !configured, intent: configured ? "configured" : "active", policy: structuredClone(policy), scopeLabels: selectedLabels });
   }
   async setIntent(intent: MetadataBuildPreferences["intent"]): Promise<void> {
-    if (this.saved) await this.write({ ...this.saved, intent });
+    if (this.saved?.consent) await this.write({ ...this.saved, intent });
   }
   async flush(): Promise<void> { await this.writing; }
   async validate(volumes: readonly { volumeId: string; queryable?: boolean }[], resolveScope?: (path: string) => Promise<CoreResolvedScope>): Promise<void> {

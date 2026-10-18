@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getActiveLanguage, t, type TranslationKey } from "../../../electron/localization";
 import type { LlamaRuntimeSettings, UserPreferences } from "../../shared/types";
-import CustomScrollbar from "../CustomScrollbar";
+import SettingsContentFrame from "./SettingsContentFrame";
+import { useSettingsIndexNavigation } from "./useSettingsIndexNavigation";
 import StableUiIcon from "../stable-ui/StableUiIcon";
 import { useInertElement } from "../stable-ui/useInertElement";
 import { getTextColorForBackground } from "../appearance";
@@ -41,12 +42,11 @@ const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
   general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.edgeCollapse", "settings.standardWindowMode", "settings.edgeCollapseMode", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
   appearance: ["stableSettings.category.appearance", "stableSettings.material", "stableSettings.uiFontSize", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.uiFontSize", "stableSettings.desc.theme", "stableSettings.desc.colors"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.runtimeInfo", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.runtimeInfo"],
-  cache: ["stableSettings.category.cache", "stableSettings.formalCache", "settings.embeddedMetadata", "stableSettings.desc.formalCache", "stableSettings.desc.metadata", "stableSettings.metadataBuild", "stableSettings.desc.metadataBuild"],
+  cache: ["stableSettings.category.cache", "stableSettings.formalCache", "stableSettings.desc.formalCache", "stableSettings.metadataBuild", "stableSettings.desc.metadataBuild"],
   shortcuts: ["stableSettings.category.shortcuts", "settings.quickActions", "settings.quickCommands", "stableSettings.desc.quickActions", "stableSettings.desc.quickCommands"],
   diagnostics: ["stableSettings.category.diagnostics", "stableSettings.diagnostics", "settings.applicationLog", "settings.crashReports", "settings.diagnosticsBundle", "stableSettings.desc.diagnostics"],
   about: ["stableSettings.category.about", "settings.versionUpdate", "stableSettings.license", "stableSettings.desc.update", "stableSettings.desc.license"]
 };
-
 const matchesQuery = (query: string, values: string[]) => {
   const normalized = query.trim().toLocaleLowerCase();
   return !normalized || values.some((value) => value.toLocaleLowerCase().includes(normalized));
@@ -83,6 +83,7 @@ const SettingsWindowApp = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryId>("general");
   const [query, setQuery] = useState("");
   const [filterQuery, setFilterQuery] = useState("");
+  const indexNavigation = useSettingsIndexNavigation(() => { setActiveCategory("cache"); setQuery(""); setFilterQuery(""); });
   const { dialog, dialogBusy, openConfirmation, cancelDialog, confirmDialog } = useSettingsConfirmation();
   const [systemDark, setSystemDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -90,7 +91,6 @@ const SettingsWindowApp = () => {
   const searchCompositionRef = useRef(false);
   const normalizedQuery = filterQuery.trim();
   const uiFontStyle = useUiFontSize(preferences?.uiFontSize ?? defaultUiFontSize);
-
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const update = () => setSystemDark(media.matches);
@@ -140,7 +140,7 @@ const SettingsWindowApp = () => {
     </SettingsSection>;
     if (category === "cache") return <>
       <SettingsSection title="stableSettings.section.cache"><SettingCard title="stableSettings.formalCache" description="stableSettings.desc.formalCache" query={normalizedQuery}><div className="cap-stable-settings-action-line"><span>{t("stableSettings.cacheSummary", { count: controller.visualCacheStats.cacheCount, size: formatCacheSize(controller.visualCacheStats.totalBytes) })}</span><button type="button" className="cap-stable-settings-button" onClick={() => openConfirmation(t("stableSettings.confirmClearCache"), controller.clearFormalCache)}>{t("settings.clearCache")}</button></div></SettingCard></SettingsSection>
-      <SettingsIndexSection query={normalizedQuery} />
+      <SettingsIndexSection query={normalizedQuery} onManage={indexNavigation.show} />
     </>;
     if (category === "shortcuts") return <div className="cap-stable-settings-shortcut-groups"><SettingsSection title="stableSettings.section.keyboard"><SettingCard title="settings.quickActions" description="stableSettings.desc.quickActions" query={normalizedQuery} className="cap-stable-settings-card-with-body"><QuickActionSettingsRows quickActionGlobalEnabled={preferences.quickActionGlobalEnabled} shortcutActions={preferences.stableShortcutActions} unavailableShortcutActionIds={controller.unavailableShortcutActionIds} onGlobalEnabledChange={(enabled) => toggle("quickActionGlobalEnabled", enabled)} onShortcutActionsChange={controller.updateShortcutActions} onShortcutCaptureStart={controller.beginShortcutCapture} onShortcutCaptureEnd={controller.endShortcutCapture} /></SettingCard><SettingCard title="settings.quickCommands" description="stableSettings.desc.quickCommands" query={normalizedQuery} className="cap-stable-settings-card-with-command-body"><div className="cap-stable-settings-command-toggle"><SettingsToggle enabled={preferences.commandEnabled} onChange={(enabled) => toggle("commandEnabled", enabled)} /></div><QuickCommandSettingsRows stableUi /></SettingCard></SettingsSection></div>;
     if (category === "diagnostics") return <SettingsSection title="stableSettings.section.application"><SettingCard title="stableSettings.diagnostics" description="stableSettings.desc.diagnostics" query={normalizedQuery} className="cap-stable-settings-card-expanded"><RuntimeDiagnosticsRows stableUi /></SettingCard></SettingsSection>;
@@ -150,8 +150,8 @@ const SettingsWindowApp = () => {
   return <div className={`cap-settings-window-foundation theme-${effectiveTheme}`} data-window-material={preferences.windowMaterial} data-language={getActiveLanguage()} style={menuStyle}>
     <div className="cap-settings-window-drag-region" aria-hidden="true" />
     <div ref={settingsShellRef} className="cap-stable-settings-shell">
-      <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => { const value = event.target.value; setQuery(value); if (!searchCompositionRef.current) setFilterQuery(value); }} onCompositionStart={() => { searchCompositionRef.current = true; }} onCompositionEnd={(event) => { searchCompositionRef.current = false; const value = event.currentTarget.value; setQuery(value); setFilterQuery(value); }} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} onClick={() => { setActiveCategory(category.id); setQuery(""); setFilterQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><SettingsCategoryIcon name={category.icon} /><span>{t(category.label)}</span></button>)}</nav></aside>
-      <div className="cap-stable-settings-content-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical"><main className="cap-stable-settings-content cap-main-scroll-viewport" ref={scrollRef}><div className="cap-stable-settings-content-track">{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel"><h1>{t(category.label)}</h1>{renderCategory(category.id)}</article>)}</div></main><CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" /></div>
+      <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => { const value = event.target.value; if (indexNavigation.open) { indexNavigation.navigate(() => { setQuery(value); setFilterQuery(value); }); return; } setQuery(value); if (!searchCompositionRef.current) setFilterQuery(value); }} onCompositionStart={() => { searchCompositionRef.current = true; }} onCompositionEnd={(event) => { searchCompositionRef.current = false; const value = event.currentTarget.value; setQuery(value); setFilterQuery(value); }} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} onClick={() => indexNavigation.navigate(() => { setActiveCategory(category.id); setQuery(""); setFilterQuery(""); scrollRef.current?.scrollTo({ top: 0 }); })}><SettingsCategoryIcon name={category.icon} /><span>{t(category.label)}</span></button>)}</nav></aside>
+      <SettingsContentFrame navigation={indexNavigation} scrollRef={scrollRef}>{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel"><h1>{t(category.label)}</h1>{renderCategory(category.id)}</article>)}</SettingsContentFrame>
     </div>
     {dialog && <SettingsConfirmationDialog message={dialog.message} busy={dialogBusy} confirmLabel={dialog.confirmLabel} onCancel={cancelDialog} onConfirm={() => void confirmDialog()} />}
   </div>;

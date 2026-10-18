@@ -58,6 +58,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
       <div className="cap-catalog-activity-dock"><CatalogActivityBar />
       {layout.restoreError && <BottomNoticeBar message="窗口大小未能恢复，请重试展开面板。" actions={<button type="button" aria-label="关闭窗口提醒" onClick={layout.dismissRestoreError}>×</button>} />}
+      {layout.metadataError && <BottomNoticeBar message={t("stableSettings.metadataBuildOpenFailed")} actions={<button type="button" aria-label={t("common.close")} onClick={layout.dismissMetadataError}>×</button>} />}
       <div className="cap-catalog-query-notice-host" ref={setNoticeHost} />
       <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost}><CatalogDetailsResizer layout={detailsLayout} /></div>

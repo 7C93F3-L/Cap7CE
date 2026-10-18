@@ -18,8 +18,6 @@ const dialogShellSource = fs.readFileSync(path.join(root, "src", "renderer", "di
 const settingsControllerSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsWindowController.ts"), "utf8");
 const settingsCacheStatsVisibilitySource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "useSettingsCacheStatsVisibility.ts"), "utf8");
 const formattingSource = fs.readFileSync(path.join(root, "src", "renderer", "formatting.ts"), "utf8");
-const embeddedMetadataSettingsSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
-const embeddedMetadataRuntimeSource = fs.readFileSync(path.join(root, "electron", "embeddedMetadataRuntime.ts"), "utf8");
 const fontSizeSettingSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "FontSizeSetting.tsx"), "utf8");
 const fontSizeSettingStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "FontSizeSetting.css"), "utf8");
 const stableSelectSource = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "StableSettingsSelect.tsx"), "utf8");
@@ -119,13 +117,16 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
     isMainSenderAllowed: (event) => event.sender.id === 1,
     isSettingsSenderAllowed: (event) => event.sender.id === 2,
     openSettings: async () => true,
-    openMetadataBuild: () => true
+    notifyMetadataBuild: () => undefined
   });
   assert.equal(await handles.get("settingsWindow:open")({ sender: { id: 2 } }), false);
   assert.equal(await handles.get("settingsWindow:open")({ sender: { id: 1 } }), true);
-  assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 1 } }), false);
+  assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 1 } }), true);
   assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 3 } }), false);
   assert.equal(await handles.get("settingsWindow:openMetadataBuild")({ sender: { id: 2 } }), true);
+  assert.equal(await handles.get("settingsWindow:consumeMetadataBuildRequest")({ sender: { id: 1 } }), false);
+  assert.equal(await handles.get("settingsWindow:consumeMetadataBuildRequest")({ sender: { id: 2 } }), true);
+  assert.equal(await handles.get("settingsWindow:consumeMetadataBuildRequest")({ sender: { id: 2 } }), false);
   const { createSettingsWindowBridge } = require("../dist-electron/settingsWindowBridge.js");
   const listeners = new Map(), invoked = [];
   const bridge = createSettingsWindowBridge({ invoke: async channel => { invoked.push(channel); return true; }, on: (channel, callback) => listeners.set(channel, callback), removeListener: channel => listeners.delete(channel) });
@@ -314,7 +315,8 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(settingsStyles, /cap-stable-settings-section-cards\s*\{[\s\S]*?gap: 0;[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--stable-settings-card\)/u);
   assert.match(settingsStyles, /cap-stable-settings-shortcut-groups \.cap-stable-settings-section-cards\s*\{[\s\S]*?gap: 16px;[\s\S]*?background: transparent;[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-card\s*\{[\s\S]*?border-radius: 22px;[\s\S]*?background: var\(--stable-settings-card\);/u);
   assert.match(settingsStyles, /cap-stable-settings-section > h2\s*\{[\s\S]*?margin: 0 0 8px;/u);
-  assert.match(settingsAppSource, /cap-stable-settings-content-track[\s\S]*?shownCategories\.map/u);
+  assert.match(settingsAppSource, /SettingsContentFrame[\s\S]*?shownCategories\.map/u);
+  assert.match(fs.readFileSync(path.join(root, "src/renderer/settings-window/SettingsContentFrame.tsx"), "utf8"), /cap-stable-settings-content-track[\s\S]*?children/u);
   assert.match(settingsAppSource, /SettingsCategoryIcon[\s\S]*?icon: "general"[\s\S]*?icon: "about"[\s\S]*?<SettingsCategoryIcon name=\{category\.icon\} \/>/u);
   assert.doesNotMatch(settingsAppSource, /data-short|short: "(?:⚙|◐|▣|AI|◫|⌨|!|\?)"/u);
   assert.match(settingsCategoryIconSource, /viewBox="0 0 24 24"[\s\S]*?name === "general"[\s\S]*?name === "about"/u);
@@ -329,18 +331,12 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(settingsStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-settings-card[\s\S]*?grid-template-columns: minmax\(0, 1fr\)[\s\S]*?cap-stable-settings-colors[\s\S]*?justify-content: flex-start/u);
   assert.match(stableSelectStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-settings-model-line[\s\S]*?width: 100%[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto auto[\s\S]*?cap-stable-settings-select[\s\S]*?max-width: none/u);
   assert.match(stableRuntimeDiagnosticStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-runtime-diagnostics-row[\s\S]*?grid-template-columns: 116px minmax\(0, 1fr\) auto/u);
-  assert.match(settingsAppSource, /<SettingsIndexSection query=\{normalizedQuery\} \/>/u);
-  assert.match(fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsIndexSection.tsx"), "utf8"), /<EmbeddedMetadataSettingsRow stableUi \/>/u);
-  assert.doesNotMatch(settingsAppSource, /SettingCard title="settings\.embeddedMetadata"[^>]*cap-stable-settings-card-expanded/u);
-  const embeddedMetadataSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "EmbeddedMetadataSettingsRow.tsx"), "utf8");
-  assert.match(embeddedMetadataSource, /className=\{stableUi \? "cap-stable-settings-button" : "cap-settings-pill"\}/u);
-  assert.match(embeddedMetadataSource, /if \(stableUi\)[\s\S]*?cap-stable-settings-action-line/u);
-  assert.match(embeddedMetadataSettingsSource, /isRequestPending[\s\S]*?settings\.embeddedMetadataChecking[\s\S]*?settings\.embeddedMetadataRequestFailed/u);
-  assert.match(embeddedMetadataSettingsSource, /await api\.startBackfill\(\)[\s\S]*?catch \{[\s\S]*?setRequestError\(true\)/u);
-  assert.match(mainSource, /configureEmbeddedMetadataRuntime\([\s\S]*?settingsWindowController\?\.getWebContents\(\)/u);
+  assert.ok(settingsAppSource.includes('<SettingsIndexSection query={normalizedQuery} onManage={indexNavigation.show} />'));
+  assert.equal(fs.existsSync(path.join(root,'src/renderer/settings/EmbeddedMetadataSettingsRow.tsx')),false);
+  assert.doesNotMatch(preloadSource,/embeddedMetadata:startBackfill/);
+  assert.match(mainSource,/configureSearchIndexChangeRuntime/);
   assert.match(mainSource, /setThumbnailOptimizationStatusListener\([\s\S]*?settingsWindowController\?\.send\("cache:optimizationStatusChanged", status\)/u);
   assert.match(mainSource, /isVisibleAndFocused\(mainWindow\)[\s\S]*?settingsWindowController\?\.isVisibleAndFocused\(\)[\s\S]*?isVisibleAndFocused\(previewWindow\)/u);
-  assert.match(embeddedMetadataRuntimeSource, /getActiveWebContents[\s\S]*?includes\(event\.sender\)[\s\S]*?for \(const webContents of getActiveWebContents\(\)\)/u);
   assert.match(mainSource, /registerAppUpdateIpc\([\s\S]*?isSenderAllowed: \(event\) => isMainSenderAllowed\(event\) \|\| isSettingsSenderAllowed\(event\)[\s\S]*?service: appUpdateDownloadService/u);
   assert.match(appUpdateIpcSource, /app:checkForUpdates[\s\S]*?app:downloadUpdate[\s\S]*?app:pauseUpdateDownload[\s\S]*?app:discardUpdate[\s\S]*?app:installUpdate/u);
   assert.match(appUpdateIpcSource, /if \(!isSenderAllowed\(event\)\)[\s\S]*?service\.setAvailableAsset\(result\.asset\)/u);

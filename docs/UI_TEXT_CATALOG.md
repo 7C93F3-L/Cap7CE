@@ -265,7 +265,6 @@
 | `settings.launchAtLoginOff`        | 关闭                            |                           | Off | 登录启动状态 |
 | `settings.systemNotifications`     | 系统通知                          |                           | System Notifications | 后台运行与缓存完成通知 |
 | `settings.skimCache`               | Skim 缓存                       |                           | Skim Cache | Skim 独立缓存 |
-| `settings.embeddedMetadata`        | 嵌入信息                         |                           | Embedded Information | 嵌入信息补齐 |
 | `format.category.visual`           | 图像                            |                           |     | 自定义查看分类        |
 | `format.category.video`            | 视频                            |                           |     | 自定义查看分类        |
 | `format.category.audio`            | 音频                            |                           |     | 自定义查看分类        |
@@ -673,3 +672,86 @@
 - “识别 / 索引”使用边界：AI 内容分析使用“识别”，数据库记录及维护使用“索引”
 - 标点和空格规则：中文标点；省略号统一用“…”；中英文之间留一个空格；短按钮不加句号，完整提示可加句号
 - 英文风格（美式 / 英式）：美式
+
+## 文件属性建库管理
+
+| Key | 中文 | English | 用途 |
+| --- | --- | --- | --- |
+| `metadataBuild.task` | 任务状态 | Task status | 建库详情页 |
+| `metadataBuild.idle` | 尚未开始 | Not started | 建库详情页 |
+| `metadataBuild.preparing` | 正在准备 | Preparing | 建库详情页 |
+| `metadataBuild.discovering` | 正在查找文件 | Discovering files | 建库详情页 |
+| `metadataBuild.extracting` | 正在提取 | Extracting | 建库详情页 |
+| `metadataBuild.waiting` | 等待恢复 | Waiting | 建库详情页 |
+| `metadataBuild.pausing` | 正在暂停… | Pausing… | 建库详情页 |
+| `metadataBuild.paused` | 已暂停 | Paused | 建库详情页 |
+| `metadataBuild.completed` | 本轮已完成 | Pass complete | 建库详情页 |
+| `metadataBuild.failed` | 提取已中断 | Extraction interrupted | 建库详情页 |
+| `metadataBuild.intro` | 提取文件属性，用于尺寸、色彩、时长等筛选。 | Extract file attributes for size, color, duration and other filters. | 建库详情页 |
+| `metadataBuild.items` | 项 | items | 建库详情页 |
+| `metadataBuild.total` | / {count} 项 | / {count} items | 建库详情页 |
+| `metadataBuild.estimating` | 剩余时间估算中 | Estimating time remaining | 建库详情页 |
+| `metadataBuild.eta` | 预计还需 {minutes} 分钟 | About {minutes} min remaining | 建库详情页 |
+| `metadataBuild.progress` | 本轮提取进度 | Current extraction progress | 建库详情页 |
+| `metadataBuild.directoryCount` | {count} 个目录任务 | {count} directory tasks | 建库详情页 |
+| `metadataBuild.currentDrive` | 当前磁盘 {label} | Current drive: {label} | 建库详情页 |
+| `metadataBuild.exceptions` | 跳过 {skipped} 项 · 失败 {failed} 项 | Skipped {skipped} · Failed {failed} | 建库详情页 |
+| `metadataBuild.failedHint` | 任务暂时中断，已有属性仍可使用。请检查磁盘连接或诊断信息后重试。 | The task was interrupted. Existing attributes remain available. Check drive connections or diagnostics, then retry. | 建库详情页 |
+| `metadataBuild.directoryChanged` | 目录身份已变化，请取消任务后重新选择目录。 | The directory identity changed. Cancel the task and select the directory again. | 建库详情页 |
+| `metadataBuild.directoryUnavailable` | 目录暂不可访问，请检查磁盘连接和基础索引状态。 | The directory is unavailable. Check its drive connection and base index status. | 建库详情页 |
+| `metadataBuild.background` | 关闭设置后继续提取 | Extraction continues after closing Settings | 建库详情页 |
+| `metadataBuild.directoryHint` | 目录任务不改变已保存的全盘范围 | Directory tasks preserve the saved drive scope | 建库详情页 |
+| `metadataBuild.pauseHint` | 暂停期间可调整范围与顺序 | Scope and order can be changed while paused | 建库详情页 |
+| `metadataBuild.localHint` | 处理在本机进行，可随时暂停 | Runs locally and can be paused at any time | 建库详情页 |
+| `metadataBuild.cancelDirectories` | 取消目录任务 | Cancel directory tasks | 建库详情页 |
+| `metadataBuild.pause` | 暂停提取 | Pause | 建库详情页 |
+| `metadataBuild.resume` | 继续提取 | Resume | 建库详情页 |
+| `metadataBuild.saveResume` | 保存并继续 | Save and resume | 建库详情页 |
+| `metadataBuild.start` | 开始提取 | Start extraction | 建库详情页 |
+| `metadataBuild.saveStart` | 保存并开始 | Save and start | 建库详情页 |
+| `metadataBuild.check` | 重新检查 | Check again | 建库详情页 |
+| `metadataBuild.saveCheck` | 保存并检查 | Save and check | 建库详情页 |
+| `metadataBuild.saveRetry` | 保存并重试 | Save and retry | 建库详情页 |
+| `metadataBuild.drives` | 磁盘范围与顺序 | Drive scope and order | 建库详情页 |
+| `metadataBuild.selected` | 已选 {count} 个磁盘 | {count} drives selected | 建库详情页 |
+| `metadataBuild.drivesHint` | 按列表从上往下处理，取消勾选不会删除已有属性。 | Process drives from top to bottom. Deselecting a drive keeps existing attributes. | 建库详情页 |
+| `metadataBuild.unavailableDrive` | 不可用磁盘 | Unavailable drive | 建库详情页 |
+| `metadataBuild.selectDrive` | 处理 {label} | Process {label} | 建库详情页 |
+| `metadataBuild.excludedDrive` | 不处理 | Excluded | 建库详情页 |
+| `metadataBuild.limitedFolders` | 仅 {count} 个文件夹 | {count} folders only | 建库详情页 |
+| `metadataBuild.wholeDrive` | 整盘 | Entire drive | 建库详情页 |
+| `metadataBuild.moveUp` | 上移 {label} | Move {label} up | 建库详情页 |
+| `metadataBuild.moveDown` | 下移 {label} | Move {label} down | 建库详情页 |
+| `metadataBuild.directoryLock` | 目录任务结束或取消后，可修改全盘范围。 | Drive scope can be changed after directory tasks finish or are canceled. | 建库详情页 |
+| `metadataBuild.locked` | 暂停提取后可修改范围与顺序。 | Pause extraction to change the scope and order. | 建库详情页 |
+| `metadataBuild.noSelection` | 请选择至少一个磁盘。 | Select at least one drive. | 建库详情页 |
+| `metadataBuild.noDrives` | 暂无可管理的磁盘，请先完成基础文件索引的准备。 | No drives are available. Prepare the base file index first. | 建库详情页 |
+| `metadataBuild.folders` | 文件夹限制 | Folder limits | 建库详情页 |
+| `metadataBuild.folderSummary` | {includes} 项限定 · {excludes} 项排除 | {includes} included · {excludes} excluded | 建库详情页 |
+| `metadataBuild.foldersHint` | 默认处理所选磁盘，可进一步限定或排除文件夹 | Process selected drives, with optional folder limits or exclusions | 建库详情页 |
+| `metadataBuild.onlyFolders` | 仅处理这些文件夹 | Only process these folders | 建库详情页 |
+| `metadataBuild.excludeFolders` | 排除这些文件夹 | Exclude these folders | 建库详情页 |
+| `metadataBuild.addFolder` | ＋ 添加文件夹 | + Add folder | 建库详情页 |
+| `metadataBuild.onlyHint` | 添加后，对应磁盘仅处理这些文件夹及其子文件夹。 | Limits each corresponding drive to these folders and their subfolders. | 建库详情页 |
+| `metadataBuild.excludeHint` | 这些文件夹及其子文件夹始终跳过。 | Always skip these folders and their subfolders. | 建库详情页 |
+| `metadataBuild.savedScope` | 已保存的范围 {count} | Saved scope {count} | 建库详情页 |
+| `metadataBuild.removeScope` | 移除 {label} | Remove {label} | 建库详情页 |
+| `metadataBuild.noOnlyFolders` | 未限定文件夹 | No folder limits | 建库详情页 |
+| `metadataBuild.noExcludedFolders` | 未添加排除文件夹 | No excluded folders | 建库详情页 |
+| `metadataBuild.folderPath` | 文件夹路径 | Folder path | 建库详情页 |
+| `metadataBuild.pathPlaceholder` | 粘贴本地文件夹路径 | Paste a local folder path | 建库详情页 |
+| `metadataBuild.add` | 添加 | Add | 建库详情页 |
+| `metadataBuild.saved` | 范围与顺序已保存，不会自动开始提取。 | Scope and order saved. Extraction will not start automatically. | 建库详情页 |
+| `metadataBuild.scopeFailed` | 无法添加此范围，请检查路径、基础索引状态或是否存在冲突规则。 | Could not add this scope. Check the path, base index status and conflicting rules. | 建库详情页 |
+| `metadataBuild.back` | 返回缓存与索引 | Back to Cache and index | 建库详情页 |
+| `metadataBuild.loadFailed` | 未能读取建库状态，请重试。 | Could not load extraction status. Please retry. | 建库详情页 |
+| `metadataBuild.conflict` | 范围已由其他操作改变，请还原修改后重新编辑。 | The scope changed elsewhere. Reset your changes before editing again. | 建库详情页 |
+| `metadataBuild.actionFailed` | 操作未完成，修改已保留，请重试。 | The action failed. Your changes were retained. Please retry. | 建库详情页 |
+| `metadataBuild.unsaved` | 有未保存的修改 | Unsaved changes | 建库详情页 |
+| `metadataBuild.unchanged` | 范围与顺序无修改 | No scope or order changes | 建库详情页 |
+| `metadataBuild.reset` | 还原修改 | Reset changes | 建库详情页 |
+| `metadataBuild.save` | 保存配置 | Save configuration | 建库详情页 |
+| `metadataBuild.leaveTitle` | 保存范围与顺序？ | Save scope and order? | 建库详情页 |
+| `metadataBuild.keepEditing` | 继续编辑 | Keep editing | 建库详情页 |
+| `metadataBuild.discard` | 放弃修改 | Discard changes | 建库详情页 |
+| `metadataBuild.saveBack` | 保存并返回 | Save and go back | 建库详情页 |

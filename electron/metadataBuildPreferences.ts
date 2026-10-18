@@ -5,8 +5,8 @@ import type { MetadataBuildPolicy } from "../src/shared/metadataBuildTypes";
 
 export interface MetadataBuildPreferences {
   version: 2;
-  consent: true;
-  intent: "active" | "paused" | "completed";
+  consent: boolean;
+  intent: "configured" | "active" | "paused" | "completed";
   policy: MetadataBuildPolicy;
   scopeLabels: Record<string, string>;
 }
@@ -17,7 +17,7 @@ export interface MetadataBuildPreferenceStore {
 const valid = (value: unknown): value is MetadataBuildPreferences => {
   const saved = value as MetadataBuildPreferences | null;
   const policy = saved?.policy;
-  return saved?.version === 2 && saved.consent === true && ["active", "paused", "completed"].includes(saved.intent) && !!policy
+  return saved?.version === 2 && (saved.intent === "configured" ? saved.consent === false : saved.consent === true && ["active", "paused", "completed"].includes(saved.intent)) && !!policy
     && Array.isArray(policy.volumeOrder) && policy.volumeOrder.length > 0 && policy.volumeOrder.length <= 64
     && new Set(policy.volumeOrder).size === policy.volumeOrder.length
     && policy.volumeOrder.every((id) => typeof id === "string" && /^[A-Fa-f0-9]{32}$/.test(id))

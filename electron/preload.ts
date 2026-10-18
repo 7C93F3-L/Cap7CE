@@ -185,16 +185,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
     setDetailedLogging: (enabled: boolean): Promise<RuntimeDiagnosticsInfo> => ipcRenderer.invoke("diagnostics:setDetailedLogging", enabled),
     export: (): Promise<RuntimeDiagnosticsExportResult> => ipcRenderer.invoke("diagnostics:export")
   },
-  embeddedMetadata: {
-    status: () => ipcRenderer.invoke("embeddedMetadata:status"),
-    startBackfill: () => ipcRenderer.invoke("embeddedMetadata:startBackfill"),
-    cancelBackfill: () => ipcRenderer.invoke("embeddedMetadata:cancelBackfill"),
-    onStatusChanged: (callback: (status: unknown) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, status: unknown) => callback(status);
-      ipcRenderer.on("embeddedMetadata:statusChanged", listener);
-      return () => ipcRenderer.removeListener("embeddedMetadata:statusChanged", listener);
-    }
-  },
   skim: {
     listLocations: () => ipcRenderer.invoke("skim:listLocations"),
     resolveDirectoryPath: (input: string) => ipcRenderer.invoke("skim:resolveDirectoryPath", input),

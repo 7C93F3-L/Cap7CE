@@ -6,7 +6,7 @@ const fixture=`
 import React from 'react';import {createRoot} from 'react-dom/client';import './src/renderer/styles.css';import './src/renderer/stable-ui/StableUiFoundation.css';
 import CatalogWorkspace from './src/renderer/catalog-workspace/CatalogWorkspace';import {useCatalogWindowCommands} from './src/renderer/catalog-workspace/useCatalogWindowCommands';
 const noop=()=>{},probe=window.probe={requests:[],canceled:[],statusReads:0,locationReads:0,driveReads:0,building:true,attributesAvailable:false,colorsAvailable:false,forceEmpty:false};
-window.cap7ce={settingsWindow:{onMetadataBuildRequested:callback=>{probe.openMetadata=callback;return noop}},window:{onRefreshCurrentPageRequested:()=>noop,onFocusMainSearch:()=>noop,onActivateSkimRequested:()=>noop,onToggleSkimLocationPickerRequested:()=>noop,onActivateShellModeShortcut:()=>noop},skim:{listLocations:async()=>{probe.locationReads++;return []},read:async r=>{if(r.path!==null)throw Error('Home must only enumerate roots');probe.driveReads++;return {taskId:r.taskId,cancelled:false,entries:['X:','Y:'].map(name=>({kind:'drive',path:name+'\\\\',label:name==='X:'?'System':''}))}},cancel:async()=>true},preview:{onNavigate:()=>noop,onClosed:()=>noop},
+window.cap7ce={settingsWindow:{openMetadataBuild:async()=>{probe.metadataOpens=(probe.metadataOpens||0)+1;return true}},window:{onRefreshCurrentPageRequested:()=>noop,onFocusMainSearch:()=>noop,onActivateSkimRequested:()=>noop,onToggleSkimLocationPickerRequested:()=>noop,onActivateShellModeShortcut:()=>noop},skim:{listLocations:async()=>{probe.locationReads++;return []},read:async r=>{if(r.path!==null)throw Error('Home must only enumerate roots');probe.driveReads++;return {taskId:r.taskId,cancelled:false,entries:['X:','Y:'].map(name=>({kind:'drive',path:name+'\\\\',label:name==='X:'?'System':''}))}},cancel:async()=>true},preview:{onNavigate:()=>noop,onClosed:()=>noop},
 files:{open:async p=>{probe.revealed=p;return ''},copyPaths:async p=>{probe.copied=p;return p.length}},favoriteDirectories:{renameFolder:async(id,name)=>{const item=probe.favorites.find(v=>v.id===id);probe.renameCalls=(probe.renameCalls??0)+1;if(probe.cancelRename)return {change:null,directories:probe.favorites};const change={oldPath:item.path,newPath:item.path.slice(0,item.path.lastIndexOf('\\\\')+1)+name};probe.renamedRoot=change.newPath;probe.favorites=probe.favorites.map(v=>v.path===change.oldPath?{...v,path:change.newPath,name}:v);return {change,directories:probe.favorites}},move:async(id,direction)=>{const a=probe.favorites,i=a.findIndex(v=>v.id===id),j=i+(direction==='up'?-1:1);[a[i],a[j]]=[a[j],a[i]];return [...a]},list:async()=>probe.favorites??= [{id:'fav',name:'Favorite',path:'X:\\\\Favorite'}],add:async path=>{probe.favorites=[...probe.favorites,{id:'new-fav',name:'Folder',path}];return probe.favorites},remove:async id=>{probe.favorites=probe.favorites.filter(f=>f.id!==id);return probe.favorites}},
 metadataBuild:{startDirectory:async request=>{(probe.metadataRequests??=[]).push(request);return window.cap7ce.metadataBuild.status()},status:async()=>({volumes:[{volumeId:'X:',label:'X:'}],scopeLabels:{},policy:{volumeOrder:[],includes:[],excludes:[]},progress:{phase:'idle',discovered:0,processed:0,failed:0,unsupported:0,total:null}})},
 computerSearch:{moveToTrash:async r=>{(probe.trashCalls??=[]).push(r);return probe.trashResult??{success:false,totalCount:r.authorizationIds.length,deletedPaths:[],failedItems:[]}},status:async()=>{probe.statusReads++;return ({state:probe.building?'starting':'ready',searchAvailable:!probe.building,catalogRevision:1,volumes:probe.building?[]:['X:','Y:'].map(displayName=>({displayName,volumeId:displayName,state:'ready',queryable:true,processed:2,total:2}))})},onCatalogChanged:()=>noop,
@@ -20,7 +20,7 @@ app.whenReady().then(async()=>{
     loader:{'.svg':'text'},banner:{js:'var __icons=()=>({});'},define:{'process.env.NODE_ENV':'"production"','import.meta.glob':'__icons'}}).outputFiles;
   const js=output.find(file=>file.path.endsWith('.js'))??output[0];fs.writeFileSync(path.join(root,'fixture.js'),js.text);fs.writeFileSync(path.join(root,'fixture.css'),output.find(file=>file.path.endsWith('.css')).text);
   fs.writeFileSync(path.join(root,'index.html'),'<link rel="stylesheet" href="fixture.css"><div id="root"></div><script src="fixture.js"></script>');
-  win=new BrowserWindow({show:false,width:1100,height:750,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}});
+  win=new BrowserWindow({show:false,width:1100,height:750,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});
   const run=code=>win.webContents.executeJavaScript(code).catch(error=>{console.error("Failed renderer action:",code);throw error}),wait=ms=>new Promise(r=>setTimeout(r,ms));
   const ready=async code=>{for(let n=0;n<150;n++){if(await run(code))return;await wait(20)}throw Error('Timeout '+code)};
   await win.loadFile(path.join(root,'index.html'));await ready("document.querySelectorAll('.cap-catalog-home .cap-skim-root-entry').length===2");
@@ -119,9 +119,10 @@ app.whenReady().then(async()=>{
   const detailsResizer="document.querySelector('.cap-catalog-details-resizer')";
   const detailsWidth=()=>run(`${detailsResizer}.getAttribute('aria-valuenow')`);
   assert.equal(await detailsWidth(),'280','right sidebar starts at the content-oriented default');
-  const dragDetails=async dx=>{const point=await run(`(()=>{const r=${detailsResizer}.getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()`);
+  const painted=()=>run('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))');
+  const dragDetails=async dx=>{await painted();const point=await run(`(()=>{const r=${detailsResizer}.getBoundingClientRect();return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+60)}})()`);
     win.webContents.sendInputEvent({type:'mouseMove',...point});win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...point});
-    win.webContents.sendInputEvent({type:'mouseMove',x:point.x+dx,y:point.y});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+dx,y:point.y});await wait(50);};
+    await painted();win.webContents.sendInputEvent({type:'mouseMove',x:point.x+dx,y:point.y});await painted();win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,x:point.x+dx,y:point.y});await painted();};
   await dragDetails(-60);assert.equal(await detailsWidth(),'340','dragging the left edge left widens the right sidebar');
   await dragDetails(-500);assert.equal(await detailsWidth(),'420','right sidebar respects its maximum');
   await dragDetails(600);assert.equal(await detailsWidth(),'220','right sidebar respects its minimum');
@@ -175,8 +176,8 @@ app.whenReady().then(async()=>{
   await ready("document.querySelector('.cap-catalog-attribute-notice')?.title.includes('尚无')");
   assert.equal(await run("Boolean(document.querySelector('.cap-catalog-attribute-notice').closest('.cap-catalog-top-filters'))"),true,'missing attributes have a contextual header entry');
   await run("document.querySelector('.cap-catalog-attribute-notice').click()");
-  await ready("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')");
-  await run("document.querySelector('.cap-metadata-build-close').click()");
+  await ready("probe.metadataOpens===1");
+  assert.equal(await run("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')"),false,"management opens Settings without covering the grid");
   assert.equal(await run("document.querySelector('.cap-stable-metadata-filters').disabled"),true,'missing scoped attributes disable detailed conditions');
   assert.equal(await run("document.querySelector('.cap-catalog-details header').textContent"),'当前搜索');
   assert.equal(await run("document.querySelector('.cap-catalog-details').textContent.includes('搜索范围')"),true);
@@ -194,12 +195,9 @@ app.whenReady().then(async()=>{
   await ready(`${active}.querySelector('.cap-catalog-home')`);
   assert.equal(await run("document.querySelector('.cap-catalog-filter-actions span').textContent"),'筛选 · 0项','home action clears conditions');
   assert.equal(await run("document.querySelector('[aria-label=\"文件属性建库\"]')===null"),true,'sidebar no longer duplicates the indexing entry');
-  await run('probe.openMetadata()');
-  await ready("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')");
-  await run('probe.openMetadata()');
-  assert.equal(await run("document.querySelectorAll('.cap-metadata-build-slot.is-floating').length"),1,'repeated settings requests keep the original panel open');
-  await run("document.querySelector('.cap-metadata-build-close').click()");
-  await ready("!document.querySelector('.cap-metadata-build-slot.is-floating')");
+  await run("window.cap7ce.settingsWindow.openMetadataBuild();window.cap7ce.settingsWindow.openMetadataBuild()");
+  await ready("probe.metadataOpens===3");
+  assert.equal(await run("!!document.querySelector('.cap-metadata-build-slot.is-floating .cap-metadata-build')"),false);
 
   await run("probe.forceEmpty=false;probe.bulk=true;document.querySelector('.cap-favorite-directories > .cap-favorite-open').click()");
   await goHome();await ready(`${active}.querySelector('.cap-catalog-home')`);await openDrive('X:');

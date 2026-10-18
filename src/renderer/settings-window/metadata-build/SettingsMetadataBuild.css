@@ -1,0 +1,86 @@
+.cap-settings-build, .cap-settings-build .build-body { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
+.cap-settings-build { grid-column: 1 / -1; }
+.cap-settings-build .build-body { flex: 1; }
+.cap-settings-build .build-scroll-frame { flex: 1; min-height: 0; position: relative; }
+.cap-settings-build .build-scroll-frame > .cap-custom-scrollbar-vertical { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; }
+.cap-settings-build .build-page { display: grid; gap: 16px; }
+.cap-settings-build .build-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+.cap-settings-build .build-heading h1 { margin: 0; font-size: var(--cap-ui-font-page-title); font-weight: 600; line-height: 30px; }
+.cap-settings-build .build-card { padding: 18px 20px; min-width: 0; border-radius: 12px; background: var(--stable-settings-card); }
+.cap-settings-build .card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cap-settings-build :is(h2, h3) { margin: 0; font-size: var(--cap-ui-font-body); font-weight: 600; }
+.cap-settings-build .muted { color: var(--stable-settings-secondary); font-size: var(--cap-ui-font-secondary); }
+.cap-settings-build .build-card p { margin: 6px 0 0; line-height: 1.6; }
+.cap-settings-build .intro { color: var(--stable-settings-secondary); margin-top: 12px; }
+.cap-settings-build .icon-button { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border-radius: 999px; flex-shrink: 0; }
+.cap-settings-build .icon-button:hover:not(:disabled) { background: var(--stable-settings-hover); }
+.cap-settings-build .icon-button:disabled { opacity: .25; }
+.cap-settings-build .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: var(--stable-settings-hover); color: var(--stable-settings-secondary); font-size: var(--cap-ui-font-secondary); }
+.cap-settings-build .status-pill i { width: 5px; height: 5px; border-radius: 50%; background: var(--stable-settings-focus); }
+.cap-settings-build .status-pill.is-running { color: var(--stable-settings-text); }
+.cap-settings-build :is(.task-bottom, .task-actions) { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cap-settings-build .task-bottom { margin-top: 18px; }
+.cap-settings-window-foundation .cap-settings-build .primary { background: var(--cap-accent-gradient); color: var(--dialog-action-hover-text); }
+.cap-settings-window-foundation .cap-settings-build .primary:disabled { background: var(--stable-settings-hover); color: inherit; }
+.cap-settings-build .task-count { display: flex; gap: 6px; align-items: baseline; margin-top: 14px; }
+.cap-settings-build .task-count strong { font-size: 22px; font-weight: 600; }
+.cap-settings-build .task-count > span { font-size: var(--cap-ui-font-secondary); color: var(--stable-settings-secondary); }
+.cap-settings-build .task-estimate { margin-left: auto; }
+.cap-settings-build progress { display: block; appearance: none; height: 5px; width: 100%; margin-top: 12px; border: 0; border-radius: 3px; overflow: hidden; }
+.cap-settings-build progress::-webkit-progress-bar { background: var(--stable-settings-hover); }
+.cap-settings-build progress::-webkit-progress-value { background: var(--cap-accent-gradient); border-radius: 3px; }
+.cap-settings-build .task-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: var(--cap-ui-font-secondary); color: var(--stable-settings-secondary); }
+.cap-settings-build .task-error { color: color-mix(in srgb, var(--stable-settings-text) 65%, #d49a6c); font-size: var(--cap-ui-font-control); }
+.cap-settings-build .directory-task-path { overflow-wrap: anywhere; font-size: var(--cap-ui-font-control); user-select: text; }
+.cap-settings-build :is(.drive-list, .folder-details) { border: 0; margin: 0; padding: 0; min-width: 0; }
+.cap-settings-build .drive-list { margin-top: 10px; }
+.cap-settings-build .drive-row { min-height: 46px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--stable-settings-border); }
+.cap-settings-build .drive-row:last-child { border: 0; }
+.cap-settings-build .drive-row label { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+.cap-settings-build .drive-row input { appearance: none; margin: 0; width: 16px; height: 16px; flex: 0 0 16px; border: 1px solid color-mix(in srgb, var(--stable-settings-text) 32%, transparent); border-radius: 50%; background: transparent; cursor: pointer; }
+.cap-settings-build .drive-row input:checked { border-color: transparent; background: var(--cap-accent-gradient); }
+.cap-settings-build .drive-row label:hover input:not(:checked):not(:disabled) { border-color: var(--stable-settings-focus); background: var(--stable-settings-hover); }
+.cap-settings-build .drive-list:disabled :is(label, input) { cursor: default; }
+.cap-settings-build .drive-row label svg { color: var(--stable-settings-secondary); flex-shrink: 0; }
+.cap-settings-build .drive-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap-settings-build .drive-scope { flex-shrink: 0; }
+.cap-settings-build .order-buttons { display: flex; gap: 2px; }
+.cap-settings-build .is-unselected .drive-name { color: var(--stable-settings-secondary); }
+.cap-settings-build .drive-list:disabled .drive-row label { opacity: .65; }
+.cap-settings-build .scope-lock { padding-top: 6px; }
+.cap-settings-build .folder-card { padding-block: 0; }
+.cap-settings-build .folder-toggle { display: flex; align-items: center; width: 100%; min-height: 70px; gap: 12px; text-align: left; padding: 0; }
+.cap-settings-build .folder-toggle > span:nth-child(2) { display: grid; gap: 3px; flex: 1; }
+.cap-settings-build .folder-toggle strong { font-weight: 600; }
+.cap-settings-build .folder-toggle small { line-height: 16px; }
+.cap-settings-build .chevron { display: flex; }
+.cap-settings-build .chevron.is-open { transform: rotate(180deg); }
+.cap-settings-build .folder-group { border-top: 1px solid var(--stable-settings-border); padding: 16px 0; }
+.cap-settings-build .scope-paths { list-style: none; margin: 10px 0 0; padding: 0; }
+.cap-settings-build .scope-paths li { display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.cap-settings-build .scope-paths li > span { flex: 1; overflow-wrap: anywhere; min-width: 0; font-size: var(--cap-ui-font-control); user-select: text; }
+.cap-settings-build .scope-paths li svg { flex-shrink: 0; color: var(--stable-settings-secondary); }
+.cap-settings-build .empty-rule { padding: 10px 0 0; opacity: .7; }
+.cap-settings-build .folder-composer { display: grid; gap: 8px; margin-top: 12px; padding: 12px; background: var(--stable-settings-hover); border-radius: 8px; }
+.cap-settings-build .folder-composer label { font-size: var(--cap-ui-font-control); }
+.cap-settings-build .folder-composer input { min-width: 0; width: 100%; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--stable-settings-border); background: var(--stable-settings-surface); color: inherit; user-select: text; }
+.cap-settings-build .composer-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.cap-settings-build .build-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 28px; min-height: 58px; flex-shrink: 0; background: var(--stable-settings-card); border-top: 1px solid var(--stable-settings-border); }
+.cap-settings-build .build-footer > span { font-size: var(--cap-ui-font-secondary); color: var(--stable-settings-secondary); min-width: 0; overflow-wrap: anywhere; }
+.cap-settings-build .build-footer > div { display: flex; gap: 8px; flex-shrink: 0; }
+.cap-settings-build .build-leave-dialog { border: 1px solid var(--stable-settings-border); background: var(--dialog-surface); color: inherit; border-radius: 12px; padding: 24px; max-width: calc(100% - 32px); box-shadow: 0 10px 24px #0003; }
+.cap-settings-build .build-leave-dialog::backdrop { background: #0003; }
+.cap-settings-build .build-leave-dialog h2 { font-size: 16px; }
+.cap-settings-build .build-leave-dialog p { color: var(--stable-settings-secondary); margin: 12px 0 24px; }
+.cap-settings-build .build-leave-dialog > div { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .cap-settings-build .cap-stable-settings-content { padding: 18px 14px; }
+  .cap-settings-build .build-card { padding: 16px; }
+  .cap-settings-build .folder-card { padding-block: 0; }
+  .cap-settings-build .build-footer { padding: 12px 14px; flex-wrap: wrap; }
+  .cap-settings-build .build-footer > div { margin-left: auto; }
+  .cap-settings-build .build-heading h1 { font-size: 20px; }
+  .cap-settings-build .drive-row, .cap-settings-build .drive-row label { gap: 8px; }
+  .cap-settings-build :is(.task-meta, .task-bottom, .task-actions, .card-heading) { flex-wrap: wrap; }
+  .cap-settings-build .task-actions { margin-left: auto; }
+}

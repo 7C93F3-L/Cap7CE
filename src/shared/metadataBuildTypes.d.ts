@@ -31,6 +31,8 @@ export interface MetadataBuildStatus {
 export interface MetadataBuildApi {
   resolveScope(path: string): Promise<{ volumeId: string; rootFileReference: string | null; label: string }>;
   status(): Promise<MetadataBuildStatus>;
+  savePolicy(policy: MetadataBuildPolicy): Promise<MetadataBuildStatus>;
+  onChanged?: (callback: () => void) => () => void;
   start(request: { allowMetadataExtraction: boolean; policy: MetadataBuildPolicy }): Promise<MetadataBuildStatus>;
   pause(): Promise<MetadataBuildStatus>;
   resume(): Promise<MetadataBuildStatus>;
