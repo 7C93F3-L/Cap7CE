@@ -73,7 +73,8 @@ public sealed record CatalogV2WriteBatch(
     long NextCheckpointUsn,
     long? JournalFirstUsn,
     long? JournalLowestValidUsn,
-    IReadOnlyList<CatalogV2NodeRecord> Nodes);
+    IReadOnlyList<CatalogV2NodeRecord> Nodes,
+    IReadOnlyList<DirectoryEntries.CatalogFileEntryUpdate>? FileEntries = null);
 
 public sealed record CatalogQueryScope(
     CatalogQueryScopeKind Kind,

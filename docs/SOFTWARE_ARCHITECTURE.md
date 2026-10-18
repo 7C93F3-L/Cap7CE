@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-## 当前实施状态（2026-10-18）
+## 当前实施状态（2026-10-19）
 
 本地开发主线已切换到统一 Catalog 工作区，主入口是 `src/renderer/catalog-workspace/CatalogApplicationRoot.tsx`；旧 `App.tsx` 不再作为默认产品入口。本文后续按历史轮次记录的描述不得覆盖本节的当前所有权；尤其旧即时 AI 搜索、旧自定义查看范围和旧工作区标签布局不再代表当前产品界面。
 
@@ -11,8 +11,11 @@
 - 已激活入口集合通过同一 Catalog 查询投影参与范围、名称/路径/关键词、扩展名与事实筛选。签名游标包含入口 key，避免同一物理身份的同名多入口在分页时丢失；Core 返回的结果 ID 区分入口，文件授权仍使用既有返回项链路。属性源解析可选择仍存在的入口，不依赖已经删除的原名称。
 - `Reader.Host/DirectoryEntries` 复用已授权卷及既有 `FILE_READ_ATTRIBUTES` 句柄，以固定 `NtQueryInformationFile(FileHardLinkInformation=46)` 读取完整名称/父目录引用，前后核对身份、属性、链接数及源版本；不接受路径、不读正文、不写源文件。原生缓冲上限 1 MiB、单文件最多 1024 个入口，失败、超限和消失分别返回明确状态，部分集合不能当作完整数据。
 - CR/2 增加可选 `FileEntryNames` 能力和固定操作，每批最多 64 个不重复文件引用，按字节预算续页。`Core.Host/DirectoryEntries/ReaderFileEntryClient` 严格校验请求顺序、完整性和结束标志，断连或取消不返回部分集合。`ReaderV2CatalogSession` 负责既有鉴权与传输；旧 Reader 保持兼容且不隐式启用新能力。普通 Win32 名称枚举只留在测试项目，作为独立参考，不成为生产全盘二次扫描。
-- 目录入口扩展当前完成隔离数据契约、查询、Reader 提供端和 Core 消费端及原生合成文件验证；正式初建、USN 入口发布、断档恢复及全盘覆盖接线尚未启用，硬链接完整覆盖缺口尚不能标记为已解决。公开接口不新增提取授权，也不启动个人文件分析。
-- `core-directory-entry-boundary-check` 守护入口存储的数据库边界、Reader 的固定元数据权限、模块清单和体量；范围 SQL 拆出后将 `CatalogV2Database.cs` 的检查上限锁定为当前 1216 行，不允许继续把入口业务堆回数据库宿主。
+- `CatalogSynchronizationService` 与 `CatalogJournalMonitor` 增加默认关闭的 `captureFileEntries` 内部装配参数，产品运行时尚不传入开启值。开启时先协商 Reader 能力，初建使用同一临时 SQLite 库中的入口暂存表，追赶与实时维护在既有节点/检查点事务中调用 `CatalogFileEntryPublication`。不由 Renderer 或普通状态/查询请求激活，不新增提取授权。
+- `CatalogDirectoryEntryCapture` 以每批最多 64 个引用读取元数据，保留匹配的当前主名称或选确定性剩余名称。FileDelete 后若物理文件仍存在则发布剩余入口，并剔除该删除原因的内容失效提示；其他内容变化原因仍保留。明确 Missing 才删除最后入口，Unavailable/OverLimit 在增量中不推进检查点并使当前 owner 退出；重试重新从持久检查点开始。初建的不完整观察不覆盖已有完整集合，新文件保留可用的基础节点，不宣称完整覆盖。
+- `CatalogFileEntryStaging` 只持有临时库的名称集合与源版本；`Snapshots/CatalogSnapshotPublication` 拥有节点、路径、入口和 ready 状态的单次发布，并校验开始建库时的卷修订。旧 owner、源或父目录不匹配、SQL 失败均回滚，拒绝的入口页不能继续发布为成功快照。入口查询仅使用仍存活且有已解析路径的父目录，避免恢复期间猜测错误根路径。
+- 入口的初建、两种增量和恢复接线已通过隔离测试；真实受限服务部署、不可读文件的生产重试策略、多路径属性发现的范围边界、启用/回退与规模验证尚未收口，正式库仍未启用，不能标记全盘硬链接缺口已解决。
+- `core-directory-entry-boundary-check` 守护入口存储的数据库边界、Reader 的固定元数据权限、模块清单和体量；范围 SQL 和快照发布拆出后将 `CatalogV2Database.cs` 的检查上限降低至 1125 行，不允许继续把入口业务堆回数据库宿主。
 - 当前版本尚未完成睡眠/物理热插拔及最新安装矩阵验收；WPF/WinUI 试验壳未排期。本轮没有打包、发布或更换正在使用的受保护组件。
 
 

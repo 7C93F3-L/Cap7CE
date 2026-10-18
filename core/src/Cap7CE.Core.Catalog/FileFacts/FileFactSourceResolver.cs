@@ -33,7 +33,7 @@ public sealed class FileFactSourceResolver(string databasePath)
                 ON pp.volume_id = n.volume_id AND pp.file_reference = ({parent})
             WHERE n.volume_id = $volume AND n.file_reference = $reference
                 AND (({parent}) IS NULL OR pp.file_reference IS NOT NULL)
-                {(entries ? "AND (es.file_reference IS NULL OR en.entry_key IS NOT NULL) ORDER BY en.entry_key" : "")}
+                {(entries ? "AND (es.file_reference IS NULL OR (en.entry_key IS NOT NULL AND EXISTS(SELECT 1 FROM catalog_nodes_v2 ep WHERE ep.volume_id=en.volume_id AND ep.file_reference=en.parent_file_reference AND ep.is_directory=1 AND ep.exists_flag=1))) ORDER BY en.entry_key" : "")}
             LIMIT 1;
             """;
         FileFactDatabase.BindIdentity(command, identity);

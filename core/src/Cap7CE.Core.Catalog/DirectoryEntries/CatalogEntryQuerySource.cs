@@ -28,6 +28,8 @@ internal static class CatalogEntryQuerySource
                 n.is_directory,n.attributes,n.exists_flag,n.size_bytes,n.created_utc_ticks,n.modified_utc_ticks,e.entry_key
             FROM catalog_file_entries e JOIN catalog_file_entry_sets s ON s.volume_id=e.volume_id AND s.file_reference=e.file_reference
             JOIN catalog_nodes_v2 n ON n.volume_id=s.volume_id AND n.file_reference=s.file_reference
+            JOIN catalog_nodes_v2 p ON p.volume_id=e.volume_id AND p.file_reference=e.parent_file_reference AND p.is_directory=1 AND p.exists_flag=1
+            JOIN catalog_directory_paths_v2 pp ON pp.volume_id=e.volume_id AND pp.file_reference=e.parent_file_reference
             WHERE n.is_directory=0 AND n.created_utc_ticks IS s.created_utc_ticks
         ),
         """;

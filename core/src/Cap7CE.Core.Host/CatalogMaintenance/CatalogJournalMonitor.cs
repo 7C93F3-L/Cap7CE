@@ -16,11 +16,13 @@ public sealed class CatalogJournalMonitor
     private readonly Action<long> published;
     private readonly TimeProvider time;
     private readonly Action listening;
+    private readonly bool captureFileEntries;
     public CatalogJournalMonitor(CatalogV2Database catalog, ICatalogReaderSessionFactory factory,
         Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
-        Action<long> published, TimeProvider? time = null, Action? listening = null, CatalogPreparationDiagnostics? diagnostics = null)
+        Action<long> published, TimeProvider? time = null, Action? listening = null, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false)
     {
-        this.catalog = catalog; this.factory = factory; synchronization = new(catalog, factory, diagnostics);
+        this.catalog = catalog; this.factory = factory; synchronization = new(catalog, factory, diagnostics, captureFileEntries);
+        this.captureFileEntries = captureFileEntries;
         this.resolveRoots = resolveRoots; this.published = published; this.time = time ?? TimeProvider.System;
         this.listening = listening ?? (() => { });
     }
@@ -33,6 +35,7 @@ public sealed class CatalogJournalMonitor
             if (ready.Count == 0) return; // restarted by explicit selection/build; no idle discovery loop
             await using var reader = await factory.ConnectAsync(token);
             if (!reader.SupportsJournalChangeWait) throw new NotSupportedException("reader-journal-wait-unavailable");
+            if (captureFileEntries && !reader.SupportsFileEntryNames) throw new NotSupportedException("reader-entry-names-unavailable");
             var started = time.GetTimestamp();
             var native = (await reader.ListVolumesAsync(token)).Where(volume => volume.JournalAvailable)
                 .ToDictionary(volume => volume.CatalogId, StringComparer.Ordinal);
@@ -48,7 +51,7 @@ public sealed class CatalogJournalMonitor
             var roots = await resolveRoots(ready, token);
             var owners = new Dictionary<string, CatalogJournalPageOwner>(StringComparer.Ordinal);
             foreach (var volume in ready.Where(volume => native.ContainsKey(volume.VolumeId)))
-                owners.Add(volume.VolumeId, await CatalogJournalPageOwner.CreateAsync(catalog, volume, roots, token));
+                owners.Add(volume.VolumeId, await CreateOwnerAsync(reader, native[volume.VolumeId], volume, roots, token));
             if (owners.Count == 0) return;
             listening();
             var pending = new Queue<string>(); var queued = new HashSet<string>(StringComparer.Ordinal);
@@ -82,7 +85,7 @@ public sealed class CatalogJournalMonitor
                         ready = await ReadReadyAsync(token); roots = await resolveRoots(ready, token);
                         var recovered = ready.SingleOrDefault(volume => volume.VolumeId == key);
                         if (recovered is null) owners.Remove(key);
-                        else owners[key] = await CatalogJournalPageOwner.CreateAsync(catalog, recovered, roots, token);
+                        else owners[key] = await CreateOwnerAsync(reader, native[key], recovered, roots, token);
                         if (owners.Count == 0) return;
                     }
                 }
@@ -94,6 +97,10 @@ public sealed class CatalogJournalMonitor
     }
     private async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> ReadReadyAsync(CancellationToken token) =>
         (await catalog.ReadVolumesAsync(token)).Where(volume => volume.Selected && volume.State == CatalogV2VolumeState.Ready).ToArray();
+    private Task<CatalogJournalPageOwner> CreateOwnerAsync(ICatalogReaderSession reader, CatalogReaderVolume native,
+        CatalogV2VolumeSnapshot volume, IReadOnlyList<FileFactOwnedStorageRoot> roots, CancellationToken token) =>
+        CatalogJournalPageOwner.CreateAsync(catalog, volume, roots, token,
+            captureFileEntries ? new CatalogDirectoryEntryCapture(reader, native).CaptureJournalAsync : null);
     private async Task RecoverAsync(ICatalogReaderSession reader, string volumeId, CancellationToken token, string origin = "monitor-recovery")
     {
         await synchronization.SynchronizeConnectedAsync(reader, [volumeId], true, token, origin);

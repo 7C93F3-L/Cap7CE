@@ -67,6 +67,8 @@ await NativeFileEntryCatalogTests.RunAsync();
 await ReaderHardLinkMetadataTests.RunAsync();
 await ReaderFileEntryProtocolTests.RunAsync();
 await ReaderFileEntryClientTests.RunAsync();
+await CatalogEntrySynchronizationTests.RunAsync();
+await CatalogEntrySnapshotFenceTests.RunAsync();
 await CatalogRandomOrderingTests.RunAsync();
 await FileFactDatabaseTests.RunAsync();
 await FileFactImageDetailsTests.RunAsync();

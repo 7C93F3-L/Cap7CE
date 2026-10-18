@@ -14,7 +14,7 @@ public sealed record CatalogV2SnapshotBuildResult(
     CatalogV2VolumeSnapshot Volume,
     CatalogV2SnapshotBuildMetrics Metrics);
 
-public sealed class CatalogV2SnapshotBuild : IAsyncDisposable
+public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
 {
     private readonly CatalogV2Database owner;
     private readonly string volumeId;
@@ -47,7 +47,7 @@ public sealed class CatalogV2SnapshotBuild : IAsyncDisposable
         CatalogV2Database owner,
         string volumeId,
         string databasePath,
-        CancellationToken token)
+        CancellationToken token, bool captureFileEntries, long expectedVolumeRevision)
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
@@ -89,12 +89,13 @@ public sealed class CatalogV2SnapshotBuild : IAsyncDisposable
                     """;
                 await initialize.ExecuteNonQueryAsync(token);
             }
+            if (captureFileEntries) await DirectoryEntries.CatalogFileEntryStaging.CreateAsync(connection, token);
             return new CatalogV2SnapshotBuild(
                 owner,
                 volumeId,
                 databasePath,
                 connection,
-                connection.BeginTransaction());
+                connection.BeginTransaction()) { CaptureFileEntries = captureFileEntries, ExpectedVolumeRevision = expectedVolumeRevision };
         }
         catch
         {
@@ -159,7 +160,7 @@ public sealed class CatalogV2SnapshotBuild : IAsyncDisposable
 
         await connection.CloseAsync();
         var publishWatch = Stopwatch.StartNew();
-        var volume = await owner.PublishSnapshotBuildAsync(volumeId, databasePath, records, token);
+        var volume = await owner.PublishSnapshotBuildAsync(volumeId, databasePath, records, token, CaptureFileEntries, ExpectedVolumeRevision);
         publishWatch.Stop();
         completed = true;
         CatalogV2Database.DeleteSnapshotBuildFiles(databasePath);

@@ -18,14 +18,16 @@ public sealed class CatalogSynchronizationService
     private readonly CatalogV2Database catalog;
     private readonly ICatalogReaderSessionFactory readerFactory;
     private readonly CatalogPreparationDiagnostics? diagnostics;
+    private readonly bool captureFileEntries;
 
     public CatalogSynchronizationService(
         CatalogV2Database catalog,
-        ICatalogReaderSessionFactory readerFactory, CatalogPreparationDiagnostics? diagnostics = null)
+        ICatalogReaderSessionFactory readerFactory, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false)
     {
         this.catalog = catalog;
         this.readerFactory = readerFactory;
         this.diagnostics = diagnostics;
+        this.captureFileEntries = captureFileEntries;
     }
 
     public async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> DiscoverAsync(
@@ -62,6 +64,10 @@ public sealed class CatalogSynchronizationService
         ICatalogReaderSession reader, IReadOnlyList<string> requestedVolumeIds, bool forceRebuild, CancellationToken token = default, string origin = "explicit")
     {
         ArgumentNullException.ThrowIfNull(reader); ArgumentNullException.ThrowIfNull(requestedVolumeIds);
+        if (captureFileEntries) {
+            if (!reader.SupportsFileEntryNames) throw new NotSupportedException("reader-entry-names-unavailable");
+            await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryStore(catalog).InitializeAsync(token);
+        }
         var requested = requestedVolumeIds.ToArray();
         var readerVolumes = (await reader.ListVolumesAsync(token))
             .ToDictionary(volume => volume.CatalogId, StringComparer.Ordinal);
@@ -207,7 +213,7 @@ public sealed class CatalogSynchronizationService
                 inspection.LowestValidUsn,
                 snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount),
                 rebuild,
-                token);
+                token, captureFileEntries);
             activity?.Stage("snapshot-read-and-stage");
             var cursor = 0UL;
             for (var pageNumber = 0; pageNumber < 1_000_000; pageNumber++)
@@ -227,9 +233,9 @@ public sealed class CatalogSynchronizationService
                 }
                 if (page.Records.Count > 0)
                 {
-                    await build.AppendAsync(
-                        page.Records.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray(),
-                        token);
+                    var nodes = page.Records.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray();
+                    if (captureFileEntries) await build.AppendWithEntriesAsync(await new CatalogDirectoryEntryCapture(reader, readerVolume).CaptureSnapshotAsync(nodes, token), token);
+                    else await build.AppendAsync(nodes, token);
                 }
                 cursor = page.NextCursor;
                 if (page.EndOfStream) break;
@@ -304,6 +310,8 @@ public sealed class CatalogSynchronizationService
                 .Where(record => record.Usn < targetUsn)
                 .ToArray();
             var nextCheckpoint = Math.Min(page.Response.NextUsn, targetUsn);
+            var nodes = boundedRecords.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray();
+            var entries = captureFileEntries ? await new CatalogDirectoryEntryCapture(reader, readerVolume).CaptureJournalAsync(nodes, boundedRecords, token) : null;
             volume = await catalog.ApplyBatchAsync(new CatalogV2WriteBatch(
                 volume.VolumeId,
                 volume.JournalId,
@@ -312,7 +320,7 @@ public sealed class CatalogSynchronizationService
                 nextCheckpoint,
                 page.Response.FirstUsn,
                 page.Response.LowestValidUsn,
-                boundedRecords.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray()), token);
+                entries?.Nodes ?? nodes, entries?.Entries), token);
             records = checked(records + boundedRecords.Length);
             pages++;
             cursor = nextCheckpoint;

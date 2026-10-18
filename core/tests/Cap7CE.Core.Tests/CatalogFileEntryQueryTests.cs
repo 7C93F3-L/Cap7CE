@@ -79,5 +79,12 @@ internal static class CatalogFileEntryQueryTests
             CoreProtocolJson.ToElement(new SearchNextPageRequest(strict.NextCursor!))), CancellationToken.None);
         TestAssert.Equal(CoreErrorCodes.InvalidCursor, stale.Error!.Code, "entry replacement invalidates strict result snapshots");
         TestAssert.Equal(1, (await catalog.QueryAsync(query with { Facts = new(FileFactKind.ImageDimensions, 1) })).Items.Count, "removing names preserves shared facts");
+        await using (var connection = new SqliteConnection($"Data Source={fixture.DatabasePath};Pooling=False")) {
+            await connection.OpenAsync(); using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE catalog_nodes_v2 SET exists_flag=0 WHERE file_reference='0000000000000010';";
+            await command.ExecuteNonQueryAsync();
+        }
+        TestAssert.False((await catalog.QueryAsync(query)).Items.Any(item => item.Identity == identity), "retired parent hides explicit names even while an old path cache remains");
+        TestAssert.True(await new FileFactSourceResolver(fixture.DatabasePath).ResolveAsync(identity) is null, "property source rejects an alias whose parent is gone");
     }
 }
