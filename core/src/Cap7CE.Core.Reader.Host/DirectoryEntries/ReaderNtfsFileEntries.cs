@@ -31,7 +31,9 @@ internal sealed partial class ReaderNtfsVolume
         using var handle = OpenFileById(volume, ref descriptor, FileReadAttributes, ShareReadWriteDelete,
             IntPtr.Zero, OpenNoRecall | OpenReparsePoint);
         if (handle.IsInvalid) {
-            var status = Marshal.GetLastWin32Error() is 2 or 3 or 1168 ? ReaderFileEntryState.Missing : ReaderFileEntryState.Unavailable;
+            var error = Marshal.GetLastWin32Error();
+            var status = error is 2 or 3 or 1168 ? ReaderFileEntryState.Missing
+                : error == 87 ? ReadEntryPresence(reference, token) : ReaderFileEntryState.Unavailable;
             return new(reference, status, 0, null, null, null, []);
         }
         if (!GetFileInformationByHandle(handle, out var before) || (before.FileAttributes & 0x00441410) != 0

@@ -31,7 +31,7 @@ module.exports = (root, sourceFiles, failures) => {
   for (const required of ["FileHardLinkInformation = 46", "MaximumBufferBytes = 1024 * 1024", "expectedCount is < 1 or > 1024", "ReaderHardLinkBuffer.Decode"])
     if (!native.includes(required)) failures.push(`Reader entry metadata is missing ${required}.`);
   const readerDomain = "core/src/Cap7CE.Core.Reader.Host/DirectoryEntries";
-  const readerLimits = { "ReaderHardLinkMetadata.cs": 45, "ReaderHardLinkBuffer.cs": 45, "ReaderNtfsFileEntries.cs": 60, "ReaderSnapshotEntryCache.cs": 30 };
+  const readerLimits = { "ReaderHardLinkMetadata.cs": 45, "ReaderHardLinkBuffer.cs": 45, "ReaderNtfsFileEntries.cs": 60, "ReaderSnapshotEntryCache.cs": 30, "ReaderNtfsEntryPresence.cs": 50 };
   if (JSON.stringify(fs.readdirSync(path.join(root, readerDomain)).sort()) !== JSON.stringify(Object.keys(readerLimits).sort()))
     failures.push("Reader entry metadata domain contains unregistered sources.");
   for (const [name, cap] of Object.entries(readerLimits)) {
@@ -40,6 +40,11 @@ module.exports = (root, sourceFiles, failures) => {
     if (/\b(?:FileReadData|GenericRead|WriteFile\w*|WriteData\w*|AdjustTokenPrivileges)\b|Process\.|System\.Net|Microsoft\.Data/.test(source))
       failures.push(`${name} broadens Reader metadata permissions.`);
   }
+  const presence = fs.readFileSync(path.join(root, readerDomain, "ReaderNtfsEntryPresence.cs"), "utf8");
+  if (/0x0*90068|GetNtfsFileRecord|FSCTL_GET_NTFS_FILE_RECORD|\bReadFile\b|\bCreateFile\b/.test(presence))
+    failures.push("Entry presence must use bounded USN metadata, never raw MFT records or file content.");
+  for (const required of ["new byte[64 * 1024]", "EnumUsnData", "LowUsn = 0, HighUsn = long.MaxValue", "token.ThrowIfCancellationRequested()"])
+    if (!presence.includes(required)) failures.push(`Entry presence is missing ${required}.`);
   for (const [file, cap] of Object.entries({
     "core/src/Cap7CE.Core.Reader.Protocol/ReaderFileEntryCodec.cs": 110,
     "core/src/Cap7CE.Core.Host/DirectoryEntries/ReaderFileEntryClient.cs": 55,
