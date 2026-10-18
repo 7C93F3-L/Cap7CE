@@ -262,8 +262,6 @@
 | `settings.launchAtLoginOn`         | 启动                            |                           | On | 登录启动状态 |
 | `settings.launchAtLoginOff`        | 关闭                            |                           | Off | 登录启动状态 |
 | `settings.systemNotifications`     | 系统通知                          |                           | System Notifications | 后台运行与缓存完成通知 |
-| `settings.skimDisplay`             | 自定义范围                        |                           | Custom Scope | 格式范围配置 |
-| `settings.skimDisplaySummary`      | 已选 {selected} / {total} 种格式，在查看范围中选择“自定义”后应用。 | | {selected} / {total} formats selected. Choose “Custom” under View Scope to apply. | 自定义范围摘要 |
 | `settings.skimCache`               | Skim 缓存                       |                           | Skim Cache | Skim 独立缓存 |
 | `settings.embeddedMetadata`        | 嵌入信息                         |                           | Embedded Information | 嵌入信息补齐 |
 | `format.category.visual`           | 图像                            |                           |     | 自定义查看分类        |

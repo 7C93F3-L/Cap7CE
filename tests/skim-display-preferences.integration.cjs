@@ -13,7 +13,6 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       getUserPreferences,
       updateSearchLabelVisibilityPreference,
       updateStableShortcutActionsPreference,
-      updateSkimDisplayPreference,
       updateSkimSidebarFoldersPreference,
       updateSkimSystemLocationsCollapsedPreference,
       updateSkimSortPreference,
@@ -111,21 +110,8 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     });
     assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "");
 
-    const updated = await updateSkimDisplayPreference({
-      mode: "custom",
-      searchMode: "all",
-      customExtensions: [".PNG", ".txt", ".txt", "invalid"],
-      showHiddenFiles: true
-    });
-    assert.deepEqual(updated.skimDisplay, {
-      mode: "custom",
-      searchMode: "all",
-      customExtensions: [".png", ".txt"],
-      showHiddenFiles: true
-    });
-
     await updateSearchLabelVisibilityPreference({
-      ...updated.searchLabelVisibility,
+      ...normalized.searchLabelVisibility,
       skimDisplay: false
     });
     await updateSortPreference({ sortField: "modified_at", sortDirection: "desc" });
@@ -136,8 +122,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
     await updateEdgeCollapsePreference(true);
     await updateUiFontSizePreference(16);
     const reloaded = await getUserPreferences();
-    assert.equal(reloaded.skimDisplay.mode, "custom");
-    assert.equal(reloaded.skimDisplay.searchMode, "all");
+    assert.deepEqual(reloaded.skimDisplay, normalized.skimDisplay, "other settings preserve the legacy display configuration");
     assert.equal(reloaded.searchLabelVisibility.skimDisplay, false);
     assert.equal(reloaded.searchLabelVisibility.ai, true);
     assert.deepEqual(reloaded.sortPreference, { sortField: "modified_at", sortDirection: "desc" });
@@ -153,7 +138,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       defaultSkimModeSeeded: true,
       skimPreferencesNormalized: true,
       disabledShortcutsPersisted: true,
-      customExtensionsNormalized: true,
+      legacyDisplayPreferencesPreserved: true,
       skimModePersisted: true,
       independentSearchModePersisted: true,
       skimLabelVisibilityPersisted: true,

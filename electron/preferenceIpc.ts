@@ -17,7 +17,6 @@ export interface PreferenceIpcDependencies {
   updateSkimSort: PreferenceUpdater<UserPreferencesResponse["skimSortPreference"]>;
   updateCommandEnabled: PreferenceUpdater<boolean>;
   updateSearchLabelVisibility: PreferenceUpdater<UserPreferencesResponse["searchLabelVisibility"]>;
-  updateSkimDisplay: PreferenceUpdater<UserPreferencesResponse["skimDisplay"]>;
   updateSkimSidebarFolders: PreferenceUpdater<string[]>;
   updateSkimSystemLocationsCollapsed: PreferenceUpdater<boolean>;
   updateTheme: PreferenceUpdater<ThemePreference>;
@@ -47,7 +46,6 @@ export const registerPreferenceIpc = ({
   updateSkimSort,
   updateCommandEnabled,
   updateSearchLabelVisibility,
-  updateSkimDisplay,
   updateSkimSidebarFolders,
   updateSkimSystemLocationsCollapsed,
   updateTheme,
@@ -106,13 +104,6 @@ export const registerPreferenceIpc = ({
             skimDisplay: Boolean(nextVisibility?.skimDisplay),
             ai: Boolean(nextVisibility?.ai)
           }))
-        )
-      },
-      {
-        kind: "handle",
-        channel: "preferences:updateSkimDisplay",
-        listener: (_event, nextSkimDisplay: UserPreferencesResponse["skimDisplay"]) => (
-          updateAndBroadcast(updateSkimDisplay(nextSkimDisplay))
         )
       },
       {

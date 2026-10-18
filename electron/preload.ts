@@ -315,7 +315,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
     updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: boolean) => ipcRenderer.invoke("preferences:updateQuickActionGlobalEnabled", quickActionGlobalEnabled),
     updateCommandEnabled: (commandEnabled: boolean) => ipcRenderer.invoke("preferences:updateCommandEnabled", commandEnabled),
     updateSearchLabelVisibility: (searchLabelVisibility: { directory: boolean; sort: boolean; format: boolean; skimDisplay: boolean; ai: boolean }) => ipcRenderer.invoke("preferences:updateSearchLabelVisibility", searchLabelVisibility),
-    updateSkimDisplay: (skimDisplay: { mode: "skim" | "all" | "custom"; searchMode: "skim" | "all" | "custom"; customExtensions: string[]; showHiddenFiles: boolean }) => ipcRenderer.invoke("preferences:updateSkimDisplay", skimDisplay),
     updateSkimSidebarFolders: (skimSidebarFolders: string[]) => ipcRenderer.invoke("preferences:updateSkimSidebarFolders", skimSidebarFolders),
     updateSkimSystemLocationsCollapsed: (collapsed: boolean) => ipcRenderer.invoke("preferences:updateSkimSystemLocationsCollapsed", collapsed),
     updateShortcutActions: (shortcutActions: {

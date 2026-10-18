@@ -1205,9 +1205,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
         }, 300);
       }
     }
-    void window.cap7ce?.preferences.updateSkimDisplay(nextSkimDisplay).then((preferences) => {
-      if (preferences) setSkimDisplay((current) => ({ ...preferences.skimDisplay, searchMode: current.searchMode }));
-    });
     if (changedDisplayMode && announceChange) {
       showQuickCommandNotice(t(`search.displaySwitched.${changedDisplayMode}` as TranslationKey));
     }

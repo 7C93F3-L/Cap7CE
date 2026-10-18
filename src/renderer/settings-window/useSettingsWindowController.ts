@@ -7,7 +7,6 @@ import type {
   ShortcutActionPreferences,
   ShortcutActionsUpdateResult,
   ShortcutAvailabilityResult,
-  SkimDisplayPreferences,
   ThumbnailOptimizationStatus,
   UserPreferences,
   VisualCacheStats
@@ -163,9 +162,6 @@ export const useSettingsWindowController = () => {
     return nextPreferences;
   };
 
-  const updateSkimDisplay = async (skimDisplay: SkimDisplayPreferences) => (
-    applyPreferences(await window.cap7ce?.preferences.updateSkimDisplay(skimDisplay))
-  );
   const updateShortcutActions = async (shortcutActions: ShortcutActionPreferences): Promise<ShortcutActionsUpdateResult | null> => {
     const result = await window.cap7ce?.preferences.updateShortcutActions(shortcutActions);
     if (!result) return null;
@@ -259,7 +255,6 @@ export const useSettingsWindowController = () => {
     updateAppearanceColors,
     previewAppearanceColors,
     updateBooleanPreference,
-    updateSkimDisplay,
     updateShortcutActions,
     beginShortcutCapture,
     endShortcutCapture,

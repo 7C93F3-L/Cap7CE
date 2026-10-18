@@ -484,22 +484,6 @@ export const updateSearchLabelVisibilityPreference = async (searchLabelVisibilit
   return nextPreferences;
 };
 
-export const updateSkimDisplayPreference = async (skimDisplay: SkimDisplayPreferences) => {
-  const preferences = await readPreferences();
-  const nextPreferences: UserPreferencesResponse = {
-    ...preferences,
-    skimDisplay: {
-      mode: isSkimDisplayMode(skimDisplay?.mode) ? skimDisplay.mode : preferences.skimDisplay.mode,
-      searchMode: isSkimDisplayMode(skimDisplay?.searchMode) ? skimDisplay.searchMode : preferences.skimDisplay.searchMode,
-      customExtensions: normalizeSkimExtensions(skimDisplay?.customExtensions),
-      showHiddenFiles: Boolean(skimDisplay?.showHiddenFiles)
-    },
-    updatedAt: new Date().toISOString()
-  };
-  await savePreferences(nextPreferences);
-  return nextPreferences;
-};
-
 export const updateSkimSidebarFoldersPreference = async (skimSidebarFolders: string[]) => {
   const preferences = await readPreferences();
   const nextPreferences: UserPreferencesResponse = {

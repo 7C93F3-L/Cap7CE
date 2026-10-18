@@ -27,7 +27,6 @@ const run = async () => {
     updateSkimSort: capture("skimSort"),
     updateCommandEnabled: capture("commandEnabled"),
     updateSearchLabelVisibility: capture("searchLabelVisibility"),
-    updateSkimDisplay: capture("skimDisplay"),
     updateSkimSidebarFolders: capture("skimSidebarFolders"),
     updateSkimSystemLocationsCollapsed: capture("skimSystemLocationsCollapsed"),
     updateTheme: capture("theme"),
@@ -61,7 +60,6 @@ const run = async () => {
     "preferences:updateSkimSort",
     "preferences:updateCommandEnabled",
     "preferences:updateSearchLabelVisibility",
-    "preferences:updateSkimDisplay",
     "preferences:updateSkimSidebarFolders",
     "preferences:updateSkimSystemLocationsCollapsed",
     "preferences:updateTheme",
@@ -78,16 +76,11 @@ const run = async () => {
     "preferences:updateAutoCacheOptimization"
   ]);
 
+  assert.equal(handles.has("preferences:updateSkimDisplay"), false);
   const event = { sender: { id: 1 } };
   assert.equal(await handles.get("preferences:get")(event), response);
 
   const skimSort = { sortField: "modified_at", sortDirection: "desc" };
-  const skimDisplay = {
-    mode: "custom",
-    searchMode: "all",
-    customExtensions: [".png", ".pdf"],
-    showHiddenFiles: true
-  };
   const sidebarFolders = ["C:\\Work", "D:\\Assets"];
   await handles.get("preferences:updateSkimSort")(event, skimSort);
   await handles.get("preferences:updateCommandEnabled")(event, 0);
@@ -98,7 +91,6 @@ const run = async () => {
     skimDisplay: true,
     ai: true
   });
-  await handles.get("preferences:updateSkimDisplay")(event, skimDisplay);
   await handles.get("preferences:updateSkimSidebarFolders")(event, sidebarFolders);
   await handles.get("preferences:updateSkimSystemLocationsCollapsed")(event, "collapsed");
   await handles.get("preferences:updateTheme")(event, "dark");
@@ -124,7 +116,6 @@ const run = async () => {
       skimDisplay: true,
       ai: true
     }],
-    ["skimDisplay", skimDisplay],
     ["skimSidebarFolders", sidebarFolders],
     ["skimSystemLocationsCollapsed", "collapsed"],
     ["theme", "dark"],
@@ -162,7 +153,6 @@ const run = async () => {
     updateSkimSort: async () => disabledResponse,
     updateCommandEnabled: async () => disabledResponse,
     updateSearchLabelVisibility: async () => disabledResponse,
-    updateSkimDisplay: async () => disabledResponse,
     updateSkimSidebarFolders: async () => disabledResponse,
     updateSkimSystemLocationsCollapsed: async () => disabledResponse,
     updateTheme: async () => disabledResponse,

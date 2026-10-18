@@ -13,7 +13,6 @@ import { QuickActionSettingsRows } from "../settings/QuickActionSettingsRows";
 import { QuickCommandSettingsRows } from "../settings/QuickCommandSettingsRows";
 import { RuntimeDiagnosticsRows } from "../settings/RuntimeDiagnosticsRows";
 import { SettingsFooter } from "../settings/SettingsFooter";
-import { SkimDisplaySettingsRows } from "../settings/SkimDisplaySettingsRows";
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";
 import SettingsConfirmationDialog from "./SettingsConfirmationDialog";
 import FontSizeSetting from "./FontSizeSetting";
@@ -27,13 +26,11 @@ import "./StableSettingsActions.css";
 import "./StableQuickActionSettings.css";
 import "./StableQuickCommandSettings.css";
 import "./StableRuntimeDiagnostics.css";
-import "./StableSkimDisplaySettingsRows.css";
 import "../stable-ui/StableMaterialContrast.css";
-type CategoryId = "general" | "appearance" | "browse" | "search-ai" | "cache" | "shortcuts" | "diagnostics" | "about";
+type CategoryId = "general" | "appearance" | "search-ai" | "cache" | "shortcuts" | "diagnostics" | "about";
 const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; icon: SettingsCategoryIconName }> = [
   { id: "general", label: "stableSettings.category.general", icon: "general" },
   { id: "appearance", label: "stableSettings.category.appearance", icon: "appearance" },
-  { id: "browse", label: "settings.skimDisplay", icon: "browse" },
   { id: "cache", label: "stableSettings.category.cache", icon: "cache" },
   { id: "shortcuts", label: "stableSettings.category.shortcuts", icon: "shortcuts" },
   { id: "search-ai", label: "stableSettings.category.searchAi", icon: "search-ai" },
@@ -43,7 +40,6 @@ const categoryDefinitions: Array<{ id: CategoryId; label: TranslationKey; icon: 
 const categorySearchKeys: Record<CategoryId, TranslationKey[]> = {
   general: ["stableSettings.category.general", "settings.language", "settings.launchAtLogin", "settings.systemNotifications", "settings.edgeCollapse", "settings.standardWindowMode", "settings.edgeCollapseMode", "settings.standbyLine", "stableSettings.desc.language", "stableSettings.desc.launch", "stableSettings.desc.notifications", "stableSettings.desc.edgeCollapse", "stableSettings.desc.line"],
   appearance: ["stableSettings.category.appearance", "stableSettings.material", "stableSettings.uiFontSize", "appearance.themeModeLabel", "appearance.themeColor", "appearance.accentColor", "stableSettings.desc.material", "stableSettings.desc.uiFontSize", "stableSettings.desc.theme", "stableSettings.desc.colors"],
-  browse: ["settings.skimDisplay", "stableSettings.desc.skimDisplay"],
   "search-ai": ["stableSettings.category.searchAi", "search.aiEnhance", "settings.selectRuntime", "settings.visionModel", "stableSettings.runtimeInfo", "stableSettings.desc.ai", "stableSettings.desc.runtime", "stableSettings.desc.model", "stableSettings.desc.runtimeInfo"],
   cache: ["stableSettings.category.cache", "stableSettings.formalCache", "settings.skimCache", "settings.embeddedMetadata", "stableSettings.desc.formalCache", "stableSettings.desc.skimCache", "stableSettings.desc.metadata", "stableSettings.metadataBuild", "stableSettings.desc.metadataBuild"],
   shortcuts: ["stableSettings.category.shortcuts", "settings.quickActions", "settings.quickCommands", "stableSettings.desc.quickActions", "stableSettings.desc.quickCommands"],
@@ -136,7 +132,6 @@ const SettingsWindowApp = () => {
         <SettingCard title="stableSettings.uiFontSize" description="stableSettings.desc.uiFontSize" query={normalizedQuery}><FontSizeSetting value={preferences.uiFontSize} onChange={(value) => void controller.updateUiFontSize(value)} /></SettingCard>
       </SettingsSection>
     </>;
-    if (category === "browse") return <SkimDisplaySettingsRows stableUi skimDisplay={preferences.skimDisplay} onSkimDisplayChange={(next) => void controller.updateSkimDisplay(next)} />;
     if (category === "search-ai") return <SettingsSection title="stableSettings.section.ai">
       <SettingCard title="search.aiEnhance" description="stableSettings.desc.ai" query={normalizedQuery}><SettingsToggle enabled={preferences.aiRecognitionEnabled} onChange={(enabled) => toggle("aiRecognitionEnabled", enabled)} /></SettingCard>
       <SettingCard title="settings.selectRuntime" description="stableSettings.desc.runtime" query={normalizedQuery}><div className="cap-stable-settings-action-line cap-stable-settings-model-line"><StableSettingsSelect menuStyle={menuStyle} label={t("settings.selectRuntime")} value={runtime.llamaRuntimeSettings.selectedVersion} disabled={runtime.llamaRuntimeProcessState.status === "running" || runtime.llamaRuntimeProcessState.status === "starting"} options={[{ value: "", label: t("settings.selectVersion") }, ...runtime.llamaRuntimeSettings.versions.map((item) => ({ value: item.version, label: item.version }))]} onChange={(value) => void runtime.updateSelectedLlamaRuntime(value)} /><div className="cap-stable-settings-model-actions"><button type="button" className="cap-stable-settings-button" disabled={runtime.isChangingLlamaRuntimeState || runtime.llamaRuntimeProcessState.status === "starting"} onClick={() => void (runtime.llamaRuntimeProcessState.status === "running" ? runtime.stopLlamaRuntimeServer() : runtime.startLlamaRuntimeServer())}>{runtime.llamaRuntimeProcessState.status === "running" ? t("common.stop") : t("common.start")}</button><button type="button" className="cap-stable-settings-button" disabled={runtime.isLoadingLlamaRuntime} onClick={() => void runtime.refreshLlamaRuntimeSettings()}>{t("common.refresh")}</button></div></div></SettingCard>
@@ -156,7 +151,7 @@ const SettingsWindowApp = () => {
     <div className="cap-settings-window-drag-region" aria-hidden="true" />
     <div ref={settingsShellRef} className="cap-stable-settings-shell">
       <aside className="cap-stable-settings-navigation"><label className="cap-stable-settings-search"><StableUiIcon name="search" className="cap-stable-settings-search-icon" /><input value={query} type="search" placeholder={t("stableSettings.search")} aria-label={t("stableSettings.search")} onChange={(event) => { const value = event.target.value; setQuery(value); if (!searchCompositionRef.current) setFilterQuery(value); }} onCompositionStart={() => { searchCompositionRef.current = true; }} onCompositionEnd={(event) => { searchCompositionRef.current = false; const value = event.currentTarget.value; setQuery(value); setFilterQuery(value); }} /></label><nav aria-label={t("stableSettings.title")}>{visibleCategories.map((category) => <button key={category.id} type="button" className={activeCategory === category.id ? "is-active" : ""} aria-current={activeCategory === category.id ? "page" : undefined} onClick={() => { setActiveCategory(category.id); setQuery(""); setFilterQuery(""); scrollRef.current?.scrollTo({ top: 0 }); }}><SettingsCategoryIcon name={category.icon} /><span>{t(category.label)}</span></button>)}</nav></aside>
-      <div className="cap-stable-settings-content-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical"><main className="cap-stable-settings-content cap-main-scroll-viewport" ref={scrollRef}><div className="cap-stable-settings-content-track">{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel">{category.id === "browse" ? <header className="cap-stable-settings-page-heading"><h1>{t(category.label)}</h1><p>{t("stableSettings.desc.skimDisplay")}</p></header> : <h1>{t(category.label)}</h1>}{renderCategory(category.id)}</article>)}</div></main><CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" /></div>
+      <div className="cap-stable-settings-content-frame cap-scroll-viewport-frame cap-scroll-viewport-frame-vertical"><main className="cap-stable-settings-content cap-main-scroll-viewport" ref={scrollRef}><div className="cap-stable-settings-content-track">{shownCategories.length === 0 ? <p className="cap-stable-settings-empty">{t("stableSettings.noResults")}</p> : shownCategories.map((category) => <article key={category.id} className="cap-stable-settings-panel"><h1>{t(category.label)}</h1>{renderCategory(category.id)}</article>)}</div></main><CustomScrollbar scrollContainerRef={scrollRef} orientation="vertical" /></div>
     </div>
     {dialog && <SettingsConfirmationDialog message={dialog.message} busy={dialogBusy} confirmLabel={dialog.confirmLabel} onCancel={cancelDialog} onConfirm={() => void confirmDialog()} />}
   </div>;

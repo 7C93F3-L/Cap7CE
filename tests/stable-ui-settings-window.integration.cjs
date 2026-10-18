@@ -34,7 +34,6 @@ const customScrollbarStyles = fs.readFileSync(path.join(root, "src", "renderer",
 const sharedSelectSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SettingsSelect.tsx"), "utf8");
 const sharedSelectStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SettingsSelect.css"), "utf8");
 const colorPickerSource = fs.readFileSync(path.join(root, "src", "renderer", "ColorPickerPopover.tsx"), "utf8");
-const skimDisplaySource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "SkimDisplaySettingsRows.tsx"), "utf8");
 const quickActionSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "QuickActionSettingsRows.tsx"), "utf8");
 const shortcutActionsSource = fs.readFileSync(path.join(root, "src", "renderer", "shortcutActions.ts"), "utf8");
 const quickCommandSource = fs.readFileSync(path.join(root, "src", "renderer", "settings", "QuickCommandSettingsRows.tsx"), "utf8");
@@ -42,7 +41,6 @@ const runtimeDiagnosticsSource = fs.readFileSync(path.join(root, "src", "rendere
 const settingsStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowApp.css"), "utf8");
 const navigationStateStyles = fs.readFileSync(path.join(root, "src", "renderer", "stable-ui", "StableNavigationState.css"), "utf8");
 const materialContrastStyles = fs.readFileSync(path.join(root, "src", "renderer", "stable-ui", "StableMaterialContrast.css"), "utf8");
-const stableSkimStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "StableSkimDisplaySettingsRows.css"), "utf8");
 const settingsAccessibilityStyles = fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsWindowAccessibility.css"), "utf8");
 const preferenceIpcSource = fs.readFileSync(path.join(root, "electron", "preferenceIpc.ts"), "utf8");
 const directoryIpcSource = fs.readFileSync(path.join(root, "electron", "directoryManagementIpc.ts"), "utf8");
@@ -184,6 +182,7 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.equal(created.length, 1, "reopening reuses the same settings window");
   assert.deepEqual(created[0].getBounds(), { x: 2050, y: 100, width: 1100, height: 840 }, "reopening restores the default size after a manual resize");
 
+  assert.doesNotMatch(settingsAppSource, /SkimDisplaySettingsRows|settings\.skimDisplay|id: "browse"/u);
   const broadcasts = [];
   const broadcastSettingsData = createSettingsDataBroadcaster({
     sendToMain: (channel, value) => broadcasts.push(["main", channel, value]),
@@ -195,7 +194,7 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.deepEqual(broadcasts, [["main", "preferences:changed", canonicalPreferences], ["settings", "preferences:changed", canonicalPreferences], ["preview", "preferences:changed", canonicalPreferences]]);
 
   assert.match(rendererEntrySource, /windowKind === "settings"[\s\S]*?import\("\.\/settings-window\/SettingsWindowApp"\)/u);
-  assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"browse"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"search-ai"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
+  assert.match(settingsAppSource, /categoryDefinitions[\s\S]*?"general"[\s\S]*?"appearance"[\s\S]*?"cache"[\s\S]*?"shortcuts"[\s\S]*?"search-ai"[\s\S]*?"diagnostics"[\s\S]*?"about"/u);
   assert.match(settingsAppSource, /useSettingsWindowController/u);
   assert.match(settingsAppSource, /useSettingsCacheStatsVisibility[\s\S]*?activeCategory === "cache"[\s\S]*?controller\.refreshCaches/u);
   assert.match(settingsCacheStatsVisibilitySource, /useSettingsCacheStatsVisibility[\s\S]*?addEventListener\("focus", refreshCacheStats\)/u);
@@ -270,7 +269,6 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(settingsAppSource, /getFileContextMenuStyle\(effectiveTheme, preferences\.appearanceColors, preferences\.windowMaterial\)/u);
   assert.match(materialContrastStyles, /\.cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="mica"\] \{[\s\S]*?--stable-settings-surface: var\(--cap-mica-light-content-surface\);[\s\S]*?--stable-settings-card: var\(--cap-mica-light-card-surface\);[\s\S]*?--stable-settings-hover: var\(--cap-mica-light-hover-surface\);[\s\S]*?--stable-settings-border: var\(--cap-mica-light-border\);[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
   assert.match(materialContrastStyles, /data-window-material="mica"[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-section-cards[\s\S]*?box-shadow: none;[\s\S]*?cap-stable-settings-shortcut-groups \.cap-stable-settings-card[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\);/u);
-  assert.match(materialContrastStyles, /cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="mica"\] \.cap-settings-skim-format-group\s*\{\s*background: var\(--cap-mica-light-card-surface\);/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation\.theme-dark\[data-window-material="mica"\] \{[\s\S]*?--stable-settings-surface: rgb\(20 20 20 \/ 96%\);[\s\S]*?--cap-stable-search-surface: var\(--stable-settings-surface\)/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation\[data-window-material="mica"\] \.cap-stable-settings-search[\s\S]*?box-shadow: inset 0 0 0 1px var\(--cap-stable-material-border\)/u);
   assert.match(materialContrastStyles, /cap-settings-window-foundation:not\(\.theme-dark\)\[data-window-material="acrylic"\][\s\S]*?--cap-stable-navigation-state: rgb\(255 255 255 \/ 68%\)[\s\S]*?--cap-stable-search-surface: rgb\(255 255 255 \/ 68%\)[\s\S]*?cap-settings-window-foundation\.theme-dark\[data-window-material="acrylic"\][\s\S]*?--cap-stable-navigation-state: rgb\(0 0 0 \/ 42%\)[\s\S]*?--cap-stable-search-surface: rgb\(0 0 0 \/ 42%\)/u);
@@ -286,8 +284,6 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(settingsAppSource, /category === "general"[\s\S]*?settings\.standbyLine[\s\S]*?category === "appearance"/u);
   assert.doesNotMatch(settingsAppSource, /stableSettings\.windowMode|switchWindowPresentationMode|WindowPresentationModeSettingsRow/u);
   assert.doesNotMatch(settingsAppSource, /settings\.rememberWindowLayout|stableSettings\.desc\.rememberWindows/u);
-  assert.match(settingsAppSource, /category === "browse"[\s\S]*?<SkimDisplaySettingsRows stableUi/u);
-  assert.match(settingsAppSource, /id: "browse", label: "settings\.skimDisplay"/u);
   assert.doesNotMatch(settingsAppSource, /beginAddDirectory|controller\.directories|stableSettings\.section\.folders/u);
   assert.match(settingsAppSource, /--stable-settings-theme-color[\s\S]*?appearanceColors\.themeColor/u);
   assert.match(settingsAppSource, /--stable-settings-focus[\s\S]*?appearanceColors\.accentColor/u);
@@ -333,9 +329,6 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(settingsStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-settings-card[\s\S]*?grid-template-columns: minmax\(0, 1fr\)[\s\S]*?cap-stable-settings-colors[\s\S]*?justify-content: flex-start/u);
   assert.match(stableSelectStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-settings-model-line[\s\S]*?width: 100%[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto auto[\s\S]*?cap-stable-settings-select[\s\S]*?max-width: none/u);
   assert.match(stableRuntimeDiagnosticStyles, /@media \(max-width: 700px\)[\s\S]*?cap-stable-runtime-diagnostics-row[\s\S]*?grid-template-columns: 116px minmax\(0, 1fr\) auto/u);
-  assert.match(stableSkimStyles, /cap-settings-skim-display-stable[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?cap-settings-skim-extension\[data-selected="true"\]/u);
-  assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?min-height: 24px[\s\S]*?height: 24px[\s\S]*?border-radius: var\(--radius-pill\)/u);
-  assert.match(skimDisplaySource, /stableUi[\s\S]*?cap-settings-skim-category-control[\s\S]*?role="switch"[\s\S]*?settings\.hiddenFiles/u);
   assert.match(settingsAppSource, /<SettingsIndexSection query=\{normalizedQuery\} \/>/u);
   assert.match(fs.readFileSync(path.join(root, "src", "renderer", "settings-window", "SettingsIndexSection.tsx"), "utf8"), /<EmbeddedMetadataSettingsRow stableUi \/>/u);
   assert.doesNotMatch(settingsAppSource, /SettingCard title="settings\.embeddedMetadata"[^>]*cap-stable-settings-card-expanded/u);
@@ -357,7 +350,6 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(settingsUpdateControlSource, /window\.cap7ce\?\.app\.openReleasePage\(\)[\s\S]*?settings\.viewReleases/u);
   assert.match(settingsUpdatePresentationSource, /status === "install_failed"[\s\S]*?settings\.updateInstallerOpenFailed/u);
   assert.match(mainSource, /registerDiagnosticsIpc\([\s\S]*?isSettingsSenderAllowed\(event\)[\s\S]*?BrowserWindow\.fromWebContents\(event\.sender\)/u);
-  assert.match(stableSkimStyles, /cap-settings-skim-extension\s*\{[\s\S]*?transition: var\(--cap-stable-control-transition\);[\s\S]*?cap-settings-skim-extension\[data-selected="true"\][\s\S]*?background: var\(--cap-accent-gradient\)[\s\S]*?cap-settings-skim-extension:is\(:hover, :focus-visible\):not\(:disabled\)[\s\S]*?background: var\(--cap-stable-control-hover\)/u);
   assert.match(settingsControllerSource, /preferences\.onChanged[\s\S]*?directories\.onChanged/u);
   assert.match(settingsControllerSource, /refreshAllPromiseRef[\s\S]*?if \(refreshAllPromiseRef\.current\) return refreshAllPromiseRef\.current/u);
   assert.match(settingsControllerSource, /if \(showLoading\) \{[\s\S]*?setIsLoading\(true\)[\s\S]*?if \(showLoading\) setIsLoading\(false\)/u);

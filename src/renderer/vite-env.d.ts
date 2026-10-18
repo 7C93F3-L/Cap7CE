@@ -191,7 +191,6 @@ declare global {
         updateQuickActionGlobalEnabled: (quickActionGlobalEnabled: UserPreferences["quickActionGlobalEnabled"]) => Promise<UserPreferences>;
         updateCommandEnabled: (commandEnabled: UserPreferences["commandEnabled"]) => Promise<UserPreferences>;
         updateSearchLabelVisibility: (searchLabelVisibility: UserPreferences["searchLabelVisibility"]) => Promise<UserPreferences>;
-        updateSkimDisplay: (skimDisplay: UserPreferences["skimDisplay"]) => Promise<UserPreferences>;
         updateSkimSidebarFolders: (skimSidebarFolders: UserPreferences["skimSidebarFolders"]) => Promise<UserPreferences>;
         updateSkimSystemLocationsCollapsed: (collapsed: boolean) => Promise<UserPreferences>;
         updateShortcutActions: (shortcutActions: UserPreferences["stableShortcutActions"]) => Promise<ShortcutActionsUpdateResult>;

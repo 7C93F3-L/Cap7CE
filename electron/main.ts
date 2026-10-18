@@ -36,7 +36,7 @@ import { searchScanSnapshotService } from "./searchScanSnapshotService";
 import { getLlamaRuntimeProcessState, onLlamaRuntimeProcessStateChanged, registerLlamaRuntimeShutdownHandler, startLlamaRuntime, stopLlamaRuntime, syncIdleLlamaRuntimeSelectionState } from "./llamaRuntimeManager";
 import { getLlamaRuntimeSettings, updateSelectedLlamaRuntime } from "./llamaRuntimeStore";
 import { registerRuntimeModelIpc } from "./runtimeModelIpc";
-import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimDisplayPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
+import { getUserPreferences, markBackgroundRunNotificationShown, updateAiRecognitionEnabledPreference, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
 import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
@@ -2492,7 +2492,6 @@ registerPreferenceIpc({
   updateSkimSort: updateSkimSortPreference,
   updateCommandEnabled: updateCommandEnabledPreference,
   updateSearchLabelVisibility: updateSearchLabelVisibilityPreference,
-  updateSkimDisplay: updateSkimDisplayPreference,
   updateSkimSidebarFolders: updateSkimSidebarFoldersPreference,
   updateSkimSystemLocationsCollapsed: updateSkimSystemLocationsCollapsedPreference,
   updateTheme: updateThemePreference,
