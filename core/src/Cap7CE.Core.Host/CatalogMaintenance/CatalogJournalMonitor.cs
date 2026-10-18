@@ -29,6 +29,7 @@ public sealed class CatalogJournalMonitor
 
     public async Task RunAsync(CancellationToken token)
     {
+        await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryActivation(catalog).RequireWriterAsync(captureFileEntries, token);
         while (true) {
             token.ThrowIfCancellationRequested();
             var ready = await ReadReadyAsync(token);

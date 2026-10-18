@@ -4,7 +4,8 @@ const path = require("node:path");
 module.exports = (root, sourceFiles, failures) => {
   const limits = { "CatalogFileEntry.cs": 45, "CatalogFileEntrySchema.cs": 55, "CatalogFileEntryStore.cs": 140, "CatalogEntryQuerySource.cs": 50,
     "CatalogFileEntryUpdate.cs": 10, "CatalogFileEntryPublication.cs": 70, "CatalogFileEntryStaging.cs": 80,
-    "CatalogFileEntryPending.cs": 80, "CatalogFileEntryPendingPublication.cs": 65, "CatalogFileEntryPendingStaging.cs": 45 };
+    "CatalogFileEntryPending.cs": 80, "CatalogFileEntryPendingPublication.cs": 65, "CatalogFileEntryPendingStaging.cs": 45,
+    "CatalogFileEntryMode.cs": 40, "CatalogFileEntryActivation.cs": 55, "CatalogFileEntryReadiness.cs": 20 };
   const directory = "core/src/Cap7CE.Core.Catalog/DirectoryEntries";
   if (JSON.stringify(fs.readdirSync(path.join(root, directory)).sort()) !== JSON.stringify(Object.keys(limits).sort()))
     failures.push("Catalog entry domain contains unregistered sources.");
@@ -25,6 +26,12 @@ module.exports = (root, sourceFiles, failures) => {
   for (const name of ["ProductCoreRuntime.cs", "Program.cs"])
     if (/captureFileEntries/.test(fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host", name), "utf8")))
       failures.push("Product directory entry activation requires its own validated migration round.");
+  const activation = fs.readFileSync(path.join(root, directory, "CatalogFileEntryActivation.cs"), "utf8");
+  for (const required of ["expectedRevision", "requireExisting: true", "CreateWithinAsync", "state='needsRebuild'", "PRAGMA user_version=3", "token.ThrowIfCancellationRequested()", "transaction.Commit()"])
+    if (!activation.includes(required)) failures.push(`Explicit entry activation is missing ${required}.`);
+  for (const file of ["Transactions/CatalogBatchPublication.cs", "Snapshots/CatalogSnapshotPublication.cs"])
+    if (!fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog", file), "utf8").includes("CatalogFileEntryMode.RequireWriterAsync"))
+      failures.push(`${file} must reject legacy writes to active entry storage.`);
   const native = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Reader.Host/DirectoryEntries/ReaderHardLinkMetadata.cs"), "utf8");
   if (native.split(/\r?\n/).length > 65 || /DeviceIoControl|AdjustTokenPrivileges|System\.Net|HttpClient|Process\.|(?:File|Directory)\.|WriteFile|CreateFile|CreateHardLink|SetFileInformation/.test(native))
     failures.push("Reader entry metadata must remain a bounded query on an existing attribute handle, without paths, content or writes.");

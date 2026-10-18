@@ -11,7 +11,7 @@ internal static class CatalogV2Schema
         using var version = connection.CreateCommand();
         version.CommandText = "PRAGMA user_version;";
         var current = Convert.ToInt32(await version.ExecuteScalarAsync(token));
-        if (current == CatalogV2Contract.SchemaVersion)
+        if (current is CatalogV2Contract.SchemaVersion or DirectoryEntries.CatalogFileEntryMode.StorageVersion)
         {
             await ValidateAsync(connection, token);
             return;
@@ -41,10 +41,7 @@ internal static class CatalogV2Schema
             throw new CatalogSchemaException("Catalog v2 application identity is invalid.");
         }
         command.CommandText = "PRAGMA user_version;";
-        if (Convert.ToInt32(await command.ExecuteScalarAsync(token)) != CatalogV2Contract.SchemaVersion)
-        {
-            throw new CatalogSchemaException("Catalog v2 schema version is unsupported.");
-        }
+        await DirectoryEntries.CatalogFileEntryMode.ValidateAsync(connection, null, Convert.ToInt32(await command.ExecuteScalarAsync(token)), token);
         command.CommandText = """
             SELECT COUNT(*) FROM sqlite_master
             WHERE type = 'table' AND name IN (

@@ -50,6 +50,7 @@ public sealed class CatalogJournalPageOwner
             || !ulong.TryParse(volume.JournalId, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var journal) || journal == 0)
             throw new InvalidOperationException("journal-owner-requires-ready-checkpoint");
         validateRoots();
+        await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryActivation(catalog).RequireWriterAsync(captureEntries is not null, token);
         var copied = roots.ToArray(); var revision = await catalog.ReadRevisionAsync(token);
         var lookup = new CatalogStorageDirectoryReader(catalog); var links = new List<CatalogStorageDirectoryLink>();
         string? after = null;

@@ -64,6 +64,7 @@ public sealed class CatalogSynchronizationService
         ICatalogReaderSession reader, IReadOnlyList<string> requestedVolumeIds, bool forceRebuild, CancellationToken token = default, string origin = "explicit")
     {
         ArgumentNullException.ThrowIfNull(reader); ArgumentNullException.ThrowIfNull(requestedVolumeIds);
+        await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryActivation(catalog).RequireWriterAsync(captureFileEntries, token);
         if (captureFileEntries) {
             if (!reader.SupportsFileEntryNames) throw new NotSupportedException("reader-entry-names-unavailable");
             await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryStore(catalog).InitializeAsync(token);

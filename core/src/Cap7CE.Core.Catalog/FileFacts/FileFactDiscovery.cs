@@ -56,7 +56,7 @@ public sealed class FileFactDiscovery(string databasePath)
         {
             using var transaction = connection.BeginTransaction(deferred: true);
             var entries = await FileFactEntryPolicy.IsActiveAsync(connection, transaction, token);
-            var pending = await DirectoryEntries.CatalogFileEntryPending.ExclusionSqlAsync(connection, transaction, token);
+            var pending = await DirectoryEntries.CatalogFileEntryReadiness.PredicateAsync(connection, transaction, token);
             var jobs = new List<FileFactJob>();
             for (var index = start; index < policy.VolumeOrder.Count && jobs.Count <= pageSize; index++)
             {

@@ -8,6 +8,11 @@ internal static class CatalogFileEntrySchema
     {
         await CatalogV2Schema.ValidateAsync(connection, token);
         using var transaction = connection.BeginTransaction();
+        await CreateWithinAsync(connection, transaction, token);
+        transaction.Commit();
+    }
+    internal static async Task CreateWithinAsync(SqliteConnection connection, SqliteTransaction transaction, CancellationToken token)
+    {
         using var command = connection.CreateCommand(); command.Transaction = transaction;
         command.CommandText = """
             CREATE TABLE IF NOT EXISTS catalog_file_entry_sets (
@@ -35,7 +40,6 @@ internal static class CatalogFileEntrySchema
             ) STRICT, WITHOUT ROWID;
             """ + CatalogFileEntryPending.CreateTableSql;
         await command.ExecuteNonQueryAsync(token);
-        transaction.Commit();
     }
 
     public static async Task<bool> ExistsAsync(SqliteConnection connection, CancellationToken token, SqliteTransaction? transaction = null)

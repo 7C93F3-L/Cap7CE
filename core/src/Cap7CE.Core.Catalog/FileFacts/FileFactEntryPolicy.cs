@@ -12,7 +12,7 @@ internal static class FileFactEntryPolicy
     public static string Prefix(bool active) => active ? "WITH " + CatalogEntryQuerySource.Cte.TrimEnd(',', '\r', '\n', ' ') + " " : "";
     public static async Task<string> BindAsync(SqliteCommand command, FileFactQueuePolicy policy, CancellationToken token) =>
         "(" + Bind(command, policy, await IsActiveAsync(command.Connection!, command.Transaction!, token)) + ") AND "
-        + await CatalogFileEntryPending.ExclusionSqlAsync(command.Connection!, command.Transaction, token);
+        + await CatalogFileEntryReadiness.PredicateAsync(command.Connection!, command.Transaction, token);
     public static string Bind(SqliteCommand command, FileFactQueuePolicy policy, bool active)
     {
         if (!active) return FileFactQueueScope.Bind(command, policy);

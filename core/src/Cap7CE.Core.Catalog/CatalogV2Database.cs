@@ -227,6 +227,7 @@ public sealed partial class CatalogV2Database
         bool rebuild,
         CancellationToken token = default, bool captureFileEntries = false)
     {
+        await new DirectoryEntries.CatalogFileEntryActivation(this).RequireWriterAsync(captureFileEntries, token);
         var buildVolume = await BeginBuildAsync(
             volumeId,
             journalId,
@@ -398,7 +399,6 @@ public sealed partial class CatalogV2Database
         if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes && !scopedEntries)
         {
             sql.Append(" JOIN scope_nodes sn ON sn.volume_id = n.volume_id AND sn.file_reference = n.file_reference ");
-            if (entries) sql.Append(" AND sn.entry_key=n.entry_key ");
         }
         if (query.Facts is not null) FileFacts.FileFactQuerySql.AppendJoin(sql, factPlan);
         if (query.TextTarget != CatalogQueryTextTarget.Name)
@@ -406,7 +406,7 @@ public sealed partial class CatalogV2Database
         sql.Append(" WHERE n.exists_flag = 1 AND v.selected = 1 AND v.state IN ('ready', 'catchingUp') ");
         if (query.Facts is not null) {
             FileFacts.FileFactQuerySql.AppendPredicate(sql, command, query.Facts);
-            sql.Append(" AND ").Append(await DirectoryEntries.CatalogFileEntryPending.ExclusionSqlAsync(connection, transaction, token));
+            sql.Append(" AND ").Append(await DirectoryEntries.CatalogFileEntryReadiness.PredicateAsync(connection, transaction, token));
         }
         if (query.FileConditions is not null) CatalogFileConditionSql.Append(sql, command, query.FileConditions);
         if (query.ExcludeHidden) sql.Append(" AND (n.attributes & 2) = 0 ");
@@ -870,12 +870,12 @@ public sealed partial class CatalogV2Database
         return await reader.ReadAsync(token) ? ReadVolume(reader) : null;
     }
 
-    internal async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token)
+    internal async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token, bool requireExisting = false)
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
-            Mode = readOnly ? SqliteOpenMode.ReadOnly : SqliteOpenMode.ReadWriteCreate,
+            Mode = readOnly ? SqliteOpenMode.ReadOnly : requireExisting ? SqliteOpenMode.ReadWrite : SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Private,
             Pooling = true
         }.ToString());

@@ -22,6 +22,7 @@ public sealed partial class CatalogV2Database
         try
         {
             using var transaction = connection.BeginTransaction();
+            await DirectoryEntries.CatalogFileEntryMode.RequireWriterAsync(connection, transaction, captureFileEntries, token);
             var volume = await ReadVolumeAsync(connection, transaction, volumeId, token)
                 ?? throw new CatalogConcurrencyException("Catalog volume is not registered.");
             if (volume.State != CatalogV2VolumeState.Building)

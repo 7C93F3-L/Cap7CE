@@ -20,6 +20,8 @@
 - 入口初建、两种增量、恢复、范围撤销和有界重试已通过隔离测试，十万物理文件/十一万入口完成有界查询与任务发现测量；真实受限服务已在可丢弃 NTFS 虚拟盘验证双入口、共享事实、单个/最终名称删除、活跃会话增量与日志断档重建，并完成临时服务/虚拟盘/Catalog 清理。正式组件部署、生产规模与启用/回退仍待验证，正式库未启用，不能据隔离样本宣称个人全盘缺口已解决。
 - `Transactions/CatalogBatchPublication` 独立拥有基础节点、事实失效、入口、待重试项与检查点的事务；仅退避变更不递增可见 Catalog 修订。`core-directory-entry-boundary-check` 守护数据库/Reader 权限、模块清单和体量。
 - `Queries/CatalogEntryScopeSql` 在目录身份集合中使用既有父索引选择入口 key，`CatalogEntryScopedSource` 在同一读快照中按主键投影候选；不为每个目录物化全卷入口集合。`CatalogQueryPageProjection` 将已选页的名称/扩展名/父路径与物理元数据组合，旧库继续原有物理节点来源；这些模块只生成 SQL，不拥有查询执行、连接或源文件 IO。百万物理文件/101 万入口覆盖签名分页、保存范围隔离、递归范围与共享事实。查询范围和结果投影分离后，`CatalogV2Database.cs` 体量上限进一步降低为 1040 行。
+- `CatalogFileEntryActivation.EnablePreparedAsync` 是显式维护用的数据库底座，调用方负责退出当前写入进程并保存一致性恢复点；它不被普通初始化、查询或产品运行时调用。以恢复点的基础 Catalog 修订作栅栏，扩展建表、版本标记、旧卷 needsRebuild 和修订变化同事务完成。`PRAGMA user_version=3` 要求入口感知写入器，基础查询契约和 `catalog_state_v2.schema_version` 仍为 2；旧二进制因此拒绝打开新存储。`CatalogFileEntryMode` 校验特性版本 1 及完整扩展，节点批次、快照、同步与实时 owner 均拒绝缺少入口维护的写入。手工改回版本 2 不构成受支持回退。
+- `CatalogFileEntryReadiness` 在格式 3 下额外要求匹配当前物理创建版本的完整入口集合；未确认名称不能借旧主路径取得事实、任务、续租或内容源授权。格式 2 的兼容规则不变。产品仍默认格式 2；宿主备份/回退、格式 3 重启及新库策略的装配尚未接入，正式库未升级。
 - 当前版本尚未完成睡眠/物理热插拔及最新安装矩阵验收；WPF/WinUI 试验壳未排期。本轮没有打包、发布或更换正在使用的受保护组件。
 
 

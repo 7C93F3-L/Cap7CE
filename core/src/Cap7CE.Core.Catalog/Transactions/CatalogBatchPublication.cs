@@ -26,6 +26,7 @@ public sealed partial class CatalogV2Database
             throw new ArgumentException("Maintenance requires an external change and an advancing durable checkpoint.", nameof(batch));
         await using var connection = await OpenAsync(false, token);
         using var transaction = connection.BeginTransaction();
+        await DirectoryEntries.CatalogFileEntryMode.RequireWriterAsync(connection, transaction, batch.FileEntries is not null, token);
         var volume = await ReadVolumeAsync(connection, transaction, batch.VolumeId, token)
             ?? throw new CatalogConcurrencyException("Catalog volume is not registered.");
         var revision = await ReadRevisionAsync(connection, transaction, token);
