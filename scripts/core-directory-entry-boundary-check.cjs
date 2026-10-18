@@ -5,7 +5,8 @@ module.exports = (root, sourceFiles, failures) => {
   const limits = { "CatalogFileEntry.cs": 45, "CatalogFileEntrySchema.cs": 55, "CatalogFileEntryStore.cs": 140, "CatalogEntryQuerySource.cs": 50,
     "CatalogFileEntryUpdate.cs": 10, "CatalogFileEntryPublication.cs": 70, "CatalogFileEntryStaging.cs": 80,
     "CatalogFileEntryPending.cs": 80, "CatalogFileEntryPendingPublication.cs": 65, "CatalogFileEntryPendingStaging.cs": 45,
-    "CatalogFileEntryMode.cs": 40, "CatalogFileEntryActivation.cs": 43, "CatalogFileEntryActivationMarker.cs": 25, "CatalogFileEntryReadiness.cs": 20 };
+    "CatalogFileEntryMode.cs": 40, "CatalogFileEntryActivation.cs": 43, "CatalogFileEntryActivationMarker.cs": 25, "CatalogFileEntryReadiness.cs": 20,
+    "CatalogSnapshotEntryParents.cs": 45 };
   const directory = "core/src/Cap7CE.Core.Catalog/DirectoryEntries";
   if (JSON.stringify(fs.readdirSync(path.join(root, directory)).sort()) !== JSON.stringify(Object.keys(limits).sort()))
     failures.push("Catalog entry domain contains unregistered sources.");
@@ -20,9 +21,12 @@ module.exports = (root, sourceFiles, failures) => {
     failures.push("File entry storage must not alter physical facts, source nodes or annotations.");
   for (const required of ["expectedVolumeRevision", "source.CreatedUtcTicks", "transaction.Commit()", "token.ThrowIfCancellationRequested()"])
     if (!store.includes(required)) failures.push(`File entry publication is missing ${required}.`);
-  for (const name of ["CatalogFileEntryPublication.cs", "CatalogFileEntryStaging.cs", "CatalogFileEntryPendingPublication.cs", "CatalogFileEntryPendingStaging.cs"])
+  for (const name of ["CatalogFileEntryPublication.cs", "CatalogFileEntryStaging.cs", "CatalogFileEntryPendingPublication.cs", "CatalogFileEntryPendingStaging.cs", "CatalogSnapshotEntryParents.cs"])
     if (/BeginTransaction|transaction\.Commit/.test(fs.readFileSync(path.join(root, directory, name), "utf8")))
       failures.push(`${name} must share its caller's node/checkpoint transaction.`);
+  const parentDeferral = fs.readFileSync(path.join(root, directory, "CatalogSnapshotEntryParents.cs"), "utf8");
+  for (const required of ["LIMIT 64", "CatalogFileEntryPendingStaging.AppendAsync", "DELETE FROM build_entries", "DELETE FROM build_entry_sets"])
+    if (!parentDeferral.includes(required)) failures.push(`Snapshot parent deferral is missing ${required}.`);
   const runtime = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs"), "utf8");
   for (const required of ["CatalogStorageLease.Acquire", "await catalog.InitializeAsync(token, createEntryCatalog)", "FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync", "captureFileEntries: FileEntryModeEnabled", "diagnostics, FileEntryModeEnabled", "storageLease?.Dispose()"])
     if (!runtime.includes(required)) failures.push(`Runtime entry mode must derive from persistent storage: missing ${required}.`);

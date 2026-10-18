@@ -140,6 +140,7 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
         ObjectDisposedException.ThrowIf(disposed, this);
         if (completed || nodesCommitted) throw new InvalidOperationException("Catalog snapshot build is already complete.");
 
+        if (CaptureFileEntries) await DirectoryEntries.CatalogSnapshotEntryParents.DeferAsync(connection, transaction, volumeId, token);
         await transaction.CommitAsync(token);
         nodesCommitted = true;
 
