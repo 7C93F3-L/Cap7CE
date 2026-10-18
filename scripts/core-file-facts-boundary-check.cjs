@@ -13,7 +13,11 @@ module.exports = (root, sourceFiles, failures) => {
     failures.push("Metadata build panel must remain a bounded presentation component without runtime ownership.");
   }
   if (!panel.includes('from "../../shared/metadataBuildTypes"')) failures.push("Metadata build panel must use the shared progress contract.");
-  const recovery = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/MetadataRecovery/FileFactRecoveryCheckpoint.cs"), "utf8");
+  const recovery = [["FileFactRecoveryCheckpoint.cs", 35], ["CatalogRecoverySnapshotWriter.cs", 75]].map(([name, maximum]) => {
+    const source = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/MetadataRecovery", name), "utf8");
+    if (source.split(/\r?\n/).length > maximum) failures.push(`Metadata recovery ${name} exceeds its responsibility boundary.`);
+    return source;
+  }).join("\n");
   if (/System\.Net|HttpClient|DeviceIoControl|AdjustTokenPrivileges|File\.(?:Copy|Replace)|Directory\.(?:Delete|Move)|sqlite3_exec|\b(?:INSERT|UPDATE|DROP|ALTER)\s+(?:INTO|TABLE|file_)/.test(recovery)) {
     failures.push("Metadata recovery bypasses its private backup-only boundary.");
   }
