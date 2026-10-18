@@ -376,7 +376,7 @@ public sealed partial class CatalogV2Database
         if (!factsAvailable) return new([], null, revision, factRevision);
         var factPlan = await FileFacts.FileFactQuerySql.ChoosePlanAsync(query, connection, transaction, token);
         var entries = await DirectoryEntries.CatalogEntryQuerySource.IsActiveAsync(connection, transaction, token);
-        var nodeSource = entries ? "query_entries" : "catalog_nodes_v2";
+        var scopedEntries = entries && query.Scope.Kind != CatalogQueryScopeKind.AllVolumes;
         const string pathExpression = "CASE WHEN n.is_directory = 1 THEN COALESCE(dp.relative_path, n.name) "
             + "WHEN pp.relative_path IS NULL OR pp.relative_path = '' THEN n.name "
             + "ELSE pp.relative_path || '\\' || n.name END";
@@ -384,17 +384,18 @@ public sealed partial class CatalogV2Database
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
         var sql = new StringBuilder("WITH RECURSIVE ");
-        if (entries) sql.Append(DirectoryEntries.CatalogEntryQuerySource.Cte);
+        if (entries && !scopedEntries) sql.Append(DirectoryEntries.CatalogEntryQuerySource.Cte);
         sql.Append("scope_nodes(volume_id, file_reference, entry_key) AS (");
         Queries.CatalogQueryScopeSql.Append(sql, command, query.Scope, entries);
+        sql.Append("),");
+        if (scopedEntries) sql.Append(Queries.CatalogEntryScopedSource.Cte);
         sql.Append("""
-            ),
             matched_keys(volume_id, file_reference, name, modified_utc_ticks, is_directory, entry_key) AS MATERIALIZED (
             SELECT n.volume_id, n.file_reference, n.name, n.modified_utc_ticks, n.is_directory,
             """);
         sql.Append(entries ? "n.entry_key " : "'' ");
-        FileFacts.FileFactQuerySql.AppendSource(sql, factPlan, entries);
-        if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes)
+        FileFacts.FileFactQuerySql.AppendSource(sql, factPlan, entries, scopedEntries);
+        if (query.Scope.Kind != CatalogQueryScopeKind.AllVolumes && !scopedEntries)
         {
             sql.Append(" JOIN scope_nodes sn ON sn.volume_id = n.volume_id AND sn.file_reference = n.file_reference ");
             if (entries) sql.Append(" AND sn.entry_key=n.entry_key ");
@@ -447,27 +448,7 @@ public sealed partial class CatalogV2Database
         CatalogQueryOrdering.AppendAfter(sql, command, query, entries);
         sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query, "n", entries)).Append(" LIMIT $limit");
         command.Parameters.AddWithValue("$limit", query.PageSize + 1);
-        sql.Append("""
-            )
-            SELECT n.volume_id, n.file_reference, n.name,
-            """);
-        sql.Append(pathExpression);
-        sql.Append("""
-             AS relative_path,
-                   n.extension, n.is_directory, n.attributes, n.size_bytes,
-                   n.created_utc_ticks, n.modified_utc_ticks,
-            """);
-        sql.Append(entries ? "n.entry_key " : "'' ");
-        sql.Append($"""
-            FROM matched_keys m
-            JOIN {nodeSource} n
-                ON n.volume_id = m.volume_id AND n.file_reference = m.file_reference
-                {(entries ? "AND n.entry_key=m.entry_key" : "")}
-            LEFT JOIN catalog_directory_paths_v2 dp
-                ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference
-            LEFT JOIN catalog_directory_paths_v2 pp
-                ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference
-            """);
+        sql.Append(") ").Append(Queries.CatalogQueryPageProjection.Sql(entries));
         sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query, "m", entries)).Append(';');
         command.CommandText = sql.ToString();
         var items = new List<CatalogV2QueryItem>(query.PageSize + 1);

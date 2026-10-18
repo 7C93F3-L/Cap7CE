@@ -7,6 +7,7 @@ internal static class CatalogQueryScopeSql
 {
     public static void Append(StringBuilder sql, SqliteCommand command, CatalogQueryScope scope, bool entries)
     {
+        if (entries) { CatalogEntryScopeSql.Append(sql, command, scope); return; }
         var source = entries ? "query_entries" : "catalog_nodes_v2";
         var key = entries ? "entry_key" : "''";
         switch (scope.Kind) {

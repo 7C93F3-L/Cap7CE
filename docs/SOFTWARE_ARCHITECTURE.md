@@ -18,7 +18,8 @@
 - `ReaderSnapshotEntryCache` 仅保存最新 MFT 页最多 4096 个单链接结果，复用同一次属性读取，不新增句柄或正文权限；多链接及不确定结果仍完整查询。下一页、日志检查和快照关闭立即清空，USN 删除及重试不能使用初建缓存判断存活。
 - `ReaderNtfsEntryPresence` 处理按 ID 打开返回错误 87 的不确定存活状态：在既有授权卷句柄上从目标 NTFS 槽位读取一次最多 64 KiB 的 USN 元数据页，只有枚举结束、已越过该槽位或该槽位身份换代时报告 Missing。相同身份仍存在、格式不明或 IO 失败继续 Unavailable。它不读取原始 MFT 记录或文件正文，不增加权限、路径参数、协议操作或扫描循环；独立纯解析测试与架构守门覆盖保守判定。
 - 入口初建、两种增量、恢复、范围撤销和有界重试已通过隔离测试，十万物理文件/十一万入口完成有界查询与任务发现测量；真实受限服务已在可丢弃 NTFS 虚拟盘验证双入口、共享事实、单个/最终名称删除、活跃会话增量与日志断档重建，并完成临时服务/虚拟盘/Catalog 清理。正式组件部署、生产规模与启用/回退仍待验证，正式库未启用，不能据隔离样本宣称个人全盘缺口已解决。
-- `Transactions/CatalogBatchPublication` 独立拥有基础节点、事实失效、入口、待重试项与检查点的事务；仅退避变更不递增可见 Catalog 修订。`core-directory-entry-boundary-check` 守护数据库/Reader 权限、模块清单和体量，数据库宿主上限进一步降至 1060 行。
+- `Transactions/CatalogBatchPublication` 独立拥有基础节点、事实失效、入口、待重试项与检查点的事务；仅退避变更不递增可见 Catalog 修订。`core-directory-entry-boundary-check` 守护数据库/Reader 权限、模块清单和体量。
+- `Queries/CatalogEntryScopeSql` 在目录身份集合中使用既有父索引选择入口 key，`CatalogEntryScopedSource` 在同一读快照中按主键投影候选；不为每个目录物化全卷入口集合。`CatalogQueryPageProjection` 将已选页的名称/扩展名/父路径与物理元数据组合，旧库继续原有物理节点来源；这些模块只生成 SQL，不拥有查询执行、连接或源文件 IO。百万物理文件/101 万入口覆盖签名分页、保存范围隔离、递归范围与共享事实。查询范围和结果投影分离后，`CatalogV2Database.cs` 体量上限进一步降低为 1040 行。
 - 当前版本尚未完成睡眠/物理热插拔及最新安装矩阵验收；WPF/WinUI 试验壳未排期。本轮没有打包、发布或更换正在使用的受保护组件。
 
 

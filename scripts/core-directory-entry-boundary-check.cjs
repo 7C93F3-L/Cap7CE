@@ -45,6 +45,11 @@ module.exports = (root, sourceFiles, failures) => {
     failures.push("Entry presence must use bounded USN metadata, never raw MFT records or file content.");
   for (const required of ["new byte[64 * 1024]", "EnumUsnData", "LowUsn = 0, HighUsn = long.MaxValue", "token.ThrowIfCancellationRequested()"])
     if (!presence.includes(required)) failures.push(`Entry presence is missing ${required}.`);
+  for (const name of ["CatalogEntryScopeSql.cs", "CatalogEntryScopedSource.cs", "CatalogQueryPageProjection.cs"]) {
+    const source = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/Queries", name), "utf8");
+    if (/Execute(?:Scalar|Reader|NonQuery)|OpenAsync|new SqliteConnection|File\.|Directory\.|DeviceIoControl/.test(source))
+      failures.push(`${name} must remain a pure query builder, without query execution or source access.`);
+  }
   for (const [file, cap] of Object.entries({
     "core/src/Cap7CE.Core.Reader.Protocol/ReaderFileEntryCodec.cs": 110,
     "core/src/Cap7CE.Core.Host/DirectoryEntries/ReaderFileEntryClient.cs": 55,
@@ -61,7 +66,10 @@ module.exports = (root, sourceFiles, failures) => {
     "core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotPublication.cs": 110,
     "core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotEntryAppend.cs": 25,
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogQueryScopeSql.cs": 35,
-    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1060
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopeSql.cs": 45,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopedSource.cs": 25,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogQueryPageProjection.cs": 30,
+    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1040
   })) if (fs.readFileSync(path.join(root, file), "utf8").split(/\r?\n/).length > cap)
     failures.push(`${file} exceeds its entry metadata boundary.`);
 };

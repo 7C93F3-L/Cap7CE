@@ -63,12 +63,13 @@ internal static class FileFactQuerySql
         return candidates <= 10_000 ? Plan.FactFirst : candidates <= 50_000 ? Plan.Automatic : Plan.NameFirst;
     }
 
-    public static void AppendSource(StringBuilder sql, Plan plan, bool entries = false)
+    public static void AppendSource(StringBuilder sql, Plan plan, bool entries = false, bool scopedEntries = false)
     {
         if (entries) {
+            var source = scopedEntries ? "scoped_entries" : "query_entries";
             sql.Append(plan == Plan.FactFirst
-                ? " FROM file_facts ff CROSS JOIN query_entries n ON n.volume_id=ff.volume_id AND n.file_reference=ff.file_reference JOIN catalog_volumes_v2 v ON v.volume_id=n.volume_id "
-                : " FROM query_entries n JOIN catalog_volumes_v2 v ON v.volume_id=n.volume_id ");
+                ? $" FROM file_facts ff CROSS JOIN {source} n ON n.volume_id=ff.volume_id AND n.file_reference=ff.file_reference JOIN catalog_volumes_v2 v ON v.volume_id=n.volume_id "
+                : $" FROM {source} n JOIN catalog_volumes_v2 v ON v.volume_id=n.volume_id ");
             if (plan == Plan.NameFirst) sql.Append(" CROSS JOIN file_facts ff ON ff.volume_id=n.volume_id AND ff.file_reference=n.file_reference ");
             return;
         }
