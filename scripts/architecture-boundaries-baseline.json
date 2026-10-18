@@ -95,6 +95,16 @@
     "core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs": 27
   },
   "maintenanceMaxLines": {
+    "src/renderer/quick-commands/catalogCommandRegistry.ts": 30,
+    "src/renderer/quick-commands/catalogCommandErrors.ts": 10,
+    "src/renderer/quick-commands/catalogPreferenceCommands.ts": 50,
+    "src/renderer/quick-commands/catalogRuntimeCommands.ts": 40,
+    "src/renderer/quick-commands/catalogPageCommands.ts": 30,
+    "src/renderer/quick-commands/catalogFavoriteCommands.ts": 40,
+    "src/renderer/quick-commands/catalogCommandOperation.ts": 50,
+    "src/renderer/quick-commands/CatalogCommandProvider.tsx": 50,
+    "src/renderer/quick-commands/useCatalogCommandInput.ts": 100,
+    "src/renderer/quick-commands/CatalogQuickCommandSettingsRows.tsx": 30,
     "electron/metadataExtraction/metadataQuickVolumes.ts": 20,
     "src/renderer/stable-ui/StableMetadataFilterGate.tsx": 40,
     "src/renderer/stable-ui/StableMetadataFilterGate.css": 10,

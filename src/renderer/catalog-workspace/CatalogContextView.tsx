@@ -81,7 +81,8 @@ export default function CatalogContextView({ context, selected, foreground, filt
       random={random} sort={view.sort} onSort={value => { random.disable(); view.setSort(value); }} showHidden={view.showHidden} onShowHidden={view.toggleHidden}
       onOpen={openDirectory} onHome={home} inputRef={inputRef}
       searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
-      onSubmit={() => void controller.submit()} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} includeSubfolders={view.includeSubfolders} onIncludeSubfolders={view.toggleSubfolders} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
+      commandPage={{ ...view, home, refresh: refresh.refresh, setSort: value => { random.disable(); return view.setSort(value); } }} active={selected}
+      onSubmit={value => void controller.submit(value)} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} includeSubfolders={view.includeSubfolders} onIncludeSubfolders={view.toggleSubfolders} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
     {selected && noticeHost && createPortal(<CatalogQueryNotice busy={foreground && controller.busy} invalid={foreground && filters.invalid} />, noticeHost)}
     <div className="cap-catalog-results">{navigation.path === null && !random.enabled && !controller.query.trim()
       && !filters.conditions.facts && !filters.conditions.fileConditions

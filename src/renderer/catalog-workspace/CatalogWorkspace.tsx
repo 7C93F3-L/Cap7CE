@@ -16,6 +16,7 @@ import "./CatalogWorkspace.css";
 import "./CatalogDesign.css";
 import { CatalogActivityProvider, CatalogActivityBar } from "./CatalogActivity";
 import BottomNoticeBar from "../feedback/BottomNoticeBar";
+import { CatalogCommandProvider, CatalogCommandNotice } from "../quick-commands/CatalogCommandProvider";
 
 export default function CatalogWorkspace({ foreground = true, interactionLocked = false, onOpenSettings, onActiveActions, ...appearance }: CatalogWorkspaceAppearance & {
   foreground?: boolean; interactionLocked?: boolean; onOpenSettings: () => void;
@@ -42,7 +43,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
   const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
-  return <CatalogActivityProvider onShowDetails={layout.revealDetails}><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
+  return <CatalogActivityProvider onShowDetails={layout.revealDetails}><CatalogCommandProvider favorites={favorites} open={workspace.open}><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px`, "--cap-catalog-details-width": `${detailsLayout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
       favorites={{ ...favorites, appearance, onReveal: favorites.reveal, onCopyPath: favorites.copyPath, activePath: active.favoritePath ?? null, globalActive: active.favoritePath == null,
@@ -56,7 +57,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
       filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null} noticeHost={noticeHost}
       onShowDetails={layout.showDetails} onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
-      <div className="cap-catalog-activity-dock"><CatalogActivityBar />
+      <div className="cap-catalog-activity-dock"><CatalogActivityBar /><CatalogCommandNotice />
       {layout.restoreError && <BottomNoticeBar message="窗口大小未能恢复，请重试展开面板。" actions={<button type="button" aria-label="关闭窗口提醒" onClick={layout.dismissRestoreError}>×</button>} />}
       {layout.metadataError && <BottomNoticeBar message={t("stableSettings.metadataBuildOpenFailed")} actions={<button type="button" aria-label={t("common.close")} onClick={layout.dismissMetadataError}>×</button>} />}
       <div className="cap-catalog-query-notice-host" ref={setNoticeHost} />
@@ -64,5 +65,5 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost}><CatalogDetailsResizer layout={detailsLayout} /></div>
     {favorites.notice && <FavoriteOperationNotice message={favorites.notice} onDismiss={favorites.dismissNotice} onRetry={() => void favorites.reload()} />}
     {workspace.openLimitReached && <div className="cap-catalog-limit" role="alert">{t("catalogWorkspace.limit")} <button type="button" onClick={workspace.dismissLimit}>{t("common.close")}</button></div>}
-  </section></CatalogActivityProvider>;
+  </section></CatalogCommandProvider></CatalogActivityProvider>;
 }

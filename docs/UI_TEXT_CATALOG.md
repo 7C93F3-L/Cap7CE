@@ -768,3 +768,25 @@
 | `metadataBuild.keepEditing` | 继续编辑 | Keep editing | 建库详情页 |
 | `metadataBuild.discard` | 放弃修改 | Discard changes | 建库详情页 |
 | `metadataBuild.saveBack` | 保存并返回 | Save and go back | 建库详情页 |
+
+| `catalogCommand.done` | 指令已执行 | Command completed | 新版快捷指令 |
+| `catalogCommand.failed` | 指令执行失败，请重试。 | Command failed. Try again. | 新版快捷指令 |
+| `catalogCommand.busy` | 已有指令正在执行，请稍候。 | A command is running. Please wait. | 新版快捷指令 |
+| `catalogCommand.executing` | 正在执行指令… | Running command… | 新版快捷指令 |
+| `catalogCommand.retired` | 此指令已停用，请查看设置中的指令列表。 | This command is retired. Check the command list in Settings. | 新版快捷指令 |
+| `catalogCommand.aiBusy` | AI 任务进行中，暂不能停止服务。 | Finish the AI task before stopping the server. | 新版快捷指令 |
+| `catalogCommand.favoriteNotFound` | 未找到唯一匹配的收藏，请使用完整路径。 | No unique favorite matches. Use its full path. | 新版快捷指令 |
+| `catalogCommand.confirmRemove` | 取消收藏“{name}”？输入 y / n | Remove “{name}” from favorites? Enter y / n | 新版快捷指令 |
+| `catalogCommand.confirmCache` | 清理缩略图与预览缓存？输入 y / n | Clear thumbnail and preview cache? Enter y / n | 新版快捷指令 |
+| `catalogCommand.answer` | 输入 y / n，回车确认 | Enter y / n, then press Enter | 新版快捷指令 |
+| `catalogCommand.addFavorite` | 添加收藏目录 | Add a favorite folder | 新版快捷指令 |
+| `catalogCommand.renameFavorite` | 修改收藏名称，不重命名磁盘目录 | Rename the favorite without renaming its folder | 新版快捷指令 |
+| `catalogCommand.removeFavorite` | 取消收藏，不删除磁盘目录 | Remove a favorite without deleting its folder | 新版快捷指令 |
+| `catalogCommand.selectFavorite` | 切换收藏目录，all 切换到此电脑 | Switch favorites; all switches to This PC | 新版快捷指令 |
+| `catalogCommand.root` | 返回此电脑根页面 | Return to the This PC home page | 新版快捷指令 |
+| `catalogCommand.includeSubfolders` | 搜索包含子文件夹 | Include subfolders in search | 新版快捷指令 |
+| `catalogCommand.excludeSubfolders` | 搜索仅当前文件夹 | Search only the current folder | 新版快捷指令 |
+| `catalogCommand.clearCache` | 清理缩略图与预览缓存 | Clear thumbnail and preview cache | 新版快捷指令 |
+| `catalogCommand.removeExample` | dir:remove "收藏名称" | dir:remove "Favorite name" | 新版快捷指令 |
+| `catalogCommand.runtimeNotFound` | 未找到匹配的运行时版本。 | No matching runtime version was found. | 新版快捷指令 |
+| `catalogCommand.modelNotFound` | 未找到唯一可用模型，请使用模型名称或 ID。 | No unique usable model matches. Use its name or ID. | 新版快捷指令 |

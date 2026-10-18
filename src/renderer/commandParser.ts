@@ -16,6 +16,7 @@ export type QuickCommandParseResult =
 
 export interface QuickCommandParseOptions {
   commandEnabled?: boolean;
+  specs?: readonly QuickCommandSpec[];
 }
 
 const quickCommandDomainSet = new Set<string>(quickCommandDomains);
@@ -114,7 +115,7 @@ export const parseQuickCommand = (input: string, options: QuickCommandParseOptio
     return { type: "search" };
   }
 
-  const sameActionSpecs = quickCommandSpecs.filter((spec) => (
+  const sameActionSpecs = (options.specs ?? quickCommandSpecs).filter((spec) => (
     spec.domain === command.domain && spec.action === command.action
   ));
   const exactSpec = sameActionSpecs.find((spec) => isExactSpecMatch(spec, command.args));

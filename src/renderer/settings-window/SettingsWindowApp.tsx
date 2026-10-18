@@ -11,7 +11,7 @@ import { formatCacheSize } from "../formatting";
 import { defaultUiFontSize, useUiFontSize } from "../typography";
 import SettingsIndexSection from "./SettingsIndexSection";
 import { QuickActionSettingsRows } from "../settings/QuickActionSettingsRows";
-import { QuickCommandSettingsRows } from "../settings/QuickCommandSettingsRows";
+import { CatalogQuickCommandSettingsRows as QuickCommandSettingsRows } from "../quick-commands/CatalogQuickCommandSettingsRows";
 import { RuntimeDiagnosticsRows } from "../settings/RuntimeDiagnosticsRows";
 import { SettingsFooter } from "../settings/SettingsFooter";
 import { SettingsWindowUpdateControl } from "./SettingsWindowUpdateControl";

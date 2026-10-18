@@ -133,10 +133,11 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       : message.includes("scope-not-indexed") ? "scope-not-indexed" : "failed";
   };
 
-  const submit = useCallback(async () => {
-    const searchQuery = query.trim();
+  const submit = useCallback(async (value?: string) => {
+    const searchQuery = (value ?? query).trim();
+    if (value !== undefined) setQuery(value);
     const api = window.cap7ce?.computerSearch;
-    if (!api || !status?.searchAvailable || atHome) return;
+    if (!api || !status?.searchAvailable || idleHome && !searchQuery && !selectedConditions.facts && !selectedConditions.fileConditions && selectedConditions.randomSeed === undefined) return;
     cancelActive();
     const sequence = ++requestSequence.current;
     const taskId = nextTaskId("search");
@@ -160,7 +161,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     } finally {
       if (activeRef.current && requestSequence.current === sequence) setBusy(false);
     }
-  }, [cancelActive, currentPath, query, status?.searchAvailable, selectedConditions, nextTaskId, browseChildren, atHome]);
+  }, [cancelActive, currentPath, query, status?.searchAvailable, selectedConditions, nextTaskId, browseChildren, idleHome]);
   const refreshResults = useCallback(async (): Promise<"applied" | "failed" | "deferred"> => {
     const api = window.cap7ce?.computerSearch;
     if (!api || !activeRef.current || !foregroundRef.current || !hasSubmitted

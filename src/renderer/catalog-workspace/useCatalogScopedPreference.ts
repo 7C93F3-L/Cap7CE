@@ -25,16 +25,19 @@ export function useCatalogScopedPreference<T>(scope: string | null, fallback: T,
   }, [codec, key]);
   const current = () => ref.current[key] ?? fallback;
   const update = (next: T, force = false) => {
-    if (!force && current() === next) return;
+    if (!force && current() === next) return Promise.resolve(true);
     const sequence = (sequences.current.get(key) ?? 0) + 1, owner = generation.current;
     sequences.current.set(key, sequence); ref.current = { ...ref.current, [key]: next }; setValues(ref.current); setError(false);
-    void codec.save(scope, next)?.then(() => {
+    const saving = codec.save(scope, next);
+    return Promise.resolve(saving).then(() => {
       if (generation.current === owner && sequence >= (acknowledged.current.get(key) ?? 0)) {
         acknowledged.current.set(key, sequence); confirmed.current = { ...confirmed.current, [key]: next };
       }
+      return Boolean(saving);
     }).catch(() => {
-      if (generation.current !== owner || sequences.current.get(key) !== sequence) return;
+      if (generation.current !== owner || sequences.current.get(key) !== sequence) return false;
       setValues(value => ({ ...value, [key]: confirmed.current[key] ?? fallback })); setError(true);
+      return false;
     });
   };
   const dismissError = useCallback(() => setError(false), []);

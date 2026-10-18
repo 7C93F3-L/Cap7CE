@@ -157,12 +157,14 @@ export const getDangerousQuickCommandItems = () => [
 ];
 
 export interface QuickCommandSettingsRowsProps {
+  groups?: ReturnType<typeof getQuickCommandGroups>;
+  dangerousItems?: ReturnType<typeof getDangerousQuickCommandItems>;
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   stableUi?: boolean;
 }
 
-export const QuickCommandSettingsRows = ({ expanded = false, onExpandedChange = () => undefined, stableUi = false }: QuickCommandSettingsRowsProps) => {
+export const QuickCommandSettingsRows = ({ expanded = false, onExpandedChange = () => undefined, stableUi = false, groups, dangerousItems }: QuickCommandSettingsRowsProps) => {
   const collapseTimerRef = useRef<number | null>(null);
   const [closing, setClosing] = useState(false);
 
@@ -195,7 +197,7 @@ export const QuickCommandSettingsRows = ({ expanded = false, onExpandedChange = 
 
   const commandGroups = (
     <div className="cap-settings-quick-command-groups">
-      {getQuickCommandGroups().map((group) => (
+      {(groups ?? getQuickCommandGroups()).map((group) => (
         <section className="cap-settings-quick-command-group" key={group.title}>
           <h3>{group.title}</h3>
           <div className="cap-settings-quick-command-list">
@@ -212,7 +214,7 @@ export const QuickCommandSettingsRows = ({ expanded = false, onExpandedChange = 
         <h3>{t("settings.confirmationCommands")}</h3>
         <p>{t("settings.confirmationCommandHint")}</p>
         <div className="cap-settings-quick-command-list">
-          {getDangerousQuickCommandItems().map((item) => (
+          {(dangerousItems ?? getDangerousQuickCommandItems()).map((item) => (
             <div className="cap-settings-quick-command-item" key={item.command}>
               <span className="cap-settings-command-pill">{item.command}</span>
               <span className="cap-settings-command-description">{item.description}</span>
