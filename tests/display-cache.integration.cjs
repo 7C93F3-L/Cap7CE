@@ -1,0 +1,36 @@
+const assert=require('node:assert/strict'),fsSync=require('node:fs'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+const {app}=require('electron');
+const root=fsSync.mkdtempSync(path.join(os.tmpdir(),'Cap7CE-display-cache-'));
+app.setPath('userData',path.join(root,'profile'));app.setPath('temp',root);
+app.whenReady().then(async()=>{try{
+ const visual=require('../dist-electron/visualCacheService.js'),office=require('../dist-electron/officePreviewCache.js');
+ const {getDisplayCacheStats,clearDisplayCaches}=require('../dist-electron/displayCacheService.js');
+ const source=path.join(root,'original.png');await fs.writeFile(source,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64'));await visual.initializeVisualCacheDirectories();
+ const types=['search-thumbnail','search-shell-thumbnail','search-shell-preview','model-input-image','preview-image','skim-thumbnail','skim-preview','skim-shell-thumbnail','skim-shell-preview'];
+ const entries=[];for(const type of types){const entry=await visual.createVisualCacheEntry(source,type);await visual.writeVisualCacheEntry(entry,Buffer.from('cache'),'image/png');entries.push(entry)}
+ const index=path.join(root,'profile','index','catalog.db'),keywords=path.join(root,'profile','keywords.json'),model=path.join(root,'model.gguf');
+ await fs.mkdir(path.dirname(index),{recursive:true});await Promise.all([index,keywords,model].map(file=>fs.writeFile(file,'preserve')));
+ await fs.mkdir(office.officePreviewCacheRoot,{recursive:true});const active=path.join(office.officePreviewCacheRoot,'a'.repeat(64)+'.pdf'),unused=path.join(office.officePreviewCacheRoot,'b'.repeat(64)+'.pdf'),unrelated=path.join(office.officePreviewCacheRoot,'notes.pdf');
+ await Promise.all([active,unused,unrelated].map(file=>fs.writeFile(file,'%PDF-fixture')));
+ const before=await getDisplayCacheStats();assert.equal(before.cacheCount,11,'all nine visual types plus both Office conversions are counted');
+ const expectedFiles=entries.flatMap(entry=>[entry.imagePath,entry.metadataPath]).concat([active,unused]);let expectedBytes=0;for(const file of expectedFiles)expectedBytes+=(await fs.stat(file)).size;
+ assert.equal(before.totalBytes,expectedBytes,'metadata bytes are counted once; unrelated files are excluded');
+ const skim=require('../dist-electron/skimVisualCacheService.js');skim.beginSkimVisualSession('still-authorized');
+ const release=await office.acquireOfficePreviewCache(active,async()=>true),oldGeneration=office.getOfficePreviewCacheGeneration();
+ const publication=require('../dist-electron/visualCachePublication.js');let finishWrite;const writeGate=new Promise(resolve=>finishWrite=resolve),writing=entries.find(entry=>entry.type==='preview-image');
+ const inFlight=publication.publishVisualCache(writing.type,writing.publicationEpoch,async()=>{await writeGate;await fs.writeFile(writing.imagePath,'published-before-clear')});
+ let finished=false;const pendingClear=clearDisplayCaches().then(result=>{finished=true;return result}),duplicateClear=clearDisplayCaches();await new Promise(resolve=>setImmediate(resolve));assert.equal(finished,false,'clearing waits for an already admitted file publication');finishWrite();await inFlight;
+ const [cleared,duplicate]=await Promise.all([pendingClear,duplicateClear]);assert.equal(cleared.cacheCount,1);assert.deepEqual(duplicate,cleared);
+ for(const file of entries.flatMap(entry=>[entry.imagePath,entry.metadataPath]).concat(unused))await assert.rejects(fs.access(file));
+ for(const entry of entries)await assert.rejects(visual.writeVisualCacheEntry(entry,Buffer.from('late'),'image/png'),error=>error?.code==='ECANCELED');
+ await fs.access(active);for(const file of [source,index,keywords,model,unrelated])await fs.access(file);
+ await office.publishOfficePreviewCache(source,unused,1,oldGeneration);await assert.rejects(fs.access(unused),'an older conversion cannot repopulate the cleared cache');
+ await fs.access(await skim.requestSkimVisualCache('still-authorized',source,'thumbnail'));
+ release();assert.equal((await clearDisplayCaches()).cacheCount,0);await assert.rejects(fs.access(active));
+ await assert.rejects(publication.clearVisualCachePublications(['preview-image'],async()=>{throw Error('simulated delete failure')}));
+ await visual.writeVisualCacheEntry(await visual.createVisualCacheEntry(source,'preview-image'),Buffer.from('retry'),'image/png');assert.equal((await clearDisplayCaches()).cacheCount,0,'publication resumes after a failed clear');
+ assert.equal((await getDisplayCacheStats()).totalBytes,0);await fs.access(unrelated);
+ const main=fsSync.readFileSync(path.resolve(__dirname,'../electron/main.ts'),'utf8'),settings=fsSync.readFileSync(path.resolve(__dirname,'../src/renderer/settings-window/SettingsWindowApp.tsx'),'utf8');
+ assert.match(main,/getCacheStats: getDisplayCacheStats/);assert.match(main,/clearFormalCache:.*clearDisplayCaches/);assert.doesNotMatch(settings,/<SettingCard title="settings.skimCache"/);
+ console.log('Unified display cache: exact totals, legacy AI leftovers, active Office lease, obsolete publication, concurrent clears, live session recovery and protected source/index/keywords/model files passed.');
+}catch(error){console.error(error);process.exitCode=1}finally{await fs.rm(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});

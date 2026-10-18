@@ -95,6 +95,9 @@
     "core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs": 27
   },
   "maintenanceMaxLines": {
+    "electron/displayCacheService.ts": 30,
+    "electron/officePreviewCache.ts": 75,
+    "electron/visualCachePublication.ts": 30,
     "src/renderer/directoryListActions.ts": 20,
     "src/renderer/explore/useRandomBrowse.ts": 40,
     "src/renderer/window-presentation/WindowPinButton.tsx": 50,

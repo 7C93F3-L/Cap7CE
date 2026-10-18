@@ -230,6 +230,8 @@
 | `settings.deleteDirectoryActionHint` | 点击移除此目录 | Remove this folder | 删除按钮 title |
 | `settings.clearCache` | 清理缓存 | Clear Cache | 缓存区标题 / title |
 | `settings.cacheManagement` | 缓存管理 | Cache Management | 缓存设置项标题 |
+| `stableSettings.formalCache` | 缩略图与预览缓存 | Thumbnail and preview cache | 合并浏览、搜索与Office转换缓存 |
+| `stableSettings.desc.formalCache` | 缓存缩略图与预览内容，清理后按需重新生成。 | Caches thumbnails and previews. Rebuilt on demand after clearing. | 统一缓存说明 |
 | `settings.readingCache` | 读取中 | Reading | 缓存统计 |
 | `settings.cacheStats` | {count} 个 / {size} | {count} / {size} | 缓存统计 |
 | `settings.cacheOptimizationReady` | {count}个 / {size} 自动优化已开启。 | | 自动缓存状态 |

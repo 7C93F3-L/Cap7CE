@@ -1,13 +1,11 @@
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import { spawn } from "node:child_process";
+import { officePreviewRoot, officePreviewCacheRoot, getOfficePreviewCacheGeneration, publishOfficePreviewCache, clearOfficePreviewCacheFiles, acquireOfficePreviewCache } from "./officePreviewCache";
 
 const maximumOfficePreviewBytes = 256 * 1024 * 1024;
 const officeConversionTimeoutMs = 30_000;
-const officePreviewRoot = path.join(os.tmpdir(), "Cap7CE", "office-preview");
-const officePreviewCacheRoot = path.join(officePreviewRoot, "cache");
 
 export type OfficePreviewKind = "excel" | "powerpoint";
 
@@ -25,6 +23,7 @@ interface OfficePreviewSession {
   outputPath: string;
   controller: AbortController;
   disposed: boolean;
+  releaseCache?: () => void;
 }
 
 const conversionScript = String.raw`
@@ -202,6 +201,7 @@ const removeSessionDirectory = (directoryPath: string) => (
 const disposeSession = (session: OfficePreviewSession) => {
   if (session.disposed) return;
   session.disposed = true;
+  session.releaseCache?.();
   session.controller.abort();
   if (session.directoryPath) void removeSessionDirectory(session.directoryPath);
 };
@@ -233,16 +233,6 @@ const isValidPdf = async (pdfPath: string) => {
   }
 };
 
-const publishOfficePreviewCache = async (sourcePath: string, cachePath: string, requestId: number) => {
-  const pendingPath = `${cachePath}.${process.pid}.${requestId}.tmp`;
-  try {
-    await fs.copyFile(sourcePath, pendingPath);
-    await fs.rename(pendingPath, cachePath);
-  } catch {
-    await fs.rm(pendingPath, { force: true }).catch(() => undefined);
-  }
-};
-
 export const prepareOfficePreviewTemporaryRoot = async () => {
   await fs.rm(officePreviewRoot, { recursive: true, force: true });
   await fs.mkdir(officePreviewCacheRoot, { recursive: true });
@@ -257,9 +247,12 @@ export const closeOfficePreviewSession = (sessionId?: string) => {
   return true;
 };
 
+export const clearOfficePreviewCache = () => clearOfficePreviewCacheFiles();
+
 export const openOfficePreviewSession = async (sessionId: string, filePath: string) => {
   closeOfficePreviewSession();
   const requestId = ++sessionRequestId;
+  const cacheGeneration = getOfficePreviewCacheGeneration();
   const normalizedPath = path.normalize(path.resolve(filePath));
   if (!path.isAbsolute(filePath)) throw new Error("Office preview requires an absolute path.");
   const kind = getOfficePreviewKind(normalizedPath);
@@ -273,14 +266,16 @@ export const openOfficePreviewSession = async (sessionId: string, filePath: stri
 
   await fs.mkdir(officePreviewCacheRoot, { recursive: true });
   const cachePath = getOfficePreviewCachePath(normalizedPath, stat.size, stat.mtimeMs, kind);
-  if (await isValidPdf(cachePath)) {
+  const releaseCache = await acquireOfficePreviewCache(cachePath, () => isValidPdf(cachePath));
+  if (requestId !== sessionRequestId) { releaseCache?.(); throw createCancelledError(); }
+  if (releaseCache) {
     const session: OfficePreviewSession = {
       sessionId,
       sourcePath: normalizedPath,
       directoryPath: null,
       outputPath: cachePath,
       controller: new AbortController(),
-      disposed: false
+      disposed: false, releaseCache
     };
     activeSession = session;
     return { pdfPath: cachePath, kind };
@@ -308,7 +303,7 @@ export const openOfficePreviewSession = async (sessionId: string, filePath: stri
     if (!await isValidPdf(outputPath)) {
       throw new Error("Office preview conversion did not produce a PDF.");
     }
-    await publishOfficePreviewCache(outputPath, cachePath, requestId);
+    await publishOfficePreviewCache(outputPath, cachePath, requestId, cacheGeneration);
     return { pdfPath: outputPath, kind };
   } catch (error) {
     if (activeSession === session) activeSession = null;

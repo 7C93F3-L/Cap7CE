@@ -387,6 +387,7 @@ const renderVisualCache = async (entry: VisualCacheEntry) => {
     await writeVisualCacheEntry(entry, imageBuffer, strategy.mimeType);
     return entry.imagePath;
   } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ECANCELED") throw error;
     const message = error instanceof Error ? error.message : "未知渲染错误";
     throw new Error(`${entry.type} 生成失败：${message}`);
   }
@@ -447,4 +448,10 @@ export const loadModelInputImage = async (sourcePath: string) => {
     imagePath,
     ...await readVisualCacheImage(imagePath)
   };
+};
+
+export const prepareTemporaryModelInputImage = async (sourcePath: string) => {
+  const entry = await createVisualCacheEntry(sourcePath, "model-input-image");
+  const strategy = renderStrategies["model-input-image"];
+  return { buffer: await renderSourceImage(entry, strategy), mimeType: strategy.mimeType };
 };

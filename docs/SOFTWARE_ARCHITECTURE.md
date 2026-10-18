@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+displayCacheService统一既有cache:stats和cache:clearAll的显示缓存语义，汇总formal/skim视觉类型（含历史.capmo）及Office转换缓存，不新增IPC；Settings只呈现一项“缩略图与预览缓存”。Main继续走现有缩略图暂停/丢弃队列入口，领域服务暂停搜索Shell并在Skim清理屏障内清理各组，重复清理共用同一Promise，finally恢复调度。Skim清理取消排队/进行中的渲染但保留尚有效的会话登记，退出/取消的会话不会复活，清理后可按需重建。visualCachePublication以不落盘的逐类型代数和写入屏障等待已开始的文件发布，并拒绝清理前或清理中创建的过期渲染回填；该模块受30行维护阈值约束，不改变磁盘缓存格式。缓存字节统计在await文件状态完成后再同步累加，避免并发读覆盖总数。
+
+officePreviewCache独立持有现有临时目录下转换缓存的统计、串行发布/清理和租约：只统计/删除64位哈希命名的PDF，活动Office会话持有租约直至关闭；清理递增代数，清理前启动的转换仍可用于当前会话但不得重新发布缓存。officePreviewService继续持有转换进程、会话和内容验证。新模块分别受30行/75行维护阈值约束。catalogAutoKeywordRuntime改用prepareTemporaryModelInputImage，复用同一1536px JPEG渲染策略但不写入.capmo；任务只持有临时Buffer/data URL，退出任务后交由运行时回收，历史输入文件仅由明确的缓存清理入口处理。
+
 设置页移除旧Skim“自定义范围”分类：正式入口main.tsx装配CatalogApplicationRoot，当前CatalogContextView通过文件条件和catalogViewPreference管理格式、隐藏文件与子目录范围，不读取旧skimDisplay。SkimDisplaySettingsRows组件及两份样式、设置分类/搜索键/图标/文案、设置控制器更新动作、preferences:updateSkimDisplay注册与preload桥接、存储更新函数全部退休；未装配的旧App只保留本地展示状态，不再写入该偏好。preferenceStore及共享类型继续兼容读取已有skimDisplay字段，其他偏好写入保留旧字段，不做用户配置迁移。
 
 FavoriteDirectoryScroll只组合原目录行滚动容器、Ref及共享CustomScrollbar，在Catalog图标宿主启用自绘纵向轨道，其他宿主仍返回原cap-favorite-rows。目录列表独占剩余高度，外层nav隐藏原生溢出，内层保留原生overflow及滚轮；轨道位于目录列表右侧，滑块右沿距侧栏边缘2px，避开调宽命中区，窄栏补偿其4px内边距且不占用图标宽度。轨道标记selection-preserve；原nav的scroll捕获仍关闭浮层，无额外查询或菜单状态，组件与样式分别受体量守门约束。
@@ -44,7 +48,7 @@ feedback/BottomNoticeBar是无状态的共用窄条组件，只接收消息、�
 
 右栏CatalogKeywords组合原useCatalogKeywords和PreviewManualKeywordsSection，保留手动编辑器，将标题与底部按钮作为可选展示输入；PreviewInformationSidebar只增加关键词插槽，独立预览保留原功能。CatalogActivityProvider在统一工作区拥有单张自动添加的本次运行状态，useCatalogAutoKeywords过滤requestId并在卸载时取消，不依赖当前选择来决定保存目标。CatalogActivityBar在网格底部显示阶段与结果，终态有限时自动关闭；CatalogTransientFeedback将已有网格文件操作短提示汇入同一入口。CatalogActivity.css独立持有浮动停靠与任务避让布局，元数据任务本身保持原流程。
 
-catalogAutoKeywordIpc独立注册generateKeywords/cancelGeneratedKeywords及发送进度，仅接受当前查询授权，不接受Renderer路径；单任务有界执行，取消校验请求与WebContents所有者，保存阶段不接受取消。catalogAutoKeywordRuntime复用loadModelInputImage的1536px JPEG/.capmo缓存及原本地llama视觉服务与占用/空闲释放。catalogAutoKeywordModel只向该本地连接请求有界JSON关键词数组，超时或取消中止请求；catalogAutoKeywordSource以文件创建时间、设备/文件身份、大小与修改时间复核源文件。catalogAutoKeywordService在保存前重读Core关键词并去重追加，以行修订冲突重试最多三次，所有读写重新验证查询授权；不生成旧库AI元数据或全目录识别队列，不改变源文件及Core数据库结构。模块边界与体量由catalog-keywords-boundary-check自动守护。
+catalogAutoKeywordIpc独立注册generateKeywords/cancelGeneratedKeywords及发送进度，仅接受当前查询授权，不接受Renderer路径；单任务有界执行，取消校验请求与WebContents所有者，保存阶段不接受取消。catalogAutoKeywordRuntime复用1536px JPEG渲染规则并通过prepareTemporaryModelInputImage只在内存准备模型输入及原本地llama视觉服务与占用/空闲释放。catalogAutoKeywordModel只向该本地连接请求有界JSON关键词数组，超时或取消中止请求；catalogAutoKeywordSource以文件创建时间、设备/文件身份、大小与修改时间复核源文件。catalogAutoKeywordService在保存前重读Core关键词并去重追加，以行修订冲突重试最多三次，所有读写重新验证查询授权；不生成旧库AI元数据或全目录识别队列，不改变源文件及Core数据库结构。模块边界与体量由catalog-keywords-boundary-check自动守护。
 
 CatalogFileInformation通过PreviewInformationSidebar的可选mergeLocation将位置作为基础信息卡片的最后一项，并将文件名呈现为原生按钮；文件名与路径共用已有onShowInFolder授权动作，不新增文件操作或IPC。默认关闭该布局，独立预览继续使用单独位置卡片。字段和长文本继续沿用既有滚动、换行与领域样式。
 
@@ -757,7 +761,7 @@ Q3 的动画事实由独立 Worker 增量补齐，前台活动时限速、失焦
 
 skim 缓存位于独立的 `skim-cache/thumbnails`、`skim-cache/previews` 和 `skim-cache/metadata`，不计入正式视觉缓存统计、清理或自动优化。原生视觉缩略图与 Shell 内容缩略图使用不同的缓存类型、扩展名和渲染来源；Shell 缓存键同时包含源文件大小、精确修改时间及 Shell 策略版本，避免与原生结果混用。Renderer 使用可见性观察只请求当前视口及邻近区域的缩略图；每次进入目录建立新的生成会话，离开时取消未领取任务，已开始的单文件生成允许完成但迟到响应不再交付。显式预览插入原生视觉高优先级队列；Shell 请求使用独立串行通道，只在主窗口聚焦且处于内容视图时领取任务，单会话内抑制重复失败，并在连续超时后停止该会话继续领取。Settings 单独展示全部 skim 缓存数量和大小，并通过独立确认、授权和安全清理入口暂停两条队列、等待正在写入的任务结束后清理。
 
-历史 `.capmo` 模型输入图仍属于可重建缓存，自动缓存优化可清理既有通用 AI 元数据已完成项目的遗留输入；按需 AI 搜索直接从受限视觉输入准备 300px 单图，不创建新的全目录模型输入队列。清理不扫描源目录、不删除缩略图或预览缓存，失败也不影响搜索或查询确认词。
+历史 `.capmo` 模型输入图仍属于可重建缓存，统一缓存清理入口可清理遗留输入；旧版按通用 AI 元数据成功记录自动清理的触发链已退休；按需 AI 搜索直接从受限视觉输入准备 300px 单图，不创建新的全目录模型输入队列。清理不扫描源目录、不删除缩略图或预览缓存，失败也不影响搜索或查询确认词。
 
 Electron 在任何数据路径读取前通过 `electron/applicationDataPaths.ts` 将产品数据根固定为 `%LOCALAPPDATA%\Cap7CE`，并将 Electron `userData` 指向其中的 `UserData` 子目录。目录配置、普通 SQLite 索引、预览缓存、缩略图缓存、日志和崩溃数据均只写入 `UserData`；普通数据库文件固定为 `UserData/index/cap7ce-index.db`。全盘搜索 Catalog、更新暂存、模型和 `llama.cpp` 分别使用同一产品根下的 `Core`、`updates`、`models` 与 `llama.cpp`，从而与只读程序目录分离。路径解析本身不迁移旧 `%APPDATA%\Cap7CE`；已有开发机器的数据迁移由不随产品发布的独立工具显式执行，应用启动不会猜测、合并或删除旧目录。
 

@@ -47,7 +47,8 @@ import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, 
 import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSearchShellVisualActivity } from "./searchShellVisualCacheService";
 import { registerCacheActivityIpc } from "./cacheActivityIpc";
 import { registerCacheClearIpc } from "./cacheClearIpc";
-import { clearAllVisualCaches, clearThumbnailCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, getAllVisualCacheStats, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
+import { getDisplayCacheStats, clearDisplayCaches } from "./displayCacheService";
+import { clearAllVisualCaches, clearThumbnailCaches, deleteThumbnailsForDirectory, deleteThumbnailsForImages, discardAllQueuedThumbnailRenders, discardQueuedInteractiveThumbnailRenders, discardQueuedThumbnailRendersForDirectory, ensureThumbnailPath, pauseThumbnailRendering, resumeThumbnailRendering } from "./thumbnailService";
 import { discardThumbnailOptimizationCandidatesForDirectory, getThumbnailOptimizationStatus, pauseThumbnailOptimization, resumeThumbnailOptimization, setThumbnailOptimizationEnabled, setThumbnailOptimizationForegroundActive, setThumbnailOptimizationSort, setThumbnailOptimizationStatusListener, type ThumbnailOptimizationStatus } from "./thumbnailOptimizationService";
 import { readVisualCacheImage } from "./visualCacheService";
 import { getWindowsKnownFolderDisplayNames } from "./windowsKnownFolderDisplayNameService";
@@ -2608,7 +2609,7 @@ ipcMain.handle("preferences:endShortcutCapture", async () => {
 registerCacheActivityIpc({
   registrar: ipcMain,
   isMainSenderAllowed,
-  getCacheStats: getAllVisualCacheStats,
+  getCacheStats: getDisplayCacheStats,
   getOptimizationStatus: getThumbnailOptimizationStatus,
   setContentViewActive: (active) => {
     rendererContentViewActive = active;
@@ -2645,7 +2646,7 @@ registerCacheClearIpc({
   registrar: ipcMain,
   createToken: randomUUID,
   translateConfirmationRequired: () => t("error.cacheConfirmationRequired"),
-  clearFormalCache: () => clearFormalVisualCacheSafely(clearAllVisualCaches),
+  clearFormalCache: () => clearFormalVisualCacheSafely(clearDisplayCaches),
   clearThumbnailCache: () => clearFormalVisualCacheSafely(clearThumbnailCaches),
   getSkimCacheStats,
   clearSkimCache: clearSkimCacheSafely

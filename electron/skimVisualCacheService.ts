@@ -118,16 +118,17 @@ export const setSkimShellThumbnailActivity = (active: boolean) => {
 
 export const getSkimCacheStats = (): Promise<VisualCacheStats> => getSkimVisualCacheStats();
 
-export const clearSkimCacheSafely = async (): Promise<VisualCacheStats> => {
+export const clearSkimCacheSafely = async (clear = clearSkimVisualCaches): Promise<VisualCacheStats> => {
   clearing = true;
-  for (const sessionId of [...sessions.keys()]) cancelSkimVisualSession(sessionId);
+  for (const task of queuedTasks.splice(0)) task.reject(cancelledError());
   await Promise.all([
     Promise.allSettled([...activeTasks]),
     shellThumbnailScheduler.clear()
   ]);
   try {
-    return await clearSkimVisualCaches();
+    return await clear();
   } finally {
     clearing = false;
+    for (const sessionId of sessions.keys()) shellThumbnailScheduler.beginSession(sessionId);
   }
 };

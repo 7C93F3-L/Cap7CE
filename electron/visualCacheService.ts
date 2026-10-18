@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "./versioning";
+import { visualCacheEpoch, publishVisualCache, clearVisualCachePublications } from "./visualCachePublication";
 
 export type FormalVisualCacheType = "search-thumbnail" | "search-shell-thumbnail" | "search-shell-preview" | "model-input-image" | "preview-image";
 export type SkimVisualCacheType = "skim-thumbnail" | "skim-preview" | "skim-shell-thumbnail" | "skim-shell-preview";
@@ -18,6 +19,7 @@ export interface VisualCacheDescriptor {
 }
 
 export interface VisualCacheEntry {
+  publicationEpoch: number;
   type: VisualCacheType;
   key: string;
   sourcePath: string;
@@ -200,7 +202,8 @@ const getVisualCacheTypeStats = async (type: VisualCacheType) => {
       const filePath = filePaths[nextFileIndex];
       nextFileIndex += 1;
       try {
-        totalBytes += (await fs.stat(filePath)).size;
+        const stat = await fs.stat(filePath);
+        totalBytes += stat.size;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
       }
@@ -257,7 +260,8 @@ export const getSkimVisualCacheStats = () => {
 
 const clearCacheTypes = async (types: readonly VisualCacheType[]) => {
   await initializeVisualCacheDirectories();
-  await Promise.all(
+  await clearVisualCachePublications(types, async () => {
+    await Promise.all(
     types.map(async (type) => {
       const descriptor = getVisualCacheDescriptor(type);
       const directories = [...new Set([getVisualCacheDirectory(type), getVisualCacheMetadataDirectory(type)])];
@@ -273,7 +277,8 @@ const clearCacheTypes = async (types: readonly VisualCacheType[]) => {
         }));
       }));
     })
-  );
+    );
+  });
 };
 
 export const clearVisualCaches = async (): Promise<VisualCacheStats> => {
@@ -321,6 +326,7 @@ export const createVisualCacheEntryFromSourceMetadata = (
   const cacheDirectory = getVisualCacheDirectory(type);
 
   return {
+    publicationEpoch: visualCacheEpoch(type),
     type,
     key,
     sourcePath: normalizedSourcePath,
@@ -407,11 +413,11 @@ const atomicWriteFile = async (filePath: string, data: string | Buffer) => {
   }
 };
 
-export const writeVisualCacheEntry = async (
+export const writeVisualCacheEntry = (
   entry: VisualCacheEntry,
   imageBuffer: Buffer,
   mimeType: VisualImageMimeType
-) => {
+) => publishVisualCache(entry.type, entry.publicationEpoch, async () => {
   await fs.mkdir(path.dirname(entry.imagePath), { recursive: true });
   await atomicWriteFile(entry.imagePath, imageBuffer);
   const metadata: VisualCacheMetadata = {
@@ -431,7 +437,7 @@ export const writeVisualCacheEntry = async (
     generatedAt: new Date().toISOString()
   };
   await atomicWriteFile(entry.metadataPath, JSON.stringify(metadata, null, 2));
-};
+});
 
 export const detectVisualImageMimeType = (buffer: Buffer): VisualImageMimeType => {
   if (

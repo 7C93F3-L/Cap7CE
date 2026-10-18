@@ -36,7 +36,7 @@ module.exports=(root,failures)=>{
  if(/\buse[A-Z]\w*|window\.|catalog-workspace|metadata-build/.test(notice))failures.push('The shared bottom notice must remain a pure presentation component.');
  for(const file of ['src/renderer/catalog-workspace/CatalogActivity.tsx','src/renderer/metadata-build/MetadataBuildSlot.tsx'])
   if(!fs.readFileSync(path.join(root,file),'utf8').includes('<BottomNoticeBar'))failures.push(`${file} must reuse the shared bottom notice.`);
- if(!runtime.includes('loadModelInputImage')||/ensureThumbnail|prepareAiSearchImage/.test(runtime))failures.push('Automatic keywords must reuse the existing model-input image preparation.');
+ if(!runtime.includes('prepareTemporaryModelInputImage')||/ensureThumbnail|prepareAiSearchImage/.test(runtime))failures.push('Automatic keywords must reuse the existing model-input image preparation.');
  const service=fs.readFileSync(path.join(root,'electron/catalogAutoKeywordService.ts'),'utf8');
  for(const anchor of ['deps.keywords.read(check())','deps.keywords.write(check(), keywords, current.revision)','deps.fingerprint(check()) !== original','deps.endUse()'])
   if(!service.includes(anchor))failures.push(`Automatic keyword safety is missing ${anchor}.`);

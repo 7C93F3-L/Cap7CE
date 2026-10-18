@@ -240,7 +240,8 @@ app.whenReady().then(async () => {
     await assert.rejects(() => fs.access(searchShellThumbnailPath));
     await assert.rejects(() => fs.access(searchShellPreviewPath));
     assert.equal((await getSkimCacheStats()).cacheCount, 7);
-    await writeVisualCacheEntry(formalEntry, png, "image/png");
+    await assert.rejects(writeVisualCacheEntry(formalEntry, png, "image/png"), error => error?.code === "ECANCELED");
+    await writeVisualCacheEntry(await createVisualCacheEntry(sourcePath, "search-thumbnail"), png, "image/png");
 
     const future = new Date(Date.now() + 2000);
     await fs.utimes(sourcePath, future, future);

@@ -28,7 +28,6 @@ export const useSettingsWindowController = () => {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [directories, setDirectories] = useState<DirectoryItem[]>([]);
   const [visualCacheStats, setVisualCacheStats] = useState(emptyCacheStats);
-  const [skimCacheStats, setSkimCacheStats] = useState(emptyCacheStats);
   const [thumbnailOptimizationStatus, setThumbnailOptimizationStatus] = useState(emptyOptimizationStatus);
   const [unavailableShortcutActionIds, setUnavailableShortcutActionIds] = useState<ShortcutAvailabilityResult["unavailableActionIds"]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,13 +50,11 @@ export const useSettingsWindowController = () => {
   const refreshCaches = useCallback(async () => {
     setIsRefreshingCaches(true);
     try {
-      const [formalStats, skimStats, optimizationStatus] = await Promise.all([
+      const [formalStats, optimizationStatus] = await Promise.all([
         window.cap7ce?.cache.stats(),
-        window.cap7ce?.skimCache.stats(),
         window.cap7ce?.cache.optimizationStatus()
       ]);
       if (formalStats) setVisualCacheStats(formalStats);
-      if (skimStats) setSkimCacheStats(skimStats);
       if (optimizationStatus) setThumbnailOptimizationStatus(optimizationStatus);
     } finally {
       setIsRefreshingCaches(false);
@@ -219,13 +216,6 @@ export const useSettingsWindowController = () => {
     applyPreferences(await window.cap7ce?.preferences.get());
     return stats ?? null;
   };
-  const clearSkimCache = async () => {
-    const token = await window.cap7ce?.skimCache.authorizeClear();
-    if (!token) return null;
-    const stats = await window.cap7ce?.skimCache.clear(token);
-    if (stats) setSkimCacheStats(stats);
-    return stats ?? null;
-  };
 
   const totalFileCount = useMemo(() => directories.some((directory) => directory.fileCount === null)
     ? null
@@ -235,7 +225,6 @@ export const useSettingsWindowController = () => {
     preferences,
     directories,
     visualCacheStats,
-    skimCacheStats,
     thumbnailOptimizationStatus,
     unavailableShortcutActionIds,
     isLoading,
@@ -262,7 +251,6 @@ export const useSettingsWindowController = () => {
     replaceDirectoryConflicts,
     renameDirectory,
     deleteDirectory,
-    clearFormalCache,
-    clearSkimCache
+    clearFormalCache
   };
 };

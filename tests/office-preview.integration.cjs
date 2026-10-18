@@ -3,12 +3,15 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const { app } = require("electron");
+const isolatedTemp = require("node:fs").mkdtempSync(path.join(os.tmpdir(), "cap7ce-office-cache-"));
+app.setPath("temp", isolatedTemp);
 
 const {
   closeOfficePreviewSession,
   openOfficePreviewSession,
   prepareOfficePreviewTemporaryRoot,
-  setOfficePreviewConversionRunnerForTests
+  setOfficePreviewConversionRunnerForTests,
+  clearOfficePreviewCache
 } = require("../dist-electron/officePreviewService.js");
 const {
   closePdfPreviewSession,
@@ -89,8 +92,12 @@ const run = async () => {
     const cachedExcelPreview = await openOfficePreviewSession("cached-excel-session", excelPath);
     assert.equal(cachedExcelPreview.kind, "excel");
     assert.deepEqual(observedKinds, ["excel"]);
+    await clearOfficePreviewCache();
+    await fs.access(cachedExcelPreview.pdfPath);
     assert.equal(closeOfficePreviewSession("cached-excel-session"), true);
     assert.equal(await waitForMissing(cachedExcelPreview.pdfPath), false);
+    await clearOfficePreviewCache();
+    assert.equal(await waitForMissing(cachedExcelPreview.pdfPath), true);
 
     const presentationPreview = await openOfficePreviewSession("presentation-session", presentationPath);
     assert.equal(presentationPreview.kind, "powerpoint");
@@ -136,6 +143,7 @@ const run = async () => {
     closeOfficePreviewSession();
     setOfficePreviewConversionRunnerForTests(null);
     await fs.rm(testRoot, { recursive: true, force: true });
+    await fs.rm(isolatedTemp, { recursive: true, force: true });
   }
   app.quit();
 };
