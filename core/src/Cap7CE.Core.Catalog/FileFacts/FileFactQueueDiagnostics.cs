@@ -33,7 +33,7 @@ public sealed class FileFactQueueDiagnostics(string databasePath, TimeProvider? 
             }
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
-            var scope = FileFactQueueScope.Bind(command, policy);
+            var scope = await FileFactEntryPolicy.BindAsync(command, policy, token);
             command.CommandText = $"""
                 SELECT COALESCE(SUM(j.state = 'pending' OR (j.state = 'leased'
                         AND (j.lease_expires <= $now OR j.policy_epoch <> $epoch))), 0),

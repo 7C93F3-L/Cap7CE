@@ -5,6 +5,7 @@ namespace Cap7CE.Core.Reader.Host;
 
 internal sealed partial class ReaderNtfsVolume
 {
+    private readonly ReaderSnapshotEntryCache snapshotEntries = new();
     public ReaderFileEntryBatchResponse ReadFileEntries(ReaderFileEntryBatchRequest request, CancellationToken token)
     {
         if (request.VolumeId != VolumeId) throw new InvalidDataException("reader-entry-volume");
@@ -25,6 +26,7 @@ internal sealed partial class ReaderNtfsVolume
 
     private ReaderFileEntrySet ReadFileEntries(ulong reference, CancellationToken token)
     {
+        if (snapshotEntries.Read(reference) is { } cached) return cached;
         var descriptor = new FileIdDescriptor { Size = checked((uint)Marshal.SizeOf<FileIdDescriptor>()), Type = 0, FileId = unchecked((long)reference) };
         using var handle = OpenFileById(volume, ref descriptor, FileReadAttributes, ShareReadWriteDelete,
             IntPtr.Zero, OpenNoRecall | OpenReparsePoint);

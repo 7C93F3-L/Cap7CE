@@ -63,6 +63,19 @@ internal static class NativeFileEntryCatalogTests
             TestAssert.True(NativeFileFactSourceGuard.Matches(resolved), "resolved remaining name retains native identity and source fence");
             TestAssert.True(await facts.ReadCurrentAsync(source.Identity, FileFactKind.ImageDimensions, 1) is not null, "link removal reuses current facts");
             TestAssert.Equal("owned synthetic Core metadata fixture", await File.ReadAllTextAsync(alias), "remaining source bytes are intact");
+            var pngAlias = Path.Combine(first, "usable.png");
+            TestAssert.True(CreateHardLinkW(pngAlias, alias, IntPtr.Zero), "create private differently named format alias");
+            var now = NativeFileEntryReader.Read(pngAlias)!;
+            await store.ReplaceAsync(source.Identity, version, 2, now.Entries);
+            var policy = new FileFactQueuePolicy([source.Identity.VolumeId], [new(one.VolumeId, one.FileReference)], []);
+            var jobs = (await new FileFactDiscovery(fixture.DatabasePath).ReadPageAsync(policy, FileFactKind.ImageDimensions, 2, [".png"])).Jobs;
+            var broker = new FileFactExtractionBroker(fixture.DatabasePath); await broker.InitializeAsync(); await broker.SetPolicyAsync(policy); await broker.EnqueueAsync(jobs);
+            var ticket = (await broker.ClaimAsync()).Ticket!;
+            TestAssert.Equal(pngAlias, ticket.FullPath, "ordinary broker reads the allowed PNG alias instead of canonical or excluded TXT names");
+            TestAssert.True(await broker.RenewAsync(ticket.Lease.LeaseId), "allowed actual alias renews through native and policy guards");
+            await store.ReplaceAsync(source.Identity, version, 3, [new(two.FileReference, "alias.txt")]);
+            TestAssert.False(await broker.RenewAsync(ticket.Lease.LeaseId), "removing the allowed entry revokes a live worker grant");
+            TestAssert.Equal(FileFactBrokerCompletion.LeaseLost, await broker.CompleteAsync(ticket.Lease.LeaseId, new(FileFactState.Indexed, 1, 1)), "revoked alias cannot publish through another path");
         } finally { Directory.Delete(root, recursive: true); }
     }
 

@@ -55,13 +55,15 @@ public sealed class FileFactDiscovery(string databasePath)
         return await CatalogQueryExecution.RunAsync(connection, token, async () =>
         {
             using var transaction = connection.BeginTransaction(deferred: true);
+            var entries = await FileFactEntryPolicy.IsActiveAsync(connection, transaction, token);
+            var pending = await DirectoryEntries.CatalogFileEntryPending.ExclusionSqlAsync(connection, transaction, token);
             var jobs = new List<FileFactJob>();
             for (var index = start; index < policy.VolumeOrder.Count && jobs.Count <= pageSize; index++)
             {
                 using var command = connection.CreateCommand();
                 command.Transaction = transaction;
-                var scope = FileFactQueueScope.Bind(command, policy);
-                var changedScope = FileFactChangedScope.Bind(command, change);
+                var scope = entries ? FileFactEntryPolicy.Bind(command, policy, true) : FileFactQueueScope.Bind(command, policy);
+                var changedScope = entries ? "1" : FileFactChangedScope.Bind(command, change);
                 command.Parameters.AddWithValue("$volume", policy.VolumeOrder[index]);
                 command.Parameters.AddWithValue("$after", index == start && after is not null ? after.FileReference.ToUpperInvariant() : "");
                 command.Parameters.AddWithValue("$limit", pageSize + 1 - jobs.Count);
@@ -72,9 +74,12 @@ public sealed class FileFactDiscovery(string databasePath)
                     var parameter = "$extension" + extensionIndex;
                     command.Parameters.AddWithValue(parameter, extension);
                     return parameter;
-                });
+                }).ToArray();
+                var extensionList = string.Join(',', extensionParameters);
+                var preferred = entries ? FileFactEntryDiscoverySql.Bind(command, policy, change, extensionList) : "NULL";
+                var eligible = entries ? "source_extension IS NOT NULL" : $"n.extension COLLATE NOCASE IN ({extensionList})";
                 command.CommandText = $"""
-                    SELECT n.file_reference FROM catalog_nodes_v2 n
+                    SELECT n.file_reference,{preferred} AS source_extension FROM catalog_nodes_v2 n
                     JOIN catalog_volumes_v2 v ON v.volume_id = n.volume_id
                     LEFT JOIN file_fact_volumes fv ON fv.volume_id = n.volume_id
                     LEFT JOIN file_fact_sources fs ON fs.volume_id = n.volume_id AND fs.file_reference = n.file_reference
@@ -82,7 +87,8 @@ public sealed class FileFactDiscovery(string databasePath)
                         AND n.exists_flag = 1 AND n.is_directory = 0 AND (n.attributes & 0x00441400) = 0
                         AND n.size_bytes IS NOT NULL AND n.modified_utc_ticks IS NOT NULL
                         AND v.selected = 1 AND v.state = 'ready'
-                        AND CASE WHEN n.extension COLLATE NOCASE IN ({string.Join(',', extensionParameters)})
+                        AND {pending}
+                        AND CASE WHEN {eligible}
                             THEN ({scope} AND {changedScope}) ELSE 0 END
                         AND NOT EXISTS(SELECT 1 FROM file_facts ff
                             WHERE ff.volume_id = n.volume_id AND ff.file_reference = n.file_reference
@@ -94,7 +100,7 @@ public sealed class FileFactDiscovery(string databasePath)
                     """;
                 using var reader = await command.ExecuteReaderAsync(token);
                 while (await reader.ReadAsync(token))
-                    jobs.Add(new(new(policy.VolumeOrder[index], reader.GetString(0)), kind, extractorVersion));
+                    jobs.Add(new(new(policy.VolumeOrder[index], reader.GetString(0)), kind, extractorVersion, entries ? reader.GetString(1) : null));
             }
             FileFactDiscoveryCursor? next = null;
             if (jobs.Count > pageSize)

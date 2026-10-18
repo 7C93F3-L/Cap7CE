@@ -5,12 +5,21 @@ namespace Cap7CE.Core.Catalog.FileFacts;
 public sealed record FileFactResolvedSource(
     CatalogEntryIdentity Identity, string RootPath, string RelativePath, string FullPath, FileFactSourceVersion Source);
 
-// Resolves only Catalog-owned local paths; physical identity must still be verified by the worker.
+// Resolves Catalog-owned local paths. Workers must still verify native identity.
 public sealed class FileFactSourceResolver(string databasePath)
 {
     private readonly FileFactDatabase facts = new(databasePath);
-
-    public async Task<FileFactResolvedSource?> ResolveAsync(CatalogEntryIdentity identity, CancellationToken token = default)
+    public Task<FileFactResolvedSource?> ResolveAsync(CatalogEntryIdentity identity, CancellationToken token = default) =>
+        ResolveCoreAsync(identity, null, null, token);
+    public Task<FileFactResolvedSource?> ResolveForLeaseAsync(FileFactLease lease, CancellationToken token = default) =>
+        ResolveCoreAsync(lease.Job.Identity, lease, null, token);
+    public async Task<bool> IsAuthorizedAsync(FileFactResolvedSource source, FileFactLease lease, CancellationToken token = default)
+    {
+        var current = await ResolveCoreAsync(lease.Job.Identity, lease, source.RelativePath, token);
+        return current is not null && current.FullPath == source.FullPath && current.Source == lease.Source;
+    }
+    private async Task<FileFactResolvedSource?> ResolveCoreAsync(CatalogEntryIdentity identity, FileFactLease? lease,
+        string? requiredRelative, CancellationToken token)
     {
         FileFactDatabase.ValidateIdentity(identity);
         await using var connection = await facts.OpenAsync(true, token);
@@ -18,29 +27,33 @@ public sealed class FileFactSourceResolver(string databasePath)
         using var transaction = connection.BeginTransaction(deferred: true);
         var source = await FileFactDatabase.CaptureAsync(connection, transaction, identity, token);
         if (source is null) return null;
-        var entries = await DirectoryEntries.CatalogFileEntrySchema.ExistsAsync(connection, token, transaction);
-        var name = entries ? "CASE WHEN es.file_reference IS NULL THEN n.name ELSE en.name END" : "n.name";
-        var parent = entries ? "CASE WHEN es.file_reference IS NULL THEN n.parent_file_reference ELSE en.parent_file_reference END" : "n.parent_file_reference";
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
+        var entries = await FileFactEntryPolicy.IsActiveAsync(connection, transaction, token);
+        using var command = connection.CreateCommand(); command.Transaction = transaction;
+        var policySql = "1";
+        if (lease is not null) {
+            var (policy, _) = await FileFactQueue.ReadPolicyAsync(connection, transaction, token);
+            policySql = FileFactEntryPolicy.Bind(command, policy, entries);
+            if (entries) policySql += " AND " + FileFactQueueScope.Bind(command, policy);
+            var extension = await FileFactEntryJobHints.ReadAsync(connection, transaction, lease, token);
+            if (extension is not null) { command.Parameters.AddWithValue("$extension", extension); policySql += " AND n.extension=$extension COLLATE NOCASE"; }
+        }
+        const string path = "CASE WHEN pp.relative_path IS NULL OR pp.relative_path='' THEN n.name ELSE pp.relative_path || '\\' || n.name END";
+        var requiredSql = "1";
+        if (requiredRelative is not null) { command.Parameters.AddWithValue("$relative", requiredRelative); requiredSql = $"({path})=$relative COLLATE BINARY"; }
         command.CommandText = $"""
-            SELECT v.display_name,
-                CASE WHEN pp.relative_path IS NULL OR pp.relative_path = '' THEN {name}
-                    ELSE pp.relative_path || '\' || ({name}) END
-            FROM catalog_nodes_v2 n JOIN catalog_volumes_v2 v ON v.volume_id = n.volume_id
-            {(entries ? "LEFT JOIN catalog_file_entry_sets es ON es.volume_id=n.volume_id AND es.file_reference=n.file_reference AND es.created_utc_ticks IS n.created_utc_ticks LEFT JOIN catalog_file_entries en ON en.volume_id=es.volume_id AND en.file_reference=es.file_reference" : "")}
-            LEFT JOIN catalog_directory_paths_v2 pp
-                ON pp.volume_id = n.volume_id AND pp.file_reference = ({parent})
-            WHERE n.volume_id = $volume AND n.file_reference = $reference
-                AND (({parent}) IS NULL OR pp.file_reference IS NOT NULL)
-                {(entries ? "AND (es.file_reference IS NULL OR (en.entry_key IS NOT NULL AND EXISTS(SELECT 1 FROM catalog_nodes_v2 ep WHERE ep.volume_id=en.volume_id AND ep.file_reference=en.parent_file_reference AND ep.is_directory=1 AND ep.exists_flag=1))) ORDER BY en.entry_key" : "")}
-            LIMIT 1;
+            {FileFactEntryPolicy.Prefix(entries)}
+            SELECT v.display_name,{path} FROM {(entries ? "query_entries" : "catalog_nodes_v2")} n
+            JOIN catalog_volumes_v2 v ON v.volume_id=n.volume_id
+            LEFT JOIN catalog_directory_paths_v2 pp ON pp.volume_id=n.volume_id AND pp.file_reference=n.parent_file_reference
+            WHERE n.volume_id=$volume AND n.file_reference=$reference AND n.exists_flag=1
+                AND (n.parent_file_reference IS NULL OR pp.file_reference IS NOT NULL)
+                AND ({policySql}) AND ({requiredSql})
+            {(entries ? "ORDER BY n.entry_key" : "")} LIMIT 1;
             """;
         FileFactDatabase.BindIdentity(command, identity);
         using var reader = await command.ExecuteReaderAsync(token);
         if (!await reader.ReadAsync(token)) return null;
-        var display = reader.GetString(0);
-        var relative = reader.GetString(1);
+        var display = reader.GetString(0); var relative = reader.GetString(1);
         if (display.Length != 2 || !char.IsAsciiLetter(display[0]) || display[1] != ':'
             || string.IsNullOrEmpty(relative) || relative.Length > 32760
             || relative.IndexOfAny(['\0', ':', '/', '?', '*', '<', '>', '|', '"']) >= 0

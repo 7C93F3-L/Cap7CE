@@ -27,7 +27,13 @@ internal static class CatalogFileEntrySchema
                 FOREIGN KEY(volume_id, file_reference) REFERENCES catalog_file_entry_sets(volume_id, file_reference) ON DELETE CASCADE
             ) STRICT, WITHOUT ROWID;
             CREATE INDEX IF NOT EXISTS catalog_file_entries_parent ON catalog_file_entries(volume_id, parent_file_reference, name COLLATE NOCASE, file_reference, entry_key);
-            """;
+            CREATE TABLE IF NOT EXISTS catalog_file_entry_job_hints (
+                volume_id TEXT NOT NULL,file_reference TEXT NOT NULL,kind INTEGER NOT NULL,extractor INTEGER NOT NULL,
+                size INTEGER NOT NULL,modified INTEGER NOT NULL,epoch INTEGER NOT NULL,revision INTEGER NOT NULL,extension TEXT NOT NULL,
+                PRIMARY KEY(volume_id,file_reference,kind,extractor),
+                FOREIGN KEY(volume_id,file_reference) REFERENCES catalog_nodes_v2(volume_id,file_reference) ON DELETE CASCADE
+            ) STRICT, WITHOUT ROWID;
+            """ + CatalogFileEntryPending.CreateTableSql;
         await command.ExecuteNonQueryAsync(token);
         transaction.Commit();
     }

@@ -73,6 +73,7 @@ public sealed class FileFactQueue(string databasePath, TimeProvider? timeProvide
                 """;
             BindJob(command, job, source);
             await command.ExecuteNonQueryAsync(token);
+            await FileFactEntryJobHints.WriteAsync(connection, transaction, job, source, token);
         }
         transaction.Commit();
     }
@@ -96,7 +97,7 @@ public sealed class FileFactQueue(string databasePath, TimeProvider? timeProvide
         var (policy, epoch) = await ReadPolicyAsync(connection, transaction, token);
         using var find = connection.CreateCommand();
         find.Transaction = transaction;
-        var scope = FileFactQueueScope.Bind(find, policy);
+        var scope = await FileFactEntryPolicy.BindAsync(find, policy, token);
         var order = FileFactQueueScope.BindOrder(find, policy);
         var selected = FileFactSelection.Bind(find, specification);
         find.CommandText = $"""
@@ -140,16 +141,7 @@ public sealed class FileFactQueue(string databasePath, TimeProvider? timeProvide
     {
         ValidateDuration(leaseMilliseconds);
         await using var connection = await OpenAsync(token);
-        using var command = connection.CreateCommand();
-        command.CommandText = """
-            UPDATE file_fact_jobs SET lease_expires = $expires WHERE lease_id = $lease AND state = 'leased'
-                AND lease_expires > $now AND policy_epoch = (SELECT policy_epoch FROM file_fact_queue_state WHERE singleton = 1);
-            """;
-        var now = clock.GetUtcNow().ToUnixTimeMilliseconds();
-        command.Parameters.AddWithValue("$lease", leaseId);
-        command.Parameters.AddWithValue("$now", now);
-        command.Parameters.AddWithValue("$expires", checked(now + leaseMilliseconds));
-        return await command.ExecuteNonQueryAsync(token) == 1;
+        return await FileFactLeaseRenewal.RenewAsync(connection, leaseId, clock.GetUtcNow().ToUnixTimeMilliseconds(), leaseMilliseconds, token);
     }
 
     public async Task<FileFactCompletion> CompleteAsync(string leaseId, FileFactObservation observation,
@@ -162,7 +154,7 @@ public sealed class FileFactQueue(string databasePath, TimeProvider? timeProvide
         var (policy, epoch) = await ReadPolicyAsync(connection, transaction, token);
         using var check = connection.CreateCommand();
         check.Transaction = transaction;
-        var scope = FileFactQueueScope.Bind(check, policy);
+        var scope = await FileFactEntryPolicy.BindAsync(check, policy, token);
         check.CommandText = $"""
             SELECT EXISTS(SELECT 1 FROM file_fact_jobs j JOIN catalog_nodes_v2 n
                 ON n.volume_id = j.volume_id AND n.file_reference = j.file_reference

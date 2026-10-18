@@ -80,6 +80,7 @@ public sealed class CatalogSynchronizationService
         foreach (var target in targets)
         {
             token.ThrowIfCancellationRequested();
+            if (captureFileEntries && origin == "explicit") await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryPending(catalog).RearmAsync(target.VolumeId, token);
             if (!readerVolumes.TryGetValue(target.VolumeId, out var readerVolume))
             {
                 await catalog.MarkOfflineAsync(target.VolumeId, token);
@@ -88,6 +89,7 @@ public sealed class CatalogSynchronizationService
             var activity = diagnostics?.Begin(target.DisplayName, origin);
             try {
                 measurements.Add(await SynchronizeVolumeAsync(reader, readerVolume, target, forceRebuild, activity, token));
+                if (captureFileEntries) await new CatalogDirectoryEntryRetryOwner(catalog, reader, readerVolume).StepAsync(token);
                 activity?.Complete(measurements[^1]);
             }
             catch (OperationCanceledException) { activity?.Cancel(); throw; }
@@ -234,7 +236,7 @@ public sealed class CatalogSynchronizationService
                 if (page.Records.Count > 0)
                 {
                     var nodes = page.Records.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray();
-                    if (captureFileEntries) await build.AppendWithEntriesAsync(await new CatalogDirectoryEntryCapture(reader, readerVolume).CaptureSnapshotAsync(nodes, token), token);
+                    if (captureFileEntries) await build.AppendWithEntriesAsync(await new CatalogDirectoryEntryCapture(reader, readerVolume, true).CaptureSnapshotAsync(nodes, token), token);
                     else await build.AppendAsync(nodes, token);
                 }
                 cursor = page.NextCursor;
@@ -311,7 +313,7 @@ public sealed class CatalogSynchronizationService
                 .ToArray();
             var nextCheckpoint = Math.Min(page.Response.NextUsn, targetUsn);
             var nodes = boundedRecords.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray();
-            var entries = captureFileEntries ? await new CatalogDirectoryEntryCapture(reader, readerVolume).CaptureJournalAsync(nodes, boundedRecords, token) : null;
+            var entries = captureFileEntries ? await new CatalogDirectoryEntryCapture(reader, readerVolume, true).CaptureJournalAsync(nodes, boundedRecords, token) : null;
             volume = await catalog.ApplyBatchAsync(new CatalogV2WriteBatch(
                 volume.VolumeId,
                 volume.JournalId,
@@ -320,7 +322,7 @@ public sealed class CatalogSynchronizationService
                 nextCheckpoint,
                 page.Response.FirstUsn,
                 page.Response.LowestValidUsn,
-                entries?.Nodes ?? nodes, entries?.Entries), token);
+                entries?.Nodes ?? nodes, entries?.Entries, entries?.Deferred), token);
             records = checked(records + boundedRecords.Length);
             pages++;
             cursor = nextCheckpoint;

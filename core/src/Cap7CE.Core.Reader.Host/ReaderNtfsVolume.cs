@@ -81,6 +81,7 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
 
     public ReaderJournalSnapshot QueryJournal()
     {
+        snapshotEntries.Clear();
         if (!DeviceIoControl(volume, QueryUsnJournal, IntPtr.Zero, 0, out JournalData data,
                 checked((uint)Marshal.SizeOf<JournalData>()), out var bytes, IntPtr.Zero)
             || bytes < 56)
@@ -214,7 +215,8 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
         {
             return null;
         }
-        if (!GetFileInformationByHandle(handle, out var information))
+        if (!GetFileInformationByHandle(handle, out var information)
+            || (((ulong)information.FileIndexHigh << 32) | information.FileIndexLow) != fileReference)
         {
             return null;
         }
@@ -225,7 +227,7 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
             size,
             ToFileTime(information.CreationTimeHigh, information.CreationTimeLow),
             ToFileTime(information.LastWriteTimeHigh, information.LastWriteTimeLow),
-            information.FileAttributes);
+            information.FileAttributes, information.NumberOfLinks);
     }
 
     private static long ToFileTime(uint high, uint low) => unchecked((long)(((ulong)high << 32) | low));
@@ -420,6 +422,7 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
 
         public ReaderMftReadPageResponse ReadPage(ulong expectedCursor, uint maximumRecords, CancellationToken token)
         {
+            owner.snapshotEntries.Clear();
             if (expectedCursor != protocolCursor) throw new InvalidDataException("reader-mft-page-cursor");
             var records = new List<ReaderMftRecord>(checked((int)maximumRecords));
             while (records.Count < maximumRecords)
@@ -442,6 +445,7 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
             var records = page.Records.Select(record =>
             {
                 var facts = owner.TryReadBasicFacts(record.FileReference, record.IsDirectory);
+                owner.snapshotEntries.Add(record, facts);
                 return new ReaderMftRecordV2(
                     record.FileReference,
                     record.ParentFileReference,
@@ -485,6 +489,7 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
 
         public void Dispose()
         {
+            owner.snapshotEntries.Clear();
             pending.Clear();
             Array.Clear(buffer);
         }
@@ -552,7 +557,7 @@ internal sealed record ReaderBasicFacts(
     ulong? SizeBytes,
     long CreationFileTimeUtc,
     long LastWriteFileTimeUtc,
-    uint Attributes);
+    uint Attributes, uint NumberOfLinks);
 
 internal sealed class ReaderJournalDiscontinuousException : Exception;
 

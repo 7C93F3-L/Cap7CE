@@ -26,7 +26,7 @@ internal static class FileFactQueueScope
 
     // n is a Catalog node alias. Parent traversal uses identities, never path prefixes.
     // UNION removes cycles in a malformed parent graph.
-    public static string Bind(SqliteCommand command, FileFactQueuePolicy policy)
+    public static string Bind(SqliteCommand command, FileFactQueuePolicy policy, string alias = "n", string parameterPrefix = "scope")
     {
         var index = 0;
         string Match(IReadOnlyList<FileFactScope> scopes)
@@ -34,12 +34,12 @@ internal static class FileFactQueueScope
             var conditions = new List<string>();
             foreach (var scope in scopes)
             {
-                var parameter = "$scope" + index++;
+                var parameter = "$" + parameterPrefix + index++;
                 command.Parameters.AddWithValue(parameter, scope.VolumeId);
                 if (scope.RootFileReference is null) conditions.Add($"n.volume_id = {parameter}");
                 else
                 {
-                    var root = "$scope" + index++;
+                    var root = "$" + parameterPrefix + index++;
                     command.Parameters.AddWithValue(root, scope.RootFileReference.ToUpperInvariant());
                     conditions.Add($"""
                         (n.volume_id = {parameter} AND EXISTS(
@@ -54,7 +54,7 @@ internal static class FileFactQueueScope
             }
             return conditions.Count == 0 ? "0" : "(" + string.Join(" OR ", conditions) + ")";
         }
-        return $"({Match(policy.Includes)} AND NOT {Match(policy.Excludes)})";
+        return $"({Match(policy.Includes)} AND NOT {Match(policy.Excludes)})".Replace("n.", alias + ".", StringComparison.Ordinal);
     }
 
     public static string BindOrder(SqliteCommand command, FileFactQueuePolicy policy)

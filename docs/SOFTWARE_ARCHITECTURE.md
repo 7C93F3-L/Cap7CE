@@ -12,10 +12,12 @@
 - `Reader.Host/DirectoryEntries` 复用已授权卷及既有 `FILE_READ_ATTRIBUTES` 句柄，以固定 `NtQueryInformationFile(FileHardLinkInformation=46)` 读取完整名称/父目录引用，前后核对身份、属性、链接数及源版本；不接受路径、不读正文、不写源文件。原生缓冲上限 1 MiB、单文件最多 1024 个入口，失败、超限和消失分别返回明确状态，部分集合不能当作完整数据。
 - CR/2 增加可选 `FileEntryNames` 能力和固定操作，每批最多 64 个不重复文件引用，按字节预算续页。`Core.Host/DirectoryEntries/ReaderFileEntryClient` 严格校验请求顺序、完整性和结束标志，断连或取消不返回部分集合。`ReaderV2CatalogSession` 负责既有鉴权与传输；旧 Reader 保持兼容且不隐式启用新能力。普通 Win32 名称枚举只留在测试项目，作为独立参考，不成为生产全盘二次扫描。
 - `CatalogSynchronizationService` 与 `CatalogJournalMonitor` 增加默认关闭的 `captureFileEntries` 内部装配参数，产品运行时尚不传入开启值。开启时先协商 Reader 能力，初建使用同一临时 SQLite 库中的入口暂存表，追赶与实时维护在既有节点/检查点事务中调用 `CatalogFileEntryPublication`。不由 Renderer 或普通状态/查询请求激活，不新增提取授权。
-- `CatalogDirectoryEntryCapture` 以每批最多 64 个引用读取元数据，保留匹配的当前主名称或选确定性剩余名称。FileDelete 后若物理文件仍存在则发布剩余入口，并剔除该删除原因的内容失效提示；其他内容变化原因仍保留。明确 Missing 才删除最后入口，Unavailable/OverLimit 在增量中不推进检查点并使当前 owner 退出；重试重新从持久检查点开始。初建的不完整观察不覆盖已有完整集合，新文件保留可用的基础节点，不宣称完整覆盖。
+- `CatalogDirectoryEntryCapture` 以每批最多 64 个引用读取元数据，保留匹配的当前主名称或选确定性剩余名称。FileDelete 后物理文件仍存在则保留剩余入口及共享事实，明确 Missing 才删除最后入口。启用接线后 Unavailable/OverLimit 与检查点同事务进入 `catalog_file_entry_pending`，已知名称仍可浏览，该身份的事实筛选、发现及提取授权暂停。`CatalogDirectoryEntryRetryOwner` 在独占 Reader owner 内串行执行，最多八次退避，缓存下次期限；空队列及全部阻塞后不轮询数据库，显式刷新或新事件可重新触发。不确定状态不作删除，取消/断连仍不提交部分页；恢复成功将先前内容/格式失效原因合并进节点事务。
 - `CatalogFileEntryStaging` 只持有临时库的名称集合与源版本；`Snapshots/CatalogSnapshotPublication` 拥有节点、路径、入口和 ready 状态的单次发布，并校验开始建库时的卷修订。旧 owner、源或父目录不匹配、SQL 失败均回滚，拒绝的入口页不能继续发布为成功快照。入口查询仅使用仍存活且有已解析路径的父目录，避免恢复期间猜测错误根路径。
-- 入口的初建、两种增量和恢复接线已通过隔离测试；真实受限服务部署、不可读文件的生产重试策略、多路径属性发现的范围边界、启用/回退与规模验证尚未收口，正式库仍未启用，不能标记全盘硬链接缺口已解决。
-- `core-directory-entry-boundary-check` 守护入口存储的数据库边界、Reader 的固定元数据权限、模块清单和体量；范围 SQL 和快照发布拆出后将 `CatalogV2Database.cs` 的检查上限降低至 1125 行，不允许继续把入口业务堆回数据库宿主。
+- `FileFactEntryPolicy` 在物理身份索引范围内统一允许/排除判定，任一已知入口命中排除即阻止该物理文件。`FileFactEntryDiscoverySql` 从允许且格式匹配的入口选源，一份物理任务保存内部格式提示；提示不进入客户端协议。领取、续租、提交和 `FileFactSourceResolver` 复查当前策略，Broker 同时核对实际获准路径和原生身份，不能改用另一条路径绕过排除。无入口扩展的旧库保持原范围规则。
+- `ReaderSnapshotEntryCache` 仅保存最新 MFT 页最多 4096 个单链接结果，复用同一次属性读取，不新增句柄或正文权限；多链接及不确定结果仍完整查询。下一页、日志检查和快照关闭立即清空，USN 删除及重试不能使用初建缓存判断存活。
+- 入口初建、两种增量、恢复、范围撤销和有界重试已通过隔离测试，十万物理文件/十一万入口完成有界查询与任务发现测量；真实受限服务部署及启用/回退仍待验证，正式库未启用，不能据合成测量宣称全盘缺口已解决。
+- `Transactions/CatalogBatchPublication` 独立拥有基础节点、事实失效、入口、待重试项与检查点的事务；仅退避变更不递增可见 Catalog 修订。`core-directory-entry-boundary-check` 守护数据库/Reader 权限、模块清单和体量，数据库宿主上限进一步降至 1060 行。
 - 当前版本尚未完成睡眠/物理热插拔及最新安装矩阵验收；WPF/WinUI 试验壳未排期。本轮没有打包、发布或更换正在使用的受保护组件。
 
 

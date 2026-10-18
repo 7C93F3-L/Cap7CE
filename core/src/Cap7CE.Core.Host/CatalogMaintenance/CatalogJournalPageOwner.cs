@@ -91,7 +91,7 @@ public sealed class CatalogJournalPageOwner
             var publication = stage.Prepare(initial.VolumeId, advance.Records);
             var entries = captureEntries is null ? null : await captureEntries(publication.Nodes, advance.Records, token);
             var committed = await catalog.ApplyMaintenanceBatchAsync(new(initial.VolumeId, initial.JournalId,
-                advance.PersistedUsn, revision, advance.NextUsn, page.Response.FirstUsn, page.Response.LowestValidUsn, entries?.Nodes ?? publication.Nodes, entries?.Entries), token);
+                advance.PersistedUsn, revision, advance.NextUsn, page.Response.FirstUsn, page.Response.LowestValidUsn, entries?.Nodes ?? publication.Nodes, entries?.Entries, entries?.Deferred), token);
             cursor.CompletePersisted(advance, committed.CheckpointUsn!.Value); stage.Complete(publication);
             return new(true, committed.CatalogRevision, cursor.NextReadUsn, advance.Records.Count);
         }

@@ -183,7 +183,8 @@ public sealed class FileFactDatabase(string databasePath)
     {
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        var pending = await DirectoryEntries.CatalogFileEntryPending.ExclusionSqlAsync(connection, transaction, token);
+        command.CommandText = $"""
             SELECT n.size_bytes, n.modified_utc_ticks, COALESCE(v.epoch, 0), COALESCE(s.content_revision, 0)
             FROM catalog_nodes_v2 n
             JOIN catalog_volumes_v2 c ON c.volume_id = n.volume_id
@@ -193,7 +194,7 @@ public sealed class FileFactDatabase(string databasePath)
                 AND n.exists_flag = 1 AND n.is_directory = 0
                 AND (n.attributes & 0x00441400) = 0
                 AND n.size_bytes IS NOT NULL AND n.modified_utc_ticks IS NOT NULL
-                AND c.state = 'ready' AND c.selected = 1;
+                AND c.state = 'ready' AND c.selected = 1 AND {pending};
             """;
         BindIdentity(command, identity);
         using var reader = await command.ExecuteReaderAsync(token);

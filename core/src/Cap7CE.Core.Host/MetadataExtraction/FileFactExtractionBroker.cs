@@ -62,7 +62,7 @@ public sealed class FileFactExtractionBroker
             var lease = await queue.ClaimAsync(token: token, specification: specification);
             // Empty means no immediately claimable job, not proof that every persisted job is done.
             if (lease is null) return new(FileFactClaimState.Empty);
-            var source = await resolver.ResolveAsync(lease.Job.Identity, token);
+            var source = await resolver.ResolveForLeaseAsync(lease, token);
             token.ThrowIfCancellationRequested();
             if (source is null || source.Source != lease.Source || !NativeFileFactSourceGuard.Matches(source))
                 return new(FileFactClaimState.SourceDeferred, RetryAfterUnixMilliseconds: lease.ExpiresUnixMilliseconds);
@@ -80,6 +80,7 @@ public sealed class FileFactExtractionBroker
         {
             PruneExpired();
             if (!owned.TryGetValue(leaseId, out var current)) return false;
+            if (!NativeFileFactSourceGuard.Matches(current.Source) || !await resolver.IsAuthorizedAsync(current.Source, current.Ticket.Lease, token)) { owned.Remove(leaseId); return false; }
             if (!await queue.RenewAsync(leaseId, token: token)) { owned.Remove(leaseId); return false; }
             owned[leaseId] = current with { Ticket = current.Ticket with { Lease = current.Ticket.Lease with {
                 ExpiresUnixMilliseconds = checked(clock.GetUtcNow().ToUnixTimeMilliseconds() + 30_000) } } };
@@ -105,6 +106,7 @@ public sealed class FileFactExtractionBroker
                 return FileFactBrokerCompletion.SourceDeferred;
             }
             var lease = current.Ticket.Lease;
+            if (!await resolver.IsAuthorizedAsync(current.Source, lease, token)) { owned.Remove(leaseId); return FileFactBrokerCompletion.LeaseLost; }
             var observation = new FileFactObservation(lease.Job.Identity, lease.Source, lease.Job.Kind,
                 lease.Job.ExtractorVersion, result.State, result.Width, result.Height, result.DurationMilliseconds, result.ErrorCode,
                 result.IsAnimated, result.VisualProperties, result.ChannelCount, result.FontProperties, result.ModelProperties, result.DocumentProperties, result.ThreeDProperties, result.TextDataProperties, result.ArchiveProperties);

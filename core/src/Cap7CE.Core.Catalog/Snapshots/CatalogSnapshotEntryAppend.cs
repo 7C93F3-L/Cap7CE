@@ -14,6 +14,7 @@ public sealed partial class CatalogV2SnapshotBuild
             CatalogFileEntryPublication.Validate(volumeId, changes.Nodes, changes.Entries);
             await AppendAsync(changes.Nodes, token);
             await CatalogFileEntryStaging.AppendAsync(connection, transaction, volumeId, changes.Nodes, changes.Entries, token);
+            await CatalogFileEntryPendingStaging.AppendAsync(connection, transaction, volumeId, changes.Deferred, token);
         }
         catch { completed = true; throw; } // a rejected page must never become a publishable partial build
     }

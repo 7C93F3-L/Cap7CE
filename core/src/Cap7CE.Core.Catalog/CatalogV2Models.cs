@@ -74,7 +74,9 @@ public sealed record CatalogV2WriteBatch(
     long? JournalFirstUsn,
     long? JournalLowestValidUsn,
     IReadOnlyList<CatalogV2NodeRecord> Nodes,
-    IReadOnlyList<DirectoryEntries.CatalogFileEntryUpdate>? FileEntries = null);
+    IReadOnlyList<DirectoryEntries.CatalogFileEntryUpdate>? FileEntries = null,
+    IReadOnlyList<DirectoryEntries.CatalogFileEntryDeferred>? DeferredEntries = null,
+    long? EntryRetryAtUnixMilliseconds = null);
 
 public sealed record CatalogQueryScope(
     CatalogQueryScopeKind Kind,

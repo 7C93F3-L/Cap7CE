@@ -9,7 +9,7 @@ public delegate Task<CatalogFileEntryChanges> CatalogFileEntryCapture(IReadOnlyL
 
 // Metadata is gathered before the Catalog transaction. The existing volume/revision
 // fences reject concurrent writers; unknown liveness must never turn into deletion.
-public sealed class CatalogDirectoryEntryCapture(ICatalogReaderSession reader, CatalogReaderVolume volume)
+public sealed class CatalogDirectoryEntryCapture(ICatalogReaderSession reader, CatalogReaderVolume volume, bool deferUnavailable = false)
 {
     public Task<CatalogFileEntryChanges> CaptureJournalAsync(IReadOnlyList<CatalogV2NodeRecord> nodes,
         IReadOnlyList<ReaderJournalRecordV2> records, CancellationToken token) => CaptureAsync(nodes, false,
@@ -18,6 +18,9 @@ public sealed class CatalogDirectoryEntryCapture(ICatalogReaderSession reader, C
 
     public Task<CatalogFileEntryChanges> CaptureSnapshotAsync(IReadOnlyList<CatalogV2NodeRecord> nodes, CancellationToken token) =>
         CaptureAsync(nodes, true, new Dictionary<ulong, uint>(), token);
+    public Task<CatalogFileEntryChanges> CaptureDeferredAsync(IReadOnlyList<CatalogFileEntryDeferred> items, CancellationToken token) =>
+        CaptureAsync(items.Select(item => item.Node).ToArray(), false,
+            items.ToDictionary(item => Convert.ToUInt64(item.Node.Identity.FileReference, 16), item => item.Reason), token);
 
     private async Task<CatalogFileEntryChanges> CaptureAsync(IReadOnlyList<CatalogV2NodeRecord> nodes, bool snapshot,
         IReadOnlyDictionary<ulong, uint> reasons, CancellationToken token)
@@ -34,7 +37,7 @@ public sealed class CatalogDirectoryEntryCapture(ICatalogReaderSession reader, C
             if (!files.Select(file => file.FileReference).SequenceEqual(references)) throw new ReaderProtocolException("unrequested-entry-reference");
             foreach (var file in files) { _ = ReaderPayloadCodec.MeasureFileEntrySet(file); observed.Add(file.FileReference, file); }
         }
-        var result = new List<CatalogV2NodeRecord>(); var updates = new List<CatalogFileEntryUpdate>();
+        var result = new List<CatalogV2NodeRecord>(); var updates = new List<CatalogFileEntryUpdate>(); var deferred = new List<CatalogFileEntryDeferred>();
         foreach (var node in latest) {
             if (node.IsDirectory) { result.Add(node); continue; }
             var reference = Convert.ToUInt64(node.Identity.FileReference, 16); var file = observed[reference];
@@ -43,8 +46,10 @@ public sealed class CatalogDirectoryEntryCapture(ICatalogReaderSession reader, C
                 continue;
             }
             if (file.State != ReaderFileEntryState.Complete || file.SizeBytes > long.MaxValue) {
-                if (!snapshot) throw new CatalogFileEntryUnavailableException();
-                result.Add(node); continue; // no complete observation; retain legacy/previous available names
+                if (!snapshot && !deferUnavailable) throw new CatalogFileEntryUnavailableException();
+                if (!snapshot || (node.SizeBytes is not null && node.ModifiedUtcTicks is not null)) deferred.Add(new(node, reasons.GetValueOrDefault(reference)));
+                if (snapshot) result.Add(node); // no complete observation; retain legacy/previous available names
+                continue;
             }
             var names = file.Names.Select(name => new CatalogFileName(CatalogV2Database.EncodeFileReference(name.ParentFileReference), name.Name)).ToArray();
             var chosen = names.FirstOrDefault(name => name.ParentFileReference == node.ParentFileReference && name.Name == node.Name)
@@ -58,7 +63,7 @@ public sealed class CatalogDirectoryEntryCapture(ICatalogReaderSession reader, C
             result.Add(current); updates.Add(new(node.Identity, new(current.CreatedUtcTicks, current.ModifiedUtcTicks, current.SizeBytes), names));
         }
         token.ThrowIfCancellationRequested();
-        return new(result.AsReadOnly(), updates.AsReadOnly());
+        return new(result.AsReadOnly(), updates.AsReadOnly(), deferred.AsReadOnly());
     }
 }
 

@@ -15,6 +15,7 @@ internal static class CatalogFileEntryStaging
                 PRIMARY KEY(volume_id,file_reference,entry_key)) STRICT, WITHOUT ROWID;
             """;
         await command.ExecuteNonQueryAsync(token);
+        await CatalogFileEntryPendingStaging.CreateAsync(connection, token);
     }
 
     public static async Task AppendAsync(SqliteConnection connection, SqliteTransaction transaction, string volume,
@@ -65,5 +66,6 @@ internal static class CatalogFileEntryStaging
                 FROM snapshot_build.build_entries WHERE volume_id=$volume;
             """;
         await command.ExecuteNonQueryAsync(token);
+        await CatalogFileEntryPendingStaging.PublishAsync(connection, transaction, volume, token);
     }
 }

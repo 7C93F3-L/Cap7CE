@@ -312,75 +312,6 @@ public sealed partial class CatalogV2Database
         return (await ReadVolumeAsync(volumeId, token))!;
     }
 
-    public Task<CatalogV2VolumeSnapshot> ApplyBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default)
-        => ApplyBatchCoreAsync(batch, false, token);
-
-    // An external event publishes its checkpoint and any staged owned directory
-    // ancestry atomically, without readiness-state writes around each page.
-    public Task<CatalogV2VolumeSnapshot> ApplyMaintenanceBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default)
-        => ApplyBatchCoreAsync(batch, true, token);
-
-    private async Task<CatalogV2VolumeSnapshot> ApplyBatchCoreAsync(
-        CatalogV2WriteBatch batch,
-        bool maintenance,
-        CancellationToken token)
-    {
-        ValidateBatch(batch);
-        if (maintenance && (batch.Nodes.Count == 0 || batch.Nodes.All(node => node.SuppressFileFactChangeHint)
-            || batch.ExpectedCheckpointUsn is not { } expected || batch.NextCheckpointUsn <= expected))
-            throw new ArgumentException("Maintenance requires an external change and an advancing durable checkpoint.", nameof(batch));
-        await using var connection = await OpenAsync(false, token);
-        using var transaction = connection.BeginTransaction();
-        var volume = await ReadVolumeAsync(connection, transaction, batch.VolumeId, token)
-            ?? throw new CatalogConcurrencyException("Catalog volume is not registered.");
-        var revision = await ReadRevisionAsync(connection, transaction, token);
-        if (revision != batch.ExpectedCatalogRevision
-            || !string.Equals(volume.JournalId, batch.ExpectedJournalId, StringComparison.Ordinal)
-            || volume.CheckpointUsn != batch.ExpectedCheckpointUsn)
-        {
-            throw new CatalogConcurrencyException("Catalog v2 batch is stale.");
-        }
-        if (maintenance ? volume.State != CatalogV2VolumeState.Ready
-            : volume.State is not (CatalogV2VolumeState.Building or CatalogV2VolumeState.CatchingUp))
-        {
-            throw new CatalogStateTransitionException("Catalog v2 accepts batches only while synchronizing.");
-        }
-
-        var pathsChanged = (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
-            && await CatalogDirectoryPathChanges.RequiresRebuildAsync(connection, transaction, batch.Nodes, token);
-        await FileFacts.FileFactCatalogInvalidation.ApplyNodesAsync(connection, transaction, batch.Nodes, token);
-        await UpsertNodesAsync(connection, transaction, "catalog_nodes_v2", batch.Nodes, token);
-        await DirectoryEntries.CatalogFileEntryPublication.ApplyAsync(connection, transaction, batch, token);
-        if (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
-            await FileFacts.FileFactChangeLog.RecordAsync(connection, transaction, batch.Nodes, token);
-        if (pathsChanged)
-        {
-            await RebuildDirectoryPathsAsync(connection, transaction, batch.VolumeId, token);
-        }
-        var nextRevision = NextRevision(revision);
-        using (var update = connection.CreateCommand())
-        {
-            update.Transaction = transaction;
-            update.CommandText = """
-                UPDATE catalog_volumes_v2
-                SET checkpoint_usn = $checkpoint, journal_first_usn = $first,
-                    journal_lowest_valid_usn = $lowest, processed = processed + $count,
-                    catalog_revision = $revision
-                WHERE volume_id = $volume;
-                """;
-            update.Parameters.AddWithValue("$checkpoint", batch.NextCheckpointUsn);
-            update.Parameters.AddWithValue("$first", (object?)batch.JournalFirstUsn ?? DBNull.Value);
-            update.Parameters.AddWithValue("$lowest", (object?)batch.JournalLowestValidUsn ?? DBNull.Value);
-            update.Parameters.AddWithValue("$count", batch.Nodes.Count);
-            update.Parameters.AddWithValue("$revision", nextRevision);
-            update.Parameters.AddWithValue("$volume", batch.VolumeId);
-            await update.ExecuteNonQueryAsync(token);
-        }
-        await SetRevisionAsync(connection, transaction, nextRevision, token);
-        transaction.Commit();
-        return (await ReadVolumeAsync(batch.VolumeId, token))!;
-    }
-
     public async Task SaveScopeAsync(CatalogSavedScope scope, CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(scope);
@@ -472,7 +403,10 @@ public sealed partial class CatalogV2Database
         if (query.TextTarget != CatalogQueryTextTarget.Name)
             sql.Append(" LEFT JOIN catalog_directory_paths_v2 dp ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference LEFT JOIN catalog_directory_paths_v2 pp ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference ");
         sql.Append(" WHERE n.exists_flag = 1 AND v.selected = 1 AND v.state IN ('ready', 'catchingUp') ");
-        if (query.Facts is not null) FileFacts.FileFactQuerySql.AppendPredicate(sql, command, query.Facts);
+        if (query.Facts is not null) {
+            FileFacts.FileFactQuerySql.AppendPredicate(sql, command, query.Facts);
+            sql.Append(" AND ").Append(await DirectoryEntries.CatalogFileEntryPending.ExclusionSqlAsync(connection, transaction, token));
+        }
         if (query.FileConditions is not null) CatalogFileConditionSql.Append(sql, command, query.FileConditions);
         if (query.ExcludeHidden) sql.Append(" AND (n.attributes & 2) = 0 ");
         if (query.VolumeIds.Count > 0)
