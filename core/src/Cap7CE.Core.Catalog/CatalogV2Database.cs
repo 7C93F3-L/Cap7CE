@@ -377,7 +377,7 @@ public sealed partial class CatalogV2Database
         if (!factsAvailable) return new([], null, revision, factRevision);
         var factPlan = await FileFacts.FileFactQuerySql.ChoosePlanAsync(query, connection, transaction, token);
         var entries = await DirectoryEntries.CatalogEntryQuerySource.IsActiveAsync(connection, transaction, token);
-        var scopedEntries = entries && query.Scope.Kind != CatalogQueryScopeKind.AllVolumes;
+        var scopedEntries = entries && Queries.CatalogTextCandidateSql.UseScopedSource(query);
         const string pathExpression = "CASE WHEN n.is_directory = 1 THEN COALESCE(dp.relative_path, n.name) "
             + "WHEN pp.relative_path IS NULL OR pp.relative_path = '' THEN n.name "
             + "ELSE pp.relative_path || '\\' || n.name END";
@@ -387,7 +387,7 @@ public sealed partial class CatalogV2Database
         var sql = new StringBuilder("WITH RECURSIVE ");
         if (entries && !scopedEntries) sql.Append(DirectoryEntries.CatalogEntryQuerySource.Cte);
         sql.Append("scope_nodes(volume_id, file_reference, entry_key) AS (");
-        Queries.CatalogQueryScopeSql.Append(sql, command, query.Scope, entries);
+        Queries.CatalogTextCandidateSql.AppendScope(sql, command, query, entries);
         sql.Append("),");
         if (scopedEntries) sql.Append(Queries.CatalogEntryScopedSource.Cte);
         sql.Append("""
@@ -401,7 +401,7 @@ public sealed partial class CatalogV2Database
             sql.Append(" JOIN scope_nodes sn ON sn.volume_id = n.volume_id AND sn.file_reference = n.file_reference ");
         }
         if (query.Facts is not null) FileFacts.FileFactQuerySql.AppendJoin(sql, factPlan);
-        if (query.TextTarget != CatalogQueryTextTarget.Name)
+        if (terms.Length > 0 && query.TextTarget != CatalogQueryTextTarget.Name)
             sql.Append(" LEFT JOIN catalog_directory_paths_v2 dp ON dp.volume_id = n.volume_id AND dp.file_reference = n.file_reference LEFT JOIN catalog_directory_paths_v2 pp ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference ");
         sql.Append(" WHERE n.exists_flag = 1 AND v.selected = 1 AND v.state IN ('ready', 'catchingUp') ");
         if (query.Facts is not null) {
@@ -443,7 +443,7 @@ public sealed partial class CatalogV2Database
                 CatalogQueryTextTarget.NameOrPath => nameMatch + " OR " + pathMatch,
                 _ => nameMatch + " OR " + pathMatch + " OR " + Keywords.CatalogKeywordSchema.Match(parameter)
             }).Append(')');
-            command.Parameters.AddWithValue("$term" + index, "%" + EscapeLike(terms[index]) + "%");
+            command.Parameters.AddWithValue("$term" + index, Queries.CatalogTextCandidateSql.Pattern(terms[index]));
         }
         CatalogQueryOrdering.AppendAfter(sql, command, query, entries);
         sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query, "n", entries)).Append(" LIMIT $limit");
@@ -1019,8 +1019,4 @@ public sealed partial class CatalogV2Database
         if (value < 0) throw new ArgumentOutOfRangeException(parameterName);
     }
 
-    private static string EscapeLike(string value) => value
-        .Replace("\\", "\\\\", StringComparison.Ordinal)
-        .Replace("%", "\\%", StringComparison.Ordinal)
-        .Replace("_", "\\_", StringComparison.Ordinal);
 }

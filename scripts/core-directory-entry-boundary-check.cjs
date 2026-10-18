@@ -68,6 +68,9 @@ module.exports = (root, sourceFiles, failures) => {
     if (/Execute(?:Scalar|Reader|NonQuery)|OpenAsync|new SqliteConnection|File\.|Directory\.|DeviceIoControl/.test(source))
       failures.push(`${name} must remain a pure query builder, without query execution or source access.`);
   }
+  const textCandidates = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/Queries/CatalogTextCandidateSql.cs"), "utf8");
+  if (/OpenAsync|Execute\w*Async|File\.|Directory\.|FileStream|Reader\.Host|System\.Net/.test(textCandidates))
+    failures.push("Text candidate SQL must not own connections, execution, discovery or source IO.");
   for (const [file, cap] of Object.entries({
     "core/src/Cap7CE.Core.Reader.Protocol/ReaderFileEntryCodec.cs": 110,
     "core/src/Cap7CE.Core.Host/DirectoryEntries/ReaderFileEntryClient.cs": 55,
@@ -87,7 +90,8 @@ module.exports = (root, sourceFiles, failures) => {
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopeSql.cs": 45,
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopedSource.cs": 25,
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogQueryPageProjection.cs": 30,
-    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1027,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogTextCandidateSql.cs": 65,
+    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1023,
     "core/src/Cap7CE.Core.Catalog/CatalogV2Connection.cs": 30
   })) if (fs.readFileSync(path.join(root, file), "utf8").split(/\r?\n/).length > cap)
     failures.push(`${file} exceeds its entry metadata boundary.`);
