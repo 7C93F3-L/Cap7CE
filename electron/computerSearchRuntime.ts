@@ -69,7 +69,11 @@ export const classifyComputerSearchCatalog = (catalog: CoreCatalogStatus): Compu
   let state: ComputerSearchState = "unavailable";
   let reason: string | undefined = catalog.volumes.length === 0 ? "catalog-empty" : undefined;
   const taskRunning = catalog.tasks.some((task) => task.state === "running");
-  if (catalog.volumes.some((volume) => volume.state === "building" || volume.state === "discovering")) {
+  const interrupted = !taskRunning && catalog.tasks.some((task) => task.state === "failed" || task.state === "cancelled")
+    && catalog.volumes.some((volume) => volume.selected && (volume.needsRebuild || volume.state === "building" || volume.state === "catchingUp"));
+  if (interrupted) {
+    state = catalog.tasks.some((task) => task.state === "failed" && task.errorCode === "reader-repair-required") ? "repair-required" : "needs-rebuild";
+  } else if (catalog.volumes.some((volume) => volume.state === "building" || volume.state === "discovering")) {
     state = "building";
   } else if (catalog.volumes.some((volume) => volume.state === "catchingUp")) {
     state = "syncing";

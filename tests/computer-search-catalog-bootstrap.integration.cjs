@@ -70,6 +70,26 @@ const run = async () => {
   });
   assert.equal(building.state, "building");
   assert.equal(building.searchAvailable, false);
+  for (const terminal of ["failed", "cancelled"]) {
+    const stoppedTask = { taskId: "stopped", kind: "synchronize", state: terminal, errorCode: terminal === "failed" ? "catalog-concurrency" : null };
+    for (const phase of ["building", "catchingUp"]) {
+      const stopped = classifyComputerSearchCatalog({
+        volumes: [{ ...volume("volume-c", phase, true), queryable: phase === "catchingUp" }, { ...volume("volume-e", "ready", true), queryable: true }],
+        tasks: [stoppedTask], catalogRevision: 5
+      });
+      assert.equal(stopped.state, "needs-rebuild", "a terminal preparation cannot remain indefinitely busy");
+      assert.equal(stopped.searchAvailable, true, "a stopped task does not hide unaffected queryable volumes");
+    }
+    const resumed = classifyComputerSearchCatalog({ volumes: [volume("volume-c", "building", true)],
+      tasks: [stoppedTask, { taskId: "new", kind: "synchronize", state: "running", errorCode: null }], catalogRevision: 5 });
+    assert.equal(resumed.state, "building", "a new active task supersedes an earlier terminal task");
+    const recovered = classifyComputerSearchCatalog({ volumes: [{ ...volume("volume-c", "ready", true), queryable: true }],
+      tasks: [stoppedTask], catalogRevision: 5 });
+    assert.equal(recovered.state, "ready", "a completed recovery does not retain an old failure state");
+  }
+  const incompatible = classifyComputerSearchCatalog({ volumes: [volume("volume-c", "building", true)],
+    tasks: [{ taskId: "incompatible", kind: "synchronize", state: "failed", errorCode: "reader-repair-required" }], catalogRevision: 5 });
+  assert.equal(incompatible.state, "repair-required", "a missing Reader capability requires repair rather than another busy state");
   for (const pendingState of ['building', 'needsRebuild']) {
     const partial = classifyComputerSearchCatalog({
       volumes: [volume('volume-c', pendingState, true), {...volume('volume-e', 'ready', true), queryable:true}],
