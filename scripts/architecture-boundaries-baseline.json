@@ -95,6 +95,9 @@
     "core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs": 27
   },
   "maintenanceMaxLines": {
+    "src/renderer/catalog-workspace/useCatalogHomeActions.ts": 75,
+    "src/renderer/catalog-workspace/useCatalogHomePreview.ts": 50,
+    "src/renderer/catalog-workspace/CatalogHomeDetails.tsx": 40,
     "src/renderer/quick-commands/catalogCommandRegistry.ts": 30,
     "src/renderer/quick-commands/catalogCommandErrors.ts": 10,
     "src/renderer/quick-commands/catalogPreferenceCommands.ts": 50,

@@ -759,3 +759,6 @@
 
 
 旧搜索结果的分类卡、运行/暂停提示及对应文案已移除；设置内该分组称为“本地 AI”，历史预览证据中的aiSearch只用于说明旧记录来源。
+
+
+| `catalogHome.actionFailed` | 操作未完成，请确认目录仍可访问后重试。 | The action could not be completed. Check that the location is still accessible and try again. | 此电脑首页入口操作失败，使用底部窄条 |

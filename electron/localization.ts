@@ -14,6 +14,7 @@ export const zhCN = {
   "favorites.renameRecovery": "上次改名的路径暂时无法确认，请恢复磁盘连接或检查目录后重试。",
   "favorites.renameFailed": "文件夹重命名未完成，请检查系统提示或在资源管理器中确认当前名称。",
   "favorites.operationFailed": "目录操作未完成，请确认目录仍然可访问后重试。",
+  "catalogHome.actionFailed": "操作未完成，请确认目录仍可访问后重试。",
   "catalogActions.addFavorite": "添加收藏",
   "catalogActions.trashLimit": "一次最多删除200个项目，请分批选择。",
   "catalogActions.removeFavorite": "移除收藏",

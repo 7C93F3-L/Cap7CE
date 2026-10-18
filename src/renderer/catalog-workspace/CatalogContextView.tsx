@@ -66,6 +66,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
   useEffect(() => {
     if (foreground && controller.status && controller.status.state !== "starting") onSearchAvailable(controller.status.searchAvailable);
   }, [foreground, controller.status, onSearchAvailable]);
+  const showHome = navigation.path === null && !random.enabled && !controller.query.trim() && !filters.conditions.facts && !filters.conditions.fileConditions;
   const ref = useInertElement<HTMLElement>(!foreground);
   return <section ref={ref} id={context.id} className="cap-catalog-context" hidden={!selected} role="tabpanel" aria-label={context.name}
     onKeyDown={event => { if (!event.defaultPrevented && event.altKey && !event.ctrlKey && !event.shiftKey && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
@@ -75,7 +76,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
     } }} onMouseDown={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}
     onAuxClick={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}>
     {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={filterCount} attributes={attributes} onMetadata={onMetadata} path={navigation.path} noticeHost={noticeHost} metadataProgress={metadataProgress} />, filterHost)}
-    {selected && detailsHost && createPortal(<CatalogDetails selection={selection?.taskId === controller.taskId ? selection : null} path={navigation.path} count={controller.items.length} foreground={foreground} searching={searching} filterCount={filterCount} />, detailsHost)}
+    {selected && detailsHost && !showHome && createPortal(<CatalogDetails selection={selection?.taskId === controller.taskId ? selection : null} path={navigation.path} count={controller.items.length} foreground={foreground} searching={searching} filterCount={filterCount} />, detailsHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
       onUp={navigation.up} onRefresh={() => void refresh.refresh()} refreshing={refresh.busy || controller.busy || !foreground}
       random={random} sort={view.sort} onSort={value => { random.disable(); view.setSort(value); }} showHidden={view.showHidden} onShowHidden={view.toggleHidden}
@@ -84,9 +85,8 @@ export default function CatalogContextView({ context, selected, foreground, filt
       commandPage={{ ...view, home, refresh: refresh.refresh, setSort: value => { random.disable(); return view.setSort(value); } }} active={selected}
       onSubmit={value => void controller.submit(value)} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} includeSubfolders={view.includeSubfolders} onIncludeSubfolders={view.toggleSubfolders} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
     {selected && noticeHost && createPortal(<CatalogQueryNotice busy={foreground && controller.busy} invalid={foreground && filters.invalid} />, noticeHost)}
-    <div className="cap-catalog-results">{navigation.path === null && !random.enabled && !controller.query.trim()
-      && !filters.conditions.facts && !filters.conditions.fileConditions
-      ? <CatalogHome onOpen={openDirectory} favorites={favorites} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />
+    <div className="cap-catalog-results">{showHome
+      ? <CatalogHome onOpen={openDirectory} favorites={favorites} active={selected} detailsHost={selected ? detailsHost : null} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />
       : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={reportSelection} {...appearance} />}</div>
     {(grid.error || view.error) && <CatalogGridPreferenceNotice onDismiss={dismissPreferenceError} />}
   </section>;

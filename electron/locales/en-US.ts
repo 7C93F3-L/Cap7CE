@@ -14,6 +14,7 @@ export const enUS = defineLocale({
   "favorites.renameRecovery": "The previous rename could not be verified. Reconnect the drive or check the folder and retry.",
   "favorites.renameFailed": "The folder rename could not be completed. Check the system message or verify its name in File Explorer.",
   "favorites.operationFailed": "The folder operation could not finish. Check that the folder is accessible and retry.",
+  "catalogHome.actionFailed": "The action could not be completed. Check that the location is still accessible and try again.",
   "catalogActions.addFavorite": "Add to Favorites",
   "catalogActions.trashLimit": "Select up to 200 items per deletion.",
   "catalogActions.removeFavorite": "Remove from Favorites",
