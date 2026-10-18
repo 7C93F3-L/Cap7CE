@@ -150,7 +150,7 @@ Catalog 首页由 `CatalogHomeGroup` 保留系统位置与盘符分组；组内�
 
 `CatalogHome`复用`SkimRootSections`的系统目录与此电脑展示。系统位置通过既有只读`skim.listLocations`获取并排除独立星标；磁盘入口由Core状态构造，不调用旧目录读取。无范围、无关键词、无筛选时Controller的idleHome门禁禁止空全盘查询；首页不依赖全局searchAvailable，建库期间仍展示系统位置与已发现盘符。Runtime可用性仅取已选择且可查询的卷，单卷building/needsRebuild不会阻挡其他卷；Core继续只查询ready/catchingUp，范围解析仍拒绝未就绪卷。输入或筛选仍走Core搜索，首页动作在当前上下文复用目录历史。
 
-统一文件结果复用`ResultGrid.css`中的方格、格式卡片、铺满缩略图及悬停/选择效果，局部`ComputerSearchResultGrid.css`负责自适应150px/5px网格。`ComputerSearchResultVisual`保留授权ID、可见范围租约和失败回退；没有导入旧ImageIndex数据源、目录扫描或全目录缩略图生产。图片不额外占用名称/路径行，名称与路径仍可通过title及现有详情动作查看。旧Skim位置导航卡片保留原展示语义。
+统一文件结果复用`ResultGrid.css`中的方格、格式卡片、铺满缩略图及悬停/选择效果，局部`ComputerSearchResultGrid.css`负责自适应150px/5px网格；鼠标悬停描边仅作用于原比例gallery模式，square模式保留原悬停背景和键盘聚焦描边。`ComputerSearchResultVisual`保留授权ID、可见范围租约和失败回退；没有导入旧ImageIndex数据源、目录扫描或全目录缩略图生产。图片不额外占用名称/路径行，名称与路径仍可通过title及现有详情动作查看。旧Skim位置导航卡片保留原展示语义。
 
 视频事实提取器v2通过`VideoMetadataFrameClient`拥有一个普通权限、隐藏的`Cap7CE.Media.Metadata`原生辅助进程。程序使用Windows Media Editing，在10/50/90%三个时间点生成长边最多160px的内存像素流；复用纯RGBA分析器，对29项定点指标取代表帧均值。色彩是抽样结果，不声称描述视频每一帧。流不落盘，也不调用Shell缩略图缓存；辅助程序不发现目录、不写源文件、不联网。Windows解码不可用时保留标量提取后备，未知色彩不满足色彩筛选。
 
