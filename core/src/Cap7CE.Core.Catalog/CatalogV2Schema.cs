@@ -6,7 +6,7 @@ internal static class CatalogV2Schema
 {
     private const int ApplicationId = 1127695174;
 
-    public static async Task InitializeAsync(SqliteConnection connection, CancellationToken token)
+    public static async Task InitializeAsync(SqliteConnection connection, CancellationToken token, bool createEntryCatalog = false)
     {
         using var version = connection.CreateCommand();
         version.CommandText = "PRAGMA user_version;";
@@ -29,6 +29,11 @@ internal static class CatalogV2Schema
         command.Transaction = transaction;
         command.CommandText = SchemaSql;
         await command.ExecuteNonQueryAsync(token);
+        if (createEntryCatalog) {
+            await DirectoryEntries.CatalogFileEntrySchema.CreateWithinAsync(connection, transaction, token);
+            await DirectoryEntries.CatalogFileEntryActivationMarker.CreateAsync(connection, transaction, 0, token);
+        }
+        token.ThrowIfCancellationRequested();
         transaction.Commit();
     }
 

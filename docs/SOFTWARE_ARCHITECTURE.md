@@ -11,17 +11,17 @@
 - 已激活入口集合通过同一 Catalog 查询投影参与范围、名称/路径/关键词、扩展名与事实筛选。签名游标包含入口 key，避免同一物理身份的同名多入口在分页时丢失；Core 返回的结果 ID 区分入口，文件授权仍使用既有返回项链路。属性源解析可选择仍存在的入口，不依赖已经删除的原名称。
 - `Reader.Host/DirectoryEntries` 复用已授权卷及既有 `FILE_READ_ATTRIBUTES` 句柄，以固定 `NtQueryInformationFile(FileHardLinkInformation=46)` 读取完整名称/父目录引用，前后核对身份、属性、链接数及源版本；不接受路径、不读正文、不写源文件。原生缓冲上限 1 MiB、单文件最多 1024 个入口，失败、超限和消失分别返回明确状态，部分集合不能当作完整数据。
 - CR/2 增加可选 `FileEntryNames` 能力和固定操作，每批最多 64 个不重复文件引用，按字节预算续页。`Core.Host/DirectoryEntries/ReaderFileEntryClient` 严格校验请求顺序、完整性和结束标志，断连或取消不返回部分集合。`ReaderV2CatalogSession` 负责既有鉴权与传输；旧 Reader 保持兼容且不隐式启用新能力。普通 Win32 名称枚举只留在测试项目，作为独立参考，不成为生产全盘二次扫描。
-- `CatalogSynchronizationService` 与 `CatalogJournalMonitor` 增加默认关闭的 `captureFileEntries` 内部装配参数，产品运行时尚不传入开启值。开启时先协商 Reader 能力，初建使用同一临时 SQLite 库中的入口暂存表，追赶与实时维护在既有节点/检查点事务中调用 `CatalogFileEntryPublication`。不由 Renderer 或普通状态/查询请求激活，不新增提取授权。
+- `CatalogSynchronizationService` 与 `CatalogJournalMonitor` 增加默认关闭的 `captureFileEntries` 内部装配参数，产品运行时从已保存的存储模式传入开启值，启动不升级已有格式2库。开启时先协商 Reader 能力，初建使用同一临时 SQLite 库中的入口暂存表，追赶与实时维护在既有节点/检查点事务中调用 `CatalogFileEntryPublication`。不由 Renderer 或普通状态/查询请求激活，不新增提取授权。
 - `CatalogDirectoryEntryCapture` 以每批最多 64 个引用读取元数据，保留匹配的当前主名称或选确定性剩余名称。FileDelete 后物理文件仍存在则保留剩余入口及共享事实，明确 Missing 才删除最后入口。启用接线后 Unavailable/OverLimit 与检查点同事务进入 `catalog_file_entry_pending`，已知名称仍可浏览，该身份的事实筛选、发现及提取授权暂停。`CatalogDirectoryEntryRetryOwner` 在独占 Reader owner 内串行执行，最多八次退避，缓存下次期限；空队列及全部阻塞后不轮询数据库，显式刷新或新事件可重新触发。不确定状态不作删除，取消/断连仍不提交部分页；恢复成功将先前内容/格式失效原因合并进节点事务。
 - `CatalogFileEntryStaging` 只持有临时库的名称集合与源版本；`Snapshots/CatalogSnapshotPublication` 拥有节点、路径、入口和 ready 状态的单次发布，并校验开始建库时的卷修订。旧 owner、源或父目录不匹配、SQL 失败均回滚，拒绝的入口页不能继续发布为成功快照。入口查询仅使用仍存活且有已解析路径的父目录，避免恢复期间猜测错误根路径。
 - `FileFactEntryPolicy` 在物理身份索引范围内统一允许/排除判定，任一已知入口命中排除即阻止该物理文件。`FileFactEntryDiscoverySql` 从允许且格式匹配的入口选源，一份物理任务保存内部格式提示；提示不进入客户端协议。领取、续租、提交和 `FileFactSourceResolver` 复查当前策略，Broker 同时核对实际获准路径和原生身份，不能改用另一条路径绕过排除。无入口扩展的旧库保持原范围规则。
 - `ReaderSnapshotEntryCache` 仅保存最新 MFT 页最多 4096 个单链接结果，复用同一次属性读取，不新增句柄或正文权限；多链接及不确定结果仍完整查询。下一页、日志检查和快照关闭立即清空，USN 删除及重试不能使用初建缓存判断存活。
 - `ReaderNtfsEntryPresence` 处理按 ID 打开返回错误 87 的不确定存活状态：在既有授权卷句柄上从目标 NTFS 槽位读取一次最多 64 KiB 的 USN 元数据页，只有枚举结束、已越过该槽位或该槽位身份换代时报告 Missing。相同身份仍存在、格式不明或 IO 失败继续 Unavailable。它不读取原始 MFT 记录或文件正文，不增加权限、路径参数、协议操作或扫描循环；独立纯解析测试与架构守门覆盖保守判定。
-- 入口初建、两种增量、恢复、范围撤销和有界重试已通过隔离测试，十万物理文件/十一万入口完成有界查询与任务发现测量；真实受限服务已在可丢弃 NTFS 虚拟盘验证双入口、共享事实、单个/最终名称删除、活跃会话增量与日志断档重建，并完成临时服务/虚拟盘/Catalog 清理。正式组件部署、生产规模与启用/回退仍待验证，正式库未启用，不能据隔离样本宣称个人全盘缺口已解决。
+- 入口初建、两种增量、恢复、范围撤销和有界重试已通过隔离测试，十万物理文件/十一万入口完成有界查询与任务发现测量；真实受限服务已在可丢弃 NTFS 虚拟盘验证双入口、共享事实、单个/最终名称删除、活跃会话增量与日志断档重建，并完成临时服务/虚拟盘/Catalog 清理。启用/回退已通过250万节点的历史备份副本验证；正式组件部署、实际全卷入口回填及当前安装矩阵仍待验证，正式库未启用，不能据隔离样本宣称个人全盘缺口已解决。
 - `Transactions/CatalogBatchPublication` 独立拥有基础节点、事实失效、入口、待重试项与检查点的事务；仅退避变更不递增可见 Catalog 修订。`core-directory-entry-boundary-check` 守护数据库/Reader 权限、模块清单和体量。
-- `Queries/CatalogEntryScopeSql` 在目录身份集合中使用既有父索引选择入口 key，`CatalogEntryScopedSource` 在同一读快照中按主键投影候选；不为每个目录物化全卷入口集合。`CatalogQueryPageProjection` 将已选页的名称/扩展名/父路径与物理元数据组合，旧库继续原有物理节点来源；这些模块只生成 SQL，不拥有查询执行、连接或源文件 IO。百万物理文件/101 万入口覆盖签名分页、保存范围隔离、递归范围与共享事实。查询范围和结果投影分离后，`CatalogV2Database.cs` 体量上限进一步降低为 1040 行。
+- `Queries/CatalogEntryScopeSql` 在目录身份集合中使用既有父索引选择入口 key，`CatalogEntryScopedSource` 在同一读快照中按主键投影候选；不为每个目录物化全卷入口集合。`CatalogQueryPageProjection` 将已选页的名称/扩展名/父路径与物理元数据组合，旧库继续原有物理节点来源；这些模块只生成 SQL，不拥有查询执行、连接或源文件 IO。百万物理文件/101 万入口覆盖签名分页、保存范围隔离、递归范围与共享事实。查询范围和结果投影分离后，`CatalogV2Database.cs` 在连接所有权拆分后体量上限进一步降低为 1027 行。
 - `CatalogFileEntryActivation.EnablePreparedAsync` 是显式维护用的数据库底座，调用方负责退出当前写入进程并保存一致性恢复点；它不被普通初始化、查询或产品运行时调用。以恢复点的基础 Catalog 修订作栅栏，扩展建表、版本标记、旧卷 needsRebuild 和修订变化同事务完成。`PRAGMA user_version=3` 要求入口感知写入器，基础查询契约和 `catalog_state_v2.schema_version` 仍为 2；旧二进制因此拒绝打开新存储。`CatalogFileEntryMode` 校验特性版本 1 及完整扩展，节点批次、快照、同步与实时 owner 均拒绝缺少入口维护的写入。手工改回版本 2 不构成受支持回退。
-- `CatalogFileEntryReadiness` 在格式 3 下额外要求匹配当前物理创建版本的完整入口集合；未确认名称不能借旧主路径取得事实、任务、续租或内容源授权。格式 2 的兼容规则不变。产品仍默认格式 2；宿主备份/回退、格式 3 重启及新库策略的装配尚未接入，正式库未升级。
+- `CatalogFileEntryReadiness` 在格式 3 下额外要求匹配当前物理创建版本的完整入口集合；未确认名称不能借旧主路径取得事实、任务、续租或内容源授权。格式 2 的兼容规则不变。产品的新库在首次创建事务中建立格式3，已有格式2启动不升级；宿主的离线备份/回退与持久模式恢复已接入并隔离验证，正式库仍未升级。
 - 当前版本尚未完成睡眠/物理热插拔及最新安装矩阵验收；WPF/WinUI 试验壳未排期。本轮没有打包、发布或更换正在使用的受保护组件。
 
 
@@ -327,7 +327,7 @@ Core 搜索页已接空查询文件浏览和名称/路径默认匹配：进入�
 
 `Host/CatalogStorage` 只处理显式离线的 Catalog 存储生命周期。`CatalogStorageLease` 以同库 sidecar 的独占句柄表达整个进程的所有权，崩溃自动释放，空 sidecar 不作为持久忙碌标记；不跟随库文件及 sidecar 的重解析点。`CatalogOfflineStorage` 在活动进程已退休的前提下检查文件独占访问、截断 WAL 并校验完整性，维护进程只清理自身空闲连接池，活动连接仍会阻止操作。旧进程不认识 sidecar，因此实际维护前仍必须停止它们。
 
-`CatalogEntryMaintenance` 不由普通启动、查询或 Reader 安装隐式调用。升级先通过 `CatalogEntryRecoveryCheckpoint` 固定只读快照及修订，复用有界恢复复制器，再调用数据库域的显式事务启用；备份失败不升级，启用失败保留完整恢复点。回退要求当前格式3、输入为可验证格式2；把旧快照复制到当前库同目录的新文件，经取消/修订/占用检查后用 File.Replace 原子替换，同时在同目录唯一文件中保留升级后的完整库。失败仅清理本次拥有的暂存文件，保留输入和归档，不通过降低版本号回退。恢复输出统一为 DELETE journal 的独立 SQLite 文件，不依赖 WAL；首次事实域备份同时接受已验证格式3。相关测试覆盖忙碌句柄、旧进程连接、失败目标、SQL回滚、取消复制、幂等、完整回退与新旧数据保留。当前仅隔离库验证；生命周期所有权与存储模式的产品重启装配仍另行接入，未激活正式库或替换正式 Reader。
+`CatalogEntryMaintenance` 不由普通启动、查询或 Reader 安装隐式调用。升级先通过 `CatalogEntryRecoveryCheckpoint` 固定只读快照及修订，复用有界恢复复制器，再调用数据库域的显式事务启用；备份失败不升级，启用失败保留完整恢复点。回退要求当前格式3、输入为可验证格式2；把旧快照复制到当前库同目录的新文件，经取消/修订/占用检查后用 File.Replace 原子替换，同时在同目录唯一文件中保留升级后的完整库。失败仅清理本次拥有的暂存文件，保留输入和归档，不通过降低版本号回退。恢复输出统一为 DELETE journal 的独立 SQLite 文件，不依赖 WAL；首次事实域备份同时接受已验证格式3。相关测试覆盖忙碌句柄、旧进程连接、失败目标、SQL回滚、取消复制、幂等、完整回退与新旧数据保留。产品 `CatalogServer` 现在持有存储生命周期 lease，首次初始化全新 Catalog 时通过数据库域同一创建事务建立入口表及格式3标记；已经存在的格式2/3只验证并读取，绝不在启动时迁移旧库。`ProductCoreRuntime` 仅从该持久模式装配显式同步与同一 Reader owner 的实时监控，控制器探针默认值保持不变。重启、旧 Reader 缺少能力、并发初始化、第二所有者拒绝、完整退休及失败释放均有隔离回归；能力缺失返回修复任务错误及固定、无路径的监控原因，不退回旧写入方式。新建与显式升级共用 CatalogFileEntryActivationMarker，基础数据与标记同事务提交。`CatalogV2Connection` 单独负责连接选项、PRAGMA 和打开失败清理；首次 schema 验证使用非池化连接，防止损坏库验证失败后仍由本进程保留原生句柄。CatalogV2Database 上限同步降到1027行。当前正式库和正式 Reader 未改动，生产启用仍须独立切换。
 
 
 `electron/core/coreMetadataProtocol.ts` 是现有已认证 `CoreProtocolClient` 上的显式元数据协议适配，不创建 Host、不自动配置或启用提取。验证发现页、票据、账本、状态和数字枚举，源版本四项仅接受不溢出 Int64 的精确十进制字符串；Worker 只接收路径与读取类别，发布请求只有租约和事实结果，源版本仍由 Host 持有。测试覆盖无明确确认不发请求、FILETIME 不经过 Number、非法路径/溢出/响应拒绝和结果映射。已由后台建库服务复用，Host 休眠装配和 Core 搜索页控制已接线；完整统一结果网格尚待切换。

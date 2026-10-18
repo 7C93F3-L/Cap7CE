@@ -209,7 +209,8 @@ try
         var catalog = new CatalogV2Database(catalogPath);
         runtime = new ProductCoreRuntime(catalog, new ReaderV2CatalogSessionFactory(),
             new Cap7CE.Core.Host.MetadataExtraction.FileFactHostSession(catalogPath, resolveOwnedStorage: options.Mode == CoreHostMode.CatalogServer
-                ? token => Cap7CE.Core.Host.MetadataExtraction.ProductOwnedStorageResolver.ResolveAsync(catalog, token) : null), CatalogPreparationDiagnostics.StandardError());
+                ? token => Cap7CE.Core.Host.MetadataExtraction.ProductOwnedStorageResolver.ResolveAsync(catalog, token) : null), CatalogPreparationDiagnostics.StandardError(),
+            ownStorage: options.Mode == CoreHostMode.CatalogServer, createEntryCatalog: options.Mode == CoreHostMode.CatalogServer);
         await runtime.InitializeAsync(shutdown.Token);
     }
     await using var runtimeScope = runtime;

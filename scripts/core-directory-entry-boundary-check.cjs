@@ -5,7 +5,7 @@ module.exports = (root, sourceFiles, failures) => {
   const limits = { "CatalogFileEntry.cs": 45, "CatalogFileEntrySchema.cs": 55, "CatalogFileEntryStore.cs": 140, "CatalogEntryQuerySource.cs": 50,
     "CatalogFileEntryUpdate.cs": 10, "CatalogFileEntryPublication.cs": 70, "CatalogFileEntryStaging.cs": 80,
     "CatalogFileEntryPending.cs": 80, "CatalogFileEntryPendingPublication.cs": 65, "CatalogFileEntryPendingStaging.cs": 45,
-    "CatalogFileEntryMode.cs": 40, "CatalogFileEntryActivation.cs": 55, "CatalogFileEntryReadiness.cs": 20 };
+    "CatalogFileEntryMode.cs": 40, "CatalogFileEntryActivation.cs": 43, "CatalogFileEntryActivationMarker.cs": 25, "CatalogFileEntryReadiness.cs": 20 };
   const directory = "core/src/Cap7CE.Core.Catalog/DirectoryEntries";
   if (JSON.stringify(fs.readdirSync(path.join(root, directory)).sort()) !== JSON.stringify(Object.keys(limits).sort()))
     failures.push("Catalog entry domain contains unregistered sources.");
@@ -23,12 +23,19 @@ module.exports = (root, sourceFiles, failures) => {
   for (const name of ["CatalogFileEntryPublication.cs", "CatalogFileEntryStaging.cs", "CatalogFileEntryPendingPublication.cs", "CatalogFileEntryPendingStaging.cs"])
     if (/BeginTransaction|transaction\.Commit/.test(fs.readFileSync(path.join(root, directory, name), "utf8")))
       failures.push(`${name} must share its caller's node/checkpoint transaction.`);
-  for (const name of ["ProductCoreRuntime.cs", "Program.cs"])
-    if (/captureFileEntries/.test(fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host", name), "utf8")))
-      failures.push("Product directory entry activation requires its own validated migration round.");
+  const runtime = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs"), "utf8");
+  for (const required of ["CatalogStorageLease.Acquire", "await catalog.InitializeAsync(token, createEntryCatalog)", "FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync", "captureFileEntries: FileEntryModeEnabled", "diagnostics, FileEntryModeEnabled", "storageLease?.Dispose()"])
+    if (!runtime.includes(required)) failures.push(`Runtime entry mode must derive from persistent storage: missing ${required}.`);
+  if (/captureFileEntries/.test(fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/Program.cs"), "utf8")))
+    failures.push("Startup must not enable entry capture independently of its stored mode.");
   const activation = fs.readFileSync(path.join(root, directory, "CatalogFileEntryActivation.cs"), "utf8");
-  for (const required of ["expectedRevision", "requireExisting: true", "CreateWithinAsync", "state='needsRebuild'", "PRAGMA user_version=3", "token.ThrowIfCancellationRequested()", "transaction.Commit()"])
+  for (const required of ["expectedRevision", "requireExisting: true", "CreateWithinAsync", "state='needsRebuild'", "CatalogFileEntryActivationMarker.CreateAsync", "token.ThrowIfCancellationRequested()", "transaction.Commit()"])
     if (!activation.includes(required)) failures.push(`Explicit entry activation is missing ${required}.`);
+  const schema = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/CatalogV2Schema.cs"), "utf8");
+  for (const required of ["if (createEntryCatalog)", "CatalogFileEntrySchema.CreateWithinAsync", "CatalogFileEntryActivationMarker.CreateAsync(connection, transaction, 0, token)"])
+    if (!schema.includes(required)) failures.push(`New Catalog entry storage must share its initial transaction: missing ${required}.`);
+  const database = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs"), "utf8");
+  if (!database.includes("OpenAsync(false, token, pooling: false)")) failures.push("Initial Catalog validation must not retain a failed database in its connection pool.");
   for (const file of ["Transactions/CatalogBatchPublication.cs", "Snapshots/CatalogSnapshotPublication.cs"])
     if (!fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog", file), "utf8").includes("CatalogFileEntryMode.RequireWriterAsync"))
       failures.push(`${file} must reject legacy writes to active entry storage.`);
@@ -76,7 +83,8 @@ module.exports = (root, sourceFiles, failures) => {
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopeSql.cs": 45,
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopedSource.cs": 25,
     "core/src/Cap7CE.Core.Catalog/Queries/CatalogQueryPageProjection.cs": 30,
-    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1040
+    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1027,
+    "core/src/Cap7CE.Core.Catalog/CatalogV2Connection.cs": 30
   })) if (fs.readFileSync(path.join(root, file), "utf8").split(/\r?\n/).length > cap)
     failures.push(`${file} exceeds its entry metadata boundary.`);
 };

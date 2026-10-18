@@ -25,16 +25,11 @@ public sealed class CatalogFileEntryActivation(CatalogV2Database catalog)
         command.CommandText = "SELECT EXISTS(SELECT 1 FROM catalog_volumes_v2 WHERE state IN ('building','catchingUp'));";
         if (Convert.ToInt32(await command.ExecuteScalarAsync(token)) != 0) throw new CatalogStateTransitionException("Retire Catalog synchronization before activating entries.");
         await CatalogFileEntrySchema.CreateWithinAsync(connection, transaction, token);
+        await CatalogFileEntryActivationMarker.CreateAsync(connection, transaction, checked(expectedRevision + 1), token);
         command.Parameters.AddWithValue("$revision", checked(expectedRevision + 1));
         command.CommandText = """
-            CREATE TABLE catalog_file_entry_activation (
-                singleton INTEGER PRIMARY KEY CHECK(singleton=1),feature_version INTEGER NOT NULL CHECK(feature_version>=1),
-                activated_revision INTEGER NOT NULL CHECK(activated_revision>=0)
-            ) STRICT;
-            INSERT INTO catalog_file_entry_activation VALUES(1,1,$revision);
             UPDATE catalog_volumes_v2 SET state='needsRebuild',catalog_revision=$revision;
             UPDATE catalog_state_v2 SET catalog_revision=$revision WHERE singleton=1;
-            PRAGMA user_version=3;
             """;
         await command.ExecuteNonQueryAsync(token);
         token.ThrowIfCancellationRequested(); transaction.Commit(); return true;

@@ -22,7 +22,7 @@ public sealed class CatalogChangeSignal
     public void SetState(string state, string? reason = null)
     {
         if (state is not ("idle" or "starting" or "watching" or "paused" or "unavailable" or "failed" or "stopped")
-            || reason is not (null or "reader-wait-unavailable" or "owned-storage-unavailable" or "reader-monitor-failed"))
+            || reason is not (null or "reader-wait-unavailable" or "reader-entry-names-unavailable" or "owned-storage-unavailable" or "reader-monitor-failed"))
             throw new ArgumentException("Invalid maintenance state.");
         lock (gate) {
             if (state == current.State && reason == current.Reason) return;

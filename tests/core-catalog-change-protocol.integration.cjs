@@ -15,6 +15,7 @@ const immediate = (response) => new CoreCatalogChangeProtocol({
 (async () => {
   const signal = new AbortController().signal;
   assert.deepEqual(await immediate(valid).wait(0, signal), valid);
+  assert.equal((await immediate({ ...valid, state: "unavailable", reason: "reader-entry-names-unavailable" }).wait(0, signal)).reason, "reader-entry-names-unavailable");
   assert.deepEqual(calls[0], { operation: "catalog.awaitChanges", body: { afterSequence: 0, waitMilliseconds: 25000 }, deadline: 30000 });
   assert.equal((await immediate({ ...valid, changed: false }).wait(1, signal)).changed, false);
   assert.equal((await immediate({ ...valid, sequence: 0 }).wait(99, signal)).sequence, 0, "new Host sequence resets cleanly");

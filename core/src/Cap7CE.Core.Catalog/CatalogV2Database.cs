@@ -19,14 +19,14 @@ public sealed partial class CatalogV2Database
 
     public string DatabasePath => databasePath;
 
-    public async Task InitializeAsync(CancellationToken token = default)
+    public async Task InitializeAsync(CancellationToken token = default, bool createEntryCatalog = false)
     {
         var directory = Path.GetDirectoryName(databasePath)
             ?? throw new ArgumentException("Database path has no parent directory.");
         Directory.CreateDirectory(directory);
         CleanupAbandonedSnapshotBuilds(directory, Path.GetFileName(databasePath));
-        await using var connection = await OpenAsync(false, token);
-        await CatalogV2Schema.InitializeAsync(connection, token);
+        await using var connection = await OpenAsync(false, token, pooling: false);
+        await CatalogV2Schema.InitializeAsync(connection, token, createEntryCatalog);
         await Keywords.CatalogKeywordSchema.InitializeAsync(connection, token);
         using var wal = connection.CreateCommand();
         wal.CommandText = "PRAGMA journal_mode = WAL;";
@@ -870,21 +870,8 @@ public sealed partial class CatalogV2Database
         return await reader.ReadAsync(token) ? ReadVolume(reader) : null;
     }
 
-    internal async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token, bool requireExisting = false)
-    {
-        var connection = new SqliteConnection(new SqliteConnectionStringBuilder
-        {
-            DataSource = databasePath,
-            Mode = readOnly ? SqliteOpenMode.ReadOnly : requireExisting ? SqliteOpenMode.ReadWrite : SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Private,
-            Pooling = true
-        }.ToString());
-        await connection.OpenAsync(token);
-        using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL; PRAGMA trusted_schema = OFF;";
-        await command.ExecuteNonQueryAsync(token);
-        return connection;
-    }
+    internal Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token, bool requireExisting = false, bool pooling = true) =>
+        CatalogV2Connection.OpenAsync(databasePath, readOnly, requireExisting, pooling, token);
 
     private static async Task<long> ReadRevisionAsync(
         SqliteConnection connection,

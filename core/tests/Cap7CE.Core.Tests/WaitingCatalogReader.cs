@@ -4,7 +4,7 @@ using Cap7CE.Core.Reader.Protocol;
 
 namespace Cap7CE.Core.Tests;
 
-internal sealed class WaitingCatalogReader(SyntheticCatalogReader source) : ICatalogReaderSessionFactory
+internal sealed class WaitingCatalogReader(ICatalogReaderSessionFactory source) : ICatalogReaderSessionFactory
 {
     public bool Supported { get; set; } = true;
     public int Connects { get; private set; }
@@ -25,6 +25,8 @@ internal sealed class WaitingCatalogReader(SyntheticCatalogReader source) : ICat
     {
         private int waits;
         public bool SupportsJournalChangeWait => owner.Supported;
+        public bool SupportsFileEntryNames => inner.SupportsFileEntryNames;
+        public Task<IReadOnlyList<ReaderFileEntrySet>> ReadFileEntriesAsync(CatalogReaderVolume volume, IReadOnlyList<ulong> references, CancellationToken token) => inner.ReadFileEntriesAsync(volume, references, token);
         public Task<IReadOnlyList<CatalogReaderVolume>> ListVolumesAsync(CancellationToken token) => inner.ListVolumesAsync(token);
         public Task<CatalogReaderInspection> InspectAsync(CatalogReaderVolume volume, CancellationToken token) {
             owner.Inspections++; return inner.InspectAsync(volume, token);

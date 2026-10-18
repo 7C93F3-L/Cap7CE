@@ -4,7 +4,7 @@ import { requestCore } from "./coreAbortableRequest";
 
 type Client = Pick<CoreProtocolClient, "request" | "startRequest" | "cancel">;
 const states = new Set(["idle", "starting", "watching", "paused", "unavailable", "failed", "stopped"]);
-const reasons = new Set(["reader-wait-unavailable", "owned-storage-unavailable", "reader-monitor-failed"]);
+const reasons = new Set(["reader-wait-unavailable", "reader-entry-names-unavailable", "owned-storage-unavailable", "reader-monitor-failed"]);
 const safe = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
 
 export class CoreCatalogChangeProtocol {

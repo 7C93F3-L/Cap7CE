@@ -7,7 +7,7 @@ const categories: Record<string, RegExp> = {
   activityId: /^[a-f0-9]{32}$/, driveLetter: /^[A-Z]$/,
   origin: /^(explicit|monitor-startup|monitor-recovery)$/,
   stage: /^(inspect|snapshot-open|snapshot-read-and-stage|directory-paths-and-publish|journal-catch-up)$/,
-  reason: /^(journal-replaced|checkpoint-missing|checkpoint-expired|checkpoint-invalidated|checkpoint-ahead|interrupted-build|explicit-rebuild|marked-for-rebuild|initial-build|journal-discontinuity|preparation-failed|reader-wait-unavailable|reader-monitor-failed)$/,
+  reason: /^(journal-replaced|checkpoint-missing|checkpoint-expired|checkpoint-invalidated|checkpoint-ahead|interrupted-build|explicit-rebuild|marked-for-rebuild|initial-build|journal-discontinuity|preparation-failed|reader-wait-unavailable|reader-entry-names-unavailable|reader-monitor-failed)$/,
   kind: /^(initial|rebuild|incremental)$/, operation: /^(discover|select|synchronize|rebuild|explicit)$/
 };
 const numbers = new Set(["elapsedMilliseconds", "records", "pages", "readerReadMilliseconds",

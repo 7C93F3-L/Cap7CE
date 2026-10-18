@@ -4,27 +4,35 @@ using Cap7CE.Core.Protocol;
 using Cap7CE.Core.Reader.Protocol;
 using Cap7CE.Core.Host.MetadataExtraction;
 using Cap7CE.Core.Host.CatalogMaintenance;
+using Cap7CE.Core.Host.CatalogStorage;
+using Cap7CE.Core.Catalog.DirectoryEntries;
 
 namespace Cap7CE.Core.Host;
 
 public sealed class ProductCoreRuntime : IAsyncDisposable
 {
     private readonly CatalogV2Database catalog;
-    private readonly CatalogSynchronizationService synchronizer;
+    private CatalogSynchronizationService synchronizer;
     private readonly ConcurrentDictionary<string, RuntimeTask> tasks = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource shutdown = new();
     private readonly CatalogReaderOwnership readerOwnership;
     private readonly CatalogPreparationDiagnostics? diagnostics;
     private readonly ICatalogReaderSessionFactory readerFactory;
+    private readonly bool ownStorage, createEntryCatalog;
+    private CatalogStorageLease? storageLease;
+    private readonly SemaphoreSlim initialization = new(1, 1);
+    private bool initialized;
 
     public ProductCoreRuntime(
         CatalogV2Database catalog,
         ICatalogReaderSessionFactory readerFactory,
-        FileFactHostSession? fileFacts = null, CatalogPreparationDiagnostics? diagnostics = null)
+        FileFactHostSession? fileFacts = null, CatalogPreparationDiagnostics? diagnostics = null,
+        bool ownStorage = false, bool createEntryCatalog = false)
     {
         this.catalog = catalog;
         this.readerFactory = readerFactory;
         this.diagnostics = diagnostics;
+        this.ownStorage = ownStorage; this.createEntryCatalog = createEntryCatalog;
         readerOwnership = new(diagnostics);
         synchronizer = new CatalogSynchronizationService(catalog, readerFactory, diagnostics);
         FileFacts = fileFacts;
@@ -34,6 +42,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     public FileFactHostSession? FileFacts { get; }
     public CatalogChangeSignal ChangeSignal { get; } = new();
     public bool MaintenanceEnabled { get; private set; }
+    public bool FileEntryModeEnabled { get; private set; }
 
     public static string DefaultCatalogPath()
     {
@@ -44,7 +53,17 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
 
     public async Task InitializeAsync(CancellationToken token = default)
     {
-        await catalog.InitializeAsync(token); ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token));
+        await initialization.WaitAsync(token);
+        try {
+            if (initialized) return;
+            if (ownStorage) storageLease = CatalogStorageLease.Acquire(catalog.DatabasePath, createDirectory: true);
+            await catalog.InitializeAsync(token, createEntryCatalog);
+            FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync(token);
+            synchronizer = new(catalog, readerFactory, diagnostics, captureFileEntries: FileEntryModeEnabled);
+            ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token)); initialized = true;
+        }
+        catch { storageLease?.Dispose(); storageLease = null; throw; }
+        finally { initialization.Release(); }
     }
 
     public async Task ActivateMaintenanceAsync(
@@ -53,7 +72,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     {
         if (MaintenanceEnabled) throw new InvalidOperationException("reader-monitor-already-configured");
         ChangeSignal.SetState("starting");
-        await CatalogMaintenanceActivation.StartAsync(readerOwnership, catalog, readerFactory, ChangeSignal, resolveRoots, token, diagnostics);
+        await CatalogMaintenanceActivation.StartAsync(readerOwnership, catalog, readerFactory, ChangeSignal, resolveRoots, token, diagnostics, FileEntryModeEnabled);
         MaintenanceEnabled = true;
     }
 
@@ -196,10 +215,12 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await ShutdownAsync();
-        foreach (var task in tasks.Values) task.Dispose();
-        await readerOwnership.DisposeAsync();
-        shutdown.Dispose();
+        try {
+            await ShutdownAsync();
+            foreach (var task in tasks.Values) task.Dispose();
+            await readerOwnership.DisposeAsync();
+        }
+        finally { storageLease?.Dispose(); shutdown.Dispose(); }
     }
 
     private static (string DisplayName, string RelativePath) ParseLocalDirectoryPath(string value)
@@ -229,6 +250,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
         CatalogStateTransitionException => "catalog-state",
         ReaderProtocolException => "reader-protocol",
         ReaderRepairRequiredException => "reader-repair-required",
+        NotSupportedException unsupported when unsupported.Message == "reader-entry-names-unavailable" => "reader-repair-required",
         ReaderServiceAccessDeniedException => "reader-access-denied",
         ReaderServiceUnavailableException => "reader-unavailable",
         TimeoutException => "reader-timeout",

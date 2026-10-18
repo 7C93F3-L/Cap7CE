@@ -17,5 +17,7 @@ consume('x'.repeat(5000)); consume(event); // oversized line must be discarded t
 assert.equal(seen.length, 1, "arbitrary, private and oversized stderr is discarded");
 consume(line("preparation-failed", { reason: "preparation-failed" }) + line("monitor-retired", { operation: "discover", elapsedMilliseconds: 5 }));
 assert.equal(seen.length, 3); assert.equal(seen[1][0], "warn"); assert.equal(seen[2][2].operation, "discover");
+consume(line("monitor-failed", { reason: "reader-entry-names-unavailable" }));
+assert.equal(seen.length, 4); assert.equal(seen[3][2].reason, "reader-entry-names-unavailable");
 createCatalogDiagnosticConsumer(() => { throw Error("diagnostic destination unavailable"); })(event);
 console.log("Bounded Core diagnostics: fragmented lines, measurements, privacy rejection and sink isolation passed.");
