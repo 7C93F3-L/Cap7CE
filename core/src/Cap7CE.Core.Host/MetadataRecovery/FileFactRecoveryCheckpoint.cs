@@ -22,8 +22,10 @@ public sealed class FileFactRecoveryCheckpoint(string databasePath, string recov
         // A previously activated database must not produce another full backup on every launch.
         if (Convert.ToInt32(await schema.ExecuteScalarAsync(token)) != 0) return null;
         schema.CommandText = "PRAGMA user_version;";
-        if (Convert.ToInt32(await schema.ExecuteScalarAsync(token)) != 2)
+        var version = Convert.ToInt32(await schema.ExecuteScalarAsync(token));
+        if (version is not (2 or 3))
             throw new InvalidDataException("metadata-recovery-catalog-version");
+        if (version == 3) await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryActivation(new(sourcePath)).ReadEnabledAsync(token);
         return await CatalogRecoverySnapshotWriter.WriteAsync(source, recoveryRoot, "before-file-facts", token);
     }
 }

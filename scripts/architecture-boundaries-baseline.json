@@ -1,7 +1,7 @@
 {
   "strictMaxLines": {
     "scripts/architecture-boundaries-check.cjs": 175,
-    "scripts/core-architecture-check.cjs": 185,
+    "scripts/core-architecture-check.cjs": 183,
     "scripts/core-capability-setup-architecture-check.cjs": 245,
     "scripts/core-capability-setup-source-groups.cjs": 47,
     "scripts/core-capability-setup-windows-check.cjs": 66,

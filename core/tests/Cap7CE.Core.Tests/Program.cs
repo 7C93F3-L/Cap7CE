@@ -73,6 +73,7 @@ await CatalogEntrySynchronizationTests.RunAsync();
 await CatalogEntrySnapshotFenceTests.RunAsync();
 await CatalogEntryRetryTests.RunAsync();
 await CatalogEntryActivationTests.RunAsync();
+await CatalogEntryMaintenanceTests.RunAsync();
 await CatalogEntryScaleTests.RunAsync();
 await FileFactEntryPolicyTests.RunAsync();
 await CatalogRandomOrderingTests.RunAsync();

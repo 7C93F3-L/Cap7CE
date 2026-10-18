@@ -61,7 +61,7 @@ const walk = (directory) => fs.readdirSync(directory, { withFileTypes: true }).f
   return entry.isDirectory() ? walk(entryPath) : [entryPath];
 });
 const coreSourceFiles = walk(path.join(coreRoot, "src")).filter((filePath) => filePath.endsWith(".cs"));
-for (const name of ["core-file-facts-boundary-check", "core-catalog-maintenance-boundary-check", "core-random-browse-boundary-check", "core-directory-entry-boundary-check"]) require(`./${name}.cjs`)(root, coreSourceFiles, failures);
+for (const name of ["core-file-facts-boundary-check", "core-catalog-maintenance-boundary-check", "core-random-browse-boundary-check", "core-directory-entry-boundary-check", "core-storage-lifecycle-boundary-check"]) require(`./${name}.cjs`)(root, coreSourceFiles, failures);
 const forbiddenP11Source = [
   [/(?:^|\W)System\.Net(?:\W|$)|HttpClient|Socket\b/, "network API"],
   [/Microsoft\.Data\.Sqlite|System\.Data\.SQLite/, "catalog database implementation"],
@@ -76,8 +76,7 @@ for (const filePath of coreSourceFiles) {
   const isCatalogSource = relativePath.startsWith("core/src/Cap7CE.Core.Catalog/");
   const isReaderHostSource = relativePath.startsWith("core/src/Cap7CE.Core.Reader.Host/");
   const isVolumeProbeSource = relativePath === "core/src/Cap7CE.Core.Host/ReaderVolumeCli.cs";
-  const isMetadataRecovery = ["FileFactRecoveryCheckpoint.cs", "CatalogRecoverySnapshotWriter.cs"]
-    .some(name => relativePath === `core/src/Cap7CE.Core.Host/MetadataRecovery/${name}`);
+  const isCatalogStorage = require("./core-storage-lifecycle-boundary-check.cjs").ownsStorageSource(relativePath);
   const isProductCoreRuntime = relativePath === "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs";
   const isControllerProbeCatalog = relativePath === "core/src/Cap7CE.Core.Host/ControllerProbeCatalog.cs";
   const isRealValidationSource = ["CoreP31ValidationCli.cs", "CoreP37ValidationCli.cs", "CoreP37ProbeCoordination.cs"].some(name => relativePath === `core/src/Cap7CE.Core.Host/${name}`);
@@ -93,7 +92,7 @@ for (const filePath of coreSourceFiles) {
   ].includes(relativePath);
   const allowedCapabilities = isCatalogSource ? ["catalog database implementation", "real file-system access"]
     : isReaderHostSource ? ["package-owned Windows service implementation", "NTFS Reader implementation", "real file-system access"]
-    : isVolumeProbeSource || isMetadataRecovery ? ["catalog database implementation", "real file-system access"]
+    : isVolumeProbeSource || isCatalogStorage ? ["catalog database implementation", "real file-system access"]
     : isProductCoreRuntime || isControllerProbeCatalog ? ["real file-system access"]
     : isRealValidationSource ? ["catalog database implementation", "real file-system access"]
     : isReaderV2SessionSource ? ["package-owned Windows service implementation"]

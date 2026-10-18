@@ -37,6 +37,13 @@ internal static class CatalogRecoverySnapshotWriter
                         await Task.Delay(result == SQLitePCL.raw.SQLITE_OK ? 5 : 25, token);
                     }
                 }
+                // A recovery point is a standalone database, including when its
+                // source uses WAL. No sidecar is needed for later replacement.
+                using (var journal = destination.CreateCommand()) {
+                    journal.CommandText = "PRAGMA journal_mode=DELETE;";
+                    if (!string.Equals(await journal.ExecuteScalarAsync(token) as string, "delete", StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException("metadata-recovery-journal-mode");
+                }
                 using var verify = destination.CreateCommand();
                 verify.CommandText = "PRAGMA quick_check;";
                 token.ThrowIfCancellationRequested();

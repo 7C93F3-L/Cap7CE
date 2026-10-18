@@ -13,7 +13,7 @@ module.exports = (root, sourceFiles, failures) => {
     failures.push("Metadata build panel must remain a bounded presentation component without runtime ownership.");
   }
   if (!panel.includes('from "../../shared/metadataBuildTypes"')) failures.push("Metadata build panel must use the shared progress contract.");
-  const recovery = [["FileFactRecoveryCheckpoint.cs", 35], ["CatalogRecoverySnapshotWriter.cs", 75]].map(([name, maximum]) => {
+  const recovery = [["FileFactRecoveryCheckpoint.cs", 35], ["CatalogRecoverySnapshotWriter.cs", 75], ["CatalogEntryRecoveryCheckpoint.cs", 35]].map(([name, maximum]) => {
     const source = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/MetadataRecovery", name), "utf8");
     if (source.split(/\r?\n/).length > maximum) failures.push(`Metadata recovery ${name} exceeds its responsibility boundary.`);
     return source;
@@ -22,7 +22,7 @@ module.exports = (root, sourceFiles, failures) => {
     failures.push("Metadata recovery bypasses its private backup-only boundary.");
   }
   for (const anchor of ["DataSource = sourcePath, Mode = SqliteOpenMode.ReadOnly", "FileMode.CreateNew",
-    "sqlite3_backup_step(backup, 256)", "token.ThrowIfCancellationRequested()", "File.Move(partial, output)", "if (reserved) File.Delete(partial)"]) {
+    "sqlite3_backup_step(backup, 256)", "PRAGMA journal_mode=DELETE", "token.ThrowIfCancellationRequested()", "File.Move(partial, output)", "if (reserved) File.Delete(partial)"]) {
     if (!recovery.includes(anchor)) failures.push(`Metadata recovery is missing ${anchor}.`);
   }
   const workerRoot = path.join(root, "electron", "metadataExtraction");
