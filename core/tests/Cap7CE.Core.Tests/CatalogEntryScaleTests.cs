@@ -64,4 +64,3 @@ internal static class CatalogEntryScaleTests
         TestAssert.True(await catalog.CheckIntegrityAsync(), "large entry fixture retains SQLite integrity");
     }
 }
-
