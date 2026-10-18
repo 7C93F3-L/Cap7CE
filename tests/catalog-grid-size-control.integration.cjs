@@ -60,4 +60,4 @@ app.whenReady().then(async()=>{let win;try{
  await run('probe.navigate("X:\\\\Favorite","X:\\\\Favorite\\\\Child")');await ready('probe.size===150');
  win.destroy();await open();await ready('probe.size===125');await run('probe.navigate("X:\\\\Favorite","X:\\\\Favorite")');await ready('probe.size===150');
  console.log('View size control: shared slider style/default mark, real IPC, preview/commit, popup dismissal/focus, scroll anchoring, bounded DOM and independent restart scopes passed.');
-}catch(error){console.error(error.stack);process.exitCode=1}finally{win?.destroy();assert.equal(path.dirname(root),path.resolve(os.tmpdir()));fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});
+}catch(error){console.error(error.stack);process.exitCode=1}finally{win?.destroy();await Promise.allSettled([modes.get(),sizes.get()]);assert.equal(path.dirname(root),path.resolve(os.tmpdir()));try{await fs.promises.rm(root,{recursive:true,force:true,maxRetries:3,retryDelay:100})}catch(error){console.error(error.stack);process.exitCode=1}finally{app.exit(process.exitCode??0)}}});

@@ -14,7 +14,7 @@ export interface MetadataBuildRuntime extends MetadataBuildApi {
   shutdown(): Promise<void>;
   notifyCatalogChange(): Promise<void>;
 }
-export interface MetadataBuildOwner extends Omit<MetadataBuildRuntime, "startDirectory" | "cancelDirectories"> {
+export interface MetadataBuildOwner extends Omit<MetadataBuildRuntime, "startDirectory" | "startAllVolumes" | "cancelDirectories"> {
   suspendForDirectory(): Promise<void>;
   releaseDirectory(): Promise<void>;
 }

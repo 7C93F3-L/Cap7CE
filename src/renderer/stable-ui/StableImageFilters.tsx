@@ -1,3 +1,4 @@
+import StableMetadataFilterGate from "./StableMetadataFilterGate";
 import type { SearchState } from "../../shared/types";
 import { isImageOnlyExtensionSelection } from "./exploreFormatFilters";
 import StableImageColorFilter from "./StableImageColorFilter";
@@ -13,7 +14,7 @@ const StableImageFilters = ({ search, colorsDisabled = false, onFlyoutOpen, onSe
   if (!isImageOnlyExtensionSelection(search.selectedExtensions ?? [])) return null;
   const props = { search, onFlyoutOpen, onSearchOptionsChange };
   return <>
-    <fieldset className="cap-stable-metadata-colors" disabled={colorsDisabled}><StableImageColorFilter search={search} onSearchOptionsChange={onSearchOptionsChange} /></fieldset>
+    <StableMetadataFilterGate className="cap-stable-metadata-colors" unavailable={colorsDisabled}><StableImageColorFilter search={search} onSearchOptionsChange={onSearchOptionsChange} /></StableMetadataFilterGate>
     <StableImageRatioFilter {...props} />
     <StableImageDimensionFilter {...props} />
     <StableImageAnimationFilter search={search} onSearchOptionsChange={onSearchOptionsChange} />

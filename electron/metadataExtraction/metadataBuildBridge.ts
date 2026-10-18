@@ -9,5 +9,6 @@ export const createMetadataBuildBridge = (ipc: Pick<IpcRenderer, "invoke"> & Par
   pause: () => ipc.invoke("metadataBuild:pause"),
   resume: () => ipc.invoke("metadataBuild:resume"),
   startDirectory: request => ipc.invoke("metadataBuild:startDirectory", request),
+  startAllVolumes: request => ipc.invoke("metadataBuild:startAllVolumes", request),
   cancelDirectories: () => ipc.invoke("metadataBuild:cancelDirectories")
 });

@@ -42,6 +42,11 @@ export const registerMetadataBuildIpc = (registrar: IpcRegistrar,
       if (value?.allowMetadataExtraction !== true) throw new Error("metadata-build-confirmation-required");
       return change(() => runtime.startDirectory({ path: directoryBuildPath(value.path), allowMetadataExtraction: true }));
     } },
+    { kind: "handle", channel: "metadataBuild:startAllVolumes", listener: (event, value) => {
+      if (!(options.isDirectorySenderAllowed ?? isSenderAllowed)(event)) throw new Error("metadata-build-not allowed");
+      if (value?.allowMetadataExtraction !== true) throw new Error("metadata-build-confirmation-required");
+      return change(() => runtime.startAllVolumes({ allowMetadataExtraction: true }));
+    } },
     { kind: "handle", channel: "metadataBuild:cancelDirectories", listener: () => change(() => runtime.cancelDirectories()) }
   ] });
 };

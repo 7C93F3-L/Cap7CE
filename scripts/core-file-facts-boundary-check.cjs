@@ -3,7 +3,7 @@ const path = require("node:path");
 
 module.exports = (root, sourceFiles, failures) => {
   for (const [file, maximum] of [["electron/metadataDirectoryBuildStore.ts", 65], ["electron/metadataDirectoryStoreError.ts", 30],
-    ["electron/metadataExtraction/metadataDirectoryBuildRuntime.ts", 140], ["electron/metadataExtraction/metadataDirectoryScope.ts", 35]]) {
+    ["electron/metadataExtraction/metadataDirectoryBuildRuntime.ts", 160], ["electron/metadataExtraction/metadataDirectoryScope.ts", 35]]) {
     const text = fs.readFileSync(path.join(root, file), "utf8");
     if (text.split(/\r?\n/).length > maximum) failures.push(`${file} exceeds its metadata task boundary.`);
     if (/CoreHostController|sql\.js|databaseService|thumbnailOptimizationService/.test(text)) failures.push(`${file} bypasses the metadata task owner.`);

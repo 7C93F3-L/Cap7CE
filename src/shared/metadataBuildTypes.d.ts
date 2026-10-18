@@ -37,5 +37,6 @@ export interface MetadataBuildApi {
   pause(): Promise<MetadataBuildStatus>;
   resume(): Promise<MetadataBuildStatus>;
   startDirectory(request: { path: string; allowMetadataExtraction: boolean }): Promise<MetadataBuildStatus>;
+  startAllVolumes(request: { allowMetadataExtraction: boolean }): Promise<MetadataBuildStatus>;
   cancelDirectories(): Promise<MetadataBuildStatus>;
 }

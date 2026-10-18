@@ -95,6 +95,12 @@
     "core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs": 27
   },
   "maintenanceMaxLines": {
+    "electron/metadataExtraction/metadataQuickVolumes.ts": 20,
+    "src/renderer/stable-ui/StableMetadataFilterGate.tsx": 40,
+    "src/renderer/stable-ui/StableMetadataFilterGate.css": 10,
+    "src/renderer/catalog-workspace/useCatalogAttributeHelp.ts": 40,
+    "src/renderer/catalog-workspace/CatalogAttributeNotice.tsx": 30,
+    "src/renderer/catalog-workspace/CatalogAttributeNotice.css": 10,
     "electron/settingsMetadataBuildRequest.ts": 20,
     "src/renderer/settings-window/SettingsContentFrame.tsx": 20,
     "src/renderer/settings-window/useSettingsIndexNavigation.ts": 40,

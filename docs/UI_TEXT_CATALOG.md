@@ -744,6 +744,19 @@
 | `metadataBuild.saved` | 范围与顺序已保存，不会自动开始提取。 | Scope and order saved. Extraction will not start automatically. | 建库详情页 |
 | `metadataBuild.scopeFailed` | 无法添加此范围，请检查路径、基础索引状态或是否存在冲突规则。 | Could not add this scope. Check the path, base index status and conflicting rules. | 建库详情页 |
 | `metadataBuild.back` | 返回缓存与索引 | Back to Cache and index | 建库详情页 |
+| `metadataQuick.required` | 提取文件属性后可使用此筛选。 | Extract file attributes to use this filter. | 属性筛选提取提示 |
+| `metadataQuick.checking` | 正在检查文件属性… | Checking file attributes… | 属性筛选提取提示 |
+| `metadataQuick.unavailable` | 暂时无法确认文件属性。 | File attribute availability could not be checked. | 属性筛选提取提示 |
+| `metadataQuick.running` | 正在提取文件属性。 | Extracting file attributes. | 属性筛选提取提示 |
+| `metadataQuick.paused` | 文件属性提取已暂停。 | File attribute extraction is paused. | 属性筛选提取提示 |
+| `metadataQuick.interrupted` | 文件属性提取已中断。 | File attribute extraction was interrupted. | 属性筛选提取提示 |
+| `metadataQuick.failed` | 未能开始提取，请重试。 | Could not start extraction. Try again. | 属性筛选提取提示 |
+| `metadataQuick.current` | 提取当前目录 | Extract this folder | 属性筛选提取提示 |
+| `metadataQuick.currentHint` | 包含子文件夹 | Includes subfolders | 属性筛选提取提示 |
+| `metadataQuick.all` | 全盘提取 | Extract all drives | 属性筛选提取提示 |
+| `metadataQuick.allHint` | 提取全部可用磁盘 | Extract attributes across all available drives | 属性筛选提取提示 |
+| `metadataQuick.custom` | 自定义提取 | Custom extraction | 属性筛选提取提示 |
+| `metadataQuick.viewTask` | 查看任务 | View task | 属性筛选提取提示 |
 | `metadataBuild.loadFailed` | 未能读取建库状态，请重试。 | Could not load extraction status. Please retry. | 建库详情页 |
 | `metadataBuild.conflict` | 范围已由其他操作改变，请还原修改后重新编辑。 | The scope changed elsewhere. Reset your changes before editing again. | 建库详情页 |
 | `metadataBuild.actionFailed` | 操作未完成，修改已保留，请重试。 | The action failed. Your changes were retained. Please retry. | 建库详情页 |

@@ -6,6 +6,7 @@ import type { MetadataBuildOwner, MetadataBuildRuntime, MetadataBuildRuntimeOpti
 import { MetadataBuildController } from "./metadataBuildController";
 import { resolveMetadataDirectory } from "./metadataDirectoryScope";
 import { directoryStoreError } from "../metadataDirectoryStoreError";
+import { metadataQuickVolumeJobs } from "./metadataQuickVolumes";
 
 const emptyProgress = (): MetadataBuildProgress => ({ phase: "preparing", volumeId: null, discovered: 0, processed: 0,
   failed: 0, unsupported: 0, total: null, progressFraction: null, remainingSeconds: null, errorCode: null });
@@ -97,6 +98,20 @@ export function attachMetadataDirectoryBuilds(owner: MetadataBuildOwner, protoco
         if (queue.jobs.length >= 32) throw new Error("metadata-directory-queue-full");
         if (!queue.jobs.length) { queue.intent = "active"; current = { path }; progress = emptyProgress(); }
         queue.jobs.push(job); await save();
+      }
+      kick(); return status();
+    },
+    async startAllVolumes(request) {
+      const revision = directoryRevision;
+      actionRevision++;
+      await load(); if (closing || request?.allowMetadataExtraction !== true) throw new Error("metadata-build-confirmation-required");
+      const jobs = metadataQuickVolumeJobs(await readCatalog());
+      if (revision !== directoryRevision || closing) throw new Error("metadata-build-start-cancelled");
+      const additions = jobs.filter(job => !queue.jobs.some(existing => existing.path.toLowerCase() === job.path.toLowerCase()));
+      if (queue.jobs.length + additions.length > 32) throw new Error("metadata-directory-queue-full");
+      if (additions.length) {
+        if (!queue.jobs.length) { queue.intent = "active"; current = additions[0]; progress = emptyProgress(); }
+        queue.jobs.push(...additions); await save();
       }
       kick(); return status();
     },

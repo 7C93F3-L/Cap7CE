@@ -37,7 +37,6 @@
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary { min-height: 56px; width: max-content; gap: 6px; padding: 4px; }
 .cap-catalog-top-filters .cap-catalog-top-filter-content .cap-stable-dimension-summary .cap-stable-filter-option-icon { width: 24px; height: 24px; }
 
-.cap-catalog-top-filters .cap-catalog-attribute-notice { flex: none; color: var(--cap-stable-text-muted); cursor: pointer; }
 .cap-catalog-top-filters header button:has(> .cap-stable-filter-edit-glyph) { opacity: 0; pointer-events: none; }
 .cap-catalog-top-filters section:where(:hover, :focus-within) > header button:has(> .cap-stable-filter-edit-glyph), .cap-catalog-top-filters header button[aria-expanded="true"]:has(> .cap-stable-filter-edit-glyph) { opacity: 1; pointer-events: auto; }
 @media (hover: none) { .cap-catalog-top-filters header button:has(> .cap-stable-filter-edit-glyph) { opacity: 1; pointer-events: auto; } }

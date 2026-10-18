@@ -74,7 +74,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       event.preventDefault(); event.stopPropagation(); event.button === 3 ? navigation.back() : navigation.forward();
     } }} onMouseDown={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}
     onAuxClick={event => { if (event.button === 3 || event.button === 4) event.preventDefault(); }}>
-    {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={filterCount} attributes={attributes} onMetadata={onMetadata} />, filterHost)}
+    {selected && filterHost && createPortal(<CatalogTopFilters {...filters.panel} count={filterCount} attributes={attributes} onMetadata={onMetadata} path={navigation.path} noticeHost={noticeHost} metadataProgress={metadataProgress} />, filterHost)}
     {selected && detailsHost && createPortal(<CatalogDetails selection={selection?.taskId === controller.taskId ? selection : null} path={navigation.path} count={controller.items.length} foreground={foreground} searching={searching} filterCount={filterCount} />, detailsHost)}
     <CatalogDirectoryToolbar {...navigation} onBack={navigation.back} onForward={navigation.forward}
       onUp={navigation.up} onRefresh={() => void refresh.refresh()} refreshing={refresh.busy || controller.busy || !foreground}

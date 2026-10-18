@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "react";
 import { t, type TranslationKey } from "../../../electron/localization";
 import type { SearchState } from "../../shared/types";
 import type { SearchFilterDetailDomain } from "../../shared/searchFilterTypes";
 import StableSidebarFlyout from "./StableSidebarFlyout";
+import StableMetadataFilterGate from "./StableMetadataFilterGate";
 import { getOtherFileTypeExtensions, getPrimaryFileTypeExtensions, type ExploreOtherFileType, type ExplorePrimaryFileType } from "./exploreFormatFilters";
 import { getExploreFormatSummary } from "./exploreFormatSummary";
 import StableFilterEditGlyph from "./StableFilterEditGlyph";
@@ -46,7 +47,7 @@ const toggleExtensions = (current: readonly string[], group: readonly string[]) 
   return [...next].sort();
 };
 const isGroupSelected = (selected: ReadonlySet<string>, group: readonly string[]) => group.length > 0 && group.every((extension) => selected.has(extension));
-const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, fileTypeIcons = false, metadataNotice, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; fileTypeIcons?: boolean; metadataNotice?: ReactNode; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
+const StableExploreFilters = ({ search, availableFormats, detailDomains, compactTime = false, allowUnclassified = false, fileTypeIcons = false, onMetadataUnavailable, metadataDisabled = false, metadataColorsDisabled = false, closeFlyoutRequest, onFlyoutOpen, onSearchOptionsChange }: { search: SearchState; availableFormats: string[]; detailDomains?: readonly SearchFilterDetailDomain[]; compactTime?: boolean; allowUnclassified?: boolean; fileTypeIcons?: boolean; onMetadataUnavailable?: () => void; metadataDisabled?: boolean; metadataColorsDisabled?: boolean; closeFlyoutRequest: number; onFlyoutOpen: () => void; onSearchOptionsChange: (search: SearchState) => void }) => {
   const supports = (domain: SearchFilterDetailDomain) => detailDomains === undefined || detailDomains.includes(domain);
   const [flyout, setFlyout] = useState<FilterFlyout>(null);
   const selected = useMemo(() => new Set(search.selectedExtensions ?? []), [search.selectedExtensions]);
@@ -98,7 +99,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
       <div className="cap-stable-time-labels">{timePresets.map((preset, index) => <button type="button" className={search.timePreset !== "custom" && presetIndex === index ? "is-selected" : ""} aria-pressed={search.timePreset !== "custom" && presetIndex === index} key={preset} onClick={() => { setTimeIndex(index); commitTime(index); }}><i aria-hidden="true" />{t(timeLabels[preset])}</button>)}</div>
     </section>
     <section className="cap-stable-file-type-filter">
-      <header><strong>{t("explore.fileTypes")}</strong>{selectedSummary && <span title={selectedSummary}>{selectedSummary}</span>}{metadataNotice}</header>
+      <header><strong>{t("explore.fileTypes")}</strong>{selectedSummary && <span title={selectedSummary}>{selectedSummary}</span>}</header>
       <div className="cap-stable-file-type-options">
         {fileTypes.map((type) => {
           const extensions = type === "image" || type === "video" || type === "audio" || type === "document"
@@ -110,7 +111,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
       </div>
     </section>
     <StableFileSizeFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
-    <fieldset className="cap-stable-metadata-filters" disabled={metadataDisabled}>
+    <StableMetadataFilterGate className="cap-stable-metadata-filters" unavailable={metadataDisabled} onUnavailable={onMetadataUnavailable}>
     {supports("project") && <StableArtboardFilter search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
     <StableMediaFilters metadataColorsDisabled={metadataColorsDisabled} search={search} detailDomains={detailDomains} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />
     {supports("document") && <StableDocumentFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
@@ -119,7 +120,7 @@ const StableExploreFilters = ({ search, availableFormats, detailDomains, compact
     {supports("archive") && <StableArchiveFilters search={search} onFlyoutOpen={() => setFlyout(null)} onSearchOptionsChange={onSearchOptionsChange} />}
     {supports("font") && <StableFontFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />}
     {supports("model") && <StableModelFilters search={search} onSearchOptionsChange={onSearchOptionsChange} />}
-    </fieldset>
+    </StableMetadataFilterGate>
     {flyout?.kind === "dates" && <StableSidebarFlyout anchor={flyout.anchor} label={t("explore.editTime")} placement="below" align="start" width={360} maximumHeight={220} className="cap-stable-explore-flyout" onClose={() => setFlyout(null)}>
       <div className="cap-stable-date-fields"><label>{t("explore.startDate")}<input type="date" value={startDate} max={endDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>{t("explore.endDate")}<input type="date" value={endDate} min={startDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
       <div className="cap-stable-flyout-actions"><button type="button" onClick={() => setFlyout(null)}>{t("common.cancel")}</button><button type="button" className="is-selected" onClick={applyDateRange}>{t("common.confirm")}</button></div>

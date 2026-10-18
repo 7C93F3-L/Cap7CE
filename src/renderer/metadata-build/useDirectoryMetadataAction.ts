@@ -7,17 +7,19 @@ export function useDirectoryMetadataAction() {
   const pending = useRef(false), live = useRef(true), feedback = useTransientFeedback();
   const [busy, setBusy] = useState(false);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  const start = useCallback(async (path: string) => {
-    if (pending.current) return;
+  const perform = useCallback(async (path?: string) => {
+    if (pending.current) return false;
     pending.current = true; setBusy(true);
     try {
       const api = window.cap7ce?.metadataBuild;
       if (!api?.startDirectory) throw new Error("metadata-bridge-unavailable");
-      const status = await api.startDirectory({ path, allowMetadataExtraction: true });
+      const status = path === undefined ? await api.startAllVolumes({ allowMetadataExtraction: true })
+        : await api.startDirectory({ path, allowMetadataExtraction: true });
       window.dispatchEvent(new CustomEvent(metadataBuildChanged, { detail: status }));
       if (live.current) feedback.show(t("metadataDirectory.queued"));
-    } catch { if (live.current) feedback.show(t("metadataDirectory.failed")); }
+      return true;
+    } catch { if (live.current) feedback.show(t("metadataDirectory.failed")); return false; }
     finally { pending.current = false; if (live.current) setBusy(false); }
   }, [feedback.show]);
-  return { start, busy, message: feedback.message };
+  return { start: useCallback((path: string) => perform(path), [perform]), startAll: useCallback(() => perform(), [perform]), busy, message: feedback.message };
 }
