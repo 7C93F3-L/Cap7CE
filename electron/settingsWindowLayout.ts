@@ -1,10 +1,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { resolveRememberedWindowBounds, selectWindowLayoutDisplay } from "./windowLayoutGeometry";
+import { clampWindowLayoutBounds, resolveRememberedWindowBounds, selectWindowLayoutDisplay } from "./windowLayoutGeometry";
 import type { WindowLayoutBounds, WindowLayoutDisplaySnapshot, WindowLayoutProfile } from "./windowLayoutTypes";
 
 export const SETTINGS_WINDOW_LAYOUT_VERSION = 1 as const;
-export const SETTINGS_WINDOW_DEFAULT_SIZE = { width: 860, height: 680 } as const;
+export const SETTINGS_WINDOW_DEFAULT_SIZE = { width: 1100, height: 840 } as const;
 export const SETTINGS_WINDOW_MINIMUM_SIZE = { width: 620, height: 480 } as const;
 
 interface SettingsWindowLayoutDocument {
@@ -72,13 +72,14 @@ export const resolveSettingsWindowInitialBounds = (
     width,
     height
   };
-  return resolveRememberedWindowBounds({
+  const rememberedBounds = resolveRememberedWindowBounds({
     defaultBounds,
     profile,
     targetWorkArea: targetDisplay.workArea,
     rememberLayout: true,
     minimumSize: SETTINGS_WINDOW_MINIMUM_SIZE
   });
+  return clampWindowLayoutBounds({ ...rememberedBounds, width, height }, targetDisplay.workArea, SETTINGS_WINDOW_MINIMUM_SIZE);
 };
 
 export class SettingsWindowLayoutStore {

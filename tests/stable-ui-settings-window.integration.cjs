@@ -106,11 +106,13 @@ const displays = [
   { id: 2, bounds: { x: 1920, y: 0, width: 1280, height: 1024 }, workArea: { x: 1920, y: 0, width: 1280, height: 984 }, scaleFactor: 1.25 }
 ];
 
-assert.deepEqual(resolveSettingsWindowInitialBounds(null, displays, displays[0]), { x: 530, y: 180, width: 860, height: 680 });
+assert.deepEqual(resolveSettingsWindowInitialBounds(null, displays, displays[0]), { x: 410, y: 100, width: 1100, height: 840 });
 const remembered = createSettingsWindowLayoutProfile({ x: 2050, y: 100, width: 900, height: 700 }, displays[1], "2026-09-02T00:00:00.000Z");
-assert.equal(resolveSettingsWindowInitialBounds(remembered, displays, displays[0]).x >= displays[1].workArea.x, true);
+assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, displays, displays[0]), { x: 2050, y: 100, width: 1100, height: 840 }, "saved dimensions do not override the default size or erase the remembered position");
 const recoveredAfterDisplayRemoval = resolveSettingsWindowInitialBounds(remembered, [displays[0]], displays[0]);
 assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width <= displays[0].workArea.width, true);
+const smallDisplay = { ...displays[0], workArea: { x: 0, y: 0, width: 800, height: 600 } };
+assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], smallDisplay), { x: 0, y: 0, width: 800, height: 600 }, "small screens constrain the default size to the available work area");
 
 (async () => {
   const handles = new Map();
@@ -170,6 +172,7 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.equal(controller.send("preferences:changed", { themePreference: "dark" }), true);
   assert.deepEqual(created[0].sent.at(-1), ["preferences:changed", { themePreference: "dark" }]);
   assert.equal(controller.getWebContents(), created[0].webContents);
+  created[0].bounds = { x: 2050, y: 100, width: 700, height: 500 };
   const closeEvent = { prevented: false, preventDefault() { this.prevented = true; } };
   created[0].emit("close", closeEvent);
   assert.equal(closeEvent.prevented, true);
@@ -177,6 +180,9 @@ assert.equal(recoveredAfterDisplayRemoval.x + recoveredAfterDisplayRemoval.width
   assert.equal(controller.isVisibleAndFocused(), false);
   assert.match(created[0].loaded, /window=settings/u);
   await controller.flush();
+  assert.equal(await controller.open(), true);
+  assert.equal(created.length, 1, "reopening reuses the same settings window");
+  assert.deepEqual(created[0].getBounds(), { x: 2050, y: 100, width: 1100, height: 840 }, "reopening restores the default size after a manual resize");
 
   const broadcasts = [];
   const broadcastSettingsData = createSettingsDataBroadcaster({
