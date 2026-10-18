@@ -18,17 +18,23 @@ public sealed class FileFactSourceResolver(string databasePath)
         using var transaction = connection.BeginTransaction(deferred: true);
         var source = await FileFactDatabase.CaptureAsync(connection, transaction, identity, token);
         if (source is null) return null;
+        var entries = await DirectoryEntries.CatalogFileEntrySchema.ExistsAsync(connection, token, transaction);
+        var name = entries ? "CASE WHEN es.file_reference IS NULL THEN n.name ELSE en.name END" : "n.name";
+        var parent = entries ? "CASE WHEN es.file_reference IS NULL THEN n.parent_file_reference ELSE en.parent_file_reference END" : "n.parent_file_reference";
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = """
+        command.CommandText = $"""
             SELECT v.display_name,
-                CASE WHEN pp.relative_path IS NULL OR pp.relative_path = '' THEN n.name
-                    ELSE pp.relative_path || '\' || n.name END
+                CASE WHEN pp.relative_path IS NULL OR pp.relative_path = '' THEN {name}
+                    ELSE pp.relative_path || '\' || ({name}) END
             FROM catalog_nodes_v2 n JOIN catalog_volumes_v2 v ON v.volume_id = n.volume_id
+            {(entries ? "LEFT JOIN catalog_file_entry_sets es ON es.volume_id=n.volume_id AND es.file_reference=n.file_reference AND es.created_utc_ticks IS n.created_utc_ticks LEFT JOIN catalog_file_entries en ON en.volume_id=es.volume_id AND en.file_reference=es.file_reference" : "")}
             LEFT JOIN catalog_directory_paths_v2 pp
-                ON pp.volume_id = n.volume_id AND pp.file_reference = n.parent_file_reference
+                ON pp.volume_id = n.volume_id AND pp.file_reference = ({parent})
             WHERE n.volume_id = $volume AND n.file_reference = $reference
-                AND (n.parent_file_reference IS NULL OR pp.file_reference IS NOT NULL);
+                AND (({parent}) IS NULL OR pp.file_reference IS NOT NULL)
+                {(entries ? "AND (es.file_reference IS NULL OR en.entry_key IS NOT NULL) ORDER BY en.entry_key" : "")}
+            LIMIT 1;
             """;
         FileFactDatabase.BindIdentity(command, identity);
         using var reader = await command.ExecuteReaderAsync(token);

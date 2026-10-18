@@ -7,10 +7,10 @@ public enum CatalogQuerySort { NameAscending, NameDescending, ModifiedAscending,
 
 internal static class CatalogQueryOrdering
 {
-    public static string Order(CatalogV2Query query, string alias)
+    public static string Order(CatalogV2Query query, string alias, bool entries = false)
     {
         var name = $"{alias}.name COLLATE NOCASE";
-        var identity = $"{alias}.volume_id, {alias}.file_reference";
+        var identity = $"{alias}.volume_id, {alias}.file_reference" + (entries ? $", {alias}.entry_key" : "");
         var order = query.RandomSeed is not null ? $"{Queries.CatalogRandomOrdering.Expression(alias)}, {identity}" : query.Sort switch
         {
             CatalogQuerySort.NameAscending => $"{name}, {identity}",
@@ -22,16 +22,18 @@ internal static class CatalogQueryOrdering
         return query.Scope.Kind == CatalogQueryScopeKind.DirectChildren ? $"{alias}.is_directory DESC, {order}" : order;
     }
 
-    public static void AppendAfter(StringBuilder sql, SqliteCommand command, CatalogV2Query query)
+    public static void AppendAfter(StringBuilder sql, SqliteCommand command, CatalogV2Query query, bool entries = false)
     {
         if (query.RandomSeed is { } seed) command.Parameters.AddWithValue("$randomSeed", (long)seed);
         if (query.After is not { } after) return;
         var compare = query.Sort == CatalogQuerySort.NameDescending ? "<" : ">";
-        var name = $"(n.name COLLATE NOCASE {compare} $afterName COLLATE NOCASE OR (n.name = $afterName COLLATE NOCASE AND n.volume_id > $afterVolume) OR (n.name = $afterName COLLATE NOCASE AND n.volume_id = $afterVolume AND n.file_reference > $afterReference))";
+        var identity = "(n.volume_id > $afterVolume OR (n.volume_id=$afterVolume AND n.file_reference > $afterReference)"
+            + (entries ? " OR (n.volume_id=$afterVolume AND n.file_reference=$afterReference AND n.entry_key > $afterEntry)" : "") + ")";
+        var name = $"(n.name COLLATE NOCASE {compare} $afterName COLLATE NOCASE OR (n.name=$afterName COLLATE NOCASE AND {identity}))";
         if (query.RandomSeed is { } randomSeed) {
             var score = Queries.CatalogRandomOrdering.Expression("n");
             if (after.RandomScore != Queries.CatalogRandomOrdering.Score(after.VolumeId, after.FileReference, randomSeed)) throw new ArgumentException("Invalid random cursor anchor.");
-            name = $"({score} > $afterRandom OR ({score} = $afterRandom AND (n.volume_id > $afterVolume OR (n.volume_id = $afterVolume AND n.file_reference > $afterReference))))";
+            name = $"({score} > $afterRandom OR ({score} = $afterRandom AND {identity}))";
             command.Parameters.AddWithValue("$afterRandom", after.RandomScore!.Value);
         }
         else if (query.Sort is CatalogQuerySort.ModifiedAscending or CatalogQuerySort.ModifiedDescending)
@@ -51,5 +53,6 @@ internal static class CatalogQueryOrdering
         command.Parameters.AddWithValue("$afterName", after.Name);
         command.Parameters.AddWithValue("$afterVolume", after.VolumeId);
         command.Parameters.AddWithValue("$afterReference", after.FileReference);
+        if (entries) command.Parameters.AddWithValue("$afterEntry", after.EntryKey ?? "");
     }
 }

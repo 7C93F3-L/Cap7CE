@@ -61,7 +61,7 @@ const walk = (directory) => fs.readdirSync(directory, { withFileTypes: true }).f
   return entry.isDirectory() ? walk(entryPath) : [entryPath];
 });
 const coreSourceFiles = walk(path.join(coreRoot, "src")).filter((filePath) => filePath.endsWith(".cs"));
-for (const name of ["core-file-facts-boundary-check", "core-catalog-maintenance-boundary-check", "core-random-browse-boundary-check"]) require(`./${name}.cjs`)(root, coreSourceFiles, failures);
+for (const name of ["core-file-facts-boundary-check", "core-catalog-maintenance-boundary-check", "core-random-browse-boundary-check", "core-directory-entry-boundary-check"]) require(`./${name}.cjs`)(root, coreSourceFiles, failures);
 const forbiddenP11Source = [
   [/(?:^|\W)System\.Net(?:\W|$)|HttpClient|Socket\b/, "network API"],
   [/Microsoft\.Data\.Sqlite|System\.Data\.SQLite/, "catalog database implementation"],

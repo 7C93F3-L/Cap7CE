@@ -93,7 +93,7 @@ public sealed record CatalogQueryScope(
 public sealed record CatalogQueryCursorKey(
     string Name,
     string VolumeId,
-    string FileReference, long? ModifiedUtcTicks = null, bool? IsDirectory = null, long? RandomScore = null);
+    string FileReference, long? ModifiedUtcTicks = null, bool? IsDirectory = null, long? RandomScore = null, string? EntryKey = null);
 
 public enum CatalogQueryTextTarget { Name, Path, NameOrPath, NamePathOrKeywords }
 public sealed record CatalogQueryRevision(long CatalogRevision, long? FactRevision = null);
@@ -120,7 +120,7 @@ public sealed record CatalogV2QueryItem(
     long Attributes,
     long? SizeBytes,
     long? CreatedUtcTicks,
-    long? ModifiedUtcTicks);
+    long? ModifiedUtcTicks, string? EntryKey = null);
 
 public sealed record CatalogV2QueryPage(
     IReadOnlyList<CatalogV2QueryItem> Items,

@@ -14,7 +14,8 @@ public enum ReaderCapabilities : uint
     SyntheticFixture = 4,
     MultiVolume = 8,
     BasicFacts = 16,
-    JournalChangeWait = 32
+    JournalChangeWait = 32,
+    FileEntryNames = 64
 }
 
 public sealed record ReaderHelloRequest(byte[] Nonce, uint ClientProcessId);

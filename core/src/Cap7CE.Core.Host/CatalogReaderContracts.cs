@@ -33,6 +33,10 @@ public sealed record CatalogReaderJournalPage(
 public interface ICatalogReaderSession : IAsyncDisposable
 {
     bool SupportsJournalChangeWait => false;
+    bool SupportsFileEntryNames => false;
+    Task<IReadOnlyList<ReaderFileEntrySet>> ReadFileEntriesAsync(CatalogReaderVolume volume,
+        IReadOnlyList<ulong> references, CancellationToken token) =>
+        Task.FromException<IReadOnlyList<ReaderFileEntrySet>>(new NotSupportedException("reader-entry-names-unavailable"));
     Task<ReaderJournalWaitResponse> WaitForChangesAsync(IReadOnlyList<ReaderJournalWaitCursor> cursors, uint waitMilliseconds,
         CancellationToken token) => Task.FromException<ReaderJournalWaitResponse>(new NotSupportedException("reader-journal-wait-unavailable"));
     Task<IReadOnlyList<CatalogReaderVolume>> ListVolumesAsync(CancellationToken token);

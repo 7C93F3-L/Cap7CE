@@ -343,7 +343,7 @@ public sealed class CoreRequestDispatcher
         CatalogV2QueryPage page)
     {
         var items = page.Items.Select(item => new BasicSearchItem(
-            $"{item.Identity.VolumeId}:{item.Identity.FileReference}",
+            $"{item.Identity.VolumeId}:{item.Identity.FileReference}" + (string.IsNullOrEmpty(item.EntryKey) ? "" : $":{item.EntryKey}"),
             item.Name,
             item.RelativePath,
             item.Extension,

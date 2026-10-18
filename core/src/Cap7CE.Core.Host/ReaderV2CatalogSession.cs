@@ -47,11 +47,12 @@ public sealed class ReaderV2CatalogSessionFactory : ICatalogReaderSessionFactory
     }
 }
 
-internal sealed class ReaderV2CatalogSession : ICatalogReaderSession
+internal sealed partial class ReaderV2CatalogSession : ICatalogReaderSession
 {
     private readonly ReaderPipeConnection connection;
     private ulong requestId = 1;
     public bool SupportsJournalChangeWait { get; private set; }
+    public bool SupportsFileEntryNames { get; private set; }
 
     private ReaderV2CatalogSession(ReaderPipeConnection connection) => this.connection = connection;
 
@@ -78,6 +79,7 @@ internal sealed class ReaderV2CatalogSession : ICatalogReaderSession
             throw new UnauthorizedAccessException("reader-cr2-hello");
         }
         session.SupportsJournalChangeWait = hello.Capabilities.HasFlag(ReaderCapabilities.JournalChangeWait);
+        session.SupportsFileEntryNames = hello.Capabilities.HasFlag(ReaderCapabilities.FileEntryNames);
         return session;
     }
 

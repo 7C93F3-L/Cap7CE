@@ -5,8 +5,8 @@ const sourceRoot = path.join(root, "core/src/Cap7CE.Core.Reader.Protocol");
 const failures = [];
 const expectedFiles = [
   "Cap7CE.Core.Reader.Protocol.csproj",
-  "ReaderFrame.cs",
-  "ReaderFrameCodec.cs",
+  "ReaderFrame.cs", "ReaderFrameCodec.cs",
+  "ReaderFileEntryCodec.cs", "ReaderFileEntryMessages.cs", "ReaderFileName.cs",
   "ReaderMessages.cs", "ReaderJournalWaitCodec.cs",
   "ReaderPayloadCodec.cs",
   "ReaderProtocol.cs",
@@ -70,7 +70,7 @@ if (failures.length) {
   console.log(JSON.stringify({
     status: "passed",
     protocol: "CR/1+CR/2-binary",
-    fixedOperations: 10,
+    fixedOperations: 11,
     maximumPayloadBytes: 1024 * 1024,
     transportImplemented: true,
     serviceInstalled: false,

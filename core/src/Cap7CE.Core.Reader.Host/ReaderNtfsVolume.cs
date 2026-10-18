@@ -8,7 +8,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Cap7CE.Core.Reader.Host;
 
-internal sealed class ReaderNtfsVolume : IDisposable
+internal sealed partial class ReaderNtfsVolume : IDisposable
 {
     private const uint FileReadData = 0x00000001;
     private const uint FileReadAttributes = 0x00000080;

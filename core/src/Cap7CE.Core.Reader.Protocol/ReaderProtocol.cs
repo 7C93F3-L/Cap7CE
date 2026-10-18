@@ -37,7 +37,8 @@ public enum ReaderOperation : ushort
     JournalReadBatch = 7,
     Cancel = 8,
     VolumeEnumerate = 9,
-    JournalWaitAny = 10
+    JournalWaitAny = 10,
+    FileEntryNames = 11
 }
 
 [Flags]

@@ -1,5 +1,21 @@
 # Cap7CE 软件架构
 
+## 当前实施状态（2026-10-18）
+
+本地开发主线已切换到统一 Catalog 工作区，主入口是 `src/renderer/catalog-workspace/CatalogApplicationRoot.tsx`；旧 `App.tsx` 不再作为默认产品入口。本文后续按历史轮次记录的描述不得覆盖本节的当前所有权；尤其旧即时 AI 搜索、旧自定义查看范围和旧工作区标签布局不再代表当前产品界面。
+
+- 普通 Core 拥有原生 SQLite Catalog、稳定文件身份、目录关系、USN 增量维护、组合查询、排序、签名分页、取消、属性事实和持久任务账本；受限 Reader 继续只读 NTFS 元数据，不读文件正文、不写源文件、不拥有 SQLite。
+- 现有属性内容读取仍由 Electron 领域控制器驱动普通 Node Worker；缩略图、预览输入、缓存、模型调用、文件操作与收藏配置仍主要在 Electron 侧。它们是后续逐域迁移项，不能将本轮界面合流称作所有 Core/Shell 职责已迁完。
+- 人工关键词的新读写通过 Core；`catalogLegacyKeywords` 只读旧数据库的有界分页并导入 Core。兼容数据及旧布局文件保留，不因退役界面而删除。
+- 本轮新增 `Core.Catalog/DirectoryEntries`：物理身份与目录入口分开，完整名称集合在版本/卷修订校验后的单事务内替换；入口有独立稳定 key，同一物理文件的事实和注释仍共享。未显式激活扩展的 Catalog 继续原有查询，不自动迁移或重建正式库。
+- 已激活入口集合通过同一 Catalog 查询投影参与范围、名称/路径/关键词、扩展名与事实筛选。签名游标包含入口 key，避免同一物理身份的同名多入口在分页时丢失；Core 返回的结果 ID 区分入口，文件授权仍使用既有返回项链路。属性源解析可选择仍存在的入口，不依赖已经删除的原名称。
+- `Reader.Host/DirectoryEntries` 复用已授权卷及既有 `FILE_READ_ATTRIBUTES` 句柄，以固定 `NtQueryInformationFile(FileHardLinkInformation=46)` 读取完整名称/父目录引用，前后核对身份、属性、链接数及源版本；不接受路径、不读正文、不写源文件。原生缓冲上限 1 MiB、单文件最多 1024 个入口，失败、超限和消失分别返回明确状态，部分集合不能当作完整数据。
+- CR/2 增加可选 `FileEntryNames` 能力和固定操作，每批最多 64 个不重复文件引用，按字节预算续页。`Core.Host/DirectoryEntries/ReaderFileEntryClient` 严格校验请求顺序、完整性和结束标志，断连或取消不返回部分集合。`ReaderV2CatalogSession` 负责既有鉴权与传输；旧 Reader 保持兼容且不隐式启用新能力。普通 Win32 名称枚举只留在测试项目，作为独立参考，不成为生产全盘二次扫描。
+- 目录入口扩展当前完成隔离数据契约、查询、Reader 提供端和 Core 消费端及原生合成文件验证；正式初建、USN 入口发布、断档恢复及全盘覆盖接线尚未启用，硬链接完整覆盖缺口尚不能标记为已解决。公开接口不新增提取授权，也不启动个人文件分析。
+- `core-directory-entry-boundary-check` 守护入口存储的数据库边界、Reader 的固定元数据权限、模块清单和体量；范围 SQL 拆出后将 `CatalogV2Database.cs` 的检查上限锁定为当前 1216 行，不允许继续把入口业务堆回数据库宿主。
+- 当前版本尚未完成睡眠/物理热插拔及最新安装矩阵验收；WPF/WinUI 试验壳未排期。本轮没有打包、发布或更换正在使用的受保护组件。
+
+
 CatalogHome使用useCatalogHomeActions管理首页入口的选择、Ctrl/Shift范围、快捷键与基础文件动作，useCatalogHomePreview复用previewRequestGuard、skim.inspect和preview.open/onNavigate/onClosed，不新增IPC、Core查询或伪造ComputerSearch授权。系统位置按folderInfo启动现有按需目录统计；盘符按fileInfo展示基本信息，不启动整盘递归统计。页面active与窗口foreground分开，预览窗口抢焦点不会撤销所属页面的预览导航，真正切页/卸载和关闭预览会使迟到请求失效。
 
 CatalogHomeGroup与常规目录共用CatalogTile/VirtualGrid，渲染受控多选和活动项；CatalogHomeContextMenu共用DirectoryMetadataContextMenu与快捷键标签。右击已有多选保留目标集合并更新活动项，复制路径覆盖该集合，收藏/自动关键词/元数据仅单入口显示；根目录入口不接删除，拖出沿原files.startDrag且拒绝盘符。DirectoryMetadataContextMenu新增默认开启的showMetadata展示参数，其他宿主行为不变。CatalogHomeDetails在既有detailsHost中提供首页选中信息，不借用需要Core授权的CatalogSelection；共享CatalogHomeEntry只定义在src/shared/catalogHomeTypes.d.ts。keyboardTarget同时识别Catalog工具条、左栏、筛选和详情控制区，避免选中项抢占控件快捷键。
@@ -831,7 +847,7 @@ Windows 分发使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器�
 - 默认方向为 `Qwen3-VL-4B-Instruct-Q4_K_M`。
 - 面向 8GB / 16GB 显存环境做配置适配。
 
-当前 AI 深度匹配只让模型返回 `0/1/2` 评分，不生成、展示或持久化模型标签；内部中文判分提示词属于经 0.8B 模型实验确认的固定协议，不等同于面向用户的输出语言。查询证据保留用户输入的原始词，不根据界面语言翻译。若未来恢复由模型生成并保存或展示标签的能力，任务必须先固定当前已解析的软件语言，中文界面输出中文标签、英文界面输出英文标签；两种语言的提示模板和解析验证必须同步维护，且 AI 标签仍不得覆盖人工关键词。
+旧即时 AI 搜索已退役；当前本地 AI 仅在用户主动执行单图、多图或目录“自动添加”时生成关键词，模型和运行时配置沿用统一管理。成功、失败及取消反馈由底部窄条呈现；历史 AI 匹配证据保留兼容读取，不再参与自动全盘识别。
 
 ## 11. 搜索与交互
 
@@ -880,12 +896,12 @@ Windows 分发使用 electron-builder 26.15.3 的标准 assisted NSIS 安装器�
 
 ## 12. 设置系统
 
-查看范围通过现有偏好系统保存为 `skim`、`all`、`custom` 三种模式：搜索结果与 skim 分别持久化当前模式，同时共享一份自定义扩展名集合。默认精简范围包含 55 种常见成品、办公、媒体和创作项目格式；全部范围覆盖 123 种已登记格式，skim 的全部浏览仍可额外显示未登记普通文件。搜索服务在数据库结果和可取消扫描快照两层同时应用范围过滤，切换模式不改变正式视觉、AI 或缩略图边界。Settings 统一命名为“自定义查看”，格式配置以“圆点 + 类别文字”的完整按钮切换整类，扩展名按钮选中后使用副色背景并根据亮度自动选择文字颜色。Windows 隐藏文件开关保持只作用于自定义 skim，搜索结果不读取或应用隐藏属性。目录读取仍只发生在用户明确浏览时，skim 模式切换在 Renderer 对当前一级目录结果进行过滤，不启动额外递归扫描；Windows 端使用 `fsutil` 枚举盘符、单次 `cmd vol` 读取卷标，并通过 Unicode `dir /a:h` 按当前目录批量读取隐藏属性，不在导航热路径启动 PowerShell，也不逐文件启动外部进程。
+当前查看范围以统一 Catalog 的此电脑或收藏入口为作用域，排序、隐藏文件、子文件夹、网格模式及尺寸使用各自受限偏好存储。旧“自定义查看范围”设置及写入桥接已退役，历史偏好仅兼容保留；不能据此在新版恢复第二套目录范围或扫描后端。
 
 Settings 当前覆盖：
 - 语言、登录启动、系统通知、后台 line 与边缘收起。
 - 主题模式、窗口材质、主题色、副色与界面字号。
-- 自定义查看范围及 Skim 隐藏文件显示。
+- Catalog 的作用域查看偏好；旧自定义查看范围已退役。
 - 缓存统计、清理、自动优化、目录与索引任务管理。
 - 快捷动作：显示并聚焦主窗口、隐藏到 line、复位主窗口、切换标准窗口 / 边缘收起模式、展开或收起 Skim、打开 Settings 与窗口内目录切换。
 - 全局快捷键开关。
@@ -967,7 +983,7 @@ Settings 当前覆盖：
 
 ## 16. 1.0.4 当前稳定状态
 
-Cap7CE 1.0.4 的产品 Renderer 与原生窗口宿主均已统一为新版 stable：主窗口、独立 Settings 与 Preview 使用 40 DIP Window Controls Overlay 和可实时切换的 Acrylic / Mica，系统拒绝所选材质时回退安全纯色；采用连续响应式布局并允许三窗口并存。旧主 Renderer、旧 Preview 展示分支、独立与同窗 Capsule、micro/mini 自动形态转换、分形态布局记忆、旧 presentation 策略、兼容最大化控制器、模式切换 IPC 和对应偏好字段均已删除；磁盘上的旧布局和已有用户数据不主动清理，历史偏好 JSON 中多余字段由当前读取器安全忽略。当前稳定边界还包括虚拟化搜索与 skim 网格、带桌面与用户星标目录的快速访问边栏、完整 Windows 文件与目录路径直达、123 种已登记格式的确定性文件名 / 根目录 / 相对路径 / 手工关键词搜索、逐词证据可信度排序、15 秒可取消扫描快照、失败抑制后的原生视觉缓存，以及相互隔离的 skim 与搜索系统图像缓存。普通 JPG / JPEG / PNG / WEBP 仅在尺寸、像素量或文件体积超过受限阈值时生成 2560px 预览缓存，轻量源文件直接读取。视觉 / 文件信息 / 文本 / Markdown / 字体 / 归档 / EPUB / MOBI / 音频 / 视频 / PDF / Office 共用预览窗口；Preview 的单文件手动关键词在信息边栏内以标签方式编辑，经受限 Preview 保存链复用统一规范化与索引写入，并通知主窗口刷新当前结果；多选编辑继续使用共享浮动编辑卡片。HEIC、HEIF、常见相机 RAW 与受支持视频可在本机 Windows 扩展或 Shell 解码能力可用时获得可选缩略图，失败时回退格式图标与文件信息。Office 转换结果在当前进程内按源文件身份复用。目录拖入添加、文件/文件夹原生拖出及系统剪贴板复制、共享查看范围、自绘滚动条、主题感知图标与拾色器、输入框内快捷指令和查看条件切换反馈、窗口内目录循环切换、中英文运行时语言，以及具备真实注册检测的可配置全局快捷动作均保持稳定。只有 15 种正式视觉格式进入按需 AI 搜索，系统解码能力不会扩大 AI、自动优化或模型输入边界；OCR 与不可见的全目录 AI 深度索引未接入。
+Cap7CE 1.0.4 当前本地开发主线使用统一 Catalog 工作区。主窗口、独立 Settings、Preview 与原有 line 继续复用现有窗口生命周期；主窗口为连续响应式布局，最小尺寸为 300×210。此电脑、收藏目录、文件网格及搜索共用 Core 查询与现有授权动作。浏览缩略图只随可见范围生成，预览继续按需准备。详细属性建库由用户显式启动，可管理磁盘顺序及包含/排除范围；收藏增删只改变入口，不删除索引。旧即时 AI 搜索和自定义范围设置已经移除。核心/壳尚未完全分离，当前边界与未完成项以文首“当前实施状态”为准；历史各轮验证不能自动等同于当前代码已完成发布或安装验收。
 
 L6 最终审计补充：中间省略文件名的单行与双行布局由 `src/renderer/components/MiddleEllipsisFileName.css` 随共享组件持有，等待指示器的 SVG 尺寸、主题渐变与旋转关键帧由 `src/renderer/WaitingIndicator.css` 持有；二者均不属于全局样式入口。搜索结果与 Skim 只使用 `ResponsiveFileContextMenu`，菜单主题变量、动作类型与文件名拆分工具位于 `fileContextMenuShared.ts`；旧分栏菜单组件、旧 Results / Skim 适配层、旧搜索胶囊、占位网格、专用 CSS 和零调用图标均已删除。`scripts/architecture-boundaries-baseline.json` 直接守护当前 stable 搜索、菜单、Skim 与窗口入口；`build:electron` 在编译前只清理 `dist-electron` 和对应的 TypeScript 增量缓存，完整 `build` 随后扫描 Renderer 与 Electron 生产输出，不得发现旧宿主、兼容标题栏或 Capsule 入口标识。
 
