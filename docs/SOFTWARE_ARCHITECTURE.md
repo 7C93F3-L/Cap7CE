@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+Core Catalog、Host 与 Reader.Host 的 `RuntimeIdentifiers=win-x64` 固定还原图，但不指定运行时标识，也不改变 Core/Reader 的 framework-dependent 产品形状。Reader 的 ILLink 10.0.12 是 `PrivateAssets=all` 构建工具；AOT/trimmed 配置由 SDK 自行装配，默认配置显式保留同一工具依赖，使现有锁文件在受支持构建配置之间保持字节一致。`core-build-profile-policy` 检查固定图、私有工具与完整 PackageReference 属性，额外元数据不能绕过依赖守门。`core-restore-profiles.integration` 实际覆盖默认 solution、产品 Core/Reader 与 NativeAOT Setup 的锁定还原及失败保留开发宿主；不引入 Reader 的新发布形状或升级依赖版本。core-development-host-safety 仅查询当前 Windows 进程的可执行路径；发现占用或无法核实所有者时，在输出清理前拒绝发布，保留已有开发宿主。该检查不终止进程或更改系统设置。
+
 属性任务的实际内容执行由普通 Core 接管。`FileFactHostSession` 的可选 `IFileFactContentReader` 装配成功才宣告 `metadata.execute`；该操作只接受已有 lease ID，Broker 从自身持有的任务再次核对当前路径、原生身份、源版本与范围，解析结束仍通过原 Complete 栅栏发布。`FileFactExecutionOwner` 拥有单并发、授权代次、暂停/重配取消和连续解码故障的两次记录/第三次停止策略；空 claim 释放解析器，状态查询不启用内容读取。`MetadataWorkers` 只拥有独立 Node 资源校验、256 KiB 私有 stdin/stdout 帧和进程树，不访问 Catalog、Reader 服务或源文件正文；Node 保留原解析器。运行时固定摘要、256 MiB JS 堆、14 秒期限、RSS 回收和500毫秒取消宽限；Windows Job Object 的 kill-on-close 保证 Core 异常退出也清除解码子孙进程。Shell 的 `MetadataBuildController` 只做发现/顺序/进度编排和 lease 执行请求，不再启动解码进程、提交内容事实或按路径分派解析。产品启动装配固定资源路径，Renderer 不接收运行时路径入口。发现调度、授权偏好恢复、缩略图/缓存及模型调用的其余所有权仍需后续迁移；本轮没有启动正式全盘内容提取。
 
 属性解析使用独立 Windows x64 Node 24.15.0，构建以官方固定SHA256校验本机/缓存或固定地址下载的字节；运行时不从PATH或Electron回退，也不继承NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE。artifacts/metadata-worker/v1随应用放入resources/metadata-worker/v1，包含合并解析器、字体/模型线程、动态PDF/原生画布、sharp、7z WASM和许可证，不依赖ASAR或开发目录。metadataWorkerPaths只解析产品资源位置；MetadataWorkerClient保留独立运行兼容回归，产品执行归上段Core owner。资源、普通Core权限、帧/进程生命周期和Shell职责收缩由自动边界与仓库外运行、真实Core发布及强杀进程树回归守护。

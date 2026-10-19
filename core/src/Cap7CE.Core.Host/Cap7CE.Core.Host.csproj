@@ -4,6 +4,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>Cap7CE.Core.Host</AssemblyName>
     <RootNamespace>Cap7CE.Core.Host</RootNamespace>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <DefineConstants Condition="'$(P33CapabilityProfile)' == 'true'">$(DefineConstants);P33_CAPABILITY</DefineConstants>
     <DefineConstants Condition="'$(P37RecoveryProfile)' == 'true'">$(DefineConstants);P37_RECOVERY</DefineConstants>
     <DefineConstants Condition="'$(P37LifecycleProfile)' == 'true'">$(DefineConstants);P37_LIFECYCLE</DefineConstants>

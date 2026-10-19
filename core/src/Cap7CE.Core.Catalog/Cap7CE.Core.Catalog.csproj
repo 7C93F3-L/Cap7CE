@@ -2,6 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Cap7CE.Core.Catalog</AssemblyName>
     <RootNamespace>Cap7CE.Core.Catalog</RootNamespace>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Catalog" />

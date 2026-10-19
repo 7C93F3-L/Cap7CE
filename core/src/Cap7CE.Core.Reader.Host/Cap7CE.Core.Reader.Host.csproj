@@ -4,6 +4,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>Cap7CE.Core.Reader.Host</AssemblyName>
     <RootNamespace>Cap7CE.Core.Reader.Host</RootNamespace>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <DefineConstants Condition="'$(P23LifecycleProfile)' == 'true'">$(DefineConstants);P23_LIFECYCLE</DefineConstants>
     <DefineConstants Condition="'$(P33CapabilityProfile)' == 'true'">$(DefineConstants);P33_CAPABILITY</DefineConstants>
     <DefineConstants Condition="'$(P37RecoveryProfile)' == 'true'">$(DefineConstants);P37_RECOVERY</DefineConstants>
@@ -14,6 +15,8 @@
     <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Reader.Host" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.12" PrivateAssets="all"
+      Condition="'$(PublishAot)' != 'true' And '$(PublishTrimmed)' != 'true'" />
     <ProjectReference Include="..\Cap7CE.Core.Reader.Protocol\Cap7CE.Core.Reader.Protocol.csproj" />
   </ItemGroup>
 </Project>

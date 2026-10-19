@@ -21,8 +21,9 @@ const runDotnet = (args) => {
   if (result.status !== 0) throw new Error(`dotnet ${args[0]} failed with exit code ${result.status}.`);
 };
 
-fs.rmSync(outputRoot, { recursive: true, force: true });
 runDotnet(["restore", "core/Cap7CE.Core.sln", "--locked-mode", "--nologo"]);
+require("./core-development-host-safety.cjs").assertStopped(outputRoot);
+fs.rmSync(outputRoot, { recursive: true, force: true });
 const productProfile = selectCapabilityBuildProfile(["--product"]);
 runDotnet(productProfile.frameworkPublishArguments(
   "core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj",

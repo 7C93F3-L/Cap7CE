@@ -20,7 +20,7 @@ const expectedProjects = require("./core-file-operations-boundary-check.cjs").re
     "core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj"
   ]]
 ])));
-const allowedPackages = new Map([["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", [["Microsoft.Data.Sqlite", "10.0.12"]]]]);
+const allowedPackages = require("./core-build-profile-policy.cjs").allowedPackages;
 for (const [projectPath, expectedReferences] of expectedProjects) {
   const absoluteProjectPath = path.join(root, projectPath);
   if (!fs.existsSync(absoluteProjectPath)) {
@@ -28,8 +28,7 @@ for (const [projectPath, expectedReferences] of expectedProjects) {
     continue;
   }
   const source = fs.readFileSync(absoluteProjectPath, "utf8");
-  const actualPackages = [...source.matchAll(/<PackageReference\s+Include="([^"]+)"\s+Version="([^"]+)"\s*\/>/g)]
-    .map((match) => [match[1], match[2]]);
+  const actualPackages = require("./core-build-profile-policy.cjs").packages(source);
   const wantedPackages = allowedPackages.get(projectPath) ?? [];
   if (JSON.stringify(actualPackages) !== JSON.stringify(wantedPackages)) {
     failures.push(`${projectPath} has unexpected Core package references.`);
@@ -43,6 +42,7 @@ for (const [projectPath, expectedReferences] of expectedProjects) {
   }
 }
 const solutionSource = read("core/Cap7CE.Core.sln");
+require("./core-build-profile-policy.cjs").check(root, failures);
 for (const projectPath of expectedProjects.keys()) {
   const solutionPath = normalize(path.relative(coreRoot, path.join(root, projectPath))).replaceAll("/", "\\");
   if (!solutionSource.includes(`"${solutionPath}"`)) failures.push(`Core solution does not include ${projectPath}.`);
