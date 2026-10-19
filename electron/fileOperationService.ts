@@ -1,6 +1,6 @@
 import { app } from "electron";
-import { requestWindowsFileOperation } from "./core/coreWindowsFileOperations";
-import fs from "node:fs/promises";
+import { requestCoreTrash, closeCoreTrashClients } from "./core/coreTrashClient";
+import { coreTrashFailureError } from "./core/coreTrashProtocol";
 import path from "node:path";
 import {
   deleteImagesByFilePaths,
@@ -12,9 +12,10 @@ import { listDirectories } from "./directoryStore";
 import { getFileFormatCapability } from "./formatCapabilities";
 import {
   deleteVisualCachesForImages,
-  isCap7CECachePath
+  isCap7CECachePath, getVisualCacheDirectories
 } from "./visualCacheService";
 import { releaseVisualRenderFileHandles } from "./visualRenderService";
+app.once("will-quit", closeCoreTrashClients);
 
 interface DeleteFileFailure {
   path: string;
@@ -53,7 +54,10 @@ const isPathInsideDirectory = (filePath: string, directoryPath: string) => {
 
 export const getTrashFailureMessage = (error: unknown) => {
   const code = (error as NodeJS.ErrnoException | undefined)?.code;
-  const message = error instanceof Error ? error.message : "";
+  let message = error instanceof Error ? error.message : "";
+  if (message === "core-trash-protected-path") message = t("file.protectedCache");
+  if (message === "core-trash-target-changed") message = t("catalogActions.targetChanged");
+  if (message === "core-trash-not-file") message = t("file.sourceNotFile");
   if (code === "ENOENT") {
     return t("file.sourceMissing");
   }
@@ -63,55 +67,16 @@ export const getTrashFailureMessage = (error: unknown) => {
   if (/operation was aborted/i.test(message)) {
     return t("file.trashOperationAborted");
   }
+  if (message.startsWith("core-trash-")) return t("file.trashFailed");
   return message
     ? t("file.trashFailedWithMessage", { message })
     : t("file.trashFailed");
 };
 
-const delay = (milliseconds: number) => new Promise<void>((resolve) => {
-  setTimeout(resolve, milliseconds);
-});
-
-const trashOperationIntervalMs = 250;
-let lastTrashOperationFinishedAt = 0;
-
-const moveFileToTrashOnce = async (filePath: string) => {
-  const elapsed = Date.now() - lastTrashOperationFinishedAt;
-  if (elapsed < trashOperationIntervalMs) {
-    await delay(trashOperationIntervalMs - elapsed);
-  }
-
-  try {
-    if (!app.isPackaged) {
-      console.debug("[file-delete:trash] request", { filePath });
-    }
-    const result = await requestWindowsFileOperation({ packaged: app.isPackaged }, { operation: "trash", path: filePath });
-    if (result.status !== "deleted") throw new Error(result.error === -2147467260 ? "Operation was aborted" : "Failed to perform delete operation");
-    if (!app.isPackaged) {
-      console.debug("[file-delete:trash] success", { filePath });
-    }
-  } finally {
-    lastTrashOperationFinishedAt = Date.now();
-  }
-};
-
 export const moveFileToTrashWithRetry = async (filePath: string, directory = false) => {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const stat = await fs.stat(filePath);
-      if (directory ? !stat.isDirectory() : !stat.isFile()) {
-        throw new Error(t("file.sourceNotFile"));
-      }
-      await moveFileToTrashOnce(filePath);
-      return;
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError;
+  const result = await requestCoreTrash({ packaged: app.isPackaged }, { mode: "legacy",
+    targets: [{ path: filePath, isDirectory: directory }], cacheRoots: getVisualCacheDirectories() });
+  if (!result.success) throw coreTrashFailureError(result.failedItems[0]);
 };
 
 export const moveIndexedImagesToTrash = async (

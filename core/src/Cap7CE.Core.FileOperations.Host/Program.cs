@@ -3,6 +3,8 @@ using System.Text.Json;
 using Cap7CE.Core.FileOperations.Host;
 
 if (args is ["--describe"]) { Console.WriteLine("{\"protocol\":\"file-operations/1\",\"runtimeRequired\":false}"); return 0; }
+if (args is ["--trash-session", "--parent-pid", var parent] && int.TryParse(parent, out var parentPid) && parentPid > 0)
+    return await TrashSession.RunAsync(parentPid);
 if (args.Length != 0) return 2;
 try
 {

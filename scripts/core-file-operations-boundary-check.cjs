@@ -1,16 +1,19 @@
 const fs = require("node:fs"), path = require("node:path");
 const directory = "core/src/Cap7CE.Core.FileOperations", host = `${directory}.Host`;
 module.exports.register = projects => {
+  projects.get("core/tests/Cap7CE.Core.Tests/Cap7CE.Core.Tests.csproj").push(`${directory}/Cap7CE.Core.FileOperations.csproj`);
   projects.set(`${directory}/Cap7CE.Core.FileOperations.csproj`, ["core/src/Cap7CE.Core.Configuration/Cap7CE.Core.Configuration.csproj"]);
   projects.set(`${host}/Cap7CE.Core.FileOperations.Host.csproj`, [`${directory}/Cap7CE.Core.FileOperations.csproj`]);
   return projects;
 };
-module.exports.ownsStorage = name => ["WindowsDirectorySource.cs", "FolderRenameJournal.cs"].some(file => name === `${directory}/${file}`);
+module.exports.ownsStorage = name => ["WindowsDirectorySource.cs", "FolderRenameJournal.cs", "TrashSourceMetadata.cs"].some(file => name === `${directory}/${file}`);
 module.exports.check = (root, failures) => {
   const files = new Map([
     [`${directory}/WindowsFileOperation.cs`, 50], [`${directory}/WindowsFileOperationRules.cs`, 30], [`${host}/Program.cs`, 40],
     [`${directory}/WindowsDirectorySource.cs`, 55], [`${directory}/FolderRenameJournal.cs`, 65], [`${directory}/FolderRenameWorkflow.cs`, 80],
     [`${host}/FolderRenameRequestHandler.cs`, 45], [`${host}/WindowsOperationRequest.cs`, 25], ["electron/core/coreFolderRename.ts", 30],
+    [`${directory}/TrashModels.cs`, 15], [`${directory}/TrashPathRules.cs`, 35], [`${directory}/TrashSourceMetadata.cs`, 30], [`${directory}/TrashBatchExecutor.cs`, 70],
+    [`${host}/TrashSession.cs`, 65], [`${host}/TrashSessionRequest.cs`, 40], ["electron/core/coreTrashClient.ts", 100], ["electron/core/coreTrashProtocol.ts", 40],
     ["native/Cap7CE.Core.FileOperations/operation_sink.h", 60], ["native/Cap7CE.Core.FileOperations/file_operations.cpp", 85],
     ["electron/core/coreWindowsFileOperations.ts", 25], ["scripts/core-file-operations-build.cjs", 45]
   ]);
@@ -19,8 +22,9 @@ module.exports.check = (root, failures) => {
       if (!files.has(`${parent}/${name}`)) failures.push(`Unregistered Core file operation source: ${parent}/${name}`);
   for (const [name, maximum] of files) {
     const source = fs.readFileSync(path.join(root, name), "utf8");
+    const inspected = name === `${host}/TrashSession.cs` ? source.replace("Process.GetProcessById(parentPid)", "") : source;
     if (source.split(/\r?\n/).length > maximum) failures.push(`${name} exceeds file operation ownership (${maximum}).`);
-    if (name.startsWith("core/") && /System\.Net|HttpClient|Sqlite|Reader\.Host|DeviceIoControl|Process\.|File\.Copy|Directory\.(?:Delete|Move)/.test(source))
+    if (name.startsWith("core/") && /System\.Net|HttpClient|Sqlite|Reader\.Host|DeviceIoControl|Process\.|File\.Copy|Directory\.(?:Delete|Move)/.test(inspected))
       failures.push(`${name} bypasses its native Windows operation boundary.`);
     if (name.startsWith("core/") && /File\.(?:Delete|Move)/.test(source) && !name.endsWith("/FolderRenameJournal.cs")) failures.push(`${name} may only mutate assets through IFileOperation.`);
     if (name.startsWith("native/") && /(?:DeleteFile|RemoveDirectory|MoveFile|CopyFile|CreateProcess|ShellExecute|WinHttp|WinInet|DeviceIoControl|FSCTL_)\w*\s*\(/.test(source))
@@ -28,9 +32,15 @@ module.exports.check = (root, failures) => {
   }
   const sink = fs.readFileSync(path.join(root, "native/Cap7CE.Core.FileOperations/operation_sink.h"), "utf8");
   if (!sink.includes("TSF_DELETE_RECYCLE_IF_POSSIBLE") || !sink.includes("? S_OK : E_ABORT")) failures.push("Core deletion must reject permanent fallback before every delete.");
+  const session = fs.readFileSync(path.join(root, `${host}/TrashSession.cs`), "utf8");
+  for (const anchor of ["24 * 1024 * 1024", "parent.Exited", "Environment.Exit(0)", "request.RequestId <= sequence", "ReadExactlyAsync"])
+    if (!session.includes(anchor)) failures.push(`Trash owner lifetime/framing is missing ${anchor}.`);
+  const service = fs.readFileSync(path.join(root, "electron/computerSearchTrashService.ts"), "utf8");
+  if (/node:fs|fs\.|lstat|removedFolders|\.sort\(|new Map/.test(service) || service.split(/\r?\n/).length > 25)
+    failures.push("Catalog trash adapter must delegate validation, ordering and aggregation to Core.");
   const rename = fs.readFileSync(path.join(root, "electron/windowsShellRename.ts"), "utf8");
   const trash = fs.readFileSync(path.join(root, "electron/fileOperationService.ts"), "utf8");
-  if (/PowerShell|EncodedCommand|child_process|shell\.trashItem/.test(rename + trash) || !rename.includes("requestWindowsFileOperation") || !trash.includes("requestWindowsFileOperation"))
+  if (/PowerShell|EncodedCommand|child_process|shell\.trashItem|fs\.stat|lastTrashOperationFinishedAt/.test(rename + trash) || !rename.includes("requestWindowsFileOperation") || !trash.includes("requestCoreTrash"))
     failures.push("Electron must route both existing physical operations through the Core executor.");
   const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
   if (!pkg.build.extraResources.some(resource => resource.to === "core-file-operations/v1" && JSON.stringify(resource.filter) === JSON.stringify(["Cap7CE.Core.FileOperations.Host.exe", "Cap7CE.Core.FileOperations.Native.dll"])))

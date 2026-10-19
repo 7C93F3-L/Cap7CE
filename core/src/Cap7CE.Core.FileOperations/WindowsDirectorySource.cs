@@ -8,9 +8,9 @@ public sealed record WindowsDirectoryIdentity(string Dev, string Ino, bool IsDir
 // Reads metadata only, with the same Windows volume/index identity used by Node stat.
 public static partial class WindowsDirectorySource
 {
-    public static unsafe WindowsDirectoryIdentity? Capture(string path)
+    public static unsafe WindowsDirectoryIdentity? Capture(string path, bool followLinks = false)
     {
-        using var handle = CreateFile(path, 0x80, 7, IntPtr.Zero, 3, 0x02200000, IntPtr.Zero);
+        using var handle = CreateFile(path, 0x80, 7, IntPtr.Zero, 3, followLinks ? 0x02000000u : 0x02200000u, IntPtr.Zero);
         if (handle.IsInvalid || GetInformation(handle, out var info) == 0) return null;
         var buffer = new char[32768]; string real;
         fixed (char* value = buffer)

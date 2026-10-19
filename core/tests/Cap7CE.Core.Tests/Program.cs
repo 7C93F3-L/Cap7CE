@@ -16,6 +16,7 @@ if (args is ["--metadata-worker-tests"]) {
 }
 if (args is ["--metadata-job-owner", var metadataRuntime, var metadataSource])
     return await NodeMetadataWorkerTests.RunOwnerAsync(metadataRuntime, metadataSource);
+if (args is ["--trash-policy-tests"]) { await TrashBatchExecutorTests.RunAsync(); return 0; }
 
 if (args is ["--catalog-crash-worker"])
 {
@@ -31,6 +32,7 @@ if (args is ["--setup-identity-client", var pipeName, var expectedServer]
 var expectedLayers = new Dictionary<Assembly, string>
 {
     [typeof(Cap7CE.Core.Configuration.FavoriteDirectory).Assembly] = "Configuration",
+    [typeof(Cap7CE.Core.FileOperations.WindowsFileOperation).Assembly] = "FileOperations",
     [typeof(ProtocolAssembly).Assembly] = ProtocolAssembly.Role,
     [typeof(ReaderProtocolAssembly).Assembly] = ReaderProtocolAssembly.Role,
     [typeof(ReaderHostAssembly).Assembly] = ReaderHostAssembly.Role,
@@ -106,6 +108,7 @@ await NativeFileFactSourceGuardTests.RunAsync();
 await FileFactExtractionBrokerTests.RunAsync();
 await FileFactExecutionTests.RunAsync();
 await NodeMetadataWorkerTests.RunAsync();
+await TrashBatchExecutorTests.RunAsync();
 await FileFactCatalogIntegrationTests.RunAsync();
 await FileFactChangeLogTests.RunAsync();
 await FileFactChangeDispatcherTests.RunAsync();

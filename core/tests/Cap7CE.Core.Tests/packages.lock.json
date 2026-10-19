@@ -82,6 +82,12 @@
       },
       "cap7ce.core.setup": {
         "type": "Project"
+      },
+      "cap7ce.core.fileoperations": {
+        "type": "Project",
+        "dependencies": {
+          "Cap7CE.Core.Configuration": "[1.0.0, )"
+        }
       }
     }
   }
