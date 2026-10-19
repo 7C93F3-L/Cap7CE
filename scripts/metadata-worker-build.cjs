@@ -10,6 +10,8 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
 
 (async () => {
   if (process.platform !== "win32" || process.arch !== "x64") throw new Error("Metadata runtime currently targets Windows x64.");
+  if (path.dirname(output) !== path.join(root, "artifacts/metadata-worker") || path.basename(output) !== "v1") throw new Error("Unexpected Core Node output.");
+  require("./metadata-runtime-safety.cjs").assertStopped(output);
   // Fixed generated directory only. Never traverses source/user data or other artifacts.
   await fs.rm(output, { recursive: true, force: true });
   await fs.mkdir(output, { recursive: true });
@@ -27,6 +29,11 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     if (Object.values(thread.metafile.outputs).flatMap(item => item.imports).some(item =>
       !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected metadata thread dependency.");
   }
+  const cache = await build({ entryPoints: [path.join(root, "core/node/visualCache/host.ts")],
+    outfile: path.join(output, "visual-cache.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24",
+    sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(cache.metafile.outputs).flatMap(item => item.imports).some(item =>
+    !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected Core cache dependency.");
   const lock = require("../package-lock.json");
   for (const name of packages) {
     const source = path.join(root, "node_modules", name);

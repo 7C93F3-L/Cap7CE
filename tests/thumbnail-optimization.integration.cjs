@@ -83,12 +83,27 @@ app.whenReady().then(async () => {
 
   try {
     await thumbnailService.ensureThumbnailPath(preexistingFile);
+    await new Promise(resolve => setImmediate(resolve));
     const preexistingAvailabilityCount = lifecycleEvents.filter((event) => (
       event.kind === "available" && event.filePath === preexistingFile
     )).length;
     await service.setThumbnailOptimizationEnabled(true);
     service.setThumbnailOptimizationForegroundActive(false);
     const preexistingCandidate = await candidateFor(preexistingFile);
+    // Core cache identity is asynchronous: disabling/re-enabling must retire the previous discovery continuation.
+    const visual = require("../dist-electron/visualCacheService.js"), originalCreate = visual.createVisualCacheEntryFromSourceMetadata;
+    let releaseLookup, lookupEntered = false;
+    const lookupGate = new Promise(resolve => { releaseLookup = resolve; });
+    visual.createVisualCacheEntryFromSourceMetadata = async (...args) => { lookupEntered = true; await lookupGate; return originalCreate(...args); };
+    const retiredEnqueue = service.enqueueThumbnailOptimizationCandidates([preexistingCandidate]);
+    try {
+      await waitFor(() => lookupEntered);
+      await service.setThumbnailOptimizationEnabled(false); await service.setThumbnailOptimizationEnabled(true);
+    } finally { visual.createVisualCacheEntryFromSourceMetadata = originalCreate; releaseLookup(); }
+    await retiredEnqueue; await new Promise(resolve => setImmediate(resolve));
+    assert.equal(service.getThumbnailOptimizationStatus().queuedCount, 0);
+    assert.equal(lifecycleEvents.filter(event => event.kind === "available" && event.filePath === preexistingFile).length,
+      preexistingAvailabilityCount, "a retired Core lookup cannot announce a cached candidate in the next enabled generation");
     let foregroundDiscoveryYieldCount = 0;
     const foregroundDiscovery = new ThumbnailOptimizationDiscovery(async (_directories, _isCancelled, yieldForBackgroundWork) => {
       for (let index = 0; index < 32; index += 1) {

@@ -1,4 +1,3 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 import {
   clearThumbnailVisualCaches,
@@ -7,7 +6,8 @@ import {
   deleteVisualCachesForImages,
   getVisualCacheDirectory,
   getVisualCacheStats,
-  initializeVisualCacheDirectories
+  initializeVisualCacheDirectories,
+  listThumbnailCacheFiles
 } from "./visualCacheService";
 import {
   pauseSearchShellVisualCacheForClear,
@@ -174,10 +174,7 @@ export const getThumbnailCacheFileInventory = async () => {
   const inventoryRevision = thumbnailCacheFileInventoryRevision;
   const inventoryPromise = (async () => {
     await initializeThumbnailCache();
-    const entries = await fs.readdir(getThumbnailCacheDirectory(), { withFileTypes: true });
-    const inventory = new Set(
-      entries.filter((entry) => entry.isFile()).map((entry) => entry.name)
-    );
+    const inventory = new Set(await listThumbnailCacheFiles());
     if (inventoryRevision === thumbnailCacheFileInventoryRevision) {
       thumbnailCacheFileInventory = inventory;
     }

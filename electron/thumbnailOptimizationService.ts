@@ -210,10 +210,11 @@ export const enqueueThumbnailOptimizationCandidates = async (candidates: Thumbna
       continue;
     }
 
-    const cacheEntry = createVisualCacheEntryFromSourceMetadata(candidate.filePath, "search-thumbnail", {
+    const cacheEntry = await createVisualCacheEntryFromSourceMetadata(candidate.filePath, "search-thumbnail", {
       fileSize: candidate.fileSize,
       modifiedMs: candidate.modifiedMs
     });
+    if (!enabled || enqueueRevision !== enabledRevision) return;
     if (failedCacheKeys.has(cacheEntry.key)) {
       continue;
     }

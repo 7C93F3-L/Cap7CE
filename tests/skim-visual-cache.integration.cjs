@@ -6,7 +6,7 @@ const path = require("node:path");
 const { app } = require("electron");
 
 const visualCacheServiceSource = fsSync.readFileSync(
-  path.resolve(__dirname, "..", "electron", "visualCacheService.ts"),
+  path.resolve(__dirname, "..", "core", "node", "visualCache", "store.ts"),
   "utf8"
 );
 assert.match(visualCacheServiceSource, /const maximumConcurrentCacheStatReads = 2;/u);
