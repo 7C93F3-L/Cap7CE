@@ -101,9 +101,6 @@ const PreviewWindowApp = () => {
   const [showPreviewLoadingIndicator, setShowPreviewLoadingIndicator] = useState(false);
   const [windowControlState, setWindowControlState] = useState(defaultPreviewWindowControlState);
   const [folderStats, setFolderStats] = useState<SkimFolderStats | null>(null);
-  const [previewKeywordEditorOpen, setPreviewKeywordEditorOpen] = useState(false);
-  const [previewKeywordSavePending, setPreviewKeywordSavePending] = useState(false);
-  const [previewKeywordSaveError, setPreviewKeywordSaveError] = useState("");
   const { message: copiedPreviewSessionId, show: showPreviewPathCopied } = useTransientFeedback(1800);
   const previewSidebarLayout = usePreviewSidebarLayout();
   const previewSidebarWidth = previewSidebarLayout.expanded ? previewSidebarExpandedWidth : 40;
@@ -119,7 +116,6 @@ const PreviewWindowApp = () => {
   const targetSessionIdRef = useRef("");
   const targetFilePathRef = useRef("");
   const previewLoadingIndicatorTimerRef = useRef<number | null>(null);
-  const previewKeywordSavePendingRef = useRef(false);
   const closePreview = useCallback(() => {
     mediaRef.current?.pause();
     if (previewData?.provider === "folderInfo") {
@@ -127,11 +123,6 @@ const PreviewWindowApp = () => {
     }
     void window.cap7ce?.preview.close();
   }, [previewData]);
-  const requestKeywordEdit = useCallback((data: PreviewWindowData) => {
-    if (data.skimActive) return;
-    setPreviewKeywordSaveError("");
-    setPreviewKeywordEditorOpen(true);
-  }, []);
   const openPreviewSource = useCallback((data: PreviewWindowData) => {
     const request = data.sourceAuthorization;
     const operation = request
@@ -156,12 +147,6 @@ const PreviewWindowApp = () => {
       mediaRef.current?.pause();
       setActiveLanguage(data.language);
       setPreviewData(data);
-      if (targetSessionIdRef.current !== data.sessionId || targetFilePathRef.current !== data.filePath) {
-        previewKeywordSavePendingRef.current = false;
-        setPreviewKeywordEditorOpen(false);
-        setPreviewKeywordSavePending(false);
-        setPreviewKeywordSaveError("");
-      }
       targetFilePathRef.current = data.filePath;
       if (targetSessionIdRef.current === data.sessionId) {
         return;
@@ -284,10 +269,6 @@ const PreviewWindowApp = () => {
       setShowInfoFallback(false);
       setFontRuntimeFailed(false);
       setShowPreviewLoadingIndicator(false);
-      previewKeywordSavePendingRef.current = false;
-      setPreviewKeywordEditorOpen(false);
-      setPreviewKeywordSavePending(false);
-      setPreviewKeywordSaveError("");
       setFolderStats(null);
       void window.cap7ce?.preview.getWindowControlState().then(setWindowControlState);
     };
@@ -390,31 +371,6 @@ const PreviewWindowApp = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [closePreview, copyPreviewSourcePath, openPreviewSource, previewData, showPreviewSourceInFolder]);
 
-  const savePreviewKeywords = useCallback(async (keywords: string[]) => {
-    if (!previewData || previewData.skimActive || previewKeywordSavePendingRef.current) return;
-    previewKeywordSavePendingRef.current = true;
-    setPreviewKeywordSavePending(true);
-    setPreviewKeywordSaveError("");
-    try {
-      const normalizedKeywords = await window.cap7ce?.index.updateManualKeywords(
-        previewData.filePath,
-        keywords.join(",")
-      );
-      if (!normalizedKeywords) throw new Error(t("error.indexUnavailable"));
-      setPreviewData((current) => current
-        && current.sessionId === previewData.sessionId
-        && current.filePath === previewData.filePath
-        ? { ...current, manualKeywords: normalizedKeywords }
-        : current);
-      setPreviewKeywordEditorOpen(false);
-    } catch (error) {
-      setPreviewKeywordSaveError(error instanceof Error ? error.message : t("error.metadataSaveFailed"));
-    } finally {
-      previewKeywordSavePendingRef.current = false;
-      setPreviewKeywordSavePending(false);
-    }
-  }, [previewData]);
-
   const togglePreviewAlwaysOnTop = () => {
     void window.cap7ce?.preview.toggleAlwaysOnTop().then(setWindowControlState);
   };
@@ -493,21 +449,11 @@ const PreviewWindowApp = () => {
         <PreviewInformationSidebar
           data={previewData}
           expanded={previewSidebarLayout.expanded}
-          keywordEditorOpen={previewKeywordEditorOpen}
-          keywordSavePending={previewKeywordSavePending}
-          keywordSaveError={previewKeywordSaveError}
           onToggleExpanded={previewSidebarLayout.toggleExpanded}
           onOpen={() => openPreviewSource(previewData)}
           onShowInFolder={() => showPreviewSourceInFolder(previewData)}
           onCopyPath={() => copyPreviewSourcePath(previewData)}
           copyPathCopied={copiedPreviewSessionId === previewData.sessionId}
-          onEditKeywords={() => requestKeywordEdit(previewData)}
-          onCancelKeywordEdit={() => {
-            if (previewKeywordSavePending) return;
-            setPreviewKeywordEditorOpen(false);
-            setPreviewKeywordSaveError("");
-          }}
-          onSaveKeywords={(keywords) => { void savePreviewKeywords(keywords); }}
           onDelete={() => {
             void window.cap7ce?.preview.requestItemAction({ action: "deleteFile", itemId: previewData.itemId, filePath: previewData.filePath });
           }}

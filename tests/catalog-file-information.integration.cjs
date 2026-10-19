@@ -17,7 +17,7 @@ p.width=v=>flushSync(()=>setWidth(v));
 p.select=n=>flushSync(()=>setName(n));p.foreground=v=>flushSync(()=>setForeground(v));p.theme=v=>flushSync(()=>setTheme(v));p.preview=()=>flushSync(()=>setPreview(true));
 p.finish=n=>{const r=p.reads.findLast(r=>r.authorizationId===n);pending.get(r.requestId)({info:{kind:'file',path:'X:\\'+n+'.png',name:n+'.png',extension:'.png',size:1024,modifiedAt:'2026-10-17T00:00:00Z',withinAddedDirectory:false},imageWidth:1200,imageHeight:800,embeddedMetadata:{items:[{kind:'software_family',text:n+' software'}],capturedAt:null}})};
 return <div className={'app cap-stable-ui theme-'+theme} style={{height:'100vh',padding:8,boxSizing:'border-box'}}><div style={{height:'100%',width}}>
-{preview?<PreviewInformationSidebar expanded data={{sessionId:'preview',fileName:'preview.png',filePath:'X:\\preview.png',fileSize:1024,modifiedAt:'2026-10-17T00:00:00Z',skimActive:true}} onToggleExpanded={()=>{}}/>:
+{preview?<PreviewInformationSidebar expanded data={{sessionId:'preview',fileName:'preview.png',filePath:'X:\\preview.png',fileSize:1024,modifiedAt:'2026-10-17T00:00:00Z',skimActive:true,manualKeywords:['retired-keyword'],searchEvidence:{terms:[{term:'retired-evidence',bestSource:'fileName'}]}}} onToggleExpanded={()=>{}}/>:
 <CatalogDetails selection={name?{taskId:task,items:[item(name)],openPreview:()=>p.previews++,showInFolder:()=>p.reveals++}:null} path="X:\\" count={1} foreground={foreground}/>}
 </div></div>};createRoot(document.getElementById('root')).render(<Fixture/>);`;
 app.whenReady().then(async()=>{let win;try{
@@ -91,6 +91,6 @@ app.whenReady().then(async()=>{let win;try{
  await run('probe.preview()');await ready('document.querySelector(".preview-sidebar-actions")');assert.equal(await run('document.querySelectorAll(".preview-sidebar-actions button").length'),3,'standalone preview retains its file actions');
  assert.equal(await run('document.querySelector(".preview-sidebar-header").innerText'),'文件信息','standalone preview retains its original heading');
  assert.equal(await run('!![...document.querySelectorAll(".preview-sidebar-section h2")].find(e=>e.innerText==="位置")'),true,'standalone preview retains its separate location card');
- assert.equal(await run('document.body.innerText.includes("当前匹配依据")'),true,'standalone preview preserves its existing evidence card');
+ assert.equal(await run('document.body.innerText.includes("当前匹配依据")||document.body.innerText.includes("手动关键词")||document.body.innerText.includes("retired-keyword")||document.body.innerText.includes("retired-evidence")'),false,'standalone preview omits retired cards even when legacy data is present');
  console.log('Catalog information: shared cards, metadata, keyword editing/clear/cancel/save failures, authorization refresh, stale reads/saves, persistence, narrow themes and preview compatibility passed.');
 }catch(e){console.error(e.stack);process.exitCode=1}finally{win?.destroy();fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode??0)}});

@@ -11,7 +11,7 @@ export default function CatalogFileInformation({ selection, foreground, visualAc
   const item = selection.items[0];
   const information = useCatalogFileInformation(item, selection.taskId, visualActive);
   return <div className="cap-catalog-file-information-host" data-selection-preserve="true">
-    <PreviewInformationSidebar {...information} expanded mergeLocation showFileActions={false} showSearchEvidence={false} className="cap-catalog-file-information"
+    <PreviewInformationSidebar {...information} expanded mergeLocation showFileActions={false} className="cap-catalog-file-information"
       keywordsSection={<CatalogKeywords item={item} taskId={selection.taskId} foreground={foreground} />}
       heading={item.extension.replace(/^\./u, "").toUpperCase() || "文件"}
       onShowInFolder={selection.showInFolder} renderVisual={scrollRef => <div className="cap-catalog-file-visual">

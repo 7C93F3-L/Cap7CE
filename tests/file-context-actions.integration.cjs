@@ -138,7 +138,7 @@ assert.match(previewSource, /onContextMenu=\{\(event\) => \{\s*event\.preventDef
 assert.doesNotMatch(previewSource, /setContextMenu|deleteAction/);
 assert.match(previewSource, /isPlainSpaceShortcut\(event\)[\s\S]*?closePreview\(\)/);
 
-assert.match(previewSource, /const requestKeywordEdit[\s\S]*?setPreviewKeywordEditorOpen\(true\)/);
+assert.doesNotMatch(previewSource, /requestKeywordEdit|setPreviewKeywordEditorOpen/);
 assert.doesNotMatch(previewSource, /preview\.requestItemAction\(\{\s*action: "editKeywords"/);
 assert.match(skimSource, /ResponsiveSkimContextMenuLayer/);
 assert.match(skimSource, /fileShortcutAction === "addDirectory"/);

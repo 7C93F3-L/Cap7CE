@@ -3,24 +3,18 @@ import type { FileInformationData } from "../../shared/fileInformationTypes";
 import { t } from "../../../electron/localization";
 import CustomScrollbar from "../CustomScrollbar";
 import PreviewEmbeddedMetadata from "./PreviewEmbeddedMetadata";
-import PreviewManualKeywordsSection from "./PreviewManualKeywordsSection";
-import PreviewSearchEvidence from "./PreviewSearchEvidence";
 import "./StablePreviewShell.css";
 interface PreviewInformationSidebarProps {
   data: FileInformationData; expanded: boolean;
-  showFileActions?: boolean; showSearchEvidence?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
+  showFileActions?: boolean; className?: string; heading?: string; metadataStatus?: "loading" | "unavailable";
   mergeLocation?: boolean;
   keywordsSection?: ReactNode;
   renderVisual?: (scrollRef: RefObject<HTMLDivElement | null>) => ReactNode;
   onToggleExpanded?: () => void;
   onOpen?: () => void;
   onShowInFolder?: () => void; onCopyPath?: () => void; copyPathCopied?: boolean;
-  keywordEditorOpen?: boolean; keywordSavePending?: boolean; keywordSaveError?: string;
-  keywordsAvailable?: boolean; keywordsReadState?: "loading" | "unavailable"; onRetryKeywords?: () => void;
-  onEditKeywords?: () => void; onCancelKeywordEdit?: () => void;
-  onSaveKeywords?: (keywords: string[]) => void; onDelete?: () => void;
+  onDelete?: () => void;
 }
-const noop = () => undefined;
 const formatBytes = (bytes: number | null) => {
   if (bytes === null) return "—";
   if (bytes < 1024) return `${bytes} B`;
@@ -40,20 +34,13 @@ const getFileFormat = (data: FileInformationData) => {
 };
 const PreviewInformationSidebar = ({
   data,
-  showFileActions = true, showSearchEvidence = true, mergeLocation = false, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
+  showFileActions = true, mergeLocation = false, className = "", heading = t("preview.sidebar.heading"), renderVisual, metadataStatus,
   expanded,
   onToggleExpanded,
   onOpen,
   onShowInFolder,
   onCopyPath,
   copyPathCopied,
-  keywordEditorOpen = false,
-  keywordsAvailable, keywordsReadState, onRetryKeywords,
-  keywordSavePending = false,
-  keywordSaveError = "",
-  onEditKeywords = noop,
-  onCancelKeywordEdit = noop,
-  onSaveKeywords = noop,
   onDelete, keywordsSection
 }: PreviewInformationSidebarProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -89,8 +76,7 @@ const PreviewInformationSidebar = ({
           <h2>{t("preview.sidebar.location")}</h2>
           {location}
         </section>}
-        {keywordsSection ?? <PreviewManualKeywordsSection sessionId={data.sessionId} manualKeywords={data.manualKeywords ?? []} userDescription={data.userDescription} skimActive={data.skimActive} available={keywordsAvailable} readState={keywordsReadState} onRetry={onRetryKeywords} editorOpen={keywordEditorOpen} savePending={keywordSavePending} saveError={keywordSaveError} onEdit={onEditKeywords} onCancel={onCancelKeywordEdit} onSave={onSaveKeywords} />}
-        {showSearchEvidence && <PreviewSearchEvidence evidence={data.searchEvidence} skimActive={data.skimActive} />}
+        {keywordsSection}
         {data.embeddedMetadata
           ? <PreviewEmbeddedMetadata key={data.sessionId} data={data.embeddedMetadata} />
           : <section className="preview-sidebar-section"><h2>{t("preview.metadata.heading")}</h2><p className="preview-sidebar-empty">{t(metadataStatus === "loading" ? "common.loading" : metadataStatus === "unavailable" ? "common.unavailable" : "preview.sidebar.noEmbeddedMetadata")}</p></section>}

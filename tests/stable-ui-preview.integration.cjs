@@ -10,8 +10,6 @@ const previewAppearanceSource = read("src/renderer/preview/usePreviewAppearance.
 const titlebarSource = read("src/renderer/preview/StablePreviewTitlebar.tsx");
 const titlebarStyles = read("src/renderer/preview/StablePreviewTitlebar.css");
 const sidebarSource = read("src/renderer/preview/PreviewInformationSidebar.tsx");
-const searchEvidenceSource = read("src/renderer/preview/PreviewSearchEvidence.tsx");
-const searchEvidenceStyles = read("src/renderer/preview/PreviewSearchEvidence.css");
 const embeddedMetadataSource = read("src/renderer/preview/PreviewEmbeddedMetadata.tsx");
 const embeddedMetadataStyles = read("src/renderer/preview/PreviewEmbeddedMetadata.css");
 const manualKeywordsSectionSource = read("src/renderer/preview/PreviewManualKeywordsSection.tsx");
@@ -50,16 +48,11 @@ assert.match(sidebarDataSource, /manualKeywords: item\.keywords/u);
 assert.match(sidebarDataSource, /userDescription: item\.userDescription/u);
 assert.match(sidebarDataSource, /searchEvidence: item\.searchEvidence/u);
 assert.match(sidebarSource, /<PreviewEmbeddedMetadata key=\{data\.sessionId\} data=\{data\.embeddedMetadata\} \/>/u);
-assert.match(sidebarSource, /<PreviewSearchEvidence evidence=\{data\.searchEvidence\} skimActive=\{data\.skimActive\} \/>/u);
-for (const marker of ["fileName", "relativeDirectory", "embeddedMetadata", "aiCaption", "visualPropertySoft"]) {
-  assert.ok(searchEvidenceSource.includes(`${marker}: \"preview.evidence.`), `Preview evidence label mapping is missing ${marker}.`);
-}
-assert.match(searchEvidenceSource, /new Map<SearchEvidenceSource, string\[\]>\(\)[\s\S]*?grouped\.get\(bestSource\)[\s\S]*?!terms\.includes\(term\)[\s\S]*?grouped\.set\(bestSource, terms\)/u);
-assert.match(searchEvidenceSource, /terms\.join\(t\("preview\.evidence\.termSeparator"\)\)/u);
-assert.match(searchEvidenceStyles, /preview-sidebar-evidence li\s*\{[\s\S]*?grid-template-columns: minmax\(72px, \.55fr\) minmax\(0, 1fr\)[\s\S]*?background: var\(--preview-sidebar-control\)/u);
+assert.doesNotMatch(sidebarSource, /PreviewSearchEvidence|showSearchEvidence|data\.searchEvidence/u);
 assert.match(embeddedMetadataSource, /isVisualContent: item\.kind === "visual_content"[\s\S]*?className=\{row\.isVisualContent \? "is-visual-content" : undefined\}/u);
 assert.match(embeddedMetadataStyles, /preview-embedded-metadata-list > div\.is-visual-content \{ grid-template-columns: minmax\(0, 1fr\); gap: 0; \}[\s\S]*?div\.is-visual-content dt \{ display: none; \}/u);
-assert.match(sidebarSource, /<PreviewManualKeywordsSection[\s\S]*?manualKeywords=\{data\.manualKeywords \?\? \[\]\}[\s\S]*?onSave=\{onSaveKeywords\}/u);
+assert.match(sidebarSource, /\{keywordsSection\}/u);
+assert.doesNotMatch(sidebarSource, /PreviewManualKeywordsSection|keywordEditorOpen|onSaveKeywords/u);
 assert.match(manualKeywordsSectionSource, /<KeywordTagEditor[\s\S]*?initialKeywords=\{manualKeywords\}[\s\S]*?onSave=\{onSave\}/u);
 assert.match(manualKeywordsSectionSource, /editorOpen \? "preview\.sidebar\.clearKeywords" : "context\.editKeywords"/u);
 assert.match(manualKeywordsSectionSource, /setClearRequestVersion\(\(version\) => version \+ 1\)/u);
@@ -128,7 +121,7 @@ assert.match(titlebarSource, /data-window-material=\{windowMaterial\}/u);
 assert.match(materialContrastStyles, /\.preview-window-stable-ui:not\(\.theme-dark\)\[data-window-material="mica"\] \{[\s\S]*?--preview-stable-surface: var\(--cap-mica-light-content-surface\);[\s\S]*?--preview-stable-card: var\(--cap-mica-light-card-surface\);[\s\S]*?--preview-stable-material-border: var\(--cap-mica-light-border\);[\s\S]*?theme-dark[\s\S]*?rgb\(38 38 38 \/ 97%\)/u);
 assert.match(materialContrastStyles, /\.preview-window-stable-ui:not\(\.theme-dark\)\[data-window-material="mica"\] \.preview-information-sidebar \{[\s\S]*?--preview-sidebar-control: var\(--cap-mica-light-hover-surface\);/u);
 assert.match(materialContrastStyles, /data-window-material="mica"\][^\n]*:is\([^)]*\.preview-sidebar-section[^)]*\.preview-embedded-metadata-details[^)]*\)[\s\S]*?box-shadow: inset 0 0 0 1px var\(--preview-stable-material-border\)/u);
-assert.match(previewSource, /index\.updateManualKeywords\([\s\S]*?previewData\.filePath[\s\S]*?keywords\.join\(","\)[\s\S]*?manualKeywords: normalizedKeywords/u);
+assert.doesNotMatch(previewSource, /index\.updateManualKeywords|previewKeyword|savePreviewKeywords|requestKeywordEdit/u);
 assert.match(manualMetadataRuntimeSource, /isSingleSenderAllowed: \(event, filePath\)[\s\S]*?event\.sender === previewWindow\.webContents[\s\S]*?activePreviewData\.filePath/u);
 assert.match(manualMetadataRuntimeSource, /manualKeywords: keywords[\s\S]*?preview:manualKeywordsUpdated/u);
 assert.doesNotMatch(sidebarSource, /className="is-danger"/u);
