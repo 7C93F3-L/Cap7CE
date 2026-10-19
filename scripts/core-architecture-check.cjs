@@ -4,7 +4,7 @@ const root = path.resolve(__dirname, ".."), coreRoot = path.join(root, "core");
 const failures = [];
 const normalize = (value) => value.replaceAll("\\", "/");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
-const expectedProjects = require("./core-configuration-boundary-check.cjs").register(new Map([
+const expectedProjects = require("./core-file-operations-boundary-check.cjs").register(require("./core-configuration-boundary-check.cjs").register(new Map([
   ["core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj", []], ["core/src/Cap7CE.Core.Reader.Protocol/Cap7CE.Core.Reader.Protocol.csproj", []],
   ["core/src/Cap7CE.Core.Reader.Host/Cap7CE.Core.Reader.Host.csproj", ["core/src/Cap7CE.Core.Reader.Protocol/Cap7CE.Core.Reader.Protocol.csproj"]],
   ["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", []],
@@ -19,7 +19,7 @@ const expectedProjects = require("./core-configuration-boundary-check.cjs").regi
     "core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", "core/src/Cap7CE.Core.Adapters.Abstractions/Cap7CE.Core.Adapters.Abstractions.csproj", "core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj",
     "core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj"
   ]]
-]));
+])));
 const allowedPackages = new Map([["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", [["Microsoft.Data.Sqlite", "10.0.12"]]]]);
 for (const [projectPath, expectedReferences] of expectedProjects) {
   const absoluteProjectPath = path.join(root, projectPath);

@@ -20,7 +20,7 @@
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "clean:electron": "node scripts/clean-electron-build.cjs",
-    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration",
+    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations",
     "build": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
@@ -139,7 +139,7 @@
     "test:thumbnail-optimization": "electron tests/thumbnail-optimization.integration.cjs",
     "test:file-drag": "electron tests/file-drag.integration.cjs",
     "test:file-clipboard": "node tests/file-clipboard.integration.cjs",
-    "test:file-operation": "electron tests/file-operation.integration.cjs && electron tests/catalog-trash-service.integration.cjs && electron tests/favorite-folder-rename.integration.cjs",
+    "test:file-operation": "npm run test:core-file-operations && electron tests/file-operation.integration.cjs && electron tests/catalog-trash-service.integration.cjs && electron tests/favorite-folder-rename.integration.cjs",
     "test:manual-index": "electron tests/manual-index.integration.cjs",
     "test:stale-cleanup": "electron tests/stale-image-cleanup.integration.cjs",
     "test:model-input-cleanup": "electron tests/model-input-cache-cleanup.integration.cjs",
@@ -156,7 +156,9 @@
     "build:metadata-media": "node scripts/metadata-media-build.cjs",
     "build:preload": "node scripts/build-preload.cjs",
     "test:preload-sandbox": "electron tests/preload-sandbox.integration.cjs",
-    "build:core-configuration": "node scripts/core-configuration-build.cjs"
+    "build:core-configuration": "node scripts/core-configuration-build.cjs",
+    "build:core-file-operations": "node scripts/core-file-operations-build.cjs",
+    "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs"
   },
   "build": {
     "appId": "Cap7CE",
@@ -279,6 +281,14 @@
         "to": "core-configuration/v1",
         "filter": [
           "Cap7CE.Core.Configuration.Host.exe"
+        ]
+      },
+      {
+        "from": "core/artifacts/file-operations-host",
+        "to": "core-file-operations/v1",
+        "filter": [
+          "Cap7CE.Core.FileOperations.Host.exe",
+          "Cap7CE.Core.FileOperations.Native.dll"
         ]
       }
     ],

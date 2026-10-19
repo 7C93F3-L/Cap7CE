@@ -22,6 +22,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.Configuration",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.Configuration.Host", "src\Cap7CE.Core.Configuration.Host\Cap7CE.Core.Configuration.Host.csproj", "{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.FileOperations", "src\Cap7CE.Core.FileOperations\Cap7CE.Core.FileOperations.csproj", "{41165EFE-8F67-4DDF-ADCC-50434292F06F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.FileOperations.Host", "src\Cap7CE.Core.FileOperations.Host\Cap7CE.Core.FileOperations.Host.csproj", "{A8A22DED-74F4-4CD7-81E5-0B49A2AD6A7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -68,5 +72,13 @@ Global
 		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41165EFE-8F67-4DDF-ADCC-50434292F06F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41165EFE-8F67-4DDF-ADCC-50434292F06F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41165EFE-8F67-4DDF-ADCC-50434292F06F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41165EFE-8F67-4DDF-ADCC-50434292F06F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8A22DED-74F4-4CD7-81E5-0B49A2AD6A7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8A22DED-74F4-4CD7-81E5-0B49A2AD6A7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8A22DED-74F4-4CD7-81E5-0B49A2AD6A7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8A22DED-74F4-4CD7-81E5-0B49A2AD6A7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

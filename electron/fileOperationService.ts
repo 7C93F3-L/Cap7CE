@@ -1,4 +1,5 @@
-import { app, shell } from "electron";
+import { app } from "electron";
+import { requestWindowsFileOperation } from "./core/coreWindowsFileOperations";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
@@ -84,7 +85,8 @@ const moveFileToTrashOnce = async (filePath: string) => {
     if (!app.isPackaged) {
       console.debug("[file-delete:trash] request", { filePath });
     }
-    await shell.trashItem(filePath);
+    const result = await requestWindowsFileOperation({ packaged: app.isPackaged }, { operation: "trash", path: filePath });
+    if (result.status !== "deleted") throw new Error(result.error === -2147467260 ? "Operation was aborted" : "Failed to perform delete operation");
     if (!app.isPackaged) {
       console.debug("[file-delete:trash] success", { filePath });
     }

@@ -30,7 +30,7 @@ module.exports.check = (root, failures) => {
   const file = fs.readFileSync(path.join(root, directory, "FavoriteConfigurationFile.cs"), "utf8");
   for (const anchor of ["MaximumBytes + 1", "FileMode.CreateNew", "if (created && File.Exists(temporary))", "File.Move(temporary, path, overwrite: true)", "flushToDisk: true"])
     if (!file.includes(anchor)) failures.push(`Core favorite publication requires ${anchor}.`);
-  const client = fs.readFileSync(path.join(root, "electron/core/coreConfigurationClient.ts"), "utf8");
+  const client = fs.readFileSync(path.join(root, "electron/core/coreNativeRequest.ts"), "utf8");
   if (client.split(/\r?\n/).length > 50 || !client.includes("shell: false") || !client.includes("maximumBytes + 132"))
     failures.push("Core configuration transport must remain bounded and use private child streams without shell evaluation.");
   const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));

@@ -2,8 +2,7 @@ const fs = require("node:fs"), path = require("node:path");
 const root = path.resolve(__dirname, ".."), failures = [];
 const files = new Map([
   ["src/renderer/stable-ui/stableSidebarFlyoutPosition.ts", 15],
-  ["electron/windowsShellRenameScript.ts", 140],
-  ["electron/windowsShellRename.ts", 40],
+  ["electron/windowsShellRename.ts", 12],
   ["electron/directoryRenamePaths.ts", 30],
   ["electron/favoriteDirectories/favoriteFolderRenameRules.ts", 25],
   ["electron/favoriteDirectories/favoriteFolderRenameService.ts", 115],
@@ -150,6 +149,7 @@ const contexts = fs.readFileSync(path.join(root, "src/renderer/catalog-workspace
 if (/window\.|DirectoryItem|WorkspaceSearchBridge|fs\.|setInterval|setTimeout/.test(contexts)) failures.push("Catalog context identity must not own source operations or legacy directory state.");
 if (!contexts.includes("maximumCatalogContexts = 32") || !contexts.includes("openLimitReached: true")) failures.push("Catalog context capacity must be explicit and cannot silently evict an open view.");
 require("./core-configuration-boundary-check.cjs").check(root, failures);
+require("./core-file-operations-boundary-check.cjs").check(root, failures);
 if (/fs\.(?:rm|rmdir|copyFile|cp|stat|lstat|readdir|readFile)\(/.test(store)) failures.push("Favorite persistence must not enumerate, copy or delete source folders, or perform unbounded reads.");
 const rules = fs.readFileSync(path.join(root, "electron/favoriteDirectories/favoriteDirectoryRules.ts"), "utf8");
 if (!rules.includes("maximumFavorites = 256") || !rules.includes("maximumFavoriteBytes = 1024 * 1024")) failures.push("Favorite state must retain explicit entry/byte limits.");

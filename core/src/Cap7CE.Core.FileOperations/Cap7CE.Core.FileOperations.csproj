@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Cap7CE.Core.FileOperations</AssemblyName>
+    <RootNamespace>Cap7CE.Core.FileOperations</RootNamespace>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="FileOperations" />
+  </ItemGroup>
+</Project>

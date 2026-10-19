@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+现有文件夹改名和回收站删除的物理执行由 `Core.FileOperations` 的 STA 适配与 `Core.FileOperations.Host` NativeAOT 宿主负责，底层 `native/Cap7CE.Core.FileOperations` 只使用 Windows IFileOperation。宿主与后端 DLL 随应用携带，不要求系统 .NET 或 Reader；查询/属性执行不因此启用。回收站沿当前 Electron 的 flags 与 PreDeleteItem 可回收检查，不可回收时中止，禁止永久删除回退；改名保留实际结果路径及原生取消/冲突/提升 UI。Electron 的 windowsShellRename 与 trash 执行点共用此后端，原 PowerShell 改名实现移除；源授权、缓存/索引清理、改名 journal 和偏好恢复仍由原领域编排，因此目前仅完成执行层迁移。`coreNativeRequest` 统一两个普通权限宿主的有界私有帧、退出清理和无自动重放；有用户原生对话框的文件操作不因计时器被强杀。新源依赖、体量、Native API、回收站保护与两文件打包范围由 `core-file-operations-boundary-check.cjs` 守护。
+
 收藏配置由无数据库依赖的 `Core.Configuration` 拥有，`Core.Configuration.Host` 以 NativeAOT 随应用放入 `resources/core-configuration/v1`，不依赖系统 .NET、Reader 或 Catalog 启用。Electron 的 FavoriteDirectoryStore 只串行转发现有操作并验证响应，不保留缓存或 JSON 写入回退；路径由 Main 装配，Renderer 的 IPC 不接受配置位置。宿主每次接收一个有界的私有 stdin/stdout 帧后退出，配置路径对应的系统互斥量防止并发写入，进程崩溃后可重新获取；无监听端口、服务、轮询或磁盘锁标记。沿用原 JSON v1、ID、顺序、名称/路径规则、有限读取与损坏拒绝，独占创建暂存并原子替换，失败不删除其他写入者的文件。收藏文件夹的磁盘改名、恢复 journal、偏好重定位与原生选择器仍由现有 Electron 领域编排，尚未迁入文件操作域；移除收藏只改配置，不读取或移动素材。新项目、源文件、IO 归属、体量、传输及打包范围由 `core-configuration-boundary-check.cjs` 守护。
 
 `Queries/CatalogTextCandidateSql` 只生成文本候选 key 的 SQL，不持有连接或访问源文件。入口模式的全局名称/路径/关键词组合查询在没有详细属性条件、首词不含路径分隔符时，以文件名、目录路径、卷名和关键词生成保守候选；物化 key 后才按主键校验源版本、完整集合、存活父目录与可解析路径，再复用 scoped_entries 和原逐词谓词。关键词候选允许旧创建版本进入保守集合，但原谓词仍校验当前物理创建版本；不能把不同别名上命中的词混合成一个结果。纯名称、复杂路径和详细属性计划保持原来源，目录范围继续沿原父索引遍历。空文本不再为候选筛选联接路径，最终页仍由原投影生成路径。SQLite 缓存预算、协议、签名游标及持久数据格式不变；新模块受65行及数据库纯 SQL 边界守护，CatalogV2Database 上限同步降低至1023行。
