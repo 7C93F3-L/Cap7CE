@@ -323,7 +323,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
         const pending = controller.startRequest<CoreSearchPage>("search.start", {
           query: request.query, pageSize: 100, ...(request.randomSeed !== undefined ? { randomSeed: request.randomSeed } : {}), sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, volumeIds, scope,
           ...(controller.supports?.("search.live") ? { continuation: "live" } : {}),
-          entryType: request.scopeKind === "directory-descendants" || request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: controller.supports?.("search.manualKeywords") ? "name-path-or-keywords" : "name-or-path",
+          entryType: request.scopeKind === "directory-descendants" && !request.query.trim() || request.facts || request.fileConditions || (!request.query && !request.scopeKind) ? "file" : "any", textTarget: controller.supports?.("search.manualKeywords") ? "name-path-or-keywords" : "name-or-path",
           ...(request.facts ? { facts: toCoreSearchFacts(request.facts) } : {}),
           ...(request.fileConditions ? { fileConditions: readComputerSearchFileConditions(request.fileConditions) } : {})
         }, 30_000);

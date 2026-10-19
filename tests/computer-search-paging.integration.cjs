@@ -105,6 +105,14 @@ app.whenReady().then(async () => {
   assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','stale continuation recovery keeps the selected recursive scope');
   assert.equal(await run('probe.requests.at(-1).fileConditions.extensions[0]'),'.txt');
   await run('probe.recursive(false)');await ready('probe.requests.at(-1)?.scopeKind==="direct-children"&&!probe.controller.busy');
+  await run('probe.controller.submit("茉莉花")');await ready('probe.requests.at(-1)?.query==="茉莉花"&&!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','keywords always cover the directory tree');
+  await run('probe.expire=true;probe.controller.loadMore()');await ready('probe.controller.items.length===200&&!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','expired keyword pages keep recursive search even with flat browsing disabled');
+  assert.equal(await run('probe.requests.at(-1).query'),'茉莉花');
+  await run('probe.controller.refreshResults()');await ready('!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','refresh keeps the same keyword search scope');
+  await run('probe.controller.setQuery("")');await ready('probe.requests.at(-1)?.query===""&&probe.requests.at(-1)?.scopeKind==="direct-children"&&!probe.controller.busy');
   await run('probe.recursive(true);probe.seed(42)');await ready('probe.requests.at(-1)?.randomSeed===42&&probe.controller.items.length===100&&!probe.controller.busy');
   await run('probe.expire=true;probe.controller.loadMore()');await ready('probe.controller.items.length===200&&!probe.controller.busy');
   assert.equal(await run('probe.requests.at(-1).randomSeed'),42,'expired random continuation restarts with the same seed');

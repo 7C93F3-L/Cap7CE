@@ -12,7 +12,7 @@ export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "sco
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
 const directoryScope = (path: string | null, children: boolean, recursive: boolean | undefined, query: string): Pick<ComputerSearchRequest, "scopeKind"> =>
-  path === null ? {} : recursive !== undefined ? { scopeKind: recursive ? "directory-descendants" : "direct-children" }
+  path === null ? {} : query ? { scopeKind: "directory-descendants" } : recursive !== undefined ? { scopeKind: recursive ? "directory-descendants" : "direct-children" }
     : children && !query ? { scopeKind: "direct-children" } : {};
 
 export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false, viewOptions?: ComputerSearchViewOptions) => {

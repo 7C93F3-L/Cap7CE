@@ -113,7 +113,7 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     for (const query of ["", "poster"]) {
       await runtime.search({taskId:"recursive-explicit-"+(query||"all"),query,scopePath:"X:\\Library",scopeKind:"directory-descendants",sort:"modified-descending",excludeHidden:true});
       assert.deepEqual(requests.at(-1).body.scope,{kind:"directory-descendants",volumeId:volume.volumeId,rootFileReference:"1".repeat(16)});
-      assert.equal(requests.at(-1).body.entryType,"file","flat recursive view excludes folder results even with keywords");
+      assert.equal(requests.at(-1).body.entryType,query?"any":"file","keyword search includes matching folders; flat browsing remains file-only");
       assert.equal(requests.at(-1).body.sort,"modified-descending");assert.equal(requests.at(-1).body.excludeHidden,true);
     }
     await assert.rejects(runtime.search({taskId:"recursive-no-path",query:"",scopePath:null,scopeKind:"directory-descendants"}),/invalid-request/);
