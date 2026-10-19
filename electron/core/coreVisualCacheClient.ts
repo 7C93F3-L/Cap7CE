@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { metadataWorkerPaths } from "../metadataExtraction/metadataWorkerPaths";
 import { maximumCacheFrameBytes, VisualCacheFrameReader } from "./visualCacheFrames";
+import { coreVisualExecutable } from "./coreVisualResources";
 
 const nodeSha256 = "3331e1ffe19874215472217c5e94f5a0c6d8e18c4ac7111d3937aa0ad5e9b4a5";
 interface Pending { bytes: number; resolve: (value: unknown) => void; reject: (error: Error) => void }
@@ -16,7 +17,7 @@ export class CoreVisualCacheClient {
   private pendingBytes = 0;
   private closed = false;
   constructor(private readonly root: string, private readonly executable = metadataWorkerPaths().executable,
-    private readonly worker = path.join(path.dirname(executable), "visual-cache.cjs")) {}
+    private readonly worker = path.join(path.dirname(executable), "visual-cache.cjs"), private readonly supervisor = coreVisualExecutable()) {}
   async request(method: string, args: unknown[] = []): Promise<unknown> {
     if (this.closed) throw unavailable();
     const child = this.child ?? await (this.starting ??= this.start().finally(() => { this.starting = undefined; }));
@@ -37,7 +38,7 @@ export class CoreVisualCacheClient {
     if (this.closed) throw unavailable();
     const env = { ...process.env };
     for (const key of Object.keys(env)) if (["NODE_OPTIONS", "NODE_PATH", "ELECTRON_RUN_AS_NODE"].includes(key.toUpperCase())) delete env[key];
-    const child = spawn(this.executable, ["--max-old-space-size=384", this.worker, this.root], {
+    const child = spawn(this.supervisor, ["--node-worker", "--parent-pid", String(process.pid), this.executable, this.worker, this.root], {
       windowsHide: true, shell: false, cwd: path.dirname(this.worker), env, stdio: ["pipe", "pipe", "pipe"]
     });
     this.child = child;

@@ -20,7 +20,7 @@
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "clean:electron": "node scripts/clean-electron-build.cjs",
-    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:metadata-worker",
+    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:core-visuals && npm run build:metadata-worker",
     "build": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
@@ -95,7 +95,7 @@
     "test:web-contents-zoom": "electron tests/web-contents-zoom.integration.cjs",
     "test:devtools-policy": "electron tests/devtools-policy.integration.cjs",
     "test:shell-mouse-polling": "node tests/shell-mouse-polling.integration.cjs",
-    "test:shell-thumbnail-probe": "electron tests/shell-thumbnail-probe.integration.cjs",
+    "test:shell-thumbnail-probe": "node scripts/core-visuals-boundary-check.cjs && node tests/core-visuals-native.integration.cjs && electron tests/core-shell-thumbnail.integration.cjs && electron tests/shell-thumbnail-probe.integration.cjs",
     "test:application-data-paths": "node tests/application-data-paths.integration.cjs",
     "test:ai-content-paths": "node tests/ai-content-paths.integration.cjs",
     "test:runtime-model-selection": "node tests/runtime-model-selection.integration.cjs",
@@ -160,6 +160,7 @@
     "build:core-file-operations": "node scripts/core-file-operations-build.cjs",
     "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs && node tests/core-folder-rename-workflow.integration.cjs && node tests/core-trash-client.integration.cjs",
     "build:metadata-worker": "node scripts/metadata-worker-build.cjs",
+    "build:core-visuals": "node scripts/core-visuals-build.cjs",
     "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs"
   },
   "build": {
@@ -292,6 +293,16 @@
           "Cap7CE.Core.FileOperations.Host.exe",
           "Cap7CE.Core.FileOperations.Native.dll"
         ]
+      },
+      {
+        "from": "native/artifacts/core-visuals/v1",
+        "to": "core-visuals/v1",
+        "filter": ["Cap7CE.Core.Visuals.exe"]
+      },
+      {
+        "from": "third_party/chromium-visuals",
+        "to": "licenses/chromium-visuals",
+        "filter": ["LICENSE"]
       },
       {
         "from": "artifacts/metadata-worker/v1",

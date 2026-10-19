@@ -12,10 +12,12 @@ const clients = [];
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'cap7ce-core-visual-cache-'));
   try {
     // The production bundle runs outside the repository with just the fixed Node and builtin modules.
+    const supervisor = path.join(root, 'Cap7CE.Core.Visuals.exe');
+    await fs.copyFile(path.resolve('native/artifacts/core-visuals/v1/Cap7CE.Core.Visuals.exe'), supervisor);
     const executable = path.join(root, 'node.exe'), worker = path.join(root, 'visual-cache.cjs'), profile = path.join(root, 'profile');
     await fs.copyFile(path.resolve('artifacts/metadata-worker/v1/node.exe'), executable);
     await fs.copyFile(path.resolve('artifacts/metadata-worker/v1/visual-cache.cjs'), worker);
-    const open = (file = worker) => { const client = new CoreVisualCacheClient(profile, executable, file); clients.push(client); return client; };
+    const open = (file = worker) => { const client = new CoreVisualCacheClient(profile, executable, file, supervisor); clients.push(client); return client; };
     let client = open(); const source = path.join(root, '源 图.png'); await fs.writeFile(source, png);
     const injected = path.join(root, 'injected.cjs'), marker = path.join(root, 'must-not-run');
     await fs.writeFile(injected, `require('fs').writeFileSync(${JSON.stringify(marker)},'bad')`);
@@ -78,7 +80,7 @@ const clients = [];
     const bad = path.join(root, 'bad.cjs'); await fs.writeFile(bad, "process.stdin.once('data',()=>process.stdout.write(Buffer.from([255,255,255,127])))");
     await assert.rejects(open(bad).request('initialize'));
     const wrongRuntime = path.join(root, 'wrong.exe'); await fs.writeFile(wrongRuntime, 'not-the-fixed-runtime');
-    const wrongClient = new CoreVisualCacheClient(profile, wrongRuntime, worker); clients.push(wrongClient);
+    const wrongClient = new CoreVisualCacheClient(profile, wrongRuntime, worker, supervisor); clients.push(wrongClient);
     await assert.rejects(wrongClient.request('initialize'), /core-cache-host-unavailable/);
     const crash = path.join(root, 'crash.cjs'), attempts = path.join(root, 'attempts');
     await fs.writeFile(crash, `process.stdin.once('data',()=>{require('fs').appendFileSync(${JSON.stringify(attempts)},'x');process.exit(1)});`);
@@ -87,7 +89,7 @@ const clients = [];
     const raw = spawn(executable, [worker, profile], { windowsHide: true, stdio: ['pipe','ignore','ignore'] });
     const exited = new Promise(resolve => raw.once('close', resolve)); raw.stdin.end(Buffer.from([255,255,255,127])); assert.notEqual(await exited, 0);
     const launcher = path.join(root, 'parent.cjs'), pidFile = path.join(root, 'child.json');
-    await fs.writeFile(launcher, `const {CoreVisualCacheClient}=require(${JSON.stringify(require.resolve('../dist-electron/core/coreVisualCacheClient.js'))});\nconst c=new CoreVisualCacheClient(${JSON.stringify(profile)},${JSON.stringify(executable)},${JSON.stringify(worker)});c.request('stats').then(()=>{require('fs').writeFileSync(${JSON.stringify(pidFile)},JSON.stringify({pid:c.child.pid}));setInterval(()=>{},10000)});`);
+    await fs.writeFile(launcher, `const {CoreVisualCacheClient}=require(${JSON.stringify(require.resolve('../dist-electron/core/coreVisualCacheClient.js'))});\nconst c=new CoreVisualCacheClient(${JSON.stringify(profile)},${JSON.stringify(executable)},${JSON.stringify(worker)},${JSON.stringify(supervisor)});c.request('stats').then(()=>{require('fs').writeFileSync(${JSON.stringify(pidFile)},JSON.stringify({pid:c.child.pid}));setInterval(()=>{},10000)});`);
     const parent = spawn(executable, [launcher], { windowsHide: true, stdio: 'ignore' });
     let childPid;
     try {

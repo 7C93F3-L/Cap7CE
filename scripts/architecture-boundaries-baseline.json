@@ -133,6 +133,8 @@
     "electron/core/visualCachePaths.ts": 150,
     "electron/core/visualCacheFrames.ts": 40,
     "electron/core/visualCacheImage.ts": 10,
+    "electron/core/coreShellThumbnail.ts": 40,
+    "electron/core/coreVisualResources.ts": 10,
     "src/renderer/directoryListActions.ts": 20,
     "src/renderer/explore/useRandomBrowse.ts": 40,
     "src/renderer/window-presentation/WindowPinButton.tsx": 50,
