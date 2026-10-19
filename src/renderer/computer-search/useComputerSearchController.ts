@@ -112,6 +112,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const timer = window.setInterval(() => void refreshStatus(), 1_500);
     return () => window.clearInterval(timer);
   }, [active, foreground, refreshStatus, status]);
+  useEffect(() => { if (active && foreground) void refreshStatus(); }, [active, foreground, refreshStatus]);
   useEffect(() => {
     if (!active || !foreground || persistent) return;
     const handleKeyDown = (event: KeyboardEvent) => {

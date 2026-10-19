@@ -187,7 +187,7 @@ const syncThumbnailOptimizationActivity = () => {
     && mainWindow
     && !mainWindow.isDestroyed()
     && mainWindow.isVisible()
-    && mainWindow.isFocused()
+    && !mainWindow.isMinimized()
     && activeShellState === "normal"
   );
   const foregroundWindowActive = isVisibleAndFocused(mainWindow)

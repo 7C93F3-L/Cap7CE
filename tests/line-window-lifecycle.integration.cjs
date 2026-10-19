@@ -29,6 +29,26 @@ assert.doesNotMatch(mainSource, /appTray\.on\("double-click"|openNormalFromTray/
 assert.match(mainSource, /const contentViewActive = Boolean\([\s\S]*?rendererContentViewActive[\s\S]*?setSkimShellThumbnailActivity\(contentViewActive\)/u);
 assert.match(mainSource, /searchScanSnapshotService\.setActive\(false\)/u);
 assert.match(mainSource, /const isVisibleAndFocused = \(window: BrowserWindow \| null\)[\s\S]*?window\.isVisible\(\) && window\.isFocused\(\)[\s\S]*?isVisibleAndFocused\(mainWindow\)[\s\S]*?settingsWindowController\?\.isVisibleAndFocused\(\)[\s\S]*?isVisibleAndFocused\(previewWindow\)[\s\S]*?setThumbnailOptimizationForegroundActive\(foregroundWindowActive\)/u);
+const activityBody = mainSource.slice(mainSource.indexOf('const syncThumbnailOptimizationActivity = () => {'), mainSource.indexOf('const cancelActiveSearchTasks = () => {'));
+const activity = { visible: true, focused: false, minimized: false, destroyed: false };
+const projection = {}, activityContext = {
+  rendererContentViewActive: true, activeShellState: 'normal', settingsWindowController: null, previewWindow: null,
+  mainWindow: { isVisible: () => activity.visible, isFocused: () => activity.focused, isMinimized: () => activity.minimized, isDestroyed: () => activity.destroyed },
+  isVisibleAndFocused: window => Boolean(window && !window.isDestroyed() && window.isVisible() && window.isFocused()),
+  setSkimShellThumbnailActivity: value => { projection.skim = value; }, setSearchShellVisualActivity: value => { projection.search = value; },
+  searchScanSnapshotService: { setActive() {} }, setThumbnailOptimizationForegroundActive: value => { projection.optimization = value; }, setVisualPropertyForegroundActive: value => { projection.properties = value; }
+};
+const readActivity = () => require('node:vm').runInNewContext(`(()=>{${activityBody};return syncThumbnailOptimizationActivity()})()`, activityContext);
+assert.equal(readActivity(), true, 'visible unfocused normal window admits viewport thumbnails');
+assert.deepEqual(projection, { skim: true, search: true, optimization: false, properties: false }, 'batch optimization still follows focus independently');
+activity.focused = true;assert.equal(readActivity(), true);assert.equal(projection.optimization, true);
+activity.focused = false;
+for (const patch of [{ visible: false }, { minimized: true }, { destroyed: true }]) {
+  Object.assign(activity, patch);assert.equal(readActivity(), false);
+  for (const key of Object.keys(patch)) activity[key] = key === 'visible';
+}
+for (const shell of ['micro', 'mini', 'line', 'standby', 'settings']) { activityContext.activeShellState = shell;assert.equal(readActivity(), false); }
+activityContext.activeShellState = 'normal';activityContext.rendererContentViewActive = false;assert.equal(readActivity(), false);
 assert.doesNotMatch(mainSource, /ThumbnailOptimizationDiscovery|scheduleDirectoryThumbnailOptimization|setThumbnailOptimizationEnabled\(preferences\.autoCacheOptimizationEnabled\)/u);
 
 assert.match(appSource, /const dismissTransientInteractionsForStandby = useCallback/u);

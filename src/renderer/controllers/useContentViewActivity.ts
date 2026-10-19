@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 const isDocumentVisible = () => document.visibilityState === "visible";
-const isDocumentActive = () => isDocumentVisible() && document.hasFocus();
-
-export const useContentViewActivity = (cancelSearch: () => void) => {
+export const useContentViewActivity = (cancelSearch: () => void, contentVisible?: boolean) => {
   const [activityConfirmed, setActivityConfirmed] = useState(false);
   const requestVersionRef = useRef(0);
 
   useEffect(() => {
     let disposed = false;
+    const isDocumentActive = () => isDocumentVisible() && (contentVisible ?? document.hasFocus());
 
     const syncContentActivity = () => {
       const active = isDocumentActive();
@@ -39,7 +38,7 @@ export const useContentViewActivity = (cancelSearch: () => void) => {
       window.removeEventListener("blur", syncContentActivity);
       document.removeEventListener("visibilitychange", syncContentActivity);
     };
-  }, [cancelSearch]);
+  }, [cancelSearch, contentVisible]);
 
   return activityConfirmed;
 };

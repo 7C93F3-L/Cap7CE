@@ -18,8 +18,8 @@ import { CatalogActivityProvider, CatalogActivityBar } from "./CatalogActivity";
 import BottomNoticeBar from "../feedback/BottomNoticeBar";
 import { CatalogCommandProvider, CatalogCommandNotice } from "../quick-commands/CatalogCommandProvider";
 
-export default function CatalogWorkspace({ foreground = true, interactionLocked = false, onOpenSettings, onActiveActions, ...appearance }: CatalogWorkspaceAppearance & {
-  foreground?: boolean; interactionLocked?: boolean; onOpenSettings: () => void;
+export default function CatalogWorkspace({ foreground = true, visible = foreground, interactionLocked = false, onOpenSettings, onActiveActions, ...appearance }: CatalogWorkspaceAppearance & {
+  foreground?: boolean; visible?: boolean; interactionLocked?: boolean; onOpenSettings: () => void;
   onActiveActions?: (actions: CatalogContextActions | null) => void;
 }) {
   const favorites = useFavoriteDirectories();
@@ -42,7 +42,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     report.current?.(actions ? { ...actions, cycleFavorite } : null);
   }, [cycleFavorite]);
   const active = workspace.contexts.find(context => context.id === workspace.activeId)!;
-  const ref = useInertElement<HTMLElement>(!foreground || interactionLocked);
+  const ref = useInertElement<HTMLElement>(!visible || interactionLocked);
   return <CatalogActivityProvider onShowDetails={layout.revealDetails}><CatalogCommandProvider favorites={favorites} open={workspace.open}><section ref={ref} className={`cap-catalog-workspace cap-catalog-design${layout.detailsVisible ? " has-details" : ""}`}
     style={{ "--cap-catalog-sidebar-width": `${layout.width}px`, "--cap-catalog-details-width": `${detailsLayout.width}px` } as CSSProperties}>
     <CatalogSidebar layout={layout} onSettings={onOpenSettings}
@@ -53,7 +53,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
     <div className="cap-catalog-main">
     <div className="cap-catalog-body">
     <div className="cap-catalog-contexts">{workspace.contexts.map(context => <CatalogContextView key={context.id}
-      context={context} selected={workspace.activeId === context.id} foreground={foreground && !interactionLocked && workspace.activeId === context.id}
+      context={context} selected={workspace.activeId === context.id} visible={visible && !interactionLocked && workspace.activeId === context.id} foreground={foreground && !interactionLocked && workspace.activeId === context.id}
       filterHost={layout.filtersVisible ? filterHost : null} detailsHost={layout.detailsVisible ? detailsHost : null} noticeHost={noticeHost}
       onShowDetails={layout.showDetails} onOpenBrowser={workspace.openBrowser} onLocation={workspace.location} onMetadata={() => { if (!layout.metadataOpen) layout.toggleMetadata(); }}
       metadataProgress={metadataProgress} favorites={favorites} onSearchAvailable={setSearchAvailable} onActiveActions={reportActions} {...appearance} />)}</div>
@@ -61,7 +61,7 @@ export default function CatalogWorkspace({ foreground = true, interactionLocked 
       {layout.restoreError && <BottomNoticeBar message="窗口大小未能恢复，请重试展开面板。" actions={<button type="button" aria-label="关闭窗口提醒" onClick={layout.dismissRestoreError}>×</button>} />}
       {layout.metadataError && <BottomNoticeBar message={t("stableSettings.metadataBuildOpenFailed")} actions={<button type="button" aria-label={t("common.close")} onClick={layout.dismissMetadataError}>×</button>} />}
       <div className="cap-catalog-query-notice-host" ref={setNoticeHost} />
-      <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={foreground && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>
+      <MetadataBuildSlot floating controlsOpen={layout.metadataOpen} onRequestControls={layout.toggleMetadata} enabled={searchAvailable} foreground={visible && !interactionLocked} onProgress={setMetadataProgress} /></div></div></div>
     <div className="cap-catalog-details-host" hidden={!layout.detailsVisible} ref={setDetailsHost}><CatalogDetailsResizer layout={detailsLayout} /></div>
     {favorites.notice && <FavoriteOperationNotice message={favorites.notice} onDismiss={favorites.dismissNotice} onRetry={() => void favorites.reload()} />}
     {workspace.openLimitReached && <div className="cap-catalog-limit" role="alert">{t("catalogWorkspace.limit")} <button type="button" onClick={workspace.dismissLimit}>{t("common.close")}</button></div>}

@@ -32,11 +32,12 @@ const stateKeys: Record<ComputerSearchState, TranslationKey> = {
   unavailable: "computerSearch.state.unavailable"
 };
 
-const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, onOpenDirectory, gridMode = "square", gridSize = 100, emptyHint, onSelectionChange, favorites }: {
+const ComputerSearchView = ({ controller, theme, appearanceColors, windowMaterial, onNativeDragStateChange, foreground = true, visualActive = foreground, onOpenDirectory, gridMode = "square", gridSize = 100, emptyHint, onSelectionChange, favorites }: {
   favorites?: FavoriteDirectoryControls;
   controller: ComputerSearchController;
   emptyHint?: string;
   foreground?: boolean;
+  visualActive?: boolean;
   onOpenDirectory?: (path: string) => void;
   gridMode?: CatalogGridMode;
   gridSize?: number;
@@ -119,7 +120,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     <CatalogVirtualGrid items={items} mode={gridMode} size={gridSize} rootRef={scrollContainerRef} renderItem={(item, style, onRatio) => {
       const selected = actions.selectedIds.has(item.authorizationId);
       const active = actions.activeId === item.authorizationId;
-      return <CatalogResultTile item={item} visual={{ taskId, scrollContainerRef, foreground, showName: true }}
+      return <CatalogResultTile item={item} visual={{ taskId, scrollContainerRef, foreground: visualActive, showName: true }}
         style={style} onRatio={onRatio}
         className="cap-computer-search-entry" selected={selected} active={active}
         type="button"

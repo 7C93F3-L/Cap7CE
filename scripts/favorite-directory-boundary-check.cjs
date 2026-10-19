@@ -132,6 +132,7 @@ const files = new Map([
   ["src/renderer/catalog-workspace/useCatalogToolbarState.ts", 45],
   ["src/renderer/catalog-workspace/CatalogVolumeGrid.tsx", 35],
   ["src/renderer/catalog-workspace/CatalogApplicationRoot.tsx", 45],
+  ["src/renderer/catalog-workspace/useCatalogWindowVisibility.ts", 25],
   ["src/renderer/catalog-workspace/useCatalogApplicationPreferences.ts", 55],
   ["src/renderer/catalog-workspace/useCatalogWindowCommands.ts", 60],
   ["src/renderer/components/svgIdNamespace.ts", 50],

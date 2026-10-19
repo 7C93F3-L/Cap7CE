@@ -9,14 +9,14 @@ const bytes = (size: number) => size >= 1024 ** 3 ? `${(size / 1024 ** 3).toFixe
   : size >= 1024 ** 2 ? `${(size / 1024 ** 2).toFixed(2)} MB` : `${(size / 1024).toFixed(1)} KB`;
 // Catalog timestamps retain NTFS FILETIME's 1601 epoch.
 const date = (ticks: number | null) => ticks ? new Date(ticks / 10000 - 11644473600000).toLocaleString() : "—";
-export default function CatalogDetails({ selection, path, count, foreground, searching = false, filterCount = 0 }: {
-  selection: CatalogSelection | null; path: string | null; count: number; foreground: boolean; searching?: boolean; filterCount?: number;
+export default function CatalogDetails({ selection, path, count, foreground, visualActive = foreground, searching = false, filterCount = 0 }: {
+  selection: CatalogSelection | null; path: string | null; count: number; foreground: boolean; visualActive?: boolean; searching?: boolean; filterCount?: number;
 }) {
   const ref = useRef<HTMLElement | null>(null), items = selection?.items ?? [], item = items.length === 1 ? items[0] : null;
-  if (item && !item.isDirectory && selection) return <CatalogFileInformation selection={selection} foreground={foreground} />;
+  if (item && !item.isDirectory && selection) return <CatalogFileInformation selection={selection} foreground={foreground} visualActive={visualActive} />;
   return <aside className="cap-catalog-details" ref={ref} aria-label="详细信息" data-selection-preserve="true">
     <header title={item?.name ?? path ?? "此电脑"}><strong>{item ? "文件夹" : items.length ? "多选信息" : searching ? "当前搜索" : path?.replace(/\\+$/, "").split("\\").pop() || "此电脑"}</strong></header>
-    {item && selection && <div className="cap-catalog-details-visual"><ComputerSearchResultVisual item={item} taskId={selection.taskId} foreground={foreground} scrollContainerRef={ref} /></div>}
+    {item && selection && <div className="cap-catalog-details-visual"><ComputerSearchResultVisual item={item} taskId={selection.taskId} foreground={visualActive} scrollContainerRef={ref} /></div>}
     <section className="cap-catalog-details-card">
     <strong className="cap-catalog-details-name">{item?.name ?? (items.length ? `已选择 ${items.length} 项` : path?.replace(/\\+$/, "").split("\\").pop() || "此电脑")}</strong>
     <dl>{item ? <><dt>大小</dt><dd>{item.isDirectory ? "未计算" : item.sizeBytes === null ? "—" : bytes(item.sizeBytes)}</dd>
