@@ -35,6 +35,10 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(cache.metafile.outputs).flatMap(item => item.imports).some(item =>
     !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected Core cache dependency.");
+  const modelHost = await build({ entryPoints: [path.join(root, "core/node/modelRuntime/host.ts")], outfile: path.join(output, "model-runtime.cjs"),
+    bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(modelHost.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !builtinModules.includes(item.path.replace(/^node:/, ""))))
+    throw new Error("Unexpected Core model runtime dependency.");
   for (const [source, name] of [["core/node/visualRendering/worker.ts", "visual-render.cjs"], ["electron/psdArtboardRenderWorker.ts", "psdArtboardRenderWorker.js"]]) {
     const renderer = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name),
       bundle: true, platform: "node", format: "cjs", target: "node24", external: ["sharp", "@napi-rs/canvas"],

@@ -85,7 +85,7 @@
     "test:cache-activity-ipc": "node tests/cache-activity-ipc.integration.cjs",
     "test:cache-clear-ipc": "node tests/cache-clear-ipc.integration.cjs",
     "test:ai-retirement": "electron tests/ai-retirement.integration.cjs",
-    "test:llama-runtime-idle": "node tests/llama-runtime-idle.integration.cjs",
+    "test:llama-runtime-idle": "node scripts/core-model-runtime-boundary-check.cjs && node tests/core-model-runtime-client.integration.cjs && node tests/core-model-runtime.integration.cjs && node tests/llama-runtime-idle.integration.cjs",
     "test:ai-query-evidence": "node tests/ai-query-evidence-store.integration.cjs",
     "test:manual-metadata-ipc": "node tests/manual-metadata-ipc.integration.cjs",
     "test:directory-management-ipc": "node tests/directory-management-ipc.integration.cjs",

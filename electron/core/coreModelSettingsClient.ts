@@ -1,8 +1,3 @@
-import { getAiContentPaths } from "../aiContentPaths";
-import { getActiveLanguage } from "../localization";
-import { requestVisualCacheOwner } from "../visualCacheService";
-// The Shell supplies its fixed content roots and language; Core discovers files and owns selection persistence.
-export const requestCoreModelSettings = <T>(operation: string, value: string | null = null): Promise<T> => {
- const {runtimeRoot,modelsRoot}=getAiContentPaths();
- return requestVisualCacheOwner<T>("modelSettings.invoke",[{runtimeRoot,modelsRoot,language:getActiveLanguage()},operation,value]);
-};
+import { coreModelHost } from "./coreModelHost";
+// Shell action forwarding only. Discovery, selection validation and persistence belong to Core.
+export const requestCoreModelSettings = <T>(operation:string,value:string|null=null):Promise<T>=>coreModelHost().settings<T>(operation,value);

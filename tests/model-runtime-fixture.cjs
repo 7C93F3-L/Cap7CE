@@ -1,0 +1,11 @@
+const fs=require('node:fs/promises'),path=require('node:path'),{spawnSync}=require('node:child_process');
+module.exports=async root=>{const build=path.join(root,'fake-build');await fs.mkdir(build,{recursive:true});
+ await fs.copyFile(path.join(__dirname,'fixtures/model-runtime/FakeLlama.cs'),path.join(build,'Program.cs'));
+ await fs.writeFile(path.join(build,'Directory.Build.props'),'<Project />');
+ await fs.writeFile(path.join(build,'FakeLlama.csproj'),'<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>Cap7CE.FakeLlama</AssemblyName><DebugType>None</DebugType></PropertyGroup></Project>');
+ const config=path.join(build,'NuGet.Config');await fs.writeFile(config,'<configuration><packageSources><clear /></packageSources></configuration>');
+ const result=spawnSync('dotnet',['build',path.join(build,'FakeLlama.csproj'),'--configuration','Release','--configfile',config,'--nologo'],{windowsHide:true,encoding:'utf8',timeout:60000,env:{...process.env,DOTNET_CLI_TELEMETRY_OPTOUT:'1',DOTNET_NOLOGO:'1'}});if(result.status!==0)throw Error(result.stdout+result.stderr);
+ const runtime=path.join(root,'llama.cpp','b-test');await fs.mkdir(runtime,{recursive:true});
+ for(const file of await fs.readdir(path.join(build,'bin/Release/net10.0')))await fs.copyFile(path.join(build,'bin/Release/net10.0',file),path.join(runtime,file==='Cap7CE.FakeLlama.exe'?'llama-server.exe':file));
+ return runtime;
+};

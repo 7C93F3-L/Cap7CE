@@ -2,9 +2,13 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/modelRuntime` 是独立模型进程领域，通过 model-runtime.cjs 与固定 Node/原生 Job 私有宿主运行，和视觉缓存的 Job 分离。api 固定上下文和动作白名单，owner 持有启动/停止代次、在退进程栅栏、健康监控与原有手动/AI空闲策略；startup 只组合已有配置与进程适配，attempt 只管理选中运行组件和有界输出，health 只直连 loopback 的两个固定 GET 路径，ports 只探测原端口范围，log 只写既有私有模型日志，state 只维护不可变快照和有界变化等待。模型配置与该宿主共用同一 modelSettings 所有者，启动/退进程期间拒绝切换配置；RPC 不接收任意可执行文件、命令行或测试时钟。
+
+Main 的 llamaRuntimeManager 缩为既有动作和应用退出适配，CoreModelRuntimeClient 只转发动作、拒绝旧代次响应并维护同步展示镜像；状态订阅复用同一私有 RPC 的一次被动等待，空闲无查询轮询。关闭不冷启动宿主，最多等待10秒后退休原生Job，异常不重放模型启动；Main/Node/模型子孙随原生Job生命周期清理。进程/状态共享契约在 src/shared/modelRuntimeTypes.d.ts，纯初始状态和AI空闲期限同源；普通模型资源和源文件不进入日志之外的写入路径。生成的模拟进程覆盖准备取消、重复启动、后续停止撤销排队启动、别名、端口重试、健康失败、嵌套AI使用、手动所有权、环境代理隔离和Job结束；不把这些测试当作实际GPU推理验收。
+
 `core/node/transport/server` 拥有独立 Node 服务端的单个继承管道会话：严格帧解析、单调请求编号、64在途/128MiB累计输入/64MiB帧预算、输出队列、并行响应和 EOF 收尾。领域入口提供 dispatch/close 与需要串行的方法列表，通用传输不依赖领域、文件系统、网络、定时器或进程启动。视觉 host 缩为根目录校验和装配，继续只串行 read/write/temporaryImage，错误代码和线格式不变；退出先调用并等待领域 close，再归还已接纳工作和输出。架构守门降低视觉入口上限至10行，并单独登记服务端；真实固定 Node 测试覆盖分片Unicode、乱序响应、指定串行、错误长度、EOF、重放、请求限额与破损/超限帧。
 
-`core/node/modelSettings` 在既有固定 Node/原生 Job/私有管道内负责本地运行组件和 GGUF 目录发现、数字版本排序、模型配对及原 JSON 选择配置。runtime/models 工厂分开持有各自配置，pairing 为纯配对策略，selectionFile 只读写两个原有 JSON（1MiB预算、独占自建暂存、刷盘和原子替换），owner 串行化请求并固定首次接入的内容目录；被动读取不创建配置、加载模型或启动外部程序。共享契约位于 src/shared/modelSettingsTypes.d.ts，语言沿当前纯翻译资源和明确语言参数复用。Main 的两个 Store 仅转发动作，由 coreModelSettingsClient 投影原有内容目录和语言，不进行模型文件扫描或配置写入。进程生命周期暂由原 llamaRuntimeManager 持有，未据此声称模型运行管理已迁移。独立领域及实际固定 Node/原生 Job 测试只使用生成占位文件，守护配对/排序/清空/重选、损坏配置保留、路径上下文不被后续请求替换和素材不变。
+`core/node/modelSettings` 在独立模型宿主的固定 Node/原生 Job/私有管道内负责本地运行组件和 GGUF 目录发现、数字版本排序、模型配对及原 JSON 选择配置。runtime/models 工厂分开持有各自配置，pairing 为纯配对策略，selectionFile 只读写两个原有 JSON（1MiB预算、独占自建暂存、刷盘和原子替换），owner 串行化请求并固定首次接入的内容目录；被动读取不创建配置、加载模型或启动外部程序。共享契约位于 src/shared/modelSettingsTypes.d.ts，语言沿当前纯翻译资源和明确语言参数复用。Main 的两个 Store 仅转发动作，由 coreModelSettingsClient 投影原有内容目录和语言，不进行模型文件扫描或配置写入。进程生命周期由同宿主的 modelRuntime 域持有，原 llamaRuntimeManager 仅为 Shell 适配。独立领域及实际固定 Node/原生 Job 测试只使用生成占位文件，守护配对/排序/清空/重选、损坏配置保留、路径上下文不被后续请求替换和素材不变。
 
 `Core.Host/MetadataScheduling` 增加单次建库循环：`MetadataBuildSweep` 拥有一次显式执行、取消及失败恢复；`MetadataSweepDiscovery` 负责有界 Catalog 分页、队列统计与离线等待；`MetadataSweepProgress` 提供不可变状态，`MetadataBuildEstimate` 保留原有每类64样本和未知估时规则。所有实际读取与事实发布经同进程 `IMetadataBuildSession`，由原 `FileFactHostSession` 实现；本层无文件、SQLite、Reader、网络或进程启动权限。增量每轮最多64批，空闲不轮询；暂停等待执行归还。`metadataBuildSpecifications` 与纯版本模块是唯一默认提取器表，旧导出保持兼容；构建从该表生成 extractors.json，Core 严格验证版本、九类完整性、格式及64KiB预算，缺失/无效时拒绝执行，不在C#复制默认格式或版本。新模块清单、体量和权限由 core-metadata-scheduling-boundary-check 守护；生产授权、目录借用和恢复由同域的 GlobalBuildOwner/Coordinator 接管，Main 使用薄代理。
 
@@ -16,7 +20,7 @@
 
 `core/node/localKeywords` 拥有单图/多图流程实际的本地模型请求及源指纹读取。固定保留原提示词、Qwen thinking兼容grammar、512tokens、temperature0.2与关键词规范化；只接受精确的http://127.0.0.1:port连接、JPEG data URL及最长120秒期限。HTTP使用独立无proxyEnv的Agent、字面量loopback主机和固定/v1/chat/completions路径，不使用全局代理或跟随重定向；响应按字节限制1MiB，最多两个请求，每次结束/取消销毁连接，Core EOF取消活动任务，不重放。图像只在内存，不发布AI输入缓存；源指纹沿原bigint设备/文件ID/尺寸/创建及修改纳秒版本，拒绝文件身份改变，读取不写用户文件或事实库。
 
-`catalogAutoKeywordModel`与`catalogAutoKeywordSource`缩为私有Core请求适配；`coreLocalKeywordsClient`保留Shell的AbortSignal和120秒界面期限，早取消不启动请求，迟到结果不保存，取消只发给当前运行中的宿主。共享连接/源DTO在src/shared/localKeywordTypes.d.ts，通用私有request/cancel形状在coreNodeTransport.d.ts；纯grammar/提示词/输出解析由localKeywordPolicy复用，不加载Electron。模型发现和选择配置已由独立 Core modelSettings 域接管，进程启动管理、任务选择/授权投影、关键词合并及冲突重试仍复用原入口；事实写入继续经既有Core Catalog授权，未据此迁移模型安装管理或建库恢复调度。复制到仓库外的固定Node/空PATH、实际本地HTTP测试服务、代理陷阱/重定向零命中、取消/超时/坏或过大响应/断流恢复、源版本与临时图片不落盘回归守护此域，不在正式素材上自动识别。
+`catalogAutoKeywordModel`与`catalogAutoKeywordSource`缩为私有Core请求适配；`coreLocalKeywordsClient`保留Shell的AbortSignal和120秒界面期限，早取消不启动请求，迟到结果不保存，取消只发给当前运行中的宿主。共享连接/源DTO在src/shared/localKeywordTypes.d.ts，通用私有request/cancel形状在coreNodeTransport.d.ts；纯grammar/提示词/输出解析由localKeywordPolicy复用，不加载Electron。模型发现和选择配置已由独立 Core modelSettings 域接管，模型进程管理已由独立模型域接管，任务选择/授权投影、关键词合并及冲突重试仍复用原入口；事实写入继续经既有Core Catalog授权，未据此迁移模型安装管理或建库恢复调度。复制到仓库外的固定Node/空PATH、实际本地HTTP测试服务、代理陷阱/重定向零命中、取消/超时/坏或过大响应/断流恢复、源版本与临时图片不落盘回归守护此域，不在正式素材上自动识别。
 
 `core/node/interactiveMetadata` 接管右栏和空格预览的临时嵌入信息读取，复用独立普通 Node/native Job 宿主，不依赖 Electron、Catalog 或旧 SQLite。只允许两个活动线程及两个待处理请求，Worker 独立256MiB堆/4MiB栈、8秒期限、单次结果后真正终止，stdout/stderr独立排空，不向宿主管道写解析诊断。队列取消不打开源，活动取消/源句柄释放等待线程终止；Core EOF关闭本域，实际父进程结束仍由原生Job保护。源前后以bigint设备/文件ID、大小及纳秒时间校验，原同路径文件被替换或改变时丢弃结果；不写索引、缓存、授权或用户文件。格式解析及高价值信息选择策略复用原实现，资源独立合并为preview-metadata.cjs，含相应依赖许可证。全新的临时读取不会因Core进程替换自动重放。
 
@@ -612,7 +616,7 @@ P3.6 不把 Core 路径直接变成通用文件能力。`computerSearchRuntime.t
 | `vectorDocumentRenderService.ts` | AI / EPS 兼容预览数据处理 |
 | `cdrRenderService.ts` | 现代 CDR 内置预览图读取 |
 | `llamaRuntimeStore.ts` | Core 运行组件配置的薄适配 |
-| `llamaRuntimeManager.ts` / `llamaRuntimeIdleController.ts` | llama-server 进程生命周期、健康检查、手动 / AI 启动所有权与 AI 空闲回收策略 |
+| `llamaRuntimeManager.ts` / `llamaRuntimeIdleController.ts` | Shell 模型动作/退出适配与 Core 复用的纯空闲策略；实际进程生命周期属于 modelRuntime |
 | `ggufModelStore.ts` | GGUF 主模型与 mmproj 扫描、配对和选择 |
 | `llamaVisionRuntime.ts` | 按需 AI 能力共用的视觉运行时连接入口；复用已就绪服务，否则按现有配置启动并验证视觉模型 |
 | `aiQueryEvidenceStore.ts` | 每文件正向查询确认词的紧凑存储、去重上限、源 / 模型 / 提示词版本失效与级联删除；Beta 准确性测试期间持久化关闭，旧查询标签不参与普通搜索 |

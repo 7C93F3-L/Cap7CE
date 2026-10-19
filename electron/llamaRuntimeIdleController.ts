@@ -1,4 +1,5 @@
-export type LlamaRuntimeStartSource = "manual" | "ai";
+import type { LlamaRuntimeStartSource } from "../src/shared/modelRuntimeTypes";
+export type { LlamaRuntimeStartSource } from "../src/shared/modelRuntimeTypes";
 
 type IdleTimer = ReturnType<typeof setTimeout>;
 

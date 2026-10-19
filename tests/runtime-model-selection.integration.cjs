@@ -86,7 +86,7 @@ const path = require("node:path");
       invalidNonEmptySelectionsStillRejected: true
     }));
   } finally {
-    require("../dist-electron/visualCacheService.js").closeVisualCacheOwner();
+    require("../dist-electron/core/coreModelHost.js").closeCoreModelHost();
     Module._load = originalLoad;
     await fs.rm(temporaryRoot, { recursive: true, force: true });
   }

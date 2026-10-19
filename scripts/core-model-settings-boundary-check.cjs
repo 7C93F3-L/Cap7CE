@@ -15,7 +15,7 @@ for(const file of ['electron/llamaRuntimeStore.ts','electron/ggufModelStore.ts']
  const s=read(file);assert.ok(s.split(/\r?\n/).length<=10);assert.match(s,/requestCoreModelSettings/);assert.doesNotMatch(s,/node:fs|readdir|JSON\.|writeFile|\.stat\(/);
 }
 const owner=read(dir+'/owner.ts');for(const a of ['serial.then','context.runtimeRoot!==next.runtimeRoot','setActiveLanguage(next.language)'])assert.ok(owner.includes(a));
-assert.match(read('core/node/visualCache/dispatch.ts'),/modelSettings\.dispatch\(args\)/);
+assert.match(read('core/node/modelRuntime/api.ts'),/settings\.dispatch\(args\)/);
 
 const io=read(dir+'/selectionFile.ts');for(const a of ['maximumBytes=1024*1024','fs.open(stage,"wx")','await file.sync()','if(created)','await fs.rename(stage,target)'])assert.ok(io.includes(a));
 

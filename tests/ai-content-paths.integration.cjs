@@ -63,7 +63,9 @@ const path = require("node:path");
     const modelStoreSource = await fs.readFile(path.join(repositoryRoot, "electron", "ggufModelStore.ts"), "utf8");
     const pathModuleSource = await fs.readFile(path.join(repositoryRoot, "electron", "aiContentPaths.ts"), "utf8");
     const clientSource = await fs.readFile(path.join(repositoryRoot, "electron/core/coreModelSettingsClient.ts"), "utf8");
-    assert.match(clientSource, /getAiContentPaths\(\)/);
+    const hostSource = await fs.readFile(path.join(repositoryRoot, "electron/core/coreModelHost.ts"), "utf8");
+    assert.match(clientSource, /coreModelHost\(\)\.settings/);
+    assert.match(hostSource, /getAiContentPaths\(\)/);
     assert.match(runtimeStoreSource, /requestCoreModelSettings/);
     assert.match(modelStoreSource, /requestCoreModelSettings/);
     for (const source of [runtimeStoreSource, modelStoreSource]) {
