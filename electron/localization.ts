@@ -1,6 +1,7 @@
 import { enUS } from "./locales/en-US";
 
 export const zhCN = {
+  "preview.officeInUse": "Office 已在使用，暂无法转换预览。",
   "metadataDirectory.action": "获取/刷新元数据",
   "metadataDirectory.queued": "目录已加入元数据队列，包含子文件夹；可在任务区查看进度。",
   "metadataDirectory.failed": "目录元数据任务未能加入，请确认目录可访问后重试。",

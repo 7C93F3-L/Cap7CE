@@ -1,6 +1,7 @@
 import { defineLocale } from "./defineLocale";
 
 export const enUS = defineLocale({
+  "preview.officeInUse": "Office is already in use. Preview conversion is unavailable.",
   "metadataDirectory.action": "Get / refresh metadata",
   "metadataDirectory.queued": "Folder queued, including subfolders. Progress is available in the task panel.",
   "metadataDirectory.failed": "Could not queue the folder. Check that it is accessible and try again.",

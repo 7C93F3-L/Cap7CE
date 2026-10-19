@@ -2,9 +2,11 @@
 
 ## 当前实施状态（2026-10-19）
 
+Office 转换的 Windows 适配在打开源文件前记录既有进程、读取 COM HWND 对应进程并检查当前文档数量；既有或已有文档的实例不接入 Job、不改应用选项、不调用 Quit。新实例在源文件打开前接入 PowerShell 自持的 KILL_ON_JOB_CLOSE Job，Excel/PowerPoint 均设置 AutomationSecurity=3；正常退出、取消或 PowerShell 终止释放该 Job。Node 只停止已登记的 PowerShell 子进程，不再用裸 PID 终止外部程序；实例拒绝错误在 Shell 本地化。officeJob 仅包含固定 Win32 ABI 与句柄生命周期，不提供任意 PID 的生产消息入口。真实 PowerShell/Win32 测试使用生成的空闲 Node 进程验证既有 PID 不触碰及持有者被终止后的回收，并解析实际生产脚本；实际 Office 版本、用户同时操作及 WPS 兼容仍需人工验收，不由模拟测试推断。
+
 `core/node/officePreview` 单独拥有 Office 转换与临时 PDF 缓存：cache 工厂沿用 temp/Cap7CE/office-preview/cache、SHA缓存键、使用中 lease、清理代次与串行发布，sessions 管理准备/转换/缓存命中的会话与取消，conversion 保留普通 PowerShell/COM 适配，pdfHeader 只验证5字节PDF头，api 只装配固定动作和有界在途任务。普通 office-preview.cjs 与固定 Node/原生 Job 运行；PowerShell子进程复用已有预览生命周期登记和释放屏障，转换会话目录位于本 Job 工作区，清理先核对自建目录。退出等待转换、目录移除和缓存队列，保存前的清理代次变化拒绝迟到回填。
 
-Main 的 OfficeService/OfficeCache 只投影原预览及统计/清理/使用中保留动作，根目录由纯 Shell 路径模块确定，RPC 不接受任意转换器、命令行或发布目标。预览与 Office 的薄宿主统一复用 corePreviewNodeSession 装配（各自独立Job），会话代次与同步关闭复用 CoreProviderPreviewClient；不复制进程或私有协议实现。生产缓存/lease真实RPC测试和注入模拟转换器的独立Core测试覆盖准备取消、转换取消、缓存命中、在用保护、清理期间旧发布、输出验证及父进程退出；模拟转换器只在测试编译入口注入，不能视为实际 Excel/PowerPoint 运行验收。Office COM 的外部进程生命周期仍沿原适配，不将本轮纯迁移称作 Office 程序完整回归。
+Main 的 OfficeService/OfficeCache 只投影原预览及统计/清理/使用中保留动作，根目录由纯 Shell 路径模块确定，RPC 不接受任意转换器、命令行或发布目标。预览与 Office 的薄宿主统一复用 corePreviewNodeSession 装配（各自独立Job），会话代次与同步关闭复用 CoreProviderPreviewClient；不复制进程或私有协议实现。生产缓存/lease真实RPC测试和注入模拟转换器的独立Core测试覆盖准备取消、转换取消、缓存命中、在用保护、清理期间旧发布、输出验证及父进程退出；模拟转换器只在测试编译入口注入，不能视为实际 Excel/PowerPoint 运行验收。Office COM 的独立实例保护与句柄回收由 Windows 适配层负责，不将模拟回归称作 Office 程序完整回归。
 
 `core/node/providerPreview` 持有非 Office 的预览解析执行，按 PDF、字体、EPUB、MOBI、压缩包分别保留原控制器与解析器，api 仅装配固定动作和有界请求，lifecycle 负责实际线程/子进程释放屏障。独立 provider-preview.cjs 复用固定 Node、CoreVisualCacheClient/原生 Job 与通用私有管道，不依赖 Electron，也不与模型或视觉缓存共享进程树。PDF 保留1600边长、16MP限制、顺序渲染、5页缓存和实际源/授权源分离；字体/书籍仍使用独立线程，压缩包只列举原内容，MOBI 临时文件位于该 Job 自有工作区。解析线程输出隔离并限制512MiB heap，释放失败交由现有 Job 退休链路收尾。
 

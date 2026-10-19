@@ -1,3 +1,4 @@
+import { officeJobSource } from "./officeJob";
 import { spawnPreviewWorker as spawn } from "../providerPreview/lifecycle";
 import type { OfficePreviewKind } from "../../../src/shared/officePreviewTypes";
 export type OfficeConversionRunner = (
@@ -8,58 +9,53 @@ export type OfficeConversionRunner = (
 ) => Promise<void>;
 
 const officeConversionTimeoutMs = 30_000;
-const conversionScript = String.raw`
+export const conversionScript = String.raw`
 $ErrorActionPreference = "Stop"
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public static class Cap7CEOfficeProcess {
-  [DllImport("user32.dll")]
-  public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-}
+Add-Type -TypeDefinition @"
+${officeJobSource}
 "@
-
-function Publish-OfficeProcessId([object]$application) {
-  [uint32]$processId = 0
-  $windowHandle = [IntPtr]::new([int64]$application.Hwnd)
-  [void][Cap7CEOfficeProcess]::GetWindowThreadProcessId($windowHandle, [ref]$processId)
-  if ($processId -gt 0) {
-    [Console]::Out.WriteLine("CAP7CE_OFFICE_PID=" + $processId)
-    [Console]::Out.Flush()
-  }
+function Get-OfficeProcessId([object]$application) {
+  [uint32]$officeProcessId = 0
+  [void][Cap7CEOfficeProcess]::GetWindowThreadProcessId([IntPtr]::new([int64]$application.Hwnd), [ref]$officeProcessId)
+  return $officeProcessId
 }
-
 $application = $null
 $document = $null
+$ownsApplication = $false
+$officeJob = New-Object Cap7CEOfficeProcess
 try {
+  [uint32[]]$existingProcesses = @(Get-Process | ForEach-Object { [uint32]$_.Id })
+  if ($env:CAP7CE_OFFICE_KIND -eq "excel") { $application = New-Object -ComObject Excel.Application }
+  elseif ($env:CAP7CE_OFFICE_KIND -eq "powerpoint") { $application = New-Object -ComObject PowerPoint.Application }
+  else { throw "Unsupported Office preview kind." }
+  [uint32]$officeProcessId = Get-OfficeProcessId $application
+  $hasDocuments = if ($env:CAP7CE_OFFICE_KIND -eq "excel") { $application.Workbooks.Count -gt 0 } else { $application.Presentations.Count -gt 0 }
+  if ([Cap7CEOfficeProcess]::IsExisting($officeProcessId, $existingProcesses) -or $hasDocuments) { throw "CAP7CE_OFFICE_EXISTING_INSTANCE" }
+  $ownsApplication = $true
+  $officeJob.Attach($officeProcessId)
+  $application.AutomationSecurity = 3
   if ($env:CAP7CE_OFFICE_KIND -eq "excel") {
-    $application = New-Object -ComObject Excel.Application
     $application.Visible = $false
     $application.DisplayAlerts = $false
     $application.EnableEvents = $false
     $application.AskToUpdateLinks = $false
-    $application.AutomationSecurity = 3
-    Publish-OfficeProcessId $application
     $document = $application.Workbooks.Open($env:CAP7CE_OFFICE_SOURCE, 0, $true)
     $document.ExportAsFixedFormat(0, $env:CAP7CE_OFFICE_OUTPUT)
-  } elseif ($env:CAP7CE_OFFICE_KIND -eq "powerpoint") {
-    $application = New-Object -ComObject PowerPoint.Application
+  } else {
     $application.DisplayAlerts = 1
-    Publish-OfficeProcessId $application
     $document = $application.Presentations.Open($env:CAP7CE_OFFICE_SOURCE, $true, $true, $false)
     $document.SaveAs($env:CAP7CE_OFFICE_OUTPUT, 32)
-  } else {
-    throw "Unsupported Office preview kind."
   }
 } finally {
   if ($null -ne $document) {
-    try { $document.Close($false) } catch {}
+    try { if ($env:CAP7CE_OFFICE_KIND -eq "excel") { $document.Close($false) } else { $document.Close() } } catch {}
     try { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($document) } catch {}
   }
   if ($null -ne $application) {
-    try { $application.Quit() } catch {}
+    if ($ownsApplication) { try { $application.Quit() } catch {} }
     try { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($application) } catch {}
   }
+  $officeJob.Dispose()
   [GC]::Collect()
   [GC]::WaitForPendingFinalizers()
 }
@@ -70,15 +66,6 @@ const encodedConversionScript = Buffer.from(conversionScript, "utf16le").toStrin
 export const createCancelledError = () => Object.assign(new Error("Office preview session was cancelled."), {
   code: "ECANCELED"
 });
-
-const terminateOwnedOfficeProcess = (processId: number | null) => {
-  if (!processId || !Number.isInteger(processId) || processId <= 0) return;
-  try {
-    process.kill(processId);
-  } catch {
-    // The Office process may already have exited normally.
-  }
-};
 
 export const runPowerShellConversion: OfficeConversionRunner = (sourcePath, outputPath, kind, signal) => (
   new Promise<void>((resolve, reject) => {
@@ -102,6 +89,7 @@ export const runPowerShellConversion: OfficeConversionRunner = (sourcePath, outp
     ], {
       env: {
         ...process.env,
+        ...(process.env.CAP7CE_CORE_SCRATCH_ROOT ? { TEMP: process.env.CAP7CE_CORE_SCRATCH_ROOT, TMP: process.env.CAP7CE_CORE_SCRATCH_ROOT } : {}),
         CAP7CE_OFFICE_SOURCE: sourcePath,
         CAP7CE_OFFICE_OUTPUT: outputPath,
         CAP7CE_OFFICE_KIND: kind
@@ -109,8 +97,6 @@ export const runPowerShellConversion: OfficeConversionRunner = (sourcePath, outp
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true
     });
-    let officeProcessId: number | null = null;
-    let stdout = "";
     let stderr = "";
     let settled = false;
 
@@ -124,7 +110,6 @@ export const runPowerShellConversion: OfficeConversionRunner = (sourcePath, outp
     };
     const terminateOwnedProcesses = () => {
       child.kill();
-      terminateOwnedOfficeProcess(officeProcessId);
     };
     const handleAbort = () => {
       terminateOwnedProcesses();
@@ -136,13 +121,8 @@ export const runPowerShellConversion: OfficeConversionRunner = (sourcePath, outp
     }, officeConversionTimeoutMs);
 
     signal.addEventListener("abort", handleAbort, { once: true });
-    child.stdout!.setEncoding("utf8");
+    child.stdout!.resume();
     child.stderr!.setEncoding("utf8");
-    child.stdout!.on("data", (chunk: string) => {
-      stdout = (stdout + chunk).slice(-4096);
-      const match = /CAP7CE_OFFICE_PID=(\d+)/.exec(stdout);
-      if (match) officeProcessId = Number(match[1]);
-    });
     child.stderr!.on("data", (chunk: string) => {
       stderr = (stderr + chunk).slice(-4096);
     });
@@ -153,7 +133,7 @@ export const runPowerShellConversion: OfficeConversionRunner = (sourcePath, outp
       } else if (code === 0) {
         finish();
       } else {
-        finish(new Error(stderr.trim() || `Office preview conversion failed with code ${code}.`));
+        finish(Object.assign(new Error(stderr.trim() || `Office preview conversion failed with code ${code}.`), stderr.includes("CAP7CE_OFFICE_EXISTING_INSTANCE") ? { code: "EOFFICEINUSE" } : {}));
       }
     });
   })
