@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {app,BrowserWindow,ipcMain}=require('electron'),esbuild=require('esbuild');
+app.on('window-all-closed',()=>{}); // Cleanup must finish before reporting the assertion exit code.
 const repo=path.resolve(__dirname,'..'),root=fs.mkdtempSync(path.join(os.tmpdir(),'Cap7CE-catalog-commands-'));app.setPath('userData',root+'-profile');
 let win,queries=[],themes=[],clears=0,tokens=0,failTheme=false,failView=false,holdClear,releaseClear;
 let preferences={commandEnabled:true},viewPreferences={};
@@ -41,6 +42,7 @@ app.whenReady().then(async()=>{try{
  const submit=()=>run('document.querySelector(".cap-catalog-directory-toolbar").requestSubmit()');
  const escape=()=>run(`document.querySelector('${input}').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}))`);
  const edit=async()=>{await run('document.querySelector(".cap-catalog-address-edit").click()');await ready(`document.querySelector('${input}')`)};
+ const waitCommandEnabled=async value=>{for(let n=0;n<200;n++){if(preferences.commandEnabled===value)return;await sleep(20)}throw Error('Command preference was not persisted')};
  const notice=message=>ready(`document.querySelector('.cap-catalog-command-notice')?.textContent.includes(${JSON.stringify(message)})`);
  await win.loadFile(path.join(root,'index.html'));await ready('probe.items.length===1');await sleep(100);const initialCount=queries.length;
  await edit();await fill('ui:dark');assert.equal(queries.length,initialCount);assert.equal(themes.length,0);
@@ -64,9 +66,9 @@ app.whenReady().then(async()=>{try{
  await edit();failView=true;await fill('see:hidden on');await submit();await notice('执行失败');assert.equal(await run(`document.querySelector('${input}').value`),'see:hidden on');failView=false;
  await escape();await edit();await fill('cache:clear');await submit();await notice('输入 y / n');holdClear=new Promise(resolve=>{releaseClear=resolve});await fill('y');await submit();await ready(`document.querySelector('${input}').readOnly`);
  await submit();assert.equal(clears,2);releaseClear();holdClear=null;await ready('document.querySelector(".cap-catalog-breadcrumb")');assert.equal(tokens,2,'repeated Enter cannot duplicate a running command');
- await run('document.querySelector(".cap-catalog-address-toggle").click()');await fill('cmd:off');await submit();await notice('指令已执行');assert.equal(preferences.commandEnabled,false);
+ await run('document.querySelector(".cap-catalog-address-toggle").click()');await fill('cmd:off');await submit();await notice('指令已执行');await waitCommandEnabled(false);assert.equal(preferences.commandEnabled,false);
  await fill('ui:dark');await submit();await ready('probe.query==="ui:dark"');assert.equal(themes.length,2,'disabled parser leaves command-looking text as ordinary search');
- await fill('cmd:on');await submit();await notice('指令已执行');assert.equal(preferences.commandEnabled,true);
+ await fill('cmd:on');await submit();await notice('指令已执行');await waitCommandEnabled(true);assert.equal(preferences.commandEnabled,true);
  await fill('y');await submit();await ready('probe.query==="y"');assert.equal(clears,2,'y is a search outside confirmation');
  await fill('see:root');await submit();await ready('probe.path===null');await notice('指令已执行');
  await run('probe.help()');await ready('document.querySelector(".cap-settings-quick-commands-panel")');
