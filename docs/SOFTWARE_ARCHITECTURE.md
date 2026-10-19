@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`Core.Host/MetadataBuild` 增加被动配置存储底座：`MetadataBuildPreferencesFile` 兼容原 metadata-build.json v2，`MetadataDirectoryQueueFile` 兼容 metadata-directory-build.json v1，均由调用方明确提供应用配置目录。Schema 保留未知字段，沿用授权意图、卷顺序、文件夹身份与路径校验；无效全局配置返回空，非法目录队列报告有界 operation/code，原文件均保留。`MetadataStateFile` 独占每个配置的串行读写、1MiB预算、独占临时文件、刷盘与原子替换，只删除自己创建的阶段文件。模块不依赖 Catalog、Reader、解析器或网络，不打开素材；体量、文件清单与权限由 core-metadata-state-boundary-check 守护。本轮尚未接入生产调度和启动恢复，现有 Main 控制器继续工作；读取或保存配置均不授予新的提取权限。
+
 独立Node资源使用两个明确的extraResources复制根：metadata-worker/v1及其node_modules，绕过打包器对复制根下node_modules的默认排除。`metadata-runtime-packaged-check`在pack/dist:installer之后对照生成源的完整文件集合和逐文件摘要，另核对官方Node固定字节；不能拿原生成目录自证已打包。真实electron-builder matcher/copy回归覆盖依赖漏拷、文件损坏与假目标，实际包验证应完整复制到仓库外，阻止父目录node_modules形成隐式运行回退。ASAR、独立解析库/原生二进制和许可证均按对应资源保留；构建校验不修改用户缓存或索引。
 
 `CoreVisualCacheClient` 只负责固定Node校验、环境清理、原生Job宿主的启动/退休、旧进程退出栅栏与被动源释放；`CoreNodeRpcSession` 负责单个私有管道的请求映射、分片帧、在途/字节预算、远端错误与管道失效，既有id序列仍由生命周期owner产生。线格式、64在途/128MiB累计输入/64MiB帧、引用/解除引用及失败不重放规则不变；本轮不增加事件或第二个Core客户端，不迁移建库流程。自动边界降低原客户端体量上限，并用乱序/逐字节Unicode响应、配额、坏/重复/未知帧、EPIPE及真实原生缓存/元数据/AI生命周期回归验证分离；为下一轮控制器所有权迁移保留明确传输职责，避免继续扩张单一客户端。

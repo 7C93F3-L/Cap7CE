@@ -61,7 +61,7 @@ const walk = (directory) => fs.readdirSync(directory, { withFileTypes: true }).f
   return entry.isDirectory() ? walk(entryPath) : [entryPath];
 });
 const coreSourceFiles = walk(path.join(coreRoot, "src")).filter((filePath) => filePath.endsWith(".cs"));
-for (const name of ["core-file-facts-boundary-check", "core-catalog-maintenance-boundary-check", "core-random-browse-boundary-check", "core-directory-entry-boundary-check", "core-storage-lifecycle-boundary-check"]) require(`./${name}.cjs`)(root, coreSourceFiles, failures);
+for (const name of ["core-file-facts-boundary-check", "core-catalog-maintenance-boundary-check", "core-random-browse-boundary-check", "core-directory-entry-boundary-check", "core-storage-lifecycle-boundary-check", "core-metadata-state-boundary-check"]) require(`./${name}.cjs`)(root, coreSourceFiles, failures);
 const forbiddenP11Source = [
   [/(?:^|\W)System\.Net(?:\W|$)|HttpClient|Socket\b/, "network API"],
   [/Microsoft\.Data\.Sqlite|System\.Data\.SQLite/, "catalog database implementation"],
@@ -93,7 +93,7 @@ for (const filePath of coreSourceFiles) {
   const allowedCapabilities = isCatalogSource ? ["catalog database implementation", "real file-system access"]
     : isReaderHostSource ? ["package-owned Windows service implementation", "NTFS Reader implementation", "real file-system access"]
     : isVolumeProbeSource || isCatalogStorage ? ["catalog database implementation", "real file-system access"]
-    : isProductCoreRuntime || isControllerProbeCatalog || require("./core-configuration-boundary-check.cjs").ownsStorage(relativePath) || require("./core-file-operations-boundary-check.cjs").ownsStorage(relativePath) ? ["real file-system access"]
+    : isProductCoreRuntime || isControllerProbeCatalog || require("./core-configuration-boundary-check.cjs").ownsStorage(relativePath) || require("./core-file-operations-boundary-check.cjs").ownsStorage(relativePath) || require("./core-metadata-state-boundary-check.cjs").ownsStorage(relativePath) ? ["real file-system access"]
     : isRealValidationSource ? ["catalog database implementation", "real file-system access"]
     : isReaderV2SessionSource ? ["package-owned Windows service implementation"]
     : isReaderLifecycleSource ? ["package-owned Windows service implementation"]
