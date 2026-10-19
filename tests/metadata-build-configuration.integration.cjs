@@ -10,11 +10,10 @@ const catalog = { volumes: [{ volumeId: id, displayName: 'X:', selected: true, q
  try {
   const store = createMetadataBuildPreferenceStore(path.join(root, 'metadata-build.json'));
   let configured = 0, workers = 0, changes = 0;
-  const protocol = { async configure() { configured++; }, async pause() {}, async startChanges() { changes++; },
+  const protocol = { async execute() { workers++; throw Error('Unexpected content read'); }, async configure() { configured++; }, async pause() {}, async startChanges() { changes++; },
    async discover() { return { state: 1, discovered: 0, nextCursor: null }; }, async lease() { return { state: 1, ticket: null }; },
    async status() { return { state: 'active', ledger: { pendingJobs: 0, leasedJobs: 0, unavailableVolumeIds: [] } }; } };
-  const create = () => createMetadataBuildRuntime(protocol, async () => catalog, { preferences: store, yieldMs: 0,
-   workerFactory() { workers++; throw Error('Unexpected content read'); } });
+  const create = () => createMetadataBuildRuntime(protocol, async () => catalog, { preferences: store, yieldMs: 0 });
   const runtime = create();
   const saved = await runtime.savePolicy(policy);
   assert.equal(saved.progress.phase, 'idle'); assert.deepEqual(saved.policy, policy);

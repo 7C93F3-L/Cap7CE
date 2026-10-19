@@ -15,12 +15,12 @@ function fixture(perKind = 4) {
       kind, extractorVersion, done: false, queued: false, leaseId: null }))));
   const control = { offline: false, blockedRead: false, blockedConfiguration: false, busyOnce: false, emptyOnce: false, sourceChangedOnce: false,
     configurations: 0, reads: 0, publications: 0, closes: 0, discoveries: 0, order: [], workerErrors: [], results: [] };
-  let active = false, sequence = 0;
+  let active = false, sequence = 0, failures = 0;
   const protocol = {
     async configure(_policy, allowed, signal) {
       assert.equal(allowed, true); control.configurations++;
       if (control.blockedConfiguration) await metadataBuildDelay(10000, signal);
-      active = true; return { state: "active", ledger: null };
+      active = true; failures = 0; return { state: "active", ledger: null };
     },
     async pause() { active = false; rows.forEach((row) => { row.leaseId = null; }); return { state: "paused", ledger: null }; },
     async status(kind, version, volumeId) {
@@ -55,20 +55,23 @@ function fixture(perKind = 4) {
       row.done = true; control.publications++; control.results.push(result); return 0;
     }
   };
-  const workerFactory = () => ({ async extract(task, signal) {
+  protocol.execute = async (leaseId, signal) => {
     signal.throwIfAborted();
-    if (control.busyOnce) { control.busyOnce = false; throw new Error("metadata-worker-busy"); }
+    const row = rows.find(row => row.leaseId === leaseId);
+    if (!row || !active) return { completion: 1, state: null };
     control.reads++;
     const workerError = control.workerErrors.shift();
-    if (workerError) throw new Error(workerError);
+    if (workerError && (!["metadata-worker-exited", "metadata-worker-timeout"].includes(workerError) || ++failures >= 3)) throw new Error(workerError);
+    if (!workerError) failures = 0;
     await metadataBuildDelay(control.blockedRead ? 10000 : 2, signal);
-    return task.kind === "image-dimensions" ? { state: "indexed", width: 64, height: 48 }
+    const result = workerError ? { state: "failed", errorCode: workerError } : row.kind === 0 ? { state: "indexed", width: 64, height: 48 }
       : { state: "indexed", width: 1920, height: 1080, durationMilliseconds: 1000 };
-  }, close() { control.closes++; } });
-  return { protocol, workerFactory, control, rows };
+    return { completion: await protocol.complete(leaseId, result), state: result.state };
+  };
+  return { protocol, control, rows };
 }
 const controller = (test, onProgress) => new MetadataBuildController(test.protocol,
-  { specifications, workerFactory: test.workerFactory, onProgress, yieldMs: 1, waitMs: 2 });
+  { specifications, onProgress, yieldMs: 1, waitMs: 2 });
 
 (async () => {
   const ordered = fixture(); const progress = [];
@@ -82,7 +85,6 @@ const controller = (test, onProgress) => new MetadataBuildController(test.protoc
   assert.equal(completed.phase, "completed"); assert.equal(completed.processed, 16); assert.equal(completed.total, 16);
   assert.equal((await build.pause()).phase, "completed", "a late pause cannot turn completed work into paused work");
   assert.equal(completed.progressFraction, 1); assert.equal(ordered.control.reads, 17);
-  assert.equal(ordered.control.closes, 1);
   assert.deepEqual([...new Set(ordered.control.order)], volumes, "scope processing follows drive order");
   assert.ok(progress.some((value) => value.phase === "waiting"), "an empty claim with pending jobs does not finish the build");
   assert.ok(progress.some((value) => value.phase === "discovering" && value.total === null), "unknown totals remain unknown");
@@ -134,7 +136,6 @@ const controller = (test, onProgress) => new MetadataBuildController(test.protoc
   const bounded = controller(broken); bounded.start(policy, true);
   assert.equal((await bounded.waitForIdle()).phase, "failed");
   assert.equal(broken.control.reads, 3); assert.equal(broken.control.publications, 2);
-  assert.equal(broken.control.closes, 1, "the helper is closed when repeated crashes stop the sweep");
   broken.control.workerErrors = []; bounded.start(policy, true);
   assert.equal((await bounded.waitForIdle()).processed, 6, "the third source remains retryable after the environment recovers");
 
@@ -151,8 +152,8 @@ const controller = (test, onProgress) => new MetadataBuildController(test.protoc
     return { jobsDiscovered: 1, acknowledged: true, hasMore: changeCalls < 2 };
   };
   let workerStarts = 0;
-  const makeChangedWorker = changed.workerFactory;
-  changed.workerFactory = () => { workerStarts++; return makeChangedWorker(); };
+  const executeChanged = changed.protocol.execute;
+  changed.protocol.execute = (...args) => { workerStarts++; return executeChanged(...args); };
   const changedBuild = controller(changed);
   assert.throws(() => changedBuild.startChanges(policy, false), /confirmation-required/);
   changedBuild.startChanges(policy, true);
@@ -164,7 +165,7 @@ const controller = (test, onProgress) => new MetadataBuildController(test.protoc
   assert.equal(changed.control.reads, 1, "only the changed queued identity is read");
   changed.protocol.consumeChanges = async () => { changeCalls++; return { jobsDiscovered: 0, acknowledged: false, hasMore: false }; };
   changedBuild.startChanges(policy, true); await changedBuild.waitForIdle();
-  assert.equal(workerStarts, 1, "empty wake must not create another extraction helper");
+  assert.equal(workerStarts, 1, "empty wake must not request another content execution");
   const callsWhenIdle = changeCalls;
   await new Promise(resolve => setTimeout(resolve, 15));
   assert.equal(changeCalls, callsWhenIdle, "completed wake-drain does not poll empty changes");

@@ -8,13 +8,13 @@ const catalog = { volumes: [{ volumeId, displayName: "X:", selected: true }], ta
 (async () => {
   let configured = 0, pauses = 0, workers = 0;
   const protocol = {
+    async execute() { workers++; throw Error("unexpected-content-read"); },
     async configure() { configured++; }, async pause() { pauses++; },
     async discover() { return { jobs: [], next: null }; }, async consumeChanges() { return { hasMore: false }; }, async claim() { return { state: 1, ticket: null }; },
     async status() { return { state: "active", ledger: { pendingJobs: 0, leasedJobs: 0, unavailableVolumeIds: [] } }; }
   };
   const runtime = createMetadataBuildRuntime(protocol, async () => catalog, {
-    yieldMs: 0, resolveScope: async () => ({ resolved: true, queryable: true, volumeId, rootFileReference: "1".repeat(16) }),
-    workerFactory() { workers++; return { extract() { throw Error("unexpected-content-read"); }, close() {} }; }
+    yieldMs: 0, resolveScope: async () => ({ resolved: true, queryable: true, volumeId, rootFileReference: "1".repeat(16) })
   });
   const initial = await runtime.status(); assert.equal(initial.progress.phase, "idle");
   assert.equal(configured, 0); assert.equal(workers, 0, "reading status never activates content extraction");
@@ -50,7 +50,7 @@ const catalog = { volumes: [{ volumeId, displayName: "X:", selected: true }], ta
   const pausedRuntime = createMetadataBuildRuntime({ ...protocol, async status() {
     return { state: "active", ledger: { pendingJobs: 0, leasedJobs: 0, unavailableVolumeIds: [volumeId] } };
   } }, () => stalled ? new Promise(resolve => { releaseCatalog = resolve; }) : Promise.resolve(catalog), {
-    yieldMs: 0, workerFactory: () => ({ close() {} })
+    yieldMs: 0
   });
   await pausedRuntime.start({ allowMetadataExtraction: true, policy }); await pausedRuntime.pause();
   assert.equal((await pausedRuntime.status()).progress.phase, "paused");

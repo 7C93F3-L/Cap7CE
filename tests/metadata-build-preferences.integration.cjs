@@ -20,8 +20,7 @@ const { createMetadataBuildRuntime } = require("../dist-electron/metadataExtract
     const protocol = { async configure() { configured++; }, async pause() {}, async consumeChanges() { return { hasMore: false }; }, async discover() { return { jobs: [], next: null }; },
       async claim() { return { state: 1 }; }, async status() { return { state: "active", ledger: { pendingJobs: 0, leasedJobs: 0, unavailableVolumeIds: [] } }; } };
     const catalog = { volumes: [{ volumeId, displayName: "X:", selected: true }] };
-    const restored = createMetadataBuildRuntime(protocol, async () => catalog, { preferences: store, yieldMs: 0,
-      workerFactory: () => ({ close() {} }) });
+    const restored = createMetadataBuildRuntime(protocol, async () => catalog, { preferences: store, yieldMs: 0 });
     const initial = await restored.status();
     assert.deepEqual(initial.policy, policy); assert.deepEqual(initial.scopeLabels, saved.scopeLabels);
     assert.equal(initial.progress.phase, "idle"); assert.equal(configured, 0, "saved consent cannot implicitly read content");

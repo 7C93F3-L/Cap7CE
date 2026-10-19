@@ -76,7 +76,7 @@ for (const filePath of coreSourceFiles) {
   const isCatalogSource = relativePath.startsWith("core/src/Cap7CE.Core.Catalog/");
   const isReaderHostSource = relativePath.startsWith("core/src/Cap7CE.Core.Reader.Host/");
   const isVolumeProbeSource = relativePath === "core/src/Cap7CE.Core.Host/ReaderVolumeCli.cs";
-  const isCatalogStorage = require("./core-storage-lifecycle-boundary-check.cjs").ownsStorageSource(relativePath);
+  const isCatalogStorage = require("./core-storage-lifecycle-boundary-check.cjs").ownsStorageSource(relativePath) || require("./core-file-facts-boundary-check.cjs").ownsRuntimeSource(relativePath);
   const isProductCoreRuntime = relativePath === "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs";
   const isControllerProbeCatalog = relativePath === "core/src/Cap7CE.Core.Host/ControllerProbeCatalog.cs";
   const isRealValidationSource = ["CoreP31ValidationCli.cs", "CoreP37ValidationCli.cs", "CoreP37ProbeCoordination.cs"].some(name => relativePath === `core/src/Cap7CE.Core.Host/${name}`);

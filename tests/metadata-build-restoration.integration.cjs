@@ -10,7 +10,7 @@ const create=(saved=grant,extra={},readCatalog=async()=>catalog)=>{
  const protocol={async configure(){configured++},async pause(){},async discover(){sweeps++;return {jobs:[],next:null}},async consumeChanges(){changes++;return {hasMore:false}},async claim(){return {state:1}},
   async status(){return {state:"active",ledger:{pendingJobs:0,leasedJobs:0,unavailableVolumeIds:[]}}}};
  const runtime=createMetadataBuildRuntime(protocol,readCatalog,{yieldMs:0,preferences:{async load(){return structuredClone(stored)},async save(value){stored=structuredClone(value)}},
-  resolveScope:async()=>resolution,workerFactory:()=>({close(){}}),...extra});
+  resolveScope:async()=>resolution,...extra});
  return {runtime,count:()=>configured,sweeps:()=>sweeps,changes:()=>changes,saved:()=>stored};
 };
 const completed=async runtime=>{for(let i=0;i<100;i++){if((await runtime.status()).progress.phase==="completed")return;await new Promise(r=>setTimeout(r,5))}throw Error("restore-completion-timeout")};

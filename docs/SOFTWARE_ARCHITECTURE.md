@@ -2,7 +2,9 @@
 
 ## 当前实施状态（2026-10-19）
 
-属性内容 Worker 使用独立的 Windows x64 Node 24.15.0，固定官方可执行文件 SHA256。构建只复用摘要完全相同的本机/缓存文件，否则从固定 Node 官方地址下载并校验；运行时不从 PATH 或 Electron 可执行文件回退，不继承 NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE。`artifacts/metadata-worker/v1` 生成并随包放入 `resources/metadata-worker/v1`，包含 esbuild 合并的解析器、字体/模型线程、动态 PDF/原生画布、sharp 与 7z WASM 以及许可证；不依赖 ASAR、开发目录或系统 Node。`metadataWorkerPaths` 只解析资源位置，`MetadataWorkerClient` 保持单任务、256 MiB JS 堆、超时/取消与驻留内存回收；原生视频助手继续独立资源。该轮仅替换内容读取运行时，Main 的提取控制器/发现编排与 Core 的授权/账本/事实所有权不变。资源完整性、无 Electron 运行依赖、动态依赖/线程及打包接入由边界检查和仓库外复制运行测试守护；未据此宣称提取调度已迁入 Core。
+属性任务的实际内容执行由普通 Core 接管。`FileFactHostSession` 的可选 `IFileFactContentReader` 装配成功才宣告 `metadata.execute`；该操作只接受已有 lease ID，Broker 从自身持有的任务再次核对当前路径、原生身份、源版本与范围，解析结束仍通过原 Complete 栅栏发布。`FileFactExecutionOwner` 拥有单并发、授权代次、暂停/重配取消和连续解码故障的两次记录/第三次停止策略；空 claim 释放解析器，状态查询不启用内容读取。`MetadataWorkers` 只拥有独立 Node 资源校验、256 KiB 私有 stdin/stdout 帧和进程树，不访问 Catalog、Reader 服务或源文件正文；Node 保留原解析器。运行时固定摘要、256 MiB JS 堆、14 秒期限、RSS 回收和500毫秒取消宽限；Windows Job Object 的 kill-on-close 保证 Core 异常退出也清除解码子孙进程。Shell 的 `MetadataBuildController` 只做发现/顺序/进度编排和 lease 执行请求，不再启动解码进程、提交内容事实或按路径分派解析。产品启动装配固定资源路径，Renderer 不接收运行时路径入口。发现调度、授权偏好恢复、缩略图/缓存及模型调用的其余所有权仍需后续迁移；本轮没有启动正式全盘内容提取。
+
+属性解析使用独立 Windows x64 Node 24.15.0，构建以官方固定SHA256校验本机/缓存或固定地址下载的字节；运行时不从PATH或Electron回退，也不继承NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE。artifacts/metadata-worker/v1随应用放入resources/metadata-worker/v1，包含合并解析器、字体/模型线程、动态PDF/原生画布、sharp、7z WASM和许可证，不依赖ASAR或开发目录。metadataWorkerPaths只解析产品资源位置；MetadataWorkerClient保留独立运行兼容回归，产品执行归上段Core owner。资源、普通Core权限、帧/进程生命周期和Shell职责收缩由自动边界与仓库外运行、真实Core发布及强杀进程树回归守护。
 
 收藏文件夹的物理身份校验、四字段改名 journal、改名后判定及恢复归 `Core.FileOperations` 的 `WindowsDirectorySource`、`FolderRenameJournal` 和 `FolderRenameWorkflow`。普通账号仅以 read-attributes 句柄读取 Windows 卷序列/文件索引与实际路径，不读素材正文；兼容旧 Node dev/ino 日志，无法确定新旧身份时保留日志和配置。准备、观察、恢复、确认分别通过配置路径的同一系统互斥量串行，Shell 更新偏好后以日志内容摘要确认，Core 再发布收藏路径并消费日志；过期确认拒绝。改名已发生而保存未完成时返回真实路径及待恢复状态，不尝试物理回滚。Electron 的 FavoriteFolderRenameService 只负责释放视觉句柄、窗口动作及偏好回调，不再读取源元数据或读写 journal。收藏路径预演与持久发布共用 `FavoriteDirectoryRelocation`。未完成的删除聚合/旧兼容索引清理仍由原领域编排。
 
@@ -17,7 +19,7 @@
 本地开发主线已切换到统一 Catalog 工作区，主入口是 `src/renderer/catalog-workspace/CatalogApplicationRoot.tsx`；旧 `App.tsx` 不再作为默认产品入口。本文后续按历史轮次记录的描述不得覆盖本节的当前所有权；尤其旧即时 AI 搜索、旧自定义查看范围和旧工作区标签布局不再代表当前产品界面。
 
 - 普通 Core 拥有原生 SQLite Catalog、稳定文件身份、目录关系、USN 增量维护、组合查询、排序、签名分页、取消、属性事实和持久任务账本；受限 Reader 继续只读 NTFS 元数据，不读文件正文、不写源文件、不拥有 SQLite。
-- 现有属性内容读取仍由 Electron 领域控制器驱动普通 Node Worker；缩略图、预览输入、缓存与模型调用仍主要在 Electron 侧。文件操作的物理执行、收藏目录改名校验和耐久恢复已进入 Core，删除聚合/旧索引清理及 Shell 偏好更新仍由原领域编排。剩余职责继续逐域迁移，不能将界面合流称作所有 Core/Shell 职责已迁完。
+- 属性内容读取与结果发布由普通 Core 驱动独立 Node Worker，Electron 保留当前发现/进度编排和授权偏好恢复；缩略图、预览输入、缓存与模型调用仍主要在 Electron 侧。文件操作的物理执行、收藏目录改名校验和耐久恢复已进入 Core，删除聚合/旧索引清理及 Shell 偏好更新仍由原领域编排。剩余职责继续逐域迁移，不能将界面合流称作所有 Core/Shell 职责已迁完。
 - 人工关键词的新读写通过 Core；`catalogLegacyKeywords` 只读旧数据库的有界分页并导入 Core。兼容数据及旧布局文件保留，不因退役界面而删除。
 - 本轮新增 `Core.Catalog/DirectoryEntries`：物理身份与目录入口分开，完整名称集合在版本/卷修订校验后的单事务内替换；入口有独立稳定 key，同一物理文件的事实和注释仍共享。未显式激活扩展的 Catalog 继续原有查询，不自动迁移或重建正式库。
 - 已激活入口集合通过同一 Catalog 查询投影参与范围、名称/路径/关键词、扩展名与事实筛选。签名游标包含入口 key，避免同一物理身份的同名多入口在分页时丢失；Core 返回的结果 ID 区分入口，文件授权仍使用既有返回项链路。属性源解析可选择仍存在的入口，不依赖已经删除的原名称。

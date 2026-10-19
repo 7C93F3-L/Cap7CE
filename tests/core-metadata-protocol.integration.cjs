@@ -111,4 +111,12 @@ const protocol = new CoreMetadataProtocol({ async request(operation, body, deadl
   await protocol.complete(leaseId, { state: "indexed", archiveProperties: { listingComplete: true, fileCount: 0, hasDirectories: false, contentTypes: [] } });
   assert.equal(requests.at(-1).body.result.archiveProperties.fileCount, 0);
   assert.equal(protocol.task({ ...ticket, lease: { ...ticket.lease, job: { ...job, kind: 8 } } }).kind, "archive");
+  response = { completion: 0, state: "indexed" };
+  assert.deepEqual(await protocol.execute(leaseId), response);
+  assert.equal(requests.at(-1).operation, "metadata.execute");
+  assert.deepEqual(requests.at(-1).body, { leaseId }, "execution sends no source paths or caller-supplied facts");
+  await assert.rejects(protocol.execute("arbitrary-path"), /invalid-lease/);
+  for (const invalidResponse of [{ completion: 0, state: null }, { completion: "0", state: "indexed" }, { completion: 1, state: "unexpected" }]) {
+    response = invalidResponse; await assert.rejects(protocol.execute(leaseId), /invalid/);
+  }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

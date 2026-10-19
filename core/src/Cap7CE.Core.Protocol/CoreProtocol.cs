@@ -52,6 +52,7 @@ public static class CoreOperations
     public const string FileFactRenew = "metadata.renew";
     public const string FileFactComplete = "metadata.complete";
     public const string FileFactStatus = "metadata.status";
+    public const string FileFactExecute = "metadata.execute";
 
     public static readonly IReadOnlyList<string> FileFactCapabilities =
         [FileFactConfigure, FileFactDiscover, FileFactConsumeChanges, FileFactClaim, FileFactPause, FileFactRenew, FileFactComplete, FileFactStatus];

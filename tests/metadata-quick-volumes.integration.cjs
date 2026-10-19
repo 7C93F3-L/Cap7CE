@@ -15,7 +15,7 @@ const until=async predicate=>{for(let i=0;i<500;i++){if(await predicate())return
   const store=createMetadataDirectoryStore(path.join(root,'queue.json'));
   const create=()=>createMetadataBuildRuntime(protocol,async()=>{if(blockRead)await blockRead;return catalog()},
    {directoryStore:{load:()=>store.load(),save:value=>fail?Promise.reject(Error('disk-full')):store.save(value)},preferences:{load:async()=>structuredClone(grant),save:async()=>{writes++}},yieldMs:0,waitMs:2,
-    specifications:[{kind:0,extractorVersion:1,extensions:['.png']}],workerFactory:()=>{throw Error('No content jobs in this fixture')},
+    specifications:[{kind:0,extractorVersion:1,extensions:['.png']}],
     resolveScope:async p=>({resolved:!building,queryable:!building,volumeId:changed?ids[2]:p[0]==='X'?ids[0]:ids[1],rootFileReference:null,state:building?'building':'ready'})});
   const runtime=create(),handlers=new Map();registerMetadataBuildIpc({handle:(c,h)=>handlers.set(c,h),on(){}},e=>e.main||e.settings,runtime,{isDirectorySenderAllowed:e=>e.main});
   await runtime.status();assert.equal(configurations.length,0);

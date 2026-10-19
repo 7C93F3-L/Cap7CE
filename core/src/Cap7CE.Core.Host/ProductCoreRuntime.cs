@@ -217,6 +217,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     {
         try {
             await ShutdownAsync();
+            if (FileFacts is not null) await FileFacts.DisposeAsync();
             foreach (var task in tasks.Values) task.Dispose();
             await readerOwnership.DisposeAsync();
         }

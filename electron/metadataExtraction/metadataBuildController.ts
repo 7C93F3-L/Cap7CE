@@ -10,7 +10,6 @@ import { DOCUMENT_FACT_EXTRACTOR_VERSION, supportedDocumentFactExtensions } from
 import { THREE_D_FACT_EXTRACTOR_VERSION, supportedThreeDFactExtensions } from "../threeDFactTypes";
 import { ARCHIVE_FACT_EXTRACTOR_VERSION, supportedArchiveFactExtensions } from "../archiveFactTypes";
 import { TEXT_DATA_FACT_EXTRACTOR_VERSION, supportedTextDataFactExtensions } from "../textDataFactTypes";
-import { MetadataWorkerClient } from "./metadataWorkerClient";
 import { MetadataBuildEstimate, metadataBuildDelay, type MetadataBuildPhase, type MetadataBuildProgress } from "./metadataBuildProgress";
 import { discoverMetadataChanges } from "./metadataChangeDiscovery";
 
@@ -26,11 +25,9 @@ const defaultSpecifications: readonly MetadataBuildSpecification[] = [
   { kind: 7, extractorVersion: TEXT_DATA_FACT_EXTRACTOR_VERSION, extensions: supportedTextDataFactExtensions },
   { kind: 8, extractorVersion: ARCHIVE_FACT_EXTRACTOR_VERSION, extensions: supportedArchiveFactExtensions }
 ];
-type Worker = Pick<MetadataWorkerClient, "extract" | "close">;
-type Protocol = Pick<CoreMetadataProtocol, "configure" | "pause" | "discover" | "consumeChanges" | "claim" | "status" | "complete" | "task">;
+type Protocol = Pick<CoreMetadataProtocol, "configure" | "pause" | "discover" | "consumeChanges" | "claim" | "status" | "execute">;
 export interface MetadataBuildOptions {
   onProgress?: (progress: MetadataBuildProgress) => void;
-  workerFactory?: () => Worker;
   specifications?: readonly MetadataBuildSpecification[];
   yieldMs?: number;
   waitMs?: number;
@@ -97,10 +94,8 @@ export class MetadataBuildController {
     return this.pausing;
   }
   private async run(policy: CoreMetadataPolicy, specifications: readonly MetadataBuildSpecification[], signal: AbortSignal, changesOnly: boolean): Promise<void> {
-    let worker: Worker | undefined;
     const remaining = new Map<number, number>();
     const estimate = new MetadataBuildEstimate();
-    let consecutiveWorkerFailures = 0;
     const volumes = policy.volumeOrder.filter((volume) => policy.includes.some((scope) => scope.volumeId === volume) &&
       !policy.excludes.some((scope) => scope.volumeId === volume && scope.rootFileReference === null));
     try {
@@ -148,34 +143,11 @@ export class MetadataBuildController {
             continue;
           }
           this.update("extracting");
-          worker ??= (this.options.workerFactory ?? (() => new MetadataWorkerClient()))();
           const ticket = claimed.ticket!;
           const began = Date.now();
-          const task = this.protocol.task(ticket);
-          const retireDeadline = Date.now() + 2000;
-          let result;
-          while (true) {
-            try {
-              result = await worker.extract(task, signal);
-              consecutiveWorkerFailures = 0;
-              break;
-            }
-            catch (error) {
-              signal.throwIfAborted();
-              if (error instanceof Error && error.message === "metadata-worker-busy" && Date.now() < retireDeadline) {
-                await metadataBuildDelay(20, signal);
-                continue;
-              }
-              // A decoder crash or hung source must not end an otherwise healthy sweep.
-              // Repeated process failures may be environmental: stop before caching the third source.
-              if (!(error instanceof Error) || !["metadata-worker-exited", "metadata-worker-timeout"].includes(error.message)
-                || ++consecutiveWorkerFailures >= 3) throw error;
-              result = { state: "failed" as const, errorCode: error.message };
-              break;
-            }
-          }
+          const result = await this.protocol.execute(ticket.lease.leaseId, signal);
           signal.throwIfAborted();
-          const completion = await this.protocol.complete(ticket.lease.leaseId, result, signal);
+          const completion = result.completion;
           if (completion === 0 || completion === 4) {
             this.progress.processed += 1;
             if (result.state === "failed") this.progress.failed += 1;
@@ -195,12 +167,11 @@ export class MetadataBuildController {
     } catch {
       if (signal.aborted) this.update("paused");
       else {
-        worker?.close(); worker = undefined;
         // Revoke this session's remaining leases so a later explicit retry does not wait for expiry.
         try { await this.protocol.pause(); } catch { /* The failed bridge may already be unavailable. */ }
         this.progress.errorCode = "metadata-build-failed"; this.update("failed");
       }
-    } finally { worker?.close(); }
+    }
   }
   private async awaitAvailable(volumeId: string, specifications: readonly MetadataBuildSpecification[], signal: AbortSignal): Promise<void> {
     while (true) {

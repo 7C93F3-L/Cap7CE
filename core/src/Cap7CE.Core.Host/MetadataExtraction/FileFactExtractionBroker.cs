@@ -89,6 +89,20 @@ public sealed class FileFactExtractionBroker
         finally { gate.Release(); }
     }
 
+    public async Task<FileFactExtractionTicket?> ReadOwnedTicketAsync(string leaseId, CancellationToken token)
+    {
+        await gate.WaitAsync(token);
+        try {
+            PruneExpired();
+            if (!owned.TryGetValue(leaseId, out var current)) return null;
+            if (!NativeFileFactSourceGuard.Matches(current.Source) || !await resolver.IsAuthorizedAsync(current.Source, current.Ticket.Lease, token)) {
+                owned.Remove(leaseId); return null;
+            }
+            return current.Ticket;
+        }
+        finally { gate.Release(); }
+    }
+
     public async Task<FileFactBrokerCompletion> CompleteAsync(string leaseId, FileFactExtractionResult result,
         CancellationToken token = default)
     {

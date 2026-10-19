@@ -14,6 +14,7 @@ import { inspectDocumentMetadata } from "./documentMetadataInspector";
 import { inspectModelFactBatch } from "../modelFactInspector";
 import { inspectFontFactBatch } from "../fontFactInspector";
 import type { MetadataWorkerTask, MetadataWorkerResult } from "./metadataWorkerTypes";
+import { metadataWorkerTransport } from "./metadataWorkerTransport";
 
 sharp.concurrency(1);
 sharp.cache(false);
@@ -108,7 +109,7 @@ const extract = async (task: MetadataWorkerTask, signal: AbortSignal): Promise<M
     : { state: "failed", errorCode: video.errorCode };
 };
 
-process.on("message", async (message: unknown) => {
+const send = metadataWorkerTransport(async (message: unknown) => {
   if (!message || typeof message !== "object") return;
   const request = message as Record<string, unknown>;
   if (request.type === "stop") return stop();
@@ -123,5 +124,5 @@ process.on("message", async (message: unknown) => {
   catch { result = { state: "failed", errorCode: "metadata-read-failed" }; }
   active = undefined;
   if (stopping) return finish();
-  if (process.connected) process.send?.({ id: request.id, result, residentBytes: process.memoryUsage().rss + videoFrames.residentBytes });
-});
+  send({ id: request.id, result, residentBytes: process.memoryUsage().rss + videoFrames.residentBytes });
+}, stop);

@@ -186,6 +186,7 @@ export class CoreHostController {
       restartCount: this.restartCount
     });
     const child = spawn(executablePath, profile.arguments, {
+      env: profile.environment,
       cwd: path.dirname(executablePath),
       windowsHide: true,
       shell: false,

@@ -9,6 +9,14 @@ using Cap7CE.Core.Reader.Host;
 using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
+if (args is ["--metadata-worker-tests"]) {
+    await FileFactExecutionTests.RunAsync();
+    await NodeMetadataWorkerTests.RunAsync();
+    return 0;
+}
+if (args is ["--metadata-job-owner", var metadataRuntime, var metadataSource])
+    return await NodeMetadataWorkerTests.RunOwnerAsync(metadataRuntime, metadataSource);
+
 if (args is ["--catalog-crash-worker"])
 {
     return await CatalogCrashWorker.RunAsync();
@@ -96,6 +104,8 @@ await FileFactQueueTests.RunAsync();
 await FileFactDiscoveryTests.RunAsync();
 await NativeFileFactSourceGuardTests.RunAsync();
 await FileFactExtractionBrokerTests.RunAsync();
+await FileFactExecutionTests.RunAsync();
+await NodeMetadataWorkerTests.RunAsync();
 await FileFactCatalogIntegrationTests.RunAsync();
 await FileFactChangeLogTests.RunAsync();
 await FileFactChangeDispatcherTests.RunAsync();
@@ -158,7 +168,9 @@ Console.WriteLine(JsonSerializer.Serialize(new
     catalogSyntheticDatabaseBytes = readOnlyBaseline.DatabaseBytes,
     catalogSyntheticDatabaseBytesPerRow = readOnlyBaseline.DatabaseBytesPerRow,
     catalogSyntheticPeakRssBytes = readOnlyBaseline.PeakRssBytes,
-    sourceFilesReadDuringAutomatedTests = false,
+    sourceFilesReadDuringAutomatedTests = OperatingSystem.IsWindows(),
+    sourceContentReadScope = "owned-generated-test-fixtures-only",
+    userSourceFilesRead = false,
     temporaryCapabilityPayloadVerified = true,
     realNtfsAdapterBuilt = true,
     readerServiceExecutableBuilt = true,

@@ -146,11 +146,14 @@ const verifyLaunchProfiles = async () => {
   const product = createCoreHostLaunchProfile("product", "a".repeat(32));
   assert.equal(product.pipeName, `cap7ce-core-p35-${"a".repeat(32)}`);
   assert.deepEqual(product.arguments, ["--catalog-server", "--pipe-name", product.pipeName]);
+  assert.equal(path.isAbsolute(product.environment.CAP7CE_METADATA_RUNTIME_ROOT), true);
+  assert.match(product.environment.CAP7CE_METADATA_VIDEO_HELPER, /Cap7CE\.Media\.Metadata\.exe$/);
   await product.cleanup();
 
   const probe = createCoreHostLaunchProfile("probe", "b".repeat(32));
   assert.equal(probe.pipeName, `cap7ce-core-p32-${"b".repeat(32)}`);
   assert.deepEqual(probe.arguments, ["--catalog-controller-probe", "--pipe-name", probe.pipeName]);
+  assert.equal(probe.environment, undefined, "probe does not assemble the product's content execution resources");
   await probe.cleanup();
 };
 

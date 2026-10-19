@@ -17,13 +17,14 @@ function fixture(directoryStore,prior=null){
  async status(){const jobs=rows.filter(r=>matches(r)&&r.queued&&!r.done);return {state:active?'active':'paused',ledger:{pendingJobs:jobs.filter(r=>!r.lease).length,leasedJobs:jobs.filter(r=>r.lease).length,unavailableVolumeIds:[]}}},
  async claim(){const row=rows.find(r=>matches(r)&&r.queued&&!r.done&&!r.lease);if(!row)return {state:1};row.lease=String(++sequence);return {state:0,ticket:{fullPath:row.name,lease:{leaseId:row.lease,job:{kind:0}}}}},
  task(ticket){return {kind:'image-dimensions',filePath:ticket.fullPath}},async complete(leaseId){const row=rows.find(r=>r.lease===leaseId);if(!row||!active)return 1;row.done=true;row.lease=null;return 0}};
+ protocol.execute=async(leaseId,signal)=>{const row=rows.find(r=>r.lease===leaseId);if(!row||!active)return {completion:1,state:null};
+  live++;control.maxLive=Math.max(control.maxLive,live);control.reads.push(row.name);try{
+   await metadataBuildDelay(control.block||(control.blockGlobal&&selected.includes[0].rootFileReference===null)?10000:2,signal);
+   control.finished.push(row.name);return {completion:await protocol.complete(leaseId),state:'indexed'};}finally{live--}};
  const readCatalog=async()=>({volumes:[{volumeId,displayName:'X:',selected:true,queryable:!control.building,state:control.building?'building':'ready'}],tasks:[],catalogRevision:1});
  const create=()=>createMetadataBuildRuntime(protocol,readCatalog,{directoryStore,yieldMs:0,waitMs:2,specifications:[{kind:0,extractorVersion:1,extensions:['.png']}],
  preferences:{async load(){return structuredClone(stored)},async save(v){stored=structuredClone(v);control.writes.push(stored)}},
- resolveScope:async p=>{control.resolve++;if(control.resolveWait)await control.resolveWait;return {resolved:!control.building,queryable:!control.building,volumeId,rootFileReference:control.changed?'3'.repeat(16):p.toLowerCase().endsWith('other')?other:folder,state:control.building?'building':'ready'}},
- workerFactory:()=>({async extract(task,signal){live++;control.maxLive=Math.max(control.maxLive,live);control.reads.push(task.filePath);try{
-  await metadataBuildDelay(control.block||(control.blockGlobal&&selected.includes[0].rootFileReference===null)?10000:2,signal);
-  control.finished.push(task.filePath);return {state:'indexed',width:64,height:48};}finally{live--}},close(){}})});
+ resolveScope:async p=>{control.resolve++;if(control.resolveWait)await control.resolveWait;return {resolved:!control.building,queryable:!control.building,volumeId,rootFileReference:control.changed?'3'.repeat(16):p.toLowerCase().endsWith('other')?other:folder,state:control.building?'building':'ready'}}});
  return {create,control,rows,saved:()=>stored};
 }
 (async()=>{

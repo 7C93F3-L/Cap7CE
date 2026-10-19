@@ -4,7 +4,7 @@ namespace Cap7CE.Core.Host.MetadataExtraction;
 
 internal static class FileFactRequestHandler
 {
-    public static bool Supports(string operation) => CoreOperations.FileFactCapabilities.Contains(operation, StringComparer.Ordinal);
+    public static bool Supports(string operation) => operation == CoreOperations.FileFactExecute || CoreOperations.FileFactCapabilities.Contains(operation, StringComparer.Ordinal);
 
     public static async Task<CoreResponseEnvelope> DispatchAsync(FileFactHostSession session,
         CoreRequestEnvelope request, CancellationToken token)
@@ -22,6 +22,8 @@ internal static class FileFactRequestHandler
                     response = await session.ConsumeChangesAsync(CoreRequestDispatcher.ReadBody<FileFactConsumeChangesRequest>(request), token); break;
                 case CoreOperations.FileFactClaim:
                     response = await session.ClaimAsync(token, CoreRequestDispatcher.ReadBody<FileFactClaimRequest>(request).Specification); break;
+                case CoreOperations.FileFactExecute:
+                    response = await session.ExecuteAsync(CoreRequestDispatcher.ReadBody<FileFactLeaseRequest>(request), token); break;
                 case CoreOperations.FileFactPause:
                     CoreRequestDispatcher.RequireEmptyBody(request);
                     response = await session.PauseAsync(token); break;

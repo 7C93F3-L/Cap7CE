@@ -30,6 +30,7 @@ export interface CoreMetadataStatus {
   state: "inactive" | "active" | "paused";
   ledger: null | { policyEpoch: number; pendingJobs: number; leasedJobs: number; completedJobs: number; nextLeaseExpiryUnixMilliseconds: number | null; unavailableVolumeIds?: string[] };
 }
+export interface CoreMetadataExecution { completion: 0 | 1 | 2 | 3 | 4; state: "indexed" | "unsupported" | "failed" | null }
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const safe = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
@@ -100,6 +101,14 @@ export class CoreMetadataProtocol {
     const response = await this.request<unknown>("metadata.renew", { leaseId });
     if (!record(response) || typeof response.renewed !== "boolean") throw invalid();
     return response.renewed;
+  }
+  async execute(leaseId: string, signal?: AbortSignal): Promise<CoreMetadataExecution> {
+    if (!hex(leaseId, 32)) throw new Error("core-metadata-invalid-lease");
+    const response = await this.request<unknown>("metadata.execute", { leaseId }, 20_000, signal);
+    if (!record(response) || ![0, 1, 2, 3, 4].includes(Number(response.completion)) || typeof response.completion !== "number"
+      || ![null, "indexed", "unsupported", "failed"].includes(response.state as CoreMetadataExecution["state"])
+      || ([0, 4].includes(response.completion) && response.state === null)) throw invalid();
+    return response as unknown as CoreMetadataExecution;
   }
   async complete(leaseId: string, result: MetadataWorkerResult, signal?: AbortSignal): Promise<0 | 1 | 2 | 3 | 4> {
     const observation = result.state === "indexed"

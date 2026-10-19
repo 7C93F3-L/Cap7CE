@@ -36,6 +36,7 @@ public sealed class CoreRequestDispatcher
     public IReadOnlyList<string> Capabilities => runtime is null
         ? CoreOperations.P11Capabilities
         : CoreOperations.P31Capabilities.Concat(runtime.FileFacts is null ? [] : CoreOperations.FileFactCapabilities)
+            .Concat(runtime.FileFacts?.CanExecute == true ? [CoreOperations.FileFactExecute] : Array.Empty<string>())
             .Concat(runtime.MaintenanceEnabled ? [CoreOperations.CatalogAwaitChanges] : Array.Empty<string>()).ToArray();
 
     public bool SyntheticFixture => runtime is null;
@@ -234,7 +235,7 @@ public sealed class CoreRequestDispatcher
                 CatalogV2Contract.SchemaVersion,
                 CatalogV2Contract.PathStrategy,
                 false,
-                false,
+                runtime.FileFacts?.CanExecute == true,
                 false,
                 false));
     }

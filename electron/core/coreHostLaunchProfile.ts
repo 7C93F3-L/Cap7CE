@@ -2,12 +2,14 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { metadataWorkerPaths } from "../metadataExtraction/metadataWorkerPaths";
 
 export type CoreHostLaunchMode = "probe" | "product";
 
 export interface CoreHostLaunchProfile {
   pipeName: string;
   arguments: string[];
+  environment?: NodeJS.ProcessEnv;
   cleanup: () => Promise<void>;
 }
 
@@ -16,9 +18,12 @@ export const createCoreHostLaunchProfile = (
   token: string
 ): CoreHostLaunchProfile => {
   if (mode === "product") {
+    const metadata = metadataWorkerPaths();
     return {
       pipeName: `cap7ce-core-p35-${token}`,
       arguments: ["--catalog-server", "--pipe-name", `cap7ce-core-p35-${token}`],
+      environment: { ...process.env, CAP7CE_METADATA_RUNTIME_ROOT: path.dirname(metadata.executable),
+        CAP7CE_METADATA_VIDEO_HELPER: metadata.videoHelper },
       cleanup: async () => undefined
     };
   }
