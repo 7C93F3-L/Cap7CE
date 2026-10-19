@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/transport/server` 拥有独立 Node 服务端的单个继承管道会话：严格帧解析、单调请求编号、64在途/128MiB累计输入/64MiB帧预算、输出队列、并行响应和 EOF 收尾。领域入口提供 dispatch/close 与需要串行的方法列表，通用传输不依赖领域、文件系统、网络、定时器或进程启动。视觉 host 缩为根目录校验和装配，继续只串行 read/write/temporaryImage，错误代码和线格式不变；退出先调用并等待领域 close，再归还已接纳工作和输出。架构守门降低视觉入口上限至10行，并单独登记服务端；真实固定 Node 测试覆盖分片Unicode、乱序响应、指定串行、错误长度、EOF、重放、请求限额与破损/超限帧。
+
 `core/node/modelSettings` 在既有固定 Node/原生 Job/私有管道内负责本地运行组件和 GGUF 目录发现、数字版本排序、模型配对及原 JSON 选择配置。runtime/models 工厂分开持有各自配置，pairing 为纯配对策略，selectionFile 只读写两个原有 JSON（1MiB预算、独占自建暂存、刷盘和原子替换），owner 串行化请求并固定首次接入的内容目录；被动读取不创建配置、加载模型或启动外部程序。共享契约位于 src/shared/modelSettingsTypes.d.ts，语言沿当前纯翻译资源和明确语言参数复用。Main 的两个 Store 仅转发动作，由 coreModelSettingsClient 投影原有内容目录和语言，不进行模型文件扫描或配置写入。进程生命周期暂由原 llamaRuntimeManager 持有，未据此声称模型运行管理已迁移。独立领域及实际固定 Node/原生 Job 测试只使用生成占位文件，守护配对/排序/清空/重选、损坏配置保留、路径上下文不被后续请求替换和素材不变。
 
 `Core.Host/MetadataScheduling` 增加单次建库循环：`MetadataBuildSweep` 拥有一次显式执行、取消及失败恢复；`MetadataSweepDiscovery` 负责有界 Catalog 分页、队列统计与离线等待；`MetadataSweepProgress` 提供不可变状态，`MetadataBuildEstimate` 保留原有每类64样本和未知估时规则。所有实际读取与事实发布经同进程 `IMetadataBuildSession`，由原 `FileFactHostSession` 实现；本层无文件、SQLite、Reader、网络或进程启动权限。增量每轮最多64批，空闲不轮询；暂停等待执行归还。`metadataBuildSpecifications` 与纯版本模块是唯一默认提取器表，旧导出保持兼容；构建从该表生成 extractors.json，Core 严格验证版本、九类完整性、格式及64KiB预算，缺失/无效时拒绝执行，不在C#复制默认格式或版本。新模块清单、体量和权限由 core-metadata-scheduling-boundary-check 守护；生产授权、目录借用和恢复由同域的 GlobalBuildOwner/Coordinator 接管，Main 使用薄代理。

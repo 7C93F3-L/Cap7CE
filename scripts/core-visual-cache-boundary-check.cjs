@@ -1,7 +1,7 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..'), read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const directory = 'core/node/visualCache';
-const limits = { 'store.ts': 420, 'publication.ts': 32, 'dispatch.ts': 75, 'host.ts': 50 };
+const limits = { 'store.ts': 420, 'publication.ts': 32, 'dispatch.ts': 75, 'host.ts': 10 };
 assert.deepEqual(fs.readdirSync(path.join(root, directory)).filter(name => name.endsWith('.ts')).sort(), Object.keys(limits).sort());
 for (const [file, limit] of Object.entries(limits)) {
   const source = read(`${directory}/${file}`);
