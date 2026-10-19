@@ -207,7 +207,8 @@ export class CoreHostController {
         sessionSecret,
         expectedServerProcessId: child.pid,
         expectedSyntheticFixture: false,
-        requiredCapabilities,
+        requiredCapabilities: (this.options.launchMode ?? "probe") === "product"
+          ? [...requiredCapabilities, "metadata.build.attach"] : requiredCapabilities,
         clientProductVersion: this.options.productVersion
       });
       if (!this.desiredRunning || this.stopping || child.exitCode !== null) {

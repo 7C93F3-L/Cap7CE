@@ -28,6 +28,7 @@ if (failures.length === 0) {
     [launch, "--catalog-controller-probe", "temporary probe activation"],
     [launch, "--catalog-server", "product catalog activation"],
     [controller, "core.shutdown", "graceful shutdown"],
+    [controller, "metadata.build.attach", "product metadata build ownership handshake"],
     [controller, "this.restartCount >= 1", "single restart ceiling"],
     [client, "expectedServerProcessId", "server PID verification"],
     [controllerTest, "core-crash-restart-exhausted", "restart coverage"]
@@ -39,7 +40,6 @@ if (failures.length === 0) {
     [/Reader\.Host|Cap7CE\.Core\.Reader\.Host/, "direct Reader launch"]
   ]) if (pattern.test(controllerBoundary)) failures.push(`Core controller introduces ${description}.`);
 }
-
 if (failures.length) {
   console.error("Core Electron controller architecture checks failed:\n");
   for (const failure of failures) console.error(`- ${failure}`);
