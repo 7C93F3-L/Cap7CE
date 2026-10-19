@@ -59,4 +59,3 @@ export interface VisualCacheSourceMetadata {
   fileSize: number;
   modifiedMs: number;
 }
-
