@@ -102,6 +102,7 @@ await ReaderFileEntryClientTests.RunAsync();
 await CatalogEntrySynchronizationTests.RunAsync();
 await CatalogEntrySnapshotFenceTests.RunAsync();
 await CatalogSnapshotEntryParentTests.RunAsync();
+await CatalogJournalEntryParentTests.RunAsync();
 await CatalogTextCandidateTests.RunAsync();
 await CatalogEntryRetryTests.RunAsync();
 await CatalogEntryActivationTests.RunAsync();

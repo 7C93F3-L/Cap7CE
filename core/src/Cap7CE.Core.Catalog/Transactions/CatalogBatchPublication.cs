@@ -42,6 +42,7 @@ public sealed partial class CatalogV2Database
             throw new CatalogStateTransitionException("Catalog v2 accepts batches only while synchronizing.");
         }
 
+        if (!entryRetry) batch = await DirectoryEntries.CatalogJournalEntryParents.DeferAsync(connection, transaction, batch, token);
         batch = batch with { Nodes = await DirectoryEntries.CatalogFileEntryPendingPublication.MergeInvalidationsAsync(connection, transaction, batch, token) };
         var pathsChanged = (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
             && await CatalogDirectoryPathChanges.RequiresRebuildAsync(connection, transaction, batch.Nodes, token);

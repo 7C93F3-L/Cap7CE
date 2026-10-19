@@ -52,8 +52,11 @@ internal static class CatalogEntrySynchronizationTests
         await SqlAsync(fixture.DatabasePath, "DROP TRIGGER reject_entry;");
         reader.Overrides[11] = EntryCatalogReaderFixture.Names(new(5, "alias.png"), new(99, "orphan.png"));
         owner = await Owner();
-        await TestAssert.ThrowsAsync<CatalogConcurrencyException>(() => owner.ProcessAsync(page), "missing alias parent cannot cause partial publication");
-        await AssertUnchangedAsync(catalog, store, identity, before, "alias.png");
+        await owner.ProcessAsync(page);
+        TestAssert.Equal("alias.png", (await store.ReadAsync(identity))!.Entries.Single().Name, "missing alias parent preserves the whole old name set");
+        TestAssert.Equal(1L, (await new CatalogFileEntryPending(catalog).ReadDueAsync(volume.VolumeId, 0)).Waiting, "missing parent becomes durable retry work");
+        TestAssert.True((await catalog.ReadVolumeAsync(volume.VolumeId))!.CheckpointUsn > before.CheckpointUsn, "deferred entry does not block journal progress");
+        before = (await catalog.ReadVolumeAsync(volume.VolumeId))!; page = DeletePage(before);
         reader.Overrides[11] = EntryCatalogReaderFixture.Names(new ReaderFileName(5, "alias.png"));
         using (var cancellation = new CancellationTokenSource()) {
             reader.CancelEntryRead = cancellation; owner = await Owner();
