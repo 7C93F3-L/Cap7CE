@@ -10,6 +10,7 @@ internal sealed class EntryCatalogReaderFixture : ICatalogReaderSessionFactory
     public bool FailEntryRead { get; set; }
     public int EntryReads { get; private set; }
     public CancellationTokenSource? CancelEntryRead { get; set; }
+    public Func<CatalogReaderVolume, Task>? AfterJournalRead { get; set; }
     public async Task<ICatalogReaderSession> ConnectAsync(CancellationToken token) => new Session(this, await Base.ConnectAsync(token));
     public static ReaderFileEntrySet Names(params ReaderFileName[] names) => new(11, ReaderFileEntryState.Complete,
         (uint)names.Length, 1024, 132_000_000_000_000_011, 133_000_000_000_000_011, names);
@@ -34,6 +35,7 @@ internal sealed class EntryCatalogReaderFixture : ICatalogReaderSessionFactory
             var page = await inner.ReadJournalPageAsync(volume, journal, usn, limit, token);
             foreach (var node in page.Response.Records.Where(node => node.Exists)) observed[node.FileReference] = new(node.FileReference,
                 node.ParentFileReference, node.SizeBytes, node.CreationFileTimeUtc, node.LastWriteFileTimeUtc, node.Attributes, node.IsDirectory, node.Name, node.Extension);
+            if (owner.AfterJournalRead is { } afterRead) await afterRead(volume);
             return page;
         }
         public Task<IReadOnlyList<ReaderFileEntrySet>> ReadFileEntriesAsync(CatalogReaderVolume volume, IReadOnlyList<ulong> references, CancellationToken token)

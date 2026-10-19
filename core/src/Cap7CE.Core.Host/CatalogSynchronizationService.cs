@@ -295,6 +295,9 @@ public sealed class CatalogSynchronizationService
         {
             if (cursor >= targetUsn) break;
             token.ThrowIfCancellationRequested();
+            // A resumed volume's last revision can predate other volumes' work.
+            // Fence this observation before reading, rather than reuse that revision.
+            var observationRevision = await catalog.ReadRevisionAsync(token);
             var readerWatch = System.Diagnostics.Stopwatch.StartNew();
             var page = await reader.ReadJournalPageAsync(
                 readerVolume,
@@ -319,7 +322,7 @@ public sealed class CatalogSynchronizationService
                 volume.VolumeId,
                 volume.JournalId,
                 volume.CheckpointUsn,
-                volume.CatalogRevision,
+                observationRevision,
                 nextCheckpoint,
                 page.Response.FirstUsn,
                 page.Response.LowestValidUsn,
