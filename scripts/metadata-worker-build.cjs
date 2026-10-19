@@ -64,6 +64,8 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     const provider = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name), bundle: true, platform: "node", format: "cjs", target: "node24", external, sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(provider.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !external.includes(item.path) && !isBuiltin(item.path))) throw new Error("Unexpected Core preview dependency.");
   }
+  const office = await build({ entryPoints: [path.join(root, "core/node/officePreview/host.ts")], outfile: path.join(output, "office-preview.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(office.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core Office dependency.");
   const lock = require("../package-lock.json");
   for (const name of packages) {
     const source = path.join(root, "node_modules", name);

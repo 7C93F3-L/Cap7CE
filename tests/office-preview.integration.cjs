@@ -12,7 +12,7 @@ const {
   prepareOfficePreviewTemporaryRoot,
   setOfficePreviewConversionRunnerForTests,
   clearOfficePreviewCache
-} = require("../dist-electron/officePreviewService.js");
+} = require("./office-preview-core-fixture.cjs")(isolatedTemp);
 const {
   closePdfPreviewSession,
   openPdfPreviewSession,

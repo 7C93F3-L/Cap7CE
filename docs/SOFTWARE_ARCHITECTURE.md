@@ -2,9 +2,13 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/officePreview` 单独拥有 Office 转换与临时 PDF 缓存：cache 工厂沿用 temp/Cap7CE/office-preview/cache、SHA缓存键、使用中 lease、清理代次与串行发布，sessions 管理准备/转换/缓存命中的会话与取消，conversion 保留普通 PowerShell/COM 适配，pdfHeader 只验证5字节PDF头，api 只装配固定动作和有界在途任务。普通 office-preview.cjs 与固定 Node/原生 Job 运行；PowerShell子进程复用已有预览生命周期登记和释放屏障，转换会话目录位于本 Job 工作区，清理先核对自建目录。退出等待转换、目录移除和缓存队列，保存前的清理代次变化拒绝迟到回填。
+
+Main 的 OfficeService/OfficeCache 只投影原预览及统计/清理/使用中保留动作，根目录由纯 Shell 路径模块确定，RPC 不接受任意转换器、命令行或发布目标。预览与 Office 的薄宿主统一复用 corePreviewNodeSession 装配（各自独立Job），会话代次与同步关闭复用 CoreProviderPreviewClient；不复制进程或私有协议实现。生产缓存/lease真实RPC测试和注入模拟转换器的独立Core测试覆盖准备取消、转换取消、缓存命中、在用保护、清理期间旧发布、输出验证及父进程退出；模拟转换器只在测试编译入口注入，不能视为实际 Excel/PowerPoint 运行验收。Office COM 的外部进程生命周期仍沿原适配，不将本轮纯迁移称作 Office 程序完整回归。
+
 `core/node/providerPreview` 持有非 Office 的预览解析执行，按 PDF、字体、EPUB、MOBI、压缩包分别保留原控制器与解析器，api 仅装配固定动作和有界请求，lifecycle 负责实际线程/子进程释放屏障。独立 provider-preview.cjs 复用固定 Node、CoreVisualCacheClient/原生 Job 与通用私有管道，不依赖 Electron，也不与模型或视觉缓存共享进程树。PDF 保留1600边长、16MP限制、顺序渲染、5页缓存和实际源/授权源分离；字体/书籍仍使用独立线程，压缩包只列举原内容，MOBI 临时文件位于该 Job 自有工作区。解析线程输出隔离并限制512MiB heap，释放失败交由现有 Job 退休链路收尾。
 
-Main 的五个 PreviewService 变为薄代理，保留同步关闭结果、授权和既有错误类型；CoreProviderPreviewClient 持有当前界面会话代次，旧成功/失败和 PDF 页面响应均不得回填，CoreProviderPreviewHost 仅装配复用的进程 owner，超时或退出不重放源操作。格式 DTO 位于 src/shared，电子书共享同一展示结构；字体授权与归档列表解析为纯模块，源解析器在构建时统一生成固定 Core worker 资源，旧解析源码仍兼容未装配的旧入口。Main 的统一源句柄释放同时等待视觉与预览宿主，冷关闭不启动后台进程。运行时完整携带锁定 MOBI ESM 及其依赖、字体/PDF/图像/WASM 资源和许可证；实际复制到仓库外、空 PATH 测试覆盖五类格式、取消/恢复、进程树退出及工作区清理。Office 转换及其临时 PDF 缓存尚为独立兼容域，未在本轮迁移。
+Main 的五个 PreviewService 变为薄代理，保留同步关闭结果、授权和既有错误类型；CoreProviderPreviewClient 持有当前界面会话代次，旧成功/失败和 PDF 页面响应均不得回填，CoreProviderPreviewHost 仅装配复用的进程 owner，超时或退出不重放源操作。格式 DTO 位于 src/shared，电子书共享同一展示结构；字体授权与归档列表解析为纯模块，源解析器在构建时统一生成固定 Core worker 资源，旧解析源码仍兼容未装配的旧入口。Main 的统一源句柄释放同时等待视觉与预览宿主，冷关闭不启动后台进程。运行时完整携带锁定 MOBI ESM 及其依赖、字体/PDF/图像/WASM 资源和许可证；实际复制到仓库外、空 PATH 测试覆盖五类格式、取消/恢复、进程树退出及工作区清理。Office 转换及其临时 PDF 缓存由独立 officePreview 域拥有，PDF 展示继续复用本域。
 
 `core/node/storedMetadata` 是旧索引的只读兼容域：固定应用根下 index/cap7ce-index.db，原生 node:sqlite 只读分页、禁止扩展、关闭可信 schema，静态参数查询嵌入状态/证据、目录计数与64条关键词页，不创建、升级或回写旧库。查询运行在 InteractiveMetadataOwner 已有的两活动/两排队与8秒线程预算内，取消和源句柄释放等待实际线程终止；源解析线程的 workerData 与行为保持兼容。Main 的 coreStoredMetadataClient 只转发、校验投影和回退，preview、右栏、目录计数与关键词继承复用它；关键词失败保留重试，不记为已继承。启动移除 ensureImageDatabase，旧写入 API 仅为仍保留的旧界面兼容入口。DeleteFilesResult 移至共享契约，现代删除只依赖纯本地化错误投影，不间接加载旧SQL服务。自动守门与真实固定 Node/Job 测试核对原库字节/mtime、无新journal、缺库不创建、异常表拒绝和既有状态语义。
 

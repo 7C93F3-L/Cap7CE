@@ -7,7 +7,8 @@ export type { DirectSourcePreviewFacts } from "../src/shared/visualRenderTypes";
 export const shouldUseSourceFileForPreview = (sourcePath: string) => requestVisualCacheOwner<boolean>("sourcePreview", [sourcePath]);
 export const readVisualSourceDimensions = (sourcePath: string) => requestVisualCacheOwner<ImageSize | null>("sourceDimensions", [sourcePath]);
 import { releaseCoreProviderPreview } from "./core/coreProviderPreviewHost";
-export const releaseVisualRenderFileHandles = () => Promise.all([releaseVisualCacheSourceHandles(), releaseCoreProviderPreview()]).then(() => undefined);
+import { releaseCoreOfficePreview } from "./core/coreOfficePreviewHost";
+export const releaseVisualRenderFileHandles = () => Promise.all([releaseVisualCacheSourceHandles(), releaseCoreProviderPreview(), releaseCoreOfficePreview()]).then(() => undefined);
 export const ensureVisualCachePath = async (sourcePath: string, type: VisualCacheType) =>
   (await requestVisualCacheOwner<VisualPreparedPath>("ensure", [sourcePath, type])).imagePath;
 export const ensureSearchThumbnail = async (sourcePath: string) => {

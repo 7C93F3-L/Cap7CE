@@ -1,58 +1,13 @@
-import { app } from "electron";
-import fs from "node:fs/promises";
-import path from "node:path";
-import type { VisualCacheStats } from "./visualCacheService";
-
-export const officePreviewRoot = path.join(app.getPath("temp"), "Cap7CE", "office-preview");
-export const officePreviewCacheRoot = path.join(officePreviewRoot, "cache");
-let generation = 0, operations: Promise<unknown> = Promise.resolve();
-const leases = new Map<string, number>();
-const enqueue = <T>(run: () => Promise<T>) => {
-  const result = operations.then(run, run);
-  operations = result.catch(() => undefined);
-  return result;
-};
-const files = async () => {
-  try {
-    return (await fs.readdir(officePreviewCacheRoot, { withFileTypes: true }))
-      .filter(entry => entry.isFile() && /^[a-f0-9]{64}\.pdf$/u.test(entry.name))
-      .map(entry => path.join(officePreviewCacheRoot, entry.name));
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
-  }
-};
-export const getOfficePreviewCacheGeneration = () => generation;
-export const acquireOfficePreviewCache = (file: string, validate: () => Promise<boolean>) => enqueue(async () => {
-  if (!await validate()) return null;
-  leases.set(file, (leases.get(file) ?? 0) + 1);
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    const remaining = (leases.get(file) ?? 1) - 1;
-    if (remaining) leases.set(file, remaining); else leases.delete(file);
-  };
-});
-export const getOfficePreviewCacheStats = async (): Promise<VisualCacheStats> => {
-  let cacheCount = 0, totalBytes = 0;
-  for (const file of await files()) {
-    try { const stat = await fs.stat(file); cacheCount++; totalBytes += stat.size; }
-    catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
-  }
-  return { cacheCount, totalBytes, cachePaths: [officePreviewCacheRoot] };
-};
-export const publishOfficePreviewCache = (source: string, target: string, requestId: number, expectedGeneration: number) => enqueue(async () => {
-  if (expectedGeneration !== generation) return;
-  if (path.dirname(target) !== officePreviewCacheRoot || !/^[a-f0-9]{64}\.pdf$/u.test(path.basename(target))) throw Error("Invalid Office cache target.");
-  const pending = `${target}.${process.pid}.${requestId}.tmp`;
-  try { await fs.copyFile(source, pending); await fs.rename(pending, target); }
-  catch { await fs.rm(pending, { force: true }).catch(() => undefined); }
-});
-export const clearOfficePreviewCacheFiles = () => {
-  generation++;
-  return enqueue(async () => {
-    for (const file of await files()) if (!leases.has(file)) await fs.rm(file, { force: true });
-    return getOfficePreviewCacheStats();
-  });
+import { requestCoreOfficePreview } from "./core/coreOfficePreviewHost";
+import { officePreviewCacheRoot } from "./officePreviewPaths";
+import type { VisualCacheStats } from "../src/shared/visualCacheTypes";
+export { officePreviewRoot, officePreviewCacheRoot } from "./officePreviewPaths";
+const stats = (value: unknown): VisualCacheStats => { const result = value as VisualCacheStats;
+ if (!result || !Number.isSafeInteger(result.cacheCount) || result.cacheCount < 0 || !Number.isSafeInteger(result.totalBytes) || result.totalBytes < 0 || !Array.isArray(result.cachePaths) || result.cachePaths.length !== 1 || result.cachePaths[0] !== officePreviewCacheRoot) throw Error("core-office-invalid-response"); return result; };
+export const getOfficePreviewCacheStats = async () => stats(await requestCoreOfficePreview("cache.stats", []));
+export const clearOfficePreviewCacheFiles = async () => stats(await requestCoreOfficePreview("cache.clear", []));
+export const acquireOfficePreviewCache = async (file: string, validate?: () => Promise<boolean>) => {
+ if (validate && !await validate()) return null; const token = await requestCoreOfficePreview("cache.acquire", [file]);
+ if (token === null) return null; if (typeof token !== "string" || !/^[a-f0-9-]{36}$/.test(token)) throw Error("core-office-invalid-response"); let released = false;
+ return () => { if (released) return; released = true; void requestCoreOfficePreview("cache.release", [token], true).catch(() => undefined); };
 };
