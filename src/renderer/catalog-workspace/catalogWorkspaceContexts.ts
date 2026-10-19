@@ -21,7 +21,7 @@ export function catalogWorkspaceReducer(state: CatalogWorkspaceState, action: Ca
   if (action.type === "relocate") return relocateCatalogWorkspace(state, action.change);
   if (action.type === "entry") {
     const existing = state.contexts.find(context => pathKey(context.favoritePath ?? null) === pathKey(action.scopePath));
-    if (existing) return { ...state, activeId: existing.id, openLimitReached: false };
+    if (existing && action.scopePath === null) return { ...state, activeId: existing.id, openLimitReached: false };
     const context = { id: `catalog:${state.nextId}`, kind: "browse" as const, scopePath: action.scopePath, favoritePath: action.scopePath, name: action.name }, slot = action.scopePath === null ? -1 : state.contexts.findIndex(value => value.favoritePath != null);
     return { ...state, contexts: slot < 0 ? [...state.contexts, context] : state.contexts.map((value, index) => index === slot ? context : value),
       activeId: context.id, nextId: state.nextId + 1, openLimitReached: false };

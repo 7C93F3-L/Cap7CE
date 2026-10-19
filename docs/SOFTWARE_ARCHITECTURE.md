@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+收藏目录的 `entry` 动作始终沿既有上下文替换流程打开收藏路径并退役旧所有者，包含重复点击当前收藏和从此电脑返回收藏；不再把收藏快捷入口等同于恢复其旧浏览现场。临时搜索、目录历史与授权任务随旧上下文卸载清理，持久化视图偏好仍由原作用域读取，此电脑入口继续复用其挂载上下文。
+
 目录关键词搜索与浏览平铺状态解耦：`useComputerSearchController` 为非空关键词统一选择 `directory-descendants`，首次提交、替换刷新及失效分页重建共用该规则；空关键词继续沿持久化的 `includeSubfolders` 浏览偏好，搜索期间不改写该偏好。Main 在无文件专用筛选的关键词查询中保留文件和文件夹，空关键词递归平铺仍仅显示文件；此电脑全局范围与现有筛选交集不变。
 
 首次建库期间，普通 Core 的 `core/node/directoryBrowse` 通过既有固定 Node / 原生 Job / 私有 RPC 执行当前文件夹读取，复用无 Electron 依赖的 `skimBrowseService` 与共享目录 DTO。只读取直接子项的元数据，不递归、不建立第二份索引；每进程最多4个暂存目录、每目录65536项和32MiB投影预算、每页100项，游标单次消费。容量已满时仅淘汰读取完成的旧暂存，过期分页复用既有失效游标重建，不撤销已显示条目的授权；取消、源句柄释放和关闭等待已接纳读取归还。Main 的 `CoreDirectoryBrowseClient` 只验证响应及投影，结果沿原任务授权、缩略图、预览和文件操作链路使用。文本、递归检索及属性筛选仍等待目录库就绪，基础类型、时间与大小条件沿当前目录过滤；目录发布后 Renderer 保留当前可见项直至替换查询成功。不可用或离线磁盘仍明确失败，未发布暂存库不进入查询。
@@ -223,7 +225,7 @@ FavoriteFolderRenameService根据收藏ID从唯一注册表取得源路径，校
 
 ComputerSearchResultContextMenu使用ResponsiveFileContextMenu的actions-only展示，保留旧菜单默认信息区。useComputerSearchFileOperations组合收藏动作与授权删除；删除入口computerSearchTrashIpc只允许Main，复用现有批量授权解析，原生确认默认取消，确认后复查授权，并拒绝并发删除。computerSearchTrashService校验真实类型、链接、卷根和应用缓存，复用fileOperationService的回收站重试与DeleteFilesResult契约；旧索引资格规则不用于新Catalog，Core仍由原增量链维护索引。成功路径通过本窗口的useComputerSearchTrashUpdates更新所有已挂载结果，部分失败项保留。收藏控制来自唯一useFavoriteDirectories，无新增收藏写入链或文件扫描；未接入AI或其他文件管理动作。
 
-Catalog左栏使用entry动作选择既有此电脑或当前收藏上下文，保留挂载身份、查询、目录历史与滚动；换到另一收藏仅替换收藏上下文，普通入口最多保留两份现场，不创建可见标签或重启持久配置。侧栏高亮依入口favoritePath而非内部路径；CatalogVirtualGrid忽略隐藏容器的零尺寸，避免后台布局折叠破坏滚动现场。结果容器禁用原生overflow-anchor，避免续页追加时浏览器跟随末端自动滚动，视图大小仍由useCatalogGridSizeAnchor保持位置。原有foreground门禁继续限制后台查询续页、属性探测与缩略图兴趣。
+Catalog左栏的entry动作复用既有此电脑上下文，保留其挂载身份、查询、目录历史与滚动；收藏入口始终在收藏槽重新创建固定收藏路径的浏览上下文，回收旧查询及临时导航历史，普通入口最多保留两份现场，不创建可见标签或重启持久配置。侧栏高亮依入口favoritePath而非内部路径；CatalogVirtualGrid忽略隐藏容器的零尺寸，避免后台布局折叠破坏滚动现场。结果容器禁用原生overflow-anchor，避免续页追加时浏览器跟随末端自动滚动，视图大小仍由useCatalogGridSizeAnchor保持位置。原有foreground门禁继续限制后台查询续页、属性探测与缩略图兴趣。
 
 CatalogQueryOrdering对DirectChildren目录浏览先按is_directory降序分组，再执行用户选择的名称或修改时间排序；两阶段查询的matched_keys携带类型，CatalogQueryCursorKey和既有签名游标同步保留IsDirectory，续页先比较类型再比较原排序锚点。全盘、递归搜索保持原排序；无新增数据库字段、索引迁移、IPC或Renderer二次排序。
 
