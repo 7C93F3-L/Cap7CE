@@ -107,7 +107,8 @@
     "scripts/core-local-keywords-boundary-check.cjs": 25,
     "electron/core/coreVisualCacheClient.ts": 70,
     "electron/core/coreNodeRpcSession.ts": 65,
-    "scripts/core-node-transport-boundary-check.cjs": 15
+    "scripts/core-node-transport-boundary-check.cjs": 15,
+    "scripts/metadata-runtime-packaged-check.cjs": 30
   },
   "maintenanceMaxLines": {
     "src/renderer/catalog-workspace/useCatalogHomeActions.ts": 75,

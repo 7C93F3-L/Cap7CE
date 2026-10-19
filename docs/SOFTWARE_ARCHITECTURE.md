@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+独立Node资源使用两个明确的extraResources复制根：metadata-worker/v1及其node_modules，绕过打包器对复制根下node_modules的默认排除。`metadata-runtime-packaged-check`在pack/dist:installer之后对照生成源的完整文件集合和逐文件摘要，另核对官方Node固定字节；不能拿原生成目录自证已打包。真实electron-builder matcher/copy回归覆盖依赖漏拷、文件损坏与假目标，实际包验证应完整复制到仓库外，阻止父目录node_modules形成隐式运行回退。ASAR、独立解析库/原生二进制和许可证均按对应资源保留；构建校验不修改用户缓存或索引。
+
 `CoreVisualCacheClient` 只负责固定Node校验、环境清理、原生Job宿主的启动/退休、旧进程退出栅栏与被动源释放；`CoreNodeRpcSession` 负责单个私有管道的请求映射、分片帧、在途/字节预算、远端错误与管道失效，既有id序列仍由生命周期owner产生。线格式、64在途/128MiB累计输入/64MiB帧、引用/解除引用及失败不重放规则不变；本轮不增加事件或第二个Core客户端，不迁移建库流程。自动边界降低原客户端体量上限，并用乱序/逐字节Unicode响应、配额、坏/重复/未知帧、EPIPE及真实原生缓存/元数据/AI生命周期回归验证分离；为下一轮控制器所有权迁移保留明确传输职责，避免继续扩张单一客户端。
 
 `core/node/localKeywords` 拥有单图/多图流程实际的本地模型请求及源指纹读取。固定保留原提示词、Qwen thinking兼容grammar、512tokens、temperature0.2与关键词规范化；只接受精确的http://127.0.0.1:port连接、JPEG data URL及最长120秒期限。HTTP使用独立无proxyEnv的Agent、字面量loopback主机和固定/v1/chat/completions路径，不使用全局代理或跟随重定向；响应按字节限制1MiB，最多两个请求，每次结束/取消销毁连接，Core EOF取消活动任务，不重放。图像只在内存，不发布AI输入缓存；源指纹沿原bigint设备/文件ID/尺寸/创建及修改纳秒版本，拒绝文件身份改变，读取不写用户文件或事实库。
