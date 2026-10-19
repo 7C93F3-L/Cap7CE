@@ -41,7 +41,7 @@ import { deleteDirectoryImages, reassignDirectoryImages } from "./sqliteImageInd
 import { readCoreStoredMetadata as readPreviewEmbeddedMetadata, readCoreStoredCounts as getExistingImageCountsByDirectory } from "./core/coreStoredMetadataClient";
 import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
 import { collectSkimFolderStats, createSkimFolderStatsTask, inspectSkimEntry } from "./skimPreviewService";
-import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
+import { closeSkimTextPreview, getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellPreviewCache, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSearchShellVisualActivity } from "./searchShellVisualCacheService";
 import { registerCacheActivityIpc } from "./cacheActivityIpc";
@@ -310,6 +310,7 @@ const schedulePreviewIdleDestroy = () => {
   }, previewWindowIdleDestroyDelayMs);
 };
 const closePreviewSession = ({ restoreMain = true }: { restoreMain?: boolean } = {}) => {
+  closeSkimTextPreview();
   previewOpenRequestId += 1;
   embeddedMetadataPreviewCoordinator.cancel();
   closeFontPreviewSession();
@@ -1746,6 +1747,7 @@ ipcMain.handle("preview:open", async (event, data: PreviewWindowData) => {
     mobiPreview: undefined,
     mobiFallbackReason: undefined
   };
+  if (data.provider !== "text") closeSkimTextPreview();
   if (data.provider !== "mobi") closeMobiPreviewSession();
   if (data.provider !== "epub") closeEpubPreviewSession();
   if (data.provider === "mobi") {
@@ -2315,21 +2317,16 @@ ipcMain.handle("skim:startFolderStats", (event, request: unknown) => {
   const task = createSkimFolderStatsTask({ sessionId: candidate.sessionId, path: candidate.path });
   activeSkimFolderStatsTask = task;
   void task.collect((stats) => {
-      latestSkimFolderStatsUpdate = {
-        sessionId: task.sessionId,
-        path: task.path,
-        ...stats
-      };
-      if (
-        !task.cancelled
-        && activeSkimFolderStatsTask === task
-        && previewWindow
-        && !previewWindow.isDestroyed()
-      ) {
-        previewWindow.webContents.send("skim:folderStats", latestSkimFolderStatsUpdate);
-      }
+    latestSkimFolderStatsUpdate = { sessionId: task.sessionId, path: task.path, ...stats };
+    if (
+      !task.cancelled
+      && activeSkimFolderStatsTask === task
+      && previewWindow
+      && !previewWindow.isDestroyed()
+    ) {
+      previewWindow.webContents.send("skim:folderStats", latestSkimFolderStatsUpdate);
     }
-  ).finally(() => {
+  }).finally(() => {
     if (activeSkimFolderStatsTask === task) activeSkimFolderStatsTask = null;
   });
   return true;

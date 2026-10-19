@@ -21,7 +21,7 @@ const script = ts.transpileModule(registration.getText(ast), {
 
 function harness() {
   const pending = new Map();
-  const sent = [];
+  const sent = []; let textCancelled = 0;
   let handler;
   const sender = {};
   const context = {
@@ -31,6 +31,7 @@ function harness() {
     authorizeComputerSearchPreviewData: (data) => data,
     previewOpenRequestId: 0,
     embeddedMetadataPreviewCoordinator: { cancel() {}, start() {} },
+    closeSkimTextPreview() { textCancelled++; },
     readPreviewEmbeddedMetadata: (filePath) => new Promise((resolve) => pending.set(filePath, resolve)),
     previewWindow: null,
     activePreviewData: null,
@@ -50,6 +51,7 @@ function harness() {
   vm.runInNewContext(script, context, { filename: sourcePath });
   return {
     sent,
+    textCancelled: () => textCancelled,
     open: (sessionId, provider) => handler({ sender }, {
       sessionId, filePath: sessionId, fileSize: 1, modifiedAt: "2026-10-12",
       previewUrl: "cap7ce://test", provider, info: { path: sessionId },
@@ -70,6 +72,7 @@ function harness() {
     switching.finish("old");
     assert.equal(await old, false, `${provider}: metadata must not reopen an older preview`);
     assert.deepEqual(switching.sent, ["latest"]);
+    assert.equal(switching.textCancelled(), provider === "text" ? 0 : 1, "only the accepted non-text switch cancels pending text reads");
 
     const closing = harness();
     const request = closing.open("closing", provider);

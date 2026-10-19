@@ -1,3 +1,5 @@
+import type { SkimTextPreview } from "./textPreviewTypes";
+export type { SkimTextPreview } from "./textPreviewTypes";
 import type { SkimPreviewInfo, SkimFolderStats } from "./sourceInformationTypes";
 export type { SkimPreviewInfo, SkimFolderStats } from "./sourceInformationTypes";
 import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
@@ -342,14 +344,6 @@ export interface SkimLocationShortcut {
   path: string | null;
   name?: string;
 }
-
-
-export interface SkimTextPreview {
-  content: string;
-  encoding: "utf-8" | "utf-16le" | "utf-16be";
-  truncated: boolean;
-}
-
 
 export interface SkimFolderStatsUpdate extends SkimFolderStats {
   sessionId: string;

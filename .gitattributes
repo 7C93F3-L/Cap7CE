@@ -4,3 +4,4 @@
 *.png binary
 third_party/metadata-media/LICENSE-Windows-SDK.rtf binary
 third_party/metadata-media/LICENSE-dotnet-third-party.txt -whitespace
+third_party/saxes/LICENSE text eol=lf

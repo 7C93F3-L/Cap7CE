@@ -64,6 +64,8 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     const provider = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name), bundle: true, platform: "node", format: "cjs", target: "node24", external, sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(provider.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !external.includes(item.path) && !isBuiltin(item.path))) throw new Error("Unexpected Core preview dependency.");
   }
+  const textPreview = await build({ entryPoints: [path.join(root, "core/node/textPreview/worker.ts")], outfile: path.join(output, "text-preview.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(textPreview.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core text dependency.");
   const office = await build({ entryPoints: [path.join(root, "core/node/officePreview/host.ts")], outfile: path.join(output, "office-preview.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(office.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core Office dependency.");
   const lock = require("../package-lock.json");
@@ -75,9 +77,11 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
       filter: file => !/\.(?:map|ts)$/.test(file) && !/(?:^|[\\/])(?:test|tests|\.v8-cache)(?:[\\/]|$)/.test(path.relative(source, file)) });
   }
   // esbuild embeds these modules; retain their complete license files as separate resources.
-  for (const name of ["ag-psd", "base64-js", "pako", "fflate", "@xmldom/xmldom", "exifr", "opentype.js", "parse5", "entities"]) {
+  for (const name of ["ag-psd", "base64-js", "pako", "fflate", "@xmldom/xmldom", "exifr", "opentype.js", "parse5", "entities", "word-extractor", "xmlchars", "saxes", "pend", "fd-slicer", "buffer-crc32", "yauzl"]) {
     const source = path.join(root, "node_modules", name), target = path.join(output, "licenses", name);
     await fs.mkdir(target, { recursive: true });
+    // saxes 5.0.1 omits LICENSE from its npm tarball; keep the complete tagged upstream notice.
+    if (name === "saxes") await fs.copyFile(path.join(root, "third_party", "saxes", "LICENSE"), path.join(target, "LICENSE"));
     for (const entry of await fs.readdir(source)) if (/^(?:license|copying|notice)/i.test(entry))
       await fs.copyFile(path.join(source, entry), path.join(target, entry));
   }

@@ -5,12 +5,14 @@ import * as mobi from "./mobi";
 import * as archive from "./archive";
 import * as pdf from "./pdf";
 import { releasePreviewWorkers } from "./lifecycle";
-export function createProviderPreviewService() {
+import { createTextPreviewOwner } from "../textPreview/owner";
+export function createProviderPreviewService(directory: string) {
+  const textPreview = createTextPreviewOwner(directory);
   let closed = false, releasing: Promise<void> | undefined; const pending = new Set<Promise<unknown>>();
   const invalid = (): never => { throw Error("core-preview-invalid-request"); };
   const text = (value: unknown, file = false) => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") && (!file || path.isAbsolute(value)) ? value : invalid();
   const closeSessions = (all = false) => { font.closeFontPreviewSession(); epub.closeEpubPreviewSession(); mobi.closeMobiPreviewSession(); archive.closeArchivePreviewSession(); if (all) pdf.closePdfPreviewSession(); else pdf.releasePdfPreviewSourceHandles(); };
-  const release = () => releasing ??= (async () => { closeSessions(); await releasePreviewWorkers(); await Promise.allSettled([...pending]); await releasePreviewWorkers(); })().finally(() => { releasing = undefined; });
+  const release = () => releasing ??= (async () => { closeSessions(); await Promise.all([releasePreviewWorkers(), textPreview.release()]); await Promise.allSettled([...pending]); await releasePreviewWorkers(); })().finally(() => { releasing = undefined; });
   const execute = async (method: string, args: unknown[]): Promise<unknown> => {
     if (args.length < 1) return invalid(); const session = text(args[0]);
     if (method.endsWith(".close")) { if (args.length !== 1) return invalid(); switch (method) { case "font.close": return font.closeFontPreviewSession(session); case "epub.close": return epub.closeEpubPreviewSession(session); case "mobi.close": return mobi.closeMobiPreviewSession(session); case "archive.close": return archive.closeArchivePreviewSession(session); case "pdf.close": return pdf.closePdfPreviewSession(session); default: return invalid(); } }
@@ -31,10 +33,11 @@ export function createProviderPreviewService() {
       if (closed || !Array.isArray(args) || typeof method !== "string") return invalid();
       if (method === "releaseSourceHandles") { if (args.length) return invalid(); return release(); }
       if (releasing) throw Error("core-preview-releasing");
+      if (method.startsWith("text.")) return textPreview.dispatch(method, args);
       if (pending.size >= 16) throw Error("core-preview-busy");
       const work = execute(method, args).catch(error => { if (typeof error?.reason === "string") error.code = "preview:" + error.reason; throw error; }); pending.add(work);
       try { return await work; } finally { pending.delete(work); }
     },
-    async close() { closed = true; closeSessions(true); await release(); }
+    async close() { closed = true; closeSessions(true); await Promise.all([release(), textPreview.close()]); }
   };
 }

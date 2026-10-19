@@ -14,7 +14,7 @@ export class InteractiveMetadataOwner {
   read(id: string, source: string): Promise<PreviewEmbeddedMetadata | null> {
     return this.run(id, "preview-metadata.cjs", source, validPreviewMetadata, null);
   }
-  run<T>(id: string, file: "preview-metadata.cjs" | "stored-metadata.cjs", data: unknown, valid: (value: unknown) => value is T, fallback: T): Promise<T> {
+  run<T>(id: string, file: "preview-metadata.cjs" | "stored-metadata.cjs" | "text-preview.cjs", data: unknown, valid: (value: unknown) => value is T, fallback: T): Promise<T> {
     if (this.closed || this.releasing || this.jobs.has(id) || this.jobs.size >= 4) return Promise.resolve(fallback);
     return new Promise(resolve => { const job: Job = { id, file, data, resolve: value => resolve(valid(value) ? value : fallback) }; this.jobs.set(id, job); this.queue.push(job); this.pump(); });
   }

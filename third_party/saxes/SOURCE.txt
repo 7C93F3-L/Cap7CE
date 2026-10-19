@@ -1,0 +1,5 @@
+saxes 5.0.1 upstream license, including its inherited notices.
+Source: https://raw.githubusercontent.com/lddubeau/saxes/v5.0.1/LICENSE
+SHA256: 0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e
+The npm 5.0.1 tarball omits this file. The independent text preview runtime
+copies it to licenses/saxes/LICENSE without modifying the upstream text.

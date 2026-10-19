@@ -132,7 +132,7 @@
     "test:search-evidence": "node tests/search-evidence.integration.cjs",
     "test:search-query-planner": "node tests/search-query-planner.integration.cjs",
     "test:skim-visual-cache": "electron tests/skim-visual-cache.integration.cjs && electron tests/visual-invalid-source.integration.cjs",
-    "test:skim-content-preview": "electron tests/skim-content-preview.integration.cjs",
+    "test:skim-content-preview": "node scripts/core-text-preview-boundary-check.cjs && node tests/core-text-preview.integration.cjs && electron tests/skim-content-preview.integration.cjs",
     "test:file-catalog": "electron tests/file-catalog.integration.cjs",
     "test:multi-format-search": "electron tests/multi-format-search.integration.cjs",
     "test:file-size-filter": "electron tests/file-size-filter.integration.cjs",

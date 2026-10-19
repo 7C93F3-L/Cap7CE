@@ -23,6 +23,8 @@ This file is a human-readable inventory for Cap7CE 1.0.4 and its opt-in Core cap
 | `@xmldom/xmldom` | MIT |
 | `parse5` | MIT |
 | `entities` | BSD-2-Clause |
+| `word-extractor`, `xmlchars`, `pend`, `fd-slicer`, `buffer-crc32`, `yauzl` | MIT; bundled into the independent text preview worker with complete license resources |
+| `saxes` | ISC; bundled into the independent text preview worker with its license resource |
 | `pdfjs-dist` | Apache-2.0 |
 | `opentype.js` | MIT; bundled license text is in `third_party/opentype.js` |
 | `sharp` | Apache-2.0 |

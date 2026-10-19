@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/textPreview` 拥有按需文本与 Word 正文读取，复用 provider-preview 独立 Node/Job 与 InteractiveMetadataOwner 的线程队列（2活动/2排队、10秒、256MiB），不在 Core 事件循环解析 Word。reader 沿用普通文本1MiB、Word源64MiB、原提取器与BOM/截断/错误规则；结果及有界错误使用共享 textPreviewTypes，types.ts 仅重导出。固定 text-preview.cjs 合并现有解析依赖，完整许可证随运行时携带；不借助 Office、网络或系统 Node。text.read/cancel 以 UUID 隔离并行请求，release/EOF 等待真实 terminate；Main 的 CoreTextPreviewClient 只校验与转发，统一预览关闭和非文本切换撤销 pending 请求及迟到成功/失败，不复制单会话导航链。skimContentPreviewService 保留纯 MIME/字节范围和媒体扩展名映射。实际仓库外/空PATH、生成Word、格式编码、配额/取消/超时与原预览回归守护该边界。
+
 `core/node/sourceInformation` 拥有按需源条目信息与目录递归统计，仅使用 lstat/readdir，不读正文、创建缓存或写源文件。复用现有普通 Core 私有管道与 Job，最多4个统计任务、8个信息请求，目录并发4（上限8）、文件元数据16项一批；子目录链接跳过。任务以 UUID 隔离，watch 被动等待进度变化，无空闲轮询；取消、全局源句柄释放及退出均等待实际读取归还。Main 的 skimPreviewService/coreSourceInformationClient 只转发并验证 DTO，冷取消不启动宿主；预览和右栏分别持有任务身份并过滤迟到进度，共享契约位于 src/shared/sourceInformationTypes。专项实际 Node/Job 回归覆盖计数、进度、链接、配额、只读与取消屏障。
 
 Office 转换的 Windows 适配在打开源文件前记录既有进程、读取 COM HWND 对应进程并检查当前文档数量；既有或已有文档的实例不接入 Job、不改应用选项、不调用 Quit。新实例在源文件打开前接入 PowerShell 自持的 KILL_ON_JOB_CLOSE Job，Excel/PowerPoint 均设置 AutomationSecurity=3；正常退出、取消或 PowerShell 终止释放该 Job。Node 只停止已登记的 PowerShell 子进程，不再用裸 PID 终止外部程序；实例拒绝错误在 Shell 本地化。officeJob 仅包含固定 Win32 ABI 与句柄生命周期，不提供任意 PID 的生产消息入口。真实 PowerShell/Win32 测试使用生成的空闲 Node 进程验证既有 PID 不触碰及持有者被终止后的回收，并解析实际生产脚本；实际 Office 版本、用户同时操作及 WPS 兼容仍需人工验收，不由模拟测试推断。
