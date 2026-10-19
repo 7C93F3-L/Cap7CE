@@ -16,7 +16,7 @@ public sealed record FileFactHostStatus(string State, FileFactQueueLedger? Ledge
 
 // Host session remains inactive until explicit extraction configuration.
 // A rebuildable fresh store needs no historical migration; assemblers may retain a private checkpoint.
-public sealed class FileFactHostSession : IAsyncDisposable
+public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.IMetadataBuildSession
 {
     private readonly FileFactExtractionBroker broker;
     private readonly string databasePath;

@@ -1,30 +1,9 @@
 import type { CoreMetadataCursor, CoreMetadataPolicy, CoreMetadataProtocol } from "../core/coreMetadataProtocol";
-import { supportedImageDimensionExtensions } from "../imageDimensionTypes";
-import { CORE_IMAGE_METADATA_EXTRACTOR_VERSION } from "./imageMetadataMetrics";
-import { supportedVideoFactExtensions } from "../videoFactTypes";
-import { CORE_VIDEO_METADATA_EXTRACTOR_VERSION as VIDEO_FACT_EXTRACTOR_VERSION } from "./videoMetadataFrames";
-import { AUDIO_FACT_EXTRACTOR_VERSION, supportedAudioFactExtensions } from "../audioFactTypes";
-import { FONT_FACT_EXTRACTOR_VERSION, supportedFontFactExtensions } from "../fontFactTypes";
-import { MODEL_FACT_EXTRACTOR_VERSION, supportedModelFactExtensions } from "../modelFactTypes";
-import { DOCUMENT_FACT_EXTRACTOR_VERSION, supportedDocumentFactExtensions } from "../documentFactTypes";
-import { THREE_D_FACT_EXTRACTOR_VERSION, supportedThreeDFactExtensions } from "../threeDFactTypes";
-import { ARCHIVE_FACT_EXTRACTOR_VERSION, supportedArchiveFactExtensions } from "../archiveFactTypes";
-import { TEXT_DATA_FACT_EXTRACTOR_VERSION, supportedTextDataFactExtensions } from "../textDataFactTypes";
+import { metadataBuildSpecifications as defaultSpecifications, type MetadataBuildSpecification } from "./metadataBuildSpecifications";
 import { MetadataBuildEstimate, metadataBuildDelay, type MetadataBuildPhase, type MetadataBuildProgress } from "./metadataBuildProgress";
 import { discoverMetadataChanges } from "./metadataChangeDiscovery";
 
-export interface MetadataBuildSpecification { kind: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; extractorVersion: number; extensions: readonly string[] }
-const defaultSpecifications: readonly MetadataBuildSpecification[] = [
-  { kind: 0, extractorVersion: CORE_IMAGE_METADATA_EXTRACTOR_VERSION, extensions: supportedImageDimensionExtensions },
-  { kind: 1, extractorVersion: VIDEO_FACT_EXTRACTOR_VERSION, extensions: supportedVideoFactExtensions },
-  { kind: 2, extractorVersion: AUDIO_FACT_EXTRACTOR_VERSION, extensions: supportedAudioFactExtensions },
-  { kind: 3, extractorVersion: FONT_FACT_EXTRACTOR_VERSION, extensions: supportedFontFactExtensions },
-  { kind: 4, extractorVersion: MODEL_FACT_EXTRACTOR_VERSION, extensions: supportedModelFactExtensions },
-  { kind: 5, extractorVersion: DOCUMENT_FACT_EXTRACTOR_VERSION, extensions: supportedDocumentFactExtensions },
-  { kind: 6, extractorVersion: THREE_D_FACT_EXTRACTOR_VERSION, extensions: supportedThreeDFactExtensions },
-  { kind: 7, extractorVersion: TEXT_DATA_FACT_EXTRACTOR_VERSION, extensions: supportedTextDataFactExtensions },
-  { kind: 8, extractorVersion: ARCHIVE_FACT_EXTRACTOR_VERSION, extensions: supportedArchiveFactExtensions }
-];
+export type { MetadataBuildSpecification } from "./metadataBuildSpecifications";
 type Protocol = Pick<CoreMetadataProtocol, "configure" | "pause" | "discover" | "consumeChanges" | "claim" | "status" | "execute">;
 export interface MetadataBuildOptions {
   onProgress?: (progress: MetadataBuildProgress) => void;

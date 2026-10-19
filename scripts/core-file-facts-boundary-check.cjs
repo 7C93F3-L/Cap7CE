@@ -80,4 +80,4 @@ module.exports = (root, sourceFiles, failures) => {
   }
 };
 
-module.exports.ownsRuntimeSource = relative => relative === "core/src/Cap7CE.Core.Host/MetadataWorkers/NodeMetadataResources.cs";
+module.exports.ownsRuntimeSource = relative => ["NodeMetadataResources.cs", "MetadataExtractorManifest.cs"].some(name => relative === `core/src/Cap7CE.Core.Host/MetadataWorkers/${name}`);

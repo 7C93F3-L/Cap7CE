@@ -10,6 +10,7 @@ using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
 if (args is ["--metadata-state-tests"]) { await MetadataBuildStateFileTests.RunAsync(); return 0; }
+if (args is ["--metadata-sweep-tests"]) { await MetadataExtractorManifestTests.RunAsync(); await MetadataBuildSweepTests.RunAsync(); return 0; }
 if (args is ["--metadata-worker-tests"]) {
     await FileFactExecutionTests.RunAsync();
     await NodeMetadataWorkerTests.RunAsync();
@@ -62,6 +63,8 @@ TestAssert.False(nativeDependencyProbe.SourceFilesRead, "native catalog dependen
 await ProtocolFrameTests.RunAsync();
 await FavoriteConfigurationTests.RunAsync();
 await MetadataBuildStateFileTests.RunAsync();
+await MetadataExtractorManifestTests.RunAsync();
+await MetadataBuildSweepTests.RunAsync();
 await CoreRequestIdentityTests.RunAsync();
 await ReaderProtocolTests.RunAsync();
 ReaderNtfsParserTests.Run();

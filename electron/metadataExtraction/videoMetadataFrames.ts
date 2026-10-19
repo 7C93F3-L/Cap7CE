@@ -1,7 +1,7 @@
 import { analyzeVisualProperties } from "../visualPropertyAnalyzer";
 import { flattenImageMetadataProperties, type ImageMetadataProperties } from "./imageMetadataMetrics";
 
-export const CORE_VIDEO_METADATA_EXTRACTOR_VERSION = 2;
+export { CORE_VIDEO_METADATA_EXTRACTOR_VERSION } from "./metadataExtractorVersions";
 export interface VideoMetadataFrameResponse {
   id: number; state: "indexed" | "unavailable"; width: number; height: number;
   durationMilliseconds: number; frames: { width: number; height: number; rgba: string }[]; residentBytes: number;

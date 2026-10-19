@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`Core.Host/MetadataScheduling` 增加单次建库循环：`MetadataBuildSweep` 拥有一次显式执行、取消及失败恢复；`MetadataSweepDiscovery` 负责有界 Catalog 分页、队列统计与离线等待；`MetadataSweepProgress` 提供不可变状态，`MetadataBuildEstimate` 保留原有每类64样本和未知估时规则。所有实际读取与事实发布经同进程 `IMetadataBuildSession`，由原 `FileFactHostSession` 实现；本层无文件、SQLite、Reader、网络或进程启动权限。增量每轮最多64批，空闲不轮询；暂停等待执行归还。`metadataBuildSpecifications` 与纯版本模块是唯一默认提取器表，旧导出保持兼容；构建从该表生成 extractors.json，Core 严格验证版本、九类完整性、格式及64KiB预算，缺失/无效时拒绝执行，不在C#复制默认格式或版本。新模块清单、体量和权限由 core-metadata-scheduling-boundary-check 守护，原 Main 控制器体量上限降低。此轮尚未替换生产授权、目录借用、恢复及Main适配入口，不能视为整个建库调度迁移已完成。
+
 `Core.Host/MetadataBuild` 增加被动配置存储底座：`MetadataBuildPreferencesFile` 兼容原 metadata-build.json v2，`MetadataDirectoryQueueFile` 兼容 metadata-directory-build.json v1，均由调用方明确提供应用配置目录。Schema 保留未知字段，沿用授权意图、卷顺序、文件夹身份与路径校验；无效全局配置返回空，非法目录队列报告有界 operation/code，原文件均保留。`MetadataStateFile` 独占每个配置的串行读写、1MiB预算、独占临时文件、刷盘与原子替换，只删除自己创建的阶段文件。模块不依赖 Catalog、Reader、解析器或网络，不打开素材；体量、文件清单与权限由 core-metadata-state-boundary-check 守护。本轮尚未接入生产调度和启动恢复，现有 Main 控制器继续工作；读取或保存配置均不授予新的提取权限。
 
 独立Node资源使用两个明确的extraResources复制根：metadata-worker/v1及其node_modules，绕过打包器对复制根下node_modules的默认排除。`metadata-runtime-packaged-check`在pack/dist:installer之后对照生成源的完整文件集合和逐文件摘要，另核对官方Node固定字节；不能拿原生成目录自证已打包。真实electron-builder matcher/copy回归覆盖依赖漏拷、文件损坏与假目标，实际包验证应完整复制到仓库外，阻止父目录node_modules形成隐式运行回退。ASAR、独立解析库/原生二进制和许可证均按对应资源保留；构建校验不修改用户缓存或索引。

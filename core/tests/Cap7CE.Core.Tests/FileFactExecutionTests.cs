@@ -112,7 +112,7 @@ internal static class FileFactExecutionTests
     {
         public Task<ICatalogReaderSession> ConnectAsync(CancellationToken token) => throw new InvalidOperationException("Content execution never starts Reader.");
     }
-    private sealed class Fixture(string root, CatalogEntryIdentity identity, FileFactHostSession session) : IAsyncDisposable
+    internal sealed class Fixture(string root, CatalogEntryIdentity identity, FileFactHostSession session) : IAsyncDisposable
     {
         public string Source => Path.Combine(root, "源.txt");
         public string Database => Path.Combine(root, "fixture.db");

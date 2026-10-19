@@ -1,7 +1,7 @@
 import type { VisualPropertyVector } from "../visualPropertyTypes";
 import { visualColorFamilies } from "../visualPropertyTypes";
 
-export const CORE_IMAGE_METADATA_EXTRACTOR_VERSION = 2;
+export { CORE_IMAGE_METADATA_EXTRACTOR_VERSION } from "./metadataExtractorVersions";
 const scalars = ["transparentRatio", "semitransparentRatio", "borderTransparentRatio", "brightnessMean", "brightnessMedian",
   "darkRatio", "highlightRatio", "saturationMean", "highSaturationRatio", "lowSaturationRatio", "borderWhiteRatio", "borderBlackRatio", "borderUniformity"] as const;
 export const imageMetadataMetrics = [...scalars, ...visualColorFamilies.map(color => `colorRatio.${color}`),
