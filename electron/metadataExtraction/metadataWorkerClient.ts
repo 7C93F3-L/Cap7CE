@@ -1,6 +1,6 @@
 import { validMetadataArchiveProperties } from "./metadataArchiveProperties";
 import { spawn, type ChildProcess } from "node:child_process";
-import path from "node:path";
+import { metadataWorkerPaths } from "./metadataWorkerPaths";
 import type { MetadataWorkerTask, MetadataWorkerResult, MetadataWorkerResponse } from "./metadataWorkerTypes";
 import { searchModelPrecisions } from "../modelSearchFilters";
 import { validMetadataTextDataProperties } from "./metadataTextDataProperties";
@@ -60,12 +60,12 @@ export class MetadataWorkerClient {
   }
 
   private start(): ChildProcess {
-    const child = spawn(process.execPath, ["--max-old-space-size=256",
-      this.options.workerPath ?? path.join(__dirname, "metadataWorkerProcess.js")], {
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", CAP7CE_VIDEO_FRAME_HELPER: this.options.nativeVideoHelperPath
-        ?? (process.resourcesPath && !process.defaultApp
-          ? path.join(process.resourcesPath, "metadata-media/v1/Cap7CE.Media.Metadata.exe")
-          : path.resolve(__dirname, "../../native/artifacts/metadata-media/v1/Cap7CE.Media.Metadata.exe")) },
+    const runtime = metadataWorkerPaths();
+    const env: NodeJS.ProcessEnv = { ...process.env, CAP7CE_VIDEO_FRAME_HELPER: this.options.nativeVideoHelperPath ?? runtime.videoHelper };
+    // Never inherit executable injection or resolve modules through the invoking shell.
+    for (const key of Object.keys(env)) if (["NODE_OPTIONS", "NODE_PATH", "ELECTRON_RUN_AS_NODE"].includes(key.toUpperCase())) delete env[key];
+    const child = spawn(runtime.executable, ["--max-old-space-size=256", this.options.workerPath ?? runtime.worker], {
+      env,
       windowsHide: true,
       stdio: ["ignore", "ignore", "ignore", "ipc"]
     });

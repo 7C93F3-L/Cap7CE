@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 module.exports = (root, sourceFiles, failures) => {
+  require("./metadata-runtime-boundary-check.cjs")(root, failures);
   for (const [file, maximum] of [["electron/metadataDirectoryBuildStore.ts", 65], ["electron/metadataDirectoryStoreError.ts", 30],
     ["electron/metadataExtraction/metadataDirectoryBuildRuntime.ts", 160], ["electron/metadataExtraction/metadataDirectoryScope.ts", 35]]) {
     const text = fs.readFileSync(path.join(root, file), "utf8");

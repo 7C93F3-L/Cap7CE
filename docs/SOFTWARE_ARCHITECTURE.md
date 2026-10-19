@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+属性内容 Worker 使用独立的 Windows x64 Node 24.15.0，固定官方可执行文件 SHA256。构建只复用摘要完全相同的本机/缓存文件，否则从固定 Node 官方地址下载并校验；运行时不从 PATH 或 Electron 可执行文件回退，不继承 NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE。`artifacts/metadata-worker/v1` 生成并随包放入 `resources/metadata-worker/v1`，包含 esbuild 合并的解析器、字体/模型线程、动态 PDF/原生画布、sharp 与 7z WASM 以及许可证；不依赖 ASAR、开发目录或系统 Node。`metadataWorkerPaths` 只解析资源位置，`MetadataWorkerClient` 保持单任务、256 MiB JS 堆、超时/取消与驻留内存回收；原生视频助手继续独立资源。该轮仅替换内容读取运行时，Main 的提取控制器/发现编排与 Core 的授权/账本/事实所有权不变。资源完整性、无 Electron 运行依赖、动态依赖/线程及打包接入由边界检查和仓库外复制运行测试守护；未据此宣称提取调度已迁入 Core。
+
 收藏文件夹的物理身份校验、四字段改名 journal、改名后判定及恢复归 `Core.FileOperations` 的 `WindowsDirectorySource`、`FolderRenameJournal` 和 `FolderRenameWorkflow`。普通账号仅以 read-attributes 句柄读取 Windows 卷序列/文件索引与实际路径，不读素材正文；兼容旧 Node dev/ino 日志，无法确定新旧身份时保留日志和配置。准备、观察、恢复、确认分别通过配置路径的同一系统互斥量串行，Shell 更新偏好后以日志内容摘要确认，Core 再发布收藏路径并消费日志；过期确认拒绝。改名已发生而保存未完成时返回真实路径及待恢复状态，不尝试物理回滚。Electron 的 FavoriteFolderRenameService 只负责释放视觉句柄、窗口动作及偏好回调，不再读取源元数据或读写 journal。收藏路径预演与持久发布共用 `FavoriteDirectoryRelocation`。未完成的删除聚合/旧兼容索引清理仍由原领域编排。
 
 现有文件夹改名和回收站删除的物理执行由 `Core.FileOperations` 的 STA 适配与 `Core.FileOperations.Host` NativeAOT 宿主负责，底层 `native/Cap7CE.Core.FileOperations` 只使用 Windows IFileOperation。宿主与后端 DLL 随应用携带，不要求系统 .NET 或 Reader；查询/属性执行不因此启用。回收站沿当前 Electron 的 flags 与 PreDeleteItem 可回收检查，不可回收时中止，禁止永久删除回退；改名保留实际结果路径及原生取消/冲突/提升 UI。Electron 的 windowsShellRename 与 trash 执行点共用此后端，原 PowerShell 改名实现移除；删除授权、缓存/旧索引清理和偏好更新仍由原领域编排；改名 journal 已由上节 Core 工作流接管。`coreNativeRequest` 统一两个普通权限宿主的有界私有帧、退出清理和无自动重放；有用户原生对话框的文件操作不因计时器被强杀。新源依赖、体量、Native API、回收站保护与两文件打包范围由 `core-file-operations-boundary-check.cjs` 守护。

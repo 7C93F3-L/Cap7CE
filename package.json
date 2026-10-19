@@ -20,7 +20,7 @@
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "clean:electron": "node scripts/clean-electron-build.cjs",
-    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations",
+    "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:metadata-worker",
     "build": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
@@ -114,7 +114,7 @@
     "test:embedded-metadata-service": "node tests/embedded-metadata-service.integration.cjs",
     "test:visual-property-service": "node tests/visual-property-service.integration.cjs && npm run test:visual-property-semantics",
     "test:image-dimension-service": "node tests/image-dimension-service.integration.cjs",
-    "test:video-fact": "node tests/video-metadata-frames.integration.cjs && node tests/video-fact-cancellation.integration.cjs && node tests/metadata-worker.integration.cjs && electron tests/video-fact.integration.cjs",
+    "test:video-fact": "node tests/video-metadata-frames.integration.cjs && node tests/video-fact-cancellation.integration.cjs && node tests/metadata-worker.integration.cjs && node tests/metadata-runtime.integration.cjs && electron tests/video-fact.integration.cjs",
     "test:audio-fact": "node tests/audio-fact-cancellation.integration.cjs && electron tests/audio-fact.integration.cjs",
     "test:document-fact": "node tests/document-fact-cancellation.integration.cjs && electron tests/document-fact.integration.cjs",
     "test:three-d-fact": "node tests/three-d-known-properties.integration.cjs && electron tests/three-d-fact.integration.cjs",
@@ -158,7 +158,8 @@
     "test:preload-sandbox": "electron tests/preload-sandbox.integration.cjs",
     "build:core-configuration": "node scripts/core-configuration-build.cjs",
     "build:core-file-operations": "node scripts/core-file-operations-build.cjs",
-    "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs && node tests/core-folder-rename-workflow.integration.cjs"
+    "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs && node tests/core-folder-rename-workflow.integration.cjs",
+    "build:metadata-worker": "node scripts/metadata-worker-build.cjs"
   },
   "build": {
     "appId": "Cap7CE",
@@ -289,6 +290,13 @@
         "filter": [
           "Cap7CE.Core.FileOperations.Host.exe",
           "Cap7CE.Core.FileOperations.Native.dll"
+        ]
+      },
+      {
+        "from": "artifacts/metadata-worker/v1",
+        "to": "metadata-worker/v1",
+        "filter": [
+          "**/*"
         ]
       }
     ],

@@ -9,6 +9,7 @@ This file is a human-readable inventory for Cap7CE 1.0.4 and its opt-in Core cap
 | Component | License |
 | --- | --- |
 | Electron | MIT; the Electron distribution also includes Chromium and other third-party notices |
+| Node.js 24.15.0, Windows x64 | MIT and included dependency notices; the independently bundled metadata runtime includes the complete upstream `LICENSE-node` |
 | React / React DOM | MIT |
 | Fluent UI System Icons | MIT; selected SVG geometry is adapted for the stable UI, with the bundled license text in `third_party/fluentui-system-icons` |
 | `react-markdown` / `remark-gfm` and unified ecosystem dependencies | MIT; selected supporting packages also use ISC |
