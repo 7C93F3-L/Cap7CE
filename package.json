@@ -158,7 +158,7 @@
     "test:preload-sandbox": "electron tests/preload-sandbox.integration.cjs",
     "build:core-configuration": "node scripts/core-configuration-build.cjs",
     "build:core-file-operations": "node scripts/core-file-operations-build.cjs",
-    "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs"
+    "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs && node tests/core-folder-rename-workflow.integration.cjs"
   },
   "build": {
     "appId": "Cap7CE",

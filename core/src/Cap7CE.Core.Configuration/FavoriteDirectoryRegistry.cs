@@ -31,10 +31,7 @@ public sealed class FavoriteDirectoryRegistry(FavoriteConfigurationFile file)
                     (current[index], current[target]) = (current[target], current[index]); break;
                 case "relocate":
                     var source = FavoriteDirectoryRules.PathValue(oldPath); var destination = FavoriteDirectoryRules.PathValue(newPath);
-                    current = current.Select(item => {
-                        var moved = FavoriteDirectoryRules.Relocate(item.Path, source, destination);
-                        return moved == item.Path ? item : item with { Path = moved, Name = FavoriteDirectoryRules.DefaultName(moved) };
-                    }).ToList(); break;
+                    current = FavoriteDirectoryRelocation.Apply(current, source, destination).ToList(); break;
                 default: throw new FavoriteConfigurationException("favorite-directory-invalid-operation");
             }
             await file.WriteAsync(current, token); return current;

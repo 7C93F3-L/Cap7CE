@@ -1,13 +1,16 @@
 const fs = require("node:fs"), path = require("node:path");
 const directory = "core/src/Cap7CE.Core.FileOperations", host = `${directory}.Host`;
 module.exports.register = projects => {
-  projects.set(`${directory}/Cap7CE.Core.FileOperations.csproj`, []);
+  projects.set(`${directory}/Cap7CE.Core.FileOperations.csproj`, ["core/src/Cap7CE.Core.Configuration/Cap7CE.Core.Configuration.csproj"]);
   projects.set(`${host}/Cap7CE.Core.FileOperations.Host.csproj`, [`${directory}/Cap7CE.Core.FileOperations.csproj`]);
   return projects;
 };
+module.exports.ownsStorage = name => ["WindowsDirectorySource.cs", "FolderRenameJournal.cs"].some(file => name === `${directory}/${file}`);
 module.exports.check = (root, failures) => {
   const files = new Map([
     [`${directory}/WindowsFileOperation.cs`, 50], [`${directory}/WindowsFileOperationRules.cs`, 30], [`${host}/Program.cs`, 40],
+    [`${directory}/WindowsDirectorySource.cs`, 55], [`${directory}/FolderRenameJournal.cs`, 65], [`${directory}/FolderRenameWorkflow.cs`, 80],
+    [`${host}/FolderRenameRequestHandler.cs`, 45], [`${host}/WindowsOperationRequest.cs`, 25], ["electron/core/coreFolderRename.ts", 30],
     ["native/Cap7CE.Core.FileOperations/operation_sink.h", 60], ["native/Cap7CE.Core.FileOperations/file_operations.cpp", 85],
     ["electron/core/coreWindowsFileOperations.ts", 25], ["scripts/core-file-operations-build.cjs", 45]
   ]);
@@ -17,8 +20,9 @@ module.exports.check = (root, failures) => {
   for (const [name, maximum] of files) {
     const source = fs.readFileSync(path.join(root, name), "utf8");
     if (source.split(/\r?\n/).length > maximum) failures.push(`${name} exceeds file operation ownership (${maximum}).`);
-    if (name.startsWith("core/") && /System\.Net|HttpClient|Sqlite|Reader\.Host|DeviceIoControl|Process\.|File\.(?:Delete|Move|Copy)|Directory\.(?:Delete|Move)/.test(source))
+    if (name.startsWith("core/") && /System\.Net|HttpClient|Sqlite|Reader\.Host|DeviceIoControl|Process\.|File\.Copy|Directory\.(?:Delete|Move)/.test(source))
       failures.push(`${name} bypasses its native Windows operation boundary.`);
+    if (name.startsWith("core/") && /File\.(?:Delete|Move)/.test(source) && !name.endsWith("/FolderRenameJournal.cs")) failures.push(`${name} may only mutate assets through IFileOperation.`);
     if (name.startsWith("native/") && /(?:DeleteFile|RemoveDirectory|MoveFile|CopyFile|CreateProcess|ShellExecute|WinHttp|WinInet|DeviceIoControl|FSCTL_)\w*\s*\(/.test(source))
       failures.push(`${name} bypasses the Windows Shell operation contract.`);
   }

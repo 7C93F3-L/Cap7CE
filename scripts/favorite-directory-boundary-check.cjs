@@ -5,7 +5,7 @@ const files = new Map([
   ["electron/windowsShellRename.ts", 12],
   ["electron/directoryRenamePaths.ts", 30],
   ["electron/favoriteDirectories/favoriteFolderRenameRules.ts", 25],
-  ["electron/favoriteDirectories/favoriteFolderRenameService.ts", 115],
+  ["electron/favoriteDirectories/favoriteFolderRenameService.ts", 50],
   ["electron/catalogGridPreferenceRegistry.ts", 20],
   ["electron/catalogViewPreferenceRules.ts", 20],
   ["electron/catalogViewPreferenceStore.ts", 20],

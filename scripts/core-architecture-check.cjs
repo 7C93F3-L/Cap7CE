@@ -93,7 +93,7 @@ for (const filePath of coreSourceFiles) {
   const allowedCapabilities = isCatalogSource ? ["catalog database implementation", "real file-system access"]
     : isReaderHostSource ? ["package-owned Windows service implementation", "NTFS Reader implementation", "real file-system access"]
     : isVolumeProbeSource || isCatalogStorage ? ["catalog database implementation", "real file-system access"]
-    : isProductCoreRuntime || isControllerProbeCatalog || require("./core-configuration-boundary-check.cjs").ownsStorage(relativePath) ? ["real file-system access"]
+    : isProductCoreRuntime || isControllerProbeCatalog || require("./core-configuration-boundary-check.cjs").ownsStorage(relativePath) || require("./core-file-operations-boundary-check.cjs").ownsStorage(relativePath) ? ["real file-system access"]
     : isRealValidationSource ? ["catalog database implementation", "real file-system access"]
     : isReaderV2SessionSource ? ["package-owned Windows service implementation"]
     : isReaderLifecycleSource ? ["package-owned Windows service implementation"]
