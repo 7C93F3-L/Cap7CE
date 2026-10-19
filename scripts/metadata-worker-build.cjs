@@ -5,6 +5,7 @@ const { build } = require("esbuild");
 const copyRuntime = require("./metadata-node-runtime.cjs");
 const root = path.resolve(__dirname, "..");
 const output = path.join(root, "artifacts/metadata-worker/v1");
+const isBuiltin = name => builtinModules.includes(name) || builtinModules.includes(name.replace(/^node:/, "")) || require("node:module").isBuiltin(name);
 const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc", "semver", "7z-wasm", "readline-sync",
   "pdfjs-dist", "@napi-rs/canvas", "@napi-rs/canvas-win32-x64-msvc"];
 
@@ -22,36 +23,39 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     external: ["sharp", "7z-wasm"], sourcemap: false, metafile: true, logLevel: "error" });
   const imports = Object.values(result.metafile.outputs).flatMap(item => item.imports);
   if (imports.some(item => !item.external || !["sharp", "7z-wasm", "7z-wasm/7zz.wasm"].includes(item.path)
-    && !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected metadata runtime dependency.");
+    && !isBuiltin(item.path))) throw new Error("Unexpected metadata runtime dependency.");
   for (const name of ["modelFactWorker", "fontMetadataWorker"]) {
     const thread = await build({ entryPoints: [path.join(root, `electron/${name}.ts`)],
       outfile: path.join(output, `${name}.js`), bundle: true, platform: "node", format: "cjs", target: "node24",
       sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(thread.metafile.outputs).flatMap(item => item.imports).some(item =>
-      !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected metadata thread dependency.");
+      !item.external || !isBuiltin(item.path))) throw new Error("Unexpected metadata thread dependency.");
   }
   const cache = await build({ entryPoints: [path.join(root, "core/node/visualCache/host.ts")],
     outfile: path.join(output, "visual-cache.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24",
     sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(cache.metafile.outputs).flatMap(item => item.imports).some(item =>
-    !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected Core cache dependency.");
+    !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core cache dependency.");
   const modelHost = await build({ entryPoints: [path.join(root, "core/node/modelRuntime/host.ts")], outfile: path.join(output, "model-runtime.cjs"),
     bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
-  if (Object.values(modelHost.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !builtinModules.includes(item.path.replace(/^node:/, ""))))
+  if (Object.values(modelHost.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path)))
     throw new Error("Unexpected Core model runtime dependency.");
   for (const [source, name] of [["core/node/visualRendering/worker.ts", "visual-render.cjs"], ["electron/psdArtboardRenderWorker.ts", "psdArtboardRenderWorker.js"]]) {
     const renderer = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name),
       bundle: true, platform: "node", format: "cjs", target: "node24", external: ["sharp", "@napi-rs/canvas"],
       sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(renderer.metafile.outputs).flatMap(item => item.imports).some(item => !item.external
-      || !["sharp", "@napi-rs/canvas"].includes(item.path) && !builtinModules.includes(item.path.replace(/^node:/, ""))))
+      || !["sharp", "@napi-rs/canvas"].includes(item.path) && !isBuiltin(item.path)))
       throw new Error("Unexpected Core visual decoder dependency.");
   }
   const preview = await build({ entryPoints: [path.join(root, "core/node/interactiveMetadata/worker.ts")],
     outfile: path.join(output, "preview-metadata.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24",
     sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(preview.metafile.outputs).flatMap(item => item.imports).some(item =>
-    !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected Core preview metadata dependency.");
+    !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core preview metadata dependency.");
+  const stored = await build({ entryPoints: [path.join(root, "core/node/storedMetadata/worker.ts")], outfile: path.join(output, "stored-metadata.cjs"),
+    bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(stored.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core stored metadata dependency.");
   const lock = require("../package-lock.json");
   for (const name of packages) {
     const source = path.join(root, "node_modules", name);

@@ -4,18 +4,20 @@ const {createCatalogKeywordsRuntime}=require('../dist-electron/catalogKeywordsRu
 const {registerCatalogKeywordsIpc}=require('../dist-electron/catalogKeywordsIpc.js');
 (async()=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'Cap7CE-keywords-'));
+ const transport=require('./core-stored-index-transport.cjs')(root),absent=require('./core-stored-index-transport.cjs')(path.join(root,'absent'));
+ fs.mkdirSync(path.join(root,'index'));
  try{
-  const file=path.join(root,'legacy.db'),db=new DatabaseSync(file);
+  const file=path.join(root,'index','cap7ce-index.db'),db=new DatabaseSync(file);
   db.exec('CREATE TABLE files(file_path TEXT PRIMARY KEY,created_at TEXT);CREATE TABLE file_user_metadata(file_path TEXT PRIMARY KEY,keywords TEXT);');
   const putFile=db.prepare('INSERT INTO files VALUES(?,?)'),putTags=db.prepare('INSERT INTO file_user_metadata VALUES(?,?)');
   for(let i=0;i<65;i++){const p=`X:\\${String(i).padStart(3,'0')}.png`;putFile.run(p,'2026-10-17T00:00:00Z');putTags.run(p,' 天空，blue,blue ')}db.close();
-  const before=fs.readFileSync(file),page=await readLegacyKeywordPage('',file);assert.equal(page.entries.length,64);assert.ok(page.after);
-  const last=await readLegacyKeywordPage(page.after,file);assert.equal(last.entries.length,1);assert.equal(last.after,null);
+  const before=fs.readFileSync(file),page=await readLegacyKeywordPage('',transport);assert.equal(page.entries.length,64);assert.ok(page.after);
+  const last=await readLegacyKeywordPage(page.after,transport);assert.equal(last.entries.length,1);assert.equal(last.after,null);
   assert.deepEqual(last.entries[0].keywords,['天空','blue']);assert.deepEqual(fs.readFileSync(file),before,'legacy compatibility is read-only');
-  assert.deepEqual(await readLegacyKeywordPage('',path.join(root,'absent.db')),{entries:[],after:null});
+  assert.deepEqual(await readLegacyKeywordPage('',absent),{entries:[],after:null});
   let processId=1,active=true,fail=false,legacyReads=0;const calls=[];
   const runtime=createCatalogKeywordsRuntime({start:async()=>{},supports:()=>true,processId:()=>processId,active:()=>active,
-   legacyPage:async after=>{legacyReads++;if(fail)throw Error('temporary');return readLegacyKeywordPage(after,file)},
+   legacyPage:async after=>{legacyReads++;if(fail)throw Error('temporary');return readLegacyKeywordPage(after,transport)},
    request:async(operation,body)=>{calls.push([operation,body]);if(operation==='keywords.read')return {keywords:['天空'],revision:'2'};
     if(operation==='keywords.write')return {saved:true,current:{keywords:body.keywords,revision:'3'}};return {imported:body.entries.length,catalogRevision:1}}});
   await Promise.all([runtime.prepare('a'),runtime.prepare('a')]);assert.equal(legacyReads,2,'concurrent initialization shares bounded legacy pages');
@@ -40,5 +42,5 @@ const {registerCatalogKeywordsIpc}=require('../dist-electron/catalogKeywordsIpc.
   await handlers.get('computerSearch:saveKeywords')({allowed:true},{...request,keywords:[],expectedRevision:'1'});assert.equal(writes,1);
   prepare=async()=>{authorized=false};await assert.rejects(()=>handlers.get('computerSearch:saveKeywords')({allowed:true},{...request,keywords:[],expectedRevision:'2'}),/expired/);assert.equal(writes,1,'retired authorization cannot write after initialization');
   console.log('Catalog keywords: read-only legacy paging, serialized initialization/retry, stable identities, normalization and authorized IPC passed.');
- }finally{fs.rmSync(root,{recursive:true,force:true})}
+ }finally{transport.close();absent.close();await new Promise(resolve=>setTimeout(resolve,150));fs.rmSync(root,{recursive:true,force:true})}
 })().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>{if(process.versions.electron)require('electron').app.exit(process.exitCode??0)});

@@ -4,6 +4,7 @@ const {CoreProtocolClient}=require('../dist-electron/core/coreProtocolClient.js'
 const {createCatalogKeywordsRuntime}=require('../dist-electron/catalogKeywordsRuntime.js'),{readLegacyKeywordPage}=require('../dist-electron/catalogLegacyKeywords.js');
 const {registerCatalogKeywordsIpc}=require('../dist-electron/catalogKeywordsIpc.js');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'Cap7CE-keyword-product-')),repo=path.resolve(__dirname,'..'),token=crypto.randomBytes(16).toString('hex');
+const legacyTransport=require('./core-stored-index-transport.cjs')(root);
 const profile=createCoreHostLaunchProfile('probe',token),catalogPath=path.join(os.tmpdir(),'Cap7CE-Core-P32-'+token,'catalog.db');
 app.setPath('userData',root+'-profile');app.on('window-all-closed',()=>{});
 const fixture=String.raw`import React from 'react';import{createRoot}from'react-dom/client';import CatalogDetails from './src/renderer/catalog-workspace/CatalogDetails';
@@ -21,9 +22,9 @@ app.whenReady().then(async()=>{let child,client,win;try{
  INSERT INTO catalog_nodes_v2 VALUES('a','0000000000000001',NULL,'.','',1,16,1,NULL,10000,10000);
  INSERT INTO catalog_directory_paths_v2 VALUES('a','0000000000000001','');
  INSERT INTO catalog_nodes_v2 VALUES('a','0000000000000010','0000000000000001','source.bin','.bin',0,32,1,123,133000000000009999,10000);`);db.close();
- const legacyPath=path.join(root,'legacy.db'),legacy=new DatabaseSync(legacyPath);legacy.exec(`CREATE TABLE files(file_path TEXT PRIMARY KEY,created_at TEXT);CREATE TABLE file_user_metadata(file_path TEXT PRIMARY KEY,keywords TEXT);
+ fs.mkdirSync(path.join(root,'index'));const legacyPath=path.join(root,'index','cap7ce-index.db'),legacy=new DatabaseSync(legacyPath);legacy.exec(`CREATE TABLE files(file_path TEXT PRIMARY KEY,created_at TEXT);CREATE TABLE file_user_metadata(file_path TEXT PRIMARY KEY,keywords TEXT);
  INSERT INTO files VALUES('X:\\source.bin','${new Date(13300000000000-11644473600000).toISOString()}');INSERT INTO file_user_metadata VALUES('X:\\source.bin','legacytag');`);legacy.close();const before=fs.readFileSync(legacyPath);
- const api=createCatalogKeywordsRuntime({request:(...args)=>client.request(...args),start:async()=>{},supports:name=>client.supports(name),processId:()=>child.pid,active:()=>true,legacyPage:after=>readLegacyKeywordPage(after,legacyPath)});
+ const api=createCatalogKeywordsRuntime({request:(...args)=>client.request(...args),start:async()=>{},supports:name=>client.supports(name),processId:()=>child.pid,active:()=>true,legacyPage:after=>readLegacyKeywordPage(after,legacyTransport)});
  const item={volumeId:'a',fileReference:'0000000000000010',createdUtcTicks:Number(133000000000009999n),createdFileTimeMilliseconds:'13300000000000',isDirectory:false};
  registerCatalogKeywordsIpc({registrar:ipcMain,isSenderAllowed:event=>event.sender===win?.webContents,keywords:api,resolveItem:request=>{if(request.taskId!=='task'||request.authorizationId!=='granted')throw Error('expired');return item;}});
  ipcMain.handle('computerSearch:readFileDetails',()=>null);ipcMain.handle('computerSearch:cancelFileDetails',()=>true);
@@ -47,4 +48,4 @@ app.whenReady().then(async()=>{let child,client,win;try{
  assert.equal((await api.read(item)).keywords.length,0,'empty user value survives Core restart and repeated legacy import');
  assert.deepEqual(fs.readFileSync(legacyPath),before,'old user database is byte-for-byte unchanged');assert.deepEqual(errors,[],'real sandbox preload loads cleanly');
  await stop();console.log('Native keyword round trip: real Renderer, sandbox preload, authorized IPC, Core search, legacy compatibility, clear and restart passed.');
-}catch(error){console.error(error.stack);process.exitCode=1}finally{client?.close();if(child&&child.exitCode===null){const exited=new Promise(resolve=>child.once('exit',resolve));child.stdin.destroy();child.kill();await Promise.race([exited,new Promise(resolve=>setTimeout(resolve,2000))]);}win?.destroy();await profile.cleanup();try{fs.rmSync(root,{recursive:true,force:true,maxRetries:3,retryDelay:50})}catch(error){console.error(error);process.exitCode=1}app.exit(process.exitCode??0)}});
+}catch(error){console.error(error.stack);process.exitCode=1}finally{legacyTransport.close();client?.close();if(child&&child.exitCode===null){const exited=new Promise(resolve=>child.once('exit',resolve));child.stdin.destroy();child.kill();await Promise.race([exited,new Promise(resolve=>setTimeout(resolve,2000))]);}win?.destroy();await profile.cleanup();try{fs.rmSync(root,{recursive:true,force:true,maxRetries:3,retryDelay:50})}catch(error){console.error(error);process.exitCode=1}app.exit(process.exitCode??0)}});

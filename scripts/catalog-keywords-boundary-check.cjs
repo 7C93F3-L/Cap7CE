@@ -9,7 +9,8 @@ module.exports=(root,failures)=>{
   if(/System\.Net|HttpClient|DeviceIoControl|Process\.|File\.(?:Read|Write|Delete|Move)|Directory\.(?:Get|Enumerate|Delete)|Reader\.Host/.test(source))failures.push(`${file} bypasses the keyword database-only boundary.`);
  }
  const legacy=fs.readFileSync(path.join(root,'electron/catalogLegacyKeywords.ts'),'utf8');
- if(!legacy.includes('readOnly: true')||!legacy.includes('LIMIT 64')||/\.exec\(|\.run\(|INSERT INTO|UPDATE |DELETE FROM/.test(legacy))failures.push('Legacy keyword compatibility must remain bounded and read-only.');
+ const reader=fs.readFileSync(path.join(root,'core/node/storedMetadata/reader.ts'),'utf8');
+ if(!reader.includes('readOnly: true')||!reader.includes('LIMIT 64')||/node:(?:sqlite|fs)|\.prepare\(/.test(legacy)||!legacy.includes('readCoreLegacyKeywordPage'))failures.push('Legacy keyword compatibility must use bounded read-only Core pages.');
  const schema=fs.readFileSync(path.join(root,'core/src/Cap7CE.Core.Catalog/Keywords/CatalogKeywordSchema.cs'),'utf8');
  if(/REFERENCES\s+catalog_nodes/i.test(schema))failures.push('User annotations must survive replacement of automatic Catalog nodes.');
  const ipc=fs.readFileSync(path.join(root,'electron/catalogKeywordsIpc.ts'),'utf8');

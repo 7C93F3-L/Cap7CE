@@ -1,4 +1,4 @@
-import { readPreviewEmbeddedMetadata } from "./sqliteImageIndex";
+import { readCoreStoredMetadata as readPreviewEmbeddedMetadata } from "./core/coreStoredMetadataClient";
 import type { ImageSize } from "../src/shared/visualRenderTypes";
 import { startEmbeddedMetadataPreviewProbe, type EmbeddedMetadataPreviewProbe } from "./embeddedMetadataPreviewProbe";
 import type { SkimPreviewInfo } from "./skimPreviewService";

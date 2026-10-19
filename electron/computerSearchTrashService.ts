@@ -1,6 +1,7 @@
 import { app } from "electron";
 import type { ComputerSearchItem } from "./computerSearchTypes";
-import { getTrashFailureMessage, type DeleteFilesResult } from "./fileOperationService";
+import { getTrashFailureMessage } from "./trashFailureMessage";
+import type { DeleteFilesResult } from "../src/shared/deleteFilesTypes";
 import { getVisualCacheDirectories } from "./visualCacheService";
 import { releaseVisualRenderFileHandles } from "./visualRenderService";
 import { requestCoreTrash } from "./core/coreTrashClient";

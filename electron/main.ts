@@ -37,7 +37,8 @@ import { registerRuntimeModelIpc } from "./runtimeModelIpc";
 import { getUserPreferences, markBackgroundRunNotificationShown, updateAlwaysOnTopPreference, updateAppearanceColorsPreference, updateAutoCacheOptimizationPreference, updateCommandEnabledPreference, updateEdgeCollapsePreference, updateLanguagePreference, updateLaunchAtLoginPreference, updateQuickActionGlobalEnabledPreference, updateSearchLabelVisibilityPreference, updateStableShortcutActionsPreference, updateSkimSidebarFoldersPreference, updateSkimSortPreference, updateSkimSystemLocationsCollapsedPreference, updateSortPreference, updateStandbyLineVisiblePreference, updateSystemNotificationsPreference, updateThemePreference, updateUiFontSizePreference, updateWindowMaterialPreference } from "./preferenceStore";
 import { registerPreferenceIpc } from "./preferenceIpc";
 import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
-import { deleteDirectoryImages, ensureImageDatabase, getExistingImageCountsByDirectory, readPreviewEmbeddedMetadata, reassignDirectoryImages } from "./sqliteImageIndex";
+import { deleteDirectoryImages, reassignDirectoryImages } from "./sqliteImageIndex";
+import { readCoreStoredMetadata as readPreviewEmbeddedMetadata, readCoreStoredCounts as getExistingImageCountsByDirectory } from "./core/coreStoredMetadataClient";
 import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
 import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
@@ -1523,7 +1524,6 @@ if (hasSingleInstanceLock) app.whenReady().then(async () => {
   await prepareOfficePreviewTemporaryRoot().catch((error) => {
     console.warn("[office-preview] failed to reset temporary root", error);
   });
-  await ensureImageDatabase();
   const preferences = await getUserPreferences();
   if (nativeTheme.themeSource !== preferences.themePreference) nativeTheme.themeSource = preferences.themePreference;
   stableWindowRuntime.configure(preferences.themePreference, preferences.windowMaterial);

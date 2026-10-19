@@ -1,6 +1,7 @@
 import path from "node:path";
 import { CoreVisualPreparation } from "../visualRendering/preparation";
 import { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
+import { dispatchStoredMetadata } from "../storedMetadata/dispatch";
 import { LocalKeywordOwner } from "../localKeywords/owner";
 import { createVisualCacheStore } from "./store";
 import { formalVisualCacheTypes, skimVisualCacheTypes } from "../../../electron/core/visualCachePaths";
@@ -25,6 +26,7 @@ export const createVisualCacheDispatcher = (root: string, directory: string) => 
     if (!Array.isArray(args)) return invalid();
     const count = (expected: number) => { if (args.length !== expected) invalid(); };
     if (typeof method === "string" && method.startsWith("localKeywords.")) return keywords.dispatch(method, args);
+    if (["storedMetadata", "storedCounts", "legacyKeywordPage"].includes(String(method))) return dispatchStoredMetadata(metadata, root, String(method), args, probeId, filePath);
     switch (method) {
       case "ensure": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), false);
       case "ensureShell": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), true);

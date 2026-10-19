@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/storedMetadata` 是旧索引的只读兼容域：固定应用根下 index/cap7ce-index.db，原生 node:sqlite 只读分页、禁止扩展、关闭可信 schema，静态参数查询嵌入状态/证据、目录计数与64条关键词页，不创建、升级或回写旧库。查询运行在 InteractiveMetadataOwner 已有的两活动/两排队与8秒线程预算内，取消和源句柄释放等待实际线程终止；源解析线程的 workerData 与行为保持兼容。Main 的 coreStoredMetadataClient 只转发、校验投影和回退，preview、右栏、目录计数与关键词继承复用它；关键词失败保留重试，不记为已继承。启动移除 ensureImageDatabase，旧写入 API 仅为仍保留的旧界面兼容入口。DeleteFilesResult 移至共享契约，现代删除只依赖纯本地化错误投影，不间接加载旧SQL服务。自动守门与真实固定 Node/Job 测试核对原库字节/mtime、无新journal、缺库不创建、异常表拒绝和既有状态语义。
+
 `core/node/modelRuntime` 是独立模型进程领域，通过 model-runtime.cjs 与固定 Node/原生 Job 私有宿主运行，和视觉缓存的 Job 分离。api 固定上下文和动作白名单，owner 持有启动/停止代次、在退进程栅栏、健康监控与原有手动/AI空闲策略；startup 只组合已有配置与进程适配，attempt 只管理选中运行组件和有界输出，health 只直连 loopback 的两个固定 GET 路径，ports 只探测原端口范围，log 只写既有私有模型日志，state 只维护不可变快照和有界变化等待。模型配置与该宿主共用同一 modelSettings 所有者，启动/退进程期间拒绝切换配置；RPC 不接收任意可执行文件、命令行或测试时钟。
 
 Main 的 llamaRuntimeManager 缩为既有动作和应用退出适配，CoreModelRuntimeClient 只转发动作、拒绝旧代次响应并维护同步展示镜像；状态订阅复用同一私有 RPC 的一次被动等待，空闲无查询轮询。关闭不冷启动宿主，最多等待10秒后退休原生Job，异常不重放模型启动；Main/Node/模型子孙随原生Job生命周期清理。进程/状态共享契约在 src/shared/modelRuntimeTypes.d.ts，纯初始状态和AI空闲期限同源；普通模型资源和源文件不进入日志之外的写入路径。生成的模拟进程覆盖准备取消、重复启动、后续停止撤销排队启动、别名、端口重试、健康失败、嵌套AI使用、手动所有权、环境代理隔离和Job结束；不把这些测试当作实际GPU推理验收。
