@@ -106,7 +106,7 @@
     "test:skim-preview": "electron tests/skim-preview.integration.cjs",
     "test:pdf-preview": "electron tests/pdf-preview.integration.cjs",
     "test:office-preview": "electron tests/office-preview.integration.cjs",
-    "test:display-cache": "node scripts/core-visual-cache-boundary-check.cjs && node scripts/core-visual-execution-boundary-check.cjs && node tests/core-visual-cache.integration.cjs && node tests/core-visual-execution-lifetime.integration.cjs && node tests/core-visual-runtime.integration.cjs && electron tests/core-visual-bmp-parity.integration.cjs && electron tests/display-cache.integration.cjs",
+    "test:display-cache": "node scripts/core-node-transport-boundary-check.cjs && node tests/core-node-rpc-session.integration.cjs && node scripts/core-visual-cache-boundary-check.cjs && node scripts/core-visual-execution-boundary-check.cjs && node tests/core-visual-cache.integration.cjs && node tests/core-visual-execution-lifetime.integration.cjs && node tests/core-visual-runtime.integration.cjs && electron tests/core-visual-bmp-parity.integration.cjs && electron tests/display-cache.integration.cjs",
     "test:archive-preview": "node tests/archive-preview.integration.cjs",
     "test:font-preview": "electron tests/font-preview.integration.cjs",
     "test:embedded-metadata": "node tests/embedded-metadata.integration.cjs",

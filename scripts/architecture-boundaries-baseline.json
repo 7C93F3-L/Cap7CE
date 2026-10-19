@@ -104,7 +104,10 @@
     "electron/catalogAutoKeywordSource.ts": 18,
     "electron/core/coreLocalKeywordsClient.ts": 40,
     "electron/core/localKeywordPolicy.ts": 26,
-    "scripts/core-local-keywords-boundary-check.cjs": 25
+    "scripts/core-local-keywords-boundary-check.cjs": 25,
+    "electron/core/coreVisualCacheClient.ts": 70,
+    "electron/core/coreNodeRpcSession.ts": 65,
+    "scripts/core-node-transport-boundary-check.cjs": 15
   },
   "maintenanceMaxLines": {
     "src/renderer/catalog-workspace/useCatalogHomeActions.ts": 75,
@@ -141,7 +144,6 @@
     "electron/displayCacheService.ts": 30,
     "electron/officePreviewCache.ts": 75,
     "electron/visualCacheService.ts": 50,
-    "electron/core/coreVisualCacheClient.ts": 100,
     "electron/core/visualCachePaths.ts": 150,
     "electron/core/visualCacheFrames.ts": 40,
     "electron/core/visualCacheImage.ts": 10,

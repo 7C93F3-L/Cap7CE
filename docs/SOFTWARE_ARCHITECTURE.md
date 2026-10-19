@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`CoreVisualCacheClient` 只负责固定Node校验、环境清理、原生Job宿主的启动/退休、旧进程退出栅栏与被动源释放；`CoreNodeRpcSession` 负责单个私有管道的请求映射、分片帧、在途/字节预算、远端错误与管道失效，既有id序列仍由生命周期owner产生。线格式、64在途/128MiB累计输入/64MiB帧、引用/解除引用及失败不重放规则不变；本轮不增加事件或第二个Core客户端，不迁移建库流程。自动边界降低原客户端体量上限，并用乱序/逐字节Unicode响应、配额、坏/重复/未知帧、EPIPE及真实原生缓存/元数据/AI生命周期回归验证分离；为下一轮控制器所有权迁移保留明确传输职责，避免继续扩张单一客户端。
+
 `core/node/localKeywords` 拥有单图/多图流程实际的本地模型请求及源指纹读取。固定保留原提示词、Qwen thinking兼容grammar、512tokens、temperature0.2与关键词规范化；只接受精确的http://127.0.0.1:port连接、JPEG data URL及最长120秒期限。HTTP使用独立无proxyEnv的Agent、字面量loopback主机和固定/v1/chat/completions路径，不使用全局代理或跟随重定向；响应按字节限制1MiB，最多两个请求，每次结束/取消销毁连接，Core EOF取消活动任务，不重放。图像只在内存，不发布AI输入缓存；源指纹沿原bigint设备/文件ID/尺寸/创建及修改纳秒版本，拒绝文件身份改变，读取不写用户文件或事实库。
 
 `catalogAutoKeywordModel`与`catalogAutoKeywordSource`缩为私有Core请求适配；`coreLocalKeywordsClient`保留Shell的AbortSignal和120秒界面期限，早取消不启动请求，迟到结果不保存，取消只发给当前运行中的宿主。共享连接/源DTO在src/shared/localKeywordTypes.d.ts，通用私有request/cancel形状在coreNodeTransport.d.ts；纯grammar/提示词/输出解析由localKeywordPolicy复用，不加载Electron。模型配置/启动管理、任务选择/授权投影、关键词合并及冲突重试仍复用原入口；事实写入继续经既有Core Catalog授权，未据此迁移模型安装管理或建库恢复调度。复制到仓库外的固定Node/空PATH、实际本地HTTP测试服务、代理陷阱/重定向零命中、取消/超时/坏或过大响应/断流恢复、源版本与临时图片不落盘回归守护此域，不在正式素材上自动识别。
