@@ -111,7 +111,7 @@
     "test:font-preview": "electron tests/font-preview.integration.cjs",
     "test:embedded-metadata": "node tests/embedded-metadata.integration.cjs",
     "test:visual-property": "node tests/visual-property.integration.cjs",
-    "test:embedded-metadata-service": "node tests/embedded-metadata-service.integration.cjs",
+    "test:embedded-metadata-service": "npm run test:core-preview-metadata && node tests/embedded-metadata-service.integration.cjs",
     "test:visual-property-service": "node tests/visual-property-service.integration.cjs && npm run test:visual-property-semantics",
     "test:image-dimension-service": "node tests/image-dimension-service.integration.cjs",
     "test:video-fact": "node tests/video-metadata-frames.integration.cjs && node tests/video-fact-cancellation.integration.cjs && node tests/metadata-worker.integration.cjs && node tests/metadata-runtime.integration.cjs && electron tests/video-fact.integration.cjs",
@@ -161,7 +161,8 @@
     "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs && node tests/core-folder-rename-workflow.integration.cjs && node tests/core-trash-client.integration.cjs",
     "build:metadata-worker": "node scripts/metadata-worker-build.cjs",
     "build:core-visuals": "node scripts/core-visuals-build.cjs",
-    "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs"
+    "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs",
+    "test:core-preview-metadata": "node scripts/core-preview-metadata-boundary-check.cjs && node tests/core-preview-metadata-lifetime.integration.cjs && node tests/core-preview-metadata-runtime.integration.cjs"
   },
   "build": {
     "appId": "Cap7CE",

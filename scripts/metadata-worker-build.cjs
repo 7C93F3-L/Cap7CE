@@ -42,6 +42,11 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
       || !["sharp", "@napi-rs/canvas"].includes(item.path) && !builtinModules.includes(item.path.replace(/^node:/, ""))))
       throw new Error("Unexpected Core visual decoder dependency.");
   }
+  const preview = await build({ entryPoints: [path.join(root, "core/node/interactiveMetadata/worker.ts")],
+    outfile: path.join(output, "preview-metadata.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24",
+    sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(preview.metafile.outputs).flatMap(item => item.imports).some(item =>
+    !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected Core preview metadata dependency.");
   const lock = require("../package-lock.json");
   for (const name of packages) {
     const source = path.join(root, "node_modules", name);
@@ -51,7 +56,7 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
       filter: file => !/\.(?:map|ts)$/.test(file) && !/(?:^|[\\/])(?:test|tests|\.v8-cache)(?:[\\/]|$)/.test(path.relative(source, file)) });
   }
   // esbuild embeds these modules; retain their complete license files as separate resources.
-  for (const name of ["ag-psd", "base64-js", "pako", "fflate"]) {
+  for (const name of ["ag-psd", "base64-js", "pako", "fflate", "@xmldom/xmldom", "exifr", "opentype.js"]) {
     const source = path.join(root, "node_modules", name), target = path.join(output, "licenses", name);
     await fs.mkdir(target, { recursive: true });
     for (const entry of await fs.readdir(source)) if (/^(?:license|copying|notice)/i.test(entry))

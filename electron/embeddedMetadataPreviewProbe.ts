@@ -1,7 +1,7 @@
-import path from "node:path";
-import { Worker } from "node:worker_threads";
-import { supportsEmbeddedMetadataExtraction } from "./embeddedMetadataExtractor";
-import type { EmbeddedMetadataExtraction } from "./embeddedMetadataTypes";
+import { supportsEmbeddedMetadataExtraction } from "./embeddedMetadataFormats";
+import type { EmbeddedMetadataExtraction, CancellablePreviewMetadataRead } from "./embeddedMetadataTypes";
+import { toPreviewMetadata } from "./core/previewMetadataProjection";
+import { startCorePreviewMetadataRead } from "./core/corePreviewMetadataClient";
 import type { PreviewEmbeddedMetadata, PreviewWindowData } from "./previewTypes";
 
 interface WorkerLike {
@@ -15,10 +15,7 @@ interface ProbeDependencies {
   timeoutMs?: number;
 }
 
-export interface EmbeddedMetadataPreviewProbe {
-  result: Promise<PreviewEmbeddedMetadata | null>;
-  cancel: () => void;
-}
+export type EmbeddedMetadataPreviewProbe = CancellablePreviewMetadataRead;
 
 export interface PreviewEmbeddedMetadataUpdate {
   sessionId: string;
@@ -32,17 +29,10 @@ interface CoordinatorDependencies {
   probeDependencies?: ProbeDependencies;
 }
 
-const toPreviewMetadata = (extraction: EmbeddedMetadataExtraction): PreviewEmbeddedMetadata | null => {
-  if (extraction.status !== "indexed") return null;
-  const items = extraction.evidence.map((item) => ({ kind: item.kind, text: item.searchText }));
-  if (items.length === 0 && !extraction.capturedAt) return null;
-  return { items, capturedAt: extraction.capturedAt };
-};
-
 export const startEmbeddedMetadataPreviewProbe = (
   data: Pick<PreviewWindowData, "skimActive" | "info" | "embeddedMetadata" | "filePath">,
   {
-    createWorker = () => new Worker(path.join(__dirname, "embeddedMetadataWorker.js")),
+    createWorker,
     timeoutMs = 8_000
   }: ProbeDependencies = {}
 ): EmbeddedMetadataPreviewProbe | null => {
@@ -52,6 +42,8 @@ export const startEmbeddedMetadataPreviewProbe = (
     || data.embeddedMetadata
     || !supportsEmbeddedMetadataExtraction(data.filePath)
   ) return null;
+
+  if (!createWorker) return startCorePreviewMetadataRead(data.filePath, timeoutMs);
 
   const worker = createWorker();
   let settled = false;

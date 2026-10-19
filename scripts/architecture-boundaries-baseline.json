@@ -92,7 +92,14 @@
     "core/src/Cap7CE.Core.Setup/CapabilitySetupServiceDacl.cs": 34,
     "core/src/Cap7CE.Core.Setup/CapabilitySetupServiceHardening.cs": 119,
     "core/src/Cap7CE.Core.Setup/CapabilitySetupServiceCommand.cs": 57,
-    "core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs": 27
+    "core/src/Cap7CE.Core.Catalog/CatalogNativeDependencyProbe.cs": 27,
+    "electron/embeddedMetadataPreviewProbe.ts": 100,
+    "electron/catalogFileDetailsReader.ts": 52,
+    "electron/core/corePreviewMetadataClient.ts": 40,
+    "electron/core/previewMetadataProjection.ts": 25,
+    "electron/embeddedMetadataFormats.ts": 35,
+    "electron/embeddedMetadataTypes.ts": 25,
+    "scripts/core-preview-metadata-boundary-check.cjs": 25
   },
   "maintenanceMaxLines": {
     "src/renderer/catalog-workspace/useCatalogHomeActions.ts": 75,

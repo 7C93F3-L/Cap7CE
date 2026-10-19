@@ -17,6 +17,7 @@ export const releaseVisualCacheSourceHandles = () => client?.releaseSourceHandle
 app.once("will-quit", closeVisualCacheOwner);
 process.once("exit", closeVisualCacheOwner);
 export const requestVisualCacheOwner = <T>(method: string, args: unknown[] = []) => owner().request(method, args) as Promise<T>;
+export const requestActiveVisualCacheOwner = (method: string, args: unknown[]) => client?.requestIfActive(method, args) ?? Promise.resolve(null);
 const locations = () => createVisualCachePaths(app.getPath("userData"));
 export const getVisualCacheDescriptor = (type: VisualCacheType) => locations().getVisualCacheDescriptor(type);
 export const getVisualCacheDirectory = (type: VisualCacheType) => locations().getVisualCacheDirectory(type);

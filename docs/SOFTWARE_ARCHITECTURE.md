@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/interactiveMetadata` 接管右栏和空格预览的临时嵌入信息读取，复用独立普通 Node/native Job 宿主，不依赖 Electron、Catalog 或旧 SQLite。只允许两个活动线程及两个待处理请求，Worker 独立256MiB堆/4MiB栈、8秒期限、单次结果后真正终止，stdout/stderr独立排空，不向宿主管道写解析诊断。队列取消不打开源，活动取消/源句柄释放等待线程终止；Core EOF关闭本域，实际父进程结束仍由原生Job保护。源前后以bigint设备/文件ID、大小及纳秒时间校验，原同路径文件被替换或改变时丢弃结果；不写索引、缓存、授权或用户文件。格式解析及高价值信息选择策略复用原实现，资源独立合并为preview-metadata.cjs，含相应依赖许可证。全新的临时读取不会因Core进程替换自动重放。
+
+`embeddedMetadataPreviewProbe` 默认使用私有Core RPC，Shell只保留8秒界面期限、会话取消/迟到丢弃和可注入的兼容测试适配；取消采用当前宿主，不为一次取消启动新Core。`catalogFileDetailsReader`的尺寸读取复用既有Core sourceDimensions，并继续保留单个活动/一个可替换待选项、读取后复查和旧库当前结果的兼容投影。元数据/预览契约只在src/shared/embeddedMetadataTypes.d.ts定义，electron/embeddedMetadataTypes及previewTypes按原路径导出，轻量embeddedMetadataFormats不加载正文解析器。旧批量兼容服务和旧库查询没有据此迁完或自动重新启动。真实仓库外资源、EXIF/XMP、快速切换、线程故障、预算/日志隔离、源替换与不持久化回归及边界守门覆盖此域。
+
 `core/node/visualRendering` 接管交互式可见图像、文档缩略图、原图预览判定、尺寸及临时 AI 输入准备。CoreVisualPreparation 用同一 cache Store 产生源条目、检查命中、去重、调解码器并唯一发布；decoder 只返回图像/元数据，不持有 cache epoch 或写缓存权限。两个隔离 Node slot 保留原 Sharp concurrency2/cache64MiB/20files/100items 与 300px/2560px/1536px JPEG90、旋转、内容裁切及格式策略；单任务60秒、256MiB JS堆、768MiB响应后回收，5秒一次性空闲回收由父进程控制，无定时轮询或失败重放。原生 Shell 图片单独串行，由 Core native primitive 保留300/1200px和15秒期限，不被同步图像解析堵住；所有后代继承原生 Job。PSD artboard 动态线程单独合并发布，PDF/画布与已有锁定依赖复用，仓库外无PATH/无Electron可完成实际PNG/EXIF/SVG/PDF/128MiB以上PSD画板/CDR/EPS和系统图片准备。临时AI仍只返回内存JPEG，不发布model-input缓存；旧兼容缓存API不变。sourcePreview的纯阈值共享于visualDirectPreviewPolicy，ImageSize等DTO仅在src/shared/visualRenderTypes.d.ts定义。
 
 源句柄释放覆盖已接纳但仍在metadata-await的准备操作，并等待解码子进程真正退出和清理临时目录；改名/删除入口await此动作。没启动缓存宿主时不因释放而启动它，释放故障会退休整个Job，不禁用独立文件操作。CoreVisualCacheClient通过nonce限定的原生stop事件请求停止，等旧宿主退出后才允许替换，避免旧进程绕过新会话的清理栅栏；宿主以隐藏detached方式避开Node全局子进程Job的提前终止，但继续严格等待实际Shell父进程句柄。原生宿主在操作系统临时根内创建唯一GUID工作区，给decoder的子目录租用，停止/父进程结束时先等Job的active-process-zero，再仅删除自身创建的树，遇到reparse point只移除链接；不递归跟随到源文件或用户选择的路径。直接强杀监督宿主本身仍只能由OS终止Job，清理属于best-effort，不扫描旧临时文件或用户数据。Decoder退出时另有精确自建子目录清理，磁盘/启动同步失败和EOF前未启动任务均不挂死队列。

@@ -20,24 +20,8 @@ export interface PreviewManualKeywordsUpdate {
   manualKeywords: string[];
 }
 
-export type PreviewEmbeddedMetadataKind =
-  | "visual_content"
-  | "embedded_title"
-  | "embedded_subject"
-  | "embedded_description"
-  | "embedded_keywords"
-  | "software_family"
-  | "capture_device"
-  | "media_title"
-  | "media_artist"
-  | "media_album"
-  | "font_family"
-  | "font_style";
-
-export interface PreviewEmbeddedMetadata {
-  items: Array<{ kind: PreviewEmbeddedMetadataKind; text: string }>;
-  capturedAt: string | null;
-}
+export type { PreviewEmbeddedMetadataKind, PreviewEmbeddedMetadata } from "../src/shared/embeddedMetadataTypes";
+import type { PreviewEmbeddedMetadata } from "../src/shared/embeddedMetadataTypes";
 
 export interface PreviewSearchEvidence {
   terms: Array<{ term: string; bestSource: string }>;

@@ -36,6 +36,9 @@ export class CoreVisualCacheClient {
     });
   }
   close(): void { this.closed = true; if (this.child) this.fail(this.child); }
+  requestIfActive(method: string, args: unknown[]): Promise<unknown> {
+    return this.child || this.starting ? this.request(method, args) : Promise.resolve(null);
+  }
   async releaseSourceHandles(): Promise<void> {
     if (!this.child && !this.starting) return;
     try { await this.request("releaseSourceHandles"); }

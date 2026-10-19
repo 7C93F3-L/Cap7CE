@@ -1,3 +1,5 @@
+import { standardMetadataExtensions, xmpContainerExtensions } from "./embeddedMetadataFormats";
+export { supportsEmbeddedMetadataExtraction } from "./embeddedMetadataFormats";
 import fs from "node:fs/promises";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -20,30 +22,12 @@ const opentype = require("opentype.js") as {
   };
 };
 
-const standardMetadataExtensions = new Set([
-  ".jpg", ".jpeg", ".png", ".tif", ".tiff", ".nef", ".dng", ".cr2", ".heic", ".heif", ".avif"
-]);
-const xmpContainerExtensions = new Set([".psd", ".psb", ".pdf", ".ai"]);
 const maximumPngTextBytes = 16 * 1024 * 1024;
 const maximumPngTotalTextBytes = 32 * 1024 * 1024;
 const maximumXmpPacketBytes = 1024 * 1024;
 const boundedContainerReadBytes = 4 * 1024 * 1024;
 const maximumFontBytes = 64 * 1024 * 1024;
 const boundedMp4ReadBytes = 8 * 1024 * 1024;
-const supportedEmbeddedMetadataExtensions = new Set([
-  ...standardMetadataExtensions,
-  ...xmpContainerExtensions,
-  ".mp4", ".ttf", ".otf"
-]);
-
-export const supportsEmbeddedMetadataExtraction = (filePathOrExtension: string) => {
-  const value = filePathOrExtension.trim().toLowerCase();
-  const extension = value.startsWith(".") && !value.includes("\\") && !value.includes("/")
-    ? value
-    : path.extname(value);
-  return supportedEmbeddedMetadataExtensions.has(extension);
-};
-
 const metadataPick = [
   "Title", "DocumentName", "Headline", "Description", "ImageDescription", "Subject", "Keywords", "HierarchicalSubject",
   "Software", "CreatorTool", "Make", "Model", "DateTimeOriginal", "CreateDate"

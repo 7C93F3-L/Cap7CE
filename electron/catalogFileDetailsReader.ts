@@ -1,5 +1,5 @@
 import { readPreviewEmbeddedMetadata } from "./sqliteImageIndex";
-import { readVisualSourceDimensions } from "./visualSourceDimensions";
+import type { ImageSize } from "../src/shared/visualRenderTypes";
 import { startEmbeddedMetadataPreviewProbe, type EmbeddedMetadataPreviewProbe } from "./embeddedMetadataPreviewProbe";
 import type { SkimPreviewInfo } from "./skimPreviewService";
 import type { CatalogFileDetails } from "../src/shared/fileInformationTypes";
@@ -8,12 +8,13 @@ interface Job { key: string; path: string; cancelled: boolean; resolve: (value: 
 interface Dependencies {
   inspect: (filePath: string) => Promise<SkimPreviewInfo>;
   readStored?: typeof readPreviewEmbeddedMetadata;
-  readDimensions?: typeof readVisualSourceDimensions;
+  readDimensions?: (filePath: string) => Promise<ImageSize | null>;
   startProbe?: typeof startEmbeddedMetadataPreviewProbe;
 }
 // One running read and one replaceable pending selection. No persistent cache or indexing.
 export function createCatalogFileDetailsReader({ inspect, readStored = readPreviewEmbeddedMetadata,
-  readDimensions = readVisualSourceDimensions, startProbe = startEmbeddedMetadataPreviewProbe }: Dependencies) {
+  readDimensions = async filePath => (await import("./visualRenderService")).readVisualSourceDimensions(filePath),
+  startProbe = startEmbeddedMetadataPreviewProbe }: Dependencies) {
   let active: Job | null = null, pending: Job | null = null, probe: EmbeddedMetadataPreviewProbe | null = null;
   const cancelJob = (job: Job | null) => { if (job) { job.cancelled = true; job.resolve(null); } };
   const pump = async () => {

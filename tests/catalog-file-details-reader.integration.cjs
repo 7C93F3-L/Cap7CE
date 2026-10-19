@@ -30,10 +30,17 @@ const metadata={items:[{kind:'software_family',text:'photoshop'}],capturedAt:nul
  try{
    const file=path.join(temp,'source.jpg');await sharp({create:{width:12,height:8,channels:3,background:'#b0c0d0'}}).withMetadata({exif:{IFD0:{Software:'Adobe Photoshop'}}}).jpeg().toFile(file);
    const before=await fs.readFile(file);
-   const real=createCatalogFileDetailsReader({inspect:p=>inspectSkimEntry(p,'file',[]),readStored:async()=>({metadata:null,isCurrent:false})});
+   const {CoreVisualCacheClient}=require('../dist-electron/core/coreVisualCacheClient.js');
+   const {startCorePreviewMetadataRead}=require('../dist-electron/core/corePreviewMetadataClient.js');
+   const client=new CoreVisualCacheClient(path.join(temp,'profile'));
+   const request=client.request.bind(client),cancel=client.requestIfActive.bind(client);
+   const real=createCatalogFileDetailsReader({inspect:p=>inspectSkimEntry(p,'file',[]),readStored:async()=>({metadata:null,isCurrent:false}),
+     readDimensions:p=>request('sourceDimensions',[p]),startProbe:({filePath})=>startCorePreviewMetadataRead(filePath,8000,{request,cancel})});
+   try {
    const actual=await real.read('real',file);assert.equal(actual.imageWidth,12);assert.equal(actual.imageHeight,8);
    assert.ok(actual.embeddedMetadata.items.some(e=>e.kind==='software_family'&&e.text.toLowerCase().includes('photoshop')),'real preview metadata worker supplies the sidebar');
    assert.deepEqual(await fs.readFile(file),before,'detail reads preserve source bytes');
+   } finally {await client.releaseSourceHandles();client.close()}
  }finally{await fs.rm(temp,{recursive:true,force:true})}
  console.log('Catalog file details: current metadata reused, latest-only bounded reads, cancellation, missing sources and revision guards passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});
