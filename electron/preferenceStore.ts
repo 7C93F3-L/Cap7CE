@@ -12,7 +12,7 @@ type AppearanceColors = {
   themeColor: string;
   accentColor: string;
 };
-type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleWindowMode" | "toggleSkim" | "cycleDirectory" | "openSettings";
+type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleWindowMode" | "cycleDirectory" | "openSettings";
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type SearchLabelVisibilityPreferences = {
   directory: boolean;
@@ -110,7 +110,6 @@ const defaultPreferences = (): UserPreferencesResponse => ({
     hideToLine: "Alt+1",
     restoreDefaultWindow: "Alt+2",
     toggleWindowMode: "Alt+3",
-    toggleSkim: "Alt+4",
     openSettings: "Alt+5",
     cycleDirectory: "Alt+Q"
   },

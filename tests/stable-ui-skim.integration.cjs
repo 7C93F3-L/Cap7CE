@@ -29,7 +29,8 @@ assert.match(responsiveMenuSource, /windowMaterial: WindowMaterial[\s\S]*?getFil
 assert.doesNotMatch(appSource, /onBack: navigateStableSkimBack/);
 assert.match(appSource, /sortField: skimSortPreference\.sortField, sortDirection: skimSortPreference\.sortDirection/);
 assert.match(appSource, /onDisplayModeChange: \(mode\) => updateSkimDisplay\(\{ \.\.\.skimDisplay, mode \}\)/);
-assert.match(appSource, /onActivateSkimRequested[\s\S]*?stableSkimCommands\.requestToggle/u);
+assert.match(appSource, /onToggleSkimLocationPickerRequested[\s\S]*?stableSkimCommands\.requestToggle/u);
+assert.doesNotMatch(appSource, /onActivateSkimRequested/u);
 assert.doesNotMatch(appSource, /if \(stableUi\)/u);
 assert.match(appSource, /requests: stableSkimCommands\.requests/u);
 assert.match(appSource, /openSkim: stableSkimCommands\.openCurrent/u);

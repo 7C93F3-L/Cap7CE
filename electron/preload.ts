@@ -53,11 +53,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
       ipcRenderer.on("window:toggleSkimLocationPickerRequested", listener);
       return () => ipcRenderer.removeListener("window:toggleSkimLocationPickerRequested", listener);
     },
-    onActivateSkimRequested: (callback: () => void) => {
-      const listener = () => callback();
-      ipcRenderer.on("window:activateSkimRequested", listener);
-      return () => ipcRenderer.removeListener("window:activateSkimRequested", listener);
-    },
     onFocusMainSearch: (callback: () => void) => {
       const listener = () => callback();
       ipcRenderer.on("window:focusMainSearch", listener);
@@ -301,7 +296,6 @@ contextBridge.exposeInMainWorld("cap7ce", {
       restoreDefaultWindow: string;
       hideToLine: string;
       toggleWindowMode: string;
-      toggleSkim: string;
       cycleDirectory: string;
       openSettings: string;
     }) => ipcRenderer.invoke("preferences:updateShortcutActions", shortcutActions),

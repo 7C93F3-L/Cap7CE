@@ -180,7 +180,6 @@ export type ShortcutActionId =
   | "restoreDefaultWindow"
   | "hideToLine"
   | "toggleWindowMode"
-  | "toggleSkim"
   | "cycleDirectory"
   | "openSettings";
 

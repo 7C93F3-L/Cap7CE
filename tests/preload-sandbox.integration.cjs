@@ -25,12 +25,12 @@ app.whenReady().then(async()=>{
         cancelDirectories:typeof api.metadataBuild.cancelDirectories,
         favorites:(await api.favoriteDirectories.list()).length,renameFolder:typeof api.favoriteDirectories.renameFolder,
         pinned:await api.window.getAlwaysOnTop(),
-        shellAction:typeof api.window.setShellState,
+        shellAction:typeof api.window.setShellState,retiredSkimShortcut:typeof api.window.onActivateSkimRequested,
         changeSubscription:typeof api.computerSearch.onCatalogChanged,trashAction:typeof api.computerSearch.moveToTrash};
     })()`);
     assert.deepEqual(errors,[],'production preload must load inside the sandbox');
     assert.deepEqual(result,{available:true,nodeAccess:'undefined',phase:'idle',directory:true,cancelDirectories:'function',favorites:0,renameFolder:'function',pinned:false,
-      shellAction:'function',changeSubscription:'function',trashAction:'function'});
+      shellAction:'function',retiredSkimShortcut:'undefined',changeSubscription:'function',trashAction:'function'});
     console.log('Production preload exposes domain and existing window bridges in a real isolated sandbox.');
     window.destroy();app.exit(0);
   } catch(error){console.error(error);window?.destroy();app.exit(1)}

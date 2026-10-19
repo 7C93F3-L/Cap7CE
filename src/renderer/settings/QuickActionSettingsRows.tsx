@@ -20,7 +20,6 @@ const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }>
   { id: "hideToLine", name: t("shortcut.hideToLine") },
   { id: "restoreDefaultWindow", name: t("shortcut.restoreDefaultWindow") },
   { id: "toggleWindowMode", name: t("shortcut.toggleWindowMode") },
-  { id: "toggleSkim", name: t("shortcut.toggleSkim") },
   { id: "openSettings", name: t("shortcut.openSettings") },
   { id: "cycleDirectory", name: t("shortcut.cycleDirectory") }
 ] as Array<{ id: ShortcutActionId; name: string }>);

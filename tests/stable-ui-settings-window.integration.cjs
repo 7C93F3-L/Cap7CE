@@ -239,8 +239,9 @@ assert.deepEqual(resolveSettingsWindowInitialBounds(remembered, [smallDisplay], 
   assert.match(quickActionSource, /className="cap-stable-settings-toggle"[\s\S]*?role="switch"[\s\S]*?aria-checked=\{quickActionGlobalEnabled\}[\s\S]*?data-checked=\{quickActionGlobalEnabled\}/u);
   assert.doesNotMatch(settingsAppSource, /quickActionsExpanded|setQuickActionsExpanded/u);
   assert.doesNotMatch(quickActionSource, /stableUi|expanded|cap-settings-expand-toggle/u);
-  assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.restoreDefaultWindow[\s\S]*?shortcut\.toggleWindowMode[\s\S]*?shortcut\.toggleSkim[\s\S]*?shortcut\.openSettings[\s\S]*?shortcut\.cycleDirectory/u);
-  assert.match(shortcutActionsSource, /focusMainSearch: "Alt\+`"[\s\S]*?hideToLine: "Alt\+1"[\s\S]*?restoreDefaultWindow: "Alt\+2"[\s\S]*?toggleWindowMode: "Alt\+3"[\s\S]*?toggleSkim: "Alt\+4"[\s\S]*?openSettings: "Alt\+5"/u);
+  assert.match(quickActionSource, /shortcut\.focusMainSearch[\s\S]*?shortcut\.hideToLine[\s\S]*?shortcut\.restoreDefaultWindow[\s\S]*?shortcut\.toggleWindowMode[\s\S]*?shortcut\.openSettings[\s\S]*?shortcut\.cycleDirectory/u);
+  assert.match(shortcutActionsSource, /focusMainSearch: "Alt\+`"[\s\S]*?hideToLine: "Alt\+1"[\s\S]*?restoreDefaultWindow: "Alt\+2"[\s\S]*?toggleWindowMode: "Alt\+3"[\s\S]*?openSettings: "Alt\+5"/u);
+  assert.doesNotMatch(quickActionSource + shortcutActionsSource, /toggleSkim/u);
   assert.match(shortcutActionsSource, /focusMainSearch: shortcutActions\?\.focusMainSearch \?\? defaultStableShortcutActions\.focusMainSearch[\s\S]*?openSettings: shortcutActions\?\.openSettings \?\? defaultStableShortcutActions\.openSettings/u);
   assert.match(quickActionSource, /handleShortcutCaptureOutsideClick[\s\S]*?data-shortcut-capturing="true"[\s\S]*?settings\.shortcutCaptureCancelHint/u);
   assert.match(quickActionSource, /clearShortcutAction[\s\S]*?updateShortcutAction\(shortcutActionId, ""\)[\s\S]*?Boolean\(shortcut\)[\s\S]*?settings\.shortcutUnassigned[\s\S]*?cap-settings-shortcut-clear-button[\s\S]*?settings\.clearShortcutAction/u);

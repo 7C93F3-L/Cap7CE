@@ -23,7 +23,6 @@ declare global {
         onShellStateChanged: (callback: (state: Cap7CEShellState) => void) => () => void;
         onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => () => void;
         onToggleSkimLocationPickerRequested: (callback: () => void) => () => void;
-        onActivateSkimRequested: (callback: () => void) => () => void;
         onFocusMainSearch: (callback: () => void) => () => void;
         onRefreshCurrentPageRequested: (callback: () => void) => () => void;
         onActivateShellModeShortcut: (callback: (mode: "normal" | "standby") => void) => () => void;

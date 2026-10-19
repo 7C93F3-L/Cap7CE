@@ -35,11 +35,11 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       open: defaults.stableShortcutActions.focusMainSearch,
       hide: defaults.stableShortcutActions.hideToLine,
       windowMode: defaults.stableShortcutActions.toggleWindowMode,
-      skim: defaults.stableShortcutActions.toggleSkim,
       settings: defaults.stableShortcutActions.openSettings,
       reset: defaults.stableShortcutActions.restoreDefaultWindow,
       directory: defaults.stableShortcutActions.cycleDirectory
-    }, { open: "Alt+`", hide: "Alt+1", windowMode: "Alt+3", skim: "Alt+4", settings: "Alt+5", reset: "Alt+2", directory: "Alt+Q" });
+    }, { open: "Alt+`", hide: "Alt+1", windowMode: "Alt+3", settings: "Alt+5", reset: "Alt+2", directory: "Alt+Q" });
+    assert.equal("toggleSkim" in defaults.stableShortcutActions, false);
     assert.equal(defaults.edgeCollapseEnabled, false);
     assert.equal("rememberWindowLayout" in defaults, false);
     assert.equal("windowPresentationMode" in defaults, false);
@@ -95,10 +95,10 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       restoreDefaultWindow: "Alt+3",
       hideToLine: "Alt+4",
       toggleWindowMode: "Alt+7",
-      toggleSkim: "Alt+5",
       cycleDirectory: "Alt+Q",
       openSettings: "Alt+6"
     });
+    assert.equal("toggleSkim" in normalized.stableShortcutActions, false, "retired binding is ignored without resetting other shortcuts");
     assert.deepEqual(normalized.skimSidebarFolders, [sidebarFolder]);
     assert.equal(normalized.skimSystemLocationsCollapsed, false);
     assert.equal(normalized.edgeCollapseEnabled, false);
@@ -109,6 +109,7 @@ app.setPath("userData", path.join(testRoot, "user-data"));
       cycleDirectory: ""
     });
     assert.equal(updatedStableShortcuts.stableShortcutActions.cycleDirectory, "");
+    assert.equal("toggleSkim" in JSON.parse(await fs.readFile(preferencesPath, "utf8")).stableShortcutActions, false, "normal save cannot restore the retired binding");
 
     await updateSearchLabelVisibilityPreference({
       ...normalized.searchLabelVisibility,

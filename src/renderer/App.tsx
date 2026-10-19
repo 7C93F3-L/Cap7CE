@@ -1973,14 +1973,6 @@ const App = ({ stableUiRenderer: StableUiRenderer }: AppProps) => {
     return () => unsubscribe?.();
   }, [dialog, isAddingDirectory]);
 
-  useEffect(() => {
-    const unsubscribe = window.cap7ce?.window.onActivateSkimRequested?.(() => {
-      if (dialog === "editKeywords") return;
-      stableSkimCommands.requestToggle();
-    });
-    return () => unsubscribe?.();
-  }, [dialog]);
-
   const refreshCurrentPage = async () => {
     if (
       dialog

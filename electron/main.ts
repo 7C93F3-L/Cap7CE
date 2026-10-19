@@ -147,7 +147,7 @@ let quickActionGlobalEnabled = true;
 let shortcutCaptureActive = false;
 let registeredMainSearchShortcut: string | null = null;
 const registeredShellModeShortcuts = new Map<string, string>();
-type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleWindowMode" | "toggleSkim" | "cycleDirectory" | "openSettings";
+type ShortcutActionId = "focusMainSearch" | "restoreDefaultWindow" | "hideToLine" | "toggleWindowMode" | "cycleDirectory" | "openSettings";
 type GlobalShortcutActionId = Exclude<ShortcutActionId, "cycleDirectory">;
 type ShortcutActionPreferences = Record<ShortcutActionId, string>;
 type ShortcutPreferenceProfiles = { stableShortcutActions: ShortcutActionPreferences };
@@ -730,12 +730,6 @@ const sendToggleSkimLocationPickerToRenderer = () => {
   }
 };
 
-const sendActivateSkimToRenderer = () => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("window:activateSkimRequested");
-  }
-};
-
 const sendFocusMainSearchToRenderer = () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("window:focusMainSearch");
@@ -831,17 +825,11 @@ const unregisterShellModeShortcuts = () => {
   registeredShellModeShortcuts.clear();
 };
 
-const activateShellModeShortcut = async (mode: "normal" | "standby" | "skim" | "settings", restoreStableDefaultBounds = false, preservePosition = false): Promise<boolean> => {
+const activateShellModeShortcut = async (mode: "normal" | "standby" | "settings", restoreStableDefaultBounds = false, preservePosition = false): Promise<boolean> => {
   if (mode === "settings") {
     return openSettings();
   }
 
-  if (mode === "skim") {
-    dockedShellController?.restore(false);
-    if (!showAndFocusMainWindow()) return false;
-    sendActivateSkimToRenderer();
-    return true;
-  }
   if (mode === "standby") {
     return requestSafeMainWindowHide();
   }
@@ -867,7 +855,6 @@ const registerShellModeShortcuts = (shortcutActions: ShortcutActionPreferences) 
     ["hideToLine", shortcutActions.hideToLine, () => { void activateShellModeShortcut("standby"); }],
     ["restoreDefaultWindow", shortcutActions.restoreDefaultWindow, () => { void activateShellModeShortcut("normal", true); }],
     ["toggleWindowMode", shortcutActions.toggleWindowMode, () => { void toggleEdgeCollapseWindowMode(); }],
-    ["toggleSkim", shortcutActions.toggleSkim, () => { void activateShellModeShortcut("skim"); }],
     ["openSettings", shortcutActions.openSettings, () => { void activateShellModeShortcut("settings"); }]
   ];
 
@@ -909,7 +896,6 @@ const probeGlobalShortcutActions = (shortcutActions: ShortcutActionPreferences) 
     ["focusMainSearch", shortcutActions.focusMainSearch],
     ["hideToLine", shortcutActions.hideToLine],
     ["toggleWindowMode", shortcutActions.toggleWindowMode],
-    ["toggleSkim", shortcutActions.toggleSkim],
     ["openSettings", shortcutActions.openSettings],
     ["restoreDefaultWindow", shortcutActions.restoreDefaultWindow]
   ];

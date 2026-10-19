@@ -21,7 +21,7 @@ export function useCatalogWindowCommands(preferences: UserPreferences | null) {
     };
     const toggleBrowser = () => { if (!nativeDragging.current) actions.current?.toggleBrowser(); };
     const api = window.cap7ce?.window;
-    const unsubscribers = [api?.onFocusMainSearch(focusSearch), api?.onActivateSkimRequested(toggleBrowser),
+    const unsubscribers = [api?.onFocusMainSearch(focusSearch),
       api?.onToggleSkimLocationPickerRequested(toggleBrowser), api?.onActivateShellModeShortcut(mode => {
         if (mode === "standby") { if (!nativeDragging.current) void api.setShellState("standby"); }
         else focusSearch();
