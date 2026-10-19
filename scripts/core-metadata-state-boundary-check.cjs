@@ -2,7 +2,7 @@ const fs=require('node:fs'),path=require('node:path');
 const directory='core/src/Cap7CE.Core.Host/MetadataBuild';
 module.exports=(root,sourceFiles,failures)=>{
   const limits={'MetadataStateFile.cs':50,'MetadataStateErrors.cs':25,'MetadataDirectoryPath.cs':25,'MetadataBuildStateSchema.cs':50,
-    'MetadataBuildPreferencesFile.cs':40,'MetadataDirectoryQueueFile.cs':40,'MetadataBuildTestVisibility.cs':5};
+    'MetadataBuildPreferencesFile.cs':40,'MetadataDirectoryQueueFile.cs':40,'MetadataBuildTestVisibility.cs':5,'MetadataBuildGrantLifecycle.cs':110,'MetadataDirectoryQueueState.cs':50};
   if(JSON.stringify(fs.readdirSync(path.join(root,directory)).sort())!==JSON.stringify(Object.keys(limits).sort()))failures.push('Metadata state contains unregistered modules.');
   for(const[name,limit]of Object.entries(limits)){
     const source=fs.readFileSync(path.join(root,directory,name),'utf8');

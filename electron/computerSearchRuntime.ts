@@ -12,10 +12,7 @@ import { CoreHostController, type CoreControllerSnapshot, type CoreControllerDia
 import type { CoreCatalogStatus, CoreResolvedScope, CoreSearchPage } from "./core/coreProductProtocolTypes";
 import { getFileFormatCapability } from "./formatCapabilities";
 import type { MetadataBuildApi } from "../src/shared/metadataBuildTypes";
-import { CoreMetadataProtocol } from "./core/coreMetadataProtocol";
-import { createMetadataBuildRuntime } from "./metadataExtraction/metadataBuildRuntime";
-import { createMetadataBuildPreferenceStore } from "./metadataBuildPreferences";
-import { createMetadataDirectoryStore } from "./metadataDirectoryBuildStore";
+import { CoreMetadataBuildClient } from "./core/coreMetadataBuildClient";
 import { toCoreSearchFacts } from "./computerSearchFactConditions";
 import { readComputerSearchFileConditions } from "./computerSearchFileConditions";
 import { CoreCatalogChangeProtocol } from "./core/coreCatalogChangeProtocol";
@@ -51,7 +48,6 @@ interface RuntimeOptions {
   executablePath?: string;
   beginVisualSession?: (sessionId: string) => boolean;
   cancelVisualSession?: (sessionId: string) => boolean;
-  metadataPreferencesPath?: string;
   favoritePreferencesPath?: string;
   diagnostics?: CoreControllerDiagnostics;
 }
@@ -216,13 +212,10 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     }
   };
 
-  const metadataBuild = createMetadataBuildRuntime(new CoreMetadataProtocol({ request: controller.request.bind(controller),
-    startRequest: controller.startRequest.bind(controller), cancel: controller.cancelRequest.bind(controller) }), readCatalog,
-    { resolveScope: (path) => controller.request<CoreResolvedScope>("catalog.resolveScope", { path }, 5_000),
-      directoryStore: options.metadataPreferencesPath || process.env.LOCALAPPDATA
-        ? createMetadataDirectoryStore(path.join(path.dirname(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")), "metadata-directory-build.json"), details => options.diagnostics?.log("warn", "metadata.directory-store-failed", { ...details })) : undefined,
-      preferences: options.metadataPreferencesPath || process.env.LOCALAPPDATA
-        ? createMetadataBuildPreferenceStore(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")) : undefined });
+  const metadataBuild = new CoreMetadataBuildClient({
+    request: <T>(operation: string, body: Record<string, unknown>, deadlineMs?: number) => controller.startRequest<T>(operation, body, deadlineMs).response,
+    ensureCatalog: readCatalog, supports: operation => controller.supports(operation), processId: () => controller.snapshot().processId ?? null,
+    active: () => !stopping, reportStorageError: details => options.diagnostics?.log("warn", "metadata.directory-store-failed", { ...details }) });
   const favorites = options.favoritePreferencesPath || process.env.LOCALAPPDATA
     ? new FavoriteDirectoryStore(options.favoritePreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "favorite-directories.json"), options) : undefined;
   let observedRevision: number | undefined;

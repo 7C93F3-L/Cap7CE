@@ -11,6 +11,11 @@ using Cap7CE.Core.Tests;
 
 if (args is ["--metadata-state-tests"]) { await MetadataBuildStateFileTests.RunAsync(); return 0; }
 if (args is ["--metadata-sweep-tests"]) { await MetadataExtractorManifestTests.RunAsync(); await MetadataBuildSweepTests.RunAsync(); return 0; }
+if (args is ["--metadata-lifecycle-tests"]) { await MetadataBuildGrantLifecycleTests.RunAsync(); await FileFactBuildOwnershipTests.RunAsync(); return 0; }
+if (args is ["--metadata-global-tests"]) { await MetadataGlobalBuildTests.RunAsync(); return 0; }
+if (args is ["--metadata-directory-tests"]) { await MetadataDirectoryCoordinatorTests.RunAsync(); return 0; }
+if (args is ["--metadata-coordinator-native-tests"]) { await MetadataCoordinatorNativeTests.RunAsync(); return 0; }
+if (args is ["--metadata-hosting-tests"]) { await MetadataBuildHostingTests.RunAsync(); return 0; }
 if (args is ["--metadata-worker-tests"]) {
     await FileFactExecutionTests.RunAsync();
     await NodeMetadataWorkerTests.RunAsync();
@@ -63,6 +68,12 @@ TestAssert.False(nativeDependencyProbe.SourceFilesRead, "native catalog dependen
 await ProtocolFrameTests.RunAsync();
 await FavoriteConfigurationTests.RunAsync();
 await MetadataBuildStateFileTests.RunAsync();
+await MetadataBuildGrantLifecycleTests.RunAsync();
+await FileFactBuildOwnershipTests.RunAsync();
+await MetadataGlobalBuildTests.RunAsync();
+await MetadataDirectoryCoordinatorTests.RunAsync();
+await MetadataCoordinatorNativeTests.RunAsync();
+await MetadataBuildHostingTests.RunAsync();
 await MetadataExtractorManifestTests.RunAsync();
 await MetadataBuildSweepTests.RunAsync();
 await CoreRequestIdentityTests.RunAsync();

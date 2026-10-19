@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const hostModule = require("../dist-electron/core/coreHostController.js");
-const metadataModule = require("../dist-electron/metadataExtraction/metadataBuildRuntime.js");
-const savedHost = hostModule.CoreHostController, savedMetadata = metadataModule.createMetadataBuildRuntime;
+const metadataModule = require("../dist-electron/core/coreMetadataBuildClient.js");
+const savedHost = hostModule.CoreHostController, savedMetadata = metadataModule.CoreMetadataBuildClient;
 const turn = () => new Promise(resolve => setImmediate(resolve));
 const volume = { volumeId: "A".repeat(32), displayName: "X:", fileSystem: "NTFS", selected: true, state: "ready", queryable: true };
 const waits = [], order = []; let activeWaits = 0, maximumWaits = 0, restores = 0, notifications = 0;
@@ -30,11 +30,11 @@ class FixtureHost {
   async cancelRequest(requestId) { waits.find(wait => wait.requestId === requestId).cancelled = true; return true; }
 }
 hostModule.CoreHostController = FixtureHost;
-metadataModule.createMetadataBuildRuntime = () => ({
+metadataModule.CoreMetadataBuildClient = function () { return ({
   async restore() { restores++; },
   notifyCatalogChange() { notifications++; return new Promise(resolve => { metadataRelease = resolve; }); },
   async shutdown() { assert.equal(activeWaits, 0); order.push("metadata-stop"); metadataRelease?.(); }
-});
+}); };
 const { createComputerSearchRuntime } = require("../dist-electron/computerSearchRuntime.js");
 const notice = (sequence, revision, changed = true, state = "watching") => ({ sequence, catalogRevision: revision, changed, state, reason: null });
 (async () => {
@@ -59,5 +59,5 @@ const notice = (sequence, revision, changed = true, state = "watching") => ({ se
     assert.deepEqual(order.slice(-3), ["wait-retired", "metadata-stop", "host-stop"]);
     assert.equal(maximumWaits, 1); assert.equal(activeWaits, 0);
     console.log("Product Catalog notifications update granted maintenance without blocking waits; shutdown retires owners in order.");
-  } finally { hostModule.CoreHostController = savedHost; metadataModule.createMetadataBuildRuntime = savedMetadata; }
+  } finally { hostModule.CoreHostController = savedHost; metadataModule.CoreMetadataBuildClient = savedMetadata; }
 })().catch(error => { console.error(error); process.exitCode = 1; });

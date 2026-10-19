@@ -214,6 +214,7 @@ try
                     ? new Cap7CE.Core.Host.MetadataWorkers.NodeMetadataWorker(metadataResources) : null), CatalogPreparationDiagnostics.StandardError(),
             ownStorage: options.Mode == CoreHostMode.CatalogServer, createEntryCatalog: options.Mode == CoreHostMode.CatalogServer);
         await runtime.InitializeAsync(shutdown.Token);
+        Cap7CE.Core.Host.MetadataBuildHosting.MetadataBuildAssembly.Configure(runtime, catalogPath, options.Mode == CoreHostMode.CatalogServer);
     }
     await using var runtimeScope = runtime;
     if (options.Mode == CoreHostMode.CatalogServer && runtime is not null)

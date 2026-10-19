@@ -16,7 +16,7 @@ public sealed record FileFactHostStatus(string State, FileFactQueueLedger? Ledge
 
 // Host session remains inactive until explicit extraction configuration.
 // A rebuildable fresh store needs no historical migration; assemblers may retain a private checkpoint.
-public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.IMetadataBuildSession
+public sealed partial class FileFactHostSession : IAsyncDisposable, MetadataScheduling.IMetadataBuildSession
 {
     private readonly FileFactExtractionBroker broker;
     private readonly string databasePath;
@@ -48,7 +48,7 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         execution = contentReader is null ? null : new(contentReader);
     }
 
-    public async Task<FileFactHostStatus> ConfigureAsync(FileFactConfigurationRequest request, CancellationToken token)
+    public async Task<FileFactHostStatus> ConfigureAsync(FileFactConfigurationRequest request, CancellationToken token, bool buildOwner = false)
     {
         if (!request.AllowMetadataExtraction) throw Invalid("Explicit extraction confirmation is required.");
         FileFactQueue.ValidatePolicy(request.Policy);
@@ -57,6 +57,7 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         await gate.WaitAsync(token);
         try
         {
+            RequireOwner(buildOwner);
             var effective = await ResolveEffectivePolicyAsync(policy, token);
             if (!initialized)
             {
@@ -80,11 +81,12 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         finally { gate.Release(); }
     }
 
-    public async Task<FileFactHostStatus> PauseAsync(CancellationToken token)
+    public async Task<FileFactHostStatus> PauseAsync(CancellationToken token, bool buildOwner = false)
     {
         await gate.WaitAsync(token);
         try
         {
+            RequireOwner(buildOwner);
             if (!initialized || configured is null) return new("inactive");
             execution?.Revoke();
             if (execution is not null) await execution.ReleaseAsync();
@@ -95,12 +97,12 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         finally { gate.Release(); }
     }
 
-    public async Task<FileFactDiscoveryPage> DiscoverAsync(FileFactDiscoveryRequest request, CancellationToken token)
+    public async Task<FileFactDiscoveryPage> DiscoverAsync(FileFactDiscoveryRequest request, CancellationToken token, bool buildOwner = false)
     {
         await gate.WaitAsync(token);
         try
         {
-            RequireActive();
+            RequireActive(buildOwner);
             await RefreshOwnedPolicyAsync(token);
             var page = await discovery.ReadPageAsync(FileFactSelection.ForVolume(configured!, request.VolumeId), request.Kind, request.ExtractorVersion,
                 request.Extensions, request.After, request.PageSize, token);
@@ -110,28 +112,28 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         finally { gate.Release(); }
     }
 
-    public async Task<FileFactClaimResult> ClaimAsync(CancellationToken token, FileFactClaimSpecification? specification = null)
+    public async Task<FileFactClaimResult> ClaimAsync(CancellationToken token, FileFactClaimSpecification? specification = null, bool buildOwner = false)
     {
         await gate.WaitAsync(token);
-        try { RequireActive(); await RefreshOwnedPolicyAsync(token); if (specification?.VolumeId is not null) _ = FileFactSelection.ForVolume(configured!, specification.VolumeId);
+        try { RequireActive(buildOwner); await RefreshOwnedPolicyAsync(token); if (specification?.VolumeId is not null) _ = FileFactSelection.ForVolume(configured!, specification.VolumeId);
             var result = await broker.ClaimAsync(token, specification);
             if (result.State == FileFactClaimState.Empty && execution is not null) await execution.ReleaseAsync();
             return result; }
         finally { gate.Release(); }
     }
 
-    public async Task<FileFactExecutionResult> ExecuteAsync(FileFactLeaseRequest request, CancellationToken token)
+    public async Task<FileFactExecutionResult> ExecuteAsync(FileFactLeaseRequest request, CancellationToken token, bool buildOwner = false)
     {
         ValidateLease(request.LeaseId);
         Task<FileFactExecutionResult> work;
         await gate.WaitAsync(token);
         try {
-            RequireActive();
+            RequireActive(buildOwner);
             if (execution is null) throw new CoreProtocolException(CoreErrorCodes.NotQueryable, "Content execution is not assembled.");
             await RefreshOwnedPolicyAsync(token);
             var ticket = await broker.ReadOwnedTicketAsync(request.LeaseId, token);
             if (ticket is null) return new(FileFactBrokerCompletion.LeaseLost, null);
-            work = execution.ExecuteAsync(ticket, (result, cancellation) => CompleteAsync(new(request.LeaseId, result), cancellation), token);
+            work = execution.ExecuteAsync(ticket, (result, cancellation) => CompleteAsync(new(request.LeaseId, result), cancellation, buildOwner), token);
         }
         finally { gate.Release(); }
         try { return await work; }
@@ -140,11 +142,11 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
 
     public async ValueTask DisposeAsync() { if (execution is not null) await execution.DisposeAsync(); }
 
-    public async Task<FileFactChangeDispatchStep> ConsumeChangesAsync(FileFactConsumeChangesRequest request, CancellationToken token)
+    public async Task<FileFactChangeDispatchStep> ConsumeChangesAsync(FileFactConsumeChangesRequest request, CancellationToken token, bool buildOwner = false)
     {
         await gate.WaitAsync(token);
         try {
-            RequireActive();
+            RequireActive(buildOwner);
             await RefreshOwnedPolicyAsync(token);
             ArgumentNullException.ThrowIfNull(request.Specifications);
             if (request.PageSize is < 1 or > 512) throw Invalid("Invalid change dispatch page size.");
@@ -158,23 +160,25 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         finally { gate.Release(); }
     }
 
-    public async Task<bool> RenewAsync(FileFactLeaseRequest request, CancellationToken token)
+    public async Task<bool> RenewAsync(FileFactLeaseRequest request, CancellationToken token, bool buildOwner = false)
     {
         ValidateLease(request.LeaseId);
         await gate.WaitAsync(token);
         try {
+            RequireOwner(buildOwner);
             if (!initialized || paused || configured is null) return false;
             await RefreshOwnedPolicyAsync(token); return await broker.RenewAsync(request.LeaseId, token);
         }
         finally { gate.Release(); }
     }
 
-    public async Task<FileFactBrokerCompletion> CompleteAsync(FileFactCompleteRequest request, CancellationToken token)
+    public async Task<FileFactBrokerCompletion> CompleteAsync(FileFactCompleteRequest request, CancellationToken token, bool buildOwner = false)
     {
         ValidateLease(request.LeaseId);
         await gate.WaitAsync(token);
         try
         {
+            RequireOwner(buildOwner);
             if (!initialized || paused || configured is null) return FileFactBrokerCompletion.LeaseLost;
             await RefreshOwnedPolicyAsync(token);
             return await broker.CompleteAsync(request.LeaseId, request.Result, token);
@@ -194,8 +198,9 @@ public sealed class FileFactHostSession : IAsyncDisposable, MetadataScheduling.I
         finally { gate.Release(); }
     }
 
-    private void RequireActive()
+    private void RequireActive(bool buildOwner)
     {
+        RequireOwner(buildOwner);
         if (!initialized || paused || configured is null) throw new CoreProtocolException(CoreErrorCodes.NotQueryable, "Extraction is not active.");
     }
     private async Task<FileFactQueuePolicy> ResolveEffectivePolicyAsync(FileFactQueuePolicy policy, CancellationToken token)

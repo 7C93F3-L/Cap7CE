@@ -1,3 +1,4 @@
+export interface MetadataBuildSpecification { kind: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8; extractorVersion: number; extensions: readonly string[] }
 export type MetadataBuildPhase = "idle" | "preparing" | "discovering" | "extracting" | "waiting" | "pausing" | "paused" | "completed" | "failed";
 export interface MetadataDirectoryStorageError {
   operation: "read" | "write" | "replace" | "validate";

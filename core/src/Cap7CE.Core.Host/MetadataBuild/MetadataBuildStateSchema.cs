@@ -4,8 +4,9 @@ namespace Cap7CE.Core.Host.MetadataBuild;
 
 internal static class MetadataBuildStateSchema
 {
-    private static readonly JsonSerializerOptions FileJson = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    private static readonly JsonSerializerOptions FileJson = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 128 };
     internal static byte[] Encode(JsonElement value) => JsonSerializer.SerializeToUtf8Bytes(value, FileJson);
+    internal static JsonElement Element(System.Text.Json.Nodes.JsonObject value) => JsonSerializer.SerializeToElement(value, FileJson);
     internal static bool Property(JsonElement value, string key, out JsonElement result)
     { result = default; return value.ValueKind == JsonValueKind.Object && value.TryGetProperty(key, out result); }
     internal static bool Text(JsonElement value, out string text) { text = value.ValueKind == JsonValueKind.String ? value.GetString()! : ""; return value.ValueKind == JsonValueKind.String; }

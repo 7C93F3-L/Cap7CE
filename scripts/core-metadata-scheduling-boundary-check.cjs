@@ -1,7 +1,8 @@
 const fs=require('node:fs'),path=require('node:path');
 module.exports=(root,sourceFiles,failures)=>{
- const directory='core/src/Cap7CE.Core.Host/MetadataScheduling',limits={'IMetadataBuildSession.cs':20,'MetadataBuildProgress.cs':30,'MetadataBuildEstimate.cs':30,
-  'MetadataBuildSpecifications.cs':20,'MetadataSweepDiscovery.cs':80,'MetadataBuildSweep.cs':145};
+ require('./core-metadata-build-hosting-boundary-check.cjs')(root,failures);
+ const directory='core/src/Cap7CE.Core.Host/MetadataScheduling',limits={'IMetadataBuildSession.cs':20,'IMetadataBuildCatalog.cs':15,'MetadataBuildProgress.cs':30,'MetadataBuildEstimate.cs':30,
+  'MetadataBuildSpecifications.cs':20,'MetadataSweepDiscovery.cs':80,'MetadataBuildSweep.cs':125,'MetadataBuildChangeDrain.cs':50,'MetadataBuildCoordinator.cs':115,'MetadataBuildStatus.cs':25,'MetadataDirectoryBuildLoop.cs':75,'MetadataDirectoryBuildRequests.cs':50,'MetadataDirectoryScopeResolver.cs':30,'MetadataGlobalBuildOwner.cs':145,'MetadataGlobalBuildState.cs':100};
  if(JSON.stringify(fs.readdirSync(path.join(root,directory)).sort())!==JSON.stringify(Object.keys(limits).sort()))failures.push('Core metadata scheduling contains unregistered modules.');
  for(const[name,maximum]of Object.entries(limits)){
   const text=fs.readFileSync(path.join(root,directory,name),'utf8');

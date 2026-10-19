@@ -74,7 +74,7 @@ internal static class MetadataBuildSweepTests
         var reader = new CountingReader(new NodeMetadataWorker(FileFactExecutionTests.Resources));
         await using var fixture = await FileFactExecutionTests.Fixture.CreateAsync(reader);
         var original = await File.ReadAllBytesAsync(fixture.Source);
-        var sweep = new MetadataBuildSweep(fixture.Session, specifications, yieldMilliseconds: 0, waitMilliseconds: 2);
+        var sweep = new MetadataBuildSweep(await fixture.Session.AttachBuildOwnerAsync(), specifications, yieldMilliseconds: 0, waitMilliseconds: 2);
         var policy = new FileFactQueuePolicy([fixture.Identity.VolumeId], [new(fixture.Identity.VolumeId)], []);
         TestAssert.Equal(0, reader.Reads, "assembly never starts content reading");
         sweep.Start(policy, true); TestAssert.Equal("completed", (await sweep.WaitForIdleAsync()).Phase, "actual C# sweep and independent Node complete");

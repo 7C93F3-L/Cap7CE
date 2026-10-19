@@ -9,7 +9,7 @@ using Cap7CE.Core.Catalog.DirectoryEntries;
 
 namespace Cap7CE.Core.Host;
 
-public sealed class ProductCoreRuntime : IAsyncDisposable
+public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IMetadataBuildCatalog
 {
     private readonly CatalogV2Database catalog;
     private CatalogSynchronizationService synchronizer;
@@ -40,6 +40,12 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
 
     public CatalogV2Database Catalog => catalog;
     public FileFactHostSession? FileFacts { get; }
+    public MetadataBuildHosting.MetadataBuildService? MetadataBuild { get; private set; }
+    public void ConfigureMetadataBuild(MetadataBuildHosting.MetadataBuildService service)
+    {
+        if (MetadataBuild is not null) throw new InvalidOperationException("metadata-build-already-assembled");
+        MetadataBuild = service;
+    }
     public CatalogChangeSignal ChangeSignal { get; } = new();
     public bool MaintenanceEnabled { get; private set; }
     public bool FileEntryModeEnabled { get; private set; }
@@ -203,23 +209,28 @@ public sealed class ProductCoreRuntime : IAsyncDisposable
     public async Task ShutdownAsync()
     {
         shutdown.Cancel();
-        await readerOwnership.ShutdownAsync();
-        ChangeSignal.SetState("stopped");
-        var pending = tasks.Values.Select(task => task.Work).Where(task => task is not null).Cast<Task>().ToArray();
-        if (pending.Length > 0)
-        {
-            try { await Task.WhenAll(pending).WaitAsync(TimeSpan.FromSeconds(10)); }
-            catch (Exception error) when (error is TimeoutException or OperationCanceledException) { }
+        try { if (MetadataBuild is not null) await MetadataBuild.ShutdownAsync(); }
+        finally {
+            await readerOwnership.ShutdownAsync();
+            ChangeSignal.SetState("stopped");
+            var pending = tasks.Values.Select(task => task.Work).Where(task => task is not null).Cast<Task>().ToArray();
+            if (pending.Length > 0)
+            {
+                try { await Task.WhenAll(pending).WaitAsync(TimeSpan.FromSeconds(10)); }
+                catch (Exception error) when (error is TimeoutException or OperationCanceledException) { }
+            }
         }
     }
 
     public async ValueTask DisposeAsync()
     {
         try {
-            await ShutdownAsync();
-            if (FileFacts is not null) await FileFacts.DisposeAsync();
-            foreach (var task in tasks.Values) task.Dispose();
-            await readerOwnership.DisposeAsync();
+            try { await ShutdownAsync(); }
+            finally {
+                if (FileFacts is not null) await FileFacts.DisposeAsync();
+                foreach (var task in tasks.Values) task.Dispose();
+                await readerOwnership.DisposeAsync();
+            }
         }
         finally { storageLease?.Dispose(); shutdown.Dispose(); }
     }

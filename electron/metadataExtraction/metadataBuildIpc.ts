@@ -1,7 +1,7 @@
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 import type { MetadataBuildApi, MetadataBuildPolicy } from "../../src/shared/metadataBuildTypes";
 import { registerIpcDomain, type IpcRegistrar } from "../ipcRegistration";
-import { directoryBuildPath } from "../metadataDirectoryBuildStore";
+import { directoryBuildPath } from "./metadataDirectoryPath";
 
 const readPolicy = (value: unknown): MetadataBuildPolicy => {
   const policy = value as MetadataBuildPolicy | null;

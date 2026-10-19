@@ -2,9 +2,9 @@
 
 ## 当前实施状态（2026-10-19）
 
-`Core.Host/MetadataScheduling` 增加单次建库循环：`MetadataBuildSweep` 拥有一次显式执行、取消及失败恢复；`MetadataSweepDiscovery` 负责有界 Catalog 分页、队列统计与离线等待；`MetadataSweepProgress` 提供不可变状态，`MetadataBuildEstimate` 保留原有每类64样本和未知估时规则。所有实际读取与事实发布经同进程 `IMetadataBuildSession`，由原 `FileFactHostSession` 实现；本层无文件、SQLite、Reader、网络或进程启动权限。增量每轮最多64批，空闲不轮询；暂停等待执行归还。`metadataBuildSpecifications` 与纯版本模块是唯一默认提取器表，旧导出保持兼容；构建从该表生成 extractors.json，Core 严格验证版本、九类完整性、格式及64KiB预算，缺失/无效时拒绝执行，不在C#复制默认格式或版本。新模块清单、体量和权限由 core-metadata-scheduling-boundary-check 守护，原 Main 控制器体量上限降低。此轮尚未替换生产授权、目录借用、恢复及Main适配入口，不能视为整个建库调度迁移已完成。
+`Core.Host/MetadataScheduling` 增加单次建库循环：`MetadataBuildSweep` 拥有一次显式执行、取消及失败恢复；`MetadataSweepDiscovery` 负责有界 Catalog 分页、队列统计与离线等待；`MetadataSweepProgress` 提供不可变状态，`MetadataBuildEstimate` 保留原有每类64样本和未知估时规则。所有实际读取与事实发布经同进程 `IMetadataBuildSession`，由原 `FileFactHostSession` 实现；本层无文件、SQLite、Reader、网络或进程启动权限。增量每轮最多64批，空闲不轮询；暂停等待执行归还。`metadataBuildSpecifications` 与纯版本模块是唯一默认提取器表，旧导出保持兼容；构建从该表生成 extractors.json，Core 严格验证版本、九类完整性、格式及64KiB预算，缺失/无效时拒绝执行，不在C#复制默认格式或版本。新模块清单、体量和权限由 core-metadata-scheduling-boundary-check 守护；生产授权、目录借用和恢复由同域的 GlobalBuildOwner/Coordinator 接管，Main 使用薄代理。
 
-`Core.Host/MetadataBuild` 增加被动配置存储底座：`MetadataBuildPreferencesFile` 兼容原 metadata-build.json v2，`MetadataDirectoryQueueFile` 兼容 metadata-directory-build.json v1，均由调用方明确提供应用配置目录。Schema 保留未知字段，沿用授权意图、卷顺序、文件夹身份与路径校验；无效全局配置返回空，非法目录队列报告有界 operation/code，原文件均保留。`MetadataStateFile` 独占每个配置的串行读写、1MiB预算、独占临时文件、刷盘与原子替换，只删除自己创建的阶段文件。模块不依赖 Catalog、Reader、解析器或网络，不打开素材；体量、文件清单与权限由 core-metadata-state-boundary-check 守护。本轮尚未接入生产调度和启动恢复，现有 Main 控制器继续工作；读取或保存配置均不授予新的提取权限。
+`Core.Host/MetadataBuild` 增加被动配置存储底座：`MetadataBuildPreferencesFile` 兼容原 metadata-build.json v2，`MetadataDirectoryQueueFile` 兼容 metadata-directory-build.json v1，均由调用方明确提供应用配置目录。Schema 保留未知字段，沿用授权意图、卷顺序、文件夹身份与路径校验；无效全局配置返回空，非法目录队列报告有界 operation/code，原文件均保留。`MetadataStateFile` 独占每个配置的串行读写、1MiB预算、独占临时文件、刷盘与原子替换，只删除自己创建的阶段文件。模块不依赖 Catalog、Reader、解析器或网络，不打开素材；体量、文件清单与权限由 core-metadata-state-boundary-check 守护。生产调度和启动恢复沿用这两份配置，Main 不再保存建库状态；读取或保存配置均不授予新的提取权限。
 
 独立Node资源使用两个明确的extraResources复制根：metadata-worker/v1及其node_modules，绕过打包器对复制根下node_modules的默认排除。`metadata-runtime-packaged-check`在pack/dist:installer之后对照生成源的完整文件集合和逐文件摘要，另核对官方Node固定字节；不能拿原生成目录自证已打包。真实electron-builder matcher/copy回归覆盖依赖漏拷、文件损坏与假目标，实际包验证应完整复制到仓库外，阻止父目录node_modules形成隐式运行回退。ASAR、独立解析库/原生二进制和许可证均按对应资源保留；构建校验不修改用户缓存或索引。
 
@@ -32,7 +32,7 @@ Electron visualRenderService 缩为RPC与共享纯阈值导出，默认Shell Pro
 
 Core Catalog、Host 与 Reader.Host 的 `RuntimeIdentifiers=win-x64` 固定还原图，但不指定运行时标识，也不改变 Core/Reader 的 framework-dependent 产品形状。Reader 的 ILLink 10.0.12 是 `PrivateAssets=all` 构建工具；AOT/trimmed 配置由 SDK 自行装配，默认配置显式保留同一工具依赖，使现有锁文件在受支持构建配置之间保持字节一致。`core-build-profile-policy` 检查固定图、私有工具与完整 PackageReference 属性，额外元数据不能绕过依赖守门。`core-restore-profiles.integration` 实际覆盖默认 solution、产品 Core/Reader 与 NativeAOT Setup 的锁定还原及失败保留开发宿主；不引入 Reader 的新发布形状或升级依赖版本。core-development-host-safety 仅查询当前 Windows 进程的可执行路径；发现占用或无法核实所有者时，在输出清理前拒绝发布，保留已有开发宿主。该检查不终止进程或更改系统设置。
 
-属性任务的实际内容执行由普通 Core 接管。`FileFactHostSession` 的可选 `IFileFactContentReader` 装配成功才宣告 `metadata.execute`；该操作只接受已有 lease ID，Broker 从自身持有的任务再次核对当前路径、原生身份、源版本与范围，解析结束仍通过原 Complete 栅栏发布。`FileFactExecutionOwner` 拥有单并发、授权代次、暂停/重配取消和连续解码故障的两次记录/第三次停止策略；空 claim 释放解析器，状态查询不启用内容读取。`MetadataWorkers` 只拥有独立 Node 资源校验、256 KiB 私有 stdin/stdout 帧和进程树，不访问 Catalog、Reader 服务或源文件正文；Node 保留原解析器。运行时固定摘要、256 MiB JS 堆、14 秒期限、RSS 回收和500毫秒取消宽限；Windows Job Object 的 kill-on-close 保证 Core 异常退出也清除解码子孙进程。Shell 的 `MetadataBuildController` 只做发现/顺序/进度编排和 lease 执行请求，不再启动解码进程、提交内容事实或按路径分派解析。产品启动装配固定资源路径，Renderer 不接收运行时路径入口。发现调度、授权偏好恢复、图像解码/渲染调度及模型调用的其余所有权仍需后续迁移；本轮没有启动正式全盘内容提取。
+属性任务的实际内容执行由普通 Core 接管。`FileFactHostSession` 的可选 `IFileFactContentReader` 装配成功才宣告 `metadata.execute`；该操作只接受已有 lease ID，Broker 从自身持有的任务再次核对当前路径、原生身份、源版本与范围，解析结束仍通过原 Complete 栅栏发布。`FileFactExecutionOwner` 拥有单并发、授权代次、暂停/重配取消和连续解码故障的两次记录/第三次停止策略；空 claim 释放解析器，状态查询不启用内容读取。`MetadataWorkers` 只拥有独立 Node 资源校验、256 KiB 私有 stdin/stdout 帧和进程树，不访问 Catalog、Reader 服务或源文件正文；Node 保留原解析器。运行时固定摘要、256 MiB JS 堆、14 秒期限、RSS 回收和500毫秒取消宽限；Windows Job Object 的 kill-on-close 保证 Core 异常退出也清除解码子孙进程。发现、顺序和进度编排已由 Core MetadataBuildSweep 接管，Shell 只转发建库动作。产品启动装配固定资源路径，Renderer 不接收运行时路径入口。发现调度和授权恢复已接入同进程建库所有者；模型运行管理仍由现有入口负责，没有启动正式全盘内容提取。
 
 属性解析使用独立 Windows x64 Node 24.15.0，构建以官方固定SHA256校验本机/缓存或固定地址下载的字节；运行时不从PATH或Electron回退，也不继承NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE。artifacts/metadata-worker/v1随应用放入resources/metadata-worker/v1，包含合并解析器、字体/模型线程、动态PDF/原生画布、sharp、7z WASM和许可证，不依赖ASAR或开发目录。metadataWorkerPaths只解析产品资源位置；MetadataWorkerClient保留独立运行兼容回归，产品执行归上段Core owner。资源、普通Core权限、帧/进程生命周期和Shell职责收缩由自动边界与仓库外运行、真实Core发布及强杀进程树回归守护。
 
@@ -347,7 +347,7 @@ Catalog增量节点携带`MayChangeFileFormat`，由USN改名原因产生；事�
 
 `metadataExtraction/imageMetadataInspector` 是隔离 Worker 内使用的只读图像读取器，复用尺寸读取、受限动画头探测和视觉属性纯分析器。只解码首帧，将分析输出限制到300×300，不创建缩略图；SVG复用外部引用拒绝规则，方向修正与尺寸一致。JPEG/TIFF/BMP按静态格式处理，GIF/PNG/WebP探测不完整时为未知，AVIF/SVG动画未探测时也为未知；颜色不可解码不冒充已知颜色。正式Worker已经沿用超时/源身份门禁调用读取器，结果经固定向量校验进入事实存储，组合查询与共享图像面板已经接线。测试使用自建图像覆盖红色/透明背景、方向、GIF动画、未知SVG、拒绝外部引用及不写源/不生成缓存。
 
-`MetadataBuildController` 将单次 Worker 超时/异常退出作为有源版本保护的失败结果发布，沿用 Core 前后物理身份核验及失败缓存，继续后续源；连续三次异常停止扫描，第三项不发布失败，关闭 Worker 并向 Core 暂停以撤销租约。正常读取结果重置连续异常计数；启动/发送/协议错误仍中止，不归因于文件。取消始终优先，不缓存取消结果。`computerSearchBaseConditions` 在调用旧条件解析器前后拒绝非法自定义大小、日期及未知预设，避免条件丢失后回退为更宽查询。
+`MetadataBuildSweep` 将单次 Worker 超时/异常退出作为有源版本保护的失败结果发布，沿用 Core 前后物理身份核验及失败缓存，继续后续源；连续三次异常停止扫描，第三项不发布失败，关闭 Worker 并向 Core 暂停以撤销租约。正常读取结果重置连续异常计数；启动/发送/协议错误仍中止，不归因于文件。取消始终优先，不缓存取消结果。`computerSearchBaseConditions` 在调用旧条件解析器前后拒绝非法自定义大小、日期及未知预设，避免条件丢失后回退为更宽查询。
 
 `FileFactShortEdgeRangeSql` 用短边区间并集支持多个分辨率档，查询计划与最终谓词共用，分页保留选择；空、反向或非正整数区间拒绝。`computerSearchScalarConditions` 将尺寸、图像/视频比例、时长和分辨率纯适配到Core；十进制秒用整数缩放处理毫秒上下界，无法命中整数毫秒的点范围转为明确空文件条件。`useComputerSearchController` 可接共享条件快照，条件改变取消旧页并重新提交，隐藏页不主动提交；共享界面已经传入图像颜色/动画和视频标量条件，其他媒体领域待接入。
 
@@ -359,13 +359,13 @@ Catalog增量节点携带`MayChangeFileFormat`，由USN改名原因产生；事�
 
 Core 搜索页已接空查询文件浏览和名称/路径默认匹配：进入可查询状态后自动提交，清空文本回到空查询，目录变化取消旧任务并重新查询，只有当前请求能解除忙状态。`hasSubmitted` 区分尚未提交与已提交的空文本，结果页不再把空文本当成没有结果。授权/分页沿用同一 Core 会话，目录浏览/收藏入口和完整事实筛选面板尚未统一。Core 结果缩略图的观察预取边距已设为0，仅进入视口的结果才发起缩略图请求；整个旧缩略图后台链仍待独立收口。
 
-`metadataBuildRuntime` 复用 ComputerSearchRuntime 的认证连接和 Catalog 初始化链，仅在明确请求后创建一次提取扫描；status 只读 Catalog 和任务快照，暂停使尚未完成的启动准备失效，退出/能力变更先停止提取再关闭 Host。`metadataBuildIpc` 独立校验主窗口来源、明确同意及稳定范围标识，`metadataBuildBridge` 提供状态、开始、暂停、恢复与目录范围解析的白名单方法。`useMetadataBuild` 只在前台运行阶段串行刷新展示状态，隐藏或退出搜索页不停止后台任务；无进行中的任务时不轮询。`MetadataBuildSlot` 组合展示、范围草稿与明确动作，不访问源；`MetadataBuildScopePanel` 提供磁盘勾选及上下顺序，`MetadataBuildDirectoryScopes` 通过 Core 将本地路径解析为稳定目录标识，支持多个允许/排除范围；目录控制默认折叠，解析不授权内容提取。
+`CoreMetadataBuildClient` 复用 ComputerSearchRuntime 的认证连接和 Catalog 初始化链，转发状态与明确动作，不在 Main 调度扫描或保存状态；Core 状态读取不授权提取，暂停撤销尚未完成的启动，退出/能力变更先停止提取再关闭 Host。`metadataBuildIpc` 独立校验主窗口来源、明确同意及稳定范围标识，`metadataBuildBridge` 提供状态、开始、暂停、恢复与目录范围解析的白名单方法。`useMetadataBuild` 只在前台运行阶段串行刷新展示状态，隐藏或退出搜索页不停止后台任务；无进行中的任务时不轮询。`MetadataBuildSlot` 组合展示、范围草稿与明确动作，不访问源；`MetadataBuildScopePanel` 提供磁盘勾选及上下顺序，`MetadataBuildDirectoryScopes` 通过 Core 将本地路径解析为稳定目录标识，支持多个允许/排除范围；目录控制默认折叠，解析不授权内容提取。
 
-`electron/metadataBuildPreferences` 单独持有 `%LOCALAPPDATA%\Cap7CE\Core\metadata-build.json`，只保存明确开始时的范围、顺序、范围显示路径与授权记录，不保存文件内容或进度快照。创建独占临时文件、同步并原子替换自己的配置；尺寸/结构有界校验，畸形记录不视为授权。配置读写独立于只读提取模块。配置版本2增加active/paused/completed运行意图，旧实验配置拒绝而不迁移。`MetadataBuildLifecycle`持有授权及串行原子写入，读取状态不启动内容提取；产品所有者在Core准备好后显式执行一次恢复，只恢复active授权。基础Catalog仍在同步时延后恢复，由现有产品状态观察在就绪后重试，不增加空闲提取轮询；恢复前检查所有选中卷，并按显示路径重新解析每个文件夹，要求卷ID和稳定文件引用完全一致；缺失、重建或重绑定失败关闭，不回退到全盘。用户暂停保存paused，正常退出只取消当前进程工作而保留意图；完成或错误分别保存completed/paused，防止重启重复完整扫描或自动重复失败。停止等待配置写入完成，写入失败仍在finally停止Core。未开始草稿不跨重启保存，持续增量仍待实现。
+`Core.Host/MetadataBuild` 持有原 `%LOCALAPPDATA%\Cap7CE\Core\metadata-build.json` v2 和目录队列 v1。GlobalBuildOwner 按 active/paused/completed/configured 意图恢复：配置保存不执行，active 等基础库完成并复查卷/目录稳定身份后恢复，completed 只处理变化提示；暂停持久化，退出保留意图但归还读取器。读写有界、串行原子替换并保留未知字段，失败保留原文件；Main 不再持有授权生命周期。
 
 `src/renderer/metadata-build/MetadataBuildPanel` 为建库提示和进度提供纯展示组件，接收快照与明确操作回调；不拥有 IPC、源访问、授权持久化或后台任务。状态契约唯一声明于 `src/shared/metadataBuildTypes.d.ts`，Electron 仅作类型重导出，不改变运行时输出目录。未知总量不显示百分比，暂停时未知进度不显示运行中的进度条，完成仅表示本轮处理。私有本机预览已连接正式后台控制器与实际样本；已通过独立 metadataBuild IPC/预加载白名单接入 Core 搜索页，实际 Windows 主界面仍待人工验证。自动守门限制该组件体量及运行时依赖。
 
-`metadataExtraction/MetadataBuildController` 负责一次明确启动的后台扫描：按所选卷分页发现尺寸/视频任务，确认本轮总量后按卷顺序派发到单进程读取器；暂停向 Core 传播取消并撤销票据，恢复重新检查剩余任务、复用已完成事实。运行期间等候不可用卷或未到期租约，空领取不等于完成；扫描完成后停止轮询。进度仅统计本轮处理，不将任务账本当作全盘覆盖率，ETA 按类别使用有界样本，缺少样本/分母或等待时返回未知。`metadataBuildProgress` 提供展示状态、有限样本估算和可取消让步；两者不读取源或数据库。Core 的发现、账本和领取可限定当前卷，领取同时约束当前读取器类别/版本，避免任务交给不匹配的解析器。这是新流程的派发契约，不提供旧用户库迁移或旧队列兼容；旧实验格式需要时整体重建。Host 显式装配休眠的事实会话，查询或启动 Host 不初始化事实表；只有 metadata.configure 明确同意后才激活。
+`Core.Host/MetadataScheduling/MetadataBuildSweep` 负责单次发现、按卷顺序领取及执行，暂停等待会话撤销和实际任务终止，重新执行复用已完成事实。进度与 ETA 仅描述本轮，空领取继续核对账本，空闲不轮询。GlobalBuildOwner 持有全局授权，MetadataBuildCoordinator 在同一会话上借用目录任务，目录身份重核后才读取；32项队列独立持久化，结束恢复原全局意图，不覆盖全局范围。Shell 的 metadataBuild IPC 仍校验确认、发送方、路径和互斥。低层会话经显式 attach 转为内部调度所有，旧协议不能同时修改授权或发布事实。
 
 `Host/MetadataRecovery/FileFactRecoveryCheckpoint` 在事实域首次激活前，为已有 Catalog 创建私有一致性 SQLite 恢复点。源连接只读，原生 backup 每批 256 页、批间让步并检查取消，90 秒上限；输出仅使用私有恢复目录中的新 GUID 文件，CreateNew 保证所有权，校验 quick_check 后原子改名且不覆盖。取消/失败仅删除本次自建 partial；已有事实域不在每次启动重复备份。只读快照的建立及事实域条件由该入口负责，`CatalogRecoverySnapshotWriter` 单独拥有有界复制、校验及新恢复文件生命周期；该职责拆分保持既有行为。该模块不恢复或初始化源库；装配者成功返回后才可进入 HostSession 初始化。临时库测试覆盖备份早于表创建、再次启用不重复备份、复制途中取消、失败目标保留、缺失源不创建。尚未接入生产首次启用流程。
 
@@ -1074,3 +1074,8 @@ Dispatcher cursors and hint acknowledgment fence the changed volume's Catalog re
 The Electron preload retains separate source bridge domains and is bundled by scripts/build-preload.cjs after TypeScript validation. Its deployed sandbox artifact has Electron as its only runtime import, because sandbox preloads cannot load relative CommonJS modules. Sandbox and context isolation remain enabled. A real BrowserWindow integration verifies metadata, favorites, Catalog notifications and existing window actions without exposing Node to the page.
 
 CatalogDirectoryPathChanges checks existing directory identity, parent, name and existence before the owning batch upsert. Attribute/time updates skip the full-volume path cache rebuild while still committing metadata, invalidations and checkpoints; creation, deletion, rename and move retain the existing atomic structural rebuild. A SQLite deletion-audit regression verifies zero path rewrites for timestamp updates and descendant correctness for structural changes.
+
+
+Core 文件属性建库由 MetadataBuildHosting 在固定产品配置目录惰性装配，SC1 metadata.build.* 经同一用户管道接收既有界面动作；attach 仅切换内部会话所有权，不授权正文读取。MetadataBuildService 统一配置生命周期、目录任务协调器和单次 Sweep；MetadataBuildGrantLifecycle 保存全局授权意图，MetadataDirectoryQueueState 保留旧版目录队列及未知字段。MetadataScheduling 只调用 Catalog/提取会话抽象，不拥有 SQLite、源 IO、进程或网络。暂停、取消目录和退出共用有界控制通道，不排在两个查询槽后；状态与错误仅返回共享有界 DTO。
+
+Main 的 CoreMetadataBuildClient 只管理惰性接入、动作转发、进程代次和被动通知/关闭；不持有提取策略、授权、持久配置、发现/领取或后台循环。旧 TypeScript 建库控制器、目录调度、JSON 存储及低层 metadata 客户端已移除，IPC 保留现有发送方限制、确认和互斥，并使用纯路径校验器。Core 会话接管后拒绝旧低层写动作，内部调度不能经 RPC 伪造所有权。自动边界检查登记新模块清单和体量，守护惰性装配、控制槽、无 Main 调度与源 IO 的依赖方向。

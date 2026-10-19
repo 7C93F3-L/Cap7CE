@@ -124,7 +124,7 @@
     "src/renderer/quick-commands/CatalogCommandProvider.tsx": 50,
     "src/renderer/quick-commands/useCatalogCommandInput.ts": 75,
     "src/renderer/quick-commands/CatalogQuickCommandSettingsRows.tsx": 30,
-    "electron/metadataExtraction/metadataQuickVolumes.ts": 20,
+    "electron/metadataExtraction/metadataDirectoryPath.ts": 10,
     "src/renderer/stable-ui/StableMetadataFilterGate.tsx": 40,
     "src/renderer/stable-ui/StableMetadataFilterGate.css": 10,
     "src/renderer/catalog-workspace/useCatalogAttributeHelp.ts": 40,

@@ -4,8 +4,7 @@ const path = require("node:path");
 module.exports = (root, sourceFiles, failures) => {
   require("./metadata-runtime-boundary-check.cjs")(root, failures);
   require("./core-metadata-execution-boundary-check.cjs")(root, failures);
-  for (const [file, maximum] of [["electron/metadataDirectoryBuildStore.ts", 65], ["electron/metadataDirectoryStoreError.ts", 30],
-    ["electron/metadataExtraction/metadataDirectoryBuildRuntime.ts", 160], ["electron/metadataExtraction/metadataDirectoryScope.ts", 35]]) {
+  for (const [file, maximum] of [["electron/core/coreMetadataBuildClient.ts", 85], ["electron/core/coreMetadataBuildValidation.ts", 65], ["electron/metadataExtraction/metadataDirectoryPath.ts", 12]]) {
     const text = fs.readFileSync(path.join(root, file), "utf8");
     if (text.split(/\r?\n/).length > maximum) failures.push(`${file} exceeds its metadata task boundary.`);
     if (/CoreHostController|sql\.js|databaseService|thumbnailOptimizationService/.test(text)) failures.push(`${file} bypasses the metadata task owner.`);

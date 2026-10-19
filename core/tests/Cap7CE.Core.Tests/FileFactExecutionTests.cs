@@ -91,7 +91,7 @@ internal static class FileFactExecutionTests
         }
         Console.WriteLine("Core content execution: owned lease, real Node publication, source revalidation, pause and bounded crash recovery passed.");
     }
-    private sealed class ControlledReader : IFileFactContentReader
+    internal sealed class ControlledReader : IFileFactContentReader
     {
         public int Reads, Live; public bool Block; public string? Fault;
         public Func<Task>? BeforeReturn;

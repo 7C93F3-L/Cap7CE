@@ -2,7 +2,8 @@ namespace Cap7CE.Core.Host.MetadataScheduling;
 
 public sealed record MetadataBuildProgress(string Phase = "idle", string? VolumeId = null, long Discovered = 0,
     long Processed = 0, long Failed = 0, long Unsupported = 0, long? Total = null, double? ProgressFraction = null,
-    double? RemainingSeconds = null, string? ErrorCode = null, MetadataBuild.MetadataDirectoryStorageError? StorageError = null);
+    double? RemainingSeconds = null, string? ErrorCode = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] MetadataBuild.MetadataDirectoryStorageError? StorageError = null);
 
 // Immutable snapshots; notification failures cannot revoke the extraction owner or corrupt its state.
 internal sealed class MetadataSweepProgress(Action<MetadataBuildProgress>? changed)

@@ -17,6 +17,7 @@ public sealed class CoreRequestDispatcher
     private readonly ProductCoreRuntime? runtime;
     private readonly ProductSearchCursorCodec? productCursors;
     private readonly CatalogMaintenanceRequestHandler? maintenance;
+    private readonly MetadataBuildHosting.MetadataBuildControlDispatch metadataControl = new();
 
     public CoreRequestDispatcher(IMetadataSearchSource source, SearchCursorCodec cursors)
     {
@@ -36,6 +37,7 @@ public sealed class CoreRequestDispatcher
     public IReadOnlyList<string> Capabilities => runtime is null
         ? CoreOperations.P11Capabilities
         : CoreOperations.P31Capabilities.Concat(runtime.FileFacts is null ? [] : CoreOperations.FileFactCapabilities)
+            .Concat(runtime.MetadataBuild is null ? [] : MetadataBuildOperations.All)
             .Concat(runtime.FileFacts?.CanExecute == true ? [CoreOperations.FileFactExecute] : Array.Empty<string>())
             .Concat(runtime.MaintenanceEnabled ? [CoreOperations.CatalogAwaitChanges] : Array.Empty<string>()).ToArray();
 
@@ -65,6 +67,8 @@ public sealed class CoreRequestDispatcher
         {
             if (request.Operation == CoreOperations.CatalogAwaitChanges && runtime?.MaintenanceEnabled == true)
                 return await maintenance!.DispatchAsync(request, linkedCancellation.Token);
+            if (runtime?.MetadataBuild is { } metadata && MetadataBuildOperations.IsControl(request.Operation))
+                return await metadataControl.DispatchAsync(metadata, request, linkedCancellation.Token);
             await executionSlots.WaitAsync(linkedCancellation.Token);
             try
             {
@@ -118,6 +122,8 @@ public sealed class CoreRequestDispatcher
             CoreOperations.SearchNextPage => await NextPageAsync(request, token),
             _ when runtime is not null && Keywords.CatalogKeywordRequestHandler.Supports(request.Operation) =>
                 await Keywords.CatalogKeywordRequestHandler.DispatchAsync(runtime, request, token),
+            _ when runtime?.MetadataBuild is { } build && MetadataBuildHosting.MetadataBuildRequestHandler.Supports(request.Operation) =>
+                await MetadataBuildHosting.MetadataBuildRequestHandler.DispatchAsync(build, request, token),
             _ when runtime?.FileFacts is { } facts && FileFactRequestHandler.Supports(request.Operation) =>
                 await FileFactRequestHandler.DispatchAsync(facts, request, token),
             _ => Failure(request, CoreErrorCodes.UnknownOperation, "dispatch", false, "Operation is not supported.")
