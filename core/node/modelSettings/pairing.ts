@@ -56,4 +56,3 @@ export const pairVisionModels = (files: GgufModelFile[]): GgufVisionModel[] => {
     };
   });
 };
-
