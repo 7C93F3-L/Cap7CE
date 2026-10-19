@@ -40,8 +40,8 @@
 
 LangString cap7ceCleanupUserData 1033 "Remove user data"
 LangString cap7ceCleanupUserData 2052 "删除用户数据"
-LangString cap7ceCleanupAiContent 1033 "Remove models and llama.cpp for this user"
-LangString cap7ceCleanupAiContent 2052 "删除当前用户的 models 和 llama.cpp"
+LangString cap7ceCleanupAiContent 1033 "Remove models and llama.cpp from this installation"
+LangString cap7ceCleanupAiContent 2052 "删除本安装目录的 models 和 llama.cpp"
 LangString cap7ceUninstallUnsafePath 1033 "Cap7CE program files were not found in the uninstall directory. Nothing was removed."
 LangString cap7ceUninstallUnsafePath 2052 "卸载目录中未找到 Cap7CE 程序文件，未删除任何内容。"
 LangString cap7ceUninstallPreserveFailed 1033 "Cap7CE could not safely preserve protected or user-managed content. Nothing was removed."
@@ -226,9 +226,9 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
 !endif
 
 !macro customUnInit
-  # The standard uninstall section is index 0; the user-data and per-user AI
+  # The standard uninstall section is index 0; the user-data and installed AI
   # sections appended by customUnInstallSection are indexes 1 and 2. Use
-  # electron-builder's known application size and only scan the two local AI
+  # electron-builder's known application size and only scan the two installed AI
   # directories. Recursively sizing shared app data here could delay the
   # uninstall UI for large caches, including a large full-disk Catalog.
   !ifdef ESTIMATED_SIZE
@@ -242,9 +242,9 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     SetShellVarContext current
   ${endif}
   StrCpy $4 0
-  ${GetSize} "$LOCALAPPDATA\Cap7CE\models" "/S=0K" $0 $1 $2
+  ${GetSize} "$INSTDIR\models" "/S=0K" $0 $1 $2
   StrCpy $4 $0
-  ${GetSize} "$LOCALAPPDATA\Cap7CE\llama.cpp" "/S=0K" $0 $1 $2
+  ${GetSize} "$INSTDIR\llama.cpp" "/S=0K" $0 $1 $2
   IntOp $4 $4 + $0
   SectionSetSize 2 $4
   ${if} $installMode == "all"
@@ -298,11 +298,11 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     ${if} $installMode == "all"
       SetShellVarContext current
     ${endif}
-    Push "$LOCALAPPDATA\Cap7CE\models"
+    Push "$INSTDIR\models"
     Call un.cap7ceRemoveSelectedPath
-    Push "$LOCALAPPDATA\Cap7CE\llama.cpp"
+    Push "$INSTDIR\llama.cpp"
     Call un.cap7ceRemoveSelectedPath
-    RMDir "$LOCALAPPDATA\Cap7CE"
+    RMDir "$INSTDIR"
     ${if} $installMode == "all"
       SetShellVarContext all
     ${endif}

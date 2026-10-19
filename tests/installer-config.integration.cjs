@@ -109,8 +109,13 @@ assert.match(customNsis, /Rename "\$cap7cePreserveRoot\\Core" "\$INSTDIR\\Core"/
 assert.match(customNsis, /Rename "\$cap7cePreserveRoot\\NtfsReader" "\$INSTDIR\\NtfsReader"/);
 assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\UserData/);
 assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\updates/);
-assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\models/);
-assert.match(customNsis, /\$LOCALAPPDATA\\Cap7CE\\llama\.cpp/);
+const aiCleanup = customNsis.match(/Section \/o "un\.\$\(cap7ceCleanupAiContent\)"[\s\S]*?SectionEnd/)?.[0];
+assert.ok(aiCleanup, "AI cleanup remains an explicit optional section");
+assert.match(aiCleanup, /Push "\$INSTDIR\\models"/);
+assert.match(aiCleanup, /Push "\$INSTDIR\\llama\.cpp"/);
+assert.doesNotMatch(aiCleanup, /\$LOCALAPPDATA|\$APPDATA/, "AI cleanup targets only this installation");
+assert.match(customNsis, /\$\{GetSize\} "\$INSTDIR\\models"/);
+assert.match(customNsis, /\$\{GetSize\} "\$INSTDIR\\llama\.cpp"/);
 assert.match(customNsis, /\$APPDATA\\Cap7CE/,
   "the explicit user-data cleanup choice must also cover legacy roaming data");
 assert.doesNotMatch(customNsis, /CreateDirectory "\$INSTDIR\\(?:models|llama\.cpp)"/);
