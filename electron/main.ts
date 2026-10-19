@@ -40,7 +40,7 @@ import { registerManualMetadataRuntime } from "./manualMetadataRuntime";
 import { deleteDirectoryImages, reassignDirectoryImages } from "./sqliteImageIndex";
 import { readCoreStoredMetadata as readPreviewEmbeddedMetadata, readCoreStoredCounts as getExistingImageCountsByDirectory } from "./core/coreStoredMetadataClient";
 import { readSkimLocation, resolveReadableSkimDirectoryPath } from "./skimBrowseService";
-import { collectSkimFolderStats, inspectSkimEntry } from "./skimPreviewService";
+import { collectSkimFolderStats, createSkimFolderStatsTask, inspectSkimEntry } from "./skimPreviewService";
 import { getSkimMediaMimeType, parseSkimMediaByteRange, readSkimTextPreview, skimAudioPreviewExtensions, skimVideoPreviewExtensions } from "./skimContentPreviewService";
 import { beginSkimVisualSession, cancelSkimVisualSession, clearSkimCacheSafely, getSkimCacheStats, requestSkimShellPreviewCache, requestSkimShellThumbnailCache, requestSkimVisualCache, setSkimShellThumbnailActivity } from "./skimVisualCacheService";
 import { requestSearchShellPreviewCache, requestSearchShellThumbnailCache, setSearchShellVisualActivity } from "./searchShellVisualCacheService";
@@ -2312,12 +2312,9 @@ ipcMain.handle("skim:startFolderStats", (event, request: unknown) => {
   }
 
   if (activeSkimFolderStatsTask) activeSkimFolderStatsTask.cancelled = true;
-  const task = { sessionId: candidate.sessionId, path: candidate.path, cancelled: false };
+  const task = createSkimFolderStatsTask({ sessionId: candidate.sessionId, path: candidate.path });
   activeSkimFolderStatsTask = task;
-  void collectSkimFolderStats(
-    task.path,
-    () => task.cancelled || activeSkimFolderStatsTask !== task,
-    (stats) => {
+  void task.collect((stats) => {
       latestSkimFolderStatsUpdate = {
         sessionId: task.sessionId,
         path: task.path,
@@ -2357,8 +2354,7 @@ ipcMain.handle("skim:readFileInfoDimensions", async (event, filePath: unknown) =
   }
   try {
     const normalizedPath = path.normalize(path.resolve(filePath));
-    const stats = await fs.lstat(normalizedPath);
-    if (stats.isSymbolicLink() || !stats.isFile()) return null;
+    await inspectSkimEntry(normalizedPath, "file", []);
     return await readVisualSourceDimensions(normalizedPath);
   } catch {
     return null;
@@ -2383,20 +2379,11 @@ ipcMain.handle("skim:readFileInfoFolderStats", async (event, request: unknown) =
   }
 
   if (activeFileInfoFolderStatsTask) activeFileInfoFolderStatsTask.cancelled = true;
-  const task = {
-    taskId: candidate.taskId,
-    path: path.normalize(path.resolve(candidate.path)),
-    cancelled: false
-  };
+  const task = createSkimFolderStatsTask({ taskId: candidate.taskId, path: path.normalize(path.resolve(candidate.path)) });
   activeFileInfoFolderStatsTask = task;
   try {
-    const stats = await fs.lstat(task.path);
-    if (stats.isSymbolicLink() || !stats.isDirectory()) return null;
-    return await collectSkimFolderStats(
-      task.path,
-      () => task.cancelled || activeFileInfoFolderStatsTask !== task,
-      () => undefined
-    );
+    await inspectSkimEntry(task.path, "folder", []);
+    return await task.collect(() => undefined);
   } catch {
     return null;
   } finally {

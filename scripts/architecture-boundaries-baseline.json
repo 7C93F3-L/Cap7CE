@@ -40,7 +40,7 @@
     "src/renderer/PreviewWindowApp.tsx": 866,
     "src/renderer/preview/PreviewWindow.css": 694,
     "src/renderer/results/ResultGrid.css": 202,
-    "electron/main.ts": 2647,
+    "electron/main.ts": 2634,
     "electron/stableWindowRuntime.ts": 51,
     "electron/stableUiWindowLifecycle.ts": 81,
     "electron/stablePreviewWindowSizing.ts": 59,

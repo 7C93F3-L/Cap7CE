@@ -103,7 +103,7 @@
     "test:format-capabilities": "electron tests/format-capabilities.integration.cjs",
     "test:skim-browse": "electron tests/skim-browse.integration.cjs",
     "test:skim-display-preferences": "electron tests/skim-display-preferences.integration.cjs",
-    "test:skim-preview": "electron tests/skim-preview.integration.cjs",
+    "test:skim-preview": "node scripts/core-source-information-boundary-check.cjs && node tests/core-source-information.integration.cjs && electron tests/skim-preview.integration.cjs",
     "test:core-provider-preview": "node scripts/core-provider-preview-boundary-check.cjs && node tests/core-provider-preview-client.integration.cjs && node tests/core-provider-preview-runtime.integration.cjs",
     "test:pdf-preview": "npm run test:core-provider-preview && electron tests/pdf-preview.integration.cjs",
     "test:office-preview": "node tests/office-process-job.integration.cjs && node scripts/core-office-preview-boundary-check.cjs && node tests/core-office-preview-runtime.integration.cjs && electron tests/office-preview.integration.cjs",

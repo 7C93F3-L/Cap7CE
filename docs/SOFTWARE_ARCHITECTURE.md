@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/sourceInformation` 拥有按需源条目信息与目录递归统计，仅使用 lstat/readdir，不读正文、创建缓存或写源文件。复用现有普通 Core 私有管道与 Job，最多4个统计任务、8个信息请求，目录并发4（上限8）、文件元数据16项一批；子目录链接跳过。任务以 UUID 隔离，watch 被动等待进度变化，无空闲轮询；取消、全局源句柄释放及退出均等待实际读取归还。Main 的 skimPreviewService/coreSourceInformationClient 只转发并验证 DTO，冷取消不启动宿主；预览和右栏分别持有任务身份并过滤迟到进度，共享契约位于 src/shared/sourceInformationTypes。专项实际 Node/Job 回归覆盖计数、进度、链接、配额、只读与取消屏障。
+
 Office 转换的 Windows 适配在打开源文件前记录既有进程、读取 COM HWND 对应进程并检查当前文档数量；既有或已有文档的实例不接入 Job、不改应用选项、不调用 Quit。新实例在源文件打开前接入 PowerShell 自持的 KILL_ON_JOB_CLOSE Job，Excel/PowerPoint 均设置 AutomationSecurity=3；正常退出、取消或 PowerShell 终止释放该 Job。Node 只停止已登记的 PowerShell 子进程，不再用裸 PID 终止外部程序；实例拒绝错误在 Shell 本地化。officeJob 仅包含固定 Win32 ABI 与句柄生命周期，不提供任意 PID 的生产消息入口。真实 PowerShell/Win32 测试使用生成的空闲 Node 进程验证既有 PID 不触碰及持有者被终止后的回收，并解析实际生产脚本；实际 Office 版本、用户同时操作及 WPS 兼容仍需人工验收，不由模拟测试推断。
 
 `core/node/officePreview` 单独拥有 Office 转换与临时 PDF 缓存：cache 工厂沿用 temp/Cap7CE/office-preview/cache、SHA缓存键、使用中 lease、清理代次与串行发布，sessions 管理准备/转换/缓存命中的会话与取消，conversion 保留普通 PowerShell/COM 适配，pdfHeader 只验证5字节PDF头，api 只装配固定动作和有界在途任务。普通 office-preview.cjs 与固定 Node/原生 Job 运行；PowerShell子进程复用已有预览生命周期登记和释放屏障，转换会话目录位于本 Job 工作区，清理先核对自建目录。退出等待转换、目录移除和缓存队列，保存前的清理代次变化拒绝迟到回填。

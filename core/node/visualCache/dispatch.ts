@@ -1,12 +1,12 @@
 import path from "node:path";
 import { CoreVisualPreparation } from "../visualRendering/preparation";
+import { createSourceInformationOwner } from "../sourceInformation/owner";
 import { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
 import { dispatchStoredMetadata } from "../storedMetadata/dispatch";
 import { LocalKeywordOwner } from "../localKeywords/owner";
 import { createVisualCacheStore } from "./store";
 import { formalVisualCacheTypes, skimVisualCacheTypes } from "../../../electron/core/visualCachePaths";
 import type { VisualCacheEntry, VisualCacheType, VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
-
 const invalid = () => { throw new Error("core-cache-invalid-request"); };
 const text = (value: unknown): string => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") ? value : invalid();
 const filePath = (value: unknown) => { const result = text(value); return path.isAbsolute(result) ? result : invalid(); };
@@ -21,12 +21,13 @@ import { maximumCacheImageBytes } from "../../../electron/core/visualCacheFrames
 export const createVisualCacheDispatcher = (root: string, directory: string) => {
   const store = createVisualCacheStore(root), visuals = new CoreVisualPreparation(store, directory);
   const metadata = new InteractiveMetadataOwner(directory);
-  const keywords = new LocalKeywordOwner();
+  const keywords = new LocalKeywordOwner(), sourceInfo = createSourceInformationOwner();
   const dispatch = async (method: unknown, args: unknown): Promise<unknown> => {
     if (!Array.isArray(args)) return invalid();
     const count = (expected: number) => { if (args.length !== expected) invalid(); };
     if (typeof method === "string" && method.startsWith("localKeywords.")) return keywords.dispatch(method, args);
     if (["storedMetadata", "storedCounts", "legacyKeywordPage"].includes(String(method))) return dispatchStoredMetadata(metadata, root, String(method), args, probeId, filePath);
+    if (typeof method === "string" && method.startsWith("sourceInfo.")) return sourceInfo.dispatch(method, args);
     switch (method) {
       case "ensure": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), false);
       case "ensureShell": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), true);
@@ -35,7 +36,7 @@ export const createVisualCacheDispatcher = (root: string, directory: string) => 
       case "sourcePreview": count(1); return visuals.sourcePreview(filePath(args[0]));
       case "previewMetadata": count(2); return metadata.read(probeId(args[0]), filePath(args[1]));
       case "cancelPreviewMetadata": count(1); return metadata.cancel(probeId(args[0]));
-      case "releaseSourceHandles": count(0); return Promise.all([visuals.release(), metadata.release()]).then(() => undefined);
+      case "releaseSourceHandles": count(0); return Promise.all([visuals.release(), metadata.release(), sourceInfo.release()]).then(() => undefined);
       case "initialize": count(0); return store.initializeVisualCacheDirectories();
       case "stats": count(0); return store.getVisualCacheStats();
       case "skimStats": count(0); return store.getSkimVisualCacheStats();
@@ -69,5 +70,5 @@ export const createVisualCacheDispatcher = (root: string, directory: string) => 
       default: return invalid();
     }
   };
-  return { dispatch, close: () => { keywords.close(); metadata.close(); visuals.close(); } };
+  return { dispatch, close: async () => { keywords.close(); metadata.close(); visuals.close(); await sourceInfo.close(); } };
 };

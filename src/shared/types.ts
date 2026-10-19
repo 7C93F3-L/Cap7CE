@@ -1,3 +1,5 @@
+import type { SkimPreviewInfo, SkimFolderStats } from "./sourceInformationTypes";
+export type { SkimPreviewInfo, SkimFolderStats } from "./sourceInformationTypes";
 import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
 import type { SearchImageAnimationMode, SearchImageAspectRatio, SearchImageAspectRatioValue, SearchImageColorTrait, SearchImageDimensionFilter, SearchVisualColor } from "../../electron/imageSearchFilters";
 import type { SearchVideoAspectRatio, SearchVideoAspectRatioValue, SearchVideoColorTrait, SearchVideoDimensionFilter, SearchVideoDurationPreset, SearchVideoDurationRange, SearchVideoResolution, SearchVideoVisualColor } from "../../electron/videoSearchFilters";
@@ -341,15 +343,6 @@ export interface SkimLocationShortcut {
   name?: string;
 }
 
-export interface SkimPreviewInfo {
-  kind: "file" | "folder";
-  name: string;
-  path: string;
-  extension: string;
-  size: number;
-  modifiedAt: string;
-  withinAddedDirectory: boolean;
-}
 
 export interface SkimTextPreview {
   content: string;
@@ -357,13 +350,6 @@ export interface SkimTextPreview {
   truncated: boolean;
 }
 
-export interface SkimFolderStats {
-  fileCount: number;
-  folderCount: number;
-  totalSize: number;
-  skippedCount: number;
-  status: "scanning" | "completed" | "cancelled";
-}
 
 export interface SkimFolderStatsUpdate extends SkimFolderStats {
   sessionId: string;

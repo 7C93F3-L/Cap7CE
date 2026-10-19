@@ -25,7 +25,7 @@ const metadata={items:[{kind:'software_family',text:'photoshop'}],capturedAt:nul
  const empty=createCatalogFileDetailsReader({inspect:async path=>info(path),readStored:async()=>({metadata:null,isCurrent:true}),readDimensions:async()=>null,startProbe:()=>{throw Error('current empty metadata must not be retried')}});
  assert.equal((await empty.read('empty','empty.txt')).embeddedMetadata,undefined);
  const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),sharp=require('sharp');
- const {inspectSkimEntry}=require('../dist-electron/skimPreviewService.js');
+ const {inspectCoreSource}=require('../dist-electron/core/coreSourceInformationClient.js');
  const temp=await fs.mkdtemp(path.join(os.tmpdir(),'Cap7CE-details-reader-'));
  try{
    const file=path.join(temp,'source.jpg');await sharp({create:{width:12,height:8,channels:3,background:'#b0c0d0'}}).withMetadata({exif:{IFD0:{Software:'Adobe Photoshop'}}}).jpeg().toFile(file);
@@ -34,7 +34,7 @@ const metadata={items:[{kind:'software_family',text:'photoshop'}],capturedAt:nul
    const {startCorePreviewMetadataRead}=require('../dist-electron/core/corePreviewMetadataClient.js');
    const client=new CoreVisualCacheClient(path.join(temp,'profile'));
    const request=client.request.bind(client),cancel=client.requestIfActive.bind(client);
-   const real=createCatalogFileDetailsReader({inspect:p=>inspectSkimEntry(p,'file',[]),readStored:async()=>({metadata:null,isCurrent:false}),
+   const real=createCatalogFileDetailsReader({inspect:p=>inspectCoreSource(p,'file',[],{request,cancel}),readStored:async()=>({metadata:null,isCurrent:false}),
      readDimensions:p=>request('sourceDimensions',[p]),startProbe:({filePath})=>startCorePreviewMetadataRead(filePath,8000,{request,cancel})});
    try {
    const actual=await real.read('real',file);assert.equal(actual.imageWidth,12);assert.equal(actual.imageHeight,8);
