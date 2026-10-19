@@ -40,8 +40,8 @@ const ComputerSearchResultContextMenu = ({
     detail=""
     actionGroups={[
       [
-        action("open", t("skim.openItem"), fileContextShortcutLabels.open),
         action("preview", t("skim.preview"), fileContextShortcutLabels.primaryView),
+        action("open", t("skim.openItem"), fileContextShortcutLabels.open),
         action("showInFolder", t("skim.openPath"), fileContextShortcutLabels.showInFolder),
         action("copyPaths", state.items.length > 1
         ? t("context.copySelectedPaths", { count: state.items.length })

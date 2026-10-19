@@ -23,8 +23,8 @@ export default function CatalogHomeContextMenu({ target, entry, entries, appeara
     showMetadata={single} keywordsBusy={activity?.busy} onAutoKeywords={activity && single ? () => void activity.startBatch(entry.kind === "drive"
       ? { driveLetter: entry.path[0].toUpperCase() } : { locationId: entry.id }, entry.name) : undefined}
     basicActions={[
-      { id: "open", label: t("skim.openItem"), shortcut: fileContextShortcutLabels.open, onSelect: () => onOpen(entry.path) },
       { id: "preview", label: t("skim.preview"), shortcut: fileContextShortcutLabels.primaryView, onSelect: onPreview },
+      { id: "open", label: t("skim.openItem"), shortcut: fileContextShortcutLabels.open, onSelect: () => onOpen(entry.path) },
       { id: "reveal", label: t("skim.openPath"), shortcut: fileContextShortcutLabels.showInFolder, onSelect: onReveal },
       { id: "copy", label: t(entries.length > 1 ? "context.copySelectedPaths" : "context.copyPath", { count: entries.length }), shortcut: fileContextShortcutLabels.copyPaths, onSelect: onCopy },
       ...(favorites && single ? [{ id: "favorite", label: t(favorite ? "catalogActions.removeFavorite" : "catalogActions.addFavorite"), disabled: favorites.busy, onSelect: () => void toggleFavorite() }] : [])
