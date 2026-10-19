@@ -1,5 +1,6 @@
 import { t, type TranslationKey } from "../../../../electron/localization";
 import type { MetadataBuildStatus } from "../../../shared/metadataBuildTypes";
+import GradientProgress from "../../feedback/GradientProgress";
 
 const phases: Record<MetadataBuildStatus["progress"]["phase"], TranslationKey> = {
   idle: "metadataBuild.idle", preparing: "metadataBuild.preparing", discovering: "metadataBuild.discovering", extracting: "metadataBuild.extracting",
@@ -22,7 +23,7 @@ export default function SettingsMetadataTask({ status, busy, dirty, canStart, on
       <div className="task-count"><strong>{(p.phase === "discovering" ? p.discovered : p.processed).toLocaleString()}</strong>
         <span>{p.total === null ? t("metadataBuild.items") : t("metadataBuild.total", { count: p.total.toLocaleString() })}</span>
         {running && <span className="task-estimate">{p.remainingSeconds === null ? t("metadataBuild.estimating") : t("metadataBuild.eta", { minutes: Math.max(1, Math.ceil(p.remainingSeconds / 60)) })}</span>}</div>
-      {running && <progress value={p.progressFraction ?? undefined} max={1} aria-label={t("metadataBuild.progress")} />}
+      {running && <GradientProgress value={p.progressFraction} label={t("metadataBuild.progress")} />}
       <div className="task-meta"><span>{directory ? t("metadataBuild.directoryCount", { count: status.directoryTask!.pending }) : label ? t("metadataBuild.currentDrive", { label }) : ""}</span>
         <span>{t("metadataBuild.exceptions", { skipped: p.unsupported.toLocaleString(), failed: p.failed.toLocaleString() })}</span></div>
       {p.phase === "failed" && <p className="task-error" role="alert">{t(p.errorCode === "metadata-directory-changed" ? "metadataBuild.directoryChanged"

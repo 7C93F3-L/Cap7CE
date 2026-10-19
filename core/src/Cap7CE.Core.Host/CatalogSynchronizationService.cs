@@ -19,15 +19,18 @@ public sealed class CatalogSynchronizationService
     private readonly ICatalogReaderSessionFactory readerFactory;
     private readonly CatalogPreparationDiagnostics? diagnostics;
     private readonly bool captureFileEntries;
+    private readonly CatalogPreparationProgressOwner? progress;
 
     public CatalogSynchronizationService(
         CatalogV2Database catalog,
-        ICatalogReaderSessionFactory readerFactory, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false)
+        ICatalogReaderSessionFactory readerFactory, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false,
+        CatalogPreparationProgressOwner? progress = null)
     {
         this.catalog = catalog;
         this.readerFactory = readerFactory;
         this.diagnostics = diagnostics;
         this.captureFileEntries = captureFileEntries;
+        this.progress = progress;
     }
 
     public async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> DiscoverAsync(
@@ -88,6 +91,7 @@ public sealed class CatalogSynchronizationService
                 continue;
             }
             var activity = diagnostics?.Begin(target.DisplayName, origin);
+            progress?.Report(target.VolumeId, target.DisplayName, "preparing");
             try {
                 measurements.Add(await SynchronizeVolumeAsync(reader, readerVolume, target, forceRebuild, activity, token));
                 if (captureFileEntries) await new CatalogDirectoryEntryRetryOwner(catalog, reader, readerVolume).StepAsync(token);
@@ -95,6 +99,7 @@ public sealed class CatalogSynchronizationService
             }
             catch (OperationCanceledException) { activity?.Cancel(); throw; }
             catch (Exception error) when (error is not OutOfMemoryException) { activity?.Fail(); throw; }
+            finally { progress?.Clear(); }
         }
         return measurements;
     }
@@ -218,6 +223,9 @@ public sealed class CatalogSynchronizationService
                 rebuild,
                 token, captureFileEntries);
             activity?.Stage("snapshot-read-and-stage");
+            var scanned = 0L;
+            var total = snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount);
+            progress?.Report(volume.VolumeId, volume.DisplayName, "scanning", 0, total);
             var cursor = 0UL;
             for (var pageNumber = 0; pageNumber < 1_000_000; pageNumber++)
             {
@@ -241,6 +249,8 @@ public sealed class CatalogSynchronizationService
                     else await build.AppendAsync(nodes, token);
                 }
                 cursor = page.NextCursor;
+                scanned = checked(scanned + page.Records.Count);
+                progress?.Report(volume.VolumeId, volume.DisplayName, "scanning", scanned, total);
                 if (page.EndOfStream) break;
                 if (pageNumber == 999_999) throw new InvalidDataException("reader-snapshot-page-limit");
             }
@@ -250,6 +260,7 @@ public sealed class CatalogSynchronizationService
             readerReadMilliseconds += readerWatch.Elapsed.TotalMilliseconds;
             snapshotClosed = true;
             activity?.Stage("directory-paths-and-publish");
+            progress?.Report(volume.VolumeId, volume.DisplayName, "publishing", scanned);
             result = await build.PublishAsync(token);
         }
         finally
@@ -291,6 +302,8 @@ public sealed class CatalogSynchronizationService
         var cursor = volume.CheckpointUsn
             ?? throw new InvalidDataException("catalog-checkpoint-missing");
         if (targetUsn < cursor) throw new CatalogReaderDiscontinuityException();
+        var startingUsn = cursor;
+        progress?.Report(volume.VolumeId, volume.DisplayName, "syncing", fraction: 0);
         for (var pageNumber = 0; pageNumber < 1_000_000; pageNumber++)
         {
             if (cursor >= targetUsn) break;
@@ -330,6 +343,8 @@ public sealed class CatalogSynchronizationService
             records = checked(records + boundedRecords.Length);
             pages++;
             cursor = nextCheckpoint;
+            progress?.Report(volume.VolumeId, volume.DisplayName, "syncing", records,
+                fraction: targetUsn > startingUsn ? (double)(cursor - startingUsn) / (targetUsn - startingUsn) : 1);
             if (cursor >= targetUsn) break;
             if (page.EndOfStream) throw new CatalogReaderDiscontinuityException();
             if (pageNumber == 999_999) throw new InvalidDataException("reader-journal-page-limit");

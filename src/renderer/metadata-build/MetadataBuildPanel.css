@@ -17,5 +17,4 @@
 .cap-metadata-build button.cap-metadata-build-close { padding: 0 4px; border: 0; background: transparent; font-size: 22px; }
 .cap-metadata-build-progress { display: grid; gap: 6px; margin-top: 6px; }
 .cap-metadata-build-progress:empty { display: none; }
-.cap-metadata-build progress { width: 100%; height: 7px; accent-color: #c7a8e3; }
 @media (max-width: 420px) { .cap-metadata-build { padding: 12px; } .cap-metadata-build-footer { align-items: flex-start; gap: 10px; } }

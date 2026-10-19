@@ -21,6 +21,7 @@ export interface CoreCatalogStatus {
   volumes: CoreVolumeStatus[];
   tasks: CoreCatalogTaskStatus[];
   catalogRevision: number;
+  preparation?: import("../../src/shared/catalogPreparationTypes").CatalogPreparationProgress;
 }
 
 export interface CoreVolumeList {

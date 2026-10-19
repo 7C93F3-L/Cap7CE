@@ -20,6 +20,7 @@ import { CoreCatalogChangeWatcher } from "./core/coreCatalogChangeWatcher";
 import { FavoriteDirectoryStore } from "./favoriteDirectories/favoriteDirectoryStore";
 import type { FavoriteDirectoryRegistry } from "../src/shared/favoriteDirectoryTypes";
 import { ComputerSearchThumbnailLeases } from "./computerSearchThumbnailLeases";
+import { CoreDirectoryBrowseClient } from "./core/coreDirectoryBrowseClient";
 import { createCatalogKeywordsRuntime, type CatalogKeywordsApi } from "./catalogKeywordsRuntime";
 
 export interface ComputerSearchRuntime {
@@ -82,7 +83,7 @@ export const classifyComputerSearchCatalog = (catalog: CoreCatalogStatus): Compu
   } else if (queryable) {
     state = "ready";
   }
-  return { state, reason, searchAvailable: queryable,
+  return { state, reason, searchAvailable: queryable, ...(catalog.preparation ? { preparation: catalog.preparation } : {}),
     catalogRevision: catalog.catalogRevision, volumes };
 };
 
@@ -113,6 +114,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
     packaged: options.packaged, resourcesPath: options.resourcesPath ?? process.resourcesPath
   });
   const active = new Map<string, SearchContext>();
+  const directoryBrowse = new CoreDirectoryBrowseClient();
   const authorizationSessions = new Map<string, AuthorizationSession>();
   const thumbnailLeases = new ComputerSearchThumbnailLeases(request => authorizationSessions.get(request.taskId)?.items.get(request.authorizationId) ?? null,
     id => options.beginVisualSession?.(id), id => options.cancelVisualSession?.(id));
@@ -296,6 +298,15 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
           );
           if (cancelledTasks.has(request.taskId)) throw new Error("search-cancelled");
           if (!resolved.resolved || !resolved.queryable || !resolved.volumeId) {
+            const volume = catalog.volumes.find(volume => request.scopePath!.slice(0, 2).toLowerCase() === volume.displayName.toLowerCase());
+            if ((["building", "discovering"].includes(resolved.state ?? "") || catalog.tasks.some(task => task.state === "running"))
+              && volume && resolved.state !== "offline" && request.scopeKind !== "directory-descendants" && !request.query.trim() && !request.facts && request.randomSeed === undefined) {
+              const page = await directoryBrowse.start(request.taskId, request.scopePath, volume.volumeId,
+                { sort: request.sort ?? "name-ascending", excludeHidden: request.excludeHidden ?? false, fileConditions: request.fileConditions });
+              if (cancelledTasks.has(request.taskId)) { await directoryBrowse.cancel(request.taskId); throw Error("search-cancelled"); }
+              active.set(request.taskId, { requestId: "", volumeNames: names });
+              return { ...toPage(request.taskId, page, names), source: "filesystem" };
+            }
             throw new Error(resolved.state === "offline" ? "scope-offline"
               : ["building", "discovering"].includes(resolved.state ?? "") ? "scope-preparing" : "scope-not-indexed");
           }
@@ -323,6 +334,11 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       }
     },
     async nextPage(request) {
+      if (directoryBrowse.has(request.taskId)) {
+        const names = active.get(request.taskId)?.volumeNames;
+        if (!names) throw Error("search-task-not-found");
+        return { ...toPage(request.taskId, await directoryBrowse.next(request.taskId, request.cursor), names), source: "filesystem" };
+      }
       const context = active.get(request.taskId);
       if (!context) throw new Error("search-task-not-found");
       runningTasks.add(request.taskId);
@@ -343,7 +359,8 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       active.delete(taskId);
       const released = releaseAuthorizationSession(taskId);
       const cancelled = context?.requestId ? await controller.cancelRequest(context.requestId).catch(() => false) : false;
-      return released || cancelled;
+      const browsed = await directoryBrowse.cancel(taskId);
+      return released || cancelled || browsed;
     },
     resolveAuthorizedItem(request) {
       return authorizationSessions.get(request.taskId)?.items.get(request.authorizationId) ?? null;
@@ -359,6 +376,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       if (stopping) return stopping;
       stopping = (async () => {
         await watcher.stop();
+        await directoryBrowse.close();
         try { await metadataBuild.shutdown(); }
         finally {
         active.clear();

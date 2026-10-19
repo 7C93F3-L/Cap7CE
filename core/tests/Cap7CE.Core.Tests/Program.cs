@@ -9,6 +9,7 @@ using Cap7CE.Core.Reader.Host;
 using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
+if (args is ["--catalog-preparation-tests"]) { await CatalogPreparationProgressTests.RunAsync(); return 0; }
 if (args is ["--metadata-state-tests"]) { await MetadataBuildStateFileTests.RunAsync(); return 0; }
 if (args is ["--metadata-sweep-tests"]) { await MetadataExtractorManifestTests.RunAsync(); await MetadataBuildSweepTests.RunAsync(); return 0; }
 if (args is ["--metadata-lifecycle-tests"]) { await MetadataBuildGrantLifecycleTests.RunAsync(); await FileFactBuildOwnershipTests.RunAsync(); return 0; }
@@ -87,6 +88,7 @@ await HostProtocolTests.RunAsync();
 await CoreRequestSchedulingTests.RunAsync();
 await CatalogDatabaseTests.RunAsync();
 await CatalogRecoveryTests.RunAsync();
+await CatalogPreparationProgressTests.RunAsync();
 var readOnlyBaseline = await CatalogReadOnlyCliTests.RunAsync();
 var catalogV2 = await CatalogV2Tests.RunAsync();
 await CatalogVolumeRootTests.RunAsync();

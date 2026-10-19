@@ -1,6 +1,6 @@
 .cap-bottom-notice-bar { display: flex; align-items: center; gap: 10px; min-height: 34px; box-sizing: border-box; padding: 6px 10px; border-radius: 10px; color: var(--cap-stable-text); background: #202126; background: rgb(from color-mix(in srgb, var(--cap-stable-surface, #282a2e) 78%, black) r g b / 1); box-shadow: 0 4px 14px #0002; font-size: var(--cap-stable-secondary-font-size, 12px); }
 .cap-bottom-notice-message { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cap-bottom-notice-bar progress { flex: 0 1 160px; width: 160px; min-width: 24px; max-width: 22%; height: 4px; accent-color: var(--theme-color); }
+.cap-bottom-notice-bar progress { flex: 0 1 160px; width: 160px; min-width: 24px; max-width: 22%; }
 .cap-bottom-notice-detail { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cap-bottom-notice-actions { display: flex; flex: none; align-items: center; gap: 6px; }
 .cap-bottom-notice-actions button { flex: none; border: 0; border-radius: 5px; padding: 2px 5px; color: inherit; background: transparent; font: inherit; white-space: nowrap; cursor: pointer; }

@@ -101,7 +101,9 @@ public sealed record VolumeSelectionResponse(IReadOnlyList<string> SelectedVolum
 public sealed record CatalogStatusResponse(
     IReadOnlyList<CoreVolumeStatus> Volumes,
     IReadOnlyList<CoreCatalogTaskStatus> Tasks,
-    long CatalogRevision);
+    long CatalogRevision,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    CatalogPreparationProgress? Preparation = null);
 
 public sealed record CatalogResolveScopeRequest(string Path);
 

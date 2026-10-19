@@ -1,6 +1,7 @@
 import type { MetadataBuildPhase, MetadataBuildProgress } from "../../shared/metadataBuildTypes";
 import "./MetadataBuildPanel.css";
 import { metadataBuildStorageMessage } from "./metadataBuildStorageMessage";
+import GradientProgress from "../feedback/GradientProgress";
 
 const labels: Record<MetadataBuildPhase, string> = {
   idle: "让全盘搜索支持更多条件", preparing: "正在准备", discovering: "正在查找需要提取的文件",
@@ -44,7 +45,7 @@ export default function MetadataBuildPanel({ progress, scopeSummary, currentDriv
     </div>
     {initial ? <p>提取后可按尺寸、比例、时长等属性筛选。处理在本机进行，可随时暂停。</p>
       : <div className="cap-metadata-build-progress">
-        {!stopped && <progress max={1} value={fraction ?? undefined} aria-label="本轮属性提取进度" />}
+        {!stopped && <GradientProgress value={fraction} label="本轮属性提取进度" />}
         {!stopped && progress.phase !== "pausing" && <span className="cap-metadata-build-detail">{
           progress.phase === "waiting" ? "等待恢复后将继续" : remaining}</span>}
         {progress.failed > 0 && !partial && <span className="cap-metadata-build-detail">{progress.failed.toLocaleString()} 项未能提取，不影响其余文件</span>}

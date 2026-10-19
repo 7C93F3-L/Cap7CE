@@ -27,6 +27,12 @@ class FixtureController {
   }
 }
 controllerModule.CoreHostController = FixtureController;
+const browseModule = require('../dist-electron/core/coreDirectoryBrowseClient.js'), savedBrowse = browseModule.CoreDirectoryBrowseClient;
+let browsed = 0;
+browseModule.CoreDirectoryBrowseClient = class {
+  has() { return false; } async cancel() { return false; } async close() {}
+  async start() { browsed++; return { items: [{name:'child.txt',relativePath:'Pending\\child.txt',extension:'.txt',isDirectory:false,volumeId:volume.volumeId,fileReference:'3'.repeat(16)}],nextCursor:null,isComplete:true,catalogRevision:0 }; }
+};
 const { createComputerSearchRuntime } = require("../dist-electron/computerSearchRuntime.js");
 (async () => {
   const runtime = createComputerSearchRuntime({ packaged: false, productVersion: "test" });
@@ -88,10 +94,19 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     const dispatched = requests.length;
     for (const state of ["building", "discovering", "offline", "ready"]) {
       scopeState = state; scopeResolved = false;
-      await assert.rejects(runtime.search({ taskId: "scope-" + state, query: "", scopePath: "X:\\Pending", scopeKind: "direct-children" }),
-        state === "offline" ? /scope-offline/ : state === "ready" ? /scope-not-indexed/ : /scope-preparing/);
+      const work = runtime.search({ taskId: "scope-" + state, query: "", scopePath: "X:\\Pending", scopeKind: "direct-children" });
+      if (state === 'building' || state === 'discovering') {
+        const page = await work; assert.equal(page.source,'filesystem'); assert.equal(page.items[0].path,'X:\\Pending\\child.txt');
+        assert.ok(runtime.resolveAuthorizedItem({taskId:page.taskId,authorizationId:page.items[0].authorizationId}));
+        await runtime.cancel(page.taskId);assert.equal(runtime.resolveAuthorizedItem({taskId:page.taskId,authorizationId:page.items[0].authorizationId}),null);
+      } else await assert.rejects(work,state === 'offline' ? /scope-offline/ : /scope-not-indexed/);
     }
     assert.equal(requests.length, dispatched, "preparing and missing scopes never broaden into whole-drive queries");
+    assert.equal(browsed,2);scopeState='building';
+    await assert.rejects(runtime.search({taskId:'unready-search',query:'child',scopePath:'X:\\Pending'}),/scope-preparing/);
+    await assert.rejects(runtime.search({taskId:'unready-recursive',query:'',scopePath:'X:\\Pending',scopeKind:'directory-descendants'}),/scope-preparing/);
+    await assert.rejects(runtime.search({taskId:'unready-facts',query:'',scopePath:'X:\\Pending',facts:{kind:'image-dimensions',minimumWidth:1}}),/scope-preparing/);
+    assert.equal(browsed,2,'indexed filters and text cannot silently turn into ordinary folder browsing');
     scopeState = "ready"; scopeResolved = true;
     await runtime.search({ taskId: "scope-recovered", query: "", scopePath: "X:\\Pending", scopeKind: "direct-children" });
     assert.equal(requests.length, dispatched + 1, "the same location recovers after publication");
@@ -111,5 +126,5 @@ const { createComputerSearchRuntime } = require("../dist-electron/computerSearch
     randomSupported = false;
     await assert.rejects(runtime.search({taskId:"old-core-random",query:"",scopePath:null,randomSeed:42}),/random-browse-unavailable/);
     console.log("Core empty/child browsing, path matching and result authorization tests passed.");
-  } finally { await runtime.stop(); controllerModule.CoreHostController = saved; }
+  } finally { await runtime.stop(); controllerModule.CoreHostController = saved; browseModule.CoreDirectoryBrowseClient = savedBrowse; }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

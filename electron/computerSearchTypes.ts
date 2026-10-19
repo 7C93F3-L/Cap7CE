@@ -20,6 +20,7 @@ export interface ComputerSearchStatus {
   searchAvailable: boolean;
   catalogRevision: number;
   volumes: ComputerSearchVolumeStatus[];
+  preparation?: import("../src/shared/catalogPreparationTypes").CatalogPreparationProgress;
 }
 
 export interface ComputerSearchCapabilityVolume {
@@ -99,6 +100,7 @@ export interface ComputerSearchAuthorizationBatch {
 
 export interface ComputerSearchPage {
   taskId: string;
+  source?: "filesystem" | "catalog";
   items: ComputerSearchItem[];
   nextCursor: string | null;
   isComplete: boolean;

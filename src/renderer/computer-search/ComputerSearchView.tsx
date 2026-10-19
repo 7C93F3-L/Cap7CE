@@ -51,7 +51,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   const pageEndRef = useRef<HTMLDivElement | null>(null);
   useComputerSearchScrollPaging(scrollContainerRef, pageEndRef,
-    foreground && Boolean(status?.searchAvailable) && hasSubmitted && !busy && !error,
+    foreground && Boolean(status?.searchAvailable || controller.canBrowse) && hasSubmitted && !busy && !error,
     nextCursor, loadMore, controller.directoryListing, Boolean(pageError));
   const taskId = controller.taskId ?? "";
   const keywordActivity = useCatalogActivity();
@@ -73,7 +73,7 @@ const ComputerSearchView = ({ controller, theme, appearanceColors, windowMateria
     controller.setInteractionBlocked(interactionBlocked);
     return () => controller.setInteractionBlocked(false);
   }, [controller.setInteractionBlocked, interactionBlocked]);
-  if (!status || !status.searchAvailable) {
+  if (!status || (!status.searchAvailable || controller.canSubmit === false) && !controller.canBrowse) {
     const progress = status?.volumes.reduce((total, volume) => total + volume.processed, 0) ?? 0;
     return <section className="cap-computer-search-state">
       <StableUiIcon name="search" />

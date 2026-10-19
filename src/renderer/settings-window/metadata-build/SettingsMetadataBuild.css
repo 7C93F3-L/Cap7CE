@@ -26,9 +26,7 @@
 .cap-settings-build .task-count strong { font-size: 22px; font-weight: 600; }
 .cap-settings-build .task-count > span { font-size: var(--cap-ui-font-secondary); color: var(--stable-settings-secondary); }
 .cap-settings-build .task-estimate { margin-left: auto; }
-.cap-settings-build progress { display: block; appearance: none; height: 5px; width: 100%; margin-top: 12px; border: 0; border-radius: 3px; overflow: hidden; }
-.cap-settings-build progress::-webkit-progress-bar { background: var(--stable-settings-hover); }
-.cap-settings-build progress::-webkit-progress-value { background: var(--cap-accent-gradient); border-radius: 3px; }
+.cap-settings-build progress { margin-top: 12px; }
 .cap-settings-build .task-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: var(--cap-ui-font-secondary); color: var(--stable-settings-secondary); }
 .cap-settings-build .task-error { color: color-mix(in srgb, var(--stable-settings-text) 65%, #d49a6c); font-size: var(--cap-ui-font-control); }
 .cap-settings-build .directory-task-path { overflow-wrap: anywhere; font-size: var(--cap-ui-font-control); user-select: text; }

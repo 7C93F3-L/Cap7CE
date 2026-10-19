@@ -3,37 +3,11 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { getFileFormatCapability, type FileFormatCapability } from "./formatCapabilities";
-import { isPathWithinDirectory } from "./skimPreviewService";
+import { getFileFormatCapability } from "./formatCapabilities";
+import { isPathWithinDirectory } from "./sourcePathPolicy";
 
-export type SkimBrowseEntryKind = "drive" | "folder" | "file";
-
-export interface SkimBrowseEntry {
-  kind: SkimBrowseEntryKind;
-  name: string;
-  path: string;
-  extension: string;
-  label?: string;
-  size: number | null;
-  modifiedAt: string | null;
-  withinAddedDirectory: boolean;
-  hidden: boolean;
-  formatCapability?: FileFormatCapability;
-  status: "ready" | "loading" | "error";
-  error?: string;
-}
-
-export interface SkimBreadcrumb {
-  name: string;
-  path: string;
-}
-
-export interface SkimReadResult {
-  currentPath: string | null;
-  breadcrumbs: SkimBreadcrumb[];
-  entries: SkimBrowseEntry[];
-  cancelled: boolean;
-}
+import type { SkimBrowseEntry, SkimBreadcrumb, SkimReadResult } from "../src/shared/directoryBrowseTypes";
+export type { SkimBrowseEntryKind, SkimBrowseEntry, SkimBreadcrumb, SkimReadResult } from "../src/shared/directoryBrowseTypes";
 
 const execFileAsync = promisify(execFile);
 
@@ -208,7 +182,9 @@ export const resolveReadableSkimDirectoryPath = async (requestedPath: string): P
 export const readSkimLocation = async (
   requestedPath: string | null,
   shouldCancel: () => boolean = () => false,
-  addedDirectoryPaths: string[] = []
+  addedDirectoryPaths: string[] = [],
+  maximumEntries = Number.MAX_SAFE_INTEGER,
+  maximumProjectedBytes = Number.MAX_SAFE_INTEGER
 ): Promise<SkimReadResult> => {
   if (shouldCancel()) {
     return cancelledResult(requestedPath);
@@ -225,19 +201,21 @@ export const readSkimLocation = async (
   }
 
   const directoryEntries = await fs.readdir(directoryPath, { withFileTypes: true });
+  if (directoryEntries.length > maximumEntries) throw new Error("directory-browse-capacity-exceeded");
   const hiddenEntryPaths = await listHiddenEntryPaths(directoryPath);
   if (shouldCancel()) {
     return cancelledResult(directoryPath);
   }
 
   const entries: SkimBrowseEntry[] = [];
+  let projectedBytes = 0;
   for (let index = 0; index < directoryEntries.length; index += 48) {
     if (shouldCancel()) return cancelledResult(directoryPath);
     const batchEntries = await Promise.all(directoryEntries.slice(index, index + 48).map(async (entry) => {
       if (entry.isSymbolicLink()) return null;
       const entryPath = path.join(directoryPath, entry.name);
       try {
-        const stats = await fs.lstat(entryPath);
+        const stats = await fs.lstat(entryPath, { bigint: true });
         if (stats.isSymbolicLink()) return null;
         const withinAddedDirectory = addedDirectoryPaths.some((addedPath) => isPathWithinDirectory(entryPath, addedPath));
         if (stats.isDirectory()) {
@@ -247,6 +225,7 @@ export const readSkimLocation = async (
             path: entryPath,
             extension: "",
             size: null,
+            fileReference: stats.ino > 0n && stats.ino <= 0xffffffffffffffffn ? stats.ino.toString(16).toUpperCase().padStart(16, "0") : undefined,
             modifiedAt: stats.mtime.toISOString(),
             withinAddedDirectory,
             hidden: hiddenEntryPaths.has(pathKey(entryPath)) || (process.platform !== "win32" && entry.name.startsWith(".")),
@@ -261,7 +240,8 @@ export const readSkimLocation = async (
           name: entry.name,
           path: entryPath,
           extension,
-          size: stats.size,
+          size: Number(stats.size),
+          fileReference: stats.ino > 0n && stats.ino <= 0xffffffffffffffffn ? stats.ino.toString(16).toUpperCase().padStart(16, "0") : undefined,
           modifiedAt: stats.mtime.toISOString(),
           withinAddedDirectory,
           hidden: hiddenEntryPaths.has(pathKey(entryPath)) || (process.platform !== "win32" && entry.name.startsWith(".")),
@@ -273,7 +253,11 @@ export const readSkimLocation = async (
       }
     }));
     for (const entry of batchEntries) {
-      if (entry) entries.push(entry);
+      if (entry) {
+        projectedBytes += 2 * (entry.name.length + entry.path.length) + 512;
+        if (projectedBytes > maximumProjectedBytes) throw new Error("directory-browse-capacity-exceeded");
+        entries.push(entry);
+      }
     }
   }
 

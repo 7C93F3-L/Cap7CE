@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CatalogContextActions, CatalogWorkspaceContext, CatalogWorkspaceAppearance } from "../../shared/catalogWorkspaceTypes";
 import type { MetadataBuildProgress } from "../../shared/metadataBuildTypes";
 import ComputerSearchView from "../computer-search/ComputerSearchView";
+import CatalogPreparationNotice from "./CatalogPreparationNotice";
 import { useComputerSearchController } from "../computer-search/useComputerSearchController";
 import { useComputerSearchFilters } from "../computer-search/useComputerSearchFilters";
 import { useComputerSearchMetadataRefresh } from "../computer-search/useComputerSearchMetadataRefresh";
@@ -84,7 +85,7 @@ export default function CatalogContextView({ context, selected, foreground, filt
       searchMode={searchMode} onSearchMode={() => setSearchMode(value => !value)} query={controller.query} onQuery={controller.setQuery}
       commandPage={{ ...view, home, refresh: refresh.refresh, setSort: value => { random.disable(); return view.setSort(value); } }} active={selected}
       onSubmit={value => void controller.submit(value)} enabled={controller.canSubmit} gridMode={gridMode} onGridMode={grid.toggle} includeSubfolders={view.includeSubfolders} onIncludeSubfolders={view.toggleSubfolders} gridSize={grid.size} onGridSize={grid.previewSize} onGridSizeCommit={grid.commitSize} />
-    {selected && noticeHost && createPortal(<CatalogQueryNotice busy={foreground && controller.busy} invalid={foreground && filters.invalid} />, noticeHost)}
+    {selected && noticeHost && createPortal(<><CatalogPreparationNotice status={foreground ? controller.status : null} /><CatalogQueryNotice busy={foreground && controller.busy && !controller.canBrowse} invalid={foreground && filters.invalid} /></>, noticeHost)}
     <div className="cap-catalog-results">{showHome
       ? <CatalogHome onOpen={openDirectory} favorites={favorites} active={selected} detailsHost={selected ? detailsHost : null} gridMode={gridMode} gridSize={grid.size} foreground={foreground} refreshVersion={refresh.version} {...appearance} />
       : <ComputerSearchView controller={controller} favorites={favorites} foreground={foreground} onOpenDirectory={openDirectory} gridMode={gridMode} gridSize={grid.size} emptyHint={filters.conditions.facts ? "属性筛选只覆盖已提取属性的文件。可以放宽条件，或提取更多文件属性后再试。" : undefined} onSelectionChange={reportSelection} {...appearance} />}</div>

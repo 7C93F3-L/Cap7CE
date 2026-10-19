@@ -6,6 +6,7 @@ import { readComputerSearchReplacement } from "./computerSearchResultRefresh";
 import { readComputerSearchContinuation } from "./computerSearchContinuation";
 import { createComputerSearchTaskIdGenerator } from "./computerSearchTaskIdentity";
 import { useComputerSearchTrashUpdates } from "./useComputerSearchTrashUpdates";
+import { computerSearchAvailability } from "./computerSearchAvailability";
 
 export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "scope-offline" | "random-unavailable" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
@@ -24,6 +25,8 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [status, setStatus] = useState<ComputerSearchStatus | null>(null);
+  const { canSearch, canBrowse } = computerSearchAvailability(status, currentPath);
+  const [filesystemListing, setFilesystemListing] = useState(false);
   const [items, setItems] = useState<ComputerSearchItem[]>([]);
   useComputerSearchTrashUpdates(setItems);
   const itemIds = useRef(new Set<string>());
@@ -137,7 +140,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const searchQuery = (value ?? query).trim();
     if (value !== undefined) setQuery(value);
     const api = window.cap7ce?.computerSearch;
-    if (!api || !status?.searchAvailable || idleHome && !searchQuery && !selectedConditions.facts && !selectedConditions.fileConditions && selectedConditions.randomSeed === undefined) return;
+    if (!api || !(canSearch || canBrowse) || !canSearch && (searchQuery || selectedConditions.facts || selectedConditions.randomSeed !== undefined) || idleHome && !searchQuery && !selectedConditions.facts && !selectedConditions.fileConditions && selectedConditions.randomSeed === undefined) return;
     cancelActive();
     const sequence = ++requestSequence.current;
     const taskId = nextTaskId("search");
@@ -146,10 +149,11 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setBusy(true); setHasSubmitted(true); setError(null); setPageError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
     try {
       const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
-        ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, searchQuery),
+        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, searchQuery) : { scopeKind: "direct-children" as const }),
         ...(selectedConditions.facts ? { facts: selectedConditions.facts } : {}),
         ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) });
       if (!activeRef.current || taskRef.current !== taskId) return;
+      setFilesystemListing(page.source === "filesystem");
       itemIds.current = new Set(page.items.map(item => item.id));
       setItems(page.items); setNextCursor(page.nextCursor);
     } catch (cause) {
@@ -161,7 +165,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     } finally {
       if (activeRef.current && requestSequence.current === sequence) setBusy(false);
     }
-  }, [cancelActive, currentPath, query, status?.searchAvailable, selectedConditions, nextTaskId, browseChildren, idleHome]);
+  }, [cancelActive, currentPath, query, canSearch, canBrowse, selectedConditions, nextTaskId, browseChildren, idleHome]);
   const refreshResults = useCallback(async (): Promise<"applied" | "failed" | "deferred"> => {
     const api = window.cap7ce?.computerSearch;
     if (!api || !activeRef.current || !foregroundRef.current || !hasSubmitted
@@ -174,13 +178,14 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       && !busyRef.current && requestSequence.current === sequence && replacementTaskRef.current === taskId;
     try {
       const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
-        ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery),
+        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery) : { scopeKind: "direct-children" as const }),
         facts: selectedConditions.facts, ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) },
       items.length, isCurrent);
       if (!page || !isCurrent()) return "deferred";
       replacementTaskRef.current = null;
       taskRef.current = taskId;
       itemIds.current = new Set(page.items.map(item => item.id));
+      setFilesystemListing(page.source === "filesystem");
       setItems(page.items); setNextCursor(page.nextCursor); setError(null); setPageError(null);
       if (oldTaskId) void api.cancel(oldTaskId);
       return "applied";
@@ -189,7 +194,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       if (replacementTaskRef.current === taskId) replacementTaskRef.current = null;
       if (taskRef.current !== taskId) void api.cancel(taskId);
     }
-  }, [hasSubmitted, selectedConditions, submittedQuery, currentPath, items.length, nextTaskId, browseChildren]);
+  }, [hasSubmitted, selectedConditions, submittedQuery, currentPath, items.length, nextTaskId, browseChildren, canSearch]);
   useEffect(() => {
     requestSequence.current++;
     setHasSubmitted(false);
@@ -199,9 +204,10 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setBusy(false);
   }, [currentPath, cancelActive, conditionKey, browseChildren, atHome]);
   useEffect(() => {
-    if (!active || !foreground || !status?.searchAvailable || busy || atHome) return;
+    if (!active || !foreground || !(canSearch || canBrowse) || busy || atHome) return;
     if (!hasSubmitted || (!query.trim() && submittedQuery)) void submit();
-  }, [active, foreground, status?.searchAvailable, busy, hasSubmitted, query, submittedQuery, submit, atHome]);
+  }, [active, foreground, canSearch, canBrowse, busy, hasSubmitted, query, submittedQuery, submit, atHome]);
+  useEffect(() => { if (filesystemListing && canSearch && !busy && !interactionBlocked) void refreshResults(); }, [filesystemListing, canSearch, busy, interactionBlocked, refreshResults]);
 
   const configureCapability = useCallback(async (action: "enable" | "repair") => {
     const api = window.cap7ce?.computerSearch;
@@ -265,7 +271,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     try {
       const result = await readComputerSearchContinuation(api, { taskId: replacementId,
         query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
-        ...directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery),
+        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery) : { scopeKind: "direct-children" as const }),
         facts: selectedConditions.facts, fileConditions: selectedConditions.fileConditions },
       taskId, cursor, items.length, isCurrent, Boolean(pageError));
       if (!result || !isCurrent()) return;
@@ -287,12 +293,12 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       if (taskRef.current !== replacementId) void api.cancel(replacementId);
       if (activeRef.current && requestSequence.current === sequence) { busyRef.current = false; setBusy(false); }
     }
-  }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError]);
+  }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError, canSearch]);
 
   return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, pageError, scopeLabel,
-    directoryListing: (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery && selectedConditions.randomSeed === undefined,
+    directoryListing: filesystemListing || (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery && selectedConditions.randomSeed === undefined,
     taskId: taskRef.current,
-    canSubmit: Boolean(status?.searchAvailable), capabilityBusy, capabilityFeedback, capabilityOptions,
+    canSubmit: canSearch, canBrowse, filesystemListing, capabilityBusy, capabilityFeedback, capabilityOptions,
     enter, exit, setQuery, submit, loadMore, refreshStatus, configureCapability,
     refreshResults, interactionBlocked, setInteractionBlocked };
 };

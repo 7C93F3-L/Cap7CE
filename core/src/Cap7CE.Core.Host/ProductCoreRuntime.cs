@@ -22,6 +22,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
     private CatalogStorageLease? storageLease;
     private readonly SemaphoreSlim initialization = new(1, 1);
     private bool initialized;
+    private readonly CatalogPreparationProgressOwner preparation = new();
 
     public ProductCoreRuntime(
         CatalogV2Database catalog,
@@ -34,7 +35,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
         this.diagnostics = diagnostics;
         this.ownStorage = ownStorage; this.createEntryCatalog = createEntryCatalog;
         readerOwnership = new(diagnostics);
-        synchronizer = new CatalogSynchronizationService(catalog, readerFactory, diagnostics);
+        synchronizer = new CatalogSynchronizationService(catalog, readerFactory, diagnostics, progress: preparation);
         FileFacts = fileFacts;
     }
 
@@ -65,7 +66,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
             if (ownStorage) storageLease = CatalogStorageLease.Acquire(catalog.DatabasePath, createDirectory: true);
             await catalog.InitializeAsync(token, createEntryCatalog);
             FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync(token);
-            synchronizer = new(catalog, readerFactory, diagnostics, captureFileEntries: FileEntryModeEnabled);
+            synchronizer = new(catalog, readerFactory, diagnostics, captureFileEntries: FileEntryModeEnabled, progress: preparation);
             ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token)); initialized = true;
         }
         catch { storageLease?.Dispose(); storageLease = null; throw; }
@@ -108,7 +109,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
         return new CatalogStatusResponse(
             volumes.Select(ToStatus).ToArray(),
             tasks.Values.Select(task => task.Snapshot()).OrderBy(task => task.TaskId, StringComparer.Ordinal).ToArray(),
-            await catalog.ReadRevisionAsync(token));
+            await catalog.ReadRevisionAsync(token), preparation.Read());
     }
 
     public async Task<CatalogResolveScopeResponse> ResolveScopeAsync(
