@@ -6,7 +6,8 @@ import { VisualCacheFrameReader, maximumCacheFrameBytes } from "../../../electro
 const root = process.argv[2];
 if (process.argv.length !== 3 || !root || !path.isAbsolute(root)) process.exit(2);
 process.stdout.on("error", () => { process.exitCode = 1; process.stdin.destroy(); });
-const dispatch = createVisualCacheDispatcher(root);
+const owner = createVisualCacheDispatcher(root, path.dirname(process.argv[1]));
+const dispatch = owner.dispatch;
 const pending = new Set<Promise<void>>();
 let lastId = 0, pendingBytes = 0, output: Promise<void> = Promise.resolve(), transfers: Promise<void> = Promise.resolve();
 const respond = (value: unknown) => {
@@ -28,7 +29,7 @@ const accept = (bytes: Buffer) => {
     .then(result => respond({ id: request.id, result: result ?? null }), error => respond({ id: request.id,
       error: { code: typeof error?.code === "string" ? error.code : "core-cache-operation-failed", message: String(error?.message ?? error).slice(0, 1024) } }))
     .catch(() => { process.exitCode = 1; process.stdin.destroy(); });
-  const transfer = request.method === "read" || request.method === "write";
+  const transfer = ["read", "write", "temporaryImage"].includes(String(request.method));
   const work = transfer ? transfers.then(execute, execute) : execute();
   if (transfer) transfers = work;
   const task = work.finally(() => { pending.delete(task); pendingBytes -= bytes.length; });
@@ -36,8 +37,7 @@ const accept = (bytes: Buffer) => {
 };
 async function run() {
   const reader = new VisualCacheFrameReader(accept);
-  for await (const chunk of process.stdin) reader.push(chunk);
-  reader.finish();
+  try { for await (const chunk of process.stdin) reader.push(chunk); reader.finish(); } finally { owner.close(); }
   await Promise.allSettled(pending); await output;
 }
 void run().catch(() => { process.exitCode = 1; process.stdin.destroy(); });

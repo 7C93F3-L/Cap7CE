@@ -1,9 +1,11 @@
-import { nativeImage, type NativeImage } from "electron";
+import { requestCoreShellThumbnail } from "./core/coreShellThumbnail";
+import type { VisualPreparedPath } from "../src/shared/visualRenderTypes";
 import {
   createVisualCacheEntry,
   initializeVisualCacheDirectories,
   isVisualCacheEntryValid,
-  writeVisualCacheEntry
+  writeVisualCacheEntry,
+  requestVisualCacheOwner
 } from "./visualCacheService";
 import type { VisualCacheType } from "./visualCacheService";
 
@@ -59,9 +61,10 @@ const loadWithTimeout = async (
   }
 };
 
-const defaultCreateThumbnail = (sourcePath: string, size: { width: number; height: number }): Promise<NativeImage> => (
-  nativeImage.createThumbnailFromPath(sourcePath, size)
-);
+const defaultCreateThumbnail = async (sourcePath: string, size: { width: number; height: number }): Promise<ShellThumbnailImage> => {
+  const png = await requestCoreShellThumbnail(sourcePath, size.width);
+  return { isEmpty: () => png.length === 0, toPNG: () => png };
+};
 
 export const createShellThumbnailProvider = (
   options: ShellThumbnailProviderOptions = {}
@@ -70,6 +73,10 @@ export const createShellThumbnailProvider = (
   const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
   const edge = options.edge ?? shellThumbnailEdge;
   const cacheType = options.cacheType ?? "skim-shell-thumbnail";
+  const standardEdge = cacheType.endsWith("preview") ? shellPreviewEdge : shellThumbnailEdge;
+  if (!options.createThumbnail && edge === standardEdge && timeoutMs === defaultTimeoutMs) return {
+    ensureThumbnailPath: async sourcePath => (await requestVisualCacheOwner<VisualPreparedPath>("ensureShell", [sourcePath, cacheType])).imagePath
+  };
   const pendingRequests = new Map<string, Promise<string>>();
 
   const ensureThumbnailPath = async (sourcePath: string) => {

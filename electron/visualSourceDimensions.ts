@@ -3,10 +3,8 @@ import path from "node:path";
 import sharp from "sharp";
 import { supportedImageDimensionExtensions } from "./imageDimensionTypes";
 
-export interface ImageSize {
-  width: number;
-  height: number;
-}
+import type { ImageSize } from "../src/shared/visualRenderTypes";
+export type { ImageSize } from "../src/shared/visualRenderTypes";
 
 export const maximumVisualInputPixels = 150_000_000;
 export const maximumVisualInputBytes = 256 * 1024 * 1024;

@@ -10,7 +10,7 @@ export class FavoriteFolderRenameService {
     private readonly preferences = async (change: DirectoryRename) => (await import("../catalogGridPreferenceRegistry")).relocateCatalogGridPreferences(change),
     private readonly prepare = async (source: string) => {
       if ((await import("../visualCacheService")).isCap7CECachePath(source)) throw new Error("folder-rename-protected");
-      (await import("../visualRenderService")).releaseVisualRenderFileHandles();
+      await (await import("../visualRenderService")).releaseVisualRenderFileHandles();
     }) {}
   private request(action: "prepare" | "observe" | "recover" | "complete", body: Parameters<typeof requestCoreFolderRename>[3] = {}) {
     const journal = this.registry.renameJournalPath;

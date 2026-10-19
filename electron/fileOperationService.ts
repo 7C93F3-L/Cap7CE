@@ -118,7 +118,7 @@ export const moveIndexedImagesToTrash = async (
     deletableFilePaths.push(filePath);
   }
 
-  releaseVisualRenderFileHandles();
+  await releaseVisualRenderFileHandles();
 
   const deletedPaths: string[] = [];
   for (const filePath of deletableFilePaths) {

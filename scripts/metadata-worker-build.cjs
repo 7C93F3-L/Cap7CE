@@ -34,6 +34,14 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(cache.metafile.outputs).flatMap(item => item.imports).some(item =>
     !item.external || !builtinModules.includes(item.path.replace(/^node:/, "")))) throw new Error("Unexpected Core cache dependency.");
+  for (const [source, name] of [["core/node/visualRendering/worker.ts", "visual-render.cjs"], ["electron/psdArtboardRenderWorker.ts", "psdArtboardRenderWorker.js"]]) {
+    const renderer = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name),
+      bundle: true, platform: "node", format: "cjs", target: "node24", external: ["sharp", "@napi-rs/canvas"],
+      sourcemap: false, metafile: true, logLevel: "error" });
+    if (Object.values(renderer.metafile.outputs).flatMap(item => item.imports).some(item => !item.external
+      || !["sharp", "@napi-rs/canvas"].includes(item.path) && !builtinModules.includes(item.path.replace(/^node:/, ""))))
+      throw new Error("Unexpected Core visual decoder dependency.");
+  }
   const lock = require("../package-lock.json");
   for (const name of packages) {
     const source = path.join(root, "node_modules", name);

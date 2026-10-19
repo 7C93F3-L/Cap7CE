@@ -4,5 +4,5 @@
     "noUnusedLocals": true, "noUnusedParameters": true, "esModuleInterop": true,
     "skipLibCheck": true, "noEmit": true, "types": ["node"]
   },
-  "include": ["visualCache"]
+  "include": ["visualCache", "visualRendering"]
 }

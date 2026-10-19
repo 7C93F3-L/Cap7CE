@@ -1,4 +1,5 @@
 import path from "node:path";
+import { CoreVisualPreparation } from "../visualRendering/preparation";
 import { createVisualCacheStore } from "./store";
 import { formalVisualCacheTypes, skimVisualCacheTypes } from "../../../electron/core/visualCachePaths";
 import type { VisualCacheEntry, VisualCacheType, VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
@@ -13,12 +14,18 @@ const entry = (value: unknown): VisualCacheEntry => value !== null && typeof val
 const mime = (value: unknown): VisualImageMimeType => value === "image/png" || value === "image/jpeg" ? value : invalid();
 import { maximumCacheImageBytes } from "../../../electron/core/visualCacheFrames";
 
-export const createVisualCacheDispatcher = (root: string) => {
-  const store = createVisualCacheStore(root);
-  return async (method: unknown, args: unknown): Promise<unknown> => {
+export const createVisualCacheDispatcher = (root: string, directory: string) => {
+  const store = createVisualCacheStore(root), visuals = new CoreVisualPreparation(store, directory);
+  const dispatch = async (method: unknown, args: unknown): Promise<unknown> => {
     if (!Array.isArray(args)) return invalid();
     const count = (expected: number) => { if (args.length !== expected) invalid(); };
     switch (method) {
+      case "ensure": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), false);
+      case "ensureShell": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), true);
+      case "temporaryImage": count(1); return visuals.temporary(filePath(args[0]));
+      case "sourceDimensions": count(1); return visuals.dimensions(filePath(args[0]));
+      case "sourcePreview": count(1); return visuals.sourcePreview(filePath(args[0]));
+      case "releaseSourceHandles": count(0); return visuals.release();
       case "initialize": count(0); return store.initializeVisualCacheDirectories();
       case "stats": count(0); return store.getVisualCacheStats();
       case "skimStats": count(0); return store.getSkimVisualCacheStats();
@@ -52,4 +59,5 @@ export const createVisualCacheDispatcher = (root: string) => {
       default: return invalid();
     }
   };
+  return { dispatch, close: () => visuals.close() };
 };

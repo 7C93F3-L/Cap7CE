@@ -1,4 +1,4 @@
-import { nativeImage } from "electron";
+import { requestCoreShellThumbnail } from "./core/coreShellThumbnail";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -77,23 +77,18 @@ const readEpsEmbeddedPreview = async (sourcePath: string) => {
 export const renderEpsEmbeddedPreview = async (
   sourcePath: string,
   maxWidth: number,
-  maxHeight: number
+  maxHeight: number,
+  thumbnail: (sourcePath: string, edge: number) => Promise<Buffer> = requestCoreShellThumbnail,
+  temporaryDirectory = os.tmpdir()
 ) => {
   const preview = await readEpsEmbeddedPreview(sourcePath);
   const tempPath = path.join(
-    os.tmpdir(),
+    temporaryDirectory,
     `cap7ce-eps-${process.pid}-${crypto.randomUUID()}.tif`
   );
   await fs.writeFile(tempPath, preview);
   try {
-    const image = await nativeImage.createThumbnailFromPath(tempPath, {
-      width: maxWidth,
-      height: maxHeight
-    });
-    if (image.isEmpty()) {
-      throw new Error("Windows 无法解码 EPS 内嵌 TIFF 预览。");
-    }
-    return image.toPNG();
+    return await thumbnail(tempPath, Math.max(maxWidth, maxHeight));
   } finally {
     await fs.rm(tempPath, { force: true }).catch(() => undefined);
   }
