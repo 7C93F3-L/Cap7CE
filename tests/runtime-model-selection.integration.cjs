@@ -30,6 +30,7 @@ const path = require("node:path");
     if (request === "electron") {
       return {
         app: {
+          once() {},
           isPackaged: false,
           getAppPath: () => temporaryRoot,
           getPath: (name) => {
@@ -85,6 +86,7 @@ const path = require("node:path");
       invalidNonEmptySelectionsStillRejected: true
     }));
   } finally {
+    require("../dist-electron/visualCacheService.js").closeVisualCacheOwner();
     Module._load = originalLoad;
     await fs.rm(temporaryRoot, { recursive: true, force: true });
   }

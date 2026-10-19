@@ -62,8 +62,10 @@ const path = require("node:path");
     const runtimeStoreSource = await fs.readFile(path.join(repositoryRoot, "electron", "llamaRuntimeStore.ts"), "utf8");
     const modelStoreSource = await fs.readFile(path.join(repositoryRoot, "electron", "ggufModelStore.ts"), "utf8");
     const pathModuleSource = await fs.readFile(path.join(repositoryRoot, "electron", "aiContentPaths.ts"), "utf8");
-    assert.match(runtimeStoreSource, /getAiContentPaths\(\)/);
-    assert.match(modelStoreSource, /getAiContentPaths\(\)/);
+    const clientSource = await fs.readFile(path.join(repositoryRoot, "electron/core/coreModelSettingsClient.ts"), "utf8");
+    assert.match(clientSource, /getAiContentPaths\(\)/);
+    assert.match(runtimeStoreSource, /requestCoreModelSettings/);
+    assert.match(modelStoreSource, /requestCoreModelSettings/);
     for (const source of [runtimeStoreSource, modelStoreSource]) {
       assert.doesNotMatch(source, /PORTABLE_EXECUTABLE_DIR|resourcesPath|process\.cwd\(\)/);
     }

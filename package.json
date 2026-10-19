@@ -98,7 +98,7 @@
     "test:shell-thumbnail-probe": "node scripts/core-visuals-boundary-check.cjs && node tests/core-visuals-native.integration.cjs && electron tests/core-shell-thumbnail.integration.cjs && electron tests/shell-thumbnail-probe.integration.cjs",
     "test:application-data-paths": "node tests/application-data-paths.integration.cjs",
     "test:ai-content-paths": "node tests/ai-content-paths.integration.cjs",
-    "test:runtime-model-selection": "node tests/runtime-model-selection.integration.cjs",
+    "test:runtime-model-selection": "node scripts/core-model-settings-boundary-check.cjs && node tests/core-model-settings.integration.cjs && node tests/core-model-settings-host.integration.cjs && node tests/runtime-model-selection.integration.cjs",
     "test:directory-add": "electron tests/directory-add.integration.cjs",
     "test:format-capabilities": "electron tests/format-capabilities.integration.cjs",
     "test:skim-browse": "electron tests/skim-browse.integration.cjs",

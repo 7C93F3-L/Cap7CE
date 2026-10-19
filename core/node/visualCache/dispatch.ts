@@ -1,3 +1,4 @@
+import { createModelSettingsOwner } from "../modelSettings/owner";
 import path from "node:path";
 import { CoreVisualPreparation } from "../visualRendering/preparation";
 import { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
@@ -21,9 +22,11 @@ export const createVisualCacheDispatcher = (root: string, directory: string) => 
   const store = createVisualCacheStore(root), visuals = new CoreVisualPreparation(store, directory);
   const metadata = new InteractiveMetadataOwner(directory);
   const keywords = new LocalKeywordOwner();
+  const modelSettings = createModelSettingsOwner(root);
   const dispatch = async (method: unknown, args: unknown): Promise<unknown> => {
     if (!Array.isArray(args)) return invalid();
     const count = (expected: number) => { if (args.length !== expected) invalid(); };
+    if (method === "modelSettings.invoke") return modelSettings.dispatch(args);
     if (typeof method === "string" && method.startsWith("localKeywords.")) return keywords.dispatch(method, args);
     switch (method) {
       case "ensure": count(2); return visuals.ensure(filePath(args[0]), cacheType(args[1]), false);
