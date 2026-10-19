@@ -2,7 +2,6 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const opentype = require("opentype.js");
 const { app, BrowserWindow, protocol } = require("electron");
 
 protocol.registerSchemesAsPrivileged([{
@@ -19,24 +18,7 @@ const {
   openFontPreviewSession
 } = require("../dist-electron/fontPreviewService.js");
 
-const createOpenTypeFixture = () => {
-  const notdef = new opentype.Glyph({ name: ".notdef", advanceWidth: 500, path: new opentype.Path() });
-  const latinPath = new opentype.Path();
-  latinPath.moveTo(40, 0);
-  latinPath.lineTo(300, 700);
-  latinPath.lineTo(560, 0);
-  latinPath.close();
-  const latin = new opentype.Glyph({ name: "A", unicode: 65, advanceWidth: 600, path: latinPath });
-  const font = new opentype.Font({
-    familyName: "Cap7CE OTF Probe",
-    styleName: "Regular",
-    unitsPerEm: 1000,
-    ascender: 800,
-    descender: -200,
-    glyphs: [notdef, latin]
-  });
-  return Buffer.from(font.toArrayBuffer());
-};
+const { createOpenTypeFixture } = require("./provider-preview-fixtures.cjs");
 
 const expectReason = async (promise, reason) => {
   await assert.rejects(promise, (error) => error instanceof FontPreviewError && error.reason === reason);

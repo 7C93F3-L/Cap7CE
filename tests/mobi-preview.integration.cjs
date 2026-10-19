@@ -9,43 +9,7 @@ const {
   openMobiPreviewSession
 } = require("../dist-electron/mobiPreviewService.js");
 
-const makeMobi = ({ encryption = 0, version = 6, textLengthOverride, invalidSecondOffset = false } = {}) => {
-  const title = Buffer.from("测试 MOBI", "utf8");
-  const text = Buffer.from("<html><head></head><body><h1>第一章</h1><p>安全正文内容</p></body></html>", "utf8");
-  const record0 = Buffer.alloc(260 + title.length);
-  record0.writeUInt16BE(1, 0);
-  record0.writeUInt32BE(textLengthOverride ?? text.length, 4);
-  record0.writeUInt16BE(1, 8);
-  record0.writeUInt16BE(4096, 10);
-  record0.writeUInt16BE(encryption, 12);
-  record0.write("MOBI", 16, "ascii");
-  record0.writeUInt32BE(232, 20);
-  record0.writeUInt32BE(2, 24);
-  record0.writeUInt32BE(65001, 28);
-  record0.writeUInt32BE(123456, 32);
-  record0.writeUInt32BE(version, 36);
-  record0.writeUInt32BE(260, 84);
-  record0.writeUInt32BE(title.length, 88);
-  record0.writeUInt32BE(2, 108);
-  record0.writeUInt32BE(0, 112);
-  record0.writeUInt32BE(0, 116);
-  record0.writeUInt32BE(64, 128);
-  record0.writeUInt32BE(0, 240);
-  record0.writeUInt32BE(0xffffffff, 244);
-  record0.write("EXTH", 248, "ascii");
-  record0.writeUInt32BE(12, 252);
-  record0.writeUInt32BE(0, 256);
-  title.copy(record0, 260);
-
-  const header = Buffer.alloc(94);
-  header.write("Test_Mobi", 0, "ascii");
-  header.write("BOOK", 60, "ascii");
-  header.write("MOBI", 64, "ascii");
-  header.writeUInt16BE(2, 76);
-  header.writeUInt32BE(94, 78);
-  header.writeUInt32BE(invalidSecondOffset ? 0xffffffff : 94 + record0.length, 86);
-  return Buffer.concat([header, record0, text]);
-};
+const { makeMobi } = require("./provider-preview-fixtures.cjs");
 
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
 const listTemporaryRoots = async () => new Set((await fs.readdir(os.tmpdir()))

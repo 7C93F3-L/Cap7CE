@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, "..");
 const output = path.join(root, "artifacts/metadata-worker/v1");
 const isBuiltin = name => builtinModules.includes(name) || builtinModules.includes(name.replace(/^node:/, "")) || require("node:module").isBuiltin(name);
 const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc", "semver", "7z-wasm", "readline-sync",
-  "pdfjs-dist", "@napi-rs/canvas", "@napi-rs/canvas-win32-x64-msvc"];
+  "pdfjs-dist", "@napi-rs/canvas", "@napi-rs/canvas-win32-x64-msvc", "@lingo-reader/mobi-parser", "@lingo-reader/shared", "fflate", "events", "path-browserify", "sax"];
 
 (async () => {
   if (process.platform !== "win32" || process.arch !== "x64") throw new Error("Metadata runtime currently targets Windows x64.");
@@ -56,6 +56,14 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
   const stored = await build({ entryPoints: [path.join(root, "core/node/storedMetadata/worker.ts")], outfile: path.join(output, "stored-metadata.cjs"),
     bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(stored.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core stored metadata dependency.");
+  for (const [source, name, external] of [
+    ["core/node/providerPreview/host.ts", "provider-preview.cjs", ["@napi-rs/canvas"]],
+    ["electron/epubPreviewWorker.ts", "epubPreviewWorker.js", ["sharp"]],
+    ["electron/mobiPreviewWorker.ts", "mobiPreviewWorker.js", ["sharp", "@lingo-reader/mobi-parser"]],
+    ["electron/archivePreviewWorker.ts", "archivePreviewWorker.js", ["7z-wasm"]]]) {
+    const provider = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name), bundle: true, platform: "node", format: "cjs", target: "node24", external, sourcemap: false, metafile: true, logLevel: "error" });
+    if (Object.values(provider.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !external.includes(item.path) && !isBuiltin(item.path))) throw new Error("Unexpected Core preview dependency.");
+  }
   const lock = require("../package-lock.json");
   for (const name of packages) {
     const source = path.join(root, "node_modules", name);
@@ -65,7 +73,7 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
       filter: file => !/\.(?:map|ts)$/.test(file) && !/(?:^|[\\/])(?:test|tests|\.v8-cache)(?:[\\/]|$)/.test(path.relative(source, file)) });
   }
   // esbuild embeds these modules; retain their complete license files as separate resources.
-  for (const name of ["ag-psd", "base64-js", "pako", "fflate", "@xmldom/xmldom", "exifr", "opentype.js"]) {
+  for (const name of ["ag-psd", "base64-js", "pako", "fflate", "@xmldom/xmldom", "exifr", "opentype.js", "parse5", "entities"]) {
     const source = path.join(root, "node_modules", name), target = path.join(output, "licenses", name);
     await fs.mkdir(target, { recursive: true });
     for (const entry of await fs.readdir(source)) if (/^(?:license|copying|notice)/i.test(entry))

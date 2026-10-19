@@ -4,5 +4,5 @@
     "noUnusedLocals": true, "noUnusedParameters": true, "esModuleInterop": true,
     "skipLibCheck": true, "noEmit": true, "types": ["node"]
   },
-  "include": ["visualCache", "visualRendering", "interactiveMetadata", "localKeywords", "modelSettings", "transport", "modelRuntime", "storedMetadata"]
+  "include": ["visualCache", "visualRendering", "interactiveMetadata", "localKeywords", "modelSettings", "transport", "modelRuntime", "storedMetadata", "providerPreview"]
 }

@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-19）
 
+`core/node/providerPreview` 持有非 Office 的预览解析执行，按 PDF、字体、EPUB、MOBI、压缩包分别保留原控制器与解析器，api 仅装配固定动作和有界请求，lifecycle 负责实际线程/子进程释放屏障。独立 provider-preview.cjs 复用固定 Node、CoreVisualCacheClient/原生 Job 与通用私有管道，不依赖 Electron，也不与模型或视觉缓存共享进程树。PDF 保留1600边长、16MP限制、顺序渲染、5页缓存和实际源/授权源分离；字体/书籍仍使用独立线程，压缩包只列举原内容，MOBI 临时文件位于该 Job 自有工作区。解析线程输出隔离并限制512MiB heap，释放失败交由现有 Job 退休链路收尾。
+
+Main 的五个 PreviewService 变为薄代理，保留同步关闭结果、授权和既有错误类型；CoreProviderPreviewClient 持有当前界面会话代次，旧成功/失败和 PDF 页面响应均不得回填，CoreProviderPreviewHost 仅装配复用的进程 owner，超时或退出不重放源操作。格式 DTO 位于 src/shared，电子书共享同一展示结构；字体授权与归档列表解析为纯模块，源解析器在构建时统一生成固定 Core worker 资源，旧解析源码仍兼容未装配的旧入口。Main 的统一源句柄释放同时等待视觉与预览宿主，冷关闭不启动后台进程。运行时完整携带锁定 MOBI ESM 及其依赖、字体/PDF/图像/WASM 资源和许可证；实际复制到仓库外、空 PATH 测试覆盖五类格式、取消/恢复、进程树退出及工作区清理。Office 转换及其临时 PDF 缓存尚为独立兼容域，未在本轮迁移。
+
 `core/node/storedMetadata` 是旧索引的只读兼容域：固定应用根下 index/cap7ce-index.db，原生 node:sqlite 只读分页、禁止扩展、关闭可信 schema，静态参数查询嵌入状态/证据、目录计数与64条关键词页，不创建、升级或回写旧库。查询运行在 InteractiveMetadataOwner 已有的两活动/两排队与8秒线程预算内，取消和源句柄释放等待实际线程终止；源解析线程的 workerData 与行为保持兼容。Main 的 coreStoredMetadataClient 只转发、校验投影和回退，preview、右栏、目录计数与关键词继承复用它；关键词失败保留重试，不记为已继承。启动移除 ensureImageDatabase，旧写入 API 仅为仍保留的旧界面兼容入口。DeleteFilesResult 移至共享契约，现代删除只依赖纯本地化错误投影，不间接加载旧SQL服务。自动守门与真实固定 Node/Job 测试核对原库字节/mtime、无新journal、缺库不创建、异常表拒绝和既有状态语义。
 
 `core/node/modelRuntime` 是独立模型进程领域，通过 model-runtime.cjs 与固定 Node/原生 Job 私有宿主运行，和视觉缓存的 Job 分离。api 固定上下文和动作白名单，owner 持有启动/停止代次、在退进程栅栏、健康监控与原有手动/AI空闲策略；startup 只组合已有配置与进程适配，attempt 只管理选中运行组件和有界输出，health 只直连 loopback 的两个固定 GET 路径，ports 只探测原端口范围，log 只写既有私有模型日志，state 只维护不可变快照和有界变化等待。模型配置与该宿主共用同一 modelSettings 所有者，启动/退进程期间拒绝切换配置；RPC 不接收任意可执行文件、命令行或测试时钟。
