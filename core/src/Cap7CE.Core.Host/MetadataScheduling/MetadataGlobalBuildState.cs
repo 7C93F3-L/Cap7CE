@@ -40,13 +40,17 @@ public sealed partial class MetadataGlobalBuildOwner
         return selected;
     }
     private void OnProgress(MetadataBuildProgress progress)
+        => PersistTerminalProgress(progress, atStop: false);
+    private void PersistTerminalProgress(MetadataBuildProgress progress, bool atStop)
     {
         if (progress.Phase is not ("completed" or "failed")) return;
         Task saving; long own; bool notify;
         lock (gate) {
-            if (runRevision != revision || closing || stopping > 0 || borrowed) return;
-            own = revision; savedIntent = progress.Phase == "completed" ? "completed" : "paused";
-            saving = lifecycle.SetIntentAsync(savedIntent); notify = initialSweep && progress.Phase == "completed"; initialSweep = false;
+            if (runRevision != revision || stopping > 0 || !atStop && (closing || borrowed)) return;
+            var intent = progress.Phase == "completed" ? "completed" : "paused";
+            if (savedIntent == intent) return;
+            own = revision; savedIntent = intent;
+            pendingWrite = saving = lifecycle.SetIntentAsync(savedIntent); notify = !atStop && initialSweep && progress.Phase == "completed"; initialSweep = false;
         }
         _ = ObserveSaveAsync(saving, own); if (notify) drain.Notify(own);
     }

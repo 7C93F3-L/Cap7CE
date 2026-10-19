@@ -104,7 +104,10 @@ public sealed partial class MetadataGlobalBuildOwner
     private async Task StopAsync(bool persist)
     {
         Task? writing;
-        lock (gate) { revision++; stopping++; maintenance = false; initialSweep = false; writing = pendingWrite; }
+        lock (gate) {
+            PersistTerminalProgress(sweep.Snapshot, atStop: true);
+            revision++; stopping++; maintenance = false; initialSweep = false; writing = pendingWrite;
+        }
         drain.Reset();
         try {
             await LoadAsync(); var dormant = Inactive(sweep.Snapshot.Phase);

@@ -43,6 +43,7 @@ internal static class MetadataGlobalBuildTests
     }
     public static async Task RunAsync()
     {
+        await TerminalNotificationShutdownRaceAsync();
         var fixture = new Fixture(); var owner = fixture.Create();
         TestAssert.Equal("idle", (await owner.ReadAsync()).Progress.Phase, "passive status has no task");
         await owner.RestoreAsync(); await owner.NotifyCatalogChangeAsync(); TestAssert.Equal(0, fixture.Session.Configurations, "fresh install never grants content");
@@ -91,5 +92,28 @@ internal static class MetadataGlobalBuildTests
         TestAssert.Equal(0, fixture.Session.Configurations, "failed restored grant never starts");
         await TestAssert.ThrowsAsync<IOException>(() => owner.ShutdownAsync(), "failed accepted write remains visible at shutdown");
         Console.WriteLine("Core global metadata: configuration-only, active/completed/paused restore, deferred base readiness, identity loss, pending scope/write cancellation and persistence failures passed.");
+    }
+    private static async Task TerminalNotificationShutdownRaceAsync()
+    {
+        foreach (var failed in new[] { false, true }) {
+            var fixture = new Fixture("active", perKind: 1);
+            fixture.Session.ExecutionGate = new(TaskCreationOptions.RunContinuationsAsynchronously); fixture.Session.Fault = failed;
+            var owner = fixture.Create(); await owner.RestoreAsync();
+            for (var step = 0; fixture.Session.Live == 0 && step < 1000; step++) await Task.Delay(2);
+            TestAssert.Equal(1, fixture.Session.Live, "synthetic execution has reached its controlled gate");
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var ownerGate = typeof(MetadataGlobalBuildOwner).GetField("gate", flags)!.GetValue(owner)!;
+            var sweep = (MetadataBuildSweep)typeof(MetadataGlobalBuildOwner).GetField("sweep", flags)!.GetValue(owner)!;
+            Task shutdown;
+            // Hold notification admission, not the progress snapshot: deterministically expose the publication gap.
+            lock (ownerGate) {
+                fixture.Session.ExecutionGate.SetResult();
+                TestAssert.True(SpinWait.SpinUntil(() => sweep.Snapshot.Phase == (failed ? "failed" : "completed"), TimeSpan.FromSeconds(5)), "terminal snapshot published before its owner callback");
+                shutdown = owner.ShutdownAsync();
+            }
+            await shutdown; await sweep.WaitForIdleAsync();
+            TestAssert.Equal(failed ? "paused" : "completed", fixture.Saved!.Value.GetProperty("intent").GetString(), "shutdown persists terminal state even when its notification was pending");
+            TestAssert.Equal(0, fixture.Session.Live, "terminal shutdown joins all synthetic reads");
+        }
     }
 }

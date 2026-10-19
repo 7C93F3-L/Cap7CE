@@ -22,6 +22,7 @@ internal sealed class MetadataSweepFixture : IMetadataBuildSession
     internal int ExitDelay;
     internal string ResultState = "indexed";
     internal int MoreChanges;
+    internal TaskCompletionSource? ExecutionGate;
     internal int Configurations => Volatile.Read(ref configurations);
     internal int Reads => Volatile.Read(ref reads);
     internal int StatusReads => Volatile.Read(ref statusReads);
@@ -82,6 +83,7 @@ internal sealed class MetadataSweepFixture : IMetadataBuildSession
     {
         token.ThrowIfCancellationRequested(); var read = Interlocked.Increment(ref reads); Interlocked.Increment(ref live);
         try {
+            if (ExecutionGate is not null) await ExecutionGate.Task.WaitAsync(token);
             await Task.Delay(BlockRead || read >= BlockAfter ? 10000 : 2, token); if (Fault) throw new IOException("synthetic parser failure");
             lock (gate) {
                 var row = rows.SingleOrDefault(row => row.Lease == request.LeaseId); if (row is null || !active) return new(FileFactBrokerCompletion.LeaseLost, null);
