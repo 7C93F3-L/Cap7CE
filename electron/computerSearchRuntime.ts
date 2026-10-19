@@ -224,7 +224,7 @@ export const createComputerSearchRuntime = (options: RuntimeOptions): ComputerSe
       preferences: options.metadataPreferencesPath || process.env.LOCALAPPDATA
         ? createMetadataBuildPreferenceStore(options.metadataPreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "metadata-build.json")) : undefined });
   const favorites = options.favoritePreferencesPath || process.env.LOCALAPPDATA
-    ? new FavoriteDirectoryStore(options.favoritePreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "favorite-directories.json")) : undefined;
+    ? new FavoriteDirectoryStore(options.favoritePreferencesPath ?? path.join(process.env.LOCALAPPDATA!, "Cap7CE", "Core", "favorite-directories.json"), options) : undefined;
   let observedRevision: number | undefined;
   let observedProcess: number | undefined;
   const keywords = createCatalogKeywordsRuntime({ request: controller.request.bind(controller), start: () => controller.start(),

@@ -56,6 +56,9 @@
           "Microsoft.Data.Sqlite": "[10.0.12, )"
         }
       },
+      "cap7ce.core.configuration": {
+        "type": "Project"
+      },
       "cap7ce.core.host": {
         "type": "Project",
         "dependencies": {

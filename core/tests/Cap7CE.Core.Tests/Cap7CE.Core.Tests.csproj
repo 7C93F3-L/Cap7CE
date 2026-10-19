@@ -6,6 +6,7 @@
     <RootNamespace>Cap7CE.Core.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Cap7CE.Core.Configuration\Cap7CE.Core.Configuration.csproj" />
     <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Tests" />
   </ItemGroup>
   <ItemGroup>

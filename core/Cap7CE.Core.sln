@@ -18,6 +18,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.Tests", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.Setup", "src\Cap7CE.Core.Setup\Cap7CE.Core.Setup.csproj", "{79C266D3-0F4A-4CB7-A2AB-097D5E10FE08}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.Configuration", "src\Cap7CE.Core.Configuration\Cap7CE.Core.Configuration.csproj", "{A21A9C41-2711-4D91-B80F-65224C16E295}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cap7CE.Core.Configuration.Host", "src\Cap7CE.Core.Configuration.Host\Cap7CE.Core.Configuration.Host.csproj", "{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,5 +60,13 @@ Global
 		{79C266D3-0F4A-4CB7-A2AB-097D5E10FE08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79C266D3-0F4A-4CB7-A2AB-097D5E10FE08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79C266D3-0F4A-4CB7-A2AB-097D5E10FE08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A21A9C41-2711-4D91-B80F-65224C16E295}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A21A9C41-2711-4D91-B80F-65224C16E295}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A21A9C41-2711-4D91-B80F-65224C16E295}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A21A9C41-2711-4D91-B80F-65224C16E295}.Release|Any CPU.Build.0 = Release|Any CPU
+		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{615FDCB0-54A4-46E8-9827-5E2E51ED12CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

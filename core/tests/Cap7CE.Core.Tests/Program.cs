@@ -22,6 +22,7 @@ if (args is ["--setup-identity-client", var pipeName, var expectedServer]
 
 var expectedLayers = new Dictionary<Assembly, string>
 {
+    [typeof(Cap7CE.Core.Configuration.FavoriteDirectory).Assembly] = "Configuration",
     [typeof(ProtocolAssembly).Assembly] = ProtocolAssembly.Role,
     [typeof(ReaderProtocolAssembly).Assembly] = ReaderProtocolAssembly.Role,
     [typeof(ReaderHostAssembly).Assembly] = ReaderHostAssembly.Role,
@@ -48,6 +49,7 @@ TestAssert.Equal("passed", nativeDependencyProbe.Status, "native catalog depende
 TestAssert.False(nativeDependencyProbe.SourceFilesRead, "native catalog dependency probe source boundary");
 
 await ProtocolFrameTests.RunAsync();
+await FavoriteConfigurationTests.RunAsync();
 await CoreRequestIdentityTests.RunAsync();
 await ReaderProtocolTests.RunAsync();
 ReaderNtfsParserTests.Run();

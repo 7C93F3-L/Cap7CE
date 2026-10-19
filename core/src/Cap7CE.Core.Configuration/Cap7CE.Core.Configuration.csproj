@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Cap7CE.Core.Configuration</AssemblyName>
+    <RootNamespace>Cap7CE.Core.Configuration</RootNamespace>
+    <IsAotCompatible>true</IsAotCompatible>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Configuration" />
+    <InternalsVisibleTo Include="Cap7CE.Core.Tests" />
+  </ItemGroup>
+</Project>

@@ -22,7 +22,7 @@ const files = new Map([
   ["electron/computerSearchTrashService.ts", 40],
   ["src/renderer/computer-search/useComputerSearchFileOperations.ts", 45],
   ["src/renderer/computer-search/useComputerSearchTrashUpdates.ts", 25],
-  ["electron/favoriteDirectories/favoriteDirectoryStore.ts", 150],
+  ["electron/favoriteDirectories/favoriteDirectoryStore.ts", 30],
   ["electron/favoriteDirectories/favoriteDirectoryRules.ts", 75],
   ["electron/favoriteDirectories/favoriteDirectoryIpc.ts", 150],
   ["electron/favoriteDirectories/favoriteDirectoryBridge.ts", 50],
@@ -149,9 +149,7 @@ if (/window\.cap7ce|useFavoriteDirectories|computerSearch\./.test(view)) failure
 const contexts = fs.readFileSync(path.join(root, "src/renderer/catalog-workspace/catalogWorkspaceContexts.ts"), "utf8");
 if (/window\.|DirectoryItem|WorkspaceSearchBridge|fs\.|setInterval|setTimeout/.test(contexts)) failures.push("Catalog context identity must not own source operations or legacy directory state.");
 if (!contexts.includes("maximumCatalogContexts = 32") || !contexts.includes("openLimitReached: true")) failures.push("Catalog context capacity must be explicit and cannot silently evict an open view.");
-for (const anchor of ["maximumFavoriteBytes + 1", 'new TextDecoder("utf-8", { fatal: true })',
-  'fs.open(temporary, "wx")', "if (created) await fs.unlink(temporary)", "await fs.rename(temporary, this.filePath)"])
-  if (!store.includes(anchor)) failures.push(`Favorite persistence is missing ${anchor}.`);
+require("./core-configuration-boundary-check.cjs").check(root, failures);
 if (/fs\.(?:rm|rmdir|copyFile|cp|stat|lstat|readdir|readFile)\(/.test(store)) failures.push("Favorite persistence must not enumerate, copy or delete source folders, or perform unbounded reads.");
 const rules = fs.readFileSync(path.join(root, "electron/favoriteDirectories/favoriteDirectoryRules.ts"), "utf8");
 if (!rules.includes("maximumFavorites = 256") || !rules.includes("maximumFavoriteBytes = 1024 * 1024")) failures.push("Favorite state must retain explicit entry/byte limits.");
