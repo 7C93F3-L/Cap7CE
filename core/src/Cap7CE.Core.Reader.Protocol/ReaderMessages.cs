@@ -15,7 +15,8 @@ public enum ReaderCapabilities : uint
     MultiVolume = 8,
     BasicFacts = 16,
     JournalChangeWait = 32,
-    FileEntryNames = 64
+    FileEntryNames = 64,
+    AuthenticatedSessions = 128
 }
 
 public sealed record ReaderHelloRequest(byte[] Nonce, uint ClientProcessId);

@@ -42,8 +42,7 @@ internal static class ReaderVolumeService
             remoteRejected = ReaderNativePipe.RejectsRemoteClients(pipe);
             if (!remoteRejected) throw new InvalidOperationException("reader-remote-reject-missing");
 
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-            deadline.CancelAfter(TimeSpan.FromSeconds(config.WaitSeconds));
+            using var deadline = new ReaderConnectionLifetime(stoppingToken, TimeSpan.FromSeconds(config.WaitSeconds));
             stage = "wait-for-client";
             await pipe.WaitForConnectionAsync(deadline.Token);
             var nativeClientProcessId = ReaderNativePipe.GetClientProcessId(pipe);
@@ -65,11 +64,12 @@ internal static class ReaderVolumeService
                     ReaderProtocol.MaximumRecordsPerPage,
                     ReaderCapabilities.SnapshotPaging | ReaderCapabilities.JournalPaging
                     | (helloFrame.Header.MajorVersion == ReaderProtocol.CurrentMajorVersion
-                        ? ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts | ReaderCapabilities.JournalChangeWait | ReaderCapabilities.FileEntryNames
+                        ? ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts | ReaderCapabilities.JournalChangeWait | ReaderCapabilities.FileEntryNames | ReaderCapabilities.AuthenticatedSessions
                         : ReaderCapabilities.None))),
                 ReaderFrameFlags.None,
                 deadline.Token);
 
+            deadline.Authenticate();
             stage = "volume-session";
             var lastRequestId = helloFrame.Header.RequestId;
             var complete = false;

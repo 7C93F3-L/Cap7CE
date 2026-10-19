@@ -35,7 +35,7 @@ public sealed class ReaderV2CatalogSessionFactory : ICatalogReaderSessionFactory
             {
                 var identity = ReaderServiceIdentity.Verify(ReaderClientConstants.Product, connection.ServerProcessId);
                 if (!identity.Passed) throw new UnauthorizedAccessException(identity.Stage);
-                return await ReaderV2CatalogSession.ConnectAsync(connection, token);
+                return await ReaderV2CatalogSession.ConnectAsync(connection, token, requireAuthenticatedSession: true);
             }
             catch
             {
@@ -53,12 +53,13 @@ internal sealed partial class ReaderV2CatalogSession : ICatalogReaderSession
     private ulong requestId = 1;
     public bool SupportsJournalChangeWait { get; private set; }
     public bool SupportsFileEntryNames { get; private set; }
+    public bool SupportsAuthenticatedSessions { get; private set; }
 
     private ReaderV2CatalogSession(ReaderPipeConnection connection) => this.connection = connection;
 
     internal static async Task<ReaderV2CatalogSession> ConnectAsync(
         ReaderPipeConnection connection,
-        CancellationToken token)
+        CancellationToken token, bool requireAuthenticatedSession = false)
     {
         var session = new ReaderV2CatalogSession(connection);
         var nonce = RandomNumberGenerator.GetBytes(ReaderProtocol.HelloNonceBytes);
@@ -80,6 +81,9 @@ internal sealed partial class ReaderV2CatalogSession : ICatalogReaderSession
         }
         session.SupportsJournalChangeWait = hello.Capabilities.HasFlag(ReaderCapabilities.JournalChangeWait);
         session.SupportsFileEntryNames = hello.Capabilities.HasFlag(ReaderCapabilities.FileEntryNames);
+        session.SupportsAuthenticatedSessions = hello.Capabilities.HasFlag(ReaderCapabilities.AuthenticatedSessions);
+        if (requireAuthenticatedSession && !session.SupportsAuthenticatedSessions)
+            throw new ReaderRepairRequiredException("reader-authenticated-session-unavailable");
         return session;
     }
 

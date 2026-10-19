@@ -78,6 +78,8 @@ await MetadataExtractorManifestTests.RunAsync();
 await MetadataBuildSweepTests.RunAsync();
 await CoreRequestIdentityTests.RunAsync();
 await ReaderProtocolTests.RunAsync();
+ReaderConnectionLifetimeTests.Run();
+await ReaderSessionCapabilityTests.RunAsync();
 ReaderNtfsParserTests.Run();
 await SearchCursorCodecTests.RunAsync();
 await HostProtocolTests.RunAsync();

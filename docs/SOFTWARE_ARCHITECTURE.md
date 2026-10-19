@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-19）
 
+ReaderConnectionLifetime 只拥有一次性的连接/Hello准入计时及服务停止取消。完成原PID、令牌和Hello认证后撤销准入计时器，已认证volume会话依现有管道断开、显式取消或SCM停止归还；空闲JournalWait不轮询，也不被旧30分钟总时限中断。尚未认证、认证过期、服务停止及已排队计时回调的取消行为保持有界。CR/2 Hello新增AuthenticatedSessions可选能力；产品ReaderV2工厂要求该能力，缺失时走既有reader-repair-required，不隐式使用旧的有限会话实现。诊断会话仍可显式保留旧能力兼容；协议主版本、授权磁盘、受限令牌、帧/读取预算和源元数据只读边界不变。可控时钟测试红绿复现旧绝对时限，实际CR/2命名管道测试覆盖旧能力拒绝、当前接受、诊断兼容及正常关闭。
+
 产品 CoreHostController 在既有身份/协议/版本/基础能力认证外要求 metadata.build.attach；缺少统一建库所有权的受保护旧 Core 不进入 ready，经现有 controllerFailure 映射为 repair-required，只有用户明确修复才安装或替换组件。resource-free probe 不增加该要求，继续支持独立契约测试。隔离真实命名管道测试分别覆盖无建库能力集拒绝、新资源能力接受、原探针兼容和不调用系统配置/不创建偏好；该测试不等同于真实旧安装目录的升级验收。Core、Reader 与 Catalog 的独立更新/数据保护规则不变。
 
 `core/node/textPreview` 拥有按需文本与 Word 正文读取，复用 provider-preview 独立 Node/Job 与 InteractiveMetadataOwner 的线程队列（2活动/2排队、10秒、256MiB），不在 Core 事件循环解析 Word。reader 沿用普通文本1MiB、Word源64MiB、原提取器与BOM/截断/错误规则；结果及有界错误使用共享 textPreviewTypes，types.ts 仅重导出。固定 text-preview.cjs 合并现有解析依赖，完整许可证随运行时携带；不借助 Office、网络或系统 Node。text.read/cancel 以 UUID 隔离并行请求，release/EOF 等待真实 terminate；Main 的 CoreTextPreviewClient 只校验与转发，统一预览关闭和非文本切换撤销 pending 请求及迟到成功/失败，不复制单会话导航链。skimContentPreviewService 保留纯 MIME/字节范围和媒体扩展名映射。实际仓库外/空PATH、生成Word、格式编码、配额/取消/超时与原预览回归守护该边界。
