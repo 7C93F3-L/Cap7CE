@@ -24,6 +24,7 @@ if (args is ["--metadata-worker-tests"]) {
 if (args is ["--metadata-job-owner", var metadataRuntime, var metadataSource])
     return await NodeMetadataWorkerTests.RunOwnerAsync(metadataRuntime, metadataSource);
 if (args is ["--trash-policy-tests"]) { await TrashBatchExecutorTests.RunAsync(); return 0; }
+if (args is ["--reader-startup-deadline-tests"]) { await ReaderJournalStartupDeadlineTests.RunAsync(); return 0; }
 
 if (args is ["--catalog-crash-worker"])
 {

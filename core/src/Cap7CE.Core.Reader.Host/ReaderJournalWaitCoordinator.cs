@@ -16,12 +16,13 @@ internal static class ReaderJournalWaitCoordinator
         try {
             foreach (var cursor in request.Cursors) tasks.Add(wait(cursor, lifetime.Token));
             var first = await Task.WhenAny(tasks);
-            try { await first; }
-            catch (OperationCanceledException) when (!token.IsCancellationRequested && lifetime.IsCancellationRequested) {
-                return new([], true);
-            }
+            await first;
             token.ThrowIfCancellationRequested();
             return new(request.Cursors.Where((_, index) => tasks[index].IsCompletedSuccessfully).Select(cursor => cursor.VolumeId).ToArray(), false);
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested && lifetime.IsCancellationRequested) {
+            // The deadline can expire between synchronous volume startups too.
+            return new([], true);
         }
         finally {
             lifetime.Cancel();

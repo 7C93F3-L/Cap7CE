@@ -8,6 +8,7 @@ internal static class ReaderJournalWaitTests
 {
     public static async Task RunAsync()
     {
+        await ReaderJournalStartupDeadlineTests.RunAsync();
         ReaderJournalWaitCursor[] cursors = [new(new(1, 2), 42, 100), new(new(3, 4), 43, 200), new(new(5, 6), 44, long.MaxValue)];
         var request = new ReaderJournalWaitRequest(cursors, 30000);
         var encoded = ReaderPayloadCodec.EncodeJournalWaitRequest(request);
