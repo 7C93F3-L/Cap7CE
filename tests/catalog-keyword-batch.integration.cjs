@@ -3,9 +3,11 @@ const {collectKeywordBatchTargets}=require('../dist-electron/catalogKeywordBatch
 const {runKeywordBatch}=require('../dist-electron/catalogKeywordBatchService.js');
 const {registerCatalogAutoKeywordIpc}=require('../dist-electron/catalogAutoKeywordIpc.js');
 const {fingerprintKeywordSource}=require('../dist-electron/catalogAutoKeywordSource.js');
+const {CoreVisualCacheClient}=require('../dist-electron/core/coreVisualCacheClient.js');
 const tick=()=>new Promise(r=>setImmediate(r));
 (async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'Cap7CE-keyword-batch-'));
+ const sourceClient=new CoreVisualCacheClient(path.join(root,'profile'));
  try{
   const folder=path.join(root,'folder'),nested=path.join(folder,'nested');await fs.mkdir(nested,{recursive:true});
   const make=async(name,dir=false)=>{const file=path.join(root,name);if(!dir)await fs.writeFile(file,'synthetic');const stat=await fs.lstat(file,{bigint:true});
@@ -29,7 +31,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   const missing={...directory,path:path.join(root,'missing')};const partial=await collectKeywordBatchTargets(runtime,{taskId:'s',authorizationIds:[]},()=>[missing,a],controller.signal,()=>{});
   assert.equal(partial.failed,1);assert.equal(partial.items.length,1,'one inaccessible folder does not discard other selected files');
   const changed=await collectKeywordBatchTargets(runtime,{taskId:'s',authorizationIds:[]},()=>[{...directory,createdFileTimeMilliseconds:'1'}],controller.signal,()=>{});assert.equal(changed.failed,1);
-  await assert.rejects(fingerprintKeywordSource({...a,fileReference:'0000000000000001'}),/变化/);
+  await assert.rejects(fingerprintKeywordSource({...a,fileReference:'0000000000000001'},sourceClient.request.bind(sourceClient)),/变化/);
   const abort=new AbortController();let saved=0;const cancelled=await runKeywordBatch(async()=>({...collected,items:[a,b],failed:0,skipped:0}),async()=>{saved++;abort.abort();return {status:'saved',added:1,current:{keywords:[],revision:'1'}}},abort.signal,()=>{});
   assert.equal(saved,1);assert.equal(cancelled.status,'cancelled');assert.equal(cancelled.succeeded,1,'cancellation keeps successful saves and stops the remaining queue');
   let started=0;const fatal=await runKeywordBatch(async()=>({...collected,items:[a,b],failed:0,skipped:0}),async()=>{started++;return {status:'failed',fatal:true,message:'模型未配置'}},controller.signal,()=>{});
@@ -46,5 +48,5 @@ const tick=()=>new Promise(r=>setImmediate(r));
   release();const finished=await pending;assert.equal(finished.succeeded,2,'accepted task survives browsing authorization retirement');assert.equal(sender.listenerCount('destroyed'),0);
   await assert.rejects(handlers.get('computerSearch:generateKeywordBatch')(event,{...request,requestId:'expired'}),/authorization/);
   console.log('Keyword batches: recursive saved scopes, deduplication, identity, scope containment, per-file failures, unsupported files, cancellation, fatal errors, owned IPC and navigation isolation passed.');
- }finally{await fs.rm(root,{recursive:true,force:true});}
+ }finally{await sourceClient.releaseSourceHandles();sourceClient.close();await fs.rm(root,{recursive:true,force:true});}
 })().catch(error=>{console.error(error);process.exitCode=1});

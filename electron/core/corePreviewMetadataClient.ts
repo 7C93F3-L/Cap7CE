@@ -1,14 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { validPreviewMetadata } from "./previewMetadataProjection";
 import type { CancellablePreviewMetadataRead } from "../../src/shared/embeddedMetadataTypes";
+import type { CoreNodeTransport } from "../../src/shared/coreNodeTransport";
 
-interface Transport {
-  request: (method: string, args: unknown[]) => Promise<unknown>;
-  cancel: (method: string, args: unknown[]) => Promise<unknown>;
-}
-export const startCorePreviewMetadataRead = (filePath: string, timeoutMs = 8000, injected?: Transport): CancellablePreviewMetadataRead => {
+export const startCorePreviewMetadataRead = (filePath: string, timeoutMs = 8000, injected?: CoreNodeTransport): CancellablePreviewMetadataRead => {
   const id = randomUUID();
-  let finished = false, sent = false, transport: Transport | undefined;
+  let finished = false, sent = false, transport: CoreNodeTransport | undefined;
   let settle: (value: Awaited<CancellablePreviewMetadataRead["result"]>) => void = () => undefined;
   const result = new Promise<Awaited<CancellablePreviewMetadataRead["result"]>>(resolve => { settle = resolve; });
   const finish = (value: Awaited<CancellablePreviewMetadataRead["result"]>, cancel: boolean) => {

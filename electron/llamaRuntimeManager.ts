@@ -26,10 +26,8 @@ export interface LlamaRuntimeProcessState {
   logPath: string;
 }
 
-export interface LlamaRuntimeConnection {
-  baseUrl: string;
-  modelName: string;
-}
+export type { LocalKeywordModelConnection as LlamaRuntimeConnection } from "../src/shared/localKeywordTypes";
+import type { LocalKeywordModelConnection as LlamaRuntimeConnection } from "../src/shared/localKeywordTypes";
 
 const runtimeHost = "127.0.0.1";
 const firstRuntimePort = 18080;
