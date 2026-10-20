@@ -14,7 +14,7 @@
   <SolidColorBrush x:Key="CapAccentBrush" Color="#7894F8" />
   <SolidColorBrush x:Key="CapSecondaryBrush" Color="#67BEC1" />
   <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#7894F8" />
-  <LinearGradientBrush x:Key="CapAccentGradient" StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#7894F8" Offset="0"/><GradientStop Color="#67BEC1" Offset="1"/></LinearGradientBrush>
+  <LinearGradientBrush x:Key="CapAccentGradient" StartPoint="0,1" EndPoint="1,0"><GradientStop Color="#7894F8" Offset="0"/><GradientStop Color="#67BEC1" Offset="1"/></LinearGradientBrush>
   <Thickness x:Key="CapPagePadding">16</Thickness>
   <CornerRadius x:Key="CapPanelRadius">12</CornerRadius>
   <Style x:Key="CapToolButton" TargetType="Button">

@@ -31,7 +31,16 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true }; info.ArgumentList.Add("/select," + item.FullPath); Process.Start(info);
     }
     public static void CopyPaths(IReadOnlyList<AssetItem> items)
-    { var data = new DataPackage(); data.SetText(string.Join(Environment.NewLine, items.Select(i => i.FullPath))); Clipboard.SetContent(data); }
+        => CopyPath(string.Join(Environment.NewLine, items.Select(i => i.FullPath)));
+    public static void CopyPath(string path)
+    { var data = new DataPackage(); data.SetText(path); Clipboard.SetContent(data); }
+    public static void OpenDirectoryInExplorer(string path)
+    {
+        FileAccessGuard.RejectLinks(path);
+        if (!Directory.Exists(path)) throw new DirectoryNotFoundException("目录不存在或当前不可用");
+        var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true };
+        info.ArgumentList.Add(Path.GetFullPath(path)); Process.Start(info);
+    }
     public static async Task CopyFilesAsync(IReadOnlyList<AssetItem> items)
     {
         var files = await StorageItemsAsync(items); var data = new DataPackage { RequestedOperation = DataPackageOperation.Copy };

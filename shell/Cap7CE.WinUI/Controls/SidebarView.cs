@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Data;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Themes;
 
@@ -25,6 +26,7 @@ internal sealed class SidebarView : UserControl
     private readonly DataTemplate expandedTemplate, compactTemplate;
     private bool? compact;
     private string activePath = "";
+    private Func<Favorite, MenuFlyout>? favoriteMenu;
     private static Style StyleFor(string key) => (Style)Application.Current.Resources[key];
 
     public SidebarView()
@@ -51,10 +53,7 @@ internal sealed class SidebarView : UserControl
         expandedTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteTemplate"];
         compactTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteCompactTemplate"];
         ScrollViewer.SetHorizontalScrollBarVisibility(favorites,ScrollBarVisibility.Disabled);
-        favorites.ContainerContentChanging += (_,e)=>{
-            if(e.Item is not Favorite item)return;
-            ToolTipService.SetToolTip(e.ItemContainer,item.Name+"\n"+item.Path); AutomationProperties.SetName(e.ItemContainer,item.Name);
-        };
+        favorites.ContainerContentChanging += PrepareFavorite;
         favorites.ItemClick += (_,e)=>{if(e.ClickedItem is Favorite item)Navigate?.Invoke(item.Path);};
         var settings = new Button { Style = StyleFor("CapSidebarButton"), Margin = new(5), Height = 36 };
         NavigationContent(settings,"settings","打开设置",8,false); settings.Click += (_,_)=>Settings?.Invoke();
@@ -110,21 +109,48 @@ internal sealed class SidebarView : UserControl
         favorites.SelectedItem = favorites.Items.OfType<Favorite>().FirstOrDefault(item=>
             item.Path.TrimEnd('\\','/').Equals(path.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase));
     }
+
+    private void PrepareFavorite(ListViewBase sender, ContainerContentChangingEventArgs e)
+    {
+        if(e.InRecycleQueue || e.Item is not Favorite item)return;
+        ToolTipService.SetToolTip(e.ItemContainer,item.Name+"\n"+item.Path); AutomationProperties.SetName(e.ItemContainer,item.Name);
+        if(e.Phase==0) { e.RegisterUpdateCallback(1,PrepareFavorite); return; }
+        if(e.ItemContainer.ContentTemplateRoot is not FrameworkElement content || content.FindName("FavoriteMore") is not Button more)return;
+        AutomationProperties.SetName(more,"管理收藏："+item.Name);
+        for(var parent=VisualTreeHelper.GetParent(more);parent is not null;parent=VisualTreeHelper.GetParent(parent))
+            if(parent is ContentPresenter presenter) {
+                more.SetBinding(ForegroundProperty,new Binding {Source=presenter,Path=new PropertyPath(nameof(ContentPresenter.Foreground))}); break;
+            }
+        if(more.Tag is true)return;
+        more.Tag=true;
+        more.Tapped+=(_,args)=>args.Handled=true;
+        more.Click+=(_,_)=>{if(more.DataContext is Favorite current)favoriteMenu?.Invoke(current).ShowAt(more);};
+    }
+
     public void Bind(FavoriteService service, FileCommands commands, Func<XamlRoot> xaml)
     {
         favorites.ItemsSource = service.Items;
         service.Changed += () => DispatcherQueue.TryEnqueue(()=>{favorites.ItemsSource=service.Items;SetActivePath(activePath);});
-        favorites.RightTapped += (_, e) => {
-            if((e.OriginalSource as FrameworkElement)?.DataContext is not Favorite item) return;
-            e.Handled=true; var menu=ThemeService.Menu();
+        favoriteMenu = item => {
+            var menu=ThemeService.Menu();
             menu.Items.Add(Ui.MenuItem("打开",()=>Navigate?.Invoke(item.Path)));
+            menu.Items.Add(Ui.MenuItem("在资源管理器中打开",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;})));
+            menu.Items.Add(Ui.MenuItem("复制路径",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;})));
+            menu.Items.Add(new MenuFlyoutSeparator());
             menu.Items.Add(Ui.MenuItem("修改显示名称",()=>commands.Run(async()=>{
                 var input=new TextBox {Text=item.Name}; var dialog=new ContentDialog {XamlRoot=xaml(),Title="收藏显示名称",Content=input,PrimaryButtonText="保存",CloseButtonText="取消"};
                 if(await dialog.ShowAsync()==ContentDialogResult.Primary) await service.ExecuteAsync("rename",id:item.Id,name:input.Text);
             })));
-            menu.Items.Add(Ui.MenuItem("上移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"up"))));
-            menu.Items.Add(Ui.MenuItem("下移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"down"))));
+            var index=service.Items.ToList().FindIndex(entry=>entry.Id==item.Id);
+            var up=Ui.MenuItem("上移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"up"))); up.IsEnabled=index>0;
+            var down=Ui.MenuItem("下移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"down"))); down.IsEnabled=index>=0 && index<service.Items.Count-1;
+            menu.Items.Add(up); menu.Items.Add(down);
             menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id))));
+            return menu;
+        };
+        favorites.RightTapped += (_, e) => {
+            if((e.OriginalSource as FrameworkElement)?.DataContext is not Favorite item) return;
+            e.Handled=true; var menu=favoriteMenu(item);
             menu.ShowAt(favorites,new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position=e.GetPosition(favorites) });
         };
     }

@@ -99,6 +99,13 @@ public sealed class SidebarIcon : UserControl
             var area=Shape(Kind=="top"?"M5 6H19V7H5Z":"M17 6H19V18H17Z",false);
             area.Opacity=IsActive?1:.3;canvas.Children.Add(area);
         }
+        else if(Kind=="more")
+        {
+            foreach(var x in new[]{5.0,11,17}) {
+                var dot=new Ellipse {Width=2,Height=2}; Bind(dot,Microsoft.UI.Xaml.Shapes.Shape.FillProperty);
+                Canvas.SetLeft(dot,x); Canvas.SetTop(dot,11); canvas.Children.Add(dot);
+            }
+        }
         else canvas.Children.Add(Shape(Kind switch {
             "computer"=>"M4 4H20V16H4Z M12 16V20 M8 20H16",
             "add"=>"M12 5V19 M5 12H19", _=>"M5 12H19"
