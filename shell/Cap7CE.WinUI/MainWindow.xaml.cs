@@ -25,7 +25,7 @@ public sealed partial class MainWindow : Window
     private bool closed,started,minimized;
     public MainWindow()
     {
-        InitializeComponent();AppWindow.Resize(new(1440,900));
+        InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,Notice);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;

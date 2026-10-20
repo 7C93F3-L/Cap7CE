@@ -1,4 +1,5 @@
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -7,7 +8,7 @@ namespace Cap7CE.WinUI.Themes;
 
 internal sealed class WindowTitleBar : Grid
 {
-    private readonly Grid dragRegion = new() { Height = 32, Background = new SolidColorBrush(Colors.Transparent) };
+    private readonly Grid dragRegion = new() { Height = 48, Background = new SolidColorBrush(Colors.Transparent) };
 
     private WindowTitleBar(FrameworkElement content)
     {
@@ -27,6 +28,7 @@ internal sealed class WindowTitleBar : Grid
             frame = new(content);
             window.Content = frame;
             window.ExtendsContentIntoTitleBar = true;
+            window.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             window.SetTitleBar(frame.dragRegion);
         }
         frame.RequestedTheme = theme;

@@ -2,7 +2,9 @@
 
 ## 当前实施状态（2026-10-20）
 
-`ThemeService` 同时统一三类 WinUI 窗口的标题栏：`PreferredTheme` 映射显式明暗与系统应用主题，窗口标题留空并隐藏图标及其系统菜单入口。独立 `Themes/WindowTitleBar` 只负责一次性装配透明的 32 DIP 顶部拖动区与原内容容器，延伸窗口现有 Mica / Mica Alt 材质，并同步根容器主题及系统按钮常态、失焦透明背景；拖动、双击最大化、Snap 和窗口控制按钮仍使用 Windows / WinUI 既有机制，不复制窗口状态机。
+`ThemeService` 同时统一三类 WinUI 窗口的标题栏：`PreferredTheme` 映射显式明暗与系统应用主题，窗口标题留空并隐藏图标及其系统菜单入口。独立 `Themes/WindowTitleBar` 只负责一次性装配透明的 48 DIP 顶部拖动区与原内容容器，使用 `TitleBarHeightOption.Tall` 同步系统按钮高度，延伸窗口现有 Mica / Mica Alt 材质，并同步根容器主题及系统按钮常态、失焦透明背景；主窗口内容顶部不另加留白，拖动、双击最大化、Snap 和窗口控制按钮仍使用 Windows / WinUI 既有机制，不复制窗口状态机。
+
+`Services/MainWindowGeometry` 负责首次主窗口几何及原生最小尺寸约束，沿用 Electron 主线工作区宽 90%、高 82%、最大 1760×1000 DIP、最小 300×210 DIP且不越出工作区的规则；读取窗口所在显示器的工作区及 DPI，将逻辑尺寸转换为物理像素后居中。最小尺寸通过 `OverlappedPresenter` 设置，仅在窗口移动或缩放后检测到 DPI 改变时更新约束，关闭窗口时注销订阅，不引入窗口记忆或状态机。
 
 WinUI 的 `Models` 目录包含 `AssetCollection`、`AssetItem`、`BrowseFilter`、`FileFormat`、`FormatRegistry`、`HomeEntries` 和 `ShellPreferences` 七个源码文件。本机交接恢复时根据原始 `Cap7CE.WinUI.dll` 反编译恢复其实现，不能视为原源码逐字副本；职责及依赖方向保持不变。AI 模型忽略规则仅匹配仓库根目录 `/models/`，源边界检查同时验证上述文件存在且未被 Git 忽略，防止提交或交接时遗漏。
 
