@@ -19,7 +19,6 @@
       <SolidColorBrush x:Key="CapSidebarCheckedForegroundBrush" Color="{ThemeResource SystemColorHighlightTextColor}"/>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
-  <SolidColorBrush x:Key="CapSidebarSelectedForegroundBrush" Color="#FF1F1F1F"/>
   <ControlTemplate x:Key="CapSidebarButtonTemplate" TargetType="Button">
     <Grid>
       <VisualStateManager.VisualStateGroups><VisualStateGroup x:Name="CommonStates">
@@ -86,9 +85,9 @@
           <VisualState x:Name="Normal"/>
           <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapSidebarHoverBrush}"/></VisualState.Setters></VisualState>
           <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapSidebarHoverBrush}"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarSelectedForegroundBrush}"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarSelectedForegroundBrush}"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarSelectedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
           <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
         </VisualStateGroup></VisualStateManager.VisualStateGroups>
         <Border x:Name="Surface" Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}"/>

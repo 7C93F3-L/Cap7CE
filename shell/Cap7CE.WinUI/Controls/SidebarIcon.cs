@@ -24,6 +24,12 @@ public sealed class SidebarIcon : UserControl
         new PropertyMetadata("folder",(sender,_)=>((SidebarIcon)sender).Draw()));
     public static readonly DependencyProperty IsActiveProperty = DependencyProperty.Register(nameof(IsActive),typeof(bool),typeof(SidebarIcon),
         new PropertyMetadata(false,(sender,_)=>((SidebarIcon)sender).Draw()));
+    public static readonly DependencyProperty OutlinePathProperty = DependencyProperty.Register(nameof(OutlinePath),typeof(string),typeof(SidebarIcon),
+        new PropertyMetadata("",(sender,_)=>((SidebarIcon)sender).Draw()));
+    public static readonly DependencyProperty InkForegroundProperty = DependencyProperty.Register(nameof(InkForeground),typeof(Brush),typeof(SidebarIcon),
+        new PropertyMetadata(null,(sender,_)=>{var icon=(SidebarIcon)sender;icon.RefreshInk();icon.QueueInkRefresh();}));
+    public Brush? InkForeground {get=>(Brush?)GetValue(InkForegroundProperty);set=>SetValue(InkForegroundProperty,value);}
+    public string OutlinePath {get=>(string)GetValue(OutlinePathProperty);set=>SetValue(OutlinePathProperty,value);}
     public string Kind { get => (string)GetValue(KindProperty); set => SetValue(KindProperty,value); }
     public bool IsActive { get => (bool)GetValue(IsActiveProperty); set => SetValue(IsActiveProperty,value); }
     public SidebarIcon()
@@ -57,7 +63,7 @@ public sealed class SidebarIcon : UserControl
 
     private void RefreshInk()
     {
-        if(!IsLoaded||Foreground is not SolidColorBrush brush)return;
+        if(!IsLoaded||(InkForeground??Foreground) is not SolidColorBrush brush)return;
         if(!ReferenceEquals(foregroundSource,brush))
         {
             DetachInkSource();foregroundSource=brush;
@@ -88,9 +94,10 @@ public sealed class SidebarIcon : UserControl
 
     private void Draw()
     {
-        var asset=assets.FirstOrDefault(item=>item.Name==Kind);
+        var asset=OutlinePath.Length==0?assets.FirstOrDefault(item=>item.Name==Kind):null;
         var canvas=new Canvas {Width=asset?.Width??24,Height=asset?.Height??24};
-        if(asset is not null) canvas.Children.Add(Shape(asset.Path,false));
+        if(OutlinePath.Length>0)canvas.Children.Add(Shape(OutlinePath,true));
+        else if(asset is not null) canvas.Children.Add(Shape(asset.Path,false));
         else if(Kind is "top" or "right")
         {
             var outline=new Rectangle {Width=18,Height=16,RadiusX=2,RadiusY=2,StrokeThickness=1.5};

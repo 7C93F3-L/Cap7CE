@@ -12,6 +12,7 @@
   </ResourceDictionary.ThemeDictionaries>
   <DataTemplate x:Key="CapAssetTileTemplate"><controls:AssetTile/></DataTemplate>
   <SolidColorBrush x:Key="CapAccentBrush" Color="#7894F8" />
+  <SolidColorBrush x:Key="CapAccentForegroundBrush" Color="#FF1F1F1F" />
   <SolidColorBrush x:Key="CapSecondaryBrush" Color="#67BEC1" />
   <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#7894F8" />
   <LinearGradientBrush x:Key="CapAccentGradient" StartPoint="0,1" EndPoint="1,0"><GradientStop Color="#7894F8" Offset="0"/><GradientStop Color="#67BEC1" Offset="1"/></LinearGradientBrush>

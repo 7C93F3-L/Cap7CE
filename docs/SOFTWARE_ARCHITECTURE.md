@@ -2,6 +2,12 @@
 
 ## 当前实施状态（2026-10-20）
 
+筛选图标的语义颜色由 `FilterIcons.BindSelection` 绑定按钮的Checked/Unchecked、前景及主题变化：选中时将共享 `CapAccentForegroundBrush` 作为 `SidebarIcon.InkForeground` 显式输入，未选中跟随原生按钮前景；类型与比例入口共用，不依赖模板Presenter的视觉状态通知是否传播到绑定。`SidebarIcon` 仍拥有独立ink快照及源Color订阅，未提供显式输入的左栏图标沿用既有Presenter继承。仅事件及有限帧同步，无轮询或常驻Rendering。
+
+上方筛选栏由 `Controls/FilterBar` 组合，范围止于时间/类型/大小及随类型显示的属性分组，不改变目录路径/搜索工具条。`Controls/Filters/FilterSection` 统一80 DIP内容、24 DIP标题与26 DIP两行选项，比例使用56 DIP图文选项；`FilterIcons` 仅复用当前主线实际调用的单色路径，通过既有 `SidebarIcon` 的可选轮廓数据绘制并共用主题前景投影。`Themes/FilterResources.xaml` 集中原生ToggleButton状态、面板和分组样式；强调色前景提升为 `ShellResources` 的共享 `CapAccentForegroundBrush`，左栏与筛选继续使用同一对比色计算及45°表面，不复制色表。
+
+`Models/FilterPresets` 持有本地日历时间边界、大小预设和类型组合转换，只依赖既有格式注册表与条件模型。`BrowseFilter` 继续生成原Core DTO：日期结束按排他边界转为前一个FILETIME单位，大小预设将主线上限转换为Core包含上限；不修改Core协议、查询或索引。`FilterEditors` 拥有日期、大小和注册扩展名草稿，`FactFilterStrip` 只展示适用类型的既有事实条件，`FactFilterEditor` 编辑范围时保留其他组条件；`FilterFlyouts` 统一原生亚克力浮层的互斥及滚动/卸载关闭。外层使用原生ScrollViewer横向浏览，普通滚轮在溢出时横向移动；选项使用非虚拟化Grid，不能再使用无ItemsControl宿主的WrapGrid。`Cap7CE.Filter.Tests` 只验证条件边界和组合，不读取个人配置或打开Catalog。颜色和完整高级复合筛选仍未全部迁入，不以编译代替交互验收。
+
 固定图标采用10 DIP外圈、1 DIP描边、3 DIP中心点，并按截图上移一个物理像素；不改变48 DIP按钮及点击区域。按下背景单独定义为浅色#FFCCCCCC/深色#FF333333，高对比度仍用系统高亮色；这些是自定义按钮的视觉近似，不覆盖或宣称读取了DWM默认色。固定按钮在偏好异步加载后创建，创建及Loaded时通过只读前台窗口句柄查询同步激活状态，后续沿Window.Activated更新；失焦透明度只投影到图标层，背景保持自身状态。此初始化不更改前台窗口或复制窗口状态机。
 
 固定按钮按截图将悬停及按下表面的下沿内缩一个物理像素，由 `WindowTitleBar` 按 `1 / RasterizationScale` 转为DIP，并通过模板的BorderThickness投影到两层背景Margin；根点击区、48 DIP布局及图标位置保持。此项是当前截图的视觉校正，不把标题栏布局高度等同于系统悬停绘制高度，其他缩放与窗口状态仍待人工确认。

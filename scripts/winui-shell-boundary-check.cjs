@@ -30,7 +30,10 @@ assert(read('shell/Directory.Build.props').includes('<RuntimeIdentifier>win-x64<
 assert(!/arm64|win-x86/.test(project + read('shell/Directory.Build.props')));
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('ItemsWrapGrid'), 'preserve native grid virtualization');
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsGridLayout.cs').includes('grid.ItemsPanelRoot is ItemsWrapGrid'), 'compact row must retain the existing virtualizing panel');
-assert(read('shell/Cap7CE.WinUI/Controls/FilterBar.cs').includes('VariableSizedWrapGrid'), 'standalone filter children require a nonvirtualizing panel, not an ownerless WrapGrid');
+const filterBar = read('shell/Cap7CE.WinUI/Controls/FilterBar.cs');
+assert(!/new\s+(?:Items)?WrapGrid|ItemsPanel/.test(filterBar), 'standalone filter options must use nonvirtualizing Grid/StackPanel layout');
+assert(filterBar.includes('FilterPresets') && filterBar.includes('FilterFlyouts'), 'top filters must share presets and a single flyout owner');
+assert(read('shell/Cap7CE.WinUI/App.xaml').includes('Themes/FilterResources.xaml'), 'top filter visuals must use compiled shared theme resources');
 assert(read('shell/Cap7CE.WinUI/Themes/ShellResources.xaml').includes('<controls:AssetTile/>'), 'custom tile must appear in compiled XAML to generate WinUI activation metadata');
 assert(/Unloaded\s*\+=/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs')), 'recycled tiles must release pixels');
 assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('Cap7CE-PhaseF'), 'visual cache must be separate from production');

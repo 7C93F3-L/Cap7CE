@@ -12,7 +12,7 @@ internal static class SidebarPalette
         var luminance=new[]{first,midpoint,second}.Select(Luminance).ToArray();
         var black=luminance.Min(value=>(value+.05)/.05);
         var white=luminance.Min(value=>1.05/(value+.05));
-        ((SolidColorBrush)Application.Current.Resources["CapSidebarSelectedForegroundBrush"]).Color =
+        ((SolidColorBrush)Application.Current.Resources["CapAccentForegroundBrush"]).Color =
             black>=white?Color.FromArgb(255,31,31,31):Color.FromArgb(255,255,255,255);
     }
     private static double Luminance(Color color)

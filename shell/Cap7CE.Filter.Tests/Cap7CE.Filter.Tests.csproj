@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj"/>
+    <Compile Include="../Cap7CE.WinUI/Models/FilterPresets.cs;../Cap7CE.WinUI/Models/BrowseFilter.cs;../Cap7CE.WinUI/Models/FormatRegistry.cs;../Cap7CE.WinUI/Models/FileFormat.cs" Link="%(Filename)%(Extension)"/>
+    <Content Include="../artifacts/assets/formats.json" Link="Assets/formats.json" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+</Project>

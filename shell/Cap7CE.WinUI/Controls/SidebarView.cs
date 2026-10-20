@@ -42,7 +42,7 @@ internal sealed class SidebarView : UserControl
         directories.RowDefinitions.Add(new() { Height = GridLength.Auto }); directories.RowDefinitions.Add(new() { Height = GridLength.Auto });
         directories.RowDefinitions.Add(new() { Height = new(1, GridUnitType.Star) });
         home = new ToggleButton { Style = StyleFor("CapSidebarHomeToggle") };
-        home.Resources["CapSidebarCheckedForegroundBrush"] = Application.Current.Resources["CapSidebarSelectedForegroundBrush"];
+        home.Resources["CapSidebarCheckedForegroundBrush"] = Application.Current.Resources["CapAccentForegroundBrush"];
         NavigationContent(home,"computer","此电脑",10,true); home.Click += (_,_)=>Navigate?.Invoke(""); directories.Children.Add(home);
         heading.Height = 32; heading.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) }); heading.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         heading.Children.Add(header); header.Style = (Style)Application.Current.Resources["CapSidebarHeaderText"];

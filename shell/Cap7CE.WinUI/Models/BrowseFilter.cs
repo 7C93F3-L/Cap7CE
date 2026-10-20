@@ -6,6 +6,7 @@ namespace Cap7CE.WinUI.Models;
 
 internal sealed record BrowseFilter
 {
+	public string TimePreset { get; init; } = "all";
 	public string Category { get; init; } = "";
 
 	public string[] Extensions { get; init; } = Array.Empty<string>();
@@ -35,7 +36,7 @@ internal sealed record BrowseFilter
 		}
 		if (Count != 0)
 		{
-			return new CoreSearchFileConditions((array.Length != 0) ? array : null, MinimumBytes, MaximumBytes, After?.UtcDateTime.ToFileTimeUtc().ToString(), Before?.UtcDateTime.ToFileTimeUtc().ToString(), (Category == "other") ? FormatRegistry.Formats.Select((FileFormat f) => f.Extension).Distinct().ToArray() : null);
+			return new CoreSearchFileConditions((array.Length != 0) ? array : null, MinimumBytes, MaximumBytes, After?.UtcDateTime.ToFileTimeUtc().ToString(), Before?.UtcDateTime.AddTicks(-1).ToFileTimeUtc().ToString(), (Category == "other") ? FormatRegistry.Formats.Select((FileFormat f) => f.Extension).Distinct().ToArray() : null);
 		}
 		return null;
 	}
