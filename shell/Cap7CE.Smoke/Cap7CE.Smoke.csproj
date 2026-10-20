@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj" />
+    <Compile Include="../Cap7CE.WinUI/Services/FramedRpc.cs" Link="FramedRpc.cs" />
+    <Compile Include="../Cap7CE.WinUI/Services/CoreConnection.cs" Link="CoreConnection.cs" />
+    <Compile Include="../Cap7CE.WinUI/Services/VisualConnection.cs" Link="VisualConnection.cs" />
+    <Compile Include="../Cap7CE.WinUI/Services/CoreNodeHost.cs" Link="CoreNodeHost.cs" />
+  </ItemGroup>
+</Project>

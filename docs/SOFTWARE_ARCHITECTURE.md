@@ -2,6 +2,18 @@
 
 ## 当前实施状态（2026-10-20）
 
+`shell/Cap7CE.WinUI` 是独立 x64、.NET 10 / WinUI 3 开发壳。当前有效主线的左收藏栏、顶部筛选、目录标签/工具条、虚拟网格/列表、右侧详情/关键词、状态条、设置和独立预览已按原生控件迁入首版；只复用实际调用的内容与原图标，不整体复制React/CSS、退役页面或待机线。Electron主线保持，未迁入能力明确列于 `shell/README.md`，本轮编译通过不等于交互验收。
+
+`Themes/ShellResources.xaml` 集中共用色、按钮/卡片/文字与菜单样式；`ThemeService` 统一主窗口、设置和预览的Mica/Mica Alt、明暗与强调色，菜单/临时浮层使用DesktopAcrylicBackdrop及原生亚克力资源。外观与布局在独立PhaseF偏好保存；首次缺失时仅被动读取已有颜色/主题，不迁移配置。`Models` 拥有偏好、格式注册表投影、条件和结果；`Controllers/BrowseSession` 拥有每标签历史、查询代次/取消、分页和本次删除抑制；`Controls/Views` 只承载相应界面，MainWindow只组合。格式/图标名与提取器版本由原注册表和Core资源生成，不维护第二份事实定义。
+
+`CoreConnection` 复用SC/1 DTO、同用户管道、双方PID/密钥认证、分页和取消；UI只引用Protocol，不访问SQLite或Reader。独立 `Cap7CE.QueryHost` 引用原Host/Catalog，直接使用现有库，不调用数据库初始化、存储所有权、Reader维护、建库或属性调度。CorePipeServer/CorePipeSession增加可选会话操作白名单，在能力协商与执行入口共同过滤；省略参数的Electron会话行为保持原样。默认验证会话仅开放状态、目录解析、搜索分页及取消；WinUI交互会话另外允许现有关键词读写，写入由明确的保存动作触发并校验修订冲突。缺库或不可查询目录明确失败，不自动重建。
+
+`AssetCollection` 按100项增量加载，`GridView/ItemsWrapGrid` 保持原生容器虚拟化；`AssetTile` 实现时请求图像，卸载释放像素并丢弃迟到结果。`CoreNodeHost` 统一固定摘要Node、清理注入环境、有界帧、原生Job监督、惰性启动和退出；`VisualConnection` 限制两个已接纳视觉请求，图片缓存使用独立Cap7CE-PhaseF根。预览复用原图片、正文、PDF、Office、电子书、压缩包和字体元信息Core；音视频由WinUI媒体控件呈现。未迁入完整专用查看器时明示基本信息或默认程序入口。
+
+`FavoriteService` 通过原普通权限Configuration宿主读取收藏，仅用户动作改配置；`FileCommands` 统一预览/打开/定位/剪贴板/拖出和确认后的回收站入口，原生身份与链接检查在操作前执行。删除通过原FileOperations宿主，只可回收删除；关闭预览并释放Core读取后执行，成功路径在本壳所有标签及后续分页中过滤，不据此改写Catalog或清理正式缓存。Reader维护未接入，外部文件变化仍依赖已有目录更新及手动刷新。模型设置/手动加载复用原Core域，打开设置不自动加载；诊断导出只含系统信息。
+
+`shell/build.ps1` 按需恢复缺失Core资源、生成格式资源、构建查询宿主与WinUI到独立输出；`run.ps1` 启动已有库入口。`Cap7CE.Smoke` 保留临时合成库与PNG的默认只读会话烟测；`measure.ps1` 仅显式调用时有限采样。`winui-shell-boundary-check.cjs` 接入架构检查，守护无UI数据库依赖、禁止初始化/维护、会话白名单、x64、虚拟化、缓存隔离及单一职责体量。迁移轮按用户要求不进行交互验证、长时间测试或资源对照；未迁移用户数据、未全盘重建、未验证安装包。功能对等与资源比较需后续实际验收。
+
 预览窗口边栏不再展示旧“手动关键词”和“当前匹配依据”卡片，预览专用的关键词编辑/保存状态与处理器、匹配依据展示组件及样式已移除。`PreviewInformationSidebar` 仅通过 `keywordsSection` 插槽承载 Catalog 主窗口的现有关键词组件，独立预览不注入该内容；文件信息、位置、嵌入信息和文件操作沿用原边栏。既有关键词数据、搜索依据数据及后台接口不迁移或删除。
 
 快捷操作已退役独立的 `toggleSkim` 动作：设置列表、共享/桥接类型、默认值、配置归一化、注册及探测列表和专用 `window:activateSkimRequested` 事件均不再包含该动作。旧配置字段在读取时忽略，不执行启动迁移；其他快捷键、录制期间暂停与恢复注册、预览中的既有浏览切换入口保持原规则。

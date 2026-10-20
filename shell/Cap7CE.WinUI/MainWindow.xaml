@@ -1,0 +1,29 @@
+<Window x:Class="Cap7CE.WinUI.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Cap7CE">
+  <ContentControl x:Name="Surface" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+    <Grid x:Name="Root" Background="Transparent" Padding="0,4,8,8" ColumnSpacing="8" RowSpacing="6">
+      <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="172"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="DetailsColumn" Width="280"/></Grid.ColumnDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <ContentControl x:Name="SidebarHost" Grid.RowSpan="3" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+      <ContentControl x:Name="FilterHost" Grid.Column="1" Grid.ColumnSpan="2" HorizontalContentAlignment="Stretch"/>
+      <Border Grid.Row="1" Grid.Column="1" CornerRadius="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <TabView x:Name="Tabs" IsAddTabButtonVisible="True" CanDragTabs="False" TabWidthMode="SizeToContent" Margin="2,0,2,0"/>
+          <ContentControl Grid.Row="1" x:Name="ToolbarHost" HorizontalContentAlignment="Stretch"/>
+          <ContentControl Grid.Row="2" x:Name="ResultsHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+        </Grid>
+      </Border>
+      <Border x:Name="DetailsBorder" Grid.Row="1" Grid.Column="2" Style="{StaticResource CapPanel}" Padding="0">
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Thumb x:Name="DetailsSizer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ToolTipService.ToolTip="拖动调整右栏宽度"/>
+          <ContentControl Grid.Column="1" x:Name="DetailsHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+        </Grid>
+      </Border>
+      <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" ColumnSpacing="10" Padding="8,2">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <ProgressRing x:Name="BusyRing" Width="18" Height="18" Foreground="{StaticResource CapAccentBrush}" IsActive="False"/>
+        <TextBlock Grid.Column="1" x:Name="Status" Text="正在启动…" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+        <Button Grid.Column="2" x:Name="NextPage" Content="下一页" Style="{StaticResource CapToolButton}"/>
+      </Grid>
+    </Grid>
+  </ContentControl>
+</Window>
