@@ -27,8 +27,9 @@ internal sealed class FilterBar : UserControl
         row.Children.Add(Group("大小 / 格式", Ui.Row(Size("不限", null, null), Size("小于1MB", null, 1024*1024)),
             Ui.Row(Size("1–100MB", 1024*1024,100*1024*1024), Size("大于100MB",100*1024*1024,null)), Ui.Button("自定义…", SizeAndFormat)));
         row.Children.Add(new FactFilterEditor(filter => Set(Value with { Facts = filter })));
-        Content = Ui.Panel(new ScrollViewer { Content = row, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Enabled, VerticalScrollMode = ScrollMode.Disabled });
+        Content = new Border { Style = (Style)Application.Current.Resources["CapWorkspacePanel"], Child = new ScrollViewer {
+            Content = row, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled, HorizontalScrollMode = ScrollMode.Enabled, VerticalScrollMode = ScrollMode.Disabled } };
     }
     public void Restore(BrowseFilter filter) { Value = filter; Render(); }
     private void Set(BrowseFilter filter) { Value = filter; Render(); FilterChanged?.Invoke(filter); }
