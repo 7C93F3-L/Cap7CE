@@ -9,5 +9,6 @@ const root = path.resolve(__dirname, '..'), output = path.join(root, 'shell/arti
   fs.writeFileSync(path.join(output, 'formats.json'), JSON.stringify(require(modulePath).fileFormatCapabilities));
   fs.copyFileSync(path.join(root, 'artifacts/metadata-worker/v1/extractors.json'), path.join(output, 'extractors.json'));
   require('./winui-sidebar-assets.cjs')(root, output);
+  await require('./winui-filter-resources.cjs')(root, output);
   console.log('WinUI format resources generated from the existing registry.');
 })().catch(error => { console.error(error.message); process.exitCode = 1; });

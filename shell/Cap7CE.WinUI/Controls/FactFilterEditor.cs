@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 namespace Cap7CE.WinUI.Controls;
 internal sealed class FactFilterEditor(Func<BrowseFilter> read,Action<BrowseFilter> apply,FilterFlyouts flyouts)
 {
-    public void Show(Button anchor,string domain)
+    public void Show(Button anchor,string domain,string scope="all")
     {
         var current=read().Facts??new CoreSearchFactFilter(domain,FormatRegistry.ExtractorVersion(domain));
         var content=new StackPanel {Spacing=10,Width=310};
@@ -16,12 +16,12 @@ internal sealed class FactFilterEditor(Func<BrowseFilter> read,Action<BrowseFilt
             content.Children.Add(box);return box;
         }
         NumberBox? minW=null,maxW=null,minH=null,maxH=null,minDuration=null,maxDuration=null,minCount=null,maxCount=null;
-        if(domain is "image-dimensions" or "video") {
+        if(domain is "image-dimensions" or "video" && scope is "all" or "dimensions") {
             minW=Number("最小宽度 px",current.MinimumWidth,100000);maxW=Number("最大宽度 px",current.MaximumWidth,100000);
             minH=Number("最小高度 px",current.MinimumHeight,100000);maxH=Number("最大高度 px",current.MaximumHeight,100000);
             minW.Minimum=maxW.Minimum=minH.Minimum=maxH.Minimum=1;
         }
-        if(domain is "video" or "audio") {
+        if(domain is "video" or "audio" && scope is "all" or "duration") {
             minDuration=Number("最小时长（秒）",current.MinimumDurationMilliseconds/1000d,604800);
             maxDuration=Number("最大时长（秒）",current.MaximumDurationMilliseconds/1000d,604800);
         }
@@ -39,22 +39,30 @@ internal sealed class FactFilterEditor(Func<BrowseFilter> read,Action<BrowseFilt
             "archive"=>(current.Archive?.MinimumFileCount,current.Archive?.MaximumFileCount),_=>(null,null)
         };
         if(domain=="font"){min=current.Font?.WeightRanges?.FirstOrDefault()?.Minimum;max=current.Font?.WeightRanges?.FirstOrDefault()?.Maximum;}
-        if(domain is "document" or "three-d" or "model" or "text-data" or "archive" or "font") {
+        if(scope=="channels"){min=current.ChannelRanges?.FirstOrDefault()?.Minimum;max=current.ChannelRanges?.FirstOrDefault()?.Maximum;countLabel="声道";}
+        if(domain is "document" or "three-d" or "model" or "text-data" or "archive" or "font" || scope=="channels") {
             var limit=domain=="model"?1e15:1e9;
             minCount=Number("最少"+countLabel,min,limit);maxCount=Number("最多"+countLabel,max,limit);
             if(domain=="font"){minCount.Minimum=maxCount.Minimum=1;minCount.Maximum=maxCount.Maximum=1000;}
+            if(scope=="channels")minCount.Minimum=maxCount.Minimum=1;
         }
         content.Children.Add(error);
         long? Value(NumberBox? box)=>box is null || double.IsNaN(box.Value)?null:checked((long)box.Value);
-        content.Children.Add(Ui.Row(Ui.Button("清除此组",()=>{apply(read() with {Facts=null});flyouts.Close();}),Ui.Button("应用",()=>{
+        content.Children.Add(Ui.Row(Ui.Button("清除此组",()=>{
+            var latest=read().Facts??current;
+            var cleared=scope switch {"dimensions"=>AspectFilterRules.ClearDimensions(latest),"duration"=>latest with {MinimumDurationMilliseconds=null,MaximumDurationMilliseconds=null},
+                "channels"=>latest with {ChannelRanges=null},_=>new CoreSearchFactFilter(domain,current.ExtractorVersion)};
+            apply(read() with {Facts=AspectFilterRules.Normalize(cleared)});flyouts.Close();
+        }),Ui.Button("应用",()=>{
             var ranges=new[]{(minW,maxW),(minH,maxH),(minDuration,maxDuration),(minCount,maxCount)};
             if(ranges.Any(pair=>pair.Item1 is {} a&&pair.Item2 is {} b&&!double.IsNaN(a.Value)&&!double.IsNaN(b.Value)&&a.Value>b.Value)) {error.Text="最大值不能小于最小值";return;}
             if(ranges.SelectMany(pair=>new[]{pair.Item1,pair.Item2}).Any(box=>box is not null&&!double.IsNaN(box.Value)&&(double.IsInfinity(box.Value)||box.Value<0))) {error.Text="请输入有效数值";return;}
             if(new[]{minW,maxW,minH,maxH,minCount,maxCount}.Any(box=>box is not null&&!double.IsNaN(box.Value)&&box.Value!=Math.Truncate(box.Value))) {error.Text="像素和数量需要整数";return;}
             var next=current;
-            if(minW is not null)next=next with {MinimumWidth=(int?)Value(minW),MaximumWidth=(int?)Value(maxW),MinimumHeight=(int?)Value(minH),MaximumHeight=(int?)Value(maxH)};
+            if(minW is not null)next=next with {MinimumWidth=(int?)Value(minW),MaximumWidth=(int?)Value(maxW),MinimumHeight=(int?)Value(minH),MaximumHeight=(int?)Value(maxH),ShortEdgeRanges=null};
             if(minDuration is not null)next=next with {MinimumDurationMilliseconds=double.IsNaN(minDuration.Value)?null:(long)(minDuration.Value*1000),MaximumDurationMilliseconds=double.IsNaN(maxDuration!.Value)?null:(long)(maxDuration.Value*1000)};
             var lower=Value(minCount);var upper=Value(maxCount);var hasCount=lower is not null || upper is not null;
+            if(scope=="channels")next=next with {ChannelRanges=hasCount?[new((int?)lower,(int?)upper)]:null};
             next=domain switch {
                 "document"=>next with {Document=hasCount?(current.Document??new()) with {MinimumContentCount=(int?)lower,MaximumContentCount=(int?)upper}:null},
                 "three-d"=>next with {ThreeD=hasCount?(current.ThreeD??new()) with {MinimumTriangleCount=lower,MaximumTriangleCount=upper}:null},

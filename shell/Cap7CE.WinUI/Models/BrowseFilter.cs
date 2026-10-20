@@ -21,7 +21,7 @@ internal sealed record BrowseFilter
 
 	public CoreSearchFactFilter? Facts { get; init; }
 
-	public int Count => ((Category.Length > 0 || Extensions.Length != 0) ? 1 : 0) + ((MinimumBytes.HasValue || MaximumBytes.HasValue) ? 1 : 0) + ((After.HasValue || Before.HasValue) ? 1 : 0) + ((Facts is not null) ? 1 : 0);
+	public int Count => ((Category.Length > 0 || Extensions.Length != 0) ? 1 : 0) + ((MinimumBytes.HasValue || MaximumBytes.HasValue) ? 1 : 0) + ((After.HasValue || Before.HasValue) ? 1 : 0) + FilterFactRules.Count(Facts);
 
 	public CoreSearchFileConditions? ToConditions()
 	{

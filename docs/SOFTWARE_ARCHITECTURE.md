@@ -2,11 +2,15 @@
 
 ## 当前实施状态（2026-10-20）
 
+顶部颜色筛选由 `ColorFilterSection` 使用原生ToggleButton圆形色样及选中环显示；图片包含透明背景及四种特征，视频只含主线支持的非透明颜色，特征从编辑浮层选择。`scripts/winui-filter-resources.cjs` 随资源构建只导出当前图片/视频筛选所用语义及约束到 `filter-visual-semantics.json`，不导出关键词别名、旧页面或CSS；`VisualFilterRules` 直接把该共享事实映射到现有 `CoreSearchVisualGroup`，颜色组内部OR、颜色与特征组之间AND，保留尺寸/比例/动静等其他事实条件，不启动颜色提取或索引任务。
+
+`AspectFilterEditor` 与纯 `AspectFilterRules` 提供常用比例和1–100000整数自定义比例，沿用主线±2%容差；应用时保留当前其他条件。数字编辑器按尺寸/时长/声道分组输入和清除，不再由所有铅笔入口打开同一个宽泛属性弹层。`FilterFactRules` 集中生效分组判断及计数，自定义条件在标题回显。相关纯条件测试不打开Catalog。完整颜色可用性探测、三维/文档/模型/压缩包等全部专用高级选项仍未迁入，不据本轮宣称完整筛选对等。
+
 筛选图标的语义颜色由 `FilterIcons.BindSelection` 绑定按钮的Checked/Unchecked、前景及主题变化：选中时将共享 `CapAccentForegroundBrush` 作为 `SidebarIcon.InkForeground` 显式输入，未选中跟随原生按钮前景；类型与比例入口共用，不依赖模板Presenter的视觉状态通知是否传播到绑定。`SidebarIcon` 仍拥有独立ink快照及源Color订阅，未提供显式输入的左栏图标沿用既有Presenter继承。仅事件及有限帧同步，无轮询或常驻Rendering。
 
 上方筛选栏由 `Controls/FilterBar` 组合，范围止于时间/类型/大小及随类型显示的属性分组，不改变目录路径/搜索工具条。`Controls/Filters/FilterSection` 统一80 DIP内容、24 DIP标题与26 DIP两行选项，比例使用56 DIP图文选项；`FilterIcons` 仅复用当前主线实际调用的单色路径，通过既有 `SidebarIcon` 的可选轮廓数据绘制并共用主题前景投影。`Themes/FilterResources.xaml` 集中原生ToggleButton状态、面板和分组样式；强调色前景提升为 `ShellResources` 的共享 `CapAccentForegroundBrush`，左栏与筛选继续使用同一对比色计算及45°表面，不复制色表。
 
-`Models/FilterPresets` 持有本地日历时间边界、大小预设和类型组合转换，只依赖既有格式注册表与条件模型。`BrowseFilter` 继续生成原Core DTO：日期结束按排他边界转为前一个FILETIME单位，大小预设将主线上限转换为Core包含上限；不修改Core协议、查询或索引。`FilterEditors` 拥有日期、大小和注册扩展名草稿，`FactFilterStrip` 只展示适用类型的既有事实条件，`FactFilterEditor` 编辑范围时保留其他组条件；`FilterFlyouts` 统一原生亚克力浮层的互斥及滚动/卸载关闭。外层使用原生ScrollViewer横向浏览，普通滚轮在溢出时横向移动；选项使用非虚拟化Grid，不能再使用无ItemsControl宿主的WrapGrid。`Cap7CE.Filter.Tests` 只验证条件边界和组合，不读取个人配置或打开Catalog。颜色和完整高级复合筛选仍未全部迁入，不以编译代替交互验收。
+`Models/FilterPresets` 持有本地日历时间边界、大小预设和类型组合转换，只依赖既有格式注册表与条件模型。`BrowseFilter` 继续生成原Core DTO：日期结束按排他边界转为前一个FILETIME单位，大小预设将主线上限转换为Core包含上限；不修改Core协议、查询或索引。`FilterEditors` 拥有日期、大小和注册扩展名草稿，`FactFilterStrip` 只展示适用类型的既有事实条件，`FactFilterEditor` 编辑范围时保留其他组条件；`FilterFlyouts` 统一原生亚克力浮层的互斥及滚动/卸载关闭。外层使用原生ScrollViewer横向浏览，普通滚轮在溢出时横向移动；选项使用非虚拟化Grid，不能再使用无ItemsControl宿主的WrapGrid。`Cap7CE.Filter.Tests` 只验证条件边界和组合，不读取个人配置或打开Catalog。颜色可用性提示和完整专用高级选项仍未全部迁入，不以编译代替交互验收。
 
 固定图标采用10 DIP外圈、1 DIP描边、3 DIP中心点，并按截图上移一个物理像素；不改变48 DIP按钮及点击区域。按下背景单独定义为浅色#FFCCCCCC/深色#FF333333，高对比度仍用系统高亮色；这些是自定义按钮的视觉近似，不覆盖或宣称读取了DWM默认色。固定按钮在偏好异步加载后创建，创建及Loaded时通过只读前台窗口句柄查询同步激活状态，后续沿Window.Activated更新；失焦透明度只投影到图标层，背景保持自身状态。此初始化不更改前台窗口或复制窗口状态机。
 

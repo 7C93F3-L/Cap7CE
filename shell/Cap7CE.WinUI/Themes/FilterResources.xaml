@@ -26,6 +26,27 @@
       </Grid>
     </ControlTemplate></Setter.Value></Setter>
   </Style>
+  <Style x:Key="CapFilterSwatch" TargetType="ToggleButton">
+    <Setter Property="Width" Value="22"/><Setter Property="Height" Value="22"/><Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/>
+    <Setter Property="Padding" Value="0"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ToggleButton">
+      <Grid Background="Transparent">
+        <VisualStateManager.VisualStateGroups><VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal"/>
+          <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Surface.Opacity" Value="0.75"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Surface.Opacity" Value="0.6"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="Ring.Opacity" Value="1"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="Ring.Opacity" Value="1"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="Ring.Opacity" Value="1"/><Setter Target="Surface.Opacity" Value="0.6"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Surface.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedDisabled"><VisualState.Setters><Setter Target="Ring.Opacity" Value="0.4"/><Setter Target="Surface.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+        </VisualStateGroup></VisualStateManager.VisualStateGroups>
+        <ContentPresenter x:Name="Surface" Content="{TemplateBinding Content}" Width="16" Height="16" CornerRadius="8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Ellipse Width="16" Height="16" Stroke="{ThemeResource TextFillColorSecondaryBrush}" StrokeThickness="1" IsHitTestVisible="False"/>
+        <Ellipse x:Name="Ring" Stroke="{ThemeResource CapSecondaryBrush}" StrokeThickness="2" Opacity="0" IsHitTestVisible="False"/>
+      </Grid>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
   <Style x:Key="CapFilterAction" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
     <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="Height" Value="26"/>
     <Setter Property="Padding" Value="6,2"/><Setter Property="CornerRadius" Value="7"/><Setter Property="FontSize" Value="12"/>
