@@ -8,10 +8,12 @@ public sealed class CorePipeServer : IAsyncDisposable
 {
     private readonly NamedPipeServerStream pipe;
     private readonly ProductCoreRuntime? runtime;
+    private readonly IReadOnlySet<string>? allowedOperations;
 
-    public CorePipeServer(string pipeName, ProductCoreRuntime? runtime = null)
+    public CorePipeServer(string pipeName, ProductCoreRuntime? runtime = null, IReadOnlySet<string>? allowedOperations = null)
     {
         this.runtime = runtime;
+        this.allowedOperations = allowedOperations;
         pipe = new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
@@ -29,7 +31,7 @@ public sealed class CorePipeServer : IAsyncDisposable
         }
         var session = runtime is null
             ? new CorePipeSession(sessionSecret, checked((int)clientProcessId))
-            : new CorePipeSession(sessionSecret, checked((int)clientProcessId), runtime);
+            : new CorePipeSession(sessionSecret, checked((int)clientProcessId), runtime, allowedOperations);
         await session.RunAsync(pipe, cancellationToken);
     }
 

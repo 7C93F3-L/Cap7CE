@@ -11,6 +11,7 @@ public sealed class CorePipeSession
     private readonly int clientProcessId;
     private readonly CoreRequestIdentityTracker requestIds = new();
     private readonly SemaphoreSlim writeLock = new(1, 1);
+    private readonly IReadOnlySet<string>? allowedOperations;
 
     public CorePipeSession(byte[] expectedSecret, int clientProcessId)
     {
@@ -19,10 +20,12 @@ public sealed class CorePipeSession
         dispatcher = new CoreRequestDispatcher(new SyntheticMetadataSearchSource(), new SearchCursorCodec());
     }
 
-    public CorePipeSession(byte[] expectedSecret, int clientProcessId, ProductCoreRuntime runtime)
+    public CorePipeSession(byte[] expectedSecret, int clientProcessId, ProductCoreRuntime runtime,
+        IReadOnlySet<string>? allowedOperations = null)
     {
         this.expectedSecret = expectedSecret;
         this.clientProcessId = clientProcessId;
+        this.allowedOperations = allowedOperations;
         dispatcher = new CoreRequestDispatcher(runtime, new ProductSearchCursorCodec());
     }
 
@@ -162,7 +165,7 @@ public sealed class CorePipeSession
             Environment.ProcessId,
             CoreProtocol.MaximumFrameBytes,
             CoreProtocol.MaximumPageSize,
-            dispatcher.Capabilities,
+            dispatcher.Capabilities.Where(operation => allowedOperations is null || allowedOperations.Contains(operation)).ToArray(),
             dispatcher.SyntheticFixture));
     }
 
@@ -171,6 +174,12 @@ public sealed class CorePipeSession
         CoreRequestEnvelope request,
         CancellationToken cancellationToken)
     {
+        if (allowedOperations is not null && !allowedOperations.Contains(request.Operation))
+        {
+            await WriteAsync(stream, CoreResponseEnvelope.Failure(request.RequestId, 1,
+                CoreErrorCodes.InvalidRequest, "admission", false, "Operation is unavailable in this session."), cancellationToken);
+            return;
+        }
         var response = await dispatcher.DispatchAsync(request, cancellationToken);
         try
         {
