@@ -20,6 +20,8 @@ internal static class FilterPresets
         return value with {TimePreset=preset,After=after,Before=before};
     }
     public static string[] Extensions(BrowseFilter value) => value.Extensions.Length>0?value.Extensions:FormatRegistry.Extensions(value.Category);
+    public static string[] QueryExtensions(BrowseFilter value)
+    {var selected=Extensions(value);return value.ThreeDTypes.Length==0?selected:selected.Intersect(ThreeDFilterRules.Extensions(value.ThreeDTypes),StringComparer.OrdinalIgnoreCase).ToArray();}
     public static bool Selected(BrowseFilter value,string id)
     {
         if(id=="other")return value.Category==id;
@@ -28,10 +30,10 @@ internal static class FilterPresets
     }
     public static BrowseFilter ToggleType(BrowseFilter value,string id)
     {
-        if(id=="other")return value with {Category=value.Category==id?"":"other",Extensions=[],Facts=null};
+        if(id=="other")return value with {Category=value.Category==id?"":"other",Extensions=[],ThreeDTypes=[],Facts=null};
         var selected=Extensions(value).ToHashSet(StringComparer.OrdinalIgnoreCase);var group=FormatRegistry.Extensions(id);
         if(group.All(selected.Contains))selected.ExceptWith(group);else selected.UnionWith(group);
-        var next=value with {Category="",Extensions=selected.Order().ToArray()};
+        var next=value with {Category="",Extensions=selected.Order().ToArray(),ThreeDTypes=[]};
         return next with {Facts=RetainFacts(next,value.Facts)};
     }
     public static Cap7CE.Core.Protocol.CoreSearchFactFilter? RetainFacts(BrowseFilter next,Cap7CE.Core.Protocol.CoreSearchFactFilter? facts)

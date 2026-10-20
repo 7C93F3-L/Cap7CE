@@ -20,6 +20,7 @@ public sealed partial class MainWindow : Window
     private readonly ResultsView results=new();
     private readonly DetailsPane details;
     private readonly WorkspaceLayoutController layout;
+    private readonly FilterAvailabilityService filterAvailability;
     private SettingsWindow? settings;
     private PreviewWindow? preview;
     private BrowseSession? active;
@@ -29,6 +30,8 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
+        filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
+        filters.RetryAvailability+=()=>{if(active is not null)filterAvailability.Update(active,true);};
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,Notice);
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,StatusHost,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
@@ -82,7 +85,7 @@ public sealed partial class MainWindow : Window
     private void Bind()
     {
         if(active is null||closed)return;
-        sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);results.Bind(active.Items);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
+        sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);results.Bind(active.Items);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
     private void OpenLocation(string path)
@@ -129,6 +132,7 @@ public sealed partial class MainWindow : Window
         if(e.OriginalSource is TextBox||e.OriginalSource is AutoSuggestBox)return;
         if(alt&&active is not null&&e.Key is VirtualKey.Left or VirtualKey.Right){e.Handled=true;commands.Run(()=>e.Key==VirtualKey.Left?active.BackAsync():active.ForwardAsync());return;}
         if(e.Key==VirtualKey.F5){e.Handled=true;Refresh();return;}
+        if(e.OriginalSource is DependencyObject source&&filters.ContainsKeyboardTarget(source))return;
         if(control&&e.Key==VirtualKey.A){e.Handled=true;results.SelectAll();return;}
         var selection=results.Selection;if(selection.Count==0)return;
         if(control&&e.Key==VirtualKey.C){e.Handled=true;commands.Run(()=>FileCommands.CopyFilesAsync(selection));}
@@ -138,7 +142,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

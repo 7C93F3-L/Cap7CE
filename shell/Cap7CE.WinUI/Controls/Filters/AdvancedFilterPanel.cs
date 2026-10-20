@@ -19,11 +19,17 @@ internal sealed class AdvancedFilterPanel : UserControl
         foreach(var group in AdvancedFilterRules.Groups.Where(g=>g.Kind==domain||domain=="image-dimensions"&&g.Id=="artboards")) {
             if(!versions.ContainsKey(group.Kind))versions.Add(group.Kind,FormatRegistry.ExtractorVersion(group.Kind));
             var buttons=new List<(ToggleButton,AdvancedFilterOption)>();
+            var tall=group.Id is "archive-structure" or "three-d-structure";
             foreach(var option in group.Options) {
                 var icon=group.Id is "archive-content" or "archive-structure" or "three-d-structure"?FilterIcons.Create(option.Id=="image"?"visual":option.Id):null;
                 var button=FilterSection.Option(option.Label,()=>Set(AdvancedFilterRules.Toggle(Current(group),group,option)),icon);buttons.Add((button,option));
+                if(tall&&icon is not null) {
+                    ((StackPanel)button.Content).Children.Clear();((FrameworkElement)icon).Width=((FrameworkElement)icon).Height=24;
+                    button.Content=Ui.Column(icon,new TextBlock {Text=option.Label,FontSize=11,HorizontalAlignment=HorizontalAlignment.Center});
+                    ((StackPanel)button.Content).Spacing=2;button.Height=56;
+                }
             }
-            var section=new FilterSection(group.Title,FilterSection.Options(buttons.Select(pair=>(UIElement)pair.Item1).ToArray(),group.Options.Length>6?4:3),
+            var section=new FilterSection(group.Title,FilterSection.Options(buttons.Select(pair=>(UIElement)pair.Item1).ToArray(),group.Options.Length>6?4:3,tall?56:26),
                 group.Range.Length>0?anchor=>Edit(anchor,group):null);
             row.Children.Add(section);sections.Add((group,section,buttons));
         }
@@ -40,6 +46,8 @@ internal sealed class AdvancedFilterPanel : UserControl
             section.Summary.Text=AdvancedFilterRules.Has(facts,group)&&!buttons.Any(pair=>pair.Button.IsChecked==true)?"自定":"";
         }
     }
+    public void SetAvailability(FilterAvailability state)
+    {foreach(var (group,section,_) in sections)section.IsEnabled=state.Enabled(group.Kind);}
     private void Edit(Button anchor,AdvancedFilterGroup group)
     {
         var (lower,upper,count)=AdvancedFilterRules.Bounds(Current(group),group);

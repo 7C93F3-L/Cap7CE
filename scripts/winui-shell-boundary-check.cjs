@@ -38,6 +38,11 @@ assert(read('scripts/winui-resources.cjs').includes('winui-filter-resources.cjs'
 assert(read('scripts/winui-resources.cjs').includes('winui-advanced-filter-resources.cjs'), 'native advanced presets must be generated from the current mainline converters');
 assert(read('shell/Cap7CE.WinUI/Controls/Filters/FactFilterStrip.cs').includes('AdvancedFilterPanel'), 'specialized facts must use the shared advanced filter component');
 assert(!/brightnessMean|saturationMean|borderWhiteRatio/.test(read('shell/Cap7CE.WinUI/Models/VisualFilterRules.cs')), 'native visual filters must not duplicate semantic thresholds');
+const availabilityController = read('shell/Cap7CE.WinUI/Controllers/FilterAvailabilityController.cs');
+assert(!/Microsoft\.UI|System\.IO|Services|PeriodicTimer|DispatcherTimer|Task\.Delay/.test(availabilityController), 'availability scheduling must stay UI-independent and event-driven');
+const availability = read('shell/Cap7CE.WinUI/Services/FilterAvailabilityService.cs');
+assert(!/CatalogBuild|CatalogRebuild|metadata\.build|MetadataBuild|KeywordsWrite|Timer|Task\.Delay/.test(availability), 'filter probes cannot start extraction, write operations or polling');
+assert(!/new\s+CoreSearch(?:AspectRange|IntegerRange)/.test(read('shell/Cap7CE.WinUI/Models/MediaFilterRules.cs')), 'native media presets must use generated mainline bounds');
 assert(read('shell/Cap7CE.WinUI/Themes/ShellResources.xaml').includes('<controls:AssetTile/>'), 'custom tile must appear in compiled XAML to generate WinUI activation metadata');
 assert(/Unloaded\s*\+=/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs')), 'recycled tiles must release pixels');
 assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('Cap7CE-PhaseF'), 'visual cache must be separate from production');

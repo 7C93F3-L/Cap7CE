@@ -2,19 +2,23 @@
 
 ## 当前实施状态（2026-10-20）
 
+上方筛选的剩余媒体预设由同一资源生成器输出 `filter-media-options.json`，`MediaFilterRules` 只组合已有Protocol范围，不复制视频分辨率、音频时长、声道和宽高比阈值。图像尺寸支持精确宽高或独立范围，时长按十进制秒向内取整到毫秒，避免边界漂移；清除只影响当前组。`filter-three-d-types.json` 从主线三维类型映射生成，`ThreeDFilterRules` 保留基础类型选择、仅缩小有效查询扩展名；类型细分无需元数据，空交集保持空结果，基础类型改变时清理细分。
+
+`FilterAvailabilityController` 独立调度有界存在性检查，按目录、有效类型、隐藏状态和Core连接改变触发，或由用户重试；六秒期限、取消和代次隔离阻止旧结果覆盖当前视图，没有定时轮询。`FilterAvailabilityService` 仅沿既有Core会话解析目录并执行一项只读搜索，属性和颜色分开探测。分页游标使用现有无状态签名载荷，探测只消费首项，不另建搜索会话；取消沿用 `CoreConnection` 现有机制。`MainWindow` 只装配服务并在派发回UI时再次校验代次；关闭窗口先取消检查。`FilterAvailabilityNotice` 显示缺失/失败与重新检查，尚未迁入的提取动作明确引导用户在Electron手动完成，不触发扫描或属性任务。纯条件测试覆盖组合与边界、取消/过期/重试/关闭；独立临时库烟测验证单项查询与取消，不读取用户素材库。
+
 专用属性分组由 `scripts/winui-advanced-filter-resources.cjs` 调用当前主线 `toComputerSearchArchiveConditions` 及其既有领域转换链生成 `filter-advanced-options.json`，只保留现用分组的允许扩展名、Protocol字段、预设及范围边界，不打包React/CSS或备用界面。`AdvancedFilterRules` 验证描述边界，只修改document/threeD/font/model/textData/archive的有界叶字段，保留会话事实kind与extractorVersion；支持单选范围、多段范围/枚举并集及独立布尔条件，空嵌套载荷清理后再返回强类型DTO。
 
-`AdvancedFilterPanel` 组合统一 `FilterSection`、ToggleButton和原生范围编辑器，按所选扩展名显示文档/画板、三维结构/面数、模型、字体、文本/CSV/JSON和压缩包分组；每组编辑/清除保留其他组。`FilterPresets.RetainFacts` 拒绝CSV条件沿用到JSON等不兼容切换。PSD/AI/CDR画板复用document事实域，图片控件与画板控件分别构造自己合法的事实类型，不拼接跨事实域条件；切换入口会替换不兼容事实。`FilterFactRules` 按生成分组回显和计数。旧宽泛数字编辑器删除已被专用分组替代的分支，只负责尺寸、时长和声道。颜色可用性提示、三维模型类型细分及部分专用图文布局仍未对等；不启动提取、建库或迁移数据。
+`AdvancedFilterPanel` 组合统一 `FilterSection`、ToggleButton和原生范围编辑器，按所选有效扩展名显示文档/画板、三维结构/面数、模型、字体、文本/CSV/JSON和压缩包分组；每组编辑/清除保留其他组。三维与压缩包结构复用56 DIP图文选项，元数据控件按属性可用性启用。`FilterPresets.RetainFacts` 拒绝CSV条件沿用到JSON等不兼容切换。PSD/AI/CDR画板复用document事实域，图片控件与画板控件分别构造自己合法的事实类型，不拼接跨事实域条件；切换入口会替换不兼容事实。`FilterFactRules` 按生成分组回显和计数。旧宽泛数字编辑器删除已被专用分组替代的分支，只负责尺寸、时长和声道。不启动提取、建库或迁移数据。
 
 顶部颜色筛选由 `ColorFilterSection` 使用原生ToggleButton圆形色样及选中环显示；图片包含透明背景及四种特征，视频只含主线支持的非透明颜色，特征从编辑浮层选择。`scripts/winui-filter-resources.cjs` 随资源构建只导出当前图片/视频筛选所用语义及约束到 `filter-visual-semantics.json`，不导出关键词别名、旧页面或CSS；`VisualFilterRules` 直接把该共享事实映射到现有 `CoreSearchVisualGroup`，颜色组内部OR、颜色与特征组之间AND，保留尺寸/比例/动静等其他事实条件，不启动颜色提取或索引任务。
 
-`AspectFilterEditor` 与纯 `AspectFilterRules` 提供常用比例和1–100000整数自定义比例，沿用主线±2%容差；应用时保留当前其他条件。数字编辑器按尺寸/时长/声道分组输入和清除，不再由所有铅笔入口打开同一个宽泛属性弹层。`FilterFactRules` 集中生效分组判断及计数，自定义条件在标题回显。相关纯条件测试不打开Catalog。颜色可用性提示、三维类型细分及部分专用图文布局仍未对等，不据本轮宣称完整筛选对等。
+`AspectFilterEditor` 与纯 `AspectFilterRules` 提供常用比例和1–100000整数自定义比例，沿用主线±2%容差；应用时保留当前其他条件。数字编辑器按尺寸/时长/声道分组输入和清除，不再由所有铅笔入口打开同一个宽泛属性弹层。`FilterFactRules` 集中生效分组判断及计数，自定义条件在标题回显。相关纯条件测试不打开Catalog。图标、色彩、布局及各格式结果仍需用户统一验收。
 
 筛选图标的语义颜色由 `FilterIcons.BindSelection` 绑定按钮的Checked/Unchecked、前景及主题变化：选中时将共享 `CapAccentForegroundBrush` 作为 `SidebarIcon.InkForeground` 显式输入，未选中跟随原生按钮前景；类型与比例入口共用，不依赖模板Presenter的视觉状态通知是否传播到绑定。`SidebarIcon` 仍拥有独立ink快照及源Color订阅，未提供显式输入的左栏图标沿用既有Presenter继承。仅事件及有限帧同步，无轮询或常驻Rendering。
 
 上方筛选栏由 `Controls/FilterBar` 组合，范围止于时间/类型/大小及随类型显示的属性分组，不改变目录路径/搜索工具条。`Controls/Filters/FilterSection` 统一80 DIP内容、24 DIP标题与26 DIP两行选项，比例使用56 DIP图文选项；`FilterIcons` 仅复用当前主线实际调用的单色路径，通过既有 `SidebarIcon` 的可选轮廓数据绘制并共用主题前景投影。`Themes/FilterResources.xaml` 集中原生ToggleButton状态、面板和分组样式；强调色前景提升为 `ShellResources` 的共享 `CapAccentForegroundBrush`，左栏与筛选继续使用同一对比色计算及45°表面，不复制色表。
 
-`Models/FilterPresets` 持有本地日历时间边界、大小预设和类型组合转换，只依赖既有格式注册表与条件模型。`BrowseFilter` 继续生成原Core DTO：日期结束按排他边界转为前一个FILETIME单位，大小预设将主线上限转换为Core包含上限；不修改Core协议、查询或索引。`FilterEditors` 拥有日期、大小和注册扩展名草稿，`FactFilterStrip` 只展示适用类型的既有事实条件，`FactFilterEditor` 编辑范围时保留其他组条件；`FilterFlyouts` 统一原生亚克力浮层的互斥及滚动/卸载关闭。外层使用原生ScrollViewer横向浏览，普通滚轮在溢出时横向移动；选项使用非虚拟化Grid，不能再使用无ItemsControl宿主的WrapGrid。`Cap7CE.Filter.Tests` 只验证条件边界和组合，不读取个人配置或打开Catalog。颜色可用性提示和完整专用高级选项仍未全部迁入，不以编译代替交互验收。
+`Models/FilterPresets` 持有本地日历时间边界、大小预设和类型组合转换，只依赖既有格式注册表与条件模型。`BrowseFilter` 继续生成原Core DTO：日期结束按排他边界转为前一个FILETIME单位，大小预设将主线上限转换为Core包含上限；不修改Core协议、查询或索引。`FilterEditors` 拥有日期、大小和注册扩展名草稿，`FactFilterStrip` 只展示适用类型的既有事实条件，`FactFilterEditor` 编辑范围时保留其他组条件；`FilterFlyouts` 统一原生亚克力浮层的互斥及滚动/卸载关闭。外层使用原生ScrollViewer横向浏览，普通滚轮在溢出时横向移动，边界/Ctrl/横向滚轮保留原生处理；选项使用非虚拟化Grid，不能再使用无ItemsControl宿主的WrapGrid。`Cap7CE.Filter.Tests` 只验证条件边界、组合和纯检查控制器，不读取个人配置或打开Catalog。不以编译代替交互验收。
 
 固定图标采用10 DIP外圈、1 DIP描边、3 DIP中心点，并按截图上移一个物理像素；不改变48 DIP按钮及点击区域。按下背景单独定义为浅色#FFCCCCCC/深色#FF333333，高对比度仍用系统高亮色；这些是自定义按钮的视觉近似，不覆盖或宣称读取了DWM默认色。固定按钮在偏好异步加载后创建，创建及Loaded时通过只读前台窗口句柄查询同步激活状态，后续沿Window.Activated更新；失焦透明度只投影到图标层，背景保持自身状态。此初始化不更改前台窗口或复制窗口状态机。
 

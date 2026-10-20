@@ -31,7 +31,7 @@ internal static class AdvancedFilterRules
     private static JsonObject Source(AdvancedFilterOption option)=>JsonNode.Parse(option.Facts.GetRawText())!.AsObject();
     public static bool Available(AdvancedFilterGroup group,BrowseFilter filter)
     {
-        var extensions=FilterPresets.Extensions(filter);
+        var extensions=FilterPresets.QueryExtensions(filter);
         return extensions.Length>0&&extensions.All(group.Allowed.Contains)&&(group.Any.Length==0||extensions.Any(group.Any.Contains));
     }
     private static bool SameTextKind(JsonObject node,AdvancedFilterGroup group)

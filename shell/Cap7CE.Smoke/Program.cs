@@ -5,6 +5,7 @@ using Microsoft.Data.Sqlite;
 
 var root = Path.GetFullPath(args.Single());
 var temporary = Path.Combine(Path.GetTempPath(), "Cap7CE-PhaseF-" + Guid.NewGuid().ToString("N"));
+if (!Path.GetFullPath(temporary).StartsWith(Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("Fixture must stay inside the temporary directory");
 Directory.CreateDirectory(temporary);
 try
 {
@@ -32,6 +33,9 @@ try
             foreach (var item in page.Items) Require(names.Add(item.Name), "no duplicate page items");
         }
         Require(names.Count == 251, "all three pages");
+        var probe = await core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart,
+            new SearchStartRequest("asset", 1, CoreSearchSorts.NameAscending, [volume]));
+        Require(probe.Items.Count == 1 && probe.NextCursor is not null, "bounded availability-style search returns one item without requesting the remaining pages");
         foreach (var denied in new[] { CoreOperations.CatalogBuild, CoreOperations.CatalogRebuild, CoreOperations.VolumeSelection, CoreOperations.KeywordsWrite, "metadata.build.attach" })
         {
             var rejected = false;

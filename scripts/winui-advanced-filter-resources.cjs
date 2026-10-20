@@ -5,7 +5,8 @@ module.exports=async(root,output)=>{
     'export {toComputerSearchArchiveConditions as convert} from "./src/renderer/computer-search/computerSearchArchiveConditions";',
     'export * from "./src/renderer/stable-ui/exploreFormatFilters";',
     'export {fileFormatCapabilities as formats} from "./electron/formatCapabilities";',
-    'export {supportedThreeDFactExtensions as threeD} from "./electron/threeDFactTypes";'
+    'export {supportedThreeDFactExtensions as threeD} from "./electron/threeDFactTypes";',
+    'export {searchThreeDModelTypes, getThreeDModelTypeExtensions} from "./electron/threeDSearchFilters";'
   ].join('\n'),resolveDir:root},bundle:true,platform:'node',format:'cjs',write:false});
   const module={exports:{}};new Function('module','exports',compiled.outputFiles[0].text)(module,module.exports);
   const api=module.exports,groups=[];
@@ -50,4 +51,14 @@ module.exports=async(root,output)=>{
     ['image','video','audio','document','project','threeD','program','other'],['图像','视频','音频','文档','工程','三维','程序','其他'],['archive.contentTypes'],'union');
   group('archive-structure','目录结构','archive','isArchiveOnlyExtensionSelection','archiveStructures',['flat','nested'],['平铺','嵌套'],['archive.structures'],'union');
   fs.writeFileSync(path.join(output,'filter-advanced-options.json'),JSON.stringify(groups));
+  const media=[];
+  function mediaGroup(id,key,values,labels,multiple=false){media.push({id,options:values.map((value,i)=>({id:value,label:labels[i],facts:api.convert({fileFormat:'all',[key]:multiple?[value]:value}).facts}))});}
+  mediaGroup('video-resolution','videoResolutions',['720p','1080p','2k','4k','8k'],['720p','1080p','2K','4K','8K'],true);
+  mediaGroup('video-duration','videoDurationPreset',['under-15s','15s-1m','1m-5m','over-5m'],['＜15秒','15秒–1分','1–5分','≥5分']);
+  mediaGroup('audio-duration','audioDurationPreset',['under-5s','5s-30s','30s-5m','over-5m'],['＜5秒','5–30秒','30秒–5分','≥5分']);
+  mediaGroup('audio-channels','audioChannels',['mono','stereo','multichannel'],['单声道','立体声','多声道'],true);
+  for(const [id,key] of [['image-dimensions-aspect','imageAspectRatios'],['video-aspect','videoAspectRatios']])
+    mediaGroup(id,key,['portrait','landscape','square','wide','tall'],['竖图','横图','方形','宽图','长图'],true);
+  fs.writeFileSync(path.join(output,'filter-media-options.json'),JSON.stringify(media));
+  fs.writeFileSync(path.join(output,'filter-three-d-types.json'),JSON.stringify(api.searchThreeDModelTypes.map((id,i)=>({id,label:['多边形','CAD','场景'][i],extensions:api.getThreeDModelTypeExtensions([id])}))));
 };

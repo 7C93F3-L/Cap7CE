@@ -1,5 +1,6 @@
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Models;
+using Cap7CE.WinUI.Controllers;
 
 var checks=0;
 void Require(bool condition,string label){if(!condition)throw new Exception(label);checks++;}
@@ -73,4 +74,51 @@ var doc=AdvancedFilterRules.Toggle(new("document",9),composition,composition.Opt
 doc=AdvancedFilterRules.ApplyRange(doc,documentCount,2,50)!;
 Require(AdvancedFilterRules.Bounds(doc,documentCount).Max==50&&doc.Document!.HasEmbeddedImages==false,"Custom page count preserves an explicitly false image-composition condition");
 Require(AdvancedFilterRules.Clear(doc,documentCount)!.Document!.HasEmbeddedImages==false,"Clearing page count preserves the independent text-only selector");
+var audioPresets=MediaFilterRules.Options("audio-duration");
+Require(audioPresets[0].Facts.MaximumDurationMilliseconds==4999&&audioPresets[1].Facts.MinimumDurationMilliseconds==5000&&audioPresets[1].Facts.MaximumDurationMilliseconds==29999,"Audio uses its own five-second boundary");
+foreach(var groupId in new[]{"audio-duration","video-duration"}) {
+    var presets=MediaFilterRules.Options(groupId);
+    for(var i=1;i<presets.Count;i++)Require(presets[i-1].Facts.MaximumDurationMilliseconds+1==presets[i].Facts.MinimumDurationMilliseconds,"Duration intervals have no gaps or overlap");
+}
+var resolutions=MediaFilterRules.Options("video-resolution");
+var video=MediaFilterRules.Toggle(new("video",9,MinimumWidth:500,MinimumDurationMilliseconds:123),resolutions[0],"resolution");
+video=MediaFilterRules.Toggle(video,resolutions[3],"resolution");
+Require(video.ShortEdgeRanges is {Count:2}&&video.MinimumWidth is null&&video.MinimumDurationMilliseconds==123&&video.ExtractorVersion==9,"Resolution union replaces custom dimensions and preserves duration and version");
+video=MediaFilterRules.Toggle(video,resolutions[0],"resolution");
+Require(video.ShortEdgeRanges is {Count:1}&&MediaFilterRules.Selected(video,resolutions[3],"resolution"),"Removing one resolution preserves the other");
+var channels=MediaFilterRules.Options("audio-channels");
+var audio=MediaFilterRules.Toggle(MediaFilterRules.Toggle(new("audio",4),channels[0],"channels"),channels[2],"channels");
+Require(audio.ChannelRanges is {Count:2}&&audio.ChannelRanges[1].Minimum==3&&audio.ChannelRanges[1].Maximum is null,"Mono and multichannel compose without including stereo");
+Require(MediaFilterRules.Milliseconds(1.001,true)==1001&&MediaFilterRules.Milliseconds(1.001,false)==1001,"Decimal millisecond boundaries do not drift by one");
+Require(MediaFilterRules.Milliseconds(0.0001,true)==1&&MediaFilterRules.Milliseconds(0.0001,false)==0,"Sub-millisecond limits round inward");
+Require(MediaFilterRules.DimensionLabel(new("image-dimensions",1,MinimumWidth:1920,MaximumWidth:1920,MinimumHeight:1080,MaximumHeight:1080))=="1920 × 1080","Exact dimensions have a specific summary");
+var three=FilterPresets.ToggleType(empty,"threeD");
+var cad=ThreeDFilterRules.Toggle(three,"cad");
+Require(FilterPresets.Selected(cad,"threeD")&&FilterPresets.QueryExtensions(cad).Order().SequenceEqual(ThreeDFilterRules.Extensions(["cad"]).Order()),"Three-dimensional subtype narrows the query while preserving the parent selection");
+var combined=ThreeDFilterRules.Toggle(cad,"polygon");
+Require(FilterPresets.QueryExtensions(combined).Length==ThreeDFilterRules.Extensions(["cad","polygon"]).Length&&combined.Count==2,"Subtype union counts as one additional group");
+Require(FilterPresets.QueryExtensions(ThreeDFilterRules.Toggle(cad,"cad")).Length==FilterPresets.Extensions(three).Length,"Clearing the subtype restores the original type scope");
+Require(FilterPresets.ToggleType(cad,"audio").ThreeDTypes.Length==0,"Changing the basic type clears incompatible subtype state");
+Require((new BrowseFilter {Extensions=[".obj"],ThreeDTypes=["cad"]}).ToConditions()!.Extensions is {Count:0},"Empty subtype intersection never widens to all files");
+Require(!AdvancedFilterRules.Available(Find("three-d-count"),cad),"CAD subtype does not offer unsupported triangle metadata");
+var snapshots=new List<FilterAvailability>();
+using(var controller=new FilterAvailabilityController(snapshots.Add)) {
+    var oldProbe=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    CancellationToken oldToken=default;var calls=0;
+    controller.Update("old",["audio"],(_,_,token)=>{oldToken=token;return oldProbe.Task;});var oldCompletion=controller.Completion;var obsolete=snapshots[^1];
+    controller.Update("new",["video"],(_,colors,_)=>{calls++;return Task.FromResult(!colors);});await controller.Completion;
+    Require(oldToken.IsCancellationRequested&&snapshots[^1].Get("video")==FilterAvailabilityState.Available&&snapshots[^1].Get("video",true)==FilterAvailabilityState.Missing,"New scope cancels the old probe and checks color availability separately");
+    var published=snapshots.Count;oldProbe.SetResult(true);await oldCompletion;
+    Require(snapshots.Count==published&&!controller.IsCurrent(obsolete),"Late probe results and queued obsolete snapshots cannot replace the current state");
+    controller.Update("new",["video"],(_,_,_)=>throw new Exception("should not probe"));
+    Require(calls==2,"Unchanged scope does not poll");
+    controller.Update("new",["video"],(_,_,_)=>Task.FromResult(true),true);await controller.Completion;
+    Require(snapshots[^1].Get("video",true)==FilterAvailabilityState.Available,"Explicit retry refreshes an unchanged scope");
+    controller.Update("failed",["audio"],(_,_,_)=>Task.FromException<bool>(new IOException("fixture")));await controller.Completion;
+    Require(snapshots[^1].Get("audio")==FilterAvailabilityState.Failed&&!snapshots[^1].Enabled("audio"),"Probe failure is distinct from missing metadata");
+    var late=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    controller.Update("closing",["audio"],(_,_,_)=>late.Task);var completion=controller.Completion;published=snapshots.Count;
+    controller.Dispose();late.SetResult(true);await completion;
+    Require(snapshots.Count==published&&!controller.IsCurrent(snapshots[^1]),"Closing prevents late UI publication");
+}
 Console.WriteLine($"Top filter checks passed: {checks}");

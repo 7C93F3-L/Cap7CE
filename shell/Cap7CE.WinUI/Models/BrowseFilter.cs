@@ -10,6 +10,7 @@ internal sealed record BrowseFilter
 	public string Category { get; init; } = "";
 
 	public string[] Extensions { get; init; } = Array.Empty<string>();
+	public string[] ThreeDTypes { get; init; } = Array.Empty<string>();
 
 	public long? MinimumBytes { get; init; }
 
@@ -21,22 +22,14 @@ internal sealed record BrowseFilter
 
 	public CoreSearchFactFilter? Facts { get; init; }
 
-	public int Count => ((Category.Length > 0 || Extensions.Length != 0) ? 1 : 0) + ((MinimumBytes.HasValue || MaximumBytes.HasValue) ? 1 : 0) + ((After.HasValue || Before.HasValue) ? 1 : 0) + FilterFactRules.Count(Facts);
+	public int Count => ((Category.Length > 0 || Extensions.Length != 0) ? 1 : 0) + ((MinimumBytes.HasValue || MaximumBytes.HasValue) ? 1 : 0) + ((After.HasValue || Before.HasValue) ? 1 : 0) + (ThreeDTypes.Length>0?1:0) + FilterFactRules.Count(Facts);
 
 	public CoreSearchFileConditions? ToConditions()
 	{
-		string[] array;
-		if (Extensions.Length != 0)
-		{
-			array = Extensions;
-		}
-		else
-		{
-			array = ((Category.Length > 0 && Category != "other") ? FormatRegistry.Extensions(Category) : Array.Empty<string>());
-		}
+		var array=FilterPresets.QueryExtensions(this);
 		if (Count != 0)
 		{
-			return new CoreSearchFileConditions((array.Length != 0) ? array : null, MinimumBytes, MaximumBytes, After?.UtcDateTime.ToFileTimeUtc().ToString(), Before?.UtcDateTime.AddTicks(-1).ToFileTimeUtc().ToString(), (Category == "other") ? FormatRegistry.Formats.Select((FileFormat f) => f.Extension).Distinct().ToArray() : null);
+			return new CoreSearchFileConditions((array.Length != 0||ThreeDTypes.Length>0) ? array : null, MinimumBytes, MaximumBytes, After?.UtcDateTime.ToFileTimeUtc().ToString(), Before?.UtcDateTime.AddTicks(-1).ToFileTimeUtc().ToString(), (Category == "other") ? FormatRegistry.Formats.Select((FileFormat f) => f.Extension).Distinct().ToArray() : null);
 		}
 		return null;
 	}

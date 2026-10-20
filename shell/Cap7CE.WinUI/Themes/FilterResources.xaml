@@ -18,7 +18,7 @@
           <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="Selected.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
           <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="Selected.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/><Setter Target="Presenter.Opacity" Value="0.8"/></VisualState.Setters></VisualState>
           <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="CheckedDisabled"><VisualState.Setters><Setter Target="Selected.Opacity" Value="0.4"/><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedDisabled"><VisualState.Setters><Setter Target="Selected.Opacity" Value="0.4"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
         </VisualStateGroup></VisualStateManager.VisualStateGroups>
         <Border x:Name="Hover" Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
         <Border x:Name="Selected" themes:AccentGradient.Source="{ThemeResource CapAccentGradient}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
