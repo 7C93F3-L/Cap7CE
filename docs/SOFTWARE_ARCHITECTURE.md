@@ -36,7 +36,7 @@ WinUI 的 `Models` 目录包含 `AssetCollection`、`AssetItem`、`BrowseFilter`
 
 `AssetCollection` 按100项增量加载，`GridView/ItemsWrapGrid` 保持原生容器虚拟化；`AssetTile` 实现时请求图像，卸载释放像素并丢弃迟到结果。`CoreNodeHost` 统一固定摘要Node、清理注入环境、有界帧、原生Job监督、惰性启动和退出；`VisualConnection` 限制两个已接纳视觉请求，图片缓存使用独立Cap7CE-PhaseF根。预览复用原图片、正文、PDF、Office、电子书、压缩包和字体元信息Core；音视频由WinUI媒体控件呈现。未迁入完整专用查看器时明示基本信息或默认程序入口。
 
-`FavoriteService` 通过原普通权限Configuration宿主读取收藏，仅用户动作改配置；`FileCommands` 统一预览/打开/定位/剪贴板/拖出和确认后的回收站入口，原生身份与链接检查在操作前执行。删除通过原FileOperations宿主，只可回收删除；关闭预览并释放Core读取后执行，成功路径在本壳所有标签及后续分页中过滤，不据此改写Catalog或清理正式缓存。Reader维护未接入，外部文件变化仍依赖已有目录更新及手动刷新。模型设置/手动加载复用原Core域，打开设置不自动加载；诊断导出只含系统信息。
+`FavoriteService` 通过原普通权限Configuration宿主读取收藏，配置固定为与 Electron 主线相同的 `%LOCALAPPDATA%/Cap7CE/Core/favorite-directories.json`；不连接旧 `UserData/config/directories.json` 目录索引清单，不转换旧格式，仅用户动作改收藏配置。左栏目录选择器与结果右键均调用同一服务。`FileCommands` 统一预览/打开/定位/剪贴板/拖出和确认后的回收站入口，原生身份与链接检查在操作前执行。删除通过原FileOperations宿主，只可回收删除；关闭预览并释放Core读取后执行，成功路径在本壳所有标签及后续分页中过滤，不据此改写Catalog或清理正式缓存。Reader维护未接入，外部文件变化仍依赖已有目录更新及手动刷新。模型设置/手动加载复用原Core域，打开设置不自动加载；诊断导出只含系统信息。
 
 `shell/build.ps1` 按需恢复缺失Core资源、生成格式资源、构建查询宿主与WinUI到独立输出；`run.ps1` 启动已有库入口。`Cap7CE.Smoke` 保留临时合成库与PNG的默认只读会话烟测；`measure.ps1` 仅显式调用时有限采样。`winui-shell-boundary-check.cjs` 接入架构检查，守护无UI数据库依赖、禁止初始化/维护、会话白名单、x64、虚拟化、缓存隔离及单一职责体量。迁移轮按用户要求不进行交互验证、长时间测试或资源对照；未迁移用户数据、未全盘重建、未验证安装包。功能对等与资源比较需后续实际验收。
 
