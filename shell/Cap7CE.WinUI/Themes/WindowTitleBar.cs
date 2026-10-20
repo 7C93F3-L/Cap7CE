@@ -19,6 +19,7 @@ internal sealed class WindowTitleBar : Grid
     private ToggleButton? pin;
     private Action<bool>? pinChanged;
     private Ellipse? pinCenter;
+    private Grid? pinGlyph;
     private Window? owner;
     private AppWindow? appWindow;
     private bool updateQueued, updatingRegion, regionFailureLogged;
@@ -51,9 +52,9 @@ internal sealed class WindowTitleBar : Grid
         dragRegion.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) });
         dragRegion.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         dragRegion.ColumnDefinitions.Add(captionSpace);
-        var glyph = new Grid { Width = 12, Height = 12, IsHitTestVisible = false };
-        var ring = new Ellipse { Width = 12, Height = 12, StrokeThickness = 1 };
-        pinCenter = new Ellipse { Width = 4, Height = 4 };
+        var glyph = pinGlyph = new Grid { Width = 10, Height = 10, IsHitTestVisible = false, RenderTransform = new TranslateTransform() };
+        var ring = new Ellipse { Width = 10, Height = 10, StrokeThickness = 1 };
+        pinCenter = new Ellipse { Width = 3, Height = 3 };
         pin = new ToggleButton { Content = glyph, Style = (Style)Application.Current.Resources["CapTitleBarPin"] };
         ring.SetBinding(Shape.StrokeProperty, new Microsoft.UI.Xaml.Data.Binding { Source = pin, Path = new("Foreground") });
         pinCenter.SetBinding(Shape.FillProperty, new Microsoft.UI.Xaml.Data.Binding { Source = pin, Path = new("Foreground") });
@@ -66,11 +67,13 @@ internal sealed class WindowTitleBar : Grid
         dragRegion.Loaded += (_, _) => QueuePinRegionUpdate();
         dragRegion.SizeChanged += (_, _) => QueuePinRegionUpdate();
         pin.SizeChanged += (_, _) => QueuePinRegionUpdate();
+        pin.Loaded += (_, _) => SynchronizeActivation();
         pin.ActualThemeChanged += (_, _) => QueuePinRegionUpdate();
         appWindow.Changed += OnWindowChanged;
         appWindow.Destroying += OnDestroying;
         window.Activated += OnActivated;
         window.Closed += OnClosed;
+        SynchronizeActivation();
         QueuePinRegionUpdate();
     }
 
@@ -109,6 +112,12 @@ internal sealed class WindowTitleBar : Grid
         if (appWindow is null || pin is null || !pin.IsLoaded || pin.XamlRoot is null || !appWindow.IsVisible
             || appWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized }) return;
         var scale = pin.XamlRoot.RasterizationScale;
+        // Only the painted surfaces reserve one device pixel at the bottom.
+        // The 48-DIP hit target and centered glyph retain their full layout bounds.
+        var surfaceInset = new Thickness(0, 0, 0, 1 / scale);
+        if (!pin.BorderThickness.Equals(surfaceInset)) pin.BorderThickness = surfaceInset;
+        // Native caption glyphs in the supplied screenshot sit one pixel higher.
+        if (pinGlyph?.RenderTransform is TranslateTransform glyphOffset) glyphOffset.Y = -1 / scale;
         var inset = appWindow.TitleBar.RightInset / scale;
         var width = inset > 0 ? inset / 3 : 46;
         if (captionSpace.Width.Value != inset || pin.Width != width)
@@ -133,7 +142,17 @@ internal sealed class WindowTitleBar : Grid
     { if (args.DidSizeChange || args.DidPositionChange || args.DidPresenterChange || args.DidVisibilityChange) QueuePinRegionUpdate(); }
     private void OnDestroying(AppWindow sender, object args) => Detach();
     private void OnActivated(object sender, WindowActivatedEventArgs args)
-    { if (pin is not null) pin.Opacity = args.WindowActivationState == WindowActivationState.Deactivated ? 0.4 : 1; }
+    { SetGlyphActivation(args.WindowActivationState != WindowActivationState.Deactivated); }
+    private void SynchronizeActivation()
+    {
+        if (owner is not null) SetGlyphActivation(NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(owner)));
+    }
+    private void SetGlyphActivation(bool active)
+    {
+        // The pin is added after the first activation during preference loading.
+        // Initialize the glyph as well as reacting to later focus transitions.
+        if (pinGlyph is not null) pinGlyph.Opacity = active ? 1 : 0.4;
+    }
     private void OnClosed(object sender, WindowEventArgs args)
         => Detach();
     private void Detach()

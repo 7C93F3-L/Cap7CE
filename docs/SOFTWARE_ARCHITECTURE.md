@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-20）
 
+固定图标采用10 DIP外圈、1 DIP描边、3 DIP中心点，并按截图上移一个物理像素；不改变48 DIP按钮及点击区域。按下背景单独定义为浅色#FFCCCCCC/深色#FF333333，高对比度仍用系统高亮色；这些是自定义按钮的视觉近似，不覆盖或宣称读取了DWM默认色。固定按钮在偏好异步加载后创建，创建及Loaded时通过只读前台窗口句柄查询同步激活状态，后续沿Window.Activated更新；失焦透明度只投影到图标层，背景保持自身状态。此初始化不更改前台窗口或复制窗口状态机。
+
+固定按钮按截图将悬停及按下表面的下沿内缩一个物理像素，由 `WindowTitleBar` 按 `1 / RasterizationScale` 转为DIP，并通过模板的BorderThickness投影到两层背景Margin；根点击区、48 DIP布局及图标位置保持。此项是当前截图的视觉校正，不把标题栏布局高度等同于系统悬停绘制高度，其他缩放与窗口状态仍待人工确认。
+
 `SidebarIcon` 挂载时显式绑定最近 `ContentPresenter.Foreground`，绕开 UserControl 自身默认前景色对继承的覆盖；所有路径填充/描边持有每个图标独立的 ink 画刷，将 Foreground 当前解析后的 Color 复制进去，不将主题资源画刷直接转交给 Shape 再解析。监听 Foreground、源 SolidColorBrush.Color 及 ActualThemeChanged，主题变化后仅在后续两帧 Rendering 内合并复核，然后解除渲染订阅，卸载时解除源画刷订阅及祖先绑定。由当前内容呈现器统一提供明暗主题及选中态颜色，不交换颜色表，渐变选中项继续使用既有对比色。验证需沿设置页的共享偏好通知链，同时核对控件 Foreground 与实际 Shape.Fill/Stroke，不能只检查控件属性。设置窗口关闭时标记终态，已排队的主题投影跳过关闭窗口，避免关闭与偏好通知交错时访问已销毁窗口。
 
 主窗口通过 `WindowTitleBar.ConfigurePin` 投影独立偏好的 `AlwaysOnTop`，仅使用 `OverlappedPresenter.IsAlwaysOnTop`，不复制 Electron 窗口状态机。`Themes/TitleBarResources.xaml` 为原生 ToggleButton 提供系统标题栏前景、悬停及焦点样式；两个简单圆形由 XAML Ellipse 重绘。按钮位于原生三按钮左侧，按 RightInset 与 RasterizationScale 计算宽度及保留区，并将物理像素点击矩形注册为非客户区 Passthrough；布局变化、窗口变化时同步，原生拖动及三按钮仍由系统处理。设置、预览不新增固定入口，主窗口切换沿用既有偏好保存与通知通道。

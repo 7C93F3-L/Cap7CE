@@ -4,6 +4,10 @@ namespace Cap7CE.WinUI.Themes;
 
 internal static class NativeCaptionFeedback
 {
+    public static bool IsActive(nint window) => window != 0 && GetForegroundWindow() == window;
+    [DllImport("user32.dll", ExactSpelling = true)]
+    private static extern nint GetForegroundWindow();
+
     // DWM must see WM_NCMOUSELEAVE when moving into the XAML passthrough island.
     // https://learn.microsoft.com/windows/win32/api/dwmapi/nf-dwmapi-dwmdefwindowproc
     public static void ClearHover(nint window)

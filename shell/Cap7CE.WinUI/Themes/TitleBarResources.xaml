@@ -2,16 +2,17 @@
   <ResourceDictionary.ThemeDictionaries>
     <!-- Observed native hover fills in the supplied light/dark screenshots.
          Keep these local to the pin; do not override native caption colors. -->
-    <ResourceDictionary x:Key="Light"><SolidColorBrush x:Key="CapTitleBarPinHoverBrush" Color="#FFE5E5E5"/></ResourceDictionary>
-    <ResourceDictionary x:Key="Default"><SolidColorBrush x:Key="CapTitleBarPinHoverBrush" Color="#FF191919"/></ResourceDictionary>
-    <ResourceDictionary x:Key="HighContrast"><SolidColorBrush x:Key="CapTitleBarPinHoverBrush" Color="{ThemeResource SystemColorHighlightColor}"/></ResourceDictionary>
+    <ResourceDictionary x:Key="Light"><SolidColorBrush x:Key="CapTitleBarPinHoverBrush" Color="#FFE5E5E5"/><SolidColorBrush x:Key="CapTitleBarPinPressedBrush" Color="#FFCCCCCC"/></ResourceDictionary>
+    <ResourceDictionary x:Key="Default"><SolidColorBrush x:Key="CapTitleBarPinHoverBrush" Color="#FF191919"/><SolidColorBrush x:Key="CapTitleBarPinPressedBrush" Color="#FF333333"/></ResourceDictionary>
+    <ResourceDictionary x:Key="HighContrast"><SolidColorBrush x:Key="CapTitleBarPinHoverBrush" Color="{ThemeResource SystemColorHighlightColor}"/><SolidColorBrush x:Key="CapTitleBarPinPressedBrush" Color="{ThemeResource SystemColorHighlightColor}"/></ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
   <Style x:Key="CapTitleBarPin" TargetType="ToggleButton">
     <Setter Property="Height" Value="48"/><Setter Property="Width" Value="46"/>
     <Setter Property="MinWidth" Value="0"/><Setter Property="Padding" Value="0"/>
+    <Setter Property="BorderThickness" Value="0,0,0,1"/>
     <Setter Property="Foreground" Value="{ThemeResource WindowCaptionForeground}"/>
     <Setter Property="Background" Value="{ThemeResource CapTitleBarPinHoverBrush}"/>
-    <Setter Property="BorderBrush" Value="{ThemeResource WindowCaptionButtonBackgroundPressed}"/>
+    <Setter Property="BorderBrush" Value="{ThemeResource CapTitleBarPinPressedBrush}"/>
     <Setter Property="UseSystemFocusVisuals" Value="True"/>
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ToggleButton">
       <Grid Background="Transparent">
@@ -19,13 +20,13 @@
           <VisualState x:Name="Normal"/><VisualState x:Name="Checked"/>
           <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Hover.Opacity" Value="1"/></VisualState.Setters></VisualState>
           <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="Hover.Opacity" Value="1"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="PressedSurface.Opacity" Value="1"/><Setter Target="Glyph.Opacity" Value="0.6"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="PressedSurface.Opacity" Value="1"/><Setter Target="Glyph.Opacity" Value="0.6"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="PressedSurface.Opacity" Value="1"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="PressedSurface.Opacity" Value="1"/></VisualState.Setters></VisualState>
           <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Glyph.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
           <VisualState x:Name="CheckedDisabled"><VisualState.Setters><Setter Target="Glyph.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
         </VisualStateGroup></VisualStateManager.VisualStateGroups>
-        <Border x:Name="Hover" Background="{TemplateBinding Background}" Opacity="0"/>
-        <Border x:Name="PressedSurface" Background="{TemplateBinding BorderBrush}" Opacity="0"/>
+        <Border x:Name="Hover" Margin="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Opacity="0"/>
+        <Border x:Name="PressedSurface" Margin="{TemplateBinding BorderThickness}" Background="{TemplateBinding BorderBrush}" Opacity="0"/>
         <ContentPresenter x:Name="Glyph" Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
       </Grid>
     </ControlTemplate></Setter.Value></Setter>
