@@ -13,6 +13,7 @@ internal sealed class FactFilterStrip : UserControl
     private readonly AspectFilterEditor aspectEditor;
     private readonly FilterFlyouts flyouts;
     private ColorFilterSection? colors;
+    private AdvancedFilterPanel? advanced;
     private readonly StackPanel row=new() {Orientation=Orientation.Horizontal,Spacing=6};
     private readonly List<(ToggleButton Button,Func<CoreSearchFactFilter,bool> Selected)> options=[];
     private readonly List<(FilterSection Section,IReadOnlyList<UIElement> Buttons,string Scope)> sections=[];
@@ -20,7 +21,7 @@ internal sealed class FactFilterStrip : UserControl
     private int extractorVersion;
     public FactFilterStrip(Func<BrowseFilter> read,Action<BrowseFilter> apply,FilterFlyouts flyouts)
     {this.read=read;this.apply=apply;this.flyouts=flyouts;editor=new(read,apply,flyouts);aspectEditor=new(()=>Current,value=>Change(_=>value),flyouts);Content=row;}
-    private CoreSearchFactFilter Current => read().Facts??new(domain,extractorVersion);
+    private CoreSearchFactFilter Current => read().Facts is {} facts&&facts.Kind==domain?facts:new(domain,extractorVersion);
     public void Restore()
     {
         var next=FilterPresets.Domain(read());
@@ -28,6 +29,7 @@ internal sealed class FactFilterStrip : UserControl
         if(domain.Length==0)return;
         foreach(var (button,selected) in options)button.IsChecked=selected(Current);
         colors?.Restore();
+        advanced?.Restore();
         foreach(var (section,buttons,scope) in sections)section.Summary.Text=FilterFactRules.Has(Current,scope)&&!buttons.OfType<ToggleButton>().Any(b=>b.IsChecked==true)?"自定":"";
     }
     private void Change(Func<CoreSearchFactFilter,CoreSearchFactFilter> update)
@@ -45,7 +47,7 @@ internal sealed class FactFilterStrip : UserControl
     }
     private void Build()
     {
-        row.Children.Clear();options.Clear();sections.Clear();colors=null;if(domain.Length==0)return;
+        row.Children.Clear();options.Clear();sections.Clear();colors=null;advanced=null;if(domain.Length==0)return;
         if(domain is "image-dimensions" or "video") {
             colors=new(domain,()=>Current,value=>Change(_=>value),flyouts);row.Children.Add(colors);
             (string Label,CoreSearchAspectRange Range)[] ratios=[
@@ -80,17 +82,8 @@ internal sealed class FactFilterStrip : UserControl
             Group("声道",channels.Select(choice=>(UIElement)Option(choice.Label,f=>f.ChannelRanges?.Contains(choice.Range)==true,
                 (f,on)=>f with {ChannelRanges=on?[choice.Range]:null})).ToArray(),2,scope:"channels");
         }
-        if(domain=="font")Group("字体",new UIElement[] {
-            Option("中文",f=>f.Font?.SupportsChinese==true,(f,on)=>f with {Font=Clean((f.Font??new()) with {SupportsChinese=on?true:null})}),
-            Option("拉丁",f=>f.Font?.SupportsLatin==true,(f,on)=>f with {Font=Clean((f.Font??new()) with {SupportsLatin=on?true:null})}),
-            Option("可变",f=>f.Font?.Variable==true,(f,on)=>f with {Font=Clean((f.Font??new()) with {Variable=on?true:null})}),
-            Option("斜体",f=>f.Font?.Italic==true,(f,on)=>f with {Font=Clean((f.Font??new()) with {Italic=on?true:null})})},2);
-        if(domain is "document" or "three-d" or "model" or "text-data" or "archive") {
-            var label=domain switch {"document"=>"页数", "three-d"=>"三角面", "model"=>"参数量", "text-data"=>"文本 / 数据",_=>"文件数量"};
-            var configure=FilterSection.ActionButton("自定义…",()=>{});configure.Click+=(_,_)=>editor.Show(configure,domain);
-            var clear=FilterSection.ActionButton("清除此组",()=>apply(read() with {Facts=null}));
-            Group(label,[configure,clear],1);
+        if(domain is "image-dimensions" or "document" or "three-d" or "model" or "text-data" or "archive" or "font") {
+            advanced=new(domain,read,apply,flyouts);row.Children.Add(advanced);
         }
     }
-    private static CoreSearchFontFilter? Clean(CoreSearchFontFilter value)=>value==new CoreSearchFontFilter()?null:value;
 }

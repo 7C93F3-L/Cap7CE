@@ -35,6 +35,8 @@ assert(!/new\s+(?:Items)?WrapGrid|ItemsPanel/.test(filterBar), 'standalone filte
 assert(filterBar.includes('FilterPresets') && filterBar.includes('FilterFlyouts'), 'top filters must share presets and a single flyout owner');
 assert(read('shell/Cap7CE.WinUI/App.xaml').includes('Themes/FilterResources.xaml'), 'top filter visuals must use compiled shared theme resources');
 assert(read('scripts/winui-resources.cjs').includes('winui-filter-resources.cjs'), 'native visual filters must generate constraints from the existing semantic owner');
+assert(read('scripts/winui-resources.cjs').includes('winui-advanced-filter-resources.cjs'), 'native advanced presets must be generated from the current mainline converters');
+assert(read('shell/Cap7CE.WinUI/Controls/Filters/FactFilterStrip.cs').includes('AdvancedFilterPanel'), 'specialized facts must use the shared advanced filter component');
 assert(!/brightnessMean|saturationMean|borderWhiteRatio/.test(read('shell/Cap7CE.WinUI/Models/VisualFilterRules.cs')), 'native visual filters must not duplicate semantic thresholds');
 assert(read('shell/Cap7CE.WinUI/Themes/ShellResources.xaml').includes('<controls:AssetTile/>'), 'custom tile must appear in compiled XAML to generate WinUI activation metadata');
 assert(/Unloaded\s*\+=/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs')), 'recycled tiles must release pixels');

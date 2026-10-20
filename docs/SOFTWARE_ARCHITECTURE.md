@@ -2,9 +2,13 @@
 
 ## 当前实施状态（2026-10-20）
 
+专用属性分组由 `scripts/winui-advanced-filter-resources.cjs` 调用当前主线 `toComputerSearchArchiveConditions` 及其既有领域转换链生成 `filter-advanced-options.json`，只保留现用分组的允许扩展名、Protocol字段、预设及范围边界，不打包React/CSS或备用界面。`AdvancedFilterRules` 验证描述边界，只修改document/threeD/font/model/textData/archive的有界叶字段，保留会话事实kind与extractorVersion；支持单选范围、多段范围/枚举并集及独立布尔条件，空嵌套载荷清理后再返回强类型DTO。
+
+`AdvancedFilterPanel` 组合统一 `FilterSection`、ToggleButton和原生范围编辑器，按所选扩展名显示文档/画板、三维结构/面数、模型、字体、文本/CSV/JSON和压缩包分组；每组编辑/清除保留其他组。`FilterPresets.RetainFacts` 拒绝CSV条件沿用到JSON等不兼容切换。PSD/AI/CDR画板复用document事实域，图片控件与画板控件分别构造自己合法的事实类型，不拼接跨事实域条件；切换入口会替换不兼容事实。`FilterFactRules` 按生成分组回显和计数。旧宽泛数字编辑器删除已被专用分组替代的分支，只负责尺寸、时长和声道。颜色可用性提示、三维模型类型细分及部分专用图文布局仍未对等；不启动提取、建库或迁移数据。
+
 顶部颜色筛选由 `ColorFilterSection` 使用原生ToggleButton圆形色样及选中环显示；图片包含透明背景及四种特征，视频只含主线支持的非透明颜色，特征从编辑浮层选择。`scripts/winui-filter-resources.cjs` 随资源构建只导出当前图片/视频筛选所用语义及约束到 `filter-visual-semantics.json`，不导出关键词别名、旧页面或CSS；`VisualFilterRules` 直接把该共享事实映射到现有 `CoreSearchVisualGroup`，颜色组内部OR、颜色与特征组之间AND，保留尺寸/比例/动静等其他事实条件，不启动颜色提取或索引任务。
 
-`AspectFilterEditor` 与纯 `AspectFilterRules` 提供常用比例和1–100000整数自定义比例，沿用主线±2%容差；应用时保留当前其他条件。数字编辑器按尺寸/时长/声道分组输入和清除，不再由所有铅笔入口打开同一个宽泛属性弹层。`FilterFactRules` 集中生效分组判断及计数，自定义条件在标题回显。相关纯条件测试不打开Catalog。完整颜色可用性探测、三维/文档/模型/压缩包等全部专用高级选项仍未迁入，不据本轮宣称完整筛选对等。
+`AspectFilterEditor` 与纯 `AspectFilterRules` 提供常用比例和1–100000整数自定义比例，沿用主线±2%容差；应用时保留当前其他条件。数字编辑器按尺寸/时长/声道分组输入和清除，不再由所有铅笔入口打开同一个宽泛属性弹层。`FilterFactRules` 集中生效分组判断及计数，自定义条件在标题回显。相关纯条件测试不打开Catalog。颜色可用性提示、三维类型细分及部分专用图文布局仍未对等，不据本轮宣称完整筛选对等。
 
 筛选图标的语义颜色由 `FilterIcons.BindSelection` 绑定按钮的Checked/Unchecked、前景及主题变化：选中时将共享 `CapAccentForegroundBrush` 作为 `SidebarIcon.InkForeground` 显式输入，未选中跟随原生按钮前景；类型与比例入口共用，不依赖模板Presenter的视觉状态通知是否传播到绑定。`SidebarIcon` 仍拥有独立ink快照及源Color订阅，未提供显式输入的左栏图标沿用既有Presenter继承。仅事件及有限帧同步，无轮询或常驻Rendering。
 

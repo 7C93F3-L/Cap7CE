@@ -49,7 +49,7 @@ internal sealed class FilterEditors(Func<BrowseFilter> read,Action<BrowseFilter>
         var scroll=new ScrollViewer {Content=choices,MaxHeight=240,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};var content=Ui.Column(search,scroll);
         content.Children.Add(Ui.Row(Ui.Button("全不选",()=>{foreach(var (box,_) in boxes)box.IsChecked=false;}),Ui.Button("应用",()=>{
             var next=read() with {Category="",Extensions=boxes.Where(entry=>entry.Box.IsChecked==true).Select(entry=>entry.Extension).Distinct().ToArray()};
-            apply(next with {Facts=FilterPresets.Domain(next)==read().Facts?.Kind?read().Facts:null});flyouts.Close();
+            apply(next with {Facts=FilterPresets.RetainFacts(next,read().Facts)});flyouts.Close();
         })));
         flyouts.Show(anchor,content);
     }

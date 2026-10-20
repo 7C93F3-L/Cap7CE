@@ -32,7 +32,13 @@ internal static class FilterPresets
         var selected=Extensions(value).ToHashSet(StringComparer.OrdinalIgnoreCase);var group=FormatRegistry.Extensions(id);
         if(group.All(selected.Contains))selected.ExceptWith(group);else selected.UnionWith(group);
         var next=value with {Category="",Extensions=selected.Order().ToArray()};
-        return next with {Facts=Domain(next)==value.Facts?.Kind?value.Facts:null};
+        return next with {Facts=RetainFacts(next,value.Facts)};
+    }
+    public static Cap7CE.Core.Protocol.CoreSearchFactFilter? RetainFacts(BrowseFilter next,Cap7CE.Core.Protocol.CoreSearchFactFilter? facts)
+    {
+        if(facts is null)return null;
+        if(facts.Kind is "image-dimensions" or "video" or "audio")return Domain(next)==facts.Kind?facts:null;
+        return AdvancedFilterRules.Groups.Any(group=>group.Kind==facts.Kind&&AdvancedFilterRules.Available(group,next)&&AdvancedFilterRules.Has(facts,group))?facts:null;
     }
     public static string Domain(BrowseFilter value)
     {

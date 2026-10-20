@@ -44,4 +44,33 @@ Require(AspectFilterRules.Normalize(VisualFilterRules.Apply(new("image-dimension
 Require(VisualFilterRules.Definitions.All(d=>d.Constraints.Length is >0 and <=8&&d.Constraints.All(c=>c.Value is >=0 and <=10000)),"Generated visual semantics fit existing Core constraint bounds");
 var largest=AspectFilterRules.Around(99999,100000);
 Require(largest.Minimum!.Numerator<=10000000&&largest.Maximum!.Numerator<=10000000&&largest.Maximum.Denominator<=10000000,"Largest custom inputs fit existing Core aspect endpoint bounds");
+foreach(var group in AdvancedFilterRules.Groups)foreach(var option in group.Options) {
+    var initial=new CoreSearchFactFilter(group.Kind,17);
+    var on=AdvancedFilterRules.Toggle(initial,group,option)!;
+    Require(on.Kind==group.Kind&&on.ExtractorVersion==17&&AdvancedFilterRules.Selected(on,group,option),"Generated advanced option round-trips through the existing Protocol without changing session identity");
+    Require(AdvancedFilterRules.Toggle(on,group,option) is null,"Removing the last option removes its empty nested payload");
+}
+AdvancedFilterGroup Find(string id)=>AdvancedFilterRules.Groups.Single(g=>g.Id==id);
+var modelCount=Find("model-count");var precision=Find("model-precision");
+var modelFacts=AdvancedFilterRules.Toggle(new("model",7),precision,precision.Options[0])!;
+modelFacts=AdvancedFilterRules.Toggle(modelFacts,modelCount,modelCount.Options[0])!;
+modelFacts=AdvancedFilterRules.Toggle(modelFacts,modelCount,modelCount.Options[1])!;
+Require(modelFacts.Model!.ParameterRanges!.Count==2&&modelFacts.Model.Precisions!.Count==1,"Parameter ranges combine without removing model precision");
+Require(AdvancedFilterRules.Clear(modelFacts,modelCount)!.Model!.Precisions!.Count==1,"Clearing parameter ranges preserves precision");
+var chars=Find("text-characters");var lines=Find("text-lines");
+var text=AdvancedFilterRules.Toggle(AdvancedFilterRules.Toggle(new("text-data",1),chars,chars.Options[0])!,lines,lines.Options[0])!;
+Require(FilterFactRules.Count(text)==2&&AdvancedFilterRules.Has(AdvancedFilterRules.Clear(text,chars)!,lines),"Text character and line groups compose and clear independently");
+var csvGroup=Find("csv-records");var csv=AdvancedFilterRules.Toggle(new("text-data",1),csvGroup,csvGroup.Options[0]);
+Require(FilterPresets.RetainFacts(new(){Extensions=[".json"]},csv) is null,"CSV conditions do not survive a switch to JSON within the same fact domain");
+var artboards=Find("artboards");var boardFacts=AdvancedFilterRules.Toggle(new("document",1),artboards,artboards.Options[0]);
+Require(AdvancedFilterRules.Available(artboards,new(){Extensions=[".psd"]})&&FilterPresets.RetainFacts(new(){Extensions=[".psd"]},boardFacts) is not null,"PSD artboards use the document fact contract without changing image classification");
+var bounds=AdvancedFilterRules.Bounds(modelFacts,modelCount);
+Require(bounds.Count==2&&bounds.Min==1,"Multiple numeric ranges can be loaded into the editor");
+var editedModel=AdvancedFilterRules.ApplyRange(modelFacts,modelCount,12000000000,15000000000)!;
+Require(editedModel.Model!.ParameterRanges is {Count:1}&&editedModel.Model.ParameterRanges[0].Minimum==12000000000&&editedModel.Model.Precisions!.Count==1,"Custom model range preserves 64-bit values and precision");
+var composition=Find("document-images");var documentCount=Find("document-count");
+var doc=AdvancedFilterRules.Toggle(new("document",9),composition,composition.Options[0])!;
+doc=AdvancedFilterRules.ApplyRange(doc,documentCount,2,50)!;
+Require(AdvancedFilterRules.Bounds(doc,documentCount).Max==50&&doc.Document!.HasEmbeddedImages==false,"Custom page count preserves an explicitly false image-composition condition");
+Require(AdvancedFilterRules.Clear(doc,documentCount)!.Document!.HasEmbeddedImages==false,"Clearing page count preserves the independent text-only selector");
 Console.WriteLine($"Top filter checks passed: {checks}");

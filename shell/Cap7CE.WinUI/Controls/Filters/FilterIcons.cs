@@ -9,6 +9,12 @@ namespace Cap7CE.WinUI.Controls;
 internal static class FilterIcons
 {
     private static readonly Dictionary<string,string> paths=new() {
+        ["program"]="M3 4h18v16H3zM7 9l3 3-3 3M13 15h4",
+        ["flat"]="M3 5h18v14H3zM7 9h.01M10 9h7M7 14h.01M10 14h7",
+        ["nested"]="M3 3h7l2 3h9v15H3zM7 10v7h3M7 12h3M11 10h6M11 16h6",
+        ["static"]="M6 4h12v16H6zM10 8v8M14 8v8",
+        ["animated"]="M3 6h18v15H3zM7 3h14M10 10l6 3.5-6 3.5v-7Z",
+        ["rigged"]="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM5 8l7 3 7-3M12 7v8m0 0-5 7m5-7 5 7",
         ["竖图"]="M6 2h12v20H6z",["横图"]="M2 6h20v12H2z",["方形"]="M3 3h18v18H3z",["宽图"]="M1 8h22v8H1z",["长图"]="M8 1h8v22H8z",
         ["visual"]="M3 3h18v18H3zM3 16l5-5 5 5 3-3 5 5M16 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z",
         ["video"]="M3 4h18v16H3zM10 8l6 4-6 4V8Z",

@@ -3,8 +3,8 @@ using Cap7CE.Core.Protocol;
 namespace Cap7CE.WinUI.Models;
 internal static class FilterFactRules
 {
-    private static readonly string[] groups=["dimensions","aspect","duration","animation","colors","channels","font","document","three-d","model","text-data","archive"];
-    public static int Count(CoreSearchFactFilter? facts)=>groups.Count(group=>Has(facts,group));
+    private static readonly string[] groups=["dimensions","aspect","duration","animation","colors","channels"];
+    public static int Count(CoreSearchFactFilter? facts)=>facts is null?0:groups.Count(group=>Has(facts,group))+AdvancedFilterRules.Groups.Count(group=>AdvancedFilterRules.Has(facts,group));
     public static bool Has(CoreSearchFactFilter? f,string group)
     {
         if(f is null)return false;
