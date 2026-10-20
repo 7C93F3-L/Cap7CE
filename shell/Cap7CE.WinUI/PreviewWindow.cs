@@ -27,7 +27,7 @@ internal sealed class PreviewWindow : Window
     private MediaPlayerElement? media;
     public PreviewWindow(ShellServices services)
     {
-        this.services=services;Title="预览 · Cap7CE";AppWindow.Resize(new(1100,820));
+        this.services=services;AppWindow.Resize(new(1100,820));
         root.RowDefinitions.Add(new(){Height=GridLength.Auto});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         pageBack=Ui.Button("上一页",()=>RenderPage(-1));pageForward=Ui.Button("下一页",()=>RenderPage(1));
         var toolbar=Ui.Row(Ui.Tool("\uE72B","上一个文件",()=>Move(-1)),Ui.Tool("\uE72A","下一个文件",()=>Move(1)),pageBack,pageForward,
@@ -49,7 +49,7 @@ internal sealed class PreviewWindow : Window
     private async void Load(AssetItem item)
     {
         reading.Cancel();reading.Dispose();reading=new();var token=reading.Token;
-        media?.MediaPlayer?.Pause();media?.MediaPlayer?.Dispose();media=null;content.Content=null;status.Text="正在准备预览…";Title=item.Name+" · 预览";
+        media?.MediaPlayer?.Pause();media?.MediaPlayer?.Dispose();media=null;content.Content=null;status.Text="正在准备预览…";
         pageBack.Visibility=pageForward.Visibility=Visibility.Collapsed;
         try
         {

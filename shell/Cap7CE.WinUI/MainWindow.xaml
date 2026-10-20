@@ -1,4 +1,4 @@
-<Window x:Class="Cap7CE.WinUI.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Cap7CE">
+<Window x:Class="Cap7CE.WinUI.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="">
   <ContentControl x:Name="Surface" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
     <Grid x:Name="Root" Background="Transparent" Padding="0,4,8,8" ColumnSpacing="8" RowSpacing="6">
       <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="172"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="DetailsColumn" Width="280"/></Grid.ColumnDefinitions>

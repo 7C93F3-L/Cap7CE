@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Windowing;
 using Cap7CE.WinUI.Models;
 using Windows.UI;
 
@@ -11,6 +12,12 @@ internal static class ThemeService
     public static void Apply(Window window, FrameworkElement root, ShellPreferences settings)
     {
         root.RequestedTheme = settings.Theme switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
+        WindowTitleBar.Apply(window, root.RequestedTheme);
+        window.Title = "";
+        window.AppWindow.TitleBar.IconShowOptions = IconShowOptions.HideIconAndSystemMenu;
+        window.AppWindow.TitleBar.PreferredTheme = settings.Theme switch {
+            "light" => TitleBarTheme.Light, "dark" => TitleBarTheme.Dark, _ => TitleBarTheme.UseDefaultAppMode
+        };
         window.SystemBackdrop = new MicaBackdrop { Kind = settings.Material == "mica-alt" ? MicaKind.BaseAlt : MicaKind.Base };
         if (root is Control control) control.FontSize = settings.FontSize;
         root.SetValue(Control.FontSizeProperty, settings.FontSize);

@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+`ThemeService` 同时统一三类 WinUI 窗口的标题栏：`PreferredTheme` 映射显式明暗与系统应用主题，窗口标题留空并隐藏图标及其系统菜单入口。独立 `Themes/WindowTitleBar` 只负责一次性装配透明的 32 DIP 顶部拖动区与原内容容器，延伸窗口现有 Mica / Mica Alt 材质，并同步根容器主题及系统按钮常态、失焦透明背景；拖动、双击最大化、Snap 和窗口控制按钮仍使用 Windows / WinUI 既有机制，不复制窗口状态机。
+
 WinUI 的 `Models` 目录包含 `AssetCollection`、`AssetItem`、`BrowseFilter`、`FileFormat`、`FormatRegistry`、`HomeEntries` 和 `ShellPreferences` 七个源码文件。本机交接恢复时根据原始 `Cap7CE.WinUI.dll` 反编译恢复其实现，不能视为原源码逐字副本；职责及依赖方向保持不变。AI 模型忽略规则仅匹配仓库根目录 `/models/`，源边界检查同时验证上述文件存在且未被 Git 忽略，防止提交或交接时遗漏。
 
 `shell/Cap7CE.WinUI` 是独立 x64、.NET 10 / WinUI 3 开发壳。当前有效主线的左收藏栏、顶部筛选、目录标签/工具条、虚拟网格/列表、右侧详情/关键词、状态条、设置和独立预览已按原生控件迁入首版；只复用实际调用的内容与原图标，不整体复制React/CSS、退役页面或待机线。Electron主线保持，未迁入能力明确列于 `shell/README.md`，本轮编译通过不等于交互验收。
