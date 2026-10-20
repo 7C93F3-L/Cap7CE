@@ -13,6 +13,7 @@ public sealed class AssetTile : Grid
     private readonly TextBlock title=new(){TextTrimming=TextTrimming.CharacterEllipsis,Margin=new(6),MaxLines=2,HorizontalTextAlignment=TextAlignment.Center};
     private CancellationTokenSource? reading;
     private bool active;
+    private double? compactHeight;
     private static ShellPreferences preferences=new();
     private static event Action? LayoutChanged;
     internal static VisualConnection? Visuals {get;set;}
@@ -23,7 +24,16 @@ public sealed class AssetTile : Grid
         DataContextChanged+=(_,_)=>Refresh();Loaded+=(_,_)=>{active=true;LayoutChanged+=Layout;Layout();Refresh();};
         Unloaded+=(_,_)=>{active=false;LayoutChanged-=Layout;Release();};Layout();
     }
-    private void Layout(){Width=preferences.TileSize;Height=preferences.TileSize+28;RowDefinitions[0].Height=new(preferences.TileSize-10);image.Stretch=preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=preferences.FontSize;}
+    internal static double PreferredSize => preferences.TileSize;
+    internal void SetCompactHeight(double? height) { if(compactHeight==height)return;compactHeight=height;Layout(); }
+    private void Layout()
+    {
+        Width=compactHeight??preferences.TileSize;Height=compactHeight??(preferences.TileSize+28);
+        RowDefinitions[0].Height=compactHeight is null?new(preferences.TileSize-10):new(1,GridUnitType.Star);
+        title.Visibility=compactHeight is <52?Visibility.Collapsed:Visibility.Visible;title.MaxLines=compactHeight is null?2:1;
+        formatIcon.Width=formatIcon.Height=compactHeight is {} cell?Math.Clamp(cell-(cell<52?12:40),1,44):44;
+        image.Stretch=preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=preferences.FontSize;
+    }
     internal void Suspend(bool suspended){active=!suspended;if(suspended)Release();else Refresh();}
     private void Release(){reading?.Cancel();reading?.Dispose();reading=null;image.Source=null;}
     private async void Refresh()

@@ -16,12 +16,16 @@ internal sealed class ResultsView : UserControl
     private FileCommands? commands;
     private AssetCollection? items;
     private bool listMode;
+    private bool horizontal;
+    private readonly ResultsGridLayout gridLayout;
+    private ListViewBase ActiveView => listMode && !horizontal ? list : grid;
     public event Action<IReadOnlyList<AssetItem>>? SelectionChanged;
-    public IReadOnlyList<AssetItem> Selection => (listMode ? list.SelectedItems : grid.SelectedItems).OfType<AssetItem>().ToArray();
+    public IReadOnlyList<AssetItem> Selection => ActiveView.SelectedItems.OfType<AssetItem>().ToArray();
     public ResultsView()
     {
         grid.ItemsPanel = (ItemsPanelTemplate)XamlReader.Load("<ItemsPanelTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><ItemsWrapGrid Orientation='Horizontal' CacheLength='1'/></ItemsPanelTemplate>");
         grid.ItemTemplate = (DataTemplate)Application.Current.Resources["CapAssetTileTemplate"];
+        gridLayout = new(grid);
         list.ItemTemplate = (DataTemplate)XamlReader.Load("<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><StackPanel Orientation='Horizontal' Spacing='18' Padding='6'><FontIcon Glyph='&#xE8A5;' FontSize='16'/><TextBlock Text='{Binding Name}' Width='300' TextTrimming='CharacterEllipsis'/><TextBlock Text='{Binding SizeLabel}' Width='90'/><TextBlock Text='{Binding ModifiedLabel}' Width='150'/><TextBlock Text='{Binding FullPath}' Opacity='0.55' TextTrimming='CharacterEllipsis'/></StackPanel></DataTemplate>");
         foreach (var view in new ListViewBase[] { grid, list })
         {
@@ -39,8 +43,25 @@ internal sealed class ResultsView : UserControl
         empty.Visibility = value.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         empty.Text = "没有匹配项，或目录尚未就绪";
     }
-    public void View(bool isList) { listMode = isList; grid.Visibility = isList ? Visibility.Collapsed : Visibility.Visible; list.Visibility = isList ? Visibility.Visible : Visibility.Collapsed; SelectionChanged?.Invoke(Selection); }
-    public void SelectAll() { if (listMode) list.SelectAll(); else grid.SelectAll(); }
+    public void View(bool isList) { var previous=ActiveView;listMode=isList;ApplyView(previous);gridLayout.SetHorizontal(horizontal); }
+    public void SetHorizontal(bool value)
+    {
+        if(horizontal==value)return;
+        var previous=ActiveView;horizontal=value;ApplyView(previous);gridLayout.SetHorizontal(value);
+    }
+    private void ApplyView(ListViewBase previous)
+    {
+        var current=ActiveView;
+        if(!ReferenceEquals(previous,current))
+        {
+            var selected=previous.SelectedItems.OfType<AssetItem>().ToArray();current.SelectedItems.Clear();
+            foreach(var item in selected)if(items?.Contains(item)==true)current.SelectedItems.Add(item);
+        }
+        grid.Visibility=ReferenceEquals(current,grid)?Visibility.Visible:Visibility.Collapsed;
+        list.Visibility=ReferenceEquals(current,list)?Visibility.Visible:Visibility.Collapsed;
+        if(!ReferenceEquals(previous,current))SelectionChanged?.Invoke(Selection);
+    }
+    public void SelectAll() => ActiveView.SelectAll();
     public void Suspend(bool value) { foreach (var tile in Tiles(root)) tile.Suspend(value); }
     private void OnItemDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {

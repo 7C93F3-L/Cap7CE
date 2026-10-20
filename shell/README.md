@@ -42,6 +42,8 @@ pwsh -File shell/run.ps1 -Catalog <existing-catalog.db>
 
 ## 检查与比较
 
+主窗口整体响应式及两侧栏宽遵循现有主线规则；两侧分隔条可拖动、用左右方向键微调或双击恢复默认宽度。自动压缩不覆盖手动选择的栏宽，低高度隐藏左栏后仍可从工具栏菜单打开面板或设置。纯布局验证：`dotnet run --project shell/Cap7CE.Layout.Tests/Cap7CE.Layout.Tests.csproj -c Release`。
+
 ```powershell
 node scripts/winui-shell-boundary-check.cjs
 git diff --check

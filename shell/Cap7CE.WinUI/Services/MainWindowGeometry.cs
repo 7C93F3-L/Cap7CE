@@ -34,6 +34,19 @@ internal static class MainWindowGeometry
         presenter.PreferredMinimumHeight = Round(210 * scale);
     }
 
+    public static void RestoreDefault(Window window)
+    {
+        if (window.AppWindow.Presenter is OverlappedPresenter presenter && presenter.State != OverlappedPresenterState.Restored)
+            presenter.Restore();
+        var workArea = DisplayArea.GetFromWindowId(window.AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
+        var dpi = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(window));
+        var bounds = ResolveDefaultBounds(workArea, dpi == 0 ? 1 : dpi / 96d);
+        var position = window.AppWindow.Position;
+        bounds.X = Math.Clamp(position.X, workArea.X, workArea.X + workArea.Width - bounds.Width);
+        bounds.Y = Math.Clamp(position.Y, workArea.Y, workArea.Y + workArea.Height - bounds.Height);
+        window.AppWindow.MoveAndResize(bounds);
+    }
+
     internal static RectInt32 ResolveDefaultBounds(RectInt32 workArea, double scale)
     {
         var width = Size(workArea.Width, scale, 0.9, 300, 1760);

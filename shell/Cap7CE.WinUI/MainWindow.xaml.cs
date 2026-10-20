@@ -19,6 +19,7 @@ public sealed partial class MainWindow : Window
     private readonly FilterBar filters=new();
     private readonly ResultsView results=new();
     private readonly DetailsPane details;
+    private readonly WorkspaceLayoutController layout;
     private SettingsWindow? settings;
     private PreviewWindow? preview;
     private BrowseSession? active;
@@ -28,16 +29,18 @@ public sealed partial class MainWindow : Window
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,Notice);
+        layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,StatusHost,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
+        layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
+        layout.HorizontalGridChanged+=results.SetHorizontal;results.SetHorizontal(layout.HorizontalGrid);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
         results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);};
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
-        sidebar.ToggleFilters+=()=>SaveLayout(true);sidebar.ToggleDetails+=()=>SaveLayout(false);
+        sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
+        toolbar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));toolbar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));toolbar.OpenSettings+=OpenSettings;
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
         toolbar.OpenFolder+=()=>ChooseFolder(false);toolbar.ViewChanged+=()=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{View=services.Preferences.Current.View=="grid"?"list":"grid"}));
         toolbar.SizeChangedByUser+=size=>{AssetTile.Configure(services.Preferences.Current with{TileSize=size});};
         toolbar.SizeCommitted+=size=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{TileSize=size}));
-        DetailsSizer.DragDelta+=(_,e)=>DetailsColumn.Width=new(Math.Clamp(DetailsColumn.Width.Value-e.HorizontalChange,220,420));
-        DetailsSizer.DragCompleted+=(_,_)=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{DetailsWidth=DetailsColumn.Width.Value}));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
         Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
         Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();}};
@@ -49,7 +52,6 @@ public sealed partial class MainWindow : Window
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};
         Surface.KeyDown+=KeyDown;
         services.Preferences.Changed+=ApplyPreferences;
-        Root.SizeChanged+=(_,_)=>ApplyResponsive();
         AppWindow.Changed+=(_,_)=>{
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
             if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else details.Select(results.Selection);
@@ -104,17 +106,10 @@ public sealed partial class MainWindow : Window
     }
     private void OpenSettings()
     {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}settings.Activate();}
-    private void SaveLayout(bool filter)=>commands.Run(()=>services.Preferences.SaveAsync(filter?services.Preferences.Current with{ShowFilters=!services.Preferences.Current.ShowFilters}:services.Preferences.Current with{ShowDetails=!services.Preferences.Current.ShowDetails}));
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);
-        FilterHost.Visibility=prefs.ShowFilters?Visibility.Visible:Visibility.Collapsed;results.View(prefs.View=="list");SidebarColumn.Width=new(prefs.SidebarWidth);ApplyResponsive();
+        results.View(prefs.View=="list");layout.ApplyPreferences();
     });
-    private void ApplyResponsive()
-    {
-        var visible=services.Preferences.Current.ShowDetails&&Root.ActualWidth>=900;
-        DetailsBorder.Visibility=visible?Visibility.Visible:Visibility.Collapsed;DetailsColumn.Width=new(visible?services.Preferences.Current.DetailsWidth:0);
-        if(!visible)details.Stop();
-    }
     private void Notice(string text){if(!closed)Status.Text=text;}
     private void KeyDown(object sender,KeyRoutedEventArgs e)
     {
@@ -136,7 +131,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;services.Preferences.Changed-=ApplyPreferences;details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

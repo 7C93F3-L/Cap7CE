@@ -26,7 +26,7 @@ public sealed record ShellPreferences
 
 	public string View { get; init; } = "grid";
 
-	public double SidebarWidth { get; init; } = 172.0;
+	public double SidebarWidth { get; init; } = 156.0;
 
 	public double DetailsWidth { get; init; } = 280.0;
 

@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-20）
 
+窗口高度低于 360 DIP 时，纯布局策略同步输出 `HorizontalGrid`；控制器只转发模式变化，`ResultsView` 临时使用同一 GridView、数据集合及分页入口，并在列表/网格容器切换时保留选项。`Controls/ResultsGridLayout` 将现有 `ItemsWrapGrid` 切为纵向排布且仅一行，从而沿横轴虚拟化，关闭纵向滚动并将普通鼠标滚轮映射到横向；`Models/ResultGridGeometry` 负责与主线一致的 138 基准及可用高度上限，`AssetTile` 只投影临时紧凑尺寸。增高恢复常规方向及原列表偏好，不持久化紧凑模式、不增加缩略图扫描或改变查询。纯布局检查同时覆盖 360 临界值、窄而高窗口、最小窗口和卡片高度收缩。
+
+WinUI 响应式区域由独立的纯 `Controllers/WorkspaceLayoutPolicy` 计算，`WorkspaceLayoutController` 只负责视口投影、左右栏宽交互、实验壳偏好保存和用户明确展开时的窗口恢复；`MainWindow` 只组合。宽度 900/960 与高度 520/560 采用主线相同的迟滞区间，低于 360 高时释放左栏；缩放造成的临时收起或栏宽压缩不回写偏好。左栏默认/最小/最大 156/40/320，图标阈值 90、品牌阈值 95；右栏为 280/220/420，按主线为中央内容保留 300 加 32 的空间。`Controls/PaneResizer` 共用拖动、键盘和双击恢复语义；`SidebarView` 只投影图标/展开模式，收藏列表独立滚动、设置固定底部。`WorkspaceToolbar` 在自身宽度不超过 560 时将非必要控件收至菜单，保留路径、搜索切换、面板及设置动作。恢复默认窗口尺寸复用 `MainWindowGeometry`，不调用 Core、不改索引，不改变窗口状态机。`Cap7CE.Layout.Tests` 直接链接纯策略验证横纵缩放、迟滞、手动关闭、受限屏幕显式展开及栏宽保留，不启动窗口或读取用户资料。
+
 `ThemeService` 同时统一三类 WinUI 窗口的标题栏：`PreferredTheme` 映射显式明暗与系统应用主题，窗口标题留空并隐藏图标及其系统菜单入口。独立 `Themes/WindowTitleBar` 只负责一次性装配透明的 48 DIP 顶部拖动区与原内容容器，使用 `TitleBarHeightOption.Tall` 同步系统按钮高度，延伸窗口现有 Mica / Mica Alt 材质，并同步根容器主题及系统按钮常态、失焦透明背景；主窗口内容顶部不另加留白，拖动、双击最大化、Snap 和窗口控制按钮仍使用 Windows / WinUI 既有机制，不复制窗口状态机。
 
 `Services/MainWindowGeometry` 负责首次主窗口几何及原生最小尺寸约束，沿用 Electron 主线工作区宽 90%、高 82%、最大 1760×1000 DIP、最小 300×210 DIP且不越出工作区的规则；读取窗口所在显示器的工作区及 DPI，将逻辑尺寸转换为物理像素后居中。最小尺寸通过 `OverlappedPresenter` 设置，仅在窗口移动或缩放后检测到 DPI 改变时更新约束，关闭窗口时注销订阅，不引入窗口记忆或状态机。
