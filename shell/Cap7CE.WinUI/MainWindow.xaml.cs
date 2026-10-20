@@ -23,6 +23,7 @@ public sealed partial class MainWindow : Window
     private SettingsWindow? settings;
     private PreviewWindow? preview;
     private BrowseSession? active;
+    private Models.ShellPreferences? appliedPreferences;
     private bool closed,started,minimized;
     public MainWindow()
     {
@@ -107,8 +108,14 @@ public sealed partial class MainWindow : Window
     private void OpenSettings()
     {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}settings.Activate();}
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
-        if(closed)return;var prefs=services.Preferences.Current;ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);
-        results.View(prefs.View=="list");layout.ApplyPreferences();
+        if(closed)return;var prefs=services.Preferences.Current;
+        var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop})==prefs;
+        if(!pinOnly){ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);results.View(prefs.View=="list");layout.ApplyPreferences();}
+        WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned);appliedPreferences=prefs;
+    });
+    private void SetPinned(bool value)=>commands.Run(async()=>{
+        try{await services.Preferences.SaveAsync(services.Preferences.Current with{AlwaysOnTop=value});}
+        catch{ApplyPreferences();throw;}
     });
     private void Notice(string text){if(!closed)Status.Text=text;}
     private void KeyDown(object sender,KeyRoutedEventArgs e)

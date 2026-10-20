@@ -2,6 +2,8 @@ namespace Cap7CE.WinUI.Models;
 
 public sealed record ShellPreferences
 {
+	public bool AlwaysOnTop { get; init; }
+
 	public string Material { get; init; } = "mica";
 
 	public string Theme { get; init; } = "system";

@@ -18,7 +18,9 @@ internal static class ThemeService
         window.AppWindow.TitleBar.PreferredTheme = settings.Theme switch {
             "light" => TitleBarTheme.Light, "dark" => TitleBarTheme.Dark, _ => TitleBarTheme.UseDefaultAppMode
         };
-        window.SystemBackdrop = new MicaBackdrop { Kind = settings.Material == "mica-alt" ? MicaKind.BaseAlt : MicaKind.Base };
+        var kind = settings.Material == "mica-alt" ? MicaKind.BaseAlt : MicaKind.Base;
+        if (window.SystemBackdrop is MicaBackdrop mica) { if (mica.Kind != kind) mica.Kind = kind; }
+        else window.SystemBackdrop = new MicaBackdrop { Kind = kind };
         if (root is Control control) control.FontSize = settings.FontSize;
         root.SetValue(Control.FontSizeProperty, settings.FontSize);
         ((SolidColorBrush)Application.Current.Resources["CapAccentBrush"]).Color = Parse(settings.Color1);

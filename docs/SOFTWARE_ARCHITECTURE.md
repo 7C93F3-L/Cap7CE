@@ -2,6 +2,14 @@
 
 ## 当前实施状态（2026-10-20）
 
+主窗口通过 `WindowTitleBar.ConfigurePin` 投影独立偏好的 `AlwaysOnTop`，仅使用 `OverlappedPresenter.IsAlwaysOnTop`，不复制 Electron 窗口状态机。`Themes/TitleBarResources.xaml` 为原生 ToggleButton 提供系统标题栏前景、悬停及焦点样式；两个简单圆形由 XAML Ellipse 重绘。按钮位于原生三按钮左侧，按 RightInset 与 RasterizationScale 计算宽度及保留区，并将物理像素点击矩形注册为非客户区 Passthrough；布局变化、窗口变化时同步，原生拖动及三按钮仍由系统处理。设置、预览不新增固定入口，主窗口切换沿用既有偏好保存与通知通道。
+
+XAML 的 `WindowCaptionButtonBackgroundPointerOver` / `WindowCaptionButtonBackgroundPressed` 与原生按钮默认绘制不是同一调色来源；原生颜色属性未覆盖时可为 null，并不返回默认绘制色。原生三按钮的悬停与按下颜色保持系统默认，不通过修改原生配色掩盖两者差异。未找到可读取默认绘制色的公开参数后，固定按钮悬停填充仅按用户提供的截图采样为 Light #FFE5E5E5、Default #FF191919；这是当前系统外观的近似值，不声明为跨 Windows 版本的官方常量。HighContrast 继续使用系统高亮色；不读写系统主题设置。
+
+鼠标进入固定按钮的 XAML Passthrough 区域时，`Themes/NativeCaptionFeedback` 向 DWM 补充 `WM_NCMOUSELEAVE`，并将同一通知 PostMessage 到 AppWindow 的常规窗口消息通道，此离开通知经用户验证未能清除残留，有限追加当前鼠标位置的 WM_NCMOUSEMOVE / HTCLIENT 通知，结果待人工验证，不宣称已解决；不在 XAML 输入回调中同步重入窗口消息，不接管原生按钮点击或修改配色。`MainWindow` 比较已经投影的偏好，只有 AlwaysOnTop 改变时只同步固定按钮与置顶状态；保存失败恢复投影，不在成功保存后重复全界面刷新。`ThemeService` 复用窗口已有 MicaBackdrop，仅在材质种类变化时更新 Kind，避免普通偏好变更重新创建背景。运行时测量原生 TitleBar.Height、固定按钮及拖动区均为 48 DIP，保持原尺寸。
+
+标题栏点击区更新在 DispatcherQueue 低优先级合并执行，原生 `AppWindow.Changed` 回调只按相关变更排队，不同步读取布局或写非客户区。修改系统按钮保留区后另等一轮布局；窗口销毁时提前断开事件并撤销待执行工作，最小化、不可见或布局区域无效时跳过。暂态参数/COM 异常留在界面边界内，每次进程最多写一次 `Cap7CE-PhaseF/last-titlebar-region-error.log`，避免将错误返回原生 Changed 分发器而触发 fail-fast。
+
 左栏视觉独立集中在 `Themes/SidebarResources.xaml`，`SidebarView` 只组合当前原生导航与现有收藏动作，并接收浏览路径投影选中态；不导入 Electron 页面、CSS 或业务控制器。`scripts/winui-sidebar-assets.cjs` 仅从固定的 Logo、目录、设置三份单色 SVG 提取原始路径和 viewBox，随既有资源构建写入 `sidebar-icons.json`；`Controls/SidebarIcon` 将这些路径和简单的面板/显示器/加号图形绘制为原生 XAML，并继承前景色。`SidebarPalette` 只负责渐变选中态的文字对比色，主题变化沿既有 ThemeService 同步。导航、目录配置、响应式策略与 Core 接口不新增分支。
 
 窗口高度低于 360 DIP 时，纯布局策略同步输出 `HorizontalGrid`；控制器只转发模式变化，`ResultsView` 临时使用同一 GridView、数据集合及分页入口，并在列表/网格容器切换时保留选项。`Controls/ResultsGridLayout` 将现有 `ItemsWrapGrid` 切为纵向排布且仅一行，从而沿横轴虚拟化，关闭纵向滚动并将普通鼠标滚轮映射到横向；`Models/ResultGridGeometry` 负责与主线一致的 138 基准及可用高度上限，`AssetTile` 只投影临时紧凑尺寸。增高恢复常规方向及原列表偏好，不持久化紧凑模式、不增加缩略图扫描或改变查询。纯布局检查同时覆盖 360 临界值、窄而高窗口、最小窗口和卡片高度收缩。
