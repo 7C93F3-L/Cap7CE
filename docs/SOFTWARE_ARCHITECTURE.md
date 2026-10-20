@@ -2,6 +2,12 @@
 
 ## 当前实施状态（2026-10-20）
 
+中央工作区 `WorkspaceToolbar` 只组合导航、随机/换批、排序、隐藏/子目录与网格动作；`Controls/Workspace/WorkspaceAddress` 独立拥有路径/搜索共用输入区、面包屑、输入草稿和Escape处理，纯 `WorkspacePathRules` 保留盘符和UNC根边界。工具条复用当前主线矢量及共享选中前景，样式集中于 `Themes/WorkspaceResources.xaml`，浮层仍由原生亚克力服务提供。`MainWindow` 只接线现有浏览会话和独立偏好，单页隐藏标签行，多页沿原生TabView保留；不增加Core操作。
+
+`ResultsView` 统一方形GridView、原比例 `ResultsGallery`、原有列表和低高度横向网格。纯 `GalleryGeometry` 沿当前主线catalogJustifiedRows计算8 DIP间距、28 DIP名称区、满行及自然末行；可见性通过真实卡片下沿二分查找。`GalleryLayout` 实现原生VirtualizingLayout，仅测量/排列RealizationRect及推荐锚点，离开视口回收元素；`GalleryTile` 在编译XAML模板中注册激活元信息。`AssetItem` 只记录本次浏览已解码缩略图的比例，不访问元数据或改写缓存；未知比例暂按1显示，比例到达后按事件合并重排。`AssetTile` 卸载/隐藏视图/最小化取消读取并释放像素，重复恢复不重新请求所有卡片；复用原Core视觉通道及独立PhaseF缓存。
+
+`WorkspaceSelection<T>` 独立提供原比例网格单选、Ctrl切换、Shift范围和锚点清理；方形/列表继续使用原生选择机制，模式切换保留同一批文件的选择。右键保持多选，空白和Escape清选只在结果区域处理，不穿透路径/搜索/右栏。`ResultDrag` 统一三种结果视图的StorageItems拖出，继续调用原FileCommands，不增加复制/移动协议。`HomeGroup` 仅投影已有系统位置和卷，首页使用原生分组及六份实际引用的目录图标，低高度时平铺为原横向模式。`BrowseSession.Error` 仅投影最近查询失败，空状态提供重试/清除条件；不改分页、索引或建库边界。纯布局检查覆盖5万项可见范围、末行、UNC路径和选择规则，视觉/拖入/长期滚动仍由用户统一验收。
+
 上方筛选的剩余媒体预设由同一资源生成器输出 `filter-media-options.json`，`MediaFilterRules` 只组合已有Protocol范围，不复制视频分辨率、音频时长、声道和宽高比阈值。图像尺寸支持精确宽高或独立范围，时长按十进制秒向内取整到毫秒，避免边界漂移；清除只影响当前组。`filter-three-d-types.json` 从主线三维类型映射生成，`ThreeDFilterRules` 保留基础类型选择、仅缩小有效查询扩展名；类型细分无需元数据，空交集保持空结果，基础类型改变时清理细分。
 
 `FilterAvailabilityController` 独立调度有界存在性检查，按目录、有效类型、隐藏状态和Core连接改变触发，或由用户重试；六秒期限、取消和代次隔离阻止旧结果覆盖当前视图，没有定时轮询。`FilterAvailabilityService` 仅沿既有Core会话解析目录并执行一项只读搜索，属性和颜色分开探测。分页游标使用现有无状态签名载荷，探测只消费首项，不另建搜索会话；取消沿用 `CoreConnection` 现有机制。`MainWindow` 只装配服务并在派发回UI时再次校验代次；关闭窗口先取消检查。`FilterAvailabilityNotice` 显示缺失/失败与重新检查，尚未迁入的提取动作明确引导用户在Electron手动完成，不触发扫描或属性任务。纯条件测试覆盖组合与边界、取消/过期/重试/关闭；独立临时库烟测验证单项查询与取消，不读取用户素材库。

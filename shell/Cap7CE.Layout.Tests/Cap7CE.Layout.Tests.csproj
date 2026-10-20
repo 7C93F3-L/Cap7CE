@@ -2,4 +2,5 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Controllers/WorkspaceLayoutPolicy.cs" Link="WorkspaceLayoutPolicy.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/ResultGridGeometry.cs" Link="ResultGridGeometry.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/GalleryGeometry.cs;../Cap7CE.WinUI/Models/WorkspacePathRules.cs;../Cap7CE.WinUI/Controllers/WorkspaceSelection.cs" Link="%(Filename)%(Extension)"/></ItemGroup>
 </Project>

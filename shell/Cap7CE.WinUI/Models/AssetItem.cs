@@ -7,6 +7,11 @@ namespace Cap7CE.WinUI.Models;
 [Bindable]
 public sealed class AssetItem(BasicSearchItem entry, string fullPath)
 {
+    public double AspectRatio {get;private set;}=1;
+    internal event Action? AspectChanged;
+    internal void ReportAspect(double width,double height)
+    {if(width<=0||height<=0)return;var ratio=width/height;if(!double.IsFinite(ratio)||Math.Abs(ratio-AspectRatio)<.001)return;AspectRatio=ratio;AspectChanged?.Invoke();}
+    public string IconName=>Entry.Id switch {"home-桌面"=>"skim-location-desktop","home-文档"=>"skim-location-documents","home-下载"=>"skim-location-downloads","home-图片"=>"skim-location-pictures","home-音乐"=>"skim-location-music","home-视频"=>"skim-location-videos",_=>Entry.IsDirectory?(FullPath.Length<=3?"skim-disk":"skim-folder"):FormatRegistry.Find(Entry.Extension)?.IconName??"skim-file"};
 	public BasicSearchItem Entry { get; } = entry;
 
 	public string FullPath { get; } = fullPath;

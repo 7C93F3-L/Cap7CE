@@ -38,12 +38,14 @@ public sealed partial class MainWindow : Window
         layout.HorizontalGridChanged+=results.SetHorizontal;results.SetHorizontal(layout.HorizontalGrid);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
         results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);};
+        results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
         toolbar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));toolbar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));toolbar.OpenSettings+=OpenSettings;
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
         toolbar.OpenFolder+=()=>ChooseFolder(false);toolbar.ViewChanged+=()=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{View=services.Preferences.Current.View=="grid"?"list":"grid"}));
-        toolbar.SizeChangedByUser+=size=>{AssetTile.Configure(services.Preferences.Current with{TileSize=size});};
+        toolbar.GridModeChanged+=()=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{SquareTiles=!services.Preferences.Current.SquareTiles,View="grid"}));
+        toolbar.SizeChangedByUser+=size=>{AssetTile.Configure(services.Preferences.Current with{TileSize=size});results.PreviewSize(size);};
         toolbar.SizeCommitted+=size=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{TileSize=size}));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
         Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
@@ -76,16 +78,19 @@ public sealed partial class MainWindow : Window
         var tab=new TabViewItem {Header=path.Length==0?"此电脑":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
         session.Changed+=()=>{if(closed)return;tab.Header=session.Title;if(ReferenceEquals(active,session))Bind();};
         Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.NavigateAsync(path));
+        Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
     }
     private void CloseTab(TabViewItem tab)
     {
         if(tab.Tag is BrowseSession session)session.Dispose();Tabs.TabItems.Remove(tab);
         if(Tabs.TabItems.Count==0&&!closed)NewTab("");
+        Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
     }
     private void Bind()
     {
         if(active is null||closed)return;
-        sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);results.Bind(active.Items);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
+        sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
+        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
     private void OpenLocation(string path)
@@ -113,7 +118,7 @@ public sealed partial class MainWindow : Window
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop})==prefs;
-        if(!pinOnly){ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);results.View(prefs.View=="list");layout.ApplyPreferences();}
+        if(!pinOnly){ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);results.View(prefs.View=="list");results.Preferences(prefs);toolbar.ApplyPreferences(prefs);layout.ApplyPreferences();}
         WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned);appliedPreferences=prefs;
     });
     private void SetPinned(bool value)=>commands.Run(async()=>{
@@ -132,7 +137,8 @@ public sealed partial class MainWindow : Window
         if(e.OriginalSource is TextBox||e.OriginalSource is AutoSuggestBox)return;
         if(alt&&active is not null&&e.Key is VirtualKey.Left or VirtualKey.Right){e.Handled=true;commands.Run(()=>e.Key==VirtualKey.Left?active.BackAsync():active.ForwardAsync());return;}
         if(e.Key==VirtualKey.F5){e.Handled=true;Refresh();return;}
-        if(e.OriginalSource is DependencyObject source&&filters.ContainsKeyboardTarget(source))return;
+        if(e.OriginalSource is DependencyObject source&&(filters.ContainsKeyboardTarget(source)||toolbar.ContainsKeyboardTarget(source)))return;
+        if(e.Key==VirtualKey.Escape){e.Handled=true;results.ClearSelection();return;}
         if(control&&e.Key==VirtualKey.A){e.Handled=true;results.SelectAll();return;}
         var selection=results.Selection;if(selection.Count==0)return;
         if(control&&e.Key==VirtualKey.C){e.Handled=true;commands.Run(()=>FileCommands.CopyFilesAsync(selection));}

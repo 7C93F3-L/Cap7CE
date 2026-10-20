@@ -16,6 +16,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
     public bool Busy { get; private set; }
+    public string? Error {get;private set;}
     public string Status { get; private set; } = "";
     public AssetCollection Items { get; private set; } = new();
     public event Action? Changed;
@@ -31,7 +32,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     {
         var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
-        Busy = true; Status = "正在查询…"; Changed?.Invoke();
+        Busy = true;Error=null; Status = "正在查询…"; Changed?.Invoke();
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
@@ -85,7 +86,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             Items = result;
         }
         catch (OperationCanceledException) { }
-        catch (Exception error) { if (version == generation) Status = error.Message; }
+        catch (Exception error) { if (version == generation) Error=Status = error.Message; }
         finally { if (version == generation) { Busy = false; Changed?.Invoke(); } }
     }
     private void Append(AssetCollection target, SearchPageResponse page)

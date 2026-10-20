@@ -8,10 +8,10 @@ internal sealed class FilterFlyouts
 {
     private Flyout? current;
     public void Close() {current?.Hide();current=null;}
-    public void Show(FrameworkElement anchor,UIElement content)
+    public void Show(FrameworkElement anchor,UIElement content,Action? closed=null)
     {
         Close();var flyout=ThemeService.Flyout(content);current=flyout;
-        flyout.Closed+=(_,_)=>{if(ReferenceEquals(current,flyout))current=null;};
+        flyout.Closed+=(_,_)=>{if(ReferenceEquals(current,flyout))current=null;closed?.Invoke();};
         flyout.ShowAt(anchor);
     }
 }

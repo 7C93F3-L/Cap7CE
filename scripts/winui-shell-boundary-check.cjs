@@ -29,6 +29,10 @@ assert(project.includes('<WindowsPackageType>None</WindowsPackageType>'));
 assert(read('shell/Directory.Build.props').includes('<RuntimeIdentifier>win-x64</RuntimeIdentifier>'));
 assert(!/arm64|win-x86/.test(project + read('shell/Directory.Build.props')));
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('ItemsWrapGrid'), 'preserve native grid virtualization');
+assert(read('shell/Cap7CE.WinUI/Controls/Workspace/GalleryLayout.cs').includes(': VirtualizingLayout'), 'original-ratio gallery must remain virtualized');
+for (const name of ['Models/GalleryGeometry', 'Models/WorkspacePathRules', 'Controllers/WorkspaceSelection'])
+  assert(!/Microsoft\.UI|Services|PreferenceStore|\.RequestAsync/.test(read(`shell/Cap7CE.WinUI/${name}.cs`)), `${name}: geometry and selection must stay pure`);
+assert(read('shell/Cap7CE.WinUI/Themes/WorkspaceResources.xaml').includes('<controls:GalleryTile/>'), 'gallery tile needs compiled activation metadata');
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsGridLayout.cs').includes('grid.ItemsPanelRoot is ItemsWrapGrid'), 'compact row must retain the existing virtualizing panel');
 const filterBar = read('shell/Cap7CE.WinUI/Controls/FilterBar.cs');
 assert(!/new\s+(?:Items)?WrapGrid|ItemsPanel/.test(filterBar), 'standalone filter options must use nonvirtualizing Grid/StackPanel layout');
