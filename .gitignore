@@ -7,7 +7,7 @@ core/**/bin/
 core/**/obj/
 native/**/bin/
 native/**/obj/
-models/
+/models/
 llama.cpp/
 TestFiles/
 .agents/

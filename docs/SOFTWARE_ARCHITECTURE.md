@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+WinUI 的 `Models` 目录包含 `AssetCollection`、`AssetItem`、`BrowseFilter`、`FileFormat`、`FormatRegistry`、`HomeEntries` 和 `ShellPreferences` 七个源码文件。本机交接恢复时根据原始 `Cap7CE.WinUI.dll` 反编译恢复其实现，不能视为原源码逐字副本；职责及依赖方向保持不变。AI 模型忽略规则仅匹配仓库根目录 `/models/`，源边界检查同时验证上述文件存在且未被 Git 忽略，防止提交或交接时遗漏。
+
 `shell/Cap7CE.WinUI` 是独立 x64、.NET 10 / WinUI 3 开发壳。当前有效主线的左收藏栏、顶部筛选、目录标签/工具条、虚拟网格/列表、右侧详情/关键词、状态条、设置和独立预览已按原生控件迁入首版；只复用实际调用的内容与原图标，不整体复制React/CSS、退役页面或待机线。Electron主线保持，未迁入能力明确列于 `shell/README.md`，本轮编译通过不等于交互验收。
 
 `Themes/ShellResources.xaml` 集中共用色、按钮/卡片/文字与菜单样式；`ThemeService` 统一主窗口、设置和预览的Mica/Mica Alt、明暗与强调色，菜单/临时浮层使用DesktopAcrylicBackdrop及原生亚克力资源。外观与布局在独立PhaseF偏好保存；首次缺失时仅被动读取已有颜色/主题，不迁移配置。`Models` 拥有偏好、格式注册表投影、条件和结果；`Controllers/BrowseSession` 拥有每标签历史、查询代次/取消、分页和本次删除抑制；`Controls/Views` 只承载相应界面，MainWindow只组合。格式/图标名与提取器版本由原注册表和Core资源生成，不维护第二份事实定义。

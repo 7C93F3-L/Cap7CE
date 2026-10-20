@@ -1,6 +1,12 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+const modelFiles = ['AssetCollection', 'AssetItem', 'BrowseFilter', 'FileFormat', 'FormatRegistry', 'HomeEntries', 'ShellPreferences']
+  .map(name => `shell/Cap7CE.WinUI/Models/${name}.cs`);
+for (const file of modelFiles) assert(fs.existsSync(path.join(root, file)), `${file}: required WinUI model source must be present`);
+const ignoredModels = require('node:child_process').spawnSync('git', ['check-ignore', '--no-index', '--stdin'],
+  { cwd: root, input: modelFiles.join('\n') + '\n', encoding: 'utf8', windowsHide: true });
+assert.equal(ignoredModels.status, 1, `WinUI model source must not be ignored: ${ignoredModels.stdout || ignoredModels.stderr}`);
 const files = directory => fs.readdirSync(path.join(root, directory), { withFileTypes: true })
   .flatMap(item => item.isDirectory() ? files(`${directory}/${item.name}`) : [`${directory}/${item.name}`]);
 for (const file of files('shell/Cap7CE.WinUI').filter(name => name.endsWith('.cs'))) {
