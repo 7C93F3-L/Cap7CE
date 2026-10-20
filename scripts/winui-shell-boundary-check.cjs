@@ -35,6 +35,10 @@ assert(read('shell/Cap7CE.WinUI/Themes/ShellResources.xaml').includes('<controls
 assert(/Unloaded\s*\+=/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs')), 'recycled tiles must release pixels');
 assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('Cap7CE-PhaseF'), 'visual cache must be separate from production');
 const theme = read('shell/Cap7CE.WinUI/Themes/ThemeService.cs');
+const sidebarAssets = read('scripts/winui-sidebar-assets.cjs');
+assert(!/\.tsx|\.css/.test(sidebarAssets), 'sidebar asset extraction must not import old UI code or styles');
+assert(read('shell/Cap7CE.WinUI/Themes/SidebarResources.xaml').includes('<controls:SidebarIcon'), 'sidebar vectors must have compiled XAML activation metadata');
+assert(!/FontIcon|Ui\.Icon\(/.test(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs')), 'sidebar visuals must use theme-aware vectors instead of font or fixed-color image fallbacks');
 const layoutPolicy = read('shell/Cap7CE.WinUI/Controllers/WorkspaceLayoutPolicy.cs');
 assert(!/Microsoft\.UI|System\.IO|Services|PreferenceStore/.test(layoutPolicy), 'responsive policy must stay independent of UI and persistence');
 assert(read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('WorkspaceLayoutController'), 'main window must compose the shared layout controller');

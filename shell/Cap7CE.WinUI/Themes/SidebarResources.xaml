@@ -1,0 +1,118 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:Cap7CE.WinUI.Controls">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="CapSidebarTextBrush" Color="#E01F1F1F"/>
+      <SolidColorBrush x:Key="CapSidebarMutedBrush" Color="#8A1F1F1F"/>
+      <SolidColorBrush x:Key="CapSidebarHoverBrush" Color="#14000000"/>
+      <SolidColorBrush x:Key="CapSidebarCheckedForegroundBrush" Color="#E01F1F1F"/>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Default">
+      <SolidColorBrush x:Key="CapSidebarTextBrush" Color="#E6F4F4F4"/>
+      <SolidColorBrush x:Key="CapSidebarMutedBrush" Color="#94F4F4F4"/>
+      <SolidColorBrush x:Key="CapSidebarHoverBrush" Color="#20FFFFFF"/>
+      <SolidColorBrush x:Key="CapSidebarCheckedForegroundBrush" Color="#E6F4F4F4"/>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="HighContrast">
+      <SolidColorBrush x:Key="CapSidebarTextBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+      <SolidColorBrush x:Key="CapSidebarMutedBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+      <SolidColorBrush x:Key="CapSidebarHoverBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+      <SolidColorBrush x:Key="CapSidebarCheckedForegroundBrush" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+  <SolidColorBrush x:Key="CapSidebarSelectedForegroundBrush" Color="#FF1F1F1F"/>
+  <ControlTemplate x:Key="CapSidebarButtonTemplate" TargetType="Button">
+    <Grid>
+      <VisualStateManager.VisualStateGroups><VisualStateGroup x:Name="CommonStates">
+        <VisualState x:Name="Normal"/>
+        <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Hover.Opacity" Value="1"/></VisualState.Setters></VisualState>
+        <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Hover.Opacity" Value="1"/><Setter Target="Presenter.Opacity" Value="0.8"/></VisualState.Setters></VisualState>
+        <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+      </VisualStateGroup></VisualStateManager.VisualStateGroups>
+      <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}"/>
+      <Border x:Name="Hover" Background="{ThemeResource CapSidebarHoverBrush}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
+      <ContentPresenter x:Name="Presenter" Content="{TemplateBinding Content}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
+    </Grid>
+  </ControlTemplate>
+  <ControlTemplate x:Key="CapSidebarToggleTemplate" TargetType="ToggleButton">
+    <Grid>
+      <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal"/>
+          <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Hover.Opacity" Value="1"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Hover.Opacity" Value="1"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Indeterminate"/>
+          <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="CheckedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="CheckedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="CheckedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/><Setter Target="Presenter.Opacity" Value="0.8"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="CheckedDisabled"><VisualState.Setters><Setter Target="CheckedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+        </VisualStateGroup>
+      </VisualStateManager.VisualStateGroups>
+      <Border Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}"/>
+      <Border x:Name="CheckedSurface" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
+      <Border x:Name="Hover" Background="{ThemeResource CapSidebarHoverBrush}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
+      <ContentPresenter x:Name="Presenter" Content="{TemplateBinding Content}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
+    </Grid>
+  </ControlTemplate>
+  <Style x:Key="CapSidebarButton" TargetType="Button">
+    <Setter Property="Template" Value="{StaticResource CapSidebarButtonTemplate}"/>
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/>
+    <Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="MinWidth" Value="0"/><Setter Property="Height" Value="36"/><Setter Property="Padding" Value="8,0"/>
+    <Setter Property="CornerRadius" Value="8"/><Setter Property="FontSize" Value="13"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/><Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Setter Property="UseSystemFocusVisuals" Value="True"/>
+  </Style>
+  <Style x:Key="CapSidebarBrandButton" TargetType="Button" BasedOn="{StaticResource CapSidebarButton}">
+    <Setter Property="Height" Value="52"/><Setter Property="Padding" Value="8"/><Setter Property="Opacity" Value="0.72"/>
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><ContentPresenter Content="{TemplateBinding Content}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/></ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="CapSidebarToggle" TargetType="ToggleButton">
+    <Setter Property="Template" Value="{StaticResource CapSidebarToggleTemplate}"/>
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarMutedBrush}"/>
+    <Setter Property="Background" Value="{ThemeResource CapSidebarHoverBrush}"/>
+    <Setter Property="MinWidth" Value="0"/><Setter Property="Height" Value="34"/><Setter Property="Width" Value="34"/>
+    <Setter Property="Padding" Value="6"/><Setter Property="CornerRadius" Value="9"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
+  </Style>
+  <Style x:Key="CapSidebarFavoriteContainer" TargetType="ListViewItem">
+    <Setter Property="MinWidth" Value="0"/><Setter Property="Height" Value="36"/><Setter Property="MinHeight" Value="0"/>
+    <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,0,4"/><Setter Property="CornerRadius" Value="18"/>
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem">
+      <Grid>
+        <VisualStateManager.VisualStateGroups><VisualStateGroup x:Name="CommonStates">
+          <VisualState x:Name="Normal"/>
+          <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapSidebarHoverBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapSidebarHoverBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapAccentGradient}"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarSelectedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapAccentGradient}"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarSelectedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapAccentGradient}"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarSelectedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
+        </VisualStateGroup></VisualStateManager.VisualStateGroups>
+        <Border x:Name="Surface" Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}">
+          <ContentPresenter x:Name="Presenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
+        </Border>
+      </Grid>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="CapSidebarFavoriteCompactContainer" TargetType="ListViewItem" BasedOn="{StaticResource CapSidebarFavoriteContainer}">
+    <Setter Property="Height" Value="32"/><Setter Property="Width" Value="32"/><Setter Property="CornerRadius" Value="9"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+  </Style>
+  <Style x:Key="CapSidebarHomeToggle" TargetType="ToggleButton" BasedOn="{StaticResource CapSidebarToggle}">
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="Background" Value="{ThemeResource CapAccentGradient}"/>
+    <Setter Property="Height" Value="36"/><Setter Property="CornerRadius" Value="18"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+  </Style>
+  <Style x:Key="CapSidebarHeaderText" TargetType="TextBlock"><Setter Property="Foreground" Value="{ThemeResource CapSidebarMutedBrush}"/></Style>
+  <DataTemplate x:Key="CapSidebarFavoriteTemplate">
+    <Grid Height="36" Padding="8,0" ColumnSpacing="10"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <controls:SidebarIcon Kind="folder" Width="24" Height="24"/><TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+    </Grid>
+  </DataTemplate>
+  <DataTemplate x:Key="CapSidebarFavoriteCompactTemplate">
+    <Grid Width="32" Height="32"><controls:SidebarIcon Kind="folder" Width="24" Height="24"/></Grid>
+  </DataTemplate>
+</ResourceDictionary>

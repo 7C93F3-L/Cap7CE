@@ -81,7 +81,7 @@ public sealed partial class MainWindow : Window
     private void Bind()
     {
         if(active is null||closed)return;
-        toolbar.Bind(active);filters.Restore(active.Filter);results.Bind(active.Items);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
+        sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);results.Bind(active.Items);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
     private void OpenLocation(string path)

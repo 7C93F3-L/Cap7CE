@@ -26,6 +26,7 @@ internal static class ThemeService
         ((SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"]).Color = Parse(settings.Color1);
         var gradient = (LinearGradientBrush)Application.Current.Resources["CapAccentGradient"];
         gradient.GradientStops[0].Color = Parse(settings.Color1); gradient.GradientStops[1].Color = Parse(settings.Color2);
+        SidebarPalette.Apply(gradient.GradientStops[0].Color,gradient.GradientStops[1].Color);
     }
     public static Color Parse(string hex)
     {
