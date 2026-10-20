@@ -11,6 +11,11 @@ namespace Cap7CE.WinUI.Controls;
 
 public sealed class SidebarIcon : UserControl
 {
+    private readonly SolidColorBrush ink=new();
+    private SolidColorBrush? foregroundSource;
+    private long colorSubscription;
+    private bool inkQueued;
+    private int inkFrames;
     private sealed record Asset(string Name, double Width, double Height, string Path);
     private static readonly Asset[] assets = JsonSerializer.Deserialize<Asset[]>(
         File.ReadAllText(System.IO.Path.Combine(AppContext.BaseDirectory,"Assets/sidebar-icons.json")),
@@ -21,7 +26,65 @@ public sealed class SidebarIcon : UserControl
         new PropertyMetadata(false,(sender,_)=>((SidebarIcon)sender).Draw()));
     public string Kind { get => (string)GetValue(KindProperty); set => SetValue(KindProperty,value); }
     public bool IsActive { get => (bool)GetValue(IsActiveProperty); set => SetValue(IsActiveProperty,value); }
-    public SidebarIcon() { IsHitTestVisible=false; Draw(); }
+    public SidebarIcon()
+    {
+        IsHitTestVisible=false;Draw();
+        Loaded+=(_,_)=>{InheritContentForeground();RefreshInk();QueueInkRefresh();};
+        Unloaded+=(_,_)=>{DetachInkSource();CancelInkRefresh();ClearValue(ForegroundProperty);};
+        RegisterPropertyChangedCallback(ForegroundProperty,(_,_)=>{RefreshInk();if(IsLoaded)QueueInkRefresh();});
+        ActualThemeChanged+=(_,_)=>QueueInkRefresh();
+    }
+
+    private void QueueInkRefresh()
+    {
+        if(!IsLoaded)return;
+        inkFrames=2;
+        if(inkQueued)return;
+        inkQueued=true;CompositionTarget.Rendering+=OnInkRendering;
+    }
+
+    private void OnInkRendering(object? sender,object args)
+    {
+        RefreshInk();
+        if(--inkFrames<=0)CancelInkRefresh();
+    }
+
+    private void CancelInkRefresh()
+    {
+        if(inkQueued)CompositionTarget.Rendering-=OnInkRendering;
+        inkQueued=false;
+    }
+
+    private void RefreshInk()
+    {
+        if(!IsLoaded||Foreground is not SolidColorBrush brush)return;
+        if(!ReferenceEquals(foregroundSource,brush))
+        {
+            DetachInkSource();foregroundSource=brush;
+            colorSubscription=brush.RegisterPropertyChangedCallback(SolidColorBrush.ColorProperty,(_,_)=>RefreshInk());
+        }
+        // Snapshot the effective color, rather than handing a theme-resource brush
+        // to Shape.Fill/Stroke where it can resolve against the previous theme.
+        ink.Color=brush.Color;
+    }
+
+    private void DetachInkSource()
+    {
+        if(foregroundSource is not null)foregroundSource.UnregisterPropertyChangedCallback(SolidColorBrush.ColorProperty,colorSubscription);
+        foregroundSource=null;
+    }
+
+    private void InheritContentForeground()
+    {
+        // UserControl has its own default foreground. Explicitly follow the
+        // presenter's resolved foreground, including theme and selected states.
+        for(var parent=VisualTreeHelper.GetParent(this);parent is not null;parent=VisualTreeHelper.GetParent(parent))
+        {
+            if(parent is not ContentPresenter presenter)continue;
+            SetBinding(ForegroundProperty,new Binding {Source=presenter,Path=new PropertyPath(nameof(ContentPresenter.Foreground))});
+            return;
+        }
+    }
 
     private void Draw()
     {
@@ -50,6 +113,5 @@ public sealed class SidebarIcon : UserControl
         Bind(path,outline?Microsoft.UI.Xaml.Shapes.Shape.StrokeProperty:Microsoft.UI.Xaml.Shapes.Shape.FillProperty);
         return path;
     }
-    private void Bind(DependencyObject target,DependencyProperty property) => BindingOperations.SetBinding(target,property,
-        new Binding {Source=this,Path=new PropertyPath(nameof(Foreground))});
+    private void Bind(DependencyObject target,DependencyProperty property) => target.SetValue(property,ink);
 }

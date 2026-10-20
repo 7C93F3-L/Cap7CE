@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+`SidebarIcon` 挂载时显式绑定最近 `ContentPresenter.Foreground`，绕开 UserControl 自身默认前景色对继承的覆盖；所有路径填充/描边持有每个图标独立的 ink 画刷，将 Foreground 当前解析后的 Color 复制进去，不将主题资源画刷直接转交给 Shape 再解析。监听 Foreground、源 SolidColorBrush.Color 及 ActualThemeChanged，主题变化后仅在后续两帧 Rendering 内合并复核，然后解除渲染订阅，卸载时解除源画刷订阅及祖先绑定。由当前内容呈现器统一提供明暗主题及选中态颜色，不交换颜色表，渐变选中项继续使用既有对比色。验证需沿设置页的共享偏好通知链，同时核对控件 Foreground 与实际 Shape.Fill/Stroke，不能只检查控件属性。设置窗口关闭时标记终态，已排队的主题投影跳过关闭窗口，避免关闭与偏好通知交错时访问已销毁窗口。
+
 主窗口通过 `WindowTitleBar.ConfigurePin` 投影独立偏好的 `AlwaysOnTop`，仅使用 `OverlappedPresenter.IsAlwaysOnTop`，不复制 Electron 窗口状态机。`Themes/TitleBarResources.xaml` 为原生 ToggleButton 提供系统标题栏前景、悬停及焦点样式；两个简单圆形由 XAML Ellipse 重绘。按钮位于原生三按钮左侧，按 RightInset 与 RasterizationScale 计算宽度及保留区，并将物理像素点击矩形注册为非客户区 Passthrough；布局变化、窗口变化时同步，原生拖动及三按钮仍由系统处理。设置、预览不新增固定入口，主窗口切换沿用既有偏好保存与通知通道。
 
 XAML 的 `WindowCaptionButtonBackgroundPointerOver` / `WindowCaptionButtonBackgroundPressed` 与原生按钮默认绘制不是同一调色来源；原生颜色属性未覆盖时可为 null，并不返回默认绘制色。原生三按钮的悬停与按下颜色保持系统默认，不通过修改原生配色掩盖两者差异。未找到可读取默认绘制色的公开参数后，固定按钮悬停填充仅按用户提供的截图采样为 Light #FFE5E5E5、Default #FF191919；这是当前系统外观的近似值，不声明为跨 Windows 版本的官方常量。HighContrast 继续使用系统高亮色；不读写系统主题设置。

@@ -14,6 +14,7 @@ internal sealed class SettingsWindow : Window
     private readonly InfoBar notice = new() { IsOpen=false, IsClosable=true };
     private readonly Grid root = new();
     private string category="常规";
+    private bool closed;
     public SettingsWindow(ShellServices services)
     {
         this.services=services; AppWindow.Resize(new(1000,760));
@@ -27,9 +28,9 @@ internal sealed class SettingsWindow : Window
         var scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};Grid.SetColumn(scroll,1);root.Children.Add(scroll);
         Grid.SetRow(notice,1);Grid.SetColumnSpan(notice,2);root.Children.Add(notice);Content=root;
         services.Preferences.Changed+=OnPreferences;
-        Closed+=(_,_)=>services.Preferences.Changed-=OnPreferences;
+        Closed+=(_,_)=>{closed=true;services.Preferences.Changed-=OnPreferences;};
         Render();OnPreferences();
     }
-    private void OnPreferences()=>DispatcherQueue.TryEnqueue(()=>ThemeService.Apply(this,root,services.Preferences.Current));
+    private void OnPreferences()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
     private void Render()=>body.Content=pages.Build(category,search.Text.Trim());
 }
