@@ -53,6 +53,7 @@ internal sealed class SidebarView : UserControl
         expandedTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteTemplate"];
         compactTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteCompactTemplate"];
         ScrollViewer.SetHorizontalScrollBarVisibility(favorites,ScrollBarVisibility.Disabled);
+        IdleScrollBars.Attach(favorites);
         favorites.ContainerContentChanging += PrepareFavorite;
         favorites.ItemClick += (_,e)=>{if(e.ClickedItem is Favorite item)Navigate?.Invoke(item.Path);};
         var settings = new Button { Style = StyleFor("CapSidebarButton"), Margin = new(5), Height = 36 };

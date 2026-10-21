@@ -20,12 +20,14 @@ internal sealed class SettingsWindow : Window
         this.services=services; AppWindow.Resize(new(1000,760));
         pages=new(services, this, text=>{notice.Message=text;notice.IsOpen=true;});
         var navigation=new ListView { ItemsSource=new[]{"常规","外观","缓存与索引","快捷操作","运行组件与模型","诊断","关于"}, SelectedIndex=0, Margin=new(8) };
+        IdleScrollBars.Attach(navigation);
         navigation.SelectionChanged+=(_,_)=>{category=navigation.SelectedItem?.ToString()??"常规"; Render();};
         search.TextChanged+=(_,_)=>Render();
         root.ColumnDefinitions.Add(new(){Width=new(210)});root.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         root.Children.Add(Ui.Column(Ui.Heading("设置"),search,navigation));
         var scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};Grid.SetColumn(scroll,1);root.Children.Add(scroll);
+        IdleScrollBars.Attach(scroll);
         Grid.SetRow(notice,1);Grid.SetColumnSpan(notice,2);root.Children.Add(notice);Content=root;
         services.Preferences.Changed+=OnPreferences;
         Closed+=(_,_)=>{closed=true;services.Preferences.Changed-=OnPreferences;};

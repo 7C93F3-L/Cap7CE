@@ -8,7 +8,7 @@
 
 中央工作区 `WorkspaceToolbar` 只组合导航、随机/换批、排序、隐藏/子目录与网格动作；`Controls/Workspace/WorkspaceAddress` 独立拥有路径/搜索共用输入区、面包屑、输入草稿和Escape处理，纯 `WorkspacePathRules` 保留盘符和UNC根边界。工具条复用当前主线矢量及共享选中前景，样式集中于 `Themes/WorkspaceResources.xaml`，浮层仍由原生亚克力服务提供。`MainWindow` 只接线现有浏览会话和独立偏好，单页隐藏标签行，多页沿原生TabView保留；不增加Core操作。
 
-`ResultsView` 统一方形GridView、原比例 `ResultsGallery`、原有列表和低高度横向网格。纯 `GalleryGeometry` 沿当前主线catalogJustifiedRows计算8 DIP间距、28 DIP名称区、满行及自然末行；可见性通过真实卡片下沿二分查找。`GalleryLayout` 实现原生VirtualizingLayout，仅测量/排列RealizationRect及推荐锚点，离开视口回收元素；`GalleryTile` 在编译XAML模板中注册激活元信息。`AssetItem` 只记录本次浏览已解码缩略图的比例，不访问元数据或改写缓存；未知比例暂按1显示，比例到达后按事件合并重排。`AssetTile` 卸载/隐藏视图/最小化取消读取并释放像素，重复恢复不重新请求所有卡片；复用原Core视觉通道及独立PhaseF缓存。
+`ResultsView` 统一方形GridView、原比例 `ResultsGallery`、原有列表和低高度横向网格。中央三种视图、左侧收藏、右侧详情、设置页导航/正文、文本及目录类预览、属性/比例/扩展名筛选浮层共用 Controls/Workspace/IdleScrollBars，仅控制原生滚动条Opacity：滚动时显示，空闲1秒后以160 ms淡出，指针停在滚动条及拖动期间保持显示；方向及可滚动性仍由原ScrollViewer控制。显隐不修改Visibility、尺寸或内容面板，不改变分页、虚拟化和选择。行为按Loaded/Unloaded及视图可见性绑定/解绑事件，停止一次性计时器与动画；仅遍历滚动宿主模板，不扫描内容项，不改系统滚动条设置；顶部筛选及面包屑原本不显示滚动条的规则保持原样。纯 `GalleryGeometry` 沿当前主线catalogJustifiedRows计算8 DIP间距、28 DIP名称区、满行及自然末行；可见性通过真实卡片下沿二分查找。`GalleryLayout` 实现原生VirtualizingLayout，仅测量/排列RealizationRect及推荐锚点，离开视口回收元素；`GalleryTile` 在编译XAML模板中注册激活元信息。`AssetItem` 只记录本次浏览已解码缩略图的比例，不访问元数据或改写缓存；未知比例暂按1显示，比例到达后按事件合并重排。`AssetTile` 卸载/隐藏视图/最小化取消读取并释放像素，重复恢复不重新请求所有卡片；复用原Core视觉通道及独立PhaseF缓存。
 
 `WorkspaceSelection<T>` 独立提供原比例网格单选、Ctrl切换、Shift范围和锚点清理；方形/列表继续使用原生选择机制，模式切换保留同一批文件的选择。右键保持多选，空白和Escape清选只在结果区域处理，不穿透路径/搜索/右栏。`ResultDrag` 统一三种结果视图的StorageItems拖出，继续调用原FileCommands，不增加复制/移动协议。`HomeGroup` 仅投影已有系统位置和卷，首页使用原生分组及六份实际引用的目录图标，低高度时平铺为原横向模式。`BrowseSession.Error` 仅投影最近查询失败，空状态提供重试/清除条件；不改分页、索引或建库边界。纯布局检查覆盖5万项可见范围、末行、UNC路径和选择规则，视觉/拖入/长期滚动仍由用户统一验收。
 

@@ -43,6 +43,7 @@ internal sealed class AspectFilterEditor(Func<CoreSearchFactFilter> read,Action<
             if(draft.Count>32){error.Text="最多组合32种比例";return;}
             apply(read() with {MinimumAspectRatio=null,MaximumAspectRatio=null,AspectRanges=draft.Count>0?draft.ToArray():null});flyouts.Close();
         })));
-        flyouts.Show(anchor,new ScrollViewer {Content=content,MaxHeight=420,VerticalScrollBarVisibility=ScrollBarVisibility.Auto});
+        var scroll=new ScrollViewer {Content=content,MaxHeight=420,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
+        IdleScrollBars.Attach(scroll);flyouts.Show(anchor,scroll);
     }
 }

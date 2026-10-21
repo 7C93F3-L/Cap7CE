@@ -29,7 +29,8 @@ internal sealed class DetailsPane : UserControl
         save = Ui.Button("保存关键词", () => Save());
         // These controls keep one parent for the entire pane lifetime.
         keywordPanel = Ui.Panel(Ui.Column(keywords, Ui.Row(save, Ui.Button("重新读取", () => { if (current is { } item) Read(item); })), message));
-        Content = new ScrollViewer { Content = column, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var scroll = new ScrollViewer { Content = column, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        IdleScrollBars.Attach(scroll);Content=scroll;
         debounce.Tick += (_, _) => { debounce.Stop(); if (current is not null) Read(current); };
         Select([]);
     }

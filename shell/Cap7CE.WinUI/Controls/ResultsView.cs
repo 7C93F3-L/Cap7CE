@@ -39,6 +39,7 @@ internal sealed class ResultsView : UserControl
         list.ItemTemplate = (DataTemplate)XamlReader.Load("<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><StackPanel Orientation='Horizontal' Spacing='18' Padding='6'><FontIcon Glyph='{Binding Glyph}' FontSize='16'/><TextBlock Text='{Binding Name}' Width='300' TextTrimming='CharacterEllipsis'/><TextBlock Text='{Binding SizeLabel}' Width='90'/><TextBlock Text='{Binding ModifiedLabel}' Width='150'/><TextBlock Text='{Binding FullPath}' Opacity='0.55' TextTrimming='CharacterEllipsis'/></StackPanel></DataTemplate>");
         foreach (var view in new ListViewBase[] { grid, list })
         {
+            IdleScrollBars.Attach(view);
             view.SelectionChanged += (_, _) => SelectionChanged?.Invoke(Selection);
             view.DoubleTapped += OnItemDoubleTapped; view.RightTapped += Context;
             view.DragItemsStarting += OnItemsDragStarting; root.Children.Add(view);

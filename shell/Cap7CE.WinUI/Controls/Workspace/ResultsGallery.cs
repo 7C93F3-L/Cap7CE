@@ -23,6 +23,7 @@ internal sealed class ResultsGallery : UserControl
     public ResultsGallery()
     {
         repeater.Layout=layout;repeater.ItemTemplate=(DataTemplate)Application.Current.Resources["CapGalleryTileTemplate"];scroll.Content=repeater;Content=scroll;
+        IdleScrollBars.Attach(this);
         repeater.ElementPrepared+=(_,e)=>{
             if(e.Element is not GalleryTile tile)return;tiles.Add(tile);tile.Pick=Pick;tile.Open=Open;tile.Context=Context;tile.Drag=Drag;
             tile.IsChecked=tile.DataContext is AssetItem item&&selection.Contains(item);

@@ -54,6 +54,7 @@ internal sealed class FactFilterEditor(Func<BrowseFilter> read,Action<BrowseFilt
             if(minChannel is not null)next=next with {ChannelRanges=Integer(minChannel) is null&&Integer(maxChannel) is null?null:[new(Integer(minChannel),Integer(maxChannel))]};
             apply(read() with {Facts=AspectFilterRules.Normalize(next)});flyouts.Close();
         })));
-        flyouts.Show(anchor,new ScrollViewer {Content=content,MaxHeight=420,VerticalScrollBarVisibility=ScrollBarVisibility.Auto});
+        var scroll=new ScrollViewer {Content=content,MaxHeight=420,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
+        IdleScrollBars.Attach(scroll);flyouts.Show(anchor,scroll);
     }
 }

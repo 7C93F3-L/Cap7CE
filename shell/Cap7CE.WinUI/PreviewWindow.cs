@@ -98,7 +98,11 @@ internal sealed class PreviewWindow : Window
         catch(OperationCanceledException){}
         catch(Exception error){if(!token.IsCancellationRequested){content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}
     }
-    private static ScrollViewer Text(string text)=>new(){Content=new TextBlock {Text=text,IsTextSelectionEnabled=true,TextWrapping=TextWrapping.Wrap,Margin=new(12),FontSize=15},HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
+    private static ScrollViewer Text(string text)
+    {
+        var scroll=new ScrollViewer {Content=new TextBlock {Text=text,IsTextSelectionEnabled=true,TextWrapping=TextWrapping.Wrap,Margin=new(12),FontSize=15},HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
+        IdleScrollBars.Attach(scroll);return scroll;
+    }
     private async void RenderPage(int delta)
     {
         if(page+delta<1||page+delta>pageCount)return;page+=delta;
