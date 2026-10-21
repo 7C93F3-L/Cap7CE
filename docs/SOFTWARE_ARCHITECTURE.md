@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+三大工作区表面共用 `CapWorkspaceSurfaceBrush`：深色改用系统 `LayerFillColorDefault`，由 WinUI 主题资源提供内容层填充，在窗口 Mica / Mica Alt 底层上叠加；浅色仍用 `CardBackgroundFillColorDefault`，高对比仍用 `SystemColorWindowColor`。此调整只作用于顶部筛选、中央工作区和右侧详情的共享表面，不调整图标、内部卡片或布局。
+
 中央工作区 `WorkspaceToolbar` 只组合导航、随机/换批、排序、隐藏/子目录与网格动作；`Controls/Workspace/WorkspaceAddress` 独立拥有路径/搜索共用输入区、面包屑、输入草稿和Escape处理，纯 `WorkspacePathRules` 保留盘符和UNC根边界。工具条复用当前主线矢量及共享选中前景，样式集中于 `Themes/WorkspaceResources.xaml`，浮层仍由原生亚克力服务提供。`MainWindow` 只接线现有浏览会话和独立偏好，单页隐藏标签行，多页沿原生TabView保留；不增加Core操作。
 
 `ResultsView` 统一方形GridView、原比例 `ResultsGallery`、原有列表和低高度横向网格。纯 `GalleryGeometry` 沿当前主线catalogJustifiedRows计算8 DIP间距、28 DIP名称区、满行及自然末行；可见性通过真实卡片下沿二分查找。`GalleryLayout` 实现原生VirtualizingLayout，仅测量/排列RealizationRect及推荐锚点，离开视口回收元素；`GalleryTile` 在编译XAML模板中注册激活元信息。`AssetItem` 只记录本次浏览已解码缩略图的比例，不访问元数据或改写缓存；未知比例暂按1显示，比例到达后按事件合并重排。`AssetTile` 卸载/隐藏视图/最小化取消读取并释放像素，重复恢复不重新请求所有卡片；复用原Core视觉通道及独立PhaseF缓存。
