@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Graphics;
 using Microsoft.UI.Dispatching;
+using ShapePath = Microsoft.UI.Xaml.Shapes.Path;
 
 namespace Cap7CE.WinUI.Themes;
 
@@ -18,7 +19,7 @@ internal sealed class WindowTitleBar : Grid
     private readonly ColumnDefinition captionSpace = new() { Width = new(0) };
     private ToggleButton? pin;
     private Action<bool>? pinChanged;
-    private Ellipse? pinCenter;
+    private ShapePath? pinCenter;
     private Grid? pinGlyph;
     private Window? owner;
     private AppWindow? appWindow;
@@ -53,8 +54,12 @@ internal sealed class WindowTitleBar : Grid
         dragRegion.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         dragRegion.ColumnDefinitions.Add(captionSpace);
         var glyph = pinGlyph = new Grid { Width = 10, Height = 10, IsHitTestVisible = false, RenderTransform = new TranslateTransform() };
-        var ring = new Ellipse { Width = 10, Height = 10, StrokeThickness = 1 };
-        pinCenter = new Ellipse { Width = 3, Height = 3 };
+        // Both paths occupy the same 10-DIP box; independently centering a
+        // 3-DIP element in a 10-DIP box rounds its 3.5-DIP offset asymmetrically.
+        var ring = new ShapePath { Width = 10, Height = 10, Stretch = Stretch.None, StrokeThickness = 1,
+            Data = new EllipseGeometry { Center = new(5,5), RadiusX = 4.5, RadiusY = 4.5 } };
+        pinCenter = new ShapePath { Width = 10, Height = 10, Stretch = Stretch.None,
+            Data = new EllipseGeometry { Center = new(5,5), RadiusX = 1.5, RadiusY = 1.5 } };
         pin = new ToggleButton { Content = glyph, Style = (Style)Application.Current.Resources["CapTitleBarPin"] };
         ring.SetBinding(Shape.StrokeProperty, new Microsoft.UI.Xaml.Data.Binding { Source = pin, Path = new("Foreground") });
         pinCenter.SetBinding(Shape.FillProperty, new Microsoft.UI.Xaml.Data.Binding { Source = pin, Path = new("Foreground") });

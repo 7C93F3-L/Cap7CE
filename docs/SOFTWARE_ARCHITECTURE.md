@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+标题栏固定图标的外环和实心点使用相同 10 DIP 布局盒中的 EllipseGeometry，圆心均为 (5,5)，避免 10 DIP 外环与 3 DIP 内圆分别布局时的半像素取整偏移；可见外径、描边和点径保持不变。
+
 三大工作区表面共用 `CapWorkspaceSurfaceBrush`：深色改用系统 `LayerFillColorDefault`，由 WinUI 主题资源提供内容层填充，在窗口 Mica / Mica Alt 底层上叠加；浅色仍用 `CardBackgroundFillColorDefault`，高对比仍用 `SystemColorWindowColor`。此调整只作用于顶部筛选、中央工作区和右侧详情的共享表面，不调整图标、内部卡片或布局。
 
 中央工作区 `WorkspaceToolbar` 只组合导航、随机/换批、排序、隐藏/子目录与网格动作；`Controls/Workspace/WorkspaceAddress` 独立拥有路径/搜索共用输入区、面包屑、输入草稿和Escape处理，纯 `WorkspacePathRules` 保留盘符和UNC根边界。工具条复用当前主线矢量及共享选中前景，样式集中于 `Themes/WorkspaceResources.xaml`，浮层仍由原生亚克力服务提供。`MainWindow` 只接线现有浏览会话和独立偏好，单页隐藏标签行，多页沿原生TabView保留；不增加Core操作。
