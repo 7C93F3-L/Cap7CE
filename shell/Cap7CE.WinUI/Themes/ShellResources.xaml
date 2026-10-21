@@ -4,7 +4,7 @@
       <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="{ThemeResource CardBackgroundFillColorDefault}" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Default">
-      <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="{ThemeResource LayerFillColorDefault}" />
+      <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="#4C4A4A4A" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="HighContrast">
       <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}" />
