@@ -42,7 +42,7 @@ public sealed class AssetTile : Grid
         Unloaded+=(_,_)=>{active=false;interaction.Disconnect();LayoutChanged-=Layout;Release();};Layout();
     }
     internal static double PreferredSize => preferences.TileSize;
-    internal void SetGalleryBounds(double width,double height){galleryBounds=(width,height);Layout();}
+    internal void SetGalleryBounds(double width,double height){if(galleryBounds==(width,height))return;galleryBounds=(width,height);Layout();}
     internal void SetGridSize(double? size){if(gridSize==size)return;gridSize=size;Layout();}
     internal void SetCompactHeight(double? height) { if(compactHeight==height)return;compactHeight=height;Layout(); }
     private void Layout()

@@ -9,7 +9,7 @@ internal sealed class GalleryLayout : VirtualizingLayout
     private GalleryGeometry geometry=new([],0);
     private bool dirty=true;
     private double width,target=160;
-    public void Update(double size){target=size;dirty=true;InvalidateMeasure();}
+    public void Update(double size){if(target==size)return;target=size;dirty=true;InvalidateMeasure();}
     public void RatiosChanged(){dirty=true;InvalidateMeasure();}
     public GalleryBox? Box(int index)=>index>=0&&index<geometry.Boxes.Count?geometry.Boxes[index]:null;
     protected override Size MeasureOverride(VirtualizingLayoutContext context,Size availableSize)

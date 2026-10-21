@@ -17,6 +17,6 @@ public sealed class GalleryTile : ToggleButton
         RightTapped+=(_,e)=>Context?.Invoke(this,e);DragStarting+=(_,e)=>Drag?.Invoke(this,e);
         DataContextChanged+=(_,_)=>{if(DataContext is AssetItem item)Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(this,item.Name);};
     }
-    internal void SetBounds(double width,double height){Width=width;Height=height;tile.SetGalleryBounds(width,height);}
+    internal void SetBounds(double width,double height){if(Width==width&&Height==height)return;Width=width;Height=height;tile.SetGalleryBounds(width,height);}
     internal void Suspend(bool value)=>tile.Suspend(value);
 }

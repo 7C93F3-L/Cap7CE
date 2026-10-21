@@ -25,6 +25,7 @@ internal sealed class SidebarView : UserControl
     private readonly Button add;
     private readonly DataTemplate expandedTemplate, compactTemplate;
     private bool? compact;
+    private (bool Compact,bool Brand,bool Filters,bool Details)? appliedLayout;
     private string activePath = "";
     private Func<Favorite, MenuFlyout>? favoriteMenu;
     private static Style StyleFor(string key) => (Style)Application.Current.Resources[key];
@@ -89,6 +90,9 @@ internal sealed class SidebarView : UserControl
 
     public void ApplyLayout(bool isCompact,bool showBrand,bool filtersVisible,bool detailsVisible)
     {
+        var next=(isCompact,showBrand,filtersVisible,detailsVisible);
+        if(appliedLayout==next)return;
+        appliedLayout=next;
         if(compact!=isCompact) {
             compact = isCompact; favorites.ItemTemplate = isCompact?compactTemplate:expandedTemplate;
             favorites.ItemContainerStyle = StyleFor(isCompact?"CapSidebarFavoriteCompactContainer":"CapSidebarFavoriteContainer");
