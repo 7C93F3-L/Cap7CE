@@ -64,8 +64,7 @@ internal sealed class ResultsView : UserControl
         emptyHint.Text=error??(filtered?"可以调整搜索词或筛选条件后重试。":"此文件夹中没有可显示的内容。");
         retry.Visibility=!busy?Visibility.Visible:Visibility.Collapsed;clearFilters.Visibility=!busy&&filtered?Visibility.Visible:Visibility.Collapsed;
     }
-    public void View(bool isList){var previous=ActiveView;var old=IsGallery;listMode=isList;ApplyView(previous,old);gridLayout.SetHorizontal(horizontal);}
-    public void Preferences(ShellPreferences value){var previous=ActiveView;var old=IsGallery;square=value.SquareTiles;gallery.Size(value.TileSize);ApplyView(previous,old);gridLayout.Refresh();}
+    public void Preferences(ShellPreferences value){var previous=ActiveView;var old=IsGallery;listMode=value.View=="list";square=value.SquareTiles;gallery.Size(value.TileSize);ApplyView(previous,old);gridLayout.Refresh();}
     public void PreviewSize(double value){gallery.Size(value);gridLayout.Refresh();}
     public void SetHorizontal(bool value)
     {

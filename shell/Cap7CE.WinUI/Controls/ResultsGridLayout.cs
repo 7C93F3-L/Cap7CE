@@ -15,7 +15,7 @@ internal sealed class ResultsGridLayout
     private long viewportSubscription;
     private readonly Style? normalStyle;
     private readonly Style compactStyle = new(typeof(GridViewItem));
-    private bool compactStyleApplied;
+    private bool compactStyleApplied,waitingForPanel;
     public ResultsGridLayout(GridView grid)
     {
         this.grid = grid;
@@ -26,7 +26,7 @@ internal sealed class ResultsGridLayout
         compactStyle.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));
         compactStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty,new Thickness(0,0,ResultGridGeometry.Gap,0)));
         grid.Loaded += (_, _) => Update();
-        grid.Unloaded += (_, _) => DetachViewport();
+        grid.Unloaded += (_, _) => {DetachViewport();CancelPanelRefresh();};
         grid.SizeChanged += (_, _) => Update();
         grid.ContainerContentChanging += (_, e) => {
             if (!e.InRecycleQueue) e.RegisterUpdateCallback((_, args) => ApplyTiles(args.ItemContainer));
@@ -41,6 +41,7 @@ internal sealed class ResultsGridLayout
         if(grid.IsLoaded&&scroll is null&&FindScroll(grid) is {} found) {
             scroll=found;viewportSubscription=scroll.RegisterPropertyChangedCallback(ScrollViewer.ViewportWidthProperty,(_,_)=>Update());
         }
+        if(grid.Visibility!=Visibility.Visible)return;
         ScrollViewer.SetHorizontalScrollMode(grid, horizontal ? ScrollMode.Enabled : ScrollMode.Disabled);
         ScrollViewer.SetVerticalScrollMode(grid, horizontal ? ScrollMode.Disabled : ScrollMode.Enabled);
         ScrollViewer.SetHorizontalScrollBarVisibility(grid, horizontal ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled);
@@ -58,7 +59,8 @@ internal sealed class ResultsGridLayout
             panel.ItemHeight = horizontal ? cell : cell+28+ResultGridGeometry.Gap;
             panel.VerticalAlignment = horizontal ? VerticalAlignment.Center : VerticalAlignment.Stretch;
         }
-        ApplyTiles(grid);
+        else {WaitForPanel();return;}
+        CancelPanelRefresh();ApplyTiles(grid);
     }
 
     private void ApplyTiles(DependencyObject parent)
@@ -66,9 +68,22 @@ internal sealed class ResultsGridLayout
         for (var i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++)
         {
             var child=VisualTreeHelper.GetChild(parent,i);
-            if(child is AssetTile tile){tile.SetGridSize(horizontal?null:cell);tile.SetCompactHeight(horizontal?cell:null);}else ApplyTiles(child);
+            if(child is AssetTile tile)tile.SetCompactHeight(horizontal?cell:null);else ApplyTiles(child);
         }
     }
+
+    private void WaitForPanel()
+    {
+        if(waitingForPanel)return;
+        waitingForPanel=true;grid.LayoutUpdated+=PanelReady;
+    }
+    private void PanelReady(object? sender,object args)
+    {
+        if(grid.Visibility!=Visibility.Visible){CancelPanelRefresh();return;}
+        if(grid.ItemsPanelRoot is not ItemsWrapGrid)return;
+        CancelPanelRefresh();Update();
+    }
+    private void CancelPanelRefresh(){if(waitingForPanel)grid.LayoutUpdated-=PanelReady;waitingForPanel=false;}
 
     private void DetachViewport()
     {

@@ -19,7 +19,7 @@ public sealed class AssetTile : Grid
     private CompositionRoundedRectangleGeometry? clipGeometry;
     private CancellationTokenSource? reading;
     private bool active,suspended;
-    private double? compactHeight,gridSize;
+    private double? compactHeight;
     private (double Width,double Height)? galleryBounds;
     private static ShellPreferences preferences=new();
     private static event Action? LayoutChanged;
@@ -37,25 +37,31 @@ public sealed class AssetTile : Grid
         restStroke.Style=(Style)Application.Current.Resources["CapResultRestStroke"];
         hover.Style=(Style)Application.Current.Resources["CapResultHover"];selected.Style=(Style)Application.Current.Resources["CapResultSelected"];
         foreach(var border in new[]{restStroke,hover,selected}){border.IsHitTestVisible=false;SetRowSpan(border,2);Children.Add(border);}
-        SetCardState(false,false);SizeChanged+=(_,_)=>UpdateClip();
+        SetCardState(false,false);SizeChanged+=(_,_)=>{UpdateClip();UpdateIconSize();};
         DataContextChanged+=(_,_)=>Refresh();Loaded+=(_,_)=>{active=!suspended;LayoutChanged+=Layout;Layout();UpdateClip();interaction.Connect();Refresh();};
         Unloaded+=(_,_)=>{active=false;interaction.Disconnect();LayoutChanged-=Layout;Release();};Layout();
     }
     internal static double PreferredSize => preferences.TileSize;
     internal void SetGalleryBounds(double width,double height){if(galleryBounds==(width,height))return;galleryBounds=(width,height);Layout();}
-    internal void SetGridSize(double? size){if(gridSize==size)return;gridSize=size;Layout();}
     internal void SetCompactHeight(double? height) { if(compactHeight==height)return;compactHeight=height;Layout(); }
     private void Layout()
     {
-        Width=galleryBounds?.Width??compactHeight??gridSize??preferences.TileSize;Height=galleryBounds?.Height??compactHeight??((gridSize??preferences.TileSize)+28);
-        Padding=new(0);RowDefinitions[0].Height=galleryBounds is {} bounds?new(Math.Max(1,bounds.Height-28)):compactHeight is null?new(gridSize??preferences.TileSize):new(1,GridUnitType.Star);
+        // GridView owns square cell dimensions; do not snapshot them into each recycled tile.
+        Width=galleryBounds?.Width??compactHeight??double.NaN;Height=galleryBounds?.Height??compactHeight??double.NaN;
+        Padding=new(0);RowDefinitions[0].Height=galleryBounds is {} bounds?new(Math.Max(1,bounds.Height-28)):new(1,GridUnitType.Star);
         title.Visibility=compactHeight is <52?Visibility.Collapsed:Visibility.Visible;title.MaxLines=compactHeight is null?2:1;
         RowDefinitions[1].Height=new(title.Visibility==Visibility.Visible?28:0);
         caption.Visibility=title.Visibility;
-        var iconArea=Math.Max(1,Math.Min(Width,galleryBounds is {} box?box.Height-28:gridSize??preferences.TileSize));
-        formatIcon.Width=formatIcon.Height=compactHeight is {} cell?Math.Clamp(cell-(cell<52?12:40),1,64):Math.Clamp(iconArea*.4,1,80);
+        UpdateIconSize();
         image.Stretch=galleryBounds is not null?Stretch.Uniform:preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=preferences.FontSize;
         title.MaxLines=1;title.Margin=new(4,3,4,3);title.VerticalAlignment=VerticalAlignment.Center;
+    }
+    private void UpdateIconSize()
+    {
+        var width=double.IsNaN(Width)?ActualWidth:Width;
+        var height=double.IsNaN(Height)?ActualHeight:Height;
+        var iconArea=Math.Max(1,Math.Min(width,height-(title.Visibility==Visibility.Visible?28:0)));
+        formatIcon.Width=formatIcon.Height=compactHeight is {} cell?Math.Clamp(cell-(cell<52?12:40),1,64):Math.Clamp(iconArea*.4,1,80);
     }
     internal void SetCardState(bool isSelected,bool isHovered)
     {

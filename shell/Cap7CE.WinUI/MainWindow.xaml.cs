@@ -125,7 +125,7 @@ public sealed partial class MainWindow : Window
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop})==prefs;
-        if(!pinOnly){ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);results.View(prefs.View=="list");results.Preferences(prefs);toolbar.ApplyPreferences(prefs);layout.ApplyPreferences();}
+        if(!pinOnly){ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);results.Preferences(prefs);toolbar.ApplyPreferences(prefs);layout.ApplyPreferences();}
         WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned);appliedPreferences=prefs;
     });
     private void SetPinned(bool value)=>commands.Run(async()=>{
