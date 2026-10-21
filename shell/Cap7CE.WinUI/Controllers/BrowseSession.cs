@@ -23,10 +23,19 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     private int generation;
     public bool CanBack => back.Count > 0;
     public bool CanForward => forward.Count > 0;
-    public async Task BackAsync() { if (back.TryPop(out var target)) { forward.Push(PathValue); await NavigateAsync(target, false); } }
-    public async Task ForwardAsync() { if (forward.TryPop(out var target)) { back.Push(PathValue); await NavigateAsync(target, false); } }
-    public Task UpAsync() => NavigateAsync(PathValue.Length > 0 ? Directory.GetParent(PathValue)?.FullName ?? "" : "");
-    public async Task NavigateAsync(string path, bool remember = true)
+    public async Task BackAsync()
+    {
+        if(!back.TryPeek(out var target))return;var current=PathValue;Query="";
+        if(await NavigateAsync(target,false)){back.Pop();forward.Push(current);Changed?.Invoke();}
+    }
+    public async Task ForwardAsync()
+    {
+        if(!forward.TryPeek(out var target))return;var current=PathValue;Query="";
+        if(await NavigateAsync(target,false)){forward.Pop();back.Push(current);Changed?.Invoke();}
+    }
+    public Task UpAsync()
+    {if(PathValue.Length==0)return Task.CompletedTask;Query="";return NavigateAsync(Directory.GetParent(PathValue)?.FullName??"");}
+    public async Task<bool> NavigateAsync(string path, bool remember = true)
     {
         var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
@@ -56,10 +65,10 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     EntryType: Filter.Count > 0 || Recursive && Query.Trim().Length == 0 ? "file" : "any",
                     TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
-                if (version != generation) return;
+                if (version != generation) return false;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
             }
-            if (version != generation) return;
+            if (version != generation) return false;
             if (remember && path != PathValue) { back.Push(PathValue); forward.Clear(); }
             PathValue = path; Title = path.Length == 0 ? "此电脑" : System.IO.Path.GetFileName(path.TrimEnd('\\'));
             var loading = false;
@@ -79,9 +88,10 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 finally { loading = false; }
             };
             Items = result;
+            return true;
         }
-        catch (OperationCanceledException) { }
-        catch (Exception error) { if (version == generation) Error = error.Message; }
+        catch (OperationCanceledException) { return false; }
+        catch (Exception error) { if (version == generation) Error = error.Message; return false; }
         finally { if (version == generation) { Busy = false; Changed?.Invoke(); } }
     }
     private void Append(AssetCollection target, SearchPageResponse page)
