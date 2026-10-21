@@ -19,6 +19,7 @@ internal sealed class WorkspaceAddress : UserControl
     public event Action<string>? Navigate,Search;
     public WorkspaceAddress()
     {
+        Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("ms-appx:///Themes/WorkspaceInputResources.xaml")});
         VerticalAlignment=VerticalAlignment.Center;HorizontalContentAlignment=HorizontalAlignment.Stretch;
         var inputStyle=(Style)Application.Current.Resources["CapWorkspaceInput"];address.Style=search.Style=inputStyle;
         address.Loaded+=(_,_)=>HideClearButton(address);search.Loaded+=(_,_)=>HideClearButton(search);
