@@ -18,6 +18,7 @@ public sealed partial class MainWindow : Window
     private readonly WorkspaceToolbar toolbar=new();
     private readonly FilterBar filters=new();
     private readonly ResultsView results=new();
+    private readonly WorkspaceNotice notifications=new();
     private readonly DetailsPane details;
     private readonly WorkspaceLayoutController layout;
     private readonly FilterAvailabilityService filterAvailability;
@@ -33,10 +34,11 @@ public sealed partial class MainWindow : Window
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
         filters.RetryAvailability+=()=>{if(active is not null)filterAvailability.Update(active,true);};
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,Notice);
-        layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,StatusHost,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
+        layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
         layout.HorizontalGridChanged+=results.SetHorizontal;results.SetHorizontal(layout.HorizontalGrid);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
+        NoticeHost.Content=notifications;
         results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);};
         results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
@@ -50,7 +52,6 @@ public sealed partial class MainWindow : Window
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
         Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
         Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();}};
-        NextPage.Click+=async(_,_)=>{if(active?.Items is {HasMoreItems:true,LoadPage:not null} collection)await collection.LoadPage();};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
@@ -90,7 +91,8 @@ public sealed partial class MainWindow : Window
     {
         if(active is null||closed)return;
         sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
-        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0);Status.Text=active.Status;BusyRing.IsActive=active.Busy;NextPage.IsEnabled=active.Items.HasMoreItems;
+        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0);
+        notifications.SetBusy(active.Busy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
     private void OpenLocation(string path)
@@ -125,7 +127,7 @@ public sealed partial class MainWindow : Window
         try{await services.Preferences.SaveAsync(services.Preferences.Current with{AlwaysOnTop=value});}
         catch{ApplyPreferences();throw;}
     });
-    private void Notice(string text){if(!closed)Status.Text=text;}
+    private void Notice(string text){if(!closed)notifications.ShowMessage(text);}
     private void KeyDown(object sender,KeyRoutedEventArgs e)
     {
         var control=Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
@@ -148,7 +150,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

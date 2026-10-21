@@ -13,7 +13,7 @@ internal sealed class WorkspaceLayoutController : IDisposable
     private readonly Grid root;
     private readonly ColumnDefinition sidebarColumn, detailsColumn;
     private readonly ContentControl sidebarHost, filterHost;
-    private readonly FrameworkElement mainHost, detailsHost, statusHost;
+    private readonly FrameworkElement mainHost, detailsHost;
     private readonly SidebarView sidebar;
     private readonly PaneResizer sidebarSizer;
     private readonly PreferenceStore preferences;
@@ -28,12 +28,12 @@ internal sealed class WorkspaceLayoutController : IDisposable
     public bool HorizontalGrid => snapshot?.HorizontalGrid == true;
 
     public WorkspaceLayoutController(Window window, FrameworkElement surface, Grid root, ColumnDefinition sidebarColumn,
-        ColumnDefinition detailsColumn, ContentControl sidebarHost, ContentControl filterHost, FrameworkElement mainHost, FrameworkElement detailsHost, FrameworkElement statusHost,
+        ColumnDefinition detailsColumn, ContentControl sidebarHost, ContentControl filterHost, FrameworkElement mainHost, FrameworkElement detailsHost,
         SidebarView sidebar, PaneResizer sidebarSizer, PaneResizer detailsSizer, PreferenceStore preferences, Action<string> notice)
     {
         this.window = window; this.surface = surface; this.root = root; this.sidebarColumn = sidebarColumn;
         this.detailsColumn = detailsColumn; this.sidebarHost = sidebarHost; this.filterHost = filterHost;
-        this.mainHost = mainHost; this.detailsHost = detailsHost; this.statusHost = statusHost; this.sidebar = sidebar; this.sidebarSizer = sidebarSizer;
+        this.mainHost = mainHost; this.detailsHost = detailsHost; this.sidebar = sidebar; this.sidebarSizer = sidebarSizer;
         this.preferences = preferences; this.notice = notice;
         sidebarSizer.ResizeRequested += delta => Resize(true, delta);
         detailsSizer.ResizeRequested += delta => Resize(false, -delta);
@@ -72,7 +72,6 @@ internal sealed class WorkspaceLayoutController : IDisposable
         var leftGap = next.SidebarVisible ? 8 : 0;
         filterHost.Margin = new(leftGap,0,0,0);
         mainHost.Margin = new(leftGap,next.FiltersVisible ? 6 : 0,0,0);
-        statusHost.Margin = new(leftGap,6,0,0);
         detailsHost.Margin = new(8,next.FiltersVisible ? 6 : 0,0,0);
         root.Padding = new(next.SidebarVisible && !next.SidebarCompact ? 8 : 0, 0, 8, 8);
         sidebar.ApplyLayout(next.SidebarCompact, next.BrandVisible, next.FiltersVisible, next.DetailsVisible);

@@ -2,15 +2,16 @@
   <ContentControl x:Name="Surface" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
     <Grid x:Name="Root" Background="Transparent" Padding="0,0,8,8" ColumnSpacing="8" RowSpacing="6">
       <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="156"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="DetailsColumn" Width="280"/></Grid.ColumnDefinitions>
-      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-      <ContentControl x:Name="SidebarHost" Grid.RowSpan="3" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
-      <controls:PaneResizer x:Name="SidebarSizer" Grid.RowSpan="3" Width="8" HorizontalAlignment="Right" Margin="0,0,-6,0" AutomationProperties.Name="目录栏宽度"/>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <ContentControl x:Name="SidebarHost" Grid.RowSpan="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+      <controls:PaneResizer x:Name="SidebarSizer" Grid.RowSpan="2" Width="8" HorizontalAlignment="Right" Margin="0,0,-6,0" AutomationProperties.Name="目录栏宽度"/>
       <ContentControl x:Name="FilterHost" Grid.Column="1" Grid.ColumnSpan="2" HorizontalContentAlignment="Stretch"/>
       <Border x:Name="MainBorder" Grid.Row="1" Grid.Column="1" CornerRadius="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CapWorkspaceSurfaceBrush}">
         <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
           <TabView x:Name="Tabs" IsAddTabButtonVisible="True" CanDragTabs="False" TabWidthMode="SizeToContent" Margin="2,0,2,0"/>
           <ContentControl Grid.Row="1" x:Name="ToolbarHost" HorizontalContentAlignment="Stretch"/>
           <ContentControl Grid.Row="2" x:Name="ResultsHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+          <ContentControl Grid.Row="2" x:Name="NoticeHost" Margin="8" VerticalAlignment="Bottom" HorizontalContentAlignment="Stretch"/>
         </Grid>
       </Border>
       <Border x:Name="DetailsBorder" Grid.Row="1" Grid.Column="2" Style="{StaticResource CapWorkspacePanel}" Padding="0">
@@ -19,12 +20,6 @@
           <ContentControl Grid.Column="1" x:Name="DetailsHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
         </Grid>
       </Border>
-      <Grid x:Name="StatusHost" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" ColumnSpacing="10" Padding="8,2">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-        <ProgressRing x:Name="BusyRing" Width="18" Height="18" Foreground="{StaticResource CapAccentBrush}" IsActive="False"/>
-        <TextBlock Grid.Column="1" x:Name="Status" Text="正在启动…" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-        <Button Grid.Column="2" x:Name="NextPage" Content="下一页" Style="{StaticResource CapToolButton}"/>
-      </Grid>
     </Grid>
   </ContentControl>
 </Window>

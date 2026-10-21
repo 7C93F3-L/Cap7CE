@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
@@ -17,7 +16,6 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
     public bool Busy { get; private set; }
     public string? Error {get;private set;}
-    public string Status { get; private set; } = "";
     public AssetCollection Items { get; private set; } = new();
     public event Action? Changed;
     private readonly Stack<string> back = new(), forward = new();
@@ -32,7 +30,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     {
         var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
-        Busy = true;Error=null; Status = "正在查询…"; Changed?.Invoke();
+        Busy = true;Error=null;Changed?.Invoke();
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
@@ -50,19 +48,16 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             if (path.Length == 0 && string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random)
             {
                 foreach (var item in HomeEntries.Create(services.Volumes)) result.Add(item);
-                Status = "此电脑 · 系统目录与磁盘";
             }
             else
             {
                 if (volumes.Length == 0) throw new IOException("没有可查询的磁盘；此入口不会自动建库");
-                var timer = Stopwatch.StartNew();
                 var request = new SearchStartRequest(Query.Trim(), 100, Sort, volumes, scope,
                     EntryType: Filter.Count > 0 || Recursive && Query.Trim().Length == 0 ? "file" : "any",
                     TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
                 if (version != generation) return;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
-                Status = $"{result.Count:N0} 项 · 首屏 {timer.ElapsedMilliseconds} ms";
             }
             if (version != generation) return;
             if (remember && path != PathValue) { back.Push(PathValue); forward.Clear(); }
@@ -76,17 +71,17 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchNextPage, new SearchNextPageRequest(cursor!), token);
                     if (version != generation) return 0;
                     Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
-                    Status = $"已载入 {result.Count:N0} 项 · {(result.HasMoreItems ? "滚动继续" : "已到末页")}"; Changed?.Invoke();
+                    Changed?.Invoke();
                     return (uint)page.Items.Count;
                 }
                 catch (OperationCanceledException) { return 0; }
-                catch (Exception error) { result.HasMoreItems = false; Status = error.Message + "；请刷新"; Changed?.Invoke(); return 0; }
+                catch (Exception error) { result.HasMoreItems = false; Error = error.Message + "；请刷新"; Changed?.Invoke(); return 0; }
                 finally { loading = false; }
             };
             Items = result;
         }
         catch (OperationCanceledException) { }
-        catch (Exception error) { if (version == generation) Error=Status = error.Message; }
+        catch (Exception error) { if (version == generation) Error = error.Message; }
         finally { if (version == generation) { Busy = false; Changed?.Invoke(); } }
     }
     private void Append(AssetCollection target, SearchPageResponse page)
@@ -104,7 +99,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public void RemoveDeleted()
     {
         for (var i = Items.Count - 1; i >= 0; i--) if (IsDeleted(Items[i].FullPath)) Items.RemoveAt(i);
-        Status = $"当前已载入 {Items.Count:N0} 项 · 本次删除已从界面移除"; Changed?.Invoke();
+        Changed?.Invoke();
     }
     public void Dispose() { ++generation; query.Cancel(); query.Dispose(); Items.HasMoreItems = false; }
 }
