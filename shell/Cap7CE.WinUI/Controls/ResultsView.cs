@@ -31,6 +31,7 @@ internal sealed class ResultsView : UserControl
     public IReadOnlyList<AssetItem> Selection => IsGallery?gallery.Selection:ActiveView.SelectedItems.OfType<AssetItem>().ToArray();
     public ResultsView()
     {
+        grid.Resources["GridViewHeaderItemDividerStroke"]=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
         grid.ItemsPanel = (ItemsPanelTemplate)XamlReader.Load("<ItemsPanelTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><ItemsWrapGrid Orientation='Horizontal' CacheLength='1'/></ItemsPanelTemplate>");
         grid.ItemTemplate = (DataTemplate)Application.Current.Resources["CapAssetTileTemplate"];
         grid.ItemContainerStyle=(Style)Application.Current.Resources["CapResultItem"];grid.Padding=new(6);

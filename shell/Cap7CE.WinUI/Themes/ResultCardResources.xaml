@@ -2,26 +2,42 @@
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
       <SolidColorBrush x:Key="CapResultSurfaceBrush" Color="#99FFFFFF"/>
-      <SolidColorBrush x:Key="CapResultCaptionBrush" Color="#08000000"/>
+      <SolidColorBrush x:Key="CapResultCaptionBrush" Color="#0E000000"/>
+      <SolidColorBrush x:Key="CapResultSelectionBrush" Color="#686868"/>
+      <SolidColorBrush x:Key="CapResultSelectionTextBrush" Color="#E4000000"/>
+      <SolidColorBrush x:Key="CapResultHoverStrokeBrush" Color="#66000000"/>
+      <SolidColorBrush x:Key="CapResultRestStrokeBrush" Color="#20000000"/>
+      <SolidColorBrush x:Key="CapResultSelectedCaptionBrush" Color="#24000000"/>
     </ResourceDictionary>
     <ResourceDictionary x:Key="Default">
       <SolidColorBrush x:Key="CapResultSurfaceBrush" Color="#0FFFFFFF"/>
-      <SolidColorBrush x:Key="CapResultCaptionBrush" Color="#18000000"/>
+      <SolidColorBrush x:Key="CapResultCaptionBrush" Color="#20000000"/>
+      <SolidColorBrush x:Key="CapResultSelectionBrush" Color="#C2C2C2"/>
+      <SolidColorBrush x:Key="CapResultSelectionTextBrush" Color="#FFFFFF"/>
+      <SolidColorBrush x:Key="CapResultHoverStrokeBrush" Color="#80FFFFFF"/>
+      <SolidColorBrush x:Key="CapResultRestStrokeBrush" Color="#24FFFFFF"/>
+      <SolidColorBrush x:Key="CapResultSelectedCaptionBrush" Color="#30FFFFFF"/>
     </ResourceDictionary>
     <ResourceDictionary x:Key="HighContrast">
       <SolidColorBrush x:Key="CapResultSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}"/>
       <SolidColorBrush x:Key="CapResultCaptionBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+      <SolidColorBrush x:Key="CapResultSelectionBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+      <SolidColorBrush x:Key="CapResultSelectionTextBrush" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+      <SolidColorBrush x:Key="CapResultHoverStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+      <SolidColorBrush x:Key="CapResultRestStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+      <SolidColorBrush x:Key="CapResultSelectedCaptionBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
   <Style x:Key="CapResultSurface" TargetType="Border"><Setter Property="Background" Value="{ThemeResource CapResultSurfaceBrush}"/><Setter Property="CornerRadius" Value="8"/></Style>
   <Style x:Key="CapResultCaption" TargetType="Border"><Setter Property="Background" Value="{ThemeResource CapResultCaptionBrush}"/></Style>
-  <Style x:Key="CapResultCaptionSelected" TargetType="Border"><Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}"/><Setter Property="Opacity" Value="0.18"/></Style>
-  <Style x:Key="CapResultHoverFill" TargetType="Border"><Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/><Setter Property="CornerRadius" Value="8"/></Style>
+  <Style x:Key="CapResultCaptionSelected" TargetType="Border"><Setter Property="Background" Value="{ThemeResource CapResultSelectedCaptionBrush}"/></Style>
+  <Style x:Key="CapResultRestStroke" TargetType="Border"><Setter Property="BorderBrush" Value="{ThemeResource CapResultRestStrokeBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="8"/></Style>
   <Style x:Key="CapResultHover" TargetType="Border">
-    <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="BorderBrush" Value="{ThemeResource CapResultHoverStrokeBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="8"/>
   </Style>
-  <Style x:Key="CapResultSelected" TargetType="Border"><Setter Property="BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}"/><Setter Property="BorderThickness" Value="2"/><Setter Property="CornerRadius" Value="8"/></Style>
+  <Style x:Key="CapResultSelected" TargetType="Border"><Setter Property="BorderBrush" Value="{ThemeResource CapResultSelectionBrush}"/><Setter Property="BorderThickness" Value="2"/><Setter Property="CornerRadius" Value="8"/></Style>
   <Style x:Key="CapResultTitle" TargetType="TextBlock"><Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/></Style>
+  <Style x:Key="CapResultTitleSelected" TargetType="TextBlock" BasedOn="{StaticResource CapResultTitle}"><Setter Property="Foreground" Value="{ThemeResource CapResultSelectionTextBrush}"/></Style>
   <Style x:Key="CapResultItem" TargetType="GridViewItem">
     <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="4"/><Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="CornerRadius" Value="8"/>
     <Setter Property="UseSystemFocusVisuals" Value="True"/>

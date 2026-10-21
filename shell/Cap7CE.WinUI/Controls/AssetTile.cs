@@ -12,9 +12,9 @@ namespace Cap7CE.WinUI.Controls;
 public sealed class AssetTile : Grid
 {
     private readonly Image image=new(){Stretch=Stretch.Uniform};
-    private readonly Image formatIcon=new(){Width=44,Height=44,Stretch=Stretch.Uniform,Opacity=.85};
+    private readonly AssetPlaceholderIcon formatIcon=new(){Width=44,Height=44};
     private readonly TextBlock title=new(){TextTrimming=TextTrimming.CharacterEllipsis,Margin=new(6),MaxLines=2,HorizontalTextAlignment=TextAlignment.Center};
-    private readonly Border caption=new(),captionSelected=new(),hoverFill=new(),hover=new(),selected=new();
+    private readonly Border caption=new(),captionSelected=new(),restStroke=new(),hover=new(),selected=new();
     private readonly ResultCardInteraction interaction;
     private CompositionRoundedRectangleGeometry? clipGeometry;
     private CancellationTokenSource? reading;
@@ -30,13 +30,13 @@ public sealed class AssetTile : Grid
         Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         interaction=new(this);RowDefinitions.Add(new());RowDefinitions.Add(new(){Height=new(28)});
         var surface=new Border {Style=(Style)Application.Current.Resources["CapResultSurface"],IsHitTestVisible=false};SetRowSpan(surface,2);Children.Add(surface);
-        hoverFill.Style=(Style)Application.Current.Resources["CapResultHoverFill"];hoverFill.IsHitTestVisible=false;SetRowSpan(hoverFill,2);Children.Add(hoverFill);
         Children.Add(formatIcon);Children.Add(image);
         caption.Style=(Style)Application.Current.Resources["CapResultCaption"];captionSelected.Style=(Style)Application.Current.Resources["CapResultCaptionSelected"];
         foreach(var border in new[]{caption,captionSelected}){border.IsHitTestVisible=false;SetRow(border,1);Children.Add(border);}
         title.Style=(Style)Application.Current.Resources["CapResultTitle"];SetRow(title,1);Children.Add(title);
+        restStroke.Style=(Style)Application.Current.Resources["CapResultRestStroke"];
         hover.Style=(Style)Application.Current.Resources["CapResultHover"];selected.Style=(Style)Application.Current.Resources["CapResultSelected"];
-        foreach(var border in new[]{hover,selected}){border.IsHitTestVisible=false;SetRowSpan(border,2);Children.Add(border);}
+        foreach(var border in new[]{restStroke,hover,selected}){border.IsHitTestVisible=false;SetRowSpan(border,2);Children.Add(border);}
         SetCardState(false,false);SizeChanged+=(_,_)=>UpdateClip();
         DataContextChanged+=(_,_)=>Refresh();Loaded+=(_,_)=>{active=!suspended;LayoutChanged+=Layout;Layout();UpdateClip();interaction.Connect();Refresh();};
         Unloaded+=(_,_)=>{active=false;interaction.Disconnect();LayoutChanged-=Layout;Release();};Layout();
@@ -57,9 +57,10 @@ public sealed class AssetTile : Grid
     }
     internal void SetCardState(bool isSelected,bool isHovered)
     {
+        title.Style=(Style)Application.Current.Resources[isSelected?"CapResultTitleSelected":"CapResultTitle"];
+        restStroke.Visibility=!isSelected&&!isHovered?Visibility.Visible:Visibility.Collapsed;
         selected.Visibility=isSelected?Visibility.Visible:Visibility.Collapsed;
         hover.Visibility=isHovered&&!isSelected?Visibility.Visible:Visibility.Collapsed;
-        hoverFill.Visibility=hover.Visibility;
         captionSelected.Visibility=isSelected?Visibility.Visible:Visibility.Collapsed;
     }
     private void UpdateClip()
@@ -72,10 +73,10 @@ public sealed class AssetTile : Grid
     private void Release(){reading?.Cancel();reading?.Dispose();reading=null;image.Source=null;}
     private async void Refresh()
     {
-        Release();formatIcon.Visibility=Visibility.Visible;if(DataContext is not AssetItem item)return;
+        interaction.ClearHover();Release();formatIcon.Visibility=Visibility.Visible;if(DataContext is not AssetItem item)return;
         title.Text=item.Name;ToolTipService.SetToolTip(this,item.FullPath);
         var icon=item.IconName;
-        formatIcon.Source=new SvgImageSource(new Uri("ms-appx:///Assets/Icons/"+icon+".svg"));
+        formatIcon.SetIcon(icon);
         if(!active||item.FullPath.Length==0||item.Entry.IsDirectory||Visuals is null)return;
         var token=(reading=new()).Token;
         try
