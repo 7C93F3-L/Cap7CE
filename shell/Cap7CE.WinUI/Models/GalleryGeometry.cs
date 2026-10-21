@@ -6,11 +6,12 @@ internal sealed record GalleryGeometry(IReadOnlyList<GalleryBox> Boxes,double He
     public static GalleryGeometry Create(int count,double width,Func<int,double> ratio,double target)
     {
         width=Math.Max(1,width);target=Math.Max(1,target);var boxes=new List<GalleryBox>(count);var index=0;double top=0;
+        var minimumRowItems=width<300+ResultGridGeometry.Gap?2:1;
         double Ratio(int i){var r=ratio(i);return double.IsFinite(r)&&r>0?Math.Clamp(r,.45,2.4):1;}
         while(index<count) {
-            var first=index;double sum=0;do{sum+=Ratio(index++);}while(index<count&&target*sum+ResultGridGeometry.Gap*(index-first-1)<width);
+            var first=index;double sum=0;do{sum+=Ratio(index++);}while(index<count&&(index-first<minimumRowItems||target*sum+ResultGridGeometry.Gap*(index-first-1)<width));
             var length=index-first;
-            if(length>1&&target*sum+ResultGridGeometry.Gap*(length-1)>=width) {
+            if(length>minimumRowItems&&target*sum+ResultGridGeometry.Gap*(length-1)>=width) {
                 var previous=sum-Ratio(index-1);var without=(width-ResultGridGeometry.Gap*(length-2))/previous;var with=(width-ResultGridGeometry.Gap*(length-1))/sum;
                 if(Math.Abs(without-target)<Math.Abs(with-target)){index--;sum=previous;}
             }

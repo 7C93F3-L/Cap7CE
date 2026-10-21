@@ -60,10 +60,17 @@ foreach(var width in new[]{130d,329,330,1000,1303,1920}) {
     var fill=ResultGridGeometry.FillWidth(width,160);
     Require(fill.Columns>=1&&fill.Cell>0&&Math.Abs(fill.Columns*(fill.Cell+5)-width)<.00001,"Square grid fills every available row width including gaps");
 }
+foreach(var preferred in new[]{120d,160,240})
+    Require(ResultGridGeometry.FillWidth(210,preferred).Columns==2,"Narrow square grid keeps two columns regardless of preferred tile size");
 Require(ResultGridGeometry.FillWidth(1303,240).Columns<ResultGridGeometry.FillWidth(1303,120).Columns,"Preferred size controls column count while rows still fill");
 var fitted=GalleryGeometry.Create(5,320,_=>1,100);
 Require(fitted.Boxes.Count==5&&Math.Abs(fitted.Boxes[2].Left+fitted.Boxes[2].Width-320)<.0001,"Completed gallery row fills the viewport");
 Require(fitted.Boxes[3].Width==100&&fitted.Boxes[4].Left==105,"Incomplete final row retains natural width");
+foreach(var target in new[]{120d,160,240}) {
+    var narrow=GalleryGeometry.Create(7,210,i=>i%2==0?2.4:.45,target);
+    Require(narrow.Boxes[0].Top==narrow.Boxes[1].Top&&narrow.Boxes.All(b=>b.Left+b.Width<=210.001),"Narrow original-ratio grid keeps at least two items per complete row without clipping");
+}
+Require(GalleryGeometry.Create(1,210,_=>1,160).Boxes.Single().Width==160,"Single remaining gallery item keeps its natural size");
 var large=GalleryGeometry.Create(50000,930,i=>i%3==0?4:i%3==1?.1:1.5,160);
 Require(large.Boxes.Count==50000&&large.Boxes.All(b=>b.Width>0&&b.Height>28&&b.Left>=0&&b.Left+b.Width<=930.001),"Fifty thousand mixed-ratio items stay inside the viewport");
 Require(large.Visible(2000,2600).Count()<50&&large.Visible(2000,2600).All(b=>b.Top+b.Height>=2000&&b.Top<=2600),"Realization uses tile bottoms and stays bounded to the viewport");
