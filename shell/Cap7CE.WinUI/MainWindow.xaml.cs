@@ -145,7 +145,7 @@ public sealed partial class MainWindow : Window
         if(alt&&active is not null&&e.Key is VirtualKey.Left or VirtualKey.Right){e.Handled=true;commands.Run(()=>e.Key==VirtualKey.Left?active.BackAsync():active.ForwardAsync());return;}
         if(e.Key==VirtualKey.F5){e.Handled=true;Refresh();return;}
         if(e.Key!=VirtualKey.Escape&&e.OriginalSource is DependencyObject source&&(filters.ContainsKeyboardTarget(source)||toolbar.ContainsKeyboardTarget(source)))return;
-        if(e.Key==VirtualKey.Escape){e.Handled=true;results.ClearSelection();return;}
+        if(e.Key==VirtualKey.Escape){e.Handled=true;if(!sidebar.CancelOrder())results.ClearSelection();return;}
         if(control&&e.Key==VirtualKey.A){e.Handled=true;results.SelectAll();return;}
         var selection=results.Selection;if(selection.Count==0)return;
         if(control&&e.Key==VirtualKey.C){e.Handled=true;commands.Run(()=>FileCommands.CopyFilesAsync(selection));}

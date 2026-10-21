@@ -22,7 +22,14 @@ public static class FavoriteConfigurationSession
                 using var document = JsonDocument.Parse(bytes); var root = document.RootElement;
                 if (root.GetProperty("version").GetInt32() != 1) throw new FavoriteConfigurationException("favorite-directory-invalid-request");
                 string? Read(string key) => root.TryGetProperty(key, out var value) ? value.GetString() : null;
-                var items = await registry.ExecuteAsync(Read("operation")!, Read("id"), Read("path"), Read("name"), Read("direction"), Read("oldPath"), Read("newPath"), token);
+                string[]? ReadIds(string key) {
+                    if(!root.TryGetProperty(key,out var value)||value.ValueKind==JsonValueKind.Null)return null;
+                    if(value.ValueKind!=JsonValueKind.Array||value.GetArrayLength()>FavoriteDirectoryRules.MaximumCount)
+                        throw new FavoriteConfigurationException("favorite-directory-invalid-order");
+                    return value.EnumerateArray().Select(item=>item.GetString()??"").ToArray();
+                }
+                var items = await registry.ExecuteAsync(Read("operation")!, Read("id"), Read("path"), Read("name"), Read("direction"), Read("oldPath"), Read("newPath"), token,
+                    orderedIds:ReadIds("orderedIds"),expectedIds:ReadIds("expectedIds"));
                 writer.WriteBoolean("ok", true); writer.WritePropertyName("directories"); FavoriteDirectoryJson.WriteItems(writer, items);
             }
             catch (Exception error) when (error is not (OutOfMemoryException or OperationCanceledException))

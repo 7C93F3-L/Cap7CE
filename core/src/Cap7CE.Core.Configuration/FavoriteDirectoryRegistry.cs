@@ -4,7 +4,8 @@ public sealed class FavoriteDirectoryRegistry(FavoriteConfigurationFile file)
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     public async Task<IReadOnlyList<FavoriteDirectory>> ExecuteAsync(string operation, string? id = null, string? path = null,
-        string? name = null, string? direction = null, string? oldPath = null, string? newPath = null, CancellationToken token = default)
+        string? name = null, string? direction = null, string? oldPath = null, string? newPath = null, CancellationToken token = default,
+        IReadOnlyList<string>? orderedIds = null, IReadOnlyList<string>? expectedIds = null)
     {
         await gate.WaitAsync(token);
         try
@@ -32,6 +33,10 @@ public sealed class FavoriteDirectoryRegistry(FavoriteConfigurationFile file)
                 case "relocate":
                     var source = FavoriteDirectoryRules.PathValue(oldPath); var destination = FavoriteDirectoryRules.PathValue(newPath);
                     current = FavoriteDirectoryRelocation.Apply(current, source, destination).ToList(); break;
+                case "reorder":
+                    var ordered=FavoriteDirectoryOrder.Apply(current,orderedIds,expectedIds);
+                    if(current.SequenceEqual(ordered))return current;
+                    current=ordered.ToList();break;
                 default: throw new FavoriteConfigurationException("favorite-directory-invalid-operation");
             }
             await file.WriteAsync(current, token); return current;

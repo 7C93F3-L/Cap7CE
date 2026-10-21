@@ -24,6 +24,7 @@ internal sealed class SidebarView : UserControl
     private readonly SidebarIcon detailsIcon = new() { Kind = "right", Width = 22, Height = 22 };
     private readonly Button add;
     private readonly DataTemplate expandedTemplate, compactTemplate;
+    private readonly SidebarFavoriteOrder order;
     private bool? compact;
     private (bool Compact,bool Brand,bool Filters,bool Details)? appliedLayout;
     private string activePath = "";
@@ -53,10 +54,12 @@ internal sealed class SidebarView : UserControl
         Grid.SetRow(favorites,2); directories.Children.Add(favorites); Grid.SetRow(directories,2); root.Children.Add(directories);
         expandedTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteTemplate"];
         compactTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteCompactTemplate"];
+        order=new(favorites);order.Changed+=()=>{ApplyOrderPresentation();SetActivePath(activePath);};
+        Grid.SetColumnSpan(order.Actions,2);order.Actions.HorizontalAlignment=HorizontalAlignment.Right;heading.Children.Add(order.Actions);
         ScrollViewer.SetHorizontalScrollBarVisibility(favorites,ScrollBarVisibility.Disabled);
         IdleScrollBars.Attach(favorites);
         favorites.ContainerContentChanging += PrepareFavorite;
-        favorites.ItemClick += (_,e)=>{if(e.ClickedItem is Favorite item)Navigate?.Invoke(item.Path);};
+        favorites.ItemClick += (_,e)=>{if(!order.Editing&&e.ClickedItem is Favorite item)Navigate?.Invoke(item.Path);};
         var settings = new Button { Style = StyleFor("CapSidebarButton"), Margin = new(5), Height = 36 };
         NavigationContent(settings,"settings","打开设置",8,false); settings.Click += (_,_)=>Settings?.Invoke();
         Grid.SetRow(settings,3); root.Children.Add(settings); Content = root;
@@ -93,10 +96,7 @@ internal sealed class SidebarView : UserControl
         var next=(isCompact,showBrand,filtersVisible,detailsVisible);
         if(appliedLayout==next)return;
         appliedLayout=next;
-        if(compact!=isCompact) {
-            compact = isCompact; favorites.ItemTemplate = isCompact?compactTemplate:expandedTemplate;
-            favorites.ItemContainerStyle = StyleFor(isCompact?"CapSidebarFavoriteCompactContainer":"CapSidebarFavoriteContainer");
-        }
+        compact=isCompact;
         root.Padding = new(0); brandArea.Visibility = showBrand?Visibility.Visible:Visibility.Collapsed;
         directories.Margin = isCompact?new(4,6,4,0):new(6,6,6,0);
         header.Visibility = isCompact?Visibility.Collapsed:Visibility.Visible;
@@ -115,6 +115,21 @@ internal sealed class SidebarView : UserControl
         filterButton.IsChecked = filterIcon.IsActive = filtersVisible; detailsButton.IsChecked = detailsIcon.IsActive = detailsVisible;
         ToolTipService.SetToolTip(filterButton,filtersVisible?"收起顶部筛选":"显示顶部筛选");
         ToolTipService.SetToolTip(detailsButton,detailsVisible?"收起详细信息":"显示详细信息");
+        ApplyOrderPresentation();
+    }
+
+    public bool CancelOrder()=>order.Cancel();
+    private void ApplyOrderPresentation()
+    {
+        var small=compact==true;
+        favorites.ItemTemplate=order.Editing?(DataTemplate)Application.Current.Resources[small?"CapSidebarOrderCompactTemplate":"CapSidebarOrderTemplate"]:small?compactTemplate:expandedTemplate;
+        favorites.ItemContainerStyle=StyleFor(order.Editing?(small?"CapSidebarOrderCompactContainer":"CapSidebarOrderContainer")
+            :small?"CapSidebarFavoriteCompactContainer":"CapSidebarFavoriteContainer");
+        header.Text=order.Editing?"调整位置":"收藏目录";header.Visibility=small?Visibility.Collapsed:Visibility.Visible;
+        add.Visibility=order.Editing?Visibility.Collapsed:Visibility.Visible;
+        heading.Height=order.Editing&&small?60:32;
+        order.Actions.Orientation=small?Orientation.Vertical:Orientation.Horizontal;
+        order.Actions.HorizontalAlignment=small?HorizontalAlignment.Center:HorizontalAlignment.Right;
     }
 
     public void SetActivePath(string path)
@@ -148,17 +163,14 @@ internal sealed class SidebarView : UserControl
 
     public void Bind(FavoriteService service, FileCommands commands, Func<XamlRoot> xaml)
     {
-        favorites.ItemsSource = service.Items;
-        service.Changed += () => DispatcherQueue.TryEnqueue(()=>{favorites.ItemsSource=service.Items;SetActivePath(activePath);});
+        order.Bind(service,commands);
+        service.Changed += () => DispatcherQueue.TryEnqueue(()=>{order.Refresh();if(!order.Editing)SetActivePath(activePath);});
         favoriteMenu = item => {
             var menu=ThemeService.Menu();
             menu.Items.Add(Ui.MenuItem("在资源管理器中打开",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;}),"\uE838"));
             menu.Items.Add(Ui.MenuItem("复制路径",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;}),"\uE8C8"));
             menu.Items.Add(ResultContextMenu.Unavailable("重命名文件夹","磁盘文件夹改名尚未迁入WinUI壳","\uE8AC"));
-            var index=service.Items.ToList().FindIndex(entry=>entry.Id==item.Id);
-            var up=Ui.MenuItem("上移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"up")),"\uE74A"); up.IsEnabled=index>0;
-            var down=Ui.MenuItem("下移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"down")),"\uE74B"); down.IsEnabled=index>=0 && index<service.Items.Count-1;
-            menu.Items.Add(up); menu.Items.Add(down);
+            var arrange=Ui.MenuItem("调整位置",()=>order.Begin(item),"\uE8CB");arrange.IsEnabled=service.Items.Count>1;menu.Items.Add(arrange);
             menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
             menu.Items.Add(new MenuFlyoutSeparator());
             menu.Items.Add(ResultContextMenu.Unavailable("自动添加关键词","自动关键词任务尚未迁入WinUI壳","\uE945"));
@@ -166,6 +178,7 @@ internal sealed class SidebarView : UserControl
             return menu;
         };
         favorites.RightTapped += (_, e) => {
+            if(order.Editing){e.Handled=true;return;}
             if((e.OriginalSource as FrameworkElement)?.DataContext is not Favorite item) return;
             e.Handled=true; var menu=favoriteMenu(item);
             menu.ShowAt(favorites,new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position=e.GetPosition(favorites) });

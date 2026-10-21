@@ -100,6 +100,14 @@
     <Setter Property="Height" Value="32"/><Setter Property="Width" Value="32"/><Setter Property="CornerRadius" Value="9"/>
     <Setter Property="HorizontalAlignment" Value="Center"/>
   </Style>
+  <Style x:Key="CapSidebarOrderContainer" TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+    <Setter Property="Height" Value="36"/><Setter Property="MinHeight" Value="0"/><Setter Property="MinWidth" Value="0"/>
+    <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,0,4"/>
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="FontSize" Value="13"/>
+  </Style>
+  <Style x:Key="CapSidebarOrderCompactContainer" TargetType="ListViewItem" BasedOn="{StaticResource CapSidebarOrderContainer}">
+    <Setter Property="Height" Value="32"/><Setter Property="Width" Value="32"/><Setter Property="HorizontalAlignment" Value="Center"/>
+  </Style>
   <Style x:Key="CapSidebarHomeToggle" TargetType="ToggleButton" BasedOn="{StaticResource CapSidebarToggle}">
     <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="Background" Value="{ThemeResource CapAccentGradient}"/>
     <Setter Property="Height" Value="36"/><Setter Property="CornerRadius" Value="18"/>
@@ -116,5 +124,20 @@
   </DataTemplate>
   <DataTemplate x:Key="CapSidebarFavoriteCompactTemplate">
     <Grid Width="32" Height="32"><controls:SidebarIcon Kind="folder" Width="24" Height="24"/></Grid>
+  </DataTemplate>
+  <DataTemplate x:Key="CapSidebarOrderTemplate">
+    <Grid Height="36" Padding="8,0" Background="Transparent" ToolTipService.ToolTip="拖动调整顺序，Alt+↑/↓微调">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+      <controls:SidebarIcon Kind="folder" Width="24" Height="24"/>
+      <TextBlock Grid.Column="1" Margin="10,0,4,0" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+      <controls:SidebarIcon Grid.Column="2" Width="18" Height="18" OutlinePath="M6 7H18M6 12H18M6 17H18"/>
+    </Grid>
+  </DataTemplate>
+  <DataTemplate x:Key="CapSidebarOrderCompactTemplate">
+    <Grid Width="32" Height="32" Background="Transparent">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="12"/></Grid.ColumnDefinitions>
+      <controls:SidebarIcon Kind="folder" Width="20" Height="20"/>
+      <controls:SidebarIcon Grid.Column="1" Width="10" Height="16" OutlinePath="M6 7H18M6 12H18M6 17H18"/>
+    </Grid>
   </DataTemplate>
 </ResourceDictionary>

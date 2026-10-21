@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">False</x:Boolean>
+      <SolidColorBrush x:Key="ListViewItemPlaceholderBackground" Color="Transparent"/>
+      <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemForegroundSelected" ResourceKey="CapSidebarTextBrush"/>
+      <StaticResource x:Key="ListViewItemForegroundPointerOver" ResourceKey="CapSidebarTextBrush"/>
+      <StaticResource x:Key="ListViewItemDragForeground" ResourceKey="CapSidebarTextBrush"/>
+      <StaticResource x:Key="ListViewItemDragBackground" ResourceKey="SolidBackgroundFillColorSecondaryBrush"/>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Default">
+      <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">False</x:Boolean>
+      <SolidColorBrush x:Key="ListViewItemPlaceholderBackground" Color="Transparent"/>
+      <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="CapSidebarHoverBrush"/>
+      <StaticResource x:Key="ListViewItemForegroundSelected" ResourceKey="CapSidebarTextBrush"/>
+      <StaticResource x:Key="ListViewItemForegroundPointerOver" ResourceKey="CapSidebarTextBrush"/>
+      <StaticResource x:Key="ListViewItemDragForeground" ResourceKey="CapSidebarTextBrush"/>
+      <StaticResource x:Key="ListViewItemDragBackground" ResourceKey="SolidBackgroundFillColorSecondaryBrush"/>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="HighContrast">
+      <x:Boolean x:Key="ListViewItemSelectionIndicatorVisualEnabled">True</x:Boolean>
+      <SolidColorBrush x:Key="ListViewItemPlaceholderBackground" Color="Transparent"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelected" ResourceKey="SystemColorHighlightColorBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="SystemColorHighlightColorBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="SystemColorHighlightColorBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundPointerOver" ResourceKey="SystemColorHighlightColorBrush"/>
+      <StaticResource x:Key="ListViewItemBackgroundPressed" ResourceKey="SystemColorHighlightColorBrush"/>
+      <StaticResource x:Key="ListViewItemForegroundSelected" ResourceKey="SystemColorHighlightTextColorBrush"/>
+      <StaticResource x:Key="ListViewItemForegroundPointerOver" ResourceKey="SystemColorHighlightTextColorBrush"/>
+      <StaticResource x:Key="ListViewItemDragForeground" ResourceKey="SystemColorWindowTextColorBrush"/>
+      <StaticResource x:Key="ListViewItemDragBackground" ResourceKey="SystemColorWindowColorBrush"/>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

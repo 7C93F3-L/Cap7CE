@@ -12,7 +12,7 @@ module.exports.register = projects => {
 module.exports.ownsStorage = name => ["FavoriteConfigurationFile.cs", "FavoriteConfigurationLease.cs"].some(file => name === `${directory}/${file}`);
 module.exports.check = (root, failures) => {
   const files = new Map([
-    ["FavoriteDirectory.cs", 10], ["FavoriteDirectoryRules.cs", 55], ["FavoriteDirectoryJson.cs", 55], ["FavoriteDirectoryRelocation.cs", 20],
+    ["FavoriteDirectory.cs", 10], ["FavoriteDirectoryRules.cs", 55], ["FavoriteDirectoryJson.cs", 55], ["FavoriteDirectoryRelocation.cs", 20], ["FavoriteDirectoryOrder.cs", 25],
     ["FavoriteConfigurationFile.cs", 50], ["FavoriteDirectoryRegistry.cs", 55], ["FavoriteConfigurationLease.cs", 25], ["FavoriteUnicodeKey.cs", 40]
   ].map(([file, limit]) => [`${directory}/${file}`, limit]));
   files.set(`${host}/Program.cs`, 25); files.set(`${host}/FavoriteConfigurationSession.cs`, 50);
