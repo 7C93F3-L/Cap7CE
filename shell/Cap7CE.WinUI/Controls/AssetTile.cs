@@ -19,7 +19,7 @@ public sealed class AssetTile : Grid
     private CompositionRoundedRectangleGeometry? clipGeometry;
     private CancellationTokenSource? reading;
     private bool active,suspended;
-    private double? compactHeight;
+    private double? compactHeight,gridSize;
     private (double Width,double Height)? galleryBounds;
     private static ShellPreferences preferences=new();
     private static event Action? LayoutChanged;
@@ -43,11 +43,12 @@ public sealed class AssetTile : Grid
     }
     internal static double PreferredSize => preferences.TileSize;
     internal void SetGalleryBounds(double width,double height){galleryBounds=(width,height);Layout();}
+    internal void SetGridSize(double? size){if(gridSize==size)return;gridSize=size;Layout();}
     internal void SetCompactHeight(double? height) { if(compactHeight==height)return;compactHeight=height;Layout(); }
     private void Layout()
     {
-        Width=galleryBounds?.Width??compactHeight??preferences.TileSize;Height=galleryBounds?.Height??compactHeight??(preferences.TileSize+28);
-        Padding=new(0);RowDefinitions[0].Height=galleryBounds is {} bounds?new(Math.Max(1,bounds.Height-28)):compactHeight is null?new(preferences.TileSize):new(1,GridUnitType.Star);
+        Width=galleryBounds?.Width??compactHeight??gridSize??preferences.TileSize;Height=galleryBounds?.Height??compactHeight??((gridSize??preferences.TileSize)+28);
+        Padding=new(0);RowDefinitions[0].Height=galleryBounds is {} bounds?new(Math.Max(1,bounds.Height-28)):compactHeight is null?new(gridSize??preferences.TileSize):new(1,GridUnitType.Star);
         title.Visibility=compactHeight is <52?Visibility.Collapsed:Visibility.Visible;title.MaxLines=compactHeight is null?2:1;
         RowDefinitions[1].Height=new(title.Visibility==Visibility.Visible?28:0);
         caption.Visibility=title.Visibility;

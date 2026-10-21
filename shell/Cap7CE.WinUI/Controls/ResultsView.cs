@@ -65,8 +65,8 @@ internal sealed class ResultsView : UserControl
         retry.Visibility=!busy?Visibility.Visible:Visibility.Collapsed;clearFilters.Visibility=!busy&&filtered?Visibility.Visible:Visibility.Collapsed;
     }
     public void View(bool isList){var previous=ActiveView;var old=IsGallery;listMode=isList;ApplyView(previous,old);gridLayout.SetHorizontal(horizontal);}
-    public void Preferences(ShellPreferences value){var previous=ActiveView;var old=IsGallery;square=value.SquareTiles;gallery.Size(value.TileSize);ApplyView(previous,old);}
-    public void PreviewSize(double value)=>gallery.Size(value);
+    public void Preferences(ShellPreferences value){var previous=ActiveView;var old=IsGallery;square=value.SquareTiles;gallery.Size(value.TileSize);ApplyView(previous,old);gridLayout.Refresh();}
+    public void PreviewSize(double value){gallery.Size(value);gridLayout.Refresh();}
     public void SetHorizontal(bool value)
     {
         if(horizontal==value)return;

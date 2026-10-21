@@ -16,6 +16,7 @@ internal sealed class WorkspaceToolbar : UserControl
     private BrowseSession? session;
     private double tileSize=160;
     private WorkspaceViewMode viewMode;
+    private bool compact;
     private MenuFlyout? viewMenu;
     public event Action<WorkspaceViewMode>? ViewSelected;
     public event Action<double>? SizeChangedByUser,SizeCommitted;
@@ -55,8 +56,17 @@ internal sealed class WorkspaceToolbar : UserControl
     {
         tileSize=value.TileSize;
         viewMode=value.View=="list"?WorkspaceViewMode.List:value.SquareTiles?WorkspaceViewMode.Square:WorkspaceViewMode.OriginalRatio;
-        ((SidebarIcon)view.Content).OutlinePath=WorkspaceIcons.Icon(viewMode==WorkspaceViewMode.List?"list":"grid").OutlinePath;
-        WorkspaceIcons.Label(sizeButton,$"网格大小 · {value.TileSize:0} DIP");WorkspaceIcons.Label(view,$"视图 · 当前：{ViewLabel(viewMode)}");
+        WorkspaceIcons.Label(sizeButton,$"网格大小 · {value.TileSize:0} DIP");ApplyViewState();
+    }
+    public void SetCompact(bool value)
+    {
+        compact=value;if(compact)viewMenu?.Hide();ApplyViewState();
+    }
+    private void ApplyViewState()
+    {
+        view.IsEnabled=!compact;
+        ((SidebarIcon)view.Content).OutlinePath=WorkspaceIcons.Icon(!compact&&viewMode==WorkspaceViewMode.List?"list":"grid").OutlinePath;
+        WorkspaceIcons.Label(view,compact?"低高度下使用横向网格，拉高窗口后恢复原视图":$"视图 · 当前：{ViewLabel(viewMode)}");
     }
     private void Reflow()
     {
@@ -73,11 +83,12 @@ internal sealed class WorkspaceToolbar : UserControl
     private static string ViewLabel(WorkspaceViewMode mode)=>mode switch {WorkspaceViewMode.List=>"列表",WorkspaceViewMode.OriginalRatio=>"原比例网格",_=>"方形网格"};
     private void ShowView()
     {
+        if(compact)return;
         flyouts.Close();viewMenu?.Hide();var menu=ThemeService.Menu();viewMenu=menu;
         menu.Closed+=(_,_)=>{if(ReferenceEquals(viewMenu,menu))viewMenu=null;};
         foreach(var mode in Enum.GetValues<WorkspaceViewMode>()) {
             var option=new RadioMenuFlyoutItem {Text=ViewLabel(mode),IsChecked=mode==viewMode,GroupName="workspace-view"};
-            option.Click+=(_,_)=>{if(mode!=viewMode)ViewSelected?.Invoke(mode);};menu.Items.Add(option);
+            option.Click+=(_,_)=>{if(!compact&&mode!=viewMode)ViewSelected?.Invoke(mode);};menu.Items.Add(option);
         }
         menu.ShowAt(view);
     }

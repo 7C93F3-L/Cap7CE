@@ -56,9 +56,14 @@ Require(ResultGridGeometry.CompactCell(500,160)==138, "normal compact row caps a
 Require(ResultGridGeometry.CompactCell(60,160)==60, "short row shrinks cards to remaining height");
 Require(ResultGridGeometry.CompactCell(0,160)==1, "layout transition with zero extent stays valid");
 Require(ResultGridGeometry.CompactCell(500,240)==207, "compact row respects preferred tile scale");
+foreach(var width in new[]{130d,329,330,1000,1303,1920}) {
+    var fill=ResultGridGeometry.FillWidth(width,160);
+    Require(fill.Columns>=1&&fill.Cell>0&&Math.Abs(fill.Columns*(fill.Cell+5)-width)<.00001,"Square grid fills every available row width including gaps");
+}
+Require(ResultGridGeometry.FillWidth(1303,240).Columns<ResultGridGeometry.FillWidth(1303,120).Columns,"Preferred size controls column count while rows still fill");
 var fitted=GalleryGeometry.Create(5,320,_=>1,100);
 Require(fitted.Boxes.Count==5&&Math.Abs(fitted.Boxes[2].Left+fitted.Boxes[2].Width-320)<.0001,"Completed gallery row fills the viewport");
-Require(fitted.Boxes[3].Width==100&&fitted.Boxes[4].Left==108,"Incomplete final row retains natural width");
+Require(fitted.Boxes[3].Width==100&&fitted.Boxes[4].Left==105,"Incomplete final row retains natural width");
 var large=GalleryGeometry.Create(50000,930,i=>i%3==0?4:i%3==1?.1:1.5,160);
 Require(large.Boxes.Count==50000&&large.Boxes.All(b=>b.Width>0&&b.Height>28&&b.Left>=0&&b.Left+b.Width<=930.001),"Fifty thousand mixed-ratio items stay inside the viewport");
 Require(large.Visible(2000,2600).Count()<50&&large.Visible(2000,2600).All(b=>b.Top+b.Height>=2000&&b.Top<=2600),"Realization uses tile bottoms and stays bounded to the viewport");

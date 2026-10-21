@@ -39,7 +39,7 @@
   <Style x:Key="CapResultTitle" TargetType="TextBlock"><Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/></Style>
   <Style x:Key="CapResultTitleSelected" TargetType="TextBlock" BasedOn="{StaticResource CapResultTitle}"><Setter Property="Foreground" Value="{ThemeResource CapResultSelectionTextBrush}"/></Style>
   <Style x:Key="CapResultItem" TargetType="GridViewItem">
-    <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="4"/><Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,5,5"/><Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="CornerRadius" Value="8"/>
     <Setter Property="UseSystemFocusVisuals" Value="True"/>
     <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Stretch"/>
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="GridViewItem"><ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Control.IsTemplateFocusTarget="True"/></ControlTemplate></Setter.Value></Setter>

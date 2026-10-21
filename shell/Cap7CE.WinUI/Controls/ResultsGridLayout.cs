@@ -11,7 +11,8 @@ internal sealed class ResultsGridLayout
     private readonly GridView grid;
     private bool horizontal;
     private double cell = 138;
-    private int? normalMaximumRows;
+    private ScrollViewer? scroll;
+    private long viewportSubscription;
     private readonly Style? normalStyle;
     private readonly Style compactStyle = new(typeof(GridViewItem));
     private bool compactStyleApplied;
@@ -23,8 +24,9 @@ internal sealed class ResultsGridLayout
         compactStyle.Setters.Add(new Setter(FrameworkElement.MinWidthProperty,0d));
         compactStyle.Setters.Add(new Setter(FrameworkElement.MinHeightProperty,0d));
         compactStyle.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));
-        compactStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty,new Thickness(0)));
+        compactStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty,new Thickness(0,0,ResultGridGeometry.Gap,0)));
         grid.Loaded += (_, _) => Update();
+        grid.Unloaded += (_, _) => DetachViewport();
         grid.SizeChanged += (_, _) => Update();
         grid.ContainerContentChanging += (_, e) => {
             if (!e.InRecycleQueue) e.RegisterUpdateCallback((_, args) => ApplyTiles(args.ItemContainer));
@@ -33,8 +35,12 @@ internal sealed class ResultsGridLayout
     }
 
     public void SetHorizontal(bool value) { horizontal = value; Update(); }
+    public void Refresh()=>Update();
     private void Update()
     {
+        if(grid.IsLoaded&&scroll is null&&FindScroll(grid) is {} found) {
+            scroll=found;viewportSubscription=scroll.RegisterPropertyChangedCallback(ScrollViewer.ViewportWidthProperty,(_,_)=>Update());
+        }
         ScrollViewer.SetHorizontalScrollMode(grid, horizontal ? ScrollMode.Enabled : ScrollMode.Disabled);
         ScrollViewer.SetVerticalScrollMode(grid, horizontal ? ScrollMode.Disabled : ScrollMode.Enabled);
         ScrollViewer.SetHorizontalScrollBarVisibility(grid, horizontal ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled);
@@ -43,10 +49,13 @@ internal sealed class ResultsGridLayout
         if(compactStyleApplied!=horizontal) { compactStyleApplied=horizontal;grid.ItemContainerStyle=horizontal?compactStyle:normalStyle; }
         if (grid.ItemsPanelRoot is ItemsWrapGrid panel)
         {
-            normalMaximumRows ??= panel.MaximumRowsOrColumns;
+            var width=Math.Max(1,(scroll is {ViewportWidth:>0}?scroll.ViewportWidth:grid.ActualWidth)-grid.Padding.Left-grid.Padding.Right);
+            var fitted=ResultGridGeometry.FillWidth(width,AssetTile.PreferredSize);
+            if(!horizontal)cell=fitted.Cell;
             panel.Orientation = horizontal ? Orientation.Vertical : Orientation.Horizontal;
-            panel.MaximumRowsOrColumns = horizontal ? 1 : normalMaximumRows.Value;
-            panel.ItemWidth = panel.ItemHeight = horizontal ? cell : double.NaN;
+            panel.MaximumRowsOrColumns = horizontal ? 1 : fitted.Columns;
+            panel.ItemWidth = cell+ResultGridGeometry.Gap;
+            panel.ItemHeight = horizontal ? cell : cell+28+ResultGridGeometry.Gap;
             panel.VerticalAlignment = horizontal ? VerticalAlignment.Center : VerticalAlignment.Stretch;
         }
         ApplyTiles(grid);
@@ -57,8 +66,14 @@ internal sealed class ResultsGridLayout
         for (var i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++)
         {
             var child=VisualTreeHelper.GetChild(parent,i);
-            if(child is AssetTile tile)tile.SetCompactHeight(horizontal?cell:null);else ApplyTiles(child);
+            if(child is AssetTile tile){tile.SetGridSize(horizontal?null:cell);tile.SetCompactHeight(horizontal?cell:null);}else ApplyTiles(child);
         }
+    }
+
+    private void DetachViewport()
+    {
+        if(scroll is not null)scroll.UnregisterPropertyChangedCallback(ScrollViewer.ViewportWidthProperty,viewportSubscription);
+        scroll=null;
     }
 
     private void OnWheel(object sender, PointerRoutedEventArgs e)
