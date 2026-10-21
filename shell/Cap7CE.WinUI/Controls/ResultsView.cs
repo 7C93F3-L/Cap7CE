@@ -90,7 +90,7 @@ internal sealed class ResultsView : UserControl
         if(!ReferenceEquals(previous,current)||wasGallery!=IsGallery)SelectionChanged?.Invoke(Selection);
     }
     public void SelectAll(){if(IsGallery)gallery.SelectAll();else ActiveView.SelectAll();}
-    public void ClearSelection(){if(IsGallery)gallery.Clear();else ActiveView.SelectedItems.Clear();}
+    public void ClearSelection(){if(Selection.Count==0)return;if(IsGallery)gallery.Clear();else ActiveView.SelectedItems.Clear();}
     private bool IsBlank(DependencyObject? element)
     {for(var item=element;item is not null&&!ReferenceEquals(item,root);item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(item is ListViewItem or GridViewItem or GalleryTile or Button or Microsoft.UI.Xaml.Controls.Primitives.ScrollBar)return false;return true;}
     public void Suspend(bool value){suspended=value;foreach(var tile in Tiles(grid))tile.Suspend(value||grid.Visibility!=Visibility.Visible);gallery.Suspend(value||!IsGallery);}

@@ -33,7 +33,7 @@ internal sealed class WorkspaceToolbar : UserControl
         address.Search+=query=>{if(session is null)return;session.Query=query;Reload();};
         random=WorkspaceIcons.Toggle("shuffle","随机浏览",()=>{if(session is null)return;session.Random=!session.Random;if(session.Random)session.Seed=(uint)System.Random.Shared.Next();Reload();});
         next=WorkspaceIcons.Button("refresh","换一批",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
-        sizeButton=WorkspaceIcons.Button("size","网格大小",ShowSize);
+        sizeButton=WorkspaceIcons.Button("size","网格大小",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);
         view=WorkspaceIcons.Button("grid","视图",ShowView);sort=WorkspaceIcons.Button("sort","排序",ShowSort);
         recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>{if(session is null)return;session.Recursive=!session.Recursive;Reload();});
         hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>{if(session is null)return;session.ShowHidden=!session.ShowHidden;Reload();});

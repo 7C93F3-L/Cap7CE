@@ -21,6 +21,7 @@ public sealed partial class MainWindow : Window
     private readonly WorkspaceNotice notifications=new();
     private readonly DetailsPane details;
     private readonly WorkspaceLayoutController layout;
+    private readonly WorkspacePointerInput pointerInput;
     private readonly FilterAvailabilityService filterAvailability;
     private SettingsWindow? settings;
     private PreviewWindow? preview;
@@ -58,6 +59,8 @@ public sealed partial class MainWindow : Window
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
         commands.ItemsDeleted+=()=>{foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.RemoveDeleted();};
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};
+        WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);
+        pointerInput=new(Surface,results.ClearSelection,forward=>{if(active is {} session)commands.Run(()=>forward?session.ForwardAsync():session.BackAsync());});
         Surface.KeyDown+=KeyDown;
         services.Preferences.Changed+=ApplyPreferences;
         AppWindow.Changed+=(_,_)=>{
@@ -140,7 +143,7 @@ public sealed partial class MainWindow : Window
         if(e.OriginalSource is TextBox||e.OriginalSource is AutoSuggestBox)return;
         if(alt&&active is not null&&e.Key is VirtualKey.Left or VirtualKey.Right){e.Handled=true;commands.Run(()=>e.Key==VirtualKey.Left?active.BackAsync():active.ForwardAsync());return;}
         if(e.Key==VirtualKey.F5){e.Handled=true;Refresh();return;}
-        if(e.OriginalSource is DependencyObject source&&(filters.ContainsKeyboardTarget(source)||toolbar.ContainsKeyboardTarget(source)))return;
+        if(e.Key!=VirtualKey.Escape&&e.OriginalSource is DependencyObject source&&(filters.ContainsKeyboardTarget(source)||toolbar.ContainsKeyboardTarget(source)))return;
         if(e.Key==VirtualKey.Escape){e.Handled=true;results.ClearSelection();return;}
         if(control&&e.Key==VirtualKey.A){e.Handled=true;results.SelectAll();return;}
         var selection=results.Selection;if(selection.Count==0)return;
@@ -151,7 +154,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;pointerInput.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
