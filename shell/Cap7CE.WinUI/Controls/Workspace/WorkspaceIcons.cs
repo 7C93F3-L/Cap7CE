@@ -15,8 +15,9 @@ internal static class WorkspaceIcons
         ["eye"]="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
         ["eyeOff"]="m3 3 18 18M10 5.2a12 12 0 0 1 2-.2c6.5 0 10 7 10 7a19 19 0 0 1-3 3.8M6 6.5A21 21 0 0 0 2 12s3.5 7 10 7a13 13 0 0 0 5-1M10 10a3 3 0 0 0 4 4",
         ["grid"]="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+        ["list"]="M3 5h.01M3 12h.01M3 19h.01M7 5h14M7 12h14M7 19h14",
         ["search"]="M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm5 12 6 6",
-        ["sort"]="M7 4v16m-4-4 4 4 4-4M14 5h7M14 10h5M14 15h3",["more"]="M5 12h.01M12 12h.01M19 12h.01"
+        ["sort"]="M7 4v16m-4-4 4 4 4-4M14 5h7M14 10h5M14 15h3"
     };
     public static SidebarIcon Icon(string id)=>new(){OutlinePath=paths[id],Width=16,Height=16};
     public static void Label(FrameworkElement element,string text){ToolTipService.SetToolTip(element,text);AutomationProperties.SetName(element,text);}

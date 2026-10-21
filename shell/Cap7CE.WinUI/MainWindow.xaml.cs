@@ -43,10 +43,10 @@ public sealed partial class MainWindow : Window
         results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
-        toolbar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));toolbar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));toolbar.OpenSettings+=OpenSettings;
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
-        toolbar.OpenFolder+=()=>ChooseFolder(false);toolbar.ViewChanged+=()=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{View=services.Preferences.Current.View=="grid"?"list":"grid"}));
-        toolbar.GridModeChanged+=()=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{SquareTiles=!services.Preferences.Current.SquareTiles,View="grid"}));
+        toolbar.ViewSelected+=mode=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{
+            View=mode==Models.WorkspaceViewMode.List?"list":"grid",
+            SquareTiles=mode==Models.WorkspaceViewMode.List?services.Preferences.Current.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
         toolbar.SizeChangedByUser+=size=>{AssetTile.Configure(services.Preferences.Current with{TileSize=size});results.PreviewSize(size);};
         toolbar.SizeCommitted+=size=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{TileSize=size}));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
