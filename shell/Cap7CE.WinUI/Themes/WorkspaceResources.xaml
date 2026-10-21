@@ -9,6 +9,11 @@
     <Setter Property="Background" Value="{ThemeResource CapWorkspaceToolbarBrush}"/>
     <Setter Property="BorderBrush" Value="{ThemeResource DividerStrokeColorDefaultBrush}"/><Setter Property="BorderThickness" Value="0,0,0,1"/>
   </Style>
+  <Style x:Key="CapWorkspaceToolSeparator" TargetType="Border">
+    <Setter Property="Width" Value="1"/><Setter Property="Height" Value="16"/>
+    <Setter Property="Margin" Value="5,0,2,0"/><Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Background" Value="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+  </Style>
   <Style x:Key="CapWorkspaceInput" TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
     <Setter Property="Height" Value="30"/><Setter Property="MinHeight" Value="30"/><Setter Property="MinWidth" Value="0"/>
     <Setter Property="FontSize" Value="12"/><Setter Property="Padding" Value="12,3"/><Setter Property="CornerRadius" Value="15"/>

@@ -1151,6 +1151,8 @@ Settings 当前覆盖：
 
 如果一个问题表现为 UI 异常，先定位真实触发路径和 DOM / CSS 层级，不要用扩大排除区、魔法 margin、固定 top offset 等方式掩盖。
 
+WinUI 网格名称由 `Controls/AssetNameLabel` 在名称、字号及卡片可用宽度变化时使用原生 TextBlock 测量，宽度由 AssetTile 布局槽传入，首次排列前保留完整文字，避免空文本零宽度循环；`Models/CatalogNameLabel` 复用主线 Catalog 首尾保留及扩展名优先规则。选择仅切换共享文字样式，不触发名称测量。原始 AssetItem 名称保持不变，卡片悬停提示仅显示完整名称。
+
 ## 15. 目录结构
 
 主要目录：

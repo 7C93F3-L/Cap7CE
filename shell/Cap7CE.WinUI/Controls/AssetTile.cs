@@ -13,7 +13,8 @@ public sealed class AssetTile : Grid
 {
     private readonly Image image=new(){Stretch=Stretch.Uniform};
     private readonly AssetPlaceholderIcon formatIcon=new(){Width=64,Height=64};
-    private readonly TextBlock title=new(){TextTrimming=TextTrimming.CharacterEllipsis,Margin=new(6),MaxLines=2,HorizontalTextAlignment=TextAlignment.Center};
+    private readonly AssetNameLabel nameLabel=new();
+    private TextBlock title=>nameLabel.Text;
     private readonly Border caption=new(),captionSelected=new(),restStroke=new(),hover=new(),selected=new();
     private readonly ResultCardInteraction interaction;
     private CompositionRoundedRectangleGeometry? clipGeometry;
@@ -37,7 +38,7 @@ public sealed class AssetTile : Grid
         restStroke.Style=(Style)Application.Current.Resources["CapResultRestStroke"];
         hover.Style=(Style)Application.Current.Resources["CapResultHover"];selected.Style=(Style)Application.Current.Resources["CapResultSelected"];
         foreach(var border in new[]{restStroke,hover,selected}){border.IsHitTestVisible=false;SetRowSpan(border,2);Children.Add(border);}
-        SetCardState(false,false);SizeChanged+=(_,_)=>{UpdateClip();UpdateIconSize();};
+        SetCardState(false,false);SizeChanged+=(_,_)=>{UpdateClip();UpdateIconSize();UpdateNameWidth();};
         DataContextChanged+=(_,_)=>Refresh();Loaded+=(_,_)=>{active=!suspended;LayoutChanged+=Layout;Layout();UpdateClip();interaction.Connect();Refresh();};
         Unloaded+=(_,_)=>{active=false;interaction.Disconnect();LayoutChanged-=Layout;Release();};Layout();
     }
@@ -55,7 +56,9 @@ public sealed class AssetTile : Grid
         UpdateIconSize();
         image.Stretch=galleryBounds is not null?Stretch.Uniform:preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=preferences.FontSize;
         title.MaxLines=1;title.Margin=new(4,3,4,3);title.VerticalAlignment=VerticalAlignment.Center;
+        UpdateNameWidth();
     }
+    private void UpdateNameWidth()=>nameLabel.SetAvailableWidth(ActualWidth-title.Margin.Left-title.Margin.Right);
     private void UpdateIconSize()
     {
         var width=double.IsNaN(Width)?ActualWidth:Width;
@@ -65,7 +68,7 @@ public sealed class AssetTile : Grid
     }
     internal void SetCardState(bool isSelected,bool isHovered)
     {
-        title.Style=(Style)Application.Current.Resources[isSelected?"CapResultTitleSelected":"CapResultTitle"];
+        title.Style=(Style)Application.Current.Resources[isSelected?"CapResultTitleSelected":isHovered?"CapResultTitleHover":"CapResultTitle"];
         restStroke.Visibility=!isSelected&&!isHovered?Visibility.Visible:Visibility.Collapsed;
         selected.Visibility=isSelected?Visibility.Visible:Visibility.Collapsed;
         hover.Visibility=isHovered&&!isSelected?Visibility.Visible:Visibility.Collapsed;
@@ -82,7 +85,7 @@ public sealed class AssetTile : Grid
     private async void Refresh()
     {
         interaction.ClearHover();Release();formatIcon.Visibility=Visibility.Visible;if(DataContext is not AssetItem item)return;
-        title.Text=item.Name;ToolTipService.SetToolTip(this,item.FullPath);
+        nameLabel.SetName(item.Name,!item.Entry.IsDirectory);ToolTipService.SetToolTip(this,item.Name);
         var icon=item.IconName;
         formatIcon.SetIcon(icon);
         if(!active||item.FullPath.Length==0||item.Entry.IsDirectory||Visuals is null)return;

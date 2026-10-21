@@ -76,6 +76,13 @@ Require(large.Boxes.Count==50000&&large.Boxes.All(b=>b.Width>0&&b.Height>28&&b.L
 Require(large.Visible(2000,2600).Count()<50&&large.Visible(2000,2600).All(b=>b.Top+b.Height>=2000&&b.Top<=2600),"Realization uses tile bottoms and stays bounded to the viewport");
 var edge=GalleryGeometry.Create(3,10,_=>double.NaN,100);
 Require(edge.Boxes.All(b=>double.IsFinite(b.Left)&&b.Width>0)&&GalleryGeometry.Create(0,10,_=>1,100).Height==0,"Unknown ratios and empty content stay valid");
+double NameWidth(string text)=>text.EnumerateRunes().Count();
+Require(CatalogNameLabel.Format("短文件.png",20,true,NameWidth)=="短文件.png","Fitting names remain complete");
+Require(CatalogNameLabel.Format("abcdefghijk.png",10,true,NameWidth)=="abcde….png","Long filenames preserve the extension and beginning");
+Require(CatalogNameLabel.Format("abcdefghijk.png",3,true,NameWidth)=="…ng","Very narrow names retain the ending that fits");
+Require(CatalogNameLabel.Format("abcdefghijk.png",10,false,NameWidth)=="abcdef…png","Directory dots do not reserve a file extension");
+Require(CatalogNameLabel.Format("😀😀😀😀😀😀😀😀😀😀",6,false,NameWidth)=="😀😀😀…😀😀","Middle omission preserves Unicode scalar boundaries");
+Require(CatalogNameLabel.Format("long.png",0,true,NameWidth)=="","Zero-width labels do not overflow");
 string MenuIds(int count,bool home,bool folder)=>string.Join(",",ResultMenuRules.Create(count,home,folder).Select(action=>action.Id));
 Require(MenuIds(1,true,true)=="preview,open,reveal,copyPaths,favorite,autoKeywords,metadata","Home single directory menu matches mainline order");
 Require(MenuIds(2,true,true)=="preview,open,reveal,copyPaths","Home multi-selection omits single-directory actions");
