@@ -1,12 +1,15 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:Cap7CE.WinUI.Controls">
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="CapFlyoutSurfaceBrush" Color="Transparent"/>
       <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="{ThemeResource CardBackgroundFillColorDefault}" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Default">
+      <SolidColorBrush x:Key="CapFlyoutSurfaceBrush" Color="Transparent"/>
       <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="#4C4A4A4A" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="HighContrast">
+      <SolidColorBrush x:Key="CapFlyoutSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}"/>
       <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}" />
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
@@ -32,6 +35,6 @@
     <Setter Property="Background" Value="{ThemeResource CapWorkspaceSurfaceBrush}"/>
   </Style>
   <Style x:Key="CapHeading" TargetType="TextBlock"><Setter Property="FontSize" Value="19"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="0,8,0,4"/></Style>
-  <Style TargetType="MenuFlyoutPresenter"><Setter Property="Background" Value="{ThemeResource AcrylicInAppFillColorDefaultBrush}"/></Style>
-  <Style TargetType="FlyoutPresenter"><Setter Property="Background" Value="{ThemeResource AcrylicInAppFillColorDefaultBrush}"/><Setter Property="CornerRadius" Value="12"/></Style>
+  <Style TargetType="MenuFlyoutPresenter"><Setter Property="Background" Value="{ThemeResource CapFlyoutSurfaceBrush}"/></Style>
+  <Style TargetType="FlyoutPresenter"><Setter Property="Background" Value="{ThemeResource CapFlyoutSurfaceBrush}"/><Setter Property="CornerRadius" Value="12"/></Style>
 </ResourceDictionary>

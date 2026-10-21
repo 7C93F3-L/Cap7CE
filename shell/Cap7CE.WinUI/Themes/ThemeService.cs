@@ -36,5 +36,6 @@ internal static class ThemeService
         return Color.FromArgb(255, (byte)(value >> 16), (byte)(value >> 8), (byte)value);
     }
     public static MenuFlyout Menu() => new() { SystemBackdrop = new DesktopAcrylicBackdrop() };
-    public static Flyout Flyout(UIElement content) => new() { Content = content, SystemBackdrop = new DesktopAcrylicBackdrop() };
+    // Desktop acrylic needs a windowed popup; ordinary Flyout defaults to an in-root popup.
+    public static Flyout Flyout(UIElement content) => new() { Content = content, ShouldConstrainToRootBounds = false, SystemBackdrop = new DesktopAcrylicBackdrop() };
 }
