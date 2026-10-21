@@ -8,10 +8,10 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class WorkspaceToolbar : UserControl
 {
     private readonly WorkspaceAddress address=new();
-    private readonly Grid root=new(){ColumnSpacing=4,Padding=new(8,6,8,6)};
+    private readonly Grid root=new(){ColumnSpacing=4,Padding=new(8,2,8,2)};
     private readonly StackPanel navigation,tools;
-    private readonly Button back,forward,up,refresh,next,sort,view,sizeButton;
-    private readonly ToggleButton random,recursive,hidden;
+    private readonly Button back,forward,up,refresh,next,sort,view,sizeButton,recursive,hidden;
+    private readonly ToggleButton random;
     private readonly FilterFlyouts flyouts=new();
     private BrowseSession? session;
     private double tileSize=160;
@@ -32,16 +32,18 @@ internal sealed class WorkspaceToolbar : UserControl
         next=WorkspaceIcons.Button("refresh","换一批",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
         sizeButton=WorkspaceIcons.Button("size","网格大小",ShowSize);
         view=WorkspaceIcons.Button("grid","方形 / 原比例网格",()=>GridModeChanged?.Invoke());sort=WorkspaceIcons.Button("sort","排序",ShowSort);
-        recursive=WorkspaceIcons.Toggle("tree","包含子文件夹",()=>{if(session is null)return;session.Recursive=!session.Recursive;Reload();});
-        hidden=WorkspaceIcons.Toggle("eyeOff","显示隐藏项",()=>{if(session is null)return;session.ShowHidden=!session.ShowHidden;Reload();});
+        recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>{if(session is null)return;session.Recursive=!session.Recursive;Reload();});
+        hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>{if(session is null)return;session.ShowHidden=!session.ShowHidden;Reload();});
         tools=Ui.Row(random,next,sizeButton,view,sort,recursive,hidden,WorkspaceIcons.Button("more","更多浏览操作",Options));tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
-        root.SizeChanged+=(_,_)=>Reflow();Unloaded+=(_,_)=>flyouts.Close();Content=root;
+        navigation.VerticalAlignment=tools.VerticalAlignment=VerticalAlignment.Center;
+        root.SizeChanged+=(_,_)=>Reflow();Unloaded+=(_,_)=>flyouts.Close();
+        Content=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolbar"],Child=root};
     }
     public void Bind(BrowseSession value)
     {
         var reset=!ReferenceEquals(session,value);session=value;address.Bind(value.PathValue,value.Query,reset);
         back.IsEnabled=value.CanBack;forward.IsEnabled=value.CanForward;up.IsEnabled=value.PathValue.Length>0;refresh.IsEnabled=!value.Busy;
-        random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsChecked=value.Recursive;recursive.IsEnabled=value.PathValue.Length>0;hidden.IsChecked=value.ShowHidden;
+        random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
         ((SidebarIcon)hidden.Content).OutlinePath=WorkspaceIcons.Icon(value.ShowHidden?"eye":"eyeOff").OutlinePath;
         WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":"")}");
@@ -55,7 +57,7 @@ internal sealed class WorkspaceToolbar : UserControl
     private void Reflow()
     {
         var narrow=root.ActualWidth<=560;navigation.Visibility=narrow?Visibility.Collapsed:Visibility.Visible;
-        foreach(var button in new FrameworkElement[]{random,next,sort,recursive,hidden})button.Visibility=narrow?Visibility.Collapsed:Visibility.Visible;
+        tools.Visibility=narrow?Visibility.Collapsed:Visibility.Visible;root.ColumnSpacing=narrow?0:4;
         next.Visibility=!narrow&&session?.Random==true?Visibility.Visible:Visibility.Collapsed;if(narrow)flyouts.Close();
     }
     public void FocusSearch()=>address.FocusSearch();
