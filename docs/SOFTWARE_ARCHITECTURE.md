@@ -58,7 +58,7 @@ WinUI 的 `Models` 目录包含 `AssetCollection`、`AssetItem`、`BrowseFilter`
 
 `shell/Cap7CE.WinUI` 是独立 x64、.NET 10 / WinUI 3 开发壳。当前有效主线的左收藏栏、顶部筛选、目录标签/工具条、虚拟网格/列表、右侧详情/关键词、设置和独立预览已按原生控件迁入首版；只复用实际调用的内容与原图标，不整体复制React/CSS、退役页面或待机线。Electron主线保持，未迁入能力明确列于 `shell/README.md`，本轮编译通过不等于交互验收。
 
-主工作区不设常驻底栏，中央结果及右侧详情延伸到底部外边距。`Controls/Workspace/WorkspaceNotice` 仅管理结果区底部的临时提醒：查询持续 300 ms 后显示进度，完成隐藏；操作和非空结果中的错误显示 5 秒，可手动关闭，关闭窗口时停止计时器。初始空结果的查询错误仍由 ResultsView 呈现。MainWindow 只组合与传递状态，不再展示首屏耗时、载入计数或手动下一页；原生增量加载和原比例网格滚动分页沿用既有查询路径。
+主工作区不设常驻底栏，中央结果及右侧详情延伸到底部外边距。块间水平/垂直间距及左右、底部外边距由 WorkspaceLayoutController 统一为 5 DIP，侧栏收起后保留相同外边距；标题栏下方距离不变。`Controls/Workspace/WorkspaceNotice` 仅管理结果区底部的临时提醒：查询持续 300 ms 后显示进度，完成隐藏；操作和非空结果中的错误显示 5 秒，可手动关闭，关闭窗口时停止计时器。初始空结果的查询错误仍由 ResultsView 呈现。MainWindow 只组合与传递状态，不再展示首屏耗时、载入计数或手动下一页；原生增量加载和原比例网格滚动分页沿用既有查询路径。
 
 `Themes/ShellResources.xaml` 集中共用色、按钮/卡片/文字与菜单样式；`ThemeService` 统一主窗口、设置和预览的Mica/Mica Alt、明暗与强调色，菜单/临时浮层使用DesktopAcrylicBackdrop及原生亚克力资源。外观与布局在独立PhaseF偏好保存；首次缺失时仅被动读取已有颜色/主题，不迁移配置。`Models` 拥有偏好、格式注册表投影、条件和结果；`Controllers/BrowseSession` 拥有每标签历史、查询代次/取消、分页和本次删除抑制；`Controls/Views` 只承载相应界面，MainWindow只组合。格式/图标名与提取器版本由原注册表和Core资源生成，不维护第二份事实定义。
 

@@ -8,6 +8,7 @@ namespace Cap7CE.WinUI.Controllers;
 
 internal sealed class WorkspaceLayoutController : IDisposable
 {
+    private const double Gap = 5;
     private readonly Window window;
     private readonly FrameworkElement surface;
     private readonly Grid root;
@@ -67,13 +68,13 @@ internal sealed class WorkspaceLayoutController : IDisposable
         sidebarColumn.Width = new(next.SidebarVisible ? next.SidebarWidth : 0);
         filterHost.Visibility = next.FiltersVisible ? Visibility.Visible : Visibility.Collapsed;
         detailsHost.Visibility = next.DetailsVisible ? Visibility.Visible : Visibility.Collapsed;
-        detailsColumn.Width = new(next.DetailsVisible ? next.DetailsWidth + 8 : 0);
+        detailsColumn.Width = new(next.DetailsVisible ? next.DetailsWidth + Gap : 0);
         root.ColumnSpacing = root.RowSpacing = 0;
-        var leftGap = next.SidebarVisible ? 8 : 0;
+        var leftGap = next.SidebarVisible ? Gap : 0;
         filterHost.Margin = new(leftGap,0,0,0);
-        mainHost.Margin = new(leftGap,next.FiltersVisible ? 6 : 0,0,0);
-        detailsHost.Margin = new(8,next.FiltersVisible ? 6 : 0,0,0);
-        root.Padding = new(next.SidebarVisible && !next.SidebarCompact ? 8 : 0, 0, 8, 8);
+        mainHost.Margin = new(leftGap,next.FiltersVisible ? Gap : 0,0,0);
+        detailsHost.Margin = new(Gap,next.FiltersVisible ? Gap : 0,0,0);
+        root.Padding = new(Gap, 0, Gap, Gap);
         sidebar.ApplyLayout(next.SidebarCompact, next.BrandVisible, next.FiltersVisible, next.DetailsVisible);
         if (previous?.DetailsVisible != next.DetailsVisible) DetailsVisibilityChanged?.Invoke(next.DetailsVisible);
         if (previous?.HorizontalGrid != next.HorizontalGrid) HorizontalGridChanged?.Invoke(next.HorizontalGrid);
