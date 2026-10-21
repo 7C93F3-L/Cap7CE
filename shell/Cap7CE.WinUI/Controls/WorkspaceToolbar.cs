@@ -91,7 +91,7 @@ internal sealed class WorkspaceToolbar : UserControl
             var option=new RadioMenuFlyoutItem {Text=ViewLabel(mode),IsChecked=mode==viewMode,GroupName="workspace-view"};
             option.Click+=(_,_)=>{if(!compact&&mode!=viewMode)ViewSelected?.Invoke(mode);};menu.Items.Add(option);
         }
-        menu.ShowAt(view);
+        menu.ShowAt(view,new FlyoutShowOptions{Placement=FlyoutPlacementMode.Bottom});
     }
     private void ShowSize()
     {
@@ -107,6 +107,6 @@ internal sealed class WorkspaceToolbar : UserControl
             var option=new RadioMenuFlyoutItem{Text=SortLabel(value),IsChecked=!session.Random&&session.Sort==value,GroupName="sort"};
             option.Click+=(_,_)=>{session.Sort=value;session.Random=false;Reload();};menu.Items.Add(option);
         }
-        menu.ShowAt(sort);
+        menu.ShowAt(sort,new FlyoutShowOptions{Placement=FlyoutPlacementMode.Bottom});
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
@@ -37,5 +38,5 @@ internal static class ThemeService
     }
     public static MenuFlyout Menu() => new() { SystemBackdrop = new DesktopAcrylicBackdrop() };
     // Desktop acrylic needs a windowed popup; ordinary Flyout defaults to an in-root popup.
-    public static Flyout Flyout(UIElement content) => new() { Content = content, ShouldConstrainToRootBounds = false, SystemBackdrop = new DesktopAcrylicBackdrop() };
+    public static Flyout Flyout(UIElement content) => new() { Content = content, Placement = FlyoutPlacementMode.Bottom, ShouldConstrainToRootBounds = false, SystemBackdrop = new DesktopAcrylicBackdrop() };
 }

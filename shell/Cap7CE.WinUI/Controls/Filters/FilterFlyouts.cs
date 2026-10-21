@@ -10,6 +10,7 @@ internal sealed class FilterFlyouts
     public void Close() {current?.Hide();current=null;}
     public void Show(FrameworkElement anchor,UIElement content,Action? closed=null)
     {
+        if(content is FrameworkElement element)FilterControlTheme.Apply(element);
         Close();var flyout=ThemeService.Flyout(content);current=flyout;
         flyout.Closed+=(_,_)=>{if(ReferenceEquals(current,flyout))current=null;closed?.Invoke();};
         flyout.ShowAt(anchor);

@@ -10,7 +10,9 @@
 
 `ResultMenuRules`以纯规则确定首页/目录/文件/多选菜单顺序及分组，`ResultContextMenu`投影原生MenuFlyout并复用FileCommands及FavoriteService，不复制文件操作或Core任务。收藏菜单沿主线顺序；未迁入能力保留禁用项，单文件关键词编辑仅复用已展开详情栏。
 
-ThemeService仍为菜单及筛选/尺寸浮层配置DesktopAcrylicBackdrop，普通Flyout显式设置ShouldConstrainToRootBounds=false以启用支持桌面材质的windowed popup（MenuFlyout默认即为此模式）；Presenter共用透明表层，移除叠加的应用内亚克力；高对比表层使用系统窗口色。
+ThemeService仍为菜单及筛选/尺寸浮层配置DesktopAcrylicBackdrop，普通Flyout显式设置ShouldConstrainToRootBounds=false以启用支持桌面材质的windowed popup（MenuFlyout默认即为此模式）；Presenter共用透明表层，移除叠加的应用内亚克力；高对比表层使用系统窗口色。按钮打开的普通Flyout默认Placement=Bottom，工具栏视图/排序MenuFlyout通过ShowAt选项同样优先向下，保留系统空间避让；右键菜单及收藏菜单维持原生定位。
+
+`Themes/FilterControlTheme` 仅为筛选内容合并 `FilterControlResources`，局部覆盖实际组件主题画刷，复用 CapAccentBrush/CapAccentForegroundBrush 及 WorkspaceInputResources，覆盖日期、复选框、下拉选中标记和文本输入强调色，高对比改用系统高亮资源。CalendarDatePicker、NumberBox、ComboBox 内部弹层保留原生背景及定位，不遍历模板挂载材质、不覆盖背景资源；FilterFlyouts 统一装配，设置页及其他组件不受影响。
 
 中央工作区 `WorkspaceToolbar` 只组合导航、随机/换批、排序、隐藏/子目录与网格动作；`Controls/Workspace/WorkspaceAddress` 独立拥有路径/搜索共用输入区、面包屑、输入草稿和Escape处理，纯 `WorkspacePathRules` 保留盘符和UNC根边界。工具条复用当前主线矢量及共享选中前景，网格大小浮层由独立GridSizePicker组合原生Slider、HyperlinkButton及标题/百分比回显，复用现有预览及关闭保存事件；默认链接按钮通过局部GridSizePickerResources统一常态文字色及悬停/按下背景；WorkspaceAddress仅合并局部WorkspaceInputResources，保留原生聚焦描边几何并把底线颜色绑定至共用CapAccentBrush，高对比保留系统资源。滑杆数值仍为DIP，显示及提示转换为相对160 DIP的百分比，不改范围、步长或偏好。Slider局部主题资源将滑块普通/悬停/按下画刷映射到共用CapAccentBrush，进度轨道映射到CapAccentGradient，不替换原生模板；高对比使用系统高亮，禁用态保留原生资源。样式集中于 `Themes/WorkspaceResources.xaml`，浮层仍由原生亚克力服务提供。`MainWindow` 只接线现有浏览会话和独立偏好，单页隐藏标签行，多页沿原生TabView保留；不增加Core操作。
 
