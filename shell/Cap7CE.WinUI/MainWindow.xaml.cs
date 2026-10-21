@@ -56,6 +56,7 @@ public sealed partial class MainWindow : Window
         Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();}};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
+        commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
         commands.ItemsDeleted+=()=>{foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.RemoveDeleted();};
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};

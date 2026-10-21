@@ -76,20 +76,8 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         }
         finally { AfterMutation?.Invoke(); operation.Release(); }
     }
-    public MenuFlyout Menu(IReadOnlyList<AssetItem> items)
-    {
-        var menu = ThemeService.Menu(); if (items.Count == 0) return menu;
-        var first = items[0];
-        menu.Items.Add(Ui.MenuItem("预览", () => Run(() => { Preview(first); return Task.CompletedTask; }), "\uE8A7"));
-        menu.Items.Add(Ui.MenuItem("打开", () => Run(() => { Open(first); return Task.CompletedTask; }), "\uE8A5"));
-        menu.Items.Add(Ui.MenuItem("在资源管理器中显示", () => Run(() => { Reveal(first); return Task.CompletedTask; }), "\uE838"));
-        menu.Items.Add(new MenuFlyoutSeparator());
-        menu.Items.Add(Ui.MenuItem("复制文件 · Ctrl+C", () => Run(() => CopyFilesAsync(items)), "\uE8C8"));
-        menu.Items.Add(Ui.MenuItem("复制路径", () => CopyPaths(items)));
-        if (items.Count == 1 && first.Entry.IsDirectory)
-            menu.Items.Add(Ui.MenuItem("添加到收藏", () => Run(() => services.Favorites.ExecuteAsync("add", path: first.FullPath)), "\uE734"));
-        if (items.All(item => item.Entry.FileReference is not null))
-        { menu.Items.Add(new MenuFlyoutSeparator()); menu.Items.Add(Ui.MenuItem("移到回收站 · Delete", () => Run(() => DeleteAsync(items)), "\uE74D")); }
-        return menu;
-    }
+    public Func<bool> CanEditKeywords {get;set;}=()=>false;
+    public event Action<AssetItem>? EditKeywordsRequested;
+    public void EditKeywords(AssetItem item)=>EditKeywordsRequested?.Invoke(item);
+    public MenuFlyout Menu(IReadOnlyList<AssetItem> items,bool home=false)=>ResultContextMenu.Build(this,services.Favorites,items,home);
 }

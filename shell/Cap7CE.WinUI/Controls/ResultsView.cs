@@ -104,7 +104,7 @@ internal sealed class ResultsView : UserControl
         if (commands is null || (e.OriginalSource as FrameworkElement)?.DataContext is not AssetItem item) return;
         e.Handled = true; var view = (ListViewBase)sender;
         if (!view.SelectedItems.Contains(item)) { view.SelectedItems.Clear(); view.SelectedItem = item; }
-        commands.Menu(Selection).ShowAt(view, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = e.GetPosition(view) });
+        commands.Menu(Selection,home).ShowAt(view, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = e.GetPosition(view) });
     }
     private void OnItemsDragStarting(object sender, DragItemsStartingEventArgs e)
     {

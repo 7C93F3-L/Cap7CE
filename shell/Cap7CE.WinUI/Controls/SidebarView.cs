@@ -147,19 +147,17 @@ internal sealed class SidebarView : UserControl
         service.Changed += () => DispatcherQueue.TryEnqueue(()=>{favorites.ItemsSource=service.Items;SetActivePath(activePath);});
         favoriteMenu = item => {
             var menu=ThemeService.Menu();
-            menu.Items.Add(Ui.MenuItem("打开",()=>Navigate?.Invoke(item.Path)));
-            menu.Items.Add(Ui.MenuItem("在资源管理器中打开",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;})));
-            menu.Items.Add(Ui.MenuItem("复制路径",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;})));
-            menu.Items.Add(new MenuFlyoutSeparator());
-            menu.Items.Add(Ui.MenuItem("修改显示名称",()=>commands.Run(async()=>{
-                var input=new TextBox {Text=item.Name}; var dialog=new ContentDialog {XamlRoot=xaml(),Title="收藏显示名称",Content=input,PrimaryButtonText="保存",CloseButtonText="取消"};
-                if(await dialog.ShowAsync()==ContentDialogResult.Primary) await service.ExecuteAsync("rename",id:item.Id,name:input.Text);
-            })));
+            menu.Items.Add(Ui.MenuItem("在资源管理器中打开",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;}),"\uE838"));
+            menu.Items.Add(Ui.MenuItem("复制路径",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;}),"\uE8C8"));
+            menu.Items.Add(ResultContextMenu.Unavailable("重命名文件夹","磁盘文件夹改名尚未迁入WinUI壳","\uE8AC"));
             var index=service.Items.ToList().FindIndex(entry=>entry.Id==item.Id);
-            var up=Ui.MenuItem("上移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"up"))); up.IsEnabled=index>0;
-            var down=Ui.MenuItem("下移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"down"))); down.IsEnabled=index>=0 && index<service.Items.Count-1;
+            var up=Ui.MenuItem("上移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"up")),"\uE74A"); up.IsEnabled=index>0;
+            var down=Ui.MenuItem("下移",()=>commands.Run(()=>service.ExecuteAsync("move",id:item.Id,direction:"down")),"\uE74B"); down.IsEnabled=index>=0 && index<service.Items.Count-1;
             menu.Items.Add(up); menu.Items.Add(down);
-            menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id))));
+            menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
+            menu.Items.Add(new MenuFlyoutSeparator());
+            menu.Items.Add(ResultContextMenu.Unavailable("自动添加关键词","自动关键词任务尚未迁入WinUI壳","\uE945"));
+            menu.Items.Add(ResultContextMenu.Unavailable("获取/刷新元数据","属性获取任务尚未迁入WinUI壳","\uE895"));
             return menu;
         };
         favorites.RightTapped += (_, e) => {

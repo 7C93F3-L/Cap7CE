@@ -20,7 +20,7 @@ internal sealed class DetailsPane : UserControl
     private CancellationTokenSource selection = new();
     private AssetItem? current;
     private string? revision;
-    private bool loading;
+    private bool loading,focusKeywords;
     private readonly Button save;
     private readonly Border keywordPanel;
     public DetailsPane(ShellServices services, Action<string> notice)
@@ -34,9 +34,10 @@ internal sealed class DetailsPane : UserControl
         debounce.Tick += (_, _) => { debounce.Stop(); if (current is not null) Read(current); };
         Select([]);
     }
+    public void EditKeywords(AssetItem item){Select([item]);focusKeywords=true;}
     public void Select(IReadOnlyList<AssetItem> items)
     {
-        debounce.Stop(); selection.Cancel(); selection.Dispose(); selection = new(); current = items.Count == 1 ? items[0] : null;
+        focusKeywords=false;debounce.Stop(); selection.Cancel(); selection.Dispose(); selection = new(); current = items.Count == 1 ? items[0] : null;
         image.Source = null; column.Children.Clear(); revision = null; keywords.Text = ""; message.Text = ""; save.IsEnabled = false; loading = false;
         column.Children.Add(Ui.Heading(items.Count == 1 ? "详细信息" : items.Count == 0 ? "未选择项目" : $"已选择 {items.Count} 项"));
         if (items.Count != 1)
@@ -64,6 +65,7 @@ internal sealed class DetailsPane : UserControl
                 if (token.IsCancellationRequested || current != item) return;
                 keywords.Text = string.Join(Environment.NewLine, reply.GetProperty("keywords").EnumerateArray().Select(x => x.GetString()));
                 revision = reply.GetProperty("revision").ValueKind == JsonValueKind.Null ? null : reply.GetProperty("revision").GetString(); save.IsEnabled = true; message.Text = "";
+                if(focusKeywords){focusKeywords=false;keywords.Focus(FocusState.Programmatic);}
             }
             var prepared = await services.Visuals.PrepareAsync(item.FullPath, true, token);
             var file = await StorageFile.GetFileFromPathAsync(prepared); using var stream = await file.OpenReadAsync();

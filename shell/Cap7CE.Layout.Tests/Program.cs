@@ -76,6 +76,13 @@ Require(large.Boxes.Count==50000&&large.Boxes.All(b=>b.Width>0&&b.Height>28&&b.L
 Require(large.Visible(2000,2600).Count()<50&&large.Visible(2000,2600).All(b=>b.Top+b.Height>=2000&&b.Top<=2600),"Realization uses tile bottoms and stays bounded to the viewport");
 var edge=GalleryGeometry.Create(3,10,_=>double.NaN,100);
 Require(edge.Boxes.All(b=>double.IsFinite(b.Left)&&b.Width>0)&&GalleryGeometry.Create(0,10,_=>1,100).Height==0,"Unknown ratios and empty content stay valid");
+string MenuIds(int count,bool home,bool folder)=>string.Join(",",ResultMenuRules.Create(count,home,folder).Select(action=>action.Id));
+Require(MenuIds(1,true,true)=="preview,open,reveal,copyPaths,favorite,autoKeywords,metadata","Home single directory menu matches mainline order");
+Require(MenuIds(2,true,true)=="preview,open,reveal,copyPaths","Home multi-selection omits single-directory actions");
+Require(MenuIds(1,false,true)=="preview,open,reveal,copyPaths,delete,favorite,editKeywords,autoKeywords,metadata","Directory result menu matches mainline order");
+Require(MenuIds(1,false,false)=="preview,open,reveal,copyPaths,delete,editKeywords,autoKeywords","File menu omits directory actions");
+Require(MenuIds(2,false,true)=="preview,open,reveal,copyPaths,delete,editKeywords,autoKeywords","Multi-selection menu omits single-directory actions");
+Require(ResultMenuRules.Create(1,false,true).Single(action=>action.NewGroup).Id=="editKeywords"&&ResultMenuRules.Create(0,false,false).Count==0,"Menu groups and empty selection stay valid");
 var path=WorkspacePathRules.Crumbs(@"C:\Design Assets\中文");
 Require(path.Count==4&&path[1].Path==@"C:\"&&path[^1].Path==@"C:\Design Assets\中文","Breadcrumbs preserve drive root, spaces and Unicode");
 var unc=WorkspacePathRules.Crumbs(@"\\server\share\folder");
