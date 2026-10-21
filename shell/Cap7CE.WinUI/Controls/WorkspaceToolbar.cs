@@ -94,10 +94,9 @@ internal sealed class WorkspaceToolbar : UserControl
     }
     private void ShowSize()
     {
-        flyouts.Close();var size=new Slider{Minimum=96,Maximum=280,Value=tileSize,Width=220,StepFrequency=4};var sizeLabel=Ui.Text($"网格大小 · {tileSize:0} DIP");
-        size.ValueChanged+=(_,e)=>{tileSize=e.NewValue;sizeLabel.Text=$"网格大小 · {e.NewValue:0} DIP";SizeChangedByUser?.Invoke(e.NewValue);};
-        var content=Ui.Column(sizeLabel,size,Ui.Row(Ui.Text("较小",true),Ui.Button("默认",()=>size.Value=160),Ui.Text("较大",true)));
-        flyouts.Show(sizeButton,content,()=>SizeCommitted?.Invoke(size.Value));
+        flyouts.Close();
+        var picker=new GridSizePicker(tileSize,value=>{tileSize=value;SizeChangedByUser?.Invoke(value);});
+        flyouts.Show(sizeButton,picker,()=>SizeCommitted?.Invoke(picker.Value));
     }
     private static string SortLabel(string value)=>value switch {"name-descending"=>"名称 · 降序","modified-descending"=>"修改时间 · 降序","modified-ascending"=>"修改时间 · 升序",_=>"名称 · 升序"};
     private void ShowSort()
