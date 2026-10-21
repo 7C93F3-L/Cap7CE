@@ -73,7 +73,16 @@ internal sealed class SidebarView : UserControl
         var text = new TextBlock { Text = label, TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis };
         var content = new Grid { ColumnSpacing = gap };
         content.ColumnDefinitions.Add(new() { Width = new(24) }); content.ColumnDefinitions.Add(new() { Width = new(1,GridUnitType.Star) });
-        content.Children.Add(new SidebarIcon { Kind = icon, Width = icon=="settings"?22:24, Height = icon=="settings"?22:24 });
+        var glyph=new SidebarIcon { Kind = icon, Width = icon=="settings"?22:24, Height = icon=="settings"?22:24 };
+        content.Children.Add(glyph);
+        if(pill&&button is ToggleButton toggle) {
+            // Follow the semantic selection rather than a snapshotted template foreground.
+            void Sync()=>glyph.InkForeground=toggle.IsChecked==true?(Brush)Application.Current.Resources["CapAccentForegroundBrush"]:toggle.Foreground;
+            toggle.Checked+=(_,_)=>Sync();toggle.Unchecked+=(_,_)=>Sync();toggle.Indeterminate+=(_,_)=>Sync();toggle.Loaded+=(_,_)=>Sync();
+            toggle.RegisterPropertyChangedCallback(Control.ForegroundProperty,(_,_)=>Sync());
+            toggle.ActualThemeChanged+=(_,_)=>{Sync();toggle.DispatcherQueue.TryEnqueue(()=>{if(glyph.IsLoaded)Sync();});};
+            Sync();
+        }
         Grid.SetColumn(text,1); text.VerticalAlignment = VerticalAlignment.Center; content.Children.Add(text); button.Content = content;
         AutomationProperties.SetName(button,label); ToolTipService.SetToolTip(button,label); navigation.Add((button,text,content,gap,pill));
     }
