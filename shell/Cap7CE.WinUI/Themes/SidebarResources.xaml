@@ -107,9 +107,9 @@
   </Style>
   <Style x:Key="CapSidebarHeaderText" TargetType="TextBlock"><Setter Property="Foreground" Value="{ThemeResource CapSidebarMutedBrush}"/></Style>
   <DataTemplate x:Key="CapSidebarFavoriteTemplate">
-    <Grid Height="36" Padding="8,0"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+    <Grid Height="36" Padding="8,0" Background="Transparent"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
       <controls:SidebarIcon Kind="folder" Width="24" Height="24"/><TextBlock Grid.Column="1" Margin="10,0,4,0" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-      <Button x:Name="FavoriteMore" Grid.Column="2" Width="24" Height="24" Padding="3" CornerRadius="12" Style="{StaticResource CapSidebarButton}" ToolTipService.ToolTip="管理收藏">
+      <Button x:Name="FavoriteMore" Grid.Column="2" Width="24" Height="24" Padding="3" CornerRadius="12" Opacity="0" IsHitTestVisible="False" Style="{StaticResource CapSidebarButton}" ToolTipService.ToolTip="管理收藏">
         <controls:SidebarIcon Kind="more" Width="18" Height="18"/>
       </Button>
     </Grid>

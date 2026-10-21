@@ -12,7 +12,7 @@ internal sealed class FilterSection : UserControl
     public FilterSection(string title,UIElement body,Action<Button>? edit=null,bool separator=true)
     {
         Height=80;
-        var border=new Border {Padding=new(6,0,8,0),Style=(Style)Application.Current.Resources["CapFilterGroupFrame"]};
+        var border=new Border {Padding=new(6,0,8,0),Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent),Style=(Style)Application.Current.Resources["CapFilterGroupFrame"]};
         if(separator)border.BorderThickness=new(0,0,1,0);
         var heading=new StackPanel {Orientation=Orientation.Horizontal,Spacing=4,Height=24};
         heading.Children.Add(new TextBlock {Text=title,FontSize=12,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,VerticalAlignment=VerticalAlignment.Center});
@@ -20,6 +20,7 @@ internal sealed class FilterSection : UserControl
             var button=ActionButton("",()=>{}); button.Width=22;button.Height=22;button.Padding=new(3);
             button.Content=new FontIcon {Glyph="\uE70F",FontSize=11};
             AutomationProperties.SetName(button,"编辑"+title);ToolTipService.SetToolTip(button,"编辑"+title);button.Click+=(_,_)=>edit(button);heading.Children.Add(button);
+            HoverReveal.Attach(this,button);
         }
         Summary.Style=(Style)Application.Current.Resources["CapFilterSummary"];heading.Children.Add(Summary);
         var panel=new Grid();panel.RowDefinitions.Add(new(){Height=new(24)});panel.RowDefinitions.Add(new(){Height=new(56)});

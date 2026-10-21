@@ -137,8 +137,13 @@ internal sealed class SidebarView : UserControl
             }
         if(more.Tag is true)return;
         more.Tag=true;
+        HoverReveal.Attach(content,more);
         more.Tapped+=(_,args)=>args.Handled=true;
-        more.Click+=(_,_)=>{if(more.DataContext is Favorite current)favoriteMenu?.Invoke(current).ShowAt(more);};
+        more.Click+=(_,_)=>{
+            if(more.DataContext is not Favorite current||favoriteMenu?.Invoke(current) is not {} menu)return;
+            HoverReveal.Hold(more,true);menu.Closed+=(_,_)=>HoverReveal.Hold(more,false);
+            menu.ShowAt(more,new FlyoutShowOptions{Placement=FlyoutPlacementMode.Bottom});
+        };
     }
 
     public void Bind(FavoriteService service, FileCommands commands, Func<XamlRoot> xaml)

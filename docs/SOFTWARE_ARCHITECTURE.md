@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+`Controls/HoverReveal` 共用顶部筛选分组铅笔及收藏行管理按钮的显隐规则：仅以Opacity及IsHitTestVisible隐藏，保留布局和键盘顺序；局部悬停/Keyboard焦点事件显示，普通鼠标及程序焦点不维持显示。FilterFlyouts和收藏菜单通过Hold保持打开期间可见，关闭时及焦点恢复后以原生按钮IsPointerOver刷新悬停，分组内移动继续校正，避免windowed popup吞掉PointerExited导致残留。状态以按钮弱键保存，事件局限于按钮所属分组/行，卸载清理悬停及打开标记，无根指针订阅或空闲轮询；三点按钮ShowAt显式优先Bottom，鼠标右键菜单保留坐标定位。
+
 标题栏固定图标的外环和实心点使用相同 10 DIP 布局盒中的 EllipseGeometry，圆心均为 (5,5)，避免 10 DIP 外环与 3 DIP 内圆分别布局时的半像素取整偏移；可见外径、描边和点径保持不变。
 
 三大工作区表面共用 `CapWorkspaceSurfaceBrush`：深色在系统内容层基础上提亮为 `#4C4A4A4A`，以约30%不透明度在窗口 Mica / Mica Alt 底层上叠加；浅色仍用 `CardBackgroundFillColorDefault`，高对比仍用 `SystemColorWindowColor`。此调整只作用于顶部筛选、中央工作区和右侧详情的共享表面，不调整图标、内部卡片或布局。
