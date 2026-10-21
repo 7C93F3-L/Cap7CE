@@ -6,6 +6,8 @@
 
 `Controls/SidebarFavoriteOrder` 独立拥有收藏排序草稿、完成/取消按钮及原生ListView重排开关，SidebarView仅组合编辑模板和菜单入口；临时ObservableCollection不直接写配置。排序暂停ItemClick导航，支持Alt+↑/↓，Esc经既有工作区键盘入口优先取消排序；窄栏保留紧凑手柄及纵向完成/取消按钮，此电脑不在重排数据源内。FavoriteService经既有私有配置Host请求提交orderedIds和expectedIds，Core `FavoriteDirectoryOrder` 纯规则拒绝重复、缺项、外来ID和过期顺序，用最新条目重排并复用FavoriteConfigurationFile原子发布；未变化不写入。既有Electron上/下移动作及配置格式不变，未增加索引、源文件访问或后台进程。
 
+原比例 `GalleryTile` 在原生ToggleButton指针处理之后记录鼠标左键起点，以4 DIP移动阈值调用StartDragAsync（不依赖CanDrag自动手势），拖动期间抑制OnToggle及点击选择回调。`ResultsGallery.Drag` 继续按当前选择调用共用 `ResultDrag.Prepare`，保留1–200项及有效路径约束、StorageItems延迟提供和Copy操作；拖拽启动错误进入FileCommands既有错误通道，回收时解除回调。不新增文件读取、复制动作或Core协议。
+
 `Controls/HoverReveal` 共用顶部筛选分组铅笔及收藏行管理按钮的显隐规则：仅以Opacity及IsHitTestVisible隐藏，保留布局和键盘顺序；局部悬停/Keyboard焦点事件显示，普通鼠标及程序焦点不维持显示。FilterFlyouts和收藏菜单通过Hold保持打开期间可见，关闭时及焦点恢复后以原生按钮IsPointerOver刷新悬停，分组内移动继续校正，避免windowed popup吞掉PointerExited导致残留。状态以按钮弱键保存，事件局限于按钮所属分组/行，卸载清理悬停及打开标记，无根指针订阅或空闲轮询；三点按钮ShowAt显式优先Bottom，鼠标右键菜单保留坐标定位。
 
 标题栏固定图标的外环和实心点使用相同 10 DIP 布局盒中的 EllipseGeometry，圆心均为 (5,5)，避免 10 DIP 外环与 3 DIP 内圆分别布局时的半像素取整偏移；可见外径、描边和点径保持不变。

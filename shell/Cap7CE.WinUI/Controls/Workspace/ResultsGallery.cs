@@ -26,10 +26,11 @@ internal sealed class ResultsGallery : UserControl
         IdleScrollBars.Attach(this);
         repeater.ElementPrepared+=(_,e)=>{
             if(e.Element is not GalleryTile tile)return;tiles.Add(tile);tile.Pick=Pick;tile.Open=Open;tile.Context=Context;tile.Drag=Drag;
+            tile.DragError=error=>commands?.Run(()=>Task.FromException(error));
             tile.IsChecked=tile.DataContext is AssetItem item&&selection.Contains(item);
             tile.Suspend(suspended);
         };
-        repeater.ElementClearing+=(_,e)=>{if(e.Element is GalleryTile tile){tiles.Remove(tile);tile.Pick=tile.Open=null;tile.Context=null;tile.Drag=null;}};
+        repeater.ElementClearing+=(_,e)=>{if(e.Element is GalleryTile tile){tiles.Remove(tile);tile.Pick=tile.Open=null;tile.Context=null;tile.Drag=null;tile.DragError=null;}};
         scroll.ViewChanged+=async(_,_)=>await LoadMore();scroll.SizeChanged+=async(_,_)=>await LoadMore();
         KeyDown+=NavigateKey;Unloaded+=(_,_)=>Detach();Loaded+=(_,_)=>Observe();
     }
