@@ -100,11 +100,11 @@ public sealed class SidebarIcon : UserControl
         else if(asset is not null) canvas.Children.Add(Shape(asset.Path,false));
         else if(Kind is "top" or "right")
         {
-            var outline=new Rectangle {Width=18,Height=16,RadiusX=2,RadiusY=2,StrokeThickness=1.5};
-            Bind(outline,Microsoft.UI.Xaml.Shapes.Shape.StrokeProperty);Canvas.SetLeft(outline,3);Canvas.SetTop(outline,4);canvas.Children.Add(outline);
+            // SVG strokes straddle the outline; Rectangle would inset its stroke into Width/Height.
+            canvas.Children.Add(Shape("M5 4H19 A2 2 0 0 1 21 6 V18 A2 2 0 0 1 19 20 H5 A2 2 0 0 1 3 18 V6 A2 2 0 0 1 5 4 Z",true));
             canvas.Children.Add(Shape(Kind=="top"?"M3 9H21":"M15 4V20",true));
-            var area=Shape(Kind=="top"?"M5 6H19V7H5Z":"M17 6H19V18H17Z",false);
-            area.Opacity=IsActive?1:.3;canvas.Children.Add(area);
+            var area=Shape(Kind=="top"?"M5 5.5H19V7.5H5Z":"M17 6H19V18H17Z",false);
+            area.Opacity=IsActive?1:.5;canvas.Children.Add(area);
         }
         else if(Kind=="more")
         {
