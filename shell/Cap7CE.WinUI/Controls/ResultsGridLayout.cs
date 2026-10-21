@@ -19,6 +19,7 @@ internal sealed class ResultsGridLayout
     {
         this.grid = grid;
         normalStyle = grid.ItemContainerStyle;
+        compactStyle.BasedOn=normalStyle;
         compactStyle.Setters.Add(new Setter(FrameworkElement.MinWidthProperty,0d));
         compactStyle.Setters.Add(new Setter(FrameworkElement.MinHeightProperty,0d));
         compactStyle.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));

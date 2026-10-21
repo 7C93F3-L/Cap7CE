@@ -44,7 +44,5 @@
   <Style x:Key="CapWorkspaceTool" TargetType="Button" BasedOn="{StaticResource CapWorkspaceAction}"><Setter Property="Width" Value="30"/><Setter Property="Height" Value="30"/><Setter Property="Padding" Value="5"/></Style>
   <Style x:Key="CapWorkspaceToggle" TargetType="ToggleButton" BasedOn="{StaticResource CapFilterOption}"><Setter Property="Width" Value="30"/><Setter Property="Height" Value="30"/><Setter Property="Padding" Value="5"/></Style>
   <Style x:Key="CapWorkspaceCrumb" TargetType="Button" BasedOn="{StaticResource CapWorkspaceAction}"><Setter Property="Height" Value="30"/><Setter Property="Padding" Value="5,2"/></Style>
-  <Style x:Key="CapResultItem" TargetType="GridViewItem"><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="4"/><Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="CornerRadius" Value="8"/></Style>
   <DataTemplate x:Key="CapGalleryTileTemplate"><controls:GalleryTile/></DataTemplate>
-  <Style x:Key="CapGalleryItem" TargetType="ToggleButton" BasedOn="{StaticResource CapFilterOption}"><Setter Property="Padding" Value="0"/><Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Stretch"/></Style>
 </ResourceDictionary>
