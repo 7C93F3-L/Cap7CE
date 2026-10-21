@@ -12,7 +12,7 @@ namespace Cap7CE.WinUI.Controls;
 public sealed class AssetTile : Grid
 {
     private readonly Image image=new(){Stretch=Stretch.Uniform};
-    private readonly AssetPlaceholderIcon formatIcon=new(){Width=44,Height=44};
+    private readonly AssetPlaceholderIcon formatIcon=new(){Width=64,Height=64};
     private readonly TextBlock title=new(){TextTrimming=TextTrimming.CharacterEllipsis,Margin=new(6),MaxLines=2,HorizontalTextAlignment=TextAlignment.Center};
     private readonly Border caption=new(),captionSelected=new(),restStroke=new(),hover=new(),selected=new();
     private readonly ResultCardInteraction interaction;
@@ -52,7 +52,8 @@ public sealed class AssetTile : Grid
         title.Visibility=compactHeight is <52?Visibility.Collapsed:Visibility.Visible;title.MaxLines=compactHeight is null?2:1;
         RowDefinitions[1].Height=new(title.Visibility==Visibility.Visible?28:0);
         caption.Visibility=title.Visibility;
-        formatIcon.Width=formatIcon.Height=compactHeight is {} cell?Math.Clamp(cell-(cell<52?12:40),1,44):44;
+        var iconArea=Math.Max(1,Math.Min(Width,galleryBounds is {} box?box.Height-28:gridSize??preferences.TileSize));
+        formatIcon.Width=formatIcon.Height=compactHeight is {} cell?Math.Clamp(cell-(cell<52?12:40),1,64):Math.Clamp(iconArea*.4,1,80);
         image.Stretch=galleryBounds is not null?Stretch.Uniform:preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=preferences.FontSize;
         title.MaxLines=1;title.Margin=new(4,3,4,3);title.VerticalAlignment=VerticalAlignment.Center;
     }
