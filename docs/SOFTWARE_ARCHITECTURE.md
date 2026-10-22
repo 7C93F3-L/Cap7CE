@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+设置导航的搜索框使用NavigationView.PaneCustomContent独立行，不占用PaneHeader与原生展开按钮/PaneTitle共用的标题行；显示状态仅投影IsPaneOpen，收起时不保留被窄栏裁切的输入热区，不替换原生导航模板或展开逻辑。
+
 WinUI设置窗口使用原生NavigationView组合七分类、胶囊搜索和独立滚动内容；SettingsPages仅按SettingsEntry分组/查询并装配，Views/Settings/SettingsCatalog拥有页面描述和现有偏好动作，SettingsActions只负责现有偏好动作的错误回显，不增加后台或跨进程协议；设置条目与主线19项对应，不保留WinUI原先额外的浏览、布局、缓存或诊断工具行。Controls/Settings/SettingsCard负责宽窄布局与共用表面，SettingsColors负责原生ColorPicker草稿、取消和明确保存，保存时重新读取最新偏好并只替换对应颜色。SettingsResources只定义命名样式，SettingsControlResources局部装入设置窗口，不覆盖主窗口控件。主题、配色和字号仍使用既有PreferenceStore；关闭窗口后的主题回调继续忽略。未接通功能仅禁用对应原生控件，标题、说明、选项及按钮保留主线文案，不加入迁移状态解释或虚构持久化。
 
 scripts/winui-settings-resources.cjs在构建阶段读取主线设置文案、快捷键默认值及CatalogQuickCommandSettingsRows的有效指令描述，生成只含静态内容的settings-reference.json；WinUI通过SettingsReference读取，不分发React、CSS或执行器。快捷操作页保持主线快捷键及指令内容，不额外加入当前窗口快捷键组，不注册全局按键、不解释指令。模型页沿原modelSettings.invoke/runtime.start/runtime.stop/runtime.state入口按明确点击读写，打开页面不启动或读取模型；由每次页面构建的共享ModelSettingsView分别提供运行组件、视觉模型、运行信息三个卡片，刷新后回显原选择与运行目录、清单、服务地址，运行中禁止修改组件/模型选择。单文件上限仍由winui-shell-boundary-check守护。

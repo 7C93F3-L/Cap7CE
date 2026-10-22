@@ -24,7 +24,10 @@ internal sealed class SettingsWindow : Window
         this.services=services;AppWindow.Resize(new(1000,800));
         root.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new("ms-appx:///Themes/SettingsControlResources.xaml")});
         pages=new(services,this,text=>{if(closed)return;notice.Message=text;notice.IsOpen=true;});
-        AutomationProperties.SetName(search,"搜索设置");navigation.PaneHeader=search;
+        AutomationProperties.SetName(search,"搜索设置");navigation.PaneCustomContent=search;
+        void SyncSearchVisibility()=>search.Visibility=navigation.IsPaneOpen?Visibility.Visible:Visibility.Collapsed;
+        navigation.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,(_,_)=>SyncSearchVisibility());
+        SyncSearchVisibility();
         foreach(var (label,symbol) in new[]{("通用",Symbol.Setting),("外观",Symbol.Highlight),("缓存与索引",Symbol.Library),
             ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",Symbol.Help)})
             navigation.MenuItems.Add(new NavigationViewItem {Content=label,Tag=label,Icon=new SymbolIcon(symbol)});
