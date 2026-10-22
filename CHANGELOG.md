@@ -2,6 +2,8 @@
 
 ## 未发布
 
+- 网格缩略图、右侧详情及独立图片预览共用CachedBitmapLoader，使用WinUI缓存文件URI和ImageOpened/ImageFailed事件完成加载，替换可能停滞的SetSourceAsync流加载；保留解码尺寸、取消及容器复用校验，失败留下有界本地诊断。
+
 - 恢复WinUI在Catalog未就绪时的普通目录浏览：复用主线directoryBrowse文件系统分页通道，支持当前层目录、排序、隐藏项及既有文件操作，不触发建库或内容提取。搜索/递归检索及筛选仍要求索引；主页补充未登记本地磁盘并移除误导性的“不可查询”文件名后缀。
 
 - WinUI转为默认开发/构建入口，保留显式legacy命令；正式入口复用产品Core Host的Catalog独占及Reader增量维护，隔离QueryHost仍用于烟测。新增原生索引/属性任务窗口、明确范围确认、停止/暂停/继续及按任务活动更新状态，复用Core Setup提供保留Catalog的安装/修复入口，右键和设置共用任务入口。

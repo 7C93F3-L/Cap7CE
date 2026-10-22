@@ -48,7 +48,11 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
         }
         finally { sending.Release(); }
         var value = await response;
-        if (value.TryGetProperty("error", out var error)) throw new IOException(error.GetProperty("code").GetString());
+        if (value.TryGetProperty("error", out var error)) {
+            var failure=new IOException(error.GetProperty("code").GetString());
+            if(error.TryGetProperty("message",out var message))failure.Data["CoreMessage"]=message.GetString();
+            throw failure;
+        }
         return value.GetProperty("result").Clone();
     }
     public async Task ReleaseAsync() { if (IsActive) await RequestAsync("releaseSourceHandles", []); }

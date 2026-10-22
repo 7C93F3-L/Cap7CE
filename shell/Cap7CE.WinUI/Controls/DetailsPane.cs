@@ -106,8 +106,7 @@ internal sealed class DetailsPane : UserControl
     {
         try {
             var prepared=await services.Visuals.PrepareAsync(item.FullPath,true,token);token.ThrowIfCancellationRequested();
-            var file=await StorageFile.GetFileFromPathAsync(prepared);using var stream=await file.OpenReadAsync();
-            var bitmap=new BitmapImage{DecodePixelWidth=600};await bitmap.SetSourceAsync(stream);
+            var bitmap=await CachedBitmapLoader.LoadAsync(image,prepared,600,token);
             if(!token.IsCancellationRequested&&selected is [var current]&&current==item){image.Source=bitmap;icon.Visibility=Visibility.Collapsed;}
         }
         catch(OperationCanceledException){}

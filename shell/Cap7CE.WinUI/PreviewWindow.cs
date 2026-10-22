@@ -91,9 +91,9 @@ internal sealed class PreviewWindow : Window
                 status.Text=kind=="archive"?"压缩包目录（只读）":"只读预览";return;
             }
             var prepared=await services.Visuals.PrepareAsync(item.FullPath,true,token);
-            var file=await StorageFile.GetFileFromPathAsync(prepared);using var stream=await file.OpenReadAsync();
-            var bitmap=new BitmapImage {DecodePixelWidth=1600};await bitmap.SetSourceAsync(stream);
-            if(!token.IsCancellationRequested){content.Content=new Image {Source=bitmap,Stretch=Stretch.Uniform};status.Text=$"{index+1} / {items.Count} · Space / Esc 关闭";}
+            token.ThrowIfCancellationRequested();var previewImage=new Image {Stretch=Stretch.Uniform};content.Content=previewImage;
+            await CachedBitmapLoader.LoadAsync(previewImage,prepared,1600,token);
+            if(!token.IsCancellationRequested)status.Text=$"{index+1} / {items.Count} · Space / Esc 关闭";
         }
         catch(OperationCanceledException){}
         catch(Exception error){if(!token.IsCancellationRequested){content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}

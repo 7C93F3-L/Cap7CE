@@ -93,10 +93,10 @@ public sealed class AssetTile : Grid
         try
         {
             var path=await Visuals.PrepareAsync(item.FullPath,false,token);token.ThrowIfCancellationRequested();
-            var file=await StorageFile.GetFileFromPathAsync(path);using var stream=await file.OpenReadAsync();
-            var bitmap=new BitmapImage{DecodePixelWidth=480};await bitmap.SetSourceAsync(stream);
+            token.ThrowIfCancellationRequested();if(!ReferenceEquals(DataContext,item))return;
+            var bitmap=await CachedBitmapLoader.LoadAsync(image,path,480,token);
             if(!token.IsCancellationRequested&&ReferenceEquals(DataContext,item)){image.Source=bitmap;formatIcon.Visibility=Visibility.Collapsed;item.ReportAspect(bitmap.PixelWidth,bitmap.PixelHeight);}
         }
-        catch(OperationCanceledException){}catch{}
+        catch(OperationCanceledException){}catch(Exception error){if(!token.IsCancellationRequested)NativeDiagnostics.VisualFailure(error);}
     }
 }
