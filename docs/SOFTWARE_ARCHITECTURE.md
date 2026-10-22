@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+日期弹层通过CalendarDatePicker.CalendarViewStyle显式指定原生CalendarView派生样式，集中在Themes/FilterCalendarResources.xaml；今天、选中和悬停等强调属性使用应用私有主题键绑定CapAccentBrush/CapAccentForegroundBrush，高对比映射系统高亮色。仅在筛选日期控件上指定该样式，不替换全局默认CalendarView。原先挂在内容子树的CalendarView资源别名不会可靠传入内部Popup，已移除无效映射；原内容容器继续持有其余筛选配色和初始焦点，不改日历背景或系统强调色。
+
 浅色CapResultSurfaceBrush为#80FFFFFF（约50%不透明白色），其他网格交互/文字及深色资源不变。DetailsPane将预览Image居中到实际显示尺寸，并用随SizeChanged更新的Composition圆角几何裁剪8 DIP外轮廓，避免等比留白使外层Border圆角无法覆盖图片边角；不改变缩略图请求和解码尺寸。DetailsResources的卡片与FilterResources的顶部筛选块均用1 DIP CardStrokeColorDefaultBrush弱描边，顶部内边距抵消描边厚度，保持原内容位置；明暗主题均应用。
 
 右栏 `DetailsPane` 仅组合当前目录/搜索上下文、选择概况和160 ms合并后的只读预览，MainWindow沿已有Bind传入路径、已加载数量及条件数。`Controls/Details/DetailsCard` 共用字段对齐、换行及大小格式，`DetailsKeywordEditor` 独立持有展示/编辑草稿与取消状态，通过委托读写，不依赖应用级选择；`Services/ManualKeywordService` 复用原keywords.read/write及expectedRevision，不新增Core操作。读取有取消与选择校验，写入完成只更新原选择的界面；预览和关键词独立失败。未选择显示位置/搜索概况，目录与磁盘不请求文件预览，多选只汇总已投影大小。文件名不承载操作，位置按钮通过同一CapDetailsPath模板保留正常前景、原生焦点及悬停背景；文件复用Reveal定位，目录/磁盘复用OpenDirectoryInExplorer进入目录。样式集中在Themes/DetailsResources.xaml，未迁入的内嵌元数据、批量及自动关键词明确不可用，不启动解析器、模型、建库或目录统计。

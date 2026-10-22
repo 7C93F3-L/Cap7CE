@@ -10,8 +10,9 @@ internal sealed class FilterEditors(Func<BrowseFilter> read,Action<BrowseFilter>
     public void Dates(Button anchor)
     {
         var value=read();
-        var start=new CalendarDatePicker {Header="开始日期",PlaceholderText="不限",Date=value.After,MinDate=DateTimeOffset.UnixEpoch};
-        var end=new CalendarDatePicker {Header="结束日期（含当天）",PlaceholderText="不限",Date=value.Before?.AddDays(-1),MinDate=DateTimeOffset.UnixEpoch};
+        var calendarStyle=(Style)Application.Current.Resources["CapFilterCalendarView"];
+        var start=new CalendarDatePicker {Header="开始日期",PlaceholderText="不限",Date=value.After,MinDate=DateTimeOffset.UnixEpoch,CalendarViewStyle=calendarStyle};
+        var end=new CalendarDatePicker {Header="结束日期（含当天）",PlaceholderText="不限",Date=value.Before?.AddDays(-1),MinDate=DateTimeOffset.UnixEpoch,CalendarViewStyle=calendarStyle};
         var error=Ui.Text("",true);var content=Ui.Column(start,end,error);
         content.Children.Add(Ui.Row(Ui.Button("清除",()=>{apply(read() with {TimePreset="all",After=null,Before=null});flyouts.Close();}),Ui.Button("应用",()=>{
             if(start.Date is null && end.Date is null){error.Text="请选择开始或结束日期";return;}

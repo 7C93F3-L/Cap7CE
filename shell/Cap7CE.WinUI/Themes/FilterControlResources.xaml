@@ -2,16 +2,6 @@
   <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="WorkspaceInputResources.xaml"/></ResourceDictionary.MergedDictionaries>
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
-      <StaticResource x:Key="CalendarViewFocusBorderBrush" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedBorderBrush" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedHoverBorderBrush" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedForeground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedHoverForeground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedPressedForeground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBackground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayHoverBackground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayPressedBackground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBlackoutBackground" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="ComboBoxItemPillFillBrush" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="TextControlSelectionHighlightColor" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundFillChecked" ResourceKey="CapAccentBrush"/>
@@ -26,9 +16,6 @@
       <StaticResource x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePointerOver" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundFillIndeterminatePressed" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePressed" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayForeground" ResourceKey="CapAccentForegroundBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBlackoutForeground" ResourceKey="CapAccentForegroundBrush"/>
-      <StaticResource x:Key="CalendarViewTodaySelectedInnerBorderBrush" ResourceKey="CapAccentForegroundBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="CapAccentForegroundBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" ResourceKey="CapAccentForegroundBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" ResourceKey="CapAccentForegroundBrush"/>
@@ -37,16 +24,6 @@
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundIndeterminatePressed" ResourceKey="CapAccentForegroundBrush"/>
     </ResourceDictionary>
     <ResourceDictionary x:Key="Default">
-      <StaticResource x:Key="CalendarViewFocusBorderBrush" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedBorderBrush" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedHoverBorderBrush" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedForeground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedHoverForeground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedPressedForeground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBackground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayHoverBackground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayPressedBackground" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBlackoutBackground" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="ComboBoxItemPillFillBrush" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="TextControlSelectionHighlightColor" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundFillChecked" ResourceKey="CapAccentBrush"/>
@@ -61,9 +38,6 @@
       <StaticResource x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePointerOver" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundFillIndeterminatePressed" ResourceKey="CapAccentBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePressed" ResourceKey="CapAccentBrush"/>
-      <StaticResource x:Key="CalendarViewTodayForeground" ResourceKey="CapAccentForegroundBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBlackoutForeground" ResourceKey="CapAccentForegroundBrush"/>
-      <StaticResource x:Key="CalendarViewTodaySelectedInnerBorderBrush" ResourceKey="CapAccentForegroundBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="CapAccentForegroundBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" ResourceKey="CapAccentForegroundBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" ResourceKey="CapAccentForegroundBrush"/>
@@ -72,16 +46,6 @@
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundIndeterminatePressed" ResourceKey="CapAccentForegroundBrush"/>
     </ResourceDictionary>
     <ResourceDictionary x:Key="HighContrast">
-      <StaticResource x:Key="CalendarViewFocusBorderBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedBorderBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedHoverBorderBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedForeground" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedHoverForeground" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewSelectedPressedForeground" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBackground" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodayHoverBackground" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodayPressedBackground" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBlackoutBackground" ResourceKey="SystemColorHighlightColorBrush"/>
       <StaticResource x:Key="ComboBoxItemPillFillBrush" ResourceKey="SystemColorHighlightColorBrush"/>
       <StaticResource x:Key="TextControlSelectionHighlightColor" ResourceKey="SystemColorHighlightColorBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundFillChecked" ResourceKey="SystemColorHighlightColorBrush"/>
@@ -96,9 +60,6 @@
       <StaticResource x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePointerOver" ResourceKey="SystemColorHighlightColorBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundFillIndeterminatePressed" ResourceKey="SystemColorHighlightColorBrush"/>
       <StaticResource x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePressed" ResourceKey="SystemColorHighlightColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodayForeground" ResourceKey="SystemColorHighlightTextColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodayBlackoutForeground" ResourceKey="SystemColorHighlightTextColorBrush"/>
-      <StaticResource x:Key="CalendarViewTodaySelectedInnerBorderBrush" ResourceKey="SystemColorHighlightTextColorBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="SystemColorHighlightTextColorBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPointerOver" ResourceKey="SystemColorHighlightTextColorBrush"/>
       <StaticResource x:Key="CheckBoxCheckGlyphForegroundCheckedPressed" ResourceKey="SystemColorHighlightTextColorBrush"/>
