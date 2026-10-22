@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+目录检索与浏览平铺解耦：WinUI 的纯 `Models/BrowseScopeRules` 将非空关键词或 `BrowseFilter.Count > 0` 映射为 `directory-descendants`，BrowseSession 首次查询和刷新共用该规则，续页沿用原游标；没有检索条件才读取 Recursive 浏览偏好。Electron 的 `useComputerSearchController.directoryScope` 对 facts/fileConditions 使用相同优先级，提交、替换刷新及失效分页重建一致，筛选结果不标记为普通 directoryListing，目录库未就绪时不把递归筛选降级为当前层文件系统筛选。两端不改写浏览偏好，不新增 Core 协议、索引写入或目录扫描。
+
 收藏排序的展开/紧凑容器继承原生 `DefaultListViewItemStyle`，保留ListViewItemPresenter的拖动占位、让位和焦点状态；不再使用缺少拖动状态的简化容器模板。局部 `SidebarOrderResources` 仅覆盖原生选中/悬停/拖动配色，无选中渐变，拖动占位为空白；正常收藏容器仅使用CapSidebar资源，不受这些原生资源覆盖影响。退出后由SidebarView恢复原收藏容器样式，选择身份及保存逻辑不变。
 
 `Controls/SidebarFavoriteOrder` 独立拥有收藏排序草稿、完成/取消按钮及原生ListView重排开关，SidebarView仅组合编辑模板和菜单入口；临时ObservableCollection不直接写配置。排序暂停ItemClick导航，支持Alt+↑/↓，Esc经既有工作区键盘入口优先取消排序；窄栏保留紧凑手柄及纵向完成/取消按钮，此电脑不在重排数据源内。FavoriteService经既有私有配置Host请求提交orderedIds和expectedIds，Core `FavoriteDirectoryOrder` 纯规则拒绝重复、缺项、外来ID和过期顺序，用最新条目重排并复用FavoriteConfigurationFile原子发布；未变化不写入。既有Electron上/下移动作及配置格式不变，未增加索引、源文件访问或后台进程。
@@ -94,9 +96,9 @@ Catalog 的界面可见性与资源准入确认分离：`useCatalogWindowVisibil
 
 收藏目录的 `entry` 动作始终沿既有上下文替换流程打开收藏路径并退役旧所有者，包含重复点击当前收藏和从此电脑返回收藏；不再把收藏快捷入口等同于恢复其旧浏览现场。临时搜索、目录历史与授权任务随旧上下文卸载清理，持久化视图偏好仍由原作用域读取，此电脑入口继续复用其挂载上下文。
 
-目录关键词搜索与浏览平铺状态解耦：`useComputerSearchController` 为非空关键词统一选择 `directory-descendants`，首次提交、替换刷新及失效分页重建共用该规则；空关键词继续沿持久化的 `includeSubfolders` 浏览偏好，搜索期间不改写该偏好。Main 在无文件专用筛选的关键词查询中保留文件和文件夹，空关键词递归平铺仍仅显示文件；此电脑全局范围与现有筛选交集不变。
+目录关键词及条件筛选与浏览平铺状态解耦：`useComputerSearchController` 为非空关键词或 facts/fileConditions 统一选择 `directory-descendants`，首次提交、替换刷新及失效分页重建共用该规则；关键词及条件均清空后才沿持久化的 `includeSubfolders` 浏览偏好，搜索期间不改写该偏好。Main 在无文件专用筛选的关键词查询中保留文件和文件夹，空关键词递归平铺仍仅显示文件；此电脑全局范围与现有筛选交集不变。
 
-首次建库期间，普通 Core 的 `core/node/directoryBrowse` 通过既有固定 Node / 原生 Job / 私有 RPC 执行当前文件夹读取，复用无 Electron 依赖的 `skimBrowseService` 与共享目录 DTO。只读取直接子项的元数据，不递归、不建立第二份索引；每进程最多4个暂存目录、每目录65536项和32MiB投影预算、每页100项，游标单次消费。容量已满时仅淘汰读取完成的旧暂存，过期分页复用既有失效游标重建，不撤销已显示条目的授权；取消、源句柄释放和关闭等待已接纳读取归还。Main 的 `CoreDirectoryBrowseClient` 只验证响应及投影，结果沿原任务授权、缩略图、预览和文件操作链路使用。文本、递归检索及属性筛选仍等待目录库就绪，基础类型、时间与大小条件沿当前目录过滤；目录发布后 Renderer 保留当前可见项直至替换查询成功。不可用或离线磁盘仍明确失败，未发布暂存库不进入查询。
+首次建库期间，普通 Core 的 `core/node/directoryBrowse` 通过既有固定 Node / 原生 Job / 私有 RPC 执行当前文件夹读取，复用无 Electron 依赖的 `skimBrowseService` 与共享目录 DTO。只读取直接子项的元数据，不递归、不建立第二份索引；每进程最多4个暂存目录、每目录65536项和32MiB投影预算、每页100项，游标单次消费。容量已满时仅淘汰读取完成的旧暂存，过期分页复用既有失效游标重建，不撤销已显示条目的授权；取消、源句柄释放和关闭等待已接纳读取归还。Main 的 `CoreDirectoryBrowseClient` 只验证响应及投影，结果沿原任务授权、缩略图、预览和文件操作链路使用。文本及全部顶部条件检索仍等待目录库就绪，Renderer 不将条件检索降级为当前层筛选；底层直接子项接口的原有基础过滤能力保留。目录发布后 Renderer 保留当前可见项直至替换查询成功。不可用或离线磁盘仍明确失败，未发布暂存库不进入查询。
 
 `CatalogPreparationProgressOwner` 仅保留当次基础建库的准备、扫描、发布与追赶阶段观察，通过可选 `catalog.status.preparation` 输出，不新增数据库写入或后台计时器。Reader 未提供扫描总量时不推算百分比或剩余时间；已知比例的阶段按当前阶段计时估算。Renderer 的 `CatalogPreparationNotice` 使用既有底部活动区域，`GradientProgress` 为基础目录、全盘及目录属性提取、设置页任务提供统一6px圆角双色渐变进度轨道，未知进度使用流动样式并遵循减少动态效果设置。独立边界检查与实际 Core Job/RPC、Renderer 首次浏览/发布替换和合成 Reader 测试守护这些边界，不修改正式 Catalog 或用户源文件。
 
@@ -302,7 +304,7 @@ metadataBuild:startAllVolumes只接受Main的显式同意，磁盘范围由metad
 
 随机浏览由独立useCatalogRandomBrowse保存每个已挂载现场的enabled/seed/batchNumber；CatalogRandomControls在面包屑工具条显示随机开关与条件出现的换批按钮，普通排序动作关闭随机，清除筛选不改变浏览模式。CatalogContextView仅组合参数；首页随机开启后复用正式结果视图，关闭后恢复根目录卡片。提交、结果刷新、游标恢复均带相同uint32 randomSeed，未启用时不发送字段；IPC严格校验边界，Main通过search.random能力探测避免对旧Core伪装成功。SC/1增加可选种子和能力声明，签名游标保存种子与随机分值锚点；CatalogRandomOrdering在只读连接注册确定性身份散列，沿用原筛选、文件夹分组、取消和两阶段路径水合，按分值及唯一身份续页，无全量Renderer数组、随机持久列、迁移或新数据库写入。随机排序需对匹配的索引身份计分，分页返回与渲染保持有界，性能由百万条合成库验证，不能等同于所有真实属性筛选的延迟保证。
 
-Catalog普通收藏entry和openBrowser替换入口统一创建browse上下文，CatalogContextView依上下文类型初始化面包屑/搜索显示；useCatalogDirectoryNavigation仍统一持有逐层浏览与历史，显式search上下文及关键词搜索保持原语义。网格模式只改变展示，未绑定目录查询范围。CatalogDirectoryToolbar右侧操作使用固定尺寸图标按钮，排序与隐藏状态通过悬浮提示和无障碍属性表达，隐藏文件复用原showHidden配置与查询链，隐藏状态仅切换眼睛图标，无开启态颜色或底色。useCatalogViewOptions按此电脑/收藏范围持久保存includeSubfolders，独立于网格模式；controller的统一directoryScope映射提交、刷新与续页恢复，既有computerSearch:search增加受校验的directory-descendants范围标识，要求具体目录并复用原Core后代查询、授权与分页，空关键词平铺以entryType=file排除文件夹，关闭平铺时浏览及无关键词筛选作用于direct-children；非空关键词固定查询当前目录树，无文件专用筛选时包含匹配文件夹，清空后恢复浏览偏好；旧入口未指定此选项时保持原语义，未新增IPC通道、Core协议或索引写入。
+Catalog普通收藏entry和openBrowser替换入口统一创建browse上下文，CatalogContextView依上下文类型初始化面包屑/搜索显示；useCatalogDirectoryNavigation仍统一持有逐层浏览与历史，显式search上下文及关键词搜索保持原语义。网格模式只改变展示，未绑定目录查询范围。CatalogDirectoryToolbar右侧操作使用固定尺寸图标按钮，排序与隐藏状态通过悬浮提示和无障碍属性表达，隐藏文件复用原showHidden配置与查询链，隐藏状态仅切换眼睛图标，无开启态颜色或底色。useCatalogViewOptions按此电脑/收藏范围持久保存includeSubfolders，独立于网格模式；controller的统一directoryScope映射提交、刷新与续页恢复，既有computerSearch:search使用受校验的directory-descendants范围标识，要求具体目录并复用原Core后代查询、授权与分页，空关键词平铺以entryType=file排除文件夹；关键词或顶部条件固定查询当前目录树，无文件专用筛选的关键词查询包含匹配文件夹，两者均清空后恢复浏览偏好，关闭平铺的普通浏览才作用于direct-children；旧入口未指定此选项时保持原浏览语义，未新增IPC通道、Core协议或索引写入。
 
 CatalogPreparationDiagnostics是Host侧可选的诊断接收器，由Program写入带版本标识的stderr，stdout启动与SC/1协议不变；CatalogSynchronizationService为每次磁盘准备分配关联ID，记录实际连续性检查原因、阶段、既有测量和完成/取消/失败，CatalogReaderOwnership记录维护被显式操作打断及完整退休/重启。无逐文件日志、独立文件写入或计时轮询；失败的诊断接收器不影响索引。Electron的coreCatalogDiagnostics按4KiB行上限与字段/类别白名单消费stderr，经CoreHostController注入既有RuntimeDiagnostics轮转与脱敏链，不接收路径、卷ID或异常文本。范围解析在building/discovering时返回scope-preparing，保留离线和真正未入库语义；Renderer复用原空状态与Catalog发布事件刷新，未增加重试轮询或改变查询范围。
 

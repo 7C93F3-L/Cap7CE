@@ -51,7 +51,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 FileAccessGuard.RejectLinks(path);
                 var resolved = await services.Core.RequestAsync<CatalogResolveScopeResponse>(CoreOperations.CatalogResolveScope, new CatalogResolveScopeRequest(path), token);
                 if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null) throw new IOException("目录不在可查询 Catalog 中；此入口不会自动建库");
-                volumes = [resolved.VolumeId!]; scope = new(Query.Trim().Length > 0 || Recursive ? "directory-descendants" : "direct-children", resolved.VolumeId, resolved.DirectoryFileReference);
+                volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);
             }
             var result = new AssetCollection(); string? cursor = null;
             if (path.Length == 0 && string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random)

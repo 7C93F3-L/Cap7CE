@@ -20,9 +20,9 @@ window.cap7ce={preview:{onNavigate:()=>noop,onClosed:()=>noop},computerSearch:{
  nextPage:async request=>{p.pages.push(request);if(p.expire){p.expire=false;throw Error('CoreRemoteError: invalid-cursor')}
  if(p.fail){p.fail=false;throw Error('timeout')}if(p.hold){p.hold=false;await new Promise(r=>p.resume=r)}return page(request.taskId,Number(request.cursor))},
  cancel:async id=>{p.canceled.push(id);return true}}};
-function Fixture(){const [scope,setScope]=useState('X:\\Folder'),[fg,setFg]=useState(true),[complete,setComplete]=useState(false),[grid,setGrid]=useState("square"),[recursive,setRecursive]=useState(undefined),[randomSeed,setRandomSeed]=useState(undefined);
- p.scope=setScope;p.foreground=setFg;p.complete=setComplete;p.grid=setGrid;p.recursive=setRecursive;p.seed=setRandomSeed;
- const controller=useComputerSearchController(scope,fg,{fileConditions:{extensions:['.txt']}},undefined,true,complete,false,{includeSubfolders:recursive,randomSeed});
+function Fixture(){const [scope,setScope]=useState('X:\\Folder'),[fg,setFg]=useState(true),[complete,setComplete]=useState(false),[grid,setGrid]=useState("square"),[recursive,setRecursive]=useState(undefined),[randomSeed,setRandomSeed]=useState(undefined),[conditions,setConditions]=useState(undefined);
+ p.scope=setScope;p.foreground=setFg;p.complete=setComplete;p.grid=setGrid;p.recursive=setRecursive;p.seed=setRandomSeed;p.conditions=setConditions;
+ const controller=useComputerSearchController(scope,fg,conditions,undefined,true,complete,false,{includeSubfolders:recursive,randomSeed});
  p.controller=controller;
  return <div className="host"><ComputerSearchView controller={controller} gridMode={grid} foreground={fg} theme="dark" appearanceColors={{}}
  windowMaterial="none" onNativeDragStateChange={noop}/></div>}
@@ -37,7 +37,8 @@ app.whenReady().then(async () => {
   for (const file of output) fs.writeFileSync(file.path, file.contents);
   fs.writeFileSync(path.join(root, 'index.html'), '<link rel="stylesheet" href="stdin.css"><style>html,body,#root,.host{height:100%;margin:0}.host{position:relative}</style><div id="root"></div><script src="stdin.js"></script>');
   win = new BrowserWindow({ show: false, width: 900, height: 600, webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false } });
-  const run = code => win.webContents.executeJavaScript(code), wait = ms => new Promise(r => setTimeout(r, ms));
+  win.webContents.on('console-message',event=>{if(event.level==='error')console.error('Renderer:',event.message);});
+  const run = code => win.webContents.executeJavaScript(code).catch(error=>{throw new Error(`${code}: ${error.message}`)}), wait = ms => new Promise(r => setTimeout(r, ms));
   const ready = async code => { for (let n = 0; n < 1500; n++) { if (await run(code)) return; await wait(20); } console.log(await run("({count:probe.controller.items.length,complete:probe.controller.directoryListing,scope:probe.requests.at(-1)?.scopePath,pages:probe.pages.length,root:(()=>{const r=document.querySelector('.cap-computer-search-results');return r&&[r.scrollWidth,r.clientWidth,r.scrollHeight,r.clientHeight,r.scrollLeft,getComputedStyle(r).overflowY]})()})"));throw Error('Timeout: ' + code); };
   const count = () => run("Number(document.querySelector('.cap-computer-search-grid')?.dataset.totalCount??0)");
   const scroll = () => run("(()=>{const r=document.querySelector('.cap-computer-search-results');r.scrollTop=r.scrollHeight})()");
@@ -55,7 +56,7 @@ app.whenReady().then(async () => {
   await ready('probe.controller.items.length===200&&!probe.controller.busy');
   assert.notEqual(await run('probe.controller.taskId'), firstOwner, 'stale cursor replaced under fresh owner');
   assert.equal(await run(`probe.canceled.includes(${JSON.stringify(firstOwner)})`), true);
-  assert.equal(await run('probe.requests.every(r=>r.scopePath==="X:\\\\Folder"&&r.scopeKind===undefined&&r.fileConditions.extensions[0]===".txt")'), true, 'recovery retains scope and filters');
+  assert.equal(await run('probe.requests.every(r=>r.scopePath==="X:\\\\Folder"&&r.scopeKind===undefined&&r.fileConditions===undefined)'), true, 'recovery retains ordinary browsing scope');
   await run('probe.fail=true'); await scroll();
   await ready('!!probe.controller.pageError&&!probe.controller.busy');
   assert.equal(await count(), 200, 'continuation failure preserves displayed grid');
@@ -98,13 +99,22 @@ app.whenReady().then(async () => {
   await run("[...document.querySelectorAll('.cap-computer-search-entry')].find(x=>x.getAttribute('aria-label')==='file-49999.txt').click()");
   await ready("!!document.querySelector('.cap-computer-search-entry.selected')");
   await run('probe.scope("X:\\\\Other")');await ready('probe.controller.items.length===1&&!probe.controller.busy');
-  await run('probe.big=false;probe.complete(false);probe.recursive(true);probe.scope("X:/Recursive")');
+  await run('probe.big=false;probe.complete(false);probe.recursive(true);probe.conditions({fileConditions:{extensions:[".txt"]}});probe.scope("X:/Recursive")');
   await ready('probe.controller.items.length===100&&!probe.controller.busy');
   assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants');
   await run('probe.expire=true;probe.controller.loadMore()');await ready('probe.controller.items.length===200&&!probe.controller.busy');
   assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','stale continuation recovery keeps the selected recursive scope');
   assert.equal(await run('probe.requests.at(-1).fileConditions.extensions[0]'),'.txt');
-  await run('probe.recursive(false)');await ready('probe.requests.at(-1)?.scopeKind==="direct-children"&&!probe.controller.busy');
+  await run('probe.recursive(false)');await ready('probe.requests.at(-1)?.scopeKind==="directory-descendants"&&!probe.controller.busy');
+  assert.equal(await run('probe.controller.directoryListing'),false,'filtered retrieval is not a direct directory listing');
+  await run('probe.controller.refreshResults()');await ready('!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','filter refresh keeps recursive retrieval with flat browsing disabled');
+  await run('probe.expire=true;probe.controller.loadMore()');await ready('probe.controller.items.length===200&&!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','expired filtered pages keep recursive retrieval');
+  await run('probe.conditions({facts:{kind:"image-dimensions",minimumWidth:1}})');await ready('!!probe.requests.at(-1)?.facts&&!probe.controller.busy');
+  assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','attribute-only filters also cover the directory tree');
+  await run('probe.conditions(undefined)');await ready('probe.requests.at(-1)?.scopeKind==="direct-children"&&!probe.controller.busy');
+  assert.equal(await run('probe.controller.directoryListing'),true,'clearing filters restores ordinary directory browsing');
   await run('probe.controller.submit("茉莉花")');await ready('probe.requests.at(-1)?.query==="茉莉花"&&!probe.controller.busy');
   assert.equal(await run('probe.requests.at(-1).scopeKind'),'directory-descendants','keywords always cover the directory tree');
   await run('probe.expire=true;probe.controller.loadMore()');await ready('probe.controller.items.length===200&&!probe.controller.busy');

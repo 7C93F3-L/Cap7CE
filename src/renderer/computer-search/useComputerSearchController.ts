@@ -11,8 +11,8 @@ import { computerSearchAvailability } from "./computerSearchAvailability";
 export type ComputerSearchError = "scope-not-indexed" | "scope-preparing" | "scope-offline" | "random-unavailable" | "failed" | null;
 export type ComputerSearchCapabilityFeedback = ComputerSearchCapabilityResult["status"] | null;
 
-const directoryScope = (path: string | null, children: boolean, recursive: boolean | undefined, query: string): Pick<ComputerSearchRequest, "scopeKind"> =>
-  path === null ? {} : query ? { scopeKind: "directory-descendants" } : recursive !== undefined ? { scopeKind: recursive ? "directory-descendants" : "direct-children" }
+const directoryScope = (path: string | null, children: boolean, recursive: boolean | undefined, query: string, filtered: boolean): Pick<ComputerSearchRequest, "scopeKind"> =>
+  path === null ? {} : query || filtered ? { scopeKind: "directory-descendants" } : recursive !== undefined ? { scopeKind: recursive ? "directory-descendants" : "direct-children" }
     : children && !query ? { scopeKind: "direct-children" } : {};
 
 export const useComputerSearchController = (currentPath: string | null, foreground = true, conditions?: ComputerSearchConditions, onExit?: () => void, persistent = false, browseChildren = false, idleHome = false, viewOptions?: ComputerSearchViewOptions) => {
@@ -141,7 +141,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     const searchQuery = (value ?? query).trim();
     if (value !== undefined) setQuery(value);
     const api = window.cap7ce?.computerSearch;
-    if (!api || !(canSearch || canBrowse) || !canSearch && (searchQuery || selectedConditions.facts || selectedConditions.randomSeed !== undefined) || idleHome && !searchQuery && !selectedConditions.facts && !selectedConditions.fileConditions && selectedConditions.randomSeed === undefined) return;
+    if (!api || !(canSearch || canBrowse) || !canSearch && (searchQuery || selectedConditions.facts || selectedConditions.fileConditions || selectedConditions.randomSeed !== undefined) || idleHome && !searchQuery && !selectedConditions.facts && !selectedConditions.fileConditions && selectedConditions.randomSeed === undefined) return;
     cancelActive();
     const sequence = ++requestSequence.current;
     const taskId = nextTaskId("search");
@@ -150,7 +150,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     setBusy(true); setHasSubmitted(true); setError(null); setPageError(null); setItems([]); setNextCursor(null); setSubmittedQuery(searchQuery);
     try {
       const page = await api.search({ taskId, query: searchQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
-        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, searchQuery) : { scopeKind: "direct-children" as const }),
+        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, searchQuery, Boolean(selectedConditions.facts || selectedConditions.fileConditions)) : { scopeKind: "direct-children" as const }),
         ...(selectedConditions.facts ? { facts: selectedConditions.facts } : {}),
         ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) });
       if (!activeRef.current || taskRef.current !== taskId) return;
@@ -179,7 +179,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
       && !busyRef.current && requestSequence.current === sequence && replacementTaskRef.current === taskId;
     try {
       const page = await readComputerSearchReplacement(api, { taskId, query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
-        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery) : { scopeKind: "direct-children" as const }),
+        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery, Boolean(selectedConditions.facts || selectedConditions.fileConditions)) : { scopeKind: "direct-children" as const }),
         facts: selectedConditions.facts, ...(selectedConditions.fileConditions ? { fileConditions: selectedConditions.fileConditions } : {}) },
       items.length, isCurrent);
       if (!page || !isCurrent()) return "deferred";
@@ -272,7 +272,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
     try {
       const result = await readComputerSearchContinuation(api, { taskId: replacementId,
         query: submittedQuery, scopePath: currentPath, sort: selectedConditions.sort, excludeHidden: selectedConditions.excludeHidden, ...(selectedConditions.randomSeed !== undefined ? { randomSeed: selectedConditions.randomSeed } : {}),
-        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery) : { scopeKind: "direct-children" as const }),
+        ...(canSearch ? directoryScope(currentPath, browseChildren, selectedConditions.includeSubfolders, submittedQuery, Boolean(selectedConditions.facts || selectedConditions.fileConditions)) : { scopeKind: "direct-children" as const }),
         facts: selectedConditions.facts, fileConditions: selectedConditions.fileConditions },
       taskId, cursor, items.length, isCurrent, Boolean(pageError));
       if (!result || !isCurrent()) return;
@@ -297,7 +297,7 @@ export const useComputerSearchController = (currentPath: string | null, foregrou
   }, [nextCursor, cancelReplacement, nextTaskId, submittedQuery, currentPath, browseChildren, selectedConditions, items.length, pageError, canSearch]);
 
   return { active, query, submittedQuery, hasSubmitted, status, items, nextCursor, busy, error, pageError, scopeLabel,
-    directoryListing: filesystemListing || (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery && selectedConditions.randomSeed === undefined,
+    directoryListing: filesystemListing || (selectedConditions.includeSubfolders === undefined ? browseChildren : !selectedConditions.includeSubfolders) && currentPath !== null && !submittedQuery && !selectedConditions.facts && !selectedConditions.fileConditions && selectedConditions.randomSeed === undefined,
     taskId: taskRef.current,
     canSubmit: canSearch, canBrowse, filesystemListing, capabilityBusy, capabilityFeedback, capabilityOptions,
     enter, exit, setQuery, submit, loadMore, refreshStatus, configureCapability,
