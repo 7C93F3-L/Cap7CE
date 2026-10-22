@@ -11,5 +11,6 @@ const root = path.resolve(__dirname, '..'), output = path.join(root, 'shell/arti
   require('./winui-sidebar-assets.cjs')(root, output);
   await require('./winui-filter-resources.cjs')(root, output);
   await require('./winui-advanced-filter-resources.cjs')(root, output);
+  await require('./winui-settings-resources.cjs')(root, output);
   console.log('WinUI format resources generated from the existing registry.');
 })().catch(error => { console.error(error.message); process.exitCode = 1; });

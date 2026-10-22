@@ -1,0 +1,56 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="WorkspaceInputResources.xaml"/></ResourceDictionary.MergedDictionaries>
+ <ResourceDictionary.ThemeDictionaries>
+  <ResourceDictionary x:Key="Light">
+   <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent"/>
+   <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent"/>
+   <StaticResource x:Key="NavigationViewSelectionIndicatorForeground" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOn" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOnPointerOver" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOnPressed" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOn" ResourceKey="CapAccentForegroundBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOnPointerOver" ResourceKey="CapAccentForegroundBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOnPressed" ResourceKey="CapAccentForegroundBrush"/>
+   <StaticResource x:Key="SliderThumbBackground" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderThumbBackgroundPointerOver" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderThumbBackgroundPressed" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderTrackValueFill" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderTrackValueFillPointerOver" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderTrackValueFillPressed" ResourceKey="CapAccentBrush"/>
+  </ResourceDictionary>
+  <ResourceDictionary x:Key="Default">
+   <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent"/>
+   <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent"/>
+   <StaticResource x:Key="NavigationViewSelectionIndicatorForeground" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOn" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOnPointerOver" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOnPressed" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOn" ResourceKey="CapAccentForegroundBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOnPointerOver" ResourceKey="CapAccentForegroundBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOnPressed" ResourceKey="CapAccentForegroundBrush"/>
+   <StaticResource x:Key="SliderThumbBackground" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderThumbBackgroundPointerOver" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderThumbBackgroundPressed" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderTrackValueFill" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderTrackValueFillPointerOver" ResourceKey="CapAccentBrush"/>
+   <StaticResource x:Key="SliderTrackValueFillPressed" ResourceKey="CapAccentBrush"/>
+  </ResourceDictionary>
+  <ResourceDictionary x:Key="HighContrast">
+   <SolidColorBrush x:Key="NavigationViewContentBackground" Color="{ThemeResource SystemColorWindowColor}"/>
+   <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="{ThemeResource SystemColorWindowColor}"/>
+   <StaticResource x:Key="NavigationViewSelectionIndicatorForeground" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOn" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOnPointerOver" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="ToggleSwitchFillOnPressed" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOn" ResourceKey="SystemColorHighlightTextColorBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOnPointerOver" ResourceKey="SystemColorHighlightTextColorBrush"/>
+   <StaticResource x:Key="ToggleSwitchKnobFillOnPressed" ResourceKey="SystemColorHighlightTextColorBrush"/>
+   <StaticResource x:Key="SliderThumbBackground" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="SliderThumbBackgroundPointerOver" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="SliderThumbBackgroundPressed" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="SliderTrackValueFill" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="SliderTrackValueFillPointerOver" ResourceKey="SystemColorHighlightColorBrush"/>
+   <StaticResource x:Key="SliderTrackValueFillPressed" ResourceKey="SystemColorHighlightColorBrush"/>
+  </ResourceDictionary>
+ </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>
