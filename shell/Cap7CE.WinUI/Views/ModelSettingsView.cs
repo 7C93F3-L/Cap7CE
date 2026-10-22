@@ -33,7 +33,7 @@ internal sealed class ModelSettingsView
         var info=Ui.Column();
         foreach(var (key,value) in new[]{("settings.runtimeFileStatus",fileState),("settings.serviceAddress",address),
             ("settings.runtimeDirectory",runtimeDirectory),("settings.modelDirectory",modelDirectory),("settings.modelInventory",inventory)}) {
-            value.IsTextSelectionEnabled=true;info.Children.Add(Ui.Column(Ui.Text(T(key)),value));
+            value.IsTextSelectionEnabled=true;info.Children.Add(new SettingsFieldRow(T(key),value));
         }
         RuntimeInfo=info;
     }

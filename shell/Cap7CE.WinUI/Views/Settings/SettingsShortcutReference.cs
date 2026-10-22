@@ -28,10 +28,6 @@ internal static class SettingsShortcutReference
         foreach(var item in items.EnumerateArray())column.Children.Add(Pair(item.GetProperty("command").GetString()??"",item.GetProperty("description").GetString()??""));
         return column;
     }
-    private static Grid Pair(string title,string value)
-    {
-        var grid=new Grid {ColumnSpacing=16,RowSpacing=4};
-        grid.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});grid.ColumnDefinitions.Add(new(){Width=new(2,GridUnitType.Star)});
-        grid.Children.Add(Ui.Text(title));var text=Ui.Text(value,true);text.IsTextSelectionEnabled=true;Grid.SetColumn(text,1);grid.Children.Add(text);return grid;
-    }
+    private static SettingsFieldRow Pair(string title,string value)
+    {var text=Ui.Text(value,true);text.IsTextSelectionEnabled=true;return new(title,text);}
 }

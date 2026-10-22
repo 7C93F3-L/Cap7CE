@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+设置材质项映射现有ShellPreferences.Material的mica/mica-alt，通过原Choice保存与错误恢复链路回显，不引入新材质；该项说明随当前WinUI材质能力覆盖主线的旧亚克力说明，其他设置条目与文案不变。SettingsCard用280 DIP操作宿主统一普通行的右侧列，宽度不足620 DIP时换行、空操作区不占列；颜色编辑按钮用有界Grid避免按自身DesiredSize切换方向形成竖排。SettingsFieldRow只负责152 DIP字段列与不足480 DIP时的上下布局，运行信息、诊断及快捷键/指令共用；页面仍保持19项，5 DIP外边距及原生组件不变。
+
 AccentGradient为各表面保留独立Absolute渐变几何，其GradientStop.Color/Offset通过原生BindingOperations绑定共享源色标；不再依赖Border.Loaded/Unloaded订阅颜色回调。首次Loaded期间WindowTitleBar挂接内容会使旧颜色订阅最终断开，而原生属性绑定在该场景下仍能跟随ThemeService更新。Loaded/SizeChanged只更新45°几何，源画刷替换时解除旧绑定及几何事件；不重建筛选或选择、不改窗口挂接流程，也不增加全局订阅或轮询。
 
 设置窗口在局部SettingsControlResources中将NavigationView普通/紧凑内容框描边和默认左上圆角归零，仅由CapSettingsSurface绘制工作区外框；不替换原生模板。InfoBar初始及关闭后均为Collapsed，打开时才参与布局，避免隐藏消息条的Margin在Auto行保留10 DIP高度；正常内容区右侧、底部均以共用表面的5 DIP外边距收口。

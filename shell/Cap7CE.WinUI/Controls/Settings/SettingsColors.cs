@@ -25,9 +25,20 @@ internal sealed class SettingsColors : UserControl
             try {var defaults=new ShellPreferences();await save(read() with{Color1=defaults.Color1,Color2=defaults.Color2});Refresh();}
             catch(Exception error){notice(error.Message);}finally{reset.IsEnabled=true;}
         };
-        var panel=new StackPanel {Spacing=6,Orientation=Orientation.Horizontal};
-        panel.Children.Add(firstButton);panel.Children.Add(secondButton);panel.Children.Add(reset);Content=panel;
-        SizeChanged+=(_,_)=>panel.Orientation=ActualWidth<310?Orientation.Vertical:Orientation.Horizontal;
+        var panel=new Grid {ColumnSpacing=8};
+        panel.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});panel.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
+        panel.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
+        panel.RowDefinitions.Add(new(){Height=GridLength.Auto});panel.RowDefinitions.Add(new(){Height=GridLength.Auto});
+        firstButton.HorizontalAlignment=secondButton.HorizontalAlignment=HorizontalAlignment.Stretch;
+        panel.Children.Add(firstButton);Grid.SetColumn(secondButton,1);panel.Children.Add(secondButton);panel.Children.Add(reset);Content=panel;
+        void Arrange()
+        {
+            var wrap=ActualWidth<260;panel.RowSpacing=wrap?8:0;
+            panel.ColumnDefinitions[2].Width=wrap?new(0):GridLength.Auto;
+            Grid.SetRow(reset,wrap?1:0);Grid.SetColumn(reset,wrap?0:2);Grid.SetColumnSpan(reset,wrap?2:1);
+            reset.HorizontalAlignment=wrap?HorizontalAlignment.Right:HorizontalAlignment.Stretch;
+        }
+        SizeChanged+=(_,_)=>Arrange();Arrange();
         Refresh();
     }
     private Button ColorButton(string label,Ellipse swatch,bool primary)

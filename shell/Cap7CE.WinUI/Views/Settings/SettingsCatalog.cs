@@ -21,8 +21,8 @@ internal sealed class SettingsCatalog
     public void BeginRender()=>models=null;
     private ModelSettingsView ModelsView=>models??=new(services,notice);
     private static string T(string key)=>SettingsReference.Text(key);
-    private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false)
-        =>Entries.Add(new(category,T("stableSettings.section."+section),T(title),T(description),create,expanded));
+    private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false,string? descriptionOverride=null)
+        =>Entries.Add(new(category,T("stableSettings.section."+section),T(title),descriptionOverride??T(description),create,expanded));
     private static UIElement Disabled(string key)=>new Button {Content=T(key),IsEnabled=false};
     private static UIElement DisabledToggle()=>new ToggleSwitch {IsEnabled=false,OnContent=T("settings.enabled"),OffContent=T("settings.disabled")};
     private static UIElement DisabledChoice(string[] labels)=>new ComboBox {ItemsSource=labels,SelectedIndex=0,IsEnabled=false};
@@ -36,12 +36,10 @@ internal sealed class SettingsCatalog
     }
     private void Appearance()
     {
-        Mainline("外观","colors","stableSettings.material","stableSettings.desc.material",()=>{
-            var box=new ComboBox {MinWidth=160};
-            box.Items.Add(new ComboBoxItem {Content=T("stableSettings.material.acrylic"),IsEnabled=false});
-            box.Items.Add(new ComboBoxItem {Content=T("stableSettings.material.mica")});box.SelectedIndex=1;
-            return box;
-        });
+        Mainline("外观","colors","stableSettings.material","stableSettings.desc.material",
+            ()=>Choice(["云母","云母 Alt"],()=>services.Preferences.Current.Material=="mica-alt"?1:0,
+                i=>services.Preferences.SaveAsync(services.Preferences.Current with{Material=i==0?"mica":"mica-alt"})),
+            descriptionOverride:"选择主窗口、设置与预览窗口使用的云母或云母 Alt 效果；不可用时自动使用纯色背景。");
         Mainline("外观","colors","appearance.themeModeLabel","stableSettings.desc.theme",
             ()=>Choice([T("theme.system"),T("theme.light"),T("theme.dark")],()=>Array.IndexOf(new[]{"system","light","dark"},services.Preferences.Current.Theme),i=>services.Preferences.SaveAsync(services.Preferences.Current with{Theme=new[]{"system","light","dark"}[i]})));
         Mainline("外观","colors","appearance.configureLabel","stableSettings.desc.colors",()=>new SettingsColors(()=>services.Preferences.Current,services.Preferences.SaveAsync,notice));
@@ -59,16 +57,16 @@ internal sealed class SettingsCatalog
     }
     private void Models()
     {
-        Mainline("搜索与 AI","ai","settings.selectRuntime","stableSettings.desc.runtime",()=>ModelsView.RuntimeSettings,true);
-        Mainline("搜索与 AI","ai","settings.visionModel","stableSettings.desc.model",()=>ModelsView.ModelSettings,true);
+        Mainline("搜索与 AI","ai","settings.selectRuntime","stableSettings.desc.runtime",()=>ModelsView.RuntimeSettings);
+        Mainline("搜索与 AI","ai","settings.visionModel","stableSettings.desc.model",()=>ModelsView.ModelSettings);
         Mainline("搜索与 AI","ai","stableSettings.runtimeInfo","stableSettings.desc.runtimeInfo",()=>ModelsView.RuntimeInfo,true);
     }
     private void Diagnostics()=>Mainline("诊断","application","stableSettings.diagnostics","stableSettings.desc.diagnostics",()=>{
         var column=Ui.Column();
-        column.Children.Add(Ui.Column(Ui.Text(T("settings.applicationLog")),Ui.Text(T("common.notCreated"),true)));
-        column.Children.Add(Ui.Column(Ui.Text(T("settings.crashReports")),Ui.Text(T("common.notCreated"),true)));
-        column.Children.Add(Ui.Column(Ui.Text(T("settings.detailedLogging")),Ui.Row(Ui.Text(T("common.disabled"),true),Disabled("common.enable"))));
-        column.Children.Add(Ui.Column(Ui.Text(T("settings.diagnosticsBundle")),Ui.Text(T("settings.diagnosticsBundleDescription"),true),Disabled("settings.exportDiagnostics")));
+        column.Children.Add(new SettingsFieldRow(T("settings.applicationLog"),Ui.Text(T("common.notCreated"),true)));
+        column.Children.Add(new SettingsFieldRow(T("settings.crashReports"),Ui.Text(T("common.notCreated"),true)));
+        column.Children.Add(new SettingsFieldRow(T("settings.detailedLogging"),Ui.Text(T("common.disabled"),true),Disabled("common.enable")));
+        column.Children.Add(new SettingsFieldRow(T("settings.diagnosticsBundle"),Ui.Text(T("settings.diagnosticsBundleDescription"),true),Disabled("settings.exportDiagnostics")));
         return column;
     },true);
     private void About()
