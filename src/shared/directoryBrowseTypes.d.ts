@@ -23,6 +23,7 @@ export interface SkimReadResult { currentPath: string | null; breadcrumbs: SkimB
 export interface DirectoryBrowseOptions {
   sort: ComputerSearchSort;
   excludeHidden: boolean;
+  includeSubfolders?: boolean;
   fileConditions?: ComputerSearchFileConditions;
 }
 export interface DirectoryBrowsePage {

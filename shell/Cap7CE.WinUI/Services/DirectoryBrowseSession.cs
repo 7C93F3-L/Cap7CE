@@ -4,16 +4,18 @@ using Cap7CE.WinUI.Models;
 
 namespace Cap7CE.WinUI.Services;
 
-// Reuses the mainline's bounded, non-recursive filesystem owner and cursor contract.
+// Reuses the bounded filesystem owner and cursor contract, with optional recursive pages.
 internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDisposable
 {
     private readonly string id=Guid.NewGuid().ToString();
     private string root="";
     private bool closed;
-    public async Task<DirectoryBrowsePage> StartAsync(string path,string sort,bool showHidden,CancellationToken token)
+    private bool recursive;
+    public async Task<DirectoryBrowsePage> StartAsync(string path,string sort,bool showHidden,bool includeSubfolders,CancellationToken token)
     {
         FileAccessGuard.RejectLinks(path);root=Path.GetFullPath(path);
-        var value=await visuals.RequestAsync("directoryBrowse.start",id,root,new{sort,excludeHidden=!showHidden});
+        recursive=includeSubfolders;
+        var value=await visuals.RequestAsync("directoryBrowse.start",id,root,new{sort,excludeHidden=!showHidden,includeSubfolders});
         token.ThrowIfCancellationRequested();return Read(value);
     }
     public async Task<DirectoryBrowsePage> NextAsync(string cursor,CancellationToken token)
@@ -28,7 +30,8 @@ internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDispos
         foreach(var item in value.GetProperty("entries").EnumerateArray())
         {
             var path=Path.GetFullPath(item.GetProperty("path").GetString()!);
-            if(!string.Equals(Path.GetDirectoryName(path)?.TrimEnd('\\'),root.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase))throw new IOException("目录浏览结果越界");
+            if(!path.StartsWith(root.TrimEnd('\\')+"\\",StringComparison.OrdinalIgnoreCase)
+                ||!recursive&&!string.Equals(Path.GetDirectoryName(path)?.TrimEnd('\\'),root.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase))throw new IOException("目录浏览结果越界");
             long? modified=item.TryGetProperty("modifiedAt",out var date)&&date.ValueKind==JsonValueKind.String
                 &&DateTimeOffset.TryParse(date.GetString(),out var parsed)?parsed.UtcDateTime.ToFileTimeUtc():null;
             var entry=new BasicSearchItem(path,item.GetProperty("name").GetString()!,Path.GetFileName(path),

@@ -35,7 +35,7 @@ internal sealed class WorkspaceToolbar : UserControl
         next=WorkspaceIcons.Button("refresh","换一批",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
         sizeButton=WorkspaceIcons.Button("size","网格大小",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);
         view=WorkspaceIcons.Button("grid","视图",ShowView);sort=WorkspaceIcons.Button("sort","排序",ShowSort);
-        recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>{if(session is null)return;session.Recursive=!session.Recursive;Reload();});
+        recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>{if(session is null)return;Run(()=>session.ToggleRecursiveAsync());});
         hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>{if(session is null)return;session.ShowHidden=!session.ShowHidden;Reload();});
         var separator=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolSeparator"],IsHitTestVisible=false};
         tools=Ui.Row(random,next,separator,sizeButton,view,sort,recursive,hidden);tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
@@ -50,7 +50,7 @@ internal sealed class WorkspaceToolbar : UserControl
         random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
         ((SidebarIcon)hidden.Content).OutlinePath=WorkspaceIcons.Icon(value.ShowHidden?"eye":"eyeOff").OutlinePath;
-        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":"")}");
+        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启 · 再次点击取消":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":value.FilesystemBrowsing?" · 文件系统逐层读取，各目录内排序":"")}");
         WorkspaceIcons.Label(hidden,$"显示隐藏项 · {(value.ShowHidden?"开启":"关闭")}");WorkspaceIcons.Label(sort,value.Random?"排序 · 随机浏览":$"排序 · {SortLabel(value.Sort)}");Reflow();
     }
     public void ApplyPreferences(ShellPreferences value)

@@ -73,6 +73,28 @@ try
         var cursorRejected=false;
         try{await visuals.RequestAsync("directoryBrowse.next",cancelledId,cancelledPage.GetProperty("nextCursor").GetString());}catch(IOException){cursorRejected=true;}
         Require(cursorRejected,"leaving directory releases filesystem cursor");
+        var recursiveId=Guid.NewGuid().ToString();
+        var recursivePage=await visuals.RequestAsync("directoryBrowse.start",recursiveId,browseRoot,new{sort="name-ascending",excludeHidden=true,includeSubfolders=true});
+        Require(recursivePage.GetProperty("entries").GetArrayLength()==100,"recursive first page bounded to 100");
+        var recursiveNames=new List<string>();
+        while(true){
+            foreach(var entry in recursivePage.GetProperty("entries").EnumerateArray()){
+                Require(entry.GetProperty("kind").GetString()=="file","recursive listing contains files");
+                recursiveNames.Add(entry.GetProperty("name").GetString()!);
+            }
+            var next=recursivePage.GetProperty("nextCursor").GetString();if(next is null)break;
+            recursivePage=await visuals.RequestAsync("directoryBrowse.next",recursiveId,next);
+        }
+        Require(recursiveNames.Count==106&&recursiveNames.Distinct().Count()==106&&recursiveNames.Contains("deep.txt")&&!recursiveNames.Contains("hidden.txt"),"recursive pages include descendants once and preserve hidden filtering");
+        var cancelRoot=Directory.CreateDirectory(Path.Combine(temporary,"cancel-recursive"));
+        for(var i=0;i<24;i++)Directory.CreateDirectory(Path.Combine(cancelRoot.FullName,$"child-{i}"));
+        var runningId=Guid.NewGuid().ToString();
+        var runningPage=visuals.RequestAsync("directoryBrowse.start",runningId,cancelRoot.FullName,new{sort="name-ascending",excludeHidden=false,includeSubfolders=true});
+        await visuals.RequestAsync("directoryBrowse.cancel",runningId);
+        var stopped=false;
+        try{await runningPage;}catch(IOException error){stopped=error.Data["CoreMessage"]?.ToString()=="directory-browse-cancelled";}
+        Require(stopped,"recursive traversal cancels while a page is being read");
+        Console.WriteLine("passed: recursive filesystem pages, descendants, hidden filtering and active cancellation");
         Console.WriteLine("passed: unindexed filesystem browse, bounded pagination, hidden items, nonrecursive scope, cancellation");
         var thumbnail = await visuals.PrepareAsync(png, false, CancellationToken.None);
         var preview = await visuals.PrepareAsync(png, true, CancellationToken.None);

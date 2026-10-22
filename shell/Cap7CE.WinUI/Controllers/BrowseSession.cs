@@ -24,6 +24,8 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     private CancellationTokenSource query = new();
     private int generation;
     private DirectoryBrowseSession? filesystem;
+    public bool FilesystemBrowsing {get;private set;}
+    public Task<bool> ToggleRecursiveAsync(){Recursive=!Recursive;return NavigateAsync(PathValue,false);}
     public bool CanBack => back.Count > 0;
     public bool CanForward => forward.Count > 0;
     public async Task BackAsync()
@@ -95,10 +97,10 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     return (uint)page.Items.Count;
                 }
                 catch (OperationCanceledException) { return 0; }
-                catch (Exception error) { result.HasMoreItems = false; Error = error.Message + "；请刷新"; Changed?.Invoke(); return 0; }
+                catch (Exception error) { if(version==generation){result.HasMoreItems = false; Error = error.Message + "；请刷新"; Changed?.Invoke();} return 0; }
                 finally { loading = false; }
             };
-            Items = result;
+            Items = result;FilesystemBrowsing=false;
             return true;
         }
         catch (OperationCanceledException) { return false; }
@@ -118,7 +120,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     private async Task<bool> BrowseFilesystemAsync(string path,bool remember,int version,CancellationToken token)
     {
         var owner=new DirectoryBrowseSession(services.Visuals);filesystem=owner;
-        var page=await owner.StartAsync(path,Sort,ShowHidden,token);
+        var page=await owner.StartAsync(path,Sort,ShowHidden,Recursive,token);
         if(version!=generation)return false;
         var result=new AssetCollection();foreach(var item in page.Items)if(!IsDeleted(item.FullPath))result.Add(item);
         var cursor=page.NextCursor;result.HasMoreItems=cursor is not null;var loading=false;
@@ -133,7 +135,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             finally{loading=false;}
         };
         if(remember&&path!=PathValue){back.Push(PathValue);forward.Clear();}
-        PathValue=path;Title=System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;return true;
+        PathValue=path;Title=System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;FilesystemBrowsing=true;return true;
     }
     private bool IsDeleted(string path) => services.DeletedPaths.Any(deleted => path.Equals(deleted, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(deleted.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase));
