@@ -34,7 +34,7 @@ public sealed partial class MainWindow : Window
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
         filters.RetryAvailability+=()=>{if(active is not null)filterAvailability.Update(active,true);};
-        commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,Notice);
+        commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
         layout.HorizontalGridChanged+=value=>{results.SetHorizontal(value);toolbar.SetCompact(value);};
@@ -97,6 +97,7 @@ public sealed partial class MainWindow : Window
         if(active is null||closed)return;
         sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
         results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0);
+        details.SetContext(active.PathValue,active.Items.Count,active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count);
         notifications.SetBusy(active.Busy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
