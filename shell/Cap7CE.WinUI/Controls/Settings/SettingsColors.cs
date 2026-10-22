@@ -53,16 +53,18 @@ internal sealed class SettingsColors : UserControl
     }
     private void Open(Button anchor,bool primary)
     {
-        var picker=new ColorPicker {Color=ThemeService.Parse(primary?read().Color1:read().Color2),IsAlphaEnabled=false,
-            IsAlphaSliderVisible=false,IsAlphaTextInputVisible=false,IsHexInputVisible=true,IsColorPreviewVisible=true,Width=280};
+        var picker=new SettingsColorEditor(ThemeService.Parse(primary?read().Color1:read().Color2));
         AutomationProperties.SetName(picker,primary?"颜色1":"颜色2");
-        var actions=Ui.Row();actions.HorizontalAlignment=HorizontalAlignment.Right;
-        var flyout=ThemeService.Flyout(Ui.Column(picker,actions));
+        var actions=Ui.Row();actions.HorizontalAlignment=HorizontalAlignment.Center;
+        var content=Ui.Column(picker,actions);content.Spacing=12;content.HorizontalAlignment=HorizontalAlignment.Center;
+        var flyout=ThemeService.Flyout(content);
+        flyout.FlyoutPresenterStyle=(Style)Application.Current.Resources["CapSettingsColorFlyout"];
         var apply=Ui.Button("应用",()=>{});
         apply.Click+=async(_,_)=>{
             apply.IsEnabled=false;
             try {
-                var color=picker.Color;var hex=$"#{color.R:X2}{color.G:X2}{color.B:X2}";
+                if(!picker.TryRead(out var color)){notice("请输入6位十六进制颜色，例如 #FFC9ED。");return;}
+                var hex=$"#{color.R:X2}{color.G:X2}{color.B:X2}";
                 await save(primary?read() with{Color1=hex}:read() with{Color2=hex});Refresh();flyout.Hide();
             } catch(Exception error){notice(error.Message);}finally{apply.IsEnabled=true;}
         };

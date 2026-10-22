@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Automation;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Themes;
@@ -11,8 +10,7 @@ internal sealed class SettingsWindow : Window
 {
     private readonly ShellServices services;
     private readonly SettingsPages pages;
-    private readonly ContentControl body=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,Margin=new(20,12,20,20)};
-    private readonly TextBox search=new(){PlaceholderText="搜索设置",Margin=new(8,8,8,12),Style=(Style)Application.Current.Resources["CapWorkspaceInput"]};
+    private readonly ContentControl body=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,MaxWidth=1040,Margin=new(20,16,20,24)};
     private readonly InfoBar notice=new(){IsOpen=false,Visibility=Visibility.Collapsed,IsClosable=true,Severity=InfoBarSeverity.Informational};
     private readonly Grid root=new();
     private readonly NavigationView navigation=new(){Style=(Style)Application.Current.Resources["CapSettingsNavigation"]};
@@ -21,14 +19,10 @@ internal sealed class SettingsWindow : Window
     private bool closed;
     public SettingsWindow(ShellServices services)
     {
-        this.services=services;AppWindow.Resize(new(1000,800));
+        this.services=services;SettingsWindowGeometry.ApplyInitial(this);
         root.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new("ms-appx:///Themes/SettingsControlResources.xaml")});
         pages=new(services,this,text=>{if(closed)return;notice.Message=text;notice.Visibility=Visibility.Visible;notice.IsOpen=true;});
         notice.Closed+=(_,_)=>notice.Visibility=Visibility.Collapsed;
-        AutomationProperties.SetName(search,"搜索设置");navigation.PaneCustomContent=search;
-        void SyncSearchVisibility()=>search.Visibility=navigation.IsPaneOpen?Visibility.Visible:Visibility.Collapsed;
-        navigation.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,(_,_)=>SyncSearchVisibility());
-        SyncSearchVisibility();
         foreach(var (label,symbol) in new[]{("通用",Symbol.Setting),("外观",Symbol.Highlight),("缓存与索引",Symbol.Library),
             ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",Symbol.Help)})
             navigation.MenuItems.Add(new NavigationViewItem {Content=label,Tag=label,Icon=new SymbolIcon(symbol)});
@@ -36,10 +30,9 @@ internal sealed class SettingsWindow : Window
         navigation.SelectionChanged+=(_,e)=>{
             if(e.SelectedItem is not NavigationViewItem item)return;
             category=item.Tag.ToString()??"通用";
-            if(search.Text.Length>0)search.Text="";else Render();
+            Render();
             scroll?.ChangeView(null,0,null,true);
         };
-        search.TextChanged+=(_,_)=>{Render();scroll?.ChangeView(null,0,null,true);};
         scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,HorizontalContentAlignment=HorizontalAlignment.Stretch};
         IdleScrollBars.Attach(scroll);
         navigation.Content=new Border {Style=(Style)Application.Current.Resources["CapSettingsSurface"],Child=scroll};
@@ -50,5 +43,5 @@ internal sealed class SettingsWindow : Window
         Render();OnPreferences();
     }
     private void OnPreferences()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
-    private void Render()=>body.Content=pages.Build(category,search.Text.Trim());
+    private void Render()=>body.Content=pages.Build(category);
 }

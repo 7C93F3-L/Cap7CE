@@ -12,12 +12,10 @@ internal sealed class SettingsPages
     private readonly SettingsCatalog catalog;
     public SettingsPages(ShellServices services,Window owner,Action<string> notice)
         =>catalog=new SettingsCatalog(services,new SettingsActions(notice),notice);
-    public UIElement Build(string category,string query)
+    public UIElement Build(string category)
     {
-        catalog.BeginRender();var column=Ui.Column();column.Spacing=16;
-        var matches=catalog.Entries.Where(e=>query.Length==0?e.Category==category:
-            (e.Title+e.Description+e.Section+e.Category).Contains(query,StringComparison.OrdinalIgnoreCase)).ToArray();
-        if(matches.Length==0)column.Children.Add(Ui.Text("没有匹配的设置项",true));
+        catalog.BeginRender();var column=Ui.Column();column.Spacing=20;
+        var matches=catalog.Entries.Where(e=>e.Category==category).ToArray();
         foreach(var categoryGroup in matches.GroupBy(e=>e.Category))
         {
             column.Children.Add(Ui.Heading(categoryGroup.Key));
@@ -29,7 +27,7 @@ internal sealed class SettingsPages
                 column.Children.Add(section);
             }
         }
-        if(query.Length==0&&category=="关于") {
+        if(category=="关于") {
             var footer=Ui.Column(Ui.Heading("Cap7CE"),Ui.Text("7C93F3-L & Echo",true));
             footer.Margin=new(0,16,0,8);column.Children.Add(footer);
         }

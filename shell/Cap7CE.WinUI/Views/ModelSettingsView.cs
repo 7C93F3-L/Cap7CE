@@ -26,8 +26,11 @@ internal sealed class ModelSettingsView
         this.services=services;this.notice=notice;
         runtimes.PlaceholderText=T("settings.selectVersion");models.PlaceholderText=T("settings.selectVisionModel");
         runtimeToggle=Action(T("common.start"),()=>RuntimeAsync(active?"runtime.stop":"runtime.start","manual"));
-        RuntimeSettings=Ui.Column(runtimes,Ui.Row(runtimeToggle,Action(T("common.refresh"),RefreshAsync)));
-        ModelSettings=Ui.Column(models,Action(T("common.refresh"),RefreshAsync));
+        var runtimeActions=Ui.Row(runtimeToggle,Action(T("common.refresh"),RefreshAsync));
+        runtimeActions.HorizontalAlignment=HorizontalAlignment.Right;
+        var modelRefresh=Action(T("common.refresh"),RefreshAsync);modelRefresh.HorizontalAlignment=HorizontalAlignment.Right;
+        RuntimeSettings=Ui.Column(runtimes,runtimeActions);
+        ModelSettings=Ui.Column(models,modelRefresh);
         runtimes.SelectionChanged+=(_,_)=>{if(!syncing&&runtimes.SelectedItem is Choice choice)Run(()=>SelectAsync("runtime.select",choice.Id));};
         models.SelectionChanged+=(_,_)=>{if(!syncing&&models.SelectedItem is Choice choice)Run(()=>SelectAsync("models.select",choice.Id));};
         var info=Ui.Column();
