@@ -50,13 +50,18 @@ try
     Require(revision == await database.ReadRevisionAsync(), "queries did not change Catalog");
     var png = Path.Combine(temporary, "fixture.png");
     await File.WriteAllBytesAsync(png, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAMElEQVRIiWPojvlGU8QwakHMaBB9G01F3aMZ7dtoUdE9WprGjFY43aNVZszgblUAANlOl0wagnzLAAAAAElFTkSuQmCC"));
-    await using (var visuals = new VisualConnection(root))
+    await using (var visuals = new VisualConnection(root,Path.Combine(temporary,"visual-cache")))
     {
         var thumbnail = await visuals.PrepareAsync(png, false, CancellationToken.None);
         var preview = await visuals.PrepareAsync(png, true, CancellationToken.None);
         Require(new FileInfo(thumbnail).Length > 0 && new FileInfo(preview).Length > 0, "real Core thumbnail and preview");
+        var sentinel=Path.Combine(temporary,"outside-cache.txt");await File.WriteAllTextAsync(sentinel,"preserve");
+        await visuals.ClearAsync();
+        Require(!File.Exists(thumbnail)&&!File.Exists(preview),"native cache clear removes generated images");
+        Require(File.Exists(png)&&await File.ReadAllTextAsync(sentinel)=="preserve","cache clear preserves source and sibling files");
     }
     Console.WriteLine("passed: authenticated Core, 251 items/3 pages, root scope, write denial, cancellation, unchanged revision, real thumbnail/preview, shutdown");
+    await NativeProductProbe.RunAsync(root);
 }
 finally
 {

@@ -15,6 +15,8 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
     public bool Busy { get; private set; }
+    public bool Invalidated {get;private set;}
+    public void Invalidate()=>Invalidated=true;
     public string? Error {get;private set;}
     public AssetCollection Items { get; private set; } = new();
     public event Action? Changed;
@@ -37,7 +39,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     {if(PathValue.Length==0)return Task.CompletedTask;Query="";return NavigateAsync(Directory.GetParent(PathValue)?.FullName??"");}
     public async Task<bool> NavigateAsync(string path, bool remember = true)
     {
-        var version = ++generation; Items.HasMoreItems = false;
+        Invalidated=false;var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
         Busy = true;Error=null;Changed?.Invoke();
         try

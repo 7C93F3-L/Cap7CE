@@ -4,6 +4,8 @@ namespace Cap7CE.WinUI;
 public partial class App : Application
 {
     private MainWindow? window;
+    internal void ActivateMain()
+    {var target=window;if(target is null)return;target.DispatcherQueue.TryEnqueue(()=>{if(ReferenceEquals(window,target))Services.WindowActivation.Show(target);});}
     public App()
     {
         UnhandledException += (_, e) => LogFailure(e.Exception);
@@ -11,7 +13,7 @@ public partial class App : Application
     }
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        try { window = new MainWindow(); window.Activate(); }
+        try { window = new MainWindow();window.Closed+=(_,_)=>window=null; window.Activate(); }
         catch (Exception error) { LogFailure(error); throw; }
     }
     private static void LogFailure(Exception error)

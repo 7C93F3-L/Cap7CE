@@ -11,7 +11,9 @@ const files = directory => fs.readdirSync(path.join(root, directory), { withFile
   .flatMap(item => item.isDirectory() ? files(`${directory}/${item.name}`) : [`${directory}/${item.name}`]);
 for (const file of files('shell/Cap7CE.WinUI').filter(name => name.endsWith('.cs'))) {
   const source = read(file);
-  assert(!/Microsoft\.Data\.Sqlite|Core\.Catalog|Core\.Host|FileSystemWatcher/.test(source), `${file}: UI cannot own Catalog, Reader or indexing`);
+  // Launching the existing product executable is allowed; referencing its implementation is not.
+  const dependencies = source.replaceAll('Cap7CE.Core.Host.exe', 'native-product-host.exe');
+  assert(!/Microsoft\.Data\.Sqlite|Core\.Catalog|Core\.Host|FileSystemWatcher/.test(dependencies), `${file}: UI cannot own Catalog, Reader or indexing`);
   assert(source.split('\n').length <= 260, `${file}: split responsibilities before growing beyond 260 lines`);
 }
 const host = read('shell/Cap7CE.QueryHost/Program.cs').replace(/\/\/[^\r\n]*/g, '');

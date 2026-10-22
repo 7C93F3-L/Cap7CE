@@ -1,6 +1,16 @@
 # Cap7CE 软件架构
 
-## 当前实施状态（2026-10-20）
+## 当前实施状态（2026-10-22）
+
+默认入口已切到WinUI。native-build.cjs串联产品Core宿主、原生依赖、独立Node工作进程、资源生成与原生构建；Electron开发/构建保留为显式legacy入口，旧源码仍是部分共享资源及工作进程的构建来源，不能直接删除。native-pack.cjs生成具有根标识的独立目录/ZIP，WinUI和产品Core自包含发布，辅助宿主和Setup载荷保持原布局，空模型目录不携带用户资料。FindRoot同时支持独立根标识及开发仓库，不依赖Electron进程；远程发布与更新通道未切换。
+
+CoreLaunchProfile区分默认产品宿主与显式Catalog覆盖的隔离QueryHost；CoreConnection共用有界分帧、握手secret、服务端PID与能力校验，产品路径保持现有Catalog独占与维护，关闭先请求Core正常停止。ShellServices管理连接代次和CatalogChangeSubscription的服务端长等待；实际变更才刷新界面，不引入UI定时扫描。MetadataTasks懒附着既有metadata.build接口，仅显式开始/继续后转发变更通知，不自动restore旧任务；WinUI不持有SQLite或索引调度逻辑。
+
+MaintenanceWindow由MainWindow统一打开，设置与右键复用。IndexMaintenanceView负责卷选择/建库/重建/停止，MetadataMaintenanceView负责明确目录范围及提取控制；内容读取和重建均经原生确认，VisibleTaskMonitor仅在可见任务运行期间观察状态。NativeCoreSetup仅转发现有activation-coordinator的repair/preserve，不绕过UAC、身份认证或事务保护，不暴露删除Catalog动作。
+
+Program使用AppInstance单实例及统一WindowActivation唤起；系统登录启动仅写当前用户Run项，通知显式开启后注册。NativeHotKeys只注册已存在的四个原生动作，并报告占用，不引入旧line/停靠状态机。VisualConnection缓存清理由既有缓存宿主执行，ShellServices在操作期间暂停视觉读取；烟测可传入临时缓存根。NativeDiagnostics只导出白名单日志及运行信息；NativeUpdates仅检查公开WinUI ZIP发布，不执行旧更新器。
+
+NativeSmoke复用现有查询/视觉烟测，新增隔离产品宿主与metadata.attach/status，以及缓存清理范围检查；总进程限制60秒，无自动重试，不执行真实Reader发现/建库或内容提取。完整旧窗口形态、语言、快捷键录制、快捷指令执行及自动AI任务仍是功能差距；下列阶段F记录保留其历史验证范围，不能作为这些功能已接通的证据。
 
 Controls/Settings/SettingsSection将卡片首行操作与全宽正文分离，SettingsCard仅负责排版与窄屏换行；SettingsShortcutReference继续由构建生成的主线数据组合快捷键/指令。纯展示SettingsCommandList接收分组、指令和确认说明，使用原生ComboBox按分类过滤并直接渲染可选择的等宽指令及说明，不依赖服务、偏好或命令执行器，不新增嵌套滚动或后台动作。
 

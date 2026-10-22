@@ -25,7 +25,7 @@ internal sealed class FilterAvailabilityNotice : UserControl
         var missing=current.States.Any(pair=>!pair.Key.EndsWith(":colors")&&pair.Value==FilterAvailabilityState.Missing);
         var text=checking?"正在检查当前目录与文件类型的已有属性。":failed?"当前范围的属性状态未能确认，可以重新检查。":missing?"当前范围部分详细属性尚不可用；对应筛选已暂时禁用。":colors?"当前范围尚无可用的颜色信息。其他已有属性可继续筛选。":"当前范围的详细属性可用。";
         var message=Ui.Text(text);message.MaxWidth=310;
-        var help=Ui.Text("属性和颜色需先在 Electron 主线提取，完成后点“重新检查”。",true);help.MaxWidth=310;
+        var help=Ui.Text("属性和颜色可在设置 → 缓存与索引 → 管理元数据提取中准备，完成后点“重新检查”。",true);help.MaxWidth=310;
         var content=Ui.Column(message);if(!checking)content.Children.Add(help);
         content.Children.Add(Ui.Button("重新检查",()=>{flyouts.Close();Retry?.Invoke();}));flyouts.Show(button,content);
     }

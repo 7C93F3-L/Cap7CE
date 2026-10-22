@@ -11,13 +11,23 @@ internal sealed class ShellServices : IAsyncDisposable
     public CoreNodeHost Models { get; }
     public CoreNodeHost Office { get; }
     public FavoriteService Favorites { get; }
+    public MetadataTasks Metadata {get;}
+    public NativeNotifications Notifications {get;}=new();
+    public NativeHotKeys? Shortcuts {get;set;}
+    public event Action? CatalogChanged;
+    public void RefreshViews()=>CatalogChanged?.Invoke();
+    public event Action<string>? BackgroundError;
+    public event Action<bool>? VisualMaintenance;
+    public event Action<string?>? MaintenanceRequested;
+    public void ShowMaintenance(string? path=null)=>MaintenanceRequested?.Invoke(path);
+    private CatalogChangeSubscription? changes;
     public HashSet<string> DeletedPaths { get; } = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim connection = new(1);
     private bool closed;
     public IReadOnlyList<CoreVolumeStatus> Volumes { get; private set; } = [];
     public ShellServices(string root)
     {
-        Root = root; Visuals = new(root); Favorites = new(root);
+        Root = root; Visuals = new(root); Favorites = new(root);Metadata=new(this);
         Providers = new(root, "provider-preview.cjs", Path.GetTempPath());
         Models = new(root, "model-runtime.cjs", PreferenceStore.ProductData);
         Office = new(root, "office-preview.cjs", Path.Combine(PreferenceStore.DataRoot, "temp"));
@@ -27,20 +37,41 @@ internal sealed class ShellServices : IAsyncDisposable
         await connection.WaitAsync();
         try {
         ObjectDisposedException.ThrowIf(closed, this);
+        changes?.Dispose();changes=null;
         if(Core is not null){await Core.DisposeAsync();Core=null;}
         var database = Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE/Core/v1/catalog.db");
-        Core = await CoreConnection.StartAsync(Root, database, interactive: true); await RefreshVolumesAsync();
+        Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure); await RefreshVolumesAsync();
+        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke("目录同步连接已结束："+error.Message));
         } finally { connection.Release(); }
     }
     public async Task RefreshVolumesAsync()
     { if (Core is not null) Volumes = (await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus, new { })).Volumes; }
+    public async Task DisconnectAsync()
+    {
+        await connection.WaitAsync();
+        try{changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
+        finally{connection.Release();}
+    }
+    private async void OnCatalogChanged()
+    {
+        if(closed)return;var owner=Core;
+        try{await RefreshVolumesAsync();if(closed||!ReferenceEquals(owner,Core))return;RefreshViews();await Metadata.NotifyAsync();}catch(Exception error){if(!closed)BackgroundError?.Invoke(error.Message);}
+    }
     public async Task ReleaseSourcesAsync() { await Providers.ReleaseAsync(); await Office.ReleaseAsync(); await Visuals.ReleaseAsync(); }
+    public async Task ClearVisualCacheAsync()
+    {
+        VisualMaintenance?.Invoke(true);
+        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();Notify("WinUI缓存清理完成。");}
+        finally{VisualMaintenance?.Invoke(false);}
+    }
+    public void Notify(string text)
+    {try{Notifications.Show(text,Preferences.Current.Notifications);}catch(Exception error){BackgroundError?.Invoke("通知发送失败："+error.Message);}}
     public async ValueTask DisposeAsync()
     {
         await connection.WaitAsync();
-        try { if (closed) return; closed = true; if (Core is not null) await Core.DisposeAsync(); Core = null; }
+        try { if (closed) return; closed = true;changes?.Dispose(); if (Core is not null) await Core.DisposeAsync(); Core = null; }
         finally { connection.Release(); }
-        await Providers.DisposeAsync(); await Office.DisposeAsync(); await Models.DisposeAsync(); await Visuals.DisposeAsync();
+        Shortcuts?.Dispose();Notifications.Dispose();await Providers.DisposeAsync(); await Office.DisposeAsync(); await Models.DisposeAsync(); await Visuals.DisposeAsync();
     }
 }

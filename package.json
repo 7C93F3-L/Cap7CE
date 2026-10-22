@@ -2,7 +2,7 @@
   "name": "cap7ce",
   "version": "1.0.4",
   "productName": "Cap7CE",
-  "description": "Windows local file search, browsing and preview tool built with Electron, React, TypeScript and SQLite.",
+  "description": "Windows local asset search, browsing and preview with a native WinUI shell and independent Core.",
   "author": "7C93F3-L",
   "license": "PolyForm-Noncommercial-1.0.0",
   "homepage": "https://github.com/7C93F3-L/Cap7CE#readme",
@@ -16,12 +16,12 @@
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File shell/run.ps1",
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "clean:electron": "node scripts/clean-electron-build.cjs",
     "build:electron": "npm run clean:electron && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:core-visuals && npm run build:metadata-worker",
-    "build": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
+    "build": "node scripts/native-build.cjs",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
     "publish:core-capability": "node scripts/core-capability-payload-build.cjs",
@@ -148,9 +148,9 @@
     "probe:shell-thumbnail": "electron scripts/shell-thumbnail-probe.cjs",
     "probe:window-controls-overlay": "electron scripts/window-controls-overlay-probe.cjs",
     "preview": "vite preview --host 127.0.0.1",
-    "pack": "npm run build && npm run publish:core-product-capability && electron-builder --dir && node scripts/metadata-runtime-packaged-check.cjs",
-    "dist:installer": "npm run build && npm run publish:core-product-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win nsis --x64 --publish never && node scripts/metadata-runtime-packaged-check.cjs && node scripts/core-product-installer-smoke.cjs",
-    "dist:core-capability-installer": "npm run build && npm run publish:core-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --config build/core-capability-dev.electron-builder.cjs --win nsis --x64 --publish never && node scripts/core-capability-installer-smoke.cjs",
+    "pack": "npm run build && node scripts/native-pack.cjs",
+    "dist:installer": "node scripts/native-installer-unavailable.cjs",
+    "dist:core-capability-installer": "node scripts/native-installer-unavailable.cjs",
     "test:epub-preview": "node tests/epub-preview.integration.cjs",
     "test:mobi-preview": "node tests/mobi-preview.integration.cjs",
     "test:installer-config": "node tests/installer-config.integration.cjs && node tests/metadata-runtime-packaging.integration.cjs",
@@ -165,7 +165,16 @@
     "build:core-visuals": "node scripts/core-visuals-build.cjs",
     "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs",
     "test:core-preview-metadata": "node scripts/core-preview-metadata-boundary-check.cjs && node tests/core-preview-metadata-lifetime.integration.cjs && node tests/core-preview-metadata-runtime.integration.cjs",
-    "test:core-local-keywords": "node scripts/core-local-keywords-boundary-check.cjs && node tests/core-local-keywords-runtime.integration.cjs"
+    "test:core-local-keywords": "node scripts/core-local-keywords-boundary-check.cjs && node tests/core-local-keywords-runtime.integration.cjs",
+    "dev:legacy": "concurrently --kill-others-on-fail -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "build:legacy": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
+    "pack:legacy": "npm run build:legacy && npm run publish:core-product-capability && electron-builder --dir && node scripts/metadata-runtime-packaged-check.cjs",
+    "dist:installer:legacy": "npm run build:legacy && npm run publish:core-product-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win nsis --x64 --publish never && node scripts/metadata-runtime-packaged-check.cjs && node scripts/core-product-installer-smoke.cjs",
+    "dev:winui": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File shell/run.ps1",
+    "build:winui": "node scripts/native-build.cjs",
+    "dist:portable": "npm run build && node scripts/native-pack.cjs --zip",
+    "test:native:smoke": "node scripts/native-smoke.cjs",
+    "dist:core-capability-installer:legacy": "npm run build:legacy && npm run publish:core-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --config build/core-capability-dev.electron-builder.cjs --win nsis --x64 --publish never && node scripts/core-capability-installer-smoke.cjs"
   },
   "build": {
     "appId": "Cap7CE",
@@ -301,12 +310,16 @@
       {
         "from": "native/artifacts/core-visuals/v1",
         "to": "core-visuals/v1",
-        "filter": ["Cap7CE.Core.Visuals.exe"]
+        "filter": [
+          "Cap7CE.Core.Visuals.exe"
+        ]
       },
       {
         "from": "third_party/chromium-visuals",
         "to": "licenses/chromium-visuals",
-        "filter": ["LICENSE"]
+        "filter": [
+          "LICENSE"
+        ]
       },
       {
         "from": "artifacts/metadata-worker/v1",
@@ -318,7 +331,9 @@
       {
         "from": "artifacts/metadata-worker/v1/node_modules",
         "to": "metadata-worker/v1/node_modules",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {

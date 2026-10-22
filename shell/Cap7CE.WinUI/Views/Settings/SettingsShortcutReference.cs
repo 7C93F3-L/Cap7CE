@@ -6,12 +6,13 @@ namespace Cap7CE.WinUI.Views;
 
 internal static class SettingsShortcutReference
 {
-    public static UIElement Actions()
+    public static UIElement Actions(UIElement? toggle=null)
     {
-        var controls=Ui.Row(DisabledToggle(),new Button {Content=SettingsReference.Text("common.restoreDefault"),IsEnabled=false});
+        var controls=Ui.Row(toggle??DisabledToggle(),new Button {Content=SettingsReference.Text("common.restoreDefault"),IsEnabled=false});
         var column=Ui.Column();
         foreach(var id in new[]{"focusMainSearch","hideToLine","restoreDefaultWindow","toggleWindowMode","openSettings","cycleDirectory"})
-            column.Children.Add(ShortcutRow(SettingsReference.Text("shortcut."+id),SettingsReference.Shortcut(id)));
+            {var row=ShortcutRow(SettingsReference.Text("shortcut."+id),SettingsReference.Shortcut(id));
+            if(id is "hideToLine" or "toggleWindowMode"){row.Opacity=0.4;ToolTipService.SetToolTip(row,"此窗口动作尚未迁入WinUI，不注册其快捷键。");}column.Children.Add(row);}
         return new SettingsSection(controls,column);
     }
     public static UIElement Commands()

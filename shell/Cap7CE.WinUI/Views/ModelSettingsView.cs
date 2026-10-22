@@ -39,6 +39,7 @@ internal sealed class ModelSettingsView
             value.IsTextSelectionEnabled=true;info.Children.Add(new SettingsFieldRow(T(key),value));
         }
         RuntimeInfo=info;
+        var loaded=false;((FrameworkElement)RuntimeSettings).Loaded+=(_,_)=>{if(!loaded){loaded=true;Run(RefreshAsync);}};
     }
     private async Task RefreshAsync()
     {

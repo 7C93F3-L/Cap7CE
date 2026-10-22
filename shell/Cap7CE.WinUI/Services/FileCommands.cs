@@ -16,6 +16,8 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public event Action? BeforeMutation;
     public event Action? AfterMutation;
     public event Action? ItemsDeleted;
+    public void ShowMetadata(AssetItem item)
+    {FileAccessGuard.Validate(item);services.ShowMaintenance(item.Entry.IsDirectory?item.FullPath:Path.GetDirectoryName(item.FullPath));}
     public void Run(Func<Task> action) => Execute(action);
     private async void Execute(Func<Task> action) { try { await action(); } catch (Exception error) { notice(error.Message); } }
     public void Preview(AssetItem item) { FileAccessGuard.Validate(item); PreviewRequested?.Invoke(item); }

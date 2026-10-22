@@ -24,6 +24,7 @@ public sealed partial class MainWindow : Window
     private readonly WorkspacePointerInput pointerInput;
     private readonly FilterAvailabilityService filterAvailability;
     private SettingsWindow? settings;
+    private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
     private BrowseSession? active;
     private Models.ShellPreferences? appliedPreferences;
@@ -32,6 +33,9 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
+        services.CatalogChanged+=()=>DispatcherQueue.TryEnqueue(()=>{if(!closed){foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Invalidate();Refresh();if(active is not null)filterAvailability?.Update(active,true);}});
+        services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
+        services.MaintenanceRequested+=OpenMaintenance;
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
         filters.RetryAvailability+=()=>{if(active is not null)filterAvailability.Update(active,true);};
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
@@ -42,10 +46,13 @@ public sealed partial class MainWindow : Window
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
         NoticeHost.Content=notifications;
         results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);};
+        services.VisualMaintenance+=busy=>{if(busy){preview?.Close();details.Stop();}results.Suspend(busy||minimized);if(!busy)Refresh();};
         results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
+        services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{MainWindowGeometry.RestoreDefault(this);WindowActivation.Show(this);},OpenSettings,
+            ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.PathValue??"")+1)%paths.Length]);},error=>Notice(error.Message));
         toolbar.ViewSelected+=mode=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{
             View=mode==Models.WorkspaceViewMode.List?"list":"grid",
             SquareTiles=mode==Models.WorkspaceViewMode.List?services.Preferences.Current.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
@@ -53,7 +60,7 @@ public sealed partial class MainWindow : Window
         toolbar.SizeCommitted+=size=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{TileSize=size}));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
         Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
-        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();}};
+        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();if(session.Invalidated&&!session.Busy)Refresh();}};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
         commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
@@ -73,6 +80,8 @@ public sealed partial class MainWindow : Window
     private async Task StartAsync()
     {
         try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice("偏好读取失败："+error.Message);}
+        try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice("通知注册失败："+error.Message);}
+        try{services.Shortcuts?.Configure(services.Preferences.Current.QuickActions);}catch(Exception error){Notice(error.Message);}
         AssetTile.Visuals=services.Visuals;NewTab("");
         try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice("收藏读取失败："+error.Message);}
         try{await services.ConnectAsync();if(!closed&&active is not null)await active.NavigateAsync("");}catch(Exception error){Notice(error.Message);}
@@ -122,7 +131,12 @@ public sealed partial class MainWindow : Window
         preview.Show(item,active?.Items.ToArray()??[item]);
     }
     private void OpenSettings()
-    {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}settings.Activate();}
+    {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
+    private void OpenMaintenance(string? path)
+    {
+        if(maintenance is null){maintenance=new(services);maintenance.Closed+=(_,_)=>maintenance=null;}
+        if(path is not null)maintenance.SetDirectory(path);WindowActivation.Show(maintenance);
+    }
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop})==prefs;
@@ -156,14 +170,14 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;pointerInput.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;pointerInput.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();maintenance?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
     private static string FindRoot()
     {
         for(var directory=new DirectoryInfo(AppContext.BaseDirectory);directory is not null;directory=directory.Parent)
-            if(File.Exists(Path.Combine(directory.FullName,"package.json"))&&Directory.Exists(Path.Combine(directory.FullName,"core")))return directory.FullName;
+            if(File.Exists(Path.Combine(directory.FullName,"cap7ce-native.json"))||File.Exists(Path.Combine(directory.FullName,"package.json"))&&Directory.Exists(Path.Combine(directory.FullName,"core")))return directory.FullName;
         return AppContext.BaseDirectory;
     }
 }

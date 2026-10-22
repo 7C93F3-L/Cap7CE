@@ -7,6 +7,10 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>../../build/icon.ico</ApplicationIcon>
+    <Version>1.0.4</Version>
+    <Product>Cap7CE</Product>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="../../src/renderer/assets/icons/skim-location-desktop.svg;../../src/renderer/assets/icons/skim-location-documents.svg;../../src/renderer/assets/icons/skim-location-downloads.svg;../../src/renderer/assets/icons/skim-location-pictures.svg;../../src/renderer/assets/icons/skim-location-music.svg;../../src/renderer/assets/icons/skim-location-videos.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
@@ -15,4 +19,8 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
     <ProjectReference Include="../../core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj" />
   </ItemGroup>
+  <Target Name="PublishNativeResources" AfterTargets="Publish">
+    <Error Condition="!Exists('$(TargetDir)$(AssemblyName).pri')" Text="WinUI resource index is missing." />
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).pri" DestinationFolder="$(PublishDir)" />
+  </Target>
 </Project>
