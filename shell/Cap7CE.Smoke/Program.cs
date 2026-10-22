@@ -4,6 +4,7 @@ using Cap7CE.WinUI.Services;
 using Microsoft.Data.Sqlite;
 
 var root = Path.GetFullPath(args.Single());
+NativeEntryPointProbe.Run(root);
 var temporary = Path.Combine(Path.GetTempPath(), "Cap7CE-PhaseF-" + Guid.NewGuid().ToString("N"));
 if (!Path.GetFullPath(temporary).StartsWith(Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("Fixture must stay inside the temporary directory");
 Directory.CreateDirectory(temporary);
