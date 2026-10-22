@@ -13,7 +13,7 @@ internal sealed class SettingsWindow : Window
     private readonly SettingsPages pages;
     private readonly ContentControl body=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,Margin=new(20,12,20,20)};
     private readonly TextBox search=new(){PlaceholderText="搜索设置",Margin=new(8,8,8,12),Style=(Style)Application.Current.Resources["CapWorkspaceInput"]};
-    private readonly InfoBar notice=new(){IsOpen=false,IsClosable=true,Severity=InfoBarSeverity.Informational};
+    private readonly InfoBar notice=new(){IsOpen=false,Visibility=Visibility.Collapsed,IsClosable=true,Severity=InfoBarSeverity.Informational};
     private readonly Grid root=new();
     private readonly NavigationView navigation=new(){Style=(Style)Application.Current.Resources["CapSettingsNavigation"]};
     private readonly ScrollViewer scroll;
@@ -23,7 +23,8 @@ internal sealed class SettingsWindow : Window
     {
         this.services=services;AppWindow.Resize(new(1000,800));
         root.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new("ms-appx:///Themes/SettingsControlResources.xaml")});
-        pages=new(services,this,text=>{if(closed)return;notice.Message=text;notice.IsOpen=true;});
+        pages=new(services,this,text=>{if(closed)return;notice.Message=text;notice.Visibility=Visibility.Visible;notice.IsOpen=true;});
+        notice.Closed+=(_,_)=>notice.Visibility=Visibility.Collapsed;
         AutomationProperties.SetName(search,"搜索设置");navigation.PaneCustomContent=search;
         void SyncSearchVisibility()=>search.Visibility=navigation.IsPaneOpen?Visibility.Visible:Visibility.Collapsed;
         navigation.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,(_,_)=>SyncSearchVisibility());
