@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+AccentGradient为各表面保留独立Absolute渐变几何，其GradientStop.Color/Offset通过原生BindingOperations绑定共享源色标；不再依赖Border.Loaded/Unloaded订阅颜色回调。首次Loaded期间WindowTitleBar挂接内容会使旧颜色订阅最终断开，而原生属性绑定在该场景下仍能跟随ThemeService更新。Loaded/SizeChanged只更新45°几何，源画刷替换时解除旧绑定及几何事件；不重建筛选或选择、不改窗口挂接流程，也不增加全局订阅或轮询。
+
 设置窗口在局部SettingsControlResources中将NavigationView普通/紧凑内容框描边和默认左上圆角归零，仅由CapSettingsSurface绘制工作区外框；不替换原生模板。InfoBar初始及关闭后均为Collapsed，打开时才参与布局，避免隐藏消息条的Margin在Auto行保留10 DIP高度；正常内容区右侧、底部均以共用表面的5 DIP外边距收口。
 
 设置导航的搜索框使用NavigationView.PaneCustomContent独立行，不占用PaneHeader与原生展开按钮/PaneTitle共用的标题行；显示状态仅投影IsPaneOpen，收起时不保留被窄栏裁切的输入热区，不替换原生导航模板或展开逻辑。
