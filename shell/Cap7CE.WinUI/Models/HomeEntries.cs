@@ -29,7 +29,12 @@ internal static class HomeEntries
 		}
 		foreach (CoreVolumeStatus volume in volumes)
 		{
-			yield return new AssetItem(new BasicSearchItem(volume.VolumeId, "本地磁盘 (" + volume.DisplayName + ")" + (volume.Queryable ? "" : " · 不可查询"), "", "", IsDirectory: true), volume.DisplayName.TrimEnd('\\') + "\\");
+			yield return new AssetItem(new BasicSearchItem(volume.VolumeId, "本地磁盘 (" + volume.DisplayName + ")", "", "", IsDirectory: true), volume.DisplayName.TrimEnd('\\') + "\\");
+		}
+		foreach(var drive in DriveInfo.GetDrives())
+		{
+			if(drive.DriveType is not (DriveType.Fixed or DriveType.Removable)||volumes.Any(v=>string.Equals(v.DisplayName.TrimEnd('\\'),drive.Name.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase)))continue;
+			yield return new AssetItem(new BasicSearchItem("drive-"+drive.Name,"本地磁盘 ("+drive.Name.TrimEnd('\\')+")","","",IsDirectory:true),drive.Name);
 		}
 	}
 }

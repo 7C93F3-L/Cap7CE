@@ -52,6 +52,28 @@ try
     await File.WriteAllBytesAsync(png, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAMElEQVRIiWPojvlGU8QwakHMaBB9G01F3aMZ7dtoUdE9WprGjFY43aNVZszgblUAANlOl0wagnzLAAAAAElFTkSuQmCC"));
     await using (var visuals = new VisualConnection(root,Path.Combine(temporary,"visual-cache")))
     {
+        var browseRoot=Path.Combine(temporary,"unindexed");Directory.CreateDirectory(browseRoot);
+        var nested=Directory.CreateDirectory(Path.Combine(browseRoot,"nested"));
+        await File.WriteAllTextAsync(Path.Combine(nested.FullName,"deep.txt"),"not a recursive listing");
+        for(var i=0;i<105;i++)await File.WriteAllTextAsync(Path.Combine(browseRoot,$"item-{i:D3}.txt"),"fixture");
+        var hidden=Path.Combine(browseRoot,"hidden.txt");await File.WriteAllTextAsync(hidden,"hidden");File.SetAttributes(hidden,FileAttributes.Hidden);
+        var browseId=Guid.NewGuid().ToString();
+        var listing=await visuals.RequestAsync("directoryBrowse.start",browseId,browseRoot,new{sort="name-ascending",excludeHidden=true});
+        Require(listing.GetProperty("entries").GetArrayLength()==100,"unindexed directory first page bounded to 100");
+        var listed=new List<string>();
+        while(true){
+            listed.AddRange(listing.GetProperty("entries").EnumerateArray().Select(item=>item.GetProperty("name").GetString()!));
+            var next=listing.GetProperty("nextCursor").GetString();if(next is null)break;
+            listing=await visuals.RequestAsync("directoryBrowse.next",browseId,next);
+        }
+        Require(listed.Count==106&&listed.Distinct().Count()==106&&listed[0]=="nested"&&!listed.Contains("deep.txt")&&!listed.Contains("hidden.txt"),"unindexed browse pages, folder ordering, hidden exclusion and nonrecursive scope");
+        var cancelledId=Guid.NewGuid().ToString();
+        var cancelledPage=await visuals.RequestAsync("directoryBrowse.start",cancelledId,browseRoot,new{sort="name-descending",excludeHidden=false});
+        await visuals.RequestAsync("directoryBrowse.cancel",cancelledId);
+        var cursorRejected=false;
+        try{await visuals.RequestAsync("directoryBrowse.next",cancelledId,cancelledPage.GetProperty("nextCursor").GetString());}catch(IOException){cursorRejected=true;}
+        Require(cursorRejected,"leaving directory releases filesystem cursor");
+        Console.WriteLine("passed: unindexed filesystem browse, bounded pagination, hidden items, nonrecursive scope, cancellation");
         var thumbnail = await visuals.PrepareAsync(png, false, CancellationToken.None);
         var preview = await visuals.PrepareAsync(png, true, CancellationToken.None);
         Require(new FileInfo(thumbnail).Length > 0 && new FileInfo(preview).Length > 0, "real Core thumbnail and preview");

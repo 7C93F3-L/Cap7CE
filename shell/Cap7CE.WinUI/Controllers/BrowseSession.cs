@@ -23,6 +23,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     private readonly Stack<string> back = new(), forward = new();
     private CancellationTokenSource query = new();
     private int generation;
+    private DirectoryBrowseSession? filesystem;
     public bool CanBack => back.Count > 0;
     public bool CanForward => forward.Count > 0;
     public async Task BackAsync()
@@ -41,10 +42,13 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     {
         Invalidated=false;var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
+        filesystem?.Dispose();filesystem=null;
         Busy = true;Error=null;Changed?.Invoke();
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
+            if (services.Core is null&&path.Length>0&&string.IsNullOrWhiteSpace(Query)&&Filter.Count==0&&!Random)
+                return await BrowseFilesystemAsync(path,remember,version,token);
             if (services.Core is null) throw new IOException("Core 未连接，请在设置中重新连接");
             CoreSearchScopeRequest? scope = null;
             var volumes = services.Volumes.Where(v => v.Queryable).Select(v => v.VolumeId).ToArray();
@@ -52,7 +56,12 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             {
                 FileAccessGuard.RejectLinks(path);
                 var resolved = await services.Core.RequestAsync<CatalogResolveScopeResponse>(CoreOperations.CatalogResolveScope, new CatalogResolveScopeRequest(path), token);
-                if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null) throw new IOException("目录不在可查询 Catalog 中；此入口不会自动建库");
+                if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null)
+                {
+                    if(string.IsNullOrWhiteSpace(Query)&&Filter.Count==0&&!Random)
+                        return await BrowseFilesystemAsync(path,remember,version,token);
+                    throw new IOException("此目录的索引尚未就绪，可清除搜索和筛选后直接浏览；搜索及筛选需要可查询的索引");
+                }
                 volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);
             }
             var result = new AssetCollection(); string? cursor = null;
@@ -106,6 +115,26 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             if (!IsDeleted(full)) target.Add(new(item, full));
         }
     }
+    private async Task<bool> BrowseFilesystemAsync(string path,bool remember,int version,CancellationToken token)
+    {
+        var owner=new DirectoryBrowseSession(services.Visuals);filesystem=owner;
+        var page=await owner.StartAsync(path,Sort,ShowHidden,token);
+        if(version!=generation)return false;
+        var result=new AssetCollection();foreach(var item in page.Items)if(!IsDeleted(item.FullPath))result.Add(item);
+        var cursor=page.NextCursor;result.HasMoreItems=cursor is not null;var loading=false;
+        result.LoadPage=async()=>{
+            if(loading||!result.HasMoreItems||version!=generation)return 0;loading=true;
+            try{
+                var next=await owner.NextAsync(cursor!,token);if(version!=generation)return 0;
+                foreach(var item in next.Items)if(!IsDeleted(item.FullPath))result.Add(item);
+                cursor=next.NextCursor;result.HasMoreItems=cursor is not null;Changed?.Invoke();return (uint)next.Items.Count;
+            }catch(OperationCanceledException){return 0;}
+            catch(Exception error){if(version==generation){result.HasMoreItems=false;Error=error.Message+"；请刷新";Changed?.Invoke();}return 0;}
+            finally{loading=false;}
+        };
+        if(remember&&path!=PathValue){back.Push(PathValue);forward.Clear();}
+        PathValue=path;Title=System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;return true;
+    }
     private bool IsDeleted(string path) => services.DeletedPaths.Any(deleted => path.Equals(deleted, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(deleted.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase));
     public void RemoveDeleted()
@@ -113,5 +142,5 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         for (var i = Items.Count - 1; i >= 0; i--) if (IsDeleted(Items[i].FullPath)) Items.RemoveAt(i);
         Changed?.Invoke();
     }
-    public void Dispose() { ++generation; query.Cancel(); query.Dispose(); Items.HasMoreItems = false; }
+    public void Dispose() { ++generation; query.Cancel(); query.Dispose();filesystem?.Dispose(); Items.HasMoreItems = false; }
 }
