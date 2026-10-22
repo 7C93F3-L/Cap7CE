@@ -22,7 +22,7 @@ internal sealed class SidebarView : UserControl
     private readonly ToggleButton filterButton, detailsButton, home;
     private readonly SidebarIcon filterIcon = new() { Kind = "top", Width = 22, Height = 22 };
     private readonly SidebarIcon detailsIcon = new() { Kind = "right", Width = 22, Height = 22 };
-    private readonly Button add;
+    private readonly Button add, settings;
     private readonly DataTemplate expandedTemplate, compactTemplate;
     private readonly SidebarFavoriteOrder order;
     private bool? compact;
@@ -60,8 +60,9 @@ internal sealed class SidebarView : UserControl
         IdleScrollBars.Attach(favorites);
         favorites.ContainerContentChanging += PrepareFavorite;
         favorites.ItemClick += (_,e)=>{if(!order.Editing&&e.ClickedItem is Favorite item)Navigate?.Invoke(item.Path);};
-        var settings = new Button { Style = StyleFor("CapSidebarButton"), Margin = new(5), Height = 36 };
-        NavigationContent(settings,"settings","打开设置",8,false); settings.Click += (_,_)=>Settings?.Invoke();
+        settings = new Button { Style = StyleFor("CapSidebarIconButton"), Content = new SidebarIcon { Kind = "settings", Width = 22, Height = 22 } };
+        AutomationProperties.SetName(settings,"打开设置"); ToolTipService.SetToolTip(settings,"打开设置");
+        settings.Click += (_,_)=>Settings?.Invoke();
         Grid.SetRow(settings,3); root.Children.Add(settings); Content = root;
         ApplyLayout(false,true,true,true); SetActivePath("");
     }
@@ -104,6 +105,9 @@ internal sealed class SidebarView : UserControl
         tools.MaximumRowsOrColumns = isCompact?1:2; tools.ItemWidth = isCompact?32:39; tools.ItemHeight = isCompact?36:34;
         tools.Margin = isCompact?new(4,5,4,23):new(5,5,5,23); tools.HorizontalAlignment = isCompact?HorizontalAlignment.Center:HorizontalAlignment.Left;
         foreach(var button in new[]{filterButton,detailsButton})button.Width=button.Height=isCompact?32:34;
+        settings.Width=settings.Height=isCompact?32:34;
+        settings.Margin=isCompact?new(4,5,4,5):new(5);
+        settings.HorizontalAlignment=isCompact?HorizontalAlignment.Center:HorizontalAlignment.Left;
         foreach(var entry in navigation) {
             entry.Label.Visibility = isCompact?Visibility.Collapsed:Visibility.Visible;
             entry.Content.ColumnDefinitions[1].Width = isCompact?new(0):new(1,GridUnitType.Star); entry.Content.ColumnSpacing = isCompact?0:entry.Gap;

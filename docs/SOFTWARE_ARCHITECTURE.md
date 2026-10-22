@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+SidebarView的设置入口独立使用普通Button及CapSidebarIconButton样式，仅展示22 DIP图标并保留提示和自动化名称；尺寸随展开/紧凑布局使用34/32 DIP，复用顶部按钮的悬停画刷与9 DIP圆角。入口不加入目录文字布局或绑定设置窗口选中态，继续调用原Settings事件。
+
 日期弹层通过CalendarDatePicker.CalendarViewStyle显式指定原生CalendarView派生样式，集中在Themes/FilterCalendarResources.xaml；今天、选中和悬停等强调属性使用应用私有主题键绑定CapAccentBrush/CapAccentForegroundBrush，高对比映射系统高亮色。仅在筛选日期控件上指定该样式，不替换全局默认CalendarView。原先挂在内容子树的CalendarView资源别名不会可靠传入内部Popup，已移除无效映射；原内容容器继续持有其余筛选配色和初始焦点，不改日历背景或系统强调色。
 
 浅色CapResultSurfaceBrush为#80FFFFFF（约50%不透明白色），其他网格交互/文字及深色资源不变。DetailsPane将预览Image居中到实际显示尺寸，并用随SizeChanged更新的Composition圆角几何裁剪8 DIP外轮廓，避免等比留白使外层Border圆角无法覆盖图片边角；不改变缩略图请求和解码尺寸。DetailsResources的卡片与FilterResources的顶部筛选块均用1 DIP CardStrokeColorDefaultBrush弱描边，顶部内边距抵消描边厚度，保持原内容位置；明暗主题均应用。

@@ -62,6 +62,12 @@
     <Setter Property="HorizontalAlignment" Value="Stretch"/><Setter Property="HorizontalContentAlignment" Value="Left"/>
     <Setter Property="UseSystemFocusVisuals" Value="True"/>
   </Style>
+  <Style x:Key="CapSidebarIconButton" TargetType="Button" BasedOn="{StaticResource CapSidebarButton}">
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarMutedBrush}"/>
+    <Setter Property="Width" Value="34"/><Setter Property="Height" Value="34"/>
+    <Setter Property="Padding" Value="6"/><Setter Property="CornerRadius" Value="9"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+  </Style>
   <Style x:Key="CapSidebarBrandButton" TargetType="Button" BasedOn="{StaticResource CapSidebarButton}">
     <Setter Property="Height" Value="52"/><Setter Property="Padding" Value="8"/><Setter Property="Opacity" Value="0.72"/>
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><ContentPresenter Content="{TemplateBinding Content}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/></ControlTemplate></Setter.Value></Setter>
