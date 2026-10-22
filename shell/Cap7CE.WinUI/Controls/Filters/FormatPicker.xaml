@@ -37,6 +37,7 @@
      <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4" ItemWidth="70" ItemHeight="40"/></ItemsPanelTemplate></GridView.ItemsPanel>
      <GridView.ItemContainerStyle><Style TargetType="GridViewItem" BasedOn="{StaticResource DefaultGridViewItemStyle}">
       <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="2"/>
+      <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
      </Style></GridView.ItemContainerStyle>
      <GridView.ItemTemplate><DataTemplate><TextBlock Text="{Binding Group.Key}" FontSize="18"/></DataTemplate></GridView.ItemTemplate>
