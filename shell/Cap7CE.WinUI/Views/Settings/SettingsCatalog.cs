@@ -85,16 +85,10 @@ internal sealed class SettingsCatalog
     }
     private UIElement FontSize()
     {
-        var slider=new Slider {Value=services.Preferences.Current.FontSize,Minimum=12,Maximum=16,StepFrequency=1,MinWidth=180};
-        var column=Ui.Column(slider);column.Spacing=0;
-        var scale=new Grid();for(var i=0;i<5;i++)scale.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
-        var labels=new[]{T("stableSettings.uiFontSize.small"),T("stableSettings.uiFontSize.standard"),"","",T("stableSettings.uiFontSize.large")};
-        for(var i=0;i<5;i++){var label=Ui.Text(labels[i],true);label.HorizontalAlignment=i==0?HorizontalAlignment.Left:i==4?HorizontalAlignment.Right:HorizontalAlignment.Center;Grid.SetColumn(label,i);scale.Children.Add(label);}
-        column.Children.Add(scale);
+        var slider=new SizeSlider("界面字号",services.Preferences.Current.FontSize,12,16,1,1,13,value=>$"{value:0} DIP",_=>{},showTitle:false);
         var saved=services.Preferences.Current.FontSize;
         void Commit(){var value=slider.Value;if(value==saved)return;saved=value;actions.Run(async()=>{try{await services.Preferences.SaveAsync(services.Preferences.Current with{FontSize=value});}catch{saved=services.Preferences.Current.FontSize;throw;}});}
-        slider.AddHandler(UIElement.PointerReleasedEvent,new PointerEventHandler((_,_)=>Commit()),true);
-        slider.KeyUp+=(_,_)=>Commit();slider.LostFocus+=(_,_)=>Commit();
-        return column;
+        slider.CommitRequested+=Commit;
+        return slider;
     }
 }

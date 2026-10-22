@@ -10,6 +10,8 @@ internal sealed class SettingsCard : UserControl
 {
     public SettingsCard(string title,string description,UIElement control,bool expanded=false)
     {
+        var section=control as SettingsSection;
+        if(section is not null){control=section.Actions;expanded=false;}
         var copy=Ui.Column(new TextBlock {Text=title,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap},Ui.Text(description,true));
         copy.Spacing=4;
         var grid=new Grid {ColumnSpacing=20,RowSpacing=12};
@@ -17,7 +19,7 @@ internal sealed class SettingsCard : UserControl
         grid.ColumnDefinitions.Add(new(){Width=new(280)});
         grid.RowDefinitions.Add(new(){Height=GridLength.Auto});grid.RowDefinitions.Add(new(){Height=GridLength.Auto});
         var element=(FrameworkElement)control;
-        var compact=control is ToggleSwitch or Button;
+        var compact=control is ToggleSwitch or Button or StackPanel {Orientation:Orientation.Horizontal};
         var actionWidth=control is ComboBox?240:280;
         var hasAction=control is not TextBlock {Text.Length:0};
         if(control is ToggleSwitch toggle)toggle.MinWidth=0;
@@ -30,10 +32,16 @@ internal sealed class SettingsCard : UserControl
         element.HorizontalAlignment=control is ToggleSwitch or Button?HorizontalAlignment.Right:HorizontalAlignment.Stretch;
         var action=new ContentControl {Content=control,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalAlignment=VerticalAlignment.Center};
         grid.Children.Add(copy);grid.Children.Add(action);
+        if(section is not null) {
+            section.AttachBody();section.Margin=new(0,12,0,0);
+            grid.RowDefinitions.Add(new(){Height=GridLength.Auto});
+            Grid.SetRow(section,2);Grid.SetColumnSpan(section,2);grid.Children.Add(section);
+        }
         if(control is Control accessible)AutomationProperties.SetName(accessible,title);
         void Arrange()
         {
             var stacked=expanded||ActualWidth<(compact?460:actionWidth+280);
+            if(section is not null)section.Margin=stacked?new(0):new(0,12,0,0);
             grid.RowSpacing=stacked&&hasAction?12:0;
             grid.ColumnDefinitions[1].Width=stacked||!hasAction?new(0):compact?GridLength.Auto:new(actionWidth);
             Grid.SetColumnSpan(copy,stacked||!hasAction?2:1);Grid.SetRow(action,stacked?1:0);

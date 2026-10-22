@@ -1,7 +1,6 @@
 using Cap7CE.WinUI.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Text.Json;
 
 namespace Cap7CE.WinUI.Views;
 
@@ -9,27 +8,21 @@ internal static class SettingsShortcutReference
 {
     public static UIElement Actions()
     {
-        var column=Ui.Column(Ui.Row(new ToggleSwitch {IsEnabled=false,OnContent=SettingsReference.Text("settings.enabled"),OffContent=SettingsReference.Text("settings.disabled")},new Button {Content=SettingsReference.Text("common.restoreDefault"),IsEnabled=false}));
+        var controls=Ui.Row(DisabledToggle(),new Button {Content=SettingsReference.Text("common.restoreDefault"),IsEnabled=false});
+        var column=Ui.Column();
         foreach(var id in new[]{"focusMainSearch","hideToLine","restoreDefaultWindow","toggleWindowMode","openSettings","cycleDirectory"})
             column.Children.Add(ShortcutRow(SettingsReference.Text("shortcut."+id),SettingsReference.Shortcut(id)));
-        return column;
+        return new SettingsSection(controls,column);
     }
     public static UIElement Commands()
     {
-        var column=Ui.Column(new ToggleSwitch {IsEnabled=false,OnContent=SettingsReference.Text("settings.enabled"),OffContent=SettingsReference.Text("settings.disabled")});
-        foreach(var group in SettingsReference.CommandGroups.EnumerateArray())
-            column.Children.Add(new Expander {Header=group.GetProperty("title").GetString(),Content=CommandRows(group.GetProperty("items")),HorizontalAlignment=HorizontalAlignment.Stretch,HorizontalContentAlignment=HorizontalAlignment.Stretch});
-        column.Children.Add(new Expander {Header=SettingsReference.Text("settings.confirmationCommands"),Content=Ui.Column(Ui.Text(SettingsReference.Text("settings.confirmationCommandHint"),true),CommandRows(SettingsReference.DangerousCommands)),HorizontalAlignment=HorizontalAlignment.Stretch,HorizontalContentAlignment=HorizontalAlignment.Stretch});
-        return column;
+        var groups=SettingsReference.CommandGroups.EnumerateArray()
+            .Select(g=>(Title:g.GetProperty("title").GetString()??"",Items:g.GetProperty("items"),Hint:(string?)null)).ToList();
+        groups.Add((SettingsReference.Text("settings.confirmationCommands"),SettingsReference.DangerousCommands,SettingsReference.Text("settings.confirmationCommandHint")));
+        return new SettingsSection(DisabledToggle(),new SettingsCommandList(groups));
     }
-    private static UIElement CommandRows(JsonElement items)
-    {
-        var column=Ui.Column();
-        foreach(var item in items.EnumerateArray())column.Children.Add(Pair(item.GetProperty("command").GetString()??"",item.GetProperty("description").GetString()??""));
-        return column;
-    }
-    private static SettingsFieldRow Pair(string title,string value)
-    {var text=Ui.Text(value,true);text.IsTextSelectionEnabled=true;return new(title,text);}
+    private static ToggleSwitch DisabledToggle()=>new() {IsEnabled=false,MinWidth=0,
+        OnContent=SettingsReference.Text("settings.enabled"),OffContent=SettingsReference.Text("settings.disabled")};
     private static UIElement ShortcutRow(string title,string shortcut)
     {
         var row=new Grid {ColumnSpacing=20,MinHeight=36};

@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-20）
 
+Controls/Settings/SettingsSection将卡片首行操作与全宽正文分离，SettingsCard仅负责排版与窄屏换行；SettingsShortcutReference继续由构建生成的主线数据组合快捷键/指令。纯展示SettingsCommandList接收分组、指令和确认说明，使用原生ComboBox按分类过滤并直接渲染可选择的等宽指令及说明，不依赖服务、偏好或命令执行器，不新增嵌套滚动或后台动作。
+
+Controls/Workspace/SizeSlider集中原生Slider的局部配色、数值格式、默认点对齐和提交手势；GridSizePicker仅配置96–280/默认160及百分比格式，SettingsCatalog字号配置12–16/默认13及DIP显示并沿现有偏好保存入口提交。共享控件不持有偏好、Core或应用状态，网格原有即时预览保持不变。
+
 SettingsCard将普通组合操作中的按钮、文字及水平按钮行靠右，ToggleSwitch局部MinWidth归零；SettingsFieldRow值列使用右对齐。ModelSettingsView只调整按钮行位置，不改刷新及运行时动作。Services/SettingsWindowGeometry仅计算设置窗口初次打开的1100×840 DIP尺寸与居中位置，换算窗口DPI并按最近屏幕工作区限幅；不接管主窗口状态机、不读写窗口偏好或迁移主线布局记录。
 
 WinUI设置正文限制1040 DIP最大宽度，SettingsCard按紧凑开关/按钮与240/280 DIP输入操作区分别决定响应式换行。快捷动作使用弹性名称列及局部主题键帽样式，保留禁用占位。Controls/Settings/SettingsColorEditor仅组合原生ColorPicker色谱/亮度与Hex文本框，隐藏原生侧边预览及通道选择区，避免256 DIP最小色谱和56 DIP预览占用超过原280 DIP宽度；独立色块显示编辑结果，校验后仍由SettingsColors读取最新偏好并仅保存当前颜色。调色浮层使用共享透明表面及DesktopAcrylicBackdrop，内容宽256 DIP、四周12 DIP留白，移除颜色标题和RGB输入，不覆盖其他浮层及原生控件模板、不新增偏好或后台任务。
