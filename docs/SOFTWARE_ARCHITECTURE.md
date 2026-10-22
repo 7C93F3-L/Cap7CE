@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+浅色CapResultSurfaceBrush为#80FFFFFF（约50%不透明白色），其他网格交互/文字及深色资源不变。DetailsPane将预览Image居中到实际显示尺寸，并用随SizeChanged更新的Composition圆角几何裁剪8 DIP外轮廓，避免等比留白使外层Border圆角无法覆盖图片边角；不改变缩略图请求和解码尺寸。DetailsResources的卡片与FilterResources的顶部筛选块均用1 DIP CardStrokeColorDefaultBrush弱描边，顶部内边距抵消描边厚度，保持原内容位置；明暗主题均应用。
+
 右栏 `DetailsPane` 仅组合当前目录/搜索上下文、选择概况和160 ms合并后的只读预览，MainWindow沿已有Bind传入路径、已加载数量及条件数。`Controls/Details/DetailsCard` 共用字段对齐、换行及大小格式，`DetailsKeywordEditor` 独立持有展示/编辑草稿与取消状态，通过委托读写，不依赖应用级选择；`Services/ManualKeywordService` 复用原keywords.read/write及expectedRevision，不新增Core操作。读取有取消与选择校验，写入完成只更新原选择的界面；预览和关键词独立失败。未选择显示位置/搜索概况，目录与磁盘不请求文件预览，多选只汇总已投影大小。文件名不承载操作，位置按钮通过同一CapDetailsPath模板保留正常前景、原生焦点及悬停背景；文件复用Reveal定位，目录/磁盘复用OpenDirectoryInExplorer进入目录。样式集中在Themes/DetailsResources.xaml，未迁入的内嵌元数据、批量及自动关键词明确不可用，不启动解析器、模型、建库或目录统计。
 
 `Controls/Filters/FormatPicker` 独立承载文件格式草稿，使用原生SemanticZoom、CollectionViewSource、字母GridView和分组多选ListView同步定位；首次打开显示索引，按钮及组标题返回索引，多选由原生容器维护，应用时才回传扩展名。固定300×380 DIP外框和32/300/32 DIP三行，字母网格280×280 DIP水平居中、顶部26 DIP，较整体居中位置上移24 DIP；SemanticZoom跨过顶部行，格式列表仍保留40 DIP顶部空间，返回按钮显隐不改变行高，避免浮层重新测量/定位。局部主题资源将原生多选框及选择指示条绑定CapAccentBrush，勾选对比色使用CapAccentForegroundBrush，高对比沿用系统色。Models/FormatLetterGroup从FormatRegistry中CanSearch扩展名生成#及A–Z分组，跨类别去重、忽略大小写，空组在索引禁用、明细隐藏。FilterEditors仅装配并复用原筛选/属性保留逻辑，不新增查询、后台访问或搜索输入框。
@@ -20,7 +22,7 @@
 
 标题栏固定图标的外环和实心点使用相同 10 DIP 布局盒中的 EllipseGeometry，圆心均为 (5,5)，避免 10 DIP 外环与 3 DIP 内圆分别布局时的半像素取整偏移；可见外径、描边和点径保持不变。
 
-三大工作区表面共用 `CapWorkspaceSurfaceBrush`：深色在系统内容层基础上提亮为 `#4C4A4A4A`，以约30%不透明度在窗口 Mica / Mica Alt 底层上叠加；浅色仍用 `CardBackgroundFillColorDefault`，高对比仍用 `SystemColorWindowColor`。此调整只作用于顶部筛选、中央工作区和右侧详情的共享表面，不调整图标、内部卡片或布局。
+三大工作区表面共用 `CapWorkspaceSurfaceBrush`：深色在系统内容层基础上提亮为 `#4C4A4A4A`，以约30%不透明度在窗口 Mica / Mica Alt 底层上叠加；浅色使用 `#66FFFFFF`（40%不透明白色）增加云母色调透出，高对比仍用 `SystemColorWindowColor`。此调整只作用于顶部筛选、中央工作区和右侧详情的共享表面，不调整图标、内部卡片或布局。
 
 `PaneResizer`仅在有拖动增量时临时订阅CompositionTarget.Rendering，同帧增量合并为一次ResizeRequested，DragCompleted先同步补齐再通知保存，卸载取消订阅；键盘及双击沿既有入口。SidebarView按布局状态元组去重，GalleryTile/AssetTile及GalleryLayout按相同尺寸去重，不改变缩略图读取、像素质量、虚拟化或偏好所有权。
 

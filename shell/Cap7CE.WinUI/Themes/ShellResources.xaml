@@ -2,7 +2,7 @@
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
       <SolidColorBrush x:Key="CapFlyoutSurfaceBrush" Color="Transparent"/>
-      <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="{ThemeResource CardBackgroundFillColorDefault}" />
+      <SolidColorBrush x:Key="CapWorkspaceSurfaceBrush" Color="#66FFFFFF" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Default">
       <SolidColorBrush x:Key="CapFlyoutSurfaceBrush" Color="Transparent"/>

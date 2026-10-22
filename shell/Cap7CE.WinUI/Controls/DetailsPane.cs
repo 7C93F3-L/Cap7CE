@@ -4,6 +4,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Composition;
+using System.Numerics;
 using Windows.Storage;
 namespace Cap7CE.WinUI.Controls;
 internal sealed class DetailsPane : UserControl
@@ -11,7 +14,8 @@ internal sealed class DetailsPane : UserControl
     private readonly ShellServices services;
     private readonly FileCommands commands;
     private readonly StackPanel column=new(){Spacing=8,Padding=new(12)};
-    private readonly Image image=new(){Stretch=Stretch.Uniform};
+    private readonly Image image=new(){Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,MaxHeight=160};
+    private CompositionRoundedRectangleGeometry? previewClip;
     private readonly AssetPlaceholderIcon icon=new(){Width=72,Height=72,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly Border visual=new(){Height=160,CornerRadius=new(8)};
     private readonly DetailsKeywordEditor keywords;
@@ -26,6 +30,7 @@ internal sealed class DetailsPane : UserControl
         var keywordService=new ManualKeywordService(services);
         keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice);
         var preview=new Grid();preview.Children.Add(icon);preview.Children.Add(image);visual.Child=preview;
+        image.SizeChanged+=(_,_)=>UpdatePreviewClip();
         var scroll=new ScrollViewer{Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
         IdleScrollBars.Attach(scroll);Content=scroll;
         debounce.Tick+=(_,_)=>{debounce.Stop();if(selected is [var item]&&!item.Entry.IsDirectory){_=keywords.ReadAsync();_=ReadVisualAsync(item,reading.Token);}};
@@ -107,6 +112,16 @@ internal sealed class DetailsPane : UserControl
         }
         catch(OperationCanceledException){}
         catch(Exception){if(!token.IsCancellationRequested)ToolTipService.SetToolTip(visual,"预览暂不可用");}
+    }
+    private void UpdatePreviewClip()
+    {
+        if(image.ActualWidth<=0||image.ActualHeight<=0)return;
+        if(previewClip is null) {
+            var element=ElementCompositionPreview.GetElementVisual(image);
+            previewClip=element.Compositor.CreateRoundedRectangleGeometry();previewClip.CornerRadius=new Vector2(8);
+            element.Clip=element.Compositor.CreateGeometricClip(previewClip);
+        }
+        previewClip.Size=new Vector2((float)image.ActualWidth,(float)image.ActualHeight);
     }
     public void Stop(){stopped=true;debounce.Stop();reading.Cancel();keywords.Stop();image.Source=null;}
 }
