@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-20）
 
+`Controls/Filters/FormatPicker` 独立承载文件格式草稿，使用原生SemanticZoom、CollectionViewSource、字母GridView和分组多选ListView同步定位；首次打开显示索引，按钮及组标题返回索引，多选由原生容器维护，应用时才回传扩展名。固定300×380 DIP外框和32/300/32 DIP三行，字母网格280×280 DIP水平居中、顶部26 DIP，较整体居中位置上移24 DIP；SemanticZoom跨过顶部行，格式列表仍保留40 DIP顶部空间，返回按钮显隐不改变行高，避免浮层重新测量/定位。局部主题资源将原生多选框及选择指示条绑定CapAccentBrush，勾选对比色使用CapAccentForegroundBrush，高对比沿用系统色。Models/FormatLetterGroup从FormatRegistry中CanSearch扩展名生成#及A–Z分组，跨类别去重、忽略大小写，空组在索引禁用、明细隐藏。FilterEditors仅装配并复用原筛选/属性保留逻辑，不新增查询、后台访问或搜索输入框。
+
 `FilterEditors.Size` 使用独立标签行及数值/单位两列Grid，保留原生NumberBox解析与范围校验，隐藏增减按钮并为内部TextBox复用CapWorkspaceInput胶囊样式；错误文本仅在校验失败时占位。共用FilterFlyouts以可聚焦ContentControl承载内容，打开时聚焦容器，不自动进入首个编辑框，仍保留点击、Tab及原生浮层关闭规则。
 
 目录检索与浏览平铺解耦：WinUI 的纯 `Models/BrowseScopeRules` 将非空关键词或 `BrowseFilter.Count > 0` 映射为 `directory-descendants`，BrowseSession 首次查询和刷新共用该规则，续页沿用原游标；没有检索条件才读取 Recursive 浏览偏好。Electron 的 `useComputerSearchController.directoryScope` 对 facts/fileConditions 使用相同优先级，提交、替换刷新及失效分页重建一致，筛选结果不标记为普通 directoryListing，目录库未就绪时不把递归筛选降级为当前层文件系统筛选。两端不改写浏览偏好，不新增 Core 协议、索引写入或目录扫描。
