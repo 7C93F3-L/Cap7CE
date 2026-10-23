@@ -10,6 +10,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public CoreNodeHost Providers { get; }
     public CoreNodeHost Models { get; }
     public CoreNodeHost Office { get; }
+    public CoreNodeHost StoredMetadata {get;}
     public FavoriteService Favorites { get; }
     public MetadataTasks Metadata {get;}
     public NativeNotifications Notifications {get;}=new();
@@ -31,6 +32,7 @@ internal sealed class ShellServices : IAsyncDisposable
         Providers = new(root, "provider-preview.cjs", Path.GetTempPath());
         Models = new(root, "model-runtime.cjs", PreferenceStore.ProductData);
         Office = new(root, "office-preview.cjs", Path.Combine(PreferenceStore.DataRoot, "temp"));
+        StoredMetadata=new(root,"visual-cache.cjs",PreferenceStore.ProductData);
     }
     public async Task ConnectAsync()
     {
@@ -77,6 +79,6 @@ internal sealed class ShellServices : IAsyncDisposable
         await connection.WaitAsync();
         try { if (closed) return; closed = true;changes?.Dispose(); if (Core is not null) await Core.DisposeAsync(); Core = null; }
         finally { connection.Release(); }
-        Shortcuts?.Dispose();Notifications.Dispose();await Providers.DisposeAsync(); await Office.DisposeAsync(); await Models.DisposeAsync(); await Visuals.DisposeAsync();
+        Shortcuts?.Dispose();Notifications.Dispose();await Providers.DisposeAsync(); await Office.DisposeAsync(); await Models.DisposeAsync(); await Visuals.DisposeAsync();await StoredMetadata.DisposeAsync();
     }
 }

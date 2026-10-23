@@ -78,10 +78,14 @@ internal sealed class PreviewWindow : Window
                 toolbar.Visibility=status.Visibility=Visibility.Collapsed;
                 var file=await StorageFile.GetFileFromPathAsync(item.FullPath);
                 token.ThrowIfCancellationRequested();
-                if(kind=="audio")geometry.Apply(800,450);
+                if(kind=="audio")geometry.Apply(640,640);
                 media=new MediaPreviewSession(file,message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;status.Text=message;}},
-                    (width,height)=>{if(!closed&&!token.IsCancellationRequested)geometry.Apply(width,height);},autoPlayAndLoop:kind=="video");
-                content.Content=media.Element;return;
+                    (width,height)=>{if(!closed&&!token.IsCancellationRequested&&kind=="video")geometry.Apply(width,height);},autoPlayAndLoop:true);
+                if(kind=="audio") {
+                    var audio=new AudioPreviewView(item,media.Element);content.Content=audio;
+                    await audio.LoadAsync(file,item,services,token);
+                } else content.Content=media.Element;
+                return;
             }
             if(kind=="text")
             {
