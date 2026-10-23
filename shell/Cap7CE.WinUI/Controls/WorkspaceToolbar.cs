@@ -38,7 +38,7 @@ internal sealed class WorkspaceToolbar : UserControl
         recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>{if(session is null)return;Run(()=>session.ToggleRecursiveAsync());});
         hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>{if(session is null)return;session.ShowHidden=!session.ShowHidden;Reload();});
         var separator=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolSeparator"],IsHitTestVisible=false};
-        tools=Ui.Row(random,next,separator,sizeButton,view,sort,recursive,hidden);tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
+        tools=Ui.Row(random,next,separator,sizeButton,view,recursive,sort,hidden);tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
         navigation.VerticalAlignment=tools.VerticalAlignment=VerticalAlignment.Center;
         root.SizeChanged+=(_,_)=>Reflow();Unloaded+=(_,_)=>{flyouts.Close();viewMenu?.Hide();};
         Content=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolbar"],Child=root};

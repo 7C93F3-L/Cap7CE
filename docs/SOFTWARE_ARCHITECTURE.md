@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+WorkspaceToolbar仅交换recursive与sort的展示顺序。
+
 PreviewWindow构造末尾同步执行首次ThemeService.Apply，在Show/Activate/geometry.Apply.UpdateLayout前安装WindowTitleBar内容根；后续偏好变化仍由原ApplyTheme入队。避免文本、通用文件快速路径先Loaded再被延迟初始主题重挂内容树，而视觉异步路径已完成主题的首次显示差异。PreviewNavigationView固定观察viewport本身并以其计算位置，不再持有可被标题栏替换的XamlRoot.Content；沿用可见箭头才命中、空白侧区穿透、Loaded/Unloaded配对事件释放。
 
 ResultsGallery方向键滚动通过GalleryGeometry.RevealOffset计算最小可见偏移：目标已可见或大项覆盖视口时保持当前偏移，越界只补足最近边缘，并限制在ScrollableHeight内。仅偏移实际变化时调用无动画ChangeView及布局更新，随后移动键盘焦点；不再按目标Top无条件滚动/强制布局。几何检查覆盖第三可见行、同排移动、上下越界、边缘重合、超高项及末端限幅。
