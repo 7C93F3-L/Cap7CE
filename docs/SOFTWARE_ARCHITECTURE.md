@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+Controls/PdfPreviewView通过Windows.Data.Pdf读取及有界分辨率渲染页面，不再通过Provider的pdf.open/render通道；Office仍保留既有转换/关闭链路。页面按钮注入ImagePreviewView底部浮条，复用缩放、拖动和3秒静止隐藏，取消后不回写视图。PreviewWindow统一移除顶部工具条，继续拥有文件切换和窗口几何；PDF视图仅拥有页内导航。
+
 formatCapabilities将APE登记为audio预览，browseOnly分组支持显式内容预览映射；WinUI继续由生成formats.json路由到现有音频会话，不引入解码器、转码或系统组件安装。
 
 Controls/AudioPreviewView组合原生音乐缩略图、格式图标、文件名/可选歌手专辑及既有MediaPlayerElement。封面最大320 DIP，按ThumbnailType.Image区分真实封面与系统图标，圆角沿PreviewViewportStyle；图片读取取消后不回写。元数据通过独立懒启动StoredMetadata宿主复用storedMetadata只读兼容接口，根固定ProductData，只读取已存在index/cap7ce-index.db且验证源版本；当前Catalog建库尚未提供歌手/专辑读取，不从源音频临时提取标签，不显示缺失提示。音视频统一AutoPlay与IsLoopingEnabled。

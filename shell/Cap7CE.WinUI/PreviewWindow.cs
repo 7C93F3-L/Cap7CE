@@ -20,13 +20,11 @@ internal sealed class PreviewWindow : Window
     private readonly ContentControl content=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};
     private readonly Grid viewport=new();
     private readonly TextBlock status=Ui.Text("",true);
-    private readonly Button pageBack,pageForward;
-    private readonly StackPanel toolbar;
     private readonly PreviewNavigationView navigation;
     private IReadOnlyList<AssetItem> items=[];
     private CancellationTokenSource reading=new();
     private string sessionId="",kind="",pdfPath="";
-    private int index,page=1,pageCount;
+    private int index;
     private MediaPreviewSession? media;
     private bool closed;
     private readonly PreviewWindowGeometry geometry;
@@ -35,9 +33,6 @@ internal sealed class PreviewWindow : Window
         geometry=new(this,owner,viewport);
         this.services=services;AppWindow.Resize(new(1100,820));
         root.RowDefinitions.Add(new(){Height=GridLength.Auto});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
-        pageBack=Ui.Button("上一页",()=>RenderPage(-1));pageForward=Ui.Button("下一页",()=>RenderPage(1));
-        toolbar=Ui.Row(pageBack,pageForward,
-            Ui.Button("默认程序打开",()=>OpenExternal()));root.Children.Add(toolbar);
         viewport.Children.Add(content);Grid.SetRow(viewport,1);root.Children.Add(viewport);Grid.SetRow(status,2);root.Children.Add(status);
         PreviewViewportStyle.Apply(viewport);
         navigation=new(()=>Move(-1),()=>Move(1));viewport.Children.Add(navigation);
@@ -60,8 +55,7 @@ internal sealed class PreviewWindow : Window
         if(closed)return;
         reading.Cancel();reading.Dispose();reading=new();var token=reading.Token;
         ReleaseMedia();content.Content=null;status.Text="正在准备预览…";
-        pageBack.Visibility=pageForward.Visibility=Visibility.Collapsed;
-        toolbar.Visibility=status.Visibility=Visibility.Visible;root.Padding=new(5);
+        status.Visibility=Visibility.Visible;root.Padding=new(5);
         navigation.Update(index>0,index<items.Count-1);
         try
         {
@@ -75,7 +69,7 @@ internal sealed class PreviewWindow : Window
             }
             if(kind is "video" or "audio")
             {
-                toolbar.Visibility=status.Visibility=Visibility.Collapsed;
+                status.Visibility=Visibility.Collapsed;
                 var file=await StorageFile.GetFileFromPathAsync(item.FullPath);
                 token.ThrowIfCancellationRequested();
                 if(kind=="audio")geometry.Apply(640,640);
@@ -100,9 +94,11 @@ internal sealed class PreviewWindow : Window
             {
                 pdfPath=item.FullPath;
                 if(kind=="office")pdfPath=(await services.Office.RequestAsync("office.open",[sessionId,item.FullPath],token)).GetProperty("pdfPath").GetString()!;
-                var reply=await services.Providers.RequestAsync("pdf.open",[sessionId,pdfPath,item.FullPath],token);
-                if(token.IsCancellationRequested)return;pageCount=reply.GetProperty("pageCount").GetInt32();page=1;
-                pageBack.Visibility=pageForward.Visibility=Visibility.Visible;await PageAsync(token);return;
+                token.ThrowIfCancellationRequested();status.Visibility=Visibility.Collapsed;
+                var pdf=new PdfPreviewView(()=>OpenExternal(true),
+                    (width,height)=>{if(!closed&&!token.IsCancellationRequested)geometry.Apply(width,height);},
+                    message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;status.Text=message;}});
+                content.Content=pdf;await pdf.LoadAsync(pdfPath,token);return;
             }
             if(kind is "epub" or "mobi" or "archive" or "font")
             {
@@ -116,35 +112,19 @@ internal sealed class PreviewWindow : Window
             }
             var prepared=await services.Visuals.PrepareAsync(item.FullPath,true,token);
             token.ThrowIfCancellationRequested();
-            toolbar.Visibility=status.Visibility=Visibility.Collapsed;root.Padding=new(5);
+            status.Visibility=Visibility.Collapsed;root.Padding=new(5);
             var previewImage=new ImagePreviewView(()=>OpenExternal(true));content.Content=previewImage;
             var dimensions=await previewImage.LoadAsync(prepared,token);
             token.ThrowIfCancellationRequested();geometry.Apply(dimensions.Width,dimensions.Height);
             if(!token.IsCancellationRequested)status.Text=$"{index+1} / {items.Count} · Space / Esc 关闭";
         }
         catch(OperationCanceledException){}
-        catch(Exception error){if(!token.IsCancellationRequested){toolbar.Visibility=status.Visibility=Visibility.Visible;root.Padding=new(5);content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}
+        catch(Exception error){if(!token.IsCancellationRequested){status.Visibility=Visibility.Visible;root.Padding=new(5);content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}
     }
     private static ScrollViewer Text(string text)
     {
         var scroll=new ScrollViewer {Content=new TextBlock {Text=text,IsTextSelectionEnabled=true,TextWrapping=TextWrapping.Wrap,Margin=new(12),FontSize=15},HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
         IdleScrollBars.Attach(scroll);return scroll;
-    }
-    private async void RenderPage(int delta)
-    {
-        if(page+delta<1||page+delta>pageCount)return;page+=delta;
-        try{await PageAsync(reading.Token);}catch(OperationCanceledException){}catch(Exception error){status.Text=error.Message;}
-    }
-    private async Task PageAsync(CancellationToken token)
-    {
-        pageBack.IsEnabled=pageForward.IsEnabled=false;
-        var reply=await services.Providers.RequestAsync("pdf.render",[sessionId,pdfPath,page],token);
-        var bytes=Convert.FromBase64String(reply.GetProperty("base64").GetString()!);
-        using var stream=new InMemoryRandomAccessStream();using(var writer=new DataWriter(stream.GetOutputStreamAt(0))){writer.WriteBytes(bytes);await writer.StoreAsync();}
-        stream.Seek(0);var bitmap=new BitmapImage();await bitmap.SetSourceAsync(stream);
-        if(token.IsCancellationRequested)return;content.Content=new Image {Source=bitmap,Stretch=Stretch.Uniform};status.Text=$"第 {page} / {pageCount} 页";
-        geometry.Apply(bitmap.PixelWidth,bitmap.PixelHeight,24,110);
-        pageBack.IsEnabled=page>1;pageForward.IsEnabled=page<pageCount;
     }
     private async Task CloseSessionAsync()
     {
@@ -152,7 +132,6 @@ internal sealed class PreviewWindow : Window
         try
         {
             if(old=="text")await services.Providers.RequestAsync("text.cancel",[id]);
-            else if(old is "pdf" or "office")await services.Providers.RequestAsync("pdf.close",[id]);
             else if(old is "font" or "epub" or "mobi" or "archive")await services.Providers.RequestAsync(old+".close",[id]);
             if(old=="office")await services.Office.RequestAsync("office.close",[id]);
         }catch{}

@@ -26,12 +26,13 @@ internal sealed class ImagePreviewView : Grid
     private readonly DispatcherQueueTimer idle;
     private long lastActivity;
     private Windows.Foundation.Point? lastPointerPosition;
-    public ImagePreviewView(Action openExternal)
+    public ImagePreviewView(Action openExternal,FrameworkElement? pageTools=null)
     {
         Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         scroll.Content=image;Children.Add(scroll);IdleScrollBars.Attach(scroll);
         var tools=Ui.Row(scale,Ui.Tool("\uE71F","缩小",()=>Zoom(1/1.25f)),zoomSlider,Ui.Tool("\uE8A3","放大",()=>Zoom(1.25f)),Ui.Button("适应",Fit),Ui.Tool("\uE8A7","默认程序打开",openExternal));
         tools.Spacing=4;scale.Width=44;scale.VerticalAlignment=VerticalAlignment.Center;
+        if(pageTools is not null)tools.Children.Insert(0,pageTools);
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(zoomSlider,"图片缩放百分比");
         zoomSlider.ValueChanged+=(_,_)=>{if(!syncingZoom)SetZoom((float)(zoomSlider.Value/100));};
         tools.HorizontalAlignment=HorizontalAlignment.Center;
@@ -89,9 +90,11 @@ internal sealed class ImagePreviewView : Grid
     public async Task<(double Width,double Height)> LoadAsync(string path,CancellationToken token)
     {
         var bitmap=await CachedBitmapLoader.LoadAsync(image,path,1600,token);
-        token.ThrowIfCancellationRequested();width=bitmap.PixelWidth;height=bitmap.PixelHeight;Fit();
+        token.ThrowIfCancellationRequested();SetBitmap(bitmap);
         return (width,height);
     }
+    public void SetBitmap(Microsoft.UI.Xaml.Media.Imaging.BitmapImage bitmap)
+    {image.Source=bitmap;width=bitmap.PixelWidth;height=bitmap.PixelHeight;Fit();}
     private void Fit()
     {
         fit=true;if(width<=0||height<=0||scroll.ActualWidth<=0||scroll.ActualHeight<=0)return;
