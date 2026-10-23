@@ -13,10 +13,11 @@ internal sealed class VisualConnection : IAsyncDisposable
         await slots.WaitAsync(token);
         try
         {
-            // Videos use the existing Windows thumbnail provider, not image decoding.
-            var shell = !preview && FormatRegistry.Find(Path.GetExtension(path))?.Category == "video";
+            // Preserve the registry's Shell providers for RAW/HEIC and other system formats.
+            var format = FormatRegistry.Find(Path.GetExtension(path));
+            var shell = format?.CanShellPreview == true || (!preview && format?.Category == "video");
             var value = await host.RequestAsync(shell ? "ensureShell" : "ensure",
-                [path, shell ? "skim-shell-thumbnail" : preview ? "skim-preview" : "skim-thumbnail"]);
+                [path, shell ? (preview ? "skim-shell-preview" : "skim-shell-thumbnail") : preview ? "skim-preview" : "skim-thumbnail"]);
             token.ThrowIfCancellationRequested();
             var image = Path.GetFullPath(value.GetProperty("imagePath").GetString()!);
             if (!image.StartsWith(cacheRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("Core 图像越界");

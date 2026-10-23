@@ -52,6 +52,8 @@ assert(!/new\s+CoreSearch(?:AspectRange|IntegerRange)/.test(read('shell/Cap7CE.W
 assert(read('shell/Cap7CE.WinUI/Themes/ShellResources.xaml').includes('<controls:AssetTile/>'), 'custom tile must appear in compiled XAML to generate WinUI activation metadata');
 assert(/Unloaded\s*\+=/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs')), 'recycled tiles must release pixels');
 assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('Cap7CE-PhaseF'), 'visual cache must be separate from production');
+const nativeVisualConnection = read('shell/Cap7CE.WinUI/Services/VisualConnection.cs');
+assert(nativeVisualConnection.includes('format?.CanShellPreview == true') && nativeVisualConnection.includes('preview ? "skim-shell-preview" : "skim-shell-thumbnail"'), 'native visuals must route registered Shell formats through both thumbnail and preview providers');
 const theme = read('shell/Cap7CE.WinUI/Themes/ThemeService.cs');
 const sidebarAssets = read('scripts/winui-sidebar-assets.cjs');
 assert(!/\.tsx|\.css/.test(sidebarAssets), 'sidebar asset extraction must not import old UI code or styles');
