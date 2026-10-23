@@ -20,22 +20,25 @@ internal sealed class PreviewWindow : Window
     private readonly ContentControl content=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};
     private readonly TextBlock status=Ui.Text("",true);
     private readonly Button pageBack,pageForward;
+    private readonly StackPanel toolbar;
     private IReadOnlyList<AssetItem> items=[];
     private CancellationTokenSource reading=new();
     private string sessionId="",kind="",pdfPath="";
     private int index,page=1,pageCount;
     private MediaPlayerElement? media;
-    public PreviewWindow(ShellServices services)
+    private readonly PreviewWindowGeometry geometry;
+    public PreviewWindow(ShellServices services,Window owner)
     {
+        geometry=new(this,owner);
         this.services=services;AppWindow.Resize(new(1100,820));
         root.RowDefinitions.Add(new(){Height=GridLength.Auto});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         pageBack=Ui.Button("上一页",()=>RenderPage(-1));pageForward=Ui.Button("下一页",()=>RenderPage(1));
-        var toolbar=Ui.Row(Ui.Tool("\uE72B","上一个文件",()=>Move(-1)),Ui.Tool("\uE72A","下一个文件",()=>Move(1)),pageBack,pageForward,
+        toolbar=Ui.Row(Ui.Tool("\uE72B","上一个文件",()=>Move(-1)),Ui.Tool("\uE72A","下一个文件",()=>Move(1)),pageBack,pageForward,
             Ui.Button("默认程序打开",()=>OpenExternal()));root.Children.Add(toolbar);
         Grid.SetRow(content,1);root.Children.Add(content);Grid.SetRow(status,2);root.Children.Add(status);
         var surface=new ContentControl {Content=root,IsTabStop=true,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};Content=surface;
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
-        surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key is VirtualKey.Escape or VirtualKey.Space){e.Handled=true;Close();}else if(e.Key==VirtualKey.Left){e.Handled=true;Move(-1);}else if(e.Key==VirtualKey.Right){e.Handled=true;Move(1);}};
+        surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key is VirtualKey.Escape or VirtualKey.Space){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}else if(e.Key==VirtualKey.Left){e.Handled=true;Move(-1);}else if(e.Key==VirtualKey.Right){e.Handled=true;Move(1);}};
         Closed+=(_,_)=>{reading.Cancel();media?.MediaPlayer?.Pause();media?.MediaPlayer?.Dispose();_=CloseSessionAsync();};
         services.Preferences.Changed+=ApplyTheme;Closed+=(_,_)=>services.Preferences.Changed-=ApplyTheme;ApplyTheme();
     }
@@ -51,6 +54,7 @@ internal sealed class PreviewWindow : Window
         reading.Cancel();reading.Dispose();reading=new();var token=reading.Token;
         media?.MediaPlayer?.Pause();media?.MediaPlayer?.Dispose();media=null;content.Content=null;status.Text="正在准备预览…";
         pageBack.Visibility=pageForward.Visibility=Visibility.Collapsed;
+        toolbar.Visibility=status.Visibility=Visibility.Visible;root.Padding=new(12);
         try
         {
             await CloseSessionAsync();token.ThrowIfCancellationRequested();FileAccessGuard.Validate(item);
@@ -91,12 +95,15 @@ internal sealed class PreviewWindow : Window
                 status.Text=kind=="archive"?"压缩包目录（只读）":"只读预览";return;
             }
             var prepared=await services.Visuals.PrepareAsync(item.FullPath,true,token);
-            token.ThrowIfCancellationRequested();var previewImage=new Image {Stretch=Stretch.Uniform};content.Content=previewImage;
-            await CachedBitmapLoader.LoadAsync(previewImage,prepared,1600,token);
+            token.ThrowIfCancellationRequested();
+            toolbar.Visibility=status.Visibility=Visibility.Collapsed;root.Padding=new(5);
+            var previewImage=new ImagePreviewView(()=>Move(-1),()=>Move(1),()=>OpenExternal(true),index>0,index<items.Count-1);content.Content=previewImage;
+            var dimensions=await previewImage.LoadAsync(prepared,token);
+            token.ThrowIfCancellationRequested();geometry.Apply(dimensions.Width,dimensions.Height);
             if(!token.IsCancellationRequested)status.Text=$"{index+1} / {items.Count} · Space / Esc 关闭";
         }
         catch(OperationCanceledException){}
-        catch(Exception error){if(!token.IsCancellationRequested){content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}
+        catch(Exception error){if(!token.IsCancellationRequested){toolbar.Visibility=status.Visibility=Visibility.Visible;root.Padding=new(12);content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}
     }
     private static ScrollViewer Text(string text)
     {
@@ -129,6 +136,6 @@ internal sealed class PreviewWindow : Window
             if(old=="office")await services.Office.RequestAsync("office.close",[id]);
         }catch{}
     }
-    private void OpenExternal()
-    {if(index<0||index>=items.Count)return;try{FileAccessGuard.Validate(items[index]);System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(items[index].FullPath){UseShellExecute=true});}catch(Exception error){status.Text=error.Message;}}
+    private void OpenExternal(bool closeAfter=false)
+    {if(index<0||index>=items.Count)return;try{FileAccessGuard.Validate(items[index]);System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(items[index].FullPath){UseShellExecute=true});if(closeAfter)Close();}catch(Exception error){status.Visibility=Visibility.Visible;status.Text=error.Message;}}
 }

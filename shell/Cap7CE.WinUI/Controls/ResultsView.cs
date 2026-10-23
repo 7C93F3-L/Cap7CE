@@ -32,6 +32,13 @@ internal sealed class ResultsView : UserControl
     public IReadOnlyList<AssetItem> Selection => IsGallery?gallery.Selection:ActiveView.SelectedItems.OfType<AssetItem>().ToArray();
     public ResultsView()
     {
+        PreviewKeyDown+=(_,e)=>{
+            if(e.Key!=Windows.System.VirtualKey.Space||e.OriginalSource is TextBox||commands is null)return;
+            if(new[]{Windows.System.VirtualKey.Control,Windows.System.VirtualKey.Menu,Windows.System.VirtualKey.Shift}.Any(key=>Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down)))return;
+            var selected=Selection;if(selected.Count==0)return;
+            e.Handled=true;
+            if(!e.KeyStatus.WasKeyDown)commands.Run(()=>{commands.Preview(selected[0]);return Task.CompletedTask;});
+        };
         grid.Resources["GridViewHeaderItemDividerStroke"]=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
         grid.ItemsPanel = (ItemsPanelTemplate)XamlReader.Load("<ItemsPanelTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><ItemsWrapGrid Orientation='Horizontal' CacheLength='1'/></ItemsPanelTemplate>");
         grid.ItemTemplate = (DataTemplate)Application.Current.Resources["CapAssetTileTemplate"];

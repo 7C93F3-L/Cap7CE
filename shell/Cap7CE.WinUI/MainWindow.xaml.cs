@@ -127,7 +127,7 @@ public sealed partial class MainWindow : Window
     }
     private void ShowPreview(Models.AssetItem item)
     {
-        if(preview is null){preview=new(services);preview.Closed+=(_,_)=>preview=null;}
+        if(preview is null){preview=new(services,this);preview.Closed+=(_,_)=>preview=null;}
         preview.Show(item,active?.Items.ToArray()??[item]);
     }
     private void OpenSettings()
