@@ -2,6 +2,20 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
 var checks = 0;
+void CheckReveal(double top,double height,double offset,double viewport,double maximum,double expected)
+{
+    if(Math.Abs(GalleryGeometry.RevealOffset(new(0,0,top,100,height),offset,viewport,maximum)-expected)>.001)
+        throw new Exception("Gallery keyboard navigation must scroll only enough to reveal its target");
+}
+CheckReveal(300,100,0,600,2000,0); // Third visible row stays in place.
+CheckReveal(320,100,200,600,2000,200); // Same-row navigation preserves a scrolled viewport.
+CheckReveal(100,100,200,600,2000,100); // Above the viewport.
+CheckReveal(750,100,200,600,2000,250); // Only reveal the bottom edge.
+CheckReveal(200,100,200,600,2000,200); // Exactly at the top.
+CheckReveal(700,100,200,600,2000,200); // Exactly at the bottom.
+CheckReveal(100,900,200,600,2000,200); // Oversized item spanning the viewport.
+CheckReveal(900,900,200,600,2000,900); // Oversized item below the viewport.
+CheckReveal(2100,100,200,600,1500,1500); // Clamp to the content end.
 await AnimationSourceChecks.RunAsync();
 TextPreviewChecks.Run();
 FontPreviewChecks.Run();

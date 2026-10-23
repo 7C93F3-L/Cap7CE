@@ -2,6 +2,16 @@ namespace Cap7CE.WinUI.Models;
 internal readonly record struct GalleryBox(int Index,double Left,double Top,double Width,double Height);
 internal sealed record GalleryGeometry(IReadOnlyList<GalleryBox> Boxes,double Height)
 {
+    public static double RevealOffset(GalleryBox target,double offset,double viewport,double maximum)
+    {
+        if(viewport<=0)return offset;
+        var bottom=target.Top+target.Height;
+        // An oversized item already spanning the viewport needs no movement.
+        if(target.Top<offset&&bottom<offset+viewport)offset=target.Top;
+        else if(bottom>offset+viewport&&target.Top>offset)
+            offset=target.Height>viewport?target.Top:bottom-viewport;
+        return Math.Clamp(offset,0,Math.Max(0,maximum));
+    }
     // Active catalogJustifiedRows fitting: 5 DIP gaps, 28 DIP captions and natural last row.
     public static GalleryGeometry Create(int count,double width,Func<int,double> ratio,double target)
     {

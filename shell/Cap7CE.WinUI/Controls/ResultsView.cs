@@ -26,6 +26,7 @@ internal sealed class ResultsView : UserControl
     private AssetCollection? items;
     private bool listMode;
     private bool horizontal;
+    private bool keyboardSelect;
     private readonly ResultsGridLayout gridLayout;
     private ListViewBase ActiveView => listMode && !horizontal ? list : grid;
     public event Action<IReadOnlyList<AssetItem>>? SelectionChanged;
@@ -33,6 +34,9 @@ internal sealed class ResultsView : UserControl
     public ResultsView()
     {
         PreviewKeyDown+=(_,e)=>{
+            keyboardSelect=!IsGallery&&ReferenceEquals(ActiveView,grid)
+                &&e.Key is Windows.System.VirtualKey.Left or Windows.System.VirtualKey.Right or Windows.System.VirtualKey.Up or Windows.System.VirtualKey.Down or Windows.System.VirtualKey.Home or Windows.System.VirtualKey.End
+                &&!new[]{Windows.System.VirtualKey.Control,Windows.System.VirtualKey.Menu,Windows.System.VirtualKey.Shift}.Any(key=>Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down));
             if(e.Key!=Windows.System.VirtualKey.Space||e.OriginalSource is TextBox||commands is null)return;
             if(new[]{Windows.System.VirtualKey.Control,Windows.System.VirtualKey.Menu,Windows.System.VirtualKey.Shift}.Any(key=>Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down)))return;
             var selected=Selection;if(selected.Count==0)return;
@@ -45,6 +49,15 @@ internal sealed class ResultsView : UserControl
         grid.ItemContainerStyle=(Style)Application.Current.Resources["CapResultItem"];grid.Padding=new(6);
         grid.GroupStyle.Add(new GroupStyle{HeaderTemplate=(DataTemplate)XamlReader.Load("<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><TextBlock Text='{Binding Title}' FontSize='12' Opacity='0.6' Margin='8,8,0,4'/></DataTemplate>")});
         gridLayout = new(grid);
+        grid.GotFocus+=(_,_)=>{
+            if(!keyboardSelect)return;
+            var target=FocusManager.GetFocusedElement(grid.XamlRoot) as DependencyObject;
+            while(target is not null&&target is not GridViewItem)target=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(target);
+            if(target is GridViewItem {FocusState:FocusState.Keyboard} container&&grid.ItemFromContainer(container) is AssetItem item
+                &&(grid.SelectedItems.Count!=1||!grid.SelectedItems.Contains(item))) {
+                grid.SelectedItems.Clear();grid.SelectedItem=item;
+            }
+        };
         list.ItemTemplate = (DataTemplate)XamlReader.Load("<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><StackPanel Orientation='Horizontal' Spacing='18' Padding='6'><FontIcon Glyph='{Binding Glyph}' FontSize='16'/><TextBlock Text='{Binding Name}' Width='300' TextTrimming='CharacterEllipsis'/><TextBlock Text='{Binding SizeLabel}' Width='90'/><TextBlock Text='{Binding ModifiedLabel}' Width='150'/><TextBlock Text='{Binding FullPath}' Opacity='0.55' TextTrimming='CharacterEllipsis'/></StackPanel></DataTemplate>");
         foreach (var view in new ListViewBase[] { grid, list })
         {

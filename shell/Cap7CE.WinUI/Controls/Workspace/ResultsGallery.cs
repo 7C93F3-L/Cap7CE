@@ -32,7 +32,7 @@ internal sealed class ResultsGallery : UserControl
         };
         repeater.ElementClearing+=(_,e)=>{if(e.Element is GalleryTile tile){tiles.Remove(tile);tile.Pick=tile.Open=null;tile.Context=null;tile.Drag=null;tile.DragError=null;}};
         scroll.ViewChanged+=async(_,_)=>await LoadMore();scroll.SizeChanged+=async(_,_)=>await LoadMore();
-        KeyDown+=NavigateKey;Unloaded+=(_,_)=>Detach();Loaded+=(_,_)=>Observe();
+        PreviewKeyDown+=NavigateKey;Unloaded+=(_,_)=>Detach();Loaded+=(_,_)=>Observe();
     }
     public void Configure(FileCommands value)=>commands=value;
     public void Bind(AssetCollection value)
@@ -93,7 +93,10 @@ internal sealed class ResultsGallery : UserControl
             var best=candidates.OrderBy(b=>Math.Abs(b.Top-box.Top)*10000+Math.Abs(b.Left+b.Width/2-box.Left-box.Width/2)).FirstOrDefault();if(best.Height>0)next=best.Index;
         }
         e.Handled=true;if(!Down(VirtualKey.Control))selection.Pick(items,next,false,Down(VirtualKey.Shift));SyncSelection();
-        if(layout.Box(next) is {} target)scroll.ChangeView(null,Math.Clamp(target.Top,0,scroll.ScrollableHeight),null,true);
-        repeater.UpdateLayout();(repeater.TryGetElement(next) as Control)?.Focus(FocusState.Keyboard);
+        if(layout.Box(next) is {} target) {
+            var offset=GalleryGeometry.RevealOffset(target,scroll.VerticalOffset,scroll.ViewportHeight,scroll.ScrollableHeight);
+            if(Math.Abs(offset-scroll.VerticalOffset)>.5){scroll.ChangeView(null,offset,null,true);repeater.UpdateLayout();}
+        }
+        (repeater.TryGetElement(next) as Control)?.Focus(FocusState.Keyboard);
     }
 }
