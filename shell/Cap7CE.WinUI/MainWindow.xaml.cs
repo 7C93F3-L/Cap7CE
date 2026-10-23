@@ -84,7 +84,9 @@ public sealed partial class MainWindow : Window
         try{services.Shortcuts?.Configure(services.Preferences.Current.QuickActions);}catch(Exception error){Notice(error.Message);}
         AssetTile.Visuals=services.Visuals;NewTab("");
         try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice("收藏读取失败："+error.Message);}
-        try{await services.ConnectAsync();if(!closed&&active is not null)await active.NavigateAsync("");}catch(Exception error){Notice(error.Message);}
+        // Core readiness updates capabilities; it must not replace user navigation
+        // or cancel directory reads started while the connection was pending.
+        try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(error.Message);}
     }
     private void NewTab(string path)
     {

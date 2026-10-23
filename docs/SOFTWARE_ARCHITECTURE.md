@@ -2,7 +2,7 @@
 
 ## 当前实施状态（2026-10-22）
 
-WorkspaceToolbar仅交换recursive与sort的展示顺序。
+MainWindow.StartAsync先创建可浏览的首页，连接Core完成后仅强制更新当前BrowseSession的FilterAvailabilityService能力，不再NavigateAsync空路径；启动期间的目录导航、查询状态、选择与文件系统分页由原会话继续拥有，后续显式导航/刷新沿既有Core或文件系统分流。Core启动协议、数据库及索引流程不变。WorkspaceToolbar仅交换recursive与sort的展示顺序。
 
 PreviewWindow构造末尾同步执行首次ThemeService.Apply，在Show/Activate/geometry.Apply.UpdateLayout前安装WindowTitleBar内容根；后续偏好变化仍由原ApplyTheme入队。避免文本、通用文件快速路径先Loaded再被延迟初始主题重挂内容树，而视觉异步路径已完成主题的首次显示差异。PreviewNavigationView固定观察viewport本身并以其计算位置，不再持有可被标题栏替换的XamlRoot.Content；沿用可见箭头才命中、空白侧区穿透、Loaded/Unloaded配对事件释放。
 
