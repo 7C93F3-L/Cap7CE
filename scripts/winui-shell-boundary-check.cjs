@@ -93,6 +93,8 @@ const archivePreview = read('shell/Cap7CE.WinUI/Controls/ArchivePreviewView.cs')
 assert(archivePreview.includes('new ListView') && archivePreview.includes('ListViewSelectionMode.None') && archivePreview.includes('truncated'), 'archive preview must keep a virtualized read-only list and report truncation');
 assert(!/CoreNodeHost|RequestAsync|File\.|Directory\.|FileCommands|ItemClick\+=/.test(archivePreview), 'archive display cannot extract entries or issue source operations');
 const previewNavigation = read('shell/Cap7CE.WinUI/Controls/PreviewNavigationView.cs');
+assert(previewNavigation.includes('GetCurrentPoint(viewport)') && previewNavigation.includes('viewport.XamlRoot?.Content??viewport'), 'preview hover must use explicit viewport coordinates and root pointer observation');
+assert(read('shell/Cap7CE.WinUI/Controls/Workspace/ResultsGallery.cs').includes('PreviewKeyDown+=NavigateKey'), 'gallery selection must run before native directional focus movement');
 assert(previewNavigation.includes('var region=new Grid {Width=56,Background=null') && previewNavigation.includes('faces[i].IsHitTestVisible=visible&&buttons[i].IsEnabled'), 'preview side regions and invisible arrows must pass input to underlying content');
 assert(previewNavigation.includes('AddHandler(PointerMovedEvent,pointerPosition,true)') && previewNavigation.includes('RemoveHandler(PointerMovedEvent,pointerPosition)'), 'preview hover observation must use the viewport with balanced subscriptions');
 const genericPreview = read('shell/Cap7CE.WinUI/Controls/FileInfoPreviewView.cs');

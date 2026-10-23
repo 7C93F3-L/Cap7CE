@@ -14,20 +14,20 @@ internal sealed class PreviewNavigationView : Grid
     private UIElement? pointerOwner;
     private readonly PointerEventHandler pointerPosition;
     public static SolidColorBrush SurfaceBrush()=>new(Windows.UI.Color.FromArgb(210,32,32,32));
-    public PreviewNavigationView(Action previous,Action next)
+    public PreviewNavigationView(FrameworkElement viewport,Action previous,Action next)
     {
-        Background=null;
+        Background=null;HorizontalAlignment=HorizontalAlignment.Stretch;VerticalAlignment=VerticalAlignment.Stretch;
         pointerPosition=(_,e)=>{
-            var point=e.GetCurrentPoint(this).Position;
-            hovered=point.X>=0&&point.X<=ActualWidth&&point.Y>=0&&point.Y<ActualHeight-100
-                &&(point.X<56||point.X>ActualWidth-56);
+            var point=e.GetCurrentPoint(viewport).Position;
+            hovered=point.X>=0&&point.X<=viewport.ActualWidth&&point.Y>=0&&point.Y<viewport.ActualHeight-100
+                &&(point.X<56||point.X>viewport.ActualWidth-56);
             UpdateVisibility();
         };
         Children.Add(Side("\uE76B","上一个文件",previous,HorizontalAlignment.Left));
         Children.Add(Side("\uE76C","下一个文件",next,HorizontalAlignment.Right));
         Loaded+=(_,_)=>{
             if(pointerOwner is not null)return;
-            pointerOwner=Parent as UIElement;
+            pointerOwner=viewport.XamlRoot?.Content??viewport;
             pointerOwner?.AddHandler(PointerMovedEvent,pointerPosition,true);
             pointerOwner?.AddHandler(PointerEnteredEvent,pointerPosition,true);
             pointerOwner?.AddHandler(PointerExitedEvent,pointerPosition,true);
