@@ -10,11 +10,11 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class ImagePreviewView : Grid
 {
     private readonly Image image=new(){Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
-    private readonly Grid surface=new(){HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+    private readonly Grid surface=new(){Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent),HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly ScrollViewer scroll=new(){ZoomMode=ZoomMode.Enabled,MinZoomFactor=0.1f,MaxZoomFactor=8,
         HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,
         HorizontalScrollMode=ScrollMode.Enabled,VerticalScrollMode=ScrollMode.Enabled,
-        HorizontalContentAlignment=HorizontalAlignment.Center,VerticalContentAlignment=VerticalAlignment.Center};
+        Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent),HorizontalContentAlignment=HorizontalAlignment.Center,VerticalContentAlignment=VerticalAlignment.Center};
     private readonly TextBlock scale=Ui.Text("100%",true);
     private readonly Slider zoomSlider=new(){Minimum=10,Maximum=800,Value=100,StepFrequency=1,Width=110,VerticalAlignment=VerticalAlignment.Center};
     private bool syncingZoom;

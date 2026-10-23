@@ -12,12 +12,14 @@ internal sealed class AnimatedImageView : Grid,IDisposable
     private const string ImageUri="https://cap7ce-animation.invalid/image";
     private const string DocumentUri="https://cap7ce-animation.invalid/preview";
     private const string Document="<!doctype html><meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src https://cap7ce-animation.invalid; style-src 'unsafe-inline'\"><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}img{width:100%;height:100%;object-fit:contain}</style><img src='"+ImageUri+"'>";
-    private readonly WebView2 browser=new(){IsHitTestVisible=false,IsTabStop=false};
+    private readonly WebView2 browser=new(){IsHitTestVisible=false,IsTabStop=false,DefaultBackgroundColor=Windows.UI.Color.FromArgb(0,0,0,0)};
     private bool disposed;
     private MemoryStream? response;
     private MemoryStream? documentResponse;
     public AnimatedImageView()
     {
+        browser.Resources["SolidBackgroundFillColorBase"]=Windows.UI.Color.FromArgb(0,0,0,0);
+        browser.Resources["ApplicationPageBackgroundThemeBrush"]=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
         Children.Add(browser);
         Children.Add(new Border {Background=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent)});
         Unloaded+=(_,_)=>Dispose();
