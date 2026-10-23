@@ -81,6 +81,9 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const previewNavigation = read('shell/Cap7CE.WinUI/Controls/PreviewNavigationView.cs');
+assert(previewNavigation.includes('var region=new Grid {Width=56,Background=null') && previewNavigation.includes('faces[i].IsHitTestVisible=visible&&buttons[i].IsEnabled'), 'preview side regions and invisible arrows must pass input to underlying content');
+assert(previewNavigation.includes('AddHandler(PointerMovedEvent,pointerPosition,true)') && previewNavigation.includes('RemoveHandler(PointerMovedEvent,pointerPosition)'), 'preview hover observation must use the viewport with balanced subscriptions');
 const genericPreview = read('shell/Cap7CE.WinUI/Controls/FileInfoPreviewView.cs');
 assert(genericPreview.includes('ThumbnailOptions.ReturnOnlyIfCached') && genericPreview.includes('ThumbnailType.Image'), 'generic preview must use existing/embedded thumbnails and reject icon substitutes');
 assert(!/CoreNodeHost|RequestAsync|PrepareAsync|StoredMetadata|Timer/.test(genericPreview), 'generic preview cannot generate caches, extract content or start background work');
