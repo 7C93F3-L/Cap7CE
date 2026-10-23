@@ -4,6 +4,7 @@ using Cap7CE.WinUI.Models;
 var checks = 0;
 await AnimationSourceChecks.RunAsync();
 TextPreviewChecks.Run();
+FontPreviewChecks.Run();
 var policy = new WorkspaceLayoutPolicy();
 WorkspaceLayoutSnapshot Size(double width, double height, double left = 156, double right = 280, bool filters = true, bool details = true)
     => policy.Update(width, height, left, right, filters, details);

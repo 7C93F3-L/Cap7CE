@@ -81,6 +81,9 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const fontPreview = read('shell/Cap7CE.WinUI/Controls/FontPreviewView.cs');
+assert(fontPreview.includes('64*1024*1024') && !/AddFont|Install|CoreNodeHost|RequestAsync/.test(fontPreview), 'font preview must stay bounded and cannot install fonts or create another provider');
+assert(read('shell/Cap7CE.WinUI/Models/FontPreviewDocument.cs').includes('FontCharacterCoverage.Supports(font,ChineseSample)'), 'Chinese specimen must use exact source-font coverage');
 const archivePreview = read('shell/Cap7CE.WinUI/Controls/ArchivePreviewView.cs');
 assert(archivePreview.includes('new ListView') && archivePreview.includes('ListViewSelectionMode.None') && archivePreview.includes('truncated'), 'archive preview must keep a virtualized read-only list and report truncation');
 assert(!/CoreNodeHost|RequestAsync|File\.|Directory\.|FileCommands|ItemClick\+=/.test(archivePreview), 'archive display cannot extract entries or issue source operations');

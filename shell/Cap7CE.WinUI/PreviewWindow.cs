@@ -126,8 +126,10 @@ internal sealed class PreviewWindow : Window
                 else if(kind=="archive") {
                     status.Visibility=Visibility.Collapsed;content.Content=new ArchivePreviewView(reply);return;
                 }
-                else content.Content=Text($"字体：{reply.GetProperty("familyName")}\n样式：{reply.GetProperty("styleName")}\n字重：{reply.GetProperty("weight")}\n字形数：{reply.GetProperty("glyphCount")}\n\n原生动态字体字样展示尚未迁入，可使用默认程序打开。");
-                status.Text=kind=="archive"?"压缩包目录（只读）":"只读预览";return;
+                else {
+                    status.Visibility=Visibility.Collapsed;
+                    var font=new FontPreviewView(token);content.Content=font;await font.LoadAsync(item.FullPath,reply,token);return;
+                }
             }
             var prepared=await services.Visuals.PrepareAsync(item.FullPath,true,token);
             token.ThrowIfCancellationRequested();

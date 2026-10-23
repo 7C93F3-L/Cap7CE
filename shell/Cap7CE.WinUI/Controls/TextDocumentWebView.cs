@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Services;
+using Cap7CE.WinUI.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
@@ -12,7 +13,7 @@ internal sealed class TextDocumentWebView : Grid,IDisposable
     private readonly List<MemoryStream> responses=[];
     private bool disposed;
     public TextDocumentWebView(){Children.Add(browser);Unloaded+=(_,_)=>Dispose();}
-    public async Task LoadAsync(string html,CancellationToken token)
+    public async Task LoadAsync(string html,CancellationToken token,byte[]? fontBytes=null)
     {
         using var cancellation=token.Register(()=>DispatcherQueue.TryEnqueue(Dispose));
         var environment=await CoreWebView2Environment.CreateWithOptionsAsync(null,Path.Combine(PreferenceStore.DataRoot,"text-webview"),new CoreWebView2EnvironmentOptions()).AsTask(token);
@@ -21,7 +22,7 @@ internal sealed class TextDocumentWebView : Grid,IDisposable
         token.ThrowIfCancellationRequested();if(disposed)throw new OperationCanceledException(token);
         browser.DefaultBackgroundColor=Windows.UI.Color.FromArgb(0,0,0,0);
         var core=browser.CoreWebView2;
-        core.Settings.IsScriptEnabled=false;core.Settings.IsWebMessageEnabled=false;
+        core.Settings.IsScriptEnabled=false;core.Settings.IsWebMessageEnabled=fontBytes is not null;
         core.Settings.AreDevToolsEnabled=false;core.Settings.AreDefaultContextMenusEnabled=false;
         core.Settings.IsStatusBarEnabled=false;
         core.AddWebResourceRequestedFilter("*",CoreWebView2WebResourceContext.All);
@@ -29,6 +30,9 @@ internal sealed class TextDocumentWebView : Grid,IDisposable
             if(!disposed&&e.Request.Uri==DocumentUri) {
                 var stream=new MemoryStream(System.Text.Encoding.UTF8.GetBytes(html),false);responses.Add(stream);
                 e.Response=environment.CreateWebResourceResponse(stream.AsRandomAccessStream(),200,"OK","Content-Type: text/html; charset=utf-8\r\nCache-Control: no-store");
+            } else if(!disposed&&fontBytes is not null&&e.Request.Uri==FontPreviewDocument.FontUri) {
+                var stream=new MemoryStream(fontBytes,false);responses.Add(stream);
+                e.Response=environment.CreateWebResourceResponse(stream.AsRandomAccessStream(),200,"OK","Content-Type: application/octet-stream\r\nCache-Control: no-store");
             } else e.Response=environment.CreateWebResourceResponse(null,403,"Forbidden","");
         };
         ulong? navigationId=null;
@@ -45,7 +49,22 @@ internal sealed class TextDocumentWebView : Grid,IDisposable
             if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new IOException("正文显示失败："+e.WebErrorStatus));
         }
         core.NavigationCompleted+=Completed;
-        try {core.Navigate(DocumentUri);await ready.Task.WaitAsync(TimeSpan.FromSeconds(15),token);}
+        try {
+            core.Navigate(DocumentUri);await ready.Task.WaitAsync(TimeSpan.FromSeconds(15),token);
+            if(fontBytes is not null) {
+                var fontReady=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                void FontLoaded(object? sender,CoreWebView2WebMessageReceivedEventArgs e) {
+                    if(e.Source!=DocumentUri)return;
+                    if(e.TryGetWebMessageAsString()=="font-ready")fontReady.TrySetResult();
+                    else fontReady.TrySetException(new IOException("字体无法加载。"));
+                }
+                core.WebMessageReceived+=FontLoaded;
+                try {
+                    await core.ExecuteScriptAsync("document.fonts.ready.then(()=>{const ok=[...document.fonts].some(f=>f.family==='Cap7CEPreviewFont'&&f.status==='loaded');if(ok)document.querySelector('main').style.visibility='visible';chrome.webview.postMessage(ok?'font-ready':'font-failed');}).catch(()=>chrome.webview.postMessage('font-failed')); ").AsTask(token);
+                    await fontReady.Task.WaitAsync(TimeSpan.FromSeconds(10),token);
+                } finally {core.WebMessageReceived-=FontLoaded;}
+            }
+        }
         finally {core.NavigationCompleted-=Completed;}
     }
     public void Dispose()
