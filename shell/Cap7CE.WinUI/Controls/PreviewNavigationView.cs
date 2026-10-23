@@ -27,7 +27,7 @@ internal sealed class PreviewNavigationView : Grid
         Children.Add(Side("\uE76C","下一个文件",next,HorizontalAlignment.Right));
         Loaded+=(_,_)=>{
             if(pointerOwner is not null)return;
-            pointerOwner=viewport.XamlRoot?.Content??viewport;
+            pointerOwner=viewport;
             pointerOwner?.AddHandler(PointerMovedEvent,pointerPosition,true);
             pointerOwner?.AddHandler(PointerEnteredEvent,pointerPosition,true);
             pointerOwner?.AddHandler(PointerExitedEvent,pointerPosition,true);
