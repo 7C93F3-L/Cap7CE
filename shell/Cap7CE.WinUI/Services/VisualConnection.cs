@@ -15,7 +15,7 @@ internal sealed class VisualConnection : IAsyncDisposable
         {
             // Preserve the registry's Shell providers for RAW/HEIC and other system formats.
             var format = FormatRegistry.Find(Path.GetExtension(path));
-            var shell = format?.CanShellPreview == true || (!preview && format?.Category == "video");
+            var shell = format?.CanShellPreview == true || (!preview && format?.CanThumbnail != true);
             var value = await host.RequestAsync(shell ? "ensureShell" : "ensure",
                 [path, shell ? (preview ? "skim-shell-preview" : "skim-shell-thumbnail") : preview ? "skim-preview" : "skim-thumbnail"]);
             token.ThrowIfCancellationRequested();
