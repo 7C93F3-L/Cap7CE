@@ -49,11 +49,7 @@ internal sealed class SettingsCatalog
     private void Storage()
     {
         Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>new CacheSettingsView(services,owner,notice),descriptionOverride:"缓存缩略图与预览内容，清理后按需重新生成；源文件、索引和关键词保持不变。");
-        Mainline("缓存与索引","index","stableSettings.metadataBuild","stableSettings.desc.metadataBuild",()=>Ui.Button(T("stableSettings.manageMetadataBuild"),OpenMaintenance));
-    }
-    private void OpenMaintenance()
-    {
-        services.ShowMaintenance();
+        Entries.Add(new("缓存与索引",T("stableSettings.section.index"),"","",()=>new MaintenanceSettingsView(services,owner),true));
     }
     private UIElement Toggle(Func<bool> read,Func<bool,Task> save)
     {

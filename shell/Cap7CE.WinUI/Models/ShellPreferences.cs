@@ -2,6 +2,8 @@ namespace Cap7CE.WinUI.Models;
 
 public sealed record ShellPreferences
 {
+    public string[] IndexVolumeOrder {get;init;}=[];
+    public Dictionary<string,bool> IndexVolumeSelection {get;init;}=[];
     public bool Notifications {get;init;}
     public bool QuickActions {get;init;}
 	public bool AlwaysOnTop { get; init; }

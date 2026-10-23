@@ -23,7 +23,7 @@ internal sealed class SettingsPages
             {
                 var section=Ui.Column();section.Spacing=5;
                 section.Children.Add(Ui.Text(group.Key,true));
-                foreach(var row in group)section.Children.Add(new SettingsCard(row.Title,row.Description,row.Create(),row.Expanded));
+                foreach(var row in group)section.Children.Add(row.Title.Length==0?row.Create():new SettingsCard(row.Title,row.Description,row.Create(),row.Expanded));
                 column.Children.Add(section);
             }
         }

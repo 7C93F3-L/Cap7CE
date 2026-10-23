@@ -33,7 +33,7 @@ internal static class HomeEntries
 		{
 			var root = ReadyRoot(drive);
 			if (root is not null)
-				yield return new AssetItem(new BasicSearchItem("drive-" + root, "本地磁盘 (" + root.TrimEnd('\\') + ")", "", "", IsDirectory: true), root);
+                yield return new AssetItem(new BasicSearchItem("drive-" + root, DrivePresentation.Read(root).Name, "", "", IsDirectory: true), root);
 		}
 	}
 	private static string? ReadyRoot(DriveInfo drive)

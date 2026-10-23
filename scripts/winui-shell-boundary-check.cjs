@@ -70,8 +70,9 @@ assert(settingsWindow.includes('NavigationView') && settingsWindow.includes('Set
 assert(!/\.RequestAsync|\.SaveAsync|new ColorPicker/.test(settingsWindow), 'settings window cannot own setting actions or editors');
 const settingsCatalog = read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs');
 const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowApp.tsx').matchAll(/<SettingCard title="([^"]+)" description="([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
-const indexSetting = read('src/renderer/settings-window/SettingsIndexSection.tsx').match(/title: "([^"]+)", description: "([^"]+)"/);
-mainlineSettings.push(`${indexSetting[1]}:${indexSetting[2]}`);
+const maintenanceSettings = read('shell/Cap7CE.WinUI/Views/Settings/MaintenanceSettingsView.cs');
+assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
+assert(maintenanceSettings.includes('new IndexMaintenanceView(services)') && !maintenanceSettings.includes('new MetadataMaintenanceView'), 'settings must show directory indexing only; metadata remains in the result context menu');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
 assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the current mainline without extra workspace controls');
 const settingsColors = read('shell/Cap7CE.WinUI/Controls/Settings/SettingsColors.cs');

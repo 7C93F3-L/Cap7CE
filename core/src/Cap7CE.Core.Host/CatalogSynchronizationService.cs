@@ -79,6 +79,7 @@ public sealed class CatalogSynchronizationService
         var targets = catalogVolumes
             .Where(volume => volume.Selected
                 && (requested.Length == 0 || requested.Contains(volume.VolumeId, StringComparer.Ordinal)))
+            .OrderBy(volume => requested.Length == 0 ? 0 : Array.IndexOf(requested, volume.VolumeId))
             .ToArray();
         var measurements = new List<CatalogSynchronizationMeasurement>(targets.Length);
         foreach (var target in targets)

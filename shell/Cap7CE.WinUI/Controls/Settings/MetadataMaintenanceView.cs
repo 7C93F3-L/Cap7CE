@@ -10,8 +10,8 @@ internal sealed class MetadataMaintenanceView : UserControl
 {
     private readonly ShellServices services;
     private readonly Window owner;
-    private readonly TextBox directory=new(){PlaceholderText="选择需要提取属性的目录",MinWidth=160};
-    private readonly TextBlock status=Ui.Text("尚未读取属性任务。",true);
+    private readonly TextBox directory=new(){PlaceholderText="选择目录",MinWidth=160};
+    private readonly TextBlock status=Ui.Text("暂无任务信息",true);
     private readonly List<Button> buttons=[];
     private readonly Controllers.VisibleTaskMonitor monitor=new();
     public void SetDirectory(string path)=>directory.Text=path;
@@ -22,9 +22,9 @@ internal sealed class MetadataMaintenanceView : UserControl
         var browse=Action("选择目录",ChooseAsync);
         var path=new Grid {ColumnSpacing=8};path.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});path.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         path.Children.Add(directory);Grid.SetColumn(browse,1);path.Children.Add(browse);
-        var tools=Ui.Row(Action("提取此目录",()=>StartAsync(false)),Action("提取全部已索引磁盘",()=>StartAsync(true)),
-            Action("暂停",()=>InvokeAsync("pause")),Action("继续",()=>InvokeAsync("resume")),Action("取消目录队列",()=>InvokeAsync("cancelDirectories")),Action("刷新状态",()=>InvokeAsync("status")));
-        Content=Ui.Column(Ui.Text("属性提取会读取文件内容，并在Core管理的位置保存元数据。只有点击开始并确认后才运行；不自动恢复旧任务。",true),path,
+        var tools=Ui.Row(Action("提取目录",()=>StartAsync(false)),Action("提取已索引磁盘",()=>StartAsync(true)),
+            Action("暂停",()=>InvokeAsync("pause")),Action("继续",()=>InvokeAsync("resume")),Action("取消队列",()=>InvokeAsync("cancelDirectories")),Action("刷新",()=>InvokeAsync("status")));
+        Content=Ui.Column(path,
             new ScrollViewer {Content=tools,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled},status);
         Unloaded+=(_,_)=>monitor.Dispose();
     }
