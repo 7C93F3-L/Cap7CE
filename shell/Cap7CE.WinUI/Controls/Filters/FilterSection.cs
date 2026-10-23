@@ -19,7 +19,7 @@ internal sealed class FilterSection : UserControl
         if(edit is not null) {
             var button=ActionButton("",()=>{}); button.Width=22;button.Height=22;button.Padding=new(3);
             button.Content=new FontIcon {Glyph="\uE70F",FontSize=11};
-            AutomationProperties.SetName(button,"编辑"+title);ToolTipService.SetToolTip(button,"编辑"+title);button.Click+=(_,_)=>edit(button);heading.Children.Add(button);
+            AutomationProperties.SetName(button,"自定义"+title);ToolTipService.SetToolTip(button,"自定义"+title);button.Click+=(_,_)=>edit(button);heading.Children.Add(button);
             HoverReveal.Attach(this,button);
         }
         Summary.Style=(Style)Application.Current.Resources["CapFilterSummary"];heading.Children.Add(Summary);

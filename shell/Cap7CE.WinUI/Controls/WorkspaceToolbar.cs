@@ -50,7 +50,7 @@ internal sealed class WorkspaceToolbar : UserControl
         random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
         ((SidebarIcon)hidden.Content).OutlinePath=WorkspaceIcons.Icon(value.ShowHidden?"eye":"eyeOff").OutlinePath;
-        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启 · 再次点击取消":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":value.FilesystemBrowsing?" · 文件系统逐层读取，各目录内排序":"")}");
+        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":value.FilesystemBrowsing?" · 文件系统逐层读取，各目录内排序":"")}");
         WorkspaceIcons.Label(hidden,$"显示隐藏项 · {(value.ShowHidden?"开启":"关闭")}");WorkspaceIcons.Label(sort,value.Random?"排序 · 随机浏览":$"排序 · {SortLabel(value.Sort)}");Reflow();
     }
     public void ApplyPreferences(ShellPreferences value)
@@ -81,7 +81,7 @@ internal sealed class WorkspaceToolbar : UserControl
     {for(DependencyObject? item=target;item is not null;item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(ReferenceEquals(item,this))return true;return false;}
     private void Reload(){if(session is not null)Run(()=>session.NavigateAsync(session.PathValue,false));}
     private async void Run(Func<Task> action){if(session is null)return;try{await action();}catch(Exception error){Failure?.Invoke(error.Message);}}
-    private static string ViewLabel(WorkspaceViewMode mode)=>mode switch {WorkspaceViewMode.List=>"列表",WorkspaceViewMode.OriginalRatio=>"原比例网格",_=>"方形网格"};
+    private static string ViewLabel(WorkspaceViewMode mode)=>mode switch {WorkspaceViewMode.List=>"列表",WorkspaceViewMode.OriginalRatio=>"原比例",_=>"等比例"};
     private void ShowView()
     {
         if(compact)return;

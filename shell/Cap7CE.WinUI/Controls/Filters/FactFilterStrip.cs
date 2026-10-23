@@ -76,7 +76,7 @@ internal sealed class FactFilterStrip : UserControl
                 var icon=FilterIcons.Create("dimensions");icon.Width=icon.Height=24;
                 Button dimensions=null!;dimensions=FilterSection.ActionButton("",()=>editor.Show(dimensions,domain,"dimensions"));
                 dimensions.Content=Ui.Column(icon,dimensionSummary);((StackPanel)dimensions.Content).Spacing=2;dimensions.Height=56;dimensions.MinWidth=110;
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(dimensions,"编辑图像尺寸");
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(dimensions,"自定义图像尺寸");
                 Group("尺寸",[dimensions],1,true,scope:"dimensions");
             }
         }
