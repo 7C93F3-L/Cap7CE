@@ -19,6 +19,7 @@ internal static class TextPreviewChecks
         Require(html.Contains("default-src 'none'")&&html.Contains("font:28px"),"Resource blocking and font bounds");
         Require(!TextPreviewDocument.CanRender(".html")&&!TextPreviewDocument.CanRender(".js")&&TextPreviewDocument.CanRender(".MD"),"Only Markdown renders as a page");
         Require(html.Contains("background:transparent")&&!html.Contains("background:#"),"Markdown surfaces stay transparent");
+        Require(html.Contains("body{background:transparent")&&html.Contains("background:rgba(128,128,128,.12)")&&html.Contains("pre code{background:transparent"),"Transparent page and single translucent code surface");
         Require(TextPreviewDocument.BookText(["第一章\n内容一","第二章\n内容二"])=="第一章\n内容一\n\n第二章\n内容二","Entire book retains chapter order and text");
         Require(TextPreviewDocument.BookText([])=="暂无可读正文","Empty book");
         Console.WriteLine("Text preview checks passed (Markdown, text-only HTML, transparent surfaces, continuous book text).");

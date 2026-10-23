@@ -31,6 +31,7 @@ internal static class FontPreviewChecks
         var html=FontPreviewDocument.Render(metadata.RootElement,font12,true);
         Require(html.Contains(FontPreviewDocument.ChineseSample)&&html.Contains("abcdefghijklmnopqrstuvwxyz")&&html.Contains("ABCDEFGHIJKLMNOPQRSTUVWXYZ")&&html.Contains("0123456789"),"Specimen contents");
         Require(html.Contains("A &lt;font&gt;")&&html.Contains("background:transparent"),"Name escaping and transparent page");
+        Require(html.Contains("body{background:transparent"),"Font specimen body cannot paint an opaque panel");
         html=FontPreviewDocument.Render(metadata.RootElement,new byte[12],false);
         Require(!html.Contains(FontPreviewDocument.ChineseSample),"No missing-glyph sentence or warning");
         Console.WriteLine("Font specimen checks passed (Unicode cmap4/cmap12, missing/zero glyphs, malformed fonts, specimen HTML).");

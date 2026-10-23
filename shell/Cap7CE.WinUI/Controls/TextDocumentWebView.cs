@@ -9,14 +9,22 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class TextDocumentWebView : Grid,IDisposable
 {
     private const string DocumentUri="https://cap7ce-text.invalid/preview";
-    private readonly WebView2 browser=new();
+    private readonly WebView2 browser=new(){DefaultBackgroundColor=Windows.UI.Color.FromArgb(0,0,0,0)};
     private readonly List<MemoryStream> responses=[];
     private bool disposed;
-    public TextDocumentWebView(){Children.Add(browser);Unloaded+=(_,_)=>Dispose();}
+    public TextDocumentWebView()
+    {
+        // The XAML visual bridge has its own theme background behind transparent HTML.
+        // Scope the overrides to this WebView; leave system/high-contrast resources intact.
+        browser.Resources["SolidBackgroundFillColorBase"]=Windows.UI.Color.FromArgb(0,0,0,0);
+        browser.Resources["ApplicationPageBackgroundThemeBrush"]=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        Children.Add(browser);Unloaded+=(_,_)=>Dispose();
+    }
     public async Task LoadAsync(string html,CancellationToken token,byte[]? fontBytes=null)
     {
         using var cancellation=token.Register(()=>DispatcherQueue.TryEnqueue(Dispose));
-        var environment=await CoreWebView2Environment.CreateWithOptionsAsync(null,Path.Combine(PreferenceStore.DataRoot,"text-webview"),new CoreWebView2EnvironmentOptions()).AsTask(token);
+        var options=new CoreWebView2EnvironmentOptions {ScrollBarStyle=CoreWebView2ScrollbarStyle.FluentOverlay};
+        var environment=await CoreWebView2Environment.CreateWithOptionsAsync(null,Path.Combine(PreferenceStore.DataRoot,"text-webview"),options).AsTask(token);
         token.ThrowIfCancellationRequested();if(disposed)throw new OperationCanceledException(token);
         await browser.EnsureCoreWebView2Async(environment).AsTask(token);
         token.ThrowIfCancellationRequested();if(disposed)throw new OperationCanceledException(token);
