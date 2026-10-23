@@ -13,7 +13,7 @@ internal sealed class PreviewSpaceKey : IDisposable
     private readonly Hook callback;
     private nint hook;
     private bool closing;
-    public PreviewSpaceKey(Window owner,Action close)
+    public PreviewSpaceKey(Window owner,Action close,Action<int> navigate)
     {
         window=WinRT.Interop.WindowNative.GetWindowHandle(owner);
         callback=(code,remove,pointer)=>{
@@ -21,9 +21,13 @@ internal sealed class PreviewSpaceKey : IDisposable
                 var message=Marshal.PtrToStructure<Message>(pointer);
                 var action=PreviewSpaceKeyPolicy.Action(message.Id,message.Key,message.Flags,
                     message.Key==0x20&&Owns(message.Window),remove==1);
-                if(action!=0) {
+                var navigation=PreviewSpaceKeyPolicy.NavigationAction(message.Id,message.Key,
+                    message.Key is 0x25 or 0x27&&Owns(message.Window),remove==1,
+                    (GetKeyState(0x10)&0x8000)!=0||(GetKeyState(0x11)&0x8000)!=0||(GetKeyState(0x12)&0x8000)!=0);
+                if(action!=0||navigation!=0) {
                     message.Id=0;message.Key=0;message.Flags=0;Marshal.StructureToPtr(message,pointer,false);
                     if(action==2&&!closing){closing=true;owner.DispatcherQueue.TryEnqueue(()=>close());}
+                    else if(navigation>=2&&!closing)owner.DispatcherQueue.TryEnqueue(()=>{if(!closing)navigate(navigation==2?-1:1);});
                 }
             }
             return CallNextHookEx(hook,code,remove,pointer);
@@ -46,5 +50,6 @@ internal sealed class PreviewSpaceKey : IDisposable
     [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook,int code,nuint remove,nint message);
     [DllImport("user32.dll")] private static extern nint GetAncestor(nint window,uint flags);
     [DllImport("user32.dll")] private static extern nint GetWindow(nint window,uint command);
+    [DllImport("user32.dll")] private static extern short GetKeyState(int key);
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
 }

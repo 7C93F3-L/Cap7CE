@@ -18,7 +18,7 @@ internal sealed class PreviewWindow : Window
     private readonly ShellServices services;
     private readonly Grid root=new(){Padding=new(5)};
     private readonly ContentControl content=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};
-    private readonly Grid viewport=new();
+    private readonly Grid viewport=new(){Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent)};
     private readonly TextBlock status=Ui.Text("",true);
     private readonly PreviewNavigationView navigation;
     private IReadOnlyList<AssetItem> items=[];
@@ -36,11 +36,11 @@ internal sealed class PreviewWindow : Window
         root.RowDefinitions.Add(new(){Height=GridLength.Auto});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         viewport.Children.Add(content);Grid.SetRow(viewport,1);root.Children.Add(viewport);Grid.SetRow(status,2);root.Children.Add(status);
         PreviewViewportStyle.Apply(viewport);
-        navigation=new(()=>Move(-1),()=>Move(1));viewport.Children.Add(navigation);
+        navigation=new(viewport,()=>Move(-1),()=>Move(1));Canvas.SetZIndex(navigation,10);viewport.Children.Add(navigation);
         var surface=new ContentControl {Content=root,IsTabStop=true,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};Content=surface;
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
-        surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key==VirtualKey.Escape){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}else if(e.Key==VirtualKey.Left){e.Handled=true;Move(-1);}else if(e.Key==VirtualKey.Right){e.Handled=true;Move(1);}};
-        spaceKey=new(this,()=>{if(!closed)Close();});Closed+=(_,_)=>spaceKey.Dispose();
+        surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key==VirtualKey.Escape){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}};
+        spaceKey=new(this,()=>{if(!closed)Close();},delta=>{if(!closed)Move(delta);});Closed+=(_,_)=>spaceKey.Dispose();
         Closed+=(_,_)=>{closed=true;reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
         services.Preferences.Changed+=ApplyTheme;Closed+=(_,_)=>services.Preferences.Changed-=ApplyTheme;ApplyTheme();
     }
