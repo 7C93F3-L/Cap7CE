@@ -59,10 +59,15 @@ internal sealed class ShellServices : IAsyncDisposable
         try{await RefreshVolumesAsync();if(closed||!ReferenceEquals(owner,Core))return;RefreshViews();await Metadata.NotifyAsync();}catch(Exception error){if(!closed)BackgroundError?.Invoke(error.Message);}
     }
     public async Task ReleaseSourcesAsync() { await Providers.ReleaseAsync(); await Office.ReleaseAsync(); await Visuals.ReleaseAsync(); }
+    public async Task<(long Count,long Bytes)> GetCacheStatsAsync()
+    {
+        var replies=await Task.WhenAll(Visuals.RequestAsync("stats"),Visuals.RequestAsync("skimStats"),Office.RequestAsync("cache.stats",[]));
+        return (replies.Sum(r=>r.GetProperty("cacheCount").GetInt64()),replies.Sum(r=>r.GetProperty("totalBytes").GetInt64()));
+    }
     public async Task ClearVisualCacheAsync()
     {
         VisualMaintenance?.Invoke(true);
-        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();Notify("WinUI缓存清理完成。");}
+        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();await Office.RequestAsync("cache.clear",[]);Notify("缓存清理完成。");}
         finally{VisualMaintenance?.Invoke(false);}
     }
     public void Notify(string text)

@@ -48,18 +48,12 @@ internal sealed class SettingsCatalog
     }
     private void Storage()
     {
-        Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>Ui.Button(T("settings.clearCache"),()=>actions.Run(ClearCacheAsync)),descriptionOverride:"清理WinUI缩略图和预览缓存，下次查看时按需生成；不清理旧界面缓存、索引和用户资料。");
+        Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>new CacheSettingsView(services,owner,notice),descriptionOverride:"缓存缩略图与预览内容，清理后按需重新生成；源文件、索引和关键词保持不变。");
         Mainline("缓存与索引","index","stableSettings.metadataBuild","stableSettings.desc.metadataBuild",()=>Ui.Button(T("stableSettings.manageMetadataBuild"),OpenMaintenance));
     }
     private void OpenMaintenance()
     {
         services.ShowMaintenance();
-    }
-    private async Task ClearCacheAsync()
-    {
-        var dialog=new ContentDialog {XamlRoot=owner.Content.XamlRoot,Title="清理缓存",Content="仅清理WinUI缩略图与预览缓存，索引、关键词和源文件保持不变。",PrimaryButtonText="清理",CloseButtonText="取消",DefaultButton=ContentDialogButton.Close};
-        if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
-        await services.ClearVisualCacheAsync();notice("WinUI缓存已清理。");
     }
     private UIElement Toggle(Func<bool> read,Func<bool,Task> save)
     {
