@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-22）
 
+动图显示层的文档与图像均由WebResourceRequested提供固定内存响应；NavigationStarting仅准入一次指定文档导航，NavigationCompleted按NavigationId匹配，忽略初始化空白页被后续导航取消的完成事件，避免错误的OperationCanceled使整个预览退回失败页。
+
+Services/AnimationSource只在独立预览中识别GIF、WebP的VP8X动画位及PNG/APNG的acTL，静态图继续使用既有缓存；PNG块检查最多512个，动图源读取限制64 MiB和4000万像素，不写源文件或发布缓存。Controls/AnimatedImageView使用现有WebView2依赖解码原始多帧字节，仅响应固定内存图片地址，禁用脚本、外部导航、权限和外部资源；独立浏览器资料位于PhaseF的animation-webview目录。ImagePreviewView的共用surface承载静态Image或动图及透明输入层，保留ScrollViewer缩放/拖动和浮条。卸载、读取取消及关闭释放WebView2和内存响应，不建立后台动画计时器；浏览器运行时缺失时沿既有可见错误及默认程序入口，不自动安装。缩略图和右侧详情不走该通道。
+
 Controls/PdfPreviewView通过Windows.Data.Pdf读取及有界分辨率渲染页面，不再通过Provider的pdf.open/render通道；Office仍保留既有转换/关闭链路。页面按钮注入ImagePreviewView底部浮条，复用缩放、拖动和3秒静止隐藏，取消后不回写视图。PreviewWindow统一移除顶部工具条，继续拥有文件切换和窗口几何；PDF视图仅拥有页内导航。
 
 formatCapabilities将APE登记为audio预览，browseOnly分组支持显式内容预览映射；WinUI继续由生成formats.json路由到现有音频会话，不引入解码器、转码或系统组件安装。

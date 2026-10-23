@@ -10,6 +10,7 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class ImagePreviewView : Grid
 {
     private readonly Image image=new(){Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+    private readonly Grid surface=new(){HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly ScrollViewer scroll=new(){ZoomMode=ZoomMode.Enabled,MinZoomFactor=0.1f,MaxZoomFactor=8,
         HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,
         HorizontalScrollMode=ScrollMode.Enabled,VerticalScrollMode=ScrollMode.Enabled,
@@ -29,7 +30,7 @@ internal sealed class ImagePreviewView : Grid
     public ImagePreviewView(Action openExternal,FrameworkElement? pageTools=null)
     {
         Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-        scroll.Content=image;Children.Add(scroll);IdleScrollBars.Attach(scroll);
+        surface.Children.Add(image);scroll.Content=surface;Children.Add(scroll);IdleScrollBars.Attach(scroll);
         var tools=Ui.Row(scale,Ui.Tool("\uE71F","缩小",()=>Zoom(1/1.25f)),zoomSlider,Ui.Tool("\uE8A3","放大",()=>Zoom(1.25f)),Ui.Button("适应",Fit),Ui.Tool("\uE8A7","默认程序打开",openExternal));
         tools.Spacing=4;scale.Width=44;scale.VerticalAlignment=VerticalAlignment.Center;
         if(pageTools is not null)tools.Children.Insert(0,pageTools);
@@ -59,7 +60,7 @@ internal sealed class ImagePreviewView : Grid
             scale.Text=$"{scroll.ZoomFactor*100:0}%";
             syncingZoom=true;zoomSlider.Value=scroll.ZoomFactor*100;syncingZoom=false;
         };
-        image.PointerPressed+=(_,e)=>{
+        surface.PointerPressed+=(_,e)=>{
             var point=e.GetCurrentPoint(scroll);
             if(e.Pointer.PointerDeviceType!=Microsoft.UI.Input.PointerDeviceType.Mouse||!point.Properties.IsLeftButtonPressed
                 ||(scroll.ScrollableWidth<=0&&scroll.ScrollableHeight<=0))return;
@@ -95,11 +96,18 @@ internal sealed class ImagePreviewView : Grid
     }
     public void SetBitmap(Microsoft.UI.Xaml.Media.Imaging.BitmapImage bitmap)
     {image.Source=bitmap;width=bitmap.PixelWidth;height=bitmap.PixelHeight;Fit();}
+    public async Task<(double Width,double Height)> LoadAnimationAsync(AnimationSource source,CancellationToken token)
+    {
+        var animation=new AnimatedImageView();surface.Children.Clear();surface.Children.Add(animation);
+        width=source.Width;height=source.Height;Fit();
+        try {await animation.LoadAsync(source,token);token.ThrowIfCancellationRequested();return (width,height);}
+        catch {animation.Dispose();throw;}
+    }
     private void Fit()
     {
         fit=true;if(width<=0||height<=0||scroll.ActualWidth<=0||scroll.ActualHeight<=0)return;
         var ratio=Math.Min(1,Math.Min(scroll.ActualWidth/width,scroll.ActualHeight/height));
-        image.Width=Math.Max(1,width*ratio);image.Height=Math.Max(1,height*ratio);
+        surface.Width=Math.Max(1,width*ratio);surface.Height=Math.Max(1,height*ratio);
         scroll.ChangeView(0,0,1,true);
     }
     private void Zoom(float factor)
@@ -114,7 +122,7 @@ internal sealed class ImagePreviewView : Grid
             var center=(offset+viewport/2-Math.Max(0,(viewport-extent*oldZoom)/2))/oldZoom;
             return Math.Clamp(center*newZoom-viewport/2,0,Math.Max(0,extent*newZoom-viewport));
         }
-        scroll.ChangeView(Offset(scroll.HorizontalOffset,viewportWidth,image.Width,old,next),
-            Offset(scroll.VerticalOffset,viewportHeight,image.Height,old,next),next,true);
+        scroll.ChangeView(Offset(scroll.HorizontalOffset,viewportWidth,surface.Width,old,next),
+            Offset(scroll.VerticalOffset,viewportHeight,surface.Height,old,next),next,true);
     }
 }

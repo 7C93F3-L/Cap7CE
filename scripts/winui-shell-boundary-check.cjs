@@ -81,5 +81,12 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const animationSource = read('shell/Cap7CE.WinUI/Services/AnimationSource.cs');
+const animationView = read('shell/Cap7CE.WinUI/Controls/AnimatedImageView.cs');
+assert(!/CoreNodeHost|RequestAsync|WriteAll|FileMode\.Create|Timer/.test(animationSource), 'animation source reader cannot publish caches, write sources or schedule background work');
+assert(animationSource.includes('64*1024*1024') && animationSource.includes('40_000_000') && animationSource.includes('i<512'), 'animation input and header walks must stay bounded');
+assert(animationView.includes('IsScriptEnabled=false') && animationView.includes('403,"Forbidden"') && animationView.includes('browser.Close()'), 'animation browser must block page scripts/external resources and close on disposal');
+assert(animationView.includes('core.Navigate(DocumentUri)') && animationView.includes('e.NavigationId!=navigationId') && !animationView.includes('NavigateToString('), 'animation readiness must belong to the explicit in-memory document navigation, never a cancelled initialization navigation');
+assert(!/AnimationSource|AnimatedImageView/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs') + read('shell/Cap7CE.WinUI/Services/VisualConnection.cs')), 'animation playback belongs only to independent preview');
 assert(commands.includes('BeforeMutation?.Invoke()') && commands.includes('ReleaseSourcesAsync') && commands.includes('deletedPaths'));
 console.log('WinUI shell boundaries passed');

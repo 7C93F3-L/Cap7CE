@@ -61,6 +61,14 @@ internal sealed class PreviewWindow : Window
         {
             await CloseSessionAsync();token.ThrowIfCancellationRequested();FileAccessGuard.Validate(item);
             sessionId=Guid.NewGuid().ToString();kind=item.Entry.IsDirectory?"folder":FormatRegistry.Find(item.Entry.Extension)?.PreviewKind??"fileInfo";
+            var animation=item.Entry.IsDirectory?null:await AnimationSource.TryLoadAsync(item.FullPath,token);
+            token.ThrowIfCancellationRequested();
+            if(animation is not null) {
+                status.Visibility=Visibility.Collapsed;
+                var animatedPreview=new ImagePreviewView(()=>OpenExternal(true));content.Content=animatedPreview;
+                var size=await animatedPreview.LoadAnimationAsync(animation,token);
+                token.ThrowIfCancellationRequested();geometry.Apply(size.Width,size.Height);return;
+            }
             if(kind is "folder" or "fileInfo")
             {
                 geometry.Apply(800,560,24,110);
