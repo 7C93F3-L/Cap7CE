@@ -33,7 +33,11 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
-        services.CatalogChanged+=()=>DispatcherQueue.TryEnqueue(()=>{if(!closed){foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Invalidate();Refresh();if(active is not null)filterAvailability?.Update(active,true);}});
+        services.CatalogChanged+=()=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
+            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {FilesystemBrowsing:false} session)session.Invalidate();
+            if(active is {FilesystemBrowsing:false,Busy:false})Refresh();
+            if(active is not null)filterAvailability?.Update(active,true);
+        }});
         services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
         services.MaintenanceRequested+=OpenMaintenance;
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));

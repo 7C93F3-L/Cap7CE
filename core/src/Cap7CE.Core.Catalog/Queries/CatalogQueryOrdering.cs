@@ -7,9 +7,10 @@ public enum CatalogQuerySort { NameAscending, NameDescending, ModifiedAscending,
 
 internal static class CatalogQueryOrdering
 {
+    private static string NameCollation(CatalogV2Query query)=>query.Scope.Kind==CatalogQueryScopeKind.DirectChildren?"CAP7CE_NATURAL":"NOCASE";
     public static string Order(CatalogV2Query query, string alias, bool entries = false)
     {
-        var name = $"{alias}.name COLLATE NOCASE";
+        var name = $"{alias}.name COLLATE {NameCollation(query)}";
         var identity = $"{alias}.volume_id, {alias}.file_reference" + (entries ? $", {alias}.entry_key" : "");
         var order = query.RandomSeed is not null ? $"{Queries.CatalogRandomOrdering.Expression(alias)}, {identity}" : query.Sort switch
         {
@@ -29,7 +30,8 @@ internal static class CatalogQueryOrdering
         var compare = query.Sort == CatalogQuerySort.NameDescending ? "<" : ">";
         var identity = "(n.volume_id > $afterVolume OR (n.volume_id=$afterVolume AND n.file_reference > $afterReference)"
             + (entries ? " OR (n.volume_id=$afterVolume AND n.file_reference=$afterReference AND n.entry_key > $afterEntry)" : "") + ")";
-        var name = $"(n.name COLLATE NOCASE {compare} $afterName COLLATE NOCASE OR (n.name=$afterName COLLATE NOCASE AND {identity}))";
+        var collation=NameCollation(query);
+        var name = $"(n.name COLLATE {collation} {compare} $afterName COLLATE {collation} OR (n.name=$afterName COLLATE {collation} AND {identity}))";
         if (query.RandomSeed is { } randomSeed) {
             var score = Queries.CatalogRandomOrdering.Expression("n");
             if (after.RandomScore != Queries.CatalogRandomOrdering.Score(after.VolumeId, after.FileReference, randomSeed)) throw new ArgumentException("Invalid random cursor anchor.");

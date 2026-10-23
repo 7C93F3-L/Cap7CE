@@ -16,6 +16,8 @@ internal static class CatalogV2Connection
         }.ToString());
         try {
             await connection.OpenAsync(token);
+            connection.CreateCollation("CAP7CE_NATURAL", (left,right)=>System.Globalization.CultureInfo.GetCultureInfo("en").CompareInfo.Compare(
+                left,right,System.Globalization.CompareOptions.IgnoreCase|System.Globalization.CompareOptions.IgnoreNonSpace|System.Globalization.CompareOptions.NumericOrdering));
             using var command = connection.CreateCommand();
             command.CommandText = "PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL; PRAGMA trusted_schema = OFF;";
             await command.ExecuteNonQueryAsync(token);
