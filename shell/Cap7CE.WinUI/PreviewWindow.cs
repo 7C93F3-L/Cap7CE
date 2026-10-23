@@ -57,9 +57,10 @@ internal sealed class PreviewWindow : Window
         ReleaseMedia();content.Content=null;status.Text="正在准备预览…";
         status.Visibility=Visibility.Visible;root.Padding=new(5);
         navigation.Update(index>0,index<items.Count-1);
+        var sourceValidated=false;
         try
         {
-            await CloseSessionAsync();token.ThrowIfCancellationRequested();FileAccessGuard.Validate(item);
+            await CloseSessionAsync();token.ThrowIfCancellationRequested();FileAccessGuard.Validate(item);sourceValidated=true;
             sessionId=Guid.NewGuid().ToString();kind=item.Entry.IsDirectory?"folder":FormatRegistry.Find(item.Entry.Extension)?.PreviewKind??"fileInfo";
             var animation=item.Entry.IsDirectory?null:await AnimationSource.TryLoadAsync(item.FullPath,token);
             token.ThrowIfCancellationRequested();
@@ -71,9 +72,7 @@ internal sealed class PreviewWindow : Window
             }
             if(kind is "folder" or "fileInfo")
             {
-                geometry.Apply(800,560,24,110);
-                content.Content=Text($"{item.Name}\n\n类型：{(item.Entry.IsDirectory?"文件夹":item.Entry.Extension)}\n大小：{item.SizeLabel}\n修改时间：{item.ModifiedLabel}\n位置：{item.FullPath}");
-                status.Text="基本信息 · 可用默认程序打开";return;
+                await ShowFileInfoAsync(item,token);return;
             }
             if(kind is "video" or "audio")
             {
@@ -137,7 +136,17 @@ internal sealed class PreviewWindow : Window
             if(!token.IsCancellationRequested)status.Text=$"{index+1} / {items.Count} · Space / Esc 关闭";
         }
         catch(OperationCanceledException){}
-        catch(Exception error){if(!token.IsCancellationRequested){status.Visibility=Visibility.Visible;root.Padding=new(5);content.Content=Text("此格式暂不可预览，可用默认程序打开。");status.Text=error.Message;}}
+        catch(Exception error){if(!token.IsCancellationRequested){
+            NativeDiagnostics.VisualFailure(error);
+            await ShowFileInfoAsync(item,token,sourceValidated);
+        }}
+    }
+    private async Task ShowFileInfoAsync(AssetItem item,CancellationToken token,bool readThumbnail=true)
+    {
+        if(closed||token.IsCancellationRequested)return;
+        ReleaseMedia();geometry.Apply(720,680);status.Visibility=Visibility.Collapsed;
+        var info=new FileInfoPreviewView(item,()=>OpenExternal(true));content.Content=info;
+        if(readThumbnail)await info.LoadAsync(item,token);
     }
     private static ScrollViewer Text(string text)
     {

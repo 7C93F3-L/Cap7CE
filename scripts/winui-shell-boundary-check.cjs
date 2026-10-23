@@ -81,6 +81,9 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const genericPreview = read('shell/Cap7CE.WinUI/Controls/FileInfoPreviewView.cs');
+assert(genericPreview.includes('ThumbnailOptions.ReturnOnlyIfCached') && genericPreview.includes('ThumbnailType.Image'), 'generic preview must use existing/embedded thumbnails and reject icon substitutes');
+assert(!/CoreNodeHost|RequestAsync|PrepareAsync|StoredMetadata|Timer/.test(genericPreview), 'generic preview cannot generate caches, extract content or start background work');
 const textDocument = read('shell/Cap7CE.WinUI/Models/TextPreviewDocument.cs');
 const textView = read('shell/Cap7CE.WinUI/Controls/TextPreviewView.cs');
 const textBrowser = read('shell/Cap7CE.WinUI/Controls/TextDocumentWebView.cs');
