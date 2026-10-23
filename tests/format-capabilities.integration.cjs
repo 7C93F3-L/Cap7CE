@@ -74,7 +74,8 @@ const { app } = require("electron");
   const shellPreviewExtensions = [
     ".heic", ".heif", ".dng", ".cr2", ".cr3", ".nef", ".arw", ".raf", ".orf", ".rw2"
   ];
-  assert.equal(searchableFileCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 64);
+  assert.equal(searchableFileCapabilities.filter((capability) => capability.previewKind === "fileInfo").length, 63);
+  assert.equal(fileFormatCapabilityByExtension.get(".ape").previewKind, "audio");
   for (const extension of shellPreviewExtensions) {
     const capability = fileFormatCapabilityByExtension.get(extension);
     assert.equal(capability.previewKind, "image", extension);

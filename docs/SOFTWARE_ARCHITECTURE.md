@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+formatCapabilities将APE登记为audio预览，browseOnly分组支持显式内容预览映射；WinUI继续由生成formats.json路由到现有音频会话，不引入解码器、转码或系统组件安装。
+
 Controls/AudioPreviewView组合原生音乐缩略图、格式图标、文件名/可选歌手专辑及既有MediaPlayerElement。封面最大320 DIP，按ThumbnailType.Image区分真实封面与系统图标，圆角沿PreviewViewportStyle；图片读取取消后不回写。元数据通过独立懒启动StoredMetadata宿主复用storedMetadata只读兼容接口，根固定ProductData，只读取已存在index/cap7ce-index.db且验证源版本；当前Catalog建库尚未提供歌手/专辑读取，不从源音频临时提取标签，不显示缺失提示。音视频统一AutoPlay与IsLoopingEnabled。
 
 Themes/PreviewViewportStyle统一拥有8 DIP预览圆角及Composition裁切；外层viewport与MediaPlayerElement共用，原生视频额外设置其公开CornerRadius属性，Loaded/SizeChanged同步。图片效果已确认，但本机视频仍无圆角，暂作已知限制；不替换播放器模板或开启逐帧复制。导航控件仅负责热区，不再拥有视口样式。

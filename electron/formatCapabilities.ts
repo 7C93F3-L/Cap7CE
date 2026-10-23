@@ -148,6 +148,7 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["epub", "epub"],
   ["mobi", "mobi"],
   ["flac", "audio"], ["m4a", "audio"], ["mp3", "audio"], ["ogg", "audio"], ["wav", "audio"],
+  ["ape", "audio"],
   ["mkv", "video"], ["mp4", "video"], ["mov", "video"], ["webm", "video"]
 ]);
 
@@ -201,7 +202,7 @@ const browseOnlyCapabilities = browseOnlyFormatGroups.flatMap(([category, extens
     canSearch: true,
     canThumbnail: false,
     canShellPreview: shellPreviewExtensions.has(`.${extension}`),
-    previewKind: shellPreviewExtensions.has(`.${extension}`) ? "image" : "fileInfo",
+    previewKind: contentPreviewKinds.get(extension) ?? (shellPreviewExtensions.has(`.${extension}`) ? "image" : "fileInfo"),
     canDirectPreview: false,
     canAIIndex: false,
     naturalSearchKinds: category === "visual" && extension === "psb"
