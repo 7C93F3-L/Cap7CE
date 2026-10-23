@@ -4,8 +4,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml.Hosting;
-using System.Numerics;
 
 namespace Cap7CE.WinUI.Controls;
 
@@ -26,26 +24,19 @@ internal sealed class ImagePreviewView : Grid
     private bool fit=true;
     private readonly Border overlay;
     private readonly DispatcherQueueTimer idle;
-    private readonly List<Border> navigationFaces=[];
-    private readonly List<Button> navigationButtons=[];
-    private int hoveredSides;
     private long lastActivity;
     private Windows.Foundation.Point? lastPointerPosition;
-    private static SolidColorBrush OverlayBrush()=>new(Windows.UI.Color.FromArgb(210,32,32,32));
-    public ImagePreviewView(Action previous,Action next,Action openExternal,bool canPrevious,bool canNext)
+    public ImagePreviewView(Action openExternal)
     {
         Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         scroll.Content=image;Children.Add(scroll);IdleScrollBars.Attach(scroll);
-        RoundedClip(scroll,8);
-        Children.Add(Navigation("\uE76B","上一个文件",previous,HorizontalAlignment.Left,canPrevious));
-        Children.Add(Navigation("\uE76C","下一个文件",next,HorizontalAlignment.Right,canNext));
         var tools=Ui.Row(scale,Ui.Tool("\uE71F","缩小",()=>Zoom(1/1.25f)),zoomSlider,Ui.Tool("\uE8A3","放大",()=>Zoom(1.25f)),Ui.Button("适应",Fit),Ui.Tool("\uE8A7","默认程序打开",openExternal));
         tools.Spacing=4;scale.Width=44;scale.VerticalAlignment=VerticalAlignment.Center;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(zoomSlider,"图片缩放百分比");
         zoomSlider.ValueChanged+=(_,_)=>{if(!syncingZoom)SetZoom((float)(zoomSlider.Value/100));};
         tools.HorizontalAlignment=HorizontalAlignment.Center;
         overlay=new Border {Child=tools,RequestedTheme=ElementTheme.Dark,
-            Background=OverlayBrush(),CornerRadius=new(12),Padding=new(8),
+            Background=PreviewNavigationView.SurfaceBrush(),CornerRadius=new(12),Padding=new(8),
             Margin=new(8,0,8,16),HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Bottom};
         Children.Add(overlay);
         idle=DispatcherQueue.CreateTimer();idle.Interval=TimeSpan.FromMilliseconds(100);idle.IsRepeating=true;
@@ -87,13 +78,6 @@ internal sealed class ImagePreviewView : Grid
         }),true);
         scroll.PointerCaptureLost+=(_,_)=>dragPointer=null;
     }
-    private static void RoundedClip(FrameworkElement target,float radius)
-    {
-        var visual=ElementCompositionPreview.GetElementVisual(target);
-        var shape=visual.Compositor.CreateRoundedRectangleGeometry();
-        shape.CornerRadius=new Vector2(radius);visual.Clip=visual.Compositor.CreateGeometricClip(shape);
-        target.SizeChanged+=(_,_)=>shape.Size=new Vector2((float)target.ActualWidth,(float)target.ActualHeight);
-    }
     private void ShowTools(){lastActivity=Environment.TickCount64;overlay.Opacity=1;overlay.IsHitTestVisible=true;idle.Start();}
     private bool KeyboardInside()
     {
@@ -101,27 +85,6 @@ internal sealed class ImagePreviewView : Grid
         if(focused is not Control {FocusState:FocusState.Keyboard})return false;
         for(var node=focused;node is not null;node=VisualTreeHelper.GetParent(node))if(ReferenceEquals(node,overlay))return true;
         return false;
-    }
-    private void UpdateNavigation()
-    {
-        var show=hoveredSides>0||navigationButtons.Any(button=>button.FocusState==FocusState.Keyboard);
-        foreach(var face in navigationFaces)face.Opacity=show?1:0;
-    }
-    private FrameworkElement Navigation(string glyph,string title,Action action,HorizontalAlignment side,bool enabled)
-    {
-        var button=Ui.Tool(glyph,title,action);button.Width=40;button.Height=40;
-        button.HorizontalAlignment=HorizontalAlignment.Center;button.VerticalAlignment=VerticalAlignment.Center;
-        button.Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);button.IsEnabled=enabled;
-        var face=new Border {Child=button,Background=OverlayBrush(),RequestedTheme=ElementTheme.Dark,CornerRadius=new(12),Opacity=0,
-            HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
-        navigationFaces.Add(face);navigationButtons.Add(button);
-        var region=new Border {Child=face,Width=56,HorizontalAlignment=side,VerticalAlignment=VerticalAlignment.Stretch,
-            Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent),Margin=new(0,0,0,100)};
-        region.PointerEntered+=(_,_)=>{hoveredSides++;UpdateNavigation();};
-        region.PointerExited+=(_,_)=>{hoveredSides=Math.Max(0,hoveredSides-1);UpdateNavigation();};
-        button.GotFocus+=(_,_)=>UpdateNavigation();
-        button.LostFocus+=(_,_)=>UpdateNavigation();
-        return region;
     }
     public async Task<(double Width,double Height)> LoadAsync(string path,CancellationToken token)
     {
