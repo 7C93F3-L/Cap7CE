@@ -25,7 +25,8 @@ internal sealed class PreviewWindow : Window
     private CancellationTokenSource reading=new();
     private string sessionId="",kind="",pdfPath="";
     private int index,page=1,pageCount;
-    private MediaPlayerElement? media;
+    private MediaPreviewSession? media;
+    private bool closed;
     private readonly PreviewWindowGeometry geometry;
     public PreviewWindow(ShellServices services,Window owner)
     {
@@ -39,10 +40,11 @@ internal sealed class PreviewWindow : Window
         var surface=new ContentControl {Content=root,IsTabStop=true,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};Content=surface;
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
         surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key is VirtualKey.Escape or VirtualKey.Space){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}else if(e.Key==VirtualKey.Left){e.Handled=true;Move(-1);}else if(e.Key==VirtualKey.Right){e.Handled=true;Move(1);}};
-        Closed+=(_,_)=>{reading.Cancel();media?.MediaPlayer?.Pause();media?.MediaPlayer?.Dispose();_=CloseSessionAsync();};
+        Closed+=(_,_)=>{closed=true;reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
         services.Preferences.Changed+=ApplyTheme;Closed+=(_,_)=>services.Preferences.Changed-=ApplyTheme;ApplyTheme();
     }
-    private void ApplyTheme()=>DispatcherQueue.TryEnqueue(()=>ThemeService.Apply(this,root,services.Preferences.Current));
+    private void ApplyTheme()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
+    private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();}
     public void Show(AssetItem item,IReadOnlyList<AssetItem> source)
     {
         items=source.Where(i=>!i.Entry.IsDirectory).ToArray();index=Array.IndexOf(items.ToArray(),item);if(index<0){items=[item];index=0;}
@@ -51,8 +53,9 @@ internal sealed class PreviewWindow : Window
     private void Move(int delta){var target=index+delta;if(target<0||target>=items.Count)return;index=target;Load(items[index]);}
     private async void Load(AssetItem item)
     {
+        if(closed)return;
         reading.Cancel();reading.Dispose();reading=new();var token=reading.Token;
-        media?.MediaPlayer?.Pause();media?.MediaPlayer?.Dispose();media=null;content.Content=null;status.Text="正在准备预览…";
+        ReleaseMedia();content.Content=null;status.Text="正在准备预览…";
         pageBack.Visibility=pageForward.Visibility=Visibility.Collapsed;
         toolbar.Visibility=status.Visibility=Visibility.Visible;root.Padding=new(12);
         try
@@ -66,8 +69,10 @@ internal sealed class PreviewWindow : Window
             }
             if(kind is "video" or "audio")
             {
-                media=new MediaPlayerElement {AreTransportControlsEnabled=true,AutoPlay=false,Source=MediaSource.CreateFromStorageFile(await StorageFile.GetFileFromPathAsync(item.FullPath))};
-                if(token.IsCancellationRequested){media.MediaPlayer?.Dispose();return;}content.Content=media;status.Text="使用原生媒体控件播放";return;
+                var file=await StorageFile.GetFileFromPathAsync(item.FullPath);
+                token.ThrowIfCancellationRequested();
+                media=new MediaPreviewSession(file,message=>{if(!closed&&!token.IsCancellationRequested)status.Text=message;});
+                content.Content=media.Element;status.Text="使用原生媒体控件播放";return;
             }
             if(kind=="text")
             {
