@@ -2,6 +2,18 @@
   "version": 1,
   "dependencies": {
     "net10.0-windows10.0.19041": {
+      "AngleSharp": {
+        "type": "Direct",
+        "requested": "[1.8.4, )",
+        "resolved": "1.8.4",
+        "contentHash": "lbwt3oqjyxI6x01NT0kRqnudE+gxLqRAs/X49/iVWyguj6OtRfYCanV1mL+jYZgeeAqnGqWzqi7+s5gdtBF1Ag=="
+      },
+      "Markdig": {
+        "type": "Direct",
+        "requested": "[0.41.3, )",
+        "resolved": "0.41.3",
+        "contentHash": "i3vSTyGpBGWbJB04aJ3cPJs0T3BV2e1nduW3EUHK/i+xUupYbym75iZPss/XjqhS5JlBErwQYnx7ofK3Zcsozg=="
+      },
       "Microsoft.WindowsAppSDK": {
         "type": "Direct",
         "requested": "[1.8.260209005, )",

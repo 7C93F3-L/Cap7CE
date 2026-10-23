@@ -1,0 +1,72 @@
+using Cap7CE.WinUI.Models;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Media;
+
+namespace Cap7CE.WinUI.Controls;
+
+internal sealed class TextPreviewView : Grid
+{
+    private readonly TextBox text=new(){IsReadOnly=true,AcceptsReturn=true,TextWrapping=TextWrapping.Wrap,
+        BorderThickness=new(0),Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent),Padding=new(24),
+        IsSpellCheckEnabled=false,IsTextPredictionEnabled=false,FontSize=16};
+    private readonly ContentControl body=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};
+    private readonly TextBlock size=Ui.Text("16");
+    private readonly TextBlock notice=Ui.Text("",true);
+    private readonly StackPanel tools;
+    private readonly CheckBox source=new(){Content="源码",MinWidth=0};
+    private readonly CheckBox wrap=new(){Content="自动换行",IsChecked=true,MinWidth=0};
+    private readonly CancellationToken lifetime;
+    private CancellationTokenSource? rendering;
+    private TextDocumentWebView? web;
+    private string value="",extension="";
+    private int fontSize=16;
+    public TextPreviewView(Action openExternal,CancellationToken token)
+    {
+        lifetime=token;Padding=new(56,8,56,8);RowSpacing=6;
+        RowDefinitions.Add(new(){Height=GridLength.Auto});RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});RowDefinitions.Add(new(){Height=GridLength.Auto});
+        // Override every native TextBox state locally, including hover and focus.
+        foreach(var key in new[]{"TextControlBackground","TextControlBackgroundPointerOver","TextControlBackgroundFocused","TextControlBackgroundDisabled",
+            "TextControlBorderBrush","TextControlBorderBrushPointerOver","TextControlBorderBrushFocused","TextControlBorderBrushDisabled"})
+            text.Resources[key]=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        ScrollViewer.SetVerticalScrollBarVisibility(text,ScrollBarVisibility.Auto);
+        ScrollViewer.SetHorizontalScrollBarVisibility(text,ScrollBarVisibility.Auto);
+        tools=Ui.Row(Ui.Tool("\uE738","减小字号",()=>Resize(-2)),size,Ui.Tool("\uE710","增大字号",()=>Resize(2)),wrap,source,Ui.Tool("\uE8A7","默认程序打开",openExternal));
+        tools.Spacing=12;notice.FontSize=12;
+        tools.VerticalAlignment=VerticalAlignment.Center;size.VerticalAlignment=VerticalAlignment.Center;
+        Children.Add(new ScrollViewer {Content=tools,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled});
+        Grid.SetRow(body,1);Children.Add(body);Grid.SetRow(notice,2);Children.Add(notice);
+        source.Click+=(_,_)=>Refresh();wrap.Click+=(_,_)=>{text.TextWrapping=wrap.IsChecked==true?TextWrapping.Wrap:TextWrapping.NoWrap;};
+        Unloaded+=(_,_)=>{rendering?.Cancel();rendering?.Dispose();rendering=null;web?.Dispose();};
+        ActualThemeChanged+=(_,_)=>{if(IsLoaded&&web is not null)Refresh();};
+    }
+    public void SetText(string content,string fileExtension,string information="")
+    {
+        value=content;extension=fileExtension.ToLowerInvariant();notice.Text=information;
+        source.Visibility=TextPreviewDocument.CanRender(extension)?Visibility.Visible:Visibility.Collapsed;
+        text.FontFamily=new(extension is ".txt" or ".md" or ".epub" or ".mobi"?"Segoe UI":"Consolas");
+        Refresh();
+    }
+    public void SetBookText(IReadOnlyList<string> chapters)
+    {
+        SetText(TextPreviewDocument.BookText(chapters),".epub","全文文字预览");
+    }
+    private void Resize(int delta){fontSize=Math.Clamp(fontSize+delta,12,28);size.Text=fontSize.ToString();Refresh();}
+    private async void Refresh()
+    {
+        rendering?.Cancel();rendering?.Dispose();rendering=CancellationTokenSource.CreateLinkedTokenSource(lifetime);
+        var token=rendering.Token;web?.Dispose();web=null;body.Content=null;
+        var rendered=TextPreviewDocument.CanRender(extension)&&source.IsChecked!=true;
+        wrap.Visibility=rendered?Visibility.Collapsed:Visibility.Visible;
+        if(!rendered){text.Text=value;text.FontSize=fontSize;body.Content=text;return;}
+        try {
+            var content=value;var format=extension;var dark=ActualTheme==ElementTheme.Dark;var font=fontSize;
+            var html=await Task.Run(()=>TextPreviewDocument.Render(content,format,dark,font),token);
+            token.ThrowIfCancellationRequested();
+            var view=new TextDocumentWebView();web=view;body.Content=view;await view.LoadAsync(html,token);
+        }
+        catch(OperationCanceledException){}
+        catch(Exception error){if(!token.IsCancellationRequested){web?.Dispose();web=null;text.Text=value;text.FontSize=fontSize;body.Content=text;notice.Text="格式预览失败，已显示源码："+error.Message;}}
+    }
+}

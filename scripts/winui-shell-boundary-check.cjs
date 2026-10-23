@@ -81,6 +81,12 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const textDocument = read('shell/Cap7CE.WinUI/Models/TextPreviewDocument.cs');
+const textView = read('shell/Cap7CE.WinUI/Controls/TextPreviewView.cs');
+const textBrowser = read('shell/Cap7CE.WinUI/Controls/TextDocumentWebView.cs');
+assert(!/CoreNodeHost|\.RequestAsync|File\.|Directory\.|Sqlite/.test(textDocument + textView), 'text presentation cannot read sources, own storage or call Core');
+assert(textDocument.includes('.DisableHtml()') && textDocument.includes("default-src 'none'"), 'formatted previews must disable Markdown HTML and block external resources');
+assert(textBrowser.includes('IsScriptEnabled=false') && textBrowser.includes('e.NavigationId!=navigationId') && textBrowser.includes('browser.Close()'), 'text browser must disable page scripts, match navigation and release on unload');
 const animationSource = read('shell/Cap7CE.WinUI/Services/AnimationSource.cs');
 const animationView = read('shell/Cap7CE.WinUI/Controls/AnimatedImageView.cs');
 assert(!/CoreNodeHost|RequestAsync|WriteAll|FileMode\.Create|Timer/.test(animationSource), 'animation source reader cannot publish caches, write sources or schedule background work');

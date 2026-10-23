@@ -95,8 +95,14 @@ internal sealed class PreviewWindow : Window
                 var reply=await services.Providers.RequestAsync("text.read",[sessionId,item.FullPath],token);
                 if(!reply.GetProperty("ok").GetBoolean())throw new IOException(reply.GetProperty("error").GetProperty("message").GetString());
                 if(token.IsCancellationRequested)return;
-                var value=reply.GetProperty("value");content.Content=Text(value.GetProperty("content").GetString()??"");
-                status.Text=value.GetProperty("truncated").GetBoolean()?"正文已按上限截断":"正文预览";return;
+                var value=reply.GetProperty("value");var raw=value.GetProperty("content").GetString()??"";
+                if(item.Entry.Extension.ToLowerInvariant() is ".doc" or ".docx") {
+                    content.Content=Text(raw);status.Text=value.GetProperty("truncated").GetBoolean()?"正文已按上限截断":"正文预览";return;
+                }
+                status.Visibility=Visibility.Collapsed;
+                var textPreview=new TextPreviewView(()=>OpenExternal(true),token);content.Content=textPreview;
+                textPreview.SetText(raw,item.Entry.Extension,
+                    (value.GetProperty("truncated").GetBoolean()?"正文已按 1 MiB 上限截断 · ":"")+value.GetProperty("encoding").GetString());return;
             }
             if(kind is "pdf" or "office")
             {
@@ -113,7 +119,11 @@ internal sealed class PreviewWindow : Window
                 geometry.Apply(800,560,24,110);
                 var args=kind=="font"?new object?[]{sessionId,item.FullPath,"zh-CN"}:new object?[]{sessionId,item.FullPath};
                 var reply=await services.Providers.RequestAsync(kind+".open",args,token);if(token.IsCancellationRequested)return;
-                if(kind is "epub" or "mobi")content.Content=Text(string.Join("\n\n",reply.GetProperty("chapters").EnumerateArray().Select(c=>c.GetProperty("text").GetString())));
+                if(kind is "epub" or "mobi") {
+                    status.Visibility=Visibility.Collapsed;
+                    var book=new TextPreviewView(()=>OpenExternal(true),token);content.Content=book;
+                    book.SetBookText(reply.GetProperty("chapters").EnumerateArray().Select(c=>c.GetProperty("text").GetString()??"").ToArray());return;
+                }
                 else if(kind=="archive")content.Content=Text(string.Join("\n",reply.GetProperty("entries").EnumerateArray().Select(e=>(e.GetProperty("directory").GetBoolean()?"▸ ":"  ")+e.GetProperty("path").GetString())));
                 else content.Content=Text($"字体：{reply.GetProperty("familyName")}\n样式：{reply.GetProperty("styleName")}\n字重：{reply.GetProperty("weight")}\n字形数：{reply.GetProperty("glyphCount")}\n\n原生动态字体字样展示尚未迁入，可使用默认程序打开。");
                 status.Text=kind=="archive"?"压缩包目录（只读）":"只读预览";return;
