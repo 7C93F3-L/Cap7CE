@@ -49,9 +49,23 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
-            if (services.Core is null&&path.Length>0&&string.IsNullOrWhiteSpace(Query)&&Filter.Count==0&&!Random)
-                return await BrowseFilesystemAsync(path,remember,version,token);
-            if (services.Core is null) throw new IOException("Core 未连接，请在设置中重新连接");
+            var plainBrowse = string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random;
+            // “此电脑” and ordinary directory browsing are shell capabilities. They
+            // must remain usable while the optional catalog host is reconnecting.
+            if (services.Core is null)
+            {
+                if (path.Length > 0 && plainBrowse)
+                    return await BrowseFilesystemAsync(path,remember,version,token);
+                if (path.Length == 0 && plainBrowse)
+                {
+                    var home = new AssetCollection();
+                    foreach (var item in HomeEntries.Create()) home.Add(item);
+                    if (remember && path != PathValue) { back.Push(PathValue); forward.Clear(); }
+                    PathValue = path; Title = "此电脑"; Items = home; FilesystemBrowsing = false;
+                    return true;
+                }
+                throw new IOException("搜索和筛选需要连接 Core；请在设置中重新连接后再试");
+            }
             CoreSearchScopeRequest? scope = null;
             var volumes = services.Volumes.Where(v => v.Queryable).Select(v => v.VolumeId).ToArray();
             if (path.Length > 0)
@@ -69,7 +83,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             var result = new AssetCollection(); string? cursor = null;
             if (path.Length == 0 && string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random)
             {
-                foreach (var item in HomeEntries.Create(services.Volumes)) result.Add(item);
+                foreach (var item in HomeEntries.Create()) result.Add(item);
             }
             else
             {

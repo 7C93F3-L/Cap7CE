@@ -17,7 +17,8 @@ internal sealed class ResultsView : UserControl
     private readonly ResultsGallery gallery=new(){Visibility=Visibility.Collapsed};
     private readonly StackPanel emptyPanel=new(){Spacing=8,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,MaxWidth=380,Margin=new(16)};
     private readonly TextBlock emptyHint=Ui.Text("",true);
-    private readonly Button retry=Ui.Button("重新加载",()=>{}),clearFilters=Ui.Button("清除筛选",()=>{});
+    private readonly Button retry=Ui.Button("重试",()=>{}),clearFilters=Ui.Button("清除筛选",()=>{});
+    private readonly StackPanel emptyActions=new(){Orientation=Orientation.Horizontal,Spacing=6,HorizontalAlignment=HorizontalAlignment.Center};
     private bool square=true,home,suspended;
     private bool IsGallery=>!square&&!listMode&&!horizontal&&!home;
     public event Action? Retry,ClearFilters;
@@ -47,7 +48,9 @@ internal sealed class ResultsView : UserControl
         }
         list.Visibility=Visibility.Collapsed;root.Children.Add(gallery);gallery.SelectionChanged+=()=>{if(IsGallery)SelectionChanged?.Invoke(Selection);};
         empty.HorizontalTextAlignment=TextAlignment.Center;emptyHint.HorizontalTextAlignment=TextAlignment.Center;
-        retry.Click+=(_,_)=>Retry?.Invoke();clearFilters.Click+=(_,_)=>ClearFilters?.Invoke();emptyPanel.Children.Add(empty);emptyPanel.Children.Add(emptyHint);emptyPanel.Children.Add(Ui.Row(retry,clearFilters));root.Children.Add(emptyPanel);
+        retry.Click+=(_,_)=>Retry?.Invoke();clearFilters.Click+=(_,_)=>ClearFilters?.Invoke();
+        emptyActions.Children.Add(retry);emptyActions.Children.Add(clearFilters);
+        emptyPanel.Children.Add(empty);emptyPanel.Children.Add(emptyHint);emptyPanel.Children.Add(emptyActions);root.Children.Add(emptyPanel);
         root.Background=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
         root.AddHandler(UIElement.TappedEvent,new TappedEventHandler((_,e)=>{if(IsBlank(e.OriginalSource as DependencyObject))ClearSelection();}),true);Content=root;
     }
@@ -60,7 +63,7 @@ internal sealed class ResultsView : UserControl
             list.ItemsSource=value;gallery.Bind(value);ApplyView(ActiveView,wasGallery);SelectionChanged?.Invoke([]);
         }
         emptyPanel.Visibility=value.Count==0?Visibility.Visible:Visibility.Collapsed;
-        empty.Text=busy?"正在载入…":error is not null?"无法读取当前位置":"没有匹配项";
+        empty.Text=busy?"正在载入…":error is not null?"暂时无法打开此位置":"没有匹配项";
         emptyHint.Text=error??(filtered?"可以调整搜索词或筛选条件后重试。":"此文件夹中没有可显示的内容。");
         retry.Visibility=!busy?Visibility.Visible:Visibility.Collapsed;clearFilters.Visibility=!busy&&filtered?Visibility.Visible:Visibility.Collapsed;
     }

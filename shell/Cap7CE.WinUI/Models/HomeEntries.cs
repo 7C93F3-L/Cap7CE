@@ -7,7 +7,9 @@ namespace Cap7CE.WinUI.Models;
 
 internal static class HomeEntries
 {
-	public static IEnumerable<AssetItem> Create(IReadOnlyList<CoreVolumeStatus> volumes)
+	// Home is a direct shell projection: it intentionally does not depend on
+	// catalog availability, index progress, or metadata state.
+	public static IEnumerable<AssetItem> Create()
 	{
 		(string, string)[] array = new (string, string)[6]
 		{
@@ -27,14 +29,16 @@ internal static class HomeEntries
 				yield return new AssetItem(new BasicSearchItem("home-" + text, text, "", "", IsDirectory: true), text2);
 			}
 		}
-		foreach (CoreVolumeStatus volume in volumes)
+		foreach (var drive in DriveInfo.GetDrives())
 		{
-			yield return new AssetItem(new BasicSearchItem(volume.VolumeId, "本地磁盘 (" + volume.DisplayName + ")", "", "", IsDirectory: true), volume.DisplayName.TrimEnd('\\') + "\\");
+			var root = ReadyRoot(drive);
+			if (root is not null)
+				yield return new AssetItem(new BasicSearchItem("drive-" + root, "本地磁盘 (" + root.TrimEnd('\\') + ")", "", "", IsDirectory: true), root);
 		}
-		foreach(var drive in DriveInfo.GetDrives())
-		{
-			if(drive.DriveType is not (DriveType.Fixed or DriveType.Removable)||volumes.Any(v=>string.Equals(v.DisplayName.TrimEnd('\\'),drive.Name.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase)))continue;
-			yield return new AssetItem(new BasicSearchItem("drive-"+drive.Name,"本地磁盘 ("+drive.Name.TrimEnd('\\')+")","","",IsDirectory:true),drive.Name);
-		}
+	}
+	private static string? ReadyRoot(DriveInfo drive)
+	{
+		try { return drive.IsReady ? drive.Name : null; }
+		catch (IOException) { return null; }
 	}
 }
