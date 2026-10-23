@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Cap7CE.WinUI.Models;
 namespace Cap7CE.WinUI.Services;
 internal sealed class VisualConnection : IAsyncDisposable
 {
@@ -12,7 +13,10 @@ internal sealed class VisualConnection : IAsyncDisposable
         await slots.WaitAsync(token);
         try
         {
-            var value = await host.RequestAsync("ensure", [path, preview ? "skim-preview" : "skim-thumbnail"]);
+            // Videos use the existing Windows thumbnail provider, not image decoding.
+            var shell = !preview && FormatRegistry.Find(Path.GetExtension(path))?.Category == "video";
+            var value = await host.RequestAsync(shell ? "ensureShell" : "ensure",
+                [path, shell ? "skim-shell-thumbnail" : preview ? "skim-preview" : "skim-thumbnail"]);
             token.ThrowIfCancellationRequested();
             var image = Path.GetFullPath(value.GetProperty("imagePath").GetString()!);
             if (!image.StartsWith(cacheRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("Core 图像越界");
