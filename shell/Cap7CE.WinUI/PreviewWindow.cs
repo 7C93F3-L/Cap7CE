@@ -123,7 +123,9 @@ internal sealed class PreviewWindow : Window
                     var book=new TextPreviewView(()=>OpenExternal(true),token);content.Content=book;
                     book.SetBookText(reply.GetProperty("chapters").EnumerateArray().Select(c=>c.GetProperty("text").GetString()??"").ToArray());return;
                 }
-                else if(kind=="archive")content.Content=Text(string.Join("\n",reply.GetProperty("entries").EnumerateArray().Select(e=>(e.GetProperty("directory").GetBoolean()?"▸ ":"  ")+e.GetProperty("path").GetString())));
+                else if(kind=="archive") {
+                    status.Visibility=Visibility.Collapsed;content.Content=new ArchivePreviewView(reply);return;
+                }
                 else content.Content=Text($"字体：{reply.GetProperty("familyName")}\n样式：{reply.GetProperty("styleName")}\n字重：{reply.GetProperty("weight")}\n字形数：{reply.GetProperty("glyphCount")}\n\n原生动态字体字样展示尚未迁入，可使用默认程序打开。");
                 status.Text=kind=="archive"?"压缩包目录（只读）":"只读预览";return;
             }

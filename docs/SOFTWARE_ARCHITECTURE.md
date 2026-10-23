@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+Controls/ArchivePreviewView仅将既有archive.open的有界清单投影为虚拟化ListView，文件名与父目录分层、大小独立列、完整路径作为提示，保留摘要、截断及空包信息。Models/ArchivePreviewEntry只拆分条目字符串，不将包内路径当本地路径读取；图标通过AssetItem.EntryGlyph与主窗口列表共用。无条目点击、解压、目录展开或新增后台请求，原取消/关闭会话及最多2000条边界保持。
+
 PreviewNavigationView在父视口以handledEventsToo观察指针位置计算两侧56 DIP悬停区域，加载/卸载成对装卸订阅，不设置Handled或捕获指针；布局Grid无背景，空白区域不参与命中。仅可见且可用的40 DIP原生箭头按钮接收点击，隐藏及禁用箭头也允许输入穿透；底部100 DIP避让保持，文件切换继续由PreviewWindow.Move统一处理。
 
 Controls/FileInfoPreviewView独立组合通用文件图标/缩略图、可选择文件名及基本属性，布局沿用AudioPreviewView的居中图像与下方信息，不引入信息卡片底色。属性由现有AssetItem投影，图标复用AssetPlaceholderIcon；StorageFile仅以ReturnOnlyIfCached读取已有或文件内嵌缩略图，非ThumbnailType.Image时保留格式图标，加载取消/卸载后不回写。PreviewWindow的fileInfo入口与专用预览失败共用ShowFileInfoAsync，内部错误仅写本地诊断，界面保持统一默认程序动作；不调用视觉缓存生成器、不建立索引、不提取属性、不改变音频/PDF等成功路径。

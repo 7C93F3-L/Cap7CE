@@ -22,13 +22,10 @@ public sealed class AssetItem(BasicSearchItem entry, string fullPath)
 	{
 		get
 		{
-			if (!Entry.IsDirectory)
-			{
-				return "\ue8a5";
-			}
-			return "\ue8b7";
+			return EntryGlyph(Entry.IsDirectory);
 		}
 	}
+    internal static string EntryGlyph(bool directory)=>directory?"\ue8b7":"\ue8a5";
 
 	public string SizeLabel
 	{
