@@ -83,6 +83,9 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const previewSpaceKey = read('shell/Cap7CE.WinUI/Services/PreviewSpaceKey.cs');
+assert(previewSpaceKey.includes('GetCurrentThreadId()') && previewSpaceKey.includes('Owns(message.Window)') && previewSpaceKey.includes('UnhookWindowsHookEx(hook)'), 'preview Space interception must be thread/window scoped and released');
+assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('!preview && format?.CanThumbnail != true'), 'grid must retain Shell fallback for formats without native image thumbnails');
 const fontPreview = read('shell/Cap7CE.WinUI/Controls/FontPreviewView.cs');
 assert(fontPreview.includes('64*1024*1024') && !/AddFont|Install|CoreNodeHost|RequestAsync/.test(fontPreview), 'font preview must stay bounded and cannot install fonts or create another provider');
 assert(read('shell/Cap7CE.WinUI/Models/FontPreviewDocument.cs').includes('FontCharacterCoverage.Supports(font,ChineseSample)'), 'Chinese specimen must use exact source-font coverage');

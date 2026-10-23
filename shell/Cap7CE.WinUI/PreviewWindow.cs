@@ -28,6 +28,7 @@ internal sealed class PreviewWindow : Window
     private MediaPreviewSession? media;
     private bool closed;
     private readonly PreviewWindowGeometry geometry;
+    private readonly PreviewSpaceKey spaceKey;
     public PreviewWindow(ShellServices services,Window owner)
     {
         geometry=new(this,owner,viewport);
@@ -38,7 +39,8 @@ internal sealed class PreviewWindow : Window
         navigation=new(()=>Move(-1),()=>Move(1));viewport.Children.Add(navigation);
         var surface=new ContentControl {Content=root,IsTabStop=true,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};Content=surface;
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
-        surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key is VirtualKey.Escape or VirtualKey.Space){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}else if(e.Key==VirtualKey.Left){e.Handled=true;Move(-1);}else if(e.Key==VirtualKey.Right){e.Handled=true;Move(1);}};
+        surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key==VirtualKey.Escape){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}else if(e.Key==VirtualKey.Left){e.Handled=true;Move(-1);}else if(e.Key==VirtualKey.Right){e.Handled=true;Move(1);}};
+        spaceKey=new(this,()=>{if(!closed)Close();});Closed+=(_,_)=>spaceKey.Dispose();
         Closed+=(_,_)=>{closed=true;reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
         services.Preferences.Changed+=ApplyTheme;Closed+=(_,_)=>services.Preferences.Changed-=ApplyTheme;ApplyTheme();
     }
