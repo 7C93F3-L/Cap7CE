@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj" />
+    <Compile Include="../Cap7CE.WinUI/Services/CoreConnection.cs;../Cap7CE.WinUI/Services/CoreLaunchProfile.cs;../Cap7CE.WinUI/Services/FramedRpc.cs" Link="%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

@@ -43,9 +43,12 @@ assert(catalogRefresh.includes('BrowseSession {UsesCatalogResults:true}')
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('CatalogRefreshRules.RetainSelection')
   && browseRouting.includes('result=Items') && browseRouting.includes('preserveSelection&&result.Count<Items.Count'),
   'background refresh must preserve existing identities, unchanged collections and loaded depth');
-assert(browseRouting.includes('if(path.Length>0&&plainBrowse)')
-  && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token,origin)') < browseRouting.indexOf('if (services.Core is null)'),
-  'ordinary directory listings must use the filesystem before checking Core or resolving Catalog scope');
+assert(browseRouting.includes('if(path.Length>0&&plainBrowse&&!Recursive)')
+  && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token,origin)') < browseRouting.indexOf('if (services.Core?.IsConnected!=true)'),
+  'direct-child browsing must remain fresh and independent of Core');
+assert(browseRouting.includes('if(plainBrowse)return await BrowseFilesystemAsync')
+  && browseRouting.includes('IncludeTotalCount: false'),
+  'recursive browsing must retain an unindexed fallback without forcing an exact count before the first Catalog page');
 assert(project.includes('<WindowsPackageType>None</WindowsPackageType>'));
 assert(read('shell/Directory.Build.props').includes('<RuntimeIdentifier>win-x64</RuntimeIdentifier>'));
 assert(!/arm64|win-x86/.test(project + read('shell/Directory.Build.props')));

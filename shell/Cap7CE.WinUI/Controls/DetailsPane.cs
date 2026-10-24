@@ -23,7 +23,7 @@ internal sealed class DetailsPane : UserControl
     private readonly DispatcherTimer debounce=new(){Interval=TimeSpan.FromMilliseconds(160)};
     private CancellationTokenSource reading=new();
     private IReadOnlyList<AssetItem> selected=[];
-    private (string Path,long? Count,bool Searching,int Filters) context=("",0,false,0);
+    private (string Path,long? Count,bool Searching,int Filters,int Loaded,bool Busy) context=("",0,false,0,0,false);
     private bool stopped,keywordRefreshPending;
     public DetailsPane(ShellServices services,FileCommands commands,Action<string> notice)
     {
@@ -37,9 +37,9 @@ internal sealed class DetailsPane : UserControl
         debounce.Tick+=(_,_)=>{debounce.Stop();if(selected.Any(item=>!item.Entry.IsDirectory))_=keywords.ReadAsync();if(selected is [var item]&&!item.Entry.IsDirectory)_=ReadVisualAsync(item,reading.Token);};
         Unloaded+=(_,_)=>Stop();Render();
     }
-    public void SetContext(string path,long? count,bool searching,int filters)
+    public void SetContext(string path,long? count,bool searching,int filters,int loaded,bool busy)
     {
-        var next=(path,count,searching,filters);if(context==next)return;context=next;
+        var next=(path,count,searching,filters,loaded,busy);if(context==next)return;context=next;
         if(selected.Count==0)Render();
     }
     public void Select(IReadOnlyList<AssetItem> items)
@@ -70,7 +70,7 @@ internal sealed class DetailsPane : UserControl
     {
         var card=Card(LocationName(context.Path));
         card.Field(context.Searching?"搜索范围":"位置",context.Path.Length==0?"此电脑":context.Path,true);
-        var count=context.Count is { } total?$"{total:N0} 项":"统计中";
+        var count=context.Count is { } total?$"{total:N0} 项":context.Busy?"读取中":$"已加载 {context.Loaded:N0} 项";
         if(context.Searching){card.Field("筛选条件",$"{context.Filters} 项");card.Field("匹配结果",count);}
         else card.Field(context.Path.Length==0?"浏览范围":"当前项目",context.Path.Length==0?"系统位置与本机磁盘":count);
     }

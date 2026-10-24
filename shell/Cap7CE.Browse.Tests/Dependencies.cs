@@ -1,0 +1,67 @@
+using Cap7CE.Core.Protocol;
+using Cap7CE.WinUI.Models;
+
+// Isolate the real BrowseSession from WinUI, processes and the user's Catalog.
+namespace Cap7CE.WinUI.Models
+{
+    internal sealed record AssetItem(BasicSearchItem Entry,string FullPath);
+    internal sealed class AssetCollection : List<AssetItem>
+    {
+        public bool HasMoreItems {get;set;}
+        public long? TotalCount {get;set;}
+        public Func<Task<uint>>? LoadPage {get;set;}
+    }
+    internal sealed record BrowseFilter
+    {
+        public int Count {get;init;}
+        public CoreSearchFactFilter? Facts=>null;
+        public CoreSearchFileConditions? ToConditions()=>null;
+    }
+    internal static class HomeEntries {public static AssetItem[] Create()=>[];}
+}
+namespace Cap7CE.WinUI.Services
+{
+    internal sealed class PreferenceStore
+    {
+        public static string DataRoot=>throw new Exception("Tests must not write diagnostics");
+        public ShellPreferences Current {get;set;}=new();
+    }
+    internal sealed class ShellServices
+    {
+        public CoreConnection? Core {get;set;}
+        public PreferenceStore Preferences {get;}=new();
+        public VisualConnection Visuals {get;}=new();
+        public HashSet<string> DeletedPaths {get;}=new(StringComparer.OrdinalIgnoreCase);
+        public IReadOnlyList<CoreVolumeStatus> Volumes {get;}=[new("v","E:","NTFS",true,"ready",0,0,true,false)];
+        public Func<Task>? Connecting {get;set;}
+        public int Connections {get;private set;}
+        public async Task ConnectAsync(bool onlyIfDisconnected=false){Connections++;if(Connecting is {} connect)await connect();}
+    }
+    internal sealed class CoreConnection
+    {
+        public bool IsConnected {get;set;}=true;
+        public bool Queryable {get;set;}=true;
+        public List<(string Operation,object Body)> Requests {get;}=[];
+        public TaskCompletionSource? Resolving {get;set;}
+        public bool Supports(string operation)=>true;
+        public async Task<T> RequestAsync<T>(string operation,object body,CancellationToken token)
+        {
+            Requests.Add((operation,body));
+            object result;
+            if(operation==CoreOperations.CatalogResolveScope){if(Resolving is {} wait)await wait.Task.WaitAsync(token);result=new CatalogResolveScopeResponse(Queryable,"v","5","E:","ready",Queryable,"5");}
+            else result=new SearchPageResponse([new("file","file.txt","file.txt",".txt",false,"v")],operation==CoreOperations.SearchStart?"next":null,operation!=CoreOperations.SearchStart,1);
+            token.ThrowIfCancellationRequested();return (T)result;
+        }
+    }
+    internal sealed class VisualConnection {public List<(string Path,bool Recursive)> Reads {get;}=[];}
+    internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDisposable
+    {
+        public Task<DirectoryBrowsePage> StartAsync(string path,string sort,bool hidden,bool recursive,CancellationToken token)
+        {token.ThrowIfCancellationRequested();visuals.Reads.Add((path,recursive));return Task.FromResult(new DirectoryBrowsePage([],null,0));}
+        public Task<DirectoryBrowsePage> NextAsync(string cursor,CancellationToken token)=>throw new Exception("Unexpected filesystem continuation");
+        public void Dispose(){}
+    }
+    internal sealed record DirectoryBrowsePage(IReadOnlyList<AssetItem> Items,string? NextCursor,long? TotalCount);
+    internal static class FileAccessGuard {public static void RejectLinks(string path){}}
+    internal static class NativeDiagnostics {public static void CoreFailure(string text){}}
+}

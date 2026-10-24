@@ -17,6 +17,10 @@
 
 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/winui-desktop-launch.ps1`执行有界原生启动检查：验证环境变量穿过普通子进程，并在已有偏好文件存在时只读校验实际文件句柄路径。测试仅写入并删除自己的临时结果文件，不修改偏好或启动UI/Core。
 
+递归浏览优先使用可查询的Catalog；当前层和未索引范围保留文件系统读取。`dotnet run --project shell/Cap7CE.Browse.Tests -c Release -p:Platform=x64`验证真实BrowseSession的分流、分页和取消，不启动进程或访问用户文件。开发启动前设置进程环境变量`CAP7CE_BROWSE_TIMING=1`，可将最后一次导航的累计阶段耗时写入诊断文件`last-browse-timing.json`，不记录路径或搜索词；ui-notified只表示界面更新通知已返回。
+
+`Cap7CE.Browse.Probe`为显式调用的只读查询诊断工具，参数依次为仓库根、目录范围、输出JSON路径，通过现有QueryHost对比有/无精确总数的首屏耗时。使用正常桌面启动环境，避免工具的AppData重定向；无Reader、索引初始化或源文件遍历，不自动运行。顺序测量受缓存、后台负载影响，不作为严格性能基准。
+
 ## 索引与属性
 
 默认连接现有产品Core Host，使用同用户私有管道、随机握手secret及服务端PID核验。Core独占Catalog、负责Reader增量维护；WinUI不直接操作SQLite。

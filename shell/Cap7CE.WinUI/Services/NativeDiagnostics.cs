@@ -26,7 +26,7 @@ internal static class NativeDiagnostics
         using var archive=new ZipArchive(output,ZipArchiveMode.Create,true);
         var state=archive.CreateEntry("runtime.json");
         await using(var stream=state.Open())await JsonSerializer.SerializeAsync(stream,new{shell="WinUI",version=NativeVersion.Text,os=Environment.OSVersion.VersionString,architecture=System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString()});
-        foreach(var name in new[]{"last-startup-error.log","last-core-error.log","last-titlebar-region-error.log","last-visual-error.log"}) {
+        foreach(var name in new[]{"last-startup-error.log","last-core-error.log","last-titlebar-region-error.log","last-visual-error.log","last-browse-timing.json"}) {
             var path=Path.Combine(PreferenceStore.DataRoot,name);if(!File.Exists(path))continue;
             await using var source=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite);
             await using var target=archive.CreateEntry(name).Open();

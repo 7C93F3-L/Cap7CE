@@ -68,21 +68,26 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
         filesystem?.Dispose();filesystem=null;
         Busy = true;Error=null;Changed?.Invoke();
+        using var timing=new BrowseTiming();
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
             var plainBrowse = string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random;
-            // Ordinary browsing is always a fresh filesystem listing, even when
-            // the Catalog is queryable. Index recovery must not hide new files.
-            if(path.Length>0&&plainBrowse)
+            // Direct children stay fresh; recursive indexed browsing must not rescan a disk.
+            timing.Mark("dispatch");
+            if(path.Length>0&&plainBrowse&&!Recursive)
                 return await BrowseFilesystemAsync(path,remember,version,token,origin);
-            if(!plainBrowse&&services.Core is {IsConnected:false}) {
-                await services.ConnectAsync(onlyIfDisconnected:true);token.ThrowIfCancellationRequested();
+            if(!plainBrowse||path.Length>0&&Recursive) {
+                try { if(services.Core?.IsConnected!=true)await services.ConnectAsync(onlyIfDisconnected:true); }
+                catch(Exception error) when(plainBrowse&&error is not OperationCanceledException) { NativeDiagnostics.CoreFailure(error.ToString()); }
+                token.ThrowIfCancellationRequested();
             }
+            timing.Mark("connection");
             // “此电脑” and ordinary directory browsing are shell capabilities. They
             // must remain usable while the optional catalog host is reconnecting.
-            if (services.Core is null)
+            if (services.Core?.IsConnected!=true)
             {
+                if(path.Length>0&&plainBrowse)return await BrowseFilesystemAsync(path,remember,version,token,origin);
                 if (path.Length == 0 && plainBrowse)
                 {
                     var home = new AssetCollection();
@@ -99,8 +104,10 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             {
                 FileAccessGuard.RejectLinks(path);
                 var resolved = await services.Core.RequestAsync<CatalogResolveScopeResponse>(CoreOperations.CatalogResolveScope, new CatalogResolveScopeRequest(path), token);
+                timing.Mark("scope");
                 if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null)
                 {
+                    if(plainBrowse)return await BrowseFilesystemAsync(path,remember,version,token,origin);
                     throw new IOException("此目录的索引尚未就绪，可清除搜索和筛选后直接浏览；搜索及筛选需要可查询的索引");
                 }
                 volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);
@@ -115,9 +122,10 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 if (volumes.Length == 0) throw new IOException("没有可查询的磁盘；此入口不会自动建库");
                 var request = new SearchStartRequest(Query.Trim(), 100, Sort, volumes, scope,
                     EntryType: BrowseScopeRules.EntryType(Query,Recursive,Filter.Count>0),
-                    TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: true,
+                    TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: false,
                     Continuation: services.Core.Supports(CoreOperations.SearchLive)?"live":null);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
+                timing.Mark("first-page");
                 if (version != generation) return false;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
             }
@@ -154,8 +162,8 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             return true;
         }
         catch (OperationCanceledException) { return false; }
-        catch (Exception error) { if (version == generation) Error = error.Message; return false; }
-        finally { if (version == generation) { Busy = false; Changed?.Invoke(); } }
+        catch (Exception error) { if (version == generation) { timing.Mark("failure");NativeDiagnostics.CoreFailure(error+"\n"+error.Data["CoreMessage"]);Error = BrowseTiming.ErrorText(error); } return false; }
+        finally { if (version == generation) { Busy = false; Changed?.Invoke();timing.Mark("ui-notified"); } }
     }
     private void Append(AssetCollection target, SearchPageResponse page)
     {
