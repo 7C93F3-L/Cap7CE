@@ -23,12 +23,13 @@ internal static class ResultContextMenu
                 "favorite"=>Ui.MenuItem(favorite is null?"添加收藏":"移除收藏",()=>commands.Run(()=>favorite is null
                     ?favorites.ExecuteAsync("add",path:first.FullPath):favorites.ExecuteAsync("remove",id:favorite.Id)),"\uE734"),
                 "editKeywords"=>Ui.MenuItem("编辑关键词",()=>commands.EditKeywords(first),"\uE70F"),
-                "autoKeywords"=>Unavailable("自动添加关键词","自动关键词任务尚未迁入WinUI壳","\uE945"),
+                "autoKeywords"=>Ui.MenuItem("自动添加关键词",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}),"\uE945"),
                 _=>Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>{commands.ShowMetadata(first);return Task.CompletedTask;}),"\uE895")
             };
             if(action.Id=="delete")item.IsEnabled=items.All(entry=>entry.Entry.FileReference is not null);
+            if(action.Id=="autoKeywords")item.IsEnabled=items.Any(entry=>entry.Entry.IsDirectory||FormatRegistry.Find(entry.Entry.Extension)?.CanAIIndex==true);
             if(action.Id=="editKeywords") {
-                item.IsEnabled=items.Count==1&&!first.Entry.IsDirectory&&first.Entry.FileReference is not null&&commands.CanEditKeywords();
+                item.IsEnabled=items.Count==1&&!first.Entry.IsDirectory&&commands.CanEditKeywords();
                 if(!item.IsEnabled)ToolTipService.SetToolTip(item,items.Count>1?"批量关键词编辑尚未迁入WinUI壳":"请选中单个文件并展开右侧详细信息栏");
             }
             menu.Items.Add(item);

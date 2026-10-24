@@ -2,6 +2,7 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
 var checks = 0;
+await AutoKeywordChecks.RunAsync();
 PreviewSelectionChecks.Run();
 await RpcLifetimeChecks.RunAsync();
 CatalogRefreshChecks.Run();

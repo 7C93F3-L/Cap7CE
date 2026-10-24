@@ -16,6 +16,10 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public event Action? BeforeMutation;
     public event Action? AfterMutation;
     public event Action? ItemsDeleted;
+    public event Action<IReadOnlyList<AssetItem>>? AutoKeywordsRequested;
+    public void AutoKeywords(IReadOnlyList<AssetItem> items)
+    {if(items.Count is 0 or >100000)throw new IOException("请选择不超过十万项的文件或目录。");if(items.Count==1)FileAccessGuard.Validate(items[0]);AutoKeywordsRequested?.Invoke(items.ToArray());}
+    public void AutoKeywords(string directory)=>AutoKeywords([new AssetItem(new Cap7CE.Core.Protocol.BasicSearchItem(directory,Path.GetFileName(directory.TrimEnd('\\')),"","",true),directory)]);
     public void ShowMetadata(AssetItem item)
     {FileAccessGuard.Validate(item);services.ShowMaintenance(item.Entry.IsDirectory?item.FullPath:Path.GetDirectoryName(item.FullPath));}
     public void Run(Func<Task> action) => Execute(action);

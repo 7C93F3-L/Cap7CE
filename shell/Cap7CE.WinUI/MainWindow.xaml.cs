@@ -25,6 +25,7 @@ public sealed partial class MainWindow : Window
     private readonly FilterAvailabilityService filterAvailability;
     private readonly WorkspacePreferencesController workspace;
     private readonly PreviewSelectionController<Models.AssetItem> previewLink;
+    private readonly AutoKeywordNoticeController keywordNotice;
     private SettingsWindow? settings;
     private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
@@ -47,6 +48,7 @@ public sealed partial class MainWindow : Window
         services.MaintenanceRequested+=OpenMaintenance;
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
+        keywordNotice=new(services.AutoKeywords,notifications,details.SetAutoKeywordBusy);
         previewLink=new(item=>item.FullPath,item=>!item.Entry.IsDirectory,results.SelectSingle,item=>preview?.FollowSelection(item),()=>preview?.Close());
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
@@ -73,6 +75,8 @@ public sealed partial class MainWindow : Window
         Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){var changed=session.SyncWorkspaceOptions();active=session;Bind();if(changed)Refresh();else QueueCatalogRefresh();}};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
+        commands.AutoKeywordsRequested+=items=>commands.Run(()=>services.AutoKeywords.StartAsync(items));
+        services.AutoKeywords.Saved+=item=>details.RefreshKeywords(item);
         commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
         commands.ItemsDeleted+=()=>{foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.RemoveDeleted();};
@@ -201,7 +205,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;pointerInput.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();maintenance?.Close();AssetTile.Visuals=null;
+        closed=true;pointerInput.Dispose();keywordNotice.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();maintenance?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

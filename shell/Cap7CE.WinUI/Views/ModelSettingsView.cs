@@ -20,7 +20,7 @@ internal sealed class ModelSettingsView
     public UIElement ModelSettings {get;}
     public UIElement RuntimeInfo {get;}
     private static string T(string key)=>SettingsReference.Text(key);
-    private object Context=>new{runtimeRoot=Path.Combine(services.Root,"llama.cpp"),modelsRoot=Path.Combine(services.Root,"models"),language="zh-CN"};
+    private object Context=>services.ModelContext;
     public ModelSettingsView(ShellServices services,Action<string> notice)
     {
         this.services=services;this.notice=notice;

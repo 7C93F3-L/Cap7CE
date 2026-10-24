@@ -108,6 +108,12 @@ assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.include
 assert(!/CoreNodeHost|\.RequestAsync|Process\.Start/.test(settingsColors + colorEditor), 'color editor only uses preference delegates');
 assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'excluded standby line and discarded demo UI must not return');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
+const autoKeywordProcessor=read('shell/Cap7CE.WinUI/Services/AutoKeywordProcessor.cs');
+assert(!fs.existsSync(path.join(root,'shell/Cap7CE.WinUI/Views/AutoKeywordWindow.cs')) && read('shell/Cap7CE.WinUI/Controllers/AutoKeywordNoticeController.cs').includes('notice.SetTask('), 'AI recognition must run directly and reuse the compact notice');
+assert(read('shell/Cap7CE.WinUI/Controls/Details/DetailsKeywordEditor.cs').includes('generate(target)') && !read('shell/Cap7CE.WinUI/Controls/DetailsPane.cs').includes('file.Entry.FileReference is not null?file:null'), 'keyword card must wire generation and accept live file identities');
+assert(['localKeywords.fingerprint','temporaryImage','localKeywords.generate','localKeywords.cancel','runtime.beginAI','runtime.endAI'].every(operation=>autoKeywordProcessor.includes(operation)), 'AI keywords must reuse existing visual/model owners and their cancellation/use lifetime');
+assert(!/HttpClient|Process.Start|Sqlite|BitmapImage/.test(autoKeywordProcessor), 'AI keyword adapter cannot duplicate inference, model process or source decoding');
+assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordWriter.cs').includes('attempt<3') && read('shell/Cap7CE.WinUI/Services/AutoKeywordTargets.cs').includes('100000'), 'AI keyword writes and target collection must be bounded');
 const previewSpaceKey = read('shell/Cap7CE.WinUI/Services/PreviewSpaceKey.cs');
 assert(previewSpaceKey.includes('GetCurrentThreadId()') && previewSpaceKey.includes('Owns(message.Window)') && previewSpaceKey.includes('UnhookWindowsHookEx(hook)'), 'preview Space interception must be thread/window scoped and released');
 assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('!preview && format?.CanThumbnail != true'), 'grid must retain Shell fallback for formats without native image thumbnails');

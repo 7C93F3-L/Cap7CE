@@ -17,7 +17,15 @@ internal sealed class ManualKeywordService(ShellServices services)
         if(!reply.GetProperty("saved").GetBoolean())throw new IOException("关键词已在其他窗口变化，请重新读取后再编辑");
         return Parse(reply.GetProperty("current"));
     }
+    public async Task<bool> TrySaveAsync(AssetItem item,string[] words,string? revision)
+    {
+        FileAccessGuard.Validate(item);
+        var core=services.Core??throw new IOException("Core 尚未连接");
+        var reply=await core.RequestAsync<JsonElement>("keywords.write",new{identity=Identity(item),keywords=words,expectedRevision=revision});
+        return reply.GetProperty("saved").GetBoolean();
+    }
     private static ManualKeywords Parse(JsonElement reply)=>new(reply.GetProperty("keywords").EnumerateArray().Select(value=>value.GetString()!).ToArray(),
         reply.GetProperty("revision").ValueKind==JsonValueKind.Null?null:reply.GetProperty("revision").GetString());
-    private static object Identity(AssetItem item)=>new{item.Entry.VolumeId,item.Entry.FileReference,item.Entry.CreatedFileTimeMilliseconds};
+    private object Identity(AssetItem item)
+    {item=FileAccessGuard.ResolveIdentity(item,services.Volumes);return new{item.Entry.VolumeId,item.Entry.FileReference,item.Entry.CreatedFileTimeMilliseconds};}
 }

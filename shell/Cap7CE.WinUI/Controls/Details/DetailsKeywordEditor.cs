@@ -12,16 +12,16 @@ internal sealed class DetailsKeywordEditor : UserControl
     private readonly TextBlock words=Ui.Text("尚未添加关键词",true),status=Ui.Text("",true);
     private readonly TextBox input=new(){AcceptsReturn=true,TextWrapping=TextWrapping.Wrap,MinHeight=90,PlaceholderText="每行一个关键词",CornerRadius=new(8)};
     private readonly StackPanel actions,editorActions;
-    private readonly Button edit,retry,save,cancel;
+    private readonly Button edit,retry,save,cancel,automatic;
     private CancellationTokenSource pending=new();
     private AssetItem? item;
     private ManualKeywords snapshot=new([],null);
-    private bool ready,saving,editing,editRequested,readFailed;
-    public DetailsKeywordEditor(Func<AssetItem,CancellationToken,Task<ManualKeywords>> read,Func<AssetItem,string[],string?,Task<ManualKeywords>> write,Action<string> notice)
+    private bool ready,saving,editing,editRequested,readFailed,automaticBusy;
+    public DetailsKeywordEditor(Func<AssetItem,CancellationToken,Task<ManualKeywords>> read,Func<AssetItem,string[],string?,Task<ManualKeywords>> write,Action<string> notice,Action<AssetItem> generate)
     {
         this.read=read;this.write=write;this.notice=notice;
         edit=Ui.Button("编辑",Edit);retry=Ui.Button("重新读取",()=>_=ReadAsync());
-        var automatic=Ui.Button("自动添加",()=>{});automatic.IsEnabled=false;ToolTipService.SetToolTip(automatic,"当前不可用");
+        automatic=Ui.Button("自动添加",()=>{if(item is {} target)generate(target);});
         actions=Ui.Row(edit,automatic);actions.Spacing=4;
         save=Ui.Button("保存",()=>_=SaveAsync());cancel=Ui.Button("取消",CancelDraft);
         var clear=Ui.Button("清空",()=>input.Text="");editorActions=Ui.Row(clear,save,cancel);
@@ -37,6 +37,7 @@ internal sealed class DetailsKeywordEditor : UserControl
         status.Text=value is null?"当前不可用":"读取中…";input.Text="";Show();
     }
     public void RequestEdit(){editRequested=true;if(ready)Edit();}
+    public void SetAutomaticBusy(bool value){automaticBusy=value;Show();}
     public async Task ReadAsync()
     {
         if(item is not {} target||saving)return;
@@ -75,6 +76,8 @@ internal sealed class DetailsKeywordEditor : UserControl
         status.Visibility=status.Text.Length>0?Visibility.Visible:Visibility.Collapsed;
         retry.Visibility=readFailed?Visibility.Visible:Visibility.Collapsed;
         edit.IsEnabled=ready&&!saving;retry.IsEnabled=item is not null&&!saving;save.IsEnabled=cancel.IsEnabled=!saving;input.IsReadOnly=saving;
+        automatic.IsEnabled=item is not null&&FormatRegistry.Find(item.Entry.Extension)?.CanAIIndex==true&&!saving&&!automaticBusy;
+        ToolTipService.SetToolTip(automatic,automaticBusy?"正在识别":item is null?"请选择单个文件":FormatRegistry.Find(item.Entry.Extension)?.CanAIIndex==true?"使用本地模型添加关键词":"此格式不支持自动添加关键词");
         foreach(var button in editorActions.Children.OfType<Button>())button.IsEnabled=!saving;
     }
     public void Stop()=>pending.Cancel();

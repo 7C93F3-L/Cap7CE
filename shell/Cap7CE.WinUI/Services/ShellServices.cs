@@ -14,6 +14,8 @@ internal sealed class ShellServices : IAsyncDisposable
     public CoreNodeHost StoredMetadata {get;}
     public FavoriteService Favorites { get; }
     public MetadataTasks Metadata {get;}
+    public AutoKeywordTasks AutoKeywords {get;}
+    public object ModelContext=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language="zh-CN"};
     public NativeNotifications Notifications {get;}=new();
     public NativeHotKeys? Shortcuts {get;set;}
     public event Action<IReadOnlySet<string>?>? CatalogChanged;
@@ -30,7 +32,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public IReadOnlyList<CoreVolumeStatus> Volumes { get; private set; } = [];
     public ShellServices(string root)
     {
-        Root = root; Visuals = new(root); Favorites = new(root);Metadata=new(this);
+        Root = root; Visuals = new(root); Favorites = new(root);Metadata=new(this);AutoKeywords=new(this);
         Providers = new(root, "provider-preview.cjs", Path.GetTempPath());
         Models = new(root, "model-runtime.cjs", PreferenceStore.ProductData);
         Office = new(root, "office-preview.cjs", Path.Combine(PreferenceStore.DataRoot, "temp"));
@@ -85,6 +87,7 @@ internal sealed class ShellServices : IAsyncDisposable
     {try{Notifications.Show(text,Preferences.Current.Notifications);}catch(Exception error){BackgroundError?.Invoke("通知发送失败："+error.Message);}}
     public async ValueTask DisposeAsync()
     {
+        await AutoKeywords.DisposeAsync();
         await connection.WaitAsync();
         try { if (closed) return; closed = true;changes?.Dispose(); if (Core is not null) await Core.DisposeAsync(); Core = null; }
         finally { connection.Release(); }

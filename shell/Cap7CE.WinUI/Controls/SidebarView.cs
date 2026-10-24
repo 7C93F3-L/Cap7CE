@@ -177,7 +177,7 @@ internal sealed class SidebarView : UserControl
             var arrange=Ui.MenuItem("调整位置",()=>order.Begin(item),"\uE8CB");arrange.IsEnabled=service.Items.Count>1;menu.Items.Add(arrange);
             menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
             menu.Items.Add(new MenuFlyoutSeparator());
-            menu.Items.Add(ResultContextMenu.Unavailable("自动添加关键词","自动关键词任务尚未迁入WinUI壳","\uE945"));
+            menu.Items.Add(Ui.MenuItem("自动添加关键词",()=>commands.Run(()=>{commands.AutoKeywords(item.Path);return Task.CompletedTask;}),"\uE945"));
             menu.Items.Add(ResultContextMenu.Unavailable("获取/刷新元数据","属性获取任务尚未迁入WinUI壳","\uE895"));
             return menu;
         };

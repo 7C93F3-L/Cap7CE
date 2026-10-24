@@ -28,7 +28,7 @@ internal sealed class DetailsPane : UserControl
     {
         this.services=services;this.commands=commands;
         var keywordService=new ManualKeywordService(services);
-        keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice);
+        keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice,item=>commands.Run(()=>{commands.AutoKeywords([item]);return Task.CompletedTask;}));
         var preview=new Grid();preview.Children.Add(icon);preview.Children.Add(image);visual.Child=preview;
         image.SizeChanged+=(_,_)=>UpdatePreviewClip();
         var scroll=new ScrollViewer{Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
@@ -46,11 +46,13 @@ internal sealed class DetailsPane : UserControl
         if(!stopped&&selected.SequenceEqual(items))return;
         debounce.Stop();reading.Cancel();reading.Dispose();reading=new();stopped=false;
         selected=items.ToArray();image.Source=null;icon.Visibility=Visibility.Visible;ToolTipService.SetToolTip(visual,null);
-        keywords.SetItem(selected is [var file]&&!file.Entry.IsDirectory&&file.Entry.FileReference is not null?file:null);
+        keywords.SetItem(selected is [var file]&&!file.Entry.IsDirectory?file:null);
         Render();
         if(selected is [var item]&&!item.Entry.IsDirectory)debounce.Start();
     }
     public void EditKeywords(AssetItem item){Select([item]);keywords.RequestEdit();}
+    public void RefreshKeywords(AssetItem item){if(!stopped&&selected is [var current]&&string.Equals(current.FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase))_=keywords.ReadAsync();}
+    public void SetAutoKeywordBusy(bool value)=>keywords.SetAutomaticBusy(value);
     private void Render()
     {
         column.Children.Clear();var item=selected.Count==1?selected[0]:null;

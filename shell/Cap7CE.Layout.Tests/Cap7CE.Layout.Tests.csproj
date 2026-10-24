@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/AutoKeywordPolicy.cs;../Cap7CE.WinUI/Models/ManualKeywords.cs;../Cap7CE.WinUI/Services/AutoKeywordWriter.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Controllers/PreviewSelectionController.cs" Link="PreviewSelectionController.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/FramedRpc.cs" Link="FramedRpc.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/PreviewSpaceKeyPolicy.cs" Link="PreviewSpaceKeyPolicy.cs" /></ItemGroup>
