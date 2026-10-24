@@ -1,4 +1,6 @@
 using Cap7CE.Core.Catalog;
+using Cap7CE.Core.Host;
+using Cap7CE.Core.Protocol;
 using Microsoft.Data.Sqlite;
 
 namespace Cap7CE.Core.Tests;
@@ -42,6 +44,21 @@ internal static class CatalogResultCountTests
         TestAssert.True(folderPage.TotalCount==150&&folderPage.Items.Count==100&&folderPage.Items.All(item=>!item.IsDirectory&&!item.Name.Contains("DSD16")),"Matching an ancestor folder returns files whose names do not match, excludes folders, and counts files only");
         var folderNext=await catalog.QueryAsync(folderQuery with{After=folderPage.Next});
         TestAssert.True(folderNext.Items.Count==50&&folderNext.Items.All(item=>!item.IsDirectory),"Folder-path matching and file-only results survive pagination");
-        Console.WriteLine("Catalog result totals: paging, scope, extension, hidden items, zero and opt-in checks passed.");
+        await using var runtime=new ProductCoreRuntime(catalog,new SyntheticCatalogReader());
+        var dispatcher=new CoreRequestDispatcher(runtime,new ProductSearchCursorCodec());var sequence=0;
+        async Task<CoreResponseEnvelope> Send(string operation,object body)=>await dispatcher.DispatchAsync(
+            new(1,"live-count-"+(++sequence),operation,5000,CoreProtocolJson.ToElement(body)),CancellationToken.None);
+        foreach(var sort in new[]{CoreSearchSorts.NameAscending,CoreSearchSorts.NameDescending,CoreSearchSorts.ModifiedAscending,CoreSearchSorts.ModifiedDescending}) {
+            var request=new SearchStartRequest("song",100,sort,["a"],EntryType:"file",IncludeTotalCount:true);
+            var strict=ProtocolClient.ReadBody<SearchPageResponse>(await Send(CoreOperations.SearchStart,request));
+            var live=ProtocolClient.ReadBody<SearchPageResponse>(await Send(CoreOperations.SearchStart,request with{Continuation="live"}));
+            await catalog.SetVolumeSelectionAsync(["a"]);
+            var stale=await Send(CoreOperations.SearchNextPage,new SearchNextPageRequest(strict.NextCursor!));
+            TestAssert.True(stale.Error?.Code==CoreErrorCodes.InvalidCursor,"Reproduce strict paging failure after background revision changes");
+            var continued=ProtocolClient.ReadBody<SearchPageResponse>(await Send(CoreOperations.SearchNextPage,new SearchNextPageRequest(live.NextCursor!)));
+            TestAssert.True(live.TotalCount==150&&continued.Items.Count==50&&continued.NextCursor is null&&continued.CatalogRevision>live.CatalogRevision,"Live paging retains totals and continues across background updates in all four sorts");
+            TestAssert.True(live.Items.Concat(continued.Items).Select(item=>item.Id).Distinct().Count()==150,"Unchanged files stay complete and unique across a revision change");
+        }
+        Console.WriteLine("Catalog totals and live paging passed (scope, filters, folders, zero, opt-in, four sorts, background revisions and strict-cursor regression).");
     }
 }

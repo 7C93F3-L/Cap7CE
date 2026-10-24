@@ -110,7 +110,8 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 if (volumes.Length == 0) throw new IOException("没有可查询的磁盘；此入口不会自动建库");
                 var request = new SearchStartRequest(Query.Trim(), 100, Sort, volumes, scope,
                     EntryType: BrowseScopeRules.EntryType(Query,Recursive,Filter.Count>0),
-                    TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: true);
+                    TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: true,
+                    Continuation: services.Core.Supports(CoreOperations.SearchLive)?"live":null);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
                 if (version != generation) return false;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
@@ -141,7 +142,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     return (uint)page.Items.Count;
                 }
                 catch (OperationCanceledException) { return 0; }
-                catch (Exception error) { if(version==generation){result.HasMoreItems = false; Error = error.Message + "；请刷新"; Changed?.Invoke();} return 0; }
+                catch (Exception error) { if(version==generation){result.HasMoreItems = false; Error = error.Message==CoreErrorCodes.InvalidCursor?"后续结果暂时无法加载，请点击刷新后继续浏览。":error.Message + "；请刷新"; Changed?.Invoke();} return 0; }
                 finally { loading = false; }
             };
             Items = result;FilesystemBrowsing=false;
