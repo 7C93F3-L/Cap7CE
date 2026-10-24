@@ -4,33 +4,43 @@ import { readSkimLocation, type SkimBrowseEntry } from "../../../electron/skimBr
 import type { DirectoryBrowseOptions } from "../../../src/shared/directoryBrowseTypes";
 import { filterDirectoryEntries, sortDirectoryEntries } from "./policy";
 
-// Demand-driven pages: never collect an entire volume before returning results.
+// A bounded, fresh directory-tree snapshot: sort once before exposing any page.
 export class RecursiveDirectoryListing {
   private directories: string[];
   private pendingBytes = 0;
   private entries: SkimBrowseEntry[] = [];
   private offset = 0;
+  private work?: Promise<void>;
+  private ready = false;
   constructor(private readonly root: string, private readonly options: DirectoryBrowseOptions, private readonly cancelled: () => boolean) {
     this.directories = [root]; this.pendingBytes = root.length * 2;
   }
-  get hasMore() { return this.offset < this.entries.length || this.directories.length > 0; }
+  get hasMore() { return !this.ready || this.offset < this.entries.length; }
   async read(): Promise<SkimBrowseEntry[]> {
-    const result: SkimBrowseEntry[] = [];
-    while (result.length < 100 && this.hasMore) {
+    await (this.work ??= this.collect());
+    this.checkCancelled();
+    const result = this.entries.slice(this.offset, this.offset + 100); this.offset += result.length;
+    return result;
+  }
+  private async collect() {
+    let examined = 0, projectedBytes = 0;
+    while (this.directories.length) {
       this.checkCancelled();
-      while (result.length < 100 && this.offset < this.entries.length) result.push(this.entries[this.offset++]);
-      if (result.length === 100 || !this.directories.length) break;
-      const directory = this.directories.pop()!; this.pendingBytes -= directory.length * 2;
+      const batch = this.directories.splice(-4);
+      const settled = await Promise.allSettled(batch.map(async directory => {
+      this.pendingBytes -= directory.length * 2;
       try {
         const stats = await fs.lstat(directory);
         const real = await fs.realpath(directory);
         const same = process.platform === "win32" ? real.toLowerCase() === path.resolve(directory).toLowerCase() : real === path.resolve(directory);
         if (!stats.isDirectory() || stats.isSymbolicLink() || !same) {
           if (directory === this.root) throw Error("directory-browse-invalid-root");
-          continue;
+          return;
         }
         const value = await readSkimLocation(directory, this.cancelled, [], 65536, 32 * 1024 * 1024);
         this.checkCancelled();
+        examined += value.entries.length;
+        if (examined > 65536) throw Error("directory-browse-capacity-exceeded");
         const children = value.entries.filter(item => item.status === "ready" && (!this.options.excludeHidden || !item.hidden));
         const folders = sortDirectoryEntries(children.filter(item => item.kind === "folder"), this.options.sort);
         for (const folder of folders.reverse()) {
@@ -40,14 +50,18 @@ export class RecursiveDirectoryListing {
           if (this.pendingBytes > 16 * 1024 * 1024) throw Error("directory-browse-capacity-exceeded");
           this.directories.push(folder.path);
         }
-        this.entries = sortDirectoryEntries(filterDirectoryEntries(children.filter(item => item.kind === "file"), this.options), this.options.sort);
-        this.offset = 0;
+        for (const item of filterDirectoryEntries(children.filter(item => item.kind === "file"), this.options)) {
+          projectedBytes += 2 * (item.name.length + item.path.length) + 512;
+          if (projectedBytes > 32 * 1024 * 1024) throw Error("directory-browse-capacity-exceeded");
+          this.entries.push(item);
+        }
       } catch (error) {
         if (directory === this.root || !["EACCES", "EPERM", "ENOENT", "ENOTDIR", "ELOOP"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;
-        this.entries = []; this.offset = 0;
       }
+      }));
+      for (const result of settled) if (result.status === "rejected") throw result.reason;
     }
-    this.checkCancelled(); return result;
+    this.checkCancelled(); sortDirectoryEntries(this.entries, this.options.sort); this.ready = true;
   }
   private checkCancelled() { if (this.cancelled()) throw Error("directory-browse-cancelled"); }
 }

@@ -50,7 +50,7 @@ internal sealed class WorkspaceToolbar : UserControl
         random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
         ((SidebarIcon)hidden.Content).OutlinePath=WorkspaceIcons.Icon(value.ShowHidden?"eye":"eyeOff").OutlinePath;
-        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":value.FilesystemBrowsing?" · 文件系统逐层读取，各目录内排序":"")}");
+        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":"")}");
         WorkspaceIcons.Label(hidden,$"显示隐藏项 · {(value.ShowHidden?"开启":"关闭")}");WorkspaceIcons.Label(sort,value.Random?"排序 · 随机浏览":$"排序 · {SortLabel(value.Sort)}");Reflow();
     }
     public void ApplyPreferences(ShellPreferences value)

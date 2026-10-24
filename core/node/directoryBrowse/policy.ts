@@ -20,7 +20,11 @@ export function filterDirectoryEntries(entries: SkimBrowseEntry[], options: Dire
 }
 export function sortDirectoryEntries(entries: SkimBrowseEntry[], sort: DirectoryBrowseOptions["sort"]) {
   const direction = sort.endsWith("descending") ? -1 : 1;
+  const names = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  const time = (item: SkimBrowseEntry) => item.modifiedAt === null ? NaN : Date.parse(item.modifiedAt);
   return entries.sort((a, b) => Number(b.kind === "folder") - Number(a.kind === "folder")
-    || direction * (sort.startsWith("modified") ? Date.parse(a.modifiedAt ?? "") - Date.parse(b.modifiedAt ?? "") : a.name.localeCompare(b.name, "en", { numeric: true, sensitivity: "base" }))
+    || (sort.startsWith("modified") ? Number(!Number.isFinite(time(a))) - Number(!Number.isFinite(time(b)))
+      || direction * ((Number.isFinite(time(a)) && Number.isFinite(time(b))) ? time(a) - time(b) : 0)
+      || names.compare(a.name, b.name) : direction * names.compare(a.name, b.name))
     || a.path.localeCompare(b.path));
 }

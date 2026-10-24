@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+RecursiveDirectoryListing在第一次read中收集所选目录树的文件信息并统一调用sortDirectoryEntries，随后从同一排序快照每次返回100项；每批最多4个目录并行枚举，整批等待完成后才进入下一批或抛错。目录与链接安全检查、隐藏项、取消和会话隔离沿用原所有者。遍历最多65536项、结果投影32 MiB、待访问目录路径16 MiB，超限失败不返回局部有序假象；全局准确排序需等待本次目录树枚举，不依赖Catalog、不读取源内容或生成持久索引。policy使用系统语言Intl自然名称排序，修改时间升降序同值按名称与路径稳定兜底，未知时间始终置后；普通目录文件夹优先，递归仅文件全局排序。
+
 BrowseScopeRules.UsesCatalogResults统一区分首页/文件系统列表与Catalog结果；MainWindow收到CatalogChanged仅使UsesCatalogResults标签失效，并只重载其中空闲的当前页。普通“此电脑”不再因FilesystemBrowsing=false被误判为Core查询而重建网格；首页搜索/筛选/随机仍受通知影响，能力刷新不变。
 
 BrowseSession.NavigateAsync在访问Core及CatalogResolveScope之前，将非空目录且无关键词、筛选、随机模式的浏览交给既有DirectoryBrowseSession；收藏、逐层导航和显式刷新共用该分流。目录列表以磁盘现状为准，不依赖Catalog就绪或恢复进度；递归开关继续传入原有有界文件系统通道。搜索/筛选/随机仍使用Core，不新增Watcher、数据库写入或索引任务。
