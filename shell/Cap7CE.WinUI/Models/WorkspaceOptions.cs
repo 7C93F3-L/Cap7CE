@@ -1,7 +1,7 @@
 namespace Cap7CE.WinUI.Models;
 
 internal enum WorkspacePreferenceScope { Computer,Favorites }
-internal sealed record WorkspaceLocation(string Path,WorkspacePreferenceScope Scope);
+internal sealed record WorkspaceLocation(string Path,WorkspacePreferenceScope Scope,string EntryPath="");
 
 public sealed record WorkspaceOptions
 {

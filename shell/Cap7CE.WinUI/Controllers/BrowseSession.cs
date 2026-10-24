@@ -13,6 +13,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool ShowHidden { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).ShowHidden;
     public string Sort { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).Sort;
     public WorkspacePreferenceScope PreferenceScope {get;private set;}
+    public string EntryPath {get;private set;}="";
     public long AddressRevision {get;private set;}
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
@@ -26,16 +27,19 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public event Action<bool>? NavigationStarting;
     private readonly Stack<WorkspaceLocation> back = new(), forward = new();
     private WorkspaceLocation? pendingOrigin;
+    private WorkspacePreferenceScope committedScope;
+    private string committedEntryPath="";
+    private WorkspaceLocation CurrentLocation=>new(PathValue,committedScope,committedEntryPath);
     private CancellationTokenSource query = new();
     private int generation;
     private DirectoryBrowseSession? filesystem;
     public bool FilesystemBrowsing {get;private set;}
     public bool UsesCatalogResults=>BrowseScopeRules.UsesCatalogResults(FilesystemBrowsing,PathValue,Query,Filter.Count>0,Random);
     public Task<bool> OpenLocationAsync(string path,bool favorite)
-    {EnterScope(favorite?WorkspacePreferenceScope.Favorites:WorkspacePreferenceScope.Computer);return NavigateAsync(path);}
-    private void EnterScope(WorkspacePreferenceScope scope)
+    {EnterScope(favorite&&path.Length>0?WorkspacePreferenceScope.Favorites:WorkspacePreferenceScope.Computer,favorite&&path.Length>0?Path.GetFullPath(path):"");return NavigateAsync(path);}
+    private void EnterScope(WorkspacePreferenceScope scope,string entryPath)
     {
-        pendingOrigin??=new(PathValue,PreferenceScope);PreferenceScope=scope;AddressRevision++;
+        pendingOrigin??=CurrentLocation;PreferenceScope=scope;EntryPath=entryPath;AddressRevision++;
         Random=false;Query="";Filter=new();SyncWorkspaceOptions();
     }
     public bool SyncWorkspaceOptions()
@@ -48,12 +52,12 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool CanForward => forward.Count > 0;
     public async Task BackAsync()
     {
-        if(!back.TryPeek(out var target))return;var current=new WorkspaceLocation(PathValue,PreferenceScope);EnterScope(target.Scope);
+        if(!back.TryPeek(out var target))return;var current=CurrentLocation;EnterScope(target.Scope,target.EntryPath);
         if(await NavigateAsync(target.Path,false)){back.Pop();forward.Push(current);Changed?.Invoke();}
     }
     public async Task ForwardAsync()
     {
-        if(!forward.TryPeek(out var target))return;var current=new WorkspaceLocation(PathValue,PreferenceScope);EnterScope(target.Scope);
+        if(!forward.TryPeek(out var target))return;var current=CurrentLocation;EnterScope(target.Scope,target.EntryPath);
         if(await NavigateAsync(target.Path,false)){forward.Pop();back.Push(current);Changed?.Invoke();}
     }
     public Task UpAsync()
@@ -61,8 +65,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public async Task<bool> NavigateAsync(string path, bool remember = true,bool preserveSelection=false)
     {
         NavigationStarting?.Invoke(preserveSelection);
-        if(path.Trim().Length==0&&pendingOrigin is null&&(PreferenceScope!=WorkspacePreferenceScope.Computer||PathValue.Length>0))EnterScope(WorkspacePreferenceScope.Computer);
-        var origin=pendingOrigin??new(PathValue,PreferenceScope);pendingOrigin=null;SyncWorkspaceOptions();
+        var origin=pendingOrigin??CurrentLocation;pendingOrigin=null;SyncWorkspaceOptions();
         PreserveSelection=preserveSelection;
         Invalidated=false;var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
@@ -177,7 +180,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         }
     }
     private void Remember(string path,bool remember,WorkspaceLocation origin)
-    {if(remember&&(path!=origin.Path||PreferenceScope!=origin.Scope)){back.Push(origin);forward.Clear();}}
+    {if(remember&&(path!=origin.Path||PreferenceScope!=origin.Scope||EntryPath!=origin.EntryPath)){back.Push(origin);forward.Clear();}committedScope=PreferenceScope;committedEntryPath=EntryPath;}
     private async Task<bool> BrowseFilesystemAsync(string path,bool remember,int version,CancellationToken token,WorkspaceLocation origin)
     {
         var owner=new DirectoryBrowseSession(services.Visuals);filesystem=owner;

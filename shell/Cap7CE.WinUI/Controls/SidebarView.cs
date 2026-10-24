@@ -28,6 +28,7 @@ internal sealed class SidebarView : UserControl
     private bool? compact;
     private (bool Compact,bool Brand,bool Filters,bool Details)? appliedLayout;
     private string activePath = "";
+    private bool activeFavorite;
     private Func<Favorite, MenuFlyout>? favoriteMenu;
     private static Style StyleFor(string key) => (Style)Application.Current.Resources[key];
 
@@ -54,7 +55,7 @@ internal sealed class SidebarView : UserControl
         Grid.SetRow(favorites,2); directories.Children.Add(favorites); Grid.SetRow(directories,2); root.Children.Add(directories);
         expandedTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteTemplate"];
         compactTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteCompactTemplate"];
-        order=new(favorites);order.Changed+=()=>{ApplyOrderPresentation();SetActivePath(activePath);};
+        order=new(favorites);order.Changed+=()=>{ApplyOrderPresentation();SetActiveEntry(activePath,activeFavorite);};
         Grid.SetColumnSpan(order.Actions,2);order.Actions.HorizontalAlignment=HorizontalAlignment.Right;heading.Children.Add(order.Actions);
         ScrollViewer.SetHorizontalScrollBarVisibility(favorites,ScrollBarVisibility.Disabled);
         IdleScrollBars.Attach(favorites);
@@ -64,7 +65,7 @@ internal sealed class SidebarView : UserControl
         AutomationProperties.SetName(settings,"打开设置"); ToolTipService.SetToolTip(settings,"打开设置");
         settings.Click += (_,_)=>Settings?.Invoke();
         Grid.SetRow(settings,3); root.Children.Add(settings); Content = root;
-        ApplyLayout(false,true,true,true); SetActivePath("");
+        ApplyLayout(false,true,true,true); SetActiveEntry("",false);
     }
 
     private static ToggleButton PanelButton(SidebarIcon icon,string label,Action action)
@@ -136,11 +137,11 @@ internal sealed class SidebarView : UserControl
         order.Actions.HorizontalAlignment=small?HorizontalAlignment.Center:HorizontalAlignment.Right;
     }
 
-    public void SetActivePath(string path)
+    public void SetActiveEntry(string path,bool favorite)
     {
-        activePath = path; home.IsChecked = path.Length==0;
-        favorites.SelectedItem = favorites.Items.OfType<Favorite>().FirstOrDefault(item=>
-            item.Path.TrimEnd('\\','/').Equals(path.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase));
+        activePath=path;activeFavorite=favorite;home.IsChecked=!favorite;
+        favorites.SelectedItem=favorite?favorites.Items.OfType<Favorite>().FirstOrDefault(item=>
+            item.Path.TrimEnd('\\','/').Equals(path.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase)):null;
     }
 
     private void PrepareFavorite(ListViewBase sender, ContainerContentChangingEventArgs e)
@@ -168,7 +169,7 @@ internal sealed class SidebarView : UserControl
     public void Bind(FavoriteService service, FileCommands commands, Func<XamlRoot> xaml)
     {
         order.Bind(service,commands);
-        service.Changed += () => DispatcherQueue.TryEnqueue(()=>{order.Refresh();if(!order.Editing)SetActivePath(activePath);});
+        service.Changed += () => DispatcherQueue.TryEnqueue(()=>{order.Refresh();if(!order.Editing)SetActiveEntry(activePath,activeFavorite);});
         favoriteMenu = item => {
             var menu=ThemeService.Menu();
             menu.Items.Add(Ui.MenuItem("在资源管理器中打开",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;}),"\uE838"));

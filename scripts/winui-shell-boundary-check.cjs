@@ -29,6 +29,9 @@ assert(session.includes('allowedOperations is null || allowedOperations.Contains
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');
 const catalogRefresh = read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
+assert(catalogRefresh.includes('sidebar.SetActiveEntry(active.EntryPath,active.PreferenceScope')
+  && !catalogRefresh.includes('sidebar.SetActivePath(active.PathValue)'),
+  'sidebar selection must follow the explicit workspace entry rather than the current filesystem path');
 const workspacePreferences=read('shell/Cap7CE.WinUI/Controllers/WorkspacePreferencesController.cs');
 assert(workspacePreferences.includes('Preferences.UpdateAsync') && workspacePreferences.includes('WorkspaceOptions.Write')
   && read('shell/Cap7CE.WinUI/Controls/WorkspaceToolbar.cs').includes('value.AddressRevision')

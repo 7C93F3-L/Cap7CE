@@ -63,7 +63,7 @@ public sealed partial class MainWindow : Window
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
         services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{MainWindowGeometry.RestoreDefault(this);WindowActivation.Show(this);},OpenSettings,
-            ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.PathValue??"")+1)%paths.Length]);},error=>Notice(error.Message));
+            ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);},error=>Notice(error.Message));
         toolbar.ViewSelected+=mode=>commands.Run(()=>workspace.UpdateAsync(value=>value with{
             View=mode==Models.WorkspaceViewMode.List?"list":"grid",
             SquareTiles=mode==Models.WorkspaceViewMode.List?value.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
@@ -123,7 +123,7 @@ public sealed partial class MainWindow : Window
         if(active is null||closed)return;
         previewLink.ContextChanged(active);
         workspace.Apply();
-        sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
+        sidebar.SetActiveEntry(active.EntryPath,active.PreferenceScope==Models.WorkspacePreferenceScope.Favorites);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
         var preserveSelection=ReferenceEquals(boundSession,active)&&active.PreserveSelection;boundSession=active;
         results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
         details.SetContext(active.PathValue,active.Busy?null:active.Items.TotalCount??(!active.Items.HasMoreItems?(long?)active.Items.Count:null),active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count,active.Items.Count,active.Busy);

@@ -51,4 +51,39 @@ using(var browse=new BrowseSession(interrupted)) {
 }
 var capacity=new IOException("core-cache-operation-failed");capacity.Data["CoreMessage"]="directory-browse-capacity-exceeded";
 Require(BrowseTiming.ErrorText(capacity).Contains("实时递归"),"filesystem capacity error preserves a useful user message");
+var scoped=Setup(false);var saved=scoped.Preferences.Current;
+using(var browse=new BrowseSession(scoped)) {
+    Require(await browse.OpenLocationAsync("E:\\",true)&&browse.Recursive,"favorite entry uses its own recursive preference");
+    Require(await browse.NavigateAsync("")&&browse.PreferenceScope==Cap7CE.WinUI.Models.WorkspacePreferenceScope.Favorites&&browse.Recursive&&browse.EntryPath=="E:\\","breadcrumb home retains the favorite entry and its profile");
+    Require(await browse.NavigateAsync("F:\\")&&browse.EntryPath=="E:\\"&&browse.Recursive,"browsing outside the favorite root retains entry identity");
+    Require(await browse.OpenLocationAsync("",false)&&!browse.Recursive&&browse.EntryPath=="","explicit Computer entry selects its own profile");
+    Require(await browse.NavigateAsync("E:\\")&&!browse.Recursive&&browse.EntryPath=="","Computer drive entry keeps recursion disabled even when bookmarked");
+    Require(scoped.Preferences.Current==saved,"navigation does not persist favorite state into Computer preferences");
+    Require(await browse.OpenLocationAsync("",true)&&!browse.Recursive&&browse.PreferenceScope==Cap7CE.WinUI.Models.WorkspacePreferenceScope.Computer,"explicit home entry always uses Computer even with a stale favorite flag");
+}
+var rapid=Setup(false);rapid.Core!.Resolving=new();
+using(var browse=new BrowseSession(rapid)) {
+    var first=browse.OpenLocationAsync("E:\\",true);
+    rapid.Core.Resolving=null;
+    Require(await browse.OpenLocationAsync("E:\\nested",true),"second favorite navigation replaces an unfinished entry");
+    Require(!await first,"superseded favorite navigation is cancelled");
+    await browse.BackAsync();
+    Require(browse.PathValue==""&&browse.PreferenceScope==Cap7CE.WinUI.Models.WorkspacePreferenceScope.Computer&&!browse.Recursive,"home history cannot restore a favorite profile captured during an unfinished entry");
+    await browse.ForwardAsync();
+    Require(browse.PathValue=="E:\\nested"&&browse.Recursive,"forward retains the completed favorite entry profile");
+    await browse.BackAsync();
+    Require(await browse.NavigateAsync("E:\\")&&!browse.Recursive,"entering a bookmarked drive from Computer cannot select the favorite profile");
+}
+var samePath=Setup(false);
+using(var browse=new BrowseSession(samePath)) {
+    Require(await browse.OpenLocationAsync("E:\\",false)&&!browse.Recursive,"Computer can open a bookmarked path independently");
+    Require(await browse.OpenLocationAsync("E:\\",true)&&browse.Recursive,"sidebar favorite explicitly selects its profile at the same path");
+    await browse.BackAsync();
+    Require(browse.PathValue=="E:\\"&&browse.EntryPath==""&&!browse.Recursive,"back restores Computer identity at an identical path");
+    await browse.ForwardAsync();
+    Require(browse.PathValue=="E:\\"&&browse.EntryPath=="E:\\"&&browse.Recursive,"forward restores favorite identity at an identical path");
+    Require(await browse.NavigateAsync("F:\\")&&await browse.OpenLocationAsync("F:\\",true),"another favorite can be entered at the current path");
+    await browse.BackAsync();
+    Require(browse.PathValue=="F:\\"&&browse.EntryPath=="E:\\","history distinguishes favorite entry anchors even with the same profile and path");
+}
 Console.WriteLine("BrowseSession routing checks passed: direct/recursive, indexed/unindexed, startup/offline, count-free paging, search scope and navigation cancellation.");
