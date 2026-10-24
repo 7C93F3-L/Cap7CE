@@ -21,7 +21,13 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     {if(items.Count is 0 or >100000)throw new IOException("请选择不超过十万项的文件或目录。");if(items.Count==1)FileAccessGuard.Validate(items[0]);AutoKeywordsRequested?.Invoke(items.ToArray());}
     public void AutoKeywords(string directory)=>AutoKeywords([new AssetItem(new Cap7CE.Core.Protocol.BasicSearchItem(directory,Path.GetFileName(directory.TrimEnd('\\')),"","",true),directory)]);
     public void ShowMetadata(AssetItem item)
-    {FileAccessGuard.Validate(item);services.ShowMaintenance(item.Entry.IsDirectory?item.FullPath:Path.GetDirectoryName(item.FullPath));}
+    {FileAccessGuard.Validate(item);ShowMetadata(item.Entry.IsDirectory?item.FullPath:Path.GetDirectoryName(item.FullPath)??throw new IOException("无法确定文件所在目录。"));}
+    public void ShowMetadata(string directory)
+    {
+        FileAccessGuard.RejectLinks(directory);
+        if(!Directory.Exists(directory))throw new DirectoryNotFoundException("目录不存在或当前不可用");
+        services.ShowMaintenance(Path.GetFullPath(directory));
+    }
     public void Run(Func<Task> action) => Execute(action);
     private async void Execute(Func<Task> action) { try { await action(); } catch (Exception error) { notice(error.Message); } }
     public void Preview(AssetItem item) { FileAccessGuard.Validate(item); PreviewRequested?.Invoke(item); }
