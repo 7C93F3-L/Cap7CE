@@ -30,9 +30,14 @@ const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');
 const catalogRefresh = read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
 assert(catalogRefresh.includes('BrowseSession {UsesCatalogResults:true}')
-  && catalogRefresh.includes('active is {UsesCatalogResults:true,Busy:false}')
+  && catalogRefresh.includes('active is not {UsesCatalogResults:true}')
+  && catalogRefresh.includes('CatalogRefreshRules.CanRefresh')
+  && catalogRefresh.includes('CatalogRefreshRules.Affects')
   && !catalogRefresh.includes('FilesystemBrowsing:false'),
   'Catalog notifications must not invalidate or rebuild the plain home or filesystem views');
+assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('CatalogRefreshRules.RetainSelection')
+  && browseRouting.includes('result=Items') && browseRouting.includes('preserveSelection&&result.Count<Items.Count'),
+  'background refresh must preserve existing identities, unchanged collections and loaded depth');
 assert(browseRouting.includes('if(path.Length>0&&plainBrowse)')
   && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token)') < browseRouting.indexOf('if (services.Core is null)'),
   'ordinary directory listings must use the filesystem before checking Core or resolving Catalog scope');

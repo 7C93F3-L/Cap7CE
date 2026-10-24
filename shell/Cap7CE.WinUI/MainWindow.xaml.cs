@@ -27,16 +27,18 @@ public sealed partial class MainWindow : Window
     private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
     private BrowseSession? active;
+    private BrowseSession? boundSession;
+    private bool catalogRefreshQueued;
     private Models.ShellPreferences? appliedPreferences;
     private bool closed,started,minimized;
     public MainWindow()
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
-        services.CatalogChanged+=()=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
-            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session)session.Invalidate();
-            if(active is {UsesCatalogResults:true,Busy:false})Refresh();
-            if(active is not null)filterAvailability?.Update(active,true);
+        services.CatalogChanged+=roots=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
+            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.Affects(session.PathValue,roots))session.Invalidate();
+            QueueCatalogRefresh();
+            if(active is not null&&Models.CatalogRefreshRules.Affects(active.PathValue,roots))filterAvailability?.Update(active,true);
         }});
         services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
         services.MaintenanceRequested+=OpenMaintenance;
@@ -48,7 +50,7 @@ public sealed partial class MainWindow : Window
         results.SetHorizontal(layout.HorizontalGrid);toolbar.SetCompact(layout.HorizontalGrid);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
         NoticeHost.Content=notifications;
-        results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);};
+        results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);QueueCatalogRefresh();};
         services.VisualMaintenance+=busy=>{if(busy){preview?.Close();details.Stop();}results.Suspend(busy||minimized);if(!busy)Refresh();};
         results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
@@ -63,7 +65,7 @@ public sealed partial class MainWindow : Window
         toolbar.SizeCommitted+=size=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{TileSize=size}));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
         Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
-        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();if(session.Invalidated&&!session.Busy)Refresh();}};
+        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();QueueCatalogRefresh();}};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
         commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
@@ -76,7 +78,7 @@ public sealed partial class MainWindow : Window
         services.Preferences.Changed+=ApplyPreferences;
         AppWindow.Changed+=(_,_)=>{
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
-            if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else details.Select(results.Selection);
+            if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else {details.Select(results.Selection);QueueCatalogRefresh();}
         };
         Closed+=OnClosed;Root.Loaded+=async(_,_)=>{if(started)return;started=true;await StartAsync();};
     }
@@ -110,11 +112,22 @@ public sealed partial class MainWindow : Window
     {
         if(active is null||closed)return;
         sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
-        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0);
+        var preserveSelection=ReferenceEquals(boundSession,active)&&active.PreserveSelection;boundSession=active;
+        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
         details.SetContext(active.PathValue,active.Items.Count,active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count);
         notifications.SetBusy(active.Busy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
+        if(!active.Busy)QueueCatalogRefresh();
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
+    private void QueueCatalogRefresh()
+    {
+        if(closed||catalogRefreshQueued)return;catalogRefreshQueued=true;
+        DispatcherQueue.TryEnqueue(()=>{
+            catalogRefreshQueued=false;
+            if(closed||active is not {UsesCatalogResults:true} session||!Models.CatalogRefreshRules.CanRefresh(session.Invalidated,session.Busy,results.Selection.Count,preview is not null,minimized))return;
+            commands.Run(()=>session.NavigateAsync(session.PathValue,false,true));
+        });
+    }
     private void OpenLocation(string path)
     {
         // Navigation entry always returns to the requested root with fresh query state.
@@ -132,7 +145,7 @@ public sealed partial class MainWindow : Window
     }
     private void ShowPreview(Models.AssetItem item)
     {
-        if(preview is null){preview=new(services,this);preview.Closed+=(_,_)=>preview=null;}
+        if(preview is null){preview=new(services,this);preview.Closed+=(_,_)=>{preview=null;QueueCatalogRefresh();};}
         preview.Show(item,active?.Items.ToArray()??[item]);
     }
     private void OpenSettings()

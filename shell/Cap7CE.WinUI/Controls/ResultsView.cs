@@ -19,7 +19,7 @@ internal sealed class ResultsView : UserControl
     private readonly TextBlock emptyHint=Ui.Text("",true);
     private readonly Button retry=Ui.Button("重试",()=>{}),clearFilters=Ui.Button("清除筛选",()=>{});
     private readonly StackPanel emptyActions=new(){Orientation=Orientation.Horizontal,Spacing=6,HorizontalAlignment=HorizontalAlignment.Center};
-    private bool square=true,home,suspended;
+    private bool square=true,home,suspended,binding;
     private bool IsGallery=>!square&&!listMode&&!horizontal&&!home;
     public event Action? Retry,ClearFilters;
     private FileCommands? commands;
@@ -62,11 +62,11 @@ internal sealed class ResultsView : UserControl
         foreach (var view in new ListViewBase[] { grid, list })
         {
             IdleScrollBars.Attach(view);
-            view.SelectionChanged += (_, _) => SelectionChanged?.Invoke(Selection);
+            view.SelectionChanged += (_, _) => {if(!binding)SelectionChanged?.Invoke(Selection);};
             view.DoubleTapped += OnItemDoubleTapped; view.RightTapped += Context;
             view.DragItemsStarting += OnItemsDragStarting; root.Children.Add(view);
         }
-        list.Visibility=Visibility.Collapsed;root.Children.Add(gallery);gallery.SelectionChanged+=()=>{if(IsGallery)SelectionChanged?.Invoke(Selection);};
+        list.Visibility=Visibility.Collapsed;root.Children.Add(gallery);gallery.SelectionChanged+=()=>{if(IsGallery&&!binding)SelectionChanged?.Invoke(Selection);};
         empty.HorizontalTextAlignment=TextAlignment.Center;emptyHint.HorizontalTextAlignment=TextAlignment.Center;
         retry.Click+=(_,_)=>Retry?.Invoke();clearFilters.Click+=(_,_)=>ClearFilters?.Invoke();
         emptyActions.Children.Add(retry);emptyActions.Children.Add(clearFilters);
@@ -75,12 +75,17 @@ internal sealed class ResultsView : UserControl
         root.AddHandler(UIElement.TappedEvent,new TappedEventHandler((_,e)=>{if(IsBlank(e.OriginalSource as DependencyObject))ClearSelection();}),true);Content=root;
     }
     public void Configure(FileCommands value){commands=value;gallery.Configure(value);}
-    public void Bind(AssetCollection value,bool isHome=false,bool busy=false,string? error=null,bool filtered=false)
+    public void Bind(AssetCollection value,bool isHome=false,bool busy=false,string? error=null,bool filtered=false,bool preserveSelection=false)
     {
         if(!ReferenceEquals(items,value)||home!=isHome) {
-            var wasGallery=IsGallery;home=isHome;items=value;
-            SetGridSource();
-            list.ItemsSource=value;gallery.Bind(value);ApplyView(ActiveView,wasGallery);SelectionChanged?.Invoke([]);
+            var retained=preserveSelection?CatalogRefreshRules.RetainSelection(Selection,value,item=>item.FullPath+"|"+item.Entry.FileReference):[];
+            binding=true;
+            try {
+                var wasGallery=IsGallery;home=isHome;items=value;SetGridSource();
+                list.ItemsSource=value;gallery.Bind(value,preserveSelection);ApplyView(ActiveView,wasGallery);
+                if(IsGallery)gallery.ReplaceSelection(retained);else foreach(var item in retained)ActiveView.SelectedItems.Add(item);
+            } finally {binding=false;}
+            SelectionChanged?.Invoke(Selection);
         }
         emptyPanel.Visibility=value.Count==0?Visibility.Visible:Visibility.Collapsed;
         empty.Text=busy?"正在载入…":error is not null?"暂时无法打开此位置":"没有匹配项";
@@ -109,7 +114,7 @@ internal sealed class ResultsView : UserControl
         grid.Visibility=!IsGallery&&ReferenceEquals(current,grid)?Visibility.Visible:Visibility.Collapsed;
         list.Visibility=!IsGallery&&ReferenceEquals(current,list)?Visibility.Visible:Visibility.Collapsed;gallery.Visibility=IsGallery?Visibility.Visible:Visibility.Collapsed;
         Suspend(suspended);
-        if(!ReferenceEquals(previous,current)||wasGallery!=IsGallery)SelectionChanged?.Invoke(Selection);
+        if(!binding&&(!ReferenceEquals(previous,current)||wasGallery!=IsGallery))SelectionChanged?.Invoke(Selection);
     }
     public void SelectAll(){if(IsGallery)gallery.SelectAll();else ActiveView.SelectAll();}
     public void ClearSelection(){if(Selection.Count==0)return;if(IsGallery)gallery.Clear();else ActiveView.SelectedItems.Clear();}

@@ -90,7 +90,9 @@ public sealed record CoreVolumeStatus(
     long Processed,
     long? Total,
     bool Queryable,
-    bool NeedsRebuild);
+    bool NeedsRebuild,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    long? CatalogRevision = null);
 
 public sealed record VolumeListResponse(IReadOnlyList<CoreVolumeStatus> Volumes);
 

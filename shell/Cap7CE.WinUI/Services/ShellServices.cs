@@ -1,4 +1,5 @@
 using Cap7CE.Core.Protocol;
+using Cap7CE.WinUI.Models;
 
 namespace Cap7CE.WinUI.Services;
 internal sealed class ShellServices : IAsyncDisposable
@@ -15,8 +16,9 @@ internal sealed class ShellServices : IAsyncDisposable
     public MetadataTasks Metadata {get;}
     public NativeNotifications Notifications {get;}=new();
     public NativeHotKeys? Shortcuts {get;set;}
-    public event Action? CatalogChanged;
-    public void RefreshViews()=>CatalogChanged?.Invoke();
+    public event Action<IReadOnlySet<string>?>? CatalogChanged;
+    public void RefreshViews()=>CatalogChanged?.Invoke(null);
+    private long catalogRevision;
     public event Action<string>? BackgroundError;
     public event Action<bool>? VisualMaintenance;
     public event Action<string?>? MaintenanceRequested;
@@ -48,17 +50,23 @@ internal sealed class ShellServices : IAsyncDisposable
         } finally { connection.Release(); }
     }
     public async Task RefreshVolumesAsync()
-    { if (Core is not null) Volumes = (await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus, new { })).Volumes; }
+    { if (Core is not null) {var status=await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});Volumes=status.Volumes;catalogRevision=status.CatalogRevision;} }
     public async Task DisconnectAsync()
     {
         await connection.WaitAsync();
         try{changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
         finally{connection.Release();}
     }
-    private async void OnCatalogChanged()
+    private async Task OnCatalogChanged()
     {
         if(closed)return;var owner=Core;
-        try{await RefreshVolumesAsync();if(closed||!ReferenceEquals(owner,Core))return;RefreshViews();await Metadata.NotifyAsync();}catch(Exception error){if(!closed)BackgroundError?.Invoke(error.Message);}
+        try{
+            var before=Volumes;var previousRevision=catalogRevision;
+            await RefreshVolumesAsync();if(closed||!ReferenceEquals(owner,Core))return;
+            static CatalogVolumeStamp Stamp(CoreVolumeStatus v)=>new(v.VolumeId,v.DisplayName,v.CatalogRevision,v.Queryable,v.State);
+            CatalogChanged?.Invoke(CatalogRefreshRules.Changes(before.Select(Stamp).ToArray(),Volumes.Select(Stamp).ToArray(),previousRevision!=catalogRevision));
+            await Metadata.NotifyAsync();
+        }catch(Exception error){if(!closed)BackgroundError?.Invoke(error.Message);}
     }
     public async Task ReleaseSourcesAsync() { await Providers.ReleaseAsync(); await Office.ReleaseAsync(); await Visuals.ReleaseAsync(); }
     public async Task<(long Count,long Bytes)> GetCacheStatsAsync()

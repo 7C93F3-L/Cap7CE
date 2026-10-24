@@ -2,6 +2,7 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
 var checks = 0;
+CatalogRefreshChecks.Run();
 void CheckReveal(double top,double height,double offset,double viewport,double maximum,double expected)
 {
     if(Math.Abs(GalleryGeometry.RevealOffset(new(0,0,top,100,height),offset,viewport,maximum)-expected)>.001)

@@ -15,6 +15,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
     public bool Busy { get; private set; }
+    public bool PreserveSelection {get;private set;}
     public bool Invalidated {get;private set;}
     public void Invalidate()=>Invalidated=true;
     public string? Error {get;private set;}
@@ -41,8 +42,9 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     }
     public Task UpAsync()
     {if(PathValue.Length==0)return Task.CompletedTask;Query="";return NavigateAsync(Directory.GetParent(PathValue)?.FullName??"");}
-    public async Task<bool> NavigateAsync(string path, bool remember = true)
+    public async Task<bool> NavigateAsync(string path, bool remember = true,bool preserveSelection=false)
     {
+        PreserveSelection=preserveSelection;
         Invalidated=false;var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
         filesystem?.Dispose();filesystem=null;
@@ -95,6 +97,16 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
                 if (version != generation) return false;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
+            }
+            while(preserveSelection&&result.Count<Items.Count&&cursor is not null) {
+                var continuation=await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchNextPage,new SearchNextPageRequest(cursor),token);
+                if(version!=generation)return false;Append(result,continuation);cursor=continuation.NextCursor;
+            }
+            if(preserveSelection) {
+                var previous=Items.ToDictionary(item=>item.FullPath,StringComparer.OrdinalIgnoreCase);
+                for(var i=0;i<result.Count;i++)if(previous.TryGetValue(result[i].FullPath,out var old)&&Equals(old.Entry,result[i].Entry))result[i]=old;
+                if(result.Count==Items.Count&&result.Zip(Items).All(pair=>ReferenceEquals(pair.First,pair.Second)))result=Items;
+                result.HasMoreItems=cursor is not null;
             }
             if (version != generation) return false;
             if (remember && path != PathValue) { back.Push(PathValue); forward.Clear(); }

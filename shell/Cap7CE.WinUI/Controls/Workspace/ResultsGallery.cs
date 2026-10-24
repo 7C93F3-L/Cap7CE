@@ -35,9 +35,11 @@ internal sealed class ResultsGallery : UserControl
         PreviewKeyDown+=NavigateKey;Unloaded+=(_,_)=>Detach();Loaded+=(_,_)=>Observe();
     }
     public void Configure(FileCommands value)=>commands=value;
-    public void Bind(AssetCollection value)
+    public void Bind(AssetCollection value,bool preserveViewport=false)
     {
-        if(ReferenceEquals(items,value))return;Detach();items=value;selection.Clear();repeater.ItemsSource=value;Observe();scroll.ChangeView(null,0,null,true);
+        if(ReferenceEquals(items,value))return;var offset=preserveViewport?scroll.VerticalOffset:0;
+        Detach();items=value;selection.Clear();repeater.ItemsSource=value;Observe();
+        DispatcherQueue.TryEnqueue(()=>{if(ReferenceEquals(items,value))scroll.ChangeView(null,offset,null,true);});
     }
     private void Detach(){if(items is not null)items.CollectionChanged-=ItemsChanged;foreach(var item in observed)item.AspectChanged-=RatioChanged;observed.Clear();}
     private void Observe(){if(items is null)return;items.CollectionChanged-=ItemsChanged;items.CollectionChanged+=ItemsChanged;foreach(var item in items)if(observed.Add(item))item.AspectChanged+=RatioChanged;}

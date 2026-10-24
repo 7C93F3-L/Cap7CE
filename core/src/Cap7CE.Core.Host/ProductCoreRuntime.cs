@@ -289,7 +289,8 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
         volume.Processed,
         volume.Total,
         volume.State is CatalogV2VolumeState.Ready or CatalogV2VolumeState.CatchingUp,
-        volume.State == CatalogV2VolumeState.NeedsRebuild);
+        volume.State == CatalogV2VolumeState.NeedsRebuild,
+        volume.CatalogRevision);
 
     private sealed class RuntimeTask : IDisposable
     {
