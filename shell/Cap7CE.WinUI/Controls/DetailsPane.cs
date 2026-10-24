@@ -11,13 +11,14 @@ using Windows.Storage;
 namespace Cap7CE.WinUI.Controls;
 internal sealed class DetailsPane : UserControl
 {
+    private const double FilePreviewHeight=200;
     private readonly ShellServices services;
     private readonly FileCommands commands;
     private readonly StackPanel column=new(){Spacing=8,Padding=new(12)};
-    private readonly Image image=new(){Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,MaxHeight=160};
+    private readonly Image image=new(){Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,MaxHeight=FilePreviewHeight};
     private CompositionRoundedRectangleGeometry? previewClip;
     private readonly AssetPlaceholderIcon icon=new(){Width=72,Height=72,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
-    private readonly Border visual=new(){Height=160,CornerRadius=new(8)};
+    private readonly Border visual=new(){Height=FilePreviewHeight,CornerRadius=new(8)};
     private readonly DetailsKeywordEditor keywords;
     private readonly DispatcherTimer debounce=new(){Interval=TimeSpan.FromMilliseconds(160)};
     private CancellationTokenSource reading=new();
@@ -61,7 +62,7 @@ internal sealed class DetailsPane : UserControl
             :item.Entry.IsDirectory?(drive?"磁盘":"文件夹"):item.Entry.Extension.TrimStart('.').ToUpperInvariant();
         if(heading.Length==0)heading="文件";
         column.Children.Add(new TextBlock{Text=heading,Style=(Style)Application.Current.Resources["CapDetailsHeading"]});
-        if(item is not null){icon.SetIcon(item.IconName);visual.Height=item.Entry.IsDirectory?120:160;column.Children.Add(visual);RenderItem(item,drive);}
+        if(item is not null){icon.SetIcon(item.IconName);visual.Height=item.Entry.IsDirectory?120:FilePreviewHeight;column.Children.Add(visual);RenderItem(item,drive);}
         else if(selected.Count>1)RenderSelection();
         else RenderContext();
     }
