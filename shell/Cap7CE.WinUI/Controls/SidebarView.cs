@@ -45,7 +45,6 @@ internal sealed class SidebarView : UserControl
         directories.RowDefinitions.Add(new() { Height = GridLength.Auto }); directories.RowDefinitions.Add(new() { Height = GridLength.Auto });
         directories.RowDefinitions.Add(new() { Height = new(1, GridUnitType.Star) });
         home = new ToggleButton { Style = StyleFor("CapSidebarHomeToggle") };
-        home.Resources["CapSidebarCheckedForegroundBrush"] = Application.Current.Resources["CapAccentForegroundBrush"];
         NavigationContent(home,"computer","此电脑",10,true); home.Click += (_,_)=>Navigate?.Invoke(""); directories.Children.Add(home);
         heading.Height = 32; heading.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) }); heading.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         heading.Children.Add(header); header.Style = (Style)Application.Current.Resources["CapSidebarHeaderText"];
@@ -81,14 +80,6 @@ internal sealed class SidebarView : UserControl
         content.ColumnDefinitions.Add(new() { Width = new(24) }); content.ColumnDefinitions.Add(new() { Width = new(1,GridUnitType.Star) });
         var glyph=new SidebarIcon { Kind = icon, Width = icon=="settings"?22:24, Height = icon=="settings"?22:24 };
         content.Children.Add(glyph);
-        if(pill&&button is ToggleButton toggle) {
-            // Follow the semantic selection rather than a snapshotted template foreground.
-            void Sync()=>glyph.InkForeground=toggle.IsChecked==true?(Brush)Application.Current.Resources["CapAccentForegroundBrush"]:toggle.Foreground;
-            toggle.Checked+=(_,_)=>Sync();toggle.Unchecked+=(_,_)=>Sync();toggle.Indeterminate+=(_,_)=>Sync();toggle.Loaded+=(_,_)=>Sync();
-            toggle.RegisterPropertyChangedCallback(Control.ForegroundProperty,(_,_)=>Sync());
-            toggle.ActualThemeChanged+=(_,_)=>{Sync();toggle.DispatcherQueue.TryEnqueue(()=>{if(glyph.IsLoaded)Sync();});};
-            Sync();
-        }
         Grid.SetColumn(text,1); text.VerticalAlignment = VerticalAlignment.Center; content.Children.Add(text); button.Content = content;
         AutomationProperties.SetName(button,label); ToolTipService.SetToolTip(button,label); navigation.Add((button,text,content,gap,pill));
     }
@@ -113,7 +104,7 @@ internal sealed class SidebarView : UserControl
             entry.Label.Visibility = isCompact?Visibility.Collapsed:Visibility.Visible;
             entry.Content.ColumnDefinitions[1].Width = isCompact?new(0):new(1,GridUnitType.Star); entry.Content.ColumnSpacing = isCompact?0:entry.Gap;
             entry.Button.Width = isCompact?32:double.NaN; entry.Button.Height = isCompact?32:36;
-            entry.Button.Padding = isCompact?new(4):new(8,0,8,0); entry.Button.CornerRadius = new(isCompact?9:entry.Pill?18:8);
+            entry.Button.Padding = isCompact?new(4):new(8,0,8,0); entry.Button.CornerRadius = new(isCompact?9:entry.Pill?9:8);
             entry.Button.HorizontalAlignment = isCompact?HorizontalAlignment.Center:HorizontalAlignment.Stretch;
             if(!entry.Pill)entry.Button.Margin = isCompact?new(4,5,4,5):new(5);
         }

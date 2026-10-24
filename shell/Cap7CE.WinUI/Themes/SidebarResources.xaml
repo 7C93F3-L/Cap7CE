@@ -82,7 +82,7 @@
   </Style>
   <Style x:Key="CapSidebarFavoriteContainer" TargetType="ListViewItem">
     <Setter Property="MinWidth" Value="0"/><Setter Property="Height" Value="36"/><Setter Property="MinHeight" Value="0"/>
-    <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,0,4"/><Setter Property="CornerRadius" Value="18"/>
+    <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,0,4"/><Setter Property="CornerRadius" Value="9"/>
     <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="UseSystemFocusVisuals" Value="True"/>
     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem">
@@ -91,13 +91,13 @@
           <VisualState x:Name="Normal"/>
           <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapSidebarHoverBrush}"/></VisualState.Setters></VisualState>
           <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="Surface.Background" Value="{ThemeResource CapSidebarHoverBrush}"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
-          <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapAccentForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/></VisualState.Setters></VisualState>
+          <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="SelectedSurface.Opacity" Value="1"/><Setter Target="Presenter.Foreground" Value="{ThemeResource CapSidebarCheckedForegroundBrush}"/></VisualState.Setters></VisualState>
           <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="Presenter.Opacity" Value="0.4"/></VisualState.Setters></VisualState>
         </VisualStateGroup></VisualStateManager.VisualStateGroups>
         <Border x:Name="Surface" Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}"/>
-        <Border x:Name="SelectedSurface" themes:AccentGradient.Source="{ThemeResource CapAccentGradient}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
+        <Border x:Name="SelectedSurface" Background="{ThemeResource CapSidebarHoverBrush}" CornerRadius="{TemplateBinding CornerRadius}" Opacity="0"/>
           <ContentPresenter x:Name="Presenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
       </Grid>
     </ControlTemplate></Setter.Value></Setter>
@@ -115,8 +115,8 @@
     <Setter Property="Height" Value="32"/><Setter Property="Width" Value="32"/><Setter Property="HorizontalAlignment" Value="Center"/>
   </Style>
   <Style x:Key="CapSidebarHomeToggle" TargetType="ToggleButton" BasedOn="{StaticResource CapSidebarToggle}">
-    <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="Background" Value="{ThemeResource CapAccentGradient}"/>
-    <Setter Property="Height" Value="36"/><Setter Property="CornerRadius" Value="18"/>
+    <Setter Property="Foreground" Value="{ThemeResource CapSidebarTextBrush}"/><Setter Property="Background" Value="{ThemeResource CapSidebarHoverBrush}"/>
+    <Setter Property="Height" Value="36"/><Setter Property="CornerRadius" Value="9"/>
     <Setter Property="HorizontalAlignment" Value="Stretch"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/>
   </Style>
   <Style x:Key="CapSidebarHeaderText" TargetType="TextBlock"><Setter Property="Foreground" Value="{ThemeResource CapSidebarMutedBrush}"/></Style>
