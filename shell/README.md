@@ -7,10 +7,15 @@
 - `npm ci`：安装构建工具及既有独立工作进程依赖。
 - 关闭本项目正在运行的原生窗口，再执行 `npm run build`。
 - `npm run dev` 或 `& ./shell/run.ps1`：启动 WinUI。
+- 已完成构建后可用 `& ./shell/run.ps1 -NoBuild` 直接启动；隔离测试库必须显式传 `-Catalog <路径>`，正常启动不继承外部测试库覆盖。
 - `npm run test:native:smoke`：一次短烟测，60秒进程超时，无自动重试；仅使用临时Catalog/图片/缓存，不扫描真实磁盘。
 - `npm run build:legacy`、`npm run dev:legacy`：显式保留的Electron入口。
 
 构建会复用现有Core产品宿主、配置/文件操作宿主、原生视觉适配器和独立Node工作进程，生成所需格式/筛选/指令资源。资源暂仍来源于旧源码目录；不能直接删除electron/src共享文件。
+
+开发启动统一使用run.ps1。DesktopProcess.cs通过Windows的PROC_THREAD_ATTRIBUTE_PARENT_PROCESS，以当前交互桌面Shell为父进程创建WinUI，使其继承正常桌面的token/job环境，避免从带MSIX文件重定向的开发工具直接启动时读取另一份AppData配置。环境变量仍由启动脚本传入，原配置路径规则和所有数据保持原位；不提权、不拷贝或合并配置。无交互桌面或无权创建进程时明确失败，不回退到已知会读错配置的直接启动。不要再从工具中用普通Start-Process启动开发EXE。
+
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/winui-desktop-launch.ps1`执行有界原生启动检查：验证环境变量穿过普通子进程，并在已有偏好文件存在时只读校验实际文件句柄路径。测试仅写入并删除自己的临时结果文件，不修改偏好或启动UI/Core。
 
 ## 索引与属性
 

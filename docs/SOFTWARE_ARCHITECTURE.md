@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-22）
 
+shell/run.ps1通过开发专用DesktopProcess.cs创建WinUI，使用GetShellWindow定位当前桌面Shell，仅申请PROCESS_CREATE_PROCESS，并通过STARTUPINFOEX/PROC_THREAD_ATTRIBUTE_PARENT_PROCESS继承桌面token/job等属性；不修改Shell、服务或产品入口，不提权。CreateProcess显式程序路径/工作目录、不继承句柄，环境变量仍来自启动脚本，后者在finally恢复项目根和测试Catalog变量；未显式-Catalog时清除继承的测试库覆盖。所有原生句柄和属性列表使用后释放，失败抛错不降级到直接启动；无额外进程驻留或轮询。run.ps1 -NoBuild只跳过构建且仍要求现有EXE，不改变原构建流程。PreferenceStore/Core/视觉缓存路径算法不变，不对两处数据执行迁移或合并。
+
+tests/winui-desktop-launch.ps1验证实际父进程启动后普通孙进程的环境传递，并只读打开已有偏好文件，通过GetFinalPathNameByHandle确认没有被重定向；只创建自己命名的临时JSON并在finally删除，不启动UI/Core或写配置。Windows API依据：https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute 。
+
 FramedRpc.IsConnected投影既有读取生命周期，连接终止时抛IOException而非模拟调用者取消；CoreConnection将内部超时与调用者取消区分。BrowseSession在主动Catalog查询开始前发现既有连接已断开时，复用ShellServices.ConnectAsync的连接门并以onlyIfDisconnected检查避免多个标签重复重启；只尝试一次，不增加轮询或后台重载。随机状态、种子及查询条件由原会话保留，普通文件系统浏览继续独立于Core，不变更Catalog/索引或窗口状态机。
 
 PreviewWindow在内容surface首次Loaded后通过低优先级UI队列补设Programmatic焦点，弥补Activated早于控件加载时Focus未生效的时序；成功后标记完成，后续Loaded不重复转移焦点。公共固定按钮的Tab资格和系统焦点视觉保持原样，不通过隐藏焦点框掩盖初始焦点落点。

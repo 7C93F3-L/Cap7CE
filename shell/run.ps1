@@ -1,4 +1,4 @@
-param([string]$Catalog)
+param([string]$Catalog,[switch]$NoBuild)
 $ErrorActionPreference = 'Stop'
 $phaseRoot = Split-Path $PSScriptRoot -Parent
 $phaseExecutable = Join-Path $PSScriptRoot 'artifacts/winui/Cap7CE.WinUI.exe'
@@ -22,12 +22,22 @@ if (-not $phaseNeedsBuild) {
         }
     }
 }
-if ($phaseNeedsBuild) {
+if ($phaseNeedsBuild -and -not $NoBuild) {
     & (Join-Path $PSScriptRoot 'build.ps1')
     if ($LASTEXITCODE) { throw 'WinUI build failed.' }
 }
-$phaseInfo = [Diagnostics.ProcessStartInfo]::new($phaseExecutable)
-$phaseInfo.UseShellExecute = $false
-$phaseInfo.Environment['CAP7CE_PHASEF_ROOT'] = $phaseRoot
-if ($Catalog) { $phaseInfo.Environment['CAP7CE_PHASEF_CATALOG'] = (Resolve-Path -LiteralPath $Catalog).Path }
-[Diagnostics.Process]::Start($phaseInfo)
+if (-not (Test-Path -LiteralPath $phaseExecutable)) { throw 'WinUI executable is missing; build it first.' }
+if (-not ('Cap7CEDesktopProcess' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'DesktopProcess.cs') }
+$phaseOldRoot=$env:CAP7CE_PHASEF_ROOT
+$phaseOldCatalog=$env:CAP7CE_PHASEF_CATALOG
+try {
+    $env:CAP7CE_PHASEF_ROOT=$phaseRoot
+    # Never let an inherited fixture override silently redirect a normal launch.
+    $env:CAP7CE_PHASEF_CATALOG=if($Catalog){(Resolve-Path -LiteralPath $Catalog).Path}else{$null}
+    $phaseId=[Cap7CEDesktopProcess]::Start($phaseExecutable,'',$phaseRoot)
+    [PSCustomObject]@{Id=$phaseId;Path=$phaseExecutable;LaunchEnvironment='Interactive desktop'}
+}
+finally {
+    $env:CAP7CE_PHASEF_ROOT=$phaseOldRoot
+    $env:CAP7CE_PHASEF_CATALOG=$phaseOldCatalog
+}
