@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+FilterBar移除FilterAvailabilityNotice及其手动重试事件，只将FilterAvailability状态交给FactFilterStrip控制详细筛选可用性；后台检查、目录切换和Catalog通知刷新仍保留，状态文案不再参与顶部布局。
+
 RecursiveDirectoryListing在第一次read中收集所选目录树的文件信息并统一调用sortDirectoryEntries，随后从同一排序快照每次返回100项；每批最多4个目录并行枚举，整批等待完成后才进入下一批或抛错。目录与链接安全检查、隐藏项、取消和会话隔离沿用原所有者。遍历最多65536项、结果投影32 MiB、待访问目录路径16 MiB，超限失败不返回局部有序假象；全局准确排序需等待本次目录树枚举，不依赖Catalog、不读取源内容或生成持久索引。policy使用系统语言Intl自然名称排序，修改时间升降序同值按名称与路径稳定兜底，未知时间始终置后；普通目录文件夹优先，递归仅文件全局排序。
 
 BrowseScopeRules.UsesCatalogResults统一区分首页/文件系统列表与Catalog结果；MainWindow收到CatalogChanged仅使UsesCatalogResults标签失效，并只重载其中空闲的当前页。普通“此电脑”不再因FilesystemBrowsing=false被误判为Core查询而重建网格；首页搜索/筛选/随机仍受通知影响，能力刷新不变。
@@ -162,7 +164,7 @@ ThemeService仍为菜单及筛选/尺寸浮层配置DesktopAcrylicBackdrop，普
 
 上方筛选的剩余媒体预设由同一资源生成器输出 `filter-media-options.json`，`MediaFilterRules` 只组合已有Protocol范围，不复制视频分辨率、音频时长、声道和宽高比阈值。图像尺寸支持精确宽高或独立范围，时长按十进制秒向内取整到毫秒，避免边界漂移；清除只影响当前组。`filter-three-d-types.json` 从主线三维类型映射生成，`ThreeDFilterRules` 保留基础类型选择、仅缩小有效查询扩展名；类型细分无需元数据，空交集保持空结果，基础类型改变时清理细分。
 
-`FilterAvailabilityController` 独立调度有界存在性检查，按目录、有效类型、隐藏状态和Core连接改变触发，或由用户重试；六秒期限、取消和代次隔离阻止旧结果覆盖当前视图，没有定时轮询。`FilterAvailabilityService` 仅沿既有Core会话解析目录并执行一项只读搜索，属性和颜色分开探测。分页游标使用现有无状态签名载荷，探测只消费首项，不另建搜索会话；取消沿用 `CoreConnection` 现有机制。`MainWindow` 只装配服务并在派发回UI时再次校验代次；关闭窗口先取消检查。`FilterAvailabilityNotice` 显示缺失/失败与重新检查，尚未迁入的提取动作明确引导用户在Electron手动完成，不触发扫描或属性任务。纯条件测试覆盖组合与边界、取消/过期/重试/关闭；独立临时库烟测验证单项查询与取消，不读取用户素材库。
+`FilterAvailabilityController` 独立调度有界存在性检查，按目录、有效类型、隐藏状态和Core连接改变及Catalog通知触发；六秒期限、取消和代次隔离阻止旧结果覆盖当前视图，没有定时轮询。`FilterAvailabilityService` 仅沿既有Core会话解析目录并执行一项只读搜索，属性和颜色分开探测。分页游标使用现有无状态签名载荷，探测只消费首项，不另建搜索会话；取消沿用 `CoreConnection` 现有机制。`MainWindow` 只装配服务并在派发回UI时再次校验代次；关闭窗口先取消检查。状态仅用于详细筛选的启用/禁用，不再显示属性提示按钮或说明浮层，不触发扫描或属性任务。纯条件测试覆盖组合与边界、取消/过期/重试/关闭；独立临时库烟测验证单项查询与取消，不读取用户素材库。
 
 专用属性分组由 `scripts/winui-advanced-filter-resources.cjs` 调用当前主线 `toComputerSearchArchiveConditions` 及其既有领域转换链生成 `filter-advanced-options.json`，只保留现用分组的允许扩展名、Protocol字段、预设及范围边界，不打包React/CSS或备用界面。`AdvancedFilterRules` 验证描述边界，只修改document/threeD/font/model/textData/archive的有界叶字段，保留会话事实kind与extractorVersion；支持单选范围、多段范围/枚举并集及独立布尔条件，空嵌套载荷清理后再返回强类型DTO。
 

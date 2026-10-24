@@ -46,6 +46,9 @@ for (const name of ['Models/GalleryGeometry', 'Models/WorkspacePathRules', 'Cont
 assert(read('shell/Cap7CE.WinUI/Themes/WorkspaceResources.xaml').includes('<controls:GalleryTile/>'), 'gallery tile needs compiled activation metadata');
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsGridLayout.cs').includes('grid.ItemsPanelRoot is ItemsWrapGrid'), 'compact row must retain the existing virtualizing panel');
 const filterBar = read('shell/Cap7CE.WinUI/Controls/FilterBar.cs');
+assert(!filterBar.includes('FilterAvailabilityNotice') && !filterBar.includes('RetryAvailability')
+  && filterBar.includes('facts.SetAvailability(state)'),
+  'availability state must retain detailed filter gating without a status button or popup');
 assert(!/new\s+(?:Items)?WrapGrid|ItemsPanel/.test(filterBar), 'standalone filter options must use nonvirtualizing Grid/StackPanel layout');
 assert(filterBar.includes('FilterPresets') && filterBar.includes('FilterFlyouts'), 'top filters must share presets and a single flyout owner');
 assert(read('shell/Cap7CE.WinUI/App.xaml').includes('Themes/FilterResources.xaml'), 'top filter visuals must use compiled shared theme resources');

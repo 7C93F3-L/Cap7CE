@@ -14,8 +14,6 @@ internal sealed class FilterBar : UserControl
     private readonly List<ToggleButton> sizes=[];
     private readonly FilterFlyouts flyouts=new();
     private readonly FactFilterStrip facts;
-    private readonly FilterAvailabilityNotice availability;
-    public event Action? RetryAvailability;
     public BrowseFilter Value {get;private set;}=new();
     public event Action<BrowseFilter>? FilterChanged;
     public FilterBar()
@@ -23,7 +21,6 @@ internal sealed class FilterBar : UserControl
         var editors=new FilterEditors(()=>Value,Set,flyouts);
         clear=FilterSection.ActionButton("清除筛选",()=>Set(new()));
         var actions=new StackPanel {Margin=new(0,0,2,0)};actions.Children.Add(count);actions.Children.Add(clear);row.Children.Add(actions);
-        availability=new(flyouts);availability.Retry+=()=>RetryAvailability?.Invoke();actions.Children.Add(availability);
         foreach(var (id,label) in FilterPresets.Times)times.Add(id,FilterSection.Option(label,()=>Set(FilterPresets.Time(Value,id,DateTime.Now))));
         timeSection=new("修改时间",FilterSection.Options(times.Values.Cast<UIElement>().ToArray(),3),editors.Dates);row.Children.Add(timeSection);
         var typeGrid=new Grid {ColumnSpacing=4,RowSpacing=4};
@@ -55,7 +52,7 @@ internal sealed class FilterBar : UserControl
         Unloaded+=(_,_)=>flyouts.Close();Render();
     }
     public void Restore(BrowseFilter filter) {if(!ReferenceEquals(Value,filter))flyouts.Close();Value=filter;Render();}
-    public void SetAvailability(FilterAvailability state){availability.Set(state);facts.SetAvailability(state);}
+    public void SetAvailability(FilterAvailability state)=>facts.SetAvailability(state);
     public bool ContainsKeyboardTarget(DependencyObject target)
     {for(DependencyObject? item=target;item is not null;item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(ReferenceEquals(item,this))return true;return false;}
     private void Set(BrowseFilter filter) {Value=filter;Render();FilterChanged?.Invoke(filter);}

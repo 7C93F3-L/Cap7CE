@@ -41,7 +41,6 @@ public sealed partial class MainWindow : Window
         services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
         services.MaintenanceRequested+=OpenMaintenance;
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
-        filters.RetryAvailability+=()=>{if(active is not null)filterAvailability.Update(active,true);};
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
