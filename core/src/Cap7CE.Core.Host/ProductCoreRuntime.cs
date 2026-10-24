@@ -65,6 +65,8 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
             if (initialized) return;
             if (ownStorage) storageLease = CatalogStorageLease.Acquire(catalog.DatabasePath, createDirectory: true);
             await catalog.InitializeAsync(token, createEntryCatalog);
+            if(ownStorage)foreach(var volume in (await catalog.ReadVolumesAsync(token)).Where(v=>v.State==CatalogV2VolumeState.Building))
+                await catalog.RecoverInterruptedBuildAsync(volume.VolumeId,volume.CatalogRevision,token);
             FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync(token);
             synchronizer = new(catalog, readerFactory, diagnostics, captureFileEntries: FileEntryModeEnabled, progress: preparation);
             ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token)); initialized = true;

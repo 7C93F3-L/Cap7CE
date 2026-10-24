@@ -119,7 +119,9 @@ internal sealed class IndexMaintenanceView : UserControl
         }
         foreach(var task in tasks.Where(t=>t.State!="running"))if(started.Remove(task.TaskId))services.Notify("索引任务："+task.State);
         status.Text=string.Join("\n",snapshot.Tasks.Select(t=>$"{t.Kind}：{t.State}"+(t.ErrorCode is null?"":" · "+t.ErrorCode)));
-        if(status.Text.Length==0)status.Text=snapshot.Volumes.Count==0?"暂无磁盘，请刷新。":"索引就绪";
+        var unavailable=snapshot.Volumes.Where(v=>v.Selected&&!v.Queryable).Select(v=>v.DisplayName).ToArray();
+        if(unavailable.Length>0)status.Text+=(status.Text.Length>0?"\n":"")+string.Join("、",unavailable)+" 索引未就绪；可选择相应磁盘，点击“建立 / 更新”。";
+        else if(status.Text.Length==0)status.Text=snapshot.Volumes.Count==0?"暂无磁盘，请刷新。":"索引就绪";
         await services.RefreshVolumesAsync();
     }
     private async Task BuildAsync(bool rebuild)

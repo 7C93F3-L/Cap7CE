@@ -111,7 +111,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null)
                 {
                     if(plainBrowse)return await BrowseFilesystemAsync(path,remember,version,token,origin);
-                    throw new IOException("此目录的索引尚未就绪，可清除搜索和筛选后直接浏览；搜索及筛选需要可查询的索引");
+                    throw new IOException(BrowseScopeRules.IndexUnavailable(resolved.State,Random));
                 }
                 volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);
             }

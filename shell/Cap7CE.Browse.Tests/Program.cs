@@ -87,3 +87,5 @@ using(var browse=new BrowseSession(samePath)) {
     Require(browse.PathValue=="F:\\"&&browse.EntryPath=="E:\\","history distinguishes favorite entry anchors even with the same profile and path");
 }
 Console.WriteLine("BrowseSession routing checks passed: direct/recursive, indexed/unindexed, startup/offline, count-free paging, search scope and navigation cancellation.");
+Require(Cap7CE.WinUI.Models.BrowseScopeRules.IndexUnavailable("needsRebuild",true).Contains("建立 / 更新"),"random unavailable status exposes the existing recovery action");
+Require(!Cap7CE.WinUI.Models.BrowseScopeRules.IndexUnavailable("building",true).Contains("清除"),"random build status does not ask to clear nonexistent search filters");

@@ -10,6 +10,7 @@ using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
 if (args is ["--catalog-natural-order-tests"]) { await CatalogNaturalOrderingTests.RunAsync(); return 0; }
+if (args is ["--catalog-interrupted-build-tests"]) { await CatalogInterruptedBuildTests.RunAsync(); await CatalogPreparationProgressTests.RunAsync(); await CatalogEntrySnapshotFenceTests.RunAsync(); return 0; }
 if (args is ["--catalog-result-count-tests"]) { await CatalogResultCountTests.RunAsync(); return 0; }
 if (args is ["--catalog-preparation-tests"]) { await CatalogPreparationProgressTests.RunAsync(); return 0; }
 if (args is ["--metadata-state-tests"]) { await MetadataBuildStateFileTests.RunAsync(); return 0; }
@@ -90,6 +91,7 @@ await HostProtocolTests.RunAsync();
 await CoreRequestSchedulingTests.RunAsync();
 await CatalogDatabaseTests.RunAsync();
 await CatalogRecoveryTests.RunAsync();
+await CatalogInterruptedBuildTests.RunAsync();
 await CatalogPreparationProgressTests.RunAsync();
 var readOnlyBaseline = await CatalogReadOnlyCliTests.RunAsync();
 var catalogV2 = await CatalogV2Tests.RunAsync();

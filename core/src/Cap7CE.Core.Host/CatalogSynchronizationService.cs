@@ -266,13 +266,10 @@ public sealed class CatalogSynchronizationService
         }
         finally
         {
-            if (!snapshotClosed)
-            {
-                await reader.CloseSnapshotAsync(snapshot.SnapshotId, CancellationToken.None);
-            }
-            if (build is not null)
-            {
-                await build.DisposeAsync();
+            try {
+                if (!snapshotClosed)await reader.CloseSnapshotAsync(snapshot.SnapshotId, CancellationToken.None);
+            } finally {
+                if (build is not null)await build.DisposeAsync();
             }
         }
         totalWatch.Stop();

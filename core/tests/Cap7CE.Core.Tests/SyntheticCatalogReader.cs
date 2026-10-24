@@ -32,6 +32,7 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
 
     public bool SlowReads { get; set; }
     public bool FailNextSnapshotRead { get; set; }
+    public bool FailSnapshotClose { get; set; }
     public bool FailNextJournalReadAsDiscontinuous { get; set; }
     public int SnapshotOpenCount { get; private set; }
 
@@ -157,6 +158,7 @@ internal sealed class SyntheticCatalogReader : ICatalogReaderSessionFactory
         public Task CloseSnapshotAsync(ReaderOpaqueId snapshotId, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
+            if(owner.FailSnapshotClose)throw new IOException("synthetic-close-failure");
             snapshots.TryRemove(snapshotId, out _);
             return Task.CompletedTask;
         }

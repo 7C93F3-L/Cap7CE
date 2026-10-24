@@ -27,6 +27,7 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
     private double stagingWriteMilliseconds;
     private bool nodesCommitted;
     private bool completed;
+    private bool published;
     private bool disposed;
 
     private CatalogV2SnapshotBuild(
@@ -56,9 +57,9 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
             Cache = SqliteCacheMode.Private,
             Pooling = false
         }.ToString());
-        await connection.OpenAsync(token);
         try
         {
+            await connection.OpenAsync(token);
             using (var initialize = connection.CreateCommand())
             {
                 initialize.CommandText = """
@@ -99,8 +100,10 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
         }
         catch
         {
-            await connection.DisposeAsync();
-            CatalogV2Database.DeleteSnapshotBuildFiles(databasePath);
+            try {
+                await connection.DisposeAsync();
+                CatalogV2Database.DeleteSnapshotBuildFiles(databasePath);
+            } finally {await RetireAsync(owner,volumeId,expectedVolumeRevision);}
             throw;
         }
     }
@@ -164,6 +167,7 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
         var volume = await owner.PublishSnapshotBuildAsync(volumeId, databasePath, records, token, CaptureFileEntries, ExpectedVolumeRevision);
         publishWatch.Stop();
         completed = true;
+        published = true;
         CatalogV2Database.DeleteSnapshotBuildFiles(databasePath);
         return new CatalogV2SnapshotBuildResult(
             volume,
@@ -179,14 +183,24 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
     {
         if (disposed) return;
         disposed = true;
-        if (!nodesCommitted)
-        {
-            try { await transaction.RollbackAsync(CancellationToken.None); }
-            catch (InvalidOperationException) { }
-        }
-        await transaction.DisposeAsync();
-        await connection.DisposeAsync();
-        CatalogV2Database.DeleteSnapshotBuildFiles(databasePath);
+        try {
+            if (!nodesCommitted)
+            {
+                try { await transaction.RollbackAsync(CancellationToken.None); }
+                catch (InvalidOperationException) { }
+            }
+            await transaction.DisposeAsync();
+            await connection.DisposeAsync();
+            CatalogV2Database.DeleteSnapshotBuildFiles(databasePath);
+        } finally {if(!published)await RetireAsync(owner,volumeId,ExpectedVolumeRevision);}
+    }
+
+    private static async Task RetireAsync(CatalogV2Database catalog,string volumeId,long revision)
+    {
+        using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        try{await catalog.RecoverInterruptedBuildAsync(volumeId,revision,timeout.Token);}
+        catch(OperationCanceledException){} // Startup under the product lease retries stale states.
+        catch(SqliteException){} // Cleanup must not replace the original Reader/page failure.
     }
 }
 

@@ -29,6 +29,15 @@ internal static class CatalogPreparationProgressTests
         reader.FailNextSnapshotRead = true;
         await TestAssert.ThrowsAsync<IOException>(() => sync.SynchronizeAsync([], true), "failure remains visible");
         TestAssert.True(progress.Read() is null, "failed build clears progress");
+        TestAssert.Equal(CatalogV2VolumeState.NeedsRebuild,(await catalog.ReadVolumeAsync(volume.VolumeId))!.State,"failed Reader snapshot retires building state");
+        using var cancelled=new CancellationTokenSource();
+        var interrupted=sync.SynchronizeAsync([],false,cancelled.Token);
+        for(var i=0;i<200&&progress.Read()?.Stage!="scanning"&&!interrupted.IsCompleted;i++)await Task.Delay(1);
+        cancelled.Cancel();await TestAssert.ThrowsAsync<OperationCanceledException>(()=>interrupted,"snapshot cancellation remains observable");
+        TestAssert.Equal(CatalogV2VolumeState.NeedsRebuild,(await catalog.ReadVolumeAsync(volume.VolumeId))!.State,"cancelled snapshot retires building state");
+        reader.FailNextSnapshotRead=true;reader.FailSnapshotClose=true;
+        await TestAssert.ThrowsAsync<IOException>(()=>sync.SynchronizeAsync([],false),"Reader close failure remains observable");
+        TestAssert.Equal(CatalogV2VolumeState.NeedsRebuild,(await catalog.ReadVolumeAsync(volume.VolumeId))!.State,"Reader close failure cannot bypass local build disposal");
     }
 
     private sealed class Clock : TimeProvider
