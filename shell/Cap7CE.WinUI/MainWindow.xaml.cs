@@ -162,14 +162,14 @@ public sealed partial class MainWindow : Window
     }
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
-        var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop})==prefs;
+        var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})==prefs;
         var workspaceOnly=appliedPreferences is {} old&&(old with{ComputerWorkspace=prefs.ComputerWorkspace,FavoriteWorkspace=prefs.FavoriteWorkspace})==prefs;
         if(!pinOnly&&!workspaceOnly){ThemeService.Apply(this,Surface,prefs);layout.ApplyPreferences();}
         workspace.Apply();
         WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned);appliedPreferences=prefs;
     });
     private void SetPinned(bool value)=>commands.Run(async()=>{
-        try{await services.Preferences.SaveAsync(services.Preferences.Current with{AlwaysOnTop=value});}
+        try{await services.Preferences.UpdateAsync(prefs=>prefs with{AlwaysOnTop=value});}
         catch{ApplyPreferences();throw;}
     });
     private void Notice(string text){if(!closed)notifications.ShowMessage(text);}

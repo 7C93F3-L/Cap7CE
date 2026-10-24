@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using DispatcherQueuePriority = Microsoft.UI.Dispatching.DispatcherQueuePriority;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.Media.Core;
@@ -27,6 +28,7 @@ internal sealed class PreviewWindow : Window
     private int index;
     private MediaPreviewSession? media;
     private bool closed;
+    private ShellPreferences? appliedPreferences;
     private readonly PreviewWindowGeometry geometry;
     private readonly PreviewSpaceKey spaceKey;
     public PreviewWindow(ShellServices services,Window owner)
@@ -38,15 +40,31 @@ internal sealed class PreviewWindow : Window
         PreviewViewportStyle.Apply(viewport);
         navigation=new(viewport,()=>Move(-1),()=>Move(1));Canvas.SetZIndex(navigation,10);viewport.Children.Add(navigation);
         var surface=new ContentControl {Content=root,IsTabStop=true,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};Content=surface;
+        var initialFocusPending=true;
+        surface.Loaded+=(_,_)=>DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low,()=>{
+            if(!closed&&initialFocusPending&&surface.Focus(FocusState.Programmatic))initialFocusPending=false;
+        });
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
         surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key==VirtualKey.Escape){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}};
         spaceKey=new(this,()=>{if(!closed)Close();},delta=>{if(!closed)Move(delta);});Closed+=(_,_)=>spaceKey.Dispose();
         Closed+=(_,_)=>{closed=true;reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
         // Install the titlebar/content root before Show can force the first layout.
-        ThemeService.Apply(this,root,services.Preferences.Current);
+        ApplyAppearance();
         services.Preferences.Changed+=ApplyTheme;Closed+=(_,_)=>services.Preferences.Changed-=ApplyTheme;
     }
-    private void ApplyTheme()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
+    private void ApplyTheme()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ApplyAppearance();});
+    private void ApplyAppearance()
+    {
+        var prefs=services.Preferences.Current;
+        if(appliedPreferences is not {} previous||(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})!=prefs)
+            ThemeService.Apply(this,root,prefs);
+        WindowTitleBar.ConfigurePin(this,prefs.PreviewAlwaysOnTop,SetPinned);appliedPreferences=prefs;
+    }
+    private async void SetPinned(bool value)
+    {
+        try{await services.Preferences.UpdateAsync(prefs=>prefs with{PreviewAlwaysOnTop=value});}
+        catch(Exception error){if(!closed){ApplyAppearance();status.Visibility=Visibility.Visible;status.Text="无法保存固定状态："+error.Message;}}
+    }
     private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();}
     public void Show(AssetItem item,IReadOnlyList<AssetItem> source)
     {

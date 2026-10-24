@@ -9,6 +9,7 @@ public sealed record ShellPreferences
     public bool Notifications {get;init;}
     public bool QuickActions {get;init;}
 	public bool AlwaysOnTop { get; init; }
+    public bool PreviewAlwaysOnTop {get;init;}
 
 	public string Material { get; init; } = "mica";
 
