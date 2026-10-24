@@ -27,6 +27,7 @@ export interface DirectoryBrowseOptions {
   fileConditions?: ComputerSearchFileConditions;
 }
 export interface DirectoryBrowsePage {
+  totalCount?: number;
   entries: SkimBrowseEntry[];
   nextCursor: string | null;
   isComplete: boolean;

@@ -39,9 +39,9 @@ internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDispos
                 SizeBytes:item.TryGetProperty("size",out var size)&&size.ValueKind==JsonValueKind.Number&&size.TryGetInt64(out var bytes)?bytes:null,ModifiedUtcTicks:modified);
             entries.Add(new(entry,path));
         }
-        return new(entries,value.GetProperty("nextCursor").GetString());
+        return new(entries,value.GetProperty("nextCursor").GetString(),value.TryGetProperty("totalCount",out var total)?total.GetInt64():null);
     }
     public void Dispose(){if(closed)return;closed=true;_=CancelAsync();}
     private async Task CancelAsync(){try{await visuals.RequestAsync("directoryBrowse.cancel",id);}catch{}}
 }
-internal sealed record DirectoryBrowsePage(IReadOnlyList<AssetItem> Items,string? NextCursor);
+internal sealed record DirectoryBrowsePage(IReadOnlyList<AssetItem> Items,string? NextCursor,long? TotalCount);

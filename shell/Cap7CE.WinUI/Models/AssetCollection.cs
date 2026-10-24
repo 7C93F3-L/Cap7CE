@@ -11,6 +11,7 @@ namespace Cap7CE.WinUI.Models;
 public sealed class AssetCollection : ObservableCollection<AssetItem>, ISupportIncrementalLoading
 {
 	public bool HasMoreItems { get; set; }
+	public long? TotalCount { get; set; }
 
 	internal Func<Task<uint>>? LoadPage { get; set; }
 

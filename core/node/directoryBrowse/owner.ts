@@ -18,7 +18,7 @@ export function createDirectoryBrowseOwner() {
     const entries = job.entries.slice(job.offset, job.offset + 100); job.offset += entries.length;
     job.cursor = (job.recursive ? job.recursive.hasMore : job.offset < job.entries.length) ? randomUUID() : null;
     if (job.cursor === null) jobs.delete(id);
-    return { entries, nextCursor: job.cursor, isComplete: job.cursor === null };
+    return { entries, nextCursor: job.cursor, isComplete: job.cursor === null, totalCount: job.recursive?.totalCount ?? job.entries.length };
   };
   const release = async () => {
     releasing = true; const current = [...jobs.values()]; for (const job of current) job.cancelled = true;

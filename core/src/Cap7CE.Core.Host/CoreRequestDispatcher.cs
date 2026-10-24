@@ -375,7 +375,7 @@ public sealed class CoreRequestDispatcher
             FileConditions: start.FileConditions,
             Continuation: start.Continuation, Sort: start.Sort, ExcludeHidden: start.ExcludeHidden, RandomSeed: start.RandomSeed));
         return CoreResponseEnvelope.Success(request.RequestId, page.CatalogRevision,
-            new SearchPageResponse(items, nextCursor, nextCursor is null, page.CatalogRevision, page.FactRevision));
+            new SearchPageResponse(items, nextCursor, nextCursor is null, page.CatalogRevision, page.FactRevision, page.TotalCount));
     }
 
     private CoreResponseEnvelope Failure(

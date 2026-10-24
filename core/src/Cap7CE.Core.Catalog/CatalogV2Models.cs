@@ -112,7 +112,8 @@ public sealed record CatalogV2Query(
     FileFacts.FileFactQueryFilter? Facts = null,
     CatalogQueryTextTarget TextTarget = CatalogQueryTextTarget.Name,
     CatalogQueryRevision? ExpectedRevision = null,
-    CatalogFileConditions? FileConditions = null, CatalogQuerySort Sort = CatalogQuerySort.NameAscending, bool ExcludeHidden = false, uint? RandomSeed = null);
+    CatalogFileConditions? FileConditions = null, CatalogQuerySort Sort = CatalogQuerySort.NameAscending, bool ExcludeHidden = false, uint? RandomSeed = null,
+    bool IncludeTotalCount = false);
 
 public sealed record CatalogV2QueryItem(
     CatalogEntryIdentity Identity,
@@ -129,7 +130,7 @@ public sealed record CatalogV2QueryPage(
     IReadOnlyList<CatalogV2QueryItem> Items,
     CatalogQueryCursorKey? Next,
     long CatalogRevision,
-    long? FactRevision = null);
+    long? FactRevision = null, long? TotalCount = null);
 
 public sealed record CatalogResolvedDirectory(
     CatalogEntryIdentity Identity,

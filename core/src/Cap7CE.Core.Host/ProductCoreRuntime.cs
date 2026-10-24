@@ -198,7 +198,7 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
         ArgumentNullException.ThrowIfNull(request);
         try
         {
-            var query = ProductSearchQueryMapper.Map(request, after);
+            var query = ProductSearchQueryMapper.Map(request, after) with { IncludeTotalCount = request.IncludeTotalCount && after is null };
             if (expectedCatalogRevision is { } expected) query = query with { ExpectedRevision = new(expected) };
             return await catalog.QueryAsync(query, token);
         }

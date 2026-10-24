@@ -110,7 +110,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 if (volumes.Length == 0) throw new IOException("没有可查询的磁盘；此入口不会自动建库");
                 var request = new SearchStartRequest(Query.Trim(), 100, Sort, volumes, scope,
                     EntryType: Filter.Count > 0 || Recursive && Query.Trim().Length == 0 ? "file" : "any",
-                    TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null);
+                    TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: true);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
                 if (version != generation) return false;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
@@ -122,7 +122,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             if(preserveSelection) {
                 var previous=Items.ToDictionary(item=>item.FullPath,StringComparer.OrdinalIgnoreCase);
                 for(var i=0;i<result.Count;i++)if(previous.TryGetValue(result[i].FullPath,out var old)&&Equals(old.Entry,result[i].Entry))result[i]=old;
-                if(result.Count==Items.Count&&result.Zip(Items).All(pair=>ReferenceEquals(pair.First,pair.Second)))result=Items;
+                if(result.Count==Items.Count&&result.Zip(Items).All(pair=>ReferenceEquals(pair.First,pair.Second))){Items.TotalCount=result.TotalCount;result=Items;}
                 result.HasMoreItems=cursor is not null;
             }
             if (version != generation) return false;
@@ -153,12 +153,13 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     }
     private void Append(AssetCollection target, SearchPageResponse page)
     {
+        if(page.TotalCount is { } total)target.TotalCount=total;
         foreach (var item in page.Items)
         {
             var volume = services.Volumes.First(v => v.VolumeId == item.VolumeId); var root = volume.DisplayName.TrimEnd('\\') + "\\";
             var full = Path.GetFullPath(Path.Combine(root, item.RelativePath.TrimStart('\\', '/')));
             if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new IOException("结果路径越界");
-            if (!IsDeleted(full)) target.Add(new(item, full));
+            if (!IsDeleted(full)) target.Add(new(item, full));else if(target.TotalCount is { } count)target.TotalCount=Math.Max(0,count-1);
         }
     }
     private void Remember(string path,bool remember,WorkspaceLocation origin)
@@ -168,13 +169,13 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         var owner=new DirectoryBrowseSession(services.Visuals);filesystem=owner;
         var page=await owner.StartAsync(path,Sort,ShowHidden,Recursive,token);
         if(version!=generation)return false;
-        var result=new AssetCollection();foreach(var item in page.Items)if(!IsDeleted(item.FullPath))result.Add(item);
+        var result=new AssetCollection{TotalCount=page.TotalCount};foreach(var item in page.Items)if(!IsDeleted(item.FullPath))result.Add(item);else if(result.TotalCount is { } count)result.TotalCount=Math.Max(0,count-1);
         var cursor=page.NextCursor;result.HasMoreItems=cursor is not null;var loading=false;
         result.LoadPage=async()=>{
             if(loading||!result.HasMoreItems||version!=generation)return 0;loading=true;
             try{
                 var next=await owner.NextAsync(cursor!,token);if(version!=generation)return 0;
-                foreach(var item in next.Items)if(!IsDeleted(item.FullPath))result.Add(item);
+                foreach(var item in next.Items)if(!IsDeleted(item.FullPath))result.Add(item);else if(result.TotalCount is { } count)result.TotalCount=Math.Max(0,count-1);
                 cursor=next.NextCursor;result.HasMoreItems=cursor is not null;Changed?.Invoke();return (uint)next.Items.Count;
             }catch(OperationCanceledException){return 0;}
             catch(Exception error){if(version==generation){result.HasMoreItems=false;Error=error.Message+"；请刷新";Changed?.Invoke();}return 0;}
@@ -187,7 +188,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         || path.StartsWith(deleted.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase));
     public void RemoveDeleted()
     {
-        for (var i = Items.Count - 1; i >= 0; i--) if (IsDeleted(Items[i].FullPath)) Items.RemoveAt(i);
+        for (var i = Items.Count - 1; i >= 0; i--) if (IsDeleted(Items[i].FullPath)){Items.RemoveAt(i);if(Items.TotalCount is { } count)Items.TotalCount=Math.Max(0,count-1);}
         Changed?.Invoke();
     }
     public void Dispose() { ++generation; query.Cancel(); query.Dispose();filesystem?.Dispose(); Items.HasMoreItems = false; }

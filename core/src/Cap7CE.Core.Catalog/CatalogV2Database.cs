@@ -374,7 +374,7 @@ public sealed partial class CatalogV2Database
         if (query.ExpectedRevision is { } expected
             && (expected.CatalogRevision != revision || (expected.FactRevision is not null && expected.FactRevision != factRevision)))
             throw new CatalogConcurrencyException("Catalog query revision changed.");
-        if (!factsAvailable) return new([], null, revision, factRevision);
+        if (!factsAvailable) return new([], null, revision, factRevision, query.IncludeTotalCount ? 0 : null);
         var factPlan = await FileFacts.FileFactQuerySql.ChoosePlanAsync(query, connection, transaction, token);
         var entries = await DirectoryEntries.CatalogEntryQuerySource.IsActiveAsync(connection, transaction, token);
         var scopedEntries = entries && Queries.CatalogTextCandidateSql.UseScopedSource(query);
@@ -445,6 +445,14 @@ public sealed partial class CatalogV2Database
             }).Append(')');
             command.Parameters.AddWithValue("$term" + index, Queries.CatalogTextCandidateSql.Pattern(terms[index]));
         }
+        // Count the identical predicate before applying the cursor and page limit,
+        // in the same read transaction so the first page and total agree.
+        long? totalCount = null;
+        if (query.IncludeTotalCount && query.After is null)
+        {
+            command.CommandText = sql.ToString() + ") SELECT COUNT(*) FROM matched_keys;";
+            totalCount = Convert.ToInt64(await command.ExecuteScalarAsync(token));
+        }
         CatalogQueryOrdering.AppendAfter(sql, command, query, entries);
         sql.Append(" ORDER BY ").Append(CatalogQueryOrdering.Order(query, "n", entries)).Append(" LIMIT $limit");
         command.Parameters.AddWithValue("$limit", query.PageSize + 1);
@@ -469,7 +477,7 @@ public sealed partial class CatalogV2Database
             var last = items[^1];
             next = new CatalogQueryCursorKey(last.Name, last.Identity.VolumeId, last.Identity.FileReference, last.ModifiedUtcTicks ?? -1, last.IsDirectory, query.RandomSeed is { } seed ? Queries.CatalogRandomOrdering.Score(last.Identity.VolumeId, last.Identity.FileReference, seed) : null, last.EntryKey);
         }
-        return new CatalogV2QueryPage(items, next, revision, factRevision);
+        return new CatalogV2QueryPage(items, next, revision, factRevision, totalCount);
     }
 
     public Task<CatalogV2QueryPage> GetChildrenAsync(

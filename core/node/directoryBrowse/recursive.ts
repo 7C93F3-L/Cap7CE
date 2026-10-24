@@ -16,6 +16,7 @@ export class RecursiveDirectoryListing {
     this.directories = [root]; this.pendingBytes = root.length * 2;
   }
   get hasMore() { return !this.ready || this.offset < this.entries.length; }
+  get totalCount() { return this.entries.length; }
   async read(): Promise<SkimBrowseEntry[]> {
     await (this.work ??= this.collect());
     this.checkCancelled();

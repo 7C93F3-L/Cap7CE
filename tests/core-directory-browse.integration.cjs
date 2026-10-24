@@ -26,7 +26,10 @@ const {CoreDirectoryBrowseClient}=require('../dist-electron/core/coreDirectoryBr
   assert.ok(filtered.items.some(item=>item.name==='item0.txt'));assert.ok(filtered.items.every(item=>!item.isDirectory));
   await client.cancel('filter');
   const ids=Array.from({length:4},()=>randomUUID());await Promise.all(ids.map(id=>transport.request('directoryBrowse.start',[id,source,options])));
-  const fifth=await transport.request('directoryBrowse.start',[randomUUID(),source,options]);assert.equal(fifth.entries.length,100,'completed snapshots retire to admit another directory');
+  const fifth=await transport.request('directoryBrowse.start',[randomUUID(),source,options]);assert.equal(fifth.entries.length,100,'completed snapshots retire to admit another directory');assert.equal(fifth.totalCount,109,'total includes items beyond the first page');
+  const recursiveId=randomUUID(),recursive=await transport.request('directoryBrowse.start',[recursiveId,source,{...options,includeSubfolders:true}]);
+  assert.equal(recursive.totalCount,109,'recursive total counts all files, excluding directories and links');
+  const recursiveNext=await transport.request('directoryBrowse.next',[recursiveId,recursive.nextCursor]);assert.equal(recursiveNext.totalCount,109);assert.equal(recursiveNext.entries.length,9);
   await assert.rejects(transport.request('directoryBrowse.next',[ids[0],used]),/invalid-request/);
   await transport.request('releaseSourceHandles',[]);for(const id of ids)await assert.rejects(transport.request('directoryBrowse.next',[id,used]),/invalid-request/);
   await assert.rejects(transport.request('directoryBrowse.start',['-'.repeat(36),source,options]),/invalid-request/);

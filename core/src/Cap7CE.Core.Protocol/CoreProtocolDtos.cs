@@ -33,7 +33,9 @@ public sealed record SearchStartRequest(
     CoreSearchFileConditions? FileConditions = null,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     string? Continuation = null, bool ExcludeHidden = false,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] uint? RandomSeed = null);
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] uint? RandomSeed = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    bool IncludeTotalCount = false);
 
 public sealed record CoreSearchScopeRequest(
     string Kind,
@@ -70,7 +72,9 @@ public sealed record SearchPageResponse(
     bool IsComplete,
     long CatalogRevision,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
-    long? FactRevision = null);
+    long? FactRevision = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    long? TotalCount = null);
 
 public sealed record CapabilityStatusResponse(
     string State,
