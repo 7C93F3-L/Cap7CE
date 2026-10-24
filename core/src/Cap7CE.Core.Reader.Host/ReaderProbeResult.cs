@@ -12,7 +12,8 @@ internal sealed record ReaderProbeResult(
     bool ServerProcessIdBound,
     bool SourceVolumeMetadataRead,
     bool SourceFilesRead,
-    bool NetworkUsed)
+    bool NetworkUsed,
+    string? FailureCode = null)
 {
     public static async Task WriteAsync(
         ReaderServiceConfig config,

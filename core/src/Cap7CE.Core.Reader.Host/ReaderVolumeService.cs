@@ -13,6 +13,7 @@ internal static class ReaderVolumeService
     {
         var stage = "preflight";
         var status = "failed";
+        string? failureCode = null;
         var restrictedToken = false;
         var remoteRejected = false;
         var clientChecked = false;
@@ -296,9 +297,10 @@ internal static class ReaderVolumeService
             status = "client-timeout";
             return 4;
         }
-        catch (ReaderProtocolException)
+        catch (ReaderProtocolException error)
         {
             status = "protocol-rejected";
+            failureCode = error.Code;
             return 4;
         }
         catch (Exception error) when (error is not OutOfMemoryException)
@@ -331,7 +333,7 @@ internal static class ReaderVolumeService
                     processBound,
                     volumes.Count > 0,
                     false,
-                    false));
+                    false, failureCode));
             }
             catch
             {

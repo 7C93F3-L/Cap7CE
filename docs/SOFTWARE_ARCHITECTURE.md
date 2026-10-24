@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+ReaderVolumeService在既有ReaderProbeResult中保存ReaderProtocolException.Code为可选FailureCode，供受保护的本地结果记录诊断使用；不改变Reader二进制协议、磁盘授权、客户端验证或Catalog结构。服务自定义退出码4不是可靠的Win32文件错误根因。
+
 CatalogV2Connection注册连接级CAP7CE_NATURAL排序规则，使用en文化的IgnoreCase/IgnoreNonSpace/NumericOrdering，与文件系统浏览的en/numeric/base意图一致。CatalogQueryOrdering仅DirectChildren的名称主排序及时间相等后的名称排序使用该规则，Order与AppendAfter保持同一比较及相等语义，并保留目录优先和稳定身份兜底；全库/后代搜索仍使用既有NOCASE，不覆盖SQLite内置规则，不改schema/索引。CatalogNaturalOrderingTests使用临时库覆盖数字、前导零及同名、升降序、时间相等、不同分页大小，单独入口--catalog-natural-order-tests便于有界验证。
 
 MainWindow收到CatalogChanged时仅使Core来源标签失效，仅自动重载空闲的Core来源当前页；FilesystemBrowsing会话保持当前结果/分页，不因Catalog变更自动转为Core查询。正在读取的页面不被通知取消；筛选能力更新仍执行，显式导航/刷新继续按既有来源选择流程。
