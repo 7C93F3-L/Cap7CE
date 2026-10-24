@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Services;
+using Cap7CE.WinUI.Models;
 
 namespace Cap7CE.WinUI.Controllers;
 
@@ -28,9 +29,7 @@ internal sealed class AutoKeywordNoticeController:IDisposable
             notice.SetTask(text,state.Processed,state.Total,state.Phase=="收集文件"||state.Total<=1,tasks.Cancelling);
         } else if(observed) {
             observed=false;notice.ClearTask();
-            var text=state.Phase=="已取消"?"识别已取消":state.Phase=="失败"?"识别失败":state.Failed>0?$"识别完成：成功 {state.Succeeded}，失败 {state.Failed}":state.Succeeded==0?"没有可识别的文件":$"识别完成：{state.Succeeded} 项";
-            if(state.Failed>0||state.Phase=="失败")text+=" · "+state.Message;
-            notice.ShowMessage(text);
+            notice.ShowMessage(AutoKeywordNoticeText.Finished(state));
         }
     }
     public void Dispose(){disposed=true;tasks.Changed-=Changed;notice.CancelTaskRequested-=tasks.Cancel;}

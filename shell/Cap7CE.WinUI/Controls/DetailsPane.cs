@@ -23,17 +23,17 @@ internal sealed class DetailsPane : UserControl
     private CancellationTokenSource reading=new();
     private IReadOnlyList<AssetItem> selected=[];
     private (string Path,long? Count,bool Searching,int Filters) context=("",0,false,0);
-    private bool stopped;
+    private bool stopped,keywordRefreshPending;
     public DetailsPane(ShellServices services,FileCommands commands,Action<string> notice)
     {
         this.services=services;this.commands=commands;
-        var keywordService=new ManualKeywordService(services);
-        keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice,item=>commands.Run(()=>{commands.AutoKeywords([item]);return Task.CompletedTask;}));
+        var keywordService=new KeywordSelectionService(services);
+        keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice,items=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}));
         var preview=new Grid();preview.Children.Add(icon);preview.Children.Add(image);visual.Child=preview;
         image.SizeChanged+=(_,_)=>UpdatePreviewClip();
         var scroll=new ScrollViewer{Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
         IdleScrollBars.Attach(scroll);Content=scroll;
-        debounce.Tick+=(_,_)=>{debounce.Stop();if(selected is [var item]&&!item.Entry.IsDirectory){_=keywords.ReadAsync();_=ReadVisualAsync(item,reading.Token);}};
+        debounce.Tick+=(_,_)=>{debounce.Stop();if(selected.Any(item=>!item.Entry.IsDirectory))_=keywords.ReadAsync();if(selected is [var item]&&!item.Entry.IsDirectory)_=ReadVisualAsync(item,reading.Token);};
         Unloaded+=(_,_)=>Stop();Render();
     }
     public void SetContext(string path,long? count,bool searching,int filters)
@@ -46,13 +46,13 @@ internal sealed class DetailsPane : UserControl
         if(!stopped&&selected.SequenceEqual(items))return;
         debounce.Stop();reading.Cancel();reading.Dispose();reading=new();stopped=false;
         selected=items.ToArray();image.Source=null;icon.Visibility=Visibility.Visible;ToolTipService.SetToolTip(visual,null);
-        keywords.SetItem(selected is [var file]&&!file.Entry.IsDirectory?file:null);
+        keywordRefreshPending=false;keywords.SetItems(selected);
         Render();
-        if(selected is [var item]&&!item.Entry.IsDirectory)debounce.Start();
+        if(selected.Any(item=>!item.Entry.IsDirectory))debounce.Start();
     }
-    public void EditKeywords(AssetItem item){Select([item]);keywords.RequestEdit();}
-    public void RefreshKeywords(AssetItem item){if(!stopped&&selected is [var current]&&string.Equals(current.FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase))_=keywords.ReadAsync();}
-    public void SetAutoKeywordBusy(bool value)=>keywords.SetAutomaticBusy(value);
+    public void EditKeywords(IReadOnlyList<AssetItem> items){Select(items);keywords.RequestEdit();}
+    public void RefreshKeywords(AssetItem item){if(stopped||!selected.Any(current=>string.Equals(current.FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase)))return;if(services.AutoKeywords.Busy)keywordRefreshPending=true;else _=keywords.ReadAsync();}
+    public void SetAutoKeywordBusy(bool value){keywords.SetAutomaticBusy(value);if(!value&&keywordRefreshPending&&!stopped){keywordRefreshPending=false;_=keywords.ReadAsync();}}
     private void Render()
     {
         column.Children.Clear();var item=selected.Count==1?selected[0]:null;
@@ -99,7 +99,7 @@ internal sealed class DetailsPane : UserControl
         if(files.Length>0) {
             card.Field("已知文件大小",DetailsCard.Bytes(files.Sum(item=>(decimal)(item.Entry.SizeBytes??0))));
             var unknown=files.Count(item=>item.Entry.SizeBytes is null);if(unknown>0)card.Body.Children.Add(Ui.Text($"另有 {unknown} 个文件大小未知",true));
-            Card("添加关键词").Body.Children.Add(Ui.Text("当前不可用",true));
+            column.Children.Add(keywords);
         }
     }
     private DetailsCard Card(string title){var card=new DetailsCard(title);column.Children.Add(card);return card;}

@@ -31,4 +31,9 @@
    </Grid>
   </ControlTemplate></Setter.Value></Setter>
  </Style>
+ <Style x:Key="CapKeywordChip" TargetType="Border">
+  <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
+  <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/><Setter Property="BorderThickness" Value="1"/>
+  <Setter Property="CornerRadius" Value="6"/><Setter Property="Padding" Value="8,3,2,3"/>
+ </Style>
 </ResourceDictionary>

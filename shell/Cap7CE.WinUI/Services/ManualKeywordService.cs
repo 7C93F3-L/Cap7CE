@@ -18,11 +18,13 @@ internal sealed class ManualKeywordService(ShellServices services)
         return Parse(reply.GetProperty("current"));
     }
     public async Task<bool> TrySaveAsync(AssetItem item,string[] words,string? revision)
+        =>(await SaveAttemptAsync(item,words,revision)).Saved;
+    public async Task<ManualKeywordSaveResult> SaveAttemptAsync(AssetItem item,string[] words,string? revision)
     {
         FileAccessGuard.Validate(item);
         var core=services.Core??throw new IOException("Core 尚未连接");
         var reply=await core.RequestAsync<JsonElement>("keywords.write",new{identity=Identity(item),keywords=words,expectedRevision=revision});
-        return reply.GetProperty("saved").GetBoolean();
+        return new(reply.GetProperty("saved").GetBoolean(),Parse(reply.GetProperty("current")));
     }
     private static ManualKeywords Parse(JsonElement reply)=>new(reply.GetProperty("keywords").EnumerateArray().Select(value=>value.GetString()!).ToArray(),
         reply.GetProperty("revision").ValueKind==JsonValueKind.Null?null:reply.GetProperty("revision").GetString());

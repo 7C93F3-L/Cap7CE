@@ -83,7 +83,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         finally { AfterMutation?.Invoke(); operation.Release(); }
     }
     public Func<bool> CanEditKeywords {get;set;}=()=>false;
-    public event Action<AssetItem>? EditKeywordsRequested;
-    public void EditKeywords(AssetItem item)=>EditKeywordsRequested?.Invoke(item);
+    public event Action<IReadOnlyList<AssetItem>>? EditKeywordsRequested;
+    public void EditKeywords(IReadOnlyList<AssetItem> items)=>EditKeywordsRequested?.Invoke(items.ToArray());
     public MenuFlyout Menu(IReadOnlyList<AssetItem> items,bool home=false)=>ResultContextMenu.Build(this,services.Favorites,items,home);
 }

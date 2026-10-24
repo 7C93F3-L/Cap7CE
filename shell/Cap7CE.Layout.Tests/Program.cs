@@ -2,6 +2,8 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
 var checks = 0;
+await KeywordBatchChecks.RunAsync();
+KeywordDraftChecks.Run();
 await AutoKeywordChecks.RunAsync();
 PreviewSelectionChecks.Run();
 await RpcLifetimeChecks.RunAsync();
