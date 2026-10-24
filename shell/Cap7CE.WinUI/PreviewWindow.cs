@@ -31,9 +31,13 @@ internal sealed class PreviewWindow : Window
     private ShellPreferences? appliedPreferences;
     private readonly PreviewWindowGeometry geometry;
     private readonly PreviewSpaceKey spaceKey;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer followTimer;
+    public event Action<AssetItem>? CurrentChanged;
     public PreviewWindow(ShellServices services,Window owner)
     {
         geometry=new(this,owner,viewport);
+        followTimer=DispatcherQueue.CreateTimer();followTimer.Interval=TimeSpan.FromMilliseconds(140);followTimer.IsRepeating=false;
+        followTimer.Tick+=(_,_)=>{if(!closed&&index>=0&&index<items.Count)Load(items[index]);};
         this.services=services;AppWindow.Resize(new(1100,820));
         root.RowDefinitions.Add(new(){Height=GridLength.Auto});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         viewport.Children.Add(content);Grid.SetRow(viewport,1);root.Children.Add(viewport);Grid.SetRow(status,2);root.Children.Add(status);
@@ -47,7 +51,7 @@ internal sealed class PreviewWindow : Window
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
         surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key==VirtualKey.Escape){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}};
         spaceKey=new(this,()=>{if(!closed)Close();},delta=>{if(!closed)Move(delta);});Closed+=(_,_)=>spaceKey.Dispose();
-        Closed+=(_,_)=>{closed=true;reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
+        Closed+=(_,_)=>{closed=true;followTimer.Stop();UnobserveItems();reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
         // Install the titlebar/content root before Show can force the first layout.
         ApplyAppearance();
         services.Preferences.Changed+=ApplyTheme;Closed+=(_,_)=>services.Preferences.Changed-=ApplyTheme;
@@ -68,17 +72,28 @@ internal sealed class PreviewWindow : Window
     private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();}
     public void Show(AssetItem item,IReadOnlyList<AssetItem> source)
     {
-        items=source.Where(i=>!i.Entry.IsDirectory).ToArray();index=Array.IndexOf(items.ToArray(),item);if(index<0){items=[item];index=0;}
+        followTimer.Stop();UnobserveItems();items=source;index=FindIndex(item);if(index<0){items=[item];index=0;}
+        if(items is System.Collections.Specialized.INotifyCollectionChanged observable)observable.CollectionChanged+=ItemsChanged;
         geometry.BeginOpen();Activate();Load(item);
     }
-    private void Move(int delta){var target=index+delta;if(target<0||target>=items.Count)return;index=target;Load(items[index]);}
+    private int FindIndex(AssetItem item){for(var i=0;i<items.Count;i++)if(string.Equals(items[i].FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase))return i;return -1;}
+    private int NextIndex(int delta){for(var i=index+delta;i>=0&&i<items.Count;i+=delta)if(!items[i].Entry.IsDirectory)return i;return -1;}
+    private void ItemsChanged(object? sender,System.Collections.Specialized.NotifyCollectionChangedEventArgs e)=>UpdateNavigation();
+    private void UnobserveItems(){if(items is System.Collections.Specialized.INotifyCollectionChanged observable)observable.CollectionChanged-=ItemsChanged;}
+    private void UpdateNavigation()=>navigation.Update(NextIndex(-1)>=0,NextIndex(1)>=0);
+    public void FollowSelection(AssetItem item)
+    {
+        var target=FindIndex(item);if(closed||target<0||target==index||item.Entry.IsDirectory)return;
+        index=target;reading.Cancel();followTimer.Stop();followTimer.Start();UpdateNavigation();
+    }
+    private void Move(int delta){var target=NextIndex(delta);if(target<0)return;followTimer.Stop();index=target;CurrentChanged?.Invoke(items[index]);Load(items[index]);}
     private async void Load(AssetItem item)
     {
         if(closed)return;
         reading.Cancel();reading.Dispose();reading=new();var token=reading.Token;
         ReleaseMedia();content.Content=null;status.Text="正在准备预览…";
         status.Visibility=Visibility.Visible;root.Padding=new(5);
-        navigation.Update(index>0,index<items.Count-1);
+        UpdateNavigation();
         var sourceValidated=false;
         try
         {

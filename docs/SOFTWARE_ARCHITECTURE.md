@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-22）
 
+Controllers/PreviewSelectionController<T>仅协调当前BrowseSession、结果源、路径身份和重入保护，通过select/follow/close委托连接界面；不拥有文件读取、焦点或Core。MainWindow装配此协调器，ResultsView/ResultsGallery提供不聚焦的SelectSingle并沿原最小可见滚动，PreviewWindow.CurrentChanged只在翻看时发布。BrowseSession.NavigationStarting在主动导航开始时关闭所属旧预览，保留模式刷新不关闭；Bind检测标签身份变化，Closed解除关联。多选、空选、文件夹、列表外路径和相同文件不驱动加载，程序回显不会互相递归。
+
+PreviewWindow保留当前已载入结果集合引用；翻看沿现有Load，跳过文件夹，集合续页通知只更新箭头，关闭/重开解绑观察。FollowSelection不Activate或BeginOpen，立即取消旧读取，通过140ms单次UI计时器合并连续主窗口选择，再调用同一个Load；翻看和关闭停止计时器，仍由原读取令牌与媒体/Provider释放链防止过期回写。不会预载文件、扫描目录或触发翻看范围外分页。PreviewSelectionChecks验证两个方向的回显保护、忽略条件、标签/导航生命周期及新增分页项目。
+
 shell/run.ps1通过开发专用DesktopProcess.cs创建WinUI，使用GetShellWindow定位当前桌面Shell，仅申请PROCESS_CREATE_PROCESS，并通过STARTUPINFOEX/PROC_THREAD_ATTRIBUTE_PARENT_PROCESS继承桌面token/job等属性；不修改Shell、服务或产品入口，不提权。CreateProcess显式程序路径/工作目录、不继承句柄，环境变量仍来自启动脚本，后者在finally恢复项目根和测试Catalog变量；未显式-Catalog时清除继承的测试库覆盖。所有原生句柄和属性列表使用后释放，失败抛错不降级到直接启动；无额外进程驻留或轮询。run.ps1 -NoBuild只跳过构建且仍要求现有EXE，不改变原构建流程。PreferenceStore/Core/视觉缓存路径算法不变，不对两处数据执行迁移或合并。
 
 tests/winui-desktop-launch.ps1验证实际父进程启动后普通孙进程的环境传递，并只读打开已有偏好文件，通过GetFinalPathNameByHandle确认没有被重定向；只创建自己命名的临时JSON并在finally删除，不启动UI/Core或写配置。Windows API依据：https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute 。

@@ -23,6 +23,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public string? Error {get;private set;}
     public AssetCollection Items { get; private set; } = new();
     public event Action? Changed;
+    public event Action<bool>? NavigationStarting;
     private readonly Stack<WorkspaceLocation> back = new(), forward = new();
     private WorkspaceLocation? pendingOrigin;
     private CancellationTokenSource query = new();
@@ -59,6 +60,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     {if(PathValue.Length==0)return Task.CompletedTask;Query="";return NavigateAsync(Directory.GetParent(PathValue)?.FullName??"");}
     public async Task<bool> NavigateAsync(string path, bool remember = true,bool preserveSelection=false)
     {
+        NavigationStarting?.Invoke(preserveSelection);
         if(path.Trim().Length==0&&pendingOrigin is null&&(PreferenceScope!=WorkspacePreferenceScope.Computer||PathValue.Length>0))EnterScope(WorkspacePreferenceScope.Computer);
         var origin=pendingOrigin??new(PathValue,PreferenceScope);pendingOrigin=null;SyncWorkspaceOptions();
         PreserveSelection=preserveSelection;

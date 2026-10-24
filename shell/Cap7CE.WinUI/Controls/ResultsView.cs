@@ -117,6 +117,15 @@ internal sealed class ResultsView : UserControl
         if(!binding&&(!ReferenceEquals(previous,current)||wasGallery!=IsGallery))SelectionChanged?.Invoke(Selection);
     }
     public void SelectAll(){if(IsGallery)gallery.SelectAll();else ActiveView.SelectAll();}
+    public void SelectSingle(AssetItem item)
+    {
+        if(items?.Contains(item)!=true)return;
+        if(IsGallery){gallery.SelectSingle(item);return;}
+        keyboardSelect=false;binding=true;
+        try{ActiveView.SelectedItems.Clear();ActiveView.SelectedItem=item;}finally{binding=false;}
+        ActiveView.ScrollIntoView(item,ScrollIntoViewAlignment.Default);
+        SelectionChanged?.Invoke(Selection);
+    }
     public void ClearSelection(){if(Selection.Count==0)return;if(IsGallery)gallery.Clear();else ActiveView.SelectedItems.Clear();}
     private bool IsBlank(DependencyObject? element)
     {for(var item=element;item is not null&&!ReferenceEquals(item,root);item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(item is ListViewItem or GridViewItem or GalleryTile or Button or Microsoft.UI.Xaml.Controls.Primitives.ScrollBar)return false;return true;}

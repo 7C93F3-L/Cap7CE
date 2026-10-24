@@ -24,6 +24,7 @@ public sealed partial class MainWindow : Window
     private readonly WorkspacePointerInput pointerInput;
     private readonly FilterAvailabilityService filterAvailability;
     private readonly WorkspacePreferencesController workspace;
+    private readonly PreviewSelectionController<Models.AssetItem> previewLink;
     private SettingsWindow? settings;
     private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
@@ -46,13 +47,14 @@ public sealed partial class MainWindow : Window
         services.MaintenanceRequested+=OpenMaintenance;
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
+        previewLink=new(item=>item.FullPath,item=>!item.Entry.IsDirectory,results.SelectSingle,item=>preview?.FollowSelection(item),()=>preview?.Close());
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
         layout.HorizontalGridChanged+=value=>{results.SetHorizontal(value);toolbar.SetCompact(value);};
         results.SetHorizontal(layout.HorizontalGrid);toolbar.SetCompact(layout.HorizontalGrid);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
         NoticeHost.Content=notifications;
-        results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);QueueCatalogRefresh();};
+        results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);previewLink.SelectionChanged(active,items);QueueCatalogRefresh();};
         services.VisualMaintenance+=busy=>{if(busy){preview?.Close();details.Stop();}results.Suspend(busy||minimized);if(!busy)Refresh();};
         results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
@@ -100,6 +102,7 @@ public sealed partial class MainWindow : Window
     {
         if(Tabs.TabItems.Count>=12){Notice("最多打开12个目录标签");return;}
         var session=new BrowseSession(services);
+        session.NavigationStarting+=preserve=>previewLink.NavigationStarting(session,preserve);
         var tab=new TabViewItem {Header=path.Length==0?"此电脑":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
         session.Changed+=()=>{if(closed)return;tab.Header=session.Title;if(ReferenceEquals(active,session))Bind();};
         Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.OpenLocationAsync(path,favorite));
@@ -114,6 +117,7 @@ public sealed partial class MainWindow : Window
     private void Bind()
     {
         if(active is null||closed)return;
+        previewLink.ContextChanged(active);
         workspace.Apply();
         sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
         var preserveSelection=ReferenceEquals(boundSession,active)&&active.PreserveSelection;boundSession=active;
@@ -150,8 +154,10 @@ public sealed partial class MainWindow : Window
     }
     private void ShowPreview(Models.AssetItem item)
     {
-        if(preview is null){preview=new(services,this);preview.Closed+=(_,_)=>{preview=null;QueueCatalogRefresh();};}
-        preview.Show(item,active?.Items.ToArray()??[item]);
+        if(preview is null){preview=new(services,this);preview.CurrentChanged+=previewLink.PreviewChanged;preview.Closed+=(_,_)=>{previewLink.Detach();preview=null;QueueCatalogRefresh();};}
+        IReadOnlyList<Models.AssetItem> source=active?.Items??[item];
+        if(active is not null)previewLink.Open(active,source,item);
+        preview.Show(item,source);
     }
     private void OpenSettings()
     {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}

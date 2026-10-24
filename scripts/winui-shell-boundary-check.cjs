@@ -120,6 +120,9 @@ assert(!/CoreNodeHost|RequestAsync|File\.|Directory\.|FileCommands|ItemClick\+=/
 const previewNavigation = read('shell/Cap7CE.WinUI/Controls/PreviewNavigationView.cs');
 assert(previewNavigation.includes('GetCurrentPoint(viewport)') && previewNavigation.includes('pointerOwner=viewport;'), 'preview hover must use the stable viewport for both coordinates and pointer observation');
 const previewWindow = read('shell/Cap7CE.WinUI/PreviewWindow.cs');
+const previewSelection = read('shell/Cap7CE.WinUI/Controllers/PreviewSelectionController.cs');
+assert(!/CoreNodeHost|RequestAsync|Dispatcher|File\.|Directory\.|Focus\(|Activate\(/.test(previewSelection), 'preview selection coordination cannot own loading, storage or window focus');
+assert(previewWindow.includes('UnobserveItems();reading.Cancel()') && previewWindow.includes('followTimer.Stop()'), 'preview follow must release source observation and pending work on close');
 assert(previewWindow.indexOf('ThemeService.Apply(this,root,services.Preferences.Current);') < previewWindow.indexOf('public void Show(') && !previewWindow.includes('services.Preferences.Changed-=ApplyTheme;ApplyTheme();'), 'preview initial theme/titlebar must be installed synchronously before Show can force layout');
 assert(read('shell/Cap7CE.WinUI/Controls/Workspace/ResultsGallery.cs').includes('PreviewKeyDown+=NavigateKey'), 'gallery selection must run before native directional focus movement');
 assert(previewNavigation.includes('var region=new Grid {Width=56,Background=null') && previewNavigation.includes('faces[i].IsHitTestVisible=visible&&buttons[i].IsEnabled'), 'preview side regions and invisible arrows must pass input to underlying content');

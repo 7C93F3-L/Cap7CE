@@ -59,6 +59,11 @@ internal sealed class ResultsGallery : UserControl
     public void ReplaceSelection(IEnumerable<AssetItem> value){selection.Replace(value);SyncSelection();}
     public void Clear(){selection.Clear();SyncSelection();}
     public void SelectAll(){selection.Replace(items??[]);SyncSelection();}
+    public void SelectSingle(AssetItem item)
+    {
+        if(items?.Contains(item)!=true)return;
+        selection.Pick(items,items.IndexOf(item),false,false);SyncSelection();Reveal(items.IndexOf(item));
+    }
     private void SyncSelection(){foreach(var tile in tiles)tile.IsChecked=tile.DataContext is AssetItem item&&selection.Contains(item);SelectionChanged?.Invoke();}
     private static bool Down(VirtualKey key)=>Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
     private void Pick(GalleryTile tile)
@@ -95,10 +100,14 @@ internal sealed class ResultsGallery : UserControl
             var best=candidates.OrderBy(b=>Math.Abs(b.Top-box.Top)*10000+Math.Abs(b.Left+b.Width/2-box.Left-box.Width/2)).FirstOrDefault();if(best.Height>0)next=best.Index;
         }
         e.Handled=true;if(!Down(VirtualKey.Control))selection.Pick(items,next,false,Down(VirtualKey.Shift));SyncSelection();
-        if(layout.Box(next) is {} target) {
+        Reveal(next);
+        (repeater.TryGetElement(next) as Control)?.Focus(FocusState.Keyboard);
+    }
+    private void Reveal(int index)
+    {
+        if(layout.Box(index) is {} target) {
             var offset=GalleryGeometry.RevealOffset(target,scroll.VerticalOffset,scroll.ViewportHeight,scroll.ScrollableHeight);
             if(Math.Abs(offset-scroll.VerticalOffset)>.5){scroll.ChangeView(null,offset,null,true);repeater.UpdateLayout();}
         }
-        (repeater.TryGetElement(next) as Control)?.Focus(FocusState.Keyboard);
     }
 }
