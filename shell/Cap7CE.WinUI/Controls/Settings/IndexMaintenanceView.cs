@@ -80,9 +80,8 @@ internal sealed class IndexMaintenanceView : UserControl
                 row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
                 row.RowDefinitions.Add(new(){Height=GridLength.Auto});
                 row.RowDefinitions.Add(new(){Height=GridLength.Auto});
-                row.RowDefinitions.Add(new(){Height=GridLength.Auto});
                 var drive=Models.DrivePresentation.Read(item.DisplayName);
-                var choice=new CheckBox {Content=drive.Name,IsChecked=selection.TryGetValue(item.VolumeId,out var chosen)?chosen:!drive.IsSystem&&item.Selected,Tag=item.VolumeId};
+                var choice=new CheckBox {Content=drive.Name,IsChecked=selection.TryGetValue(item.VolumeId,out var chosen)?chosen:drive.IsSystem||item.Selected,Tag=item.VolumeId};
                 choice.Content=new TextBlock {Text=drive.Name,TextTrimming=TextTrimming.CharacterEllipsis};
                 choice.VerticalAlignment=VerticalAlignment.Center;
                 var capacity=Ui.Text($"容量  {drive.Capacity}",true);
@@ -90,9 +89,6 @@ internal sealed class IndexMaintenanceView : UserControl
                 capacity.VerticalAlignment=count.VerticalAlignment=VerticalAlignment.Center;
                 Grid.SetColumn(capacity,1);Grid.SetColumn(count,2);
                 row.Children.Add(capacity);row.Children.Add(count);
-                var hint=Ui.Text("建议仅为系统盘中的常用文件夹提取属性",true);
-                hint.Margin=new(28,0,0,0);hint.Visibility=drive.IsSystem?Visibility.Visible:Visibility.Collapsed;
-                Grid.SetRow(hint,2);Grid.SetColumnSpan(hint,4);row.Children.Add(hint);
                 ToolTipService.SetToolTip(choice,$"{item.FileSystem} · {item.State}");
                 choice.Click+=(_,_)=>Run(async()=>{
                     foreach(var entry in Choices)selection[(string)entry.Tag]=entry.IsChecked==true;
