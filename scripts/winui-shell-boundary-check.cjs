@@ -29,6 +29,11 @@ assert(session.includes('allowedOperations is null || allowedOperations.Contains
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');
 const catalogRefresh = read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
+const workspacePreferences=read('shell/Cap7CE.WinUI/Controllers/WorkspacePreferencesController.cs');
+assert(workspacePreferences.includes('Preferences.UpdateAsync') && workspacePreferences.includes('WorkspaceOptions.Write')
+  && read('shell/Cap7CE.WinUI/Controls/WorkspaceToolbar.cs').includes('value.AddressRevision')
+  && read('shell/Cap7CE.WinUI/Controls/Workspace/WorkspaceAddress.cs').includes('searchMode=defaultSearch||nextQuery.Length>0'),
+  'toolbar preferences must be scoped and editor mode reset on explicit entry');
 assert(catalogRefresh.includes('BrowseSession {UsesCatalogResults:true}')
   && catalogRefresh.includes('active is not {UsesCatalogResults:true}')
   && catalogRefresh.includes('CatalogRefreshRules.CanRefresh')
@@ -39,7 +44,7 @@ assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('CatalogRefre
   && browseRouting.includes('result=Items') && browseRouting.includes('preserveSelection&&result.Count<Items.Count'),
   'background refresh must preserve existing identities, unchanged collections and loaded depth');
 assert(browseRouting.includes('if(path.Length>0&&plainBrowse)')
-  && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token)') < browseRouting.indexOf('if (services.Core is null)'),
+  && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token,origin)') < browseRouting.indexOf('if (services.Core is null)'),
   'ordinary directory listings must use the filesystem before checking Core or resolving Catalog scope');
 assert(project.includes('<WindowsPackageType>None</WindowsPackageType>'));
 assert(read('shell/Directory.Build.props').includes('<RuntimeIdentifier>win-x64</RuntimeIdentifier>'));

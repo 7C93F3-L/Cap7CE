@@ -38,9 +38,9 @@ internal sealed class WorkspaceAddress : UserControl
         search.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;Search?.Invoke(search.Text);return;}if(e.Key!=VirtualKey.Escape)return;e.Handled=true;if(search.Text.Length>0){search.Text="";Search?.Invoke("");}else{searchMode=false;Render();toggle.Focus(FocusState.Programmatic);}};
         Content=root;Render();
     }
-    public void Bind(string nextPath,string nextQuery,bool reset)
+    public void Bind(string nextPath,string nextQuery,bool reset,bool defaultSearch=false)
     {
-        if(reset){searchMode=nextQuery.Length>0;editing=false;}
+        if(reset){searchMode=defaultSearch||nextQuery.Length>0;editing=false;}
         if(path!=nextPath||reset){path=nextPath;address.Text=path;Rebuild();}
         if(query!=nextQuery||reset){query=nextQuery;search.Text=query;}
         Render();

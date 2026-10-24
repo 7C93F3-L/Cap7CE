@@ -2,6 +2,8 @@ namespace Cap7CE.WinUI.Models;
 
 public sealed record ShellPreferences
 {
+    public WorkspaceOptions ComputerWorkspace {get;init;}=WorkspaceOptions.ComputerDefault;
+    public WorkspaceOptions FavoriteWorkspace {get;init;}=WorkspaceOptions.FavoritesDefault;
     public string[] IndexVolumeOrder {get;init;}=[];
     public Dictionary<string,bool> IndexVolumeSelection {get;init;}=[];
     public bool Notifications {get;init;}

@@ -17,9 +17,12 @@ internal sealed class WorkspaceToolbar : UserControl
     private double tileSize=160;
     private WorkspaceViewMode viewMode;
     private bool compact;
+    private long addressRevision=-1;
     private MenuFlyout? viewMenu;
     public event Action<WorkspaceViewMode>? ViewSelected;
-    public event Action<double>? SizeChangedByUser,SizeCommitted;
+    public event Action<double>? SizeChangedByUser;
+    public event Action<double,WorkspacePreferenceScope>? SizeCommitted;
+    public event Action<Func<WorkspaceOptions,WorkspaceOptions>>? OptionsChanged;
     public event Action<string>? Failure;
     public WorkspaceToolbar()
     {
@@ -35,8 +38,8 @@ internal sealed class WorkspaceToolbar : UserControl
         next=WorkspaceIcons.Button("refresh","换一批",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
         sizeButton=WorkspaceIcons.Button("size","网格大小",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);
         view=WorkspaceIcons.Button("grid","视图",ShowView);sort=WorkspaceIcons.Button("sort","排序",ShowSort);
-        recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>{if(session is null)return;Run(()=>session.ToggleRecursiveAsync());});
-        hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>{if(session is null)return;session.ShowHidden=!session.ShowHidden;Reload();});
+        recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>OptionsChanged?.Invoke(value=>value with{Recursive=!value.Recursive}));
+        hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>OptionsChanged?.Invoke(value=>value with{ShowHidden=!value.ShowHidden}));
         var separator=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolSeparator"],IsHitTestVisible=false};
         tools=Ui.Row(random,next,separator,sizeButton,view,recursive,sort,hidden);tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
         navigation.VerticalAlignment=tools.VerticalAlignment=VerticalAlignment.Center;
@@ -45,7 +48,9 @@ internal sealed class WorkspaceToolbar : UserControl
     }
     public void Bind(BrowseSession value)
     {
-        var reset=!ReferenceEquals(session,value);session=value;address.Bind(value.PathValue,value.Query,reset);
+        var reset=!ReferenceEquals(session,value)||addressRevision!=value.AddressRevision;
+        if(reset){flyouts.Close();viewMenu?.Hide();}
+        session=value;addressRevision=value.AddressRevision;address.Bind(value.PathValue,value.Query,reset,WorkspaceOptions.SearchByDefault(value.PreferenceScope));
         back.IsEnabled=value.CanBack;forward.IsEnabled=value.CanForward;up.IsEnabled=value.PathValue.Length>0;refresh.IsEnabled=!value.Busy;
         random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
@@ -96,8 +101,9 @@ internal sealed class WorkspaceToolbar : UserControl
     private void ShowSize()
     {
         flyouts.Close();
+        var scope=session?.PreferenceScope??WorkspacePreferenceScope.Computer;
         var picker=new GridSizePicker(tileSize,value=>{tileSize=value;SizeChangedByUser?.Invoke(value);});
-        flyouts.Show(sizeButton,picker,()=>SizeCommitted?.Invoke(picker.Value));
+        flyouts.Show(sizeButton,picker,()=>SizeCommitted?.Invoke(picker.Value,scope));
     }
     private static string SortLabel(string value)=>value switch {"name-descending"=>"名称 · 降序","modified-descending"=>"修改时间 · 降序","modified-ascending"=>"修改时间 · 升序",_=>"名称 · 升序"};
     private void ShowSort()
@@ -105,7 +111,7 @@ internal sealed class WorkspaceToolbar : UserControl
         if(session is null)return;var menu=ThemeService.Menu();
         foreach(var value in new[]{"name-ascending","name-descending","modified-descending","modified-ascending"}) {
             var option=new RadioMenuFlyoutItem{Text=SortLabel(value),IsChecked=!session.Random&&session.Sort==value,GroupName="sort"};
-            option.Click+=(_,_)=>{session.Sort=value;session.Random=false;Reload();};menu.Items.Add(option);
+            option.Click+=(_,_)=>{session.Random=false;OptionsChanged?.Invoke(current=>current with{Sort=value});};menu.Items.Add(option);
         }
         menu.ShowAt(sort,new FlyoutShowOptions{Placement=FlyoutPlacementMode.Bottom});
     }

@@ -9,9 +9,11 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public string PathValue { get; private set; } = "";
     public string Query { get; set; } = "";
     public BrowseFilter Filter { get; set; } = new();
-    public bool Recursive { get; set; } = services.Preferences.Current.Recursive;
-    public bool ShowHidden { get; set; } = services.Preferences.Current.ShowHidden;
-    public string Sort { get; set; } = services.Preferences.Current.Sort;
+    public bool Recursive { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).Recursive;
+    public bool ShowHidden { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).ShowHidden;
+    public string Sort { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).Sort;
+    public WorkspacePreferenceScope PreferenceScope {get;private set;}
+    public long AddressRevision {get;private set;}
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
     public bool Busy { get; private set; }
@@ -21,29 +23,44 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public string? Error {get;private set;}
     public AssetCollection Items { get; private set; } = new();
     public event Action? Changed;
-    private readonly Stack<string> back = new(), forward = new();
+    private readonly Stack<WorkspaceLocation> back = new(), forward = new();
+    private WorkspaceLocation? pendingOrigin;
     private CancellationTokenSource query = new();
     private int generation;
     private DirectoryBrowseSession? filesystem;
     public bool FilesystemBrowsing {get;private set;}
     public bool UsesCatalogResults=>BrowseScopeRules.UsesCatalogResults(FilesystemBrowsing,PathValue,Query,Filter.Count>0,Random);
-    public Task<bool> ToggleRecursiveAsync(){Recursive=!Recursive;return NavigateAsync(PathValue,false);}
+    public Task<bool> OpenLocationAsync(string path,bool favorite)
+    {EnterScope(favorite?WorkspacePreferenceScope.Favorites:WorkspacePreferenceScope.Computer);return NavigateAsync(path);}
+    private void EnterScope(WorkspacePreferenceScope scope)
+    {
+        pendingOrigin??=new(PathValue,PreferenceScope);PreferenceScope=scope;AddressRevision++;
+        Random=false;Query="";Filter=new();SyncWorkspaceOptions();
+    }
+    public bool SyncWorkspaceOptions()
+    {
+        var value=WorkspaceOptions.Read(services.Preferences.Current,PreferenceScope);
+        var changed=Recursive!=value.Recursive||ShowHidden!=value.ShowHidden||Sort!=value.Sort;
+        Recursive=value.Recursive;ShowHidden=value.ShowHidden;Sort=value.Sort;return changed;
+    }
     public bool CanBack => back.Count > 0;
     public bool CanForward => forward.Count > 0;
     public async Task BackAsync()
     {
-        if(!back.TryPeek(out var target))return;var current=PathValue;Query="";
-        if(await NavigateAsync(target,false)){back.Pop();forward.Push(current);Changed?.Invoke();}
+        if(!back.TryPeek(out var target))return;var current=new WorkspaceLocation(PathValue,PreferenceScope);EnterScope(target.Scope);
+        if(await NavigateAsync(target.Path,false)){back.Pop();forward.Push(current);Changed?.Invoke();}
     }
     public async Task ForwardAsync()
     {
-        if(!forward.TryPeek(out var target))return;var current=PathValue;Query="";
-        if(await NavigateAsync(target,false)){forward.Pop();back.Push(current);Changed?.Invoke();}
+        if(!forward.TryPeek(out var target))return;var current=new WorkspaceLocation(PathValue,PreferenceScope);EnterScope(target.Scope);
+        if(await NavigateAsync(target.Path,false)){forward.Pop();back.Push(current);Changed?.Invoke();}
     }
     public Task UpAsync()
     {if(PathValue.Length==0)return Task.CompletedTask;Query="";return NavigateAsync(Directory.GetParent(PathValue)?.FullName??"");}
     public async Task<bool> NavigateAsync(string path, bool remember = true,bool preserveSelection=false)
     {
+        if(path.Trim().Length==0&&pendingOrigin is null&&(PreferenceScope!=WorkspacePreferenceScope.Computer||PathValue.Length>0))EnterScope(WorkspacePreferenceScope.Computer);
+        var origin=pendingOrigin??new(PathValue,PreferenceScope);pendingOrigin=null;SyncWorkspaceOptions();
         PreserveSelection=preserveSelection;
         Invalidated=false;var version = ++generation; Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
@@ -56,7 +73,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             // Ordinary browsing is always a fresh filesystem listing, even when
             // the Catalog is queryable. Index recovery must not hide new files.
             if(path.Length>0&&plainBrowse)
-                return await BrowseFilesystemAsync(path,remember,version,token);
+                return await BrowseFilesystemAsync(path,remember,version,token,origin);
             // “此电脑” and ordinary directory browsing are shell capabilities. They
             // must remain usable while the optional catalog host is reconnecting.
             if (services.Core is null)
@@ -65,7 +82,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 {
                     var home = new AssetCollection();
                     foreach (var item in HomeEntries.Create()) home.Add(item);
-                    if (remember && path != PathValue) { back.Push(PathValue); forward.Clear(); }
+                    Remember(path,remember,origin);
                     PathValue = path; Title = "此电脑"; Items = home; FilesystemBrowsing = false;
                     return true;
                 }
@@ -109,7 +126,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 result.HasMoreItems=cursor is not null;
             }
             if (version != generation) return false;
-            if (remember && path != PathValue) { back.Push(PathValue); forward.Clear(); }
+            Remember(path,remember,origin);
             PathValue = path; Title = path.Length == 0 ? "此电脑" : System.IO.Path.GetFileName(path.TrimEnd('\\'));
             var loading = false;
             result.LoadPage = async () => {
@@ -144,7 +161,9 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             if (!IsDeleted(full)) target.Add(new(item, full));
         }
     }
-    private async Task<bool> BrowseFilesystemAsync(string path,bool remember,int version,CancellationToken token)
+    private void Remember(string path,bool remember,WorkspaceLocation origin)
+    {if(remember&&(path!=origin.Path||PreferenceScope!=origin.Scope)){back.Push(origin);forward.Clear();}}
+    private async Task<bool> BrowseFilesystemAsync(string path,bool remember,int version,CancellationToken token,WorkspaceLocation origin)
     {
         var owner=new DirectoryBrowseSession(services.Visuals);filesystem=owner;
         var page=await owner.StartAsync(path,Sort,ShowHidden,Recursive,token);
@@ -161,7 +180,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             catch(Exception error){if(version==generation){result.HasMoreItems=false;Error=error.Message+"；请刷新";Changed?.Invoke();}return 0;}
             finally{loading=false;}
         };
-        if(remember&&path!=PathValue){back.Push(PathValue);forward.Clear();}
+        Remember(path,remember,origin);
         PathValue=path;Title=System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;FilesystemBrowsing=true;return true;
     }
     private bool IsDeleted(string path) => services.DeletedPaths.Any(deleted => path.Equals(deleted, StringComparison.OrdinalIgnoreCase)

@@ -23,6 +23,7 @@ public sealed partial class MainWindow : Window
     private readonly WorkspaceLayoutController layout;
     private readonly WorkspacePointerInput pointerInput;
     private readonly FilterAvailabilityService filterAvailability;
+    private readonly WorkspacePreferencesController workspace;
     private SettingsWindow? settings;
     private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
@@ -35,6 +36,7 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
+        workspace=new(services,()=>active,results,toolbar);
         services.CatalogChanged+=roots=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
             foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.Affects(session.PathValue,roots))session.Invalidate();
             QueueCatalogRefresh();
@@ -58,14 +60,15 @@ public sealed partial class MainWindow : Window
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
         services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{MainWindowGeometry.RestoreDefault(this);WindowActivation.Show(this);},OpenSettings,
             ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.PathValue??"")+1)%paths.Length]);},error=>Notice(error.Message));
-        toolbar.ViewSelected+=mode=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{
+        toolbar.ViewSelected+=mode=>commands.Run(()=>workspace.UpdateAsync(value=>value with{
             View=mode==Models.WorkspaceViewMode.List?"list":"grid",
-            SquareTiles=mode==Models.WorkspaceViewMode.List?services.Preferences.Current.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
-        toolbar.SizeChangedByUser+=size=>{AssetTile.Configure(services.Preferences.Current with{TileSize=size});results.PreviewSize(size);};
-        toolbar.SizeCommitted+=size=>commands.Run(()=>services.Preferences.SaveAsync(services.Preferences.Current with{TileSize=size}));
+            SquareTiles=mode==Models.WorkspaceViewMode.List?value.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
+        toolbar.SizeChangedByUser+=workspace.PreviewSize;
+        toolbar.SizeCommitted+=(size,scope)=>commands.Run(()=>workspace.UpdateAsync(value=>value with{TileSize=size},capturedScope:scope));
+        toolbar.OptionsChanged+=update=>commands.Run(()=>workspace.UpdateAsync(update,true));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
         Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
-        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){active=session;Bind();QueueCatalogRefresh();}};
+        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){var changed=session.SyncWorkspaceOptions();active=session;Bind();if(changed)Refresh();else QueueCatalogRefresh();}};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
         commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
@@ -93,13 +96,13 @@ public sealed partial class MainWindow : Window
         // or cancel directory reads started while the connection was pending.
         try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(error.Message);}
     }
-    private void NewTab(string path)
+    private void NewTab(string path,bool favorite=false)
     {
         if(Tabs.TabItems.Count>=12){Notice("最多打开12个目录标签");return;}
         var session=new BrowseSession(services);
         var tab=new TabViewItem {Header=path.Length==0?"此电脑":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
         session.Changed+=()=>{if(closed)return;tab.Header=session.Title;if(ReferenceEquals(active,session))Bind();};
-        Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.NavigateAsync(path));
+        Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.OpenLocationAsync(path,favorite));
         Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
     }
     private void CloseTab(TabViewItem tab)
@@ -111,6 +114,7 @@ public sealed partial class MainWindow : Window
     private void Bind()
     {
         if(active is null||closed)return;
+        workspace.Apply();
         sidebar.SetActivePath(active.PathValue);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
         var preserveSelection=ReferenceEquals(boundSession,active)&&active.PreserveSelection;boundSession=active;
         results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
@@ -131,7 +135,8 @@ public sealed partial class MainWindow : Window
     private void OpenLocation(string path)
     {
         // Navigation entry always returns to the requested root with fresh query state.
-        if(active is null){NewTab(path);return;}active.Query="";active.Filter=new();commands.Run(()=>active.NavigateAsync(path));
+        var favorite=path.Length>0&&services.Favorites.Items.Any(item=>string.Equals(item.Path.TrimEnd('\\','/'),path.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase));
+        if(active is null){NewTab(path,favorite);return;}commands.Run(()=>active.OpenLocationAsync(path,favorite));
     }
     private async void ChooseFolder(bool favorite)
     {
@@ -158,7 +163,9 @@ public sealed partial class MainWindow : Window
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop})==prefs;
-        if(!pinOnly){ThemeService.Apply(this,Surface,prefs);AssetTile.Configure(prefs);results.Preferences(prefs);toolbar.ApplyPreferences(prefs);layout.ApplyPreferences();}
+        var workspaceOnly=appliedPreferences is {} old&&(old with{ComputerWorkspace=prefs.ComputerWorkspace,FavoriteWorkspace=prefs.FavoriteWorkspace})==prefs;
+        if(!pinOnly&&!workspaceOnly){ThemeService.Apply(this,Surface,prefs);layout.ApplyPreferences();}
+        workspace.Apply();
         WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned);appliedPreferences=prefs;
     });
     private void SetPinned(bool value)=>commands.Run(async()=>{

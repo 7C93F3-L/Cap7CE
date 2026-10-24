@@ -27,12 +27,14 @@ internal sealed class PreferenceStore
         if (Current.Material is not ("mica" or "mica-alt") || Current.Theme is not ("system" or "light" or "dark")
             || Current.TileSize is < 96 or > 280 || Current.FontSize is < 10 or > 24) Current = new();
     }
-    public async Task SaveAsync(ShellPreferences value)
+    public Task SaveAsync(ShellPreferences value)=>UpdateAsync(_=>value);
+    public async Task UpdateAsync(Func<ShellPreferences,ShellPreferences> update)
     {
         await gate.WaitAsync();
         var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
+            var value=update(Current);
             Directory.CreateDirectory(DataRoot);
             await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(value, FramedRpc.Json));
             File.Move(temporary, path, true); Current = value; Changed?.Invoke();
