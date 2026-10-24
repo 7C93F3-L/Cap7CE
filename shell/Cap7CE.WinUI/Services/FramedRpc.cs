@@ -14,6 +14,7 @@ internal sealed class FramedRpc : IAsyncDisposable
     private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> pending = new();
     private readonly SemaphoreSlim writing = new(1);
     private readonly Task reading;
+    public bool IsConnected=>!ended.IsCancellationRequested;
     public FramedRpc(Stream input, Stream output, int maximum)
     {
         this.input = input; this.output = output; this.maximum = maximum;
@@ -21,7 +22,7 @@ internal sealed class FramedRpc : IAsyncDisposable
     }
     public async Task<JsonElement> RequestAsync(string id, object request, CancellationToken token)
     {
-        ended.Token.ThrowIfCancellationRequested();
+        if(!IsConnected)throw new IOException("查询连接已断开，请重新连接后重试。");
         if (pending.Count >= 32) throw new IOException("Core 请求队列已满");
         var completion = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
         if (!pending.TryAdd(id, completion)) throw new InvalidOperationException("Duplicate request");
@@ -40,6 +41,8 @@ internal sealed class FramedRpc : IAsyncDisposable
             finally { writing.Release(); }
             return await completion.Task.WaitAsync(token);
         }
+        catch(OperationCanceledException)when(!token.IsCancellationRequested&&!IsConnected)
+        {throw new IOException("查询连接已断开，请重新连接后重试。");}
         finally { pending.TryRemove(id, out _); }
     }
     private async Task ReadAsync()

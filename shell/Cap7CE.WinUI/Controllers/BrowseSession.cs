@@ -74,6 +74,9 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             // the Catalog is queryable. Index recovery must not hide new files.
             if(path.Length>0&&plainBrowse)
                 return await BrowseFilesystemAsync(path,remember,version,token,origin);
+            if(!plainBrowse&&services.Core is {IsConnected:false}) {
+                await services.ConnectAsync(onlyIfDisconnected:true);token.ThrowIfCancellationRequested();
+            }
             // “此电脑” and ordinary directory browsing are shell capabilities. They
             // must remain usable while the optional catalog host is reconnecting.
             if (services.Core is null)

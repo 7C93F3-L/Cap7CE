@@ -36,11 +36,12 @@ internal sealed class ShellServices : IAsyncDisposable
         Office = new(root, "office-preview.cjs", Path.Combine(PreferenceStore.DataRoot, "temp"));
         StoredMetadata=new(root,"visual-cache.cjs",PreferenceStore.ProductData);
     }
-    public async Task ConnectAsync()
+    public async Task ConnectAsync(bool onlyIfDisconnected=false)
     {
         await connection.WaitAsync();
         try {
         ObjectDisposedException.ThrowIf(closed, this);
+        if(onlyIfDisconnected&&Core?.IsConnected==true)return;
         changes?.Dispose();changes=null;
         if(Core is not null){await Core.DisposeAsync();Core=null;}
         var database = Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") ?? Path.Combine(

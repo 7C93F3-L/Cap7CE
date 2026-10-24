@@ -13,6 +13,7 @@ internal sealed class CoreConnection : IAsyncDisposable
     private readonly FramedRpc rpc;
     private long sequence;
     public IReadOnlyList<string> Capabilities {get;private set;}=[];
+    public bool IsConnected=>rpc.IsConnected;
     public bool Supports(string operation)=>Capabilities.Contains(operation,StringComparer.Ordinal);
     private CoreConnection(Process process, NamedPipeClientStream pipe) { this.process = process; rpc = new(pipe, pipe, CoreProtocol.MaximumFrameBytes); }
     public static Task<CoreConnection> StartAsync(string root, string database, bool interactive = false,bool product=false,Action<string>? failureLog=null)
@@ -53,7 +54,10 @@ internal sealed class CoreConnection : IAsyncDisposable
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromMilliseconds(deadlineMs+1000));
         using var registration = token.Register(() => { if (operation.StartsWith("search.") && operation != CoreOperations.SearchCancel) _ = CancelAsync(id); });
-        var value = await rpc.RequestAsync(id, new { protocolVersion = 1, requestId = id, operation, deadlineMs, body }, timeout.Token);
+        JsonElement value;
+        try{value=await rpc.RequestAsync(id,new{protocolVersion=1,requestId=id,operation,deadlineMs,body},timeout.Token);}
+        catch(OperationCanceledException)when(!token.IsCancellationRequested)
+        {throw new IOException(IsConnected?"查询超时，请重试。":"查询连接已断开，请重新连接后重试。");}
         if (value.GetProperty("status").GetString() != "success")
             throw new IOException(value.GetProperty("error").GetProperty("code").GetString());
         return value.GetProperty("body").Deserialize<T>(FramedRpc.Json) ?? throw new IOException("Core 响应为空");

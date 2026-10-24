@@ -2,6 +2,7 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
 var checks = 0;
+await RpcLifetimeChecks.RunAsync();
 CatalogRefreshChecks.Run();
 WorkspacePreferenceChecks.Run();
 void CheckReveal(double top,double height,double offset,double viewport,double maximum,double expected)
