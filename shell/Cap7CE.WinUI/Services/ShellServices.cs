@@ -19,6 +19,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public NativeNotifications Notifications {get;}=new();
     public NativeHotKeys? Shortcuts {get;set;}
     public event Action<IReadOnlySet<string>?>? CatalogChanged;
+    public event Action<CatalogStatusResponse>? IndexStatusChanged;
     public void RefreshViews()=>CatalogChanged?.Invoke(null);
     private long catalogRevision;
     public event Action<string>? BackgroundError;
@@ -53,7 +54,7 @@ internal sealed class ShellServices : IAsyncDisposable
         } finally { connection.Release(); }
     }
     public async Task RefreshVolumesAsync()
-    { if (Core is not null) {var status=await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});Volumes=status.Volumes;catalogRevision=status.CatalogRevision;} }
+    { if (Core is not null) {var status=await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});Volumes=status.Volumes;catalogRevision=status.CatalogRevision;IndexStatusChanged?.Invoke(status);} }
     public async Task DisconnectAsync()
     {
         await connection.WaitAsync();

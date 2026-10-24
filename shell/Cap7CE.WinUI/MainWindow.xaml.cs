@@ -26,6 +26,7 @@ public sealed partial class MainWindow : Window
     private readonly WorkspacePreferencesController workspace;
     private readonly PreviewSelectionController<Models.AssetItem> previewLink;
     private readonly AutoKeywordNoticeController keywordNotice;
+    private readonly IndexNoticeController indexNotice;
     private SettingsWindow? settings;
     private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
@@ -49,6 +50,7 @@ public sealed partial class MainWindow : Window
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
         commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
         keywordNotice=new(services.AutoKeywords,notifications,details.SetAutoKeywordBusy);
+        indexNotice=new(services,notifications);
         previewLink=new(item=>item.FullPath,item=>!item.Entry.IsDirectory,results.SelectSingle,item=>preview?.FollowSelection(item),()=>preview?.Close());
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
@@ -205,7 +207,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;pointerInput.Dispose();keywordNotice.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();maintenance?.Close();AssetTile.Visuals=null;
+        closed=true;pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();maintenance?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
