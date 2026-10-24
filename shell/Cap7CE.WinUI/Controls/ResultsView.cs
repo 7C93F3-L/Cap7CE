@@ -124,7 +124,7 @@ internal sealed class ResultsView : UserControl
     private void OnItemDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
         if ((e.OriginalSource as FrameworkElement)?.DataContext is not AssetItem item || commands is null) return;
-        commands.Run(() => { if (item.Entry.IsDirectory) commands.Open(item); else commands.Preview(item); return Task.CompletedTask; });
+        e.Handled=true;commands.Run(() => { commands.Open(item); return Task.CompletedTask; });
     }
     private void Context(object sender, RightTappedRoutedEventArgs e)
     {

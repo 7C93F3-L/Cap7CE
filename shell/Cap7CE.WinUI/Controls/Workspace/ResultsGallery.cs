@@ -64,7 +64,7 @@ internal sealed class ResultsGallery : UserControl
     private void Pick(GalleryTile tile)
     {if(items is null||tile.DataContext is not AssetItem item)return;selection.Pick(items,items.IndexOf(item),Down(VirtualKey.Control),Down(VirtualKey.Shift));SyncSelection();}
     private void Open(GalleryTile tile)
-    {if(tile.DataContext is AssetItem item&&commands is not null)commands.Run(()=>{if(item.Entry.IsDirectory)commands.Open(item);else commands.Preview(item);return Task.CompletedTask;});}
+    {if(tile.DataContext is AssetItem item&&commands is not null)commands.Run(()=>{commands.Open(item);return Task.CompletedTask;});}
     private void Context(GalleryTile tile,RightTappedRoutedEventArgs e)
     {
         if(tile.DataContext is not AssetItem item||commands is null)return;e.Handled=true;

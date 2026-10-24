@@ -50,6 +50,9 @@ assert(project.includes('<WindowsPackageType>None</WindowsPackageType>'));
 assert(read('shell/Directory.Build.props').includes('<RuntimeIdentifier>win-x64</RuntimeIdentifier>'));
 assert(!/arm64|win-x86/.test(project + read('shell/Directory.Build.props')));
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('ItemsWrapGrid'), 'preserve native grid virtualization');
+const resultDoubleTap=read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').split('private void OnItemDoubleTapped')[1].split('private void Context')[0];
+const galleryDoubleTap=read('shell/Cap7CE.WinUI/Controls/Workspace/ResultsGallery.cs').split('private void Open(GalleryTile tile)')[1].split('private void Context')[0];
+for(const source of [resultDoubleTap,galleryDoubleTap])assert(source.includes('commands.Open(item)')&&!source.includes('commands.Preview'), 'double-click uses the same default open action as the context menu, not preview');
 assert(read('shell/Cap7CE.WinUI/Controls/Workspace/GalleryLayout.cs').includes(': VirtualizingLayout'), 'original-ratio gallery must remain virtualized');
 for (const name of ['Models/GalleryGeometry', 'Models/WorkspacePathRules', 'Controllers/WorkspaceSelection'])
   assert(!/Microsoft\.UI|Services|PreferenceStore|\.RequestAsync/.test(read(`shell/Cap7CE.WinUI/${name}.cs`)), `${name}: geometry and selection must stay pure`);
