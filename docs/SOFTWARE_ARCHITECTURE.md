@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+BrowseScopeRules.EntryType统一搜索/筛选的file限制，非搜索单层浏览仍为any；路径与手动关键词继续复用既有name-path-or-keywords查询，目录匹配自然投影为目录内的文件，不展开额外查询或改变Core谓词。WorkspaceAddress在已提交关键词被删空时调用原Search事件；Bind先同步内部query再写Text，程序化导航/换标签不会触发清空请求，Esc仅修改Text以避免重复请求。原BrowseSession导航取消、路径、筛选及工具栏偏好保持原所有权，清空后按当前浏览偏好重新读取，不保存过时文件列表。
+
 目录浏览响应增加可选totalCount，普通与递归枚举复用当前排序快照的完整长度，不额外扫描。SearchStartRequest增加默认关闭的IncludeTotalCount，WinUI首屏启用；CatalogV2Query在同一只读事务内复用matched_keys的完整谓词统计，先于游标及LIMIT应用，返回可选TotalCount，不修改schema或索引。后续页不重算；AssetCollection保留总数，后台复用集合时同步更新，DetailsPane仅展示总数，分页加载深度不再影响数字；当前进程已删除的已加载条目同步扣减，未知总数不伪装为100。
 
 ResultsView及ResultsGallery双击统一调用FileCommands.Open，与右键菜单共用文件访问校验、文件夹NavigateRequested及文件UseShellExecute默认应用入口；不再将文件双击分流到Preview，空格预览链路保持不变。

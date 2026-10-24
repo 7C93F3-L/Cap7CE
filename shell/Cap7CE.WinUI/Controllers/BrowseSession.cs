@@ -109,7 +109,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             {
                 if (volumes.Length == 0) throw new IOException("没有可查询的磁盘；此入口不会自动建库");
                 var request = new SearchStartRequest(Query.Trim(), 100, Sort, volumes, scope,
-                    EntryType: Filter.Count > 0 || Recursive && Query.Trim().Length == 0 ? "file" : "any",
+                    EntryType: BrowseScopeRules.EntryType(Query,Recursive,Filter.Count>0),
                     TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: true);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
                 if (version != generation) return false;

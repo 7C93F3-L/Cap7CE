@@ -9,4 +9,7 @@ internal static class BrowseScopeRules
     public static string DirectoryScope(string query, bool includeSubfolders, bool hasFilters) =>
         !string.IsNullOrWhiteSpace(query) || hasFilters || includeSubfolders
             ? "directory-descendants" : "direct-children";
+
+    public static string EntryType(string query, bool includeSubfolders, bool hasFilters) =>
+        !string.IsNullOrWhiteSpace(query) || hasFilters || includeSubfolders ? "file" : "any";
 }

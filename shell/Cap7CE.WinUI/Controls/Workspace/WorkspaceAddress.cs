@@ -35,7 +35,8 @@ internal sealed class WorkspaceAddress : UserControl
         badge=new Button{Content="搜索中",Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};badge.Click+=(_,_)=>FocusSearch();Grid.SetColumn(badge,2);root.Children.Add(badge);
         address.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;SubmitPath();}else if(e.Key==VirtualKey.Escape){e.Handled=true;editing=false;address.Text=path;Render();toggle.Focus(FocusState.Programmatic);}};
         address.LostFocus+=(_,_)=>{if(editing){editing=false;Render();}};
-        search.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;Search?.Invoke(search.Text);return;}if(e.Key!=VirtualKey.Escape)return;e.Handled=true;if(search.Text.Length>0){search.Text="";Search?.Invoke("");}else{searchMode=false;Render();toggle.Focus(FocusState.Programmatic);}};
+        search.TextChanged+=(_,_)=>{if(string.IsNullOrWhiteSpace(search.Text)&&!string.IsNullOrWhiteSpace(query)){query="";Search?.Invoke("");}};
+        search.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;Search?.Invoke(search.Text);return;}if(e.Key!=VirtualKey.Escape)return;e.Handled=true;if(search.Text.Length>0)search.Text="";else{searchMode=false;Render();toggle.Focus(FocusState.Programmatic);}};
         Content=root;Render();
     }
     public void Bind(string nextPath,string nextQuery,bool reset,bool defaultSearch=false)

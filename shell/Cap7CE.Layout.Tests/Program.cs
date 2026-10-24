@@ -53,6 +53,9 @@ foreach(var recursive in new[]{false,true}) {
     Require(BrowseScopeRules.DirectoryScope("",recursive,true)=="directory-descendants", "filters search descendants regardless of browsing preference");
     Require(BrowseScopeRules.DirectoryScope("image",recursive,false)=="directory-descendants", "keywords search descendants regardless of browsing preference");
     Require(BrowseScopeRules.DirectoryScope("",recursive,false)==(recursive?"directory-descendants":"direct-children"), "clearing retrieval restores browsing preference");
+    Require(BrowseScopeRules.EntryType("image",recursive,false)=="file", "keyword search excludes folders regardless of browsing preference");
+    Require(BrowseScopeRules.EntryType("",recursive,false)==(recursive?"file":"any"), "clearing keywords restores normal flat or hierarchical browsing");
+    Require(BrowseScopeRules.EntryType("",recursive,true)=="file", "clearing keywords retains existing file filters");
 }
 Require(BrowseScopeRules.DirectoryScope("  ",false,false)=="direct-children", "whitespace is not a search condition");
 Require(!BrowseScopeRules.UsesCatalogResults(false,"","  ",false,false), "plain home must not reload on Catalog notifications");
