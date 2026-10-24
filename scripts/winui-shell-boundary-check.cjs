@@ -27,6 +27,15 @@ const session = read('core/src/Cap7CE.Core.Host/CorePipeSession.cs');
 assert(session.indexOf('!allowedOperations.Contains(request.Operation)') < session.indexOf('var response = await dispatcher.DispatchAsync'), 'admission must precede dispatcher');
 assert(session.includes('allowedOperations is null || allowedOperations.Contains(operation)'), 'hello cannot advertise forbidden operations');
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
+const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');
+const catalogRefresh = read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
+assert(catalogRefresh.includes('BrowseSession {UsesCatalogResults:true}')
+  && catalogRefresh.includes('active is {UsesCatalogResults:true,Busy:false}')
+  && !catalogRefresh.includes('FilesystemBrowsing:false'),
+  'Catalog notifications must not invalidate or rebuild the plain home or filesystem views');
+assert(browseRouting.includes('if(path.Length>0&&plainBrowse)')
+  && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token)') < browseRouting.indexOf('if (services.Core is null)'),
+  'ordinary directory listings must use the filesystem before checking Core or resolving Catalog scope');
 assert(project.includes('<WindowsPackageType>None</WindowsPackageType>'));
 assert(read('shell/Directory.Build.props').includes('<RuntimeIdentifier>win-x64</RuntimeIdentifier>'));
 assert(!/arm64|win-x86/.test(project + read('shell/Directory.Build.props')));

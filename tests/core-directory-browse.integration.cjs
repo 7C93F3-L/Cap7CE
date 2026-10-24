@@ -17,6 +17,10 @@ const {CoreDirectoryBrowseClient}=require('../dist-electron/core/coreDirectoryBr
   const stamp=BigInt(Math.trunc(Number(before.mtimeMs)))*10000n+116444736000000000n;
   assert.ok(Math.abs(item.modifiedUtcTicks-Number(stamp))<=10016,'projection uses Windows FILETIME');
   await assert.rejects(client.next('browse',used),/invalid-cursor/);await client.cancel('browse');
+  await fs.writeFile(path.join(source,'added-after-listing.txt'),'new external file');
+  const refreshed=await client.start('refresh',source,'volume',options);
+  assert.ok(refreshed.items.some(item=>item.name==='added-after-listing.txt'),'fresh directory listing sees a file created after the previous session');
+  await client.cancel('refresh');
   assert.equal((await client.start('empty',source,'volume',{...options,fileConditions:{extensions:[]}})).items.length,0);
   const filtered=await client.start('filter',source,'volume',{...options,fileConditions:{extensions:['.TXT'],minimumSizeBytes:4,maximumSizeBytes:4,minimumModifiedFileTime:(stamp-20000n).toString(),maximumModifiedFileTime:(stamp+20000n).toString()}});
   assert.ok(filtered.items.some(item=>item.name==='item0.txt'));assert.ok(filtered.items.every(item=>!item.isDirectory));

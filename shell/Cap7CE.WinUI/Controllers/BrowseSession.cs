@@ -25,6 +25,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     private int generation;
     private DirectoryBrowseSession? filesystem;
     public bool FilesystemBrowsing {get;private set;}
+    public bool UsesCatalogResults=>BrowseScopeRules.UsesCatalogResults(FilesystemBrowsing,PathValue,Query,Filter.Count>0,Random);
     public Task<bool> ToggleRecursiveAsync(){Recursive=!Recursive;return NavigateAsync(PathValue,false);}
     public bool CanBack => back.Count > 0;
     public bool CanForward => forward.Count > 0;
@@ -50,12 +51,14 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
             var plainBrowse = string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random;
+            // Ordinary browsing is always a fresh filesystem listing, even when
+            // the Catalog is queryable. Index recovery must not hide new files.
+            if(path.Length>0&&plainBrowse)
+                return await BrowseFilesystemAsync(path,remember,version,token);
             // “此电脑” and ordinary directory browsing are shell capabilities. They
             // must remain usable while the optional catalog host is reconnecting.
             if (services.Core is null)
             {
-                if (path.Length > 0 && plainBrowse)
-                    return await BrowseFilesystemAsync(path,remember,version,token);
                 if (path.Length == 0 && plainBrowse)
                 {
                     var home = new AssetCollection();
@@ -74,8 +77,6 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 var resolved = await services.Core.RequestAsync<CatalogResolveScopeResponse>(CoreOperations.CatalogResolveScope, new CatalogResolveScopeRequest(path), token);
                 if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null)
                 {
-                    if(string.IsNullOrWhiteSpace(Query)&&Filter.Count==0&&!Random)
-                        return await BrowseFilesystemAsync(path,remember,version,token);
                     throw new IOException("此目录的索引尚未就绪，可清除搜索和筛选后直接浏览；搜索及筛选需要可查询的索引");
                 }
                 volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);

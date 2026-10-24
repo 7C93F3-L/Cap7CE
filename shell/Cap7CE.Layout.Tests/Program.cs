@@ -53,6 +53,12 @@ foreach(var recursive in new[]{false,true}) {
     Require(BrowseScopeRules.DirectoryScope("",recursive,false)==(recursive?"directory-descendants":"direct-children"), "clearing retrieval restores browsing preference");
 }
 Require(BrowseScopeRules.DirectoryScope("  ",false,false)=="direct-children", "whitespace is not a search condition");
+Require(!BrowseScopeRules.UsesCatalogResults(false,"","  ",false,false), "plain home must not reload on Catalog notifications");
+Require(!BrowseScopeRules.UsesCatalogResults(true,"C:\\work","",false,false), "filesystem directory must retain its grid on Catalog notifications");
+Require(BrowseScopeRules.UsesCatalogResults(false,"","report",false,false), "home search still follows Catalog notifications");
+Require(BrowseScopeRules.UsesCatalogResults(false,"","",true,false), "home filters still follow Catalog notifications");
+Require(BrowseScopeRules.UsesCatalogResults(false,"","",false,true), "random results still follow Catalog notifications");
+Require(BrowseScopeRules.UsesCatalogResults(false,"C:\\work","report",false,false), "indexed directory search still follows Catalog notifications");
 Require(Size(960,800,320,420).DetailsWidth == 308, "details leaves 300 DIP for main content plus spacing");
 Require(Size(1600,800,320,420).DetailsWidth == 420, "details restores preferred width after growing");
 Require(WorkspaceLayoutPolicy.ClampSidebar(900,1600) == 320 && WorkspaceLayoutPolicy.ClampSidebar(-100,1600) == 40, "sidebar drag bounds");

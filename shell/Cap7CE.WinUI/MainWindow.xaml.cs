@@ -34,8 +34,8 @@ public sealed partial class MainWindow : Window
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         services.CatalogChanged+=()=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
-            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {FilesystemBrowsing:false} session)session.Invalidate();
-            if(active is {FilesystemBrowsing:false,Busy:false})Refresh();
+            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session)session.Invalidate();
+            if(active is {UsesCatalogResults:true,Busy:false})Refresh();
             if(active is not null)filterAvailability?.Update(active,true);
         }});
         services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
