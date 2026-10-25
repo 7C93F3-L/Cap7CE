@@ -1,6 +1,7 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--settings-origin-tests"]) {await SettingsOriginChecks.RunAsync();return;}
 if(args is ["--core-exit-fixture"]) {Console.ReadLine();Console.Error.WriteLine("controlled-core-failure");Environment.ExitCode=7;return;}
 if(args is ["--catalog-refresh-tests"]) {CatalogRefreshChecks.Run();await CoreProcessChecks.RunAsync();await CoreRequestSenderChecks.RunAsync();return;}
 if(args is ["--metadata-task-tests"]) {await MetadataTaskChecks.RunAsync();MetadataPanelChecks.Run();await MetadataExclusionChecks.RunAsync();return;}

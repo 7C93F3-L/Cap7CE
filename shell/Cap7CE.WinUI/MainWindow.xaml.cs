@@ -166,7 +166,10 @@ public sealed partial class MainWindow : Window
         preview.Show(item,source);
     }
     private void OpenSettings()
-    {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
+    {
+        try{if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
+        catch(Exception error){NativeDiagnostics.VisualFailure(error);Notice("暂时无法打开设置，请重试。");}
+    }
     private void OpenMaintenance(string? path)
     {
         OpenSettings();settings?.ShowMaintenance();

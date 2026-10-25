@@ -27,4 +27,14 @@
   <Setter Property="IsPaneToggleButtonVisible" Value="True"/><Setter Property="IsTitleBarAutoPaddingEnabled" Value="False"/>
   <Setter Property="PaneTitle" Value="设置"/>
  </Style>
+ <Style x:Key="CapSettingsSignaturePath" TargetType="Path">
+  <Setter Property="Fill" Value="{ThemeResource TextFillColorPrimaryBrush}"/>
+ </Style>
+ <Style x:Key="CapSettingsSignatureTrigger" TargetType="HyperlinkButton">
+  <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/>
+  <Setter Property="UseSystemFocusVisuals" Value="True"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="HyperlinkButton">
+   <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}" VerticalAlignment="Center"/>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
 </ResourceDictionary>

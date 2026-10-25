@@ -8,6 +8,10 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/CoreProcessDiagnostics.cs" Link="CoreProcessDiagnostics.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/CoreRequestSender.cs;../../core/src/Cap7CE.Core.Host/CoreRequestIdentityTracker.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/PreviewSpaceKeyPolicy.cs" Link="PreviewSpaceKeyPolicy.cs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Cap7CE.WinUI/Models/SettingsOriginAsset.cs" Link="SettingsOriginAsset.cs" />
+    <None Include="../../src/renderer/assets/archive/phase7.dat" Link="Assets/phase7.dat" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/CatalogNameLabel.cs" Link="CatalogNameLabel.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/AnimationSource.cs" Link="AnimationSource.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/FontCharacterCoverage.cs;../Cap7CE.WinUI/Models/FontPreviewDocument.cs" Link="%(Filename)%(Extension)" /></ItemGroup>

@@ -28,10 +28,6 @@ internal sealed class SettingsPages
                 column.Children.Add(section);
             }
         }
-        if(category=="关于") {
-            var footer=Ui.Column(Ui.Heading("Cap7CE"),Ui.Text("7C93F3-L & Echo",true));
-            footer.Margin=new(0,16,0,8);column.Children.Add(footer);
-        }
         return column;
     }
 }

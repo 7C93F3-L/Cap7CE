@@ -16,6 +16,7 @@
     <Content Include="../../src/renderer/assets/icons/skim-location-desktop.svg;../../src/renderer/assets/icons/skim-location-documents.svg;../../src/renderer/assets/icons/skim-location-downloads.svg;../../src/renderer/assets/icons/skim-location-pictures.svg;../../src/renderer/assets/icons/skim-location-music.svg;../../src/renderer/assets/icons/skim-location-videos.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
     <Content Include="../../src/renderer/assets/icons/format-*.svg;../../src/renderer/assets/icons/skim-folder.svg;../../src/renderer/assets/icons/skim-file.svg;../../src/renderer/assets/icons/skim-disk.svg;../../src/renderer/assets/icons/logo-cap7ce.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../artifacts/assets/*.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/renderer/assets/archive/phase7.dat" Link="Assets/phase7.dat" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
     <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="AngleSharp" Version="1.8.4" />

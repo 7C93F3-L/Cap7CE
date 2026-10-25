@@ -13,4 +13,6 @@ module.exports = async (root, output) => {
   const generated = { exports: {} };
   new Function('module', 'exports', 'require', compiled.outputFiles[0].text)(generated, generated.exports, require);
   fs.writeFileSync(path.join(output, 'settings-reference.json'), JSON.stringify(generated.exports.settings));
+  const signature = fs.readFileSync(path.join(root, 'src/renderer/assets/icons/icon-signature-cap7ce.svg'), 'utf8');
+  fs.writeFileSync(path.join(output, 'settings-signature.json'), JSON.stringify([...signature.matchAll(/<path\b[^>]*\bd="([^"]+)"/g)].map(match => match[1]).join(' ')));
 };
