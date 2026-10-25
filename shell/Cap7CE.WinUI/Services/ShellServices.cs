@@ -20,6 +20,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public NativeHotKeys? Shortcuts {get;set;}
     public event Action<IReadOnlySet<string>?>? CatalogChanged;
     public event Action<CatalogStatusResponse>? IndexStatusChanged;
+    public event Action? ConnectionChanged;
     public void RefreshViews()=>CatalogChanged?.Invoke(null);
     private long catalogRevision;
     public event Action<string>? BackgroundError;
@@ -51,7 +52,7 @@ internal sealed class ShellServices : IAsyncDisposable
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE/Core/v1/catalog.db");
         Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure); await RefreshVolumesAsync();
         changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke("目录同步连接已结束："+error.Message));
-        } finally { connection.Release(); }
+        } finally { connection.Release();ConnectionChanged?.Invoke(); }
     }
     public async Task RefreshVolumesAsync()
     { if (Core is not null) {var status=await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});Volumes=status.Volumes;catalogRevision=status.CatalogRevision;IndexStatusChanged?.Invoke(status);} }
@@ -59,7 +60,7 @@ internal sealed class ShellServices : IAsyncDisposable
     {
         await connection.WaitAsync();
         try{changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
-        finally{connection.Release();}
+        finally{connection.Release();ConnectionChanged?.Invoke();}
     }
     private async Task OnCatalogChanged()
     {

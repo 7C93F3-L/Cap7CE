@@ -1,8 +1,9 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
-if(args is ["--metadata-task-tests"]) {await MetadataTaskChecks.RunAsync();return;}
+if(args is ["--metadata-task-tests"]) {await MetadataTaskChecks.RunAsync();MetadataPanelChecks.Run();return;}
 await MetadataTaskChecks.RunAsync();
+MetadataPanelChecks.Run();
 var checks = 0;
 await KeywordBatchChecks.RunAsync();
 KeywordDraftChecks.Run();
