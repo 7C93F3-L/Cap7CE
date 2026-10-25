@@ -86,7 +86,7 @@ internal sealed class MetadataMaintenanceView : UserControl
         all.IsEnabled=ready&&services.Volumes.Any(volume=>volume.Selected&&(volume.Queryable||volume.State is "building" or "discovering" or "catchingUp"));
         control.Content=state?.ControlText??"暂停";control.IsEnabled=ready&&(state!.CanPause||state.CanResume);
         cancel.IsEnabled=ready&&state!.CanCancel;refresh.IsEnabled=connected&&!busy;
-        status.Text=!connected?"元数据服务未连接或不可用，请在上方“服务维护”中重新连接。":state?.Title??"正在读取任务状态…";
+        status.Text=!connected?"元数据服务未连接或不可用，请到“诊断 → 服务维护”中重新连接。":state?.Title??"正在读取任务状态…";
         status.Visibility=!connected||state is null||state.ShowTaskArea?Visibility.Visible:Visibility.Collapsed;
         taskArea.Visibility=connected&&state?.ShowTaskArea==true?Visibility.Visible:Visibility.Collapsed;
         current.Text=state?.Directory is {} path?"当前目录："+path+(state.Pending>1?$" · 另有 {state.Pending-1} 个目录排队":""):"";

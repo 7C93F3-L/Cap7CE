@@ -86,14 +86,18 @@ internal sealed class SettingsCatalog
         Mainline("搜索与 AI","ai","settings.visionModel","stableSettings.desc.model",()=>ModelsView.ModelSettings);
         Mainline("搜索与 AI","ai","stableSettings.runtimeInfo","stableSettings.desc.runtimeInfo",()=>ModelsView.RuntimeInfo,true);
     }
-    private void Diagnostics()=>Mainline("诊断","application","stableSettings.diagnostics","stableSettings.desc.diagnostics",()=>{
-        var column=Ui.Column();
-        column.Children.Add(new SettingsFieldRow(T("settings.applicationLog"),Ui.Text("原生启动及Core错误日志",true),Ui.Button("打开目录",()=>{Directory.CreateDirectory(PreferenceStore.DataRoot);FileCommands.OpenDirectoryInExplorer(PreferenceStore.DataRoot);} )));
-        column.Children.Add(new SettingsFieldRow(T("settings.crashReports"),Ui.Text(File.Exists(Path.Combine(PreferenceStore.DataRoot,"last-startup-error.log"))?"存在启动/异常记录":T("common.notCreated"),true)));
-        column.Children.Add(new SettingsFieldRow(T("settings.detailedLogging"),Ui.Text(T("common.disabled"),true),Disabled("common.enable")));
-        column.Children.Add(new SettingsFieldRow(T("settings.diagnosticsBundle"),Ui.Text("导出原生运行信息及已记录的错误，不包含素材、数据库或偏好文件。",true),Ui.Button(T("settings.exportDiagnostics"),()=>actions.Run(()=>NativeDiagnostics.ExportAsync(owner)))));
-        return column;
-    },true);
+    private void Diagnostics()
+    {
+        Entries.Add(new("诊断",T("stableSettings.section.application"),"服务维护","后台连接或索引服务异常时，可重新连接或修复。",()=>new CoreMaintenanceView(services,owner).Section));
+        Mainline("诊断","application","stableSettings.diagnostics","stableSettings.desc.diagnostics",()=>{
+            var column=Ui.Column();
+            column.Children.Add(new SettingsFieldRow(T("settings.applicationLog"),Ui.Text("原生启动及Core错误日志",true),Ui.Button("打开目录",()=>{Directory.CreateDirectory(PreferenceStore.DataRoot);FileCommands.OpenDirectoryInExplorer(PreferenceStore.DataRoot);} )));
+            column.Children.Add(new SettingsFieldRow(T("settings.crashReports"),Ui.Text(File.Exists(Path.Combine(PreferenceStore.DataRoot,"last-startup-error.log"))?"存在启动/异常记录":T("common.notCreated"),true)));
+            column.Children.Add(new SettingsFieldRow(T("settings.detailedLogging"),Ui.Text(T("common.disabled"),true),Disabled("common.enable")));
+            column.Children.Add(new SettingsFieldRow(T("settings.diagnosticsBundle"),Ui.Text("导出原生运行信息及已记录的错误，不包含素材、数据库或偏好文件。",true),Ui.Button(T("settings.exportDiagnostics"),()=>actions.Run(()=>NativeDiagnostics.ExportAsync(owner)))));
+            return column;
+        },true);
+    }
     private void About()
     {
         Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",()=>Ui.Column(Ui.Text(T("settings.updateCurrentVersion").Replace("{version}",NativeVersion.Text)),Ui.Button(T("settings.checkForUpdates"),()=>actions.Run(async()=>notice(await NativeUpdates.CheckAsync())))),descriptionOverride:"仅在主动点击时检查正式WinUI更新，不下载或安装Electron发布。");

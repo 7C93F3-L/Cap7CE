@@ -11,6 +11,5 @@ internal sealed class MaintenanceSettingsView : StackPanel
     {
         Spacing=16;
         Children.Add(new SettingsCard("目录索引","建立文件名与目录索引，用于快速搜索。",new IndexMaintenanceView(services),true));
-        Children.Add(new SettingsCard("服务维护","连接Core，或安装/修复索引服务。",new CoreMaintenanceView(services,owner),true));
     }
 }

@@ -5,18 +5,20 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Cap7CE.WinUI.Views;
 
-internal sealed class CoreMaintenanceView : StackPanel
+internal sealed class CoreMaintenanceView
 {
+    public SettingsSection Section {get;}
     public CoreMaintenanceView(ShellServices services,Window owner)
     {
-        Spacing=8;
-        var status=Ui.Text("Core产品宿主：目录索引与属性任务",true);
+        var status=Ui.Text("",true);
         var reconnect=Ui.Button("重新连接Core",()=>{});
         var install=Ui.Button("安装/修复索引服务",()=>{});
+        Section=new(Ui.Row(reconnect,install),status){Visibility=Visibility.Collapsed};
+        void Report(string text){status.Text=text;Section.Visibility=Visibility.Visible;}
         reconnect.Click+=async(_,_)=>{
             install.IsEnabled=reconnect.IsEnabled=false;
-            try{await services.ConnectAsync();status.Text="Core已连接，请刷新索引与元数据状态。";}
-            catch(Exception error){status.Text=error.Message;}
+            try{await services.ConnectAsync();Report("后台服务已重新连接。");}
+            catch(Exception error){Report(error.Message);}
             finally{install.IsEnabled=reconnect.IsEnabled=true;}
         };
         install.Click+=async(_,_)=>{
@@ -26,11 +28,9 @@ internal sealed class CoreMaintenanceView : StackPanel
             try {
                 if(!File.Exists(NativeCoreSetup.Executable(services.Root)))throw new IOException("Core安装组件缺失，请重新构建或解压完整程序包。");
                 await services.DisconnectAsync();await NativeCoreSetup.RunAsync(services.Root,repair:true);await services.ConnectAsync();
-                status.Text="Core配置完成，请刷新索引与元数据状态。";
-            }catch(Exception error){status.Text=error.Message;}
+                Report("索引服务配置完成。");
+            }catch(Exception error){Report(error.Message);}
             finally{install.IsEnabled=reconnect.IsEnabled=true;}
         };
-        Children.Add(new ScrollViewer {Content=Ui.Row(reconnect,install),HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled});
-        Children.Add(status);
     }
 }

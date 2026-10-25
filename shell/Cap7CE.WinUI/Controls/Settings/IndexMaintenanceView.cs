@@ -41,7 +41,7 @@ internal sealed class IndexMaintenanceView : UserControl
         Loaded+=(_,_)=>Run(ReadAsync);
         Unloaded+=(_,_)=>monitor.Dispose();
     }
-    private CoreConnection Core=>services.Core??throw new IOException("Core尚未连接，请在上方重新连接。");
+    private CoreConnection Core=>services.Core??throw new IOException("Core尚未连接，请到“诊断 → 服务维护”中重新连接。");
     private Button Action(string title,Func<Task> action)
     {var button=Ui.Button(title,()=>Run(action));buttons.Add(button);return button;}
     private async void Run(Func<Task> action)
