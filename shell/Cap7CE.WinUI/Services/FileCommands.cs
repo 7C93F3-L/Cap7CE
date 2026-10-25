@@ -20,13 +20,13 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public void AutoKeywords(IReadOnlyList<AssetItem> items)
     {if(items.Count is 0 or >100000)throw new IOException("请选择不超过十万项的文件或目录。");if(items.Count==1)FileAccessGuard.Validate(items[0]);AutoKeywordsRequested?.Invoke(items.ToArray());}
     public void AutoKeywords(string directory)=>AutoKeywords([new AssetItem(new Cap7CE.Core.Protocol.BasicSearchItem(directory,Path.GetFileName(directory.TrimEnd('\\')),"","",true),directory)]);
-    public void ShowMetadata(AssetItem item)
-    {FileAccessGuard.Validate(item);ShowMetadata(item.Entry.IsDirectory?item.FullPath:Path.GetDirectoryName(item.FullPath)??throw new IOException("无法确定文件所在目录。"));}
-    public void ShowMetadata(string directory)
+    public Task StartMetadataAsync(AssetItem item)
+    {FileAccessGuard.Validate(item);if(!item.Entry.IsDirectory)throw new IOException("请选择目录以提取元数据。");return StartMetadataAsync(item.FullPath);}
+    public async Task StartMetadataAsync(string directory)
     {
         FileAccessGuard.RejectLinks(directory);
         if(!Directory.Exists(directory))throw new DirectoryNotFoundException("目录不存在或当前不可用");
-        services.ShowMaintenance(Path.GetFullPath(directory));
+        await services.Metadata.InvokeAsync("startDirectory",new{path=Path.GetFullPath(directory),allowMetadataExtraction=true});
     }
     public void Run(Func<Task> action) => Execute(action);
     private async void Execute(Func<Task> action) { try { await action(); } catch (Exception error) { notice(error.Message); } }

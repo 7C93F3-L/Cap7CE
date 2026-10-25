@@ -24,7 +24,7 @@ internal static class ResultContextMenu
                     ?favorites.ExecuteAsync("add",path:first.FullPath):favorites.ExecuteAsync("remove",id:favorite.Id)),"\uE734"),
                 "editKeywords"=>Ui.MenuItem("编辑关键词",()=>commands.EditKeywords(items),"\uE70F"),
                 "autoKeywords"=>Ui.MenuItem("自动添加关键词",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}),"\uE945"),
-                _=>Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>{commands.ShowMetadata(first);return Task.CompletedTask;}),"\uE895")
+                _=>Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")
             };
             if(action.Id=="delete")item.IsEnabled=items.All(entry=>entry.Entry.FileReference is not null);
             if(action.Id=="autoKeywords")item.IsEnabled=items.Count>1||items.Any(entry=>entry.Entry.IsDirectory||FormatRegistry.Find(entry.Entry.Extension)?.CanAIIndex==true);

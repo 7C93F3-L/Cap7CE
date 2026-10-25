@@ -170,7 +170,7 @@ internal sealed class SidebarView : UserControl
             menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
             menu.Items.Add(new MenuFlyoutSeparator());
             menu.Items.Add(Ui.MenuItem("自动添加关键词",()=>commands.Run(()=>{commands.AutoKeywords(item.Path);return Task.CompletedTask;}),"\uE945"));
-            menu.Items.Add(Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>{commands.ShowMetadata(item.Path);return Task.CompletedTask;}),"\uE895"));
+            menu.Items.Add(Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>commands.StartMetadataAsync(item.Path)),"\uE895"));
             return menu;
         };
         favorites.RightTapped += (_, e) => {

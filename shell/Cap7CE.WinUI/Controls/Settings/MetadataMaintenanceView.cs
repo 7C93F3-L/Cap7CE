@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
 using System.Text.Json;
+using Cap7CE.WinUI.Models;
 
 namespace Cap7CE.WinUI.Controls;
 
@@ -13,9 +14,8 @@ internal sealed class MetadataMaintenanceView : UserControl
     private readonly TextBox directory=new(){PlaceholderText="选择目录",MinWidth=160};
     private readonly TextBlock status=Ui.Text("暂无任务信息",true);
     private readonly List<Button> buttons=[];
-    private readonly Controllers.VisibleTaskMonitor monitor=new();
+    private bool listening;
     public void SetDirectory(string path)=>directory.Text=path;
-    public void StopMonitoring()=>monitor.Dispose();
     public MetadataMaintenanceView(ShellServices services,Window owner)
     {
         this.services=services;this.owner=owner;
@@ -26,8 +26,8 @@ internal sealed class MetadataMaintenanceView : UserControl
             Action("暂停",()=>InvokeAsync("pause")),Action("继续",()=>InvokeAsync("resume")),Action("取消队列",()=>InvokeAsync("cancelDirectories")),Action("刷新",()=>InvokeAsync("status")));
         Content=Ui.Column(path,
             new ScrollViewer {Content=tools,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled},status);
-        Loaded+=(_,_)=>Run(()=>InvokeAsync("status"));
-        Unloaded+=(_,_)=>monitor.Dispose();
+        Loaded+=(_,_)=>{if(listening)return;listening=true;services.Metadata.Changed+=Changed;Run(()=>InvokeAsync("status"));};
+        Unloaded+=(_,_)=>{listening=false;services.Metadata.Changed-=Changed;};
     }
     private Button Action(string title,Func<Task> work)
     {var button=Ui.Button(title,()=>Run(work));buttons.Add(button);return button;}
@@ -53,15 +53,9 @@ internal sealed class MetadataMaintenanceView : UserControl
     private async Task InvokeAsync(string operation)=>Show(await services.Metadata.InvokeAsync(operation));
     private void Show(JsonElement result)
     {
-        var progress=result.GetProperty("progress");
-        var phase=progress.GetProperty("phase").GetString();
-        monitor.Dispose();
-        if(services.Metadata.ActiveThisSession&&phase is not ("idle" or "completed" or "paused" or "failed"))monitor.Start(async token=>{
-            var snapshot=await services.Metadata.InvokeAsync("status",token:token);token.ThrowIfCancellationRequested();Display(snapshot);
-            return snapshot.GetProperty("progress").GetProperty("phase").GetString() is not ("idle" or "completed" or "paused" or "failed");
-        },e=>status.Text=e.Message);
         Display(result);
     }
+    private void Changed(JsonElement result,MetadataTaskStatus _)=>DispatcherQueue.TryEnqueue(()=>{if(listening)Display(result);});
     private void Display(JsonElement result)
     {
         var progress=result.GetProperty("progress");

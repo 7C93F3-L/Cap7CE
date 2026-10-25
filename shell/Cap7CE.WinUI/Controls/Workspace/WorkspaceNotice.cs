@@ -15,6 +15,8 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     private string? task;
     private string? indexTask;
     private double? indexFraction;
+    private string? metadataTask;
+    private double? metadataFraction;
     private double taskValue,taskMaximum=1;
     private bool taskIndeterminate,taskCancelling;
     private readonly Button close;
@@ -56,18 +58,21 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     }
     public void ClearTask(){task=null;Render();}
     public void SetIndexTask(string? text,double? fraction=null){indexTask=text;indexFraction=fraction;Render();}
+    public void SetMetadataTask(string? text,double? fraction=null){metadataTask=text;metadataFraction=fraction;Render();}
 
     private void Render()
     {
         if(disposed)return;
-        var indexing=task is null&&indexTask is not null;
+        var background=task is null&&(indexTask is not null||metadataTask is not null);
+        var backgroundText=indexTask??metadataTask;
+        var fraction=indexTask is not null?indexFraction:metadataFraction;
         var loading=notice is null&&busyShown;
-        Visibility=task is not null||indexing||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
-        message.Text=task??indexTask??notice??"正在查询…";ToolTipService.SetToolTip(message,task??indexTask??notice);
-        progress.Visibility=task is not null||indexing||loading?Visibility.Visible:Visibility.Collapsed;
-        progress.Maximum=task is not null?taskMaximum:1;progress.Value=task is not null?taskValue:indexing?Math.Clamp(indexFraction??0,0,1):0;
-        progress.IsIndeterminate=task is not null?taskIndeterminate:indexing?indexFraction is null:loading;
-        close.Visibility=indexing?Visibility.Collapsed:Visibility.Visible;
+        Visibility=task is not null||background||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
+        message.Text=task??backgroundText??notice??"正在查询…";ToolTipService.SetToolTip(message,task??backgroundText??notice);
+        progress.Visibility=task is not null||background||loading?Visibility.Visible:Visibility.Collapsed;
+        progress.Maximum=task is not null?taskMaximum:1;progress.Value=task is not null?taskValue:background?Math.Clamp(fraction??0,0,1):0;
+        progress.IsIndeterminate=task is not null?taskIndeterminate:background?fraction is null:loading;
+        close.Visibility=background?Visibility.Collapsed:Visibility.Visible;
         close.IsEnabled=task is null||!taskCancelling;
         var closeLabel=task is not null?"取消识别":"关闭临时提醒";
         AutomationProperties.SetName(close,closeLabel);ToolTipService.SetToolTip(close,closeLabel);
