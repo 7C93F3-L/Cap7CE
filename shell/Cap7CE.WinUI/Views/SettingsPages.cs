@@ -12,7 +12,7 @@ internal sealed class SettingsPages
     private readonly SettingsCatalog catalog;
     public SettingsPages(ShellServices services,Window owner,Action<string> notice)
         =>catalog=new SettingsCatalog(services,owner,new SettingsActions(notice),notice);
-    public void SetMetadataDirectory(string? path)=>catalog.SetMetadataDirectory(path);
+    public void FocusMetadata()=>catalog.FocusMetadata();
     public UIElement Build(string category)
     {
         catalog.BeginRender();var column=Ui.Column();column.Spacing=20;

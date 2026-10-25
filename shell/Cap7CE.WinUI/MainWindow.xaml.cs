@@ -28,6 +28,7 @@ public sealed partial class MainWindow : Window
     private readonly AutoKeywordNoticeController keywordNotice;
     private readonly IndexNoticeController indexNotice;
     private readonly MetadataNoticeController metadataNotice;
+    private readonly MetadataFilterPromptController metadataFilters;
     private SettingsWindow? settings;
     private PreviewWindow? preview;
     private BrowseSession? active;
@@ -52,6 +53,7 @@ public sealed partial class MainWindow : Window
         keywordNotice=new(services.AutoKeywords,notifications,details.SetAutoKeywordBusy);
         indexNotice=new(services,notifications);
         metadataNotice=new(services.Metadata,notifications);
+        metadataFilters=new(services,()=>active,()=>Root.XamlRoot,Notice);filters.MetadataUnavailable+=metadataFilters.Request;
         previewLink=new(item=>item.FullPath,item=>!item.Entry.IsDirectory,results.SelectSingle,item=>preview?.FollowSelection(item),()=>preview?.Close());
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
@@ -170,7 +172,7 @@ public sealed partial class MainWindow : Window
     {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
     private void OpenMaintenance(string? path)
     {
-        OpenSettings();settings?.ShowMaintenance(path);
+        OpenSettings();settings?.ShowMaintenance();
     }
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
@@ -207,7 +209,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

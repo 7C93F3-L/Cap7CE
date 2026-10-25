@@ -13,12 +13,14 @@ internal sealed class FactFilterStrip : UserControl
     private readonly AspectFilterEditor aspectEditor;
     private readonly FilterFlyouts flyouts;
     private ColorFilterSection? colors;
+    private MetadataFilterGate? colorsGate;
     private AdvancedFilterPanel? advanced;
     private ThreeDTypeSection? threeD;
     private TextBlock? dimensionSummary;
     private readonly StackPanel row=new() {Orientation=Orientation.Horizontal,Spacing=6};
     private readonly List<(ToggleButton Button,Func<CoreSearchFactFilter,bool> Selected)> options=[];
-    private readonly List<(FilterSection Section,IReadOnlyList<UIElement> Buttons,string Scope)> sections=[];
+    private readonly List<(FilterSection Section,IReadOnlyList<UIElement> Buttons,string Scope,MetadataFilterGate Gate)> sections=[];
+    public event Action<string,bool,FilterAvailabilityState>? Unavailable;
     private string domain="?";
     private int extractorVersion;
     private FilterAvailability availability=FilterAvailability.Empty;
@@ -33,14 +35,14 @@ internal sealed class FactFilterStrip : UserControl
         foreach(var (button,selected) in options)button.IsChecked=selected(Current);
         colors?.Restore();advanced?.Restore();threeD?.Restore();
         if(dimensionSummary is not null)dimensionSummary.Text=MediaFilterRules.DimensionLabel(Current);
-        foreach(var (section,buttons,scope) in sections)section.Summary.Text=FilterFactRules.Has(Current,scope)&&!buttons.OfType<ToggleButton>().Any(b=>b.IsChecked==true)?"自定":"";
+        foreach(var (section,buttons,scope,_) in sections)section.Summary.Text=FilterFactRules.Has(Current,scope)&&!buttons.OfType<ToggleButton>().Any(b=>b.IsChecked==true)?"自定":"";
         ApplyAvailability();
     }
     public void SetAvailability(FilterAvailability value){availability=value;ApplyAvailability();}
     private void ApplyAvailability()
     {
-        foreach(var (section,_,_) in sections)section.IsEnabled=availability.Enabled(domain);
-        if(colors is not null)colors.IsEnabled=availability.Enabled(domain,true);
+        foreach(var (_,_,_,gate) in sections)gate.Set(availability.Get(domain));
+        colorsGate?.Set(availability.Get(domain,true));
         advanced?.SetAvailability(availability);
     }
     private void Change(Func<CoreSearchFactFilter,CoreSearchFactFilter> update)=>apply(read() with {Facts=AspectFilterRules.Normalize(update(Current))});
@@ -58,14 +60,16 @@ internal sealed class FactFilterStrip : UserControl
     private void Group(string title,IReadOnlyList<UIElement> buttons,int columns,bool tall=false,string scope="all",Action<Button>? edit=null,bool editable=true)
     {
         var section=new FilterSection(title,FilterSection.Options(buttons,columns,tall?56:26),editable?edit??(anchor=>editor.Show(anchor,domain,scope)):null);
-        row.Children.Add(section);sections.Add((section,buttons,scope=="all"?domain:scope));
+        var gate=new MetadataFilterGate(section,()=>Unavailable?.Invoke(domain,false,availability.Get(domain)));
+        row.Children.Add(gate);sections.Add((section,buttons,scope=="all"?domain:scope,gate));
     }
     private void Build()
     {
-        row.Children.Clear();options.Clear();sections.Clear();colors=null;advanced=null;threeD=null;dimensionSummary=null;if(domain.Length==0)return;
-        if(domain=="image-dimensions"){advanced=new(domain,read,apply,flyouts);row.Children.Add(advanced);}
+        row.Children.Clear();options.Clear();sections.Clear();colors=null;colorsGate=null;advanced=null;threeD=null;dimensionSummary=null;if(domain.Length==0)return;
+        if(domain=="image-dimensions"){advanced=new(domain,read,apply,flyouts);advanced.Unavailable+=(kind,state)=>Unavailable?.Invoke(kind,false,state);row.Children.Add(advanced);}
         if(domain is "image-dimensions" or "video") {
-            colors=new(domain,()=>Current,value=>Change(_=>value),flyouts);row.Children.Add(colors);
+            colors=new(domain,()=>Current,value=>Change(_=>value),flyouts);
+            colorsGate=new(colors,()=>Unavailable?.Invoke(domain,true,availability.Get(domain,true)));row.Children.Add(colorsGate);
             var ratios=MediaFilterRules.Options(domain+"-aspect").Select(choice=>{
                 var button=MediaOption(choice,"aspect");Tall(button,choice.Label,choice.Label);return (UIElement)button;
             }).ToArray();
@@ -90,6 +94,6 @@ internal sealed class FactFilterStrip : UserControl
             }).ToArray();Group("声道",channels,3,true,scope:"channels");
         }
         if(domain=="three-d"){threeD=new(read,apply);row.Children.Add(threeD);}
-        if(domain is "document" or "three-d" or "model" or "text-data" or "archive" or "font") {advanced=new(domain,read,apply,flyouts);row.Children.Add(advanced);}
+        if(domain is "document" or "three-d" or "model" or "text-data" or "archive" or "font") {advanced=new(domain,read,apply,flyouts);advanced.Unavailable+=(kind,state)=>Unavailable?.Invoke(kind,false,state);row.Children.Add(advanced);}
     }
 }

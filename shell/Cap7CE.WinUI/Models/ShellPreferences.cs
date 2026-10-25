@@ -6,6 +6,8 @@ public sealed record ShellPreferences
     public WorkspaceOptions FavoriteWorkspace {get;init;}=WorkspaceOptions.FavoritesDefault;
     public string[] IndexVolumeOrder {get;init;}=[];
     public Dictionary<string,bool> IndexVolumeSelection {get;init;}=[];
+    public Dictionary<string,bool> MetadataExclusionChoices {get;init;}=[];
+    public string[] MetadataCustomExclusions {get;init;}=[];
     public bool Notifications {get;init;}
     public bool QuickActions {get;init;}
 	public bool AlwaysOnTop { get; init; }

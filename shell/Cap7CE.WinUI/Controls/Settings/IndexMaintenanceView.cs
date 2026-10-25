@@ -25,7 +25,7 @@ internal sealed class IndexMaintenanceView : UserControl
         order.AddRange(services.Preferences.Current.IndexVolumeOrder);
         foreach(var entry in services.Preferences.Current.IndexVolumeSelection)selection[entry.Key]=entry.Value;
         volumeHost.Content=volumes;
-        volumes.Spacing=12;
+        volumes.Spacing=4;
         volumeHost.Margin=new(0,8,0,12);
         var primary=Action("建立 / 更新",()=>BuildAsync(false));
         primary.Style=(Style)Application.Current.Resources["AccentButtonStyle"];
@@ -73,7 +73,7 @@ internal sealed class IndexMaintenanceView : UserControl
             var items=snapshot.Volumes.OrderBy(item=>order.IndexOf(item.VolumeId)).ToArray();
             foreach(var item in items)
             {
-                var row=new Grid {ColumnSpacing=20,RowSpacing=6,Padding=new(0,8,0,8),Tag=item.VolumeId};
+                var row=new Grid {ColumnSpacing=20,RowSpacing=6,Padding=new(0,4,0,4),Tag=item.VolumeId};
                 row.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
                 row.ColumnDefinitions.Add(new(){Width=new(140)});
                 row.ColumnDefinitions.Add(new(){Width=new(165)});

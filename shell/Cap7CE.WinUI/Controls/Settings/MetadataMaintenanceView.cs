@@ -3,7 +3,6 @@ using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage.Pickers;
 using System.Text.Json;
 
 namespace Cap7CE.WinUI.Controls;
@@ -11,33 +10,34 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class MetadataMaintenanceView : UserControl
 {
     private readonly ShellServices services;
-    private readonly Window owner;
-    private readonly TextBox directory=new(){PlaceholderText="选择要提取的目录（包含子目录）",MinWidth=0};
+    private readonly MetadataExclusionsView exclusions;
+    private readonly TextBlock scope=Ui.Text("处理范围：读取中…",true);
     private readonly TextBlock status=Ui.Text("正在读取任务状态…");
     private readonly TextBlock current=Ui.Text("",true),counts=Ui.Text("",true),error=Ui.Text("",true);
     private readonly ProgressBar progress=new(){Height=4,HorizontalAlignment=HorizontalAlignment.Stretch};
     private readonly StackPanel taskArea=Ui.Column();
-    private readonly Button browse,start,all,control,cancel,refresh;
+    private readonly Button start,control,cancel,refresh;
     private MetadataPanelState? state;
     private bool listening,busy,reload;
-    public void SetDirectory(string path)=>directory.Text=path;
     public MetadataMaintenanceView(ShellServices services,Window owner)
     {
-        this.services=services;this.owner=owner;
-        browse=Action("选择目录",ChooseAsync);
-        start=Action("提取目录",()=>StartAsync(false));all=Action("提取已索引磁盘",()=>StartAsync(true));
+        this.services=services;exclusions=new(services,owner);
+        start=Action("开始提取",()=>MetadataBatchService.StartAsync(services,exclusions.Snapshot()));
         start.Style=(Style)Application.Current.Resources["AccentButtonStyle"];
         control=Action("暂停",()=>InvokeAsync(state?.CanResume==true?"resume":"pause"));
         cancel=Action("取消队列",()=>InvokeAsync("cancelDirectories"));refresh=Action("刷新",()=>InvokeAsync("status"));
         ToolTipService.SetToolTip(cancel,"停止当前目录并清空排队目录，已提取的结果保留。");
-        var path=new Grid {ColumnSpacing=8};path.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});path.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-        path.Children.Add(directory);Grid.SetColumn(browse,1);path.Children.Add(browse);
         var tools=new Grid {ColumnSpacing=16};tools.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});tools.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         tools.Children.Add(Scroll(Ui.Row(control,cancel)));Grid.SetColumn(refresh,1);tools.Children.Add(refresh);
         current.TextWrapping=TextWrapping.NoWrap;current.TextTrimming=TextTrimming.CharacterEllipsis;
         taskArea.Children.Add(current);taskArea.Children.Add(progress);taskArea.Children.Add(counts);taskArea.Children.Add(tools);
-        Content=Ui.Column(path,Scroll(Ui.Row(start,all)),status,taskArea,error);
-        directory.TextChanged+=(_,_)=>Render();
+        start.HorizontalAlignment=HorizontalAlignment.Right;
+        var actions=new Grid {ColumnSpacing=24};
+        actions.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});actions.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
+        exclusions.AddButton.HorizontalAlignment=HorizontalAlignment.Left;
+        actions.Children.Add(exclusions.AddButton);Grid.SetColumn(start,1);actions.Children.Add(start);
+        Content=Ui.Column(scope,exclusions,actions,status,taskArea,error);
+        exclusions.Changed+=Render;exclusions.Failure+=text=>{error.Text=text;Render();};
         Loaded+=(_,_)=>{
             if(listening)return;listening=true;
             services.Metadata.Changed+=Changed;services.ConnectionChanged+=ConnectionChanged;services.IndexStatusChanged+=IndexChanged;
@@ -55,19 +55,6 @@ internal sealed class MetadataMaintenanceView : UserControl
         try{await action();}catch(Exception failure){error.Text=MetadataPanelState.DescribeError(failure.Message);}
         finally{busy=false;if(listening){if(reload&&Connected){reload=false;Run(()=>InvokeAsync("status"));}else Render();}}
     }
-    private async Task ChooseAsync()
-    {
-        var picker=new FolderPicker();picker.FileTypeFilter.Add("*");WinRT.Interop.InitializeWithWindow.Initialize(picker,WinRT.Interop.WindowNative.GetWindowHandle(owner));
-        if(await picker.PickSingleFolderAsync() is {} folder)directory.Text=folder.Path;
-    }
-    private async Task StartAsync(bool allVolumes)
-    {
-        var path=directory.Text.Trim();if(!allVolumes&&!Directory.Exists(path))throw new IOException("请选择存在的本地目录。");
-        var dialog=new ContentDialog {XamlRoot=XamlRoot,Title="提取元数据",Content=allVolumes?"提取已选择并建立索引的磁盘中的文件属性？此范围可能很大。":$"提取此目录及子目录的文件属性？\n{path}",
-            PrimaryButtonText=state?.Pending>0?"加入队列":"开始提取",CloseButtonText="取消",DefaultButton=ContentDialogButton.Close};
-        if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
-        await services.Metadata.InvokeAsync(allVolumes?"startAllVolumes":"startDirectory",allVolumes?new{allowMetadataExtraction=true}:(object)new{path,allowMetadataExtraction=true});
-    }
     private async Task InvokeAsync(string operation)=>await services.Metadata.InvokeAsync(operation);
     private void Changed(JsonElement result,MetadataTaskStatus _)=>DispatcherQueue.TryEnqueue(()=>{
         if(!listening)return;state=MetadataPanelState.Read(result);error.Text="";Render();
@@ -80,10 +67,10 @@ internal sealed class MetadataMaintenanceView : UserControl
     private void Render()
     {
         var connected=Connected;var ready=connected&&state is not null&&!busy;
-        browse.IsEnabled=directory.IsEnabled=!busy;
-        start.IsEnabled=ready&&!string.IsNullOrWhiteSpace(directory.Text);
-        start.Content=state?.Pending>0?"加入目录队列":"提取目录";
-        all.IsEnabled=ready&&services.Volumes.Any(volume=>volume.Selected&&(volume.Queryable||volume.State is "building" or "discovering" or "catchingUp"));
+        exclusions.SetBusy(busy);
+        var volumes=services.Volumes.Where(volume=>volume.Selected&&volume.Queryable).Select(volume=>volume.DisplayName).ToArray();
+        scope.Text="提取磁盘："+(connected?(volumes.Length>0?string.Join("、",volumes):"暂无可用磁盘"):"等待连接");
+        start.IsEnabled=ready&&!exclusions.Busy&&volumes.Length>0&&state?.CanPause!=true&&state?.Progress.Phase!="pausing"&&state?.Pending==0;
         control.Content=state?.ControlText??"暂停";control.IsEnabled=ready&&(state!.CanPause||state.CanResume);
         cancel.IsEnabled=ready&&state!.CanCancel;refresh.IsEnabled=connected&&!busy;
         status.Text=!connected?"元数据服务未连接或不可用，请到“诊断 → 服务维护”中重新连接。":state?.Title??"正在读取任务状态…";

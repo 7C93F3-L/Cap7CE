@@ -11,7 +11,9 @@ internal sealed class AdvancedFilterPanel : UserControl
     private readonly Action<BrowseFilter> apply;
     private readonly FilterFlyouts flyouts;
     private readonly Dictionary<string,int> versions=[];
-    private readonly List<(AdvancedFilterGroup Group,FilterSection Section,List<(ToggleButton Button,AdvancedFilterOption Option)> Buttons)> sections=[];
+    private readonly List<(AdvancedFilterGroup Group,FilterSection Section,List<(ToggleButton Button,AdvancedFilterOption Option)> Buttons,MetadataFilterGate Gate)> sections=[];
+    private FilterAvailability availability=FilterAvailability.Empty;
+    public event Action<string,FilterAvailabilityState>? Unavailable;
     public AdvancedFilterPanel(string domain,Func<BrowseFilter> read,Action<BrowseFilter> apply,FilterFlyouts flyouts)
     {
         this.read=read;this.apply=apply;this.flyouts=flyouts;
@@ -31,7 +33,8 @@ internal sealed class AdvancedFilterPanel : UserControl
             }
             var section=new FilterSection(group.Title,FilterSection.Options(buttons.Select(pair=>(UIElement)pair.Item1).ToArray(),group.Options.Length>6?4:3,tall?56:26),
                 group.Range.Length>0?anchor=>Edit(anchor,group):null);
-            row.Children.Add(section);sections.Add((group,section,buttons));
+            var gate=new MetadataFilterGate(section,()=>Unavailable?.Invoke(group.Kind,availability.Get(group.Kind)));
+            row.Children.Add(gate);sections.Add((group,section,buttons,gate));
         }
         Content=row;
     }
@@ -39,15 +42,15 @@ internal sealed class AdvancedFilterPanel : UserControl
     private void Set(CoreSearchFactFilter? facts)=>apply(read() with {Facts=facts});
     public void Restore()
     {
-        foreach(var (group,section,buttons) in sections) {
-            var visible=AdvancedFilterRules.Available(group,read());section.Visibility=visible?Visibility.Visible:Visibility.Collapsed;
+        foreach(var (group,section,buttons,gate) in sections) {
+            var visible=AdvancedFilterRules.Available(group,read());gate.Visibility=section.Visibility=visible?Visibility.Visible:Visibility.Collapsed;
             if(!visible)continue;var facts=Current(group);
             foreach(var (button,option) in buttons)button.IsChecked=AdvancedFilterRules.Selected(facts,group,option);
             section.Summary.Text=AdvancedFilterRules.Has(facts,group)&&!buttons.Any(pair=>pair.Button.IsChecked==true)?"自定":"";
         }
     }
     public void SetAvailability(FilterAvailability state)
-    {foreach(var (group,section,_) in sections)section.IsEnabled=state.Enabled(group.Kind);}
+    {availability=state;foreach(var (group,_,_,gate) in sections)gate.Set(state.Get(group.Kind));}
     private void Edit(Button anchor,AdvancedFilterGroup group)
     {
         var (lower,upper,count)=AdvancedFilterRules.Bounds(Current(group),group);

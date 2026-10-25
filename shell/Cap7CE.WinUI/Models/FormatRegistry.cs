@@ -39,11 +39,13 @@ internal static class FormatRegistry
 	}
 
 	public static int ExtractorVersion(string kind)
+		=> Extractor(kind).GetProperty("extractorVersion").GetInt32();
+	public static string[] ExtractorExtensions(string kind)
+		=> Extractor(kind).GetProperty("extensions").EnumerateArray().Select(item=>item.GetString()!).ToArray();
+	private static JsonElement Extractor(string kind)
 	{
 		string[] ids = new string[9] { "image-dimensions", "video", "audio", "font", "model", "document", "three-d", "text-data", "archive" };
 		using JsonDocument jsonDocument = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets/extractors.json")));
-		return jsonDocument.RootElement.GetProperty("specifications").EnumerateArray().First((JsonElement s) => s.GetProperty("kind").GetInt32() == Array.IndexOf(ids, kind))
-			.GetProperty("extractorVersion")
-			.GetInt32();
+		return jsonDocument.RootElement.GetProperty("specifications").EnumerateArray().First((JsonElement s) => s.GetProperty("kind").GetInt32() == Array.IndexOf(ids, kind)).Clone();
 	}
 }

@@ -43,9 +43,9 @@ internal sealed class SettingsWindow : Window
         Render();OnPreferences();
     }
     private void OnPreferences()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
-    public void ShowMaintenance(string? path)
+    public void ShowMaintenance()
     {
-        pages.SetMetadataDirectory(path);
+        pages.FocusMetadata();
         if(category=="缓存与索引")Render();
         else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="缓存与索引");
     }

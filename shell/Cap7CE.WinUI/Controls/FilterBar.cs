@@ -16,6 +16,7 @@ internal sealed class FilterBar : UserControl
     private readonly FactFilterStrip facts;
     public BrowseFilter Value {get;private set;}=new();
     public event Action<BrowseFilter>? FilterChanged;
+    public event Action<string,bool,FilterAvailabilityState>? MetadataUnavailable;
     public FilterBar()
     {
         var editors=new FilterEditors(()=>Value,Set,flyouts);
@@ -38,7 +39,7 @@ internal sealed class FilterBar : UserControl
             MaximumBytes=Value.MinimumBytes==min && Value.MaximumBytes==max?null:max
         })));
         sizeSection=new("文件大小",FilterSection.Options(sizes.Cast<UIElement>().ToArray(),3),editors.Size);row.Children.Add(sizeSection);
-        facts=new(()=>Value,Set,flyouts);row.Children.Add(facts);
+        facts=new(()=>Value,Set,flyouts);facts.Unavailable+=(kind,colors,state)=>{flyouts.Close();MetadataUnavailable?.Invoke(kind,colors,state);};row.Children.Add(facts);
         var scroll=new ScrollViewer {Content=row,HorizontalScrollBarVisibility=ScrollBarVisibility.Hidden,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled,
             HorizontalScrollMode=ScrollMode.Enabled,VerticalScrollMode=ScrollMode.Disabled,ZoomMode=ZoomMode.Disabled};
         scroll.PointerWheelChanged+=(_,e)=>{

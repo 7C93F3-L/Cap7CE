@@ -13,22 +13,20 @@ internal sealed class SettingsCatalog
     private readonly Action<string> notice;
     private readonly Window owner;
     private ModelSettingsView? models;
-    private MetadataMaintenanceView? metadata;
-    private string? metadataDirectory;
+    private bool metadataFocus;
     public List<SettingsEntry> Entries {get;}=[];
     public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<string> notice)
     {
         this.services=services;this.owner=owner;this.actions=actions;this.notice=notice;
         General();Appearance();Storage();Shortcuts();Models();Diagnostics();About();
     }
-    public void BeginRender(){models=null;metadata=null;}
-    public void SetMetadataDirectory(string? path)
-    {if(path is null)return;metadataDirectory=path;metadata?.SetDirectory(path);}
+    public void BeginRender()=>models=null;
+    public void FocusMetadata()=>metadataFocus=true;
     private MetadataMaintenanceView MetadataView()
     {
-        metadata=new(services,owner);
-        if(metadataDirectory is not null)metadata.SetDirectory(metadataDirectory);
-        return metadata;
+        var view=new MetadataMaintenanceView(services,owner);
+        if(metadataFocus){metadataFocus=false;view.Loaded+=(_,_)=>view.DispatcherQueue.TryEnqueue(()=>view.StartBringIntoView());}
+        return view;
     }
     private ModelSettingsView ModelsView=>models??=new(services,notice);
     private static string T(string key)=>SettingsReference.Text(key);
@@ -59,7 +57,7 @@ internal sealed class SettingsCatalog
     private void Storage()
     {
         Entries.Add(new("缓存与索引",T("stableSettings.section.index"),"","",()=>new MaintenanceSettingsView(services,owner),true));
-        Entries.Add(new("缓存与索引","元数据","元数据提取","按指定目录及其子目录提取文件属性；也可处理已索引磁盘。",MetadataView,true));
+        Entries.Add(new("缓存与索引","元数据","元数据提取","读取文件属性，用于尺寸、颜色等筛选。勾选下方目录可跳过提取。",MetadataView,true));
         Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>new CacheSettingsView(services,owner,notice),descriptionOverride:"缓存缩略图与预览内容，清理后按需重新生成；源文件、索引和关键词保持不变。");
     }
     private UIElement Toggle(Func<bool> read,Func<bool,Task> save)
