@@ -26,6 +26,7 @@ internal sealed class MetadataMaintenanceView : UserControl
             Action("暂停",()=>InvokeAsync("pause")),Action("继续",()=>InvokeAsync("resume")),Action("取消队列",()=>InvokeAsync("cancelDirectories")),Action("刷新",()=>InvokeAsync("status")));
         Content=Ui.Column(path,
             new ScrollViewer {Content=tools,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled},status);
+        Loaded+=(_,_)=>Run(()=>InvokeAsync("status"));
         Unloaded+=(_,_)=>monitor.Dispose();
     }
     private Button Action(string title,Func<Task> work)

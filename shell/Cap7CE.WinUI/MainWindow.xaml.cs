@@ -28,7 +28,6 @@ public sealed partial class MainWindow : Window
     private readonly AutoKeywordNoticeController keywordNotice;
     private readonly IndexNoticeController indexNotice;
     private SettingsWindow? settings;
-    private MaintenanceWindow? maintenance;
     private PreviewWindow? preview;
     private BrowseSession? active;
     private BrowseSession? boundSession;
@@ -169,8 +168,7 @@ public sealed partial class MainWindow : Window
     {if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
     private void OpenMaintenance(string? path)
     {
-        if(maintenance is null){maintenance=new(services);maintenance.Closed+=(_,_)=>maintenance=null;}
-        if(path is not null)maintenance.SetDirectory(path);WindowActivation.Show(maintenance);
+        OpenSettings();settings?.ShowMaintenance(path);
     }
     private void ApplyPreferences()=>DispatcherQueue.TryEnqueue(()=>{
         if(closed)return;var prefs=services.Preferences.Current;
@@ -207,7 +205,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();maintenance?.Close();AssetTile.Visuals=null;
+        closed=true;pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
