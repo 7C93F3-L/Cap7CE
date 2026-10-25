@@ -78,8 +78,10 @@ public sealed class FileFactDiscovery(string databasePath)
                 var extensionList = string.Join(',', extensionParameters);
                 var preferred = entries ? FileFactEntryDiscoverySql.Bind(command, policy, change, extensionList) : "NULL";
                 var eligible = entries ? "source_extension IS NOT NULL" : $"n.extension COLLATE NOCASE IN ({extensionList})";
+                var candidates = await FileFactDiscoveryCandidates.BindAsync(command, policy, policy.VolumeOrder[index], entries, token);
                 command.CommandText = $"""
-                    SELECT n.file_reference,{preferred} AS source_extension FROM catalog_nodes_v2 n
+                    {candidates.Prefix}
+                    SELECT n.file_reference,{preferred} AS source_extension FROM {candidates.Source}
                     JOIN catalog_volumes_v2 v ON v.volume_id = n.volume_id
                     LEFT JOIN file_fact_volumes fv ON fv.volume_id = n.volume_id
                     LEFT JOIN file_fact_sources fs ON fs.volume_id = n.volume_id AND fs.file_reference = n.file_reference

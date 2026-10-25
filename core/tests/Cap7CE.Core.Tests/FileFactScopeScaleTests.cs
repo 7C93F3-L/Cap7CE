@@ -1,5 +1,6 @@
 using Cap7CE.Core.Catalog;
 using Cap7CE.Core.Catalog.FileFacts;
+using Cap7CE.Core.Catalog.DirectoryEntries;
 using Microsoft.Data.Sqlite;
 
 namespace Cap7CE.Core.Tests;
@@ -41,6 +42,24 @@ internal static class FileFactScopeScaleTests
             using var statusDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(2));
             var ledger = await new FileFactQueueDiagnostics(path).ReadAsync(FileFactKind.ImageDimensions, 2, statusDeadline.Token);
             TestAssert.Equal(3L, ledger.PendingJobs, "queue status scales with matching jobs and preserves the scoped count");
+            var catalog=new CatalogV2Database(path);var entries=new CatalogFileEntryStore(catalog);await entries.InitializeAsync();
+            await using(var connection=new SqliteConnection($"Data Source={path};Pooling=False")) {
+                await connection.OpenAsync();using var command=connection.CreateCommand();
+                command.CommandText="""
+                    UPDATE catalog_nodes_v2 SET name='unrelated.png',extension='.png' WHERE file_reference>='00000000000003E8';
+                    INSERT INTO catalog_directory_paths_v2 VALUES('fixture','0000000000000001',''),('fixture','0000000000000002','allowed');
+                    """;
+                await command.ExecuteNonQueryAsync();
+            }
+            foreach(var (reference,name) in new[]{("0000000000000064","one.png"),("0000000000000065","two.png"),("0000000000000066","three.png")})
+                TestAssert.True(await entries.ReplaceAsync(new("fixture",reference),new(1,1,100),await catalog.ReadRevisionAsync(),[new("0000000000000002",name)]),"activate complete names for scoped fixtures");
+            using var entryDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            var entryPage=await new FileFactDiscovery(path).ReadPageAsync(policy,FileFactKind.ImageDimensions,2,[".png"],token:entryDeadline.Token);
+            TestAssert.Equal(3,entryPage.Jobs.Count,"entry-aware discovery starts from the small subtree rather than 150,000 unrelated PNG files");
+            var lease=(await queue.ClaimAsync())!;
+            using var sourceDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            var source=await new FileFactSourceResolver(path).ResolveForLeaseAsync(lease,sourceDeadline.Token);
+            TestAssert.True(source is not null&&source.RelativePath.StartsWith("allowed\\",StringComparison.Ordinal),"identity path resolution stays scoped with unrelated matching files");
         }
         finally { SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }
     }

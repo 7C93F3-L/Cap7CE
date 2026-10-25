@@ -14,6 +14,7 @@ if (args is ["--catalog-interrupted-build-tests"]) { await CatalogInterruptedBui
 if (args is ["--catalog-result-count-tests"]) { await CatalogResultCountTests.RunAsync(); return 0; }
 if (args is ["--catalog-preparation-tests"]) { await CatalogPreparationProgressTests.RunAsync(); return 0; }
 if (args is ["--metadata-state-tests"]) { await MetadataBuildStateFileTests.RunAsync(); return 0; }
+if (args is ["--metadata-discovery-tests"]) { await FileFactDiscoveryTests.RunAsync(); await FileFactEntryPolicyTests.RunAsync(); await FileFactScopeScaleTests.RunAsync(); await FileFactQueueTests.RunAsync(); await FileFactExtractionBrokerTests.RunAsync(); return 0; }
 if (args is ["--metadata-sweep-tests"]) { await MetadataExtractorManifestTests.RunAsync(); await MetadataBuildSweepTests.RunAsync(); return 0; }
 if (args is ["--metadata-lifecycle-tests"]) { await MetadataBuildGrantLifecycleTests.RunAsync(); await FileFactBuildOwnershipTests.RunAsync(); return 0; }
 if (args is ["--metadata-global-tests"]) { await MetadataGlobalBuildTests.RunAsync(); return 0; }
