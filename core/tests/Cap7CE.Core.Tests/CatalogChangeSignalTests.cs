@@ -48,7 +48,7 @@ internal static class CatalogChangeSignalTests
             var after = runtime.ChangeSignal.Snapshot.Sequence;
             var pending = Send(CoreOperations.CatalogAwaitChanges, new CatalogAwaitChangesRequest(after));
             TestAssert.False(pending.IsCompleted, "long wait remains pending before an event");
-            var duplicate = await Send(CoreOperations.CatalogAwaitChanges, new CatalogAwaitChangesRequest(after));
+            var duplicate = await Send(CoreOperations.CatalogAwaitScopedChanges, new CatalogAwaitChangesRequest(after));
             TestAssert.Equal(CoreErrorCodes.InvalidRequest, duplicate.Error!.Code, "a second wait cannot consume another execution lane");
             var foreground = await Task.WhenAll(Send(CoreOperations.CatalogStatus, new { }), Send(CoreOperations.SearchStart,
                 new SearchStartRequest("", 10, CoreSearchSorts.NameAscending, [])));
@@ -59,6 +59,9 @@ internal static class CatalogChangeSignalTests
             var wake = Send(CoreOperations.CatalogAwaitChanges, new CatalogAwaitChangesRequest(after));
             runtime.ChangeSignal.PublishCatalog(10);
             TestAssert.Equal(10L, ProtocolClient.ReadBody<CatalogChangeNotice>(await wake).CatalogRevision, "cached publication reaches typed framed response");
+            var scopedWake=Send(CoreOperations.CatalogAwaitScopedChanges,new CatalogAwaitChangesRequest(runtime.ChangeSignal.Snapshot.Sequence));
+            runtime.ChangeSignal.PublishScoped(11,new("fixture",["folder\\file.png"]));
+            TestAssert.True(ProtocolClient.ReadBody<CatalogChangeNotice>(await scopedWake).Scopes is [{VolumeId:"fixture"}],"capability-negotiated scoped wait carries committed paths through the typed wire");
             var invalid = await Send(CoreOperations.CatalogAwaitChanges, new CatalogAwaitChangesRequest(0, 100), 100);
             TestAssert.Equal(CoreErrorCodes.InvalidRequest, invalid.Error!.Code, "wait must finish before its request deadline");
             using var session = new CancellationTokenSource();

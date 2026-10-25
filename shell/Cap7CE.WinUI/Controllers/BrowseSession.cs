@@ -18,6 +18,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
     public bool Busy { get; private set; }
+    public bool ForegroundBusy=>Busy&&!PreserveSelection;
     public bool PreserveSelection {get;private set;}
     public bool Invalidated {get;private set;}
     public void Invalidate()=>Invalidated=true;
@@ -67,7 +68,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         NavigationStarting?.Invoke(preserveSelection);
         var origin=pendingOrigin??CurrentLocation;pendingOrigin=null;SyncWorkspaceOptions();
         PreserveSelection=preserveSelection;
-        Invalidated=false;var version = ++generation; Items.HasMoreItems = false;
+        Invalidated=false;var version = ++generation;if(!preserveSelection)Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
         filesystem?.Dispose();filesystem=null;
         Busy = true;Error=null;Changed?.Invoke();

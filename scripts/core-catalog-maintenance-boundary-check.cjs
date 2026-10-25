@@ -24,7 +24,7 @@ module.exports = (root, sourceFiles, failures) => {
   }
   if (/Sqlite|CatalogV2Database|Task\.Delay/.test(read("CatalogChangeSignal.cs"))) failures.push("Catalog notification waits must use cached state without database polling.");
   const dispatch = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/CoreRequestDispatcher.cs"), "utf8");
-  const lane = dispatch.indexOf("request.Operation == CoreOperations.CatalogAwaitChanges && runtime?.MaintenanceEnabled == true");
+  const lane = dispatch.indexOf("request.Operation is CoreOperations.CatalogAwaitChanges or CoreOperations.CatalogAwaitScopedChanges && runtime?.MaintenanceEnabled == true");
   if (lane < 0 || lane > dispatch.indexOf("await executionSlots.WaitAsync")) failures.push("Catalog notification wait must bypass both foreground execution slots.");
   for (const name of ["electron/core/coreCatalogChangeWatcher.ts", "core/src/Cap7CE.Core.Host/MetadataScheduling/MetadataBuildChangeDrain.cs"]) {
     const source = fs.readFileSync(path.join(root, name), "utf8");

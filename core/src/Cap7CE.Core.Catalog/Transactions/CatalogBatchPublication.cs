@@ -9,8 +9,8 @@ public sealed partial class CatalogV2Database
 
     // An external event publishes its checkpoint and any staged owned directory
     // ancestry atomically, without readiness-state writes around each page.
-    public Task<CatalogV2VolumeSnapshot> ApplyMaintenanceBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default)
-        => ApplyBatchCoreAsync(batch, true, token);
+    public Task<CatalogV2VolumeSnapshot> ApplyMaintenanceBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default,Action<CatalogDirectoryImpact>? impact=null)
+        => ApplyBatchCoreAsync(batch, true, token,impact:impact);
     public Task<CatalogV2VolumeSnapshot> ApplyEntryRetryBatchAsync(CatalogV2WriteBatch batch, CancellationToken token = default)
         => batch.EntryRetryAtUnixMilliseconds is >= 0 && batch.NextCheckpointUsn == batch.ExpectedCheckpointUsn && batch.FileEntries is not null
             ? ApplyBatchCoreAsync(batch, true, token, true) : throw new ArgumentException("Invalid entry retry transaction.");
@@ -18,7 +18,7 @@ public sealed partial class CatalogV2Database
     private async Task<CatalogV2VolumeSnapshot> ApplyBatchCoreAsync(
         CatalogV2WriteBatch batch,
         bool maintenance,
-        CancellationToken token, bool entryRetry = false)
+        CancellationToken token, bool entryRetry = false,Action<CatalogDirectoryImpact>? impact=null)
     {
         ValidateBatch(batch);
         if (maintenance && ((!batch.Nodes.Any(node => !node.SuppressFileFactChangeHint) && batch.DeferredEntries is not { Count: > 0 })
@@ -42,6 +42,7 @@ public sealed partial class CatalogV2Database
             throw new CatalogStateTransitionException("Catalog v2 accepts batches only while synchronizing.");
         }
 
+        var beforePaths=impact is null?null:await CatalogChangePaths.ReadAsync(connection,transaction,batch,token);
         if (!entryRetry) batch = await DirectoryEntries.CatalogJournalEntryParents.DeferAsync(connection, transaction, batch, token);
         batch = batch with { Nodes = await DirectoryEntries.CatalogFileEntryPendingPublication.MergeInvalidationsAsync(connection, transaction, batch, token) };
         var pathsChanged = (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
@@ -76,7 +77,9 @@ public sealed partial class CatalogV2Database
             await update.ExecuteNonQueryAsync(token);
         }
         await SetRevisionAsync(connection, transaction, nextRevision, token);
+        var paths=impact is null?null:CatalogChangePaths.Merge(beforePaths,await CatalogChangePaths.ReadAsync(connection,transaction,batch,token));
         token.ThrowIfCancellationRequested(); transaction.Commit();
+        impact?.Invoke(new(nextRevision,batch.VolumeId,paths));
         return (await ReadVolumeAsync(batch.VolumeId, token))!;
     }
 

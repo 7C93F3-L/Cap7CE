@@ -139,4 +139,6 @@ public sealed record CatalogCancelResponse(bool Accepted);
 public sealed record CoreShutdownResponse(bool Accepted);
 
 public sealed record CatalogAwaitChangesRequest(long AfterSequence, int WaitMilliseconds = 25_000);
-public sealed record CatalogChangeNotice(long Sequence, long CatalogRevision, string State, string? Reason, bool Changed);
+public sealed record CatalogChangeScope(string VolumeId,IReadOnlyList<string>? RelativePaths);
+public sealed record CatalogChangeNotice(long Sequence, long CatalogRevision, string State, string? Reason, bool Changed,
+    [property:System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<CatalogChangeScope>? Scopes=null);

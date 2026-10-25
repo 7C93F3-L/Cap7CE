@@ -6,7 +6,7 @@ using Cap7CE.Core.Reader.Protocol;
 
 namespace Cap7CE.Core.Host.CatalogMaintenance;
 
-public sealed record CatalogJournalPageResult(bool Published, long CatalogRevision, long NextReadUsn, int ExternalRecords);
+public sealed record CatalogJournalPageResult(bool Published, long CatalogRevision, long NextReadUsn, int ExternalRecords,CatalogDirectoryImpact? Impact=null);
 
 // One selected ready volume inside the exclusive Reader owner. This class owns
 // publication order, not the Reader connection or a polling timer. Any failure
@@ -24,6 +24,7 @@ public sealed class CatalogJournalPageOwner
     private readonly SemaphoreSlim gate = new(1, 1);
     private bool retired;
     private CatalogFileEntryCapture? captureEntries;
+    private bool captureImpact;
 
     private CatalogJournalPageOwner(CatalogV2Database catalog, CatalogV2VolumeSnapshot initial,
         CatalogOwnedDirectoryIndex directories, Action validateRoots, bool hasOwnedRoots)
@@ -36,15 +37,15 @@ public sealed class CatalogJournalPageOwner
     public long NextReadUsn => cursor.NextReadUsn;
 
     public static Task<CatalogJournalPageOwner> CreateAsync(CatalogV2Database catalog, CatalogV2VolumeSnapshot volume,
-        IReadOnlyList<FileFactOwnedStorageRoot> roots, CancellationToken token = default, CatalogFileEntryCapture? captureEntries = null)
+        IReadOnlyList<FileFactOwnedStorageRoot> roots, CancellationToken token = default, CatalogFileEntryCapture? captureEntries = null,bool captureImpact=false)
     {
         var copied = roots.ToArray();
         return CreateVerifiedAsync(catalog, volume, copied.Where(root => root.Identity.VolumeId == volume.VolumeId)
-            .Select(root => root.Identity.FileReference).ToArray(), () => FileFactOwnedStorage.Validate(copied), token, captureEntries);
+            .Select(root => root.Identity.FileReference).ToArray(), () => FileFactOwnedStorage.Validate(copied), token, captureEntries,captureImpact);
     }
 
     private static async Task<CatalogJournalPageOwner> CreateVerifiedAsync(CatalogV2Database catalog, CatalogV2VolumeSnapshot volume,
-        IReadOnlyList<string> roots, Action validateRoots, CancellationToken token, CatalogFileEntryCapture? captureEntries)
+        IReadOnlyList<string> roots, Action validateRoots, CancellationToken token, CatalogFileEntryCapture? captureEntries,bool captureImpact)
     {
         if (!volume.Selected || volume.State != CatalogV2VolumeState.Ready || volume.CheckpointUsn is null or < 0
             || !ulong.TryParse(volume.JournalId, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var journal) || journal == 0)
@@ -62,7 +63,7 @@ public sealed class CatalogJournalPageOwner
         if (copied.Any(root => !links.Any(link => string.Equals(link.FileReference, root, StringComparison.OrdinalIgnoreCase))))
             throw new InvalidOperationException("owned-storage-root-not-in-catalog");
         validateRoots();
-        return new(catalog, volume, new(copied, links), validateRoots, copied.Length > 0) { captureEntries = captureEntries };
+        return new(catalog, volume, new(copied, links), validateRoots, copied.Length > 0) { captureEntries = captureEntries,captureImpact=captureImpact };
     }
 
     public async Task<CatalogJournalPageResult> ProcessAsync(CatalogReaderJournalPage page, CancellationToken token = default)
@@ -91,10 +92,11 @@ public sealed class CatalogJournalPageOwner
             }
             var publication = stage.Prepare(initial.VolumeId, advance.Records);
             var entries = captureEntries is null ? null : await captureEntries(publication.Nodes, advance.Records, token);
+            CatalogDirectoryImpact? impact=null;
             var committed = await catalog.ApplyMaintenanceBatchAsync(new(initial.VolumeId, initial.JournalId,
-                advance.PersistedUsn, revision, advance.NextUsn, page.Response.FirstUsn, page.Response.LowestValidUsn, entries?.Nodes ?? publication.Nodes, entries?.Entries, entries?.Deferred), token);
+                advance.PersistedUsn, revision, advance.NextUsn, page.Response.FirstUsn, page.Response.LowestValidUsn, entries?.Nodes ?? publication.Nodes, entries?.Entries, entries?.Deferred), token,captureImpact?value=>impact=value:null);
             cursor.CompletePersisted(advance, committed.CheckpointUsn!.Value); stage.Complete(publication);
-            return new(true, committed.CatalogRevision, cursor.NextReadUsn, advance.Records.Count);
+            return new(true, committed.CatalogRevision, cursor.NextReadUsn, advance.Records.Count,impact);
         }
         catch { retired = true; throw; }
         finally { gate.Release(); }

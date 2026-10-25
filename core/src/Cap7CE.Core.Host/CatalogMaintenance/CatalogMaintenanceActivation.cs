@@ -11,7 +11,8 @@ internal static class CatalogMaintenanceActivation
         CancellationToken token, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false)
     {
         var monitor = new CatalogJournalMonitor(catalog, factory, resolveRoots, signal.PublishCatalog,
-            listening: () => signal.SetState("watching"), diagnostics: diagnostics, captureFileEntries: captureFileEntries);
+            listening: () => signal.SetState("watching"), diagnostics: diagnostics, captureFileEntries: captureFileEntries,
+            scopedPublished:impact=>signal.PublishScoped(impact.Revision,new(impact.VolumeId,impact.RelativePaths)));
         return ownership.ActivateAsync(async lifetime => {
             signal.SetState("starting");
             try { await monitor.RunAsync(lifetime); signal.SetState("idle"); }

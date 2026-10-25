@@ -10,6 +10,7 @@ using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
 if (args is ["--catalog-natural-order-tests"]) { await CatalogNaturalOrderingTests.RunAsync(); return 0; }
+if (args is ["--catalog-impact-tests"]) {await CatalogChangeImpactTests.RunAsync();await CatalogChangeSignalTests.RunAsync();await CatalogDirectoryPathChangesTests.RunAsync();await CatalogJournalMonitorTests.RunAsync();return 0;}
 if (args is ["--catalog-interrupted-build-tests"]) { await CatalogInterruptedBuildTests.RunAsync(); await CatalogPreparationProgressTests.RunAsync(); await CatalogEntrySnapshotFenceTests.RunAsync(); return 0; }
 if (args is ["--catalog-result-count-tests"]) { await CatalogResultCountTests.RunAsync(); return 0; }
 if (args is ["--catalog-preparation-tests"]) { await CatalogPreparationProgressTests.RunAsync(); return 0; }

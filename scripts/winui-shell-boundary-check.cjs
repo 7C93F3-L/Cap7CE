@@ -38,14 +38,25 @@ assert(workspacePreferences.includes('Preferences.UpdateAsync') && workspacePref
   && read('shell/Cap7CE.WinUI/Controls/Workspace/WorkspaceAddress.cs').includes('searchMode=defaultSearch||nextQuery.Length>0'),
   'toolbar preferences must be scoped and editor mode reset on explicit entry');
 assert(catalogRefresh.includes('BrowseSession {UsesCatalogResults:true}')
-  && catalogRefresh.includes('active is not {UsesCatalogResults:true}')
+  && catalogRefresh.includes('active is {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.CanRefresh')
   && catalogRefresh.includes('CatalogRefreshRules.CanRefresh')
-  && catalogRefresh.includes('CatalogRefreshRules.Affects')
+  && catalogRefresh.includes('CatalogRefreshRules.AffectsChange')
   && !catalogRefresh.includes('FilesystemBrowsing:false'),
   'Catalog notifications must not invalidate or rebuild the plain home or filesystem views');
 assert(read('shell/Cap7CE.WinUI/Controls/ResultsView.cs').includes('CatalogRefreshRules.RetainSelection')
   && browseRouting.includes('result=Items') && browseRouting.includes('preserveSelection&&result.Count<Items.Count'),
   'background refresh must preserve existing identities, unchanged collections and loaded depth');
+assert(browseRouting.includes('ForegroundBusy=>Busy&&!PreserveSelection')
+  && catalogRefresh.includes('details.SetContext(active.PathValue,active.ForegroundBusy?')
+  && read('shell/Cap7CE.WinUI/Controls/WorkspaceToolbar.cs').includes('refresh.IsEnabled=!value.ForegroundBusy'),
+  'background refresh must not replace retained counts or disable manual refresh');
+assert(catalogRefresh.includes('if(closed||catalogRefreshQueued)return;catalogRefreshQueued=true;')
+  && catalogRefresh.includes('catalogRefreshQueued=false;if(CanCatalogRefresh()'),
+  'queued refresh must coalesce pending dispatch and recheck interaction eligibility without a timer');
+const changeService=read('shell/Cap7CE.WinUI/Services/ShellServices.cs').split('private async Task OnCatalogChanged')[1];
+assert(changeService.indexOf('CatalogChanged?.Invoke(new(null,precise));return;')<changeService.indexOf('await RefreshVolumesAsync()')
+  && changeService.includes('if(notice.Scopes is null)await Metadata.NotifyAsync()'),
+  'precise filesystem changes must not request volume status or unrelated metadata task status');
 assert(browseRouting.includes('if(path.Length>0&&plainBrowse&&!Recursive)')
   && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token,origin)') < browseRouting.indexOf('if (services.Core?.IsConnected!=true)'),
   'direct-child browsing must remain fresh and independent of Core');

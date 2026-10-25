@@ -42,9 +42,9 @@ public sealed partial class MainWindow : Window
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         workspace=new(services,()=>active,results,toolbar);
         services.CatalogChanged+=roots=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
-            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.Affects(session.PathValue,roots))session.Invalidate();
+            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.AffectsChange(session.PathValue,roots))session.Invalidate();
             QueueCatalogRefresh();
-            if(active is not null&&Models.CatalogRefreshRules.Affects(active.PathValue,roots))filterAvailability?.Update(active,true);
+            if(active is not null&&Models.CatalogRefreshRules.AffectsChange(active.PathValue,roots))filterAvailability?.Update(active,true);
         }});
         services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
         services.MaintenanceRequested+=OpenMaintenance;
@@ -130,20 +130,17 @@ public sealed partial class MainWindow : Window
         workspace.Apply();
         sidebar.SetActiveEntry(active.EntryPath,active.PreferenceScope==Models.WorkspacePreferenceScope.Favorites);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
         var preserveSelection=ReferenceEquals(boundSession,active)&&active.PreserveSelection;boundSession=active;
-        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.Busy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
-        details.SetContext(active.PathValue,active.Busy?null:active.Items.TotalCount??(!active.Items.HasMoreItems?(long?)active.Items.Count:null),active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count,active.Items.Count,active.Busy);
-        notifications.SetBusy(active.Busy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
+        results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.ForegroundBusy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
+        details.SetContext(active.PathValue,active.ForegroundBusy?null:active.Items.TotalCount??(!active.Items.HasMoreItems?(long?)active.Items.Count:null),active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count,active.Items.Count,active.ForegroundBusy);
+        notifications.SetBusy(active.ForegroundBusy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
         if(!active.Busy)QueueCatalogRefresh();
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
+    private bool CanCatalogRefresh()=>!closed&&active is {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.CanRefresh(session.Invalidated,session.Busy,results.Selection.Count,preview is not null,minimized);
     private void QueueCatalogRefresh()
     {
         if(closed||catalogRefreshQueued)return;catalogRefreshQueued=true;
-        DispatcherQueue.TryEnqueue(()=>{
-            catalogRefreshQueued=false;
-            if(closed||active is not {UsesCatalogResults:true} session||!Models.CatalogRefreshRules.CanRefresh(session.Invalidated,session.Busy,results.Selection.Count,preview is not null,minimized))return;
-            commands.Run(()=>session.NavigateAsync(session.PathValue,false,true));
-        });
+        DispatcherQueue.TryEnqueue(()=>{catalogRefreshQueued=false;if(CanCatalogRefresh()&&active is {} session)commands.Run(()=>session.NavigateAsync(session.PathValue,false,true));});
     }
     private void OpenLocation(string path)
     {

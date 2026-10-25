@@ -39,7 +39,7 @@ public sealed class CoreRequestDispatcher
         : CoreOperations.P31Capabilities.Concat(runtime.FileFacts is null ? [] : CoreOperations.FileFactCapabilities)
             .Concat(runtime.MetadataBuild is null ? [] : MetadataBuildOperations.All)
             .Concat(runtime.FileFacts?.CanExecute == true ? [CoreOperations.FileFactExecute] : Array.Empty<string>())
-            .Concat(runtime.MaintenanceEnabled ? [CoreOperations.CatalogAwaitChanges] : Array.Empty<string>()).ToArray();
+            .Concat(runtime.MaintenanceEnabled ? [CoreOperations.CatalogAwaitChanges,CoreOperations.CatalogAwaitScopedChanges] : Array.Empty<string>()).ToArray();
 
     public bool SyntheticFixture => runtime is null;
 
@@ -65,7 +65,7 @@ public sealed class CoreRequestDispatcher
             sessionCancellationToken);
         try
         {
-            if (request.Operation == CoreOperations.CatalogAwaitChanges && runtime?.MaintenanceEnabled == true)
+            if (request.Operation is CoreOperations.CatalogAwaitChanges or CoreOperations.CatalogAwaitScopedChanges && runtime?.MaintenanceEnabled == true)
                 return await maintenance!.DispatchAsync(request, linkedCancellation.Token);
             if (runtime?.MetadataBuild is { } metadata && MetadataBuildOperations.IsControl(request.Operation))
                 return await metadataControl.DispatchAsync(metadata, request, linkedCancellation.Token);

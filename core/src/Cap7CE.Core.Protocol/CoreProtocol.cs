@@ -29,6 +29,7 @@ public static class CoreOperations
     public const string VolumeSelection = "volume.selection";
     public const string CatalogStatus = "catalog.status";
     public const string CatalogAwaitChanges = "catalog.awaitChanges";
+    public const string CatalogAwaitScopedChanges = "catalog.awaitScopedChanges";
     public const string CatalogBuild = "catalog.build";
     public const string CatalogRebuild = "catalog.rebuild";
     public const string CatalogCancel = "catalog.cancel";

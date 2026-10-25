@@ -21,11 +21,13 @@ internal static class CatalogJournalMonitorTests
             await sync.SynchronizeAsync([], false);
             var reader = new WaitingCatalogReader(synthetic); var time = new CatalogMonitorTime();
             var publications = Channel.CreateUnbounded<long>(); var resolves = 0;
+            var impacts=new System.Collections.Concurrent.ConcurrentQueue<CatalogDirectoryImpact>();
             var diagnostics = new System.Collections.Concurrent.ConcurrentQueue<(string Name, System.Text.Json.JsonElement Data)>();
             var trace = new CatalogPreparationDiagnostics((name, data) => diagnostics.Enqueue((name, System.Text.Json.JsonSerializer.SerializeToElement(data))));
             var monitor = new CatalogJournalMonitor(catalog, reader, (ready, token) => {
                 resolves++; return Task.FromResult<IReadOnlyList<FileFactOwnedStorageRoot>>([]);
-            }, revision => publications.Writer.TryWrite(revision), time, diagnostics: trace);
+            }, revision => publications.Writer.TryWrite(revision), time, diagnostics: trace,
+                scopedPublished:impact=>{impacts.Enqueue(impact);publications.Writer.TryWrite(impact.Revision);});
             var work = monitor.RunAsync(cancellation.Token); activeWork = work;
             async Task Wait() => await reader.Waits.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
             async Task Publication() => await publications.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
@@ -41,6 +43,7 @@ internal static class CatalogJournalMonitorTests
             reader.Pulses.Writer.TryWrite(false); await Wait();
             TestAssert.Equal("A:,B:,A:,B:", string.Join(',', reader.PageOrder.Take(4)), "cross-volume backlog pages are round-robin rather than starving later drives");
             TestAssert.Equal(27, reader.PageOrder.Count, "backlog larger than one sixteen-page turn drains without missing pages");
+            TestAssert.True(impacts.Count>0&&impacts.Select(i=>i.VolumeId).Distinct().Count()==2,"journal monitor forwards committed impacts for both drives without rescanning");
             var page = await catalog.QueryAsync(new("a-49", [], CatalogQueryScope.AllVolumes(), null, CatalogEntryType.File, 10, null));
             TestAssert.Equal(1, page.Items.Count, "last external event is queryable after drain");
             TestAssert.Equal(1, reader.Connects, "page draining does not create competing Reader sessions");

@@ -1,8 +1,29 @@
 namespace Cap7CE.WinUI.Models;
 
 internal sealed record CatalogVolumeStamp(string Id,string Root,long? Revision,bool Queryable,string State);
+internal sealed record CatalogPathChange(string Root,IReadOnlyList<string>? RelativePaths);
+internal sealed record CatalogRefreshImpact(IReadOnlySet<string>? Roots,IReadOnlyList<CatalogPathChange>? Paths=null);
 internal static class CatalogRefreshRules
 {
+    public static bool AffectsChange(string path,CatalogRefreshImpact impact)
+    {
+        if(impact.Paths is null)return Affects(path,impact.Roots);
+        if(path.Length==0)return impact.Paths.Count>0;
+        var normalized=path.Replace('/','\\').TrimEnd('\\');
+        foreach(var scope in impact.Paths) {
+            var root=scope.Root.Replace('/','\\').TrimEnd('\\');
+            if(!normalized.Equals(root,StringComparison.OrdinalIgnoreCase)&&!normalized.StartsWith(root+"\\",StringComparison.OrdinalIgnoreCase))continue;
+            if(scope.RelativePaths is null)return true;
+            foreach(var relative in scope.RelativePaths) {
+                var value=relative.Replace('/','\\');
+                if(value.StartsWith('\\')||value.Contains(':')||value.Split('\\').Any(part=>part is "." or ".."))return true;
+                var changed=value.Length==0?root:root+"\\"+value.TrimEnd('\\');
+                if(normalized.Equals(changed,StringComparison.OrdinalIgnoreCase)||changed.StartsWith(normalized+"\\",StringComparison.OrdinalIgnoreCase)
+                    ||normalized.StartsWith(changed+"\\",StringComparison.OrdinalIgnoreCase))return true;
+            }
+        }
+        return false;
+    }
     // Null means a global/unknown change (also supports older Core responses).
     public static IReadOnlySet<string>? Changes(IReadOnlyList<CatalogVolumeStamp> before,IReadOnlyList<CatalogVolumeStamp> after,bool revisionChanged)
     {

@@ -18,10 +18,10 @@ internal sealed class ShellServices : IAsyncDisposable
     public object ModelContext=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language="zh-CN"};
     public NativeNotifications Notifications {get;}=new();
     public NativeHotKeys? Shortcuts {get;set;}
-    public event Action<IReadOnlySet<string>?>? CatalogChanged;
+    public event Action<CatalogRefreshImpact>? CatalogChanged;
     public event Action<CatalogStatusResponse>? IndexStatusChanged;
     public event Action? ConnectionChanged;
-    public void RefreshViews()=>CatalogChanged?.Invoke(null);
+    public void RefreshViews()=>CatalogChanged?.Invoke(new(null));
     private long catalogRevision;
     public event Action<string>? BackgroundError;
     public event Action<bool>? VisualMaintenance;
@@ -50,8 +50,8 @@ internal sealed class ShellServices : IAsyncDisposable
         if(Core is not null){await Core.DisposeAsync();Core=null;}
         var database = Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE/Core/v1/catalog.db");
-        Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure); await RefreshVolumesAsync();
-        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke("目录同步连接已结束："+error.Message));
+        Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure,runtimeLog:NativeDiagnostics.CoreRuntimeFailure); await RefreshVolumesAsync();
+        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke("后台同步已断开，当前列表已保留。可刷新重试；若仍失败，请到诊断页重新连接。"));
         } finally { connection.Release();ConnectionChanged?.Invoke(); }
     }
     public async Task RefreshVolumesAsync()
@@ -62,15 +62,27 @@ internal sealed class ShellServices : IAsyncDisposable
         try{changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
         finally{connection.Release();ConnectionChanged?.Invoke();}
     }
-    private async Task OnCatalogChanged()
+    private async Task OnCatalogChanged(CatalogChangeNotice notice)
     {
         if(closed)return;var owner=Core;
         try{
+            if(notice.Scopes is {Count:>0} scopes&&scopes.All(s=>Volumes.Any(v=>v.VolumeId==s.VolumeId&&v.Queryable&&v.Selected))) {
+                var precise=scopes.Select(s=>new CatalogPathChange(Volumes.First(v=>v.VolumeId==s.VolumeId).DisplayName,s.RelativePaths)).ToArray();
+                CatalogChanged?.Invoke(new(null,precise));return;
+            }
             var before=Volumes;var previousRevision=catalogRevision;
             await RefreshVolumesAsync();if(closed||!ReferenceEquals(owner,Core))return;
             static CatalogVolumeStamp Stamp(CoreVolumeStatus v)=>new(v.VolumeId,v.DisplayName,v.CatalogRevision,v.Queryable,v.State);
-            CatalogChanged?.Invoke(CatalogRefreshRules.Changes(before.Select(Stamp).ToArray(),Volumes.Select(Stamp).ToArray(),previousRevision!=catalogRevision));
-            await Metadata.NotifyAsync();
+            var roots=CatalogRefreshRules.Changes(before.Select(Stamp).ToArray(),Volumes.Select(Stamp).ToArray(),previousRevision!=catalogRevision);
+            var stable=before.Select(v=>(v.VolumeId,v.DisplayName,v.Queryable,v.State,v.Selected)).OrderBy(v=>v.VolumeId)
+                .SequenceEqual(Volumes.Select(v=>(v.VolumeId,v.DisplayName,v.Queryable,v.State,v.Selected)).OrderBy(v=>v.VolumeId));
+            List<CatalogPathChange>? paths=notice.Scopes is not null&&stable?[]:null;
+            if(paths is not null)foreach(var scope in notice.Scopes!) {
+                var volume=Volumes.FirstOrDefault(v=>v.VolumeId==scope.VolumeId);
+                if(volume is null){paths=null;break;}paths.Add(new(volume.DisplayName,scope.RelativePaths));
+            }
+            CatalogChanged?.Invoke(new(roots,paths));
+            if(notice.Scopes is null)await Metadata.NotifyAsync();
         }catch(Exception error){if(!closed)BackgroundError?.Invoke(error.Message);}
     }
     public async Task ReleaseSourcesAsync() { await Providers.ReleaseAsync(); await Office.ReleaseAsync(); await Visuals.ReleaseAsync(); }

@@ -17,12 +17,13 @@ public sealed class CatalogJournalMonitor
     private readonly TimeProvider time;
     private readonly Action listening;
     private readonly bool captureFileEntries;
+    private readonly Action<CatalogDirectoryImpact>? scopedPublished;
     public CatalogJournalMonitor(CatalogV2Database catalog, ICatalogReaderSessionFactory factory,
         Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
-        Action<long> published, TimeProvider? time = null, Action? listening = null, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false)
+        Action<long> published, TimeProvider? time = null, Action? listening = null, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false,Action<CatalogDirectoryImpact>? scopedPublished=null)
     {
         this.catalog = catalog; this.factory = factory; synchronization = new(catalog, factory, diagnostics, captureFileEntries);
-        this.captureFileEntries = captureFileEntries;
+        this.captureFileEntries = captureFileEntries;this.scopedPublished=scopedPublished;
         this.resolveRoots = resolveRoots; this.published = published; this.time = time ?? TimeProvider.System;
         this.listening = listening ?? (() => { });
     }
@@ -85,7 +86,7 @@ public sealed class CatalogJournalMonitor
                             owners[key].NextReadUsn, ReaderProtocol.MaximumRecordsPerPage, token);
                         var result = await owners[key].ProcessAsync(page, token);
                         if (entryRetries.TryGetValue(key, out var retryOwner) && result.Published) retryOwner.NotifyJournalChange();
-                        if (result.Published) published(result.CatalogRevision);
+                        if (result.Published) {if(result.Impact is {} impact&&scopedPublished is not null)scopedPublished(impact);else published(result.CatalogRevision);}
                         if (!page.EndOfStream && queued.Add(key)) pending.Enqueue(key);
                     }
                     catch (CatalogReaderDiscontinuityException) {
@@ -112,7 +113,7 @@ public sealed class CatalogJournalMonitor
     private Task<CatalogJournalPageOwner> CreateOwnerAsync(ICatalogReaderSession reader, CatalogReaderVolume native,
         CatalogV2VolumeSnapshot volume, IReadOnlyList<FileFactOwnedStorageRoot> roots, CancellationToken token) =>
         CatalogJournalPageOwner.CreateAsync(catalog, volume, roots, token,
-            captureFileEntries ? new CatalogDirectoryEntryCapture(reader, native, true).CaptureJournalAsync : null);
+            captureFileEntries ? new CatalogDirectoryEntryCapture(reader, native, true).CaptureJournalAsync : null,captureImpact:scopedPublished is not null);
     private async Task RecoverAsync(ICatalogReaderSession reader, string volumeId, CancellationToken token, string origin = "monitor-recovery")
     {
         await synchronization.SynchronizeConnectedAsync(reader, [volumeId], true, token, origin);

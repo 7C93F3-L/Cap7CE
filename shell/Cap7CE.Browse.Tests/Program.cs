@@ -26,6 +26,19 @@ using(var browse=new BrowseSession(indexed)) {
     Require(await browse.Items.LoadPage!()==1&&!browse.Items.HasMoreItems,"existing Core continuation loads remaining page");
 }
 var unindexed=Setup();unindexed.Core!.Queryable=false;
+var background=Setup();
+using(var browse=new BrowseSession(background)) {
+    Require(await browse.NavigateAsync("E:\\"),"initial result opens before background refresh");
+    var items=browse.Items;background.Core!.Resolving=new();
+    var refresh=browse.NavigateAsync("E:\\",false,true);
+    Require(browse.Busy&&!browse.ForegroundBusy&&ReferenceEquals(items,browse.Items)&&browse.Items.HasMoreItems,"background refresh retains results, partial-count meaning and foreground loading state");
+    background.Core.Resolving=null;
+    Require(await browse.NavigateAsync("E:\\nested"),"user navigation can replace background refresh");
+    Require(!await refresh&&!browse.Busy&&!browse.ForegroundBusy&&browse.PathValue=="E:\\nested","cancelled refresh cannot replace the user's navigation or loading state");
+    background.Core.Resolving=new();var manual=browse.NavigateAsync("E:\\nested",false);
+    Require(browse.Busy&&browse.ForegroundBusy,"manual refresh retains the normal loading state");
+    background.Core.Resolving.SetResult();Require(await manual,"manual refresh completes");
+}
 using(var browse=new BrowseSession(unindexed)) {
     Require(await browse.NavigateAsync("E:\\new-folder"),"unindexed directory still opens");
     Require(unindexed.Visuals.Reads is [(_,true)]&&browse.FilesystemBrowsing&&!browse.UsesCatalogResults,"unindexed recursive browse retains filesystem fallback");

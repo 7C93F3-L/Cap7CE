@@ -4,6 +4,8 @@
     <ProjectReference Include="../../core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj" />
     <Compile Include="../Cap7CE.WinUI/Services/FramedRpc.cs" Link="FramedRpc.cs" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreConnection.cs" Link="CoreConnection.cs" />
+    <Compile Include="../Cap7CE.WinUI/Services/CoreProcessDiagnostics.cs" Link="CoreProcessDiagnostics.cs" />
+    <Compile Include="../Cap7CE.WinUI/Services/CoreRequestSender.cs" Link="CoreRequestSender.cs" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreLaunchProfile.cs" Link="CoreLaunchProfile.cs" />
     <Compile Include="../Cap7CE.WinUI/Services/VisualConnection.cs" Link="VisualConnection.cs" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreNodeHost.cs" Link="CoreNodeHost.cs" />

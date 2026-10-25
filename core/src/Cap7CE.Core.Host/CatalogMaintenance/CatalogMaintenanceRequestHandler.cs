@@ -14,7 +14,7 @@ internal sealed class CatalogMaintenanceRequestHandler(CatalogChangeSignal signa
             throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Catalog wait parameters are invalid.");
         if (Interlocked.CompareExchange(ref waiting, 1, 0) != 0)
             throw new CoreProtocolException(CoreErrorCodes.InvalidRequest, "Only one Catalog wait may be active.");
-        try { return CoreResponseEnvelope.Success(request.RequestId, 0, await signal.WaitAsync(body, token)); }
+        try { return CoreResponseEnvelope.Success(request.RequestId, 0, await signal.WaitAsync(body, token,request.Operation==CoreOperations.CatalogAwaitScopedChanges)); }
         finally { Volatile.Write(ref waiting, 0); }
     }
 }

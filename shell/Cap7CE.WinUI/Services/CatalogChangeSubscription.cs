@@ -6,17 +6,18 @@ namespace Cap7CE.WinUI.Services;
 internal sealed class CatalogChangeSubscription : IDisposable
 {
     private readonly CancellationTokenSource stop=new();
-    public CatalogChangeSubscription(CoreConnection core,Func<Task> changed,Action<Exception> failed)
+    public CatalogChangeSubscription(CoreConnection core,Func<CatalogChangeNotice,Task> changed,Action<Exception> failed)
     {
         if(core.Supports(CoreOperations.CatalogAwaitChanges))_ = RunAsync(core,changed,failed);
     }
-    private async Task RunAsync(CoreConnection core,Func<Task> changed,Action<Exception> failed)
+    private async Task RunAsync(CoreConnection core,Func<CatalogChangeNotice,Task> changed,Action<Exception> failed)
     {
         long sequence=0;var first=true;
         try {
             while(!stop.IsCancellationRequested) {
-                var value=await core.RequestAsync<CatalogChangeNotice>(CoreOperations.CatalogAwaitChanges,new CatalogAwaitChangesRequest(sequence),stop.Token,30000);
-                sequence=value.Sequence;if(value.Changed&&!first)await changed();first=false;
+                var operation=core.Supports(CoreOperations.CatalogAwaitScopedChanges)?CoreOperations.CatalogAwaitScopedChanges:CoreOperations.CatalogAwaitChanges;
+                var value=await core.RequestAsync<CatalogChangeNotice>(operation,new CatalogAwaitChangesRequest(sequence),stop.Token,30000);
+                sequence=value.Sequence;if(value.Changed&&!first)await changed(value);first=false;
             }
         } catch(OperationCanceledException)when(stop.IsCancellationRequested){}
         catch(Exception error){if(!stop.IsCancellationRequested)failed(error);}

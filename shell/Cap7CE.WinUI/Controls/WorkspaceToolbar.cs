@@ -51,8 +51,8 @@ internal sealed class WorkspaceToolbar : UserControl
         var reset=!ReferenceEquals(session,value)||addressRevision!=value.AddressRevision;
         if(reset){flyouts.Close();viewMenu?.Hide();}
         session=value;addressRevision=value.AddressRevision;address.Bind(value.PathValue,value.Query,reset,WorkspaceOptions.SearchByDefault(value.PreferenceScope));
-        back.IsEnabled=value.CanBack;forward.IsEnabled=value.CanForward;up.IsEnabled=value.PathValue.Length>0;refresh.IsEnabled=!value.Busy;
-        random.IsChecked=value.Random;next.IsEnabled=!value.Busy;recursive.IsEnabled=value.PathValue.Length>0;
+        back.IsEnabled=value.CanBack;forward.IsEnabled=value.CanForward;up.IsEnabled=value.PathValue.Length>0;refresh.IsEnabled=!value.ForegroundBusy;
+        random.IsChecked=value.Random;next.IsEnabled=!value.ForegroundBusy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
         ((SidebarIcon)hidden.Content).OutlinePath=WorkspaceIcons.Icon(value.ShowHidden?"eye":"eyeOff").OutlinePath;
         WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":"")}");

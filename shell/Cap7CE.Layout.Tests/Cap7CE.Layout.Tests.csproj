@@ -5,6 +5,8 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/AutoKeywordPolicy.cs;../Cap7CE.WinUI/Models/ManualKeywords.cs;../Cap7CE.WinUI/Services/AutoKeywordWriter.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Controllers/PreviewSelectionController.cs" Link="PreviewSelectionController.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/FramedRpc.cs" Link="FramedRpc.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/CoreProcessDiagnostics.cs" Link="CoreProcessDiagnostics.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/CoreRequestSender.cs;../../core/src/Cap7CE.Core.Host/CoreRequestIdentityTracker.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/PreviewSpaceKeyPolicy.cs" Link="PreviewSpaceKeyPolicy.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/CatalogNameLabel.cs" Link="CatalogNameLabel.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/AnimationSource.cs" Link="AnimationSource.cs" /></ItemGroup>
