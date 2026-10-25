@@ -1,7 +1,7 @@
 using Cap7CE.WinUI.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
 namespace Cap7CE.WinUI.Controls;
 
 // Local tag/input draft. Only an explicit Save invokes the supplied writer.
@@ -29,8 +29,8 @@ internal sealed class DetailsKeywordEditor:UserControl
         ToolTipService.SetToolTip(retry,"丢弃草稿并重新读取关键词");
         automatic=Ui.Button("自动添加",()=>{if(items.Count>0&&!draft.Dirty){var target=items;generate(target);}});
         var automaticLabel=new TextBlock{Text="自动添加",VerticalAlignment=VerticalAlignment.Center};
-        var automaticIcon=new FontIcon{Glyph="\uE945",FontSize=14,VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};
-        automaticIcon.SetBinding(FontIcon.ForegroundProperty,new Binding{Source=automaticLabel,Path=new PropertyPath(nameof(TextBlock.Foreground))});
+        var automaticIcon=new TextBlock{Text="\uE945",FontFamily=new FontFamily("Segoe Fluent Icons"),FontSize=14,
+            Opacity=.8,VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};
         var automaticContent=Ui.Row(automaticIcon,automaticLabel);automaticContent.Spacing=5;automatic.Content=automaticContent;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(automatic,"自动添加");
         save=Ui.Button("保存",()=>_=SaveAsync());cancel=Ui.Button("取消",CancelDraft);

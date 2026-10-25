@@ -20,6 +20,7 @@ internal sealed class DetailsPane : UserControl
     private readonly AssetPlaceholderIcon icon=new(){Width=72,Height=72,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly Border visual=new(){Height=FilePreviewHeight,CornerRadius=new(8)};
     private readonly DetailsKeywordEditor keywords;
+    private readonly DetailsEmbeddedMetadata embedded;
     private readonly DispatcherTimer debounce=new(){Interval=TimeSpan.FromMilliseconds(160)};
     private CancellationTokenSource reading=new();
     private IReadOnlyList<AssetItem> selected=[];
@@ -27,14 +28,14 @@ internal sealed class DetailsPane : UserControl
     private bool stopped,keywordRefreshPending;
     public DetailsPane(ShellServices services,FileCommands commands,Action<string> notice)
     {
-        this.services=services;this.commands=commands;
+        this.services=services;this.commands=commands;embedded=new(services);
         var keywordService=new KeywordSelectionService(services);
         keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice,items=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}));
         var preview=new Grid();preview.Children.Add(icon);preview.Children.Add(image);visual.Child=preview;
         image.SizeChanged+=(_,_)=>UpdatePreviewClip();
         var scroll=new ScrollViewer{Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
         IdleScrollBars.Attach(scroll);Content=scroll;
-        debounce.Tick+=(_,_)=>{debounce.Stop();if(selected.Any(item=>!item.Entry.IsDirectory))_=keywords.ReadAsync();if(selected is [var item]&&!item.Entry.IsDirectory)_=ReadVisualAsync(item,reading.Token);};
+        debounce.Tick+=(_,_)=>{debounce.Stop();if(selected.Any(item=>!item.Entry.IsDirectory))_=keywords.ReadAsync();if(selected is [var item]&&!item.Entry.IsDirectory){_=ReadVisualAsync(item,reading.Token);_=embedded.ReadAsync(item,reading.Token);}};
         Unloaded+=(_,_)=>Stop();Render();
     }
     public void SetContext(string path,long? count,bool searching,int filters,int loaded,bool busy)
@@ -47,7 +48,7 @@ internal sealed class DetailsPane : UserControl
         if(!stopped&&selected.SequenceEqual(items))return;
         debounce.Stop();reading.Cancel();reading.Dispose();reading=new();stopped=false;
         selected=items.ToArray();image.Source=null;icon.Visibility=Visibility.Visible;ToolTipService.SetToolTip(visual,null);
-        keywordRefreshPending=false;keywords.SetItems(selected);
+        keywordRefreshPending=false;keywords.SetItems(selected);embedded.Reset();
         Render();
         if(selected.Any(item=>!item.Entry.IsDirectory))debounce.Start();
     }
@@ -88,7 +89,7 @@ internal sealed class DetailsPane : UserControl
         }));
         if(!item.Entry.IsDirectory) {
             column.Children.Add(keywords);
-            Card("内嵌元数据").Body.Children.Add(Ui.Text("当前不可用",true));
+            column.Children.Add(embedded);
         }
     }
     private void RenderSelection()
