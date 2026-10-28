@@ -23,8 +23,9 @@ internal sealed class SettingsWindow : Window
     {
         this.services=services;SettingsWindowGeometry.ApplyInitial(this);
         LanguageUi.Bind(navigation,NavigationView.PaneTitleProperty,"main.settings");
-        navigation.Loaded+=(_,_)=>SettingsNavigationAppearance.HideTitle(navigation);
-        navigation.DisplayModeChanged+=(_,_)=>navigation.DispatcherQueue.TryEnqueue(()=>{if(!closed)SettingsNavigationAppearance.HideTitle(navigation);});
+        navigation.Loaded+=(_,_)=>SettingsNavigationAppearance.Apply(navigation);
+        navigation.DisplayModeChanged+=(_,_)=>QueueNavigationAppearance();
+        navigation.RegisterPropertyChangedCallback(NavigationView.IsPaneOpenProperty,(_,_)=>QueueNavigationAppearance());
         root.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new("ms-appx:///Themes/SettingsControlResources.xaml")});
         pages=new(services,this,text=>{if(closed)return;LanguageUi.Computed(notice,InfoBar.MessageProperty,()=>text.Render(AppLanguage.Session));notice.Visibility=Visibility.Visible;notice.IsOpen=true;});
         notice.Closed+=(_,_)=>notice.Visibility=Visibility.Collapsed;
@@ -53,6 +54,7 @@ internal sealed class SettingsWindow : Window
         Render();OnPreferences();
     }
     private void OnPreferences()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
+    private void QueueNavigationAppearance()=>navigation.DispatcherQueue.TryEnqueue(()=>{if(!closed)SettingsNavigationAppearance.Apply(navigation);});
     public void ShowMaintenance()
     {
         pages.FocusMetadata();

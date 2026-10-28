@@ -1207,6 +1207,14 @@
     "zh-CN": "通用",
     "en-US": "General"
   },
+  "navigation.open": {
+    "zh-CN": "打开导航",
+    "en-US": "Open navigation"
+  },
+  "navigation.close": {
+    "zh-CN": "关闭导航",
+    "en-US": "Close navigation"
+  },
   "navigation.appearance": {
     "zh-CN": "外观",
     "en-US": "Appearance"

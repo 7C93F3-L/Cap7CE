@@ -19,6 +19,8 @@
 
 `LanguageText.Key` 支持 TextBlock 和 ContentControl；`Literal` 提供原文，不能从原文猜测键。`NameKey`、`ToolTipKey` 分别用于无障碍名称和提示。复合按钮应绑定内部标签，不能把含图标的整个 Content 绑定为字符串。`LanguageUi.Dialog` 绑定原生确认框标题/按钮和可选正文，自定义正文传空 contentKey 后设置 Content；它不会重建对话框或提交动作。
 
+NavigationView会按平台资源重设内部按钮提示；设置窗口在加载、显示模式和开合状态变化后，由SettingsNavigationAppearance重新绑定navigation.open/close。模板按钮的悬停提示与无障碍名称均跟随应用语言，不能只依靠根Language属性或只在首次加载时赋值。
+
 `FactTextKeys` 按生成预设的稳定身份组织资源，图标选择也按身份。新增/删除预设时，构建及专项检查核对动态键与图标；无需为了修改文案同步修改旧生成Label。`MaintenanceText`、`ProgressText` 和 `FailureText` 只格式化状态/机器码，模型中已停用的中文显示访问器已经移除，修改资源不需再维护旧中文副本。
 
 通知回调携带 `UiMessage`。Key复制命名参数字典，需随语言变化的嵌套内容显式传入另一个UiMessage；Snapshot只捕获不可变状态；普通字符串作为Literal，不猜测资源键。自有IO/目录/参数错误分别使用UiFailure、UiDirectoryFailure、UiArgumentFailure，显示处调用FailureText.From并交给LanguageUi.Message。未知系统错误保留原文或既有机器码，AI未知错误使用统一提示，不以是否含中文推断语言。系统通知按发送时语言生成，不重发已送达消息。
