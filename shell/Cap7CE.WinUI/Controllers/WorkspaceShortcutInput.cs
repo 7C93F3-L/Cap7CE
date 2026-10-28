@@ -23,6 +23,8 @@ internal sealed class WorkspaceShortcutInput:IDisposable
     public WorkspaceShortcutInput(Window owner,FrameworkElement root,ResultsView results,Action<string> execute)
     {
         this.owner=owner;this.root=root;this.results=results;this.execute=execute;
+        // Accelerators belong to this whole scope, not to a hoverable command surface.
+        root.KeyboardAcceleratorPlacementMode=KeyboardAcceleratorPlacementMode.Hidden;
         release=(_,args)=>held.RemoveWhere(key=>key.Key==(uint)args.Key);
         root.AddHandler(UIElement.KeyUpEvent,release,true);root.PreviewKeyDown+=ApplicationKey;owner.Activated+=Activated;
     }
