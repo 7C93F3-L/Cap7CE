@@ -1,4 +1,6 @@
 using Cap7CE.WinUI.Models;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -43,7 +45,7 @@ internal sealed class TextPreviewView : Grid
     }
     public void SetText(string content,string fileExtension,string information="")
     {
-        value=content;extension=fileExtension.ToLowerInvariant();notice.Text=information;
+        value=content;extension=fileExtension.ToLowerInvariant();L.Literal(notice,TextBlock.TextProperty,information);
         source.Visibility=TextPreviewDocument.CanRender(extension)?Visibility.Visible:Visibility.Collapsed;
         text.FontFamily=new(extension is ".txt" or ".md" or ".epub" or ".mobi"?"Segoe UI":"Consolas");
         Refresh();
@@ -67,6 +69,7 @@ internal sealed class TextPreviewView : Grid
             var view=new TextDocumentWebView();web=view;body.Content=view;await view.LoadAsync(html,token);
         }
         catch(OperationCanceledException){}
-        catch(Exception error){if(!token.IsCancellationRequested){web?.Dispose();web=null;text.Text=value;text.FontSize=fontSize;body.Content=text;notice.Text="格式预览失败，已显示源码："+error.Message;}}
+        catch(Exception error){if(!token.IsCancellationRequested){web?.Dispose();web=null;text.Text=value;text.FontSize=fontSize;body.Content=text;
+            L.Message(notice,TextBlock.TextProperty,UiMessage.Key("ui.preview.formatFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}}
     }
 }

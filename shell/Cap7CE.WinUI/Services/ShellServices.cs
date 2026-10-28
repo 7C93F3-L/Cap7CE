@@ -1,4 +1,5 @@
 using Cap7CE.Core.Protocol;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 
 namespace Cap7CE.WinUI.Services;
@@ -24,7 +25,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public event Action? ConnectionChanged;
     public void RefreshViews()=>CatalogChanged?.Invoke(new(null));
     private long catalogRevision;
-    public event Action<string>? BackgroundError;
+    public event Action<UiMessage>? BackgroundError;
     public event Action<bool>? VisualMaintenance;
     public event Action<string?>? MaintenanceRequested;
     public void ShowMaintenance(string? path=null)=>MaintenanceRequested?.Invoke(path);
@@ -52,7 +53,7 @@ internal sealed class ShellServices : IAsyncDisposable
         var database = Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE/Core/v1/catalog.db");
         Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure,runtimeLog:NativeDiagnostics.CoreRuntimeFailure); await RefreshVolumesAsync();
-        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke("后台同步已断开，当前列表已保留。可刷新重试；若仍失败，请到诊断页重新连接。"));
+        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke(UiMessage.Key("ui.error.backgroundDisconnected")));
         } finally { connection.Release();ConnectionChanged?.Invoke(); }
     }
     public async Task RefreshVolumesAsync()
@@ -84,7 +85,7 @@ internal sealed class ShellServices : IAsyncDisposable
             }
             CatalogChanged?.Invoke(new(roots,paths));
             if(notice.Scopes is null)await Metadata.NotifyAsync();
-        }catch(Exception error){if(!closed)BackgroundError?.Invoke(error.Message);}
+        }catch(Exception error){if(!closed)BackgroundError?.Invoke(FailureText.From(error));}
     }
     public async Task ReleaseSourcesAsync() { await Providers.ReleaseAsync(); await Office.ReleaseAsync(); await Visuals.ReleaseAsync(); }
     public async Task<(long Count,long Bytes)> GetCacheStatsAsync()
@@ -95,11 +96,11 @@ internal sealed class ShellServices : IAsyncDisposable
     public async Task ClearVisualCacheAsync()
     {
         VisualMaintenance?.Invoke(true);
-        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();await Office.RequestAsync("cache.clear",[]);Notify("缓存清理完成。");}
+        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();await Office.RequestAsync("cache.clear",[]);Notify(UiMessage.Key("ui.error.cacheCompleted"));}
         finally{VisualMaintenance?.Invoke(false);}
     }
-    public void Notify(string text)
-    {try{Notifications.Show(text,Preferences.Current.Notifications);}catch(Exception error){BackgroundError?.Invoke("通知发送失败："+error.Message);}}
+    public void Notify(UiMessage text)
+    {try{Notifications.Show(text.Render(AppLanguage.Session),Preferences.Current.Notifications);}catch(Exception error){BackgroundError?.Invoke(UiMessage.Key("ui.error.notificationFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}}
     public async ValueTask DisposeAsync()
     {
         await AutoKeywords.DisposeAsync();

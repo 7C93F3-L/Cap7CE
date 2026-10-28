@@ -20,18 +20,18 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public event Action? ItemsDeleted;
     public event Action<IReadOnlyList<AssetItem>>? AutoKeywordsRequested;
     public void AutoKeywords(IReadOnlyList<AssetItem> items)
-    {if(items.Count is 0 or >100000)throw new IOException("请选择不超过十万项的文件或目录。");if(items.Count==1)FileAccessGuard.Validate(items[0]);AutoKeywordsRequested?.Invoke(items.ToArray());}
+    {if(items.Count is 0 or >100000)throw new UiFailure("ui.error.fileSelection");if(items.Count==1)FileAccessGuard.Validate(items[0]);AutoKeywordsRequested?.Invoke(items.ToArray());}
     public void AutoKeywords(string directory)=>AutoKeywords([new AssetItem(new Cap7CE.Core.Protocol.BasicSearchItem(directory,Path.GetFileName(directory.TrimEnd('\\')),"","",true),directory)]);
     public Task StartMetadataAsync(AssetItem item)
-    {FileAccessGuard.Validate(item);if(!item.Entry.IsDirectory)throw new IOException("请选择目录以提取元数据。");return StartMetadataAsync(item.FullPath);}
+    {FileAccessGuard.Validate(item);if(!item.Entry.IsDirectory)throw new UiFailure("ui.error.metadataDirectory");return StartMetadataAsync(item.FullPath);}
     public async Task StartMetadataAsync(string directory)
     {
         FileAccessGuard.RejectLinks(directory);
-        if(!Directory.Exists(directory))throw new DirectoryNotFoundException("目录不存在或当前不可用");
+        if(!Directory.Exists(directory))throw new UiDirectoryFailure("ui.error.directoryMissing");
         await services.Metadata.InvokeAsync("startDirectory",new{path=Path.GetFullPath(directory),allowMetadataExtraction=true});
     }
     public void Run(Func<Task> action) => Execute(action);
-    private async void Execute(Func<Task> action) { try { await action(); } catch (Exception error) { notice(error.Message); } }
+    private async void Execute(Func<Task> action) { try { await action(); } catch (Exception error) { notice(FailureText.From(error)); } }
     public void Preview(AssetItem item) { FileAccessGuard.Validate(item); PreviewRequested?.Invoke(item); }
     public void Open(AssetItem item)
     {
@@ -51,7 +51,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public static void OpenDirectoryInExplorer(string path)
     {
         FileAccessGuard.RejectLinks(path);
-        if (!Directory.Exists(path)) throw new DirectoryNotFoundException("目录不存在或当前不可用");
+        if (!Directory.Exists(path)) throw new UiDirectoryFailure("ui.error.directoryMissing");
         var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true };
         info.ArgumentList.Add(Path.GetFullPath(path)); Process.Start(info);
     }
@@ -62,7 +62,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     }
     public static async Task<IReadOnlyList<IStorageItem>> StorageItemsAsync(IReadOnlyList<AssetItem> items)
     {
-        if (items.Count is < 1 or > 200) throw new IOException("单次最多操作200项");
+        if (items.Count is < 1 or > 200) throw new UiFailure("ui.error.fileLimit");
         var result = new List<IStorageItem>();
         foreach (var item in items) { FileAccessGuard.Validate(item); result.Add(item.Entry.IsDirectory
             ? await StorageFolder.GetFolderFromPathAsync(item.FullPath) : await StorageFile.GetFileFromPathAsync(item.FullPath)); }
@@ -70,8 +70,8 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     }
     public async Task DeleteAsync(IReadOnlyList<AssetItem> items)
     {
-        if (items.Count is < 1 or > 200) throw new IOException("单次最多操作200项");
-        if (!await operation.WaitAsync(0)) throw new IOException("已有文件操作正在进行");
+        if (items.Count is < 1 or > 200) throw new UiFailure("ui.error.fileLimit");
+        if (!await operation.WaitAsync(0)) throw new UiFailure("ui.error.fileBusy");
         try
         {
             foreach (var item in items) FileAccessGuard.Validate(item);
@@ -85,7 +85,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
                     targets = items.Select(item => new { path = item.FullPath, isDirectory = item.Entry.IsDirectory }).ToArray(),
                     cacheRoots = new[] { PreferenceStore.ProductData, PreferenceStore.DataRoot } });
             var paths = result.GetProperty("deletedPaths").EnumerateArray().Select(p => p.GetString()!).ToArray();
-            if (paths.Any(path => !items.Any(item => item.FullPath.Equals(path, StringComparison.OrdinalIgnoreCase)))) throw new IOException("Core 删除结果不属于本次选择");
+            if (paths.Any(path => !items.Any(item => item.FullPath.Equals(path, StringComparison.OrdinalIgnoreCase)))) throw new UiFailure("ui.error.trashResults");
             services.DeletedPaths.UnionWith(paths); ItemsDeleted?.Invoke();
             notice(result.GetProperty("success").GetBoolean()?UiMessage.Key("ui.file.trashed"):
                 UiMessage.Key("ui.file.trashPartial",new Dictionary<string,object?>{{"count",result.GetProperty("failedItems").GetArrayLength()}}));

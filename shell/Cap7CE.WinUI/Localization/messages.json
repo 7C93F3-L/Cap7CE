@@ -3974,5 +3974,357 @@
   "ui.signature.openFailed": {
     "zh-CN": "暂时无法打开，请重试。",
     "en-US": "Could not open this. Please try again."
+  },
+  "ui.error.browseCore": {
+    "zh-CN": "搜索和筛选需要连接 Core；请在设置中重新连接后再试",
+    "en-US": "Search and filters require Core. Reconnect in Settings and try again."
+  },
+  "ui.error.browseVolumes": {
+    "zh-CN": "没有可查询的磁盘；此入口不会自动建库",
+    "en-US": "No disks are available for queries. This action does not create an index automatically."
+  },
+  "ui.error.browsePath": {
+    "zh-CN": "结果路径越界",
+    "en-US": "A result path is outside the requested location."
+  },
+  "ui.error.animationLimit": {
+    "zh-CN": "动图超过预览上限（64 MiB / 4000万像素），请使用默认程序打开。",
+    "en-US": "The animation exceeds the preview limit (64 MiB / 40 million pixels). Open it in the default app."
+  },
+  "ui.error.autoScope": {
+    "zh-CN": "范围超过十万个文件，请选择更小的目录。",
+    "en-US": "The selection contains more than 100,000 files. Choose a smaller folder."
+  },
+  "ui.error.coreRetry": {
+    "zh-CN": "Core 尚未连接，请稍后重试。",
+    "en-US": "Core is not connected. Try again shortly."
+  },
+  "ui.error.autoIndex": {
+    "zh-CN": "目录尚未入库，请先建立目录索引。",
+    "en-US": "The folder is not indexed. Create its index first."
+  },
+  "ui.error.autoPath": {
+    "zh-CN": "目录结果越界",
+    "en-US": "A folder result is outside the requested location."
+  },
+  "ui.error.coreStart": {
+    "zh-CN": "无法启动 Core 查询宿主",
+    "en-US": "Unable to start the Core query host."
+  },
+  "ui.error.coreStartup": {
+    "zh-CN": "Core启动失败。请关闭其他Cap7CE进程后重试；索引权限和安装状态可在设置中查看。",
+    "en-US": "Core could not start. Close other Cap7CE processes and try again. Check index permissions and installation status in Settings."
+  },
+  "ui.error.coreIdentity": {
+    "zh-CN": "Core 进程身份不符",
+    "en-US": "The Core process identity does not match."
+  },
+  "ui.error.coreHandshake": {
+    "zh-CN": "Core 协商失败",
+    "en-US": "Core negotiation failed."
+  },
+  "ui.error.coreTimeout": {
+    "zh-CN": "查询超时，请重试。",
+    "en-US": "The query timed out. Try again."
+  },
+  "ui.error.coreDisconnected": {
+    "zh-CN": "查询连接已断开，请重新连接后重试。",
+    "en-US": "The query connection was lost. Reconnect and try again."
+  },
+  "ui.error.coreEmpty": {
+    "zh-CN": "Core 响应为空",
+    "en-US": "Core returned an empty response."
+  },
+  "ui.error.modelStartup": {
+    "zh-CN": "本地模型无法启动，请在设置中检查运行库和视觉模型。",
+    "en-US": "The local model could not start. Check the runtime and vision model in Settings."
+  },
+  "ui.error.modelNotReady": {
+    "zh-CN": "本地视觉模型尚未就绪，请检查模型设置。",
+    "en-US": "The local vision model is not ready. Check model settings."
+  },
+  "ui.error.autoBusy": {
+    "zh-CN": "已有关键词任务正在处理，请先等待或取消。",
+    "en-US": "A keyword task is already running. Wait for it to finish or cancel it."
+  },
+  "ui.error.autoSelection": {
+    "zh-CN": "请选择文件或目录。",
+    "en-US": "Select files or folders."
+  },
+  "ui.error.coreMissing": {
+    "zh-CN": "Core程序缺失，请先完成原生构建或重新解压完整程序包。",
+    "en-US": "The Core program is missing. Complete the native build or extract the full application package again."
+  },
+  "ui.error.nodeChecksum": {
+    "zh-CN": "Core Node 摘要不符",
+    "en-US": "The Core Node checksum does not match."
+  },
+  "ui.error.nodeHost": {
+    "zh-CN": "Core 宿主不可用",
+    "en-US": "The Core host is unavailable."
+  },
+  "ui.error.sourceChanged": {
+    "zh-CN": "文件已发生变化，请重新选择文件后重试。",
+    "en-US": "The file has changed. Select it again and retry."
+  },
+  "ui.error.keywordConflict": {
+    "zh-CN": "关键词正在被其他操作修改，请稍后重试。",
+    "en-US": "Another operation is modifying the keywords. Try again shortly."
+  },
+  "ui.error.directoryPath": {
+    "zh-CN": "目录浏览结果越界",
+    "en-US": "A browsing result is outside the requested folder."
+  },
+  "ui.error.sourceIdentity": {
+    "zh-CN": "无法确认源文件身份",
+    "en-US": "Unable to verify the source file identity."
+  },
+  "ui.error.sourceIndex": {
+    "zh-CN": "文件所在磁盘尚未入库，请先建立目录索引",
+    "en-US": "The disk containing this file is not indexed. Create a folder index first."
+  },
+  "ui.error.localPath": {
+    "zh-CN": "仅支持本地磁盘路径",
+    "en-US": "Only local disk paths are supported."
+  },
+  "ui.error.links": {
+    "zh-CN": "不跟随链接或重解析点",
+    "en-US": "Links and reparse points are not followed."
+  },
+  "ui.error.sourceRefresh": {
+    "zh-CN": "源文件已变化，请刷新后重试",
+    "en-US": "The source file has changed. Refresh and try again."
+  },
+  "ui.error.sourceReplaced": {
+    "zh-CN": "源文件已被替换",
+    "en-US": "The source file has been replaced."
+  },
+  "ui.error.coreNotReady": {
+    "zh-CN": "Core 尚未就绪",
+    "en-US": "Core is not ready."
+  },
+  "ui.error.directoryQuery": {
+    "zh-CN": "目录不可查询",
+    "en-US": "The folder is unavailable for queries."
+  },
+  "ui.error.fileSelection": {
+    "zh-CN": "请选择不超过十万项的文件或目录。",
+    "en-US": "Select no more than 100,000 files or folders."
+  },
+  "ui.error.metadataDirectory": {
+    "zh-CN": "请选择目录以提取元数据。",
+    "en-US": "Select a folder to extract metadata."
+  },
+  "ui.error.directoryMissing": {
+    "zh-CN": "目录不存在或当前不可用",
+    "en-US": "The folder does not exist or is currently unavailable."
+  },
+  "ui.error.fileLimit": {
+    "zh-CN": "单次最多操作200项",
+    "en-US": "You can process up to 200 items at a time."
+  },
+  "ui.error.fileBusy": {
+    "zh-CN": "已有文件操作正在进行",
+    "en-US": "A file operation is already in progress."
+  },
+  "ui.error.trashResults": {
+    "zh-CN": "Core 删除结果不属于本次选择",
+    "en-US": "The Core deletion result does not belong to this selection."
+  },
+  "ui.error.coreNotConnected": {
+    "zh-CN": "Core 尚未连接",
+    "en-US": "Core is not connected."
+  },
+  "ui.error.keywordReload": {
+    "zh-CN": "关键词已在其他窗口变化，请重新读取后再编辑",
+    "en-US": "The keywords changed in another window. Reload them before editing."
+  },
+  "ui.error.setupMissing": {
+    "zh-CN": "Core安装组件缺失，请重新构建或重新解压完整WinUI程序包。",
+    "en-US": "The Core setup component is missing. Rebuild or extract the full WinUI package again."
+  },
+  "ui.error.setupStart": {
+    "zh-CN": "无法启动Core配置工具。",
+    "en-US": "Unable to start the Core setup tool."
+  },
+  "ui.error.nativeUnavailable": {
+    "zh-CN": "Core 原生组件不可用",
+    "en-US": "The native Core component is unavailable."
+  },
+  "ui.error.nativeLimit": {
+    "zh-CN": "操作内容超出限制",
+    "en-US": "The operation content exceeds the limit."
+  },
+  "ui.error.nativeResponse": {
+    "zh-CN": "Core 响应无效",
+    "en-US": "Core returned an invalid response."
+  },
+  "ui.error.nativeOperation": {
+    "zh-CN": "Core 原生操作失败",
+    "en-US": "The native Core operation failed."
+  },
+  "ui.error.metadataDisconnected": {
+    "zh-CN": "Core尚未连接，请先重新连接。",
+    "en-US": "Core is not connected. Reconnect first."
+  },
+  "ui.error.metadataCapability": {
+    "zh-CN": "当前Core未提供属性任务，请确认使用完整原生程序包。",
+    "en-US": "This Core does not support metadata tasks. Make sure you are using the full native package."
+  },
+  "ui.error.connectionChanged": {
+    "zh-CN": "Core连接已改变，请重试。",
+    "en-US": "The Core connection has changed. Try again."
+  },
+  "ui.error.metadataConnection": {
+    "zh-CN": "Core连接已改变，请刷新任务状态。",
+    "en-US": "The Core connection has changed. Refresh the task status."
+  },
+  "ui.error.hotkey": {
+    "zh-CN": "当前快捷键不可用，需重新设置。",
+    "en-US": "This shortcut is unavailable. Choose another shortcut."
+  },
+  "ui.error.batchConnection": {
+    "zh-CN": "后台连接已改变，请重新开始提取。",
+    "en-US": "The background connection has changed. Start extraction again."
+  },
+  "ui.error.rpcQueue": {
+    "zh-CN": "Core 请求队列已满",
+    "en-US": "The Core request queue is full."
+  },
+  "ui.error.rpcRequest": {
+    "zh-CN": "Core 请求超出帧限制",
+    "en-US": "The Core request exceeds the frame limit."
+  },
+  "ui.error.rpcResponse": {
+    "zh-CN": "Core 响应帧无效",
+    "en-US": "Core returned an invalid response frame."
+  },
+  "ui.error.rpcEnded": {
+    "zh-CN": "Core 连接已结束",
+    "en-US": "The Core connection has ended."
+  },
+  "ui.error.imagePath": {
+    "zh-CN": "Core 图像越界",
+    "en-US": "The Core image is outside the cache directory."
+  },
+  "ui.error.programPath": {
+    "zh-CN": "程序路径不可用",
+    "en-US": "The application path is unavailable."
+  },
+  "ui.error.autoInvalid": {
+    "zh-CN": "模型未返回有效关键词，请重试。",
+    "en-US": "The model did not return valid keywords. Try again."
+  },
+  "ui.error.autoLimit": {
+    "zh-CN": "现有关键词已接近数量上限，请整理后重试。",
+    "en-US": "The existing keywords are near the limit. Remove some keywords and try again."
+  },
+  "ui.error.keywordLimit": {
+    "zh-CN": "关键词超出限制，请减少数量或缩短内容后重试。",
+    "en-US": "The keywords exceed the limit. Use fewer or shorter keywords and try again."
+  },
+  "ui.error.browseCapacity": {
+    "zh-CN": "实时递归读取超出范围限制；请检查此磁盘的索引状态，或关闭包含子文件夹后浏览。",
+    "en-US": "Live recursive browsing exceeds the limit. Check the disk index or turn off Include subfolders."
+  },
+  "ui.error.favoriteOrder": {
+    "zh-CN": "收藏列表已变化，请取消后重新调整位置",
+    "en-US": "The favorites list has changed. Cancel and reorder it again."
+  },
+  "ui.error.pageCursor": {
+    "zh-CN": "后续结果暂时无法加载，请点击刷新后继续浏览。",
+    "en-US": "More results could not be loaded. Refresh to continue browsing."
+  },
+  "ui.error.refresh": {
+    "zh-CN": "{error}；请刷新",
+    "en-US": "{error}; please refresh"
+  },
+  "ui.error.scopeRebuild": {
+    "zh-CN": "该磁盘索引需要重新建立；请在设置的索引维护中选择该磁盘并点击“建立 / 更新”。",
+    "en-US": "This disk index needs rebuilding. Select the disk under index maintenance in Settings and click Build / update."
+  },
+  "ui.error.scopeRebuildRandom": {
+    "zh-CN": "该磁盘索引需要重新建立；请在设置的索引维护中选择该磁盘并点击“建立 / 更新”。索引就绪后才能随机浏览。",
+    "en-US": "This disk index needs rebuilding. Select it under index maintenance in Settings and click Build / update. Random browsing requires a ready index."
+  },
+  "ui.error.scopeBuilding": {
+    "zh-CN": "该磁盘索引正在建立；搜索和筛选需要等待索引就绪，当前仍可直接浏览。",
+    "en-US": "This disk index is being built. Search and filters will be available when it is ready. Direct browsing is available now."
+  },
+  "ui.error.scopeBuildingRandom": {
+    "zh-CN": "该磁盘索引正在建立；随机浏览需要等待索引就绪，当前仍可直接浏览。",
+    "en-US": "This disk index is being built. Random browsing will be available when it is ready. Direct browsing is available now."
+  },
+  "ui.error.scopeRandom": {
+    "zh-CN": "随机浏览需要可查询的目录索引；请检查设置中的索引状态，当前仍可直接浏览。",
+    "en-US": "Random browsing requires a queryable folder index. Check the index status in Settings. Direct browsing is available now."
+  },
+  "ui.error.scopeUnavailable": {
+    "zh-CN": "此目录的索引尚未就绪，可清除搜索和筛选后直接浏览；搜索及筛选需要可查询的索引",
+    "en-US": "The folder index is not ready. Clear search and filters to browse directly. Search and filters require a queryable index."
+  },
+  "ui.error.autoGeneric": {
+    "zh-CN": "自动添加关键词失败，请检查目录索引、本地模型和源文件后重试。",
+    "en-US": "Unable to add keywords automatically. Check the folder index, local model and source file, then try again."
+  },
+  "ui.error.autoCancelling": {
+    "zh-CN": "正在取消；已保存的关键词会保留。",
+    "en-US": "Cancelling. Keywords already saved will be kept."
+  },
+  "ui.error.autoPartial": {
+    "zh-CN": "部分目录未能完整读取，请确认目录已入库且可访问。",
+    "en-US": "Some folders could not be read completely. Make sure they are indexed and accessible."
+  },
+  "ui.error.exclusionDirectory": {
+    "zh-CN": "排除项不是目录：{path}",
+    "en-US": "The exclusion is not a folder: {path}"
+  },
+  "ui.error.setupFailed": {
+    "zh-CN": "Core配置未完成，可能取消了UAC或缺少.NET 10 x64运行时。{details}",
+    "en-US": "Core setup did not complete. UAC may have been cancelled, or the .NET 10 x64 runtime may be missing.{details}"
+  },
+  "ui.error.backgroundDisconnected": {
+    "zh-CN": "后台同步已断开，当前列表已保留。可刷新重试；若仍失败，请到诊断页重新连接。",
+    "en-US": "Background sync was disconnected. The current list is retained. Refresh to retry. If it still fails, reconnect on the Diagnostics page."
+  },
+  "ui.error.notificationFailed": {
+    "zh-CN": "通知发送失败：{error}",
+    "en-US": "Unable to send the notification: {error}"
+  },
+  "ui.error.metadataCompleted": {
+    "zh-CN": "属性提取完成。",
+    "en-US": "Metadata extraction complete."
+  },
+  "ui.error.cacheCompleted": {
+    "zh-CN": "缓存清理完成。",
+    "en-US": "Cache cleared."
+  },
+  "ui.preview.mediaFailed": {
+    "zh-CN": "媒体播放失败：{error}",
+    "en-US": "Media playback failed: {error}"
+  },
+  "ui.preview.formatFailed": {
+    "zh-CN": "格式预览失败，已显示源码：{error}",
+    "en-US": "The formatted preview failed. Showing source: {error}"
+  },
+  "ui.preview.pinFailed": {
+    "zh-CN": "无法保存固定状态：{error}",
+    "en-US": "Unable to save the pinned state: {error}"
+  },
+  "ui.preview.preparing": {
+    "zh-CN": "正在准备预览…",
+    "en-US": "Preparing preview…"
+  },
+  "ui.preview.textTruncated": {
+    "zh-CN": "正文已按上限截断",
+    "en-US": "Text truncated at the preview limit"
+  },
+  "ui.preview.textBody": {
+    "zh-CN": "正文预览",
+    "en-US": "Text preview"
+  },
+  "ui.preview.position": {
+    "zh-CN": "{index} / {total} · Space / Esc 关闭",
+    "en-US": "{index} / {total} · Space / Esc to close"
   }
 }

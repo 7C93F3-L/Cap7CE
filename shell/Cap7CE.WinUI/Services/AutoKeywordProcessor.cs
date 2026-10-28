@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Text.Json;
 using Cap7CE.WinUI.Models;
 
@@ -26,9 +27,9 @@ internal sealed class AutoKeywordProcessor(ShellServices services,string languag
                 using var cancelStartup=token.Register(()=>{if(ownStartup)_=StopStartupAsync();});
                 var started=await startup.WaitAsync(token);
                 token.ThrowIfCancellationRequested();
-                if(started.GetProperty("state").GetProperty("status").GetString()!="running")throw new AutoKeywordRuntimeException("本地模型无法启动，请在设置中检查运行库和视觉模型。");
+                if(started.GetProperty("state").GetProperty("status").GetString()!="running")throw new AutoKeywordRuntimeException("ui.error.modelStartup");
                 ready=await services.Models.RequestAsync("runtime.ready",[context,null]);
-                if(!ready.TryGetProperty("result",out connection)||connection.ValueKind==JsonValueKind.Null)throw new AutoKeywordRuntimeException("本地视觉模型尚未就绪，请检查模型设置。");
+                if(!ready.TryGetProperty("result",out connection)||connection.ValueKind==JsonValueKind.Null)throw new AutoKeywordRuntimeException("ui.error.modelNotReady");
             }
             token.ThrowIfCancellationRequested();phase("生成关键词");
             var id=Guid.NewGuid().ToString();JsonElement result;
@@ -45,4 +46,4 @@ internal sealed class AutoKeywordProcessor(ShellServices services,string languag
     }
     private async Task StopStartupAsync(){try{await services.Models.RequestAsync("runtime.stop",[context,"关键词任务取消"]);}catch{}}
 }
-internal sealed class AutoKeywordRuntimeException(string message):IOException(message);
+internal sealed class AutoKeywordRuntimeException(string key):UiFailure(key);

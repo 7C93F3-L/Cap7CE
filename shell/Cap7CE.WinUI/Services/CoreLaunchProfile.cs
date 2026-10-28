@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Diagnostics;
 using System.Text.Json;
 
@@ -9,7 +10,7 @@ internal sealed record CoreLaunchProfile(ProcessStartInfo Start,string Pipe,bool
     {
         var pipe=(product?"cap7ce-core-p35-":"cap7ce-phase-f-")+Guid.NewGuid().ToString("N");
         var executable=Path.Combine(root,product?"core/artifacts/development-product-host/Cap7CE.Core.Host.exe":"shell/artifacts/query/Cap7CE.QueryHost.exe");
-        if(!File.Exists(executable))throw new IOException("Core程序缺失，请先完成原生构建或重新解压完整程序包。");
+        if(!File.Exists(executable))throw new UiFailure("ui.error.coreMissing");
         var info=new ProcessStartInfo(executable) {UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true};
         foreach(var key in new[]{"NODE_OPTIONS","NODE_PATH","ELECTRON_RUN_AS_NODE"})info.Environment.Remove(key);
         if(product) {

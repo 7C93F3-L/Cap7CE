@@ -39,7 +39,7 @@ internal sealed class MetadataMaintenanceView : UserControl
         exclusions.AddButton.HorizontalAlignment=HorizontalAlignment.Left;
         actions.Children.Add(exclusions.AddButton);Grid.SetColumn(start,1);actions.Children.Add(start);
         Content=Ui.Column(scope,exclusions,actions,status,taskArea,error);
-        exclusions.Changed+=Render;exclusions.Failure+=text=>{L.Computed(error,()=>MaintenanceText.Error(text,AppLanguage.Session));Render();};
+        exclusions.Changed+=Render;exclusions.Failure+=text=>{L.Message(error,TextBlock.TextProperty,text);Render();};
         Loaded+=(_,_)=>{
             if(listening)return;listening=true;
             services.Metadata.Changed+=Changed;services.ConnectionChanged+=ConnectionChanged;services.IndexStatusChanged+=IndexChanged;
@@ -54,7 +54,7 @@ internal sealed class MetadataMaintenanceView : UserControl
     private async void Run(Func<Task> action)
     {
         if(busy)return;busy=true;L.Literal(error,TextBlock.TextProperty,"");Render();
-        try{await action();}catch(Exception failure){var code=failure.Message;L.Computed(error,()=>MaintenanceText.Error(code,AppLanguage.Session));}
+        try{await action();}catch(Exception failure){L.Message(error,TextBlock.TextProperty,FailureText.From(failure));}
         finally{busy=false;if(listening){if(reload&&Connected){reload=false;Run(()=>InvokeAsync("status"));}else Render();}}
     }
     private async Task InvokeAsync(string operation)=>await services.Metadata.InvokeAsync(operation);

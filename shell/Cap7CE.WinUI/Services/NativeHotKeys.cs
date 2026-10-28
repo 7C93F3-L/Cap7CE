@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
@@ -24,7 +25,7 @@ internal sealed class NativeHotKeys : IDisposable
         if(!value){Unregister();enabled=false;return;}
         for(var i=0;i<actions.Length;i++) {
             if(RegisterHotKey(window,7302+i,0x4001,actions[i].Key))continue;
-            Unregister();throw new IOException("当前快捷键不可用，需重新设置。");
+            Unregister();throw new UiFailure("ui.error.hotkey");
         }
         enabled=true;
     }

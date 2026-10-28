@@ -51,7 +51,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private async void Run(Func<Task> action)
     {
         foreach(var b in buttons)b.IsEnabled=false;volumeHost.IsEnabled=false;
-        try{await action();}catch(Exception e){var message=e.Message;ShowStatus(()=>AppLanguage.Text("ui.index.actionFailed",new Dictionary<string,object?>{{"error",MaintenanceText.Error(message,AppLanguage.Session)}}));}
+        try{await action();}catch(Exception e){var message=UiMessage.Key("ui.index.actionFailed",new Dictionary<string,object?>{{"error",FailureText.From(e)}});ShowStatus(()=>message.Render(AppLanguage.Session));}
         finally{foreach(var b in buttons)b.IsEnabled=true;volumeHost.IsEnabled=true;}
     }
     private async Task DiscoverAsync()
@@ -62,7 +62,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private async Task ReadAsync()
     {
         await ReadSnapshotAsync(true);
-        if(tasks.Any(t=>t.State=="running"))monitor.Start(async token=>{await ReadSnapshotAsync(false,token);return tasks.Any(t=>t.State=="running");},e=>{var message=e.Message;ShowStatus(()=>message);});
+        if(tasks.Any(t=>t.State=="running"))monitor.Start(async token=>{await ReadSnapshotAsync(false,token);return tasks.Any(t=>t.State=="running");},e=>{var message=FailureText.From(e);ShowStatus(()=>message.Render(AppLanguage.Session));});
     }
     private async Task ReadSnapshotAsync(bool updateVolumes,CancellationToken token=default)
     {
@@ -118,7 +118,7 @@ internal sealed class IndexMaintenanceView : UserControl
                 volumes.Children.Add(row);
             }
         }
-        foreach(var task in tasks.Where(t=>t.State!="running"))if(started.Remove(task.TaskId))services.Notify(AppLanguage.Text("ui.index.taskNotice",new Dictionary<string,object?>{{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(task.State))}}));
+        foreach(var task in tasks.Where(t=>t.State!="running"))if(started.Remove(task.TaskId))services.Notify(UiMessage.Key("ui.index.taskNotice",new Dictionary<string,object?>{{"state",UiMessage.Key(MaintenanceText.TaskStateKey(task.State))}}));
         ShowStatus(()=>{
             var lines=snapshot.Tasks.Select(t=>AppLanguage.Text("ui.index.taskStatus",new Dictionary<string,object?>{
                 {"kind",AppLanguage.Text(MaintenanceText.TaskKindKey(t.Kind))},{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(t.State))}})+(t.ErrorCode is null?"":" · "+t.ErrorCode)).ToList();

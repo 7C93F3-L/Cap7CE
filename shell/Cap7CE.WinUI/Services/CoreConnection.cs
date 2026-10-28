@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
@@ -22,7 +23,7 @@ internal sealed class CoreConnection : IAsyncDisposable
     internal static async Task<CoreConnection> StartAsync(CoreLaunchProfile profile,Action<string>? failureLog=null,Action<string>? runtimeLog=null)
     {
         var name=profile.Pipe;var info=profile.Start;
-        var child = Process.Start(info) ?? throw new IOException("无法启动 Core 查询宿主");
+        var child = Process.Start(info) ?? throw new UiFailure("ui.error.coreStart");
         var diagnostics=new CoreProcessDiagnostics(child,runtimeLog??failureLog??(_=>{}));
         var pipe = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
         CoreConnection? connection = null;
@@ -31,14 +32,14 @@ internal sealed class CoreConnection : IAsyncDisposable
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             var secret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
             await child.StandardInput.WriteLineAsync(secret);
-            if (!profile.IsReady(await child.StandardOutput.ReadLineAsync(timeout.Token),child.Id)) throw new IOException("Core启动失败。请关闭其他Cap7CE进程后重试；索引权限和安装状态可在设置中查看。");
+            if (!profile.IsReady(await child.StandardOutput.ReadLineAsync(timeout.Token),child.Id)) throw new UiFailure("ui.error.coreStartup");
             await pipe.ConnectAsync(timeout.Token);
-            if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var pid) || pid != child.Id) throw new IOException("Core 进程身份不符");
+            if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var pid) || pid != child.Id) throw new UiFailure("ui.error.coreIdentity");
             connection = new(child, pipe,diagnostics);
             var hello = await connection.RequestAsync<SessionHelloResponse>(CoreOperations.SessionHello,
                 new SessionHelloRequest(secret, [1], "Cap7CE WinUI Phase F", "1.0.4", Environment.ProcessId), timeout.Token);
             if (hello.ServerProcessId != child.Id || hello.SelectedProtocolVersion != 1 || hello.SyntheticFixture
-                || !hello.Capabilities.Contains(CoreOperations.SearchStart)) throw new IOException("Core 协商失败");
+                || !hello.Capabilities.Contains(CoreOperations.SearchStart)) throw new UiFailure("ui.error.coreHandshake");
             connection.Capabilities=hello.Capabilities;return connection;
         }
         catch(Exception error)
@@ -59,10 +60,10 @@ internal sealed class CoreConnection : IAsyncDisposable
         JsonElement value;
         try{value=await pending.Response;}
         catch(OperationCanceledException)when(!token.IsCancellationRequested)
-        {throw new IOException(IsConnected?"查询超时，请重试。":"查询连接已断开，请重新连接后重试。");}
+        {throw new UiFailure(IsConnected?"ui.error.coreTimeout":"ui.error.coreDisconnected");}
         if (value.GetProperty("status").GetString() != "success")
             throw new IOException(value.GetProperty("error").GetProperty("code").GetString());
-        return value.GetProperty("body").Deserialize<T>(FramedRpc.Json) ?? throw new IOException("Core 响应为空");
+        return value.GetProperty("body").Deserialize<T>(FramedRpc.Json) ?? throw new UiFailure("ui.error.coreEmpty");
     }
     private async Task CancelAsync(string id) { try { await RequestAsync<SearchCancelResponse>(CoreOperations.SearchCancel, new SearchCancelRequest(id)); } catch { } }
     public async ValueTask DisposeAsync()

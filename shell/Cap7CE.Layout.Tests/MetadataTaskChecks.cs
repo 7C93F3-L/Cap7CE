@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
+using Cap7CE.WinUI.Localization;
 
 internal static class MetadataTaskChecks
 {
@@ -52,9 +53,9 @@ namespace Cap7CE.WinUI.Services
     internal sealed class ShellServices
     {
         public CoreConnection? Core {get;set;}=new();
-        public List<string> Notices {get;}=[];
+        public List<UiMessage> Notices {get;}=[];
         public int Refreshes {get;private set;}
-        public void Notify(string text)=>Notices.Add(text);
+        public void Notify(UiMessage text)=>Notices.Add(text);
         public void RefreshViews()=>Refreshes++;
     }
     internal sealed class CoreConnection

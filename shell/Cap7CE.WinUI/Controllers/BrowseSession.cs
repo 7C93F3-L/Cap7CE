@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
@@ -22,7 +23,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public bool PreserveSelection {get;private set;}
     public bool Invalidated {get;private set;}
     public void Invalidate()=>Invalidated=true;
-    public string? Error {get;private set;}
+    public UiMessage? Error {get;private set;}
     public AssetCollection Items { get; private set; } = new();
     public event Action? Changed;
     public event Action<bool>? NavigationStarting;
@@ -100,7 +101,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     PathValue = path; Title = "此电脑"; Items = home; FilesystemBrowsing = false;
                     return true;
                 }
-                throw new IOException("搜索和筛选需要连接 Core；请在设置中重新连接后再试");
+                throw new UiFailure("ui.error.browseCore");
             }
             CoreSearchScopeRequest? scope = null;
             var volumes = services.Volumes.Where(v => v.Queryable).Select(v => v.VolumeId).ToArray();
@@ -112,7 +113,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 if (!resolved.Resolved || !resolved.Queryable || resolved.DirectoryFileReference is null)
                 {
                     if(plainBrowse)return await BrowseFilesystemAsync(path,remember,version,token,origin);
-                    throw new IOException(BrowseScopeRules.IndexUnavailable(resolved.State,Random));
+                    throw new UiFailure(FailureText.ScopeKey(resolved.State,Random));
                 }
                 volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);
             }
@@ -123,7 +124,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             }
             else
             {
-                if (volumes.Length == 0) throw new IOException("没有可查询的磁盘；此入口不会自动建库");
+                if (volumes.Length == 0) throw new UiFailure("ui.error.browseVolumes");
                 var request = new SearchStartRequest(Query.Trim(), 100, Sort, volumes, scope,
                     EntryType: BrowseScopeRules.EntryType(Query,Recursive,Filter.Count>0),
                     TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: false,
@@ -159,14 +160,14 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     return (uint)page.Items.Count;
                 }
                 catch (OperationCanceledException) { return 0; }
-                catch (Exception error) { if(version==generation){result.HasMoreItems = false; Error = error.Message==CoreErrorCodes.InvalidCursor?"后续结果暂时无法加载，请点击刷新后继续浏览。":error.Message + "；请刷新"; Changed?.Invoke();} return 0; }
+                catch (Exception error) { if(version==generation){result.HasMoreItems = false; Error = FailureText.Refresh(error); Changed?.Invoke();} return 0; }
                 finally { loading = false; }
             };
             Items = result;FilesystemBrowsing=false;
             return true;
         }
         catch (OperationCanceledException) { return false; }
-        catch (Exception error) { if (version == generation) { timing.Mark("failure");NativeDiagnostics.CoreFailure(error+"\n"+error.Data["CoreMessage"]);Error = BrowseTiming.ErrorText(error); } return false; }
+        catch (Exception error) { if (version == generation) { timing.Mark("failure");NativeDiagnostics.CoreFailure(error+"\n"+error.Data["CoreMessage"]);Error = FailureText.From(error); } return false; }
         finally { if (version == generation) { Busy = false; Changed?.Invoke();timing.Mark("ui-notified"); } }
     }
     private void Append(AssetCollection target, SearchPageResponse page)
@@ -176,7 +177,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         {
             var volume = services.Volumes.First(v => v.VolumeId == item.VolumeId); var root = volume.DisplayName.TrimEnd('\\') + "\\";
             var full = Path.GetFullPath(Path.Combine(root, item.RelativePath.TrimStart('\\', '/')));
-            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new IOException("结果路径越界");
+            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new UiFailure("ui.error.browsePath");
             if (!IsDeleted(full)) target.Add(new(item, full));else if(target.TotalCount is { } count)target.TotalCount=Math.Max(0,count-1);
         }
     }
@@ -196,7 +197,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 foreach(var item in next.Items)if(!IsDeleted(item.FullPath))result.Add(item);else if(result.TotalCount is { } count)result.TotalCount=Math.Max(0,count-1);
                 cursor=next.NextCursor;result.HasMoreItems=cursor is not null;Changed?.Invoke();return (uint)next.Items.Count;
             }catch(OperationCanceledException){return 0;}
-            catch(Exception error){if(version==generation){result.HasMoreItems=false;Error=error.Message+"；请刷新";Changed?.Invoke();}return 0;}
+            catch(Exception error){if(version==generation){result.HasMoreItems=false;Error=UiMessage.Key("ui.error.refresh",new Dictionary<string,object?>{{"error",FailureText.From(error)}});Changed?.Invoke();}return 0;}
             finally{loading=false;}
         };
         Remember(path,remember,origin);

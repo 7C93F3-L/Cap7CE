@@ -58,7 +58,7 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
                 FileAccessGuard.RejectLinks(path);if(!Directory.Exists(path))throw new IOException("目录不存在或当前不可用。");
                 await services.Metadata.InvokeAsync("startDirectory",new{path,allowMetadataExtraction=true});
             } else await services.Metadata.InvokeAsync("startAllVolumes",new{allowMetadataExtraction=true});
-        }catch(Exception error){if(!disposed)notice(MetadataPanelState.DescribeError(error.Message));}
+        }catch(Exception error){if(!disposed)notice(FailureText.From(error));}
         finally{busy=false;}
     }
     public void Dispose()=>disposed=true;

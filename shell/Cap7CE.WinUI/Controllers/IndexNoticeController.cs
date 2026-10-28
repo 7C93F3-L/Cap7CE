@@ -27,7 +27,7 @@ internal sealed class IndexNoticeController : IDisposable
             if(!watching) {
                 watching=true;
                 monitor.Start(async token=>{token.ThrowIfCancellationRequested();await services.RefreshVolumesAsync();return watching&&!disposed;},
-                    error=>{watching=false;notice.SetIndexTask(null);notice.ShowMessage(UiMessage.Key("ui.progress.indexReadFailed",new Dictionary<string,object?>{{"error",error.Message}}));});
+                    error=>{watching=false;notice.SetIndexTask(null);notice.ShowMessage(UiMessage.Key("ui.progress.indexReadFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));});
             }
         } else {
             watching=false;monitor.Dispose();notice.SetIndexTask(null);

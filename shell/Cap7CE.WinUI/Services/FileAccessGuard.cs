@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
@@ -8,20 +9,20 @@ internal static class FileAccessGuard
     {
         Validate(item);if(item.Entry.FileReference is not null)return item;
         using var handle=CreateFileW(item.FullPath,0x80,7,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
-        if(handle.IsInvalid||!GetFileInformationByHandle(handle,out var info))throw new IOException("无法确认源文件身份");
+        if(handle.IsInvalid||!GetFileInformationByHandle(handle,out var info))throw new UiFailure("ui.error.sourceIdentity");
         var root=Path.GetPathRoot(item.FullPath);
         var volume=volumes.FirstOrDefault(value=>string.Equals(value.DisplayName.TrimEnd('\\')+"\\",root,StringComparison.OrdinalIgnoreCase));
-        if(volume is null)throw new IOException("文件所在磁盘尚未入库，请先建立目录索引");
+        if(volume is null)throw new UiFailure("ui.error.sourceIndex");
         return new(item.Entry with{VolumeId=volume.VolumeId,FileReference=(((ulong)info.IndexHigh<<32)|info.IndexLow).ToString("X16"),
             CreatedUtcTicks=((long)info.CreatedHigh<<32)|info.CreatedLow},item.FullPath);
     }
     public static void RejectLinks(string path)
     {
         path = Path.GetFullPath(path);
-        if (path.Length < 3 || !char.IsAsciiLetter(path[0]) || path[1] != ':' || path[2] != '\\') throw new IOException("仅支持本地磁盘路径");
+        if (path.Length < 3 || !char.IsAsciiLetter(path[0]) || path[1] != ':' || path[2] != '\\') throw new UiFailure("ui.error.localPath");
         for (string? part = path; part is not null; part = Path.GetDirectoryName(part.TrimEnd('\\')))
         {
-            if ((File.GetAttributes(part) & FileAttributes.ReparsePoint) != 0) throw new IOException("不跟随链接或重解析点");
+            if ((File.GetAttributes(part) & FileAttributes.ReparsePoint) != 0) throw new UiFailure("ui.error.links");
             if (part == Path.GetPathRoot(part)) break;
         }
     }
@@ -31,8 +32,8 @@ internal static class FileAccessGuard
         if (item.Entry.FileReference is not { } expected) return;
         using var handle = CreateFileW(item.FullPath, 0x80, 7, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
         if (handle.IsInvalid || !GetFileInformationByHandle(handle, out var info)
-            || (((ulong)info.IndexHigh << 32) | info.IndexLow).ToString("X16") != expected.ToUpperInvariant()) throw new IOException("源文件已变化，请刷新后重试");
-        if (item.Entry.CreatedUtcTicks is { } created && (((long)info.CreatedHigh << 32) | info.CreatedLow) != created) throw new IOException("源文件已被替换");
+            || (((ulong)info.IndexHigh << 32) | info.IndexLow).ToString("X16") != expected.ToUpperInvariant()) throw new UiFailure("ui.error.sourceRefresh");
+        if (item.Entry.CreatedUtcTicks is { } created && (((long)info.CreatedHigh << 32) | info.CreatedLow) != created) throw new UiFailure("ui.error.sourceReplaced");
     }
     [StructLayout(LayoutKind.Sequential)] private struct FileInformation
     { public uint Attributes, CreatedLow, CreatedHigh, AccessLow, AccessHigh, WriteLow, WriteHigh, Volume, SizeHigh, SizeLow, Links, IndexHigh, IndexLow; }

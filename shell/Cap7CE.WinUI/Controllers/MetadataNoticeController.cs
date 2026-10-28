@@ -21,7 +21,7 @@ internal sealed class MetadataNoticeController : IDisposable
             if(!watching) {
                 watching=true;
                 monitor.Start(async token=>{await tasks.InvokeAsync("status",token:token);return watching&&!disposed;},
-                    error=>{if(disposed)return;watching=false;observed=false;notice.SetMetadataTask(null);notice.ShowMessage(UiMessage.Key("ui.progress.metadataReadFailed",new Dictionary<string,object?>{{"error",error.Message}}));});
+                    error=>{if(disposed)return;watching=false;observed=false;notice.SetMetadataTask(null);notice.ShowMessage(UiMessage.Key("ui.progress.metadataReadFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));});
             }
         } else {
             watching=false;monitor.Dispose();notice.SetMetadataTask(null);

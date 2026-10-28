@@ -74,7 +74,7 @@ internal sealed class ModelSettingsView
     private async void Run(Func<Task> work)
     {
         foreach(var button in buttons)button.IsEnabled=false;runtimes.IsEnabled=models.IsEnabled=false;
-        try{await work();}catch(Exception error){notice(error.Message);}
+        try{await work();}catch(Exception error){notice(FailureText.From(error));}
         finally{foreach(var button in buttons)button.IsEnabled=true;runtimes.IsEnabled=models.IsEnabled=!active;runtimeToggle.IsEnabled=!starting;}
     }
     private sealed record Choice(string Id,string Name);

@@ -10,7 +10,8 @@ internal static class ProgressText
     public static string AutoFinished(AutoKeywordState state,LanguageSession language)
     {
         if(state.Phase=="已取消")return language.Text("ui.progress.autoCancelled");
-        if(state.Phase=="失败")return language.Text(state.Message.Length>0?"ui.progress.autoError":"ui.progress.autoFailed",new Dictionary<string,object?>{{"error",state.Message}});
+        var detail=state.DisplayMessage?.Render(language)??state.Message;
+        if(state.Phase=="失败")return language.Text(detail.Length>0?"ui.progress.autoError":"ui.progress.autoFailed",new Dictionary<string,object?>{{"error",detail}});
         var failures=state.Failed+state.Skipped;
         return language.Text(failures>0?"ui.progress.autoFailedFiles":"ui.progress.autoCompleted",new Dictionary<string,object?>{{"count",failures>0?failures:state.Succeeded}});
     }

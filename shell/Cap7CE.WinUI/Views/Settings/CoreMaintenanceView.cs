@@ -16,12 +16,12 @@ internal sealed class CoreMaintenanceView
         var reconnect=L.Button("ui.maintenance.reconnect",()=>{});
         var install=L.Button("ui.maintenance.install",()=>{});
         Section=new(Ui.Row(reconnect,install),status){Visibility=Visibility.Collapsed};
-        void Report(string text){L.Literal(status,TextBlock.TextProperty,text);Section.Visibility=Visibility.Visible;}
+        void Report(UiMessage text){L.Message(status,TextBlock.TextProperty,text);Section.Visibility=Visibility.Visible;}
         void ReportResource(string key){L.Bind(status,TextBlock.TextProperty,key);Section.Visibility=Visibility.Visible;}
         reconnect.Click+=async(_,_)=>{
             install.IsEnabled=reconnect.IsEnabled=false;
             try{await services.ConnectAsync();ReportResource("ui.maintenance.reconnected");}
-            catch(Exception error){Report(error.Message);}
+            catch(Exception error){Report(FailureText.From(error));}
             finally{install.IsEnabled=reconnect.IsEnabled=true;}
         };
         install.Click+=async(_,_)=>{
@@ -29,10 +29,10 @@ internal sealed class CoreMaintenanceView
             if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
             install.IsEnabled=reconnect.IsEnabled=false;
             try {
-                if(!File.Exists(NativeCoreSetup.Executable(services.Root)))throw new IOException(AppLanguage.Text("ui.maintenance.missingSetup"));
+                if(!File.Exists(NativeCoreSetup.Executable(services.Root)))throw new UiFailure("ui.maintenance.missingSetup");
                 await services.DisconnectAsync();await NativeCoreSetup.RunAsync(services.Root,repair:true);await services.ConnectAsync();
                 ReportResource("ui.maintenance.configured");
-            }catch(Exception error){Report(error.Message);}
+            }catch(Exception error){Report(FailureText.From(error));}
             finally{install.IsEnabled=reconnect.IsEnabled=true;}
         };
     }

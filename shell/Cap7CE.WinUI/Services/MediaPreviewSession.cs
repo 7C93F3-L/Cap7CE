@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Media.Core;
 using Windows.Media.Playback;
@@ -13,10 +14,10 @@ internal sealed class MediaPreviewSession : IDisposable
     public MediaPlayerElement Element {get;}=new(){AreTransportControlsEnabled=true,AutoPlay=false};
     private readonly MediaPlayer player=new(){AutoPlay=false};
     private readonly MediaSource source;
-    private readonly Action<string> failure;
+    private readonly Action<UiMessage> failure;
     private readonly Action<double,double>? dimensions;
     private bool disposed;
-    public MediaPreviewSession(StorageFile file,Action<string> failure,Action<double,double>? dimensions=null,bool autoPlayAndLoop=false)
+    public MediaPreviewSession(StorageFile file,Action<UiMessage> failure,Action<double,double>? dimensions=null,bool autoPlayAndLoop=false)
     {
         this.failure=failure;this.dimensions=dimensions;source=MediaSource.CreateFromStorageFile(file);
         try {
@@ -37,7 +38,7 @@ internal sealed class MediaPreviewSession : IDisposable
     private void Failed(MediaPlayer sender,MediaPlayerFailedEventArgs args)
     {
         var message=args.ErrorMessage;
-        Element.DispatcherQueue.TryEnqueue(()=>{if(!disposed)failure("媒体播放失败："+message);});
+        Element.DispatcherQueue.TryEnqueue(()=>{if(!disposed)failure(UiMessage.Key("ui.preview.mediaFailed",new Dictionary<string,object?>{{"error",message}}));});
     }
     public void Dispose()
     {

@@ -25,9 +25,7 @@ internal sealed class FavoriteService(string root)
         {
             var reply = await NativeCoreRequest.SendAsync(Path.Combine(root, "core/artifacts/configuration-host/Cap7CE.Core.Configuration.Host.exe"),
                 ["--favorites-file", ConfigurationPath], new { version = 1, operation, id, path, name, direction, orderedIds, expectedIds });
-            if (!reply.GetProperty("ok").GetBoolean()) throw new IOException(reply.GetProperty("error").GetString() switch {
-                "favorite-directories-order-changed" or "favorite-directory-invalid-order"=>"收藏列表已变化，请取消后重新调整位置",var error=>error
-            });
+            if (!reply.GetProperty("ok").GetBoolean()) throw new IOException(reply.GetProperty("error").GetString());
             Items = reply.GetProperty("directories").Deserialize<Favorite[]>(FramedRpc.Json) ?? [];
             Changed?.Invoke();
         }

@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
@@ -18,7 +19,7 @@ internal sealed class FilterAvailabilityService(ShellServices services,Action<Fi
         var key=$"{(core is null?0:RuntimeHelpers.GetHashCode(core))}|{path}|{hidden}|{string.Join(',',extensions.Order())}";
         Task<CoreSearchScopeRequest?>? scope=null;
         controller.Update(key,requested,async(kind,colors,token)=>{
-            if(core is null||volumes.Length==0)throw new IOException("Core 尚未就绪");
+            if(core is null||volumes.Length==0)throw new UiFailure("ui.error.coreNotReady");
             scope??=Resolve();var resolved=await scope;
             var facts=new CoreSearchFactFilter(kind,FormatRegistry.ExtractorVersion(kind),VisualGroups:colors?[new CoreSearchVisualGroup([[new("brightnessMean","<=",10000)]])]:null);
             var page=await core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart,
@@ -28,7 +29,7 @@ internal sealed class FilterAvailabilityService(ShellServices services,Action<Fi
             {
                 if(path.Length==0)return null;
                 var value=await core.RequestAsync<CatalogResolveScopeResponse>(CoreOperations.CatalogResolveScope,new CatalogResolveScopeRequest(path),token);
-                if(!value.Resolved||!value.Queryable||value.VolumeId is null||value.DirectoryFileReference is null)throw new IOException("目录不可查询");
+                if(!value.Resolved||!value.Queryable||value.VolumeId is null||value.DirectoryFileReference is null)throw new UiFailure("ui.error.directoryQuery");
                 return new("directory-descendants",value.VolumeId,value.DirectoryFileReference);
             }
         },force);

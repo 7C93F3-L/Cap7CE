@@ -24,8 +24,4 @@ internal sealed class BrowseTiming : IDisposable
             }
         });
     }
-    public static string ErrorText(Exception error)=>(error.Data["CoreMessage"] as string) switch {
-        "directory-browse-capacity-exceeded"=>"实时递归读取超出范围限制；请检查此磁盘的索引状态，或关闭包含子文件夹后浏览。",
-        _=>error.Message
-    };
 }

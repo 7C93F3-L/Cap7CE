@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
@@ -76,7 +77,7 @@ internal sealed class ResultsView : UserControl
         root.AddHandler(UIElement.TappedEvent,new TappedEventHandler((_,e)=>{if(IsBlank(e.OriginalSource as DependencyObject))ClearSelection();}),true);Content=root;
     }
     public void Configure(FileCommands value){commands=value;gallery.Configure(value);}
-    public void Bind(AssetCollection value,bool isHome=false,bool busy=false,string? error=null,bool filtered=false,bool preserveSelection=false)
+    public void Bind(AssetCollection value,bool isHome=false,bool busy=false,UiMessage? error=null,bool filtered=false,bool preserveSelection=false)
     {
         if(!ReferenceEquals(items,value)||home!=isHome) {
             var retained=preserveSelection?CatalogRefreshRules.RetainSelection(Selection,value,item=>item.FullPath+"|"+item.Entry.FileReference):[];
@@ -90,7 +91,7 @@ internal sealed class ResultsView : UserControl
         }
         emptyPanel.Visibility=value.Count==0?Visibility.Visible:Visibility.Collapsed;
         L.Bind(empty,TextBlock.TextProperty,busy?"main.loading":error is not null?"main.locationUnavailable":"main.noMatches");
-        if(error is not null)L.Literal(emptyHint,TextBlock.TextProperty,error);else L.Bind(emptyHint,TextBlock.TextProperty,filtered?"main.adjustFilters":"main.emptyFolder");
+        if(error is not null)L.Message(emptyHint,TextBlock.TextProperty,error);else L.Bind(emptyHint,TextBlock.TextProperty,filtered?"main.adjustFilters":"main.emptyFolder");
         retry.Visibility=!busy?Visibility.Visible:Visibility.Collapsed;clearFilters.Visibility=!busy&&filtered?Visibility.Visible:Visibility.Collapsed;
     }
     public void Preferences(ShellPreferences value){var previous=ActiveView;var old=IsGallery;listMode=value.View=="list";square=value.SquareTiles;gallery.Size(value.TileSize);ApplyView(previous,old);gridLayout.Refresh();}

@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -23,13 +24,13 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
             if (process is not null) return;
             var directory = Path.Combine(root, "artifacts/metadata-worker/v1"); var node = Path.Combine(directory, "node.exe");
             await using var source = File.OpenRead(node);
-            if (Convert.ToHexString(await SHA256.HashDataAsync(source)).ToLowerInvariant() != "3331e1ffe19874215472217c5e94f5a0c6d8e18c4ac7111d3937aa0ad5e9b4a5") throw new IOException("Core Node 摘要不符");
+            if (Convert.ToHexString(await SHA256.HashDataAsync(source)).ToLowerInvariant() != "3331e1ffe19874215472217c5e94f5a0c6d8e18c4ac7111d3937aa0ad5e9b4a5") throw new UiFailure("ui.error.nodeChecksum");
             var info = new ProcessStartInfo(Executable) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true,
                 RedirectStandardOutput = true, RedirectStandardError = true, WorkingDirectory = directory };
             foreach (var key in new[] { "NODE_OPTIONS", "NODE_PATH", "ELECTRON_RUN_AS_NODE", "CAP7CE_CORE_SCRATCH_ROOT", "CAP7CE_VISUAL_SCRATCH" }) info.Environment.Remove(key);
             info.Environment["CAP7CE_CORE_VISUAL_HOST"] = Executable;
             foreach (var arg in new[] { "--node-worker", "--parent-pid", Environment.ProcessId.ToString(), node, Path.Combine(directory, worker), dataRoot, nonce }) info.ArgumentList.Add(arg);
-            process = Process.Start(info) ?? throw new IOException("Core 宿主不可用");
+            process = Process.Start(info) ?? throw new UiFailure("ui.error.nodeHost");
             process.ErrorDataReceived += (_, _) => { }; process.BeginErrorReadLine();
             rpc = new(process.StandardOutput.BaseStream, process.StandardInput.BaseStream, 64 * 1024 * 1024);
         }

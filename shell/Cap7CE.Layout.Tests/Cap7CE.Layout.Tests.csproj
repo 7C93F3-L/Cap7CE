@@ -7,6 +7,7 @@
     <Compile Include="../Cap7CE.WinUI/Localization/FactTextKeys.cs" Link="FactTextKeys.cs" />
     <Compile Include="../Cap7CE.WinUI/Localization/MaintenanceText.cs" Link="MaintenanceText.cs" />
     <Compile Include="../Cap7CE.WinUI/Localization/ProgressText.cs;../Cap7CE.WinUI/Localization/UiMessage.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../Cap7CE.WinUI/Localization/UiFailure.cs;../Cap7CE.WinUI/Localization/FailureText.cs" Link="%(Filename)%(Extension)" />
     <None Include="../artifacts/assets/filter-*.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Cap7CE.WinUI/Localization/messages.json" Link="Assets/languages.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

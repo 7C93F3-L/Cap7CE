@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Dispatching;
@@ -18,7 +19,7 @@ internal sealed class WorkspaceLayoutController : IDisposable
     private readonly SidebarView sidebar;
     private readonly PaneResizer sidebarSizer;
     private readonly PreferenceStore preferences;
-    private readonly Action<string> notice;
+    private readonly Action<UiMessage> notice;
     private readonly WorkspaceLayoutPolicy policy = new();
     private WorkspaceLayoutSnapshot? snapshot;
     private double sidebarWidth, detailsWidth;
@@ -30,7 +31,7 @@ internal sealed class WorkspaceLayoutController : IDisposable
 
     public WorkspaceLayoutController(Window window, FrameworkElement surface, Grid root, ColumnDefinition sidebarColumn,
         ColumnDefinition detailsColumn, ContentControl sidebarHost, ContentControl filterHost, FrameworkElement mainHost, FrameworkElement detailsHost,
-        SidebarView sidebar, PaneResizer sidebarSizer, PaneResizer detailsSizer, PreferenceStore preferences, Action<string> notice)
+        SidebarView sidebar, PaneResizer sidebarSizer, PaneResizer detailsSizer, PreferenceStore preferences, Action<UiMessage> notice)
     {
         this.window = window; this.surface = surface; this.root = root; this.sidebarColumn = sidebarColumn;
         this.detailsColumn = detailsColumn; this.sidebarHost = sidebarHost; this.filterHost = filterHost;
@@ -100,7 +101,7 @@ internal sealed class WorkspaceLayoutController : IDisposable
         if (disposed) return;
         try { await preferences.SaveAsync(left ? preferences.Current with { SidebarWidth = sidebarWidth }
             : preferences.Current with { DetailsWidth = detailsWidth }); }
-        catch (Exception error) { notice(error.Message); }
+        catch (Exception error) { notice(FailureText.From(error)); }
     }
 
     public async Task ToggleAsync(bool filters)

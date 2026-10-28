@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Text.Json;
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Models;
@@ -31,7 +32,7 @@ internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDispos
         {
             var path=Path.GetFullPath(item.GetProperty("path").GetString()!);
             if(!path.StartsWith(root.TrimEnd('\\')+"\\",StringComparison.OrdinalIgnoreCase)
-                ||!recursive&&!string.Equals(Path.GetDirectoryName(path)?.TrimEnd('\\'),root.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase))throw new IOException("目录浏览结果越界");
+                ||!recursive&&!string.Equals(Path.GetDirectoryName(path)?.TrimEnd('\\'),root.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase))throw new UiFailure("ui.error.directoryPath");
             long? modified=item.TryGetProperty("modifiedAt",out var date)&&date.ValueKind==JsonValueKind.String
                 &&DateTimeOffset.TryParse(date.GetString(),out var parsed)?parsed.UtcDateTime.ToFileTimeUtc():null;
             var entry=new BasicSearchItem(path,item.GetProperty("name").GetString()!,Path.GetFileName(path),

@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Buffers.Binary;
 
 namespace Cap7CE.WinUI.Services;
@@ -32,7 +33,7 @@ internal sealed record AnimationSource(byte[] Bytes,string MimeType,int Width,in
         }
         if(info is not {} value)return null;
         if(file.Length>64*1024*1024||value.Width<=0||value.Height<=0||(long)value.Width*value.Height>40_000_000)
-            throw new IOException("动图超过预览上限（64 MiB / 4000万像素），请使用默认程序打开。");
+            throw new UiFailure("ui.error.animationLimit");
         var bytes=new byte[checked((int)file.Length)];file.Position=0;
         await file.ReadExactlyAsync(bytes,token);token.ThrowIfCancellationRequested();
         return new(bytes,value.MimeType,value.Width,value.Height);

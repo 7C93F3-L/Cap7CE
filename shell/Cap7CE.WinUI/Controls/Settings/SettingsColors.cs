@@ -25,7 +25,7 @@ internal sealed class SettingsColors : UserControl
         reset.Click+=async(_,_)=>{
             reset.IsEnabled=false;
             try {var defaults=new ShellPreferences();await save(read() with{Color1=defaults.Color1,Color2=defaults.Color2});Refresh();}
-            catch(Exception error){notice(error.Message);}finally{reset.IsEnabled=true;}
+            catch(Exception error){notice(FailureText.From(error));}finally{reset.IsEnabled=true;}
         };
         var panel=new Grid {ColumnSpacing=8};
         panel.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});panel.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
@@ -68,7 +68,7 @@ internal sealed class SettingsColors : UserControl
                 if(!picker.TryRead(out var color)){notice(UiMessage.Key("native.colors.invalid"));return;}
                 var hex=$"#{color.R:X2}{color.G:X2}{color.B:X2}";
                 await save(primary?read() with{Color1=hex}:read() with{Color2=hex});Refresh();flyout.Hide();
-            } catch(Exception error){notice(error.Message);}finally{apply.IsEnabled=true;}
+            } catch(Exception error){notice(FailureText.From(error));}finally{apply.IsEnabled=true;}
         };
         actions.Children.Add(L.Button("common.cancel",()=>flyout.Hide()));actions.Children.Add(apply);flyout.ShowAt(anchor);
     }

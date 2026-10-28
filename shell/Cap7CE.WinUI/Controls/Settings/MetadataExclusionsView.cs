@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
@@ -17,7 +18,7 @@ internal sealed class MetadataExclusionsView : UserControl
     public bool Busy=>saving;
     public Button AddButton {get;}
     public event Action? Changed;
-    public event Action<string>? Failure;
+    public event Action<UiMessage>? Failure;
     public MetadataExclusionsView(ShellServices services,Window owner)
     {
         this.services=services;this.owner=owner;rows.Spacing=4;
@@ -57,7 +58,7 @@ internal sealed class MetadataExclusionsView : UserControl
     private async void Run(Func<Task> action)
     {
         if(saving||blocked)return;saving=true;IsEnabled=AddButton.IsEnabled=false;Changed?.Invoke();
-        try{await action();}catch(Exception error){Render();Failure?.Invoke(error.Message);}
+        try{await action();}catch(Exception error){Render();Failure?.Invoke(FailureText.From(error));}
         finally{saving=false;IsEnabled=AddButton.IsEnabled=!blocked;Changed?.Invoke();}
     }
     private async Task AddAsync()

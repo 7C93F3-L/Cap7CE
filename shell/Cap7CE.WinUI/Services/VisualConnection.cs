@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Text.Json;
 using Cap7CE.WinUI.Models;
 namespace Cap7CE.WinUI.Services;
@@ -20,7 +21,7 @@ internal sealed class VisualConnection : IAsyncDisposable
                 [path, shell ? (preview ? "skim-shell-preview" : "skim-shell-thumbnail") : preview ? "skim-preview" : "skim-thumbnail"]);
             token.ThrowIfCancellationRequested();
             var image = Path.GetFullPath(value.GetProperty("imagePath").GetString()!);
-            if (!image.StartsWith(cacheRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("Core 图像越界");
+            if (!image.StartsWith(cacheRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new UiFailure("ui.error.imagePath");
             return image;
         }
         finally { slots.Release(); }

@@ -27,7 +27,7 @@ module.exports = root => {
   assert.equal(sizeKeys.length, sizePresets.length, 'every size preset must have a language key');
   const maintenance = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization/MaintenanceText.cs'), 'utf8');
   assert(!/Microsoft\.UI|Services|RequestAsync|File\.|Directory\.|Timer|Task\.Delay/.test(maintenance), 'task text formatting must stay free of UI, IO and service actions');
-  for (const file of ['UiMessage.cs', 'ProgressText.cs']) {
+  for (const file of ['UiMessage.cs', 'ProgressText.cs', 'UiFailure.cs', 'FailureText.cs']) {
     const text = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization', file), 'utf8');
     assert(!/Microsoft\.UI|Services|RequestAsync|File\.|Directory\.|Timer|Task\.Delay/.test(text), `${file}: deferred text must stay free of UI, IO and service actions`);
   }

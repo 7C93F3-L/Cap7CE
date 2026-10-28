@@ -64,7 +64,7 @@ internal sealed class SettingsCatalog
         var toggle=L.Toggle();toggle.IsOn=read();var syncing=false;
         toggle.Toggled+=async(_,_)=>{
             if(syncing)return;toggle.IsEnabled=false;
-            try{await save(toggle.IsOn);}catch(Exception error){notice(error.Message);syncing=true;toggle.IsOn=read();syncing=false;}
+            try{await save(toggle.IsOn);}catch(Exception error){notice(FailureText.From(error));syncing=true;toggle.IsOn=read();syncing=false;}
             finally{toggle.IsEnabled=true;}
         };return toggle;
     }
@@ -105,7 +105,7 @@ internal sealed class SettingsCatalog
         var box=L.Choice(labels,read());var syncing=false;
         box.SelectionChanged+=async(_,_)=>{
             if(syncing||box.SelectedIndex<0)return;box.IsEnabled=false;
-            try{await change(box.SelectedIndex);}catch(Exception error){notice(error.Message);syncing=true;box.SelectedIndex=read();syncing=false;}
+            try{await change(box.SelectedIndex);}catch(Exception error){notice(FailureText.From(error));syncing=true;box.SelectedIndex=read();syncing=false;}
             finally{box.IsEnabled=true;}
         };return box;
     }

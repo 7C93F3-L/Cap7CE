@@ -51,7 +51,7 @@ internal sealed class DetailsKeywordEditor:UserControl
     public void SetItems(IReadOnlyList<AssetItem> value)
     {
         Stop();items=value.Where(item=>!item.Entry.IsDirectory).ToArray();snapshot=new([],[]);draft.Reset([]);ready=saving=focusRequested=readFailed=refreshPending=false;
-        L.Bind(status,TextBlock.TextProperty,items.Count==0?"ui.keywords.unavailable":"ui.keywords.reading");input.Text="";RenderTags();Show();
+        L.Literal(status,ToolTipService.ToolTipProperty,null);L.Bind(status,TextBlock.TextProperty,items.Count==0?"ui.keywords.unavailable":"ui.keywords.reading");input.Text="";RenderTags();Show();
     }
     public void RequestEdit(){focusRequested=true;if(ready){focusRequested=false;input.Focus(FocusState.Programmatic);}}
     public void SetAutomaticBusy(bool value){automaticBusy=value;Show();}
@@ -61,7 +61,7 @@ internal sealed class DetailsKeywordEditor:UserControl
         if(saving){refreshPending=true;return;}
         if(draft.Dirty){refreshPending=true;return;}
         pending.Cancel();pending.Dispose();pending=new();var token=pending.Token;
-        ready=readFailed=false;L.Bind(status,TextBlock.TextProperty,"ui.keywords.reading");Show();
+        ready=readFailed=false;L.Literal(status,ToolTipService.ToolTipProperty,null);L.Bind(status,TextBlock.TextProperty,"ui.keywords.reading");Show();
         try {
             var result=await read(target,token);
             if(token.IsCancellationRequested||!ReferenceEquals(items,target))return;
@@ -69,7 +69,7 @@ internal sealed class DetailsKeywordEditor:UserControl
             if(focusRequested){focusRequested=false;input.Focus(FocusState.Programmatic);}
         }
         catch(OperationCanceledException){}
-        catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.readFailed");ToolTipService.SetToolTip(status,error.Message);Show();}}
+        catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.readFailed");L.Message(status,ToolTipService.ToolTipProperty,FailureText.From(error));Show();}}
     }
     private void RenderTags()
     {
@@ -94,7 +94,7 @@ internal sealed class DetailsKeywordEditor:UserControl
             if(result.Failed>0){readFailed=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.partial",()=>new Dictionary<string,object?>{{"count",result.Failed}});notice(UiMessage.Key("ui.keywords.saveSummary",new Dictionary<string,object?>{{"succeeded",result.Succeeded},{"failed",result.Failed}}));return;}
             snapshot=result.Snapshot;draft.Reset(snapshot.Words);input.Text="";reload=refreshPending;refreshPending=readFailed=false;L.Literal(status,TextBlock.TextProperty,"");RenderTags();notice(UiMessage.Key(items.Count==1?"ui.keywords.saved":"ui.keywords.savedFiles",new Dictionary<string,object?>{{"count",result.Succeeded}}));
         }
-        catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Literal(status,TextBlock.TextProperty,error.Message);}}
+        catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Message(status,TextBlock.TextProperty,FailureText.From(error));}}
         finally{if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){saving=false;Show();if(reload)_=ReadAsync();}}
     }
     private void Show()

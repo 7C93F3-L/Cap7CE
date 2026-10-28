@@ -71,7 +71,7 @@ public sealed partial class MainWindow : Window
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
         services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{MainWindowGeometry.RestoreDefault(this);WindowActivation.Show(this);},OpenSettings,
-            ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);},error=>Notice(error.Message));
+            ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);},error=>Notice(FailureText.From(error)));
         toolbar.ViewSelected+=mode=>commands.Run(()=>workspace.UpdateAsync(value=>value with{
             View=mode==Models.WorkspaceViewMode.List?"list":"grid",
             SquareTiles=mode==Models.WorkspaceViewMode.List?value.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
@@ -101,14 +101,14 @@ public sealed partial class MainWindow : Window
     }
     private async Task StartAsync()
     {
-        try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",error.Message}}));}
-        try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",error.Message}}));}
-        try{services.Shortcuts?.Configure(services.Preferences.Current.QuickActions);}catch(Exception error){Notice(error.Message);}
+        try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
+        try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
+        try{services.Shortcuts?.Configure(services.Preferences.Current.QuickActions);}catch(Exception error){Notice(FailureText.From(error));}
         AssetTile.Visuals=services.Visuals;NewTab("");
-        try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice(UiMessage.Key("ui.notice.favoritesFailed",new Dictionary<string,object?>{{"error",error.Message}}));}
+        try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice(UiMessage.Key("ui.notice.favoritesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         // Core readiness updates capabilities; it must not replace user navigation
         // or cancel directory reads started while the connection was pending.
-        try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(error.Message);}
+        try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(FailureText.From(error));}
     }
     private void NewTab(string path,bool favorite=false)
     {
@@ -160,7 +160,7 @@ public sealed partial class MainWindow : Window
             if(await picker.PickSingleFolderAsync() is not { } folder)return;FileAccessGuard.RejectLinks(folder.Path);
             if(favorite)await services.Favorites.ExecuteAsync("add",path:folder.Path);else NewTab(folder.Path);
         }
-        catch(Exception error){Notice(error.Message);}
+        catch(Exception error){Notice(FailureText.From(error));}
     }
     private void ShowPreview(Models.AssetItem item)
     {

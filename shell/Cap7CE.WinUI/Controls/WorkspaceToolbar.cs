@@ -25,7 +25,7 @@ internal sealed class WorkspaceToolbar : UserControl
     public event Action<double>? SizeChangedByUser;
     public event Action<double,WorkspacePreferenceScope>? SizeCommitted;
     public event Action<Func<WorkspaceOptions,WorkspaceOptions>>? OptionsChanged;
-    public event Action<string>? Failure;
+    public event Action<UiMessage>? Failure;
     public WorkspaceToolbar()
     {
         root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});root.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
@@ -89,7 +89,7 @@ internal sealed class WorkspaceToolbar : UserControl
     public bool ContainsKeyboardTarget(DependencyObject target)
     {for(DependencyObject? item=target;item is not null;item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(ReferenceEquals(item,this))return true;return false;}
     private void Reload(){if(session is not null)Run(()=>session.NavigateAsync(session.PathValue,false));}
-    private async void Run(Func<Task> action){if(session is null)return;try{await action();}catch(Exception error){Failure?.Invoke(error.Message);}}
+    private async void Run(Func<Task> action){if(session is null)return;try{await action();}catch(Exception error){Failure?.Invoke(FailureText.From(error));}}
     private static string ViewKey(WorkspaceViewMode mode)=>mode switch {WorkspaceViewMode.List=>"main.viewList",WorkspaceViewMode.OriginalRatio=>"main.viewOriginal",_=>"main.viewSquare"};
     private void ShowView()
     {

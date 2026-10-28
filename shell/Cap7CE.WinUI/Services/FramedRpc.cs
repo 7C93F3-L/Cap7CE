@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -22,14 +23,14 @@ internal sealed class FramedRpc : IAsyncDisposable
     }
     public async Task<JsonElement> RequestAsync(string id, object request, CancellationToken token)
     {
-        if(!IsConnected)throw new IOException("查询连接已断开，请重新连接后重试。");
-        if (pending.Count >= 32) throw new IOException("Core 请求队列已满");
+        if(!IsConnected)throw new UiFailure("ui.error.coreDisconnected");
+        if (pending.Count >= 32) throw new UiFailure("ui.error.rpcQueue");
         var completion = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
         if (!pending.TryAdd(id, completion)) throw new InvalidOperationException("Duplicate request");
         try
         {
             var payload = JsonSerializer.SerializeToUtf8Bytes(request, Json);
-            if (payload.Length > maximum) throw new IOException("Core 请求超出帧限制");
+            if (payload.Length > maximum) throw new UiFailure("ui.error.rpcRequest");
             await writing.WaitAsync(token);
             try
             {
@@ -42,7 +43,7 @@ internal sealed class FramedRpc : IAsyncDisposable
             return await completion.Task.WaitAsync(token);
         }
         catch(OperationCanceledException)when(!token.IsCancellationRequested&&!IsConnected)
-        {throw new IOException("查询连接已断开，请重新连接后重试。");}
+        {throw new UiFailure("ui.error.coreDisconnected");}
         finally { pending.TryRemove(id, out _); }
     }
     private async Task ReadAsync()
@@ -53,7 +54,7 @@ internal sealed class FramedRpc : IAsyncDisposable
             {
                 var header = new byte[4]; await input.ReadExactlyAsync(header, ended.Token);
                 var length = BinaryPrimitives.ReadInt32LittleEndian(header);
-                if (length < 2 || length > maximum) throw new IOException("Core 响应帧无效");
+                if (length < 2 || length > maximum) throw new UiFailure("ui.error.rpcResponse");
                 var payload = new byte[length]; await input.ReadExactlyAsync(payload, ended.Token);
                 using var document = JsonDocument.Parse(payload);
                 var value = document.RootElement;
@@ -64,7 +65,7 @@ internal sealed class FramedRpc : IAsyncDisposable
         catch (Exception error) when (error is not OutOfMemoryException)
         {
             ended.Cancel();
-            foreach (var completion in pending.Values) completion.TrySetException(new IOException("Core 连接已结束", error));
+            foreach (var completion in pending.Values) completion.TrySetException(new UiFailure("ui.error.rpcEnded", inner:error));
             pending.Clear();
         }
     }

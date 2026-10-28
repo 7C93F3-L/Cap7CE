@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 
 namespace Cap7CE.WinUI.Services;
@@ -16,17 +17,17 @@ internal static class MetadataBatchService
             if(item.BuiltIn&&string.IsNullOrEmpty(item.Path))continue;
             if(!volumes.Any(volume=>item.Path.StartsWith(volume.Drive.TrimEnd('\\','/')+"\\",StringComparison.OrdinalIgnoreCase)))continue;
             try {
-                if(!File.GetAttributes(item.Path).HasFlag(FileAttributes.Directory))throw new IOException("排除项不是目录："+item.Path);
+                if(!File.GetAttributes(item.Path).HasFlag(FileAttributes.Directory))throw new UiFailure("ui.error.exclusionDirectory",new Dictionary<string,object?>{{"path",item.Path}});
                 existing.Add(item);
             }catch(FileNotFoundException)when(item.BuiltIn){}catch(DirectoryNotFoundException)when(item.BuiltIn){}
         }
         var policy=await MetadataExclusions.BuildAsync(volumes,existing,async(path,abort)=>{
-            if(!ReferenceEquals(owner,services.Core))throw new IOException("后台连接已改变，请重新开始提取。");
+            if(!ReferenceEquals(owner,services.Core))throw new UiFailure("ui.error.batchConnection");
             FileAccessGuard.RejectLinks(path);
             var scope=await services.Metadata.InvokeAsync("resolveScope",new{path},abort);
             return new(scope.GetProperty("volumeId").GetString()!,scope.GetProperty("rootFileReference").GetString());
         },token);
-        if(!ReferenceEquals(owner,services.Core))throw new IOException("后台连接已改变，请重新开始提取。");
+        if(!ReferenceEquals(owner,services.Core))throw new UiFailure("ui.error.batchConnection");
         await services.Metadata.InvokeAsync("start",new{policy,allowMetadataExtraction=true},token);
     }
 }

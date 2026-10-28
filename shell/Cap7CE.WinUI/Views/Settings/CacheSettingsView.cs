@@ -40,7 +40,7 @@ internal sealed class CacheSettingsView : StackPanel
             notice(UiMessage.Key("ui.cache.cleared"));
             await RefreshAsync();
         }
-        catch(Exception error){notice(UiMessage.Key("ui.cache.failed",new Dictionary<string,object?>{{"error",error.Message}}));await RefreshAsync();}
+        catch(Exception error){notice(UiMessage.Key("ui.cache.failed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));await RefreshAsync();}
         finally{busy=false;clear.IsEnabled=true;}
     }
     private static string Size(long bytes)

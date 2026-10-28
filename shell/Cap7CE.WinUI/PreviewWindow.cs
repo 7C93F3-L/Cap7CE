@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Controls;
@@ -67,7 +69,7 @@ internal sealed class PreviewWindow : Window
     private async void SetPinned(bool value)
     {
         try{await services.Preferences.UpdateAsync(prefs=>prefs with{PreviewAlwaysOnTop=value});}
-        catch(Exception error){if(!closed){ApplyAppearance();status.Visibility=Visibility.Visible;status.Text="无法保存固定状态："+error.Message;}}
+        catch(Exception error){if(!closed){ApplyAppearance();status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,UiMessage.Key("ui.preview.pinFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}}
     }
     private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();}
     public void Show(AssetItem item,IReadOnlyList<AssetItem> source)
@@ -91,7 +93,7 @@ internal sealed class PreviewWindow : Window
     {
         if(closed)return;
         reading.Cancel();reading.Dispose();reading=new();var token=reading.Token;
-        ReleaseMedia();content.Content=null;status.Text="正在准备预览…";
+        ReleaseMedia();content.Content=null;L.Bind(status,TextBlock.TextProperty,"ui.preview.preparing");
         status.Visibility=Visibility.Visible;root.Padding=new(5);
         UpdateNavigation();
         var sourceValidated=false;
@@ -117,7 +119,7 @@ internal sealed class PreviewWindow : Window
                 var file=await StorageFile.GetFileFromPathAsync(item.FullPath);
                 token.ThrowIfCancellationRequested();
                 if(kind=="audio")geometry.Apply(640,640);
-                media=new MediaPreviewSession(file,message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;status.Text=message;}},
+                media=new MediaPreviewSession(file,message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,message);}},
                     (width,height)=>{if(!closed&&!token.IsCancellationRequested&&kind=="video")geometry.Apply(width,height);},autoPlayAndLoop:true);
                 if(kind=="audio") {
                     var audio=new AudioPreviewView(item,media.Element);content.Content=audio;
@@ -133,7 +135,7 @@ internal sealed class PreviewWindow : Window
                 if(token.IsCancellationRequested)return;
                 var value=reply.GetProperty("value");var raw=value.GetProperty("content").GetString()??"";
                 if(item.Entry.Extension.ToLowerInvariant() is ".doc" or ".docx") {
-                    content.Content=Text(raw);status.Text=value.GetProperty("truncated").GetBoolean()?"正文已按上限截断":"正文预览";return;
+                    content.Content=Text(raw);L.Bind(status,TextBlock.TextProperty,value.GetProperty("truncated").GetBoolean()?"ui.preview.textTruncated":"ui.preview.textBody");return;
                 }
                 status.Visibility=Visibility.Collapsed;
                 var textPreview=new TextPreviewView(()=>OpenExternal(true),token);content.Content=textPreview;
@@ -147,7 +149,7 @@ internal sealed class PreviewWindow : Window
                 token.ThrowIfCancellationRequested();status.Visibility=Visibility.Collapsed;
                 var pdf=new PdfPreviewView(()=>OpenExternal(true),
                     (width,height)=>{if(!closed&&!token.IsCancellationRequested)geometry.Apply(width,height);},
-                    message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;status.Text=message;}});
+                    message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,message);}});
                 content.Content=pdf;await pdf.LoadAsync(pdfPath,token);return;
             }
             if(kind is "epub" or "mobi" or "archive" or "font")
@@ -174,7 +176,7 @@ internal sealed class PreviewWindow : Window
             var previewImage=new ImagePreviewView(()=>OpenExternal(true));content.Content=previewImage;
             var dimensions=await previewImage.LoadAsync(prepared,token);
             token.ThrowIfCancellationRequested();geometry.Apply(dimensions.Width,dimensions.Height);
-            if(!token.IsCancellationRequested)status.Text=$"{index+1} / {items.Count} · Space / Esc 关闭";
+            if(!token.IsCancellationRequested)L.Bind(status,TextBlock.TextProperty,"ui.preview.position",()=>new Dictionary<string,object?>{{"index",index+1},{"total",items.Count}});
         }
         catch(OperationCanceledException){}
         catch(Exception error){if(!token.IsCancellationRequested){
@@ -205,5 +207,5 @@ internal sealed class PreviewWindow : Window
         }catch{}
     }
     private void OpenExternal(bool closeAfter=false)
-    {if(index<0||index>=items.Count)return;try{FileAccessGuard.Validate(items[index]);System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(items[index].FullPath){UseShellExecute=true});if(closeAfter)Close();}catch(Exception error){status.Visibility=Visibility.Visible;status.Text=error.Message;}}
+    {if(index<0||index>=items.Count)return;try{FileAccessGuard.Validate(items[index]);System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(items[index].FullPath){UseShellExecute=true});if(closeAfter)Close();}catch(Exception error){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,FailureText.From(error));}}
 }

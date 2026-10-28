@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 namespace Cap7CE.WinUI.Models;
 
 internal sealed class KeywordDraft
@@ -16,7 +17,7 @@ internal sealed class KeywordDraft
         var result=words.Concat(Input.Split([',','，','\r','\n'],StringSplitOptions.RemoveEmptyEntries))
             .Select(word=>word.Trim()).Where(word=>word.Length>0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if(result.Length>128||result.Any(word=>word.Length>256||word.Any(char.IsControl))||string.Join(',',result).Length>32000)
-            throw new IOException("关键词超出限制，请减少数量或缩短内容后重试。");
+            throw new UiFailure("ui.error.keywordLimit");
         return result;
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Data.Pdf;
@@ -14,12 +15,12 @@ internal sealed class PdfPreviewView : Grid
     private readonly Button previous,next;
     private readonly TextBlock count=Ui.Text("",true);
     private readonly Action<double,double> resized;
-    private readonly Action<string> failed;
+    private readonly Action<UiMessage> failed;
     private PdfDocument? document;
     private CancellationToken token;
     private uint page;
     private bool rendering;
-    public PdfPreviewView(Action openExternal,Action<double,double> resized,Action<string> failed)
+    public PdfPreviewView(Action openExternal,Action<double,double> resized,Action<UiMessage> failed)
     {
         this.resized=resized;this.failed=failed;
         previous=Ui.Tool("\uE76B","上一页",()=>Move(-1));next=Ui.Tool("\uE76C","下一页",()=>Move(1));
@@ -40,7 +41,7 @@ internal sealed class PdfPreviewView : Grid
         var old=page;page=(uint)target;
         try{await RenderAsync();}
         catch(OperationCanceledException){}
-        catch(Exception error){page=old;UpdateButtons();failed(error.Message);}
+        catch(Exception error){page=old;UpdateButtons();failed(FailureText.From(error));}
     }
     private void UpdateButtons()
     {previous.IsEnabled=!rendering&&page>0;next.IsEnabled=!rendering&&document is not null&&page+1<document.PageCount;}
