@@ -2,6 +2,7 @@ namespace Cap7CE.WinUI.Models;
 
 public sealed record ShellPreferences
 {
+    public const double DefaultUiFontSize=13.0;
     public string Language {get;init;}="zh-CN";
     public WorkspaceOptions ComputerWorkspace {get;init;}=WorkspaceOptions.ComputerDefault;
     public WorkspaceOptions FavoriteWorkspace {get;init;}=WorkspaceOptions.FavoritesDefault;
@@ -21,8 +22,6 @@ public sealed record ShellPreferences
 	public string Color1 { get; init; } = "#7894F8";
 
 	public string Color2 { get; init; } = "#67BEC1";
-
-	public double FontSize { get; init; } = 13.0;
 
 	public double TileSize { get; init; } = 160.0;
 

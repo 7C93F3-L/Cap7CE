@@ -20,7 +20,7 @@ internal static class WorkspacePreferenceChecks
         var restored=JsonSerializer.Deserialize<ShellPreferences>(JsonSerializer.Serialize(changed,json),json)!;
         Require(WorkspaceOptions.Read(restored,computer)==WorkspaceOptions.Read(changed,computer),"Computer config round trip retains all toolbar fields");
         Require(WorkspaceOptions.Read(restored,favorites)==WorkspaceOptions.Read(changed,favorites),"shared favorite config round trip retains all toolbar fields");
-        Require(restored.Theme=="dark"&&restored.FontSize==15,"scoped writes preserve unrelated user preferences");
+        Require(restored.Theme=="dark"&&!JsonSerializer.Serialize(restored,json).Contains("fontSize",StringComparison.OrdinalIgnoreCase),"scoped writes preserve theme and do not revive retired font size");
         var shared=WorkspaceOptions.Write(restored,favorites,WorkspaceOptions.Read(restored,favorites) with{Sort="modified-descending"});
         Require(WorkspaceOptions.Read(shared,computer)==WorkspaceOptions.Read(restored,computer),"changing a favorite cannot overwrite Computer config");
         Require(WorkspaceOptions.Project(shared,favorites).TileSize==128&&WorkspaceOptions.Project(shared,computer).TileSize==240,"presentation follows entry scope");

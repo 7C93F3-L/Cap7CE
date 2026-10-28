@@ -7,11 +7,11 @@ namespace Cap7CE.WinUI.Controllers;
 // Owns scoped toolbar persistence/presentation, never directory enumeration or navigation history.
 internal sealed class WorkspacePreferencesController(ShellServices services,Func<BrowseSession?> active,ResultsView results,WorkspaceToolbar toolbar)
 {
-    private (string View,bool Square,double Size,double Font)? presented;
+    private (string View,bool Square,double Size)? presented;
     public ShellPreferences Effective=>WorkspaceOptions.Project(services.Preferences.Current,active()?.PreferenceScope??WorkspacePreferenceScope.Computer);
     public void Apply()
     {
-        var value=Effective;var key=(value.View,value.SquareTiles,value.TileSize,value.FontSize);
+        var value=Effective;var key=(value.View,value.SquareTiles,value.TileSize);
         if(presented==key)return;presented=key;
         AssetTile.Configure(value);results.Preferences(value);toolbar.ApplyPreferences(value);
     }

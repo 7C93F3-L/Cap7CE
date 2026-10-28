@@ -40,6 +40,16 @@ internal static class LanguagePreferenceChecks
             if(AppLanguage.Session.Current!="en-US"||failing.Current.Theme!="system"||Directory.EnumerateFiles(root,"*.tmp").Any())throw new Exception("Failed persistence must not apply the requested language/settings or leave a temporary file.");
             await File.WriteAllTextAsync(file,"{\"language\":\"unknown\",\"theme\":\"dark\"}");await restored.LoadAsync();
             if(restored.Current.Language!="zh-CN"||restored.Current.Theme!="dark")throw new Exception("Unknown persisted language must fall back without discarding unrelated preferences.");
+            foreach(var legacySize in new[]{"16","99","\"legacy\"","null"}) {
+                var legacy="{\"fontSize\":"+legacySize+",\"theme\":\"dark\",\"language\":\"en-US\",\"showDetails\":false}";
+                await File.WriteAllTextAsync(file,legacy);await restored.LoadAsync();
+                if(restored.Current.Theme!="dark"||restored.Current.Language!="en-US"||restored.Current.ShowDetails)throw new Exception("Retired font size must not affect valid preferences.");
+                if(await File.ReadAllTextAsync(file)!=legacy)throw new Exception("Loading a retired font preference must not rewrite user data.");
+                await restored.UpdateAsync(value=>value with{Theme="light"});
+                using var saved=JsonDocument.Parse(await File.ReadAllTextAsync(file));
+                if(saved.RootElement.TryGetProperty("fontSize",out _)||saved.RootElement.GetProperty("language").GetString()!="en-US"||saved.RootElement.GetProperty("showDetails").GetBoolean())throw new Exception("Normal saves must omit retired font size and preserve unrelated preferences.");
+            }
+            Console.WriteLine("Retired UI font preference passed: legacy sizes/types ignored, unrelated settings retained, load read-only and normal save omits the field.");
             foreach(var choice in LanguagePreferenceOptions.Choices) {
                 if(LanguagePreferenceOptions.Choices[LanguagePreferenceOptions.Index(choice.Id)].Id!=choice.Id)throw new Exception("Selector identity must not depend on translated labels.");
             }

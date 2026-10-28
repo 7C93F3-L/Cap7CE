@@ -363,26 +363,6 @@
     "zh-CN": "云母",
     "en-US": "Mica"
   },
-  "stableSettings.uiFontSize": {
-    "zh-CN": "字体大小",
-    "en-US": "Font size"
-  },
-  "stableSettings.uiFontSize.small": {
-    "zh-CN": "小",
-    "en-US": "Small"
-  },
-  "stableSettings.uiFontSize.standard": {
-    "zh-CN": "标准",
-    "en-US": "Standard"
-  },
-  "stableSettings.uiFontSize.large": {
-    "zh-CN": "大",
-    "en-US": "Large"
-  },
-  "stableSettings.desc.uiFontSize": {
-    "zh-CN": "调整主窗口、设置页、预览信息和弹出菜单的字体大小。",
-    "en-US": "Adjust text size in the main window, Settings, preview information, and pop-up menus."
-  },
   "stableSettings.desc.theme": {
     "zh-CN": "跟随 Windows 主题，或始终使用明亮、黑暗模式。",
     "en-US": "Follow the Windows theme, or always use Light or Dark mode."
@@ -1426,26 +1406,6 @@
   "help.command.ui_mica": {
     "zh-CN": "切换为云母材质",
     "en-US": "Switch to Mica"
-  },
-  "help.command.ui_font_12": {
-    "zh-CN": "将界面字体大小设为 12",
-    "en-US": "Set UI Font Size to 12"
-  },
-  "help.command.ui_font_13": {
-    "zh-CN": "将界面字体大小设为 13",
-    "en-US": "Set UI Font Size to 13"
-  },
-  "help.command.ui_font_14": {
-    "zh-CN": "将界面字体大小设为 14",
-    "en-US": "Set UI Font Size to 14"
-  },
-  "help.command.ui_font_15": {
-    "zh-CN": "将界面字体大小设为 15",
-    "en-US": "Set UI Font Size to 15"
-  },
-  "help.command.ui_font_16": {
-    "zh-CN": "将界面字体大小设为 16",
-    "en-US": "Set UI Font Size to 16"
   },
   "help.command.ui_main_RRGGBB": {
     "zh-CN": "设置颜色1",

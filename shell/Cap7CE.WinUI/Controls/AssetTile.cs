@@ -54,7 +54,7 @@ public sealed class AssetTile : Grid
         RowDefinitions[1].Height=new(title.Visibility==Visibility.Visible?28:0);
         caption.Visibility=title.Visibility;
         UpdateIconSize();
-        image.Stretch=galleryBounds is not null?Stretch.Uniform:preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=preferences.FontSize;
+        image.Stretch=galleryBounds is not null?Stretch.Uniform:preferences.SquareTiles?Stretch.UniformToFill:Stretch.Uniform;title.FontSize=ShellPreferences.DefaultUiFontSize;
         title.MaxLines=1;title.Margin=new(4,3,4,3);title.VerticalAlignment=VerticalAlignment.Center;
         UpdateNameWidth();
     }

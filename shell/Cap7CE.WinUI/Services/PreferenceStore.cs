@@ -28,7 +28,7 @@ internal sealed class PreferenceStore
             }
         }
         if (Current.Material is not ("mica" or "mica-alt") || Current.Theme is not ("system" or "light" or "dark")
-            || Current.TileSize is < 96 or > 280 || Current.FontSize is < 10 or > 24) Current = new();
+            || Current.TileSize is < 96 or > 280) Current = new();
         if(Current.Language is not ("system" or "zh-CN" or "en-US"))Current=Current with{Language="zh-CN"};
         AppLanguage.Apply(Current.Language);
     }

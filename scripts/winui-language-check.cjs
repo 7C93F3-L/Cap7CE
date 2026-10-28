@@ -64,6 +64,7 @@ module.exports = root => {
       assert(messages[item.descriptionKey], `Missing command resource: ${item.descriptionKey}`);
       if (item.exampleKey) assert(messages[item.exampleKey], `Missing command example resource: ${item.exampleKey}`);
       assert(!/^(line:|win:line)/.test(item.command), 'retired line commands cannot return in native help');
+      assert(!/^ui:font(?:\s|$)/.test(item.command), 'retired UI font-size commands cannot return in native help');
     }
   }
   const walk = directory => fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry => {

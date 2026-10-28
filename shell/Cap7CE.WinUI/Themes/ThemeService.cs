@@ -23,8 +23,8 @@ internal static class ThemeService
         var kind = settings.Material == "mica-alt" ? MicaKind.BaseAlt : MicaKind.Base;
         if (window.SystemBackdrop is MicaBackdrop mica) { if (mica.Kind != kind) mica.Kind = kind; }
         else window.SystemBackdrop = new MicaBackdrop { Kind = kind };
-        if (root is Control control) control.FontSize = settings.FontSize;
-        root.SetValue(Control.FontSizeProperty, settings.FontSize);
+        if (root is Control control) control.FontSize = ShellPreferences.DefaultUiFontSize;
+        root.SetValue(Control.FontSizeProperty, ShellPreferences.DefaultUiFontSize);
         ((SolidColorBrush)Application.Current.Resources["CapAccentBrush"]).Color = Parse(settings.Color1);
         ((SolidColorBrush)Application.Current.Resources["CapSecondaryBrush"]).Color = Parse(settings.Color2);
         ((SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"]).Color = Parse(settings.Color1);

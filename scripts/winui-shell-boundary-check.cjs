@@ -114,7 +114,7 @@ const settingsWindow = read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs');
 assert(settingsWindow.includes('NavigationView') && settingsWindow.includes('SettingsPages'), 'settings window only composes native navigation and pages');
 assert(!/\.RequestAsync|\.SaveAsync|new ColorPicker/.test(settingsWindow), 'settings window cannot own setting actions or editors');
 const settingsCatalog = read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs');
-const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowApp.tsx').matchAll(/<SettingCard title="([^"]+)" description="([^"]+)"/g)].filter(m => m[1] !== 'settings.standbyLine').map(m => `${m[1]}:${m[2]}`);
+const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowApp.tsx').matchAll(/<SettingCard title="([^"]+)" description="([^"]+)"/g)].filter(m => !['settings.standbyLine','stableSettings.uiFontSize'].includes(m[1])).map(m => `${m[1]}:${m[2]}`);
 const maintenanceSettings = read('shell/Cap7CE.WinUI/Views/Settings/MaintenanceSettingsView.cs');
 assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
 assert(maintenanceSettings.includes('new IndexMaintenanceView(services)') && settingsCatalog.includes('MetadataView,true'), 'settings must host index and metadata management inline');
@@ -124,6 +124,8 @@ assert(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('commands.Sta
   && read('shell/Cap7CE.WinUI/Services/ResultContextMenu.cs').includes('commands.StartMetadataAsync(first)'), 'metadata shortcuts must share the explicit directory queue action');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
 assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the current mainline without extra workspace controls');
+assert(!/uiFontSize|preferences\.FontSize|settings\.FontSize|Current\.FontSize/.test(nativeUi)
+  && !/public double FontSize/.test(read('shell/Cap7CE.WinUI/Models/ShellPreferences.cs')), 'retired native UI font preference and setting cannot return');
 const settingsColors = read('shell/Cap7CE.WinUI/Controls/Settings/SettingsColors.cs');
 const colorEditor = read('shell/Cap7CE.WinUI/Controls/Settings/SettingsColorEditor.cs');
 assert(settingsColors.includes('new SettingsColorEditor') && colorEditor.includes('new ColorPicker') && colorEditor.includes('IsAlphaEnabled=false'), 'color editing must retain native opaque RGB spectrum');
@@ -132,6 +134,7 @@ assert(!/LineWindow|toggleLine|lineMode|DemoAssets|FakeData/.test(nativeUi), 'ex
 assert(!/standbyLine|hideToLine|\bline:|win:line/.test(nativeUi), 'native UI must not expose retired line settings, shortcuts or commands');
 const nativeSettingsReference = JSON.parse(read('shell/artifacts/assets/settings-reference.json'));
 assert(!/standbyLine|hideToLine|stableSettings\.desc\.line|line:|win:line/.test(JSON.stringify(nativeSettingsReference)), 'native settings resources must exclude retired line copy, bindings and command help');
+assert(!/uiFontSize|ui:font/.test(JSON.stringify(nativeSettingsReference)), 'native settings resources must exclude retired font size copy and commands');
 assert(!/0x31\s*,/.test(read('shell/Cap7CE.WinUI/Services/NativeHotKeys.cs')), 'retired Alt+1 line binding must not be registered');
 const commands = read('shell/Cap7CE.WinUI/Services/FileCommands.cs');
 const autoKeywordProcessor=read('shell/Cap7CE.WinUI/Services/AutoKeywordProcessor.cs');

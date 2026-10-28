@@ -52,7 +52,6 @@ internal sealed class SettingsCatalog
         Mainline("外观","colors","appearance.themeModeLabel","stableSettings.desc.theme",
             ()=>Choice(["theme.system","theme.light","theme.dark"],()=>Array.IndexOf(new[]{"system","light","dark"},services.Preferences.Current.Theme),i=>services.Preferences.SaveAsync(services.Preferences.Current with{Theme=new[]{"system","light","dark"}[i]})));
         Mainline("外观","colors","appearance.configureLabel","stableSettings.desc.colors",()=>new SettingsColors(()=>services.Preferences.Current,services.Preferences.SaveAsync,notice));
-        Mainline("外观","colors","stableSettings.uiFontSize","stableSettings.desc.uiFontSize",FontSize);
     }
     private void Storage()
     {
@@ -109,13 +108,5 @@ internal sealed class SettingsCatalog
             try{await change(box.SelectedIndex);}catch(Exception error){notice(FailureText.From(error));syncing=true;box.SelectedIndex=read();syncing=false;}
             finally{box.IsEnabled=true;}
         };return box;
-    }
-    private UIElement FontSize()
-    {
-        var slider=new SizeSlider("stableSettings.uiFontSize",services.Preferences.Current.FontSize,12,16,1,1,13,value=>$"{value:0} DIP",_=>{},showTitle:false);
-        var saved=services.Preferences.Current.FontSize;
-        void Commit(){var value=slider.Value;if(value==saved)return;saved=value;actions.Run(async()=>{try{await services.Preferences.SaveAsync(services.Preferences.Current with{FontSize=value});}catch{saved=services.Preferences.Current.FontSize;throw;}});}
-        slider.CommitRequested+=Commit;
-        return slider;
     }
 }

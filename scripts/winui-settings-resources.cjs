@@ -12,9 +12,11 @@ module.exports = async (root, output) => {
     loader: { '.svg': 'text' } });
   const generated = { exports: {} };
   new Function('module', 'exports', 'require', compiled.outputFiles[0].text)(generated, generated.exports, require);
-  // Native WinUI does not support line. Do not ship its legacy copy or bindings.
+  // Native WinUI excludes retired line and UI font-size settings.
   const retiredKeys = ['stableSettings.desc.line', 'settings.standbyLine', 'settings.showStandbyLineHint', 'settings.hideStandbyLineHint', 'shortcut.hideToLine'];
   for (const key of retiredKeys) delete generated.exports.settings.text[key];
+  for (const key of Object.keys(generated.exports.settings.text)) if (key.includes('uiFontSize')) delete generated.exports.settings.text[key];
+  generated.exports.settings.commandGroups=generated.exports.settings.commandGroups.map(group=>({...group,items:group.items.filter(item=>!item.command.startsWith('ui:font '))})).filter(group=>group.items.length);
   delete generated.exports.settings.shortcuts.hideToLine;
   fs.writeFileSync(path.join(output, 'settings-reference.json'), JSON.stringify(generated.exports.settings));
   const signature = fs.readFileSync(path.join(root, 'src/renderer/assets/icons/icon-signature-cap7ce.svg'), 'utf8');

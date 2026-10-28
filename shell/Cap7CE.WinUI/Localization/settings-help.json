@@ -122,26 +122,6 @@
         "descriptionKey": "help.command.ui_mica"
       },
       {
-        "command": "ui:font 12",
-        "descriptionKey": "help.command.ui_font_12"
-      },
-      {
-        "command": "ui:font 13",
-        "descriptionKey": "help.command.ui_font_13"
-      },
-      {
-        "command": "ui:font 14",
-        "descriptionKey": "help.command.ui_font_14"
-      },
-      {
-        "command": "ui:font 15",
-        "descriptionKey": "help.command.ui_font_15"
-      },
-      {
-        "command": "ui:font 16",
-        "descriptionKey": "help.command.ui_font_16"
-      },
-      {
         "command": "ui:main #RRGGBB",
         "descriptionKey": "help.command.ui_main_RRGGBB"
       },
