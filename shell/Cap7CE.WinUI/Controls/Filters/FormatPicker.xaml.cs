@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Models;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -32,7 +33,7 @@ public sealed partial class FormatPicker : UserControl
         BackButton.Visibility=Zoom.IsZoomedInViewActive?Visibility.Visible:Visibility.Collapsed;
     }
     private void SelectionChanged(object sender,SelectionChangedEventArgs e)=>UpdateSummary();
-    private void UpdateSummary(){if(Summary is not null)Summary.Text=$"已选 {Formats.SelectedItems.Count} 项";}
+    private void UpdateSummary(){if(Summary is not null)L.Bind(Summary,TextBlock.TextProperty,"ui.filters.selectedFormats",()=>new Dictionary<string,object?>{{"count",Formats.SelectedItems.Count}});}
     private void ClearSelection(object sender,RoutedEventArgs e)=>Formats.SelectedItems.Clear();
     private void ApplySelection(object sender,RoutedEventArgs e)=>apply(Formats.SelectedItems.Cast<string>().Order(StringComparer.OrdinalIgnoreCase).ToArray());
 }

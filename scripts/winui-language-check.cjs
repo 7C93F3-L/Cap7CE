@@ -11,6 +11,20 @@ module.exports = root => {
     assert.deepEqual(parameters(variants['zh-CN']), parameters(variants['en-US']), `${key}: named parameters differ`);
   }
   assert(Object.keys(messages).length, 'native language catalog must not be empty');
+  assert.deepEqual(messages['language.tag'], {'zh-CN': 'zh-CN', 'en-US': 'en-US'}, 'native control language tags must be valid locale IDs');
+  for (const [file, family] of [['Models/FormatRegistry.cs', 'kind'], ['Models/FilterPresets.cs', 'time']]) {
+    // Read only the declared label array, never protocol or query identifiers.
+    const text = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI', file), 'utf8');
+    const array = family === 'kind' ? text.slice(text.indexOf('Categories'), text.indexOf('};', text.indexOf('Categories')))
+      : text.slice(text.indexOf('Times='), text.indexOf(';', text.indexOf('Times=')));
+    for (const match of array.matchAll(/\("([^"]+)",\s*"[^"]+"\)/g))
+      assert(messages[`ui.filters.${family}.${match[1]}`], `Missing ${family} preset translation: ${match[1]}`);
+  }
+  const presets = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Models/FilterPresets.cs'), 'utf8');
+  const sizePresets = presets.match(/Sizes=\[([\s\S]*?)\];/)[1].match(/\("/g);
+  const filterBar = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Controls/FilterBar.cs'), 'utf8');
+  const sizeKeys = filterBar.match(/var sizeKeys=new\[\]\{([^}]+)\}/)[1].match(/"[^"]+"/g);
+  assert.equal(sizeKeys.length, sizePresets.length, 'every size preset must have a language key');
   const help = JSON.parse(fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization/settings-help.json'), 'utf8'));
   for (const group of help) {
     assert(messages[group.titleKey], `Missing command group resource: ${group.titleKey}`);
@@ -23,10 +37,10 @@ module.exports = root => {
   }
   const walk = directory => fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry => {
     const file = path.join(directory, entry.name);
-    return entry.isDirectory() && !['bin', 'obj'].includes(entry.name) ? walk(file) : entry.isFile() && file.endsWith('.cs') ? [file] : [];
+    return entry.isDirectory() && !['bin', 'obj'].includes(entry.name) ? walk(file) : entry.isFile() && /\.(?:cs|xaml)$/.test(file) ? [file] : [];
   });
   for (const file of walk(path.join(root, 'shell/Cap7CE.WinUI')))
-    for (const match of fs.readFileSync(file, 'utf8').matchAll(/"((?:main|menu|native|navigation|help|settings|common|theme|appearance|stableSettings|shortcut)\.[A-Za-z0-9_.]+)"/g))
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(/"((?:language|ui|main|menu|native|navigation|help|settings|common|theme|appearance|stableSettings|shortcut)\.[A-Za-z0-9_.-]+)"/g))
       if (!match[1].endsWith('.')) assert(messages[match[1]], `${file}: unknown language key ${match[1]}`);
   console.log(`WinUI language catalog passed: ${Object.keys(messages).length} paired messages`);
 };

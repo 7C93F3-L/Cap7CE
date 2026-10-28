@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Models;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,7 +12,7 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class DetailsEmbeddedMetadata : UserControl
 {
     private readonly ShellServices services;
-    private readonly DetailsCard card=new("内嵌元数据");
+    private readonly DetailsCard card=new("ui.embedded.embedded",true);
     private StackPanel Body=>card.Body;
     private long revision;
     private readonly DispatcherTimer copyFeedback=new(){Interval=TimeSpan.FromSeconds(1.5)};
@@ -19,23 +20,23 @@ internal sealed class DetailsEmbeddedMetadata : UserControl
     public DetailsEmbeddedMetadata(ShellServices services)
     {
         this.services=services;Content=card;
-        copyFeedback.Tick+=(_,_)=>{copyFeedback.Stop();if(copyButton is not null)copyButton.Content="复制";};
+        copyFeedback.Tick+=(_,_)=>{copyFeedback.Stop();if(copyButton is not null)L.Bind(copyButton,Button.ContentProperty,"ui.embedded.copy");};
         Unloaded+=(_,_)=>copyFeedback.Stop();
     }
     public void Reset()
     {
         revision++;
-        Clear();Body.Children.Add(Ui.Text("读取中…",true));
+        Clear();Body.Children.Add(L.Text("ui.keywords.reading",true));
     }
     private void Clear(){copyFeedback.Stop();copyButton=null;while(Body.Children.Count>1)Body.Children.RemoveAt(1);}
     private void AddCopy(string text)
     {
-        var button=new Button {Content="复制"};
+        var button=L.Button("ui.embedded.copy",()=>{});
         button.FontSize=12;button.MinWidth=0;button.Padding=new(8,4,8,4);button.HorizontalAlignment=HorizontalAlignment.Right;
         button.Click+=(_,_)=>{
             copyFeedback.Stop();
-            try{var data=new DataPackage();data.SetText(text);Clipboard.SetContent(data);button.Content="已复制";}
-            catch(Exception){button.Content="复制失败";}
+            try{var data=new DataPackage();data.SetText(text);Clipboard.SetContent(data);L.Bind(button,Button.ContentProperty,"ui.embedded.copied");}
+            catch(Exception){L.Bind(button,Button.ContentProperty,"ui.embedded.copyFailed");}
             copyButton=button;copyFeedback.Start();
         };
         Body.Children.Add(button);
@@ -67,21 +68,21 @@ internal sealed class DetailsEmbeddedMetadata : UserControl
                 if(metadata.TryGetProperty("items",out var items)&&items.ValueKind==JsonValueKind.Array)
                     foreach(var entry in items.EnumerateArray()) {
                         var kind=entry.GetProperty("kind").GetString();var text=entry.GetProperty("text").GetString();
-                        if(!string.IsNullOrWhiteSpace(text)){card.Field(Label(kind),text,true);if(kind=="visual_content")AddCopy(text);}
+                        if(!string.IsNullOrWhiteSpace(text)){card.Field(LabelKey(kind),text,true);if(kind=="visual_content")AddCopy(text);}
                     }
                 if(metadata.TryGetProperty("capturedAt",out var captured)&&captured.ValueKind==JsonValueKind.String
-                    &&DateTimeOffset.TryParse(captured.GetString(),out var date))card.Field("拍摄时间",date.LocalDateTime.ToString("g"),true);
+                    &&DateTimeOffset.TryParse(captured.GetString(),out var date))card.FieldResource("ui.embedded.captured","ui.embedded.date",()=>new Dictionary<string,object?>{{"value",date.LocalDateTime}},fullWidth:true);
             }
-            if(Body.Children.Count==1)Body.Children.Add(Ui.Text("未发现内嵌元数据",true));
-        }catch(OperationCanceledException){if(!token.IsCancellationRequested&&expected==revision){Clear();Body.Children.Add(Ui.Text("读取超时，请重新选择文件重试",true));}}
-        catch(Exception error){if(!token.IsCancellationRequested&&expected==revision){Clear();Body.Children.Add(Ui.Text("暂时无法读取内嵌元数据",true));NativeDiagnostics.VisualFailure(error);}}
+            if(Body.Children.Count==1)Body.Children.Add(L.Text("ui.embedded.none",true));
+        }catch(OperationCanceledException){if(!token.IsCancellationRequested&&expected==revision){Clear();Body.Children.Add(L.Text("ui.embedded.timeout",true));}}
+        catch(Exception error){if(!token.IsCancellationRequested&&expected==revision){Clear();Body.Children.Add(L.Text("ui.embedded.unavailable",true));NativeDiagnostics.VisualFailure(error);}}
         finally {
             if(timeout.IsCancellationRequested)try{await services.StoredMetadata.RequestAsync("cancelPreviewMetadata",[id]);}catch(Exception){}
         }
     }
-    private static string Label(string? kind)=>kind switch {
-        "visual_content"=>"提示词 / 内容描述","embedded_title"=>"标题","embedded_subject"=>"主题",
-        "embedded_description"=>"说明","embedded_keywords"=>"关键词","software_family"=>"制作软件",
-        "capture_device"=>"拍摄设备","media_title"=>"媒体标题","media_artist"=>"艺术家","media_album"=>"专辑",
-        "font_family"=>"字体名称","font_style"=>"字体样式",_=>"内容"};
+    private static string LabelKey(string? kind)=>kind switch {
+        "visual_content"=>"ui.embedded.prompt","embedded_title"=>"ui.embedded.title","embedded_subject"=>"ui.embedded.subject",
+        "embedded_description"=>"ui.embedded.description","embedded_keywords"=>"ui.embedded.keywords","software_family"=>"ui.embedded.software",
+        "capture_device"=>"ui.embedded.device","media_title"=>"ui.embedded.mediaTitle","media_artist"=>"ui.embedded.artist","media_album"=>"ui.embedded.album",
+        "font_family"=>"ui.embedded.fontFamily","font_style"=>"ui.embedded.fontStyle",_=>"ui.embedded.content"};
 }

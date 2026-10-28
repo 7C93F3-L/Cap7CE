@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+原生语言第四轮接入：DetailsCard区分原文标题与资源标题，字段标题使用稳定键，FieldResource只绑定展示值；DetailsPane按位置/选择身份决定资源标题，文件名、路径、文件元数据与用户关键词保持原文。DetailsKeywordEditor只更新按钮、输入占位、状态和标签删除提示，不重建KeywordDraft或改变读写/自动添加链路；自动添加按钮只绑定内部文字与无障碍名称，保留图标容器。DetailsEmbeddedMetadata的字段标签、复制反馈、读取提示和日期格式进入语言资源，正文与剪贴板内容不变。基础FilterBar、日期/大小编辑器及FormatPicker绑定标题、摘要、验证提示与无障碍名称，预设标识、日期、数值、选择及查询参数保持原值；语言变化只更新属性，不应用或关闭筛选。FilterSection以localized显式区分资源与未迁入的高级筛选文本，图标选项只绑定内部标签。LanguageText支持ContentControl与独立NameKey，供编译XAML按钮文案和无障碍名称使用。构建语言检查覆盖C#/XAML静态键、时间/种类动态键和尺寸预设数量，新增界面键使用ui.*避免与keywords.read、metadata.build等协议名称混淆。当前617条资源；高级属性筛选、剩余设置及后台提示未完成，语言选择器仍禁用。
+
 原生语言第三轮接入：工具栏状态、侧栏与排序操作、地址栏占位/模式提示、收藏及结果右键菜单、空结果提示、首页分组与系统位置显示、根目录标签、窗口固定和SizeSlider标题/无障碍提示使用显式资源绑定。LanguageUi.Label同步绑定提示及无障碍名称，Literal在显示用户内容前解除相同属性的旧绑定；LanguageBinding支持自定义文本应用回调，使AssetNameLabel继续沿既有原生测量/文件名省略路径更新显示。HomeEntries.LabelKey仅按既有系统入口身份返回显示资源键，不改变Entry.Id/Name、路径或Catalog。结果列表与分组模板位于既有ResultCardResources，LanguageText附加属性明确接收资源键与原文回退，模板复用时移除旧订阅；文件名即使与中文资源相同也按原文显示。当前共502条资源，构建检查同时验证main/menu键。Layout中的事件/属性/派发替身运行真实LanguageBinding实现，覆盖加载/卸载、替换、原文回退、动态参数、自定义应用与迟到派发抑制；该测试不等同于原生控件视觉回归。详细信息、筛选、部分设置和后台提示尚未完成，语言选择器继续禁用。
 
 原生语言第二轮接入：PreferenceStore保存Language（默认中文，支持system/zh-CN/en-US），保存成功后由AppLanguage更新唯一LanguageSession；LanguageUi仅绑定显式资源键，导航项、SettingsPages/SettingsCard/SettingsFieldRow、主要选择项、快捷动作和颜色编辑器直接更新依赖属性，不重建页面或重置选择/草稿。内部分类标识保持原值，显示标题使用navigation键。settings-help.json只保存分组、指令与资源键，说明及含中文参数的示例进入messages.json，指令帮助切换语言保留当前分类。SettingsReference.Text改读原生语言资源，快捷键仍读取既有非语言生成资源。构建检查覆盖源码资源键及帮助引用。当前尚未完成主窗口、索引/元数据、模型状态及其他后台提示的全覆盖，语言选择器仍禁用，不能视为完整双语版本。

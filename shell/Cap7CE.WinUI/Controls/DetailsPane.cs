@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Models;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -47,7 +48,7 @@ internal sealed class DetailsPane : UserControl
     {
         if(!stopped&&selected.SequenceEqual(items))return;
         debounce.Stop();reading.Cancel();reading.Dispose();reading=new();stopped=false;
-        selected=items.ToArray();image.Source=null;icon.Visibility=Visibility.Visible;ToolTipService.SetToolTip(visual,null);
+        selected=items.ToArray();image.Source=null;icon.Visibility=Visibility.Visible;L.Literal(visual,ToolTipService.ToolTipProperty,null);
         keywordRefreshPending=false;keywords.SetItems(selected);embedded.Reset();
         Render();
         if(selected.Any(item=>!item.Entry.IsDirectory))debounce.Start();
@@ -59,31 +60,35 @@ internal sealed class DetailsPane : UserControl
     {
         column.Children.Clear();var item=selected.Count==1?selected[0]:null;
         var drive=item is not null&&IsDrive(item);
-        var heading=item is null?(selected.Count>0?"多选信息":context.Searching?"当前搜索":LocationName(context.Path))
-            :item.Entry.IsDirectory?(drive?"磁盘":"文件夹"):item.Entry.Extension.TrimStart('.').ToUpperInvariant();
-        if(heading.Length==0)heading="文件";
-        column.Children.Add(new TextBlock{Text=heading,Style=(Style)Application.Current.Resources["CapDetailsHeading"]});
+        string? headingKey=item is null?(selected.Count>0?"ui.details.multiple":context.Searching?"ui.details.search":context.Path.Length==0?"main.home":null)
+            :item.Entry.IsDirectory?(drive?"ui.details.drive":"main.folder"):item.Entry.Extension.Length==0?"ui.details.file":null;
+        var heading=new TextBlock{Style=(Style)Application.Current.Resources["CapDetailsHeading"]};
+        if(headingKey is not null)L.Bind(heading,TextBlock.TextProperty,headingKey);
+        else heading.Text=item is null?LocationName(context.Path):item.Entry.Extension.TrimStart('.').ToUpperInvariant();
+        column.Children.Add(heading);
         if(item is not null){icon.SetIcon(item.IconName);visual.Height=item.Entry.IsDirectory?120:FilePreviewHeight;column.Children.Add(visual);RenderItem(item,drive);}
         else if(selected.Count>1)RenderSelection();
         else RenderContext();
     }
     private void RenderContext()
     {
-        var card=Card(LocationName(context.Path));
-        card.Field(context.Searching?"搜索范围":"位置",context.Path.Length==0?"此电脑":context.Path,true);
-        var count=context.Count is { } total?$"{total:N0} 项":context.Busy?"读取中":$"已加载 {context.Loaded:N0} 项";
-        if(context.Searching){card.Field("筛选条件",$"{context.Filters} 项");card.Field("匹配结果",count);}
-        else card.Field(context.Path.Length==0?"浏览范围":"当前项目",context.Path.Length==0?"系统位置与本机磁盘":count);
+        var card=context.Path.Length==0?Card("main.home",true):Card(LocationName(context.Path));
+        var locationLabel=context.Searching?"ui.details.searchScope":"ui.details.location";
+        if(context.Path.Length==0)card.FieldResource(locationLabel,"main.home",fullWidth:true);else card.Field(locationLabel,context.Path,true);
+        var countKey=context.Count is not null?"ui.details.items":context.Busy?"ui.details.reading":"ui.details.loaded";
+        IReadOnlyDictionary<string,object?> Count()=>new Dictionary<string,object?>{{"count",context.Count??context.Loaded}};
+        if(context.Searching){card.FieldResource("ui.details.filters","ui.details.items",()=>new Dictionary<string,object?>{{"count",context.Filters}});card.FieldResource("ui.details.matches",countKey,Count);}
+        else if(context.Path.Length==0)card.FieldResource("ui.details.browseScope","ui.details.systemLocations");else card.FieldResource("ui.details.currentItems",countKey,Count);
     }
     private void RenderItem(AssetItem item,bool drive)
     {
-        var card=Card(item.Entry.IsDirectory?item.Name:"文件信息");
+        var card=item.Entry.IsDirectory?Card(item.NameResourceKey??item.Name,item.NameResourceKey is not null):Card("ui.details.fileInfo",true);
         if(!item.Entry.IsDirectory) {
             card.Body.Children.Add(new TextBlock{Text=item.Name,TextWrapping=TextWrapping.Wrap,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,IsTextSelectionEnabled=true});
         }
-        if(!drive)card.Field("大小",item.Entry.IsDirectory?"未计算":DetailsCard.Bytes(item.Entry.SizeBytes));
-        card.Field("修改时间",item.ModifiedLabel);
-        card.Field("位置",item.FullPath,true,()=>commands.Run(()=>{
+        if(!drive){if(item.Entry.IsDirectory)card.FieldResource("ui.details.size","ui.details.notCalculated");else card.Field("ui.details.size",DetailsCard.Bytes(item.Entry.SizeBytes));}
+        card.Field("ui.details.modified",item.ModifiedLabel);
+        card.Field("ui.details.location",item.FullPath,true,()=>commands.Run(()=>{
             if(item.Entry.IsDirectory)FileCommands.OpenDirectoryInExplorer(item.FullPath);else commands.Reveal(item);
             return Task.CompletedTask;
         }));
@@ -95,17 +100,17 @@ internal sealed class DetailsPane : UserControl
     private void RenderSelection()
     {
         var files=selected.Where(item=>!item.Entry.IsDirectory).ToArray();var drives=selected.Count(IsDrive);
-        var card=Card($"已选择 {selected.Count} 项");
-        card.Field("文件",$"{files.Length} 项");card.Field("文件夹",$"{selected.Count-files.Length-drives} 项");
-        if(drives>0)card.Field("磁盘",$"{drives} 项");
+        var card=Card("ui.details.selected",true,()=>new Dictionary<string,object?>{{"count",selected.Count}});
+        card.FieldResource("ui.details.file","ui.details.items",()=>new Dictionary<string,object?>{{"count",files.Length}});card.FieldResource("main.folder","ui.details.items",()=>new Dictionary<string,object?>{{"count",selected.Count-files.Length-drives}});
+        if(drives>0)card.FieldResource("ui.details.drive","ui.details.items",()=>new Dictionary<string,object?>{{"count",drives}});
         if(files.Length>0) {
-            card.Field("已知文件大小",DetailsCard.Bytes(files.Sum(item=>(decimal)(item.Entry.SizeBytes??0))));
-            var unknown=files.Count(item=>item.Entry.SizeBytes is null);if(unknown>0)card.Body.Children.Add(Ui.Text($"另有 {unknown} 个文件大小未知",true));
+            card.Field("ui.details.knownSize",DetailsCard.Bytes(files.Sum(item=>(decimal)(item.Entry.SizeBytes??0))));
+            var unknown=files.Count(item=>item.Entry.SizeBytes is null);if(unknown>0)card.Body.Children.Add(L.Text("ui.details.unknownSizes",true,()=>new Dictionary<string,object?>{{"count",unknown}}));
             column.Children.Add(keywords);
         }
     }
-    private DetailsCard Card(string title){var card=new DetailsCard(title);column.Children.Add(card);return card;}
-    private static string LocationName(string path){var name=Path.GetFileName(path.TrimEnd('\\','/'));return path.Length==0?"此电脑":name.Length>0?name:path.TrimEnd('\\','/');}
+    private DetailsCard Card(string title,bool localized=false,Func<IReadOnlyDictionary<string,object?>?>? parameters=null){var card=new DetailsCard(title,localized,parameters);column.Children.Add(card);return card;}
+    private static string LocationName(string path){var name=Path.GetFileName(path.TrimEnd('\\','/'));return path.Length==0?"":name.Length>0?name:path.TrimEnd('\\','/');}
     private static bool IsDrive(AssetItem item)=>item.Entry.IsDirectory&&string.Equals(Path.GetPathRoot(item.FullPath),item.FullPath,StringComparison.OrdinalIgnoreCase);
     private async Task ReadVisualAsync(AssetItem item,CancellationToken token)
     {
@@ -115,7 +120,7 @@ internal sealed class DetailsPane : UserControl
             if(!token.IsCancellationRequested&&selected is [var current]&&current==item){image.Source=bitmap;icon.Visibility=Visibility.Collapsed;}
         }
         catch(OperationCanceledException){}
-        catch(Exception){if(!token.IsCancellationRequested)ToolTipService.SetToolTip(visual,"预览暂不可用");}
+        catch(Exception){if(!token.IsCancellationRequested)L.Bind(visual,ToolTipService.ToolTipProperty,"ui.details.previewUnavailable");}
     }
     private void UpdatePreviewClip()
     {

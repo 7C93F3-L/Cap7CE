@@ -2006,5 +2006,465 @@
   "main.closeNotice": {
     "zh-CN": "关闭临时提醒",
     "en-US": "Dismiss notification"
+  },
+  "ui.details.reveal": {
+    "zh-CN": "在资源管理器中显示",
+    "en-US": "Show in File Explorer"
+  },
+  "ui.details.multiple": {
+    "zh-CN": "多选信息",
+    "en-US": "Selection details"
+  },
+  "ui.details.search": {
+    "zh-CN": "当前搜索",
+    "en-US": "Current search"
+  },
+  "ui.details.drive": {
+    "zh-CN": "磁盘",
+    "en-US": "Drive"
+  },
+  "ui.details.file": {
+    "zh-CN": "文件",
+    "en-US": "File"
+  },
+  "ui.details.searchScope": {
+    "zh-CN": "搜索范围",
+    "en-US": "Search scope"
+  },
+  "ui.details.location": {
+    "zh-CN": "位置",
+    "en-US": "Location"
+  },
+  "ui.details.items": {
+    "zh-CN": "{count:N0} 项",
+    "en-US": "Items: {count:N0}"
+  },
+  "ui.details.reading": {
+    "zh-CN": "读取中",
+    "en-US": "Reading"
+  },
+  "ui.details.loaded": {
+    "zh-CN": "已加载 {count:N0} 项",
+    "en-US": "Loaded: {count:N0}"
+  },
+  "ui.details.filters": {
+    "zh-CN": "筛选条件",
+    "en-US": "Filters"
+  },
+  "ui.details.matches": {
+    "zh-CN": "匹配结果",
+    "en-US": "Matches"
+  },
+  "ui.details.browseScope": {
+    "zh-CN": "浏览范围",
+    "en-US": "Browse scope"
+  },
+  "ui.details.systemLocations": {
+    "zh-CN": "系统位置与本机磁盘",
+    "en-US": "System folders and local drives"
+  },
+  "ui.details.currentItems": {
+    "zh-CN": "当前项目",
+    "en-US": "Current items"
+  },
+  "ui.details.fileInfo": {
+    "zh-CN": "文件信息",
+    "en-US": "File information"
+  },
+  "ui.details.size": {
+    "zh-CN": "大小",
+    "en-US": "Size"
+  },
+  "ui.details.notCalculated": {
+    "zh-CN": "未计算",
+    "en-US": "Not calculated"
+  },
+  "ui.details.modified": {
+    "zh-CN": "修改时间",
+    "en-US": "Modified"
+  },
+  "ui.details.selected": {
+    "zh-CN": "已选择 {count} 项",
+    "en-US": "Selected: {count}"
+  },
+  "ui.details.knownSize": {
+    "zh-CN": "已知文件大小",
+    "en-US": "Known file size"
+  },
+  "ui.details.unknownSizes": {
+    "zh-CN": "另有 {count} 个文件大小未知",
+    "en-US": "Files of unknown size: {count}"
+  },
+  "ui.details.previewUnavailable": {
+    "zh-CN": "预览暂不可用",
+    "en-US": "Preview is currently unavailable"
+  },
+  "ui.keywords.add": {
+    "zh-CN": "添加关键词",
+    "en-US": "Add keywords"
+  },
+  "ui.keywords.empty": {
+    "zh-CN": "尚未添加关键词",
+    "en-US": "No keywords yet"
+  },
+  "ui.keywords.placeholder": {
+    "zh-CN": "键入关键词，以逗号分隔",
+    "en-US": "Enter keywords separated by commas"
+  },
+  "ui.keywords.reload": {
+    "zh-CN": "重新读取",
+    "en-US": "Reload"
+  },
+  "ui.keywords.reloadHint": {
+    "zh-CN": "丢弃草稿并重新读取关键词",
+    "en-US": "Discard the draft and reload keywords"
+  },
+  "ui.keywords.automatic": {
+    "zh-CN": "自动添加",
+    "en-US": "Add with AI"
+  },
+  "ui.keywords.save": {
+    "zh-CN": "保存",
+    "en-US": "Save"
+  },
+  "ui.keywords.clear": {
+    "zh-CN": "清空",
+    "en-US": "Clear"
+  },
+  "ui.keywords.unavailable": {
+    "zh-CN": "当前不可用",
+    "en-US": "Currently unavailable"
+  },
+  "ui.keywords.reading": {
+    "zh-CN": "读取中…",
+    "en-US": "Reading…"
+  },
+  "ui.keywords.readFailed": {
+    "zh-CN": "读取失败，可重新读取",
+    "en-US": "Could not read keywords. Try reloading."
+  },
+  "ui.keywords.saving": {
+    "zh-CN": "保存中…",
+    "en-US": "Saving…"
+  },
+  "ui.keywords.partial": {
+    "zh-CN": "{count} 个文件未保存，已保留修改，可重试。",
+    "en-US": "Files not saved: {count}. Your changes are retained; try again."
+  },
+  "ui.keywords.saveSummary": {
+    "zh-CN": "关键词保存：成功 {succeeded}，失败 {failed}",
+    "en-US": "Keywords saved: {succeeded} succeeded, {failed} failed"
+  },
+  "ui.keywords.saved": {
+    "zh-CN": "关键词已保存",
+    "en-US": "Keywords saved"
+  },
+  "ui.keywords.savedFiles": {
+    "zh-CN": "关键词已保存：{count} 个文件",
+    "en-US": "Keywords saved. Files: {count}"
+  },
+  "ui.keywords.noCommon": {
+    "zh-CN": "暂无共同关键词",
+    "en-US": "No shared keywords"
+  },
+  "ui.keywords.saveFirst": {
+    "zh-CN": "请先保存或取消修改",
+    "en-US": "Save or cancel your changes first"
+  },
+  "ui.keywords.recognizing": {
+    "zh-CN": "正在识别",
+    "en-US": "Recognizing"
+  },
+  "ui.keywords.selectFiles": {
+    "zh-CN": "请选择文件",
+    "en-US": "Select files"
+  },
+  "ui.keywords.generateHint": {
+    "zh-CN": "使用本地模型添加关键词",
+    "en-US": "Add keywords using the local model"
+  },
+  "ui.keywords.unsupported": {
+    "zh-CN": "此格式不支持自动添加关键词",
+    "en-US": "AI keywords are not supported for this format"
+  },
+  "ui.keywords.remove": {
+    "zh-CN": "删除关键词：{word}",
+    "en-US": "Remove keyword: {word}"
+  },
+  "ui.embedded.embedded": {
+    "zh-CN": "内嵌元数据",
+    "en-US": "Embedded metadata"
+  },
+  "ui.embedded.copy": {
+    "zh-CN": "复制",
+    "en-US": "Copy"
+  },
+  "ui.embedded.copied": {
+    "zh-CN": "已复制",
+    "en-US": "Copied"
+  },
+  "ui.embedded.copyFailed": {
+    "zh-CN": "复制失败",
+    "en-US": "Copy failed"
+  },
+  "ui.embedded.none": {
+    "zh-CN": "未发现内嵌元数据",
+    "en-US": "No embedded metadata found"
+  },
+  "ui.embedded.timeout": {
+    "zh-CN": "读取超时，请重新选择文件重试",
+    "en-US": "Reading timed out. Select the file again to retry."
+  },
+  "ui.embedded.unavailable": {
+    "zh-CN": "暂时无法读取内嵌元数据",
+    "en-US": "Embedded metadata is currently unavailable"
+  },
+  "ui.embedded.captured": {
+    "zh-CN": "拍摄时间",
+    "en-US": "Date taken"
+  },
+  "ui.embedded.date": {
+    "zh-CN": "{value:g}",
+    "en-US": "{value:g}"
+  },
+  "ui.embedded.prompt": {
+    "zh-CN": "提示词 / 内容描述",
+    "en-US": "Prompt / content description"
+  },
+  "ui.embedded.title": {
+    "zh-CN": "标题",
+    "en-US": "Title"
+  },
+  "ui.embedded.subject": {
+    "zh-CN": "主题",
+    "en-US": "Subject"
+  },
+  "ui.embedded.description": {
+    "zh-CN": "说明",
+    "en-US": "Description"
+  },
+  "ui.embedded.keywords": {
+    "zh-CN": "关键词",
+    "en-US": "Keywords"
+  },
+  "ui.embedded.software": {
+    "zh-CN": "制作软件",
+    "en-US": "Software"
+  },
+  "ui.embedded.device": {
+    "zh-CN": "拍摄设备",
+    "en-US": "Capture device"
+  },
+  "ui.embedded.mediaTitle": {
+    "zh-CN": "媒体标题",
+    "en-US": "Media title"
+  },
+  "ui.embedded.artist": {
+    "zh-CN": "艺术家",
+    "en-US": "Artist"
+  },
+  "ui.embedded.album": {
+    "zh-CN": "专辑",
+    "en-US": "Album"
+  },
+  "ui.embedded.fontFamily": {
+    "zh-CN": "字体名称",
+    "en-US": "Font family"
+  },
+  "ui.embedded.fontStyle": {
+    "zh-CN": "字体样式",
+    "en-US": "Font style"
+  },
+  "ui.embedded.content": {
+    "zh-CN": "内容",
+    "en-US": "Content"
+  },
+  "language.tag": {
+    "zh-CN": "zh-CN",
+    "en-US": "en-US"
+  },
+  "ui.filters.customize": {
+    "zh-CN": "自定义{title}",
+    "en-US": "Customize {title}"
+  },
+  "ui.filters.modified": {
+    "zh-CN": "修改时间",
+    "en-US": "Modified"
+  },
+  "ui.filters.kind": {
+    "zh-CN": "文件种类",
+    "en-US": "File type"
+  },
+  "ui.filters.size": {
+    "zh-CN": "文件大小",
+    "en-US": "File size"
+  },
+  "ui.filters.count": {
+    "zh-CN": "筛选 · {count}",
+    "en-US": "Filters · {count}"
+  },
+  "ui.filters.custom": {
+    "zh-CN": "自定",
+    "en-US": "Custom"
+  },
+  "ui.filters.formatCount": {
+    "zh-CN": "{count} 种",
+    "en-US": "Formats: {count}"
+  },
+  "ui.filters.unlimited": {
+    "zh-CN": "不限",
+    "en-US": "Any"
+  },
+  "ui.filters.dateRange": {
+    "zh-CN": "{after} 至 {before}",
+    "en-US": "{after} to {before}"
+  },
+  "ui.filters.byteRange": {
+    "zh-CN": "{minimum} – {maximum} 字节",
+    "en-US": "{minimum} – {maximum} bytes"
+  },
+  "ui.filters.startDate": {
+    "zh-CN": "开始日期",
+    "en-US": "Start date"
+  },
+  "ui.filters.endDate": {
+    "zh-CN": "结束日期（含当天）",
+    "en-US": "End date (inclusive)"
+  },
+  "ui.filters.chooseDate": {
+    "zh-CN": "请选择开始或结束日期",
+    "en-US": "Select a start or end date."
+  },
+  "ui.filters.invalidDates": {
+    "zh-CN": "结束日期不能早于开始日期",
+    "en-US": "The end date cannot be before the start date."
+  },
+  "ui.filters.clear": {
+    "zh-CN": "清除",
+    "en-US": "Clear"
+  },
+  "ui.filters.minimum": {
+    "zh-CN": "最小值",
+    "en-US": "Minimum"
+  },
+  "ui.filters.maximum": {
+    "zh-CN": "最大值",
+    "en-US": "Maximum"
+  },
+  "ui.filters.enterSize": {
+    "zh-CN": "请输入大小范围",
+    "en-US": "Enter a file size range."
+  },
+  "ui.filters.invalidRange": {
+    "zh-CN": "最大值不能小于最小值",
+    "en-US": "The maximum cannot be smaller than the minimum."
+  },
+  "ui.filters.letterIndex": {
+    "zh-CN": "返回首字母索引",
+    "en-US": "Return to the letter index"
+  },
+  "ui.filters.back": {
+    "zh-CN": "‹ 返回",
+    "en-US": "‹ Back"
+  },
+  "ui.filters.selectNone": {
+    "zh-CN": "全不选",
+    "en-US": "Deselect all"
+  },
+  "ui.filters.selectedFormats": {
+    "zh-CN": "已选 {count} 项",
+    "en-US": "{count} selected"
+  },
+  "ui.filters.time.week": {
+    "zh-CN": "本周",
+    "en-US": "This week"
+  },
+  "ui.filters.time.month": {
+    "zh-CN": "本月",
+    "en-US": "This month"
+  },
+  "ui.filters.time.year": {
+    "zh-CN": "今年",
+    "en-US": "This year"
+  },
+  "ui.filters.time.last-year": {
+    "zh-CN": "去年",
+    "en-US": "Last year"
+  },
+  "ui.filters.time.older": {
+    "zh-CN": "更早",
+    "en-US": "Earlier"
+  },
+  "ui.filters.time.all": {
+    "zh-CN": "不限",
+    "en-US": "Any"
+  },
+  "ui.filters.sizeTiny": {
+    "zh-CN": "＜1 MB",
+    "en-US": "＜1 MB"
+  },
+  "ui.filters.sizeSmall": {
+    "zh-CN": "1–10 MB",
+    "en-US": "1–10 MB"
+  },
+  "ui.filters.sizeMedium": {
+    "zh-CN": "10–100 MB",
+    "en-US": "10–100 MB"
+  },
+  "ui.filters.sizeLarge": {
+    "zh-CN": "100 MB–1 GB",
+    "en-US": "100 MB–1 GB"
+  },
+  "ui.filters.sizeHuge": {
+    "zh-CN": "≥1 GB",
+    "en-US": "≥1 GB"
+  },
+  "ui.filters.kind.visual": {
+    "zh-CN": "图像",
+    "en-US": "Images"
+  },
+  "ui.filters.kind.video": {
+    "zh-CN": "视频",
+    "en-US": "Video"
+  },
+  "ui.filters.kind.audio": {
+    "zh-CN": "音频",
+    "en-US": "Audio"
+  },
+  "ui.filters.kind.document": {
+    "zh-CN": "文档",
+    "en-US": "Documents"
+  },
+  "ui.filters.kind.text": {
+    "zh-CN": "文本",
+    "en-US": "Text"
+  },
+  "ui.filters.kind.project": {
+    "zh-CN": "工程",
+    "en-US": "Projects"
+  },
+  "ui.filters.kind.threeD": {
+    "zh-CN": "三维",
+    "en-US": "3D"
+  },
+  "ui.filters.kind.archive": {
+    "zh-CN": "压缩包",
+    "en-US": "Archives"
+  },
+  "ui.filters.kind.data": {
+    "zh-CN": "数据",
+    "en-US": "Data"
+  },
+  "ui.filters.kind.font": {
+    "zh-CN": "字体",
+    "en-US": "Fonts"
+  },
+  "ui.filters.kind.model": {
+    "zh-CN": "模型",
+    "en-US": "Models"
+  },
+  "ui.filters.kind.other": {
+    "zh-CN": "其他",
+    "en-US": "Other"
   }
 }

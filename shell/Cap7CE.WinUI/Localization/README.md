@@ -10,6 +10,8 @@
 
 主窗口工具栏、侧栏、地址栏、菜单、首页系统入口与分组、空结果和大小滑块已接入。使用LanguageUi.Label同步设置提示与无障碍名称；同一属性从资源切换为用户数据时必须调用LanguageUi.Literal解除旧绑定。数据模板使用LanguageText.Key显式绑定资源键、LanguageText.Literal绑定原文；二者独立，不能以原文猜测资源键。首页系统名称按入口身份映射，用户文件和目录始终使用原名。
 
+详细信息、关键词编辑器、内嵌元数据标签及基础筛选已接入。DetailsCard.Field的label参数是资源键，value始终为原文；FieldResource用于可翻译展示值。LanguageText.Key支持TextBlock文字和ContentControl内容，NameKey单独绑定无障碍名称；含图标等复合内容的按钮应绑定内部文字，不能将整个Content绑定为字符串。新增界面资源使用ui.*前缀，避免与keywords.read等协议名称混淆。构建检查核对C#/XAML静态键、时间/种类动态键和尺寸预设数量。
+
 需要原生测量、省略等自定义显示过程时，LanguageBinding.Attach可提供apply回调；回调只更新显示，不修改原始记录。绑定拥有者的加载/卸载、替换和排队更新由Layout替身测试验证；原生菜单、模板回收和视觉效果仍需手动回归。
 
 PreferenceStore保存Language并在成功后更新AppLanguage唯一会话；默认中文，支持跟随系统。AI在任务开始、异步收集前取得语言快照，整批任务继续使用该快照；Node生成请求显式携带语言，四参数旧请求保持中文。当前未完成主窗口、索引/元数据、模型动态状态和后台提示的全覆盖，不能视为完整双语支持。文件名、路径、用户关键词和源文件元数据不能被资源替换。

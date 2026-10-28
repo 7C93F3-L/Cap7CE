@@ -1,4 +1,6 @@
 using Microsoft.UI.Xaml;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Cap7CE.WinUI.Models;
@@ -20,25 +22,26 @@ internal sealed class FilterBar : UserControl
     public FilterBar()
     {
         var editors=new FilterEditors(()=>Value,Set,flyouts);
-        clear=FilterSection.ActionButton("清除筛选",()=>Set(new()));
+        clear=FilterSection.ActionButton("main.clearFilters",()=>Set(new()),localized:true);
         var actions=new StackPanel {Margin=new(0,0,2,0)};actions.Children.Add(count);actions.Children.Add(clear);row.Children.Add(actions);
-        foreach(var (id,label) in FilterPresets.Times)times.Add(id,FilterSection.Option(label,()=>Set(FilterPresets.Time(Value,id,DateTime.Now))));
-        timeSection=new("修改时间",FilterSection.Options(times.Values.Cast<UIElement>().ToArray(),3),editors.Dates);row.Children.Add(timeSection);
+        foreach(var (id,label) in FilterPresets.Times)times.Add(id,FilterSection.Option("ui.filters.time."+id,()=>Set(FilterPresets.Time(Value,id,DateTime.Now)),localized:true));
+        timeSection=new("ui.filters.modified",FilterSection.Options(times.Values.Cast<UIElement>().ToArray(),3),editors.Dates,localized:true);row.Children.Add(timeSection);
         var typeGrid=new Grid {ColumnSpacing=4,RowSpacing=4};
         for(var i=0;i<6;i++)typeGrid.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         typeGrid.RowDefinitions.Add(new(){Height=new(26)});typeGrid.RowDefinitions.Add(new(){Height=new(26)});
         var index=0;
         foreach(var (id,label) in FormatRegistry.Categories) {
-            var button=FilterSection.Option(label,()=>Set(FilterPresets.ToggleType(Value,id)),FilterIcons.Create(id));
+            var button=FilterSection.Option("ui.filters.kind."+id,()=>Set(FilterPresets.ToggleType(Value,id)),FilterIcons.Create(id),localized:true);
             button.IsEnabled=id=="other" || FormatRegistry.Extensions(id).Length>0;
             Grid.SetColumn(button,index%6);Grid.SetRow(button,index/6);typeGrid.Children.Add(button);types.Add(id,button);index++;
         }
-        typeSection=new("文件种类",typeGrid,editors.Formats);row.Children.Add(typeSection);
-        foreach(var (label,min,max) in FilterPresets.Sizes) sizes.Add(FilterSection.Option(label,()=>Set(Value with {
+        typeSection=new("ui.filters.kind",typeGrid,editors.Formats,localized:true);row.Children.Add(typeSection);
+        var sizeKeys=new[]{"ui.filters.sizeTiny","ui.filters.sizeSmall","ui.filters.sizeMedium","ui.filters.sizeLarge","ui.filters.sizeHuge"};
+        foreach(var (preset,key) in FilterPresets.Sizes.Zip(sizeKeys)) {var (_,min,max)=preset;sizes.Add(FilterSection.Option(key,()=>Set(Value with {
             MinimumBytes=Value.MinimumBytes==min && Value.MaximumBytes==max?null:min,
             MaximumBytes=Value.MinimumBytes==min && Value.MaximumBytes==max?null:max
-        })));
-        sizeSection=new("文件大小",FilterSection.Options(sizes.Cast<UIElement>().ToArray(),3),editors.Size);row.Children.Add(sizeSection);
+        }),localized:true));}
+        sizeSection=new("ui.filters.size",FilterSection.Options(sizes.Cast<UIElement>().ToArray(),3),editors.Size,localized:true);row.Children.Add(sizeSection);
         facts=new(()=>Value,Set,flyouts);facts.Unavailable+=(kind,colors,state)=>{flyouts.Close();MetadataUnavailable?.Invoke(kind,colors,state);};row.Children.Add(facts);
         var scroll=new ScrollViewer {Content=row,HorizontalScrollBarVisibility=ScrollBarVisibility.Hidden,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled,
             HorizontalScrollMode=ScrollMode.Enabled,VerticalScrollMode=ScrollMode.Disabled,ZoomMode=ZoomMode.Disabled};
@@ -59,15 +62,23 @@ internal sealed class FilterBar : UserControl
     private void Set(BrowseFilter filter) {Value=filter;Render();FilterChanged?.Invoke(filter);}
     private void Render()
     {
-        count.Text=$"筛选 · {Value.Count}";clear.IsEnabled=Value.Count>0;
+        L.Bind(count,TextBlock.TextProperty,"ui.filters.count",()=>new Dictionary<string,object?>{{"count",Value.Count}});clear.IsEnabled=Value.Count>0;
         foreach(var (id,button) in times)button.IsChecked=Value.TimePreset==id;
         foreach(var (id,button) in types)button.IsChecked=FilterPresets.Selected(Value,id);
         for(var i=0;i<sizes.Count;i++)sizes[i].IsChecked=Value.MinimumBytes==FilterPresets.Sizes[i].Min && Value.MaximumBytes==FilterPresets.Sizes[i].Max;
-        timeSection.Summary.Text=Value.TimePreset=="custom"?"自定":"";
-        typeSection.Summary.Text=Value.Extensions.Length>0?$"{Value.Extensions.Length} 种":"";
-        sizeSection.Summary.Text=(Value.MinimumBytes is not null || Value.MaximumBytes is not null) && !sizes.Any(button=>button.IsChecked==true)?"自定":"";
-        ToolTipService.SetToolTip(timeSection.Summary,Value.TimePreset=="custom"?$"{Value.After?.ToLocalTime().ToString("yyyy-MM-dd")??"不限"} 至 {Value.Before?.AddDays(-1).ToLocalTime().ToString("yyyy-MM-dd")??"不限"}":null);
-        ToolTipService.SetToolTip(sizeSection.Summary,sizeSection.Summary.Text.Length>0?$"{Value.MinimumBytes?.ToString("N0")??"不限"} – {Value.MaximumBytes?.ToString("N0")??"不限"} 字节":null);
+        var customTime=Value.TimePreset=="custom";
+        var customSize=(Value.MinimumBytes is not null || Value.MaximumBytes is not null)&&!sizes.Any(button=>button.IsChecked==true);
+        if(customTime)L.Bind(timeSection.Summary,TextBlock.TextProperty,"ui.filters.custom");else L.Literal(timeSection.Summary,TextBlock.TextProperty,"");
+        if(Value.Extensions.Length>0)L.Bind(typeSection.Summary,TextBlock.TextProperty,"ui.filters.formatCount",()=>new Dictionary<string,object?>{{"count",Value.Extensions.Length}});else L.Literal(typeSection.Summary,TextBlock.TextProperty,"");
+        if(customSize)L.Bind(sizeSection.Summary,TextBlock.TextProperty,"ui.filters.custom");else L.Literal(sizeSection.Summary,TextBlock.TextProperty,"");
+        if(customTime)L.Bind(timeSection.Summary,ToolTipService.ToolTipProperty,"ui.filters.dateRange",()=>new Dictionary<string,object?>{
+            {"after",Value.After?.ToLocalTime().ToString("yyyy-MM-dd")??AppLanguage.Text("ui.filters.unlimited")},
+            {"before",Value.Before?.AddDays(-1).ToLocalTime().ToString("yyyy-MM-dd")??AppLanguage.Text("ui.filters.unlimited")}});
+        else L.Literal(timeSection.Summary,ToolTipService.ToolTipProperty,null);
+        if(customSize)L.Bind(sizeSection.Summary,ToolTipService.ToolTipProperty,"ui.filters.byteRange",()=>new Dictionary<string,object?>{
+            {"minimum",Value.MinimumBytes?.ToString("N0")??AppLanguage.Text("ui.filters.unlimited")},
+            {"maximum",Value.MaximumBytes?.ToString("N0")??AppLanguage.Text("ui.filters.unlimited")}});
+        else L.Literal(sizeSection.Summary,ToolTipService.ToolTipProperty,null);
         facts.Restore();
     }
 }
