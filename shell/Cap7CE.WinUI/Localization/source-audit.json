@@ -1,0 +1,147 @@
+[
+  {
+    "file": "Controllers/AutoKeywordNoticeController.cs",
+    "reason": "Stable task phase identity; visible progress uses ProgressText.",
+    "literals": {
+      "\"收集文件\"": 1
+    }
+  },
+  {
+    "file": "Localization/LanguageUi.cs",
+    "reason": "Existing settings category identities mapped to resource keys.",
+    "literals": {
+      "\"通用\"": 1,
+      "\"外观\"": 1,
+      "\"缓存与索引\"": 1,
+      "\"快捷操作\"": 1,
+      "\"搜索与 AI\"": 1,
+      "\"诊断\"": 1,
+      "\"关于\"": 1
+    }
+  },
+  {
+    "file": "Localization/ProgressText.cs",
+    "reason": "Stable terminal phase identities mapped to resource keys.",
+    "literals": {
+      "\"已取消\"": 1,
+      "\"失败\"": 1
+    }
+  },
+  {
+    "file": "Models/AssetItem.cs",
+    "reason": "Stable known-folder identities used for icon selection.",
+    "literals": {
+      "\"home-桌面\"": 1,
+      "\"home-文档\"": 1,
+      "\"home-下载\"": 1,
+      "\"home-图片\"": 1,
+      "\"home-音乐\"": 1,
+      "\"home-视频\"": 1
+    }
+  },
+  {
+    "file": "Models/AutoKeywordPolicy.cs",
+    "reason": "Initial internal task phase identity.",
+    "literals": {
+      "\"待开始\"": 1
+    }
+  },
+  {
+    "file": "Models/FilterPresets.cs",
+    "reason": "Legacy time labels accompany stable IDs; FilterBar displays ui.filters.time keys.",
+    "literals": {
+      "\"本周\"": 1,
+      "\"本月\"": 1,
+      "\"今年\"": 1,
+      "\"去年\"": 1,
+      "\"更早\"": 1,
+      "\"不限\"": 1
+    }
+  },
+  {
+    "file": "Models/FontPreviewDocument.cs",
+    "reason": "Actual font glyph specimen content, intentionally independent of interface language.",
+    "literals": {
+      "\"学而时习之不亦说乎\"": 1
+    }
+  },
+  {
+    "file": "Models/FormatRegistry.cs",
+    "reason": "Legacy category labels accompany stable IDs; FilterBar displays ui.filters.kind keys.",
+    "literals": {
+      "\"图像\"": 1,
+      "\"视频\"": 1,
+      "\"音频\"": 1,
+      "\"文档\"": 1,
+      "\"文本\"": 1,
+      "\"工程\"": 1,
+      "\"三维\"": 1,
+      "\"压缩包\"": 1,
+      "\"数据\"": 1,
+      "\"字体\"": 1,
+      "\"模型\"": 1,
+      "\"其他\"": 1
+    }
+  },
+  {
+    "file": "Services/AutoKeywordProcessor.cs",
+    "reason": "Canonical task phases and diagnostic cancellation reason; not rendered as UI copy.",
+    "literals": {
+      "\"准备图像\"": 1,
+      "\"启动模型\"": 1,
+      "\"生成关键词\"": 1,
+      "\"保存关键词\"": 1,
+      "\"关键词任务取消\"": 1
+    }
+  },
+  {
+    "file": "Services/AutoKeywordTasks.cs",
+    "reason": "Canonical task phase identities; displayed messages use UiMessage.",
+    "literals": {
+      "\"收集文件\"": 1,
+      "\"准备\"": 1,
+      "\"启动模型\"": 1,
+      "\"失败\"": 2,
+      "\"完成\"": 1,
+      "\"已取消\"": 1
+    }
+  },
+  {
+    "file": "Services/SystemLocations.cs",
+    "reason": "Stable known-folder identities independent of actual Windows display names.",
+    "literals": {
+      "\"home-桌面\"": 1,
+      "\"home-文档\"": 1,
+      "\"home-下载\"": 1,
+      "\"home-图片\"": 1,
+      "\"home-音乐\"": 1,
+      "\"home-视频\"": 1
+    }
+  },
+  {
+    "file": "Views/Settings/SettingsCatalog.cs",
+    "reason": "Existing settings category identities; entry titles and descriptions are resource keys.",
+    "literals": {
+      "\"通用\"": 4,
+      "\"外观\"": 4,
+      "\"缓存与索引\"": 3,
+      "\"快捷操作\"": 2,
+      "\"搜索与 AI\"": 3,
+      "\"诊断\"": 2,
+      "\"关于\"": 2
+    }
+  },
+  {
+    "file": "Views/SettingsWindow.cs",
+    "reason": "Existing category/navigation identities, never the displayed labels.",
+    "literals": {
+      "\"通用\"": 3,
+      "\"外观\"": 1,
+      "\"缓存与索引\"": 3,
+      "\"快捷操作\"": 1,
+      "\"搜索与 AI\"": 1,
+      "\"诊断\"": 1,
+      "\"关于\"": 3
+    }
+  }
+]

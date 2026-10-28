@@ -27,6 +27,8 @@ internal static class LanguageUi
     {var text=Ui.Heading("");Bind(text,TextBlock.TextProperty,key);return text;}
     public static Button Button(string key,Action action)
     {var button=Ui.Button("",action);Bind(button,Microsoft.UI.Xaml.Controls.Button.ContentProperty,key);return button;}
+    public static Button Tool(string glyph,string key,Action action)
+    {var button=Ui.Tool(glyph,"",action);Label(button,key);return button;}
     public static ContentDialog Dialog(XamlRoot root,string titleKey,string? contentKey,string primaryKey,string closeKey="common.cancel")
     {
         var dialog=new ContentDialog{XamlRoot=root,DefaultButton=ContentDialogButton.Close};

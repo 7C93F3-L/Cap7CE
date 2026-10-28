@@ -12,6 +12,7 @@ internal static class ThemeService
 {
     public static void Apply(Window window, FrameworkElement root, ShellPreferences settings)
     {
+        Localization.LanguageUi.Bind(root,FrameworkElement.LanguageProperty,"language.tag");
         root.RequestedTheme = settings.Theme switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
         WindowTitleBar.Apply(window, root.RequestedTheme);
         window.Title = "";

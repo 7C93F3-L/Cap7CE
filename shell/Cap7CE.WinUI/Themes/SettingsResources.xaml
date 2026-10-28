@@ -25,7 +25,7 @@
   <Setter Property="CompactModeThresholdWidth" Value="0"/><Setter Property="ExpandedModeThresholdWidth" Value="780"/>
   <Setter Property="IsSettingsVisible" Value="False"/><Setter Property="IsBackButtonVisible" Value="Collapsed"/>
   <Setter Property="IsPaneToggleButtonVisible" Value="True"/><Setter Property="IsTitleBarAutoPaddingEnabled" Value="False"/>
-  <Setter Property="PaneTitle" Value="设置"/>
+  <Setter Property="PaneTitle" Value=""/>
  </Style>
  <Style x:Key="CapSettingsSignaturePath" TargetType="Path">
   <Setter Property="Fill" Value="{ThemeResource TextFillColorPrimaryBrush}"/>

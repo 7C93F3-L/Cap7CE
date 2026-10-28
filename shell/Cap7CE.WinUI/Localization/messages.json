@@ -332,8 +332,8 @@
     "en-US": "Cap7CE"
   },
   "stableSettings.desc.language": {
-    "zh-CN": "选择界面语言；“跟随系统”将使用当前 Windows 显示语言。",
-    "en-US": "Choose the interface language. The system option uses the current Windows display language."
+    "zh-CN": "立即切换界面语言；系统位置名称保持 Windows 显示名，新启动的 AI 关键词任务使用所选语言。",
+    "en-US": "Change the interface language immediately. System locations keep their Windows display names. New AI keyword tasks use the selected language."
   },
   "stableSettings.desc.launch": {
     "zh-CN": "登录 Windows 后自动启动 Cap7CE。",
@@ -4302,5 +4302,177 @@
   "ui.preview.position": {
     "zh-CN": "{index} / {total} · Space / Esc 关闭",
     "en-US": "{index} / {total} · Space / Esc to close"
+  },
+  "ui.preview.previousFile": {
+    "zh-CN": "上一个文件",
+    "en-US": "Previous file"
+  },
+  "ui.preview.nextFile": {
+    "zh-CN": "下一个文件",
+    "en-US": "Next file"
+  },
+  "ui.preview.previousPage": {
+    "zh-CN": "上一页",
+    "en-US": "Previous page"
+  },
+  "ui.preview.nextPage": {
+    "zh-CN": "下一页",
+    "en-US": "Next page"
+  },
+  "ui.preview.zoomOut": {
+    "zh-CN": "缩小",
+    "en-US": "Zoom out"
+  },
+  "ui.preview.zoomIn": {
+    "zh-CN": "放大",
+    "en-US": "Zoom in"
+  },
+  "ui.preview.fit": {
+    "zh-CN": "适应",
+    "en-US": "Fit"
+  },
+  "ui.preview.openDefault": {
+    "zh-CN": "默认程序打开",
+    "en-US": "Open in default app"
+  },
+  "ui.preview.zoomPercent": {
+    "zh-CN": "图片缩放百分比",
+    "en-US": "Image zoom percentage"
+  },
+  "ui.preview.source": {
+    "zh-CN": "源码",
+    "en-US": "Source"
+  },
+  "ui.preview.wrap": {
+    "zh-CN": "自动换行",
+    "en-US": "Word wrap"
+  },
+  "ui.preview.smallerText": {
+    "zh-CN": "减小字号",
+    "en-US": "Decrease text size"
+  },
+  "ui.preview.largerText": {
+    "zh-CN": "增大字号",
+    "en-US": "Increase text size"
+  },
+  "ui.preview.bookText": {
+    "zh-CN": "全文文字预览",
+    "en-US": "Full text preview"
+  },
+  "ui.preview.noText": {
+    "zh-CN": "暂无可读正文",
+    "en-US": "No readable text available"
+  },
+  "ui.preview.textEncoding": {
+    "zh-CN": "{encoding}",
+    "en-US": "{encoding}"
+  },
+  "ui.preview.truncatedEncoding": {
+    "zh-CN": "正文已按 1 MiB 上限截断 · {encoding}",
+    "en-US": "Text truncated at the 1 MiB limit · {encoding}"
+  },
+  "ui.preview.artist": {
+    "zh-CN": "歌手：{value}",
+    "en-US": "Artist: {value}"
+  },
+  "ui.preview.album": {
+    "zh-CN": "专辑：{value}",
+    "en-US": "Album: {value}"
+  },
+  "ui.preview.archiveSummary": {
+    "zh-CN": "{count:N0} 项 · 解压后 {size}",
+    "en-US": "Items: {count:N0} · Uncompressed: {size}"
+  },
+  "ui.preview.archiveEmpty": {
+    "zh-CN": "压缩包为空",
+    "en-US": "The archive is empty"
+  },
+  "ui.preview.archiveTruncated": {
+    "zh-CN": "列表已截断，当前显示 {count:N0} 项",
+    "en-US": "The list is truncated. Showing {count:N0} items"
+  },
+  "ui.preview.archiveRoot": {
+    "zh-CN": "根目录",
+    "en-US": "Root"
+  },
+  "ui.preview.extensionType": {
+    "zh-CN": "{extension} 文件",
+    "en-US": "{extension} file"
+  },
+  "ui.preview.fileSummary": {
+    "zh-CN": "{type} · {size}",
+    "en-US": "{type} · {size}"
+  },
+  "ui.preview.created": {
+    "zh-CN": "创建时间",
+    "en-US": "Created"
+  },
+  "ui.preview.location": {
+    "zh-CN": "文件位置",
+    "en-US": "File location"
+  },
+  "ui.preview.fontLimit": {
+    "zh-CN": "字体文件超过预览范围。",
+    "en-US": "The font file exceeds the preview limit."
+  },
+  "ui.preview.textDisplayFailed": {
+    "zh-CN": "正文显示失败：{status}",
+    "en-US": "Text display failed: {status}"
+  },
+  "ui.preview.fontLoadFailed": {
+    "zh-CN": "字体无法加载。",
+    "en-US": "The font could not be loaded."
+  },
+  "ui.preview.animationDisplayFailed": {
+    "zh-CN": "动图显示失败：{status}",
+    "en-US": "Animation display failed: {status}"
+  },
+  "ui.preview.animationDecodeFailed": {
+    "zh-CN": "动图解码失败，请使用默认程序打开。",
+    "en-US": "The animation could not be decoded. Open it in the default app."
+  },
+  "ui.preview.markdownOnly": {
+    "zh-CN": "仅Markdown进行格式渲染。",
+    "en-US": "Only Markdown supports formatted rendering."
+  },
+  "ui.accessibility.resizeHelp": {
+    "zh-CN": "拖动调整宽度；双击恢复默认；方向键每次调整 16 DIP",
+    "en-US": "Drag to resize; double-click to reset; arrow keys adjust by 16 DIP"
+  },
+  "ui.accessibility.currentColor": {
+    "zh-CN": "当前颜色 {color}",
+    "en-US": "Current color {color}"
+  },
+  "ui.sidebar.manageFavorite": {
+    "zh-CN": "管理收藏",
+    "en-US": "Manage favorite"
+  },
+  "ui.sidebar.reorder": {
+    "zh-CN": "拖动调整顺序，Alt+↑/↓微调",
+    "en-US": "Drag to reorder; use Alt+↑/↓ to adjust"
+  },
+  "ui.error.metadataService": {
+    "zh-CN": "元数据服务未连接，请到“诊断 → 服务维护”中重新连接。",
+    "en-US": "The metadata service is disconnected. Reconnect under Diagnostics → Service maintenance."
+  },
+  "ui.error.metadataIndex": {
+    "zh-CN": "请先建立可用的目录索引，再提取元数据。",
+    "en-US": "Create a queryable folder index before extracting metadata."
+  },
+  "ui.error.metadataScope": {
+    "zh-CN": "当前目录索引尚未就绪，请先在设置中建立或更新索引。",
+    "en-US": "The current folder index is not ready. Build or update it in Settings first."
+  },
+  "ui.error.metadataVolumes": {
+    "zh-CN": "没有可提取的已选索引磁盘，请先检查目录索引。",
+    "en-US": "No selected indexed disks are available for extraction. Check the folder indexes first."
+  },
+  "ui.error.metadataExclusion": {
+    "zh-CN": "无法安全定位排除目录：{path}",
+    "en-US": "Unable to safely resolve the excluded folder: {path}"
+  },
+  "ui.error.filterResource": {
+    "zh-CN": "高级筛选资源无效",
+    "en-US": "The advanced filter resources are invalid."
   }
 }

@@ -25,13 +25,13 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
         busy=true;
         try {
             var core=services.Core;
-            if(core?.IsConnected!=true||!core.Supports(MetadataBuildOperations.Attach))throw new IOException("元数据服务未连接，请到“诊断 → 服务维护”中重新连接。");
+            if(core?.IsConnected!=true||!core.Supports(MetadataBuildOperations.Attach))throw new UiFailure("ui.error.metadataService");
             var volumes=services.Volumes.Where(volume=>volume.Selected&&volume.Queryable).Select(volume=>volume.VolumeId).ToArray();
-            if(volumes.Length==0)throw new IOException("请先建立可用的目录索引，再提取元数据。");
+            if(volumes.Length==0)throw new UiFailure("ui.error.metadataIndex");
             CoreSearchScopeRequest? scope=null;
             if(path.Length>0) {
                 var resolved=await core.RequestAsync<CatalogResolveScopeResponse>(CoreOperations.CatalogResolveScope,new CatalogResolveScopeRequest(path));
-                if(!resolved.Resolved||!resolved.Queryable||resolved.VolumeId is null||resolved.DirectoryFileReference is null)throw new IOException("当前目录索引尚未就绪，请先在设置中建立或更新索引。");
+                if(!resolved.Resolved||!resolved.Queryable||resolved.VolumeId is null||resolved.DirectoryFileReference is null)throw new UiFailure("ui.error.metadataScope");
                 scope=new("directory-descendants",resolved.VolumeId,resolved.DirectoryFileReference);
             }
             var supported=FormatRegistry.ExtractorExtensions(kind);
@@ -55,7 +55,7 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
             if(picker.Choice==MetadataRangeChoice.Recommended) {
                 await MetadataBatchService.StartAsync(services,MetadataExclusions.Defaults(new Dictionary<string,bool>()));
             } else if(picker.Choice==MetadataRangeChoice.Current) {
-                FileAccessGuard.RejectLinks(path);if(!Directory.Exists(path))throw new IOException("目录不存在或当前不可用。");
+                FileAccessGuard.RejectLinks(path);if(!Directory.Exists(path))throw new UiDirectoryFailure("ui.error.directoryMissing");
                 await services.Metadata.InvokeAsync("startDirectory",new{path,allowMetadataExtraction=true});
             } else await services.Metadata.InvokeAsync("startAllVolumes",new{allowMetadataExtraction=true});
         }catch(Exception error){if(!disposed)notice(FailureText.From(error));}

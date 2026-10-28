@@ -8,6 +8,7 @@ internal static class FailureText
         // CoreMessage can contain raw provider diagnostics. Recognize only this existing code.
         if(error.Data["CoreMessage"] as string=="directory-browse-capacity-exceeded")return UiMessage.Key("ui.error.browseCapacity");
         var code=error.Message;
+        if(code=="invalid-native-filter-data")return UiMessage.Key("ui.error.filterResource");
         if(code=="directory-browse-capacity-exceeded")return UiMessage.Key("ui.error.browseCapacity");
         if(code is "favorite-directories-order-changed" or "favorite-directory-invalid-order")return UiMessage.Key("ui.error.favoriteOrder");
         return UiMessage.Snapshot(language=>MaintenanceText.Error(code,language));

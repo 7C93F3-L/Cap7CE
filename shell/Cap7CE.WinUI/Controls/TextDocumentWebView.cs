@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Models;
 using Microsoft.UI.Xaml;
@@ -54,7 +55,7 @@ internal sealed class TextDocumentWebView : Grid,IDisposable
         var ready=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         void Completed(object? sender,CoreWebView2NavigationCompletedEventArgs e) {
             if(e.NavigationId!=navigationId)return;
-            if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new IOException("正文显示失败："+e.WebErrorStatus));
+            if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new UiFailure("ui.preview.textDisplayFailed",new Dictionary<string,object?>{{"status",e.WebErrorStatus}}));
         }
         core.NavigationCompleted+=Completed;
         try {
@@ -64,7 +65,7 @@ internal sealed class TextDocumentWebView : Grid,IDisposable
                 void FontLoaded(object? sender,CoreWebView2WebMessageReceivedEventArgs e) {
                     if(e.Source!=DocumentUri)return;
                     if(e.TryGetWebMessageAsString()=="font-ready")fontReady.TrySetResult();
-                    else fontReady.TrySetException(new IOException("字体无法加载。"));
+                    else fontReady.TrySetException(new UiFailure("ui.preview.fontLoadFailed"));
                 }
                 core.WebMessageReceived+=FontLoaded;
                 try {

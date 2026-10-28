@@ -22,6 +22,7 @@ internal sealed class SettingsWindow : Window
     public SettingsWindow(ShellServices services)
     {
         this.services=services;SettingsWindowGeometry.ApplyInitial(this);
+        LanguageUi.Bind(navigation,NavigationView.PaneTitleProperty,"main.settings");
         navigation.Loaded+=(_,_)=>SettingsNavigationAppearance.HideTitle(navigation);
         navigation.DisplayModeChanged+=(_,_)=>navigation.DispatcherQueue.TryEnqueue(()=>{if(!closed)SettingsNavigationAppearance.HideTitle(navigation);});
         root.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new("ms-appx:///Themes/SettingsControlResources.xaml")});

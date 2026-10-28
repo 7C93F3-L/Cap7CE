@@ -11,6 +11,9 @@ public sealed class LanguageText : DependencyObject
     public static readonly DependencyProperty KeyProperty=DependencyProperty.RegisterAttached("Key",typeof(string),typeof(LanguageText),new PropertyMetadata(null,Changed));
     public static readonly DependencyProperty LiteralProperty=DependencyProperty.RegisterAttached("Literal",typeof(string),typeof(LanguageText),new PropertyMetadata("",Changed));
     public static readonly DependencyProperty NameKeyProperty=DependencyProperty.RegisterAttached("NameKey",typeof(string),typeof(LanguageText),new PropertyMetadata(null,NameChanged));
+    public static readonly DependencyProperty ToolTipKeyProperty=DependencyProperty.RegisterAttached("ToolTipKey",typeof(string),typeof(LanguageText),new PropertyMetadata(null,ToolTipChanged));
+    public static string? GetToolTipKey(DependencyObject target)=>(string?)target.GetValue(ToolTipKeyProperty);
+    public static void SetToolTipKey(DependencyObject target,string? value)=>target.SetValue(ToolTipKeyProperty,value);
     public static string? GetNameKey(DependencyObject target)=>(string?)target.GetValue(NameKeyProperty);
     public static void SetNameKey(DependencyObject target,string? value)=>target.SetValue(NameKeyProperty,value);
     public static string? GetKey(DependencyObject target)=>(string?)target.GetValue(KeyProperty);
@@ -27,4 +30,6 @@ public sealed class LanguageText : DependencyObject
     }
     private static void NameChanged(DependencyObject target,DependencyPropertyChangedEventArgs args)
     {if(target is FrameworkElement element){if(GetNameKey(target) is {Length:>0} key)LanguageUi.Bind(element,AutomationProperties.NameProperty,key);else LanguageUi.Literal(element,AutomationProperties.NameProperty,"");}}
+    private static void ToolTipChanged(DependencyObject target,DependencyPropertyChangedEventArgs args)
+    {if(target is FrameworkElement element){if(GetToolTipKey(target) is {Length:>0} key)LanguageUi.Bind(element,ToolTipService.ToolTipProperty,key);else LanguageUi.Literal(element,ToolTipService.ToolTipProperty,null);}}
 }

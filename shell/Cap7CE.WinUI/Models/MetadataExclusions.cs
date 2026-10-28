@@ -21,14 +21,14 @@ internal static class MetadataExclusions
     public static async Task<MetadataBatchPolicy> BuildAsync(IReadOnlyList<MetadataBatchVolume> volumes,IReadOnlyList<MetadataExclusion> choices,
         Func<string,CancellationToken,Task<MetadataBatchScope>> resolve,CancellationToken token=default)
     {
-        if(volumes.Count==0)throw new IOException("没有可提取的已选索引磁盘，请先检查目录索引。");
+        if(volumes.Count==0)throw new Localization.UiFailure("ui.error.metadataVolumes");
         var excluded=new HashSet<MetadataBatchScope>();
         foreach(var item in choices.Where(item=>item.Enabled)) {
             token.ThrowIfCancellationRequested();
             var volume=volumes.FirstOrDefault(volume=>item.Path.StartsWith(volume.Drive.TrimEnd('\\','/')+"\\",StringComparison.OrdinalIgnoreCase));
             if(volume is null)continue;
             var scope=await resolve(item.Path,token);
-            if(scope.VolumeId!=volume.VolumeId||string.IsNullOrEmpty(scope.RootFileReference))throw new IOException("无法安全定位排除目录："+item.Path);
+            if(scope.VolumeId!=volume.VolumeId||string.IsNullOrEmpty(scope.RootFileReference))throw new Localization.UiFailure("ui.error.metadataExclusion",new Dictionary<string,object?>{{"path",item.Path}});
             excluded.Add(scope);
         }
         token.ThrowIfCancellationRequested();

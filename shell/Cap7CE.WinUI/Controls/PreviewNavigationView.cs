@@ -1,3 +1,4 @@
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -23,8 +24,8 @@ internal sealed class PreviewNavigationView : Grid
                 &&(point.X<56||point.X>viewport.ActualWidth-56);
             UpdateVisibility();
         };
-        Children.Add(Side("\uE76B","上一个文件",previous,HorizontalAlignment.Left));
-        Children.Add(Side("\uE76C","下一个文件",next,HorizontalAlignment.Right));
+        Children.Add(Side("\uE76B","ui.preview.previousFile",previous,HorizontalAlignment.Left));
+        Children.Add(Side("\uE76C","ui.preview.nextFile",next,HorizontalAlignment.Right));
         Loaded+=(_,_)=>{
             if(pointerOwner is not null)return;
             pointerOwner=viewport;
@@ -50,7 +51,7 @@ internal sealed class PreviewNavigationView : Grid
     }
     private FrameworkElement Side(string glyph,string label,Action action,HorizontalAlignment side)
     {
-        var button=Ui.Tool(glyph,label,action);button.Width=40;button.Height=40;buttons.Add(button);
+        var button=L.Tool(glyph,label,action);button.Width=40;button.Height=40;buttons.Add(button);
         var face=new Border {Child=button,Background=SurfaceBrush(),RequestedTheme=ElementTheme.Dark,CornerRadius=new(12),Opacity=0,IsHitTestVisible=false,
             HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};faces.Add(face);
         var region=new Grid {Width=56,Background=null,HorizontalAlignment=side,VerticalAlignment=VerticalAlignment.Stretch,Margin=new(0,0,0,100)};

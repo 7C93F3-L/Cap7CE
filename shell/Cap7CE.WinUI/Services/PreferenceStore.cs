@@ -7,7 +7,10 @@ internal sealed class PreferenceStore
 {
     public static string DataRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE-PhaseF");
     public static string ProductData => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE", "UserData");
-    private readonly string path = Path.Combine(DataRoot, "shell-preferences.json");
+    private readonly string path;
+    private readonly string? originalPath;
+    public PreferenceStore():this(Path.Combine(DataRoot,"shell-preferences.json"),Path.Combine(ProductData,"config/preferences.json")){}
+    internal PreferenceStore(string preferencesPath,string? legacyPath){path=Path.GetFullPath(preferencesPath);originalPath=legacyPath;}
     private readonly SemaphoreSlim gate = new(1);
     public ShellPreferences Current { get; private set; } = new();
     public event Action? Changed;
@@ -16,10 +19,9 @@ internal sealed class PreferenceStore
         if (File.Exists(path)) Current = JsonSerializer.Deserialize<ShellPreferences>(await File.ReadAllTextAsync(path), FramedRpc.Json) ?? new();
         else
         {
-            var original = Path.Combine(ProductData, "config/preferences.json");
-            if (File.Exists(original))
+            if (originalPath is not null&&File.Exists(originalPath))
             {
-                using var json = JsonDocument.Parse(await File.ReadAllTextAsync(original)); var value = json.RootElement;
+                using var json = JsonDocument.Parse(await File.ReadAllTextAsync(originalPath)); var value = json.RootElement;
                 if (value.TryGetProperty("themePreference", out var theme)) Current = Current with { Theme = theme.GetString() ?? "system" };
                 if (value.TryGetProperty("appearanceColors", out var colors))
                     Current = Current with { Color1 = colors.GetProperty("themeColor").GetString()!, Color2 = colors.GetProperty("accentColor").GetString()! };
@@ -39,7 +41,7 @@ internal sealed class PreferenceStore
         {
             var value=update(Current);
             if(value.Language is not ("system" or "zh-CN" or "en-US"))throw new ArgumentOutOfRangeException(nameof(value.Language));
-            Directory.CreateDirectory(DataRoot);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(value, FramedRpc.Json));
             File.Move(temporary, path, true); Current = value; AppLanguage.Apply(value.Language);Changed?.Invoke();
         }

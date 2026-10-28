@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Text.Json;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
@@ -23,7 +24,7 @@ internal sealed class FontPreviewView : Grid
     public async Task LoadAsync(string path,JsonElement reply,CancellationToken token)
     {
         await using(var file=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete,4096,true)) {
-            if(file.Length is <=0 or >64*1024*1024)throw new IOException("字体文件超过预览范围。");
+            if(file.Length is <=0 or >64*1024*1024)throw new UiFailure("ui.preview.fontLimit");
             var data=new byte[checked((int)file.Length)];await file.ReadExactlyAsync(data,token);
             token.ThrowIfCancellationRequested();bytes=data;
         }

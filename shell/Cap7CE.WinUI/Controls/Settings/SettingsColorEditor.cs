@@ -22,6 +22,7 @@ internal sealed class SettingsColorEditor : UserControl
             IsAlphaTextInputVisible=false,IsColorPreviewVisible=false,IsHexInputVisible=false,
             IsColorChannelTextInputVisible=false,IsMoreButtonVisible=false};
         L.Bind(picker,AutomationProperties.NameProperty,"native.colors.spectrum");
+        L.Bind(picker,FrameworkElement.LanguageProperty,"language.tag");
         hex.MinWidth=0;hex.PlaceholderText="#RRGGBB";L.Bind(hex,AutomationProperties.NameProperty,"native.colors.hex");
         var hexRow=new Grid {ColumnSpacing=12};hexRow.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         hexRow.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
@@ -53,7 +54,7 @@ internal sealed class SettingsColorEditor : UserControl
         try {
             var color=picker.Color;
             var text=$"#{color.R:X2}{color.G:X2}{color.B:X2}";if(hex!=source&&hex.Text!=text)hex.Text=text;
-            preview.Background=new SolidColorBrush(color);AutomationProperties.SetName(preview,"当前颜色 "+text);valid=true;
+            preview.Background=new SolidColorBrush(color);L.Bind(preview,AutomationProperties.NameProperty,"ui.accessibility.currentColor",()=>new Dictionary<string,object?>{{"color",text}});valid=true;
         }finally{syncing=false;}
     }
 }

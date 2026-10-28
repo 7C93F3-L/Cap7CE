@@ -1,3 +1,4 @@
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -31,10 +32,10 @@ internal sealed class ImagePreviewView : Grid
     {
         Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         surface.Children.Add(image);scroll.Content=surface;Children.Add(scroll);IdleScrollBars.Attach(scroll);
-        var tools=Ui.Row(scale,Ui.Tool("\uE71F","缩小",()=>Zoom(1/1.25f)),zoomSlider,Ui.Tool("\uE8A3","放大",()=>Zoom(1.25f)),Ui.Button("适应",Fit),Ui.Tool("\uE8A7","默认程序打开",openExternal));
+        var tools=Ui.Row(scale,L.Tool("\uE71F","ui.preview.zoomOut",()=>Zoom(1/1.25f)),zoomSlider,L.Tool("\uE8A3","ui.preview.zoomIn",()=>Zoom(1.25f)),L.Button("ui.preview.fit",Fit),L.Tool("\uE8A7","ui.preview.openDefault",openExternal));
         tools.Spacing=4;scale.Width=44;scale.VerticalAlignment=VerticalAlignment.Center;
         if(pageTools is not null)tools.Children.Insert(0,pageTools);
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(zoomSlider,"图片缩放百分比");
+        L.Bind(zoomSlider,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"ui.preview.zoomPercent");
         zoomSlider.ValueChanged+=(_,_)=>{if(!syncingZoom)SetZoom((float)(zoomSlider.Value/100));};
         tools.HorizontalAlignment=HorizontalAlignment.Center;
         overlay=new Border {Child=tools,RequestedTheme=ElementTheme.Dark,

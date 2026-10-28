@@ -46,7 +46,7 @@ public sealed class AssetItem(BasicSearchItem entry, string fullPath,string? dis
 				}
 				return "—";
 			}
-			return "文件夹";
+			return ""; // SizeResourceKey supplies the localized folder label.
 		}
 	}
 

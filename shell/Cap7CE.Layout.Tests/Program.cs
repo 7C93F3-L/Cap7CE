@@ -2,8 +2,9 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
 if(args is ["--system-location-tests"]) {NativeSystemLocationChecks.Run();return;}
-if(args is ["--language-tests"]) {LanguageChecks.Run();return;}
+if(args is ["--language-tests"]) {LanguageChecks.Run();await LanguagePreferenceChecks.RunAsync();return;}
 LanguageChecks.Run();
+await LanguagePreferenceChecks.RunAsync();
 
 if(args is ["--settings-origin-tests"]) {await SettingsOriginChecks.RunAsync();return;}
 if(args is ["--core-exit-fixture"]) {Console.ReadLine();Console.Error.WriteLine("controlled-core-failure");Environment.ExitCode=7;return;}

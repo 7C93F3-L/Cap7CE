@@ -62,7 +62,7 @@ internal sealed class PreviewWindow : Window
     private void ApplyAppearance()
     {
         var prefs=services.Preferences.Current;
-        if(appliedPreferences is not {} previous||(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})!=prefs)
+        if(appliedPreferences is not {} previous||(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop,Language=prefs.Language})!=prefs)
             ThemeService.Apply(this,root,prefs);
         WindowTitleBar.ConfigurePin(this,prefs.PreviewAlwaysOnTop,SetPinned);appliedPreferences=prefs;
     }
@@ -140,7 +140,7 @@ internal sealed class PreviewWindow : Window
                 status.Visibility=Visibility.Collapsed;
                 var textPreview=new TextPreviewView(()=>OpenExternal(true),token);content.Content=textPreview;
                 textPreview.SetText(raw,item.Entry.Extension,
-                    (value.GetProperty("truncated").GetBoolean()?"正文已按 1 MiB 上限截断 · ":"")+value.GetProperty("encoding").GetString());return;
+                    UiMessage.Key(value.GetProperty("truncated").GetBoolean()?"ui.preview.truncatedEncoding":"ui.preview.textEncoding",new Dictionary<string,object?>{{"encoding",value.GetProperty("encoding").GetString()}}));return;
             }
             if(kind is "pdf" or "office")
             {
@@ -155,7 +155,7 @@ internal sealed class PreviewWindow : Window
             if(kind is "epub" or "mobi" or "archive" or "font")
             {
                 geometry.Apply(800,560,24,110);
-                var args=kind=="font"?new object?[]{sessionId,item.FullPath,"zh-CN"}:new object?[]{sessionId,item.FullPath};
+                var args=kind=="font"?new object?[]{sessionId,item.FullPath,AppLanguage.Session.Current}:new object?[]{sessionId,item.FullPath};
                 var reply=await services.Providers.RequestAsync(kind+".open",args,token);if(token.IsCancellationRequested)return;
                 if(kind is "epub" or "mobi") {
                     status.Visibility=Visibility.Collapsed;

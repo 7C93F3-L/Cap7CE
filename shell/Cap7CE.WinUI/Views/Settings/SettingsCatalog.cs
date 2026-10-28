@@ -37,7 +37,8 @@ internal sealed class SettingsCatalog
     private static UIElement DisabledChoice(string[] labels)=>L.Choice(labels,enabled:false);
     private void General()
     {
-        Mainline("通用","basics","settings.language","stableSettings.desc.language",()=>DisabledChoice(["theme.system","language.chinese","language.english"]));
+        Mainline("通用","basics","settings.language","stableSettings.desc.language",()=>Choice(LanguagePreferenceOptions.Choices.Select(choice=>choice.Key).ToArray(),
+            ()=>LanguagePreferenceOptions.Index(services.Preferences.Current.Language),index=>services.Preferences.UpdateAsync(value=>value with{Language=LanguagePreferenceOptions.Choices[index].Id})));
         Mainline("通用","basics","settings.launchAtLogin","stableSettings.desc.launch",()=>Toggle(()=>SystemSettings.LaunchAtLogin,value=>{SystemSettings.LaunchAtLogin=value;return Task.CompletedTask;}));
         Mainline("通用","basics","settings.systemNotifications","stableSettings.desc.notifications",()=>Toggle(()=>services.Preferences.Current.Notifications,async value=>{services.Notifications.Configure(value);await services.Preferences.SaveAsync(services.Preferences.Current with{Notifications=value});}));
         Mainline("通用","windows","settings.edgeCollapse","stableSettings.desc.edgeCollapse",()=>DisabledChoice(["settings.standardWindowMode","settings.edgeCollapseMode"]));

@@ -18,7 +18,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async predicate=>{for(let
    if(mode==='status'){res.writeHead(503);res.end();return}
    if(mode==='large'){res.end(' '.repeat(1024*1024+1));return}
    if(mode==='broken'){res.setHeader('Content-Length','200');res.write('{');res.destroy();return}
-   res.setHeader('Content-Type','application/json');res.end(mode==='invalid'?'not-json':JSON.stringify({choices:[{message:{content:'<think>hidden</think>["天空"," 蓝色 ","天空"]'}}]}));
+   const words=/short English keywords/.test(body.messages[0].content[1].text)?['sky',' blue sky ','sky']:['天空',' 蓝色 ','天空'];
+   res.setHeader('Content-Type','application/json');res.end(mode==='invalid'?'not-json':JSON.stringify({choices:[{message:{content:'<think>hidden</think>'+JSON.stringify(words)}}]}));
   }catch{res.destroy()}});
   proxy=http.createServer((_req,res)=>{proxyHits++;res.writeHead(502);res.end()});
   await Promise.all([new Promise(r=>server.listen(0,'127.0.0.1',r)),new Promise(r=>proxy.listen(0,'127.0.0.1',r))]);
@@ -32,7 +33,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async predicate=>{for(let
   assert.deepEqual(await generate(),['天空','蓝色']);assert.equal(proxyHits,0,'Core never sends image bytes through configured proxy');
   assert.equal(requests[0].messages[0].content[0].image_url.url,image);assert.equal(requests[0].max_tokens,512);assert.equal(requests[0].temperature,.2);assert.equal(requests[0].stream,false);assert.equal(requests[0].chat_template_kwargs.enable_thinking,false);
   assert.match(requests[0].messages[0].content[1].text,/中文关键词/,'legacy requests retain Chinese output');
-  await request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000,'en-US']);
+  assert.deepEqual(await request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000,'en-US']),['sky','blue sky'],'English keywords survive parsing, trimming and deduplication');
   assert.match(requests.at(-1).messages[0].content[1].text,/short English keywords/);
   await request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000,'zh-CN']);
   assert.match(requests.at(-1).messages[0].content[1].text,/中文关键词/);
@@ -71,7 +72,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async predicate=>{for(let
   client=new CoreVisualCacheClient(profile,path.join(runtime,'node.exe'),path.join(runtime,'visual-cache.cjs'),supervisor);
   mode='valid';assert.deepEqual(await client.request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000]),['天空','蓝色']);
   assert.equal(requests.filter(body=>body.model==='close-active').length,1,'retired model requests are never replayed by the replacement');
-  console.log('Core local keywords: standalone copied runtime/empty PATH/no Electron, literal loopback/no proxy or redirects, original prompt/grammar, bounded HTTP and jobs, cancellation/deadline/socket recovery, source identity and no persistent AI image passed.');
+  console.log('Core local keywords: standalone copied runtime/empty PATH/no Electron, bilingual per-request prompts and parsed English tags, literal loopback/no proxy or redirects, original grammar, bounded HTTP and jobs, cancellation/deadline/socket recovery, source identity and no persistent AI image passed.');
  }finally{
   client?.close();for(const key of variables)if(saved[key]===undefined)delete process.env[key];else process.env[key]=saved[key];
   for(const res of holds.values())res.destroy();for(const service of [server,proxy])if(service){service.closeAllConnections();await new Promise(r=>service.close(r))}

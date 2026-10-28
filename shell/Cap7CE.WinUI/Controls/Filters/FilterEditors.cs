@@ -14,6 +14,7 @@ internal sealed class FilterEditors(Func<BrowseFilter> read,Action<BrowseFilter>
         var calendarStyle=(Style)Application.Current.Resources["CapFilterCalendarView"];
         var start=new CalendarDatePicker {Date=value.After,MinDate=DateTimeOffset.UnixEpoch,CalendarViewStyle=calendarStyle};
         var end=new CalendarDatePicker {Date=value.Before?.AddDays(-1),MinDate=DateTimeOffset.UnixEpoch,CalendarViewStyle=calendarStyle};
+        L.Bind(start,FrameworkElement.LanguageProperty,"language.tag");L.Bind(end,FrameworkElement.LanguageProperty,"language.tag");
         L.Bind(start,CalendarDatePicker.HeaderProperty,"ui.filters.startDate");L.Bind(end,CalendarDatePicker.HeaderProperty,"ui.filters.endDate");
         foreach(var picker in new[]{start,end}){L.Bind(picker,CalendarDatePicker.PlaceholderTextProperty,"ui.filters.unlimited");L.Bind(picker,FrameworkElement.LanguageProperty,"language.tag");}
         var error=Ui.Text("",true);var content=Ui.Column(start,end,error);

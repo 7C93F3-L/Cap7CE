@@ -17,8 +17,8 @@ internal sealed class TextPreviewView : Grid
     private readonly TextBlock size=Ui.Text("16");
     private readonly TextBlock notice=Ui.Text("",true);
     private readonly StackPanel tools;
-    private readonly CheckBox source=new(){Content="源码",MinWidth=0};
-    private readonly CheckBox wrap=new(){Content="自动换行",IsChecked=true,MinWidth=0};
+    private readonly CheckBox source=new(){MinWidth=0};
+    private readonly CheckBox wrap=new(){IsChecked=true,MinWidth=0};
     private readonly CancellationToken lifetime;
     private CancellationTokenSource? rendering;
     private TextDocumentWebView? web;
@@ -27,6 +27,7 @@ internal sealed class TextPreviewView : Grid
     public TextPreviewView(Action openExternal,CancellationToken token)
     {
         lifetime=token;Padding=new(56,8,56,8);RowSpacing=6;
+        L.Bind(source,CheckBox.ContentProperty,"ui.preview.source");L.Bind(wrap,CheckBox.ContentProperty,"ui.preview.wrap");
         RowDefinitions.Add(new(){Height=GridLength.Auto});RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});RowDefinitions.Add(new(){Height=GridLength.Auto});
         // Override every native TextBox state locally, including hover and focus.
         foreach(var key in new[]{"TextControlBackground","TextControlBackgroundPointerOver","TextControlBackgroundFocused","TextControlBackgroundDisabled",
@@ -34,7 +35,7 @@ internal sealed class TextPreviewView : Grid
             text.Resources[key]=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         ScrollViewer.SetVerticalScrollBarVisibility(text,ScrollBarVisibility.Auto);
         ScrollViewer.SetHorizontalScrollBarVisibility(text,ScrollBarVisibility.Auto);
-        tools=Ui.Row(Ui.Tool("\uE738","减小字号",()=>Resize(-2)),size,Ui.Tool("\uE710","增大字号",()=>Resize(2)),wrap,source,Ui.Tool("\uE8A7","默认程序打开",openExternal));
+        tools=Ui.Row(L.Tool("\uE738","ui.preview.smallerText",()=>Resize(-2)),size,L.Tool("\uE710","ui.preview.largerText",()=>Resize(2)),wrap,source,L.Tool("\uE8A7","ui.preview.openDefault",openExternal));
         tools.Spacing=12;notice.FontSize=12;
         tools.VerticalAlignment=VerticalAlignment.Center;size.VerticalAlignment=VerticalAlignment.Center;
         Children.Add(new ScrollViewer {Content=tools,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled});
@@ -43,16 +44,16 @@ internal sealed class TextPreviewView : Grid
         Unloaded+=(_,_)=>{rendering?.Cancel();rendering?.Dispose();rendering=null;web?.Dispose();};
         ActualThemeChanged+=(_,_)=>{if(IsLoaded&&web is not null)Refresh();};
     }
-    public void SetText(string content,string fileExtension,string information="")
+    public void SetText(string content,string fileExtension,UiMessage? information=null)
     {
-        value=content;extension=fileExtension.ToLowerInvariant();L.Literal(notice,TextBlock.TextProperty,information);
+        value=content;extension=fileExtension.ToLowerInvariant();L.Message(notice,TextBlock.TextProperty,information??UiMessage.Literal(""));
         source.Visibility=TextPreviewDocument.CanRender(extension)?Visibility.Visible:Visibility.Collapsed;
         text.FontFamily=new(extension is ".txt" or ".md" or ".epub" or ".mobi"?"Segoe UI":"Consolas");
         Refresh();
     }
     public void SetBookText(IReadOnlyList<string> chapters)
     {
-        SetText(TextPreviewDocument.BookText(chapters),".epub","全文文字预览");
+        SetText(TextPreviewDocument.BookText(chapters),".epub",UiMessage.Key(chapters.Count==0?"ui.preview.noText":"ui.preview.bookText"));
     }
     private void Resize(int delta){fontSize=Math.Clamp(fontSize+delta,12,28);size.Text=fontSize.ToString();Refresh();}
     private async void Refresh()

@@ -14,6 +14,14 @@ internal static class LanguageBindingChecks
         session.Select("en-US","zh-CN");Equal(element.GetValue(property),"About");
         element.Unload();session.Select("zh-CN","zh-CN");Equal(element.GetValue(property),"About");
         element.Load();Equal(element.GetValue(property),"关于");
+        // Native window-content reparenting may report an old unload after reload.
+        element.NotifyUnloaded();element.DispatcherQueue.Drain();
+        session.Select("en-US","zh-CN");Equal(element.GetValue(property),"About");
+        element.Unload(notifyBeforeStateChange:true);element.DispatcherQueue.Drain();
+        session.Select("zh-CN","zh-CN");Equal(element.GetValue(property),"About");
+        element.Load();Equal(element.GetValue(property),"关于");
+        element.Unload(notifyBeforeStateChange:true);element.Load();element.DispatcherQueue.Drain();
+        session.Select("en-US","zh-CN");Equal(element.GetValue(property),"About");
         LanguageBinding.Clear(element,property);element.SetValue(property,"通用.txt");
         session.Select("en-US","zh-CN");Equal(element.GetValue(property),"通用.txt");
         element.Unload();element.Load();Equal(element.GetValue(property),"通用.txt");
@@ -28,7 +36,7 @@ internal static class LanguageBindingChecks
         session.Select("en-US","zh-CN");LanguageBinding.Clear(element,property);element.SetValue(property,"用户文件");
         element.DispatcherQueue.Drain();Equal(element.GetValue(property),"用户文件");
         if(applications!=2)throw new Exception("A queued update must not revive a replaced binding.");
-        Console.WriteLine("Language binding owner passed: initial/load/unload, replacement, literal data, current parameters, custom rendering and stale dispatcher suppression (fixture surface).");
+        Console.WriteLine("Language binding owner passed: initial/load/unload, late native unload after reparent/reload, replacement, literal data, current parameters, custom rendering and stale dispatcher suppression (fixture surface).");
     }
     private static void Equal(object? actual,string expected){if(!Equals(actual,expected))throw new Exception($"Expected {expected}, got {actual}.");}
 }

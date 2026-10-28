@@ -21,5 +21,6 @@ internal sealed class FrameworkElement
     public void SetValue(DependencyProperty property,object? value)=>values[property]=value;
     public object? GetValue(DependencyProperty property)=>values.GetValueOrDefault(property);
     public void Load(){IsLoaded=true;Loaded?.Invoke(this,new());}
-    public void Unload(){IsLoaded=false;Unloaded?.Invoke(this,new());}
+    public void Unload(bool notifyBeforeStateChange=false){if(notifyBeforeStateChange)Unloaded?.Invoke(this,new());IsLoaded=false;if(!notifyBeforeStateChange)Unloaded?.Invoke(this,new());}
+    public void NotifyUnloaded()=>Unloaded?.Invoke(this,new());
 }

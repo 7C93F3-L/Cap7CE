@@ -14,9 +14,9 @@ internal sealed record DrivePresentation(string Name,string Capacity,bool IsSyst
             var drive=new DriveInfo(root);var label=drive.VolumeLabel;
             var size=(double)drive.TotalSize;var unit="GB";size/=1024d*1024*1024;
             if(size>=1024){size/=1024;unit="TB";}
-            return new(name??$"{(string.IsNullOrWhiteSpace(label)?"本地磁盘":label)} ({letter})",$"{size:0.#} {unit}",system,name is null&&string.IsNullOrWhiteSpace(label));
+            return new(name??(string.IsNullOrWhiteSpace(label)?letter:$"{label} ({letter})"),$"{size:0.#} {unit}",system,name is null&&string.IsNullOrWhiteSpace(label));
         }
         catch(Exception error) when(error is IOException or UnauthorizedAccessException or ArgumentException)
-        {return new(name??$"本地磁盘 ({letter})","不可用",system,name is null,false);}
+        {return new(name??letter,"—",system,name is null,false);}
     }
 }

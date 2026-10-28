@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:Cap7CE.WinUI.Controls" xmlns:themes="using:Cap7CE.WinUI.Themes">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:Cap7CE.WinUI.Controls" xmlns:themes="using:Cap7CE.WinUI.Themes" xmlns:language="using:Cap7CE.WinUI.Localization">
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
       <SolidColorBrush x:Key="CapSidebarTextBrush" Color="#E01F1F1F"/>
@@ -123,7 +123,7 @@
   <DataTemplate x:Key="CapSidebarFavoriteTemplate">
     <Grid Height="36" Padding="8,0" Background="Transparent"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
       <controls:SidebarIcon Kind="folder" Width="24" Height="24"/><TextBlock Grid.Column="1" Margin="10,0,4,0" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-      <Button x:Name="FavoriteMore" Grid.Column="2" Width="24" Height="24" Padding="3" CornerRadius="12" Opacity="0" IsHitTestVisible="False" Style="{StaticResource CapSidebarButton}" ToolTipService.ToolTip="管理收藏">
+      <Button x:Name="FavoriteMore" Grid.Column="2" Width="24" Height="24" Padding="3" CornerRadius="12" Opacity="0" IsHitTestVisible="False" Style="{StaticResource CapSidebarButton}" language:LanguageText.ToolTipKey="ui.sidebar.manageFavorite">
         <controls:SidebarIcon Kind="more" Width="18" Height="18"/>
       </Button>
     </Grid>
@@ -132,7 +132,7 @@
     <Grid Width="32" Height="32"><controls:SidebarIcon Kind="folder" Width="24" Height="24"/></Grid>
   </DataTemplate>
   <DataTemplate x:Key="CapSidebarOrderTemplate">
-    <Grid Height="36" Padding="8,0" Background="Transparent" ToolTipService.ToolTip="拖动调整顺序，Alt+↑/↓微调">
+    <Grid Height="36" Padding="8,0" Background="Transparent" language:LanguageText.ToolTipKey="ui.sidebar.reorder">
       <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
       <controls:SidebarIcon Kind="folder" Width="24" Height="24"/>
       <TextBlock Grid.Column="1" Margin="10,0,4,0" Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>

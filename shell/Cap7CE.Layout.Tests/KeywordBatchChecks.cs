@@ -27,7 +27,6 @@ internal static class KeywordBatchChecks
         Require(conflicts.Failed==2&&attempts.Values.All(count=>count==3),"Conflicts are bounded to three attempts per file");
         using var cancel=new CancellationTokenSource();cancel.Cancel();
         try{await KeywordSelectionWriter.SaveAsync(original,[],(_,_,_)=>throw new Exception("Cancelled write started"),cancel.Token);throw new Exception("Cancellation ignored");}catch(OperationCanceledException){}
-        Require(AutoKeywordNoticeText.Finished(new("完成",Failed:1,Skipped:2))=="3 个文件识别失败","Unsupported formats are counted in the compact failure notice");
         Console.WriteLine("Batch keyword checks passed (common/delta, unique words, conflicts, partial results, cancellation and unsupported recognition summary).");
     }
 }

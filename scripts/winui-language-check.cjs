@@ -9,6 +9,7 @@ module.exports = root => {
     for (const [language, text] of Object.entries(variants))
       assert(typeof text === 'string' && text.trim().length, `${key}/${language}: empty translation`);
     assert.deepEqual(parameters(variants['zh-CN']), parameters(variants['en-US']), `${key}: named parameters differ`);
+    assert(!/\p{Script=Han}/u.test(variants['en-US']) || ['settings.language', 'language.chinese', 'ui.signature.secondary'].includes(key), `${key}: unexpected Chinese text in the English catalog`);
   }
   assert(Object.keys(messages).length, 'native language catalog must not be empty');
   assert.deepEqual(messages['language.tag'], {'zh-CN': 'zh-CN', 'en-US': 'en-US'}, 'native control language tags must be valid locale IDs');
@@ -72,6 +73,7 @@ module.exports = root => {
   for (const file of walk(path.join(root, 'shell/Cap7CE.WinUI')))
     for (const match of fs.readFileSync(file, 'utf8').matchAll(/"((?:language|ui|main|menu|native|navigation|help|settings|common|theme|appearance|stableSettings|shortcut)\.[A-Za-z0-9_.-]+)"/g))
       if (!match[1].endsWith('.')) assert(messages[match[1]], `${file}: unknown language key ${match[1]}`);
+  require('./winui-language-audit.cjs')(root);
   console.log(`WinUI language catalog passed: ${Object.keys(messages).length} paired messages`);
 };
 if (require.main === module) module.exports(path.resolve(__dirname, '..'));

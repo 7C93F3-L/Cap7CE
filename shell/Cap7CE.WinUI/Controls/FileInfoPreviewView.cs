@@ -1,3 +1,5 @@
+using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Themes;
@@ -23,20 +25,22 @@ internal sealed class FileInfoPreviewView : Grid
         icon.SetIcon(iconName);artwork.Children.Add(icon);artwork.Children.Add(thumbnail);PreviewViewportStyle.Apply(artwork);
         var name=new TextBlock {Text=item.Name,FontSize=20,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,
             TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,IsTextSelectionEnabled=true,Margin=new(0,8,0,0)};
-        var type=item.Entry.IsDirectory?"文件夹":string.IsNullOrWhiteSpace(item.Entry.Extension)?"文件":item.Entry.Extension.TrimStart('.').ToUpperInvariant()+" 文件";
-        var summary=Ui.Text(item.Entry.IsDirectory?type:$"{type} · {DetailsCard.Bytes(item.Entry.SizeBytes)}",true);
+        var type=UiMessage.Key(item.Entry.IsDirectory?"main.folder":string.IsNullOrWhiteSpace(item.Entry.Extension)?"ui.details.file":"ui.preview.extensionType",
+            new Dictionary<string,object?>{{"extension",item.Entry.Extension.TrimStart('.').ToUpperInvariant()}});
+        var summary=Ui.Text("",true);L.Message(summary,TextBlock.TextProperty,item.Entry.IsDirectory?type:
+            UiMessage.Key("ui.preview.fileSummary",new Dictionary<string,object?>{{"type",type},{"size",DetailsCard.Bytes(item.Entry.SizeBytes)}}));
         summary.TextAlignment=TextAlignment.Center;summary.IsTextSelectionEnabled=true;
         var details=new Grid {RowSpacing=8,ColumnSpacing=16,HorizontalAlignment=HorizontalAlignment.Center};
         details.ColumnDefinitions.Add(new(){Width=GridLength.Auto});details.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         void Field(string label,string value) {
             var row=details.RowDefinitions.Count;details.RowDefinitions.Add(new(){Height=GridLength.Auto});
-            var title=Ui.Text(label,true);title.FontSize=12;title.VerticalAlignment=VerticalAlignment.Center;
+            var title=L.Text(label,true);title.FontSize=12;title.VerticalAlignment=VerticalAlignment.Center;
             var text=Ui.Text(value);text.FontSize=13;text.IsTextSelectionEnabled=true;
             Grid.SetRow(title,row);Grid.SetRow(text,row);Grid.SetColumn(text,1);details.Children.Add(title);details.Children.Add(text);
         }
-        if(item.Entry.CreatedUtcTicks is {} created)Field("创建时间",DateTime.FromFileTimeUtc(created).ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
-        Field("修改时间",item.ModifiedLabel);Field("文件位置",item.FullPath);
-        var open=Ui.Tool("\uE8A7","默认程序打开",openExternal);open.HorizontalAlignment=HorizontalAlignment.Center;
+        if(item.Entry.CreatedUtcTicks is {} created)Field("ui.preview.created",DateTime.FromFileTimeUtc(created).ToLocalTime().ToString("yyyy-MM-dd HH:mm"));
+        Field("ui.details.modified",item.ModifiedLabel);Field("ui.preview.location",item.FullPath);
+        var open=L.Tool("\uE8A7","ui.preview.openDefault",openExternal);open.HorizontalAlignment=HorizontalAlignment.Center;
         var column=Ui.Column(artwork,name,summary,details,open);column.Spacing=12;column.Margin=new(56,20,56,24);
         column.MaxWidth=680;column.HorizontalAlignment=HorizontalAlignment.Center;column.VerticalAlignment=VerticalAlignment.Center;
         var scroll=new ScrollViewer {Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};

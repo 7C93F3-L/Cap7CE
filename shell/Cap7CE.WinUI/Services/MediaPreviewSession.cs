@@ -20,6 +20,7 @@ internal sealed class MediaPreviewSession : IDisposable
     public MediaPreviewSession(StorageFile file,Action<UiMessage> failure,Action<double,double>? dimensions=null,bool autoPlayAndLoop=false)
     {
         this.failure=failure;this.dimensions=dimensions;source=MediaSource.CreateFromStorageFile(file);
+        LanguageUi.Bind(Element,Microsoft.UI.Xaml.FrameworkElement.LanguageProperty,"language.tag");
         try {
             PreviewViewportStyle.Apply(Element);
             player.MediaFailed+=Failed;player.MediaOpened+=Opened;

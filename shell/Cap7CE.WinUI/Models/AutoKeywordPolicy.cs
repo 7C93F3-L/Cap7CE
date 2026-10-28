@@ -12,4 +12,4 @@ internal static class AutoKeywordPolicy
         return merged;
     }
 }
-internal sealed record AutoKeywordState(string Phase="待开始",string Name="",int Total=0,int Processed=0,int Succeeded=0,int Failed=0,int Skipped=0,string Message="",UiMessage? DisplayMessage=null);
+internal sealed record AutoKeywordState(string Phase="待开始",string Name="",int Total=0,int Processed=0,int Succeeded=0,int Failed=0,int Skipped=0,UiMessage? DisplayMessage=null);

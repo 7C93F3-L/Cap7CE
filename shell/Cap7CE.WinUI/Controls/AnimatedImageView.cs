@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -56,7 +57,7 @@ internal sealed class AnimatedImageView : Grid,IDisposable
         var ready=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         void Completed(object? sender,CoreWebView2NavigationCompletedEventArgs e) {
             if(e.NavigationId!=navigationId)return;
-            if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new IOException("动图显示失败："+e.WebErrorStatus));
+            if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new UiFailure("ui.preview.animationDisplayFailed",new Dictionary<string,object?>{{"status",e.WebErrorStatus}}));
         }
         core.NavigationCompleted+=Completed;
         try {
@@ -64,7 +65,7 @@ internal sealed class AnimatedImageView : Grid,IDisposable
             await ready.Task.WaitAsync(TimeSpan.FromSeconds(15),token);
             // Host-side inspection still works with page scripts disabled.
             var decoded=await core.ExecuteScriptAsync("Boolean(document.images[0]?.complete && document.images[0]?.naturalWidth > 0)").AsTask(token);
-            if(decoded!="true")throw new IOException("动图解码失败，请使用默认程序打开。");
+            if(decoded!="true")throw new UiFailure("ui.preview.animationDecodeFailed");
         } finally {core.NavigationCompleted-=Completed;}
     }
     public void Dispose()

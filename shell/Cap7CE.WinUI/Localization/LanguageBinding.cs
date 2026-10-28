@@ -34,9 +34,17 @@ internal sealed class LanguageBinding
     private void Subscribe(){if(subscribed)return;session.Changed+=Changed;subscribed=true;}
     private void Changed()
     {
+        if(!subscribed)return;
         if(element.DispatcherQueue.HasThreadAccess)Refresh();
         else element.DispatcherQueue.TryEnqueue(()=>{if(subscribed)Refresh();});
     }
-    private void Unloaded(object sender,RoutedEventArgs args){session.Changed-=Changed;subscribed=false;}
+    private void Unloaded(object sender,RoutedEventArgs args)
+    {
+        // Reparenting the window content can deliver Unloaded after the next Loaded.
+        // Let the native tree settle before deciding whether this owner is detached.
+        if(!element.IsLoaded){Unsubscribe();return;}
+        if(!element.DispatcherQueue.TryEnqueue(()=>{if(!element.IsLoaded)Unsubscribe();}))Unsubscribe();
+    }
+    private void Unsubscribe(){session.Changed-=Changed;subscribed=false;}
     private void Detach(){element.Loaded-=Loaded;element.Unloaded-=Unloaded;session.Changed-=Changed;subscribed=false;}
 }

@@ -10,11 +10,13 @@ public sealed class ArchivePreviewEntry
     public string Location {get;}
     public string Glyph {get;}
     public string SizeLabel {get;}
+    public string? LocationResourceKey {get;}
+    public string? SizeResourceKey {get;}
     internal ArchivePreviewEntry(string path,bool directory,string sizeLabel)
     {
         FullPath=path;var normalized=path.Replace('\\','/').TrimEnd('/');var separator=normalized.LastIndexOf('/');
         Name=separator<0?normalized:normalized[(separator+1)..];
-        Location=separator<0?"根目录":normalized[..separator];
-        Glyph=AssetItem.EntryGlyph(directory);SizeLabel=directory?"文件夹":sizeLabel;
+        Location=separator<0?"":normalized[..separator];LocationResourceKey=separator<0?"ui.preview.archiveRoot":null;
+        Glyph=AssetItem.EntryGlyph(directory);SizeLabel=directory?"":sizeLabel;SizeResourceKey=directory?"main.folder":null;
     }
 }

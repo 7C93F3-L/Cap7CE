@@ -34,9 +34,9 @@ internal static class MediaFilterRules
     }
     public static string DimensionLabel(CoreSearchFactFilter f)
     {
-        if(!FilterFactRules.Has(f,"dimensions"))return "任意尺寸";
+        if(!FilterFactRules.Has(f,"dimensions"))return "";
         if(f.MinimumWidth is {} w&&f.MinimumHeight is {} h&&f.MaximumWidth==w&&f.MaximumHeight==h)return $"{w} × {h}";
         if(f.MinimumWidth is {} minW&&f.MinimumHeight is {} minH&&f.MaximumWidth is null&&f.MaximumHeight is null)return $"≥ {minW} × {minH}";
-        return "自定尺寸";
+        return "";
     }
 }

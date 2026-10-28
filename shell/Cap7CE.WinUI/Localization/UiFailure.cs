@@ -13,3 +13,8 @@ internal sealed class UiDirectoryFailure : DirectoryNotFoundException,IUiFailure
     public UiMessage Display {get;}
     public UiDirectoryFailure(string key):base(key)=>Display=UiMessage.Key(key);
 }
+internal sealed class UiArgumentFailure : ArgumentException,IUiFailure
+{
+    public UiMessage Display {get;}
+    public UiArgumentFailure(string key,string? parameter=null):base(key,parameter)=>Display=UiMessage.Key(key);
+}

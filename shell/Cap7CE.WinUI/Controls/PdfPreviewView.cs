@@ -1,3 +1,4 @@
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml;
 using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml.Controls;
@@ -23,7 +24,7 @@ internal sealed class PdfPreviewView : Grid
     public PdfPreviewView(Action openExternal,Action<double,double> resized,Action<UiMessage> failed)
     {
         this.resized=resized;this.failed=failed;
-        previous=Ui.Tool("\uE76B","上一页",()=>Move(-1));next=Ui.Tool("\uE76C","下一页",()=>Move(1));
+        previous=L.Tool("\uE76B","ui.preview.previousPage",()=>Move(-1));next=L.Tool("\uE76C","ui.preview.nextPage",()=>Move(1));
         count.VerticalAlignment=VerticalAlignment.Center;
         viewer=new(openExternal,Ui.Row(previous,count,next));Children.Add(viewer);
     }

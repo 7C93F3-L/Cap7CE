@@ -18,7 +18,7 @@ internal static class AdvancedFilterRules
         foreach(var group in groups) {
             if(group.Fields.Length is <1 or >2 || group.Options.Length is <1 or >12 || group.Mode is not ("single" or "union" or "flags")
                 || group.Fields.Any(field=>field.Split('.') is not ["document" or "threeD" or "font" or "model" or "textData" or "archive",_]))
-                throw new InvalidDataException("高级筛选资源无效");
+                throw new InvalidDataException("invalid-native-filter-data");
         }
         return groups;
     }

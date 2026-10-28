@@ -25,9 +25,9 @@ internal static class MetadataTaskChecks
         Require(core.Requests.Last().Operation=="metadata.build.notify","Completion preserves existing incremental maintenance ownership");
         Require(states.Count==beforeWake,"Accepted-only wake responses cannot be parsed as progress or emit false state changes");
         core.Phase="extracting";await tasks.InvokeAsync("resume");await tasks.InvokeAsync("pause");
-        Require(!tasks.ActiveThisSession&&!states[^1].Running&&states[^1].Finished.Contains("暂停"),"Pause stops active observation");
+        Require(!tasks.ActiveThisSession&&!states[^1].Running&&states[^1].Phase=="paused","Pause stops active observation");
         await tasks.InvokeAsync("cancelDirectories");
-        Require(!states[^1].Running&&states[^1].Finished.Contains("取消"),"Directory cancellation cannot report completion");
+        Require(!states[^1].Running&&states[^1].Operation=="cancelDirectories","Directory cancellation cannot report completion");
         var before=states.Count;core.Fail=true;
         try{await tasks.InvokeAsync("startDirectory");throw new Exception("Failure expected");}catch(IOException){}
         Require(states.Count==before,"Rejected start cannot publish running or successful state");
@@ -41,9 +41,9 @@ internal static class MetadataTaskChecks
         blocked.SetResult();await Task.WhenAll(start,pause).WaitAsync(TimeSpan.FromSeconds(2));
         Require(states[^1].Operation=="pause"&&!states[^1].Running,"Late start response cannot overwrite a subsequent pause");
         var failed=MetadataTaskStatus.Read(JsonSerializer.SerializeToElement(new{progress=new{phase="failed",processed=4,failed=2,unsupported=3,errorCode="storage-error"}}),true,"status");
-        Require(!failed.Running&&failed.Fraction is null&&failed.Finished.Contains("storage-error"),"Unknown totals and failures remain explicit");
+        Require(!failed.Running&&failed.Fraction is null&&failed.ErrorCode=="storage-error","Unknown totals and failures remain explicit");
         var discovering=MetadataTaskStatus.Read(JsonSerializer.SerializeToElement(new{progress=new{phase="discovering",discovered=120}}),true,"status");
-        Require(discovering.Running&&discovering.Text.Contains("发现")&&discovering.Text.Contains("120")&&discovering.Total is null,"Discovery reports its own count rather than pretending extraction has stalled at zero");
+        Require(discovering.Running&&discovering.Phase=="discovering"&&discovering.Discovered==120&&discovering.Total is null,"Discovery reports its own count rather than pretending extraction has stalled at zero");
         Console.WriteLine("Metadata task checks passed: scope, consent, progress, completion, maintenance, pause, cancellation, rejected start and serialized controls.");
     }
 }

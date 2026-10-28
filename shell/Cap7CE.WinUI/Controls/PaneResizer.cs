@@ -48,7 +48,7 @@ public sealed class PaneResizer : UserControl
         Content = thumb;
         HorizontalAlignment = HorizontalAlignment.Stretch; VerticalAlignment = VerticalAlignment.Stretch;
         ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
-        AutomationProperties.SetHelpText(this, "拖动调整宽度；双击恢复默认；方向键每次调整 16 DIP");
+        Cap7CE.WinUI.Localization.LanguageUi.Bind(this,AutomationProperties.HelpTextProperty,"ui.accessibility.resizeHelp");
         AddHandler(DoubleTappedEvent, new DoubleTappedEventHandler((_, e) => { e.Handled = true; ResetRequested?.Invoke(); }), true);
         KeyDown += (_, e) => {
             if (e.Key is not (VirtualKey.Left or VirtualKey.Right)) return;

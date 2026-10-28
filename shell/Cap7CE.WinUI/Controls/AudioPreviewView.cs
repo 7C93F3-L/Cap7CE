@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Models;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Themes;
 using Microsoft.UI.Xaml;
@@ -51,10 +52,10 @@ internal sealed class AudioPreviewView : Grid
             token.ThrowIfCancellationRequested();
             if(!reply.GetProperty("isCurrent").GetBoolean()||reply.GetProperty("metadata").ValueKind!=System.Text.Json.JsonValueKind.Object)return;
             foreach(var entry in reply.GetProperty("metadata").GetProperty("items").EnumerateArray()) {
-                var label=entry.GetProperty("kind").GetString() switch {"media_artist"=>"歌手","media_album"=>"专辑",_=>null};
+                var label=entry.GetProperty("kind").GetString() switch {"media_artist"=>"ui.preview.artist","media_album"=>"ui.preview.album",_=>null};
                 var value=entry.GetProperty("text").GetString();
                 if(label is null||string.IsNullOrWhiteSpace(value))continue;
-                information.Children.Add(new TextBlock {Text=$"{label}：{value}",TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,IsTextSelectionEnabled=true});
+                var text=L.Text(label,parameters:()=>new Dictionary<string,object?>{{"value",value}});text.TextAlignment=TextAlignment.Center;text.IsTextSelectionEnabled=true;information.Children.Add(text);
             }
         } catch(OperationCanceledException){}catch(Exception error){if(!token.IsCancellationRequested)NativeDiagnostics.VisualFailure(error);}
     }

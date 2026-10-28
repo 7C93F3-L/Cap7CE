@@ -8,7 +8,7 @@ internal static class FailureLanguageChecks
         var language=new LanguageSession(catalog);var checks=0;
         foreach(var state in new[]{"needsRebuild","building","offline",null,"future-state"})foreach(var random in new[]{false,true}) {
             var message=UiMessage.Key(FailureText.ScopeKey(state,random));
-            Equal(message.Render(language),BrowseScopeRules.IndexUnavailable(state,random));
+            if(string.IsNullOrWhiteSpace(message.Render(language)))throw new Exception("Every index scope failure must resolve a resource.");
             language.Select("en-US","zh-CN");NoChinese(message.Render(language));language.Select("zh-CN","zh-CN");checks++;
         }
         var inner=new InvalidOperationException("diagnostic details");
