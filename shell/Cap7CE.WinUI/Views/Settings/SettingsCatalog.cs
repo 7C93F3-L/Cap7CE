@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Cap7CE.WinUI.Controls;
@@ -31,36 +32,36 @@ internal sealed class SettingsCatalog
     private ModelSettingsView ModelsView=>models??=new(services,notice);
     private static string T(string key)=>SettingsReference.Text(key);
     private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false,string? descriptionOverride=null)
-        =>Entries.Add(new(category,T("stableSettings.section."+section),T(title),descriptionOverride??T(description),create,expanded));
-    private static UIElement Disabled(string key)=>new Button {Content=T(key),IsEnabled=false};
-    private static UIElement DisabledChoice(string[] labels)=>new ComboBox {ItemsSource=labels,SelectedIndex=0,IsEnabled=false};
+        =>Entries.Add(new(category,"stableSettings.section."+section,title,descriptionOverride??description,create,expanded));
+    private static UIElement Disabled(string key){var button=L.Button(key,()=>{});button.IsEnabled=false;return button;}
+    private static UIElement DisabledChoice(string[] labels)=>L.Choice(labels,enabled:false);
     private void General()
     {
-        Mainline("通用","basics","settings.language","stableSettings.desc.language",()=>DisabledChoice([T("theme.system"),"中文","English"]));
+        Mainline("通用","basics","settings.language","stableSettings.desc.language",()=>DisabledChoice(["theme.system","language.chinese","language.english"]));
         Mainline("通用","basics","settings.launchAtLogin","stableSettings.desc.launch",()=>Toggle(()=>SystemSettings.LaunchAtLogin,value=>{SystemSettings.LaunchAtLogin=value;return Task.CompletedTask;}));
         Mainline("通用","basics","settings.systemNotifications","stableSettings.desc.notifications",()=>Toggle(()=>services.Preferences.Current.Notifications,async value=>{services.Notifications.Configure(value);await services.Preferences.SaveAsync(services.Preferences.Current with{Notifications=value});}));
-        Mainline("通用","windows","settings.edgeCollapse","stableSettings.desc.edgeCollapse",()=>DisabledChoice([T("settings.standardWindowMode"),T("settings.edgeCollapseMode")]));
+        Mainline("通用","windows","settings.edgeCollapse","stableSettings.desc.edgeCollapse",()=>DisabledChoice(["settings.standardWindowMode","settings.edgeCollapseMode"]));
     }
     private void Appearance()
     {
         Mainline("外观","colors","stableSettings.material","stableSettings.desc.material",
-            ()=>Choice(["云母","云母 Alt"],()=>services.Preferences.Current.Material=="mica-alt"?1:0,
+            ()=>Choice(["native.material.mica","native.material.alt"],()=>services.Preferences.Current.Material=="mica-alt"?1:0,
                 i=>services.Preferences.SaveAsync(services.Preferences.Current with{Material=i==0?"mica":"mica-alt"})),
-            descriptionOverride:"选择主窗口、设置与预览窗口使用的云母或云母 Alt 效果；不可用时自动使用纯色背景。");
+            descriptionOverride:"native.material.description");
         Mainline("外观","colors","appearance.themeModeLabel","stableSettings.desc.theme",
-            ()=>Choice([T("theme.system"),T("theme.light"),T("theme.dark")],()=>Array.IndexOf(new[]{"system","light","dark"},services.Preferences.Current.Theme),i=>services.Preferences.SaveAsync(services.Preferences.Current with{Theme=new[]{"system","light","dark"}[i]})));
+            ()=>Choice(["theme.system","theme.light","theme.dark"],()=>Array.IndexOf(new[]{"system","light","dark"},services.Preferences.Current.Theme),i=>services.Preferences.SaveAsync(services.Preferences.Current with{Theme=new[]{"system","light","dark"}[i]})));
         Mainline("外观","colors","appearance.configureLabel","stableSettings.desc.colors",()=>new SettingsColors(()=>services.Preferences.Current,services.Preferences.SaveAsync,notice));
         Mainline("外观","colors","stableSettings.uiFontSize","stableSettings.desc.uiFontSize",FontSize);
     }
     private void Storage()
     {
-        Entries.Add(new("缓存与索引",T("stableSettings.section.index"),"","",()=>new MaintenanceSettingsView(services,owner),true));
-        Entries.Add(new("缓存与索引","元数据","元数据提取","读取文件属性，用于尺寸、颜色等筛选。勾选下方目录可跳过提取。",MetadataView,true));
-        Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>new CacheSettingsView(services,owner,notice),descriptionOverride:"缓存缩略图与预览内容，清理后按需重新生成；源文件、索引和关键词保持不变。");
+        Entries.Add(new("缓存与索引","stableSettings.section.index","","",()=>new MaintenanceSettingsView(services,owner),true));
+        Entries.Add(new("缓存与索引","native.metadata.section","native.metadata.title","native.metadata.description",MetadataView,true));
+        Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>new CacheSettingsView(services,owner,notice),descriptionOverride:"native.cache.description");
     }
     private UIElement Toggle(Func<bool> read,Func<bool,Task> save)
     {
-        var toggle=new ToggleSwitch {MinWidth=0,IsOn=read(),OnContent=T("settings.enabled"),OffContent=T("settings.disabled")};var syncing=false;
+        var toggle=L.Toggle();toggle.IsOn=read();var syncing=false;
         toggle.Toggled+=async(_,_)=>{
             if(syncing)return;toggle.IsEnabled=false;
             try{await save(toggle.IsOn);}catch(Exception error){notice(error.Message);syncing=true;toggle.IsOn=read();syncing=false;}
@@ -84,24 +85,24 @@ internal sealed class SettingsCatalog
     }
     private void Diagnostics()
     {
-        Entries.Add(new("诊断",T("stableSettings.section.application"),"服务维护","后台连接或索引服务异常时，可重新连接或修复。",()=>new CoreMaintenanceView(services,owner).Section));
+        Entries.Add(new("诊断","stableSettings.section.application","native.maintenance.title","native.maintenance.description",()=>new CoreMaintenanceView(services,owner).Section));
         Mainline("诊断","application","stableSettings.diagnostics","stableSettings.desc.diagnostics",()=>{
             var column=Ui.Column();
-            column.Children.Add(new SettingsFieldRow(T("settings.applicationLog"),Ui.Text("原生启动及Core错误日志",true),Ui.Button("打开目录",()=>{Directory.CreateDirectory(PreferenceStore.DataRoot);FileCommands.OpenDirectoryInExplorer(PreferenceStore.DataRoot);} )));
-            column.Children.Add(new SettingsFieldRow(T("settings.crashReports"),Ui.Text(File.Exists(Path.Combine(PreferenceStore.DataRoot,"last-startup-error.log"))?"存在启动/异常记录":T("common.notCreated"),true)));
-            column.Children.Add(new SettingsFieldRow(T("settings.detailedLogging"),Ui.Text(T("common.disabled"),true),Disabled("common.enable")));
-            column.Children.Add(new SettingsFieldRow(T("settings.diagnosticsBundle"),Ui.Text("导出原生运行信息及已记录的错误，不包含素材、数据库或偏好文件。",true),Ui.Button(T("settings.exportDiagnostics"),()=>actions.Run(()=>NativeDiagnostics.ExportAsync(owner)))));
+            column.Children.Add(new SettingsFieldRow("settings.applicationLog",L.Text("native.diagnostics.logs",true),L.Button("native.diagnostics.openFolder",()=>{Directory.CreateDirectory(PreferenceStore.DataRoot);FileCommands.OpenDirectoryInExplorer(PreferenceStore.DataRoot);} ),localized:true));
+            column.Children.Add(new SettingsFieldRow("settings.crashReports",L.Text(File.Exists(Path.Combine(PreferenceStore.DataRoot,"last-startup-error.log"))?"native.diagnostics.recordPresent":"common.notCreated",true),localized:true));
+            column.Children.Add(new SettingsFieldRow("settings.detailedLogging",L.Text("common.disabled",true),Disabled("common.enable"),localized:true));
+            column.Children.Add(new SettingsFieldRow("settings.diagnosticsBundle",L.Text("native.diagnostics.exportDescription",true),L.Button("settings.exportDiagnostics",()=>actions.Run(()=>NativeDiagnostics.ExportAsync(owner))),localized:true));
             return column;
         },true);
     }
     private void About()
     {
-        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",()=>Ui.Column(Ui.Text(T("settings.updateCurrentVersion").Replace("{version}",NativeVersion.Text)),Ui.Button(T("settings.checkForUpdates"),()=>actions.Run(async()=>notice(await NativeUpdates.CheckAsync())))),descriptionOverride:"仅在主动点击时检查正式WinUI更新，不下载或安装Electron发布。");
+        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",()=>Ui.Column(L.Text("settings.updateCurrentVersion",parameters:()=>new Dictionary<string,object?>{{"version",NativeVersion.Text}}),L.Button("settings.checkForUpdates",()=>actions.Run(async()=>notice(await NativeUpdates.CheckAsync())))),descriptionOverride:"native.update.description");
         Mainline("关于","application","stableSettings.license","stableSettings.desc.license",()=>new TextBlock());
     }
     private UIElement Choice(string[] labels,Func<int> read,Func<int,Task> change)
     {
-        var box=new ComboBox {ItemsSource=labels,SelectedIndex=read(),MinWidth=160,MaxWidth=300};var syncing=false;
+        var box=L.Choice(labels,read());var syncing=false;
         box.SelectionChanged+=async(_,_)=>{
             if(syncing||box.SelectedIndex<0)return;box.IsEnabled=false;
             try{await change(box.SelectedIndex);}catch(Exception error){notice(error.Message);syncing=true;box.SelectedIndex=read();syncing=false;}
@@ -110,7 +111,7 @@ internal sealed class SettingsCatalog
     }
     private UIElement FontSize()
     {
-        var slider=new SizeSlider("界面字号",services.Preferences.Current.FontSize,12,16,1,1,13,value=>$"{value:0} DIP",_=>{},showTitle:false);
+        var slider=new SizeSlider(T("stableSettings.uiFontSize"),services.Preferences.Current.FontSize,12,16,1,1,13,value=>$"{value:0} DIP",_=>{},showTitle:false);
         var saved=services.Preferences.Current.FontSize;
         void Commit(){var value=slider.Value;if(value==saved)return;saved=value;actions.Run(async()=>{try{await services.Preferences.SaveAsync(services.Preferences.Current with{FontSize=value});}catch{saved=services.Preferences.Current.FontSize;throw;}});}
         slider.CommitRequested+=Commit;

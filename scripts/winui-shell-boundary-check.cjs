@@ -118,8 +118,8 @@ const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowAp
 const maintenanceSettings = read('shell/Cap7CE.WinUI/Views/Settings/MaintenanceSettingsView.cs');
 assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
 assert(maintenanceSettings.includes('new IndexMaintenanceView(services)') && settingsCatalog.includes('MetadataView,true'), 'settings must host index and metadata management inline');
-assert(settingsCatalog.indexOf('new MaintenanceSettingsView(services,owner)') < settingsCatalog.indexOf('"元数据","元数据提取"')
-  && settingsCatalog.indexOf('"元数据","元数据提取"') < settingsCatalog.indexOf('new CacheSettingsView'), 'storage settings must retain index, metadata, cache ordering');
+assert(settingsCatalog.indexOf('new MaintenanceSettingsView(services,owner)') < settingsCatalog.indexOf('"native.metadata.section","native.metadata.title"')
+  && settingsCatalog.indexOf('"native.metadata.section","native.metadata.title"') < settingsCatalog.indexOf('new CacheSettingsView'), 'storage settings must retain index, metadata, cache ordering');
 assert(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('commands.StartMetadataAsync(item.Path)')
   && read('shell/Cap7CE.WinUI/Services/ResultContextMenu.cs').includes('commands.StartMetadataAsync(first)'), 'metadata shortcuts must share the explicit directory queue action');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);

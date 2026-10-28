@@ -1270,5 +1270,365 @@
   "native.progress.processed": {
     "zh-CN": "已处理 {count:N0} 项",
     "en-US": "Processed {count:N0} items"
+  },
+  "native.material.description": {
+    "zh-CN": "选择主窗口、设置与预览窗口使用的云母或云母 Alt 效果；不可用时自动使用纯色背景。",
+    "en-US": "Choose Mica or Mica Alt for the main, settings and preview windows. A solid background is used when unavailable."
+  },
+  "native.cache.description": {
+    "zh-CN": "缓存缩略图与预览内容，清理后按需重新生成；源文件、索引和关键词保持不变。",
+    "en-US": "Cache thumbnails and preview content. Cleared content is regenerated as needed; source files, indexes and keywords are preserved."
+  },
+  "native.metadata.section": {
+    "zh-CN": "元数据",
+    "en-US": "Metadata"
+  },
+  "native.diagnostics.logs": {
+    "zh-CN": "原生启动及Core错误日志",
+    "en-US": "Native startup and Core error logs"
+  },
+  "native.diagnostics.openFolder": {
+    "zh-CN": "打开目录",
+    "en-US": "Open folder"
+  },
+  "native.diagnostics.recordPresent": {
+    "zh-CN": "存在启动/异常记录",
+    "en-US": "Startup or error records are available"
+  },
+  "native.diagnostics.exportDescription": {
+    "zh-CN": "导出原生运行信息及已记录的错误，不包含素材、数据库或偏好文件。",
+    "en-US": "Export native runtime information and recorded errors. Assets, databases and preference files are excluded."
+  },
+  "native.update.description": {
+    "zh-CN": "仅在主动点击时检查正式WinUI更新，不下载或安装Electron发布。",
+    "en-US": "Check for official WinUI updates only when requested. Electron releases are not downloaded or installed."
+  },
+  "native.shortcut.unavailable": {
+    "zh-CN": "此窗口动作尚未迁入WinUI，不注册其快捷键。",
+    "en-US": "This window action is not available in WinUI. Its shortcut is not registered."
+  },
+  "help.command.set": {
+    "zh-CN": "打开设置",
+    "en-US": "Open Settings"
+  },
+  "help.group.settings": {
+    "zh-CN": "设置",
+    "en-US": "Settings"
+  },
+  "help.command.see_dir_all": {
+    "zh-CN": "切换收藏目录，all 切换到此电脑",
+    "en-US": "Switch favorites; all switches to This PC"
+  },
+  "help.command.see_dir": {
+    "zh-CN": "切换收藏目录，all 切换到此电脑",
+    "en-US": "Switch favorites; all switches to This PC"
+  },
+  "help.command.see_sort_asc": {
+    "zh-CN": "切换为升序排序",
+    "en-US": "Sort Ascending"
+  },
+  "help.command.see_sort_desc": {
+    "zh-CN": "切换为降序排序",
+    "en-US": "Sort Descending"
+  },
+  "help.command.see_sort_name": {
+    "zh-CN": "按名称排序",
+    "en-US": "Sort by Name"
+  },
+  "help.command.see_sort_time": {
+    "zh-CN": "按修改时间排序",
+    "en-US": "Sort by Modified Time"
+  },
+  "help.command.see_root": {
+    "zh-CN": "返回此电脑根页面",
+    "en-US": "Return to the This PC home page"
+  },
+  "help.command.see_hidden_on": {
+    "zh-CN": "显示 Windows 隐藏文件",
+    "en-US": "Show Windows Hidden Files"
+  },
+  "help.command.see_subfolders_on": {
+    "zh-CN": "搜索包含子文件夹",
+    "en-US": "Include subfolders in search"
+  },
+  "help.command.see_hidden_off": {
+    "zh-CN": "隐藏 Windows 隐藏文件",
+    "en-US": "Hide Windows Hidden Files"
+  },
+  "help.command.see_subfolders_off": {
+    "zh-CN": "搜索仅当前文件夹",
+    "en-US": "Search only the current folder"
+  },
+  "help.group.browse": {
+    "zh-CN": "查看",
+    "en-US": "View"
+  },
+  "help.command.win_max": {
+    "zh-CN": "窗口最大化",
+    "en-US": "Maximize Window"
+  },
+  "help.command.win_reset": {
+    "zh-CN": "复位主窗口",
+    "en-US": "Reset the Main Window"
+  },
+  "help.command.win_top_on": {
+    "zh-CN": "固定窗口",
+    "en-US": "Pin Window"
+  },
+  "help.command.win_top_off": {
+    "zh-CN": "取消固定窗口",
+    "en-US": "Unpin Window"
+  },
+  "help.group.window": {
+    "zh-CN": "窗口模式",
+    "en-US": "Window Modes"
+  },
+  "help.command.dir_add": {
+    "zh-CN": "添加收藏目录",
+    "en-US": "Add a favorite folder"
+  },
+  "help.command.dir_rename": {
+    "zh-CN": "修改收藏名称，不重命名磁盘目录",
+    "en-US": "Rename the favorite without renaming its folder"
+  },
+  "help.command.dir_refresh": {
+    "zh-CN": "刷新目录统计 / 状态",
+    "en-US": "Refresh Folder Statistics / Status"
+  },
+  "help.group.directories": {
+    "zh-CN": "目录",
+    "en-US": "Folders"
+  },
+  "help.command.ui_light": {
+    "zh-CN": "切换明亮模式",
+    "en-US": "Switch to Light Mode"
+  },
+  "help.command.ui_dark": {
+    "zh-CN": "切换黑暗模式",
+    "en-US": "Switch to Dark Mode"
+  },
+  "help.command.ui_auto": {
+    "zh-CN": "跟随系统主题",
+    "en-US": "Use System Theme"
+  },
+  "help.command.ui_acrylic": {
+    "zh-CN": "切换为亚克力材质",
+    "en-US": "Switch to Acrylic"
+  },
+  "help.command.ui_mica": {
+    "zh-CN": "切换为云母材质",
+    "en-US": "Switch to Mica"
+  },
+  "help.command.ui_font_12": {
+    "zh-CN": "将界面字体大小设为 12",
+    "en-US": "Set UI Font Size to 12"
+  },
+  "help.command.ui_font_13": {
+    "zh-CN": "将界面字体大小设为 13",
+    "en-US": "Set UI Font Size to 13"
+  },
+  "help.command.ui_font_14": {
+    "zh-CN": "将界面字体大小设为 14",
+    "en-US": "Set UI Font Size to 14"
+  },
+  "help.command.ui_font_15": {
+    "zh-CN": "将界面字体大小设为 15",
+    "en-US": "Set UI Font Size to 15"
+  },
+  "help.command.ui_font_16": {
+    "zh-CN": "将界面字体大小设为 16",
+    "en-US": "Set UI Font Size to 16"
+  },
+  "help.command.ui_main_RRGGBB": {
+    "zh-CN": "设置颜色1",
+    "en-US": "Set Color 1"
+  },
+  "help.command.ui_accent_RRGGBB": {
+    "zh-CN": "设置颜色2",
+    "en-US": "Set Color 2"
+  },
+  "help.command.ui_reset": {
+    "zh-CN": "恢复默认外观配置",
+    "en-US": "Restore Default Appearance"
+  },
+  "help.group.appearance": {
+    "zh-CN": "外观",
+    "en-US": "Appearance"
+  },
+  "help.command.app_startup_on": {
+    "zh-CN": "开启开机运行",
+    "en-US": "Enable Launch at Login"
+  },
+  "help.command.app_startup_off": {
+    "zh-CN": "关闭开机运行",
+    "en-US": "Disable Launch at Login"
+  },
+  "help.command.app_notify_on": {
+    "zh-CN": "开启系统通知",
+    "en-US": "Enable System Notifications"
+  },
+  "help.command.app_notify_off": {
+    "zh-CN": "关闭系统通知",
+    "en-US": "Disable System Notifications"
+  },
+  "help.group.behavior": {
+    "zh-CN": "软件行为",
+    "en-US": "App Behavior"
+  },
+  "help.command.key_global_on": {
+    "zh-CN": "启用全局快捷键",
+    "en-US": "Enable Global Shortcuts"
+  },
+  "help.command.key_global_off": {
+    "zh-CN": "禁用全局快捷键",
+    "en-US": "Disable Global Shortcuts"
+  },
+  "help.command.key_reset": {
+    "zh-CN": "恢复快捷动作默认配置",
+    "en-US": "Restore Default Quick Actions"
+  },
+  "help.group.shortcuts": {
+    "zh-CN": "快捷动作",
+    "en-US": "Quick Actions"
+  },
+  "help.command.cmd_on": {
+    "zh-CN": "启用快捷指令解析",
+    "en-US": "Enable Quick Command Parsing"
+  },
+  "help.command.cmd_off": {
+    "zh-CN": "禁用快捷指令解析",
+    "en-US": "Disable Quick Command Parsing"
+  },
+  "help.group.commands": {
+    "zh-CN": "快捷指令",
+    "en-US": "Quick Commands"
+  },
+  "help.command.lang_auto": {
+    "zh-CN": "跟随系统语言",
+    "en-US": "Use System Language"
+  },
+  "help.command.lang_cn": {
+    "zh-CN": "中文界面",
+    "en-US": "Chinese Interface"
+  },
+  "help.command.lang_en": {
+    "zh-CN": "英文界面",
+    "en-US": "English Interface"
+  },
+  "help.group.language": {
+    "zh-CN": "语言",
+    "en-US": "Language"
+  },
+  "help.command.llama_start": {
+    "zh-CN": "启动 llama.cpp / llama-server",
+    "en-US": "Start llama.cpp / llama-server"
+  },
+  "help.command.llama_use": {
+    "zh-CN": "切换 llama.cpp 版本",
+    "en-US": "Switch llama.cpp Version"
+  },
+  "help.command.llama_refresh": {
+    "zh-CN": "刷新 llama.cpp 版本列表",
+    "en-US": "Refresh llama.cpp Version List"
+  },
+  "help.group.runtime": {
+    "zh-CN": "llama.cpp",
+    "en-US": "llama.cpp"
+  },
+  "help.command.model_refresh": {
+    "zh-CN": "刷新视觉模型列表",
+    "en-US": "Refresh Vision Model List"
+  },
+  "help.command.model_use": {
+    "zh-CN": "切换视觉模型",
+    "en-US": "Switch Vision Model"
+  },
+  "help.group.models": {
+    "zh-CN": "视觉模型",
+    "en-US": "Vision Model"
+  },
+  "help.command.dir_remove": {
+    "zh-CN": "取消收藏，不删除磁盘目录",
+    "en-US": "Remove a favorite without deleting its folder"
+  },
+  "help.command.app_quit": {
+    "zh-CN": "关闭 Cap7CE 运行进程",
+    "en-US": "Close the Cap7CE Process"
+  },
+  "help.command.llama_stop": {
+    "zh-CN": "停止 llama.cpp / llama-server",
+    "en-US": "Stop llama.cpp / llama-server"
+  },
+  "help.command.cache_clear": {
+    "zh-CN": "清理缩略图与预览缓存",
+    "en-US": "Clear thumbnail and preview cache"
+  },
+  "help.all": {
+    "zh-CN": "全部",
+    "en-US": "All"
+  },
+  "help.category": {
+    "zh-CN": "快捷指令分类",
+    "en-US": "Command category"
+  },
+  "native.colors.first": {
+    "zh-CN": "颜色1",
+    "en-US": "Color 1"
+  },
+  "native.colors.second": {
+    "zh-CN": "颜色2",
+    "en-US": "Color 2"
+  },
+  "native.colors.invalid": {
+    "zh-CN": "请输入6位十六进制颜色，例如 #FFC9ED。",
+    "en-US": "Enter a six-digit hexadecimal color, such as #FFC9ED."
+  },
+  "native.colors.spectrum": {
+    "zh-CN": "色谱与亮度",
+    "en-US": "Color spectrum and brightness"
+  },
+  "native.colors.hex": {
+    "zh-CN": "十六进制颜色",
+    "en-US": "Hexadecimal color"
+  },
+  "native.index.title": {
+    "zh-CN": "目录索引",
+    "en-US": "Directory index"
+  },
+  "native.index.description": {
+    "zh-CN": "建立文件名与目录索引，用于快速搜索。",
+    "en-US": "Build an index of file names and directories for fast searching."
+  },
+  "native.signature.unavailable": {
+    "zh-CN": "签名暂时无法加载。",
+    "en-US": "The signature cannot be loaded at the moment."
+  },
+  "common.apply": {
+    "zh-CN": "应用",
+    "en-US": "Apply"
+  },
+  "help.example.see_dir": {
+    "zh-CN": "see:dir \"目录名称\"",
+    "en-US": "see:dir \"Directory name\""
+  },
+  "help.example.dir_add": {
+    "zh-CN": "dir:add \"完整路径\"",
+    "en-US": "dir:add \"Full path\""
+  },
+  "help.example.dir_rename": {
+    "zh-CN": "dir:rename \"旧\" \"新\"",
+    "en-US": "dir:rename \"Old\" \"New\""
+  },
+  "help.example.llama_use": {
+    "zh-CN": "llama:use \"版本名称\"",
+    "en-US": "llama:use \"Version name\""
+  },
+  "help.example.model_use": {
+    "zh-CN": "model:use \"模型名称\"",
+    "en-US": "model:use \"Model name\""
+  },
+  "help.example.dir_remove": {
+    "zh-CN": "dir:remove \"收藏名称\"",
+    "en-US": "dir:remove \"Favorite name\""
   }
 }

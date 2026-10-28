@@ -5,14 +5,14 @@ namespace Cap7CE.WinUI.Controls;
 
 internal sealed class SettingsFieldRow : UserControl
 {
-    public SettingsFieldRow(string label,UIElement value,UIElement? action=null)
+    public SettingsFieldRow(string label,UIElement value,UIElement? action=null,bool localized=false)
     {
         var grid=new Grid {ColumnSpacing=16,RowSpacing=5,MinHeight=32};
         grid.ColumnDefinitions.Add(new(){Width=new(152)});
         grid.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         grid.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         grid.RowDefinitions.Add(new(){Height=GridLength.Auto});grid.RowDefinitions.Add(new(){Height=GridLength.Auto});
-        var title=Ui.Text(label);title.VerticalAlignment=VerticalAlignment.Center;
+        var title=localized?Localization.LanguageUi.Text(label):Ui.Text(label);title.VerticalAlignment=VerticalAlignment.Center;
         var field=(FrameworkElement)value;field.VerticalAlignment=VerticalAlignment.Center;
         field.HorizontalAlignment=HorizontalAlignment.Right;
         if(field is TextBlock text)text.TextAlignment=TextAlignment.Right;

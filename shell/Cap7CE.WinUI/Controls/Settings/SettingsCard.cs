@@ -8,11 +8,12 @@ namespace Cap7CE.WinUI.Controls;
 
 internal sealed class SettingsCard : UserControl
 {
-    public SettingsCard(string title,string description,UIElement control,bool expanded=false)
+    public SettingsCard(string title,string description,UIElement control,bool expanded=false,bool localized=false)
     {
         var section=control as SettingsSection;
         if(section is not null){control=section.Actions;expanded=false;}
-        var copy=Ui.Column(new TextBlock {Text=title,FontWeight=FontWeights.SemiBold,TextWrapping=TextWrapping.Wrap},Ui.Text(description,true));
+        var label=localized?Localization.LanguageUi.Text(title):Ui.Text(title);label.FontWeight=FontWeights.SemiBold;
+        var copy=Ui.Column(label,localized?Localization.LanguageUi.Text(description,true):Ui.Text(description,true));
         copy.Spacing=4;
         var grid=new Grid {ColumnSpacing=20,RowSpacing=12};
         grid.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
@@ -37,7 +38,7 @@ internal sealed class SettingsCard : UserControl
             grid.RowDefinitions.Add(new(){Height=GridLength.Auto});
             Grid.SetRow(section,2);Grid.SetColumnSpan(section,2);grid.Children.Add(section);
         }
-        if(control is Control accessible)AutomationProperties.SetName(accessible,title);
+        if(control is Control accessible){if(localized)Localization.LanguageUi.Bind(accessible,AutomationProperties.NameProperty,title);else AutomationProperties.SetName(accessible,title);}
         void Arrange()
         {
             var stacked=expanded||ActualWidth<(compact?460:actionWidth+280);

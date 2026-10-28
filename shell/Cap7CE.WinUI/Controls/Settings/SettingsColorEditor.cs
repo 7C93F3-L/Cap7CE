@@ -1,4 +1,5 @@
 using System.Globalization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -20,8 +21,8 @@ internal sealed class SettingsColorEditor : UserControl
         picker=new ColorPicker {Color=initial,Width=256,IsAlphaEnabled=false,IsAlphaSliderVisible=false,
             IsAlphaTextInputVisible=false,IsColorPreviewVisible=false,IsHexInputVisible=false,
             IsColorChannelTextInputVisible=false,IsMoreButtonVisible=false};
-        AutomationProperties.SetName(picker,"色谱与亮度");
-        hex.MinWidth=0;hex.PlaceholderText="#RRGGBB";AutomationProperties.SetName(hex,"十六进制颜色");
+        L.Bind(picker,AutomationProperties.NameProperty,"native.colors.spectrum");
+        hex.MinWidth=0;hex.PlaceholderText="#RRGGBB";L.Bind(hex,AutomationProperties.NameProperty,"native.colors.hex");
         var hexRow=new Grid {ColumnSpacing=12};hexRow.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         hexRow.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         preview.VerticalAlignment=VerticalAlignment.Bottom;

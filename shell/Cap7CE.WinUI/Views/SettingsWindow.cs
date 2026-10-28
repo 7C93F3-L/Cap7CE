@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Themes;
+using Cap7CE.WinUI.Localization;
 
 namespace Cap7CE.WinUI.Views;
 
@@ -28,7 +29,10 @@ internal sealed class SettingsWindow : Window
         notice.Closed+=(_,_)=>notice.Visibility=Visibility.Collapsed;
         foreach(var (label,symbol) in new[]{("通用",Symbol.Setting),("外观",Symbol.Highlight),("缓存与索引",Symbol.Library),
             ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",Symbol.Help)})
-            navigation.MenuItems.Add(new NavigationViewItem {Content=label,Tag=label,Icon=new SymbolIcon(symbol)});
+        {
+            var item=new NavigationViewItem {Tag=label,Icon=new SymbolIcon(symbol)};
+            LanguageUi.Bind(item,NavigationViewItem.ContentProperty,LanguageUi.CategoryKey(label));navigation.MenuItems.Add(item);
+        }
         navigation.SelectedItem=navigation.MenuItems[0];
         navigation.SelectionChanged+=(_,e)=>{
             if(e.SelectedItem is not NavigationViewItem item)return;
@@ -59,6 +63,6 @@ internal sealed class SettingsWindow : Window
         body.Content=pages.Build(category);signature.Visibility=category=="关于"?Visibility.Visible:Visibility.Collapsed;
         if(category=="关于"&&signature.Content is null)try {
             signature.Content=new SettingsSignature {Notice=text=>{if(!closed){notice.Message=text;notice.Visibility=Visibility.Visible;notice.IsOpen=true;}}};
-        }catch(Exception error){NativeDiagnostics.VisualFailure(error);notice.Message="签名暂时无法加载。";notice.Visibility=Visibility.Visible;notice.IsOpen=true;}
+        }catch(Exception error){NativeDiagnostics.VisualFailure(error);notice.Message=AppLanguage.Text("native.signature.unavailable");notice.Visibility=Visibility.Visible;notice.IsOpen=true;}
     }
 }

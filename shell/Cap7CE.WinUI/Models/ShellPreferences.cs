@@ -2,6 +2,7 @@ namespace Cap7CE.WinUI.Models;
 
 public sealed record ShellPreferences
 {
+    public string Language {get;init;}="zh-CN";
     public WorkspaceOptions ComputerWorkspace {get;init;}=WorkspaceOptions.ComputerDefault;
     public WorkspaceOptions FavoriteWorkspace {get;init;}=WorkspaceOptions.FavoritesDefault;
     public string[] IndexVolumeOrder {get;init;}=[];

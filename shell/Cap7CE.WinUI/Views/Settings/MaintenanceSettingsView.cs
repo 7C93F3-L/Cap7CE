@@ -10,6 +10,6 @@ internal sealed class MaintenanceSettingsView : StackPanel
     public MaintenanceSettingsView(ShellServices services,Window owner)
     {
         Spacing=16;
-        Children.Add(new SettingsCard("目录索引","建立文件名与目录索引，用于快速搜索。",new IndexMaintenanceView(services),true));
+        Children.Add(new SettingsCard("native.index.title","native.index.description",new IndexMaintenanceView(services),true,localized:true));
     }
 }

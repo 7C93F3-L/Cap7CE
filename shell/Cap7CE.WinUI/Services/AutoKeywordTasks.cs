@@ -17,10 +17,11 @@ internal sealed class AutoKeywordTasks(ShellServices services):IAsyncDisposable
         if(Busy)throw new IOException("已有关键词任务正在处理，请先等待或取消。");
         if(source.Count is 0 or >100000)throw new IOException("请选择文件或目录。");
         cancellation?.Dispose();cancellation=new();Busy=true;
-        return running=RunAsync(source.ToArray(),cancellation.Token);
+        var language=Localization.AppLanguage.Session.Current;
+        return running=RunAsync(source.ToArray(),language,cancellation.Token);
     }
     public void Cancel(){if(Busy){cancellation?.Cancel();Set(State with{Message="正在取消；已保存的关键词会保留。"});}}
-    private async Task RunAsync(IReadOnlyList<AssetItem> source,CancellationToken token)
+    private async Task RunAsync(IReadOnlyList<AssetItem> source,string language,CancellationToken token)
     {
         Set(new("收集文件"));
         try {
@@ -28,7 +29,7 @@ internal sealed class AutoKeywordTasks(ShellServices services):IAsyncDisposable
             var collected=await AutoKeywordTargets.CollectAsync(services,source,token,count=>Set(State with{Total=count}));
             Set(State with{Total=collected.Items.Count+collected.Failed,Failed=collected.Failed,Processed=collected.Failed,
                 Message=collected.Failed>0?"部分目录未能完整读取，请确认目录已入库且可访问。":""});
-            var processor=new AutoKeywordProcessor(services);
+            var processor=new AutoKeywordProcessor(services,language);
             foreach(var item in collected.Items) {
                 token.ThrowIfCancellationRequested();Set(State with{Name=item.Name,Phase="准备"});
                 if(FormatRegistry.Find(item.Entry.Extension)?.CanAIIndex!=true){Set(State with{Processed=State.Processed+1,Skipped=State.Skipped+1});if(State.Processed%100==0)await Task.Yield();continue;}

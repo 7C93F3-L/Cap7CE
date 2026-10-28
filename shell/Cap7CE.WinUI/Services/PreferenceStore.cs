@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Cap7CE.WinUI.Models;
+using Cap7CE.WinUI.Localization;
 
 namespace Cap7CE.WinUI.Services;
 internal sealed class PreferenceStore
@@ -26,6 +27,8 @@ internal sealed class PreferenceStore
         }
         if (Current.Material is not ("mica" or "mica-alt") || Current.Theme is not ("system" or "light" or "dark")
             || Current.TileSize is < 96 or > 280 || Current.FontSize is < 10 or > 24) Current = new();
+        if(Current.Language is not ("system" or "zh-CN" or "en-US"))Current=Current with{Language="zh-CN"};
+        AppLanguage.Apply(Current.Language);
     }
     public Task SaveAsync(ShellPreferences value)=>UpdateAsync(_=>value);
     public async Task UpdateAsync(Func<ShellPreferences,ShellPreferences> update)
@@ -35,9 +38,10 @@ internal sealed class PreferenceStore
         try
         {
             var value=update(Current);
+            if(value.Language is not ("system" or "zh-CN" or "en-US"))throw new ArgumentOutOfRangeException(nameof(value.Language));
             Directory.CreateDirectory(DataRoot);
             await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(value, FramedRpc.Json));
-            File.Move(temporary, path, true); Current = value; Changed?.Invoke();
+            File.Move(temporary, path, true); Current = value; AppLanguage.Apply(value.Language);Changed?.Invoke();
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); gate.Release(); }
     }

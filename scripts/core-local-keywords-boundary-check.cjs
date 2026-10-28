@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(root,file),'utf8');
-const directory='core/node/localKeywords',limits={'owner.ts':40,'requestHttp.ts':35,'requestModel.ts':30,'sourceFingerprint.ts':20,'validation.ts':40};
+const directory='core/node/localKeywords',limits={'owner.ts':40,'requestHttp.ts':35,'requestModel.ts':30,'sourceFingerprint.ts':20,'validation.ts':40,'languagePrompt.ts':10};
 assert.deepEqual(fs.readdirSync(path.join(root,directory)).filter(file=>file.endsWith('.ts')).sort(),Object.keys(limits).sort());
 for(const[file,limit]of Object.entries(limits)){
  const source=read(`${directory}/${file}`);assert.ok(source.split(/\r?\n/).length<=limit,`${file} domain size`);

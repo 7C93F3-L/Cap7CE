@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Services;
+using Cap7CE.WinUI.Localization;
 
 namespace Cap7CE.WinUI.Views;
 
@@ -19,12 +20,12 @@ internal sealed class SettingsPages
         var matches=catalog.Entries.Where(e=>e.Category==category).ToArray();
         foreach(var categoryGroup in matches.GroupBy(e=>e.Category))
         {
-            column.Children.Add(Ui.Heading(categoryGroup.Key));
+            column.Children.Add(LanguageUi.Heading(LanguageUi.CategoryKey(categoryGroup.Key)));
             foreach(var group in categoryGroup.GroupBy(e=>e.Section))
             {
                 var section=Ui.Column();section.Spacing=5;
-                section.Children.Add(Ui.Text(group.Key,true));
-                foreach(var row in group)section.Children.Add(row.Title.Length==0?row.Create():new SettingsCard(row.Title,row.Description,row.Create(),row.Expanded));
+                section.Children.Add(LanguageUi.Text(group.Key,true));
+                foreach(var row in group)section.Children.Add(row.Title.Length==0?row.Create():new SettingsCard(row.Title,row.Description,row.Create(),row.Expanded,localized:true));
                 column.Children.Add(section);
             }
         }

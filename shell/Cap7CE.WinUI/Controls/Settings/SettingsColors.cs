@@ -1,4 +1,6 @@
 using Cap7CE.WinUI.Models;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Themes;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -18,8 +20,8 @@ internal sealed class SettingsColors : UserControl
     public SettingsColors(Func<ShellPreferences> read,Func<ShellPreferences,Task> save,Action<string> notice)
     {
         this.read=read;this.save=save;this.notice=notice;
-        firstButton=ColorButton("颜色1",first,true);secondButton=ColorButton("颜色2",second,false);
-        reset=Ui.Button("恢复默认",()=>{});
+        firstButton=ColorButton("native.colors.first",first,true);secondButton=ColorButton("native.colors.second",second,false);
+        reset=L.Button("common.restoreDefault",()=>{});
         reset.Click+=async(_,_)=>{
             reset.IsEnabled=false;
             try {var defaults=new ShellPreferences();await save(read() with{Color1=defaults.Color1,Color2=defaults.Color2});Refresh();}
@@ -43,8 +45,8 @@ internal sealed class SettingsColors : UserControl
     }
     private Button ColorButton(string label,Ellipse swatch,bool primary)
     {
-        var button=new Button {Content=Ui.Row(swatch,Ui.Text(label))};
-        AutomationProperties.SetName(button,label);ToolTipService.SetToolTip(button,label);
+        var button=new Button {Content=Ui.Row(swatch,L.Text(label))};
+        L.Bind(button,AutomationProperties.NameProperty,label);L.Bind(button,ToolTipService.ToolTipProperty,label);
         button.Click+=(_,_)=>Open(button,primary);return button;
     }
     private void Refresh()
@@ -54,20 +56,20 @@ internal sealed class SettingsColors : UserControl
     private void Open(Button anchor,bool primary)
     {
         var picker=new SettingsColorEditor(ThemeService.Parse(primary?read().Color1:read().Color2));
-        AutomationProperties.SetName(picker,primary?"颜色1":"颜色2");
+        L.Bind(picker,AutomationProperties.NameProperty,primary?"native.colors.first":"native.colors.second");
         var actions=Ui.Row();actions.HorizontalAlignment=HorizontalAlignment.Center;
         var content=Ui.Column(picker,actions);content.Spacing=12;content.HorizontalAlignment=HorizontalAlignment.Center;
         var flyout=ThemeService.Flyout(content);
         flyout.FlyoutPresenterStyle=(Style)Application.Current.Resources["CapSettingsColorFlyout"];
-        var apply=Ui.Button("应用",()=>{});
+        var apply=L.Button("common.apply",()=>{});
         apply.Click+=async(_,_)=>{
             apply.IsEnabled=false;
             try {
-                if(!picker.TryRead(out var color)){notice("请输入6位十六进制颜色，例如 #FFC9ED。");return;}
+                if(!picker.TryRead(out var color)){notice(AppLanguage.Text("native.colors.invalid"));return;}
                 var hex=$"#{color.R:X2}{color.G:X2}{color.B:X2}";
                 await save(primary?read() with{Color1=hex}:read() with{Color2=hex});Refresh();flyout.Hide();
             } catch(Exception error){notice(error.Message);}finally{apply.IsEnabled=true;}
         };
-        actions.Children.Add(Ui.Button("取消",()=>flyout.Hide()));actions.Children.Add(apply);flyout.ShowAt(anchor);
+        actions.Children.Add(L.Button("common.cancel",()=>flyout.Hide()));actions.Children.Add(apply);flyout.ShowAt(anchor);
     }
 }

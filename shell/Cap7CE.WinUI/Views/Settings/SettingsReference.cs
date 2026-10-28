@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Cap7CE.WinUI.Models;
+using Cap7CE.WinUI.Localization;
 
 namespace Cap7CE.WinUI.Views;
 
@@ -10,8 +12,7 @@ internal static class SettingsReference
         using var document=JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets","settings-reference.json")));
         return document.RootElement.Clone();
     }
-    public static string Text(string key)=>data.GetProperty("text").TryGetProperty(key,out var value)?value.GetString()??key:key;
+    public static string Text(string key)=>AppLanguage.Text(key);
     public static string Shortcut(string key)=>data.GetProperty("shortcuts").GetProperty(key).GetString()??"";
-    public static JsonElement CommandGroups=>data.GetProperty("commandGroups");
-    public static JsonElement DangerousCommands=>data.GetProperty("dangerousCommands");
+    public static SettingsHelpGroup[] HelpGroups {get;}=JsonSerializer.Deserialize<SettingsHelpGroup[]>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/settings-help.json")),new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
 }

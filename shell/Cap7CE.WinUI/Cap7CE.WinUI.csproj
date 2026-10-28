@@ -14,6 +14,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Localization/messages.json" Link="Assets/languages.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Localization/settings-help.json" Link="Assets/settings-help.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../src/renderer/assets/icons/skim-location-desktop.svg;../../src/renderer/assets/icons/skim-location-documents.svg;../../src/renderer/assets/icons/skim-location-downloads.svg;../../src/renderer/assets/icons/skim-location-pictures.svg;../../src/renderer/assets/icons/skim-location-music.svg;../../src/renderer/assets/icons/skim-location-videos.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
     <Content Include="../../src/renderer/assets/icons/format-*.svg;../../src/renderer/assets/icons/skim-folder.svg;../../src/renderer/assets/icons/skim-file.svg;../../src/renderer/assets/icons/skim-disk.svg;../../src/renderer/assets/icons/logo-cap7ce.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../artifacts/assets/*.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />

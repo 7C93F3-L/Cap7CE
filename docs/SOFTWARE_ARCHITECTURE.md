@@ -2,6 +2,10 @@
 
 ## 当前实施状态（2026-10-22）
 
+原生语言第二轮接入：PreferenceStore保存Language（默认中文，支持system/zh-CN/en-US），保存成功后由AppLanguage更新唯一LanguageSession；LanguageUi仅绑定显式资源键，导航项、SettingsPages/SettingsCard/SettingsFieldRow、主要选择项、快捷动作和颜色编辑器直接更新依赖属性，不重建页面或重置选择/草稿。内部分类标识保持原值，显示标题使用navigation键。settings-help.json只保存分组、指令与资源键，说明及含中文参数的示例进入messages.json，指令帮助切换语言保留当前分类。SettingsReference.Text改读原生语言资源，快捷键仍读取既有非语言生成资源。构建检查覆盖源码资源键及帮助引用。当前尚未完成主窗口、索引/元数据、模型状态及其他后台提示的全覆盖，语言选择器仍禁用，不能视为完整双语版本。
+
+AutoKeywordTasks在StartAsync中、任何异步收集前固定整批语言；AutoKeywordProcessor复用这一快照创建模型上下文，并作为localKeywords.generate第五参数传给独立Node所有者。Node只接受zh-CN/en-US，四参数旧请求默认中文；requestModel按每请求语言选择提示词，不依赖进程全局语言。并行中英文任务互不改变提示词；现有语法、解析、关键词合并、取消、源身份和修订检查保持原链路。运行测试覆盖四参数兼容、双语请求、无效语言拒绝、并行任务、取消与超时。
+
 WinUI 语言实时切换开始接入：Localization/messages.json 以稳定键并排保存中英文，当前先收录318条设置及通用资源。LanguageCatalog 独立验证语言集合与命名参数并按语言文化格式化；LanguageSession 发送语言变化；LanguageBinding 仅对显式绑定的控件依赖属性刷新文案，通过Loaded/Unloaded与替换解绑管理订阅，不重建窗口、页面或改变浏览状态。构建语言检查与Layout专项覆盖资源一致性、系统语言解析、参数和通知。当前基础尚未接入全部界面、偏好或AI请求，语言选择器继续禁用；不能将此阶段视为完整双语支持。旧Electron资源初始复用后由原生文件独立维护，未修改旧宿主。
 
 新版 WinUI 不支持 line，且原生宿主本身没有 line 窗口、IPC 或快捷键实现。SettingsCatalog 不再展示 line 开关，SettingsShortcutReference 不再列出 hideToLine；winui-settings-resources 在生成原生资源时移除 line 专用文案、hideToLine 绑定、line: 与 win:line 帮助及过滤后的空分组。winui-shell-boundary-check 检查原生源码、生成资源和 Alt+1 注册，阻止该功能回归；原生设置与旧版卡片的对照明确排除退役项。旧 Electron 的实现、共享指令注册表和磁盘上的旧偏好保留，等待后续整体退役，不属于当前 WinUI 功能范围。

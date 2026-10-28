@@ -11,6 +11,23 @@ module.exports = root => {
     assert.deepEqual(parameters(variants['zh-CN']), parameters(variants['en-US']), `${key}: named parameters differ`);
   }
   assert(Object.keys(messages).length, 'native language catalog must not be empty');
+  const help = JSON.parse(fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization/settings-help.json'), 'utf8'));
+  for (const group of help) {
+    assert(messages[group.titleKey], `Missing command group resource: ${group.titleKey}`);
+    if (group.hintKey) assert(messages[group.hintKey], `Missing command hint resource: ${group.hintKey}`);
+    for (const item of group.items) {
+      assert(messages[item.descriptionKey], `Missing command resource: ${item.descriptionKey}`);
+      if (item.exampleKey) assert(messages[item.exampleKey], `Missing command example resource: ${item.exampleKey}`);
+      assert(!/^(line:|win:line)/.test(item.command), 'retired line commands cannot return in native help');
+    }
+  }
+  const walk = directory => fs.readdirSync(directory, {withFileTypes: true}).flatMap(entry => {
+    const file = path.join(directory, entry.name);
+    return entry.isDirectory() && !['bin', 'obj'].includes(entry.name) ? walk(file) : entry.isFile() && file.endsWith('.cs') ? [file] : [];
+  });
+  for (const file of walk(path.join(root, 'shell/Cap7CE.WinUI')))
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(/"((?:native|navigation|help|settings|common|theme|appearance|stableSettings|shortcut)\.[A-Za-z0-9_.]+)"/g))
+      if (!match[1].endsWith('.')) assert(messages[match[1]], `${file}: unknown language key ${match[1]}`);
   console.log(`WinUI language catalog passed: ${Object.keys(messages).length} paired messages`);
 };
 if (require.main === module) module.exports(path.resolve(__dirname, '..'));

@@ -15,7 +15,8 @@ internal sealed class ShellServices : IAsyncDisposable
     public FavoriteService Favorites { get; }
     public MetadataTasks Metadata {get;}
     public AutoKeywordTasks AutoKeywords {get;}
-    public object ModelContext=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language="zh-CN"};
+    public object ModelContext=>ModelContextFor(Localization.AppLanguage.Session.Current);
+    public object ModelContextFor(string language)=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language};
     public NativeNotifications Notifications {get;}=new();
     public NativeHotKeys? Shortcuts {get;set;}
     public event Action<CatalogRefreshImpact>? CatalogChanged;

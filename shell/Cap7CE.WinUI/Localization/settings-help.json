@@ -1,0 +1,281 @@
+[
+  {
+    "titleKey": "help.group.settings",
+    "items": [
+      {
+        "command": "set:",
+        "descriptionKey": "help.command.set"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.browse",
+    "items": [
+      {
+        "command": "see:dir all",
+        "descriptionKey": "help.command.see_dir_all"
+      },
+      {
+        "command": "see:dir \"目录名称\"",
+        "descriptionKey": "help.command.see_dir",
+        "exampleKey": "help.example.see_dir"
+      },
+      {
+        "command": "see:sort asc",
+        "descriptionKey": "help.command.see_sort_asc"
+      },
+      {
+        "command": "see:sort desc",
+        "descriptionKey": "help.command.see_sort_desc"
+      },
+      {
+        "command": "see:sort name",
+        "descriptionKey": "help.command.see_sort_name"
+      },
+      {
+        "command": "see:sort time",
+        "descriptionKey": "help.command.see_sort_time"
+      },
+      {
+        "command": "see:root",
+        "descriptionKey": "help.command.see_root"
+      },
+      {
+        "command": "see:hidden on",
+        "descriptionKey": "help.command.see_hidden_on"
+      },
+      {
+        "command": "see:subfolders on",
+        "descriptionKey": "help.command.see_subfolders_on"
+      },
+      {
+        "command": "see:hidden off",
+        "descriptionKey": "help.command.see_hidden_off"
+      },
+      {
+        "command": "see:subfolders off",
+        "descriptionKey": "help.command.see_subfolders_off"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.window",
+    "items": [
+      {
+        "command": "win:max",
+        "descriptionKey": "help.command.win_max"
+      },
+      {
+        "command": "win:reset",
+        "descriptionKey": "help.command.win_reset"
+      },
+      {
+        "command": "win:top on",
+        "descriptionKey": "help.command.win_top_on"
+      },
+      {
+        "command": "win:top off",
+        "descriptionKey": "help.command.win_top_off"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.directories",
+    "items": [
+      {
+        "command": "dir:add \"完整路径\"",
+        "descriptionKey": "help.command.dir_add",
+        "exampleKey": "help.example.dir_add"
+      },
+      {
+        "command": "dir:rename \"旧\" \"新\"",
+        "descriptionKey": "help.command.dir_rename",
+        "exampleKey": "help.example.dir_rename"
+      },
+      {
+        "command": "dir:refresh",
+        "descriptionKey": "help.command.dir_refresh"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.appearance",
+    "items": [
+      {
+        "command": "ui:light",
+        "descriptionKey": "help.command.ui_light"
+      },
+      {
+        "command": "ui:dark",
+        "descriptionKey": "help.command.ui_dark"
+      },
+      {
+        "command": "ui:auto",
+        "descriptionKey": "help.command.ui_auto"
+      },
+      {
+        "command": "ui:acrylic",
+        "descriptionKey": "help.command.ui_acrylic"
+      },
+      {
+        "command": "ui:mica",
+        "descriptionKey": "help.command.ui_mica"
+      },
+      {
+        "command": "ui:font 12",
+        "descriptionKey": "help.command.ui_font_12"
+      },
+      {
+        "command": "ui:font 13",
+        "descriptionKey": "help.command.ui_font_13"
+      },
+      {
+        "command": "ui:font 14",
+        "descriptionKey": "help.command.ui_font_14"
+      },
+      {
+        "command": "ui:font 15",
+        "descriptionKey": "help.command.ui_font_15"
+      },
+      {
+        "command": "ui:font 16",
+        "descriptionKey": "help.command.ui_font_16"
+      },
+      {
+        "command": "ui:main #RRGGBB",
+        "descriptionKey": "help.command.ui_main_RRGGBB"
+      },
+      {
+        "command": "ui:accent #RRGGBB",
+        "descriptionKey": "help.command.ui_accent_RRGGBB"
+      },
+      {
+        "command": "ui:reset",
+        "descriptionKey": "help.command.ui_reset"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.behavior",
+    "items": [
+      {
+        "command": "app:startup on",
+        "descriptionKey": "help.command.app_startup_on"
+      },
+      {
+        "command": "app:startup off",
+        "descriptionKey": "help.command.app_startup_off"
+      },
+      {
+        "command": "app:notify on",
+        "descriptionKey": "help.command.app_notify_on"
+      },
+      {
+        "command": "app:notify off",
+        "descriptionKey": "help.command.app_notify_off"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.shortcuts",
+    "items": [
+      {
+        "command": "key:global on",
+        "descriptionKey": "help.command.key_global_on"
+      },
+      {
+        "command": "key:global off",
+        "descriptionKey": "help.command.key_global_off"
+      },
+      {
+        "command": "key:reset",
+        "descriptionKey": "help.command.key_reset"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.commands",
+    "items": [
+      {
+        "command": "cmd:on",
+        "descriptionKey": "help.command.cmd_on"
+      },
+      {
+        "command": "cmd:off",
+        "descriptionKey": "help.command.cmd_off"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.language",
+    "items": [
+      {
+        "command": "lang:auto",
+        "descriptionKey": "help.command.lang_auto"
+      },
+      {
+        "command": "lang:cn",
+        "descriptionKey": "help.command.lang_cn"
+      },
+      {
+        "command": "lang:en",
+        "descriptionKey": "help.command.lang_en"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.runtime",
+    "items": [
+      {
+        "command": "llama:start",
+        "descriptionKey": "help.command.llama_start"
+      },
+      {
+        "command": "llama:use \"版本名称\"",
+        "descriptionKey": "help.command.llama_use",
+        "exampleKey": "help.example.llama_use"
+      },
+      {
+        "command": "llama:refresh",
+        "descriptionKey": "help.command.llama_refresh"
+      }
+    ]
+  },
+  {
+    "titleKey": "help.group.models",
+    "items": [
+      {
+        "command": "model:refresh",
+        "descriptionKey": "help.command.model_refresh"
+      },
+      {
+        "command": "model:use \"模型名称\"",
+        "descriptionKey": "help.command.model_use",
+        "exampleKey": "help.example.model_use"
+      }
+    ]
+  },
+  {
+    "titleKey": "settings.confirmationCommands",
+    "hintKey": "settings.confirmationCommandHint",
+    "items": [
+      {
+        "command": "dir:remove \"收藏名称\"",
+        "descriptionKey": "help.command.dir_remove",
+        "exampleKey": "help.example.dir_remove"
+      },
+      {
+        "command": "app:quit",
+        "descriptionKey": "help.command.app_quit"
+      },
+      {
+        "command": "llama:stop",
+        "descriptionKey": "help.command.llama_stop"
+      },
+      {
+        "command": "cache:clear",
+        "descriptionKey": "help.command.cache_clear"
+      }
+    ]
+  }
+]

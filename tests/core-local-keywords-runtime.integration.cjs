@@ -31,6 +31,12 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async predicate=>{for(let
   const generate=async(name='fixture',timeout=1000,signal=new AbortController().signal)=>generateImageKeywords({...connection,modelName:name},image,signal,timeout,transport);
   assert.deepEqual(await generate(),['天空','蓝色']);assert.equal(proxyHits,0,'Core never sends image bytes through configured proxy');
   assert.equal(requests[0].messages[0].content[0].image_url.url,image);assert.equal(requests[0].max_tokens,512);assert.equal(requests[0].temperature,.2);assert.equal(requests[0].stream,false);assert.equal(requests[0].chat_template_kwargs.enable_thinking,false);
+  assert.match(requests[0].messages[0].content[1].text,/中文关键词/,'legacy requests retain Chinese output');
+  await request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000,'en-US']);
+  assert.match(requests.at(-1).messages[0].content[1].text,/short English keywords/);
+  await request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000,'zh-CN']);
+  assert.match(requests.at(-1).messages[0].content[1].text,/中文关键词/);
+  for(const language of ['system','fr-FR',null,{},1])await assert.rejects(request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000,language]),/invalid-request/);
   const source=path.join(root,'源文件.jpg');await fs.writeFile(source,Buffer.from(image.slice(23),'base64'));const original=await fs.readFile(source),stat=await fs.lstat(source,{bigint:true});
   const item={path:source,fileReference:stat.ino.toString(16).padStart(16,'0'),createdUtcTicks:null,createdFileTimeMilliseconds:String(stat.birthtimeNs/1000000n+11644473600000n)};
   const fingerprint=await fingerprintKeywordSource(item,request);await assert.rejects(fingerprintKeywordSource({...item,fileReference:'0000000000000001'},request),/变化/);
@@ -43,8 +49,10 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async predicate=>{for(let
   for(const args of [[crypto.randomUUID(),{...connection,extra:1},image,1000],[crypto.randomUUID(),connection,'data:image/jpeg;base64,not-base64',1000],[crypto.randomUUID(),connection,image,120001],['bad',connection,image,1000]])
    await assert.rejects(request('localKeywords.generate',args),/invalid-request/);
   await assert.rejects(request('localKeywords.fingerprint',[{...item,path:'relative.jpg'}]),/invalid-request/);assert.equal(requests.length,before);
-  mode='hold';const ids=[crypto.randomUUID(),crypto.randomUUID()],active=ids.map((id,i)=>request('localKeywords.generate',[id,{...connection,modelName:'held-'+i},image,10000]));for(const task of active)void task.catch(()=>undefined);
+  mode='hold';const ids=[crypto.randomUUID(),crypto.randomUUID()],active=ids.map((id,i)=>request('localKeywords.generate',[id,{...connection,modelName:'held-'+i},image,10000,i===0?'en-US':'zh-CN']));for(const task of active)void task.catch(()=>undefined);
   await until(()=>holds.size===2);await assert.rejects(request('localKeywords.generate',[crypto.randomUUID(),connection,image,1000]),/繁忙/);
+  assert.match(requests.find(body=>body.model==='held-0').messages[0].content[1].text,/short English keywords/);
+  assert.match(requests.find(body=>body.model==='held-1').messages[0].content[1].text,/中文关键词/);
   const began=Date.now();assert.equal((await request('stats')).cacheCount,0);await client.releaseSourceHandles();assert.ok(Date.now()-began<3000,'in-memory model jobs do not block cache or source-handle release');assert.equal(holds.size,2);
   for(let i=0;i<ids.length;i++){await cancel('localKeywords.cancel',[ids[i]]);await assert.rejects(active[i],/cancelled/)}await until(()=>holds.size===0);
   await assert.rejects(request('localKeywords.generate',[crypto.randomUUID(),connection,image,40]),/超时/);await until(()=>holds.size===0);
