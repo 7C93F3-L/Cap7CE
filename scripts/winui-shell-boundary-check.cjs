@@ -111,6 +111,18 @@ assert(!/FontIcon|Ui\.Icon\(/.test(read('shell/Cap7CE.WinUI/Controls/SidebarView
 const layoutPolicy = read('shell/Cap7CE.WinUI/Controllers/WorkspaceLayoutPolicy.cs');
 assert(!/Microsoft\.UI|System\.IO|Services|PreferenceStore/.test(layoutPolicy), 'responsive policy must stay independent of UI and persistence');
 assert(read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('WorkspaceLayoutController'), 'main window must compose the shared layout controller');
+const edgeController=read('shell/Cap7CE.WinUI/Controllers/EdgeCollapseController.cs');
+const edgeGeometry=read('shell/Cap7CE.WinUI/Models/EdgeCollapseGeometry.cs');
+const edgeMotion=read('shell/Cap7CE.WinUI/Services/EdgeCollapse/EdgeWindowMotion.cs');
+const edgeInput=read('shell/Cap7CE.WinUI/Services/EdgeCollapse/EdgeInputMonitor.cs');
+assert(!/Microsoft\.UI|Services|PreferenceStore|DllImport|File\.|Directory\./.test(edgeGeometry), 'edge geometry must remain a pure physical-pixel policy');
+assert(!/NavigateAsync|SearchStart|RequestAsync|ItemsSource|Selection|ConfigurePin|SetWindowsHookEx/.test(edgeController+edgeMotion), 'edge lifecycle cannot requery, rebind grids or bypass native pin ownership');
+assert(edgeMotion.includes('positionOnly:true') && edgeMotion.includes('180d') && edgeMotion.includes('Stop();completed();'), 'edge animation must only move the window and stop after its bounded transition');
+assert(edgeController.includes('leave.IsRepeating=false') && edgeController.includes('WindowActivation.Showing+=Showing') && edgeController.includes('WindowActivation.Showing-=Showing'), 'edge mode must use one-shot dismissal and the unified activation lifecycle');
+assert(edgeInput.includes('PointerCaptureLostEvent') && edgeInput.includes('RemoveHandler') && edgeInput.includes('popup.Closed'), 'edge input must cover content capture and popup completion, with paired cleanup');
+assert(settingsModeConnected(), 'window-mode setting must persist through the existing preference update gate');
+function settingsModeConnected() { const text=read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs');return text.includes('Current.EdgeCollapseEnabled?1:0') && text.includes('UpdateAsync(value=>value with{EdgeCollapseEnabled=index==1})'); }
+assert(read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('ResultDrag.IsActive') && read('shell/Cap7CE.WinUI/Controls/Workspace/GalleryTile.cs').includes('finally {dragging=false;ResultDrag.SetActive(this,false);}'), 'file drag completion must unblock auto-hide without interfering with selection');
 assert(read('shell/Cap7CE.WinUI/MainWindow.xaml').includes('<controls:PaneResizer'), 'resizer must be included in compiled XAML activation metadata');
 assert(theme.includes('MicaKind.BaseAlt') && theme.includes('MicaKind.Base') && theme.includes('DesktopAcrylicBackdrop'));
 assert(!/\.css|\.tsx|assets\/icons\/\*/.test(project), 'only active native UI and selected icon families belong in the project');

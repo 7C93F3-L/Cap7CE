@@ -66,7 +66,10 @@ internal sealed class ResultsView : UserControl
             IdleScrollBars.Attach(view);
             view.SelectionChanged += (_, _) => {if(!binding)SelectionChanged?.Invoke(Selection);};
             view.DoubleTapped += OnItemDoubleTapped; view.RightTapped += Context;
-            view.DragItemsStarting += OnItemsDragStarting; root.Children.Add(view);
+            view.DragItemsStarting += OnItemsDragStarting;
+            view.DragItemsStarting+=(_,e)=>{if(!e.Cancel)ResultDrag.SetActive(view,true);};
+            view.DragItemsCompleted+=(_,_)=>ResultDrag.SetActive(view,false);
+            view.Unloaded+=(_,_)=>ResultDrag.SetActive(view,false);root.Children.Add(view);
         }
         list.Visibility=Visibility.Collapsed;root.Children.Add(gallery);gallery.SelectionChanged+=()=>{if(IsGallery&&!binding)SelectionChanged?.Invoke(Selection);};
         empty.HorizontalTextAlignment=TextAlignment.Center;emptyHint.HorizontalTextAlignment=TextAlignment.Center;

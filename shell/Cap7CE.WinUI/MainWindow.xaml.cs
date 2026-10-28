@@ -31,6 +31,7 @@ public sealed partial class MainWindow : Window
     private readonly IndexNoticeController indexNotice;
     private readonly MetadataNoticeController metadataNotice;
     private readonly MetadataFilterPromptController metadataFilters;
+    private readonly EdgeCollapseController edgeCollapse;
     private SettingsWindow? settings;
     private PreviewWindow? preview;
     private BrowseSession? active;
@@ -71,7 +72,7 @@ public sealed partial class MainWindow : Window
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
-        services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{MainWindowGeometry.RestoreDefault(this);WindowActivation.Show(this);},OpenSettings,
+        services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{WindowActivation.Show(this);MainWindowGeometry.RestoreDefault(this);},OpenSettings,
             ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);},error=>Notice(FailureText.From(error)));
         toolbar.ViewSelected+=mode=>commands.Run(()=>workspace.UpdateAsync(value=>value with{
             View=mode==Models.WorkspaceViewMode.List?"list":"grid",
@@ -93,6 +94,8 @@ public sealed partial class MainWindow : Window
         WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);
         pointerInput=new(Surface,results.ClearSelection,forward=>{if(active is {} session)commands.Run(()=>forward?session.ForwardAsync():session.BackAsync());});
         Surface.KeyDown+=KeyDown;
+        edgeCollapse=new(this,Root,()=>preview is not null||settings is not null||ResultDrag.IsActive,Notice);
+        ResultDrag.Changed+=edgeCollapse.Wake;
         services.Preferences.Changed+=ApplyPreferences;
         AppWindow.Changed+=(_,_)=>{
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
@@ -165,14 +168,14 @@ public sealed partial class MainWindow : Window
     }
     private void ShowPreview(Models.AssetItem item)
     {
-        if(preview is null){preview=new(services,this);preview.CurrentChanged+=previewLink.PreviewChanged;preview.Closed+=(_,_)=>{previewLink.Detach();preview=null;QueueCatalogRefresh();};}
+        if(preview is null){preview=new(services,this);preview.CurrentChanged+=previewLink.PreviewChanged;preview.Closed+=(_,_)=>{previewLink.Detach();preview=null;QueueCatalogRefresh();edgeCollapse.Wake();};}
         IReadOnlyList<Models.AssetItem> source=active?.Items??[item];
         if(active is not null)previewLink.Open(active,source,item);
         preview.Show(item,source);
     }
     private void OpenSettings()
     {
-        try{if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
+        try{if(settings is null){settings=new(services);settings.Closed+=(_,_)=>{settings=null;edgeCollapse.Wake();};}WindowActivation.Show(settings);}
         catch(Exception error){NativeDiagnostics.VisualFailure(error);Notice(UiMessage.Key("ui.notice.settingsFailed"));}
     }
     private void OpenMaintenance(string? path)
@@ -185,9 +188,10 @@ public sealed partial class MainWindow : Window
         if(appliedPreferences is {} languagePrevious&&(languagePrevious with{Language=prefs.Language})==prefs){appliedPreferences=prefs;return;}
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})==prefs;
         var workspaceOnly=appliedPreferences is {} old&&(old with{ComputerWorkspace=prefs.ComputerWorkspace,FavoriteWorkspace=prefs.FavoriteWorkspace})==prefs;
-        if(!pinOnly&&!workspaceOnly){ThemeService.Apply(this,Surface,prefs);layout.ApplyPreferences();}
+        var edgeOnly=appliedPreferences is {} edgeOld&&(edgeOld with{EdgeCollapseEnabled=prefs.EdgeCollapseEnabled})==prefs;
+        if(!pinOnly&&!workspaceOnly&&!edgeOnly){ThemeService.Apply(this,Surface,prefs);layout.ApplyPreferences();}
         workspace.Apply();
-        WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned);appliedPreferences=prefs;
+        WindowTitleBar.ConfigurePin(this,prefs.AlwaysOnTop,SetPinned,visible:!prefs.EdgeCollapseEnabled);edgeCollapse.Configure(prefs.EdgeCollapseEnabled,prefs.AlwaysOnTop);appliedPreferences=prefs;
     });
     private void SetPinned(bool value)=>commands.Run(async()=>{
         try{await services.Preferences.UpdateAsync(prefs=>prefs with{AlwaysOnTop=value});}
@@ -217,7 +221,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

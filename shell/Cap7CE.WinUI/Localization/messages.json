@@ -1,4 +1,16 @@
 {
+  "ui.error.edgeOccupied": {
+    "zh-CN": "该屏幕边缘已被其他自动隐藏工具栏占用，请尝试另一边。",
+    "en-US": "This screen edge is used by another auto-hide toolbar. Try another edge."
+  },
+  "ui.error.edgeUnavailable": {
+    "zh-CN": "暂时无法在该屏幕边缘启用自动收起，请拖回屏幕内后重试。",
+    "en-US": "Auto-hide is unavailable at this screen edge. Move the window inside the screen and try again."
+  },
+  "ui.error.edgeFailed": {
+    "zh-CN": "边缘收起遇到问题，已尝试恢复标准窗口。请重新选择窗口模式。",
+    "en-US": "Edge auto-hide encountered a problem and attempted to restore the standard window. Select the window mode again."
+  },
   "ui.window.settingsTitle": {
     "zh-CN": "Cap7CE — 设置",
     "en-US": "Cap7CE — Settings"

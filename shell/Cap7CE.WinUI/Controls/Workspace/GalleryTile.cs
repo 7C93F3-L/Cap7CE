@@ -40,10 +40,10 @@ public sealed class GalleryTile : ToggleButton
         var point=e.GetCurrentPoint(this);
         if(!point.Properties.IsLeftButtonPressed){armed=false;return;}
         if(Math.Abs(point.Position.X-pressed.X)<4&&Math.Abs(point.Position.Y-pressed.Y)<4)return;
-        armed=false;dragging=true;e.Handled=true;
+        armed=false;dragging=true;e.Handled=true;ResultDrag.SetActive(this,true);
         try {await StartDragAsync(point);}
         catch(Exception error){DragError?.Invoke(error);}
-        finally {dragging=false;}
+        finally {dragging=false;ResultDrag.SetActive(this,false);}
     }
     internal void SetBounds(double width,double height){if(Width==width&&Height==height)return;Width=width;Height=height;tile.SetGalleryBounds(width,height);}
     internal void Suspend(bool value)=>tile.Suspend(value);

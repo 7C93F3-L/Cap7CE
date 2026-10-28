@@ -1,6 +1,9 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--edge-collapse-tests"]) {await EdgeCollapseChecks.RunAsync();return;}
+await EdgeCollapseChecks.RunAsync();
+
 if(args is ["--system-location-tests"]) {NativeSystemLocationChecks.Run();return;}
 if(args is ["--language-tests"]) {LanguageChecks.Run();await LanguagePreferenceChecks.RunAsync();return;}
 LanguageChecks.Run();

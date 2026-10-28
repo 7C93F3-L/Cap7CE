@@ -24,6 +24,7 @@ internal sealed class WindowTitleBar : Grid
     private Window? owner;
     private AppWindow? appWindow;
     private bool updateQueued, updatingRegion, regionFailureLogged;
+    private int captionButtonCount = 3;
 
     private WindowTitleBar(FrameworkElement content)
     {
@@ -34,15 +35,17 @@ internal sealed class WindowTitleBar : Grid
         Children.Add(content);
     }
 
-    public static void ConfigurePin(Window window, bool enabled, Action<bool> changed)
+    public static void ConfigurePin(Window window, bool enabled, Action<bool> changed, bool visible = true)
     {
         if (window.Content is not WindowTitleBar frame) return;
         frame.pinChanged = changed;
-        if (window.AppWindow.Presenter is OverlappedPresenter presenter && presenter.IsAlwaysOnTop != enabled) presenter.IsAlwaysOnTop = enabled;
+        if (visible && window.AppWindow.Presenter is OverlappedPresenter presenter && presenter.IsAlwaysOnTop != enabled) presenter.IsAlwaysOnTop = enabled;
         if (frame.pin is null) frame.AddPin(window);
         frame.pin!.IsChecked = enabled;
+        frame.pin.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         frame.pinCenter!.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
         Localization.LanguageUi.Label(frame.pin,enabled?"main.unpin":"main.pin");
+        frame.QueuePinRegionUpdate();
     }
 
     private void AddPin(Window window)
@@ -110,6 +113,8 @@ internal sealed class WindowTitleBar : Grid
     }
 
     private RectInt32? previousRegion;
+    internal static void RefreshCaptionLayout(Window window, int visibleButtonCount)
+    {if(window.Content is WindowTitleBar frame){frame.captionButtonCount=visibleButtonCount;frame.QueuePinRegionUpdate();}}
     private void UpdatePinRegion()
     {
         if (appWindow is null || pin is null || !pin.IsLoaded || pin.XamlRoot is null || !appWindow.IsVisible
@@ -122,7 +127,7 @@ internal sealed class WindowTitleBar : Grid
         // Native caption glyphs in the supplied screenshot sit one pixel higher.
         if (pinGlyph?.RenderTransform is TranslateTransform glyphOffset) glyphOffset.Y = -1 / scale;
         var inset = appWindow.TitleBar.RightInset / scale;
-        var width = inset > 0 ? inset / 3 : 46;
+        var width = inset > 0 ? inset / captionButtonCount : 46;
         if (captionSpace.Width.Value != inset || pin.Width != width)
         {
             captionSpace.Width = new(inset);pin.Width = width;
@@ -130,7 +135,14 @@ internal sealed class WindowTitleBar : Grid
             DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, QueuePinRegionUpdate);
             return;
         }
-        // The three native caption buttons occupy the inset; match their average width.
+        // Match the native button width even when only Close remains visible.
+        if (pin.Visibility != Visibility.Visible)
+        {
+            if (previousRegion is not null)
+                InputNonClientPointerSource.GetForWindowId(appWindow.Id).SetRegionRects(NonClientRegionKind.Passthrough, []);
+            previousRegion = null;
+            return;
+        }
         var bounds = pin.TransformToVisual(this).TransformBounds(new(0, 0, pin.ActualWidth, pin.ActualHeight));
         if (!double.IsFinite(bounds.X + bounds.Y + bounds.Width + bounds.Height) || bounds.Width <= 0 || bounds.Height <= 0
             || bounds.X < 0 || bounds.Y < 0 || bounds.Right > ActualWidth + 1 || bounds.Bottom > dragRegion.ActualHeight + 1) return;
