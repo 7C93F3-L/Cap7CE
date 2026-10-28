@@ -1,0 +1,1274 @@
+{
+  "common.add": {
+    "zh-CN": "添加",
+    "en-US": "Add"
+  },
+  "common.open": {
+    "zh-CN": "打开",
+    "en-US": "Open"
+  },
+  "common.close": {
+    "zh-CN": "关闭",
+    "en-US": "Close"
+  },
+  "common.enable": {
+    "zh-CN": "开启",
+    "en-US": "Enable"
+  },
+  "common.cancel": {
+    "zh-CN": "取消",
+    "en-US": "Cancel"
+  },
+  "common.confirm": {
+    "zh-CN": "确认",
+    "en-US": "Confirm"
+  },
+  "common.confirmYes": {
+    "zh-CN": "是",
+    "en-US": "Yes"
+  },
+  "common.confirmNo": {
+    "zh-CN": "否",
+    "en-US": "No"
+  },
+  "common.save": {
+    "zh-CN": "保存",
+    "en-US": "Save"
+  },
+  "common.saving": {
+    "zh-CN": "保存中",
+    "en-US": "Saving"
+  },
+  "common.delete": {
+    "zh-CN": "删除",
+    "en-US": "Delete"
+  },
+  "common.retry": {
+    "zh-CN": "重试",
+    "en-US": "Retry"
+  },
+  "common.done": {
+    "zh-CN": "完成",
+    "en-US": "Done"
+  },
+  "common.refresh": {
+    "zh-CN": "刷新",
+    "en-US": "Refresh"
+  },
+  "common.refreshing": {
+    "zh-CN": "刷新中",
+    "en-US": "Refreshing"
+  },
+  "common.refreshed": {
+    "zh-CN": "已刷新",
+    "en-US": "Refreshed"
+  },
+  "common.restoreDefault": {
+    "zh-CN": "恢复默认",
+    "en-US": "Restore Defaults"
+  },
+  "common.view": {
+    "zh-CN": "查看",
+    "en-US": "View"
+  },
+  "common.manage": {
+    "zh-CN": "管理",
+    "en-US": "Manage"
+  },
+  "common.expand": {
+    "zh-CN": "展开",
+    "en-US": "Expand"
+  },
+  "common.collapse": {
+    "zh-CN": "收起",
+    "en-US": "Collapse"
+  },
+  "common.start": {
+    "zh-CN": "启动",
+    "en-US": "Start"
+  },
+  "common.starting": {
+    "zh-CN": "启动中",
+    "en-US": "Starting"
+  },
+  "common.stop": {
+    "zh-CN": "停止",
+    "en-US": "Stop"
+  },
+  "common.running": {
+    "zh-CN": "运行中",
+    "en-US": "Running"
+  },
+  "common.stopped": {
+    "zh-CN": "已停止",
+    "en-US": "Stopped"
+  },
+  "common.available": {
+    "zh-CN": "可用",
+    "en-US": "Available"
+  },
+  "common.unavailable": {
+    "zh-CN": "暂不可用",
+    "en-US": "Unavailable"
+  },
+  "common.unselected": {
+    "zh-CN": "未选择",
+    "en-US": "Not Selected"
+  },
+  "common.notDetected": {
+    "zh-CN": "未检测到",
+    "en-US": "Not Detected"
+  },
+  "common.notCreated": {
+    "zh-CN": "尚未创建",
+    "en-US": "Not Created"
+  },
+  "common.yes": {
+    "zh-CN": "是",
+    "en-US": "Yes"
+  },
+  "common.no": {
+    "zh-CN": "否",
+    "en-US": "No"
+  },
+  "common.idle": {
+    "zh-CN": "空闲",
+    "en-US": "Idle"
+  },
+  "common.loading": {
+    "zh-CN": "加载中",
+    "en-US": "Loading"
+  },
+  "common.loaded": {
+    "zh-CN": "已加载",
+    "en-US": "Loaded"
+  },
+  "common.loadFailed": {
+    "zh-CN": "加载失败",
+    "en-US": "Load Failed"
+  },
+  "common.completed": {
+    "zh-CN": "已完成",
+    "en-US": "Completed"
+  },
+  "common.enabled": {
+    "zh-CN": "已开启",
+    "en-US": "On"
+  },
+  "common.disabled": {
+    "zh-CN": "已关闭",
+    "en-US": "Off"
+  },
+  "common.cancelled": {
+    "zh-CN": "已取消",
+    "en-US": "Cancelled"
+  },
+  "common.failed": {
+    "zh-CN": "失败",
+    "en-US": "Failed"
+  },
+  "common.abnormal": {
+    "zh-CN": "异常",
+    "en-US": "Error"
+  },
+  "common.unknown": {
+    "zh-CN": "未知",
+    "en-US": "Unknown"
+  },
+  "common.countItems": {
+    "zh-CN": "{count} 个",
+    "en-US": "{count} items"
+  },
+  "common.back": {
+    "zh-CN": "返回",
+    "en-US": "Back"
+  },
+  "theme.system": {
+    "zh-CN": "跟随系统",
+    "en-US": "Use System Setting"
+  },
+  "theme.light": {
+    "zh-CN": "明亮",
+    "en-US": "Light"
+  },
+  "theme.dark": {
+    "zh-CN": "黑暗",
+    "en-US": "Dark"
+  },
+  "theme.lightMode": {
+    "zh-CN": "明亮模式",
+    "en-US": "Light Mode"
+  },
+  "theme.darkMode": {
+    "zh-CN": "黑暗模式",
+    "en-US": "Dark Mode"
+  },
+  "appearance.themeModeLabel": {
+    "zh-CN": "主题模式",
+    "en-US": "Theme Mode"
+  },
+  "appearance.configureLabel": {
+    "zh-CN": "主题颜色",
+    "en-US": "Theme Colors"
+  },
+  "appearance.themeColor": {
+    "zh-CN": "颜色1",
+    "en-US": "Color 1"
+  },
+  "appearance.accentColor": {
+    "zh-CN": "颜色2",
+    "en-US": "Color 2"
+  },
+  "stableSettings.title": {
+    "zh-CN": "设置",
+    "en-US": "Settings"
+  },
+  "stableSettings.search": {
+    "zh-CN": "搜索设置",
+    "en-US": "Search settings"
+  },
+  "stableSettings.noResults": {
+    "zh-CN": "没有匹配的设置项",
+    "en-US": "No matching settings"
+  },
+  "stableSettings.loading": {
+    "zh-CN": "正在读取设置…",
+    "en-US": "Loading settings…"
+  },
+  "stableSettings.loadFailed": {
+    "zh-CN": "设置暂时无法读取，请重试。",
+    "en-US": "Settings are temporarily unavailable. Try again."
+  },
+  "stableSettings.category.general": {
+    "zh-CN": "通用",
+    "en-US": "General"
+  },
+  "stableSettings.category.appearance": {
+    "zh-CN": "外观",
+    "en-US": "Appearance"
+  },
+  "stableSettings.category.browse": {
+    "zh-CN": "浏览与 Skim",
+    "en-US": "Browse & Skim"
+  },
+  "stableSettings.category.searchAi": {
+    "zh-CN": "搜索与 AI",
+    "en-US": "Search & AI"
+  },
+  "stableSettings.category.cache": {
+    "zh-CN": "缓存与索引",
+    "en-US": "Cache & Index"
+  },
+  "stableSettings.category.shortcuts": {
+    "zh-CN": "快捷操作",
+    "en-US": "Shortcuts"
+  },
+  "stableSettings.category.diagnostics": {
+    "zh-CN": "诊断",
+    "en-US": "Diagnostics"
+  },
+  "stableSettings.category.about": {
+    "zh-CN": "关于",
+    "en-US": "About"
+  },
+  "stableSettings.section.basics": {
+    "zh-CN": "基础",
+    "en-US": "Basics"
+  },
+  "stableSettings.section.windows": {
+    "zh-CN": "窗口行为",
+    "en-US": "Window behavior"
+  },
+  "stableSettings.section.colors": {
+    "zh-CN": "主题与颜色",
+    "en-US": "Theme and colors"
+  },
+  "stableSettings.section.labels": {
+    "zh-CN": "界面标签",
+    "en-US": "Interface labels"
+  },
+  "stableSettings.section.folders": {
+    "zh-CN": "配置目录",
+    "en-US": "Indexed folders"
+  },
+  "stableSettings.section.browsing": {
+    "zh-CN": "文件浏览",
+    "en-US": "File browsing"
+  },
+  "stableSettings.section.ai": {
+    "zh-CN": "本地 AI",
+    "en-US": "Local AI"
+  },
+  "stableSettings.section.cache": {
+    "zh-CN": "缓存",
+    "en-US": "Cache"
+  },
+  "stableSettings.section.index": {
+    "zh-CN": "索引",
+    "en-US": "Index"
+  },
+  "stableSettings.metadataBuild": {
+    "zh-CN": "文件属性建库",
+    "en-US": "File Attribute Index"
+  },
+  "stableSettings.desc.metadataBuild": {
+    "zh-CN": "提取文件属性，用于更多筛选条件。",
+    "en-US": "Extract file attributes for additional filter conditions."
+  },
+  "stableSettings.manageMetadataBuild": {
+    "zh-CN": "管理建库",
+    "en-US": "Manage Indexing"
+  },
+  "stableSettings.metadataBuildOpenFailed": {
+    "zh-CN": "未能打开建库管理，请重试。",
+    "en-US": "Could not open extraction management. Please try again."
+  },
+  "stableSettings.section.keyboard": {
+    "zh-CN": "键盘与指令",
+    "en-US": "Keyboard and commands"
+  },
+  "stableSettings.section.application": {
+    "zh-CN": "Cap7CE",
+    "en-US": "Cap7CE"
+  },
+  "stableSettings.desc.language": {
+    "zh-CN": "选择界面语言；“跟随系统”将使用当前 Windows 显示语言。",
+    "en-US": "Choose the interface language. The system option uses the current Windows display language."
+  },
+  "stableSettings.desc.launch": {
+    "zh-CN": "登录 Windows 后自动启动 Cap7CE。",
+    "en-US": "Start Cap7CE after you sign in to Windows."
+  },
+  "stableSettings.desc.notifications": {
+    "zh-CN": "显示首次后台运行提示，以及自动缓存优化完成通知。",
+    "en-US": "Show the initial background-running notice and notifications when background cache optimization finishes."
+  },
+  "stableSettings.desc.edgeCollapse": {
+    "zh-CN": "标准窗口模式保留窗口最大化与窗口贴靠功能；边缘收起模式会在窗口贴在屏幕边缘时自动隐藏。",
+    "en-US": "Standard Window mode keeps window maximize and Windows Snap available. Edge Auto-hide mode hides a window automatically when it is placed at a screen edge."
+  },
+  "stableSettings.desc.material": {
+    "zh-CN": "选择主窗口、设置与预览窗口使用的亚克力或云母效果；不可用时自动使用纯色背景。",
+    "en-US": "Choose Acrylic or Mica for the main, Settings, and preview windows. If unavailable, a solid background is used."
+  },
+  "stableSettings.material": {
+    "zh-CN": "窗口材质",
+    "en-US": "Window material"
+  },
+  "stableSettings.material.acrylic": {
+    "zh-CN": "亚克力",
+    "en-US": "Acrylic"
+  },
+  "stableSettings.material.mica": {
+    "zh-CN": "云母",
+    "en-US": "Mica"
+  },
+  "stableSettings.uiFontSize": {
+    "zh-CN": "字体大小",
+    "en-US": "Font size"
+  },
+  "stableSettings.uiFontSize.small": {
+    "zh-CN": "小",
+    "en-US": "Small"
+  },
+  "stableSettings.uiFontSize.standard": {
+    "zh-CN": "标准",
+    "en-US": "Standard"
+  },
+  "stableSettings.uiFontSize.large": {
+    "zh-CN": "大",
+    "en-US": "Large"
+  },
+  "stableSettings.desc.uiFontSize": {
+    "zh-CN": "调整主窗口、设置页、预览信息和弹出菜单的字体大小。",
+    "en-US": "Adjust text size in the main window, Settings, preview information, and pop-up menus."
+  },
+  "stableSettings.desc.theme": {
+    "zh-CN": "跟随 Windows 主题，或始终使用明亮、黑暗模式。",
+    "en-US": "Follow the Windows theme, or always use Light or Dark mode."
+  },
+  "stableSettings.desc.colors": {
+    "zh-CN": "调整图标及按钮等内容的风格化颜色。",
+    "en-US": "Adjust the stylized colors used by icons, buttons, and other interface elements."
+  },
+  "stableSettings.desc.folders": {
+    "zh-CN": "添加、重命名或移除参与正式搜索的目录，并查看支持文件数量。",
+    "en-US": "Add, rename, or remove folders used by formal search and review their supported file counts."
+  },
+  "stableSettings.desc.runtime": {
+    "zh-CN": "选择本机 llama.cpp 版本，并手动启动或停止本地推理服务。",
+    "en-US": "Select a local llama.cpp version and manually start or stop the inference service."
+  },
+  "stableSettings.desc.model": {
+    "zh-CN": "选择自动添加关键词使用的本地视觉模型。",
+    "en-US": "Choose the local vision model used to generate keywords."
+  },
+  "stableSettings.desc.cacheOptimization": {
+    "zh-CN": "在后台逐步生成搜索缩略图；使用 Cap7CE 时自动降低处理频率。",
+    "en-US": "Generate search thumbnails gradually in the background and automatically slow down while Cap7CE is in use."
+  },
+  "stableSettings.desc.formalCache": {
+    "zh-CN": "缓存缩略图与预览内容，清理后按需重新生成。",
+    "en-US": "Caches thumbnails and previews. Rebuilt on demand after clearing."
+  },
+  "stableSettings.desc.skimCache": {
+    "zh-CN": "查看并清理 Skim 浏览产生的缩略图、预览和元数据缓存。",
+    "en-US": "View and clear the thumbnail, preview, and metadata cache created by Skim browsing."
+  },
+  "stableSettings.formalCache": {
+    "zh-CN": "缩略图与预览缓存",
+    "en-US": "Thumbnail and preview cache"
+  },
+  "stableSettings.cacheOptimization": {
+    "zh-CN": "自动缓存优化",
+    "en-US": "Automatic cache optimization"
+  },
+  "stableSettings.cacheSummary": {
+    "zh-CN": "{count} 项 · {size}",
+    "en-US": "{count} items · {size}"
+  },
+  "stableSettings.optimizationSummary": {
+    "zh-CN": "队列 {queued} · 已处理 {processed} · 失败 {failed}",
+    "en-US": "Queued {queued} · Processed {processed} · Failed {failed}"
+  },
+  "stableSettings.optimizationChecking": {
+    "zh-CN": "正在检查缓存…",
+    "en-US": "Checking cache…"
+  },
+  "stableSettings.optimizationNoWork": {
+    "zh-CN": "检查完成 · 无需优化",
+    "en-US": "Check complete · Nothing to optimize"
+  },
+  "stableSettings.optimizationCompleted": {
+    "zh-CN": "检查完成 · 已处理 {processed} · 失败 {failed}",
+    "en-US": "Check complete · Processed {processed} · Failed {failed}"
+  },
+  "stableSettings.desc.quickActions": {
+    "zh-CN": "启用并设置主窗口、窗口模式、line、目录切换和设置页的快捷键。",
+    "en-US": "Enable and configure shortcuts for the main window, window mode, line, folder cycling, and Settings."
+  },
+  "stableSettings.desc.quickCommands": {
+    "zh-CN": "在搜索框或路径编辑框中输入指令，回车执行。",
+    "en-US": "Enter commands in the search or path field, then press Enter."
+  },
+  "stableSettings.desc.diagnostics": {
+    "zh-CN": "查看日志和崩溃报告位置，开启详细记录，或导出脱敏诊断包。",
+    "en-US": "View log and crash-report locations, enable detailed logging, or export a sanitized diagnostics bundle."
+  },
+  "stableSettings.diagnostics": {
+    "zh-CN": "日志与诊断",
+    "en-US": "Logs and diagnostics"
+  },
+  "stableSettings.runtimeInfo": {
+    "zh-CN": "llama.cpp 运行信息",
+    "en-US": "llama.cpp runtime information"
+  },
+  "stableSettings.desc.runtimeInfo": {
+    "zh-CN": "查看本地推理服务、llama.cpp 运行目录和模型文件的当前状态。",
+    "en-US": "View the current status of the local inference service, llama.cpp runtime folder, and model files."
+  },
+  "stableSettings.desc.update": {
+    "zh-CN": "手动检查并下载更新；Cap7CE 不会在后台自动更新。",
+    "en-US": "Check for and download updates manually. Cap7CE does not update automatically in the background."
+  },
+  "stableSettings.desc.license": {
+    "zh-CN": "Cap7CE 自有源码使用 PolyForm Noncommercial 1.0.0；第三方组件适用各自许可证。",
+    "en-US": "Cap7CE source uses PolyForm Noncommercial 1.0.0; third-party components retain their own licenses."
+  },
+  "stableSettings.license": {
+    "zh-CN": "许可与组件",
+    "en-US": "Licenses and components"
+  },
+  "stableSettings.directoryCount": {
+    "zh-CN": "{directories} 个目录 · {files} 个支持文件",
+    "en-US": "{directories} folders · {files} supported files"
+  },
+  "stableSettings.directoryCountUnknown": {
+    "zh-CN": "{directories} 个目录 · 文件数量读取中",
+    "en-US": "{directories} folders · Reading file counts"
+  },
+  "stableSettings.directoryEmpty": {
+    "zh-CN": "尚未添加搜索目录。",
+    "en-US": "No search folders have been added."
+  },
+  "stableSettings.directoryConflict": {
+    "zh-CN": "所选目录与现有配置重叠。是否以新目录替换冲突项？",
+    "en-US": "The selected folder overlaps existing entries. Replace the conflicting entries with the new folder?"
+  },
+  "stableSettings.confirmDeleteDirectory": {
+    "zh-CN": "确定移除“{name}”吗？源文件不会被删除。",
+    "en-US": "Remove “{name}”? Source files will not be deleted."
+  },
+  "stableSettings.confirmClearCache": {
+    "zh-CN": "清理缩略图与预览缓存？下次浏览时会按需重新生成；不会删除源文件、索引、关键词或模型。",
+    "en-US": "Clear thumbnail and preview caches? They will be rebuilt on demand. Source files, indexes, keywords and models are preserved."
+  },
+  "stableSettings.confirmClearSkimCache": {
+    "zh-CN": "确定清理独立 Skim 缓存吗？源文件不会受到影响。",
+    "en-US": "Clear the separate Skim cache? Source files will not be affected."
+  },
+  "stableSettings.rename": {
+    "zh-CN": "重命名",
+    "en-US": "Rename"
+  },
+  "stableSettings.update.readOnlyMaterial": {
+    "zh-CN": "后续功能",
+    "en-US": "Future feature"
+  },
+  "settings.directoryConfig": {
+    "zh-CN": "配置目录",
+    "en-US": "Folders"
+  },
+  "settings.directoryLoading": {
+    "zh-CN": "正在读取目录…",
+    "en-US": "Loading Folders…"
+  },
+  "settings.directoryEmpty": {
+    "zh-CN": "尚未添加目录",
+    "en-US": "No Folders Added"
+  },
+  "settings.directorySummary": {
+    "zh-CN": "{directoryCount} 目录　{fileCount} 文件",
+    "en-US": "{directoryCount} folders　{fileCount} files"
+  },
+  "settings.addDirectory": {
+    "zh-CN": "添加目录",
+    "en-US": "Add Folder"
+  },
+  "settings.renameDirectoryHint": {
+    "zh-CN": "双击重命名",
+    "en-US": "Double-click to rename"
+  },
+  "settings.deleteDirectoryHint": {
+    "zh-CN": "删除目录",
+    "en-US": "Delete Folder"
+  },
+  "settings.clearCache": {
+    "zh-CN": "清理缓存",
+    "en-US": "Clear Cache"
+  },
+  "settings.cacheManagement": {
+    "zh-CN": "缓存管理",
+    "en-US": "Cache Management"
+  },
+  "settings.readingCache": {
+    "zh-CN": "读取中",
+    "en-US": "Reading"
+  },
+  "settings.cacheStats": {
+    "zh-CN": "{count} 个 / {size}",
+    "en-US": "{count} items / {size}"
+  },
+  "settings.cacheOptimizationReady": {
+    "zh-CN": "{count}个 / {size}　自动优化已开启。",
+    "en-US": "{count} items / {size}  Automatic optimization is on."
+  },
+  "settings.cacheOptimizationRunning": {
+    "zh-CN": "{count}个 / {size}　正在自动优化：已处理 {processed}，剩余 {remaining}。",
+    "en-US": "{count} items / {size}  Optimizing: {processed} processed, {remaining} remaining."
+  },
+  "settings.cacheOptimizationCompleted": {
+    "zh-CN": "{count}个 / {size}　自动优化已完成。",
+    "en-US": "{count} items / {size}  Automatic optimization is complete."
+  },
+  "settings.cacheOptimizationDisabled": {
+    "zh-CN": "{count}个 / {size}　自动优化已关闭，开启可提升浏览体验。",
+    "en-US": "{count} items / {size}  Automatic optimization is off. Turn it on for smoother browsing."
+  },
+  "settings.cacheOptimizationOn": {
+    "zh-CN": "自动优化",
+    "en-US": "Auto Optimize"
+  },
+  "settings.cacheOptimizationOff": {
+    "zh-CN": "无优化",
+    "en-US": "No Optimization"
+  },
+  "settings.cacheOptimizationOnHint": {
+    "zh-CN": "已开启自动生成缓存",
+    "en-US": "Automatic cache generation is enabled"
+  },
+  "settings.cacheOptimizationOffHint": {
+    "zh-CN": "开启后自动生成缓存",
+    "en-US": "Enable automatic cache generation"
+  },
+  "settings.clearingCache": {
+    "zh-CN": "清理中",
+    "en-US": "Clearing"
+  },
+  "settings.clearAllCache": {
+    "zh-CN": "清理全部",
+    "en-US": "Clear All"
+  },
+  "settings.cacheCleared": {
+    "zh-CN": "清理完成",
+    "en-US": "Cleared"
+  },
+  "settings.skimCache": {
+    "zh-CN": "Skim 缓存",
+    "en-US": "Skim Cache"
+  },
+  "settings.clearSkimCache": {
+    "zh-CN": "清理 skim",
+    "en-US": "Clear skim"
+  },
+  "settings.skimCacheCleared": {
+    "zh-CN": "skim 缓存清理完成",
+    "en-US": "skim cache cleared"
+  },
+  "settings.language": {
+    "zh-CN": "语言 / Language",
+    "en-US": "Language / 语言"
+  },
+  "settings.editColorHint": {
+    "zh-CN": "单击修改",
+    "en-US": "Click to edit"
+  },
+  "settings.editShortcutHint": {
+    "zh-CN": "单击修改",
+    "en-US": "Click to edit"
+  },
+  "settings.visible": {
+    "zh-CN": "显示",
+    "en-US": "Show"
+  },
+  "settings.hidden": {
+    "zh-CN": "不显示",
+    "en-US": "Hide"
+  },
+  "settings.edgeCollapse": {
+    "zh-CN": "窗口模式",
+    "en-US": "Window Mode"
+  },
+  "settings.standardWindowMode": {
+    "zh-CN": "标准窗口",
+    "en-US": "Standard Window"
+  },
+  "settings.edgeCollapseMode": {
+    "zh-CN": "边缘收起",
+    "en-US": "Edge Auto-hide"
+  },
+  "settings.enabled": {
+    "zh-CN": "打开",
+    "en-US": "On"
+  },
+  "settings.disabled": {
+    "zh-CN": "关闭",
+    "en-US": "Off"
+  },
+  "settings.launchAtLogin": {
+    "zh-CN": "登录时启动",
+    "en-US": "Launch at Sign-in"
+  },
+  "settings.launchAtLoginOn": {
+    "zh-CN": "启动",
+    "en-US": "On"
+  },
+  "settings.launchAtLoginOff": {
+    "zh-CN": "关闭",
+    "en-US": "Off"
+  },
+  "settings.systemNotifications": {
+    "zh-CN": "系统通知",
+    "en-US": "System Notifications"
+  },
+  "settings.systemNotificationsOn": {
+    "zh-CN": "开启",
+    "en-US": "On"
+  },
+  "settings.systemNotificationsOff": {
+    "zh-CN": "关闭",
+    "en-US": "Off"
+  },
+  "settings.quickActions": {
+    "zh-CN": "快捷动作",
+    "en-US": "Quick Actions"
+  },
+  "settings.hiddenFilesOn": {
+    "zh-CN": "显示隐藏文件",
+    "en-US": "Show Hidden Files"
+  },
+  "settings.hiddenFilesOff": {
+    "zh-CN": "不显示隐藏文件",
+    "en-US": "Hide Hidden Files"
+  },
+  "settings.hiddenFiles": {
+    "zh-CN": "隐藏文件",
+    "en-US": "Hidden files"
+  },
+  "settings.finishConfiguration": {
+    "zh-CN": "完成配置",
+    "en-US": "Finish"
+  },
+  "settings.configure": {
+    "zh-CN": "配置",
+    "en-US": "Configure"
+  },
+  "settings.shortcutUnavailable": {
+    "zh-CN": "当前设置不可用，需重新设置",
+    "en-US": "This shortcut is unavailable. Choose another."
+  },
+  "settings.captureShortcut": {
+    "zh-CN": "按下组合键…",
+    "en-US": "Press a shortcut…"
+  },
+  "settings.shortcutUnassigned": {
+    "zh-CN": "未设置",
+    "en-US": "Not set"
+  },
+  "settings.clearShortcutAction": {
+    "zh-CN": "清除快捷键",
+    "en-US": "Clear shortcut"
+  },
+  "settings.shortcutCaptureCancelHint": {
+    "zh-CN": "Esc 取消",
+    "en-US": "Esc to cancel"
+  },
+  "settings.quickCommands": {
+    "zh-CN": "快捷指令",
+    "en-US": "Quick Commands"
+  },
+  "settings.closeQuickCommands": {
+    "zh-CN": "关闭查看",
+    "en-US": "Close List"
+  },
+  "settings.confirmationCommands": {
+    "zh-CN": "需二次确认",
+    "en-US": "Confirmation Required"
+  },
+  "settings.confirmationCommandHint": {
+    "zh-CN": "执行前将在输入框内要求输入 y / n 二次确认。",
+    "en-US": "Enter y or n in the input field to confirm before execution."
+  },
+  "settings.selectRuntime": {
+    "zh-CN": "llama.cpp 版本",
+    "en-US": "llama.cpp Version"
+  },
+  "settings.selectVersion": {
+    "zh-CN": "选择版本",
+    "en-US": "Select Version"
+  },
+  "settings.refreshRuntime": {
+    "zh-CN": "刷新 llama.cpp 版本",
+    "en-US": "Refresh llama.cpp Versions"
+  },
+  "settings.startServer": {
+    "zh-CN": "启动 llama-server",
+    "en-US": "Start llama-server"
+  },
+  "settings.stopServer": {
+    "zh-CN": "停止 llama-server",
+    "en-US": "Stop llama-server"
+  },
+  "settings.visionModel": {
+    "zh-CN": "视觉模型",
+    "en-US": "Vision Model"
+  },
+  "settings.selectVisionModel": {
+    "zh-CN": "选择视觉模型",
+    "en-US": "Select Vision Model"
+  },
+  "settings.refreshGguf": {
+    "zh-CN": "刷新 GGUF 模型",
+    "en-US": "Refresh GGUF Models"
+  },
+  "settings.versionUpdate": {
+    "zh-CN": "版本与更新",
+    "en-US": "Version and Updates"
+  },
+  "settings.updateCurrentVersion": {
+    "zh-CN": "当前版本 {version}",
+    "en-US": "Current version {version}"
+  },
+  "settings.checkForUpdates": {
+    "zh-CN": "检查更新",
+    "en-US": "Check for Updates"
+  },
+  "settings.updateChecking": {
+    "zh-CN": "正在检查最新版本",
+    "en-US": "Checking..."
+  },
+  "settings.updateCheckingButton": {
+    "zh-CN": "检查中",
+    "en-US": "Checking"
+  },
+  "settings.updateUpToDate": {
+    "zh-CN": "已是最新版本 {version}",
+    "en-US": "Latest: {version}"
+  },
+  "settings.updateAvailable": {
+    "zh-CN": "发现新版本 {version}",
+    "en-US": "New: {version}"
+  },
+  "settings.downloadUpdateNow": {
+    "zh-CN": "立即下载",
+    "en-US": "Download Now"
+  },
+  "settings.updateDownloading": {
+    "zh-CN": "{percent}%　{received}/{total}",
+    "en-US": "{percent}%  {received}/{total}"
+  },
+  "settings.updateDownloadingUnknownTotal": {
+    "zh-CN": "{received}",
+    "en-US": "{received}"
+  },
+  "settings.updateCancelling": {
+    "zh-CN": "正在取消下载",
+    "en-US": "Cancelling download"
+  },
+  "settings.updateCancellingButton": {
+    "zh-CN": "取消中",
+    "en-US": "Cancelling"
+  },
+  "settings.updateCancelled": {
+    "zh-CN": "已取消下载",
+    "en-US": "Download cancelled"
+  },
+  "settings.updatePaused": {
+    "zh-CN": "已暂停 {version} 下载，可稍后继续",
+    "en-US": "Download for {version} paused. You can continue later."
+  },
+  "settings.pauseUpdate": {
+    "zh-CN": "暂停",
+    "en-US": "Pause"
+  },
+  "settings.updatePausing": {
+    "zh-CN": "暂停中",
+    "en-US": "Pausing"
+  },
+  "settings.resumeUpdate": {
+    "zh-CN": "继续下载",
+    "en-US": "Continue Download"
+  },
+  "settings.updateVerifying": {
+    "zh-CN": "下载完成，正在验证安装器",
+    "en-US": "Download complete. Verifying installer."
+  },
+  "settings.updateVerifyingButton": {
+    "zh-CN": "验证中",
+    "en-US": "Verifying"
+  },
+  "settings.updateReady": {
+    "zh-CN": "{version} 已下载，可以安装",
+    "en-US": "{version} is downloaded and ready to install."
+  },
+  "settings.installUpdateNow": {
+    "zh-CN": "立即安装",
+    "en-US": "Install Now"
+  },
+  "settings.discardUpdate": {
+    "zh-CN": "放弃更新",
+    "en-US": "Discard Update"
+  },
+  "settings.updateDiscarding": {
+    "zh-CN": "正在清理下载",
+    "en-US": "Removing download"
+  },
+  "settings.confirmDiscardUpdate": {
+    "zh-CN": "删除已经下载的更新文件？",
+    "en-US": "Delete the downloaded update files?"
+  },
+  "settings.confirmInstallUpdate": {
+    "zh-CN": "Cap7CE 将启动安装程序并安全退出。是否继续？",
+    "en-US": "Cap7CE will start the installer and exit safely. Continue?"
+  },
+  "settings.updateInstalling": {
+    "zh-CN": "正在启动安装程序并退出 Cap7CE",
+    "en-US": "Starting the installer and exiting Cap7CE"
+  },
+  "settings.updateInstallingButton": {
+    "zh-CN": "正在启动",
+    "en-US": "Starting"
+  },
+  "settings.updateInstallerOpenFailed": {
+    "zh-CN": "无法启动安装程序，Cap7CE 将继续运行",
+    "en-US": "The installer could not be started. Cap7CE will remain open"
+  },
+  "settings.updateUnsupported": {
+    "zh-CN": "开发模式不能启动安装程序，请使用安装版测试",
+    "en-US": "The installer cannot be started in development mode. Test with an installed build."
+  },
+  "settings.downloadUpdateAgain": {
+    "zh-CN": "再次下载",
+    "en-US": "Download Again"
+  },
+  "settings.updateDownloadFailed": {
+    "zh-CN": "更新失败，详情已记录",
+    "en-US": "Update failed. Details recorded"
+  },
+  "settings.updateRateLimited": {
+    "zh-CN": "下载请求受限，请稍后再试",
+    "en-US": "Download limited. Try again later"
+  },
+  "settings.updateNetworkFailed": {
+    "zh-CN": "下载已中断，请检查网络",
+    "en-US": "Download interrupted. Check your network"
+  },
+  "settings.updateDiskSpaceFailed": {
+    "zh-CN": "磁盘空间不足",
+    "en-US": "Not enough disk space"
+  },
+  "settings.updateSecurityFailed": {
+    "zh-CN": "更新失败，请检查安全软件",
+    "en-US": "Update failed. Check security software"
+  },
+  "settings.updateIncomplete": {
+    "zh-CN": "下载尚未完成，可以继续下载",
+    "en-US": "The download is incomplete and can be resumed"
+  },
+  "settings.updateInvalid": {
+    "zh-CN": "下载文件无效，已自动清理",
+    "en-US": "Invalid download removed"
+  },
+  "settings.updateCheckFailed": {
+    "zh-CN": "检查失败，请重试",
+    "en-US": "Check Failed, Try Again"
+  },
+  "settings.details": {
+    "zh-CN": "运行信息 >",
+    "en-US": "Runtime Information >"
+  },
+  "settings.viewReleases": {
+    "zh-CN": "查看版本发布",
+    "en-US": "View releases"
+  },
+  "settings.runtimeFileStatus": {
+    "zh-CN": "运行时文件状态",
+    "en-US": "Runtime File Status"
+  },
+  "settings.runtimeDirectory": {
+    "zh-CN": "运行时目录",
+    "en-US": "Runtime Folder"
+  },
+  "settings.serviceAddress": {
+    "zh-CN": "服务地址",
+    "en-US": "Service Address"
+  },
+  "settings.processPid": {
+    "zh-CN": "进程 PID",
+    "en-US": "Process PID"
+  },
+  "settings.runtimeStartedAt": {
+    "zh-CN": "启动时间",
+    "en-US": "Started At"
+  },
+  "settings.runtimeLog": {
+    "zh-CN": "llama.cpp 日志",
+    "en-US": "llama.cpp Log"
+  },
+  "settings.applicationLog": {
+    "zh-CN": "应用日志",
+    "en-US": "Application Log"
+  },
+  "settings.crashReports": {
+    "zh-CN": "崩溃报告",
+    "en-US": "Crash Reports"
+  },
+  "settings.detailedLogging": {
+    "zh-CN": "详细记录",
+    "en-US": "Detailed Logging"
+  },
+  "settings.diagnosticsBundle": {
+    "zh-CN": "诊断数据",
+    "en-US": "Diagnostic Data"
+  },
+  "settings.exportDiagnostics": {
+    "zh-CN": "导出",
+    "en-US": "Export"
+  },
+  "settings.exportingDiagnostics": {
+    "zh-CN": "导出中",
+    "en-US": "Exporting"
+  },
+  "settings.diagnosticsExported": {
+    "zh-CN": "已导出",
+    "en-US": "Exported"
+  },
+  "settings.diagnosticsActionFailed": {
+    "zh-CN": "操作失败",
+    "en-US": "Action Failed"
+  },
+  "settings.diagnosticsBundleDescription": {
+    "zh-CN": "日志与最近的崩溃报告",
+    "en-US": "Logs and recent crash reports"
+  },
+  "settings.modelDirectory": {
+    "zh-CN": "模型目录",
+    "en-US": "Model Folder"
+  },
+  "settings.modelPath": {
+    "zh-CN": "模型路径",
+    "en-US": "Model Path"
+  },
+  "settings.mmprojFile": {
+    "zh-CN": "mmproj 文件",
+    "en-US": "mmproj File"
+  },
+  "settings.mainModelInfo": {
+    "zh-CN": "主模型大小 / 修改时间",
+    "en-US": "Main Model Size / Modified"
+  },
+  "settings.mmprojInfo": {
+    "zh-CN": "mmproj 大小 / 修改时间",
+    "en-US": "mmproj Size / Modified"
+  },
+  "settings.modelInventory": {
+    "zh-CN": "可用模型 / GGUF 文件",
+    "en-US": "Available Models / GGUF Files"
+  },
+  "settings.addDirectoryActionHint": {
+    "zh-CN": "点击添加目录",
+    "en-US": "Click to add a folder"
+  },
+  "settings.directoryFileCountHint": {
+    "zh-CN": "受支持文件数",
+    "en-US": "Supported file count"
+  },
+  "settings.expandDirectoriesHint": {
+    "zh-CN": "管理已添加目录",
+    "en-US": "Manage added folders"
+  },
+  "settings.collapseDirectoriesHint": {
+    "zh-CN": "点击收起列表",
+    "en-US": "Click to collapse the list"
+  },
+  "settings.deleteDirectoryActionHint": {
+    "zh-CN": "点击移除此目录",
+    "en-US": "Click to remove this folder"
+  },
+  "settings.disableCacheOptimizationHint": {
+    "zh-CN": "点击关闭自动优化",
+    "en-US": "Click to turn off auto optimization"
+  },
+  "settings.enableCacheOptimizationHint": {
+    "zh-CN": "点击开启自动优化",
+    "en-US": "Click to turn on auto optimization"
+  },
+  "settings.clearAllCacheActionHint": {
+    "zh-CN": "点击清理全部视觉缓存",
+    "en-US": "Click to clear all visual caches"
+  },
+  "settings.clearSkimCacheActionHint": {
+    "zh-CN": "点击清理 skim 缓存",
+    "en-US": "Click to clear the skim cache"
+  },
+  "settings.changeLanguageHint": {
+    "zh-CN": "点击切换界面语言",
+    "en-US": "Click to switch the interface language"
+  },
+  "settings.changeThemeHint": {
+    "zh-CN": "点击切换外观模式",
+    "en-US": "Click to switch appearance modes"
+  },
+  "settings.editThemeColorHint": {
+    "zh-CN": "自定义颜色1",
+    "en-US": "Customize Color 1"
+  },
+  "settings.editAccentColorHint": {
+    "zh-CN": "自定义颜色2",
+    "en-US": "Customize Color 2"
+  },
+  "settings.resetAppearanceHint": {
+    "zh-CN": "点击恢复默认",
+    "en-US": "Click to restore defaults"
+  },
+  "settings.enableEdgeCollapseHint": {
+    "zh-CN": "点击开启窗口边缘收起",
+    "en-US": "Click to enable edge collapse"
+  },
+  "settings.disableEdgeCollapseHint": {
+    "zh-CN": "点击关闭窗口边缘收起",
+    "en-US": "Click to disable edge collapse"
+  },
+  "settings.enableLaunchAtLoginHint": {
+    "zh-CN": "点击启动开机运行",
+    "en-US": "Click to enable run at startup"
+  },
+  "settings.disableLaunchAtLoginHint": {
+    "zh-CN": "点击关闭开机运行",
+    "en-US": "Click to disable run at startup"
+  },
+  "settings.enableSystemNotificationsHint": {
+    "zh-CN": "点击开启系统通知",
+    "en-US": "Click to turn on system notifications"
+  },
+  "settings.disableSystemNotificationsHint": {
+    "zh-CN": "点击关闭系统通知",
+    "en-US": "Click to turn off system notifications"
+  },
+  "settings.enableQuickActionsHint": {
+    "zh-CN": "点击打开快捷动作",
+    "en-US": "Click to turn on Quick Actions"
+  },
+  "settings.disableQuickActionsHint": {
+    "zh-CN": "点击关闭快捷动作",
+    "en-US": "Click to turn off Quick Actions"
+  },
+  "settings.resetQuickActionsHint": {
+    "zh-CN": "点击恢复默认",
+    "en-US": "Click to restore defaults"
+  },
+  "settings.configureQuickActionsHint": {
+    "zh-CN": "点击展开",
+    "en-US": "Click to expand"
+  },
+  "settings.finishQuickActionsHint": {
+    "zh-CN": "点击收起",
+    "en-US": "Click to collapse"
+  },
+  "settings.editShortcutActionHint": {
+    "zh-CN": "点击修改",
+    "en-US": "Click to edit"
+  },
+  "settings.cancelShortcutCaptureHint": {
+    "zh-CN": "按 Esc 或点击其他位置取消",
+    "en-US": "Press Esc or click elsewhere to cancel"
+  },
+  "settings.openQuickCommandsHint": {
+    "zh-CN": "点击查看",
+    "en-US": "Click to view"
+  },
+  "settings.closeQuickCommandsHint": {
+    "zh-CN": "点击收起",
+    "en-US": "Click to collapse"
+  },
+  "settings.selectRuntimeActionHint": {
+    "zh-CN": "选择版本",
+    "en-US": "Select a version"
+  },
+  "settings.refreshRuntimeActionHint": {
+    "zh-CN": "刷新版本列表",
+    "en-US": "Refresh the version list"
+  },
+  "settings.startServerActionHint": {
+    "zh-CN": "点击启动",
+    "en-US": "Click to start"
+  },
+  "settings.stopServerActionHint": {
+    "zh-CN": "点击停止",
+    "en-US": "Click to stop"
+  },
+  "settings.selectVisionModelActionHint": {
+    "zh-CN": "选择模型",
+    "en-US": "Select a model"
+  },
+  "settings.refreshGgufActionHint": {
+    "zh-CN": "点击刷新",
+    "en-US": "Click to refresh"
+  },
+  "settings.checkForUpdatesActionHint": {
+    "zh-CN": "点击检查更新",
+    "en-US": "Click to check for updates"
+  },
+  "settings.downloadUpdateActionHint": {
+    "zh-CN": "点击开始下载",
+    "en-US": "Click to start the download"
+  },
+  "settings.expandDetailsHint": {
+    "zh-CN": "点击查看",
+    "en-US": "Click to view"
+  },
+  "settings.collapseDetailsHint": {
+    "zh-CN": "点击收起",
+    "en-US": "Click to collapse"
+  },
+  "settings.enableDetailedLoggingHint": {
+    "zh-CN": "点击在本次运行中临时开启详细记录",
+    "en-US": "Click to temporarily enable detailed logging for this session"
+  },
+  "settings.disableDetailedLoggingHint": {
+    "zh-CN": "点击关闭详细记录",
+    "en-US": "Click to disable detailed logging"
+  },
+  "settings.exportDiagnosticsHint": {
+    "zh-CN": "点击导出诊断数据（文字日志会脱敏）",
+    "en-US": "Click to export diagnostics (text logs are sanitized)"
+  },
+  "shortcut.focusMainSearch": {
+    "zh-CN": "显示主窗口并聚焦搜索",
+    "en-US": "Show main window and focus search"
+  },
+  "shortcut.restoreDefaultWindow": {
+    "zh-CN": "默认大小和位置打开主窗口",
+    "en-US": "Open main window at default size and position"
+  },
+  "shortcut.toggleWindowMode": {
+    "zh-CN": "切换窗口模式",
+    "en-US": "Switch window mode"
+  },
+  "shortcut.cycleDirectory": {
+    "zh-CN": "目录切换",
+    "en-US": "Cycle folders"
+  },
+  "shortcut.openSettings": {
+    "zh-CN": "打开设置",
+    "en-US": "Open Settings"
+  },
+  "navigation.general": {
+    "zh-CN": "通用",
+    "en-US": "General"
+  },
+  "navigation.appearance": {
+    "zh-CN": "外观",
+    "en-US": "Appearance"
+  },
+  "navigation.storage": {
+    "zh-CN": "缓存与索引",
+    "en-US": "Cache and index"
+  },
+  "navigation.shortcuts": {
+    "zh-CN": "快捷操作",
+    "en-US": "Shortcuts"
+  },
+  "navigation.models": {
+    "zh-CN": "搜索与 AI",
+    "en-US": "Search and AI"
+  },
+  "navigation.diagnostics": {
+    "zh-CN": "诊断",
+    "en-US": "Diagnostics"
+  },
+  "navigation.about": {
+    "zh-CN": "关于",
+    "en-US": "About"
+  },
+  "language.chinese": {
+    "zh-CN": "中文",
+    "en-US": "中文"
+  },
+  "language.english": {
+    "zh-CN": "English",
+    "en-US": "English"
+  },
+  "language.description": {
+    "zh-CN": "选择界面及 AI 生成关键词使用的语言，立即生效。",
+    "en-US": "Choose the language for the interface and AI-generated keywords. Changes take effect immediately."
+  },
+  "native.material.mica": {
+    "zh-CN": "云母",
+    "en-US": "Mica"
+  },
+  "native.material.alt": {
+    "zh-CN": "云母 Alt",
+    "en-US": "Mica Alt"
+  },
+  "native.metadata.title": {
+    "zh-CN": "元数据提取",
+    "en-US": "Metadata extraction"
+  },
+  "native.metadata.description": {
+    "zh-CN": "读取文件属性，用于尺寸、颜色等筛选。勾选下方目录可跳过提取。",
+    "en-US": "Read file properties for filters such as dimensions and colors. Select directories below to exclude them."
+  },
+  "native.maintenance.title": {
+    "zh-CN": "服务维护",
+    "en-US": "Service maintenance"
+  },
+  "native.maintenance.description": {
+    "zh-CN": "后台连接或索引服务异常时，可重新连接或修复。",
+    "en-US": "Reconnect or repair the service if the background connection or indexing service fails."
+  },
+  "native.progress.processed": {
+    "zh-CN": "已处理 {count:N0} 项",
+    "en-US": "Processed {count:N0} items"
+  }
+}

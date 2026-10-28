@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+WinUI 语言实时切换开始接入：Localization/messages.json 以稳定键并排保存中英文，当前先收录318条设置及通用资源。LanguageCatalog 独立验证语言集合与命名参数并按语言文化格式化；LanguageSession 发送语言变化；LanguageBinding 仅对显式绑定的控件依赖属性刷新文案，通过Loaded/Unloaded与替换解绑管理订阅，不重建窗口、页面或改变浏览状态。构建语言检查与Layout专项覆盖资源一致性、系统语言解析、参数和通知。当前基础尚未接入全部界面、偏好或AI请求，语言选择器继续禁用；不能将此阶段视为完整双语支持。旧Electron资源初始复用后由原生文件独立维护，未修改旧宿主。
+
 新版 WinUI 不支持 line，且原生宿主本身没有 line 窗口、IPC 或快捷键实现。SettingsCatalog 不再展示 line 开关，SettingsShortcutReference 不再列出 hideToLine；winui-settings-resources 在生成原生资源时移除 line 专用文案、hideToLine 绑定、line: 与 win:line 帮助及过滤后的空分组。winui-shell-boundary-check 检查原生源码、生成资源和 Alt+1 注册，阻止该功能回归；原生设置与旧版卡片的对照明确排除退役项。旧 Electron 的实现、共享指令注册表和磁盘上的旧偏好保留，等待后续整体退役，不属于当前 WinUI 功能范围。
 
 SettingsWindow导航保留原生折叠按钮及非空PaneTitle，仅通过SettingsNavigationAppearance隐藏原生PaneTitleTextBlock的显示和命中，不破坏标题测量；空PaneTitle在当前WinUI配置下会导致打开设置退出。关于页内容区独立底部行承载SettingsSignature，不随正文滚动或遮挡内容；仅进入关于页时以普通Grid和原生控件组合创建，不加载自定义XAML根组件，局部失败记录日志并保留设置窗口。签名原始SVG路径由设置资源生成器转换为单色原生几何，颜色跟随主题。SettingsSignature沿用Echo七连击/850ms间隔，懒加载既有phase7.dat，通过SettingsOriginAsset按原AES-GCM格式认证并仅在内存生成BitmapImage；原生ContentDialog承载图片及中英文说明，支持关闭按钮/Esc，窗口卸载时关闭，无网络或后台计时器。

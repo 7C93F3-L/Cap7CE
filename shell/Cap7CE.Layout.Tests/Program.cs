@@ -1,6 +1,9 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--language-tests"]) {LanguageChecks.Run();return;}
+LanguageChecks.Run();
+
 if(args is ["--settings-origin-tests"]) {await SettingsOriginChecks.RunAsync();return;}
 if(args is ["--core-exit-fixture"]) {Console.ReadLine();Console.Error.WriteLine("controlled-core-failure");Environment.ExitCode=7;return;}
 if(args is ["--catalog-refresh-tests"]) {CatalogRefreshChecks.Run();await CoreProcessChecks.RunAsync();await CoreRequestSenderChecks.RunAsync();return;}

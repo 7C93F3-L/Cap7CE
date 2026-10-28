@@ -1,5 +1,6 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
+require('./winui-language-check.cjs')(root);
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const modelFiles = ['AssetCollection', 'AssetItem', 'BrowseFilter', 'FileFormat', 'FormatRegistry', 'HomeEntries', 'ShellPreferences']
   .map(name => `shell/Cap7CE.WinUI/Models/${name}.cs`);
