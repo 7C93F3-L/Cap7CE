@@ -63,7 +63,8 @@ using(var browse=new BrowseSession(interrupted)) {
     Require(!await old&&browse.PathValue==""&&interrupted.Visuals.Reads.Count==0,"cancelled scope resolution cannot rescan a disk or overwrite newer navigation");
 }
 var capacity=new IOException("core-cache-operation-failed");capacity.Data["CoreMessage"]="directory-browse-capacity-exceeded";
-Require(BrowseTiming.ErrorText(capacity).Contains("实时递归"),"filesystem capacity error preserves a useful user message");
+var language=new Cap7CE.WinUI.Localization.LanguageSession(new(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/languages.json"))));
+Require(Cap7CE.WinUI.Localization.FailureText.From(capacity).Render(language).Contains("实时递归"),"filesystem capacity error preserves a useful user message");
 var scoped=Setup(false);var saved=scoped.Preferences.Current;
 using(var browse=new BrowseSession(scoped)) {
     Require(await browse.OpenLocationAsync("E:\\",true)&&browse.Recursive,"favorite entry uses its own recursive preference");
@@ -100,5 +101,27 @@ using(var browse=new BrowseSession(samePath)) {
     Require(browse.PathValue=="F:\\"&&browse.EntryPath=="E:\\","history distinguishes favorite entry anchors even with the same profile and path");
 }
 Console.WriteLine("BrowseSession routing checks passed: direct/recursive, indexed/unindexed, startup/offline, count-free paging, search scope and navigation cancellation.");
-Require(Cap7CE.WinUI.Models.BrowseScopeRules.IndexUnavailable("needsRebuild",true).Contains("建立 / 更新"),"random unavailable status exposes the existing recovery action");
-Require(!Cap7CE.WinUI.Models.BrowseScopeRules.IndexUnavailable("building",true).Contains("清除"),"random build status does not ask to clear nonexistent search filters");
+var single=Setup();
+using(var browse=new BrowseSession(single)) {
+    var closedPreviews=0;
+    var preview=new PreviewSelectionController<Cap7CE.WinUI.Models.AssetItem>(item=>item.FullPath,item=>!item.Entry.IsDirectory,_=>{},_=>{},()=>closedPreviews++);
+    browse.NavigationStarting+=preserve=>preview.NavigationStarting(browse,preserve);
+    Require(await browse.OpenLocationAsync("E:\\",false),"single-page initial directory opens");
+    preview.Open(browse,browse.Items,browse.Items[0]);
+    Require(await browse.NavigateAsync(browse.PathValue,false,true)&&closedPreviews==0,"retained Catalog refresh keeps the single-page preview attached");
+    browse.Query="needle";browse.Filter=new(){Count=1};browse.Random=true;
+    Require(await browse.OpenLocationAsync("F:\\",false)&&browse.Query==""&&browse.Filter.Count==0&&!browse.Random,"opening a new directory reuses the page with the existing fresh-entry semantics");
+    Require(closedPreviews==1&&browse.CanBack,"ordinary navigation closes the old preview once and retains history");
+    await browse.BackAsync();Require(browse.PathValue=="E:\\"&&browse.CanForward,"single-page back history remains available");
+    await browse.ForwardAsync();Require(browse.PathValue=="F:\\","single-page forward history remains available");
+    single.DeletedPaths.Add(browse.Items[0].FullPath);browse.RemoveDeleted();
+    Require(browse.Items.Count==0,"deletion still removes files from the current result collection");
+}
+Console.WriteLine("Single-page navigation regression passed: entry reset, preview lifetime, retained refresh, history and deletion.");
+var delayedPreferences=Setup(false);
+using(var browse=new BrowseSession(delayedPreferences)){
+    delayedPreferences.Preferences.Current=delayedPreferences.Preferences.Current with{ComputerWorkspace=new(){Recursive=true,Sort="name-descending"}};
+    Require(await browse.OpenLocationAsync("E:\\",false)&&browse.Recursive&&browse.Sort=="name-descending","a session created before preference loading must use loaded options on initial navigation");
+}
+Require(Cap7CE.WinUI.Localization.FailureText.ScopeKey("needsRebuild",true)=="ui.error.scopeRebuildRandom","random unavailable status exposes the existing recovery action");
+Require(Cap7CE.WinUI.Localization.FailureText.ScopeKey("building",true)=="ui.error.scopeBuildingRandom","random build status preserves the explicit indexing state");

@@ -34,8 +34,7 @@ public sealed partial class MainWindow : Window
     private readonly EdgeCollapseController edgeCollapse;
     private SettingsWindow? settings;
     private PreviewWindow? preview;
-    private BrowseSession? active;
-    private BrowseSession? boundSession;
+    private readonly BrowseSession active;
     private bool catalogRefreshQueued;
     private Models.ShellPreferences? appliedPreferences;
     private bool closed,started,minimized;
@@ -45,9 +44,10 @@ public sealed partial class MainWindow : Window
         Title=ApplicationIdentity.Name;
         L.Bind(SidebarSizer,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.sidebarWidth");L.Bind(DetailsSizer,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.detailsWidth");
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
+        active=new BrowseSession(services);
         workspace=new(services,()=>active,results,toolbar);
         services.CatalogChanged+=roots=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
-            foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())if(tab.Tag is BrowseSession {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.AffectsChange(session.PathValue,roots))session.Invalidate();
+            if(active.UsesCatalogResults&&Models.CatalogRefreshRules.AffectsChange(active.PathValue,roots))active.Invalidate();
             QueueCatalogRefresh();
             if(active is not null&&Models.CatalogRefreshRules.AffectsChange(active.PathValue,roots))filterAvailability?.Update(active,true);
         }});
@@ -60,6 +60,7 @@ public sealed partial class MainWindow : Window
         metadataNotice=new(services.Metadata,notifications);
         metadataFilters=new(services,()=>active,()=>Root.XamlRoot,Notice);filters.MetadataUnavailable+=metadataFilters.Request;
         previewLink=new(item=>item.FullPath,item=>!item.Entry.IsDirectory,results.SelectSingle,item=>preview?.FollowSelection(item),()=>preview?.Close());
+        active.NavigationStarting+=preserve=>previewLink.NavigationStarting(active,preserve);active.Changed+=Bind;
         layout=new(this,Surface,Root,SidebarColumn,DetailsColumn,SidebarHost,FilterHost,MainBorder,DetailsBorder,sidebar,SidebarSizer,DetailsSizer,services.Preferences,Notice);
         layout.DetailsVisibilityChanged+=visible=>{if(!visible)details.Stop();else if(!minimized)details.Select(results.Selection);};
         layout.HorizontalGridChanged+=value=>{results.SetHorizontal(value);toolbar.SetCompact(value);};
@@ -78,8 +79,7 @@ public sealed partial class MainWindow : Window
         services.Shortcuts=new(this,Surface,results,services.Preferences,commands,new(){
             ["focusMainSearch"]=()=>{WindowActivation.Show(this);toolbar.FocusSearch();},["focusSearch"]=toolbar.FocusSearch,["focusPath"]=toolbar.FocusPath,
             ["restoreDefaultWindow"]=()=>{WindowActivation.Show(this);MainWindowGeometry.RestoreDefault(this);},["openSettings"]=OpenSettings,
-            ["openFolder"]=()=>ChooseFolder(false),["newTab"]=()=>NewTab(""),["closeTab"]=()=>{if(Tabs.SelectedItem is TabViewItem tab)CloseTab(tab);},
-            ["previousTab"]=()=>StepTab(-1),["nextTab"]=()=>StepTab(1),["refresh"]=Refresh,
+            ["openFolder"]=()=>ChooseFolder(false),["refresh"]=Refresh,
             ["back"]=()=>{if(active is not null)commands.Run(active.BackAsync);},["forward"]=()=>{if(active is not null)commands.Run(active.ForwardAsync);},
             ["up"]=()=>{if(active is not null)commands.Run(active.UpAsync);},["cycleDirectory"]=CycleDirectory,
             ["toggleWindowMode"]=()=>commands.Run(()=>services.Preferences.UpdateAsync(value=>value with{EdgeCollapseEnabled=!value.EdgeCollapseEnabled})),
@@ -93,15 +93,13 @@ public sealed partial class MainWindow : Window
         toolbar.SizeCommitted+=(size,scope)=>commands.Run(()=>workspace.UpdateAsync(value=>value with{TileSize=size},capturedScope:scope));
         toolbar.OptionsChanged+=update=>commands.Run(()=>workspace.UpdateAsync(update,true));
         filters.FilterChanged+=filter=>{if(active is null)return;active.Filter=filter;Refresh();};
-        Tabs.AddTabButtonClick+=(_,_)=>NewTab("");Tabs.TabCloseRequested+=(_,e)=>CloseTab(e.Tab);
-        Tabs.SelectionChanged+=(_,_)=>{if(Tabs.SelectedItem is TabViewItem {Tag:BrowseSession session}){var changed=session.SyncWorkspaceOptions();active=session;Bind();if(changed)Refresh();else QueueCatalogRefresh();}};
         commands.NavigateRequested+=path=>{if(active is not null){active.Query="";commands.Run(()=>active.NavigateAsync(path));}};
         commands.PreviewRequested+=ShowPreview;
         commands.AutoKeywordsRequested+=items=>commands.Run(()=>services.AutoKeywords.StartAsync(items));
         services.AutoKeywords.Saved+=item=>details.RefreshKeywords(item);
         commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
-        commands.ItemsDeleted+=()=>{foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.RemoveDeleted();};
+        commands.ItemsDeleted+=active.RemoveDeleted;
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};
         WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);
         pointerInput=new(Surface,results.ClearSelection,forward=>{if(active is {} session)commands.Run(()=>forward?session.ForwardAsync():session.BackAsync());});
@@ -122,28 +120,11 @@ public sealed partial class MainWindow : Window
         try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         try{services.Shortcuts?.Apply();}catch(Exception error){Notice(FailureText.From(error));}
-        AssetTile.Visuals=services.Visuals;NewTab("");
+        AssetTile.Visuals=services.Visuals;OpenLocation("");
         try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice(UiMessage.Key("ui.notice.favoritesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         // Core readiness updates capabilities; it must not replace user navigation
         // or cancel directory reads started while the connection was pending.
         try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(FailureText.From(error));}
-    }
-    private void NewTab(string path,bool favorite=false)
-    {
-        if(Tabs.TabItems.Count>=12){Notice(UiMessage.Key("main.tabLimit"));return;}
-        var session=new BrowseSession(services);
-        session.NavigationStarting+=preserve=>previewLink.NavigationStarting(session,preserve);
-        var tab=new TabViewItem {Header=path.Length==0?"":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
-        if(path.Length==0)L.Message(tab,TabViewItem.HeaderProperty,LocationText.Computer);
-        session.Changed+=()=>{if(closed)return;if(session.PathValue.Length==0)L.Message(tab,TabViewItem.HeaderProperty,LocationText.Computer);else L.Literal(tab,TabViewItem.HeaderProperty,session.Title);if(ReferenceEquals(active,session))Bind();};
-        Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.OpenLocationAsync(path,favorite));
-        Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
-    }
-    private void CloseTab(TabViewItem tab)
-    {
-        if(tab.Tag is BrowseSession session)session.Dispose();Tabs.TabItems.Remove(tab);
-        if(Tabs.TabItems.Count==0&&!closed)NewTab("");
-        Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
     }
     private void Bind()
     {
@@ -151,7 +132,7 @@ public sealed partial class MainWindow : Window
         previewLink.ContextChanged(active);
         workspace.Apply();
         sidebar.SetActiveEntry(active.EntryPath,active.PreferenceScope==Models.WorkspacePreferenceScope.Favorites);toolbar.Bind(active);filters.Restore(active.Filter);filterAvailability.Update(active);
-        var preserveSelection=ReferenceEquals(boundSession,active)&&active.PreserveSelection;boundSession=active;
+        var preserveSelection=active.PreserveSelection;
         results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.ForegroundBusy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
         details.SetContext(active.PathValue,active.ForegroundBusy?null:active.Items.TotalCount??(!active.Items.HasMoreItems?(long?)active.Items.Count:null),active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count,active.Items.Count,active.ForegroundBusy);
         notifications.SetBusy(active.ForegroundBusy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
@@ -168,7 +149,7 @@ public sealed partial class MainWindow : Window
     {
         // Navigation entry always returns to the requested root with fresh query state.
         var favorite=path.Length>0&&services.Favorites.Items.Any(item=>string.Equals(item.Path.TrimEnd('\\','/'),path.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase));
-        if(active is null){NewTab(path,favorite);return;}commands.Run(()=>active.OpenLocationAsync(path,favorite));
+        if(!closed)commands.Run(()=>active.OpenLocationAsync(path,favorite));
     }
     private async void ChooseFolder(bool favorite)
     {
@@ -176,7 +157,7 @@ public sealed partial class MainWindow : Window
         {
             var picker=new FolderPicker();picker.FileTypeFilter.Add("*");WinRT.Interop.InitializeWithWindow.Initialize(picker,WinRT.Interop.WindowNative.GetWindowHandle(this));
             if(await picker.PickSingleFolderAsync() is not { } folder)return;FileAccessGuard.RejectLinks(folder.Path);
-            if(favorite)await services.Favorites.ExecuteAsync("add",path:folder.Path);else NewTab(folder.Path);
+            if(favorite)await services.Favorites.ExecuteAsync("add",path:folder.Path);else OpenLocation(folder.Path);
         }
         catch(Exception error){Notice(FailureText.From(error));}
     }
@@ -213,7 +194,6 @@ public sealed partial class MainWindow : Window
         catch{ApplyPreferences();throw;}
     });
     private void NotificationInvoked()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)WindowActivation.Show(this);});
-    private void StepTab(int step){if(Tabs.TabItems.Count>0)Tabs.SelectedIndex=(Tabs.SelectedIndex+step+Tabs.TabItems.Count)%Tabs.TabItems.Count;}
     private void CycleDirectory(){var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);}
     private void Notice(string text)=>Notice(UiMessage.Literal(text));
     private void Notice(UiMessage text){if(!closed)notifications.ShowMessage(text);}
@@ -225,7 +205,7 @@ public sealed partial class MainWindow : Window
     private async void OnClosed(object sender,WindowEventArgs e)
     {
         closed=true;services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
-        foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
+        active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
     private static string FindRoot()

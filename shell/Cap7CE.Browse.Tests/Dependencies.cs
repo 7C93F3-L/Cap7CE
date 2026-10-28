@@ -4,7 +4,7 @@ using Cap7CE.WinUI.Models;
 // Isolate the real BrowseSession from WinUI, processes and the user's Catalog.
 namespace Cap7CE.WinUI.Models
 {
-    internal sealed record AssetItem(BasicSearchItem Entry,string FullPath);
+    internal sealed record AssetItem(BasicSearchItem Entry,string FullPath,string? DisplayName=null);
     internal sealed class AssetCollection : List<AssetItem>
     {
         public bool HasMoreItems {get;set;}
@@ -21,6 +21,12 @@ namespace Cap7CE.WinUI.Models
 }
 namespace Cap7CE.WinUI.Services
 {
+    internal static class SystemLocations
+    {
+        internal sealed record Place(string Name);
+        internal sealed class Snapshot {public Place? Computer=>new("This PC");public string? NameForPath(string path)=>null;}
+        public static Snapshot Current {get;}=new();
+    }
     internal sealed class PreferenceStore
     {
         public static string DataRoot=>throw new Exception("Tests must not write diagnostics");
@@ -64,4 +70,9 @@ namespace Cap7CE.WinUI.Services
     internal sealed record DirectoryBrowsePage(IReadOnlyList<AssetItem> Items,string? NextCursor,long? TotalCount);
     internal static class FileAccessGuard {public static void RejectLinks(string path){}}
     internal static class NativeDiagnostics {public static void CoreFailure(string text){}}
+}
+namespace Cap7CE.WinUI.Localization
+{
+    // Unknown-provider presentation is outside these routing tests. Known failures use real resource classes.
+    internal static class MaintenanceText {public static string Error(string code,LanguageSession language)=>code;}
 }

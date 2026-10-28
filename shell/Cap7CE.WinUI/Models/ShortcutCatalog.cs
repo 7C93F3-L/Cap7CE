@@ -10,7 +10,6 @@ internal static class ShortcutCatalog
     public static readonly ShortcutDefinition[] All=[
         new("focusMainSearch","Alt+`","global"),
         new("focusSearch","Ctrl+F"),new("focusPath","Ctrl+L"),new("openFolder","Ctrl+O"),
-        new("newTab","Ctrl+T"),new("closeTab","Ctrl+W"),new("previousTab","Ctrl+Shift+Tab"),new("nextTab","Ctrl+Tab"),
         new("back","Alt+Left",Context:"browse"),new("forward","Alt+Right",Context:"browse"),new("up","Alt+Up",Context:"browse"),
         new("refresh","F5",Context:"browse"),new("openSettings","Ctrl+,"),new("cycleDirectory","Alt+Q",Context:"browse"),
         new("restoreDefaultWindow",Scope:"global"),new("toggleWindowMode"),

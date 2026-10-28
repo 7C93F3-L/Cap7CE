@@ -28,7 +28,7 @@ internal static class PreviewSelectionChecks
         link.NavigationStarting(owner,false);link.PreviewChanged(a);link.SelectionChanged(owner,[a]);
         Require(closes==1&&selected.Count==1&&followed.Count==2,"Active navigation detaches before closing and stale events do nothing");
         link.Open(owner,source,a);link.ContextChanged(other);link.ContextChanged(other);
-        Require(closes==2,"Changing tabs closes the old preview exactly once");
+        Require(closes==2,"Replacing the browsing context closes the old preview exactly once");
         link.Open(owner,source,a);link.Detach();link.SelectionChanged(owner,[b]);
         Require(followed.Count==2,"Closed preview stays detached");
         Console.WriteLine("Preview selection checks passed (bidirectional sync, no feedback, multi/empty/folders, context lifetime, loaded pages).");

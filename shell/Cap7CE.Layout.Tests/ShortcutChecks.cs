@@ -13,6 +13,10 @@ internal static class ShortcutChecks
             Check(ShortcutCatalog.Validate(action,binding,preferences) is null,"Every default binding must be valid and unique: "+action.Id);
         }
         Check(ShortcutCatalog.All.Count(action=>action.Scope=="global"&&action.Gesture.Length>0)==1,"Only search activation may reserve a global key by default.");
+        var retired=new[]{"newTab","closeTab","previousTab","nextTab"};
+        Check(!ShortcutCatalog.All.Any(action=>retired.Contains(action.Id)),"Tab-page actions must not remain assignable.");
+        var retiredPreferences=preferences with{ShortcutBindings=retired.ToDictionary(id=>id,_=>new ShortcutBinding("Ctrl+F"))};
+        Check(ShortcutCatalog.Validate(ShortcutCatalog.All.Single(action=>action.Id=="focusSearch"),new("Ctrl+F"),retiredPreferences) is null,"Retired action overrides must not reserve combinations or block active actions.");
         foreach(var text in new[]{"Ctrl+Shift+Tab","Alt+`","Ctrl+,","f5","Enter","ctrl+alt+K","Ctrl+Num1","Ctrl+NumAdd"}){
             Check(ShortcutGesture.TryParse(text,out var key),"Parse known gestures: "+text);
             Check(ShortcutGesture.TryParse(key.ToString(),out var normalized)&&key==normalized,"Gesture normalization must round trip.");

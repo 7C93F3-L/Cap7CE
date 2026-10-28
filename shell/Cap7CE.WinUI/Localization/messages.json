@@ -1875,10 +1875,6 @@
     "zh-CN": "请选中文件并展开右侧详细信息栏",
     "en-US": "Select files and open the details pane on the right."
   },
-  "main.tabLimit": {
-    "zh-CN": "最多打开12个目录标签",
-    "en-US": "You can open up to 12 folder tabs."
-  },
   "main.sidebarWidth": {
     "zh-CN": "目录栏宽度",
     "en-US": "Folder pane width"
@@ -4511,10 +4507,6 @@
  "ui.shortcuts.action.focusSearch":{"zh-CN":"聚焦搜索","en-US":"Focus search"},
  "ui.shortcuts.action.focusPath":{"zh-CN":"聚焦地址栏","en-US":"Focus address bar"},
  "ui.shortcuts.action.openFolder":{"zh-CN":"打开目录","en-US":"Open folder"},
- "ui.shortcuts.action.newTab":{"zh-CN":"新建标签","en-US":"New tab"},
- "ui.shortcuts.action.closeTab":{"zh-CN":"关闭当前标签","en-US":"Close current tab"},
- "ui.shortcuts.action.previousTab":{"zh-CN":"上一个标签","en-US":"Previous tab"},
- "ui.shortcuts.action.nextTab":{"zh-CN":"下一个标签","en-US":"Next tab"},
  "ui.shortcuts.action.back":{"zh-CN":"后退","en-US":"Back"},
  "ui.shortcuts.action.forward":{"zh-CN":"前进","en-US":"Forward"},
  "ui.shortcuts.action.up":{"zh-CN":"上一级目录","en-US":"Parent folder"},

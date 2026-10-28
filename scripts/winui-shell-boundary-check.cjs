@@ -44,7 +44,7 @@ assert(workspacePreferences.includes('Preferences.UpdateAsync') && workspacePref
   && read('shell/Cap7CE.WinUI/Controls/WorkspaceToolbar.cs').includes('value.AddressRevision')
   && read('shell/Cap7CE.WinUI/Controls/Workspace/WorkspaceAddress.cs').includes('searchMode=defaultSearch||nextQuery.Length>0'),
   'toolbar preferences must be scoped and editor mode reset on explicit entry');
-assert(catalogRefresh.includes('BrowseSession {UsesCatalogResults:true}')
+assert(catalogRefresh.includes('active.UsesCatalogResults&&Models.CatalogRefreshRules.AffectsChange(active.PathValue,roots)')
   && catalogRefresh.includes('active is {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.CanRefresh')
   && catalogRefresh.includes('CatalogRefreshRules.CanRefresh')
   && catalogRefresh.includes('CatalogRefreshRules.AffectsChange')
@@ -207,9 +207,17 @@ assert(!read('shell/Cap7CE.WinUI/Controls/Settings/IndexMaintenanceView.cs').inc
 assert(read('shell/Cap7CE.WinUI/Services/ShellServices.cs').includes('TaskNotices.IndexStatus('), 'index terminal notices must use shared service snapshots');
 assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordTasks.cs').includes('TaskNotices.Finish('), 'AI batches must publish one aggregate terminal outcome');
 const shortcutCatalog=read('shell/Cap7CE.WinUI/Models/ShortcutCatalog.cs');
+const singleMain=read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
+assert(!/\bTabView(?:Item)?\b|\bTabs\b|NewTab|CloseTab|StepTab/.test(singleMain+read('shell/Cap7CE.WinUI/MainWindow.xaml')),
+  'the native main window must own one browsing page, without tab UI or session collections');
+assert(singleMain.includes('private readonly BrowseSession active;')&&singleMain.match(/new BrowseSession\(services\)/g)?.length===1
+  &&singleMain.includes('commands.ItemsDeleted+=active.RemoveDeleted')&&singleMain.includes('active.Dispose()'), 'single-session creation, deletion updates and shutdown must stay paired');
+assert(!/newTab|closeTab|previousTab|nextTab/.test(shortcutCatalog), 'removed tab-page actions cannot return through shortcut settings');
 const shortcutGesture=read('shell/Cap7CE.WinUI/Models/ShortcutGesture.cs');
 const shortcutInput=read('shell/Cap7CE.WinUI/Controllers/WorkspaceShortcutInput.cs');
 const shortcutService=read('shell/Cap7CE.WinUI/Services/WindowShortcutService.cs');
+assert(!/AllowGlobal|scope\.SelectionChanged/.test(read('shell/Cap7CE.WinUI/Views/Settings/SettingsShortcutEditor.cs'))
+  && shortcutCatalog.includes('record ShortcutBinding(string Gesture);'), 'shortcut scopes must be owned by the action catalog, never editable or persisted overrides');
 assert(!/Microsoft\.UI|DllImport|RequestAsync|File\.|Directory\./.test(shortcutCatalog+shortcutGesture), 'shortcut definitions and validation must stay independent of UI and IO');
 const shortcutActionOwners=read('shell/Cap7CE.WinUI/MainWindow.xaml.cs')+shortcutService;
 for(const match of shortcutCatalog.matchAll(/new\("([A-Za-z]+)"/g))assert(shortcutActionOwners.includes(`["${match[1]}"]`), `shortcut action must have a real owner: ${match[1]}`);
