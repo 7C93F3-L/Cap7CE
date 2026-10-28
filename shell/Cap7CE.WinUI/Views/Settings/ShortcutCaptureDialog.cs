@@ -10,7 +10,7 @@ namespace Cap7CE.WinUI.Views;
 
 internal static class ShortcutCaptureDialog
 {
-    public static async Task<string?> ShowAsync(Window owner,ShortcutDefinition action,string scope,ShellPreferences preferences)
+    public static async Task<string?> ShowAsync(Window owner,ShortcutDefinition action,ShellPreferences preferences)
     {
         string? candidate=null;
         var key=L.Text("ui.shortcuts.captureHint",true);var error=L.Text("ui.shortcuts.captureEmpty",true);
@@ -21,7 +21,7 @@ internal static class ShortcutCaptureDialog
             args.Handled=true;
             if(args.Key is VirtualKey.Control or VirtualKey.Menu or VirtualKey.Shift or VirtualKey.LeftWindows or VirtualKey.RightWindows)return;
             var gesture=new ShortcutGesture((uint)args.Key,WorkspaceShortcutInput.Modifiers());
-            candidate=gesture.ToString();var reason=ShortcutCatalog.Validate(action,new(candidate,scope),preferences);
+            candidate=gesture.ToString();var reason=ShortcutCatalog.Validate(action,new(candidate),preferences);
             L.Literal(key,TextBlock.TextProperty,candidate);L.Bind(error,TextBlock.TextProperty,reason??"ui.shortcuts.captureReady");
             dialog.IsPrimaryButtonEnabled=reason is null;
         };

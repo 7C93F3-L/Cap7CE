@@ -48,7 +48,7 @@ internal sealed class WorkspaceShortcutInput:IDisposable
         foreach(var accelerator in accelerators)root.KeyboardAccelerators.Remove(accelerator);accelerators.Clear();resultKeys.Clear();appKeys.Clear();
         foreach(var action in ShortcutCatalog.All) {
             var binding=ShortcutCatalog.Binding(preferences,action);
-            if(binding.Scope!="app"||ShortcutCatalog.Validate(action,binding,preferences) is not null||!ShortcutGesture.TryParse(binding.Gesture,out var key))continue;
+            if(action.Scope!="app"||ShortcutCatalog.Validate(action,binding,preferences) is not null||!ShortcutGesture.TryParse(binding.Gesture,out var key))continue;
             if(action.Context=="results"){resultKeys.Add((action,key));continue;}
             appKeys.Add((action,key));
             var accelerator=new KeyboardAccelerator{Key=(VirtualKey)key.Key,Modifiers=ToModifiers(key.Modifiers),ScopeOwner=root};
@@ -71,7 +71,7 @@ internal sealed class WorkspaceShortcutInput:IDisposable
         foreach(var action in ShortcutCatalog.All.Where(action=>(action.Context=="results")==resultsContext&&action.Scope=="app")) {
             if(!ShortcutGesture.TryParse(action.Gesture,out var original)||original!=key||Blocked(action.Context))continue;
             var binding=ShortcutCatalog.Binding(preferences,action);
-            if(binding.Scope!="app"||!ShortcutGesture.TryParse(binding.Gesture,out var current)||current!=original)return true;
+            if(!ShortcutGesture.TryParse(binding.Gesture,out var current)||current!=original)return true;
         }
         return false;
     }

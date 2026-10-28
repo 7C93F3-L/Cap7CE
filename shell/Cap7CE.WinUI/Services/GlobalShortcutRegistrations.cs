@@ -11,7 +11,7 @@ internal sealed class GlobalShortcutRegistrations(Func<int,ShortcutGesture,bool>
         Clear();Failed.Clear();if(!preferences.QuickActions||suspended)return;
         for(var i=0;i<ShortcutCatalog.All.Length;i++) {
             var action=ShortcutCatalog.All[i];var binding=ShortcutCatalog.Binding(preferences,action);
-            if(binding.Scope!="global"||string.IsNullOrEmpty(binding.Gesture))continue;
+            if(action.Scope!="global"||string.IsNullOrEmpty(binding.Gesture))continue;
             if(ShortcutCatalog.Validate(action,binding,preferences) is not null||!ShortcutGesture.TryParse(binding.Gesture,out var gesture)
                 ||!register(7302+i,gesture)){Failed.Add(action.Id);continue;}
             active.Add(7302+i,action.Id);

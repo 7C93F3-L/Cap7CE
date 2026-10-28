@@ -33,7 +33,7 @@ internal sealed class SettingsShortcutEditor:UserControl
         global.Children.Clear();local.Children.Clear();
         foreach(var action in ShortcutCatalog.All) {
             var binding=ShortcutCatalog.Binding(services.Preferences.Current,action);
-            (binding.Scope=="global"?global:local).Children.Add(Row(action,binding));
+            (action.Scope=="global"?global:local).Children.Add(Row(action,binding));
         }
     }
     private UIElement Row(ShortcutDefinition action,ShortcutBinding binding)
@@ -45,22 +45,17 @@ internal sealed class SettingsShortcutEditor:UserControl
         L.Label(gesture,"ui.shortcuts.change");gesture.Click+=async(_,_)=>{
             if(busy)return;busy=true;capturing=true;services.Shortcuts?.Capture(true);
             try{
-                var value=await ShortcutCaptureDialog.ShowAsync(owner,action,binding.Scope,services.Preferences.Current);
-                if(value is not null)await Save(action,new(value,binding.Scope));
+                var value=await ShortcutCaptureDialog.ShowAsync(owner,action,services.Preferences.Current);
+                if(value is not null)await Save(action,new(value));
             }catch(Exception error){notice(FailureText.From(error));}
             finally{capturing=false;services.Shortcuts?.Capture(false);busy=false;Render();}
         };
-        var clear=L.Button("ui.shortcuts.clear",()=>_=Run(()=>Save(action,new("",binding.Scope))));
+        var clear=L.Button("ui.shortcuts.clear",()=>_=Run(()=>Save(action,new(""))));
         var reset=L.Button("ui.shortcuts.resetOne",()=>_=Run(()=>services.Preferences.UpdateAsync(value=>{
             var bindings=new Dictionary<string,ShortcutBinding>(value.ShortcutBindings??[]);bindings.Remove(action.Id);var next=value with{ShortcutBindings=bindings};
             var reason=ShortcutCatalog.Validate(action,ShortcutCatalog.Binding(next,action),next);if(reason is not null)throw new UiFailure(reason);return next;
         })));
         var controls=Ui.Row(gesture,clear,reset);var row=new StackPanel {Spacing=4,Margin=new(0,4,0,12),Children={label,controls,status}};
-        if(action.AllowGlobal){
-            var scope=L.Choice(["ui.shortcuts.appScope","ui.shortcuts.globalScope"]);scope.SelectedIndex=binding.Scope=="global"?1:0;
-            scope.SelectionChanged+=async(_,_)=>await Run(()=>Save(action,new(binding.Gesture,scope.SelectedIndex==1?"global":"app")));
-            row.Children.Add(scope);
-        }
         return row;
     }
     private Task Save(ShortcutDefinition action,ShortcutBinding binding)=>services.Preferences.UpdateAsync(value=>{

@@ -46,7 +46,7 @@ internal sealed class WindowShortcutService:IDisposable
         var binding=ShortcutCatalog.Binding(preferences.Current,action);
         if(string.IsNullOrEmpty(binding.Gesture))return "ui.shortcuts.unbound";
         if(ShortcutCatalog.Validate(action,binding,preferences.Current) is not null)return "ui.shortcuts.invalid";
-        if(binding.Scope!="global")return "ui.shortcuts.appScope";
+        if(action.Scope!="global")return "ui.shortcuts.appScope";
         return !preferences.Current.QuickActions?"ui.shortcuts.globalOff":global.Registrations.Failed.Contains(action.Id)?"ui.shortcuts.conflict":"ui.shortcuts.registered";
     }
     public void Dispose(){if(disposed)return;disposed=true;preferences.Changed-=PreferencesChanged;local.Dispose();global.Dispose();Changed=null;}
