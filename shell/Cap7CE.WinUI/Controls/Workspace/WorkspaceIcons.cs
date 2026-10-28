@@ -9,7 +9,7 @@ internal static class WorkspaceIcons
 {
     private static readonly Dictionary<string,string> paths=new(){
         ["back"]="M19 12H5m7-7-7 7 7 7",["forward"]="M5 12h14m-7-7 7 7-7 7",["up"]="M12 19V5m-7 7 7-7 7 7",
-        ["refresh"]="M20 7v5h-5M20 12a8 8 0 1 0-2 5M20 7l-3-3",["computer"]="M4 4h16v12H4zM12 16v4m-4 0h8",
+        ["refresh"]="M20 4v6h-6M20 10a8 8 0 1 0-2 8",["computer"]="M4 4h16v12H4zM12 16v4m-4 0h8",
         ["size"]="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4M8 8h8v8H8z",
         ["shuffle"]="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 3-2 4-4m4-4c1-2 2-4 4-4h3m-4-4 4 4-4 4",
         ["tree"]="M5 3v13h5M5 7h5M10 4h10v6H10zM10 13h10v6H10z",["files"]="M4 5h14v16H4zM8 2h13v15M8 10h6M8 14h6",
