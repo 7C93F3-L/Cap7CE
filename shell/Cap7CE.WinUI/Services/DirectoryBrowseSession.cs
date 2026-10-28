@@ -38,7 +38,7 @@ internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDispos
             var entry=new BasicSearchItem(path,item.GetProperty("name").GetString()!,Path.GetFileName(path),
                 item.GetProperty("extension").GetString()!,item.GetProperty("kind").GetString()=="folder",
                 SizeBytes:item.TryGetProperty("size",out var size)&&size.ValueKind==JsonValueKind.Number&&size.TryGetInt64(out var bytes)?bytes:null,ModifiedUtcTicks:modified);
-            entries.Add(new(entry,path));
+            entries.Add(new(entry,path,entry.IsDirectory?SystemLocations.Current.NameForPath(path):null));
         }
         return new(entries,value.GetProperty("nextCursor").GetString(),value.TryGetProperty("totalCount",out var total)?total.GetInt64():null);
     }

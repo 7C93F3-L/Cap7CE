@@ -104,7 +104,7 @@ internal sealed class ResultsView : UserControl
         ApplyView(previous,old);gridLayout.SetHorizontal(value);
     }
     private void SetGridSource()
-    {grid.ItemsSource=home&&!horizontal&&items is {} value?new CollectionViewSource{IsSourceGrouped=true,Source=new[]{new HomeGroup("main.systemFolders",value.Where(i=>i.Entry.Id.StartsWith("home-"))),new HomeGroup("main.home",value.Where(i=>!i.Entry.Id.StartsWith("home-")))}}.View:items;}
+    {grid.ItemsSource=home&&!horizontal&&items is {} value?new CollectionViewSource{IsSourceGrouped=true,Source=new[]{new HomeGroup("main.systemFolders",value.Where(i=>i.Entry.Id.StartsWith("home-"))),new HomeGroup(SystemLocations.Current.Computer?.Name??"main.home",value.Where(i=>!i.Entry.Id.StartsWith("home-")),SystemLocations.Current.Computer is null)}}.View:items;}
     private void ApplyView(ListViewBase previous,bool wasGallery)
     {
         var current=ActiveView;

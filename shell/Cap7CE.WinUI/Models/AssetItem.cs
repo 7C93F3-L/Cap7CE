@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Data;
 namespace Cap7CE.WinUI.Models;
 
 [Bindable]
-public sealed class AssetItem(BasicSearchItem entry, string fullPath)
+public sealed class AssetItem(BasicSearchItem entry, string fullPath,string? displayName=null)
 {
     public double AspectRatio {get;private set;}=1;
     internal event Action? AspectChanged;
@@ -16,8 +16,7 @@ public sealed class AssetItem(BasicSearchItem entry, string fullPath)
 
 	public string FullPath { get; } = fullPath;
 
-	public string Name => Entry.Name;
-    public string? NameResourceKey=>HomeEntries.LabelKey(Entry.Id);
+	public string Name => displayName??Entry.Name;
     public string? SizeResourceKey=>Entry.IsDirectory?"main.folder":null;
 
 	public string Glyph

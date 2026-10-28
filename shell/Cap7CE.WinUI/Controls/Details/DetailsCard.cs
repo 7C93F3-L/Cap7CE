@@ -2,10 +2,13 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Text;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 namespace Cap7CE.WinUI.Controls;
 internal sealed class DetailsCard : UserControl
 {
     internal StackPanel Body {get;}=new(){Spacing=8};
+    public DetailsCard(UiMessage title):this("")
+        =>L.Message((TextBlock)Body.Children[0],TextBlock.TextProperty,title);
     public DetailsCard(string title,bool localized=false,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
     {
         HorizontalContentAlignment=HorizontalAlignment.Stretch;

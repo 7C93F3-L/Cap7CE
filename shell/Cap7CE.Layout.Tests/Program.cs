@@ -1,6 +1,7 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--system-location-tests"]) {NativeSystemLocationChecks.Run();return;}
 if(args is ["--language-tests"]) {LanguageChecks.Run();return;}
 LanguageChecks.Run();
 
@@ -140,11 +141,11 @@ Require(MenuIds(1,false,true)=="preview,open,reveal,copyPaths,delete,favorite,ed
 Require(MenuIds(1,false,false)=="preview,open,reveal,copyPaths,delete,editKeywords,autoKeywords","File menu omits directory actions");
 Require(MenuIds(2,false,true)=="preview,open,reveal,copyPaths,delete,editKeywords,autoKeywords","Multi-selection menu omits single-directory actions");
 Require(ResultMenuRules.Create(1,false,true).Single(action=>action.NewGroup).Id=="editKeywords"&&ResultMenuRules.Create(0,false,false).Count==0,"Menu groups and empty selection stay valid");
-var path=WorkspacePathRules.Crumbs(@"C:\Design Assets\中文");
+var path=WorkspacePathRules.Crumbs(@"C:\Design Assets\中文","My PC");
 Require(path.Count==4&&path[1].Path==@"C:\"&&path[^1].Path==@"C:\Design Assets\中文","Breadcrumbs preserve drive root, spaces and Unicode");
-var unc=WorkspacePathRules.Crumbs(@"\\server\share\folder");
+var unc=WorkspacePathRules.Crumbs(@"\\server\share\folder","My PC");
 Require(unc.Count==3&&unc[1].Path==@"\\server\share\"&&unc[^1].Path==@"\\server\share\folder","UNC share is one indivisible root breadcrumb");
-Require(WorkspacePathRules.Crumbs("").Single().Path=="","Home breadcrumb carries the existing home action");
+Require(WorkspacePathRules.Crumbs("","My PC").Single().Path=="","Home breadcrumb carries the existing home action");
 var selection=new WorkspaceSelection<string>();string[] entries=["a","b","c","d"];
 selection.Pick(entries,1,false,false);selection.Pick(entries,3,false,true);
 Require(selection.Ordered(entries).SequenceEqual(new[]{"b","c","d"}),"Shift selects an anchored range");

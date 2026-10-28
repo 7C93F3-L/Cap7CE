@@ -116,8 +116,8 @@ public sealed partial class MainWindow : Window
         var session=new BrowseSession(services);
         session.NavigationStarting+=preserve=>previewLink.NavigationStarting(session,preserve);
         var tab=new TabViewItem {Header=path.Length==0?"":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
-        if(path.Length==0)L.Bind(tab,TabViewItem.HeaderProperty,"main.home");
-        session.Changed+=()=>{if(closed)return;if(session.PathValue.Length==0)L.Bind(tab,TabViewItem.HeaderProperty,"main.home");else L.Literal(tab,TabViewItem.HeaderProperty,session.Title);if(ReferenceEquals(active,session))Bind();};
+        if(path.Length==0)L.Message(tab,TabViewItem.HeaderProperty,LocationText.Computer);
+        session.Changed+=()=>{if(closed)return;if(session.PathValue.Length==0)L.Message(tab,TabViewItem.HeaderProperty,LocationText.Computer);else L.Literal(tab,TabViewItem.HeaderProperty,session.Title);if(ReferenceEquals(active,session))Bind();};
         Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.OpenLocationAsync(path,favorite));
         Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
     }

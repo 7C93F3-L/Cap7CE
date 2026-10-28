@@ -8,7 +8,9 @@
 
 已接入设置导航、卡片、主要选项、快捷动作、指令帮助与颜色编辑器；语言选择器仍未开放。LanguageUi只接受资源键，普通Ui继续显示用户数据。settings-help.json只持有指令结构和资源键，描述和可翻译示例在messages.json维护。指令文本是只读帮助，语言更新不会执行指令或改变分类选择。
 
-主窗口工具栏、侧栏、地址栏、菜单、首页系统入口与分组、空结果和大小滑块已接入。使用LanguageUi.Label同步设置提示与无障碍名称；同一属性从资源切换为用户数据时必须调用LanguageUi.Literal解除旧绑定。数据模板使用LanguageText.Key显式绑定资源键、LanguageText.Literal绑定原文；二者独立，不能以原文猜测资源键。首页系统名称按入口身份映射，用户文件和目录始终使用原名。
+主窗口工具栏、侧栏、地址栏、菜单、首页分组、空结果和大小滑块已接入。使用LanguageUi.Label同步设置提示与无障碍名称；同一属性从资源切换为用户数据时必须调用LanguageUi.Literal解除旧绑定。数据模板使用LanguageText.Key显式绑定资源键、LanguageText.Literal绑定原文；二者独立，不能以原文猜测资源键。
+
+系统位置采用Windows真实显示名：SystemLocations在启动时读取Computer和六个Known Folder的名称/实际路径，SystemLocationSnapshot按完整路径提供展示名称；语言切换不重查Shell、不翻译这些名称、不修改路由。桌面等home-*内部身份不随名称改变，下载不拼接默认路径。应用英文配合中文Windows时，系统位置仍可能显示中文；自定义名称、用户收藏名及目录重定向保持系统/用户原值。系统更名或重新定位发生在运行期间时，下次启动读取。LocationText.Computer仅在Shell未返回名称时退回main.home资源；未解析的Known Folder省略，不猜测位置。磁盘显示名也优先取Shell，系统读取失败时才沿用既有回退。不要重新引入main.homeDesktop等系统目录翻译键。
 
 详细信息、关键词编辑器、内嵌元数据标签及基础筛选已接入。DetailsCard.Field的label参数是资源键，value始终为原文；FieldResource用于可翻译展示值。LanguageText.Key支持TextBlock文字和ContentControl内容，NameKey单独绑定无障碍名称；含图标等复合内容的按钮应绑定内部文字，不能将整个Content绑定为字符串。新增界面资源使用ui.*前缀，避免与keywords.read等协议名称混淆。构建检查核对C#/XAML静态键、时间/种类动态键和尺寸预设数量。
 
@@ -24,6 +26,6 @@ LanguageUi.Dialog在原生ContentDialog中绑定标题、主按钮、关闭按�
 
 需要原生测量、省略等自定义显示过程时，LanguageBinding.Attach可提供apply回调；回调只更新显示，不修改原始记录。绑定拥有者的加载/卸载、替换和排队更新由Layout替身测试验证；原生菜单、模板回收和视觉效果仍需手动回归。
 
-PreferenceStore保存Language并在成功后更新AppLanguage唯一会话；默认中文，支持跟随系统。AI在任务开始、异步收集前取得语言快照，整批任务继续使用该快照；Node生成请求显式携带语言，四参数旧请求保持中文。当前首页默认磁盘名、预览边角文案及最终遗漏审计仍未完成，语言选择器继续禁用，不能视为完整双语支持。文件名、路径、用户关键词和源文件元数据不能被资源替换。
+PreferenceStore保存Language并在成功后更新AppLanguage唯一会话；默认中文，支持跟随系统。AI在任务开始、异步收集前取得语言快照，整批任务继续使用该快照；Node生成请求显式携带语言，四参数旧请求保持中文。当前预览边角文案及最终遗漏审计仍未完成，语言选择器继续禁用，不能视为完整双语支持。文件名、路径、用户关键词和源文件元数据不能被资源替换。
 
-验证：`node scripts/winui-language-check.cjs` 和 `dotnet run --project shell/Cap7CE.Layout.Tests/Cap7CE.Layout.Tests.csproj -c Release -- --language-tests`；完整构建运行资源检查。
+验证：`node scripts/winui-language-check.cjs` 和 `dotnet run --project shell/Cap7CE.Layout.Tests/Cap7CE.Layout.Tests.csproj -c Release -- --language-tests`；Windows本机Shell交叉比对使用`--system-location-tests`，不修改实际名称或目录。完整构建运行资源检查。

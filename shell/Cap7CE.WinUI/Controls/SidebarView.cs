@@ -46,7 +46,7 @@ internal sealed class SidebarView : UserControl
         directories.RowDefinitions.Add(new() { Height = GridLength.Auto }); directories.RowDefinitions.Add(new() { Height = GridLength.Auto });
         directories.RowDefinitions.Add(new() { Height = new(1, GridUnitType.Star) });
         home = new ToggleButton { Style = StyleFor("CapSidebarHomeToggle") };
-        NavigationContent(home,"computer","main.home",10,true); home.Click += (_,_)=>Navigate?.Invoke(""); directories.Children.Add(home);
+        NavigationContent(home,"computer",Localization.LocationText.Computer,10,true); home.Click += (_,_)=>Navigate?.Invoke(""); directories.Children.Add(home);
         heading.Height = 32; heading.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) }); heading.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         heading.Children.Add(header); header.Style = (Style)Application.Current.Resources["CapSidebarHeaderText"];
         add = new Button { Style = StyleFor("CapSidebarButton"), Width = 26, Height = 26, Padding = new(5), Content = new SidebarIcon { Kind = "add", Width = 16, Height = 16 } };
@@ -74,15 +74,15 @@ internal sealed class SidebarView : UserControl
         L.Bind(button,AutomationProperties.NameProperty,label); button.Click += (_,_)=>action(); return button;
     }
 
-    private void NavigationContent(ContentControl button,string icon,string label,double gap,bool pill)
+    private void NavigationContent(ContentControl button,string icon,Localization.UiMessage label,double gap,bool pill)
     {
         var text = new TextBlock { TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis };
-        L.Bind(text,TextBlock.TextProperty,label);var content = new Grid { ColumnSpacing = gap };
+        L.Message(text,TextBlock.TextProperty,label);var content = new Grid { ColumnSpacing = gap };
         content.ColumnDefinitions.Add(new() { Width = new(24) }); content.ColumnDefinitions.Add(new() { Width = new(1,GridUnitType.Star) });
         var glyph=new SidebarIcon { Kind = icon, Width = icon=="settings"?22:24, Height = icon=="settings"?22:24 };
         content.Children.Add(glyph);
         Grid.SetColumn(text,1); text.VerticalAlignment = VerticalAlignment.Center; content.Children.Add(text); button.Content = content;
-        L.Label(button,label); navigation.Add((button,text,content,gap,pill));
+        L.Message(button,ToolTipService.ToolTipProperty,label);L.Message(button,AutomationProperties.NameProperty,label);navigation.Add((button,text,content,gap,pill));
     }
 
     public void ApplyLayout(bool isCompact,bool showBrand,bool filtersVisible,bool detailsVisible)

@@ -6,7 +6,7 @@ using Cap7CE.WinUI.Services;
 namespace Cap7CE.WinUI.Controllers;
 internal sealed class BrowseSession(ShellServices services) : IDisposable
 {
-    public string Title { get; set; } = "此电脑";
+    public string Title { get; set; } = SystemLocations.Current.Computer?.Name??"";
     public string PathValue { get; private set; } = "";
     public string Query { get; set; } = "";
     public BrowseFilter Filter { get; set; } = new();
@@ -98,7 +98,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     var home = new AssetCollection();
                     foreach (var item in HomeEntries.Create()) home.Add(item);
                     Remember(path,remember,origin);
-                    PathValue = path; Title = "此电脑"; Items = home; FilesystemBrowsing = false;
+                    PathValue = path; Title = SystemLocations.Current.Computer?.Name??""; Items = home; FilesystemBrowsing = false;
                     return true;
                 }
                 throw new UiFailure("ui.error.browseCore");
@@ -146,7 +146,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             }
             if (version != generation) return false;
             Remember(path,remember,origin);
-            PathValue = path; Title = path.Length == 0 ? "此电脑" : System.IO.Path.GetFileName(path.TrimEnd('\\'));
+            PathValue = path; Title = path.Length == 0 ? SystemLocations.Current.Computer?.Name??"" : SystemLocations.Current.NameForPath(path)??System.IO.Path.GetFileName(path.TrimEnd('\\'));
             var loading = false;
             result.LoadPage = async () => {
                 if (loading || !result.HasMoreItems || version != generation) return 0;
@@ -178,7 +178,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             var volume = services.Volumes.First(v => v.VolumeId == item.VolumeId); var root = volume.DisplayName.TrimEnd('\\') + "\\";
             var full = Path.GetFullPath(Path.Combine(root, item.RelativePath.TrimStart('\\', '/')));
             if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new UiFailure("ui.error.browsePath");
-            if (!IsDeleted(full)) target.Add(new(item, full));else if(target.TotalCount is { } count)target.TotalCount=Math.Max(0,count-1);
+            if (!IsDeleted(full)) target.Add(new(item, full,item.IsDirectory?SystemLocations.Current.NameForPath(full):null));else if(target.TotalCount is { } count)target.TotalCount=Math.Max(0,count-1);
         }
     }
     private void Remember(string path,bool remember,WorkspaceLocation origin)
@@ -201,7 +201,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             finally{loading=false;}
         };
         Remember(path,remember,origin);
-        PathValue=path;Title=System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;FilesystemBrowsing=true;return true;
+        PathValue=path;Title=SystemLocations.Current.NameForPath(path)??System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;FilesystemBrowsing=true;return true;
     }
     private bool IsDeleted(string path) => services.DeletedPaths.Any(deleted => path.Equals(deleted, StringComparison.OrdinalIgnoreCase)
         || path.StartsWith(deleted.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase));

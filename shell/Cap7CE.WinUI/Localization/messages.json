@@ -1939,30 +1939,6 @@
     "zh-CN": "文件夹",
     "en-US": "Folder"
   },
-  "main.homeDesktop": {
-    "zh-CN": "桌面",
-    "en-US": "Desktop"
-  },
-  "main.homeDocuments": {
-    "zh-CN": "文档",
-    "en-US": "Documents"
-  },
-  "main.homeDownloads": {
-    "zh-CN": "下载",
-    "en-US": "Downloads"
-  },
-  "main.homePictures": {
-    "zh-CN": "图片",
-    "en-US": "Pictures"
-  },
-  "main.homeMusic": {
-    "zh-CN": "音乐",
-    "en-US": "Music"
-  },
-  "main.homeVideos": {
-    "zh-CN": "视频",
-    "en-US": "Videos"
-  },
   "main.pin": {
     "zh-CN": "固定窗口",
     "en-US": "Pin window"

@@ -12,6 +12,10 @@ module.exports = root => {
   }
   assert(Object.keys(messages).length, 'native language catalog must not be empty');
   assert.deepEqual(messages['language.tag'], {'zh-CN': 'zh-CN', 'en-US': 'en-US'}, 'native control language tags must be valid locale IDs');
+  for (const key of ['Desktop', 'Documents', 'Downloads', 'Pictures', 'Music', 'Videos'])
+    assert(!messages[`main.home${key}`], 'system locations use Windows display names, not app translations');
+  const systemSnapshot = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Models/SystemLocationSnapshot.cs'), 'utf8');
+  assert(!/Microsoft\.UI|Services|RequestAsync|File\.|Directory\.|DllImport/.test(systemSnapshot), 'system location snapshots must stay independent of UI, IO and native interop');
   for (const [file, family] of [['Models/FormatRegistry.cs', 'kind'], ['Models/FilterPresets.cs', 'time']]) {
     // Read only the declared label array, never protocol or query identifiers.
     const text = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI', file), 'utf8');

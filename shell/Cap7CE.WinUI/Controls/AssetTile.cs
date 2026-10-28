@@ -85,8 +85,8 @@ public sealed class AssetTile : Grid
     private async void Refresh()
     {
         interaction.ClearHover();Release();formatIcon.Visibility=Visibility.Visible;if(DataContext is not AssetItem item)return;
-        nameLabel.SetName(item.Name,!item.Entry.IsDirectory,item.NameResourceKey);
-        if(item.NameResourceKey is {} key)Localization.LanguageUi.Bind(this,ToolTipService.ToolTipProperty,key);else Localization.LanguageUi.Literal(this,ToolTipService.ToolTipProperty,item.Name);
+        nameLabel.SetName(item.Name,!item.Entry.IsDirectory);
+        Localization.LanguageUi.Literal(this,ToolTipService.ToolTipProperty,item.Name);
         var icon=item.IconName;
         formatIcon.SetIcon(icon);
         if(!active||item.FullPath.Length==0||item.Entry.IsDirectory||Visuals is null)return;

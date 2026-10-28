@@ -64,7 +64,8 @@ internal sealed class DetailsPane : UserControl
         string? headingKey=item is null?(selected.Count>0?"ui.details.multiple":context.Searching?"ui.details.search":context.Path.Length==0?"main.home":null)
             :item.Entry.IsDirectory?(drive?"ui.details.drive":"main.folder"):item.Entry.Extension.Length==0?"ui.details.file":null;
         var heading=new TextBlock{Style=(Style)Application.Current.Resources["CapDetailsHeading"]};
-        if(headingKey is not null)L.Bind(heading,TextBlock.TextProperty,headingKey);
+        if(headingKey=="main.home")L.Message(heading,TextBlock.TextProperty,LocationText.Computer);
+        else if(headingKey is not null)L.Bind(heading,TextBlock.TextProperty,headingKey);
         else heading.Text=item is null?LocationName(context.Path):item.Entry.Extension.TrimStart('.').ToUpperInvariant();
         column.Children.Add(heading);
         if(item is not null){icon.SetIcon(item.IconName);visual.Height=item.Entry.IsDirectory?120:FilePreviewHeight;column.Children.Add(visual);RenderItem(item,drive);}
@@ -73,9 +74,9 @@ internal sealed class DetailsPane : UserControl
     }
     private void RenderContext()
     {
-        var card=context.Path.Length==0?Card("main.home",true):Card(LocationName(context.Path));
+        var card=context.Path.Length==0?Card(LocationText.Computer):Card(LocationName(context.Path));
         var locationLabel=context.Searching?"ui.details.searchScope":"ui.details.location";
-        if(context.Path.Length==0)card.FieldResource(locationLabel,"main.home",fullWidth:true);else card.Field(locationLabel,context.Path,true);
+        if(context.Path.Length==0)L.Message(card.Field(locationLabel,"",true),TextBlock.TextProperty,LocationText.Computer);else card.Field(locationLabel,context.Path,true);
         var countKey=context.Count is not null?"ui.details.items":context.Busy?"ui.details.reading":"ui.details.loaded";
         IReadOnlyDictionary<string,object?> Count()=>new Dictionary<string,object?>{{"count",context.Count??context.Loaded}};
         if(context.Searching){card.FieldResource("ui.details.filters","ui.details.items",()=>new Dictionary<string,object?>{{"count",context.Filters}});card.FieldResource("ui.details.matches",countKey,Count);}
@@ -83,7 +84,7 @@ internal sealed class DetailsPane : UserControl
     }
     private void RenderItem(AssetItem item,bool drive)
     {
-        var card=item.Entry.IsDirectory?Card(item.NameResourceKey??item.Name,item.NameResourceKey is not null):Card("ui.details.fileInfo",true);
+        var card=item.Entry.IsDirectory?Card(item.Name):Card("ui.details.fileInfo",true);
         if(!item.Entry.IsDirectory) {
             card.Body.Children.Add(new TextBlock{Text=item.Name,TextWrapping=TextWrapping.Wrap,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,IsTextSelectionEnabled=true});
         }
@@ -111,7 +112,8 @@ internal sealed class DetailsPane : UserControl
         }
     }
     private DetailsCard Card(string title,bool localized=false,Func<IReadOnlyDictionary<string,object?>?>? parameters=null){var card=new DetailsCard(title,localized,parameters);column.Children.Add(card);return card;}
-    private static string LocationName(string path){var name=Path.GetFileName(path.TrimEnd('\\','/'));return path.Length==0?"":name.Length>0?name:path.TrimEnd('\\','/');}
+    private DetailsCard Card(UiMessage title){var card=new DetailsCard(title);column.Children.Add(card);return card;}
+    private static string LocationName(string path){var name=SystemLocations.Current.NameForPath(path)??Path.GetFileName(path.TrimEnd('\\','/'));return path.Length==0?"":name.Length>0?name:path.TrimEnd('\\','/');}
     private static bool IsDrive(AssetItem item)=>item.Entry.IsDirectory&&string.Equals(Path.GetPathRoot(item.FullPath),item.FullPath,StringComparison.OrdinalIgnoreCase);
     private async Task ReadVisualAsync(AssetItem item,CancellationToken token)
     {

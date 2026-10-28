@@ -1,4 +1,6 @@
 using Cap7CE.WinUI.Models;
+using Cap7CE.WinUI.Localization;
+using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
@@ -50,9 +52,10 @@ internal sealed class WorkspaceAddress : UserControl
     }
     private void Rebuild()
     {
-        crumbs.Children.Clear();foreach(var part in WorkspacePathRules.Crumbs(path)) {
+        var homeName=LocationText.Computer;
+        crumbs.Children.Clear();foreach(var part in WorkspacePathRules.Crumbs(path,homeName.Render(AppLanguage.Session),SystemLocations.Current.NameForPath)) {
             if(crumbs.Children.Count>0)crumbs.Children.Add(new TextBlock{Text="›",VerticalAlignment=VerticalAlignment.Center,Opacity=.5});
-            var button=new Button{Content=part.Label,Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};if(part.Path.Length==0){L.Bind(button,Button.ContentProperty,"main.home");L.Label(button,"main.home");}else WorkspaceIcons.Label(button,part.Path);
+            var button=new Button{Content=part.Label,Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};if(part.Path.Length==0){L.Message(button,Button.ContentProperty,homeName);L.Message(button,ToolTipService.ToolTipProperty,homeName);L.Message(button,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,homeName);}else WorkspaceIcons.Label(button,part.Path);
             button.Click+=(_,_)=>Navigate?.Invoke(part.Path);crumbs.Children.Add(button);
         }
     }
