@@ -1,6 +1,9 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--notification-tests"]) {await NotificationChecks.RunAsync();return;}
+await NotificationChecks.RunAsync();
+
 if(args is ["--edge-collapse-tests"]) {await EdgeCollapseChecks.RunAsync();return;}
 await EdgeCollapseChecks.RunAsync();
 

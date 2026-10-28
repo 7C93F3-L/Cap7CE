@@ -360,8 +360,8 @@
     "en-US": "Start Cap7CE after you sign in to Windows."
   },
   "stableSettings.desc.notifications": {
-    "zh-CN": "显示首次后台运行提示，以及自动缓存优化完成通知。",
-    "en-US": "Show the initial background-running notice and notifications when background cache optimization finishes."
+    "zh-CN": "显示索引、元数据及缓存维护等任务通知。实际展示受 Windows 通知设置与勿扰模式影响。",
+    "en-US": "Show notifications for indexing, metadata and cache maintenance tasks. Delivery is subject to Windows notification settings and Do not disturb."
   },
   "stableSettings.desc.edgeCollapse": {
     "zh-CN": "标准窗口模式保留窗口最大化与窗口贴靠功能；边缘收起模式会在窗口贴在屏幕边缘时自动隐藏。",
@@ -4462,5 +4462,9 @@
   "ui.error.filterResource": {
     "zh-CN": "高级筛选资源无效",
     "en-US": "The advanced filter resources are invalid."
+  },
+  "ui.notice.notificationsBlocked": {
+    "zh-CN": "应用内通知已开启，但 Windows 当前禁止此应用发送通知。请检查 Windows 系统通知设置。",
+    "en-US": "Notifications are enabled in Cap7CE, but Windows currently blocks this app from sending them. Check Windows notification settings."
   }
 }

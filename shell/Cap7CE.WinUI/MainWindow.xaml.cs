@@ -96,6 +96,7 @@ public sealed partial class MainWindow : Window
         Surface.KeyDown+=KeyDown;
         edgeCollapse=new(this,Root,()=>preview is not null||settings is not null||ResultDrag.IsActive,Notice);
         ResultDrag.Changed+=edgeCollapse.Wake;
+        services.Notifications.Invoked+=NotificationInvoked;
         services.Preferences.Changed+=ApplyPreferences;
         AppWindow.Changed+=(_,_)=>{
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
@@ -197,6 +198,7 @@ public sealed partial class MainWindow : Window
         try{await services.Preferences.UpdateAsync(prefs=>prefs with{AlwaysOnTop=value});}
         catch{ApplyPreferences();throw;}
     });
+    private void NotificationInvoked()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)WindowActivation.Show(this);});
     private void Notice(string text)=>Notice(UiMessage.Literal(text));
     private void Notice(UiMessage text){if(!closed)notifications.ShowMessage(text);}
     private void KeyDown(object sender,KeyRoutedEventArgs e)
@@ -221,7 +223,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         foreach(var tab in Tabs.TabItems.OfType<TabViewItem>())(tab.Tag as BrowseSession)?.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
