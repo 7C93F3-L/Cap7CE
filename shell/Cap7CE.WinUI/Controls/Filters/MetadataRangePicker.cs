@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Cap7CE.WinUI.Controls.Filters;
@@ -16,17 +17,17 @@ internal sealed class MetadataRangePicker : Grid
         MinWidth=0;
         HorizontalAlignment=HorizontalAlignment.Stretch;
         Children.Add(options);
-        Add("仅当前目录","包含子目录",hasDirectory);
-        Add("推荐的范围","排除系统及软件目录");
-        Add("全部已索引磁盘","不应用目录排除");
-        Add("自定义…","前往元数据设置");
+        Add("ui.metadataRange.current","ui.metadataRange.currentHint",hasDirectory);
+        Add("ui.metadataRange.recommended","ui.metadataRange.recommendedHint");
+        Add("ui.metadataRange.all","ui.metadataRange.allHint");
+        Add("ui.metadataRange.custom","ui.metadataRange.customHint");
         options.SelectedIndex=hasDirectory?0:1;
         options.SelectionChanged+=(_,_)=>{if(Choice==MetadataRangeChoice.Custom)CustomRequested?.Invoke();};
     }
 
     private void Add(string label,string hint,bool enabled=true)
     {
-        var item=new ListViewItem {Content=label,IsEnabled=enabled,MinHeight=40};
-        ToolTipService.SetToolTip(item,hint);options.Items.Add(item);
+        var item=new ListViewItem {IsEnabled=enabled,MinHeight=40};
+        L.Bind(item,ListViewItem.ContentProperty,label);L.Bind(item,ToolTipService.ToolTipProperty,hint);options.Items.Add(item);
     }
 }

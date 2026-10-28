@@ -4,6 +4,8 @@
   <ItemGroup>
     <Compile Include="../Cap7CE.WinUI/Localization/LanguageCatalog.cs;../Cap7CE.WinUI/Localization/LanguageSession.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Cap7CE.WinUI/Localization/LanguageBinding.cs" Link="LanguageBinding.cs" />
+    <Compile Include="../Cap7CE.WinUI/Localization/FactTextKeys.cs" Link="FactTextKeys.cs" />
+    <None Include="../artifacts/assets/filter-*.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Cap7CE.WinUI/Localization/messages.json" Link="Assets/languages.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/KeywordDraft.cs" Link="KeywordDraft.cs" /></ItemGroup>

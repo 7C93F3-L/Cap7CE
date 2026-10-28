@@ -25,6 +25,18 @@ module.exports = root => {
   const filterBar = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Controls/FilterBar.cs'), 'utf8');
   const sizeKeys = filterBar.match(/var sizeKeys=new\[\]\{([^}]+)\}/)[1].match(/"[^"]+"/g);
   assert.equal(sizeKeys.length, sizePresets.length, 'every size preset must have a language key');
+  const generated = name => JSON.parse(fs.readFileSync(path.join(root, 'shell/artifacts/assets', name), 'utf8'));
+  for (const group of generated('filter-advanced-options.json')) {
+    assert(messages[`ui.facts.advanced.${group.id}.title`], `Missing advanced group: ${group.id}`);
+    for (const option of group.options) assert(messages[`ui.facts.advanced.${group.id}.${option.id}`], `Missing advanced option: ${group.id}/${option.id}`);
+  }
+  const icons = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Controls/Filters/FilterIcons.cs'), 'utf8');
+  for (const group of generated('filter-media-options.json')) for (const option of group.options) {
+    assert(messages[`ui.facts.media.${group.id}.${option.id}`], `Missing media option: ${group.id}/${option.id}`);
+    if (group.id.endsWith('-aspect')) assert(icons.includes(`["${option.id}"]`), `Missing aspect icon identity: ${option.id}`);
+  }
+  for (const type of generated('filter-three-d-types.json')) assert(messages[`ui.facts.type.${type.id}`], `Missing 3D type: ${type.id}`);
+  for (const color of generated('filter-visual-semantics.json')) assert(messages[`ui.facts.color.${color.id}`], `Missing color semantic: ${color.id}`);
   const help = JSON.parse(fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization/settings-help.json'), 'utf8'));
   for (const group of help) {
     assert(messages[group.titleKey], `Missing command group resource: ${group.titleKey}`);

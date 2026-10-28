@@ -12,6 +12,10 @@
 
 详细信息、关键词编辑器、内嵌元数据标签及基础筛选已接入。DetailsCard.Field的label参数是资源键，value始终为原文；FieldResource用于可翻译展示值。LanguageText.Key支持TextBlock文字和ContentControl内容，NameKey单独绑定无障碍名称；含图标等复合内容的按钮应绑定内部文字，不能将整个Content绑定为字符串。新增界面资源使用ui.*前缀，避免与keywords.read等协议名称混淆。构建检查核对C#/XAML静态键、时间/种类动态键和尺寸预设数量。
 
+高级筛选使用FactTextKeys从生成的分组/选项身份构造资源键。新增或删除预设时，构建检查和Layout专项会核对动态键；修改中文文案只需改messages.json，无须修改生成的旧Label或事实约束。图标使用独立身份，不能依赖翻译后的文字。将原本绑定Content字符串的选项改为复合布局时，先调用LanguageBinding.Clear解除旧Content绑定，再绑定内部标签。
+
+LanguageUi.Dialog在原生ContentDialog中绑定标题、主按钮、关闭按钮，以及可选的正文资源；正文是自定义控件时传空contentKey，随后设置Content。语言更新不负责重建对话框、提交草稿或开始维护动作。
+
 需要原生测量、省略等自定义显示过程时，LanguageBinding.Attach可提供apply回调；回调只更新显示，不修改原始记录。绑定拥有者的加载/卸载、替换和排队更新由Layout替身测试验证；原生菜单、模板回收和视觉效果仍需手动回归。
 
 PreferenceStore保存Language并在成功后更新AppLanguage唯一会话；默认中文，支持跟随系统。AI在任务开始、异步收集前取得语言快照，整批任务继续使用该快照；Node生成请求显式携带语言，四参数旧请求保持中文。当前未完成主窗口、索引/元数据、模型动态状态和后台提示的全覆盖，不能视为完整双语支持。文件名、路径、用户关键词和源文件元数据不能被资源替换。

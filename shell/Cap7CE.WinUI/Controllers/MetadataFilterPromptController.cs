@@ -1,4 +1,6 @@
 using Cap7CE.Core.Protocol;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Controls.Filters;
 using Cap7CE.WinUI.Models;
@@ -14,8 +16,8 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
     public async void Request(string kind,bool colors,FilterAvailabilityState state)
     {
         if(busy||disposed)return;
-        if(state==FilterAvailabilityState.Checking){notice("正在检查此范围的元数据，请稍候。");return;}
-        if(state!=FilterAvailabilityState.Missing){notice("暂时无法检查元数据，请确认后台连接与目录索引是否就绪。");return;}
+        if(state==FilterAvailabilityState.Checking){notice(AppLanguage.Text("ui.metadataPrompt.checking"));return;}
+        if(state!=FilterAvailabilityState.Missing){notice(AppLanguage.Text("ui.metadataPrompt.checkFailed"));return;}
         if(active() is not {} session)return;
         var path=session.PathValue;var selected=FilterPresets.QueryExtensions(session.Filter);var hidden=session.ShowHidden;
         bool Current()=>!disposed&&ReferenceEquals(active(),session)&&session.PathValue==path&&session.ShowHidden==hidden
@@ -34,16 +36,16 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
             }
             var supported=FormatRegistry.ExtractorExtensions(kind);
             if(selected.Length>0)supported=supported.Intersect(selected,StringComparer.OrdinalIgnoreCase).ToArray();
-            if(supported.Length==0){notice("当前文件类型暂不支持这类元数据提取。");return;}
+            if(supported.Length==0){notice(AppLanguage.Text("ui.metadataPrompt.unsupported"));return;}
             var candidates=await core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart,new SearchStartRequest("",1,"name-ascending",
                 scope is null?volumes:[scope.VolumeId!],scope,EntryType:"file",FileConditions:new(supported),ExcludeHidden:!hidden,IncludeTotalCount:false));
             if(!Current()||!ReferenceEquals(core,services.Core))return;
-            if(candidates.Items.Count==0){notice("当前范围没有支持此条件的文件，无需开始提取。");return;}
+            if(candidates.Items.Count==0){notice(AppLanguage.Text("ui.metadataPrompt.empty"));return;}
             var picker=new MetadataRangePicker(path.Length>0);
-            var dialog=new ContentDialog {XamlRoot=root(),Title="提取文件元数据",PrimaryButtonText="开始",CloseButtonText="取消",DefaultButton=ContentDialogButton.Primary};
+            var dialog=L.Dialog(root(),"ui.metadataPrompt.title",null,"ui.metadataPrompt.start");dialog.DefaultButton=ContentDialogButton.Primary;
             var customRequested=false;
             picker.CustomRequested+=()=>{customRequested=true;dialog.Hide();};
-            var content=Ui.Column(Ui.Text("选择提取范围："));
+            var content=Ui.Column(L.Text("ui.metadataPrompt.choose"));
             if(path.Length>0)content.Children.Add(Ui.Text(path,true));
             content.Children.Add(picker);dialog.Content=content;
             var result=await dialog.ShowAsync();

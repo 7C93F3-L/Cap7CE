@@ -1,4 +1,6 @@
 using Cap7CE.Core.Protocol;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Themes;
 using Microsoft.UI.Xaml;
@@ -16,42 +18,42 @@ internal sealed class ColorFilterSection : UserControl
     private readonly Dictionary<string,ToggleButton> buttons=[];
     private readonly FilterSection section;
     private readonly FilterFlyouts flyouts;
-    private static readonly (string Id,string Label,string Color)[] swatches=[
-        ("red","红色","#F22228"),("orange","橙色","#FF931F"),("yellow","黄色","#FFEA18"),("green","绿色","#27D345"),
-        ("cyan","青色","#17CED7"),("blue","蓝色","#243BDF"),("purple","紫色","#A32BD3"),("pink","粉色","#EF68AE"),
-        ("black-background","黑底","#111111"),("gray-tone","灰色调","#999999"),("white-background","白底","#F3F3F3"),
-        ("transparent-background","透明背景","#FFFFFF"),("bright-image","明亮","#FFF1AD"),("dark-image","偏暗","#303947"),
-        ("vivid-image","鲜艳","#F22228"),("muted-image","低饱和","#BA8B92")];
+    private static readonly (string Id,string Color)[] swatches=[
+        ("red","#F22228"),("orange","#FF931F"),("yellow","#FFEA18"),("green","#27D345"),
+        ("cyan","#17CED7"),("blue","#243BDF"),("purple","#A32BD3"),("pink","#EF68AE"),
+        ("black-background","#111111"),("gray-tone","#999999"),("white-background","#F3F3F3"),
+        ("transparent-background","#FFFFFF"),("bright-image","#FFF1AD"),("dark-image","#303947"),
+        ("vivid-image","#F22228"),("muted-image","#BA8B92")];
     public ColorFilterSection(string domain,Func<CoreSearchFactFilter> read,Action<CoreSearchFactFilter> apply,FilterFlyouts flyouts)
     {
         this.read=read;this.apply=apply;this.flyouts=flyouts;var grid=new Grid {ColumnSpacing=1,RowSpacing=4};
         for(var i=0;i<8;i++)grid.ColumnDefinitions.Add(new(){Width=new(22)});
         grid.RowDefinitions.Add(new(){Height=new(26)});grid.RowDefinitions.Add(new(){Height=new(26)});
         var index=0;
-        foreach(var (id,label,color) in swatches) {
+        foreach(var (id,color) in swatches) {
             var definition=VisualFilterRules.Definitions.First(d=>d.Id==id);
             if(domain=="video" && (!definition.Video || definition.Trait))continue;
             var button=new ToggleButton {Style=(Style)Application.Current.Resources["CapFilterSwatch"],Content=Swatch(id,color)};
-            ToolTipService.SetToolTip(button,label);AutomationProperties.SetName(button,label);button.Click+=(_,_)=>apply(VisualFilterRules.Toggle(read(),id));
+            L.Label(button,FactTextKeys.Color(id));button.Click+=(_,_)=>apply(VisualFilterRules.Toggle(read(),id));
             Grid.SetColumn(button,index%8);Grid.SetRow(button,index/8);grid.Children.Add(button);buttons.Add(id,button);index++;
         }
-        section=new(domain=="video"?"视频颜色":"图像颜色",grid,Edit);
-        ToolTipService.SetToolTip(section,"仅筛选已有颜色信息的文件");Content=section;
+        section=new(domain=="video"?"ui.facts.videoColor":"ui.facts.imageColor",grid,Edit,localized:true);
+        L.Bind(section,ToolTipService.ToolTipProperty,"ui.facts.colorAvailable");Content=section;
     }
     public void Restore()
     {
         foreach(var (id,button) in buttons)button.IsChecked=VisualFilterRules.Selected(read(),id);
-        section.Summary.Text=read().VisualGroups is {Count:>0}?"已选":"";
+        if(read().VisualGroups is {Count:>0})L.Bind(section.Summary,TextBlock.TextProperty,"ui.facts.selected");else L.Literal(section.Summary,TextBlock.TextProperty,"");
     }
     private void Edit(Button anchor)
     {
         var selected=VisualFilterRules.Definitions.Where(d=>VisualFilterRules.Selected(read(),d.Id)).Select(d=>d.Id).ToHashSet();
         var controls=new List<UIElement>();
-        foreach(var (id,label,_) in swatches.Where(s=>VisualFilterRules.Definitions.First(d=>d.Id==s.Id).Trait)) {
-            var button=FilterSection.Option(label,()=>{if(!selected.Add(id))selected.Remove(id);});button.IsChecked=selected.Contains(id);controls.Add(button);
+        foreach(var (id,_) in swatches.Where(s=>VisualFilterRules.Definitions.First(d=>d.Id==s.Id).Trait)) {
+            var button=FilterSection.Option(FactTextKeys.Color(id),()=>{if(!selected.Add(id))selected.Remove(id);},localized:true);button.IsChecked=selected.Contains(id);controls.Add(button);
         }
-        var content=Ui.Column(new TextBlock {Text="颜色特征",FontSize=14},FilterSection.Options(controls,2));
-        content.Children.Add(Ui.Row(Ui.Button("清除颜色",()=>{apply(read() with {VisualGroups=null});flyouts.Close();}),Ui.Button("应用",()=>{apply(VisualFilterRules.Apply(read(),selected));flyouts.Close();})));
+        var title=L.Text("ui.facts.colorTraits");title.FontSize=14;title.TextWrapping=TextWrapping.NoWrap;var content=Ui.Column(title,FilterSection.Options(controls,2));
+        content.Children.Add(Ui.Row(L.Button("ui.facts.clearColor",()=>{apply(read() with {VisualGroups=null});flyouts.Close();}),L.Button("common.apply",()=>{apply(VisualFilterRules.Apply(read(),selected));flyouts.Close();})));
         flyouts.Show(anchor,content);
     }
     private static UIElement Swatch(string id,string color)

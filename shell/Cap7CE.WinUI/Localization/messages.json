@@ -2466,5 +2466,921 @@
   "ui.filters.kind.other": {
     "zh-CN": "其他",
     "en-US": "Other"
+  },
+  "ui.facts.advanced.document-count.title": {
+    "zh-CN": "内容页数",
+    "en-US": "Content pages"
+  },
+  "ui.facts.advanced.document-count.one": {
+    "zh-CN": "1",
+    "en-US": "1"
+  },
+  "ui.facts.advanced.document-count.2-10": {
+    "zh-CN": "2–10",
+    "en-US": "2–10"
+  },
+  "ui.facts.advanced.document-count.11-50": {
+    "zh-CN": "11–50",
+    "en-US": "11–50"
+  },
+  "ui.facts.advanced.document-count.51-100": {
+    "zh-CN": "51–100",
+    "en-US": "51–100"
+  },
+  "ui.facts.advanced.document-count.over-100": {
+    "zh-CN": "＞100",
+    "en-US": "＞100"
+  },
+  "ui.facts.advanced.document-images.title": {
+    "zh-CN": "文档图文",
+    "en-US": "Document images"
+  },
+  "ui.facts.advanced.document-images.without-images": {
+    "zh-CN": "纯文字",
+    "en-US": "Text only"
+  },
+  "ui.facts.advanced.document-images.with-images": {
+    "zh-CN": "含图片",
+    "en-US": "With images"
+  },
+  "ui.facts.advanced.artboards.title": {
+    "zh-CN": "画板",
+    "en-US": "Artboards"
+  },
+  "ui.facts.advanced.artboards.one": {
+    "zh-CN": "1",
+    "en-US": "1"
+  },
+  "ui.facts.advanced.artboards.2-5": {
+    "zh-CN": "2–5",
+    "en-US": "2–5"
+  },
+  "ui.facts.advanced.artboards.6-10": {
+    "zh-CN": "6–10",
+    "en-US": "6–10"
+  },
+  "ui.facts.advanced.artboards.11-20": {
+    "zh-CN": "11–20",
+    "en-US": "11–20"
+  },
+  "ui.facts.advanced.artboards.over-20": {
+    "zh-CN": "＞20",
+    "en-US": "＞20"
+  },
+  "ui.facts.advanced.three-d-count.title": {
+    "zh-CN": "三角面",
+    "en-US": "Triangles"
+  },
+  "ui.facts.advanced.three-d-count.under-10k": {
+    "zh-CN": "＜1万",
+    "en-US": "＜10k"
+  },
+  "ui.facts.advanced.three-d-count.10k-100k": {
+    "zh-CN": "1–10万",
+    "en-US": "10k–100k"
+  },
+  "ui.facts.advanced.three-d-count.100k-1m": {
+    "zh-CN": "10–100万",
+    "en-US": "100k–1M"
+  },
+  "ui.facts.advanced.three-d-count.over-1m": {
+    "zh-CN": "≥100万",
+    "en-US": "≥1M"
+  },
+  "ui.facts.advanced.three-d-structure.title": {
+    "zh-CN": "三维结构",
+    "en-US": "3D structure"
+  },
+  "ui.facts.advanced.three-d-structure.static": {
+    "zh-CN": "静态",
+    "en-US": "Static"
+  },
+  "ui.facts.advanced.three-d-structure.animated": {
+    "zh-CN": "动画",
+    "en-US": "Animated"
+  },
+  "ui.facts.advanced.three-d-structure.rigged": {
+    "zh-CN": "骨骼",
+    "en-US": "Rigged"
+  },
+  "ui.facts.advanced.model-count.title": {
+    "zh-CN": "模型参数",
+    "en-US": "Model parameters"
+  },
+  "ui.facts.advanced.model-count.under-1b": {
+    "zh-CN": "＜1B",
+    "en-US": "＜1B"
+  },
+  "ui.facts.advanced.model-count.1b-3b": {
+    "zh-CN": "1–3B",
+    "en-US": "1–3B"
+  },
+  "ui.facts.advanced.model-count.3b-7b": {
+    "zh-CN": "3–7B",
+    "en-US": "3–7B"
+  },
+  "ui.facts.advanced.model-count.7b-14b": {
+    "zh-CN": "7–14B",
+    "en-US": "7–14B"
+  },
+  "ui.facts.advanced.model-count.14b-or-more": {
+    "zh-CN": "≥14B",
+    "en-US": "≥14B"
+  },
+  "ui.facts.advanced.model-precision.title": {
+    "zh-CN": "模型精度",
+    "en-US": "Model precision"
+  },
+  "ui.facts.advanced.model-precision.f32": {
+    "zh-CN": "F32",
+    "en-US": "F32"
+  },
+  "ui.facts.advanced.model-precision.f16-bf16": {
+    "zh-CN": "F16/BF16",
+    "en-US": "F16/BF16"
+  },
+  "ui.facts.advanced.model-precision.8bit": {
+    "zh-CN": "8 bit",
+    "en-US": "8 bit"
+  },
+  "ui.facts.advanced.model-precision.6bit": {
+    "zh-CN": "6 bit",
+    "en-US": "6 bit"
+  },
+  "ui.facts.advanced.model-precision.5bit": {
+    "zh-CN": "5 bit",
+    "en-US": "5 bit"
+  },
+  "ui.facts.advanced.model-precision.4bit": {
+    "zh-CN": "4 bit",
+    "en-US": "4 bit"
+  },
+  "ui.facts.advanced.model-precision.3bit-or-less": {
+    "zh-CN": "≤3 bit",
+    "en-US": "≤3 bit"
+  },
+  "ui.facts.advanced.font-weight.title": {
+    "zh-CN": "字重",
+    "en-US": "Font weight"
+  },
+  "ui.facts.advanced.font-weight.thin": {
+    "zh-CN": "纤细",
+    "en-US": "Thin"
+  },
+  "ui.facts.advanced.font-weight.regular": {
+    "zh-CN": "常规",
+    "en-US": "Regular"
+  },
+  "ui.facts.advanced.font-weight.medium": {
+    "zh-CN": "中等",
+    "en-US": "Medium"
+  },
+  "ui.facts.advanced.font-weight.bold": {
+    "zh-CN": "粗体",
+    "en-US": "Bold"
+  },
+  "ui.facts.advanced.font-weight.black": {
+    "zh-CN": "特粗",
+    "en-US": "Black"
+  },
+  "ui.facts.advanced.font-style.title": {
+    "zh-CN": "字形",
+    "en-US": "Font style"
+  },
+  "ui.facts.advanced.font-style.normal": {
+    "zh-CN": "正体",
+    "en-US": "Normal"
+  },
+  "ui.facts.advanced.font-style.italic": {
+    "zh-CN": "斜体",
+    "en-US": "Italic"
+  },
+  "ui.facts.advanced.font-charset.title": {
+    "zh-CN": "字符集",
+    "en-US": "Character set"
+  },
+  "ui.facts.advanced.font-charset.chinese": {
+    "zh-CN": "中文",
+    "en-US": "Chinese"
+  },
+  "ui.facts.advanced.font-charset.latin": {
+    "zh-CN": "拉丁",
+    "en-US": "Latin"
+  },
+  "ui.facts.advanced.font-kind.title": {
+    "zh-CN": "字体类型",
+    "en-US": "Font type"
+  },
+  "ui.facts.advanced.font-kind.static": {
+    "zh-CN": "静态",
+    "en-US": "Static"
+  },
+  "ui.facts.advanced.font-kind.variable": {
+    "zh-CN": "可变",
+    "en-US": "Variable"
+  },
+  "ui.facts.advanced.text-characters.title": {
+    "zh-CN": "字符数",
+    "en-US": "Characters"
+  },
+  "ui.facts.advanced.text-characters.up-to-100": {
+    "zh-CN": "≤100",
+    "en-US": "≤100"
+  },
+  "ui.facts.advanced.text-characters.101-1000": {
+    "zh-CN": "101–1千",
+    "en-US": "101–1k"
+  },
+  "ui.facts.advanced.text-characters.1001-10000": {
+    "zh-CN": "1千–1万",
+    "en-US": "1k–10k"
+  },
+  "ui.facts.advanced.text-characters.10001-100000": {
+    "zh-CN": "1万–10万",
+    "en-US": "10k–100k"
+  },
+  "ui.facts.advanced.text-characters.over-100000": {
+    "zh-CN": "＞10万",
+    "en-US": "＞100k"
+  },
+  "ui.facts.advanced.text-lines.title": {
+    "zh-CN": "行数",
+    "en-US": "Lines"
+  },
+  "ui.facts.advanced.text-lines.up-to-10": {
+    "zh-CN": "≤10",
+    "en-US": "≤10"
+  },
+  "ui.facts.advanced.text-lines.11-50": {
+    "zh-CN": "11–50",
+    "en-US": "11–50"
+  },
+  "ui.facts.advanced.text-lines.51-200": {
+    "zh-CN": "51–200",
+    "en-US": "51–200"
+  },
+  "ui.facts.advanced.text-lines.201-1000": {
+    "zh-CN": "201–1千",
+    "en-US": "201–1k"
+  },
+  "ui.facts.advanced.text-lines.over-1000": {
+    "zh-CN": "＞1千",
+    "en-US": "＞1k"
+  },
+  "ui.facts.advanced.csv-records.title": {
+    "zh-CN": "记录数",
+    "en-US": "Records"
+  },
+  "ui.facts.advanced.csv-records.up-to-10": {
+    "zh-CN": "≤10",
+    "en-US": "≤10"
+  },
+  "ui.facts.advanced.csv-records.11-100": {
+    "zh-CN": "11–100",
+    "en-US": "11–100"
+  },
+  "ui.facts.advanced.csv-records.101-1000": {
+    "zh-CN": "101–1千",
+    "en-US": "101–1k"
+  },
+  "ui.facts.advanced.csv-records.1001-10000": {
+    "zh-CN": "1千–1万",
+    "en-US": "1k–10k"
+  },
+  "ui.facts.advanced.csv-records.over-10000": {
+    "zh-CN": "＞1万",
+    "en-US": "＞10k"
+  },
+  "ui.facts.advanced.json-records.title": {
+    "zh-CN": "记录数",
+    "en-US": "Records"
+  },
+  "ui.facts.advanced.json-records.up-to-10": {
+    "zh-CN": "≤10",
+    "en-US": "≤10"
+  },
+  "ui.facts.advanced.json-records.11-100": {
+    "zh-CN": "11–100",
+    "en-US": "11–100"
+  },
+  "ui.facts.advanced.json-records.101-1000": {
+    "zh-CN": "101–1千",
+    "en-US": "101–1k"
+  },
+  "ui.facts.advanced.json-records.1001-10000": {
+    "zh-CN": "1千–1万",
+    "en-US": "1k–10k"
+  },
+  "ui.facts.advanced.json-records.over-10000": {
+    "zh-CN": "＞1万",
+    "en-US": "＞10k"
+  },
+  "ui.facts.advanced.csv-columns.title": {
+    "zh-CN": "列数",
+    "en-US": "Columns"
+  },
+  "ui.facts.advanced.csv-columns.one": {
+    "zh-CN": "1",
+    "en-US": "1"
+  },
+  "ui.facts.advanced.csv-columns.2-5": {
+    "zh-CN": "2–5",
+    "en-US": "2–5"
+  },
+  "ui.facts.advanced.csv-columns.6-10": {
+    "zh-CN": "6–10",
+    "en-US": "6–10"
+  },
+  "ui.facts.advanced.csv-columns.11-30": {
+    "zh-CN": "11–30",
+    "en-US": "11–30"
+  },
+  "ui.facts.advanced.csv-columns.over-30": {
+    "zh-CN": "＞30",
+    "en-US": "＞30"
+  },
+  "ui.facts.advanced.json-root.title": {
+    "zh-CN": "JSON 结构",
+    "en-US": "JSON structure"
+  },
+  "ui.facts.advanced.json-root.array": {
+    "zh-CN": "数组",
+    "en-US": "Array"
+  },
+  "ui.facts.advanced.json-root.object": {
+    "zh-CN": "对象",
+    "en-US": "Object"
+  },
+  "ui.facts.advanced.archive-count.title": {
+    "zh-CN": "文件数量",
+    "en-US": "File count"
+  },
+  "ui.facts.advanced.archive-count.under-10": {
+    "zh-CN": "＜10",
+    "en-US": "＜10"
+  },
+  "ui.facts.advanced.archive-count.10-100": {
+    "zh-CN": "10–100",
+    "en-US": "10–100"
+  },
+  "ui.facts.advanced.archive-count.100-1000": {
+    "zh-CN": "100–1千",
+    "en-US": "100–1k"
+  },
+  "ui.facts.advanced.archive-count.over-1000": {
+    "zh-CN": "≥1千",
+    "en-US": "≥1k"
+  },
+  "ui.facts.advanced.archive-content.title": {
+    "zh-CN": "包内类型",
+    "en-US": "Content type"
+  },
+  "ui.facts.advanced.archive-content.image": {
+    "zh-CN": "图像",
+    "en-US": "Images"
+  },
+  "ui.facts.advanced.archive-content.video": {
+    "zh-CN": "视频",
+    "en-US": "Video"
+  },
+  "ui.facts.advanced.archive-content.audio": {
+    "zh-CN": "音频",
+    "en-US": "Audio"
+  },
+  "ui.facts.advanced.archive-content.document": {
+    "zh-CN": "文档",
+    "en-US": "Documents"
+  },
+  "ui.facts.advanced.archive-content.project": {
+    "zh-CN": "工程",
+    "en-US": "Projects"
+  },
+  "ui.facts.advanced.archive-content.threeD": {
+    "zh-CN": "三维",
+    "en-US": "3D"
+  },
+  "ui.facts.advanced.archive-content.program": {
+    "zh-CN": "程序",
+    "en-US": "Programs"
+  },
+  "ui.facts.advanced.archive-content.other": {
+    "zh-CN": "其他",
+    "en-US": "Other"
+  },
+  "ui.facts.advanced.archive-structure.title": {
+    "zh-CN": "目录结构",
+    "en-US": "Folder structure"
+  },
+  "ui.facts.advanced.archive-structure.flat": {
+    "zh-CN": "平铺",
+    "en-US": "Flat"
+  },
+  "ui.facts.advanced.archive-structure.nested": {
+    "zh-CN": "嵌套",
+    "en-US": "Nested"
+  },
+  "ui.facts.media.video-resolution.720p": {
+    "zh-CN": "720p",
+    "en-US": "720p"
+  },
+  "ui.facts.media.video-resolution.1080p": {
+    "zh-CN": "1080p",
+    "en-US": "1080p"
+  },
+  "ui.facts.media.video-resolution.2k": {
+    "zh-CN": "2K",
+    "en-US": "2K"
+  },
+  "ui.facts.media.video-resolution.4k": {
+    "zh-CN": "4K",
+    "en-US": "4K"
+  },
+  "ui.facts.media.video-resolution.8k": {
+    "zh-CN": "8K",
+    "en-US": "8K"
+  },
+  "ui.facts.media.video-duration.under-15s": {
+    "zh-CN": "＜15秒",
+    "en-US": "＜15 s"
+  },
+  "ui.facts.media.video-duration.15s-1m": {
+    "zh-CN": "15秒–1分",
+    "en-US": "15 s–1 min"
+  },
+  "ui.facts.media.video-duration.1m-5m": {
+    "zh-CN": "1–5分",
+    "en-US": "1–5 min"
+  },
+  "ui.facts.media.video-duration.over-5m": {
+    "zh-CN": "≥5分",
+    "en-US": "≥5 min"
+  },
+  "ui.facts.media.audio-duration.under-5s": {
+    "zh-CN": "＜5秒",
+    "en-US": "＜5 s"
+  },
+  "ui.facts.media.audio-duration.5s-30s": {
+    "zh-CN": "5–30秒",
+    "en-US": "5–30 s"
+  },
+  "ui.facts.media.audio-duration.30s-5m": {
+    "zh-CN": "30秒–5分",
+    "en-US": "30 s–5 min"
+  },
+  "ui.facts.media.audio-duration.over-5m": {
+    "zh-CN": "≥5分",
+    "en-US": "≥5 min"
+  },
+  "ui.facts.media.audio-channels.mono": {
+    "zh-CN": "单声道",
+    "en-US": "Mono"
+  },
+  "ui.facts.media.audio-channels.stereo": {
+    "zh-CN": "立体声",
+    "en-US": "Stereo"
+  },
+  "ui.facts.media.audio-channels.multichannel": {
+    "zh-CN": "多声道",
+    "en-US": "Multichannel"
+  },
+  "ui.facts.media.image-dimensions-aspect.portrait": {
+    "zh-CN": "竖图",
+    "en-US": "Portrait"
+  },
+  "ui.facts.media.image-dimensions-aspect.landscape": {
+    "zh-CN": "横图",
+    "en-US": "Landscape"
+  },
+  "ui.facts.media.image-dimensions-aspect.square": {
+    "zh-CN": "方形",
+    "en-US": "Square"
+  },
+  "ui.facts.media.image-dimensions-aspect.wide": {
+    "zh-CN": "宽图",
+    "en-US": "Wide"
+  },
+  "ui.facts.media.image-dimensions-aspect.tall": {
+    "zh-CN": "长图",
+    "en-US": "Tall"
+  },
+  "ui.facts.media.video-aspect.portrait": {
+    "zh-CN": "竖图",
+    "en-US": "Portrait"
+  },
+  "ui.facts.media.video-aspect.landscape": {
+    "zh-CN": "横图",
+    "en-US": "Landscape"
+  },
+  "ui.facts.media.video-aspect.square": {
+    "zh-CN": "方形",
+    "en-US": "Square"
+  },
+  "ui.facts.media.video-aspect.wide": {
+    "zh-CN": "宽图",
+    "en-US": "Wide"
+  },
+  "ui.facts.media.video-aspect.tall": {
+    "zh-CN": "长图",
+    "en-US": "Tall"
+  },
+  "ui.facts.type.polygon": {
+    "zh-CN": "多边形",
+    "en-US": "Polygon mesh"
+  },
+  "ui.facts.type.cad": {
+    "zh-CN": "CAD",
+    "en-US": "CAD"
+  },
+  "ui.facts.type.scene": {
+    "zh-CN": "场景",
+    "en-US": "Scene"
+  },
+  "ui.facts.mergeRange": {
+    "zh-CN": "应用后本组改为单一范围",
+    "en-US": "Applying replaces this group with a single range."
+  },
+  "ui.facts.clearGroup": {
+    "zh-CN": "清除此组",
+    "en-US": "Clear group"
+  },
+  "ui.facts.integerRange": {
+    "zh-CN": "请输入范围内的整数",
+    "en-US": "Enter an integer within the allowed range."
+  },
+  "ui.facts.threeDTypes": {
+    "zh-CN": "三维类型",
+    "en-US": "3D type"
+  },
+  "ui.facts.videoColor": {
+    "zh-CN": "视频颜色",
+    "en-US": "Video colors"
+  },
+  "ui.facts.imageColor": {
+    "zh-CN": "图像颜色",
+    "en-US": "Image colors"
+  },
+  "ui.facts.colorAvailable": {
+    "zh-CN": "仅筛选已有颜色信息的文件",
+    "en-US": "Only files with available color information can be filtered."
+  },
+  "ui.facts.selected": {
+    "zh-CN": "已选",
+    "en-US": "Selected"
+  },
+  "ui.facts.colorTraits": {
+    "zh-CN": "颜色特征",
+    "en-US": "Color properties"
+  },
+  "ui.facts.clearColor": {
+    "zh-CN": "清除颜色",
+    "en-US": "Clear colors"
+  },
+  "ui.facts.anyDimensions": {
+    "zh-CN": "任意尺寸",
+    "en-US": "Any dimensions"
+  },
+  "ui.facts.customDimensions": {
+    "zh-CN": "自定尺寸",
+    "en-US": "Custom dimensions"
+  },
+  "ui.facts.aspect": {
+    "zh-CN": "比例",
+    "en-US": "Aspect ratio"
+  },
+  "ui.facts.resolution": {
+    "zh-CN": "分辨率",
+    "en-US": "Resolution"
+  },
+  "ui.facts.dimensions": {
+    "zh-CN": "尺寸",
+    "en-US": "Dimensions"
+  },
+  "ui.facts.animation": {
+    "zh-CN": "动静",
+    "en-US": "Animation"
+  },
+  "ui.facts.duration": {
+    "zh-CN": "时长",
+    "en-US": "Duration"
+  },
+  "ui.facts.channels": {
+    "zh-CN": "声道",
+    "en-US": "Channels"
+  },
+  "ui.facts.animated": {
+    "zh-CN": "动态图",
+    "en-US": "Animated"
+  },
+  "ui.facts.static": {
+    "zh-CN": "静态图",
+    "en-US": "Static"
+  },
+  "ui.facts.editDimensions": {
+    "zh-CN": "自定义图像尺寸",
+    "en-US": "Customize image dimensions"
+  },
+  "ui.facts.dimensionRange": {
+    "zh-CN": "尺寸范围",
+    "en-US": "Dimension range"
+  },
+  "ui.facts.exactDimensions": {
+    "zh-CN": "精确尺寸",
+    "en-US": "Exact dimensions"
+  },
+  "ui.facts.minWidth": {
+    "zh-CN": "最小宽度 px",
+    "en-US": "Minimum width (px)"
+  },
+  "ui.facts.maxWidth": {
+    "zh-CN": "最大宽度 px",
+    "en-US": "Maximum width (px)"
+  },
+  "ui.facts.minHeight": {
+    "zh-CN": "最小高度 px",
+    "en-US": "Minimum height (px)"
+  },
+  "ui.facts.maxHeight": {
+    "zh-CN": "最大高度 px",
+    "en-US": "Maximum height (px)"
+  },
+  "ui.facts.widthPixels": {
+    "zh-CN": "宽度 px",
+    "en-US": "Width (px)"
+  },
+  "ui.facts.heightPixels": {
+    "zh-CN": "高度 px",
+    "en-US": "Height (px)"
+  },
+  "ui.facts.minDuration": {
+    "zh-CN": "最小时长（秒）",
+    "en-US": "Minimum duration (seconds)"
+  },
+  "ui.facts.maxDuration": {
+    "zh-CN": "最大时长（秒）",
+    "en-US": "Maximum duration (seconds)"
+  },
+  "ui.facts.minChannels": {
+    "zh-CN": "最少声道",
+    "en-US": "Minimum channels"
+  },
+  "ui.facts.maxChannels": {
+    "zh-CN": "最多声道",
+    "en-US": "Maximum channels"
+  },
+  "ui.facts.hdPreset": {
+    "zh-CN": "≥1920×1080",
+    "en-US": "≥1920×1080"
+  },
+  "ui.facts.uhdPreset": {
+    "zh-CN": "≥3840×2160",
+    "en-US": "≥3840×2160"
+  },
+  "ui.facts.validNumber": {
+    "zh-CN": "请输入范围内的有效数值",
+    "en-US": "Enter a valid number within the allowed range."
+  },
+  "ui.facts.integerPixelsChannels": {
+    "zh-CN": "像素和声道需要整数",
+    "en-US": "Pixel dimensions and channel counts must be integers."
+  },
+  "ui.facts.enterDimensions": {
+    "zh-CN": "请输入精确宽度和高度",
+    "en-US": "Enter an exact width and height."
+  },
+  "ui.facts.durationPrecision": {
+    "zh-CN": "范围小于毫秒精度，请扩大范围",
+    "en-US": "The range is smaller than one millisecond. Increase the range."
+  },
+  "ui.facts.width": {
+    "zh-CN": "宽",
+    "en-US": "Width"
+  },
+  "ui.facts.height": {
+    "zh-CN": "高",
+    "en-US": "Height"
+  },
+  "ui.facts.commonRatios": {
+    "zh-CN": "常用比例",
+    "en-US": "Common aspect ratios"
+  },
+  "ui.facts.addRatio": {
+    "zh-CN": "添加比例",
+    "en-US": "Add ratio"
+  },
+  "ui.facts.ratioInteger": {
+    "zh-CN": "宽和高需要1–100000的整数",
+    "en-US": "Width and height must be integers from 1 to 100000."
+  },
+  "ui.facts.ratioLimit": {
+    "zh-CN": "最多组合32种比例",
+    "en-US": "You can combine up to 32 aspect ratios."
+  },
+  "ui.facts.metadataRequirements": {
+    "zh-CN": "查看此筛选条件的元数据要求",
+    "en-US": "View metadata requirements for this filter"
+  },
+  "ui.facts.checkingMetadata": {
+    "zh-CN": "正在检查元数据",
+    "en-US": "Checking metadata"
+  },
+  "ui.facts.metadataReason": {
+    "zh-CN": "查看元数据不可用的原因",
+    "en-US": "View why metadata is unavailable"
+  },
+  "ui.facts.getMetadata": {
+    "zh-CN": "点击获取此条件所需的元数据",
+    "en-US": "Extract the metadata needed for this filter"
+  },
+  "ui.facts.color.red": {
+    "zh-CN": "红色",
+    "en-US": "Red"
+  },
+  "ui.facts.color.orange": {
+    "zh-CN": "橙色",
+    "en-US": "Orange"
+  },
+  "ui.facts.color.yellow": {
+    "zh-CN": "黄色",
+    "en-US": "Yellow"
+  },
+  "ui.facts.color.green": {
+    "zh-CN": "绿色",
+    "en-US": "Green"
+  },
+  "ui.facts.color.cyan": {
+    "zh-CN": "青色",
+    "en-US": "Cyan"
+  },
+  "ui.facts.color.blue": {
+    "zh-CN": "蓝色",
+    "en-US": "Blue"
+  },
+  "ui.facts.color.purple": {
+    "zh-CN": "紫色",
+    "en-US": "Purple"
+  },
+  "ui.facts.color.pink": {
+    "zh-CN": "粉色",
+    "en-US": "Pink"
+  },
+  "ui.facts.color.black-background": {
+    "zh-CN": "黑底",
+    "en-US": "Black background"
+  },
+  "ui.facts.color.gray-tone": {
+    "zh-CN": "灰色调",
+    "en-US": "Gray tones"
+  },
+  "ui.facts.color.white-background": {
+    "zh-CN": "白底",
+    "en-US": "White background"
+  },
+  "ui.facts.color.transparent-background": {
+    "zh-CN": "透明背景",
+    "en-US": "Transparent background"
+  },
+  "ui.facts.color.bright-image": {
+    "zh-CN": "明亮",
+    "en-US": "Bright"
+  },
+  "ui.facts.color.dark-image": {
+    "zh-CN": "偏暗",
+    "en-US": "Dark"
+  },
+  "ui.facts.color.vivid-image": {
+    "zh-CN": "鲜艳",
+    "en-US": "Vivid"
+  },
+  "ui.facts.color.muted-image": {
+    "zh-CN": "低饱和",
+    "en-US": "Muted"
+  },
+  "ui.metadataRange.current": {
+    "zh-CN": "仅当前目录",
+    "en-US": "Current folder only"
+  },
+  "ui.metadataRange.currentHint": {
+    "zh-CN": "包含子目录",
+    "en-US": "Include subfolders"
+  },
+  "ui.metadataRange.recommended": {
+    "zh-CN": "推荐的范围",
+    "en-US": "Recommended scope"
+  },
+  "ui.metadataRange.recommendedHint": {
+    "zh-CN": "排除系统及软件目录",
+    "en-US": "Exclude system and application folders"
+  },
+  "ui.metadataRange.all": {
+    "zh-CN": "全部已索引磁盘",
+    "en-US": "All indexed drives"
+  },
+  "ui.metadataRange.allHint": {
+    "zh-CN": "不应用目录排除",
+    "en-US": "Do not apply folder exclusions"
+  },
+  "ui.metadataRange.custom": {
+    "zh-CN": "自定义…",
+    "en-US": "Custom…"
+  },
+  "ui.metadataRange.customHint": {
+    "zh-CN": "前往元数据设置",
+    "en-US": "Open metadata settings"
+  },
+  "ui.cache.measuring": {
+    "zh-CN": "正在统计…",
+    "en-US": "Calculating…"
+  },
+  "ui.cache.clear": {
+    "zh-CN": "清理缓存",
+    "en-US": "Clear cache"
+  },
+  "ui.cache.stats": {
+    "zh-CN": "{count:N0} 项 · {size}",
+    "en-US": "Items: {count:N0} · {size}"
+  },
+  "ui.cache.unavailable": {
+    "zh-CN": "缓存统计暂不可用",
+    "en-US": "Cache statistics are currently unavailable"
+  },
+  "ui.cache.confirm": {
+    "zh-CN": "清理缩略图、预览图片及 Office 文档转换缓存？下次查看时会按需重新生成，源文件、索引和关键词保持不变。",
+    "en-US": "Clear cached thumbnails, preview images and Office document conversions? They will be regenerated as needed. Source files, indexes and keywords are preserved."
+  },
+  "ui.cache.confirmAction": {
+    "zh-CN": "清理",
+    "en-US": "Clear"
+  },
+  "ui.cache.clearing": {
+    "zh-CN": "正在清理…",
+    "en-US": "Clearing…"
+  },
+  "ui.cache.cleared": {
+    "zh-CN": "缓存已清理。",
+    "en-US": "Cache cleared."
+  },
+  "ui.cache.failed": {
+    "zh-CN": "缓存清理未完成：{error}",
+    "en-US": "Could not finish clearing the cache: {error}"
+  },
+  "ui.maintenance.reconnect": {
+    "zh-CN": "重新连接Core",
+    "en-US": "Reconnect Core"
+  },
+  "ui.maintenance.install": {
+    "zh-CN": "安装/修复索引服务",
+    "en-US": "Install/repair indexing service"
+  },
+  "ui.maintenance.reconnected": {
+    "zh-CN": "后台服务已重新连接。",
+    "en-US": "Background service reconnected."
+  },
+  "ui.maintenance.configured": {
+    "zh-CN": "索引服务配置完成。",
+    "en-US": "Indexing service configured."
+  },
+  "ui.maintenance.setupTitle": {
+    "zh-CN": "配置Core与索引服务",
+    "en-US": "Configure Core and indexing service"
+  },
+  "ui.maintenance.setupDescription": {
+    "zh-CN": "会暂停当前Core任务，并请求管理员授权安装或修复索引服务。保留现有Catalog与素材；请先关闭其他Cap7CE程序。Reader服务需要.NET 10 x64运行时。",
+    "en-US": "Current Core tasks will be paused, and administrator approval will be requested to install or repair the indexing service. Existing Catalog data and assets are preserved. Close other Cap7CE instances first. The Reader service requires the .NET 10 x64 runtime."
+  },
+  "ui.maintenance.setupAction": {
+    "zh-CN": "安装/修复",
+    "en-US": "Install/repair"
+  },
+  "ui.maintenance.missingSetup": {
+    "zh-CN": "Core安装组件缺失，请重新构建或解压完整程序包。",
+    "en-US": "Core setup components are missing. Rebuild or extract the complete application package."
+  },
+  "ui.metadataPrompt.checking": {
+    "zh-CN": "正在检查此范围的元数据，请稍候。",
+    "en-US": "Checking metadata in this scope. Please wait."
+  },
+  "ui.metadataPrompt.checkFailed": {
+    "zh-CN": "暂时无法检查元数据，请确认后台连接与目录索引是否就绪。",
+    "en-US": "Could not check metadata. Make sure the background connection and directory index are ready."
+  },
+  "ui.metadataPrompt.unsupported": {
+    "zh-CN": "当前文件类型暂不支持这类元数据提取。",
+    "en-US": "The selected file types do not support this metadata extraction."
+  },
+  "ui.metadataPrompt.empty": {
+    "zh-CN": "当前范围没有支持此条件的文件，无需开始提取。",
+    "en-US": "No files in this scope support this filter. No extraction is needed."
+  },
+  "ui.metadataPrompt.title": {
+    "zh-CN": "提取文件元数据",
+    "en-US": "Extract file metadata"
+  },
+  "ui.metadataPrompt.start": {
+    "zh-CN": "开始",
+    "en-US": "Start"
+  },
+  "ui.metadataPrompt.choose": {
+    "zh-CN": "选择提取范围：",
+    "en-US": "Choose an extraction scope:"
   }
 }

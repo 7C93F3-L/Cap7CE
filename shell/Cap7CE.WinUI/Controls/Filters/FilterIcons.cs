@@ -21,7 +21,7 @@ internal static class FilterIcons
         ["static"]="M6 4h12v16H6zM10 8v8M14 8v8",
         ["animated"]="M3 6h18v15H3zM7 3h14M10 10l6 3.5-6 3.5v-7Z",
         ["rigged"]="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM5 8l7 3 7-3M12 7v8m0 0-5 7m5-7 5 7",
-        ["竖图"]="M6 2h12v20H6z",["横图"]="M2 6h20v12H2z",["方形"]="M3 3h18v18H3z",["宽图"]="M1 8h22v8H1z",["长图"]="M8 1h8v22H8z",
+        ["portrait"]="M6 2h12v20H6z",["landscape"]="M2 6h20v12H2z",["square"]="M3 3h18v18H3z",["wide"]="M1 8h22v8H1z",["tall"]="M8 1h8v22H8z",
         ["visual"]="M3 3h18v18H3zM3 16l5-5 5 5 3-3 5 5M16 6a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z",
         ["video"]="M3 4h18v16H3zM10 8l6 4-6 4V8Z",
         ["audio"]="M9 18V5l11-2v13M9 7l11-2M6 16a3 2 0 1 0 0 4 3 2 0 0 0 0-4ZM17 14a3 2 0 1 0 0 4 3 2 0 0 0 0-4Z",

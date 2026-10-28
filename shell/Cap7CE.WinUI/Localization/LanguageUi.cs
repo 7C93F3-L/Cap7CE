@@ -21,6 +21,13 @@ internal static class LanguageUi
     {var text=Ui.Heading("");Bind(text,TextBlock.TextProperty,key);return text;}
     public static Button Button(string key,Action action)
     {var button=Ui.Button("",action);Bind(button,Microsoft.UI.Xaml.Controls.Button.ContentProperty,key);return button;}
+    public static ContentDialog Dialog(XamlRoot root,string titleKey,string? contentKey,string primaryKey,string closeKey="common.cancel")
+    {
+        var dialog=new ContentDialog{XamlRoot=root,DefaultButton=ContentDialogButton.Close};
+        Bind(dialog,ContentDialog.TitleProperty,titleKey);Bind(dialog,ContentDialog.PrimaryButtonTextProperty,primaryKey);Bind(dialog,ContentDialog.CloseButtonTextProperty,closeKey);
+        if(contentKey is not null)Bind(dialog,ContentDialog.ContentProperty,contentKey);
+        return dialog;
+    }
     public static ToggleSwitch Toggle(bool enabled=true)
     {var toggle=new ToggleSwitch {IsEnabled=enabled,MinWidth=0};Bind(toggle,ToggleSwitch.OnContentProperty,"settings.enabled");Bind(toggle,ToggleSwitch.OffContentProperty,"settings.disabled");return toggle;}
     public static ComboBox Choice(string[] keys,int selected=0,bool enabled=true)
