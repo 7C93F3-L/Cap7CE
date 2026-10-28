@@ -3382,5 +3382,405 @@
   "ui.metadataPrompt.choose": {
     "zh-CN": "选择提取范围：",
     "en-US": "Choose an extraction scope:"
+  },
+  "ui.common.text": {
+    "zh-CN": "{text}",
+    "en-US": "{text}"
+  },
+  "ui.common.listSeparator": {
+    "zh-CN": "、",
+    "en-US": ", "
+  },
+  "ui.index.reading": {
+    "zh-CN": "读取索引状态…",
+    "en-US": "Reading index status…"
+  },
+  "ui.index.build": {
+    "zh-CN": "建立 / 更新",
+    "en-US": "Build / update"
+  },
+  "ui.index.refresh": {
+    "zh-CN": "刷新",
+    "en-US": "Refresh"
+  },
+  "ui.index.stop": {
+    "zh-CN": "停止",
+    "en-US": "Stop"
+  },
+  "ui.index.rebuild": {
+    "zh-CN": "重建…",
+    "en-US": "Rebuild…"
+  },
+  "ui.index.orderHint": {
+    "zh-CN": "按从上到下的顺序处理所选磁盘。",
+    "en-US": "Selected drives are processed from top to bottom."
+  },
+  "ui.index.disconnected": {
+    "zh-CN": "Core尚未连接，请到“诊断 → 服务维护”中重新连接。",
+    "en-US": "Core is not connected. Reconnect in Diagnostics → Service maintenance."
+  },
+  "ui.index.actionFailed": {
+    "zh-CN": "{error}\n索引服务未安装或未授权时，请先完成Reader服务安装；不要以管理员身份运行整个界面。",
+    "en-US": "{error}\nIf the indexing service is not installed or authorized, install the Reader service first. Do not run the entire interface as administrator."
+  },
+  "ui.index.isolated": {
+    "zh-CN": "此会话为隔离查询模式，不提供索引维护。",
+    "en-US": "Index maintenance is unavailable in this isolated query session."
+  },
+  "ui.index.capacity": {
+    "zh-CN": "容量  {size}",
+    "en-US": "Capacity  {size}"
+  },
+  "ui.index.items": {
+    "zh-CN": "索引项  {count:N0}",
+    "en-US": "Indexed items  {count:N0}"
+  },
+  "ui.index.volumeInfo": {
+    "zh-CN": "{fileSystem} · {state}",
+    "en-US": "{fileSystem} · {state}"
+  },
+  "ui.index.earlier": {
+    "zh-CN": "提前索引",
+    "en-US": "Index earlier"
+  },
+  "ui.index.later": {
+    "zh-CN": "延后索引",
+    "en-US": "Index later"
+  },
+  "ui.index.taskNotice": {
+    "zh-CN": "索引任务：{state}",
+    "en-US": "Index task: {state}"
+  },
+  "ui.index.taskStatus": {
+    "zh-CN": "{kind}：{state}",
+    "en-US": "{kind}: {state}"
+  },
+  "ui.index.notReady": {
+    "zh-CN": "{drives} 索引未就绪；可选择相应磁盘，点击“建立 / 更新”。",
+    "en-US": "The index for {drives} is not ready. Select the drives and click Build / update."
+  },
+  "ui.index.noVolumes": {
+    "zh-CN": "暂无磁盘，请刷新。",
+    "en-US": "No drives available. Refresh to try again."
+  },
+  "ui.index.ready": {
+    "zh-CN": "索引就绪",
+    "en-US": "Index ready"
+  },
+  "ui.index.chooseVolumes": {
+    "zh-CN": "请先选择磁盘。",
+    "en-US": "Select drives first."
+  },
+  "ui.index.rebuildTitle": {
+    "zh-CN": "重建索引",
+    "en-US": "Rebuild index"
+  },
+  "ui.index.buildTitle": {
+    "zh-CN": "建立/更新索引",
+    "en-US": "Build/update index"
+  },
+  "ui.index.rebuildDescription": {
+    "zh-CN": "将重新读取所选磁盘并替换其索引。原文件不变；已有索引较大时可能耗时。",
+    "en-US": "Selected drives will be read again and their indexes replaced. Source files are preserved. Large indexes may take some time."
+  },
+  "ui.index.buildDescription": {
+    "zh-CN": "将读取所选磁盘的文件名与目录信息；不会自动提取文件内容。",
+    "en-US": "Read file names and directory information from the selected drives. File content is not extracted automatically."
+  },
+  "ui.index.continue": {
+    "zh-CN": "继续",
+    "en-US": "Continue"
+  },
+  "ui.index.accepted": {
+    "zh-CN": "任务已接受：{id}",
+    "en-US": "Task accepted: {id}"
+  },
+  "ui.index.kind.rebuild": {
+    "zh-CN": "索引重建",
+    "en-US": "Index rebuild"
+  },
+  "ui.index.kind.synchronize": {
+    "zh-CN": "索引建立/更新",
+    "en-US": "Index build/update"
+  },
+  "ui.index.kind.build": {
+    "zh-CN": "建立索引",
+    "en-US": "Index build"
+  },
+  "ui.index.kind.unknown": {
+    "zh-CN": "索引任务",
+    "en-US": "Index task"
+  },
+  "ui.index.state.running": {
+    "zh-CN": "运行中",
+    "en-US": "Running"
+  },
+  "ui.index.state.completed": {
+    "zh-CN": "已完成",
+    "en-US": "Completed"
+  },
+  "ui.index.state.cancelled": {
+    "zh-CN": "已取消",
+    "en-US": "Cancelled"
+  },
+  "ui.index.state.failed": {
+    "zh-CN": "失败",
+    "en-US": "Failed"
+  },
+  "ui.index.state.pending": {
+    "zh-CN": "等待中",
+    "en-US": "Pending"
+  },
+  "ui.index.state.unknown": {
+    "zh-CN": "状态未知",
+    "en-US": "Unknown state"
+  },
+  "ui.index.volume.disabled": {
+    "zh-CN": "未启用",
+    "en-US": "Disabled"
+  },
+  "ui.index.volume.discovering": {
+    "zh-CN": "发现中",
+    "en-US": "Discovering"
+  },
+  "ui.index.volume.building": {
+    "zh-CN": "建立中",
+    "en-US": "Building"
+  },
+  "ui.index.volume.ready": {
+    "zh-CN": "就绪",
+    "en-US": "Ready"
+  },
+  "ui.index.volume.catchingUp": {
+    "zh-CN": "正在同步更新",
+    "en-US": "Catching up"
+  },
+  "ui.index.volume.offline": {
+    "zh-CN": "离线",
+    "en-US": "Offline"
+  },
+  "ui.index.volume.degraded": {
+    "zh-CN": "状态异常",
+    "en-US": "Degraded"
+  },
+  "ui.index.volume.needsRebuild": {
+    "zh-CN": "需要重建",
+    "en-US": "Rebuild required"
+  },
+  "ui.drive.defaultName": {
+    "zh-CN": "本地磁盘 ({drive})",
+    "en-US": "Local Disk ({drive})"
+  },
+  "ui.drive.unavailable": {
+    "zh-CN": "不可用",
+    "en-US": "Unavailable"
+  },
+  "ui.metadata.scopeReading": {
+    "zh-CN": "处理范围：读取中…",
+    "en-US": "Scope: reading…"
+  },
+  "ui.metadata.reading": {
+    "zh-CN": "正在读取任务状态…",
+    "en-US": "Reading task status…"
+  },
+  "ui.metadata.start": {
+    "zh-CN": "开始提取",
+    "en-US": "Start extraction"
+  },
+  "ui.metadata.pause": {
+    "zh-CN": "暂停",
+    "en-US": "Pause"
+  },
+  "ui.metadata.resume": {
+    "zh-CN": "继续",
+    "en-US": "Resume"
+  },
+  "ui.metadata.retry": {
+    "zh-CN": "重试",
+    "en-US": "Retry"
+  },
+  "ui.metadata.cancel": {
+    "zh-CN": "取消队列",
+    "en-US": "Cancel queue"
+  },
+  "ui.metadata.refresh": {
+    "zh-CN": "刷新",
+    "en-US": "Refresh"
+  },
+  "ui.metadata.cancelHint": {
+    "zh-CN": "停止当前目录并清空排队目录，已提取的结果保留。",
+    "en-US": "Stop the current folder and clear queued folders. Extracted results are preserved."
+  },
+  "ui.metadata.scope": {
+    "zh-CN": "提取磁盘：{drives}",
+    "en-US": "Extraction drives: {drives}"
+  },
+  "ui.metadata.noVolumes": {
+    "zh-CN": "暂无可用磁盘",
+    "en-US": "No available drives"
+  },
+  "ui.metadata.awaitConnection": {
+    "zh-CN": "等待连接",
+    "en-US": "Waiting for connection"
+  },
+  "ui.metadata.disconnected": {
+    "zh-CN": "元数据服务未连接或不可用，请到“诊断 → 服务维护”中重新连接。",
+    "en-US": "The metadata service is disconnected or unavailable. Reconnect in Diagnostics → Service maintenance."
+  },
+  "ui.metadata.current": {
+    "zh-CN": "当前目录：{path}",
+    "en-US": "Current folder: {path}"
+  },
+  "ui.metadata.currentQueued": {
+    "zh-CN": "当前目录：{path} · 另有 {count} 个目录排队",
+    "en-US": "Current folder: {path} · Additional folders queued: {count}"
+  },
+  "ui.metadata.idle": {
+    "zh-CN": "暂无提取任务",
+    "en-US": "No extraction tasks"
+  },
+  "ui.metadata.preparing": {
+    "zh-CN": "正在准备",
+    "en-US": "Preparing"
+  },
+  "ui.metadata.discovering": {
+    "zh-CN": "正在发现文件属性任务",
+    "en-US": "Discovering file property tasks"
+  },
+  "ui.metadata.waiting": {
+    "zh-CN": "正在等待索引或可用任务",
+    "en-US": "Waiting for an index or available tasks"
+  },
+  "ui.metadata.extracting": {
+    "zh-CN": "正在提取元数据",
+    "en-US": "Extracting metadata"
+  },
+  "ui.metadata.pausing": {
+    "zh-CN": "正在暂停…",
+    "en-US": "Pausing…"
+  },
+  "ui.metadata.paused": {
+    "zh-CN": "已暂停",
+    "en-US": "Paused"
+  },
+  "ui.metadata.completed": {
+    "zh-CN": "提取完成",
+    "en-US": "Extraction complete"
+  },
+  "ui.metadata.failed": {
+    "zh-CN": "提取失败",
+    "en-US": "Extraction failed"
+  },
+  "ui.metadata.discovered": {
+    "zh-CN": "已发现 {count:N0} 项属性任务",
+    "en-US": "Property tasks discovered: {count:N0}"
+  },
+  "ui.metadata.processedTotal": {
+    "zh-CN": "已处理 {count:N0} / {total:N0} 项属性任务",
+    "en-US": "Property tasks processed: {count:N0} / {total:N0}"
+  },
+  "ui.metadata.processed": {
+    "zh-CN": "已处理 {count:N0} 项属性任务",
+    "en-US": "Property tasks processed: {count:N0}"
+  },
+  "ui.metadata.failedCount": {
+    "zh-CN": " · 失败 {count:N0}",
+    "en-US": " · Failed: {count:N0}"
+  },
+  "ui.metadata.unsupportedCount": {
+    "zh-CN": " · 不支持 {count:N0}",
+    "en-US": " · Unsupported: {count:N0}"
+  },
+  "ui.metadata.errorDirectoryUnavailable": {
+    "zh-CN": "目标目录的索引尚不可用，请先检查目录索引。",
+    "en-US": "The index for the target folder is unavailable. Check the directory index first."
+  },
+  "ui.metadata.errorDirectoryChanged": {
+    "zh-CN": "目标目录已变化，请重新选择目录。",
+    "en-US": "The target folder has changed. Select the folder again."
+  },
+  "ui.metadata.errorState": {
+    "zh-CN": "无法保存任务状态，请检查磁盘空间和目录权限。",
+    "en-US": "Could not save task state. Check disk space and folder permissions."
+  },
+  "ui.metadata.errorNotPaused": {
+    "zh-CN": "当前没有可继续的已暂停任务，请刷新状态。",
+    "en-US": "There is no paused task to resume. Refresh the status."
+  },
+  "ui.metadata.errorQueueFull": {
+    "zh-CN": "目录队列已满，请等待现有任务完成后再添加。",
+    "en-US": "The folder queue is full. Wait for existing tasks to finish before adding more."
+  },
+  "ui.metadata.errorFailed": {
+    "zh-CN": "元数据提取未完成，请查看任务结果或重试。",
+    "en-US": "Metadata extraction did not finish. Check the task results or retry."
+  },
+  "ui.metadata.errorGeneric": {
+    "zh-CN": "元数据操作未完成，请刷新状态或查看诊断信息。",
+    "en-US": "The metadata operation did not finish. Refresh the status or check diagnostics."
+  },
+  "ui.exclusions.add": {
+    "zh-CN": "添加排除目录",
+    "en-US": "Add excluded folder"
+  },
+  "ui.exclusions.remove": {
+    "zh-CN": "移除",
+    "en-US": "Remove"
+  },
+  "ui.exclusions.limit": {
+    "zh-CN": "最多添加32个排除目录。",
+    "en-US": "You can add up to 32 excluded folders."
+  },
+  "ui.exclusions.builtIn.windows": {
+    "zh-CN": "Windows",
+    "en-US": "Windows"
+  },
+  "ui.exclusions.builtIn.program-files": {
+    "zh-CN": "Program Files",
+    "en-US": "Program Files"
+  },
+  "ui.exclusions.builtIn.program-files-x86": {
+    "zh-CN": "Program Files (x86)",
+    "en-US": "Program Files (x86)"
+  },
+  "ui.exclusions.builtIn.appdata": {
+    "zh-CN": "AppData",
+    "en-US": "AppData"
+  },
+  "ui.exclusions.builtIn.program-data": {
+    "zh-CN": "ProgramData",
+    "en-US": "ProgramData"
+  },
+  "ui.model.runtime.missingRoot": {
+    "zh-CN": "未找到 llama.cpp 目录：{path}",
+    "en-US": "llama.cpp directory not found: {path}"
+  },
+  "ui.model.runtime.missingServer": {
+    "zh-CN": "未检测到包含 llama-server.exe 的版本目录。",
+    "en-US": "No version directory containing llama-server.exe was found."
+  },
+  "ui.model.runtime.unselected": {
+    "zh-CN": "请选择一个 llama.cpp 版本。",
+    "en-US": "Select a llama.cpp version."
+  },
+  "ui.model.runtime.selectionMissing": {
+    "zh-CN": "已选择的版本 {name} 不存在，请重新选择。",
+    "en-US": "The selected version {name} no longer exists. Select another version."
+  },
+  "ui.model.runtime.available": {
+    "zh-CN": "可用",
+    "en-US": "Available"
+  },
+  "ui.model.runtime.unknown": {
+    "zh-CN": "状态：{status}",
+    "en-US": "Status: {status}"
+  },
+  "ui.model.inventory": {
+    "zh-CN": "{models} / {files}",
+    "en-US": "{models} / {files}"
+  },
+  "ui.metadata.readingUnknown": {
+    "zh-CN": "正在读取任务状态",
+    "en-US": "Reading task status"
   }
 }

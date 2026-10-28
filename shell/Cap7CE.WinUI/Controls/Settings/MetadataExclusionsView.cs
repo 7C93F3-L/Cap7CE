@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Models;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -20,7 +21,7 @@ internal sealed class MetadataExclusionsView : UserControl
     public MetadataExclusionsView(ShellServices services,Window owner)
     {
         this.services=services;this.owner=owner;rows.Spacing=4;
-        AddButton=Ui.Button("添加排除目录",()=>Run(AddAsync));
+        AddButton=L.Button("ui.exclusions.add",()=>Run(AddAsync));
         Margin=new(0,8,0,12);Content=rows;Render();
     }
     public MetadataExclusion[] Snapshot()=>choices.Select(item=>item.Choice with{Enabled=item.Check.IsChecked==true}).ToArray();
@@ -34,6 +35,7 @@ internal sealed class MetadataExclusionsView : UserControl
         foreach(var item in items) {
             var check=new CheckBox {IsChecked=item.Enabled,HorizontalAlignment=HorizontalAlignment.Stretch,HorizontalContentAlignment=HorizontalAlignment.Stretch,MinWidth=0,
                 Content=new TextBlock {Text=item.Label,TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center}};
+            if(item.BuiltIn)L.Bind((TextBlock)check.Content,TextBlock.TextProperty,"ui.exclusions.builtIn."+item.Key);
             ToolTipService.SetToolTip(check,item.Path);choices.Add((item,check));
             check.Click+=(_,_)=>Run(()=>services.Preferences.UpdateAsync(value=>value with{
                 MetadataExclusionChoices=new(value.MetadataExclusionChoices){[item.Key]=check.IsChecked==true}}));
@@ -42,7 +44,7 @@ internal sealed class MetadataExclusionsView : UserControl
             var pathText=Ui.Text(item.Path,true);pathText.TextWrapping=TextWrapping.NoWrap;pathText.TextTrimming=TextTrimming.CharacterEllipsis;pathText.VerticalAlignment=VerticalAlignment.Center;
             ToolTipService.SetToolTip(pathText,item.Path);Grid.SetColumn(pathText,1);row.Children.Add(pathText);
             if(!item.BuiltIn) {
-                var remove=Ui.Button("移除",()=>Run(async()=>{
+                var remove=L.Button("ui.exclusions.remove",()=>Run(async()=>{
                     await services.Preferences.UpdateAsync(value=>{
                         var selected=new Dictionary<string,bool>(value.MetadataExclusionChoices);selected.Remove(item.Key);
                         return value with{MetadataCustomExclusions=value.MetadataCustomExclusions.Where(path=>MetadataExclusions.CustomKey(path)!=item.Key).ToArray(),MetadataExclusionChoices=selected};
@@ -64,7 +66,7 @@ internal sealed class MetadataExclusionsView : UserControl
         if(await picker.PickSingleFolderAsync() is not {} folder)return;
         var path=Path.GetFullPath(folder.Path);var key=MetadataExclusions.CustomKey(path);FileAccessGuard.RejectLinks(path);
         if(choices.Any(item=>!string.IsNullOrEmpty(item.Choice.Path)&&MetadataExclusions.CustomKey(item.Choice.Path)==key))return;
-        if(services.Preferences.Current.MetadataCustomExclusions.Length>=32)throw new IOException("最多添加32个排除目录。");
+        if(services.Preferences.Current.MetadataCustomExclusions.Length>=32)throw new IOException("metadata-exclusions-limit");
         await services.Preferences.UpdateAsync(value=>value with{MetadataCustomExclusions=[..value.MetadataCustomExclusions,path],MetadataExclusionChoices=new(value.MetadataExclusionChoices){[key]=true}});Render();
     }
 }

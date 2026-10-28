@@ -25,6 +25,16 @@ module.exports = root => {
   const filterBar = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Controls/FilterBar.cs'), 'utf8');
   const sizeKeys = filterBar.match(/var sizeKeys=new\[\]\{([^}]+)\}/)[1].match(/"[^"]+"/g);
   assert.equal(sizeKeys.length, sizePresets.length, 'every size preset must have a language key');
+  const maintenance = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization/MaintenanceText.cs'), 'utf8');
+  assert(!/Microsoft\.UI|Services|RequestAsync|File\.|Directory\.|Timer|Task\.Delay/.test(maintenance), 'task text formatting must stay free of UI, IO and service actions');
+  const volumeStates = fs.readFileSync(path.join(root, 'core/src/Cap7CE.Core.Catalog/CatalogVolumeStateMachine.cs'), 'utf8').split('ToStorage')[1].split('};')[0];
+  const volumeText = maintenance.split('VolumeStateKey')[1].split('};')[0];
+  for (const match of volumeStates.matchAll(/=> "([^"]+)"/g)) assert(volumeText.includes(`"${match[1]}"=>`), `Missing volume state translation: ${match[1]}`);
+  const runtimeStates = fs.readFileSync(path.join(root, 'src/shared/modelSettingsTypes.d.ts'), 'utf8').split('export type LlamaRuntimeStatus =')[1].split(';')[0];
+  const runtimeText = maintenance.split('RuntimeKey')[1];
+  for (const match of runtimeStates.matchAll(/"([^"]+)"/g)) assert(runtimeText.includes(`"${match[1]}"=>`), `Missing runtime state translation: ${match[1]}`);
+  const exclusions = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Models/MetadataExclusions.cs'), 'utf8').split('folders=[')[1].split('];')[0];
+  for (const match of exclusions.matchAll(/\("([^"]+)",/g)) assert(messages[`ui.exclusions.builtIn.${match[1]}`], `Missing built-in exclusion label: ${match[1]}`);
   const generated = name => JSON.parse(fs.readFileSync(path.join(root, 'shell/artifacts/assets', name), 'utf8'));
   for (const group of generated('filter-advanced-options.json')) {
     assert(messages[`ui.facts.advanced.${group.id}.title`], `Missing advanced group: ${group.id}`);

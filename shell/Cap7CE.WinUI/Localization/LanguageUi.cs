@@ -11,6 +11,8 @@ internal static class LanguageUi
         =>LanguageBinding.Attach(target,property,AppLanguage.Session,key,parameters);
     public static void Literal(FrameworkElement target,DependencyProperty property,object? value)
     {LanguageBinding.Clear(target,property);target.SetValue(property,value);}
+    public static void Computed(TextBlock target,Func<string> format)
+        =>Bind(target,TextBlock.TextProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",format()}});
     public static void Label(FrameworkElement target,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
     {Bind(target,ToolTipService.ToolTipProperty,key,parameters);Bind(target,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,key,parameters);}
     public static MenuFlyoutItem MenuItem(string key,Action action,string? glyph=null,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)

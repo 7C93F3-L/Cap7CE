@@ -1,6 +1,6 @@
 namespace Cap7CE.WinUI.Models;
 
-internal sealed record DrivePresentation(string Name,string Capacity,bool IsSystem)
+internal sealed record DrivePresentation(string Name,string Capacity,bool IsSystem,bool UsesDefaultName=false,bool CapacityAvailable=true)
 {
     public static DrivePresentation Read(string path)
     {
@@ -13,9 +13,9 @@ internal sealed record DrivePresentation(string Name,string Capacity,bool IsSyst
             var drive=new DriveInfo(root);var label=drive.VolumeLabel;
             var size=(double)drive.TotalSize;var unit="GB";size/=1024d*1024*1024;
             if(size>=1024){size/=1024;unit="TB";}
-            return new($"{(string.IsNullOrWhiteSpace(label)?"本地磁盘":label)} ({letter})",$"{size:0.#} {unit}",system);
+            return new($"{(string.IsNullOrWhiteSpace(label)?"本地磁盘":label)} ({letter})",$"{size:0.#} {unit}",system,string.IsNullOrWhiteSpace(label));
         }
         catch(Exception error) when(error is IOException or UnauthorizedAccessException or ArgumentException)
-        {return new($"本地磁盘 ({letter})","不可用",system);}
+        {return new($"本地磁盘 ({letter})","不可用",system,true,false);}
     }
 }

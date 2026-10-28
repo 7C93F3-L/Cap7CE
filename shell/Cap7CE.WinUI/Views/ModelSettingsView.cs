@@ -1,4 +1,5 @@
 using System.Text.Json;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Controls;
 using Microsoft.UI.Xaml.Controls;
@@ -11,24 +12,23 @@ internal sealed class ModelSettingsView
     private readonly Action<string> notice;
     private readonly ComboBox runtimes=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch,DisplayMemberPath="Name"},
         models=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch,DisplayMemberPath="Name"};
-    private readonly TextBlock fileState=Ui.Text(T("common.notDetected"),true),address=Ui.Text(T("common.stopped"),true),
-        runtimeDirectory=Ui.Text(T("common.notDetected"),true),modelDirectory=Ui.Text(T("common.notDetected"),true),inventory=Ui.Text("0 / 0",true);
+    private readonly TextBlock fileState=L.Text("common.notDetected",true),address=L.Text("common.stopped",true),
+        runtimeDirectory=L.Text("common.notDetected",true),modelDirectory=L.Text("common.notDetected",true),inventory=L.Text("ui.model.inventory",true,()=>new Dictionary<string,object?>{{"models",0},{"files",0}});
     private readonly List<Button> buttons=[];
     private readonly Button runtimeToggle;
     private bool active,starting,syncing;
     public UIElement RuntimeSettings {get;}
     public UIElement ModelSettings {get;}
     public UIElement RuntimeInfo {get;}
-    private static string T(string key)=>SettingsReference.Text(key);
     private object Context=>services.ModelContext;
     public ModelSettingsView(ShellServices services,Action<string> notice)
     {
         this.services=services;this.notice=notice;
-        runtimes.PlaceholderText=T("settings.selectVersion");models.PlaceholderText=T("settings.selectVisionModel");
-        runtimeToggle=Action(T("common.start"),()=>RuntimeAsync(active?"runtime.stop":"runtime.start","manual"));
-        var runtimeActions=Ui.Row(runtimeToggle,Action(T("common.refresh"),RefreshAsync));
+        L.Bind(runtimes,ComboBox.PlaceholderTextProperty,"settings.selectVersion");L.Bind(models,ComboBox.PlaceholderTextProperty,"settings.selectVisionModel");
+        runtimeToggle=Action("common.start",()=>RuntimeAsync(active?"runtime.stop":"runtime.start","manual"));
+        var runtimeActions=Ui.Row(runtimeToggle,Action("common.refresh",RefreshAsync));
         runtimeActions.HorizontalAlignment=HorizontalAlignment.Right;
-        var modelRefresh=Action(T("common.refresh"),RefreshAsync);modelRefresh.HorizontalAlignment=HorizontalAlignment.Right;
+        var modelRefresh=Action("common.refresh",RefreshAsync);modelRefresh.HorizontalAlignment=HorizontalAlignment.Right;
         RuntimeSettings=Ui.Column(runtimes,runtimeActions);
         ModelSettings=Ui.Column(models,modelRefresh);
         runtimes.SelectionChanged+=(_,_)=>{if(!syncing&&runtimes.SelectedItem is Choice choice)Run(()=>SelectAsync("runtime.select",choice.Id));};
@@ -36,7 +36,7 @@ internal sealed class ModelSettingsView
         var info=Ui.Column();
         foreach(var (key,value) in new[]{("settings.runtimeFileStatus",fileState),("settings.serviceAddress",address),
             ("settings.runtimeDirectory",runtimeDirectory),("settings.modelDirectory",modelDirectory),("settings.modelInventory",inventory)}) {
-            value.IsTextSelectionEnabled=true;info.Children.Add(new SettingsFieldRow(T(key),value));
+            value.IsTextSelectionEnabled=true;info.Children.Add(new SettingsFieldRow(key,value,localized:true));
         }
         RuntimeInfo=info;
         var loaded=false;((FrameworkElement)RuntimeSettings).Loaded+=(_,_)=>{if(!loaded){loaded=true;Run(RefreshAsync);}};
@@ -52,9 +52,12 @@ internal sealed class ModelSettingsView
             runtimes.SelectedItem=runtimes.Items.Cast<Choice>().FirstOrDefault(x=>x.Id==runtime.GetProperty("selectedVersion").GetString());
             models.SelectedItem=models.Items.Cast<Choice>().FirstOrDefault(x=>x.Id==model.GetProperty("selectedModelId").GetString());
         } finally{syncing=false;}
-        fileState.Text=runtime.TryGetProperty("message",out var message)?message.GetString()??"":runtime.GetProperty("status").GetString();
-        runtimeDirectory.Text=runtime.GetProperty("runtimeRoot").GetString();modelDirectory.Text=model.GetProperty("modelsRoot").GetString();
-        inventory.Text=$"{models.Items.Count} / {model.GetProperty("files").GetArrayLength()}";
+        var runtimeStatus=runtime.GetProperty("status").GetString()??"";
+        var runtimeRoot=runtime.GetProperty("runtimeRoot").GetString();var selectedVersion=runtime.GetProperty("selectedVersion").GetString();
+        var detail=runtime.TryGetProperty("message",out var message)?message.GetString()??runtimeStatus:runtimeStatus;
+        L.Bind(fileState,TextBlock.TextProperty,Cap7CE.WinUI.Localization.MaintenanceText.RuntimeKey(runtimeStatus),()=>new Dictionary<string,object?>{{"path",runtimeRoot},{"name",selectedVersion},{"status",detail}});
+        L.Literal(runtimeDirectory,TextBlock.TextProperty,runtimeRoot);L.Literal(modelDirectory,TextBlock.TextProperty,model.GetProperty("modelsRoot").GetString());
+        var fileCount=model.GetProperty("files").GetArrayLength();L.Bind(inventory,TextBlock.TextProperty,"ui.model.inventory",()=>new Dictionary<string,object?>{{"models",models.Items.Count},{"files",fileCount}});
         await RuntimeAsync("runtime.state",null);
     }
     private async Task SelectAsync(string operation,string id)
@@ -63,11 +66,10 @@ internal sealed class ModelSettingsView
     {
         var reply=(await services.Models.RequestAsync(operation,[Context,value])).GetProperty("state");
         starting=reply.GetProperty("status").GetString()=="starting";active=starting||reply.GetProperty("status").GetString()=="running";
-        runtimeToggle.Content=T(active?"common.stop":"common.start");
-        address.Text=reply.TryGetProperty("host",out var host)&&reply.TryGetProperty("port",out var port)&&port.ValueKind==JsonValueKind.Number
-            ?$"{host.GetString()}:{port.GetInt32()}":T("common.stopped");
+        L.Bind(runtimeToggle,Button.ContentProperty,active?"common.stop":"common.start");
+        if(reply.TryGetProperty("host",out var host)&&reply.TryGetProperty("port",out var port)&&port.ValueKind==JsonValueKind.Number)L.Literal(address,TextBlock.TextProperty,$"{host.GetString()}:{port.GetInt32()}");else L.Bind(address,TextBlock.TextProperty,"common.stopped");
     }
-    private Button Action(string label,Func<Task> work){var button=Ui.Button(label,()=>Run(work));buttons.Add(button);return button;}
+    private Button Action(string label,Func<Task> work){var button=L.Button(label,()=>Run(work));buttons.Add(button);return button;}
     private async void Run(Func<Task> work)
     {
         foreach(var button in buttons)button.IsEnabled=false;runtimes.IsEnabled=models.IsEnabled=false;

@@ -1,4 +1,6 @@
 using Cap7CE.Core.Protocol;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,8 +12,10 @@ internal sealed class IndexMaintenanceView : UserControl
     private readonly ShellServices services;
     private readonly StackPanel volumes=Ui.Column();
     private readonly ContentControl volumeHost=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch};
-    private readonly TextBlock status=Ui.Text("读取索引状态…",true);
+    private readonly TextBlock status=L.Text("ui.index.reading",true);
     private readonly List<Button> buttons=[];
+    private Func<string> statusText=()=>AppLanguage.Text("ui.index.reading");
+    private void ShowStatus(Func<string> text){statusText=text;L.Computed(status,text);}
     private CoreCatalogTaskStatus[] tasks=[];
     private readonly Controllers.VisibleTaskMonitor monitor=new();
     private readonly HashSet<string> started=[];
@@ -27,38 +31,38 @@ internal sealed class IndexMaintenanceView : UserControl
         volumeHost.Content=volumes;
         volumes.Spacing=4;
         volumeHost.Margin=new(0,8,0,12);
-        var primary=Action("建立 / 更新",()=>BuildAsync(false));
+        var primary=Action("ui.index.build",()=>BuildAsync(false));
         primary.Style=(Style)Application.Current.Resources["AccentButtonStyle"];
         primary.HorizontalAlignment=HorizontalAlignment.Right;
-        var tools=Ui.Row(Action("刷新",DiscoverAsync),Action("停止",CancelAsync),Action("重建…",()=>BuildAsync(true)));
+        var tools=Ui.Row(Action("ui.index.refresh",DiscoverAsync),Action("ui.index.stop",CancelAsync),Action("ui.index.rebuild",()=>BuildAsync(true)));
         var scroll=new ScrollViewer {Content=tools,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled};
         var actions=new Grid {ColumnSpacing=24,RowSpacing=10};
         actions.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});actions.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         actions.Children.Add(scroll);Grid.SetColumn(primary,1);actions.Children.Add(primary);
         actions.SizeChanged+=(_,_)=>{var narrow=actions.ActualWidth<460;Grid.SetRow(primary,narrow?1:0);Grid.SetColumn(primary,narrow?0:1);};
         actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
-        Content=Ui.Column(Ui.Text("按从上到下的顺序处理所选磁盘。",true),volumeHost,actions,status);
+        Content=Ui.Column(L.Text("ui.index.orderHint",true),volumeHost,actions,status);
         Loaded+=(_,_)=>Run(ReadAsync);
         Unloaded+=(_,_)=>monitor.Dispose();
     }
-    private CoreConnection Core=>services.Core??throw new IOException("Core尚未连接，请到“诊断 → 服务维护”中重新连接。");
+    private CoreConnection Core=>services.Core??throw new IOException("index-ui-disconnected");
     private Button Action(string title,Func<Task> action)
-    {var button=Ui.Button(title,()=>Run(action));buttons.Add(button);return button;}
+    {var button=L.Button(title,()=>Run(action));buttons.Add(button);return button;}
     private async void Run(Func<Task> action)
     {
         foreach(var b in buttons)b.IsEnabled=false;volumeHost.IsEnabled=false;
-        try{await action();}catch(Exception e){status.Text=e.Message+"\n索引服务未安装或未授权时，请先完成Reader服务安装；不要以管理员身份运行整个界面。";}
+        try{await action();}catch(Exception e){var message=e.Message;ShowStatus(()=>AppLanguage.Text("ui.index.actionFailed",new Dictionary<string,object?>{{"error",MaintenanceText.Error(message,AppLanguage.Session)}}));}
         finally{foreach(var b in buttons)b.IsEnabled=true;volumeHost.IsEnabled=true;}
     }
     private async Task DiscoverAsync()
     {
-        if(!Core.Supports(CoreOperations.VolumeList))throw new IOException("此会话为隔离查询模式，不提供索引维护。");
+        if(!Core.Supports(CoreOperations.VolumeList))throw new IOException("index-ui-isolated");
         await Core.RequestAsync<VolumeListResponse>(CoreOperations.VolumeList,new{},deadlineMs:30000);await ReadAsync();
     }
     private async Task ReadAsync()
     {
         await ReadSnapshotAsync(true);
-        if(tasks.Any(t=>t.State=="running"))monitor.Start(async token=>{await ReadSnapshotAsync(false,token);return tasks.Any(t=>t.State=="running");},e=>status.Text=e.Message);
+        if(tasks.Any(t=>t.State=="running"))monitor.Start(async token=>{await ReadSnapshotAsync(false,token);return tasks.Any(t=>t.State=="running");},e=>{var message=e.Message;ShowStatus(()=>message);});
     }
     private async Task ReadSnapshotAsync(bool updateVolumes,CancellationToken token=default)
     {
@@ -82,21 +86,22 @@ internal sealed class IndexMaintenanceView : UserControl
                 row.RowDefinitions.Add(new(){Height=GridLength.Auto});
                 var drive=Models.DrivePresentation.Read(item.DisplayName);
                 var choice=new CheckBox {Content=drive.Name,IsChecked=selection.TryGetValue(item.VolumeId,out var chosen)?chosen:drive.IsSystem||item.Selected,Tag=item.VolumeId};
-                choice.Content=new TextBlock {Text=drive.Name,TextTrimming=TextTrimming.CharacterEllipsis};
+                var caption=new TextBlock{Text=drive.Name,TextTrimming=TextTrimming.CharacterEllipsis};choice.Content=caption;
+                if(drive.UsesDefaultName)L.Bind(caption,TextBlock.TextProperty,"ui.drive.defaultName",()=>new Dictionary<string,object?>{{"drive",(Path.GetPathRoot(item.DisplayName)??item.DisplayName).TrimEnd('\\','/')}});
                 choice.VerticalAlignment=VerticalAlignment.Center;
-                var capacity=Ui.Text($"容量  {drive.Capacity}",true);
-                var count=Ui.Text($"索引项  {item.Processed:N0}",true);
+                var capacity=L.Text("ui.index.capacity",true,()=>new Dictionary<string,object?>{{"size",drive.CapacityAvailable?drive.Capacity:AppLanguage.Text("ui.drive.unavailable")}});
+                var count=L.Text("ui.index.items",true,()=>new Dictionary<string,object?>{{"count",item.Processed}});
                 capacity.VerticalAlignment=count.VerticalAlignment=VerticalAlignment.Center;
                 Grid.SetColumn(capacity,1);Grid.SetColumn(count,2);
                 row.Children.Add(capacity);row.Children.Add(count);
-                ToolTipService.SetToolTip(choice,$"{item.FileSystem} · {item.State}");
+                L.Bind(choice,ToolTipService.ToolTipProperty,"ui.index.volumeInfo",()=>new Dictionary<string,object?>{{"fileSystem",item.FileSystem},{"state",AppLanguage.Text(MaintenanceText.VolumeStateKey(item.State))}});
                 choice.Click+=(_,_)=>Run(async()=>{
                     foreach(var entry in Choices)selection[(string)entry.Tag]=entry.IsChecked==true;
                     await services.Preferences.SaveAsync(services.Preferences.Current with{IndexVolumeSelection=new(selection)});
                 });
                 row.Children.Add(choice);
                 var up=Ui.Button("↑",()=>Move(row,-1));var down=Ui.Button("↓",()=>Move(row,1));
-                ToolTipService.SetToolTip(up,"提前索引");ToolTipService.SetToolTip(down,"延后索引");
+                L.Label(up,"ui.index.earlier");L.Label(down,"ui.index.later");
                 up.IsEnabled=item!=items[0];down.IsEnabled=item!=items[^1];
                 var controls=Ui.Row(up,down);controls.VerticalAlignment=VerticalAlignment.Center;
                 Grid.SetColumn(controls,3);row.Children.Add(controls);
@@ -113,25 +118,28 @@ internal sealed class IndexMaintenanceView : UserControl
                 volumes.Children.Add(row);
             }
         }
-        foreach(var task in tasks.Where(t=>t.State!="running"))if(started.Remove(task.TaskId))services.Notify("索引任务："+task.State);
-        status.Text=string.Join("\n",snapshot.Tasks.Select(t=>$"{t.Kind}：{t.State}"+(t.ErrorCode is null?"":" · "+t.ErrorCode)));
-        var unavailable=snapshot.Volumes.Where(v=>v.Selected&&!v.Queryable).Select(v=>v.DisplayName).ToArray();
-        if(unavailable.Length>0)status.Text+=(status.Text.Length>0?"\n":"")+string.Join("、",unavailable)+" 索引未就绪；可选择相应磁盘，点击“建立 / 更新”。";
-        else if(status.Text.Length==0)status.Text=snapshot.Volumes.Count==0?"暂无磁盘，请刷新。":"索引就绪";
+        foreach(var task in tasks.Where(t=>t.State!="running"))if(started.Remove(task.TaskId))services.Notify(AppLanguage.Text("ui.index.taskNotice",new Dictionary<string,object?>{{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(task.State))}}));
+        ShowStatus(()=>{
+            var lines=snapshot.Tasks.Select(t=>AppLanguage.Text("ui.index.taskStatus",new Dictionary<string,object?>{
+                {"kind",AppLanguage.Text(MaintenanceText.TaskKindKey(t.Kind))},{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(t.State))}})+(t.ErrorCode is null?"":" · "+t.ErrorCode)).ToList();
+            var unavailable=snapshot.Volumes.Where(v=>v.Selected&&!v.Queryable).Select(v=>v.DisplayName).ToArray();
+            if(unavailable.Length>0)lines.Add(AppLanguage.Text("ui.index.notReady",new Dictionary<string,object?>{{"drives",string.Join(AppLanguage.Text("ui.common.listSeparator"),unavailable)}}));
+            else if(lines.Count==0)lines.Add(AppLanguage.Text(snapshot.Volumes.Count==0?"ui.index.noVolumes":"ui.index.ready"));
+            return string.Join("\n",lines);
+        });
         await services.RefreshVolumesAsync();
     }
     private async Task BuildAsync(bool rebuild)
     {
         var ids=Choices.Where(b=>b.IsChecked==true).Select(b=>(string)b.Tag).ToArray();
-        if(ids.Length==0)throw new IOException("请先选择磁盘。");
-        var dialog=new ContentDialog {XamlRoot=XamlRoot,Title=rebuild?"重建索引":"建立/更新索引",
-            Content=rebuild?"将重新读取所选磁盘并替换其索引。原文件不变；已有索引较大时可能耗时。":"将读取所选磁盘的文件名与目录信息；不会自动提取文件内容。",
-            PrimaryButtonText="继续",CloseButtonText="取消",DefaultButton=rebuild?ContentDialogButton.Close:ContentDialogButton.Primary};
+        if(ids.Length==0)throw new IOException("index-ui-no-volumes");
+        var dialog=L.Dialog(XamlRoot,rebuild?"ui.index.rebuildTitle":"ui.index.buildTitle",rebuild?"ui.index.rebuildDescription":"ui.index.buildDescription","ui.index.continue");
+        dialog.DefaultButton=rebuild?ContentDialogButton.Close:ContentDialogButton.Primary;
         if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
         await Core.RequestAsync<VolumeSelectionResponse>(CoreOperations.VolumeSelection,new VolumeSelectionRequest(ids));
         var reply=await Core.RequestAsync<CatalogBuildResponse>(rebuild?CoreOperations.CatalogRebuild:CoreOperations.CatalogBuild,new CatalogBuildRequest(ids));
         if(reply.Accepted)started.Add(reply.TaskId);
-        await ReadAsync();status.Text=$"任务已接受：{reply.TaskId}\n"+status.Text;
+        await ReadAsync();var previous=statusText;ShowStatus(()=>AppLanguage.Text("ui.index.accepted",new Dictionary<string,object?>{{"id",reply.TaskId}})+"\n"+previous());
     }
     private async Task CancelAsync()
     {
