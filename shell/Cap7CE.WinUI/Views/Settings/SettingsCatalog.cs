@@ -33,7 +33,6 @@ internal sealed class SettingsCatalog
     private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false,string? descriptionOverride=null)
         =>Entries.Add(new(category,T("stableSettings.section."+section),T(title),descriptionOverride??T(description),create,expanded));
     private static UIElement Disabled(string key)=>new Button {Content=T(key),IsEnabled=false};
-    private static UIElement DisabledToggle()=>new ToggleSwitch {IsEnabled=false,OnContent=T("settings.enabled"),OffContent=T("settings.disabled")};
     private static UIElement DisabledChoice(string[] labels)=>new ComboBox {ItemsSource=labels,SelectedIndex=0,IsEnabled=false};
     private void General()
     {
@@ -41,7 +40,6 @@ internal sealed class SettingsCatalog
         Mainline("通用","basics","settings.launchAtLogin","stableSettings.desc.launch",()=>Toggle(()=>SystemSettings.LaunchAtLogin,value=>{SystemSettings.LaunchAtLogin=value;return Task.CompletedTask;}));
         Mainline("通用","basics","settings.systemNotifications","stableSettings.desc.notifications",()=>Toggle(()=>services.Preferences.Current.Notifications,async value=>{services.Notifications.Configure(value);await services.Preferences.SaveAsync(services.Preferences.Current with{Notifications=value});}));
         Mainline("通用","windows","settings.edgeCollapse","stableSettings.desc.edgeCollapse",()=>DisabledChoice([T("settings.standardWindowMode"),T("settings.edgeCollapseMode")]));
-        Mainline("通用","windows","settings.standbyLine","stableSettings.desc.line",DisabledToggle);
     }
     private void Appearance()
     {

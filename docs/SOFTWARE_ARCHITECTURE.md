@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+新版 WinUI 不支持 line，且原生宿主本身没有 line 窗口、IPC 或快捷键实现。SettingsCatalog 不再展示 line 开关，SettingsShortcutReference 不再列出 hideToLine；winui-settings-resources 在生成原生资源时移除 line 专用文案、hideToLine 绑定、line: 与 win:line 帮助及过滤后的空分组。winui-shell-boundary-check 检查原生源码、生成资源和 Alt+1 注册，阻止该功能回归；原生设置与旧版卡片的对照明确排除退役项。旧 Electron 的实现、共享指令注册表和磁盘上的旧偏好保留，等待后续整体退役，不属于当前 WinUI 功能范围。
+
 SettingsWindow导航保留原生折叠按钮及非空PaneTitle，仅通过SettingsNavigationAppearance隐藏原生PaneTitleTextBlock的显示和命中，不破坏标题测量；空PaneTitle在当前WinUI配置下会导致打开设置退出。关于页内容区独立底部行承载SettingsSignature，不随正文滚动或遮挡内容；仅进入关于页时以普通Grid和原生控件组合创建，不加载自定义XAML根组件，局部失败记录日志并保留设置窗口。签名原始SVG路径由设置资源生成器转换为单色原生几何，颜色跟随主题。SettingsSignature沿用Echo七连击/850ms间隔，懒加载既有phase7.dat，通过SettingsOriginAsset按原AES-GCM格式认证并仅在内存生成BitmapImage；原生ContentDialog承载图片及中英文说明，支持关闭按钮/Esc，窗口卸载时关闭，无网络或后台计时器。
 
 目录同步增量通知通过可选catalog.awaitScopedChanges能力提供变更范围，旧catalog.awaitChanges保留五字段响应供Electron兼容。CatalogChangePaths在既有维护发布事务内对本批身份做有界主键查询，合并提交前后目录路径及完整文件入口（含硬链接），不访问源文件、不增加索引或迁移；缺失路径、延迟入口或超限回退整卷。CatalogChangeSignal保留32条有界事件并按客户端序列合并，修订间隙、历史丢失及未知全局变化回退全局，生命周期单独标为无数据变化；合并路径有总长度上限。CatalogJournalMonitor仍按原USN等待/页处理调度，无延时降频。WinUI仅对与当前范围相交的旧/新路径失效（含祖先目录移动/删除），已知卷的精确文件通知直接复用缓存卷映射，不再请求catalog.status或无关元数据任务状态；未知卷、全局及生命周期状态继续走原状态读取。手动关键词和属性提取完成仍走全局更新，旧Core自动退回原卷级判断。

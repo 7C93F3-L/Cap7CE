@@ -10,9 +10,9 @@ internal static class SettingsShortcutReference
     {
         var controls=Ui.Row(toggle??DisabledToggle(),new Button {Content=SettingsReference.Text("common.restoreDefault"),IsEnabled=false});
         var column=Ui.Column();
-        foreach(var id in new[]{"focusMainSearch","hideToLine","restoreDefaultWindow","toggleWindowMode","openSettings","cycleDirectory"})
+        foreach(var id in new[]{"focusMainSearch","restoreDefaultWindow","toggleWindowMode","openSettings","cycleDirectory"})
             {var row=ShortcutRow(SettingsReference.Text("shortcut."+id),SettingsReference.Shortcut(id));
-            if(id is "hideToLine" or "toggleWindowMode"){row.Opacity=0.4;ToolTipService.SetToolTip(row,"此窗口动作尚未迁入WinUI，不注册其快捷键。");}column.Children.Add(row);}
+            if(id is "toggleWindowMode"){row.Opacity=0.4;ToolTipService.SetToolTip(row,"此窗口动作尚未迁入WinUI，不注册其快捷键。");}column.Children.Add(row);}
         return new SettingsSection(controls,column);
     }
     public static UIElement Commands()
