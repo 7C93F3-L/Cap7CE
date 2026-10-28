@@ -219,7 +219,6 @@ public sealed partial class MainWindow : Window
         var selection=results.Selection;if(selection.Count==0)return;
         if(control&&e.Key==VirtualKey.C){e.Handled=true;commands.Run(()=>FileCommands.CopyFilesAsync(selection));}
         else if(e.Key==VirtualKey.Space){e.Handled=true;commands.Run(()=>{commands.Preview(selection[0]);return Task.CompletedTask;});}
-        else if(e.Key==VirtualKey.Enter){e.Handled=true;commands.Run(()=>{commands.Open(selection[0]);return Task.CompletedTask;});}
         else if(e.Key==VirtualKey.Delete&&selection.All(i=>i.Entry.FileReference is not null)){e.Handled=true;commands.Run(()=>commands.DeleteAsync(selection));}
     }
     private async void OnClosed(object sender,WindowEventArgs e)
