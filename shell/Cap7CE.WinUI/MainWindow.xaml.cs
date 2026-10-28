@@ -97,6 +97,7 @@ public sealed partial class MainWindow : Window
         edgeCollapse=new(this,Root,()=>preview is not null||settings is not null||ResultDrag.IsActive,Notice);
         ResultDrag.Changed+=edgeCollapse.Wake;
         services.Notifications.Invoked+=NotificationInvoked;
+        services.TaskNotices.IsObserved=kind=>!closed&&(!edgeCollapse.IsCollapsed&&NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(this))||(kind!="ai"&&settings?.IsViewingMaintenance==true));
         services.Preferences.Changed+=ApplyPreferences;
         AppWindow.Changed+=(_,_)=>{
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;

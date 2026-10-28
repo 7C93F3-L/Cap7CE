@@ -18,7 +18,6 @@ internal sealed class IndexMaintenanceView : UserControl
     private void ShowStatus(Func<string> text){statusText=text;L.Computed(status,text);}
     private CoreCatalogTaskStatus[] tasks=[];
     private readonly Controllers.VisibleTaskMonitor monitor=new();
-    private readonly HashSet<string> started=[];
     private readonly Dictionary<string,bool> selection=[];
     private readonly List<string> order=[];
     private IEnumerable<CheckBox> Choices=>volumes.Children.OfType<Grid>().Select(row=>row.Children.OfType<CheckBox>().Single());
@@ -118,7 +117,6 @@ internal sealed class IndexMaintenanceView : UserControl
                 volumes.Children.Add(row);
             }
         }
-        foreach(var task in tasks.Where(t=>t.State!="running"))if(started.Remove(task.TaskId))services.Notify(UiMessage.Key("ui.index.taskNotice",new Dictionary<string,object?>{{"state",UiMessage.Key(MaintenanceText.TaskStateKey(task.State))}}));
         ShowStatus(()=>{
             var lines=snapshot.Tasks.Select(t=>AppLanguage.Text("ui.index.taskStatus",new Dictionary<string,object?>{
                 {"kind",AppLanguage.Text(MaintenanceText.TaskKindKey(t.Kind))},{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(t.State))}})+(t.ErrorCode is null?"":" · "+t.ErrorCode)).ToList();
@@ -138,13 +136,15 @@ internal sealed class IndexMaintenanceView : UserControl
         if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
         await Core.RequestAsync<VolumeSelectionResponse>(CoreOperations.VolumeSelection,new VolumeSelectionRequest(ids));
         var reply=await Core.RequestAsync<CatalogBuildResponse>(rebuild?CoreOperations.CatalogRebuild:CoreOperations.CatalogBuild,new CatalogBuildRequest(ids));
-        if(reply.Accepted)started.Add(reply.TaskId);
+        if(reply.Accepted)services.TaskNotices.Begin("index",reply.TaskId);
         await ReadAsync();var previous=statusText;ShowStatus(()=>AppLanguage.Text("ui.index.accepted",new Dictionary<string,object?>{{"id",reply.TaskId}})+"\n"+previous());
     }
     private async Task CancelAsync()
     {
-        foreach(var task in tasks.Where(t=>t.State is not ("completed" or "cancelled" or "failed")))
+        foreach(var task in tasks.Where(t=>t.State is not ("completed" or "cancelled" or "failed"))){
+            services.TaskNotices.Forget("index",task.TaskId);
             await Core.RequestAsync<CatalogCancelResponse>(CoreOperations.CatalogCancel,new CatalogCancelRequest(task.TaskId));
+        }
         await ReadAsync();
     }
     private void Move(Grid row,int delta)=>Run(async()=>

@@ -18,11 +18,12 @@ internal sealed class AutoKeywordTasks(ShellServices services):IAsyncDisposable
         if(Busy)throw new UiFailure("ui.error.autoBusy");
         if(source.Count is 0 or >100000)throw new UiFailure("ui.error.autoSelection");
         cancellation?.Dispose();cancellation=new();Busy=true;
+        var notificationId=Guid.NewGuid().ToString("N");services.TaskNotices.Begin("ai",notificationId);
         var language=Localization.AppLanguage.Session.Current;
-        return running=RunAsync(source.ToArray(),language,cancellation.Token);
+        return running=RunAsync(source.ToArray(),language,notificationId,cancellation.Token);
     }
     public void Cancel(){if(Busy){cancellation?.Cancel();Set(State with{DisplayMessage=UiMessage.Key("ui.error.autoCancelling")});}}
-    private async Task RunAsync(IReadOnlyList<AssetItem> source,string language,CancellationToken token)
+    private async Task RunAsync(IReadOnlyList<AssetItem> source,string language,string notificationId,CancellationToken token)
     {
         Set(new("收集文件"));
         try {
@@ -47,7 +48,10 @@ internal sealed class AutoKeywordTasks(ShellServices services):IAsyncDisposable
             Set(State with{Phase="完成"});
         }catch(OperationCanceledException)when(token.IsCancellationRequested){Set(State with{Phase="已取消"});}
         catch(Exception error){Set(State with{Phase="失败",DisplayMessage=Message(error)});}
-        finally{Busy=false;Changed?.Invoke();if(State.Succeeded>0)services.RefreshViews();}
+        finally{
+            Busy=false;Changed?.Invoke();if(State.Succeeded>0)services.RefreshViews();
+            services.TaskNotices.Finish("ai",notificationId,token.IsCancellationRequested||State.Phase=="已取消"?"cancelled":State.Phase=="失败"?"failed":"completed",State.Processed,State.Failed,State.Skipped);
+        }
     }
     private static UiMessage Message(Exception error)=>FailureText.Keyword(error);
     public async ValueTask DisposeAsync(){Cancel();if(running is not null)await running;cancellation?.Dispose();}

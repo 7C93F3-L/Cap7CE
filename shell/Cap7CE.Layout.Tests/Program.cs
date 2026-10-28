@@ -1,6 +1,9 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--task-notification-tests"]) {TaskNotificationChecks.Run();return;}
+TaskNotificationChecks.Run();
+
 if(args is ["--notification-tests"]) {await NotificationChecks.RunAsync();return;}
 await NotificationChecks.RunAsync();
 

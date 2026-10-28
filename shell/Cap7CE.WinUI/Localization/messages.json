@@ -360,8 +360,8 @@
     "en-US": "Start Cap7CE after you sign in to Windows."
   },
   "stableSettings.desc.notifications": {
-    "zh-CN": "显示索引、元数据及缓存维护等任务通知。实际展示受 Windows 通知设置与勿扰模式影响。",
-    "en-US": "Show notifications for indexing, metadata and cache maintenance tasks. Delivery is subject to Windows notification settings and Do not disturb."
+    "zh-CN": "后台长时间索引、属性提取及 AI 关键词任务结束时通知；正在查看进度、短时成功或主动取消时不打扰。实际展示受 Windows 通知设置与勿扰模式影响。",
+    "en-US": "Notify when long-running background indexing, metadata or AI keyword tasks finish. Suppress notices while viewing progress, for quick successes or for user cancellation. Delivery is subject to Windows notification settings and Do not disturb."
   },
   "stableSettings.desc.edgeCollapse": {
     "zh-CN": "标准窗口模式保留窗口最大化与窗口贴靠功能；边缘收起模式会在窗口贴在屏幕边缘时自动隐藏。",
@@ -3411,10 +3411,6 @@
     "zh-CN": "延后索引",
     "en-US": "Index later"
   },
-  "ui.index.taskNotice": {
-    "zh-CN": "索引任务：{state}",
-    "en-US": "Index task: {state}"
-  },
   "ui.index.taskStatus": {
     "zh-CN": "{kind}：{state}",
     "en-US": "{kind}: {state}"
@@ -4255,14 +4251,6 @@
     "zh-CN": "通知发送失败：{error}",
     "en-US": "Unable to send the notification: {error}"
   },
-  "ui.error.metadataCompleted": {
-    "zh-CN": "属性提取完成。",
-    "en-US": "Metadata extraction complete."
-  },
-  "ui.error.cacheCompleted": {
-    "zh-CN": "缓存清理完成。",
-    "en-US": "Cache cleared."
-  },
   "ui.preview.mediaFailed": {
     "zh-CN": "媒体播放失败：{error}",
     "en-US": "Media playback failed: {error}"
@@ -4462,6 +4450,38 @@
   "ui.error.filterResource": {
     "zh-CN": "高级筛选资源无效",
     "en-US": "The advanced filter resources are invalid."
+  },
+  "ui.taskNotifications.summary": {
+    "zh-CN": "{task}：{state}。{details}",
+    "en-US": "{task}: {state}. {details}"
+  },
+  "ui.taskNotifications.counts": {
+    "zh-CN": "已处理 {processed} 项，成功 {succeeded} 项，失败 {failed} 项，跳过 {skipped} 项。",
+    "en-US": "Processed {processed}; succeeded {succeeded}, failed {failed}, skipped {skipped}."
+  },
+  "ui.taskNotifications.index": {
+    "zh-CN": "目录索引",
+    "en-US": "Indexing"
+  },
+  "ui.taskNotifications.metadata": {
+    "zh-CN": "属性提取",
+    "en-US": "Metadata extraction"
+  },
+  "ui.taskNotifications.ai": {
+    "zh-CN": "AI 关键词",
+    "en-US": "AI keywords"
+  },
+  "ui.taskNotifications.completed": {
+    "zh-CN": "已完成",
+    "en-US": "Completed"
+  },
+  "ui.taskNotifications.partial": {
+    "zh-CN": "已完成，部分文件失败",
+    "en-US": "Completed with some failures"
+  },
+  "ui.taskNotifications.failed": {
+    "zh-CN": "任务失败，请打开 Cap7CE 查看详情",
+    "en-US": "Task failed; open Cap7CE for details"
   },
   "ui.notice.notificationsBlocked": {
     "zh-CN": "应用内通知已开启，但 Windows 当前禁止此应用发送通知。请检查 Windows 系统通知设置。",

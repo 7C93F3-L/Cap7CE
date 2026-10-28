@@ -21,6 +21,7 @@ internal sealed class EdgeCollapseController : IDisposable
     private EdgeInsets insets;
     private EdgeRect expanded;
     private bool enabled,pinned,collapsed,userMoving,queued,disposed,awaitingEntry;
+    public bool IsCollapsed=>collapsed||motion.Running;
     public EdgeCollapseController(Window owner,FrameworkElement root,Func<bool> interactionBlocked,Action<UiMessage> report)
     {
         window=owner;blocked=interactionBlocked;notice=report;host=new(owner);registration=new(host.Handle);

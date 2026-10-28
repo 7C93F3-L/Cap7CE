@@ -19,6 +19,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public object ModelContext=>ModelContextFor(Localization.AppLanguage.Session.Current);
     public object ModelContextFor(string language)=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language};
     public NativeNotifications Notifications {get;}=new();
+    public TaskNotifications TaskNotices {get;}
     public NativeHotKeys? Shortcuts {get;set;}
     public event Action<CatalogRefreshImpact>? CatalogChanged;
     public event Action<CatalogStatusResponse>? IndexStatusChanged;
@@ -36,7 +37,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public IReadOnlyList<CoreVolumeStatus> Volumes { get; private set; } = [];
     public ShellServices(string root)
     {
-        Root = root; Visuals = new(root); Favorites = new(root);Metadata=new(this);AutoKeywords=new(this);
+        Root = root;TaskNotices=new(Notify); Visuals = new(root); Favorites = new(root);Metadata=new(this);AutoKeywords=new(this);
         Providers = new(root, "provider-preview.cjs", Path.GetTempPath());
         Models = new(root, "model-runtime.cjs", PreferenceStore.ProductData);
         Office = new(root, "office-preview.cjs", Path.Combine(PreferenceStore.DataRoot, "temp"));
@@ -48,6 +49,7 @@ internal sealed class ShellServices : IAsyncDisposable
         try {
         ObjectDisposedException.ThrowIf(closed, this);
         if(onlyIfDisconnected&&Core?.IsConnected==true)return;
+        TaskNotices.ForgetKind("index");TaskNotices.ForgetKind("metadata");
         changes?.Dispose();changes=null;
         if(Core is not null){await Core.DisposeAsync();Core=null;}
         var database = Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") ?? Path.Combine(
@@ -57,11 +59,11 @@ internal sealed class ShellServices : IAsyncDisposable
         } finally { connection.Release();ConnectionChanged?.Invoke(); }
     }
     public async Task RefreshVolumesAsync()
-    { if (Core is not null) {var status=await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});Volumes=status.Volumes;catalogRevision=status.CatalogRevision;IndexStatusChanged?.Invoke(status);} }
+    { var owner=Core;if(owner is not null){var status=await owner.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});if(closed||!ReferenceEquals(owner,Core))return;Volumes=status.Volumes;catalogRevision=status.CatalogRevision;TaskNotices.IndexStatus(status.Tasks.Select(task=>(task.TaskId,task.State)));IndexStatusChanged?.Invoke(status);} }
     public async Task DisconnectAsync()
     {
         await connection.WaitAsync();
-        try{changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
+        try{TaskNotices.ForgetKind("index");TaskNotices.ForgetKind("metadata");changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
         finally{connection.Release();ConnectionChanged?.Invoke();}
     }
     private async Task OnCatalogChanged(CatalogChangeNotice notice)
@@ -96,13 +98,14 @@ internal sealed class ShellServices : IAsyncDisposable
     public async Task ClearVisualCacheAsync()
     {
         VisualMaintenance?.Invoke(true);
-        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();await Office.RequestAsync("cache.clear",[]);Notify(UiMessage.Key("ui.error.cacheCompleted"));}
+        try{await ReleaseSourcesAsync();await Visuals.ClearAsync();await Office.RequestAsync("cache.clear",[]);}
         finally{VisualMaintenance?.Invoke(false);}
     }
     public void Notify(UiMessage text)
     {try{Notifications.Show(text.Render(AppLanguage.Session),Preferences.Current.Notifications);}catch(Exception error){BackgroundError?.Invoke(UiMessage.Key("ui.error.notificationFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}}
     public async ValueTask DisposeAsync()
     {
+        TaskNotices.Clear();TaskNotices.IsObserved=_=>true;
         await AutoKeywords.DisposeAsync();
         await connection.WaitAsync();
         try { if (closed) return; closed = true;changes?.Dispose(); if (Core is not null) await Core.DisposeAsync(); Core = null; }

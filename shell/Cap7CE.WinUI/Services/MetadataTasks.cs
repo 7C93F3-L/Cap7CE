@@ -10,6 +10,8 @@ internal sealed class MetadataTasks(ShellServices services)
     private CoreConnection? attached;
     private bool started;
     private string? lastPhase;
+    private string? notificationId;
+    private bool multipleDirectories;
     public bool ActiveThisSession=>started&&ReferenceEquals(attached,services.Core);
     public event Action<JsonElement,MetadataTaskStatus>? Changed;
     private readonly SemaphoreSlim gate=new(1);
@@ -22,16 +24,26 @@ internal sealed class MetadataTasks(ShellServices services)
             if(!ReferenceEquals(core,services.Core))throw new UiFailure("ui.error.connectionChanged");
             if(!ReferenceEquals(attached,core)) {
                 Read(await core.RequestAsync<JsonElement>(MetadataBuildOperations.Attach,new{},token));attached=core;started=false;lastPhase=null;
+                if(notificationId is {} old)services.TaskNotices.Forget("metadata",old);notificationId=null;
             }
         var result=Read(await core.RequestAsync<JsonElement>("metadata.build."+operation,body??new{},token,30000));
         token.ThrowIfCancellationRequested();
         if(!ReferenceEquals(core,services.Core))throw new UiFailure("ui.error.metadataConnection");
-        if(operation is "start" or "startDirectory" or "startAllVolumes" or "resume")started=true;
-        if(operation is "pause" or "cancelDirectories" or "shutdown")started=false;
+        if(operation is "start" or "startDirectory" or "startAllVolumes" or "resume"){
+            started=true;if(notificationId is null){multipleDirectories=false;notificationId=Guid.NewGuid().ToString("N");services.TaskNotices.Begin("metadata",notificationId);}
+        }
+        if(operation is "pause" or "cancelDirectories" or "shutdown"){
+            started=false;if(notificationId is {} cancelled)services.TaskNotices.Forget("metadata",cancelled);notificationId=null;
+        }
         if(result.TryGetProperty("progress",out var progress)) {
             var phase=progress.GetProperty("phase").GetString();
-            if(started&&phase=="completed"&&lastPhase!="completed"){services.Notify(UiMessage.Key("ui.error.metadataCompleted"));services.RefreshViews();}lastPhase=phase;
+            var pending=MetadataPanelState.Read(result).Pending;multipleDirectories|=pending>1;
             var state=MetadataTaskStatus.Read(result,started,operation);
+            if(phase=="completed"&&pending>0)state=state with{Phase="waiting"};
+            if(started&&state.Phase=="completed"&&lastPhase!="completed")services.RefreshViews();lastPhase=state.Phase;
+            if(notificationId is {} id&&state.Phase is "completed" or "failed"){
+                services.TaskNotices.Finish("metadata",id,state.Phase,multipleDirectories?null:state.Processed,state.Failed,state.Unsupported);notificationId=null;
+            }
             Changed?.Invoke(result,state);
         }
         return result;

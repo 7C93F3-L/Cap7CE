@@ -201,4 +201,9 @@ assert(animationView.includes('IsScriptEnabled=false') && animationView.includes
 assert(animationView.includes('core.Navigate(DocumentUri)') && animationView.includes('e.NavigationId!=navigationId') && !animationView.includes('NavigateToString('), 'animation readiness must belong to the explicit in-memory document navigation, never a cancelled initialization navigation');
 assert(!/AnimationSource|AnimatedImageView/.test(read('shell/Cap7CE.WinUI/Controls/AssetTile.cs') + read('shell/Cap7CE.WinUI/Services/VisualConnection.cs')), 'animation playback belongs only to independent preview');
 assert(commands.includes('BeforeMutation?.Invoke()') && commands.includes('ReleaseSourcesAsync') && commands.includes('deletedPaths'));
+const taskNotices=read('shell/Cap7CE.WinUI/Services/TaskNotifications.cs');
+assert(!/Microsoft\.UI|DllImport|RequestAsync|Task\.Delay|Timer|File\.|Directory\./.test(taskNotices), 'task notice policy must not own windows, task execution, polling or storage');
+assert(!read('shell/Cap7CE.WinUI/Controls/Settings/IndexMaintenanceView.cs').includes('services.Notify('), 'index system notices must survive settings-page lifecycle');
+assert(read('shell/Cap7CE.WinUI/Services/ShellServices.cs').includes('TaskNotices.IndexStatus('), 'index terminal notices must use shared service snapshots');
+assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordTasks.cs').includes('TaskNotices.Finish('), 'AI batches must publish one aggregate terminal outcome');
 console.log('WinUI shell boundaries passed');

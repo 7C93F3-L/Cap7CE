@@ -19,6 +19,7 @@ internal sealed class SettingsWindow : Window
     private readonly ContentControl signature=new(){HorizontalContentAlignment=HorizontalAlignment.Center,Margin=new(0,16,0,30),Visibility=Visibility.Collapsed};
     private string category="通用";
     private bool closed;
+    internal bool IsViewingMaintenance=>!closed&&category=="缓存与索引"&&NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(this));
     public SettingsWindow(ShellServices services)
     {
         this.services=services;SettingsWindowGeometry.ApplyInitial(this);
