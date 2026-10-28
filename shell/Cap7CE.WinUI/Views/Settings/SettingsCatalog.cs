@@ -74,11 +74,7 @@ internal sealed class SettingsCatalog
     }
     private void Shortcuts()
     {
-        Mainline("快捷操作","keyboard","settings.quickActions","stableSettings.desc.quickActions",()=>SettingsShortcutReference.Actions(Toggle(()=>services.Preferences.Current.QuickActions,async value=>{
-            var previous=services.Preferences.Current.QuickActions;
-            services.Shortcuts?.Configure(value);
-            try{await services.Preferences.SaveAsync(services.Preferences.Current with{QuickActions=value});}catch{services.Shortcuts?.Configure(previous);throw;}
-        })),true);
+        Mainline("快捷操作","keyboard","settings.quickActions","stableSettings.desc.quickActions",()=>new SettingsShortcutEditor(services,owner,notice),true);
         Mainline("快捷操作","keyboard","settings.quickCommands","stableSettings.desc.quickCommands",SettingsShortcutReference.Commands,true);
     }
     private void Models()

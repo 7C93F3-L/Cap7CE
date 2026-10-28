@@ -20,7 +20,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public object ModelContextFor(string language)=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language};
     public NativeNotifications Notifications {get;}=new();
     public TaskNotifications TaskNotices {get;}
-    public NativeHotKeys? Shortcuts {get;set;}
+    public WindowShortcutService? Shortcuts {get;set;}
     public event Action<CatalogRefreshImpact>? CatalogChanged;
     public event Action<CatalogStatusResponse>? IndexStatusChanged;
     public event Action? ConnectionChanged;

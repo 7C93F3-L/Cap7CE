@@ -72,11 +72,23 @@ public sealed partial class MainWindow : Window
         sidebar.Navigate+=OpenLocation;sidebar.AddFavorite+=()=>ChooseFolder(true);sidebar.Settings+=OpenSettings;
         sidebar.ToggleFilters+=()=>commands.Run(()=>layout.ToggleAsync(true));sidebar.ToggleDetails+=()=>commands.Run(()=>layout.ToggleAsync(false));
         sidebar.Bind(services.Favorites,commands,()=>Root.XamlRoot);
-        services.Shortcuts=new(this,()=>{WindowActivation.Show(this);toolbar.FocusSearch();},()=>{WindowActivation.Show(this);MainWindowGeometry.RestoreDefault(this);},OpenSettings,
-            ()=>{var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);},error=>Notice(FailureText.From(error)));
-        toolbar.ViewSelected+=mode=>commands.Run(()=>workspace.UpdateAsync(value=>value with{
+        void SelectView(Models.WorkspaceViewMode mode)=>commands.Run(()=>workspace.UpdateAsync(value=>value with{
             View=mode==Models.WorkspaceViewMode.List?"list":"grid",
             SquareTiles=mode==Models.WorkspaceViewMode.List?value.SquareTiles:mode==Models.WorkspaceViewMode.Square}));
+        services.Shortcuts=new(this,Surface,results,services.Preferences,commands,new(){
+            ["focusMainSearch"]=()=>{WindowActivation.Show(this);toolbar.FocusSearch();},["focusSearch"]=toolbar.FocusSearch,["focusPath"]=toolbar.FocusPath,
+            ["restoreDefaultWindow"]=()=>{WindowActivation.Show(this);MainWindowGeometry.RestoreDefault(this);},["openSettings"]=OpenSettings,
+            ["openFolder"]=()=>ChooseFolder(false),["newTab"]=()=>NewTab(""),["closeTab"]=()=>{if(Tabs.SelectedItem is TabViewItem tab)CloseTab(tab);},
+            ["previousTab"]=()=>StepTab(-1),["nextTab"]=()=>StepTab(1),["refresh"]=Refresh,
+            ["back"]=()=>{if(active is not null)commands.Run(active.BackAsync);},["forward"]=()=>{if(active is not null)commands.Run(active.ForwardAsync);},
+            ["up"]=()=>{if(active is not null)commands.Run(active.UpAsync);},["cycleDirectory"]=CycleDirectory,
+            ["toggleWindowMode"]=()=>commands.Run(()=>services.Preferences.UpdateAsync(value=>value with{EdgeCollapseEnabled=!value.EdgeCollapseEnabled})),
+            ["togglePin"]=()=>{if(!services.Preferences.Current.EdgeCollapseEnabled)SetPinned(!services.Preferences.Current.AlwaysOnTop);},
+            ["toggleFilters"]=()=>commands.Run(()=>layout.ToggleAsync(true)),["toggleDetails"]=()=>commands.Run(()=>layout.ToggleAsync(false)),
+            ["viewSquare"]=()=>SelectView(Models.WorkspaceViewMode.Square),["viewGallery"]=()=>SelectView(Models.WorkspaceViewMode.OriginalRatio),["viewList"]=()=>SelectView(Models.WorkspaceViewMode.List),
+            ["metadata"]=()=>OpenMaintenance(null)
+        },error=>Notice(FailureText.From(error)));
+        toolbar.ViewSelected+=SelectView;
         toolbar.SizeChangedByUser+=workspace.PreviewSize;
         toolbar.SizeCommitted+=(size,scope)=>commands.Run(()=>workspace.UpdateAsync(value=>value with{TileSize=size},capturedScope:scope));
         toolbar.OptionsChanged+=update=>commands.Run(()=>workspace.UpdateAsync(update,true));
@@ -109,7 +121,7 @@ public sealed partial class MainWindow : Window
     {
         try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
-        try{services.Shortcuts?.Configure(services.Preferences.Current.QuickActions);}catch(Exception error){Notice(FailureText.From(error));}
+        try{services.Shortcuts?.Apply();}catch(Exception error){Notice(FailureText.From(error));}
         AssetTile.Visuals=services.Visuals;NewTab("");
         try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice(UiMessage.Key("ui.notice.favoritesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         // Core readiness updates capabilities; it must not replace user navigation
@@ -188,6 +200,7 @@ public sealed partial class MainWindow : Window
         if(closed)return;var prefs=services.Preferences.Current;
         // LanguageBinding already updated text; do not reapply layout or window actions.
         if(appliedPreferences is {} languagePrevious&&(languagePrevious with{Language=prefs.Language})==prefs){appliedPreferences=prefs;return;}
+        if(appliedPreferences is {} shortcutPrevious&&(shortcutPrevious with{QuickActions=prefs.QuickActions,ShortcutBindings=prefs.ShortcutBindings})==prefs){appliedPreferences=prefs;return;}
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})==prefs;
         var workspaceOnly=appliedPreferences is {} old&&(old with{ComputerWorkspace=prefs.ComputerWorkspace,FavoriteWorkspace=prefs.FavoriteWorkspace})==prefs;
         var edgeOnly=appliedPreferences is {} edgeOld&&(edgeOld with{EdgeCollapseEnabled=prefs.EdgeCollapseEnabled})==prefs;
@@ -200,26 +213,14 @@ public sealed partial class MainWindow : Window
         catch{ApplyPreferences();throw;}
     });
     private void NotificationInvoked()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)WindowActivation.Show(this);});
+    private void StepTab(int step){if(Tabs.TabItems.Count>0)Tabs.SelectedIndex=(Tabs.SelectedIndex+step+Tabs.TabItems.Count)%Tabs.TabItems.Count;}
+    private void CycleDirectory(){var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);}
     private void Notice(string text)=>Notice(UiMessage.Literal(text));
     private void Notice(UiMessage text){if(!closed)notifications.ShowMessage(text);}
     private void KeyDown(object sender,KeyRoutedEventArgs e)
     {
-        var control=Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-        var alt=Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-        if(control&&e.Key is VirtualKey.F or VirtualKey.L or VirtualKey.O or VirtualKey.T or VirtualKey.W)
-        {
-            e.Handled=true;switch(e.Key){case VirtualKey.F:toolbar.FocusSearch();break;case VirtualKey.L:toolbar.FocusPath();break;case VirtualKey.O:ChooseFolder(false);break;case VirtualKey.T:NewTab("");break;case VirtualKey.W:if(Tabs.SelectedItem is TabViewItem tab)CloseTab(tab);break;}return;
-        }
         if(e.OriginalSource is TextBox||e.OriginalSource is AutoSuggestBox)return;
-        if(alt&&active is not null&&e.Key is VirtualKey.Left or VirtualKey.Right){e.Handled=true;commands.Run(()=>e.Key==VirtualKey.Left?active.BackAsync():active.ForwardAsync());return;}
-        if(e.Key==VirtualKey.F5){e.Handled=true;Refresh();return;}
-        if(e.Key!=VirtualKey.Escape&&e.OriginalSource is DependencyObject source&&(filters.ContainsKeyboardTarget(source)||toolbar.ContainsKeyboardTarget(source)))return;
         if(e.Key==VirtualKey.Escape){e.Handled=true;if(!sidebar.CancelOrder())results.ClearSelection();return;}
-        if(control&&e.Key==VirtualKey.A){e.Handled=true;results.SelectAll();return;}
-        var selection=results.Selection;if(selection.Count==0)return;
-        if(control&&e.Key==VirtualKey.C){e.Handled=true;commands.Run(()=>FileCommands.CopyFilesAsync(selection));}
-        else if(e.Key==VirtualKey.Space){e.Handled=true;commands.Run(()=>{commands.Preview(selection[0]);return Task.CompletedTask;});}
-        else if(e.Key==VirtualKey.Delete&&selection.All(i=>i.Entry.FileReference is not null)){e.Handled=true;commands.Run(()=>commands.DeleteAsync(selection));}
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {

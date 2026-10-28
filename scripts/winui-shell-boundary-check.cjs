@@ -206,4 +206,14 @@ assert(!/Microsoft\.UI|DllImport|RequestAsync|Task\.Delay|Timer|File\.|Directory
 assert(!read('shell/Cap7CE.WinUI/Controls/Settings/IndexMaintenanceView.cs').includes('services.Notify('), 'index system notices must survive settings-page lifecycle');
 assert(read('shell/Cap7CE.WinUI/Services/ShellServices.cs').includes('TaskNotices.IndexStatus('), 'index terminal notices must use shared service snapshots');
 assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordTasks.cs').includes('TaskNotices.Finish('), 'AI batches must publish one aggregate terminal outcome');
+const shortcutCatalog=read('shell/Cap7CE.WinUI/Models/ShortcutCatalog.cs');
+const shortcutGesture=read('shell/Cap7CE.WinUI/Models/ShortcutGesture.cs');
+const shortcutInput=read('shell/Cap7CE.WinUI/Controllers/WorkspaceShortcutInput.cs');
+const shortcutService=read('shell/Cap7CE.WinUI/Services/WindowShortcutService.cs');
+assert(!/Microsoft\.UI|DllImport|RequestAsync|File\.|Directory\./.test(shortcutCatalog+shortcutGesture), 'shortcut definitions and validation must stay independent of UI and IO');
+const shortcutActionOwners=read('shell/Cap7CE.WinUI/MainWindow.xaml.cs')+shortcutService;
+for(const match of shortcutCatalog.matchAll(/new\("([A-Za-z]+)"/g))assert(shortcutActionOwners.includes(`["${match[1]}"]`), `shortcut action must have a real owner: ${match[1]}`);
+assert(shortcutInput.includes('KeyboardAccelerator')&&shortcutInput.includes('WasKeyDown')&&shortcutInput.includes('OldDefault')&&shortcutInput.includes('RemoveHandler'), 'shortcut routing must preserve native accelerators, repeat suppression, cleared-default handling and cleanup');
+assert(!/SetWindowsHookEx|Process\.Start|RequestAsync/.test(shortcutInput+shortcutService), 'shortcut dispatch cannot introduce a global keyboard hook or bypass domain actions');
+assert(read('shell/Cap7CE.WinUI/Views/Settings/SettingsShortcutEditor.cs').includes('UpdateAsync')&&!read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs').includes('Shortcuts?.Configure'), 'shortcut updates must use serialized field-level preferences');
 console.log('WinUI shell boundaries passed');

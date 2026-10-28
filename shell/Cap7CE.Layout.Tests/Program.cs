@@ -1,6 +1,9 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
 
+if(args is ["--shortcut-tests"]) {await ShortcutChecks.RunAsync();return;}
+await ShortcutChecks.RunAsync();
+
 if(args is ["--task-notification-tests"]) {TaskNotificationChecks.Run();return;}
 TaskNotificationChecks.Run();
 
