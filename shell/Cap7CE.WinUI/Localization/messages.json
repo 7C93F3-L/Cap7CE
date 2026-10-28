@@ -1630,5 +1630,381 @@
   "help.example.dir_remove": {
     "zh-CN": "dir:remove \"收藏名称\"",
     "en-US": "dir:remove \"Favorite name\""
+  },
+  "main.home": {
+    "zh-CN": "此电脑",
+    "en-US": "This PC"
+  },
+  "main.favorites": {
+    "zh-CN": "收藏目录",
+    "en-US": "Favorite folders"
+  },
+  "main.filters": {
+    "zh-CN": "顶部筛选",
+    "en-US": "Filters"
+  },
+  "main.details": {
+    "zh-CN": "详细信息",
+    "en-US": "Details"
+  },
+  "main.addFavorite": {
+    "zh-CN": "添加收藏目录",
+    "en-US": "Add favorite folder"
+  },
+  "main.settings": {
+    "zh-CN": "打开设置",
+    "en-US": "Open settings"
+  },
+  "main.reorder": {
+    "zh-CN": "调整位置",
+    "en-US": "Reorder"
+  },
+  "main.collapseFilters": {
+    "zh-CN": "收起顶部筛选",
+    "en-US": "Hide filters"
+  },
+  "main.expandFilters": {
+    "zh-CN": "显示顶部筛选",
+    "en-US": "Show filters"
+  },
+  "main.collapseDetails": {
+    "zh-CN": "收起详细信息",
+    "en-US": "Hide details"
+  },
+  "main.expandDetails": {
+    "zh-CN": "显示详细信息",
+    "en-US": "Show details"
+  },
+  "main.manageFavorite": {
+    "zh-CN": "管理收藏：{name}",
+    "en-US": "Manage favorite: {name}"
+  },
+  "main.orderDone": {
+    "zh-CN": "完成排序",
+    "en-US": "Save order"
+  },
+  "main.orderCancel": {
+    "zh-CN": "取消排序",
+    "en-US": "Cancel reordering"
+  },
+  "main.back": {
+    "zh-CN": "返回 · Alt+←",
+    "en-US": "Back · Alt+←"
+  },
+  "main.forward": {
+    "zh-CN": "前进 · Alt+→",
+    "en-US": "Forward · Alt+→"
+  },
+  "main.up": {
+    "zh-CN": "上一级",
+    "en-US": "Up one level"
+  },
+  "main.refresh": {
+    "zh-CN": "刷新 · F5",
+    "en-US": "Refresh · F5"
+  },
+  "main.random": {
+    "zh-CN": "随机浏览",
+    "en-US": "Random browsing"
+  },
+  "main.next": {
+    "zh-CN": "换一批",
+    "en-US": "Next batch"
+  },
+  "main.gridSize": {
+    "zh-CN": "网格大小",
+    "en-US": "Grid size"
+  },
+  "main.view": {
+    "zh-CN": "视图",
+    "en-US": "View"
+  },
+  "main.sort": {
+    "zh-CN": "排序",
+    "en-US": "Sort"
+  },
+  "main.recursive": {
+    "zh-CN": "包含子文件夹",
+    "en-US": "Include subfolders"
+  },
+  "main.hidden": {
+    "zh-CN": "显示隐藏项",
+    "en-US": "Show hidden items"
+  },
+  "main.on": {
+    "zh-CN": "开启",
+    "en-US": "On"
+  },
+  "main.off": {
+    "zh-CN": "关闭",
+    "en-US": "Off"
+  },
+  "main.randomStatus": {
+    "zh-CN": "随机浏览 · {state}",
+    "en-US": "Random browsing · {state}"
+  },
+  "main.recursiveStatus": {
+    "zh-CN": "包含子文件夹 · {state}",
+    "en-US": "Include subfolders · {state}"
+  },
+  "main.enterFolder": {
+    "zh-CN": "包含子文件夹 · {state} · 请先进入目录",
+    "en-US": "Include subfolders · {state} · Open a folder first"
+  },
+  "main.hiddenStatus": {
+    "zh-CN": "显示隐藏项 · {state}",
+    "en-US": "Show hidden items · {state}"
+  },
+  "main.sortRandom": {
+    "zh-CN": "排序 · 随机浏览",
+    "en-US": "Sort · Random browsing"
+  },
+  "main.sortStatus": {
+    "zh-CN": "排序 · {sort}",
+    "en-US": "Sort · {sort}"
+  },
+  "main.gridSizeStatus": {
+    "zh-CN": "网格大小 · {size:0} DIP",
+    "en-US": "Grid size · {size:0} DIP"
+  },
+  "main.compactView": {
+    "zh-CN": "低高度下使用横向网格，拉高窗口后恢复原视图",
+    "en-US": "A horizontal grid is used in short windows. Increase the height to restore the selected view."
+  },
+  "main.viewStatus": {
+    "zh-CN": "视图 · 当前：{view}",
+    "en-US": "View · Current: {view}"
+  },
+  "main.viewList": {
+    "zh-CN": "列表",
+    "en-US": "List"
+  },
+  "main.viewOriginal": {
+    "zh-CN": "原比例",
+    "en-US": "Original ratio"
+  },
+  "main.viewSquare": {
+    "zh-CN": "等比例",
+    "en-US": "Square"
+  },
+  "main.sortNameAsc": {
+    "zh-CN": "名称 · 升序",
+    "en-US": "Name · Ascending"
+  },
+  "main.sortNameDesc": {
+    "zh-CN": "名称 · 降序",
+    "en-US": "Name · Descending"
+  },
+  "main.sortModifiedAsc": {
+    "zh-CN": "修改时间 · 升序",
+    "en-US": "Modified · Ascending"
+  },
+  "main.sortModifiedDesc": {
+    "zh-CN": "修改时间 · 降序",
+    "en-US": "Modified · Descending"
+  },
+  "main.addressPlaceholder": {
+    "zh-CN": "输入目录路径",
+    "en-US": "Enter a folder path"
+  },
+  "main.searchPlaceholder": {
+    "zh-CN": "搜索名称、路径、关键词",
+    "en-US": "Search names, paths and keywords"
+  },
+  "main.toSearch": {
+    "zh-CN": "切换为搜索 · Ctrl+F",
+    "en-US": "Switch to search · Ctrl+F"
+  },
+  "main.toAddress": {
+    "zh-CN": "切换为目录路径",
+    "en-US": "Switch to folder path"
+  },
+  "main.editAddress": {
+    "zh-CN": "编辑目录路径 · Ctrl+L",
+    "en-US": "Edit folder path · Ctrl+L"
+  },
+  "main.searchActive": {
+    "zh-CN": "搜索中",
+    "en-US": "Search active"
+  },
+  "menu.preview": {
+    "zh-CN": "预览",
+    "en-US": "Preview"
+  },
+  "menu.open": {
+    "zh-CN": "打开",
+    "en-US": "Open"
+  },
+  "menu.reveal": {
+    "zh-CN": "打开路径",
+    "en-US": "Open file location"
+  },
+  "menu.copyPath": {
+    "zh-CN": "复制路径",
+    "en-US": "Copy path"
+  },
+  "menu.copyPaths": {
+    "zh-CN": "复制选中的 {count} 条路径",
+    "en-US": "Copy {count} selected paths"
+  },
+  "menu.delete": {
+    "zh-CN": "删除",
+    "en-US": "Delete"
+  },
+  "menu.addFavorite": {
+    "zh-CN": "添加收藏",
+    "en-US": "Add to favorites"
+  },
+  "menu.removeFavorite": {
+    "zh-CN": "移除收藏",
+    "en-US": "Remove from favorites"
+  },
+  "menu.editKeywords": {
+    "zh-CN": "编辑关键词",
+    "en-US": "Edit keywords"
+  },
+  "menu.autoKeywords": {
+    "zh-CN": "自动添加关键词",
+    "en-US": "Add AI keywords"
+  },
+  "menu.metadata": {
+    "zh-CN": "获取/刷新元数据",
+    "en-US": "Extract/refresh metadata"
+  },
+  "menu.openExplorer": {
+    "zh-CN": "在资源管理器中打开",
+    "en-US": "Open in File Explorer"
+  },
+  "menu.renameFolder": {
+    "zh-CN": "重命名文件夹",
+    "en-US": "Rename folder"
+  },
+  "menu.renameUnavailable": {
+    "zh-CN": "磁盘文件夹改名尚未迁入WinUI壳",
+    "en-US": "Renaming folders is not yet available in WinUI."
+  },
+  "menu.editKeywordsUnavailable": {
+    "zh-CN": "请选中文件并展开右侧详细信息栏",
+    "en-US": "Select files and open the details pane on the right."
+  },
+  "main.tabLimit": {
+    "zh-CN": "最多打开12个目录标签",
+    "en-US": "You can open up to 12 folder tabs."
+  },
+  "main.sidebarWidth": {
+    "zh-CN": "目录栏宽度",
+    "en-US": "Folder pane width"
+  },
+  "main.detailsWidth": {
+    "zh-CN": "详细信息栏宽度",
+    "en-US": "Details pane width"
+  },
+  "main.connecting": {
+    "zh-CN": "正在连接现有目录…",
+    "en-US": "Connecting to existing folders…"
+  },
+  "main.retry": {
+    "zh-CN": "重试",
+    "en-US": "Retry"
+  },
+  "main.clearFilters": {
+    "zh-CN": "清除筛选",
+    "en-US": "Clear filters"
+  },
+  "main.loading": {
+    "zh-CN": "正在载入…",
+    "en-US": "Loading…"
+  },
+  "main.locationUnavailable": {
+    "zh-CN": "暂时无法打开此位置",
+    "en-US": "This location is currently unavailable."
+  },
+  "main.noMatches": {
+    "zh-CN": "没有匹配项",
+    "en-US": "No matching items"
+  },
+  "main.adjustFilters": {
+    "zh-CN": "可以调整搜索词或筛选条件后重试。",
+    "en-US": "Try changing the search terms or filters."
+  },
+  "main.emptyFolder": {
+    "zh-CN": "此文件夹中没有可显示的内容。",
+    "en-US": "There are no items to display in this folder."
+  },
+  "main.systemFolders": {
+    "zh-CN": "系统目录",
+    "en-US": "System folders"
+  },
+  "main.folder": {
+    "zh-CN": "文件夹",
+    "en-US": "Folder"
+  },
+  "main.homeDesktop": {
+    "zh-CN": "桌面",
+    "en-US": "Desktop"
+  },
+  "main.homeDocuments": {
+    "zh-CN": "文档",
+    "en-US": "Documents"
+  },
+  "main.homeDownloads": {
+    "zh-CN": "下载",
+    "en-US": "Downloads"
+  },
+  "main.homePictures": {
+    "zh-CN": "图片",
+    "en-US": "Pictures"
+  },
+  "main.homeMusic": {
+    "zh-CN": "音乐",
+    "en-US": "Music"
+  },
+  "main.homeVideos": {
+    "zh-CN": "视频",
+    "en-US": "Videos"
+  },
+  "main.pin": {
+    "zh-CN": "固定窗口",
+    "en-US": "Pin window"
+  },
+  "main.unpin": {
+    "zh-CN": "取消固定窗口",
+    "en-US": "Unpin window"
+  },
+  "main.sliderHelp": {
+    "zh-CN": "默认 {value}；方向键微调，Page Up 和 Page Down 较大幅度调整",
+    "en-US": "Default: {value}. Use arrow keys for small adjustments and Page Up or Page Down for larger adjustments."
+  },
+  "main.sliderSmaller": {
+    "zh-CN": "较小",
+    "en-US": "Smaller"
+  },
+  "main.sliderLarger": {
+    "zh-CN": "较大",
+    "en-US": "Larger"
+  },
+  "main.sliderDefault": {
+    "zh-CN": "默认",
+    "en-US": "Default"
+  },
+  "main.sliderReset": {
+    "zh-CN": "恢复默认{title}（{value}）",
+    "en-US": "Restore default {title} ({value})"
+  },
+  "main.sliderResetHint": {
+    "zh-CN": "恢复 {value}",
+    "en-US": "Restore {value}"
+  },
+  "main.querying": {
+    "zh-CN": "正在查询…",
+    "en-US": "Searching…"
+  },
+  "main.cancelRecognition": {
+    "zh-CN": "取消识别",
+    "en-US": "Cancel recognition"
+  },
+  "main.closeNotice": {
+    "zh-CN": "关闭临时提醒",
+    "en-US": "Dismiss notification"
   }
 }

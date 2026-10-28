@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Controls;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Themes;
 using Microsoft.UI.Xaml.Controls;
@@ -15,27 +16,27 @@ internal static class ResultContextMenu
         foreach(var action in ResultMenuRules.Create(items.Count,home,first.Entry.IsDirectory)) {
             if(action.NewGroup)menu.Items.Add(new MenuFlyoutSeparator());
             MenuFlyoutItem item=action.Id switch {
-                "preview"=>Ui.MenuItem("预览",()=>commands.Run(()=>{commands.Preview(first);return Task.CompletedTask;}),"\uE8A7"),
-                "open"=>Ui.MenuItem("打开",()=>commands.Run(()=>{commands.Open(first);return Task.CompletedTask;}),"\uE8A5"),
-                "reveal"=>Ui.MenuItem("打开路径",()=>commands.Run(()=>{commands.Reveal(first);return Task.CompletedTask;}),"\uE838"),
-                "copyPaths"=>Ui.MenuItem(items.Count>1?$"复制选中的 {items.Count} 条路径":"复制路径",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8"),
-                "delete"=>Ui.MenuItem("删除",()=>commands.Run(()=>commands.DeleteAsync(items)),"\uE74D"),
-                "favorite"=>Ui.MenuItem(favorite is null?"添加收藏":"移除收藏",()=>commands.Run(()=>favorite is null
+                "preview"=>L.MenuItem("menu.preview",()=>commands.Run(()=>{commands.Preview(first);return Task.CompletedTask;}),"\uE8A7"),
+                "open"=>L.MenuItem("menu.open",()=>commands.Run(()=>{commands.Open(first);return Task.CompletedTask;}),"\uE8A5"),
+                "reveal"=>L.MenuItem("menu.reveal",()=>commands.Run(()=>{commands.Reveal(first);return Task.CompletedTask;}),"\uE838"),
+                "copyPaths"=>L.MenuItem(items.Count>1?"menu.copyPaths":"menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8",()=>new Dictionary<string,object?>{{"count",items.Count}}),
+                "delete"=>L.MenuItem("menu.delete",()=>commands.Run(()=>commands.DeleteAsync(items)),"\uE74D"),
+                "favorite"=>L.MenuItem(favorite is null?"menu.addFavorite":"menu.removeFavorite",()=>commands.Run(()=>favorite is null
                     ?favorites.ExecuteAsync("add",path:first.FullPath):favorites.ExecuteAsync("remove",id:favorite.Id)),"\uE734"),
-                "editKeywords"=>Ui.MenuItem("编辑关键词",()=>commands.EditKeywords(items),"\uE70F"),
-                "autoKeywords"=>Ui.MenuItem("自动添加关键词",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}),"\uE945"),
-                _=>Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")
+                "editKeywords"=>L.MenuItem("menu.editKeywords",()=>commands.EditKeywords(items),"\uE70F"),
+                "autoKeywords"=>L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}),"\uE945"),
+                _=>L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")
             };
             if(action.Id=="delete")item.IsEnabled=items.All(entry=>entry.Entry.FileReference is not null);
             if(action.Id=="autoKeywords")item.IsEnabled=items.Count>1||items.Any(entry=>entry.Entry.IsDirectory||FormatRegistry.Find(entry.Entry.Extension)?.CanAIIndex==true);
             if(action.Id=="editKeywords") {
                 item.IsEnabled=items.Any(entry=>!entry.Entry.IsDirectory)&&commands.CanEditKeywords();
-                if(!item.IsEnabled)ToolTipService.SetToolTip(item,"请选中文件并展开右侧详细信息栏");
+                if(!item.IsEnabled)L.Bind(item,ToolTipService.ToolTipProperty,"menu.editKeywordsUnavailable");
             }
             menu.Items.Add(item);
         }
         return menu;
     }
     internal static MenuFlyoutItem Unavailable(string label,string reason,string glyph)
-    {var item=Ui.MenuItem(label,()=>{},glyph);item.IsEnabled=false;ToolTipService.SetToolTip(item,reason);return item;}
+    {var item=L.MenuItem(label,()=>{},glyph);item.IsEnabled=false;L.Bind(item,ToolTipService.ToolTipProperty,reason);return item;}
 }

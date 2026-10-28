@@ -8,6 +8,10 @@
 
 已接入设置导航、卡片、主要选项、快捷动作、指令帮助与颜色编辑器；语言选择器仍未开放。LanguageUi只接受资源键，普通Ui继续显示用户数据。settings-help.json只持有指令结构和资源键，描述和可翻译示例在messages.json维护。指令文本是只读帮助，语言更新不会执行指令或改变分类选择。
 
+主窗口工具栏、侧栏、地址栏、菜单、首页系统入口与分组、空结果和大小滑块已接入。使用LanguageUi.Label同步设置提示与无障碍名称；同一属性从资源切换为用户数据时必须调用LanguageUi.Literal解除旧绑定。数据模板使用LanguageText.Key显式绑定资源键、LanguageText.Literal绑定原文；二者独立，不能以原文猜测资源键。首页系统名称按入口身份映射，用户文件和目录始终使用原名。
+
+需要原生测量、省略等自定义显示过程时，LanguageBinding.Attach可提供apply回调；回调只更新显示，不修改原始记录。绑定拥有者的加载/卸载、替换和排队更新由Layout替身测试验证；原生菜单、模板回收和视觉效果仍需手动回归。
+
 PreferenceStore保存Language并在成功后更新AppLanguage唯一会话；默认中文，支持跟随系统。AI在任务开始、异步收集前取得语言快照，整批任务继续使用该快照；Node生成请求显式携带语言，四参数旧请求保持中文。当前未完成主窗口、索引/元数据、模型动态状态和后台提示的全覆盖，不能视为完整双语支持。文件名、路径、用户关键词和源文件元数据不能被资源替换。
 
 验证：`node scripts/winui-language-check.cjs` 和 `dotnet run --project shell/Cap7CE.Layout.Tests/Cap7CE.Layout.Tests.csproj -c Release -- --language-tests`；完整构建运行资源检查。

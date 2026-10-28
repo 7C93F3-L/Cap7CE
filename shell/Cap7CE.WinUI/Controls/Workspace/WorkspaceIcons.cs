@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 namespace Cap7CE.WinUI.Controls;
 // Paths used by the active CatalogToolbarIcon, drawn with the shared theme-aware vector.
 internal static class WorkspaceIcons
@@ -20,7 +21,11 @@ internal static class WorkspaceIcons
         ["sort"]="M7 4v16m-4-4 4 4 4-4M14 5h7M14 10h5M14 15h3"
     };
     public static SidebarIcon Icon(string id)=>new(){OutlinePath=paths[id],Width=16,Height=16};
-    public static void Label(FrameworkElement element,string text){ToolTipService.SetToolTip(element,text);AutomationProperties.SetName(element,text);}
+    public static void Label(FrameworkElement element,string text){L.Literal(element,ToolTipService.ToolTipProperty,text);L.Literal(element,AutomationProperties.NameProperty,text);}
+    public static Button ResourceButton(string id,string key,Action action)
+    {var button=Button(id,"",action);L.Label(button,key);return button;}
+    public static ToggleButton ResourceToggle(string id,string key,Action action)
+    {var button=Toggle(id,"",action);L.Label(button,key);return button;}
     public static Button Button(string id,string label,Action action)
     {var button=new Button{Style=(Style)Application.Current.Resources["CapWorkspaceTool"],Content=Icon(id)};Label(button,label);button.Click+=(_,_)=>action();return button;}
     public static ToggleButton Toggle(string id,string label,Action action)

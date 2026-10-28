@@ -42,9 +42,7 @@ internal sealed class WindowTitleBar : Grid
         if (frame.pin is null) frame.AddPin(window);
         frame.pin!.IsChecked = enabled;
         frame.pinCenter!.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
-        var label = enabled ? "取消固定窗口" : "固定窗口";
-        ToolTipService.SetToolTip(frame.pin, label);
-        AutomationProperties.SetName(frame.pin, label);
+        Localization.LanguageUi.Label(frame.pin,enabled?"main.unpin":"main.pin");
     }
 
     private void AddPin(Window window)

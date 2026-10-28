@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Automation;
@@ -17,7 +18,7 @@ internal sealed class SidebarView : UserControl
     private readonly Grid root = new(), directories = new(), heading = new();
     private readonly StackPanel brandArea;
     private readonly VariableSizedWrapGrid tools = new() { Orientation = Orientation.Horizontal, ItemWidth = 39, ItemHeight = 34, MaximumRowsOrColumns = 2 };
-    private readonly TextBlock header = new() { Text = "收藏目录", FontSize = 11, VerticalAlignment = VerticalAlignment.Center, Margin = new(6,0,0,0) };
+    private readonly TextBlock header = new() { FontSize = 11, VerticalAlignment = VerticalAlignment.Center, Margin = new(6,0,0,0) };
     private readonly List<(ContentControl Button, TextBlock Label, Grid Content, double Gap, bool Pill)> navigation = [];
     private readonly ToggleButton filterButton, detailsButton, home;
     private readonly SidebarIcon filterIcon = new() { Kind = "top", Width = 22, Height = 22 };
@@ -39,17 +40,17 @@ internal sealed class SidebarView : UserControl
         var brand = new Button { Content = new SidebarIcon { Kind = "logo", Width = 78, Height = 20 }, Style = StyleFor("CapSidebarBrandButton") };
         AutomationProperties.SetName(brand,"Cap7CE"); brand.Click += (_, _) => Navigate?.Invoke("");
         brandArea = new StackPanel(); brandArea.Children.Add(brand); root.Children.Add(brandArea);
-        filterButton = PanelButton(filterIcon,"顶部筛选",()=>ToggleFilters?.Invoke());
-        detailsButton = PanelButton(detailsIcon,"详细信息",()=>ToggleDetails?.Invoke());
+        filterButton = PanelButton(filterIcon,"main.filters",()=>ToggleFilters?.Invoke());
+        detailsButton = PanelButton(detailsIcon,"main.details",()=>ToggleDetails?.Invoke());
         tools.Children.Add(filterButton); tools.Children.Add(detailsButton); Grid.SetRow(tools,1); root.Children.Add(tools);
         directories.RowDefinitions.Add(new() { Height = GridLength.Auto }); directories.RowDefinitions.Add(new() { Height = GridLength.Auto });
         directories.RowDefinitions.Add(new() { Height = new(1, GridUnitType.Star) });
         home = new ToggleButton { Style = StyleFor("CapSidebarHomeToggle") };
-        NavigationContent(home,"computer","此电脑",10,true); home.Click += (_,_)=>Navigate?.Invoke(""); directories.Children.Add(home);
+        NavigationContent(home,"computer","main.home",10,true); home.Click += (_,_)=>Navigate?.Invoke(""); directories.Children.Add(home);
         heading.Height = 32; heading.ColumnDefinitions.Add(new() { Width = new(1, GridUnitType.Star) }); heading.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
         heading.Children.Add(header); header.Style = (Style)Application.Current.Resources["CapSidebarHeaderText"];
         add = new Button { Style = StyleFor("CapSidebarButton"), Width = 26, Height = 26, Padding = new(5), Content = new SidebarIcon { Kind = "add", Width = 16, Height = 16 } };
-        ToolTipService.SetToolTip(add,"添加收藏目录"); AutomationProperties.SetName(add,"添加收藏目录"); add.Click += (_,_)=>AddFavorite?.Invoke();
+        L.Label(add,"main.addFavorite"); add.Click += (_,_)=>AddFavorite?.Invoke();
         Grid.SetColumn(add,1); heading.Children.Add(add); Grid.SetRow(heading,1); directories.Children.Add(heading);
         Grid.SetRow(favorites,2); directories.Children.Add(favorites); Grid.SetRow(directories,2); root.Children.Add(directories);
         expandedTemplate = (DataTemplate)Application.Current.Resources["CapSidebarFavoriteTemplate"];
@@ -61,7 +62,7 @@ internal sealed class SidebarView : UserControl
         favorites.ContainerContentChanging += PrepareFavorite;
         favorites.ItemClick += (_,e)=>{if(!order.Editing&&e.ClickedItem is Favorite item)Navigate?.Invoke(item.Path);};
         settings = new Button { Style = StyleFor("CapSidebarIconButton"), Content = new SidebarIcon { Kind = "settings", Width = 22, Height = 22 } };
-        AutomationProperties.SetName(settings,"打开设置"); ToolTipService.SetToolTip(settings,"打开设置");
+        L.Label(settings,"main.settings");
         settings.Click += (_,_)=>Settings?.Invoke();
         Grid.SetRow(settings,3); root.Children.Add(settings); Content = root;
         ApplyLayout(false,true,true,true); SetActiveEntry("",false);
@@ -70,18 +71,18 @@ internal sealed class SidebarView : UserControl
     private static ToggleButton PanelButton(SidebarIcon icon,string label,Action action)
     {
         var button = new ToggleButton { Content = icon, Style = StyleFor("CapSidebarToggle") };
-        AutomationProperties.SetName(button,label); button.Click += (_,_)=>action(); return button;
+        L.Bind(button,AutomationProperties.NameProperty,label); button.Click += (_,_)=>action(); return button;
     }
 
     private void NavigationContent(ContentControl button,string icon,string label,double gap,bool pill)
     {
-        var text = new TextBlock { Text = label, TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis };
-        var content = new Grid { ColumnSpacing = gap };
+        var text = new TextBlock { TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis };
+        L.Bind(text,TextBlock.TextProperty,label);var content = new Grid { ColumnSpacing = gap };
         content.ColumnDefinitions.Add(new() { Width = new(24) }); content.ColumnDefinitions.Add(new() { Width = new(1,GridUnitType.Star) });
         var glyph=new SidebarIcon { Kind = icon, Width = icon=="settings"?22:24, Height = icon=="settings"?22:24 };
         content.Children.Add(glyph);
         Grid.SetColumn(text,1); text.VerticalAlignment = VerticalAlignment.Center; content.Children.Add(text); button.Content = content;
-        AutomationProperties.SetName(button,label); ToolTipService.SetToolTip(button,label); navigation.Add((button,text,content,gap,pill));
+        L.Label(button,label); navigation.Add((button,text,content,gap,pill));
     }
 
     public void ApplyLayout(bool isCompact,bool showBrand,bool filtersVisible,bool detailsVisible)
@@ -109,8 +110,8 @@ internal sealed class SidebarView : UserControl
             if(!entry.Pill)entry.Button.Margin = isCompact?new(4,5,4,5):new(5);
         }
         filterButton.IsChecked = filterIcon.IsActive = filtersVisible; detailsButton.IsChecked = detailsIcon.IsActive = detailsVisible;
-        ToolTipService.SetToolTip(filterButton,filtersVisible?"收起顶部筛选":"显示顶部筛选");
-        ToolTipService.SetToolTip(detailsButton,detailsVisible?"收起详细信息":"显示详细信息");
+        L.Label(filterButton,filtersVisible?"main.collapseFilters":"main.expandFilters");
+        L.Label(detailsButton,detailsVisible?"main.collapseDetails":"main.expandDetails");
         ApplyOrderPresentation();
     }
 
@@ -121,7 +122,7 @@ internal sealed class SidebarView : UserControl
         favorites.ItemTemplate=order.Editing?(DataTemplate)Application.Current.Resources[small?"CapSidebarOrderCompactTemplate":"CapSidebarOrderTemplate"]:small?compactTemplate:expandedTemplate;
         favorites.ItemContainerStyle=StyleFor(order.Editing?(small?"CapSidebarOrderCompactContainer":"CapSidebarOrderContainer")
             :small?"CapSidebarFavoriteCompactContainer":"CapSidebarFavoriteContainer");
-        header.Text=order.Editing?"调整位置":"收藏目录";header.Visibility=small?Visibility.Collapsed:Visibility.Visible;
+        L.Bind(header,TextBlock.TextProperty,order.Editing?"main.reorder":"main.favorites");header.Visibility=small?Visibility.Collapsed:Visibility.Visible;
         add.Visibility=order.Editing?Visibility.Collapsed:Visibility.Visible;
         heading.Height=order.Editing&&small?60:32;
         order.Actions.Orientation=small?Orientation.Vertical:Orientation.Horizontal;
@@ -141,7 +142,7 @@ internal sealed class SidebarView : UserControl
         ToolTipService.SetToolTip(e.ItemContainer,item.Name+"\n"+item.Path); AutomationProperties.SetName(e.ItemContainer,item.Name);
         if(e.Phase==0) { e.RegisterUpdateCallback(1,PrepareFavorite); return; }
         if(e.ItemContainer.ContentTemplateRoot is not FrameworkElement content || content.FindName("FavoriteMore") is not Button more)return;
-        AutomationProperties.SetName(more,"管理收藏："+item.Name);
+        L.Bind(more,AutomationProperties.NameProperty,"main.manageFavorite",()=>new Dictionary<string,object?>{{"name",(more.DataContext as Favorite)?.Name??item.Name}});
         for(var parent=VisualTreeHelper.GetParent(more);parent is not null;parent=VisualTreeHelper.GetParent(parent))
             if(parent is ContentPresenter presenter) {
                 more.SetBinding(ForegroundProperty,new Binding {Source=presenter,Path=new PropertyPath(nameof(ContentPresenter.Foreground))}); break;
@@ -163,14 +164,14 @@ internal sealed class SidebarView : UserControl
         service.Changed += () => DispatcherQueue.TryEnqueue(()=>{order.Refresh();if(!order.Editing)SetActiveEntry(activePath,activeFavorite);});
         favoriteMenu = item => {
             var menu=ThemeService.Menu();
-            menu.Items.Add(Ui.MenuItem("在资源管理器中打开",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;}),"\uE838"));
-            menu.Items.Add(Ui.MenuItem("复制路径",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;}),"\uE8C8"));
-            menu.Items.Add(ResultContextMenu.Unavailable("重命名文件夹","磁盘文件夹改名尚未迁入WinUI壳","\uE8AC"));
-            var arrange=Ui.MenuItem("调整位置",()=>order.Begin(item),"\uE8CB");arrange.IsEnabled=service.Items.Count>1;menu.Items.Add(arrange);
-            menu.Items.Add(Ui.MenuItem("移除收藏",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
+            menu.Items.Add(L.MenuItem("menu.openExplorer",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;}),"\uE838"));
+            menu.Items.Add(L.MenuItem("menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;}),"\uE8C8"));
+            menu.Items.Add(ResultContextMenu.Unavailable("menu.renameFolder","menu.renameUnavailable","\uE8AC"));
+            var arrange=L.MenuItem("main.reorder",()=>order.Begin(item),"\uE8CB");arrange.IsEnabled=service.Items.Count>1;menu.Items.Add(arrange);
+            menu.Items.Add(L.MenuItem("menu.removeFavorite",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
             menu.Items.Add(new MenuFlyoutSeparator());
-            menu.Items.Add(Ui.MenuItem("自动添加关键词",()=>commands.Run(()=>{commands.AutoKeywords(item.Path);return Task.CompletedTask;}),"\uE945"));
-            menu.Items.Add(Ui.MenuItem("获取/刷新元数据",()=>commands.Run(()=>commands.StartMetadataAsync(item.Path)),"\uE895"));
+            menu.Items.Add(L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(item.Path);return Task.CompletedTask;}),"\uE945"));
+            menu.Items.Add(L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(item.Path)),"\uE895"));
             return menu;
         };
         favorites.RightTapped += (_, e) => {

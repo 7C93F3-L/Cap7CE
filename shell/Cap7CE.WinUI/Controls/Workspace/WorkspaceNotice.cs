@@ -1,5 +1,6 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 
@@ -29,7 +30,7 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         var row=new Grid {ColumnSpacing=10};row.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         close=new Button {Content="×",Width=22,Height=22,MinWidth=0,MinHeight=0,Padding=new(0),Style=(Style)Application.Current.Resources["CapToolButton"]};
-        AutomationProperties.SetName(close,"关闭临时提醒");
+        L.Label(close,"main.closeNotice");
         row.Children.Add(message);Grid.SetColumn(progress,1);row.Children.Add(progress);Grid.SetColumn(close,2);row.Children.Add(close);
         Content=new Border {Style=(Style)Application.Current.Resources["CapWorkspaceNotice"],Child=row};
         SizeChanged+=(_,_)=>progress.MaxWidth=Math.Max(0,ActualWidth*.22);
@@ -68,14 +69,13 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         var fraction=indexTask is not null?indexFraction:metadataFraction;
         var loading=notice is null&&busyShown;
         Visibility=task is not null||background||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
-        message.Text=task??backgroundText??notice??"正在查询…";ToolTipService.SetToolTip(message,task??backgroundText??notice);
+        if((task??backgroundText??notice) is {} text)L.Literal(message,TextBlock.TextProperty,text);else L.Bind(message,TextBlock.TextProperty,"main.querying");ToolTipService.SetToolTip(message,task??backgroundText??notice);
         progress.Visibility=task is not null||background||loading?Visibility.Visible:Visibility.Collapsed;
         progress.Maximum=task is not null?taskMaximum:1;progress.Value=task is not null?taskValue:background?Math.Clamp(fraction??0,0,1):0;
         progress.IsIndeterminate=task is not null?taskIndeterminate:background?fraction is null:loading;
         close.Visibility=background?Visibility.Collapsed:Visibility.Visible;
         close.IsEnabled=task is null||!taskCancelling;
-        var closeLabel=task is not null?"取消识别":"关闭临时提醒";
-        AutomationProperties.SetName(close,closeLabel);ToolTipService.SetToolTip(close,closeLabel);
+        L.Label(close,task is not null?"main.cancelRecognition":"main.closeNotice");
     }
 
     public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;}

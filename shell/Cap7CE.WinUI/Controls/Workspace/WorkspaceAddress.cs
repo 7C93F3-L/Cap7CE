@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Models;
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -10,8 +11,8 @@ internal sealed class WorkspaceAddress : UserControl
     private readonly Grid root=new(){ColumnSpacing=4,Height=30,MinWidth=0};
     private readonly Grid slot=new(){Height=30,MinWidth=0};
     private readonly StackPanel crumbs=new(){Orientation=Orientation.Horizontal,Spacing=0};
-    private readonly TextBox address=new(){PlaceholderText="输入目录路径"};
-    private readonly TextBox search=new(){PlaceholderText="搜索名称、路径、关键词"};
+    private readonly TextBox address=new();
+    private readonly TextBox search=new();
     private readonly Button toggle,badge,trailing;
     private readonly ScrollViewer breadcrumb;
     private string path="",query="";
@@ -20,19 +21,20 @@ internal sealed class WorkspaceAddress : UserControl
     public WorkspaceAddress()
     {
         Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("ms-appx:///Themes/WorkspaceInputResources.xaml")});
+        L.Bind(address,TextBox.PlaceholderTextProperty,"main.addressPlaceholder");L.Bind(search,TextBox.PlaceholderTextProperty,"main.searchPlaceholder");
         VerticalAlignment=VerticalAlignment.Center;HorizontalContentAlignment=HorizontalAlignment.Stretch;
         var inputStyle=(Style)Application.Current.Resources["CapWorkspaceInput"];address.Style=search.Style=inputStyle;
         address.Loaded+=(_,_)=>HideClearButton(address);search.Loaded+=(_,_)=>HideClearButton(search);
         root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});root.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-        toggle=WorkspaceIcons.Button("computer","切换为搜索",()=>{if(searchMode){searchMode=false;editing=false;Render();}else FocusSearch();});root.Children.Add(toggle);
+        toggle=WorkspaceIcons.ResourceButton("computer","main.toSearch",()=>{if(searchMode){searchMode=false;editing=false;Render();}else FocusSearch();});root.Children.Add(toggle);
         breadcrumb=new(){Content=crumbs,Height=30,Padding=new(0),VerticalContentAlignment=VerticalAlignment.Center,HorizontalScrollBarVisibility=ScrollBarVisibility.Hidden,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled,HorizontalScrollMode=ScrollMode.Enabled};
         breadcrumb.Tapped+=(_,e)=>{if(!HasButton(e.OriginalSource as DependencyObject))FocusPath();};
         slot.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});slot.ColumnDefinitions.Add(new(){Width=new(28)});
         slot.Children.Add(breadcrumb);slot.Children.Add(address);slot.Children.Add(search);
         trailing=new(){Style=(Style)Application.Current.Resources["CapWorkspaceEditHotspot"],VerticalAlignment=VerticalAlignment.Center};
-        trailing.Click+=(_,_)=>FocusPath();Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(trailing,"编辑目录路径 · Ctrl+L");
+        trailing.Click+=(_,_)=>FocusPath();L.Bind(trailing,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.editAddress");
         Grid.SetColumn(trailing,1);slot.Children.Add(trailing);Grid.SetColumn(slot,1);root.Children.Add(slot);
-        badge=new Button{Content="搜索中",Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};badge.Click+=(_,_)=>FocusSearch();Grid.SetColumn(badge,2);root.Children.Add(badge);
+        badge=new Button{Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};L.Bind(badge,Button.ContentProperty,"main.searchActive");badge.Click+=(_,_)=>FocusSearch();Grid.SetColumn(badge,2);root.Children.Add(badge);
         address.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;SubmitPath();}else if(e.Key==VirtualKey.Escape){e.Handled=true;editing=false;address.Text=path;Render();toggle.Focus(FocusState.Programmatic);}};
         address.LostFocus+=(_,_)=>{if(editing){editing=false;Render();}};
         search.TextChanged+=(_,_)=>{if(string.IsNullOrWhiteSpace(search.Text)&&!string.IsNullOrWhiteSpace(query)){query="";Search?.Invoke("");}};
@@ -50,7 +52,7 @@ internal sealed class WorkspaceAddress : UserControl
     {
         crumbs.Children.Clear();foreach(var part in WorkspacePathRules.Crumbs(path)) {
             if(crumbs.Children.Count>0)crumbs.Children.Add(new TextBlock{Text="›",VerticalAlignment=VerticalAlignment.Center,Opacity=.5});
-            var button=new Button{Content=part.Label,Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};WorkspaceIcons.Label(button,part.Path.Length==0?"此电脑":part.Path);
+            var button=new Button{Content=part.Label,Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};if(part.Path.Length==0){L.Bind(button,Button.ContentProperty,"main.home");L.Label(button,"main.home");}else WorkspaceIcons.Label(button,part.Path);
             button.Click+=(_,_)=>Navigate?.Invoke(part.Path);crumbs.Children.Add(button);
         }
     }
@@ -58,7 +60,7 @@ internal sealed class WorkspaceAddress : UserControl
     {
         address.Visibility=editing&&!searchMode?Visibility.Visible:Visibility.Collapsed;
         search.Visibility=searchMode?Visibility.Visible:Visibility.Collapsed;breadcrumb.Visibility=!searchMode&&!editing?Visibility.Visible:Visibility.Collapsed;
-        toggle.Content=WorkspaceIcons.Icon(searchMode?"search":"computer");WorkspaceIcons.Label(toggle,searchMode?"切换为目录路径":"切换为搜索 · Ctrl+F");
+        toggle.Content=WorkspaceIcons.Icon(searchMode?"search":"computer");L.Label(toggle,searchMode?"main.toAddress":"main.toSearch");
         badge.Visibility=!searchMode&&query.Trim().Length>0?Visibility.Visible:Visibility.Collapsed;WorkspaceIcons.Label(badge,query);
         trailing.Visibility=!searchMode&&!editing?Visibility.Visible:Visibility.Collapsed;
         slot.ColumnDefinitions[1].Width=new(!searchMode&&!editing?28:0);

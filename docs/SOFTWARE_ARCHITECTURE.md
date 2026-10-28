@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-22）
 
+原生语言第三轮接入：工具栏状态、侧栏与排序操作、地址栏占位/模式提示、收藏及结果右键菜单、空结果提示、首页分组与系统位置显示、根目录标签、窗口固定和SizeSlider标题/无障碍提示使用显式资源绑定。LanguageUi.Label同步绑定提示及无障碍名称，Literal在显示用户内容前解除相同属性的旧绑定；LanguageBinding支持自定义文本应用回调，使AssetNameLabel继续沿既有原生测量/文件名省略路径更新显示。HomeEntries.LabelKey仅按既有系统入口身份返回显示资源键，不改变Entry.Id/Name、路径或Catalog。结果列表与分组模板位于既有ResultCardResources，LanguageText附加属性明确接收资源键与原文回退，模板复用时移除旧订阅；文件名即使与中文资源相同也按原文显示。当前共502条资源，构建检查同时验证main/menu键。Layout中的事件/属性/派发替身运行真实LanguageBinding实现，覆盖加载/卸载、替换、原文回退、动态参数、自定义应用与迟到派发抑制；该测试不等同于原生控件视觉回归。详细信息、筛选、部分设置和后台提示尚未完成，语言选择器继续禁用。
+
 原生语言第二轮接入：PreferenceStore保存Language（默认中文，支持system/zh-CN/en-US），保存成功后由AppLanguage更新唯一LanguageSession；LanguageUi仅绑定显式资源键，导航项、SettingsPages/SettingsCard/SettingsFieldRow、主要选择项、快捷动作和颜色编辑器直接更新依赖属性，不重建页面或重置选择/草稿。内部分类标识保持原值，显示标题使用navigation键。settings-help.json只保存分组、指令与资源键，说明及含中文参数的示例进入messages.json，指令帮助切换语言保留当前分类。SettingsReference.Text改读原生语言资源，快捷键仍读取既有非语言生成资源。构建检查覆盖源码资源键及帮助引用。当前尚未完成主窗口、索引/元数据、模型状态及其他后台提示的全覆盖，语言选择器仍禁用，不能视为完整双语版本。
 
 AutoKeywordTasks在StartAsync中、任何异步收集前固定整批语言；AutoKeywordProcessor复用这一快照创建模型上下文，并作为localKeywords.generate第五参数传给独立Node所有者。Node只接受zh-CN/en-US，四参数旧请求默认中文；requestModel按每请求语言选择提示词，不依赖进程全局语言。并行中英文任务互不改变提示词；现有语法、解析、关键词合并、取消、源身份和修订检查保持原链路。运行测试覆盖四参数兼容、双语请求、无效语言拒绝、并行任务、取消与超时。

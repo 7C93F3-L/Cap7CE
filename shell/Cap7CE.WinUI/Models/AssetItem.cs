@@ -17,6 +17,8 @@ public sealed class AssetItem(BasicSearchItem entry, string fullPath)
 	public string FullPath { get; } = fullPath;
 
 	public string Name => Entry.Name;
+    public string? NameResourceKey=>HomeEntries.LabelKey(Entry.Id);
+    public string? SizeResourceKey=>Entry.IsDirectory?"main.folder":null;
 
 	public string Glyph
 	{

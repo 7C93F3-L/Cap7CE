@@ -30,7 +30,6 @@ internal sealed class SettingsCatalog
         return view;
     }
     private ModelSettingsView ModelsView=>models??=new(services,notice);
-    private static string T(string key)=>SettingsReference.Text(key);
     private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false,string? descriptionOverride=null)
         =>Entries.Add(new(category,"stableSettings.section."+section,title,descriptionOverride??description,create,expanded));
     private static UIElement Disabled(string key){var button=L.Button(key,()=>{});button.IsEnabled=false;return button;}
@@ -111,7 +110,7 @@ internal sealed class SettingsCatalog
     }
     private UIElement FontSize()
     {
-        var slider=new SizeSlider(T("stableSettings.uiFontSize"),services.Preferences.Current.FontSize,12,16,1,1,13,value=>$"{value:0} DIP",_=>{},showTitle:false);
+        var slider=new SizeSlider("stableSettings.uiFontSize",services.Preferences.Current.FontSize,12,16,1,1,13,value=>$"{value:0} DIP",_=>{},showTitle:false);
         var saved=services.Preferences.Current.FontSize;
         void Commit(){var value=slider.Value;if(value==saved)return;saved=value;actions.Run(async()=>{try{await services.Preferences.SaveAsync(services.Preferences.Current with{FontSize=value});}catch{saved=services.Preferences.Current.FontSize;throw;}});}
         slider.CommitRequested+=Commit;

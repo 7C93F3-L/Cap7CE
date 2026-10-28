@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Windows.ApplicationModel.DataTransfer;
@@ -25,8 +26,8 @@ internal sealed class SidebarFavoriteOrder
     {
         this.list=list;
         list.Resources.MergedDictionaries.Add(new ResourceDictionary{Source=new Uri("ms-appx:///Themes/SidebarOrderResources.xaml")});
-        done=Action("M5 12L10 17L20 7","完成排序",()=>commands?.Run(Save));
-        cancel=Action("M6 6L18 18M18 6L6 18","取消排序",()=>Cancel());
+        done=Action("M5 12L10 17L20 7","main.orderDone",()=>commands?.Run(Save));
+        cancel=Action("M6 6L18 18M18 6L6 18","main.orderCancel",()=>Cancel());
         Actions.Children.Add(done);Actions.Children.Add(cancel);
         list.DragItemsStarting+=(_,e)=>{
             if(!Editing||busy||e.Items.Count!=1){e.Cancel=true;return;}
@@ -48,7 +49,7 @@ internal sealed class SidebarFavoriteOrder
     {
         var button=new Button{Width=26,Height=26,Padding=new(4),Style=(Style)Application.Current.Resources["CapSidebarButton"],
             Content=new SidebarIcon{Width=18,Height=18,OutlinePath=path}};
-        AutomationProperties.SetName(button,label);ToolTipService.SetToolTip(button,label);button.Click+=(_,_)=>click();return button;
+        L.Label(button,label);button.Click+=(_,_)=>click();return button;
     }
     public void Bind(FavoriteService value,FileCommands actions){service=value;commands=actions;Refresh();}
     public void Refresh(){if(!Editing&&service is not null)list.ItemsSource=service.Items;}

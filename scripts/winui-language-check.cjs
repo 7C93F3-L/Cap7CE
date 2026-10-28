@@ -26,7 +26,7 @@ module.exports = root => {
     return entry.isDirectory() && !['bin', 'obj'].includes(entry.name) ? walk(file) : entry.isFile() && file.endsWith('.cs') ? [file] : [];
   });
   for (const file of walk(path.join(root, 'shell/Cap7CE.WinUI')))
-    for (const match of fs.readFileSync(file, 'utf8').matchAll(/"((?:native|navigation|help|settings|common|theme|appearance|stableSettings|shortcut)\.[A-Za-z0-9_.]+)"/g))
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(/"((?:main|menu|native|navigation|help|settings|common|theme|appearance|stableSettings|shortcut)\.[A-Za-z0-9_.]+)"/g))
       if (!match[1].endsWith('.')) assert(messages[match[1]], `${file}: unknown language key ${match[1]}`);
   console.log(`WinUI language catalog passed: ${Object.keys(messages).length} paired messages`);
 };

@@ -7,6 +7,10 @@ namespace Cap7CE.WinUI.Models;
 
 internal static class HomeEntries
 {
+    internal static string? LabelKey(string id)=>id switch {
+        "home-桌面"=>"main.homeDesktop","home-文档"=>"main.homeDocuments","home-下载"=>"main.homeDownloads",
+        "home-图片"=>"main.homePictures","home-音乐"=>"main.homeMusic","home-视频"=>"main.homeVideos",_=>null
+    };
 	// Home is a direct shell projection: it intentionally does not depend on
 	// catalog availability, index progress, or metadata state.
 	public static IEnumerable<AssetItem> Create()

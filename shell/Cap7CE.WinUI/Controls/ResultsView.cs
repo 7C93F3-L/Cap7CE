@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
@@ -12,12 +13,12 @@ internal sealed class ResultsView : UserControl
 {
     private readonly GridView grid = new() { SelectionMode = ListViewSelectionMode.Extended, CanDragItems = true };
     private readonly ListView list = new() { SelectionMode = ListViewSelectionMode.Extended, CanDragItems = true };
-    private readonly TextBlock empty = Ui.Text("正在连接现有目录…", true);
+    private readonly TextBlock empty = L.Text("main.connecting", true);
     private readonly Grid root = new();
     private readonly ResultsGallery gallery=new(){Visibility=Visibility.Collapsed};
     private readonly StackPanel emptyPanel=new(){Spacing=8,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,MaxWidth=380,Margin=new(16)};
     private readonly TextBlock emptyHint=Ui.Text("",true);
-    private readonly Button retry=Ui.Button("重试",()=>{}),clearFilters=Ui.Button("清除筛选",()=>{});
+    private readonly Button retry=L.Button("main.retry",()=>{}),clearFilters=L.Button("main.clearFilters",()=>{});
     private readonly StackPanel emptyActions=new(){Orientation=Orientation.Horizontal,Spacing=6,HorizontalAlignment=HorizontalAlignment.Center};
     private bool square=true,home,suspended,binding;
     private bool IsGallery=>!square&&!listMode&&!horizontal&&!home;
@@ -47,7 +48,7 @@ internal sealed class ResultsView : UserControl
         grid.ItemsPanel = (ItemsPanelTemplate)XamlReader.Load("<ItemsPanelTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><ItemsWrapGrid Orientation='Horizontal' CacheLength='1'/></ItemsPanelTemplate>");
         grid.ItemTemplate = (DataTemplate)Application.Current.Resources["CapAssetTileTemplate"];
         grid.ItemContainerStyle=(Style)Application.Current.Resources["CapResultItem"];grid.Padding=new(6);
-        grid.GroupStyle.Add(new GroupStyle{HeaderTemplate=(DataTemplate)XamlReader.Load("<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><TextBlock Text='{Binding Title}' FontSize='12' Opacity='0.6' Margin='8,8,0,4'/></DataTemplate>")});
+        grid.GroupStyle.Add(new GroupStyle{HeaderTemplate=(DataTemplate)Application.Current.Resources["CapHomeGroupHeaderTemplate"]});
         gridLayout = new(grid);
         grid.GotFocus+=(_,_)=>{
             if(!keyboardSelect)return;
@@ -58,7 +59,7 @@ internal sealed class ResultsView : UserControl
                 grid.SelectedItems.Clear();grid.SelectedItem=item;
             }
         };
-        list.ItemTemplate = (DataTemplate)XamlReader.Load("<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><StackPanel Orientation='Horizontal' Spacing='18' Padding='6'><FontIcon Glyph='{Binding Glyph}' FontSize='16'/><TextBlock Text='{Binding Name}' Width='300' TextTrimming='CharacterEllipsis'/><TextBlock Text='{Binding SizeLabel}' Width='90'/><TextBlock Text='{Binding ModifiedLabel}' Width='150'/><TextBlock Text='{Binding FullPath}' Opacity='0.55' TextTrimming='CharacterEllipsis'/></StackPanel></DataTemplate>");
+        list.ItemTemplate = (DataTemplate)Application.Current.Resources["CapAssetListTemplate"];
         foreach (var view in new ListViewBase[] { grid, list })
         {
             IdleScrollBars.Attach(view);
@@ -88,8 +89,8 @@ internal sealed class ResultsView : UserControl
             SelectionChanged?.Invoke(Selection);
         }
         emptyPanel.Visibility=value.Count==0?Visibility.Visible:Visibility.Collapsed;
-        empty.Text=busy?"正在载入…":error is not null?"暂时无法打开此位置":"没有匹配项";
-        emptyHint.Text=error??(filtered?"可以调整搜索词或筛选条件后重试。":"此文件夹中没有可显示的内容。");
+        L.Bind(empty,TextBlock.TextProperty,busy?"main.loading":error is not null?"main.locationUnavailable":"main.noMatches");
+        if(error is not null)L.Literal(emptyHint,TextBlock.TextProperty,error);else L.Bind(emptyHint,TextBlock.TextProperty,filtered?"main.adjustFilters":"main.emptyFolder");
         retry.Visibility=!busy?Visibility.Visible:Visibility.Collapsed;clearFilters.Visibility=!busy&&filtered?Visibility.Visible:Visibility.Collapsed;
     }
     public void Preferences(ShellPreferences value){var previous=ActiveView;var old=IsGallery;listMode=value.View=="list";square=value.SquareTiles;gallery.Size(value.TileSize);ApplyView(previous,old);gridLayout.Refresh();}
@@ -102,7 +103,7 @@ internal sealed class ResultsView : UserControl
         ApplyView(previous,old);gridLayout.SetHorizontal(value);
     }
     private void SetGridSource()
-    {grid.ItemsSource=home&&!horizontal&&items is {} value?new CollectionViewSource{IsSourceGrouped=true,Source=new[]{new HomeGroup("系统目录",value.Where(i=>i.Entry.Id.StartsWith("home-"))),new HomeGroup("此电脑",value.Where(i=>!i.Entry.Id.StartsWith("home-")))}}.View:items;}
+    {grid.ItemsSource=home&&!horizontal&&items is {} value?new CollectionViewSource{IsSourceGrouped=true,Source=new[]{new HomeGroup("main.systemFolders",value.Where(i=>i.Entry.Id.StartsWith("home-"))),new HomeGroup("main.home",value.Where(i=>!i.Entry.Id.StartsWith("home-")))}}.View:items;}
     private void ApplyView(ListViewBase previous,bool wasGallery)
     {
         var current=ActiveView;

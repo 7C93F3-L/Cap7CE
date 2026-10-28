@@ -4,7 +4,7 @@
       <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="156"/><ColumnDefinition Width="*"/><ColumnDefinition x:Name="DetailsColumn" Width="280"/></Grid.ColumnDefinitions>
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <ContentControl x:Name="SidebarHost" Grid.RowSpan="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
-      <controls:PaneResizer x:Name="SidebarSizer" Grid.RowSpan="2" Width="8" HorizontalAlignment="Right" Margin="0,0,-4,0" AutomationProperties.Name="目录栏宽度"/>
+      <controls:PaneResizer x:Name="SidebarSizer" Grid.RowSpan="2" Width="8" HorizontalAlignment="Right" Margin="0,0,-4,0"/>
       <ContentControl x:Name="FilterHost" Grid.Column="1" Grid.ColumnSpan="2" HorizontalContentAlignment="Stretch"/>
       <Border x:Name="MainBorder" Grid.Row="1" Grid.Column="1" CornerRadius="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CapWorkspaceSurfaceBrush}">
         <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -16,7 +16,7 @@
       </Border>
       <Border x:Name="DetailsBorder" Grid.Row="1" Grid.Column="2" Style="{StaticResource CapWorkspacePanel}" Padding="0">
         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-          <controls:PaneResizer x:Name="DetailsSizer" AutomationProperties.Name="详细信息栏宽度"/>
+          <controls:PaneResizer x:Name="DetailsSizer"/>
           <ContentControl Grid.Column="1" x:Name="DetailsHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
         </Grid>
       </Border>

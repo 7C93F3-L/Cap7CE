@@ -13,20 +13,23 @@ internal sealed class LanguageBinding
     private readonly LanguageSession session;
     private readonly string key;
     private readonly Func<IReadOnlyDictionary<string,object?>?>? parameters;
+    private readonly Action<string>? apply;
     private bool subscribed;
-    private LanguageBinding(FrameworkElement element,DependencyProperty property,LanguageSession session,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters)
+    private LanguageBinding(FrameworkElement element,DependencyProperty property,LanguageSession session,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters,Action<string>? apply)
     {
-        this.element=element;this.property=property;this.session=session;this.key=key;this.parameters=parameters;
+        this.element=element;this.property=property;this.session=session;this.key=key;this.parameters=parameters;this.apply=apply;
         element.Loaded+=Loaded;element.Unloaded+=Unloaded;
         Refresh();if(element.IsLoaded)Subscribe();
     }
-    public static void Attach(FrameworkElement element,DependencyProperty property,LanguageSession session,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
+    public static void Attach(FrameworkElement element,DependencyProperty property,LanguageSession session,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters=null,Action<string>? apply=null)
     {
         var bindings=Bindings.GetOrCreateValue(element);
         if(bindings.Remove(property,out var previous))previous.Detach();
-        bindings[property]=new LanguageBinding(element,property,session,key,parameters);
+        bindings[property]=new LanguageBinding(element,property,session,key,parameters,apply);
     }
-    private void Refresh()=>element.SetValue(property,session.Text(key,parameters?.Invoke()));
+    public static void Clear(FrameworkElement element,DependencyProperty property)
+    {if(Bindings.TryGetValue(element,out var bindings)&&bindings.Remove(property,out var previous))previous.Detach();}
+    private void Refresh(){var text=session.Text(key,parameters?.Invoke());if(apply is null)element.SetValue(property,text);else apply(text);}
     private void Loaded(object sender,RoutedEventArgs args){Subscribe();Refresh();}
     private void Subscribe(){if(subscribed)return;session.Changed+=Changed;subscribed=true;}
     private void Changed()

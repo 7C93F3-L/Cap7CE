@@ -1,4 +1,6 @@
 using Microsoft.UI.Xaml;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Cap7CE.WinUI.Controllers;
@@ -27,19 +29,19 @@ internal sealed class WorkspaceToolbar : UserControl
     public WorkspaceToolbar()
     {
         root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});root.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-        back=WorkspaceIcons.Button("back","返回 · Alt+←",()=>Run(()=>session!.BackAsync()));
-        forward=WorkspaceIcons.Button("forward","前进 · Alt+→",()=>Run(()=>session!.ForwardAsync()));
-        up=WorkspaceIcons.Button("up","上一级",()=>Run(()=>session!.UpAsync()));
-        refresh=WorkspaceIcons.Button("refresh","刷新 · F5",Reload);navigation=Ui.Row(back,forward,up,refresh);navigation.Spacing=2;root.Children.Add(navigation);
+        back=WorkspaceIcons.ResourceButton("back","main.back",()=>Run(()=>session!.BackAsync()));
+        forward=WorkspaceIcons.ResourceButton("forward","main.forward",()=>Run(()=>session!.ForwardAsync()));
+        up=WorkspaceIcons.ResourceButton("up","main.up",()=>Run(()=>session!.UpAsync()));
+        refresh=WorkspaceIcons.ResourceButton("refresh","main.refresh",Reload);navigation=Ui.Row(back,forward,up,refresh);navigation.Spacing=2;root.Children.Add(navigation);
         Grid.SetColumn(address,1);root.Children.Add(address);
         address.Navigate+=path=>{if(session is null)return;session.Query="";if(path.Length==0)session.Filter=new();Run(()=>session.NavigateAsync(path));};
         address.Search+=query=>{if(session is null)return;session.Query=query;Reload();};
-        random=WorkspaceIcons.Toggle("shuffle","随机浏览",()=>{if(session is null)return;session.Random=!session.Random;if(session.Random)session.Seed=(uint)System.Random.Shared.Next();Reload();});
-        next=WorkspaceIcons.Button("refresh","换一批",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
-        sizeButton=WorkspaceIcons.Button("size","网格大小",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);
-        view=WorkspaceIcons.Button("grid","视图",ShowView);sort=WorkspaceIcons.Button("sort","排序",ShowSort);
-        recursive=WorkspaceIcons.Button("tree","包含子文件夹",()=>OptionsChanged?.Invoke(value=>value with{Recursive=!value.Recursive}));
-        hidden=WorkspaceIcons.Button("eyeOff","显示隐藏项",()=>OptionsChanged?.Invoke(value=>value with{ShowHidden=!value.ShowHidden}));
+        random=WorkspaceIcons.ResourceToggle("shuffle","main.random",()=>{if(session is null)return;session.Random=!session.Random;if(session.Random)session.Seed=(uint)System.Random.Shared.Next();Reload();});
+        next=WorkspaceIcons.ResourceButton("refresh","main.next",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
+        sizeButton=WorkspaceIcons.ResourceButton("size","main.gridSize",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);
+        view=WorkspaceIcons.ResourceButton("grid","main.view",ShowView);sort=WorkspaceIcons.ResourceButton("sort","main.sort",ShowSort);
+        recursive=WorkspaceIcons.ResourceButton("tree","main.recursive",()=>OptionsChanged?.Invoke(value=>value with{Recursive=!value.Recursive}));
+        hidden=WorkspaceIcons.ResourceButton("eyeOff","main.hidden",()=>OptionsChanged?.Invoke(value=>value with{ShowHidden=!value.ShowHidden}));
         var separator=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolSeparator"],IsHitTestVisible=false};
         tools=Ui.Row(random,next,separator,sizeButton,view,recursive,sort,hidden);tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
         navigation.VerticalAlignment=tools.VerticalAlignment=VerticalAlignment.Center;
@@ -55,14 +57,16 @@ internal sealed class WorkspaceToolbar : UserControl
         random.IsChecked=value.Random;next.IsEnabled=!value.ForegroundBusy;recursive.IsEnabled=value.PathValue.Length>0;
         ((SidebarIcon)recursive.Content).OutlinePath=WorkspaceIcons.Icon(value.Recursive?"files":"tree").OutlinePath;
         ((SidebarIcon)hidden.Content).OutlinePath=WorkspaceIcons.Icon(value.ShowHidden?"eye":"eyeOff").OutlinePath;
-        WorkspaceIcons.Label(random,$"随机浏览 · {(value.Random?"开启":"关闭")}");WorkspaceIcons.Label(recursive,$"包含子文件夹 · {(value.Recursive?"开启":"关闭")}{(value.PathValue.Length==0?" · 请先进入目录":"")}");
-        WorkspaceIcons.Label(hidden,$"显示隐藏项 · {(value.ShowHidden?"开启":"关闭")}");WorkspaceIcons.Label(sort,value.Random?"排序 · 随机浏览":$"排序 · {SortLabel(value.Sort)}");Reflow();
+        L.Label(random,"main.randomStatus",()=>new Dictionary<string,object?>{{"state",AppLanguage.Text(value.Random?"main.on":"main.off")}});
+        L.Label(recursive,value.PathValue.Length==0?"main.enterFolder":"main.recursiveStatus",()=>new Dictionary<string,object?>{{"state",AppLanguage.Text(value.Recursive?"main.on":"main.off")}});
+        L.Label(hidden,"main.hiddenStatus",()=>new Dictionary<string,object?>{{"state",AppLanguage.Text(value.ShowHidden?"main.on":"main.off")}});
+        if(value.Random)L.Label(sort,"main.sortRandom");else L.Label(sort,"main.sortStatus",()=>new Dictionary<string,object?>{{"sort",AppLanguage.Text(SortKey(value.Sort))}});Reflow();
     }
     public void ApplyPreferences(ShellPreferences value)
     {
         tileSize=value.TileSize;
         viewMode=value.View=="list"?WorkspaceViewMode.List:value.SquareTiles?WorkspaceViewMode.Square:WorkspaceViewMode.OriginalRatio;
-        WorkspaceIcons.Label(sizeButton,$"网格大小 · {value.TileSize:0} DIP");ApplyViewState();
+        L.Label(sizeButton,"main.gridSizeStatus",()=>new Dictionary<string,object?>{{"size",value.TileSize}});ApplyViewState();
     }
     public void SetCompact(bool value)
     {
@@ -72,7 +76,7 @@ internal sealed class WorkspaceToolbar : UserControl
     {
         view.IsEnabled=!compact;
         ((SidebarIcon)view.Content).OutlinePath=WorkspaceIcons.Icon(!compact&&viewMode==WorkspaceViewMode.List?"list":"grid").OutlinePath;
-        WorkspaceIcons.Label(view,compact?"低高度下使用横向网格，拉高窗口后恢复原视图":$"视图 · 当前：{ViewLabel(viewMode)}");
+        if(compact)L.Label(view,"main.compactView");else L.Label(view,"main.viewStatus",()=>new Dictionary<string,object?>{{"view",AppLanguage.Text(ViewKey(viewMode))}});
     }
     private void Reflow()
     {
@@ -86,15 +90,15 @@ internal sealed class WorkspaceToolbar : UserControl
     {for(DependencyObject? item=target;item is not null;item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(ReferenceEquals(item,this))return true;return false;}
     private void Reload(){if(session is not null)Run(()=>session.NavigateAsync(session.PathValue,false));}
     private async void Run(Func<Task> action){if(session is null)return;try{await action();}catch(Exception error){Failure?.Invoke(error.Message);}}
-    private static string ViewLabel(WorkspaceViewMode mode)=>mode switch {WorkspaceViewMode.List=>"列表",WorkspaceViewMode.OriginalRatio=>"原比例",_=>"等比例"};
+    private static string ViewKey(WorkspaceViewMode mode)=>mode switch {WorkspaceViewMode.List=>"main.viewList",WorkspaceViewMode.OriginalRatio=>"main.viewOriginal",_=>"main.viewSquare"};
     private void ShowView()
     {
         if(compact)return;
         flyouts.Close();viewMenu?.Hide();var menu=ThemeService.Menu();viewMenu=menu;
         menu.Closed+=(_,_)=>{if(ReferenceEquals(viewMenu,menu))viewMenu=null;};
         foreach(var mode in Enum.GetValues<WorkspaceViewMode>()) {
-            var option=new RadioMenuFlyoutItem {Text=ViewLabel(mode),IsChecked=mode==viewMode,GroupName="workspace-view"};
-            option.Click+=(_,_)=>{if(!compact&&mode!=viewMode)ViewSelected?.Invoke(mode);};menu.Items.Add(option);
+            var option=new RadioMenuFlyoutItem {IsChecked=mode==viewMode,GroupName="workspace-view"};
+            L.Bind(option,RadioMenuFlyoutItem.TextProperty,ViewKey(mode));option.Click+=(_,_)=>{if(!compact&&mode!=viewMode)ViewSelected?.Invoke(mode);};menu.Items.Add(option);
         }
         menu.ShowAt(view,new FlyoutShowOptions{Placement=FlyoutPlacementMode.Bottom});
     }
@@ -105,13 +109,13 @@ internal sealed class WorkspaceToolbar : UserControl
         var picker=new GridSizePicker(tileSize,value=>{tileSize=value;SizeChangedByUser?.Invoke(value);});
         flyouts.Show(sizeButton,picker,()=>SizeCommitted?.Invoke(picker.Value,scope));
     }
-    private static string SortLabel(string value)=>value switch {"name-descending"=>"名称 · 降序","modified-descending"=>"修改时间 · 降序","modified-ascending"=>"修改时间 · 升序",_=>"名称 · 升序"};
+    private static string SortKey(string value)=>value switch {"name-descending"=>"main.sortNameDesc","modified-descending"=>"main.sortModifiedDesc","modified-ascending"=>"main.sortModifiedAsc",_=>"main.sortNameAsc"};
     private void ShowSort()
     {
         if(session is null)return;var menu=ThemeService.Menu();
         foreach(var value in new[]{"name-ascending","name-descending","modified-descending","modified-ascending"}) {
-            var option=new RadioMenuFlyoutItem{Text=SortLabel(value),IsChecked=!session.Random&&session.Sort==value,GroupName="sort"};
-            option.Click+=(_,_)=>{session.Random=false;OptionsChanged?.Invoke(current=>current with{Sort=value});};menu.Items.Add(option);
+            var option=new RadioMenuFlyoutItem{IsChecked=!session.Random&&session.Sort==value,GroupName="sort"};
+            L.Bind(option,RadioMenuFlyoutItem.TextProperty,SortKey(value));option.Click+=(_,_)=>{session.Random=false;OptionsChanged?.Invoke(current=>current with{Sort=value});};menu.Items.Add(option);
         }
         menu.ShowAt(sort,new FlyoutShowOptions{Placement=FlyoutPlacementMode.Bottom});
     }

@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Models;
+using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -26,7 +27,13 @@ internal sealed class AssetNameLabel
         availableWidth=Math.Max(0,value);Update();
     }
 
-    internal void SetName(string value,bool file)
+    internal void SetName(string value,bool file,string? resourceKey=null)
+    {
+        LanguageBinding.Clear(Text,TextBlock.TextProperty);
+        if(resourceKey is null)ApplyName(value,file);
+        else LanguageBinding.Attach(Text,TextBlock.TextProperty,AppLanguage.Session,resourceKey,apply:translated=>ApplyName(translated,file));
+    }
+    private void ApplyName(string value,bool file)
     {
         name=value;isFile=file;AutomationProperties.SetName(Text,value);Update();
     }

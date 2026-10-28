@@ -5,6 +5,7 @@ internal static class LanguageChecks
     public static void Run()
     {
         var catalog=new LanguageCatalog(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/languages.json")));
+        LanguageBindingChecks.Run(catalog);
         var session=new LanguageSession(catalog);var changes=0;session.Changed+=()=>changes++;
         Equal(session.Text("navigation.general"),"通用");
         session.Select("en-US","zh-CN");Equal(session.Text("navigation.general"),"General");

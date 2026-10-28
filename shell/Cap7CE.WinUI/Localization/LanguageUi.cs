@@ -9,6 +9,12 @@ internal static class LanguageUi
 {
     public static void Bind(FrameworkElement target,DependencyProperty property,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
         =>LanguageBinding.Attach(target,property,AppLanguage.Session,key,parameters);
+    public static void Literal(FrameworkElement target,DependencyProperty property,object? value)
+    {LanguageBinding.Clear(target,property);target.SetValue(property,value);}
+    public static void Label(FrameworkElement target,string key,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
+    {Bind(target,ToolTipService.ToolTipProperty,key,parameters);Bind(target,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,key,parameters);}
+    public static MenuFlyoutItem MenuItem(string key,Action action,string? glyph=null,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
+    {var item=Ui.MenuItem("",action,glyph);Bind(item,MenuFlyoutItem.TextProperty,key,parameters);return item;}
     public static TextBlock Text(string key,bool muted=false,Func<IReadOnlyDictionary<string,object?>?>? parameters=null)
     {var text=Ui.Text("",muted);Bind(text,TextBlock.TextProperty,key,parameters);return text;}
     public static TextBlock Heading(string key)

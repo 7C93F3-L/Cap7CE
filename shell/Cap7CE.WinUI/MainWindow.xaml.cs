@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Controllers;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Themes;
@@ -39,6 +40,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
+        L.Bind(SidebarSizer,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.sidebarWidth");L.Bind(DetailsSizer,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.detailsWidth");
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         workspace=new(services,()=>active,results,toolbar);
         services.CatalogChanged+=roots=>DispatcherQueue.TryEnqueue(()=>{if(!closed){
@@ -109,11 +111,12 @@ public sealed partial class MainWindow : Window
     }
     private void NewTab(string path,bool favorite=false)
     {
-        if(Tabs.TabItems.Count>=12){Notice("最多打开12个目录标签");return;}
+        if(Tabs.TabItems.Count>=12){Notice(Localization.AppLanguage.Text("main.tabLimit"));return;}
         var session=new BrowseSession(services);
         session.NavigationStarting+=preserve=>previewLink.NavigationStarting(session,preserve);
-        var tab=new TabViewItem {Header=path.Length==0?"此电脑":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
-        session.Changed+=()=>{if(closed)return;tab.Header=session.Title;if(ReferenceEquals(active,session))Bind();};
+        var tab=new TabViewItem {Header=path.Length==0?"":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
+        if(path.Length==0)L.Bind(tab,TabViewItem.HeaderProperty,"main.home");
+        session.Changed+=()=>{if(closed)return;if(session.PathValue.Length==0)L.Bind(tab,TabViewItem.HeaderProperty,"main.home");else L.Literal(tab,TabViewItem.HeaderProperty,session.Title);if(ReferenceEquals(active,session))Bind();};
         Tabs.TabItems.Add(tab);Tabs.SelectedItem=tab;commands.Run(()=>session.OpenLocationAsync(path,favorite));
         Tabs.Visibility=Tabs.TabItems.Count>1?Visibility.Visible:Visibility.Collapsed;
     }

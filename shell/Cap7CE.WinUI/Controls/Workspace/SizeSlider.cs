@@ -1,4 +1,6 @@
 using Microsoft.UI.Xaml;
+using Cap7CE.WinUI.Localization;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -13,26 +15,26 @@ internal class SizeSlider : UserControl
     private readonly Slider slider;
     public double Value=>slider.Value;
     public event Action? CommitRequested;
-    public SizeSlider(string title,double value,double minimum,double maximum,double step,double largeChange,double defaultValue,Func<double,string> format,Action<double> preview,bool showTitle=true)
+    public SizeSlider(string titleKey,double value,double minimum,double maximum,double step,double largeChange,double defaultValue,Func<double,string> format,Action<double> preview,bool showTitle=true)
     {
         Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("ms-appx:///Themes/GridSizePickerResources.xaml")});
         var panel=new StackPanel {Width=240,Spacing=6,HorizontalAlignment=HorizontalAlignment.Right};
         var header=new Grid();header.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-        header.Children.Add(new TextBlock {Text=showTitle?title:"",FontSize=14,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,VerticalAlignment=VerticalAlignment.Center});
+        var title=showTitle?L.Text(titleKey):Ui.Text("");title.FontSize=14;title.FontWeight=Microsoft.UI.Text.FontWeights.SemiBold;title.VerticalAlignment=VerticalAlignment.Center;header.Children.Add(title);
         var current=Ui.Text(format(value),true);current.FontSize=13;current.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(current,1);header.Children.Add(current);
         panel.Children.Add(header);
         slider=new Slider {Minimum=minimum,Maximum=maximum,Value=value,StepFrequency=step,SmallChange=step,LargeChange=largeChange,
             HorizontalAlignment=HorizontalAlignment.Stretch,ThumbToolTipValueConverter=new ValueConverter(format)};
         ApplyAccentColors();
-        AutomationProperties.SetName(slider,title);
-        AutomationProperties.SetHelpText(slider,"默认"+format(defaultValue)+"；方向键微调，Page Up和Page Down较大幅度调整");
+        L.Bind(slider,AutomationProperties.NameProperty,titleKey);
+        L.Bind(slider,AutomationProperties.HelpTextProperty,"main.sliderHelp",()=>new Dictionary<string,object?>{{"value",format(defaultValue)}});
         slider.ValueChanged+=(_,e)=>{current.Text=format(e.NewValue);preview(e.NewValue);};panel.Children.Add(slider);
         var scale=new Grid();
-        var small=Ui.Text("较小",true);small.HorizontalAlignment=HorizontalAlignment.Left;small.FontSize=12;small.VerticalAlignment=VerticalAlignment.Center;scale.Children.Add(small);
-        var reset=new HyperlinkButton {HorizontalAlignment=HorizontalAlignment.Left,Content="默认",FontSize=12,Padding=new(6,0,6,0),MinHeight=24,MinWidth=0};
-        AutomationProperties.SetName(reset,"恢复默认"+title+"（"+format(defaultValue)+"）");ToolTipService.SetToolTip(reset,"恢复"+format(defaultValue));reset.Click+=(_,_)=>{slider.Value=defaultValue;CommitRequested?.Invoke();};
+        var small=L.Text("main.sliderSmaller",true);small.HorizontalAlignment=HorizontalAlignment.Left;small.FontSize=12;small.VerticalAlignment=VerticalAlignment.Center;scale.Children.Add(small);
+        var reset=new HyperlinkButton {HorizontalAlignment=HorizontalAlignment.Left,FontSize=12,Padding=new(6,0,6,0),MinHeight=24,MinWidth=0};
+        L.Bind(reset,HyperlinkButton.ContentProperty,"main.sliderDefault");L.Bind(reset,AutomationProperties.NameProperty,"main.sliderReset",()=>new Dictionary<string,object?>{{"title",AppLanguage.Text(titleKey)},{"value",format(defaultValue)}});L.Bind(reset,ToolTipService.ToolTipProperty,"main.sliderResetHint",()=>new Dictionary<string,object?>{{"value",format(defaultValue)}});reset.Click+=(_,_)=>{slider.Value=defaultValue;CommitRequested?.Invoke();};
         scale.Children.Add(reset);
-        var large=Ui.Text("较大",true);large.FontSize=12;large.HorizontalAlignment=HorizontalAlignment.Right;large.VerticalAlignment=VerticalAlignment.Center;scale.Children.Add(large);
+        var large=L.Text("main.sliderLarger",true);large.FontSize=12;large.HorizontalAlignment=HorizontalAlignment.Right;large.VerticalAlignment=VerticalAlignment.Center;scale.Children.Add(large);
         void AlignDefault()
         {
             var track=FindPart(slider,"HorizontalTemplate");var thumb=FindPart(slider,"HorizontalThumb");
