@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
@@ -27,7 +28,7 @@ internal sealed class DetailsPane : UserControl
     private IReadOnlyList<AssetItem> selected=[];
     private (string Path,long? Count,bool Searching,int Filters,int Loaded,bool Busy) context=("",0,false,0,0,false);
     private bool stopped,keywordRefreshPending;
-    public DetailsPane(ShellServices services,FileCommands commands,Action<string> notice)
+    public DetailsPane(ShellServices services,FileCommands commands,Action<UiMessage> notice)
     {
         this.services=services;this.commands=commands;embedded=new(services);
         var keywordService=new KeywordSelectionService(services);

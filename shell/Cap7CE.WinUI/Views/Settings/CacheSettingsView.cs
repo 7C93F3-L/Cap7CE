@@ -11,11 +11,11 @@ internal sealed class CacheSettingsView : StackPanel
 {
     private readonly ShellServices services;
     private readonly Window owner;
-    private readonly Action<string> notice;
+    private readonly Action<UiMessage> notice;
     private readonly TextBlock summary=L.Text("ui.cache.measuring",true);
     private readonly Button clear;
     private bool busy;
-    public CacheSettingsView(ShellServices services,Window owner,Action<string> notice)
+    public CacheSettingsView(ShellServices services,Window owner,Action<UiMessage> notice)
     {
         this.services=services;this.owner=owner;this.notice=notice;
         Spacing=8;HorizontalAlignment=HorizontalAlignment.Right;
@@ -37,10 +37,10 @@ internal sealed class CacheSettingsView : StackPanel
             if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
             L.Bind(summary,TextBlock.TextProperty,"ui.cache.clearing");
             await services.ClearVisualCacheAsync();
-            notice(AppLanguage.Text("ui.cache.cleared"));
+            notice(UiMessage.Key("ui.cache.cleared"));
             await RefreshAsync();
         }
-        catch(Exception error){notice(AppLanguage.Text("ui.cache.failed",new Dictionary<string,object?>{{"error",error.Message}}));await RefreshAsync();}
+        catch(Exception error){notice(UiMessage.Key("ui.cache.failed",new Dictionary<string,object?>{{"error",error.Message}}));await RefreshAsync();}
         finally{busy=false;clear.IsEnabled=true;}
     }
     private static string Size(long bytes)

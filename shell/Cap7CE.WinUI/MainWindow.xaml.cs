@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Controllers;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Themes;
@@ -100,18 +101,18 @@ public sealed partial class MainWindow : Window
     }
     private async Task StartAsync()
     {
-        try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice("偏好读取失败："+error.Message);}
-        try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice("通知注册失败："+error.Message);}
+        try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",error.Message}}));}
+        try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",error.Message}}));}
         try{services.Shortcuts?.Configure(services.Preferences.Current.QuickActions);}catch(Exception error){Notice(error.Message);}
         AssetTile.Visuals=services.Visuals;NewTab("");
-        try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice("收藏读取失败："+error.Message);}
+        try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice(UiMessage.Key("ui.notice.favoritesFailed",new Dictionary<string,object?>{{"error",error.Message}}));}
         // Core readiness updates capabilities; it must not replace user navigation
         // or cancel directory reads started while the connection was pending.
         try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(error.Message);}
     }
     private void NewTab(string path,bool favorite=false)
     {
-        if(Tabs.TabItems.Count>=12){Notice(Localization.AppLanguage.Text("main.tabLimit"));return;}
+        if(Tabs.TabItems.Count>=12){Notice(UiMessage.Key("main.tabLimit"));return;}
         var session=new BrowseSession(services);
         session.NavigationStarting+=preserve=>previewLink.NavigationStarting(session,preserve);
         var tab=new TabViewItem {Header=path.Length==0?"":Path.GetFileName(path.TrimEnd('\\')),Tag=session,IconSource=new SymbolIconSource {Symbol=path.Length==0?Symbol.Home:Symbol.Folder}};
@@ -171,7 +172,7 @@ public sealed partial class MainWindow : Window
     private void OpenSettings()
     {
         try{if(settings is null){settings=new(services);settings.Closed+=(_,_)=>settings=null;}WindowActivation.Show(settings);}
-        catch(Exception error){NativeDiagnostics.VisualFailure(error);Notice("暂时无法打开设置，请重试。");}
+        catch(Exception error){NativeDiagnostics.VisualFailure(error);Notice(UiMessage.Key("ui.notice.settingsFailed"));}
     }
     private void OpenMaintenance(string? path)
     {
@@ -189,7 +190,8 @@ public sealed partial class MainWindow : Window
         try{await services.Preferences.UpdateAsync(prefs=>prefs with{AlwaysOnTop=value});}
         catch{ApplyPreferences();throw;}
     });
-    private void Notice(string text){if(!closed)notifications.ShowMessage(text);}
+    private void Notice(string text)=>Notice(UiMessage.Literal(text));
+    private void Notice(UiMessage text){if(!closed)notifications.ShowMessage(text);}
     private void KeyDown(object sender,KeyRoutedEventArgs e)
     {
         var control=Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);

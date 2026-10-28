@@ -8,6 +8,7 @@ internal static class LanguageChecks
         LanguageBindingChecks.Run(catalog);
         FactLanguageChecks.Run(catalog);
         MaintenanceLanguageChecks.Run(catalog);
+        ProgressLanguageChecks.Run(catalog);
         var session=new LanguageSession(catalog);var changes=0;session.Changed+=()=>changes++;
         Equal(session.Text("navigation.general"),"通用");
         session.Select("en-US","zh-CN");Equal(session.Text("navigation.general"),"General");

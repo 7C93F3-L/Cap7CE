@@ -1,14 +1,16 @@
+using Cap7CE.WinUI.Localization;
 using System.Diagnostics;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Controls;
 using Cap7CE.WinUI.Themes;
 using Microsoft.UI.Xaml;
+using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 
 namespace Cap7CE.WinUI.Services;
-internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRoot, Action<string> notice)
+internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRoot, Action<UiMessage> notice)
 {
     private readonly SemaphoreSlim operation = new(1);
     public event Action<AssetItem>? PreviewRequested;
@@ -73,7 +75,8 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         try
         {
             foreach (var item in items) FileAccessGuard.Validate(item);
-            var dialog = new ContentDialog { XamlRoot = xamlRoot(), Title = "移到回收站", Content = $"将选中的 {items.Count} 项移到回收站？", PrimaryButtonText = "移到回收站", CloseButtonText = "取消", DefaultButton = ContentDialogButton.Close };
+            var dialog=L.Dialog(xamlRoot(),"ui.file.trashTitle",null,"ui.file.trashTitle");
+            L.Bind(dialog,ContentDialog.ContentProperty,"ui.file.trashDescription",()=>new Dictionary<string,object?>{{"count",items.Count}});
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             BeforeMutation?.Invoke();
             await services.ReleaseSourcesAsync(); foreach (var item in items) FileAccessGuard.Validate(item);
@@ -84,7 +87,8 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
             var paths = result.GetProperty("deletedPaths").EnumerateArray().Select(p => p.GetString()!).ToArray();
             if (paths.Any(path => !items.Any(item => item.FullPath.Equals(path, StringComparison.OrdinalIgnoreCase)))) throw new IOException("Core 删除结果不属于本次选择");
             services.DeletedPaths.UnionWith(paths); ItemsDeleted?.Invoke();
-            notice(result.GetProperty("success").GetBoolean() ? "已移到回收站" : $"部分未完成：{result.GetProperty("failedItems").GetArrayLength()} 项");
+            notice(result.GetProperty("success").GetBoolean()?UiMessage.Key("ui.file.trashed"):
+                UiMessage.Key("ui.file.trashPartial",new Dictionary<string,object?>{{"count",result.GetProperty("failedItems").GetArrayLength()}}));
         }
         finally { AfterMutation?.Invoke(); operation.Release(); }
     }

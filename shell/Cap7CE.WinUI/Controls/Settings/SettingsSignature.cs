@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Text.Json;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
@@ -18,7 +19,7 @@ internal sealed class SettingsSignature : Grid
     private bool loading;
     private BitmapImage? picture;
     private ContentDialog? dialog;
-    internal Action<string>? Notice {get;set;}
+    internal Action<UiMessage>? Notice {get;set;}
     public SettingsSignature()
     {
         var geometry=JsonSerializer.Deserialize<string>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/settings-signature.json")))!;
@@ -51,14 +52,14 @@ internal sealed class SettingsSignature : Grid
             if(!IsLoaded||XamlRoot is null)return;
             var image=new Image {Source=picture,Stretch=Stretch.Uniform,MaxHeight=Math.Max(100,Math.Min(520,XamlRoot.Size.Height-230))};
             PreviewViewportStyle.Apply(image);
-            var caption=Ui.Text("一切始于一只找不到的狗。");caption.TextAlignment=TextAlignment.Center;
-            var translation=Ui.Text("It began with a dog that could not be found.",true);translation.TextAlignment=TextAlignment.Center;translation.FontSize=12;
+            var caption=LanguageUi.Text("ui.signature.primary");caption.TextAlignment=TextAlignment.Center;
+            var translation=LanguageUi.Text("ui.signature.secondary",true);translation.TextAlignment=TextAlignment.Center;translation.FontSize=12;
             var body=Ui.Column(image,caption,translation);
             var scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};IdleScrollBars.Attach(scroll);
-            var openedDialog=new ContentDialog {XamlRoot=XamlRoot,Content=scroll,CloseButtonText="关闭",DefaultButton=ContentDialogButton.Close};
-            dialog=openedDialog;
+            var openedDialog=new ContentDialog {XamlRoot=XamlRoot,Content=scroll,DefaultButton=ContentDialogButton.Close};
+            LanguageUi.Bind(openedDialog,ContentDialog.CloseButtonTextProperty,"ui.signature.close");dialog=openedDialog;
             await openedDialog.ShowAsync();
-        }catch(Exception error){NativeDiagnostics.VisualFailure(error);if(IsLoaded)Notice?.Invoke("暂时无法打开，请重试。");}
+        }catch(Exception error){NativeDiagnostics.VisualFailure(error);if(IsLoaded)Notice?.Invoke(UiMessage.Key("ui.signature.openFailed"));}
         finally{dialog=null;loading=false;}
     }
 }

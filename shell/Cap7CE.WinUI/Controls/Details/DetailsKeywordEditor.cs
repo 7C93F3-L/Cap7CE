@@ -11,7 +11,7 @@ internal sealed class DetailsKeywordEditor:UserControl
 {
     private readonly Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read;
     private readonly Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write;
-    private readonly Action<string> notice;
+    private readonly Action<UiMessage> notice;
     private readonly DetailsCard card=new("ui.keywords.add",true);
     private readonly KeywordDraft draft=new();
     private readonly KeywordWrapPanel tags=new();
@@ -24,7 +24,7 @@ internal sealed class DetailsKeywordEditor:UserControl
     private IReadOnlyList<AssetItem> items=[];
     private KeywordSelectionSnapshot<AssetItem> snapshot=new([],[]);
     private bool ready,saving,focusRequested,readFailed,automaticBusy,refreshPending;
-    public DetailsKeywordEditor(Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read,Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write,Action<string> notice,Action<IReadOnlyList<AssetItem>> generate)
+    public DetailsKeywordEditor(Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read,Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write,Action<UiMessage> notice,Action<IReadOnlyList<AssetItem>> generate)
     {
         this.read=read;this.write=write;this.notice=notice;L.Bind(input,TextBox.PlaceholderTextProperty,"ui.keywords.placeholder");
         retry=L.Button("ui.keywords.reload",()=>{draft.Cancel();input.Text="";_=ReadAsync();});
@@ -91,8 +91,8 @@ internal sealed class DetailsKeywordEditor:UserControl
             var values=draft.SaveWords();saving=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.saving");Show();
             var result=await write(snapshot,values,token);
             if(token.IsCancellationRequested||!ReferenceEquals(items,target))return;
-            if(result.Failed>0){readFailed=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.partial",()=>new Dictionary<string,object?>{{"count",result.Failed}});notice(AppLanguage.Text("ui.keywords.saveSummary",new Dictionary<string,object?>{{"succeeded",result.Succeeded},{"failed",result.Failed}}));return;}
-            snapshot=result.Snapshot;draft.Reset(snapshot.Words);input.Text="";reload=refreshPending;refreshPending=readFailed=false;L.Literal(status,TextBlock.TextProperty,"");RenderTags();notice(AppLanguage.Text(items.Count==1?"ui.keywords.saved":"ui.keywords.savedFiles",new Dictionary<string,object?>{{"count",result.Succeeded}}));
+            if(result.Failed>0){readFailed=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.partial",()=>new Dictionary<string,object?>{{"count",result.Failed}});notice(UiMessage.Key("ui.keywords.saveSummary",new Dictionary<string,object?>{{"succeeded",result.Succeeded},{"failed",result.Failed}}));return;}
+            snapshot=result.Snapshot;draft.Reset(snapshot.Words);input.Text="";reload=refreshPending;refreshPending=readFailed=false;L.Literal(status,TextBlock.TextProperty,"");RenderTags();notice(UiMessage.Key(items.Count==1?"ui.keywords.saved":"ui.keywords.savedFiles",new Dictionary<string,object?>{{"count",result.Succeeded}}));
         }
         catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Literal(status,TextBlock.TextProperty,error.Message);}}
         finally{if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){saving=false;Show();if(reload)_=ReadAsync();}}

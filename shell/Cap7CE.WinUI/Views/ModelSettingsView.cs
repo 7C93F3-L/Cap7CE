@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using System.Text.Json;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Cap7CE.WinUI.Services;
@@ -9,7 +10,7 @@ namespace Cap7CE.WinUI.Views;
 internal sealed class ModelSettingsView
 {
     private readonly ShellServices services;
-    private readonly Action<string> notice;
+    private readonly Action<UiMessage> notice;
     private readonly ComboBox runtimes=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch,DisplayMemberPath="Name"},
         models=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch,DisplayMemberPath="Name"};
     private readonly TextBlock fileState=L.Text("common.notDetected",true),address=L.Text("common.stopped",true),
@@ -21,7 +22,7 @@ internal sealed class ModelSettingsView
     public UIElement ModelSettings {get;}
     public UIElement RuntimeInfo {get;}
     private object Context=>services.ModelContext;
-    public ModelSettingsView(ShellServices services,Action<string> notice)
+    public ModelSettingsView(ShellServices services,Action<UiMessage> notice)
     {
         this.services=services;this.notice=notice;
         L.Bind(runtimes,ComboBox.PlaceholderTextProperty,"settings.selectVersion");L.Bind(models,ComboBox.PlaceholderTextProperty,"settings.selectVisionModel");

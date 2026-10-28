@@ -25,7 +25,7 @@ internal sealed class SettingsWindow : Window
         navigation.Loaded+=(_,_)=>SettingsNavigationAppearance.HideTitle(navigation);
         navigation.DisplayModeChanged+=(_,_)=>navigation.DispatcherQueue.TryEnqueue(()=>{if(!closed)SettingsNavigationAppearance.HideTitle(navigation);});
         root.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new("ms-appx:///Themes/SettingsControlResources.xaml")});
-        pages=new(services,this,text=>{if(closed)return;notice.Message=text;notice.Visibility=Visibility.Visible;notice.IsOpen=true;});
+        pages=new(services,this,text=>{if(closed)return;LanguageUi.Computed(notice,InfoBar.MessageProperty,()=>text.Render(AppLanguage.Session));notice.Visibility=Visibility.Visible;notice.IsOpen=true;});
         notice.Closed+=(_,_)=>notice.Visibility=Visibility.Collapsed;
         foreach(var (label,symbol) in new[]{("通用",Symbol.Setting),("外观",Symbol.Highlight),("缓存与索引",Symbol.Library),
             ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",Symbol.Help)})
@@ -62,7 +62,7 @@ internal sealed class SettingsWindow : Window
     {
         body.Content=pages.Build(category);signature.Visibility=category=="关于"?Visibility.Visible:Visibility.Collapsed;
         if(category=="关于"&&signature.Content is null)try {
-            signature.Content=new SettingsSignature {Notice=text=>{if(!closed){notice.Message=text;notice.Visibility=Visibility.Visible;notice.IsOpen=true;}}};
-        }catch(Exception error){NativeDiagnostics.VisualFailure(error);notice.Message=AppLanguage.Text("native.signature.unavailable");notice.Visibility=Visibility.Visible;notice.IsOpen=true;}
+            signature.Content=new SettingsSignature {Notice=text=>{if(!closed){LanguageUi.Computed(notice,InfoBar.MessageProperty,()=>text.Render(AppLanguage.Session));notice.Visibility=Visibility.Visible;notice.IsOpen=true;}}};
+        }catch(Exception error){NativeDiagnostics.VisualFailure(error);LanguageUi.Bind(notice,InfoBar.MessageProperty,"native.signature.unavailable");notice.Visibility=Visibility.Visible;notice.IsOpen=true;}
     }
 }

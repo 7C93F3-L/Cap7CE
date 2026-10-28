@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
@@ -11,12 +12,12 @@ internal sealed class SettingsCatalog
 {
     private readonly ShellServices services;
     private readonly SettingsActions actions;
-    private readonly Action<string> notice;
+    private readonly Action<UiMessage> notice;
     private readonly Window owner;
     private ModelSettingsView? models;
     private bool metadataFocus;
     public List<SettingsEntry> Entries {get;}=[];
-    public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<string> notice)
+    public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<UiMessage> notice)
     {
         this.services=services;this.owner=owner;this.actions=actions;this.notice=notice;
         General();Appearance();Storage();Shortcuts();Models();Diagnostics();About();

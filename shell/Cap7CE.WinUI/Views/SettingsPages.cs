@@ -11,7 +11,7 @@ internal sealed record SettingsEntry(string Category,string Section,string Title
 internal sealed class SettingsPages
 {
     private readonly SettingsCatalog catalog;
-    public SettingsPages(ShellServices services,Window owner,Action<string> notice)
+    public SettingsPages(ShellServices services,Window owner,Action<UiMessage> notice)
         =>catalog=new SettingsCatalog(services,owner,new SettingsActions(notice),notice);
     public void FocusMetadata()=>catalog.FocusMetadata();
     public UIElement Build(string category)

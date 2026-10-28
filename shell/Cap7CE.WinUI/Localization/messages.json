@@ -3782,5 +3782,197 @@
   "ui.metadata.readingUnknown": {
     "zh-CN": "正在读取任务状态",
     "en-US": "Reading task status"
+  },
+  "ui.progress.autoCancelling": {
+    "zh-CN": "正在取消…",
+    "en-US": "Cancelling…"
+  },
+  "ui.progress.autoRunning": {
+    "zh-CN": "正在识别…",
+    "en-US": "Recognizing…"
+  },
+  "ui.progress.autoFraction": {
+    "zh-CN": " {count} / {total}",
+    "en-US": " {count} / {total}"
+  },
+  "ui.progress.autoCancelled": {
+    "zh-CN": "识别已取消",
+    "en-US": "Recognition cancelled"
+  },
+  "ui.progress.autoFailed": {
+    "zh-CN": "识别失败",
+    "en-US": "Recognition failed"
+  },
+  "ui.progress.autoError": {
+    "zh-CN": "识别失败 · {error}",
+    "en-US": "Recognition failed · {error}"
+  },
+  "ui.progress.autoFailedFiles": {
+    "zh-CN": "{count} 个文件识别失败",
+    "en-US": "Files not recognized: {count}"
+  },
+  "ui.progress.autoCompleted": {
+    "zh-CN": "识别完成：{count} 项",
+    "en-US": "Recognition complete: {count}"
+  },
+  "ui.progress.metadataPreparing": {
+    "zh-CN": "正在准备元数据提取…",
+    "en-US": "Preparing metadata extraction…"
+  },
+  "ui.progress.metadataDiscovering": {
+    "zh-CN": "正在发现元数据任务… {count:N0} 项",
+    "en-US": "Discovering metadata tasks… {count:N0}"
+  },
+  "ui.progress.metadataWaiting": {
+    "zh-CN": "正在等待索引或可用的元数据任务…",
+    "en-US": "Waiting for an index or available metadata tasks…"
+  },
+  "ui.progress.metadataPausing": {
+    "zh-CN": "正在暂停元数据提取…",
+    "en-US": "Pausing metadata extraction…"
+  },
+  "ui.progress.metadataTotal": {
+    "zh-CN": "正在提取元数据… {count:N0} / {total:N0}",
+    "en-US": "Extracting metadata… {count:N0} / {total:N0}"
+  },
+  "ui.progress.metadataUnknownTotal": {
+    "zh-CN": "正在提取元数据… 已处理 {count:N0} 项",
+    "en-US": "Extracting metadata… Processed: {count:N0}"
+  },
+  "ui.progress.metadataQueueCancelled": {
+    "zh-CN": "元数据目录队列已取消。",
+    "en-US": "Metadata folder queue cancelled."
+  },
+  "ui.progress.metadataPaused": {
+    "zh-CN": "元数据提取已暂停。",
+    "en-US": "Metadata extraction paused."
+  },
+  "ui.progress.metadataFailed": {
+    "zh-CN": "元数据提取失败。",
+    "en-US": "Metadata extraction failed."
+  },
+  "ui.progress.metadataError": {
+    "zh-CN": "元数据提取失败：{error}",
+    "en-US": "Metadata extraction failed: {error}"
+  },
+  "ui.progress.metadataCompleted": {
+    "zh-CN": "元数据提取完成。",
+    "en-US": "Metadata extraction complete."
+  },
+  "ui.progress.metadataFailedFiles": {
+    "zh-CN": " {count:N0} 个文件失败。",
+    "en-US": " Failed files: {count:N0}."
+  },
+  "ui.progress.metadataUnsupported": {
+    "zh-CN": " {count:N0} 个文件不支持。",
+    "en-US": " Unsupported files: {count:N0}."
+  },
+  "ui.progress.metadataStopped": {
+    "zh-CN": "元数据提取已停止。",
+    "en-US": "Metadata extraction stopped."
+  },
+  "ui.progress.metadataReadFailed": {
+    "zh-CN": "元数据状态读取失败：{error}",
+    "en-US": "Could not read metadata status: {error}"
+  },
+  "ui.progress.indexPreparing": {
+    "zh-CN": "正在准备索引…",
+    "en-US": "Preparing the index…"
+  },
+  "ui.progress.indexScanning": {
+    "zh-CN": "正在建立索引…",
+    "en-US": "Building the index…"
+  },
+  "ui.progress.indexPublishing": {
+    "zh-CN": "正在保存索引…",
+    "en-US": "Saving the index…"
+  },
+  "ui.progress.indexSyncing": {
+    "zh-CN": "正在更新索引…",
+    "en-US": "Updating the index…"
+  },
+  "ui.progress.indexRunning": {
+    "zh-CN": "正在建立 / 更新索引…",
+    "en-US": "Building / updating the index…"
+  },
+  "ui.progress.indexDetails": {
+    "zh-CN": "{stage} {drive} · 已处理 {count:N0} 项",
+    "en-US": "{stage} {drive} · Processed: {count:N0}"
+  },
+  "ui.progress.indexReadFailed": {
+    "zh-CN": "索引状态读取失败：{error}",
+    "en-US": "Could not read index status: {error}"
+  },
+  "ui.progress.indexFailed": {
+    "zh-CN": "索引更新失败，请在设置中查看。",
+    "en-US": "Index update failed. Check Settings for details."
+  },
+  "ui.progress.indexStopped": {
+    "zh-CN": "索引更新已停止。",
+    "en-US": "Index update stopped."
+  },
+  "ui.progress.indexCompleted": {
+    "zh-CN": "索引更新完成。",
+    "en-US": "Index update complete."
+  },
+  "ui.notice.preferencesFailed": {
+    "zh-CN": "偏好读取失败：{error}",
+    "en-US": "Could not read preferences: {error}"
+  },
+  "ui.notice.notificationsFailed": {
+    "zh-CN": "通知注册失败：{error}",
+    "en-US": "Could not register notifications: {error}"
+  },
+  "ui.notice.favoritesFailed": {
+    "zh-CN": "收藏读取失败：{error}",
+    "en-US": "Could not read favorites: {error}"
+  },
+  "ui.notice.settingsFailed": {
+    "zh-CN": "暂时无法打开设置，请重试。",
+    "en-US": "Settings could not be opened. Please try again."
+  },
+  "ui.file.trashTitle": {
+    "zh-CN": "移到回收站",
+    "en-US": "Move to Recycle Bin"
+  },
+  "ui.file.trashDescription": {
+    "zh-CN": "将选中的 {count} 项移到回收站？",
+    "en-US": "Move the selected items to the Recycle Bin? Selected: {count}"
+  },
+  "ui.file.trashed": {
+    "zh-CN": "已移到回收站",
+    "en-US": "Moved to Recycle Bin"
+  },
+  "ui.file.trashPartial": {
+    "zh-CN": "部分未完成：{count} 项",
+    "en-US": "Items not completed: {count}"
+  },
+  "ui.update.current": {
+    "zh-CN": "当前已是最新原生版本。",
+    "en-US": "You are using the latest native version."
+  },
+  "ui.update.available": {
+    "zh-CN": "发现原生版本 {version}，可在项目Releases页面查看；此入口不下载或替换程序。",
+    "en-US": "Native version {version} is available. See the project Releases page; this action does not download or replace the application."
+  },
+  "ui.update.noNativeRelease": {
+    "zh-CN": "尚未发现正式发布的WinUI更新包；现有Electron发布不会用于替换原生程序。",
+    "en-US": "No official WinUI update package was found. Existing Electron releases will not replace the native application."
+  },
+  "ui.signature.primary": {
+    "zh-CN": "一切始于一只找不到的狗。",
+    "en-US": "It began with a dog that could not be found."
+  },
+  "ui.signature.secondary": {
+    "zh-CN": "It began with a dog that could not be found.",
+    "en-US": "一切始于一只找不到的狗。"
+  },
+  "ui.signature.close": {
+    "zh-CN": "关闭",
+    "en-US": "Close"
+  },
+  "ui.signature.openFailed": {
+    "zh-CN": "暂时无法打开，请重试。",
+    "en-US": "Could not open this. Please try again."
   }
 }

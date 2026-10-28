@@ -1,6 +1,7 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
+using Cap7CE.WinUI.Localization;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 
@@ -12,11 +13,11 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     private readonly ProgressBar progress=new(){Height=3,Width=120,VerticalAlignment=VerticalAlignment.Center,Visibility=Visibility.Collapsed};
     private readonly DispatcherQueueTimer delay,expiry;
     private bool busy,busyShown,disposed;
-    private string? notice;
-    private string? task;
-    private string? indexTask;
+    private UiMessage? notice;
+    private UiMessage? task;
+    private UiMessage? indexTask;
     private double? indexFraction;
-    private string? metadataTask;
+    private UiMessage? metadataTask;
     private double? metadataFraction;
     private double taskValue,taskMaximum=1;
     private bool taskIndeterminate,taskCancelling;
@@ -47,19 +48,19 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         busy=value;busyShown=false;delay.Stop();if(value)delay.Start();Render();
     }
 
-    public void ShowMessage(string text)
+    public void ShowMessage(UiMessage text)
     {
-        if(disposed||string.IsNullOrWhiteSpace(text)||notice==text)return;
+        if(disposed||string.IsNullOrWhiteSpace(text.Render(AppLanguage.Session))||notice?.Render(AppLanguage.Session)==text.Render(AppLanguage.Session))return;
         notice=text;expiry.Stop();expiry.Start();Render();
     }
-    public void SetTask(string text,int processed,int total,bool indeterminate,bool cancelling)
+    public void SetTask(UiMessage text,int processed,int total,bool indeterminate,bool cancelling)
     {
         task=text;taskMaximum=Math.Max(1,total);taskValue=Math.Clamp(processed,0,taskMaximum);
         taskIndeterminate=indeterminate;taskCancelling=cancelling;Render();
     }
     public void ClearTask(){task=null;Render();}
-    public void SetIndexTask(string? text,double? fraction=null){indexTask=text;indexFraction=fraction;Render();}
-    public void SetMetadataTask(string? text,double? fraction=null){metadataTask=text;metadataFraction=fraction;Render();}
+    public void SetIndexTask(UiMessage? text,double? fraction=null){indexTask=text;indexFraction=fraction;Render();}
+    public void SetMetadataTask(UiMessage? text,double? fraction=null){metadataTask=text;metadataFraction=fraction;Render();}
 
     private void Render()
     {
@@ -69,7 +70,8 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         var fraction=indexTask is not null?indexFraction:metadataFraction;
         var loading=notice is null&&busyShown;
         Visibility=task is not null||background||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
-        if((task??backgroundText??notice) is {} text)L.Literal(message,TextBlock.TextProperty,text);else L.Bind(message,TextBlock.TextProperty,"main.querying");ToolTipService.SetToolTip(message,task??backgroundText??notice);
+        if((task??backgroundText??notice) is {} text){L.Computed(message,()=>text.Render(AppLanguage.Session));L.Bind(message,ToolTipService.ToolTipProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",text.Render(AppLanguage.Session)}});}
+        else {L.Bind(message,TextBlock.TextProperty,"main.querying");L.Literal(message,ToolTipService.ToolTipProperty,null);}
         progress.Visibility=task is not null||background||loading?Visibility.Visible:Visibility.Collapsed;
         progress.Maximum=task is not null?taskMaximum:1;progress.Value=task is not null?taskValue:background?Math.Clamp(fraction??0,0,1):0;
         progress.IsIndeterminate=task is not null?taskIndeterminate:background?fraction is null:loading;
@@ -78,5 +80,5 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         L.Label(close,task is not null?"main.cancelRecognition":"main.closeNotice");
     }
 
-    public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;}
+    public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;LanguageBinding.Clear(message,TextBlock.TextProperty);LanguageBinding.Clear(message,ToolTipService.ToolTipProperty);notice=task=indexTask=metadataTask=null;}
 }

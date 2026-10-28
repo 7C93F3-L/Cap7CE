@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Cap7CE.WinUI.Controls;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
 
@@ -16,15 +17,15 @@ internal sealed class MetadataNoticeController : IDisposable
     private void Changed(JsonElement _,MetadataTaskStatus state)=>notice.DispatcherQueue.TryEnqueue(()=>{
         if(disposed)return;
         if(state.Running) {
-            observed=true;notice.SetMetadataTask(state.Text,state.Fraction);
+            observed=true;notice.SetMetadataTask(UiMessage.Snapshot(language=>ProgressText.MetadataBusy(state,language)),state.Fraction);
             if(!watching) {
                 watching=true;
                 monitor.Start(async token=>{await tasks.InvokeAsync("status",token:token);return watching&&!disposed;},
-                    error=>{if(disposed)return;watching=false;observed=false;notice.SetMetadataTask(null);notice.ShowMessage("元数据状态读取失败："+error.Message);});
+                    error=>{if(disposed)return;watching=false;observed=false;notice.SetMetadataTask(null);notice.ShowMessage(UiMessage.Key("ui.progress.metadataReadFailed",new Dictionary<string,object?>{{"error",error.Message}}));});
             }
         } else {
             watching=false;monitor.Dispose();notice.SetMetadataTask(null);
-            if(observed||state.Owned&&state.Operation is ("start" or "startDirectory" or "startAllVolumes" or "resume")||state.Operation is "pause" or "cancelDirectories")notice.ShowMessage(state.Finished);
+            if(observed||state.Owned&&state.Operation is ("start" or "startDirectory" or "startAllVolumes" or "resume")||state.Operation is "pause" or "cancelDirectories")notice.ShowMessage(UiMessage.Snapshot(language=>ProgressText.MetadataFinished(state,language)));
             observed=false;
         }
     });

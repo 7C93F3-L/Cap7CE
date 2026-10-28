@@ -27,6 +27,10 @@ module.exports = root => {
   assert.equal(sizeKeys.length, sizePresets.length, 'every size preset must have a language key');
   const maintenance = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization/MaintenanceText.cs'), 'utf8');
   assert(!/Microsoft\.UI|Services|RequestAsync|File\.|Directory\.|Timer|Task\.Delay/.test(maintenance), 'task text formatting must stay free of UI, IO and service actions');
+  for (const file of ['UiMessage.cs', 'ProgressText.cs']) {
+    const text = fs.readFileSync(path.join(root, 'shell/Cap7CE.WinUI/Localization', file), 'utf8');
+    assert(!/Microsoft\.UI|Services|RequestAsync|File\.|Directory\.|Timer|Task\.Delay/.test(text), `${file}: deferred text must stay free of UI, IO and service actions`);
+  }
   const volumeStates = fs.readFileSync(path.join(root, 'core/src/Cap7CE.Core.Catalog/CatalogVolumeStateMachine.cs'), 'utf8').split('ToStorage')[1].split('};')[0];
   const volumeText = maintenance.split('VolumeStateKey')[1].split('};')[0];
   for (const match of volumeStates.matchAll(/=> "([^"]+)"/g)) assert(volumeText.includes(`"${match[1]}"=>`), `Missing volume state translation: ${match[1]}`);

@@ -14,10 +14,10 @@ internal sealed class SettingsColors : UserControl
 {
     private readonly Func<ShellPreferences> read;
     private readonly Func<ShellPreferences,Task> save;
-    private readonly Action<string> notice;
+    private readonly Action<UiMessage> notice;
     private readonly Ellipse first=new(){Width=18,Height=18},second=new(){Width=18,Height=18};
     private readonly Button firstButton,secondButton,reset;
-    public SettingsColors(Func<ShellPreferences> read,Func<ShellPreferences,Task> save,Action<string> notice)
+    public SettingsColors(Func<ShellPreferences> read,Func<ShellPreferences,Task> save,Action<UiMessage> notice)
     {
         this.read=read;this.save=save;this.notice=notice;
         firstButton=ColorButton("native.colors.first",first,true);secondButton=ColorButton("native.colors.second",second,false);
@@ -65,7 +65,7 @@ internal sealed class SettingsColors : UserControl
         apply.Click+=async(_,_)=>{
             apply.IsEnabled=false;
             try {
-                if(!picker.TryRead(out var color)){notice(AppLanguage.Text("native.colors.invalid"));return;}
+                if(!picker.TryRead(out var color)){notice(UiMessage.Key("native.colors.invalid"));return;}
                 var hex=$"#{color.R:X2}{color.G:X2}{color.B:X2}";
                 await save(primary?read() with{Color1=hex}:read() with{Color2=hex});Refresh();flyout.Hide();
             } catch(Exception error){notice(error.Message);}finally{apply.IsEnabled=true;}

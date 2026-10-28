@@ -10,14 +10,14 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Cap7CE.WinUI.Controllers;
 
-internal sealed class MetadataFilterPromptController(ShellServices services,Func<BrowseSession?> active,Func<XamlRoot> root,Action<string> notice) : IDisposable
+internal sealed class MetadataFilterPromptController(ShellServices services,Func<BrowseSession?> active,Func<XamlRoot> root,Action<UiMessage> notice) : IDisposable
 {
     private bool busy,disposed;
     public async void Request(string kind,bool colors,FilterAvailabilityState state)
     {
         if(busy||disposed)return;
-        if(state==FilterAvailabilityState.Checking){notice(AppLanguage.Text("ui.metadataPrompt.checking"));return;}
-        if(state!=FilterAvailabilityState.Missing){notice(AppLanguage.Text("ui.metadataPrompt.checkFailed"));return;}
+        if(state==FilterAvailabilityState.Checking){notice(UiMessage.Key("ui.metadataPrompt.checking"));return;}
+        if(state!=FilterAvailabilityState.Missing){notice(UiMessage.Key("ui.metadataPrompt.checkFailed"));return;}
         if(active() is not {} session)return;
         var path=session.PathValue;var selected=FilterPresets.QueryExtensions(session.Filter);var hidden=session.ShowHidden;
         bool Current()=>!disposed&&ReferenceEquals(active(),session)&&session.PathValue==path&&session.ShowHidden==hidden
@@ -36,11 +36,11 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
             }
             var supported=FormatRegistry.ExtractorExtensions(kind);
             if(selected.Length>0)supported=supported.Intersect(selected,StringComparer.OrdinalIgnoreCase).ToArray();
-            if(supported.Length==0){notice(AppLanguage.Text("ui.metadataPrompt.unsupported"));return;}
+            if(supported.Length==0){notice(UiMessage.Key("ui.metadataPrompt.unsupported"));return;}
             var candidates=await core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart,new SearchStartRequest("",1,"name-ascending",
                 scope is null?volumes:[scope.VolumeId!],scope,EntryType:"file",FileConditions:new(supported),ExcludeHidden:!hidden,IncludeTotalCount:false));
             if(!Current()||!ReferenceEquals(core,services.Core))return;
-            if(candidates.Items.Count==0){notice(AppLanguage.Text("ui.metadataPrompt.empty"));return;}
+            if(candidates.Items.Count==0){notice(UiMessage.Key("ui.metadataPrompt.empty"));return;}
             var picker=new MetadataRangePicker(path.Length>0);
             var dialog=L.Dialog(root(),"ui.metadataPrompt.title",null,"ui.metadataPrompt.start");dialog.DefaultButton=ContentDialogButton.Primary;
             var customRequested=false;

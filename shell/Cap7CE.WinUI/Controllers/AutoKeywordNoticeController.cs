@@ -1,4 +1,5 @@
 using Cap7CE.WinUI.Controls;
+using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Services;
 using Cap7CE.WinUI.Models;
 
@@ -24,12 +25,11 @@ internal sealed class AutoKeywordNoticeController:IDisposable
     {
         availability(tasks.Busy);var state=tasks.State;
         if(tasks.Busy) {
-            var text=tasks.Cancelling?"正在取消…":"正在识别…";
-            if(state.Total>1)text+=$" {state.Processed} / {state.Total}";
+            var cancelling=tasks.Cancelling;var text=UiMessage.Snapshot(language=>ProgressText.AutoBusy(state,cancelling,language));
             notice.SetTask(text,state.Processed,state.Total,state.Phase=="收集文件"||state.Total<=1,tasks.Cancelling);
         } else if(observed) {
             observed=false;notice.ClearTask();
-            notice.ShowMessage(AutoKeywordNoticeText.Finished(state));
+            notice.ShowMessage(UiMessage.Snapshot(language=>ProgressText.AutoFinished(state,language)));
         }
     }
     public void Dispose(){disposed=true;tasks.Changed-=Changed;notice.CancelTaskRequested-=tasks.Cancel;}
