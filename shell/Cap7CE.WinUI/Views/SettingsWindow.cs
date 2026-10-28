@@ -22,6 +22,7 @@ internal sealed class SettingsWindow : Window
     public SettingsWindow(ShellServices services)
     {
         this.services=services;SettingsWindowGeometry.ApplyInitial(this);
+        WindowTitleBinding.Attach(this,"ui.window.settingsTitle");
         LanguageUi.Bind(navigation,NavigationView.PaneTitleProperty,"main.settings");
         navigation.Loaded+=(_,_)=>SettingsNavigationAppearance.Apply(navigation);
         navigation.DisplayModeChanged+=(_,_)=>QueueNavigationAppearance();

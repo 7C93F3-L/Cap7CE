@@ -28,6 +28,12 @@ const session = read('core/src/Cap7CE.Core.Host/CorePipeSession.cs');
 assert(session.indexOf('!allowedOperations.Contains(request.Operation)') < session.indexOf('var response = await dispatcher.DispatchAsync'), 'admission must precede dispatcher');
 assert(session.includes('allowedOperations is null || allowedOperations.Contains(operation)'), 'hello cannot advertise forbidden operations');
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
+const identitySource=read('shell/Cap7CE.WinUI/Services/ApplicationIdentity.cs');
+const legacyIdentity=read('electron/main.ts').match(/const windowsAppUserModelId = "([^"]+)"/)[1];
+assert(identitySource.includes(`AppUserModelId="${legacyIdentity}"`) && project.includes('<AssemblyTitle>Cap7CE</AssemblyTitle>'), 'native public identity must match the existing product');
+const startup=read('shell/Cap7CE.WinUI/Program.cs');
+assert(startup.indexOf('ApplicationIdentity.Initialize()')>=0 && startup.indexOf('ApplicationIdentity.Initialize()')<startup.indexOf('WinRT.ComWrappersSupport.InitializeComWrappers()'), 'public AUMID must be set before WinRT notification or window initialization');
+assert(!read('shell/Cap7CE.WinUI/Themes/ThemeService.cs').includes('window.Title = ""'), 'theme changes cannot erase system window titles');
 const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');
 const catalogRefresh = read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
 assert(catalogRefresh.includes('sidebar.SetActiveEntry(active.EntryPath,active.PreferenceScope')

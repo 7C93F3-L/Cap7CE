@@ -37,6 +37,7 @@ internal sealed class PreviewWindow : Window
     public event Action<AssetItem>? CurrentChanged;
     public PreviewWindow(ShellServices services,Window owner)
     {
+        WindowTitleBinding.Attach(this,"ui.window.previewTitle");
         geometry=new(this,owner,viewport);
         followTimer=DispatcherQueue.CreateTimer();followTimer.Interval=TimeSpan.FromMilliseconds(140);followTimer.IsRepeating=false;
         followTimer.Tick+=(_,_)=>{if(!closed&&index>=0&&index<items.Count)Load(items[index]);};

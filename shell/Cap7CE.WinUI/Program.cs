@@ -12,6 +12,7 @@ internal static class Program
     private static void Main(string[] args)
     {
         if(Thread.CurrentThread.GetApartmentState()!=ApartmentState.STA)throw new InvalidOperationException("WinUI requires an STA entry thread.");
+        Services.ApplicationIdentity.Initialize();
         WinRT.ComWrappersSupport.InitializeComWrappers();
         // Explicit fixture catalogs have independent instances and cannot activate the product UI.
         var identity=Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG")??"product";

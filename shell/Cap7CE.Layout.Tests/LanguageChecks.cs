@@ -6,6 +6,7 @@ internal static class LanguageChecks
     {
         var catalog=new LanguageCatalog(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/languages.json")));
         LanguageBindingChecks.Run(catalog);
+        WindowTitleChecks.Run();
         FactLanguageChecks.Run(catalog);
         MaintenanceLanguageChecks.Run(catalog);
         ProgressLanguageChecks.Run(catalog);

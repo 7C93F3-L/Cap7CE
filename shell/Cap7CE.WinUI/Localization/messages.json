@@ -1,4 +1,12 @@
 {
+  "ui.window.settingsTitle": {
+    "zh-CN": "Cap7CE — 设置",
+    "en-US": "Cap7CE — Settings"
+  },
+  "ui.window.previewTitle": {
+    "zh-CN": "Cap7CE — 预览",
+    "en-US": "Cap7CE — Preview"
+  },
   "common.add": {
     "zh-CN": "添加",
     "en-US": "Add"

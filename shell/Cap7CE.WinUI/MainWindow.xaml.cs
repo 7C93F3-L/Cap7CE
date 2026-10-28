@@ -41,6 +41,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
+        Title=ApplicationIdentity.Name;
         L.Bind(SidebarSizer,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.sidebarWidth");L.Bind(DetailsSizer,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"main.detailsWidth");
         services=new(Environment.GetEnvironmentVariable("CAP7CE_PHASEF_ROOT")??FindRoot());
         workspace=new(services,()=>active,results,toolbar);

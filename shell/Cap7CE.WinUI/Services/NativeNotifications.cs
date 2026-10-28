@@ -13,7 +13,7 @@ internal sealed class NativeNotifications : IDisposable
     public void Show(string message,bool enabled)
     {
         if(!enabled)return;Configure(true);
-        AppNotificationManager.Default.Show(new AppNotificationBuilder().AddText("Cap7CE").AddText(message).BuildNotification());
+        AppNotificationManager.Default.Show(new AppNotificationBuilder().AddText(ApplicationIdentity.Name).AddText(message).BuildNotification());
     }
     public void Dispose(){if(registered){AppNotificationManager.Default.Unregister();registered=false;}}
 }

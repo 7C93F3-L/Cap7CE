@@ -5,6 +5,7 @@
     <Compile Include="../Cap7CE.WinUI/Localization/LanguageCatalog.cs;../Cap7CE.WinUI/Localization/LanguageSession.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Cap7CE.WinUI/Localization/AppLanguage.cs;../Cap7CE.WinUI/Localization/LanguagePreferenceOptions.cs;../Cap7CE.WinUI/Services/PreferenceStore.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Cap7CE.WinUI/Localization/LanguageBinding.cs" Link="LanguageBinding.cs" />
+    <Compile Include="../Cap7CE.WinUI/Localization/WindowTitleBinding.cs" Link="WindowTitleBinding.cs" />
     <Compile Include="../Cap7CE.WinUI/Localization/FactTextKeys.cs" Link="FactTextKeys.cs" />
     <Compile Include="../Cap7CE.WinUI/Localization/MaintenanceText.cs" Link="MaintenanceText.cs" />
     <Compile Include="../Cap7CE.WinUI/Localization/ProgressText.cs;../Cap7CE.WinUI/Localization/UiMessage.cs" Link="%(Filename)%(Extension)" />

@@ -10,6 +10,8 @@
     <ApplicationIcon>../../build/icon.ico</ApplicationIcon>
     <Version>1.0.4</Version>
     <Product>Cap7CE</Product>
+    <AssemblyTitle>Cap7CE</AssemblyTitle>
+    <Description>Cap7CE</Description>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
