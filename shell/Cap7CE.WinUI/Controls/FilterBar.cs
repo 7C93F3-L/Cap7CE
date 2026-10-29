@@ -9,7 +9,7 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class FilterBar : UserControl
 {
     private readonly StackPanel row=new() {Orientation=Orientation.Horizontal,Spacing=6};
-    private readonly TextBlock count=new() {FontSize=12,Height=24,VerticalAlignment=VerticalAlignment.Center};
+    private readonly TextBlock count=new() {FontSize=12,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,VerticalAlignment=VerticalAlignment.Center,TextWrapping=TextWrapping.NoWrap};
     private readonly Button clear;
     private readonly FilterSection timeSection,typeSection,sizeSection;
     private readonly Dictionary<string,ToggleButton> times=[],types=[];
@@ -23,7 +23,14 @@ internal sealed class FilterBar : UserControl
     {
         var editors=new FilterEditors(()=>Value,Set,flyouts);
         clear=FilterSection.ActionButton("main.clearFilters",()=>Set(new()),localized:true);
-        var actions=new StackPanel {Margin=new(0,0,2,0)};actions.Children.Add(count);actions.Children.Add(clear);row.Children.Add(actions);
+        clear.Style=(Style)Application.Current.Resources["CapFilterClearButton"];
+        clear.HorizontalAlignment=HorizontalAlignment.Left;
+        var title=L.Text("ui.filters.title");title.FontSize=12;title.FontWeight=Microsoft.UI.Text.FontWeights.SemiBold;
+        title.TextWrapping=TextWrapping.NoWrap;title.VerticalAlignment=VerticalAlignment.Center;
+        var actions=new Grid {Height=80,Margin=new(6,0,2,0)};
+        foreach(var height in new[]{24,26,4,26})actions.RowDefinitions.Add(new(){Height=new(height)});
+        actions.Children.Add(title);Grid.SetRow(count,1);actions.Children.Add(count);Grid.SetRow(clear,3);actions.Children.Add(clear);row.Children.Add(actions);
+        L.Bind(count,ToolTipService.ToolTipProperty,"ui.filters.countHint");
         foreach(var (id,label) in FilterPresets.Times)times.Add(id,FilterSection.Option("ui.filters.time."+id,()=>Set(FilterPresets.Time(Value,id,DateTime.Now)),localized:true));
         timeSection=new("ui.filters.modified",FilterSection.Options(times.Values.Cast<UIElement>().ToArray(),3),editors.Dates,localized:true);row.Children.Add(timeSection);
         var typeGrid=new Grid {ColumnSpacing=4,RowSpacing=4};
@@ -62,7 +69,7 @@ internal sealed class FilterBar : UserControl
     private void Set(BrowseFilter filter) {Value=filter;Render();FilterChanged?.Invoke(filter);}
     private void Render()
     {
-        L.Bind(count,TextBlock.TextProperty,"ui.filters.count",()=>new Dictionary<string,object?>{{"count",Value.Count}});clear.IsEnabled=Value.Count>0;
+        L.Bind(count,TextBlock.TextProperty,Value.Count>0?"ui.filters.count":"ui.filters.inactive",()=>new Dictionary<string,object?>{{"count",Value.Count}});clear.IsEnabled=Value.Count>0;
         foreach(var (id,button) in times)button.IsChecked=Value.TimePreset==id;
         foreach(var (id,button) in types)button.IsChecked=FilterPresets.Selected(Value,id);
         for(var i=0;i<sizes.Count;i++)sizes[i].IsChecked=Value.MinimumBytes==FilterPresets.Sizes[i].Min && Value.MaximumBytes==FilterPresets.Sizes[i].Max;

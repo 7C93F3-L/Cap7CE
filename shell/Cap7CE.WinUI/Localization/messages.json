@@ -2220,8 +2220,20 @@
     "en-US": "File size"
   },
   "ui.filters.count": {
-    "zh-CN": "筛选 · {count}",
-    "en-US": "Filters · {count}"
+    "zh-CN": "{count} 组条件",
+    "en-US": "{count} groups"
+  },
+  "ui.filters.title": {
+    "zh-CN": "筛选",
+    "en-US": "Filters"
+  },
+  "ui.filters.inactive": {
+    "zh-CN": "未筛选",
+    "en-US": "No filters"
+  },
+  "ui.filters.countHint": {
+    "zh-CN": "按已启用的筛选组计数，同组内多选计为一组。",
+    "en-US": "Counts active filter groups. Multiple choices within one group count as one."
   },
   "ui.filters.custom": {
     "zh-CN": "自定",

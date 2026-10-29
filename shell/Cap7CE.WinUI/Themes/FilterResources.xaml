@@ -68,4 +68,8 @@
     <Setter Property="BorderThickness" Value="0"/><Setter Property="Background" Value="Transparent"/>
     <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/>
   </Style>
+  <Style x:Key="CapFilterClearButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="0"/><Setter Property="Height" Value="26"/>
+    <Setter Property="Padding" Value="6,2"/><Setter Property="CornerRadius" Value="6"/><Setter Property="FontSize" Value="12"/>
+  </Style>
 </ResourceDictionary>
