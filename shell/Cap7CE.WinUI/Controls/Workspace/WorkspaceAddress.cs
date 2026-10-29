@@ -18,7 +18,9 @@ internal sealed class WorkspaceAddress : UserControl
     private readonly Button toggle,badge,trailing;
     private readonly ScrollViewer breadcrumb;
     private string path="",query="";
-    private bool searchMode,editing;
+    private bool searchMode,editing,commandEditing;
+    public Func<string,bool>? CommandSubmitted {get;set;}
+    public event Action? CommandCancelled;
     public event Action<string>? Navigate,Search;
     public WorkspaceAddress()
     {
@@ -28,7 +30,7 @@ internal sealed class WorkspaceAddress : UserControl
         var inputStyle=(Style)Application.Current.Resources["CapWorkspaceInput"];address.Style=search.Style=inputStyle;
         address.Loaded+=(_,_)=>HideClearButton(address);search.Loaded+=(_,_)=>HideClearButton(search);
         root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});root.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});root.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-        toggle=WorkspaceIcons.ResourceButton("computer","main.toSearch",()=>{if(searchMode){searchMode=false;editing=false;Render();}else FocusSearch();});root.Children.Add(toggle);
+        toggle=WorkspaceIcons.ResourceButton("computer","main.toSearch",()=>{CommandCancelled?.Invoke();if(searchMode){searchMode=false;editing=false;Render();}else FocusSearch();});root.Children.Add(toggle);
         breadcrumb=new(){Content=crumbs,Height=30,Padding=new(0),VerticalContentAlignment=VerticalAlignment.Center,HorizontalScrollBarVisibility=ScrollBarVisibility.Hidden,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled,HorizontalScrollMode=ScrollMode.Enabled};
         breadcrumb.Tapped+=(_,e)=>{if(!HasButton(e.OriginalSource as DependencyObject))FocusPath();};
         slot.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});slot.ColumnDefinitions.Add(new(){Width=new(28)});
@@ -39,15 +41,16 @@ internal sealed class WorkspaceAddress : UserControl
         badge=new Button{Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};L.Bind(badge,Button.ContentProperty,"main.searchActive");badge.Click+=(_,_)=>FocusSearch();Grid.SetColumn(badge,2);root.Children.Add(badge);
         address.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;SubmitPath();}else if(e.Key==VirtualKey.Escape){e.Handled=true;editing=false;address.Text=path;Render();toggle.Focus(FocusState.Programmatic);}};
         address.LostFocus+=(_,_)=>{if(editing){editing=false;Render();}};
-        search.TextChanged+=(_,_)=>{if(string.IsNullOrWhiteSpace(search.Text)&&!string.IsNullOrWhiteSpace(query)){query="";Search?.Invoke("");}};
-        search.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;Search?.Invoke(search.Text);return;}if(e.Key!=VirtualKey.Escape)return;e.Handled=true;if(search.Text.Length>0)search.Text="";else{searchMode=false;Render();toggle.Focus(FocusState.Programmatic);}};
+        search.TextChanged+=(_,_)=>{if(!commandEditing&&string.IsNullOrWhiteSpace(search.Text)&&!string.IsNullOrWhiteSpace(query)){query="";Search?.Invoke("");}};
+        search.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;if(CommandSubmitted?.Invoke(search.Text)!=true)Search?.Invoke(search.Text);return;}if(e.Key!=VirtualKey.Escape)return;e.Handled=true;if(commandEditing){CommandCancelled?.Invoke();return;}if(search.Text.Length>0)search.Text="";else{searchMode=false;Render();toggle.Focus(FocusState.Programmatic);}};
         Content=root;Render();
     }
     public void Bind(string nextPath,string nextQuery,bool reset,bool defaultSearch=false)
     {
+        if(reset||path!=nextPath)CommandCancelled?.Invoke();
         if(reset){searchMode=defaultSearch||nextQuery.Length>0;editing=false;}
         if(path!=nextPath||reset){path=nextPath;address.Text=path;Rebuild();}
-        if(query!=nextQuery||reset){query=nextQuery;search.Text=query;}
+        if(query!=nextQuery||reset){query=nextQuery;if(!commandEditing)search.Text=query;}
         Render();
     }
     private void Rebuild()
@@ -77,9 +80,15 @@ internal sealed class WorkspaceAddress : UserControl
             else HideClearButton(child);
         }
     }
-    private void SubmitPath(){var value=address.Text.Trim();if(value.Length==0)return;editing=false;Navigate?.Invoke(value);Render();}
+    private void SubmitPath(){var value=address.Text.Trim();if(CommandSubmitted?.Invoke(value)==true)return;if(value.Length==0)return;editing=false;Navigate?.Invoke(value);Render();}
+    public void CommandInput(string? text,bool busy=false)
+    {
+        commandEditing=true;search.IsEnabled=address.IsEnabled=!busy;
+        if(text is null){search.Text=query;address.Text=path;commandEditing=false;Render();return;}
+        editing=false;searchMode=true;search.Text=text;Render();if(!busy)search.Focus(FocusState.Programmatic);
+    }
     public void FocusSearch(){editing=false;searchMode=true;Render();search.Focus(FocusState.Programmatic);}
-    public void FocusPath(){searchMode=false;editing=true;address.Text=path;Render();address.Focus(FocusState.Programmatic);address.SelectAll();}
+    public void FocusPath(){CommandCancelled?.Invoke();searchMode=false;editing=true;address.Text=path;Render();address.Focus(FocusState.Programmatic);address.SelectAll();}
     private bool HasButton(DependencyObject? element)
     {for(var item=element;item is not null&&!ReferenceEquals(item,breadcrumb);item=VisualTreeHelper.GetParent(item))if(item is Button)return true;return false;}
 }

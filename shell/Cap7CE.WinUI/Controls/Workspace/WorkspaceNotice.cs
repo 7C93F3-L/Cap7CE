@@ -13,7 +13,10 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     private readonly ProgressBar progress=new(){Height=3,Width=120,VerticalAlignment=VerticalAlignment.Center,Visibility=Visibility.Collapsed};
     private readonly DispatcherQueueTimer delay,expiry;
     private bool busy,busyShown,disposed;
-    private UiMessage? notice;
+    private UiMessage? notice,commandNotice;
+    private bool commandCancellable;
+    public event Action? ConfirmationCancelled;
+    public void SetCommandConfirmation(UiMessage? text,bool cancellable=true){commandNotice=text;commandCancellable=cancellable;Render();}
     private UiMessage? task;
     private UiMessage? indexTask;
     private double? indexFraction;
@@ -39,7 +42,7 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         delay.Tick+=(_,_)=>{if(!disposed&&busy){busyShown=true;Render();}};
         expiry=DispatcherQueue.CreateTimer();expiry.IsRepeating=false;expiry.Interval=TimeSpan.FromSeconds(5);
         expiry.Tick+=(_,_)=>{notice=null;Render();};
-        close.Click+=(_,_)=>{if(task is not null){CancelTaskRequested?.Invoke();return;}notice=null;busyShown=false;delay.Stop();expiry.Stop();Render();};
+        close.Click+=(_,_)=>{if(commandNotice is not null){ConfirmationCancelled?.Invoke();return;}if(task is not null){CancelTaskRequested?.Invoke();return;}notice=null;busyShown=false;delay.Stop();expiry.Stop();Render();};
     }
 
     public void SetBusy(bool value)
@@ -65,20 +68,21 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     private void Render()
     {
         if(disposed)return;
-        var background=task is null&&(indexTask is not null||metadataTask is not null);
+        var confirming=commandNotice is not null;
+        var background=!confirming&&task is null&&(indexTask is not null||metadataTask is not null);
         var backgroundText=indexTask??metadataTask;
         var fraction=indexTask is not null?indexFraction:metadataFraction;
         var loading=notice is null&&busyShown;
-        Visibility=task is not null||background||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
-        if((task??backgroundText??notice) is {} text){L.Computed(message,()=>text.Render(AppLanguage.Session));L.Bind(message,ToolTipService.ToolTipProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",text.Render(AppLanguage.Session)}});}
+        Visibility=confirming||task is not null||background||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
+        if((commandNotice??task??backgroundText??notice) is {} text){L.Computed(message,()=>text.Render(AppLanguage.Session));L.Bind(message,ToolTipService.ToolTipProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",text.Render(AppLanguage.Session)}});}
         else {L.Bind(message,TextBlock.TextProperty,"main.querying");L.Literal(message,ToolTipService.ToolTipProperty,null);}
-        progress.Visibility=task is not null||background||loading?Visibility.Visible:Visibility.Collapsed;
+        progress.Visibility=confirming||task is not null||background||loading?Visibility.Visible:Visibility.Collapsed;
         progress.Maximum=task is not null?taskMaximum:1;progress.Value=task is not null?taskValue:background?Math.Clamp(fraction??0,0,1):0;
-        progress.IsIndeterminate=task is not null?taskIndeterminate:background?fraction is null:loading;
-        close.Visibility=background?Visibility.Collapsed:Visibility.Visible;
-        close.IsEnabled=task is null||!taskCancelling;
-        L.Label(close,task is not null?"main.cancelRecognition":"main.closeNotice");
+        progress.IsIndeterminate=!confirming&&(task is not null?taskIndeterminate:background?fraction is null:loading);
+        close.Visibility=background||confirming&&!commandCancellable?Visibility.Collapsed:Visibility.Visible;
+        close.IsEnabled=confirming||task is null||!taskCancelling;
+        L.Label(close,!confirming&&task is not null?"main.cancelRecognition":"main.closeNotice");
     }
 
-    public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;LanguageBinding.Clear(message,TextBlock.TextProperty);LanguageBinding.Clear(message,ToolTipService.ToolTipProperty);notice=task=indexTask=metadataTask=null;}
+    public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;LanguageBinding.Clear(message,TextBlock.TextProperty);LanguageBinding.Clear(message,ToolTipService.ToolTipProperty);commandNotice=notice=task=indexTask=metadataTask=null;ConfirmationCancelled=null;}
 }

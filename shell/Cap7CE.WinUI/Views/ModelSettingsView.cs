@@ -22,7 +22,7 @@ internal sealed class ModelSettingsView
     public UIElement ModelSettings {get;}
     public UIElement RuntimeService=>runtimeToggle;
     public UIElement RuntimeInfo {get;}
-    private object Context=>services.ModelContext;
+    private Commands.ModelCommandActions ModelActions=>new(services);
     public ModelSettingsView(ShellServices services,Action<UiMessage> notice)
     {
         this.services=services;this.notice=notice;
@@ -48,8 +48,8 @@ internal sealed class ModelSettingsView
     }
     private async Task RefreshAsync()
     {
-        var runtime=await services.Models.RequestAsync("modelSettings.invoke",[Context,"runtime.settings",null]);
-        var model=await services.Models.RequestAsync("modelSettings.invoke",[Context,"models.settings",null]);
+        var runtime=await ModelActions.SettingsAsync("runtime.settings");
+        var model=await ModelActions.SettingsAsync("models.settings");
         syncing=true;
         try {
             runtimes.ItemsSource=runtime.GetProperty("versions").EnumerateArray().Select(x=>new Choice(x.GetProperty("version").GetString()!,x.GetProperty("version").GetString()!)).ToArray();
@@ -66,10 +66,10 @@ internal sealed class ModelSettingsView
         await RuntimeAsync("runtime.state",null);
     }
     private async Task SelectAsync(string operation,string id)
-    {await services.Models.RequestAsync("modelSettings.invoke",[Context,operation,id]);}
+    {await ModelActions.SettingsAsync(operation,id);}
     private async Task RuntimeAsync(string operation,object? value)
     {
-        var reply=(await services.Models.RequestAsync(operation,[Context,value])).GetProperty("state");
+        var reply=await ModelActions.RuntimeAsync(operation,value);
         starting=reply.GetProperty("status").GetString()=="starting";active=starting||reply.GetProperty("status").GetString()=="running";
         L.Bind(runtimeToggle,Button.ContentProperty,active?"common.stop":"common.start");
         if(reply.TryGetProperty("host",out var host)&&reply.TryGetProperty("port",out var port)&&port.ValueKind==JsonValueKind.Number)L.Literal(address,TextBlock.TextProperty,$"{host.GetString()}:{port.GetInt32()}");else L.Bind(address,TextBlock.TextProperty,"common.stopped");

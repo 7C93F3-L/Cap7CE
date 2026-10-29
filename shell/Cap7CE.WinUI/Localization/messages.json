@@ -448,8 +448,8 @@
     "en-US": "Set global and main-window shortcuts."
   },
   "stableSettings.desc.quickCommands": {
-    "zh-CN": "查看指令和示例，暂不支持执行。",
-    "en-US": "View commands and examples. Execution is not yet available."
+    "zh-CN": "查看可用指令及输入示例。",
+    "en-US": "View available commands and input examples."
   },
   "stableSettings.desc.diagnostics": {
     "zh-CN": "查看服务状态、异常记录或导出诊断包。",
@@ -1323,13 +1323,9 @@
     "zh-CN": "设置",
     "en-US": "Settings"
   },
-  "help.command.see_dir_all": {
-    "zh-CN": "切换收藏目录，all 切换到此电脑",
-    "en-US": "Switch favorites; all switches to This PC"
-  },
   "help.command.see_dir": {
-    "zh-CN": "切换收藏目录，all 切换到此电脑",
-    "en-US": "Switch favorites; all switches to This PC"
+    "zh-CN": "进入指定收藏目录，名称或完整路径须唯一匹配",
+    "en-US": "Open a favorite by an unambiguous name or full path"
   },
   "help.command.see_sort_asc": {
     "zh-CN": "切换为升序排序",
@@ -1395,14 +1391,6 @@
     "zh-CN": "添加收藏目录",
     "en-US": "Add a favorite folder"
   },
-  "help.command.dir_rename": {
-    "zh-CN": "修改收藏名称，不重命名磁盘目录",
-    "en-US": "Rename the favorite without renaming its folder"
-  },
-  "help.command.dir_refresh": {
-    "zh-CN": "刷新目录统计 / 状态",
-    "en-US": "Refresh Folder Statistics / Status"
-  },
   "help.group.directories": {
     "zh-CN": "目录",
     "en-US": "Folders"
@@ -1419,10 +1407,6 @@
     "zh-CN": "跟随系统主题",
     "en-US": "Use System Theme"
   },
-  "help.command.ui_acrylic": {
-    "zh-CN": "切换为亚克力材质",
-    "en-US": "Switch to Acrylic"
-  },
   "help.command.ui_mica": {
     "zh-CN": "切换为云母材质",
     "en-US": "Switch to Mica"
@@ -1436,8 +1420,8 @@
     "en-US": "Set Color 2"
   },
   "help.command.ui_reset": {
-    "zh-CN": "恢复默认外观配置",
-    "en-US": "Restore Default Appearance"
+    "zh-CN": "恢复默认主题颜色，不改变主题和材质",
+    "en-US": "Restore default theme colors without changing theme or material"
   },
   "help.group.appearance": {
     "zh-CN": "外观",
@@ -1463,33 +1447,13 @@
     "zh-CN": "软件行为",
     "en-US": "App Behavior"
   },
-  "help.command.key_global_on": {
-    "zh-CN": "启用全局快捷键",
-    "en-US": "Enable Global Shortcuts"
-  },
-  "help.command.key_global_off": {
-    "zh-CN": "禁用全局快捷键",
-    "en-US": "Disable Global Shortcuts"
-  },
   "help.command.key_reset": {
-    "zh-CN": "恢复快捷动作默认配置",
-    "en-US": "Restore Default Quick Actions"
+    "zh-CN": "恢复所有快捷键的默认键位",
+    "en-US": "Restore all default key bindings"
   },
   "help.group.shortcuts": {
     "zh-CN": "快捷动作",
     "en-US": "Quick Actions"
-  },
-  "help.command.cmd_on": {
-    "zh-CN": "启用快捷指令解析",
-    "en-US": "Enable Quick Command Parsing"
-  },
-  "help.command.cmd_off": {
-    "zh-CN": "禁用快捷指令解析",
-    "en-US": "Disable Quick Command Parsing"
-  },
-  "help.group.commands": {
-    "zh-CN": "快捷指令",
-    "en-US": "Quick Commands"
   },
   "help.command.lang_auto": {
     "zh-CN": "跟随系统语言",
@@ -1540,8 +1504,8 @@
     "en-US": "Remove a favorite without deleting its folder"
   },
   "help.command.app_quit": {
-    "zh-CN": "关闭 Cap7CE 运行进程",
-    "en-US": "Close the Cap7CE Process"
+    "zh-CN": "退出 Cap7CE",
+    "en-US": "Exit Cap7CE"
   },
   "help.command.llama_stop": {
     "zh-CN": "停止 llama.cpp / llama-server",
@@ -1602,10 +1566,6 @@
   "help.example.dir_add": {
     "zh-CN": "dir:add \"完整路径\"",
     "en-US": "dir:add \"Full path\""
-  },
-  "help.example.dir_rename": {
-    "zh-CN": "dir:rename \"旧\" \"新\"",
-    "en-US": "dir:rename \"Old\" \"New\""
   },
   "help.example.llama_use": {
     "zh-CN": "llama:use \"版本名称\"",
@@ -4638,8 +4598,8 @@
     "en-US": "More actions"
   },
   "ui.settings.referenceOnly": {
-    "zh-CN": "仅供参考，暂不支持执行。",
-    "en-US": "Reference only. Execution is not yet available."
+    "zh-CN": "在主窗口搜索框输入指令，按回车执行。",
+    "en-US": "Enter a command in the main window search box and press Enter to run it."
   },
   "ui.exclusions.title": {
     "zh-CN": "排除目录",
@@ -4676,5 +4636,85 @@
   "ui.diagnostics.statusHint": {
     "zh-CN": "查看后台连接、读取服务、边缘模式和通知状态。",
     "en-US": "View background connection, Reader service, edge mode, and notification status."
+  },
+  "ui.command.invalid": {
+    "zh-CN": "指令或参数无效，请查看设置中的快捷指令。",
+    "en-US": "Invalid command or arguments. See Quick commands in Settings."
+  },
+  "ui.command.confirm": {
+    "zh-CN": "{action} 输入 y 确认、n 取消后按回车；Esc 取消。",
+    "en-US": "{action} Enter y to confirm or n to cancel, then press Enter. Esc cancels."
+  },
+  "ui.command.done": {
+    "zh-CN": "指令已执行。",
+    "en-US": "Command completed."
+  },
+  "ui.command.cancelled": {
+    "zh-CN": "已取消指令。",
+    "en-US": "Command cancelled."
+  },
+  "ui.command.runtimeFailed": {
+    "zh-CN": "服务操作未成功，请检查本地 AI 状态。",
+    "en-US": "The service operation did not complete. Check local AI status."
+  },
+  "ui.command.stopBeforeSelect": {
+    "zh-CN": "请先停止本地 AI 服务，再切换版本或模型。",
+    "en-US": "Stop the local AI service before changing version or model."
+  },
+  "ui.command.uniqueMatch": {
+    "zh-CN": "未找到唯一匹配项，请使用完整路径或准确名称。",
+    "en-US": "No unique match was found. Use a full path or exact name."
+  },
+  "ui.command.standardWindow": {
+    "zh-CN": "此操作仅在标准窗口模式下可用。",
+    "en-US": "This action is available only in standard window mode."
+  },
+  "ui.command.directory": {
+    "zh-CN": "请输入存在的目录完整路径。",
+    "en-US": "Enter the full path of an existing folder."
+  },
+  "ui.command.help.refresh": {
+    "zh-CN": "刷新当前浏览位置",
+    "en-US": "Refresh the current location"
+  },
+  "ui.command.help.square": {
+    "zh-CN": "方形网格视图",
+    "en-US": "Square grid view"
+  },
+  "ui.command.help.gallery": {
+    "zh-CN": "原比例网格视图",
+    "en-US": "Original-ratio grid view"
+  },
+  "ui.command.help.list": {
+    "zh-CN": "列表视图",
+    "en-US": "List view"
+  },
+  "ui.command.help.edgeOn": {
+    "zh-CN": "启用边缘收起模式",
+    "en-US": "Enable edge-collapse mode"
+  },
+  "ui.command.help.edgeOff": {
+    "zh-CN": "恢复标准窗口模式",
+    "en-US": "Return to standard window mode"
+  },
+  "ui.command.help.micaAlt": {
+    "zh-CN": "切换为云母变体材质",
+    "en-US": "Use the alternate Mica material"
+  },
+  "ui.command.confirmQuit": {
+    "zh-CN": "是否退出 Cap7CE？",
+    "en-US": "Exit Cap7CE?"
+  },
+  "ui.command.confirmRemove": {
+    "zh-CN": "是否取消收藏“{name}”？不会删除磁盘目录或其中的文件。",
+    "en-US": "Remove “{name}” from favorites? The folder and its files will not be deleted."
+  },
+  "ui.command.confirmStop": {
+    "zh-CN": "是否停止本地 AI 服务？下次生成 AI 关键词时将需要重新启动服务。",
+    "en-US": "Stop the local AI service? It will need to start again for the next AI keyword task."
+  },
+  "ui.command.confirmCache": {
+    "zh-CN": "是否清理缩略图与预览缓存？保留源文件、索引和关键词。",
+    "en-US": "Clear thumbnail and preview caches? Source files, indexes, and keywords are preserved."
   }
 }

@@ -84,6 +84,9 @@ internal sealed class WorkspaceToolbar : UserControl
         tools.Visibility=narrow?Visibility.Collapsed:Visibility.Visible;root.ColumnSpacing=narrow?0:4;
         next.Visibility=!narrow&&session?.Random==true?Visibility.Visible:Visibility.Collapsed;if(narrow){flyouts.Close();viewMenu?.Hide();}
     }
+    public Func<string,bool>? CommandSubmitted {get=>address.CommandSubmitted;set=>address.CommandSubmitted=value;}
+    public event Action? CommandCancelled {add=>address.CommandCancelled+=value;remove=>address.CommandCancelled-=value;}
+    public void CommandInput(string? text,bool busy=false)=>address.CommandInput(text,busy);
     public void FocusSearch()=>address.FocusSearch();
     public void FocusPath()=>address.FocusPath();
     public bool ContainsKeyboardTarget(DependencyObject target)

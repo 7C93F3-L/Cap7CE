@@ -45,4 +45,6 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Controllers/WorkspaceLayoutPolicy.cs" Link="WorkspaceLayoutPolicy.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/ResultGridGeometry.cs" Link="ResultGridGeometry.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/ResultMenuRules.cs;../Cap7CE.WinUI/Models/GalleryGeometry.cs;../Cap7CE.WinUI/Models/WorkspacePathRules.cs;../Cap7CE.WinUI/Controllers/WorkspaceSelection.cs" Link="%(Filename)%(Extension)"/></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/QuickCommand.cs;../Cap7CE.WinUI/Commands/QuickCommandInput.cs" Link="%(Filename)%(Extension)"/>
+  <None Include="../Cap7CE.WinUI/Localization/settings-help.json" Link="Assets/settings-help.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
 </Project>

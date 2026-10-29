@@ -12,10 +12,6 @@
     "titleKey": "help.group.browse",
     "items": [
       {
-        "command": "see:dir all",
-        "descriptionKey": "help.command.see_dir_all"
-      },
-      {
         "command": "see:dir \"目录名称\"",
         "descriptionKey": "help.command.see_dir",
         "exampleKey": "help.example.see_dir"
@@ -55,6 +51,22 @@
       {
         "command": "see:subfolders off",
         "descriptionKey": "help.command.see_subfolders_off"
+      },
+      {
+        "command": "see:refresh",
+        "descriptionKey": "ui.command.help.refresh"
+      },
+      {
+        "command": "see:view square",
+        "descriptionKey": "ui.command.help.square"
+      },
+      {
+        "command": "see:view gallery",
+        "descriptionKey": "ui.command.help.gallery"
+      },
+      {
+        "command": "see:view list",
+        "descriptionKey": "ui.command.help.list"
       }
     ]
   },
@@ -76,6 +88,14 @@
       {
         "command": "win:top off",
         "descriptionKey": "help.command.win_top_off"
+      },
+      {
+        "command": "win:edge on",
+        "descriptionKey": "ui.command.help.edgeOn"
+      },
+      {
+        "command": "win:edge off",
+        "descriptionKey": "ui.command.help.edgeOff"
       }
     ]
   },
@@ -86,15 +106,6 @@
         "command": "dir:add \"完整路径\"",
         "descriptionKey": "help.command.dir_add",
         "exampleKey": "help.example.dir_add"
-      },
-      {
-        "command": "dir:rename \"旧\" \"新\"",
-        "descriptionKey": "help.command.dir_rename",
-        "exampleKey": "help.example.dir_rename"
-      },
-      {
-        "command": "dir:refresh",
-        "descriptionKey": "help.command.dir_refresh"
       }
     ]
   },
@@ -114,10 +125,6 @@
         "descriptionKey": "help.command.ui_auto"
       },
       {
-        "command": "ui:acrylic",
-        "descriptionKey": "help.command.ui_acrylic"
-      },
-      {
         "command": "ui:mica",
         "descriptionKey": "help.command.ui_mica"
       },
@@ -132,6 +139,10 @@
       {
         "command": "ui:reset",
         "descriptionKey": "help.command.ui_reset"
+      },
+      {
+        "command": "ui:mica-alt",
+        "descriptionKey": "ui.command.help.micaAlt"
       }
     ]
   },
@@ -160,29 +171,8 @@
     "titleKey": "help.group.shortcuts",
     "items": [
       {
-        "command": "key:global on",
-        "descriptionKey": "help.command.key_global_on"
-      },
-      {
-        "command": "key:global off",
-        "descriptionKey": "help.command.key_global_off"
-      },
-      {
         "command": "key:reset",
         "descriptionKey": "help.command.key_reset"
-      }
-    ]
-  },
-  {
-    "titleKey": "help.group.commands",
-    "items": [
-      {
-        "command": "cmd:on",
-        "descriptionKey": "help.command.cmd_on"
-      },
-      {
-        "command": "cmd:off",
-        "descriptionKey": "help.command.cmd_off"
       }
     ]
   },

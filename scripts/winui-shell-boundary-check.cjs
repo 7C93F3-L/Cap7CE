@@ -226,4 +226,11 @@ for(const match of shortcutCatalog.matchAll(/new\("([A-Za-z]+)"/g))assert(shortc
 assert(shortcutInput.includes('KeyboardAccelerator')&&shortcutInput.includes('WasKeyDown')&&shortcutInput.includes('OldDefault')&&shortcutInput.includes('RemoveHandler'), 'shortcut routing must preserve native accelerators, repeat suppression, cleared-default handling and cleanup');
 assert(!/SetWindowsHookEx|Process\.Start|RequestAsync/.test(shortcutInput+shortcutService), 'shortcut dispatch cannot introduce a global keyboard hook or bypass domain actions');
 assert(read('shell/Cap7CE.WinUI/Views/Settings/SettingsShortcutEditor.cs').includes('UpdateAsync')&&!read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs').includes('Shortcuts?.Configure'), 'shortcut updates must use serialized field-level preferences');
+
+// Commands stay a bounded allowlist and reuse existing owners; ordinary text is never a script.
+const commandInput=read('shell/Cap7CE.WinUI/Commands/QuickCommandInput.cs');
+assert(commandInput.includes('QuickCommandParser.IsCandidate') && commandInput.includes('confirmation.Answer') && commandInput.includes('if(busy)return true'), 'command input must distinguish search, confirmation and in-flight execution');
+assert(read('shell/Cap7CE.WinUI/Commands/QuickCommandActions.cs').includes('services.ClearVisualCacheAsync()') && read('shell/Cap7CE.WinUI/Commands/QuickCommandActions.cs').includes('workspace.UpdateAsync'), 'commands must reuse cache maintenance and scoped workspace preferences');
+assert(!read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('menu.renameFolder'), 'sidebar cannot expose real-folder rename');
+
 console.log('WinUI shell boundaries passed');

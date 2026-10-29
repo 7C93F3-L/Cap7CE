@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-28）
 
+快捷指令由纯QuickCommandParser/CommandConfirmation负责语法与确认状态，QuickCommandInput连接输入框和底部窄条，QuickCommandActions调用现有浏览/工作区偏好/窗口/收藏/通知/缓存入口；ModelCommandActions共享AI工作宿主操作。MainWindow只装配和释放，WorkspaceAddress在提交前分流指令，普通文本继续搜索/导航；不执行任意脚本，不启动外部shell。
+
 本地AI设置由ModelSettingsView保留统一选择、刷新及启停链路；SettingsCatalog分别装配版本、模型、服务操作卡片及默认折叠运行信息，原生卡片清单检查显式记录服务操作的布局拆分。
 
 维护卡片通过SettingsExpandable分别承载Options、常驻Summary和Details；IndexMaintenanceView、MetadataMaintenanceView自身作为标题状态区保持加载，Summary在标题右侧并在窄窗换行，Details单独承载进度和错误；配置与操作元素进入折叠内容，折叠不解除任务监听。
