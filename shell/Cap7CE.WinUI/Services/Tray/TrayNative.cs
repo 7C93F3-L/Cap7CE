@@ -23,16 +23,13 @@ internal static class TrayNative
     [DllImport("comctl32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool RemoveWindowSubclass(nint hwnd,Subclass callback,nuint id);
     [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool SetForegroundWindow(nint window);
-    [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
-    [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window,out uint process);
-    // Only the anchor HWND is transparent; the windowed flyout has its own HWND.
-    internal static void MakeInvisible(nint window)
-    {
-        var style=GetWindowLongPtrW(window,-20);Marshal.SetLastPInvokeError(0);
-        if(SetWindowLongPtrW(window,-20,style|0x80000)==0&&Marshal.GetLastPInvokeError()!=0)throw new System.ComponentModel.Win32Exception(Marshal.GetLastPInvokeError());
-        if(!SetLayeredWindowAttributes(window,0,0,2))throw new System.ComponentModel.Win32Exception(Marshal.GetLastPInvokeError());
-    }
-    [DllImport("user32.dll",SetLastError=true)] private static extern nint GetWindowLongPtrW(nint window,int index);
-    [DllImport("user32.dll",SetLastError=true)] private static extern nint SetWindowLongPtrW(nint window,int index,nint value);
-    [DllImport("user32.dll",SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] private static extern bool SetLayeredWindowAttributes(nint window,uint color,byte alpha,uint flags);
+    [DllImport("user32.dll",SetLastError=true)] internal static extern nint CreatePopupMenu();
+    [DllImport("user32.dll",CharSet=CharSet.Unicode,SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool AppendMenuW(nint menu,uint flags,nuint id,string? text);
+    [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool CheckMenuRadioItem(nint menu,uint first,uint last,uint selected,uint flags);
+    [DllImport("user32.dll")] internal static extern uint TrackPopupMenuEx(nint menu,uint flags,int x,int y,nint owner,nint parameters);
+    [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool DestroyMenu(nint menu);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode,SetLastError=true)] internal static extern nint CreateWindowExW(uint extendedStyle,string className,string title,uint style,int x,int y,int width,int height,nint parent,nint menu,nint instance,nint parameter);
+    [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool DestroyWindow(nint window);
+    [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool ShowWindow(nint window,int command);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool PostMessageW(nint window,uint message,nuint wParam,nint lParam);
 }

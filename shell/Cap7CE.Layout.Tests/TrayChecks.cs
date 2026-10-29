@@ -16,11 +16,6 @@ internal static class TrayChecks
         Check(TrayPolicy.ShowOnStartup(false,true,false),"A second launch must reveal a background instance.");
         Check(TrayPolicy.ShowOnStartup(false,false,true),"Registration failure must reveal a window.");
         Check(!TrayPolicy.ShowOnStartup(false,false,false),"Background launch must not activate the window.");
-        foreach(var (left,top,width,height) in new[]{(0,0,1920,1040),(-1920,-100,1920,1080),(1920,200,2560,1400)})
-            foreach(var (x,y) in new[]{(left-100,top-100),(left+width+100,top+height+100),(left+width/2,top+height/2)}){
-                var anchor=TrayMenuPlacement.Clamp(x,y,left,top,width,height);
-                Check(anchor.X>=left&&anchor.X+2<=left+width&&anchor.Y>=top&&anchor.Y+2<=top+height,"The flyout host must remain in the selected monitor work area, including negative coordinates.");
-            }
         var folder=Path.Combine(Path.GetTempPath(),"Cap7CE-tray-check-"+Guid.NewGuid().ToString("N"));var language=AppLanguage.Session.Current;
         try{
             Directory.CreateDirectory(folder);var path=Path.Combine(folder,"prefs.json");await File.WriteAllTextAsync(path,"{\"language\":\"zh-CN\",\"notifications\":true}");

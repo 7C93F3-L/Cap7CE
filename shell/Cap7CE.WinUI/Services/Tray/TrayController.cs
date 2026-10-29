@@ -12,7 +12,7 @@ internal sealed class TrayController : IDisposable
     private readonly Action settings;
     private readonly Action<UiMessage> report;
     private TrayIcon? icon;
-    private TrayMenuHost? menuHost;
+
     private bool initialized,enabled,exiting,disposed,menuOpen,working;
     public bool RegistrationFailed=>services.Preferences.Current.TrayIconEnabled&&icon?.Registered!=true;
     public TrayController(Window window,ShellServices services,Action settings,Action<UiMessage> report)
@@ -24,7 +24,7 @@ internal sealed class TrayController : IDisposable
     private void Changed()=>window.DispatcherQueue.TryEnqueue(()=>{if(initialized&&!disposed)Apply();});
     private void Apply()
     {
-        menuHost?.SetTheme(services.Preferences.Current.Theme);
+
         var previous=enabled;enabled=services.Preferences.Current.TrayIconEnabled;
         try{
             if(enabled&&icon is null){icon=new(window);icon.Open+=Show;icon.Menu+=OpenMenu;icon.Failure+=Fail;}
@@ -44,8 +44,8 @@ internal sealed class TrayController : IDisposable
             var state="unknown";
             try{using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(2));state=(await new ModelCommandActions(services).RuntimeAsync("runtime.state",token:timeout.Token)).GetProperty("status").GetString()??state;}catch(Exception error){NativeDiagnostics.VisualFailure(error);}
             if(disposed)return;
-            menuHost??=new();
-            var action=await menuHost.ShowAsync(services.Preferences.Current.EdgeCollapseEnabled,SystemSettings.LaunchAtLogin,state,working||services.AutoKeywords.Busy,services.Preferences.Current.Theme);
+
+            var action=TrayMenu.Show(services.Preferences.Current.EdgeCollapseEnabled,SystemSettings.LaunchAtLogin,state,working||services.AutoKeywords.Busy);
             await ExecuteAsync(action);
         }catch(Exception error){Fail(error);}
         finally{menuOpen=false;}
@@ -66,5 +66,5 @@ internal sealed class TrayController : IDisposable
             case 40:Exit();break;
         }
     }
-    public void Dispose(){if(disposed)return;disposed=true;services.Preferences.Changed-=Changed;window.AppWindow.Closing-=Closing;icon?.Dispose();menuHost?.Dispose();}
+    public void Dispose(){if(disposed)return;disposed=true;services.Preferences.Changed-=Changed;window.AppWindow.Closing-=Closing;icon?.Dispose();}
 }

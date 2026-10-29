@@ -238,8 +238,7 @@ assert(trayOwner.includes('TrayPolicy.HideOnClose')&&trayOwner.includes('args.Ca
 assert(read('shell/Cap7CE.WinUI/Commands/QuickCommandActions.cs').includes('case "app:quit":exit();')&&singleMain.includes('tray.Exit'), 'explicit quit must bypass close-to-tray');
 assert(edgeController.includes('if(!args.Cancel)Dispose()')&&edgeController.includes('window.AppWindow.IsVisible')&&singleMain.indexOf('tray=new(')<singleMain.indexOf('edgeCollapse=new('), 'a cancelled close must not dispose or animate the hidden edge window');
 assert(read('shell/Cap7CE.WinUI/Services/Tray/TrayIcon.cs').includes('taskbarCreated')&&read('shell/Cap7CE.WinUI/Services/Tray/TrayIcon.cs').includes('RemoveWindowSubclass'), 'tray restart registration and callback cleanup are required');
-const trayMenu=read('shell/Cap7CE.WinUI/Services/Tray/TrayMenu.cs'),trayMenuHost=read('shell/Cap7CE.WinUI/Services/Tray/TrayMenuHost.cs');
-assert(trayMenu.includes('MenuFlyout')&&trayMenu.includes('RadioMenuFlyoutItem')&&trayMenuHost.includes('root.RequestedTheme=')&&trayMenuHost.includes('ActualThemeChanged'), 'tray menus must use WinUI theme resources and track effective theme changes');
-assert(trayMenuHost.includes('IsShownInSwitchers=false')&&trayMenuHost.includes('AppWindow.Hide()')&&trayMenuHost.includes('TrayMenuPlacement.Clamp'), 'tray popup host must remain separate from the main UI, dismiss and clamp to its monitor');
-assert(!read('shell/Cap7CE.WinUI/Services/Tray/TrayNative.cs').includes('TrackPopupMenu')&&!trayMenuHost.includes('uxtheme'), 'tray theme support cannot depend on classic popup menus or undocumented theme APIs');
+const trayMenu=read('shell/Cap7CE.WinUI/Services/Tray/TrayMenu.cs');
+assert(trayMenu.includes('TrackPopupMenuEx')&&trayMenu.includes('SetForegroundWindow')&&trayMenu.includes('PostMessageW'), 'tray menu must use native tracking and foreground/dismissal protocol');
+assert(trayMenu.includes('DestroyMenu')&&trayMenu.includes('DestroyWindow')&&!trayMenu.includes('MenuFlyout'), 'tray menu must release native resources without a XAML popup host');
 console.log('WinUI shell boundaries passed');
