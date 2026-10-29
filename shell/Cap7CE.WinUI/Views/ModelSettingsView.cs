@@ -20,6 +20,7 @@ internal sealed class ModelSettingsView
     private bool active,starting,syncing;
     public UIElement RuntimeSettings {get;}
     public UIElement ModelSettings {get;}
+    public UIElement RuntimeService=>runtimeToggle;
     public UIElement RuntimeInfo {get;}
     private object Context=>services.ModelContext;
     public ModelSettingsView(ShellServices services,Action<UiMessage> notice)
@@ -27,11 +28,8 @@ internal sealed class ModelSettingsView
         this.services=services;this.notice=notice;
         L.Bind(runtimes,ComboBox.PlaceholderTextProperty,"settings.selectVersion");L.Bind(models,ComboBox.PlaceholderTextProperty,"settings.selectVisionModel");
         runtimeToggle=Action("common.start",()=>RuntimeAsync(active?"runtime.stop":"runtime.start","manual"));
-        var runtimeActions=Ui.Row(runtimeToggle,Action("common.refresh",RefreshAsync));
-        runtimeActions.HorizontalAlignment=HorizontalAlignment.Right;
-        var modelRefresh=Action("common.refresh",RefreshAsync);modelRefresh.HorizontalAlignment=HorizontalAlignment.Right;
-        RuntimeSettings=Ui.Column(runtimes,runtimeActions);
-        ModelSettings=Ui.Column(models,modelRefresh);
+        RuntimeSettings=SelectionRow(runtimes,Action("common.refresh",RefreshAsync));
+        ModelSettings=SelectionRow(models,Action("common.refresh",RefreshAsync));
         runtimes.SelectionChanged+=(_,_)=>{if(!syncing&&runtimes.SelectedItem is Choice choice)Run(()=>SelectAsync("runtime.select",choice.Id));};
         models.SelectionChanged+=(_,_)=>{if(!syncing&&models.SelectedItem is Choice choice)Run(()=>SelectAsync("models.select",choice.Id));};
         var info=Ui.Column();
@@ -39,8 +37,14 @@ internal sealed class ModelSettingsView
             ("settings.runtimeDirectory",runtimeDirectory),("settings.modelDirectory",modelDirectory),("settings.modelInventory",inventory)}) {
             value.IsTextSelectionEnabled=true;info.Children.Add(new SettingsFieldRow(key,value,localized:true));
         }
-        RuntimeInfo=info;
+        RuntimeInfo=new SettingsExpandable(info);
         var loaded=false;((FrameworkElement)RuntimeSettings).Loaded+=(_,_)=>{if(!loaded){loaded=true;Run(RefreshAsync);}};
+    }
+    private static UIElement SelectionRow(ComboBox choice,Button refresh)
+    {
+        var row=new Grid{ColumnSpacing=8};row.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
+        row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});row.Children.Add(choice);Grid.SetColumn(refresh,1);row.Children.Add(refresh);
+        return row;
     }
     private async Task RefreshAsync()
     {

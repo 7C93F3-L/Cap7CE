@@ -141,6 +141,8 @@ assert(settingsCatalog.indexOf('new MaintenanceSettingsView(services,owner)') < 
 assert(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('commands.StartMetadataAsync(item.Path)')
   && read('shell/Cap7CE.WinUI/Services/ResultContextMenu.cs').includes('commands.StartMetadataAsync(first)'), 'metadata shortcuts must share the explicit directory queue action');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
+// WinUI separates the existing runtime start/stop action from version selection.
+mainlineSettings.push("ui.model.serviceTitle:ui.model.serviceDescription");
 assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the current mainline without extra workspace controls');
 assert(!/uiFontSize|preferences\.FontSize|settings\.FontSize|Current\.FontSize/.test(nativeUi)
   && !/public double FontSize/.test(read('shell/Cap7CE.WinUI/Models/ShellPreferences.cs')), 'retired native UI font preference and setting cannot return');

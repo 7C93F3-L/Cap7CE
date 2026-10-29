@@ -82,6 +82,7 @@ internal sealed class SettingsCatalog
     {
         Mainline("搜索与 AI","ai","settings.selectRuntime","stableSettings.desc.runtime",()=>ModelsView.RuntimeSettings);
         Mainline("搜索与 AI","ai","settings.visionModel","stableSettings.desc.model",()=>ModelsView.ModelSettings);
+        Mainline("搜索与 AI","ai","ui.model.serviceTitle","ui.model.serviceDescription",()=>ModelsView.RuntimeService);
         Mainline("搜索与 AI","ai","stableSettings.runtimeInfo","stableSettings.desc.runtimeInfo",()=>ModelsView.RuntimeInfo,true);
     }
     private void Diagnostics()
