@@ -9,11 +9,14 @@ internal static class SidebarPalette
     public static void Apply(Color first,Color second)
     {
         var midpoint=Color.FromArgb(255,(byte)((first.R+second.R)/2),(byte)((first.G+second.G)/2),(byte)((first.B+second.B)/2));
-        var luminance=new[]{first,midpoint,second}.Select(Luminance).ToArray();
+        ((SolidColorBrush)Application.Current.Resources["CapAccentForegroundBrush"]).Color = Foreground(first,midpoint,second);
+    }
+    public static Color Foreground(params Color[] colors)
+    {
+        var luminance=colors.Select(Luminance).ToArray();
         var black=luminance.Min(value=>(value+.05)/.05);
         var white=luminance.Min(value=>1.05/(value+.05));
-        ((SolidColorBrush)Application.Current.Resources["CapAccentForegroundBrush"]).Color =
-            black>=white?Color.FromArgb(255,31,31,31):Color.FromArgb(255,255,255,255);
+        return black>=white?Color.FromArgb(255,31,31,31):Color.FromArgb(255,255,255,255);
     }
     private static double Luminance(Color color)
     {

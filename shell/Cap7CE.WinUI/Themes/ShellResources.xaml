@@ -17,7 +17,10 @@
   <SolidColorBrush x:Key="CapAccentBrush" Color="#7894F8" />
   <SolidColorBrush x:Key="CapAccentForegroundBrush" Color="#FF1F1F1F" />
   <SolidColorBrush x:Key="CapSecondaryBrush" Color="#67BEC1" />
-  <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#7894F8" />
+  <SolidColorBrush x:Key="CapAccentHoverBrush" Color="{Binding Color, Source={StaticResource CapAccentBrush}}" Opacity="0.9"/>
+  <SolidColorBrush x:Key="CapAccentPressedBrush" Color="{Binding Color, Source={StaticResource CapAccentBrush}}" Opacity="0.8"/>
+  <SolidColorBrush x:Key="CapSolidAccentForegroundBrush" Color="#FF1F1F1F"/>
+  <SolidColorBrush x:Key="CapSolidAccentForegroundSecondaryBrush" Color="{Binding Color, Source={StaticResource CapSolidAccentForegroundBrush}}" Opacity="0.5"/>
   <LinearGradientBrush x:Key="CapAccentGradient" StartPoint="0,1" EndPoint="1,0"><GradientStop Color="#7894F8" Offset="0"/><GradientStop Color="#67BEC1" Offset="1"/></LinearGradientBrush>
   <Thickness x:Key="CapPagePadding">16</Thickness>
   <CornerRadius x:Key="CapPanelRadius">12</CornerRadius>

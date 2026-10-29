@@ -26,7 +26,7 @@ internal static class ThemeService
         root.SetValue(Control.FontSizeProperty, ShellPreferences.DefaultUiFontSize);
         ((SolidColorBrush)Application.Current.Resources["CapAccentBrush"]).Color = Parse(settings.Color1);
         ((SolidColorBrush)Application.Current.Resources["CapSecondaryBrush"]).Color = Parse(settings.Color2);
-        ((SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"]).Color = Parse(settings.Color1);
+        ((SolidColorBrush)Application.Current.Resources["CapSolidAccentForegroundBrush"]).Color = SidebarPalette.Foreground(Parse(settings.Color1));
         var gradient = (LinearGradientBrush)Application.Current.Resources["CapAccentGradient"];
         gradient.GradientStops[0].Color = Parse(settings.Color1); gradient.GradientStops[1].Color = Parse(settings.Color2);
         SidebarPalette.Apply(gradient.GradientStops[0].Color,gradient.GradientStops[1].Color);
