@@ -4529,5 +4529,73 @@
  "ui.shortcuts.action.copyFiles":{"zh-CN":"复制选中文件","en-US":"Copy selected files"},
  "ui.shortcuts.action.copyPaths":{"zh-CN":"复制选中项路径","en-US":"Copy selected paths"},
  "ui.shortcuts.action.revealFile":{"zh-CN":"在资源管理器中定位","en-US":"Reveal in File Explorer"},
- "ui.shortcuts.action.aiKeywords":{"zh-CN":"为选中项生成 AI 关键词","en-US":"Generate AI keywords for selection"}
+ "ui.shortcuts.action.aiKeywords":{"zh-CN":"为选中项生成 AI 关键词","en-US":"Generate AI keywords for selection"},
+  "ui.diagnostics.status": {
+    "zh-CN": "当前状态",
+    "en-US": "Current status"
+  },
+  "ui.diagnostics.recent": {
+    "zh-CN": "最近异常记录",
+    "en-US": "Recent error record"
+  },
+  "ui.diagnostics.path": {
+    "zh-CN": "日志目录",
+    "en-US": "Log folder"
+  },
+  "ui.diagnostics.connected": {
+    "zh-CN": "已连接",
+    "en-US": "Connected"
+  },
+  "ui.diagnostics.disconnected": {
+    "zh-CN": "未连接",
+    "en-US": "Disconnected"
+  },
+  "ui.diagnostics.summary": {
+    "zh-CN": "Core：{core}\n读取服务：{reader}\n边缘模式：{edge}\n系统通知：{notification}",
+    "en-US": "Core: {core}\nReader service: {reader}\nEdge mode: {edge}\nNotifications: {notification}"
+  },
+  "ui.diagnostics.recordTime": {
+    "zh-CN": "最近记录：{time}",
+    "en-US": "Latest record: {time}"
+  },
+  "ui.diagnostics.exported": {
+    "zh-CN": "诊断包已导出；日志采集结果见包内 collection.json。",
+    "en-US": "Diagnostics exported. See collection.json for log collection results."
+  },
+  "ui.diagnostics.reader.running": {
+    "zh-CN": "运行中",
+    "en-US": "Running"
+  },
+  "ui.diagnostics.reader.stopped": {
+    "zh-CN": "已停止",
+    "en-US": "Stopped"
+  },
+  "ui.diagnostics.reader.missing": {
+    "zh-CN": "未安装",
+    "en-US": "Not installed"
+  },
+  "ui.diagnostics.reader.unknown": {
+    "zh-CN": "无法读取",
+    "en-US": "Unavailable"
+  },
+  "ui.diagnostics.reader.transition": {
+    "zh-CN": "正在切换状态",
+    "en-US": "Changing state"
+  },
+  "ui.diagnostics.notification.disabled": {
+    "zh-CN": "应用内关闭",
+    "en-US": "Disabled in app"
+  },
+  "ui.diagnostics.notification.allowed": {
+    "zh-CN": "允许",
+    "en-US": "Allowed"
+  },
+  "ui.diagnostics.notification.blocked": {
+    "zh-CN": "未获系统允许或未注册",
+    "en-US": "Blocked or not registered"
+  },
+  "ui.diagnostics.notification.unknown": {
+    "zh-CN": "无法读取",
+    "en-US": "Unavailable"
+  }
 }

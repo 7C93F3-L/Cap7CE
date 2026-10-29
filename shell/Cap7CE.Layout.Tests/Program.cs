@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
+await DiagnosticsArchiveChecks.RunAsync();
 
 if(args is ["--shortcut-tests"]) {await ShortcutChecks.RunAsync();return;}
 await ShortcutChecks.RunAsync();

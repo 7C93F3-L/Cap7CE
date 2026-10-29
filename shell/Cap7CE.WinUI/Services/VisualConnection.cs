@@ -6,6 +6,8 @@ internal sealed class VisualConnection : IAsyncDisposable
 {
     public static string CacheRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE-PhaseF", "visual-cache");
     private readonly CoreNodeHost host;
+    public object Diagnostics=>host.Diagnostics;
+    public bool IsActive=>host.IsActive;
     private readonly string cacheRoot;
     private readonly SemaphoreSlim slots = new(2);
     public VisualConnection(string root,string? cacheRoot=null) { this.cacheRoot=Path.GetFullPath(cacheRoot??CacheRoot);host = new(root, "visual-cache.cjs", this.cacheRoot); }

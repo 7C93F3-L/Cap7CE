@@ -86,14 +86,7 @@ internal sealed class SettingsCatalog
     private void Diagnostics()
     {
         Entries.Add(new("诊断","stableSettings.section.application","native.maintenance.title","native.maintenance.description",()=>new CoreMaintenanceView(services,owner).Section));
-        Mainline("诊断","application","stableSettings.diagnostics","stableSettings.desc.diagnostics",()=>{
-            var column=Ui.Column();
-            column.Children.Add(new SettingsFieldRow("settings.applicationLog",L.Text("native.diagnostics.logs",true),L.Button("native.diagnostics.openFolder",()=>{Directory.CreateDirectory(PreferenceStore.DataRoot);FileCommands.OpenDirectoryInExplorer(PreferenceStore.DataRoot);} ),localized:true));
-            column.Children.Add(new SettingsFieldRow("settings.crashReports",L.Text(File.Exists(Path.Combine(PreferenceStore.DataRoot,"last-startup-error.log"))?"native.diagnostics.recordPresent":"common.notCreated",true),localized:true));
-            column.Children.Add(new SettingsFieldRow("settings.detailedLogging",L.Text("common.disabled",true),Disabled("common.enable"),localized:true));
-            column.Children.Add(new SettingsFieldRow("settings.diagnosticsBundle",L.Text("native.diagnostics.exportDescription",true),L.Button("settings.exportDiagnostics",()=>actions.Run(()=>NativeDiagnostics.ExportAsync(owner))),localized:true));
-            return column;
-        },true);
+        Mainline("诊断","application","stableSettings.diagnostics","stableSettings.desc.diagnostics",()=>new DiagnosticsView(services,owner),true);
     }
     private void About()
     {

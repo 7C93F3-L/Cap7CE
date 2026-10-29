@@ -13,7 +13,9 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
     private readonly string nonce = Guid.NewGuid().ToString();
     private long sequence;
     private bool closed;
-    public bool IsActive => process is not null;
+    private readonly Queue<string> errors=new();
+    public bool IsActive => !closed&&process is {} owner&&!owner.HasExited;
+    public object Diagnostics {get{lock(errors)return new{worker,active=IsActive,stderr=errors.ToArray()};}}
     private string Executable => Path.Combine(root, "native/artifacts/core-visuals/v1/Cap7CE.Core.Visuals.exe");
     private async Task StartAsync()
     {
@@ -31,7 +33,7 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
             info.Environment["CAP7CE_CORE_VISUAL_HOST"] = Executable;
             foreach (var arg in new[] { "--node-worker", "--parent-pid", Environment.ProcessId.ToString(), node, Path.Combine(directory, worker), dataRoot, nonce }) info.ArgumentList.Add(arg);
             process = Process.Start(info) ?? throw new UiFailure("ui.error.nodeHost");
-            process.ErrorDataReceived += (_, _) => { }; process.BeginErrorReadLine();
+            process.ErrorDataReceived += (_, args) => {if(args.Data is {} line)lock(errors){errors.Enqueue(line[..Math.Min(line.Length,512)]);while(errors.Count>24)errors.Dequeue();}}; process.BeginErrorReadLine();
             rpc = new(process.StandardOutput.BaseStream, process.StandardInput.BaseStream, 64 * 1024 * 1024);
         }
         finally { starting.Release(); }
