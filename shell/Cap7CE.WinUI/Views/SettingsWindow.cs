@@ -33,7 +33,7 @@ internal sealed class SettingsWindow : Window
         pages=new(services,this,text=>{if(closed)return;LanguageUi.Computed(notice,InfoBar.MessageProperty,()=>text.Render(AppLanguage.Session));notice.Visibility=Visibility.Visible;notice.IsOpen=true;});
         notice.Closed+=(_,_)=>notice.Visibility=Visibility.Collapsed;
         foreach(var (label,symbol) in new[]{("通用",Symbol.Setting),("外观",Symbol.Highlight),("缓存与索引",Symbol.Library),
-            ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",Symbol.Help)})
+            ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",(Symbol)0xE946)}) // Info: circled i.
         {
             var item=new NavigationViewItem {Tag=label,Icon=new SymbolIcon(symbol)};
             LanguageUi.Bind(item,NavigationViewItem.ContentProperty,LanguageUi.CategoryKey(label));navigation.MenuItems.Add(item);
