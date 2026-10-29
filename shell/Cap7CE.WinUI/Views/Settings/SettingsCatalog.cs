@@ -16,10 +16,11 @@ internal sealed class SettingsCatalog
     private readonly Window owner;
     private ModelSettingsView? models;
     private bool metadataFocus;
+    private readonly Action<string,Func<UIElement>> openSubpage;
     public List<SettingsEntry> Entries {get;}=[];
-    public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<UiMessage> notice)
+    public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<UiMessage> notice,Action<string,Func<UIElement>> openSubpage)
     {
-        this.services=services;this.owner=owner;this.actions=actions;this.notice=notice;
+        this.services=services;this.owner=owner;this.actions=actions;this.notice=notice;this.openSubpage=openSubpage;
         General();Appearance();Storage();Shortcuts();Models();Diagnostics();About();
     }
     public void BeginRender()=>models=null;
@@ -55,7 +56,7 @@ internal sealed class SettingsCatalog
             descriptionOverride:"native.material.description");
         Mainline("外观","colors","appearance.themeModeLabel","stableSettings.desc.theme",
             ()=>Choice(["theme.system","theme.light","theme.dark"],()=>Array.IndexOf(new[]{"system","light","dark"},services.Preferences.Current.Theme),i=>services.Preferences.SaveAsync(services.Preferences.Current with{Theme=new[]{"system","light","dark"}[i]})));
-        Mainline("外观","colors","appearance.configureLabel","stableSettings.desc.colors",()=>new SettingsColors(()=>services.Preferences.Current,services.Preferences.SaveAsync,notice));
+        Mainline("外观","colors","appearance.configureLabel","stableSettings.desc.colors",()=>new SettingsExpandable(new SettingsColors(()=>services.Preferences.Current,services.Preferences.SaveAsync,notice)));
     }
     private void Storage()
     {
@@ -74,8 +75,8 @@ internal sealed class SettingsCatalog
     }
     private void Shortcuts()
     {
-        Mainline("快捷操作","keyboard","settings.quickActions","stableSettings.desc.quickActions",()=>new SettingsShortcutEditor(services,owner,notice),true);
-        Mainline("快捷操作","keyboard","settings.quickCommands","stableSettings.desc.quickCommands",SettingsShortcutReference.Commands,true);
+        Mainline("快捷操作","keyboard","settings.quickActions","stableSettings.desc.quickActions",()=>new SettingsPageLink(()=>openSubpage("settings.quickActions",()=>new SettingsShortcutEditor(services,owner,notice))));
+        Mainline("快捷操作","keyboard","settings.quickCommands","stableSettings.desc.quickCommands",()=>new SettingsPageLink(()=>openSubpage("settings.quickCommands",SettingsShortcutReference.Commands)));
     }
     private void Models()
     {

@@ -14,8 +14,8 @@ internal sealed class SettingsFieldRow : UserControl
         grid.RowDefinitions.Add(new(){Height=GridLength.Auto});grid.RowDefinitions.Add(new(){Height=GridLength.Auto});
         var title=localized?Localization.LanguageUi.Text(label):Ui.Text(label);title.VerticalAlignment=VerticalAlignment.Center;
         var field=(FrameworkElement)value;field.VerticalAlignment=VerticalAlignment.Center;
-        field.HorizontalAlignment=HorizontalAlignment.Right;
-        if(field is TextBlock text)text.TextAlignment=TextAlignment.Right;
+        field.HorizontalAlignment=field is TextBlock or Panel?HorizontalAlignment.Stretch:HorizontalAlignment.Right;
+        if(field is TextBlock text)text.TextAlignment=TextAlignment.Left;
         grid.Children.Add(title);grid.Children.Add(value);
         if(action is FrameworkElement button){button.HorizontalAlignment=HorizontalAlignment.Right;button.VerticalAlignment=VerticalAlignment.Center;Grid.SetColumn(button,2);grid.Children.Add(button);}
         void Arrange()

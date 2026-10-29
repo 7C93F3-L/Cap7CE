@@ -444,12 +444,12 @@
     "en-US": "Check complete · Processed {processed} · Failed {failed}"
   },
   "stableSettings.desc.quickActions": {
-    "zh-CN": "分别设置全局与主窗口快捷键。默认全局仅唤起搜索；低频动作可自行绑定，空白表示未分配。",
-    "en-US": "Configure global and main-window shortcuts separately. Only search activation has a default global binding. Optional actions start unassigned."
+    "zh-CN": "配置全局与主窗口快捷键。",
+    "en-US": "Configure global and main-window shortcuts."
   },
   "stableSettings.desc.quickCommands": {
-    "zh-CN": "在搜索框或路径编辑框中输入指令，回车执行。",
-    "en-US": "Enter commands in the search or path field, then press Enter."
+    "zh-CN": "查看指令和示例，暂不支持执行。",
+    "en-US": "Browse commands and examples. Execution is not yet available."
   },
   "stableSettings.desc.diagnostics": {
     "zh-CN": "查看日志和崩溃报告位置，开启详细记录，或导出脱敏诊断包。",
@@ -680,8 +680,8 @@
     "en-US": "Off"
   },
   "settings.quickActions": {
-    "zh-CN": "快捷动作",
-    "en-US": "Quick Actions"
+    "zh-CN": "快捷键",
+    "en-US": "Keyboard shortcuts"
   },
   "settings.hiddenFilesOn": {
     "zh-CN": "显示隐藏文件",
@@ -4485,7 +4485,7 @@
   },
 
  "ui.shortcuts.globalToggle":{"zh-CN":"启用全局快捷键","en-US":"Enable global shortcuts"},
- "ui.shortcuts.globalHint":{"zh-CN":"唤起主窗口和恢复默认位置与大小固定为全局快捷键，其他固定为主窗口快捷键。此开关仅影响全局键；录入时暂停本软件的全局键，冲突按项显示。","en-US":"Show main window and restore default position and size are always global; all other actions are local to the main window. This switch affects only global keys. Global keys pause during capture; conflicts are reported individually."},
+ "ui.shortcuts.globalHint":{"zh-CN":"仅控制全局快捷键，录入键位时暂时停用。","en-US":"Controls only global shortcuts. Temporarily paused while recording a shortcut."},
  "ui.shortcuts.globalHeading":{"zh-CN":"全局快捷键","en-US":"Global shortcuts"},
  "ui.shortcuts.appHeading":{"zh-CN":"主窗口快捷键","en-US":"Main-window shortcuts"},
  "ui.shortcuts.appScope":{"zh-CN":"主窗口内","en-US":"Main window"},
@@ -4597,5 +4597,13 @@
   "ui.diagnostics.notification.unknown": {
     "zh-CN": "无法读取",
     "en-US": "Unavailable"
+  },
+  "ui.settings.more": {
+    "zh-CN": "更多操作",
+    "en-US": "More actions"
+  },
+  "ui.settings.referenceOnly": {
+    "zh-CN": "指令参考，暂不支持执行。",
+    "en-US": "Command reference. Execution is not yet available."
   }
 }

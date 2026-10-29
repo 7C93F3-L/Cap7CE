@@ -13,8 +13,19 @@ internal sealed class SettingsCard : UserControl
         var section=control as SettingsSection;
         if(section is not null){control=section.Actions;expanded=false;}
         var label=localized?Localization.LanguageUi.Text(title):Ui.Text(title);label.FontWeight=FontWeights.SemiBold;
-        var copy=Ui.Column(label,localized?Localization.LanguageUi.Text(description,true):Ui.Text(description,true));
-        copy.Spacing=4;
+        var text=Ui.Column(label,localized?Localization.LanguageUi.Text(description,true):Ui.Text(description,true));text.Spacing=3;
+        label.Style=(Style)Application.Current.Resources["CapSettingsLabel"];
+        if(text.Children[1] is TextBlock descriptionText){descriptionText.Style=(Style)Application.Current.Resources["CapSettingsDescription"];descriptionText.Visibility=string.IsNullOrWhiteSpace(description)?Visibility.Collapsed:Visibility.Visible;}
+        var copy=new Grid{ColumnSpacing=16};copy.ColumnDefinitions.Add(new(){Width=new(20)});copy.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
+        var icon=new FontIcon{FontSize=16,Glyph=title switch{"settings.language"=>"\uE774","settings.launchAtLogin"=>"\uE7E8","settings.systemNotifications"=>"\uE7F4","settings.quickActions"=>"\uE765","settings.quickCommands"=>"\uE756","stableSettings.diagnostics"=>"\uE9D9",_=>"\uE713"},VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};AutomationProperties.SetAccessibilityView(icon,Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+        copy.Children.Add(icon);Grid.SetColumn(text,1);copy.Children.Add(text);
+        if(control is SettingsExpandable expandable){var expander=new Expander{Header=copy,Content=expandable.Body,Style=(Style)Application.Current.Resources["CapSettingsExpander"]};if(localized)Localization.LanguageUi.Bind(expander,AutomationProperties.NameProperty,title);else AutomationProperties.SetName(expander,title);Content=expander;return;}
+        if(control is SettingsPageLink link){
+            var header=new Grid{ColumnSpacing=16};header.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
+            var arrow=(UIElement)link.Content;link.Content=null;header.Children.Add(copy);Grid.SetColumn((FrameworkElement)arrow,1);header.Children.Add(arrow);
+            link.Style=(Style)Application.Current.Resources["CapSettingsNavigationCard"];link.Content=header;
+            if(localized)Localization.LanguageUi.Bind(link,AutomationProperties.NameProperty,title);Content=link;return;
+        }
         var grid=new Grid {ColumnSpacing=20,RowSpacing=12};
         grid.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         grid.ColumnDefinitions.Add(new(){Width=new(280)});
@@ -27,7 +38,7 @@ internal sealed class SettingsCard : UserControl
         if(!expanded&&control is StackPanel panel) {
             foreach(var child in panel.Children.OfType<FrameworkElement>()) {
                 if(child is Button or TextBlock or StackPanel {Orientation:Orientation.Horizontal})child.HorizontalAlignment=HorizontalAlignment.Right;
-                if(child is TextBlock text)text.TextAlignment=TextAlignment.Right;
+                if(child is TextBlock childText)childText.TextAlignment=TextAlignment.Right;
             }
         }
         element.HorizontalAlignment=control is ToggleSwitch or Button?HorizontalAlignment.Right:HorizontalAlignment.Stretch;
@@ -41,7 +52,7 @@ internal sealed class SettingsCard : UserControl
         if(control is Control accessible){if(localized)Localization.LanguageUi.Bind(accessible,AutomationProperties.NameProperty,title);else AutomationProperties.SetName(accessible,title);}
         void Arrange()
         {
-            var stacked=expanded||ActualWidth<(compact?460:actionWidth+280);
+            var stacked=expanded||ActualWidth<(compact?520:640);
             if(section is not null)section.Margin=stacked?new(0):new(0,12,0,0);
             grid.RowSpacing=stacked&&hasAction?12:0;
             grid.ColumnDefinitions[1].Width=stacked||!hasAction?new(0):compact?GridLength.Auto:new(actionWidth);

@@ -9,7 +9,6 @@ internal static class SettingsShortcutReference
 {
     public static UIElement Commands()
     {
-        return new SettingsSection(DisabledToggle(),new SettingsCommandList(SettingsReference.HelpGroups));
+        return Ui.Column(L.Text("ui.settings.referenceOnly",true),new SettingsCommandList(SettingsReference.HelpGroups));
     }
-    private static ToggleSwitch DisabledToggle()=>L.Toggle(false);
 }

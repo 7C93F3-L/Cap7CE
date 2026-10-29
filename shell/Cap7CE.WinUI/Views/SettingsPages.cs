@@ -11,20 +11,21 @@ internal sealed record SettingsEntry(string Category,string Section,string Title
 internal sealed class SettingsPages
 {
     private readonly SettingsCatalog catalog;
+    public event Action<string,Func<UIElement>>? SubpageRequested;
     public SettingsPages(ShellServices services,Window owner,Action<UiMessage> notice)
-        =>catalog=new SettingsCatalog(services,owner,new SettingsActions(notice),notice);
+        =>catalog=new SettingsCatalog(services,owner,new SettingsActions(notice),notice,(title,create)=>SubpageRequested?.Invoke(title,create));
     public void FocusMetadata()=>catalog.FocusMetadata();
     public UIElement Build(string category)
     {
-        catalog.BeginRender();var column=Ui.Column();column.Spacing=20;
+        catalog.BeginRender();var column=Ui.Column();column.Spacing=24;
         var matches=catalog.Entries.Where(e=>e.Category==category).ToArray();
         foreach(var categoryGroup in matches.GroupBy(e=>e.Category))
         {
-            column.Children.Add(LanguageUi.Heading(LanguageUi.CategoryKey(categoryGroup.Key)));
+            var heading=LanguageUi.Text(LanguageUi.CategoryKey(categoryGroup.Key));heading.Style=(Style)Application.Current.Resources["CapSettingsPageTitle"];column.Children.Add(heading);
             foreach(var group in categoryGroup.GroupBy(e=>e.Section))
             {
-                var section=Ui.Column();section.Spacing=5;
-                section.Children.Add(LanguageUi.Text(group.Key,true));
+                var section=Ui.Column();section.Spacing=6;
+                var title=LanguageUi.Text(group.Key);title.Style=(Style)Application.Current.Resources["CapSettingsSectionTitle"];title.Margin=new(0,0,0,4);section.Children.Add(title);
                 foreach(var row in group)section.Children.Add(row.Title.Length==0?row.Create():new SettingsCard(row.Title,row.Description,row.Create(),row.Expanded,localized:true));
                 column.Children.Add(section);
             }

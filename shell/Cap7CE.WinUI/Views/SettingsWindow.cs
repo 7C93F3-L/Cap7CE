@@ -11,11 +11,12 @@ internal sealed class SettingsWindow : Window
 {
     private readonly ShellServices services;
     private readonly SettingsPages pages;
-    private readonly ContentControl body=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,MaxWidth=1040,Margin=new(20,16,20,24)};
+    private readonly ContentControl body=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch,MaxWidth=1040,Margin=new(24,20,24,32)};
     private readonly InfoBar notice=new(){IsOpen=false,Visibility=Visibility.Collapsed,IsClosable=true,Severity=InfoBarSeverity.Informational};
     private readonly Grid root=new();
     private readonly NavigationView navigation=new(){Style=(Style)Application.Current.Resources["CapSettingsNavigation"]};
     private readonly ScrollViewer scroll;
+    private readonly SettingsSubpageNavigation subpages;
     private readonly ContentControl signature=new(){HorizontalContentAlignment=HorizontalAlignment.Center,Margin=new(0,16,0,30),Visibility=Visibility.Collapsed};
     private string category="通用";
     private bool closed;
@@ -45,6 +46,7 @@ internal sealed class SettingsWindow : Window
             scroll?.ChangeView(null,0,null,true);
         };
         scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,HorizontalContentAlignment=HorizontalAlignment.Stretch};
+        subpages=new(body,scroll);pages.SubpageRequested+=subpages.Open;
         IdleScrollBars.Attach(scroll);
         var content=new Grid();content.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});content.RowDefinitions.Add(new(){Height=GridLength.Auto});
         content.Children.Add(scroll);Grid.SetRow(signature,1);content.Children.Add(signature);
@@ -65,6 +67,7 @@ internal sealed class SettingsWindow : Window
     }
     private void Render()
     {
+        subpages.Reset();
         body.Content=pages.Build(category);signature.Visibility=category=="关于"?Visibility.Visible:Visibility.Collapsed;
         if(category=="关于"&&signature.Content is null)try {
             signature.Content=new SettingsSignature {Notice=text=>{if(!closed){LanguageUi.Computed(notice,InfoBar.MessageProperty,()=>text.Render(AppLanguage.Session));notice.Visibility=Visibility.Visible;notice.IsOpen=true;}}};
