@@ -3,31 +3,7 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:language="using:Cap7CE.WinUI.Localization"
  Width="300" Height="380">
- <UserControl.Resources>
-  <ResourceDictionary><ResourceDictionary.ThemeDictionaries>
-   <ResourceDictionary x:Key="Light">
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedPointerOverBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedPressedBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemSelectionIndicatorBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBrush" ResourceKey="CapAccentForegroundBrush"/>
-   </ResourceDictionary>
-   <ResourceDictionary x:Key="Default">
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedPointerOverBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedPressedBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemSelectionIndicatorBrush" ResourceKey="CapAccentBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBrush" ResourceKey="CapAccentForegroundBrush"/>
-   </ResourceDictionary>
-   <ResourceDictionary x:Key="HighContrast">
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedPointerOverBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBoxSelectedPressedBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-    <StaticResource x:Key="ListViewItemSelectionIndicatorBrush" ResourceKey="SystemColorHighlightColorBrush"/>
-    <StaticResource x:Key="ListViewItemCheckBrush" ResourceKey="SystemColorHighlightTextColorBrush"/>
-   </ResourceDictionary>
-  </ResourceDictionary.ThemeDictionaries></ResourceDictionary>
- </UserControl.Resources>
+
  <Grid RowSpacing="8">
   <Grid.RowDefinitions><RowDefinition Height="32"/><RowDefinition Height="300"/><RowDefinition Height="32"/></Grid.RowDefinitions>
   <SemanticZoom x:Name="Zoom" Grid.RowSpan="2" IsZoomedInViewActive="False" IsZoomOutButtonEnabled="False" ViewChangeCompleted="ViewChanged">
@@ -45,13 +21,13 @@
     </GridView>
    </SemanticZoom.ZoomedOutView>
    <SemanticZoom.ZoomedInView>
-    <ListView x:Name="Formats" SelectionMode="Multiple" IsMultiSelectCheckBoxEnabled="True" Margin="0,40,0,0"
+    <ListView x:Name="Formats" SelectionMode="Multiple" IsMultiSelectCheckBoxEnabled="False" Margin="0,40,0,0"
       ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollMode="Disabled"
-      SelectionChanged="SelectionChanged">
+      SelectionChanged="SelectionChanged" ContainerContentChanging="FormatContainerChanged">
      <ListView.GroupStyle><GroupStyle HidesIfEmpty="True"><GroupStyle.HeaderTemplate><DataTemplate>
       <Button Content="{Binding Key}" Click="ShowIndex" Margin="0,4" language:LanguageText.NameKey="ui.filters.letterIndex"/>
      </DataTemplate></GroupStyle.HeaderTemplate></GroupStyle></ListView.GroupStyle>
-     <ListView.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" VerticalAlignment="Center"/></DataTemplate></ListView.ItemTemplate>
+     <ListView.ItemTemplate><DataTemplate><CheckBox Content="{Binding}" IsHitTestVisible="False" IsTabStop="False" AutomationProperties.AccessibilityView="Raw" VerticalAlignment="Center"/></DataTemplate></ListView.ItemTemplate>
     </ListView>
    </SemanticZoom.ZoomedInView>
   </SemanticZoom>

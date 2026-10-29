@@ -2,6 +2,7 @@ using Cap7CE.WinUI.Models;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 
 namespace Cap7CE.WinUI.Controls;
@@ -32,7 +33,24 @@ public sealed partial class FormatPicker : UserControl
     {
         BackButton.Visibility=Zoom.IsZoomedInViewActive?Visibility.Visible:Visibility.Collapsed;
     }
-    private void SelectionChanged(object sender,SelectionChangedEventArgs e)=>UpdateSummary();
+    private void SelectionChanged(object sender,SelectionChangedEventArgs e)
+    {
+        foreach(var item in e.RemovedItems.Concat(e.AddedItems))
+            if(Formats.ContainerFromItem(item) is ListViewItem container)SyncCheck(container);
+        UpdateSummary();
+    }
+    private void FormatContainerChanged(ListViewBase sender,ContainerContentChangingEventArgs args)
+    {
+        if(args.InRecycleQueue)return;
+        if(args.Phase==0){args.RegisterUpdateCallback(1,FormatContainerChanged);return;}
+        SyncCheck(args.ItemContainer);
+    }
+    private static void SyncCheck(SelectorItem container)
+    {
+        // The list retains pointer/keyboard selection and accessibility. A passive
+        // native CheckBox supplies the same state transition as settings checkboxes.
+        if(container.ContentTemplateRoot is CheckBox check)check.IsChecked=container.IsSelected;
+    }
     private void UpdateSummary(){if(Summary is not null)L.Bind(Summary,TextBlock.TextProperty,"ui.filters.selectedFormats",()=>new Dictionary<string,object?>{{"count",Formats.SelectedItems.Count}});}
     private void ClearSelection(object sender,RoutedEventArgs e)=>Formats.SelectedItems.Clear();
     private void ApplySelection(object sender,RoutedEventArgs e)=>apply(Formats.SelectedItems.Cast<string>().Order(StringComparer.OrdinalIgnoreCase).ToArray());
