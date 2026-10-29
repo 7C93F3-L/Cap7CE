@@ -22,6 +22,9 @@ internal static class TrayNative
     [DllImport("comctl32.dll")] internal static extern nint DefSubclassProc(nint hwnd,uint message,nuint wParam,nint lParam);
     [DllImport("comctl32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool RemoveWindowSubclass(nint hwnd,Subclass callback,nuint id);
     [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool GetCursorPos(out Point point);
+    [DllImport("user32.dll")] [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool SetForegroundWindow(nint window);
+    [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window,out uint process);
     // Only the anchor HWND is transparent; the windowed flyout has its own HWND.
     internal static void MakeInvisible(nint window)
     {

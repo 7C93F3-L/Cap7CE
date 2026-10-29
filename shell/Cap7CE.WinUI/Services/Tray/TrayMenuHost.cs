@@ -12,18 +12,34 @@ internal sealed class TrayMenuHost : IDisposable
 {
     private readonly Window window=new(){Title=ApplicationIdentity.Name};
     private readonly Grid root=new();
+    private readonly nint handle;
+    private readonly TrayNative.Subclass callback;
     private MenuFlyout? menu;
     private TaskCompletionSource<uint>? completion;
     private uint selected;
     private bool opening,finishing,disposed;
     public TrayMenuHost()
     {
+        handle=WinRT.Interop.WindowNative.GetWindowHandle(window);callback=Process;
+        if(!TrayNative.SetWindowSubclass(handle,callback,8322,0))throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastPInvokeError());
         window.Content=root;window.AppWindow.IsShownInSwitchers=false;
-        if(window.AppWindow.Presenter is OverlappedPresenter presenter){presenter.SetBorderAndTitleBar(false,false);presenter.PreferredMinimumWidth=1;presenter.PreferredMinimumHeight=1;presenter.IsResizable=false;presenter.IsMaximizable=false;presenter.IsMinimizable=false;}
+        if(window.AppWindow.Presenter is OverlappedPresenter presenter){presenter.SetBorderAndTitleBar(false,false);presenter.PreferredMinimumWidth=1;presenter.PreferredMinimumHeight=1;presenter.IsResizable=false;presenter.IsMaximizable=false;presenter.IsMinimizable=false;presenter.IsAlwaysOnTop=true;}
         window.AppWindow.Resize(new SizeInt32(2,2));
         TrayNative.MakeInvisible(WinRT.Interop.WindowNative.GetWindowHandle(window));
         root.Loaded+=(_,_)=>OpenFlyout();root.ActualThemeChanged+=(_,_)=>ApplyPresenterTheme();
+        window.Activated+=(_,args)=>{
+            if(args.WindowActivationState==WindowActivationState.Deactivated)
+                window.DispatcherQueue.TryEnqueue(DismissIfExternalForeground);
+        };
         window.AppWindow.Closing+=(_,args)=>{if(!disposed){args.Cancel=true;menu?.Hide();}};
+    }
+    private nint Process(nint hwnd,uint message,nuint wParam,nint lParam,nuint id,nuint data)
+    {
+        // WM_ACTIVATEAPP also arrives when a popup, rather than the tiny anchor,
+        // held activation before the user clicked the desktop or another app.
+        if(message==0x001c&&wParam==0&&!disposed)
+            window.DispatcherQueue.TryEnqueue(DismissIfExternalForeground);
+        return TrayNative.DefSubclassProc(hwnd,message,wParam,lParam);
     }
     public void SetTheme(string preference)
     {
@@ -42,8 +58,23 @@ internal sealed class TrayMenuHost : IDisposable
         menu=TrayMenu.Create(edge,login,runtime,busy,value=>{selected=value;menu?.Hide();});
         menu.MenuFlyoutPresenterStyle=new Style{TargetType=typeof(MenuFlyoutPresenter),Setters={new Setter(FrameworkElement.RequestedThemeProperty,root.ActualTheme)}};
         menu.Opened+=(_,_)=>ApplyPresenterTheme();menu.Closed+=(_,_)=>Finish();
-        try{window.Activate();if(root.IsLoaded)OpenFlyout();}catch(Exception error){Finish(error);}
+        try{
+            // Transfer foreground from Explorer before creating the windowed popup.
+            window.Activate();
+            if(!TrayNative.SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(window))){Finish();return task;}
+            if(root.IsLoaded)OpenFlyout();
+        }catch(Exception error){Finish(error);}
         return task;
+    }
+    private void DismissIfExternalForeground()
+    {
+        if(disposed||completion is null)return;
+        var foreground=TrayNative.GetForegroundWindow();
+        if(foreground==0)return;
+        TrayNative.GetWindowThreadProcessId(foreground,out var process);
+        // WinUI submenus have separate HWNDs. Do not mistake their activation for
+        // leaving the app; external activation (including the desktop) ends the menu.
+        if(process!=(uint)Environment.ProcessId)menu?.Hide();
     }
     private void OpenFlyout()
     {
@@ -67,6 +98,6 @@ internal sealed class TrayMenuHost : IDisposable
     }
     public void Dispose()
     {
-        if(disposed)return;disposed=true;menu?.Hide();Finish();window.Close();
+        if(disposed)return;disposed=true;menu?.Hide();Finish();TrayNative.RemoveWindowSubclass(handle,callback,8322);window.Close();
     }
 }
