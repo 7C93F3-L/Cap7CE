@@ -16,6 +16,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private readonly List<Button> buttons=[];
     private Func<string> statusText=()=>AppLanguage.Text("ui.index.reading");
     private void ShowStatus(Func<string> text){statusText=text;L.Computed(status,text);}
+    private bool listening;
     private CoreCatalogTaskStatus[] tasks=[];
     private readonly Controllers.VisibleTaskMonitor monitor=new();
     private readonly Dictionary<string,bool> selection=[];
@@ -43,8 +44,17 @@ internal sealed class IndexMaintenanceView : UserControl
         actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
         Options=Ui.Column(L.Text("ui.index.orderHint",true),volumeHost,actions);
         Content=status;
-        Loaded+=(_,_)=>Run(ReadAsync);
-        Unloaded+=(_,_)=>monitor.Dispose();
+        Loaded+=(_,_)=>{
+            if(listening)return;listening=true;services.ConnectionChanged+=ConnectionChanged;ReadConnection();
+        };
+        Unloaded+=(_,_)=>{listening=false;services.ConnectionChanged-=ConnectionChanged;monitor.Dispose();};
+    }
+    private void ConnectionChanged()=>DispatcherQueue.TryEnqueue(()=>{if(listening)ReadConnection();});
+    private void ReadConnection()
+    {
+        if(services.Core?.IsConnected==true){Run(ReadAsync);return;}
+        monitor.Dispose();foreach(var button in buttons)button.IsEnabled=false;volumeHost.IsEnabled=false;
+        ShowStatus(()=>AppLanguage.Text("ui.index.connecting"));
     }
     private CoreConnection Core=>services.Core??throw new IOException("index-ui-disconnected");
     private Button Action(string title,Func<Task> action)
@@ -53,7 +63,7 @@ internal sealed class IndexMaintenanceView : UserControl
     {
         foreach(var b in buttons)b.IsEnabled=false;volumeHost.IsEnabled=false;
         try{await action();}catch(Exception e){var message=UiMessage.Key("ui.index.actionFailed",new Dictionary<string,object?>{{"error",FailureText.From(e)}});ShowStatus(()=>message.Render(AppLanguage.Session));}
-        finally{foreach(var b in buttons)b.IsEnabled=true;volumeHost.IsEnabled=true;}
+        finally{var connected=services.Core?.IsConnected==true;foreach(var b in buttons)b.IsEnabled=connected;volumeHost.IsEnabled=connected;}
     }
     private async Task DiscoverAsync()
     {

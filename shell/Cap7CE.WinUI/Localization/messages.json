@@ -3380,8 +3380,8 @@
     "en-US": "Disconnected. Reconnect under Diagnostics → Service maintenance."
   },
   "ui.index.actionFailed": {
-    "zh-CN": "{error}\n索引服务未安装或未授权时，请先完成Reader服务安装；不要以管理员身份运行整个界面。",
-    "en-US": "{error}\nIf the indexing service is not installed or authorized, install the Reader service first. Do not run the entire interface as administrator."
+    "zh-CN": "索引操作失败：{error}",
+    "en-US": "Index operation failed: {error}"
   },
   "ui.index.isolated": {
     "zh-CN": "此会话为隔离查询模式，不提供索引维护。",
@@ -4654,5 +4654,9 @@
   "ui.exclusions.hint": {
     "zh-CN": "勾选的目录及其子目录将跳过批量提取。",
     "en-US": "Checked folders and their subfolders are skipped during batch extraction."
+  },
+  "ui.index.connecting": {
+    "zh-CN": "等待后台连接…",
+    "en-US": "Waiting for connection…"
   }
 }
