@@ -224,12 +224,12 @@
     "en-US": "Dark Mode"
   },
   "appearance.themeModeLabel": {
-    "zh-CN": "主题模式",
-    "en-US": "Theme Mode"
+    "zh-CN": "主题",
+    "en-US": "Theme"
   },
   "appearance.configureLabel": {
     "zh-CN": "主题颜色",
-    "en-US": "Theme Colors"
+    "en-US": "Theme colors"
   },
   "appearance.themeColor": {
     "zh-CN": "颜色1",
@@ -292,12 +292,12 @@
     "en-US": "About"
   },
   "stableSettings.section.basics": {
-    "zh-CN": "基础",
+    "zh-CN": "基本设置",
     "en-US": "Basics"
   },
   "stableSettings.section.windows": {
-    "zh-CN": "窗口行为",
-    "en-US": "Window behavior"
+    "zh-CN": "窗口",
+    "en-US": "Window"
   },
   "stableSettings.section.colors": {
     "zh-CN": "主题与颜色",
@@ -344,28 +344,28 @@
     "en-US": "Could not open extraction management. Please try again."
   },
   "stableSettings.section.keyboard": {
-    "zh-CN": "键盘与指令",
-    "en-US": "Keyboard and commands"
+    "zh-CN": "快捷键与指令",
+    "en-US": "Shortcuts and commands"
   },
   "stableSettings.section.application": {
     "zh-CN": "Cap7CE",
     "en-US": "Cap7CE"
   },
   "stableSettings.desc.language": {
-    "zh-CN": "立即切换界面语言；系统位置名称保持 Windows 显示名，新启动的 AI 关键词任务使用所选语言。",
-    "en-US": "Change the interface language immediately. System locations keep their Windows display names. New AI keyword tasks use the selected language."
+    "zh-CN": "界面与新 AI 关键词任务使用所选语言，系统位置保留 Windows 名称。",
+    "en-US": "Applies to the interface and new AI keyword tasks. System locations keep their Windows names."
   },
   "stableSettings.desc.launch": {
-    "zh-CN": "登录 Windows 后自动启动 Cap7CE。",
-    "en-US": "Start Cap7CE after you sign in to Windows."
+    "zh-CN": "登录 Windows 时启动 Cap7CE。",
+    "en-US": "Start Cap7CE when you sign in to Windows."
   },
   "stableSettings.desc.notifications": {
-    "zh-CN": "后台长时间索引、属性提取及 AI 关键词任务结束时通知；正在查看进度、短时成功或主动取消时不打扰。实际展示受 Windows 通知设置与勿扰模式影响。",
-    "en-US": "Notify when long-running background indexing, metadata or AI keyword tasks finish. Suppress notices while viewing progress, for quick successes or for user cancellation. Delivery is subject to Windows notification settings and Do not disturb."
+    "zh-CN": "通知后台长任务的完成或后台任务失败，遵循 Windows 通知设置。",
+    "en-US": "Notify when long background tasks finish or background tasks fail. Subject to Windows notification settings."
   },
   "stableSettings.desc.edgeCollapse": {
-    "zh-CN": "标准窗口模式保留窗口最大化与窗口贴靠功能；边缘收起模式会在窗口贴在屏幕边缘时自动隐藏。",
-    "en-US": "Standard Window mode keeps window maximize and Windows Snap available. Edge Auto-hide mode hides a window automatically when it is placed at a screen edge."
+    "zh-CN": "标准窗口支持最大化与贴靠；边缘收起可贴边隐藏。",
+    "en-US": "Use a standard window with maximize and Snap, or hide it at a screen edge."
   },
   "stableSettings.desc.material": {
     "zh-CN": "选择主窗口、设置与预览窗口使用的亚克力或云母效果；不可用时自动使用纯色背景。",
@@ -384,32 +384,32 @@
     "en-US": "Mica"
   },
   "stableSettings.desc.theme": {
-    "zh-CN": "跟随 Windows 主题，或始终使用明亮、黑暗模式。",
-    "en-US": "Follow the Windows theme, or always use Light or Dark mode."
+    "zh-CN": "跟随 Windows，或固定使用浅色、深色。",
+    "en-US": "Follow Windows, or always use light or dark mode."
   },
   "stableSettings.desc.colors": {
-    "zh-CN": "调整图标及按钮等内容的风格化颜色。",
-    "en-US": "Adjust the stylized colors used by icons, buttons, and other interface elements."
+    "zh-CN": "自定义图标和按钮的主题颜色。",
+    "en-US": "Customize theme colors for icons and buttons."
   },
   "stableSettings.desc.folders": {
     "zh-CN": "添加、重命名或移除参与正式搜索的目录，并查看支持文件数量。",
     "en-US": "Add, rename, or remove folders used by formal search and review their supported file counts."
   },
   "stableSettings.desc.runtime": {
-    "zh-CN": "选择本机 llama.cpp 版本，并手动启动或停止本地推理服务。",
-    "en-US": "Select a local llama.cpp version and manually start or stop the inference service."
+    "zh-CN": "选择 llama.cpp 版本，启动或停止本地推理服务。",
+    "en-US": "Choose a llama.cpp version and start or stop the local server."
   },
   "stableSettings.desc.model": {
-    "zh-CN": "选择自动添加关键词使用的本地视觉模型。",
-    "en-US": "Choose the local vision model used to generate keywords."
+    "zh-CN": "用于生成 AI 关键词的本地视觉模型。",
+    "en-US": "Local vision model for generating AI keywords."
   },
   "stableSettings.desc.cacheOptimization": {
     "zh-CN": "在后台逐步生成搜索缩略图；使用 Cap7CE 时自动降低处理频率。",
     "en-US": "Generate search thumbnails gradually in the background and automatically slow down while Cap7CE is in use."
   },
   "stableSettings.desc.formalCache": {
-    "zh-CN": "缓存缩略图与预览内容，清理后按需重新生成。",
-    "en-US": "Caches thumbnails and previews. Rebuilt on demand after clearing."
+    "zh-CN": "清理后会在浏览时重新生成。",
+    "en-US": "Recreated as needed after clearing."
   },
   "stableSettings.desc.skimCache": {
     "zh-CN": "查看并清理 Skim 浏览产生的缩略图、预览和元数据缓存。",
@@ -444,32 +444,32 @@
     "en-US": "Check complete · Processed {processed} · Failed {failed}"
   },
   "stableSettings.desc.quickActions": {
-    "zh-CN": "配置全局与主窗口快捷键。",
-    "en-US": "Configure global and main-window shortcuts."
+    "zh-CN": "设置全局与主窗口快捷键。",
+    "en-US": "Set global and main-window shortcuts."
   },
   "stableSettings.desc.quickCommands": {
     "zh-CN": "查看指令和示例，暂不支持执行。",
-    "en-US": "Browse commands and examples. Execution is not yet available."
+    "en-US": "View commands and examples. Execution is not yet available."
   },
   "stableSettings.desc.diagnostics": {
-    "zh-CN": "查看日志和崩溃报告位置，开启详细记录，或导出脱敏诊断包。",
-    "en-US": "View log and crash-report locations, enable detailed logging, or export a sanitized diagnostics bundle."
+    "zh-CN": "查看服务状态、异常记录或导出诊断包。",
+    "en-US": "View service status and recent errors, or export diagnostics."
   },
   "stableSettings.diagnostics": {
     "zh-CN": "日志与诊断",
     "en-US": "Logs and diagnostics"
   },
   "stableSettings.runtimeInfo": {
-    "zh-CN": "llama.cpp 运行信息",
-    "en-US": "llama.cpp runtime information"
+    "zh-CN": "运行信息",
+    "en-US": "Runtime information"
   },
   "stableSettings.desc.runtimeInfo": {
-    "zh-CN": "查看本地推理服务、llama.cpp 运行目录和模型文件的当前状态。",
-    "en-US": "View the current status of the local inference service, llama.cpp runtime folder, and model files."
+    "zh-CN": "查看服务状态、运行目录和模型文件。",
+    "en-US": "View server status, runtime folders, and model files."
   },
   "stableSettings.desc.update": {
-    "zh-CN": "手动检查并下载更新；Cap7CE 不会在后台自动更新。",
-    "en-US": "Check for and download updates manually. Cap7CE does not update automatically in the background."
+    "zh-CN": "手动检查新版本，不自动下载或安装。",
+    "en-US": "Check for updates manually. No automatic downloads or installation."
   },
   "stableSettings.desc.license": {
     "zh-CN": "Cap7CE 自有源码使用 PolyForm Noncommercial 1.0.0；第三方组件适用各自许可证。",
@@ -637,15 +637,15 @@
   },
   "settings.edgeCollapse": {
     "zh-CN": "窗口模式",
-    "en-US": "Window Mode"
+    "en-US": "Window mode"
   },
   "settings.standardWindowMode": {
     "zh-CN": "标准窗口",
-    "en-US": "Standard Window"
+    "en-US": "Standard window"
   },
   "settings.edgeCollapseMode": {
     "zh-CN": "边缘收起",
-    "en-US": "Edge Auto-hide"
+    "en-US": "Edge auto-hide"
   },
   "settings.enabled": {
     "zh-CN": "打开",
@@ -657,7 +657,7 @@
   },
   "settings.launchAtLogin": {
     "zh-CN": "登录时启动",
-    "en-US": "Launch at Sign-in"
+    "en-US": "Start at sign-in"
   },
   "settings.launchAtLoginOn": {
     "zh-CN": "启动",
@@ -669,7 +669,7 @@
   },
   "settings.systemNotifications": {
     "zh-CN": "系统通知",
-    "en-US": "System Notifications"
+    "en-US": "System notifications"
   },
   "settings.systemNotificationsOn": {
     "zh-CN": "开启",
@@ -725,7 +725,7 @@
   },
   "settings.quickCommands": {
     "zh-CN": "快捷指令",
-    "en-US": "Quick Commands"
+    "en-US": "Commands"
   },
   "settings.closeQuickCommands": {
     "zh-CN": "关闭查看",
@@ -741,11 +741,11 @@
   },
   "settings.selectRuntime": {
     "zh-CN": "llama.cpp 版本",
-    "en-US": "llama.cpp Version"
+    "en-US": "llama.cpp version"
   },
   "settings.selectVersion": {
     "zh-CN": "选择版本",
-    "en-US": "Select Version"
+    "en-US": "Choose a version"
   },
   "settings.refreshRuntime": {
     "zh-CN": "刷新 llama.cpp 版本",
@@ -761,11 +761,11 @@
   },
   "settings.visionModel": {
     "zh-CN": "视觉模型",
-    "en-US": "Vision Model"
+    "en-US": "Vision model"
   },
   "settings.selectVisionModel": {
-    "zh-CN": "选择视觉模型",
-    "en-US": "Select Vision Model"
+    "zh-CN": "选择模型",
+    "en-US": "Choose a model"
   },
   "settings.refreshGguf": {
     "zh-CN": "刷新 GGUF 模型",
@@ -773,7 +773,7 @@
   },
   "settings.versionUpdate": {
     "zh-CN": "版本与更新",
-    "en-US": "Version and Updates"
+    "en-US": "Version and updates"
   },
   "settings.updateCurrentVersion": {
     "zh-CN": "当前版本 {version}",
@@ -781,7 +781,7 @@
   },
   "settings.checkForUpdates": {
     "zh-CN": "检查更新",
-    "en-US": "Check for Updates"
+    "en-US": "Check for updates"
   },
   "settings.updateChecking": {
     "zh-CN": "正在检查最新版本",
@@ -932,16 +932,16 @@
     "en-US": "View releases"
   },
   "settings.runtimeFileStatus": {
-    "zh-CN": "运行时文件状态",
-    "en-US": "Runtime File Status"
+    "zh-CN": "运行文件",
+    "en-US": "Runtime files"
   },
   "settings.runtimeDirectory": {
-    "zh-CN": "运行时目录",
-    "en-US": "Runtime Folder"
+    "zh-CN": "运行目录",
+    "en-US": "Runtime folder"
   },
   "settings.serviceAddress": {
     "zh-CN": "服务地址",
-    "en-US": "Service Address"
+    "en-US": "Server address"
   },
   "settings.processPid": {
     "zh-CN": "进程 PID",
@@ -957,7 +957,7 @@
   },
   "settings.applicationLog": {
     "zh-CN": "应用日志",
-    "en-US": "Application Log"
+    "en-US": "App logs"
   },
   "settings.crashReports": {
     "zh-CN": "崩溃报告",
@@ -968,8 +968,8 @@
     "en-US": "Detailed Logging"
   },
   "settings.diagnosticsBundle": {
-    "zh-CN": "诊断数据",
-    "en-US": "Diagnostic Data"
+    "zh-CN": "诊断包",
+    "en-US": "Diagnostics bundle"
   },
   "settings.exportDiagnostics": {
     "zh-CN": "导出",
@@ -988,12 +988,12 @@
     "en-US": "Action Failed"
   },
   "settings.diagnosticsBundleDescription": {
-    "zh-CN": "日志与最近的崩溃报告",
-    "en-US": "Logs and recent crash reports"
+    "zh-CN": "运行状态与错误日志",
+    "en-US": "Runtime status and error logs"
   },
   "settings.modelDirectory": {
     "zh-CN": "模型目录",
-    "en-US": "Model Folder"
+    "en-US": "Model folder"
   },
   "settings.modelPath": {
     "zh-CN": "模型路径",
@@ -1013,7 +1013,7 @@
   },
   "settings.modelInventory": {
     "zh-CN": "可用模型 / GGUF 文件",
-    "en-US": "Available Models / GGUF Files"
+    "en-US": "Models / GGUF files"
   },
   "settings.addDirectoryActionHint": {
     "zh-CN": "点击添加目录",
@@ -1180,8 +1180,8 @@
     "en-US": "Click to disable detailed logging"
   },
   "settings.exportDiagnosticsHint": {
-    "zh-CN": "点击导出诊断数据（文字日志会脱敏）",
-    "en-US": "Click to export diagnostics (text logs are sanitized)"
+    "zh-CN": "导出运行状态和日志（含路径）",
+    "en-US": "Export runtime status and logs, including paths"
   },
   "shortcut.focusMainSearch": {
     "zh-CN": "显示主窗口并聚焦搜索",
@@ -1264,28 +1264,28 @@
     "en-US": "Metadata extraction"
   },
   "native.metadata.description": {
-    "zh-CN": "读取文件属性，用于尺寸、颜色等筛选。勾选下方目录可跳过提取。",
-    "en-US": "Read file properties for filters such as dimensions and colors. Select directories below to exclude them."
+    "zh-CN": "读取尺寸、颜色等属性用于筛选；勾选的目录不参与批量提取。",
+    "en-US": "Read dimensions, colors, and other properties for filters. Checked folders are excluded from batch extraction."
   },
   "native.maintenance.title": {
     "zh-CN": "服务维护",
     "en-US": "Service maintenance"
   },
   "native.maintenance.description": {
-    "zh-CN": "后台连接或索引服务异常时，可重新连接或修复。",
-    "en-US": "Reconnect or repair the service if the background connection or indexing service fails."
+    "zh-CN": "连接或索引服务异常时，重新连接或修复。",
+    "en-US": "Reconnect or repair the service if the connection or indexing fails."
   },
   "native.progress.processed": {
     "zh-CN": "已处理 {count:N0} 项",
     "en-US": "Processed {count:N0} items"
   },
   "native.material.description": {
-    "zh-CN": "选择主窗口、设置与预览窗口使用的云母或云母 Alt 效果；不可用时自动使用纯色背景。",
-    "en-US": "Choose Mica or Mica Alt for the main, settings and preview windows. A solid background is used when unavailable."
+    "zh-CN": "选择云母效果，不可用时使用纯色背景。",
+    "en-US": "Choose a Mica effect. Uses a solid color if unavailable."
   },
   "native.cache.description": {
-    "zh-CN": "缓存缩略图与预览内容，清理后按需重新生成；源文件、索引和关键词保持不变。",
-    "en-US": "Cache thumbnails and preview content. Cleared content is regenerated as needed; source files, indexes and keywords are preserved."
+    "zh-CN": "清理缩略图和预览缓存，保留源文件、索引与关键词。",
+    "en-US": "Clear thumbnails and previews. Source files, indexes, and keywords are preserved."
   },
   "native.metadata.section": {
     "zh-CN": "元数据",
@@ -1304,12 +1304,12 @@
     "en-US": "Startup or error records are available"
   },
   "native.diagnostics.exportDescription": {
-    "zh-CN": "导出原生运行信息及已记录的错误，不包含素材、数据库或偏好文件。",
-    "en-US": "Export native runtime information and recorded errors. Assets, databases and preference files are excluded."
+    "zh-CN": "导出状态和日志（含路径），不含素材、数据库或配置文件。",
+    "en-US": "Export status and logs, including paths. Excludes source files, databases, and settings files."
   },
   "native.update.description": {
-    "zh-CN": "仅在主动点击时检查正式WinUI更新，不下载或安装Electron发布。",
-    "en-US": "Check for official WinUI updates only when requested. Electron releases are not downloaded or installed."
+    "zh-CN": "手动检查 WinUI 新版本，不自动下载或安装。",
+    "en-US": "Check for WinUI updates manually. No automatic downloads or installation."
   },
   "native.shortcut.unavailable": {
     "zh-CN": "此窗口动作尚未迁入WinUI，不注册其快捷键。",
@@ -3260,12 +3260,12 @@
     "en-US": "Items: {count:N0} · {size}"
   },
   "ui.cache.unavailable": {
-    "zh-CN": "缓存统计暂不可用",
-    "en-US": "Cache statistics are currently unavailable"
+    "zh-CN": "暂时无法读取缓存统计",
+    "en-US": "Cache statistics unavailable"
   },
   "ui.cache.confirm": {
-    "zh-CN": "清理缩略图、预览图片及 Office 文档转换缓存？下次查看时会按需重新生成，源文件、索引和关键词保持不变。",
-    "en-US": "Clear cached thumbnails, preview images and Office document conversions? They will be regenerated as needed. Source files, indexes and keywords are preserved."
+    "zh-CN": "清理缩略图、预览和文档转换缓存？下次查看时会重新生成，源文件、索引和关键词保留。",
+    "en-US": "Clear thumbnails, previews, and converted document caches? They will be recreated as needed. Source files, indexes, and keywords are preserved."
   },
   "ui.cache.confirmAction": {
     "zh-CN": "清理",
@@ -3284,12 +3284,12 @@
     "en-US": "Could not finish clearing the cache: {error}"
   },
   "ui.maintenance.reconnect": {
-    "zh-CN": "重新连接Core",
-    "en-US": "Reconnect Core"
+    "zh-CN": "重新连接",
+    "en-US": "Reconnect"
   },
   "ui.maintenance.install": {
-    "zh-CN": "安装/修复索引服务",
-    "en-US": "Install/repair indexing service"
+    "zh-CN": "安装或修复服务",
+    "en-US": "Install or repair service"
   },
   "ui.maintenance.reconnected": {
     "zh-CN": "后台服务已重新连接。",
@@ -3300,20 +3300,20 @@
     "en-US": "Indexing service configured."
   },
   "ui.maintenance.setupTitle": {
-    "zh-CN": "配置Core与索引服务",
-    "en-US": "Configure Core and indexing service"
+    "zh-CN": "安装或修复索引服务",
+    "en-US": "Install or repair indexing service"
   },
   "ui.maintenance.setupDescription": {
-    "zh-CN": "会暂停当前Core任务，并请求管理员授权安装或修复索引服务。保留现有Catalog与素材；请先关闭其他Cap7CE程序。Reader服务需要.NET 10 x64运行时。",
-    "en-US": "Current Core tasks will be paused, and administrator approval will be requested to install or repair the indexing service. Existing Catalog data and assets are preserved. Close other Cap7CE instances first. The Reader service requires the .NET 10 x64 runtime."
+    "zh-CN": "将中断当前后台任务，并请求管理员权限。保留索引和素材；请先退出其他 Cap7CE。读取服务需要 .NET 10 x64 运行时。",
+    "en-US": "Interrupts current background tasks and requests administrator approval. Indexes and source files are preserved. Close other Cap7CE instances first. Requires the .NET 10 x64 runtime."
   },
   "ui.maintenance.setupAction": {
-    "zh-CN": "安装/修复",
-    "en-US": "Install/repair"
+    "zh-CN": "安装或修复",
+    "en-US": "Install or repair"
   },
   "ui.maintenance.missingSetup": {
-    "zh-CN": "Core安装组件缺失，请重新构建或解压完整程序包。",
-    "en-US": "Core setup components are missing. Rebuild or extract the complete application package."
+    "zh-CN": "安装组件缺失，请使用完整程序包。",
+    "en-US": "Setup components are missing. Use the complete app package."
   },
   "ui.metadataPrompt.checking": {
     "zh-CN": "正在检查此范围的元数据，请稍候。",
@@ -3372,12 +3372,12 @@
     "en-US": "Rebuild…"
   },
   "ui.index.orderHint": {
-    "zh-CN": "按从上到下的顺序处理所选磁盘。",
-    "en-US": "Selected drives are processed from top to bottom."
+    "zh-CN": "按列表顺序处理所选磁盘。",
+    "en-US": "Process selected drives in list order."
   },
   "ui.index.disconnected": {
-    "zh-CN": "Core尚未连接，请到“诊断 → 服务维护”中重新连接。",
-    "en-US": "Core is not connected. Reconnect in Diagnostics → Service maintenance."
+    "zh-CN": "后台未连接，请到“诊断 → 服务维护”重新连接。",
+    "en-US": "Disconnected. Reconnect under Diagnostics → Service maintenance."
   },
   "ui.index.actionFailed": {
     "zh-CN": "{error}\n索引服务未安装或未授权时，请先完成Reader服务安装；不要以管理员身份运行整个界面。",
@@ -3436,12 +3436,12 @@
     "en-US": "Build/update index"
   },
   "ui.index.rebuildDescription": {
-    "zh-CN": "将重新读取所选磁盘并替换其索引。原文件不变；已有索引较大时可能耗时。",
-    "en-US": "Selected drives will be read again and their indexes replaced. Source files are preserved. Large indexes may take some time."
+    "zh-CN": "重新读取所选磁盘并替换索引，源文件不变。数据较多时可能耗时。",
+    "en-US": "Reread selected drives and replace their indexes. Source files are unchanged. Large indexes may take time."
   },
   "ui.index.buildDescription": {
-    "zh-CN": "将读取所选磁盘的文件名与目录信息；不会自动提取文件内容。",
-    "en-US": "Read file names and directory information from the selected drives. File content is not extracted automatically."
+    "zh-CN": "读取所选磁盘的文件名与目录信息，不自动提取文件内容。",
+    "en-US": "Read file names and folder information from selected drives. File contents are not extracted automatically."
   },
   "ui.index.continue": {
     "zh-CN": "继续",
@@ -3564,8 +3564,8 @@
     "en-US": "Refresh"
   },
   "ui.metadata.cancelHint": {
-    "zh-CN": "停止当前目录并清空排队目录，已提取的结果保留。",
-    "en-US": "Stop the current folder and clear queued folders. Extracted results are preserved."
+    "zh-CN": "停止当前目录并清空队列，保留已提取结果。",
+    "en-US": "Stop the current folder and clear the queue. Extracted results are preserved."
   },
   "ui.metadata.scope": {
     "zh-CN": "提取磁盘：{drives}",
@@ -3677,7 +3677,7 @@
   },
   "ui.exclusions.add": {
     "zh-CN": "添加排除目录",
-    "en-US": "Add excluded folder"
+    "en-US": "Exclude folder"
   },
   "ui.exclusions.remove": {
     "zh-CN": "移除",
@@ -4485,25 +4485,55 @@
   },
 
  "ui.shortcuts.globalToggle":{"zh-CN":"启用全局快捷键","en-US":"Enable global shortcuts"},
- "ui.shortcuts.globalHint":{"zh-CN":"仅控制全局快捷键，录入键位时暂时停用。","en-US":"Controls only global shortcuts. Temporarily paused while recording a shortcut."},
+ "ui.shortcuts.globalHint": {
+    "zh-CN": "仅影响全局快捷键，录入键位时暂时停用。",
+    "en-US": "Affects only global shortcuts. Paused while recording a shortcut."
+  },
  "ui.shortcuts.globalHeading":{"zh-CN":"全局快捷键","en-US":"Global shortcuts"},
  "ui.shortcuts.appHeading":{"zh-CN":"主窗口快捷键","en-US":"Main-window shortcuts"},
  "ui.shortcuts.appScope":{"zh-CN":"主窗口内","en-US":"Main window"},
- "ui.shortcuts.unbound":{"zh-CN":"未分配","en-US":"Unassigned"},
+ "ui.shortcuts.unbound": {
+    "zh-CN": "未设置",
+    "en-US": "Not set"
+  },
  "ui.shortcuts.globalOff":{"zh-CN":"全局快捷键已关闭","en-US":"Global shortcuts are disabled"},
  "ui.shortcuts.registered":{"zh-CN":"已注册","en-US":"Registered"},
- "ui.shortcuts.conflict":{"zh-CN":"按键被占用或 Windows 拒绝注册；其他快捷键仍可使用。","en-US":"The shortcut is occupied or Windows rejected registration. Other shortcuts remain available."},
- "ui.shortcuts.invalid":{"zh-CN":"此按键组合不可用，请换一个组合。","en-US":"This key combination is unavailable. Choose another combination."},
- "ui.shortcuts.duplicate":{"zh-CN":"此组合已分配给其他动作，请先清除原绑定。","en-US":"This combination is assigned to another action. Clear that binding first."},
+ "ui.shortcuts.conflict": {
+    "zh-CN": "组合键被占用或被 Windows 拒绝，其他快捷键不受影响。",
+    "en-US": "Shortcut in use or rejected by Windows. Other shortcuts are unaffected."
+  },
+ "ui.shortcuts.invalid": {
+    "zh-CN": "组合键不可用，请重新设置。",
+    "en-US": "Shortcut unavailable. Choose another combination."
+  },
+ "ui.shortcuts.duplicate": {
+    "zh-CN": "已用于其他操作，请先清除原绑定。",
+    "en-US": "Assigned to another action. Clear the existing binding first."
+  },
  "ui.shortcuts.unavailable":{"zh-CN":"快捷键服务尚未就绪","en-US":"The shortcut service is not ready"},
  "ui.shortcuts.change":{"zh-CN":"修改快捷键","en-US":"Change shortcut"},
  "ui.shortcuts.clear":{"zh-CN":"清除","en-US":"Clear"},
- "ui.shortcuts.resetOne":{"zh-CN":"恢复此项","en-US":"Reset action"},
- "ui.shortcuts.captureHint":{"zh-CN":"按下要使用的组合，再点击应用。Esc 取消；Tab 可移动到按钮。","en-US":"Press the desired combination, then click Apply. Escape cancels; Tab moves to the buttons."},
- "ui.shortcuts.captureEmpty":{"zh-CN":"等待按键","en-US":"Waiting for a key combination"},
- "ui.shortcuts.captureReady":{"zh-CN":"可以应用此组合","en-US":"This combination is available in Cap7CE"},
+ "ui.shortcuts.resetOne": {
+    "zh-CN": "恢复默认",
+    "en-US": "Restore default"
+  },
+ "ui.shortcuts.captureHint": {
+    "zh-CN": "按下组合键后应用；Esc 取消，Tab 切换按钮。",
+    "en-US": "Press a shortcut, then Apply. Esc cancels; Tab moves between buttons."
+  },
+ "ui.shortcuts.captureEmpty": {
+    "zh-CN": "等待按键…",
+    "en-US": "Press a shortcut…"
+  },
+ "ui.shortcuts.captureReady": {
+    "zh-CN": "可以应用此组合",
+    "en-US": "Ready to apply"
+  },
  "ui.shortcuts.apply":{"zh-CN":"应用","en-US":"Apply"},
- "ui.shortcuts.action.focusMainSearch":{"zh-CN":"唤起主窗口并聚焦搜索","en-US":"Show main window and focus search"},
+ "ui.shortcuts.action.focusMainSearch": {
+    "zh-CN": "唤起窗口并聚焦搜索",
+    "en-US": "Show window and focus search"
+  },
  "ui.shortcuts.action.focusSearch":{"zh-CN":"聚焦搜索","en-US":"Focus search"},
  "ui.shortcuts.action.focusPath":{"zh-CN":"聚焦地址栏","en-US":"Focus address bar"},
  "ui.shortcuts.action.openFolder":{"zh-CN":"打开目录","en-US":"Open folder"},
@@ -4513,23 +4543,50 @@
  "ui.shortcuts.action.refresh":{"zh-CN":"刷新","en-US":"Refresh"},
  "ui.shortcuts.action.openSettings":{"zh-CN":"打开设置","en-US":"Open settings"},
  "ui.shortcuts.action.cycleDirectory":{"zh-CN":"循环此电脑与收藏目录","en-US":"Cycle This PC and favorite folders"},
- "ui.shortcuts.action.restoreDefaultWindow":{"zh-CN":"恢复默认窗口位置与尺寸","en-US":"Restore default window position and size"},
- "ui.shortcuts.action.toggleWindowMode":{"zh-CN":"切换标准与边缘收起模式","en-US":"Toggle standard and edge auto-hide modes"},
- "ui.shortcuts.action.togglePin":{"zh-CN":"固定窗口（仅标准模式）","en-US":"Toggle always on top (standard mode only)"},
+ "ui.shortcuts.action.restoreDefaultWindow": {
+    "zh-CN": "恢复窗口默认位置与大小",
+    "en-US": "Reset window position and size"
+  },
+ "ui.shortcuts.action.toggleWindowMode": {
+    "zh-CN": "切换窗口模式",
+    "en-US": "Switch window mode"
+  },
+ "ui.shortcuts.action.togglePin": {
+    "zh-CN": "窗口置顶（仅标准模式）",
+    "en-US": "Always on top (standard mode only)"
+  },
  "ui.shortcuts.action.toggleFilters":{"zh-CN":"显示或隐藏筛选","en-US":"Show or hide filters"},
  "ui.shortcuts.action.toggleDetails":{"zh-CN":"显示或隐藏详情","en-US":"Show or hide details"},
- "ui.shortcuts.action.viewSquare":{"zh-CN":"切换方形网格","en-US":"Switch to square grid"},
- "ui.shortcuts.action.viewGallery":{"zh-CN":"切换原比例网格","en-US":"Switch to original-ratio grid"},
- "ui.shortcuts.action.viewList":{"zh-CN":"切换列表","en-US":"Switch to list"},
- "ui.shortcuts.action.metadata":{"zh-CN":"打开属性提取维护页","en-US":"Open metadata maintenance"},
- "ui.shortcuts.action.openSelected":{"zh-CN":"使用默认应用打开选中项","en-US":"Open selection with default app"},
+ "ui.shortcuts.action.viewSquare": {
+    "zh-CN": "方形网格",
+    "en-US": "Square grid"
+  },
+ "ui.shortcuts.action.viewGallery": {
+    "zh-CN": "原比例网格",
+    "en-US": "Original-ratio grid"
+  },
+ "ui.shortcuts.action.viewList": {
+    "zh-CN": "列表视图",
+    "en-US": "List view"
+  },
+ "ui.shortcuts.action.metadata": {
+    "zh-CN": "打开元数据设置",
+    "en-US": "Open metadata settings"
+  },
+ "ui.shortcuts.action.openSelected": {
+    "zh-CN": "用默认应用打开选中项",
+    "en-US": "Open selection in default app"
+  },
  "ui.shortcuts.action.previewSelected":{"zh-CN":"预览选中项","en-US":"Preview selection"},
  "ui.shortcuts.action.deleteSelected":{"zh-CN":"删除选中项","en-US":"Delete selection"},
  "ui.shortcuts.action.selectAll":{"zh-CN":"全选结果","en-US":"Select all results"},
  "ui.shortcuts.action.copyFiles":{"zh-CN":"复制选中文件","en-US":"Copy selected files"},
  "ui.shortcuts.action.copyPaths":{"zh-CN":"复制选中项路径","en-US":"Copy selected paths"},
  "ui.shortcuts.action.revealFile":{"zh-CN":"在资源管理器中定位","en-US":"Reveal in File Explorer"},
- "ui.shortcuts.action.aiKeywords":{"zh-CN":"为选中项生成 AI 关键词","en-US":"Generate AI keywords for selection"},
+ "ui.shortcuts.action.aiKeywords": {
+    "zh-CN": "为选中项生成 AI 关键词",
+    "en-US": "Generate AI keywords for selection"
+  },
   "ui.diagnostics.status": {
     "zh-CN": "当前状态",
     "en-US": "Current status"
@@ -4559,8 +4616,8 @@
     "en-US": "Latest record: {time}"
   },
   "ui.diagnostics.exported": {
-    "zh-CN": "诊断包已导出；日志采集结果见包内 collection.json。",
-    "en-US": "Diagnostics exported. See collection.json for log collection results."
+    "zh-CN": "已导出，日志采集情况已附在包内。",
+    "en-US": "Exported. Log collection details are included."
   },
   "ui.diagnostics.reader.running": {
     "zh-CN": "运行中",
@@ -4579,11 +4636,11 @@
     "en-US": "Unavailable"
   },
   "ui.diagnostics.reader.transition": {
-    "zh-CN": "正在切换状态",
+    "zh-CN": "状态切换中",
     "en-US": "Changing state"
   },
   "ui.diagnostics.notification.disabled": {
-    "zh-CN": "应用内关闭",
+    "zh-CN": "应用内已关闭",
     "en-US": "Disabled in app"
   },
   "ui.diagnostics.notification.allowed": {
@@ -4603,7 +4660,7 @@
     "en-US": "More actions"
   },
   "ui.settings.referenceOnly": {
-    "zh-CN": "指令参考，暂不支持执行。",
-    "en-US": "Command reference. Execution is not yet available."
+    "zh-CN": "仅供参考，暂不支持执行。",
+    "en-US": "Reference only. Execution is not yet available."
   }
 }
