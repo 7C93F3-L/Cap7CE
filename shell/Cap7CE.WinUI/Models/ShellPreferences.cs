@@ -10,6 +10,8 @@ public sealed record ShellPreferences
     public Dictionary<string,bool> IndexVolumeSelection {get;init;}=[];
     public Dictionary<string,bool> MetadataExclusionChoices {get;init;}=[];
     public string[] MetadataCustomExclusions {get;init;}=[];
+    public bool TrayIconEnabled {get;init;}=true;
+    public bool ShowMainOnStartup {get;init;}=true;
     public bool Notifications {get;init;}
     public Dictionary<string,ShortcutBinding> ShortcutBindings {get;init;}=[];
     public bool EdgeCollapseEnabled {get;init;}

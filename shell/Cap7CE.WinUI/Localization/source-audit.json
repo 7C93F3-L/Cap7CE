@@ -122,7 +122,7 @@
     "file": "Views/Settings/SettingsCatalog.cs",
     "reason": "Existing settings category identities; entry titles and descriptions are resource keys.",
     "literals": {
-      "\"通用\"": 4,
+      "\"通用\"": 6,
       "\"外观\"": 3,
       "\"缓存与索引\"": 3,
       "\"快捷操作\"": 2,

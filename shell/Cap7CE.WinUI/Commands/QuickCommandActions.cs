@@ -6,7 +6,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 
 namespace Cap7CE.WinUI.Commands;
-internal sealed class QuickCommandActions(ShellServices services,Window window,Func<BrowseSession> session,WorkspacePreferencesController workspace,Action settings,Func<bool,Task> pin,Func<bool> canChangeView)
+internal sealed class QuickCommandActions(ShellServices services,Window window,Func<BrowseSession> session,WorkspacePreferencesController workspace,Action settings,Func<bool,Task> pin,Func<bool> canChangeView,Action exit)
 {
     public QuickCommand Prepare(QuickCommand command)=>command.Id=="dir:remove"?command with{TargetId=FindFavorite(command.Args[0]).Id}:command;
     public async Task ExecuteAsync(QuickCommand command)
@@ -45,7 +45,7 @@ internal sealed class QuickCommandActions(ShellServices services,Window window,F
             case "lang:auto":case "lang:cn":case "lang:en":await prefs.UpdateAsync(v=>v with{Language=id=="lang:auto"?"system":id=="lang:cn"?"zh-CN":"en-US"});return;
             case "app:startup":SystemSettings.LaunchAtLogin=enabled;return;
             case "app:notify":await services.Notifications.SetEnabledAsync(prefs,enabled);return;
-            case "app:quit":window.Close();return;
+            case "app:quit":exit();return;
             case "cache:clear":await services.ClearVisualCacheAsync();return;
             default:await new ModelCommandActions(services).ExecuteAsync(id,arg);return;
         }

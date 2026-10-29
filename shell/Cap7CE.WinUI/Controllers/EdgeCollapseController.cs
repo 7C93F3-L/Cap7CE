@@ -49,7 +49,7 @@ internal sealed class EdgeCollapseController : IDisposable
     }
     private void Check()
     {
-        if(!enabled||userMoving||!host.IsRestored){leave.Stop();return;}
+        if(!enabled||!window.AppWindow.IsVisible||userMoving||!host.IsRestored){leave.Stop();return;}
         if(registration.Edge is not {} edge)return;
         if(!EdgeNative.GetCursorPos(out var pointer))return;
         var current=host.Bounds;var inside=EdgeCollapseGeometry.Visible(current,insets).Contains(pointer.X,pointer.Y);
@@ -71,7 +71,7 @@ internal sealed class EdgeCollapseController : IDisposable
     // Observe popups even while inside/dragging, so their close event always wakes us.
     private bool Blocked(){var popup=input.HasPopup;return popup||host.InteractionBlocked||blocked();}
     private void Leave(DispatcherQueueTimer sender,object args)=>Safe(()=>{
-        if(!enabled||collapsed||motion.Running||userMoving||awaitingEntry||!host.IsRestored||Blocked()||registration.Edge is not {} edge)return;
+        if(!enabled||!window.AppWindow.IsVisible||collapsed||motion.Running||userMoving||awaitingEntry||!host.IsRestored||Blocked()||registration.Edge is not {} edge)return;
         if(!EdgeNative.GetCursorPos(out var pointer)||EdgeCollapseGeometry.Visible(host.Bounds,insets).Contains(pointer.X,pointer.Y))return;
         expanded=host.Bounds;collapsed=true;host.Configure(true,pinned,true);
         motion.Start(EdgeCollapseGeometry.Collapse(expanded,insets,registration.Screen.Bounds,edge));
@@ -107,6 +107,7 @@ internal sealed class EdgeCollapseController : IDisposable
     {
         if(!enabled||disposed)return;
         Safe(()=>{
+            if(message==0x0018&&wParam==0){leave.Stop();motion.Stop();return;}
             if(message==0x0231){userMoving=true;leave.Stop();if(collapsed)Reveal(false);motion.Stop();}
             if(message==0x0232)window.DispatcherQueue.TryEnqueue(()=>Safe(()=>{if(disposed)return;userMoving=false;DockFromBounds();Wake();}));
             if(message==0x0006&&(wParam&0xffff)!=0&&collapsed){Reveal(false);awaitingEntry=true;}
@@ -127,7 +128,7 @@ internal sealed class EdgeCollapseController : IDisposable
         enabled=false;try{host.Configure(false,pinned,false);}catch(Exception cleanup){NativeDiagnostics.VisualFailure(cleanup);}
         NativeDiagnostics.VisualFailure(error);notice(UiMessage.Key("ui.error.edgeFailed"));
     }
-    private void Closing(AppWindow sender,AppWindowClosingEventArgs args)=>Dispose();
+    private void Closing(AppWindow sender,AppWindowClosingEventArgs args){if(!args.Cancel)Dispose();}
     public void Dispose()
     {
         if(disposed)return;

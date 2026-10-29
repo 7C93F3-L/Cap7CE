@@ -4716,5 +4716,33 @@
   "ui.command.confirmCache": {
     "zh-CN": "是否清理缩略图与预览缓存？保留源文件、索引和关键词。",
     "en-US": "Clear thumbnail and preview caches? Source files, indexes, and keywords are preserved."
+  },
+  "ui.tray.open": {
+    "zh-CN": "打开主窗口",
+    "en-US": "Open main window"
+  },
+  "ui.tray.exit": {
+    "zh-CN": "退出",
+    "en-US": "Exit"
+  },
+  "ui.tray.enabled": {
+    "zh-CN": "显示托盘图标",
+    "en-US": "Show tray icon"
+  },
+  "ui.tray.enabledHint": {
+    "zh-CN": "在任务栏通知区域显示图标；关闭主窗口时保留后台运行。",
+    "en-US": "Show an icon in the taskbar notification area and keep running when the main window is closed."
+  },
+  "ui.tray.showStartup": {
+    "zh-CN": "启动时显示主窗口",
+    "en-US": "Show main window on startup"
+  },
+  "ui.tray.showStartupHint": {
+    "zh-CN": "下次启动时生效；关闭后在后台启动，仍可通过托盘或再次运行程序打开窗口。",
+    "en-US": "Applies next launch. When off, start in the background; open the window from the tray or by launching the app again."
+  },
+  "ui.tray.failed": {
+    "zh-CN": "托盘图标不可用，已显示主窗口。可在设置中重新开启托盘图标。",
+    "en-US": "The tray icon is unavailable. The main window is shown. You can re-enable the tray icon in Settings."
   }
 }

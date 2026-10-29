@@ -142,7 +142,7 @@ assert(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('commands.Sta
   && read('shell/Cap7CE.WinUI/Services/ResultContextMenu.cs').includes('commands.StartMetadataAsync(first)'), 'metadata shortcuts must share the explicit directory queue action');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
 // WinUI separates the existing runtime start/stop action from version selection.
-mainlineSettings.push("ui.model.serviceTitle:ui.model.serviceDescription");
+mainlineSettings.push("ui.model.serviceTitle:ui.model.serviceDescription","ui.tray.enabled:ui.tray.enabledHint","ui.tray.showStartup:ui.tray.showStartupHint");
 assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the current mainline without extra workspace controls');
 assert(!/uiFontSize|preferences\.FontSize|settings\.FontSize|Current\.FontSize/.test(nativeUi)
   && !/public double FontSize/.test(read('shell/Cap7CE.WinUI/Models/ShellPreferences.cs')), 'retired native UI font preference and setting cannot return');
@@ -233,4 +233,13 @@ assert(commandInput.includes('QuickCommandParser.IsCandidate') && commandInput.i
 assert(read('shell/Cap7CE.WinUI/Commands/QuickCommandActions.cs').includes('services.ClearVisualCacheAsync()') && read('shell/Cap7CE.WinUI/Commands/QuickCommandActions.cs').includes('workspace.UpdateAsync'), 'commands must reuse cache maintenance and scoped workspace preferences');
 assert(!read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('menu.renameFolder'), 'sidebar cannot expose real-folder rename');
 
+const trayOwner=read('shell/Cap7CE.WinUI/Services/Tray/TrayController.cs');
+assert(trayOwner.includes('TrayPolicy.HideOnClose')&&trayOwner.includes('args.Cancel=true')&&trayOwner.includes('WindowActivation.Show'), 'tray must separate hide/exit and reuse activation');
+assert(read('shell/Cap7CE.WinUI/Commands/QuickCommandActions.cs').includes('case "app:quit":exit();')&&singleMain.includes('tray.Exit'), 'explicit quit must bypass close-to-tray');
+assert(edgeController.includes('if(!args.Cancel)Dispose()')&&edgeController.includes('window.AppWindow.IsVisible')&&singleMain.indexOf('tray=new(')<singleMain.indexOf('edgeCollapse=new('), 'a cancelled close must not dispose or animate the hidden edge window');
+assert(read('shell/Cap7CE.WinUI/Services/Tray/TrayIcon.cs').includes('taskbarCreated')&&read('shell/Cap7CE.WinUI/Services/Tray/TrayIcon.cs').includes('RemoveWindowSubclass'), 'tray restart registration and callback cleanup are required');
+const trayMenu=read('shell/Cap7CE.WinUI/Services/Tray/TrayMenu.cs'),trayMenuHost=read('shell/Cap7CE.WinUI/Services/Tray/TrayMenuHost.cs');
+assert(trayMenu.includes('MenuFlyout')&&trayMenu.includes('RadioMenuFlyoutItem')&&trayMenuHost.includes('root.RequestedTheme=')&&trayMenuHost.includes('ActualThemeChanged'), 'tray menus must use WinUI theme resources and track effective theme changes');
+assert(trayMenuHost.includes('IsShownInSwitchers=false')&&trayMenuHost.includes('AppWindow.Hide()')&&trayMenuHost.includes('TrayMenuPlacement.Clamp'), 'tray popup host must remain separate from the main UI, dismiss and clamp to its monitor');
+assert(!read('shell/Cap7CE.WinUI/Services/Tray/TrayNative.cs').includes('TrackPopupMenu')&&!trayMenuHost.includes('uxtheme'), 'tray theme support cannot depend on classic popup menus or undocumented theme APIs');
 console.log('WinUI shell boundaries passed');

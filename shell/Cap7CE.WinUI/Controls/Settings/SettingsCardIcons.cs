@@ -6,6 +6,8 @@ namespace Cap7CE.WinUI.Controls;
 internal static class SettingsCardIcons
 {
     public static string Glyph(string title)=>char.ConvertFromUtf32((int)(title switch {
+        "ui.tray.enabled"=>Symbol.DockBottom,
+        "ui.tray.showStartup"=>Symbol.OpenPane,
         "settings.language"=>Symbol.Globe,
         "settings.launchAtLogin"=>Symbol.Play,
         "settings.systemNotifications"=>Symbol.Message,

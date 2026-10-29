@@ -47,4 +47,5 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/ResultMenuRules.cs;../Cap7CE.WinUI/Models/GalleryGeometry.cs;../Cap7CE.WinUI/Models/WorkspacePathRules.cs;../Cap7CE.WinUI/Controllers/WorkspaceSelection.cs" Link="%(Filename)%(Extension)"/></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/QuickCommand.cs;../Cap7CE.WinUI/Commands/QuickCommandInput.cs" Link="%(Filename)%(Extension)"/>
   <None Include="../Cap7CE.WinUI/Localization/settings-help.json" Link="Assets/settings-help.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/TrayPolicy.cs;../Cap7CE.WinUI/Models/TrayMenuPlacement.cs;../Cap7CE.WinUI/Services/Tray/TrayNative.cs" Link="TrayPolicy.cs"/></ItemGroup>
 </Project>

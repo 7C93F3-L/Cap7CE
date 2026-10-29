@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-28）
 
+托盘由TrayIcon管理Shell图标/HICON/回调，TrayMenu只构造WinUI MenuFlyout，TrayMenuHost管理独立非任务栏承载窗口及弹出生命周期/主题/屏幕位置，TrayMenuPlacement只做坐标约束，TrayController处理隐藏与退出及转发已有服务动作；TrayPolicy保持纯策略。App先加载偏好和托盘，再决定是否显示主窗口，后台服务初始化与XAML Loaded解耦；重定向激活统一走WindowActivation.Show。托盘Closing先决定隐藏，边缘控制器仅在未取消的Closing中提前释放，隐藏时停止边缘计时，Closed由MainWindow兜底释放。TrayIconEnabled与ShowMainOnStartup默认true，登录启动仍复用既有Run项并通过事件同步设置开关。
+
 快捷指令由纯QuickCommandParser/CommandConfirmation负责语法与确认状态，QuickCommandInput连接输入框和底部窄条，QuickCommandActions调用现有浏览/工作区偏好/窗口/收藏/通知/缓存入口；ModelCommandActions共享AI工作宿主操作。MainWindow只装配和释放，WorkspaceAddress在提交前分流指令，普通文本继续搜索/导航；不执行任意脚本，不启动外部shell。
 
 本地AI设置由ModelSettingsView保留统一选择、刷新及启停链路；SettingsCatalog分别装配版本、模型、服务操作卡片及默认折叠运行信息，原生卡片清单检查显式记录服务操作的布局拆分。

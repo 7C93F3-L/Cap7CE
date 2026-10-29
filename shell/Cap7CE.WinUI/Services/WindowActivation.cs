@@ -10,6 +10,6 @@ internal static class WindowActivation
     {
         Showing?.Invoke(window);
         if(window.AppWindow.Presenter is OverlappedPresenter {State:OverlappedPresenterState.Minimized} presenter)presenter.Restore();
-        window.Activate();
+        window.AppWindow.Show();window.Activate();
     }
 }

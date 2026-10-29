@@ -40,7 +40,9 @@ internal sealed class SettingsCatalog
     {
         Mainline("通用","basics","settings.language","stableSettings.desc.language",()=>Choice(LanguagePreferenceOptions.Choices.Select(choice=>choice.Key).ToArray(),
             ()=>LanguagePreferenceOptions.Index(services.Preferences.Current.Language),index=>services.Preferences.UpdateAsync(value=>value with{Language=LanguagePreferenceOptions.Choices[index].Id})));
-        Mainline("通用","basics","settings.launchAtLogin","stableSettings.desc.launch",()=>Toggle(()=>SystemSettings.LaunchAtLogin,value=>{SystemSettings.LaunchAtLogin=value;return Task.CompletedTask;}));
+        Mainline("通用","basics","settings.launchAtLogin","stableSettings.desc.launch",()=>SettingsLoginToggle.Create(notice));
+        Mainline("通用","basics","ui.tray.enabled","ui.tray.enabledHint",()=>Toggle(()=>services.Preferences.Current.TrayIconEnabled,value=>services.Preferences.UpdateAsync(p=>p with{TrayIconEnabled=value})));
+        Mainline("通用","basics","ui.tray.showStartup","ui.tray.showStartupHint",()=>Toggle(()=>services.Preferences.Current.ShowMainOnStartup,value=>services.Preferences.UpdateAsync(p=>p with{ShowMainOnStartup=value})));
         Mainline("通用","basics","settings.systemNotifications","stableSettings.desc.notifications",()=>Toggle(()=>services.Preferences.Current.Notifications,async value=>{
             await services.Notifications.SetEnabledAsync(services.Preferences,value);
             if(value&&!services.Notifications.IsAllowed)notice(UiMessage.Key("ui.notice.notificationsBlocked"));

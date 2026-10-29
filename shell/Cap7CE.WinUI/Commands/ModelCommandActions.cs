@@ -6,7 +6,7 @@ namespace Cap7CE.WinUI.Commands;
 internal sealed class ModelCommandActions(ShellServices services)
 {
     public Task<JsonElement> SettingsAsync(string operation,string? value=null)=>services.Models.RequestAsync("modelSettings.invoke",[services.ModelContext,operation,value]);
-    public async Task<JsonElement> RuntimeAsync(string operation,object? value=null)=>(await services.Models.RequestAsync(operation,[services.ModelContext,value])).GetProperty("state");
+    public async Task<JsonElement> RuntimeAsync(string operation,object? value=null,CancellationToken token=default)=>(await services.Models.RequestAsync(operation,[services.ModelContext,value],token)).GetProperty("state");
     public async Task ExecuteAsync(string id,string? name)
     {
         var runtime=id.StartsWith("llama:");var action=id.Split(':')[1];

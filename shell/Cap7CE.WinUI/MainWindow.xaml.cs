@@ -34,11 +34,12 @@ public sealed partial class MainWindow : Window
     private readonly EdgeCollapseController edgeCollapse;
     private SettingsWindow? settings;
     private readonly Commands.QuickCommandInput commandInput;
+    private readonly TrayController tray;
     private PreviewWindow? preview;
     private readonly BrowseSession active;
     private bool catalogRefreshQueued;
     private Models.ShellPreferences? appliedPreferences;
-    private bool closed,started,minimized;
+    private bool closed,minimized;
     public MainWindow()
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
@@ -105,8 +106,9 @@ public sealed partial class MainWindow : Window
         WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);
         pointerInput=new(Surface,results.ClearSelection,forward=>{if(active is {} session)commands.Run(()=>forward?session.ForwardAsync():session.BackAsync());});
         Surface.KeyDown+=KeyDown;
+        tray=new(this,services,OpenSettings,Notice);
         edgeCollapse=new(this,Root,()=>preview is not null||settings is not null||ResultDrag.IsActive,Notice);
-        commandInput=new(toolbar,notifications,new Commands.QuickCommandActions(services,this,()=>active,workspace,OpenSettings,SetPinnedAsync,()=>!layout.HorizontalGrid));
+        commandInput=new(toolbar,notifications,new Commands.QuickCommandActions(services,this,()=>active,workspace,OpenSettings,SetPinnedAsync,()=>!layout.HorizontalGrid,tray.Exit));
         ResultDrag.Changed+=edgeCollapse.Wake;
         services.Notifications.Invoked+=NotificationInvoked;
         services.TaskNotices.IsObserved=kind=>!closed&&(!edgeCollapse.IsCollapsed&&NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(this))||(kind!="ai"&&settings?.IsViewingMaintenance==true));
@@ -115,11 +117,17 @@ public sealed partial class MainWindow : Window
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
             if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else {details.Select(results.Selection);QueueCatalogRefresh();}
         };
-        Closed+=OnClosed;Root.Loaded+=async(_,_)=>{if(started)return;started=true;await StartAsync();};
+        Closed+=OnClosed;
     }
-    private async Task StartAsync()
+    public bool ShowMainOnStartup=>services.Preferences.Current.ShowMainOnStartup;
+    public bool TrayRegistrationFailed=>tray.RegistrationFailed;
+    public async Task LoadStartupAsync()
     {
         try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
+        tray.Initialize();
+    }
+    public async Task StartServicesAsync()
+    {
         try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         try{services.Shortcuts?.Apply();}catch(Exception error){Notice(FailureText.From(error));}
         AssetTile.Visuals=services.Visuals;OpenLocation("");
@@ -207,7 +215,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

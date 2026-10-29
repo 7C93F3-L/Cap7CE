@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
+await TrayChecks.RunAsync();
 await QuickCommandChecks.RunAsync();
 await DiagnosticsArchiveChecks.RunAsync();
 
