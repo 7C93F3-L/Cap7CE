@@ -166,7 +166,6 @@ internal sealed class SidebarView : UserControl
             var menu=ThemeService.Menu();
             menu.Items.Add(L.MenuItem("menu.openExplorer",()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(item.Path);return Task.CompletedTask;}),"\uE838"));
             menu.Items.Add(L.MenuItem("menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPath(item.Path);return Task.CompletedTask;}),"\uE8C8"));
-            menu.Items.Add(ResultContextMenu.Unavailable("menu.renameFolder","menu.renameUnavailable","\uE8AC"));
             var arrange=L.MenuItem("main.reorder",()=>order.Begin(item),"\uE8CB");arrange.IsEnabled=service.Items.Count>1;menu.Items.Add(arrange);
             menu.Items.Add(L.MenuItem("menu.removeFavorite",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
             menu.Items.Add(new MenuFlyoutSeparator());
