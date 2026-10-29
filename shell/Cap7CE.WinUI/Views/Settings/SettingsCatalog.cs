@@ -92,8 +92,14 @@ internal sealed class SettingsCatalog
     }
     private void About()
     {
-        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",()=>Ui.Column(L.Text("settings.updateCurrentVersion",parameters:()=>new Dictionary<string,object?>{{"version",NativeVersion.Text}}),L.Button("settings.checkForUpdates",()=>actions.Run(async()=>notice(await NativeUpdates.CheckAsync())))),descriptionOverride:"native.update.description");
+        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",VersionActions,descriptionOverride:"native.update.description");
         Mainline("关于","application","stableSettings.license","stableSettings.desc.license",()=>new TextBlock());
+    }
+    private UIElement VersionActions()
+    {
+        var version=L.Text("settings.updateCurrentVersion",parameters:()=>new Dictionary<string,object?>{{"version",NativeVersion.Text}});
+        version.VerticalAlignment=VerticalAlignment.Center;
+        return Ui.Row(version,L.Button("settings.checkForUpdates",()=>actions.Run(async()=>notice(await NativeUpdates.CheckAsync()))));
     }
     private UIElement Choice(string[] labels,Func<int> read,Func<int,Task> change)
     {

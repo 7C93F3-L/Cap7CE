@@ -22,7 +22,7 @@ internal sealed class SettingsCard : UserControl
         label.Style=(Style)Application.Current.Resources["CapSettingsLabel"];
         if(text.Children[1] is TextBlock descriptionText){descriptionText.Style=(Style)Application.Current.Resources["CapSettingsDescription"];descriptionText.Visibility=descriptionContent is null&&string.IsNullOrWhiteSpace(description)?Visibility.Collapsed:Visibility.Visible;}
         var copy=new Grid{ColumnSpacing=16};copy.ColumnDefinitions.Add(new(){Width=new(20)});copy.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
-        var icon=new FontIcon{FontSize=16,Glyph=title switch{"settings.language"=>"\uE774","settings.launchAtLogin"=>"\uE7E8","settings.systemNotifications"=>"\uE7F4","settings.quickActions"=>"\uE765","settings.quickCommands"=>"\uE756","stableSettings.diagnostics"=>"\uE9D9",_=>"\uE713"},VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};AutomationProperties.SetAccessibilityView(icon,Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+        var icon=new FontIcon{FontSize=16,Glyph=SettingsCardIcons.Glyph(title),VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};AutomationProperties.SetAccessibilityView(icon,Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
         copy.Children.Add(icon);Grid.SetColumn(text,1);copy.Children.Add(text);
         if(control is SettingsExpandable expandable){
             var header=new Grid {ColumnSpacing=20,RowSpacing=0};
