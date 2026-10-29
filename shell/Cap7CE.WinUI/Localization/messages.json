@@ -744,8 +744,8 @@
     "en-US": "llama.cpp version"
   },
   "settings.selectVersion": {
-    "zh-CN": "选择版本",
-    "en-US": "Choose a version"
+    "zh-CN": "请选择 llama.cpp 版本",
+    "en-US": "Choose a llama.cpp version"
   },
   "settings.refreshRuntime": {
     "zh-CN": "刷新 llama.cpp 版本",
@@ -764,7 +764,7 @@
     "en-US": "Vision model"
   },
   "settings.selectVisionModel": {
-    "zh-CN": "选择模型",
+    "zh-CN": "请选择模型",
     "en-US": "Choose a model"
   },
   "settings.refreshGguf": {

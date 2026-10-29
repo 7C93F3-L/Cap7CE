@@ -11,8 +11,8 @@ internal sealed class ModelSettingsView
 {
     private readonly ShellServices services;
     private readonly Action<UiMessage> notice;
-    private readonly ComboBox runtimes=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch,DisplayMemberPath="Name"},
-        models=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch,DisplayMemberPath="Name"};
+    private readonly ComboBox runtimes=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch},
+        models=new(){MinWidth=160,MaxWidth=360,HorizontalAlignment=HorizontalAlignment.Stretch};
     private readonly TextBlock fileState=L.Text("common.notDetected",true),address=L.Text("common.stopped",true),
         runtimeDirectory=L.Text("common.notDetected",true),modelDirectory=L.Text("common.notDetected",true),inventory=L.Text("ui.model.inventory",true,()=>new Dictionary<string,object?>{{"models",0},{"files",0}});
     private readonly List<Button> buttons=[];
@@ -32,8 +32,8 @@ internal sealed class ModelSettingsView
         runtimeToggle=Action("common.start",()=>RuntimeAsync(active?"runtime.stop":"runtime.start","manual"));
         RuntimeSettings=SelectionRow(runtimes,Action("common.refresh",RefreshAsync));
         ModelSettings=SelectionRow(models,Action("common.refresh",RefreshAsync));
-        runtimes.SelectionChanged+=(_,_)=>{if(!syncing&&runtimes.SelectedItem is Choice choice)Run(()=>SelectAsync("runtime.select",choice.Id));};
-        models.SelectionChanged+=(_,_)=>{if(!syncing&&models.SelectedItem is Choice choice)Run(()=>SelectAsync("models.select",choice.Id));};
+        runtimes.SelectionChanged+=(_,_)=>{if(!syncing&&runtimes.SelectedItem is ComboBoxItem{Tag:string id})Run(()=>SelectAsync("runtime.select",id));};
+        models.SelectionChanged+=(_,_)=>{if(!syncing&&models.SelectedItem is ComboBoxItem{Tag:string id})Run(()=>SelectAsync("models.select",id));};
         var info=Ui.Column();
         foreach(var (key,value) in new[]{("settings.runtimeFileStatus",fileState),("settings.serviceAddress",address),
             ("settings.runtimeDirectory",runtimeDirectory),("settings.modelDirectory",modelDirectory),("settings.modelInventory",inventory)}) {
@@ -80,17 +80,16 @@ internal sealed class ModelSettingsView
         if(!subscribed||current!=generation)return;
         syncing=true;
         try {
-            runtimes.ItemsSource=runtime.GetProperty("versions").EnumerateArray().Select(x=>new Choice(x.GetProperty("version").GetString()!,x.GetProperty("version").GetString()!)).ToArray();
-            models.ItemsSource=model.GetProperty("models").EnumerateArray().Select(x=>new Choice(x.GetProperty("id").GetString()!,x.GetProperty("name").GetString()!)).ToArray();
-            runtimes.SelectedItem=runtimes.Items.Cast<Choice>().FirstOrDefault(x=>x.Id==runtime.GetProperty("selectedVersion").GetString());
-            models.SelectedItem=models.Items.Cast<Choice>().FirstOrDefault(x=>x.Id==model.GetProperty("selectedModelId").GetString());
+            Populate(runtimes,"settings.selectVersion",runtime.GetProperty("versions"),"version","version",runtime.GetProperty("selectedVersion").GetString());
+            Populate(models,"settings.selectVisionModel",model.GetProperty("models"),"id","name",model.GetProperty("selectedModelId").GetString());
         } finally{syncing=false;}
         var runtimeStatus=runtime.GetProperty("status").GetString()??"";
         var runtimeRoot=runtime.GetProperty("runtimeRoot").GetString();var selectedVersion=runtime.GetProperty("selectedVersion").GetString();
         var detail=runtime.TryGetProperty("message",out var message)?message.GetString()??runtimeStatus:runtimeStatus;
         L.Bind(fileState,TextBlock.TextProperty,Cap7CE.WinUI.Localization.MaintenanceText.RuntimeKey(runtimeStatus),()=>new Dictionary<string,object?>{{"path",runtimeRoot},{"name",selectedVersion},{"status",detail}});
         L.Literal(runtimeDirectory,TextBlock.TextProperty,runtimeRoot);L.Literal(modelDirectory,TextBlock.TextProperty,model.GetProperty("modelsRoot").GetString());
-        var fileCount=model.GetProperty("files").GetArrayLength();L.Bind(inventory,TextBlock.TextProperty,"ui.model.inventory",()=>new Dictionary<string,object?>{{"models",models.Items.Count},{"files",fileCount}});
+        var fileCount=model.GetProperty("files").GetArrayLength();var modelCount=model.GetProperty("models").GetArrayLength();
+        L.Bind(inventory,TextBlock.TextProperty,"ui.model.inventory",()=>new Dictionary<string,object?>{{"models",modelCount},{"files",fileCount}});
         ApplyRuntime(state);
     }
     private async Task SelectAsync(string operation,string id)
@@ -120,5 +119,12 @@ internal sealed class ModelSettingsView
             if(refreshPending&&subscribed&&!services.ModelChanges.Busy)ModelChanged();
         }
     }
-    private sealed record Choice(string Id,string Name);
+    private static void Populate(ComboBox box,string emptyKey,JsonElement entries,string idKey,string nameKey,string? selected)
+    {
+        box.Items.Clear();
+        var empty=new ComboBoxItem{Tag=""};L.Bind(empty,ComboBoxItem.ContentProperty,emptyKey);box.Items.Add(empty);
+        foreach(var entry in entries.EnumerateArray())
+            box.Items.Add(new ComboBoxItem{Tag=entry.GetProperty(idKey).GetString()!,Content=entry.GetProperty(nameKey).GetString()!});
+        box.SelectedItem=box.Items.Cast<ComboBoxItem>().FirstOrDefault(item=>(string)item.Tag==selected)??empty;
+    }
 }
