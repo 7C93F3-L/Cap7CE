@@ -94,6 +94,20 @@ public sealed class SidebarIcon : UserControl
 
     private void Draw()
     {
+        // Navigation uses the platform icon font; brand/panel indicators and
+        // explicit vector paths keep their existing domain-specific artwork.
+        var glyph=OutlinePath.Length==0?Kind switch {
+            "computer"=>"\uEC4E", // ThisPC
+            "folder"=>"\uE8B7", // Folder
+            "settings"=>"\uE713", // Settings
+            "add"=>"\uE710", // Add
+            _=>null
+        }:null;
+        if(glyph is not null){
+            var icon=new FontIcon {Glyph=glyph,FontSize=20,Width=24,Height=24,Foreground=ink};
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(icon,Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+            Content=new Viewbox {Child=icon,Stretch=Stretch.Uniform};return;
+        }
         var asset=OutlinePath.Length==0?assets.FirstOrDefault(item=>item.Name==Kind):null;
         var canvas=new Canvas {Width=asset?.Width??24,Height=asset?.Height??24};
         if(OutlinePath.Length>0)canvas.Children.Add(Shape(OutlinePath,true));
