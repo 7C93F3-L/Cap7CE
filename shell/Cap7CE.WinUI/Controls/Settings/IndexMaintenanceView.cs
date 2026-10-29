@@ -21,6 +21,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private readonly Dictionary<string,bool> selection=[];
     private readonly List<string> order=[];
     private IEnumerable<CheckBox> Choices=>volumes.Children.OfType<Grid>().Select(row=>row.Children.OfType<CheckBox>().Single());
+    public UIElement Options {get;}
     public void StopMonitoring()=>monitor.Dispose();
     public IndexMaintenanceView(ShellServices services)
     {
@@ -40,7 +41,8 @@ internal sealed class IndexMaintenanceView : UserControl
         actions.Children.Add(scroll);Grid.SetColumn(primary,1);actions.Children.Add(primary);
         actions.SizeChanged+=(_,_)=>{var narrow=actions.ActualWidth<460;Grid.SetRow(primary,narrow?1:0);Grid.SetColumn(primary,narrow?0:1);};
         actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
-        Content=Ui.Column(L.Text("ui.index.orderHint",true),volumeHost,actions,status);
+        Options=Ui.Column(L.Text("ui.index.orderHint",true),volumeHost,actions);
+        Content=status;
         Loaded+=(_,_)=>Run(ReadAsync);
         Unloaded+=(_,_)=>monitor.Dispose();
     }

@@ -18,7 +18,8 @@ internal sealed class CacheSettingsView : StackPanel
     public CacheSettingsView(ShellServices services,Window owner,Action<UiMessage> notice)
     {
         this.services=services;this.owner=owner;this.notice=notice;
-        Spacing=8;HorizontalAlignment=HorizontalAlignment.Right;
+        Spacing=12;Orientation=Orientation.Horizontal;HorizontalAlignment=HorizontalAlignment.Right;
+        summary.VerticalAlignment=VerticalAlignment.Center;
         clear=L.Button("ui.cache.clear",()=>_=ClearAsync());clear.HorizontalAlignment=HorizontalAlignment.Right;
         Children.Add(summary);Children.Add(clear);
         Loaded+=async(_,_)=>await RefreshAsync();

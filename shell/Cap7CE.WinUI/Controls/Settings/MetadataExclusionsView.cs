@@ -40,8 +40,8 @@ internal sealed class MetadataExclusionsView : UserControl
             ToolTipService.SetToolTip(check,item.Path);choices.Add((item,check));
             check.Click+=(_,_)=>Run(()=>services.Preferences.UpdateAsync(value=>value with{
                 MetadataExclusionChoices=new(value.MetadataExclusionChoices){[item.Key]=check.IsChecked==true}}));
-            var row=new Grid {ColumnSpacing=20,Padding=new(0,4,0,4)};
-            row.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=new(2,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});row.Children.Add(check);
+            var row=new Grid {ColumnSpacing=12,RowSpacing=2,Padding=new(0,4,0,4)};
+            row.ColumnDefinitions.Add(new(){Width=new(180)});row.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});row.Children.Add(check);
             var pathText=Ui.Text(item.Path,true);pathText.TextWrapping=TextWrapping.NoWrap;pathText.TextTrimming=TextTrimming.CharacterEllipsis;pathText.VerticalAlignment=VerticalAlignment.Center;
             ToolTipService.SetToolTip(pathText,item.Path);Grid.SetColumn(pathText,1);row.Children.Add(pathText);
             if(!item.BuiltIn) {
@@ -52,6 +52,13 @@ internal sealed class MetadataExclusionsView : UserControl
                     });Render();
                 }));Grid.SetColumn(remove,2);row.Children.Add(remove);
             }
+            row.RowDefinitions.Add(new(){Height=GridLength.Auto});row.RowDefinitions.Add(new(){Height=GridLength.Auto});
+            row.SizeChanged+=(_,_)=>{
+                var narrow=row.ActualWidth<480;row.ColumnDefinitions[0].Width=narrow?new(1,GridUnitType.Star):new(180);
+                row.ColumnDefinitions[1].Width=narrow?new(0):new(1,GridUnitType.Star);
+                Grid.SetRow(pathText,narrow?1:0);Grid.SetColumn(pathText,narrow?0:1);
+                pathText.Margin=narrow?new(28,0,0,0):new(0);
+            };
             rows.Children.Add(row);
         }
     }

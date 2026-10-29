@@ -1264,8 +1264,8 @@
     "en-US": "Metadata extraction"
   },
   "native.metadata.description": {
-    "zh-CN": "读取尺寸、颜色等属性用于筛选；勾选的目录不参与批量提取。",
-    "en-US": "Read dimensions, colors, and other properties for filters. Checked folders are excluded from batch extraction."
+    "zh-CN": "读取尺寸、颜色等属性，用于筛选。",
+    "en-US": "Read dimensions, colors, and other properties for filters."
   },
   "native.maintenance.title": {
     "zh-CN": "服务维护",
@@ -3531,10 +3531,6 @@
     "zh-CN": "不可用",
     "en-US": "Unavailable"
   },
-  "ui.metadata.scopeReading": {
-    "zh-CN": "处理范围：读取中…",
-    "en-US": "Scope: reading…"
-  },
   "ui.metadata.reading": {
     "zh-CN": "正在读取任务状态…",
     "en-US": "Reading task status…"
@@ -3566,18 +3562,6 @@
   "ui.metadata.cancelHint": {
     "zh-CN": "停止当前目录并清空队列，保留已提取结果。",
     "en-US": "Stop the current folder and clear the queue. Extracted results are preserved."
-  },
-  "ui.metadata.scope": {
-    "zh-CN": "提取磁盘：{drives}",
-    "en-US": "Extraction drives: {drives}"
-  },
-  "ui.metadata.noVolumes": {
-    "zh-CN": "暂无可用磁盘",
-    "en-US": "No available drives"
-  },
-  "ui.metadata.awaitConnection": {
-    "zh-CN": "等待连接",
-    "en-US": "Waiting for connection"
   },
   "ui.metadata.disconnected": {
     "zh-CN": "元数据服务未连接或不可用，请到“诊断 → 服务维护”中重新连接。",
@@ -4662,5 +4646,13 @@
   "ui.settings.referenceOnly": {
     "zh-CN": "仅供参考，暂不支持执行。",
     "en-US": "Reference only. Execution is not yet available."
+  },
+  "ui.exclusions.title": {
+    "zh-CN": "排除目录",
+    "en-US": "Excluded folders"
+  },
+  "ui.exclusions.hint": {
+    "zh-CN": "勾选的目录及其子目录将跳过批量提取。",
+    "en-US": "Checked folders and their subfolders are skipped during batch extraction."
   }
 }

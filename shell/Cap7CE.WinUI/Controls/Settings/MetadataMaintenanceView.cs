@@ -13,7 +13,6 @@ internal sealed class MetadataMaintenanceView : UserControl
 {
     private readonly ShellServices services;
     private readonly MetadataExclusionsView exclusions;
-    private readonly TextBlock scope=L.Text("ui.metadata.scopeReading",true);
     private readonly TextBlock status=L.Text("ui.metadata.reading");
     private readonly TextBlock current=Ui.Text("",true),counts=Ui.Text("",true),error=Ui.Text("",true);
     private readonly ProgressBar progress=new(){Height=4,HorizontalAlignment=HorizontalAlignment.Stretch};
@@ -21,24 +20,33 @@ internal sealed class MetadataMaintenanceView : UserControl
     private readonly Button start,control,cancel,refresh;
     private MetadataPanelState? state;
     private bool listening,busy,reload;
+    public UIElement Options {get;}
+    public UIElement Details {get;}
     public MetadataMaintenanceView(ShellServices services,Window owner)
     {
         this.services=services;exclusions=new(services,owner);
         start=Action("ui.metadata.start",()=>MetadataBatchService.StartAsync(services,exclusions.Snapshot()));
         start.Style=(Style)Application.Current.Resources["AccentButtonStyle"];
         control=Action("ui.metadata.pause",()=>InvokeAsync(state?.CanResume==true?"resume":"pause"));
-        cancel=Action("ui.metadata.cancel",()=>InvokeAsync("cancelDirectories"));refresh=Action("ui.metadata.refresh",()=>InvokeAsync("status"));
+        cancel=Action("ui.metadata.cancel",()=>InvokeAsync("cancelDirectories"));
+        refresh=Action("ui.metadata.refresh",()=>InvokeAsync("status"));
         L.Bind(cancel,ToolTipService.ToolTipProperty,"ui.metadata.cancelHint");
-        var tools=new Grid {ColumnSpacing=16};tools.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});tools.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
-        tools.Children.Add(Scroll(Ui.Row(control,cancel)));Grid.SetColumn(refresh,1);tools.Children.Add(refresh);
+
         current.TextWrapping=TextWrapping.NoWrap;current.TextTrimming=TextTrimming.CharacterEllipsis;
-        taskArea.Children.Add(current);taskArea.Children.Add(progress);taskArea.Children.Add(counts);taskArea.Children.Add(tools);
+        taskArea.Children.Add(current);taskArea.Children.Add(progress);taskArea.Children.Add(counts);
         start.HorizontalAlignment=HorizontalAlignment.Right;
         var actions=new Grid {ColumnSpacing=24};
         actions.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});actions.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         exclusions.AddButton.HorizontalAlignment=HorizontalAlignment.Left;
-        actions.Children.Add(exclusions.AddButton);Grid.SetColumn(start,1);actions.Children.Add(start);
-        Content=Ui.Column(scope,exclusions,actions,status,taskArea,error);
+        actions.Children.Add(exclusions.AddButton);
+        var buttons=Scroll(Ui.Row(control,cancel,refresh,start));Grid.SetColumn(buttons,1);actions.Children.Add(buttons);
+        actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
+        actions.SizeChanged+=(_,_)=>{var narrow=actions.ActualWidth<560;Grid.SetRow(buttons,narrow?1:0);Grid.SetColumn(buttons,narrow?0:1);Grid.SetColumnSpan(buttons,narrow?2:1);actions.RowSpacing=narrow?8:0;};
+        var heading=L.Text("ui.exclusions.title");heading.Style=(Style)Application.Current.Resources["CapSettingsSectionTitle"];
+        var hint=L.Text("ui.exclusions.hint",true);
+        var exclusionHeader=Ui.Column(heading,hint);exclusionHeader.Spacing=3;
+        Options=Ui.Column(exclusionHeader,exclusions,actions);
+        Content=status;Details=Ui.Column(taskArea,error);
         exclusions.Changed+=Render;exclusions.Failure+=text=>{L.Message(error,TextBlock.TextProperty,text);Render();};
         Loaded+=(_,_)=>{
             if(listening)return;listening=true;
@@ -71,10 +79,12 @@ internal sealed class MetadataMaintenanceView : UserControl
         var connected=Connected;var ready=connected&&state is not null&&!busy;
         exclusions.SetBusy(busy);
         var volumes=services.Volumes.Where(volume=>volume.Selected&&volume.Queryable).Select(volume=>volume.DisplayName).ToArray();
-        L.Bind(scope,TextBlock.TextProperty,"ui.metadata.scope",()=>new Dictionary<string,object?>{{"drives",connected?(volumes.Length>0?string.Join(AppLanguage.Text("ui.common.listSeparator"),volumes):AppLanguage.Text("ui.metadata.noVolumes")):AppLanguage.Text("ui.metadata.awaitConnection")}});
         start.IsEnabled=ready&&!exclusions.Busy&&volumes.Length>0&&state?.CanPause!=true&&state?.Progress.Phase!="pausing"&&state?.Pending==0;
         L.Bind(control,Button.ContentProperty,MaintenanceText.ControlKey(state));control.IsEnabled=ready&&(state!.CanPause||state.CanResume);
         cancel.IsEnabled=ready&&state!.CanCancel;refresh.IsEnabled=connected&&!busy;
+        control.Visibility=state is {} task&&(task.CanPause||task.CanResume||task.Progress.Phase=="pausing")?Visibility.Visible:Visibility.Collapsed;
+        cancel.Visibility=state?.CanCancel==true?Visibility.Visible:Visibility.Collapsed;
+        start.Visibility=state is {} active&&(active.CanPause||active.CanResume||active.CanCancel||active.Progress.Phase=="pausing")?Visibility.Collapsed:Visibility.Visible;
         L.Bind(status,TextBlock.TextProperty,!connected?"ui.metadata.disconnected":state is {} currentState?MaintenanceText.TitleKey(currentState):"ui.metadata.reading");
         status.Visibility=!connected||state is null||state.ShowTaskArea?Visibility.Visible:Visibility.Collapsed;
         taskArea.Visibility=connected&&state?.ShowTaskArea==true?Visibility.Visible:Visibility.Collapsed;
