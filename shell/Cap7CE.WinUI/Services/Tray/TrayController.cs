@@ -40,15 +40,22 @@ internal sealed class TrayController : IDisposable
     private async void OpenMenu()
     {
         if(menuOpen||disposed)return;menuOpen=true;
+        uint action;
         try{
             var state="unknown";
-            try{using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(2));state=(await new ModelCommandActions(services).RuntimeAsync("runtime.state",token:timeout.Token)).GetProperty("status").GetString()??state;}catch(Exception error){NativeDiagnostics.VisualFailure(error);}
+            if(!working&&!services.ModelChanges.Busy)
+                try{using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(2));state=(await new ModelCommandActions(services).RuntimeAsync("runtime.state",token:timeout.Token)).GetProperty("status").GetString()??state;}catch(Exception error){NativeDiagnostics.VisualFailure(error);}
             if(disposed)return;
 
-            var action=TrayMenu.Show(services.Preferences.Current.EdgeCollapseEnabled,SystemSettings.LaunchAtLogin,state,working||services.AutoKeywords.Busy);
-            await ExecuteAsync(action);
-        }catch(Exception error){Fail(error);}
+            action=TrayMenu.Show(services.Preferences.Current.EdgeCollapseEnabled,SystemSettings.LaunchAtLogin,state,working||services.ModelChanges.Busy||services.AutoKeywords.Busy);
+            // Tracking is complete. The selected action may take seconds, but must
+            // not prevent a new menu from offering Open, Settings or Exit.
+        }catch(Exception error){if(!disposed)Fail(error);return;}
         finally{menuOpen=false;}
+        try{await ExecuteAsync(action);}catch(Exception error){
+            if(disposed)return;
+            NativeDiagnostics.VisualFailure(error);Show();report(FailureText.From(error));
+        }
     }
     private async Task ExecuteAsync(uint action)
     {
@@ -58,7 +65,7 @@ internal sealed class TrayController : IDisposable
             case 2:settings();break;
             case 10:case 11:await services.Preferences.UpdateAsync(value=>value with{EdgeCollapseEnabled=action==11});break;
             case 20:case 21:
-                if(working)return;working=true;
+                if(working||services.ModelChanges.Busy)return;working=true;
                 try{await new ModelCommandActions(services).ExecuteAsync(action==20?"llama:start":"llama:stop",null);}
                 finally{working=false;}break;
             case 30:SystemSettings.LaunchAtLogin=!SystemSettings.LaunchAtLogin;break;

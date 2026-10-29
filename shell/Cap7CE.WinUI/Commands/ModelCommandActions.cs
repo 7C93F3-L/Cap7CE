@@ -5,8 +5,19 @@ using Cap7CE.WinUI.Localization;
 namespace Cap7CE.WinUI.Commands;
 internal sealed class ModelCommandActions(ShellServices services)
 {
-    public Task<JsonElement> SettingsAsync(string operation,string? value=null)=>services.Models.RequestAsync("modelSettings.invoke",[services.ModelContext,operation,value]);
-    public async Task<JsonElement> RuntimeAsync(string operation,object? value=null,CancellationToken token=default)=>(await services.Models.RequestAsync(operation,[services.ModelContext,value],token)).GetProperty("state");
+    public Task<JsonElement> SettingsAsync(string operation,string? value=null)
+    {
+        Task<JsonElement> Request()=>services.Models.RequestAsync("modelSettings.invoke",[services.ModelContext,operation,value]);
+        return operation is "runtime.select" or "models.select"?services.ModelChanges.RunAsync(Request):Request();
+    }
+    public async Task<JsonElement> RuntimeAsync(string operation,object? value=null,CancellationToken token=default)
+    {
+        // The host requires a string stop reason; null is reserved for read operations.
+        if(operation=="runtime.stop"&&value is null)value="manual";
+        Task<JsonElement> Request()=>services.Models.RequestAsync(operation,[services.ModelContext,value],token);
+        var reply=operation is "runtime.start" or "runtime.stop"?await services.ModelChanges.RunAsync(Request):await Request();
+        return reply.GetProperty("state");
+    }
     public async Task ExecuteAsync(string id,string? name)
     {
         var runtime=id.StartsWith("llama:");var action=id.Split(':')[1];

@@ -11,6 +11,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public VisualConnection Visuals { get; }
     public CoreNodeHost Providers { get; }
     public CoreNodeHost Models { get; }
+    public ModelChanges ModelChanges {get;}=new();
     public CoreNodeHost Office { get; }
     public CoreNodeHost StoredMetadata {get;}
     public FavoriteService Favorites { get; }

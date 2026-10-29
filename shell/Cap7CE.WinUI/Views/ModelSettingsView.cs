@@ -18,6 +18,8 @@ internal sealed class ModelSettingsView
     private readonly List<Button> buttons=[];
     private readonly Button runtimeToggle;
     private bool active,starting,syncing;
+    private bool subscribed,running,refreshPending;
+    private int generation;
     public UIElement RuntimeSettings {get;}
     public UIElement ModelSettings {get;}
     public UIElement RuntimeService=>runtimeToggle;
@@ -38,7 +40,30 @@ internal sealed class ModelSettingsView
             value.IsTextSelectionEnabled=true;info.Children.Add(new SettingsFieldRow(key,value,localized:true));
         }
         RuntimeInfo=new SettingsExpandable(info);
-        var loaded=false;((FrameworkElement)RuntimeSettings).Loaded+=(_,_)=>{if(!loaded){loaded=true;Run(RefreshAsync);}};
+        var owner=(FrameworkElement)RuntimeSettings;
+        owner.Loaded+=(_,_)=>{
+            if(subscribed)return;subscribed=true;generation++;
+            services.ModelChanges.Changed+=ModelChanged;
+            ModelChanged();
+        };
+        owner.Unloaded+=(_,_)=>owner.DispatcherQueue.TryEnqueue(()=>{
+            // WinUI can deliver a late Unloaded after reparenting the settings card.
+            if(owner.IsLoaded||!subscribed)return;
+            subscribed=false;generation++;refreshPending=false;
+            services.ModelChanges.Changed-=ModelChanged;
+        });
+    }
+    private void ModelChanged()=>((FrameworkElement)RuntimeSettings).DispatcherQueue.TryEnqueue(()=>{
+        if(!subscribed)return;
+        refreshPending=true;ApplyEnabled();
+        if(!running&&!services.ModelChanges.Busy)Run(RefreshAsync);
+    });
+    private void ApplyEnabled()
+    {
+        var busy=running||services.ModelChanges.Busy;
+        foreach(var button in buttons)button.IsEnabled=!busy;
+        runtimes.IsEnabled=models.IsEnabled=!busy&&!active;
+        runtimeToggle.IsEnabled=!busy&&!starting;
     }
     private static UIElement SelectionRow(ComboBox choice,Button refresh)
     {
@@ -48,8 +73,11 @@ internal sealed class ModelSettingsView
     }
     private async Task RefreshAsync()
     {
+        var current=generation;
         var runtime=await ModelActions.SettingsAsync("runtime.settings");
         var model=await ModelActions.SettingsAsync("models.settings");
+        var state=await ModelActions.RuntimeAsync("runtime.state",null);
+        if(!subscribed||current!=generation)return;
         syncing=true;
         try {
             runtimes.ItemsSource=runtime.GetProperty("versions").EnumerateArray().Select(x=>new Choice(x.GetProperty("version").GetString()!,x.GetProperty("version").GetString()!)).ToArray();
@@ -63,13 +91,18 @@ internal sealed class ModelSettingsView
         L.Bind(fileState,TextBlock.TextProperty,Cap7CE.WinUI.Localization.MaintenanceText.RuntimeKey(runtimeStatus),()=>new Dictionary<string,object?>{{"path",runtimeRoot},{"name",selectedVersion},{"status",detail}});
         L.Literal(runtimeDirectory,TextBlock.TextProperty,runtimeRoot);L.Literal(modelDirectory,TextBlock.TextProperty,model.GetProperty("modelsRoot").GetString());
         var fileCount=model.GetProperty("files").GetArrayLength();L.Bind(inventory,TextBlock.TextProperty,"ui.model.inventory",()=>new Dictionary<string,object?>{{"models",models.Items.Count},{"files",fileCount}});
-        await RuntimeAsync("runtime.state",null);
+        ApplyRuntime(state);
     }
     private async Task SelectAsync(string operation,string id)
     {await ModelActions.SettingsAsync(operation,id);}
     private async Task RuntimeAsync(string operation,object? value)
     {
+        var current=generation;
         var reply=await ModelActions.RuntimeAsync(operation,value);
+        if(subscribed&&current==generation)ApplyRuntime(reply);
+    }
+    private void ApplyRuntime(JsonElement reply)
+    {
         starting=reply.GetProperty("status").GetString()=="starting";active=starting||reply.GetProperty("status").GetString()=="running";
         L.Bind(runtimeToggle,Button.ContentProperty,active?"common.stop":"common.start");
         if(reply.TryGetProperty("host",out var host)&&reply.TryGetProperty("port",out var port)&&port.ValueKind==JsonValueKind.Number)L.Literal(address,TextBlock.TextProperty,$"{host.GetString()}:{port.GetInt32()}");else L.Bind(address,TextBlock.TextProperty,"common.stopped");
@@ -77,9 +110,15 @@ internal sealed class ModelSettingsView
     private Button Action(string label,Func<Task> work){var button=L.Button(label,()=>Run(work));buttons.Add(button);return button;}
     private async void Run(Func<Task> work)
     {
-        foreach(var button in buttons)button.IsEnabled=false;runtimes.IsEnabled=models.IsEnabled=false;
-        try{await work();}catch(Exception error){notice(FailureText.From(error));}
-        finally{foreach(var button in buttons)button.IsEnabled=true;runtimes.IsEnabled=models.IsEnabled=!active;runtimeToggle.IsEnabled=!starting;}
+        if(running)return;running=true;refreshPending=false;ApplyEnabled();
+        try{
+            await work();
+            while(refreshPending&&subscribed&&!services.ModelChanges.Busy){refreshPending=false;await RefreshAsync();}
+        }catch(Exception error){if(subscribed)notice(FailureText.From(error));}
+        finally{
+            running=false;ApplyEnabled();
+            if(refreshPending&&subscribed&&!services.ModelChanges.Busy)ModelChanged();
+        }
     }
     private sealed record Choice(string Id,string Name);
 }

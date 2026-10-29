@@ -56,7 +56,7 @@ internal static class MetadataTaskChecks
 
 namespace Cap7CE.WinUI.Services
 {
-    internal sealed class ShellServices
+    internal sealed partial class ShellServices
     {
         public CoreConnection? Core {get;set;}=new();
         public TaskNotifications TaskNotices {get;}
