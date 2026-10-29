@@ -4468,11 +4468,6 @@
     "en-US": "Notifications are enabled in Cap7CE, but Windows currently blocks this app from sending them. Check Windows notification settings."
   },
 
- "ui.shortcuts.globalToggle":{"zh-CN":"启用全局快捷键","en-US":"Enable global shortcuts"},
- "ui.shortcuts.globalHint": {
-    "zh-CN": "仅影响全局快捷键，录入键位时暂时停用。",
-    "en-US": "Affects only global shortcuts. Paused while recording a shortcut."
-  },
  "ui.shortcuts.globalHeading":{"zh-CN":"全局快捷键","en-US":"Global shortcuts"},
  "ui.shortcuts.appHeading":{"zh-CN":"主窗口快捷键","en-US":"Main-window shortcuts"},
  "ui.shortcuts.appScope":{"zh-CN":"主窗口内","en-US":"Main window"},
@@ -4480,7 +4475,6 @@
     "zh-CN": "未设置",
     "en-US": "Not set"
   },
- "ui.shortcuts.globalOff":{"zh-CN":"全局快捷键已关闭","en-US":"Global shortcuts are disabled"},
  "ui.shortcuts.registered":{"zh-CN":"已注册","en-US":"Registered"},
  "ui.shortcuts.conflict": {
     "zh-CN": "组合键被占用或被 Windows 拒绝，其他快捷键不受影响。",
@@ -4658,5 +4652,17 @@
   "ui.index.connecting": {
     "zh-CN": "等待后台连接…",
     "en-US": "Waiting for connection…"
+  },
+  "ui.shortcuts.resetAll": {
+    "zh-CN": "恢复全部默认",
+    "en-US": "Restore all defaults"
+  },
+  "ui.shortcuts.resetTitle": {
+    "zh-CN": "恢复快捷键",
+    "en-US": "Reset shortcuts"
+  },
+  "ui.shortcuts.resetHint": {
+    "zh-CN": "恢复所有快捷键的默认键位。",
+    "en-US": "Restore all default key bindings."
   }
 }

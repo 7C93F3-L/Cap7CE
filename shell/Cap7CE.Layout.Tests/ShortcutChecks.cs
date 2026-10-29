@@ -7,7 +7,7 @@ internal static class ShortcutChecks
     public static async Task RunAsync()
     {
         var checks=0;void Check(bool value,string message){checks++;if(!value)throw new Exception(message);}
-        var preferences=new ShellPreferences{QuickActions=true};
+        var preferences=new ShellPreferences();
         foreach(var action in ShortcutCatalog.All){
             var binding=ShortcutCatalog.Binding(preferences,action);
             Check(ShortcutCatalog.Validate(action,binding,preferences) is null,"Every default binding must be valid and unique: "+action.Id);
@@ -39,7 +39,8 @@ internal static class ShortcutChecks
         Check(registrations.Count==1&&registry.Action(restoreId)==restore.Id&&registry.Failed.SetEquals([focus.Id]),"One unavailable global key must not disable other actions.");
         registry.Apply(preferences,true);Check(registrations.Count==0&&registry.Action(restoreId) is null,"Capture must release only this app's hotkeys and reject queued old IDs.");
         rejected.Clear();registry.Apply(preferences);Check(registrations.Count==2&&registry.Failed.Count==0,"Finishing capture must restore and retry configured keys.");
-        registry.Apply(preferences with{QuickActions=false});Check(registrations.Count==0,"Disabling the master switch must release OS registrations.");
+        registry.Apply(preferences with{ShortcutBindings=new(){[focus.Id]=new("")}});
+        Check(registrations.Count==0,"Clearing a global binding must release its OS registration.");
         var folder=Path.Combine(Path.GetTempPath(),"Cap7CE-shortcut-check-"+Guid.NewGuid().ToString("N"));var language=AppLanguage.Session.Current;
         try{
             var store=new PreferenceStore(Path.Combine(folder,"prefs.json"),null);await store.LoadAsync();
@@ -47,13 +48,14 @@ internal static class ShortcutChecks
             var reload=new PreferenceStore(Path.Combine(folder,"prefs.json"),null);await reload.LoadAsync();
             Check(reload.Current.Notifications&&reload.Current.ShortcutBindings["openSelected"].Gesture=="Ctrl+Enter","Bindings must persist without overwriting concurrent settings.");
             var legacyPath=Path.Combine(folder,"legacy-scope.json");
-            const string legacy="""{"shortcutBindings":{"openSettings":{"gesture":"Ctrl+Alt+S","scope":"global"},"restoreDefaultWindow":{"gesture":"Ctrl+Alt+R","scope":"app"}}}""";
+            const string legacy="""{"quickActions":false,"shortcutBindings":{"openSettings":{"gesture":"Ctrl+Alt+S","scope":"global"},"restoreDefaultWindow":{"gesture":"Ctrl+Alt+R","scope":"app"}}}""";
             await File.WriteAllTextAsync(legacyPath,legacy);var old=new PreferenceStore(legacyPath,null);await old.LoadAsync();
-            registry.Apply(old.Current with{QuickActions=true});
+            registry.Apply(old.Current);
             Check(registrations.Values.All(key=>key.ToString()!="Ctrl+Alt+S")&&registry.Action(restoreId)==restore.Id,"Old scope fields must not change fixed ownership.");
             Check(await File.ReadAllTextAsync(legacyPath)==legacy,"Loading old scope fields must not rewrite user preferences.");
             await old.UpdateAsync(value=>value with{Notifications=true});
             Check(!(await File.ReadAllTextAsync(legacyPath)).Contains("\"scope\""),"Normal saves must no longer persist a configurable scope.");
+            Check(!(await File.ReadAllTextAsync(legacyPath)).Contains("quickActions"),"Normal saves must omit the retired master switch.");
             registry.Clear();
             var blocker=Path.Combine(folder,"file");await File.WriteAllTextAsync(blocker,"not a directory");var failed=new PreferenceStore(Path.Combine(blocker,"prefs.json"),null);
             try{await failed.UpdateAsync(value=>value with{ShortcutBindings=preferences.ShortcutBindings});throw new Exception("Expected save failure");}catch(IOException){}

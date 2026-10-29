@@ -11,7 +11,6 @@ public sealed record ShellPreferences
     public Dictionary<string,bool> MetadataExclusionChoices {get;init;}=[];
     public string[] MetadataCustomExclusions {get;init;}=[];
     public bool Notifications {get;init;}
-    public bool QuickActions {get;init;}
     public Dictionary<string,ShortcutBinding> ShortcutBindings {get;init;}=[];
     public bool EdgeCollapseEnabled {get;init;}
 	public bool AlwaysOnTop { get; init; }

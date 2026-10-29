@@ -8,7 +8,7 @@ internal sealed class GlobalShortcutRegistrations(Func<int,ShortcutGesture,bool>
     public HashSet<string> Failed {get;}=[];
     public void Apply(ShellPreferences preferences,bool suspended=false)
     {
-        Clear();Failed.Clear();if(!preferences.QuickActions||suspended)return;
+        Clear();Failed.Clear();if(suspended)return;
         for(var i=0;i<ShortcutCatalog.All.Length;i++) {
             var action=ShortcutCatalog.All[i];var binding=ShortcutCatalog.Binding(preferences,action);
             if(action.Scope!="global"||string.IsNullOrEmpty(binding.Gesture))continue;

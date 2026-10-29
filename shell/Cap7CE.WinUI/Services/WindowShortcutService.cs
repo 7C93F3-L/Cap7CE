@@ -37,7 +37,7 @@ internal sealed class WindowShortcutService:IDisposable
     public void Apply()
     {
         if(disposed)return;var current=preferences.Current;
-        var next=current.QuickActions+"|"+string.Join("|",ShortcutCatalog.All.Select(action=>action.Id+":"+ShortcutCatalog.Binding(current,action)));
+        var next=string.Join("|",ShortcutCatalog.All.Select(action=>action.Id+":"+ShortcutCatalog.Binding(current,action)));
         if(stamp==next)return;stamp=next;global.Registrations.Apply(current,capturing);local.Apply(current);Changed?.Invoke();
     }
     public void Capture(bool value){if(disposed)return;capturing=value;global.Registrations.Apply(preferences.Current,value);Changed?.Invoke();}
@@ -47,7 +47,7 @@ internal sealed class WindowShortcutService:IDisposable
         if(string.IsNullOrEmpty(binding.Gesture))return "ui.shortcuts.unbound";
         if(ShortcutCatalog.Validate(action,binding,preferences.Current) is not null)return "ui.shortcuts.invalid";
         if(action.Scope!="global")return "ui.shortcuts.appScope";
-        return !preferences.Current.QuickActions?"ui.shortcuts.globalOff":global.Registrations.Failed.Contains(action.Id)?"ui.shortcuts.conflict":"ui.shortcuts.registered";
+        return global.Registrations.Failed.Contains(action.Id)?"ui.shortcuts.conflict":"ui.shortcuts.registered";
     }
     public void Dispose(){if(disposed)return;disposed=true;preferences.Changed-=PreferencesChanged;local.Dispose();global.Dispose();Changed=null;}
 }

@@ -181,7 +181,7 @@ public sealed partial class MainWindow : Window
         if(closed)return;var prefs=services.Preferences.Current;
         // LanguageBinding already updated text; do not reapply layout or window actions.
         if(appliedPreferences is {} languagePrevious&&(languagePrevious with{Language=prefs.Language})==prefs){appliedPreferences=prefs;return;}
-        if(appliedPreferences is {} shortcutPrevious&&(shortcutPrevious with{QuickActions=prefs.QuickActions,ShortcutBindings=prefs.ShortcutBindings})==prefs){appliedPreferences=prefs;return;}
+        if(appliedPreferences is {} shortcutPrevious&&(shortcutPrevious with{ShortcutBindings=prefs.ShortcutBindings})==prefs){appliedPreferences=prefs;return;}
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})==prefs;
         var workspaceOnly=appliedPreferences is {} old&&(old with{ComputerWorkspace=prefs.ComputerWorkspace,FavoriteWorkspace=prefs.FavoriteWorkspace})==prefs;
         var edgeOnly=appliedPreferences is {} edgeOld&&(edgeOld with{EdgeCollapseEnabled=prefs.EdgeCollapseEnabled})==prefs;

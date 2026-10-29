@@ -14,24 +14,23 @@ internal sealed class SettingsShortcutEditor:UserControl
     private readonly Window owner;
     private readonly Action<UiMessage> notice;
     private readonly StackPanel global=Ui.Column(),local=Ui.Column();
-    private readonly ToggleSwitch enabled=L.Toggle();
-    private bool syncing,busy,capturing,listening;
+    private bool busy,capturing,listening;
     public SettingsShortcutEditor(ShellServices services,Window owner,Action<UiMessage> notice)
     {
         this.services=services;this.owner=owner;this.notice=notice;
-        L.Bind(enabled,ToggleSwitch.HeaderProperty,"ui.shortcuts.globalToggle");
-        enabled.Toggled+=async(_,_)=>{if(!syncing)await Run(()=>services.Preferences.UpdateAsync(value=>value with{QuickActions=enabled.IsOn}));};
-        var reset=L.Button("common.restoreDefault",()=>_=Run(()=>services.Preferences.UpdateAsync(value=>value with{ShortcutBindings=[]})));
-        var header=new Grid{ColumnSpacing=16};header.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});header.ColumnDefinitions.Add(new(){Width=GridLength.Auto});header.Children.Add(enabled);Grid.SetColumn(reset,1);header.Children.Add(reset);
+        var reset=L.Button("ui.shortcuts.resetAll",()=>_=Run(()=>services.Preferences.UpdateAsync(value=>value with{ShortcutBindings=[]})));
+        var resetCard=new SettingsCard("ui.shortcuts.resetTitle","ui.shortcuts.resetHint",reset,localized:true);
         global.Spacing=local.Spacing=4;
-        Content=Ui.Column(header,L.Text("ui.shortcuts.globalHint",true),L.Text("ui.shortcuts.globalHeading"),global,L.Text("ui.shortcuts.appHeading"),local);
+        var globalTitle=L.Text("ui.shortcuts.globalHeading");globalTitle.Style=(Style)Application.Current.Resources["CapSettingsSectionTitle"];
+        var localTitle=L.Text("ui.shortcuts.appHeading");localTitle.Style=(Style)Application.Current.Resources["CapSettingsSectionTitle"];
+        var content=Ui.Column(Ui.Column(globalTitle,global),Ui.Column(localTitle,local),resetCard);content.Spacing=24;
+        Content=content;
         Loaded+=(_,_)=>{if(listening)return;listening=true;if(services.Shortcuts is {} manager)manager.Changed+=Render;Render();};
         Unloaded+=(_,_)=>{listening=false;if(services.Shortcuts is {} manager){manager.Changed-=Render;if(capturing)manager.Capture(false);}};
         Render();
     }
     private void Render()
     {
-        syncing=true;enabled.IsOn=services.Preferences.Current.QuickActions;syncing=false;
         global.Children.Clear();local.Children.Clear();
         foreach(var action in ShortcutCatalog.All) {
             var binding=ShortcutCatalog.Binding(services.Preferences.Current,action);
