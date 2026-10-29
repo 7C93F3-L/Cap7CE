@@ -7,35 +7,30 @@ using Microsoft.UI.Text;
 
 namespace Cap7CE.WinUI.Controls;
 
-// Read-only reference: category selection never executes commands or changes preferences.
+// Read-only reference: expanding a category never executes commands or changes preferences.
 internal sealed class SettingsCommandList : UserControl
 {
     public SettingsCommandList(IEnumerable<SettingsHelpGroup> entries)
     {
-        var groups=entries.ToArray();
-        var selector=L.Choice(new[]{"help.all"}.Concat(groups.Select(g=>g.TitleKey)).ToArray());
-        selector.HorizontalAlignment=HorizontalAlignment.Right;
-        L.Bind(selector,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"help.category");
-        var rows=Ui.Column();rows.Spacing=16;
-        var content=Ui.Column(selector,rows);content.Spacing=16;Content=content;
-        void Render()
-        {
-            rows.Children.Clear();
-            for(var i=0;i<groups.Length;i++) {
-                if(selector.SelectedIndex>0&&selector.SelectedIndex!=i+1)continue;
-                var group=groups[i];var block=Ui.Column();block.Spacing=8;
-                var heading=L.Text(group.TitleKey);heading.FontWeight=FontWeights.SemiBold;block.Children.Add(heading);
-                if(!string.IsNullOrEmpty(group.HintKey))block.Children.Add(L.Text(group.HintKey,true));
-                foreach(var item in group.Items)
-                    block.Children.Add(Row(item.Command,item.DescriptionKey,item.ExampleKey));
-                rows.Children.Add(block);
+        var groups=Ui.Column();groups.Spacing=6;
+        foreach(var group in entries){
+            var rows=Ui.Column();rows.Spacing=0;
+            if(!string.IsNullOrEmpty(group.HintKey)){
+                var hint=L.Text(group.HintKey,true);hint.Margin=new(12,4,12,12);rows.Children.Add(hint);
             }
+            for(var i=0;i<group.Items.Length;i++){
+                var item=group.Items[i];rows.Children.Add(Row(item.Command,item.DescriptionKey,item.ExampleKey,i==group.Items.Length-1));
+            }
+            var heading=L.Text(group.TitleKey);heading.Style=(Style)Application.Current.Resources["CapSettingsLabel"];heading.FontWeight=FontWeights.SemiBold;
+            var expander=new Expander{Header=heading,Content=rows,IsExpanded=false,Style=(Style)Application.Current.Resources["CapSettingsExpander"]};
+            L.Bind(expander,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,group.TitleKey);
+            groups.Children.Add(expander);
         }
-        selector.SelectionChanged+=(_,_)=>Render();Render();
+        Content=groups;
     }
-    private static UIElement Row(string command,string description,string? exampleKey)
+    private static UIElement Row(string command,string description,string? exampleKey,bool last)
     {
-        var grid=new Grid {ColumnSpacing=20,MinHeight=32};
+        var grid=new Grid {ColumnSpacing=20};
         grid.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         grid.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         grid.RowDefinitions.Add(new(){Height=GridLength.Auto});grid.RowDefinitions.Add(new(){Height=GridLength.Auto});
@@ -48,6 +43,8 @@ internal sealed class SettingsCommandList : UserControl
             Grid.SetColumnSpan(code,stacked?2:1);Grid.SetColumn(detail,stacked?0:1);
             Grid.SetColumnSpan(detail,stacked?2:1);Grid.SetRow(detail,stacked?1:0);grid.RowSpacing=stacked?4:0;
         }
-        grid.SizeChanged+=(_,_)=>Arrange();Arrange();return grid;
+        var host=new Border{Style=(Style)Application.Current.Resources["CapSettingsCommandRow"],Child=grid};
+        if(last)host.BorderThickness=new(0);
+        host.SizeChanged+=(_,_)=>Arrange();Arrange();return host;
     }
 }
