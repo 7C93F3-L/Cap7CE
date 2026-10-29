@@ -169,7 +169,8 @@ internal sealed class SidebarView : UserControl
             var arrange=L.MenuItem("main.reorder",()=>order.Begin(item),"\uE8CB");arrange.IsEnabled=service.Items.Count>1;menu.Items.Add(arrange);
             menu.Items.Add(L.MenuItem("menu.removeFavorite",()=>commands.Run(()=>service.ExecuteAsync("remove",id:item.Id)),"\uE734"));
             menu.Items.Add(new MenuFlyoutSeparator());
-            menu.Items.Add(L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(item.Path);return Task.CompletedTask;}),"\uE945"));
+            var automatic=L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(item.Path);return Task.CompletedTask;}));
+            automatic.Icon=AiActionIcon.Attach(automatic);menu.Items.Add(automatic);
             menu.Items.Add(L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(item.Path)),"\uE895"));
             return menu;
         };

@@ -31,8 +31,7 @@ internal sealed class DetailsKeywordEditor:UserControl
         L.Bind(retry,ToolTipService.ToolTipProperty,"ui.keywords.reloadHint");
         automatic=Ui.Button("",()=>{if(items.Count>0&&!draft.Dirty){var target=items;generate(target);}});
         var automaticLabel=L.Text("ui.keywords.automatic");automaticLabel.VerticalAlignment=VerticalAlignment.Center;automaticLabel.TextWrapping=TextWrapping.NoWrap;
-        var automaticIcon=new TextBlock{Text="\uE945",FontFamily=new FontFamily("Segoe Fluent Icons"),FontSize=14,
-            Opacity=.8,VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};
+        var automaticIcon=AiActionIcon.Attach(automatic,14);automaticIcon.VerticalAlignment=VerticalAlignment.Center;
         var automaticContent=Ui.Row(automaticIcon,automaticLabel);automaticContent.Spacing=5;automatic.Content=automaticContent;
         L.Bind(automatic,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"ui.keywords.automatic");
         save=L.Button("ui.keywords.save",()=>_=SaveAsync());cancel=L.Button("common.cancel",CancelDraft);

@@ -24,11 +24,14 @@ internal static class ResultContextMenu
                 "favorite"=>L.MenuItem(favorite is null?"menu.addFavorite":"menu.removeFavorite",()=>commands.Run(()=>favorite is null
                     ?favorites.ExecuteAsync("add",path:first.FullPath):favorites.ExecuteAsync("remove",id:favorite.Id)),"\uE734"),
                 "editKeywords"=>L.MenuItem("menu.editKeywords",()=>commands.EditKeywords(items),"\uE70F"),
-                "autoKeywords"=>L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}),"\uE945"),
+                "autoKeywords"=>L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;})),
                 _=>L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")
             };
             if(action.Id=="delete")item.IsEnabled=items.All(entry=>entry.Entry.FileReference is not null);
-            if(action.Id=="autoKeywords")item.IsEnabled=items.Count>1||items.Any(entry=>entry.Entry.IsDirectory||FormatRegistry.Find(entry.Entry.Extension)?.CanAIIndex==true);
+            if(action.Id=="autoKeywords"){
+                item.Icon=AiActionIcon.Attach(item);
+                item.IsEnabled=items.Count>1||items.Any(entry=>entry.Entry.IsDirectory||FormatRegistry.Find(entry.Entry.Extension)?.CanAIIndex==true);
+            }
             if(action.Id=="editKeywords") {
                 item.IsEnabled=items.Any(entry=>!entry.Entry.IsDirectory)&&commands.CanEditKeywords();
                 if(!item.IsEnabled)L.Bind(item,ToolTipService.ToolTipProperty,"menu.editKeywordsUnavailable");

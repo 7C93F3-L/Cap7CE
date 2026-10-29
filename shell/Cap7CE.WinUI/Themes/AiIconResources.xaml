@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <ResourceDictionary.ThemeDictionaries>
+  <ResourceDictionary x:Key="Light"><StaticResource x:Key="CapAiActiveIconBrush" ResourceKey="CapAccentGradient"/></ResourceDictionary>
+  <ResourceDictionary x:Key="Default"><StaticResource x:Key="CapAiActiveIconBrush" ResourceKey="CapAccentGradient"/></ResourceDictionary>
+  <ResourceDictionary x:Key="HighContrast"><StaticResource x:Key="CapAiActiveIconBrush" ResourceKey="SystemColorHighlightTextColorBrush"/></ResourceDictionary>
+ </ResourceDictionary.ThemeDictionaries>
+ <Style x:Key="CapAiActiveIcon" TargetType="PathIcon">
+  <Setter Property="Foreground" Value="{ThemeResource CapAiActiveIconBrush}"/>
+ </Style>
+</ResourceDictionary>

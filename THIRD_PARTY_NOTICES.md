@@ -6,6 +6,8 @@ This file is a human-readable inventory for Cap7CE 1.0.4 and its opt-in Core cap
 
 ## Primary runtime components
 
+The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons), under the MIT License, copyright (c) 2020 Microsoft Corporation. The complete license is retained in `third_party/fluentui-system-icons/LICENSE` and copied to the WinUI output as `Assets/fluentui-system-icons-LICENSE.txt`.
+
 | Component | License |
 | --- | --- |
 | Electron | MIT; the Electron distribution also includes Chromium and other third-party notices |
