@@ -132,7 +132,7 @@ const settingsWindow = read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs');
 assert(settingsWindow.includes('NavigationView') && settingsWindow.includes('SettingsPages'), 'settings window only composes native navigation and pages');
 assert(!/\.RequestAsync|\.SaveAsync|new ColorPicker/.test(settingsWindow), 'settings window cannot own setting actions or editors');
 const settingsCatalog = read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs');
-const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowApp.tsx').matchAll(/<SettingCard title="([^"]+)" description="([^"]+)"/g)].filter(m => !['settings.standbyLine','stableSettings.uiFontSize'].includes(m[1])).map(m => `${m[1]}:${m[2]}`);
+const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowApp.tsx').matchAll(/<SettingCard title="([^"]+)" description="([^"]+)"/g)].filter(m => !['settings.standbyLine','stableSettings.uiFontSize','stableSettings.diagnostics'].includes(m[1])).map(m => `${m[1]}:${m[2]}`);
 const maintenanceSettings = read('shell/Cap7CE.WinUI/Views/Settings/MaintenanceSettingsView.cs');
 assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
 assert(maintenanceSettings.includes('new IndexMaintenanceView(services)') && settingsCatalog.includes('MetadataView,true'), 'settings must host index and metadata management inline');

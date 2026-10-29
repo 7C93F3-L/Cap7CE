@@ -4672,5 +4672,9 @@
   "ui.model.serviceDescription": {
     "zh-CN": "启动或停止本地 AI 服务。",
     "en-US": "Start or stop the local AI service."
+  },
+  "ui.diagnostics.statusHint": {
+    "zh-CN": "查看后台连接、读取服务、边缘模式和通知状态。",
+    "en-US": "View background connection, Reader service, edge mode, and notification status."
   }
 }

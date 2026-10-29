@@ -8,7 +8,7 @@ namespace Cap7CE.WinUI.Controls;
 
 internal sealed class SettingsCard : UserControl
 {
-    public SettingsCard(string title,string description,UIElement control,bool expanded=false,bool localized=false)
+    public SettingsCard(string title,string description,UIElement control,bool expanded=false,bool localized=false,UIElement? descriptionContent=null)
     {
         control=control switch {
             IndexMaintenanceView index=>new SettingsExpandable(index.Options,index),
@@ -18,9 +18,9 @@ internal sealed class SettingsCard : UserControl
         var section=control as SettingsSection;
         if(section is not null){control=section.Actions;expanded=false;}
         var label=localized?Localization.LanguageUi.Text(title):Ui.Text(title);label.FontWeight=FontWeights.SemiBold;
-        var text=Ui.Column(label,localized?Localization.LanguageUi.Text(description,true):Ui.Text(description,true));text.Spacing=3;
+        var text=Ui.Column(label,descriptionContent??(localized?Localization.LanguageUi.Text(description,true):Ui.Text(description,true)));text.Spacing=3;
         label.Style=(Style)Application.Current.Resources["CapSettingsLabel"];
-        if(text.Children[1] is TextBlock descriptionText){descriptionText.Style=(Style)Application.Current.Resources["CapSettingsDescription"];descriptionText.Visibility=string.IsNullOrWhiteSpace(description)?Visibility.Collapsed:Visibility.Visible;}
+        if(text.Children[1] is TextBlock descriptionText){descriptionText.Style=(Style)Application.Current.Resources["CapSettingsDescription"];descriptionText.Visibility=descriptionContent is null&&string.IsNullOrWhiteSpace(description)?Visibility.Collapsed:Visibility.Visible;}
         var copy=new Grid{ColumnSpacing=16};copy.ColumnDefinitions.Add(new(){Width=new(20)});copy.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
         var icon=new FontIcon{FontSize=16,Glyph=title switch{"settings.language"=>"\uE774","settings.launchAtLogin"=>"\uE7E8","settings.systemNotifications"=>"\uE7F4","settings.quickActions"=>"\uE765","settings.quickCommands"=>"\uE756","stableSettings.diagnostics"=>"\uE9D9",_=>"\uE713"},VerticalAlignment=VerticalAlignment.Center,IsHitTestVisible=false};AutomationProperties.SetAccessibilityView(icon,Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
         copy.Children.Add(icon);Grid.SetColumn(text,1);copy.Children.Add(text);

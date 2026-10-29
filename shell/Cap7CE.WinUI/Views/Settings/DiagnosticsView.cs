@@ -18,14 +18,15 @@ internal sealed class DiagnosticsView : StackPanel
     private bool refreshing;
     public DiagnosticsView(ShellServices services,Window owner)
     {
-        this.services=services;this.owner=owner;Spacing=10;
+        this.services=services;this.owner=owner;Spacing=6;
         refresh=L.Button("common.refresh",async()=>await RefreshAsync());export=L.Button("settings.exportDiagnostics",async()=>await ExportAsync());
         openRecord=L.Button("common.open",()=>{try{if(recordPath is {} logPath)System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(logPath){UseShellExecute=true});}catch(Exception error){ShowError(error);}});openRecord.IsEnabled=false;
-        Children.Add(new SettingsFieldRow("ui.diagnostics.status",summary,refresh,localized:true));
-        Children.Add(new SettingsFieldRow("ui.diagnostics.recent",recent,openRecord,localized:true));
+        refresh.HorizontalAlignment=HorizontalAlignment.Right;
+        Children.Add(new SettingsCard("ui.diagnostics.status","ui.diagnostics.statusHint",new SettingsExpandable(Ui.Column(summary,refresh)),localized:true));
+        Children.Add(new SettingsCard("ui.diagnostics.recent","",openRecord,localized:true,descriptionContent:recent));
         var path=Ui.Text(PreferenceStore.DataRoot,true);path.IsTextSelectionEnabled=true;
-        Children.Add(new SettingsFieldRow("ui.diagnostics.path",path,L.Button("native.diagnostics.openFolder",OpenFolder),localized:true));
-        Children.Add(new SettingsFieldRow("settings.diagnosticsBundle",L.Text("native.diagnostics.exportDescription",true),export,localized:true));
+        Children.Add(new SettingsCard("ui.diagnostics.path","",L.Button("native.diagnostics.openFolder",OpenFolder),localized:true,descriptionContent:path));
+        Children.Add(new SettingsCard("settings.diagnosticsBundle","native.diagnostics.exportDescription",export,localized:true));
         Children.Add(feedback);Loaded+=async(_,_)=>await RefreshAsync();
     }
     private async Task RefreshAsync()
