@@ -14,6 +14,7 @@ internal sealed class WorkspaceShortcutInput:IDisposable
 {
     private readonly Window owner;
     private readonly FrameworkElement root;
+    private FrameworkElement routeRoot;
     private readonly ResultsView results;
     private readonly Action<string> execute;
     private readonly HashSet<ShortcutGesture> held=[];
@@ -22,13 +23,26 @@ internal sealed class WorkspaceShortcutInput:IDisposable
     private readonly List<(ShortcutDefinition Action,ShortcutGesture Key)> appKeys=[];
     public WorkspaceShortcutInput(Window owner,FrameworkElement root,ResultsView results,Action<string> execute)
     {
-        this.owner=owner;this.root=root;this.results=results;this.execute=execute;
+        this.owner=owner;this.root=root;routeRoot=root;this.results=results;this.execute=execute;
         // Accelerators belong to this whole scope, not to a hoverable command surface.
         root.KeyboardAcceleratorPlacementMode=KeyboardAcceleratorPlacementMode.Hidden;
         release=(_,args)=>held.RemoveWhere(key=>key.Key==(uint)args.Key);
-        root.AddHandler(UIElement.KeyUpEvent,release,true);root.PreviewKeyDown+=ApplicationKey;owner.Activated+=Activated;
+        routeRoot.AddHandler(UIElement.KeyUpEvent,release,true);routeRoot.PreviewKeyDown+=ApplicationKey;
+        root.Loaded+=Loaded;owner.Activated+=Activated;
     }
-    private void Activated(object sender,WindowActivatedEventArgs args){if(args.WindowActivationState==WindowActivationState.Deactivated)held.Clear();}
+    private void Loaded(object sender,RoutedEventArgs args)=>AttachWindowRoot();
+    private void AttachWindowRoot()
+    {
+        if(owner.Content is not FrameworkElement current||ReferenceEquals(current,routeRoot))return;
+        routeRoot.RemoveHandler(UIElement.KeyUpEvent,release);routeRoot.PreviewKeyDown-=ApplicationKey;
+        foreach(var accelerator in accelerators)routeRoot.KeyboardAccelerators.Remove(accelerator);
+        routeRoot=current;routeRoot.KeyboardAcceleratorPlacementMode=KeyboardAcceleratorPlacementMode.Hidden;
+        routeRoot.AddHandler(UIElement.KeyUpEvent,release,true);routeRoot.PreviewKeyDown+=ApplicationKey;
+        foreach(var accelerator in accelerators)routeRoot.KeyboardAccelerators.Add(accelerator);
+        held.Clear();
+    }
+    private void Activated(object sender,WindowActivatedEventArgs args)
+    {if(args.WindowActivationState==WindowActivationState.Deactivated)held.Clear();else AttachWindowRoot();}
     private readonly List<KeyboardAccelerator> accelerators=[];
     private List<(ShortcutDefinition Action,ShortcutGesture Key)> resultKeys=[];
     public static uint Modifiers()
@@ -38,7 +52,7 @@ internal sealed class WorkspaceShortcutInput:IDisposable
     }
     private bool Blocked(string context)
     {
-        if(ResultDrag.IsActive||root.XamlRoot is not {} xaml||VisualTreeHelper.GetOpenPopupsForXamlRoot(xaml).Count>0)return true;
+        if(ResultDrag.IsActive||root.XamlRoot is not {} xaml||VisualTreeHelper.GetOpenPopupsForXamlRoot(xaml).Any(popup=>popup.Child is not ToolTip))return true;
         if(context=="app")return false;
         for(var target=FocusManager.GetFocusedElement(xaml) as DependencyObject;target is not null;target=VisualTreeHelper.GetParent(target))
             if(target is TextBox or RichEditBox or PasswordBox or AutoSuggestBox)return true;
@@ -47,15 +61,18 @@ internal sealed class WorkspaceShortcutInput:IDisposable
     public void Apply(ShellPreferences preferences)
     {
         this.preferences=preferences;
-        foreach(var accelerator in accelerators)root.KeyboardAccelerators.Remove(accelerator);accelerators.Clear();resultKeys.Clear();appKeys.Clear();
+        AttachWindowRoot();
+        foreach(var accelerator in accelerators)routeRoot.KeyboardAccelerators.Remove(accelerator);accelerators.Clear();resultKeys.Clear();appKeys.Clear();held.Clear();
         foreach(var action in ShortcutCatalog.All) {
             var binding=ShortcutCatalog.Binding(preferences,action);
             if(action.Scope!="app"||ShortcutCatalog.Validate(action,binding,preferences) is not null||!ShortcutGesture.TryParse(binding.Gesture,out var key))continue;
             if(action.Context=="results"){resultKeys.Add((action,key));continue;}
             appKeys.Add((action,key));
-            var accelerator=new KeyboardAccelerator{Key=(VirtualKey)key.Key,Modifiers=ToModifiers(key.Modifiers),ScopeOwner=root};
+            // Default (unscoped) accelerators cover this XAML window, including its
+            // title-bar sibling and periods with no focused content control.
+            var accelerator=new KeyboardAccelerator{Key=(VirtualKey)key.Key,Modifiers=ToModifiers(key.Modifiers)};
             accelerator.Invoked+=(_,args)=>{if(Blocked(action.Context)||Modifiers()!=key.Modifiers)return;args.Handled=true;if(held.Add(key))execute(action.Id);};
-            root.KeyboardAccelerators.Add(accelerator);accelerators.Add(accelerator);
+            routeRoot.KeyboardAccelerators.Add(accelerator);accelerators.Add(accelerator);
         }
         results.HandleShortcut=ResultKey;
     }
@@ -86,5 +103,5 @@ internal sealed class WorkspaceShortcutInput:IDisposable
     }
     private static VirtualKeyModifiers ToModifiers(uint value)=>(value&2)!=0?VirtualKeyModifiers.Control|OtherModifiers(value):OtherModifiers(value);
     private static VirtualKeyModifiers OtherModifiers(uint value)=>((value&1)!=0?VirtualKeyModifiers.Menu:VirtualKeyModifiers.None)|((value&4)!=0?VirtualKeyModifiers.Shift:VirtualKeyModifiers.None);
-    public void Dispose(){foreach(var accelerator in accelerators)root.KeyboardAccelerators.Remove(accelerator);accelerators.Clear();results.HandleShortcut=null;root.RemoveHandler(UIElement.KeyUpEvent,release);root.PreviewKeyDown-=ApplicationKey;owner.Activated-=Activated;held.Clear();}
+    public void Dispose(){foreach(var accelerator in accelerators)routeRoot.KeyboardAccelerators.Remove(accelerator);accelerators.Clear();results.HandleShortcut=null;routeRoot.RemoveHandler(UIElement.KeyUpEvent,release);routeRoot.PreviewKeyDown-=ApplicationKey;root.Loaded-=Loaded;owner.Activated-=Activated;held.Clear();}
 }
