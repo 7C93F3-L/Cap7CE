@@ -13,9 +13,13 @@ internal sealed class IndexMaintenanceView : UserControl
     private readonly StackPanel volumes=Ui.Column();
     private readonly ContentControl volumeHost=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch};
     private readonly TextBlock status=L.Text("ui.index.reading",true);
+    private readonly TextBlock feedbackText=Ui.Text("",true);
+    private readonly ProgressBar progress=new(){Minimum=0,Maximum=100,Height=3};
+    private readonly StackPanel feedback=Ui.Column();
+    private readonly Dictionary<string,(TextBlock Count,TextBlock State)> volumeText=[];
     private readonly List<Button> buttons=[];
-    private Func<string> statusText=()=>AppLanguage.Text("ui.index.reading");
-    private void ShowStatus(Func<string> text){statusText=text;L.Computed(status,text);}
+    private void ShowStatus(Func<string> text)=>L.Computed(status,text);
+    private string? observedTask;
     private bool listening;
     private CoreCatalogTaskStatus[] tasks=[];
     private readonly Controllers.VisibleTaskMonitor monitor=new();
@@ -32,6 +36,9 @@ internal sealed class IndexMaintenanceView : UserControl
         volumeHost.Content=volumes;
         volumes.Spacing=4;
         volumeHost.Margin=new(0,8,0,12);
+        status.TextWrapping=TextWrapping.NoWrap;status.TextTrimming=TextTrimming.CharacterEllipsis;status.MaxLines=1;
+        feedback.Spacing=6;feedback.Visibility=Visibility.Collapsed;feedback.Children.Add(feedbackText);feedback.Children.Add(progress);
+        feedbackText.IsTextSelectionEnabled=true;
         var primary=Action("ui.index.build",()=>BuildAsync(false));
         primary.Style=(Style)Application.Current.Resources["AccentButtonStyle"];
         primary.HorizontalAlignment=HorizontalAlignment.Right;
@@ -42,7 +49,7 @@ internal sealed class IndexMaintenanceView : UserControl
         actions.Children.Add(scroll);Grid.SetColumn(primary,1);actions.Children.Add(primary);
         actions.SizeChanged+=(_,_)=>{var narrow=actions.ActualWidth<460;Grid.SetRow(primary,narrow?1:0);Grid.SetColumn(primary,narrow?0:1);};
         actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
-        Options=Ui.Column(L.Text("ui.index.orderHint",true),volumeHost,actions);
+        Options=Ui.Column(L.Text("ui.index.orderHint",true),volumeHost,feedback,actions);
         Content=status;
         Loaded+=(_,_)=>{
             if(listening)return;listening=true;services.ConnectionChanged+=ConnectionChanged;ReadConnection();
@@ -62,8 +69,15 @@ internal sealed class IndexMaintenanceView : UserControl
     private async void Run(Func<Task> action)
     {
         foreach(var b in buttons)b.IsEnabled=false;volumeHost.IsEnabled=false;
-        try{await action();}catch(Exception e){var message=UiMessage.Key("ui.index.actionFailed",new Dictionary<string,object?>{{"error",FailureText.From(e)}});ShowStatus(()=>message.Render(AppLanguage.Session));}
+        try{await action();}catch(Exception e){ShowFailure(e);}
         finally{var connected=services.Core?.IsConnected==true;foreach(var b in buttons)b.IsEnabled=connected;volumeHost.IsEnabled=connected;}
+    }
+    private void ShowFailure(Exception error)
+    {
+        var message=UiMessage.Key("ui.index.actionFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}});
+        ShowStatus(()=>AppLanguage.Text("ui.index.state.failed"));
+        feedback.Visibility=Visibility.Visible;progress.Visibility=Visibility.Collapsed;
+        L.Message(feedbackText,TextBlock.TextProperty,message);
     }
     private async Task DiscoverAsync()
     {
@@ -73,7 +87,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private async Task ReadAsync()
     {
         await ReadSnapshotAsync(true);
-        if(tasks.Any(t=>t.State=="running"))monitor.Start(async token=>{await ReadSnapshotAsync(false,token);return tasks.Any(t=>t.State=="running");},e=>{var message=FailureText.From(e);ShowStatus(()=>message.Render(AppLanguage.Session));});
+        if(tasks.Any(t=>t.State=="running"))monitor.Start(async token=>{await ReadSnapshotAsync(false,token);return tasks.Any(t=>t.State=="running");},ShowFailure);
     }
     private async Task ReadSnapshotAsync(bool updateVolumes,CancellationToken token=default)
     {
@@ -84,7 +98,7 @@ internal sealed class IndexMaintenanceView : UserControl
         {
             foreach(var choice in Choices)selection[(string)choice.Tag]=choice.IsChecked==true;
             foreach(var item in snapshot.Volumes)if(!order.Contains(item.VolumeId))order.Add(item.VolumeId);
-            volumes.Children.Clear();
+            volumes.Children.Clear();volumeText.Clear();
             var items=snapshot.Volumes.OrderBy(item=>order.IndexOf(item.VolumeId)).ToArray();
             foreach(var item in items)
             {
@@ -102,9 +116,12 @@ internal sealed class IndexMaintenanceView : UserControl
                 choice.VerticalAlignment=VerticalAlignment.Center;
                 var capacity=L.Text("ui.index.capacity",true,()=>new Dictionary<string,object?>{{"size",drive.CapacityAvailable?drive.Capacity:AppLanguage.Text("ui.drive.unavailable")}});
                 var count=L.Text("ui.index.items",true,()=>new Dictionary<string,object?>{{"count",item.Processed}});
+                var state=L.Text(MaintenanceText.VolumeStateKey(item.State),true);state.FontSize=12;
+                var information=Ui.Column(count,state);information.Spacing=2;information.VerticalAlignment=VerticalAlignment.Center;
+                volumeText[item.VolumeId]=(count,state);
                 capacity.VerticalAlignment=count.VerticalAlignment=VerticalAlignment.Center;
-                Grid.SetColumn(capacity,1);Grid.SetColumn(count,2);
-                row.Children.Add(capacity);row.Children.Add(count);
+                Grid.SetColumn(capacity,1);Grid.SetColumn(information,2);
+                row.Children.Add(capacity);row.Children.Add(information);
                 L.Bind(choice,ToolTipService.ToolTipProperty,"ui.index.volumeInfo",()=>new Dictionary<string,object?>{{"fileSystem",item.FileSystem},{"state",AppLanguage.Text(MaintenanceText.VolumeStateKey(item.State))}});
                 choice.Click+=(_,_)=>Run(async()=>{
                     foreach(var entry in Choices)selection[(string)entry.Tag]=entry.IsChecked==true;
@@ -124,19 +141,32 @@ internal sealed class IndexMaintenanceView : UserControl
                     controls.HorizontalAlignment=HorizontalAlignment.Right;
                     Grid.SetRow(capacity,narrow?1:0);Grid.SetColumn(capacity,narrow?0:1);
                     capacity.Margin=narrow?new(28,0,0,0):new(0);
-                    Grid.SetRow(count,narrow?1:0);Grid.SetColumn(count,narrow?1:2);Grid.SetColumnSpan(count,narrow?3:1);
+                    Grid.SetRow(information,narrow?1:0);Grid.SetColumn(information,narrow?1:2);Grid.SetColumnSpan(information,narrow?3:1);
                 };
                 volumes.Children.Add(row);
             }
         }
-        ShowStatus(()=>{
-            var lines=snapshot.Tasks.Select(t=>AppLanguage.Text("ui.index.taskStatus",new Dictionary<string,object?>{
-                {"kind",AppLanguage.Text(MaintenanceText.TaskKindKey(t.Kind))},{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(t.State))}})+(t.ErrorCode is null?"":" · "+t.ErrorCode)).ToList();
-            var unavailable=snapshot.Volumes.Where(v=>v.Selected&&!v.Queryable).Select(v=>v.DisplayName).ToArray();
-            if(unavailable.Length>0)lines.Add(AppLanguage.Text("ui.index.notReady",new Dictionary<string,object?>{{"drives",string.Join(AppLanguage.Text("ui.common.listSeparator"),unavailable)}}));
-            else if(lines.Count==0)lines.Add(AppLanguage.Text(snapshot.Volumes.Count==0?"ui.index.noVolumes":"ui.index.ready"));
-            return string.Join("\n",lines);
-        });
+        foreach(var volume in snapshot.Volumes)if(volumeText.TryGetValue(volume.VolumeId,out var text)){
+            L.Bind(text.Count,TextBlock.TextProperty,"ui.index.items",()=>new Dictionary<string,object?>{{"count",volume.Processed}});
+            L.Bind(text.State,TextBlock.TextProperty,volume.NeedsRebuild?"ui.index.volume.needsRebuild":
+                !volume.Selected&&volume.State=="ready"?"ui.index.volume.disabled":MaintenanceText.VolumeStateKey(volume.State));
+        }
+        var running=snapshot.Tasks.FirstOrDefault(t=>t.State=="running");
+        if(running is not null)observedTask=running.TaskId;
+        ShowStatus(()=>running is not null?AppLanguage.Text(MaintenanceText.TaskKindKey(running.Kind))+"…":
+            snapshot.Volumes.Count==0?AppLanguage.Text("ui.index.noVolumes"):
+            AppLanguage.Text("ui.index.summary",new Dictionary<string,object?>{{"ready",snapshot.Volumes.Count(v=>v.Queryable)},{"total",snapshot.Volumes.Count}}));
+        var tracked=snapshot.Tasks.FirstOrDefault(t=>t.TaskId==observedTask);
+        feedback.Visibility=tracked is null?Visibility.Collapsed:Visibility.Visible;
+        progress.Visibility=running is null?Visibility.Collapsed:Visibility.Visible;
+        if(running is not null){
+            var p=snapshot.Preparation;progress.IsIndeterminate=p?.Fraction is null;progress.Value=Math.Clamp(p?.Fraction??0,0,1)*100;
+            L.Computed(feedbackText,()=>p is null?AppLanguage.Text(MaintenanceText.TaskKindKey(running.Kind)):
+                AppLanguage.Text("ui.progress.indexDetails",new Dictionary<string,object?>{
+                    {"stage",AppLanguage.Text(ProgressText.IndexStageKey(p.Stage))},{"drive",p.Drive},{"count",p.Processed}}));
+        }else if(tracked is not null)L.Computed(feedbackText,()=>AppLanguage.Text("ui.index.taskStatus",new Dictionary<string,object?>{
+            {"kind",AppLanguage.Text(MaintenanceText.TaskKindKey(tracked.Kind))},{"state",AppLanguage.Text(MaintenanceText.TaskStateKey(tracked.State))}})+
+            (tracked.ErrorCode is null?"":" · "+AppLanguage.Text("ui.index.actionFailed",new Dictionary<string,object?>{{"error",MaintenanceText.Error(tracked.ErrorCode,AppLanguage.Session)}})));
         await services.RefreshVolumesAsync();
     }
     private async Task BuildAsync(bool rebuild)
@@ -149,7 +179,8 @@ internal sealed class IndexMaintenanceView : UserControl
         await Core.RequestAsync<VolumeSelectionResponse>(CoreOperations.VolumeSelection,new VolumeSelectionRequest(ids));
         var reply=await Core.RequestAsync<CatalogBuildResponse>(rebuild?CoreOperations.CatalogRebuild:CoreOperations.CatalogBuild,new CatalogBuildRequest(ids));
         if(reply.Accepted)services.TaskNotices.Begin("index",reply.TaskId);
-        await ReadAsync();var previous=statusText;ShowStatus(()=>AppLanguage.Text("ui.index.accepted",new Dictionary<string,object?>{{"id",reply.TaskId}})+"\n"+previous());
+        if(reply.Accepted)observedTask=reply.TaskId;
+        await ReadAsync();
     }
     private async Task CancelAsync()
     {

@@ -3332,8 +3332,12 @@
     "en-US": "Rebuild…"
   },
   "ui.index.orderHint": {
-    "zh-CN": "按列表顺序处理所选磁盘。",
-    "en-US": "Process selected drives in list order."
+    "zh-CN": "勾选要建立或更新索引的磁盘，按列表顺序处理。更改勾选不会删除已有索引。",
+    "en-US": "Select drives to build or update in list order. Changing the selection does not delete existing indexes."
+  },
+  "ui.index.summary": {
+    "zh-CN": "{ready} / {total} 个磁盘索引就绪",
+    "en-US": "{ready} / {total} drive indexes ready"
   },
   "ui.index.disconnected": {
     "zh-CN": "后台未连接，请到“诊断 → 服务维护”重新连接。",
