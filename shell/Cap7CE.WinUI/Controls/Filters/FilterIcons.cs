@@ -41,7 +41,7 @@ internal static class FilterIcons
         // Visual-state foreground changes on a presenter are not a reliable notification
         // source for a separately snapshotted Shape brush. Follow the semantic state.
         void Sync()=>icon.InkForeground=owner.IsChecked==true
-            ?(Brush)Application.Current.Resources["CapAccentForegroundBrush"]:owner.Foreground;
+            ?(Brush)Application.Current.Resources["CapFilterSelectedForegroundBrush"]:owner.Foreground;
         owner.Checked+=(_,_)=>Sync();owner.Unchecked+=(_,_)=>Sync();owner.Indeterminate+=(_,_)=>Sync();
         owner.Loaded+=(_,_)=>Sync();
         owner.RegisterPropertyChangedCallback(Control.ForegroundProperty,(_,_)=>Sync());
