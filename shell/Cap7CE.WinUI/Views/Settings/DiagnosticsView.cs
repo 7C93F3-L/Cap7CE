@@ -10,7 +10,9 @@ internal sealed class DiagnosticsView : StackPanel
 {
     private readonly ShellServices services;
     private readonly Window owner;
-    private readonly TextBlock summary=Ui.Text("",true),recent=Ui.Text("",true),feedback=Ui.Text("",true);
+    private readonly TextBlock recent=Ui.Text("",true),feedback=Ui.Text("",true);
+    private readonly TextBlock coreState=L.Text("common.loading",true),readerState=L.Text("common.loading",true),
+        edgeState=L.Text("common.loading",true),notificationState=L.Text("common.loading",true);
     private readonly Button refresh,export,openRecord;
     private string? recordPath;
     private string reader="unknown";
@@ -22,7 +24,13 @@ internal sealed class DiagnosticsView : StackPanel
         refresh=L.Button("common.refresh",async()=>await RefreshAsync());export=L.Button("settings.exportDiagnostics",async()=>await ExportAsync());
         openRecord=L.Button("common.open",()=>{try{if(recordPath is {} logPath)System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(logPath){UseShellExecute=true});}catch(Exception error){ShowError(error);}});openRecord.IsEnabled=false;
         refresh.HorizontalAlignment=HorizontalAlignment.Right;
-        Children.Add(new SettingsCard("ui.diagnostics.status","ui.diagnostics.statusHint",new SettingsExpandable(Ui.Column(summary,refresh)),localized:true));
+        var status=Ui.Column();
+        foreach(var (key,value) in new[]{("ui.diagnostics.coreLabel",coreState),("ui.diagnostics.readerLabel",readerState),
+            ("ui.diagnostics.edgeLabel",edgeState),("settings.systemNotifications",notificationState)}) {
+            value.IsTextSelectionEnabled=true;status.Children.Add(new SettingsFieldRow(key,value,localized:true));
+        }
+        status.Children.Add(refresh);
+        Children.Add(new SettingsCard("ui.diagnostics.status","ui.diagnostics.statusHint",new SettingsExpandable(status),localized:true));
         Children.Add(new SettingsCard("ui.diagnostics.recent","",openRecord,localized:true,descriptionContent:recent));
         var path=Ui.Text(PreferenceStore.DataRoot,true);path.IsTextSelectionEnabled=true;
         Children.Add(new SettingsCard("ui.diagnostics.path","",L.Button("native.diagnostics.openFolder",OpenFolder),localized:true,descriptionContent:path));
@@ -40,7 +48,10 @@ internal sealed class DiagnosticsView : StackPanel
             var core=services.Core?.IsConnected==true;var edge=services.Preferences.Current.EdgeCollapseEnabled;
             var notification=DiagnosticSnapshot.NotificationState(services);
             var state=reader;var timestamp=lastError;
-            L.Computed(summary,()=>AppLanguage.Text("ui.diagnostics.summary",new Dictionary<string,object?>{{"core",AppLanguage.Text(core?"ui.diagnostics.connected":"ui.diagnostics.disconnected")},{"reader",AppLanguage.Text("ui.diagnostics.reader."+state)},{"edge",AppLanguage.Text(edge?"settings.enabled":"settings.disabled")},{"notification",AppLanguage.Text("ui.diagnostics.notification."+notification)}}));
+            L.Bind(coreState,TextBlock.TextProperty,core?"ui.diagnostics.connected":"ui.diagnostics.disconnected");
+            L.Bind(readerState,TextBlock.TextProperty,"ui.diagnostics.reader."+state);
+            L.Bind(edgeState,TextBlock.TextProperty,edge?"settings.enabled":"settings.disabled");
+            L.Bind(notificationState,TextBlock.TextProperty,"ui.diagnostics.notification."+notification);
             if(timestamp is {} time)L.Bind(recent,TextBlock.TextProperty,"ui.diagnostics.recordTime",()=>new Dictionary<string,object?>{{"time",time.ToString("yyyy-MM-dd HH:mm:ss")}});else L.Bind(recent,TextBlock.TextProperty,"common.notCreated");
         }catch(Exception error){ShowError(error);}
         finally{refreshing=false;refresh.IsEnabled=true;}

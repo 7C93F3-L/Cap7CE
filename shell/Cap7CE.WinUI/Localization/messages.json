@@ -4561,6 +4561,18 @@
     "zh-CN": "未连接",
     "en-US": "Disconnected"
   },
+  "ui.diagnostics.coreLabel": {
+    "zh-CN": "Core",
+    "en-US": "Core"
+  },
+  "ui.diagnostics.readerLabel": {
+    "zh-CN": "读取服务",
+    "en-US": "Reader service"
+  },
+  "ui.diagnostics.edgeLabel": {
+    "zh-CN": "边缘模式",
+    "en-US": "Edge mode"
+  },
   "ui.diagnostics.summary": {
     "zh-CN": "Core：{core}\n读取服务：{reader}\n边缘模式：{edge}\n系统通知：{notification}",
     "en-US": "Core: {core}\nReader service: {reader}\nEdge mode: {edge}\nNotifications: {notification}"
