@@ -10,6 +10,7 @@ namespace Cap7CE.WinUI.Controls;
 
 internal sealed class ImagePreviewView : Grid
 {
+    private const int ToolsIdleDelayMs=1500;
     private readonly Image image=new(){Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly Grid surface=new(){Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent),HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly ScrollViewer scroll=new(){ZoomMode=ZoomMode.Enabled,MinZoomFactor=0.1f,MaxZoomFactor=8,
@@ -44,7 +45,7 @@ internal sealed class ImagePreviewView : Grid
         Children.Add(overlay);
         idle=DispatcherQueue.CreateTimer();idle.Interval=TimeSpan.FromMilliseconds(100);idle.IsRepeating=true;
         idle.Tick+=(_,_)=>{
-            if(Environment.TickCount64-lastActivity<3000||KeyboardInside()||dragPointer is not null)return;
+            if(Environment.TickCount64-lastActivity<ToolsIdleDelayMs||KeyboardInside()||dragPointer is not null)return;
             overlay.Opacity=0;overlay.IsHitTestVisible=false;idle.Stop();
         };
         AddHandler(PointerMovedEvent,new PointerEventHandler((_,e)=>{

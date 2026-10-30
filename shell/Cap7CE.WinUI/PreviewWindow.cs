@@ -45,7 +45,7 @@ internal sealed class PreviewWindow : Window
         root.RowDefinitions.Add(new(){Height=GridLength.Auto});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         viewport.Children.Add(content);Grid.SetRow(viewport,1);root.Children.Add(viewport);Grid.SetRow(status,2);root.Children.Add(status);
         PreviewViewportStyle.Apply(viewport);
-        navigation=new(viewport,()=>Move(-1),()=>Move(1));Canvas.SetZIndex(navigation,10);viewport.Children.Add(navigation);
+        navigation=new(viewport,()=>Move(-1),()=>Move(1),WinRT.Interop.WindowNative.GetWindowHandle(this));Canvas.SetZIndex(navigation,10);viewport.Children.Add(navigation);
         var surface=new ContentControl {Content=root,IsTabStop=true,HorizontalContentAlignment=HorizontalAlignment.Stretch,VerticalContentAlignment=VerticalAlignment.Stretch};Content=surface;
         var initialFocusPending=true;
         surface.Loaded+=(_,_)=>DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low,()=>{
