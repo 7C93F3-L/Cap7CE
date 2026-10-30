@@ -56,7 +56,7 @@ public sealed partial class MainWindow : Window
         services.BackgroundError+=text=>DispatcherQueue.TryEnqueue(()=>{if(!closed)Notice(text);});
         services.MaintenanceRequested+=OpenMaintenance;
         filterAvailability=new(services,state=>DispatcherQueue.TryEnqueue(()=>{if(!closed&&filterAvailability?.IsCurrent(state)==true)filters.SetAvailability(state);}));
-        commands=new(services,()=>Root.XamlRoot,Notice);details=new(services,commands,Notice);
+        commands=new(services,()=>Root.XamlRoot,Notice,WinRT.Interop.WindowNative.GetWindowHandle(this));details=new(services,commands,Notice);
         keywordNotice=new(services.AutoKeywords,notifications,details.SetAutoKeywordBusy);
         indexNotice=new(services,notifications);
         metadataNotice=new(services.Metadata,notifications);
@@ -101,7 +101,7 @@ public sealed partial class MainWindow : Window
         services.AutoKeywords.Saved+=item=>details.RefreshKeywords(item);
         commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
-        commands.ItemsDeleted+=active.RemoveDeleted;
+        commands.ItemsDeleted+=active.RemoveDeleted;commands.ItemsRenamed+=()=>{results.ClearSelection();Refresh();};
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};
         WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);
         pointerInput=new(Surface,results.ClearSelection,forward=>{if(active is {} session)commands.Run(()=>forward?session.ForwardAsync():session.BackAsync());});

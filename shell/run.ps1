@@ -5,7 +5,12 @@ $phaseExecutable = Join-Path $PSScriptRoot 'artifacts/winui/Cap7CE.WinUI.exe'
 $phaseInputs = @(
     (Join-Path $PSScriptRoot 'build.ps1'),
     (Join-Path $PSScriptRoot 'Cap7CE.WinUI'),
-    (Join-Path $PSScriptRoot 'Cap7CE.QueryHost')
+    (Join-Path $PSScriptRoot 'Cap7CE.QueryHost'),
+    (Join-Path $phaseRoot 'core/src/Cap7CE.Core.FileOperations'),
+    (Join-Path $phaseRoot 'core/src/Cap7CE.Core.FileOperations.Host'),
+    (Join-Path $phaseRoot 'native/Cap7CE.Core.FileOperations'),
+    (Join-Path $phaseRoot 'scripts/core-file-operations-build.cjs'),
+    (Join-Path $phaseRoot 'scripts/core-file-operations-freshness.cjs')
 )
 $phaseNeedsBuild = -not (Test-Path -LiteralPath $phaseExecutable)
 if (-not $phaseNeedsBuild) {

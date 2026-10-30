@@ -26,6 +26,7 @@ internal sealed class ResultsView : UserControl
     public event Action? Retry,ClearFilters;
     public Func<KeyRoutedEventArgs,bool>? HandleShortcut {get;set;}
     private FileCommands? commands;
+    private ResultRenameController? rename;
     private AssetCollection? items;
     private bool listMode;
     private bool horizontal;
@@ -76,7 +77,7 @@ internal sealed class ResultsView : UserControl
         root.Background=new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
         root.AddHandler(UIElement.TappedEvent,new TappedEventHandler((_,e)=>{if(IsBlank(e.OriginalSource as DependencyObject))ClearSelection();}),true);Content=root;
     }
-    public void Configure(FileCommands value){commands=value;gallery.Configure(value);}
+    public void Configure(FileCommands value){rename?.Dispose();commands=value;gallery.Configure(value);rename=new(this,value); }
     public void Bind(AssetCollection value,bool isHome=false,bool busy=false,UiMessage? error=null,bool filtered=false,bool preserveSelection=false)
     {
         if(!ReferenceEquals(items,value)||home!=isHome) {

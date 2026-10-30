@@ -9,7 +9,8 @@ try {
         $phaseMissingWorkers = @('node.exe','visual-cache.cjs','provider-preview.cjs','office-preview.cjs','model-runtime.cjs','extractors.json') | Where-Object { -not (Test-Path (Join-Path 'artifacts/metadata-worker/v1' $_)) }
         if ($phaseMissingWorkers) { & node scripts/metadata-worker-build.cjs; if ($LASTEXITCODE) { throw 'Core Node build failed' } }
         if (-not (Test-Path 'core/artifacts/configuration-host/Cap7CE.Core.Configuration.Host.exe')) { & node scripts/core-configuration-build.cjs; if ($LASTEXITCODE) { throw 'Configuration host build failed' } }
-        if (-not (Test-Path 'core/artifacts/file-operations-host/Cap7CE.Core.FileOperations.Host.exe')) { & node scripts/core-file-operations-build.cjs; if ($LASTEXITCODE) { throw 'File operations host build failed' } }
+        & node -e "process.exit(require('./scripts/core-file-operations-freshness.cjs').isFresh(process.cwd()) ? 0 : 1)"
+        if ($LASTEXITCODE -ne 0) { & node scripts/core-file-operations-build.cjs; if ($LASTEXITCODE) { throw 'File operations host build failed' } }
     }
     & node scripts/winui-resources.cjs
     if ($LASTEXITCODE) { throw 'WinUI resource generation failed' }

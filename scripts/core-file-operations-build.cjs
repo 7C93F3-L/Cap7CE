@@ -28,3 +28,5 @@ const published = spawnSync("dotnet", ["publish", "core/src/Cap7CE.Core.FileOper
 });
 if (published.error) throw published.error;
 process.exitCode = published.status ?? 1;
+
+require("./core-file-operations-freshness.cjs").record(root);

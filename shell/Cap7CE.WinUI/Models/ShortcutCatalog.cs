@@ -15,7 +15,7 @@ internal static class ShortcutCatalog
         new("restoreDefaultWindow",Scope:"global"),new("toggleWindowMode"),
         new("togglePin"),new("toggleFilters"),new("toggleDetails"),new("viewSquare"),new("viewGallery"),new("viewList"),new("metadata"),
         new("openSelected","Enter",Context:"results"),new("previewSelected","Space",Context:"results"),
-        new("deleteSelected","Delete",Context:"results"),new("selectAll","Ctrl+A",Context:"results"),new("copyFiles","Ctrl+C",Context:"results"),
+        new("renameSelected","F2",Context:"results"),new("deleteSelected","Delete",Context:"results"),new("selectAll","Ctrl+A",Context:"results"),new("copyFiles","Ctrl+C",Context:"results"),
         new("copyPaths",Context:"results"),new("revealFile",Context:"results"),new("aiKeywords",Context:"results")
     ];
     public static ShortcutBinding Binding(ShellPreferences preferences,ShortcutDefinition action)

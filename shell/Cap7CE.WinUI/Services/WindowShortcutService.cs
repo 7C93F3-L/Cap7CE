@@ -22,6 +22,7 @@ internal sealed class WindowShortcutService:IDisposable
         void Selected(Action<IReadOnlyList<AssetItem>> action){var selected=results.Selection;if(selected.Count>0)action(selected);}
         actions["openSelected"]=()=>Selected(items=>commands.Open(items[0]));
         actions["previewSelected"]=()=>Selected(items=>commands.Preview(items[0]));
+        actions["renameSelected"]=()=>Selected(commands.Rename);
         actions["deleteSelected"]=()=>Selected(items=>{if(items.All(item=>item.Entry.FileReference is not null))commands.Run(()=>commands.DeleteAsync(items));});
         actions["selectAll"]=results.SelectAll;actions["copyFiles"]=()=>Selected(items=>commands.Run(()=>FileCommands.CopyFilesAsync(items)));
         actions["copyPaths"]=()=>Selected(FileCommands.CopyPaths);actions["revealFile"]=()=>Selected(items=>commands.Reveal(items[0]));

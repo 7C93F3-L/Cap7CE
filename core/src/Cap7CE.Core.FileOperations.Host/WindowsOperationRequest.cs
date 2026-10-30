@@ -7,6 +7,7 @@ public static class WindowsOperationRequest
 {
     public static void Dispatch(JsonElement root, Utf8JsonWriter writer)
     {
+        if(root.GetProperty("operation").GetString()=="rename-items"){ItemRenameRequest.Dispatch(root,writer);return;}
         var source = root.GetProperty("path").GetString()!; var operation = root.GetProperty("operation").GetString();
         var result = operation == "trash" ? WindowsFileOperation.RecycleItem(source)
             : operation == "rename" && nuint.TryParse(root.GetProperty("owner").GetString(), out var owner)

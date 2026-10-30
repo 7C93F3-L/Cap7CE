@@ -15,7 +15,7 @@ const prerequisites = [
   ['core/artifacts/configuration-host/Cap7CE.Core.Configuration.Host.exe', 'core-configuration-build.cjs'],
   ['core/artifacts/file-operations-host/Cap7CE.Core.FileOperations.Host.exe', 'core-file-operations-build.cjs']
 ];
-for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target))) node(script);
+for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target)) || script==='core-file-operations-build.cjs'&&!require('./core-file-operations-freshness.cjs').isFresh(root)) node(script);
 if (!fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
   run(process.execPath, ['scripts/core-capability-payload-build.cjs', '--product']);
 node('metadata-worker-build.cjs');

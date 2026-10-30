@@ -20,6 +20,7 @@ internal static class ResultContextMenu
                 "open"=>L.MenuItem("menu.open",()=>commands.Run(()=>{commands.Open(first);return Task.CompletedTask;}),"\uE8A5"),
                 "reveal"=>L.MenuItem("menu.reveal",()=>commands.Run(()=>{commands.Reveal(first);return Task.CompletedTask;}),"\uE838"),
                 "copyPaths"=>L.MenuItem(items.Count>1?"menu.copyPaths":"menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8",()=>new Dictionary<string,object?>{{"count",items.Count}}),
+                "rename"=>L.MenuItem("menu.rename",()=>commands.Rename(items),"\uE8AC"),
                 "delete"=>L.MenuItem("menu.delete",()=>commands.Run(()=>commands.DeleteAsync(items)),"\uE74D"),
                 "favorite"=>L.MenuItem(favorite is null?"menu.addFavorite":"menu.removeFavorite",()=>commands.Run(()=>favorite is null
                     ?favorites.ExecuteAsync("add",path:first.FullPath):favorites.ExecuteAsync("remove",id:favorite.Id)),"\uE734"),
@@ -27,6 +28,7 @@ internal static class ResultContextMenu
                 "autoKeywords"=>L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;})),
                 _=>L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")
             };
+            if(action.Id=="rename"){item.IsEnabled=commands.CanRename(items);L.Bind(item,ToolTipService.ToolTipProperty,item.IsEnabled?"ui.rename.hint":"ui.rename.selectionHint");}
             if(action.Id=="delete")item.IsEnabled=items.All(entry=>entry.Entry.FileReference is not null);
             if(action.Id=="autoKeywords"){
                 item.Icon=AiActionIcon.Attach(item);

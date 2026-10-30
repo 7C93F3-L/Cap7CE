@@ -8,7 +8,7 @@ internal static class ResultMenuRules
     {
         if(count==0)return [];
         List<ResultMenuAction> actions=[new("preview"),new("open"),new("reveal"),new("copyPaths")];
-        if(!home)actions.Add(new("delete"));
+        if(!home){actions.Add(new("rename"));actions.Add(new("delete"));}
         if(count==1&&directory)actions.Add(new("favorite"));
         if(!home){actions.Add(new("editKeywords",true));actions.Add(new("autoKeywords"));}
         else if(count==1)actions.Add(new("autoKeywords",true));

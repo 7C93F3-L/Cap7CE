@@ -10,7 +10,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 
 namespace Cap7CE.WinUI.Services;
-internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRoot, Action<UiMessage> notice)
+internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRoot, Action<UiMessage> notice,nint window=0)
 {
     private readonly SemaphoreSlim operation = new(1);
     public event Action<AssetItem>? PreviewRequested;
@@ -43,6 +43,26 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     {
         FileAccessGuard.Validate(item);
         var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true, Arguments = $"/select,\"{item.FullPath}\"" }; Process.Start(info);
+    }
+    public event Action<IReadOnlyList<AssetItem>>? RenameRequested;
+    public event Action? ItemsRenamed;
+    public bool CanRename(IReadOnlyList<AssetItem> items)=>items.Count is >0 and <=200&&items.All(item=>item.FullPath.Length>3
+        &&!item.Entry.Id.StartsWith("home-",StringComparison.Ordinal)&&(!item.Entry.IsDirectory||!services.Favorites.Items.Any(favorite=>
+            favorite.Path.Equals(item.FullPath,StringComparison.OrdinalIgnoreCase)||favorite.Path.StartsWith(item.FullPath.TrimEnd('\\')+"\\",StringComparison.OrdinalIgnoreCase))));
+    public void Rename(IReadOnlyList<AssetItem> items){if(CanRename(items))RenameRequested?.Invoke(items.ToArray());}
+    internal async Task RenameAsync(IReadOnlyList<AssetItem> items,string name)
+    {
+        if(!CanRename(items))throw new UiFailure("ui.rename.invalidSelection");
+        if(items.Count==1&&name==Path.GetFileName(items[0].FullPath))return;
+        if(!await operation.WaitAsync(0))throw new UiFailure("ui.error.fileBusy");
+        try {
+            foreach(var item in items)FileAccessGuard.Validate(item);
+            BeforeMutation?.Invoke();await services.ReleaseSourcesAsync();foreach(var item in items)FileAccessGuard.Validate(item);
+            var result=await ItemRenameService.ExecuteAsync(services,items,name,window);
+            if(result.GetProperty("changes").GetArrayLength()>0)ItemsRenamed?.Invoke();
+            if(!result.GetProperty("success").GetBoolean()&&!result.GetProperty("cancelled").GetBoolean())
+                throw new UiFailure("ui.rename.failed",new Dictionary<string,object?>{{"count",result.GetProperty("failed").GetInt32()}});
+        }finally{AfterMutation?.Invoke();operation.Release();}
     }
     public static void CopyPaths(IReadOnlyList<AssetItem> items)
         => CopyPath(string.Join(Environment.NewLine, items.Select(i => i.FullPath)));

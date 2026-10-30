@@ -5,10 +5,12 @@
 #include <string>
 
 namespace cap7ce::core {
+using RenameCallback = void(__stdcall*)(LPCWSTR, LPCWSTR, HRESULT);
 class OperationSink final : public IFileOperationProgressSink {
   std::atomic<ULONG> references_{1};
  public:
   bool renamed = false;
+  RenameCallback rename_completed = nullptr;
   HRESULT error = S_OK;
   std::wstring actual_path;
   HRESULT STDMETHODCALLTYPE QueryInterface(REFIID id, void** result) override {
@@ -22,15 +24,16 @@ class OperationSink final : public IFileOperationProgressSink {
   HRESULT STDMETHODCALLTYPE StartOperations() override { return S_OK; }
   HRESULT STDMETHODCALLTYPE FinishOperations(HRESULT) override { return S_OK; }
   HRESULT STDMETHODCALLTYPE PreRenameItem(DWORD, IShellItem*, LPCWSTR) override { return S_OK; }
-  HRESULT STDMETHODCALLTYPE PostRenameItem(DWORD, IShellItem*, LPCWSTR, HRESULT result, IShellItem* created) override {
-    error = result;
-    if (FAILED(result) || !created) return S_OK;
-    PWSTR value = nullptr;
-    const auto status = created->GetDisplayName(SIGDN_FILESYSPATH, &value);
-    if (FAILED(status)) { error = status; return S_OK; }
-    try { actual_path = value; renamed = true; }
-    catch (...) { error = E_OUTOFMEMORY; }
-    CoTaskMemFree(value); return S_OK;
+  HRESULT STDMETHODCALLTYPE PostRenameItem(DWORD, IShellItem* source, LPCWSTR, HRESULT result, IShellItem* created) override {
+    error = result; PWSTR before = nullptr, value = nullptr;
+    if (source) source->GetDisplayName(SIGDN_FILESYSPATH, &before);
+    if (SUCCEEDED(result) && created) {
+      const auto status = created->GetDisplayName(SIGDN_FILESYSPATH, &value);
+      if (FAILED(status)) error = status;
+      else try { actual_path = value; renamed = true; } catch (...) { error = E_OUTOFMEMORY; }
+    }
+    if (rename_completed) rename_completed(before, value, error);
+    CoTaskMemFree(before); CoTaskMemFree(value); return S_OK;
   }
   HRESULT STDMETHODCALLTYPE PreMoveItem(DWORD, IShellItem*, IShellItem*, LPCWSTR) override { return S_OK; }
   HRESULT STDMETHODCALLTYPE PostMoveItem(DWORD, IShellItem*, IShellItem*, LPCWSTR, HRESULT, IShellItem*) override { return S_OK; }

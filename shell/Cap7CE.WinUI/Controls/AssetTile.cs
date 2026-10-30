@@ -15,6 +15,7 @@ public sealed class AssetTile : Grid
     private readonly AssetPlaceholderIcon formatIcon=new(){Width=64,Height=64};
     private readonly AssetNameLabel nameLabel=new();
     private TextBlock title=>nameLabel.Text;
+    internal TextBlock RenameAnchor=>title;
     private readonly Border caption=new(),captionSelected=new(),restStroke=new(),hover=new(),selected=new();
     private readonly ResultCardInteraction interaction;
     private CompositionRoundedRectangleGeometry? clipGeometry;

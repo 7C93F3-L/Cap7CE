@@ -32,7 +32,7 @@
   <DataTemplate x:Key="CapAssetListTemplate">
     <StackPanel Orientation="Horizontal" Spacing="18" Padding="6">
       <FontIcon Glyph="{Binding Glyph}" FontSize="16"/>
-      <TextBlock language:LanguageText.Literal="{Binding Name}" Width="300" TextTrimming="CharacterEllipsis"/>
+      <TextBlock x:Name="RenameName" language:LanguageText.Literal="{Binding Name}" Width="300" TextTrimming="CharacterEllipsis"/>
       <TextBlock language:LanguageText.Literal="{Binding SizeLabel}" language:LanguageText.Key="{Binding SizeResourceKey}" Width="90"/>
       <TextBlock Text="{Binding ModifiedLabel}" Width="150"/>
       <TextBlock Text="{Binding FullPath}" Opacity="0.55" TextTrimming="CharacterEllipsis"/>

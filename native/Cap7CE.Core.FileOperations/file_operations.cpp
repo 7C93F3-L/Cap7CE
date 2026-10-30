@@ -61,3 +61,5 @@ extern "C" __declspec(dllexport) HRESULT __stdcall Cap7CE_RecycleItem(LPCWSTR so
     *aborted = cancelled ? 1 : 0; return cancelled ? E_ABORT : S_OK;
   } catch (...) { return E_FAIL; }
 }
+
+#include "rename_items.h"

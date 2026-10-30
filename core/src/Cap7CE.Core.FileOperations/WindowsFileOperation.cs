@@ -22,14 +22,14 @@ public static partial class WindowsFileOperation
             return status < 0 ? new("failed", Error: status) : outcome == 1 ? new("renamed", new string(output)) : new("cancelled");
         }
     }
-    public static WindowsFileOperationResult RecycleItem(string source) => OnSta(() => {
+    public static WindowsFileOperationResult RecycleItem(string source) => OnSta<WindowsFileOperationResult>(() => {
         var status = Recycle(WindowsFileOperationRules.Source(source), out var aborted);
         return status >= 0 && aborted == 0 ? new("deleted") : new("failed", Error: status);
     });
-    private static WindowsFileOperationResult OnSta(Func<WindowsFileOperationResult> action)
+    internal static T OnSta<T>(Func<T> action)
     {
         if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA) return action();
-        WindowsFileOperationResult? result = null; Exception? failure = null;
+        T? result = default; Exception? failure = null;
         var thread = new Thread(() => { try { result = action(); } catch (Exception error) { failure = error; } });
         thread.SetApartmentState(ApartmentState.STA); thread.Start(); thread.Join();
         if (failure is not null) throw failure; return result!;

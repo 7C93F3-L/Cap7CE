@@ -8,6 +8,7 @@ internal static class ShortcutChecks
     {
         var checks=0;void Check(bool value,string message){checks++;if(!value)throw new Exception(message);}
         var preferences=new ShellPreferences();
+        Check(ShortcutCatalog.All.Single(action=>action.Id=="renameSelected") is {Gesture:"F2",Context:"results",Scope:"app"},"F2 renames only within results");
         foreach(var action in ShortcutCatalog.All){
             var binding=ShortcutCatalog.Binding(preferences,action);
             Check(ShortcutCatalog.Validate(action,binding,preferences) is null,"Every default binding must be valid and unique: "+action.Id);
