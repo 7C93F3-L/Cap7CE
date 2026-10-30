@@ -107,7 +107,7 @@ public sealed partial class MainWindow : Window
         WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);
         pointerInput=new(Surface,results.ClearSelection,forward=>{if(active is {} session)commands.Run(()=>forward?session.ForwardAsync():session.BackAsync());});
         Surface.KeyDown+=KeyDown;
-        tray=new(this,services,OpenSettings,Notice);
+        tray=new(this,services,OpenSettings,OpenUpdates,Notice);services.Updates.InstallerStarted+=tray.Exit;
         edgeCollapse=new(this,Root,()=>preview is not null||settings is not null||ResultDrag.IsActive,Notice);
         commandInput=new(toolbar,notifications,new Commands.QuickCommandActions(services,this,()=>active,workspace,OpenSettings,SetPinnedAsync,()=>!layout.HorizontalGrid,tray.Exit));
         ResultDrag.Changed+=edgeCollapse.Wake;
@@ -185,6 +185,7 @@ public sealed partial class MainWindow : Window
         try{if(settings is null){settings=new(services);settings.Closed+=(_,_)=>{settings=null;edgeCollapse.Wake();};}WindowActivation.Show(settings);}
         catch(Exception error){NativeDiagnostics.VisualFailure(error);Notice(UiMessage.Key("ui.notice.settingsFailed"));}
     }
+    private void OpenUpdates(){OpenSettings();settings?.ShowUpdates();}
     private void OpenMaintenance(string? path)
     {
         OpenSettings();settings?.ShowMaintenance();
@@ -217,7 +218,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;catalogHealth.Dispose();tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

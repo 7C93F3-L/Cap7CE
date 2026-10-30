@@ -149,7 +149,7 @@
     "probe:window-controls-overlay": "electron scripts/window-controls-overlay-probe.cjs",
     "preview": "vite preview --host 127.0.0.1",
     "pack": "npm run build && node scripts/native-pack.cjs",
-    "dist:installer": "node scripts/native-installer-unavailable.cjs",
+    "dist:installer": "npm run build && node scripts/native-installer-build.cjs",
     "dist:core-capability-installer": "node scripts/native-installer-unavailable.cjs",
     "test:epub-preview": "node tests/epub-preview.integration.cjs",
     "test:mobi-preview": "node tests/mobi-preview.integration.cjs",

@@ -15,7 +15,7 @@ internal sealed class SettingsCatalog
     private readonly Action<UiMessage> notice;
     private readonly Window owner;
     private ModelSettingsView? models;
-    private bool metadataFocus;
+    private bool metadataFocus,updatesFocus;
     private readonly Action<string,Func<UIElement>> openSubpage;
     public List<SettingsEntry> Entries {get;}=[];
     public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<UiMessage> notice,Action<string,Func<UIElement>> openSubpage)
@@ -25,6 +25,7 @@ internal sealed class SettingsCatalog
     }
     public void BeginRender()=>models=null;
     public void FocusMetadata()=>metadataFocus=true;
+    public void FocusUpdates()=>updatesFocus=true;
     private UIElement MetadataView()
     {
         var view=new MetadataMaintenanceView(services,owner);
@@ -95,14 +96,15 @@ internal sealed class SettingsCatalog
     }
     private void About()
     {
-        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",VersionActions,descriptionOverride:"native.update.description");
+        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",VersionActions,expanded:true,descriptionOverride:"native.update.description");
         Mainline("关于","application","stableSettings.license","stableSettings.desc.license",()=>new TextBlock());
     }
     private UIElement VersionActions()
     {
-        var version=L.Text("settings.updateCurrentVersion",parameters:()=>new Dictionary<string,object?>{{"version",NativeVersion.Text}});
-        version.VerticalAlignment=VerticalAlignment.Center;
-        return Ui.Row(version,L.Button("settings.checkForUpdates",()=>actions.Run(async()=>notice(await NativeUpdates.CheckAsync()))));
+        var focus=updatesFocus;updatesFocus=false;
+        var view=new NativeUpdateView(services.Updates,focus);
+        if(focus)view.Loaded+=(_,_)=>view.DispatcherQueue.TryEnqueue(()=>view.StartBringIntoView());
+        return view;
     }
     private UIElement Choice(string[] labels,Func<int> read,Func<int,Task> change)
     {

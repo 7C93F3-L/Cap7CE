@@ -9,15 +9,15 @@ internal sealed class TrayController : IDisposable
 {
     private readonly Window window;
     private readonly ShellServices services;
-    private readonly Action settings;
+    private readonly Action settings,updates;
     private readonly Action<UiMessage> report;
     private TrayIcon? icon;
 
     private bool initialized,enabled,exiting,disposed,menuOpen,working;
     public bool RegistrationFailed=>services.Preferences.Current.TrayIconEnabled&&icon?.Registered!=true;
-    public TrayController(Window window,ShellServices services,Action settings,Action<UiMessage> report)
+    public TrayController(Window window,ShellServices services,Action settings,Action updates,Action<UiMessage> report)
     {
-        this.window=window;this.services=services;this.settings=settings;this.report=report;
+        this.window=window;this.services=services;this.settings=settings;this.updates=updates;this.report=report;
         window.AppWindow.Closing+=Closing;services.Preferences.Changed+=Changed;
     }
     public void Initialize(){initialized=true;Apply();}
@@ -69,7 +69,7 @@ internal sealed class TrayController : IDisposable
                 try{await new ModelCommandActions(services).ExecuteAsync(action==20?"llama:start":"llama:stop",null);}
                 finally{working=false;}break;
             case 30:SystemSettings.LaunchAtLogin=!SystemSettings.LaunchAtLogin;break;
-            case 31:Show();report(await NativeUpdates.CheckAsync());break;
+            case 31:updates();break;
             case 40:Exit();break;
         }
     }

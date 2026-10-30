@@ -33,7 +33,12 @@ export interface AppUpdateAsset {
   downloadUrl: string;
 }
 
+export type AppUpdateKind = "electron" | "winui";
+export const appUpdateInstallerName = (version: string, kind: AppUpdateKind = "electron") =>
+  `Cap7CE-${kind === "winui" ? "WinUI-" : ""}Setup-${version}-x64.exe`;
+
 export interface AppUpdateResolution extends AppUpdateCheckResult {
+  reason?: "no_native_release";
   asset?: AppUpdateAsset;
 }
 
@@ -86,11 +91,11 @@ export const isTrustedAppUpdateDownloadUrl = (downloadUrl: string, tagName: stri
   }
 };
 
-export const isValidAppUpdateAsset = (asset: AppUpdateAsset): boolean => (
+export const isValidAppUpdateAsset = (asset: AppUpdateAsset, kind: AppUpdateKind = "electron"): boolean => (
   Boolean(normalizeAppVersion(asset.version))
   && Number.isSafeInteger(asset.assetId)
   && asset.assetId > 0
-  && asset.assetName === `Cap7CE-Setup-${asset.version}-x64.exe`
+  && asset.assetName === appUpdateInstallerName(asset.version, kind)
   && asset.tagName === `v${asset.version}`
   && asset.uploadState === "uploaded"
   && Number.isSafeInteger(asset.size)
@@ -100,7 +105,7 @@ export const isValidAppUpdateAsset = (asset: AppUpdateAsset): boolean => (
   && isTrustedAppUpdateDownloadUrl(asset.downloadUrl, asset.tagName, asset.assetName)
 );
 
-export const selectLatestAppUpdate = (releases: unknown): AppUpdateAsset | null => {
+export const selectLatestAppUpdate = (releases: unknown, kind: AppUpdateKind = "electron"): AppUpdateAsset | null => {
   if (!Array.isArray(releases)) return null;
 
   const candidates = releases.flatMap((releaseValue) => {
@@ -109,7 +114,7 @@ export const selectLatestAppUpdate = (releases: unknown): AppUpdateAsset | null 
 
     const version = normalizeAppVersion(release.tag_name);
     if (!version || release.tag_name !== `v${version}`) return [];
-    const assetName = `Cap7CE-Setup-${version}-x64.exe`;
+    const assetName = appUpdateInstallerName(version, kind);
     const asset = (release.assets as GitHubReleaseAsset[]).find((candidate) => candidate.name === assetName);
     if (!asset
       || asset.state !== "uploaded"
@@ -133,7 +138,7 @@ export const selectLatestAppUpdate = (releases: unknown): AppUpdateAsset | null 
       digest,
       downloadUrl: asset.browser_download_url
     };
-    return isValidAppUpdateAsset(resolved) ? [resolved] : [];
+    return isValidAppUpdateAsset(resolved, kind) ? [resolved] : [];
   });
 
   return candidates.sort((left, right) => compareAppVersions(right.version, left.version))[0] ?? null;
@@ -141,7 +146,8 @@ export const selectLatestAppUpdate = (releases: unknown): AppUpdateAsset | null 
 
 export const checkForAppUpdate = async (
   currentVersion: string,
-  fetchReleases: typeof fetch = fetch
+  fetchReleases: typeof fetch = fetch,
+  kind: AppUpdateKind = "electron"
 ): Promise<AppUpdateResolution> => {
   const normalizedCurrentVersion = normalizeAppVersion(currentVersion);
   if (!normalizedCurrentVersion) return { status: "failed", currentVersion };
@@ -160,8 +166,8 @@ export const checkForAppUpdate = async (
     });
     if (!response.ok) return { status: "failed", currentVersion: normalizedCurrentVersion };
 
-    const latestUpdate = selectLatestAppUpdate(await response.json());
-    if (!latestUpdate) return { status: "failed", currentVersion: normalizedCurrentVersion };
+    const latestUpdate = selectLatestAppUpdate(await response.json(), kind);
+    if (!latestUpdate) return { status: "failed", currentVersion: normalizedCurrentVersion, ...(kind === "winui" ? { reason: "no_native_release" as const } : {}) };
     if (compareAppVersions(latestUpdate.version, normalizedCurrentVersion) <= 0) {
       return { status: "up_to_date", currentVersion: normalizedCurrentVersion, latestVersion: latestUpdate.version };
     }

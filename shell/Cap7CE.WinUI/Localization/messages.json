@@ -1308,8 +1308,8 @@
     "en-US": "Export status and logs, including paths. Excludes source files, databases, and settings files."
   },
   "native.update.description": {
-    "zh-CN": "手动检查 WinUI 新版本，不自动下载或安装。",
-    "en-US": "Check for WinUI updates manually. No automatic downloads or installation."
+    "zh-CN": "手动检查并下载安装器，确认安装后退出；安装步骤由安装向导完成。",
+    "en-US": "Check and download manually. Starting the installer exits Cap7CE; the installation wizard handles the upgrade."
   },
   "native.shortcut.unavailable": {
     "zh-CN": "此窗口动作尚未迁入WinUI，不注册其快捷键。",
@@ -3892,8 +3892,8 @@
     "en-US": "Native version {version} is available. See the project Releases page; this action does not download or replace the application."
   },
   "ui.update.noNativeRelease": {
-    "zh-CN": "尚未发现正式发布的WinUI更新包；现有Electron发布不会用于替换原生程序。",
-    "en-US": "No official WinUI update package was found. Existing Electron releases will not replace the native application."
+    "zh-CN": "尚未发现正式发布的 WinUI 安装器；旧 Electron 安装包不会用于更新原生程序。",
+    "en-US": "No official WinUI installer was found. Electron installers will not update the native application."
   },
   "ui.signature.primary": {
     "zh-CN": "一切始于一只找不到的狗。",

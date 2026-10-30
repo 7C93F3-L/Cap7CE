@@ -65,6 +65,12 @@ internal sealed class SettingsWindow : Window
         if(category=="缓存与索引")Render();
         else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="缓存与索引");
     }
+    public void ShowUpdates()
+    {
+        pages.FocusUpdates();
+        if(category=="关于")Render();
+        else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="关于");
+    }
     private void Render()
     {
         SessionDiagnostics.Record("trace.settings.render",new{category});subpages.Reset();

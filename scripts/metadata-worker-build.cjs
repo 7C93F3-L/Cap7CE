@@ -64,6 +64,9 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     const provider = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name), bundle: true, platform: "node", format: "cjs", target: "node24", external, sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(provider.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !external.includes(item.path) && !isBuiltin(item.path))) throw new Error("Unexpected Core preview dependency.");
   }
+  const updates = await build({ entryPoints: [path.join(root, "core/node/applicationUpdates/host.ts")], outfile: path.join(output, "application-updates.cjs"),
+    bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
+  if (Object.values(updates.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected update runtime dependency.");
   const textPreview = await build({ entryPoints: [path.join(root, "core/node/textPreview/worker.ts")], outfile: path.join(output, "text-preview.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(textPreview.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core text dependency.");
   const office = await build({ entryPoints: [path.join(root, "core/node/officePreview/host.ts")], outfile: path.join(output, "office-preview.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });

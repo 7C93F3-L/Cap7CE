@@ -259,3 +259,8 @@ assert(!/CheckIntegrityAsync|quick_check/.test(catalogInitialization), 'full hea
 const healthCheck=read('core/src/Cap7CE.Core.Host/CatalogStorage/CatalogHealthCheck.cs').replace(/\/\/[^\r\n]*/g, '');
 assert(healthCheck.includes('SqliteOpenMode.ReadWrite,') && !healthCheck.includes('ReadWriteCreate')
   && healthCheck.indexOf('PRAGMA query_only=ON;') < healthCheck.indexOf('PRAGMA quick_check;'), 'health connection cannot create storage and must block mutations before checking');
+
+const updateTray=read('shell/Cap7CE.WinUI/Services/Tray/TrayController.cs');
+assert(updateTray.includes('case 31:updates();break;') && !updateTray.includes('NativeUpdates.CheckAsync'), 'tray updates must navigate to the shared settings flow');
+assert(read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('services.Updates.InstallerStarted+=tray.Exit')
+  && read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs').includes('pages.FocusUpdates()'), 'native update installation must reuse normal exit and settings navigation');

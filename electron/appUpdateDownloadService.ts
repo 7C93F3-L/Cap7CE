@@ -6,6 +6,7 @@ import type { AppUpdateDownloadErrorCode, AppUpdateDownloadProgress, AppUpdatePu
 import {
   compareAppVersions,
   isValidAppUpdateAsset,
+  type AppUpdateKind,
   maximumUpdateInstallerBytes,
   type AppUpdateAsset
 } from "./appUpdateService";
@@ -32,6 +33,7 @@ interface AppUpdateDiagnostics {
 
 export interface AppUpdateDownloadServiceOptions {
   rootDirectory: string;
+  installerKind?: AppUpdateKind;
   currentVersion: string;
   fetchDownload?: typeof fetch;
   openInstaller: (installerPath: string) => Promise<string>;
@@ -55,7 +57,6 @@ const safeLog = (diagnostics: AppUpdateDiagnostics, level: "info" | "warn" | "er
   try { diagnostics.log(level, event, data); } catch { /* Diagnostics cannot break updates. */ }
 };
 
-const installerNameFor = (version: string) => `Cap7CE-Setup-${version}-x64.exe`;
 const percentFor = (receivedBytes: number, totalBytes: number) => Math.min(100, Math.round((receivedBytes / totalBytes) * 100));
 
 const hashFile = async (filePath: string): Promise<string> => new Promise((resolve, reject) => {
@@ -86,13 +87,13 @@ const isSameAsset = (left: AppUpdateAsset, right: AppUpdateAsset) => (
   && left.downloadUrl === right.downloadUrl
 );
 
-const parseMetadata = (value: unknown): AppUpdateMetadata | null => {
+const parseMetadata = (value: unknown, kind: AppUpdateKind = "electron"): AppUpdateMetadata | null => {
   if (!value || typeof value !== "object") return null;
   const metadata = value as Partial<AppUpdateMetadata>;
   if (metadata.schemaVersion !== 1
     || (metadata.status !== "partial" && metadata.status !== "ready")
     || !metadata.asset
-    || !isValidAppUpdateAsset(metadata.asset)
+    || !isValidAppUpdateAsset(metadata.asset, kind)
     || !Number.isSafeInteger(metadata.receivedBytes)
     || (metadata.receivedBytes as number) < 0
     || (metadata.receivedBytes as number) > metadata.asset.size
@@ -168,7 +169,7 @@ export class AppUpdateDownloadService {
       if (this.asset) await this.discard();
       return;
     }
-    if (!isValidAppUpdateAsset(asset)) throw new AppUpdateDownloadError("invalid", "Update asset metadata is invalid");
+    if (!isValidAppUpdateAsset(asset, this.options.installerKind)) throw new AppUpdateDownloadError("invalid", "Update asset metadata is invalid");
     if (this.asset && !isSameAsset(this.asset, asset)) await this.discard();
     this.asset = asset;
     if (this.metadata && !isSameAsset(this.metadata.asset, asset)) this.metadata = null;
@@ -457,7 +458,7 @@ export class AppUpdateDownloadService {
   }
 
   private async readMetadata(): Promise<AppUpdateMetadata | null> {
-    try { return parseMetadata(JSON.parse(await fs.readFile(this.metadataPath, "utf8"))); } catch { return null; }
+    try { return parseMetadata(JSON.parse(await fs.readFile(this.metadataPath, "utf8")), this.options.installerKind); } catch { return null; }
   }
 
   private async writeMetadata(metadata: AppUpdateMetadata): Promise<void> {
@@ -473,7 +474,7 @@ export class AppUpdateDownloadService {
   }
 
   private finalPath(asset: AppUpdateAsset): string {
-    return path.join(this.options.rootDirectory, installerNameFor(asset.version));
+    return path.join(this.options.rootDirectory, asset.assetName);
   }
 
   private partialPath(asset: AppUpdateAsset): string {
@@ -487,10 +488,16 @@ export class AppUpdateDownloadService {
     ]);
   }
 
+  private installerPattern(): RegExp {
+    return this.options.installerKind === "winui"
+      ? /^Cap7CE-WinUI-Setup-(\d+\.\d+\.\d+)-x64\.exe(?:\.part)?$/
+      : /^Cap7CE-Setup-(\d+\.\d+\.\d+)-x64\.exe(?:\.part)?$/;
+  }
+
   private async removeObsoleteInstallers(): Promise<void> {
     const entries = await fs.readdir(this.options.rootDirectory, { withFileTypes: true }).catch(() => []);
     await Promise.all(entries.filter((entry) => entry.isFile()).map(async (entry) => {
-      const match = entry.name.match(/^Cap7CE-Setup-(\d+\.\d+\.\d+)-x64\.exe(?:\.part)?$/);
+      const match = entry.name.match(this.installerPattern());
       if (match && compareAppVersions(match[1], this.options.currentVersion) <= 0) {
         await fs.rm(path.join(this.options.rootDirectory, entry.name), { force: true }).catch(() => undefined);
       }
@@ -500,7 +507,7 @@ export class AppUpdateDownloadService {
   private async removeAllRecognizedUpdateFiles(): Promise<void> {
     const entries = await fs.readdir(this.options.rootDirectory, { withFileTypes: true }).catch(() => []);
     await Promise.all(entries.filter((entry) => (
-      entry.isFile() && /^Cap7CE-Setup-\d+\.\d+\.\d+-x64\.exe(?:\.part)?$/.test(entry.name)
+      entry.isFile() && this.installerPattern().test(entry.name)
     )).map((entry) => fs.rm(path.join(this.options.rootDirectory, entry.name), { force: true }).catch(() => undefined)));
   }
 

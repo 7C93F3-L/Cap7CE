@@ -2,7 +2,7 @@
 
 ## 当前源码主线：WinUI
 
-后续开发已转向Windows x64原生WinUI。`npm run build`构建原生程序，`npm run dev`启动；`npm run pack`生成可携带目录，`npm run dist:portable`生成ZIP。索引/属性任务复用既有Core与Reader，安装/修复只由用户明确操作触发。详见[WinUI开发、交付与能力边界](shell/README.md)。
+后续开发已转向Windows x64原生WinUI。`npm run build`构建原生程序，`npm run dev`启动；`npm run pack`生成可携带目录，`npm run dist:portable`生成ZIP，`npm run dist:installer`生成WinUI安装器。索引/属性任务复用既有Core与Reader，安装/修复只由用户明确操作触发。详见[WinUI开发、交付与能力边界](shell/README.md)。
 
 Electron保留为迁移参考和`:legacy`入口，尚未删除。以下1.0.4下载说明及截图属于已发布的旧界面；WinUI源码主线尚未发布，功能差距见上方文档。
 

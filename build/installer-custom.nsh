@@ -128,10 +128,15 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
       Return
     ${endif}
 
-    ${ifNot} ${FileExists} "$INSTDIR\resources\core-capability\v1\Cap7CE.Core.Setup.exe"
+    !ifdef CAP7CE_NATIVE_INSTALLER
+      StrCpy $2 "$INSTDIR\core\artifacts\product-capability\v1\bundle\Cap7CE.Core.Setup.exe"
+    !else
+      StrCpy $2 "$INSTDIR\resources\core-capability\v1\Cap7CE.Core.Setup.exe"
+    !endif
+    ${ifNot} ${FileExists} "$2"
       Abort "$(cap7ceCapabilitySetupMissing)"
     ${endif}
-    nsExec::ExecToStack /TIMEOUT=360000 '"$INSTDIR\resources\core-capability\v1\Cap7CE.Core.Setup.exe" --activation-coordinator --action remove --catalog $1'
+    nsExec::ExecToStack /TIMEOUT=360000 '"$2" --activation-coordinator --action remove --catalog $1'
     Pop $0
     Pop $1
     ${if} $0 != 0
@@ -148,9 +153,15 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     ${ifNot} ${FileExists} "$INSTDIR\${PRODUCT_FILENAME}.exe"
       Abort "$(cap7ceUninstallUnsafePath)"
     ${endif}
+    !ifdef CAP7CE_NATIVE_INSTALLER
+      ${ifNot} ${FileExists} "$INSTDIR\cap7ce-native.json"
+        Abort "$(cap7ceUninstallUnsafePath)"
+      ${endif}
+    !else
     ${ifNot} ${FileExists} "$INSTDIR\resources\app.asar"
       Abort "$(cap7ceUninstallUnsafePath)"
     ${endif}
+    !endif
 
     System::Call 'kernel32::GetCurrentProcessId()i.r0'
     StrCpy $cap7cePreserveRoot "$INSTDIR.cap7ce-preserve-$0"
@@ -214,6 +225,10 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
 
     CreateDirectory "$INSTDIR"
     Call un.cap7ceRestorePreservedContent
+    !ifdef CAP7CE_NATIVE_INSTALLER
+      # Only bundled application runtimes; separately installed Core\v1 is retained.
+      RMDir /r "$INSTDIR\Core\artifacts"
+    !endif
 
     ${if} $cap7cePreservedModels != "1"
     ${andIf} $cap7cePreservedLlama != "1"
