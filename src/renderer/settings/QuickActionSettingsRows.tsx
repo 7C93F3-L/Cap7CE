@@ -12,7 +12,7 @@ import {
   getShortcutFromKeyboardEvent,
   normalizeStableShortcutActions
 } from "../shortcutActions";
-import clearIcon from "../assets/icons/icon-stable-clear-search.svg?raw";
+import clearIcon from "../../../resources/icons/icon-stable-clear-search.svg?raw";
 import SvgIcon from "../components/SvgIcon";
 
 const getShortcutActionItems = (): Array<{ id: ShortcutActionId; name: string }> => ([

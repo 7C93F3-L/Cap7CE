@@ -1,4 +1,4 @@
-import type { FileFormatCapability } from "../../electron/formatCapabilities";
+import type { FileFormatCapability } from "../../core/node/resourceCatalog/domain/formats/formatCapabilities";
 import type { ComputerSearchFileConditions, ComputerSearchSort } from "./computerSearchFactTypes";
 
 export type SkimBrowseEntryKind = "drive" | "folder" | "file";

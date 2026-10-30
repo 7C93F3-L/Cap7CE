@@ -1,5 +1,5 @@
-import iconPinOffSvg from "../assets/icons/icon-pin-off.svg?raw";
-import iconPinOnSvg from "../assets/icons/icon-pin-on.svg?raw";
+import iconPinOffSvg from "../../../resources/icons/icon-pin-off.svg?raw";
+import iconPinOnSvg from "../../../resources/icons/icon-pin-on.svg?raw";
 
 interface WindowPinButtonProps {
   pinned: boolean;

@@ -16,9 +16,9 @@ assert.match(second, /url\(#second-gradient\)/);
 assert.equal(namespaceSvgIds('<svg><path fill="#abc"/></svg>', "plain"), '<svg><path fill="#abc"/></svg>');
 assert.throws(() => namespaceSvgIds(fixture, "bad prefix"), /invalid-svg-prefix/);
 const ids = text => [...text.matchAll(/\sid\s*=\s*["']([^"']+)["']/g)].map(match => match[1]);
-for (const name of fs.readdirSync(path.join(__dirname, "../src/renderer/assets/icons"))) {
+for (const name of fs.readdirSync(path.join(__dirname, "../resources/icons"))) {
   if (!name.endsWith(".svg")) continue;
-  const source = fs.readFileSync(path.join(__dirname, "../src/renderer/assets/icons", name), "utf8");
+  const source = fs.readFileSync(path.join(__dirname, "../resources/icons", name), "utf8");
   const firstIds = new Set(ids(namespaceSvgIds(source, "first")));
   for (const id of ids(namespaceSvgIds(source, "second"))) assert(!firstIds.has(id), `${name} retained a shared SVG identity`);
 }

@@ -133,7 +133,7 @@ const { app } = require("electron");
   assert.equal(isSupportedImageFilePath("C:\\notes.txt"), false);
   assert.equal(isSupportedImageFilePath("C:\\document.docx"), false);
 
-  const iconDirectory = path.join(__dirname, "..", "src", "renderer", "assets", "icons");
+  const iconDirectory = path.join(__dirname, "..", "resources", "icons");
   for (const capability of fileFormatCapabilities) {
     assert.equal(fs.existsSync(path.join(iconDirectory, `${capability.iconName}.svg`)), true, capability.iconName);
   }

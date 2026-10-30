@@ -1,4 +1,4 @@
-import waitingSvg from "./assets/icons/waiting.svg?raw";
+import waitingSvg from "../../resources/icons/waiting.svg?raw";
 
 const WaitingIndicator = ({ className = "" }: { className?: string }) => (
   <span

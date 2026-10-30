@@ -4,15 +4,15 @@ import type { SkimBrowseEntry, SkimLocationShortcut, SkimLocationShortcutKind } 
 import ChevronIcon from "../components/ChevronIcon";
 import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
 import SvgIcon from "../components/SvgIcon";
-import computerSvg from "../assets/icons/skim-location-computer.svg?raw";
-import diskSvg from "../assets/icons/skim-disk.svg?raw";
-import desktopSvg from "../assets/icons/skim-location-desktop.svg?raw";
-import documentsSvg from "../assets/icons/skim-location-documents.svg?raw";
-import downloadsSvg from "../assets/icons/skim-location-downloads.svg?raw";
-import musicSvg from "../assets/icons/skim-location-music.svg?raw";
-import picturesSvg from "../assets/icons/skim-location-pictures.svg?raw";
-import starredFolderSvg from "../assets/icons/skim-location-starred-folder.svg?raw";
-import videosSvg from "../assets/icons/skim-location-videos.svg?raw";
+import computerSvg from "../../../resources/icons/skim-location-computer.svg?raw";
+import diskSvg from "../../../resources/icons/skim-disk.svg?raw";
+import desktopSvg from "../../../resources/icons/skim-location-desktop.svg?raw";
+import documentsSvg from "../../../resources/icons/skim-location-documents.svg?raw";
+import downloadsSvg from "../../../resources/icons/skim-location-downloads.svg?raw";
+import musicSvg from "../../../resources/icons/skim-location-music.svg?raw";
+import picturesSvg from "../../../resources/icons/skim-location-pictures.svg?raw";
+import starredFolderSvg from "../../../resources/icons/skim-location-starred-folder.svg?raw";
+import videosSvg from "../../../resources/icons/skim-location-videos.svg?raw";
 import "./SkimRootSections.css";
 
 export const locationIcons: Record<SkimLocationShortcutKind, string> = {

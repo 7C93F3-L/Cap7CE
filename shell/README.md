@@ -11,7 +11,7 @@
 - `npm run test:native:smoke`：一次短烟测，60秒进程超时，无自动重试；仅使用临时Catalog/图片/缓存，不扫描真实磁盘。
 - `npm run build:legacy`、`npm run dev:legacy`：显式保留的Electron入口。
 
-构建会复用现有Core产品宿主、配置/文件操作宿主、原生视觉适配器和独立Node工作进程，生成所需格式/筛选/指令资源。资源暂仍来源于旧源码目录；不能直接删除electron/src共享文件。
+构建会复用现有Core产品宿主、配置/文件操作宿主、原生视觉适配器和独立Node工作进程，生成所需格式/筛选/指令资源。格式/筛选/指令资源定义已归入core/node/resourceCatalog/domain，图标和签名载荷归入resources；生成器不依赖旧React组件。解析器、预览及AI等仍有旧目录依赖，尚不能整体删除electron/src。
 
 开发启动统一使用run.ps1。DesktopProcess.cs通过Windows的PROC_THREAD_ATTRIBUTE_PARENT_PROCESS，以当前交互桌面Shell为父进程创建WinUI，使其继承正常桌面的token/job环境，避免从带MSIX文件重定向的开发工具直接启动时读取另一份AppData配置。环境变量仍由启动脚本传入，原配置路径规则和所有数据保持原位；不提权、不拷贝或合并配置。无交互桌面或无权创建进程时明确失败，不回退到已知会读错配置的直接启动。不要再从工具中用普通Start-Process启动开发EXE。
 

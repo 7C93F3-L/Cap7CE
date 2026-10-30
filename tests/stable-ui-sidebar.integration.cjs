@@ -24,9 +24,9 @@ const searchResultsStyles = read("src/renderer/stable-ui/StableSearchResults.css
 const directoryFlyoutStyles = read("src/renderer/stable-ui/StableDirectoryFlyout.css");
 const navigationStateStyles = read("src/renderer/stable-ui/StableNavigationState.css");
 const materialContrastStyles = read("src/renderer/stable-ui/StableMaterialContrast.css");
-const brandLogo = read("src/renderer/assets/icons/logo-cap7ce.svg");
-const zhLocalizationSource = read("electron/localization.ts");
-const enLocalizationSource = read("electron/locales/en-US.ts");
+const brandLogo = read("resources/icons/logo-cap7ce.svg");
+const zhLocalizationSource = read("core/node/resourceCatalog/domain/localization/localization.ts");
+const enLocalizationSource = read("core/node/resourceCatalog/domain/localization/en-US.ts");
 
 for (const marker of [
   "onSearchOptionsChange",

@@ -30,7 +30,7 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/PreviewSpaceKeyPolicy.cs" Link="PreviewSpaceKeyPolicy.cs" /></ItemGroup>
   <ItemGroup>
     <Compile Include="../Cap7CE.WinUI/Models/SettingsOriginAsset.cs" Link="SettingsOriginAsset.cs" />
-    <None Include="../../src/renderer/assets/archive/phase7.dat" Link="Assets/phase7.dat" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../resources/branding/phase7.dat" Link="Assets/phase7.dat" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/CatalogNameLabel.cs" Link="CatalogNameLabel.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/AnimationSource.cs" Link="AnimationSource.cs" /></ItemGroup>

@@ -1,6 +1,6 @@
 @import "./StableNavigationState.css";
 .cap-stable-sidebar { container-type: inline-size; position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; min-height: 0; box-sizing: border-box; padding: 6px; overflow: hidden; app-region: no-drag; -webkit-app-region: no-drag; }
-.cap-stable-brand { display: flex; align-items: center; min-height: 34px; padding: 0 6px 4px; } .cap-stable-brand-logo { display: block; width: 78px; height: 20px; background: currentColor; opacity: .72; -webkit-mask: url("../assets/icons/logo-cap7ce.svg") center / contain no-repeat; mask: url("../assets/icons/logo-cap7ce.svg") center / contain no-repeat; }
+.cap-stable-brand { display: flex; align-items: center; min-height: 34px; padding: 0 6px 4px; } .cap-stable-brand-logo { display: block; width: 78px; height: 20px; background: currentColor; opacity: .72; -webkit-mask: url("../../../resources/icons/logo-cap7ce.svg") center / contain no-repeat; mask: url("../../../resources/icons/logo-cap7ce.svg") center / contain no-repeat; }
 .cap-stable-sidebar-controls { display: grid; gap: 4px; }
 .cap-stable-sidebar-control,
 .cap-stable-directory-item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; width: 100%; min-width: 0; min-height: 40px; box-sizing: border-box; padding: 4px 6px; border: 0; border-radius: var(--cap-stable-radius-pill); color: inherit; background: transparent; font: inherit; text-align: left; transition: var(--cap-stable-control-transition); }

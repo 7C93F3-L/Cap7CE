@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import iconSignatureCap7CESvg from "../assets/icons/icon-signature-cap7ce.svg?raw";
+import iconSignatureCap7CESvg from "../../../resources/icons/icon-signature-cap7ce.svg?raw";
 import SvgIcon from "../components/SvgIcon";
 
 export const SettingsFooter = () => {
@@ -38,7 +38,7 @@ export const SettingsFooter = () => {
 
     originLoadingRef.current = true;
     try {
-      const encodedPayload = (await import("../assets/archive/phase7.dat?raw")).default.trim();
+      const encodedPayload = (await import("../../../resources/branding/phase7.dat?raw")).default.trim();
       const payloadText = window.atob(encodedPayload);
       const payload = new Uint8Array(payloadText.length);
       for (let index = 0; index < payloadText.length; index += 1) {

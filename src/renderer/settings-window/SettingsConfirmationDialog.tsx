@@ -1,4 +1,4 @@
-import warningGradientSvg from "../assets/icons/warning-gradient.svg?raw";
+import warningGradientSvg from "../../../resources/icons/warning-gradient.svg?raw";
 import { t } from "../../../electron/localization";
 import SvgIcon from "../components/SvgIcon";
 import DialogShell from "../dialogs/DialogShell";

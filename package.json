@@ -20,9 +20,11 @@
     "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
     "clean:electron": "node scripts/clean-electron-build.cjs",
+    "test:resource-catalog": "npm run build:resource-catalog && tsc -p tsconfig.electron.json && tsc -p tsconfig.json && vite build && node tests/resource-catalog.integration.cjs && electron tests/format-capabilities.integration.cjs && node tests/visual-property-semantics.integration.cjs && node tests/quick-command.integration.cjs && node tests/catalog-command-operations.integration.cjs && node tests/computer-search-text-data.integration.cjs && node tests/computer-search-archive.integration.cjs && node tests/svg-icon-identity.integration.cjs",
+    "build:resource-catalog": "tsc -p core/node/resourceCatalog/domain/tsconfig.json && node scripts/resource-catalog-boundary-check.cjs",
     "build:update-domain": "tsc -p core/node/applicationUpdates/domain/tsconfig.json && node scripts/update-domain-boundary-check.cjs",
     "test:update-domain": "npm run build:update-domain && tsc -p tsconfig.electron.json && node tests/app-update.integration.cjs && node tests/app-update-download.integration.cjs && node tests/app-update-install-intent.integration.cjs && node tests/native-update.integration.cjs",
-    "build:electron": "npm run build:update-domain && npm run clean:electron && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:core-visuals && npm run build:metadata-worker",
+    "build:electron": "npm run build:resource-catalog && npm run build:update-domain && npm run clean:electron && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:core-visuals && npm run build:metadata-worker",
     "build": "node scripts/native-build.cjs",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
@@ -169,7 +171,7 @@
     "test:core-preview-metadata": "node scripts/core-preview-metadata-boundary-check.cjs && node tests/core-preview-metadata-lifetime.integration.cjs && node tests/core-preview-metadata-runtime.integration.cjs",
     "test:core-local-keywords": "node scripts/core-local-keywords-boundary-check.cjs && node tests/core-local-keywords-runtime.integration.cjs",
     "dev:legacy": "concurrently --kill-others-on-fail -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
-    "build:legacy": "tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
+    "build:legacy": "npm run build:resource-catalog && npm run build:update-domain && tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
     "pack:legacy": "npm run build:legacy && npm run publish:core-product-capability && electron-builder --dir && node scripts/metadata-runtime-packaged-check.cjs",
     "dist:installer:legacy": "npm run build:legacy && npm run publish:core-product-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win nsis --x64 --publish never && node scripts/metadata-runtime-packaged-check.cjs && node scripts/core-product-installer-smoke.cjs",
     "dev:winui": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File shell/run.ps1",
@@ -194,7 +196,8 @@
       "dist/**/*",
       "dist-electron/**/*",
       "core/artifacts/application-updates/*.js",
-      "src/renderer/assets/icons/**/*",
+      "core/artifacts/resource-catalog/**/*.js",
+      "resources/icons/**/*",
       "src/renderer/assets/startup/**/*",
       "build/icon.ico",
       "build/notification-icon.png",
@@ -233,7 +236,7 @@
     ],
     "extraResources": [
       {
-        "from": "src/renderer/assets/icons",
+        "from": "resources/icons",
         "to": "renderer-assets/icons",
         "filter": [
           "*.svg"

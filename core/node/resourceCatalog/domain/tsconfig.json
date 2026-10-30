@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "../../../..",
+    "outDir": "../../../artifacts/resource-catalog",
+    "declaration": true,
+    "composite": true,
+    "noEmitOnError": true
+  },
+  "include": [
+    "**/*.ts",
+    "../../../../src/shared/types.ts",
+    "../../../../electron/modelFactTypes.ts"
+  ]
+}

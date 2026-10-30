@@ -1,4 +1,4 @@
-import chevronSvg from "../assets/icons/icon-chevron.svg?raw";
+import chevronSvg from "../../../resources/icons/icon-chevron.svg?raw";
 import SvgIcon from "./SvgIcon";
 
 const ChevronIcon = ({ className = "cap-chevron-icon" }: { className?: string }) => (

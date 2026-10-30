@@ -9,9 +9,9 @@ import {
   type RefObject
 } from "react";
 import type React from "react";
-import skimDiskSvg from "../assets/icons/skim-disk.svg?raw";
-import skimFolderSvg from "../assets/icons/skim-folder.svg?raw";
-import skimStarredFolderSvg from "../assets/icons/skim-location-starred-folder.svg?raw";
+import skimDiskSvg from "../../../resources/icons/skim-disk.svg?raw";
+import skimFolderSvg from "../../../resources/icons/skim-folder.svg?raw";
+import skimStarredFolderSvg from "../../../resources/icons/skim-location-starred-folder.svg?raw";
 import { MiddleEllipsisFileName, TwoLineMiddleEllipsisFileName } from "../components/MiddleEllipsisFileName";
 import SvgIcon from "../components/SvgIcon";
 import CustomScrollbar from "../CustomScrollbar";

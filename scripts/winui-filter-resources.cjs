@@ -2,9 +2,9 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const { build } = require('esbuild');
 module.exports = async (root, output) => {
   const compiled = await build({ stdin: { contents: [
-    'export { visualPropertySemanticDefinitions } from "./electron/visualPropertySemantics";',
-    'export { searchVisualColors, searchImageColorTraits } from "./electron/imageSearchFilters";',
-    'export { searchVideoVisualColors } from "./electron/videoSearchFilters";'
+    'export { visualPropertySemanticDefinitions } from "./core/node/resourceCatalog/domain/formats/visualPropertySemantics";',
+    'export { searchVisualColors, searchImageColorTraits } from "./core/node/resourceCatalog/domain/formats/imageSearchFilters";',
+    'export { searchVideoVisualColors } from "./core/node/resourceCatalog/domain/formats/videoSearchFilters";'
   ].join('\n'), resolveDir: root }, bundle: true, platform: 'node', format: 'cjs', write: false });
   const definitions = { exports: {} }; new Function('module', 'exports', compiled.outputFiles[0].text)(definitions, definitions.exports);
   const { visualPropertySemanticDefinitions, searchVisualColors, searchImageColorTraits, searchVideoVisualColors } = definitions.exports;

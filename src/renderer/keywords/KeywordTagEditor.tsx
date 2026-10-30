@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "../../../electron/keywordRules";
 import { t } from "../../../electron/localization";
-import clearIcon from "../assets/icons/icon-stable-clear-search.svg?raw";
+import clearIcon from "../../../resources/icons/icon-stable-clear-search.svg?raw";
 import SvgIcon from "../components/SvgIcon";
 import "./KeywordTagEditor.css";
 

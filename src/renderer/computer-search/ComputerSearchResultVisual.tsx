@@ -3,7 +3,7 @@ import type { ComputerSearchItem } from "../../../electron/computerSearchTypes";
 import CatalogIconVisual from "./CatalogIconVisual";
 import CatalogName from "./CatalogName";
 import { getFormatIconSvgByName } from "../formatIcons";
-import skimFolderSvg from "../assets/icons/skim-folder.svg?raw";
+import skimFolderSvg from "../../../resources/icons/skim-folder.svg?raw";
 import { useViewportThumbnail } from "./useViewportThumbnail";
 import { VideoThumbnailIndicator, videoThumbnailExtensions } from "../results/ResultThumbnail";
 import { getThumbnailSourceKey } from "./viewportThumbnailImage";

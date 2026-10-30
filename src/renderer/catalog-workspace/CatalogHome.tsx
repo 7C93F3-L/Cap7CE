@@ -4,7 +4,7 @@ import type { SkimLocationShortcut } from "../../shared/types";
 import type { CatalogGridMode } from "../../shared/catalogPresentationTypes";
 import { t } from "../../../electron/localization";
 import { locationIcons, resolveLocationLabel } from "../skim/SkimRootSections";
-import diskSvg from "../assets/icons/skim-disk.svg?raw";
+import diskSvg from "../../../resources/icons/skim-disk.svg?raw";
 import CatalogHomeGroup from "./CatalogHomeGroup";
 import type { CatalogHomeEntry } from "../../shared/catalogHomeTypes";
 import { useCatalogHomeActions } from "./useCatalogHomeActions";

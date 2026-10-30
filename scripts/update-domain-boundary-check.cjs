@@ -15,6 +15,6 @@ for (const file of Object.keys(compiled.metafile.inputs))
   assert(file.replaceAll('\\', '/').startsWith(domain + '/'), `Update domain acquired an outer dependency: ${file}`);
 assert(fs.readFileSync(path.join(root, 'core/node/applicationUpdates/service.ts'), 'utf8').includes('"./domain/appUpdateDownloadService"'), 'native owner must use canonical source');
 const pkg = require('../package.json');
-assert(pkg.scripts['build:electron'].startsWith('npm run build:update-domain &&'), 'legacy compiler requires domain declarations first');
+assert(pkg.scripts['build:electron'].includes('npm run build:update-domain &&') && pkg.scripts['build:electron'].indexOf('npm run build:update-domain &&') < pkg.scripts['build:electron'].indexOf('tsc -p tsconfig.electron.json'), 'legacy compiler requires domain declarations first');
 assert(pkg.build.files.includes('core/artifacts/application-updates/*.js'), 'legacy package requires the compatibility runtime');
 console.log('Update domain boundaries passed: Node-only dependency closure, single implementation and legacy compilation/package handoff.');

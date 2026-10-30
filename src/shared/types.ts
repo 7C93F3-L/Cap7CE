@@ -2,17 +2,17 @@ import type { SkimTextPreview } from "./textPreviewTypes";
 export type { SkimTextPreview } from "./textPreviewTypes";
 import type { SkimPreviewInfo, SkimFolderStats } from "./sourceInformationTypes";
 export type { SkimPreviewInfo, SkimFolderStats } from "./sourceInformationTypes";
-import type { SearchModifiedTimeRange, SearchTimePreset } from "../../electron/searchFilters";
-import type { SearchImageAnimationMode, SearchImageAspectRatio, SearchImageAspectRatioValue, SearchImageColorTrait, SearchImageDimensionFilter, SearchVisualColor } from "../../electron/imageSearchFilters";
-import type { SearchVideoAspectRatio, SearchVideoAspectRatioValue, SearchVideoColorTrait, SearchVideoDimensionFilter, SearchVideoDurationPreset, SearchVideoDurationRange, SearchVideoResolution, SearchVideoVisualColor } from "../../electron/videoSearchFilters";
-import type { SearchAudioChannel, SearchAudioDurationPreset, SearchAudioDurationRange } from "../../electron/audioSearchFilters";
-import type { SearchFileSizePreset, SearchFileSizeRange } from "../../electron/fileSizeSearchFilters";
-import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange, SearchDocumentImageComposition } from "../../electron/documentSearchFilters";
-import type { SearchArtboardCountPreset } from "../../electron/artboardSearchFilters";
-import type { SearchThreeDModelType, SearchThreeDStructure, SearchThreeDTriangleCountPreset, SearchThreeDTriangleCountRange } from "../../electron/threeDSearchFilters";
-import type { SearchArchiveContentType, SearchArchiveEntryCountPreset, SearchArchiveEntryCountRange, SearchArchiveStructure } from "../../electron/archiveSearchFilters";
-import type { SearchFontCharacterSet, SearchFontKind, SearchFontStyle, SearchFontWeight } from "../../electron/fontSearchFilters";
-import type { SearchModelParameterCount, SearchModelPrecision } from "../../electron/modelSearchFilters";
+import type { SearchModifiedTimeRange, SearchTimePreset } from "../../core/node/resourceCatalog/domain/formats/searchFilters";
+import type { SearchImageAnimationMode, SearchImageAspectRatio, SearchImageAspectRatioValue, SearchImageColorTrait, SearchImageDimensionFilter, SearchVisualColor } from "../../core/node/resourceCatalog/domain/formats/imageSearchFilters";
+import type { SearchVideoAspectRatio, SearchVideoAspectRatioValue, SearchVideoColorTrait, SearchVideoDimensionFilter, SearchVideoDurationPreset, SearchVideoDurationRange, SearchVideoResolution, SearchVideoVisualColor } from "../../core/node/resourceCatalog/domain/formats/videoSearchFilters";
+import type { SearchAudioChannel, SearchAudioDurationPreset, SearchAudioDurationRange } from "../../core/node/resourceCatalog/domain/formats/audioSearchFilters";
+import type { SearchFileSizePreset, SearchFileSizeRange } from "../../core/node/resourceCatalog/domain/formats/fileSizeSearchFilters";
+import type { SearchDocumentContentCountPreset, SearchDocumentContentCountRange, SearchDocumentImageComposition } from "../../core/node/resourceCatalog/domain/formats/documentSearchFilters";
+import type { SearchArtboardCountPreset } from "../../core/node/resourceCatalog/domain/formats/artboardSearchFilters";
+import type { SearchThreeDModelType, SearchThreeDStructure, SearchThreeDTriangleCountPreset, SearchThreeDTriangleCountRange } from "../../core/node/resourceCatalog/domain/formats/threeDSearchFilters";
+import type { SearchArchiveContentType, SearchArchiveEntryCountPreset, SearchArchiveEntryCountRange, SearchArchiveStructure } from "../../core/node/resourceCatalog/domain/formats/archiveSearchFilters";
+import type { SearchFontCharacterSet, SearchFontKind, SearchFontStyle, SearchFontWeight } from "../../core/node/resourceCatalog/domain/formats/fontSearchFilters";
+import type { SearchModelParameterCount, SearchModelPrecision } from "../../core/node/resourceCatalog/domain/formats/modelSearchFilters";
 import type {
   SearchCountRange,
   SearchDataColumnCountPreset,
@@ -20,7 +20,7 @@ import type {
   SearchJsonRootKind,
   SearchTextCharacterCountPreset,
   SearchTextLineCountPreset
-} from "../../electron/textDataSearchFilters";
+} from "../../core/node/resourceCatalog/domain/formats/textDataSearchFilters";
 
 export type AppView = "home" | "results" | "skim" | "settings";
 

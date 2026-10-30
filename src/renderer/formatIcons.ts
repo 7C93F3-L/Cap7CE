@@ -1,7 +1,7 @@
-import skimFileSvg from "./assets/icons/skim-file.svg?raw";
+import skimFileSvg from "../../resources/icons/skim-file.svg?raw";
 import { fileFormatCapabilityByExtension } from "../../electron/formatCapabilities";
 
-const formatIconModules = import.meta.glob<string>("./assets/icons/format-*.svg", {
+const formatIconModules = import.meta.glob<string>("../../resources/icons/format-*.svg", {
   eager: true,
   query: "?raw",
   import: "default"

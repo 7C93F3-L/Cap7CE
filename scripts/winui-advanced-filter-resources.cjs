@@ -2,11 +2,11 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {build}=require('esbuild');
 module.exports=async(root,output)=>{
   const compiled=await build({stdin:{contents:[
-    'export {toComputerSearchArchiveConditions as convert} from "./src/renderer/computer-search/computerSearchArchiveConditions";',
-    'export * from "./src/renderer/stable-ui/exploreFormatFilters";',
-    'export {fileFormatCapabilities as formats} from "./electron/formatCapabilities";',
-    'export {supportedThreeDFactExtensions as threeD} from "./electron/threeDFactTypes";',
-    'export {searchThreeDModelTypes, getThreeDModelTypeExtensions} from "./electron/threeDSearchFilters";'
+    'export {toComputerSearchArchiveConditions as convert} from "./core/node/resourceCatalog/domain/filters/computerSearchArchiveConditions";',
+    'export * from "./core/node/resourceCatalog/domain/formats/exploreFormatFilters";',
+    'export {fileFormatCapabilities as formats} from "./core/node/resourceCatalog/domain/formats/formatCapabilities";',
+    'export {supportedThreeDFactExtensions as threeD} from "./core/node/resourceCatalog/domain/formats/threeDFactTypes";',
+    'export {searchThreeDModelTypes, getThreeDModelTypeExtensions} from "./core/node/resourceCatalog/domain/formats/threeDSearchFilters";'
   ].join('\n'),resolveDir:root},bundle:true,platform:'node',format:'cjs',write:false});
   const module={exports:{}};new Function('module','exports',compiled.outputFiles[0].text)(module,module.exports);
   const api=module.exports,groups=[];

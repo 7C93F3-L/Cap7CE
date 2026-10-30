@@ -5,7 +5,7 @@ import type { ArchivePreviewFallbackReason, EpubPreviewFallbackReason, FontPrevi
 import CustomScrollbar from "./CustomScrollbar";
 import SvgIcon from "./components/SvgIcon";
 import { getFormatIconSvg } from "./formatIcons";
-import skimFolderSvg from "./assets/icons/skim-folder.svg?raw";
+import skimFolderSvg from "../../resources/icons/skim-folder.svg?raw";
 import WaitingIndicator from "./WaitingIndicator";
 import PdfPreviewPanel from "./PdfPreviewPanel";
 import FontPreviewPanel from "./FontPreviewPanel";

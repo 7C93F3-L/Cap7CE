@@ -4,7 +4,7 @@ const root = path.resolve(__dirname, '..'), output = path.join(root, 'shell/arti
 (async () => {
   fs.mkdirSync(output, { recursive: true });
   const modulePath = path.join(output, 'formats.cjs');
-  await build({ entryPoints: [path.join(root, 'electron/formatCapabilities.ts')], outfile: modulePath,
+  await build({ entryPoints: [path.join(root, 'core/node/resourceCatalog/domain/formats/formatCapabilities.ts')], outfile: modulePath,
     bundle: true, platform: 'node', format: 'cjs', logLevel: 'error' });
   fs.writeFileSync(path.join(output, 'formats.json'), JSON.stringify(require(modulePath).fileFormatCapabilities));
   fs.copyFileSync(path.join(root, 'artifacts/metadata-worker/v1/extractors.json'), path.join(output, 'extractors.json'));
