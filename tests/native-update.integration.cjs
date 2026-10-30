@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const esbuild=require('esbuild');
 const load=source=>{const text=esbuild.buildSync({entryPoints:[source],bundle:true,platform:'node',format:'cjs',write:false,logLevel:'error'}).outputFiles[0].text;const m={exports:{}};new Function('module','exports','require',text)(m,m.exports,require);return m.exports;};
-const {selectLatestAppUpdate,isValidAppUpdateAsset}=load('electron/appUpdateService.ts');
+const {selectLatestAppUpdate,isValidAppUpdateAsset}=load('core/node/applicationUpdates/domain/appUpdateService.ts');
 const {createNativeUpdateService}=load('core/node/applicationUpdates/service.ts');
 (async()=>{
 const root=await fs.mkdtemp(path.join(os.tmpdir(),'cap7ce-native-update-'));

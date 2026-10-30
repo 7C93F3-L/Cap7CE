@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "../../../artifacts/application-updates",
+    "declaration": true
+  },
+  "include": ["*.ts"]
+}

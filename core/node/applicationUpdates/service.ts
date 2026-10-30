@@ -1,5 +1,5 @@
-import { AppUpdateDownloadService } from "../../../electron/appUpdateDownloadService";
-import { checkForAppUpdate } from "../../../electron/appUpdateService";
+import { AppUpdateDownloadService } from "./domain/appUpdateDownloadService";
+import { checkForAppUpdate } from "./domain/appUpdateService";
 import type { CoreNodeService } from "../transport/server";
 
 // Reuse the tested downloader, resume and digest rules; the UI launches the installer.

@@ -43,7 +43,8 @@ const release = (version, overrides = {}) => {
 
   const packageJson = JSON.parse(readProjectFile("package.json"));
   assert.equal(packageJson.scripts.dist, undefined, "the retired portable distribution command must stay removed");
-  assert.match(packageJson.scripts["dist:installer"], /electron-builder --win nsis --x64 --publish never/u);
+  assert.match(packageJson.scripts["dist:installer"], /native-installer-build/u);
+  assert.match(packageJson.scripts["dist:installer:legacy"], /electron-builder --win nsis --x64 --publish never/u);
   assert.deepEqual(packageJson.build.win.target, [{ target: "nsis", arch: ["x64"] }]);
   const packagedInputs = JSON.stringify({ files: packageJson.build.files, extraResources: packageJson.build.extraResources });
   assert.doesNotMatch(packagedInputs, /update-helper|appUpdateCompletion|appUpdateLauncher/iu);
@@ -51,8 +52,8 @@ const release = (version, overrides = {}) => {
   const currentUpdateSources = [
     "electron/main.ts",
     "electron/preload.ts",
-    "electron/appUpdateService.ts",
-    "electron/appUpdateDownloadService.ts",
+    "core/node/applicationUpdates/domain/appUpdateService.ts",
+    "core/node/applicationUpdates/domain/appUpdateDownloadService.ts",
     "electron/appUpdateIpc.ts"
   ].map(readProjectFile).join("\n");
   assert.doesNotMatch(currentUpdateSources, /helper-ready|helper-failed|appUpdateCompletion|appUpdateLauncher|update-helper\.ps1/iu);

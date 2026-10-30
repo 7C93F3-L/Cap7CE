@@ -18,6 +18,7 @@ const prerequisites = [
 for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target)) || script==='core-file-operations-build.cjs'&&!require('./core-file-operations-freshness.cjs').isFresh(root)) node(script);
 if (!fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
   run(process.execPath, ['scripts/core-capability-payload-build.cjs', '--product']);
+node('update-domain-boundary-check.cjs');
 node('metadata-worker-build.cjs');
 // Same product profile used by the existing mainline. No Reader install or user-data activation during build.
 const coreOutput = path.join(root, 'core/artifacts/development-product-host');
