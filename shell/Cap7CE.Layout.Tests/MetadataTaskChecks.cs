@@ -50,6 +50,8 @@ internal static class MetadataTaskChecks
         Require(!failed.Running&&failed.Fraction is null&&failed.ErrorCode=="storage-error","Unknown totals and failures remain explicit");
         var discovering=MetadataTaskStatus.Read(JsonSerializer.SerializeToElement(new{progress=new{phase="discovering",discovered=120}}),true,"status");
         Require(discovering.Running&&discovering.Phase=="discovering"&&discovering.Discovered==120&&discovering.Total is null,"Discovery reports its own count rather than pretending extraction has stalled at zero");
+        core.Fail=false;core.Phase="preparing";await tasks.InvokeAsync("start");
+        await tasks.InvokeAsync("cancel");Require(!tasks.ActiveThisSession&&core.Phase=="idle","Cancel ends session observation and returns idle");
         Console.WriteLine("Metadata task checks passed: scope, consent, progress, completion, maintenance, pause, cancellation, rejected start and serialized controls.");
     }
 }
@@ -81,7 +83,7 @@ namespace Cap7CE.WinUI.Services
             if(operation=="metadata.build.notify")return (T)(object)JsonSerializer.SerializeToElement(new{result=new{accepted=true}});
             if(operation=="metadata.build.startDirectory") {if(BlockStart is not null)await BlockStart();Phase="preparing";}
             if(operation=="metadata.build.pause")Phase="paused";
-            if(operation=="metadata.build.cancelDirectories")Phase="idle";
+            if(operation is "metadata.build.cancelDirectories" or "metadata.build.cancel")Phase="idle";
             object reply=Fail?JsonSerializer.SerializeToElement(new{errorCode="rejected"}):JsonSerializer.SerializeToElement(new{result=new{directoryTask=new{pending=Pending},progress=new{phase=Phase,processed=4,total=10,failed=0,unsupported=0,progressFraction=.4}}});
             return (T)reply;
         }

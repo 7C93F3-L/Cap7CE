@@ -72,6 +72,11 @@ public sealed partial class MetadataBuildCoordinator
         if (!directory) return await global.ResumeAsync(token);
         await writing!; Kick(); return await ReadAsync(token);
     }
+    public async Task<MetadataBuildStatus> CancelAsync() {
+        await LoadAsync();
+        lock(gate) { if(closing)throw Error("metadata-build-start-cancelled");if(queue.Count>0||running is not null)throw Error("metadata-directory-busy");actionRevision++;current=null; }
+        return await global.CancelAsync();
+    }
     public async Task<MetadataBuildStatus> CancelDirectoriesAsync()
     {
         lock (gate) { directoryRevision++; actionRevision++; }

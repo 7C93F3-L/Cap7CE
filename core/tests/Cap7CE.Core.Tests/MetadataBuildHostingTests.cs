@@ -46,6 +46,8 @@ internal static class MetadataBuildHostingTests
         try {
             var paused = await Send(MetadataBuildOperations.Pause).WaitAsync(TimeSpan.FromSeconds(3));
             TestAssert.True(paused.GetProperty("errorCode").ValueKind == JsonValueKind.Null, "control can stop while both query slots are occupied");
+            var canceled=await Send(MetadataBuildOperations.Cancel).WaitAsync(TimeSpan.FromSeconds(3));
+            TestAssert.Equal("idle",canceled.GetProperty("result").GetProperty("progress").GetProperty("phase").GetString(),"cancel bypasses query slots and returns configuration to idle");
         }
         finally { slots.Release(2); }
         await Send(MetadataBuildOperations.Shutdown);

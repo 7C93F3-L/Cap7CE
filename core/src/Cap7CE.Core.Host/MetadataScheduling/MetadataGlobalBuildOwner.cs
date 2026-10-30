@@ -74,6 +74,7 @@ public sealed partial class MetadataGlobalBuildOwner
         finally { lock (gate) preparing = false; }
     }
     public async Task<MetadataBuildStatus> PauseAsync() { lock (gate) if (closing) throw Error("metadata-build-start-cancelled"); await StopAsync(persist: true); return Snapshot(); }
+    public async Task<MetadataBuildStatus> CancelAsync() { lock (gate) if (closing || borrowed) throw Error("metadata-build-busy"); await StopAsync(persist: false, cancel: true); return Snapshot(); }
     public async Task<MetadataBuildStatus> ResumeAsync(CancellationToken token = default)
     {
         await LoadAsync(); FileFactQueuePolicy selected; long own;
@@ -101,7 +102,7 @@ public sealed partial class MetadataGlobalBuildOwner
         else await session.PauseAsync(CancellationToken.None);
     }
     public async Task ShutdownAsync() { lock (gate) closing = true; await StopAsync(persist: false); await lifecycle.FlushAsync(); }
-    private async Task StopAsync(bool persist)
+    private async Task StopAsync(bool persist, bool cancel = false)
     {
         Task? writing;
         lock (gate) {
@@ -113,10 +114,11 @@ public sealed partial class MetadataGlobalBuildOwner
             await LoadAsync(); var dormant = Inactive(sweep.Snapshot.Phase);
             await sweep.PauseAsync(); await drain.WaitForIdleAsync();
             if (writing is not null) { try { await writing; } catch (Exception error) when (error is not OutOfMemoryException) { } }
-            var grant = await lifecycle.LoadAsync();
+            var grant = await lifecycle.LoadAsync();var hadConsent=grant?.Consent==true;
+            if(cancel && grant is not null) { await lifecycle.GrantAsync(grant.Policy,grant.ScopeLabels,configured:true);grant=await lifecycle.LoadAsync();lock(gate)errorCode=null; }
             if (persist && grant?.Consent == true) { await lifecycle.SetIntentAsync("paused"); grant = await lifecycle.LoadAsync(); }
             lock (gate) if (grant is not null) Adopt(grant);
-            if (dormant && grant?.Consent == true) await session.PauseAsync(CancellationToken.None);
+            if (dormant && hadConsent) await session.PauseAsync(CancellationToken.None);
         }
         finally { lock (gate) stopping--; }
     }

@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-28）
 
+元数据全盘取消通过MetadataBuildOperations.Cancel进入既有独立控制通道，由MetadataBuildCoordinator拒绝目录队列占用后转交MetadataGlobalBuildOwner。取消复用StopAsync的修订失效、停止/等待及持久化顺序，将已有授权保存为consent=false、intent=configured；保留policy、scopeLabels与已发布属性，不增加状态文件或删除数据库内容。后台变更维护随本轮停止，重启/通知不会再次授予执行。暂停继续保留intent=paused，退出或重启不将手动暂停当作取消；UI为活动/暂停/失败的全盘任务显示取消，为目录任务沿用cancelDirectories，并为暂停与取消提供不同提示。
+
 DetailsPane的上下文数量只消费既有Count：目录当前项目和搜索匹配项在总数未知时不创建数量行，不以Loaded分页进度替代总数；正常翻页耗尽后的数量继续沿用MainWindow已有投影。位置、筛选组数和此电脑浏览范围保持原有显示。不新增统计服务、IPC、扫描、轮询或自动翻页，首屏仍沿用IncludeTotalCount:false策略。
 
 SessionDiagnostics在主实例确认后启动，以会话ID、PID、程序集版本/构建MVID、墙钟及单调耗时串联低频操作；Operation只做范围计时及显式错误/阶段记录，不重试、重连或修改控件行为。DiagnosticJournal独立负责线程安全JSONL追加与轮转，每份最多512KiB、当前及3份历史共4份，新会话和体积上限触发轮转，写入失败不传播。记录Core进程就绪/退出、AI宿主创建/请求、导航结果及设置分类/子页/指令折叠/AI选择刷新；不记录路径参数、搜索词、模型名称或逐文件事件，异常原文可能包含底层路径。XAML和AppDomain未处理异常立即追加类型、HRESULT及限量异常链，不吞异常或改变终止策略；ProcessExit仅在系统实际发送时记录，不以缺失退出事件单独判断崩溃。DiagnosticsArchive复用既有单项限量采集，包含4份时间线；UI和Core保持原模块边界，无后台轮询、全局输入钩子或新增跨进程协议。

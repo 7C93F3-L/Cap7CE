@@ -11,7 +11,7 @@ public sealed partial class MetadataGlobalBuildOwner
         lock (gate) {
             var progress = sweep.Snapshot;
             progress = errorCode is not null ? progress with { Phase = "failed", ErrorCode = errorCode }
-                : savedIntent == "configured" ? progress with { Phase = "idle" }
+                : savedIntent == "configured" ? progress with { Phase = "idle", ErrorCode = null }
                 : savedIntent == "paused" && progress.Phase is "idle" or "completed" ? progress with { Phase = "paused" }
                 : progress.Phase == "idle" && savedIntent == "completed" ? progress with { Phase = "completed" } : progress;
             return new(progress, volumes.ToArray(), policy is null ? null : MetadataBuildPolicyCopy.Copy(policy), new Dictionary<string, string>(scopeLabels));

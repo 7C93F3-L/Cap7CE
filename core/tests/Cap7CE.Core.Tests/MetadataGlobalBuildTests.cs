@@ -41,8 +41,49 @@ internal static class MetadataGlobalBuildTests
         for (var step = 0; step < 1000; step++) { if ((await owner.ReadAsync()).Progress.Phase == "completed") return; await Task.Delay(2); }
         throw new InvalidOperationException("global completion test timed out");
     }
+    private static async Task CancelTaskAsync()
+    {
+        foreach(var active in new[]{false,true}) {
+            var fixture=new Fixture("paused");var owner=fixture.Create();
+            if(active) {
+                fixture.Session.BlockAfter=2;await owner.ResumeAsync();
+                for(var i=0;fixture.Session.Finished==0||fixture.Session.Live==0;i++) {
+                    if(i==1000)throw new Exception("cancel fixture did not enter extraction");await Task.Delay(2);
+                }
+            }
+            var result=await owner.CancelAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            TestAssert.Equal("idle",result.Progress.Phase,"cancel returns to idle");
+            TestAssert.Equal(0,fixture.Session.Live,"cancel waits for content reads to stop");
+            var finished=fixture.Session.Finished;var configurations=fixture.Session.Configurations;
+            TestAssert.False(fixture.Saved!.Value.GetProperty("consent").GetBoolean(),"cancel removes execution consent");
+            TestAssert.Equal("configured",fixture.Saved.Value.GetProperty("intent").GetString(),"scope remains configuration only");
+            await owner.ShutdownAsync();owner=fixture.Create();await owner.RestoreAsync();await owner.NotifyCatalogChangeAsync();
+            TestAssert.Equal("idle",(await owner.ReadAsync()).Progress.Phase,"restart does not restore canceled task");
+            TestAssert.Equal(configurations,fixture.Session.Configurations,"restore/wake does not execute canceled policy");
+            TestAssert.Equal(finished,fixture.Session.Finished,"published results survive cancellation");
+            fixture.Session.BlockAfter=int.MaxValue;await owner.StartAsync(new(true,MetadataSweepFixture.Policy));await CompletedAsync(owner);
+            TestAssert.True(fixture.Session.Configurations>configurations,"explicit new start is available after cancellation");await owner.ShutdownAsync();
+        }
+        var failed=new Fixture();var failedOwner=failed.Create();failed.Session.Fault=true;
+        await failedOwner.StartAsync(new(true,MetadataSweepFixture.Policy));
+        for(var i=0;(await failedOwner.ReadAsync()).Progress.Phase!="failed";i++) {
+            if(i==1000)throw new Exception("failure fixture did not finish");await Task.Delay(2);
+        }
+        var cleared=await failedOwner.CancelAsync();TestAssert.Equal("idle",cleared.Progress.Phase,"failed task can be canceled");
+        TestAssert.True(cleared.Progress.ErrorCode is null,"cancellation clears the previous task failure");await failedOwner.ShutdownAsync();
+        var pending=new Fixture("configured"){BlockSave=new(TaskCreationOptions.RunContinuationsAsynchronously)};var target=pending.Create();
+        var start=target.StartAsync(new(true,MetadataSweepFixture.Policy));await pending.SaveEntered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        var cancel=target.CancelAsync();pending.BlockSave.SetResult();
+        await TestAssert.ThrowsAsync<InvalidOperationException>(()=>start,"cancel invalidates an in-flight start");await cancel;
+        TestAssert.Equal(0,pending.Session.Configurations,"late grant cannot start canceled work");await target.ShutdownAsync();
+        var failing=new Fixture("paused"){Fail=true};target=failing.Create();
+        await TestAssert.ThrowsAsync<IOException>(()=>target.CancelAsync(),"persistence failure cannot report successful cancellation");
+        TestAssert.Equal("paused",failing.Saved!.Value.GetProperty("intent").GetString(),"failed write retains durable state");
+        failing.Fail=false;await target.CancelAsync();await target.ShutdownAsync();
+    }
     public static async Task RunAsync()
     {
+        await CancelTaskAsync();
         await TerminalNotificationShutdownRaceAsync();
         var fixture = new Fixture(); var owner = fixture.Create();
         TestAssert.Equal("idle", (await owner.ReadAsync()).Progress.Phase, "passive status has no task");

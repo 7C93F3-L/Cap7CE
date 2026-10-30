@@ -3535,6 +3535,14 @@
     "zh-CN": "刷新",
     "en-US": "Refresh"
   },
+  "ui.metadata.cancelTaskHint": {
+    "zh-CN": "结束本轮提取，保留已提取结果及范围配置；重启后不会继续本轮任务。",
+    "en-US": "End this extraction task and keep extracted results and scope settings. This task will not resume after restarting."
+  },
+  "ui.metadata.pausedHint": {
+    "zh-CN": "暂停状态会在重启后保留。可继续提取，或取消本轮任务；已提取结果保留。",
+    "en-US": "The task stays paused after restarting. Resume extraction or cancel this task; extracted results are kept."
+  },
   "ui.metadata.cancelHint": {
     "zh-CN": "停止当前目录并清空队列，保留已提取结果。",
     "en-US": "Stop the current folder and clear the queue. Extracted results are preserved."

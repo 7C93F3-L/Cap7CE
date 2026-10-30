@@ -32,7 +32,7 @@ internal sealed class MetadataTasks(ShellServices services)
         if(operation is "start" or "startDirectory" or "startAllVolumes" or "resume"){
             started=true;if(notificationId is null){multipleDirectories=false;notificationId=Guid.NewGuid().ToString("N");services.TaskNotices.Begin("metadata",notificationId);}
         }
-        if(operation is "pause" or "cancelDirectories" or "shutdown"){
+        if(operation is "pause" or "cancel" or "cancelDirectories" or "shutdown"){
             started=false;if(notificationId is {} cancelled)services.TaskNotices.Forget("metadata",cancelled);notificationId=null;
         }
         if(result.TryGetProperty("progress",out var progress)) {

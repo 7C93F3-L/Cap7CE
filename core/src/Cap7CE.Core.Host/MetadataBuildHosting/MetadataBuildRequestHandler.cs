@@ -29,6 +29,7 @@ internal static class MetadataBuildRequestHandler
                     case MetadataBuildOperations.SavePolicy: result = await owner.SavePolicyAsync(CoreRequestDispatcher.ReadBody<PolicyRequest>(request).Policy, token); break;
                     case MetadataBuildOperations.Start: result = await owner.StartAsync(CoreRequestDispatcher.ReadBody<FileFactConfigurationRequest>(request), token); break;
                     case MetadataBuildOperations.Pause: CoreRequestDispatcher.RequireEmptyBody(request); result = await owner.PauseAsync(); break;
+                    case MetadataBuildOperations.Cancel: CoreRequestDispatcher.RequireEmptyBody(request); result = await owner.CancelAsync(); break;
                     case MetadataBuildOperations.Resume: CoreRequestDispatcher.RequireEmptyBody(request); result = await owner.ResumeAsync(token); break;
                     case MetadataBuildOperations.StartDirectory: result = await owner.StartDirectoryAsync(CoreRequestDispatcher.ReadBody<MetadataDirectoryBuildRequest>(request), token); break;
                     case MetadataBuildOperations.StartAllVolumes: result = await owner.StartAllVolumesAsync(CoreRequestDispatcher.ReadBody<ConfirmationRequest>(request).AllowMetadataExtraction, token); break;

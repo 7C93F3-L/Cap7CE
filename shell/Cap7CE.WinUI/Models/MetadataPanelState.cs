@@ -6,7 +6,7 @@ internal sealed record MetadataPanelState(MetadataTaskStatus Progress,string? Di
 {
     public bool CanPause=>Progress.Phase is "preparing" or "discovering" or "waiting" or "extracting";
     public bool CanResume=>Progress.Phase=="paused"&&(Pending>0||HasPolicy)||Progress.Phase=="failed"&&Pending>0;
-    public bool CanCancel=>Pending>0;
+    public bool CanCancel=>Pending>0||HasPolicy&&(CanPause||CanResume||Progress.Phase is "pausing" or "failed");
     public bool ShowTaskArea=>CanPause||CanResume||CanCancel||Progress.Phase is "pausing" or "failed";
     public bool ShowProgress=>CanPause||Progress.Phase=="pausing"||Progress.Phase=="paused"&&(Pending>0||HasPolicy);
     public bool ShowCounts=>Progress.Phase!="idle"&&(Progress.Phase!="paused"||Pending>0||HasPolicy)

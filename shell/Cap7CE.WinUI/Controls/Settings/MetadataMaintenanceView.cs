@@ -28,7 +28,7 @@ internal sealed class MetadataMaintenanceView : UserControl
         start=Action("ui.metadata.start",()=>MetadataBatchService.StartAsync(services,exclusions.Snapshot()));
         start.Style=(Style)Application.Current.Resources["AccentButtonStyle"];
         control=Action("ui.metadata.pause",()=>InvokeAsync(state?.CanResume==true?"resume":"pause"));
-        cancel=Action("ui.metadata.cancel",()=>InvokeAsync("cancelDirectories"));
+        cancel=Action("common.cancel",()=>InvokeAsync(state?.Pending>0?"cancelDirectories":"cancel"));
         refresh=Action("ui.metadata.refresh",()=>InvokeAsync("status"));
         L.Bind(cancel,ToolTipService.ToolTipProperty,"ui.metadata.cancelHint");
 
@@ -84,7 +84,9 @@ internal sealed class MetadataMaintenanceView : UserControl
         var volumes=services.Volumes.Where(volume=>volume.Selected&&volume.Queryable).Select(volume=>volume.DisplayName).ToArray();
         start.IsEnabled=ready&&!exclusions.Busy&&volumes.Length>0&&state?.CanPause!=true&&state?.Progress.Phase!="pausing"&&state?.Pending==0;
         L.Bind(control,Button.ContentProperty,MaintenanceText.ControlKey(state));control.IsEnabled=ready&&(state!.CanPause||state.CanResume);
-        cancel.IsEnabled=ready&&state!.CanCancel;refresh.IsEnabled=connected&&!busy;
+        L.Bind(cancel,ToolTipService.ToolTipProperty,state?.Pending>0?"ui.metadata.cancelHint":"ui.metadata.cancelTaskHint");
+        if(state?.Progress.Phase=="paused")L.Bind(control,ToolTipService.ToolTipProperty,"ui.metadata.pausedHint");else L.Literal(control,ToolTipService.ToolTipProperty,null);
+        cancel.IsEnabled=ready&&state!.CanCancel&&(state.Pending>0||services.Core!.Supports(MetadataBuildOperations.Cancel));refresh.IsEnabled=connected&&!busy;
         control.Visibility=state is {} task&&(task.CanPause||task.CanResume||task.Progress.Phase=="pausing")?Visibility.Visible:Visibility.Collapsed;
         cancel.Visibility=state?.CanCancel==true?Visibility.Visible:Visibility.Collapsed;
         start.Visibility=state is {} active&&(active.CanPause||active.CanResume||active.CanCancel||active.Progress.Phase=="pausing")?Visibility.Collapsed:Visibility.Visible;
@@ -93,7 +95,7 @@ internal sealed class MetadataMaintenanceView : UserControl
             "discovering"=>"ui.metadata.summaryDiscovering","waiting"=>"ui.metadata.summaryWaiting",
             "extracting"=>"ui.metadata.summaryExtracting",_=>statusKey
         };
-        L.Bind(status,TextBlock.TextProperty,summaryKey);L.Bind(status,ToolTipService.ToolTipProperty,statusKey);
+        L.Bind(status,TextBlock.TextProperty,summaryKey);L.Bind(status,ToolTipService.ToolTipProperty,state?.Progress.Phase=="paused"?"ui.metadata.pausedHint":statusKey);
         status.Visibility=!connected||state is null||state.ShowTaskArea?Visibility.Visible:Visibility.Collapsed;
         taskArea.Visibility=connected&&state?.ShowTaskArea==true?Visibility.Visible:Visibility.Collapsed;
         if(state is {Directory:{} path} directoryState)L.Bind(current,TextBlock.TextProperty,directoryState.Pending>1?"ui.metadata.currentQueued":"ui.metadata.current",()=>new Dictionary<string,object?>{{"path",path},{"count",directoryState.Pending-1}});else L.Literal(current,TextBlock.TextProperty,"");
