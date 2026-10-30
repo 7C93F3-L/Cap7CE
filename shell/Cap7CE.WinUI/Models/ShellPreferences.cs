@@ -22,9 +22,9 @@ public sealed record ShellPreferences
 
 	public string Theme { get; init; } = "system";
 
-	public string Color1 { get; init; } = "#7894F8";
+	public string Color1 { get; init; } = "#7C93F3";
 
-	public string Color2 { get; init; } = "#67BEC1";
+	public string Color2 { get; init; } = "#68C3C0";
 
 	public double TileSize { get; init; } = 160.0;
 

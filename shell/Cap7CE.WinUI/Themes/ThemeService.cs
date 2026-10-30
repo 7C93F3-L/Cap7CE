@@ -33,7 +33,7 @@ internal static class ThemeService
     }
     public static Color Parse(string hex)
     {
-        if (hex.Length != 7 || hex[0] != '#' || !uint.TryParse(hex[1..], System.Globalization.NumberStyles.HexNumber, null, out var value)) return Color.FromArgb(255,120,148,248);
+        if (hex.Length != 7 || hex[0] != '#' || !uint.TryParse(hex[1..], System.Globalization.NumberStyles.HexNumber, null, out var value)) return Color.FromArgb(255,124,147,243);
         return Color.FromArgb(255, (byte)(value >> 16), (byte)(value >> 8), (byte)value);
     }
     public static MenuFlyout Menu() => new() { SystemBackdrop = new DesktopAcrylicBackdrop() };
