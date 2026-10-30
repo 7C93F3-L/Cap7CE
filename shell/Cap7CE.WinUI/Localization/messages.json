@@ -3892,8 +3892,8 @@
     "en-US": "Native version {version} is available. See the project Releases page; this action does not download or replace the application."
   },
   "ui.update.noNativeRelease": {
-    "zh-CN": "尚未发现正式发布的 WinUI 安装器；旧 Electron 安装包不会用于更新原生程序。",
-    "en-US": "No official WinUI installer was found. Electron installers will not update the native application."
+    "zh-CN": "暂未发现可用的更新。",
+    "en-US": "No updates are currently available."
   },
   "ui.signature.primary": {
     "zh-CN": "一切始于一只找不到的狗。",

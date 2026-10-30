@@ -96,7 +96,7 @@ internal sealed class SettingsCatalog
     }
     private void About()
     {
-        Mainline("关于","application","settings.versionUpdate","stableSettings.desc.update",VersionActions,expanded:true,descriptionOverride:"native.update.description");
+        Entries.Add(new("关于","stableSettings.section.application","","",VersionActions,true));
         Mainline("关于","application","stableSettings.license","stableSettings.desc.license",()=>new TextBlock());
     }
     private UIElement VersionActions()
