@@ -242,3 +242,7 @@ const trayMenu=read('shell/Cap7CE.WinUI/Services/Tray/TrayMenu.cs');
 assert(trayMenu.includes('TrackPopupMenuEx')&&trayMenu.includes('SetForegroundWindow')&&trayMenu.includes('PostMessageW'), 'tray menu must use native tracking and foreground/dismissal protocol');
 assert(trayMenu.includes('DestroyMenu')&&trayMenu.includes('DestroyWindow')&&!trayMenu.includes('MenuFlyout'), 'tray menu must release native resources without a XAML popup host');
 console.log('WinUI shell boundaries passed');
+const diagnosticJournal=read("shell/Cap7CE.WinUI/Services/DiagnosticJournal.cs");
+assert(!/Microsoft\.UI|RequestAsync|ProcessStartInfo|DispatcherTimer/.test(diagnosticJournal), "journal must remain an IO-only bounded sink");
+assert(diagnosticJournal.includes("512*1024") && diagnosticJournal.includes("session-trace.3.jsonl") && diagnosticJournal.includes("lock(gate)"), "journal must keep bounded synchronized retention");
+assert(read("shell/Cap7CE.WinUI/Services/DiagnosticsArchive.cs").includes("LogNames.Concat(DiagnosticJournal.Names)"), "diagnostic export must include retained sessions");

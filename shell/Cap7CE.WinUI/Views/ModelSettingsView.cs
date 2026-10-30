@@ -73,12 +73,14 @@ internal sealed class ModelSettingsView
     }
     private async Task RefreshAsync()
     {
+        using var trace=SessionDiagnostics.Begin("ai.settings.refresh",new{generation});
+        try {
         var current=generation;
         var runtime=await ModelActions.SettingsAsync("runtime.settings");
         var model=await ModelActions.SettingsAsync("models.settings");
         var state=await ModelActions.RuntimeAsync("runtime.state",null);
         if(!subscribed||current!=generation)return;
-        syncing=true;
+        trace.Mark("populate",new{generation,runtimeOpen=runtimes.IsDropDownOpen,modelOpen=models.IsDropDownOpen});syncing=true;
         try {
             Populate(runtimes,"settings.selectVersion",runtime.GetProperty("versions"),"version","version",runtime.GetProperty("selectedVersion").GetString());
             Populate(models,"settings.selectVisionModel",model.GetProperty("models"),"id","name",model.GetProperty("selectedModelId").GetString());
@@ -91,9 +93,10 @@ internal sealed class ModelSettingsView
         var fileCount=model.GetProperty("files").GetArrayLength();var modelCount=model.GetProperty("models").GetArrayLength();
         L.Bind(inventory,TextBlock.TextProperty,"ui.model.inventory",()=>new Dictionary<string,object?>{{"models",modelCount},{"files",fileCount}});
         ApplyRuntime(state);
+        }catch(Exception error){trace.Fail(error);throw;}
     }
     private async Task SelectAsync(string operation,string id)
-    {await ModelActions.SettingsAsync(operation,id);}
+    {SessionDiagnostics.Record("ai.settings.select",new{operation,empty=id.Length==0,generation,runtimeOpen=runtimes.IsDropDownOpen,modelOpen=models.IsDropDownOpen});await ModelActions.SettingsAsync(operation,id);}
     private async Task RuntimeAsync(string operation,object? value)
     {
         var current=generation;
@@ -109,11 +112,11 @@ internal sealed class ModelSettingsView
     private Button Action(string label,Func<Task> work){var button=L.Button(label,()=>Run(work));buttons.Add(button);return button;}
     private async void Run(Func<Task> work)
     {
-        if(running)return;running=true;refreshPending=false;ApplyEnabled();
+        if(running)return;using var trace=SessionDiagnostics.Begin("ai.settings.action",new{generation,subscribed});running=true;refreshPending=false;ApplyEnabled();
         try{
             await work();
             while(refreshPending&&subscribed&&!services.ModelChanges.Busy){refreshPending=false;await RefreshAsync();}
-        }catch(Exception error){if(subscribed)notice(FailureText.From(error));}
+        }catch(Exception error){trace.Fail(error);if(subscribed)notice(FailureText.From(error));}
         finally{
             running=false;ApplyEnabled();
             if(refreshPending&&subscribed&&!services.ModelChanges.Busy)ModelChanged();

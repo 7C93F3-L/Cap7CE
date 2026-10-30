@@ -23,6 +23,8 @@ internal sealed class SettingsCommandList : UserControl
             }
             var heading=L.Text(group.TitleKey);heading.Style=(Style)Application.Current.Resources["CapSettingsLabel"];heading.FontWeight=FontWeights.SemiBold;
             var expander=new Expander{Header=heading,Content=rows,IsExpanded=false,Style=(Style)Application.Current.Resources["CapSettingsExpander"]};
+            expander.Expanding+=(_,_)=>Services.SessionDiagnostics.Record("trace.settings.command.expand",new{group=group.TitleKey});
+            expander.Collapsed+=(_,_)=>Services.SessionDiagnostics.Record("trace.settings.command.collapse",new{group=group.TitleKey});
             L.Bind(expander,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,group.TitleKey);
             groups.Children.Add(expander);
         }

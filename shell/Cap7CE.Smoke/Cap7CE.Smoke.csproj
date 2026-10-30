@@ -10,4 +10,5 @@
     <Compile Include="../Cap7CE.WinUI/Services/VisualConnection.cs" Link="VisualConnection.cs" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreNodeHost.cs" Link="CoreNodeHost.cs" />
   </ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/DiagnosticJournal.cs;../Cap7CE.WinUI/Services/SessionDiagnostics.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
 </Project>

@@ -50,4 +50,5 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/QuickCommand.cs;../Cap7CE.WinUI/Commands/QuickCommandInput.cs" Link="%(Filename)%(Extension)"/>
   <None Include="../Cap7CE.WinUI/Localization/settings-help.json" Link="Assets/settings-help.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/TrayPolicy.cs;../Cap7CE.WinUI/Services/Tray/TrayNative.cs" Link="TrayPolicy.cs"/></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/DiagnosticJournal.cs;../Cap7CE.WinUI/Services/SessionDiagnostics.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
 </Project>

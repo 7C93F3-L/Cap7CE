@@ -12,19 +12,20 @@ public partial class App : Application
     });
     public App()
     {
-        UnhandledException += (_, e) => LogFailure(e.Exception);
+        UnhandledException += (_, e) => { Services.SessionDiagnostics.Record("exception.xaml",new{e.Message,error=Services.SessionDiagnostics.Error(e.Exception)});LogFailure(e.Exception); };
         try { InitializeComponent(); } catch (Exception error) { LogFailure(error); throw; }
     }
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        using var trace=Services.SessionDiagnostics.Begin("app.launch");
         try {
             var target=window=new MainWindow();target.Closed+=(_,_)=>{if(ReferenceEquals(window,target))window=null;};
-            await target.LoadStartupAsync();if(!ReferenceEquals(window,target))return;
+            await target.LoadStartupAsync();trace.Mark("preferences-and-tray-ready");if(!ReferenceEquals(window,target))return;
             initializing=false;
             if(Models.TrayPolicy.ShowOnStartup(target.ShowMainOnStartup,activationRequested,target.TrayRegistrationFailed))Services.WindowActivation.Show(target);
-            await target.StartServicesAsync();
+            trace.Mark("window-initialized");await target.StartServicesAsync();trace.Mark("startup-services-returned");
         }
-        catch (Exception error) { LogFailure(error); throw; }
+        catch (Exception error) { trace.Fail(error);LogFailure(error); throw; }
     }
     private static void LogFailure(Exception error)
     {

@@ -74,6 +74,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         filesystem?.Dispose();filesystem=null;
         Busy = true;Error=null;Changed?.Invoke();
         using var timing=new BrowseTiming();
+        using var trace=SessionDiagnostics.Begin("browse.navigate",new{navigation=version,Recursive,filtered=Filter.Count>0,searching=!string.IsNullOrWhiteSpace(Query),Random,preserveSelection,coreConnected=services.Core?.IsConnected==true});
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
@@ -166,9 +167,9 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             Items = result;FilesystemBrowsing=false;
             return true;
         }
-        catch (OperationCanceledException) { return false; }
-        catch (Exception error) { if (version == generation) { timing.Mark("failure");NativeDiagnostics.CoreFailure(error+"\n"+error.Data["CoreMessage"]);Error = FailureText.From(error); } return false; }
-        finally { if (version == generation) { Busy = false; Changed?.Invoke();timing.Mark("ui-notified"); } }
+        catch (OperationCanceledException error) { trace.Fail(error);return false; }
+        catch (Exception error) { trace.Fail(error);if (version == generation) { timing.Mark("failure");NativeDiagnostics.CoreFailure(error+"\n"+error.Data["CoreMessage"]);Error = FailureText.From(error); } return false; }
+        finally { trace.Mark("result",new{current=version==generation,FilesystemBrowsing,count=Items.Count,hasError=Error is not null});if (version == generation) { Busy = false; Changed?.Invoke();timing.Mark("ui-notified"); } }
     }
     private void Append(AssetCollection target, SearchPageResponse page)
     {

@@ -33,6 +33,12 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
             info.Environment["CAP7CE_CORE_VISUAL_HOST"] = Executable;
             foreach (var arg in new[] { "--node-worker", "--parent-pid", Environment.ProcessId.ToString(), node, Path.Combine(directory, worker), dataRoot, nonce }) info.ArgumentList.Add(arg);
             process = Process.Start(info) ?? throw new UiFailure("ui.error.nodeHost");
+            SessionDiagnostics.Record("worker.spawned",new{worker,pid=process.Id});
+            try {
+                var owner=process;var pid=owner.Id;
+                owner.Exited+=(_,_)=>{try{SessionDiagnostics.Record("worker.exit",new{worker,pid,owner.ExitCode});}catch{}};
+                owner.EnableRaisingEvents=true;
+            }catch { /* Exit observation cannot block host startup. */ }
             process.ErrorDataReceived += (_, args) => {if(args.Data is {} line)lock(errors){errors.Enqueue(line[..Math.Min(line.Length,512)]);while(errors.Count>24)errors.Dequeue();}}; process.BeginErrorReadLine();
             rpc = new(process.StandardOutput.BaseStream, process.StandardInput.BaseStream, 64 * 1024 * 1024);
         }
@@ -40,6 +46,8 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
     }
     public async Task<JsonElement> RequestAsync(string method, object?[] args, CancellationToken token = default)
     {
+        using var trace=worker=="model-runtime.cjs"?SessionDiagnostics.Begin("ai.request",new{method,operation=method=="modelSettings.invoke"?args.ElementAtOrDefault(1) as string:null}):null;
+        try {
         await StartAsync();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token); timeout.CancelAfter(TimeSpan.FromSeconds(120));
         await sending.WaitAsync(timeout.Token);
@@ -57,6 +65,7 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
             throw failure;
         }
         return value.GetProperty("result").Clone();
+        }catch(Exception error){trace?.Fail(error);throw;}
     }
     public async Task ReleaseAsync() { if (IsActive) await RequestAsync("releaseSourceHandles", []); }
     public async ValueTask DisposeAsync()

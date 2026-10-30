@@ -19,6 +19,7 @@ internal static class Program
         var key="Cap7CE.WinUI."+Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)))[..16];
         var instance=AppInstance.FindOrRegisterForKey(key);
         if(!instance.IsCurrent){Services.ActivationRedirect.Run(instance,AppInstance.GetCurrent().GetActivatedEventArgs());return;}
+        Services.SessionDiagnostics.Start(Services.PreferenceStore.DataRoot);
         App? app=null;var activationGate=new object();var activationPending=false;
         instance.Activated+=(_,_)=>{lock(activationGate){if(app is null)activationPending=true;else app.ActivateMain();}};
         Application.Start(_=>{

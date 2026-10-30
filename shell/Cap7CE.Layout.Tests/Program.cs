@@ -5,6 +5,8 @@ await ModelChangesChecks.RunAsync();
 await ModelCommandChecks.RunAsync();
 await QuickCommandChecks.RunAsync();
 await DiagnosticsArchiveChecks.RunAsync();
+await DiagnosticJournalChecks.RunAsync();
+if(args is ["--diagnostics-tests"])return;
 
 if(args is ["--shortcut-tests"]) {await ShortcutChecks.RunAsync();return;}
 await ShortcutChecks.RunAsync();

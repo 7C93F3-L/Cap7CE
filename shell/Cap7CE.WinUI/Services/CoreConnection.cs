@@ -22,6 +22,7 @@ internal sealed class CoreConnection : IAsyncDisposable
         =>StartAsync(CoreLaunchProfile.Create(root,database,product,interactive),failureLog,runtimeLog);
     internal static async Task<CoreConnection> StartAsync(CoreLaunchProfile profile,Action<string>? failureLog=null,Action<string>? runtimeLog=null)
     {
+        using var trace=SessionDiagnostics.Begin("core.connect",new{profile.Product,timeoutSeconds=20});
         var name=profile.Pipe;var info=profile.Start;
         var child = Process.Start(info) ?? throw new UiFailure("ui.error.coreStart");
         var diagnostics=new CoreProcessDiagnostics(child,runtimeLog??failureLog??(_=>{}));
@@ -31,20 +32,20 @@ internal sealed class CoreConnection : IAsyncDisposable
         {
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             var secret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            await child.StandardInput.WriteLineAsync(secret);
+            trace.Mark("spawned",new{child.Id});await child.StandardInput.WriteLineAsync(secret);
             if (!profile.IsReady(await child.StandardOutput.ReadLineAsync(timeout.Token),child.Id)) throw new UiFailure("ui.error.coreStartup");
-            await pipe.ConnectAsync(timeout.Token);
+            trace.Mark("ready");await pipe.ConnectAsync(timeout.Token);trace.Mark("pipe-connected");
             if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var pid) || pid != child.Id) throw new UiFailure("ui.error.coreIdentity");
             connection = new(child, pipe,diagnostics);
             var hello = await connection.RequestAsync<SessionHelloResponse>(CoreOperations.SessionHello,
                 new SessionHelloRequest(secret, [1], "Cap7CE WinUI Phase F", "1.0.4", Environment.ProcessId), timeout.Token);
             if (hello.ServerProcessId != child.Id || hello.SelectedProtocolVersion != 1 || hello.SyntheticFixture
                 || !hello.Capabilities.Contains(CoreOperations.SearchStart)) throw new UiFailure("ui.error.coreHandshake");
-            connection.Capabilities=hello.Capabilities;return connection;
+            connection.Capabilities=hello.Capabilities;trace.Mark("handshake-ready");return connection;
         }
         catch(Exception error)
         {
-            diagnostics.ExpectExit();
+            trace.Fail(error);diagnostics.ExpectExit();
             try{failureLog?.Invoke(diagnostics.Errors+"\n"+error);}catch{}
             if (connection is not null) await connection.DisposeAsync();
             else { pipe.Dispose(); child.StandardInput.Close(); if (!child.HasExited) child.Kill(true);await diagnostics.Completion; child.Dispose(); }

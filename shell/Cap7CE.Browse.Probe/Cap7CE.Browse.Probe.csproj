@@ -6,4 +6,5 @@
     <ProjectReference Include="../../core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreConnection.cs;../Cap7CE.WinUI/Services/CoreLaunchProfile.cs;../Cap7CE.WinUI/Services/FramedRpc.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/DiagnosticJournal.cs;../Cap7CE.WinUI/Services/SessionDiagnostics.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
 </Project>

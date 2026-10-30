@@ -2,6 +2,8 @@
 
 ## 当前实施状态（2026-10-28）
 
+SessionDiagnostics在主实例确认后启动，以会话ID、PID、程序集版本/构建MVID、墙钟及单调耗时串联低频操作；Operation只做范围计时及显式错误/阶段记录，不重试、重连或修改控件行为。DiagnosticJournal独立负责线程安全JSONL追加与轮转，每份最多512KiB、当前及3份历史共4份，新会话和体积上限触发轮转，写入失败不传播。记录Core进程就绪/退出、AI宿主创建/请求、导航结果及设置分类/子页/指令折叠/AI选择刷新；不记录路径参数、搜索词、模型名称或逐文件事件，异常原文可能包含底层路径。XAML和AppDomain未处理异常立即追加类型、HRESULT及限量异常链，不吞异常或改变终止策略；ProcessExit仅在系统实际发送时记录，不以缺失退出事件单独判断崩溃。DiagnosticsArchive复用既有单项限量采集，包含4份时间线；UI和Core保持原模块边界，无后台轮询、全局输入钩子或新增跨进程协议。
+
 AiActionIcon集中创建结果/收藏目录菜单及关键词编辑器的PathIcon，统一Regular/Filled星芒几何和悬停/键盘焦点/禁用状态，按两版几何共同边界计算同一缩放/平移矩阵并留1 DIP余量，避免14/16 DIP槽位裁切；渐变直接引用CapAccentGradient共享画刷，不修改文字背景或控件模板。高对比度通过AiIconResources的ThemeResource原生映射，不订阅AccessibilitySettings事件，无后台计时器。几何来自Microsoft Fluent UI System Icons，MIT许可保存在third_party并复制到WinUI输出。
 
 AccentResources.xaml在ShellResources后以应用级资源字典接入，集中映射WinUI 1.8原生控件的强调色及配套前景资源，覆盖Light/Default并为相同资源键保留原始HighContrast映射。共享CapAccentBrush及透明度变体由颜色1驱动，ThemeService只更新共享画刷；CapSolidAccentForegroundBrush独立根据颜色1计算前景，渐变仍由SidebarPalette按颜色1/颜色2共同选择前景。WorkspaceInputResources同时进入应用级范围，覆盖普通输入控件的焦点线；保留既有局部控件资源，不复制模板、不遍历视觉树或修改系统主题。

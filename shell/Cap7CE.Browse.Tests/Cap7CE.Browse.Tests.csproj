@@ -8,4 +8,5 @@
     <ProjectReference Include="../../core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj" />
     <Compile Include="../Cap7CE.WinUI/Controllers/BrowseSession.cs;../Cap7CE.WinUI/Models/BrowseScopeRules.cs;../Cap7CE.WinUI/Models/WorkspaceOptions.cs;../Cap7CE.WinUI/Models/ShellPreferences.cs;../Cap7CE.WinUI/Services/BrowseTiming.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/DiagnosticJournal.cs;../Cap7CE.WinUI/Services/SessionDiagnostics.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
 </Project>

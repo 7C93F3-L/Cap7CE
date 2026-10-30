@@ -10,7 +10,7 @@ internal static class DiagnosticsArchive
         using var zip=new ZipArchive(output,ZipArchiveMode.Create,true);
         await using(var stream=zip.CreateEntry("runtime.json").Open())await JsonSerializer.SerializeAsync(stream,snapshot);
         var report=new List<object>();
-        foreach(var name in LogNames) {
+        foreach(var name in LogNames.Concat(DiagnosticJournal.Names)) {
             byte[] bytes;bool truncated;
             try {
                 await using var source=new FileStream(Path.Combine(directory,name),FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);

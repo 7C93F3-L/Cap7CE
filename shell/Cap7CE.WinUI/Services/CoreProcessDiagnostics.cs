@@ -19,6 +19,7 @@ internal sealed class CoreProcessDiagnostics
     {
         try {
             await process.WaitForExitAsync().ConfigureAwait(false);
+            SessionDiagnostics.Record("core.exit",new{pid=process.Id,process.ExitCode,expected=Volatile.Read(ref expected)!=0});
             if(Volatile.Read(ref expected)==0)report($"{DateTimeOffset.Now:O}\nCore PID: {process.Id}\nExit code: {process.ExitCode} (0x{process.ExitCode:X8})\n{Errors}");
         }catch(Exception error){if(Volatile.Read(ref expected)==0)try{report("Core exit diagnostics failed: "+error.Message);}catch{}}
     }

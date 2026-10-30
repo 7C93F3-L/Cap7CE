@@ -23,7 +23,7 @@ internal sealed class SettingsWindow : Window
     internal bool IsViewingMaintenance=>!closed&&category=="缓存与索引"&&NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(this));
     public SettingsWindow(ShellServices services)
     {
-        this.services=services;SettingsWindowGeometry.ApplyInitial(this);
+        SessionDiagnostics.Record("trace.settings.open");this.services=services;SettingsWindowGeometry.ApplyInitial(this);
         WindowTitleBinding.Attach(this,"ui.window.settingsTitle");
         LanguageUi.Bind(navigation,NavigationView.PaneTitleProperty,"main.settings");
         navigation.Loaded+=(_,_)=>SettingsNavigationAppearance.Apply(navigation);
@@ -54,7 +54,7 @@ internal sealed class SettingsWindow : Window
         root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=GridLength.Auto});
         root.Children.Add(navigation);Grid.SetRow(notice,1);notice.Margin=new(5);root.Children.Add(notice);Content=root;
         services.Preferences.Changed+=OnPreferences;
-        Closed+=(_,_)=>{closed=true;services.Preferences.Changed-=OnPreferences;};
+        Closed+=(_,_)=>{SessionDiagnostics.Record("trace.settings.close");closed=true;services.Preferences.Changed-=OnPreferences;};
         Render();OnPreferences();
     }
     private void OnPreferences()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)ThemeService.Apply(this,root,services.Preferences.Current);});
@@ -67,7 +67,7 @@ internal sealed class SettingsWindow : Window
     }
     private void Render()
     {
-        subpages.Reset();
+        SessionDiagnostics.Record("trace.settings.render",new{category});subpages.Reset();
         body.Content=pages.Build(category);signature.Visibility=category=="关于"?Visibility.Visible:Visibility.Collapsed;
         if(category=="关于"&&signature.Content is null)try {
             signature.Content=new SettingsSignature {Notice=text=>{if(!closed){LanguageUi.Computed(notice,InfoBar.MessageProperty,()=>text.Render(AppLanguage.Session));notice.Visibility=Visibility.Visible;notice.IsOpen=true;}}};
