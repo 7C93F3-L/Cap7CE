@@ -19,24 +19,25 @@ public sealed partial class CatalogV2Database
 
     public string DatabasePath => databasePath;
 
-    public async Task InitializeAsync(CancellationToken token = default, bool createEntryCatalog = false)
+    public async Task InitializeAsync(CancellationToken token = default, bool createEntryCatalog = false, Action<string>? startupStage = null)
     {
         var directory = Path.GetDirectoryName(databasePath)
             ?? throw new ArgumentException("Database path has no parent directory.");
         Directory.CreateDirectory(directory);
+        startupStage?.Invoke("catalog.cleanup");
         CleanupAbandonedSnapshotBuilds(directory, Path.GetFileName(databasePath));
+        startupStage?.Invoke("catalog.open");
         await using var connection = await OpenAsync(false, token, pooling: false);
+        startupStage?.Invoke("catalog.schema");
         await CatalogV2Schema.InitializeAsync(connection, token, createEntryCatalog);
+        startupStage?.Invoke("catalog.keywords-schema");
         await Keywords.CatalogKeywordSchema.InitializeAsync(connection, token);
+        startupStage?.Invoke("catalog.wal");
         using var wal = connection.CreateCommand();
         wal.CommandText = "PRAGMA journal_mode = WAL;";
         if (!string.Equals(Convert.ToString(await wal.ExecuteScalarAsync(token)), "wal", StringComparison.OrdinalIgnoreCase))
         {
             throw new CatalogSchemaException("Catalog v2 could not enable WAL mode.");
-        }
-        if (!await CheckIntegrityAsync(connection, token))
-        {
-            throw new CatalogSchemaException("Catalog v2 integrity check failed.");
         }
     }
 

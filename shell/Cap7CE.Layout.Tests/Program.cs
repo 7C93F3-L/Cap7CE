@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
+HealthCheckScheduleChecks.Run();
 await TrayChecks.RunAsync();
 await ModelChangesChecks.RunAsync();
 await ModelCommandChecks.RunAsync();

@@ -49,6 +49,7 @@ internal sealed class CoreConnection : IAsyncDisposable
             try{failureLog?.Invoke(diagnostics.Errors+"\n"+error);}catch{}
             if (connection is not null) await connection.DisposeAsync();
             else { pipe.Dispose(); child.StandardInput.Close(); if (!child.HasExited) child.Kill(true);await diagnostics.Completion; child.Dispose(); }
+            if(error is OperationCanceledException)throw new UiFailure("ui.error.coreStartupTimeout");
             throw;
         }
     }

@@ -32,6 +32,7 @@ public sealed partial class MainWindow : Window
     private readonly MetadataNoticeController metadataNotice;
     private readonly MetadataFilterPromptController metadataFilters;
     private readonly EdgeCollapseController edgeCollapse;
+    private readonly CatalogHealthController catalogHealth;
     private SettingsWindow? settings;
     private readonly Commands.QuickCommandInput commandInput;
     private readonly TrayController tray;
@@ -117,6 +118,7 @@ public sealed partial class MainWindow : Window
             var next=AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p&&p.State==Microsoft.UI.Windowing.OverlappedPresenterState.Minimized;
             if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else {details.Select(results.Selection);QueueCatalogRefresh();}
         };
+        catalogHealth=new(this,services);
         Closed+=OnClosed;
     }
     public bool ShowMainOnStartup=>services.Preferences.Current.ShowMainOnStartup;
@@ -215,7 +217,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;catalogHealth.Dispose();tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

@@ -11,7 +11,10 @@ internal sealed class CoreProcessDiagnostics
     public Task Completion {get;}
     public CoreProcessDiagnostics(Process process,Action<string> report)
     {
-        process.ErrorDataReceived+=(_,e)=>{if(e.Data is {} line)lock(gate){errors.Enqueue(line[..Math.Min(line.Length,512)]);while(errors.Count>24)errors.Dequeue();}};
+        process.ErrorDataReceived+=(_,e)=>{if(e.Data is {} line){
+            if(line.StartsWith("{\"type\":\"core-startup-v1\",",StringComparison.Ordinal)&&line.Length<=1024)
+                SessionDiagnostics.Record("core.startup",new{pid=process.Id,data=line});
+            lock(gate){errors.Enqueue(line[..Math.Min(line.Length,512)]);while(errors.Count>24)errors.Dequeue();}}};
         process.BeginErrorReadLine();Completion=ObserveAsync(process,report);
     }
     public void ExpectExit()=>Interlocked.Exchange(ref expected,1);

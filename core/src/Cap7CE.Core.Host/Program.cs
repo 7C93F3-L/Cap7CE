@@ -35,6 +35,13 @@ if (options.Mode == CoreHostMode.CatalogNativeDependencyProbe)
     }
 }
 
+if (options.Mode == CoreHostMode.CatalogHealthCheck)
+{
+    var report = await Cap7CE.Core.Host.CatalogStorage.CatalogHealthCheck.RunAsync(ProductCoreRuntime.DefaultCatalogPath());
+    Console.WriteLine(JsonSerializer.Serialize(report));
+    return 0;
+}
+
 if (options.Mode == CoreHostMode.CatalogReadOnly)
 {
     using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
@@ -200,6 +207,8 @@ Console.CancelKeyPress += (_, eventArgs) =>
 
 try
 {
+    var startup = new CoreStartupDiagnostics();
+    startup.Mark("runtime.assembly");
     ProductCoreRuntime? runtime = null;
     if (options.Mode is CoreHostMode.CatalogServer or CoreHostMode.CatalogControllerProbe)
     {
@@ -213,14 +222,18 @@ try
                 contentReader: Cap7CE.Core.Host.MetadataWorkers.NodeMetadataResources.FromEnvironment() is { } metadataResources
                     ? new Cap7CE.Core.Host.MetadataWorkers.NodeMetadataWorker(metadataResources) : null), CatalogPreparationDiagnostics.StandardError(),
             ownStorage: options.Mode == CoreHostMode.CatalogServer, createEntryCatalog: options.Mode == CoreHostMode.CatalogServer);
-        await runtime.InitializeAsync(shutdown.Token);
+        await runtime.InitializeAsync(shutdown.Token, startup.Mark);
+        startup.Mark("metadata.assembly");
         Cap7CE.Core.Host.MetadataBuildHosting.MetadataBuildAssembly.Configure(runtime, catalogPath, options.Mode == CoreHostMode.CatalogServer);
     }
     await using var runtimeScope = runtime;
+    startup.Mark("maintenance.activation");
     if (options.Mode == CoreHostMode.CatalogServer && runtime is not null)
         await runtime.ActivateMaintenanceAsync((ready, token) =>
             Cap7CE.Core.Host.MetadataExtraction.ProductOwnedStorageResolver.ResolveAsync(runtime.Catalog, ready, token), shutdown.Token);
+    startup.Mark("pipe.create");
     await using var server = new CorePipeServer(options.PipeName!, runtime);
+    startup.Mark("ready");
     Console.WriteLine(JsonSerializer.Serialize(new
     {
         status = "ready",

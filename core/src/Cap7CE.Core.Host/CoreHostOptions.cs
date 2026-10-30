@@ -8,6 +8,7 @@ public enum CoreHostMode
     CatalogControllerProbe,
     CatalogNativeDependencyProbe,
     CatalogReadOnly,
+    CatalogHealthCheck,
     ReaderFixtureClient,
     ReaderFixtureDisconnect,
     ReaderVolumeProbe,
@@ -28,6 +29,12 @@ public sealed record CoreHostOptions(CoreHostMode Mode, string? PipeName)
         if (args.Length == 0)
         {
             options = new CoreHostOptions(CoreHostMode.Describe, null);
+            return true;
+        }
+
+        if (args is ["--catalog-health-check"])
+        {
+            options = new CoreHostOptions(CoreHostMode.CatalogHealthCheck, null);
             return true;
         }
 

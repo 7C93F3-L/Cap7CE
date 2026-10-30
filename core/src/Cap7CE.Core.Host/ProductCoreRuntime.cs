@@ -58,17 +58,21 @@ public sealed class ProductCoreRuntime : IAsyncDisposable, MetadataScheduling.IM
         return Path.Combine(local, "Cap7CE", "Core", "v1", "catalog.db");
     }
 
-    public async Task InitializeAsync(CancellationToken token = default)
+    public async Task InitializeAsync(CancellationToken token = default, Action<string>? startupStage = null)
     {
         await initialization.WaitAsync(token);
         try {
             if (initialized) return;
+            startupStage?.Invoke("storage.lease");
             if (ownStorage) storageLease = CatalogStorageLease.Acquire(catalog.DatabasePath, createDirectory: true);
-            await catalog.InitializeAsync(token, createEntryCatalog);
+            await catalog.InitializeAsync(token, createEntryCatalog, startupStage);
+            startupStage?.Invoke("catalog.recover-builds");
             if(ownStorage)foreach(var volume in (await catalog.ReadVolumesAsync(token)).Where(v=>v.State==CatalogV2VolumeState.Building))
                 await catalog.RecoverInterruptedBuildAsync(volume.VolumeId,volume.CatalogRevision,token);
+            startupStage?.Invoke("catalog.file-entry-mode");
             FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync(token);
             synchronizer = new(catalog, readerFactory, diagnostics, captureFileEntries: FileEntryModeEnabled, progress: preparation);
+            startupStage?.Invoke("catalog.revision");
             ChangeSignal.PublishCatalog(await catalog.ReadRevisionAsync(token)); initialized = true;
         }
         catch { storageLease?.Dispose(); storageLease = null; throw; }

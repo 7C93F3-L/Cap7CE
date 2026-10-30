@@ -252,3 +252,10 @@ assert(!/File\.(?:Move|Delete)|Directory\.(?:Move|Delete)|NativeCoreRequest|Proc
 assert(read('shell/Cap7CE.WinUI/Services/ItemRenameService.cs').includes('core/artifacts/file-operations-host/')&&!/File\.Move|Directory\.Move/.test(read('shell/Cap7CE.WinUI/Services/FileCommands.cs')),'rename must execute through the Core file operations host');
 
 assert(renameUi.includes('L.Dialog(root,"menu.rename"') && !/TransformToVisual|new Popup|RenameAnchor/.test(renameUi),'rename editor must use a native dialog independent of thumbnail layout');
+
+// Product startup must remain independent of a full database health scan.
+const catalogInitialization=read('core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs').split('public async Task InitializeAsync')[1].split('public async Task<long> ReadRevisionAsync')[0];
+assert(!/CheckIntegrityAsync|quick_check/.test(catalogInitialization), 'full health check cannot gate ordinary startup');
+const healthCheck=read('core/src/Cap7CE.Core.Host/CatalogStorage/CatalogHealthCheck.cs').replace(/\/\/[^\r\n]*/g, '');
+assert(healthCheck.includes('SqliteOpenMode.ReadWrite,') && !healthCheck.includes('ReadWriteCreate')
+  && healthCheck.indexOf('PRAGMA query_only=ON;') < healthCheck.indexOf('PRAGMA quick_check;'), 'health connection cannot create storage and must block mutations before checking');

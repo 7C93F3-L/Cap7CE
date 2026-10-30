@@ -3959,6 +3959,10 @@
     "zh-CN": "Core 协商失败",
     "en-US": "Core negotiation failed."
   },
+  "ui.error.coreStartupTimeout": {
+    "zh-CN": "Core 启动超时，请重试。启动诊断已记录。",
+    "en-US": "Core startup timed out. Try again. Startup diagnostics have been recorded."
+  },
   "ui.error.coreTimeout": {
     "zh-CN": "查询超时，请重试。",
     "en-US": "The query timed out. Try again."

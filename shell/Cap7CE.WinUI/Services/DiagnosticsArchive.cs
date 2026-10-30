@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Cap7CE.WinUI.Services;
 internal static class DiagnosticsArchive
 {
-    public static readonly string[] LogNames=["last-startup-error.log","last-core-error.log","last-core-runtime-error.log","last-titlebar-region-error.log","last-visual-error.log","last-browse-timing.json"];
+    public static readonly string[] LogNames=["catalog-health.json","last-startup-error.log","last-core-error.log","last-core-runtime-error.log","last-titlebar-region-error.log","last-visual-error.log","last-browse-timing.json"];
     public static async Task WriteAsync(Stream output,string directory,object snapshot)
     {
         using var zip=new ZipArchive(output,ZipArchiveMode.Create,true);
