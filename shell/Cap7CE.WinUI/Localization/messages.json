@@ -3559,6 +3559,18 @@
     "zh-CN": "正在准备",
     "en-US": "Preparing"
   },
+  "ui.metadata.summaryDiscovering": {
+    "zh-CN": "发现中",
+    "en-US": "Discovering"
+  },
+  "ui.metadata.summaryWaiting": {
+    "zh-CN": "等待中",
+    "en-US": "Waiting"
+  },
+  "ui.metadata.summaryExtracting": {
+    "zh-CN": "提取中",
+    "en-US": "Extracting"
+  },
   "ui.metadata.discovering": {
     "zh-CN": "正在发现文件属性任务",
     "en-US": "Discovering file property tasks"

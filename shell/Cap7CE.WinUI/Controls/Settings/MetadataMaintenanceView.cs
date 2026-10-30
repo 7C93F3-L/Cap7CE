@@ -32,8 +32,11 @@ internal sealed class MetadataMaintenanceView : UserControl
         refresh=Action("ui.metadata.refresh",()=>InvokeAsync("status"));
         L.Bind(cancel,ToolTipService.ToolTipProperty,"ui.metadata.cancelHint");
 
+        status.TextWrapping=TextWrapping.NoWrap;status.TextTrimming=TextTrimming.CharacterEllipsis;status.MaxLines=1;
+        taskArea.Spacing=6;taskArea.Margin=new(0,8,0,4);
+        current.IsTextSelectionEnabled=counts.IsTextSelectionEnabled=true;
         current.TextWrapping=TextWrapping.NoWrap;current.TextTrimming=TextTrimming.CharacterEllipsis;
-        taskArea.Children.Add(current);taskArea.Children.Add(progress);taskArea.Children.Add(counts);
+        taskArea.Children.Add(current);taskArea.Children.Add(counts);taskArea.Children.Add(progress);
         start.HorizontalAlignment=HorizontalAlignment.Right;
         var actions=new Grid {ColumnSpacing=24};
         actions.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});actions.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
@@ -45,8 +48,8 @@ internal sealed class MetadataMaintenanceView : UserControl
         var heading=L.Text("ui.exclusions.title");heading.Style=(Style)Application.Current.Resources["CapSettingsSectionTitle"];
         var hint=L.Text("ui.exclusions.hint",true);
         var exclusionHeader=Ui.Column(heading,hint);exclusionHeader.Spacing=3;
-        Options=Ui.Column(exclusionHeader,exclusions,actions);
-        Content=status;Details=Ui.Column(taskArea,error);
+        Options=Ui.Column(exclusionHeader,exclusions,taskArea,actions);
+        Content=status;Details=error;
         exclusions.Changed+=Render;exclusions.Failure+=text=>{L.Message(error,TextBlock.TextProperty,text);Render();};
         Loaded+=(_,_)=>{
             if(listening)return;listening=true;
@@ -85,13 +88,18 @@ internal sealed class MetadataMaintenanceView : UserControl
         control.Visibility=state is {} task&&(task.CanPause||task.CanResume||task.Progress.Phase=="pausing")?Visibility.Visible:Visibility.Collapsed;
         cancel.Visibility=state?.CanCancel==true?Visibility.Visible:Visibility.Collapsed;
         start.Visibility=state is {} active&&(active.CanPause||active.CanResume||active.CanCancel||active.Progress.Phase=="pausing")?Visibility.Collapsed:Visibility.Visible;
-        L.Bind(status,TextBlock.TextProperty,!connected?"ui.metadata.disconnected":state is {} currentState?MaintenanceText.TitleKey(currentState):"ui.metadata.reading");
+        var statusKey=!connected?"ui.metadata.disconnected":state is {} currentState?MaintenanceText.TitleKey(currentState):"ui.metadata.reading";
+        var summaryKey=!connected?"ui.diagnostics.disconnected":state?.Progress.Phase switch {
+            "discovering"=>"ui.metadata.summaryDiscovering","waiting"=>"ui.metadata.summaryWaiting",
+            "extracting"=>"ui.metadata.summaryExtracting",_=>statusKey
+        };
+        L.Bind(status,TextBlock.TextProperty,summaryKey);L.Bind(status,ToolTipService.ToolTipProperty,statusKey);
         status.Visibility=!connected||state is null||state.ShowTaskArea?Visibility.Visible:Visibility.Collapsed;
         taskArea.Visibility=connected&&state?.ShowTaskArea==true?Visibility.Visible:Visibility.Collapsed;
         if(state is {Directory:{} path} directoryState)L.Bind(current,TextBlock.TextProperty,directoryState.Pending>1?"ui.metadata.currentQueued":"ui.metadata.current",()=>new Dictionary<string,object?>{{"path",path},{"count",directoryState.Pending-1}});else L.Literal(current,TextBlock.TextProperty,"");
         current.Visibility=connected&&state?.Pending>0?Visibility.Visible:Visibility.Collapsed;ToolTipService.SetToolTip(current,state?.Directory);
         if(state is {} countState)L.Computed(counts,()=>MaintenanceText.Counts(countState,AppLanguage.Session));else L.Literal(counts,TextBlock.TextProperty,"");counts.Visibility=connected&&state?.ShowCounts==true?Visibility.Visible:Visibility.Collapsed;
-        progress.Visibility=connected&&state?.ShowProgress==true?Visibility.Visible:Visibility.Collapsed;
+        progress.Visibility=connected&&state?.ShowProgress==true&&(state.Progress.Phase!="paused"||state.Progress.Fraction is not null)?Visibility.Visible:Visibility.Collapsed;
         progress.Maximum=1;progress.Value=state?.Progress.Fraction??0;
         progress.IsIndeterminate=listening&&connected&&state?.CanPause==true&&state.Progress.Fraction is null;
         if(string.IsNullOrEmpty(error.Text)&&state?.Progress.ErrorCode is {} code)L.Computed(error,()=>MaintenanceText.Error(code,AppLanguage.Session));
