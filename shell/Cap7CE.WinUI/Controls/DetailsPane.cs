@@ -77,10 +77,14 @@ internal sealed class DetailsPane : UserControl
         var card=context.Path.Length==0?Card(LocationText.Computer):Card(LocationName(context.Path));
         var locationLabel=context.Searching?"ui.details.searchScope":"ui.details.location";
         if(context.Path.Length==0)L.Message(card.Field(locationLabel,"",true),TextBlock.TextProperty,LocationText.Computer);else card.Field(locationLabel,context.Path,true);
-        var countKey=context.Count is not null?"ui.details.items":context.Busy?"ui.details.reading":"ui.details.loaded";
-        IReadOnlyDictionary<string,object?> Count()=>new Dictionary<string,object?>{{"count",context.Count??context.Loaded}};
-        if(context.Searching){card.FieldResource("ui.details.filters","ui.details.items",()=>new Dictionary<string,object?>{{"count",context.Filters}});card.FieldResource("ui.details.matches",countKey,Count);}
-        else if(context.Path.Length==0)card.FieldResource("ui.details.browseScope","ui.details.systemLocations");else card.FieldResource("ui.details.currentItems",countKey,Count);
+        IReadOnlyDictionary<string,object?> Count()=>new Dictionary<string,object?>{{"count",context.Count}};
+        // Show only an existing total; pagination progress is not a directory count.
+        if(context.Searching){
+            card.FieldResource("ui.details.filters","ui.details.items",()=>new Dictionary<string,object?>{{"count",context.Filters}});
+            if(context.Count is not null)card.FieldResource("ui.details.matches","ui.details.items",Count);
+        }
+        else if(context.Path.Length==0)card.FieldResource("ui.details.browseScope","ui.details.systemLocations");
+        else if(context.Count is not null)card.FieldResource("ui.details.currentItems","ui.details.items",Count);
     }
     private void RenderItem(AssetItem item,bool drive)
     {
