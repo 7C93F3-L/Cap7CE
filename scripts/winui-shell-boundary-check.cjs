@@ -248,5 +248,7 @@ assert(diagnosticJournal.includes("512*1024") && diagnosticJournal.includes("ses
 assert(read("shell/Cap7CE.WinUI/Services/DiagnosticsArchive.cs").includes("LogNames.Concat(DiagnosticJournal.Names)"), "diagnostic export must include retained sessions");
 
 const renameUi=read('shell/Cap7CE.WinUI/Controls/Workspace/ResultRenameController.cs');
-assert(!/File\.(?:Move|Delete)|Directory\.(?:Move|Delete)|NativeCoreRequest|ProcessStartInfo/.test(renameUi),'inline rename must use the shared FileCommands coordinator');
+assert(!/File\.(?:Move|Delete)|Directory\.(?:Move|Delete)|NativeCoreRequest|ProcessStartInfo/.test(renameUi),'rename dialog must use the shared FileCommands coordinator');
 assert(read('shell/Cap7CE.WinUI/Services/ItemRenameService.cs').includes('core/artifacts/file-operations-host/')&&!/File\.Move|Directory\.Move/.test(read('shell/Cap7CE.WinUI/Services/FileCommands.cs')),'rename must execute through the Core file operations host');
+
+assert(renameUi.includes('L.Dialog(root,"menu.rename"') && !/TransformToVisual|new Popup|RenameAnchor/.test(renameUi),'rename editor must use a native dialog independent of thumbnail layout');

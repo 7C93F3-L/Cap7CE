@@ -4801,6 +4801,7 @@
   "ui.rename.invalidSelection": {"zh-CN": "无法重命名当前选择。请勿同时选择目录及其内部项目。", "en-US": "Cannot rename this selection. Do not select a folder together with items inside it."},
   "ui.rename.invalidName": {"zh-CN": "名称无效。请检查非法字符、保留名称及结尾的空格或句点。", "en-US": "Invalid name. Check for invalid characters, reserved names, or trailing spaces or periods."},
   "ui.rename.invalidResult": {"zh-CN": "重命名结果校验失败，请刷新目录确认实际名称。", "en-US": "Could not verify the rename result. Refresh the folder to check the actual names."},
-  "ui.rename.notVisible": {"zh-CN": "请先将要重命名的项目滚动到可见位置。", "en-US": "Scroll a selected item into view before renaming."},
-  "ui.rename.failed": {"zh-CN": "有{count}项未能重命名，请检查占用、权限或名称冲突。", "en-US": "Could not rename {count} items. Check for locks, permissions, or name conflicts."}
+  "ui.rename.failed": {"zh-CN": "有{count}项未能重命名，请检查占用、权限或名称冲突。", "en-US": "Could not rename {count} items. Check for locks, permissions, or name conflicts."},
+  "ui.rename.batchTitle": {"zh-CN": "重命名 {count} 个项目", "en-US": "Rename {count} items"},
+  "ui.rename.batchDescription": {"zh-CN": "统一名称，保留扩展名，由系统自动编号。", "en-US": "Use one base name, keep extensions, and let Windows number the items."}
 }
