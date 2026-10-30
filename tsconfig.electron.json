@@ -26,6 +26,9 @@
   "references": [
     {
       "path": "./core/node/resourceCatalog/domain"
+    },
+    {
+      "path": "./core/node/embeddedMetadata/domain"
     }
   ]
 }

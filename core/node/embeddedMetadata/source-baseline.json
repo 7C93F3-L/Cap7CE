@@ -1,0 +1,22 @@
+{
+  "embeddedMetadataExtractor.ts": {
+    "lines": 389,
+    "sourceHash": "ce4c3b24b2605be7644376de2f3e57206c852f5e34b5d6ece377c3a3a667fc9d"
+  },
+  "embeddedMetadataFormats.ts": {
+    "lines": 18,
+    "sourceHash": "4201ce68bf0f34c18d8692f51cc09d51d2aacb7fd69511fac56967efffce8d0d"
+  },
+  "embeddedMetadataPolicy.ts": {
+    "lines": 122,
+    "sourceHash": "2edd97c28c6dc964ab5ac1127f07266944e3885aacad08546b6c9e85100054fb"
+  },
+  "embeddedMetadataTypes.ts": {
+    "lines": 17,
+    "sourceHash": "b62bd0c06fb6f455dcf149a1a702533eac77ffdf7dc9d345082c5c5d4acdcd53"
+  },
+  "fileSourceRevision.ts": {
+    "lines": 17,
+    "sourceHash": "2713380a5f3b6a45c73bbf1b68c252b128c0f2b660f6b4042824979a87daa74c"
+  }
+}

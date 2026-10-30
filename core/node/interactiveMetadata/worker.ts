@@ -1,7 +1,7 @@
 import { parentPort, workerData } from "node:worker_threads";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { extractEmbeddedMetadata } from "../../../electron/embeddedMetadataExtractor";
+import { extractEmbeddedMetadata } from "../embeddedMetadata/domain/embeddedMetadataExtractor";
 import { toPreviewMetadata } from "../../../electron/core/previewMetadataProjection";
 
 if (!parentPort || typeof workerData !== "string" || workerData.length > 32767 || workerData.includes("\0") || !path.isAbsolute(workerData))

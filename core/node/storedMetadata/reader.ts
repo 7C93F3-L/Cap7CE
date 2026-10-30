@@ -1,8 +1,8 @@
 import { DatabaseSync } from "node:sqlite";
 import { lstatSync } from "node:fs";
 import path from "node:path";
-import { createFileSourceRevision } from "../../../electron/fileSourceRevision";
-import { EMBEDDED_METADATA_EXTRACTOR_VERSION } from "../../../electron/embeddedMetadataTypes";
+import { createFileSourceRevision } from "../embeddedMetadata/domain/fileSourceRevision";
+import { EMBEDDED_METADATA_EXTRACTOR_VERSION } from "../embeddedMetadata/domain/embeddedMetadataTypes";
 import { parseKeywordText } from "../../../electron/keywordRules";
 import { emptyStoredMetadata, validStoredMetadata, validLegacyKeywordPage } from "../../../electron/core/storedMetadataProjection";
 import type { StoredIndexRequest, StoredMetadataResult } from "../../../src/shared/storedMetadataTypes";
