@@ -42,7 +42,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public void Reveal(AssetItem item)
     {
         FileAccessGuard.Validate(item);
-        var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true }; info.ArgumentList.Add("/select," + item.FullPath); Process.Start(info);
+        var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true, Arguments = $"/select,\"{item.FullPath}\"" }; Process.Start(info);
     }
     public static void CopyPaths(IReadOnlyList<AssetItem> items)
         => CopyPath(string.Join(Environment.NewLine, items.Select(i => i.FullPath)));
