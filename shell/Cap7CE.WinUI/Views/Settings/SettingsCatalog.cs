@@ -25,11 +25,12 @@ internal sealed class SettingsCatalog
     }
     public void BeginRender()=>models=null;
     public void FocusMetadata()=>metadataFocus=true;
-    private MetadataMaintenanceView MetadataView()
+    private UIElement MetadataView()
     {
         var view=new MetadataMaintenanceView(services,owner);
-        if(metadataFocus){metadataFocus=false;view.Loaded+=(_,_)=>view.DispatcherQueue.TryEnqueue(()=>view.StartBringIntoView());}
-        return view;
+        if(!metadataFocus)return view;
+        metadataFocus=false;view.Loaded+=(_,_)=>view.DispatcherQueue.TryEnqueue(()=>view.StartBringIntoView());
+        return new SettingsExpandable(view.Options,view,view.Details,initiallyExpanded:true);
     }
     private ModelSettingsView ModelsView=>models??=new(services,notice);
     private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false,string? descriptionOverride=null)

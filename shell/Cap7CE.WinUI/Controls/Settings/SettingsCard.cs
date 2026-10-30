@@ -39,7 +39,7 @@ internal sealed class SettingsCard : UserControl
                 };
             }
             if(expandable.Details is FrameworkElement details){details.Margin=new(36,0,0,0);Grid.SetRow(details,2);Grid.SetColumnSpan(details,2);header.Children.Add(details);}
-            var expander=new Expander{Header=header,Content=expandable.Body,IsExpanded=false,Style=(Style)Application.Current.Resources["CapSettingsExpander"]};
+            var expander=new Expander{Header=header,Content=expandable.Body,IsExpanded=expandable.InitiallyExpanded,Style=(Style)Application.Current.Resources["CapSettingsExpander"]};
             if(localized)Localization.LanguageUi.Bind(expander,AutomationProperties.NameProperty,title);else AutomationProperties.SetName(expander,title);
             Content=expander;return;
         }
