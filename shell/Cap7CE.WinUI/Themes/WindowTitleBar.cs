@@ -15,7 +15,7 @@ namespace Cap7CE.WinUI.Themes;
 
 internal sealed class WindowTitleBar : Grid
 {
-    private readonly Grid dragRegion = new() { Height = 48, Background = new SolidColorBrush(Colors.Transparent) };
+    private readonly Grid dragRegion = new() { Height = 32, Background = new SolidColorBrush(Colors.Transparent) };
     private readonly ColumnDefinition captionSpace = new() { Width = new(0) };
     private ToggleButton? pin;
     private Action<bool>? pinChanged;
@@ -73,7 +73,7 @@ internal sealed class WindowTitleBar : Grid
         dragRegion.Loaded += (_, _) => QueuePinRegionUpdate();
         dragRegion.SizeChanged += (_, _) => QueuePinRegionUpdate();
         pin.SizeChanged += (_, _) => QueuePinRegionUpdate();
-        pin.Loaded += (_, _) => SynchronizeActivation();
+        pin.Loaded += (_, _) => { SynchronizeActivation();QueuePinRegionUpdate(); };
         pin.ActualThemeChanged += (_, _) => QueuePinRegionUpdate();
         appWindow.Changed += OnWindowChanged;
         appWindow.Destroying += OnDestroying;
@@ -121,16 +121,18 @@ internal sealed class WindowTitleBar : Grid
             || appWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized }) return;
         var scale = pin.XamlRoot.RasterizationScale;
         // Only the painted surfaces reserve one device pixel at the bottom.
-        // The 48-DIP hit target and centered glyph retain their full layout bounds.
+        // The standard-height hit target and centered glyph retain their full layout bounds.
         var surfaceInset = new Thickness(0, 0, 0, 1 / scale);
         if (!pin.BorderThickness.Equals(surfaceInset)) pin.BorderThickness = surfaceInset;
         // Native caption glyphs in the supplied screenshot sit one pixel higher.
         if (pinGlyph?.RenderTransform is TranslateTransform glyphOffset) glyphOffset.Y = -1 / scale;
         var inset = appWindow.TitleBar.RightInset / scale;
+        if(inset<=0)return; // Native caption metrics are not ready; do not publish a region over Close.
         var width = inset > 0 ? inset / captionButtonCount : 46;
-        if (captionSpace.Width.Value != inset || pin.Width != width)
+        var height = appWindow.TitleBar.Height > 0 ? appWindow.TitleBar.Height / scale : 32;
+        if (captionSpace.Width.Value != inset || pin.Width != width || dragRegion.Height != height || pin.Height != height)
         {
-            captionSpace.Width = new(inset);pin.Width = width;
+            captionSpace.Width = new(inset);pin.Width = width;dragRegion.Height = height;pin.Height = height;
             // Wait for XAML to arrange the new caption reservation before hit testing.
             DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, QueuePinRegionUpdate);
             return;
@@ -143,9 +145,12 @@ internal sealed class WindowTitleBar : Grid
             previousRegion = null;
             return;
         }
+        // Property values can settle before XAML has arranged the new caption slot.
+        // Never publish a passthrough rectangle from the previous button position.
+        dragRegion.UpdateLayout();
         var bounds = pin.TransformToVisual(this).TransformBounds(new(0, 0, pin.ActualWidth, pin.ActualHeight));
         if (!double.IsFinite(bounds.X + bounds.Y + bounds.Width + bounds.Height) || bounds.Width <= 0 || bounds.Height <= 0
-            || bounds.X < 0 || bounds.Y < 0 || bounds.Right > ActualWidth + 1 || bounds.Bottom > dragRegion.ActualHeight + 1) return;
+            || bounds.X < 0 || bounds.Y < 0 || bounds.Right > ActualWidth - inset + 1 || bounds.Bottom > dragRegion.ActualHeight + 1) return;
         var rect = new RectInt32((int)Math.Round(bounds.X * scale), (int)Math.Round(bounds.Y * scale),
             (int)Math.Round(bounds.Width * scale), (int)Math.Round(bounds.Height * scale));
         if (previousRegion is { } prior && prior.X == rect.X && prior.Y == rect.Y && prior.Width == rect.Width && prior.Height == rect.Height) return;
@@ -157,7 +162,10 @@ internal sealed class WindowTitleBar : Grid
     { if (args.DidSizeChange || args.DidPositionChange || args.DidPresenterChange || args.DidVisibilityChange) QueuePinRegionUpdate(); }
     private void OnDestroying(AppWindow sender, object args) => Detach();
     private void OnActivated(object sender, WindowActivatedEventArgs args)
-    { SetGlyphActivation(args.WindowActivationState != WindowActivationState.Deactivated); }
+    {
+        var active=args.WindowActivationState != WindowActivationState.Deactivated;SetGlyphActivation(active);
+        if(active){previousRegion=null;QueuePinRegionUpdate();}
+    }
     private void SynchronizeActivation()
     {
         if (owner is not null) SetGlyphActivation(NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(owner)));
@@ -187,7 +195,7 @@ internal sealed class WindowTitleBar : Grid
             frame = new(content);
             window.Content = frame;
             window.ExtendsContentIntoTitleBar = true;
-            window.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+            window.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
             window.SetTitleBar(frame.dragRegion);
         }
         frame.RequestedTheme = theme;
