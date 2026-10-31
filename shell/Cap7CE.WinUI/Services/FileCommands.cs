@@ -90,11 +90,11 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     }
     public async Task DeleteAsync(IReadOnlyList<AssetItem> items)
     {
-        if (items.Count is < 1 or > 200) throw new UiFailure("ui.error.fileLimit");
+        if (!CanDelete(items)) throw new UiFailure("ui.error.fileSelection");
         if (!await operation.WaitAsync(0)) throw new UiFailure("ui.error.fileBusy");
         try
         {
-            foreach (var item in items) FileAccessGuard.Validate(item);
+            items=items.Select(FileAccessGuard.ResolveFileIdentity).ToArray();
             var dialog=L.Dialog(xamlRoot(),"ui.file.trashTitle",null,"ui.file.trashTitle");
             L.Bind(dialog,ContentDialog.ContentProperty,"ui.file.trashDescription",()=>new Dictionary<string,object?>{{"count",items.Count}});
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
@@ -111,6 +111,22 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
                 UiMessage.Key("ui.file.trashPartial",new Dictionary<string,object?>{{"count",result.GetProperty("failedItems").GetArrayLength()}}));
         }
         finally { AfterMutation?.Invoke(); operation.Release(); }
+    }
+    public bool CanDelete(IReadOnlyList<AssetItem> items)=>items.Count is >0 and <=200&&items.All(item=>
+        item.FullPath.Length>3&&!item.Entry.Id.StartsWith("home-",StringComparison.Ordinal));
+    public string? KeywordsUnavailable(IReadOnlyList<AssetItem> items,bool automatic=false)
+    {
+        var targets=items.Where(item=>automatic?item.Entry.IsDirectory||FormatRegistry.Find(item.Entry.Extension)?.CanAIIndex==true:!item.Entry.IsDirectory).ToArray();
+        if(targets.Length==0)return automatic?"ui.keywords.unsupported":"ui.keywords.selectFiles";
+        if(services.Core?.IsConnected!=true)return "ui.error.coreNotConnected";
+        foreach(var item in targets) {
+            var volume=services.Volumes.FirstOrDefault(v=>!string.IsNullOrEmpty(item.Entry.VolumeId)?v.VolumeId==item.Entry.VolumeId:
+                string.Equals(v.DisplayName.TrimEnd('\\')+"\\",Path.GetPathRoot(item.FullPath),StringComparison.OrdinalIgnoreCase));
+            if(volume is null||!volume.Selected||volume.State is not ("ready" or "catchingUp" or "building" or "needsRebuild")
+                ||!(volume.Queryable||volume.Processed>0||volume.State=="ready"))return "ui.error.sourceIndex";
+            if(automatic&&item.Entry.IsDirectory&&!volume.Queryable)return "ui.error.autoIndex";
+        }
+        return null;
     }
     public Func<bool> CanEditKeywords {get;set;}=()=>false;
     public event Action<IReadOnlyList<AssetItem>>? EditKeywordsRequested;

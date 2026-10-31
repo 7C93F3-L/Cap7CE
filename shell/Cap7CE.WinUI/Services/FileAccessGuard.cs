@@ -7,13 +7,20 @@ internal static class FileAccessGuard
 {
     public static AssetItem ResolveIdentity(AssetItem item,IReadOnlyList<Cap7CE.Core.Protocol.CoreVolumeStatus> volumes)
     {
-        Validate(item);if(item.Entry.FileReference is not null)return item;
-        using var handle=CreateFileW(item.FullPath,0x80,7,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
-        if(handle.IsInvalid||!GetFileInformationByHandle(handle,out var info))throw new UiFailure("ui.error.sourceIdentity");
+        item=ResolveFileIdentity(item);
+        if(!string.IsNullOrEmpty(item.Entry.VolumeId))return item;
         var root=Path.GetPathRoot(item.FullPath);
         var volume=volumes.FirstOrDefault(value=>string.Equals(value.DisplayName.TrimEnd('\\')+"\\",root,StringComparison.OrdinalIgnoreCase));
         if(volume is null)throw new UiFailure("ui.error.sourceIndex");
-        return new(item.Entry with{VolumeId=volume.VolumeId,FileReference=(((ulong)info.IndexHigh<<32)|info.IndexLow).ToString("X16"),
+        return new(item.Entry with{VolumeId=volume.VolumeId},item.FullPath);
+    }
+    // Capture live identity without requiring any Catalog volume or node.
+    public static AssetItem ResolveFileIdentity(AssetItem item)
+    {
+        Validate(item);if(item.Entry.FileReference is not null)return item;
+        using var handle=CreateFileW(item.FullPath,0x80,7,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
+        if(handle.IsInvalid||!GetFileInformationByHandle(handle,out var info))throw new UiFailure("ui.error.sourceIdentity");
+        return new(item.Entry with{FileReference=(((ulong)info.IndexHigh<<32)|info.IndexLow).ToString("X16"),
             CreatedUtcTicks=((long)info.CreatedHigh<<32)|info.CreatedLow},item.FullPath);
     }
     public static void RejectLinks(string path)

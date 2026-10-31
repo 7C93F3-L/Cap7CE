@@ -29,14 +29,17 @@ internal static class ResultContextMenu
                 _=>L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")
             };
             if(action.Id=="rename"){item.IsEnabled=commands.CanRename(items);L.Bind(item,ToolTipService.ToolTipProperty,item.IsEnabled?"ui.rename.hint":"ui.rename.selectionHint");}
-            if(action.Id=="delete")item.IsEnabled=items.All(entry=>entry.Entry.FileReference is not null);
+            if(action.Id=="delete")item.IsEnabled=commands.CanDelete(items);
             if(action.Id=="autoKeywords"){
                 item.Icon=AiActionIcon.Attach(item);
-                item.IsEnabled=items.Count>1||items.Any(entry=>entry.Entry.IsDirectory||FormatRegistry.Find(entry.Entry.Extension)?.CanAIIndex==true);
+                var reason=commands.KeywordsUnavailable(items,automatic:true);
+                item.IsEnabled=reason is null;
+                if(reason is not null)L.Bind(item,ToolTipService.ToolTipProperty,reason);
             }
             if(action.Id=="editKeywords") {
-                item.IsEnabled=items.Any(entry=>!entry.Entry.IsDirectory)&&commands.CanEditKeywords();
-                if(!item.IsEnabled)L.Bind(item,ToolTipService.ToolTipProperty,"menu.editKeywordsUnavailable");
+                var reason=commands.KeywordsUnavailable(items)??(commands.CanEditKeywords()?null:"menu.editKeywordsUnavailable");
+                item.IsEnabled=reason is null;
+                if(reason is not null)L.Bind(item,ToolTipService.ToolTipProperty,reason);
             }
             menu.Items.Add(item);
         }
