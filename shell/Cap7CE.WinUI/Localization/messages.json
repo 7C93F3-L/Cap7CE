@@ -2399,6 +2399,10 @@
     "zh-CN": "运行时安装需要重启系统。请重启后再次安装或修复索引服务。",
     "en-US": "Runtime installation requires a restart. Restart Windows, then install or repair the indexing service again."
   },
+  "ui.error.setupNoVolumes": {
+    "zh-CN": "未发现可用于索引的固定 NTFS 磁盘，请检查磁盘连接后重试。",
+    "en-US": "No fixed NTFS drives are available for indexing. Check drive connections and try again."
+  },
   "ui.error.runtimeInstallFailed": {
     "zh-CN": ".NET 运行时下载或安装未完成。请检查网络及安装授权后重试。",
     "en-US": ".NET runtime download or installation did not complete. Check the network and installation approval, then try again."

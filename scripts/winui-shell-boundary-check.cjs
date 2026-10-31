@@ -30,6 +30,9 @@ assert(session.includes('allowedOperations is null || allowedOperations.Contains
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const identitySource=read('shell/Cap7CE.WinUI/Services/ApplicationIdentity.cs');
 const setupSource=read('shell/Cap7CE.WinUI/Services/NativeCoreSetup.cs');
+assert(setupSource.includes('CoreSetupVolumes.Read()')&&setupSource.includes('CoreSetupVolumes.Arguments(repair,volumes)')
+  &&read('shell/Cap7CE.WinUI/Services/CoreSetupVolumes.cs').includes('"--volumes"'),
+  'native service setup must pass fixed NTFS volumes instead of selecting the disconnect fixture');
 assert(setupSource.indexOf('await CoreRuntimePrerequisite.EnsureAsync()')<setupSource.indexOf('await beforeSetup()')
   && setupSource.indexOf('await beforeSetup()')<setupSource.indexOf('Process.Start(info)'),
   'runtime prerequisites must complete before disconnecting Core and launching capability setup');
@@ -39,6 +42,8 @@ assert(project.includes('capability-setup-manifest.v1.json')
 const productIdentity="Cap7CE";
 assert(identitySource.includes(`AppUserModelId="${productIdentity}"`) && project.includes('<AssemblyTitle>Cap7CE</AssemblyTitle>'), 'native public identity must match the existing product');
 const startup=read('shell/Cap7CE.WinUI/Program.cs');
+assert(startup.indexOf('InstallerSearchSetup.IsRequest(args)')<startup.indexOf('ApplicationIdentity.Initialize()')
+  &&startup.includes('MethodImplOptions.NoInlining'), 'installer setup must run before UI, singleton and app startup initialization');
 assert(startup.indexOf('ApplicationIdentity.Initialize()')>=0 && startup.indexOf('ApplicationIdentity.Initialize()')<startup.indexOf('WinRT.ComWrappersSupport.InitializeComWrappers()'), 'public AUMID must be set before WinRT notification or window initialization');
 assert(!read('shell/Cap7CE.WinUI/Themes/ThemeService.cs').includes('window.Title = ""'), 'theme changes cannot erase system window titles');
 const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');

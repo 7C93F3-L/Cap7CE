@@ -47,6 +47,10 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 ## WinUI 与更新
 
+NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，通过既有--volumes参数明确授权Reader运行范围；不传空范围，避免Setup进入保留给探针的disconnect模式。该范围供磁盘发现及后续用户显式操作使用，不等同于Catalog建库选择或提取授权。安装和设置页修复共享这一入口，配置始终保留Catalog；索引操作错误进入现有Core诊断。
+
+正常NSIS安装和覆盖更新默认配置搜索服务，不提供跳过选项。customInstall在本体落盘后ExecWait调用Cap7CE.exe的--install-search-service模式；该模式在窗口、应用身份与单实例初始化之前分流，复用CoreRuntimePrerequisite及NativeCoreSetup，不启动普通Core会话或索引扫描。独立只读--verify-search-setup-entry只验证嵌入策略和包内Setup入口，交付检查在无系统.NET路径条件下运行它。安装配置核对桌面与当前进程的实际SID，避免替另一个管理员账户绑定搜索授权；不符则明确失败。成功才完成安装，失败支持重试并保留诊断，需重启返回3010且不自动重启。索引页在正常Core连接后自动发现磁盘，由用户选择和开始建库。
+
 安装或修复搜索服务的显式动作先由独立CoreRuntimePrerequisite服务补齐.NET依赖，CoreRuntimePolicy从嵌入的Core部署清单读取版本、微软URL、摘要和前台安装参数，CoreRuntimeInstaller独占有界下载、SHA-512验证与临时文件清理；校验到安装结束持有禁止写入/删除的文件句柄。已有兼容.NET 10 x64不联网；缺失时打开微软安装器，不静默安装、不自动重启、不删除共享运行时。依赖复检通过后NativeCoreSetup才断开Core并调用既有NativeAOT提升协调器；失败或需要重启不继续，设置页保留或尝试恢复连接。卸载及Setup的只读验证不依赖此流程，Core Setup不新增网络责任。Browse.Tests链接相同前置服务源码，以隔离响应和安装器验证缺失/取消/失败/重启边界。
 
 窗口/标签/选择/预览使用现有统一动作与拥有者；独立视图和控件不把业务 IO 堆回顶层窗口。托盘“检查更新”打开设置并定位更新区后检查，下载由会话服务持有，窗口关闭后仍可继续；没有自动检查、下载或安装。
@@ -55,7 +59,7 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 ## 构建与验证
 
-应用覆盖安装同时保留Core、NtfsReader和CapabilitySetup归属/恢复状态；只替换应用载荷，不删除独立能力的管理记录。组件卸载失败时NSIS保留退出码与返回结果到当前用户临时目录的cap7ce-uninstall-core.log，并中止后续应用及用户数据清理；不自动接管缺失归属记录的组件。用户数据选项只提供选择，实际清理统一由customRemoveFiles在组件移除后、应用本体及登记删除前调用；明确切换到当前用户路径，逐项验证目标已不存在。cap7ce-uninstall-data.log追加记录全部实际路径、删除后属性和Win32错误；失败中止并保留卸载入口供重试，更新模式跳过此步骤。应用清理末尾只以非递归删除清除空容器，不移除仍有模型或组件的目录。
+应用文件替换阶段保留Core、NtfsReader和CapabilitySetup归属/恢复状态，不删除独立能力的管理记录；随后由正式Setup事务更新搜索组件。组件卸载失败时NSIS保留退出码与返回结果到当前用户临时目录的cap7ce-uninstall-core.log，并中止后续应用及用户数据清理；不自动接管缺失归属记录的组件。用户数据选项只提供选择，实际清理统一由customRemoveFiles在组件移除后、应用本体及登记删除前调用；明确切换到当前用户路径，逐项验证目标已不存在。cap7ce-uninstall-data.log追加记录全部实际路径、删除后属性和Win32错误；失败中止并保留卸载入口供重试，更新模式跳过此步骤。应用清理末尾只以非递归删除清除空容器，不移除仍有模型或组件的目录。
 
 `npm run build` 先验证原生源码边界和类型，再打包固定 Node 运行库、发布 Core/QueryHost、生成资源并构建 WinUI。`npm run dev` 使用 shell/run.ps1，在正常交互桌面环境启动，避免开发工具的 AppData 重定向；构建保护正在运行的程序。
 

@@ -10,10 +10,11 @@ internal static class NativeCoreSetup
     public static async Task RunAsync(string root,bool repair,Func<Task>? beforeSetup=null)
     {
         var executable=Executable(root);if(!File.Exists(executable))throw new UiFailure("ui.error.setupMissing");
+        var volumes=CoreSetupVolumes.Read();if(volumes.Length==0)throw new UiFailure("ui.error.setupNoVolumes");
         await CoreRuntimePrerequisite.EnsureAsync();
         if(beforeSetup is not null)await beforeSetup();
         var info=new ProcessStartInfo(executable){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
-        foreach(var arg in new[]{"--activation-coordinator","--action",repair?"repair":"enable","--catalog","preserve"})info.ArgumentList.Add(arg);
+        foreach(var arg in CoreSetupVolumes.Arguments(repair,volumes))info.ArgumentList.Add(arg);
         using var process=Process.Start(info)??throw new UiFailure("ui.error.setupStart");
         var output=process.StandardOutput.ReadToEndAsync();var error=process.StandardError.ReadToEndAsync();
         // The existing coordinator owns UAC, authentication, its five-minute deadline and transaction recovery.

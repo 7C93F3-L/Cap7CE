@@ -9,7 +9,13 @@ namespace Cap7CE.WinUI;
 internal static class Program
 {
     [STAThread]
-    private static void Main(string[] args)
+    private static int Main(string[] args)
+    {
+        if(Services.InstallerSearchSetup.IsRequest(args))return Services.InstallerSearchSetup.RunAsync(args).GetAwaiter().GetResult();
+        RunUi();return 0;
+    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static void RunUi()
     {
         if(Thread.CurrentThread.GetApartmentState()!=ApartmentState.STA)throw new InvalidOperationException("WinUI requires an STA entry thread.");
         Services.ApplicationIdentity.Initialize();

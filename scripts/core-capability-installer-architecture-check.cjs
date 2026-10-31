@@ -27,6 +27,17 @@ const capabilityNsis = read("build/installer-winui.nsh");
 const installerNsis = read("build/installer-custom.nsh");
 const packageJson = JSON.parse(read("package.json"));
 const installerSmoke = read("scripts/native-installer-smoke.cjs");
+const installHook=installerNsis.split('!macro customInstall')[1]?.split('!macroend')[0]??"";
+requireAnchor(installHook, 'ExecWait', "synchronous mandatory search setup before installation completes");
+requireAnchor(installHook, '--install-search-service', "default service configuration for installs and updates");
+requireAnchor(installHook, 'SetErrorLevel 3010', "restart-required installation result");
+requireAnchor(installHook, 'Abort', "installation failure when search setup fails");
+const bootstrap=read('shell/Cap7CE.WinUI/Services/InstallerSearchSetup.cs');
+requireAnchor(bootstrap, 'InstallerAccount.MatchesDesktop()', "setup account ownership check");
+if(!(bootstrap.indexOf('if(args is ["--verify-search-setup-entry"])return 0')<bootstrap.indexOf('await NativeCoreSetup.RunAsync'))) {
+  failures.push("Package verification must stop before any service setup.");
+}
+requireAnchor(installerSmoke, '--verify-search-setup-entry', "packaged self-contained setup entry verification");
 const conditionals = [];
 for (const line of installerNsis.split(/\r?\n/).map(value => value.trim())) {
   if (/^!if(?:def|ndef|macrodef|macrondef)?\b/.test(line)) conditionals.push(line);

@@ -52,6 +52,42 @@ LangString cap7ceCapabilityCleanupFailed 1033 "Cap7CE could not remove the full-
 LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索组件，未删除任何内容。"
 LangString cap7ceUserCleanupFailed 1033 "Some selected user data could not be removed. Close programs using these files and retry uninstall. Application files were kept."
 LangString cap7ceUserCleanupFailed 2052 "部分用户数据无法删除。请关闭占用这些文件的程序后重试卸载，程序文件已保留。"
+LangString cap7ceSearchSetupProgress 1033 "Configuring search service..."
+LangString cap7ceSearchSetupProgress 2052 "正在配置搜索服务…"
+LangString cap7ceSearchSetupFailed 1033 "Search service configuration did not complete. Check the network and administrator approval, then retry. Details: %TEMP%\cap7ce-install-search.log"
+LangString cap7ceSearchSetupFailed 2052 "搜索服务配置未完成。请检查网络及管理员授权后重试。详情：%TEMP%\cap7ce-install-search.log"
+LangString cap7ceSearchSetupRestart 1033 "The runtime requires a restart. Restart Windows, then run this installer again to finish search configuration."
+LangString cap7ceSearchSetupRestart 2052 "运行时需要重启。请重启系统后再次运行安装器，完成搜索服务配置。"
+LangString cap7ceSearchSetupAccount 1033 "The installer is using a different account from the desktop user. Search was not configured for the wrong account. Run setup with the intended account, or configure search from Cap7CE Settings."
+LangString cap7ceSearchSetupAccount 2052 "安装器与当前桌面账户不同，未替其他账户配置搜索。请使用目标账户安装，或从该账户的 Cap7CE 设置中完成服务配置。"
+
+!macro customInstall
+  DetailPrint "$(cap7ceSearchSetupProgress)"
+  cap7ce_search_setup_retry:
+    ClearErrors
+    ExecWait '"$INSTDIR\${PRODUCT_FILENAME}.exe" --install-search-service' $0
+    ${if} ${Errors}
+      StrCpy $0 "error"
+    ${endif}
+    ${if} $0 == 0
+      Goto cap7ce_search_setup_done
+    ${endif}
+    ${if} $0 == 3010
+      SetErrorLevel 3010
+      Abort "$(cap7ceSearchSetupRestart)"
+    ${endif}
+    ${if} $0 == 6
+      SetErrorLevel 6
+      Abort "$(cap7ceSearchSetupAccount)"
+    ${endif}
+    ${ifNot} ${Silent}
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(cap7ceSearchSetupFailed)" IDRETRY cap7ce_search_setup_retry
+    ${endif}
+    SetErrorLevel 1
+    Abort "$(cap7ceSearchSetupFailed)"
+  cap7ce_search_setup_done:
+    SetErrorLevel 0
+!macroend
 
 !ifdef BUILD_UNINSTALLER
   Var /GLOBAL cap7cePreserveRoot

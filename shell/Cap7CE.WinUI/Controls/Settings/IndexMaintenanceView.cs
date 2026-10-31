@@ -59,7 +59,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private void ConnectionChanged()=>DispatcherQueue.TryEnqueue(()=>{if(listening)ReadConnection();});
     private void ReadConnection()
     {
-        if(services.Core?.IsConnected==true){Run(ReadAsync);return;}
+        if(services.Core?.IsConnected==true){Run(services.Core.Supports(CoreOperations.VolumeList)?DiscoverAsync:ReadAsync);return;}
         monitor.Dispose();foreach(var button in buttons)button.IsEnabled=false;volumeHost.IsEnabled=false;
         ShowStatus(()=>AppLanguage.Text("ui.index.connecting"));
     }
@@ -74,6 +74,7 @@ internal sealed class IndexMaintenanceView : UserControl
     }
     private void ShowFailure(Exception error)
     {
+        NativeDiagnostics.CoreFailure(error.ToString());
         var message=UiMessage.Key("ui.index.actionFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}});
         ShowStatus(()=>AppLanguage.Text("ui.index.state.failed"));
         feedback.Visibility=Visibility.Visible;progress.Visibility=Visibility.Collapsed;

@@ -42,7 +42,7 @@
     "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs",
     "test:core-setup-native": "node scripts/core-setup-native-smoke.cjs",
     "test:core-capability-payload": "node scripts/core-capability-payload-smoke.cjs",
-    "test:delivery": "npm run test:core-setup-native && npm run test:core-capability-payload && node scripts/native-installer-smoke.cjs && node scripts/native-uninstall-lifecycle-smoke.cjs",
+    "test:delivery": "npm run test:core-setup-native && npm run test:core-capability-payload && node scripts/native-installer-smoke.cjs && node scripts/native-install-lifecycle-smoke.cjs && node scripts/native-uninstall-lifecycle-smoke.cjs",
     "probe:core-p37": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-recovery-probe.ps1",
     "probe:core-p37-lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-lifecycle-probe.ps1",
     "prepare:core-p37-reboot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-reboot-prepare.ps1",

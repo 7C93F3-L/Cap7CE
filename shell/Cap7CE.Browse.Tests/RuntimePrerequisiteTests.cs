@@ -8,6 +8,15 @@ internal static class RuntimePrerequisiteTests
     public static async Task RunAsync()
     {
         static void Require(bool condition,string message){if(!condition)throw new Exception(message);}
+        var drives=CoreSetupVolumes.Select([
+            new("c:\\",DriveType.Fixed,true,"NTFS"),new("C:\\",DriveType.Fixed,true,"NTFS"),
+            new("D:\\",DriveType.Fixed,true,"ntfs"),new("E:\\",DriveType.Removable,true,"NTFS"),
+            new("F:\\",DriveType.Fixed,false,"NTFS"),new("G:\\",DriveType.Fixed,true,"exFAT")]);
+        Require(drives.SequenceEqual(new[]{"C","D"}),"setup only authorizes ready fixed NTFS drives");
+        var setup=CoreSetupVolumes.Arguments(true,drives);
+        Require(setup[^2]=="--volumes"&&setup[^1]=="C,D"&&setup.Contains("preserve"),"real volume mode and preserved Catalog must reach Setup");
+        var rejected=false;try{CoreSetupVolumes.Arguments(true,[]);}catch(InvalidOperationException){rejected=true;}
+        Require(rejected,"empty setup scope must never fall back to disconnect fixture mode");
         var policy=CoreRuntimePolicy.Load();
         Require(policy.MinimumVersion=="10.0.12"&&policy.Arguments.SequenceEqual(new[]{"/install","/norestart"}),"shared foreground runtime policy");
         Require(policy.Matches(["10.0.12"])&&policy.Matches(["10.0.13"]),"supported runtime patches");
