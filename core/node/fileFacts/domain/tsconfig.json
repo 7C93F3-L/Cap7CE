@@ -21,6 +21,11 @@
     "../../textPreview/contracts/**/*.ts",
     "../../modelRuntime/policy/llamaRuntimeIdleController.ts",
     "../../localKeywords/policy/**/*.ts",
-    "../../directoryBrowse/source/**/*.ts"
+    "../../directoryBrowse/source/**/*.ts",
+    "../../visualRendering/shell/**/*.ts",
+    "../../interactiveMetadata/contracts/**/*.ts",
+    "../../storedMetadata/contracts/**/*.ts",
+    "../../embeddedMetadata/domain/embeddedMetadataTypes.ts",
+    "../../visualRendering/resources.ts"
   ]
 }

@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+原生读侧剩余依赖已集中收口：previewMetadataProjection在`interactiveMetadata/contracts`维护，storedMetadataProjection在`storedMetadata/contracts`维护，Windows缩略图调用与矢量预览在`visualRendering/shell`维护。四份执行实现仅调整模块路径；原生Shell缩略图默认资源复用既有visualNativeExecutable，原生现有调用仍显式传入可执行路径。旧coreShellThumbnail与vectorDocumentRenderService入口仅作参数/默认资源适配，保留原Electron资源定位，实际执行和EPS临时文件所有权归规范模块；旧元数据投影路径只转出。
+
+规范源码和必要共享声明继续使用现有跨领域TypeScript输出树，不改用户缓存、元数据或模型。`native-read-side-boundary-check`从九个运行入口递归检查实际esbuild输入，要求实现仅在core/node中，阻止回依赖Electron/Renderer或编译产物；同时守护四份实现的源码/体量基线、投影转出、旧Shell适配大小/参数和原生资源身份。`test:native-read-side`验证只读元数据、线程取消/生命周期、视觉运行库和实际Windows缩略图。该轮完成原生运行源码去旧目录依赖；旧Electron/Renderer及兼容构建入口待下一轮整体移除，Core架构旧基线与最终打包另行收尾。
+
 目录源读取归属`core/node/directoryBrowse/source`：skimBrowseService实现既有磁盘/目录枚举、隐藏项/格式识别及面包屑，sourcePathPolicy实现原有路径范围判断。两份实现除导入位置外保留，目录所有者、递归枚举和sourceInformation直接依赖规范源码；旧入口只转出。Windows只读查询、取消回调、枚举配额、分页及递归行为不变，不写入用户文件或配置。
 
 规范源码沿现有TypeScript公共输出树`core/artifacts/file-facts`发出JS/声明，directoryBrowseTypes及其条件类型声明链随输出复制；共享模型精度类型直接引用fileFacts规范类型，避免编译输入绕回旧入口产物。`directory-source-boundary-check`守护两份源码/体量基线、只读闭包、旧入口和原生消费者；既有目录守护按当前递归实现锁定owner 60行/recursive 68行（去掉末尾空行计数），并显式检查递归容量、后代范围及取消锚点，保留分页和客户端边界。`test:directory-sources`覆盖Windows枚举/隐藏项、目录Job/RPC分页/配额/取消及源信息只读统计。

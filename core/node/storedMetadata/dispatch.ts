@@ -1,6 +1,6 @@
 import type { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
 import type { StoredIndexRequest, LegacyKeywordPage } from "../../../src/shared/storedMetadataTypes";
-import { emptyStoredMetadata, validStoredMetadata, validStoredCounts, validLegacyKeywordPage } from "../../../electron/core/storedMetadataProjection";
+import { emptyStoredMetadata, validStoredMetadata, validStoredCounts, validLegacyKeywordPage } from "./contracts/storedMetadataProjection";
 export function readStoredMetadata(owner: InteractiveMetadataOwner, id: string, root: string, request: StoredIndexRequest) {
   const data = { root, request };
   if (request.kind === "metadata") return owner.run(id, "stored-metadata.cjs", data, validStoredMetadata, emptyStoredMetadata);

@@ -2,7 +2,7 @@ import type { VisualCacheType, VisualImageMimeType } from "../../../src/shared/v
 import type { NativeVisualCacheType, VisualDecodeResult, VisualPreparedPath } from "../../../src/shared/visualRenderTypes";
 import type { createVisualCacheStore } from "../visualCache/store";
 import { detectVisualImageMimeType } from "../visualCache/contracts/visualCacheImage";
-import { requestCoreShellThumbnail } from "../../../electron/core/coreShellThumbnail";
+import { requestCoreShellThumbnail } from "./shell/coreShellThumbnail";
 import { VisualExecutionOwner } from "./owner";
 import { visualNativeExecutable } from "./resources";
 

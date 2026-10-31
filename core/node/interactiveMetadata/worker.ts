@@ -2,7 +2,7 @@ import { parentPort, workerData } from "node:worker_threads";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { extractEmbeddedMetadata } from "../embeddedMetadata/domain/embeddedMetadataExtractor";
-import { toPreviewMetadata } from "../../../electron/core/previewMetadataProjection";
+import { toPreviewMetadata } from "./contracts/previewMetadataProjection";
 
 if (!parentPort || typeof workerData !== "string" || workerData.length > 32767 || workerData.includes("\0") || !path.isAbsolute(workerData))
   throw new Error("core-preview-invalid-source");

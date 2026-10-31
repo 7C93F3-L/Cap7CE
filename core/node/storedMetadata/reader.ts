@@ -4,7 +4,7 @@ import path from "node:path";
 import { createFileSourceRevision } from "../embeddedMetadata/domain/fileSourceRevision";
 import { EMBEDDED_METADATA_EXTRACTOR_VERSION } from "../embeddedMetadata/domain/embeddedMetadataTypes";
 import { parseKeywordText } from "../localKeywords/policy/keywordRules";
-import { emptyStoredMetadata, validStoredMetadata, validLegacyKeywordPage } from "../../../electron/core/storedMetadataProjection";
+import { emptyStoredMetadata, validStoredMetadata, validLegacyKeywordPage } from "./contracts/storedMetadataProjection";
 import type { StoredIndexRequest, StoredMetadataResult } from "../../../src/shared/storedMetadataTypes";
 const requireTables = (db: DatabaseSync, names: string[]) => {
   for (const name of names) {

@@ -1,6 +1,6 @@
 import { Worker } from "node:worker_threads";
 import path from "node:path";
-import { validPreviewMetadata } from "../../../electron/core/previewMetadataProjection";
+import { validPreviewMetadata } from "./contracts/previewMetadataProjection";
 import type { PreviewEmbeddedMetadata } from "../../../src/shared/embeddedMetadataTypes";
 
 interface Job { id: string; file: string; data: unknown; resolve: (value: unknown) => void; worker?: Worker; timer?: NodeJS.Timeout; ending?: Promise<void> }

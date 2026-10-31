@@ -6,7 +6,7 @@ import { renderPsdFlattenedPreview } from "./decoders/psdRenderService";
 import {
   assertPdfCompatibleIllustratorFile,
   renderEpsEmbeddedPreview
-} from "../../../electron/vectorDocumentRenderService";
+} from "./shell/vectorDocumentRenderService";
 import { supportedVisualFileExtensionSet } from "./decoders/supportedVisualFormats";
 import { cropVisualContent } from "./decoders/visualContentBoundsService";
 import {
@@ -17,7 +17,7 @@ import {
   sharpSourceExtensions,
   type ImageSize
 } from "../fileFacts/domain/visualSourceDimensions";
-import { requestCoreShellThumbnail } from "../../../electron/core/coreShellThumbnail";
+import { requestCoreShellThumbnail } from "./shell/coreShellThumbnail";
 import type { NativeVisualCacheType } from "../../../src/shared/visualRenderTypes";
 import type { VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
 import { visualNativeExecutable, visualScratchDirectory } from "./resources";

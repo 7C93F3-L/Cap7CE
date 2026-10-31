@@ -1,0 +1,18 @@
+{
+  "core/node/interactiveMetadata/contracts/previewMetadataProjection.ts": {
+    "lines": 18,
+    "sourceHash": "67e28b39661218ac2f0c0e5b967079922cc4980d1b3b3b4627fd620fd4d2dfeb"
+  },
+  "core/node/storedMetadata/contracts/storedMetadataProjection.ts": {
+    "lines": 13,
+    "sourceHash": "6947ea48c00eac9f94d9849e2b703a1c4087453ac52caa9d87844d55cbd3e5ad"
+  },
+  "core/node/visualRendering/shell/coreShellThumbnail.ts": {
+    "lines": 37,
+    "sourceHash": "e5f72b63c750e287ef7dd1ea79c3e0683bf11cace47f9c8c0e52eabfa5ca3946"
+  },
+  "core/node/visualRendering/shell/vectorDocumentRenderService.ts": {
+    "lines": 95,
+    "sourceHash": "ee21b6acdb11911c7a71a72a0db092b6e59010f2c3434a2664e67476e4ba3d71"
+  }
+}
