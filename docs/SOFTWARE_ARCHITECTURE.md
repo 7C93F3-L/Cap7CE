@@ -49,9 +49,11 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 窗口/标签/选择/预览使用现有统一动作与拥有者；独立视图和控件不把业务 IO 堆回顶层窗口。托盘“检查更新”打开设置并定位更新区后检查，下载由会话服务持有，窗口关闭后仍可继续；没有自动检查、下载或安装。
 
-更新只接受专用 WinUI 安装器，下载及安装前保留大小/SHA-256 校验。ShellExecute 成功后走正常退出；失败保持程序运行。安装器身份、目录和快捷方式延续既有 Cap7CE，NSIS 保留用户模型、配置、Catalog 和独立 Core/Reader 的保护逻辑。入口 Cap7CE.exe 同时保留匹配的 Cap7CE.pri 与程序集原 PRI。
+更新只接受专用 WinUI 安装器，下载及安装前保留大小/SHA-256 校验。ShellExecute 成功后走正常退出；失败保持程序运行。安装器身份、目录和快捷方式延续既有 Cap7CE，NSIS 保留用户模型、配置、Catalog 和独立 Core/Reader 的保护逻辑。入口 Cap7CE.exe 同时保留匹配的 Cap7CE.pri 与程序集原 PRI。卸载“删除用户数据”在正式能力移除成功后清理当前用户的Cap7CE完整数据根、Cap7CE-PhaseF原生配置/日志和旧更新目录；未勾选仍保留，安装目录内模型/llama.cpp由独立选项控制。
 
 ## 构建与验证
+
+应用覆盖安装同时保留Core、NtfsReader和CapabilitySetup归属/恢复状态；只替换应用载荷，不删除独立能力的管理记录。组件卸载失败时NSIS保留退出码与返回结果到当前用户临时目录的cap7ce-uninstall-core.log，并中止后续应用及用户数据清理；不自动接管缺失归属记录的组件。用户数据选项只提供选择，实际清理统一由customRemoveFiles在组件移除后、应用本体及登记删除前调用；明确切换到当前用户路径，逐项验证目标已不存在。cap7ce-uninstall-data.log追加记录全部实际路径、删除后属性和Win32错误；失败中止并保留卸载入口供重试，更新模式跳过此步骤。应用清理末尾只以非递归删除清除空容器，不移除仍有模型或组件的目录。
 
 `npm run build` 先验证原生源码边界和类型，再打包固定 Node 运行库、发布 Core/QueryHost、生成资源并构建 WinUI。`npm run dev` 使用 shell/run.ps1，在正常交互桌面环境启动，避免开发工具的 AppData 重定向；构建保护正在运行的程序。
 

@@ -34,6 +34,24 @@ for (const line of installerNsis.split(/\r?\n/).map(value => value.trim())) {
   else if (/^!else\b/.test(line) && !conditionals.length) failures.push("Native installer has an unmatched !else.");
 }
 if (conditionals.length) failures.push("Native installer has unclosed conditional blocks.");
+for (const directory of ["Core", "NtfsReader", "CapabilitySetup"]) {
+  requireAnchor(installerNsis, `Rename "$INSTDIR\\${directory}" "$cap7cePreserveRoot\\${directory}"`, `preserve capability ${directory} during app replacement`);
+  requireAnchor(installerNsis, `Rename "$cap7cePreserveRoot\\${directory}" "$INSTDIR\\${directory}"`, `restore capability ${directory} after app replacement`);
+}
+requireAnchor(installerNsis, 'FileWrite $2 "ExitCode=$0$\\r$\\n$1$\\r$\\n"', "persist failed capability cleanup response");
+requireAnchor(installerNsis, 'AttributesAfter=$2', "record selected cleanup targets and outcomes");
+requireAnchor(installerNsis, 'FileSeek $3 0 END', "append cleanup diagnostics without overwriting earlier targets");
+requireAnchor(installerNsis, 'RMDir "$INSTDIR\\Core"', "remove the empty Core container after cleanup");
+const userCleanup=installerNsis.split('Function un.cap7ceCleanupSelectedUserData')[1]?.split('FunctionEnd')[0]??"";
+requireAnchor(userCleanup, 'SectionGetFlags 1 $0', "explicit user-data selection before cleanup");
+requireAnchor(userCleanup, 'Abort "$(cap7ceUserCleanupFailed)"', "stop uninstall when selected data remain");
+const removal=installerNsis.split('!macro customRemoveFiles')[1]?.split('!macroend')[0]??"";
+if (!(removal.indexOf('Call un.cap7ceRemoveCoreCapability') < removal.indexOf('Call un.cap7ceCleanupSelectedUserData')
+  && removal.indexOf('Call un.cap7ceCleanupSelectedUserData') < removal.indexOf('Call un.cap7ceRemoveApplicationFiles'))) {
+  failures.push("Selected user data must be checked after capability removal and before application removal.");
+}
+for(const target of ['$LOCALAPPDATA\\Cap7CE','$LOCALAPPDATA\\Cap7CE-PhaseF','$LOCALAPPDATA\\cap7ce-updater','$APPDATA\\Cap7CE'])
+  requireAnchor(userCleanup,`Push "${target}"`,"selected-only cleanup of "+target);
 
 for (const anchor of ["--activation-coordinator", "CapabilitySetupActivationPipe.CreateName()",
   "Environment.ProcessPath", "UseShellExecute = true", 'Verb = "runas"',

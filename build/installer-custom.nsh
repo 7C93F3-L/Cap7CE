@@ -50,6 +50,8 @@ LangString cap7ceCapabilitySetupMissing 1033 "The Cap7CE full-disk search cleanu
 LangString cap7ceCapabilitySetupMissing 2052 "Cap7CE 全盘搜索清理组件缺失，未删除任何内容。"
 LangString cap7ceCapabilityCleanupFailed 1033 "Cap7CE could not remove the full-disk search components. Nothing was removed."
 LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索组件，未删除任何内容。"
+LangString cap7ceUserCleanupFailed 1033 "Some selected user data could not be removed. Close programs using these files and retry uninstall. Application files were kept."
+LangString cap7ceUserCleanupFailed 2052 "部分用户数据无法删除。请关闭占用这些文件的程序后重试卸载，程序文件已保留。"
 
 !ifdef BUILD_UNINSTALLER
   Var /GLOBAL cap7cePreserveRoot
@@ -57,6 +59,8 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
   Var /GLOBAL cap7cePreservedLlama
   Var /GLOBAL cap7cePreservedCore
   Var /GLOBAL cap7cePreservedReader
+  Var /GLOBAL cap7cePreservedSetup
+  Var /GLOBAL cap7ceSelectedCleanupFailed
 
   # Keep NSIS' native recursive removal for real directories, but never recurse
   # when the selected root itself is a link or junction.
@@ -84,10 +88,48 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     ${endif}
 
     cap7ce_selected_done:
+      # Record the actual resolved target and outcome, including silent failures.
+      System::Call 'kernel32::GetFileAttributesW(w r0)i.r2 ?e'
+      Pop $1
+      ${if} $2 != -1
+        StrCpy $cap7ceSelectedCleanupFailed "1"
+      ${elseif} $1 != 2
+      ${andIf} $1 != 3
+        StrCpy $cap7ceSelectedCleanupFailed "1"
+      ${endif}
+      FileOpen $3 "$TEMP\cap7ce-uninstall-data.log" a
+      FileSeek $3 0 END
+      FileWrite $3 "Target=$0 AttributesAfter=$2 Win32Error=$1$\r$\n"
+      FileClose $3
       Pop $3
       Pop $2
       Pop $1
       Pop $0
+  FunctionEnd
+
+  Function un.cap7ceCleanupSelectedUserData
+    SectionGetFlags 1 $0
+    IntOp $0 $0 & ${SF_SELECTED}
+    ${if} $0 == 0
+      Return
+    ${endif}
+    # Resolve per-user paths before deleting the application or registry entries.
+    SetShellVarContext current
+    StrCpy $cap7ceSelectedCleanupFailed "0"
+    FileOpen $0 "$TEMP\cap7ce-uninstall-data.log" w
+    FileWrite $0 "User-data cleanup selected; LocalData=$LOCALAPPDATA$\r$\n"
+    FileClose $0
+    Push "$LOCALAPPDATA\Cap7CE"
+    Call un.cap7ceRemoveSelectedPath
+    Push "$LOCALAPPDATA\Cap7CE-PhaseF"
+    Call un.cap7ceRemoveSelectedPath
+    Push "$LOCALAPPDATA\cap7ce-updater"
+    Call un.cap7ceRemoveSelectedPath
+    Push "$APPDATA\Cap7CE"
+    Call un.cap7ceRemoveSelectedPath
+    ${if} $cap7ceSelectedCleanupFailed == "1"
+      Abort "$(cap7ceUserCleanupFailed)"
+    ${endif}
   FunctionEnd
 
   Function un.cap7ceRestorePreservedContent
@@ -102,6 +144,9 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     ${endif}
     ${if} $cap7cePreservedReader == "1"
       Rename "$cap7cePreserveRoot\NtfsReader" "$INSTDIR\NtfsReader"
+    ${endif}
+    ${if} $cap7cePreservedSetup == "1"
+      Rename "$cap7cePreserveRoot\CapabilitySetup" "$INSTDIR\CapabilitySetup"
     ${endif}
     RMDir "$cap7cePreserveRoot"
   FunctionEnd
@@ -136,6 +181,9 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     Pop $0
     Pop $1
     ${if} $0 != 0
+      FileOpen $2 "$TEMP\cap7ce-uninstall-core.log" w
+      FileWrite $2 "ExitCode=$0$\r$\n$1$\r$\n"
+      FileClose $2
       Abort "$(cap7ceCapabilityCleanupFailed)"
     ${endif}
   FunctionEnd
@@ -145,6 +193,7 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     StrCpy $cap7cePreservedLlama "0"
     StrCpy $cap7cePreservedCore "0"
     StrCpy $cap7cePreservedReader "0"
+    StrCpy $cap7cePreservedSetup "0"
 
     ${ifNot} ${FileExists} "$INSTDIR\${PRODUCT_FILENAME}.exe"
       Abort "$(cap7ceUninstallUnsafePath)"
@@ -210,6 +259,19 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
       StrCpy $cap7cePreservedReader "1"
     ${endif}
 
+    # Ownership and recovery state belong to the protected capability too.
+    System::Call 'kernel32::GetFileAttributesW(w "$INSTDIR\CapabilitySetup")i.r1'
+    ${if} $1 != -1
+      ClearErrors
+      Rename "$INSTDIR\CapabilitySetup" "$cap7cePreserveRoot\CapabilitySetup"
+      ${if} ${Errors}
+        CreateDirectory "$INSTDIR"
+        Call un.cap7ceRestorePreservedContent
+        Abort "$(cap7ceUninstallPreserveFailed)"
+      ${endif}
+      StrCpy $cap7cePreservedSetup "1"
+    ${endif}
+
     SetOutPath $TEMP
     RMDir /r "$INSTDIR"
 
@@ -218,12 +280,11 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
       # Only bundled application runtimes; separately installed Core\v1 is retained.
       RMDir /r "$INSTDIR\Core\artifacts"
 
-    ${if} $cap7cePreservedModels != "1"
-    ${andIf} $cap7cePreservedLlama != "1"
-    ${andIf} $cap7cePreservedCore != "1"
-    ${andIf} $cap7cePreservedReader != "1"
-      RMDir "$INSTDIR"
-    ${endif}
+    # Only remove empty containers. Managed/user content still prevents removal.
+    RMDir "$INSTDIR\Core"
+    RMDir "$INSTDIR\NtfsReader"
+    RMDir "$INSTDIR\CapabilitySetup"
+    RMDir "$INSTDIR"
 
   FunctionEnd
 !endif
@@ -264,6 +325,7 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
   ${endif}
   ${ifNot} ${isUpdated}
     Call un.cap7ceRemoveCoreCapability
+    Call un.cap7ceCleanupSelectedUserData
   ${endif}
   ${if} $installMode == "all"
     SetShellVarContext all
@@ -281,20 +343,7 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
 
 !macro customUnInstallSection
   Section /o "un.$(cap7ceCleanupUserData)" CAP7CE_CLEAN_USER_DATA_SECTION
-    ${if} $installMode == "all"
-      SetShellVarContext current
-    ${endif}
-    Push "$LOCALAPPDATA\Cap7CE\UserData"
-    Call un.cap7ceRemoveSelectedPath
-    Push "$LOCALAPPDATA\Cap7CE\updates"
-    Call un.cap7ceRemoveSelectedPath
-    # Also honor the explicit cleanup choice for data left by pre-migration builds.
-    Push "$APPDATA\Cap7CE"
-    Call un.cap7ceRemoveSelectedPath
-    RMDir "$LOCALAPPDATA\Cap7CE"
-    ${if} $installMode == "all"
-      SetShellVarContext all
-    ${endif}
+    # Selection only: cleanup runs before application removal in customRemoveFiles.
   SectionEnd
 
   Section /o "un.$(cap7ceCleanupAiContent)" CAP7CE_CLEAN_AI_CONTENT_SECTION
