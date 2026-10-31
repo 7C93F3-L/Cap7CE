@@ -10,7 +10,8 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class WorkspaceNotice : UserControl, IDisposable
 {
     private readonly TextBlock message=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center,FontSize=12};
-    private readonly ProgressBar progress=new(){Height=3,MinHeight=0,HorizontalAlignment=HorizontalAlignment.Stretch,VerticalAlignment=VerticalAlignment.Bottom,Visibility=Visibility.Collapsed};
+    // The native ProgressBar template uses MinHeight as its drawing surface height.
+    private readonly ProgressBar progress=new(){Height=3,MinHeight=3,HorizontalAlignment=HorizontalAlignment.Stretch,VerticalAlignment=VerticalAlignment.Bottom,Visibility=Visibility.Collapsed};
     private readonly DispatcherQueueTimer delay,expiry;
     private bool busy,busyShown,disposed,pointerInside,showingNotice;
     private UiMessage? notice,commandNotice;
