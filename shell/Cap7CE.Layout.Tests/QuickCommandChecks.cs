@@ -20,7 +20,7 @@ internal static class QuickCommandChecks
         var toolbar=new WorkspaceToolbar();var notice=new WorkspaceNotice();var actions=new QuickCommandActions();
         using var input=new QuickCommandInput(toolbar,notice,actions);
         var language=new Cap7CE.WinUI.Localization.LanguageSession(new Cap7CE.WinUI.Localization.LanguageCatalog(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/languages.json"))));
-        foreach(var (raw,zh,en) in new[]{("app:quit","退出 Cap7CE","Exit Cap7CE"),("cache:clear","保留源文件","Source files"),("llama:stop","停止本地 AI 服务","Stop the local AI service"),("dir:remove \"Photos\"","不会删除磁盘目录","will not be deleted")}){
+        foreach(var (raw,zh,en) in new[]{("app:quit","退出 Cap7CE","Exit Cap7CE"),("cache:clear","保留源文件","Source files"),("llama:stop","停止本地 AI 服务","Stop the local AI service"),("dir:remove \"Photos\"","目录及文件不会删除","are kept")}){
             toolbar.Submit(raw);
             language.Select("zh-CN","zh-CN");Check(notice.Confirmation!.Render(language).Contains(zh),"Chinese confirmation must explain the action: "+raw);
             language.Select("en-US","en-US");Check(notice.Confirmation!.Render(language).Contains(en),"English confirmation must explain the action: "+raw);

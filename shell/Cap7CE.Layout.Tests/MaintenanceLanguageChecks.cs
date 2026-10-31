@@ -21,7 +21,7 @@ internal static class MaintenanceLanguageChecks
         }
         foreach(var code in new[]{"metadata-directory-unavailable","metadata-directory-changed","metadata-directory-state-unavailable","metadata-build-preferences-unavailable","metadata-build-not-paused","metadata-directory-queue-full","metadata-directory-failed","metadata-build-failed","metadata-future-code"})
             if(MaintenanceText.Error(code,language)==code)throw new Exception($"Metadata error code was not localized: {code}");
-        Equal(MaintenanceText.Error("用户提供的目录 {name}",language),"用户提供的目录 {name}");
+        Equal(MaintenanceText.Error("未知内部错误 {name}",language),language.Text("ui.error.operationFailed"));
         language.Select("en-US","zh-CN");
         if(!language.Text(MaintenanceText.RuntimeKey("selection_missing"),new Dictionary<string,object?>{{"name","版本甲"}}).Contains("版本甲"))throw new Exception("Runtime names must retain their original content.");
         if(MaintenanceText.RuntimeKey("future-state")==MaintenanceText.RuntimeKey("available"))throw new Exception("Unknown runtime states must not imply availability.");

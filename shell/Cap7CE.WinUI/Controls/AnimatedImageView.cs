@@ -57,7 +57,7 @@ internal sealed class AnimatedImageView : Grid,IDisposable
         var ready=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         void Completed(object? sender,CoreWebView2NavigationCompletedEventArgs e) {
             if(e.NavigationId!=navigationId)return;
-            if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new UiFailure("ui.preview.animationDisplayFailed",new Dictionary<string,object?>{{"status",e.WebErrorStatus}}));
+            if(e.IsSuccess)ready.TrySetResult();else ready.TrySetException(new UiFailure("ui.preview.animationDisplayFailed",inner:new IOException(e.WebErrorStatus.ToString())));
         }
         core.NavigationCompleted+=Completed;
         try {

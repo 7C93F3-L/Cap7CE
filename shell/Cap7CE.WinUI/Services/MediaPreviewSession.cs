@@ -38,8 +38,8 @@ internal sealed class MediaPreviewSession : IDisposable
     });
     private void Failed(MediaPlayer sender,MediaPlayerFailedEventArgs args)
     {
-        var message=args.ErrorMessage;
-        Element.DispatcherQueue.TryEnqueue(()=>{if(!disposed)failure(UiMessage.Key("ui.preview.mediaFailed",new Dictionary<string,object?>{{"error",message}}));});
+        NativeDiagnostics.VisualFailure(new IOException(args.ErrorMessage));
+        Element.DispatcherQueue.TryEnqueue(()=>{if(!disposed)failure(UiMessage.Key("ui.preview.mediaFailed"));});
     }
     public void Dispose()
     {

@@ -32,9 +32,9 @@ internal static class MaintenanceText
             "metadata-directory-state-unavailable" or "metadata-build-preferences-unavailable"=>"ui.metadata.errorState",
             "metadata-build-not-paused"=>"ui.metadata.errorNotPaused","metadata-directory-queue-full"=>"ui.metadata.errorQueueFull",
             "metadata-directory-failed" or "metadata-build-failed"=>"ui.metadata.errorFailed",
-            _=>code.StartsWith("metadata-",StringComparison.Ordinal)?"ui.metadata.errorGeneric":null
+            _=>code.StartsWith("metadata-",StringComparison.Ordinal)?"ui.metadata.errorGeneric":"ui.error.operationFailed"
         };
-        return key is null?code:language.Text(key);
+        return language.Text(key);
     }
     public static string TaskKindKey(string kind)=>kind switch {
         "rebuild"=>"ui.index.kind.rebuild","synchronize"=>"ui.index.kind.synchronize",

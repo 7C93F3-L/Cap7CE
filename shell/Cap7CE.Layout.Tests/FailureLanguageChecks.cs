@@ -27,12 +27,22 @@ internal static class FailureLanguageChecks
         Equal(ProgressText.AutoFinished(stateFailure,language),"Recognition failed · The exclusion is not a folder: D:\\用户 {count}");
         var unknown=new CountingFailure();var snapshot=FailureText.From(unknown);var reads=unknown.Reads;
         for(var i=0;i<4;i++) {
-            language.Select(i%2==0?"zh-CN":"en-US","zh-CN");Equal(snapshot.Render(language),"ui.error.coreNotConnected");
+            language.Select(i%2==0?"zh-CN":"en-US","zh-CN");Equal(snapshot.Render(language),language.Text("ui.error.operationFailed"));
         }
         if(reads!=1||unknown.Reads!=reads)throw new Exception("Language updates must use the error snapshot, without rereading its owner.");
-        Equal(FailureText.From(new IOException("通用 {count}")).Render(language),"通用 {count}");
+        Equal(FailureText.From(new IOException("通用 {count}")).Render(language),language.Text("ui.error.operationFailed"));
+        foreach(var (error,zh,en) in new (Exception,string,string)[]{
+            (new OperationCanceledException("The operation was canceled."),"操作已取消。","The operation was cancelled."),
+            (new UnauthorizedAccessException("access denied"),"没有操作权限，请检查文件或目录权限。","Access denied. Check file or folder permissions."),
+            (new FileNotFoundException("missing"),"文件不存在或已移动，请刷新后重试。","The file is missing or has moved. Refresh and try again."),
+            (new DirectoryNotFoundException("missing"),"目录不存在或当前不可用","The folder does not exist or is currently unavailable."),
+            (new TimeoutException("timeout"),"操作超时，请重试。","The operation timed out. Try again.")}) {
+            var original=error.Message;var display=FailureText.From(error);
+            language.Select("zh-CN","zh-CN");Equal(display.Render(language),zh);
+            language.Select("en-US","zh-CN");Equal(display.Render(language),en);Equal(error.Message,original);
+        }
         var provider=new IOException("provider-error");provider.Data["CoreMessage"]="用户诊断 ui.error.coreNotConnected";
-        Equal(FailureText.From(provider).Render(language),"provider-error");
+        Equal(FailureText.From(provider).Render(language),language.Text("ui.error.operationFailed"));
         provider.Data["CoreMessage"]="directory-browse-capacity-exceeded";NoChinese(FailureText.From(provider).Render(language));
         Equal(FailureText.From(new IOException("metadata-directory-changed")).Render(language),language.Text("ui.metadata.errorDirectoryChanged"));
         Equal(FailureText.From(new IOException("favorite-directories-order-changed")).Render(language),"The favorites list has changed. Cancel and reorder it again.");

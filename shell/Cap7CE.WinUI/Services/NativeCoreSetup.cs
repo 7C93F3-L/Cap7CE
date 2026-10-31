@@ -20,7 +20,7 @@ internal static class NativeCoreSetup
             NativeDiagnostics.CoreFailure(text+"\n"+details);
             var reason="";
             foreach(var line in text.Split('\n').Reverse())try{using var json=JsonDocument.Parse(line);if(json.RootElement.TryGetProperty("reason",out var value)){reason="\n"+value.GetString();break;}}catch(JsonException){}
-            throw new UiFailure("ui.error.setupFailed",new Dictionary<string,object?>{{"details",reason}});
+            throw new UiFailure("ui.error.setupFailed",inner:new IOException(reason));
         }
     }
 }

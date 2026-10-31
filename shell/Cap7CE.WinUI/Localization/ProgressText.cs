@@ -28,7 +28,7 @@ internal static class ProgressText
     {
         if(state.Operation=="cancelDirectories")return language.Text("ui.progress.metadataQueueCancelled");
         if(state.Phase=="paused")return language.Text("ui.progress.metadataPaused");
-        if(state.Phase=="failed")return language.Text(state.ErrorCode is null?"ui.progress.metadataFailed":"ui.progress.metadataError",new Dictionary<string,object?>{{"error",state.ErrorCode}});
+        if(state.Phase=="failed")return language.Text(state.ErrorCode is null?"ui.progress.metadataFailed":"ui.progress.metadataError",new Dictionary<string,object?>{{"error",state.ErrorCode is {} code?MaintenanceText.Error(code,language):null}});
         if(state.Phase!="completed")return language.Text("ui.progress.metadataStopped");
         var text=language.Text("ui.progress.metadataCompleted");
         if(state.Failed>0)text+=language.Text("ui.progress.metadataFailedFiles",new Dictionary<string,object?>{{"count",state.Failed}});

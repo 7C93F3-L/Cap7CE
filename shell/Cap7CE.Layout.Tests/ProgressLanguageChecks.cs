@@ -17,7 +17,7 @@ internal static class ProgressLanguageChecks
                 var busy=ProgressText.MetadataBusy(state,language);var finished=ProgressText.MetadataFinished(state,language);
                 if(phase=="discovering"&&(!busy.Contains("2,345")||busy.Contains("1,234")))throw new Exception("Discovery must report discovered work instead of processed counts.");
                 if(operation=="cancelDirectories")Equal(finished,language.Text("ui.progress.metadataQueueCancelled"));
-                else if(phase=="failed"&&error is not null&&!finished.Contains(error))throw new Exception("Failure details must remain explicit.");count++;
+                else if(phase=="failed"&&error is not null&&!finished.Contains(language.Text("ui.metadata.errorGeneric")))throw new Exception("Metadata error codes must resolve to localized guidance.");count++;
                 language.Select("en-US","zh-CN");
                 NoChinese(ProgressText.MetadataBusy(state,language));NoChinese(ProgressText.MetadataFinished(state,language));
                 language.Select("zh-CN","zh-CN");
@@ -44,13 +44,13 @@ internal static class ProgressLanguageChecks
         values["drive"]="changed";values["count"]=99;
         Equal(notice.Render(language),"正在建立索引… D:\\目录 {count} · 已处理 1,234 项");
         var literal=UiMessage.Literal("ui.progress.indexScanning");
-        var rawFailure=new MetadataTaskStatus("failed",0,0,0,0,null,null,"用户目录 {name}",true,"status");
+        var rawFailure=new MetadataTaskStatus("failed",0,0,0,0,null,null,"metadata-directory-changed",true,"status");
         var deferred=UiMessage.Snapshot(session=>ProgressText.MetadataFinished(rawFailure,session));
-        Equal(deferred.Render(language),"元数据提取失败：用户目录 {name}");
+        Equal(deferred.Render(language),"元数据提取失败：目标目录已变化，请重新选择目录。");
         language.Select("en-US","zh-CN");
         Equal(notice.Render(language),"Building the index… D:\\目录 {count} · Processed: 1,234");
         Equal(literal.Render(language),"ui.progress.indexScanning");
-        Equal(deferred.Render(language),"Metadata extraction failed: 用户目录 {name}");
+        Equal(deferred.Render(language),"Metadata extraction failed: The target folder has changed. Select the folder again.");
         foreach(var indexStage in new[]{"preparing","scanning","publishing","syncing",null,"future-stage"}) {
             NoChinese(language.Text(ProgressText.IndexStageKey(indexStage)));
         }

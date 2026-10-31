@@ -5,6 +5,9 @@ internal static class FailureText
     public static UiMessage From(Exception error)
     {
         if(error is IUiFailure localized)return localized.Display;
+        var systemKey=error switch {OperationCanceledException=>"ui.error.cancelled",UnauthorizedAccessException=>"ui.error.accessDenied",
+            FileNotFoundException=>"ui.error.fileMissing",DirectoryNotFoundException=>"ui.error.directoryMissing",TimeoutException=>"ui.error.operationTimeout",_=>null};
+        if(systemKey is not null)return UiMessage.Key(systemKey);
         // CoreMessage can contain raw provider diagnostics. Recognize only this existing code.
         if(error.Data["CoreMessage"] as string=="directory-browse-capacity-exceeded")return UiMessage.Key("ui.error.browseCapacity");
         var code=error.Message;

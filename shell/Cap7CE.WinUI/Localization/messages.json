@@ -128,8 +128,8 @@
     "en-US": "Start Cap7CE when you sign in to Windows."
   },
   "stableSettings.desc.notifications": {
-    "zh-CN": "通知后台长任务的完成或后台任务失败，遵循 Windows 通知设置。",
-    "en-US": "Notify when long background tasks finish or background tasks fail. Subject to Windows notification settings."
+    "zh-CN": "后台任务的完成或失败通知。",
+    "en-US": "Notify when background tasks finish or fail."
   },
   "stableSettings.desc.edgeCollapse": {
     "zh-CN": "标准窗口支持最大化与贴靠；边缘收起可贴边隐藏。",
@@ -388,8 +388,8 @@
     "en-US": "Shortcuts"
   },
   "navigation.models": {
-    "zh-CN": "搜索与 AI",
-    "en-US": "Search and AI"
+    "zh-CN": "本地 AI",
+    "en-US": "Local AI"
   },
   "navigation.diagnostics": {
     "zh-CN": "诊断",
@@ -460,8 +460,8 @@
     "en-US": "Settings"
   },
   "help.command.see_dir": {
-    "zh-CN": "进入指定收藏目录，名称或完整路径须唯一匹配",
-    "en-US": "Open a favorite by an unambiguous name or full path"
+    "zh-CN": "进入指定收藏目录",
+    "en-US": "Open the specified favorite folder"
   },
   "help.command.see_sort_asc": {
     "zh-CN": "切换为升序排序",
@@ -2348,8 +2348,8 @@
     "en-US": "Cache statistics unavailable"
   },
   "ui.cache.confirm": {
-    "zh-CN": "清理缩略图、预览和文档转换缓存？下次查看时会重新生成，源文件、索引和关键词保留。",
-    "en-US": "Clear thumbnails, previews, and converted document caches? They will be recreated as needed. Source files, indexes, and keywords are preserved."
+    "zh-CN": "清理缩略图、预览和文档转换缓存？下次查看时会重新生成。保留源文件、索引和关键词。",
+    "en-US": "Clear thumbnails, previews, and converted documents? Caches are recreated as needed. Source files, indexes, and keywords are kept."
   },
   "ui.cache.confirmAction": {
     "zh-CN": "清理",
@@ -2388,8 +2388,8 @@
     "en-US": "Install or repair indexing service"
   },
   "ui.maintenance.setupDescription": {
-    "zh-CN": "将中断当前后台任务，并请求管理员权限。保留索引和素材；请先退出其他 Cap7CE。读取服务需要 .NET 10 x64 运行时。",
-    "en-US": "Interrupts current background tasks and requests administrator approval. Indexes and source files are preserved. Close other Cap7CE instances first. Requires the .NET 10 x64 runtime."
+    "zh-CN": "将中断后台任务并请求管理员权限，保留索引和素材。请先退出其他 Cap7CE。读取服务需要 .NET 10 x64 运行时。",
+    "en-US": "Interrupts background tasks and requests administrator approval. Indexes and source files are kept. Close other Cap7CE instances first. The Reader service requires .NET 10 x64."
   },
   "ui.maintenance.setupAction": {
     "zh-CN": "安装或修复",
@@ -2452,8 +2452,8 @@
     "en-US": "Rebuild…"
   },
   "ui.index.orderHint": {
-    "zh-CN": "勾选要建立或更新索引的磁盘，按列表顺序处理。更改勾选不会删除已有索引。",
-    "en-US": "Select drives to build or update in list order. Changing the selection does not delete existing indexes."
+    "zh-CN": "选择需要建立索引的磁盘及调整建立顺序。",
+    "en-US": "Select drives to index and arrange their processing order."
   },
   "ui.index.summary": {
     "zh-CN": "{ready} / {total} 个磁盘索引就绪",
@@ -2628,12 +2628,12 @@
     "en-US": "Refresh"
   },
   "ui.metadata.cancelTaskHint": {
-    "zh-CN": "结束本轮提取，保留已提取结果及范围配置；重启后不会继续本轮任务。",
-    "en-US": "End this extraction task and keep extracted results and scope settings. This task will not resume after restarting."
+    "zh-CN": "结束本轮提取，重启后不再继续。保留已提取结果和范围设置。",
+    "en-US": "End this task without resuming after restart. Keep extracted results and scope settings."
   },
   "ui.metadata.pausedHint": {
-    "zh-CN": "暂停状态会在重启后保留。可继续提取，或取消本轮任务；已提取结果保留。",
-    "en-US": "The task stays paused after restarting. Resume extraction or cancel this task; extracted results are kept."
+    "zh-CN": "重启后仍保持暂停。可继续或取消任务，已提取结果保留。",
+    "en-US": "Stays paused after restart. Resume or cancel the task; extracted results are kept."
   },
   "ui.metadata.cancelHint": {
     "zh-CN": "停止当前目录并清空队列，保留已提取结果。",
@@ -3032,8 +3032,8 @@
     "en-US": "Unable to start the Core query host."
   },
   "ui.error.coreStartup": {
-    "zh-CN": "Core启动失败。请关闭其他Cap7CE进程后重试；索引权限和安装状态可在设置中查看。",
-    "en-US": "Core could not start. Close other Cap7CE processes and try again. Check index permissions and installation status in Settings."
+    "zh-CN": "Core 启动失败，请退出其他 Cap7CE 后重试。仍失败时，请在设置中检查服务状态。",
+    "en-US": "Core could not start. Close other Cap7CE instances and retry. If it still fails, check service status in Settings."
   },
   "ui.error.coreIdentity": {
     "zh-CN": "Core 进程身份不符",
@@ -3076,8 +3076,8 @@
     "en-US": "Select files or folders."
   },
   "ui.error.coreMissing": {
-    "zh-CN": "Core程序缺失，请先完成原生构建或重新解压完整程序包。",
-    "en-US": "The Core program is missing. Complete the native build or extract the full application package again."
+    "zh-CN": "Core 程序缺失，请重新安装或解压完整程序包。",
+    "en-US": "Core is missing. Reinstall the app or extract the full package."
   },
   "ui.error.nodeChecksum": {
     "zh-CN": "Core Node 摘要不符",
@@ -3164,8 +3164,8 @@
     "en-US": "The keywords changed in another window. Reload them before editing."
   },
   "ui.error.setupMissing": {
-    "zh-CN": "Core安装组件缺失，请重新构建或重新解压完整WinUI程序包。",
-    "en-US": "The Core setup component is missing. Rebuild or extract the full WinUI package again."
+    "zh-CN": "Core 安装组件缺失，请重新安装或解压完整程序包。",
+    "en-US": "The Core setup component is missing. Reinstall the app or extract the full package."
   },
   "ui.error.setupStart": {
     "zh-CN": "无法启动Core配置工具。",
@@ -3192,8 +3192,8 @@
     "en-US": "Core is not connected. Reconnect first."
   },
   "ui.error.metadataCapability": {
-    "zh-CN": "当前Core未提供属性任务，请确认使用完整原生程序包。",
-    "en-US": "This Core does not support metadata tasks. Make sure you are using the full native package."
+    "zh-CN": "当前 Core 不支持属性提取，请重新安装完整程序包。",
+    "en-US": "This Core does not support metadata extraction. Reinstall the full application package."
   },
   "ui.error.connectionChanged": {
     "zh-CN": "Core连接已改变，请重试。",
@@ -3244,8 +3244,8 @@
     "en-US": "The keywords exceed the limit. Use fewer or shorter keywords and try again."
   },
   "ui.error.browseCapacity": {
-    "zh-CN": "实时递归读取超出范围限制；请检查此磁盘的索引状态，或关闭包含子文件夹后浏览。",
-    "en-US": "Live recursive browsing exceeds the limit. Check the disk index or turn off Include subfolders."
+    "zh-CN": "递归浏览超出限制。请检查磁盘索引，或关闭“包含子文件夹”。",
+    "en-US": "Recursive browsing exceeds the limit. Check the disk index or turn off Include subfolders."
   },
   "ui.error.favoriteOrder": {
     "zh-CN": "收藏列表已变化，请取消后重新调整位置",
@@ -3260,28 +3260,28 @@
     "en-US": "{error}; please refresh"
   },
   "ui.error.scopeRebuild": {
-    "zh-CN": "该磁盘索引需要重新建立；请在设置的索引维护中选择该磁盘并点击“建立 / 更新”。",
-    "en-US": "This disk index needs rebuilding. Select the disk under index maintenance in Settings and click Build / update."
+    "zh-CN": "请在“设置 → 缓存与索引”中选择该磁盘，点击“建立 / 更新”以重建索引。",
+    "en-US": "Select this disk under Settings → Cache & index and click Build / update to rebuild its index."
   },
   "ui.error.scopeRebuildRandom": {
-    "zh-CN": "该磁盘索引需要重新建立；请在设置的索引维护中选择该磁盘并点击“建立 / 更新”。索引就绪后才能随机浏览。",
-    "en-US": "This disk index needs rebuilding. Select it under index maintenance in Settings and click Build / update. Random browsing requires a ready index."
+    "zh-CN": "随机浏览前需要重建索引。请在“设置 → 缓存与索引”中选择该磁盘，点击“建立 / 更新”。",
+    "en-US": "Random browsing requires rebuilding the index. Select this disk under Settings → Cache & index and click Build / update."
   },
   "ui.error.scopeBuilding": {
-    "zh-CN": "该磁盘索引正在建立；搜索和筛选需要等待索引就绪，当前仍可直接浏览。",
-    "en-US": "This disk index is being built. Search and filters will be available when it is ready. Direct browsing is available now."
+    "zh-CN": "索引建立中，暂时无法搜索和筛选，仍可直接浏览。",
+    "en-US": "The index is being built. Search and filters are unavailable; direct browsing is available."
   },
   "ui.error.scopeBuildingRandom": {
-    "zh-CN": "该磁盘索引正在建立；随机浏览需要等待索引就绪，当前仍可直接浏览。",
-    "en-US": "This disk index is being built. Random browsing will be available when it is ready. Direct browsing is available now."
+    "zh-CN": "索引建立中，暂时无法随机浏览，仍可直接浏览。",
+    "en-US": "The index is being built. Random browsing is unavailable; direct browsing is available."
   },
   "ui.error.scopeRandom": {
-    "zh-CN": "随机浏览需要可查询的目录索引；请检查设置中的索引状态，当前仍可直接浏览。",
-    "en-US": "Random browsing requires a queryable folder index. Check the index status in Settings. Direct browsing is available now."
+    "zh-CN": "随机浏览需要就绪的索引。请在设置中检查索引状态；仍可直接浏览。",
+    "en-US": "Random browsing requires a ready index. Check index status in Settings. Direct browsing is available."
   },
   "ui.error.scopeUnavailable": {
-    "zh-CN": "此目录的索引尚未就绪，可清除搜索和筛选后直接浏览；搜索及筛选需要可查询的索引",
-    "en-US": "The folder index is not ready. Clear search and filters to browse directly. Search and filters require a queryable index."
+    "zh-CN": "索引尚未就绪，暂时无法搜索和筛选。清除搜索和筛选后可直接浏览。",
+    "en-US": "The index is not ready for search or filters. Clear search and filters to browse directly."
   },
   "ui.error.autoGeneric": {
     "zh-CN": "自动添加关键词失败，请检查目录索引、本地模型和源文件后重试。",
@@ -3300,20 +3300,20 @@
     "en-US": "The exclusion is not a folder: {path}"
   },
   "ui.error.setupFailed": {
-    "zh-CN": "Core配置未完成，可能取消了UAC或缺少.NET 10 x64运行时。{details}",
-    "en-US": "Core setup did not complete. UAC may have been cancelled, or the .NET 10 x64 runtime may be missing.{details}"
+    "zh-CN": "Core 配置未完成，请检查管理员授权及 .NET 10 x64 运行时。详情见诊断信息。",
+    "en-US": "Core setup did not complete. Check administrator approval and the .NET 10 x64 runtime. See diagnostics for details."
   },
   "ui.error.backgroundDisconnected": {
-    "zh-CN": "后台同步已断开，当前列表已保留。可刷新重试；若仍失败，请到诊断页重新连接。",
-    "en-US": "Background sync was disconnected. The current list is retained. Refresh to retry. If it still fails, reconnect on the Diagnostics page."
+    "zh-CN": "后台同步已断开，列表已保留。请刷新；仍失败时，到诊断页重新连接。",
+    "en-US": "Background sync disconnected. The list is kept. Refresh; if it still fails, reconnect on the Diagnostics page."
   },
   "ui.error.notificationFailed": {
     "zh-CN": "通知发送失败：{error}",
     "en-US": "Unable to send the notification: {error}"
   },
   "ui.preview.mediaFailed": {
-    "zh-CN": "媒体播放失败：{error}",
-    "en-US": "Media playback failed: {error}"
+    "zh-CN": "媒体播放失败，请使用默认程序打开。",
+    "en-US": "Media playback failed. Open the file in its default app."
   },
   "ui.preview.formatFailed": {
     "zh-CN": "格式预览失败，已显示源码：{error}",
@@ -3452,16 +3452,16 @@
     "en-US": "The font file exceeds the preview limit."
   },
   "ui.preview.textDisplayFailed": {
-    "zh-CN": "正文显示失败：{status}",
-    "en-US": "Text display failed: {status}"
+    "zh-CN": "正文显示失败，请重新打开文件。",
+    "en-US": "Text could not be displayed. Reopen the file."
   },
   "ui.preview.fontLoadFailed": {
     "zh-CN": "字体无法加载。",
     "en-US": "The font could not be loaded."
   },
   "ui.preview.animationDisplayFailed": {
-    "zh-CN": "动图显示失败：{status}",
-    "en-US": "Animation display failed: {status}"
+    "zh-CN": "动图显示失败，请使用默认程序打开。",
+    "en-US": "The animation could not be displayed. Open it in the default app."
   },
   "ui.preview.animationDecodeFailed": {
     "zh-CN": "动图解码失败，请使用默认程序打开。",
@@ -3544,8 +3544,8 @@
     "en-US": "Task failed; open Cap7CE for details"
   },
   "ui.notice.notificationsBlocked": {
-    "zh-CN": "应用内通知已开启，但 Windows 当前禁止此应用发送通知。请检查 Windows 系统通知设置。",
-    "en-US": "Notifications are enabled in Cap7CE, but Windows currently blocks this app from sending them. Check Windows notification settings."
+    "zh-CN": "Windows 已禁止此应用发送通知，请检查系统通知设置。",
+    "en-US": "Windows is blocking notifications from this app. Check system notification settings."
   },
 
  "ui.shortcuts.globalHeading":{"zh-CN":"全局快捷键","en-US":"Global shortcuts"},
@@ -3834,12 +3834,12 @@
     "en-US": "Exit Cap7CE?"
   },
   "ui.command.confirmRemove": {
-    "zh-CN": "是否取消收藏“{name}”？不会删除磁盘目录或其中的文件。",
-    "en-US": "Remove “{name}” from favorites? The folder and its files will not be deleted."
+    "zh-CN": "取消收藏“{name}”？目录及文件不会删除。",
+    "en-US": "Remove “{name}” from favorites? The folder and its files are kept."
   },
   "ui.command.confirmStop": {
-    "zh-CN": "是否停止本地 AI 服务？下次生成 AI 关键词时将需要重新启动服务。",
-    "en-US": "Stop the local AI service? It will need to start again for the next AI keyword task."
+    "zh-CN": "停止本地 AI 服务？下次生成 AI 关键词时需重新启动。",
+    "en-US": "Stop the local AI service? It must restart for the next AI keyword task."
   },
   "ui.command.confirmCache": {
     "zh-CN": "是否清理缩略图与预览缓存？保留源文件、索引和关键词。",
@@ -3858,20 +3858,20 @@
     "en-US": "Show tray icon"
   },
   "ui.tray.enabledHint": {
-    "zh-CN": "在任务栏通知区域显示图标；关闭主窗口时保留后台运行。",
-    "en-US": "Show an icon in the taskbar notification area and keep running when the main window is closed."
+    "zh-CN": "在托盘显示应用图标，关闭窗口时后台运行。",
+    "en-US": "Show the app icon in the system tray and keep running when the window is closed."
   },
   "ui.tray.showStartup": {
     "zh-CN": "启动时显示主窗口",
     "en-US": "Show main window on startup"
   },
   "ui.tray.showStartupHint": {
-    "zh-CN": "下次启动时生效；关闭后在后台启动，仍可通过托盘或再次运行程序打开窗口。",
-    "en-US": "Applies next launch. When off, start in the background; open the window from the tray or by launching the app again."
+    "zh-CN": "关闭后程序每次将在后台启动。",
+    "en-US": "When off, the app starts in the background each time."
   },
   "ui.tray.failed": {
-    "zh-CN": "托盘图标不可用，已显示主窗口。可在设置中重新开启托盘图标。",
-    "en-US": "The tray icon is unavailable. The main window is shown. You can re-enable the tray icon in Settings."
+    "zh-CN": "托盘图标不可用，已显示主窗口。可在设置中重新开启。",
+    "en-US": "The tray icon is unavailable. The main window is shown. Re-enable the tray icon in Settings."
   },
   "menu.rename": {"zh-CN": "重命名", "en-US": "Rename"},
   "ui.shortcuts.action.renameSelected": {"zh-CN": "重命名所选项目", "en-US": "Rename selected items"},
@@ -3882,5 +3882,25 @@
   "ui.rename.invalidResult": {"zh-CN": "重命名结果校验失败，请刷新目录确认实际名称。", "en-US": "Could not verify the rename result. Refresh the folder to check the actual names."},
   "ui.rename.failed": {"zh-CN": "有{count}项未能重命名，请检查占用、权限或名称冲突。", "en-US": "Could not rename {count} items. Check for locks, permissions, or name conflicts."},
   "ui.rename.batchTitle": {"zh-CN": "重命名 {count} 个项目", "en-US": "Rename {count} items"},
-  "ui.rename.batchDescription": {"zh-CN": "统一名称，保留扩展名，由系统自动编号。", "en-US": "Use one base name, keep extensions, and let Windows number the items."}
+  "ui.rename.batchDescription": {"zh-CN": "统一名称，保留扩展名，由系统自动编号。", "en-US": "Use one base name, keep extensions, and let Windows number the items."},
+  "ui.error.cancelled": {
+    "zh-CN": "操作已取消。",
+    "en-US": "The operation was cancelled."
+  },
+  "ui.error.accessDenied": {
+    "zh-CN": "没有操作权限，请检查文件或目录权限。",
+    "en-US": "Access denied. Check file or folder permissions."
+  },
+  "ui.error.fileMissing": {
+    "zh-CN": "文件不存在或已移动，请刷新后重试。",
+    "en-US": "The file is missing or has moved. Refresh and try again."
+  },
+  "ui.error.operationTimeout": {
+    "zh-CN": "操作超时，请重试。",
+    "en-US": "The operation timed out. Try again."
+  },
+  "ui.error.operationFailed": {
+    "zh-CN": "操作未完成，请重试；仍失败时，请查看诊断信息。",
+    "en-US": "The operation did not finish. Retry; if it still fails, check diagnostics."
+  }
 }

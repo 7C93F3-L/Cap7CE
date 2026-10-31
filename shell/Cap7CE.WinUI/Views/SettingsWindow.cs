@@ -35,7 +35,8 @@ internal sealed class SettingsWindow : Window
         foreach(var (label,symbol) in new[]{("通用",Symbol.Setting),("外观",Symbol.Highlight),("缓存与索引",Symbol.Library),
             ("快捷操作",Symbol.Keyboard),("搜索与 AI",Symbol.Find),("诊断",Symbol.Repair),("关于",(Symbol)0xE946)}) // Info: circled i.
         {
-            var item=new NavigationViewItem {Tag=label,Icon=new SymbolIcon(symbol)};
+            var item=new NavigationViewItem {Tag=label,Icon=symbol==Symbol.Find?null:new SymbolIcon(symbol)};
+            if(symbol==Symbol.Find)item.Icon=AiActionIcon.Attach(item,interactive:false);
             LanguageUi.Bind(item,NavigationViewItem.ContentProperty,LanguageUi.CategoryKey(label));navigation.MenuItems.Add(item);
         }
         navigation.SelectedItem=navigation.MenuItems[0];
