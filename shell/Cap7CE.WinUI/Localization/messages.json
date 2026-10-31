@@ -1,4 +1,32 @@
 {
+  "ui.indexPrompt.title": {
+    "zh-CN": "建立本地索引",
+    "en-US": "Create a local index"
+  },
+  "ui.indexPrompt.description": {
+    "zh-CN": "尚未建立索引，目前仅支持文件浏览。是否创建本地索引，启用搜索？",
+    "en-US": "No index has been created yet. You can browse files now. Create a local index to enable search?"
+  },
+  "ui.indexPrompt.start": {
+    "zh-CN": "立即开始",
+    "en-US": "Start now"
+  },
+  "ui.indexPrompt.custom": {
+    "zh-CN": "自定义范围",
+    "en-US": "Choose drives"
+  },
+  "ui.indexPrompt.later": {
+    "zh-CN": "稍后",
+    "en-US": "Later"
+  },
+  "ui.indexPrompt.never": {
+    "zh-CN": "不再提醒",
+    "en-US": "Don't remind me again"
+  },
+  "ui.indexPrompt.saveFailed": {
+    "zh-CN": "未能保存，请重试或选择“稍后”。",
+    "en-US": "Could not save this choice. Try again or choose Later."
+  },
   "ui.error.edgeOccupied": {
     "zh-CN": "该屏幕边缘已被其他自动隐藏工具栏占用，请尝试另一边。",
     "en-US": "This screen edge is used by another auto-hide toolbar. Try another edge."

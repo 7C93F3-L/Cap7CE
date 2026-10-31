@@ -4,6 +4,7 @@ using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
 await RuntimePrerequisiteTests.RunAsync();
+await IndexOnboardingChecks.RunAsync();
 void Require(bool value,string message){if(!value)throw new Exception(message);}
 ShellServices Setup(bool recursive=true)
 {

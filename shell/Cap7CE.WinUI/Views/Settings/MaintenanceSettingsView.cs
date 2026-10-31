@@ -7,9 +7,13 @@ namespace Cap7CE.WinUI.Views;
 
 internal sealed class MaintenanceSettingsView : StackPanel
 {
-    public MaintenanceSettingsView(ShellServices services,Window owner)
+    public MaintenanceSettingsView(ShellServices services,Window owner,bool focusIndex=false)
     {
         Spacing=16;
-        Children.Add(new SettingsCard("native.index.title","native.index.description",new IndexMaintenanceView(services),true,localized:true));
+        var index=new IndexMaintenanceView(services);
+        var control=focusIndex?(UIElement)new SettingsExpandable(index.Options,index,initiallyExpanded:true):index;
+        var card=new SettingsCard("native.index.title","native.index.description",control,true,localized:true);
+        if(focusIndex)card.Loaded+=(_,_)=>card.DispatcherQueue.TryEnqueue(()=>card.StartBringIntoView());
+        Children.Add(card);
     }
 }

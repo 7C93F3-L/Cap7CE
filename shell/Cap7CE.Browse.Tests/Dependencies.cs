@@ -31,6 +31,7 @@ namespace Cap7CE.WinUI.Services
     {
         public static string DataRoot=>throw new Exception("Tests must not write diagnostics");
         public ShellPreferences Current {get;set;}=new();
+        public Task UpdateAsync(Func<ShellPreferences,ShellPreferences> update){Current=update(Current);return Task.CompletedTask;}
     }
     internal sealed class ShellServices
     {
@@ -41,23 +42,37 @@ namespace Cap7CE.WinUI.Services
         public IReadOnlyList<CoreVolumeStatus> Volumes {get;}=[new("v","E:","NTFS",true,"ready",0,0,true,false)];
         public Func<Task>? Connecting {get;set;}
         public int Connections {get;private set;}
+        public TaskNotifications TaskNotices {get;}=new();
+        public Task RefreshVolumesAsync()=>Task.CompletedTask;
         public async Task ConnectAsync(bool onlyIfDisconnected=false){Connections++;if(Connecting is {} connect)await connect();}
     }
     internal sealed class CoreConnection
     {
         public bool IsConnected {get;set;}=true;
         public bool Queryable {get;set;}=true;
+        public CatalogStatusResponse IndexStatus {get;set;}=new([],[],0);
+        public Queue<CatalogStatusResponse> IndexSnapshots {get;}=new();
+        public CoreVolumeStatus[] IndexVolumes {get;set;}=[];
         public List<(string Operation,object Body)> Requests {get;}=[];
         public TaskCompletionSource? Resolving {get;set;}
         public bool Supports(string operation)=>true;
-        public async Task<T> RequestAsync<T>(string operation,object body,CancellationToken token)
+        public async Task<T> RequestAsync<T>(string operation,object body,CancellationToken token=default,int deadlineMs=15000)
         {
             Requests.Add((operation,body));
             object result;
-            if(operation==CoreOperations.CatalogResolveScope){if(Resolving is {} wait)await wait.Task.WaitAsync(token);result=new CatalogResolveScopeResponse(Queryable,"v","5","E:","ready",Queryable,"5");}
+            if(operation==CoreOperations.CatalogStatus)result=IndexSnapshots.Count>0?IndexSnapshots.Dequeue():IndexStatus;
+            else if(operation==CoreOperations.VolumeList)result=new VolumeListResponse(IndexVolumes);
+            else if(operation==CoreOperations.VolumeSelection)result=new VolumeSelectionResponse(((VolumeSelectionRequest)body).VolumeIds);
+            else if(operation is CoreOperations.CatalogBuild or CoreOperations.CatalogRebuild)result=new CatalogBuildResponse("fixture-build",true);
+            else if(operation==CoreOperations.CatalogResolveScope){if(Resolving is {} wait)await wait.Task.WaitAsync(token);result=new CatalogResolveScopeResponse(Queryable,"v","5","E:","ready",Queryable,"5");}
             else result=new SearchPageResponse([new("file","file.txt","file.txt",".txt",false,"v")],operation==CoreOperations.SearchStart?"next":null,operation!=CoreOperations.SearchStart,1);
             token.ThrowIfCancellationRequested();return (T)result;
         }
+    }
+    internal sealed class TaskNotifications
+    {
+        public List<(string Kind,string Id)> Started {get;}=[];
+        public void Begin(string kind,string id)=>Started.Add((kind,id));
     }
     internal sealed class VisualConnection {public List<(string Path,bool Recursive)> Reads {get;}=[];}
     internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDisposable

@@ -49,6 +49,16 @@ internal static class LanguagePreferenceChecks
                 using var saved=JsonDocument.Parse(await File.ReadAllTextAsync(file));
                 if(saved.RootElement.TryGetProperty("fontSize",out _)||saved.RootElement.GetProperty("language").GetString()!="en-US"||saved.RootElement.GetProperty("showDetails").GetBoolean())throw new Exception("Normal saves must omit retired font size and preserve unrelated preferences.");
             }
+            var stale=restored.Current;
+            await restored.UpdateAsync(p=>p with{IndexSetupCompleted=true,DismissIndexSetupPrompt=true});
+            await restored.SaveAsync(stale with{Theme="dark"});
+            var promptReload=new PreferenceStore(file,null);await promptReload.LoadAsync();
+            if(!promptReload.Current.IndexSetupCompleted||!promptReload.Current.DismissIndexSetupPrompt||promptReload.Current.Theme!="dark")
+                throw new Exception("Stale appearance saves must preserve completed index setup and permanent prompt dismissal.");
+            await File.WriteAllTextAsync(file,"{\"indexSetupCompleted\":true,\"dismissIndexSetupPrompt\":true,\"material\":\"invalid\"}");
+            await promptReload.LoadAsync();
+            if(!promptReload.Current.IndexSetupCompleted||!promptReload.Current.DismissIndexSetupPrompt)
+                throw new Exception("Appearance recovery must not reset index onboarding history.");
             Console.WriteLine("Retired UI font preference passed: legacy sizes/types ignored, unrelated settings retained, load read-only and normal save omits the field.");
             foreach(var choice in LanguagePreferenceOptions.Choices) {
                 if(LanguagePreferenceOptions.Choices[LanguagePreferenceOptions.Index(choice.Id)].Id!=choice.Id)throw new Exception("Selector identity must not depend on translated labels.");

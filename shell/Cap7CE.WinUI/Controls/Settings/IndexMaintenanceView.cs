@@ -177,9 +177,7 @@ internal sealed class IndexMaintenanceView : UserControl
         var dialog=L.Dialog(XamlRoot,rebuild?"ui.index.rebuildTitle":"ui.index.buildTitle",rebuild?"ui.index.rebuildDescription":"ui.index.buildDescription","ui.index.continue");
         dialog.DefaultButton=rebuild?ContentDialogButton.Close:ContentDialogButton.Primary;
         if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
-        await Core.RequestAsync<VolumeSelectionResponse>(CoreOperations.VolumeSelection,new VolumeSelectionRequest(ids));
-        var reply=await Core.RequestAsync<CatalogBuildResponse>(rebuild?CoreOperations.CatalogRebuild:CoreOperations.CatalogBuild,new CatalogBuildRequest(ids));
-        if(reply.Accepted)services.TaskNotices.Begin("index",reply.TaskId);
+        var reply=await IndexBuildActions.StartAsync(services,ids,rebuild);
         if(reply.Accepted)observedTask=reply.TaskId;
         await ReadAsync();
     }

@@ -147,9 +147,9 @@ assert(!/\.RequestAsync|\.SaveAsync|new ColorPicker/.test(settingsWindow), 'sett
 const settingsCatalog = read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs');
 const mainlineSettings = require('./winui-settings-baseline.json').slice();
 const maintenanceSettings = read('shell/Cap7CE.WinUI/Views/Settings/MaintenanceSettingsView.cs');
-assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
+assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner,focus)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
 assert(maintenanceSettings.includes('new IndexMaintenanceView(services)') && settingsCatalog.includes('MetadataView,true'), 'settings must host index and metadata management inline');
-assert(settingsCatalog.indexOf('new MaintenanceSettingsView(services,owner)') < settingsCatalog.indexOf('"native.metadata.section","native.metadata.title"')
+assert(settingsCatalog.indexOf('"stableSettings.section.index"') < settingsCatalog.indexOf('"native.metadata.section","native.metadata.title"')
   && settingsCatalog.indexOf('"native.metadata.section","native.metadata.title"') < settingsCatalog.indexOf('new CacheSettingsView'), 'storage settings must retain index, metadata, cache ordering');
 assert(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('commands.StartMetadataAsync(item.Path)')
   && read('shell/Cap7CE.WinUI/Services/ResultContextMenu.cs').includes('commands.StartMetadataAsync(first)'), 'metadata shortcuts must share the explicit directory queue action');
@@ -223,6 +223,14 @@ assert(commands.includes('BeforeMutation?.Invoke()') && commands.includes('Relea
 const taskNotices=read('shell/Cap7CE.WinUI/Services/TaskNotifications.cs');
 assert(!/Microsoft\.UI|DllImport|RequestAsync|Task\.Delay|Timer|File\.|Directory\./.test(taskNotices), 'task notice policy must not own windows, task execution, polling or storage');
 assert(!read('shell/Cap7CE.WinUI/Controls/Settings/IndexMaintenanceView.cs').includes('services.Notify('), 'index system notices must survive settings-page lifecycle');
+const indexOnboarding=read('shell/Cap7CE.WinUI/Controllers/IndexOnboardingController.cs');
+assert(!/Timer|Task\.Delay|CoreOperations\.CatalogBuild/.test(indexOnboarding)
+  &&indexOnboarding.includes('IndexBuildActions.StartAllAsync(services)')
+  &&read('shell/Cap7CE.WinUI/Controls/Settings/IndexMaintenanceView.cs').includes('IndexBuildActions.StartAsync(services,ids,rebuild)'),
+  'index onboarding must use the shared explicit build action without a polling or build owner');
+assert(read('shell/Cap7CE.WinUI/Views/IndexOnboardingDialog.cs').includes('new HyperlinkButton')
+  &&read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs').includes('pages.FocusIndex()')
+  &&maintenanceSettings.includes('initiallyExpanded:true'), 'onboarding must expose text opt-out and reuse the expanded index settings page');
 assert(read('shell/Cap7CE.WinUI/Services/ShellServices.cs').includes('TaskNotices.IndexStatus('), 'index terminal notices must use shared service snapshots');
 assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordTasks.cs').includes('TaskNotices.Finish('), 'AI batches must publish one aggregate terminal outcome');
 const shortcutCatalog=read('shell/Cap7CE.WinUI/Models/ShortcutCatalog.cs');

@@ -8,6 +8,8 @@ public sealed record ShellPreferences
     public WorkspaceOptions FavoriteWorkspace {get;init;}=WorkspaceOptions.FavoritesDefault;
     public string[] IndexVolumeOrder {get;init;}=[];
     public Dictionary<string,bool> IndexVolumeSelection {get;init;}=[];
+    public bool IndexSetupCompleted {get;init;}
+    public bool DismissIndexSetupPrompt {get;init;}
     public Dictionary<string,bool> MetadataExclusionChoices {get;init;}=[];
     public string[] MetadataCustomExclusions {get;init;}=[];
     public bool TrayIconEnabled {get;init;}=true;

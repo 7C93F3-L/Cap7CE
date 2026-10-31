@@ -16,6 +16,7 @@ internal sealed class SettingsPages
         =>catalog=new SettingsCatalog(services,owner,new SettingsActions(notice),notice,(title,create)=>SubpageRequested?.Invoke(title,create));
     public void FocusMetadata()=>catalog.FocusMetadata();
     public void FocusUpdates()=>catalog.FocusUpdates();
+    public void FocusIndex()=>catalog.FocusIndex();
     public UIElement Build(string category)
     {
         catalog.BeginRender();var column=Ui.Column();column.Spacing=24;

@@ -63,14 +63,23 @@ internal sealed class SettingsWindow : Window
     public void ShowMaintenance()
     {
         pages.FocusMetadata();
-        if(category=="缓存与索引")Render();
-        else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="缓存与索引");
+        ShowStorage();
     }
     public void ShowUpdates()
     {
         pages.FocusUpdates();
         if(category=="关于")Render();
         else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="关于");
+    }
+    public void ShowIndex()
+    {
+        pages.FocusIndex();
+        ShowStorage();
+    }
+    private void ShowStorage()
+    {
+        if(category=="缓存与索引")Render();
+        else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="缓存与索引");
     }
     private void Render()
     {

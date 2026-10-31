@@ -28,7 +28,7 @@ internal sealed class PreferenceStore
             }
         }
         if (Current.Material is not ("mica" or "mica-alt") || Current.Theme is not ("system" or "light" or "dark")
-            || Current.TileSize is < 96 or > 280) Current = new();
+            || Current.TileSize is < 96 or > 280) Current = new(){IndexSetupCompleted=Current.IndexSetupCompleted,DismissIndexSetupPrompt=Current.DismissIndexSetupPrompt};
         if(Current.Language is not ("system" or "zh-CN" or "en-US"))Current=Current with{Language="system"};
         AppLanguage.Apply(Current.Language);
     }
@@ -40,6 +40,9 @@ internal sealed class PreferenceStore
         try
         {
             var value=update(Current);
+            // Normal settings saves cannot clear completed onboarding or a permanent opt-out.
+            value=value with{IndexSetupCompleted=value.IndexSetupCompleted||Current.IndexSetupCompleted,
+                DismissIndexSetupPrompt=value.DismissIndexSetupPrompt||Current.DismissIndexSetupPrompt};
             if(value.Language is not ("system" or "zh-CN" or "en-US"))throw new ArgumentOutOfRangeException(nameof(value.Language));
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(value, FramedRpc.Json));

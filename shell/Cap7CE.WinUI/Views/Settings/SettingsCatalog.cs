@@ -15,7 +15,7 @@ internal sealed class SettingsCatalog
     private readonly Action<UiMessage> notice;
     private readonly Window owner;
     private ModelSettingsView? models;
-    private bool metadataFocus,updatesFocus;
+    private bool metadataFocus,updatesFocus,indexFocus;
     private readonly Action<string,Func<UIElement>> openSubpage;
     public List<SettingsEntry> Entries {get;}=[];
     public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<UiMessage> notice,Action<string,Func<UIElement>> openSubpage)
@@ -26,6 +26,8 @@ internal sealed class SettingsCatalog
     public void BeginRender()=>models=null;
     public void FocusMetadata()=>metadataFocus=true;
     public void FocusUpdates()=>updatesFocus=true;
+    public void FocusIndex()=>indexFocus=true;
+    private UIElement IndexView(){var focus=indexFocus;indexFocus=false;return new MaintenanceSettingsView(services,owner,focus);}
     private UIElement MetadataView()
     {
         var view=new MetadataMaintenanceView(services,owner);
@@ -63,7 +65,7 @@ internal sealed class SettingsCatalog
     }
     private void Storage()
     {
-        Entries.Add(new("缓存与索引","stableSettings.section.index","","",()=>new MaintenanceSettingsView(services,owner),true));
+        Entries.Add(new("缓存与索引","stableSettings.section.index","","",IndexView,true));
         Entries.Add(new("缓存与索引","native.metadata.section","native.metadata.title","native.metadata.description",MetadataView,true));
         Mainline("缓存与索引","cache","stableSettings.formalCache","native.cache.description",()=>new CacheSettingsView(services,owner,notice));
     }

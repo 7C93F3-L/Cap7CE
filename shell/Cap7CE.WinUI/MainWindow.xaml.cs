@@ -29,6 +29,7 @@ public sealed partial class MainWindow : Window
     private readonly PreviewSelectionController<Models.AssetItem> previewLink;
     private readonly AutoKeywordNoticeController keywordNotice;
     private readonly IndexNoticeController indexNotice;
+    private readonly IndexOnboardingController indexOnboarding;
     private readonly MetadataNoticeController metadataNotice;
     private readonly MetadataFilterPromptController metadataFilters;
     private readonly EdgeCollapseController edgeCollapse;
@@ -40,7 +41,7 @@ public sealed partial class MainWindow : Window
     private readonly BrowseSession active;
     private bool catalogRefreshQueued;
     private Models.ShellPreferences? appliedPreferences;
-    private bool closed,minimized;
+    private bool closed,minimized,preferencesLoaded;
     public MainWindow()
     {
         InitializeComponent();MainWindowGeometry.ApplyDefault(this);
@@ -109,6 +110,7 @@ public sealed partial class MainWindow : Window
         Surface.KeyDown+=KeyDown;
         tray=new(this,services,OpenSettings,OpenUpdates,Notice);services.Updates.InstallerStarted+=tray.Exit;
         edgeCollapse=new(this,Root,()=>preview is not null||settings is not null||ResultDrag.IsActive,Notice);
+        indexOnboarding=new(this,services,()=>Root.XamlRoot,()=>{OpenSettings();settings?.ShowIndex();},Notice,()=>!edgeCollapse.IsCollapsed&&settings is null&&preview is null);
         commandInput=new(toolbar,notifications,new Commands.QuickCommandActions(services,this,()=>active,workspace,OpenSettings,SetPinnedAsync,()=>!layout.HorizontalGrid,tray.Exit));
         ResultDrag.Changed+=edgeCollapse.Wake;
         services.Notifications.Invoked+=NotificationInvoked;
@@ -125,7 +127,7 @@ public sealed partial class MainWindow : Window
     public bool TrayRegistrationFailed=>tray.RegistrationFailed;
     public async Task LoadStartupAsync()
     {
-        try{await services.Preferences.LoadAsync();ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
+        try{await services.Preferences.LoadAsync();preferencesLoaded=true;ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
         tray.Initialize();
     }
     public async Task StartServicesAsync()
@@ -137,6 +139,7 @@ public sealed partial class MainWindow : Window
         // Core readiness updates capabilities; it must not replace user navigation
         // or cancel directory reads started while the connection was pending.
         try{await services.ConnectAsync();if(!closed&&active is not null)filterAvailability.Update(active,true);}catch(Exception error){Notice(FailureText.From(error));}
+        if(!closed&&preferencesLoaded)indexOnboarding.Start();
     }
     private void Bind()
     {
@@ -195,6 +198,7 @@ public sealed partial class MainWindow : Window
         // LanguageBinding already updated text; do not reapply layout or window actions.
         if(appliedPreferences is {} languagePrevious&&(languagePrevious with{Language=prefs.Language})==prefs){appliedPreferences=prefs;return;}
         if(appliedPreferences is {} shortcutPrevious&&(shortcutPrevious with{ShortcutBindings=prefs.ShortcutBindings})==prefs){appliedPreferences=prefs;return;}
+        if(appliedPreferences is {} indexPrevious&&(indexPrevious with{IndexSetupCompleted=prefs.IndexSetupCompleted,DismissIndexSetupPrompt=prefs.DismissIndexSetupPrompt})==prefs){appliedPreferences=prefs;return;}
         var pinOnly=appliedPreferences is { } previous&&(previous with{AlwaysOnTop=prefs.AlwaysOnTop,PreviewAlwaysOnTop=prefs.PreviewAlwaysOnTop})==prefs;
         var workspaceOnly=appliedPreferences is {} old&&(old with{ComputerWorkspace=prefs.ComputerWorkspace,FavoriteWorkspace=prefs.FavoriteWorkspace})==prefs;
         var edgeOnly=appliedPreferences is {} edgeOld&&(edgeOld with{EdgeCollapseEnabled=prefs.EdgeCollapseEnabled})==prefs;
@@ -218,7 +222,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }
