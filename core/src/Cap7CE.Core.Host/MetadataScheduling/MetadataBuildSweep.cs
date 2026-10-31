@@ -78,7 +78,7 @@ public sealed class MetadataBuildSweep
     private async Task<MetadataBuildProgress> PauseResultAsync(Task work) { await work; return Snapshot; }
     private async Task RunAsync(FileFactQueuePolicy policy, bool changesOnly, CancellationToken token)
     {
-        var remaining = new Dictionary<FileFactKind, long>(); var estimate = new MetadataBuildEstimate();
+        var remaining = new Dictionary<FileFactKind, long>(); var estimate = new MetadataBuildEstimate();var lastYield=Stopwatch.GetTimestamp();
         try {
             token.ThrowIfCancellationRequested(); await session.ConfigureAsync(new(true, policy), token);
             if (changesOnly) {
@@ -100,11 +100,11 @@ public sealed class MetadataBuildSweep
                     var result = await session.ExecuteAsync(new(ticket.Lease.LeaseId), token); token.ThrowIfCancellationRequested();
                     if (result.Completion is FileFactBrokerCompletion.Published or FileFactBrokerCompletion.ExtractorSuperseded) {
                         var kind = ticket.Lease.Job.Kind; remaining[kind] = Math.Max(0, remaining.GetValueOrDefault(kind) - 1);
-                        estimate.Add(kind, Stopwatch.GetElapsedTime(began).TotalMilliseconds + yieldMilliseconds);
+                        estimate.Add(kind, Stopwatch.GetElapsedTime(began).TotalMilliseconds);
                         progress.Set(value => value with { Processed = value.Processed + 1, Failed = value.Failed + (result.State == "failed" ? 1 : 0),
                             Unsupported = value.Unsupported + (result.State == "unsupported" ? 1 : 0), Total = Math.Max(value.Total ?? 0, value.Processed + 1), RemainingSeconds = estimate.Remaining(remaining) });
                     }
-                    await Task.Delay(yieldMilliseconds, token);
+                    if(yieldMilliseconds>0&&Stopwatch.GetElapsedTime(lastYield).TotalMilliseconds>=yieldMilliseconds){await Task.Delay(1,token);lastYield=Stopwatch.GetTimestamp();}
                 }
             }
             token.ThrowIfCancellationRequested(); progress.Set(value => value with { VolumeId = null, RemainingSeconds = 0, Phase = "completed" });

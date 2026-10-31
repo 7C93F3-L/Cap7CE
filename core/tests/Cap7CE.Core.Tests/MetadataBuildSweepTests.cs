@@ -7,6 +7,11 @@ namespace Cap7CE.Core.Tests;
 
 internal static class MetadataBuildSweepTests
 {
+    public static async Task ProbeAsync() {
+        var fixture=new MetadataSweepFixture(25);var sweep=new MetadataBuildSweep(fixture,MetadataSweepFixture.Specifications);
+        var watch=System.Diagnostics.Stopwatch.StartNew();sweep.Start(MetadataSweepFixture.Policy,true);var result=await sweep.WaitForIdleAsync();
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new{generatedTasks=result.Processed,elapsedMs=watch.Elapsed.TotalMilliseconds,sourceFilesRead=false,result.Phase}));
+    }
     private static MetadataBuildSweep Create(MetadataSweepFixture fixture) => new(fixture, MetadataSweepFixture.Specifications, yieldMilliseconds: 0, waitMilliseconds: 2);
     internal static async Task UntilAsync(Func<bool> condition) {
         for (var step = 0; step < 1000; step++) { if (condition()) return; await Task.Delay(2); }
