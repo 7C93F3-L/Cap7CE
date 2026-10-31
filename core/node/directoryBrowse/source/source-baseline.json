@@ -1,0 +1,10 @@
+{
+  "core/node/directoryBrowse/source/skimBrowseService.ts": {
+    "lines": 274,
+    "sourceHash": "d1b451e1f4b3c55872466ee0871ce326a48bb400274c0e924574cfa39d5e515d"
+  },
+  "core/node/directoryBrowse/source/sourcePathPolicy.ts": {
+    "lines": 12,
+    "sourceHash": "edc4e267d90ffc5bff787c77307f0a5f6bb36e0277572efbf315b431888c2f88"
+  }
+}

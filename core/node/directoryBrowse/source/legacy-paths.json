@@ -1,0 +1,4 @@
+{
+  "electron/skimBrowseService.ts": "core/node/directoryBrowse/source/skimBrowseService.ts",
+  "electron/sourcePathPolicy.ts": "core/node/directoryBrowse/source/sourcePathPolicy.ts"
+}

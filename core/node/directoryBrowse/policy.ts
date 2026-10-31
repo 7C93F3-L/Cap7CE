@@ -1,4 +1,4 @@
-import type { SkimBrowseEntry } from "../../../electron/skimBrowseService";
+import type { SkimBrowseEntry } from "./source/skimBrowseService";
 import type { DirectoryBrowseOptions } from "../../../src/shared/directoryBrowseTypes";
 export function filterDirectoryEntries(entries: SkimBrowseEntry[], options: DirectoryBrowseOptions) {
   const f = options.fileConditions;

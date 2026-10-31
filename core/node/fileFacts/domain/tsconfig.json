@@ -20,6 +20,7 @@
     "../../providerPreview/readers/**/*.ts",
     "../../textPreview/contracts/**/*.ts",
     "../../modelRuntime/policy/llamaRuntimeIdleController.ts",
-    "../../localKeywords/policy/**/*.ts"
+    "../../localKeywords/policy/**/*.ts",
+    "../../directoryBrowse/source/**/*.ts"
   ]
 }

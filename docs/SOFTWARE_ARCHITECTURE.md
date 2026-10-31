@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+目录源读取归属`core/node/directoryBrowse/source`：skimBrowseService实现既有磁盘/目录枚举、隐藏项/格式识别及面包屑，sourcePathPolicy实现原有路径范围判断。两份实现除导入位置外保留，目录所有者、递归枚举和sourceInformation直接依赖规范源码；旧入口只转出。Windows只读查询、取消回调、枚举配额、分页及递归行为不变，不写入用户文件或配置。
+
+规范源码沿现有TypeScript公共输出树`core/artifacts/file-facts`发出JS/声明，directoryBrowseTypes及其条件类型声明链随输出复制；共享模型精度类型直接引用fileFacts规范类型，避免编译输入绕回旧入口产物。`directory-source-boundary-check`守护两份源码/体量基线、只读闭包、旧入口和原生消费者；既有目录守护按当前递归实现锁定owner 60行/recursive 68行（去掉末尾空行计数），并显式检查递归容量、后代范围及取消锚点，保留分页和客户端边界。`test:directory-sources`覆盖Windows枚举/隐藏项、目录Job/RPC分页/配额/取消及源信息只读统计。
+
 模型与关键词纯策略归属`core/node/modelRuntime/policy`及`core/node/localKeywords/policy`：modelRuntimeInitialState与llamaRuntimeIdleController保存原初始状态和空闲控制，keywordRules及localKeywordPolicy保存原清理/批次增减与生成语法/提示规则。四份源码除导入位置外保留。原生modelRuntime、modelSettings、localKeywords不再依赖旧Electron源码；语言直接使用resourceCatalog规范模块。storedMetadata及Renderer关键词编辑也复用同一关键词规则。模型进程、请求协议、状态所有权及用户模型/配置保持不变。
 
 初始状态由resourceCatalog编译项目输出在`core/artifacts/resource-catalog`，与旧localization入口共享唯一语言模块，避免第二份活跃语言状态；相关共享modelRuntimeTypes声明显式复制。其他三份策略由既有`core/artifacts/file-facts`编译树输出。旧入口按其所属输出树转出，Renderer直接引用规范关键词规则；Vite旧路径解析也覆盖已迁出的文件属性模块，继续支持显式旧版构建。`model-keyword-policy-boundary-check`检查四份源码/体量基线、纯依赖闭包、语言编译归属及原生消费者；Core模型守护只对精确的纯语言导入排除目录名误报，保留原数据库/网络限制。`test:model-keyword-policy`覆盖关键词编辑、初始状态与语言单例、空闲控制、模型客户端/独立运行库和隔离HTTP替身推理；不运行真实用户模型。

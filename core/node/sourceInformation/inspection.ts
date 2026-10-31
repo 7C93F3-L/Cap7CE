@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { SkimPreviewInfo } from "../../../src/shared/sourceInformationTypes";
-import { isPathWithinDirectory } from "../../../electron/sourcePathPolicy";
+import { isPathWithinDirectory } from "../directoryBrowse/source/sourcePathPolicy";
 export const inspectSkimEntry = async (
   entryPath: string,
   expectedKind: "file" | "folder",

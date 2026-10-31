@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import { readSkimLocation, type SkimBrowseEntry } from "../../../electron/skimBrowseService";
+import { readSkimLocation, type SkimBrowseEntry } from "./source/skimBrowseService";
 import type { DirectoryBrowseOptions } from "../../../src/shared/directoryBrowseTypes";
 import { filterDirectoryEntries, sortDirectoryEntries } from "./policy";
 
