@@ -18,6 +18,8 @@ Core 独占 Catalog 与属性调度；Reader 负责受限 NTFS 读取，普通 C
 
 Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照，后台写事务不通过 shared-cache 表锁串行化查询。源文件读取、派生图像、缓存发布和数据库写入分别由各自领域持有，不在界面层直接执行。
 
+磁盘Processed保留已发布索引计数，快照扫描进度由CatalogPreparationProgressOwner单独持有；旧版中断留下的零计数仅在building/needsRebuild状态按有效节点索引只读统计，不写库或将旧快照标为就绪。CatalogJournalMonitor每个新生命周期首次运行会恢复已选needsRebuild磁盘，后续显式停止/重启监视器不重新安排该恢复，不增加失败重试循环或调整系统USN日志。手动关键词在building/needsRebuild期间仍按保留节点、创建时间和独立修订号读写；文件操作端继续核验实时文件身份，未就绪磁盘仍不参与搜索。CoreProcessDiagnostics立即将有界、无路径的catalog-diagnostic-v1事件交给既有轮转会话日志；失败类型为固定异常类型名，不记录文件路径或Reader身份。
+
 启动不运行全库完整性扫描。CatalogHealthController 按既有七天到期规则，仅在主窗口后台/隐藏/最小化时开始独立检查，开始后完成，退出时取消。检查使用既有库的 ReadWrite 非创建连接，先 query_only 再 quick_check；结果有界保存，不修复或重建数据库。
 
 ## Node 职责域

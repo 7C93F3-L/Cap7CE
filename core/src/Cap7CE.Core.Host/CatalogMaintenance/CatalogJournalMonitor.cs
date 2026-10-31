@@ -16,7 +16,7 @@ public sealed class CatalogJournalMonitor
     private readonly Action<long> published;
     private readonly TimeProvider time;
     private readonly Action listening;
-    private readonly bool captureFileEntries;
+    private readonly bool captureFileEntries;private int initialRecovery=1;
     private readonly Action<CatalogDirectoryImpact>? scopedPublished;
     public CatalogJournalMonitor(CatalogV2Database catalog, ICatalogReaderSessionFactory factory,
         Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
@@ -31,9 +31,10 @@ public sealed class CatalogJournalMonitor
     public async Task RunAsync(CancellationToken token)
     {
         await new Cap7CE.Core.Catalog.DirectoryEntries.CatalogFileEntryActivation(catalog).RequireWriterAsync(captureFileEntries, token);
+        var recoverInterrupted=Interlocked.Exchange(ref initialRecovery,0)==1;
         while (true) {
             token.ThrowIfCancellationRequested();
-            var ready = await ReadReadyAsync(token);
+            var ready = await ReadReadyAsync(token,recoverInterrupted);recoverInterrupted=false;
             if (ready.Count == 0) return; // restarted by explicit selection/build; no idle discovery loop
             await using var reader = await factory.ConnectAsync(token);
             if (!reader.SupportsJournalChangeWait) throw new NotSupportedException("reader-journal-wait-unavailable");
@@ -47,7 +48,7 @@ public sealed class CatalogJournalMonitor
                     continue;
                 }
                 var inspection = await reader.InspectAsync(available, token);
-                if (!IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token, "monitor-startup");
+                if (volume.State==CatalogV2VolumeState.NeedsRebuild || !IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token, volume.State==CatalogV2VolumeState.NeedsRebuild?"monitor-resume":"monitor-startup");
             }
             ready = await ReadReadyAsync(token);
             var roots = await resolveRoots(ready, token);
@@ -108,8 +109,8 @@ public sealed class CatalogJournalMonitor
             // the Reader's 30-minute maximum session lifetime.
         }
     }
-    private async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> ReadReadyAsync(CancellationToken token) =>
-        (await catalog.ReadVolumesAsync(token)).Where(volume => volume.Selected && volume.State == CatalogV2VolumeState.Ready).ToArray();
+    private async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> ReadReadyAsync(CancellationToken token,bool includeInterrupted=false) =>
+        (await catalog.ReadVolumesAsync(token)).Where(volume => volume.Selected && (volume.State == CatalogV2VolumeState.Ready || includeInterrupted && volume.State==CatalogV2VolumeState.NeedsRebuild)).ToArray();
     private Task<CatalogJournalPageOwner> CreateOwnerAsync(ICatalogReaderSession reader, CatalogReaderVolume native,
         CatalogV2VolumeSnapshot volume, IReadOnlyList<FileFactOwnedStorageRoot> roots, CancellationToken token) =>
         CatalogJournalPageOwner.CreateAsync(catalog, volume, roots, token,

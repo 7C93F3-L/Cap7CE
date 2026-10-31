@@ -1,5 +1,6 @@
 using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Models;
+if(args is ["--core-exit-fixture"]) {Console.ReadLine();Console.Error.WriteLine("""{"type":"catalog-diagnostic-v1","name":"preparation-cancelled","data":{"driveLetter":"C","stage":"snapshot-read-and-stage"}}""");for(var i=0;i<30;i++)Console.Error.WriteLine("controlled-core-noise");Console.Error.WriteLine("controlled-core-failure");Environment.ExitCode=7;return;}
 HealthCheckScheduleChecks.Run();
 await TrayChecks.RunAsync();
 await ModelChangesChecks.RunAsync();
@@ -27,7 +28,6 @@ LanguageChecks.Run();
 await LanguagePreferenceChecks.RunAsync();
 
 if(args is ["--settings-origin-tests"]) {await SettingsOriginChecks.RunAsync();return;}
-if(args is ["--core-exit-fixture"]) {Console.ReadLine();Console.Error.WriteLine("controlled-core-failure");Environment.ExitCode=7;return;}
 if(args is ["--catalog-refresh-tests"]) {CatalogRefreshChecks.Run();await CoreProcessChecks.RunAsync();await CoreRequestSenderChecks.RunAsync();return;}
 if(args is ["--metadata-task-tests"]) {await MetadataTaskChecks.RunAsync();MetadataPanelChecks.Run();await MetadataExclusionChecks.RunAsync();return;}
 await MetadataTaskChecks.RunAsync();
@@ -39,6 +39,7 @@ KeywordDraftChecks.Run();
 await AutoKeywordChecks.RunAsync();
 PreviewSelectionChecks.Run();
 await RpcLifetimeChecks.RunAsync();
+await CoreProcessChecks.RunAsync();
 CatalogRefreshChecks.Run();
 WorkspacePreferenceChecks.Run();
 void CheckReveal(double top,double height,double offset,double viewport,double maximum,double expected)

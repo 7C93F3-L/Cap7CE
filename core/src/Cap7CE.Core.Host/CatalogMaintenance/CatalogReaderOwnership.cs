@@ -62,7 +62,7 @@ public sealed class CatalogReaderOwnership : IAsyncDisposable
                 // operation or new owner. No automatic failed-connect loop.
                 LastMonitorFailure = error is NotSupportedException unsupported
                     ? unsupported.Message == "reader-entry-names-unavailable" ? "reader-entry-names-unavailable" : "reader-wait-unavailable" : "reader-monitor-failed";
-                diagnostics?.Write("monitor-failed", new { reason = LastMonitorFailure });
+                diagnostics?.Write("monitor-failed", new { reason = LastMonitorFailure, failureType=error.GetType().Name });
             }
         }, CancellationToken.None);
     }

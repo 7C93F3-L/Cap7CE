@@ -10,6 +10,7 @@ using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
 if (args is ["--catalog-health-tests"]) { await CatalogHealthTests.RunAsync(); return 0; }
+if (args is ["--catalog-recovery-tests"]) { await CatalogInterruptedBuildTests.RunAsync(); await CatalogPreparationDiagnosticsTests.RunAsync(); await CatalogJournalMonitorTests.RunAsync(); await CatalogKeywordTests.RunAsync(); Console.WriteLine("Catalog recovery and retained-identity keyword regressions passed."); return 0; }
 if (args is ["--catalog-diagnostics-tests"]) { await CatalogPreparationDiagnosticsTests.RunAsync(); Console.WriteLine("Catalog preparation diagnostics passed."); return 0; }
 if (args is ["--catalog-natural-order-tests"]) { await CatalogNaturalOrderingTests.RunAsync(); return 0; }
 if (args is ["--catalog-impact-tests"]) {await CatalogChangeImpactTests.RunAsync();await CatalogChangeSignalTests.RunAsync();await CatalogDirectoryPathChangesTests.RunAsync();await CatalogJournalMonitorTests.RunAsync();return 0;}

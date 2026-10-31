@@ -72,7 +72,7 @@ public sealed partial class CatalogKeywordStore(string databasePath)
             SELECT COALESCE(CAST(n.created_utc_ticks AS TEXT), ''), COALESCE(CAST(n.created_utc_ticks/10000 AS TEXT), '')
             FROM catalog_nodes_v2 n JOIN catalog_volumes_v2 v ON v.volume_id=n.volume_id
             WHERE n.volume_id=$volume AND n.file_reference=$file AND n.is_directory=0 AND n.exists_flag=1
-                AND v.selected=1 AND v.state IN ('ready','catchingUp');
+                AND v.selected=1 AND v.state IN ('ready','catchingUp','building','needsRebuild');
             """;
         await using var reader = await command.ExecuteReaderAsync(token);
         if (!await reader.ReadAsync(token) || reader.GetString(1) != (identity.CreatedFileTimeMilliseconds ?? ""))

@@ -9,11 +9,14 @@ internal sealed class CoreProcessDiagnostics
     private int expected;
     public string Errors {get{lock(gate)return string.Join(Environment.NewLine,errors);}}
     public Task Completion {get;}
-    public CoreProcessDiagnostics(Process process,Action<string> report)
+    public CoreProcessDiagnostics(Process process,Action<string> report,Action<string,object?>? record=null)
     {
+        record??=SessionDiagnostics.Record;
         process.ErrorDataReceived+=(_,e)=>{if(e.Data is {} line){
             if(line.StartsWith("{\"type\":\"core-startup-v1\",",StringComparison.Ordinal)&&line.Length<=1024)
-                SessionDiagnostics.Record("core.startup",new{pid=process.Id,data=line});
+                record("core.startup",new{pid=process.Id,data=line});
+            if(line.StartsWith("{\"type\":\"catalog-diagnostic-v1\",",StringComparison.Ordinal)&&line.Length<=2048)
+                record("core.catalog",new{pid=process.Id,data=line});
             lock(gate){errors.Enqueue(line[..Math.Min(line.Length,512)]);while(errors.Count>24)errors.Dequeue();}}};
         process.BeginErrorReadLine();Completion=ObserveAsync(process,report);
     }

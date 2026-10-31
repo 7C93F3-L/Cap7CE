@@ -20,8 +20,20 @@ internal static class CatalogInterruptedBuildTests
             command.CommandText="INSERT INTO catalog_manual_keywords VALUES('v','000000000000000B','1','[\"keep\"]','keep',0)";await command.ExecuteNonQueryAsync();
         }
         await catalog.MarkNeedsRebuildAsync("v");
-        await using(var abandoned=await catalog.BeginSnapshotBuildAsync("v","1",2,0,0,2,true))await abandoned.AppendAsync([root]);
+        await using(var abandoned=await catalog.BeginSnapshotBuildAsync("v","1",2,0,0,2,true)) {
+            await abandoned.AppendAsync([root]);
+            TestAssert.Equal(2L,(await catalog.ReadVolumeAsync("v"))!.Processed,"new staging progress cannot reset the published item count");
+        }
         TestAssert.Equal(CatalogV2VolumeState.NeedsRebuild,(await catalog.ReadVolumeAsync("v"))!.State,"disposed unpublished snapshot cannot remain building");
+        TestAssert.Equal(2L,(await catalog.ReadVolumeAsync("v"))!.Processed,"cancelled rebuild keeps its published item count");
+        await using(var legacy=new SqliteConnection($"Data Source={fixture.DatabasePath};Pooling=False")) {
+            await legacy.OpenAsync();using var command=legacy.CreateCommand();command.CommandText="UPDATE catalog_volumes_v2 SET processed=0 WHERE volume_id='v'";
+            await command.ExecuteNonQueryAsync();
+        }
+        var legacyRevision=await catalog.ReadRevisionAsync();
+        TestAssert.Equal(2L,(await catalog.ReadVolumeAsync("v"))!.Processed,"legacy zero count is derived from retained live nodes");
+        TestAssert.Equal(2L,(await catalog.ReadVolumesAsync()).Single().Processed,"status list and single-volume reads agree on legacy counts");
+        TestAssert.Equal(legacyRevision,await catalog.ReadRevisionAsync(),"count recovery is read-only");
 
         var old=await catalog.BeginBuildAsync("v","1",3,0,0,2,true);
         await catalog.MarkNeedsRebuildAsync("v");

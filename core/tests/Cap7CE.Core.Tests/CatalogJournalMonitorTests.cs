@@ -68,6 +68,7 @@ internal static class CatalogJournalMonitorTests
             cancellation.Cancel(); await TestAssert.ThrowsAsync<OperationCanceledException>(() => work, "stop cancels native wait and awaits Reader retirement");
             TestAssert.Equal(0, reader.Active, "stopped monitor has no Reader session remaining");
             TestAssert.Equal(2, reader.Disposals, "every opened monitor session disposed");
+            await CheckStartupRecoveryAsync(catalog,synthetic,trace);
 
             var unsupportedReader = new WaitingCatalogReader(synthetic) { Supported = false };
             var unsupported = new CatalogJournalMonitor(catalog, unsupportedReader, (ready, token) => Task.FromResult<IReadOnlyList<FileFactOwnedStorageRoot>>([]), _ => { });
@@ -86,6 +87,25 @@ internal static class CatalogJournalMonitorTests
                 try { await activeWork; } catch (OperationCanceledException) { }
             }
             SqliteConnection.ClearAllPools(); Directory.Delete(root, true);
+        }
+    }
+    private static async Task CheckStartupRecoveryAsync(CatalogV2Database catalog,SyntheticCatalogReader synthetic,CatalogPreparationDiagnostics trace)
+    {
+        var volume=(await catalog.ReadVolumesAsync()).First();
+        var reader=new WaitingCatalogReader(synthetic);
+        var monitor=new CatalogJournalMonitor(catalog,reader,(_,_)=>Task.FromResult<IReadOnlyList<FileFactOwnedStorageRoot>>([]),_=>{},diagnostics:trace);
+        for(var attempt=0;attempt<2;attempt++) {
+            await catalog.MarkNeedsRebuildAsync(volume.VolumeId);
+            var snapshots=synthetic.SnapshotOpenCount;
+            using var cancellation=new CancellationTokenSource();var work=monitor.RunAsync(cancellation.Token);
+            try {
+                await reader.Waits.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+                TestAssert.Equal(snapshots+(attempt==0?1:0),synthetic.SnapshotOpenCount,"new lifetime resumes interrupted work once; restarting an explicitly retired monitor does not undo a stop");
+                TestAssert.Equal(attempt==0?CatalogV2VolumeState.Ready:CatalogV2VolumeState.NeedsRebuild,(await catalog.ReadVolumeAsync(volume.VolumeId))!.State,"only startup recovery reopens the retained rebuild");
+            } finally {
+                cancellation.Cancel();try{await work;}catch(OperationCanceledException){}
+            }
+            TestAssert.Equal(0,reader.Active,"recovery startup and explicit retirement leave no competing Reader owner");
         }
     }
 }

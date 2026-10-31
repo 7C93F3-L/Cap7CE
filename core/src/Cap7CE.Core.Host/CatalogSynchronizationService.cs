@@ -99,7 +99,7 @@ public sealed class CatalogSynchronizationService
                 activity?.Complete(measurements[^1]);
             }
             catch (OperationCanceledException) { activity?.Cancel(); throw; }
-            catch (Exception error) when (error is not OutOfMemoryException) { activity?.Fail(); throw; }
+            catch (Exception error) when (error is not OutOfMemoryException) { activity?.Fail(error); throw; }
             finally { progress?.Clear(); }
         }
         return measurements;

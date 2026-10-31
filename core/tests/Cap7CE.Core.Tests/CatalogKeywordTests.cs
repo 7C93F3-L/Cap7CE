@@ -87,6 +87,22 @@ internal static class CatalogKeywordTests
             var changed = await Send("keywords.write", new { identity = new CatalogKeywordIdentity("a", "0000000000000011", "1"), keywords = new[] { "protocol" }, expectedRevision = ProtocolClient.ReadBody<CatalogKeywordSnapshot>(read).Revision });
             TestAssert.True(ProtocolClient.ReadBody<CatalogKeywordWriteResult>(changed).Saved, "real protocol writes succeed");
             TestAssert.Equal(1, (await Search(original with { Query = "protocol" })).Items.Count, "saved keywords are searchable");
+            var retainedIdentity=new CatalogKeywordIdentity("a","0000000000000011","1");
+            foreach(var state in new[]{"needsRebuild","building"}) {
+                await Sql($"UPDATE catalog_volumes_v2 SET state='{state}' WHERE volume_id='a'");
+                var retained=ProtocolClient.ReadBody<CatalogKeywordSnapshot>(await Send("keywords.read",new{identity=retainedIdentity}));
+                var saved=ProtocolClient.ReadBody<CatalogKeywordWriteResult>(await Send("keywords.write",new{identity=retainedIdentity,keywords=new[]{state},expectedRevision=retained.Revision}));
+                TestAssert.True(saved.Saved,"manual keywords use retained identity independently of whole-volume query readiness");
+                TestAssert.False((await store.WriteAsync(retainedIdentity,["stale"],retained.Revision)).Saved,"stale keyword revisions remain rejected during rebuild");
+                TestAssert.Equal(CoreErrorCodes.InvalidRequest,(await Send("keywords.read",new{identity=retainedIdentity with{CreatedFileTimeMilliseconds="99"}})).Error!.Code,"rebuild does not bypass creation identity checks");
+                TestAssert.Equal(0,(await Search(original with{Query=state})).Items.Count,"allowing manual annotations must not expose a stale volume to search");
+            }
+            foreach(var state in new[]{"offline","disabled"}) {
+                await Sql($"UPDATE catalog_volumes_v2 SET state='{state}' WHERE volume_id='a'");
+                TestAssert.Equal(CoreErrorCodes.InvalidRequest,(await Send("keywords.read",new{identity=retainedIdentity})).Error!.Code,"unavailable volumes still reject keyword access");
+            }
+            await Sql("UPDATE catalog_volumes_v2 SET state='needsRebuild',selected=0 WHERE volume_id='a'");
+            TestAssert.Equal(CoreErrorCodes.InvalidRequest,(await Send("keywords.write",new{identity=retainedIdentity,keywords=new[]{"blocked"},expectedRevision=(string?)null})).Error!.Code,"deselected volumes cannot be annotated");
         }
         finally { SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }
     }

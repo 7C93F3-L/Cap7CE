@@ -149,7 +149,7 @@ public sealed partial class CatalogV2Database
         using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT volume_id, display_name, file_system, selected, journal_id, checkpoint_usn,
-                   journal_first_usn, journal_lowest_valid_usn, state, processed, total, catalog_revision
+                   journal_first_usn, journal_lowest_valid_usn, state, CASE WHEN processed=0 AND state IN ('building','needsRebuild') THEN (SELECT COUNT(*) FROM catalog_nodes_v2 n WHERE n.volume_id=catalog_volumes_v2.volume_id AND n.exists_flag=1) ELSE processed END, total, catalog_revision
             FROM catalog_volumes_v2 ORDER BY display_name COLLATE NOCASE, volume_id;
             """;
         var values = new List<CatalogV2VolumeSnapshot>();
@@ -201,7 +201,7 @@ public sealed partial class CatalogV2Database
                 UPDATE catalog_volumes_v2
                 SET journal_id = $journal, checkpoint_usn = $checkpoint,
                     journal_first_usn = $first, journal_lowest_valid_usn = $lowest,
-                    state = 'building', processed = 0, total = $total, catalog_revision = $revision
+                    state = 'building', total = $total, catalog_revision = $revision
                 WHERE volume_id = $volume;
                 """;
             update.Parameters.AddWithValue("$journal", journalId);
@@ -871,7 +871,7 @@ public sealed partial class CatalogV2Database
         command.Transaction = transaction;
         command.CommandText = """
             SELECT volume_id, display_name, file_system, selected, journal_id, checkpoint_usn,
-                   journal_first_usn, journal_lowest_valid_usn, state, processed, total, catalog_revision
+                   journal_first_usn, journal_lowest_valid_usn, state, CASE WHEN processed=0 AND state IN ('building','needsRebuild') THEN (SELECT COUNT(*) FROM catalog_nodes_v2 n WHERE n.volume_id=catalog_volumes_v2.volume_id AND n.exists_flag=1) ELSE processed END, total, catalog_revision
             FROM catalog_volumes_v2 WHERE volume_id = $volume;
             """;
         command.Parameters.AddWithValue("$volume", volumeId);

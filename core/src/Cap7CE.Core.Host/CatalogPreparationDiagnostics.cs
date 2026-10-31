@@ -48,10 +48,10 @@ public sealed class CatalogPreparationDiagnostics(Action<string, object> sink)
         public void Retry() => Emit("retry", "journal-discontinuity");
         public void Complete(CatalogSynchronizationMeasurement measurement) => Emit("completed", measurement: measurement);
         public void Cancel() => Emit("cancelled");
-        public void Fail() => Emit("failed", "preparation-failed");
-        private void Emit(string state, string? reason = null, CatalogSynchronizationMeasurement? measurement = null) =>
+        public void Fail(Exception error) => Emit("failed", "preparation-failed", failureType:error.GetType().Name);
+        private void Emit(string state, string? reason = null, CatalogSynchronizationMeasurement? measurement = null,string? failureType=null) =>
             owner.Write("preparation-" + state, new { activityId, driveLetter, origin, stage, reason,
-                elapsedMilliseconds = Math.Round(watch.Elapsed.TotalMilliseconds, 3),
+                elapsedMilliseconds = Math.Round(watch.Elapsed.TotalMilliseconds, 3), failureType,
                 kind = measurement?.Kind, records = measurement?.Records, pages = measurement?.Pages,
                 readerReadMilliseconds = measurement?.ReaderReadMilliseconds,
                 stagingWriteMilliseconds = measurement?.StagingWriteMilliseconds,
