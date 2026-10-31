@@ -15,6 +15,7 @@
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../../core/deployment/capability-setup-manifest.v1.json" LogicalName="Cap7CE.CoreRuntimePolicy.json" />
     <Content Include="Localization/messages.json" Link="Assets/languages.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../third_party/fluentui-system-icons/LICENSE" Link="Assets/fluentui-system-icons-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization/settings-help.json" Link="Assets/settings-help.json" CopyToOutputDirectory="PreserveNewest" />

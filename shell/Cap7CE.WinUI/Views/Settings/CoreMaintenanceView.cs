@@ -28,9 +28,13 @@ internal sealed class CoreMaintenanceView
             var dialog=L.Dialog(owner.Content.XamlRoot,"ui.maintenance.setupTitle","ui.maintenance.setupDescription","ui.maintenance.setupAction");
             if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
             install.IsEnabled=reconnect.IsEnabled=false;
+            ReportResource("ui.maintenance.configuring");
             try {
                 if(!File.Exists(NativeCoreSetup.Executable(services.Root)))throw new UiFailure("ui.maintenance.missingSetup");
-                await services.DisconnectAsync();await NativeCoreSetup.RunAsync(services.Root,repair:true);await services.ConnectAsync();
+                // Complete prerequisites before interrupting the existing Core connection.
+                try{await NativeCoreSetup.RunAsync(services.Root,repair:true,beforeSetup:services.DisconnectAsync);}
+                catch{if(services.Core?.IsConnected!=true)try{await services.ConnectAsync();}catch(Exception reconnectError){NativeDiagnostics.CoreFailure(reconnectError.ToString());}throw;}
+                await services.ConnectAsync();
                 ReportResource("ui.maintenance.configured");
             }catch(Exception error){Report(FailureText.From(error));}
             finally{install.IsEnabled=reconnect.IsEnabled=true;}

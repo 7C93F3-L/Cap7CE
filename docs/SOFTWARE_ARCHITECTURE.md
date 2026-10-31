@@ -47,6 +47,8 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 ## WinUI 与更新
 
+安装或修复搜索服务的显式动作先由独立CoreRuntimePrerequisite服务补齐.NET依赖，CoreRuntimePolicy从嵌入的Core部署清单读取版本、微软URL、摘要和前台安装参数，CoreRuntimeInstaller独占有界下载、SHA-512验证与临时文件清理；校验到安装结束持有禁止写入/删除的文件句柄。已有兼容.NET 10 x64不联网；缺失时打开微软安装器，不静默安装、不自动重启、不删除共享运行时。依赖复检通过后NativeCoreSetup才断开Core并调用既有NativeAOT提升协调器；失败或需要重启不继续，设置页保留或尝试恢复连接。卸载及Setup的只读验证不依赖此流程，Core Setup不新增网络责任。Browse.Tests链接相同前置服务源码，以隔离响应和安装器验证缺失/取消/失败/重启边界。
+
 窗口/标签/选择/预览使用现有统一动作与拥有者；独立视图和控件不把业务 IO 堆回顶层窗口。托盘“检查更新”打开设置并定位更新区后检查，下载由会话服务持有，窗口关闭后仍可继续；没有自动检查、下载或安装。
 
 更新只接受专用 WinUI 安装器，下载及安装前保留大小/SHA-256 校验。ShellExecute 成功后走正常退出；失败保持程序运行。安装器身份、目录和快捷方式延续既有 Cap7CE，NSIS 保留用户模型、配置、Catalog 和独立 Core/Reader 的保护逻辑。入口 Cap7CE.exe 同时保留匹配的 Cap7CE.pri 与程序集原 PRI。卸载“删除用户数据”在正式能力移除成功后清理当前用户的Cap7CE完整数据根、Cap7CE-PhaseF原生配置/日志和旧更新目录；未勾选仍保留，安装目录内模型/llama.cpp由独立选项控制。

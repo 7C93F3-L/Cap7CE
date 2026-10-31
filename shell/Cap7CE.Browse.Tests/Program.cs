@@ -3,6 +3,7 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
+await RuntimePrerequisiteTests.RunAsync();
 void Require(bool value,string message){if(!value)throw new Exception(message);}
 ShellServices Setup(bool recursive=true)
 {
@@ -64,7 +65,7 @@ using(var browse=new BrowseSession(interrupted)) {
 }
 var capacity=new IOException("core-cache-operation-failed");capacity.Data["CoreMessage"]="directory-browse-capacity-exceeded";
 var language=new Cap7CE.WinUI.Localization.LanguageSession(new(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Assets/languages.json"))));
-Require(Cap7CE.WinUI.Localization.FailureText.From(capacity).Render(language).Contains("实时递归"),"filesystem capacity error preserves a useful user message");
+Require(Cap7CE.WinUI.Localization.FailureText.From(capacity).Render(language)==language.Text("ui.error.browseCapacity"),"filesystem capacity error preserves its localized recovery message");
 var scoped=Setup(false);var saved=scoped.Preferences.Current;
 using(var browse=new BrowseSession(scoped)) {
     Require(await browse.OpenLocationAsync("E:\\",true)&&browse.Recursive,"favorite entry uses its own recursive preference");

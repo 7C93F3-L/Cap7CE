@@ -29,6 +29,13 @@ assert(session.indexOf('!allowedOperations.Contains(request.Operation)') < sessi
 assert(session.includes('allowedOperations is null || allowedOperations.Contains(operation)'), 'hello cannot advertise forbidden operations');
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const identitySource=read('shell/Cap7CE.WinUI/Services/ApplicationIdentity.cs');
+const setupSource=read('shell/Cap7CE.WinUI/Services/NativeCoreSetup.cs');
+assert(setupSource.indexOf('await CoreRuntimePrerequisite.EnsureAsync()')<setupSource.indexOf('await beforeSetup()')
+  && setupSource.indexOf('await beforeSetup()')<setupSource.indexOf('Process.Start(info)'),
+  'runtime prerequisites must complete before disconnecting Core and launching capability setup');
+assert(project.includes('capability-setup-manifest.v1.json')
+  && read('shell/Cap7CE.Browse.Tests/Program.cs').includes('await RuntimePrerequisiteTests.RunAsync()'),
+  'native runtime prerequisites must share deployment policy and retain isolated regression coverage');
 const productIdentity="Cap7CE";
 assert(identitySource.includes(`AppUserModelId="${productIdentity}"`) && project.includes('<AssemblyTitle>Cap7CE</AssemblyTitle>'), 'native public identity must match the existing product');
 const startup=read('shell/Cap7CE.WinUI/Program.cs');

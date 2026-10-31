@@ -2388,8 +2388,20 @@
     "en-US": "Install or repair indexing service"
   },
   "ui.maintenance.setupDescription": {
-    "zh-CN": "将中断后台任务并请求管理员权限，保留索引和素材。请先退出其他 Cap7CE。读取服务需要 .NET 10 x64 运行时。",
-    "en-US": "Interrupts background tasks and requests administrator approval. Indexes and source files are kept. Close other Cap7CE instances first. The Reader service requires .NET 10 x64."
+    "zh-CN": "缺少 .NET 10 x64 时，将下载并打开微软安装器。之后会中断后台任务并请求管理员权限，保留索引和素材。请先退出其他 Cap7CE。",
+    "en-US": "If .NET 10 x64 is missing, downloads and opens the Microsoft installer. Then interrupts background tasks and requests administrator approval, keeping indexes and source files. Close other Cap7CE instances first."
+  },
+  "ui.maintenance.configuring": {
+    "zh-CN": "正在检查依赖并配置索引服务，请完成弹出的安装或授权窗口。",
+    "en-US": "Checking prerequisites and configuring indexing. Complete any installer or approval window that opens."
+  },
+  "ui.error.runtimeRestartRequired": {
+    "zh-CN": "运行时安装需要重启系统。请重启后再次安装或修复索引服务。",
+    "en-US": "Runtime installation requires a restart. Restart Windows, then install or repair the indexing service again."
+  },
+  "ui.error.runtimeInstallFailed": {
+    "zh-CN": ".NET 运行时下载或安装未完成。请检查网络及安装授权后重试。",
+    "en-US": ".NET runtime download or installation did not complete. Check the network and installation approval, then try again."
   },
   "ui.maintenance.setupAction": {
     "zh-CN": "安装或修复",
