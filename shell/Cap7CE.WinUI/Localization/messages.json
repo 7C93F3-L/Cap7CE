@@ -1168,12 +1168,12 @@
     "en-US": "Enter keywords separated by commas"
   },
   "ui.keywords.reload": {
-    "zh-CN": "重新读取",
-    "en-US": "Reload"
+    "zh-CN": "关键词读取失败，点击重新读取",
+    "en-US": "Could not read keywords. Click to retry."
   },
-  "ui.keywords.reloadHint": {
-    "zh-CN": "丢弃草稿并重新读取关键词",
-    "en-US": "Discard the draft and reload keywords"
+  "ui.keywords.indexRequired": {
+    "zh-CN": "此磁盘尚未建立索引，点击前往建库",
+    "en-US": "This disk is not indexed. Click to open index settings."
   },
   "ui.keywords.automatic": {
     "zh-CN": "自动添加",
@@ -1198,10 +1198,6 @@
   "ui.keywords.reading": {
     "zh-CN": "读取中…",
     "en-US": "Reading…"
-  },
-  "ui.keywords.readFailed": {
-    "zh-CN": "读取失败，可重新读取",
-    "en-US": "Could not read keywords. Try reloading."
   },
   "ui.keywords.saving": {
     "zh-CN": "保存中…",

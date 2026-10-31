@@ -12,6 +12,10 @@ internal sealed class DetailsKeywordEditor:UserControl
     private readonly Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read;
     private readonly Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write;
     private readonly Action<UiMessage> notice;
+    private readonly Func<IReadOnlyList<AssetItem>,string?>? unavailable;
+    private readonly Action? openIndex;
+    private readonly TextBlock recovery=Ui.Text("");
+    private bool indexUnavailable;
     private readonly DetailsCard card=new("ui.keywords.add",true);
     private readonly KeywordDraft draft=new();
     private readonly KeywordWrapPanel tags=new();
@@ -31,11 +35,11 @@ internal sealed class DetailsKeywordEditor:UserControl
     public void ClearDraft(){if(!ready||saving)return;draft.Clear();input.Text="";L.Literal(status,TextBlock.TextProperty,"");RenderTags();Show();}
     public async Task<bool> SaveForDialogAsync(){await SaveAsync();return ready&&!saving&&!draft.Dirty&&!readFailed;}
     private bool ready,saving,focusRequested,readFailed,automaticBusy,refreshPending;
-    public DetailsKeywordEditor(Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read,Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write,Action<UiMessage> notice,Action<IReadOnlyList<AssetItem>> generate,bool dialogMode=false)
+    public DetailsKeywordEditor(Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read,Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write,Action<UiMessage> notice,Action<IReadOnlyList<AssetItem>> generate,bool dialogMode=false,Func<IReadOnlyList<AssetItem>,string?>? unavailable=null,Action? openIndex=null)
     {
-        this.dialogMode=dialogMode;this.read=read;this.write=write;this.notice=notice;L.Bind(input,TextBox.PlaceholderTextProperty,"ui.keywords.placeholder");
-        retry=L.Button("ui.keywords.reload",()=>{draft.Cancel();input.Text="";_=ReadAsync();});
-        L.Bind(retry,ToolTipService.ToolTipProperty,"ui.keywords.reloadHint");
+        this.unavailable=unavailable;this.openIndex=openIndex;this.dialogMode=dialogMode;this.read=read;this.write=write;this.notice=notice;L.Bind(input,TextBox.PlaceholderTextProperty,"ui.keywords.placeholder");
+        retry=new Button{Content=recovery,Style=(Style)Application.Current.Resources["CapDetailsPath"]};
+        retry.Click+=(_,_)=>{if(indexUnavailable){openIndex?.Invoke();return;}draft.Cancel();input.Text="";_=ReadAsync();};
         automatic=Ui.Button("",()=>{if(items.Count>0&&!draft.Dirty){var target=items;generate(target);}});
         var automaticLabel=L.Text("ui.keywords.automatic");automaticLabel.VerticalAlignment=VerticalAlignment.Center;automaticLabel.TextWrapping=TextWrapping.NoWrap;
         var automaticIcon=AiActionIcon.Attach(automatic,14);automaticIcon.VerticalAlignment=VerticalAlignment.Center;
@@ -48,7 +52,7 @@ internal sealed class DetailsKeywordEditor:UserControl
         actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
         automatic.HorizontalAlignment=HorizontalAlignment.Right;Grid.SetColumn(automatic,1);actions.Children.Add(editorActions);actions.Children.Add(automatic);
         actions.SizeChanged+=(_,_)=>{var narrow=actions.ActualWidth<210;Grid.SetRow(automatic,narrow?1:0);Grid.SetColumn(automatic,narrow?0:1);Grid.SetColumnSpan(editorActions,narrow?2:1);};
-        foreach(var button in new[]{automatic,retry,clear,save,cancel}){button.MinWidth=0;button.FontSize=12;button.Padding=new(8,4,8,4);}
+        foreach(var button in new[]{automatic,clear,save,cancel}){button.MinWidth=0;button.FontSize=12;button.Padding=new(8,4,8,4);}
         input.TextChanged+=(_,_)=>{draft.Input=input.Text;Show();};
         input.KeyDown+=(_,e)=>{if(!dialogMode&&e.Key==Windows.System.VirtualKey.Escape&&!saving&&draft.Dirty){e.Handled=true;CancelDraft();}};
         card.Body.Children.Add(tags);card.Body.Children.Add(empty);card.Body.Children.Add(input);card.Body.Children.Add(actions);card.Body.Children.Add(status);card.Body.Children.Add(retry);
@@ -61,8 +65,13 @@ internal sealed class DetailsKeywordEditor:UserControl
     }
     public void SetItems(IReadOnlyList<AssetItem> value)
     {
-        Stop();items=value.Where(item=>!item.Entry.IsDirectory).ToArray();snapshot=new([],[]);draft.Reset([]);ready=saving=focusRequested=readFailed=refreshPending=false;
+        Stop();items=value.Where(item=>!item.Entry.IsDirectory).ToArray();snapshot=new([],[]);draft.Reset([]);ready=saving=focusRequested=readFailed=refreshPending=indexUnavailable=false;
         L.Literal(status,ToolTipService.ToolTipProperty,null);L.Bind(status,TextBlock.TextProperty,items.Count==0?"ui.keywords.unavailable":"ui.keywords.reading");input.Text="";RenderTags();Show();
+    }
+    public void RefreshAvailability()
+    {
+        if(items.Count==0||saving||draft.Dirty)return;
+        if(indexUnavailable!=(unavailable?.Invoke(items)=="ui.error.sourceIndex"))_=ReadAsync();
     }
     public void RequestEdit(){focusRequested=true;if(ready){focusRequested=false;input.Focus(FocusState.Programmatic);}}
     public void SetAutomaticBusy(bool value){automaticBusy=value;Show();}
@@ -73,6 +82,8 @@ internal sealed class DetailsKeywordEditor:UserControl
         if(draft.Dirty){refreshPending=true;return;}
         pending.Cancel();pending.Dispose();pending=new();var token=pending.Token;
         ready=readFailed=false;L.Literal(status,ToolTipService.ToolTipProperty,null);L.Bind(status,TextBlock.TextProperty,"ui.keywords.reading");Show();
+        indexUnavailable=unavailable?.Invoke(target)=="ui.error.sourceIndex";
+        if(indexUnavailable){L.Literal(status,TextBlock.TextProperty,"");Show();return;}
         try {
             var result=await read(target,token);
             if(token.IsCancellationRequested||!ReferenceEquals(items,target))return;
@@ -80,7 +91,7 @@ internal sealed class DetailsKeywordEditor:UserControl
             if(focusRequested){focusRequested=false;input.Focus(FocusState.Programmatic);}
         }
         catch(OperationCanceledException){}
-        catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Bind(status,TextBlock.TextProperty,"ui.keywords.readFailed");L.Message(status,ToolTipService.ToolTipProperty,FailureText.From(error));Show();}}
+        catch(Exception error){if(!token.IsCancellationRequested&&ReferenceEquals(items,target)){readFailed=true;L.Literal(status,TextBlock.TextProperty,"");L.Message(retry,ToolTipService.ToolTipProperty,FailureText.From(error));Show();}}
     }
     private void RenderTags()
     {
@@ -116,10 +127,12 @@ internal sealed class DetailsKeywordEditor:UserControl
         if(ready)L.Bind(empty,TextBlock.TextProperty,items.Count>1?"ui.keywords.noCommon":"ui.keywords.empty");else L.Literal(empty,TextBlock.TextProperty,"—");
         input.IsEnabled=ready;input.IsReadOnly=saving;
         editorActions.Visibility=dirty?Visibility.Visible:Visibility.Collapsed;
-        status.Visibility=status.Text.Length>0?Visibility.Visible:Visibility.Collapsed;retry.Visibility=readFailed?Visibility.Visible:Visibility.Collapsed;
+        status.Visibility=status.Text.Length>0?Visibility.Visible:Visibility.Collapsed;retry.Visibility=readFailed||indexUnavailable?Visibility.Visible:Visibility.Collapsed;
+        L.Bind(recovery,TextBlock.TextProperty,indexUnavailable?"ui.keywords.indexRequired":"ui.keywords.reload");
+        if(indexUnavailable)L.Bind(retry,ToolTipService.ToolTipProperty,"ui.keywords.indexRequired");
         retry.IsEnabled=items.Count>0&&!saving;clear.IsEnabled=cancel.IsEnabled=save.IsEnabled=ready&&!saving;
         var canGenerate=items.Count>1||items.Any(item=>FormatRegistry.Find(item.Entry.Extension)?.CanAIIndex==true);
-        automatic.IsEnabled=items.Count>0&&canGenerate&&!saving&&!automaticBusy&&!dirty;
+        automatic.IsEnabled=ready&&items.Count>0&&canGenerate&&!saving&&!automaticBusy&&!dirty;
         StateChanged?.Invoke();
         L.Bind(automatic,ToolTipService.ToolTipProperty,dirty?"ui.keywords.saveFirst":automaticBusy?"ui.keywords.recognizing":items.Count==0?"ui.keywords.selectFiles":canGenerate?"ui.keywords.generateHint":"ui.keywords.unsupported");
     }

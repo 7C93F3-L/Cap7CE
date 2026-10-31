@@ -28,11 +28,11 @@ internal sealed class DetailsPane : UserControl
     private IReadOnlyList<AssetItem> selected=[];
     private (string Path,long? Count,bool Searching,int Filters,int Loaded,bool Busy) context=("",0,false,0,0,false);
     private bool stopped,keywordRefreshPending;
-    public DetailsPane(ShellServices services,FileCommands commands,Action<UiMessage> notice)
+    public DetailsPane(ShellServices services,FileCommands commands,Action<UiMessage> notice,Action openIndex)
     {
         this.services=services;this.commands=commands;embedded=new(services);
         var keywordService=new KeywordSelectionService(services);
-        keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice,items=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}));
+        keywords=new(keywordService.ReadAsync,keywordService.SaveAsync,notice,items=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;}),unavailable:items=>commands.KeywordsUnavailable(items),openIndex:openIndex);
         var preview=new Grid();preview.Children.Add(icon);preview.Children.Add(image);visual.Child=preview;
         image.SizeChanged+=(_,_)=>UpdatePreviewClip();
         var scroll=new ScrollViewer{Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
@@ -54,6 +54,7 @@ internal sealed class DetailsPane : UserControl
         Render();
         if(selected.Any(item=>!item.Entry.IsDirectory))debounce.Start();
     }
+    public void RefreshKeywordAvailability(){if(!stopped)keywords.RefreshAvailability();}
     public void EditKeywords(IReadOnlyList<AssetItem> items){Select(items);keywords.RequestEdit();}
     public void RefreshKeywords(AssetItem item)=>RefreshKeywords([item]);
     public void RefreshKeywords(IReadOnlyList<AssetItem> items){if(stopped||!selected.Any(current=>items.Any(item=>string.Equals(current.FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase))))return;if(services.AutoKeywords.Busy)keywordRefreshPending=true;else _=keywords.ReadAsync();}
