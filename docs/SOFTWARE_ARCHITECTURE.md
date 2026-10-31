@@ -1,12 +1,16 @@
 # Cap7CE 软件架构
 
+元数据执行源码归属`core/node/metadataExecution`：metadataWorkerProcess/Transport负责既有私有进程协议与单任务执行，videoMetadataFrameClient/Frames负责原有受限媒体子进程与帧校验，三个格式适配器组合fileFacts解析，metadataWorkerTypes及metadataBuildSpecifications保存契约/唯一清单。九份源码除模块路径外保持迁移前一致，读取/内存限制、取消、退出、回退、提取版本和调度均不变。原生运行库及extractors.json直接由该目录入口生成，不再经electron/metadataExtraction中的兼容源码。
+
+执行领域与fileFacts保持单向依赖，共用现有TypeScript编译项目及`core/artifacts/file-facts`输出树，以保留发出JS/声明的相对模块关系；源码职责仍分目录，不复制解析器或引入反向依赖。旧Electron九个路径只转出该编译树，旧版资源定位/客户端暂留原处。共享metadataBuildTypes声明随编译产物复制。`metadata-execution-source-boundary-check`守护九模块源码基线、只读约束、无旧源码依赖的闭包、旧入口转出及原生入口/清单身份；Core原有视频、压缩包及调度约束改读实际源码，保持原锚点/上限。`test:metadata-execution`覆盖帧协议、清单一致性、取消/退出生命周期与独立运行库；其他视觉/预览、模型与文件信息仍待退役整理。
+
 fileFacts第六轮统一压缩包列表与属性读取：`archivePreviewList`、`archiveFactExtractor`/Types、`archiveMetadataReader`、只读单文件FS与WASM内存边界、`archivePreviewWorker`均在同一domain维护，共32份规范源码。元数据读取直接依赖纯列表解析器，不再因导入旧archivePreviewService而拉入Shell/Core RPC。运行时闭包仅额外允许resourceCatalog的visualPropertyTypes、formatCapabilities及archiveSearchFilters纯定义；对应共享archivePreviewTypes声明随独立产物保留。源码一致性基线保留除导入路径外的原实现。
 
-原生Provider继续拥有压缩包会话、超时/取消及子进程退出，列表函数直接导入fileFacts；独立Node构建从规范源码生成原有`archivePreviewWorker.js`，原生资源定位不变。旧Electron列表进程入口只转出相邻独立产物，沿既有fileFacts打包/ASAR外布局找到依赖。`test:archive-domain`验证内存上限、只读单文件访问、不解压、部分/空列表、ZIP/7z列表及损坏/加密分类；构建后使用仓库外资源验证原生Provider。元数据进程装配、其他预览Provider及视觉缓存仍待后续整理。
+原生Provider继续拥有压缩包会话、超时/取消及子进程退出，列表函数直接导入fileFacts；独立Node构建从规范源码生成原有`archivePreviewWorker.js`，原生资源定位不变。旧Electron列表进程入口只转出相邻独立产物，沿既有fileFacts打包/ASAR外布局找到依赖。`test:archive-domain`验证内存上限、只读单文件访问、不解压、部分/空列表、ZIP/7z列表及损坏/加密分类；构建后使用仓库外资源验证原生Provider。其他预览Provider及视觉缓存仍待后续整理。
 
 fileFacts第五轮补齐图片/文档只读解析：尺寸与安全源读取、动画检测、色彩向量、PDF/Office内容计数和PSD/CDR画板信息、图片/视频Core提取版本及图片指标定义均归入同一domain。该轮迁移后规范源码为25份，运行时闭包只额外允许resourceCatalog中的visualPropertyTypes纯定义；对应共享visualRenderTypes/visualCacheTypes声明随独立产物保留。除导入路径外的源码摘要保持原实现。原生visualRendering、元数据任务与格式清单复用该实现；Electron编译根内的任务装配引用core/artifacts/file-facts产物，避免TypeScript保留源码相对路径导致运行时找不到JS。旧路径继续只转出。`test:image-document-facts`覆盖图片读取、色彩/动画、文档解析及取消和九类提取器清单；原生运行库另做仓库外运行验证。进程装配、缩略图缓存和预览会话仍待后续职责域整理。
 
-基础文件属性解析源码归属`core/node/fileFacts/domain`：音视频Shell属性读取、字体与模型隔离线程、文本/CSV/JSON计数、三维几何已知性解析，以及对应版本/格式与PowerShell路径定义。旧入口只转出独立编译产物；metadataExtraction任务装配和格式清单直接使用该领域，resourceCatalog的模型精度类型也指向同一源码。元数据进程装配尚保留旧路径，不代表整个元数据执行目录已退役。
+基础文件属性解析源码归属`core/node/fileFacts/domain`：音视频Shell属性读取、字体与模型隔离线程、文本/CSV/JSON计数、三维几何已知性解析，以及对应版本/格式与PowerShell路径定义。旧入口只转出独立编译产物；metadataExtraction任务装配和格式清单直接使用该领域，resourceCatalog的模型精度类型也指向同一源码。元数据客户端与资源定位暂留旧路径，不代表整个旧元数据目录已退役。
 
 `build:file-facts`准备`core/artifacts/file-facts`及字体/视觉共享声明，独立Node构建从canonical线程源码打包到原有`modelFactWorker.js`/`fontMetadataWorker.js`文件名；原生运行时的相邻线程定位与资源布局保持一致。旧版显式构建/打包同样准备这些产物，并将该领域JS全部解包到ASAR外，确保迁移后解析器的`__dirname`仍能找到相邻线程及其依赖。`file-facts-boundary-check.cjs`守护独立运行时闭包、旧入口转出、源码体量及除模块位置外的迁移一致性，并检查线程构建与打包契约；`test:file-facts`覆盖六类解析、边界和取消/线程退出。
 

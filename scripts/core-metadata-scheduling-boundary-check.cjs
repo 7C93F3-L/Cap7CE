@@ -9,10 +9,10 @@ module.exports=(root,sourceFiles,failures)=>{
   if(text.split(/\r?\n/).length>maximum)failures.push(`${name} exceeds its Core scheduling responsibility.`);
   if(/System\.Net|HttpClient|Process\.|DeviceIoControl|DllImport|Sqlite|Reader\.Host|\b(?:File|Directory|FileStream|DriveInfo)\b|PeriodicTimer/.test(text))failures.push(`${name} bypasses the owned in-process metadata broker.`);
  }
- for(const[file,maximum]of [['electron/metadataExtraction/metadataBuildSpecifications.ts',30],['electron/metadataExtraction/metadataExtractorVersions.ts',6],['scripts/metadata-extractor-manifest.cjs',25]]){
+ for(const[file,maximum]of [['core/node/metadataExecution/metadataBuildSpecifications.ts',30],['core/node/fileFacts/domain/metadataExtractorVersions.ts',6],['scripts/metadata-extractor-manifest.cjs',25]]){
   const text=fs.readFileSync(path.join(root,file),'utf8');if(text.split(/\r?\n/).length>maximum)failures.push(`${file} exceeds its pure extractor definition boundary.`);
  }
- const definitions=fs.readFileSync(path.join(root,'electron/metadataExtraction/metadataBuildSpecifications.ts'),'utf8');
+ const definitions=fs.readFileSync(path.join(root,'core/node/metadataExecution/metadataBuildSpecifications.ts'),'utf8');
  if(/from ['"](?:electron|node:)|videoMetadataFrames|imageMetadataMetrics|fetch\(|setInterval\(|setTimeout\(/.test(definitions))failures.push('Extractor table must remain pure and independent of content decoders.');
  const builder=fs.readFileSync(path.join(root,'scripts/metadata-worker-build.cjs'),'utf8');
  if(!builder.includes('require("./metadata-extractor-manifest.cjs")(root, output)'))failures.push('Independent metadata resource build must emit the single extractor table.');

@@ -25,7 +25,7 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
   await fs.mkdir(output, { recursive: true });
   await copyRuntime(root, output);
   await require("./metadata-extractor-manifest.cjs")(root, output);
-  const result = await build({ entryPoints: [path.join(root, "electron/metadataExtraction/metadataWorkerProcess.ts")],
+  const result = await build({ entryPoints: [path.join(root, "core/node/metadataExecution/metadataWorkerProcess.ts")],
     outfile: path.join(output, "worker.cjs"), bundle: true, platform: "node", format: "cjs", target: "node24",
     external: ["sharp", "7z-wasm"], sourcemap: false, metafile: true, logLevel: "error" });
   const imports = Object.values(result.metafile.outputs).flatMap(item => item.imports);

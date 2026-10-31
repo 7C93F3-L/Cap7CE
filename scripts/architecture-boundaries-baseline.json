@@ -348,7 +348,7 @@
       {
         "id": "shortcuts",
         "sourceAnchors": [
-          { "path": "src/renderer/shortcutActions.ts", "contains": "defaultStableShortcutActions" },
+          { "path": "core/node/resourceCatalog/domain/commands/shortcutActions.ts", "contains": "defaultStableShortcutActions" },
           { "path": "src/renderer/App.tsx", "contains": "handleWindowShortcutKeyDown" },
           { "path": "electron/main.ts", "contains": "registerConfiguredGlobalShortcuts" }
         ]

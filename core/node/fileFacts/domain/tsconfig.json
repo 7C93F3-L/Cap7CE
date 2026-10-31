@@ -12,6 +12,8 @@
     "**/*.ts",
     "../../resourceCatalog/domain/formats/visualPropertyTypes.ts",
     "../../resourceCatalog/domain/formats/formatCapabilities.ts",
-    "../../resourceCatalog/domain/formats/archiveSearchFilters.ts"
+    "../../resourceCatalog/domain/formats/archiveSearchFilters.ts",
+    "../../metadataExecution/**/*.ts",
+    "../../resourceCatalog/domain/formats/threeDFactTypes.ts"
   ]
 }

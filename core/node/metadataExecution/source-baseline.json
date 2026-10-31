@@ -1,0 +1,38 @@
+{
+  "metadataWorkerProcess.ts": {
+    "lines": 128,
+    "sourceHash": "e9e28f174fa81b8d5bb9a0f33c3e29bec709656a39b9a59ed9efce72be710215"
+  },
+  "metadataWorkerTransport.ts": {
+    "lines": 35,
+    "sourceHash": "a197a30a91f3a6821a4edf43266ec77480fd1686f03ca8fed116ae7d0aff3a32"
+  },
+  "metadataWorkerTypes.ts": {
+    "lines": 34,
+    "sourceHash": "6ba1ab237d69a87440edefb66ccfb4367d6f5c6ccf1dd95a5cb02f08e15aa799"
+  },
+  "metadataBuildSpecifications.ts": {
+    "lines": 25,
+    "sourceHash": "b0214e856fad0d512cc5347bffbf44f6c3ce29a8792b57b3bf45fb4ba286682c"
+  },
+  "documentMetadataInspector.ts": {
+    "lines": 20,
+    "sourceHash": "03791c4ca6d42f9af90cbd2d5a910399ee806167cd4ecbb2fbe7a6c58945f556"
+  },
+  "textDataMetadataInspector.ts": {
+    "lines": 14,
+    "sourceHash": "1db987a84484eedcca765c38baa3a386e0240a4cb270e0dda829e51078841d42"
+  },
+  "threeDMetadataInspector.ts": {
+    "lines": 15,
+    "sourceHash": "68025d581e6eacae5bc3d058e6d9d4b86e5d3d25b69892291ac8c32bd307892e"
+  },
+  "videoMetadataFrameClient.ts": {
+    "lines": 80,
+    "sourceHash": "ec80cbc7031eaa0d2e54e9b9eabe9cf1b384b05a152514fa0238bc55f20e7d3c"
+  },
+  "videoMetadataFrames.ts": {
+    "lines": 38,
+    "sourceHash": "51c6b39dada9483c235d4553ef5dc593b0cb0740184bc63bec62d80dd2970e19"
+  }
+}

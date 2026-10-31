@@ -1,6 +1,6 @@
 const path=require('node:path'),fs=require('node:fs/promises'),vm=require('node:vm');
 module.exports=async function buildExtractorManifest(root,output){
-  const bundle=await require('esbuild').build({entryPoints:[path.join(root,'electron/metadataExtraction/metadataBuildSpecifications.ts')],
+  const bundle=await require('esbuild').build({entryPoints:[path.join(root,'core/node/metadataExecution/metadataBuildSpecifications.ts')],
     bundle:true,platform:'node',format:'cjs',write:false,metafile:true,logLevel:'error'});
   if(Object.values(bundle.metafile.outputs).some(item=>item.imports.length))throw Error('Extractor manifest must have no runtime imports.');
   const module={exports:{}};

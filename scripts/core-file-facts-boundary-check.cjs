@@ -27,6 +27,7 @@ module.exports = (root, sourceFiles, failures) => {
     if (!recovery.includes(anchor)) failures.push(`Metadata recovery is missing ${anchor}.`);
   }
   const workerRoot = path.join(root, "electron", "metadataExtraction");
+  const executionRoot = path.join(root, "core/node/metadataExecution");
   const nativeMedia = fs.readFileSync(path.join(root, "native/Cap7CE.Media.Metadata/Program.cs"), "utf8");
   if (nativeMedia.split(/\r?\n/).length > 120 || /System\.Net|HttpClient|ShellExecute|AdjustTokenPrivileges|File\.(?:Write|Delete|Move)|Directory\.(?:Create|Delete|Move)|RenderToFileAsync/.test(nativeMedia)) {
     failures.push("Native media metadata helper must remain a bounded ordinary process without source writes, disk discovery or cache production.");
@@ -37,22 +38,22 @@ module.exports = (root, sourceFiles, failures) => {
     if (!nativeMedia.includes(anchor)) failures.push(`Native media metadata helper is missing ${anchor}.`);
   }
   for (const [name, maximum] of [["videoMetadataFrameClient.ts", 110], ["videoMetadataFrames.ts", 60]]) {
-    if (fs.readFileSync(path.join(workerRoot, name), "utf8").split(/\r?\n/).length > maximum)
+    if (fs.readFileSync(path.join(executionRoot, name), "utf8").split(/\r?\n/).length > maximum)
       failures.push(`Video metadata module ${name} exceeds its bounded responsibility.`);
   }
-  for (const name of fs.readdirSync(workerRoot).filter((name) => name.endsWith(".ts"))) {
-    const source = fs.readFileSync(path.join(workerRoot, name), "utf8");
+  for (const scanRoot of [workerRoot, executionRoot]) for (const name of fs.readdirSync(scanRoot).filter((name) => name.endsWith(".ts"))) {
+    const source = fs.readFileSync(path.join(scanRoot, name), "utf8");
     if (/node:(?:net|http|https|tls|dgram)|fetch\(|sqlite|thumbnail|fs\.(?:write|append|unlink|rename|rm|mkdir)/i.test(source)) {
       failures.push(`Metadata worker ${name} bypasses its local content-read boundary.`);
     }
   }
   const workerClient = fs.readFileSync(path.join(workerRoot, "metadataWorkerClient.ts"), "utf8");
-  const archiveReader = fs.readFileSync(path.join(workerRoot, "archiveMetadataReader.ts"), "utf8");
+  const archiveReader = fs.readFileSync(path.join(root, "core/node/fileFacts/domain/archiveMetadataReader.ts"), "utf8");
   for (const anchor of ["restrictArchiveSourceFilesystem(module, filePath)", "boundWasmMemory(bytes, 256 * 1024 * 1024)",
     'module.callMain(["l", "-slt"', 'virtualFilesystem.mkdir("/source")']) {
     if (!archiveReader.includes(anchor)) failures.push(`Archive metadata reader is missing ${anchor}.`);
   }
-  const workerProcess = fs.readFileSync(path.join(workerRoot, "metadataWorkerProcess.ts"), "utf8");
+  const workerProcess = fs.readFileSync(path.join(executionRoot, "metadataWorkerProcess.ts"), "utf8");
   for (const anchor of ["--max-old-space-size=256", "windowsHide: true", "this.retiring.size > 0"]) {
     if (!workerClient.includes(anchor)) failures.push(`Metadata worker client is missing ${anchor}.`);
   }
