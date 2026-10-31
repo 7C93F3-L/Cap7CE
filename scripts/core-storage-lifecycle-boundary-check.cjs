@@ -3,7 +3,7 @@ const path = require("node:path");
 
 module.exports = (root, sourceFiles, failures) => {
   const directory = "core/src/Cap7CE.Core.Host/CatalogStorage";
-  const limits = { "CatalogStorageLease.cs": 30, "CatalogOfflineStorage.cs": 45, "CatalogEntryMaintenance.cs": 65 };
+  const limits = { "CatalogStorageLease.cs": 30, "CatalogOfflineStorage.cs": 45, "CatalogEntryMaintenance.cs": 65, "CatalogHealthCheck.cs": 44 };
   if (JSON.stringify(fs.readdirSync(path.join(root, directory)).sort()) !== JSON.stringify(Object.keys(limits).sort()))
     failures.push("Catalog storage lifecycle contains unregistered sources.");
   const sources = {};
@@ -13,6 +13,11 @@ module.exports = (root, sourceFiles, failures) => {
     if (/System\.Net|HttpClient|Process\.|DeviceIoControl|AdjustTokenPrivileges|DllImport|Reader\.Host|Directory\.(?:Delete|Move|Enumerate|GetFiles)|File\.(?:Copy|Write|ReadAll)|PeriodicTimer|Task\.Delay/.test(source))
       failures.push(`${directory}/${name} bypasses its offline Catalog-only boundary.`);
   }
+  const health = sources["CatalogHealthCheck.cs"].replace(/\/\/[^\r\n]*/g, "");
+  if (!health.includes("SqliteOpenMode.ReadWrite,") || health.includes("ReadWriteCreate")
+      || health.indexOf("PRAGMA query_only=ON;") < 0 || health.indexOf("PRAGMA query_only=ON;") > health.indexOf("PRAGMA quick_check;"))
+    failures.push("Health checks must use an existing database and enforce query-only before inspection.");
+  if (/INSERT INTO|UPDATE |DELETE FROM|CREATE TABLE|DROP TABLE/.test(health)) failures.push("Health checks must not repair or mutate Catalog storage.");
   for (const [name, anchors] of Object.entries({
     "CatalogStorageLease.cs": ["FileShare.None", "FileAttributes.ReparsePoint", "handle.Dispose()"],
     "CatalogOfflineStorage.cs": ["FileMode.Open", "FileShare.None", "SqliteOpenMode.ReadWrite", "Pooling = false", "PRAGMA wal_checkpoint(TRUNCATE)", "PRAGMA quick_check", "token.ThrowIfCancellationRequested()"],
@@ -32,6 +37,6 @@ module.exports = (root, sourceFiles, failures) => {
 // Exact source ownership stays with this domain rather than growing the global
 // architecture policy each time a storage-lifecycle responsibility is separated.
 module.exports.ownsStorageSource = (relativePath) => [
-  "CatalogStorage/CatalogStorageLease.cs", "CatalogStorage/CatalogOfflineStorage.cs", "CatalogStorage/CatalogEntryMaintenance.cs",
+  "CatalogStorage/CatalogHealthCheck.cs", "CatalogStorage/CatalogStorageLease.cs", "CatalogStorage/CatalogOfflineStorage.cs", "CatalogStorage/CatalogEntryMaintenance.cs",
   "MetadataRecovery/FileFactRecoveryCheckpoint.cs", "MetadataRecovery/CatalogRecoverySnapshotWriter.cs", "MetadataRecovery/CatalogEntryRecoveryCheckpoint.cs"
 ].some(name => relativePath === `core/src/Cap7CE.Core.Host/${name}`);

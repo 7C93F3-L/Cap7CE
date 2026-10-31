@@ -1,6 +1,9 @@
 # Cap7CE Core
 
-`core/` 是全盘基础目录方向的独立 .NET 10 工程。P1.0–P3.8c 已完成普通 Core、原生 SQLite Catalog、SC/1、CR/2、受限 Reader、真实 NTFS 初建 / 增量 / 断档重建、NativeAOT 能力事务、Skim 内独立搜索与只读结果调用，以及恢复、安装生命周期、正式化审计、产品能力接线和常规安装人工矩阵。常规 Cap7CE 1.0.4 包携带休眠的确定性能力载荷，并且只在用户主动点击启用 / 修复时提权；主搜索、主网格与现有 `sql.js` 仍不读取 Core。
+`core/`是原生WinUI主线的独立.NET 10后端，拥有Catalog、受限Reader、SC/1/CR/2协议、文件操作及元数据任务。主网格和搜索通过QueryHost/Core读取，界面不直接访问SQLite；旧Electron与sql.js运行时已移除。确定性能力载荷只在用户主动启用/修复时提权，普通构建和源码审计不安装服务。
+
+当前命令：`npm run build`构建原生程序；`npm run test:core`验证锁文件配置并运行Core回归；`npm run test:architecture`执行十项源码审计；安装器生成后用`npm run test:delivery`做只读交付校验。完整边界见[软件架构](../docs/SOFTWARE_ARCHITECTURE.md)。后文阶段编号是实现历史，涉及已退役界面的叙述不代表当前入口。
+
 
 ## 项目职责
 
@@ -69,7 +72,6 @@
 
 ## P3.3c 隔离开发安装包
 
-- `npm run dist:core-capability-installer` 使用独立 appId、程序名和 `release/core-capability-dev` 目录构建开发 NSIS；不创建快捷方式、不安装后启动、不自动启用能力，也不修改常规 `build` 打包白名单。
 - Setup 的 `--activation-coordinator` 只接受启用 / 修复 / 移除、Catalog 保留 / 删除，以及启用 / 修复时可选的严格大写盘符列表，使用当前映像和既有认证管道完成按需 `runas`；它不接受路径、SID、服务名或外部程序，也不负责下载微软 Runtime。
 - 开发卸载器在删除应用文件前调用同一能力事务；索引删除是独立且默认勾选的选项，Runtime 永不卸载。包内烟测会解出能力目录、核对 18 个载荷，并在隔离 `DOTNET_ROOT_X64` 下运行 NativeAOT Setup。
 - P3.8 复建的 136,432,946 bytes 开发包通过包内烟测；此前真实矩阵已通过独立安装、一次 UAC 启用、普通账户 Demand Start、一次 UAC 卸载和零残留验证。包内烟测要求解出的 Setup 与当前能力 bundle 哈希一致。该包没有发布，也不是常规产品安装包。

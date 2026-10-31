@@ -9,11 +9,20 @@ const list=run(['l','-ba',installer]).replaceAll('\\','/');
 for(const name of ['Cap7CE.exe','Cap7CE.WinUI.dll','Cap7CE.pri','Cap7CE.WinUI.pri','cap7ce-native.json','core/artifacts/development-product-host/Cap7CE.Core.Host.exe','core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe','artifacts/metadata-worker/v1/node.exe','artifacts/metadata-worker/v1/application-updates.cjs']) assert(list.includes(name),`Missing native payload: ${name}`);
 for(const name of ['resources/app.asar','chrome_100_percent.pak','electron.exe'])assert(!list.toLowerCase().includes(name.toLowerCase()),`Electron payload leaked: ${name}`);
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'cap7ce-native-installer-'));
-run(['x','-y',`-o${directory}`,installer,'Cap7CE.exe','Cap7CE.WinUI.dll','Cap7CE.pri','Cap7CE.WinUI.pri','cap7ce-native.json']);
+try {
+run(['x','-y',`-o${directory}`,installer,'Cap7CE.exe','Cap7CE.WinUI.dll','Cap7CE.pri','Cap7CE.WinUI.pri','cap7ce-native.json','core/artifacts/product-capability/v1/bundle/*']);
 const marker=JSON.parse(fs.readFileSync(path.join(directory,'cap7ce-native.json'),'utf8'));
 assert.equal(require('../build/winui.electron-builder.cjs').win.executableName, 'Cap7CE', 'NSIS shortcut target must match installed entry');
 assert.deepEqual(fs.readFileSync(path.join(directory,'Cap7CE.pri')),fs.readFileSync(path.join(directory,'Cap7CE.WinUI.pri')),'Renamed apphost must have matching PRI resources');
 assert.equal(marker.shell,'WinUI');assert.equal(marker.version,version);
 assert(fs.readFileSync(path.join(directory,'Cap7CE.exe')).includes(Buffer.from('Cap7CE.WinUI.dll')),'Installer entry must be the native .NET apphost');
+const setup=path.join(directory,'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe');
+const verified=spawnSync(setup,['--verify-payload'],{encoding:'utf8',windowsHide:true,env:{...process.env,DOTNET_ROOT_X64:'C:\\nonexistent-cap7ce-runtime',DOTNET_MULTILEVEL_LOOKUP:'0'}});
+assert.equal(verified.status,0,verified.stdout+verified.stderr);
+const report=JSON.parse(verified.stdout.trim());assert.equal(report.status,'verified');assert.equal(report.systemChangesPerformed,false);
 console.log('Native installer payload passed: WinUI apphost, identity, runtime and Setup included; Electron shell excluded. Installation still requires manual verification.');
 console.log(`SHA256 ${crypto.createHash('sha256').update(fs.readFileSync(installer)).digest('hex')}`);
+} finally {
+assert.equal(path.dirname(directory),path.resolve(os.tmpdir()));assert(path.basename(directory).startsWith('cap7ce-native-installer-'));
+fs.rmSync(directory,{recursive:true,force:true});
+}

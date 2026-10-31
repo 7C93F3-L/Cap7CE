@@ -217,7 +217,6 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     Call un.cap7ceRestorePreservedContent
       # Only bundled application runtimes; separately installed Core\v1 is retained.
       RMDir /r "$INSTDIR\Core\artifacts"
-    !endif
 
     ${if} $cap7cePreservedModels != "1"
     ${andIf} $cap7cePreservedLlama != "1"
@@ -237,6 +236,9 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
   # uninstall UI for large caches, including a large full-disk Catalog.
   !ifdef ESTIMATED_SIZE
     SectionSetSize 0 ${ESTIMATED_SIZE}
+  !else
+    SectionSetSize 0 1
+  !endif
   SectionSetSize 1 0
 
   ${if} $installMode == "all"

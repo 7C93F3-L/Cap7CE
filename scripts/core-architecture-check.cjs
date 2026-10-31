@@ -155,19 +155,11 @@ if (catalogLock.dependencies?.["net10.0"]?.["Microsoft.Data.Sqlite"]?.resolved !
   failures.push("Core native SQLite dependency graph is not locked to the reviewed versions.");
 }
 const packageJson = JSON.parse(read("package.json"));
-const packagedFiles = packageJson.build?.files ?? [];
-if (packagedFiles.some((entry) => typeof entry === "string" && normalize(entry).startsWith("core/"))) {
-    failures.push("Electron Builder files must not bypass the Core capability resource boundary.");
-}
-if (!packageJson.scripts?.["build:core"] || !packageJson.scripts?.["test:core"]
-    || !packageJson.scripts?.["probe:core-p31"] || !packageJson.scripts?.["probe:core-p31-initial"]) {
+const installer = require("../build/winui.electron-builder.cjs");
+if (installer.files.length || installer.extraResources.length || !read("scripts/native-installer-build.cjs").includes("'--prepackaged'"))
+  failures.push("NSIS must consume the prepared native payload, not independently collect Core or user files.");
+if (!packageJson.scripts?.["build:core"] || !packageJson.scripts?.["test:core"])
   failures.push("Core build and test commands must remain explicit npm scripts.");
-}
-for (const integrationPath of ["electron/main.ts", "electron/preload.ts", "src/renderer/App.tsx"]) {
-  if (/Cap7CE\.Core|core[\\/]Cap7CE/i.test(read(integrationPath))) {
-    failures.push(`${integrationPath} connects to Core during isolated P1 work.`);
-  }
-}
 if (failures.length > 0) {
   console.error("Core architecture checks failed:\n");
   for (const failure of failures) console.error(`- ${failure}`);
@@ -177,6 +169,6 @@ if (failures.length > 0) {
     status: "passed", projects: expectedProjects.size, sourceFilesChecked: coreSourceFiles.length,
     protocolTransport: "same-user-named-pipe", readerProtocol: "binary-cr1-cr2-readonly-ntfs",
     catalog: "native-sqlite-v2-multi-volume-directory-path-cache", fixtureOnly: false,
-    sourceVolumeWrite: false, packaged: false, electronConnected: false
+    sourceVolumeWrite: false, packaged: false, nativeClient: "WinUI QueryHost"
   }));
 }

@@ -6,17 +6,16 @@ module.exports.register = projects => {
   projects.set(`${host}/Cap7CE.Core.FileOperations.Host.csproj`, [`${directory}/Cap7CE.Core.FileOperations.csproj`]);
   return projects;
 };
-module.exports.ownsStorage = name => ["WindowsDirectorySource.cs", "FolderRenameJournal.cs", "TrashSourceMetadata.cs"].some(file => name === `${directory}/${file}`);
+module.exports.ownsStorage = name => ["WindowsItemRename.cs", "WindowsDirectorySource.cs", "FolderRenameJournal.cs", "TrashSourceMetadata.cs"].some(file => name === `${directory}/${file}`);
 module.exports.check = (root, failures) => {
   const files = new Map([
     [`${directory}/WindowsItemRename.cs`,45],[`${host}/ItemRenameRequest.cs`,25],["native/Cap7CE.Core.FileOperations/rename_items.h",75],
     [`${directory}/WindowsFileOperation.cs`, 50], [`${directory}/WindowsFileOperationRules.cs`, 30], [`${host}/Program.cs`, 40],
     [`${directory}/WindowsDirectorySource.cs`, 55], [`${directory}/FolderRenameJournal.cs`, 65], [`${directory}/FolderRenameWorkflow.cs`, 80],
-    [`${host}/FolderRenameRequestHandler.cs`, 45], [`${host}/WindowsOperationRequest.cs`, 25], ["electron/core/coreFolderRename.ts", 30],
+    [`${host}/FolderRenameRequestHandler.cs`, 45], [`${host}/WindowsOperationRequest.cs`, 25],
     [`${directory}/TrashModels.cs`, 15], [`${directory}/TrashPathRules.cs`, 35], [`${directory}/TrashSourceMetadata.cs`, 30], [`${directory}/TrashBatchExecutor.cs`, 70],
-    [`${host}/TrashSession.cs`, 65], [`${host}/TrashSessionRequest.cs`, 40], ["electron/core/coreTrashClient.ts", 100], ["electron/core/coreTrashProtocol.ts", 40],
-    ["native/Cap7CE.Core.FileOperations/operation_sink.h", 60], ["native/Cap7CE.Core.FileOperations/file_operations.cpp", 85],
-    ["electron/core/coreWindowsFileOperations.ts", 25], ["scripts/core-file-operations-build.cjs", 45]
+    [`${host}/TrashSession.cs`, 65], [`${host}/TrashSessionRequest.cs`, 40],
+    ["native/Cap7CE.Core.FileOperations/operation_sink.h", 60], ["native/Cap7CE.Core.FileOperations/file_operations.cpp", 85], ["scripts/core-file-operations-build.cjs", 45]
   ]);
   for (const parent of [directory, host, "native/Cap7CE.Core.FileOperations"])
     for (const name of fs.readdirSync(path.join(root, parent)).filter(name => /\.(?:cs|cpp|h)$/.test(name)))
@@ -36,14 +35,11 @@ module.exports.check = (root, failures) => {
   const session = fs.readFileSync(path.join(root, `${host}/TrashSession.cs`), "utf8");
   for (const anchor of ["24 * 1024 * 1024", "parent.Exited", "Environment.Exit(0)", "request.RequestId <= sequence", "ReadExactlyAsync"])
     if (!session.includes(anchor)) failures.push(`Trash owner lifetime/framing is missing ${anchor}.`);
-  const service = fs.readFileSync(path.join(root, "electron/computerSearchTrashService.ts"), "utf8");
-  if (/node:fs|fs\.|lstat|removedFolders|\.sort\(|new Map/.test(service) || service.split(/\r?\n/).length > 25)
-    failures.push("Catalog trash adapter must delegate validation, ordering and aggregation to Core.");
-  const rename = fs.readFileSync(path.join(root, "electron/windowsShellRename.ts"), "utf8");
-  const trash = fs.readFileSync(path.join(root, "electron/fileOperationService.ts"), "utf8");
-  if (/PowerShell|EncodedCommand|child_process|shell\.trashItem|fs\.stat|lastTrashOperationFinishedAt/.test(rename + trash) || !rename.includes("requestWindowsFileOperation") || !trash.includes("requestCoreTrash"))
-    failures.push("Electron must route both existing physical operations through the Core executor.");
-  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-  if (!pkg.build.extraResources.some(resource => resource.to === "core-file-operations/v1" && JSON.stringify(resource.filter) === JSON.stringify(["Cap7CE.Core.FileOperations.Host.exe", "Cap7CE.Core.FileOperations.Native.dll"])))
-    failures.push("Native file operation packaging must contain only the host and backend DLL.");
+  const commands = fs.readFileSync(path.join(root, "shell/Cap7CE.WinUI/Services/FileCommands.cs"), "utf8");
+  const rename = fs.readFileSync(path.join(root, "shell/Cap7CE.WinUI/Services/ItemRenameService.cs"), "utf8");
+  if (/File\.(?:Delete|Move|Copy)|Directory\.(?:Delete|Move)|PowerShell|EncodedCommand/.test(commands + rename))
+    failures.push("Native file commands must use the Core executor, not mutate assets directly.");
+  if (!rename.includes("NativeCoreRequest.SendAsync")) failures.push("Native rename must use the Core executor.");
+  if (!fs.readFileSync(path.join(root, "scripts/native-pack.cjs"), "utf8").includes("core/artifacts/file-operations-host"))
+    failures.push("Native file operation package must include its owned host.");
 };

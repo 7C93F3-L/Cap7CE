@@ -1,0 +1,105 @@
+const fs = require("node:fs");
+const path = require("node:path");
+
+module.exports = (root, sourceFiles, failures) => {
+  const limits = { "CatalogFileEntry.cs": 45, "CatalogFileEntrySchema.cs": 55, "CatalogFileEntryStore.cs": 140, "CatalogEntryQuerySource.cs": 50,
+    "CatalogFileEntryUpdate.cs": 10, "CatalogFileEntryPublication.cs": 70, "CatalogFileEntryStaging.cs": 80,
+    "CatalogFileEntryPending.cs": 80, "CatalogFileEntryPendingPublication.cs": 65, "CatalogFileEntryPendingStaging.cs": 45,
+    "CatalogFileEntryMode.cs": 40, "CatalogFileEntryActivation.cs": 43, "CatalogFileEntryActivationMarker.cs": 25, "CatalogFileEntryReadiness.cs": 20,
+    "CatalogSnapshotEntryParents.cs": 45, "CatalogJournalEntryParents.cs": 55 };
+  const directory = "core/src/Cap7CE.Core.Catalog/DirectoryEntries";
+  if (JSON.stringify(fs.readdirSync(path.join(root, directory)).sort()) !== JSON.stringify(Object.keys(limits).sort()))
+    failures.push("Catalog entry domain contains unregistered sources.");
+  for (const [name, maximum] of Object.entries(limits)) {
+    const source = fs.readFileSync(path.join(root, directory, name), "utf8");
+    if (source.split(/\r?\n/).length > maximum) failures.push(`${directory}/${name} exceeds its entry-store boundary.`);
+    if (/System\.Net|HttpClient|Process\.|File\.|Directory\.|FileStream|DeviceIoControl|DllImport|Reader\.Host/.test(source))
+      failures.push(`${directory}/${name} must remain database-only, without discovery, native IO or source access.`);
+  }
+  const store = fs.readFileSync(path.join(root, directory, "CatalogFileEntryStore.cs"), "utf8");
+  if (/\b(?:INSERT|UPDATE|DELETE)\s+(?:INTO|FROM)?\s*(?:file_fact|catalog_manual_keywords|catalog_nodes_v2)\b/i.test(store))
+    failures.push("File entry storage must not alter physical facts, source nodes or annotations.");
+  for (const required of ["expectedVolumeRevision", "source.CreatedUtcTicks", "transaction.Commit()", "token.ThrowIfCancellationRequested()"])
+    if (!store.includes(required)) failures.push(`File entry publication is missing ${required}.`);
+  for (const name of ["CatalogFileEntryPublication.cs", "CatalogFileEntryStaging.cs", "CatalogFileEntryPendingPublication.cs", "CatalogFileEntryPendingStaging.cs", "CatalogSnapshotEntryParents.cs", "CatalogJournalEntryParents.cs"])
+    if (/BeginTransaction|transaction\.Commit/.test(fs.readFileSync(path.join(root, directory, name), "utf8")))
+      failures.push(`${name} must share its caller's node/checkpoint transaction.`);
+  const parentDeferral = fs.readFileSync(path.join(root, directory, "CatalogSnapshotEntryParents.cs"), "utf8");
+  for (const required of ["LIMIT 64", "CatalogFileEntryPendingStaging.AppendAsync", "DELETE FROM build_entries", "DELETE FROM build_entry_sets"])
+    if (!parentDeferral.includes(required)) failures.push(`Snapshot parent deferral is missing ${required}.`);
+  const journalParents = fs.readFileSync(path.join(root, directory, "CatalogJournalEntryParents.cs"), "utf8");
+  for (const required of ["CatalogFileEntryPublication.Validate", "node.Exists && node.IsDirectory", "DeferredEntries = deferred", "InvalidatesFileFacts", "MayChangeFileFormat"])
+    if (!journalParents.includes(required)) failures.push(`Journal parent deferral is missing ${required}.`);
+  const batchPublication = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/Transactions/CatalogBatchPublication.cs"), "utf8");
+  if (!batchPublication.includes("if (!entryRetry) batch = await DirectoryEntries.CatalogJournalEntryParents.DeferAsync")
+      || batchPublication.indexOf("CatalogJournalEntryParents.DeferAsync") > batchPublication.indexOf("CatalogFileEntryPendingPublication.MergeInvalidationsAsync"))
+    failures.push("Journal parent deferral must precede physical invalidation and preserve the existing retry publication path.");
+  const runtime = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/ProductCoreRuntime.cs"), "utf8");
+  for (const required of ["CatalogStorageLease.Acquire", "await catalog.InitializeAsync(token, createEntryCatalog, startupStage)", "FileEntryModeEnabled = await new CatalogFileEntryActivation(catalog).ReadEnabledAsync", "captureFileEntries: FileEntryModeEnabled", "diagnostics, FileEntryModeEnabled", "storageLease?.Dispose()"])
+    if (!runtime.includes(required)) failures.push(`Runtime entry mode must derive from persistent storage: missing ${required}.`);
+  if (/captureFileEntries/.test(fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/Program.cs"), "utf8")))
+    failures.push("Startup must not enable entry capture independently of its stored mode.");
+  const activation = fs.readFileSync(path.join(root, directory, "CatalogFileEntryActivation.cs"), "utf8");
+  for (const required of ["expectedRevision", "requireExisting: true", "CreateWithinAsync", "state='needsRebuild'", "CatalogFileEntryActivationMarker.CreateAsync", "token.ThrowIfCancellationRequested()", "transaction.Commit()"])
+    if (!activation.includes(required)) failures.push(`Explicit entry activation is missing ${required}.`);
+  const schema = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/CatalogV2Schema.cs"), "utf8");
+  for (const required of ["if (createEntryCatalog)", "CatalogFileEntrySchema.CreateWithinAsync", "CatalogFileEntryActivationMarker.CreateAsync(connection, transaction, 0, token)"])
+    if (!schema.includes(required)) failures.push(`New Catalog entry storage must share its initial transaction: missing ${required}.`);
+  const database = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs"), "utf8");
+  if (!database.includes("OpenAsync(false, token, pooling: false)")) failures.push("Initial Catalog validation must not retain a failed database in its connection pool.");
+  for (const file of ["Transactions/CatalogBatchPublication.cs", "Snapshots/CatalogSnapshotPublication.cs"])
+    if (!fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog", file), "utf8").includes("CatalogFileEntryMode.RequireWriterAsync"))
+      failures.push(`${file} must reject legacy writes to active entry storage.`);
+  const native = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Reader.Host/DirectoryEntries/ReaderHardLinkMetadata.cs"), "utf8");
+  if (native.split(/\r?\n/).length > 65 || /DeviceIoControl|AdjustTokenPrivileges|System\.Net|HttpClient|Process\.|(?:File|Directory)\.|WriteFile|CreateFile|CreateHardLink|SetFileInformation/.test(native))
+    failures.push("Reader entry metadata must remain a bounded query on an existing attribute handle, without paths, content or writes.");
+  for (const required of ["FileHardLinkInformation = 46", "MaximumBufferBytes = 1024 * 1024", "expectedCount is < 1 or > 1024", "ReaderHardLinkBuffer.Decode"])
+    if (!native.includes(required)) failures.push(`Reader entry metadata is missing ${required}.`);
+  const readerDomain = "core/src/Cap7CE.Core.Reader.Host/DirectoryEntries";
+  const readerLimits = { "ReaderHardLinkMetadata.cs": 45, "ReaderHardLinkBuffer.cs": 45, "ReaderNtfsFileEntries.cs": 60, "ReaderSnapshotEntryCache.cs": 30, "ReaderNtfsEntryPresence.cs": 50 };
+  if (JSON.stringify(fs.readdirSync(path.join(root, readerDomain)).sort()) !== JSON.stringify(Object.keys(readerLimits).sort()))
+    failures.push("Reader entry metadata domain contains unregistered sources.");
+  for (const [name, cap] of Object.entries(readerLimits)) {
+    const source = fs.readFileSync(path.join(root, readerDomain, name), "utf8");
+    if (source.split(/\r?\n/).length > cap) failures.push(`${name} exceeds its bounded metadata responsibility.`);
+    if (/\b(?:FileReadData|GenericRead|WriteFile\w*|WriteData\w*|AdjustTokenPrivileges)\b|Process\.|System\.Net|Microsoft\.Data/.test(source))
+      failures.push(`${name} broadens Reader metadata permissions.`);
+  }
+  const presence = fs.readFileSync(path.join(root, readerDomain, "ReaderNtfsEntryPresence.cs"), "utf8");
+  if (/0x0*90068|GetNtfsFileRecord|FSCTL_GET_NTFS_FILE_RECORD|\bReadFile\b|\bCreateFile\b/.test(presence))
+    failures.push("Entry presence must use bounded USN metadata, never raw MFT records or file content.");
+  for (const required of ["new byte[64 * 1024]", "EnumUsnData", "LowUsn = 0, HighUsn = long.MaxValue", "token.ThrowIfCancellationRequested()"])
+    if (!presence.includes(required)) failures.push(`Entry presence is missing ${required}.`);
+  for (const name of ["CatalogEntryScopeSql.cs", "CatalogEntryScopedSource.cs", "CatalogQueryPageProjection.cs"]) {
+    const source = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/Queries", name), "utf8");
+    if (/Execute(?:Scalar|Reader|NonQuery)|OpenAsync|new SqliteConnection|File\.|Directory\.|DeviceIoControl/.test(source))
+      failures.push(`${name} must remain a pure query builder, without query execution or source access.`);
+  }
+  const textCandidates = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/Queries/CatalogTextCandidateSql.cs"), "utf8");
+  if (/OpenAsync|Execute\w*Async|File\.|Directory\.|FileStream|Reader\.Host|System\.Net/.test(textCandidates))
+    failures.push("Text candidate SQL must not own connections, execution, discovery or source IO.");
+  for (const [file, cap] of Object.entries({
+    "core/src/Cap7CE.Core.Reader.Protocol/ReaderFileEntryCodec.cs": 110,
+    "core/src/Cap7CE.Core.Host/DirectoryEntries/ReaderFileEntryClient.cs": 55,
+    "core/src/Cap7CE.Core.Host/DirectoryEntries/CatalogDirectoryEntryCapture.cs": 80,
+    "core/src/Cap7CE.Core.Host/DirectoryEntries/CatalogDirectoryEntryRetryOwner.cs": 50,
+    "core/src/Cap7CE.Core.Host/DirectoryEntries/CatalogDirectoryEntryRetryPublication.cs": 40,
+    "core/src/Cap7CE.Core.Catalog/Transactions/CatalogBatchPublication.cs": 90,
+    "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactEntryPolicy.cs": 45,
+    "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactEntryDiscoverySql.cs": 20,
+    "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactEntryJobHints.cs": 55,
+    "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactLeaseRenewal.cs": 35,
+    "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactSourceResolver.cs": 70,
+    "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactChangeReasons.cs": 10,
+    "core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotPublication.cs": 110,
+    "core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotEntryAppend.cs": 25,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogQueryScopeSql.cs": 35,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopeSql.cs": 45,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogEntryScopedSource.cs": 25,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogQueryPageProjection.cs": 30,
+    "core/src/Cap7CE.Core.Catalog/Queries/CatalogTextCandidateSql.cs": 65,
+    "core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs": 1032,
+    "core/src/Cap7CE.Core.Catalog/CatalogV2Connection.cs": 30
+  })) if (fs.readFileSync(path.join(root, file), "utf8").split(/\r?\n/).length > cap)
+    failures.push(`${file} exceeds its entry metadata boundary.`);
+};

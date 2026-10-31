@@ -2,18 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 module.exports = (root, sourceFiles, failures) => {
-  require("./metadata-runtime-boundary-check.cjs")(root, failures);
   require("./core-metadata-execution-boundary-check.cjs")(root, failures);
-  for (const [file, maximum] of [["electron/core/coreMetadataBuildClient.ts", 85], ["electron/core/coreMetadataBuildValidation.ts", 65], ["electron/metadataExtraction/metadataDirectoryPath.ts", 12]]) {
-    const text = fs.readFileSync(path.join(root, file), "utf8");
-    if (text.split(/\r?\n/).length > maximum) failures.push(`${file} exceeds its metadata task boundary.`);
-    if (/CoreHostController|sql\.js|databaseService|thumbnailOptimizationService/.test(text)) failures.push(`${file} bypasses the metadata task owner.`);
-  }
-  const panel = fs.readFileSync(path.join(root, "src/renderer/metadata-build/MetadataBuildPanel.tsx"), "utf8");
-  if (/window\.|electron|node:|fetch\(|useEffect|useState|setInterval/.test(panel) || panel.split(/\r?\n/).length > 100) {
-    failures.push("Metadata build panel must remain a bounded presentation component without runtime ownership.");
-  }
-  if (!panel.includes('from "../../shared/metadataBuildTypes"')) failures.push("Metadata build panel must use the shared progress contract.");
   const recovery = [["FileFactRecoveryCheckpoint.cs", 35], ["CatalogRecoverySnapshotWriter.cs", 75], ["CatalogEntryRecoveryCheckpoint.cs", 35]].map(([name, maximum]) => {
     const source = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/MetadataRecovery", name), "utf8");
     if (source.split(/\r?\n/).length > maximum) failures.push(`Metadata recovery ${name} exceeds its responsibility boundary.`);
@@ -26,7 +15,6 @@ module.exports = (root, sourceFiles, failures) => {
     "sqlite3_backup_step(backup, 256)", "PRAGMA journal_mode=DELETE", "token.ThrowIfCancellationRequested()", "File.Move(partial, output)", "if (reserved) File.Delete(partial)"]) {
     if (!recovery.includes(anchor)) failures.push(`Metadata recovery is missing ${anchor}.`);
   }
-  const workerRoot = path.join(root, "electron", "metadataExtraction");
   const executionRoot = path.join(root, "core/node/metadataExecution");
   const nativeMedia = fs.readFileSync(path.join(root, "native/Cap7CE.Media.Metadata/Program.cs"), "utf8");
   if (nativeMedia.split(/\r?\n/).length > 120 || /System\.Net|HttpClient|ShellExecute|AdjustTokenPrivileges|File\.(?:Write|Delete|Move)|Directory\.(?:Create|Delete|Move)|RenderToFileAsync/.test(nativeMedia)) {
@@ -41,22 +29,18 @@ module.exports = (root, sourceFiles, failures) => {
     if (fs.readFileSync(path.join(executionRoot, name), "utf8").split(/\r?\n/).length > maximum)
       failures.push(`Video metadata module ${name} exceeds its bounded responsibility.`);
   }
-  for (const scanRoot of [workerRoot, executionRoot]) for (const name of fs.readdirSync(scanRoot).filter((name) => name.endsWith(".ts"))) {
+  for (const scanRoot of [executionRoot]) for (const name of fs.readdirSync(scanRoot).filter((name) => name.endsWith(".ts"))) {
     const source = fs.readFileSync(path.join(scanRoot, name), "utf8");
     if (/node:(?:net|http|https|tls|dgram)|fetch\(|sqlite|thumbnail|fs\.(?:write|append|unlink|rename|rm|mkdir)/i.test(source)) {
       failures.push(`Metadata worker ${name} bypasses its local content-read boundary.`);
     }
   }
-  const workerClient = fs.readFileSync(path.join(workerRoot, "metadataWorkerClient.ts"), "utf8");
   const archiveReader = fs.readFileSync(path.join(root, "core/node/fileFacts/domain/archiveMetadataReader.ts"), "utf8");
   for (const anchor of ["restrictArchiveSourceFilesystem(module, filePath)", "boundWasmMemory(bytes, 256 * 1024 * 1024)",
     'module.callMain(["l", "-slt"', 'virtualFilesystem.mkdir("/source")']) {
     if (!archiveReader.includes(anchor)) failures.push(`Archive metadata reader is missing ${anchor}.`);
   }
   const workerProcess = fs.readFileSync(path.join(executionRoot, "metadataWorkerProcess.ts"), "utf8");
-  for (const anchor of ["--max-old-space-size=256", "windowsHide: true", "this.retiring.size > 0"]) {
-    if (!workerClient.includes(anchor)) failures.push(`Metadata worker client is missing ${anchor}.`);
-  }
   for (const anchor of ["sharp.concurrency(1)", "sharp.cache(false)", 'process.on("disconnect", stop)']) {
     if (!workerProcess.includes(anchor)) failures.push(`Metadata worker process is missing ${anchor}.`);
   }

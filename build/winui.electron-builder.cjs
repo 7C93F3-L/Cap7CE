@@ -1,6 +1,9 @@
 const { build } = require('../package.json');
 module.exports = {
   ...build, extends: null,
+  // Required by the NSIS tool's framework metadata even with --prepackaged.
+  // No Electron download, executable, or application payload is used.
+  electronVersion: '43.2.0',
   files: [], extraResources: [],
   directories: { output: 'release/winui-installer', buildResources: 'build' },
   win: { ...build.win, executableName: 'Cap7CE', signAndEditExecutable: false },

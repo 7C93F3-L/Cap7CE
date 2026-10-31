@@ -19,6 +19,7 @@ for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root,
 if (!fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
   run(process.execPath, ['scripts/core-capability-payload-build.cjs', '--product']);
 node('native-source-check.cjs');
+node('core-architecture-suite.cjs');
 run(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']);
 node('metadata-worker-build.cjs');
 // Same product profile used by the existing mainline. No Reader install or user-data activation during build.

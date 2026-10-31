@@ -196,25 +196,14 @@ for (const anchor of ["runtime installer must not be silent", "runtime restart b
   "P3.3b2 fixed development transaction entry is implemented"]) {
   requireAnchor(tests, anchor, `test coverage: ${anchor}`);
 }
-for (const integrationPath of ["electron/main.ts", "electron/preload.ts", "src/renderer/App.tsx"]) {
-  if (/CapabilitySetup|Cap7CE\.Core\.Setup|capability-setup/i.test(read(integrationPath))) {
-    failures.push(`${integrationPath} connects the P3.3 development transaction to Electron or Renderer.`);
-  }
-}
 const packageJson = JSON.parse(read("package.json"));
 if (!packageJson.scripts?.["publish:core-setup"]?.includes("RestoreLockedMode=true")) {
   failures.push("Capability Setup must keep an explicit locked NativeAOT publish command.");
 }
-if (!packageJson.scripts?.["test:core-setup-native"]?.includes("core-setup-native-smoke.cjs")
-    || !packageJson.scripts?.["test:integration"]?.includes("test:core-setup-native")) {
-  failures.push("NativeAOT Capability Setup smoke coverage must remain in the full test chain.");
-}
+if (!packageJson.scripts?.["test:delivery"]?.includes("test:core-setup-native")
+    || !packageJson.scripts?.["test:delivery"]?.includes("test:core-capability-payload")) failures.push("Native setup/payload verification must remain in the explicit delivery chain.");
 if (!packageJson.scripts?.["publish:core-capability"]?.includes("core-capability-payload-build.cjs")
-    || !packageJson.scripts?.["publish:core-product-capability"]?.includes("--product")
-    || !packageJson.scripts?.["test:core-capability-payload"]?.includes("core-capability-payload-smoke.cjs")
-    || !packageJson.scripts?.["test:integration"]?.includes("test:core-capability-payload")) {
-  failures.push("Capability payload build and tamper smoke must remain in the full test chain.");
-}
+    || !packageJson.scripts?.["publish:core-product-capability"]?.includes("--product")) failures.push("Capability payload publish profiles must remain explicit.");
 for (const anchor of ["DOTNET_ROOT_X64", "installedDotnetRequired: false", "systemChangesPerformed: false"]) {
   requireAnchor(nativeSmoke, anchor, "NativeAOT runtime-isolation smoke coverage");
 }
@@ -238,5 +227,5 @@ if (failures.length) {
     runtimeInstaller: "microsoft-foreground", automaticRestart: false,
     payloadVerification: "sha256-exact-set-no-reparse", transactionPlatform: "development-matrix",
     requesterIdentity: "named-pipe-client-token", systemMutation: true,
-    electronConnected: false, developmentPackageConfigured: true }));
+    electronConnected: false, nativePackageConfigured: true }));
 }

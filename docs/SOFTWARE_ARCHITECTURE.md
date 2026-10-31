@@ -49,8 +49,10 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 `npm run build` 先验证原生源码边界和类型，再打包固定 Node 运行库、发布 Core/QueryHost、生成资源并构建 WinUI。`npm run dev` 使用 shell/run.ps1，在正常交互桌面环境启动，避免开发工具的 AppData 重定向；构建保护正在运行的程序。
 
-`npm run pack` 生成自包含多文件目录，`dist:portable` 生成 ZIP，`dist:installer` 使用预打包的原生目录生成 NSIS。保留的 electron-builder 仅是 NSIS 工具，npm 不再安装 Electron 运行时，载荷不包含 app.asar/Chromium。不得把源码构建等同于安装包验收。
+`npm run pack` 生成自包含多文件目录，`dist:portable` 生成 ZIP，`dist:installer` 使用预打包的原生目录生成 NSIS。保留的 electron-builder 仅是 NSIS 工具；其预打包API要求的框架版本显式写在安装器工具配置中，不引入Electron依赖或下载。npm不再安装Electron运行时，载荷不包含app.asar/Chromium。不得把源码构建等同于安装包验收。
 
-`native-source-check` 守护全部原生模块体量、迁移解析器源码基线、九个运行入口的实际依赖闭包和旧目录/依赖禁入；`native-domain-check` 保留缓存发布、只读元数据、预算、取消、后代路径及回环请求关键锚点。WinUI 语言/界面架构检查继续生效。
+`native-source-check` 守护全部原生模块体量、迁移解析器源码基线、九个运行入口的实际依赖闭包和旧目录/依赖禁入；`native-domain-check` 保留缓存发布、只读元数据、预算、取消、后代路径及回环请求关键锚点。Core的十项源码审计由core-architecture-suite统一执行，约束项目依赖、源IO/数据库归属、Reader/Setup权限与生命周期、原生客户端和预打包边界；构建及test:source均运行这些检查，不执行系统探针。WinUI语言/界面架构检查继续生效。
 
 测试直接加载规范源码，或通过实际固定 Node 的协议在临时目录验证，移除了旧 Shell/Renderer 专用测试。npm test 包含源码边界、WinUI 布局、Core 测试及原生运行测试；交互/视觉仍由用户验收。源码构建、自动测试、交互验收和安装包验证是独立证据，不相互替代。
+
+`npm run test:core`先验证支持配置的锁文件稳定性，再运行Core完整回归；纯协议项目不声明平台运行时，锁文件仅保留实际net10.0图。取消快照会先收敛到needsRebuild，诊断测试区分主动清理后的重试与未回收的building状态。`npm run test:delivery`独立检查NativeAOT Setup、产品载荷完整性/篡改拒绝和从NSIS提取的实际Setup；仅验证，不安装服务、删除Catalog或修改系统配置。安装向导、快捷方式与启动仍需实际人工验收。

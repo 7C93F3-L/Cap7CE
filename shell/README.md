@@ -10,6 +10,7 @@
 - 已完成构建后可用 `& ./shell/run.ps1 -NoBuild` 直接启动；隔离测试库必须显式传 `-Catalog <路径>`，正常启动不继承外部测试库覆盖。
 - `npm run test:native:smoke`：一次短烟测，60秒进程超时，无自动重试；仅使用临时Catalog/图片/缓存，不扫描真实磁盘。
 - `npm test`：原生源码边界、布局、Core 与运行库检查；`npm run test:runtime` 可单独验证独立 Node 及资源。
+- `npm run test:delivery`：生成安装器后，校验原生Setup、产品载荷及安装器提取内容；不执行安装或服务变更。
 
 构建会复用现有Core产品宿主、配置/文件操作宿主、原生视觉适配器和独立Node工作进程，生成所需格式/筛选/指令资源。格式/筛选/指令资源定义已归入core/node/resourceCatalog/domain，图标和签名载荷归入resources；生成器不依赖旧React组件。解析、预览和模型领域均位于core/node，共享契约已迁到core/shared；原生运行入口不依赖旧目录。
 

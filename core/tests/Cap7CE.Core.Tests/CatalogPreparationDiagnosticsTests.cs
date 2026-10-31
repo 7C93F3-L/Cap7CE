@@ -29,8 +29,10 @@ internal static class CatalogPreparationDiagnosticsTests
             await TestAssert.ThrowsAsync<OperationCanceledException>(() => sync.SynchronizeAsync([], false, cancellation.Token), "preparation cancellation is preserved");
             var cancelled = events.Single(item => item.Name == "preparation-cancelled");
             TestAssert.Equal("snapshot-read-and-stage", cancelled.Data.GetProperty("stage").GetString()!, "cancellation retains its active phase");
+            var recovered = (await catalog.ReadVolumesAsync()).Single(item => item.VolumeId == volume.VolumeId);
+            TestAssert.Equal(CatalogV2VolumeState.NeedsRebuild, recovered.State, "cooperative cancellation retires the interrupted snapshot before retry");
             await sync.SynchronizeAsync([], false);
-            TestAssert.True(events.Any(item => item.Name == "preparation-rebuild" && item.Data.GetProperty("reason").GetString() == "interrupted-build"), "a later attempt explains the interrupted build");
+            TestAssert.Equal("marked-for-rebuild", events.Last(item => item.Name == "preparation-rebuild").Data.GetProperty("reason").GetString()!, "retry explains an already recovered snapshot rather than an abandoned active build");
             var completed = events.Single(item => item.Name == "preparation-completed");
             TestAssert.True(cancelled.Data.GetProperty("activityId").GetString() != completed.Data.GetProperty("activityId").GetString(), "each retry has a distinct correlation ID");
 

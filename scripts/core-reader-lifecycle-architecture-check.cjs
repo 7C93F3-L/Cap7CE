@@ -64,11 +64,6 @@ for (const [pattern, description] of [
   }
 }
 
-for (const integrationPath of ["electron/main.ts", "electron/preload.ts", "src/renderer/App.tsx"]) {
-  if (/ReaderLifecycle|Cap7CENtfsReaderP23|reader-lifecycle-client/.test(read(integrationPath))) {
-    failures.push(`${integrationPath} connects P2.3 to Electron.`);
-  }
-}
 
 if (failures.length) {
   console.error("Core Reader lifecycle architecture checks failed:\n");

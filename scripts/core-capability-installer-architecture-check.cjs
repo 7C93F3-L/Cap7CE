@@ -22,11 +22,18 @@ const setupWithoutCoordinator = setupSources
   .map((entry) => entry.source).join("\n");
 const setupProgram = read("core/src/Cap7CE.Core.Setup/Program.cs");
 const setupTests = read("core/tests/Cap7CE.Core.Tests/CapabilitySetupIdentityTests.cs");
-const capabilityBuilder = read("build/core-capability-dev.electron-builder.cjs");
-const capabilityNsis = read("build/installer-core-capability-dev.nsh");
+const capabilityBuilder = read("build/winui.electron-builder.cjs");
+const capabilityNsis = read("build/installer-winui.nsh");
 const installerNsis = read("build/installer-custom.nsh");
 const packageJson = JSON.parse(read("package.json"));
-const installerSmoke = read("scripts/core-capability-installer-smoke.cjs");
+const installerSmoke = read("scripts/native-installer-smoke.cjs");
+const conditionals = [];
+for (const line of installerNsis.split(/\r?\n/).map(value => value.trim())) {
+  if (/^!if(?:def|ndef|macrodef|macrondef)?\b/.test(line)) conditionals.push(line);
+  else if (line === "!endif" && !conditionals.pop()) failures.push("Native installer has an unmatched !endif.");
+  else if (/^!else\b/.test(line) && !conditionals.length) failures.push("Native installer has an unmatched !else.");
+}
+if (conditionals.length) failures.push("Native installer has unclosed conditional blocks.");
 
 for (const anchor of ["--activation-coordinator", "CapabilitySetupActivationPipe.CreateName()",
   "Environment.ProcessPath", "UseShellExecute = true", 'Verb = "runas"',
@@ -51,43 +58,27 @@ for (const anchor of ["setup coordinator rejects free paths",
 }
 
 for (const [source, anchor, description] of [
-  [capabilityBuilder, 'appId: "Cap7CE.Core.P33c.Dev"', "isolated development application identity"],
-  [capabilityBuilder, 'output: "release/core-capability-dev"', "isolated development package output"],
-  [capabilityBuilder, 'from: "core/artifacts/capability/v1/bundle"', "deterministic capability bundle source"],
-  [capabilityBuilder, 'to: "core-capability/v1"', "fixed packaged capability destination"],
-  [capabilityBuilder, 'createDesktopShortcut: false', "no development desktop shortcut"],
-  [capabilityBuilder, 'createStartMenuShortcut: false', "no development Start menu shortcut"],
-  [capabilityBuilder, 'runAfterFinish: false', "no development app auto-launch"],
+  [capabilityBuilder, 'files: [], extraResources: []', "prepackaged native payload boundary"],
   [capabilityNsis, "installer-custom.nsh", "shared product NSIS lifecycle"],
   [installerNsis, "--activation-coordinator --action remove --catalog $1", "authenticated uninstall removal"],
   [installerNsis, "SectionGetFlags 1 $0", "Catalog cleanup following the existing user-data choice"],
   [installerSmoke, "--verify-payload", "package-extracted payload verification"],
   [installerSmoke, "DOTNET_ROOT_X64", "NativeAOT package runtime-isolation check"],
-  [installerSmoke, "systemChangesPerformed: false", "read-only package inspection"]
+  [installerSmoke, "assert.equal(report.systemChangesPerformed,false)", "read-only package inspection"]
 ]) requireAnchor(source, anchor, description);
 if (/cap7ceCleanupCoreCatalog|CAP7CE_CLEAN_CORE_CATALOG_SECTION|CAP7CE_PRESERVE_CORE_CATALOG/.test(installerNsis)) {
   failures.push("Full-disk Catalog cleanup must not create a separate uninstall choice.");
 }
-const regularCapability = (packageJson.build?.extraResources ?? []).filter((entry) => entry?.to === "core-capability/v1");
-if (regularCapability.length !== 1 || regularCapability[0].from !== "core/artifacts/product-capability/v1/bundle") {
-  failures.push("The regular package must include exactly one deterministic Core capability bundle.");
-}
-if (!packageJson.scripts?.pack?.includes("publish:core-product-capability")
-    || !packageJson.scripts?.["dist:installer"]?.includes("publish:core-product-capability")) {
-  failures.push("Regular package commands must rebuild the deterministic capability before packaging.");
-}
-if (!packageJson.scripts?.["dist:core-capability-installer"]?.includes("publish:core-capability")
-    || !packageJson.scripts?.["dist:core-capability-installer"]?.includes("core-capability-installer-smoke.cjs")) {
-  failures.push("Development capability installer must build and inspect the deterministic payload.");
-}
-
+const pack = read("scripts/native-pack.cjs");
+if (!pack.includes("core/artifacts/product-capability/v1/bundle")) failures.push("Native pack must include the fixed product capability bundle.");
+if (!read("scripts/native-installer-build.cjs").includes("'--prepackaged'")) failures.push("Installer must consume the prepared native directory.");
 if (failures.length) {
   console.error("Core capability installer architecture checks failed:\n");
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exitCode = 1;
 } else {
-  console.log(JSON.stringify({ status: "passed", packageIdentity: "isolated-development",
+  console.log(JSON.stringify({ status: "passed", packageIdentity: "native-product",
     payload: "deterministic-bundle", activation: "authenticated-runas-coordinator",
     uninstallCatalogPolicy: "follow-user-data-choice", regularPackageConnected: true,
-    electronConnected: true, released: false }));
+    nativeClientConnected: true, released: false }));
 }

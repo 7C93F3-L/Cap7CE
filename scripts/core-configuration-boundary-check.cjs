@@ -24,16 +24,15 @@ module.exports.check = (root, failures) => {
     if (/System\.Net|HttpClient|Socket\b|Microsoft\.Data|Sqlite|Reader\.Host|DeviceIoControl|Process\.|DllImport|PeriodicTimer|EnumerateFiles|GetFiles|Directory\.(?:Delete|Move)|File\.(?:Copy|ReadAll|WriteAll)/.test(source))
       failures.push(`${name} bypasses the isolated configuration boundary.`);
   }
-  const adapter = fs.readFileSync(path.join(root, "electron/favoriteDirectories/favoriteDirectoryStore.ts"), "utf8");
-  if (/node:fs|randomUUID|JSON\.(?:parse|stringify)|readFile|writeFile|cached/.test(adapter) || !adapter.includes("requestCoreConfiguration"))
-    failures.push("Electron favorite adapter must not retain a second configuration implementation.");
+  const adapter = fs.readFileSync(path.join(root, "shell/Cap7CE.WinUI/Services/FavoriteService.cs"), "utf8");
+  if (/File\.|Directory\.|WriteAll|ReadAll|cached/.test(adapter) || !adapter.includes("NativeCoreRequest.SendAsync"))
+    failures.push("Native favorite adapter must delegate persistence to the Core configuration owner.");
   const file = fs.readFileSync(path.join(root, directory, "FavoriteConfigurationFile.cs"), "utf8");
   for (const anchor of ["MaximumBytes + 1", "FileMode.CreateNew", "if (created && File.Exists(temporary))", "File.Move(temporary, path, overwrite: true)", "flushToDisk: true"])
     if (!file.includes(anchor)) failures.push(`Core favorite publication requires ${anchor}.`);
-  const client = fs.readFileSync(path.join(root, "electron/core/coreNativeRequest.ts"), "utf8");
-  if (client.split(/\r?\n/).length > 50 || !client.includes("shell: false") || !client.includes("maximumBytes + 132"))
-    failures.push("Core configuration transport must remain bounded and use private child streams without shell evaluation.");
-  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-  if (!pkg.build.extraResources.some(resource => resource.to === "core-configuration/v1" && resource.filter?.length === 1 && resource.filter[0] === "Cap7CE.Core.Configuration.Host.exe"))
-    failures.push("Configuration packaging must carry only the native ordinary-user host.");
+  const client = fs.readFileSync(path.join(root, "shell/Cap7CE.WinUI/Services/NativeCoreRequest.cs"), "utf8");
+  for (const anchor of ["UseShellExecute = false", "ReadExactlyAsync", "24 * 1024 * 1024", "child.WaitForExitAsync()"])
+    if (!client.includes(anchor)) failures.push(`Native Core request is missing ${anchor}.`);
+  const pack = fs.readFileSync(path.join(root, "scripts/native-pack.cjs"), "utf8");
+  if (!pack.includes("core/artifacts/configuration-host")) failures.push("Native package must include the configuration host.");
 };

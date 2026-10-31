@@ -2,6 +2,8 @@
 
 ## 未发布
 
+- 完成原生退役收尾：Core架构审计改查原生客户端、资源和健康检查，恢复原生Core诊断/交付检查入口；校准启动诊断和纯协议锁文件基线。取消建库诊断用例同时验证主动恢复后的needsRebuild状态及重试原因，不改恢复业务逻辑。NSIS使用显式工具框架元数据并修正原生分支展开，安装器检查包含提取后Setup载荷验签和临时文件清理；版本、数据及独立Core/Reader保持不变。
+
 - 旧版退役整理第十四轮整体移除Electron/Renderer/Preload、Vite/React及legacy构建入口和专用测试；共享契约迁到core/shared并清除未使用的旧界面契约。原生测试直接加载规范源码，统一边界检查保留源码体量、解析器行为摘要和关键拥有者/预算约束。安装器仅保留NSIS工具与原生载荷，版本和用户数据不变。
 
 - 旧版退役整理第十三轮集中收口原生读侧剩余依赖：元数据结果投影归入interactiveMetadata/storedMetadata的contracts，Windows缩略图和矢量预览归入visualRendering/shell。四份执行实现除模块路径外保持一致，旧Shell保留资源默认值适配；九个原生运行入口的源码闭包现仅依赖core/node，自动检查阻止重新引入Electron/Renderer或生成产物实现。原有元数据规则、资源定位、进程协议和视觉回退保持不变。
