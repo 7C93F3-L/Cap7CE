@@ -8,7 +8,7 @@ public sealed record CatalogV2SnapshotBuildMetrics(
     int Pages,
     double StagingWriteMilliseconds,
     double DirectoryPathMilliseconds,
-    double PublishMilliseconds);
+    double PublishMilliseconds,double EntryStagingMilliseconds=0);
 
 public sealed record CatalogV2SnapshotBuildResult(
     CatalogV2VolumeSnapshot Volume,
@@ -176,7 +176,7 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
                 pages,
                 Math.Round(stagingWriteMilliseconds, 3),
                 Math.Round(pathWatch.Elapsed.TotalMilliseconds, 3),
-                Math.Round(publishWatch.Elapsed.TotalMilliseconds, 3)));
+                Math.Round(publishWatch.Elapsed.TotalMilliseconds, 3),Math.Round(entryStagingMilliseconds,3)));
     }
 
     public async ValueTask DisposeAsync()

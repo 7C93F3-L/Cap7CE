@@ -11,7 +11,7 @@ public sealed record CatalogSynchronizationMeasurement(
     double StagingWriteMilliseconds,
     double DirectoryPathMilliseconds,
     double PublishMilliseconds,
-    double TotalMilliseconds);
+    double TotalMilliseconds,double? EntryReadMilliseconds=null,double? EntryStagingMilliseconds=null);
 
 public sealed class CatalogSynchronizationService
 {
@@ -202,7 +202,7 @@ public sealed class CatalogSynchronizationService
         CatalogPreparationDiagnostics.Activity? activity, string reason, CancellationToken token)
     {
         var totalWatch = System.Diagnostics.Stopwatch.StartNew();
-        var readerReadMilliseconds = 0d;
+        var readerReadMilliseconds = 0d;var entryReadMilliseconds=0d;
         var readerWatch = System.Diagnostics.Stopwatch.StartNew();
         activity?.Rebuild(rebuild ? reason : "initial-build");
         activity?.Stage("snapshot-open");
@@ -246,7 +246,10 @@ public sealed class CatalogSynchronizationService
                 if (page.Records.Count > 0)
                 {
                     var nodes = page.Records.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray();
-                    if (captureFileEntries) await build.AppendWithEntriesAsync(await new CatalogDirectoryEntryCapture(reader, readerVolume, true).CaptureSnapshotAsync(nodes, token), token);
+                    if (captureFileEntries) {
+                        readerWatch.Restart();var entries=await new CatalogDirectoryEntryCapture(reader, readerVolume, true).CaptureSnapshotAsync(nodes, token);
+                        entryReadMilliseconds+=readerWatch.Elapsed.TotalMilliseconds;await build.AppendWithEntriesAsync(entries,token);
+                    }
                     else await build.AppendAsync(nodes, token);
                 }
                 cursor = page.NextCursor;
@@ -281,7 +284,7 @@ public sealed class CatalogSynchronizationService
             result.Metrics.StagingWriteMilliseconds,
             result.Metrics.DirectoryPathMilliseconds,
             result.Metrics.PublishMilliseconds,
-            Math.Round(totalWatch.Elapsed.TotalMilliseconds, 3));
+            Math.Round(totalWatch.Elapsed.TotalMilliseconds, 3),Math.Round(entryReadMilliseconds,3),result.Metrics.EntryStagingMilliseconds);
     }
 
     private async Task<CatalogSynchronizationMeasurement> CatchUpAsync(

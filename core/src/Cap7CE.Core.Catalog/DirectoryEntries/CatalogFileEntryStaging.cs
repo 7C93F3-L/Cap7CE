@@ -22,21 +22,24 @@ internal static class CatalogFileEntryStaging
         IReadOnlyList<CatalogV2NodeRecord> nodes, IReadOnlyList<CatalogFileEntryUpdate> updates, CancellationToken token)
     {
         var entries = CatalogFileEntryPublication.Validate(volume, nodes, updates);
-        using var command = connection.CreateCommand(); command.Transaction = transaction;
-        for (var i = 0; i < updates.Count; i++) {
-            var update = updates[i]; command.Parameters.Clear();
-            command.Parameters.AddWithValue("$volume", volume); command.Parameters.AddWithValue("$ref", update.Identity.FileReference);
-            command.Parameters.AddWithValue("$created", (object?)update.Source.CreatedUtcTicks ?? DBNull.Value);
-            command.Parameters.AddWithValue("$modified", (object?)update.Source.ModifiedUtcTicks ?? DBNull.Value);
-            command.Parameters.AddWithValue("$size", (object?)update.Source.SizeBytes ?? DBNull.Value);
-            command.CommandText = "DELETE FROM build_entries WHERE volume_id=$volume AND file_reference=$ref; INSERT OR REPLACE INTO build_entry_sets VALUES($volume,$ref,$created,$modified,$size);";
-            await command.ExecuteNonQueryAsync(token);
-            foreach (var entry in entries[i]) {
-                command.Parameters.AddWithValue("$key", entry.EntryKey); command.Parameters.AddWithValue("$parent", entry.ParentFileReference);
-                command.Parameters.AddWithValue("$name", entry.Name); command.Parameters.AddWithValue("$extension", entry.Extension);
-                command.CommandText = "INSERT INTO build_entries VALUES($volume,$ref,$key,$parent,$name,$extension);";
-                await command.ExecuteNonQueryAsync(token);
-                foreach (var key in new[] { "$key", "$parent", "$name", "$extension" }) command.Parameters.RemoveAt(key);
+        SqliteCommand Prepare(string sql,params string[] keys) {
+            var command=connection.CreateCommand();command.Transaction=transaction;command.CommandText=sql;
+            foreach(var key in keys)command.Parameters.Add(key,key is "$created" or "$modified" or "$size"?SqliteType.Integer:SqliteType.Text);
+            command.Parameters["$volume"].Value=volume;command.Prepare();return command;
+        }
+        using var remove=Prepare("DELETE FROM build_entries WHERE volume_id=$volume AND file_reference=$ref;","$volume","$ref");
+        using var sets=Prepare("INSERT OR REPLACE INTO build_entry_sets VALUES($volume,$ref,$created,$modified,$size);","$volume","$ref","$created","$modified","$size");
+        using var names=Prepare("INSERT INTO build_entries VALUES($volume,$ref,$key,$parent,$name,$extension);","$volume","$ref","$key","$parent","$name","$extension");
+        for(var i=0;i<updates.Count;i++) {
+            var update=updates[i];remove.Parameters["$ref"].Value=sets.Parameters["$ref"].Value=names.Parameters["$ref"].Value=update.Identity.FileReference;
+            sets.Parameters["$created"].Value=(object?)update.Source.CreatedUtcTicks??DBNull.Value;
+            sets.Parameters["$modified"].Value=(object?)update.Source.ModifiedUtcTicks??DBNull.Value;
+            sets.Parameters["$size"].Value=(object?)update.Source.SizeBytes??DBNull.Value;
+            await remove.ExecuteNonQueryAsync(token);await sets.ExecuteNonQueryAsync(token);
+            foreach(var entry in entries[i]) {
+                names.Parameters["$key"].Value=entry.EntryKey;names.Parameters["$parent"].Value=entry.ParentFileReference;
+                names.Parameters["$name"].Value=entry.Name;names.Parameters["$extension"].Value=entry.Extension;
+                await names.ExecuteNonQueryAsync(token);
             }
         }
     }
@@ -58,12 +61,15 @@ internal static class CatalogFileEntryStaging
             """;
         if (Convert.ToInt32(await command.ExecuteScalarAsync(token)) != 0) throw new CatalogConcurrencyException("Snapshot entry source or parent changed.");
         command.CommandText = """
-            DELETE FROM catalog_file_entry_sets WHERE volume_id=$volume AND
-                (file_reference IN (SELECT file_reference FROM snapshot_build.build_entry_sets WHERE volume_id=$volume)
-                 OR file_reference IN (SELECT file_reference FROM catalog_nodes_v2 WHERE volume_id=$volume AND exists_flag=0));
-            INSERT INTO catalog_file_entry_sets SELECT volume_id,file_reference,created FROM snapshot_build.build_entry_sets WHERE volume_id=$volume;
+            DELETE FROM catalog_file_entry_sets AS old WHERE volume_id=$volume AND
+                (file_reference IN (SELECT file_reference FROM catalog_nodes_v2 WHERE volume_id=$volume AND exists_flag=0)
+                 OR EXISTS(SELECT 1 FROM snapshot_build.build_entry_sets s WHERE s.volume_id=old.volume_id AND s.file_reference=old.file_reference AND
+                    (s.created IS NOT old.created_utc_ticks
+                     OR EXISTS(SELECT entry_key,parent_file_reference,name,extension FROM snapshot_build.build_entries WHERE volume_id=old.volume_id AND file_reference=old.file_reference EXCEPT SELECT entry_key,parent_file_reference,name,extension FROM catalog_file_entries WHERE volume_id=old.volume_id AND file_reference=old.file_reference)
+                     OR EXISTS(SELECT entry_key,parent_file_reference,name,extension FROM catalog_file_entries WHERE volume_id=old.volume_id AND file_reference=old.file_reference EXCEPT SELECT entry_key,parent_file_reference,name,extension FROM snapshot_build.build_entries WHERE volume_id=old.volume_id AND file_reference=old.file_reference))));
+            INSERT INTO catalog_file_entry_sets SELECT volume_id,file_reference,created FROM snapshot_build.build_entry_sets WHERE volume_id=$volume ON CONFLICT DO NOTHING;
             INSERT INTO catalog_file_entries SELECT volume_id,file_reference,entry_key,parent_file_reference,name,extension
-                FROM snapshot_build.build_entries WHERE volume_id=$volume;
+                FROM snapshot_build.build_entries WHERE volume_id=$volume ON CONFLICT DO NOTHING;
             """;
         await command.ExecuteNonQueryAsync(token);
         await CatalogFileEntryPendingStaging.PublishAsync(connection, transaction, volume, token);

@@ -53,8 +53,8 @@ public sealed class CatalogPreparationDiagnostics(Action<string, object> sink)
             owner.Write("preparation-" + state, new { activityId, driveLetter, origin, stage, reason,
                 elapsedMilliseconds = Math.Round(watch.Elapsed.TotalMilliseconds, 3), failureType,
                 kind = measurement?.Kind, records = measurement?.Records, pages = measurement?.Pages,
-                readerReadMilliseconds = measurement?.ReaderReadMilliseconds,
-                stagingWriteMilliseconds = measurement?.StagingWriteMilliseconds,
+                readerReadMilliseconds = measurement?.ReaderReadMilliseconds,entryReadMilliseconds=measurement?.EntryReadMilliseconds,
+                stagingWriteMilliseconds = measurement?.StagingWriteMilliseconds,entryStagingMilliseconds=measurement?.EntryStagingMilliseconds,
                 directoryPathMilliseconds = measurement?.DirectoryPathMilliseconds,
                 publishMilliseconds = measurement?.PublishMilliseconds, totalMilliseconds = measurement?.TotalMilliseconds });
     }

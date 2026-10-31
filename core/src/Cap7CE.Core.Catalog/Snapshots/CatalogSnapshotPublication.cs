@@ -50,7 +50,12 @@ public sealed partial class CatalogV2Database
                         exists_flag = excluded.exists_flag,
                         size_bytes = excluded.size_bytes,
                         created_utc_ticks = excluded.created_utc_ticks,
-                        modified_utc_ticks = excluded.modified_utc_ticks;
+                        modified_utc_ticks = excluded.modified_utc_ticks
+                    WHERE catalog_nodes_v2.parent_file_reference IS NOT excluded.parent_file_reference OR catalog_nodes_v2.name IS NOT excluded.name
+                        OR catalog_nodes_v2.extension IS NOT excluded.extension OR catalog_nodes_v2.is_directory IS NOT excluded.is_directory
+                        OR catalog_nodes_v2.attributes IS NOT excluded.attributes OR catalog_nodes_v2.exists_flag IS NOT excluded.exists_flag
+                        OR catalog_nodes_v2.size_bytes IS NOT excluded.size_bytes OR catalog_nodes_v2.created_utc_ticks IS NOT excluded.created_utc_ticks
+                        OR catalog_nodes_v2.modified_utc_ticks IS NOT excluded.modified_utc_ticks;
 
                     DELETE FROM catalog_nodes_v2
                     WHERE volume_id = $volume
@@ -59,10 +64,12 @@ public sealed partial class CatalogV2Database
                           WHERE staged.volume_id = catalog_nodes_v2.volume_id
                             AND staged.file_reference = catalog_nodes_v2.file_reference);
 
-                    DELETE FROM catalog_directory_paths_v2 WHERE volume_id = $volume;
+                    DELETE FROM catalog_directory_paths_v2 WHERE volume_id = $volume AND NOT EXISTS(SELECT 1 FROM snapshot_build.build_paths p
+                        WHERE p.volume_id=catalog_directory_paths_v2.volume_id AND p.file_reference=catalog_directory_paths_v2.file_reference);
                     INSERT INTO catalog_directory_paths_v2(volume_id, file_reference, relative_path)
                     SELECT volume_id, file_reference, relative_path
-                    FROM snapshot_build.build_paths WHERE volume_id = $volume;
+                    FROM snapshot_build.build_paths WHERE volume_id = $volume
+                    ON CONFLICT(volume_id,file_reference) DO UPDATE SET relative_path=excluded.relative_path WHERE catalog_directory_paths_v2.relative_path IS NOT excluded.relative_path;
                     """;
                 publish.Parameters.AddWithValue("$volume", volumeId);
                 await publish.ExecuteNonQueryAsync(token);

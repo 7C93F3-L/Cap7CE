@@ -10,6 +10,8 @@ using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
 if (args is ["--catalog-health-tests"]) { await CatalogHealthTests.RunAsync(); return 0; }
+if (args is ["--catalog-throughput-probe"]) { await CatalogSnapshotDeltaTests.ProbeAsync(); return 0; }
+if (args is ["--catalog-delta-tests"]) { await CatalogSnapshotDeltaTests.RunAsync(); return 0; }
 if (args is ["--catalog-recovery-tests"]) { await CatalogInterruptedBuildTests.RunAsync(); await CatalogPreparationDiagnosticsTests.RunAsync(); await CatalogJournalMonitorTests.RunAsync(); await CatalogKeywordTests.RunAsync(); Console.WriteLine("Catalog recovery and retained-identity keyword regressions passed."); return 0; }
 if (args is ["--catalog-diagnostics-tests"]) { await CatalogPreparationDiagnosticsTests.RunAsync(); Console.WriteLine("Catalog preparation diagnostics passed."); return 0; }
 if (args is ["--catalog-natural-order-tests"]) { await CatalogNaturalOrderingTests.RunAsync(); return 0; }
@@ -86,6 +88,7 @@ await MetadataCoordinatorNativeTests.RunAsync();
 await MetadataBuildHostingTests.RunAsync();
 await MetadataExtractorManifestTests.RunAsync();
 await MetadataBuildSweepTests.RunAsync();
+await CatalogSnapshotDeltaTests.RunAsync();
 await CoreRequestIdentityTests.RunAsync();
 await ReaderProtocolTests.RunAsync();
 ReaderConnectionLifetimeTests.Run();
