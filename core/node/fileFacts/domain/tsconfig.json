@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "../../../..",
+    "outDir": "../../../artifacts/file-facts",
+    "declaration": true,
+    "composite": true,
+    "noEmitOnError": true
+  },
+  "include": [
+    "**/*.ts"
+  ]
+}

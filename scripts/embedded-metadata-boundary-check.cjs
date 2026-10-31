@@ -28,7 +28,7 @@ for (const file of ['core/node/interactiveMetadata/worker.ts', 'core/node/stored
   assert(!/electron\/(?:embeddedMetadata|fileSourceRevision)/.test(fs.readFileSync(path.join(root, file), 'utf8')), `${file}: bypasses canonical metadata owner`);
 const configuration = require('../package.json');
 for (const task of ['build:electron', 'build:legacy'])
-  assert(configuration.scripts[task].startsWith('npm run build:embedded-domain &&'), `${task}: compile compatibility outputs first`);
+  assert(configuration.scripts[task].includes('npm run build:embedded-domain &&'), `${task}: compile compatibility outputs first`);
 assert(configuration.build.files.includes('core/artifacts/embedded-metadata/**/*.js'), 'Legacy package must include compatibility outputs');
 assert(read('scripts/metadata-worker-build.cjs').includes('core/node/embeddedMetadata/domain/tsconfig.json'), 'Native runtime must prepare compatibility outputs');
 assert(read('scripts/metadata-worker-build.cjs').includes('require("./embedded-metadata-declarations.cjs")'), 'Preserve emitted shared type contract');

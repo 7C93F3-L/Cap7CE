@@ -1,0 +1,62 @@
+{
+  "audioFactInspector.ts": {
+    "lines": 112,
+    "sourceHash": "8493c36a515b5fb7f457cf5eeff02e14b4ab52a433b26364ee52f01a7a4736da"
+  },
+  "audioFactTypes.ts": {
+    "lines": 16,
+    "sourceHash": "a22ffebc96f99a8da988073019ed3828a1318b6ae805bf1282d46749282f6913"
+  },
+  "videoFactInspector.ts": {
+    "lines": 109,
+    "sourceHash": "eed03777f41f64a7c600b4638288725798bf1dac9800244bb342393f2cbd5bd0"
+  },
+  "videoFactTypes.ts": {
+    "lines": 18,
+    "sourceHash": "9ed23bcc72377806b4b39cc7972a2606220d5cae648d650243dbad8b0a68c643"
+  },
+  "windowsPowerShellPath.ts": {
+    "lines": 9,
+    "sourceHash": "c91944c9e0d0f8e24ef785a19bd726828e8449360d2b91b4f0f8f3321fa6db7f"
+  },
+  "fontFactInspector.ts": {
+    "lines": 65,
+    "sourceHash": "15a92d3510e53a015d4ecde8568339adfa7487cf4bf0b37138e002570d291dcd"
+  },
+  "fontMetadataWorker.ts": {
+    "lines": 84,
+    "sourceHash": "304940003a71e0339a5283ba798729c7bfa86f0435f85be3addec5cedce9f2af"
+  },
+  "fontFactTypes.ts": {
+    "lines": 16,
+    "sourceHash": "fcb03dc40157bdb34ac106840cc6cc717e571ded2c658c9952021deff52e1bea"
+  },
+  "modelFactInspector.ts": {
+    "lines": 68,
+    "sourceHash": "b238d0d509927f91c662a0b18016fad363957d900c789e0ca2626c6050065669"
+  },
+  "modelFactWorker.ts": {
+    "lines": 10,
+    "sourceHash": "edd96df731a447da228598d252825cab192682dcb8b22265127f186f1ed812a9"
+  },
+  "modelFactExtractor.ts": {
+    "lines": 183,
+    "sourceHash": "a97983c89d46a73880d372839a9504d072f020033e3a6120d45797005942ec23"
+  },
+  "modelFactTypes.ts": {
+    "lines": 15,
+    "sourceHash": "1090e34468f17245eecd9b15fe345fd0641ccc1fd451a6c78aa217fca1a33814"
+  },
+  "textDataFactExtractor.ts": {
+    "lines": 186,
+    "sourceHash": "ef78b7badeef3641edeeefe460b312e94c41b94775c1dd46a77d9edf43ff967d"
+  },
+  "textDataFactTypes.ts": {
+    "lines": 27,
+    "sourceHash": "f117af9d0312fe3d88eb1e04e2fb7a3dcf97bf23bc80bd39af8b16cdd5911525"
+  },
+  "threeDFactExtractor.ts": {
+    "lines": 149,
+    "sourceHash": "4adbebf6cebae92f42696dce490ede00645ff8af2b138d420b1968cc717a2ba7"
+  }
+}

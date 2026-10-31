@@ -6,13 +6,13 @@ import { inspectImageMetadata } from "./imageMetadataInspector";
 import { flattenImageMetadataProperties } from "./imageMetadataMetrics";
 import { VideoMetadataFrameClient } from "./videoMetadataFrameClient";
 import { videoMetadataProperties } from "./videoMetadataFrames";
-import { inspectVideoFactBatch } from "../videoFactInspector";
-import { inspectAudioFactBatch } from "../audioFactInspector";
+import { inspectVideoFactBatch } from "../../core/node/fileFacts/domain/videoFactInspector";
+import { inspectAudioFactBatch } from "../../core/node/fileFacts/domain/audioFactInspector";
 import { inspectTextDataMetadata } from "./textDataMetadataInspector";
 import { inspectThreeDMetadata } from "./threeDMetadataInspector";
 import { inspectDocumentMetadata } from "./documentMetadataInspector";
-import { inspectModelFactBatch } from "../modelFactInspector";
-import { inspectFontFactBatch } from "../fontFactInspector";
+import { inspectModelFactBatch } from "../../core/node/fileFacts/domain/modelFactInspector";
+import { inspectFontFactBatch } from "../../core/node/fileFacts/domain/fontFactInspector";
 import type { MetadataWorkerTask, MetadataWorkerResult } from "./metadataWorkerTypes";
 import { metadataWorkerTransport } from "./metadataWorkerTransport";
 

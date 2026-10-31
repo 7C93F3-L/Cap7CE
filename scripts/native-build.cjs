@@ -18,6 +18,7 @@ const prerequisites = [
 for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target)) || script==='core-file-operations-build.cjs'&&!require('./core-file-operations-freshness.cjs').isFresh(root)) node(script);
 if (!fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
   run(process.execPath, ['scripts/core-capability-payload-build.cjs', '--product']);
+node('file-facts-boundary-check.cjs');
 node('embedded-metadata-boundary-check.cjs');
 node('resource-catalog-boundary-check.cjs');
 node('update-domain-boundary-check.cjs');

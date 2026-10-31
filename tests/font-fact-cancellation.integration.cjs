@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {EventEmitter}=require('node:events');
-const file=path.resolve(__dirname,'../dist-electron/fontFactInspector.js'),loaded={exports:{}},workers=[];
+const file=path.resolve(__dirname,'../core/artifacts/file-facts/core/node/fileFacts/domain/fontFactInspector.js'),loaded={exports:{}},workers=[];
 let stats=0;
 class FakeWorker extends EventEmitter {
  constructor(file,options){super();this.options=options;this.threadId=1;this.terminated=0;workers.push(this)}

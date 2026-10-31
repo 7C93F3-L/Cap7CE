@@ -8,7 +8,7 @@ const { PassThrough } = require("node:stream");
 // Exercise lifecycle without opening media or starting Windows Shell.
 const children = [];
 const moduleUnderTest = { exports: {} };
-const inspectorPath = path.resolve(__dirname, "../dist-electron/videoFactInspector.js");
+const inspectorPath = path.resolve(__dirname, "../core/artifacts/file-facts/core/node/fileFacts/domain/videoFactInspector.js");
 vm.runInNewContext(fs.readFileSync(inspectorPath, "utf8"), {
   exports: moduleUnderTest.exports,
   process: { platform: "win32" }, Buffer, setTimeout, clearTimeout,

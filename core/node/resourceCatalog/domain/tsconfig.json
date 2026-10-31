@@ -11,6 +11,6 @@
   "include": [
     "**/*.ts",
     "../../../../src/shared/types.ts",
-    "../../../../electron/modelFactTypes.ts"
+    "../../fileFacts/domain/modelFactTypes.ts"
   ]
 }

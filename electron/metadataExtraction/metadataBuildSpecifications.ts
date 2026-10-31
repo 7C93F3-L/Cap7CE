@@ -1,14 +1,14 @@
 import type { MetadataBuildSpecification } from "../../src/shared/metadataBuildTypes";
 import { supportedImageDimensionExtensions } from "../imageDimensionTypes";
-import { supportedVideoFactExtensions } from "../videoFactTypes";
+import { supportedVideoFactExtensions } from "../../core/node/fileFacts/domain/videoFactTypes";
 import { CORE_IMAGE_METADATA_EXTRACTOR_VERSION, CORE_VIDEO_METADATA_EXTRACTOR_VERSION } from "./metadataExtractorVersions";
-import { AUDIO_FACT_EXTRACTOR_VERSION, supportedAudioFactExtensions } from "../audioFactTypes";
-import { FONT_FACT_EXTRACTOR_VERSION, supportedFontFactExtensions } from "../fontFactTypes";
-import { MODEL_FACT_EXTRACTOR_VERSION, supportedModelFactExtensions } from "../modelFactTypes";
+import { AUDIO_FACT_EXTRACTOR_VERSION, supportedAudioFactExtensions } from "../../core/node/fileFacts/domain/audioFactTypes";
+import { FONT_FACT_EXTRACTOR_VERSION, supportedFontFactExtensions } from "../../core/node/fileFacts/domain/fontFactTypes";
+import { MODEL_FACT_EXTRACTOR_VERSION, supportedModelFactExtensions } from "../../core/node/fileFacts/domain/modelFactTypes";
 import { DOCUMENT_FACT_EXTRACTOR_VERSION, supportedDocumentFactExtensions } from "../documentFactTypes";
 import { THREE_D_FACT_EXTRACTOR_VERSION, supportedThreeDFactExtensions } from "../threeDFactTypes";
 import { ARCHIVE_FACT_EXTRACTOR_VERSION, supportedArchiveFactExtensions } from "../archiveFactTypes";
-import { TEXT_DATA_FACT_EXTRACTOR_VERSION, supportedTextDataFactExtensions } from "../textDataFactTypes";
+import { TEXT_DATA_FACT_EXTRACTOR_VERSION, supportedTextDataFactExtensions } from "../../core/node/fileFacts/domain/textDataFactTypes";
 
 export type { MetadataBuildSpecification } from "../../src/shared/metadataBuildTypes";
 // This same table is emitted into the independent Core resources; never duplicate versions/extensions in C#.

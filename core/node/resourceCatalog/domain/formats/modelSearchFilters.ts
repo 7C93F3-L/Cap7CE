@@ -1,4 +1,4 @@
-import type { ModelPrecision } from "../../../../../electron/modelFactTypes";
+import type { ModelPrecision } from "../../../fileFacts/domain/modelFactTypes";
 
 export const searchModelParameterCounts = ["under-1b", "1b-3b", "3b-7b", "7b-14b", "14b-or-more"] as const;
 export type SearchModelParameterCount = typeof searchModelParameterCounts[number];

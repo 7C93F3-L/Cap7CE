@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
-const file = path.resolve(__dirname, '../dist-electron/modelFactInspector.js');
+const file = path.resolve(__dirname, '../core/artifacts/file-facts/core/node/fileFacts/domain/modelFactInspector.js');
 const loaded = { exports: {} }, workers = [];
 let stats = 0;
 class FakeWorker extends EventEmitter {

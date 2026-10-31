@@ -1,8 +1,8 @@
 // Physical source identity and source versions remain owned by the Core broker.
 export type MetadataWorkerKind = "image-dimensions" | "video" | "audio" | "font" | "model" | "document" | "three-d" | "text-data" | "archive";
-export type MetadataFontProperties = Pick<import("../fontFactTypes").FontFactResult,
+export type MetadataFontProperties = Pick<import("../../core/node/fileFacts/domain/fontFactTypes").FontFactResult,
   "weight" | "italic" | "supportsLatin" | "supportsChinese" | "variable">;
-export type MetadataModelProperties = Pick<import("../modelFactTypes").ModelFactResult, "parameterCount" | "precision">;
+export type MetadataModelProperties = Pick<import("../../core/node/fileFacts/domain/modelFactTypes").ModelFactResult, "parameterCount" | "precision">;
 export type MetadataDocumentProperties = { contentCount?: number; countKind?: import("../documentFactTypes").DocumentContentCountKind;
   hasEmbeddedImages?: boolean; artboardCount?: number };
 export type MetadataThreeDProperties = { triangleCount?: number; hasAnimation?: boolean; hasRig?: boolean };

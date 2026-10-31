@@ -1,9 +1,2 @@
-import path from "node:path";
-
-export const resolveWindowsPowerShellPath = (systemRoot = process.env.SystemRoot): string => path.join(
-  systemRoot || "C:\\Windows",
-  "System32",
-  "WindowsPowerShell",
-  "v1.0",
-  "powershell.exe"
-);
+// Compatibility entry; implementation belongs to the independent Core Node domain.
+export * from "../core/artifacts/file-facts/core/node/fileFacts/domain/windowsPowerShellPath";

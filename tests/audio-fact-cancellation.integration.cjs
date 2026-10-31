@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {EventEmitter}=require('node:events'),{PassThrough}=require('node:stream');
-const file=path.resolve(__dirname,'../dist-electron/audioFactInspector.js'),loaded={exports:{}},children=[];
+const file=path.resolve(__dirname,'../core/artifacts/file-facts/core/node/fileFacts/domain/audioFactInspector.js'),loaded={exports:{}},children=[];
 vm.runInNewContext(fs.readFileSync(file,'utf8'),{exports:loaded.exports,process:{platform:'win32'},Buffer,setTimeout,clearTimeout,require(name){
  if(name==='node:child_process')return {spawn(executable,args,options){
   assert.equal(options.windowsHide,true);assert.ok(args.includes('-NonInteractive'));

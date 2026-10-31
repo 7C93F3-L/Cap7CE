@@ -15,10 +15,11 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
   require("./metadata-runtime-safety.cjs").assertStopped(output);
   // Native domains still consume compatibility entries during retirement.
   const catalogBuild = require("node:child_process").spawnSync(process.execPath,
-    ["node_modules/typescript/bin/tsc", "-b", "core/node/resourceCatalog/domain/tsconfig.json", "core/node/embeddedMetadata/domain/tsconfig.json"],
+    ["node_modules/typescript/bin/tsc", "-b", "core/node/fileFacts/domain/tsconfig.json", "core/node/resourceCatalog/domain/tsconfig.json", "core/node/embeddedMetadata/domain/tsconfig.json"],
     { cwd: root, stdio: "inherit", windowsHide: true });
   if (catalogBuild.error || catalogBuild.status !== 0) throw catalogBuild.error || new Error("Resource catalog compilation failed.");
   require("./embedded-metadata-declarations.cjs");
+  require("./file-facts-declarations.cjs");
   // Fixed generated directory only. Never traverses source/user data or other artifacts.
   await fs.rm(output, { recursive: true, force: true });
   await fs.mkdir(output, { recursive: true });
@@ -31,7 +32,7 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
   if (imports.some(item => !item.external || !["sharp", "7z-wasm", "7z-wasm/7zz.wasm"].includes(item.path)
     && !isBuiltin(item.path))) throw new Error("Unexpected metadata runtime dependency.");
   for (const name of ["modelFactWorker", "fontMetadataWorker"]) {
-    const thread = await build({ entryPoints: [path.join(root, `electron/${name}.ts`)],
+    const thread = await build({ entryPoints: [path.join(root, `core/node/fileFacts/domain/${name}.ts`)],
       outfile: path.join(output, `${name}.js`), bundle: true, platform: "node", format: "cjs", target: "node24",
       sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(thread.metafile.outputs).flatMap(item => item.imports).some(item =>

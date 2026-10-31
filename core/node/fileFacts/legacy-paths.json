@@ -1,0 +1,17 @@
+{
+  "electron/audioFactInspector.ts": "core/node/fileFacts/domain/audioFactInspector.ts",
+  "electron/audioFactTypes.ts": "core/node/fileFacts/domain/audioFactTypes.ts",
+  "electron/videoFactInspector.ts": "core/node/fileFacts/domain/videoFactInspector.ts",
+  "electron/videoFactTypes.ts": "core/node/fileFacts/domain/videoFactTypes.ts",
+  "electron/windowsPowerShellPath.ts": "core/node/fileFacts/domain/windowsPowerShellPath.ts",
+  "electron/fontFactInspector.ts": "core/node/fileFacts/domain/fontFactInspector.ts",
+  "electron/fontMetadataWorker.ts": "core/node/fileFacts/domain/fontMetadataWorker.ts",
+  "electron/fontFactTypes.ts": "core/node/fileFacts/domain/fontFactTypes.ts",
+  "electron/modelFactInspector.ts": "core/node/fileFacts/domain/modelFactInspector.ts",
+  "electron/modelFactWorker.ts": "core/node/fileFacts/domain/modelFactWorker.ts",
+  "electron/modelFactExtractor.ts": "core/node/fileFacts/domain/modelFactExtractor.ts",
+  "electron/modelFactTypes.ts": "core/node/fileFacts/domain/modelFactTypes.ts",
+  "electron/textDataFactExtractor.ts": "core/node/fileFacts/domain/textDataFactExtractor.ts",
+  "electron/textDataFactTypes.ts": "core/node/fileFacts/domain/textDataFactTypes.ts",
+  "electron/threeDFactExtractor.ts": "core/node/fileFacts/domain/threeDFactExtractor.ts"
+}
