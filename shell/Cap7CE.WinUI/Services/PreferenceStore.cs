@@ -29,7 +29,7 @@ internal sealed class PreferenceStore
         }
         if (Current.Material is not ("mica" or "mica-alt") || Current.Theme is not ("system" or "light" or "dark")
             || Current.TileSize is < 96 or > 280) Current = new();
-        if(Current.Language is not ("system" or "zh-CN" or "en-US"))Current=Current with{Language="zh-CN"};
+        if(Current.Language is not ("system" or "zh-CN" or "en-US"))Current=Current with{Language="system"};
         AppLanguage.Apply(Current.Language);
     }
     public Task SaveAsync(ShellPreferences value)=>UpdateAsync(_=>value);

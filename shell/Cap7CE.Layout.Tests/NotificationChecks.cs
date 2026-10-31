@@ -31,8 +31,8 @@ internal static class NotificationChecks
             Check(clicks==2&&store.Current.Notifications,"Retry must register one activation handler.");
             var file=Path.Combine(directory,"blocker");await File.WriteAllTextAsync(file,"block directory creation");
             var broken=new PreferenceStore(Path.Combine(file,"preferences.json"),null);
-            try{await retry.SetEnabledAsync(broken,true);throw new Exception("Expected save failure.");}catch(IOException){}
-            Check(!broken.Current.Notifications,"Save failure must not enable future task notifications.");
+            try{await retry.SetEnabledAsync(broken,false);throw new Exception("Expected save failure.");}catch(IOException){}
+            Check(broken.Current.Notifications,"Save failure must preserve the enabled notification preference.");
             retry.Dispose();manager.Reset();
         }
         finally{Cap7CE.WinUI.Localization.AppLanguage.Apply(language);if(Directory.Exists(directory))Directory.Delete(directory,true);}

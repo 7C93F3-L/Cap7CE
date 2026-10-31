@@ -111,7 +111,7 @@ internal sealed class IndexMaintenanceView : UserControl
                 row.RowDefinitions.Add(new(){Height=GridLength.Auto});
                 row.RowDefinitions.Add(new(){Height=GridLength.Auto});
                 var drive=Models.DrivePresentation.Read(item.DisplayName);
-                var choice=new CheckBox {Content=drive.Name,IsChecked=selection.TryGetValue(item.VolumeId,out var chosen)?chosen:drive.IsSystem||item.Selected,Tag=item.VolumeId};
+                var choice=new CheckBox {Content=drive.Name,IsChecked=selection.TryGetValue(item.VolumeId,out var chosen)?chosen:true,Tag=item.VolumeId};
                 var caption=new TextBlock{Text=drive.Name,TextTrimming=TextTrimming.CharacterEllipsis};choice.Content=caption;
                 if(drive.UsesDefaultName)L.Bind(caption,TextBlock.TextProperty,"ui.drive.defaultName",()=>new Dictionary<string,object?>{{"drive",(Path.GetPathRoot(item.DisplayName)??item.DisplayName).TrimEnd('\\','/')}});
                 choice.VerticalAlignment=VerticalAlignment.Center;

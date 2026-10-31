@@ -3,7 +3,7 @@ namespace Cap7CE.WinUI.Models;
 public sealed record ShellPreferences
 {
     public const double DefaultUiFontSize=13.0;
-    public string Language {get;init;}="zh-CN";
+    public string Language {get;init;}="system";
     public WorkspaceOptions ComputerWorkspace {get;init;}=WorkspaceOptions.ComputerDefault;
     public WorkspaceOptions FavoriteWorkspace {get;init;}=WorkspaceOptions.FavoritesDefault;
     public string[] IndexVolumeOrder {get;init;}=[];
@@ -12,13 +12,13 @@ public sealed record ShellPreferences
     public string[] MetadataCustomExclusions {get;init;}=[];
     public bool TrayIconEnabled {get;init;}=true;
     public bool ShowMainOnStartup {get;init;}=true;
-    public bool Notifications {get;init;}
+    public bool Notifications {get;init;}=true;
     public Dictionary<string,ShortcutBinding> ShortcutBindings {get;init;}=[];
     public bool EdgeCollapseEnabled {get;init;}
 	public bool AlwaysOnTop { get; init; }
     public bool PreviewAlwaysOnTop {get;init;}
 
-	public string Material { get; init; } = "mica";
+	public string Material { get; init; } = "mica-alt";
 
 	public string Theme { get; init; } = "system";
 

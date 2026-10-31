@@ -14,7 +14,7 @@ internal static class LanguagePreferenceChecks
         var element=new FrameworkElement();var property=new DependencyProperty();
         try {
             var store=new PreferenceStore(file,null);await store.LoadAsync();
-            if(store.Current.Language!="zh-CN")throw new Exception("New preferences must default to Chinese.");
+            if(store.Current.Language!="system")throw new Exception("New preferences must follow the system language.");
             LanguageBinding.Attach(element,property,AppLanguage.Session,"navigation.general");element.Load();
             var notifications=0;
             store.Changed+=()=>{
@@ -39,7 +39,7 @@ internal static class LanguagePreferenceChecks
             try{await failing.UpdateAsync(value=>value with{Language="zh-CN",Theme="dark"});throw new Exception("A blocked target unexpectedly saved.");}catch(IOException){}catch(UnauthorizedAccessException){}
             if(AppLanguage.Session.Current!="en-US"||failing.Current.Theme!="system"||Directory.EnumerateFiles(root,"*.tmp").Any())throw new Exception("Failed persistence must not apply the requested language/settings or leave a temporary file.");
             await File.WriteAllTextAsync(file,"{\"language\":\"unknown\",\"theme\":\"dark\"}");await restored.LoadAsync();
-            if(restored.Current.Language!="zh-CN"||restored.Current.Theme!="dark")throw new Exception("Unknown persisted language must fall back without discarding unrelated preferences.");
+            if(restored.Current.Language!="system"||restored.Current.Theme!="dark")throw new Exception("Unknown persisted language must follow the system without discarding unrelated preferences.");
             foreach(var legacySize in new[]{"16","99","\"legacy\"","null"}) {
                 var legacy="{\"fontSize\":"+legacySize+",\"theme\":\"dark\",\"language\":\"en-US\",\"showDetails\":false}";
                 await File.WriteAllTextAsync(file,legacy);await restored.LoadAsync();
