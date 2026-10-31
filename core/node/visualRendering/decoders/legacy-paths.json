@@ -1,0 +1,9 @@
+{
+  "electron/pdfRenderService.ts": "core/node/visualRendering/decoders/pdfRenderService.ts",
+  "electron/psdRenderService.ts": "core/node/visualRendering/decoders/psdRenderService.ts",
+  "electron/psdArtboardRenderWorker.ts": "core/node/visualRendering/decoders/psdArtboardRenderWorker.ts",
+  "electron/psdArtboardBounds.ts": "core/node/visualRendering/decoders/psdArtboardBounds.ts",
+  "electron/visualContentBoundsService.ts": "core/node/visualRendering/decoders/visualContentBoundsService.ts",
+  "electron/supportedVisualFormats.ts": "core/node/visualRendering/decoders/supportedVisualFormats.ts",
+  "electron/core/visualDirectPreviewPolicy.ts": "core/node/visualRendering/decoders/visualDirectPreviewPolicy.ts"
+}

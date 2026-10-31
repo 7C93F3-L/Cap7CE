@@ -1,14 +1,14 @@
 import path from "node:path";
 import sharp, { type Sharp } from "sharp";
 import { readCdrFlattenedPreview } from "../fileFacts/domain/cdrRenderService";
-import { renderPdfFirstPage } from "../../../electron/pdfRenderService";
-import { renderPsdFlattenedPreview } from "../../../electron/psdRenderService";
+import { renderPdfFirstPage } from "./decoders/pdfRenderService";
+import { renderPsdFlattenedPreview } from "./decoders/psdRenderService";
 import {
   assertPdfCompatibleIllustratorFile,
   renderEpsEmbeddedPreview
 } from "../../../electron/vectorDocumentRenderService";
-import { supportedVisualFileExtensionSet } from "../../../electron/supportedVisualFormats";
-import { cropVisualContent } from "../../../electron/visualContentBoundsService";
+import { supportedVisualFileExtensionSet } from "./decoders/supportedVisualFormats";
+import { cropVisualContent } from "./decoders/visualContentBoundsService";
 import {
   maximumVisualInputPixels as maximumInputPixels,
   readBmpSize,

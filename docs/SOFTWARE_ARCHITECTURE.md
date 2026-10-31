@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+视觉解码源码归属`core/node/visualRendering/decoders`：PDF/PSD解码、可靠画板边界及PSD线程、内容边界裁剪、可视格式集合、直读预览策略共七份实现。既有renderSource/directPreview直接依赖该目录；Windows Shell回退、缓存发布、工作进程所有权及窗口/预览生命周期保持原链路。七个旧路径只转出独立编译产物。运行时源码闭包仅额外允许resourceCatalog的formatCapabilities纯定义，源摘要/体量基线保证迁移不改变行为。
+
+该目录与fileFacts/metadataExecution共用既有TypeScript编译输出树`core/artifacts/file-facts`，源码仍按职责分目录，解码器不反向依赖缓存发布或任务装配。原生构建直接由规范源码打包原有`psdArtboardRenderWorker.js`，保持相邻线程资源身份；旧版打包沿该输出树统一置于ASAR外保留依赖。`visual-decoder-boundary-check`检查独立依赖闭包、解码边界、七份源码一致性、旧入口转出和线程打包契约。`test:visual-decoders`验证编译、原生资源和视觉运行时及BMP一致性；本轮不代表整个视觉/缓存领域已脱离旧目录。
+
 元数据执行源码归属`core/node/metadataExecution`：metadataWorkerProcess/Transport负责既有私有进程协议与单任务执行，videoMetadataFrameClient/Frames负责原有受限媒体子进程与帧校验，三个格式适配器组合fileFacts解析，metadataWorkerTypes及metadataBuildSpecifications保存契约/唯一清单。九份源码除模块路径外保持迁移前一致，读取/内存限制、取消、退出、回退、提取版本和调度均不变。原生运行库及extractors.json直接由该目录入口生成，不再经electron/metadataExtraction中的兼容源码。
 
 执行领域与fileFacts保持单向依赖，共用现有TypeScript编译项目及`core/artifacts/file-facts`输出树，以保留发出JS/声明的相对模块关系；源码职责仍分目录，不复制解析器或引入反向依赖。旧Electron九个路径只转出该编译树，旧版资源定位/客户端暂留原处。共享metadataBuildTypes声明随编译产物复制。`metadata-execution-source-boundary-check`守护九模块源码基线、只读约束、无旧源码依赖的闭包、旧入口转出及原生入口/清单身份；Core原有视频、压缩包及调度约束改读实际源码，保持原锚点/上限。`test:metadata-execution`覆盖帧协议、清单一致性、取消/退出生命周期与独立运行库；其他视觉/预览、模型与文件信息仍待退役整理。

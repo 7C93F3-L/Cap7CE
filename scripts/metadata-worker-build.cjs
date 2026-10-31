@@ -47,7 +47,7 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     bundle: true, platform: "node", format: "cjs", target: "node24", sourcemap: false, metafile: true, logLevel: "error" });
   if (Object.values(modelHost.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path)))
     throw new Error("Unexpected Core model runtime dependency.");
-  for (const [source, name] of [["core/node/visualRendering/worker.ts", "visual-render.cjs"], ["electron/psdArtboardRenderWorker.ts", "psdArtboardRenderWorker.js"]]) {
+  for (const [source, name] of [["core/node/visualRendering/worker.ts", "visual-render.cjs"], ["core/node/visualRendering/decoders/psdArtboardRenderWorker.ts", "psdArtboardRenderWorker.js"]]) {
     const renderer = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name),
       bundle: true, platform: "node", format: "cjs", target: "node24", external: ["sharp", "@napi-rs/canvas"],
       sourcemap: false, metafile: true, logLevel: "error" });

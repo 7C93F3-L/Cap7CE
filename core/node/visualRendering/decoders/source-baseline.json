@@ -1,0 +1,30 @@
+{
+  "pdfRenderService.ts": {
+    "lines": 80,
+    "sourceHash": "242c527326447f7612dd3112783318da30f4a4d55be62eea99acf27f6a1d28e0"
+  },
+  "psdRenderService.ts": {
+    "lines": 247,
+    "sourceHash": "14cfaa14d0a69fdd8891c81eb5ca8e1eb311a10c835a238a4bf22c2a51f9a210"
+  },
+  "psdArtboardRenderWorker.ts": {
+    "lines": 84,
+    "sourceHash": "ca3ebd6acc71be3b54aac616a767446c78cd74f83e69a8f2b475a3d5b652074d"
+  },
+  "psdArtboardBounds.ts": {
+    "lines": 85,
+    "sourceHash": "24ea19bf172d220561c123dff3fb624268acc3aea14c2378beffee62cba9824f"
+  },
+  "visualContentBoundsService.ts": {
+    "lines": 205,
+    "sourceHash": "3ebb113ff0a67f86b74a54725624ac3c5f4941e1efd98ca78ac63ba0e357abf0"
+  },
+  "supportedVisualFormats.ts": {
+    "lines": 9,
+    "sourceHash": "932a2b9ed0002c6e802a7285a083da51f457679a7a9b577f083acb411931746f"
+  },
+  "visualDirectPreviewPolicy.ts": {
+    "lines": 19,
+    "sourceHash": "fcbbc2f83ff80be88897a012e361074f31a2d2caee68fbe04db7882ecd5a274a"
+  }
+}
