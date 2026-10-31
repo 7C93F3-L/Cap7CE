@@ -97,8 +97,19 @@ internal sealed class SettingsCatalog
     }
     private void About()
     {
-        Entries.Add(new("关于","stableSettings.section.application","","",VersionActions,true));
+        var version=new SettingsEntry("关于","stableSettings.section.application","","",VersionActions,true);
+        Entries.Add(version);
+        Entries.Add(version with{Title="settings.projectHomepage",Description="settings.projectHomepageAddress",Create=ProjectHomepage,Expanded=false});
         Mainline("关于","application","stableSettings.license","stableSettings.desc.license",()=>new TextBlock());
+    }
+    private UIElement ProjectHomepage()
+    {
+        var link=new SettingsPageLink(()=>actions.Run(async()=>{
+            if(!await Windows.System.Launcher.LaunchUriAsync(new Uri("https://github.com/7C93F3-L/Cap7CE")))
+                throw new UiFailure("ui.error.projectHomepage");
+        }));
+        ((FontIcon)link.Content).Glyph="\uE8A7";
+        return link;
     }
     private UIElement VersionActions()
     {

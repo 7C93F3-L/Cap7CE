@@ -1,4 +1,16 @@
 {
+  "settings.projectHomepage": {
+    "zh-CN": "项目主页",
+    "en-US": "Project homepage"
+  },
+  "settings.projectHomepageAddress": {
+    "zh-CN": "点击访问 GitHub 项目主页",
+    "en-US": "Visit the project on GitHub"
+  },
+  "ui.error.projectHomepage": {
+    "zh-CN": "无法打开项目主页，请检查默认浏览器设置。",
+    "en-US": "Could not open the project homepage. Check your default browser settings."
+  },
   "ui.indexPrompt.title": {
     "zh-CN": "建立本地索引",
     "en-US": "Create a local index"

@@ -31,6 +31,7 @@ internal static class SettingsCardIcons
         "ui.diagnostics.path"=>Symbol.Folder,
         "settings.diagnosticsBundle"=>Symbol.Save,
         "settings.versionUpdate"=>Symbol.Sync,
+        "settings.projectHomepage"=>Symbol.Link,
         "stableSettings.license"=>Symbol.Document,
         _=>Symbol.Setting
     }));
