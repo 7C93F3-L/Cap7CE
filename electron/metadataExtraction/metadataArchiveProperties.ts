@@ -1,4 +1,4 @@
-import type { ArchiveMetadataProperties } from "./archiveMetadataReader";
+import type { ArchiveMetadataProperties } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/archiveMetadataReader";
 import { searchArchiveContentTypes } from "../archiveSearchFilters";
 export const validMetadataArchiveProperties = (value: unknown): value is ArchiveMetadataProperties => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;

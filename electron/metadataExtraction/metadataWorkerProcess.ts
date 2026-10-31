@@ -1,4 +1,4 @@
-import { readArchiveMetadata } from "./archiveMetadataReader";
+import { readArchiveMetadata } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/archiveMetadataReader";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";

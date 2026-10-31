@@ -98,5 +98,33 @@
   "metadataExtractorVersions.ts": {
     "lines": 3,
     "sourceHash": "bbade52dfd38f5c1cde36c56f6b3ddce871e9d46458f2734738c17befface94b"
+  },
+  "archiveFactExtractor.ts": {
+    "lines": 42,
+    "sourceHash": "3ff6f48a1f2b2846c999be24ff54d2db5bc59d9e8a86701251f3b4369a4d333c"
+  },
+  "archiveFactTypes.ts": {
+    "lines": 19,
+    "sourceHash": "a1eb89387d63b24e8adfa034feffaf5e7ed873da3784aecddfba163b1af36e87"
+  },
+  "archivePreviewList.ts": {
+    "lines": 55,
+    "sourceHash": "15581f0bf51807625889c9be9afd81bac50e0391b570d42030ca0f6382d2f33c"
+  },
+  "archivePreviewWorker.ts": {
+    "lines": 78,
+    "sourceHash": "d4c5f96d1f0342c3de4bf062139f3708c5b555f22b78c7d2d3ec47599b1f14bb"
+  },
+  "archiveMetadataReader.ts": {
+    "lines": 60,
+    "sourceHash": "1d59e0a831f11770a76f4f55a35f269eef512b6c6a44c5587c58a3164ca88a85"
+  },
+  "archiveSourceFilesystem.ts": {
+    "lines": 27,
+    "sourceHash": "8ba32479f49166ccf946a3107d89e095b3f73f0e75c33ba1f948a15d91fbd9e6"
+  },
+  "boundedWasmMemory.ts": {
+    "lines": 47,
+    "sourceHash": "11ed57d876c7a06f9d86ad7eeb82eb2d7827bd8c61c32749c89ad91c3a1c0759"
   }
 }

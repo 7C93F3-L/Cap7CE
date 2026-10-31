@@ -23,5 +23,12 @@
   "electron/documentFactTypes.ts": "core/node/fileFacts/domain/documentFactTypes.ts",
   "electron/metadataExtraction/imageMetadataInspector.ts": "core/node/fileFacts/domain/imageMetadataInspector.ts",
   "electron/metadataExtraction/imageMetadataMetrics.ts": "core/node/fileFacts/domain/imageMetadataMetrics.ts",
-  "electron/metadataExtraction/metadataExtractorVersions.ts": "core/node/fileFacts/domain/metadataExtractorVersions.ts"
+  "electron/metadataExtraction/metadataExtractorVersions.ts": "core/node/fileFacts/domain/metadataExtractorVersions.ts",
+  "electron/archiveFactExtractor.ts": "core/node/fileFacts/domain/archiveFactExtractor.ts",
+  "electron/archiveFactTypes.ts": "core/node/fileFacts/domain/archiveFactTypes.ts",
+  "electron/archivePreviewList.ts": "core/node/fileFacts/domain/archivePreviewList.ts",
+  "electron/archivePreviewWorker.ts": "core/node/fileFacts/domain/archivePreviewWorker.ts",
+  "electron/metadataExtraction/archiveMetadataReader.ts": "core/node/fileFacts/domain/archiveMetadataReader.ts",
+  "electron/metadataExtraction/archiveSourceFilesystem.ts": "core/node/fileFacts/domain/archiveSourceFilesystem.ts",
+  "electron/metadataExtraction/boundedWasmMemory.ts": "core/node/fileFacts/domain/boundedWasmMemory.ts"
 }

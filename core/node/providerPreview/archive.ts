@@ -41,7 +41,7 @@ const getArchiveWorkerPath = () => {
   );
 };
 
-import { parseArchiveListOutput } from "../../../electron/archivePreviewList";
+import { parseArchiveListOutput } from "../fileFacts/domain/archivePreviewList";
 const classifyArchiveFailure = (output: string): ArchivePreviewFallbackReason => {
   const normalized = output.toLowerCase();
   if (normalized.includes("wrong password") || normalized.includes("encrypted archive")) {

@@ -7,7 +7,7 @@ import { FONT_FACT_EXTRACTOR_VERSION, supportedFontFactExtensions } from "../../
 import { MODEL_FACT_EXTRACTOR_VERSION, supportedModelFactExtensions } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/modelFactTypes";
 import { DOCUMENT_FACT_EXTRACTOR_VERSION, supportedDocumentFactExtensions } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/documentFactTypes";
 import { THREE_D_FACT_EXTRACTOR_VERSION, supportedThreeDFactExtensions } from "../threeDFactTypes";
-import { ARCHIVE_FACT_EXTRACTOR_VERSION, supportedArchiveFactExtensions } from "../archiveFactTypes";
+import { ARCHIVE_FACT_EXTRACTOR_VERSION, supportedArchiveFactExtensions } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/archiveFactTypes";
 import { TEXT_DATA_FACT_EXTRACTOR_VERSION, supportedTextDataFactExtensions } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/textDataFactTypes";
 
 export type { MetadataBuildSpecification } from "../../src/shared/metadataBuildTypes";
