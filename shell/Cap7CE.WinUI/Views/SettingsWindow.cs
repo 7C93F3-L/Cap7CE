@@ -46,7 +46,9 @@ internal sealed class SettingsWindow : Window
             Render();
             scroll?.ChangeView(null,0,null,true);
         };
-        scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,HorizontalContentAlignment=HorizontalAlignment.Stretch};
+        // Stretch the scroll root to its viewport; constrain and center only the inner page.
+        var pageHost=new Grid();pageHost.Children.Add(body);
+        scroll=new ScrollViewer {Content=pageHost,HorizontalScrollMode=ScrollMode.Disabled,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,HorizontalContentAlignment=HorizontalAlignment.Stretch};
         subpages=new(body,scroll);pages.SubpageRequested+=subpages.Open;
         IdleScrollBars.Attach(scroll);
         var content=new Grid();content.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});content.RowDefinitions.Add(new(){Height=GridLength.Auto});
