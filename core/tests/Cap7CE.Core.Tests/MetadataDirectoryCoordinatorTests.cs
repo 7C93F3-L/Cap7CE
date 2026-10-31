@@ -17,6 +17,15 @@ internal static class MetadataDirectoryCoordinatorTests
     }
     public static async Task RunAsync()
     {
+        var restored=new MetadataDirectoryFixture{Building=true};restored.SaveGlobal("completed");var restoredOwner=restored.Create();
+        await restoredOwner.RestoreAsync();TestAssert.Equal(0,restored.Reads,"restored maintenance waits for the base index");
+        restored.Building=false;await restoredOwner.NotifyCatalogChangeAsync();
+        await UntilAsync(()=>Task.FromResult(restored.Finished.Length==3));
+        TestAssert.Equal(1,restored.MaximumLive,"base-ready catalog notification restores completed maintenance with one content owner");await restoredOwner.ShutdownAsync();
+        foreach(var intent in new[]{"paused","configured"}) {
+            restored=new();restored.SaveGlobal(intent);restoredOwner=restored.Create();await restoredOwner.NotifyCatalogChangeAsync();
+            TestAssert.Equal(0,restored.Reads,"a catalog wake cannot grant extraction or undo a saved pause");await restoredOwner.ShutdownAsync();
+        }
         var fixture = new MetadataDirectoryFixture(); var owner = fixture.Create();
         TestAssert.Equal("idle", (await owner.ReadAsync()).Progress.Phase, "status reads no source");
         await Task.WhenAll(owner.StartDirectoryAsync(Request()), owner.StartDirectoryAsync(Request("x:/Assets/")));

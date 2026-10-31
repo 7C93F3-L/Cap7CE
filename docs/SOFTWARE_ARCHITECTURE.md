@@ -20,6 +20,9 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 磁盘Processed保留已发布索引计数，快照扫描进度由CatalogPreparationProgressOwner单独持有；旧版中断留下的零计数仅在building/needsRebuild状态按有效节点索引只读统计，不写库或将旧快照标为就绪。CatalogJournalMonitor每个新生命周期首次运行会恢复已选needsRebuild磁盘，后续显式停止/重启监视器不重新安排该恢复，不增加失败重试循环或调整系统USN日志。手动关键词在building/needsRebuild期间仍按保留节点、创建时间和独立修订号读写；文件操作端继续核验实时文件身份，未就绪磁盘仍不参与搜索。CoreProcessDiagnostics立即将有界、无路径的catalog-diagnostic-v1事件交给既有轮转会话日志；失败类型为固定异常类型名，不记录文件路径或Reader身份。
 
+
+元数据在原生Core连接后显式恢复已保存授权，目录范围通知也唤醒既有Core协调器；恢复遇到未就绪基库时等待下一次真实变更通知重试，不增加发现轮询。配置未授权或手动暂停不启动内容提取，右键目录完成后仍为一次性任务。
+
 启动不运行全库完整性扫描。CatalogHealthController 按既有七天到期规则，仅在主窗口后台/隐藏/最小化时开始独立检查，开始后完成，退出时取消。检查使用既有库的 ReadWrite 非创建连接，先 query_only 再 quick_check；结果有界保存，不修复或重建数据库。
 
 ## Node 职责域

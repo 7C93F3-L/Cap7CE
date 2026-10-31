@@ -79,7 +79,7 @@ public sealed partial class MetadataGlobalBuildOwner
                         if (!CanRestore(own) || selected is null || intent is not ("active" or "completed")) return;
                     }
                     if (status.Tasks.Any(task => task.State == "running") || status.Volumes.Any(volume => selected.VolumeOrder.Contains(volume.VolumeId)
-                        && volume.State is "building" or "discovering" or "catchingUp")) { deferred = true; return; }
+                        && !volume.Queryable)) { deferred = true; return; }
                     await lifecycle.ValidateAsync(status, catalog, token);
                     lock (gate) { if (!CanRestore(own)) return; if (intent == "completed") maintenance = true; }
                     if (intent == "completed") drain.Notify(own);

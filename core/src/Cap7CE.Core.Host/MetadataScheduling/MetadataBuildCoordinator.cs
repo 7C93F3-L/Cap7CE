@@ -94,7 +94,7 @@ public sealed partial class MetadataBuildCoordinator
     public async Task NotifyCatalogChangeAsync()
     {
         await LoadAsync(); lock (gate) if (queue.Count > 0 || running is not null || closing) return;
-        await global.NotifyCatalogChangeAsync();
+        await global.RestoreAsync(); await global.NotifyCatalogChangeAsync();
     }
     public async Task ShutdownAsync()
     {

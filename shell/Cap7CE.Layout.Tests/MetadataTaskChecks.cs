@@ -11,6 +11,10 @@ internal static class MetadataTaskChecks
         void Require(bool value,string message){if(!value)throw new Exception(message);}
         var services=new ShellServices();var core=services.Core!;var tasks=new MetadataTasks(services);
         var states=new List<MetadataTaskStatus>();tasks.Changed+=(_,state)=>states.Add(state);
+        await tasks.RestoreAsync();
+        Require(core.Requests.Last().Operation=="metadata.build.restore"&&!tasks.ActiveThisSession&&states.Count==0,"Connection restoration reuses the saved Core grant without fabricating a user start or completion");
+        await tasks.NotifyAsync();
+        Require(core.Requests.Last().Operation=="metadata.build.notify","Catalog changes wake restored maintenance even before an explicit start in this session");
         await tasks.InvokeAsync("status");
         Require(!states[^1].Running&&!tasks.ActiveThisSession,"Reading status must not claim or start extraction");
         await tasks.InvokeAsync("startDirectory",new{path="E:\\assets",allowMetadataExtraction=true});
@@ -80,7 +84,7 @@ namespace Cap7CE.WinUI.Services
         public async Task<T> RequestAsync<T>(string operation,object body,CancellationToken token=default,int deadlineMs=30000)
         {
             token.ThrowIfCancellationRequested();Requests.Add((operation,body));
-            if(operation=="metadata.build.notify")return (T)(object)JsonSerializer.SerializeToElement(new{result=new{accepted=true}});
+            if(operation is "metadata.build.notify" or "metadata.build.restore")return (T)(object)JsonSerializer.SerializeToElement(new{result=new{accepted=true}});
             if(operation=="metadata.build.startDirectory") {if(BlockStart is not null)await BlockStart();Phase="preparing";}
             if(operation=="metadata.build.pause")Phase="paused";
             if(operation is "metadata.build.cancelDirectories" or "metadata.build.cancel")Phase="idle";

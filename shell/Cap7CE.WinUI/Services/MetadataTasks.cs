@@ -49,8 +49,9 @@ internal sealed class MetadataTasks(ShellServices services)
         return result;
         } finally{gate.Release();}
     }
+    public async Task RestoreAsync() { if(services.Core?.Supports(MetadataBuildOperations.Attach)==true)await InvokeAsync("restore"); }
     public async Task NotifyAsync()
-    {if(started&&ReferenceEquals(attached,services.Core))await InvokeAsync("notify");}
+    {if(attached is not null&&ReferenceEquals(attached,services.Core))await InvokeAsync("notify");}
     private static JsonElement Read(JsonElement reply)
     {
         if(reply.TryGetProperty("errorCode",out var error)&&error.ValueKind==JsonValueKind.String)throw new IOException(error.GetString());

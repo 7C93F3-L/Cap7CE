@@ -62,8 +62,9 @@ assert(catalogRefresh.includes('if(closed||catalogRefreshQueued)return;catalogRe
   'queued refresh must coalesce pending dispatch and recheck interaction eligibility without a timer');
 const changeService=read('shell/Cap7CE.WinUI/Services/ShellServices.cs').split('private async Task OnCatalogChanged')[1];
 assert(changeService.indexOf('CatalogChanged?.Invoke(new(null,precise));return;')<changeService.indexOf('await RefreshVolumesAsync()')
-  && changeService.includes('if(notice.Scopes is null)await Metadata.NotifyAsync()'),
-  'precise filesystem changes must not request volume status or unrelated metadata task status');
+  && changeService.indexOf('await Metadata.NotifyAsync()')<changeService.indexOf('CatalogChanged?.Invoke(new(null,precise));return;')
+  && read('shell/Cap7CE.WinUI/Services/MetadataTasks.cs').split('public async Task NotifyAsync()')[1].split('private static JsonElement')[0].includes('InvokeAsync("notify")'),
+  'precise filesystem changes must wake Core metadata maintenance without requesting volume or task status');
 assert(browseRouting.includes('if(path.Length>0&&plainBrowse&&!Recursive)')
   && browseRouting.indexOf('return await BrowseFilesystemAsync(path,remember,version,token,origin)') < browseRouting.indexOf('if (services.Core?.IsConnected!=true)'),
   'direct-child browsing must remain fresh and independent of Core');

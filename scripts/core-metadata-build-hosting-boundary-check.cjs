@@ -8,6 +8,9 @@ module.exports=(root,failures)=>{
  }
  const read=p=>fs.readFileSync(path.join(root,p),'utf8'),client=read('shell/Cap7CE.WinUI/Services/MetadataTasks.cs');
  if(/File\.|Directory\.|Sqlite|NodeMetadataWorker|MetadataStateFile/.test(client)||!client.includes('core.RequestAsync'))failures.push('Native metadata actions must delegate grants, persistence and execution to Core.');
+ const shell=read('shell/Cap7CE.WinUI/Services/ShellServices.cs'),changed=shell.split('private async Task OnCatalogChanged')[1];
+ if(!shell.includes('await Metadata.RestoreAsync()')||!changed||changed.indexOf('await Metadata.NotifyAsync()')<0||changed.indexOf('await Metadata.NotifyAsync()')>changed.indexOf('if(notice.Scopes is'))
+  failures.push('Native metadata must restore saved grants on connection and wake maintenance before scoped Catalog refresh shortcuts.');
  const dispatch=read('core/src/Cap7CE.Core.Host/CoreRequestDispatcher.cs');
  if(dispatch.indexOf('MetadataBuildOperations.IsControl(request.Operation)')<0||dispatch.indexOf('MetadataBuildOperations.IsControl(request.Operation)')>dispatch.indexOf('await executionSlots.WaitAsync'))failures.push('Metadata stop/control must bypass foreground query slots.');
  const service=read(dir+'/MetadataBuildService.cs');

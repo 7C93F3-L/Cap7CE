@@ -58,6 +58,7 @@ internal sealed class ShellServices : IAsyncDisposable
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE/Core/v1/catalog.db");
         Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure,runtimeLog:NativeDiagnostics.CoreRuntimeFailure); await RefreshVolumesAsync();
         changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke(UiMessage.Key("ui.error.backgroundDisconnected")));
+        try{await Metadata.RestoreAsync();}catch(Exception error){NativeDiagnostics.CoreFailure(error.ToString());BackgroundError?.Invoke(FailureText.From(error));}
         } finally { connection.Release();ConnectionChanged?.Invoke(); }
     }
     public async Task RefreshVolumesAsync()
@@ -72,6 +73,7 @@ internal sealed class ShellServices : IAsyncDisposable
     {
         if(closed)return;var owner=Core;
         try{
+            try{await Metadata.NotifyAsync();}catch(Exception error){NativeDiagnostics.CoreFailure(error.ToString());}if(closed||!ReferenceEquals(owner,Core))return;
             if(notice.Scopes is {Count:>0} scopes&&scopes.All(s=>Volumes.Any(v=>v.VolumeId==s.VolumeId&&v.Queryable&&v.Selected))) {
                 var precise=scopes.Select(s=>new CatalogPathChange(Volumes.First(v=>v.VolumeId==s.VolumeId).DisplayName,s.RelativePaths)).ToArray();
                 CatalogChanged?.Invoke(new(null,precise));return;
@@ -88,7 +90,6 @@ internal sealed class ShellServices : IAsyncDisposable
                 if(volume is null){paths=null;break;}paths.Add(new(volume.DisplayName,scope.RelativePaths));
             }
             CatalogChanged?.Invoke(new(roots,paths));
-            if(notice.Scopes is null)await Metadata.NotifyAsync();
         }catch(Exception error){if(!closed)BackgroundError?.Invoke(FailureText.From(error));}
     }
     public async Task ReleaseSourcesAsync() { await Providers.ReleaseAsync(); await Office.ReleaseAsync(); await Visuals.ReleaseAsync(); }

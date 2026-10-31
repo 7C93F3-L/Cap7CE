@@ -107,6 +107,13 @@ internal static class MetadataGlobalBuildTests
         fixture = new("active"); fixture.Catalog.Status = fixture.Catalog.Status with { Tasks = [new("base", "synchronize", "running", null)] }; owner = fixture.Create();
         await owner.RestoreAsync(); TestAssert.Equal(0, fixture.Session.Configurations, "base preparation defers body extraction");
         fixture.Catalog.Status = fixture.Catalog.Status with { Tasks = [] }; await owner.RestoreAsync(); await CompletedAsync(owner); await owner.ShutdownAsync();
+        foreach(var unavailable in new[]{"building","catchingUp","needsRebuild","offline"}) {
+            fixture=new("completed",perKind:0);owner=fixture.Create();var status=fixture.Catalog.Status;
+            fixture.Catalog.Status=status with{Volumes=status.Volumes.Select(v=>v with{State=unavailable,Queryable=false}).ToArray()};
+            await owner.RestoreAsync();TestAssert.Equal(0,fixture.Session.Configurations,"unavailable base indexes defer restored content work");
+            fixture.Catalog.Status=status;await owner.RestoreAsync();await owner.NotifyCatalogChangeAsync();await CompletedAsync(owner);await owner.ShutdownAsync();
+            TestAssert.True(fixture.Session.Changes>0,"a later ready notification can resume the deferred maintenance grant");
+        }
         foreach (var shutdown in new[] { false, true }) {
             fixture = new("active", Scoped); var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var resolve = new TaskCompletionSource<CatalogResolveScopeResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
