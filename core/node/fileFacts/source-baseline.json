@@ -58,5 +58,45 @@
   "threeDFactExtractor.ts": {
     "lines": 149,
     "sourceHash": "4adbebf6cebae92f42696dce490ede00645ff8af2b138d420b1968cc717a2ba7"
+  },
+  "animationFactInspector.ts": {
+    "lines": 113,
+    "sourceHash": "91cb39c6d03d285e2a8ef796845e5b19547924a5873abd34c6065d2c0209d58e"
+  },
+  "visualPropertyAnalyzer.ts": {
+    "lines": 251,
+    "sourceHash": "9d6c0461c08d49199d8b1865bde6d42f97dd5f29835507b393acd56a6131564c"
+  },
+  "imageDimensionTypes.ts": {
+    "lines": 33,
+    "sourceHash": "7a6a2b537906516af83b3f5010630b074eea54d962d0cf718b741fbbd1da0369"
+  },
+  "visualSourceDimensions.ts": {
+    "lines": 126,
+    "sourceHash": "e6bebf802a583102411a79debfa4370a319f5942ac1c31efd510e531c41a043a"
+  },
+  "cdrRenderService.ts": {
+    "lines": 215,
+    "sourceHash": "d098e607e9a324f70e7f4430f1e3f9cd6e34b058130bf50e418747522cf9012c"
+  },
+  "documentFactExtractor.ts": {
+    "lines": 165,
+    "sourceHash": "ae1ab509cdd57027aae27f9352631016bf473ee2990fbe08ed4ffe6caf7af6e3"
+  },
+  "documentFactTypes.ts": {
+    "lines": 19,
+    "sourceHash": "3d5109e7264f6c2b80dab25b136c7b110e324b2c5002e221e20ca8fbbf37fac6"
+  },
+  "imageMetadataInspector.ts": {
+    "lines": 42,
+    "sourceHash": "a185cff615bc076669a246db40c64289b8f60dd1dd5b31c037345588f3d14a8f"
+  },
+  "imageMetadataMetrics.ts": {
+    "lines": 26,
+    "sourceHash": "d6065c6101dbadb46da4334dd835b1b3bf0a93e681658d52d4ca81d887b0c3be"
+  },
+  "metadataExtractorVersions.ts": {
+    "lines": 3,
+    "sourceHash": "bbade52dfd38f5c1cde36c56f6b3ddce871e9d46458f2734738c17befface94b"
   }
 }

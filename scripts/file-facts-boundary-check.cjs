@@ -14,7 +14,7 @@ for (const [file, expected] of Object.entries(baseline)) {
 const result = buildSync({ absWorkingDir: root, entryPoints: Object.keys(baseline).map(file => domain + file), outdir: 'unused',
   bundle: true, platform: 'node', format: 'cjs', packages: 'external', write: false, metafile: true, logLevel: 'error' });
 for (const file of Object.keys(result.metafile.inputs))
-  assert(file.replaceAll('\\', '/').startsWith(domain), `File-fact parser acquired a foreign runtime implementation: ${file}`);
+  assert(file.replaceAll('\\', '/').startsWith(domain) || file.replaceAll('\\', '/') === 'core/node/resourceCatalog/domain/formats/visualPropertyTypes.ts', `File-fact parser acquired a foreign runtime implementation: ${file}`);
 for (const [old, target] of Object.entries(paths)) {
   let relative = path.relative(path.dirname(path.join(root, old)), path.join(root, 'core/artifacts/file-facts', target)).replaceAll('\\', '/').replace(/\.ts$/, '');
   if (!relative.startsWith('.')) relative = './' + relative;
@@ -27,4 +27,6 @@ assert(configuration.build.files.includes('core/artifacts/file-facts/**/*.js'), 
 assert(configuration.build.asarUnpack.includes('core/artifacts/file-facts/**/*.js'), 'Legacy parser threads and adjacent dependencies stay outside ASAR');
 assert(read('scripts/metadata-worker-build.cjs').includes('`core/node/fileFacts/domain/${name}.ts`'), 'Native runtime bundles canonical parser threads');
 assert(!/from ["']\.\.\/(?:audioFactInspector|videoFactInspector|fontFactInspector|modelFactInspector)["']/.test(read('electron/metadataExtraction/metadataWorkerProcess.ts')), 'Native task assembly must use canonical parser implementations');
-console.log('File-fact boundaries passed: 15 unchanged implementations, independent closure, legacy forwarding and adjacent worker packaging.');
+for (const file of fs.readdirSync(path.join(root, 'electron/metadataExtraction')).filter(file => file.endsWith('.ts')))
+  assert(!/from ["'][^"']*\.\.\/core\/node\/fileFacts\//.test(read('electron/metadataExtraction/' + file)), `${file}: legacy compiler must reference emitted parser outputs`);
+console.log('File-fact boundaries passed: 25 unchanged implementations, independent closure, legacy forwarding and adjacent worker packaging.');

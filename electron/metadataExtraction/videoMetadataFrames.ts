@@ -1,7 +1,7 @@
-import { analyzeVisualProperties } from "../visualPropertyAnalyzer";
-import { flattenImageMetadataProperties, type ImageMetadataProperties } from "./imageMetadataMetrics";
+import { analyzeVisualProperties } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/visualPropertyAnalyzer";
+import { flattenImageMetadataProperties, type ImageMetadataProperties } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/imageMetadataMetrics";
 
-export { CORE_VIDEO_METADATA_EXTRACTOR_VERSION } from "./metadataExtractorVersions";
+export { CORE_VIDEO_METADATA_EXTRACTOR_VERSION } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/metadataExtractorVersions";
 export interface VideoMetadataFrameResponse {
   id: number; state: "indexed" | "unavailable"; width: number; height: number;
   durationMilliseconds: number; frames: { width: number; height: number; rgba: string }[]; residentBytes: number;

@@ -13,5 +13,15 @@
   "electron/modelFactTypes.ts": "core/node/fileFacts/domain/modelFactTypes.ts",
   "electron/textDataFactExtractor.ts": "core/node/fileFacts/domain/textDataFactExtractor.ts",
   "electron/textDataFactTypes.ts": "core/node/fileFacts/domain/textDataFactTypes.ts",
-  "electron/threeDFactExtractor.ts": "core/node/fileFacts/domain/threeDFactExtractor.ts"
+  "electron/threeDFactExtractor.ts": "core/node/fileFacts/domain/threeDFactExtractor.ts",
+  "electron/animationFactInspector.ts": "core/node/fileFacts/domain/animationFactInspector.ts",
+  "electron/visualPropertyAnalyzer.ts": "core/node/fileFacts/domain/visualPropertyAnalyzer.ts",
+  "electron/imageDimensionTypes.ts": "core/node/fileFacts/domain/imageDimensionTypes.ts",
+  "electron/visualSourceDimensions.ts": "core/node/fileFacts/domain/visualSourceDimensions.ts",
+  "electron/cdrRenderService.ts": "core/node/fileFacts/domain/cdrRenderService.ts",
+  "electron/documentFactExtractor.ts": "core/node/fileFacts/domain/documentFactExtractor.ts",
+  "electron/documentFactTypes.ts": "core/node/fileFacts/domain/documentFactTypes.ts",
+  "electron/metadataExtraction/imageMetadataInspector.ts": "core/node/fileFacts/domain/imageMetadataInspector.ts",
+  "electron/metadataExtraction/imageMetadataMetrics.ts": "core/node/fileFacts/domain/imageMetadataMetrics.ts",
+  "electron/metadataExtraction/metadataExtractorVersions.ts": "core/node/fileFacts/domain/metadataExtractorVersions.ts"
 }

@@ -9,6 +9,7 @@
     "noEmitOnError": true
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    "../../resourceCatalog/domain/formats/visualPropertyTypes.ts"
   ]
 }

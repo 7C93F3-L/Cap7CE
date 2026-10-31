@@ -1,6 +1,6 @@
 import path from "node:path";
 import sharp, { type Sharp } from "sharp";
-import { readCdrFlattenedPreview } from "../../../electron/cdrRenderService";
+import { readCdrFlattenedPreview } from "../fileFacts/domain/cdrRenderService";
 import { renderPdfFirstPage } from "../../../electron/pdfRenderService";
 import { renderPsdFlattenedPreview } from "../../../electron/psdRenderService";
 import {
@@ -16,7 +16,7 @@ import {
   readSharpSourceBuffer,
   sharpSourceExtensions,
   type ImageSize
-} from "../../../electron/visualSourceDimensions";
+} from "../fileFacts/domain/visualSourceDimensions";
 import { requestCoreShellThumbnail } from "../../../electron/core/coreShellThumbnail";
 import type { NativeVisualCacheType } from "../../../src/shared/visualRenderTypes";
 import type { VisualImageMimeType } from "../../../src/shared/visualCacheTypes";

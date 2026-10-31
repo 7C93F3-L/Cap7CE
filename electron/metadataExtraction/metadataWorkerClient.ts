@@ -4,7 +4,7 @@ import { metadataWorkerPaths } from "./metadataWorkerPaths";
 import type { MetadataWorkerTask, MetadataWorkerResult, MetadataWorkerResponse } from "./metadataWorkerTypes";
 import { searchModelPrecisions } from "../modelSearchFilters";
 import { validMetadataTextDataProperties } from "./metadataTextDataProperties";
-import { validImageMetadataProperties } from "./imageMetadataMetrics";
+import { validImageMetadataProperties } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/imageMetadataMetrics";
 
 interface PendingTask {
   id: number;

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { readArtboardFact, readDocumentFact } from "../documentFactExtractor";
+import { readArtboardFact, readDocumentFact } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/documentFactExtractor";
 import type { MetadataDocumentProperties } from "./metadataWorkerTypes";
 
 // Runs in the owned OS helper. PDF's native dependencies stay in this process;

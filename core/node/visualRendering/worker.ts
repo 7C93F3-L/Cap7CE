@@ -10,7 +10,7 @@ const execute = async (task: VisualDecodeTask): Promise<VisualDecodeResult> => {
   if (!task || typeof task !== "object" || Object.keys(task).sort().join(",") !== (task.operation === "decode" ? "operation,sourcePath,type" : "operation,sourcePath"))
     throw new Error("core-visual-invalid-task");
   const sourcePath = source(task.sourcePath);
-  if (task.operation === "dimensions") return { kind: "dimensions", value: await (await import("../../../electron/visualSourceDimensions")).readVisualSourceDimensions(sourcePath) };
+  if (task.operation === "dimensions") return { kind: "dimensions", value: await (await import("../fileFacts/domain/visualSourceDimensions")).readVisualSourceDimensions(sourcePath) };
   if (task.operation === "sourcePreview") return { kind: "sourcePreview", value: await (await import("./directPreview")).shouldUseSourceFileForPreview(sourcePath) };
   if (task.operation !== "decode") throw new Error("core-visual-invalid-operation");
   const image = await (await import("./renderSource")).decodeVisualSource(sourcePath, task.type);

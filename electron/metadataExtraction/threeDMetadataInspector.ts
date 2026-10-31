@@ -1,4 +1,4 @@
-import { readThreeDFact } from "../../core/node/fileFacts/domain/threeDFactExtractor";
+import { readThreeDFact } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/threeDFactExtractor";
 import type { MetadataThreeDProperties } from "./metadataWorkerTypes";
 
 // Runs only in the owned OS helper; never follows external glTF buffers.

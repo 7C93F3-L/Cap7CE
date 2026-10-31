@@ -1,4 +1,4 @@
-import { readTextDataFact } from "../../core/node/fileFacts/domain/textDataFactExtractor";
+import { readTextDataFact } from "../../core/artifacts/file-facts/core/node/fileFacts/domain/textDataFactExtractor";
 import type { MetadataTextDataProperties } from "./metadataWorkerTypes";
 
 // The owned OS helper bounds parsing lifetime. Only counts leave that process;

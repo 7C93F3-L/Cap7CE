@@ -1,3 +1,2 @@
-// Core image/video facts include representative color metrics; legacy dimensions retain their own versions.
-export const CORE_IMAGE_METADATA_EXTRACTOR_VERSION = 2;
-export const CORE_VIDEO_METADATA_EXTRACTOR_VERSION = 2;
+// Compatibility entry; implementation belongs to the independent Core Node domain.
+export * from "../../core/artifacts/file-facts/core/node/fileFacts/domain/metadataExtractorVersions";
