@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import WordExtractor from "word-extractor";
-import { skimTextPreviewExtensions, maximumSkimTextPreviewBytes, maximumWordPreviewBytes, wordPreviewExtensions } from "../../../electron/textPreviewPolicy";
+import { skimTextPreviewExtensions, maximumSkimTextPreviewBytes, maximumWordPreviewBytes, wordPreviewExtensions } from "./contracts/textPreviewPolicy";
 import type { SkimTextPreview as SkimTextPreviewResult } from "../../../src/shared/textPreviewTypes";
 const wordExtractor = new WordExtractor();
 const unsupportedTextError = () => Object.assign(

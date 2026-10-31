@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+预览读取资源归属`core/node/providerPreview/readers`及`core/node/textPreview/contracts`：前者持有EPUB/MOBI隔离读取线程与字体大小/格式限制，后者持有文本/Word读取预算及文本结果校验。五份源码除模块位置外完全保留。现有font/text所有者直接使用规范定义，EPUB/MOBI运行文件仍由原生构建生成原有文件名；会话、请求替换、取消/超时、父进程退出与临时资源清理继续归现有Provider，不引入新生命周期。
+
+这些模块沿用现有跨领域TypeScript输出树`core/artifacts/file-facts`，共享EPUB/MOBI/book/text类型声明随输出保留，旧路径只转出。`preview-reader-source-boundary-check`守护源码/体量基线、只读闭包、原生入口及消费者、旧入口和线程打包。`test:preview-readers`覆盖EPUB/MOBI读取、文本编码/Word/取消及仓库外Provider资源；原有Provider和文本所有权守护继续有效。本轮不涉及预览窗口、索引、AI或用户缓存调整。
+
 视觉缓存共用契约归属`core/node/visualCache/contracts`：visualCachePaths保存既有目录/后缀及路径规则，versioning保留原缓存/渲染/Shell策略版本，visualCacheImage识别既有图片格式，visualCacheFrames负责原有有界管道帧读取。四份实现除导入位置外完全保留；不访问文件系统、不发布或清理缓存。visualCache、visualRendering、transport及localKeywords输入校验直接依赖这些规范源码，旧Electron入口仅转出。
 
 契约继续使用现有跨领域TypeScript编译树`core/artifacts/file-facts`输出，既有共享visualCacheTypes声明随产物保留；原生运行库仍由各领域入口打包，协议上限及版本不变。`visual-cache-contract-boundary-check`核对源码/体量基线、纯契约闭包、旧入口转出及原生消费者；既有store/publication/dispatch与传输服务的边界守护不变。`test:visual-cache-contracts`覆盖有界帧/会话协议、独立缓存运行库及视觉缓存复用；Shell回退及其他旧目录依赖仍待后续整理。

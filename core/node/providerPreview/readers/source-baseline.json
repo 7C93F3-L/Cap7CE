@@ -1,0 +1,22 @@
+{
+  "core/node/providerPreview/readers/epubPreviewWorker.ts": {
+    "lines": 206,
+    "sourceHash": "68b8e2e6951889480656b7911db503d9ff5b9b16221d3581f3c79855715062f3"
+  },
+  "core/node/providerPreview/readers/mobiPreviewWorker.ts": {
+    "lines": 214,
+    "sourceHash": "a0dcc70c48e10839c95087b16ee1d99c8672c7799557895ff6e58d5cc4fbc351"
+  },
+  "core/node/providerPreview/readers/fontPreviewLimits.ts": {
+    "lines": 2,
+    "sourceHash": "b854e50d1484a249a1db1e1e899b2dbed82855d6361ed93697dfce22097bbb30"
+  },
+  "core/node/textPreview/contracts/textPreviewPolicy.ts": {
+    "lines": 7,
+    "sourceHash": "ac1a5117e3e18d1585a256cd5dcf2098945773bdcd184a270fe590539262baee"
+  },
+  "core/node/textPreview/contracts/coreTextPreviewProjection.ts": {
+    "lines": 9,
+    "sourceHash": "025d0ca1a16913308db414d30f7707f84db257bc69820b8a08767ed9205c4a83"
+  }
+}

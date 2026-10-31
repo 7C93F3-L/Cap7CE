@@ -1,6 +1,6 @@
 import path from "node:path";
 import { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
-import { validTextPreviewReply } from "../../../electron/core/coreTextPreviewProjection";
+import { validTextPreviewReply } from "./contracts/coreTextPreviewProjection";
 import type { TextPreviewReply } from "../../../src/shared/textPreviewTypes";
 const fallback: TextPreviewReply = { ok: false, error: { code: "ECANCELED", message: "Text preview stopped." } };
 export function createTextPreviewOwner(directory: string) {

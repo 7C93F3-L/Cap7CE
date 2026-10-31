@@ -16,6 +16,8 @@
     "../../metadataExecution/**/*.ts",
     "../../resourceCatalog/domain/formats/threeDFactTypes.ts",
     "../../visualRendering/decoders/**/*.ts",
-    "../../visualCache/contracts/**/*.ts"
+    "../../visualCache/contracts/**/*.ts",
+    "../../providerPreview/readers/**/*.ts",
+    "../../textPreview/contracts/**/*.ts"
   ]
 }

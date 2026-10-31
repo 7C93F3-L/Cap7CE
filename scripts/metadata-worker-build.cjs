@@ -65,8 +65,8 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
   if (Object.values(stored.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !isBuiltin(item.path))) throw new Error("Unexpected Core stored metadata dependency.");
   for (const [source, name, external] of [
     ["core/node/providerPreview/host.ts", "provider-preview.cjs", ["@napi-rs/canvas"]],
-    ["electron/epubPreviewWorker.ts", "epubPreviewWorker.js", ["sharp"]],
-    ["electron/mobiPreviewWorker.ts", "mobiPreviewWorker.js", ["sharp", "@lingo-reader/mobi-parser"]],
+    ["core/node/providerPreview/readers/epubPreviewWorker.ts", "epubPreviewWorker.js", ["sharp"]],
+    ["core/node/providerPreview/readers/mobiPreviewWorker.ts", "mobiPreviewWorker.js", ["sharp", "@lingo-reader/mobi-parser"]],
     ["core/node/fileFacts/domain/archivePreviewWorker.ts", "archivePreviewWorker.js", ["7z-wasm"]]]) {
     const provider = await build({ entryPoints: [path.join(root, source)], outfile: path.join(output, name), bundle: true, platform: "node", format: "cjs", target: "node24", external, sourcemap: false, metafile: true, logLevel: "error" });
     if (Object.values(provider.metafile.outputs).flatMap(item => item.imports).some(item => !item.external || !external.includes(item.path) && !isBuiltin(item.path))) throw new Error("Unexpected Core preview dependency.");

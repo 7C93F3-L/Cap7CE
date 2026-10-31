@@ -9,7 +9,7 @@ import type {
   FontPreviewFallbackReason
 } from "../../../src/shared/fontPreviewTypes";
 
-import { maximumFontPreviewBytes, supportedFontPreviewExtensions } from "../../../electron/fontPreviewLimits";
+import { maximumFontPreviewBytes, supportedFontPreviewExtensions } from "./readers/fontPreviewLimits";
 const fontPreviewTimeoutMs = 10_000;
 
 interface FontPreviewTask {

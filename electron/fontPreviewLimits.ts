@@ -1,2 +1,2 @@
-export const maximumFontPreviewBytes = 64 * 1024 * 1024;
-export const supportedFontPreviewExtensions = new Set([".ttf", ".otf"]);
+// Compatibility entry; implementation belongs to the independent Core Node domain.
+export * from "../core/artifacts/file-facts/core/node/providerPreview/readers/fontPreviewLimits";
