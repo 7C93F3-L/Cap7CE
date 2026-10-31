@@ -1,4 +1,4 @@
-import { VisualCacheFrameReader, maximumCacheFrameBytes } from "../../../electron/core/visualCacheFrames";
+import { VisualCacheFrameReader, maximumCacheFrameBytes } from "../visualCache/contracts/visualCacheFrames";
 export interface CoreNodeService { dispatch(method: unknown, args: unknown): Promise<unknown>; close(): unknown | Promise<unknown> }
 // One private inherited-pipe session. Domain assembly and serialized method selection belong to the caller.
 export async function serveCoreNode(owner: CoreNodeService, serialMethods: readonly string[]): Promise<void> {

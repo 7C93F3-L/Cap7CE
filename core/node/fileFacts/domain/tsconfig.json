@@ -15,6 +15,7 @@
     "../../resourceCatalog/domain/formats/archiveSearchFilters.ts",
     "../../metadataExecution/**/*.ts",
     "../../resourceCatalog/domain/formats/threeDFactTypes.ts",
-    "../../visualRendering/decoders/**/*.ts"
+    "../../visualRendering/decoders/**/*.ts",
+    "../../visualCache/contracts/**/*.ts"
   ]
 }

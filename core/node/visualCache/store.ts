@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "../../../electron/versioning";
-import { createVisualCachePaths, normalizedPathForKey, formalVisualCacheTypes, formalThumbnailCacheTypes, skimVisualCacheTypes } from "../../../electron/core/visualCachePaths";
+import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "./contracts/versioning";
+import { createVisualCachePaths, normalizedPathForKey, formalVisualCacheTypes, formalThumbnailCacheTypes, skimVisualCacheTypes } from "./contracts/visualCachePaths";
 import type { VisualCacheType, VisualCacheEntry, VisualCacheMetadata, VisualCacheSourceMetadata, VisualCacheRenderSource, VisualCacheImage, VisualImageMimeType, VisualCacheStats } from "../../../src/shared/visualCacheTypes";
-import { detectVisualImageMimeType } from "../../../electron/core/visualCacheImage";
-import { maximumCacheImageBytes } from "../../../electron/core/visualCacheFrames";
+import { detectVisualImageMimeType } from "./contracts/visualCacheImage";
+import { maximumCacheImageBytes } from "./contracts/visualCacheFrames";
 import { createVisualCachePublications } from "./publication";
 
 export const createVisualCacheStore = (root: string) => {

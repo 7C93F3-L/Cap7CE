@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { LocalKeywordModelConnection, KeywordSourceIdentity } from "../../../src/shared/localKeywordTypes";
-import { maximumCacheImageBytes } from "../../../electron/core/visualCacheFrames";
+import { maximumCacheImageBytes } from "../visualCache/contracts/visualCacheFrames";
 
 export const invalid = (): never => { throw new Error("local-keywords-invalid-request"); };
 const keys = (value: unknown, expected: string): value is Record<string, unknown> => !!value && typeof value === "object" && Object.keys(value).sort().join(",") === expected;

@@ -6,7 +6,7 @@ import { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
 import { dispatchStoredMetadata } from "../storedMetadata/dispatch";
 import { LocalKeywordOwner } from "../localKeywords/owner";
 import { createVisualCacheStore } from "./store";
-import { formalVisualCacheTypes, skimVisualCacheTypes } from "../../../electron/core/visualCachePaths";
+import { formalVisualCacheTypes, skimVisualCacheTypes } from "./contracts/visualCachePaths";
 import type { VisualCacheEntry, VisualCacheType, VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
 const invalid = () => { throw new Error("core-cache-invalid-request"); };
 const text = (value: unknown): string => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") ? value : invalid();
@@ -17,7 +17,7 @@ const entry = (value: unknown): VisualCacheEntry => value !== null && typeof val
   ? value as VisualCacheEntry : invalid(); // Store authenticates every field before any path is used.
 const mime = (value: unknown): VisualImageMimeType => value === "image/png" || value === "image/jpeg" ? value : invalid();
 const probeId = (value: unknown) => typeof value === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value) ? value : invalid();
-import { maximumCacheImageBytes } from "../../../electron/core/visualCacheFrames";
+import { maximumCacheImageBytes } from "./contracts/visualCacheFrames";
 export const createVisualCacheDispatcher = (root: string, directory: string) => {
   const store = createVisualCacheStore(root), visuals = new CoreVisualPreparation(store, directory), metadata = new InteractiveMetadataOwner(directory);
   const keywords = new LocalKeywordOwner(), sourceInfo = createSourceInformationOwner(), browse = createDirectoryBrowseOwner();

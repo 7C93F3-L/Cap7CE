@@ -1,3 +1,2 @@
-export const CACHE_VERSION = 1;
-export const RENDER_STRATEGY_VERSION = 5;
-export const SHELL_THUMBNAIL_POLICY_VERSION = 1;
+// Compatibility entry; implementation belongs to the independent Core Node domain.
+export * from "../core/artifacts/file-facts/core/node/visualCache/contracts/versioning";

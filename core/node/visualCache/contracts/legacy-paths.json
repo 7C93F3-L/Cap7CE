@@ -1,0 +1,6 @@
+{
+  "electron/core/visualCachePaths.ts": "core/node/visualCache/contracts/visualCachePaths.ts",
+  "electron/core/visualCacheFrames.ts": "core/node/visualCache/contracts/visualCacheFrames.ts",
+  "electron/core/visualCacheImage.ts": "core/node/visualCache/contracts/visualCacheImage.ts",
+  "electron/versioning.ts": "core/node/visualCache/contracts/versioning.ts"
+}

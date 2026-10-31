@@ -1,4 +1,4 @@
-import { VisualCacheFrameReader, maximumCacheImageBytes, maximumCacheFrameBytes } from "../../../electron/core/visualCacheFrames";
+import { VisualCacheFrameReader, maximumCacheImageBytes, maximumCacheFrameBytes } from "../visualCache/contracts/visualCacheFrames";
 import type { VisualDecodeTask, VisualDecodeResult } from "../../../src/shared/visualRenderTypes";
 import path from "node:path";
 

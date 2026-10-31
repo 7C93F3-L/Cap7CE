@@ -1,0 +1,18 @@
+{
+  "visualCachePaths.ts": {
+    "lines": 106,
+    "sourceHash": "bfa9be4ba21e755256a5cfa844af025d7a039fe4c500b77ad95a062a5fd58bce"
+  },
+  "visualCacheFrames.ts": {
+    "lines": 30,
+    "sourceHash": "3552ad93bfe34f50288ac1eeb6a9f0fdccc65ec991b7d911cd9429b8b6d2481b"
+  },
+  "visualCacheImage.ts": {
+    "lines": 7,
+    "sourceHash": "cb86d1a40ef8baf8aeb8a8fd966442b4c4211933ec0412c8199235b241b4c291"
+  },
+  "versioning.ts": {
+    "lines": 3,
+    "sourceHash": "e73326b158946d2866f8b1f2420744d4fc31b2252e21219601837eb9d3ecd9c4"
+  }
+}

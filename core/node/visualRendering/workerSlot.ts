@@ -3,7 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import fs from "node:fs";
 import fileSystem from "node:fs/promises";
-import { VisualCacheFrameReader, maximumCacheImageBytes } from "../../../electron/core/visualCacheFrames";
+import { VisualCacheFrameReader, maximumCacheImageBytes } from "../visualCache/contracts/visualCacheFrames";
 import type { VisualDecodeTask, VisualDecodeResult } from "../../../src/shared/visualRenderTypes";
 
 interface Pending { id: number; operation: VisualDecodeTask["operation"]; timer: NodeJS.Timeout; resolve: (result: VisualDecodeResult) => void; reject: (error: Error) => void }

@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+视觉缓存共用契约归属`core/node/visualCache/contracts`：visualCachePaths保存既有目录/后缀及路径规则，versioning保留原缓存/渲染/Shell策略版本，visualCacheImage识别既有图片格式，visualCacheFrames负责原有有界管道帧读取。四份实现除导入位置外完全保留；不访问文件系统、不发布或清理缓存。visualCache、visualRendering、transport及localKeywords输入校验直接依赖这些规范源码，旧Electron入口仅转出。
+
+契约继续使用现有跨领域TypeScript编译树`core/artifacts/file-facts`输出，既有共享visualCacheTypes声明随产物保留；原生运行库仍由各领域入口打包，协议上限及版本不变。`visual-cache-contract-boundary-check`核对源码/体量基线、纯契约闭包、旧入口转出及原生消费者；既有store/publication/dispatch与传输服务的边界守护不变。`test:visual-cache-contracts`覆盖有界帧/会话协议、独立缓存运行库及视觉缓存复用；Shell回退及其他旧目录依赖仍待后续整理。
+
 视觉解码源码归属`core/node/visualRendering/decoders`：PDF/PSD解码、可靠画板边界及PSD线程、内容边界裁剪、可视格式集合、直读预览策略共七份实现。既有renderSource/directPreview直接依赖该目录；Windows Shell回退、缓存发布、工作进程所有权及窗口/预览生命周期保持原链路。七个旧路径只转出独立编译产物。运行时源码闭包仅额外允许resourceCatalog的formatCapabilities纯定义，源摘要/体量基线保证迁移不改变行为。
 
 该目录与fileFacts/metadataExecution共用既有TypeScript编译输出树`core/artifacts/file-facts`，源码仍按职责分目录，解码器不反向依赖缓存发布或任务装配。原生构建直接由规范源码打包原有`psdArtboardRenderWorker.js`，保持相邻线程资源身份；旧版打包沿该输出树统一置于ASAR外保留依赖。`visual-decoder-boundary-check`检查独立依赖闭包、解码边界、七份源码一致性、旧入口转出和线程打包契约。`test:visual-decoders`验证编译、原生资源和视觉运行时及BMP一致性；本轮不代表整个视觉/缓存领域已脱离旧目录。
