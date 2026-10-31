@@ -19,8 +19,8 @@ internal sealed class IndexOnboardingDialog
         dialog.DefaultButton=ContentDialogButton.Primary;
         L.Bind(dialog,ContentDialog.SecondaryButtonTextProperty,"ui.indexPrompt.custom");
         var dismiss=new HyperlinkButton {HorizontalAlignment=HorizontalAlignment.Right,Padding=new(0)};
-        dismiss.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("ms-appx:///Themes/IndexOnboardingResources.xaml")});
-        dismiss.Style=(Style)dismiss.Resources["IndexOnboardingDismissStyle"];
+        dismiss.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("ms-appx:///Themes/DialogTextActionResources.xaml")});
+        dismiss.Style=(Style)dismiss.Resources["DialogTextActionStyle"];
         L.Bind(dismiss,ContentControl.ContentProperty,"ui.indexPrompt.never");
         dismiss.FontSize=13;dismiss.VerticalAlignment=VerticalAlignment.Center;
         var title=L.Text("ui.indexPrompt.title");title.FontSize=20;title.FontWeight=Microsoft.UI.Text.FontWeights.SemiBold;

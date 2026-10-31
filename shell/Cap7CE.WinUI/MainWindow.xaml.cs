@@ -101,7 +101,7 @@ public sealed partial class MainWindow : Window
         commands.PreviewRequested+=ShowPreview;
         commands.AutoKeywordsRequested+=items=>commands.Run(()=>services.AutoKeywords.StartAsync(items));
         services.AutoKeywords.Saved+=item=>details.RefreshKeywords(item);
-        commands.CanEditKeywords=()=>DetailsBorder.Visibility==Visibility.Visible;commands.EditKeywordsRequested+=details.EditKeywords;
+        commands.KeywordsEdited+=details.RefreshKeywords;
         commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
         commands.ItemsDeleted+=active.RemoveDeleted;commands.ItemsRenamed+=()=>{results.ClearSelection();Refresh();};
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};

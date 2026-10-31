@@ -37,7 +37,7 @@ internal static class ResultContextMenu
                 if(reason is not null)L.Bind(item,ToolTipService.ToolTipProperty,reason);
             }
             if(action.Id=="editKeywords") {
-                var reason=commands.KeywordsUnavailable(items)??(commands.CanEditKeywords()?null:"menu.editKeywordsUnavailable");
+                var reason=commands.KeywordsUnavailable(items);
                 item.IsEnabled=reason is null;
                 if(reason is not null)L.Bind(item,ToolTipService.ToolTipProperty,reason);
             }

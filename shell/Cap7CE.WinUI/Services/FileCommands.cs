@@ -128,8 +128,14 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         }
         return null;
     }
-    public Func<bool> CanEditKeywords {get;set;}=()=>false;
-    public event Action<IReadOnlyList<AssetItem>>? EditKeywordsRequested;
-    public void EditKeywords(IReadOnlyList<AssetItem> items)=>EditKeywordsRequested?.Invoke(items.ToArray());
+    public event Action<IReadOnlyList<AssetItem>>? KeywordsEdited;
+    private bool editingKeywords;
+    public void EditKeywords(IReadOnlyList<AssetItem> items)=>Run(async()=>{
+        if(editingKeywords)return;
+        var reason=KeywordsUnavailable(items);if(reason is not null)throw new UiFailure(reason);
+        editingKeywords=true;
+        try{if(await Views.KeywordEditDialog.ShowAsync(xamlRoot(),services,items.ToArray(),notice))KeywordsEdited?.Invoke(items);}
+        finally{editingKeywords=false;}
+    });
     public MenuFlyout Menu(IReadOnlyList<AssetItem> items,bool home=false)=>ResultContextMenu.Build(this,services.Favorites,items,home);
 }

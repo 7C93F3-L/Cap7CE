@@ -23,10 +23,17 @@ internal sealed class DetailsKeywordEditor:UserControl
     private CancellationTokenSource pending=new();
     private IReadOnlyList<AssetItem> items=[];
     private KeywordSelectionSnapshot<AssetItem> snapshot=new([],[]);
+    private readonly bool dialogMode;
+    public event Action? StateChanged;
+    public bool CanSave=>ready&&!saving&&draft.Dirty&&!readFailed;
+    public bool Saving=>saving;
+    public bool CanClear=>ready&&!saving&&(draft.Words.Count>0||input.Text.Length>0);
+    public void ClearDraft(){if(!ready||saving)return;draft.Clear();input.Text="";L.Literal(status,TextBlock.TextProperty,"");RenderTags();Show();}
+    public async Task<bool> SaveForDialogAsync(){await SaveAsync();return ready&&!saving&&!draft.Dirty&&!readFailed;}
     private bool ready,saving,focusRequested,readFailed,automaticBusy,refreshPending;
-    public DetailsKeywordEditor(Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read,Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write,Action<UiMessage> notice,Action<IReadOnlyList<AssetItem>> generate)
+    public DetailsKeywordEditor(Func<IReadOnlyList<AssetItem>,CancellationToken,Task<KeywordSelectionSnapshot<AssetItem>>> read,Func<KeywordSelectionSnapshot<AssetItem>,string[],CancellationToken,Task<KeywordSelectionSaveResult<AssetItem>>> write,Action<UiMessage> notice,Action<IReadOnlyList<AssetItem>> generate,bool dialogMode=false)
     {
-        this.read=read;this.write=write;this.notice=notice;L.Bind(input,TextBox.PlaceholderTextProperty,"ui.keywords.placeholder");
+        this.dialogMode=dialogMode;this.read=read;this.write=write;this.notice=notice;L.Bind(input,TextBox.PlaceholderTextProperty,"ui.keywords.placeholder");
         retry=L.Button("ui.keywords.reload",()=>{draft.Cancel();input.Text="";_=ReadAsync();});
         L.Bind(retry,ToolTipService.ToolTipProperty,"ui.keywords.reloadHint");
         automatic=Ui.Button("",()=>{if(items.Count>0&&!draft.Dirty){var target=items;generate(target);}});
@@ -35,7 +42,7 @@ internal sealed class DetailsKeywordEditor:UserControl
         var automaticContent=Ui.Row(automaticIcon,automaticLabel);automaticContent.Spacing=5;automatic.Content=automaticContent;
         L.Bind(automatic,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,"ui.keywords.automatic");
         save=L.Button("ui.keywords.save",()=>_=SaveAsync());cancel=L.Button("common.cancel",CancelDraft);
-        clear=L.Button("ui.keywords.clear",()=>{draft.Clear();input.Text="";L.Literal(status,TextBlock.TextProperty,"");RenderTags();Show();});
+        clear=L.Button("ui.keywords.clear",ClearDraft);
         editorActions=Ui.Row(clear,cancel,save);editorActions.Spacing=4;
         actions.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});actions.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
         actions.RowDefinitions.Add(new(){Height=GridLength.Auto});actions.RowDefinitions.Add(new(){Height=GridLength.Auto});
@@ -43,9 +50,14 @@ internal sealed class DetailsKeywordEditor:UserControl
         actions.SizeChanged+=(_,_)=>{var narrow=actions.ActualWidth<210;Grid.SetRow(automatic,narrow?1:0);Grid.SetColumn(automatic,narrow?0:1);Grid.SetColumnSpan(editorActions,narrow?2:1);};
         foreach(var button in new[]{automatic,retry,clear,save,cancel}){button.MinWidth=0;button.FontSize=12;button.Padding=new(8,4,8,4);}
         input.TextChanged+=(_,_)=>{draft.Input=input.Text;Show();};
-        input.KeyDown+=(_,e)=>{if(e.Key==Windows.System.VirtualKey.Escape&&!saving&&draft.Dirty){e.Handled=true;CancelDraft();}};
+        input.KeyDown+=(_,e)=>{if(!dialogMode&&e.Key==Windows.System.VirtualKey.Escape&&!saving&&draft.Dirty){e.Handled=true;CancelDraft();}};
         card.Body.Children.Add(tags);card.Body.Children.Add(empty);card.Body.Children.Add(input);card.Body.Children.Add(actions);card.Body.Children.Add(status);card.Body.Children.Add(retry);
-        Content=card;Show();
+        if(dialogMode){
+            card.Body.Children.Clear();
+            // The dialog owns scrolling; a second viewer retains empty scrollbar layout.
+            var body=Ui.Column(tags,empty,input,status,retry);body.Spacing=6;Content=body;
+        }else Content=card;
+        Show();
     }
     public void SetItems(IReadOnlyList<AssetItem> value)
     {
@@ -108,6 +120,7 @@ internal sealed class DetailsKeywordEditor:UserControl
         retry.IsEnabled=items.Count>0&&!saving;clear.IsEnabled=cancel.IsEnabled=save.IsEnabled=ready&&!saving;
         var canGenerate=items.Count>1||items.Any(item=>FormatRegistry.Find(item.Entry.Extension)?.CanAIIndex==true);
         automatic.IsEnabled=items.Count>0&&canGenerate&&!saving&&!automaticBusy&&!dirty;
+        StateChanged?.Invoke();
         L.Bind(automatic,ToolTipService.ToolTipProperty,dirty?"ui.keywords.saveFirst":automaticBusy?"ui.keywords.recognizing":items.Count==0?"ui.keywords.selectFiles":canGenerate?"ui.keywords.generateHint":"ui.keywords.unsupported");
     }
     public void Stop()=>pending.Cancel();

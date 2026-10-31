@@ -55,7 +55,8 @@ internal sealed class DetailsPane : UserControl
         if(selected.Any(item=>!item.Entry.IsDirectory))debounce.Start();
     }
     public void EditKeywords(IReadOnlyList<AssetItem> items){Select(items);keywords.RequestEdit();}
-    public void RefreshKeywords(AssetItem item){if(stopped||!selected.Any(current=>string.Equals(current.FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase)))return;if(services.AutoKeywords.Busy)keywordRefreshPending=true;else _=keywords.ReadAsync();}
+    public void RefreshKeywords(AssetItem item)=>RefreshKeywords([item]);
+    public void RefreshKeywords(IReadOnlyList<AssetItem> items){if(stopped||!selected.Any(current=>items.Any(item=>string.Equals(current.FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase))))return;if(services.AutoKeywords.Busy)keywordRefreshPending=true;else _=keywords.ReadAsync();}
     public void SetAutoKeywordBusy(bool value){keywords.SetAutomaticBusy(value);if(!value&&keywordRefreshPending&&!stopped){keywordRefreshPending=false;_=keywords.ReadAsync();}}
     private void Render()
     {

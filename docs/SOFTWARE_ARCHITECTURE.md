@@ -74,3 +74,5 @@ NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，�
 `npm run test:core`先验证支持配置的锁文件稳定性，再运行Core完整回归；纯协议项目不声明平台运行时，锁文件仅保留实际net10.0图。取消快照会先收敛到needsRebuild，诊断测试区分主动清理后的重试与未回收的building状态。`npm run test:delivery`独立检查NativeAOT Setup、产品载荷完整性/篡改拒绝和从NSIS提取的实际Setup；仅验证，不安装服务、删除Catalog或修改系统配置。安装向导、快捷方式与启动仍需实际人工验收。
 
 界面文案以shell/Cap7CE.WinUI/Localization/messages.json为唯一来源；资源生成不再导出旧设置文案副本。winui-language-usage按原生源码、帮助清单及实际生成的筛选身份收集静态/动态键，语言检查拒绝缺失键和无引用键；测试复用在用文案，不以测试引用保留已退役提示。
+
+KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEditor的弹窗模式及KeywordSelectionService，不另建草稿或存储链路。弹窗约束正文可用宽高并保留原生底部按钮；详情栏默认模式不变。标题清空动作复用编辑器ClearDraft；DialogTextActionResources统一建库提醒和关键词弹窗标题文字操作的普通/悬停状态。

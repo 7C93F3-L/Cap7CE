@@ -979,10 +979,6 @@
     "zh-CN": "在资源管理器中打开",
     "en-US": "Open in File Explorer"
   },
-  "menu.editKeywordsUnavailable": {
-    "zh-CN": "请选中文件并展开右侧详细信息栏",
-    "en-US": "Select files and open the details pane on the right."
-  },
   "main.sidebarWidth": {
     "zh-CN": "目录栏宽度",
     "en-US": "Folder pane width"
@@ -1186,6 +1182,10 @@
   "ui.keywords.save": {
     "zh-CN": "保存",
     "en-US": "Save"
+  },
+  "ui.keywords.clearAll": {
+    "zh-CN": "清空关键词",
+    "en-US": "Clear keywords"
   },
   "ui.keywords.clear": {
     "zh-CN": "清空",
