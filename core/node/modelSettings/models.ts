@@ -2,7 +2,7 @@ import { createModelSelectionFile } from "./selectionFile";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { t } from "../resourceCatalog/domain/localization/localization";
-import type * as Contracts from "../../../src/shared/modelSettingsTypes";
+import type * as Contracts from "../../../core/shared/modelSettingsTypes";
 type GgufModelFile=Contracts.GgufModelFile;
 type GgufModelSettingsResponse=Contracts.GgufModelSettingsResponse;
 type SelectedGgufModelRuntime=Contracts.SelectedGgufModelRuntime;

@@ -18,8 +18,8 @@ import {
   type ImageSize
 } from "../fileFacts/domain/visualSourceDimensions";
 import { requestCoreShellThumbnail } from "./shell/coreShellThumbnail";
-import type { NativeVisualCacheType } from "../../../src/shared/visualRenderTypes";
-import type { VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
+import type { NativeVisualCacheType } from "../../../core/shared/visualRenderTypes";
+import type { VisualImageMimeType } from "../../../core/shared/visualCacheTypes";
 import { visualNativeExecutable, visualScratchDirectory } from "./resources";
 type VisualSourceEntry = { sourcePath: string };
 interface VisualRenderStrategy {

@@ -1,8 +1,8 @@
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const { PassThrough, Writable } = require("node:stream");
-const { readVideoMetadataFrames, videoMetadataProperties } = require("../dist-electron/metadataExtraction/videoMetadataFrames.js");
-const { VideoMetadataFrameClient } = require("../dist-electron/metadataExtraction/videoMetadataFrameClient.js");
+const { readVideoMetadataFrames, videoMetadataProperties } = require("./support/load-canonical.cjs")("core/node/metadataExecution/videoMetadataFrames.ts");
+const { VideoMetadataFrameClient } = require("./support/load-canonical.cjs")("core/node/metadataExecution/videoMetadataFrameClient.ts");
 const frame = (rgba) => ({ width: 1, height: 1, rgba: Buffer.from(rgba).toString("base64") });
 const response = (id, residentBytes = 100) => ({ id, state: "indexed", width: 640, height: 480, durationMilliseconds: 3000,
   frames: [frame([255,0,0,255]), frame([0,255,0,255]), frame([0,0,255,255])], residentBytes });

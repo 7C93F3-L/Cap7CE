@@ -1,4 +1,4 @@
-import type { VisualDecodeTask, VisualDecodeResult } from "../../../src/shared/visualRenderTypes";
+import type { VisualDecodeTask, VisualDecodeResult } from "../../../core/shared/visualRenderTypes";
 import { VisualWorkerSlot } from "./workerSlot";
 
 type Work = { kind: "task"; task: VisualDecodeTask; resolve: (value: VisualDecodeResult) => void; reject: (error: Error) => void }

@@ -1,6 +1,6 @@
 import path from "node:path";
 import createSevenZip from "7z-wasm";
-import type { ArchiveWorkerRequest, ArchiveWorkerResponse } from "../../../../src/shared/archivePreviewTypes";
+import type { ArchiveWorkerRequest, ArchiveWorkerResponse } from "../../../../core/shared/archivePreviewTypes";
 
 const outputLines: string[] = [];
 let outputTruncated = false;

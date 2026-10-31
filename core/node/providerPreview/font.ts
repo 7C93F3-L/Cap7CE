@@ -7,7 +7,7 @@ import type {
   FontMetadataWorkerResponse,
   FontPreviewData,
   FontPreviewFallbackReason
-} from "../../../src/shared/fontPreviewTypes";
+} from "../../../core/shared/fontPreviewTypes";
 
 import { maximumFontPreviewBytes, supportedFontPreviewExtensions } from "./readers/fontPreviewLimits";
 const fontPreviewTimeoutMs = 10_000;

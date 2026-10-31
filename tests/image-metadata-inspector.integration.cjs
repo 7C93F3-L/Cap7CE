@@ -5,7 +5,7 @@ const path = require("node:path");
 const sharp = require("sharp");
 sharp.cache(false);
 sharp.concurrency(1);
-const { inspectImageMetadata } = require("../dist-electron/metadataExtraction/imageMetadataInspector.js");
+const { inspectImageMetadata } = require("./support/load-canonical.cjs")("core/node/fileFacts/domain/imageMetadataInspector.ts");
 
 (async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "cap7ce-image-metadata-"));

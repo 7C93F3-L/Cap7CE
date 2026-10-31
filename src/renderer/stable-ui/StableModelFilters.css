@@ -1,5 +1,0 @@
-.cap-stable-model-filter { width: max-content; min-width: 220px; }
-.cap-stable-model-filter > div { display: flex; gap: 4px; padding-top: 10px; }
-.cap-stable-model-filter button { min-width: 64px; min-height: 44px; padding: 4px 9px; border: 0; border-radius: 9px; color: inherit; background: transparent; font: inherit; font-size: var(--cap-stable-secondary-font-size); }
-.cap-stable-model-filter button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }
-.cap-stable-model-filter button.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }

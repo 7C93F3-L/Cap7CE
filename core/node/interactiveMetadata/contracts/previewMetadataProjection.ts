@@ -1,5 +1,5 @@
 import { embeddedSearchEvidenceKinds } from "../../embeddedMetadata/domain/embeddedMetadataTypes";
-import type { EmbeddedMetadataExtraction, PreviewEmbeddedMetadata } from "../../../../src/shared/embeddedMetadataTypes";
+import type { EmbeddedMetadataExtraction, PreviewEmbeddedMetadata } from "../../../../core/shared/embeddedMetadataTypes";
 
 export const toPreviewMetadata = (extraction: EmbeddedMetadataExtraction): PreviewEmbeddedMetadata | null => {
   if (extraction.status !== "indexed") return null;

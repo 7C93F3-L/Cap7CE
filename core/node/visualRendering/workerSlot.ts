@@ -4,7 +4,7 @@ import os from "node:os";
 import fs from "node:fs";
 import fileSystem from "node:fs/promises";
 import { VisualCacheFrameReader, maximumCacheImageBytes } from "../visualCache/contracts/visualCacheFrames";
-import type { VisualDecodeTask, VisualDecodeResult } from "../../../src/shared/visualRenderTypes";
+import type { VisualDecodeTask, VisualDecodeResult } from "../../../core/shared/visualRenderTypes";
 
 interface Pending { id: number; operation: VisualDecodeTask["operation"]; timer: NodeJS.Timeout; resolve: (result: VisualDecodeResult) => void; reject: (error: Error) => void }
 const cancelled = () => Object.assign(new Error("Visual decoder was released."), { code: "ECANCELED" });

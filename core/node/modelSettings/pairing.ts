@@ -1,6 +1,6 @@
 import path from "node:path";
 import { t } from "../resourceCatalog/domain/localization/localization";
-import type { GgufModelFileKind, GgufModelFile, GgufVisionModel } from "../../../src/shared/modelSettingsTypes";
+import type { GgufModelFileKind, GgufModelFile, GgufVisionModel } from "../../../core/shared/modelSettingsTypes";
 const modelIdentityTokens = (fileName: string, kind: GgufModelFileKind) => {
   const ignoredTokens = new Set([
     "gguf", "mmproj", "instruct", "chat", "vision", "projector", "f16", "f32", "bf16",

@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict'), fs = require('node:fs/promises'), os = require('node:os'), path = require('node:path');
-const { readThreeDFact } = require('../dist-electron/threeDFactExtractor.js');
+const { readThreeDFact } = require("./support/load-canonical.cjs")("core/node/fileFacts/domain/threeDFactExtractor.ts");
 (async () => {
  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'cap7ce-three-d-known-'));
  try {

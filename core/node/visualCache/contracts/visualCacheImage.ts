@@ -1,4 +1,4 @@
-import type { VisualImageMimeType } from "../../../../src/shared/visualCacheTypes";
+import type { VisualImageMimeType } from "../../../../core/shared/visualCacheTypes";
 
 export const detectVisualImageMimeType = (buffer: Buffer): VisualImageMimeType => {
   if (buffer.length >= 8 && buffer[0] === 0x89 && buffer.subarray(1, 4).toString("ascii") === "PNG") return "image/png";

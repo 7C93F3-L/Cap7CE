@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { parentPort, workerData } from "node:worker_threads";
-import type { FontMetadataWorkerRequest, FontMetadataWorkerResponse } from "../../../../src/shared/fontPreviewTypes";
+import type { FontMetadataWorkerRequest, FontMetadataWorkerResponse } from "../../../../core/shared/fontPreviewTypes";
 
 interface LocalizedNameRecord {
   [language: string]: string | undefined;

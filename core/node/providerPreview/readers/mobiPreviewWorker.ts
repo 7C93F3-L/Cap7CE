@@ -8,7 +8,7 @@ import type {
   MobiPreviewChapter,
   MobiPreviewFallbackReason,
   MobiWorkerResponse
-} from "../../../../src/shared/mobiPreviewTypes";
+} from "../../../../core/shared/mobiPreviewTypes";
 
 const MAX_RECORD_COUNT = 4_096;
 const MAX_RECORD_SIZE = 8 * 1024 * 1024;

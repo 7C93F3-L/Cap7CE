@@ -1,4 +1,4 @@
-import type { ComputerSearchAspectRange, ComputerSearchRatio } from "../../../../../src/shared/computerSearchFactTypes";
+import type { ComputerSearchAspectRange, ComputerSearchRatio } from "../../../../../core/shared/computerSearchFactTypes";
 import { normalizeImageAspectRatioValue, type SearchImageAspectRatio, type SearchImageAspectRatioValue } from "../formats/imageSearchFilters";
 
 const choices: Record<SearchImageAspectRatio, ComputerSearchAspectRange> = {

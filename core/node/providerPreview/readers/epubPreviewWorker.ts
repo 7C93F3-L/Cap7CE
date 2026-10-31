@@ -9,7 +9,7 @@ import type {
   EpubPreviewChapter,
   EpubPreviewFallbackReason,
   EpubWorkerResponse
-} from "../../../../src/shared/epubPreviewTypes";
+} from "../../../../core/shared/epubPreviewTypes";
 
 const MAX_ENTRY_COUNT = 2_000;
 const MAX_ENTRY_SIZE = 8 * 1024 * 1024;

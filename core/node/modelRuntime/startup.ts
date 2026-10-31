@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { t } from "../resourceCatalog/domain/localization/localization";
-import type { GgufModelLoadStatus,LlamaRuntimeProcessState } from "../../../src/shared/modelRuntimeTypes";
+import type { GgufModelLoadStatus,LlamaRuntimeProcessState } from "../../../core/shared/modelRuntimeTypes";
 import { ModelRuntimeAttempt } from "./attempt";
 import type { ModelRuntimeSettings } from "./settings";
 import type { ModelRuntimeLog } from "./log";

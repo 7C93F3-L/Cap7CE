@@ -22,7 +22,7 @@ const loadPdfJs = () => (
   pdfJsPromise ??= importEsmModule("pdfjs-dist/legacy/build/pdf.mjs")
 );
 
-import type { PdfPreviewMetadata } from "../../../src/shared/pdfPreviewTypes";
+import type { PdfPreviewMetadata } from "../../../core/shared/pdfPreviewTypes";
 interface PdfPreviewSession {
   sessionId: string;
   filePath: string;

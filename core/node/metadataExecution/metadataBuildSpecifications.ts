@@ -1,4 +1,4 @@
-import type { MetadataBuildSpecification } from "../../../src/shared/metadataBuildTypes";
+import type { MetadataBuildSpecification } from "../../../core/shared/metadataBuildTypes";
 import { supportedImageDimensionExtensions } from "../fileFacts/domain/imageDimensionTypes";
 import { supportedVideoFactExtensions } from "../fileFacts/domain/videoFactTypes";
 import { CORE_IMAGE_METADATA_EXTRACTOR_VERSION, CORE_VIDEO_METADATA_EXTRACTOR_VERSION } from "../fileFacts/domain/metadataExtractorVersions";
@@ -10,7 +10,7 @@ import { THREE_D_FACT_EXTRACTOR_VERSION, supportedThreeDFactExtensions } from ".
 import { ARCHIVE_FACT_EXTRACTOR_VERSION, supportedArchiveFactExtensions } from "../fileFacts/domain/archiveFactTypes";
 import { TEXT_DATA_FACT_EXTRACTOR_VERSION, supportedTextDataFactExtensions } from "../fileFacts/domain/textDataFactTypes";
 
-export type { MetadataBuildSpecification } from "../../../src/shared/metadataBuildTypes";
+export type { MetadataBuildSpecification } from "../../../core/shared/metadataBuildTypes";
 // This same table is emitted into the independent Core resources; never duplicate versions/extensions in C#.
 export const metadataBuildSpecifications: readonly MetadataBuildSpecification[] = [
   { kind: 0, extractorVersion: CORE_IMAGE_METADATA_EXTRACTOR_VERSION, extensions: supportedImageDimensionExtensions },

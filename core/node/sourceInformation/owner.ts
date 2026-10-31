@@ -1,7 +1,7 @@
 import path from "node:path";
 import { inspectSkimEntry } from "./inspection";
 import { collectSkimFolderStats } from "./folderStats";
-import type { FolderStatsSnapshot, SkimFolderStats, FolderStatsOptions } from "../../../src/shared/sourceInformationTypes";
+import type { FolderStatsSnapshot, SkimFolderStats, FolderStatsOptions } from "../../../core/shared/sourceInformationTypes";
 const empty = (): SkimFolderStats => ({ fileCount: 0, folderCount: 0, totalSize: 0, skippedCount: 0, status: "scanning" });
 interface Job { cancelled: boolean; snapshot: FolderStatsSnapshot; waiters: Set<(value: FolderStatsSnapshot) => void>; work: Promise<void>; }
 export function createSourceInformationOwner() {

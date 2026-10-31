@@ -1,7 +1,0 @@
-{
-  "electron/embeddedMetadataExtractor.ts": "core/node/embeddedMetadata/domain/embeddedMetadataExtractor.ts",
-  "electron/embeddedMetadataFormats.ts": "core/node/embeddedMetadata/domain/embeddedMetadataFormats.ts",
-  "electron/embeddedMetadataPolicy.ts": "core/node/embeddedMetadata/domain/embeddedMetadataPolicy.ts",
-  "electron/embeddedMetadataTypes.ts": "core/node/embeddedMetadata/domain/embeddedMetadataTypes.ts",
-  "electron/fileSourceRevision.ts": "core/node/embeddedMetadata/domain/fileSourceRevision.ts"
-}

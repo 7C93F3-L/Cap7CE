@@ -10,11 +10,8 @@ The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [F
 
 | Component | License |
 | --- | --- |
-| Electron | MIT; the Electron distribution also includes Chromium and other third-party notices |
 | Node.js 24.15.0, Windows x64 | MIT and included dependency notices; the independently bundled metadata runtime includes the complete upstream `LICENSE-node` |
-| React / React DOM | MIT |
 | Fluent UI System Icons | MIT; selected SVG geometry is adapted for the stable UI, with the bundled license text in `third_party/fluentui-system-icons` |
-| `react-markdown` / `remark-gfm` and unified ecosystem dependencies | MIT; selected supporting packages also use ISC |
 | `@napi-rs/canvas` and Windows runtime package | MIT |
 | `ag-psd` | MIT |
 | `7z-wasm` / 7-Zip WebAssembly | LGPL-2.1-or-later with the UnRAR restriction; bundled license texts are in `third_party/7z-wasm` |
@@ -31,7 +28,6 @@ The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [F
 | `opentype.js` | MIT; bundled license text is in `third_party/opentype.js` |
 | `sharp` | Apache-2.0 |
 | `@img/sharp-win32-x64` / bundled libvips components | Apache-2.0 AND LGPL-3.0-or-later |
-| `sql.js` | MIT |
 | `pako` | MIT AND Zlib |
 | Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used by the opt-in .NET Core catalog capability |
 | SQLitePCLRaw 2.1.12 packages | Apache-2.0; used by the opt-in .NET Core catalog capability |
@@ -42,30 +38,23 @@ The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [F
 
 The installed production dependency graph also contains components under MIT, Apache-2.0, ISC, 0BSD, Zlib, and LGPL-3.0-or-later terms. Their exact versions are locked in `package-lock.json`.
 
-Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entries. It does not implement or expose RAR archive creation. Binary packaging copies `License.txt` and `unRarLicense.txt` to `resources/licenses/7z-wasm`.
+Cap7CE uses the `7z-wasm` component only to list ZIP, 7Z, and RAR archive entries. It does not implement or expose RAR archive creation. Binary packaging copies `License.txt` and `unRarLicense.txt` to `artifacts/metadata-worker/v1/node_modules/7z-wasm`.
 
-Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active preview session. Binary packaging copies its MIT license to `resources/licenses/opentype.js`.
+Cap7CE uses `opentype.js` only to read bounded TTF / OTF metadata for the active preview session. Binary packaging copies its MIT license to `artifacts/metadata-worker/v1/licenses/opentype.js`.
 
 Cap7CE uses selected Microsoft Fluent UI System Icons as editable SVG geometry in the stable UI. The icons are adapted for Cap7CE state and sizing while remaining subject to the upstream MIT license.
 
-The Core capability uses Microsoft.Data.Sqlite 10.0.12 and SQLitePCLRaw 2.1.12. Binary packaging copies the applicable MIT and Apache-2.0 texts to `resources/licenses/core-dependencies`; SQLite itself is in the public domain.
+The Core capability uses Microsoft.Data.Sqlite 10.0.12 and SQLitePCLRaw 2.1.12. Binary packaging copies the applicable MIT and Apache-2.0 texts to the delivered Core dependency notices; SQLite itself is in the public domain.
 
-The native video metadata helper is published as a standalone NativeAOT executable. Its Windows SDK, C#/WinRT and .NET runtime license texts and notices are bundled under `resources/licenses/metadata-media`. Its managed compiler dependencies are recorded in `native/Cap7CE.Media.Metadata/packages.lock.json`; Windows SDK targeting pack version is fixed in the project file.
+The native video metadata helper is published as a standalone NativeAOT executable. Its Windows SDK, C#/WinRT and .NET runtime license texts and notices are bundled under `native/artifacts/metadata-media/v1/licenses`. Its managed compiler dependencies are recorded in `native/Cap7CE.Media.Metadata/packages.lock.json`; Windows SDK targeting pack version is fixed in the project file.
 
 Cap7CE uses `fflate`, `@xmldom/xmldom`, `parse5`, and `entities` only inside the bounded EPUB preview worker to read the package structure and extract inert text. It does not execute book scripts, styles, or network resources.
 
 Cap7CE uses `@lingo-reader/mobi-parser` and its runtime dependencies only inside the bounded MOBI preview worker, after Cap7CE validates the PalmDB/MOBI6 structure and supported format boundary. It extracts inert text and a bounded cover image; it does not execute book scripts or network resources.
 
-Cap7CE uses `react-markdown`, `remark-gfm`, and their unified ecosystem dependencies only to render bounded Markdown text in the preview renderer. Raw HTML, image resource loading, and link navigation remain disabled.
+## Build tooling
 
-## Electron and Chromium notices
-
-The Electron runtime contains:
-
-- Electron's `LICENSE`.
-- Chromium and bundled third-party notices in `LICENSES.chromium.html`.
-
-Binary-release verification must confirm these files remain present in the packaged Electron runtime.
+The development dependency electron-builder is used only to generate NSIS installers from a prepackaged native directory. The product does not bundle the Electron or Chromium runtime. Build dependencies retain their original licenses.
 
 ## External runtime and models
 

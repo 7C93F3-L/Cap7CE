@@ -1,9 +1,0 @@
-@media (prefers-reduced-motion: reduce) {
-  .preview-window-stable-ui *,
-  .preview-window-stable-ui *::before,
-  .preview-window-stable-ui *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0ms !important;
-    animation-duration: 0ms !important;
-  }
-}

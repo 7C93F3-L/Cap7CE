@@ -1,4 +1,4 @@
-import type { ArchivePreviewData, ArchivePreviewEntry } from "../../../../src/shared/archivePreviewTypes";
+import type { ArchivePreviewData, ArchivePreviewEntry } from "../../../../core/shared/archivePreviewTypes";
 const parseByteCount = (value: string | undefined) => {
   if (!value || !/^\d+$/.test(value)) return null;
   const parsed = Number(value);

@@ -1,6 +1,6 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions } from "../../../../../src/shared/computerSearchFactTypes";
-import type { ComputerSearchThreeDFilter } from "../../../../../src/shared/computerSearchThreeDTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions } from "../../../../../core/shared/computerSearchFactTypes";
+import type { ComputerSearchThreeDFilter } from "../../../../../core/shared/computerSearchThreeDTypes";
 import { getThreeDModelTypeExtensions, normalizeThreeDTriangleCountRange, searchThreeDModelTypes, searchThreeDStructures, searchThreeDTriangleCountPresets } from "../formats/threeDSearchFilters";
 import { toComputerSearchDocumentConditions } from "./computerSearchDocumentConditions";
 const counts: Record<string, [number, number?]> = {

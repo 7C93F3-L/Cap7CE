@@ -1,6 +1,6 @@
 import path from "node:path";
 import { readSkimLocation, type SkimBrowseEntry } from "./source/skimBrowseService";
-import type { DirectoryBrowseOptions, DirectoryBrowsePage } from "../../../src/shared/directoryBrowseTypes";
+import type { DirectoryBrowseOptions, DirectoryBrowsePage } from "../../../core/shared/directoryBrowseTypes";
 import { randomUUID } from "node:crypto";
 import { RecursiveDirectoryListing } from "./recursive";
 

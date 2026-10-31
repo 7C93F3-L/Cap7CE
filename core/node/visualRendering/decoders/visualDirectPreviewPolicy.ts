@@ -1,4 +1,4 @@
-import type { DirectSourcePreviewFacts } from "../../../../src/shared/visualRenderTypes";
+import type { DirectSourcePreviewFacts } from "../../../../core/shared/visualRenderTypes";
 const directSourcePreviewExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 const maximumDirectPreviewEdge = 4096;
 const maximumDirectPreviewPixels = 16_000_000;

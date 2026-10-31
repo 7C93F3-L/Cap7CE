@@ -1,6 +1,6 @@
 import path from "node:path";
 import { setActiveLanguage } from "../resourceCatalog/domain/localization/localization";
-import type { ModelSettingsContext } from "../../../src/shared/modelSettingsTypes";
+import type { ModelSettingsContext } from "../../../core/shared/modelSettingsTypes";
 import { createRuntimeSettings } from "./runtime";
 import { createGgufSettings } from "./models";
 const invalid=():never=>{throw new Error("core-model-settings-invalid-request");};

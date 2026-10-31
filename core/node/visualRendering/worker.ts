@@ -1,5 +1,5 @@
 import { VisualCacheFrameReader, maximumCacheImageBytes, maximumCacheFrameBytes } from "../visualCache/contracts/visualCacheFrames";
-import type { VisualDecodeTask, VisualDecodeResult } from "../../../src/shared/visualRenderTypes";
+import type { VisualDecodeTask, VisualDecodeResult } from "../../../core/shared/visualRenderTypes";
 import path from "node:path";
 
 for (const method of ["log", "info", "debug", "warn", "error"] as const) console[method] = () => undefined;

@@ -1,5 +1,5 @@
-import type { GgufModelSettingsStatus } from "../../../src/shared/modelSettingsTypes";
-import type { GgufModelLoadStatus } from "../../../src/shared/modelRuntimeTypes";
+import type { GgufModelSettingsStatus } from "../../../core/shared/modelSettingsTypes";
+import type { GgufModelLoadStatus } from "../../../core/shared/modelRuntimeTypes";
 export const runtimeHost="127.0.0.1", firstPort=18080, portCount=100, startupTimeout=180000;
 export const healthUrl=(port:number|null)=>port===null?"":"http://127.0.0.1:"+port+"/health";
 export const baseUrl=(port:number)=>"http://127.0.0.1:"+port;

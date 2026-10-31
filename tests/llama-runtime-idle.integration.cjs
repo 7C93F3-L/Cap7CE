@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { createLlamaRuntimeIdleController } = require("../dist-electron/llamaRuntimeIdleController.js");
+const { createLlamaRuntimeIdleController } = require("./support/load-canonical.cjs")("core/node/modelRuntime/policy/llamaRuntimeIdleController.ts");
 
 const scheduled = [];
 let idleStops = 0;

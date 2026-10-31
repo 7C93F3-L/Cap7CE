@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import type { Worker } from "node:worker_threads";
 import { createPreviewWorker } from "./lifecycle";
-import type { MobiPreviewData, MobiPreviewFallbackReason, MobiWorkerResponse } from "../../../src/shared/mobiPreviewTypes";
+import type { MobiPreviewData, MobiPreviewFallbackReason, MobiWorkerResponse } from "../../../core/shared/mobiPreviewTypes";
 
 export class MobiPreviewError extends Error {
   constructor(readonly reason: MobiPreviewFallbackReason, message: string) {

@@ -1,6 +1,6 @@
 import { officeJobSource } from "./officeJob";
 import { spawnPreviewWorker as spawn } from "../providerPreview/lifecycle";
-import type { OfficePreviewKind } from "../../../src/shared/officePreviewTypes";
+import type { OfficePreviewKind } from "../../../core/shared/officePreviewTypes";
 export type OfficeConversionRunner = (
   sourcePath: string,
   outputPath: string,

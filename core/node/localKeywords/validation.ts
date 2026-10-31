@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { LocalKeywordModelConnection, KeywordSourceIdentity } from "../../../src/shared/localKeywordTypes";
+import type { LocalKeywordModelConnection, KeywordSourceIdentity } from "../../../core/shared/localKeywordTypes";
 import { maximumCacheImageBytes } from "../visualCache/contracts/visualCacheFrames";
 
 export const invalid = (): never => { throw new Error("local-keywords-invalid-request"); };

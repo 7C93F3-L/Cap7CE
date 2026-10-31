@@ -1,5 +1,5 @@
-import type { EmbeddedSearchEvidenceKind } from "../../../../src/shared/embeddedMetadataTypes";
-export type * from "../../../../src/shared/embeddedMetadataTypes";
+import type { EmbeddedSearchEvidenceKind } from "../../../../core/shared/embeddedMetadataTypes";
+export type * from "../../../../core/shared/embeddedMetadataTypes";
 export const EMBEDDED_METADATA_EXTRACTOR_VERSION = 1;
 export const embeddedSearchEvidenceKinds: readonly EmbeddedSearchEvidenceKind[] = [
   "visual_content",

@@ -1,4 +1,4 @@
-import type { TextPreviewReply } from "../../../../src/shared/textPreviewTypes";
+import type { TextPreviewReply } from "../../../../core/shared/textPreviewTypes";
 import { maximumSkimTextPreviewBytes } from "./textPreviewPolicy";
 export const validTextPreviewReply = (value: unknown): value is TextPreviewReply => {
   if (!value || typeof value !== "object") return false;

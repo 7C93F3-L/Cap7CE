@@ -1,5 +1,5 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions, ComputerSearchFacts, ComputerSearchIntegerRange } from "../../../../../src/shared/computerSearchFactTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions, ComputerSearchFacts, ComputerSearchIntegerRange } from "../../../../../core/shared/computerSearchFactTypes";
 import { normalizeAudioDurationRange, searchAudioChannels } from "../formats/audioSearchFilters";
 import { toComputerSearchImageConditions } from "./computerSearchImageConditions";
 import { toComputerSearchMilliseconds } from "./computerSearchScalarConditions";

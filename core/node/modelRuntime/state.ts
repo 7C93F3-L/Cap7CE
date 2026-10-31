@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { LlamaRuntimeProcessState, ModelRuntimeSnapshot } from "../../../src/shared/modelRuntimeTypes";
+import type { LlamaRuntimeProcessState, ModelRuntimeSnapshot } from "../../../core/shared/modelRuntimeTypes";
 export class ModelRuntimeState {
  private sequence=0;private readonly epoch=randomUUID();private waiting=new Set<(value:ModelRuntimeSnapshot)=>void>();
  constructor(private state:LlamaRuntimeProcessState){}

@@ -1,7 +1,0 @@
-.cap-catalog-size-flyout { padding: 12px; grid-template-columns: minmax(0, 1fr); --stable-settings-theme-color: var(--theme-color); --stable-settings-hover: var(--cap-stable-control-hover); --stable-settings-secondary: var(--cap-stable-text-muted); }
-.cap-catalog-size-flyout .cap-font-size-setting { width: 100%; min-width: 0; }
-.cap-catalog-size-flyout header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.cap-catalog-size-flyout header { margin-bottom: 8px; font-size: 12px; }
-.cap-catalog-size-flyout header strong { font-weight: 500; }
-.cap-catalog-size-flyout output { color: var(--cap-stable-text-muted); font-variant-numeric: tabular-nums; }
-.cap-catalog-size-flyout .cap-font-size-scale { display: grid; grid-template-columns: 1fr 2fr 0; }

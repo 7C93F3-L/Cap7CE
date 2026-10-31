@@ -1,4 +1,4 @@
-import type { VisualCacheType } from "../../../src/shared/visualCacheTypes";
+import type { VisualCacheType } from "../../../core/shared/visualCacheTypes";
 export const createVisualCachePublications = () => {
 
   const epochs = new Map<VisualCacheType, number>(), blocked = new Set<VisualCacheType>();

@@ -4,7 +4,7 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 
-const { AppUpdateDownloadError, AppUpdateDownloadService, resolveAppUpdateRootDirectory } = require("../dist-electron/appUpdateDownloadService.js");
+const { AppUpdateDownloadError, AppUpdateDownloadService, resolveAppUpdateRootDirectory } = require("./support/load-canonical.cjs")("core/node/applicationUpdates/domain/appUpdateDownloadService.ts");
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const payload = Buffer.from("complete-cap7ce-installer-payload");

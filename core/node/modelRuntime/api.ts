@@ -1,8 +1,8 @@
 import type { ModelRuntimeTimings } from "./settings";
 import { createModelSettingsOwner } from "../modelSettings/owner";
 import { LocalModelRuntime } from "./owner";
-import type { LlamaRuntimeSettingsResponse,GgufModelSettingsResponse,SelectedGgufModelRuntime } from "../../../src/shared/modelSettingsTypes";
-import type { LlamaRuntimeStartSource } from "../../../src/shared/modelRuntimeTypes";
+import type { LlamaRuntimeSettingsResponse,GgufModelSettingsResponse,SelectedGgufModelRuntime } from "../../../core/shared/modelSettingsTypes";
+import type { LlamaRuntimeStartSource } from "../../../core/shared/modelRuntimeTypes";
 export function createLocalModelService(root:string,timings:ModelRuntimeTimings={}){
  let runtime:LocalModelRuntime|undefined,closed=false;
  const settings=createModelSettingsOwner(root,()=>!closed&&(!runtime||runtime.canSelect));

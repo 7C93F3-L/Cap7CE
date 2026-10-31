@@ -1,4 +1,4 @@
-import type { ShortcutActionPreferences } from "../../../../../src/shared/types";
+import type { ShortcutActionPreferences } from "../../../../../core/shared/types";
 
 export const defaultStableShortcutActions: ShortcutActionPreferences = {
   focusMainSearch: "Alt+`",

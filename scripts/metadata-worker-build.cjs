@@ -13,14 +13,6 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
   if (process.platform !== "win32" || process.arch !== "x64") throw new Error("Metadata runtime currently targets Windows x64.");
   if (path.dirname(output) !== path.join(root, "artifacts/metadata-worker") || path.basename(output) !== "v1") throw new Error("Unexpected Core Node output.");
   require("./metadata-runtime-safety.cjs").assertStopped(output);
-  // Native domains still consume compatibility entries during retirement.
-  const catalogBuild = require("node:child_process").spawnSync(process.execPath,
-    ["node_modules/typescript/bin/tsc", "-b", "core/node/fileFacts/domain/tsconfig.json", "core/node/resourceCatalog/domain/tsconfig.json", "core/node/embeddedMetadata/domain/tsconfig.json"],
-    { cwd: root, stdio: "inherit", windowsHide: true });
-  if (catalogBuild.error || catalogBuild.status !== 0) throw catalogBuild.error || new Error("Resource catalog compilation failed.");
-  require("./resource-catalog-declarations.cjs");
-  require("./embedded-metadata-declarations.cjs");
-  require("./file-facts-declarations.cjs");
   // Fixed generated directory only. Never traverses source/user data or other artifacts.
   await fs.rm(output, { recursive: true, force: true });
   await fs.mkdir(output, { recursive: true });

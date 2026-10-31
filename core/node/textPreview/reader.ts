@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import WordExtractor from "word-extractor";
 import { skimTextPreviewExtensions, maximumSkimTextPreviewBytes, maximumWordPreviewBytes, wordPreviewExtensions } from "./contracts/textPreviewPolicy";
-import type { SkimTextPreview as SkimTextPreviewResult } from "../../../src/shared/textPreviewTypes";
+import type { SkimTextPreview as SkimTextPreviewResult } from "../../../core/shared/textPreviewTypes";
 const wordExtractor = new WordExtractor();
 const unsupportedTextError = () => Object.assign(
   new Error("Text preview encoding is unsupported."),

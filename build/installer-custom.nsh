@@ -128,11 +128,7 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
       Return
     ${endif}
 
-    !ifdef CAP7CE_NATIVE_INSTALLER
       StrCpy $2 "$INSTDIR\core\artifacts\product-capability\v1\bundle\Cap7CE.Core.Setup.exe"
-    !else
-      StrCpy $2 "$INSTDIR\resources\core-capability\v1\Cap7CE.Core.Setup.exe"
-    !endif
     ${ifNot} ${FileExists} "$2"
       Abort "$(cap7ceCapabilitySetupMissing)"
     ${endif}
@@ -153,15 +149,9 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
     ${ifNot} ${FileExists} "$INSTDIR\${PRODUCT_FILENAME}.exe"
       Abort "$(cap7ceUninstallUnsafePath)"
     ${endif}
-    !ifdef CAP7CE_NATIVE_INSTALLER
       ${ifNot} ${FileExists} "$INSTDIR\cap7ce-native.json"
         Abort "$(cap7ceUninstallUnsafePath)"
       ${endif}
-    !else
-    ${ifNot} ${FileExists} "$INSTDIR\resources\app.asar"
-      Abort "$(cap7ceUninstallUnsafePath)"
-    ${endif}
-    !endif
 
     System::Call 'kernel32::GetCurrentProcessId()i.r0'
     StrCpy $cap7cePreserveRoot "$INSTDIR.cap7ce-preserve-$0"
@@ -225,7 +215,6 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
 
     CreateDirectory "$INSTDIR"
     Call un.cap7ceRestorePreservedContent
-    !ifdef CAP7CE_NATIVE_INSTALLER
       # Only bundled application runtimes; separately installed Core\v1 is retained.
       RMDir /r "$INSTDIR\Core\artifacts"
     !endif
@@ -248,9 +237,6 @@ LangString cap7ceCapabilityCleanupFailed 2052 "Cap7CE 无法移除全盘搜索�
   # uninstall UI for large caches, including a large full-disk Catalog.
   !ifdef ESTIMATED_SIZE
     SectionSetSize 0 ${ESTIMATED_SIZE}
-  !else
-    SectionSetSize 0 1
-  !endif
   SectionSetSize 1 0
 
   ${if} $installMode == "all"

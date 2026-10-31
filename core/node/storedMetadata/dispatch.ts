@@ -1,5 +1,5 @@
 import type { InteractiveMetadataOwner } from "../interactiveMetadata/owner";
-import type { StoredIndexRequest, LegacyKeywordPage } from "../../../src/shared/storedMetadataTypes";
+import type { StoredIndexRequest, LegacyKeywordPage } from "../../../core/shared/storedMetadataTypes";
 import { emptyStoredMetadata, validStoredMetadata, validStoredCounts, validLegacyKeywordPage } from "./contracts/storedMetadataProjection";
 export function readStoredMetadata(owner: InteractiveMetadataOwner, id: string, root: string, request: StoredIndexRequest) {
   const data = { root, request };

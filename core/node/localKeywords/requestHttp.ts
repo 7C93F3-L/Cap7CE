@@ -1,5 +1,5 @@
 import http from "node:http";
-import type { LocalKeywordModelConnection } from "../../../src/shared/localKeywordTypes";
+import type { LocalKeywordModelConnection } from "../../../core/shared/localKeywordTypes";
 
 const maximumResponseBytes = 1024 * 1024;
 const invalid = () => new Error("模型未返回有效关键词，请重试。");

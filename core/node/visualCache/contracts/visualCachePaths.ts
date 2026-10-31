@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { VisualCacheType, VisualCacheDescriptor, FormalVisualCacheType, SkimVisualCacheType } from "../../../../src/shared/visualCacheTypes";
+import type { VisualCacheType, VisualCacheDescriptor, FormalVisualCacheType, SkimVisualCacheType } from "../../../../core/shared/visualCacheTypes";
 
 const cacheDescriptors: Record<VisualCacheType, VisualCacheDescriptor> = {
   "search-thumbnail": {

@@ -1,5 +1,0 @@
-.cap-stable-image-dimension-filter { width: 190px; }
-.cap-stable-dimension-summary { display: flex; align-items: center; width: 100%; min-height: 64px; gap: 11px; padding: 8px 10px; border: 0; border-radius: 10px; color: var(--cap-stable-text-muted); background: transparent; font: inherit; }
-.cap-stable-dimension-summary:where(:hover, :focus-visible) { color: inherit; background: var(--cap-stable-control-hover); }
-.cap-stable-dimension-summary.is-selected { color: var(--dialog-action-hover-text, var(--theme-on-color)); background: var(--cap-accent-gradient); }
-.cap-stable-dimension-summary span { overflow: hidden; font-size: var(--cap-stable-secondary-font-size); text-overflow: ellipsis; white-space: nowrap; }

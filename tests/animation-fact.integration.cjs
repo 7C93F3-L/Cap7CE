@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { inspectAnimationFact } = require("../dist-electron/animationFactInspector.js");
+const { inspectAnimationFact } = require("./support/load-canonical.cjs")("core/node/fileFacts/domain/animationFactInspector.ts");
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const pngChunk = (type, data = Buffer.alloc(0)) => {

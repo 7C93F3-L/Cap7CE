@@ -1,5 +1,5 @@
 import { validPreviewMetadata } from "../../interactiveMetadata/contracts/previewMetadataProjection";
-import type { StoredMetadataResult, LegacyKeywordPage } from "../../../../src/shared/storedMetadataTypes";
+import type { StoredMetadataResult, LegacyKeywordPage } from "../../../../core/shared/storedMetadataTypes";
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
 export const emptyStoredMetadata: StoredMetadataResult = { metadata: null, isCurrent: false };
 export const validStoredMetadata = (value: unknown): value is StoredMetadataResult => object(value)

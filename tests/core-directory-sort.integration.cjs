@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),{randomUUID}=require('node:crypto');
-const transportFor=require('./core-stored-index-transport.cjs');
+const transportFor=profile=>require('./support/native-session.cjs')(path.resolve('artifacts/metadata-worker/v1'),'visual-cache.cjs',profile);
 (async()=>{
  const temporary=await fs.realpath(os.tmpdir()),root=await fs.mkdtemp(path.join(temporary,'cap7ce-directory-sort-')),source=path.join(root,'source');
  const transport=transportFor(path.join(root,'profile')),files=[];
@@ -40,7 +40,7 @@ const transportFor=require('./core-stored-index-transport.cjs');
   for(let i=0;i<files.length;i++)assert.equal((await fs.stat(files[i].path,{bigint:true})).mtimeNs,before[i].mtimeNs,'sorting never changes source modification times');
   console.log('All four directory sorts passed: natural names, timestamps/ties, folders first, global recursive pages, duplicate names, cancellation and unchanged sources.');
  }finally{
-  transport.close();await new Promise(resolve=>setTimeout(resolve,150));
+  await transport.close();
   assert.equal(path.dirname(root),temporary);assert.ok(path.basename(root).startsWith('cap7ce-directory-sort-'));
   await fs.rm(root,{recursive:true,force:true,maxRetries:3,retryDelay:50});
  }

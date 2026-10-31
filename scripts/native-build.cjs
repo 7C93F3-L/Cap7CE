@@ -18,17 +18,8 @@ const prerequisites = [
 for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target)) || script==='core-file-operations-build.cjs'&&!require('./core-file-operations-freshness.cjs').isFresh(root)) node(script);
 if (!fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
   run(process.execPath, ['scripts/core-capability-payload-build.cjs', '--product']);
-node('native-read-side-boundary-check.cjs');
-node('directory-source-boundary-check.cjs');
-node('model-keyword-policy-boundary-check.cjs');
-node('preview-reader-source-boundary-check.cjs');
-node('visual-cache-contract-boundary-check.cjs');
-node('visual-decoder-boundary-check.cjs');
-node('metadata-execution-source-boundary-check.cjs');
-node('file-facts-boundary-check.cjs');
-node('embedded-metadata-boundary-check.cjs');
-node('resource-catalog-boundary-check.cjs');
-node('update-domain-boundary-check.cjs');
+node('native-source-check.cjs');
+run(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']);
 node('metadata-worker-build.cjs');
 // Same product profile used by the existing mainline. No Reader install or user-data activation during build.
 const coreOutput = path.join(root, 'core/artifacts/development-product-host');

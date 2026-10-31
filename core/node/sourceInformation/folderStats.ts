@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { SkimFolderStats } from "../../../src/shared/sourceInformationTypes";
+import type { SkimFolderStats } from "../../../core/shared/sourceInformationTypes";
 const emptyStats = (): SkimFolderStats => ({
   fileCount: 0,
   folderCount: 0,

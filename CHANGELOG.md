@@ -2,6 +2,8 @@
 
 ## 未发布
 
+- 旧版退役整理第十四轮整体移除Electron/Renderer/Preload、Vite/React及legacy构建入口和专用测试；共享契约迁到core/shared并清除未使用的旧界面契约。原生测试直接加载规范源码，统一边界检查保留源码体量、解析器行为摘要和关键拥有者/预算约束。安装器仅保留NSIS工具与原生载荷，版本和用户数据不变。
+
 - 旧版退役整理第十三轮集中收口原生读侧剩余依赖：元数据结果投影归入interactiveMetadata/storedMetadata的contracts，Windows缩略图和矢量预览归入visualRendering/shell。四份执行实现除模块路径外保持一致，旧Shell保留资源默认值适配；九个原生运行入口的源码闭包现仅依赖core/node，自动检查阻止重新引入Electron/Renderer或生成产物实现。原有元数据规则、资源定位、进程协议和视觉回退保持不变。
 
 - 旧版退役整理第十二轮迁出目录读取：skimBrowseService和sourcePathPolicy归入directoryBrowse/source，原生浏览/递归与源信息读取直接引用，旧路径仅转出。两份实现除导入位置外保持一致；目录枚举、隐藏项/格式识别、路径范围、分页/递归及用户文件不变。共享模型精度类型改指规范源码，并按当前递归分页模块校准目录边界基线。

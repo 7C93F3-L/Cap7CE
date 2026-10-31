@@ -1,7 +1,0 @@
-.cap-favorite-scroll-frame { position: relative; flex: 1; min-height: 0; }
-.cap-favorite-scroll-frame > .cap-favorite-rows { height: 100%; min-height: 0; max-height: none; scrollbar-width: none; }
-.cap-favorite-scroll-frame > .cap-favorite-rows::-webkit-scrollbar { width: 0; height: 0; }
-.cap-favorite-scrollbar { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; pointer-events: none; }
-.cap-favorite-scrollbar > .cap-custom-scrollbar-vertical { position: absolute; inset: 0; height: auto; pointer-events: auto; }
-.cap-favorite-scrollbar .cap-custom-scrollbar-thumb { margin-right: 0; }
-.cap-catalog-sidebar.is-collapsed .cap-favorite-scrollbar { right: -2px; }

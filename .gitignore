@@ -1,6 +1,4 @@
 node_modules/
-dist/
-dist-electron/
 release/
 artifacts/
 core/**/bin/
@@ -12,7 +10,6 @@ llama.cpp/
 TestFiles/
 .agents/
 .codex/
-prototypes/stable-ui-canvas/
 
 *.local
 *.log
@@ -20,8 +17,6 @@ prototypes/stable-ui-canvas/
 *.sqlite
 *.sqlite3
 *.tsbuildinfo
-src/shared/types.js
-src/shared/types.d.ts
 
 .env
 .env.*

@@ -7,7 +7,7 @@ import { dispatchStoredMetadata } from "../storedMetadata/dispatch";
 import { LocalKeywordOwner } from "../localKeywords/owner";
 import { createVisualCacheStore } from "./store";
 import { formalVisualCacheTypes, skimVisualCacheTypes } from "./contracts/visualCachePaths";
-import type { VisualCacheEntry, VisualCacheType, VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
+import type { VisualCacheEntry, VisualCacheType, VisualImageMimeType } from "../../../core/shared/visualCacheTypes";
 const invalid = () => { throw new Error("core-cache-invalid-request"); };
 const text = (value: unknown): string => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") ? value : invalid();
 const filePath = (value: unknown) => { const result = text(value); return path.isAbsolute(result) ? result : invalid(); };

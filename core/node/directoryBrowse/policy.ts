@@ -1,5 +1,5 @@
 import type { SkimBrowseEntry } from "./source/skimBrowseService";
-import type { DirectoryBrowseOptions } from "../../../src/shared/directoryBrowseTypes";
+import type { DirectoryBrowseOptions } from "../../../core/shared/directoryBrowseTypes";
 export function filterDirectoryEntries(entries: SkimBrowseEntry[], options: DirectoryBrowseOptions) {
   const f = options.fileConditions;
   if (f && (typeof f !== "object" || Array.isArray(f) || Object.keys(f).some(key => !["extensions", "excludedExtensions", "minimumSizeBytes", "maximumSizeBytes", "minimumModifiedFileTime", "maximumModifiedFileTime"].includes(key)))) throw Error("directory-browse-invalid-request");

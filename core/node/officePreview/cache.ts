@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { VisualCacheStats } from "../../../src/shared/visualCacheTypes";
+import type { VisualCacheStats } from "../../../core/shared/visualCacheTypes";
 
 export function createOfficePreviewCache(tempRoot: string) {
  if (!path.isAbsolute(tempRoot)) throw Error("core-office-invalid-root");

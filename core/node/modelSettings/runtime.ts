@@ -2,7 +2,7 @@ import { createModelSelectionFile } from "./selectionFile";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { t } from "../resourceCatalog/domain/localization/localization";
-import type * as Contracts from "../../../src/shared/modelSettingsTypes";
+import type * as Contracts from "../../../core/shared/modelSettingsTypes";
 type LlamaRuntimeSettingsResponse = Contracts.LlamaRuntimeSettingsResponse;
 type LlamaRuntimeVersion = Contracts.LlamaRuntimeVersion;
 export function createRuntimeSettings(userDataRoot: string, getAiContentPaths: () => Contracts.ModelSettingsContext) {

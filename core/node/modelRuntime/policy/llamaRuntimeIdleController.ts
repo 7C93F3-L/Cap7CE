@@ -1,5 +1,5 @@
-import type { LlamaRuntimeStartSource } from "../../../../src/shared/modelRuntimeTypes";
-export type { LlamaRuntimeStartSource } from "../../../../src/shared/modelRuntimeTypes";
+import type { LlamaRuntimeStartSource } from "../../../../core/shared/modelRuntimeTypes";
+export type { LlamaRuntimeStartSource } from "../../../../core/shared/modelRuntimeTypes";
 
 type IdleTimer = ReturnType<typeof setTimeout>;
 

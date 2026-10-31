@@ -1,6 +1,6 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions } from "../../../../../src/shared/computerSearchFactTypes";
-import type { ComputerSearchDocumentFilter } from "../../../../../src/shared/computerSearchDocumentTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions } from "../../../../../core/shared/computerSearchFactTypes";
+import type { ComputerSearchDocumentFilter } from "../../../../../core/shared/computerSearchDocumentTypes";
 import { normalizeDocumentContentCountRange, searchDocumentContentCountPresets, searchDocumentImageCompositions } from "../formats/documentSearchFilters";
 import { searchArtboardCountPresets } from "../formats/artboardSearchFilters";
 import { normalizeSearchCountRange } from "../formats/textDataSearchFilters";

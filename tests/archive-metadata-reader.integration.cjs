@@ -1,9 +1,9 @@
 const assert=require("node:assert/strict"),fs=require("node:fs/promises"),path=require("node:path"),os=require("node:os");
-const {boundWasmMemory}=require("../dist-electron/metadataExtraction/boundedWasmMemory.js");
-const {restrictArchiveSourceFilesystem}=require("../dist-electron/metadataExtraction/archiveSourceFilesystem.js");
-const {readArchiveMetadata}=require("../dist-electron/metadataExtraction/archiveMetadataReader.js");
-const {parseArchiveListOutput}=require("../dist-electron/archivePreviewService.js");
-const {deriveArchiveFact}=require("../dist-electron/archiveFactExtractor.js");
+const {boundWasmMemory}=require("./support/load-canonical.cjs")("core/node/fileFacts/domain/boundedWasmMemory.ts");
+const {restrictArchiveSourceFilesystem}=require("./support/load-canonical.cjs")("core/node/fileFacts/domain/archiveSourceFilesystem.ts");
+const {readArchiveMetadata}=require("./support/load-canonical.cjs")("core/node/fileFacts/domain/archiveMetadataReader.ts");
+const {parseArchiveListOutput}=require("./support/load-canonical.cjs")("core/node/fileFacts/domain/archivePreviewList.ts");
+const {deriveArchiveFact}=require("./support/load-canonical.cjs")("core/node/fileFacts/domain/archiveFactExtractor.ts");
 const {zipSync,strToU8}=require("fflate");
 
 (async()=>{

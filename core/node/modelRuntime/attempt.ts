@@ -1,5 +1,5 @@
 import { spawn,type ChildProcess } from "node:child_process";
-import type { LlamaRuntimeVersion } from "../../../src/shared/modelSettingsTypes";
+import type { LlamaRuntimeVersion } from "../../../core/shared/modelSettingsTypes";
 import type { ModelRuntimeLog } from "./log";
 export class ModelRuntimeAttempt {
  readonly child:ChildProcess;ready=false;error="";errorCode="";stderr="";private readonly exited:Promise<void>;

@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "target": "ES2022", "module": "CommonJS", "moduleResolution": "Node", "strict": true,
-    "noUnusedLocals": true, "noUnusedParameters": true, "esModuleInterop": true,
-    "skipLibCheck": true, "noEmit": true, "types": ["node"]
-  },
-  "include": ["metadataExecution", "fileFacts", "embeddedMetadata", "resourceCatalog", "applicationUpdates", "visualCache", "visualRendering", "interactiveMetadata", "localKeywords", "modelSettings", "transport", "modelRuntime", "storedMetadata", "providerPreview", "officePreview", "sourceInformation", "textPreview"]
-}

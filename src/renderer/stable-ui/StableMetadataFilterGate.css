@@ -1,3 +1,0 @@
-.cap-stable-metadata-filters, .cap-stable-metadata-colors { display: contents; }
-:is(.cap-stable-metadata-filters, .cap-stable-metadata-colors)[aria-disabled="true"] button { opacity: .4; cursor: pointer; }
-:is(.cap-stable-metadata-filters, .cap-stable-metadata-colors)[aria-disabled="true"] button:where(:hover, :focus-visible) { background: var(--cap-stable-control-hover); }

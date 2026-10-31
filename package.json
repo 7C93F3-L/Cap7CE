@@ -14,350 +14,37 @@
     "url": "https://github.com/7C93F3-L/Cap7CE/issues"
   },
   "private": true,
-  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File shell/run.ps1",
-    "dev:renderer": "vite --host 127.0.0.1",
-    "dev:electron": "wait-on http://127.0.0.1:5173 && npm run publish:core-development-host && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
-    "clean:electron": "node scripts/clean-electron-build.cjs",
-    "test:resource-catalog": "npm run build:resource-catalog && tsc -p tsconfig.electron.json && tsc -p tsconfig.json && vite build && node tests/resource-catalog.integration.cjs && electron tests/format-capabilities.integration.cjs && node tests/visual-property-semantics.integration.cjs && node tests/quick-command.integration.cjs && node tests/catalog-command-operations.integration.cjs && node tests/computer-search-text-data.integration.cjs && node tests/computer-search-archive.integration.cjs && node tests/svg-icon-identity.integration.cjs",
-    "build:resource-catalog": "tsc -p core/node/resourceCatalog/domain/tsconfig.json && node scripts/resource-catalog-declarations.cjs && node scripts/resource-catalog-boundary-check.cjs",
-    "build:update-domain": "tsc -p core/node/applicationUpdates/domain/tsconfig.json && node scripts/update-domain-boundary-check.cjs",
-    "test:update-domain": "npm run build:update-domain && tsc -p tsconfig.electron.json && node tests/app-update.integration.cjs && node tests/app-update-download.integration.cjs && node tests/app-update-install-intent.integration.cjs && node tests/native-update.integration.cjs",
-    "build:electron": "npm run build:file-facts && npm run build:embedded-domain && npm run build:resource-catalog && npm run build:update-domain && npm run clean:electron && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:preload && npm run build:metadata-media && npm run build:core-configuration && npm run build:core-file-operations && npm run build:core-visuals && npm run build:metadata-worker",
     "build": "node scripts/native-build.cjs",
     "build:core": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet build core/Cap7CE.Core.sln --configuration Release --nologo",
     "publish:core-setup": "cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet publish core/src/Cap7CE.Core.Setup/Cap7CE.Core.Setup.csproj --configuration Release --runtime win-x64 --self-contained true --nologo --output core/artifacts/publish/Cap7CE.Core.Setup -p:RestoreLockedMode=true",
     "publish:core-capability": "node scripts/core-capability-payload-build.cjs",
     "publish:core-product-capability": "node scripts/core-capability-payload-build.cjs --product",
     "publish:core-development-host": "node scripts/core-development-host-build.cjs",
-    "test": "npm run test:workspace-tabs && npm run build:electron && npm run test:quick-command && npm run test:manual-metadata-ipc && npm run test:line-window-lifecycle && npm run test:window-layout-baseline && npm run test:browser-window-diagnostics && npm run test:main-window-input-policy && npm run test:stable-preview-window-sizing && npm run test:window-system-interactions && npm run test:stable-ui-foundation && npm run test:stable-ui-shell && npm run test:stable-ui-search && npm run test:random-browse && npm run test:stable-ui-sidebar && npm run test:stable-ui-skim && npm run test:stable-ui-settings-window && npm run test:stable-ui-preview && npm run test:stable-ui-preview-interaction && npm run test:stable-ui-window-lifecycle && npm run test:window-layout-memory && npm run test:docked-shell-automation && npm run test:integration",
-    "test:integration": "npm run test:preload-sandbox && npm run test:architecture-boundaries && npm run test:core && npm run test:core-setup-native && npm run test:core-capability-payload && npm run test:core-controller && npm run test:computer-search-ipc && npm run test:window-layout-foundation && npm run test:ipc-registration && npm run test:file-ipc && npm run test:runtime-model-ipc && npm run test:search-ipc && npm run test:diagnostics-ipc && npm run test:runtime-diagnostics && npm run test:preference-ipc && npm run test:cache-activity-ipc && npm run test:cache-clear-ipc && npm run test:ai-retirement && npm run test:llama-runtime-idle && npm run test:ai-query-evidence && npm run test:directory-management-ipc && npm run test:embedded-metadata-service && npm run test:visual-property-service && npm run test:image-dimension-service && npm run test:video-fact && npm run test:audio-fact && npm run test:document-fact && npm run test:three-d-fact && npm run test:archive-fact && npm run test:font-fact && npm run test:model-fact && npm run test:text-data-fact && npm run test:virtual-grid-layout && npm run test:result-section-layout && npm run test:app-update && npm run test:installer-config && npm run test:system-notification && npm run test:epub-preview && npm run test:mobi-preview && npm run test:web-contents-zoom && npm run test:devtools-policy && npm run test:shell-mouse-polling && npm run test:shell-thumbnail-probe && npm run test:application-data-paths && npm run test:ai-content-paths && npm run test:runtime-model-selection && npm run test:directory-add && npm run test:format-capabilities && npm run test:skim-browse && npm run test:skim-display-preferences && npm run test:skim-preview && npm run test:pdf-preview && npm run test:office-preview && npm run test:archive-preview && npm run test:font-preview && npm run test:embedded-metadata && npm run test:visual-property && npm run test:animated-image-preview && npm run test:avif-visual-format && npm run test:preview-request-guard && npm run test:keyword-editor-interaction && npm run test:file-context-actions && npm run test:skim-visual-cache && npm run test:display-cache && npm run test:skim-content-preview && npm run test:search-evidence && npm run test:search-query-planner && npm run test:file-catalog && npm run test:multi-format-search && npm run test:file-size-filter && npm run test:search-scan-snapshot && npm run test:thumbnail-optimization && npm run test:file-drag && npm run test:file-clipboard && npm run test:file-operation && npm run test:manual-index && npm run test:stale-cleanup && npm run test:model-input-cleanup",
-    "test:workspace-tabs": "node tests/workspace-tabs.integration.cjs && node tests/catalog-workspace-contexts.integration.cjs && node tests/computer-search-task-identity.integration.cjs && node tests/svg-icon-identity.integration.cjs && electron tests/catalog-navigation.integration.cjs && electron tests/catalog-directory-toolbar.integration.cjs && electron tests/catalog-commands.integration.cjs && electron tests/catalog-responsive-layout.integration.cjs && electron tests/catalog-query-notice.integration.cjs && node tests/catalog-details-width.integration.cjs && electron tests/catalog-home-grid.integration.cjs && electron tests/catalog-home-actions.integration.cjs && electron tests/catalog-selection.integration.cjs && electron tests/catalog-file-information.integration.cjs && electron tests/catalog-justified-grid.integration.cjs && electron tests/catalog-grid-size-control.integration.cjs && electron tests/catalog-top-filters.integration.cjs && electron tests/catalog-attribute-help.integration.cjs && electron tests/metadata-directory-ui.integration.cjs && electron tests/settings-metadata-build.integration.cjs && electron tests/catalog-window-visibility.integration.cjs",
-    "test:architecture-boundaries": "node tests/workspace-tabs.integration.cjs && node scripts/architecture-boundaries-check.cjs && node scripts/favorite-directory-boundary-check.cjs && node scripts/winui-shell-boundary-check.cjs && npm run test:core-architecture",
-    "test:core-architecture": "node scripts/core-architecture-check.cjs && node scripts/core-journal-resume-boundary-check.cjs && node scripts/core-capability-setup-architecture-check.cjs && node scripts/core-capability-setup-windows-check.cjs && node scripts/core-capability-installer-architecture-check.cjs && node scripts/core-electron-controller-architecture-check.cjs && node scripts/core-product-electron-integration-architecture-check.cjs && node scripts/core-reader-architecture-check.cjs && node scripts/core-reader-host-architecture-check.cjs && node scripts/core-reader-volume-architecture-check.cjs && node scripts/core-reader-lifecycle-architecture-check.cjs && node scripts/core-p37-recovery-architecture-check.cjs && node scripts/core-p37-lifecycle-architecture-check.cjs && node scripts/core-p37-reboot-architecture-check.cjs && npm run test:core-formalization",
-    "test:core-formalization": "node scripts/core-formalization-architecture-check.cjs",
-    "test:core": "npm run test:core-restore-profiles && node tests/metadata-extractor-manifest.integration.cjs && cross-env DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 dotnet run --project core/tests/Cap7CE.Core.Tests/Cap7CE.Core.Tests.csproj --configuration Release",
-    "test:core-setup-native": "npm run publish:core-setup && node scripts/core-setup-native-smoke.cjs",
-    "test:core-capability-payload": "npm run publish:core-capability && node scripts/core-capability-payload-smoke.cjs",
-    "test:core-controller": "node tests/core-catalog-diagnostics.integration.cjs && node tests/core-host-controller.integration.cjs && node tests/core-product-capabilities.integration.cjs && node tests/core-metadata-build-client.integration.cjs && node tests/core-metadata-build-host.integration.cjs && node tests/core-catalog-change-protocol.integration.cjs && node tests/core-catalog-change-watcher.integration.cjs && node tests/metadata-build-configuration.integration.cjs && node tests/image-metadata-inspector.integration.cjs",
-    "test:catalog-keywords": "node tests/catalog-keywords.integration.cjs && electron tests/catalog-keywords-product.integration.cjs && npm run test:catalog-auto-keywords",
-    "test:catalog-auto-keywords": "npm run test:core-local-keywords && node tests/catalog-auto-keywords.integration.cjs && node tests/catalog-keyword-batch.integration.cjs && electron tests/catalog-auto-keywords-ui.integration.cjs && electron tests/catalog-keyword-batch-ui.integration.cjs && electron tests/catalog-home-menu.integration.cjs && electron tests/catalog-auto-keyword-input.integration.cjs",
-    "test:computer-search-ipc": "node tests/computer-search-capability.integration.cjs && node tests/computer-search-catalog-bootstrap.integration.cjs && node tests/computer-search-ipc.integration.cjs && node tests/catalog-file-details-reader.integration.cjs && npm run test:catalog-keywords && node tests/catalog-trash-ipc.integration.cjs && node tests/computer-search-thumbnail-leases.integration.cjs && npm run test:computer-search-renderer && node tests/computer-search-runtime-browse.integration.cjs && node tests/computer-search-maintenance-runtime.integration.cjs && node tests/computer-search-change-ipc.integration.cjs && node tests/core-configuration-host.integration.cjs && node tests/favorite-directory-store.integration.cjs && node tests/favorite-directory-ipc.integration.cjs && node tests/computer-search-fact-conditions.integration.cjs && node tests/computer-search-base-adapter.integration.cjs && node tests/catalog-system-events.integration.cjs",
-    "test:computer-search-renderer": "node tests/computer-search-renderer.integration.cjs && node tests/computer-search-preview.integration.cjs && electron tests/computer-search-preview-actions.integration.cjs && electron tests/viewport-thumbnail.integration.cjs && electron tests/computer-search-lifecycle.integration.cjs && electron tests/computer-search-paging.integration.cjs && node tests/computer-search-result-refresh.integration.cjs && node tests/computer-search-text-data.integration.cjs && node tests/computer-search-archive.integration.cjs && npm run test:catalog-preparation",
-    "test:catalog-preparation": "node scripts/core-directory-browse-boundary-check.cjs && node tests/core-directory-browse.integration.cjs && electron tests/catalog-preparation-ui.integration.cjs",
-    "probe:core-reader-service": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p21-service-probe.ps1",
-    "probe:core-reader-volume": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p22-volume-probe.ps1",
-    "probe:core-p31": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p31-real-probe.ps1",
-    "probe:core-p31-initial": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p31-real-probe.ps1 -InitialOnly",
-    "probe:core-p37": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-recovery-probe.ps1",
-    "probe:core-p37-lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-lifecycle-probe.ps1",
-    "prepare:core-p37-reboot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-reboot-prepare.ps1",
-    "resume:core-p37-reboot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-reboot-resume.ps1",
-    "probe:core-reader-lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p23-lifecycle-probe.ps1",
-    "probe:core-capability-setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-capability-setup-windows-probe.ps1",
-    "probe:core-reader-reboot:prepare": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p23-reboot-probe.ps1 -Mode prepare",
-    "probe:core-reader-reboot:resume": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-reader-p23-reboot-probe.ps1 -Mode resume",
-    "test:stable-only-artifacts": "node scripts/stable-only-artifact-check.cjs",
-    "test:quick-command": "node tests/quick-command.integration.cjs && node tests/catalog-command-operations.integration.cjs",
-    "test:line-window-lifecycle": "node tests/line-window-lifecycle.integration.cjs",
-    "test:window-layout-baseline": "node tests/window-layout-baseline.integration.cjs",
-    "test:browser-window-diagnostics": "node tests/browser-window-diagnostics.integration.cjs",
-    "test:main-window-input-policy": "electron tests/main-window-input-policy.integration.cjs",
-    "test:stable-preview-window-sizing": "node tests/stable-preview-window-sizing.integration.cjs",
-    "test:window-system-interactions": "node tests/window-system-interactions.integration.cjs",
-    "test:stable-ui-preview": "node tests/stable-ui-preview.integration.cjs",
-    "test:stable-ui-preview-interaction": "node tests/stable-ui-preview-interaction.integration.cjs",
-    "test:stable-ui-window-lifecycle": "node tests/stable-ui-window-lifecycle.integration.cjs",
-    "test:stable-ui-foundation": "node tests/stable-ui-foundation.integration.cjs",
-    "test:stable-ui-shell": "node tests/stable-ui-shell.integration.cjs",
-    "test:stable-ui-search": "node tests/stable-ui-search.integration.cjs",
-    "test:random-browse": "node tests/random-browse.integration.cjs",
-    "test:stable-ui-sidebar": "node tests/stable-ui-sidebar.integration.cjs",
-    "test:stable-ui-skim": "node tests/stable-ui-skim.integration.cjs",
-    "test:stable-ui-settings-window": "node tests/stable-ui-settings-window.integration.cjs",
-    "test:window-layout-foundation": "node tests/window-layout-foundation.integration.cjs",
-    "test:window-layout-memory": "node tests/window-layout-memory.integration.cjs",
-    "test:docked-shell-automation": "node tests/docked-shell-automation.integration.cjs",
-    "test:ipc-registration": "node tests/ipc-registration.integration.cjs",
-    "test:file-ipc": "node tests/file-ipc.integration.cjs",
-    "test:runtime-model-ipc": "node tests/runtime-model-ipc.integration.cjs",
-    "test:search-ipc": "node tests/search-ipc.integration.cjs",
-    "test:diagnostics-ipc": "node tests/diagnostics-ipc.integration.cjs",
-    "test:runtime-diagnostics": "node tests/runtime-diagnostics.integration.cjs",
-    "test:catalog-view-preferences": "node tests/catalog-view-preferences.integration.cjs && electron tests/catalog-view-preference-ui.integration.cjs",
-    "test:preference-ipc": "node tests/preference-ipc.integration.cjs && node tests/catalog-grid-preferences.integration.cjs && electron tests/catalog-grid-preference-view.integration.cjs && npm run test:catalog-view-preferences",
-    "test:cache-activity-ipc": "node tests/cache-activity-ipc.integration.cjs",
-    "test:cache-clear-ipc": "node tests/cache-clear-ipc.integration.cjs",
-    "test:ai-retirement": "electron tests/ai-retirement.integration.cjs",
-    "test:llama-runtime-idle": "node scripts/core-model-runtime-boundary-check.cjs && node tests/core-model-runtime-client.integration.cjs && node tests/core-model-runtime.integration.cjs && node tests/llama-runtime-idle.integration.cjs",
-    "test:ai-query-evidence": "node tests/ai-query-evidence-store.integration.cjs",
-    "test:manual-metadata-ipc": "node tests/manual-metadata-ipc.integration.cjs",
-    "test:directory-management-ipc": "node tests/directory-management-ipc.integration.cjs",
-    "test:virtual-grid-layout": "node tests/virtual-grid-layout.integration.cjs",
-    "test:result-section-layout": "node tests/result-section-layout.integration.cjs",
-    "test:app-update": "node tests/app-update.integration.cjs && node tests/app-update-download.integration.cjs && node tests/app-update-install-intent.integration.cjs && node tests/app-update-ipc.integration.cjs",
-    "test:web-contents-zoom": "electron tests/web-contents-zoom.integration.cjs",
-    "test:devtools-policy": "electron tests/devtools-policy.integration.cjs",
-    "test:shell-mouse-polling": "node tests/shell-mouse-polling.integration.cjs",
-    "test:shell-thumbnail-probe": "node scripts/core-visuals-boundary-check.cjs && node tests/core-visuals-native.integration.cjs && electron tests/core-shell-thumbnail.integration.cjs && electron tests/shell-thumbnail-probe.integration.cjs",
-    "test:application-data-paths": "node tests/application-data-paths.integration.cjs",
-    "test:ai-content-paths": "node tests/ai-content-paths.integration.cjs",
-    "test:runtime-model-selection": "node scripts/core-model-settings-boundary-check.cjs && node tests/core-model-settings.integration.cjs && node tests/core-model-settings-host.integration.cjs && node tests/runtime-model-selection.integration.cjs",
-    "test:directory-add": "electron tests/directory-add.integration.cjs",
-    "test:format-capabilities": "electron tests/format-capabilities.integration.cjs",
-    "test:skim-browse": "electron tests/skim-browse.integration.cjs",
-    "test:skim-display-preferences": "electron tests/skim-display-preferences.integration.cjs",
-    "test:skim-preview": "node scripts/core-source-information-boundary-check.cjs && node tests/core-source-information.integration.cjs && electron tests/skim-preview.integration.cjs",
-    "test:core-provider-preview": "node scripts/core-provider-preview-boundary-check.cjs && node tests/core-provider-preview-client.integration.cjs && node tests/core-provider-preview-runtime.integration.cjs",
-    "test:pdf-preview": "npm run test:core-provider-preview && electron tests/pdf-preview.integration.cjs",
-    "test:office-preview": "node tests/office-process-job.integration.cjs && node scripts/core-office-preview-boundary-check.cjs && node tests/core-office-preview-runtime.integration.cjs && electron tests/office-preview.integration.cjs",
-    "test:display-cache": "node scripts/core-node-transport-boundary-check.cjs && node tests/core-node-rpc-session.integration.cjs && node tests/core-node-server.integration.cjs && node scripts/core-visual-cache-boundary-check.cjs && node scripts/core-visual-execution-boundary-check.cjs && node tests/core-visual-cache.integration.cjs && node tests/core-visual-execution-lifetime.integration.cjs && node tests/core-visual-runtime.integration.cjs && electron tests/core-visual-bmp-parity.integration.cjs && electron tests/display-cache.integration.cjs",
-    "test:archive-preview": "node tests/archive-preview.integration.cjs",
-    "test:font-preview": "electron tests/font-preview.integration.cjs",
-    "test:embedded-metadata": "node scripts/core-stored-metadata-boundary-check.cjs && node tests/core-stored-metadata.integration.cjs && node tests/embedded-metadata.integration.cjs",
-    "test:visual-property": "node tests/visual-property.integration.cjs",
-    "test:embedded-metadata-service": "npm run test:core-preview-metadata && node tests/embedded-metadata-service.integration.cjs",
-    "test:visual-property-service": "node tests/visual-property-service.integration.cjs && npm run test:visual-property-semantics",
-    "test:image-dimension-service": "node tests/image-dimension-service.integration.cjs",
-    "test:video-fact": "node tests/video-metadata-frames.integration.cjs && node tests/video-fact-cancellation.integration.cjs && node tests/metadata-worker.integration.cjs && node tests/metadata-runtime.integration.cjs && electron tests/video-fact.integration.cjs",
-    "test:audio-fact": "node tests/audio-fact-cancellation.integration.cjs && electron tests/audio-fact.integration.cjs",
-    "test:document-fact": "node tests/document-fact-cancellation.integration.cjs && electron tests/document-fact.integration.cjs",
-    "test:three-d-fact": "node tests/three-d-known-properties.integration.cjs && electron tests/three-d-fact.integration.cjs",
-    "test:archive-fact": "node tests/archive-metadata-reader.integration.cjs && electron tests/archive-fact.integration.cjs",
-    "test:font-fact": "node tests/font-fact-cancellation.integration.cjs && electron tests/font-fact.integration.cjs",
-    "test:model-fact": "node tests/model-fact-cancellation.integration.cjs && electron tests/model-fact.integration.cjs",
-    "test:text-data-fact": "node tests/text-data-known-properties.integration.cjs && electron tests/text-data-fact.integration.cjs",
-    "test:visual-property-semantics": "node tests/visual-property-semantics.integration.cjs",
-    "test:animated-image-preview": "electron tests/animated-image-preview.integration.cjs && npm run build:electron && node tests/animation-fact.integration.cjs",
-    "test:avif-visual-format": "electron tests/avif-visual-format.integration.cjs",
-    "test:preview-request-guard": "node tests/preview-request-guard.integration.cjs && node tests/main-preview-request.integration.cjs",
-    "test:keyword-editor-interaction": "node tests/keyword-editor-interaction.integration.cjs",
-    "test:file-context-actions": "node tests/file-context-actions.integration.cjs",
-    "test:search-evidence": "node tests/search-evidence.integration.cjs",
-    "test:search-query-planner": "node tests/search-query-planner.integration.cjs",
-    "test:skim-visual-cache": "electron tests/skim-visual-cache.integration.cjs && electron tests/visual-invalid-source.integration.cjs",
-    "test:skim-content-preview": "node scripts/core-text-preview-boundary-check.cjs && node tests/core-text-preview.integration.cjs && electron tests/skim-content-preview.integration.cjs",
-    "test:file-catalog": "electron tests/file-catalog.integration.cjs",
-    "test:multi-format-search": "electron tests/multi-format-search.integration.cjs",
-    "test:file-size-filter": "electron tests/file-size-filter.integration.cjs",
-    "test:search-scan-snapshot": "electron tests/search-scan-snapshot.integration.cjs",
-    "test:thumbnail-optimization": "electron tests/thumbnail-optimization.integration.cjs",
-    "test:file-drag": "electron tests/file-drag.integration.cjs",
-    "test:file-clipboard": "node tests/file-clipboard.integration.cjs",
-    "test:file-operation": "npm run test:core-file-operations && electron tests/file-operation.integration.cjs && electron tests/catalog-trash-service.integration.cjs && electron tests/favorite-folder-rename.integration.cjs",
-    "test:manual-index": "electron tests/manual-index.integration.cjs",
-    "test:stale-cleanup": "electron tests/stale-image-cleanup.integration.cjs",
-    "test:model-input-cleanup": "electron tests/model-input-cache-cleanup.integration.cjs",
-    "probe:shell-thumbnail": "electron scripts/shell-thumbnail-probe.cjs",
-    "probe:window-controls-overlay": "electron scripts/window-controls-overlay-probe.cjs",
-    "preview": "vite preview --host 127.0.0.1",
-    "pack": "npm run build && node scripts/native-pack.cjs",
-    "dist:installer": "npm run build && node scripts/native-installer-build.cjs",
-    "dist:core-capability-installer": "node scripts/native-installer-unavailable.cjs",
-    "test:epub-preview": "node tests/epub-preview.integration.cjs",
-    "test:mobi-preview": "node tests/mobi-preview.integration.cjs",
-    "test:installer-config": "node tests/installer-config.integration.cjs && node tests/metadata-runtime-packaging.integration.cjs",
-    "test:system-notification": "node tests/system-notification.integration.cjs",
     "build:metadata-media": "node scripts/metadata-media-build.cjs",
-    "build:preload": "node scripts/build-preload.cjs",
-    "test:preload-sandbox": "electron tests/preload-sandbox.integration.cjs",
     "build:core-configuration": "node scripts/core-configuration-build.cjs",
     "build:core-file-operations": "node scripts/core-file-operations-build.cjs",
-    "test:core-file-operations": "node scripts/core-file-operations-build.cjs --test && node tests/core-file-operations.integration.cjs && node tests/core-folder-rename-workflow.integration.cjs && node tests/core-trash-client.integration.cjs",
     "build:metadata-worker": "node scripts/metadata-worker-build.cjs",
     "build:core-visuals": "node scripts/core-visuals-build.cjs",
-    "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs",
-    "test:core-preview-metadata": "node scripts/core-preview-metadata-boundary-check.cjs && node tests/core-preview-metadata-lifetime.integration.cjs && node tests/core-preview-metadata-runtime.integration.cjs",
-    "test:core-local-keywords": "node scripts/core-local-keywords-boundary-check.cjs && node tests/core-local-keywords-runtime.integration.cjs",
-    "dev:legacy": "concurrently --kill-others-on-fail -n RENDERER,ELECTRON -c cyan,magenta \"npm:dev:renderer\" \"npm:dev:electron\"",
-    "build:legacy": "npm run build:file-facts && npm run build:embedded-domain && npm run build:resource-catalog && npm run build:update-domain && tsc -b && vite build && npm run build:electron && npm run test:stable-only-artifacts",
-    "pack:legacy": "npm run build:legacy && npm run publish:core-product-capability && electron-builder --dir && node scripts/metadata-runtime-packaged-check.cjs",
-    "dist:installer:legacy": "npm run build:legacy && npm run publish:core-product-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --win nsis --x64 --publish never && node scripts/metadata-runtime-packaged-check.cjs && node scripts/core-product-installer-smoke.cjs",
-    "dev:winui": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File shell/run.ps1",
-    "build:winui": "node scripts/native-build.cjs",
+    "pack": "npm run build && node scripts/native-pack.cjs",
+    "dist:installer": "npm run build && node scripts/native-installer-build.cjs",
     "dist:portable": "npm run build && node scripts/native-pack.cjs --zip",
     "test:native:smoke": "node scripts/native-smoke.cjs",
-    "dist:core-capability-installer:legacy": "npm run build:legacy && npm run publish:core-capability && cross-env ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ electron-builder --config build/core-capability-dev.electron-builder.cjs --win nsis --x64 --publish never && node scripts/core-capability-installer-smoke.cjs",
-    "build:embedded-domain": "tsc -b core/node/embeddedMetadata/domain && node scripts/embedded-metadata-declarations.cjs && node scripts/embedded-metadata-boundary-check.cjs",
-    "test:embedded-domain": "npm run build:embedded-domain && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run test:embedded-metadata && npm run test:embedded-metadata-service",
-    "build:file-facts": "tsc -b core/node/fileFacts/domain && node scripts/file-facts-declarations.cjs && node scripts/file-facts-boundary-check.cjs && node scripts/metadata-execution-source-boundary-check.cjs && node scripts/visual-decoder-boundary-check.cjs && node scripts/visual-cache-contract-boundary-check.cjs && node scripts/preview-reader-source-boundary-check.cjs && node scripts/model-keyword-policy-boundary-check.cjs && node scripts/directory-source-boundary-check.cjs && node scripts/native-read-side-boundary-check.cjs",
-    "test:file-facts": "npm run build:file-facts && npm run build:resource-catalog && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && node tests/audio-fact-cancellation.integration.cjs && node tests/video-fact-cancellation.integration.cjs && node tests/font-fact-cancellation.integration.cjs && node tests/model-fact-cancellation.integration.cjs && node tests/text-data-known-properties.integration.cjs && node tests/three-d-known-properties.integration.cjs && electron tests/audio-fact.integration.cjs && electron tests/video-fact.integration.cjs && electron tests/font-fact.integration.cjs && electron tests/model-fact.integration.cjs && electron tests/text-data-fact.integration.cjs && electron tests/three-d-fact.integration.cjs",
-    "test:image-document-facts": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && node tests/image-metadata-inspector.integration.cjs && node tests/visual-property.integration.cjs && node tests/animation-fact.integration.cjs && node tests/document-fact-cancellation.integration.cjs && electron tests/document-fact.integration.cjs && node tests/metadata-extractor-manifest.integration.cjs",
-    "test:archive-domain": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && node tests/archive-metadata-reader.integration.cjs && electron tests/archive-fact.integration.cjs && node tests/archive-preview.integration.cjs",
-    "test:metadata-execution": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:metadata-worker && node tests/video-metadata-frames.integration.cjs && node tests/metadata-extractor-manifest.integration.cjs && node tests/metadata-worker.integration.cjs && node tests/metadata-runtime.integration.cjs",
-    "test:visual-decoders": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:metadata-worker && node scripts/core-visual-execution-boundary-check.cjs && node tests/core-visual-runtime.integration.cjs && electron tests/core-visual-bmp-parity.integration.cjs",
-    "test:visual-cache-contracts": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:metadata-worker && node scripts/core-visual-cache-boundary-check.cjs && node tests/core-node-rpc-session.integration.cjs && node tests/core-node-server.integration.cjs && node tests/core-visual-cache.integration.cjs && node tests/core-visual-runtime.integration.cjs",
-    "test:preview-readers": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:metadata-worker && node scripts/core-provider-preview-boundary-check.cjs && node scripts/core-text-preview-boundary-check.cjs && node tests/epub-preview.integration.cjs && node tests/mobi-preview.integration.cjs && node tests/core-text-preview.integration.cjs && node tests/core-provider-preview-runtime.integration.cjs",
-    "test:model-keyword-policy": "npm run build:resource-catalog && npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p tsconfig.json && tsc -p core/node/tsconfig.json && vite build && node tests/keyword-editor-interaction.integration.cjs && node tests/llama-runtime-idle.integration.cjs && node tests/core-model-runtime-client.integration.cjs && npm run build:metadata-worker && node scripts/core-model-runtime-boundary-check.cjs && node scripts/core-local-keywords-boundary-check.cjs && node tests/core-model-runtime.integration.cjs && node tests/core-local-keywords-runtime.integration.cjs",
-    "test:directory-sources": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:metadata-worker && node scripts/core-directory-browse-boundary-check.cjs && node scripts/core-source-information-boundary-check.cjs && electron tests/skim-browse.integration.cjs && node tests/core-directory-browse.integration.cjs && node tests/core-source-information.integration.cjs",
-    "test:native-read-side": "npm run build:file-facts && tsc -p tsconfig.electron.json && tsc -p core/node/tsconfig.json && npm run build:metadata-worker && npm run test:core-preview-metadata && npm run test:embedded-metadata && node tests/core-visual-runtime.integration.cjs && electron tests/core-shell-thumbnail.integration.cjs"
+    "build:node": "tsc -p tsconfig.json",
+    "test:source": "node scripts/native-source-check.cjs && node scripts/winui-shell-boundary-check.cjs",
+    "test:layout": "dotnet run --project shell/Cap7CE.Layout.Tests/Cap7CE.Layout.Tests.csproj -c Release",
+    "test:core": "dotnet run --project core/tests/Cap7CE.Core.Tests/Cap7CE.Core.Tests.csproj -c Release",
+    "test:runtime": "node tests/animation-fact.integration.cjs && node tests/archive-metadata-reader.integration.cjs && node tests/image-metadata-inspector.integration.cjs && node tests/video-metadata-frames.integration.cjs && node tests/llama-runtime-idle.integration.cjs && node tests/three-d-known-properties.integration.cjs && node tests/metadata-extractor-manifest.integration.cjs && node tests/core-directory-sort.integration.cjs && node tests/core-model-settings.integration.cjs && node tests/core-visual-execution-lifetime.integration.cjs && node tests/metadata-runtime.integration.cjs && node tests/native-providers.integration.cjs && node tests/native-update.integration.cjs && node tests/resource-catalog.integration.cjs",
+    "test": "npm run test:source && npm run test:layout && npm run test:core && npm run test:runtime"
   },
   "build": {
     "appId": "Cap7CE",
     "productName": "Cap7CE",
     "copyright": "Copyright © 2026 7C93F3-L",
-    "extraMetadata": {
-      "description": ""
-    },
-    "icon": "build/icon.ico",
-    "electronDist": "node_modules/electron/dist",
     "directories": {
       "output": "release"
     },
-    "files": [
-      "dist/**/*",
-      "dist-electron/**/*",
-      "core/artifacts/application-updates/*.js",
-      "core/artifacts/resource-catalog/**/*.js",
-      "resources/icons/**/*",
-      "src/renderer/assets/startup/**/*",
-      "build/icon.ico",
-      "build/notification-icon.png",
-      "LICENSE",
-      "NOTICE",
-      "THIRD_PARTY_NOTICES.md",
-      "BRAND.md",
-      "package.json",
-      "!node_modules/ag-psd/.v8-cache/**/*",
-      "core/artifacts/embedded-metadata/**/*.js",
-      "core/artifacts/file-facts/**/*.js"
-    ],
-    "asarUnpack": [
-      "dist-electron/archivePreviewWorker.js",
-      "node_modules/7z-wasm/**/*",
-      "dist-electron/fontMetadataWorker.js",
-      "dist-electron/modelFactWorker.js",
-      "dist-electron/embeddedMetadataWorker.js",
-      "dist-electron/visualPropertyWorker.js",
-      "dist-electron/epubPreviewWorker.js",
-      "dist-electron/mobiPreviewWorker.js",
-      "node_modules/@lingo-reader/**/*",
-      "node_modules/events/**/*",
-      "node_modules/path-browserify/**/*",
-      "node_modules/sax/**/*",
-      "node_modules/fflate/**/*",
-      "node_modules/@xmldom/**/*",
-      "node_modules/parse5/**/*",
-      "node_modules/entities/**/*",
-      "node_modules/opentype.js/**/*",
-      "node_modules/sql.js/dist/*.wasm",
-      "node_modules/sharp/**/*",
-      "node_modules/detect-libc/**/*",
-      "node_modules/semver/**/*",
-      "node_modules/@img/**/*",
-      "node_modules/@napi-rs/canvas/**/*",
-      "node_modules/@napi-rs/canvas-win32-x64-msvc/**/*",
-      "core/artifacts/file-facts/**/*.js"
-    ],
-    "extraResources": [
-      {
-        "from": "resources/icons",
-        "to": "renderer-assets/icons",
-        "filter": [
-          "*.svg"
-        ]
-      },
-      {
-        "from": "src/renderer/assets/startup",
-        "to": "renderer-assets/startup",
-        "filter": [
-          "*.svg"
-        ]
-      },
-      {
-        "from": "third_party/7z-wasm",
-        "to": "licenses/7z-wasm",
-        "filter": [
-          "*.txt"
-        ]
-      },
-      {
-        "from": "third_party/opentype.js",
-        "to": "licenses/opentype.js",
-        "filter": [
-          "LICENSE"
-        ]
-      },
-      {
-        "from": "third_party/fluentui-system-icons",
-        "to": "licenses/fluentui-system-icons",
-        "filter": [
-          "LICENSE"
-        ]
-      },
-      {
-        "from": "third_party/core-dependencies",
-        "to": "licenses/core-dependencies",
-        "filter": [
-          "LICENSE-*"
-        ]
-      },
-      {
-        "from": "core/artifacts/product-capability/v1/bundle",
-        "to": "core-capability/v1",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "native/artifacts/metadata-media/v1",
-        "to": "metadata-media/v1",
-        "filter": [
-          "Cap7CE.Media.Metadata.exe"
-        ]
-      },
-      {
-        "from": "third_party/metadata-media",
-        "to": "licenses/metadata-media",
-        "filter": [
-          "LICENSE-*"
-        ]
-      },
-      {
-        "from": "core/artifacts/configuration-host",
-        "to": "core-configuration/v1",
-        "filter": [
-          "Cap7CE.Core.Configuration.Host.exe"
-        ]
-      },
-      {
-        "from": "core/artifacts/file-operations-host",
-        "to": "core-file-operations/v1",
-        "filter": [
-          "Cap7CE.Core.FileOperations.Host.exe",
-          "Cap7CE.Core.FileOperations.Native.dll"
-        ]
-      },
-      {
-        "from": "native/artifacts/core-visuals/v1",
-        "to": "core-visuals/v1",
-        "filter": [
-          "Cap7CE.Core.Visuals.exe"
-        ]
-      },
-      {
-        "from": "third_party/chromium-visuals",
-        "to": "licenses/chromium-visuals",
-        "filter": [
-          "LICENSE"
-        ]
-      },
-      {
-        "from": "artifacts/metadata-worker/v1",
-        "to": "metadata-worker/v1",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "artifacts/metadata-worker/v1/node_modules",
-        "to": "metadata-worker/v1/node_modules",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
     "win": {
       "icon": "build/icon.ico",
       "signtoolOptions": {
@@ -399,7 +86,6 @@
   "dependencies": {
     "@lingo-reader/mobi-parser": "0.4.6",
     "@napi-rs/canvas": "^0.1.88",
-    "@types/sql.js": "^1.4.11",
     "@xmldom/xmldom": "^0.9.10",
     "7z-wasm": "^1.2.0",
     "ag-psd": "^30.1.1",
@@ -408,27 +94,16 @@
     "opentype.js": "^2.0.0",
     "parse5": "^8.0.1",
     "pdfjs-dist": "^5.4.624",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
+    "semver": "6.3.1",
     "sharp": "^0.35.4",
-    "sql.js": "^1.14.1",
     "word-extractor": "^1.0.4"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
     "@types/word-extractor": "^1.0.2",
-    "@vitejs/plugin-react": "^4.3.4",
-    "concurrently": "^9.2.4",
     "cross-env": "^7.0.3",
-    "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
-    "typescript": "^5.7.2",
-    "vite": "^7.3.6",
-    "wait-on": "^8.0.1",
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "typescript": "^5.7.2"
   }
 }

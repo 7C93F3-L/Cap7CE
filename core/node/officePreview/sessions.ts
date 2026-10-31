@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
-import type { OfficePreviewKind } from "../../../src/shared/officePreviewTypes";
+import type { OfficePreviewKind } from "../../../core/shared/officePreviewTypes";
 import type { OfficePreviewCache } from "./cache";
 import { runPowerShellConversion, createCancelledError, type OfficeConversionRunner } from "./conversion";
 import { isValidPdf } from "./pdfHeader";

@@ -1,6 +1,6 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions, ComputerSearchIntegerRange } from "../../../../../src/shared/computerSearchFactTypes";
-import type { ComputerSearchFontFilter } from "../../../../../src/shared/computerSearchFontTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions, ComputerSearchIntegerRange } from "../../../../../core/shared/computerSearchFactTypes";
+import type { ComputerSearchFontFilter } from "../../../../../core/shared/computerSearchFontTypes";
 import { searchFontWeights, searchFontStyles, searchFontCharacterSets, searchFontKinds } from "../formats/fontSearchFilters";
 import { toComputerSearchAudioConditions } from "./computerSearchAudioConditions";
 

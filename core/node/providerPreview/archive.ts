@@ -5,7 +5,7 @@ import { spawnPreviewWorker } from "./lifecycle";
 import type {
   ArchivePreviewFallbackReason,
   ArchiveWorkerResponse
-} from "../../../src/shared/archivePreviewTypes";
+} from "../../../core/shared/archivePreviewTypes";
 
 const supportedArchiveExtensions = new Set([".zip", ".7z", ".rar"]);
 const maximumArchiveBytes = 8 * 1024 * 1024 * 1024;

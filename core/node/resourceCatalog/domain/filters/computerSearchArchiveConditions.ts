@@ -1,6 +1,6 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions } from "../../../../../src/shared/computerSearchFactTypes";
-import type { ComputerSearchArchiveFilter } from "../../../../../src/shared/computerSearchArchiveTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions } from "../../../../../core/shared/computerSearchFactTypes";
+import type { ComputerSearchArchiveFilter } from "../../../../../core/shared/computerSearchArchiveTypes";
 import { toComputerSearchTextDataConditions } from "./computerSearchTextDataConditions";
 const counts: Record<string, readonly [number, number?]> = { "under-10": [0, 9], "10-100": [10, 99], "100-1000": [100, 999], "over-1000": [1000] };
 const invalid = (): never => { throw new Error("computer-search-invalid-archive-selection"); };

@@ -1,5 +1,5 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchFileConditions } from "../../../../../src/shared/computerSearchFactTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchFileConditions } from "../../../../../core/shared/computerSearchFactTypes";
 import { normalizeFileSizeRange, resolveSearchFileSizeFilter, searchFileSizePresets } from "../formats/fileSizeSearchFilters";
 import { resolveSearchModifiedTimeRange } from "../formats/searchFilters";
 import { fileFormatCapabilities } from "../formats/formatCapabilities";

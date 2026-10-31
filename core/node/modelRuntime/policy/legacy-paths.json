@@ -1,6 +1,0 @@
-{
-  "electron/modelRuntimeInitialState.ts": "core/node/modelRuntime/policy/modelRuntimeInitialState.ts",
-  "electron/llamaRuntimeIdleController.ts": "core/node/modelRuntime/policy/llamaRuntimeIdleController.ts",
-  "electron/keywordRules.ts": "core/node/localKeywords/policy/keywordRules.ts",
-  "electron/core/localKeywordPolicy.ts": "core/node/localKeywords/policy/localKeywordPolicy.ts"
-}

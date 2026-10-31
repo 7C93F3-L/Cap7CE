@@ -6,8 +6,8 @@ import { promisify } from "node:util";
 import { getFileFormatCapability } from "../../resourceCatalog/domain/formats/formatCapabilities";
 import { isPathWithinDirectory } from "./sourcePathPolicy";
 
-import type { SkimBrowseEntry, SkimBreadcrumb, SkimReadResult } from "../../../../src/shared/directoryBrowseTypes";
-export type { SkimBrowseEntryKind, SkimBrowseEntry, SkimBreadcrumb, SkimReadResult } from "../../../../src/shared/directoryBrowseTypes";
+import type { SkimBrowseEntry, SkimBreadcrumb, SkimReadResult } from "../../../../core/shared/directoryBrowseTypes";
+export type { SkimBrowseEntryKind, SkimBrowseEntry, SkimBreadcrumb, SkimReadResult } from "../../../../core/shared/directoryBrowseTypes";
 
 const execFileAsync = promisify(execFile);
 

@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import type { KeywordSourceIdentity } from "../../../src/shared/localKeywordTypes";
+import type { KeywordSourceIdentity } from "../../../core/shared/localKeywordTypes";
 
 export async function fingerprintKeywordSource(item: KeywordSourceIdentity) {
   const stat = await fs.lstat(item.path, { bigint: true });

@@ -1,5 +1,0 @@
-.cap-catalog-activity-dock { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 36; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
-.cap-catalog-activity-dock > * { pointer-events: auto; }
-.cap-catalog-query-notice-host { display: contents; }
-.cap-catalog-design .cap-catalog-activity-dock > .cap-metadata-build-slot.is-floating { position: relative; inset: auto; width: auto; max-width: 100%; }
-.cap-catalog-design .cap-catalog-activity-dock > .cap-metadata-build-slot.is-floating:not(.is-compact) { width: min(640px, 100%); }

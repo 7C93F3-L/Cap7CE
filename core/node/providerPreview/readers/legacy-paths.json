@@ -1,7 +1,0 @@
-{
-  "electron/epubPreviewWorker.ts": "core/node/providerPreview/readers/epubPreviewWorker.ts",
-  "electron/mobiPreviewWorker.ts": "core/node/providerPreview/readers/mobiPreviewWorker.ts",
-  "electron/fontPreviewLimits.ts": "core/node/providerPreview/readers/fontPreviewLimits.ts",
-  "electron/textPreviewPolicy.ts": "core/node/textPreview/contracts/textPreviewPolicy.ts",
-  "electron/core/coreTextPreviewProjection.ts": "core/node/textPreview/contracts/coreTextPreviewProjection.ts"
-}

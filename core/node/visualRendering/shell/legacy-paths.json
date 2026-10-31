@@ -1,6 +1,0 @@
-{
-  "electron/core/previewMetadataProjection.ts": "core/node/interactiveMetadata/contracts/previewMetadataProjection.ts",
-  "electron/core/storedMetadataProjection.ts": "core/node/storedMetadata/contracts/storedMetadataProjection.ts",
-  "electron/core/coreShellThumbnail.ts": "core/node/visualRendering/shell/coreShellThumbnail.ts",
-  "electron/vectorDocumentRenderService.ts": "core/node/visualRendering/shell/vectorDocumentRenderService.ts"
-}

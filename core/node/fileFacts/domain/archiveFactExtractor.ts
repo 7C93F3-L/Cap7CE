@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileFormatCapabilityByExtension } from "../../resourceCatalog/domain/formats/formatCapabilities";
-import type { ArchivePreviewData } from "../../../../src/shared/archivePreviewTypes";
+import type { ArchivePreviewData } from "../../../../core/shared/archivePreviewTypes";
 import type { SearchArchiveContentType } from "../../resourceCatalog/domain/formats/archiveSearchFilters";
 
 const programExtensions = new Set([".exe", ".msi", ".msix", ".appx", ".appxbundle", ".bat", ".cmd", ".ps1", ".vbs"]);

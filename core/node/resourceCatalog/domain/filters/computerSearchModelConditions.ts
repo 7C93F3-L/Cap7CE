@@ -1,6 +1,6 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions } from "../../../../../src/shared/computerSearchFactTypes";
-import type { ComputerSearchModelFilter } from "../../../../../src/shared/computerSearchModelTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions } from "../../../../../core/shared/computerSearchFactTypes";
+import type { ComputerSearchModelFilter } from "../../../../../core/shared/computerSearchModelTypes";
 import { searchModelParameterCounts, searchModelPrecisions } from "../formats/modelSearchFilters";
 import { toComputerSearchFontConditions } from "./computerSearchFontConditions";
 

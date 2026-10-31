@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { CACHE_VERSION, RENDER_STRATEGY_VERSION, SHELL_THUMBNAIL_POLICY_VERSION } from "./contracts/versioning";
 import { createVisualCachePaths, normalizedPathForKey, formalVisualCacheTypes, formalThumbnailCacheTypes, skimVisualCacheTypes } from "./contracts/visualCachePaths";
-import type { VisualCacheType, VisualCacheEntry, VisualCacheMetadata, VisualCacheSourceMetadata, VisualCacheRenderSource, VisualCacheImage, VisualImageMimeType, VisualCacheStats } from "../../../src/shared/visualCacheTypes";
+import type { VisualCacheType, VisualCacheEntry, VisualCacheMetadata, VisualCacheSourceMetadata, VisualCacheRenderSource, VisualCacheImage, VisualImageMimeType, VisualCacheStats } from "../../../core/shared/visualCacheTypes";
 import { detectVisualImageMimeType } from "./contracts/visualCacheImage";
 import { maximumCacheImageBytes } from "./contracts/visualCacheFrames";
 import { createVisualCachePublications } from "./publication";

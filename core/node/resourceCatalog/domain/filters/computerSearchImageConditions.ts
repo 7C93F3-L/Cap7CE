@@ -1,5 +1,5 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions, ComputerSearchVisualGroup } from "../../../../../src/shared/computerSearchFactTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions, ComputerSearchVisualGroup } from "../../../../../core/shared/computerSearchFactTypes";
 import { searchVisualColors, searchImageColorTraits, searchImageAnimationModes } from "../formats/imageSearchFilters";
 import { searchVideoVisualColors, searchVideoColorTraits } from "../formats/videoSearchFilters";
 import { getVisualPropertySemanticConditionBySemantic } from "../formats/visualPropertySemantics";

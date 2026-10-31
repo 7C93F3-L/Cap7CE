@@ -5,7 +5,7 @@ import { createFileSourceRevision } from "../embeddedMetadata/domain/fileSourceR
 import { EMBEDDED_METADATA_EXTRACTOR_VERSION } from "../embeddedMetadata/domain/embeddedMetadataTypes";
 import { parseKeywordText } from "../localKeywords/policy/keywordRules";
 import { emptyStoredMetadata, validStoredMetadata, validLegacyKeywordPage } from "./contracts/storedMetadataProjection";
-import type { StoredIndexRequest, StoredMetadataResult } from "../../../src/shared/storedMetadataTypes";
+import type { StoredIndexRequest, StoredMetadataResult } from "../../../core/shared/storedMetadataTypes";
 const requireTables = (db: DatabaseSync, names: string[]) => {
   for (const name of names) {
     const row = db.prepare("SELECT type, sql FROM sqlite_master WHERE name=?").get(name);

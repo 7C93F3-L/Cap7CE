@@ -1,5 +1,5 @@
-import type { VisualCacheType, VisualImageMimeType } from "../../../src/shared/visualCacheTypes";
-import type { NativeVisualCacheType, VisualDecodeResult, VisualPreparedPath } from "../../../src/shared/visualRenderTypes";
+import type { VisualCacheType, VisualImageMimeType } from "../../../core/shared/visualCacheTypes";
+import type { NativeVisualCacheType, VisualDecodeResult, VisualPreparedPath } from "../../../core/shared/visualRenderTypes";
 import type { createVisualCacheStore } from "../visualCache/store";
 import { detectVisualImageMimeType } from "../visualCache/contracts/visualCacheImage";
 import { requestCoreShellThumbnail } from "./shell/coreShellThumbnail";

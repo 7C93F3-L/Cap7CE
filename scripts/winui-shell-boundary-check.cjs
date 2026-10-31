@@ -29,8 +29,8 @@ assert(session.indexOf('!allowedOperations.Contains(request.Operation)') < sessi
 assert(session.includes('allowedOperations is null || allowedOperations.Contains(operation)'), 'hello cannot advertise forbidden operations');
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const identitySource=read('shell/Cap7CE.WinUI/Services/ApplicationIdentity.cs');
-const legacyIdentity=read('electron/main.ts').match(/const windowsAppUserModelId = "([^"]+)"/)[1];
-assert(identitySource.includes(`AppUserModelId="${legacyIdentity}"`) && project.includes('<AssemblyTitle>Cap7CE</AssemblyTitle>'), 'native public identity must match the existing product');
+const productIdentity="Cap7CE";
+assert(identitySource.includes(`AppUserModelId="${productIdentity}"`) && project.includes('<AssemblyTitle>Cap7CE</AssemblyTitle>'), 'native public identity must match the existing product');
 const startup=read('shell/Cap7CE.WinUI/Program.cs');
 assert(startup.indexOf('ApplicationIdentity.Initialize()')>=0 && startup.indexOf('ApplicationIdentity.Initialize()')<startup.indexOf('WinRT.ComWrappersSupport.InitializeComWrappers()'), 'public AUMID must be set before WinRT notification or window initialization');
 assert(!read('shell/Cap7CE.WinUI/Themes/ThemeService.cs').includes('window.Title = ""'), 'theme changes cannot erase system window titles');
@@ -132,7 +132,7 @@ const settingsWindow = read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs');
 assert(settingsWindow.includes('NavigationView') && settingsWindow.includes('SettingsPages'), 'settings window only composes native navigation and pages');
 assert(!/\.RequestAsync|\.SaveAsync|new ColorPicker/.test(settingsWindow), 'settings window cannot own setting actions or editors');
 const settingsCatalog = read('shell/Cap7CE.WinUI/Views/Settings/SettingsCatalog.cs');
-const mainlineSettings = [...read('src/renderer/settings-window/SettingsWindowApp.tsx').matchAll(/<SettingCard title="([^"]+)" description="([^"]+)"/g)].filter(m => !['settings.standbyLine','stableSettings.uiFontSize','stableSettings.diagnostics','settings.versionUpdate'].includes(m[1])).map(m => `${m[1]}:${m[2]}`);
+const mainlineSettings = require('./winui-settings-baseline.json').slice();
 const maintenanceSettings = read('shell/Cap7CE.WinUI/Views/Settings/MaintenanceSettingsView.cs');
 assert(settingsCatalog.includes('new MaintenanceSettingsView(services,owner)') && !settingsCatalog.includes('services.ShowMaintenance()'), 'settings must show maintenance inline');
 assert(maintenanceSettings.includes('new IndexMaintenanceView(services)') && settingsCatalog.includes('MetadataView,true'), 'settings must host index and metadata management inline');
@@ -147,8 +147,7 @@ assert(settingsCatalog.includes('"stableSettings.section.application","","",Vers
   && nativeUpdateCard.includes('new SettingsSection(check, details)'), 'update card must retain the standard settings header/body layout');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
 // WinUI separates the existing runtime start/stop action from version selection.
-mainlineSettings.push("ui.model.serviceTitle:ui.model.serviceDescription","ui.tray.enabled:ui.tray.enabledHint","ui.tray.showStartup:ui.tray.showStartupHint");
-assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the current mainline without extra workspace controls');
+assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the frozen native settings baseline without extra workspace controls');
 assert(!/uiFontSize|preferences\.FontSize|settings\.FontSize|Current\.FontSize/.test(nativeUi)
   && !/public double FontSize/.test(read('shell/Cap7CE.WinUI/Models/ShellPreferences.cs')), 'retired native UI font preference and setting cannot return');
 const settingsColors = read('shell/Cap7CE.WinUI/Controls/Settings/SettingsColors.cs');

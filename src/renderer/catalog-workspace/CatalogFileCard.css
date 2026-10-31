@@ -1,6 +1,0 @@
-.cap-catalog-file-information .preview-sidebar-file-card { gap: 8px; }
-.cap-catalog-file-information .preview-sidebar-file-heading > span { display: none; }
-.cap-catalog-file-information .preview-sidebar-details { gap: 7px; }
-.cap-catalog-file-information .preview-sidebar-details > div { grid-template-columns: 4.5em minmax(0, 1fr); align-items: baseline; column-gap: 8px; }
-.cap-catalog-file-information .preview-sidebar-details > div:last-child { grid-template-columns: minmax(0, 1fr); gap: 3px; }
-.cap-catalog-file-information .preview-sidebar-details dt { min-width: 0; overflow-wrap: anywhere; }

@@ -1,4 +1,4 @@
-import type { LocalKeywordModelConnection } from "../../../src/shared/localKeywordTypes";
+import type { LocalKeywordModelConnection } from "../../../core/shared/localKeywordTypes";
 import { keywordGrammar, parseGeneratedKeywords } from "./policy/localKeywordPolicy";
 import { keywordPromptFor } from "./languagePrompt";
 import { requestLocalKeywordResponse } from "./requestHttp";

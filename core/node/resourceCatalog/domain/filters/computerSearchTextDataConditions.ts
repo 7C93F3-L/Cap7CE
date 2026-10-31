@@ -1,6 +1,6 @@
-import type { SearchState } from "../../../../../src/shared/types";
-import type { ComputerSearchConditions } from "../../../../../src/shared/computerSearchFactTypes";
-import type { ComputerSearchTextDataFilter } from "../../../../../src/shared/computerSearchTextDataTypes";
+import type { SearchState } from "../../../../../core/shared/types";
+import type { ComputerSearchConditions } from "../../../../../core/shared/computerSearchFactTypes";
+import type { ComputerSearchTextDataFilter } from "../../../../../core/shared/computerSearchTextDataTypes";
 import { toComputerSearchThreeDConditions } from "./computerSearchThreeDConditions";
 type Counts = Record<string, readonly [number, number?]>;
 const characters: Counts = { "up-to-100": [0, 100], "101-1000": [101, 1000], "1001-10000": [1001, 10000], "10001-100000": [10001, 100000], "over-100000": [100001] };

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { Worker } from "node:worker_threads";
 import { createPreviewWorker } from "./lifecycle";
-import type { EpubPreviewData, EpubPreviewFallbackReason, EpubWorkerResponse } from "../../../src/shared/epubPreviewTypes";
+import type { EpubPreviewData, EpubPreviewFallbackReason, EpubWorkerResponse } from "../../../core/shared/epubPreviewTypes";
 
 export class EpubPreviewError extends Error {
   constructor(readonly reason: EpubPreviewFallbackReason, message: string) {

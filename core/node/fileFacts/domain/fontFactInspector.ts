@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
-import type { FontMetadataWorkerRequest, FontMetadataWorkerResponse } from "../../../../src/shared/fontPreviewTypes";
+import type { FontMetadataWorkerRequest, FontMetadataWorkerResponse } from "../../../../core/shared/fontPreviewTypes";
 import { FONT_FACT_EXTRACTOR_VERSION, type FontFactCandidate, type FontFactResult } from "./fontFactTypes";
 
 const maximumFontBytes = 64 * 1024 * 1024;
