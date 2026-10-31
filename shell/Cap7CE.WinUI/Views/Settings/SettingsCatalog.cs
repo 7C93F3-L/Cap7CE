@@ -34,8 +34,8 @@ internal sealed class SettingsCatalog
         return new SettingsExpandable(view.Options,view,view.Details,initiallyExpanded:true);
     }
     private ModelSettingsView ModelsView=>models??=new(services,notice);
-    private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false,string? descriptionOverride=null)
-        =>Entries.Add(new(category,"stableSettings.section."+section,title,descriptionOverride??description,create,expanded));
+    private void Mainline(string category,string section,string title,string description,Func<UIElement> create,bool expanded=false)
+        =>Entries.Add(new(category,"stableSettings.section."+section,title,description,create,expanded));
     private static UIElement Disabled(string key){var button=L.Button(key,()=>{});button.IsEnabled=false;return button;}
     private static UIElement DisabledChoice(string[] labels)=>L.Choice(labels,enabled:false);
     private void General()
@@ -54,10 +54,9 @@ internal sealed class SettingsCatalog
     }
     private void Appearance()
     {
-        Mainline("外观","colors","stableSettings.material","stableSettings.desc.material",
+        Mainline("外观","colors","stableSettings.material","native.material.description",
             ()=>Choice(["native.material.mica","native.material.alt"],()=>services.Preferences.Current.Material=="mica-alt"?1:0,
-                i=>services.Preferences.SaveAsync(services.Preferences.Current with{Material=i==0?"mica":"mica-alt"})),
-            descriptionOverride:"native.material.description");
+                i=>services.Preferences.SaveAsync(services.Preferences.Current with{Material=i==0?"mica":"mica-alt"})));
         Mainline("外观","colors","appearance.themeModeLabel","stableSettings.desc.theme",
             ()=>Choice(["theme.system","theme.light","theme.dark"],()=>Array.IndexOf(new[]{"system","light","dark"},services.Preferences.Current.Theme),i=>services.Preferences.SaveAsync(services.Preferences.Current with{Theme=new[]{"system","light","dark"}[i]})));
         Mainline("外观","colors","appearance.configureLabel","stableSettings.desc.colors",()=>new SettingsExpandable(new SettingsColors(()=>services.Preferences.Current,services.Preferences.SaveAsync,notice)));
@@ -66,7 +65,7 @@ internal sealed class SettingsCatalog
     {
         Entries.Add(new("缓存与索引","stableSettings.section.index","","",()=>new MaintenanceSettingsView(services,owner),true));
         Entries.Add(new("缓存与索引","native.metadata.section","native.metadata.title","native.metadata.description",MetadataView,true));
-        Mainline("缓存与索引","cache","stableSettings.formalCache","stableSettings.desc.formalCache",()=>new CacheSettingsView(services,owner,notice),descriptionOverride:"native.cache.description");
+        Mainline("缓存与索引","cache","stableSettings.formalCache","native.cache.description",()=>new CacheSettingsView(services,owner,notice));
     }
     private UIElement Toggle(Func<bool> read,Func<bool,Task> save)
     {

@@ -12,6 +12,9 @@ module.exports = root => {
     assert(!/\p{Script=Han}/u.test(variants['en-US']) || ['settings.language', 'language.chinese', 'ui.signature.secondary'].includes(key), `${key}: unexpected Chinese text in the English catalog`);
   }
   assert(Object.keys(messages).length, 'native language catalog must not be empty');
+  const used = require('./winui-language-usage.cjs')(root);
+  for (const key of used) assert(messages[key], `Missing active native UI resource: ${key}`);
+  for (const key of Object.keys(messages)) assert(used.has(key), `Unused native UI resource: ${key}`);
   assert.deepEqual(messages['language.tag'], {'zh-CN': 'zh-CN', 'en-US': 'en-US'}, 'native control language tags must be valid locale IDs');
   for (const key of ['Desktop', 'Documents', 'Downloads', 'Pictures', 'Music', 'Videos'])
     assert(!messages[`main.home${key}`], 'system locations use Windows display names, not app translations');

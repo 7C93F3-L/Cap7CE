@@ -56,3 +56,5 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 测试直接加载规范源码，或通过实际固定 Node 的协议在临时目录验证，移除了旧 Shell/Renderer 专用测试。npm test 包含源码边界、WinUI 布局、Core 测试及原生运行测试；交互/视觉仍由用户验收。源码构建、自动测试、交互验收和安装包验证是独立证据，不相互替代。
 
 `npm run test:core`先验证支持配置的锁文件稳定性，再运行Core完整回归；纯协议项目不声明平台运行时，锁文件仅保留实际net10.0图。取消快照会先收敛到needsRebuild，诊断测试区分主动清理后的重试与未回收的building状态。`npm run test:delivery`独立检查NativeAOT Setup、产品载荷完整性/篡改拒绝和从NSIS提取的实际Setup；仅验证，不安装服务、删除Catalog或修改系统配置。安装向导、快捷方式与启动仍需实际人工验收。
+
+界面文案以shell/Cap7CE.WinUI/Localization/messages.json为唯一来源；资源生成不再导出旧设置文案副本。winui-language-usage按原生源码、帮助清单及实际生成的筛选身份收集静态/动态键，语言检查拒绝缺失键和无引用键；测试复用在用文案，不以测试引用保留已退役提示。

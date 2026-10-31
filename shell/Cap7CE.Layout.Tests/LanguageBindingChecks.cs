@@ -27,9 +27,9 @@ internal static class LanguageBindingChecks
         element.Unload();element.Load();Equal(element.GetValue(property),"通用.txt");
 
         var count=2;var applications=0;string? formatted=null;
-        LanguageBinding.Attach(element,property,session,"native.progress.processed",()=>new Dictionary<string,object?>{{"count",count}},text=>{formatted=text;applications++;});
-        Equal(formatted,"Processed 2 items");count=7;
-        session.Select("zh-CN","zh-CN");Equal(formatted,"已处理 7 项");
+        LanguageBinding.Attach(element,property,session,"ui.details.items",()=>new Dictionary<string,object?>{{"count",count}},text=>{formatted=text;applications++;});
+        Equal(formatted,"Items: 2");count=7;
+        session.Select("zh-CN","zh-CN");Equal(formatted,"7 项");
         if(applications!=2)throw new Exception("Custom rendering must run once per language update.");
 
         element.DispatcherQueue.HasThreadAccess=false;

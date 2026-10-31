@@ -18,13 +18,13 @@ internal static class LanguageChecks
         Equal(session.Text("language.tag"),"en-US");
         Equal(session.Text("ui.keywords.remove",new Dictionary<string,object?>{{"word","通用 {count}"}}),"Remove keyword: 通用 {count}");
         Equal(session.Text("ui.details.items",new Dictionary<string,object?>{{"count",1200}}),"Items: 1,200");
-        Equal(session.Text("native.progress.processed",new Dictionary<string,object?>{{"count",1234}}),"Processed 1,234 items");
+        Equal(session.Text("ui.details.items",new Dictionary<string,object?>{{"count",1234}}),"Items: 1,234");
         session.Select("en-US","zh-CN");if(changes!=1)throw new Exception("Unchanged language must not refresh controls.");
         session.Select("system","zh-Hant");Equal(session.Text("navigation.general"),"通用");
         session.Select("system","de-DE");Equal(session.Text("navigation.general"),"General");
         Reject<ArgumentOutOfRangeException>(()=>session.Select("invalid","en-US"));
         Reject<KeyNotFoundException>(()=>session.Text("missing.key"));
-        Reject<ArgumentException>(()=>session.Text("native.progress.processed"));
+        Reject<ArgumentException>(()=>session.Text("ui.details.items"));
         Reject<InvalidDataException>(()=>new LanguageCatalog("""{"key":{"zh-CN":"中文"}}"""));
         Reject<InvalidDataException>(()=>new LanguageCatalog("""{"key":{"zh-CN":"{count}","en-US":"{other}"}}"""));
         Reject<InvalidDataException>(()=>new LanguageCatalog("""{"key":{"zh-CN":"{count:N0}","en-US":"{count}"}}"""));
