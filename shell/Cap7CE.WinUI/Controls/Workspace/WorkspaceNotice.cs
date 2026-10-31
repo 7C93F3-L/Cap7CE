@@ -10,9 +10,9 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class WorkspaceNotice : UserControl, IDisposable
 {
     private readonly TextBlock message=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center,FontSize=12};
-    private readonly ProgressBar progress=new(){Height=3,Width=120,VerticalAlignment=VerticalAlignment.Center,Visibility=Visibility.Collapsed};
+    private readonly ProgressBar progress=new(){Height=3,MinHeight=0,HorizontalAlignment=HorizontalAlignment.Stretch,VerticalAlignment=VerticalAlignment.Bottom,Visibility=Visibility.Collapsed};
     private readonly DispatcherQueueTimer delay,expiry;
-    private bool busy,busyShown,disposed;
+    private bool busy,busyShown,disposed,pointerInside,showingNotice;
     private UiMessage? notice,commandNotice;
     private bool commandCancellable;
     public event Action? ConfirmationCancelled;
@@ -32,16 +32,23 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         Visibility=Visibility.Collapsed;
         HorizontalContentAlignment=HorizontalAlignment.Stretch;
         var row=new Grid {ColumnSpacing=10};row.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});
-        row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});row.ColumnDefinitions.Add(new(){Width=GridLength.Auto});
+        row.ColumnDefinitions.Add(new(){Width=new(22)});
+        row.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});row.RowDefinitions.Add(new(){Height=new(8)});
         close=new Button {Content="×",Width=22,Height=22,MinWidth=0,MinHeight=0,Padding=new(0),Style=(Style)Application.Current.Resources["CapToolButton"]};
         L.Label(close,"main.closeNotice");
-        row.Children.Add(message);Grid.SetColumn(progress,1);row.Children.Add(progress);Grid.SetColumn(close,2);row.Children.Add(close);
+        row.Children.Add(message);Grid.SetRow(progress,1);Grid.SetColumnSpan(progress,2);row.Children.Add(progress);Grid.SetColumn(close,1);row.Children.Add(close);
         Content=new Border {Style=(Style)Application.Current.Resources["CapWorkspaceNotice"],Child=row};
-        SizeChanged+=(_,_)=>progress.MaxWidth=Math.Max(0,ActualWidth*.22);
         delay=DispatcherQueue.CreateTimer();delay.IsRepeating=false;delay.Interval=TimeSpan.FromMilliseconds(300);
         delay.Tick+=(_,_)=>{if(!disposed&&busy){busyShown=true;Render();}};
         expiry=DispatcherQueue.CreateTimer();expiry.IsRepeating=false;expiry.Interval=TimeSpan.FromSeconds(5);
-        expiry.Tick+=(_,_)=>{notice=null;Render();};
+        expiry.Tick+=(_,_)=>{if(showingNotice&&!pointerInside){notice=null;Render();}};
+        PointerEntered+=(_,_)=>{pointerInside=true;UpdateExpiry();};
+        PointerExited+=(_,e)=>{
+            var point=e.GetCurrentPoint(this).Position;
+            if(point.X<0||point.X>=ActualWidth||point.Y<0||point.Y>=ActualHeight){pointerInside=false;UpdateExpiry();}
+        };
+        Unloaded+=(_,_)=>{pointerInside=false;expiry.Stop();};
+        Loaded+=(_,_)=>Render();
         close.Click+=(_,_)=>{if(commandNotice is not null){ConfirmationCancelled?.Invoke();return;}if(task is not null){CancelTaskRequested?.Invoke();return;}notice=null;busyShown=false;delay.Stop();expiry.Stop();Render();};
     }
 
@@ -54,7 +61,7 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     public void ShowMessage(UiMessage text)
     {
         if(disposed||string.IsNullOrWhiteSpace(text.Render(AppLanguage.Session))||notice?.Render(AppLanguage.Session)==text.Render(AppLanguage.Session))return;
-        notice=text;expiry.Stop();expiry.Start();Render();
+        notice=text;expiry.Stop();Render();
     }
     public void SetTask(UiMessage text,int processed,int total,bool indeterminate,bool cancelling)
     {
@@ -69,19 +76,28 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     {
         if(disposed)return;
         var confirming=commandNotice is not null;
-        var background=!confirming&&task is null&&(indexTask is not null||metadataTask is not null);
+        var foregroundTask=!confirming&&task is not null;
+        var background=!confirming&&!foregroundTask&&(indexTask is not null||metadataTask is not null);
         var backgroundText=indexTask??metadataTask;
         var fraction=indexTask is not null?indexFraction:metadataFraction;
-        var loading=notice is null&&busyShown;
-        Visibility=confirming||task is not null||background||notice is not null||loading?Visibility.Visible:Visibility.Collapsed;
+        showingNotice=!confirming&&!foregroundTask&&!background&&notice is not null;
+        var loading=!confirming&&!foregroundTask&&!background&&!showingNotice&&busyShown;
+        Visibility=confirming||foregroundTask||background||showingNotice||loading?Visibility.Visible:Visibility.Collapsed;
         if((commandNotice??task??backgroundText??notice) is {} text){L.Computed(message,()=>text.Render(AppLanguage.Session));L.Bind(message,ToolTipService.ToolTipProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",text.Render(AppLanguage.Session)}});}
         else {L.Bind(message,TextBlock.TextProperty,"main.querying");L.Literal(message,ToolTipService.ToolTipProperty,null);}
-        progress.Visibility=confirming||task is not null||background||loading?Visibility.Visible:Visibility.Collapsed;
-        progress.Maximum=task is not null?taskMaximum:1;progress.Value=task is not null?taskValue:background?Math.Clamp(fraction??0,0,1):0;
-        progress.IsIndeterminate=!confirming&&(task is not null?taskIndeterminate:background?fraction is null:loading);
+        progress.Visibility=foregroundTask||background||loading||confirming&&!commandCancellable?Visibility.Visible:Visibility.Collapsed;
+        progress.Maximum=foregroundTask?taskMaximum:1;progress.Value=foregroundTask?taskValue:background?Math.Clamp(fraction??0,0,1):0;
+        progress.IsIndeterminate=foregroundTask?taskIndeterminate:background?fraction is null:loading||confirming&&!commandCancellable;
         close.Visibility=background||confirming&&!commandCancellable?Visibility.Collapsed:Visibility.Visible;
-        close.IsEnabled=confirming||task is null||!taskCancelling;
-        L.Label(close,!confirming&&task is not null?"main.cancelRecognition":"main.closeNotice");
+        close.IsEnabled=confirming||!foregroundTask||!taskCancelling;
+        L.Label(close,foregroundTask?"main.cancelRecognition":"main.closeNotice");
+        UpdateExpiry();
+    }
+    private void UpdateExpiry()
+    {
+        if(disposed||!IsLoaded||!showingNotice||pointerInside){expiry.Stop();return;}
+        // Repeated task snapshots do not restart an already visible message's timer.
+        if(!expiry.IsRunning)expiry.Start();
     }
 
     public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;LanguageBinding.Clear(message,TextBlock.TextProperty);LanguageBinding.Clear(message,ToolTipService.ToolTipProperty);commandNotice=notice=task=indexTask=metadataTask=null;ConfirmationCancelled=null;}

@@ -26,6 +26,7 @@
     <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Grid Background="Transparent"/></ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style x:Key="CapWorkspaceNotice" TargetType="Border">
+    <Setter Property="Height" Value="52"/>
     <Setter Property="Background" Value="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
     <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/><Setter Property="BorderThickness" Value="1"/>
     <Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="10,5"/>

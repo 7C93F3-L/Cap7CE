@@ -76,3 +76,5 @@ NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，�
 界面文案以shell/Cap7CE.WinUI/Localization/messages.json为唯一来源；资源生成不再导出旧设置文案副本。winui-language-usage按原生源码、帮助清单及实际生成的筛选身份收集静态/动态键，语言检查拒绝缺失键和无引用键；测试复用在用文案，不以测试引用保留已退役提示。
 
 KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEditor的弹窗模式及KeywordSelectionService，不另建草稿或存储链路。弹窗约束正文可用宽高并保留原生底部按钮；详情栏默认模式不变。标题清空动作复用编辑器ClearDraft；DialogTextActionResources统一建库提醒和关键词弹窗标题文字操作的普通/悬停状态。
+
+WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
