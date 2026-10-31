@@ -1,5 +1,5 @@
 import path from "node:path";
-import { t } from "../../../electron/localization";
+import { t } from "../resourceCatalog/domain/localization/localization";
 import type { GgufModelFileKind, GgufModelFile, GgufVisionModel } from "../../../src/shared/modelSettingsTypes";
 const modelIdentityTokens = (fileName: string, kind: GgufModelFileKind) => {
   const ignoredTokens = new Set([

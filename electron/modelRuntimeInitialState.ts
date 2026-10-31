@@ -1,4 +1,2 @@
-import { t } from "./localization";
-import type { LlamaRuntimeProcessState } from "../src/shared/modelRuntimeTypes";
-export const llamaRuntimeAiIdleTimeoutMs=10*60000;
-export const initialModelRuntimeState=(logPath:string):LlamaRuntimeProcessState=>({status:"stopped",host:"127.0.0.1",port:null,selectedVersion:"",modelStatus:"unselected",selectedModelId:"",modelMessage:t("runtime.modelUnselected"),message:t("runtime.serverStopped"),healthUrl:"",logPath});
+// Compatibility entry; implementation belongs to the independent Core Node domain.
+export * from "../core/artifacts/resource-catalog/core/node/modelRuntime/policy/modelRuntimeInitialState";

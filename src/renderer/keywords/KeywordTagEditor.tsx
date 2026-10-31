@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "../../../electron/keywordRules";
+import { formatKeywordText, normalizeKeywordList, parseKeywordText } from "../../../core/node/localKeywords/policy/keywordRules";
 import { t } from "../../../electron/localization";
 import clearIcon from "../../../resources/icons/icon-stable-clear-search.svg?raw";
 import SvgIcon from "../components/SvgIcon";

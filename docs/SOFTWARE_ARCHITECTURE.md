@@ -1,5 +1,9 @@
 # Cap7CE 软件架构
 
+模型与关键词纯策略归属`core/node/modelRuntime/policy`及`core/node/localKeywords/policy`：modelRuntimeInitialState与llamaRuntimeIdleController保存原初始状态和空闲控制，keywordRules及localKeywordPolicy保存原清理/批次增减与生成语法/提示规则。四份源码除导入位置外保留。原生modelRuntime、modelSettings、localKeywords不再依赖旧Electron源码；语言直接使用resourceCatalog规范模块。storedMetadata及Renderer关键词编辑也复用同一关键词规则。模型进程、请求协议、状态所有权及用户模型/配置保持不变。
+
+初始状态由resourceCatalog编译项目输出在`core/artifacts/resource-catalog`，与旧localization入口共享唯一语言模块，避免第二份活跃语言状态；相关共享modelRuntimeTypes声明显式复制。其他三份策略由既有`core/artifacts/file-facts`编译树输出。旧入口按其所属输出树转出，Renderer直接引用规范关键词规则；Vite旧路径解析也覆盖已迁出的文件属性模块，继续支持显式旧版构建。`model-keyword-policy-boundary-check`检查四份源码/体量基线、纯依赖闭包、语言编译归属及原生消费者；Core模型守护只对精确的纯语言导入排除目录名误报，保留原数据库/网络限制。`test:model-keyword-policy`覆盖关键词编辑、初始状态与语言单例、空闲控制、模型客户端/独立运行库和隔离HTTP替身推理；不运行真实用户模型。
+
 预览读取资源归属`core/node/providerPreview/readers`及`core/node/textPreview/contracts`：前者持有EPUB/MOBI隔离读取线程与字体大小/格式限制，后者持有文本/Word读取预算及文本结果校验。五份源码除模块位置外完全保留。现有font/text所有者直接使用规范定义，EPUB/MOBI运行文件仍由原生构建生成原有文件名；会话、请求替换、取消/超时、父进程退出与临时资源清理继续归现有Provider，不引入新生命周期。
 
 这些模块沿用现有跨领域TypeScript输出树`core/artifacts/file-facts`，共享EPUB/MOBI/book/text类型声明随输出保留，旧路径只转出。`preview-reader-source-boundary-check`守护源码/体量基线、只读闭包、原生入口及消费者、旧入口和线程打包。`test:preview-readers`覆盖EPUB/MOBI读取、文本编码/Word/取消及仓库外Provider资源；原有Provider和文本所有权守护继续有效。本轮不涉及预览窗口、索引、AI或用户缓存调整。

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { setActiveLanguage } from "../../../electron/localization";
+import { setActiveLanguage } from "../resourceCatalog/domain/localization/localization";
 import type { ModelSettingsContext } from "../../../src/shared/modelSettingsTypes";
 import { createRuntimeSettings } from "./runtime";
 import { createGgufSettings } from "./models";

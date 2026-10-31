@@ -11,6 +11,7 @@
   "include": [
     "**/*.ts",
     "../../../../src/shared/types.ts",
-    "../../fileFacts/domain/modelFactTypes.ts"
+    "../../fileFacts/domain/modelFactTypes.ts",
+    "../../modelRuntime/policy/modelRuntimeInitialState.ts"
   ]
 }

@@ -1,7 +1,7 @@
 import { createModelSelectionFile } from "./selectionFile";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { t } from "../../../electron/localization";
+import { t } from "../resourceCatalog/domain/localization/localization";
 import type * as Contracts from "../../../src/shared/modelSettingsTypes";
 type GgufModelFile=Contracts.GgufModelFile;
 type GgufModelSettingsResponse=Contracts.GgufModelSettingsResponse;

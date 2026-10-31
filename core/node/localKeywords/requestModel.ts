@@ -1,5 +1,5 @@
 import type { LocalKeywordModelConnection } from "../../../src/shared/localKeywordTypes";
-import { keywordGrammar, parseGeneratedKeywords } from "../../../electron/core/localKeywordPolicy";
+import { keywordGrammar, parseGeneratedKeywords } from "./policy/localKeywordPolicy";
 import { keywordPromptFor } from "./languagePrompt";
 import { requestLocalKeywordResponse } from "./requestHttp";
 const invalid = () => new Error("模型未返回有效关键词，请重试。");

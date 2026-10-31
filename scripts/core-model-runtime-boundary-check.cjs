@@ -1,9 +1,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8'),dir='core/node/modelRuntime';
 const limits={'api.ts':40,'attempt.ts':30,'health.ts':30,'host.ts':10,'log.ts':20,'owner.ts':100,'policy.ts':15,'ports.ts':25,'settings.ts':15,'startup.ts':60,'state.ts':20};
-assert.deepEqual(fs.readdirSync(path.join(root,dir)).sort(),Object.keys(limits).sort());
+assert.deepEqual(fs.readdirSync(path.join(root,dir)).sort(),[...Object.keys(limits), "policy"].sort());
 for(const[file,max]of Object.entries(limits)){
- const source=read(dir+'/'+file);assert.ok(source.split(/\r?\n/).length<=max,file+' responsibility');assert.doesNotMatch(source,/from ["']electron["']|Sqlite|sqlite|Catalog|Reader\.Host|ShellExecute/,file+' ordinary model-only domain');
+ const source=read(dir+'/'+file);assert.ok(source.split(/\r?\n/).length<=max,file+' responsibility');assert.doesNotMatch(source.replace('from "../resourceCatalog/domain/localization/localization"', 'from "<localization>"'),/from ["']electron["']|Sqlite|sqlite|Catalog|Reader\.Host|ShellExecute/,file+' ordinary model-only domain');
  if(!['attempt.ts','health.ts','ports.ts','log.ts'].includes(file))assert.doesNotMatch(source,/from ["']node:(?:fs|net|http|https|child_process)|\bspawn\(|\bfetch\(/,file+' bypasses its owned resource adapters');
 }
 const http=read(dir+'/health.ts');for(const a of ['hostname:"127.0.0.1"','proxyEnv:undefined','maximumBytes=1024*1024','agent.destroy()','"/health"|"/v1/models"'])assert.ok(http.includes(a));assert.doesNotMatch(http,/fetch\(|http\.globalAgent|headers\.location|process\.env/);

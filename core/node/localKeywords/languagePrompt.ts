@@ -1,4 +1,4 @@
-import { keywordPrompt } from "../../../electron/core/localKeywordPolicy";
+import { keywordPrompt } from "./policy/localKeywordPolicy";
 
 export function keywordPromptFor(language: "zh-CN" | "en-US"): string {
   return language === "zh-CN" ? keywordPrompt

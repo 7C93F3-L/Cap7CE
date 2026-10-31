@@ -33,5 +33,6 @@
   "src/renderer/commandParser.ts": "core/node/resourceCatalog/domain/commands/commandParser.ts",
   "src/renderer/quick-commands/catalogCommandRegistry.ts": "core/node/resourceCatalog/domain/commands/catalogCommandRegistry.ts",
   "src/renderer/shortcutActions.ts": "core/node/resourceCatalog/domain/commands/shortcutActions.ts",
-  "src/renderer/stable-ui/exploreFormatFilters.ts": "core/node/resourceCatalog/domain/formats/exploreFormatFilters.ts"
+  "src/renderer/stable-ui/exploreFormatFilters.ts": "core/node/resourceCatalog/domain/formats/exploreFormatFilters.ts",
+  "electron/modelRuntimeInitialState.ts": "core/node/modelRuntime/policy/modelRuntimeInitialState.ts"
 }

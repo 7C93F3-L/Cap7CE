@@ -1,6 +1,6 @@
-import { llamaRuntimeAiIdleTimeoutMs } from "../../../electron/modelRuntimeInitialState";
-import { t } from "../../../electron/localization";
-import { createLlamaRuntimeIdleController } from "../../../electron/llamaRuntimeIdleController";
+import { llamaRuntimeAiIdleTimeoutMs } from "./policy/modelRuntimeInitialState";
+import { t } from "../resourceCatalog/domain/localization/localization";
+import { createLlamaRuntimeIdleController } from "./policy/llamaRuntimeIdleController";
 import type { LlamaRuntimeProcessState,LlamaRuntimeStartSource,GgufModelLoadStatus } from "../../../src/shared/modelRuntimeTypes";
 import type { ModelRuntimeSettings,ModelRuntimeTimings } from "./settings";
 import { ModelRuntimeState } from "./state";

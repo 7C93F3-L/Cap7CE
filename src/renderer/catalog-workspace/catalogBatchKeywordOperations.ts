@@ -1,6 +1,6 @@
 import type { ComputerSearchItem } from "../../../electron/computerSearchTypes";
 import type { CatalogKeywordSnapshot } from "../../shared/catalogKeywordTypes";
-import { applyKeywordBatchDelta } from "../../../electron/keywordRules";
+import { applyKeywordBatchDelta } from "../../../core/node/localKeywords/policy/keywordRules";
 import { catalogKeywordKey } from "./catalogKeywordIdentity";
 
 export interface BatchKeywordSnapshot extends CatalogKeywordSnapshot { key: string; }

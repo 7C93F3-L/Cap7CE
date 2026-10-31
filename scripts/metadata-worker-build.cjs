@@ -18,6 +18,7 @@ const packages = ["sharp", "@img/colour", "@img/sharp-win32-x64", "detect-libc",
     ["node_modules/typescript/bin/tsc", "-b", "core/node/fileFacts/domain/tsconfig.json", "core/node/resourceCatalog/domain/tsconfig.json", "core/node/embeddedMetadata/domain/tsconfig.json"],
     { cwd: root, stdio: "inherit", windowsHide: true });
   if (catalogBuild.error || catalogBuild.status !== 0) throw catalogBuild.error || new Error("Resource catalog compilation failed.");
+  require("./resource-catalog-declarations.cjs");
   require("./embedded-metadata-declarations.cjs");
   require("./file-facts-declarations.cjs");
   // Fixed generated directory only. Never traverses source/user data or other artifacts.

@@ -18,6 +18,8 @@
     "../../visualRendering/decoders/**/*.ts",
     "../../visualCache/contracts/**/*.ts",
     "../../providerPreview/readers/**/*.ts",
-    "../../textPreview/contracts/**/*.ts"
+    "../../textPreview/contracts/**/*.ts",
+    "../../modelRuntime/policy/llamaRuntimeIdleController.ts",
+    "../../localKeywords/policy/**/*.ts"
   ]
 }

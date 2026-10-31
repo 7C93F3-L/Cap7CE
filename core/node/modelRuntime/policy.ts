@@ -4,7 +4,7 @@ export const runtimeHost="127.0.0.1", firstPort=18080, portCount=100, startupTim
 export const healthUrl=(port:number|null)=>port===null?"":"http://127.0.0.1:"+port+"/health";
 export const baseUrl=(port:number)=>"http://127.0.0.1:"+port;
 export const modelStatus=(status:GgufModelSettingsStatus):GgufModelLoadStatus=>status==="ready"?"ready":status==="unpaired"?"unpaired":"unselected";
-export { initialModelRuntimeState as initialState } from "../../../electron/modelRuntimeInitialState";
+export { initialModelRuntimeState as initialState } from "./policy/modelRuntimeInitialState";
 export const quoteArgument=(value:string)=>/[\s"]/u.test(value)?'"'+value.replace(/"/g,'\\"')+'"':value;
 export const summarize=(value:string)=>value.replace(/\u001b\[[0-9;]*m/g,"").split(/\r?\n/).map(v=>v.trim()).filter(Boolean).slice(-2).join(" ").slice(0,500);
 export const bindingFailure=(value:string)=>/address already in use|permission denied|winerror\s*(?:10013|10048)|eaddrinuse|eacces|10013|10048|forbidden by its access permissions|only one usage of each socket address/i.test(value);

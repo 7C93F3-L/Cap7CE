@@ -11,7 +11,7 @@ const {
   isPlainSpaceShortcut,
   shouldSubmitKeywordEditor
 } = require("../src/renderer/keywordEditorInteraction.ts");
-const { normalizeKeywordList, parseKeywordText } = require("../electron/keywordRules.ts");
+const { normalizeKeywordList, parseKeywordText } = require("../dist-electron/keywordRules.js");
 const { getCommonKeywords } = require("../src/renderer/dialogs/keywordEditorModel.ts");
 
 const resultsViewSource = fs.readFileSync(

@@ -1,5 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
-import { t } from "../../../electron/localization";
+import { t } from "../resourceCatalog/domain/localization/localization";
 import type { GgufModelLoadStatus,LlamaRuntimeProcessState } from "../../../src/shared/modelRuntimeTypes";
 import { ModelRuntimeAttempt } from "./attempt";
 import type { ModelRuntimeSettings } from "./settings";
