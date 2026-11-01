@@ -1,10 +1,10 @@
 # Screenshot Asset Sources
 
-The screenshots in this directory were captured and assembled by 7C93F3-L from Cap7CE 0.9.3.
+The screenshots in this directory were captured by 7C93F3-L from Cap7CE 2.0.0.
 
-All demo artwork visible inside Cap7CE in these screenshots was generated with ChatGPT at the direction of 7C93F3-L.
+The demo artwork visible inside Cap7CE was generated locally by 7C93F3-L using the Qwen Image 2.1 model for these interface demonstrations.
 
-No ChatGPT service, source prompt, generation workflow, or model file is distributed with these screenshots or with Cap7CE.
+Source workflows, model files, and the original demo image library are not distributed with Cap7CE. These screenshots do not imply that Cap7CE includes image generation or ComfyUI integration.
 
 People depicted in the synthetic demo artwork are fictional and are not presented as real individuals.
 

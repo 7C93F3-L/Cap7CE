@@ -1,34 +1,32 @@
 # Cap7CE
 
-## Cap7CE 2.0.0 发布准备
+## Cap7CE 2.0.0
 
-当前候选版本为2.0.0，主程序使用Windows x64原生WinUI。安装器默认配置搜索服务，缺少所需.NET依赖时先打开微软运行时安装器；建库和元数据提取仍由用户主动启动。首次可直接浏览目录，建立索引后启用搜索及关键词编辑。详见[开发、交付与能力边界](shell/README.md)。
+面向 Windows 的本地素材浏览、搜索与预览工具。支持原比例网格、文件属性筛选、关键词编辑及可选的本地 AI 关键词生成。
 
-当前仓库仅保留原生主线及独立 Core/Node 领域。Electron 运行时、React/Vite、旧界面与 legacy 命令已移除；electron-builder 仅用于 NSIS 安装器生成。共享契约位于 core/shared。
+安装后即可浏览目录，建立本地索引后启用搜索与关键词编辑。安装器自动配置搜索服务，建库和元数据提取由用户主动启动。详见[开发、交付与能力边界](shell/README.md)。
 
-2.0.0尚未正式发布，安装包以GitHub Releases中的正式发布为准。以下展示截图暂时保留旧版，待新素材整理后替换；当前功能与运行边界以程序和架构文档为准。
+2.0.0 正在进行发布前检查，正式安装包以 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases) 为准。
 
 [中文](#中文) · [English](#english)
 
-> **Cap7CE 2.0.0 release preparation.** The screenshots below show an earlier version and will be replaced after the new demo assets are ready.
+> **Cap7CE 2.0.0** — Local asset browsing, search and preview for Windows, with optional local AI keyword generation. Release checks are in progress; official downloads will be available on GitHub Releases.
 
 ![Cap7CE normal mode in dark theme](docs/assets/screenshots/normal-dark.png)
 
 ## 界面预览 / Interface preview
 
-### 窗口形态 / Window forms
+### 城市素材浏览 / City asset browsing
 
-![Cap7CE line, capsule, micro, mini, normal, and Settings overview](docs/assets/screenshots/overview-light.png)
+![Cap7CE city asset gallery](docs/assets/screenshots/gallery-dark.png)
 
-### 紧凑模式 / Compact modes
+### 浅色主题 / Light theme
 
-<p align="center">
-  <img src="docs/assets/screenshots/compact-modes-light.png" width="442" alt="Cap7CE micro and mini modes in dark theme">
-</p>
+![Cap7CE illustration gallery and file details in light theme](docs/assets/screenshots/normal-light.png)
 
 ### 设置界面 / Settings
 
-![Cap7CE Settings in dark theme](docs/assets/screenshots/settings-dark.png)
+![Cap7CE Settings in English and light theme](docs/assets/screenshots/settings-light.png)
 
 截图中的演示素材来源见 [截图素材说明](docs/assets/screenshots/ASSET_SOURCES.md)。
 See [Screenshot asset sources](docs/assets/screenshots/ASSET_SOURCES.md) for the origin of the demo artwork.
