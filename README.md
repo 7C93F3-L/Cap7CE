@@ -16,9 +16,9 @@
 
 ## 界面预览 / Interface preview
 
-### 城市素材浏览 / City asset browsing
+### 简洁界面 / Clean interface
 
-![Cap7CE city asset gallery](docs/assets/screenshots/gallery-dark.png)
+![Cap7CE clean browsing interface](docs/assets/screenshots/gallery-dark.png)
 
 ### 浅色主题 / Light theme
 
