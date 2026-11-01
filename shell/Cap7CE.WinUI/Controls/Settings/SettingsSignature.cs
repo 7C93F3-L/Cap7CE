@@ -56,8 +56,7 @@ internal sealed class SettingsSignature : Grid
             var translation=LanguageUi.Text("ui.signature.secondary",true);translation.TextAlignment=TextAlignment.Center;translation.FontSize=12;
             var body=Ui.Column(image,caption,translation);
             var scroll=new ScrollViewer {Content=body,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};IdleScrollBars.Attach(scroll);
-            var openedDialog=new ContentDialog {XamlRoot=XamlRoot,Content=scroll,DefaultButton=ContentDialogButton.Close};
-            Themes.DialogAccentResources.Apply(openedDialog);
+            var openedDialog=Themes.ThemeService.Dialog(XamlRoot);openedDialog.Content=scroll;
             LanguageUi.Bind(openedDialog,ContentDialog.CloseButtonTextProperty,"ui.signature.close");dialog=openedDialog;
             await openedDialog.ShowAsync();
         }catch(Exception error){NativeDiagnostics.VisualFailure(error);if(IsLoaded)Notice?.Invoke(UiMessage.Key("ui.signature.openFailed"));}

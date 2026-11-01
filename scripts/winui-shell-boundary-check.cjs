@@ -2,6 +2,13 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const root = path.resolve(__dirname, '..');
 require('./winui-language-check.cjs')(root);
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+// Native dialogs are separate visual roots; all creation must share window-theme ownership.
+const dialogOwner='shell/Cap7CE.WinUI/Themes/ThemeService.cs';
+const dialogSources=directory=>fs.readdirSync(path.join(root,directory),{withFileTypes:true}).flatMap(item=>
+  item.isDirectory()?dialogSources(`${directory}/${item.name}`):item.name.endsWith('.cs')&&/new\s+ContentDialog\b/.test(read(`${directory}/${item.name}`))?[`${directory}/${item.name}`]:[]);
+assert.deepEqual(dialogSources('shell/Cap7CE.WinUI'),[dialogOwner],'ContentDialog creation must use the shared window-theme factory');
+assert(read(dialogOwner).includes('source.ActualThemeChanged+=Follow')&&read(dialogOwner).includes('source.ActualThemeChanged-=Follow'),
+  'dialog theme observation must end when the dialog closes');
 const modelFiles = ['AssetCollection', 'AssetItem', 'BrowseFilter', 'FileFormat', 'FormatRegistry', 'HomeEntries', 'ShellPreferences']
   .map(name => `shell/Cap7CE.WinUI/Models/${name}.cs`);
 for (const file of modelFiles) assert(fs.existsSync(path.join(root, file)), `${file}: required WinUI model source must be present`);

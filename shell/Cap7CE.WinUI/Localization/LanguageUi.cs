@@ -31,8 +31,7 @@ internal static class LanguageUi
     {var button=Ui.Tool(glyph,"",action);Label(button,key);return button;}
     public static ContentDialog Dialog(XamlRoot root,string titleKey,string? contentKey,string primaryKey,string closeKey="common.cancel")
     {
-        var dialog=new ContentDialog{XamlRoot=root,DefaultButton=ContentDialogButton.Close};
-        Themes.DialogAccentResources.Apply(dialog);
+        var dialog=Themes.ThemeService.Dialog(root);
         Bind(dialog,ContentDialog.TitleProperty,titleKey);Bind(dialog,ContentDialog.PrimaryButtonTextProperty,primaryKey);Bind(dialog,ContentDialog.CloseButtonTextProperty,closeKey);
         if(contentKey is not null)Bind(dialog,ContentDialog.ContentProperty,contentKey);
         return dialog;

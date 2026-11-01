@@ -36,6 +36,18 @@ internal static class ThemeService
         if (hex.Length != 7 || hex[0] != '#' || !uint.TryParse(hex[1..], System.Globalization.NumberStyles.HexNumber, null, out var value)) return Color.FromArgb(255,124,147,243);
         return Color.FromArgb(255, (byte)(value >> 16), (byte)(value >> 8), (byte)value);
     }
+    public static ContentDialog Dialog(XamlRoot root)
+    {
+        var dialog=new ContentDialog {XamlRoot=root,DefaultButton=ContentDialogButton.Close};
+        DialogAccentResources.Apply(dialog);
+        if(root.Content is FrameworkElement source) {
+            void Follow(FrameworkElement sender,object args)=>dialog.RequestedTheme=source.ActualTheme;
+            dialog.RequestedTheme=source.ActualTheme;
+            dialog.Opened+=(_,_)=>{dialog.RequestedTheme=source.ActualTheme;source.ActualThemeChanged+=Follow;};
+            dialog.Closed+=(_,_)=>source.ActualThemeChanged-=Follow;
+        }
+        return dialog;
+    }
     public static MenuFlyout Menu() => new() { SystemBackdrop = new DesktopAcrylicBackdrop() };
     // Desktop acrylic needs a windowed popup; ordinary Flyout defaults to an in-root popup.
     public static Flyout Flyout(UIElement content) => new() { Content = content, Placement = FlyoutPlacementMode.Bottom, ShouldConstrainToRootBounds = false, SystemBackdrop = new DesktopAcrylicBackdrop() };
