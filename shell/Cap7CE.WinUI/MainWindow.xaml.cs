@@ -90,7 +90,7 @@ public sealed partial class MainWindow : Window
             ["togglePin"]=()=>{if(!services.Preferences.Current.EdgeCollapseEnabled)SetPinned(!services.Preferences.Current.AlwaysOnTop);},
             ["toggleFilters"]=()=>commands.Run(()=>layout.ToggleAsync(true)),["toggleDetails"]=()=>commands.Run(()=>layout.ToggleAsync(false)),
             ["viewSquare"]=()=>SelectView(Models.WorkspaceViewMode.Square),["viewGallery"]=()=>SelectView(Models.WorkspaceViewMode.OriginalRatio),["viewList"]=()=>SelectView(Models.WorkspaceViewMode.List),
-            ["metadata"]=()=>OpenMaintenance(null)
+            ["metadata"]=()=>OpenMaintenance(null),["toggleRecursive"]=toolbar.ToggleRecursive,["toggleRandom"]=toolbar.ToggleRandom,["refreshRandom"]=toolbar.RefreshRandom,["clearFilters"]=filters.Clear
         },error=>Notice(FailureText.From(error)));
         toolbar.ViewSelected+=SelectView;
         toolbar.SizeChangedByUser+=workspace.PreviewSize;

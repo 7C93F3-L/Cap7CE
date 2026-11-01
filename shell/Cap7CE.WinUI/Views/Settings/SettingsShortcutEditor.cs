@@ -32,7 +32,7 @@ internal sealed class SettingsShortcutEditor:UserControl
     private void Render()
     {
         global.Children.Clear();local.Children.Clear();
-        foreach(var action in ShortcutCatalog.All) {
+        foreach(var action in ShortcutCatalog.All.Where(action=>action.Editable)) {
             var binding=ShortcutCatalog.Binding(services.Preferences.Current,action);
             (action.Scope=="global"?global:local).Children.Add(Row(action,binding));
         }

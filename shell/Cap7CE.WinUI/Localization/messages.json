@@ -476,8 +476,8 @@
     "en-US": "Choose a Mica effect. Uses a solid color if unavailable."
   },
   "native.cache.description": {
-    "zh-CN": "清理缩略图和预览缓存，保留源文件、索引与关键词。",
-    "en-US": "Clear thumbnails and previews. Source files, indexes, and keywords are preserved."
+    "zh-CN": "清理缩略图和预览缓存，不影响源文件、索引与关键词。",
+    "en-US": "Clear thumbnail and preview caches without affecting source files, indexes, or keywords."
   },
   "native.metadata.section": {
     "zh-CN": "元数据",
@@ -3651,6 +3651,10 @@
  "ui.shortcuts.action.forward":{"zh-CN":"前进","en-US":"Forward"},
  "ui.shortcuts.action.up":{"zh-CN":"上一级目录","en-US":"Parent folder"},
  "ui.shortcuts.action.refresh":{"zh-CN":"刷新","en-US":"Refresh"},
+ "ui.shortcuts.action.toggleRecursive":{"zh-CN":"包含或排除子文件夹","en-US":"Include or exclude subfolders"},
+ "ui.shortcuts.action.toggleRandom":{"zh-CN":"切换随机浏览","en-US":"Toggle random browsing"},
+ "ui.shortcuts.action.refreshRandom":{"zh-CN":"刷新随机结果","en-US":"Refresh random results"},
+ "ui.shortcuts.action.clearFilters":{"zh-CN":"清除筛选条件","en-US":"Clear filters"},
  "ui.shortcuts.action.openSettings":{"zh-CN":"打开设置","en-US":"Open settings"},
  "ui.shortcuts.action.cycleDirectory":{"zh-CN":"循环此电脑与收藏目录","en-US":"Cycle This PC and favorite folders"},
  "ui.shortcuts.action.restoreDefaultWindow": {
@@ -3668,8 +3672,8 @@
  "ui.shortcuts.action.toggleFilters":{"zh-CN":"显示或隐藏筛选","en-US":"Show or hide filters"},
  "ui.shortcuts.action.toggleDetails":{"zh-CN":"显示或隐藏详情","en-US":"Show or hide details"},
  "ui.shortcuts.action.viewSquare": {
-    "zh-CN": "方形网格",
-    "en-US": "Square grid"
+    "zh-CN": "等比例网格",
+    "en-US": "Uniform grid"
   },
  "ui.shortcuts.action.viewGallery": {
     "zh-CN": "原比例网格",
@@ -3691,6 +3695,7 @@
  "ui.shortcuts.action.deleteSelected":{"zh-CN":"删除选中项","en-US":"Delete selection"},
  "ui.shortcuts.action.selectAll":{"zh-CN":"全选结果","en-US":"Select all results"},
  "ui.shortcuts.action.copyFiles":{"zh-CN":"复制选中文件","en-US":"Copy selected files"},
+ "ui.shortcuts.action.editKeywords":{"zh-CN":"编辑关键词","en-US":"Edit keywords"},
  "ui.shortcuts.action.copyPaths":{"zh-CN":"复制选中项路径","en-US":"Copy selected paths"},
  "ui.shortcuts.action.revealFile":{"zh-CN":"在资源管理器中定位","en-US":"Reveal in File Explorer"},
  "ui.shortcuts.action.aiKeywords": {
@@ -3802,8 +3807,8 @@
     "en-US": "Reset shortcuts"
   },
   "ui.shortcuts.resetHint": {
-    "zh-CN": "恢复所有快捷键的默认键位。",
-    "en-US": "Restore all default key bindings."
+    "zh-CN": "恢复可自定义快捷键的默认键位。通用操作使用固定键位。",
+    "en-US": "Restore defaults for customizable shortcuts. Common actions use fixed keys."
   },
   "ui.model.serviceTitle": {
     "zh-CN": "本地推理服务",
@@ -3858,8 +3863,8 @@
     "en-US": "Refresh the current location"
   },
   "ui.command.help.square": {
-    "zh-CN": "方形网格视图",
-    "en-US": "Square grid view"
+    "zh-CN": "等比例网格视图",
+    "en-US": "Uniform grid view"
   },
   "ui.command.help.gallery": {
     "zh-CN": "原比例网格视图",

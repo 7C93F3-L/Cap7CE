@@ -36,11 +36,11 @@ internal sealed class WorkspaceToolbar : UserControl
         Grid.SetColumn(address,1);root.Children.Add(address);
         address.Navigate+=path=>{if(session is null)return;session.Query="";if(path.Length==0)session.Filter=new();Run(()=>session.NavigateAsync(path));};
         address.Search+=query=>{if(session is null)return;session.Query=query;Reload();};
-        random=WorkspaceIcons.ResourceToggle("shuffle","main.random",()=>{if(session is null)return;session.Random=!session.Random;if(session.Random)session.Seed=(uint)System.Random.Shared.Next();Reload();});
-        next=WorkspaceIcons.ResourceButton("refresh","main.next",()=>{if(session is null)return;session.Seed=(uint)System.Random.Shared.Next();Reload();});
+        random=WorkspaceIcons.ResourceToggle("shuffle","main.random",ToggleRandom);
+        next=WorkspaceIcons.ResourceButton("refresh","main.next",RefreshRandom);
         sizeButton=WorkspaceIcons.ResourceButton("size","main.gridSize",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);
         view=WorkspaceIcons.ResourceButton("grid","main.view",ShowView);sort=WorkspaceIcons.ResourceButton("sort","main.sort",ShowSort);
-        recursive=WorkspaceIcons.ResourceButton("tree","main.recursive",()=>OptionsChanged?.Invoke(value=>value with{Recursive=!value.Recursive}));
+        recursive=WorkspaceIcons.ResourceButton("tree","main.recursive",ToggleRecursive);
         hidden=WorkspaceIcons.ResourceButton("eyeOff","main.hidden",()=>OptionsChanged?.Invoke(value=>value with{ShowHidden=!value.ShowHidden}));
         var separator=new Border{Style=(Style)Application.Current.Resources["CapWorkspaceToolSeparator"],IsHitTestVisible=false};
         tools=Ui.Row(random,next,separator,sizeButton,view,recursive,sort,hidden);tools.Spacing=2;Grid.SetColumn(tools,2);root.Children.Add(tools);
@@ -112,6 +112,9 @@ internal sealed class WorkspaceToolbar : UserControl
         var picker=new GridSizePicker(tileSize,value=>{tileSize=value;SizeChangedByUser?.Invoke(value);});
         flyouts.Show(sizeButton,picker,()=>SizeCommitted?.Invoke(picker.Value,scope));
     }
+    public void ToggleRecursive(){if(session?.PathValue.Length>0)OptionsChanged?.Invoke(value=>value with{Recursive=!value.Recursive});}
+    public void ToggleRandom(){if(session is null)return;session.Random=!session.Random;if(session.Random)session.Seed=(uint)System.Random.Shared.Next();Reload();}
+    public void RefreshRandom(){if(session is not {Random:true,ForegroundBusy:false})return;session.Seed=(uint)System.Random.Shared.Next();Reload();}
     private static string SortKey(string value)=>value switch {"name-descending"=>"main.sortNameDesc","modified-descending"=>"main.sortModifiedDesc","modified-ascending"=>"main.sortModifiedAsc",_=>"main.sortNameAsc"};
     private void ShowSort()
     {

@@ -22,7 +22,7 @@ internal sealed class FilterBar : UserControl
     public FilterBar()
     {
         var editors=new FilterEditors(()=>Value,Set,flyouts);
-        clear=FilterSection.ActionButton("main.clearFilters",()=>Set(new()),localized:true);
+        clear=FilterSection.ActionButton("main.clearFilters",Clear,localized:true);
         clear.Style=(Style)Application.Current.Resources["CapFilterClearButton"];
         clear.HorizontalAlignment=HorizontalAlignment.Left;
         var title=L.Text("ui.filters.title");title.FontSize=12;title.FontWeight=Microsoft.UI.Text.FontWeights.SemiBold;
@@ -66,6 +66,7 @@ internal sealed class FilterBar : UserControl
     public void SetAvailability(FilterAvailability state)=>facts.SetAvailability(state);
     public bool ContainsKeyboardTarget(DependencyObject target)
     {for(DependencyObject? item=target;item is not null;item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(ReferenceEquals(item,this))return true;return false;}
+    public void Clear()=>Set(new());
     private void Set(BrowseFilter filter) {Value=filter;Render();FilterChanged?.Invoke(filter);}
     private void Render()
     {

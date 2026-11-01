@@ -47,6 +47,7 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 ## WinUI 与更新
 
+ShortcutCatalog统一声明固定通用键位与可编辑的专有快捷键；固定操作忽略历史覆盖且参与冲突检查，设置编辑器只列可编辑项。WorkspaceShortcutInput继续拥有主窗口/结果区、文本输入及弹层阻断规则；新增浏览快捷键仅编排WorkspaceToolbar既有随机/范围动作和FilterBar.Clear，不引入查询或筛选能力。
 
 正式安装布局将完整应用载荷（WinUI及其.NET/Windows App SDK依赖、Core运行库、Node工作进程和第三方清单）集中到app子目录，cap7ce-native.json以layout=installed-app声明该布局。Shell运行根仍是载荷根；NativeContentPaths仅将用户管理的models与llama.cpp解析到安装根，与开发/便携布局区分。安装根保留Cap7CE.lnk和卸载程序；桌面/开始菜单快捷方式及安装完成启动指向app/Cap7CE.exe，进程检测仍使用Cap7CE.exe文件名。DisplayIcon注册到程序EXE的内嵌图标，不保留单独的顶层ICO。NSIS卸载通过app内入口及标识校验目录，搜索能力移除使用app内Setup，模型及独立Core/Reader的保留规则不变。
 
