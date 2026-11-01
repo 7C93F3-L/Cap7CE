@@ -19,6 +19,9 @@ internal sealed class ModelSettingsView
     private readonly Button runtimeToggle;
     private bool active,starting,syncing;
     private bool subscribed,running,refreshPending;
+    private bool choiceQueued;
+    private (ComboBox Box,string Operation,string Id,int Generation)? pendingChoice;
+    private bool ChoicesOpen=>runtimes.IsDropDownOpen||models.IsDropDownOpen;
     private int generation;
     public UIElement RuntimeSettings {get;}
     public UIElement ModelSettings {get;}
@@ -32,8 +35,9 @@ internal sealed class ModelSettingsView
         runtimeToggle=Action("common.start",()=>RuntimeAsync(active?"runtime.stop":"runtime.start","manual"));
         RuntimeSettings=SelectionRow(runtimes,Action("common.refresh",RefreshAsync));
         ModelSettings=SelectionRow(models,Action("common.refresh",RefreshAsync));
-        runtimes.SelectionChanged+=(_,_)=>{if(!syncing&&runtimes.SelectedItem is ComboBoxItem{Tag:string id})Run(()=>SelectAsync("runtime.select",id));};
-        models.SelectionChanged+=(_,_)=>{if(!syncing&&models.SelectedItem is ComboBoxItem{Tag:string id})Run(()=>SelectAsync("models.select",id));};
+        runtimes.SelectionChanged+=(_,_)=>QueueChoice(runtimes,"runtime.select");
+        models.SelectionChanged+=(_,_)=>QueueChoice(models,"models.select");
+        runtimes.DropDownClosed+=(_,_)=>QueuePending();models.DropDownClosed+=(_,_)=>QueuePending();
         var info=Ui.Column();
         foreach(var (key,value) in new[]{("settings.runtimeFileStatus",fileState),("settings.serviceAddress",address),
             ("settings.runtimeDirectory",runtimeDirectory),("settings.modelDirectory",modelDirectory),("settings.modelInventory",inventory)}) {
@@ -49,20 +53,41 @@ internal sealed class ModelSettingsView
         owner.Unloaded+=(_,_)=>owner.DispatcherQueue.TryEnqueue(()=>{
             // WinUI can deliver a late Unloaded after reparenting the settings card.
             if(owner.IsLoaded||!subscribed)return;
-            subscribed=false;generation++;refreshPending=false;
+            subscribed=false;generation++;refreshPending=false;pendingChoice=null;
             services.ModelChanges.Changed-=ModelChanged;
         });
     }
     private void ModelChanged()=>((FrameworkElement)RuntimeSettings).DispatcherQueue.TryEnqueue(()=>{
         if(!subscribed)return;
         refreshPending=true;ApplyEnabled();
-        if(!running&&!services.ModelChanges.Busy)Run(RefreshAsync);
+        if(!running&&!services.ModelChanges.Busy&&!ChoicesOpen&&pendingChoice is null)Run(RefreshAsync);
+        else QueuePending();
     });
+    private void QueueChoice(ComboBox box,string operation)
+    {
+        if(syncing||!subscribed||box.SelectedItem is not ComboBoxItem{Tag:string id})return;
+        SessionDiagnostics.Record("ai.settings.choice.queued",new{operation,generation,open=box.IsDropDownOpen});
+        pendingChoice=(box,operation,id,generation);QueuePending();
+    }
+    private void QueuePending()
+    {
+        if(choiceQueued)return;choiceQueued=true;
+        ((FrameworkElement)RuntimeSettings).DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,()=>{
+            choiceQueued=false;
+            if(!subscribed||running||services.ModelChanges.Busy||ChoicesOpen)return;
+            if(pendingChoice is {} choice) {
+                pendingChoice=null;
+                if(choice.Generation==generation&&choice.Box.SelectedItem is ComboBoxItem{Tag:string id}&&id==choice.Id)
+                    Run(()=>SelectAsync(choice.Operation,choice.Id));
+            }else if(refreshPending)Run(RefreshAsync);
+        });
+    }
     private void ApplyEnabled()
     {
         var busy=running||services.ModelChanges.Busy;
         foreach(var button in buttons)button.IsEnabled=!busy;
-        runtimes.IsEnabled=models.IsEnabled=!busy&&!active;
+        // Do not disable a ComboBox while its native popup is closing.
+        if(!ChoicesOpen)runtimes.IsEnabled=models.IsEnabled=!busy&&!active;
         runtimeToggle.IsEnabled=!busy&&!starting;
     }
     private static UIElement SelectionRow(ComboBox choice,Button refresh)
@@ -80,6 +105,7 @@ internal sealed class ModelSettingsView
         var model=await ModelActions.SettingsAsync("models.settings");
         var state=await ModelActions.RuntimeAsync("runtime.state",null);
         if(!subscribed||current!=generation)return;
+        if(ChoicesOpen||pendingChoice is not null){refreshPending=true;trace.Mark("choices-deferred");return;}
         trace.Mark("populate",new{generation,runtimeOpen=runtimes.IsDropDownOpen,modelOpen=models.IsDropDownOpen});syncing=true;
         try {
             Populate(runtimes,"settings.selectVersion",runtime.GetProperty("versions"),"version","version",runtime.GetProperty("selectedVersion").GetString());
@@ -115,19 +141,24 @@ internal sealed class ModelSettingsView
         if(running)return;using var trace=SessionDiagnostics.Begin("ai.settings.action",new{generation,subscribed});running=true;refreshPending=false;ApplyEnabled();
         try{
             await work();
-            while(refreshPending&&subscribed&&!services.ModelChanges.Busy){refreshPending=false;await RefreshAsync();}
+            while(refreshPending&&subscribed&&!services.ModelChanges.Busy&&!ChoicesOpen&&pendingChoice is null){refreshPending=false;await RefreshAsync();}
         }catch(Exception error){trace.Fail(error);if(subscribed)notice(FailureText.From(error));}
         finally{
             running=false;ApplyEnabled();
-            if(refreshPending&&subscribed&&!services.ModelChanges.Busy)ModelChanged();
+            if(refreshPending||pendingChoice is not null)QueuePending();
         }
     }
     private static void Populate(ComboBox box,string emptyKey,JsonElement entries,string idKey,string nameKey,string? selected)
     {
-        box.Items.Clear();
-        var empty=new ComboBoxItem{Tag=""};L.Bind(empty,ComboBoxItem.ContentProperty,emptyKey);box.Items.Add(empty);
-        foreach(var entry in entries.EnumerateArray())
-            box.Items.Add(new ComboBoxItem{Tag=entry.GetProperty(idKey).GetString()!,Content=entry.GetProperty(nameKey).GetString()!});
-        box.SelectedItem=box.Items.Cast<ComboBoxItem>().FirstOrDefault(item=>(string)item.Tag==selected)??empty;
+        var values=entries.EnumerateArray().Select(entry=>(Id:entry.GetProperty(idKey).GetString()!,Name:entry.GetProperty(nameKey).GetString()!)).ToArray();
+        var existing=box.Items.Cast<ComboBoxItem>().ToArray();
+        if(existing.Length!=values.Length+1||!existing.Skip(1).Select(item=>((string)item.Tag,(string)item.Content)).SequenceEqual(values)) {
+            SessionDiagnostics.Record("ai.settings.choices.rebuild",new{kind=emptyKey,count=values.Length});
+            box.Items.Clear();
+            var empty=new ComboBoxItem{Tag=""};L.Bind(empty,ComboBoxItem.ContentProperty,emptyKey);box.Items.Add(empty);
+            foreach(var value in values)box.Items.Add(new ComboBoxItem{Tag=value.Id,Content=value.Name});
+        }
+        var target=box.Items.Cast<ComboBoxItem>().FirstOrDefault(item=>(string)item.Tag==selected)??box.Items[0];
+        if(!ReferenceEquals(box.SelectedItem,target))box.SelectedItem=target;
     }
 }
