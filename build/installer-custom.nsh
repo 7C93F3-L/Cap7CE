@@ -1,43 +1,5 @@
 !include LogicLib.nsh
 
-# Keep the package metadata for the executable version resources, but leave the
-# installed shortcuts and Windows uninstall entry URL/comment fields blank.
-!ifdef APP_DESCRIPTION
-  !undef APP_DESCRIPTION
-!endif
-!define APP_DESCRIPTION ""
-!ifdef UNINSTALL_URL_HELP
-  !undef UNINSTALL_URL_HELP
-!endif
-!ifdef UNINSTALL_URL_INFO_ABOUT
-  !undef UNINSTALL_URL_INFO_ABOUT
-!endif
-!ifdef UNINSTALL_URL_UPDATE_INFO
-  !undef UNINSTALL_URL_UPDATE_INFO
-!endif
-!ifdef UNINSTALL_URL_README
-  !undef UNINSTALL_URL_README
-!endif
-
-# electron-builder normally treats the directory page value as a parent and
-# appends APP_FILENAME before the install page opens. Keep its default path and
-# detected-install path, but treat a path explicitly chosen by the user as the
-# final installation directory.
-!macro customPageAfterChangeDir
-  !ifdef MUI_PAGE_CUSTOMFUNCTION_PRE
-    !undef MUI_PAGE_CUSTOMFUNCTION_PRE
-  !endif
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE cap7ceInstallFilesPre
-
-  Function cap7ceInstallFilesPre
-    Goto cap7ce_install_files_pre_done
-    # Keep electron-builder's generated function referenced so its strict NSIS
-    # warning policy remains enabled, but never execute the path-appending code.
-    Call instFilesPre
-    cap7ce_install_files_pre_done:
-  FunctionEnd
-!macroend
-
 LangString cap7ceCleanupUserData 1033 "Remove user data"
 LangString cap7ceCleanupUserData 2052 "删除用户数据"
 LangString cap7ceCleanupAiContent 1033 "Remove models and llama.cpp from this installation"
@@ -327,33 +289,6 @@ LangString cap7ceSearchSetupAccount 2052 "安装器与当前桌面账户不同�
 
   FunctionEnd
 !endif
-
-!macro customUnInit
-  # The standard uninstall section is index 0; the user-data and installed AI
-  # sections appended by customUnInstallSection are indexes 1 and 2. Use
-  # electron-builder's known application size and only scan the two installed AI
-  # directories. Recursively sizing shared app data here could delay the
-  # uninstall UI for large caches, including a large full-disk Catalog.
-  !ifdef ESTIMATED_SIZE
-    SectionSetSize 0 ${ESTIMATED_SIZE}
-  !else
-    SectionSetSize 0 1
-  !endif
-  SectionSetSize 1 0
-
-  ${if} $installMode == "all"
-    SetShellVarContext current
-  ${endif}
-  StrCpy $4 0
-  ${GetSize} "$INSTDIR\models" "/S=0K" $0 $1 $2
-  StrCpy $4 $0
-  ${GetSize} "$INSTDIR\llama.cpp" "/S=0K" $0 $1 $2
-  IntOp $4 $4 + $0
-  SectionSetSize 2 $4
-  ${if} $installMode == "all"
-    SetShellVarContext all
-  ${endif}
-!macroend
 
 !macro customRemoveFiles
   # App updates replace the machine-wide application only. Keep an already enabled

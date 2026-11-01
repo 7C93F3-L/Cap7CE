@@ -58,7 +58,7 @@ Cap7CE uses `@lingo-reader/mobi-parser` and its runtime dependencies only inside
 
 ## Build tooling
 
-The development dependency electron-builder is used only to generate NSIS installers from a prepackaged native directory. The product does not bundle the Electron or Chromium runtime. Build dependencies retain their original licenses.
+Installers are compiled directly with [NSIS](https://nsis.sourceforge.io/), with [StdUtils 1.14](https://github.com/lordmulder/stdutils) (LGPL-2.1-or-later and its upstream clarification) for launching as the desktop user and [WinShell 20121005](https://nsis.sourceforge.io/WinShell_plug-in) (freeware by Anders) for shortcut identity. Their notices are included under `app/licenses/installer`. [7-Zip](https://www.7-zip.org/) is used locally to prepare tools and inspect packages; it is not added to the installed application. Build tools retain their original licenses.
 
 ## External runtime and models
 

@@ -1,6 +1,6 @@
 # Cap7CE WinUI 主线
 
-当前开发入口为 Windows x64 / C# / WinUI 3。旧 Electron/Renderer 源码与 legacy 入口已移除；构建、运行和打包仅面向原生程序。electron-builder 只保留为 NSIS 工具。
+当前开发入口为 Windows x64 / C# / WinUI 3。旧 Electron/Renderer 源码与 legacy 入口已移除；构建、运行和打包仅面向原生程序。安装器直接使用独立 NSIS 工具链，不再依赖 electron-builder。
 
 ## 开发
 
@@ -53,7 +53,7 @@
 
 运行`Start-Cap7CE.cmd`，保持所有目录一起移动。索引仍需安装本机Reader服务及其.NET运行时；可携带界面不意味着不需要系统索引组件。程序保留现有Catalog和配置，两个产品Core Host不能同时持有同一Catalog。
 
-默认`dist:installer`明确提示使用原生ZIP；旧安装器只能通过`dist:installer:legacy`执行。当前未替换远程Release、标签或正式更新通道。
+`npm run setup:installer`可提前准备并校验独立安装器工具；`dist:installer`也会按需准备，输出位于`release/nsis-installer`。本地重新生成安装器不会自动修改远程Release、标签或更新通道。
 
 ## 数据与保留边界
 

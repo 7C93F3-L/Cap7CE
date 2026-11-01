@@ -159,11 +159,13 @@ npm run dist:installer
 
 | 命令              | 用途                         |
 | --------------- | -------------------------- |
-| `npm run dev`   | 启动 Vite 与 Electron 开发环境    |
-| `npm run build` | 构建 Renderer 和 Electron 主进程 |
+| `npm run dev`   | 启动原生 WinUI 开发程序    |
+| `npm run build` | 构建原生窗口及 Core/Node 工作进程 |
 | `npm test`      | 运行仓库内可独立完成的集成测试            |
 | `npm run pack`  | 生成未安装的应用目录，用于打包检查          |
 | `npm run dist:installer` | 生成 Windows x64 NSIS 安装器 |
+
+安装器工具会从官方来源按固定 SHA-256 校验后下载到 `artifacts/toolchains`，也可先执行 `npm run setup:installer`；安装器输出在 `release/nsis-installer`。
 
 `npm run build` 通过不代表安装包已经验证。发布前仍需执行打包并进行人工交互测试。
 
@@ -343,11 +345,13 @@ npm run dist:installer
 
 | Command         | Purpose                                                             |
 | --------------- | ------------------------------------------------------------------- |
-| `npm run dev`   | Start the Vite and Electron development environment                 |
-| `npm run build` | Build the Renderer and Electron main process                        |
+| `npm run dev`   | Start the native WinUI application                 |
+| `npm run build` | Build the native shell and Core/Node workers                        |
 | `npm test`      | Run the self-contained integration tests included in the repository |
 | `npm run pack`  | Generate an unpacked application directory for packaging checks     |
 | `npm run dist:installer` | Generate a Windows x64 NSIS installer                         |
+
+Installer tools are downloaded from official sources with pinned SHA-256 checksums into `artifacts/toolchains`; `npm run setup:installer` prepares them in advance. Installer output is in `release/nsis-installer`.
 
 A successful `npm run build` does not validate the packaged application. Packaging and manual interaction tests are still required before release.
 

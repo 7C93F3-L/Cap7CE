@@ -42,56 +42,12 @@
     "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs",
     "test:core-setup-native": "node scripts/core-setup-native-smoke.cjs",
     "test:core-capability-payload": "node scripts/core-capability-payload-smoke.cjs",
-    "test:delivery": "npm run test:core-setup-native && npm run test:core-capability-payload && node scripts/native-installer-smoke.cjs && node scripts/native-install-lifecycle-smoke.cjs && node scripts/native-uninstall-lifecycle-smoke.cjs",
+    "test:delivery": "npm run test:core-setup-native && npm run test:core-capability-payload && node scripts/native-installer-smoke.cjs && node scripts/native-install-lifecycle-smoke.cjs && node scripts/native-uninstall-lifecycle-smoke.cjs && node scripts/native-installer-flow-smoke.cjs",
     "probe:core-p37": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-recovery-probe.ps1",
     "probe:core-p37-lifecycle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-lifecycle-probe.ps1",
     "prepare:core-p37-reboot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-reboot-prepare.ps1",
-    "resume:core-p37-reboot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-reboot-resume.ps1"
-  },
-  "build": {
-    "appId": "Cap7CE",
-    "productName": "Cap7CE",
-    "copyright": "Copyright © 2026 7C93F3-L",
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "icon": "build/icon.ico",
-      "signtoolOptions": {
-        "publisherName": "7C"
-      },
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": true,
-      "allowElevation": true,
-      "allowToChangeInstallationDirectory": true,
-      "artifactName": "Cap7CE-Setup-${version}-x64.${ext}",
-      "createDesktopShortcut": "always",
-      "createStartMenuShortcut": true,
-      "shortcutName": "Cap7CE",
-      "runAfterFinish": true,
-      "deleteAppDataOnUninstall": false,
-      "installerLanguages": [
-        "en_US",
-        "zh_CN"
-      ],
-      "displayLanguageSelector": false,
-      "license": "LICENSE",
-      "installerIcon": "build/setup.ico",
-      "uninstallerIcon": "build/setup.ico",
-      "installerSidebar": "build/installerSidebar.bmp",
-      "uninstallerSidebar": "build/installerSidebar.bmp",
-      "include": "build/installer-custom.nsh"
-    }
+    "resume:core-p37-reboot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/core-p37-reboot-resume.ps1",
+    "setup:installer": "node scripts/native-installer-tools.cjs"
   },
   "dependencies": {
     "@lingo-reader/mobi-parser": "0.4.6",
@@ -112,7 +68,6 @@
     "@types/node": "^24.13.3",
     "@types/word-extractor": "^1.0.2",
     "cross-env": "^7.0.3",
-    "electron-builder": "^26.15.3",
     "esbuild": "0.28.1",
     "typescript": "^5.7.2"
   }

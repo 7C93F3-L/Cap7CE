@@ -155,9 +155,11 @@ if (catalogLock.dependencies?.["net10.0"]?.["Microsoft.Data.Sqlite"]?.resolved !
   failures.push("Core native SQLite dependency graph is not locked to the reviewed versions.");
 }
 const packageJson = JSON.parse(read("package.json"));
-const installer = require("../build/winui.electron-builder.cjs");
-if (installer.files.length || installer.extraResources.length || !read("scripts/native-installer-build.cjs").includes("'--prepackaged'"))
+const installer = read("build/native-installer.nsi");
+if (!installer.includes('File /r "${STAGED_APP}\\*.*"') || !read("scripts/native-installer-build.cjs").includes('`/DSTAGED_APP=${app}`'))
   failures.push("NSIS must consume the prepared native payload, not independently collect Core or user files.");
+if (Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies }).some(name => /electron|app-builder/.test(name)))
+  failures.push("Retired Electron packaging dependencies must not return.");
 if (!packageJson.scripts?.["build:core"] || !packageJson.scripts?.["test:core"])
   failures.push("Core build and test commands must remain explicit npm scripts.");
 if (failures.length > 0) {

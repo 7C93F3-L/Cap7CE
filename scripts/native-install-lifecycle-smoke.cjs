@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
-const {getMakeNsisPath}=require('app-builder-lib/out/toolsets/windows');
+const {getMakeNsisPath}=require('./native-installer-tools.cjs');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'cap7ce-install-lifecycle-'));
 const source=fs.readFileSync(path.join(__dirname,'../build/installer-custom.nsh'),'utf8');
 (async()=>{try {

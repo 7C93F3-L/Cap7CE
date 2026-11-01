@@ -7,7 +7,7 @@ const { spawnSync } = require('node:child_process');
 // Compile the actual NSIS functions/sections with every product path redirected
 // into one owned fixture. No product registration, service or real user data.
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cap7ce-uninstall-lifecycle-'));
-const { getMakeNsisPath } = require('app-builder-lib/out/toolsets/windows');
+const { getMakeNsisPath } = require('./native-installer-tools.cjs');
 let compilerEnvironment;
 const source = fs.readFileSync(path.join(__dirname, '../build/installer-custom.nsh'), 'utf8');
 const run = (exe, args) => {

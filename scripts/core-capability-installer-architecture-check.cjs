@@ -22,9 +22,13 @@ const setupWithoutCoordinator = setupSources
   .map((entry) => entry.source).join("\n");
 const setupProgram = read("core/src/Cap7CE.Core.Setup/Program.cs");
 const setupTests = read("core/tests/Cap7CE.Core.Tests/CapabilitySetupIdentityTests.cs");
-const capabilityBuilder = read("build/winui.electron-builder.cjs");
-const capabilityNsis = read("build/installer-winui.nsh");
+const capabilityBuilder = read("scripts/native-installer-build.cjs");
+const capabilityNsis = read("build/native-installer.nsi");
 const installerNsis = read("build/installer-custom.nsh");
+requireAnchor(capabilityNsis, 'SpaceTexts none', "no misleading uninstall space estimate");
+if (/GetSize|customUnInit/.test(installerNsis)) failures.push("Uninstall must not scan model directories for display-only size estimates.");
+if (!(capabilityNsis.indexOf('Call RequireStopped') < capabilityNsis.indexOf('RMDir /r "$INSTDIR\\app"')))
+  failures.push("Running application checks must precede native app replacement.");
 const packageJson = JSON.parse(read("package.json"));
 const installerSmoke = read("scripts/native-installer-smoke.cjs");
 const installHook=installerNsis.split('!macro customInstall')[1]?.split('!macroend')[0]??"";
@@ -87,7 +91,7 @@ for (const anchor of ["setup coordinator rejects free paths",
 }
 
 for (const [source, anchor, description] of [
-  [capabilityBuilder, 'files: [], extraResources: []', "prepackaged native payload boundary"],
+  [capabilityBuilder, '`/DSTAGED_APP=${app}`', "prepared native payload boundary"],
   [capabilityNsis, "installer-custom.nsh", "shared product NSIS lifecycle"],
   [installerNsis, "--activation-coordinator --action remove --catalog $1", "authenticated uninstall removal"],
   [installerNsis, "SectionGetFlags 1 $0", "Catalog cleanup following the existing user-data choice"],
@@ -100,7 +104,7 @@ if (/cap7ceCleanupCoreCatalog|CAP7CE_CLEAN_CORE_CATALOG_SECTION|CAP7CE_PRESERVE_
 }
 const pack = read("scripts/native-pack.cjs");
 if (!pack.includes("core/artifacts/product-capability/v1/bundle")) failures.push("Native pack must include the fixed product capability bundle.");
-if (!read("scripts/native-installer-build.cjs").includes("'--prepackaged'")) failures.push("Installer must consume the prepared native directory.");
+requireAnchor(capabilityNsis, 'File /r "${STAGED_APP}\\*.*"', "installer extraction restricted to the prepared native directory");
 if (failures.length) {
   console.error("Core capability installer architecture checks failed:\n");
   failures.forEach((failure) => console.error(`- ${failure}`));

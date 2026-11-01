@@ -75,7 +75,9 @@ native-runtime-notices在发布阶段从已还原的NuGet清单、发布后的.N
 
 `npm run build` 先验证原生源码边界和类型，再打包固定 Node 运行库、发布 Core/QueryHost、生成资源并构建 WinUI。`npm run dev` 使用 shell/run.ps1，在正常交互桌面环境启动，避免开发工具的 AppData 重定向；构建保护正在运行的程序。
 
-`npm run pack` 生成自包含多文件目录，`dist:portable` 生成 ZIP，`dist:installer` 使用预打包的原生目录生成 NSIS。保留的 electron-builder 仅是 NSIS 工具；其预打包API要求的框架版本显式写在安装器工具配置中，不引入Electron依赖或下载。npm不再安装Electron运行时，载荷不包含app.asar/Chromium。不得把源码构建等同于安装包验收。
+`npm run pack` 生成自包含多文件目录，`dist:portable` 生成 ZIP，`dist:installer` 由 `native-installer-build.cjs` 暂存原生目录并直接编译 `build/native-installer.nsi`，输出到 `release/nsis-installer`。独立工具链由 `native-installer-tools.cjs` 从官方来源下载并校验固定 SHA-256，缓存在忽略目录 `artifacts/toolchains`：NSIS 3.12、7-Zip 25.01、StdUtils 1.14 和 WinShell 20121005。不依赖 Electron 或 electron-builder，载荷不包含 app.asar/Chromium。不得把源码构建等同于安装包验收。
+
+NSIS 仅提取暂存的 `app`，沿用机器级安装登记及快捷方式 AppUserModelID；覆盖安装前检查安装目录内的进程，不强制结束进程，不调用旧卸载器或清理用户数据。搜索服务配置继续复用 `installer-custom.nsh` 的同步安装入口及失败处理。卸载复用原有受保护组件移除、用户数据选择、目录链接保护和模型保留逻辑；空间估算不属于卸载流程，不显示空间计数或扫描模型体积。StdUtils 用于安装结束后以桌面用户身份启动，WinShell 用于快捷方式身份；相应声明随安装载荷分发。
 
 `native-source-check` 守护全部原生模块体量、迁移解析器源码基线、九个运行入口的实际依赖闭包和旧目录/依赖禁入；`native-domain-check` 保留缓存发布、只读元数据、预算、取消、后代路径及回环请求关键锚点。Core的十项源码审计由core-architecture-suite统一执行，约束项目依赖、源IO/数据库归属、Reader/Setup权限与生命周期、原生客户端和预打包边界；构建及test:source均运行这些检查，不执行系统探针。WinUI语言/界面架构检查继续生效。
 
