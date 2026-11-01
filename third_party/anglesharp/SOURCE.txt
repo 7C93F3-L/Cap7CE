@@ -1,0 +1,3 @@
+AngleSharp 1.8.4
+License source matching the NuGet package repository commit:
+https://raw.githubusercontent.com/AngleSharp/AngleSharp/32981ded5b0c78c4a5afcfbb677ffb329078fdf8/LICENSE

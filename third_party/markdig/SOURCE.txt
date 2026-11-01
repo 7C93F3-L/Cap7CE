@@ -1,0 +1,3 @@
+Markdig 0.41.3
+License source matching the NuGet package repository commit:
+https://raw.githubusercontent.com/xoofx/markdig/7ff8db9016593b71f9ae17d9b2b053fbd54e9cdf/license.txt

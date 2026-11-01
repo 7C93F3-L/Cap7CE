@@ -26,6 +26,7 @@ fs.cpSync(setup, path.join(output, 'core/artifacts/product-capability/v1/bundle'
 fs.writeFileSync(path.join(output, 'cap7ce-native.json'), JSON.stringify({ product: 'Cap7CE', shell: 'WinUI', version, architecture: 'x64' }, null, 2));
 fs.writeFileSync(path.join(output, 'Start-Cap7CE.cmd'), '@echo off\r\nstart "" "%~dp0shell\\artifacts\\winui\\Cap7CE.WinUI.exe"\r\n');
 fs.writeFileSync(path.join(output, 'README.txt'), 'Cap7CE x64\r\nRun Start-Cap7CE.cmd. Keep all folders together.\r\nReader service is required for disk indexing. Existing Catalog/user data are reused, not bundled.\r\nUse the installer to configure the search service before indexing.\r\n');
+require('./native-runtime-notices.cjs')(root, output);
 for (const name of ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md']) fs.copyFileSync(path.join(root, name), path.join(output, name));
 fs.mkdirSync(path.join(output, 'models')); fs.mkdirSync(path.join(output, 'llama.cpp'));
 if (process.argv.includes('--zip')) {

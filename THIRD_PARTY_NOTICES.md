@@ -2,7 +2,7 @@
 
 Cap7CE source code is made available under PolyForm Noncommercial 1.0.0. Third-party software included in the source tree, dependency graph, or packaged runtime remains subject to its own license.
 
-This file is a human-readable inventory for Cap7CE 2.0.0. The installer includes the deterministic Core capability payload and configures the search service during installation; indexing and metadata extraction require user actions. `package-lock.json` and the Core `packages.lock.json` files are the authoritative locked dependency inventories. Before publishing a binary release, the release process must regenerate and verify the complete license report.
+This file is a human-readable inventory for Cap7CE 2.0.0. The installer includes the deterministic Core capability payload and configures the search service during installation; indexing and metadata extraction require user actions. Locked dependency files record exact versions. Packaging regenerates `licenses/components.json` for the WinUI and Node runtimes and copies WinUI NuGet/runtime license texts under `licenses/nuget`; Core and native helper notices remain beside their respective payloads. In an installed copy these paths are inside `app`.
 
 ## Primary runtime components
 
@@ -10,6 +10,10 @@ The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [F
 
 | Component | License |
 | --- | --- |
+| .NET runtime | MIT and bundled third-party notices |
+| Windows App SDK and WebView2 loader | Microsoft package license terms and accompanying notices |
+| Markdig 0.41.3 | BSD-2-Clause; complete upstream notice retained in `third_party/markdig` |
+| AngleSharp 1.8.4 | MIT; complete upstream notice retained in `third_party/anglesharp` |
 | Node.js 24.15.0, Windows x64 | MIT and included dependency notices; the independently bundled metadata runtime includes the complete upstream `LICENSE-node` |
 | Fluent UI System Icons | MIT; selected SVG geometry is adapted for the stable UI, with the bundled license text in `third_party/fluentui-system-icons` |
 | `@napi-rs/canvas` and Windows runtime package | MIT |
@@ -29,7 +33,7 @@ The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [F
 | `sharp` | Apache-2.0 |
 | `@img/sharp-win32-x64` / bundled libvips components | Apache-2.0 AND LGPL-3.0-or-later |
 | `pako` | MIT AND Zlib |
-| Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used by the opt-in .NET Core catalog capability |
+| Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core 10.0.12 | MIT; used by the Core catalog capability |
 | SQLitePCLRaw 2.1.12 packages | Apache-2.0; used by the opt-in .NET Core catalog capability |
 | SQLite native library supplied through SQLitePCLRaw | SQLite is in the public domain; the packaging components remain Apache-2.0 |
 | C#/WinRT runtime 2.2.0 | MIT; used by the bounded native video metadata helper |

@@ -69,6 +69,8 @@ NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，�
 
 ## 构建与验证
 
+native-runtime-notices在发布阶段从已还原的NuGet清单、发布后的.NET运行时版本及锁定Node依赖生成licenses/components.json，将WinUI/NuGet/.NET完整声明复制到licenses/nuget。缺失许可文本或版本不匹配会中止打包；只向新发布目录写入，不改动签名的Core能力载荷。
+
 应用文件替换阶段保留Core、NtfsReader和CapabilitySetup归属/恢复状态，不删除独立能力的管理记录；随后由正式Setup事务更新搜索组件。组件卸载失败时NSIS保留退出码与返回结果到当前用户临时目录的cap7ce-uninstall-core.log，并中止后续应用及用户数据清理；不自动接管缺失归属记录的组件。用户数据选项只提供选择，实际清理统一由customRemoveFiles在组件移除后、应用本体及登记删除前调用；明确切换到当前用户路径，逐项验证目标已不存在。cap7ce-uninstall-data.log追加记录全部实际路径、删除后属性和Win32错误；失败中止并保留卸载入口供重试，更新模式跳过此步骤。应用清理末尾只以非递归删除清除空容器，不移除仍有模型或组件的目录。
 
 `npm run build` 先验证原生源码边界和类型，再打包固定 Node 运行库、发布 Core/QueryHost、生成资源并构建 WinUI。`npm run dev` 使用 shell/run.ps1，在正常交互桌面环境启动，避免开发工具的 AppData 重定向；构建保护正在运行的程序。

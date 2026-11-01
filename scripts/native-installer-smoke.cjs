@@ -17,6 +17,12 @@ assert.deepEqual(fs.readdirSync(path.join(directory,'resources')),['elevate.exe'
 const app=path.join(directory,'app');
 const marker=JSON.parse(fs.readFileSync(path.join(app,'cap7ce-native.json'),'utf8'));
 assert.equal(marker.layout,'installed-app');
+const notices=JSON.parse(fs.readFileSync(path.join(app,'licenses/components.json'),'utf8'));
+assert.equal(notices.version,version);
+for(const name of ['Markdig','AngleSharp','Microsoft.WindowsAppSDK','Microsoft.NETCore.App.Runtime.win-x64']) {
+  const component=notices.components.find(item=>item.name===name);assert(component,`Missing runtime notice: ${name}`);
+  for(const file of component.files)assert(fs.statSync(path.join(app,'licenses',file)).size>100,`Empty runtime notice: ${file}`);
+}
 assert.equal(require('../build/winui.electron-builder.cjs').win.executableName, 'Cap7CE', 'NSIS shortcut target must match installed entry');
 assert.deepEqual(fs.readFileSync(path.join(app,'Cap7CE.pri')),fs.readFileSync(path.join(app,'Cap7CE.WinUI.pri')),'Renamed apphost must have matching PRI resources');
 assert.equal(marker.shell,'WinUI');assert.equal(marker.version,version);

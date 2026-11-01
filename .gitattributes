@@ -5,3 +5,5 @@
 third_party/metadata-media/LICENSE-Windows-SDK.rtf binary
 third_party/metadata-media/LICENSE-dotnet-third-party.txt -whitespace
 third_party/saxes/LICENSE text eol=lf
+third_party/anglesharp/LICENSE -text -whitespace
+third_party/markdig/LICENSE -text -whitespace
