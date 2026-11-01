@@ -489,9 +489,7 @@ export class AppUpdateDownloadService {
   }
 
   private installerPattern(): RegExp {
-    return this.options.installerKind === "winui"
-      ? /^Cap7CE-WinUI-Setup-(\d+\.\d+\.\d+)-x64\.exe(?:\.part)?$/
-      : /^Cap7CE-Setup-(\d+\.\d+\.\d+)-x64\.exe(?:\.part)?$/;
+    return /^Cap7CE-Setup-(\d+\.\d+\.\d+)-x64\.exe(?:\.part)?$/;
   }
 
   private async removeObsoleteInstallers(): Promise<void> {

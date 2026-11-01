@@ -34,8 +34,8 @@ export interface AppUpdateAsset {
 }
 
 export type AppUpdateKind = "electron" | "winui";
-export const appUpdateInstallerName = (version: string, kind: AppUpdateKind = "electron") =>
-  `Cap7CE-${kind === "winui" ? "WinUI-" : ""}Setup-${version}-x64.exe`;
+export const appUpdateInstallerName = (version: string, _kind: AppUpdateKind = "electron") =>
+  `Cap7CE-Setup-${version}-x64.exe`;
 
 export interface AppUpdateResolution extends AppUpdateCheckResult {
   reason?: "no_native_release";

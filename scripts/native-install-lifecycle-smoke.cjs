@@ -13,7 +13,8 @@ const source=fs.readFileSync(path.join(__dirname,'../build/installer-custom.nsh'
   };
   for(const code of [0,1,3010,6]) {
     const fixture=path.join(root,String(code));fs.mkdirSync(fixture);
-    const helper=path.join(fixture,'Cap7CE.exe'),installer=path.join(fixture,'install.exe');
+    fs.mkdirSync(path.join(fixture,'app'));
+    const helper=path.join(fixture,'app/Cap7CE.exe'),installer=path.join(fixture,'install.exe');
     compile(`Unicode true
 RequestExecutionLevel user
 SilentInstall silent

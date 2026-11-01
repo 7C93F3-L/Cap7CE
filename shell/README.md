@@ -45,11 +45,11 @@
 - 通知按用户开关注册；清理缓存和页面观察到的任务完成可发送通知。
 - 缓存清理通过Core缓存所有者完成，仅清理WinUI隔离缓存，保留源文件、索引、关键词和旧界面缓存。
 - 诊断可打开本机日志目录、导出已知原生日志及基础运行信息；不导出素材、数据库或配置。
-- 更新检查仅响应主动点击，筛选WinUI专用NSIS安装器并复用既有下载、暂停/续传及校验；用户确认后打开安装器并退出，不使用Electron历史发布。托盘入口打开设置的版本更新区域并检查。
+- 更新检查仅响应主动点击，筛选标准命名的Cap7CE安装器并复用既有下载、暂停/续传及校验；用户确认后打开安装器并退出，仅接受版本、来源及摘要校验通过的安装包。托盘入口打开设置的版本更新区域并检查。
 
 ## 可携带交付
 
-`npm run pack`生成原生可运行目录；`npm run dist:portable`额外生成ZIP。`npm run dist:installer`生成WinUI专用NSIS安装器，保留既有安装身份、快捷方式和用户数据保留规则。目录带有自包含.NET/Windows App SDK的WinUI与Core宿主、独立工作进程、Core Setup载荷和空models/llama.cpp目录，不包含Electron、用户配置、数据库、素材或模型。
+`npm run pack`生成原生可运行目录；`npm run dist:portable`额外生成ZIP。`npm run dist:installer`生成Cap7CE-Setup-<版本>-x64.exe安装器，保留既有安装身份、快捷方式和用户数据保留规则。目录带有自包含.NET/Windows App SDK的WinUI与Core宿主、独立工作进程、Core Setup载荷和空models/llama.cpp目录，不包含Electron、用户配置、数据库、素材或模型。
 
 运行`Start-Cap7CE.cmd`，保持所有目录一起移动。索引仍需安装本机Reader服务及其.NET运行时；可携带界面不意味着不需要系统索引组件。程序保留现有Catalog和配置，两个产品Core Host不能同时持有同一Catalog。
 

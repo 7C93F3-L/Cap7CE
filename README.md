@@ -1,16 +1,16 @@
 # Cap7CE
 
-## 当前源码主线：WinUI
+## Cap7CE 2.0.0 发布准备
 
-后续开发已转向Windows x64原生WinUI。`npm run build`构建原生程序，`npm run dev`启动；`npm run pack`生成可携带目录，`npm run dist:portable`生成ZIP，`npm run dist:installer`生成WinUI安装器。索引/属性任务复用既有Core与Reader，安装/修复只由用户明确操作触发。详见[WinUI开发、交付与能力边界](shell/README.md)。
+当前候选版本为2.0.0，主程序使用Windows x64原生WinUI。安装器默认配置搜索服务，缺少所需.NET依赖时先打开微软运行时安装器；建库和元数据提取仍由用户主动启动。首次可直接浏览目录，建立索引后启用搜索及关键词编辑。详见[开发、交付与能力边界](shell/README.md)。
 
 当前仓库仅保留原生主线及独立 Core/Node 领域。Electron 运行时、React/Vite、旧界面与 legacy 命令已移除；electron-builder 仅用于 NSIS 安装器生成。共享契约位于 core/shared。
 
-以下 1.0.4 下载和截图是历史发布资料，原生主线尚未正式发布。当前开发/测试说明以 [shell/README.md](shell/README.md) 为准。
+2.0.0尚未正式发布，安装包以GitHub Releases中的正式发布为准。以下展示截图暂时保留旧版，待新素材整理后替换；当前功能与运行边界以程序和架构文档为准。
 
 [中文](#中文) · [English](#english)
 
-> **Cap7CE 1.0.4.** Stable Windows x64 release. Back up important files before using file-management features.
+> **Cap7CE 2.0.0 release preparation.** The screenshots below show an earlier version and will be replaced after the new demo assets are ready.
 
 ![Cap7CE normal mode in dark theme](docs/assets/screenshots/normal-dark.png)
 
@@ -35,14 +35,14 @@ See [Screenshot asset sources](docs/assets/screenshots/ASSET_SOURCES.md) for the
 
 ## 中文
 
-Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。它扫描用户主动添加的目录，可按文件名、目录路径和手工关键词搜索多种文件，并可选使用本地 `llama.cpp` 视觉模型为受支持图像生成描述与关键词。
+Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。它支持直接浏览目录，按用户选择的磁盘建立文件名及路径索引，通过关键词和提取后的属性筛选文件，并可选使用本地 `llama.cpp` 视觉模型为受支持格式生成关键词。
 
 源文件、索引、缓存、模型和运行时配置均保留在本机。Cap7CE 不提供模型或 `llama.cpp`，也不会将素材上传到远程识别服务。
 
 ### 当前状态
 
-- 当前版本：`1.0.4`
-- 发布阶段：正式版
+- 当前候选版本：`2.0.0`
+- 发布阶段：发布准备
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
 - 源码许可证：PolyForm Noncommercial 1.0.0（仅限非商业用途）
@@ -51,19 +51,19 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 下载与安装
 
-请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest) 下载 `Cap7CE-Setup-1.0.4-x64.exe`。安装器支持选择最终安装目录、创建开始菜单和桌面快捷方式，以及覆盖安装；不会在用户选择的路径下再自动添加 `Cap7CE` 子目录。软件内更新只在用户主动检查和确认后下载、校验并启动正式安装器。
+正式发布后，请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases) 下载 `Cap7CE-Setup-2.0.0-x64.exe`。安装器支持选择最终安装目录、创建开始菜单和桌面快捷方式。安装时默认配置搜索服务；首次运行可按引导选择建库范围。软件内更新只在用户主动检查和确认后下载、校验并启动正式安装器。
 
-用户配置、SQLite 索引和视觉缓存位于 `%APPDATA%\Cap7CE`；`models` 与 `llama.cpp` 位于所选程序副本旁。安装和覆盖升级不会主动修改这些内容，卸载时只有明确勾选对应清理选项才会删除。
+原生界面配置及日志位于 `%LOCALAPPDATA%\Cap7CE-PhaseF`；Core索引、用户配置、属性及缓存位于 `%LOCALAPPDATA%\Cap7CE`。安装根目录保留启动快捷方式、卸载程序、`models` 与 `llama.cpp`，程序及依赖集中在 `app` 子目录。卸载时只有明确勾选对应清理选项才会删除用户数据、模型或AI运行时。
 
 ### 主要功能
 
-- 扫描多个本地目录并建立文件索引。
-- 通过本地视觉模型生成描述与关键词。
-- 新执行的 AI 识别会跟随当前软件语言生成中文或英文描述与关键词。
+- 为选中的本地磁盘建立目录索引，按需提取文件元数据。
+- 通过本地视觉模型生成关键词。
+- 新执行的 AI 任务会跟随当前软件语言生成中文或英文关键词。
 - 按关键词、文件名、目录、查看范围和排序方式筛选。
-- 使用 skim 浏览磁盘和目录中的多种项目文件，通过快速访问边栏或在搜索框粘贴本机文件、目录的完整路径直达对应位置，并预览视觉、文本、文档、归档、字体、音频和视频内容。
-- 使用单一响应式主窗口，并在同一工作区展开或收起 Skim。
-- 提供独立 Settings 与 Preview 窗口，支持 Windows 原生标题栏按钮、亚克力与云母材质。
+- 浏览磁盘、目录和收藏位置，并预览图片、文本、文档、归档、字体、音频和视频内容。
+- 使用单一响应式主窗口及可调整的目录栏、网格和详细信息栏。
+- 提供独立设置与预览窗口，支持 Windows 原生标题栏按钮、主题颜色与材质。
 - 支持缩略图、独立预览窗口、多选和关键词编辑。
 - 支持打开文件、定位路径、拖拽导出和移入回收站。
 - 支持明亮、黑暗、跟随系统主题及中英文界面。
@@ -92,7 +92,11 @@ Cap7CE 本体可以在缺少 AI 运行时的情况下浏览和搜索文件名。
 
 ```text
 Cap7CE/
-├─ Cap7CE.exe
+├─ Cap7CE.lnk
+├─ app/
+│  ├─ Cap7CE.exe
+│  └─ ...
+├─ Uninstall Cap7CE.exe
 ├─ llama.cpp/
 │  ├─ bxxxx-cuda/
 │  │  ├─ llama-server.exe
@@ -107,7 +111,7 @@ Cap7CE/
 
 每个 `llama.cpp` 版本使用独立子目录。`models` 可以包含子目录；Cap7CE 会递归扫描 `.gguf` 文件，并尝试将主模型与 `mmproj` 配对。
 
-正式安装器不内置运行时或模型文件，也不主动创建 `llama.cpp` 与 `models`；需要 AI 功能时可在 Cap7CE 程序目录旁自行创建这两个目录。
+正式安装器会在安装根目录创建空的 `llama.cpp` 与 `models`，不内置运行时或模型文件；需要 AI 功能时将相应文件放入这两个目录。
 
 运行时和模型必须由用户从其官方或可信来源单独获取，并遵守各自的许可证与使用条款。Cap7CE 项目不为第三方运行时或模型提供再分发授权。
 
@@ -215,14 +219,14 @@ Designed and developed by 7C93F3-L with assistance from Echo using OpenAI Codex.
 
 ## English
 
-Cap7CE is a local file search, browsing, and preview tool for Windows. It scans directories explicitly added by the user, searches many file types by file name, directory path, and manual keywords, and can optionally use a local `llama.cpp` vision model to generate descriptions and keywords for supported images.
+Cap7CE is a local file search, browsing, and preview tool for Windows. It browses folders directly, indexes selected disks for file-name and path search, filters by keywords and extracted properties, and optionally generates keywords for supported formats through a local `llama.cpp` vision model.
 
 Source files, indexes, caches, models, and runtime settings remain on the local machine. Cap7CE does not bundle models or `llama.cpp`, and it does not upload media to a remote recognition service.
 
 ### Project status
 
-- Current version: `1.0.4`
-- Release stage: Stable
+- Current candidate: `2.0.0`
+- Release stage: Preparing for release
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
 - Source-available license: PolyForm Noncommercial 1.0.0 (noncommercial use only)
@@ -231,19 +235,19 @@ The installer is currently unsigned, so Windows may show an Unknown Publisher or
 
 ### Download and installation
 
-Download `Cap7CE-Setup-1.0.4-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/latest). The installer lets you choose the final installation directory without appending another `Cap7CE` subfolder, creates Start Menu and desktop shortcuts, and can install over an existing copy. In-app updates download, verify, and launch the official installer only after explicit user actions.
+After publication, download `Cap7CE-Setup-2.0.0-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases). The installer lets you choose the installation directory, creates shortcuts, and configures the search service. Missing .NET prerequisites are installed through the Microsoft runtime installer. The first-run prompt can start indexing or open settings to choose drives. In-app updates download, verify, and launch the installer only after explicit user actions.
 
-Preferences, the SQLite index, and visual caches are stored under `%APPDATA%\Cap7CE`; `models` and `llama.cpp` stay beside the selected application copy. Installation and upgrades do not modify this content. Uninstallation removes it only when the corresponding cleanup option is explicitly selected.
+Shell preferences and logs are stored under `%LOCALAPPDATA%\Cap7CE-PhaseF`; Core indexes, user configuration, metadata and caches are stored under `%LOCALAPPDATA%\Cap7CE`. The installation root contains the launch shortcut, uninstaller, `models` and `llama.cpp`; application files and dependencies live in `app`. Uninstallation removes user data, models or the AI runtime only when the corresponding cleanup option is selected.
 
 ### Features
 
-- Scan and index multiple local directories.
-- Generate descriptions and keywords with a local vision model.
-- New AI recognition runs generate Chinese or English descriptions and keywords according to the current app language.
+- Index selected local disks and extract file metadata on demand.
+- Generate keywords with a local vision model.
+- New AI tasks generate Chinese or English keywords according to the current app language.
 - Filter by keywords, file name, directory, view scope, and sort order.
-- Use skim to browse project files across disks and folders, jump to common locations from the Quick Access sidebar or by pasting a full local file or folder path into search, and preview visual, text, document, archive, font, audio, and video content.
-- Use a single responsive main window with an integrated, collapsible Skim workspace.
-- Open independent Settings and Preview windows with native Windows titlebar controls and Acrylic or Mica materials.
+- Browse disks, folders and favorites, with previews for images, text, documents, archives, fonts, audio and video.
+- Use a responsive main window with adjustable folder, grid and details areas.
+- Open independent settings and preview windows with native Windows titlebar controls, colors and materials.
 - Browse thumbnails, open an independent preview window, select multiple files, and edit keywords.
 - Open files, reveal paths, drag files to other applications, and move files to the Recycle Bin.
 - Use light, dark, or system themes with Chinese and English interfaces.
@@ -272,7 +276,11 @@ Recommended layout:
 
 ```text
 Cap7CE/
-├─ Cap7CE.exe
+├─ Cap7CE.lnk
+├─ app/
+│  ├─ Cap7CE.exe
+│  └─ ...
+├─ Uninstall Cap7CE.exe
 ├─ llama.cpp/
 │  ├─ bxxxx-cuda/
 │  │  ├─ llama-server.exe
@@ -287,7 +295,7 @@ Cap7CE/
 
 Keep each `llama.cpp` version in a separate subdirectory. The `models` directory may contain nested directories; Cap7CE scans `.gguf` files recursively and attempts to pair each main model with its `mmproj`.
 
-The official installer does not bundle runtime or model files and does not create `llama.cpp` or `models` automatically. Create these directories beside the Cap7CE application when AI features are needed.
+The official installer creates empty `llama.cpp` and `models` directories in the installation root without bundling runtime or model files. Add the corresponding files there when AI features are needed.
 
 Users must obtain runtimes and models separately from official or otherwise trusted sources and comply with their respective licenses and terms. The Cap7CE project does not grant redistribution rights for third-party runtimes or models.
 

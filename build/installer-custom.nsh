@@ -62,10 +62,13 @@ LangString cap7ceSearchSetupAccount 1033 "The installer is using a different acc
 LangString cap7ceSearchSetupAccount 2052 "安装器与当前桌面账户不同，未替其他账户配置搜索。请使用目标账户安装，或从该账户的 Cap7CE 设置中完成服务配置。"
 
 !macro customInstall
+  !ifmacrodef cap7ceInstallLayout
+    !insertmacro cap7ceInstallLayout
+  !endif
   DetailPrint "$(cap7ceSearchSetupProgress)"
   cap7ce_search_setup_retry:
     ClearErrors
-    ExecWait '"$INSTDIR\${PRODUCT_FILENAME}.exe" --install-search-service' $0
+    ExecWait '"$INSTDIR\app\${PRODUCT_FILENAME}.exe" --install-search-service' $0
     ${if} ${Errors}
       StrCpy $0 "error"
     ${endif}
@@ -209,7 +212,7 @@ LangString cap7ceSearchSetupAccount 2052 "安装器与当前桌面账户不同�
       Return
     ${endif}
 
-      StrCpy $2 "$INSTDIR\core\artifacts\product-capability\v1\bundle\Cap7CE.Core.Setup.exe"
+      StrCpy $2 "$INSTDIR\app\core\artifacts\product-capability\v1\bundle\Cap7CE.Core.Setup.exe"
     ${ifNot} ${FileExists} "$2"
       Abort "$(cap7ceCapabilitySetupMissing)"
     ${endif}
@@ -231,10 +234,10 @@ LangString cap7ceSearchSetupAccount 2052 "安装器与当前桌面账户不同�
     StrCpy $cap7cePreservedReader "0"
     StrCpy $cap7cePreservedSetup "0"
 
-    ${ifNot} ${FileExists} "$INSTDIR\${PRODUCT_FILENAME}.exe"
+    ${ifNot} ${FileExists} "$INSTDIR\app\${PRODUCT_FILENAME}.exe"
       Abort "$(cap7ceUninstallUnsafePath)"
     ${endif}
-      ${ifNot} ${FileExists} "$INSTDIR\cap7ce-native.json"
+      ${ifNot} ${FileExists} "$INSTDIR\app\cap7ce-native.json"
         Abort "$(cap7ceUninstallUnsafePath)"
       ${endif}
 

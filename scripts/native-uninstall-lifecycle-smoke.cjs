@@ -27,8 +27,8 @@ const put = file => { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.
     const targets = ['local/Cap7CE', 'local/Cap7CE-PhaseF', 'local/cap7ce-updater', 'roaming/Cap7CE']
       .map(relative => path.join(fixture, relative));
     for (const target of targets) put(path.join(target, 'test.txt'));
-    put(path.join(installed, 'Cap7CE.exe'));
-    put(path.join(installed, 'cap7ce-native.json'));
+    put(path.join(installed, 'app/Cap7CE.exe'));
+    put(path.join(installed, 'app/cap7ce-native.json'));
     put(path.join(installed, 'models/model.bin'));
     fs.mkdirSync(path.join(installed, 'Core'), { recursive: true });
     if (scenario === 'update') {
@@ -90,19 +90,19 @@ SectionEnd
         '} finally { $h.Dispose() }';
       run('powershell.exe', ['-NoProfile', '-EncodedCommand', Buffer.from(ps, 'utf16le').toString('base64')]);
       assert(fs.existsSync(lock), 'locked data must remain');
-      assert(fs.existsSync(path.join(installed, 'Cap7CE.exe')), 'failed data cleanup must keep the application and retry entry');
+      assert(fs.existsSync(path.join(installed, 'app/Cap7CE.exe')), 'failed data cleanup must keep the application and retry entry');
       assert(!fs.existsSync(path.join(fixture, 'application-removed.txt')), 'application removal must not run after data cleanup failure');
       const diagnostic = fs.readFileSync(path.join(fixture, 'cap7ce-uninstall-data.log'), 'utf8');
       assert.equal(diagnostic.match(/Target=/g)?.length, 4, 'all cleanup targets must survive in the diagnostic');
       assert.match(diagnostic, /Win32Error=/);
       run(uninstaller, ['/S', '_?=' + installed]);
       for (const target of targets) assert(!fs.existsSync(target), 'retry must remove data after the lock is released');
-      assert(!fs.existsSync(path.join(installed, 'Cap7CE.exe')));
+      assert(!fs.existsSync(path.join(installed, 'app/Cap7CE.exe')));
       assert(fs.existsSync(path.join(installed, 'models/model.bin')));
     } else {
       run(uninstaller, ['/S', '_?=' + installed]);
       for (const target of targets) assert.equal(fs.existsSync(target), scenario === 'unchecked' || scenario === 'update', scenario + ': ' + target);
-      assert(!fs.existsSync(path.join(installed, 'Cap7CE.exe')));
+      assert(!fs.existsSync(path.join(installed, 'app/Cap7CE.exe')));
       assert.equal(fs.existsSync(path.join(installed, 'models/model.bin')), scenario !== 'ai-selected');
       if (scenario === 'update') {
         assert(fs.existsSync(path.join(installed, 'CapabilitySetup/v1/ownership.json')));

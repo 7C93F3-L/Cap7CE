@@ -40,7 +40,7 @@ assert(project.includes('capability-setup-manifest.v1.json')
   && read('shell/Cap7CE.Browse.Tests/Program.cs').includes('await RuntimePrerequisiteTests.RunAsync()'),
   'native runtime prerequisites must share deployment policy and retain isolated regression coverage');
 const productIdentity="Cap7CE";
-assert(identitySource.includes(`AppUserModelId="${productIdentity}"`) && project.includes('<AssemblyTitle>Cap7CE</AssemblyTitle>'), 'native public identity must match the existing product');
+assert(identitySource.includes(`AppUserModelId="${productIdentity}"`) && project.includes('<Product>Cap7CE</Product>'), 'native public identity must match the existing product');
 const startup=read('shell/Cap7CE.WinUI/Program.cs');
 assert(startup.indexOf('InstallerSearchSetup.IsRequest(args)')<startup.indexOf('ApplicationIdentity.Initialize()')
   &&startup.includes('MethodImplOptions.NoInlining'), 'installer setup must run before UI, singleton and app startup initialization');

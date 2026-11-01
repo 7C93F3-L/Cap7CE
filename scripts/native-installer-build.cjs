@@ -10,7 +10,7 @@ let payload = process.argv[2];
 if (!payload) {
   run(process.execPath, ['scripts/native-pack.cjs']);
   payload = fs.readdirSync(path.join(root, 'release'), { withFileTypes: true })
-    .filter(e => e.isDirectory() && /^Cap7CE-.*-winui-x64-\d+$/.test(e.name))
+    .filter(e => e.isDirectory() && /^Cap7CE-.*-x64-\d+$/.test(e.name))
     .map(e => path.join(root, 'release', e.name)).sort((a,b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
 }
 payload = path.resolve(payload);
@@ -18,15 +18,17 @@ const marker = JSON.parse(fs.readFileSync(path.join(payload, 'cap7ce-native.json
 if (marker.shell !== 'WinUI' || marker.version !== require('../package.json').version) throw new Error('Native payload identity mismatch.');
 const stage = path.join(root, 'release', `winui-installer-stage-${Date.now()}`);
 fs.mkdirSync(stage);
-fs.cpSync(payload, stage, { recursive: true, filter: p => {
+const app = path.join(stage, 'app');
+fs.cpSync(payload, app, { recursive: true, filter: p => {
   const first = path.relative(payload, p).split(path.sep)[0];
   if (fs.lstatSync(p).isSymbolicLink()) throw new Error('Installer payload contains a link.');
   return !['models', 'llama.cpp', 'shell', 'Start-Cap7CE.cmd', 'README.txt'].includes(first);
 }});
 // Pair the installed apphost name with its PRI lookup name; keep the original PRI for assembly-qualified resources.
-fs.cpSync(path.join(payload, 'shell/artifacts/winui'), stage, { recursive: true });
-fs.renameSync(path.join(stage, 'Cap7CE.WinUI.exe'), path.join(stage, 'Cap7CE.exe'));
-fs.copyFileSync(path.join(stage, 'Cap7CE.WinUI.pri'), path.join(stage, 'Cap7CE.pri'));
+fs.cpSync(path.join(payload, 'shell/artifacts/winui'), app, { recursive: true });
+fs.renameSync(path.join(app, 'Cap7CE.WinUI.exe'), path.join(app, 'Cap7CE.exe'));
+fs.copyFileSync(path.join(app, 'Cap7CE.WinUI.pri'), path.join(app, 'Cap7CE.pri'));
+fs.writeFileSync(path.join(app, 'cap7ce-native.json'), JSON.stringify({ ...marker, layout: 'installed-app' }));
 fs.mkdirSync(path.join(stage, 'resources'), { recursive: true });
 run(process.execPath, ['node_modules/electron-builder/out/cli/cli.js', '--win', 'nsis', '--x64', '--publish', 'never',
   '--config', 'build/winui.electron-builder.cjs', '--prepackaged', stage]);

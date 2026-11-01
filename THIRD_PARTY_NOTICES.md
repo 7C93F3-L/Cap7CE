@@ -2,7 +2,7 @@
 
 Cap7CE source code is made available under PolyForm Noncommercial 1.0.0. Third-party software included in the source tree, dependency graph, or packaged runtime remains subject to its own license.
 
-This file is a human-readable inventory for Cap7CE 1.0.4 and its opt-in Core capability. The regular package now carries the dormant, deterministic capability payload; it is installed into protected system locations only after the user explicitly enables or repairs full-disk search. `package-lock.json` and the Core `packages.lock.json` files are the authoritative locked dependency inventories. Before publishing a binary release, the release process must regenerate and verify the complete license report.
+This file is a human-readable inventory for Cap7CE 2.0.0. The installer includes the deterministic Core capability payload and configures the search service during installation; indexing and metadata extraction require user actions. `package-lock.json` and the Core `packages.lock.json` files are the authoritative locked dependency inventories. Before publishing a binary release, the release process must regenerate and verify the complete license report.
 
 ## Primary runtime components
 

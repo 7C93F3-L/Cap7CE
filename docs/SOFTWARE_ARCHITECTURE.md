@@ -1,11 +1,11 @@
 # Cap7CE 软件架构
 
-当前源码主线为 Windows x64 / C# / WinUI 3，版本仍为 1.0.4。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。本轮未发布新版本。
+当前源码主线为 Windows x64 / C# / WinUI 3，候选版本为 2.0.0。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。2.0.0正在进行发布准备，正式发布前以最终安装器验证为准。
 
 ## 运行边界
 
 - `shell/Cap7CE.WinUI`：原生窗口、托盘、设置、预览及交互编排，复用统一窗口/导航动作。
-- `shell/Cap7CE.QueryHost`：现有 Core 会话和有界查询接口；WinUI 不直接访问 Catalog SQLite。
+- `shell/Cap7CE.QueryHost`：隔离测试库使用的只读查询宿主，不随正常安装器分发；正式产品连接独立Core宿主，WinUI不直接访问Catalog SQLite。
 - `core/src`：产品 Core、Reader 协议/宿主、Catalog、文件操作、属性任务与安装能力。
 - `core/node`：独立固定 Node 运行库的解析、预览、模型及缓存领域。实现只依赖本目录和明确的第三方解析依赖。
 - `core/shared`：原生 Node 领域及资源生成共用的类型契约；不含旧界面控制器。SearchState/快捷键类型仅保留资源生成实际使用的声明。
@@ -47,6 +47,9 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 ## WinUI 与更新
 
+
+正式安装布局将完整应用载荷（WinUI及其.NET/Windows App SDK依赖、Core运行库、Node工作进程和第三方清单）集中到app子目录，cap7ce-native.json以layout=installed-app声明该布局。Shell运行根仍是载荷根；NativeContentPaths仅将用户管理的models与llama.cpp解析到安装根，与开发/便携布局区分。安装根保留Cap7CE.lnk和卸载程序；桌面/开始菜单快捷方式及安装完成启动指向app/Cap7CE.exe，进程检测仍使用Cap7CE.exe文件名。DisplayIcon注册到程序EXE的内嵌图标，不保留单独的顶层ICO。NSIS卸载通过app内入口及标识校验目录，搜索能力移除使用app内Setup，模型及独立Core/Reader的保留规则不变。
+
 IndexOnboardingController在偏好成功加载、Core连接可用和主窗口可交互后检查未建库状态，每次运行最多展示一次原生对话框。纯IndexOnboardingPolicy按卷/任务状态拒绝已有索引、已发布计数、正在执行或不确定状态；已成功建库和永久退出提醒分别保存在ShellPreferences.IndexSetupCompleted、DismissIndexSetupPrompt，成功记录复用现有IndexStatusChanged通知，不新增轮询。连接或快照失败不触发首次引导，背景启动不激活窗口。IndexOnboardingDialog只拥有展示与选择；立即开始经共享IndexBuildActions重新核对任务、发现全部磁盘并调用既有VolumeSelection/CatalogBuild，设置页也复用同一动作。自定义范围经SettingsWindow.ShowIndex定位、展开并滚动到原目录索引卡片，不复制建库界面。
 
 NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，通过既有--volumes参数明确授权Reader运行范围；不传空范围，避免Setup进入保留给探针的disconnect模式。该范围供磁盘发现及后续用户显式操作使用，不等同于Catalog建库选择或提取授权。安装和设置页修复共享这一入口，配置始终保留Catalog；索引操作错误进入现有Core诊断。
@@ -57,7 +60,7 @@ NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，�
 
 窗口/标签/选择/预览使用现有统一动作与拥有者；独立视图和控件不把业务 IO 堆回顶层窗口。托盘“检查更新”打开设置并定位更新区后检查，下载由会话服务持有，窗口关闭后仍可继续；没有自动检查、下载或安装。
 
-更新只接受专用 WinUI 安装器，下载及安装前保留大小/SHA-256 校验。ShellExecute 成功后走正常退出；失败保持程序运行。安装器身份、目录和快捷方式延续既有 Cap7CE，NSIS 保留用户模型、配置、Catalog 和独立 Core/Reader 的保护逻辑。入口 Cap7CE.exe 同时保留匹配的 Cap7CE.pri 与程序集原 PRI。卸载“删除用户数据”在正式能力移除成功后清理当前用户的Cap7CE完整数据根、Cap7CE-PhaseF原生配置/日志和旧更新目录；未勾选仍保留，安装目录内模型/llama.cpp由独立选项控制。
+对外安装包统一命名为Cap7CE-Setup-<版本>-x64.exe，不附加技术栈名称；更新只接受对应版本的正式安装器，下载及安装前保留大小/SHA-256 校验。ShellExecute 成功后走正常退出；失败保持程序运行。安装器身份、目录和快捷方式延续既有 Cap7CE，NSIS 保留用户模型、配置、Catalog 和独立 Core/Reader 的保护逻辑。入口 Cap7CE.exe 同时保留匹配的 Cap7CE.pri 与程序集原 PRI。卸载“删除用户数据”在正式能力移除成功后清理当前用户的Cap7CE完整数据根、Cap7CE-PhaseF原生配置/日志和旧更新目录；未勾选仍保留，安装目录内模型/llama.cpp由独立选项控制。
 
 ## 构建与验证
 
@@ -78,3 +81,5 @@ NativeCoreSetup在依赖与服务配置前枚举已就绪的固定NTFS盘符，�
 KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEditor的弹窗模式及KeywordSelectionService，不另建草稿或存储链路。弹窗约束正文可用宽高并保留原生底部按钮；详情栏默认模式不变。标题清空动作复用编辑器ClearDraft；DialogTextActionResources统一建库提醒和关键词弹窗标题文字操作的普通/悬停状态。
 
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
+
+2.0.0发布准备保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp更新到0.35.5，所有运行库仍由锁文件和现有复制脚本生成。截图资源本轮保留历史版本，不能作为当前交互实现的依据。

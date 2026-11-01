@@ -19,7 +19,8 @@ internal sealed class ShellServices : IAsyncDisposable
     public MetadataTasks Metadata {get;}
     public AutoKeywordTasks AutoKeywords {get;}
     public object ModelContext=>ModelContextFor(Localization.AppLanguage.Session.Current);
-    public object ModelContextFor(string language)=>new{runtimeRoot=Path.Combine(Root,"llama.cpp"),modelsRoot=Path.Combine(Root,"models"),language};
+    public object ModelContextFor(string language)=>new{runtimeRoot=Path.Combine(contentRoot,"llama.cpp"),modelsRoot=Path.Combine(contentRoot,"models"),language};
+    private readonly string contentRoot;
     public NativeNotifications Notifications {get;}=new();
     public TaskNotifications TaskNotices {get;}
     public WindowShortcutService? Shortcuts {get;set;}
@@ -39,6 +40,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public IReadOnlyList<CoreVolumeStatus> Volumes { get; private set; } = [];
     public ShellServices(string root)
     {
+        contentRoot=NativeContentPaths.Root(root);
         Updates=new(root);Root = root;TaskNotices=new(Notify); Visuals = new(root); Favorites = new(root);Metadata=new(this);AutoKeywords=new(this);
         Providers = new(root, "provider-preview.cjs", Path.GetTempPath());
         Models = new(root, "model-runtime.cjs", PreferenceStore.ProductData);
