@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-当前源码主线为 Windows x64 / C# / WinUI 3，候选版本为 2.0.0。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。2.0.0正在进行发布准备，正式发布前以最终安装器验证为准。
+当前源码主线为 Windows x64 / C# / WinUI 3，正式版本为 2.0.0。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。正式安装器通过自包含载荷检查，运行及快捷方式已经人工确认。
 
 ## 运行边界
 
@@ -89,4 +89,4 @@ KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEdit
 
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
 
-2.0.0发布准备保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp更新到0.35.5，所有运行库仍由锁文件和现有复制脚本生成。截图资源本轮保留历史版本，不能作为当前交互实现的依据。
+2.0.0保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp更新到0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档使用当前版本截图，演示素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
