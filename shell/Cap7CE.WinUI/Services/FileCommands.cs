@@ -95,7 +95,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         try
         {
             items=items.Select(FileAccessGuard.ResolveFileIdentity).ToArray();
-            var dialog=L.Dialog(xamlRoot(),"ui.file.trashTitle",null,"ui.file.trashTitle");
+            var dialog=L.Dialog(xamlRoot(),"ui.file.trashTitle",null,"ui.file.trashTitle",ContentDialogButton.Close);
             L.Bind(dialog,ContentDialog.ContentProperty,"ui.file.trashDescription",()=>new Dictionary<string,object?>{{"count",items.Count}});
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             BeforeMutation?.Invoke();

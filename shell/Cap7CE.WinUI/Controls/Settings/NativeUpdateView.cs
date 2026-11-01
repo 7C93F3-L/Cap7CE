@@ -66,7 +66,7 @@ internal sealed class NativeUpdateView : UserControl
     private static string Bytes(long value) => $"{value / 1048576d:0.0} MB";
     private async void Install()
     {
-        var dialog = L.Dialog(XamlRoot, "settings.installUpdateNow", "settings.confirmInstallUpdate", "settings.installUpdateNow");
+        var dialog = L.Dialog(XamlRoot, "settings.installUpdateNow", "settings.confirmInstallUpdate", "settings.installUpdateNow",ContentDialogButton.Close);
         if (await dialog.ShowAsync() == ContentDialogResult.Primary) await updates.InstallAsync();
     }
 }

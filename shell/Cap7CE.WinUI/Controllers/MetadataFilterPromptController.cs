@@ -42,7 +42,7 @@ internal sealed class MetadataFilterPromptController(ShellServices services,Func
             if(!Current()||!ReferenceEquals(core,services.Core))return;
             if(candidates.Items.Count==0){notice(UiMessage.Key("ui.metadataPrompt.empty"));return;}
             var picker=new MetadataRangePicker(path.Length>0);
-            var dialog=L.Dialog(root(),"ui.metadataPrompt.title",null,"ui.metadataPrompt.start");dialog.DefaultButton=ContentDialogButton.Primary;
+            var dialog=L.Dialog(root(),"ui.metadataPrompt.title",null,"ui.metadataPrompt.start",ContentDialogButton.Primary);
             var customRequested=false;
             picker.CustomRequested+=()=>{customRequested=true;dialog.Hide();};
             var content=Ui.Column(L.Text("ui.metadataPrompt.choose"));

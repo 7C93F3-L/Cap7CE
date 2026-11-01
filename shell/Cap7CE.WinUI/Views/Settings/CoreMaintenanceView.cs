@@ -25,7 +25,7 @@ internal sealed class CoreMaintenanceView
             finally{install.IsEnabled=reconnect.IsEnabled=true;}
         };
         install.Click+=async(_,_)=>{
-            var dialog=L.Dialog(owner.Content.XamlRoot,"ui.maintenance.setupTitle","ui.maintenance.setupDescription","ui.maintenance.setupAction");
+            var dialog=L.Dialog(owner.Content.XamlRoot,"ui.maintenance.setupTitle","ui.maintenance.setupDescription","ui.maintenance.setupAction",ContentDialogButton.Primary);
             if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
             install.IsEnabled=reconnect.IsEnabled=false;
             ReportResource("ui.maintenance.configuring");

@@ -36,9 +36,9 @@ internal static class ThemeService
         if (hex.Length != 7 || hex[0] != '#' || !uint.TryParse(hex[1..], System.Globalization.NumberStyles.HexNumber, null, out var value)) return Color.FromArgb(255,124,147,243);
         return Color.FromArgb(255, (byte)(value >> 16), (byte)(value >> 8), (byte)value);
     }
-    public static ContentDialog Dialog(XamlRoot root)
+    public static ContentDialog Dialog(XamlRoot root,ContentDialogButton defaultButton)
     {
-        var dialog=new ContentDialog {XamlRoot=root,DefaultButton=ContentDialogButton.Close};
+        var dialog=new ContentDialog {XamlRoot=root,DefaultButton=defaultButton};
         DialogAccentResources.Apply(dialog);
         if(root.Content is FrameworkElement source) {
             void Follow(FrameworkElement sender,object args)=>dialog.RequestedTheme=source.ActualTheme;

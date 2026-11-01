@@ -174,8 +174,8 @@ internal sealed class IndexMaintenanceView : UserControl
     {
         var ids=Choices.Where(b=>b.IsChecked==true).Select(b=>(string)b.Tag).ToArray();
         if(ids.Length==0)throw new IOException("index-ui-no-volumes");
-        var dialog=L.Dialog(XamlRoot,rebuild?"ui.index.rebuildTitle":"ui.index.buildTitle",rebuild?"ui.index.rebuildDescription":"ui.index.buildDescription","ui.index.continue");
-        dialog.DefaultButton=rebuild?ContentDialogButton.Close:ContentDialogButton.Primary;
+        var dialog=L.Dialog(XamlRoot,rebuild?"ui.index.rebuildTitle":"ui.index.buildTitle",rebuild?"ui.index.rebuildDescription":"ui.index.buildDescription","ui.index.continue",
+            rebuild?ContentDialogButton.Close:ContentDialogButton.Primary);
         if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
         var reply=await IndexBuildActions.StartAsync(services,ids,rebuild);
         if(reply.Accepted)observedTask=reply.TaskId;

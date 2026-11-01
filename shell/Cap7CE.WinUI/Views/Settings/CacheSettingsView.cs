@@ -34,7 +34,7 @@ internal sealed class CacheSettingsView : StackPanel
         if(busy)return;busy=true;clear.IsEnabled=false;
         try
         {
-            var dialog=L.Dialog(owner.Content.XamlRoot,"ui.cache.clear","ui.cache.confirm","ui.cache.confirmAction");
+            var dialog=L.Dialog(owner.Content.XamlRoot,"ui.cache.clear","ui.cache.confirm","ui.cache.confirmAction",ContentDialogButton.Close);
             if(await dialog.ShowAsync()!=ContentDialogResult.Primary)return;
             L.Bind(summary,TextBlock.TextProperty,"ui.cache.clearing");
             await services.ClearVisualCacheAsync();

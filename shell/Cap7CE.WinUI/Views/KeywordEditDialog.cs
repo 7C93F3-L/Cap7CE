@@ -20,8 +20,8 @@ internal static class KeywordEditDialog
         }
         var editor=new DetailsKeywordEditor(service.ReadAsync,Write,notice,_=>{},dialogMode:true);
         var scroll=new ScrollViewer{Content=editor,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
-        var dialog=L.Dialog(root,"menu.editKeywords",null,"ui.keywords.save");
-        dialog.Content=scroll;dialog.DefaultButton=ContentDialogButton.Primary;dialog.IsPrimaryButtonEnabled=false;
+        var dialog=L.Dialog(root,"menu.editKeywords",null,"ui.keywords.save",ContentDialogButton.Primary);
+        dialog.Content=scroll;dialog.IsPrimaryButtonEnabled=false;
         dialog.Resources["ContentDialogMaxWidth"]=360d;dialog.Resources["ContentDialogMinWidth"]=0d;dialog.Resources["ContentDialogMinHeight"]=0d;
         dialog.Resources["ContentDialogPadding"]=new Thickness(16,10,16,10);
         dialog.Resources["ContentDialogTitleMargin"]=new Thickness(0,0,0,8);

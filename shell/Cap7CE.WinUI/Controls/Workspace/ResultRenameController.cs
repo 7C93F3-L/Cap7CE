@@ -42,8 +42,8 @@ internal sealed class ResultRenameController : IDisposable
         header.Children.Add(title);Grid.SetColumn(keys,1);header.Children.Add(keys);
         var error=Ui.Text("",true);error.Visibility=Visibility.Collapsed;
         var panel=Ui.Column(editor,error);panel.Spacing=8;panel.Width=Math.Min(312,Math.Max(0,root.Size.Width-64));
-        var current=L.Dialog(root,"menu.rename",null,"menu.rename");
-        current.DefaultButton=ContentDialogButton.Primary;current.Content=panel;
+        var current=L.Dialog(root,"menu.rename",null,"menu.rename",ContentDialogButton.Primary);
+        current.Content=panel;
         current.Resources["ContentDialogMaxWidth"]=360d;current.Resources["ContentDialogMinWidth"]=0d;current.Resources["ContentDialogMinHeight"]=0d;
         header.Width=panel.Width;L.Literal(current,ContentDialog.TitleProperty,header);
         if(items.Length>1){

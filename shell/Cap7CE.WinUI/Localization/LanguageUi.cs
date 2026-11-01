@@ -29,9 +29,9 @@ internal static class LanguageUi
     {var button=Ui.Button("",action);Bind(button,Microsoft.UI.Xaml.Controls.Button.ContentProperty,key);return button;}
     public static Button Tool(string glyph,string key,Action action)
     {var button=Ui.Tool(glyph,"",action);Label(button,key);return button;}
-    public static ContentDialog Dialog(XamlRoot root,string titleKey,string? contentKey,string primaryKey,string closeKey="common.cancel")
+    public static ContentDialog Dialog(XamlRoot root,string titleKey,string? contentKey,string primaryKey,ContentDialogButton defaultButton,string closeKey="common.cancel")
     {
-        var dialog=Themes.ThemeService.Dialog(root);
+        var dialog=Themes.ThemeService.Dialog(root,defaultButton);
         Bind(dialog,ContentDialog.TitleProperty,titleKey);Bind(dialog,ContentDialog.PrimaryButtonTextProperty,primaryKey);Bind(dialog,ContentDialog.CloseButtonTextProperty,closeKey);
         if(contentKey is not null)Bind(dialog,ContentDialog.ContentProperty,contentKey);
         return dialog;

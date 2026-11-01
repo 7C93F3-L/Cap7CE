@@ -15,8 +15,7 @@ internal sealed class IndexOnboardingDialog
     private bool saving;
     public IndexOnboardingDialog(XamlRoot root,Func<Task> never)
     {
-        dialog=L.Dialog(root,"ui.indexPrompt.title",null,"ui.indexPrompt.start","ui.indexPrompt.later");
-        dialog.DefaultButton=ContentDialogButton.Primary;
+        dialog=L.Dialog(root,"ui.indexPrompt.title",null,"ui.indexPrompt.start",ContentDialogButton.Primary,"ui.indexPrompt.later");
         L.Bind(dialog,ContentDialog.SecondaryButtonTextProperty,"ui.indexPrompt.custom");
         var dismiss=new HyperlinkButton {HorizontalAlignment=HorizontalAlignment.Right,Padding=new(0)};
         dismiss.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("ms-appx:///Themes/DialogTextActionResources.xaml")});

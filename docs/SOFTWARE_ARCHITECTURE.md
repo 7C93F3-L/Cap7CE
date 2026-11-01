@@ -47,6 +47,8 @@ Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照
 
 ## WinUI 与更新
 
+公共弹窗入口要求调用方显式传入ContentDialogButton，编译期阻止隐式继承默认动作。普通编辑/建库/服务配置使用Primary；删除、重建、缓存清理及会退出应用的更新安装使用Close；快捷键录入使用None，纯信息弹窗使用Close。Primary/Secondary/Close继续由原生控件排为左/中/右，禁用状态仍由现有输入与任务条件控制。
+
 ContentDialog由ThemeService.Dialog统一创建，LanguageUi.Dialog只补充本地化内容；签名弹窗也复用该入口。创建时使用所属XamlRoot内容的ActualTheme，Opened/Closed管理实际主题变化订阅和解除，避免窗口选择浅色而独立弹窗仍跟随系统深色。DialogAccentResources继续仅提供本地强调色资源，不修改应用全局主题或对话框行为。
 
 ShortcutCatalog统一声明固定通用键位与可编辑的专有快捷键；固定操作忽略历史覆盖且参与冲突检查，设置编辑器只列可编辑项。WorkspaceShortcutInput继续拥有主窗口/结果区、文本输入及弹层阻断规则；新增浏览快捷键仅编排WorkspaceToolbar既有随机/范围动作和FilterBar.Clear，不引入查询或筛选能力。

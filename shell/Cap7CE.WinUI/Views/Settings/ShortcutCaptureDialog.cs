@@ -14,8 +14,8 @@ internal static class ShortcutCaptureDialog
     {
         string? candidate=null;
         var key=L.Text("ui.shortcuts.captureHint",true);var error=L.Text("ui.shortcuts.captureEmpty",true);
-        var dialog=L.Dialog(owner.Content.XamlRoot,action.TitleKey,"ui.shortcuts.captureHint","ui.shortcuts.apply");
-        dialog.Content=UiContent(key,error);dialog.IsPrimaryButtonEnabled=false;dialog.DefaultButton=ContentDialogButton.None;
+        var dialog=L.Dialog(owner.Content.XamlRoot,action.TitleKey,"ui.shortcuts.captureHint","ui.shortcuts.apply",ContentDialogButton.None);
+        dialog.Content=UiContent(key,error);dialog.IsPrimaryButtonEnabled=false;
         dialog.PreviewKeyDown+=(_,args)=>{
             if(args.Key==VirtualKey.Escape||args.Key==VirtualKey.Tab&&WorkspaceShortcutInput.Modifiers()==0)return;
             args.Handled=true;
