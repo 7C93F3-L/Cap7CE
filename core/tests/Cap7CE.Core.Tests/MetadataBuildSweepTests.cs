@@ -19,6 +19,10 @@ internal static class MetadataBuildSweepTests
     }
     public static async Task RunAsync()
     {
+        var light = new MetadataSweepFixture(25); var lightSweep = Create(light);
+        lightSweep.Start(MetadataSweepFixture.Policy, true);
+        TestAssert.Equal(100L, (await lightSweep.WaitForIdleAsync()).Processed, "lightweight readiness preserves all extraction work");
+        TestAssert.Equal(4, light.StatusReads, "ledger counted only at exhaustion for each volume and kind, never per item");
         var fixture = new MetadataSweepFixture { EmptyOnce = true, SourceChangedOnce = true }; var sweep = Create(fixture);
         await TestAssert.ThrowsAsync<InvalidOperationException>(() => Task.Run(() => sweep.Start(MetadataSweepFixture.Policy, false)), "explicit confirmation required");
         TestAssert.Equal(0, fixture.Configurations, "no configure before grant");

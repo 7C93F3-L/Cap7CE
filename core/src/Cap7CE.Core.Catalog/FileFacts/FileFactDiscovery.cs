@@ -76,7 +76,9 @@ public sealed class FileFactDiscovery(string databasePath)
                     return parameter;
                 }).ToArray();
                 var extensionList = string.Join(',', extensionParameters);
-                var preferred = entries ? FileFactEntryDiscoverySql.Bind(command, policy, change, extensionList) : "NULL";
+                // A broad format prefilter only; authorized aliases and exclusion checks below remain authoritative.
+                var formatCandidate = $"(n.extension COLLATE NOCASE IN ({extensionList}) OR EXISTS(SELECT 1 FROM catalog_file_entries format_entry WHERE format_entry.volume_id=n.volume_id AND format_entry.file_reference=n.file_reference AND format_entry.extension COLLATE NOCASE IN ({extensionList})))";
+                var preferred = entries ? $"CASE WHEN {formatCandidate} THEN {FileFactEntryDiscoverySql.Bind(command, policy, change, extensionList)} ELSE NULL END" : "NULL";
                 var eligible = entries ? "source_extension IS NOT NULL" : $"n.extension COLLATE NOCASE IN ({extensionList})";
                 var candidates = await FileFactDiscoveryCandidates.BindAsync(command, policy, policy.VolumeOrder[index], entries, token);
                 command.CommandText = $"""

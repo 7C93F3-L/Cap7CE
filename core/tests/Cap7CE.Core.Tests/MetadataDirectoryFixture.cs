@@ -72,6 +72,11 @@ internal sealed class MetadataDirectoryFixture : IMetadataBuildSession, IMetadat
     {
         token.ThrowIfCancellationRequested(); lock (gate) { foreach (var row in rows.Where(row => Matches(row) && !row.Done)) row.Queued = true; } return Task.FromResult(new FileFactChangeDispatchStep(0, true, false));
     }
+    public Task<bool> IsVolumeAvailableAsync(string volume, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        lock (gate) { if (!active) throw new InvalidOperationException("metadata-session-inactive"); return Task.FromResult(!Building); }
+    }
     public Task<FileFactHostStatus> ReadStatusAsync(FileFactQueueStatusRequest request, CancellationToken token)
     {
         token.ThrowIfCancellationRequested(); lock (gate) { var selected = rows.Where(row => Matches(row) && row.Queued && !row.Done).ToArray();

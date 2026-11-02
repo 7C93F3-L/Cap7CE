@@ -61,6 +61,11 @@ internal sealed class MetadataSweepFixture : IMetadataBuildSession
         token.ThrowIfCancellationRequested(); Interlocked.Increment(ref changes);
         lock (gate) { foreach (var row in rows.Where(row => !row.Done)) row.Queued = true; return Task.FromResult(new FileFactChangeDispatchStep(0, true, MoreChanges-- > 0)); }
     }
+    public Task<bool> IsVolumeAvailableAsync(string volume, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        lock (gate) { if (!active) throw new InvalidOperationException("metadata-session-inactive"); return Task.FromResult(!Offline); }
+    }
     public Task<FileFactHostStatus> ReadStatusAsync(FileFactQueueStatusRequest request, CancellationToken token)
     {
         token.ThrowIfCancellationRequested(); Interlocked.Increment(ref statusReads);

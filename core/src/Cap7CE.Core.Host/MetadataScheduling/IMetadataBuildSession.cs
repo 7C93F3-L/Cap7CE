@@ -12,5 +12,6 @@ public interface IMetadataBuildSession
     Task<FileFactChangeDispatchStep> ConsumeChangesAsync(FileFactConsumeChangesRequest request, CancellationToken token);
     Task<FileFactClaimResult> ClaimAsync(CancellationToken token, FileFactClaimSpecification? specification = null);
     Task<FileFactExecutionResult> ExecuteAsync(FileFactLeaseRequest request, CancellationToken token);
+    Task<bool> IsVolumeAvailableAsync(string volume, CancellationToken token);
     Task<FileFactHostStatus> ReadStatusAsync(FileFactQueueStatusRequest request, CancellationToken token);
 }

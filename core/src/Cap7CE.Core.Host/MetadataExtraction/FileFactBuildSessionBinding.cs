@@ -22,6 +22,12 @@ public sealed partial class FileFactHostSession
     {
         if (buildOwnerAttached != buildOwner) throw new CoreProtocolException(CoreErrorCodes.NotQueryable, "metadata-build-session-owner-changed");
     }
+    async Task<bool> IMetadataBuildSession.IsVolumeAvailableAsync(string volume, CancellationToken token)
+    {
+        await gate.WaitAsync(token);
+        try { RequireActive(buildOwner: true); return await diagnostics.IsVolumeAvailableAsync(volume, token); }
+        finally { gate.Release(); }
+    }
     Task<FileFactHostStatus> IMetadataBuildSession.ConfigureAsync(FileFactConfigurationRequest request, CancellationToken token) => ConfigureAsync(request, token, buildOwner: true);
     Task<FileFactHostStatus> IMetadataBuildSession.PauseAsync(CancellationToken token) => PauseAsync(token, buildOwner: true);
     Task<FileFactDiscoveryPage> IMetadataBuildSession.DiscoverAsync(FileFactDiscoveryRequest request, CancellationToken token) => DiscoverAsync(request, token, buildOwner: true);

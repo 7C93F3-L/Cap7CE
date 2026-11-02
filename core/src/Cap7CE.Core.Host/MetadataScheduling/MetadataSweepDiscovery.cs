@@ -17,7 +17,7 @@ internal sealed class MetadataSweepDiscovery(IMetadataBuildSession session, IRea
                 FileFactDiscoveryCursor? after = null;
                 do {
                     token.ThrowIfCancellationRequested(); progress.Phase("discovering");
-                    var page = await session.DiscoverAsync(new(specification.Kind, specification.ExtractorVersion, specification.Extensions, after, VolumeId: volume), token);
+                    var page = await session.DiscoverAsync(new(specification.Kind, specification.ExtractorVersion, specification.Extensions, after, PageSize: 512, VolumeId: volume), token);
                     progress.Set(value => value with { Discovered = value.Discovered + page.Jobs.Count });
                     remaining[specification.Kind] = remaining.GetValueOrDefault(specification.Kind) + page.Jobs.Count;
                     after = page.Next; await Task.Delay(yieldMilliseconds, token);
@@ -41,7 +41,7 @@ internal sealed class MetadataSweepDiscovery(IMetadataBuildSession session, IRea
         return more;
     }
     internal async Task<bool> IsAvailableAsync(string volume, CancellationToken token)
-        => (await LedgerAsync(specifications[0], volume, token)).UnavailableVolumeIds?.Contains(volume) != true;
+        => await session.IsVolumeAvailableAsync(volume, token);
     internal async Task AvailableAsync(string volume, CancellationToken token)
     {
         while (!await IsAvailableAsync(volume, token)) { progress.Phase("waiting"); await Task.Delay(waitMilliseconds, token); }

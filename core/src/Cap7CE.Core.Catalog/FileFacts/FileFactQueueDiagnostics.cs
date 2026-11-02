@@ -12,6 +12,16 @@ public sealed class FileFactQueueDiagnostics(string databasePath, TimeProvider? 
     private readonly FileFactDatabase facts = new(databasePath);
     private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
 
+    // Per-item readiness checks must not aggregate the content queue or traverse exclusion scopes.
+    public async Task<bool> IsVolumeAvailableAsync(string volumeId, CancellationToken token = default)
+    {
+        FileFactDatabase.ValidateIdentity(new(volumeId, "0000000000000000"));
+        await using var connection = await facts.OpenAsync(true, token);
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT EXISTS(SELECT 1 FROM catalog_volumes_v2 WHERE volume_id=$volume AND selected=1 AND state='ready');";
+        command.Parameters.AddWithValue("$volume", volumeId);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(token)) != 0;
+    }
     public async Task<FileFactQueueLedger> ReadAsync(FileFactKind kind, int extractorVersion, CancellationToken token = default, string? volumeId = null)
     {
         if (!Enum.IsDefined(kind) || extractorVersion <= 0) throw new ArgumentException("Invalid queue specification.");
