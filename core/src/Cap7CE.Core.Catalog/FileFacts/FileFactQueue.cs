@@ -95,24 +95,29 @@ public sealed class FileFactQueue(string databasePath, TimeProvider? timeProvide
         recover.Parameters.AddWithValue("$now", now);
         await recover.ExecuteNonQueryAsync(token);
         var (policy, epoch) = await ReadPolicyAsync(connection, transaction, token);
-        using var find = connection.CreateCommand();
-        find.Transaction = transaction;
-        var scope = await FileFactEntryPolicy.BindAsync(find, policy, token);
-        var selected = FileFactSelection.Bind(find, specification);
-        find.CommandText = $"""
-            SELECT j.volume_id, j.file_reference, j.kind, j.extractor_version FROM file_fact_jobs j INDEXED BY file_fact_jobs_pending
-            CROSS JOIN catalog_nodes_v2 n ON n.volume_id = j.volume_id AND n.file_reference = j.file_reference
-            JOIN catalog_volumes_v2 c ON c.volume_id = n.volume_id
-            WHERE j.state = 'pending' AND j.volume_id = $claimVolume AND n.exists_flag = 1 AND n.is_directory = 0
-                AND (n.attributes & 0x00441400) = 0
-                AND n.size_bytes IS NOT NULL AND n.modified_utc_ticks IS NOT NULL
-                AND c.selected = 1 AND c.state = 'ready' AND {scope} AND ({selected})
-            ORDER BY j.ordinal LIMIT 1;
-            """;
         FileFactJob? job = null;
-        var claimVolume = find.Parameters.Add("$claimVolume", SqliteType.Text);
         foreach (var volume in policy.VolumeOrder.Where(volume => specification?.VolumeId is null || specification.VolumeId == volume)) {
-            token.ThrowIfCancellationRequested();claimVolume.Value = volume;
+            token.ThrowIfCancellationRequested();
+            using var find = connection.CreateCommand(); find.Transaction = transaction;
+            find.Parameters.AddWithValue("$volume", volume); find.Parameters.AddWithValue("$after", "");
+            find.Parameters.AddWithValue("$claimVolume", volume);
+            var entries = await FileFactEntryPolicy.IsActiveAsync(connection, transaction, token);
+            var candidates = await FileFactDiscoveryCandidates.BindAsync(find, policy, volume, entries, token);
+            var candidateSource = candidates.Prefix.Length == 0
+                ? "file_fact_jobs j INDEXED BY file_fact_jobs_pending CROSS JOIN catalog_nodes_v2 n ON n.volume_id=j.volume_id AND n.file_reference=j.file_reference"
+                : candidates.Source + " CROSS JOIN file_fact_jobs j ON j.volume_id=n.volume_id AND j.file_reference=n.file_reference";
+            var scope = await FileFactEntryPolicy.BindAsync(find, policy, token);
+            var selected = FileFactSelection.Bind(find, specification);
+            find.CommandText = $"""
+                {candidates.Prefix}
+                SELECT j.volume_id, j.file_reference, j.kind, j.extractor_version FROM {candidateSource}
+                JOIN catalog_volumes_v2 c ON c.volume_id = n.volume_id
+                WHERE j.state = 'pending' AND j.volume_id = $claimVolume AND n.exists_flag = 1 AND n.is_directory = 0
+                    AND (n.attributes & 0x00441400) = 0
+                    AND n.size_bytes IS NOT NULL AND n.modified_utc_ticks IS NOT NULL
+                    AND c.selected = 1 AND c.state = 'ready' AND {scope} AND ({selected})
+                ORDER BY j.ordinal LIMIT 1;
+                """;
             using var reader = await find.ExecuteReaderAsync(token);
             if (await reader.ReadAsync(token)) {
                 job = new(new(reader.GetString(0), reader.GetString(1)), (FileFactKind)reader.GetInt32(2), reader.GetInt32(3));break;

@@ -56,7 +56,20 @@ internal static class FileFactScopeScaleTests
             using var entryDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
             var entryPage=await new FileFactDiscovery(path).ReadPageAsync(policy,FileFactKind.ImageDimensions,2,[".png"],token:entryDeadline.Token);
             TestAssert.Equal(3,entryPage.Jobs.Count,"entry-aware discovery starts from the small subtree rather than 150,000 unrelated PNG files");
-            var lease=(await queue.ClaimAsync())!;
+            // Simulate an earlier global queue: unrelated same-volume tasks precede the directory jobs.
+            await using(var connection=new SqliteConnection($"Data Source={path};Pooling=False")) {
+                await connection.OpenAsync();using var command=connection.CreateCommand();
+                command.CommandText="""
+                    DELETE FROM file_fact_jobs;
+                    INSERT INTO file_fact_jobs(volume_id,file_reference,kind,extractor_version,size_bytes,modified_file_time,volume_epoch,content_revision,state)
+                    SELECT volume_id,file_reference,0,2,100,1,0,0,'pending' FROM catalog_nodes_v2 WHERE file_reference>='00000000000003E8';
+                    """;
+                await command.ExecuteNonQueryAsync();
+            }
+            await queue.EnqueueAsync(entryPage.Jobs);
+            using var claimDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            var lease=(await queue.ClaimAsync(token:claimDeadline.Token))!;
+            TestAssert.Equal("0000000000000064",lease.Job.Identity.FileReference,"directory claim preserves ordinal order after 150,000 unrelated pending jobs");
             using var sourceDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
             var source=await new FileFactSourceResolver(path).ResolveForLeaseAsync(lease,sourceDeadline.Token);
             TestAssert.True(source is not null&&source.RelativePath.StartsWith("allowed\\",StringComparison.Ordinal),"identity path resolution stays scoped with unrelated matching files");
