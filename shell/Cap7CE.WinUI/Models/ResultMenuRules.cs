@@ -7,7 +7,7 @@ internal static class ResultMenuRules
     {
         var id=menuId switch {
             "preview"=>"previewSelected","open"=>"openSelected","reveal"=>"revealFile","copyPaths"=>"copyPaths",
-            "rename"=>"renameSelected","delete"=>"deleteSelected","editKeywords"=>"editKeywords","autoKeywords"=>"aiKeywords",_=>null
+            "rename"=>"renameSelected","delete"=>"deleteSelected","editKeywords"=>"editKeywords","autoKeywords"=>"aiKeywords","favorite"=>"toggleFavorite",_=>null
         };
         var action=ShortcutCatalog.All.FirstOrDefault(action=>action.Id==id);
         if(action is null)return "";

@@ -17,6 +17,8 @@ internal sealed class FavoriteService(string root)
         "Cap7CE", "Core", "favorite-directories.json");
     public IReadOnlyList<Favorite> Items { get; private set; } = [];
     public event Action? Changed;
+    public Favorite? Find(string path)=>Items.FirstOrDefault(entry=>entry.Path.TrimEnd('\\','/').Equals(path.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase));
+    public Task ToggleAsync(string path)=>Find(path) is {} favorite?ExecuteAsync("remove",id:favorite.Id):ExecuteAsync("add",path:path);
     public async Task ExecuteAsync(string operation = "list", string? id = null, string? path = null, string? name = null, string? direction = null,
         string[]? orderedIds = null,string[]? expectedIds = null)
     {

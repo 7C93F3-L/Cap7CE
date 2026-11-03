@@ -3695,6 +3695,10 @@
     "zh-CN": "列表视图",
     "en-US": "List view"
   },
+ "ui.shortcuts.action.toggleFavorite": {
+    "zh-CN": "添加或取消文件夹收藏",
+    "en-US": "Toggle folder favorite"
+  },
  "ui.shortcuts.action.openSelected": {
     "zh-CN": "用默认应用打开选中项",
     "en-US": "Open selection in default app"

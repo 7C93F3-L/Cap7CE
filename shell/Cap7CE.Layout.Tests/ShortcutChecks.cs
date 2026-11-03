@@ -32,6 +32,8 @@ internal static class ShortcutChecks
         }
         Check(ShortcutCatalog.All.Single(action=>action.Id=="editKeywords") is {Gesture:"Ctrl+K",Context:"results"},"Keyword editing is limited to file results.");
         Check(ResultMenuRules.ShortcutText("preview",preferences)=="Space"&&ResultMenuRules.ShortcutText("rename",preferences)=="F2","Fixed menu hints resolve to actual fixed keys.");
+        Check(ShortcutCatalog.All.Single(action=>action.Id=="toggleFavorite") is {Gesture:"Ctrl+D",Editable:false,Context:"results"},"Folder favorite uses a fixed result shortcut, outside the customizable list.");
+        Check(ResultMenuRules.ShortcutText("favorite",preferences)=="Ctrl+D","Favorite menu advertises the same fixed binding.");
         var customMenu=preferences with{ShortcutBindings=new(){["copyPaths"]=new("Ctrl+Alt+C"),["aiKeywords"]=new("")}};
         Check(ResultMenuRules.ShortcutText("copyPaths",customMenu)=="Ctrl+Alt+C","Menu hints follow saved custom keys.");
         Check(ResultMenuRules.ShortcutText("autoKeywords",customMenu)==""&&ResultMenuRules.ShortcutText("metadata",preferences)=="","Unbound or unmapped actions have no shortcut hint.");

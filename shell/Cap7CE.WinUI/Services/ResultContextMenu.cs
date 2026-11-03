@@ -12,7 +12,7 @@ internal static class ResultContextMenu
     {
         var menu=ThemeService.Menu();if(items.Count==0)return menu;
         var first=items[0];
-        var favorite=favorites.Items.FirstOrDefault(entry=>entry.Path.TrimEnd('\\','/').Equals(first.FullPath.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase));
+        var favorite=favorites.Find(first.FullPath);
         foreach(var action in ResultMenuRules.Create(items.Count,home,first.Entry.IsDirectory)) {
             if(action.NewGroup)menu.Items.Add(new MenuFlyoutSeparator());
             MenuFlyoutItem item=action.Id switch {
@@ -22,8 +22,7 @@ internal static class ResultContextMenu
                 "copyPaths"=>L.MenuItem("menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8"),
                 "rename"=>L.MenuItem("menu.rename",()=>commands.Rename(items),"\uE8AC"),
                 "delete"=>L.MenuItem("menu.delete",()=>commands.Run(()=>commands.DeleteAsync(items)),"\uE74D"),
-                "favorite"=>L.MenuItem(favorite is null?"menu.addFavorite":"menu.removeFavorite",()=>commands.Run(()=>favorite is null
-                    ?favorites.ExecuteAsync("add",path:first.FullPath):favorites.ExecuteAsync("remove",id:favorite.Id)),"\uE734"),
+                "favorite"=>L.MenuItem(favorite is null?"menu.addFavorite":"menu.removeFavorite",()=>commands.ToggleFavorite(items),"\uE734"),
                 "editKeywords"=>L.MenuItem("menu.editKeywords",()=>commands.EditKeywords(items),"\uE70F"),
                 "autoKeywords"=>L.MenuItem("menu.autoKeywords",()=>commands.Run(()=>{commands.AutoKeywords(items);return Task.CompletedTask;})),
                 _=>L.MenuItem("menu.metadata",()=>commands.Run(()=>commands.StartMetadataAsync(first)),"\uE895")

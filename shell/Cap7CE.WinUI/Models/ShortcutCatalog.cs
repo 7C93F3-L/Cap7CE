@@ -18,6 +18,7 @@ internal static class ShortcutCatalog
         new("togglePin","Ctrl+Shift+T",Context:"browse"),new("toggleFilters","Ctrl+Shift+F",Context:"browse"),new("toggleDetails","Ctrl+Shift+D",Context:"browse"),
         new("viewSquare","Ctrl+1",Context:"browse"),new("viewGallery","Ctrl+2",Context:"browse"),new("viewList","Ctrl+3",Context:"browse"),
         new("openSelected","Enter",Context:"results",Editable:false),new("previewSelected","Space",Context:"results",Editable:false),
+        new("toggleFavorite","Ctrl+D",Context:"results",Editable:false),
         new("renameSelected","F2",Context:"results",Editable:false),new("deleteSelected","Delete",Context:"results",Editable:false),new("selectAll","Ctrl+A",Context:"results",Editable:false),new("copyFiles","Ctrl+C",Context:"results",Editable:false),
         new("editKeywords","Ctrl+K",Context:"results"),new("copyPaths","Ctrl+Shift+C",Context:"results"),new("revealFile","Ctrl+Shift+E",Context:"results"),new("aiKeywords","Ctrl+Shift+K",Context:"results")
     ];

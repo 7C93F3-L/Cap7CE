@@ -17,6 +17,8 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public event Action<string>? NavigateRequested;
     public event Action? BeforeMutation;
     public event Action? AfterMutation;
+    public void ToggleFavorite(IReadOnlyList<AssetItem> items)
+    {if(items is [var item]&&item.Entry.IsDirectory)Run(()=>services.Favorites.ToggleAsync(item.FullPath));}
     public event Action? ItemsDeleted;
     public event Action<UiMessage?>? DeleteStatusChanged;
     public event Action<IReadOnlyList<AssetItem>>? AutoKeywordsRequested;
