@@ -34,7 +34,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public event Action<string?>? MaintenanceRequested;
     public void ShowMaintenance(string? path=null)=>MaintenanceRequested?.Invoke(path);
     private CatalogChangeSubscription? changes;
-    public HashSet<string> DeletedPaths { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public DeletedPathTracker DeletedPaths { get; } = new();
     private readonly SemaphoreSlim connection = new(1);
     private bool closed;
     public IReadOnlyList<CoreVolumeStatus> Volumes { get; private set; } = [];

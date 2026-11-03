@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Cap7CE.WinUI/Services/DeletedPathTracker.cs" Link="DeletedPathTracker.cs" />
     <Compile Include="../Cap7CE.WinUI/Services/NativeContentPaths.cs" Link="NativeContentPaths.cs" />
     <Compile Include="../Cap7CE.WinUI/Models/IndexOnboardingPolicy.cs;../Cap7CE.WinUI/Services/IndexBuildActions.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreSetupVolumes.cs" Link="CoreSetupVolumes.cs" />

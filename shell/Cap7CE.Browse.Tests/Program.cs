@@ -4,6 +4,7 @@ using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
 NativeContentPathChecks.Run();
+await DeletedPathChecks.RunAsync();
 await RuntimePrerequisiteTests.RunAsync();
 await IndexOnboardingChecks.RunAsync();
 void Require(bool value,string message){if(!value)throw new Exception(message);}
@@ -119,6 +120,20 @@ using(var browse=new BrowseSession(single)) {
     await browse.ForwardAsync();Require(browse.PathValue=="F:\\","single-page forward history remains available");
     single.DeletedPaths.Add(browse.Items[0].FullPath);browse.RemoveDeleted();
     Require(browse.Items.Count==0,"deletion still removes files from the current result collection");
+}
+foreach(var recursive in new[]{false,true}) {
+    var recovered=Setup(recursive);var exists=false;
+    recovered.Visuals.Items=[new(new("file","file.txt","file.txt",".txt",false,"v"),"E:\\file.txt")];
+    recovered.DeletedPaths=new(_=>exists);
+    using var browse=new BrowseSession(recovered);
+    Require(await browse.NavigateAsync("E:\\"),"recovery fixture opens");
+    var path=browse.Items[0].FullPath;recovered.DeletedPaths.Add(path);browse.RemoveDeleted();
+    Require(browse.Items.Count==0,"successful deletion removes current item");
+    Require(await browse.NavigateAsync("E:\\")&&browse.Items.Count==0,"absent deleted item stays suppressed on refresh");
+    exists=true;
+    Require(await browse.NavigateAsync("E:\\")&&browse.Items.Count>0,"restored item returns in direct and Catalog refresh");
+    exists=false;recovered.DeletedPaths.Add(path);browse.RemoveDeleted();
+    Require(browse.Items.Count==0,"a second successful deletion removes the restored item");
 }
 Console.WriteLine("Single-page navigation regression passed: entry reset, preview lifetime, retained refresh, history and deletion.");
 var delayedPreferences=Setup(false);

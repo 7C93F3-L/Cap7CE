@@ -38,7 +38,7 @@ namespace Cap7CE.WinUI.Services
         public CoreConnection? Core {get;set;}
         public PreferenceStore Preferences {get;}=new();
         public VisualConnection Visuals {get;}=new();
-        public HashSet<string> DeletedPaths {get;}=new(StringComparer.OrdinalIgnoreCase);
+        public DeletedPathTracker DeletedPaths {get;set;}=new(_=>false);
         public IReadOnlyList<CoreVolumeStatus> Volumes {get;}=[new("v","E:","NTFS",true,"ready",0,0,true,false)];
         public Func<Task>? Connecting {get;set;}
         public int Connections {get;private set;}
@@ -74,11 +74,11 @@ namespace Cap7CE.WinUI.Services
         public List<(string Kind,string Id)> Started {get;}=[];
         public void Begin(string kind,string id)=>Started.Add((kind,id));
     }
-    internal sealed class VisualConnection {public List<(string Path,bool Recursive)> Reads {get;}=[];}
+    internal sealed class VisualConnection {public List<(string Path,bool Recursive)> Reads {get;}=[];public IReadOnlyList<AssetItem> Items {get;set;}=[];}
     internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDisposable
     {
         public Task<DirectoryBrowsePage> StartAsync(string path,string sort,bool hidden,bool recursive,CancellationToken token)
-        {token.ThrowIfCancellationRequested();visuals.Reads.Add((path,recursive));return Task.FromResult(new DirectoryBrowsePage([],null,0));}
+        {token.ThrowIfCancellationRequested();visuals.Reads.Add((path,recursive));return Task.FromResult(new DirectoryBrowsePage(visuals.Items,null,visuals.Items.Count));}
         public Task<DirectoryBrowsePage> NextAsync(string cursor,CancellationToken token)=>throw new Exception("Unexpected filesystem continuation");
         public void Dispose(){}
     }

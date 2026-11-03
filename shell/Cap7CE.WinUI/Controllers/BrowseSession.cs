@@ -78,6 +78,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         try
         {
             path = path.Trim(); if (path.Length > 0) path = Path.GetFullPath(path);
+            await services.DeletedPaths.ReconcileAsync(token);if(version!=generation)return false;
             var plainBrowse = string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random;
             // Direct children stay fresh; recursive indexed browsing must not rescan a disk.
             timing.Mark("dispatch");
