@@ -75,7 +75,7 @@ internal sealed class FactFilterStrip : UserControl
         row.Children.Clear();options.Clear();sections.Clear();colors=null;colorsGate=null;advanced=null;threeD=null;dimensionSummary=null;if(domain.Length==0)return;
         if(domain=="image-dimensions"){advanced=new(domain,read,apply,flyouts);advanced.Unavailable+=(kind,state)=>Unavailable?.Invoke(kind,false,state);row.Children.Add(advanced);}
         if(domain is "image-dimensions" or "video") {
-            colors=new(domain,()=>Current,value=>Change(_=>value),flyouts);
+            colors=new(domain,()=>Current,value=>Change(_=>value));
             colorsGate=new(colors,()=>Unavailable?.Invoke(domain,true,availability.Get(domain,true)));row.Children.Add(colorsGate);
             var ratios=MediaFilterRules.Options(domain+"-aspect").Select(choice=>{
                 var button=MediaOption(choice,"aspect");Tall(button,FactTextKeys.Media(domain,"aspect",choice.Id),choice.Id);return (UIElement)button;

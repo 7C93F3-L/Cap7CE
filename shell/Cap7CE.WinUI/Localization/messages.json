@@ -2115,14 +2115,6 @@
     "zh-CN": "已选",
     "en-US": "Selected"
   },
-  "ui.facts.colorTraits": {
-    "zh-CN": "颜色特征",
-    "en-US": "Color properties"
-  },
-  "ui.facts.clearColor": {
-    "zh-CN": "清除颜色",
-    "en-US": "Clear colors"
-  },
   "ui.facts.anyDimensions": {
     "zh-CN": "任意尺寸",
     "en-US": "Any dimensions"
