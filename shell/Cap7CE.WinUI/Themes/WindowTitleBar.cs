@@ -197,6 +197,7 @@ internal sealed class WindowTitleBar : Grid
             window.ExtendsContentIntoTitleBar = true;
             window.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
             window.SetTitleBar(frame.dragRegion);
+            window.AppWindow.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico"));
         }
         frame.RequestedTheme = theme;
         window.AppWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;

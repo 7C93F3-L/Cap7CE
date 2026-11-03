@@ -4,6 +4,8 @@
 
 ## 运行边界
 
+共用WindowTitleBar在首次装配窗口时通过AppWindow.SetIcon设置Assets/app.ico；该文件与EXE嵌入图标共用build/icon.ico源，随构建和发布复制，不依赖系统为窗口自动推断图标；任务栏分组的快捷方式关联仍由Windows Shell管理。
+
 - `shell/Cap7CE.WinUI`：原生窗口、托盘、设置、预览及交互编排，复用统一窗口/导航动作。
 - `shell/Cap7CE.QueryHost`：隔离测试库使用的只读查询宿主，不随正常安装器分发；正式产品连接独立Core宿主，WinUI不直接访问Catalog SQLite。
 - `core/src`：产品 Core、Reader 协议/宿主、Catalog、文件操作、属性任务与安装能力。
