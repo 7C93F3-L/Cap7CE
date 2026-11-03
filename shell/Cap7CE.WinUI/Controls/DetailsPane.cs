@@ -21,6 +21,7 @@ internal sealed class DetailsPane : UserControl
     private CompositionRoundedRectangleGeometry? previewClip;
     private readonly AssetPlaceholderIcon icon=new(){Width=72,Height=72,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
     private readonly Border visual=new(){Height=FilePreviewHeight,CornerRadius=new(8)};
+    private TextBlock? dimensions;
     private readonly DetailsKeywordEditor keywords;
     private readonly DetailsEmbeddedMetadata embedded;
     private readonly DispatcherTimer debounce=new(){Interval=TimeSpan.FromMilliseconds(160)};
@@ -37,7 +38,7 @@ internal sealed class DetailsPane : UserControl
         image.SizeChanged+=(_,_)=>UpdatePreviewClip();
         var scroll=new ScrollViewer{Content=column,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
         IdleScrollBars.Attach(scroll);Content=scroll;
-        debounce.Tick+=(_,_)=>{debounce.Stop();if(selected.Any(item=>!item.Entry.IsDirectory))_=keywords.ReadAsync();if(selected is [var item]&&!item.Entry.IsDirectory){_=ReadVisualAsync(item,reading.Token);_=embedded.ReadAsync(item,reading.Token);}};
+        debounce.Tick+=(_,_)=>{debounce.Stop();if(selected.Any(item=>!item.Entry.IsDirectory))_=keywords.ReadAsync();if(selected is [var item]&&!item.Entry.IsDirectory){_=ReadVisualAsync(item,reading.Token);_=ReadDimensionsAsync(item,reading.Token);_=embedded.ReadAsync(item,reading.Token);}};
         Unloaded+=(_,_)=>Stop();Render();
     }
     public void SetContext(string path,long? count,bool searching,int filters,int loaded,bool busy)
@@ -61,7 +62,7 @@ internal sealed class DetailsPane : UserControl
     public void SetAutoKeywordBusy(bool value){keywords.SetAutomaticBusy(value);if(!value&&keywordRefreshPending&&!stopped){keywordRefreshPending=false;_=keywords.ReadAsync();}}
     private void Render()
     {
-        column.Children.Clear();var item=selected.Count==1?selected[0]:null;
+        dimensions=null;column.Children.Clear();var item=selected.Count==1?selected[0]:null;
         var drive=item is not null&&IsDrive(item);
         string? headingKey=item is null?(selected.Count>0?"ui.details.multiple":context.Searching?"ui.details.search":context.Path.Length==0?"main.home":null)
             :item.Entry.IsDirectory?(drive?"ui.details.drive":"main.folder"):item.Entry.Extension.Length==0?"ui.details.file":null;
@@ -94,7 +95,9 @@ internal sealed class DetailsPane : UserControl
         if(!item.Entry.IsDirectory) {
             card.Body.Children.Add(new TextBlock{Text=item.Name,TextWrapping=TextWrapping.Wrap,FontWeight=Microsoft.UI.Text.FontWeights.SemiBold,IsTextSelectionEnabled=true});
         }
-        if(!drive){if(item.Entry.IsDirectory)card.FieldResource("ui.details.size","ui.details.notCalculated");else card.Field("ui.details.size",DetailsCard.Bytes(item.Entry.SizeBytes));}
+        if(!item.Entry.IsDirectory&&FormatRegistry.ExtractorExtensions("image-dimensions").Contains(item.Entry.Extension,StringComparer.OrdinalIgnoreCase))
+            dimensions=card.Field("ui.details.imageDimensions","—");
+        if(!drive){if(item.Entry.IsDirectory)card.FieldResource("ui.details.size","ui.details.notCalculated");else card.Field("ui.details.fileSize",DetailsCard.Bytes(item.Entry.SizeBytes));}
         card.Field("ui.details.modified",item.ModifiedLabel);
         card.Field("ui.details.location",item.FullPath,true,()=>commands.Run(()=>{
             if(item.Entry.IsDirectory)FileCommands.OpenDirectoryInExplorer(item.FullPath);else commands.Reveal(item);
@@ -121,6 +124,15 @@ internal sealed class DetailsPane : UserControl
     private DetailsCard Card(UiMessage title){var card=new DetailsCard(title);column.Children.Add(card);return card;}
     private static string LocationName(string path){var name=SystemLocations.Current.NameForPath(path)??Path.GetFileName(path.TrimEnd('\\','/'));return path.Length==0?"":name.Length>0?name:path.TrimEnd('\\','/');}
     private static bool IsDrive(AssetItem item)=>item.Entry.IsDirectory&&string.Equals(Path.GetPathRoot(item.FullPath),item.FullPath,StringComparison.OrdinalIgnoreCase);
+    private async Task ReadDimensionsAsync(AssetItem item,CancellationToken token)
+    {
+        var field=dimensions;if(field is null)return;
+        try {
+            var size=await services.Visuals.ReadDimensionsAsync(item.FullPath,token);
+            if(!token.IsCancellationRequested&&ReferenceEquals(field,dimensions)&&selected is [var current]&&current==item&&size is {} value)
+                L.Bind(field,TextBlock.TextProperty,"ui.details.pixelDimensions",()=>new Dictionary<string,object?>{{"width",value.Width},{"height",value.Height}});
+        }catch(OperationCanceledException){}catch(Exception){ /* Keep unavailable source dimensions unknown. */ }
+    }
     private async Task ReadVisualAsync(AssetItem item,CancellationToken token)
     {
         try {

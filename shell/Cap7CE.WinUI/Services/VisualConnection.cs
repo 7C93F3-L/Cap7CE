@@ -28,6 +28,14 @@ internal sealed class VisualConnection : IAsyncDisposable
         }
         finally { slots.Release(); }
     }
+    public async Task<(int Width,int Height)?> ReadDimensionsAsync(string path,CancellationToken token)
+    {
+        var value=await host.RequestAsync("sourceDimensions",[path],token);token.ThrowIfCancellationRequested();
+        if(value.ValueKind==JsonValueKind.Null)return null;
+        if(value.ValueKind!=JsonValueKind.Object||!value.TryGetProperty("width",out var w)||!value.TryGetProperty("height",out var h)
+            ||!w.TryGetInt32(out var width)||!h.TryGetInt32(out var height)||width<=0||height<=0)return null;
+        return (width,height);
+    }
     public Task<JsonElement> RequestAsync(string method, params object?[] args) => host.RequestAsync(method, args);
     public Task ReleaseAsync() => host.ReleaseAsync();
     public async Task ClearAsync()

@@ -1139,6 +1139,18 @@
     "zh-CN": "文件信息",
     "en-US": "File information"
   },
+  "ui.details.imageDimensions": {
+    "zh-CN": "图片尺寸",
+    "en-US": "Dimensions"
+  },
+  "ui.details.fileSize": {
+    "zh-CN": "文件大小",
+    "en-US": "File size"
+  },
+  "ui.details.pixelDimensions": {
+    "zh-CN": "{width} × {height} 像素",
+    "en-US": "{width} × {height} px"
+  },
   "ui.details.size": {
     "zh-CN": "大小",
     "en-US": "Size"
