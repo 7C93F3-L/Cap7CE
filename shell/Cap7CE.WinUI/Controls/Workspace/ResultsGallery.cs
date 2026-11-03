@@ -17,7 +17,7 @@ internal sealed class ResultsGallery : UserControl
     private readonly HashSet<GalleryTile> tiles=[];
     private AssetCollection? items;
     private FileCommands? commands;
-    private bool queued,loading,suspended;
+    private bool queued,loading,suspended,preserveImages;
     public IReadOnlyList<AssetItem> Selection=>selection.Ordered(items??[]);
     public event Action? SelectionChanged;
     public ResultsGallery()
@@ -28,7 +28,7 @@ internal sealed class ResultsGallery : UserControl
             if(e.Element is not GalleryTile tile)return;tiles.Add(tile);tile.Pick=Pick;tile.Open=Open;tile.Context=Context;tile.Drag=Drag;
             tile.DragError=error=>commands?.Run(()=>Task.FromException(error));
             tile.IsChecked=tile.DataContext is AssetItem item&&selection.Contains(item);
-            tile.Suspend(suspended);
+            tile.Suspend(suspended,preserveImages);
         };
         repeater.ElementClearing+=(_,e)=>{if(e.Element is GalleryTile tile){tiles.Remove(tile);tile.Pick=tile.Open=null;tile.Context=null;tile.Drag=null;tile.DragError=null;}};
         scroll.ViewChanged+=async(_,_)=>await LoadMore();scroll.SizeChanged+=async(_,_)=>await LoadMore();
@@ -55,7 +55,7 @@ internal sealed class ResultsGallery : UserControl
         if(queued)return;queued=true;DispatcherQueue.TryEnqueue(()=>{queued=false;layout.RatiosChanged();});
     }
     public void Size(double value)=>layout.Update(value);
-    public void Suspend(bool value){suspended=value;foreach(var tile in tiles)tile.Suspend(value);}
+    public void Suspend(bool value,bool preserveImage=false){suspended=value;preserveImages=value&&preserveImage;foreach(var tile in tiles)tile.Suspend(value,preserveImages);}
     public void ReplaceSelection(IEnumerable<AssetItem> value){selection.Replace(value);SyncSelection();}
     public void Clear(){selection.Clear();SyncSelection();}
     public void SelectAll(){selection.Replace(items??[]);SyncSelection();}

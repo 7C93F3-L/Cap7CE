@@ -20,7 +20,7 @@ public sealed class AssetTile : Grid
     private CompositionRoundedRectangleGeometry? clipGeometry;
     private CancellationTokenSource? reading;
     private AssetItem? requestedItem;
-    private bool active,suspended;
+    private bool active,suspended,imageReady;
     private double? compactHeight;
     private (double Width,double Height)? galleryBounds;
     private static ShellPreferences preferences=new();
@@ -81,8 +81,17 @@ public sealed class AssetTile : Grid
         if(clipGeometry is null){var visual=ElementCompositionPreview.GetElementVisual(this);clipGeometry=visual.Compositor.CreateRoundedRectangleGeometry();visual.Clip=visual.Compositor.CreateGeometricClip(clipGeometry);}
         clipGeometry.Size=new((float)ActualWidth,(float)ActualHeight);var radius=(float)Math.Min(8,Math.Min(ActualWidth,ActualHeight)/2);clipGeometry.CornerRadius=new(radius,radius);
     }
-    internal void Suspend(bool value){if(suspended==value)return;suspended=value;active=IsLoaded&&!value;if(value)Release();else if(active)Refresh();}
-    private void Release(){reading?.Cancel();reading?.Dispose();reading=null;requestedItem=null;image.Source=null;}
+    internal void Suspend(bool value,bool preserveImage=false)
+    {
+        if(suspended==value){if(value&&!preserveImage)Release();return;}
+        suspended=value;active=IsLoaded&&!value;
+        if(value)Release(preserveImage);else if(active&&(!imageReady||!ReferenceEquals(requestedItem,DataContext)))Refresh();
+    }
+    private void Release(bool preserveImage=false)
+    {
+        reading?.Cancel();reading?.Dispose();reading=null;
+        if(!preserveImage||!imageReady){requestedItem=null;image.Source=null;imageReady=false;}
+    }
     private async void Refresh()
     {
         if(reading is not null&&ReferenceEquals(requestedItem,DataContext))return;
@@ -102,7 +111,7 @@ public sealed class AssetTile : Grid
             var path=await Visuals.PrepareAsync(item.FullPath,false,token);token.ThrowIfCancellationRequested();
             token.ThrowIfCancellationRequested();if(!ReferenceEquals(DataContext,item))return;
             var bitmap=await CachedBitmapLoader.LoadAsync(image,path,480,token);
-            if(!token.IsCancellationRequested&&ReferenceEquals(DataContext,item)){image.Source=bitmap;formatIcon.Visibility=Visibility.Collapsed;item.ReportAspect(bitmap.PixelWidth,bitmap.PixelHeight);}
+            if(!token.IsCancellationRequested&&ReferenceEquals(DataContext,item)){image.Source=bitmap;imageReady=true;formatIcon.Visibility=Visibility.Collapsed;item.ReportAspect(bitmap.PixelWidth,bitmap.PixelHeight);}
         }
         catch(OperationCanceledException){}catch(Exception error){if(!token.IsCancellationRequested)NativeDiagnostics.VisualFailure(error);}
     }

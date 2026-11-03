@@ -4,6 +4,8 @@
 
 ## 运行边界
 
+文件操作期间ResultsView可暂停卡片请求并保留已完成的缓存图像；恢复时仅复用绑定身份未变的图像，正常隐藏/回收仍释放，不保留源文件句柄。删除在UI线程快照选择并显示确认对话框，批量FileAccessGuard检查在后台完成，回收站仍归原Core文件操作宿主所有。
+
 AssetTile在UI低优先级提交缩略图前复核取消状态，相同绑定的现有读取不重复发起，卸载继续释放像素；GalleryLayout只在尾部追加页时保留已有索引卡片，其余集合变化沿原回收路径。VisualConnection仍维持两路有界请求，缓存和工作进程所有权不变。
 
 共用WindowTitleBar在首次装配窗口时通过AppWindow.SetIcon设置Assets/app.ico；该文件与EXE嵌入图标共用build/icon.ico源，随构建和发布复制，不依赖系统为窗口自动推断图标；任务栏分组的快捷方式关联仍由Windows Shell管理。

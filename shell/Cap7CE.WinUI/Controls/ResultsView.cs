@@ -132,7 +132,7 @@ internal sealed class ResultsView : UserControl
     public void ClearSelection(){if(Selection.Count==0)return;if(IsGallery)gallery.Clear();else ActiveView.SelectedItems.Clear();}
     private bool IsBlank(DependencyObject? element)
     {for(var item=element;item is not null&&!ReferenceEquals(item,root);item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(item is ListViewItem or GridViewItem or GalleryTile or Button or Microsoft.UI.Xaml.Controls.Primitives.ScrollBar)return false;return true;}
-    public void Suspend(bool value){suspended=value;foreach(var tile in Tiles(grid))tile.Suspend(value||grid.Visibility!=Visibility.Visible);gallery.Suspend(value||!IsGallery);}
+    public void Suspend(bool value,bool preserveImage=false){suspended=value;foreach(var tile in Tiles(grid))tile.Suspend(value||grid.Visibility!=Visibility.Visible,preserveImage&&grid.Visibility==Visibility.Visible);gallery.Suspend(value||!IsGallery,preserveImage&&IsGallery);}
     private void OnItemDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
         if ((e.OriginalSource as FrameworkElement)?.DataContext is not AssetItem item || commands is null) return;

@@ -103,7 +103,7 @@ public sealed partial class MainWindow : Window
         services.AutoKeywords.Saved+=item=>details.RefreshKeywords(item);
         commands.KeywordsEdited+=details.RefreshKeywords;
         services.IndexStatusChanged+=_=>DispatcherQueue.TryEnqueue(()=>{if(!closed)details.RefreshKeywordAvailability();});
-        commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true);};
+        commands.BeforeMutation+=()=>{preview?.Close();details.Stop();results.Suspend(true,preserveImage:true);};
         commands.ItemsDeleted+=active.RemoveDeleted;commands.ItemsRenamed+=()=>{results.ClearSelection();Refresh();};
         commands.AfterMutation+=()=>{results.Suspend(minimized);if(!minimized&&DetailsBorder.Visibility==Visibility.Visible)details.Select(results.Selection);};
         WorkspacePointerInput.PreserveSelection(DetailsBorder);WorkspacePointerInput.PreserveSelection(NoticeHost);

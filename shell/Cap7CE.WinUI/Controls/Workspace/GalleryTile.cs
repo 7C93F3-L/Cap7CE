@@ -46,5 +46,5 @@ public sealed class GalleryTile : ToggleButton
         finally {dragging=false;ResultDrag.SetActive(this,false);}
     }
     internal void SetBounds(double width,double height){if(Width==width&&Height==height)return;Width=width;Height=height;tile.SetGalleryBounds(width,height);}
-    internal void Suspend(bool value)=>tile.Suspend(value);
+    internal void Suspend(bool value,bool preserveImage=false)=>tile.Suspend(value,preserveImage);
 }

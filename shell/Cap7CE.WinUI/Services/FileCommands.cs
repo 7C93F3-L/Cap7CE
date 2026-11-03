@@ -94,12 +94,12 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         if (!await operation.WaitAsync(0)) throw new UiFailure("ui.error.fileBusy");
         try
         {
-            items=items.Select(FileAccessGuard.ResolveFileIdentity).ToArray();
+            var selected=items.ToArray();items=await Task.Run(()=>selected.Select(FileAccessGuard.ResolveFileIdentity).ToArray());
             var dialog=L.Dialog(xamlRoot(),"ui.file.trashTitle",null,"ui.file.trashTitle",ContentDialogButton.Close);
             L.Bind(dialog,ContentDialog.ContentProperty,"ui.file.trashDescription",()=>new Dictionary<string,object?>{{"count",items.Count}});
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             BeforeMutation?.Invoke();
-            await services.ReleaseSourcesAsync(); foreach (var item in items) FileAccessGuard.Validate(item);
+            await services.ReleaseSourcesAsync(); await Task.Run(()=>{foreach(var item in items)FileAccessGuard.Validate(item);});
             var result = await NativeCoreRequest.SendAsync(Path.Combine(services.Root,"core/artifacts/file-operations-host/Cap7CE.Core.FileOperations.Host.exe"),
                 ["--trash-session", "--parent-pid", Environment.ProcessId.ToString()], new { version = 1, requestId = 1, mode = "catalog",
                     targets = items.Select(item => new { path = item.FullPath, isDirectory = item.Entry.IsDirectory }).ToArray(),
