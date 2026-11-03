@@ -7,6 +7,7 @@ internal sealed class ShellServices : IAsyncDisposable
 {
     public string Root { get; }
     public NativeUpdates Updates { get; }
+    public AutomaticUpdateCheck AutomaticUpdates {get;}
     public PreferenceStore Preferences { get; } = new();
     public CoreConnection? Core { get; private set; }
     public VisualConnection Visuals { get; }
@@ -42,6 +43,8 @@ internal sealed class ShellServices : IAsyncDisposable
     {
         contentRoot=NativeContentPaths.Root(root);
         Updates=new(root);Root = root;TaskNotices=new(Notify); Visuals = new(root); Favorites = new(root);Metadata=new(this);AutoKeywords=new(this);
+        AutomaticUpdates=new(()=>Preferences.Current,Preferences.UpdateAsync,Updates.CheckQuietlyAsync,
+            version=>Notifications.ShowUpdate(UiMessage.Key("settings.updateAvailable",new Dictionary<string,object?>{{"version",version}}).Render(AppLanguage.Session),Preferences.Current.Notifications));
         Providers = new(root, "provider-preview.cjs", Path.GetTempPath());
         Models = new(root, "model-runtime.cjs", PreferenceStore.ProductData);
         Office = new(root, "office-preview.cjs", Path.Combine(PreferenceStore.DataRoot, "temp"));
@@ -111,7 +114,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         TaskNotices.Clear();TaskNotices.IsObserved=_=>true;
-        await Updates.DisposeAsync();await AutoKeywords.DisposeAsync();
+        await AutomaticUpdates.DisposeAsync();await Updates.DisposeAsync();await AutoKeywords.DisposeAsync();
         await connection.WaitAsync();
         try { if (closed) return; closed = true;changes?.Dispose(); if (Core is not null) await Core.DisposeAsync(); Core = null; }
         finally { connection.Release(); }

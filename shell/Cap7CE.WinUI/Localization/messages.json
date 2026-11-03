@@ -295,6 +295,14 @@
     "zh-CN": "当前版本 {version}",
     "en-US": "Current version {version}"
   },
+  "ui.update.description": {
+    "zh-CN": "检查更新及自动更新",
+    "en-US": "Check for updates and automatic updates"
+  },
+  "ui.update.automaticCheck": {
+    "zh-CN": "自动检查更新",
+    "en-US": "Automatically check for updates"
+  },
   "settings.checkForUpdates": {
     "zh-CN": "检查更新",
     "en-US": "Check for updates"

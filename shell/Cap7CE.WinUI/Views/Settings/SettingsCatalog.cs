@@ -114,7 +114,7 @@ internal sealed class SettingsCatalog
     private UIElement VersionActions()
     {
         var focus=updatesFocus;updatesFocus=false;
-        var view=new NativeUpdateView(services.Updates,focus);
+        var view=new NativeUpdateView(services,focus);
         if(focus)view.Loaded+=(_,_)=>view.DispatcherQueue.TryEnqueue(()=>view.StartBringIntoView());
         return view;
     }

@@ -15,6 +15,9 @@ public sealed record ShellPreferences
     public bool TrayIconEnabled {get;init;}=true;
     public bool ShowMainOnStartup {get;init;}=true;
     public bool Notifications {get;init;}=true;
+    public bool AutomaticUpdateChecks {get;init;}=true;
+    public DateTimeOffset? LastAutomaticUpdateCheckUtc {get;init;}
+    public string? NotifiedUpdateVersion {get;init;}
     public Dictionary<string,ShortcutBinding> ShortcutBindings {get;init;}=[];
     public bool EdgeCollapseEnabled {get;init;}
 	public bool AlwaysOnTop { get; init; }

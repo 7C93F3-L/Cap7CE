@@ -60,6 +60,24 @@ internal sealed class NativeUpdates : IAsyncDisposable
             _ => UiMessage.Key(reply.TryGetProperty("reason", out var reason) && reason.GetString() == "no_native_release" ? "ui.update.noNativeRelease" : "settings.updateCheckFailed")
         };
     });
+    public async Task<AutomaticUpdateResult> CheckQuietlyAsync(CancellationToken token)
+    {
+        if(Busy||closed||State.Busy)return new(false);
+        Busy=true;Changed?.Invoke();
+        using var cancel=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token);
+        try {
+            await Initialize();cancel.Token.ThrowIfCancellationRequested();
+            var reply=await host.RequestAsync("check",[],cancel.Token);
+            var status=reply.GetProperty("status").GetString();
+            if(status is not ("update_available" or "up_to_date"))return new(false);
+            if(reply.TryGetProperty("downloadState",out var state))SetState(state);
+            var version=status=="update_available"?reply.GetProperty("latestVersion").GetString():null;
+            Message=version is null?UiMessage.Key("settings.updateUpToDate",new Dictionary<string,object?>{{"version",NativeVersion.Text}})
+                :UiMessage.Key("settings.updateAvailable",new Dictionary<string,object?>{{"version",version}});
+            return new(true,version);
+        }catch(Exception){return new(false);}
+        finally{Busy=false;if(!closed)Changed?.Invoke();}
+    }
     public Task DownloadAsync() => RunAsync(async () => {
         Message = null; SetState(await host.RequestAsync("download", [], lifetime.Token));
         if (observing is null || observing.IsCompleted) observing = ObserveAsync();

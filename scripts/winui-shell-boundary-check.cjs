@@ -160,11 +160,12 @@ assert(settingsCatalog.indexOf('"stableSettings.section.index"') < settingsCatal
   && settingsCatalog.indexOf('"native.metadata.section","native.metadata.title"') < settingsCatalog.indexOf('new CacheSettingsView'), 'storage settings must retain index, metadata, cache ordering');
 assert(read('shell/Cap7CE.WinUI/Controls/SidebarView.cs').includes('commands.StartMetadataAsync(item.Path)')
   && read('shell/Cap7CE.WinUI/Services/ResultContextMenu.cs').includes('commands.StartMetadataAsync(first)'), 'metadata shortcuts must share the explicit directory queue action');
-// Version/update owns a standard card with a dynamic version description and shared header action.
+// Version/update uses the shared expander, retains its header action and owns no scheduling in the view.
 const nativeUpdateCard = read('shell/Cap7CE.WinUI/Controls/Settings/NativeUpdateView.cs');
 assert(settingsCatalog.includes('"stableSettings.section.application","","",VersionActions,true')
-  && nativeUpdateCard.includes('new SettingsCard("settings.versionUpdate", "", section, localized: true, descriptionContent: version)')
-  && nativeUpdateCard.includes('new SettingsSection(check, details)'), 'update card must retain the standard settings header/body layout');
+  && nativeUpdateCard.includes('new SettingsCard("settings.versionUpdate"')
+  && nativeUpdateCard.includes('new SettingsExpandable(body,initiallyExpanded:checkOnLoad)')
+  && nativeUpdateCard.includes('Row(version,check)') && nativeUpdateCard.includes('Row(L.Text("ui.update.automaticCheck"),automatic)') && nativeUpdateCard.includes('expander.IsExpanded=true;_=updates.CheckAsync();'), 'update card must reuse the native expandable card with separate manual/automatic rows and explicit navigation expansion');
 const nativeSettings = [...settingsCatalog.matchAll(/Mainline\("[^"]+","[^"]+","([^"]+)","([^"]+)"/g)].map(m => `${m[1]}:${m[2]}`);
 // WinUI separates the existing runtime start/stop action from version selection.
 assert.deepEqual(nativeSettings.sort(), mainlineSettings.sort(), 'settings cards and copy must match the frozen native settings baseline without extra workspace controls');
@@ -296,3 +297,7 @@ const updateTray=read('shell/Cap7CE.WinUI/Services/Tray/TrayController.cs');
 assert(updateTray.includes('case 31:updates();break;') && !updateTray.includes('NativeUpdates.CheckAsync'), 'tray updates must navigate to the shared settings flow');
 assert(read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('services.Updates.InstallerStarted+=tray.Exit')
   && read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs').includes('pages.FocusUpdates()'), 'native update installation must reuse normal exit and settings navigation');
+
+const automaticUpdates=read('shell/Cap7CE.WinUI/Services/AutomaticUpdateCheck.cs');
+assert(automaticUpdates.split(/\r?\n/).length<=70 && !/Task\.Delay|Timer|HttpClient|Process\.|DownloadAsync|InstallAsync/.test(automaticUpdates), 'automatic update owner must stay bounded, startup-only and free of download/install or system scheduling');
+assert(read('shell/Cap7CE.WinUI/Services/NativeNotifications.cs').includes('AddArgument("action","updates")') && read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('UpdateInvoked+=UpdateNotificationInvoked'), 'update notifications require a dedicated settings destination');

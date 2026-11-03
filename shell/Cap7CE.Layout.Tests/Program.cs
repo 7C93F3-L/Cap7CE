@@ -16,8 +16,9 @@ await ShortcutChecks.RunAsync();
 if(args is ["--task-notification-tests"]) {TaskNotificationChecks.Run();return;}
 TaskNotificationChecks.Run();
 
-if(args is ["--notification-tests"]) {await NotificationChecks.RunAsync();return;}
+if(args is ["--notification-tests"]) {await NotificationChecks.RunAsync();await AutomaticUpdateChecks.RunAsync();return;}
 await NotificationChecks.RunAsync();
+await AutomaticUpdateChecks.RunAsync();
 
 if(args is ["--edge-collapse-tests"]) {await EdgeCollapseChecks.RunAsync();return;}
 await EdgeCollapseChecks.RunAsync();

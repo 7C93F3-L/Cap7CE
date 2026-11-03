@@ -114,7 +114,7 @@ public sealed partial class MainWindow : Window
         indexOnboarding=new(this,services,()=>Root.XamlRoot,()=>{OpenSettings();settings?.ShowIndex();},Notice,()=>!edgeCollapse.IsCollapsed&&settings is null&&preview is null);
         commandInput=new(toolbar,notifications,new Commands.QuickCommandActions(services,this,()=>active,workspace,OpenSettings,SetPinnedAsync,()=>!layout.HorizontalGrid,tray.Exit));
         ResultDrag.Changed+=edgeCollapse.Wake;
-        services.Notifications.Invoked+=NotificationInvoked;
+        services.Notifications.Invoked+=NotificationInvoked;services.Notifications.UpdateInvoked+=UpdateNotificationInvoked;
         services.TaskNotices.IsObserved=kind=>!closed&&(!edgeCollapse.IsCollapsed&&NativeCaptionFeedback.IsActive(WinRT.Interop.WindowNative.GetWindowHandle(this))||(kind!="ai"&&settings?.IsViewingMaintenance==true));
         services.Preferences.Changed+=ApplyPreferences;
         AppWindow.Changed+=(_,_)=>{
@@ -134,6 +134,7 @@ public sealed partial class MainWindow : Window
     public async Task StartServicesAsync()
     {
         try{services.Notifications.Configure(services.Preferences.Current.Notifications);}catch(Exception error){Notice(UiMessage.Key("ui.notice.notificationsFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
+        if(preferencesLoaded)_=services.AutomaticUpdates.RunAsync();
         try{services.Shortcuts?.Apply();}catch(Exception error){Notice(FailureText.From(error));}
         AssetTile.Visuals=services.Visuals;OpenLocation("");
         try{await services.Favorites.ExecuteAsync();}catch(Exception error){Notice(UiMessage.Key("ui.notice.favoritesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
@@ -212,6 +213,7 @@ public sealed partial class MainWindow : Window
         try{await services.Preferences.UpdateAsync(prefs=>prefs with{AlwaysOnTop=value});}
         catch{ApplyPreferences();throw;}
     }
+    private void UpdateNotificationInvoked()=>DispatcherQueue.TryEnqueue(()=>{if(!closed){WindowActivation.Show(this);OpenUpdates();}});
     private void NotificationInvoked()=>DispatcherQueue.TryEnqueue(()=>{if(!closed)WindowActivation.Show(this);});
     private void CycleDirectory(){var paths=new[]{""}.Concat(services.Favorites.Items.Select(f=>f.Path)).ToArray();OpenLocation(paths[(Array.IndexOf(paths,active?.EntryPath??"")+1)%paths.Length]);}
     private void Notice(string text)=>Notice(UiMessage.Literal(text));
@@ -223,7 +225,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;services.Notifications.UpdateInvoked-=UpdateNotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

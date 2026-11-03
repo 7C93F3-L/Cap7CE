@@ -19,10 +19,13 @@ internal static class NotificationChecks
             Check(manager.Registered==1&&manager.HandlerPresentOnRegister,"Activation handler must precede registration.");
             service.Show("one",store.Current.Notifications);service.Configure(true);
             Check(manager.Sent==1&&manager.Registered==1,"Repeated configure must not duplicate registration.");
+            var updateClicks=0;service.UpdateInvoked+=()=>updateClicks++;
+            Check(service.ShowUpdate("available",true)&&manager.LastArguments.GetValueOrDefault("action")=="updates","Update notification carries its specific destination.");
+            manager.Click("updates");Check(updateClicks==1&&clicks==0,"Update clicks do not trigger generic task activation.");
             manager.Click();Check(clicks==1,"Notification click must reach the activation owner.");
-            manager.Setting=AppNotificationSetting.DisabledForApplication;Check(!service.IsAllowed,"Respect the OS notification setting.");
+            manager.Setting=AppNotificationSetting.DisabledForApplication;Check(!service.ShowUpdate("blocked",true)&&!service.IsAllowed,"Respect the OS notification setting.");
             await service.SetEnabledAsync(store,false);service.Show("disabled",store.Current.Notifications);
-            Check(manager.Sent==1&&!store.Current.Notifications,"Disabling must prevent new notifications.");
+            Check(manager.Sent==2&&!store.Current.Notifications,"Disabling must prevent new notifications.");
             service.Dispose();manager.Click();Check(clicks==1&&manager.Unregistered==1,"Dispose must detach activation and unregister once.");
             manager.Reset();manager.FailRegister=true;using var retry=new NativeNotifications();retry.Invoked+=()=>clicks++;
             try{await retry.SetEnabledAsync(store,true);throw new Exception("Expected registration failure.");}catch(IOException){}
