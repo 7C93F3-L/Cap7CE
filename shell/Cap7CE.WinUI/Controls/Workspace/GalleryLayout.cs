@@ -32,6 +32,11 @@ internal sealed class GalleryLayout : VirtualizingLayout
         foreach(var (index,element) in realized)if(index<geometry.Boxes.Count){var b=geometry.Boxes[index];element.Arrange(new Rect(b.Left,b.Top,b.Width,b.Height));}return finalSize;
     }
     protected override void OnItemsChangedCore(VirtualizingLayoutContext context,object source,System.Collections.Specialized.NotifyCollectionChangedEventArgs args)
-    {foreach(var element in realized.Values.ToArray())context.RecycleElement(element);realized.Clear();dirty=true;InvalidateMeasure();}
+    {
+        // Appended pages do not change existing indices; retain cards and their loaded images.
+        var appended=args.Action==System.Collections.Specialized.NotifyCollectionChangedAction.Add&&args.NewStartingIndex>=geometry.Boxes.Count;
+        if(!appended){foreach(var element in realized.Values.ToArray())context.RecycleElement(element);realized.Clear();}
+        dirty=true;InvalidateMeasure();
+    }
     protected override void UninitializeForContextCore(VirtualizingLayoutContext context){realized.Clear();base.UninitializeForContextCore(context);}
 }

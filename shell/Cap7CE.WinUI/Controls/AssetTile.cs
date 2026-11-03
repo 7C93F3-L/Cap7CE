@@ -19,6 +19,7 @@ public sealed class AssetTile : Grid
     private readonly ResultCardInteraction interaction;
     private CompositionRoundedRectangleGeometry? clipGeometry;
     private CancellationTokenSource? reading;
+    private AssetItem? requestedItem;
     private bool active,suspended;
     private double? compactHeight;
     private (double Width,double Height)? galleryBounds;
@@ -81,18 +82,23 @@ public sealed class AssetTile : Grid
         clipGeometry.Size=new((float)ActualWidth,(float)ActualHeight);var radius=(float)Math.Min(8,Math.Min(ActualWidth,ActualHeight)/2);clipGeometry.CornerRadius=new(radius,radius);
     }
     internal void Suspend(bool value){if(suspended==value)return;suspended=value;active=IsLoaded&&!value;if(value)Release();else if(active)Refresh();}
-    private void Release(){reading?.Cancel();reading?.Dispose();reading=null;image.Source=null;}
+    private void Release(){reading?.Cancel();reading?.Dispose();reading=null;requestedItem=null;image.Source=null;}
     private async void Refresh()
     {
+        if(reading is not null&&ReferenceEquals(requestedItem,DataContext))return;
         interaction.ClearHover();Release();formatIcon.Visibility=Visibility.Visible;if(DataContext is not AssetItem item)return;
         nameLabel.SetName(item.Name,!item.Entry.IsDirectory);
         Localization.LanguageUi.Literal(this,ToolTipService.ToolTipProperty,item.Name);
         var icon=item.IconName;
         formatIcon.SetIcon(icon);
         if(!active||item.FullPath.Length==0||item.Entry.IsDirectory||Visuals is null)return;
-        var token=(reading=new()).Token;
+        requestedItem=item;var token=(reading=new()).Token;
         try
         {
+            // Let layout/input recycle transient cards before submitting bounded visual work.
+            var turn=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            if(!DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,()=>turn.TrySetResult()))return;
+            await turn.Task.WaitAsync(token);token.ThrowIfCancellationRequested();
             var path=await Visuals.PrepareAsync(item.FullPath,false,token);token.ThrowIfCancellationRequested();
             token.ThrowIfCancellationRequested();if(!ReferenceEquals(DataContext,item))return;
             var bitmap=await CachedBitmapLoader.LoadAsync(image,path,480,token);

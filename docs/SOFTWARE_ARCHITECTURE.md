@@ -4,6 +4,8 @@
 
 ## 运行边界
 
+AssetTile在UI低优先级提交缩略图前复核取消状态，相同绑定的现有读取不重复发起，卸载继续释放像素；GalleryLayout只在尾部追加页时保留已有索引卡片，其余集合变化沿原回收路径。VisualConnection仍维持两路有界请求，缓存和工作进程所有权不变。
+
 共用WindowTitleBar在首次装配窗口时通过AppWindow.SetIcon设置Assets/app.ico；该文件与EXE嵌入图标共用build/icon.ico源，随构建和发布复制，不依赖系统为窗口自动推断图标；任务栏分组的快捷方式关联仍由Windows Shell管理。
 
 - `shell/Cap7CE.WinUI`：原生窗口、托盘、设置、预览及交互编排，复用统一窗口/导航动作。
