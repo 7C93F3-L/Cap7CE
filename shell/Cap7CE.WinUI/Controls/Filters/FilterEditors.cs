@@ -35,7 +35,7 @@ internal sealed class FilterEditors(Func<BrowseFilter> read,Action<BrowseFilter>
         Add(L.Text("ui.filters.maximum"),2,0);Add(max,3,0);Add(maxUnit,3,1);
         foreach(var unit in new[]{minUnit,maxUnit}) {unit.MinWidth=0;unit.Height=32;unit.MinHeight=32;unit.HorizontalAlignment=HorizontalAlignment.Stretch;unit.VerticalAlignment=VerticalAlignment.Center;}
         var error=Ui.Text("",true);error.Visibility=Visibility.Collapsed;
-        var content=Ui.Column(fields,error);content.Width=300;
+        var content=Ui.Column(fields,error);content.Width=220;
         content.Children.Add(Ui.Row(L.Button("ui.filters.clear",()=>{apply(read() with {MinimumBytes=null,MaximumBytes=null});flyouts.Close();}),L.Button("common.apply",()=>{
             long? Bytes(NumberBox box,ComboBox unit)=>double.IsNaN(box.Value)?null:checked((long)Math.Round(box.Value*Math.Pow(1024,unit.SelectedIndex+1)));
             var minimum=Bytes(min,minUnit);var maximum=Bytes(max,maxUnit);

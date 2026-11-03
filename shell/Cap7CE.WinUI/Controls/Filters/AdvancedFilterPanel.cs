@@ -56,7 +56,7 @@ internal sealed class AdvancedFilterPanel : UserControl
     private void Edit(Button anchor,AdvancedFilterGroup group)
     {
         var (lower,upper,count)=AdvancedFilterRules.Bounds(Current(group),group);
-        NumberBox Number(string key,long? value){var box=new NumberBox{Minimum=group.Minimum,Maximum=group.Maximum,Value=value??double.NaN,Width=240,SpinButtonPlacementMode=NumberBoxSpinButtonPlacementMode.Compact};L.Bind(box,NumberBox.HeaderProperty,key);return box;}
+        NumberBox Number(string key,long? value){var box=new NumberBox{Minimum=group.Minimum,Maximum=group.Maximum,Value=value??double.NaN,Width=group.Maximum>2000000000?240:180,SpinButtonPlacementMode=NumberBoxSpinButtonPlacementMode.Compact};L.Bind(box,NumberBox.HeaderProperty,key);return box;}
         var min=Number("ui.filters.minimum",lower);var max=Number("ui.filters.maximum",upper);var error=Ui.Text("",true);var content=Ui.Column(min,max,error);
         if(count>1)content.Children.Insert(0,L.Text("ui.facts.mergeRange",true));
         content.Children.Add(Ui.Row(L.Button("ui.facts.clearGroup",()=>{Set(AdvancedFilterRules.Clear(Current(group),group));flyouts.Close();}),L.Button("common.apply",()=>{

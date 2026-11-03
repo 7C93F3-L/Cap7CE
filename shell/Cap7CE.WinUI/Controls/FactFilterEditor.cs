@@ -11,7 +11,7 @@ internal sealed class FactFilterEditor(Func<BrowseFilter> read,Action<BrowseFilt
     {
         if(scope is not ("dimensions" or "duration" or "channels"))throw new ArgumentException("Unsupported numeric filter group",nameof(scope));
         var current=read().Facts is {} facts&&facts.Kind==domain?facts:new CoreSearchFactFilter(domain,FormatRegistry.ExtractorVersion(domain));
-        var content=new StackPanel {Spacing=10,Width=310};var error=Ui.Text("",true);
+        var content=new StackPanel {Spacing=10,Width=scope=="dimensions"?240:200};var error=Ui.Text("",true);
         NumberBox Number(string label,double? value,double minimum,double maximum) {
             var box=new NumberBox {Minimum=minimum,Maximum=maximum,Value=value??double.NaN,SpinButtonPlacementMode=NumberBoxSpinButtonPlacementMode.Compact};
             L.Bind(box,NumberBox.HeaderProperty,label);content.Children.Add(box);return box;
