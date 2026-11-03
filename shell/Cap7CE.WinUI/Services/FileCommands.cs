@@ -18,6 +18,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     public event Action? BeforeMutation;
     public event Action? AfterMutation;
     public event Action? ItemsDeleted;
+    public event Action<UiMessage?>? DeleteStatusChanged;
     public event Action<IReadOnlyList<AssetItem>>? AutoKeywordsRequested;
     public void AutoKeywords(IReadOnlyList<AssetItem> items)
     {if(items.Count is 0 or >100000)throw new UiFailure("ui.error.fileSelection");if(items.Count==1)FileAccessGuard.Validate(items[0]);AutoKeywordsRequested?.Invoke(items.ToArray());}
@@ -98,6 +99,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
             var dialog=L.Dialog(xamlRoot(),"ui.file.trashTitle",null,"ui.file.trashTitle",ContentDialogButton.Close);
             L.Bind(dialog,ContentDialog.ContentProperty,"ui.file.trashDescription",()=>new Dictionary<string,object?>{{"count",items.Count}});
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            DeleteStatusChanged?.Invoke(UiMessage.Key("ui.file.trashing",new Dictionary<string,object?>{{"count",items.Count}}));
             BeforeMutation?.Invoke();
             await services.ReleaseSourcesAsync(); await Task.Run(()=>{foreach(var item in items)FileAccessGuard.Validate(item);});
             var result = await NativeCoreRequest.SendAsync(Path.Combine(services.Root,"core/artifacts/file-operations-host/Cap7CE.Core.FileOperations.Host.exe"),
@@ -110,7 +112,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
             notice(result.GetProperty("success").GetBoolean()?UiMessage.Key("ui.file.trashed"):
                 UiMessage.Key("ui.file.trashPartial",new Dictionary<string,object?>{{"count",result.GetProperty("failedItems").GetArrayLength()}}));
         }
-        finally { AfterMutation?.Invoke(); operation.Release(); }
+        finally { DeleteStatusChanged?.Invoke(null);AfterMutation?.Invoke(); operation.Release(); }
     }
     public bool CanDelete(IReadOnlyList<AssetItem> items)=>items.Count is >0 and <=200&&items.All(item=>
         item.FullPath.Length>3&&!item.Entry.Id.StartsWith("home-",StringComparison.Ordinal));

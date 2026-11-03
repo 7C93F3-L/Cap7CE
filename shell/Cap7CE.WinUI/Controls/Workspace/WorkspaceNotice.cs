@@ -14,7 +14,8 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     private readonly ProgressBar progress=new(){Height=3,MinHeight=3,HorizontalAlignment=HorizontalAlignment.Stretch,VerticalAlignment=VerticalAlignment.Bottom,Visibility=Visibility.Collapsed};
     private readonly DispatcherQueueTimer delay,expiry;
     private bool busy,busyShown,disposed,pointerInside,showingNotice;
-    private UiMessage? notice,commandNotice;
+    private UiMessage? notice,commandNotice,fileTask;
+    public void SetFileTask(UiMessage? text){fileTask=text;Render();}
     private bool commandCancellable;
     public event Action? ConfirmationCancelled;
     public void SetCommandConfirmation(UiMessage? text,bool cancellable=true){commandNotice=text;commandCancellable=cancellable;Render();}
@@ -76,7 +77,8 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
     private void Render()
     {
         if(disposed)return;
-        var confirming=commandNotice is not null;
+        var currentCommand=fileTask??commandNotice;var cancellable=fileTask is null&&commandCancellable;
+        var confirming=currentCommand is not null;
         var foregroundTask=!confirming&&task is not null;
         var background=!confirming&&!foregroundTask&&(indexTask is not null||metadataTask is not null);
         var backgroundText=indexTask??metadataTask;
@@ -84,12 +86,12 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         showingNotice=!confirming&&!foregroundTask&&!background&&notice is not null;
         var loading=!confirming&&!foregroundTask&&!background&&!showingNotice&&busyShown;
         Visibility=confirming||foregroundTask||background||showingNotice||loading?Visibility.Visible:Visibility.Collapsed;
-        if((commandNotice??task??backgroundText??notice) is {} text){L.Computed(message,()=>text.Render(AppLanguage.Session));L.Bind(message,ToolTipService.ToolTipProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",text.Render(AppLanguage.Session)}});}
+        if((currentCommand??task??backgroundText??notice) is {} text){L.Computed(message,()=>text.Render(AppLanguage.Session));L.Bind(message,ToolTipService.ToolTipProperty,"ui.common.text",()=>new Dictionary<string,object?>{{"text",text.Render(AppLanguage.Session)}});}
         else {L.Bind(message,TextBlock.TextProperty,"main.querying");L.Literal(message,ToolTipService.ToolTipProperty,null);}
-        progress.Visibility=foregroundTask||background||loading||confirming&&!commandCancellable?Visibility.Visible:Visibility.Collapsed;
+        progress.Visibility=foregroundTask||background||loading||confirming&&!cancellable?Visibility.Visible:Visibility.Collapsed;
         progress.Maximum=foregroundTask?taskMaximum:1;progress.Value=foregroundTask?taskValue:background?Math.Clamp(fraction??0,0,1):0;
-        progress.IsIndeterminate=foregroundTask?taskIndeterminate:background?fraction is null:loading||confirming&&!commandCancellable;
-        close.Visibility=background||confirming&&!commandCancellable?Visibility.Collapsed:Visibility.Visible;
+        progress.IsIndeterminate=foregroundTask?taskIndeterminate:background?fraction is null:loading||confirming&&!cancellable;
+        close.Visibility=background||confirming&&!cancellable?Visibility.Collapsed:Visibility.Visible;
         close.IsEnabled=confirming||!foregroundTask||!taskCancelling;
         L.Label(close,foregroundTask?"main.cancelRecognition":"main.closeNotice");
         UpdateExpiry();
@@ -101,5 +103,5 @@ internal sealed class WorkspaceNotice : UserControl, IDisposable
         if(!expiry.IsRunning)expiry.Start();
     }
 
-    public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;LanguageBinding.Clear(message,TextBlock.TextProperty);LanguageBinding.Clear(message,ToolTipService.ToolTipProperty);commandNotice=notice=task=indexTask=metadataTask=null;ConfirmationCancelled=null;}
+    public void Dispose(){disposed=true;delay.Stop();expiry.Stop();progress.IsIndeterminate=false;LanguageBinding.Clear(message,TextBlock.TextProperty);LanguageBinding.Clear(message,ToolTipService.ToolTipProperty);fileTask=commandNotice=notice=task=indexTask=metadataTask=null;ConfirmationCancelled=null;}
 }

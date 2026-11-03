@@ -9,6 +9,7 @@ module.exports.register = projects => {
 module.exports.ownsStorage = name => ["WindowsItemRename.cs", "WindowsDirectorySource.cs", "FolderRenameJournal.cs", "TrashSourceMetadata.cs"].some(file => name === `${directory}/${file}`);
 module.exports.check = (root, failures) => {
   const files = new Map([
+    [`${directory}/WindowsTrashBatch.cs`,30],["native/Cap7CE.Core.FileOperations/trash_items.h",40],
     [`${directory}/WindowsItemRename.cs`,45],[`${host}/ItemRenameRequest.cs`,25],["native/Cap7CE.Core.FileOperations/rename_items.h",75],
     [`${directory}/WindowsFileOperation.cs`, 50], [`${directory}/WindowsFileOperationRules.cs`, 30], [`${host}/Program.cs`, 40],
     [`${directory}/WindowsDirectorySource.cs`, 55], [`${directory}/FolderRenameJournal.cs`, 65], [`${directory}/FolderRenameWorkflow.cs`, 80],

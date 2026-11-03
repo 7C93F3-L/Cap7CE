@@ -162,6 +162,7 @@ if (Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies })
   failures.push("Retired Electron packaging dependencies must not return.");
 if (!packageJson.scripts?.["build:core"] || !packageJson.scripts?.["test:core"])
   failures.push("Core build and test commands must remain explicit npm scripts.");
+require("./core-file-operations-boundary-check.cjs").check(root, failures);
 if (failures.length > 0) {
   console.error("Core architecture checks failed:\n");
   for (const failure of failures) console.error(`- ${failure}`);

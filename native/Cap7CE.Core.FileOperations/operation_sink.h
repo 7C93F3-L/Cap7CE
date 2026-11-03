@@ -2,8 +2,8 @@
 #include <windows.h>
 #include <shobjidl.h>
 #include <atomic>
+#include <wrl/client.h>
 #include <string>
-
 namespace cap7ce::core {
 using RenameCallback = void(__stdcall*)(LPCWSTR, LPCWSTR, HRESULT);
 class OperationSink final : public IFileOperationProgressSink {
@@ -11,7 +11,8 @@ class OperationSink final : public IFileOperationProgressSink {
  public:
   bool renamed = false;
   RenameCallback rename_completed = nullptr;
-  HRESULT error = S_OK;
+  HRESULT error = S_OK, *delete_result = nullptr;
+  Microsoft::WRL::ComPtr<IShellItem> delete_source;
   std::wstring actual_path;
   HRESULT STDMETHODCALLTYPE QueryInterface(REFIID id, void** result) override {
     if (!result) return E_POINTER;
@@ -43,7 +44,11 @@ class OperationSink final : public IFileOperationProgressSink {
     // A recycle request is never permission to fall back to permanent deletion.
     return (flags & TSF_DELETE_RECYCLE_IF_POSSIBLE) ? S_OK : E_ABORT;
   }
-  HRESULT STDMETHODCALLTYPE PostDeleteItem(DWORD, IShellItem*, HRESULT, IShellItem*) override { return S_OK; }
+  HRESULT STDMETHODCALLTYPE PostDeleteItem(DWORD, IShellItem* source, HRESULT result, IShellItem* recycled) override {
+    int order = 1;
+    if (delete_result && source && delete_source && SUCCEEDED(source->Compare(delete_source.Get(), SICHINT_CANONICAL, &order)) && order == 0) *delete_result = FAILED(result) ? result : recycled ? S_OK : E_ABORT;
+    return S_OK;
+  }
   HRESULT STDMETHODCALLTYPE PreNewItem(DWORD, IShellItem*, LPCWSTR) override { return S_OK; }
   HRESULT STDMETHODCALLTYPE PostNewItem(DWORD, IShellItem*, LPCWSTR, LPCWSTR, DWORD, HRESULT, IShellItem*) override { return S_OK; }
   HRESULT STDMETHODCALLTYPE UpdateProgress(UINT, UINT) override { return S_OK; }

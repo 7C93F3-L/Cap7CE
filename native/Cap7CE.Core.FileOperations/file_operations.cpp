@@ -63,3 +63,5 @@ extern "C" __declspec(dllexport) HRESULT __stdcall Cap7CE_RecycleItem(LPCWSTR so
 }
 
 #include "rename_items.h"
+
+#include "trash_items.h"
