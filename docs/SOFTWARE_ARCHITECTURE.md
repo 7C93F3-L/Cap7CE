@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-当前源码主线为 Windows x64 / C# / WinUI 3，正式版本为 2.0.0。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。正式安装器通过自包含载荷检查，运行及快捷方式已经人工确认。
+当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.1。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
 
 删除仍由Core文件操作宿主独占。TrashBatchExecutor校验保护路径和源类型，将互不包含的目标交给WindowsTrashBatch；原生trash_items在单个STA及IFileOperation中排队后一次执行。OperationSink按所选Shell身份及回收完成对象确认逐项成功，拒绝永久删除回退；父目录成功覆盖子项，父目录失败后子项独立执行。成功项无固定等待，失败项最多重试一次并等待250毫秒，明确中止不重试。私有请求及最终结果协议不变。WorkspaceNotice独立文件任务槽持续显示不确定进度，结束或异常时解除，不占用AI或命令状态。
 
@@ -113,4 +113,4 @@ KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEdit
 
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
 
-2.0.0保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp更新到0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档使用当前版本截图，演示素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
+2.0.1保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。

@@ -1,16 +1,16 @@
 # Cap7CE
 
-## Cap7CE 2.0.0
+## Cap7CE 2.0.1
 
 面向 Windows 的本地素材浏览、搜索与预览工具。支持原比例网格、文件属性筛选、关键词编辑及可选的本地 AI 关键词生成。
 
 安装后即可浏览目录，建立本地索引后启用搜索与关键词编辑。安装器自动配置搜索服务，建库和元数据提取由用户主动启动。详见[开发、交付与能力边界](shell/README.md)。
 
-当前正式版本为 2.0.0，安装包见 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.0)。
+当前正式版本为 2.0.1，安装包见 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.1)。
 
 [中文](#中文) · [English](#english)
 
-> **Cap7CE 2.0.0** — Local asset browsing, search and preview for Windows, with optional local AI keyword generation. Download the official installer from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.0).
+> **Cap7CE 2.0.1** — Local asset browsing, search and preview for Windows, with optional local AI keyword generation. Download the official installer from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.1).
 
 ![Cap7CE normal mode in dark theme](docs/assets/screenshots/normal-dark.png)
 
@@ -39,7 +39,7 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 当前状态
 
-- 当前正式版本：`2.0.0`
+- 当前正式版本：`2.0.1`
 - 发布阶段：正式发布
 - 支持平台：Windows 10 / 11 x64
 - 当前主要测试环境：Windows 11、NVIDIA CUDA 版 `llama.cpp`
@@ -49,7 +49,7 @@ Cap7CE 是一款面向 Windows 的本地文件搜索、浏览与预览工具。�
 
 ### 下载与安装
 
-请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.0) 下载 `Cap7CE-Setup-2.0.0-x64.exe`。安装器支持选择最终安装目录、创建开始菜单和桌面快捷方式。安装时默认配置搜索服务；首次运行可按引导选择建库范围。软件内更新只在用户主动检查和确认后下载、校验并启动正式安装器。
+请从 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.1) 下载 `Cap7CE-Setup-2.0.1-x64.exe`。安装器支持选择最终安装目录、创建开始菜单和桌面快捷方式。安装时默认配置搜索服务；首次运行可按引导选择建库范围。软件内可自动检查新版并发送系统通知；下载及安装仍由用户主动确认。
 
 原生界面配置及日志位于 `%LOCALAPPDATA%\Cap7CE-PhaseF`；Core索引、用户配置、属性及缓存位于 `%LOCALAPPDATA%\Cap7CE`。安装根目录保留启动快捷方式、卸载程序、`models` 与 `llama.cpp`，程序及依赖集中在 `app` 子目录。卸载时只有明确勾选对应清理选项才会删除用户数据、模型或AI运行时。
 
@@ -225,7 +225,7 @@ Source files, indexes, caches, models, and runtime settings remain on the local 
 
 ### Project status
 
-- Current release: `2.0.0`
+- Current release: `2.0.1`
 - Release stage: Stable
 - Supported platform: Windows 10 / 11 x64
 - Primary test environment: Windows 11 with a CUDA build of `llama.cpp`
@@ -235,7 +235,7 @@ The installer is currently unsigned, so Windows may show an Unknown Publisher or
 
 ### Download and installation
 
-Download `Cap7CE-Setup-2.0.0-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.0). The installer lets you choose the installation directory, creates shortcuts, and configures the search service. Missing .NET prerequisites are installed through the Microsoft runtime installer. The first-run prompt can start indexing or open settings to choose drives. In-app updates download, verify, and launch the installer only after explicit user actions.
+Download `Cap7CE-Setup-2.0.1-x64.exe` from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.1). The installer lets you choose the installation directory, creates shortcuts, and configures the search service. Missing .NET prerequisites are installed through the Microsoft runtime installer. The first-run prompt can start indexing or open settings to choose drives. In-app updates can check automatically and notify you when a new version is available. Downloading and launching the installer require explicit user actions.
 
 Shell preferences and logs are stored under `%LOCALAPPDATA%\Cap7CE-PhaseF`; Core indexes, user configuration, metadata and caches are stored under `%LOCALAPPDATA%\Cap7CE`. The installation root contains the launch shortcut, uninstaller, `models` and `llama.cpp`; application files and dependencies live in `app`. Uninstallation removes user data, models or the AI runtime only when the corresponding cleanup option is selected.
 
