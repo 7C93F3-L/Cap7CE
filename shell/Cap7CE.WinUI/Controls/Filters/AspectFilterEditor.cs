@@ -18,6 +18,9 @@ internal sealed class AspectFilterEditor(Func<CoreSearchFactFilter> read,Action<
             var button=FilterSection.Option($"{w}:{h}",()=>{if(draft.Contains(range))draft.Remove(range);else draft.Add(range);});
             button.IsChecked=draft.Contains(range);choices.Add(button);chips.Add((button,range));
         }
+        var presets=FilterSection.Options(choices,3);
+        foreach(var column in presets.ColumnDefinitions)column.Width=new(1,GridUnitType.Star);
+        foreach(var (button,_) in chips)button.HorizontalAlignment=HorizontalAlignment.Stretch;
         var width=new NumberBox {Minimum=1,Maximum=100000,Value=double.NaN,Width=110};
         var height=new NumberBox {Minimum=1,Maximum=100000,Value=double.NaN,Width=110};
         L.Bind(width,NumberBox.HeaderProperty,"ui.facts.width");L.Bind(height,NumberBox.HeaderProperty,"ui.facts.height");
@@ -31,7 +34,7 @@ internal sealed class AspectFilterEditor(Func<CoreSearchFactFilter> read,Action<
             }
         }
         Extras();
-        var title=L.Text("ui.facts.commonRatios");title.FontSize=14;title.TextWrapping=TextWrapping.NoWrap;var content=Ui.Column(title,FilterSection.Options(choices,3),Ui.Row(width,height),custom,error);
+        var title=L.Text("ui.facts.commonRatios");title.FontSize=14;title.TextWrapping=TextWrapping.NoWrap;var content=Ui.Column(title,presets,Ui.Row(width,height),custom,error);content.Width=226;
         var add=L.Button("ui.facts.addRatio",()=>{
             if(double.IsNaN(width.Value)||double.IsNaN(height.Value)||width.Value!=Math.Truncate(width.Value)||height.Value!=Math.Truncate(height.Value)) {L.Bind(error,TextBlock.TextProperty,"ui.facts.ratioInteger");return;}
             var w=(int)width.Value;var h=(int)height.Value;

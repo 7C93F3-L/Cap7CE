@@ -1144,7 +1144,7 @@
     "en-US": "File size"
   },
   "ui.details.pixelDimensions": {
-    "zh-CN": "{width} × {height} 像素",
+    "zh-CN": "{width} × {height} px",
     "en-US": "{width} × {height} px"
   },
   "ui.details.size": {

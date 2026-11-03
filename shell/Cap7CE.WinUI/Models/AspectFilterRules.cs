@@ -3,7 +3,7 @@ using Cap7CE.Core.Protocol;
 namespace Cap7CE.WinUI.Models;
 internal static class AspectFilterRules
 {
-    public static readonly (int Width,int Height)[] Common=[(1,1),(4,3),(3,4),(3,2),(2,3),(16,9),(9,16),(4,5),(5,4)];
+    public static readonly (int Width,int Height)[] Common=[(1,1),(4,3),(3,4),(3,2),(2,3),(16,9),(9,16),(21,9),(9,21),(4,5),(5,4)];
     public static CoreSearchAspectRange Around(int width,int height)
     {
         if(width is <1 or >100000 || height is <1 or >100000)throw new ArgumentOutOfRangeException(nameof(width));

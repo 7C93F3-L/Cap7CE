@@ -2,7 +2,6 @@ using Cap7CE.WinUI.Models;
 using Microsoft.UI.Xaml;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 
 namespace Cap7CE.WinUI.Controls;
 
@@ -34,7 +33,7 @@ internal sealed class FilterEditors(Func<BrowseFilter> read,Action<BrowseFilter>
         for(var row=0;row<4;row++)fields.RowDefinitions.Add(new(){Height=GridLength.Auto});
         Add(L.Text("ui.filters.minimum"),0,0);Add(min,1,0);Add(minUnit,1,1);
         Add(L.Text("ui.filters.maximum"),2,0);Add(max,3,0);Add(maxUnit,3,1);
-        foreach(var unit in new[]{minUnit,maxUnit}) {unit.MinWidth=0;unit.Height=30;unit.MinHeight=30;unit.HorizontalAlignment=HorizontalAlignment.Stretch;unit.VerticalAlignment=VerticalAlignment.Center;}
+        foreach(var unit in new[]{minUnit,maxUnit}) {unit.MinWidth=0;unit.Height=32;unit.MinHeight=32;unit.HorizontalAlignment=HorizontalAlignment.Stretch;unit.VerticalAlignment=VerticalAlignment.Center;}
         var error=Ui.Text("",true);error.Visibility=Visibility.Collapsed;
         var content=Ui.Column(fields,error);content.Width=300;
         content.Children.Add(Ui.Row(L.Button("ui.filters.clear",()=>{apply(read() with {MinimumBytes=null,MaximumBytes=null});flyouts.Close();}),L.Button("common.apply",()=>{
@@ -58,19 +57,10 @@ internal sealed class FilterEditors(Func<BrowseFilter> read,Action<BrowseFilter>
     }
     private static NumberBox Number(string heading,double? value)
     {
-        var box=new NumberBox {Value=value??double.NaN,Minimum=0,Maximum=1e9,MinWidth=0,Height=30,MinHeight=30,
-            FontSize=12,Padding=new(12,3,12,3),CornerRadius=new(15),BorderThickness=new(0),
+        var box=new NumberBox {Value=value??double.NaN,Minimum=0,Maximum=1e9,MinWidth=0,
             SpinButtonPlacementMode=NumberBoxSpinButtonPlacementMode.Hidden};
         L.Bind(box,NumberBox.PlaceholderTextProperty,"ui.filters.unlimited");L.Bind(box,Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty,heading);
-        box.Loaded+=(_,_)=>StyleInput(box);
         return box;
-        static void StyleInput(DependencyObject parent)
-        {
-            for(var i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++) {
-                var child=VisualTreeHelper.GetChild(parent,i);
-                if(child is TextBox input)input.Style=(Style)Application.Current.Resources["CapWorkspaceInput"];
-                else StyleInput(child);
-            }
-        }
+
     }
 }
